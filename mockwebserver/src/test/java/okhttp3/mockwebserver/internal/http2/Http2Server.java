@@ -29,6 +29,7 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import okhttp3.Headers;
 import okhttp3.Protocol;
+import okhttp3.internal.concurrent.TaskRunner;
 import okhttp3.internal.http2.Header;
 import okhttp3.internal.http2.Http2Connection;
 import okhttp3.internal.http2.Http2Stream;
@@ -69,7 +70,7 @@ public final class Http2Server extends Http2Connection.Listener {
         if (protocol != Protocol.HTTP_2) {
           throw new ProtocolException("Protocol " + protocol + " unsupported");
         }
-        Http2Connection connection = new Http2Connection.Builder(false)
+        Http2Connection connection = new Http2Connection.Builder(false, TaskRunner.INSTANCE)
             .socket(sslSocket)
             .listener(this)
             .build();
@@ -92,7 +93,7 @@ public final class Http2Server extends Http2Connection.Listener {
     SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(
         socket, socket.getInetAddress().getHostAddress(), socket.getPort(), true);
     sslSocket.setUseClientMode(false);
-    Platform.get().configureTlsExtensions(sslSocket, null,
+    Platform.get().configureTlsExtensions(sslSocket,
         Collections.singletonList(Protocol.HTTP_2));
     sslSocket.startHandshake();
     return sslSocket;
@@ -124,7 +125,7 @@ public final class Http2Server extends Http2Connection.Listener {
         send404(stream, path);
       }
     } catch (IOException e) {
-      Platform.get().log(INFO, "Failure serving Http2Stream: " + e.getMessage(), null);
+      Platform.get().log("Failure serving Http2Stream: " + e.getMessage(), INFO, null);
     }
   }
 

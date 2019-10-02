@@ -33,6 +33,7 @@ import okhttp3.Response
 import okhttp3.Route
 import okhttp3.internal.EMPTY_RESPONSE
 import okhttp3.internal.closeQuietly
+import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.http.ExchangeCodec
 import okhttp3.internal.http1.Http1ExchangeCodec
 import okhttp3.internal.http2.ConnectionShutdownException
@@ -321,7 +322,7 @@ class RealConnection(
     val source = this.source!!
     val sink = this.sink!!
     socket.soTimeout = 0 // HTTP/2 connection timeouts are set per-stream.
-    val http2Connection = Http2Connection.Builder(true)
+    val http2Connection = Http2Connection.Builder(client = true, taskRunner = TaskRunner.INSTANCE)
         .socket(socket, route.address.url.host, source, sink)
         .listener(this)
         .pingIntervalMillis(pingIntervalMillis)
@@ -344,7 +345,7 @@ class RealConnection(
       // Configure the socket's ciphers, TLS versions, and extensions.
       val connectionSpec = connectionSpecSelector.configureSecureSocket(sslSocket)
       if (connectionSpec.supportsTlsExtensions) {
-        Platform.get().configureTlsExtensions(sslSocket, address.url.host, address.protocols)
+        Platform.get().configureTlsExtensions(sslSocket, address.protocols)
       }
 
       // Force handshake. This can throw!

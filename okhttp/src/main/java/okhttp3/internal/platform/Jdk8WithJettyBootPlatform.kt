@@ -32,7 +32,6 @@ class Jdk8WithJettyBootPlatform(
 ) : Platform() {
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
-    hostname: String?,
     protocols: List<Protocol>
   ) {
     val names = alpnProtocolNames(protocols)
@@ -58,13 +57,11 @@ class Jdk8WithJettyBootPlatform(
     }
   }
 
-  override fun getSelectedProtocol(socket: SSLSocket): String? {
+  override fun getSelectedProtocol(sslSocket: SSLSocket): String? {
     try {
-      val provider = Proxy.getInvocationHandler(getMethod.invoke(null, socket)) as AlpnProvider
+      val provider = Proxy.getInvocationHandler(getMethod.invoke(null, sslSocket)) as AlpnProvider
       if (!provider.unsupported && provider.selected == null) {
-        Platform.get().log(INFO,
-            "ALPN callback dropped: HTTP/2 is disabled. " + "Is alpn-boot on the boot class path?",
-            null)
+        log("ALPN callback dropped: HTTP/2 is disabled. " + "Is alpn-boot on the boot class path?")
         return null
       }
       return if (provider.unsupported) null else provider.selected

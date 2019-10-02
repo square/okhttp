@@ -6,6 +6,9 @@ commands:
     parameters:
       platform:
         type: string
+      testjdk:
+        type: string
+        default: ""
     steps:
       - restore_cache:
           keys:
@@ -17,7 +20,7 @@ commands:
           name: Run tests
           command: ./gradlew --build-cache --parallel --continue test
           environment:
-            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dokhttp.platform=<< parameters.platform >> -Dorg.gradle.workers.max=3 -Xmx1G
+            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dokhttp.platform=<< parameters.platform >> -Dorg.gradle.workers.max=3 -Xmx1G << parameters.testjdk >>
 
       - save_cache:
           paths:
@@ -51,7 +54,7 @@ commands:
 jobs:
   compile:
     docker:
-      - image: circleci/openjdk:8u222-jdk-stretch
+      - image: circleci/openjdk:11.0.4-jdk-stretch
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -70,7 +73,7 @@ jobs:
           name: Run tests
           command: ./gradlew --parallel --build-cache test
           environment:
-            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=3 -Xmx1G
+            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dokhttp.platform=jdk9 -Dorg.gradle.workers.max=3 -Xmx1G
 
       - save_cache:
           paths:
@@ -79,9 +82,9 @@ jobs:
           # Under normal usage, saves compiled results from master at least once a day
           key: v4-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}-{{ epoch }}
 
-  checkjdk8:
+  checkjdk11:
     docker:
-      - image: circleci/openjdk:8u222-jdk-stretch
+      - image: circleci/openjdk:11.0.4-jdk-stretch
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -114,7 +117,7 @@ jobs:
 
   testjdk8:
     docker:
-      - image: circleci/openjdk:8u222-jdk-stretch
+      - image: circleci/openjdk:11.0.4-jdk-stretch
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -125,10 +128,11 @@ jobs:
 
       - runtests:
           platform: jdk8
+          testjdk: -Dtest.java.home=/usr/lib/jvm/java-8-openjdk-amd64
 
   testjdk8alpn:
     docker:
-      - image: circleci/openjdk:8u222-jdk-stretch
+      - image: circleci/openjdk:11.0.4-jdk-stretch
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -139,10 +143,11 @@ jobs:
 
       - runtests:
           platform: jdk8alpn
+          testjdk: -Dtest.java.home=/usr/lib/jvm/java-8-openjdk-amd64 -Dalpn.boot.version=8.1.13.v20181017
 
   testopenjsse:
     docker:
-      - image: circleci/openjdk:8u222-jdk-stretch
+      - image: circleci/openjdk:11.0.4-jdk-stretch
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -153,6 +158,7 @@ jobs:
 
       - runtests:
           platform: openjsse
+          testjdk: -Dtest.java.home=/usr/lib/jvm/java-8-openjdk-amd64
 
   testjdk11:
     docker:
@@ -205,7 +211,7 @@ workflows:
           filters:
             branches:
               only: master
-      - checkjdk8:
+      - checkjdk11:
           filters:
             branches:
               ignore:
@@ -245,7 +251,7 @@ workflows:
               only: master
     jobs:
       - compile
-      - checkjdk8:
+      - checkjdk11:
           requires:
             - compile
       - testjdk8:

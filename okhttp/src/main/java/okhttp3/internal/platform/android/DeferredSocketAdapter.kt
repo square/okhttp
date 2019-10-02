@@ -39,10 +39,9 @@ class DeferredSocketAdapter(private val socketPackage: String) : SocketAdapter {
 
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
-    hostname: String?,
     protocols: List<Protocol>
   ) {
-    getDelegate(sslSocket)?.configureTlsExtensions(sslSocket, hostname, protocols)
+    getDelegate(sslSocket)?.configureTlsExtensions(sslSocket, protocols)
   }
 
   override fun getSelectedProtocol(sslSocket: SSLSocket): String? {
@@ -65,7 +64,7 @@ class DeferredSocketAdapter(private val socketPackage: String) : SocketAdapter {
         delegate = AndroidSocketAdapter(possibleClass)
       } catch (e: Exception) {
         Platform.get()
-            .log(Platform.WARN, "Failed to initialize DeferredSocketAdapter $socketPackage", e)
+            .log("Failed to initialize DeferredSocketAdapter $socketPackage", Platform.WARN, e)
       }
 
       initialized = true

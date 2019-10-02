@@ -22,7 +22,6 @@ import okhttp3.testing.PlatformRule
 import okio.BufferedSink
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestRule
@@ -36,11 +35,7 @@ class CallKotlinTest {
   @JvmField @Rule val server = MockWebServer()
   @JvmField @Rule val clientTestRule = OkHttpClientTestRule()
 
-  private lateinit var client: OkHttpClient
-
-  @Before fun setUp() {
-    client = clientTestRule.newClient()
-  }
+  private var client = clientTestRule.newClient()
 
   @Test
   fun legalToExecuteTwiceCloning() {

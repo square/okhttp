@@ -25,9 +25,9 @@ task copyJavaTemplates(type: Copy) {
 dependencies {
   api deps.okio
   api deps.kotlinStdlib
+  compileOnly deps.android
   compileOnly deps.conscrypt
   compileOnly deps.openjsse
-  compileOnly deps.android
   compileOnly deps.jsr305
   compileOnly deps.animalSniffer
 
@@ -48,6 +48,10 @@ afterEvaluate { project ->
     outputDirectory = "$rootDir/docs/4.x"
     outputFormat = 'gfm'
   }
+}
+
+animalsniffer {
+    ignore 'javax.net.ssl.SSLParameters', 'javax.net.ssl.SSLSocket'
 }
 
 task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {

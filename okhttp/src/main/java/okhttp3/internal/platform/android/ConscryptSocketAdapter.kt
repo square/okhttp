@@ -26,7 +26,7 @@ import javax.net.ssl.X509TrustManager
 /**
  * Simple non-reflection SocketAdapter for Conscrypt.
  */
-object ConscryptSocketAdapter : SocketAdapter {
+class ConscryptSocketAdapter : SocketAdapter {
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? = null
 
   override fun matchesSocketFactory(sslSocketFactory: SSLSocketFactory): Boolean = false
@@ -43,16 +43,12 @@ object ConscryptSocketAdapter : SocketAdapter {
 
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
-    hostname: String?,
     protocols: List<Protocol>
   ) {
     // No TLS extensions if the socket class is custom.
     if (matchesSocket(sslSocket)) {
-      // Enable SNI and session tickets.
-      if (hostname != null) {
-        Conscrypt.setUseSessionTickets(sslSocket, true)
-        Conscrypt.setHostname(sslSocket, hostname)
-      }
+      // Enable session tickets.
+      Conscrypt.setUseSessionTickets(sslSocket, true)
 
       // Enable ALPN.
       val names = Platform.alpnProtocolNames(protocols)
@@ -60,6 +56,8 @@ object ConscryptSocketAdapter : SocketAdapter {
     }
   }
 
-  fun buildIfSupported(): SocketAdapter? =
-      if (ConscryptPlatform.isSupported) ConscryptSocketAdapter else null
+  companion object {
+    fun buildIfSupported(): SocketAdapter? =
+        if (ConscryptPlatform.isSupported) ConscryptSocketAdapter() else null
+  }
 }

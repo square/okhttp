@@ -25,6 +25,7 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.closeQuietly
+import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.duplex.MwsDuplexAccess
 import okhttp3.internal.execute
 import okhttp3.internal.http.HttpMethod
@@ -99,6 +100,7 @@ import javax.net.ssl.X509TrustManager
  * in sequence.
  */
 class MockWebServer : ExternalResource(), Closeable {
+  private val taskRunner = TaskRunner()
   private val requestQueue = LinkedBlockingQueue<RecordedRequest>()
   private val openClientSockets =
       Collections.newSetFromMap(ConcurrentHashMap<Socket, Boolean>())
@@ -454,6 +456,12 @@ class MockWebServer : ExternalResource(), Closeable {
     } catch (e: InterruptedException) {
       throw AssertionError()
     }
+
+    for (queue in taskRunner.activeQueues()) {
+      if (!queue.awaitIdle(TimeUnit.MILLISECONDS.toNanos(500L))) {
+        throw IOException("Gave up waiting for ${queue.owner} to shut down")
+      }
+    }
   }
 
   @Synchronized override fun after() {
@@ -507,7 +515,7 @@ class MockWebServer : ExternalResource(), Closeable {
           openClientSockets.add(socket)
 
           if (protocolNegotiationEnabled) {
-            Platform.get().configureTlsExtensions(sslSocket, null, protocols)
+            Platform.get().configureTlsExtensions(sslSocket, protocols)
           }
 
           sslSocket.startHandshake()
@@ -533,7 +541,7 @@ class MockWebServer : ExternalResource(), Closeable {
 
       if (protocol === Protocol.HTTP_2 || protocol === Protocol.H2_PRIOR_KNOWLEDGE) {
         val http2SocketHandler = Http2SocketHandler(socket, protocol)
-        val connection = Http2Connection.Builder(false)
+        val connection = Http2Connection.Builder(false, taskRunner)
             .socket(socket)
             .listener(http2SocketHandler)
             .build()

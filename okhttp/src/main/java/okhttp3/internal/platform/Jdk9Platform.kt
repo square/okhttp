@@ -15,50 +15,33 @@
  */
 package okhttp3.internal.platform
 
-import java.lang.reflect.InvocationTargetException
-import java.lang.reflect.Method
-import javax.net.ssl.SSLParameters
+import okhttp3.Protocol
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
-import okhttp3.Protocol
 
 /** OpenJDK 9+. */
-class Jdk9Platform(
-  @JvmField val setProtocolMethod: Method,
-  @JvmField val getProtocolMethod: Method
-) : Platform() {
+open class Jdk9Platform : Platform() {
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
-    hostname: String?,
-    protocols: List<Protocol>
+    protocols: List<@JvmSuppressWildcards Protocol>
   ) {
-    try {
-      val sslParameters = sslSocket.sslParameters
+    val sslParameters = sslSocket.sslParameters
 
-      val names = alpnProtocolNames(protocols)
+    val names = alpnProtocolNames(protocols)
 
-      setProtocolMethod.invoke(sslParameters, names.toTypedArray())
+    sslParameters.applicationProtocols = names.toTypedArray()
 
-      sslSocket.sslParameters = sslParameters
-    } catch (e: IllegalAccessException) {
-      throw AssertionError("failed to set SSL parameters", e)
-    } catch (e: InvocationTargetException) {
-      throw AssertionError("failed to set SSL parameters", e)
-    }
+    sslSocket.sslParameters = sslParameters
   }
 
-  override fun getSelectedProtocol(socket: SSLSocket): String? = try {
+  override fun getSelectedProtocol(sslSocket: SSLSocket): String? {
     // SSLSocket.getApplicationProtocol returns "" if application protocols values will not
     // be used. Observed if you didn't specify SSLParameters.setApplicationProtocols
-    when (val protocol = getProtocolMethod.invoke(socket) as String?) {
+    return when (val protocol = sslSocket.applicationProtocol) {
       null, "" -> null
       else -> protocol
     }
-  } catch (e: IllegalAccessException) {
-    throw AssertionError("failed to get ALPN selected protocol", e)
-  } catch (e: InvocationTargetException) {
-    throw AssertionError("failed to get ALPN selected protocol", e)
   }
 
   public override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? {
@@ -71,17 +54,13 @@ class Jdk9Platform(
   }
 
   companion object {
-    fun buildIfSupported(): Jdk9Platform? =
-        try {
-          // Find JDK 9 methods
-          val setProtocolMethod = SSLParameters::class.java.getMethod("setApplicationProtocols",
-              Array<String>::class.java)
-          val getProtocolMethod = SSLSocket::class.java.getMethod("getApplicationProtocol")
+    val isAvailable: Boolean
 
-          Jdk9Platform(setProtocolMethod, getProtocolMethod)
-        } catch (_: NoSuchMethodException) {
-          // pre JDK 9
-          null
-        }
+    init {
+      val majorVersion: Int = Integer.getInteger("java.specification.version") ?: 8
+      isAvailable = majorVersion >= 9
+    }
+
+    fun buildIfSupported(): Jdk9Platform? = if (isAvailable) Jdk9Platform() else null
   }
 }

@@ -40,26 +40,16 @@ import javax.net.ssl.X509TrustManager
 /**
  * Access to platform-specific features.
  *
- * ### Server name indication (SNI)
- *
- * Supported on Android 2.3+.
- *
- * Supported on OpenJDK 7+
- *
  * ### Session Tickets
  *
  * Supported on Android 2.3+.
- *
- * ### Android Traffic Stats (Socket Tagging)
- *
- * Supported on Android 4.0+.
+ * Supported on JDK 8+ via Conscrypt.
  *
  * ### ALPN (Application Layer Protocol Negotiation)
  *
- * Supported on Android 5.0+. The APIs were present in Android 4.4, but that implementation was
- * unstable.
+ * Supported on Android 5.0+.
  *
- * Supported on OpenJDK 8 via the JettyALPN-boot library.
+ * Supported on OpenJDK 8 via the JettyALPN-boot library or Conscrypt.
  *
  * Supported on OpenJDK 9+ via SSLParameters and SSLSocket features.
  *
@@ -67,6 +57,8 @@ import javax.net.ssl.X509TrustManager
  *
  * Supported on Android 2.3+ and OpenJDK 7+. There are no public APIs to recover the trust
  * manager that was used to create an [SSLSocketFactory].
+ *
+ * Not supported by choice on JDK9+ due to access checks.
  *
  * ### Android Cleartext Permit Detection
  *
@@ -105,12 +97,9 @@ open class Platform {
 
   /**
    * Configure TLS extensions on `sslSocket` for `route`.
-   *
-   * @param hostname non-null for client-side handshakes; null for server-side handshakes.
    */
   open fun configureTlsExtensions(
     sslSocket: SSLSocket,
-    hostname: String?,
     protocols: List<@JvmSuppressWildcards Protocol>
   ) {
   }
@@ -127,7 +116,7 @@ open class Platform {
     socket.connect(address, connectTimeout)
   }
 
-  open fun log(level: Int, message: String, t: Throwable?) {
+  open fun log(message: String, level: Int = INFO, t: Throwable? = null) {
     val logLevel = if (level == WARN) Level.WARNING else Level.INFO
     logger.log(logLevel, message, t)
   }
@@ -152,7 +141,7 @@ open class Platform {
       logMessage += " To see where this was allocated, set the OkHttpClient logger level to " +
           "FINE: Logger.getLogger(OkHttpClient.class.getName()).setLevel(Level.FINE);"
     }
-    log(WARN, logMessage, stackTrace as Throwable?)
+    log(logMessage, WARN, stackTrace as Throwable?)
   }
 
   open fun buildCertificateChainCleaner(trustManager: X509TrustManager): CertificateChainCleaner =
@@ -208,6 +197,12 @@ open class Platform {
 
     /** Attempt to match the host runtime to a capable Platform implementation. */
     private fun findPlatform(): Platform {
+      val android10 = Android10Platform.buildIfSupported()
+
+      if (android10 != null) {
+        return android10
+      }
+
       val android = AndroidPlatform.buildIfSupported()
 
       if (android != null) {

@@ -2,7 +2,6 @@ import net.ltgt.gradle.errorprone.CheckSeverity
 
 buildscript {
   ext.versions = [
-      'android': '4.1.1.4',
       'animalSniffer': '1.17',
       'assertj': '3.11.0',
       'bouncycastle': '1.62',
@@ -25,7 +24,7 @@ buildscript {
 
   ext.deps = [
       'picocli': "info.picocli:picocli:${versions.picocli}",
-      'android': "com.google.android:android:${versions.android}",
+      'android': "org.robolectric:android-all:9-robolectric-4913185-2",
       'animalSniffer': "org.codehaus.mojo:animal-sniffer-annotations:${versions.animalSniffer}",
       'assertj': "org.assertj:assertj-core:${versions.assertj}",
       'bouncycastle': "org.bouncycastle:bcprov-jdk15on:${versions.bouncycastle}",
@@ -38,6 +37,7 @@ buildscript {
       'junit': "junit:junit:${versions.junit}",
       'kotlinStdlib': "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin}",
       'moshi': "com.squareup.moshi:moshi:${versions.moshi}",
+      'moshiKotlin': "com.squareup.moshi:moshi-kotlin-codegen:${versions.moshi}",
       'okio': "com.squareup.okio:okio:${versions.okio}",
       'openjsse': "org.openjsse:openjsse:${versions.openjsse}"
   ]
@@ -132,10 +132,15 @@ subprojects { project ->
   }
 
   def platform = System.getProperty("okhttp.platform", "jdk8")
+  def platformJavaHome = System.getProperty('test.java.home')
 
   test {
     jvmArgs += "-Dlistener=okhttp3.testing.InstallUncaughtExceptionHandlerListener"
     jvmArgs += "-Dokhttp.platform=$platform"
+
+    if (platformJavaHome != null) {
+      executable = "$platformJavaHome/bin/java"
+    }
 
     maxParallelForks Runtime.runtime.availableProcessors() * 2
     testLogging {
@@ -211,6 +216,12 @@ tasks.wrapper {
  * https://github.com/xjdr/xio/blob/master/alpn-boot.gradle
  */
 def alpnBootVersion() {
+  def version = System.getProperty('alpn.boot.version')
+
+  if (version != null) {
+    return version
+  }
+
   def javaVersion = System.getProperty("java.version")
   def patchVersionMatcher = (javaVersion =~ /1\.8\.0_(\d+)(-.*)?/)
   if (!patchVersionMatcher.find()) return null

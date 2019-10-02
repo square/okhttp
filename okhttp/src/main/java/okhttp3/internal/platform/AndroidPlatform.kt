@@ -17,6 +17,7 @@ package okhttp3.internal.platform
 
 import android.os.Build
 import okhttp3.Protocol
+import okhttp3.internal.platform.android.AndroidCertificateChainCleaner
 import okhttp3.internal.platform.android.CloseGuard
 import okhttp3.internal.platform.android.ConscryptSocketAdapter
 import okhttp3.internal.platform.android.DeferredSocketAdapter
@@ -30,10 +31,8 @@ import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.net.InetSocketAddress
 import java.net.Socket
-import java.security.cert.Certificate
 import java.security.cert.TrustAnchor
 import java.security.cert.X509Certificate
-import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
@@ -73,19 +72,18 @@ class AndroidPlatform : Platform() {
 
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
-    hostname: String?,
-    protocols: List<Protocol>
+    protocols: List<@JvmSuppressWildcards Protocol>
   ) {
     // No TLS extensions if the socket class is custom.
     socketAdapters.find { it.matchesSocket(sslSocket) }
-        ?.configureTlsExtensions(sslSocket, hostname, protocols)
+        ?.configureTlsExtensions(sslSocket, protocols)
   }
 
   override fun getSelectedProtocol(sslSocket: SSLSocket) =
       // No TLS extensions if the socket class is custom.
       socketAdapters.find { it.matchesSocket(sslSocket) }?.getSelectedProtocol(sslSocket)
 
-  override fun log(level: Int, message: String, t: Throwable?) {
+  override fun log(message: String, level: Int, t: Throwable?) {
     androidLog(level, message, t)
   }
 
@@ -95,7 +93,7 @@ class AndroidPlatform : Platform() {
     val reported = closeGuard.warnIfOpen(stackTrace)
     if (!reported) {
       // Unable to report via CloseGuard. As a last-ditch effort, send it to the logger.
-      log(WARN, message, null)
+      log(message, WARN)
     }
   }
 
@@ -169,37 +167,6 @@ class AndroidPlatform : Platform() {
   }
 
   /**
-   * X509TrustManagerExtensions was added to Android in API 17 (Android 4.2, released in late 2012).
-   * This is the best way to get a clean chain on Android because it uses the same code as the TLS
-   * handshake.
-   */
-  internal class AndroidCertificateChainCleaner(
-    private val x509TrustManagerExtensions: Any,
-    private val checkServerTrusted: Method
-  ) : CertificateChainCleaner() {
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(SSLPeerUnverifiedException::class)
-    override // Reflection on List<Certificate>.
-    fun clean(chain: List<Certificate>, hostname: String): List<Certificate> = try {
-      val certificates = (chain as List<X509Certificate>).toTypedArray()
-      checkServerTrusted.invoke(
-          x509TrustManagerExtensions, certificates, "RSA", hostname) as List<Certificate>
-    } catch (e: InvocationTargetException) {
-      val exception = SSLPeerUnverifiedException(e.message)
-      exception.initCause(e)
-      throw exception
-    } catch (e: IllegalAccessException) {
-      throw AssertionError(e)
-    }
-
-    override fun equals(other: Any?): Boolean =
-        other is AndroidCertificateChainCleaner // All instances are equivalent.
-
-    override fun hashCode(): Int = 0
-  }
-
-  /**
    * A trust manager for Android applications that customize the trust manager.
    *
    * This class exploits knowledge of Android implementation details. This class is potentially
@@ -224,16 +191,31 @@ class AndroidPlatform : Platform() {
   }
 
   companion object {
-    val isSupported: Boolean = try {
+    val isAndroid: Boolean = try {
       // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
       Class.forName("com.android.org.conscrypt.OpenSSLSocketImpl")
 
-      // Fail Fast
-      check(Build.VERSION.SDK_INT >= 21) { "Expected Android API level 21+ but was ${Build.VERSION.SDK_INT}" }
+      // account for android-all, forces UnsatisfiedLinkError in Intellij
+      check(Build.VERSION.SDK_INT > 0)
 
       true
     } catch (_: ClassNotFoundException) {
+      // Running in a JVM
       false
+    } catch (_: UnsatisfiedLinkError) {
+      // Running in a JVM/Intellij with android-all on the classpath
+      false
+    }
+
+    val isSupported: Boolean = when {
+      !isAndroid -> false
+      else -> {
+        // Fail Fast
+        check(
+            Build.VERSION.SDK_INT >= 21) { "Expected Android API level 21+ but was ${Build.VERSION.SDK_INT}" }
+
+        true
+      }
     }
 
     fun buildIfSupported(): Platform? = if (isSupported) AndroidPlatform() else null

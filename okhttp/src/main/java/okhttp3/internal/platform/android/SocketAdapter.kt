@@ -28,7 +28,6 @@ interface SocketAdapter {
 
   open fun configureTlsExtensions(
     sslSocket: SSLSocket,
-    hostname: String?,
     protocols: List<Protocol>
   )
 

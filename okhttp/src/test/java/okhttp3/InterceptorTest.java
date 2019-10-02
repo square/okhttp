@@ -39,7 +39,6 @@ import okio.GzipSink;
 import okio.Okio;
 import okio.Sink;
 import okio.Source;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -50,12 +49,8 @@ public final class InterceptorTest {
   @Rule public MockWebServer server = new MockWebServer();
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
-  private OkHttpClient client;
+  private OkHttpClient client = clientTestRule.newClient();
   private RecordingCallback callback = new RecordingCallback();
-
-  @Before public void setUp() {
-    client = clientTestRule.newClient();
-  }
 
   @Test public void applicationInterceptorsCanShortCircuitResponses() throws Exception {
     server.shutdown(); // Accept no connections.

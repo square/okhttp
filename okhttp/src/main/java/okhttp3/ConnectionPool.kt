@@ -16,6 +16,7 @@
  */
 package okhttp3
 
+import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.connection.RealConnectionPool
 import java.util.concurrent.TimeUnit
 
@@ -29,12 +30,19 @@ import java.util.concurrent.TimeUnit
  * Currently this pool holds up to 5 idle connections which will be evicted after 5 minutes of
  * inactivity.
  */
-class ConnectionPool(
-  maxIdleConnections: Int,
-  keepAliveDuration: Long,
-  timeUnit: TimeUnit
+class ConnectionPool internal constructor(
+  internal val delegate: RealConnectionPool
 ) {
-  internal val delegate = RealConnectionPool(maxIdleConnections, keepAliveDuration, timeUnit)
+  constructor(
+    maxIdleConnections: Int,
+    keepAliveDuration: Long,
+    timeUnit: TimeUnit
+  ) : this(RealConnectionPool(
+      taskRunner = TaskRunner.INSTANCE,
+      maxIdleConnections = maxIdleConnections,
+      keepAliveDuration = keepAliveDuration,
+      timeUnit = timeUnit
+  ))
 
   constructor() : this(5, 5, TimeUnit.MINUTES)
 
