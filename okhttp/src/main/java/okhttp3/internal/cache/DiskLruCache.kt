@@ -168,7 +168,7 @@ class DiskLruCache internal constructor(
   private var nextSequenceNumber: Long = 0
 
   private val cleanupQueue = taskRunner.newQueue(this)
-  private val cleanupTask = object : Task("OkHttp DiskLruCache") {
+  private val cleanupTask = object : Task("OkHttp DiskLruCache", cancelable = false) {
     override fun runOnce(): Long {
       synchronized(this@DiskLruCache) {
         if (!initialized || closed) {

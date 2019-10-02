@@ -113,8 +113,8 @@ class TaskRunner(
   }
 
   private fun cancelAll() {
-    for (queue in activeQueues) {
-      queue.cancelAll()
+    for (i in activeQueues.size - 1 downTo 0) {
+      activeQueues[i].cancelAll()
     }
   }
 

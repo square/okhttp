@@ -42,7 +42,6 @@ class RealConnectionPool(
   private val cleanupQueue: TaskQueue = taskRunner.newQueue(this)
   private val cleanupTask = object : Task("OkHttp ConnectionPool") {
     override fun runOnce() = cleanup(System.nanoTime())
-    override fun tryCancel() = true
   }
 
   private val connections = ArrayDeque<RealConnection>()
