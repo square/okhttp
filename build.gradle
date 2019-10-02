@@ -131,7 +131,7 @@ subprojects { project ->
     }
   }
 
-  def platform = System.getProperty("okhttp.platform", "jdk8")
+  def platform = System.getProperty("okhttp.platform", "jdk9")
   def platformJavaHome = System.getProperty('test.java.home')
 
   test {
