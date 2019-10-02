@@ -131,8 +131,6 @@ class RealWebSocket(
         }
         return -1L
       }
-
-      override fun tryCancel() = true
     }
   }
 
@@ -485,8 +483,6 @@ class RealWebSocket(
       writePingFrame()
       return delayNanos
     }
-
-    override fun tryCancel() = true
   }
 
   internal fun writePingFrame() {
@@ -552,8 +548,6 @@ class RealWebSocket(
       cancel()
       return -1L
     }
-
-    override fun tryCancel() = true
   }
 
   companion object {

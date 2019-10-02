@@ -133,11 +133,6 @@ class TaskRunnerTest {
         log += "run@${taskFaker.nanoTime}"
         return -1L
       }
-
-      override fun tryCancel(): Boolean {
-        log += "cancel@${taskFaker.nanoTime}"
-        return true
-      }
     }, 100L)
 
     taskFaker.advanceUntil(0L)
@@ -146,21 +141,16 @@ class TaskRunnerTest {
     redQueue.cancelAll()
 
     taskFaker.advanceUntil(99L)
-    assertThat(log).containsExactly("cancel@99")
+    assertThat(log).isEmpty()
 
     taskFaker.assertNoMoreTasks()
   }
 
   @Test fun cancelReturnsFalseDoesNotCancel() {
-    redQueue.schedule(object : Task("task") {
+    redQueue.schedule(object : Task("task", cancelable = false) {
       override fun runOnce(): Long {
         log += "run@${taskFaker.nanoTime}"
         return -1L
-      }
-
-      override fun tryCancel(): Boolean {
-        log += "cancel@${taskFaker.nanoTime}"
-        return false
       }
     }, 100L)
 
@@ -170,10 +160,10 @@ class TaskRunnerTest {
     redQueue.cancelAll()
 
     taskFaker.advanceUntil(99L)
-    assertThat(log).containsExactly("cancel@99")
+    assertThat(log).isEmpty()
 
     taskFaker.advanceUntil(100L)
-    assertThat(log).containsExactly("cancel@99", "run@100")
+    assertThat(log).containsExactly("run@100")
 
     taskFaker.assertNoMoreTasks()
   }
@@ -184,34 +174,6 @@ class TaskRunnerTest {
         log += "run@${taskFaker.nanoTime}"
         redQueue.cancelAll()
         return 100L
-      }
-
-      override fun tryCancel(): Boolean {
-        log += "cancel@${taskFaker.nanoTime}"
-        return true
-      }
-    }, 100L)
-
-    taskFaker.advanceUntil(0L)
-    assertThat(log).isEmpty()
-
-    taskFaker.advanceUntil(100L)
-    assertThat(log).containsExactly("run@100", "cancel@100")
-
-    taskFaker.assertNoMoreTasks()
-  }
-
-  @Test fun cancelWhileExecutingDoesNothingIfTaskDoesNotRepeat() {
-    redQueue.schedule(object : Task("task") {
-      override fun runOnce(): Long {
-        log += "run@${taskFaker.nanoTime}"
-        redQueue.cancelAll()
-        return -1L
-      }
-
-      override fun tryCancel(): Boolean {
-        log += "cancel@${taskFaker.nanoTime}"
-        return true
       }
     }, 100L)
 
@@ -224,17 +186,52 @@ class TaskRunnerTest {
     taskFaker.assertNoMoreTasks()
   }
 
+  @Test fun cancelWhileExecutingDoesNothingIfTaskDoesNotRepeat() {
+    redQueue.schedule(object : Task("task") {
+      override fun runOnce(): Long {
+        log += "run@${taskFaker.nanoTime}"
+        redQueue.cancelAll()
+        return -1L
+      }
+    }, 100L)
+
+    taskFaker.advanceUntil(0L)
+    assertThat(log).isEmpty()
+
+    taskFaker.advanceUntil(100L)
+    assertThat(log).containsExactly("run@100")
+
+    taskFaker.assertNoMoreTasks()
+  }
+
+  @Test fun cancelWhileExecutingDoesNotStopUncancelableTask() {
+    redQueue.schedule(object : Task("task", cancelable = false) {
+      val delays = mutableListOf(50L, -1L)
+      override fun runOnce(): Long {
+        log += "run@${taskFaker.nanoTime}"
+        redQueue.cancelAll()
+        return delays.removeAt(0)
+      }
+    }, 100L)
+
+    taskFaker.advanceUntil(0L)
+    assertThat(log).isEmpty()
+
+    taskFaker.advanceUntil(100L)
+    assertThat(log).containsExactly("run@100")
+
+    taskFaker.advanceUntil(150L)
+    assertThat(log).containsExactly("run@100", "run@150")
+
+    taskFaker.assertNoMoreTasks()
+  }
+
   @Test fun interruptingCoordinatorAttemptsToCancelsAndSucceeds() {
     redQueue.schedule(object : Task("task") {
       override fun runOnce(): Long {
         log += "run@${taskFaker.nanoTime}"
         return -1L
       }
-
-      override fun tryCancel(): Boolean {
-        log += "cancel@${taskFaker.nanoTime}"
-        return true
-      }
     }, 100L)
 
     taskFaker.advanceUntil(0L)
@@ -243,21 +240,16 @@ class TaskRunnerTest {
     taskFaker.interruptCoordinatorThread()
 
     taskFaker.advanceUntil(0L)
-    assertThat(log).containsExactly("cancel@0")
+    assertThat(log).isEmpty()
 
     taskFaker.assertNoMoreTasks()
   }
 
   @Test fun interruptingCoordinatorAttemptsToCancelsAndFails() {
-    redQueue.schedule(object : Task("task") {
+    redQueue.schedule(object : Task("task", cancelable = false) {
       override fun runOnce(): Long {
         log += "run@${taskFaker.nanoTime}"
         return -1L
-      }
-
-      override fun tryCancel(): Boolean {
-        log += "cancel@${taskFaker.nanoTime}"
-        return false
       }
     }, 100L)
 
@@ -267,10 +259,10 @@ class TaskRunnerTest {
     taskFaker.interruptCoordinatorThread()
 
     taskFaker.advanceUntil(0L)
-    assertThat(log).containsExactly("cancel@0")
+    assertThat(log).isEmpty()
 
     taskFaker.advanceUntil(100L)
-    assertThat(log).containsExactly("cancel@0", "run@100")
+    assertThat(log).containsExactly("run@100")
 
     taskFaker.assertNoMoreTasks()
   }
@@ -452,38 +444,12 @@ class TaskRunnerTest {
     taskFaker.assertNoMoreTasks()
   }
 
-  @Test fun taskNameIsUsedForThreadNameWhenCanceling() {
-    redQueue.schedule(object : Task("lucky task") {
-      override fun tryCancel(): Boolean {
-        log += "cancel threadName:${Thread.currentThread().name}"
-        return true
-      }
-
-      override fun runOnce() = -1L
-    }, 100L)
-
-    taskFaker.advanceUntil(0L)
-    assertThat(log).isEmpty()
-
-    redQueue.cancelAll()
-
-    taskFaker.advanceUntil(0L)
-    assertThat(log).containsExactly("cancel threadName:lucky task")
-
-    taskFaker.assertNoMoreTasks()
-  }
-
   @Test fun shutdownSuccessfullyCancelsScheduledTasks() {
     redQueue.schedule(object : Task("task") {
       override fun runOnce(): Long {
         log += "run@${taskFaker.nanoTime}"
         return -1L
       }
-
-      override fun tryCancel(): Boolean {
-        log += "cancel@${taskFaker.nanoTime}"
-        return true
-      }
     }, 100L)
 
     taskFaker.advanceUntil(0L)
@@ -492,21 +458,16 @@ class TaskRunnerTest {
     redQueue.shutdown()
 
     taskFaker.advanceUntil(99L)
-    assertThat(log).containsExactly("cancel@99")
+    assertThat(log).isEmpty()
 
     taskFaker.assertNoMoreTasks()
   }
 
   @Test fun shutdownFailsToCancelsScheduledTasks() {
-    redQueue.schedule(object : Task("task") {
+    redQueue.schedule(object : Task("task", cancelable = false) {
       override fun runOnce(): Long {
         log += "run@${taskFaker.nanoTime}"
         return 50L
-      }
-
-      override fun tryCancel(): Boolean {
-        log += "cancel@${taskFaker.nanoTime}"
-        return false
       }
     }, 100L)
 
@@ -516,10 +477,10 @@ class TaskRunnerTest {
     redQueue.shutdown()
 
     taskFaker.advanceUntil(99L)
-    assertThat(log).containsExactly("cancel@99")
+    assertThat(log).isEmpty()
 
     taskFaker.advanceUntil(100L)
-    assertThat(log).containsExactly("cancel@99", "run@100")
+    assertThat(log).containsExactly("run@100")
 
     taskFaker.assertNoMoreTasks()
   }

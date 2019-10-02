@@ -146,8 +146,6 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
           writePing(false, 0, 0)
           return pingIntervalNanos
         }
-
-        override fun tryCancel() = true
       }, pingIntervalNanos)
     }
   }
@@ -329,8 +327,6 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
         }
         return -1L
       }
-
-      override fun tryCancel() = true
     })
   }
 
@@ -355,8 +351,6 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
         }
         return -1L
       }
-
-      override fun tryCancel() = true
     })
   }
 
@@ -638,7 +632,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
 
           // Use a different task queue for each stream because they should be handled in parallel.
           val taskName = "OkHttp $connectionName stream $streamId"
-          taskRunner.newQueue(taskName).schedule(object : Task(taskName) {
+          taskRunner.newQueue(taskName).schedule(object : Task(taskName, cancelable = false) {
             override fun runOnce(): Long {
               try {
                 listener.onStream(newStream)
@@ -674,8 +668,6 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
           applyAndAckSettings(clearPrevious, settings)
           return -1L
         }
-
-        override fun tryCancel() = true
       })
     }
 
@@ -717,7 +709,8 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
 
           peerSettings = newPeerSettings
 
-          settingsListenerQueue.trySchedule(object : Task("$connectionName Listener") {
+          settingsListenerQueue.trySchedule(object : Task("$connectionName Listener",
+              cancelable = false) {
             override fun runOnce(): Long {
               listener.onSettings(this@Http2Connection, newPeerSettings)
               return -1L
@@ -760,8 +753,6 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
             writePing(true, payload1, payload2)
             return -1L
           }
-
-          override fun tryCancel() = true
         })
       }
     }
@@ -860,8 +851,6 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
         }
         return -1L
       }
-
-      override fun tryCancel() = true
     })
   }
 
@@ -883,8 +872,6 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
         }
         return -1L
       }
-
-      override fun tryCancel() = true
     })
   }
 
@@ -915,13 +902,12 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
         }
         return -1L
       }
-
-      override fun tryCancel() = true
     })
   }
 
   internal fun pushResetLater(streamId: Int, errorCode: ErrorCode) {
-    pushQueue.trySchedule(object : Task("OkHttp $connectionName Push Reset[$streamId]") {
+    pushQueue.trySchedule(object : Task("OkHttp $connectionName Push Reset[$streamId]",
+        cancelable = false) {
       override fun runOnce(): Long {
         pushObserver.onReset(streamId, errorCode)
         synchronized(this@Http2Connection) {

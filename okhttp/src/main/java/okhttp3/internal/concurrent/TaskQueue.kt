@@ -15,7 +15,6 @@
  */
 package okhttp3.internal.concurrent
 
-import okhttp3.internal.addIfAbsent
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit
@@ -40,11 +39,11 @@ class TaskQueue internal constructor(
   /** This queue's currently-executing task, or null if none is currently executing. */
   private var activeTask: Task? = null
 
+  /** True if the [activeTask] should not recur when it completes. */
+  private var cancelActiveTask = false
+
   /** Scheduled tasks ordered by [Task.nextExecuteNanoTime]. */
   private val futureTasks = mutableListOf<Task>()
-
-  /** Tasks to cancel. Always either [activeTask] or a member of [futureTasks]. */
-  private val cancelTasks = mutableListOf<Task>()
 
   internal fun isActive(): Boolean {
     check(Thread.holdsLock(taskRunner))
@@ -163,17 +162,18 @@ class TaskQueue internal constructor(
 
   /** Returns true if the coordinator should run. */
   private fun cancelAllAndDecide(): Boolean {
-    val runningTask = activeTask
-    if (runningTask != null) {
-      cancelTasks.addIfAbsent(runningTask)
+    if (activeTask != null && activeTask!!.cancelable) {
+      cancelActiveTask = true
     }
 
-    for (task in futureTasks) {
-      cancelTasks.addIfAbsent(task)
+    var tasksCanceled = false
+    for (i in futureTasks.size - 1 downTo 0) {
+      if (futureTasks[i].cancelable) {
+        tasksCanceled = true
+        futureTasks.removeAt(i)
+      }
     }
-
-    // Run the coordinator if tasks were canceled.
-    return cancelTasks.isNotEmpty()
+    return tasksCanceled
   }
 
   /**
@@ -186,15 +186,6 @@ class TaskQueue internal constructor(
     check(Thread.holdsLock(taskRunner))
 
     if (activeTask != null) return Long.MAX_VALUE // This queue is busy.
-
-    // Find a task to cancel.
-    val cancelTask = cancelTasks.firstOrNull()
-    if (cancelTask != null) {
-      activeTask = cancelTask
-      cancelTasks.removeAt(0)
-      taskRunner.backend.executeTask(cancelTask.cancelRunnable!!)
-      return Long.MAX_VALUE // This queue is busy until the cancel completes.
-    }
 
     // Check if a task is immediately ready.
     val runTask = futureTasks.firstOrNull() ?: return -1L
@@ -214,27 +205,12 @@ class TaskQueue internal constructor(
     synchronized(taskRunner) {
       check(activeTask === task)
 
-      if (delayNanos != -1L && !shutdown) {
+      if (delayNanos != -1L && !cancelActiveTask && !shutdown) {
         scheduleAndDecide(task, delayNanos)
-      } else if (!futureTasks.contains(task)) {
-        cancelTasks.remove(task) // We don't need to cancel it because it isn't scheduled.
       }
 
       activeTask = null
-      taskRunner.kickCoordinator(this)
-    }
-  }
-
-  internal fun tryCancelCompleted(task: Task, skipExecution: Boolean) {
-    synchronized(taskRunner) {
-      check(activeTask === task)
-
-      if (skipExecution) {
-        futureTasks.remove(task)
-        cancelTasks.remove(task)
-      }
-
-      activeTask = null
+      cancelActiveTask = false
       taskRunner.kickCoordinator(this)
     }
   }
