@@ -847,7 +847,7 @@ class KotlinSourceModernTest {
     builder = builder.pingInterval(0L, TimeUnit.SECONDS)
     builder = builder.pingInterval(Duration.ofSeconds(0L))
     builder = builder.proxy(Proxy.NO_PROXY)
-    builder = builder.proxySelector(NullProxySelector())
+    builder = builder.proxySelector(NullProxySelector)
     builder = builder.cookieJar(CookieJar.NO_COOKIES)
     builder = builder.cache(Cache(File("/cache/"), Integer.MAX_VALUE.toLong()))
     builder = builder.dns(Dns.SYSTEM)
@@ -1150,7 +1150,7 @@ class KotlinSourceModernTest {
         Proxy.NO_PROXY,
         listOf(Protocol.HTTP_1_1),
         listOf(ConnectionSpec.MODERN_TLS),
-        NullProxySelector()
+        NullProxySelector
     )
   }
 
