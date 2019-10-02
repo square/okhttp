@@ -786,6 +786,63 @@ public final class CallTest {
     assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(2);
   }
 
+  /**
+   * Each OkHttpClient used to get its own instance of NullProxySelector, and because these weren't
+   * equal their connections weren't pooled. That's a nasty performance bug!
+   *
+   * https://github.com/square/okhttp/issues/5519
+   */
+  @Test public void connectionPoolingWithFreshClientSamePool() throws Exception {
+    server.enqueue(new MockResponse().setBody("abc"));
+    server.enqueue(new MockResponse().setBody("def"));
+    server.enqueue(new MockResponse().setBody("ghi"));
+
+    client = new OkHttpClient.Builder()
+        .connectionPool(client.connectionPool())
+        .proxy(server.toProxyAddress())
+        .build();
+    executeSynchronously("/a").assertBody("abc");
+
+    client = new OkHttpClient.Builder()
+        .connectionPool(client.connectionPool())
+        .proxy(server.toProxyAddress())
+        .build();
+    executeSynchronously("/b").assertBody("def");
+
+    client = new OkHttpClient.Builder()
+        .connectionPool(client.connectionPool())
+        .proxy(server.toProxyAddress())
+        .build();
+    executeSynchronously("/c").assertBody("ghi");
+
+    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
+    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(1);
+    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(2);
+  }
+
+  @Test public void connectionPoolingWithClientBuiltOffProxy() throws Exception {
+    client = new OkHttpClient.Builder()
+        .proxy(server.toProxyAddress())
+        .build();
+
+    server.enqueue(new MockResponse().setBody("abc"));
+    server.enqueue(new MockResponse().setBody("def"));
+    server.enqueue(new MockResponse().setBody("ghi"));
+
+    client = client.newBuilder().build();
+    executeSynchronously("/a").assertBody("abc");
+
+    client = client.newBuilder().build();
+    executeSynchronously("/b").assertBody("def");
+
+    client = client.newBuilder().build();
+    executeSynchronously("/c").assertBody("ghi");
+
+    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
+    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(1);
+    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(2);
+  }
+
   @Test public void connectionPooling_Async() throws Exception {
     server.enqueue(new MockResponse().setBody("abc"));
     server.enqueue(new MockResponse().setBody("def"));
