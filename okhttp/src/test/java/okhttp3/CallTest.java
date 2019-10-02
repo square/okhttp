@@ -26,6 +26,7 @@ import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.ProtocolException;
 import java.net.Proxy;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.net.UnknownServiceException;
@@ -71,6 +72,7 @@ import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.QueueDispatcher;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
+import okhttp3.testing.Flaky;
 import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okhttp3.tls.HeldCertificate;
@@ -939,12 +941,15 @@ public final class CallTest {
   }
 
   /** https://github.com/square/okhttp/issues/4761 */
-  @Test public void interceptorCallsProceedWithoutClosingPriorResponse() throws Exception {
+  @Test
+  public void interceptorCallsProceedAndClosesPriorResponse() throws Exception {
     server.enqueue(new MockResponse()
+        .setBodyDelay(250, TimeUnit.MILLISECONDS)
         .setBody("abc"));
-    server.enqueue(new MockResponse());
+    server.enqueue(new MockResponse()
+        .setBody("def"));
 
-    client = client.newBuilder()
+    client = clientTestRule.newClientBuilder()
         .addInterceptor(new Interceptor() {
           @Override public Response intercept(Chain chain) throws IOException {
             Response response = chain.proceed(chain.request());
@@ -952,7 +957,10 @@ public final class CallTest {
               chain.proceed(chain.request());
               fail();
             } catch (IllegalStateException expected) {
+              expected.printStackTrace();
               assertThat(expected).hasMessageContaining("please call response.close()");
+            } catch (RuntimeException re) {
+              re.printStackTrace();
             }
             return response;
           }
@@ -963,8 +971,7 @@ public final class CallTest {
         .url(server.url("/"))
         .build();
     executeSynchronously(request)
-        .assertCode(200)
-        .assertBody("abc");
+        .assertFailure(SocketException.class);
   }
 
   /**

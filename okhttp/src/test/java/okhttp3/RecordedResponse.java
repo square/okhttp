@@ -63,6 +63,7 @@ public final class RecordedResponse {
   }
 
   public RecordedResponse assertSuccessful() {
+    assertThat(failure).isNull();
     assertThat(response.isSuccessful()).isTrue();
     return this;
   }
