@@ -15,11 +15,11 @@
  */
 package okhttp3.internal.platform.android
 
-import android.net.SSLCertificateSocketFactory
 import android.os.Build
 import okhttp3.Protocol
 import okhttp3.internal.platform.AndroidPlatform.Companion.isAndroid
 import okhttp3.internal.platform.Platform
+import android.net.ssl.SSLSockets
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
@@ -28,9 +28,6 @@ import javax.net.ssl.X509TrustManager
  * Simple non-reflection SocketAdapter for Android Q.
  */
 class Android10SocketAdapter : SocketAdapter {
-  private val socketFactory =
-      SSLCertificateSocketFactory.getDefault(10000) as SSLCertificateSocketFactory
-
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? = null
 
   override fun matchesSocketFactory(sslSocketFactory: SSLSocketFactory): Boolean = false
@@ -50,7 +47,7 @@ class Android10SocketAdapter : SocketAdapter {
     sslSocket: SSLSocket,
     protocols: List<Protocol>
   ) {
-    socketFactory.setUseSessionTickets(sslSocket, true)
+    SSLSockets.setUseSessionTickets(sslSocket, true)
 
     val sslParameters = sslSocket.sslParameters
 
