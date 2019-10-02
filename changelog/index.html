@@ -579,6 +579,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#version-421" title="Version 4.2.1" class="md-nav__link">
+    Version 4.2.1
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-420" title="Version 4.2.0" class="md-nav__link">
     Version 4.2.0
   </a>
@@ -709,6 +716,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#version-421" title="Version 4.2.1" class="md-nav__link">
+    Version 4.2.1
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-420" title="Version 4.2.0" class="md-nav__link">
     Version 4.2.0
   </a>
@@ -791,6 +805,19 @@
                 
                 
                 <h1 id="change-log">Change Log<a class="headerlink" href="#change-log" title="Permanent link">&para;</a></h1>
+<h2 id="version-421">Version 4.2.1<a class="headerlink" href="#version-421" title="Permanent link">&para;</a></h2>
+<p><em>2019-10-02</em></p>
+<ul>
+<li>
+<p>Fix: In 4.1.0 we introduced a performance regression that prevented connections from being
+    pooled in certain situations. We have good test coverage for connection pooling but we missed
+    this because it only occurs if you have proxy configured and you share a connection pool among
+    multiple <code>OkHttpClient</code> instances.</p>
+<p>This particularly-subtle bug was caused by us assigning each <code>OkHttpClient</code> instance its own
+<code>NullProxySelector</code> when an explicit proxy is configured. But we don&rsquo;t share connections when
+the proxy selectors are different. Ugh!</p>
+</li>
+</ul>
 <h2 id="version-420">Version 4.2.0<a class="headerlink" href="#version-420" title="Permanent link">&para;</a></h2>
 <p><em>2019-09-10</em></p>
 <ul>
