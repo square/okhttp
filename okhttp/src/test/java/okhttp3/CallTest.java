@@ -958,7 +958,6 @@ public final class CallTest {
 
     server.enqueue(new MockResponse()
         .setBody("success!"));
-
     client = client.newBuilder()
         .proxySelector(proxySelector)
         .readTimeout(100, TimeUnit.MILLISECONDS)
@@ -999,7 +998,7 @@ public final class CallTest {
 
   /** https://github.com/square/okhttp/issues/4761 */
   @Test
-  public void interceptorCallsProceedAndClosesPriorResponse() throws Exception {
+  public void interceptorCallsProceedWithoutClosingPriorResponse() throws Exception {
     server.enqueue(new MockResponse()
         .setBodyDelay(250, TimeUnit.MILLISECONDS)
         .setBody("abc"));
@@ -1014,10 +1013,7 @@ public final class CallTest {
               chain.proceed(chain.request());
               fail();
             } catch (IllegalStateException expected) {
-              expected.printStackTrace();
               assertThat(expected).hasMessageContaining("please call response.close()");
-            } catch (RuntimeException re) {
-              re.printStackTrace();
             }
             return response;
           }

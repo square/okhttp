@@ -21,7 +21,8 @@ import okhttp3.mockwebserver.MockWebServer
 import okhttp3.testing.PlatformRule
 import okio.BufferedSink
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Assert
+import org.junit.Assert.assertEquals
+import org.junit.Assert.fail
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestRule
@@ -83,15 +84,12 @@ class CallKotlinTest {
 
     server.enqueue(MockResponse().apply {
       setResponseCode(201)
-      status = "HTTP/1.1 201 CREATED"
     })
     server.enqueue(MockResponse().apply {
       setResponseCode(204)
-      status = "HTTP/1.1 204 NO CONTENT"
     })
     server.enqueue(MockResponse().apply {
       setResponseCode(204)
-      status = "HTTP/1.1 204 NO CONTENT"
     })
 
     val endpointUrl = server.url("/endpoint")
@@ -118,7 +116,7 @@ class CallKotlinTest {
         .build()
     try {
       client.newCall(request).execute()
-      Assert.fail("test should always throw exception")
+      fail("test should always throw exception")
     } catch (_: IOException) {
       // NOTE: expected
     }
@@ -131,12 +129,12 @@ class CallKotlinTest {
     client.newCall(request).execute()
 
     var recordedRequest = server.takeRequest()
-    Assert.assertEquals("PUT", recordedRequest.method)
+    assertEquals("PUT", recordedRequest.method)
 
     recordedRequest = server.takeRequest()
-    Assert.assertEquals("HEAD", recordedRequest.method)
+    assertEquals("HEAD", recordedRequest.method)
 
     recordedRequest = server.takeRequest()
-    Assert.assertEquals("HEAD", recordedRequest.method)
+    assertEquals("HEAD", recordedRequest.method)
   }
 }
