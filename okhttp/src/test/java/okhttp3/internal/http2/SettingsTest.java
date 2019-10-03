@@ -24,7 +24,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 public final class SettingsTest {
   @Test public void unsetField() {
     Settings settings = new Settings();
-    assertThat(settings.getMaxConcurrentStreams(-3)).isEqualTo(-3);
+    assertThat(settings.isSet(MAX_CONCURRENT_STREAMS)).isFalse();
+    assertThat(settings.getMaxConcurrentStreams()).isEqualTo(Integer.MAX_VALUE);
   }
 
   @Test public void setFields() {
@@ -38,9 +39,9 @@ public final class SettingsTest {
     assertThat(settings.getEnablePush(false)).isTrue();
     settings.clear();
 
-    assertThat(settings.getMaxConcurrentStreams(-3)).isEqualTo(-3);
+    assertThat(settings.getMaxConcurrentStreams()).isEqualTo(Integer.MAX_VALUE);
     settings.set(MAX_CONCURRENT_STREAMS, 75);
-    assertThat(settings.getMaxConcurrentStreams(-3)).isEqualTo(75);
+    assertThat(settings.getMaxConcurrentStreams()).isEqualTo(75);
 
     settings.clear();
     assertThat(settings.getMaxFrameSize(16384)).isEqualTo(16384);
@@ -72,6 +73,6 @@ public final class SettingsTest {
     assertThat(a.getHeaderTableSize()).isEqualTo(10000);
     assertThat(a.getMaxHeaderListSize(-1)).isEqualTo(40000);
     assertThat(a.getInitialWindowSize()).isEqualTo(50000);
-    assertThat(a.getMaxConcurrentStreams(-1)).isEqualTo(60000);
+    assertThat(a.getMaxConcurrentStreams()).isEqualTo(60000);
   }
 }

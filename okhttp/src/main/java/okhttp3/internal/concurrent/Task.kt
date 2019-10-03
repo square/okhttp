@@ -18,13 +18,6 @@ package okhttp3.internal.concurrent
 /**
  * A unit of work that can be executed one or more times.
  *
- * Cancellation
- * ------------
- *
- * Tasks control their cancellation. If the hosting queue is canceled, the [Task.tryCancel] function
- * returns true if the task should skip the next-scheduled execution. Note that canceling a task is
- * not permanent; it is okay to schedule a task after it has been canceled.
- *
  * Recurrence
  * ----------
  *
@@ -35,6 +28,18 @@ package okhttp3.internal.concurrent
  * earliest one wins. This applies to both executions scheduled with [TaskRunner.Queue.schedule] and
  * those implied by the returned execution delay.
  *
+ * Cancellation
+ * ------------
+ *
+ * Tasks may be canceled while they are waiting to be executed, or while they are executing.
+ *
+ * Canceling a task that is waiting to execute prevents that upcoming execution. Canceling a task
+ * that is currently executing does not impact the ongoing run, but it does prevent a recurrence
+ * from being scheduled.
+ *
+ * Tasks may opt-out of cancellation with `cancelable = false`. Such tasks will recur until they
+ * decide not to by returning -1L.
+ *
  * Task Queues
  * -----------
  *
@@ -42,7 +47,8 @@ package okhttp3.internal.concurrent
  * within it never execute concurrently. It is an error to use a task in multiple queues.
  */
 abstract class Task(
-  val name: String
+  val name: String,
+  val cancelable: Boolean = true
 ) {
   // Guarded by the TaskRunner.
   internal var queue: TaskQueue? = null
@@ -51,13 +57,9 @@ abstract class Task(
   internal var nextExecuteNanoTime = -1L
 
   internal var runRunnable: Runnable? = null
-  internal var cancelRunnable: Runnable? = null
 
   /** Returns the delay in nanoseconds until the next execution, or -1L to not reschedule. */
   abstract fun runOnce(): Long
-
-  /** Return true to skip the scheduled execution. */
-  open fun tryCancel(): Boolean = false
 
   internal fun initQueue(queue: TaskQueue) {
     if (this.queue === queue) return
@@ -75,20 +77,6 @@ abstract class Task(
         delayNanos = runOnce()
       } finally {
         queue.runCompleted(this, delayNanos)
-        currentThread.name = oldName
-      }
-    }
-
-    this.cancelRunnable = Runnable {
-      val currentThread = Thread.currentThread()
-      val oldName = currentThread.name
-      currentThread.name = name
-
-      var skipExecution = false
-      try {
-        skipExecution = tryCancel()
-      } finally {
-        queue.tryCancelCompleted(this, skipExecution)
         currentThread.name = oldName
       }
     }

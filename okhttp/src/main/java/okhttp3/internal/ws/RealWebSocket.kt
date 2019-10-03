@@ -26,8 +26,9 @@ import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import okhttp3.internal.closeQuietly
+import okhttp3.internal.concurrent.Task
+import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.connection.Exchange
-import okhttp3.internal.threadFactory
 import okhttp3.internal.ws.WebSocketProtocol.CLOSE_CLIENT_GOING_AWAY
 import okhttp3.internal.ws.WebSocketProtocol.CLOSE_MESSAGE_MAX
 import okhttp3.internal.ws.WebSocketProtocol.OPCODE_BINARY
@@ -45,13 +46,11 @@ import java.net.ProtocolException
 import java.net.SocketTimeoutException
 import java.util.ArrayDeque
 import java.util.Random
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.ScheduledFuture
-import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeUnit.MILLISECONDS
 
 class RealWebSocket(
+  taskRunner: TaskRunner,
   /** The application's original request unadulterated by web socket headers. */
   private val originalRequest: Request,
   internal val listener: WebSocketListener,
@@ -63,8 +62,8 @@ class RealWebSocket(
   /** Non-null for client web sockets. These can be canceled. */
   private var call: Call? = null
 
-  /** This runnable processes the outgoing queues. Call [runWriter] to after enqueueing. */
-  private val writerRunnable: Runnable
+  /** This task processes the outgoing queues. Call [runWriter] to after enqueueing. */
+  private var writerTask: Task? = null
 
   /** Null until this web socket is connected. Only accessed by the reader thread. */
   private var reader: WebSocketReader? = null
@@ -74,8 +73,11 @@ class RealWebSocket(
   /** Null until this web socket is connected. Note that messages may be enqueued before that. */
   private var writer: WebSocketWriter? = null
 
-  /** Null until this web socket is connected. Used for writes, pings, and close timeouts. */
-  private var executor: ScheduledExecutorService? = null
+  /** Used for writes, pings, and close timeouts. */
+  private var taskQueue = taskRunner.newQueue()
+
+  /** Names this web socket for observability and debugging. */
+  private var name: String? = null
 
   /**
    * The streams held by this web socket. This is non-null until all incoming messages have been
@@ -95,12 +97,6 @@ class RealWebSocket(
 
   /** True if we've enqueued a close frame. No further message frames will be enqueued. */
   private var enqueuedClose = false
-
-  /**
-   * When executed this will cancel this web socket. This future itself should be canceled if that
-   * is unnecessary because the web socket is already closed or canceled.
-   */
-  private var cancelFuture: ScheduledFuture<*>? = null
 
   /** The close code from the peer, or -1 if this web socket has not yet read a close frame. */
   private var receivedCloseCode = -1
@@ -129,14 +125,6 @@ class RealWebSocket(
     }
 
     this.key = ByteArray(16).apply { random.nextBytes(this) }.toByteString().base64()
-    this.writerRunnable = Runnable {
-      try {
-        while (writeOneFrame()) {
-        }
-      } catch (e: IOException) {
-        failWebSocket(e, null)
-      }
-    }
   }
 
   override fun request(): Request = originalRequest
@@ -224,12 +212,13 @@ class RealWebSocket(
   @Throws(IOException::class)
   fun initReaderAndWriter(name: String, streams: Streams) {
     synchronized(this) {
+      this.name = name
       this.streams = streams
       this.writer = WebSocketWriter(streams.client, streams.sink, random)
-      this.executor = ScheduledThreadPoolExecutor(1, threadFactory(name, false))
+      this.writerTask = WriterTask()
       if (pingIntervalMillis != 0L) {
-        executor!!.scheduleAtFixedRate(
-            PingRunnable(), pingIntervalMillis, pingIntervalMillis, MILLISECONDS)
+        val pingIntervalNanos = MILLISECONDS.toNanos(pingIntervalMillis)
+        taskQueue.schedule(PingTask(pingIntervalNanos), pingIntervalNanos)
       }
       if (messageAndCloseQueue.isNotEmpty()) {
         runWriter() // Send messages that were enqueued before we were connected.
@@ -265,18 +254,15 @@ class RealWebSocket(
 
   /** For testing: wait until the web socket's executor has terminated. */
   @Throws(InterruptedException::class)
-  fun awaitTermination(timeout: Int, timeUnit: TimeUnit) {
-    executor!!.awaitTermination(timeout.toLong(), timeUnit)
+  fun awaitTermination(timeout: Long, timeUnit: TimeUnit) {
+    taskQueue.awaitIdle(timeUnit.toNanos(timeout))
   }
 
   /** For testing: force this web socket to release its threads. */
   @Throws(InterruptedException::class)
   fun tearDown() {
-    if (cancelFuture != null) {
-      cancelFuture!!.cancel(false)
-    }
-    executor!!.shutdown()
-    executor!!.awaitTermination(10, TimeUnit.SECONDS)
+    taskQueue.shutdown()
+    taskQueue.awaitIdle(TimeUnit.SECONDS.toNanos(10L))
   }
 
   @Synchronized fun sentPingCount(): Int = sentPingCount
@@ -321,8 +307,7 @@ class RealWebSocket(
       if (enqueuedClose && messageAndCloseQueue.isEmpty()) {
         toClose = this.streams
         this.streams = null
-        if (cancelFuture != null) cancelFuture!!.cancel(false)
-        this.executor!!.shutdown()
+        this.taskQueue.shutdown()
       }
     }
 
@@ -405,7 +390,7 @@ class RealWebSocket(
 
   private fun runWriter() {
     assert(Thread.holdsLock(this))
-    executor?.execute(writerRunnable)
+    taskQueue.trySchedule(writerTask!!)
   }
 
   /**
@@ -445,11 +430,12 @@ class RealWebSocket(
           if (receivedCloseCode != -1) {
             streamsToClose = this.streams
             this.streams = null
-            this.executor!!.shutdown()
+            this.taskQueue.shutdown()
           } else {
             // When we request a graceful close also schedule a cancel of the web socket.
-            cancelFuture = executor!!.schedule(CancelRunnable(),
-                (messageOrClose as Close).cancelAfterCloseMillis, MILLISECONDS)
+            val cancelAfterCloseNanos =
+                MILLISECONDS.toNanos((messageOrClose as Close).cancelAfterCloseMillis)
+            taskQueue.schedule(CancelTask(), cancelAfterCloseNanos)
           }
         } else if (messageOrClose == null) {
           return false // The queue is exhausted.
@@ -487,12 +473,6 @@ class RealWebSocket(
     }
   }
 
-  private inner class PingRunnable : Runnable {
-    override fun run() {
-      writePingFrame()
-    }
-  }
-
   internal fun writePingFrame() {
     val writer: WebSocketWriter?
     val failedPing: Int
@@ -524,8 +504,7 @@ class RealWebSocket(
       failed = true
       streamsToClose = this.streams
       this.streams = null
-      cancelFuture?.cancel(false)
-      executor?.shutdown()
+      taskQueue.shutdown()
     }
 
     try {
@@ -552,9 +531,29 @@ class RealWebSocket(
     val sink: BufferedSink
   ) : Closeable
 
-  internal inner class CancelRunnable : Runnable {
-    override fun run() {
+
+  private inner class PingTask(val delayNanos: Long) : Task("$name Ping") {
+    override fun runOnce(): Long {
+      writePingFrame()
+      return delayNanos
+    }
+  }
+
+  private inner class CancelTask : Task("$name Cancel") {
+    override fun runOnce(): Long {
       cancel()
+      return -1L
+    }
+  }
+
+  private inner class WriterTask : Task("$name Writer") {
+    override fun runOnce(): Long {
+      try {
+        if (writeOneFrame()) return 0L
+      } catch (e: IOException) {
+        failWebSocket(e, null)
+      }
+      return -1L
     }
   }
 

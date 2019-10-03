@@ -21,14 +21,12 @@ import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.Task
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.connectionName
-import okhttp3.internal.execute
 import okhttp3.internal.http2.ErrorCode.REFUSED_STREAM
 import okhttp3.internal.http2.Settings.Companion.DEFAULT_INITIAL_WINDOW_SIZE
 import okhttp3.internal.ignoreIoExceptions
 import okhttp3.internal.notifyAll
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.INFO
-import okhttp3.internal.threadFactory
 import okhttp3.internal.toHeaders
 import okhttp3.internal.wait
 import okio.Buffer
@@ -42,8 +40,6 @@ import java.io.Closeable
 import java.io.IOException
 import java.io.InterruptedIOException
 import java.net.Socket
-import java.util.concurrent.SynchronousQueue
-import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
 /**
@@ -71,10 +67,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
   /** True if this peer initiated the connection. */
   internal val client: Boolean = builder.client
 
-  /**
-   * User code to run in response to incoming streams or settings. Calls to this are always invoked
-   * on [listenerExecutor].
-   */
+  /** User code to run in response to incoming streams or settings. */
   internal val listener: Listener = builder.listener
   internal val streams = mutableMapOf<Int, Http2Stream>()
   internal val connectionName: String = builder.connectionName
@@ -86,11 +79,17 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
   @get:Synchronized var isShutdown = false
     internal set
 
+  /** For scheduling everything asynchronous. */
+  private val taskRunner = builder.taskRunner
+
   /** Asynchronously writes frames to the outgoing socket. */
-  private val writerQueue = builder.taskRunner.newQueue("$connectionName Writer")
+  private val writerQueue = taskRunner.newQueue()
 
   /** Ensures push promise callbacks events are sent in order per stream. */
-  private val pushQueue = builder.taskRunner.newQueue("$connectionName Push")
+  private val pushQueue = taskRunner.newQueue()
+
+  /** Notifies the listener of settings changes. */
+  private val settingsListenerQueue = taskRunner.newQueue()
 
   /** User code to run in response to push promise events. */
   private val pushObserver: PushObserver = builder.pushObserver
@@ -108,12 +107,11 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     }
   }
 
-  /** Settings we receive from the peer. */
-  // TODO: MWS will need to guard on this setting before attempting to push.
-  val peerSettings = Settings().apply {
-    set(Settings.INITIAL_WINDOW_SIZE, DEFAULT_INITIAL_WINDOW_SIZE)
-    set(Settings.MAX_FRAME_SIZE, Http2.INITIAL_MAX_FRAME_SIZE)
-  }
+  /**
+   * Settings we receive from the peer. Changes to the field are guarded by this. The instance is
+   * never mutated once it has been assigned.
+   */
+  var peerSettings = DEFAULT_SETTINGS
 
   /** The total number of bytes consumed by the application. */
   var readBytesTotal = 0L
@@ -148,8 +146,6 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
           writePing(false, 0, 0)
           return pingIntervalNanos
         }
-
-        override fun tryCancel() = true
       }, pingIntervalNanos)
     }
   }
@@ -169,9 +165,6 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
 
     return stream
   }
-
-  @Synchronized fun maxConcurrentStreams(): Int =
-      peerSettings.getMaxConcurrentStreams(Integer.MAX_VALUE)
 
   @Synchronized internal fun updateConnectionFlowControl(read: Long) {
     readBytesTotal += read
@@ -227,7 +220,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
 
     synchronized(writer) {
       synchronized(this) {
-        if (nextStreamId > Integer.MAX_VALUE / 2) {
+        if (nextStreamId > Int.MAX_VALUE / 2) {
           shutdown(REFUSED_STREAM)
         }
         if (isShutdown) {
@@ -334,8 +327,6 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
         }
         return -1L
       }
-
-      override fun tryCancel() = true
     })
   }
 
@@ -360,8 +351,6 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
         }
         return -1L
       }
-
-      override fun tryCancel() = true
     })
   }
 
@@ -433,7 +422,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
 
   /**
    * Closes this connection. This cancels all open streams and unanswered pings. It closes the
-   * underlying input and output streams and shuts down internal executor services.
+   * underlying input and output streams and shuts down internal task queues.
    */
   override fun close() {
     close(ErrorCode.NO_ERROR, ErrorCode.CANCEL, null)
@@ -476,6 +465,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     // Release the threads.
     writerQueue.shutdown()
     pushQueue.shutdown()
+    settingsListenerQueue.shutdown()
   }
 
   private fun failConnection(e: IOException?) {
@@ -639,16 +629,22 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
           val newStream = Http2Stream(streamId, this@Http2Connection, false, inFinished, headers)
           lastGoodStreamId = streamId
           streams[streamId] = newStream
-          listenerExecutor.execute("OkHttp $connectionName stream $streamId") {
-            try {
-              listener.onStream(newStream)
-            } catch (e: IOException) {
-              Platform.get().log("Http2Connection.Listener failure for $connectionName", INFO, e)
-              ignoreIoExceptions {
-                newStream.close(ErrorCode.PROTOCOL_ERROR, e)
+
+          // Use a different task queue for each stream because they should be handled in parallel.
+          val taskName = "OkHttp $connectionName stream $streamId"
+          taskRunner.newQueue().schedule(object : Task(taskName, cancelable = false) {
+            override fun runOnce(): Long {
+              try {
+                listener.onStream(newStream)
+              } catch (e: IOException) {
+                Platform.get().log("Http2Connection.Listener failure for $connectionName", INFO, e)
+                ignoreIoExceptions {
+                  newStream.close(ErrorCode.PROTOCOL_ERROR, e)
+                }
               }
+              return -1L
             }
-          }
+          })
           return
         }
       }
@@ -672,8 +668,6 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
           applyAndAckSettings(clearPrevious, settings)
           return -1L
         }
-
-        override fun tryCancel() = true
       })
     }
 
@@ -687,25 +681,44 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
      *
      * Since we can't ACK settings on the current reader thread (the reader thread can't write) we
      * execute all peer settings logic on the writer thread. This relies on the fact that the
-     * writer executor won't reorder tasks; otherwise settings could be applied in the opposite
+     * writer task queue won't reorder tasks; otherwise settings could be applied in the opposite
      * order than received.
      */
     fun applyAndAckSettings(clearPrevious: Boolean, settings: Settings) {
-      var delta = 0L
-      var streamsToNotify: Array<Http2Stream>? = null
+      var delta: Long
+      var streamsToNotify: Array<Http2Stream>?
+      var newPeerSettings: Settings
       synchronized(writer) {
         synchronized(this@Http2Connection) {
-          val priorWriteWindowSize = peerSettings.initialWindowSize
-          if (clearPrevious) peerSettings.clear()
-          peerSettings.merge(settings)
-          val peerInitialWindowSize = peerSettings.initialWindowSize
-          if (peerInitialWindowSize != -1 && peerInitialWindowSize != priorWriteWindowSize) {
-            delta = (peerInitialWindowSize - priorWriteWindowSize).toLong()
-            streamsToNotify = if (streams.isNotEmpty()) streams.values.toTypedArray() else null
+          val previousPeerSettings = peerSettings
+          if (clearPrevious) {
+            newPeerSettings = settings
+          } else {
+            newPeerSettings = Settings().apply {
+              merge(previousPeerSettings)
+              merge(settings)
+            }
           }
+
+          val peerInitialWindowSize = newPeerSettings.initialWindowSize.toLong()
+          delta = peerInitialWindowSize - previousPeerSettings.initialWindowSize.toLong()
+          streamsToNotify = when {
+            delta == 0L || streams.isEmpty() -> null // No adjustment is necessary.
+            else -> streams.values.toTypedArray()
+          }
+
+          peerSettings = newPeerSettings
+
+          settingsListenerQueue.trySchedule(object : Task("$connectionName Listener",
+              cancelable = false) {
+            override fun runOnce(): Long {
+              listener.onSettings(this@Http2Connection, newPeerSettings)
+              return -1L
+            }
+          })
         }
         try {
-          writer.applyAndAckSettings(peerSettings)
+          writer.applyAndAckSettings(newPeerSettings)
         } catch (e: IOException) {
           failConnection(e)
         }
@@ -716,9 +729,6 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
             stream.addBytesToWriteWindow(delta)
           }
         }
-      }
-      listenerExecutor.execute("OkHttp $connectionName settings") {
-        listener.onSettings(this@Http2Connection)
       }
     }
 
@@ -743,8 +753,6 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
             writePing(true, payload1, payload2)
             return -1L
           }
-
-          override fun tryCancel() = true
         })
       }
     }
@@ -843,8 +851,6 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
         }
         return -1L
       }
-
-      override fun tryCancel() = true
     })
   }
 
@@ -866,8 +872,6 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
         }
         return -1L
       }
-
-      override fun tryCancel() = true
     })
   }
 
@@ -898,13 +902,12 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
         }
         return -1L
       }
-
-      override fun tryCancel() = true
     })
   }
 
   internal fun pushResetLater(streamId: Int, errorCode: ErrorCode) {
-    pushQueue.trySchedule(object : Task("OkHttp $connectionName Push Reset[$streamId]") {
+    pushQueue.trySchedule(object : Task("OkHttp $connectionName Push Reset[$streamId]",
+        cancelable = false) {
       override fun runOnce(): Long {
         pushObserver.onReset(streamId, errorCode)
         synchronized(this@Http2Connection) {
@@ -921,19 +924,20 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
      * Handle a new stream from this connection's peer. Implementations should respond by either
      * [replying to the stream][Http2Stream.writeHeaders] or [closing it][Http2Stream.close]. This
      * response does not need to be synchronous.
+     *
+     * Multiple calls to this method may be made concurrently.
      */
     @Throws(IOException::class)
     abstract fun onStream(stream: Http2Stream)
 
     /**
-     * Notification that the connection's peer's settings may have changed. Implementations should
-     * take appropriate action to handle the updated settings.
+     * Notification that the connection's peer's settings may have changed to [settings].
+     * Implementations should take appropriate action to handle the updated settings.
      *
-     * It is the implementation's responsibility to handle concurrent calls to this method. A remote
-     * peer that sends multiple settings frames will trigger multiple calls to this method, and
-     * those calls are not necessarily serialized.
+     * Methods to this method may be made concurrently with [onStream]. But a calls to this method
+     * are serialized.
      */
-    open fun onSettings(connection: Http2Connection) {}
+    open fun onSettings(connection: Http2Connection, settings: Settings) {}
 
     companion object {
       @JvmField
@@ -949,12 +953,9 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
   companion object {
     const val OKHTTP_CLIENT_WINDOW_SIZE = 16 * 1024 * 1024
 
-    /**
-     * Shared executor to send notifications of incoming streams. This executor requires multiple
-     * threads because listeners are not required to return promptly.
-     */
-    private val listenerExecutor = ThreadPoolExecutor(0,
-        Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, SynchronousQueue(),
-        threadFactory("OkHttp Http2Connection", true))
+    val DEFAULT_SETTINGS = Settings().apply {
+      set(Settings.INITIAL_WINDOW_SIZE, DEFAULT_INITIAL_WINDOW_SIZE)
+      set(Settings.MAX_FRAME_SIZE, Http2.INITIAL_MAX_FRAME_SIZE)
+    }
   }
 }

@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit
 class TaskRunnerRealBackendTest {
   private val backend = TaskRunner.RealBackend()
   private val taskRunner = TaskRunner(backend)
-  private val queue = taskRunner.newQueue("queue")
+  private val queue = taskRunner.newQueue()
   private val log = LinkedBlockingDeque<String>()
 
   @Test fun test() {

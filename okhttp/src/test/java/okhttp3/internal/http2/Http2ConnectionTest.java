@@ -882,15 +882,15 @@ public final class Http2ConnectionTest {
         throw new AssertionError();
       }
 
-      @Override public void onSettings(Http2Connection connection) {
-        maxConcurrentStreams.set(connection.maxConcurrentStreams());
+      @Override public void onSettings(Http2Connection connection, Settings settings) {
+        maxConcurrentStreams.set(settings.getMaxConcurrentStreams());
         maxConcurrentStreamsUpdated.countDown();
       }
     };
     Http2Connection connection = connect(peer, IGNORE, listener);
 
     synchronized (connection) {
-      assertThat(connection.getPeerSettings().getMaxConcurrentStreams(-1)).isEqualTo(10);
+      assertThat(connection.getPeerSettings().getMaxConcurrentStreams()).isEqualTo(10);
     }
     maxConcurrentStreamsUpdated.await();
     assertThat(maxConcurrentStreams.get()).isEqualTo(10);
@@ -923,7 +923,7 @@ public final class Http2ConnectionTest {
       assertThat(connection.getPeerSettings().getHeaderTableSize()).isEqualTo(10000);
       assertThat(connection.getPeerSettings().getInitialWindowSize()).isEqualTo(40000);
       assertThat(connection.getPeerSettings().getMaxFrameSize(-1)).isEqualTo(50000);
-      assertThat(connection.getPeerSettings().getMaxConcurrentStreams(-1)).isEqualTo(60000);
+      assertThat(connection.getPeerSettings().getMaxConcurrentStreams()).isEqualTo(60000);
     }
   }
 
@@ -952,7 +952,7 @@ public final class Http2ConnectionTest {
       assertThat(connection.getPeerSettings().getInitialWindowSize()).isEqualTo(
           (long) DEFAULT_INITIAL_WINDOW_SIZE);
       assertThat(connection.getPeerSettings().getMaxFrameSize(-1)).isEqualTo(-1);
-      assertThat(connection.getPeerSettings().getMaxConcurrentStreams(-1)).isEqualTo(60000);
+      assertThat(connection.getPeerSettings().getMaxConcurrentStreams()).isEqualTo(60000);
     }
   }
 

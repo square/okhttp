@@ -1,6 +1,20 @@
 Change Log
 ==========
 
+## Version 4.2.1
+
+_2019-10-02_
+
+ *  Fix: In 4.1.0 we introduced a performance regression that prevented connections from being
+    pooled in certain situations. We have good test coverage for connection pooling but we missed
+    this because it only occurs if you have proxy configured and you share a connection pool among
+    multiple `OkHttpClient` instances.
+
+    This particularly-subtle bug was caused by us assigning each `OkHttpClient` instance its own
+    `NullProxySelector` when an explicit proxy is configured. But we don't share connections when
+    the proxy selectors are different. Ugh!
+
+
 ## Version 4.2.0
 
 _2019-09-10_
