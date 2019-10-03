@@ -459,7 +459,7 @@ class MockWebServer : ExternalResource(), Closeable {
 
     for (queue in taskRunner.activeQueues()) {
       if (!queue.awaitIdle(TimeUnit.MILLISECONDS.toNanos(500L))) {
-        throw IOException("Gave up waiting for ${queue.owner} to shut down")
+        throw IOException("Gave up waiting for queue to shut down")
       }
     }
   }
