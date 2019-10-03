@@ -76,7 +76,7 @@ class RealWebSocket(
   /** Used for writes, pings, and close timeouts. */
   private var taskQueue = taskRunner.newQueue()
 
-  /** Names this this web socket for observability and debugging. */
+  /** Names this web socket for observability and debugging. */
   private var name: String? = null
 
   /**
