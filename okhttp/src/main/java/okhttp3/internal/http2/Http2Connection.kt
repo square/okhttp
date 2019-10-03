@@ -83,13 +83,13 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
   private val taskRunner = builder.taskRunner
 
   /** Asynchronously writes frames to the outgoing socket. */
-  private val writerQueue = taskRunner.newQueue("$connectionName Writer")
+  private val writerQueue = taskRunner.newQueue()
 
   /** Ensures push promise callbacks events are sent in order per stream. */
-  private val pushQueue = taskRunner.newQueue("$connectionName Push")
+  private val pushQueue = taskRunner.newQueue()
 
   /** Notifies the listener of settings changes. */
-  private val settingsListenerQueue = taskRunner.newQueue("$connectionName Listener")
+  private val settingsListenerQueue = taskRunner.newQueue()
 
   /** User code to run in response to push promise events. */
   private val pushObserver: PushObserver = builder.pushObserver
@@ -632,7 +632,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
 
           // Use a different task queue for each stream because they should be handled in parallel.
           val taskName = "OkHttp $connectionName stream $streamId"
-          taskRunner.newQueue(taskName).schedule(object : Task(taskName, cancelable = false) {
+          taskRunner.newQueue().schedule(object : Task(taskName, cancelable = false) {
             override fun runOnce(): Long {
               try {
                 listener.onStream(newStream)

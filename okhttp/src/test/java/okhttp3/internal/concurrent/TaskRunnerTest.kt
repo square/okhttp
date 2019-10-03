@@ -24,9 +24,9 @@ class TaskRunnerTest {
   private val taskFaker = TaskFaker()
   private val taskRunner = taskFaker.taskRunner
   private val log = mutableListOf<String>()
-  private val redQueue = taskRunner.newQueue("red")
-  private val blueQueue = taskRunner.newQueue("blue")
-  private val greenQueue = taskRunner.newQueue("green")
+  private val redQueue = taskRunner.newQueue()
+  private val blueQueue = taskRunner.newQueue()
+  private val greenQueue = taskRunner.newQueue()
 
   @Test fun executeDelayed() {
     redQueue.schedule(object : Task("task") {

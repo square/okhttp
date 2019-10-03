@@ -26,13 +26,7 @@ import java.util.concurrent.TimeUnit
  * for its work; in practice a set of queues may share a set of threads to save resources.
  */
 class TaskQueue internal constructor(
-  private val taskRunner: TaskRunner,
-
-  /**
-   * An application-level object like a connection pool or HTTP call that this queue works on behalf
-   * of. This is intended to be useful for testing and debugging only.
-   */
-  val owner: Any
+  private val taskRunner: TaskRunner
 ) {
   private var shutdown = false
 

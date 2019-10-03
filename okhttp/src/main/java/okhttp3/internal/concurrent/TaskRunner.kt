@@ -44,7 +44,7 @@ class TaskRunner(
   private val activeQueues = mutableListOf<TaskQueue>()
   private val coordinator = Runnable { coordinate() }
 
-  fun newQueue(owner: Any) = TaskQueue(this, owner)
+  fun newQueue() = TaskQueue(this)
 
   /**
    * Returns a snapshot of queues that currently have tasks scheduled. The task runner does not

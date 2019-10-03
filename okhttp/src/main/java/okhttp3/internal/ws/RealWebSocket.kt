@@ -63,7 +63,7 @@ class RealWebSocket(
   private var call: Call? = null
 
   /** This task processes the outgoing queues. Call [runWriter] to after enqueueing. */
-  private val writerTask: Task
+  private var writerTask: Task? = null
 
   /** Null until this web socket is connected. Only accessed by the reader thread. */
   private var reader: WebSocketReader? = null
@@ -74,7 +74,10 @@ class RealWebSocket(
   private var writer: WebSocketWriter? = null
 
   /** Used for writes, pings, and close timeouts. */
-  private var taskQueue = taskRunner.newQueue("OkHttp WebSocket ${originalRequest.url.redact()}")
+  private var taskQueue = taskRunner.newQueue()
+
+  /** Names this web socket for observability and debugging. */
+  private var name: String? = null
 
   /**
    * The streams held by this web socket. This is non-null until all incoming messages have been
@@ -122,16 +125,6 @@ class RealWebSocket(
     }
 
     this.key = ByteArray(16).apply { random.nextBytes(this) }.toByteString().base64()
-    this.writerTask = object : Task("${taskQueue.owner} Writer") {
-      override fun runOnce(): Long {
-        try {
-          if (writeOneFrame()) return 0L
-        } catch (e: IOException) {
-          failWebSocket(e, null)
-        }
-        return -1L
-      }
-    }
   }
 
   override fun request(): Request = originalRequest
@@ -219,8 +212,10 @@ class RealWebSocket(
   @Throws(IOException::class)
   fun initReaderAndWriter(name: String, streams: Streams) {
     synchronized(this) {
+      this.name = name
       this.streams = streams
       this.writer = WebSocketWriter(streams.client, streams.sink, random)
+      this.writerTask = WriterTask()
       if (pingIntervalMillis != 0L) {
         val pingIntervalNanos = MILLISECONDS.toNanos(pingIntervalMillis)
         taskQueue.schedule(PingTask(pingIntervalNanos), pingIntervalNanos)
@@ -395,7 +390,7 @@ class RealWebSocket(
 
   private fun runWriter() {
     assert(Thread.holdsLock(this))
-    taskQueue.trySchedule(writerTask)
+    taskQueue.trySchedule(writerTask!!)
   }
 
   /**
@@ -440,7 +435,7 @@ class RealWebSocket(
             // When we request a graceful close also schedule a cancel of the web socket.
             val cancelAfterCloseNanos =
                 MILLISECONDS.toNanos((messageOrClose as Close).cancelAfterCloseMillis)
-            taskQueue.schedule(CancelRunnable(), cancelAfterCloseNanos)
+            taskQueue.schedule(CancelTask(), cancelAfterCloseNanos)
           }
         } else if (messageOrClose == null) {
           return false // The queue is exhausted.
@@ -475,13 +470,6 @@ class RealWebSocket(
       return true
     } finally {
       streamsToClose?.closeQuietly()
-    }
-  }
-
-  private inner class PingTask(val delayNanos: Long) : Task("${taskQueue.owner} Ping") {
-    override fun runOnce(): Long {
-      writePingFrame()
-      return delayNanos
     }
   }
 
@@ -543,9 +531,28 @@ class RealWebSocket(
     val sink: BufferedSink
   ) : Closeable
 
-  internal inner class CancelRunnable : Task("${taskQueue.owner} Cancel") {
+
+  private inner class PingTask(val delayNanos: Long) : Task("$name Ping") {
+    override fun runOnce(): Long {
+      writePingFrame()
+      return delayNanos
+    }
+  }
+
+  private inner class CancelTask : Task("$name Cancel") {
     override fun runOnce(): Long {
       cancel()
+      return -1L
+    }
+  }
+
+  private inner class WriterTask : Task("$name Writer") {
+    override fun runOnce(): Long {
+      try {
+        if (writeOneFrame()) return 0L
+      } catch (e: IOException) {
+        failWebSocket(e, null)
+      }
       return -1L
     }
   }
