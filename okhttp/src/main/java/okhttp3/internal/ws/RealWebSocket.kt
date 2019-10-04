@@ -531,7 +531,6 @@ class RealWebSocket(
     val sink: BufferedSink
   ) : Closeable
 
-
   private inner class PingTask(val delayNanos: Long) : Task("$name Ping") {
     override fun runOnce(): Long {
       writePingFrame()

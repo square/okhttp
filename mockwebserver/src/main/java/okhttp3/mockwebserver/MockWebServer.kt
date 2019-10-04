@@ -331,7 +331,8 @@ class MockWebServer : ExternalResource(), Closeable {
    * @return the head of the request queue
    */
   @Throws(InterruptedException::class)
-  fun takeRequest(timeout: Long, unit: TimeUnit): RecordedRequest? = requestQueue.poll(timeout, unit)
+  fun takeRequest(timeout: Long, unit: TimeUnit): RecordedRequest? =
+      requestQueue.poll(timeout, unit)
 
   @JvmName("-deprecated_requestCount")
   @Deprecated(
@@ -593,10 +594,17 @@ class MockWebServer : ExternalResource(), Closeable {
       source: BufferedSource,
       sink: BufferedSink
     ): Boolean {
-      val request = readRequest(socket, source, sink, sequenceNumber) ?: return false
+      if (source.exhausted()) {
+        return false // No more requests on this socket.
+      }
 
+      val request = readRequest(socket, source, sink, sequenceNumber)
       atomicRequestCount.incrementAndGet()
       requestQueue.add(request)
+
+      if (request.failure != null) {
+        return false // Nothing to respond to.
+      }
 
       val response = dispatcher.dispatch(request)
       if (response.socketPolicy === DISCONNECT_AFTER_REQUEST) {
@@ -674,78 +682,80 @@ class MockWebServer : ExternalResource(), Closeable {
     source: BufferedSource,
     sink: BufferedSink,
     sequenceNumber: Int
-  ): RecordedRequest? {
-    val request: String
-    try {
-      request = source.readUtf8LineStrict()
-    } catch (streamIsClosed: IOException) {
-      return null // no request because we closed the stream
-    }
-
-    if (request.isEmpty()) {
-      return null // no request because the stream is exhausted
-    }
+  ): RecordedRequest {
+    var request = ""
     val headers = Headers.Builder()
     var contentLength = -1L
     var chunked = false
     var expectContinue = false
-    while (true) {
-      val header = source.readUtf8LineStrict()
-      if (header.isEmpty()) {
-        break
-      }
-      addHeaderLenient(headers, header)
-      val lowercaseHeader = header.toLowerCase(Locale.US)
-      if (contentLength == -1L && lowercaseHeader.startsWith("content-length:")) {
-        contentLength = header.substring(15).trim().toLong()
-      }
-      if (lowercaseHeader.startsWith("transfer-encoding:") && lowercaseHeader.substring(
-              18).trim() == "chunked") {
-        chunked = true
-      }
-      if (lowercaseHeader.startsWith("expect:") && lowercaseHeader.substring(
-              7).trim().equals("100-continue", ignoreCase = true)) {
-        expectContinue = true
-      }
-    }
-
-    val socketPolicy = dispatcher.peek().socketPolicy
-    if (expectContinue && socketPolicy === EXPECT_CONTINUE || socketPolicy === CONTINUE_ALWAYS) {
-      sink.writeUtf8("HTTP/1.1 100 Continue\r\n")
-      sink.writeUtf8("Content-Length: 0\r\n")
-      sink.writeUtf8("\r\n")
-      sink.flush()
-    }
-
-    var hasBody = false
     val requestBody = TruncatingBuffer(bodyLimit)
     val chunkSizes = mutableListOf<Int>()
-    val policy = dispatcher.peek()
-    if (contentLength != -1L) {
-      hasBody = contentLength > 0L
-      throttledTransfer(policy, socket, source, requestBody.buffer(), contentLength, true)
-    } else if (chunked) {
-      hasBody = true
+    var failure: IOException? = null
+
+    try {
+      request = source.readUtf8LineStrict()
+      if (request.isEmpty()) {
+        throw ProtocolException("no request because the stream is exhausted")
+      }
+
       while (true) {
-        val chunkSize = source.readUtf8LineStrict().trim().toInt(16)
-        if (chunkSize == 0) {
-          readEmptyLine(source)
+        val header = source.readUtf8LineStrict()
+        if (header.isEmpty()) {
           break
         }
-        chunkSizes.add(chunkSize)
-        throttledTransfer(policy, socket, source,
-            requestBody.buffer(), chunkSize.toLong(), true)
-        readEmptyLine(source)
+        addHeaderLenient(headers, header)
+        val lowercaseHeader = header.toLowerCase(Locale.US)
+        if (contentLength == -1L && lowercaseHeader.startsWith("content-length:")) {
+          contentLength = header.substring(15).trim().toLong()
+        }
+        if (lowercaseHeader.startsWith("transfer-encoding:") && lowercaseHeader.substring(
+                18).trim() == "chunked") {
+          chunked = true
+        }
+        if (lowercaseHeader.startsWith("expect:") && lowercaseHeader.substring(
+                7).trim().equals("100-continue", ignoreCase = true)) {
+          expectContinue = true
+        }
       }
-    }
 
-    val method = request.substringBefore(' ')
-    require(!hasBody || HttpMethod.permitsRequestBody(method)) {
-      "Request must not have a body: $request"
+      val socketPolicy = dispatcher.peek().socketPolicy
+      if (expectContinue && socketPolicy === EXPECT_CONTINUE || socketPolicy === CONTINUE_ALWAYS) {
+        sink.writeUtf8("HTTP/1.1 100 Continue\r\n")
+        sink.writeUtf8("Content-Length: 0\r\n")
+        sink.writeUtf8("\r\n")
+        sink.flush()
+      }
+
+      var hasBody = false
+      val policy = dispatcher.peek()
+      if (contentLength != -1L) {
+        hasBody = contentLength > 0L
+        throttledTransfer(policy, socket, source, requestBody.buffer(), contentLength, true)
+      } else if (chunked) {
+        hasBody = true
+        while (true) {
+          val chunkSize = source.readUtf8LineStrict().trim().toInt(16)
+          if (chunkSize == 0) {
+            readEmptyLine(source)
+            break
+          }
+          chunkSizes.add(chunkSize)
+          throttledTransfer(policy, socket, source,
+              requestBody.buffer(), chunkSize.toLong(), true)
+          readEmptyLine(source)
+        }
+      }
+
+      val method = request.substringBefore(' ')
+      require(!hasBody || HttpMethod.permitsRequestBody(method)) {
+        "Request must not have a body: $request"
+      }
+    } catch (e: IOException) {
+      failure = e
     }
 
     return RecordedRequest(request, headers.build(), chunkSizes, requestBody.receivedByteCount,
-        requestBody.buffer, sequenceNumber, socket)
+        requestBody.buffer, sequenceNumber, socket, failure)
   }
 
   @Throws(IOException::class)
@@ -1013,17 +1023,21 @@ class MockWebServer : ExternalResource(), Closeable {
       }
 
       val body = Buffer()
+      val requestLine = "$method $path HTTP/1.1"
+      var exception: IOException? = null
       if (readBody && !peek.isDuplex) {
-        val contentLengthString = headers["content-length"]
-        val byteCount = contentLengthString?.toLong() ?: Long.MAX_VALUE
-        throttledTransfer(peek, socket, stream.getSource().buffer(),
-            body, byteCount, true)
+        try {
+          val contentLengthString = headers["content-length"]
+          val byteCount = contentLengthString?.toLong() ?: Long.MAX_VALUE
+          throttledTransfer(peek, socket, stream.getSource().buffer(),
+              body, byteCount, true)
+        } catch (e: IOException) {
+          exception = e
+        }
       }
 
-      val requestLine = "$method $path HTTP/1.1"
-      val chunkSizes = emptyList<Int>() // No chunked encoding for HTTP/2.
-      return RecordedRequest(requestLine, headers, chunkSizes, body.size, body,
-          sequenceNumber.getAndIncrement(), socket)
+      return RecordedRequest(requestLine, headers, emptyList(), body.size, body,
+          sequenceNumber.getAndIncrement(), socket, exception)
     }
 
     @Throws(IOException::class)
