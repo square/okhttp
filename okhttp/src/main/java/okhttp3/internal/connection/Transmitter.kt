@@ -204,6 +204,7 @@ class Transmitter(
 
   fun exchangeDoneDueToException() {
     synchronized(connectionPool) {
+      exchange?.detachWithViolence()
       check(!noMoreExchanges)
       exchange = null
     }

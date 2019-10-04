@@ -15,14 +15,19 @@
  */
 package okhttp3
 
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.testing.PlatformRule
+import okio.BufferedSink
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.Assert.assertEquals
+import org.junit.Assert.fail
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestRule
 import org.junit.rules.Timeout
+import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 class CallKotlinTest {
@@ -50,5 +55,86 @@ class CallKotlinTest {
 
     assertThat("abc").isEqualTo(response1.body!!.string())
     assertThat("def").isEqualTo(response2.body!!.string())
+  }
+
+  @Test
+  fun testHeadAfterPut() {
+    class ErringRequestBody : RequestBody() {
+      override fun contentType(): MediaType {
+        return "application/xml".toMediaType()
+      }
+
+      override fun writeTo(sink: BufferedSink) {
+        sink.writeUtf8("<el")
+        sink.flush()
+        throw IOException("failed to stream the XML")
+      }
+    }
+
+    class ValidRequestBody : RequestBody() {
+      override fun contentType(): MediaType {
+        return "application/xml".toMediaType()
+      }
+
+      override fun writeTo(sink: BufferedSink) {
+        sink.writeUtf8("<element/>")
+        sink.flush()
+      }
+    }
+
+    server.enqueue(MockResponse().apply {
+      setResponseCode(201)
+    })
+    server.enqueue(MockResponse().apply {
+      setResponseCode(204)
+    })
+    server.enqueue(MockResponse().apply {
+      setResponseCode(204)
+    })
+
+    val endpointUrl = server.url("/endpoint")
+
+    var request = Request.Builder()
+        .url(endpointUrl)
+        .header("Content-Type", "application/xml")
+        .put(ValidRequestBody())
+        .build()
+    // 201
+    client.newCall(request).execute()
+
+    request = Request.Builder()
+        .url(endpointUrl)
+        .head()
+        .build()
+    // 204
+    client.newCall(request).execute()
+
+    request = Request.Builder()
+        .url(endpointUrl)
+        .header("Content-Type", "application/xml")
+        .put(ErringRequestBody())
+        .build()
+    try {
+      client.newCall(request).execute()
+      fail("test should always throw exception")
+    } catch (_: IOException) {
+      // NOTE: expected
+    }
+
+    request = Request.Builder()
+        .url(endpointUrl)
+        .head()
+        .build()
+
+    client.newCall(request).execute()
+
+    var recordedRequest = server.takeRequest()
+    assertEquals("PUT", recordedRequest.method)
+
+    recordedRequest = server.takeRequest()
+    assertEquals("HEAD", recordedRequest.method)
+
+    recordedRequest = server.takeRequest()
+    assertEquals("HEAD", recordedRequest.method)
   }
 }
