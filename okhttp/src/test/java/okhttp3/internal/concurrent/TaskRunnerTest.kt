@@ -271,21 +271,21 @@ class TaskRunnerTest {
   @Test fun singleQueueIsSerial() {
     redQueue.schedule(object : Task("task one") {
       override fun runOnce(): Long {
-        log += "one:run@${taskFaker.nanoTime} tasksSize=${taskFaker.tasksSize}"
+        log += "one:run@${taskFaker.nanoTime} parallel=${taskFaker.isParallel}"
         return -1L
       }
     }, 100L)
 
     redQueue.schedule(object : Task("task two") {
       override fun runOnce(): Long {
-        log += "two:run@${taskFaker.nanoTime} tasksSize=${taskFaker.tasksSize}"
+        log += "two:run@${taskFaker.nanoTime} parallel=${taskFaker.isParallel}"
         return -1L
       }
     }, 100L)
 
     redQueue.schedule(object : Task("task three") {
       override fun runOnce(): Long {
-        log += "three:run@${taskFaker.nanoTime} tasksSize=${taskFaker.tasksSize}"
+        log += "three:run@${taskFaker.nanoTime} parallel=${taskFaker.isParallel}"
         return -1L
       }
     }, 100L)
@@ -295,9 +295,9 @@ class TaskRunnerTest {
 
     taskFaker.advanceUntil(100L)
     assertThat(log).containsExactly(
-        "one:run@100 tasksSize=0",
-        "two:run@100 tasksSize=0",
-        "three:run@100 tasksSize=0"
+        "one:run@100 parallel=false",
+        "two:run@100 parallel=false",
+        "three:run@100 parallel=false"
     )
 
     taskFaker.assertNoMoreTasks()
@@ -307,21 +307,21 @@ class TaskRunnerTest {
   @Test fun differentQueuesAreParallel() {
     redQueue.schedule(object : Task("task one") {
       override fun runOnce(): Long {
-        log += "one:run@${taskFaker.nanoTime} tasksSize=${taskFaker.tasksSize}"
+        log += "one:run@${taskFaker.nanoTime} parallel=${taskFaker.isParallel}"
         return -1L
       }
     }, 100L)
 
     blueQueue.schedule(object : Task("task two") {
       override fun runOnce(): Long {
-        log += "two:run@${taskFaker.nanoTime} tasksSize=${taskFaker.tasksSize}"
+        log += "two:run@${taskFaker.nanoTime} parallel=${taskFaker.isParallel}"
         return -1L
       }
     }, 100L)
 
     greenQueue.schedule(object : Task("task three") {
       override fun runOnce(): Long {
-        log += "three:run@${taskFaker.nanoTime} tasksSize=${taskFaker.tasksSize}"
+        log += "three:run@${taskFaker.nanoTime} parallel=${taskFaker.isParallel}"
         return -1L
       }
     }, 100L)
@@ -331,9 +331,9 @@ class TaskRunnerTest {
 
     taskFaker.advanceUntil(100L)
     assertThat(log).containsExactly(
-        "one:run@100 tasksSize=2",
-        "two:run@100 tasksSize=1",
-        "three:run@100 tasksSize=0"
+        "one:run@100 parallel=true",
+        "two:run@100 parallel=true",
+        "three:run@100 parallel=true"
     )
 
     taskFaker.assertNoMoreTasks()

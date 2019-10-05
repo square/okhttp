@@ -72,7 +72,6 @@ import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.QueueDispatcher;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
-import okhttp3.testing.Flaky;
 import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okhttp3.tls.HeldCertificate;
@@ -2453,6 +2452,8 @@ public final class CallTest {
       fail();
     } catch (IOException expected) {
     }
+
+    assertThat(server.takeRequest().getPath()).isEqualTo("/a");
   }
 
   @Test public void cancelInFlightBeforeResponseReadThrowsIOE_HTTPS() throws Exception {
@@ -3789,12 +3790,15 @@ public final class CallTest {
           }
 
           @Override public void writeTo(BufferedSink sink) throws IOException {
+            sink.flush(); // For determinism, always send a partial request to the server.
             throw new IOException("boom");
           }
         })
         .build();
 
     executeSynchronously(request).assertFailure("boom");
+
+    assertThat(server.takeRequest().getFailure()).isNotNull();
   }
 
   @Test public void requestBodyThrowsUnrelatedToNetwork_HTTP2() throws Exception {
@@ -3842,6 +3846,7 @@ public final class CallTest {
       }
 
       @Override public void writeTo(BufferedSink sink) throws IOException {
+        sink.flush(); // For determinism, always send a partial request to the server.
         throw new IOException("write body fail!");
       }
     };

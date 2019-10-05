@@ -969,6 +969,9 @@ class MockWebServer : ExternalResource(), Closeable {
       val request = readRequest(stream)
       atomicRequestCount.incrementAndGet()
       requestQueue.add(request)
+      if (request.failure != null) {
+        return // Nothing to respond to.
+      }
 
       val response: MockResponse = dispatcher.dispatch(request)
 
