@@ -1,0 +1,32 @@
+import com.github.jengelman.gradle.plugins.shadow.transformers.DontIncludeResourceTransformer
+import com.github.jengelman.gradle.plugins.shadow.transformers.IncludeResourceTransformer
+
+apply plugin: 'java-library'
+apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'me.champeau.gradle.jmh'
+
+task benchmarkJar(type: Jar, dependsOn: jmhJar) {
+  manifest {
+    attributes 'Main-Class': 'org.openjdk.jmh.Main'
+  }
+  classifier = 'benchmark'
+  from {
+    (jmhJar.outputs.files + configurations.jmh + configurations.jmhRuntime)
+        .collect { it.isDirectory() ? it : zipTree(it) }
+  }
+}
+
+jmh {
+  jvmArgs = ['-Djmh.separateClasspathJAR=true']
+  duplicateClassesStrategy = 'warn'
+}
+
+dependencies {
+  implementation project(':okhttp')
+  compile deps.jmhCore
+  jmh project(':okhttp')
+  jmh deps.jmhCore
+  jmh deps.jmhGenerator
+}
+
+assemble.dependsOn(jmhJar)

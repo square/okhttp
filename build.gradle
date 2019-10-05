@@ -1,4 +1,4 @@
-import net.ltgt.gradle.errorprone.CheckSeverity
+//import net.ltgt.gradle.errorprone.CheckSeverity
 
 buildscript {
   ext.versions = [
@@ -11,6 +11,7 @@ buildscript {
       'findbugs': '3.0.2',
       'guava': '27.0.1-jre',
       'java': '1.8',
+      'jmh': '1.21',
       'jnrUnixsocket': '0.22',
       'jsoup': '1.11.3',
       'junit': '4.12',
@@ -31,6 +32,8 @@ buildscript {
       'brotli': "org.brotli:dec:${versions.brotli}",
       'conscrypt': "org.conscrypt:conscrypt-openjdk-uber:${versions.conscrypt}",
       'guava': "com.google.guava:guava:${versions.guava}",
+      'jmhCore': "org.openjdk.jmh:jmh-core:${versions.jmh}",
+      'jmhGenerator': "org.openjdk.jmh:jmh-generator-annprocess:${versions.jmh}",
       'jnrUnixsocket': "com.github.jnr:jnr-unixsocket:${versions.jnrUnixsocket}",
       'jsoup': "org.jsoup:jsoup:${versions.jsoup}",
       'jsr305': "com.google.code.findbugs:jsr305:${versions.findbugs}",
@@ -45,11 +48,12 @@ buildscript {
   dependencies {
     // TODO(jwilson): configure maven-publish-plugin to limit which artifacts are published.
     classpath 'com.vanniktech:gradle-maven-publish-plugin:0.8.0'
-    classpath 'net.ltgt.gradle:gradle-errorprone-plugin:0.7.1'
+//    classpath 'net.ltgt.gradle:gradle-errorprone-plugin:0.7.1'
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${versions.kotlin}"
     classpath "org.jetbrains.dokka:dokka-gradle-plugin:0.9.18"
     classpath 'com.diffplug.spotless:spotless-plugin-gradle:3.21.1'
     classpath 'com.android.tools.build:gradle:3.4.2'
+    classpath 'me.champeau.gradle:jmh-gradle-plugin:0.4.8'
   }
 
   repositories {
@@ -94,7 +98,7 @@ subprojects { project ->
   apply plugin: 'org.jetbrains.kotlin.platform.jvm'
   apply plugin: 'checkstyle'
   apply plugin: 'ru.vyarus.animalsniffer'
-  apply plugin: 'net.ltgt.errorprone'
+//  apply plugin: 'net.ltgt.errorprone'
   apply plugin: 'org.jetbrains.dokka'
   apply plugin: 'com.diffplug.gradle.spotless'
   sourceCompatibility = JavaVersion.VERSION_1_8
@@ -171,18 +175,18 @@ subprojects { project ->
   }
 
   dependencies {
-    errorproneJavac 'com.google.errorprone:javac:9+181-r4173-1'
-    errorprone 'com.google.errorprone:error_prone_core:2.3.3'
+//    errorproneJavac 'com.google.errorprone:javac:9+181-r4173-1'
+//    errorprone 'com.google.errorprone:error_prone_core:2.3.3'
   }
   tasks.withType(JavaCompile).configureEach {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
 
-    options.errorprone {
-      check("MissingFail", CheckSeverity.ERROR)
-      check("MissingOverride", CheckSeverity.ERROR)
-      enabled = JavaVersion.current() < JavaVersion.VERSION_12
-    }
+//    options.errorprone {
+//      check("MissingFail", CheckSeverity.ERROR)
+//      check("MissingOverride", CheckSeverity.ERROR)
+//      enabled = JavaVersion.current() < JavaVersion.VERSION_12
+//    }
   }
 
   // We have to set the dokka configuration after evaluation since the com.vanniktech.maven.publish
