@@ -54,4 +54,18 @@ internal class AndroidCertificateChainCleaner(
           other.trustManager === this.trustManager
 
   override fun hashCode(): Int = System.identityHashCode(trustManager.hashCode())
+
+  companion object {
+    fun build(trustManager: X509TrustManager): AndroidCertificateChainCleaner? = try {
+      val extensionsClass = Class.forName("android.net.http.X509TrustManagerExtensions")
+      val constructor = extensionsClass.getConstructor(X509TrustManager::class.java)
+      val extensions = constructor.newInstance(trustManager)
+      val checkServerTrusted = extensionsClass.getMethod(
+          "checkServerTrusted", Array<X509Certificate>::class.java, String::class.java,
+          String::class.java)
+      AndroidCertificateChainCleaner(trustManager, extensions, checkServerTrusted)
+    } catch (_: Exception) {
+      null
+    }
+  }
 }
