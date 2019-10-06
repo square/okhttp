@@ -48,6 +48,7 @@ nav:
   - 'Stack Overflow ⏏': https://stackoverflow.com/questions/tagged/okhttp?sort=active
   - '4.x API':
     - 'okhttp': 4.x/okhttp/okhttp3/index.md
+    - 'brotli': 4.x/okhttp-brotli/okhttp3.brotli/index.md
     - 'dnsoverhttps': 4.x/okhttp-dnsoverhttps/okhttp3.dnsoverhttps/index.md
     - 'logging-interceptor': 4.x/okhttp-logging-interceptor/okhttp3.logging/index.md
     - 'sse': 4.x/okhttp-sse/okhttp3.sse/index.md
