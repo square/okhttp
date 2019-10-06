@@ -66,6 +66,18 @@ class TaskQueue internal constructor(
     }
   }
 
+  /** Overload of [schedule] that uses a lambda for a repeating task. */
+  inline fun schedule(
+    name: String,
+    delayNanos: Long = 0L,
+    cancelable: Boolean = true,
+    crossinline block: () -> Long
+  ) {
+    schedule(object : Task(name, cancelable) {
+      override fun runOnce() = block()
+    }, delayNanos)
+  }
+
   /** Like [schedule], but this silently discard the task if the queue is shut down. */
   fun trySchedule(task: Task, delayNanos: Long = 0L) {
     synchronized(taskRunner) {
@@ -77,11 +89,41 @@ class TaskQueue internal constructor(
     }
   }
 
+  /** Executes [block] once on a task runner thread. */
+  inline fun execute(
+    name: String,
+    delayNanos: Long = 0L,
+    cancelable: Boolean = true,
+    crossinline block: () -> Unit
+  ) {
+    schedule(object : Task(name, cancelable) {
+      override fun runOnce(): Long {
+        block()
+        return -1L
+      }
+    }, delayNanos)
+  }
+
+  /** Like [execute], but this silently discard the task if the queue is shut down. */
+  inline fun tryExecute(
+    name: String,
+    delayNanos: Long = 0L,
+    cancelable: Boolean = true,
+    crossinline block: () -> Unit
+  ) {
+    trySchedule(object : Task(name, cancelable) {
+      override fun runOnce(): Long {
+        block()
+        return -1L
+      }
+    }, delayNanos)
+  }
+
   /** Returns true if this queue became idle before the timeout elapsed. */
   fun awaitIdle(delayNanos: Long): Boolean {
     val latch = CountDownLatch(1)
 
-    val task = object : Task("awaitIdle", cancelable = false) {
+    val task = object : Task("OkHttp awaitIdle", cancelable = false) {
       override fun runOnce(): Long {
         latch.countDown()
         return -1L

@@ -19,6 +19,7 @@ import okhttp3.internal.addIfAbsent
 import okhttp3.internal.notify
 import okhttp3.internal.threadFactory
 import java.util.concurrent.SynchronousQueue
+import java.util.concurrent.ThreadFactory
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
@@ -35,7 +36,7 @@ import java.util.concurrent.TimeUnit
  * Most applications should share a process-wide [TaskRunner] and use queues for per-client work.
  */
 class TaskRunner(
-  val backend: Backend = RealBackend()
+  val backend: Backend
 ) {
   private var coordinatorWaiting = false
   private var coordinatorWakeUpAt = 0L
@@ -243,13 +244,13 @@ class TaskRunner(
     fun execute(runnable: Runnable)
   }
 
-  internal class RealBackend : Backend {
+  class RealBackend(threadFactory: ThreadFactory) : Backend {
     private val executor = ThreadPoolExecutor(
         0, // corePoolSize.
         Int.MAX_VALUE, // maximumPoolSize.
         60L, TimeUnit.SECONDS, // keepAliveTime.
         SynchronousQueue(),
-        threadFactory("OkHttp Task", true)
+        threadFactory
     )
 
     override fun beforeTask(taskRunner: TaskRunner) {
@@ -286,6 +287,6 @@ class TaskRunner(
 
   companion object {
     @JvmField
-    val INSTANCE = TaskRunner(RealBackend())
+    val INSTANCE = TaskRunner(RealBackend(threadFactory("OkHttp TaskRunner", true)))
   }
 }

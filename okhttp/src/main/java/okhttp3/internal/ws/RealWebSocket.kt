@@ -218,7 +218,10 @@ class RealWebSocket(
       this.writerTask = WriterTask()
       if (pingIntervalMillis != 0L) {
         val pingIntervalNanos = MILLISECONDS.toNanos(pingIntervalMillis)
-        taskQueue.schedule(PingTask(pingIntervalNanos), pingIntervalNanos)
+        taskQueue.schedule("$name ping", pingIntervalNanos) {
+          writePingFrame()
+          return@schedule pingIntervalNanos
+        }
       }
       if (messageAndCloseQueue.isNotEmpty()) {
         runWriter() // Send messages that were enqueued before we were connected.
@@ -433,9 +436,10 @@ class RealWebSocket(
             this.taskQueue.shutdown()
           } else {
             // When we request a graceful close also schedule a cancel of the web socket.
-            val cancelAfterCloseNanos =
-                MILLISECONDS.toNanos((messageOrClose as Close).cancelAfterCloseMillis)
-            taskQueue.schedule(CancelTask(), cancelAfterCloseNanos)
+            val cancelAfterCloseMillis = (messageOrClose as Close).cancelAfterCloseMillis
+            taskQueue.execute("$name cancel", MILLISECONDS.toNanos(cancelAfterCloseMillis)) {
+              cancel()
+            }
           }
         } else if (messageOrClose == null) {
           return false // The queue is exhausted.
@@ -531,21 +535,7 @@ class RealWebSocket(
     val sink: BufferedSink
   ) : Closeable
 
-  private inner class PingTask(val delayNanos: Long) : Task("$name Ping") {
-    override fun runOnce(): Long {
-      writePingFrame()
-      return delayNanos
-    }
-  }
-
-  private inner class CancelTask : Task("$name Cancel") {
-    override fun runOnce(): Long {
-      cancel()
-      return -1L
-    }
-  }
-
-  private inner class WriterTask : Task("$name Writer") {
+  private inner class WriterTask : Task("$name writer", cancelable = true) {
     override fun runOnce(): Long {
       try {
         if (writeOneFrame()) return 0L

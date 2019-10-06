@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.concurrent
 
+import okhttp3.internal.threadFactory
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.data.Offset
 import org.junit.Test
@@ -29,7 +30,7 @@ import java.util.concurrent.TimeUnit
  * busiest of CI servers.
  */
 class TaskRunnerRealBackendTest {
-  private val backend = TaskRunner.RealBackend()
+  private val backend = TaskRunner.RealBackend(threadFactory("TaskRunnerRealBackendTest", true))
   private val taskRunner = TaskRunner(backend)
   private val queue = taskRunner.newQueue()
   private val log = LinkedBlockingDeque<String>()
@@ -37,13 +38,11 @@ class TaskRunnerRealBackendTest {
   @Test fun test() {
     val t1 = System.nanoTime() / 1e6
 
-    queue.schedule(object : Task("task") {
-      val delays = mutableListOf(TimeUnit.MILLISECONDS.toNanos(1000), -1L)
-      override fun runOnce(): Long {
-        log.put("runOnce delays.size=${delays.size}")
-        return delays.removeAt(0)
-      }
-    }, TimeUnit.MILLISECONDS.toNanos(750))
+    val delays = mutableListOf(TimeUnit.MILLISECONDS.toNanos(1000), -1L)
+    queue.schedule("task", TimeUnit.MILLISECONDS.toNanos(750)) {
+      log.put("runOnce delays.size=${delays.size}")
+      return@schedule delays.removeAt(0)
+    }
 
     assertThat(log.take()).isEqualTo("runOnce delays.size=2")
     val t2 = System.nanoTime() / 1e6 - t1
