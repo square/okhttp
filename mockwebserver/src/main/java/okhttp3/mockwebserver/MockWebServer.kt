@@ -100,7 +100,9 @@ import javax.net.ssl.X509TrustManager
  * in sequence.
  */
 class MockWebServer : ExternalResource(), Closeable {
-  private val taskRunner = TaskRunner()
+  private val taskRunnerBackend = TaskRunner.RealBackend(
+      threadFactory("MockWebServer TaskRunner", true))
+  private val taskRunner = TaskRunner(taskRunnerBackend)
   private val requestQueue = LinkedBlockingQueue<RecordedRequest>()
   private val openClientSockets =
       Collections.newSetFromMap(ConcurrentHashMap<Socket, Boolean>())
@@ -463,6 +465,7 @@ class MockWebServer : ExternalResource(), Closeable {
         throw IOException("Gave up waiting for queue to shut down")
       }
     }
+    taskRunnerBackend.shutdown()
   }
 
   @Synchronized override fun after() {

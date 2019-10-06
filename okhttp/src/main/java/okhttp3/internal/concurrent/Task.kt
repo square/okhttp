@@ -48,7 +48,7 @@ package okhttp3.internal.concurrent
  */
 abstract class Task(
   val name: String,
-  val cancelable: Boolean = true
+  val cancelable: Boolean
 ) {
   // Guarded by the TaskRunner.
   internal var queue: TaskQueue? = null
@@ -65,4 +65,6 @@ abstract class Task(
     check(this.queue === null) { "task is in multiple queues" }
     this.queue = queue
   }
+
+  override fun toString() = name
 }

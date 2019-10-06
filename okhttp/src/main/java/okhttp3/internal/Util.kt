@@ -359,7 +359,7 @@ fun Source.discard(timeout: Int, timeUnit: TimeUnit): Boolean = try {
   false
 }
 
-fun Socket.connectionName(): String {
+fun Socket.peerName(): String {
   val address = remoteSocketAddress
   return if (address is InetSocketAddress) address.hostName else address.toString()
 }

@@ -29,12 +29,9 @@ class TaskRunnerTest {
   private val greenQueue = taskRunner.newQueue()
 
   @Test fun executeDelayed() {
-    redQueue.schedule(object : Task("task") {
-      override fun runOnce(): Long {
-        log += "run@${taskFaker.nanoTime}"
-        return -1L
-      }
-    }, 100L)
+    redQueue.execute("task", 100L) {
+      log += "run@${taskFaker.nanoTime}"
+    }
 
     taskFaker.advanceUntil(0L)
     assertThat(log).containsExactly()
@@ -49,13 +46,11 @@ class TaskRunnerTest {
   }
 
   @Test fun executeRepeated() {
-    redQueue.schedule(object : Task("task") {
-      val delays = mutableListOf(50L, 150L, -1L)
-      override fun runOnce(): Long {
-        log += "run@${taskFaker.nanoTime}"
-        return delays.removeAt(0)
-      }
-    }, 100L)
+    val delays = mutableListOf(50L, 150L, -1L)
+    redQueue.schedule("task", 100L) {
+      log += "run@${taskFaker.nanoTime}"
+      return@schedule delays.removeAt(0)
+    }
 
     taskFaker.advanceUntil(0L)
     assertThat(log).containsExactly()
@@ -77,7 +72,7 @@ class TaskRunnerTest {
 
   /** Repeat with a delay of 200 but schedule with a delay of 50. The schedule wins. */
   @Test fun executeScheduledEarlierReplacesRepeatedLater() {
-    redQueue.schedule(object : Task("task") {
+    val task = object : Task("task", cancelable = true) {
       val schedules = mutableListOf(50L)
       val delays = mutableListOf(200L, -1L)
       override fun runOnce(): Long {
@@ -87,7 +82,8 @@ class TaskRunnerTest {
         }
         return delays.removeAt(0)
       }
-    }, 100L)
+    }
+    redQueue.schedule(task, 100L)
 
     taskFaker.advanceUntil(0L)
     assertThat(log).isEmpty()
@@ -103,7 +99,7 @@ class TaskRunnerTest {
 
   /** Schedule with a delay of 200 but repeat with a delay of 50. The repeat wins. */
   @Test fun executeRepeatedEarlierReplacesScheduledLater() {
-    redQueue.schedule(object : Task("task") {
+    val task = object : Task("task", cancelable = true) {
       val schedules = mutableListOf(200L)
       val delays = mutableListOf(50L, -1L)
       override fun runOnce(): Long {
@@ -113,7 +109,8 @@ class TaskRunnerTest {
         }
         return delays.removeAt(0)
       }
-    }, 100L)
+    }
+    redQueue.schedule(task, 100L)
 
     taskFaker.advanceUntil(0L)
     assertThat(log).isEmpty()
@@ -128,12 +125,9 @@ class TaskRunnerTest {
   }
 
   @Test fun cancelReturnsTruePreventsNextExecution() {
-    redQueue.schedule(object : Task("task") {
-      override fun runOnce(): Long {
-        log += "run@${taskFaker.nanoTime}"
-        return -1L
-      }
-    }, 100L)
+    redQueue.execute("task", 100L) {
+      log += "run@${taskFaker.nanoTime}"
+    }
 
     taskFaker.advanceUntil(0L)
     assertThat(log).isEmpty()
@@ -147,12 +141,9 @@ class TaskRunnerTest {
   }
 
   @Test fun cancelReturnsFalseDoesNotCancel() {
-    redQueue.schedule(object : Task("task", cancelable = false) {
-      override fun runOnce(): Long {
-        log += "run@${taskFaker.nanoTime}"
-        return -1L
-      }
-    }, 100L)
+    redQueue.execute("task", 100L, cancelable = false) {
+      log += "run@${taskFaker.nanoTime}"
+    }
 
     taskFaker.advanceUntil(0L)
     assertThat(log).isEmpty()
@@ -169,13 +160,11 @@ class TaskRunnerTest {
   }
 
   @Test fun cancelWhileExecutingPreventsRepeat() {
-    redQueue.schedule(object : Task("task") {
-      override fun runOnce(): Long {
-        log += "run@${taskFaker.nanoTime}"
-        redQueue.cancelAll()
-        return 100L
-      }
-    }, 100L)
+    redQueue.schedule("task", 100L) {
+      log += "run@${taskFaker.nanoTime}"
+      redQueue.cancelAll()
+      return@schedule 100L
+    }
 
     taskFaker.advanceUntil(0L)
     assertThat(log).isEmpty()
@@ -187,13 +176,10 @@ class TaskRunnerTest {
   }
 
   @Test fun cancelWhileExecutingDoesNothingIfTaskDoesNotRepeat() {
-    redQueue.schedule(object : Task("task") {
-      override fun runOnce(): Long {
-        log += "run@${taskFaker.nanoTime}"
-        redQueue.cancelAll()
-        return -1L
-      }
-    }, 100L)
+    redQueue.execute("task", 100L) {
+      log += "run@${taskFaker.nanoTime}"
+      redQueue.cancelAll()
+    }
 
     taskFaker.advanceUntil(0L)
     assertThat(log).isEmpty()
@@ -205,14 +191,12 @@ class TaskRunnerTest {
   }
 
   @Test fun cancelWhileExecutingDoesNotStopUncancelableTask() {
-    redQueue.schedule(object : Task("task", cancelable = false) {
-      val delays = mutableListOf(50L, -1L)
-      override fun runOnce(): Long {
-        log += "run@${taskFaker.nanoTime}"
-        redQueue.cancelAll()
-        return delays.removeAt(0)
-      }
-    }, 100L)
+    val delays = mutableListOf(50L, -1L)
+    redQueue.schedule("task", 100L, cancelable = false) {
+      log += "run@${taskFaker.nanoTime}"
+      redQueue.cancelAll()
+      return@schedule delays.removeAt(0)
+    }
 
     taskFaker.advanceUntil(0L)
     assertThat(log).isEmpty()
@@ -227,12 +211,9 @@ class TaskRunnerTest {
   }
 
   @Test fun interruptingCoordinatorAttemptsToCancelsAndSucceeds() {
-    redQueue.schedule(object : Task("task") {
-      override fun runOnce(): Long {
-        log += "run@${taskFaker.nanoTime}"
-        return -1L
-      }
-    }, 100L)
+    redQueue.execute("task", 100L) {
+      log += "run@${taskFaker.nanoTime}"
+    }
 
     taskFaker.advanceUntil(0L)
     assertThat(log).isEmpty()
@@ -246,12 +227,9 @@ class TaskRunnerTest {
   }
 
   @Test fun interruptingCoordinatorAttemptsToCancelsAndFails() {
-    redQueue.schedule(object : Task("task", cancelable = false) {
-      override fun runOnce(): Long {
-        log += "run@${taskFaker.nanoTime}"
-        return -1L
-      }
-    }, 100L)
+    redQueue.execute("task", 100L, cancelable = false) {
+      log += "run@${taskFaker.nanoTime}"
+    }
 
     taskFaker.advanceUntil(0L)
     assertThat(log).isEmpty()
@@ -269,26 +247,17 @@ class TaskRunnerTest {
 
   /** Inspect how many runnables have been enqueued. If none then we're truly sequential. */
   @Test fun singleQueueIsSerial() {
-    redQueue.schedule(object : Task("task one") {
-      override fun runOnce(): Long {
-        log += "one:run@${taskFaker.nanoTime} parallel=${taskFaker.isParallel}"
-        return -1L
-      }
-    }, 100L)
+    redQueue.execute("task one", 100L) {
+      log += "one:run@${taskFaker.nanoTime} parallel=${taskFaker.isParallel}"
+    }
 
-    redQueue.schedule(object : Task("task two") {
-      override fun runOnce(): Long {
-        log += "two:run@${taskFaker.nanoTime} parallel=${taskFaker.isParallel}"
-        return -1L
-      }
-    }, 100L)
+    redQueue.execute("task two", 100L) {
+      log += "two:run@${taskFaker.nanoTime} parallel=${taskFaker.isParallel}"
+    }
 
-    redQueue.schedule(object : Task("task three") {
-      override fun runOnce(): Long {
-        log += "three:run@${taskFaker.nanoTime} parallel=${taskFaker.isParallel}"
-        return -1L
-      }
-    }, 100L)
+    redQueue.execute("task three", 100L) {
+      log += "three:run@${taskFaker.nanoTime} parallel=${taskFaker.isParallel}"
+    }
 
     taskFaker.advanceUntil(0L)
     assertThat(log).isEmpty()
@@ -305,26 +274,17 @@ class TaskRunnerTest {
 
   /** Inspect how many runnables have been enqueued. If non-zero then we're truly parallel. */
   @Test fun differentQueuesAreParallel() {
-    redQueue.schedule(object : Task("task one") {
-      override fun runOnce(): Long {
-        log += "one:run@${taskFaker.nanoTime} parallel=${taskFaker.isParallel}"
-        return -1L
-      }
-    }, 100L)
+    redQueue.execute("task one", 100L) {
+      log += "one:run@${taskFaker.nanoTime} parallel=${taskFaker.isParallel}"
+    }
 
-    blueQueue.schedule(object : Task("task two") {
-      override fun runOnce(): Long {
-        log += "two:run@${taskFaker.nanoTime} parallel=${taskFaker.isParallel}"
-        return -1L
-      }
-    }, 100L)
+    blueQueue.execute("task two", 100L) {
+      log += "two:run@${taskFaker.nanoTime} parallel=${taskFaker.isParallel}"
+    }
 
-    greenQueue.schedule(object : Task("task three") {
-      override fun runOnce(): Long {
-        log += "three:run@${taskFaker.nanoTime} parallel=${taskFaker.isParallel}"
-        return -1L
-      }
-    }, 100L)
+    greenQueue.execute("task three", 100L) {
+      log += "three:run@${taskFaker.nanoTime} parallel=${taskFaker.isParallel}"
+    }
 
     taskFaker.advanceUntil(0L)
     assertThat(log).isEmpty()
@@ -341,19 +301,15 @@ class TaskRunnerTest {
 
   /** Test the introspection method [TaskQueue.scheduledTasks]. */
   @Test fun scheduledTasks() {
-    redQueue.schedule(object : Task("task one") {
-      override fun runOnce(): Long = -1L
+    redQueue.execute("task one", 100L) {
+      // Do nothing.
+    }
 
-      override fun toString() = "one"
-    }, 100L)
+    redQueue.execute("task two", 200L) {
+      // Do nothing.
+    }
 
-    redQueue.schedule(object : Task("task two") {
-      override fun runOnce(): Long = -1L
-
-      override fun toString() = "two"
-    }, 200L)
-
-    assertThat(redQueue.scheduledTasks.toString()).isEqualTo("[one, two]")
+    assertThat(redQueue.scheduledTasks.toString()).isEqualTo("[task one, task two]")
   }
 
   /**
@@ -361,7 +317,7 @@ class TaskRunnerTest {
    * cumbersome to implement properly because the active task might be a cancel.
    */
   @Test fun scheduledTasksDoesNotIncludeRunningTask() {
-    redQueue.schedule(object : Task("task one") {
+    val task = object : Task("task one", cancelable = true) {
       val schedules = mutableListOf(200L)
       override fun runOnce(): Long {
         if (schedules.isNotEmpty()) {
@@ -370,34 +326,28 @@ class TaskRunnerTest {
         log += "scheduledTasks=${redQueue.scheduledTasks}"
         return -1L
       }
+    }
+    redQueue.schedule(task, 100L)
 
-      override fun toString() = "one"
-    }, 100L)
-
-    redQueue.schedule(object : Task("task two") {
-      override fun runOnce(): Long {
-        log += "scheduledTasks=${redQueue.scheduledTasks}"
-        return -1L
-      }
-
-      override fun toString() = "two"
-    }, 200L)
+    redQueue.execute("task two", 200L) {
+      log += "scheduledTasks=${redQueue.scheduledTasks}"
+    }
 
     taskFaker.advanceUntil(100L)
     assertThat(log).containsExactly(
-        "scheduledTasks=[two, one]"
+        "scheduledTasks=[task two, task one]"
     )
 
     taskFaker.advanceUntil(200L)
     assertThat(log).containsExactly(
-        "scheduledTasks=[two, one]",
-        "scheduledTasks=[one]"
+        "scheduledTasks=[task two, task one]",
+        "scheduledTasks=[task one]"
     )
 
     taskFaker.advanceUntil(300L)
     assertThat(log).containsExactly(
-        "scheduledTasks=[two, one]",
-        "scheduledTasks=[one]",
+        "scheduledTasks=[task two, task one]",
+        "scheduledTasks=[task one]",
         "scheduledTasks=[]"
     )
 
@@ -410,13 +360,13 @@ class TaskRunnerTest {
    * queues have work scheduled.
    */
   @Test fun activeQueuesContainsOnlyQueuesWithScheduledTasks() {
-    redQueue.schedule(object : Task("task one") {
-      override fun runOnce() = -1L
-    }, 100L)
+    redQueue.execute("task one", 100L) {
+      // Do nothing.
+    }
 
-    blueQueue.schedule(object : Task("task two") {
-      override fun runOnce() = -1L
-    }, 200L)
+    blueQueue.execute("task two", 200L) {
+      // Do nothing.
+    }
 
     taskFaker.advanceUntil(0L)
     assertThat(taskRunner.activeQueues()).containsExactly(redQueue, blueQueue)
@@ -431,12 +381,9 @@ class TaskRunnerTest {
   }
 
   @Test fun taskNameIsUsedForThreadNameWhenRunning() {
-    redQueue.schedule(object : Task("lucky task") {
-      override fun runOnce(): Long {
-        log += "run threadName:${Thread.currentThread().name}"
-        return -1L
-      }
-    })
+    redQueue.execute("lucky task") {
+      log += "run threadName:${Thread.currentThread().name}"
+    }
 
     taskFaker.advanceUntil(0L)
     assertThat(log).containsExactly("run threadName:lucky task")
@@ -445,12 +392,9 @@ class TaskRunnerTest {
   }
 
   @Test fun shutdownSuccessfullyCancelsScheduledTasks() {
-    redQueue.schedule(object : Task("task") {
-      override fun runOnce(): Long {
-        log += "run@${taskFaker.nanoTime}"
-        return -1L
-      }
-    }, 100L)
+    redQueue.execute("task", 100L) {
+      log += "run@${taskFaker.nanoTime}"
+    }
 
     taskFaker.advanceUntil(0L)
     assertThat(log).isEmpty()
@@ -464,12 +408,10 @@ class TaskRunnerTest {
   }
 
   @Test fun shutdownFailsToCancelsScheduledTasks() {
-    redQueue.schedule(object : Task("task", cancelable = false) {
-      override fun runOnce(): Long {
-        log += "run@${taskFaker.nanoTime}"
-        return 50L
-      }
-    }, 100L)
+    redQueue.schedule("task", 100L, cancelable = false) {
+      log += "run@${taskFaker.nanoTime}"
+      return@schedule 50L
+    }
 
     taskFaker.advanceUntil(0L)
     assertThat(log).isEmpty()
@@ -488,9 +430,9 @@ class TaskRunnerTest {
   @Test fun scheduleDiscardsTaskWhenShutdown() {
     redQueue.shutdown()
 
-    redQueue.trySchedule(object : Task("task") {
-      override fun runOnce() = -1L
-    }, 100L)
+    redQueue.tryExecute("task", 100L) {
+      // Do nothing.
+    }
 
     taskFaker.assertNoMoreTasks()
   }
@@ -499,9 +441,9 @@ class TaskRunnerTest {
     redQueue.shutdown()
 
     try {
-      redQueue.schedule(object : Task("task") {
-        override fun runOnce() = -1L
-      }, 100L)
+      redQueue.execute("task", 100L) {
+        // Do nothing.
+      }
       fail()
     } catch (_: RejectedExecutionException) {
     }
