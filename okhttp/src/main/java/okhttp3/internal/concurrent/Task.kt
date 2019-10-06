@@ -56,8 +56,6 @@ abstract class Task(
   /** Undefined unless this is in [TaskQueue.futureTasks]. */
   internal var nextExecuteNanoTime = -1L
 
-  internal var runRunnable: Runnable? = null
-
   /** Returns the delay in nanoseconds until the next execution, or -1L to not reschedule. */
   abstract fun runOnce(): Long
 
@@ -66,19 +64,5 @@ abstract class Task(
 
     check(this.queue === null) { "task is in multiple queues" }
     this.queue = queue
-
-    this.runRunnable = Runnable {
-      val currentThread = Thread.currentThread()
-      val oldName = currentThread.name
-      currentThread.name = name
-
-      var delayNanos = -1L
-      try {
-        delayNanos = runOnce()
-      } finally {
-        queue.runCompleted(this, delayNanos)
-        currentThread.name = oldName
-      }
-    }
   }
 }

@@ -135,6 +135,9 @@ class CallKotlinTest {
     assertEquals("HEAD", recordedRequest.method)
 
     recordedRequest = server.takeRequest()
+    assertThat(recordedRequest.failure).isNotNull()
+
+    recordedRequest = server.takeRequest()
     assertEquals("HEAD", recordedRequest.method)
   }
 }
