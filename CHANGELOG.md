@@ -1,6 +1,15 @@
 Change Log
 ==========
 
+## Version 4.2.2
+
+_2019-10-06_
+
+ *  Fix: When closing a canceled HTTP/2 stream, don't send the `END_STREAM` flag. This could cause
+    the server to incorrectly interpret the stream as having completed normally. This is most useful
+    when a request body needs to cancel its own call.
+
+
 ## Version 4.2.1
 
 _2019-10-02_
