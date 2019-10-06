@@ -68,8 +68,8 @@ class OkHttpClientTestRule : TestRule {
 
   private fun ensureAllTaskQueuesIdle() {
     for (queue in TaskRunner.INSTANCE.activeQueues()) {
-      assertThat(queue.awaitIdle(TimeUnit.MILLISECONDS.toNanos(500L)))
-          .withFailMessage("Queue still active after 500ms")
+      assertThat(queue.awaitIdle(TimeUnit.MILLISECONDS.toNanos(1000L)))
+          .withFailMessage("Queue still active after 1000ms")
           .isTrue()
     }
   }

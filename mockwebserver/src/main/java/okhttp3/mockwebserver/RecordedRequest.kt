@@ -29,7 +29,7 @@ import java.net.Socket
 import javax.net.ssl.SSLSocket
 
 /** An HTTP request that came into the mock web server. */
-class RecordedRequest(
+class RecordedRequest @JvmOverloads constructor(
   val requestLine: String,
 
   /** All headers. */
@@ -52,7 +52,13 @@ class RecordedRequest(
    * multiple requests, each request is assigned its own sequence number.
    */
   val sequenceNumber: Int,
-  socket: Socket
+  socket: Socket,
+
+  /**
+   * The failure MockWebServer recorded when attempting to decode this request. If, for example,
+   * the inbound request was truncated, this exception will be non-null.
+   */
+  val failure: IOException? = null
 ) {
   val method: String?
   val path: String?

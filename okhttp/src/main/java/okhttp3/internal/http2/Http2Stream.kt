@@ -534,6 +534,7 @@ class Http2Stream internal constructor(
     @Throws(IOException::class)
     private fun emitFrame(outFinishedOnLastFrame: Boolean) {
       val toWrite: Long
+      val outFinished: Boolean
       synchronized(this@Http2Stream) {
         writeTimeout.enter()
         try {
@@ -550,11 +551,11 @@ class Http2Stream internal constructor(
         checkOutNotClosed() // Kick out if the stream was reset or closed while waiting.
         toWrite = minOf(writeBytesMaximum - writeBytesTotal, sendBuffer.size)
         writeBytesTotal += toWrite
+        outFinished = outFinishedOnLastFrame && toWrite == sendBuffer.size && errorCode == null
       }
 
       writeTimeout.enter()
       try {
-        val outFinished = outFinishedOnLastFrame && toWrite == sendBuffer.size
         connection.writeData(id, outFinished, sendBuffer, toWrite)
       } finally {
         writeTimeout.exitAndThrowIfTimedOut()
@@ -578,8 +579,11 @@ class Http2Stream internal constructor(
     @Throws(IOException::class)
     override fun close() {
       assert(!Thread.holdsLock(this@Http2Stream))
+
+      val outFinished: Boolean
       synchronized(this@Http2Stream) {
         if (closed) return
+        outFinished = errorCode == null
       }
       if (!sink.finished) {
         // We have 0 or more frames of data, and 0 or more frames of trailers. We need to send at
@@ -592,7 +596,7 @@ class Http2Stream internal constructor(
             while (sendBuffer.size > 0L) {
               emitFrame(false)
             }
-            connection.writeHeaders(id, true, trailers!!.toHeaderList())
+            connection.writeHeaders(id, outFinished, trailers!!.toHeaderList())
           }
 
           hasData -> {
@@ -601,7 +605,7 @@ class Http2Stream internal constructor(
             }
           }
 
-          else -> {
+          outFinished -> {
             connection.writeData(id, true, null, 0L)
           }
         }
