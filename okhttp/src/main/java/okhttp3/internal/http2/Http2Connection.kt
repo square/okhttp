@@ -315,7 +315,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     streamId: Int,
     errorCode: ErrorCode
   ) {
-    writerQueue.tryExecute("$connectionName[$streamId] writeSynReset") {
+    writerQueue.execute("$connectionName[$streamId] writeSynReset") {
       try {
         writeSynReset(streamId, errorCode)
       } catch (e: IOException) {
@@ -336,7 +336,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     streamId: Int,
     unacknowledgedBytesRead: Long
   ) {
-    writerQueue.tryExecute("$connectionName[$streamId] windowUpdate") {
+    writerQueue.execute("$connectionName[$streamId] windowUpdate") {
       try {
         writer.windowUpdate(streamId, unacknowledgedBytesRead)
       } catch (e: IOException) {
@@ -625,8 +625,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
           streams[streamId] = newStream
 
           // Use a different task queue for each stream because they should be handled in parallel.
-          val taskName = "$connectionName[$streamId] onStream"
-          taskRunner.newQueue().execute(taskName, cancelable = false) {
+          taskRunner.newQueue().execute("$connectionName[$streamId] onStream") {
             try {
               listener.onStream(newStream)
             } catch (e: IOException) {
@@ -654,7 +653,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     }
 
     override fun settings(clearPrevious: Boolean, settings: Settings) {
-      writerQueue.tryExecute("$connectionName applyAndAckSettings") {
+      writerQueue.execute("$connectionName applyAndAckSettings") {
         applyAndAckSettings(clearPrevious, settings)
       }
     }
@@ -697,7 +696,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
 
           peerSettings = newPeerSettings
 
-          settingsListenerQueue.tryExecute("$connectionName onSettings", cancelable = false) {
+          settingsListenerQueue.execute("$connectionName onSettings") {
             listener.onSettings(this@Http2Connection, newPeerSettings)
           }
         }
@@ -732,7 +731,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
         }
       } else {
         // Send a reply to a client ping if this is a server and vice versa.
-        writerQueue.tryExecute("$connectionName ping") {
+        writerQueue.execute("$connectionName ping") {
           writePing(true, payload1, payload2)
         }
       }
@@ -819,7 +818,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
       }
       currentPushRequests.add(streamId)
     }
-    pushQueue.tryExecute("$connectionName[$streamId] onRequest") {
+    pushQueue.execute("$connectionName[$streamId] onRequest") {
       val cancel = pushObserver.onRequest(streamId, requestHeaders)
       ignoreIoExceptions {
         if (cancel) {
@@ -837,7 +836,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     requestHeaders: List<Header>,
     inFinished: Boolean
   ) {
-    pushQueue.tryExecute("$connectionName[$streamId] onHeaders") {
+    pushQueue.execute("$connectionName[$streamId] onHeaders") {
       val cancel = pushObserver.onHeaders(streamId, requestHeaders, inFinished)
       ignoreIoExceptions {
         if (cancel) writer.rstStream(streamId, ErrorCode.CANCEL)
@@ -864,7 +863,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     val buffer = Buffer()
     source.require(byteCount.toLong()) // Eagerly read the frame before firing client thread.
     source.read(buffer, byteCount.toLong())
-    pushQueue.tryExecute("$connectionName[$streamId] onData") {
+    pushQueue.execute("$connectionName[$streamId] onData") {
       ignoreIoExceptions {
         val cancel = pushObserver.onData(streamId, buffer, byteCount, inFinished)
         if (cancel) writer.rstStream(streamId, ErrorCode.CANCEL)
@@ -878,7 +877,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
   }
 
   internal fun pushResetLater(streamId: Int, errorCode: ErrorCode) {
-    pushQueue.tryExecute("$connectionName[$streamId] onReset", cancelable = false) {
+    pushQueue.execute("$connectionName[$streamId] onReset") {
       pushObserver.onReset(streamId, errorCode)
       synchronized(this@Http2Connection) {
         currentPushRequests.remove(streamId)

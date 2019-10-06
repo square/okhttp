@@ -40,7 +40,7 @@ class RealConnectionPool(
   private val keepAliveDurationNs: Long = timeUnit.toNanos(keepAliveDuration)
 
   private val cleanupQueue: TaskQueue = taskRunner.newQueue()
-  private val cleanupTask = object : Task("OkHttp ConnectionPool", cancelable = true) {
+  private val cleanupTask = object : Task("OkHttp ConnectionPool") {
     override fun runOnce() = cleanup(System.nanoTime())
   }
 

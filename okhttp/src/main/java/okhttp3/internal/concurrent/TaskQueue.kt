@@ -54,11 +54,14 @@ class TaskQueue internal constructor(
    * is running when that time is reached, that task is allowed to complete before this task is
    * started. Similarly the task will be delayed if the host lacks compute resources.
    *
-   * @throws RejectedExecutionException if the queue is shut down.
+   * @throws RejectedExecutionException if the queue is shut down and the task is not cancelable.
    */
   fun schedule(task: Task, delayNanos: Long = 0L) {
     synchronized(taskRunner) {
-      if (shutdown) throw RejectedExecutionException()
+      if (shutdown) {
+        if (task.cancelable) return
+        throw RejectedExecutionException()
+      }
 
       if (scheduleAndDecide(task, delayNanos)) {
         taskRunner.kickCoordinator(this)
@@ -70,23 +73,11 @@ class TaskQueue internal constructor(
   inline fun schedule(
     name: String,
     delayNanos: Long = 0L,
-    cancelable: Boolean = true,
     crossinline block: () -> Long
   ) {
-    schedule(object : Task(name, cancelable) {
+    schedule(object : Task(name) {
       override fun runOnce() = block()
     }, delayNanos)
-  }
-
-  /** Like [schedule], but this silently discard the task if the queue is shut down. */
-  fun trySchedule(task: Task, delayNanos: Long = 0L) {
-    synchronized(taskRunner) {
-      if (shutdown) return
-
-      if (scheduleAndDecide(task, delayNanos)) {
-        taskRunner.kickCoordinator(this)
-      }
-    }
   }
 
   /** Executes [block] once on a task runner thread. */
@@ -97,21 +88,6 @@ class TaskQueue internal constructor(
     crossinline block: () -> Unit
   ) {
     schedule(object : Task(name, cancelable) {
-      override fun runOnce(): Long {
-        block()
-        return -1L
-      }
-    }, delayNanos)
-  }
-
-  /** Like [execute], but this silently discard the task if the queue is shut down. */
-  inline fun tryExecute(
-    name: String,
-    delayNanos: Long = 0L,
-    cancelable: Boolean = true,
-    crossinline block: () -> Unit
-  ) {
-    trySchedule(object : Task(name, cancelable) {
       override fun runOnce(): Long {
         block()
         return -1L

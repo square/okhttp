@@ -72,7 +72,7 @@ class TaskRunnerTest {
 
   /** Repeat with a delay of 200 but schedule with a delay of 50. The schedule wins. */
   @Test fun executeScheduledEarlierReplacesRepeatedLater() {
-    val task = object : Task("task", cancelable = true) {
+    val task = object : Task("task") {
       val schedules = mutableListOf(50L)
       val delays = mutableListOf(200L, -1L)
       override fun runOnce(): Long {
@@ -99,7 +99,7 @@ class TaskRunnerTest {
 
   /** Schedule with a delay of 200 but repeat with a delay of 50. The repeat wins. */
   @Test fun executeRepeatedEarlierReplacesScheduledLater() {
-    val task = object : Task("task", cancelable = true) {
+    val task = object : Task("task") {
       val schedules = mutableListOf(200L)
       val delays = mutableListOf(50L, -1L)
       override fun runOnce(): Long {
@@ -141,9 +141,12 @@ class TaskRunnerTest {
   }
 
   @Test fun cancelReturnsFalseDoesNotCancel() {
-    redQueue.execute("task", 100L, cancelable = false) {
-      log += "run@${taskFaker.nanoTime}"
-    }
+    redQueue.schedule(object : Task("task", cancelable = false) {
+      override fun runOnce(): Long {
+        log += "run@${taskFaker.nanoTime}"
+        return -1L
+      }
+    }, 100L)
 
     taskFaker.advanceUntil(0L)
     assertThat(log).isEmpty()
@@ -191,12 +194,14 @@ class TaskRunnerTest {
   }
 
   @Test fun cancelWhileExecutingDoesNotStopUncancelableTask() {
-    val delays = mutableListOf(50L, -1L)
-    redQueue.schedule("task", 100L, cancelable = false) {
-      log += "run@${taskFaker.nanoTime}"
-      redQueue.cancelAll()
-      return@schedule delays.removeAt(0)
-    }
+    redQueue.schedule(object : Task("task", cancelable = false) {
+      val delays = mutableListOf(50L, -1L)
+      override fun runOnce(): Long {
+        log += "run@${taskFaker.nanoTime}"
+        redQueue.cancelAll()
+        return delays.removeAt(0)
+      }
+    }, 100L)
 
     taskFaker.advanceUntil(0L)
     assertThat(log).isEmpty()
@@ -227,9 +232,12 @@ class TaskRunnerTest {
   }
 
   @Test fun interruptingCoordinatorAttemptsToCancelsAndFails() {
-    redQueue.execute("task", 100L, cancelable = false) {
-      log += "run@${taskFaker.nanoTime}"
-    }
+    redQueue.schedule(object : Task("task", cancelable = false) {
+      override fun runOnce(): Long {
+        log += "run@${taskFaker.nanoTime}"
+        return -1L
+      }
+    }, 100L)
 
     taskFaker.advanceUntil(0L)
     assertThat(log).isEmpty()
@@ -317,7 +325,7 @@ class TaskRunnerTest {
    * cumbersome to implement properly because the active task might be a cancel.
    */
   @Test fun scheduledTasksDoesNotIncludeRunningTask() {
-    val task = object : Task("task one", cancelable = true) {
+    val task = object : Task("task one") {
       val schedules = mutableListOf(200L)
       override fun runOnce(): Long {
         if (schedules.isNotEmpty()) {
@@ -408,10 +416,12 @@ class TaskRunnerTest {
   }
 
   @Test fun shutdownFailsToCancelsScheduledTasks() {
-    redQueue.schedule("task", 100L, cancelable = false) {
-      log += "run@${taskFaker.nanoTime}"
-      return@schedule 50L
-    }
+    redQueue.schedule(object : Task("task", false) {
+      override fun runOnce(): Long {
+        log += "run@${taskFaker.nanoTime}"
+        return 50L
+      }
+    }, 100L)
 
     taskFaker.advanceUntil(0L)
     assertThat(log).isEmpty()
@@ -430,7 +440,7 @@ class TaskRunnerTest {
   @Test fun scheduleDiscardsTaskWhenShutdown() {
     redQueue.shutdown()
 
-    redQueue.tryExecute("task", 100L) {
+    redQueue.execute("task", 100L) {
       // Do nothing.
     }
 
@@ -441,9 +451,11 @@ class TaskRunnerTest {
     redQueue.shutdown()
 
     try {
-      redQueue.execute("task", 100L) {
-        // Do nothing.
-      }
+      redQueue.schedule(object : Task("task", cancelable = false) {
+        override fun runOnce(): Long {
+          return -1L
+        }
+      }, 100L)
       fail()
     } catch (_: RejectedExecutionException) {
     }

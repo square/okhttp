@@ -389,7 +389,7 @@ class MockWebServer : ExternalResource(), Closeable {
 
     portField = serverSocket!!.localPort
 
-    taskRunner.newQueue().execute("MockWebServer $portField") {
+    taskRunner.newQueue().execute("MockWebServer $portField", cancelable = false) {
       try {
         logger.info("${this@MockWebServer} starting to accept connections")
         acceptConnections()
@@ -464,7 +464,7 @@ class MockWebServer : ExternalResource(), Closeable {
   }
 
   private fun serveConnection(raw: Socket) {
-    taskRunner.newQueue().execute("MockWebServer ${raw.remoteSocketAddress}") {
+    taskRunner.newQueue().execute("MockWebServer ${raw.remoteSocketAddress}", cancelable = false) {
       try {
         SocketHandler(raw).handle()
       } catch (e: IOException) {

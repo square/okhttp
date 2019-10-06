@@ -393,7 +393,7 @@ class RealWebSocket(
 
   private fun runWriter() {
     assert(Thread.holdsLock(this))
-    taskQueue.trySchedule(writerTask!!)
+    taskQueue.schedule(writerTask!!)
   }
 
   /**
@@ -535,7 +535,7 @@ class RealWebSocket(
     val sink: BufferedSink
   ) : Closeable
 
-  private inner class WriterTask : Task("$name writer", cancelable = true) {
+  private inner class WriterTask : Task("$name writer") {
     override fun runOnce(): Long {
       try {
         if (writeOneFrame()) return 0L
