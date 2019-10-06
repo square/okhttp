@@ -23,6 +23,7 @@ cd $DIR
 # Generate the API docs
 ./gradlew \
   :mockwebserver:dokka \
+  :okhttp-brotli:dokka \
   :okhttp-dnsoverhttps:dokka \
   :okhttp-logging-interceptor:dokka \
   :okhttp-sse:dokka \
