@@ -27,7 +27,6 @@ import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.duplex.MwsDuplexAccess
-import okhttp3.internal.execute
 import okhttp3.internal.http.HttpMethod
 import okhttp3.internal.http2.ErrorCode
 import okhttp3.internal.http2.Header
@@ -81,8 +80,6 @@ import java.util.Collections
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -135,7 +132,6 @@ class MockWebServer : ExternalResource(), Closeable {
 
   private var serverSocket: ServerSocket? = null
   private var sslSocketFactory: SSLSocketFactory? = null
-  private var executor: ExecutorService? = null
   private var tunnelProxy: Boolean = false
   private var clientAuth = CLIENT_AUTH_NONE
 
@@ -383,7 +379,6 @@ class MockWebServer : ExternalResource(), Closeable {
     require(!started) { "start() already called" }
     started = true
 
-    executor = Executors.newCachedThreadPool(threadFactory("MockWebServer", false))
     this.inetSocketAddress = inetSocketAddress
 
     serverSocket = serverSocketFactory!!.createServerSocket()
@@ -393,7 +388,8 @@ class MockWebServer : ExternalResource(), Closeable {
     serverSocket!!.bind(inetSocketAddress, 50)
 
     portField = serverSocket!!.localPort
-    executor!!.execute("MockWebServer $portField") {
+
+    taskRunner.newQueue().execute("MockWebServer $portField") {
       try {
         logger.info("${this@MockWebServer} starting to accept connections")
         acceptConnections()
@@ -416,7 +412,6 @@ class MockWebServer : ExternalResource(), Closeable {
         httpConnection.remove()
       }
       dispatcher.shutdown()
-      executor!!.shutdown()
     }
   }
 
@@ -452,16 +447,8 @@ class MockWebServer : ExternalResource(), Closeable {
     serverSocket!!.close()
 
     // Await shutdown.
-    try {
-      if (!executor!!.awaitTermination(5, TimeUnit.SECONDS)) {
-        throw IOException("Gave up waiting for executor to shut down")
-      }
-    } catch (e: InterruptedException) {
-      throw AssertionError()
-    }
-
     for (queue in taskRunner.activeQueues()) {
-      if (!queue.awaitIdle(TimeUnit.MILLISECONDS.toNanos(500L))) {
+      if (!queue.awaitIdle(TimeUnit.SECONDS.toNanos(5))) {
         throw IOException("Gave up waiting for queue to shut down")
       }
     }
@@ -477,7 +464,7 @@ class MockWebServer : ExternalResource(), Closeable {
   }
 
   private fun serveConnection(raw: Socket) {
-    executor!!.execute("MockWebServer ${raw.remoteSocketAddress}") {
+    taskRunner.newQueue().execute("MockWebServer ${raw.remoteSocketAddress}") {
       try {
         SocketHandler(raw).handle()
       } catch (e: IOException) {
