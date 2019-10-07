@@ -196,7 +196,7 @@ public final class ConnectionPoolTest {
     Thread[] threads = new Thread[Thread.activeCount() * 2];
     Thread.enumerate(threads);
     for (Thread t: threads) {
-      if (t != null && t.getName().equals("OkHttp Task Coordinator")) {
+      if (t != null && t.getName().equals("OkHttp TaskRunner")) {
         t.interrupt();
       }
     }

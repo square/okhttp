@@ -27,7 +27,6 @@ import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.duplex.MwsDuplexAccess
-import okhttp3.internal.execute
 import okhttp3.internal.http.HttpMethod
 import okhttp3.internal.http2.ErrorCode
 import okhttp3.internal.http2.Header
@@ -81,8 +80,6 @@ import java.util.Collections
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -100,7 +97,9 @@ import javax.net.ssl.X509TrustManager
  * in sequence.
  */
 class MockWebServer : ExternalResource(), Closeable {
-  private val taskRunner = TaskRunner()
+  private val taskRunnerBackend = TaskRunner.RealBackend(
+      threadFactory("MockWebServer TaskRunner", true))
+  private val taskRunner = TaskRunner(taskRunnerBackend)
   private val requestQueue = LinkedBlockingQueue<RecordedRequest>()
   private val openClientSockets =
       Collections.newSetFromMap(ConcurrentHashMap<Socket, Boolean>())
@@ -133,7 +132,6 @@ class MockWebServer : ExternalResource(), Closeable {
 
   private var serverSocket: ServerSocket? = null
   private var sslSocketFactory: SSLSocketFactory? = null
-  private var executor: ExecutorService? = null
   private var tunnelProxy: Boolean = false
   private var clientAuth = CLIENT_AUTH_NONE
 
@@ -331,7 +329,8 @@ class MockWebServer : ExternalResource(), Closeable {
    * @return the head of the request queue
    */
   @Throws(InterruptedException::class)
-  fun takeRequest(timeout: Long, unit: TimeUnit): RecordedRequest? = requestQueue.poll(timeout, unit)
+  fun takeRequest(timeout: Long, unit: TimeUnit): RecordedRequest? =
+      requestQueue.poll(timeout, unit)
 
   @JvmName("-deprecated_requestCount")
   @Deprecated(
@@ -380,7 +379,6 @@ class MockWebServer : ExternalResource(), Closeable {
     require(!started) { "start() already called" }
     started = true
 
-    executor = Executors.newCachedThreadPool(threadFactory("MockWebServer", false))
     this.inetSocketAddress = inetSocketAddress
 
     serverSocket = serverSocketFactory!!.createServerSocket()
@@ -390,7 +388,8 @@ class MockWebServer : ExternalResource(), Closeable {
     serverSocket!!.bind(inetSocketAddress, 50)
 
     portField = serverSocket!!.localPort
-    executor!!.execute("MockWebServer $portField") {
+
+    taskRunner.newQueue().execute("MockWebServer $portField") {
       try {
         logger.info("${this@MockWebServer} starting to accept connections")
         acceptConnections()
@@ -413,7 +412,6 @@ class MockWebServer : ExternalResource(), Closeable {
         httpConnection.remove()
       }
       dispatcher.shutdown()
-      executor!!.shutdown()
     }
   }
 
@@ -449,19 +447,12 @@ class MockWebServer : ExternalResource(), Closeable {
     serverSocket!!.close()
 
     // Await shutdown.
-    try {
-      if (!executor!!.awaitTermination(5, TimeUnit.SECONDS)) {
-        throw IOException("Gave up waiting for executor to shut down")
-      }
-    } catch (e: InterruptedException) {
-      throw AssertionError()
-    }
-
     for (queue in taskRunner.activeQueues()) {
-      if (!queue.awaitIdle(TimeUnit.MILLISECONDS.toNanos(500L))) {
+      if (!queue.awaitIdle(TimeUnit.SECONDS.toNanos(5))) {
         throw IOException("Gave up waiting for queue to shut down")
       }
     }
+    taskRunnerBackend.shutdown()
   }
 
   @Synchronized override fun after() {
@@ -473,7 +464,7 @@ class MockWebServer : ExternalResource(), Closeable {
   }
 
   private fun serveConnection(raw: Socket) {
-    executor!!.execute("MockWebServer ${raw.remoteSocketAddress}") {
+    taskRunner.newQueue().execute("MockWebServer ${raw.remoteSocketAddress}") {
       try {
         SocketHandler(raw).handle()
       } catch (e: IOException) {
@@ -593,10 +584,17 @@ class MockWebServer : ExternalResource(), Closeable {
       source: BufferedSource,
       sink: BufferedSink
     ): Boolean {
-      val request = readRequest(socket, source, sink, sequenceNumber) ?: return false
+      if (source.exhausted()) {
+        return false // No more requests on this socket.
+      }
 
+      val request = readRequest(socket, source, sink, sequenceNumber)
       atomicRequestCount.incrementAndGet()
       requestQueue.add(request)
+
+      if (request.failure != null) {
+        return false // Nothing to respond to.
+      }
 
       val response = dispatcher.dispatch(request)
       if (response.socketPolicy === DISCONNECT_AFTER_REQUEST) {
@@ -674,78 +672,80 @@ class MockWebServer : ExternalResource(), Closeable {
     source: BufferedSource,
     sink: BufferedSink,
     sequenceNumber: Int
-  ): RecordedRequest? {
-    val request: String
-    try {
-      request = source.readUtf8LineStrict()
-    } catch (streamIsClosed: IOException) {
-      return null // no request because we closed the stream
-    }
-
-    if (request.isEmpty()) {
-      return null // no request because the stream is exhausted
-    }
+  ): RecordedRequest {
+    var request = ""
     val headers = Headers.Builder()
     var contentLength = -1L
     var chunked = false
     var expectContinue = false
-    while (true) {
-      val header = source.readUtf8LineStrict()
-      if (header.isEmpty()) {
-        break
-      }
-      addHeaderLenient(headers, header)
-      val lowercaseHeader = header.toLowerCase(Locale.US)
-      if (contentLength == -1L && lowercaseHeader.startsWith("content-length:")) {
-        contentLength = header.substring(15).trim().toLong()
-      }
-      if (lowercaseHeader.startsWith("transfer-encoding:") && lowercaseHeader.substring(
-              18).trim() == "chunked") {
-        chunked = true
-      }
-      if (lowercaseHeader.startsWith("expect:") && lowercaseHeader.substring(
-              7).trim().equals("100-continue", ignoreCase = true)) {
-        expectContinue = true
-      }
-    }
-
-    val socketPolicy = dispatcher.peek().socketPolicy
-    if (expectContinue && socketPolicy === EXPECT_CONTINUE || socketPolicy === CONTINUE_ALWAYS) {
-      sink.writeUtf8("HTTP/1.1 100 Continue\r\n")
-      sink.writeUtf8("Content-Length: 0\r\n")
-      sink.writeUtf8("\r\n")
-      sink.flush()
-    }
-
-    var hasBody = false
     val requestBody = TruncatingBuffer(bodyLimit)
     val chunkSizes = mutableListOf<Int>()
-    val policy = dispatcher.peek()
-    if (contentLength != -1L) {
-      hasBody = contentLength > 0L
-      throttledTransfer(policy, socket, source, requestBody.buffer(), contentLength, true)
-    } else if (chunked) {
-      hasBody = true
+    var failure: IOException? = null
+
+    try {
+      request = source.readUtf8LineStrict()
+      if (request.isEmpty()) {
+        throw ProtocolException("no request because the stream is exhausted")
+      }
+
       while (true) {
-        val chunkSize = source.readUtf8LineStrict().trim().toInt(16)
-        if (chunkSize == 0) {
-          readEmptyLine(source)
+        val header = source.readUtf8LineStrict()
+        if (header.isEmpty()) {
           break
         }
-        chunkSizes.add(chunkSize)
-        throttledTransfer(policy, socket, source,
-            requestBody.buffer(), chunkSize.toLong(), true)
-        readEmptyLine(source)
+        addHeaderLenient(headers, header)
+        val lowercaseHeader = header.toLowerCase(Locale.US)
+        if (contentLength == -1L && lowercaseHeader.startsWith("content-length:")) {
+          contentLength = header.substring(15).trim().toLong()
+        }
+        if (lowercaseHeader.startsWith("transfer-encoding:") && lowercaseHeader.substring(
+                18).trim() == "chunked") {
+          chunked = true
+        }
+        if (lowercaseHeader.startsWith("expect:") && lowercaseHeader.substring(
+                7).trim().equals("100-continue", ignoreCase = true)) {
+          expectContinue = true
+        }
       }
-    }
 
-    val method = request.substringBefore(' ')
-    require(!hasBody || HttpMethod.permitsRequestBody(method)) {
-      "Request must not have a body: $request"
+      val socketPolicy = dispatcher.peek().socketPolicy
+      if (expectContinue && socketPolicy === EXPECT_CONTINUE || socketPolicy === CONTINUE_ALWAYS) {
+        sink.writeUtf8("HTTP/1.1 100 Continue\r\n")
+        sink.writeUtf8("Content-Length: 0\r\n")
+        sink.writeUtf8("\r\n")
+        sink.flush()
+      }
+
+      var hasBody = false
+      val policy = dispatcher.peek()
+      if (contentLength != -1L) {
+        hasBody = contentLength > 0L
+        throttledTransfer(policy, socket, source, requestBody.buffer(), contentLength, true)
+      } else if (chunked) {
+        hasBody = true
+        while (true) {
+          val chunkSize = source.readUtf8LineStrict().trim().toInt(16)
+          if (chunkSize == 0) {
+            readEmptyLine(source)
+            break
+          }
+          chunkSizes.add(chunkSize)
+          throttledTransfer(policy, socket, source,
+              requestBody.buffer(), chunkSize.toLong(), true)
+          readEmptyLine(source)
+        }
+      }
+
+      val method = request.substringBefore(' ')
+      require(!hasBody || HttpMethod.permitsRequestBody(method)) {
+        "Request must not have a body: $request"
+      }
+    } catch (e: IOException) {
+      failure = e
     }
 
     return RecordedRequest(request, headers.build(), chunkSizes, requestBody.receivedByteCount,
-        requestBody.buffer, sequenceNumber, socket)
+        requestBody.buffer, sequenceNumber, socket, failure)
   }
 
   @Throws(IOException::class)
@@ -959,6 +959,9 @@ class MockWebServer : ExternalResource(), Closeable {
       val request = readRequest(stream)
       atomicRequestCount.incrementAndGet()
       requestQueue.add(request)
+      if (request.failure != null) {
+        return // Nothing to respond to.
+      }
 
       val response: MockResponse = dispatcher.dispatch(request)
 
@@ -1013,17 +1016,21 @@ class MockWebServer : ExternalResource(), Closeable {
       }
 
       val body = Buffer()
+      val requestLine = "$method $path HTTP/1.1"
+      var exception: IOException? = null
       if (readBody && !peek.isDuplex) {
-        val contentLengthString = headers["content-length"]
-        val byteCount = contentLengthString?.toLong() ?: Long.MAX_VALUE
-        throttledTransfer(peek, socket, stream.getSource().buffer(),
-            body, byteCount, true)
+        try {
+          val contentLengthString = headers["content-length"]
+          val byteCount = contentLengthString?.toLong() ?: Long.MAX_VALUE
+          throttledTransfer(peek, socket, stream.getSource().buffer(),
+              body, byteCount, true)
+        } catch (e: IOException) {
+          exception = e
+        }
       }
 
-      val requestLine = "$method $path HTTP/1.1"
-      val chunkSizes = emptyList<Int>() // No chunked encoding for HTTP/2.
-      return RecordedRequest(requestLine, headers, chunkSizes, body.size, body,
-          sequenceNumber.getAndIncrement(), socket)
+      return RecordedRequest(requestLine, headers, emptyList(), body.size, body,
+          sequenceNumber.getAndIncrement(), socket, exception)
     }
 
     @Throws(IOException::class)

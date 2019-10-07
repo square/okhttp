@@ -30,8 +30,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.annotation.Nullable;
 import okhttp3.Cache;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -1619,5 +1621,34 @@ public final class HttpOverHttp2Test {
     client.newCall(new Request.Builder().url(server.url("")).build()).enqueue(callback);
 
     latch.await();
+  }
+
+  @Test public void cancelWhileWritingRequestBodySendsCancelToServer() throws Exception {
+    server.enqueue(new MockResponse());
+
+    AtomicReference<Call> callReference = new AtomicReference<>();
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .post(new RequestBody() {
+          @Override public @Nullable MediaType contentType() {
+            return MediaType.get("text/plain; charset=utf-8");
+          }
+
+          @Override public void writeTo(BufferedSink sink) {
+            callReference.get().cancel();
+          }
+        })
+        .build());
+    callReference.set(call);
+
+    try {
+      call.execute();
+      fail();
+    } catch (IOException expected) {
+      assertThat(call.isCanceled()).isTrue();
+    }
+
+    RecordedRequest recordedRequest = server.takeRequest();
+    assertThat(recordedRequest.getFailure()).hasMessage("stream was reset: CANCEL");
   }
 }

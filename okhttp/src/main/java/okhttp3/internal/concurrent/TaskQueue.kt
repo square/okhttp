@@ -28,22 +28,16 @@ import java.util.concurrent.TimeUnit
 class TaskQueue internal constructor(
   private val taskRunner: TaskRunner
 ) {
-  private var shutdown = false
+  internal var shutdown = false
 
   /** This queue's currently-executing task, or null if none is currently executing. */
-  private var activeTask: Task? = null
-
-  /** True if the [activeTask] should not recur when it completes. */
-  private var cancelActiveTask = false
+  internal var activeTask: Task? = null
 
   /** Scheduled tasks ordered by [Task.nextExecuteNanoTime]. */
-  private val futureTasks = mutableListOf<Task>()
+  internal val futureTasks = mutableListOf<Task>()
 
-  internal fun isActive(): Boolean {
-    check(Thread.holdsLock(taskRunner))
-
-    return activeTask != null || futureTasks.isNotEmpty()
-  }
+  /** True if the [activeTask] should be canceled when it completes. */
+  internal var cancelActiveTask = false
 
   /**
    * Returns a snapshot of tasks currently scheduled for execution. Does not include the
@@ -72,6 +66,18 @@ class TaskQueue internal constructor(
     }
   }
 
+  /** Overload of [schedule] that uses a lambda for a repeating task. */
+  inline fun schedule(
+    name: String,
+    delayNanos: Long = 0L,
+    cancelable: Boolean = true,
+    crossinline block: () -> Long
+  ) {
+    schedule(object : Task(name, cancelable) {
+      override fun runOnce() = block()
+    }, delayNanos)
+  }
+
   /** Like [schedule], but this silently discard the task if the queue is shut down. */
   fun trySchedule(task: Task, delayNanos: Long = 0L) {
     synchronized(taskRunner) {
@@ -83,11 +89,41 @@ class TaskQueue internal constructor(
     }
   }
 
+  /** Executes [block] once on a task runner thread. */
+  inline fun execute(
+    name: String,
+    delayNanos: Long = 0L,
+    cancelable: Boolean = true,
+    crossinline block: () -> Unit
+  ) {
+    schedule(object : Task(name, cancelable) {
+      override fun runOnce(): Long {
+        block()
+        return -1L
+      }
+    }, delayNanos)
+  }
+
+  /** Like [execute], but this silently discard the task if the queue is shut down. */
+  inline fun tryExecute(
+    name: String,
+    delayNanos: Long = 0L,
+    cancelable: Boolean = true,
+    crossinline block: () -> Unit
+  ) {
+    trySchedule(object : Task(name, cancelable) {
+      override fun runOnce(): Long {
+        block()
+        return -1L
+      }
+    }, delayNanos)
+  }
+
   /** Returns true if this queue became idle before the timeout elapsed. */
   fun awaitIdle(delayNanos: Long): Boolean {
     val latch = CountDownLatch(1)
 
-    val task = object : Task("awaitIdle") {
+    val task = object : Task("OkHttp awaitIdle", cancelable = false) {
       override fun runOnce(): Long {
         latch.countDown()
         return -1L
@@ -104,8 +140,8 @@ class TaskQueue internal constructor(
     return latch.await(delayNanos, TimeUnit.NANOSECONDS)
   }
 
-  /** Adds [task] to run in [delayNanos]. Returns true if the coordinator should run. */
-  private fun scheduleAndDecide(task: Task, delayNanos: Long): Boolean {
+  /** Adds [task] to run in [delayNanos]. Returns true if the coordinator is impacted. */
+  internal fun scheduleAndDecide(task: Task, delayNanos: Long): Boolean {
     task.initQueue(this)
 
     val now = taskRunner.backend.nanoTime()
@@ -124,7 +160,7 @@ class TaskQueue internal constructor(
     if (insertAt == -1) insertAt = futureTasks.size
     futureTasks.add(insertAt, task)
 
-    // Run the coordinator if we inserted at the front.
+    // Impact the coordinator if we inserted at the front.
     return insertAt == 0
   }
 
@@ -154,8 +190,8 @@ class TaskQueue internal constructor(
     }
   }
 
-  /** Returns true if the coordinator should run. */
-  private fun cancelAllAndDecide(): Boolean {
+  /** Returns true if the coordinator is impacted. */
+  internal fun cancelAllAndDecide(): Boolean {
     if (activeTask != null && activeTask!!.cancelable) {
       cancelActiveTask = true
     }
@@ -168,44 +204,5 @@ class TaskQueue internal constructor(
       }
     }
     return tasksCanceled
-  }
-
-  /**
-   * Posts the next available task to an executor for immediate execution.
-   *
-   * Returns the delay until the next call to this method, -1L for no further calls, or
-   * [Long.MAX_VALUE] to wait indefinitely.
-   */
-  internal fun executeReadyTask(now: Long): Long {
-    check(Thread.holdsLock(taskRunner))
-
-    if (activeTask != null) return Long.MAX_VALUE // This queue is busy.
-
-    // Check if a task is immediately ready.
-    val runTask = futureTasks.firstOrNull() ?: return -1L
-    val delayNanos = runTask.nextExecuteNanoTime - now
-    if (delayNanos <= 0) {
-      activeTask = runTask
-      futureTasks.removeAt(0)
-      taskRunner.backend.executeTask(runTask.runRunnable!!)
-      return Long.MAX_VALUE // This queue is busy until the run completes.
-    }
-
-    // Wait until the next task is ready.
-    return delayNanos
-  }
-
-  internal fun runCompleted(task: Task, delayNanos: Long) {
-    synchronized(taskRunner) {
-      check(activeTask === task)
-
-      if (delayNanos != -1L && !cancelActiveTask && !shutdown) {
-        scheduleAndDecide(task, delayNanos)
-      }
-
-      activeTask = null
-      cancelActiveTask = false
-      taskRunner.kickCoordinator(this)
-    }
   }
 }

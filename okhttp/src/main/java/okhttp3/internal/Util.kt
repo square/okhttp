@@ -48,7 +48,6 @@ import java.util.Comparator
 import java.util.LinkedHashMap
 import java.util.Locale
 import java.util.TimeZone
-import java.util.concurrent.Executor
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
 import kotlin.text.Charsets.UTF_32BE
@@ -359,7 +358,7 @@ fun Source.discard(timeout: Int, timeUnit: TimeUnit): Boolean = try {
   false
 }
 
-fun Socket.connectionName(): String {
+fun Socket.peerName(): String {
   val address = remoteSocketAddress
   return if (address is InetSocketAddress) address.hostName else address.toString()
 }
@@ -380,15 +379,6 @@ inline fun threadName(name: String, block: () -> Unit) {
     block()
   } finally {
     currentThread.name = oldName
-  }
-}
-
-/** Execute [block], setting the executing thread's name to [name] for the duration. */
-inline fun Executor.execute(name: String, crossinline block: () -> Unit) {
-  execute {
-    threadName(name) {
-      block()
-    }
   }
 }
 
