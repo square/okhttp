@@ -143,17 +143,7 @@ class AndroidPlatform : Platform() {
   }
 
   override fun buildCertificateChainCleaner(trustManager: X509TrustManager): CertificateChainCleaner =
-      try {
-        val extensionsClass = Class.forName("android.net.http.X509TrustManagerExtensions")
-        val constructor = extensionsClass.getConstructor(X509TrustManager::class.java)
-        val extensions = constructor.newInstance(trustManager)
-        val checkServerTrusted = extensionsClass.getMethod(
-            "checkServerTrusted", Array<X509Certificate>::class.java, String::class.java,
-            String::class.java)
-        AndroidCertificateChainCleaner(extensions, checkServerTrusted)
-      } catch (_: Exception) {
-        super.buildCertificateChainCleaner(trustManager)
-      }
+        AndroidCertificateChainCleaner.build(trustManager) ?: super.buildCertificateChainCleaner(trustManager)
 
   override fun buildTrustRootIndex(trustManager: X509TrustManager): TrustRootIndex = try {
     // From org.conscrypt.TrustManagerImpl, we want the method with this signature:
