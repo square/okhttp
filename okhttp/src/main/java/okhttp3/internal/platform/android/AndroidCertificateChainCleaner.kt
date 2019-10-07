@@ -53,7 +53,7 @@ internal class AndroidCertificateChainCleaner(
       other is AndroidCertificateChainCleaner &&
           other.trustManager === this.trustManager
 
-  override fun hashCode(): Int = System.identityHashCode(trustManager.hashCode())
+  override fun hashCode(): Int = System.identityHashCode(trustManager)
 
   companion object {
     fun build(trustManager: X509TrustManager): AndroidCertificateChainCleaner? = try {

@@ -51,5 +51,5 @@ internal class Android10CertificateChainCleaner(
       other is Android10CertificateChainCleaner &&
           other.trustManager === this.trustManager
 
-  override fun hashCode(): Int = System.identityHashCode(trustManager.hashCode())
+  override fun hashCode(): Int = System.identityHashCode(trustManager)
 }
