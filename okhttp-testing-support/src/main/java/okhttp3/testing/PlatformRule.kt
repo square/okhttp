@@ -101,6 +101,10 @@ open class PlatformRule @JvmOverloads constructor(
     expectFailure(platformMatches(CONSCRYPT_PROPERTY))
   }
 
+  fun expectFailureOnCorrettoPlatform() {
+    expectFailure(platformMatches(CORRETTO_PROPERTY))
+  }
+
   fun expectFailureOnOpenJSSEPlatform() {
     expectFailure(platformMatches(OPENJSSE_PROPERTY))
   }
