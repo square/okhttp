@@ -16,7 +16,6 @@
 package okhttp3
 
 import okhttp3.TestUtil.assumeNetwork
-import okhttp3.internal.platform.CorrettoPlatform
 import okhttp3.testing.PlatformRule
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
