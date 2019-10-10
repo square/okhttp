@@ -67,8 +67,8 @@ class CorrettoTest {
   }
 
   @Test
-  fun testBuildIfSupported() {
-    val actual = CorrettoPlatform.isSupported
-    assertThat(actual).isTrue()
+  fun testIfSupported() {
+    assertThat(PlatformRule.isCorrettoSupported).isTrue()
+    assertThat(PlatformRule.isCorrettoInstalled).isTrue()
   }
 }

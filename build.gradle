@@ -31,7 +31,7 @@ buildscript {
       'bouncycastle': "org.bouncycastle:bcprov-jdk15on:${versions.bouncycastle}",
       'brotli': "org.brotli:dec:${versions.brotli}",
       'conscrypt': "org.conscrypt:conscrypt-openjdk-uber:${versions.conscrypt}",
-      'corretto': "software.amazon.cryptools:AmazonCorrettoCryptoProvider:1.1.1:linux-x86_64",
+      'corretto': "software.amazon.cryptools:AmazonCorrettoCryptoProvider:${versions.corretto}:linux-x86_64",
       'guava': "com.google.guava:guava:${versions.guava}",
       'jnrUnixsocket': "com.github.jnr:jnr-unixsocket:${versions.jnrUnixsocket}",
       'jsoup': "org.jsoup:jsoup:${versions.jsoup}",
