@@ -19,7 +19,6 @@ import okhttp3.TestUtil.assumeNetwork
 import okhttp3.testing.PlatformRule
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 
@@ -37,7 +36,6 @@ class CorrettoTest {
   }
 
   @Test
-  @Ignore
   fun testMozilla() {
     assumeNetwork()
 
@@ -50,7 +48,6 @@ class CorrettoTest {
   }
 
   @Test
-  @Ignore
   fun testGoogle() {
     assumeNetwork()
 
