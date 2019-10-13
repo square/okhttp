@@ -259,8 +259,7 @@ workflows:
       - testcorretto:
           filters:
             branches:
-              ignore:
-                - gh-pages
+              only: master
   nightly:
     triggers:
       - schedule:
