@@ -1817,11 +1817,6 @@ public final class Http2ConnectionTest {
     assertThat(actual).isEqualTo(expected);
   }
 
-  /** Reads {@code prefix} from {@code source}. */
-  private void assertStreamPrefix(String prefix, BufferedSource source) throws IOException {
-    assertThat(source.readUtf8(Utf8.size(prefix))).isEqualTo(prefix);
-  }
-
   /**
    * Returns true when all work currently in progress by the watchdog have completed. This method
    * creates more work for the watchdog and waits for that work to be executed. When it is, we know

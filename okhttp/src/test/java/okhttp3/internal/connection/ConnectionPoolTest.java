@@ -187,7 +187,7 @@ public final class ConnectionPoolTest {
     TaskRunner realTaskRunner = TaskRunner.INSTANCE;
     RealConnectionPool pool = new RealConnectionPool(
         realTaskRunner, 2, 100L, TimeUnit.NANOSECONDS);
-    RealConnection c1 = newConnection(pool, routeA1, Long.MAX_VALUE);
+    newConnection(pool, routeA1, Long.MAX_VALUE);
 
     assertThat(realTaskRunner.activeQueues()).isNotEmpty();
 

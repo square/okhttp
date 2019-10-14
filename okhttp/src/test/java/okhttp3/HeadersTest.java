@@ -133,7 +133,7 @@ public final class HeadersTest {
 
   @Test public void addUnsafeNonAsciiRejectsUnicodeName() {
     try {
-      Headers headers = new Headers.Builder()
+      new Headers.Builder()
           .addUnsafeNonAscii("héader1", "value1")
           .build();
       fail("Should have complained about invalid value");
