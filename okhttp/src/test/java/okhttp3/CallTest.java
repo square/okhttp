@@ -2022,7 +2022,7 @@ public final class CallTest {
           }
 
           @Override public void writeTo(BufferedSink sink) throws IOException {
-            sink.writeUtf8("attempt " + (attempt++));
+            sink.writeUtf8("attempt " + attempt++);
           }
         })
         .build();
@@ -2053,7 +2053,7 @@ public final class CallTest {
           }
 
           @Override public void writeTo(BufferedSink sink) throws IOException {
-            sink.writeUtf8("attempt " + (attempt++));
+            sink.writeUtf8("attempt " + attempt++);
           }
 
           @Override public boolean isOneShot() {
