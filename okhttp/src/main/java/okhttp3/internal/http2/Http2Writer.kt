@@ -123,7 +123,7 @@ class Http2Writer(
   @Synchronized @Throws(IOException::class)
   fun rstStream(streamId: Int, errorCode: ErrorCode) {
     if (closed) throw IOException("closed")
-    require(errorCode.httpCode != -1)
+    require(errorCode.code != -1)
 
     frameHeader(
         streamId = streamId,
@@ -131,7 +131,7 @@ class Http2Writer(
         type = TYPE_RST_STREAM,
         flags = FLAG_NONE
     )
-    sink.writeInt(errorCode.httpCode)
+    sink.writeInt(errorCode.code)
     sink.flush()
   }
 
@@ -218,7 +218,7 @@ class Http2Writer(
   @Synchronized @Throws(IOException::class)
   fun goAway(lastGoodStreamId: Int, errorCode: ErrorCode, debugData: ByteArray) {
     if (closed) throw IOException("closed")
-    require(errorCode.httpCode != -1) { "errorCode.httpCode == -1" }
+    require(errorCode.code != -1) { "errorCode.code == -1" }
     frameHeader(
         streamId = 0,
         length = 8 + debugData.size,
@@ -226,7 +226,7 @@ class Http2Writer(
         flags = FLAG_NONE
     )
     sink.writeInt(lastGoodStreamId)
-    sink.writeInt(errorCode.httpCode)
+    sink.writeInt(errorCode.code)
     if (debugData.isNotEmpty()) {
       sink.write(debugData)
     }
