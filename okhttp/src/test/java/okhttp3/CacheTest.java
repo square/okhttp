@@ -1931,7 +1931,8 @@ public final class CacheTest {
     assertThat(response2.code()).isEqualTo(HttpURLConnection.HTTP_OK);
     assertThat(response2.body().string()).isEqualTo("A");
     assertThat(response2.header("Allow")).isEqualTo("GET, HEAD");
-    assertThat((double) (response2.receivedResponseAtMillis() - t1)).isCloseTo(
+    Long originalTimestamp = response2.receivedResponseAtMillis();
+    assertThat((double) (originalTimestamp - t1)).isCloseTo(
         (double) 0, offset(250.0));
 
     // A full cache hit reads the cache.
@@ -1940,8 +1941,7 @@ public final class CacheTest {
     Response response3 = get(server.url("/a"));
     assertThat(response3.body().string()).isEqualTo("A");
     assertThat(response3.header("Allow")).isEqualTo("GET, HEAD");
-    assertThat((double) (response3.receivedResponseAtMillis() - t1)).isCloseTo(
-        (double) 0, offset(250.0));
+    assertThat(response3.receivedResponseAtMillis()).isEqualTo(originalTimestamp);
 
     assertThat(server.getRequestCount()).isEqualTo(2);
   }
