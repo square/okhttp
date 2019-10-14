@@ -284,7 +284,7 @@ public final class OkHttpClientTest {
       new OkHttpClient.Builder().protocols(protocols);
       fail();
     } catch (IllegalArgumentException expected) {
-      assertThat(expected.getMessage()).isEqualTo(("protocols must not contain null"));
+      assertThat(expected.getMessage()).isEqualTo("protocols must not contain null");
     }
   }
 
