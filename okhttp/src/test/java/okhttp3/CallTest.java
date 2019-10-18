@@ -3309,7 +3309,7 @@ public final class CallTest {
         .build();
 
     try {
-      Response response = client.newCall(request).execute();
+      client.newCall(request).execute();
       fail();
     } catch (IOException expected) {
     }

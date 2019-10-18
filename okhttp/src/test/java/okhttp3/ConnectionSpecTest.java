@@ -176,7 +176,7 @@ public final class ConnectionSpecTest {
   @Test public void tls_stringCiphersAndVersions() throws Exception {
     // Supporting arbitrary input strings allows users to enable suites and versions that are not
     // yet known to the library, but are supported by the platform.
-    ConnectionSpec tlsSpec = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
+    new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
         .cipherSuites("MAGIC-CIPHER")
         .tlsVersions("TLS9k")
         .build();

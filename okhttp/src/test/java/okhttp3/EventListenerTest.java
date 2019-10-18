@@ -309,18 +309,6 @@ public final class EventListenerTest {
     };
   }
 
-  private Matcher<Long> lessThan(final long value) {
-    return new BaseMatcher<Long>() {
-      @Override public void describeTo(Description description) {
-        description.appendText("< " + value);
-      }
-
-      @Override public boolean matches(Object o) {
-        return ((Long) o) < value;
-      }
-    };
-  }
-
   private Matcher<Response> matchesProtocol(final Protocol protocol) {
     return new BaseMatcher<Response>() {
       @Override public void describeTo(Description description) {
