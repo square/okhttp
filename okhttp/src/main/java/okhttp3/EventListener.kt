@@ -329,7 +329,7 @@ abstract class EventListener {
    * Will only be invoked for requests having a response body e.g. won't be invoked for a web socket
    * upgrade.
    *
-   * This method is always invoked after [requestBodyStart].
+   * This method is always invoked after [responseBodyStart].
    */
   open fun responseBodyEnd(
     call: Call,
