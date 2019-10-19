@@ -1239,7 +1239,7 @@ public final class HttpOverHttp2Test {
   @Test public void missingPongsFailsConnection() throws Exception {
     if (protocol == Protocol.HTTP_2) {
       // https://github.com/square/okhttp/issues/5221
-      platform.expectFailureFromJdkVersion(12);
+      platform.expectFailureOnJdkVersion(12);
     }
 
     // Ping every 500 ms, starting at 500 ms.
