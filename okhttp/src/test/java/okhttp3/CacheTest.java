@@ -1931,17 +1931,16 @@ public final class CacheTest {
     assertThat(response2.code()).isEqualTo(HttpURLConnection.HTTP_OK);
     assertThat(response2.body().string()).isEqualTo("A");
     assertThat(response2.header("Allow")).isEqualTo("GET, HEAD");
-    Long originalTimestamp = response2.receivedResponseAtMillis();
-    assertThat((double) (originalTimestamp - t1)).isCloseTo(
+    Long updatedTimestamp = response2.receivedResponseAtMillis();
+    assertThat((double) (updatedTimestamp - t1)).isCloseTo(
         (double) 0, offset(250.0));
 
     // A full cache hit reads the cache.
-    Thread.sleep(500); // Make sure t1 and t2 are distinct.
-    long t2 = System.currentTimeMillis();
+    Thread.sleep(10);
     Response response3 = get(server.url("/a"));
     assertThat(response3.body().string()).isEqualTo("A");
     assertThat(response3.header("Allow")).isEqualTo("GET, HEAD");
-    assertThat(response3.receivedResponseAtMillis()).isEqualTo(originalTimestamp);
+    assertThat(response3.receivedResponseAtMillis()).isEqualTo(updatedTimestamp);
 
     assertThat(server.getRequestCount()).isEqualTo(2);
   }
