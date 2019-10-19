@@ -177,7 +177,7 @@ jobs:
   testjdk12:
     docker:
       # best source of JDK 12 for now
-      - image: circleci/openjdk:13.0.1-jdk-buster
+      - image: circleci/dynamodb:12.0.2-jdk
 
     environment:
       JVM_OPTS: -Xmx1g
