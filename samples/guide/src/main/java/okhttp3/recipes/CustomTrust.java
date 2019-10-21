@@ -192,7 +192,7 @@ public final class CustomTrust {
     // Use it to build an X509 trust manager.
     KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(
         KeyManagerFactory.getDefaultAlgorithm());
-    keyManagerFactory.init(keyStore, password);
+    
     TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(
         TrustManagerFactory.getDefaultAlgorithm());
     trustManagerFactory.init(keyStore);
