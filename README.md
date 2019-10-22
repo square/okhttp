@@ -103,6 +103,14 @@ Our [change log][changelog] has release history.
 implementation("com.squareup.okhttp3:okhttp:4.2.1")
 ```
 
+```xml
+<dependency>
+  <groupId>com.squareup.okhttp3</groupId>
+  <artifactId>okhttp</artifactId>
+  <version>4.2.1</version>
+</dependency>
+```
+
 Snapshot builds are [available][snap].
 
 
