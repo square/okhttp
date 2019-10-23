@@ -15,7 +15,7 @@ OkHttp is an HTTP client that’s efficient by default:
 
 OkHttp perseveres when the network is troublesome: it will silently recover from common connection
 problems. If your service has multiple IP addresses OkHttp will attempt alternate addresses if the
-first connect fails. This is necessary for IPv4+IPv6 and for services hosted in redundant data
+first connect fails. This is necessary for IPv4+IPv6 and services hosted in redundant data
 centers. OkHttp supports modern TLS features (TLS 1.3, ALPN, certificate pinning). It can be
 configured to fall back for broad connectivity.
 
@@ -31,7 +31,7 @@ This program downloads a URL and prints its contents as a string. [Full source][
 ```java
 OkHttpClient client = new OkHttpClient();
 
-String run(String url) throws IOException {
+String run(String URL) throws IOException {
   Request request = new Request.Builder()
       .url(url)
       .build();
@@ -54,7 +54,7 @@ public static final MediaType JSON
 
 OkHttpClient client = new OkHttpClient();
 
-String post(String url, String json) throws IOException {
+String post(String URL, String JSON) throws IOException {
   RequestBody body = RequestBody.create(JSON, json);
   Request request = new Request.Builder()
       .url(url)
@@ -74,7 +74,7 @@ Requirements
 
 OkHttp works on Android 5.0+ (API level 21+) and on Java 8+.
 
-OkHttp depends on [Okio][okio] for high-performance I/O and the [Kotlin standard library][kotlin]. Both are small libraries with strong backwards-compatibility.
+OkHttp depends on [Okio][okio] for high-performance I/O and the [Kotlin standard library][kotlin]. Both are small libraries with strong backward-compatibility.
 
 We highly recommend you keep OkHttp up-to-date. As with auto-updating web browsers, staying current
 with HTTPS clients is an important defense against potential security problems. [We
