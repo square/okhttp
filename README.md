@@ -99,17 +99,7 @@ Releases
 
 Our [change log][changelog] has release history.
 
-```kotlin
-implementation("com.squareup.okhttp3:okhttp:4.2.1")
-```
-
-```xml
-<dependency>
-  <groupId>com.squareup.okhttp3</groupId>
-  <artifactId>okhttp</artifactId>
-  <version>4.2.1</version>
-</dependency>
-```
+The latest release Maven coordinates are `com.squareup.okhttp3:okhttp:4.2.1`.
 
 Snapshot builds are [available][snap].
 
@@ -127,9 +117,7 @@ MockWebServer
 
 OkHttp includes a library for testing HTTP, HTTPS, and HTTP/2 clients.
 
-```kotlin
-testImplementation("com.squareup.okhttp3:mockwebserver:4.2.1")
-```
+Use the Maven coordinates `com.squareup.okhttp3:mockwebserver:4.2.1`.
 
 
 License
