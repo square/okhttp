@@ -106,14 +106,6 @@ implementation("com.squareup.okhttp3:okhttp:4.2.1")
 Snapshot builds are [available][snap].
 
 
-R8 / ProGuard
--------------
-
-If you are using R8 or ProGuard add the options from [`okhttp3.pro`][okhttp3_pro].
-
-You might also need rules for Okio which is a dependency of this library.
-
-
 MockWebServer
 -------------
 
