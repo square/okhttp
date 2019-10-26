@@ -19,6 +19,8 @@ import okhttp3.internal.platform.ConscryptPlatform
 import okhttp3.internal.platform.Jdk8WithJettyBootPlatform
 import okhttp3.internal.platform.Jdk9Platform
 import okhttp3.internal.platform.OpenJSSEPlatform
+import com.amazon.corretto.crypto.provider.AmazonCorrettoCryptoProvider
+import com.amazon.corretto.crypto.provider.SelfTestStatus
 import okhttp3.internal.platform.Platform
 import org.conscrypt.Conscrypt
 import org.hamcrest.BaseMatcher
@@ -97,6 +99,10 @@ open class PlatformRule @JvmOverloads constructor(
 
   fun expectFailureOnConscryptPlatform() {
     expectFailure(platformMatches(CONSCRYPT_PROPERTY))
+  }
+
+  fun expectFailureOnCorrettoPlatform() {
+    expectFailure(platformMatches(CORRETTO_PROPERTY))
   }
 
   fun expectFailureOnOpenJSSEPlatform() {
@@ -194,6 +200,11 @@ open class PlatformRule @JvmOverloads constructor(
         JDK8_ALPN_PROPERTY))
   }
 
+  fun assumeCorretto() {
+    assumeThat(getPlatformSystemProperty(), equalTo(
+        CORRETTO_PROPERTY))
+  }
+
   fun assumeHttp2Support() {
     assumeThat(getPlatformSystemProperty(), not(
         JDK8_PROPERTY))
@@ -224,6 +235,11 @@ open class PlatformRule @JvmOverloads constructor(
         OPENJSSE_PROPERTY))
   }
 
+  fun assumeNotCorretto() {
+    assumeThat(getPlatformSystemProperty(), not(
+        CORRETTO_PROPERTY))
+  }
+
   fun assumeNotHttp2Support() {
     assumeThat(getPlatformSystemProperty(), equalTo(
         JDK8_PROPERTY))
@@ -236,6 +252,7 @@ open class PlatformRule @JvmOverloads constructor(
   companion object {
     const val PROPERTY_NAME = "okhttp.platform"
     const val CONSCRYPT_PROPERTY = "conscrypt"
+    const val CORRETTO_PROPERTY = "corretto"
     const val JDK9_PROPERTY = "jdk9"
     const val JDK8_ALPN_PROPERTY = "jdk8alpn"
     const val JDK8_PROPERTY = "jdk8"
@@ -263,6 +280,10 @@ open class PlatformRule @JvmOverloads constructor(
         }
 
         Security.insertProviderAt(OpenJSSE(), 1)
+      } else if (getPlatformSystemProperty() == CORRETTO_PROPERTY) {
+        AmazonCorrettoCryptoProvider.install()
+
+        AmazonCorrettoCryptoProvider.INSTANCE.assertHealthy()
       }
 
       Platform.resetForTests()
@@ -278,7 +299,9 @@ open class PlatformRule @JvmOverloads constructor(
           is ConscryptPlatform -> CONSCRYPT_PROPERTY
           is OpenJSSEPlatform -> OPENJSSE_PROPERTY
           is Jdk8WithJettyBootPlatform -> CONSCRYPT_PROPERTY
-          is Jdk9Platform -> JDK9_PROPERTY
+          is Jdk9Platform -> {
+            if (isCorrettoInstalled) CORRETTO_PROPERTY else JDK9_PROPERTY
+          }
           else -> JDK8_PROPERTY
         }
       }
@@ -308,5 +331,18 @@ open class PlatformRule @JvmOverloads constructor(
     } catch (cnfe: ClassNotFoundException) {
       false
     }
+
+    val isCorrettoSupported: Boolean = try {
+      // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
+      Class.forName("com.amazon.corretto.crypto.provider.AmazonCorrettoCryptoProvider")
+
+      AmazonCorrettoCryptoProvider.INSTANCE.loadingError == null &&
+          AmazonCorrettoCryptoProvider.INSTANCE.runSelfTests() == SelfTestStatus.PASSED
+    } catch (e: ClassNotFoundException) {
+      false
+    }
+
+    val isCorrettoInstalled: Boolean =
+        isCorrettoSupported && Security.getProviders().first().name == AmazonCorrettoCryptoProvider.PROVIDER_NAME
   }
 }

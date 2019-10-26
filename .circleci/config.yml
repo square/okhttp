@@ -203,6 +203,20 @@ jobs:
       - runtests:
           platform: conscrypt
 
+  testcorretto:
+    docker:
+      - image: circleci/openjdk:11.0.4-jdk-stretch
+
+    environment:
+      JVM_OPTS: -Xmx1g
+      TERM: dumb
+
+    steps:
+      - checkout
+
+      - runtests:
+          platform: corretto
+
 workflows:
   version: 2
   commit:
@@ -242,6 +256,10 @@ workflows:
           filters:
             branches:
               only: master
+      - testcorretto:
+          filters:
+            branches:
+              only: master
   nightly:
     triggers:
       - schedule:
@@ -270,5 +288,8 @@ workflows:
           requires:
             - compile
       - testconscrypt:
+          requires:
+            - compile
+      - testcorretto:
           requires:
             - compile
