@@ -103,7 +103,7 @@ Our [change log][changelog] has release history.
 implementation("com.squareup.okhttp3:okhttp:4.2.1")
 ```
 
-Snapshot builds are [available][snap].
+Snapshot builds are [available][snap]. [R8 and ProGuard][r8_proguard] rules are available.
 
 
 MockWebServer
@@ -144,6 +144,7 @@ limitations under the License.
  [okhttp]: https://square.github.io/okhttp/
  [okio]: https://github.com/square/okio
  [post_example]: https://raw.github.com/square/okhttp/master/samples/guide/src/main/java/okhttp3/guide/PostExample.java
+ [r8_proguard]: https://square.github.io/okhttp/r8_proguard/
  [recipes]: http://square.github.io/okhttp/recipes/
  [snap]: https://oss.sonatype.org/content/repositories/snapshots/
  [tls_history]: https://square.github.io/okhttp/tls_configuration_history/
