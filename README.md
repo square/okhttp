@@ -31,7 +31,7 @@ This program downloads a URL and prints its contents as a string. [Full source][
 ```java
 OkHttpClient client = new OkHttpClient();
 
-String run(String URL) throws IOException {
+String run(String url) throws IOException {
   Request request = new Request.Builder()
       .url(url)
       .build();
@@ -54,7 +54,7 @@ public static final MediaType JSON
 
 OkHttpClient client = new OkHttpClient();
 
-String post(String URL, String JSON) throws IOException {
+String post(String url, String json) throws IOException {
   RequestBody body = RequestBody.create(JSON, json);
   Request request = new Request.Builder()
       .url(url)
