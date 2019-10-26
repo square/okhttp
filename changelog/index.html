@@ -367,6 +367,18 @@
 
 
   <li class="md-nav__item">
+    <a href="../4.x/okhttp-brotli/okhttp3.brotli/" title="brotli" class="md-nav__link">
+      brotli
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
     <a href="../4.x/okhttp-dnsoverhttps/okhttp3.dnsoverhttps/" title="dnsoverhttps" class="md-nav__link">
       dnsoverhttps
     </a>
@@ -579,6 +591,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#version-422" title="Version 4.2.2" class="md-nav__link">
+    Version 4.2.2
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-421" title="Version 4.2.1" class="md-nav__link">
     Version 4.2.1
   </a>
@@ -716,6 +735,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#version-422" title="Version 4.2.2" class="md-nav__link">
+    Version 4.2.2
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-421" title="Version 4.2.1" class="md-nav__link">
     Version 4.2.1
   </a>
@@ -805,6 +831,13 @@
                 
                 
                 <h1 id="change-log">Change Log<a class="headerlink" href="#change-log" title="Permanent link">&para;</a></h1>
+<h2 id="version-422">Version 4.2.2<a class="headerlink" href="#version-422" title="Permanent link">&para;</a></h2>
+<p><em>2019-10-06</em></p>
+<ul>
+<li>Fix: When closing a canceled HTTP/2 stream, don&rsquo;t send the <code>END_STREAM</code> flag. This could cause
+    the server to incorrectly interpret the stream as having completed normally. This is most useful
+    when a request body needs to cancel its own call.</li>
+</ul>
 <h2 id="version-421">Version 4.2.1<a class="headerlink" href="#version-421" title="Permanent link">&para;</a></h2>
 <p><em>2019-10-02</em></p>
 <ul>
