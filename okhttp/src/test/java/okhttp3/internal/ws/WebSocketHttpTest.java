@@ -681,7 +681,7 @@ public final class WebSocketHttpTest {
     RecordingEventListener listener = new RecordingEventListener();
 
     client = client.newBuilder()
-        .eventListener(listener)
+        .eventListenerFactory(clientTestRule.wrap(listener))
         .build();
 
     webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));

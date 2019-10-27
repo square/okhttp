@@ -221,7 +221,7 @@ public final class ConnectionCoalescingTest {
           connection.set(chain.connection());
           return chain.proceed(chain.request());
         })
-        .eventListener(listener1)
+        .eventListenerFactory(clientTestRule.wrap(listener1))
         .build();
 
     Request request = new Request.Builder().url(sanUrl).build();
@@ -245,7 +245,7 @@ public final class ConnectionCoalescingTest {
     });
 
     OkHttpClient client2 = client.newBuilder()
-        .eventListener(request2Listener)
+        .eventListenerFactory(clientTestRule.wrap(request2Listener))
         .build();
     Call call2 = client2.newCall(request);
     Response response = call2.execute();
@@ -357,7 +357,7 @@ public final class ConnectionCoalescingTest {
       }
     };
     client = client.newBuilder()
-        .eventListener(listener)
+        .eventListenerFactory(clientTestRule.wrap(listener))
         .build();
 
     assert200Http2Response(execute(url), server.getHostName());

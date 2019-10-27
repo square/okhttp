@@ -48,6 +48,7 @@ import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.SocketPolicy;
+import okhttp3.testing.Flaky;
 import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
@@ -71,6 +72,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
 
+@Flaky // STDOUT logging enabled for test
 public final class EventListenerTest {
   public static final Matcher<Response> anyResponse = CoreMatchers.any(Response.class);
 
@@ -83,7 +85,7 @@ public final class EventListenerTest {
   private final HandshakeCertificates handshakeCertificates = localhost();
 
   private OkHttpClient client = clientTestRule.newClientBuilder()
-      .eventListener(listener)
+      .eventListenerFactory(clientTestRule.wrap(listener))
       .build();
   private SocksProxy socksProxy;
 

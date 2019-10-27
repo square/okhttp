@@ -52,7 +52,7 @@ public final class DuplexTest {
   private RecordingEventListener listener = new RecordingEventListener();
   private HandshakeCertificates handshakeCertificates = localhost();
   private OkHttpClient client = clientTestRule.newClientBuilder()
-      .eventListener(listener)
+      .eventListenerFactory(clientTestRule.wrap(listener))
       .build();
 
   @Before public void setUp() {

@@ -22,7 +22,7 @@ public final class DispatcherTest {
   RecordingEventListener listener = new RecordingEventListener();
   OkHttpClient client = clientTestRule.newClientBuilder()
       .dispatcher(dispatcher)
-      .eventListener(listener)
+      .eventListenerFactory(clientTestRule.wrap(listener))
       .build();
 
   @Before public void setUp() throws Exception {
