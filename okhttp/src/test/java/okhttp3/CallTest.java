@@ -72,6 +72,7 @@ import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.QueueDispatcher;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
+import okhttp3.testing.Flaky;
 import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okhttp3.tls.HeldCertificate;
@@ -112,7 +113,7 @@ public final class CallTest {
   private RecordingEventListener listener = new RecordingEventListener();
   private HandshakeCertificates handshakeCertificates = localhost();
   private OkHttpClient client = clientTestRule.newClientBuilder()
-      .eventListener(listener)
+      .eventListenerFactory(clientTestRule.wrap(listener))
       .build();
   private RecordingCallback callback = new RecordingCallback();
   private TestLogHandler logHandler = new TestLogHandler();
@@ -1181,7 +1182,7 @@ public final class CallTest {
 
     client = client.newBuilder()
         .dns(new DoubleInetAddressDns())
-        .eventListener(listener)
+        .eventListenerFactory(clientTestRule.wrap(listener))
         .build();
     assertThat(client.retryOnConnectionFailure()).isTrue();
 
@@ -2963,6 +2964,7 @@ public final class CallTest {
   }
 
   /** We had a bug where failed HTTP/2 calls could break the entire connection. */
+  @Flaky
   @Test public void failingCallsDoNotInterfereWithConnection() throws Exception {
     enableProtocol(Protocol.HTTP_2);
 
