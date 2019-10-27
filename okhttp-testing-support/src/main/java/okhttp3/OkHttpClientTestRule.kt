@@ -29,6 +29,10 @@ class OkHttpClientTestRule : TestRule {
   private val clientEventsList = mutableListOf<String>()
   private var testClient: OkHttpClient? = null
 
+  fun wrap(eventListener: EventListener) = object : EventListener.Factory {
+    override fun create(call: Call): EventListener = ClientRuleEventListener(eventListener) { addEvent(it) }
+  }
+
   /**
    * Returns an OkHttpClient for tests to use as a starting point.
    *
@@ -43,7 +47,9 @@ class OkHttpClientTestRule : TestRule {
     if (client == null) {
       client = OkHttpClient.Builder()
           .dns(SINGLE_INET_ADDRESS_DNS) // Prevent unexpected fallback addresses.
-          .eventListener(ClientRuleEventListener { addEvent(it) })
+          .eventListenerFactory(object : EventListener.Factory {
+            override fun create(call: Call): EventListener = ClientRuleEventListener { addEvent(it) }
+          })
           .build()
       testClient = client
     }

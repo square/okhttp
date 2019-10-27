@@ -1603,7 +1603,7 @@ public final class HttpOverHttp2Test {
       }
     };
 
-    client = client.newBuilder().eventListener(new EventListener() {
+    client = client.newBuilder().eventListenerFactory(clientTestRule.wrap(new EventListener() {
       int callCount;
 
       @Override public void connectionAcquired(Call call, Connection connection) {
@@ -1615,7 +1615,7 @@ public final class HttpOverHttp2Test {
           fail();
         }
       }
-    }).build();
+    })).build();
 
     client.newCall(new Request.Builder().url(server.url("")).build()).enqueue(callback);
     client.newCall(new Request.Builder().url(server.url("")).build()).enqueue(callback);
