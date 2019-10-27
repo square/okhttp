@@ -27,7 +27,6 @@ import javax.annotation.Nullable;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.in;
 import static org.junit.Assert.assertTrue;
 
 public class RecordingEventListener extends EventListener {
@@ -87,7 +86,8 @@ public class RecordingEventListener extends EventListener {
     logEvent(new ProxySelectStart(call, url));
   }
 
-  @Override public void proxySelectEnd(Call call, HttpUrl url, List<Proxy> proxies) {
+  @Override public void proxySelectEnd(Call call, HttpUrl url,
+      List<Proxy> proxies) {
     logEvent(new ProxySelectEnd(call, url, proxies));
   }
 
@@ -99,7 +99,8 @@ public class RecordingEventListener extends EventListener {
     logEvent(new DnsEnd(call, domainName, inetAddressList));
   }
 
-  @Override public void connectStart(Call call, InetSocketAddress inetSocketAddress, Proxy proxy) {
+  @Override public void connectStart(Call call, InetSocketAddress inetSocketAddress,
+      Proxy proxy) {
     logEvent(new ConnectStart(call, inetSocketAddress, proxy));
   }
 
