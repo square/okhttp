@@ -163,7 +163,7 @@ class ClientRuleEventListener(val delegate: EventListener = NONE, var logger: (S
   override fun responseBodyEnd(call: Call, byteCount: Long) {
     logWithTime("responseBodyEnd: byteCount=$byteCount")
 
-    delegate.requestBodyEnd(call, byteCount)
+    delegate.responseBodyEnd(call, byteCount)
   }
 
   override fun responseFailed(call: Call, ioe: IOException) {
