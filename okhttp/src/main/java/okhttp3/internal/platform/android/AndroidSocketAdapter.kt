@@ -78,7 +78,7 @@ open class AndroidSocketAdapter(private val sslSocketClass: Class<in SSLSocket>)
         when {
             // https://github.com/square/okhttp/issues/5587
             e.message == "ssl == null" -> null
-            else -> throw AssertionError(e)
+            else -> throw e
         }
     } catch (e: IllegalAccessException) {
       throw AssertionError(e)
