@@ -66,6 +66,7 @@ import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.Version;
 import okhttp3.internal.http.RecordingProxySelector;
 import okhttp3.internal.io.InMemoryFileSystem;
+import okhttp3.internal.platform.Platform;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -2990,7 +2991,14 @@ public final class CallTest {
         .url(server.url("/"))
         .post(requestBody)
         .build());
-    assertThat(call.execute().body().string()).isEqualTo("Response 1");
+    try (Response response = call.execute()) {
+      assertThat(response.code()).isEqualTo(200);
+      assertThat(response.body().string()).isNotBlank();
+    }
+
+    long connectCount = listener.eventSequence.stream().filter((event) -> event instanceof RecordingEventListener.ConnectStart).count();
+    long expected = platform.isJdk8() ? 2 : 1;
+    assertThat(connectCount).isEqualTo(expected);
   }
 
   /** Test which headers are sent unencrypted to the HTTP proxy. */
