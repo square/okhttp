@@ -112,12 +112,12 @@ public final class HttpOverHttp2Test {
     return asList(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.HTTP_2);
   }
 
-  private PlatformRule platform = new PlatformRule();
+  private final PlatformRule platform = new PlatformRule();
+  private final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
   @Rule public final TestRule chain =
-      RuleChain.outerRule(platform).around(new Timeout(5, SECONDS));
+      RuleChain.outerRule(platform).around(clientTestRule).around(new Timeout(5, SECONDS));
   @Rule public final TemporaryFolder tempDir = new TemporaryFolder();
   @Rule public final MockWebServer server = new MockWebServer();
-  @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
   private OkHttpClient client;
   private Cache cache;
