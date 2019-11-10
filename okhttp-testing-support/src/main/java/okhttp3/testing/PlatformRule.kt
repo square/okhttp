@@ -113,6 +113,10 @@ open class PlatformRule @JvmOverloads constructor(
     expectFailure(fromMajor(majorVersion))
   }
 
+  fun expectFailureOnJdkVersion(majorVersion: Int) {
+    expectFailure(onMajor(majorVersion))
+  }
+
   private fun expectFailure(
     versionMatcher: Matcher<out Any>,
     failureMatcher: Matcher<out Any> = CoreMatchers.anything()
@@ -138,6 +142,18 @@ open class PlatformRule @JvmOverloads constructor(
 
       override fun matchesSafely(item: PlatformVersion): Boolean {
         return item.majorVersion >= version
+      }
+    }
+  }
+
+  fun onMajor(version: Int): Matcher<PlatformVersion> {
+    return object : TypeSafeMatcher<PlatformVersion>() {
+      override fun describeTo(description: Description) {
+        description.appendText("JDK with version $version")
+      }
+
+      override fun matchesSafely(item: PlatformVersion): Boolean {
+        return item.majorVersion == version
       }
     }
   }
