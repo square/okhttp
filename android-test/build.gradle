@@ -37,6 +37,7 @@ dependencies {
   androidTestImplementation(project(':okhttp-testing-support')) {
     exclude group: 'org.openjsse', module: 'openjsse'
     exclude group: 'org.conscrypt', module: 'conscrypt-openjdk-uber'
+    exclude group: 'software.amazon.cryptools', module: 'AmazonCorrettoCryptoProvider'
   }
   androidTestImplementation "org.conscrypt:conscrypt-android:2.2.1"
   androidTestImplementation project(':mockwebserver')
