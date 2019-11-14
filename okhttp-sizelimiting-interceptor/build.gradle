@@ -1,0 +1,27 @@
+apply plugin: 'com.vanniktech.maven.publish'
+
+jar {
+  manifest {
+    attributes('Automatic-Module-Name': 'okhttp3.sizelimiting')
+  }
+}
+
+dependencies {
+  api project(':okhttp')
+  api deps.okio
+  compileOnly deps.jsr305
+
+  testCompileOnly deps.jsr305
+  testImplementation deps.junit
+  testImplementation project(':mockwebserver')
+  testImplementation project(':okhttp-testing-support')
+  testImplementation project(':okhttp-tls')
+  testImplementation deps.assertj
+}
+
+afterEvaluate { project ->
+  project.tasks.dokka {
+    outputDirectory = "$rootDir/docs/4.x"
+    outputFormat = 'gfm'
+  }
+}
