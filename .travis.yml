@@ -3,7 +3,7 @@ language: java
 dist: trusty
 
 jdk:
-  - oraclejdk8
+  - oraclejdk11
 
 # avoid ./gradlew assemble default which builds docs
 install:
