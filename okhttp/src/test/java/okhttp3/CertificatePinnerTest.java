@@ -189,4 +189,38 @@ public final class CertificatePinnerTest {
     } catch (SSLPeerUnverifiedException expected) {
     }
   }
+
+  @Test public void checkForHostnameWithDoubleAsterisk() throws Exception {
+    CertificatePinner certificatePinner = new CertificatePinner.Builder()
+        .add("**.example.co.uk", certA1Sha256Pin)
+        .build();
+
+    // Should be pinned:
+    try {
+      certificatePinner.check("example.co.uk", certB1.certificate());
+      fail();
+    } catch (SSLPeerUnverifiedException expected) {
+    }
+    try {
+      certificatePinner.check("foo.example.co.uk", certB1.certificate());
+      fail();
+    } catch (SSLPeerUnverifiedException expected) {
+    }
+    try {
+      certificatePinner.check("foo.bar.example.co.uk", certB1.certificate());
+      fail();
+    } catch (SSLPeerUnverifiedException expected) {
+    }
+    try {
+      certificatePinner.check("foo.bar.baz.example.co.uk", certB1.certificate());
+      fail();
+    } catch (SSLPeerUnverifiedException expected) {
+    }
+
+    // Should not be pinned:
+    certificatePinner.check("uk", certB1.certificate());
+    certificatePinner.check("co.uk", certB1.certificate());
+    certificatePinner.check("anotherexample.co.uk", certB1.certificate());
+    certificatePinner.check("foo.anotherexample.co.uk", certB1.certificate());
+  }
 }

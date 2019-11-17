@@ -64,7 +64,34 @@ class CertificatePinnerKotlinTest {
         .build()
 
     assertThat(certificatePinner.findMatchingPins("example.com")).isEmpty()
+    assertThat(certificatePinner.findMatchingPins("..example.com")).isEmpty()
+    assertThat(certificatePinner.findMatchingPins("a..example.com")).isEmpty()
     assertThat(certificatePinner.findMatchingPins("a.b.example.com")).isEmpty()
+  }
+
+  @Test
+  fun doubleWildcardHostnameShouldMatchThroughDot() {
+    val certificatePinner = CertificatePinner.Builder()
+        .add("**.example.com", certA1Sha256Pin)
+        .build()
+
+    val expectedPin1 = listOf(newPin("**.example.com", certA1Sha256Pin))
+    assertThat(certificatePinner.findMatchingPins("example.com")).isEqualTo(expectedPin1)
+    assertThat(certificatePinner.findMatchingPins(".example.com")).isEqualTo(expectedPin1)
+    assertThat(certificatePinner.findMatchingPins("..example.com")).isEqualTo(expectedPin1)
+    assertThat(certificatePinner.findMatchingPins("a..example.com")).isEqualTo(expectedPin1)
+    assertThat(certificatePinner.findMatchingPins("a.b.example.com")).isEqualTo(expectedPin1)
+  }
+
+  @Test
+  fun doubleWildcardHostnameShouldNotMatchSuffix() {
+    val certificatePinner = CertificatePinner.Builder()
+        .add("**.example.com", certA1Sha256Pin)
+        .build()
+
+    assertThat(certificatePinner.findMatchingPins("xample.com")).isEmpty()
+    assertThat(certificatePinner.findMatchingPins("dexample.com")).isEmpty()
+    assertThat(certificatePinner.findMatchingPins("barnexample.com")).isEmpty()
   }
 
   @Test fun successfulFindMatchingPinsIgnoresCase() {
@@ -106,6 +133,7 @@ class CertificatePinnerKotlinTest {
 
     val expectedPin = newPin("*.example.com", certA1Sha256Pin)
     assertThat(certificatePinner.findMatchingPins("a.example.com")).containsExactly(expectedPin)
+    assertThat(certificatePinner.findMatchingPins(".example.com")).containsExactly(expectedPin)
     assertThat(certificatePinner.findMatchingPins("example.example.com"))
         .containsExactly(expectedPin)
   }
