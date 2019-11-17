@@ -17,6 +17,7 @@ package okhttp3.internal.http2
 
 import okhttp3.internal.EMPTY_BYTE_ARRAY
 import okhttp3.internal.EMPTY_HEADERS
+import okhttp3.internal.assertThreadDoesntHoldLock
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.http2.ErrorCode.REFUSED_STREAM
@@ -424,7 +425,8 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     streamCode: ErrorCode,
     cause: IOException?
   ) {
-    assert(!Thread.holdsLock(this))
+    this.assertThreadDoesntHoldLock()
+
     ignoreIoExceptions {
       shutdown(connectionCode)
     }

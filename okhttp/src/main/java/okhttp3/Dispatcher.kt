@@ -16,6 +16,7 @@
 package okhttp3
 
 import okhttp3.RealCall.AsyncCall
+import okhttp3.internal.assertThreadDoesntHoldLock
 import okhttp3.internal.threadFactory
 import java.util.ArrayDeque
 import java.util.Collections
@@ -156,7 +157,7 @@ class Dispatcher constructor() {
    * @return true if the dispatcher is currently running calls.
    */
   private fun promoteAndExecute(): Boolean {
-    assert(!Thread.holdsLock(this))
+    this.assertThreadDoesntHoldLock()
 
     val executableCalls = mutableListOf<AsyncCall>()
     val isRunning: Boolean

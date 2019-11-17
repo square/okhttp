@@ -17,6 +17,7 @@ package okhttp3.internal.http2
 
 import okhttp3.Headers
 import okhttp3.internal.EMPTY_HEADERS
+import okhttp3.internal.assertThreadDoesntHoldLock
 import okhttp3.internal.notifyAll
 import okhttp3.internal.toHeaderList
 import okhttp3.internal.wait
@@ -172,8 +173,9 @@ class Http2Stream internal constructor(
    */
   @Throws(IOException::class)
   fun writeHeaders(responseHeaders: List<Header>, outFinished: Boolean, flushHeaders: Boolean) {
+    this@Http2Stream.assertThreadDoesntHoldLock()
+
     var flushHeaders = flushHeaders
-    assert(!Thread.holdsLock(this@Http2Stream))
     synchronized(this) {
       this.hasResponseHeaders = true
       if (outFinished) {
@@ -250,7 +252,8 @@ class Http2Stream internal constructor(
 
   /** Returns true if this stream was closed. */
   private fun closeInternal(errorCode: ErrorCode, errorException: IOException?): Boolean {
-    assert(!Thread.holdsLock(this))
+    this.assertThreadDoesntHoldLock()
+
     synchronized(this) {
       if (this.errorCode != null) {
         return false
@@ -268,7 +271,8 @@ class Http2Stream internal constructor(
 
   @Throws(IOException::class)
   fun receiveData(source: BufferedSource, length: Int) {
-    assert(!Thread.holdsLock(this@Http2Stream))
+    this@Http2Stream.assertThreadDoesntHoldLock()
+
     this.source.receive(source, length.toLong())
   }
 
@@ -277,7 +281,8 @@ class Http2Stream internal constructor(
    * [FramingSource.read] them.
    */
   fun receiveHeaders(headers: Headers, inFinished: Boolean) {
-    assert(!Thread.holdsLock(this@Http2Stream))
+    this@Http2Stream.assertThreadDoesntHoldLock()
+
     val open: Boolean
     synchronized(this) {
       if (!hasResponseHeaders || !inFinished) {
@@ -403,7 +408,8 @@ class Http2Stream internal constructor(
     }
 
     private fun updateConnectionFlowControl(read: Long) {
-      assert(!Thread.holdsLock(this@Http2Stream))
+      this@Http2Stream.assertThreadDoesntHoldLock()
+
       connection.updateConnectionFlowControl(read)
     }
 
@@ -413,8 +419,9 @@ class Http2Stream internal constructor(
      */
     @Throws(IOException::class)
     internal fun receive(source: BufferedSource, byteCount: Long) {
+      this@Http2Stream.assertThreadDoesntHoldLock()
+
       var byteCount = byteCount
-      assert(!Thread.holdsLock(this@Http2Stream))
 
       while (byteCount > 0L) {
         val finished: Boolean
@@ -484,7 +491,8 @@ class Http2Stream internal constructor(
 
   @Throws(IOException::class)
   internal fun cancelStreamIfNecessary() {
-    assert(!Thread.holdsLock(this@Http2Stream))
+    this@Http2Stream.assertThreadDoesntHoldLock()
+
     val open: Boolean
     val cancel: Boolean
     synchronized(this) {
@@ -520,7 +528,8 @@ class Http2Stream internal constructor(
 
     @Throws(IOException::class)
     override fun write(source: Buffer, byteCount: Long) {
-      assert(!Thread.holdsLock(this@Http2Stream))
+      this@Http2Stream.assertThreadDoesntHoldLock()
+
       sendBuffer.write(source, byteCount)
       while (sendBuffer.size >= EMIT_BUFFER_SIZE) {
         emitFrame(false)
@@ -564,7 +573,8 @@ class Http2Stream internal constructor(
 
     @Throws(IOException::class)
     override fun flush() {
-      assert(!Thread.holdsLock(this@Http2Stream))
+      this@Http2Stream.assertThreadDoesntHoldLock()
+
       synchronized(this@Http2Stream) {
         checkOutNotClosed()
       }
@@ -578,7 +588,7 @@ class Http2Stream internal constructor(
 
     @Throws(IOException::class)
     override fun close() {
-      assert(!Thread.holdsLock(this@Http2Stream))
+      this@Http2Stream.assertThreadDoesntHoldLock()
 
       val outFinished: Boolean
       synchronized(this@Http2Stream) {

@@ -25,6 +25,7 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
+import okhttp3.internal.assertThreadHoldsLock
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.Task
 import okhttp3.internal.concurrent.TaskRunner
@@ -392,7 +393,8 @@ class RealWebSocket(
   }
 
   private fun runWriter() {
-    assert(Thread.holdsLock(this))
+    this.assertThreadHoldsLock()
+
     taskQueue.schedule(writerTask!!)
   }
 

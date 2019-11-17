@@ -19,6 +19,7 @@ package okhttp3.internal.connection
 import okhttp3.Address
 import okhttp3.ConnectionPool
 import okhttp3.Route
+import okhttp3.internal.assertThreadHoldsLock
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.Task
 import okhttp3.internal.concurrent.TaskQueue
@@ -74,7 +75,8 @@ class RealConnectionPool(
     routes: List<Route>?,
     requireMultiplexed: Boolean
   ): Boolean {
-    assert(Thread.holdsLock(this))
+    this.assertThreadHoldsLock()
+
     for (connection in connections) {
       if (requireMultiplexed && !connection.isMultiplexed) continue
       if (!connection.isEligible(address, routes)) continue
@@ -85,7 +87,8 @@ class RealConnectionPool(
   }
 
   fun put(connection: RealConnection) {
-    assert(Thread.holdsLock(this))
+    this.assertThreadHoldsLock()
+
     connections.add(connection)
     cleanupQueue.schedule(cleanupTask)
   }
@@ -95,7 +98,8 @@ class RealConnectionPool(
    * been removed from the pool and should be closed.
    */
   fun connectionBecameIdle(connection: RealConnection): Boolean {
-    assert(Thread.holdsLock(this))
+    this.assertThreadHoldsLock()
+
     return if (connection.noNewExchanges || maxIdleConnections == 0) {
       connections.remove(connection)
       if (connections.isEmpty()) cleanupQueue.cancelAll()

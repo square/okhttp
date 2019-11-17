@@ -15,6 +15,8 @@
  */
 package okhttp3.internal.concurrent
 
+import okhttp3.internal.assertThreadDoesntHoldLock
+import okhttp3.internal.assertThreadHoldsLock
 import okhttp3.internal.notify
 import okhttp3.internal.wait
 import org.assertj.core.api.Assertions.assertThat
@@ -60,7 +62,8 @@ class TaskFaker {
   /** A task runner that posts tasks to this fake. Tasks won't be executed until requested. */
   val taskRunner: TaskRunner = TaskRunner(object : TaskRunner.Backend {
     override fun beforeTask(taskRunner: TaskRunner) {
-      check(Thread.holdsLock(taskRunner))
+      taskRunner.assertThreadHoldsLock()
+
       while (executedRunnableCount >= executedTaskLimit) {
         coordinatorWait(taskRunner, Long.MAX_VALUE)
       }
@@ -73,12 +76,14 @@ class TaskFaker {
     override fun nanoTime() = nanoTime
 
     override fun coordinatorNotify(taskRunner: TaskRunner) {
-      check(Thread.holdsLock(taskRunner))
+      taskRunner.assertThreadHoldsLock()
+
       waitingUntilTime = nanoTime
     }
 
     override fun coordinatorWait(taskRunner: TaskRunner, nanos: Long) {
-      check(Thread.holdsLock(taskRunner))
+      taskRunner.assertThreadHoldsLock()
+
       check(waitingUntilTime == Long.MAX_VALUE)
       check(waitingThread == null)
 
@@ -104,7 +109,7 @@ class TaskFaker {
 
   /** Advance the simulated clock and run anything ready at the new time. */
   fun advanceUntil(newTime: Long) {
-    check(!Thread.holdsLock(taskRunner))
+    taskRunner.assertThreadDoesntHoldLock()
 
     synchronized(taskRunner) {
       nanoTime = newTime
@@ -125,7 +130,7 @@ class TaskFaker {
 
   /** Returns true if anything was executed. */
   private fun runRunnables(taskRunner: TaskRunner) {
-    check(Thread.holdsLock(taskRunner))
+    taskRunner.assertThreadHoldsLock()
 
     while (futureRunnables.isNotEmpty()) {
       val runnable = futureRunnables.removeAt(0)
@@ -153,7 +158,7 @@ class TaskFaker {
   }
 
   fun interruptCoordinatorThread() {
-    check(!Thread.holdsLock(taskRunner))
+    taskRunner.assertThreadDoesntHoldLock()
 
     synchronized(taskRunner) {
       check(waitingThread != null) { "no thread currently waiting" }

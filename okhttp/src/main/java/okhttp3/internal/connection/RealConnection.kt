@@ -32,6 +32,7 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.Route
 import okhttp3.internal.EMPTY_RESPONSE
+import okhttp3.internal.assertThreadDoesntHoldLock
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.http.ExchangeCodec
@@ -128,7 +129,8 @@ class RealConnection(
 
   /** Prevent further exchanges from being created on this connection. */
   fun noNewExchanges() {
-    assert(!Thread.holdsLock(connectionPool))
+    connectionPool.assertThreadDoesntHoldLock()
+
     synchronized(connectionPool) {
       noNewExchanges = true
     }
@@ -654,7 +656,8 @@ class RealConnection(
    * being used for future exchanges.
    */
   internal fun trackFailure(e: IOException?) {
-    assert(!Thread.holdsLock(connectionPool))
+    connectionPool.assertThreadDoesntHoldLock()
+
     synchronized(connectionPool) {
       if (e is StreamResetException) {
         when (e.errorCode) {
