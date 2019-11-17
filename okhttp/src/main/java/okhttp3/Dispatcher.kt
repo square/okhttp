@@ -59,7 +59,7 @@ class Dispatcher constructor() {
    *
    * WebSocket connections to hosts **do not** count against this limit.
    */
-  @get:Synchronized var maxRequestsPerHost = 10
+  @get:Synchronized var maxRequestsPerHost = 16
     set(maxRequestsPerHost) {
       require(maxRequestsPerHost >= 1) { "max < 1: $maxRequestsPerHost" }
       synchronized(this) {
