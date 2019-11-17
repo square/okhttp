@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.concurrent
 
+import okhttp3.internal.assertThreadDoesntHoldLock
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit
@@ -146,7 +147,7 @@ class TaskQueue internal constructor(
    * be removed from the execution schedule.
    */
   fun cancelAll() {
-    check(!Thread.holdsLock(this))
+    this.assertThreadDoesntHoldLock()
 
     synchronized(taskRunner) {
       if (cancelAllAndDecide()) {
@@ -156,7 +157,7 @@ class TaskQueue internal constructor(
   }
 
   fun shutdown() {
-    check(!Thread.holdsLock(this))
+    this.assertThreadDoesntHoldLock()
 
     synchronized(taskRunner) {
       shutdown = true

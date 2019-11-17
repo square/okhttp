@@ -16,6 +16,8 @@
 package okhttp3.internal.concurrent
 
 import okhttp3.internal.addIfAbsent
+import okhttp3.internal.assertThreadDoesntHoldLock
+import okhttp3.internal.assertThreadHoldsLock
 import okhttp3.internal.notify
 import okhttp3.internal.threadFactory
 import java.util.concurrent.SynchronousQueue
@@ -60,7 +62,7 @@ class TaskRunner(
   }
 
   internal fun kickCoordinator(taskQueue: TaskQueue) {
-    check(Thread.holdsLock(this))
+    this.assertThreadHoldsLock()
 
     if (taskQueue.activeTask == null) {
       if (taskQueue.futureTasks.isNotEmpty()) {
@@ -78,7 +80,7 @@ class TaskRunner(
   }
 
   private fun beforeRun(task: Task) {
-    check(Thread.holdsLock(this))
+    this.assertThreadHoldsLock()
 
     task.nextExecuteNanoTime = -1L
     val queue = task.queue!!
@@ -89,7 +91,7 @@ class TaskRunner(
   }
 
   private fun runTask(task: Task) {
-    check(!Thread.holdsLock(this))
+    this.assertThreadDoesntHoldLock()
 
     val currentThread = Thread.currentThread()
     val oldName = currentThread.name
@@ -107,7 +109,7 @@ class TaskRunner(
   }
 
   private fun afterRun(task: Task, delayNanos: Long) {
-    check(Thread.holdsLock(this))
+    this.assertThreadHoldsLock()
 
     val queue = task.queue!!
     check(queue.activeTask === task)
@@ -133,7 +135,7 @@ class TaskRunner(
    * this will launch another thread to handle that work.
    */
   fun awaitTaskToRun(): Task? {
-    check(Thread.holdsLock(this))
+    this.assertThreadHoldsLock()
 
     while (true) {
       if (readyQueues.isEmpty()) {

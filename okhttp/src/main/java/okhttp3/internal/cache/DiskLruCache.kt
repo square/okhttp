@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.cache
 
+import okhttp3.internal.assertThreadHoldsLock
 import okhttp3.internal.cache.DiskLruCache.Editor
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.Task
@@ -207,7 +208,7 @@ class DiskLruCache internal constructor(
 
   @Synchronized @Throws(IOException::class)
   fun initialize() {
-    assert(Thread.holdsLock(this))
+    this.assertThreadHoldsLock()
 
     if (initialized) {
       return // Already initialized.
@@ -294,7 +295,7 @@ class DiskLruCache internal constructor(
   private fun newJournalWriter(): BufferedSink {
     val fileSink = fileSystem.appendingSink(journalFile)
     val faultHidingSink = FaultHidingSink(fileSink) {
-      assert(Thread.holdsLock(this@DiskLruCache))
+      this@DiskLruCache.assertThreadHoldsLock()
       hasJournalErrors = true
     }
     return faultHidingSink.buffer()
@@ -948,7 +949,7 @@ class DiskLruCache internal constructor(
      * different edits.
      */
     internal fun snapshot(): Snapshot? {
-      assert(Thread.holdsLock(this@DiskLruCache))
+      this@DiskLruCache.assertThreadHoldsLock()
 
       val sources = mutableListOf<Source>()
       val lengths = this.lengths.clone() // Defensive copy since these can be zeroed out.

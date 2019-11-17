@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import okhttp3.internal.assertThreadDoesntHoldLock
 import okhttp3.internal.cache.CacheInterceptor
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.connection.ConnectInterceptor
@@ -111,7 +112,8 @@ internal class RealCall private constructor(
      * if the executor has been shut down by reporting the call as failed.
      */
     fun executeOn(executorService: ExecutorService) {
-      assert(!Thread.holdsLock(client.dispatcher))
+      client.dispatcher.assertThreadDoesntHoldLock()
+
       var success = false
       try {
         executorService.execute(this)

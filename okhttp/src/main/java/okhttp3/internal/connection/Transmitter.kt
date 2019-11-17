@@ -24,6 +24,7 @@ import okhttp3.HttpUrl
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.internal.assertThreadHoldsLock
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.canReuseConnectionFor
 import okhttp3.internal.platform.Platform
@@ -171,7 +172,7 @@ class Transmitter(
   }
 
   fun acquireConnectionNoEvents(connection: RealConnection) {
-    assert(Thread.holdsLock(connectionPool))
+    connectionPool.assertThreadHoldsLock()
 
     check(this.connection == null)
     this.connection = connection
@@ -183,7 +184,7 @@ class Transmitter(
    * caller should close.
    */
   fun releaseConnectionNoEvents(): Socket? {
-    assert(Thread.holdsLock(connectionPool))
+    connectionPool.assertThreadHoldsLock()
 
     val index = connection!!.transmitters.indexOfFirst { it.get() == this@Transmitter }
     check(index != -1)

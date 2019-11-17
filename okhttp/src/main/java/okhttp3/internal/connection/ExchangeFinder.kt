@@ -21,6 +21,8 @@ import okhttp3.EventListener
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Route
+import okhttp3.internal.assertThreadDoesntHoldLock
+import okhttp3.internal.assertThreadHoldsLock
 import okhttp3.internal.canReuseConnectionFor
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.http.ExchangeCodec
@@ -270,12 +272,13 @@ class ExchangeFinder(
   }
 
   fun connectingConnection(): RealConnection? {
-    assert(Thread.holdsLock(connectionPool))
+    connectionPool.assertThreadHoldsLock()
     return connectingConnection
   }
 
   fun trackFailure() {
-    assert(!Thread.holdsLock(connectionPool))
+    connectionPool.assertThreadDoesntHoldLock()
+
     synchronized(connectionPool) {
       hasStreamFailure = true // Permit retries.
     }
