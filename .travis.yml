@@ -3,14 +3,10 @@ language: java
 dist: trusty
 
 jdk:
-  - oraclejdk8
-
-# avoid ./gradlew assemble default which builds docs
-install:
- - ./gradlew jar --parallel
+  - openjdk11
 
 script:
- - ./gradlew test --parallel
+  - ./gradlew jar --parallel
 
 after_success:
   - .buildscript/deploy_snapshot.sh
