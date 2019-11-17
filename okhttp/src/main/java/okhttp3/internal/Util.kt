@@ -26,7 +26,6 @@ import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
-import okhttp3.internal.Assertions.AssertionsEnabled
 import okhttp3.internal.http2.Header
 import okio.Buffer
 import okio.BufferedSink
@@ -530,23 +529,19 @@ internal fun <E> MutableList<E>.addIfAbsent(element: E) {
   if (!contains(element)) add(element)
 }
 
-internal object Assertions {
-  @JvmField
-  internal val AssertionsEnabled = OkHttpClient::class.java.desiredAssertionStatus()
-}
+@JvmField
+internal val AssertionsEnabled = OkHttpClient::class.java.desiredAssertionStatus()
 
+@Suppress("NOTHING_TO_INLINE")
 internal inline fun Any.assertThreadHoldsLock() {
-  if (AssertionsEnabled) {
-    if (!Thread.holdsLock(this)) {
-      throw AssertionError("Thread ${Thread.currentThread().name} MUST hold lock on $this")
-    }
+  if (AssertionsEnabled && !Thread.holdsLock(this)) {
+    throw AssertionError("Thread ${Thread.currentThread().name} MUST hold lock on $this")
   }
 }
 
+@Suppress("NOTHING_TO_INLINE")
 internal inline fun Any.assertThreadDoesntHoldLock() {
-  if (AssertionsEnabled) {
-    if (Thread.holdsLock(this)) {
-      throw AssertionError("Thread ${Thread.currentThread().name} MUST NOT hold lock on $this")
-    }
+  if (AssertionsEnabled && Thread.holdsLock(this)) {
+    throw AssertionError("Thread ${Thread.currentThread().name} MUST NOT hold lock on $this")
   }
 }
