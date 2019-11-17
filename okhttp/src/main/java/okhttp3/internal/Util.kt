@@ -530,18 +530,18 @@ internal fun <E> MutableList<E>.addIfAbsent(element: E) {
 }
 
 @JvmField
-internal val AssertionsEnabled = OkHttpClient::class.java.desiredAssertionStatus()
+internal val assertionsEnabled = OkHttpClient::class.java.desiredAssertionStatus()
 
 @Suppress("NOTHING_TO_INLINE")
 internal inline fun Any.assertThreadHoldsLock() {
-  if (AssertionsEnabled && !Thread.holdsLock(this)) {
+  if (assertionsEnabled && !Thread.holdsLock(this)) {
     throw AssertionError("Thread ${Thread.currentThread().name} MUST hold lock on $this")
   }
 }
 
 @Suppress("NOTHING_TO_INLINE")
 internal inline fun Any.assertThreadDoesntHoldLock() {
-  if (AssertionsEnabled && Thread.holdsLock(this)) {
+  if (assertionsEnabled && Thread.holdsLock(this)) {
     throw AssertionError("Thread ${Thread.currentThread().name} MUST NOT hold lock on $this")
   }
 }
