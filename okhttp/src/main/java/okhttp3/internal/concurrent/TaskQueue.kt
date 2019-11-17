@@ -16,7 +16,6 @@
 package okhttp3.internal.concurrent
 
 import okhttp3.internal.assertThreadDoesntHoldLock
-import okhttp3.internal.assertThreadHoldsLock
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit

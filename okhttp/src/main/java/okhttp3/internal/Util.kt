@@ -530,7 +530,6 @@ internal fun <E> MutableList<E>.addIfAbsent(element: E) {
   if (!contains(element)) add(element)
 }
 
-
 internal object Assertions {
   @JvmField
   internal val AssertionsEnabled = OkHttpClient::class.java.desiredAssertionStatus()
@@ -539,7 +538,7 @@ internal object Assertions {
 internal inline fun Any.assertThreadHoldsLock() {
   if (AssertionsEnabled) {
     if (!Thread.holdsLock(this)) {
-      throw AssertionError("Thread " + Thread.currentThread().name + " MUST hold lock on " + this)
+      throw AssertionError("Thread ${Thread.currentThread().name} MUST hold lock on $this")
     }
   }
 }
@@ -547,7 +546,7 @@ internal inline fun Any.assertThreadHoldsLock() {
 internal inline fun Any.assertThreadDoesntHoldLock() {
   if (AssertionsEnabled) {
     if (Thread.holdsLock(this)) {
-      throw AssertionError("Thread " + Thread.currentThread().name + " MUST NOT hold lock on " + this)
+      throw AssertionError("Thread ${Thread.currentThread().name} MUST NOT hold lock on $this")
     }
   }
 }
