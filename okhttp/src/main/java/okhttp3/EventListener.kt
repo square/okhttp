@@ -27,16 +27,16 @@ import java.net.Proxy
  * All start/connect/acquire events will eventually receive a matching end/release event, either
  * successful (non-null parameters), or failed (non-null throwable).  The first common parameters of
  * each event pair are used to link the event in case of concurrent or repeated events e.g.
- * dnsStart(call, domainName) -&gt; dnsEnd(call, domainName, inetAddressList).
+ * dnsStart(call, domainName) -> dnsEnd(call, domainName, inetAddressList).
  *
  * Nesting is as follows
  *
- *  * call -&gt; (dns -&gt; connect -&gt; secure connect)* -&gt; request events
- *  * call -&gt; (connection acquire/release)*
+ *  * call -> (dns -> connect -> secure connect)* -> request events
+ *  * call -> (connection acquire/release)*
  *
  * Request events are ordered:
  *
- * requestHeaders -&gt; requestBody -&gt; responseHeaders -&gt; responseBody
+ * requestHeaders -> requestBody -> responseHeaders -> responseBody
  *
  * Since connections may be reused, the dns and connect events may not be present for a call, or may
  * be repeated in case of failure retries, even concurrently in case of happy eyeballs type

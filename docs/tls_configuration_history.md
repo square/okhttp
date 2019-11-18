@@ -156,7 +156,7 @@ Added a new extra strict RESTRICTED_TLS configuration inspired by [Google Cloud�
 
 _2018-02-24_
 
-Remove two rarely-used cipher suites from the default set. This tracks a <a href="https://developers.google.com/web/updates/2016/12/chrome-56-deprecations#remove_cbc-mode_ecdsa_ciphers_in_tls">Chromium change</a> to remove these cipher suites because they are fragile and rarely-used.
+Remove two rarely-used cipher suites from the default set. This tracks a [Chromium change][chromium_change] to remove these cipher suites because they are fragile and rarely-used.
 
 ##### MODERN_TLS / COMPATIBLE_TLS cipher suites
 
@@ -227,7 +227,6 @@ _2016-01-13_
  * TLS_RSA_WITH_AES_128_CBC_SHA[²][http2_naughty]
  * TLS_RSA_WITH_AES_256_CBC_SHA[²][http2_naughty]
  * TLS_RSA_WITH_3DES_EDE_CBC_SHA[²][http2_naughty]
-</dl>
 
 ##### MODERN_TLS versions
 
@@ -251,14 +250,15 @@ Cipher suites that are only available with TLSv1.3.
 
 Cipher suites that are [discouraged for use][http2_denylist] with HTTP/2. OkHttp includes them because better suites are not commonly available. For example, none of the better cipher suites listed above shipped with Android 4.4 or Java 7.
 
- [OkHttp314]: https://github.com/square/okhttp/blob/master/CHANGELOG.md#version-3140
- [OkHttp313]: https://github.com/square/okhttp/blob/master/CHANGELOG.md#version-3130
- [OkHttp312]: https://github.com/square/okhttp/blob/master/CHANGELOG.md#version-3120
- [OkHttp311]: https://github.com/square/okhttp/blob/master/CHANGELOG.md#version-3110
- [OkHttp310]: https://github.com/square/okhttp/blob/master/CHANGELOG.md#version-3100
- [OkHttp35]: https://github.com/square/okhttp/blob/master/CHANGELOG.md#version-350
- [OkHttp30]: https://github.com/square/okhttp/blob/master/CHANGELOG.md#version-300
- [googlecloud_ssl_policy]: https://cloud.google.com/load-balancing/docs/ssl-policies-concepts
- [tlsv13_only]: #tlsv13_only
- [http2_naughty]: #http2_naughty
- [http2_denylist]: https://tools.ietf.org/html/rfc7540#appendix-A
+[OkHttp30]: https://square.github.io/okhttp/changelog_3x/#version-300
+[OkHttp310]: https://square.github.io/okhttp/changelog_3x/#version-310
+[OkHttp311]: https://square.github.io/okhttp/changelog_3x/#version-320
+[OkHttp312]: https://square.github.io/okhttp/changelog_3x/#version-330
+[OkHttp313]: https://square.github.io/okhttp/changelog_3x/#version-340
+[OkHttp314]: https://square.github.io/okhttp/changelog_3x/#version-310
+[OkHttp35]: https://square.github.io/okhttp/changelog_3x/#version-350
+[chromium_change]: https://developers.google.com/web/updates/2016/12/chrome-56-deprecations#remove_cbc-mode_ecdsa_ciphers_in_tls
+[googlecloud_ssl_policy]: https://cloud.google.com/load-balancing/docs/ssl-policies-concepts
+[http2_denylist]: https://tools.ietf.org/html/rfc7540#appendix-A
+[http2_naughty]: #http2_naughty
+[tlsv13_only]: #tlsv13_only
