@@ -41,7 +41,7 @@ import javax.net.ssl.SSLSocket
  * because the TLS ecosystem is dynamic and staying up to date is necessary to stay secure. See
  * [OkHttp's TLS Configuration History][tls_history] to track these changes.
  *
- * [tls_history]: https://github.com/square/okhttp/wiki/TLS-Configuration-History
+ * [tls_history]: https://square.github.io/okhttp/tls_configuration_history/
  */
 class ConnectionSpec internal constructor(
   @get:JvmName("isTls") val isTls: Boolean,

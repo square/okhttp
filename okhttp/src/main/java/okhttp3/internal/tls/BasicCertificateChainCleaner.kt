@@ -28,8 +28,10 @@ import javax.net.ssl.SSLPeerUnverifiedException
  * prefer other mechanisms where they exist, such as with
  * [okhttp3.internal.platform.AndroidPlatform.AndroidCertificateChainCleaner].
  *
- * This class includes code from <a href="https://conscrypt.org/">Conscrypt's</a> [TrustManagerImpl]
- * and [TrustedCertificateIndex].
+ * This class includes code from [Conscrypt's][Conscrypt] [TrustManagerImpl] and
+ * [TrustedCertificateIndex].
+ *
+ * [Conscrypt]: https://conscrypt.org/
  */
 class BasicCertificateChainCleaner(
   private val trustRootIndex: TrustRootIndex
