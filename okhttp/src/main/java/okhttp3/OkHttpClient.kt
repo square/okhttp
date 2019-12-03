@@ -789,7 +789,7 @@ open class OkHttpClient internal constructor(
         "protocols must not contain null"
       }
 
-      // Remove protocolsCopy that we no longer support.
+      // Remove protocols that we no longer support.
       @Suppress("DEPRECATION")
       protocolsCopy.remove(Protocol.SPDY_3)
 
