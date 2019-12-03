@@ -77,8 +77,11 @@ class RealConnectionPool(
   ): Boolean {
     this.assertThreadHoldsLock()
 
+    if (!requireMultiplexed){
+      return false
+    }
     for (connection in connections) {
-      if (requireMultiplexed && !connection.isMultiplexed) continue
+      if (!connection.isMultiplexed) continue
       if (!connection.isEligible(address, routes)) continue
       transmitter.acquireConnectionNoEvents(connection)
       return true
