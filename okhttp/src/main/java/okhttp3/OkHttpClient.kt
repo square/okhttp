@@ -794,7 +794,7 @@ open class OkHttpClient internal constructor(
       protocolsCopy.remove(Protocol.SPDY_3)
 
       // Assign as an unmodifiable list. This is effectively immutable.
-      this.protocols = Collections.unmodifiableList(protocols)
+      this.protocols = Collections.unmodifiableList(protocolsCopy)
     }
 
     /**
