@@ -789,12 +789,12 @@ open class OkHttpClient internal constructor(
         "protocols must not contain null"
       }
 
-      // Remove protocolsCopy that we no longer support.
+      // Remove protocols that we no longer support.
       @Suppress("DEPRECATION")
       protocolsCopy.remove(Protocol.SPDY_3)
 
       // Assign as an unmodifiable list. This is effectively immutable.
-      this.protocols = Collections.unmodifiableList(protocols)
+      this.protocols = Collections.unmodifiableList(protocolsCopy)
     }
 
     /**

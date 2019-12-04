@@ -288,6 +288,14 @@ public final class OkHttpClientTest {
     }
   }
 
+  @Test public void spdy3IsRemovedFromProtocols() {
+    List<Protocol> protocols = new ArrayList<>();
+    protocols.add(Protocol.HTTP_1_1);
+    protocols.add(Protocol.SPDY_3);
+    OkHttpClient client = new OkHttpClient.Builder().protocols(protocols).build();
+    assertThat(client.protocols()).containsExactly(Protocol.HTTP_1_1);
+  }
+
   @Test public void testProxyDefaults() {
     OkHttpClient client = new OkHttpClient.Builder().build();
     assertThat(client.proxy()).isNull();
