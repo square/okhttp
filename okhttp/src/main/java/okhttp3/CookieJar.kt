@@ -51,7 +51,8 @@ interface CookieJar {
   companion object {
     /** A cookie jar that never accepts any cookies. */
     @JvmField
-    val NO_COOKIES: CookieJar = object : CookieJar {
+    val NO_COOKIES: CookieJar = NoCookies()
+    private class NoCookies : CookieJar {
       override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
       }
 

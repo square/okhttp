@@ -42,7 +42,8 @@ interface Dns {
      * lookup IP addresses. Most custom [Dns] implementations should delegate to this instance.
      */
     @JvmField
-    val SYSTEM = object : Dns {
+    val SYSTEM: Dns = DnsSystem()
+    private class DnsSystem : Dns {
       override fun lookup(hostname: String): List<InetAddress> {
         try {
           return InetAddress.getAllByName(hostname).toList()
