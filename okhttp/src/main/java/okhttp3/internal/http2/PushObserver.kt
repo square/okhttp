@@ -72,7 +72,8 @@ interface PushObserver {
   fun onReset(streamId: Int, errorCode: ErrorCode)
 
   companion object {
-    @JvmField val CANCEL: PushObserver = object : PushObserver {
+    @JvmField val CANCEL: PushObserver = PushObserverCancel()
+    private class PushObserverCancel : PushObserver {
 
       override fun onRequest(streamId: Int, requestHeaders: List<Header>): Boolean {
         return true

@@ -110,7 +110,8 @@ interface Authenticator {
   companion object {
     /** An authenticator that knows no credentials and makes no attempt to authenticate. */
     @JvmField
-    val NONE = object : Authenticator {
+    val NONE: Authenticator = AuthenticatorNone()
+    private class AuthenticatorNone : Authenticator {
       override fun authenticate(route: Route?, response: Response): Request? = null
     }
   }
