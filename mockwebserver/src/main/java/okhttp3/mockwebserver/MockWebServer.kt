@@ -98,7 +98,7 @@ import javax.net.ssl.X509TrustManager
  */
 class MockWebServer : ExternalResource(), Closeable {
   private val taskRunnerBackend = TaskRunner.RealBackend(
-      threadFactory("MockWebServer TaskRunner", true))
+      threadFactory("MockWebServer TaskRunner", daemon = false))
   private val taskRunner = TaskRunner(taskRunnerBackend)
   private val requestQueue = LinkedBlockingQueue<RecordedRequest>()
   private val openClientSockets =
@@ -391,10 +391,10 @@ class MockWebServer : ExternalResource(), Closeable {
 
     taskRunner.newQueue().execute("MockWebServer $portField", cancelable = false) {
       try {
-        logger.info("${this@MockWebServer} starting to accept connections")
+        logger.info("$this starting to accept connections")
         acceptConnections()
       } catch (e: Throwable) {
-        logger.log(Level.WARNING, "${this@MockWebServer}  failed unexpectedly", e)
+        logger.log(Level.WARNING, "$this failed unexpectedly", e)
       }
 
       // Release all sockets and all threads, even if any close fails.
@@ -468,10 +468,9 @@ class MockWebServer : ExternalResource(), Closeable {
       try {
         SocketHandler(raw).handle()
       } catch (e: IOException) {
-        logger.info("${this@MockWebServer} connection from ${raw.inetAddress} failed: $e")
+        logger.info("$this connection from ${raw.inetAddress} failed: $e")
       } catch (e: Exception) {
-        logger.log(Level.SEVERE,
-            "${this@MockWebServer} connection from ${raw.inetAddress} crashed", e)
+        logger.log(Level.SEVERE, "$this connection from ${raw.inetAddress} crashed", e)
       }
     }
   }

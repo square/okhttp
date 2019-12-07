@@ -18,6 +18,7 @@ package okhttp3.internal.concurrent
 import okhttp3.internal.addIfAbsent
 import okhttp3.internal.assertThreadDoesntHoldLock
 import okhttp3.internal.assertThreadHoldsLock
+import okhttp3.internal.concurrent.TaskRunner.Companion.INSTANCE
 import okhttp3.internal.notify
 import okhttp3.internal.threadFactory
 import java.util.concurrent.SynchronousQueue
@@ -28,9 +29,8 @@ import java.util.concurrent.TimeUnit
 /**
  * A set of worker threads that are shared among a set of task queues.
  *
- * The task runner is responsible for managing non-daemon threads. It keeps the process alive while
- * user-visible (ie. non-daemon) tasks are scheduled, and allows the process to exit when only
- * housekeeping (ie. daemon) tasks are scheduled.
+ * Use [INSTANCE] for a task runner that uses daemon threads. There is not currently a shared
+ * instance for non-daemon threads.
  *
  * The task runner is also responsible for releasing held threads when the library is unloaded.
  * This is for the benefit of container environments that implement code unloading.
@@ -289,6 +289,6 @@ class TaskRunner(
 
   companion object {
     @JvmField
-    val INSTANCE = TaskRunner(RealBackend(threadFactory("OkHttp TaskRunner", true)))
+    val INSTANCE = TaskRunner(RealBackend(threadFactory("OkHttp TaskRunner", daemon = true)))
   }
 }
