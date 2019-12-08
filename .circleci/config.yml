@@ -279,7 +279,7 @@ workflows:
       - testcorretto:
           filters:
             branches:
-              only: /^.*corretto*/
+              only: /^*corretto*/
   nightly:
     triggers:
       - schedule:
