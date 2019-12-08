@@ -76,8 +76,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
   /** http://tools.ietf.org/html/draft-ietf-httpbis-http2-17#section-5.1.1 */
   internal var nextStreamId = if (builder.client) 3 else 2
 
-  @get:Synchronized var isShutdown = false
-    internal set
+  private var isShutdown = false
 
   /** For scheduling everything asynchronous. */
   private val taskRunner = builder.taskRunner
@@ -94,8 +93,16 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
   /** User code to run in response to push promise events. */
   private val pushObserver: PushObserver = builder.pushObserver
 
-  /** True if we have sent a ping that is still awaiting a reply. */
-  private var awaitingPong = false
+  // Total number of pings send and received of the corresponding types. All guarded by this.
+  private var intervalPingsSent = 0L
+  private var intervalPongsReceived = 0L
+  private var degradedPingsSent = 0L
+  private var degradedPongsReceived = 0L
+  private var awaitPingsSent = 0L
+  private var awaitPongsReceived = 0L
+
+  /** Consider this connection to be unhealthy if a degraded pong isn't received by this time. */
+  private var degradedPongDeadlineNs = 0L
 
   /** Settings we communicate to the peer. */
   val okHttpSettings = Settings().apply {
@@ -142,8 +149,21 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     if (builder.pingIntervalMillis != 0) {
       val pingIntervalNanos = TimeUnit.MILLISECONDS.toNanos(builder.pingIntervalMillis.toLong())
       writerQueue.schedule("$connectionName ping", pingIntervalNanos) {
-        writePing(false, 0, 0)
-        return@schedule pingIntervalNanos
+        val failDueToMissingPong = synchronized(this@Http2Connection) {
+          if (intervalPongsReceived < intervalPingsSent) {
+            return@synchronized true
+          } else {
+            intervalPingsSent++
+            return@synchronized false
+          }
+        }
+        if (failDueToMissingPong) {
+          failConnection(null)
+          return@schedule -1L
+        } else {
+          writePing(false, INTERVAL_PING, 0)
+          return@schedule pingIntervalNanos
+        }
       }
     }
   }
@@ -351,18 +371,6 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     payload1: Int,
     payload2: Int
   ) {
-    if (!reply) {
-      val failedDueToMissingPong: Boolean
-      synchronized(this) {
-        failedDueToMissingPong = awaitingPong
-        awaitingPong = true
-      }
-      if (failedDueToMissingPong) {
-        failConnection(null)
-        return
-      }
-    }
-
     try {
       writer.ping(reply, payload1, payload2)
     } catch (e: IOException) {
@@ -373,14 +381,23 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
   /** For testing: sends a ping and waits for a pong. */
   @Throws(InterruptedException::class)
   fun writePingAndAwaitPong() {
-    writePing(false, 0x4f4b6f6b /* "OKok" */, -0xf607257 /* donut */)
+    writePing()
     awaitPong()
   }
 
-  /** For testing: waits until `requiredPongCount` pings have been received from the peer. */
+  /** For testing: sends a ping to be awaited with [awaitPong]. */
+  @Throws(InterruptedException::class)
+  fun writePing() {
+    synchronized(this) {
+      awaitPingsSent++
+    }
+    writePing(false, AWAIT_PING, 0x4f4b6f6b /* "OKok" */)
+  }
+
+  /** For testing: awaits a pong. */
   @Synchronized @Throws(InterruptedException::class)
   fun awaitPong() {
-    while (awaitingPong) {
+    while (awaitPongsReceived < awaitPingsSent) {
       wait()
     }
   }
@@ -496,6 +513,42 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
         okHttpSettings.merge(settings)
       }
       writer.settings(settings)
+    }
+  }
+
+  @Synchronized
+  fun isHealthy(nowNs: Long): Boolean {
+    if (isShutdown) return false
+
+    // A degraded pong is overdue.
+    if (degradedPongsReceived < degradedPingsSent && nowNs >= degradedPongDeadlineNs) return false
+
+    return true
+  }
+
+  /**
+   * HTTP/2 can have both stream timeouts (due to a problem with a single stream) and connection
+   * timeouts (due to a problem with the transport). When a stream times out we don't know whether
+   * the problem impacts just one stream or the entire connection.
+   *
+   * To differentiate the two cases we ping the server when a stream times out. If the overall
+   * connection is fine the ping will receive a pong; otherwise it won't.
+   *
+   * The deadline to respond to this ping attempts to limit the cost of being wrong. If it is too
+   * long, streams created while we await the pong will reuse broken connections and inevitably
+   * fail. If it is too short, slow connections will be marked as failed and extra TCP and TLS
+   * handshakes will be required.
+   *
+   * The deadline is currently hardcoded. We may make this configurable in the future!
+   */
+  internal fun sendDegradedPingLater() {
+    synchronized(this) {
+      if (degradedPongsReceived < degradedPingsSent) return // Already awaiting a degraded pong.
+      degradedPingsSent++
+      degradedPongDeadlineNs = System.nanoTime() + DEGRADED_PONG_TIMEOUT_NS
+    }
+    writerQueue.execute("$connectionName ping") {
+      writePing(false, DEGRADED_PING, 0)
     }
   }
 
@@ -728,8 +781,21 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     ) {
       if (ack) {
         synchronized(this@Http2Connection) {
-          awaitingPong = false
-          this@Http2Connection.notifyAll()
+          when (payload1) {
+            INTERVAL_PING -> {
+              intervalPongsReceived++
+            }
+            DEGRADED_PING -> {
+              degradedPongsReceived++
+            }
+            AWAIT_PING -> {
+              awaitPongsReceived++
+              this@Http2Connection.notifyAll()
+            }
+            else -> {
+              // Ignore an unexpected pong.
+            }
+          }
         }
       } else {
         // Send a reply to a client ping if this is a server and vice versa.
@@ -926,5 +992,10 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
       set(Settings.INITIAL_WINDOW_SIZE, DEFAULT_INITIAL_WINDOW_SIZE)
       set(Settings.MAX_FRAME_SIZE, Http2.INITIAL_MAX_FRAME_SIZE)
     }
+
+    const val INTERVAL_PING = 1
+    const val DEGRADED_PING = 2
+    const val AWAIT_PING = 3
+    const val DEGRADED_PONG_TIMEOUT_NS = 1_000_000_000 // 1 second.
   }
 }

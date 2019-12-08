@@ -614,7 +614,7 @@ class RealConnection(
 
     val http2Connection = this.http2Connection
     if (http2Connection != null) {
-      return !http2Connection.isShutdown
+      return http2Connection.isHealthy(System.nanoTime())
     }
 
     if (doExtensiveChecks) {
