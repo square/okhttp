@@ -183,11 +183,10 @@ class CertificatePinner internal constructor(
       append("Certificate pinning failure!")
       append("\n  Peer certificate chain:")
       for (element in peerCertificates) {
-        val x509Certificate = element as X509Certificate
         append("\n    ")
-        append(pin(x509Certificate))
+        append(pin(element))
         append(": ")
-        append(x509Certificate.subjectDN.name)
+        append(element.subjectDN.name)
       }
       append("\n  Pinned certificates for ")
       append(hostname)

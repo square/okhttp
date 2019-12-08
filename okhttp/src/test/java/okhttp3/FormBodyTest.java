@@ -16,6 +16,7 @@
 package okhttp3;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import okio.Buffer;
 import org.junit.Test;
 import java.nio.charset.Charset;
@@ -204,7 +205,7 @@ public final class FormBodyTest {
   }
 
   @Test public void manualCharset() throws Exception {
-    FormBody body = new FormBody.Builder(Charset.forName("ISO-8859-1"))
+    FormBody body = new FormBody.Builder(StandardCharsets.ISO_8859_1)
         .add("name", "Nicolás")
         .build();
 
