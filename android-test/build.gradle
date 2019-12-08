@@ -39,7 +39,7 @@ dependencies {
     exclude group: 'org.conscrypt', module: 'conscrypt-openjdk-uber'
     exclude group: 'software.amazon.cryptools', module: 'AmazonCorrettoCryptoProvider'
   }
-  androidTestImplementation "org.conscrypt:conscrypt-android:2.2.1"
+  androidTestImplementation "org.conscrypt:conscrypt-android:2.3.0"
   androidTestImplementation project(':mockwebserver')
   androidTestImplementation project(':okhttp-tls')
   androidTestImplementation project(':okhttp-dnsoverhttps')
