@@ -670,6 +670,7 @@ class Http2Stream internal constructor(
   internal inner class StreamTimeout : AsyncTimeout() {
     override fun timedOut() {
       closeLater(ErrorCode.CANCEL)
+      connection.sendDegradedPingLater()
     }
 
     override fun newTimeoutException(cause: IOException?): IOException {
