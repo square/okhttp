@@ -276,10 +276,7 @@ workflows:
           filters:
             branches:
               only: master
-      - testcorretto:
-          filters:
-            branches:
-              only: master
+      #- testcorretto
   nightly:
     triggers:
       - schedule:
@@ -311,8 +308,5 @@ workflows:
           requires:
             - compile
       - testconscrypt:
-          requires:
-            - compile
-      - testcorretto:
           requires:
             - compile
