@@ -21,15 +21,15 @@ import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
 
 interface SocketAdapter {
-  open fun isSupported(): Boolean
+  fun isSupported(): Boolean
   fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager?
   fun matchesSocket(sslSocket: SSLSocket): Boolean
   fun matchesSocketFactory(sslSocketFactory: SSLSocketFactory): Boolean
 
-  open fun configureTlsExtensions(
+  fun configureTlsExtensions(
     sslSocket: SSLSocket,
     protocols: List<Protocol>
   )
 
-  open fun getSelectedProtocol(sslSocket: SSLSocket): String?
+  fun getSelectedProtocol(sslSocket: SSLSocket): String?
 }
