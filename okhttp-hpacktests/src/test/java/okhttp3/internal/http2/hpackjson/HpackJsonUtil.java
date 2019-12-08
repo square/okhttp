@@ -70,7 +70,7 @@ public final class HpackJsonUtil {
         }
       }
     }
-    return storyNames.toArray(new String[storyNames.size()]);
+    return storyNames.toArray(new String[0]);
   }
 
   /**
@@ -97,7 +97,7 @@ public final class HpackJsonUtil {
 
     if (result.isEmpty()) {
       // missing files
-      return Collections.singletonList(MISSING);
+      result.add(MISSING);
     }
 
     return result;

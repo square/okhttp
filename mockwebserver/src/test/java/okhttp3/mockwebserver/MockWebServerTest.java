@@ -579,7 +579,8 @@ public final class MockWebServerTest {
     connection.setHostnameVerifier(new RecordingHostnameVerifier());
 
     assertThat(connection.getResponseCode()).isEqualTo(HttpURLConnection.HTTP_OK);
-    BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+    BufferedReader reader =
+        new BufferedReader(new InputStreamReader(connection.getInputStream(), UTF_8));
     assertThat(reader.readLine()).isEqualTo("abc");
 
     RecordedRequest request = server.takeRequest();
