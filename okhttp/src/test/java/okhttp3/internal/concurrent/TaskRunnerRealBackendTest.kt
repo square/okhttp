@@ -15,11 +15,13 @@
  */
 package okhttp3.internal.concurrent
 
-import okhttp3.internal.threadFactory
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.data.Offset
+import org.junit.After
 import org.junit.Test
+import java.lang.Thread.UncaughtExceptionHandler
 import java.util.concurrent.LinkedBlockingDeque
+import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
 
 /**
@@ -30,10 +32,26 @@ import java.util.concurrent.TimeUnit
  * busiest of CI servers.
  */
 class TaskRunnerRealBackendTest {
-  private val backend = TaskRunner.RealBackend(threadFactory("TaskRunnerRealBackendTest", true))
+  private val log = LinkedBlockingDeque<String>()
+
+  private val loggingUncaughtExceptionHandler = UncaughtExceptionHandler { _, throwable ->
+    log.put("uncaught exception: $throwable")
+  }
+
+  private val threadFactory = ThreadFactory { runnable ->
+    Thread(runnable, "TaskRunnerRealBackendTest").apply {
+      isDaemon = true
+      uncaughtExceptionHandler = loggingUncaughtExceptionHandler
+    }
+  }
+
+  private val backend = TaskRunner.RealBackend(threadFactory)
   private val taskRunner = TaskRunner(backend)
   private val queue = taskRunner.newQueue()
-  private val log = LinkedBlockingDeque<String>()
+
+  @After fun tearDown() {
+    backend.shutdown()
+  }
 
   @Test fun test() {
     val t1 = System.nanoTime() / 1e6
@@ -51,7 +69,24 @@ class TaskRunnerRealBackendTest {
     assertThat(log.take()).isEqualTo("runOnce delays.size=1")
     val t3 = System.nanoTime() / 1e6 - t1
     assertThat(t3).isCloseTo(1750.0, Offset.offset(250.0))
+  }
 
-    backend.shutdown()
+  @Test fun taskFailsWithUncheckedException() {
+    queue.schedule("task", TimeUnit.MILLISECONDS.toNanos(100)) {
+      log.put("failing task running")
+      throw RuntimeException("boom!")
+    }
+
+    queue.schedule("task", TimeUnit.MILLISECONDS.toNanos(200)) {
+      log.put("normal task running")
+      return@schedule -1L
+    }
+
+    queue.awaitIdle(TimeUnit.MILLISECONDS.toNanos(500))
+
+    assertThat(log.take()).isEqualTo("failing task running")
+    assertThat(log.take()).isEqualTo("uncaught exception: java.lang.RuntimeException: boom!")
+    assertThat(log.take()).isEqualTo("normal task running")
+    assertThat(log).isEmpty()
   }
 }

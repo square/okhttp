@@ -56,7 +56,16 @@ class TaskRunner(
           awaitTaskToRun()
         } ?: return
 
-        runTask(task)
+        var completedNormally = false
+        try {
+          runTask(task)
+          completedNormally = true
+        } finally {
+          // If the task is crashing start another thread to service the queues.
+          if (!completedNormally) {
+            backend.execute(this)
+          }
+        }
       }
     }
   }
