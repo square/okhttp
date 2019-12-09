@@ -59,7 +59,7 @@ public final class EventSourceHttpTest {
         + "data: hey\n"
         + "\n").setHeader("content-type", "text/plain"));
 
-    EventSource source = newEventSource();
+    newEventSource();
     listener.assertFailure("Invalid content-type: text/plain");
   }
 
@@ -68,7 +68,7 @@ public final class EventSourceHttpTest {
         + "data: hey\n"
         + "\n").setHeader("content-type", "text/event-stream").setResponseCode(401));
 
-    EventSource source = newEventSource();
+    newEventSource();
     listener.assertFailure(null);
   }
 
