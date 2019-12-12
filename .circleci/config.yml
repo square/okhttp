@@ -239,10 +239,6 @@ workflows:
           filters:
             branches:
               only: master
-      - testopenjsse:
-          filters:
-            branches:
-              only: master
       - testjdk11:
           filters:
             branches:
@@ -253,10 +249,8 @@ workflows:
             branches:
               ignore:
                 - gh-pages
-      - testconscrypt:
-          filters:
-            branches:
-              only: master
+      #- testopenjsse
+      #- testconscrypt
       #- testcorretto
   nightly:
     triggers:
