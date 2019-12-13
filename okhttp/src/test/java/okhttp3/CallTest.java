@@ -47,9 +47,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
@@ -66,7 +63,6 @@ import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.Version;
 import okhttp3.internal.http.RecordingProxySelector;
 import okhttp3.internal.io.InMemoryFileSystem;
-import okhttp3.internal.platform.Platform;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -110,6 +106,7 @@ public final class CallTest {
   @Rule public final MockWebServer server2 = new MockWebServer();
   @Rule public final InMemoryFileSystem fileSystem = new InMemoryFileSystem();
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
+  @Rule public final TestLogHandler testLogHandler = new TestLogHandler(OkHttpClient.class);
 
   private RecordingEventListener listener = new RecordingEventListener();
   private HandshakeCertificates handshakeCertificates = localhost();
@@ -117,19 +114,14 @@ public final class CallTest {
       .eventListenerFactory(clientTestRule.wrap(listener))
       .build();
   private RecordingCallback callback = new RecordingCallback();
-  private TestLogHandler logHandler = new TestLogHandler();
   private Cache cache = new Cache(new File("/cache/"), Integer.MAX_VALUE, fileSystem);
-  private Logger logger = Logger.getLogger(OkHttpClient.class.getName());
 
   @Before public void setUp() {
     platform.assumeNotOpenJSSE();
-
-    logger.addHandler(logHandler);
   }
 
   @After public void tearDown() throws Exception {
     cache.delete();
-    logger.removeHandler(logHandler);
   }
 
   @Test public void get() throws Exception {
@@ -771,8 +763,8 @@ public final class CallTest {
       }
     });
 
-    assertThat(logHandler.take()).isEqualTo(
-        ("INFO: Callback failure for call to " + server.url("/") + "..."));
+    assertThat(testLogHandler.take()).isEqualTo(
+        "INFO: Callback failure for call to " + server.url("/") + "...");
   }
 
   @Test public void connectionPooling() throws Exception {
@@ -3569,21 +3561,12 @@ public final class CallTest {
         .url(server.url("/"))
         .build();
 
-    Level original = logger.getLevel();
-    logger.setLevel(Level.FINE);
-    logHandler.setFormatter(new SimpleFormatter());
-    try {
-      client.newCall(request).execute(); // Ignore the response so it gets leaked then GC'd.
-      awaitGarbageCollection();
+    client.newCall(request).execute(); // Ignore the response so it gets leaked then GC'd.
+    awaitGarbageCollection();
 
-      String message = logHandler.take();
-      assertThat(message).contains("A connection to " + server.url("/") + " was leaked."
-            + " Did you forget to close a response body?");
-      assertThat(message).contains("okhttp3.RealCall.execute(");
-      assertThat(message).contains("okhttp3.CallTest.leakedResponseBodyLogsStackTrace(");
-    } finally {
-      logger.setLevel(original);
-    }
+    String message = testLogHandler.take();
+    assertThat(message).contains("A connection to " + server.url("/") + " was leaked."
+        + " Did you forget to close a response body?");
   }
 
   @Test public void asyncLeakedResponseBodyLogsStackTrace() throws Exception {
@@ -3598,35 +3581,26 @@ public final class CallTest {
         .url(server.url("/"))
         .build();
 
-    Level original = logger.getLevel();
-    logger.setLevel(Level.FINE);
-    logHandler.setFormatter(new SimpleFormatter());
-    try {
-      final CountDownLatch latch = new CountDownLatch(1);
-      client.newCall(request).enqueue(new Callback() {
-        @Override public void onFailure(Call call, IOException e) {
-          fail();
-        }
+    CountDownLatch latch = new CountDownLatch(1);
+    client.newCall(request).enqueue(new Callback() {
+      @Override public void onFailure(Call call, IOException e) {
+        fail();
+      }
 
-        @Override public void onResponse(Call call, Response response) throws IOException {
-          // Ignore the response so it gets leaked then GC'd.
-          latch.countDown();
-        }
-      });
-      latch.await();
-      // There's some flakiness when triggering a GC for objects in a separate thread. Adding a
-      // small delay appears to ensure the objects will get GC'd.
-      Thread.sleep(200);
-      awaitGarbageCollection();
+      @Override public void onResponse(Call call, Response response) throws IOException {
+        // Ignore the response so it gets leaked then GC'd.
+        latch.countDown();
+      }
+    });
+    latch.await();
+    // There's some flakiness when triggering a GC for objects in a separate thread. Adding a
+    // small delay appears to ensure the objects will get GC'd.
+    Thread.sleep(200);
+    awaitGarbageCollection();
 
-      String message = logHandler.take();
-      assertThat(message).contains("A connection to " + server.url("/") + " was leaked."
-            + " Did you forget to close a response body?");
-      assertThat(message).contains("okhttp3.RealCall.enqueue(");
-      assertThat(message).contains("okhttp3.CallTest.asyncLeakedResponseBodyLogsStackTrace(");
-    } finally {
-      logger.setLevel(original);
-    }
+    String message = testLogHandler.take();
+    assertThat(message).contains("A connection to " + server.url("/") + " was leaked."
+          + " Did you forget to close a response body?");
   }
 
   @Test public void failedAuthenticatorReleasesConnection() throws IOException {

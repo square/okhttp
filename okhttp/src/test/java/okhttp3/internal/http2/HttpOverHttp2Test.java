@@ -31,7 +31,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.Nullable;
 import okhttp3.Cache;
@@ -118,11 +117,10 @@ public final class HttpOverHttp2Test {
       RuleChain.outerRule(platform).around(clientTestRule).around(new Timeout(5, SECONDS));
   @Rule public final TemporaryFolder tempDir = new TemporaryFolder();
   @Rule public final MockWebServer server = new MockWebServer();
+  @Rule public final TestLogHandler testLogHandler = new TestLogHandler(Http2.class);
 
   private OkHttpClient client;
   private Cache cache;
-  private TestLogHandler http2Handler = new TestLogHandler();
-  private Level previousLevel;
   private String scheme;
   private Protocol protocol;
 
@@ -152,15 +150,10 @@ public final class HttpOverHttp2Test {
     }
 
     cache = new Cache(tempDir.getRoot(), Integer.MAX_VALUE);
-    http2Logger.addHandler(http2Handler);
-    previousLevel = http2Logger.getLevel();
-    http2Logger.setLevel(Level.FINE);
   }
 
   @After public void tearDown() {
     Authenticator.setDefault(null);
-    http2Logger.removeHandler(http2Handler);
-    http2Logger.setLevel(previousLevel);
   }
 
   @Test public void get() throws Exception {
@@ -346,7 +339,7 @@ public final class HttpOverHttp2Test {
     int expectedFrameCount = dataLength / 16384;
     int dataFrameCount = 0;
     while (dataFrameCount < expectedFrameCount) {
-      String log = http2Handler.take();
+      String log = testLogHandler.take();
       if (log.equals("FINE: << 0x00000003 16384 DATA          ")) {
         dataFrameCount++;
       }
@@ -1170,7 +1163,7 @@ public final class HttpOverHttp2Test {
 
     assertThat(response.protocol()).isEqualTo(protocol);
 
-    List<String> logs = http2Handler.takeAll();
+    List<String> logs = testLogHandler.takeAll();
 
     assertThat(firstFrame(logs, "HEADERS"))
         .overridingErrorMessage("header logged")
@@ -1190,7 +1183,7 @@ public final class HttpOverHttp2Test {
 
     assertThat(response.protocol()).isEqualTo(protocol);
 
-    List<String> logs = http2Handler.takeAll();
+    List<String> logs = testLogHandler.takeAll();
 
     assertThat(firstFrame(logs, "HEADERS"))
         .overridingErrorMessage("header logged")
@@ -1224,7 +1217,7 @@ public final class HttpOverHttp2Test {
     assertThat(response.protocol()).isEqualTo(protocol);
 
     // Confirm a single ping was sent and received, and its reply was sent and received.
-    List<String> logs = http2Handler.takeAll();
+    List<String> logs = testLogHandler.takeAll();
     assertThat(countFrames(logs, "FINE: >> 0x00000000     8 PING          ")).isEqualTo(
         (long) 1);
     assertThat(countFrames(logs, "FINE: << 0x00000000     8 PING          ")).isEqualTo(
@@ -1270,7 +1263,7 @@ public final class HttpOverHttp2Test {
         (double) 1000, offset(250d));
 
     // Confirm a single ping was sent but not acknowledged.
-    List<String> logs = http2Handler.takeAll();
+    List<String> logs = testLogHandler.takeAll();
     assertThat(countFrames(logs, "FINE: >> 0x00000000     8 PING          ")).isEqualTo(
         (long) 1);
     assertThat(countFrames(logs, "FINE: << 0x00000000     8 PING          ACK")).isEqualTo(

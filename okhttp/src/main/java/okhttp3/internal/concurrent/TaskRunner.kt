@@ -25,6 +25,7 @@ import java.util.concurrent.SynchronousQueue
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
+import java.util.logging.Logger
 
 /**
  * A set of worker threads that are shared among a set of task queues.
@@ -40,6 +41,7 @@ import java.util.concurrent.TimeUnit
 class TaskRunner(
   val backend: Backend
 ) {
+  private var nextQueueName = 1
   private var coordinatorWaiting = false
   private var coordinatorWakeUpAt = 0L
 
@@ -56,14 +58,16 @@ class TaskRunner(
           awaitTaskToRun()
         } ?: return
 
-        var completedNormally = false
-        try {
-          runTask(task)
-          completedNormally = true
-        } finally {
-          // If the task is crashing start another thread to service the queues.
-          if (!completedNormally) {
-            backend.execute(this)
+        logElapsed(task, task.queue!!) {
+          var completedNormally = false
+          try {
+            runTask(task)
+            completedNormally = true
+          } finally {
+            // If the task is crashing start another thread to service the queues.
+            if (!completedNormally) {
+              backend.execute(this)
+            }
           }
         }
       }
@@ -222,7 +226,10 @@ class TaskRunner(
     }
   }
 
-  fun newQueue() = TaskQueue(this)
+  fun newQueue(): TaskQueue {
+    val name = synchronized(this) { nextQueueName++ }
+    return TaskQueue(this, "Q$name")
+  }
 
   /**
    * Returns a snapshot of queues that currently have tasks scheduled. The task runner does not
@@ -299,5 +306,7 @@ class TaskRunner(
   companion object {
     @JvmField
     val INSTANCE = TaskRunner(RealBackend(threadFactory("OkHttp TaskRunner", daemon = true)))
+
+    val logger: Logger = Logger.getLogger(TaskRunner::class.java.name)
   }
 }

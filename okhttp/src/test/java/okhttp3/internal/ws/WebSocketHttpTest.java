@@ -25,7 +25,6 @@ import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Logger;
 import okhttp3.OkHttpClient;
 import okhttp3.OkHttpClientTestRule;
 import okhttp3.Protocol;
@@ -68,6 +67,7 @@ public final class WebSocketHttpTest {
   @Rule public final MockWebServer webServer = new MockWebServer();
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
   @Rule public final PlatformRule platform = new PlatformRule();
+  @Rule public final TestLogHandler testLogHandler = new TestLogHandler(OkHttpClient.class);
 
   private final HandshakeCertificates handshakeCertificates = localhost();
   private final WebSocketRecorder clientListener = new WebSocketRecorder("client");
@@ -180,13 +180,9 @@ public final class WebSocketHttpTest {
 
   @Ignore("AsyncCall currently lets runtime exceptions propagate.")
   @Test public void throwingOnFailLogs() throws Exception {
-    TestLogHandler logs = new TestLogHandler();
-    Logger logger = Logger.getLogger(OkHttpClient.class.getName());
-    logger.addHandler(logs);
-
     webServer.enqueue(new MockResponse().setResponseCode(200).setBody("Body"));
 
-    final RuntimeException e = new RuntimeException();
+    final RuntimeException e = new RuntimeException("boom");
     clientListener.setNextEventDelegate(new WebSocketListener() {
       @Override public void onFailure(WebSocket webSocket, Throwable t, Response response) {
         throw e;
@@ -195,8 +191,7 @@ public final class WebSocketHttpTest {
 
     newWebSocket();
 
-    assertThat(logs.take()).isEqualTo("");
-    logger.removeHandler(logs);
+    assertThat(testLogHandler.take()).isEqualTo("INFO: [WS client] onFailure");
   }
 
   @Test public void throwingOnMessageClosesImmediatelyAndFails() {
