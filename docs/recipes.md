@@ -553,7 +553,7 @@ Response caching uses HTTP headers for all configuration. You can add request he
   private val client: OkHttpClient = OkHttpClient.Builder()
       .cache(Cache(
           directory = cacheDirectory,
-          maxSize = 10L * 1024L * 1024L // 1 MiB
+          maxSize = 10L * 1024L * 1024L // 10 MiB
       ))
       .build()
 
