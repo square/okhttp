@@ -21,21 +21,43 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Handler;
+import java.util.logging.Level;
 import java.util.logging.LogRecord;
+import java.util.logging.Logger;
+import org.junit.rules.TestRule;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
 
 /**
  * A log handler that records which log messages were published so that a calling test can make
  * assertions about them.
  */
-public final class TestLogHandler extends Handler {
+public final class TestLogHandler extends Handler implements TestRule {
+  private final Logger logger;
   private final BlockingQueue<String> logs = new LinkedBlockingQueue<>();
 
+  public TestLogHandler(Class<?> loggerName) {
+    logger = Logger.getLogger(loggerName.getName());
+  }
+
+  @Override public Statement apply(Statement base, Description description) {
+    return new Statement() {
+      @Override public void evaluate() throws Throwable {
+        Level previousLevel = logger.getLevel();
+        logger.addHandler(TestLogHandler.this);
+        logger.setLevel(Level.FINEST);
+        try {
+          base.evaluate();
+        } finally {
+          logger.setLevel(previousLevel);
+          logger.removeHandler(TestLogHandler.this);
+        }
+      }
+    };
+  }
+
   @Override public void publish(LogRecord logRecord) {
-    if (getFormatter() == null) {
-      logs.add(logRecord.getLevel() + ": " + logRecord.getMessage());
-    } else {
-      logs.add(getFormatter().format(logRecord));
-    }
+    logs.add(logRecord.getLevel() + ": " + logRecord.getMessage());
   }
 
   @Override public void flush() {

@@ -27,7 +27,8 @@ import java.util.concurrent.TimeUnit
  * for its work; in practice a set of queues may share a set of threads to save resources.
  */
 class TaskQueue internal constructor(
-  private val taskRunner: TaskRunner
+  internal val taskRunner: TaskRunner,
+  internal val name: String
 ) {
   internal var shutdown = false
 
@@ -60,7 +61,11 @@ class TaskQueue internal constructor(
   fun schedule(task: Task, delayNanos: Long = 0L) {
     synchronized(taskRunner) {
       if (shutdown) {
-        if (task.cancelable) return
+        if (task.cancelable) {
+          taskLog(task, this) { "schedule canceled (queue is shutdown)" }
+          return
+        }
+        taskLog(task, this) { "schedule failed (queue is shutdown)" }
         throw RejectedExecutionException()
       }
 
@@ -127,10 +132,14 @@ class TaskQueue internal constructor(
     // If the task is already scheduled, take the earlier of the two times.
     val existingIndex = futureTasks.indexOf(task)
     if (existingIndex != -1) {
-      if (task.nextExecuteNanoTime <= executeNanoTime) return false // Already scheduled earlier.
+      if (task.nextExecuteNanoTime <= executeNanoTime) {
+        taskLog(task, this) { "already scheduled" }
+        return false
+      }
       futureTasks.removeAt(existingIndex) // Already scheduled later: reschedule below!
     }
     task.nextExecuteNanoTime = executeNanoTime
+    taskLog(task, this) { "scheduled after ${formatDuration(executeNanoTime - now)}" }
 
     // Insert in chronological order. Always compare deltas because nanoTime() is permitted to wrap.
     var insertAt = futureTasks.indexOfFirst { it.nextExecuteNanoTime - now > delayNanos }
@@ -176,10 +185,13 @@ class TaskQueue internal constructor(
     var tasksCanceled = false
     for (i in futureTasks.size - 1 downTo 0) {
       if (futureTasks[i].cancelable) {
+        taskLog(futureTasks[i], this) { "canceled" }
         tasksCanceled = true
         futureTasks.removeAt(i)
       }
     }
     return tasksCanceled
   }
+
+  override fun toString() = name
 }
