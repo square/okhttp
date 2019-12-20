@@ -137,7 +137,6 @@ subprojects { project ->
   def platformJavaHome = System.getProperty('test.java.home')
 
   test {
-    jvmArgs += "-Dlistener=okhttp3.testing.InstallUncaughtExceptionHandlerListener"
     jvmArgs += "-Dokhttp.platform=$platform"
 
     if (platformJavaHome != null) {

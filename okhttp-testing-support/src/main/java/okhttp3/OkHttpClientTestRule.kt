@@ -24,13 +24,20 @@ import org.junit.runners.model.Statement
 import java.net.InetAddress
 import java.util.concurrent.TimeUnit
 
-/** Apply this rule to tests that need an OkHttpClient instance. */
+/**
+ * Apply this rule to all tests. It adds additional checks for leaked resources and uncaught
+ * exceptions.
+ *
+ * Use [newClient] as a factory for a OkHttpClient instances. These instances are specifically
+ * configured for testing.
+ */
 class OkHttpClientTestRule : TestRule {
   private val clientEventsList = mutableListOf<String>()
   private var testClient: OkHttpClient? = null
+  private var uncaughtException: Throwable? = null
 
   fun wrap(eventListener: EventListener) = object : EventListener.Factory {
-    override fun create(call: Call): EventListener = ClientRuleEventListener(eventListener) { addEvent(it) }
+    override fun create(call: Call) = ClientRuleEventListener(eventListener) { addEvent(it) }
   }
 
   /**
@@ -48,7 +55,7 @@ class OkHttpClientTestRule : TestRule {
       client = OkHttpClient.Builder()
           .dns(SINGLE_INET_ADDRESS_DNS) // Prevent unexpected fallback addresses.
           .eventListenerFactory(object : EventListener.Factory {
-            override fun create(call: Call): EventListener = ClientRuleEventListener { addEvent(it) }
+            override fun create(call: Call) = ClientRuleEventListener { addEvent(it) }
           })
           .build()
       testClient = client
@@ -60,8 +67,14 @@ class OkHttpClientTestRule : TestRule {
     return newClient().newBuilder()
   }
 
-  @Synchronized private fun addEvent(it: String) {
-    clientEventsList.add(it)
+  @Synchronized private fun addEvent(event: String) {
+    clientEventsList.add(event)
+  }
+
+  @Synchronized private fun initUncaughtException(throwable: Throwable) {
+    if (uncaughtException == null) {
+      uncaughtException = throwable
+    }
   }
 
   fun ensureAllConnectionsReleased() {
@@ -75,7 +88,7 @@ class OkHttpClientTestRule : TestRule {
   private fun ensureAllTaskQueuesIdle() {
     for (queue in TaskRunner.INSTANCE.activeQueues()) {
       assertThat(queue.awaitIdle(TimeUnit.MILLISECONDS.toNanos(1000L)))
-          .withFailMessage("Queue still active after 1000ms")
+          .withFailMessage("Queue still active after 1000 ms")
           .isTrue()
     }
   }
@@ -83,13 +96,21 @@ class OkHttpClientTestRule : TestRule {
   override fun apply(base: Statement, description: Description): Statement {
     return object : Statement() {
       override fun evaluate() {
+        val defaultUncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { _, throwable ->
+          initUncaughtException(throwable)
+        }
         try {
           base.evaluate()
+          if (uncaughtException != null) {
+            throw AssertionError("uncaught exception thrown during test", uncaughtException)
+          }
           logEventsIfFlaky(description)
         } catch (t: Throwable) {
           logEvents()
           throw t
         } finally {
+          Thread.setDefaultUncaughtExceptionHandler(defaultUncaughtExceptionHandler)
           ensureAllConnectionsReleased()
           releaseClient()
           ensureAllTaskQueuesIdle()
