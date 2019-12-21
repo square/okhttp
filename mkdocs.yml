@@ -1,4 +1,5 @@
 site_name: OkHttp
+site_url: https://square.github.com/okhttp/
 repo_name: OkHttp
 repo_url: https://github.com/square/okhttp
 site_description: "An HTTP & HTTP/2 client for Android and Java applications"
