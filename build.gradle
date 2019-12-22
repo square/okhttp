@@ -148,10 +148,6 @@ subprojects { project ->
       exceptionFormat = 'full'
     }
 
-    println(platform)
-    println(platform)
-    println(platform)
-    println(platform)
     systemProperty 'okhttp.platform', platform
   }
 
