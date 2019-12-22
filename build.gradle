@@ -147,6 +147,12 @@ subprojects { project ->
     testLogging {
       exceptionFormat = 'full'
     }
+
+    println(platform)
+    println(platform)
+    println(platform)
+    println(platform)
+    systemProperty 'okhttp.platform', platform
   }
 
   if (platform == "jdk8alpn") {
