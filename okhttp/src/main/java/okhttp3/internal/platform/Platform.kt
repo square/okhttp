@@ -30,7 +30,6 @@ import java.net.Socket
 import java.security.KeyStore
 import java.security.Security
 import java.util.logging.Level
-import java.util.logging.Logger
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
@@ -171,7 +170,7 @@ open class Platform {
     const val INFO = 4
     const val WARN = 5
 
-    private val logger = Logger.getLogger(OkHttpClient::class.java.name)
+    private val logger = OkHttpClient.logger
 
     @JvmStatic
     fun get(): Platform = platform

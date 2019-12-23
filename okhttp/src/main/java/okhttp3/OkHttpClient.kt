@@ -39,6 +39,7 @@ import java.util.Collections
 import java.util.Random
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.TimeUnit
+import java.util.logging.Logger
 import javax.net.SocketFactory
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSocketFactory
@@ -967,6 +968,11 @@ open class OkHttpClient internal constructor(
 
     internal val DEFAULT_CONNECTION_SPECS = immutableListOf(
         ConnectionSpec.MODERN_TLS, ConnectionSpec.CLEARTEXT)
+
+    internal val logger = Logger.getLogger(OkHttpClient::class.java.name).apply {
+      useParentHandlers = true
+      parent = Logger.getLogger("okhttp")
+    }
 
     private fun newSslSocketFactory(trustManager: X509TrustManager): SSLSocketFactory {
       try {

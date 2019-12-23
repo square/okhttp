@@ -35,8 +35,10 @@ class OkHttpClientTestRule : TestRule {
   private val clientEventsList = mutableListOf<String>()
   private var testClient: OkHttpClient? = null
   private var uncaughtException: Throwable? = null
-  private val logHandler = TestLogHandlerBase(TaskRunner.logger) {
-    clientEventsList.add(it)
+  private val logHandler = TestLogHandlerBase {
+    synchronized(this) {
+      clientEventsList.add(it)
+    }
   }
 
   fun wrap(eventListener: EventListener) = object : EventListener.Factory {

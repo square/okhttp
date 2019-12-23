@@ -28,9 +28,12 @@ import java.util.logging.Logger
  * assertions about them.
  */
 class TestLogHandlerBase(
-  private val logger: Logger,
   private val logConsumer: (String) -> Unit
 ) : Handler(), TestRule {
+  val logger = Logger.getLogger("okhttp").apply {
+    useParentHandlers = false
+  }
+
   override fun apply(
     base: Statement,
     description: Description

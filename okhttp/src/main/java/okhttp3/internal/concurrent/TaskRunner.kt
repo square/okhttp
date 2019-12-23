@@ -307,6 +307,9 @@ class TaskRunner(
     @JvmField
     val INSTANCE = TaskRunner(RealBackend(threadFactory("OkHttp TaskRunner", daemon = true)))
 
-    val logger: Logger = Logger.getLogger(TaskRunner::class.java.name)
+    val logger: Logger = Logger.getLogger(TaskRunner::class.java.name).apply {
+      useParentHandlers = true
+      parent = Logger.getLogger("okhttp")
+    }
   }
 }
