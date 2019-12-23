@@ -35,9 +35,15 @@ class OkHttpClientTestRule : TestRule {
   private val clientEventsList = mutableListOf<String>()
   private var testClient: OkHttpClient? = null
   private var uncaughtException: Throwable? = null
+  private val logHandler = TestLogHandlerBase(TaskRunner.logger) {
+    clientEventsList.add(it)
+  }
 
   fun wrap(eventListener: EventListener) = object : EventListener.Factory {
-    override fun create(call: Call) = ClientRuleEventListener(eventListener) { addEvent(it) }
+    override fun create(call: Call): ClientRuleEventListener {
+      val clientRuleEventListener = ClientRuleEventListener(eventListener) { addEvent(it) }
+      return clientRuleEventListener
+    }
   }
 
   /**
@@ -100,6 +106,9 @@ class OkHttpClientTestRule : TestRule {
         Thread.setDefaultUncaughtExceptionHandler { _, throwable ->
           initUncaughtException(throwable)
         }
+
+        val oldLevel = logHandler.install()
+
         try {
           base.evaluate()
           if (uncaughtException != null) {
@@ -110,6 +119,7 @@ class OkHttpClientTestRule : TestRule {
           logEvents()
           throw t
         } finally {
+          logHandler.uninstall(oldLevel)
           Thread.setDefaultUncaughtExceptionHandler(defaultUncaughtExceptionHandler)
           ensureAllConnectionsReleased()
           releaseClient()
