@@ -15,12 +15,11 @@
  */
 package okhttp3.mockwebserver.internal.duplex
 
+import okhttp3.internal.http2.Http2Stream
 import okhttp3.mockwebserver.RecordedRequest
-import okio.BufferedSink
-import okio.BufferedSource
 import java.io.IOException
 
 interface DuplexResponseBody {
   @Throws(IOException::class)
-  fun onRequest(request: RecordedRequest, requestBody: BufferedSource, responseBody: BufferedSink)
+  fun onRequest(request: RecordedRequest, http2Stream: Http2Stream)
 }
