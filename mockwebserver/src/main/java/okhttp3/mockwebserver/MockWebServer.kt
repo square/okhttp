@@ -1080,12 +1080,8 @@ class MockWebServer : ExternalResource(), Closeable {
           throttledTransfer(response, socket, body, sink, body.size, false)
         }
       } else if (response.isDuplex) {
-        stream.getSink().buffer().use { sink ->
-          stream.getSource().buffer().use { source ->
-            val duplexResponseBody = response.duplexResponseBody
-            duplexResponseBody!!.onRequest(request, source, sink)
-          }
-        }
+        val duplexResponseBody = response.duplexResponseBody!!
+        duplexResponseBody.onRequest(request, stream)
       } else if (!outFinished) {
         stream.close(ErrorCode.NO_ERROR, null)
       }

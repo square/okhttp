@@ -18,11 +18,14 @@ package okhttp3;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.ProtocolException;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.duplex.AsyncRequestBody;
 import okhttp3.internal.duplex.MwsDuplexAccess;
+import okhttp3.internal.http2.ErrorCode;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.SocketPolicy;
@@ -31,7 +34,9 @@ import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okio.BufferedSink;
 import okio.BufferedSource;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -503,6 +508,64 @@ public final class DuplexTest {
     }
 
     mockDuplexResponseBody.awaitSuccess();
+  }
+
+  /**
+   * OkHttp currently doesn't implement failing the request body stream independently of failing the
+   * corresponding response body stream. This is necessary if we want servers to be able to stop
+   * inbound data and send an early 400 before the request body completes.
+   *
+   * This test sends a slow request that is canceled by the server. It expects the response to still
+   * be readable after the request stream is canceled.
+   */
+  @Ignore
+  @Test public void serverCancelsRequestBodyAndSendsResponseBody() throws Exception {
+    client = client.newBuilder()
+        .retryOnConnectionFailure(false)
+        .build();
+
+    BlockingQueue<String> log = new LinkedBlockingQueue<>();
+
+    enableProtocol(Protocol.HTTP_2);
+    MockDuplexResponseBody mockDuplexResponseBody = enqueueResponseWithBody(
+        new MockResponse()
+            .clearHeaders(),
+        new MockDuplexResponseBody()
+            .sendResponse("success!")
+            .exhaustResponse()
+            .cancelStream(ErrorCode.NO_ERROR));
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .post(new RequestBody() {
+          @Override public @Nullable MediaType contentType() {
+            return null;
+          }
+
+          @Override public void writeTo(BufferedSink sink) throws IOException {
+            try {
+              for (int i = 0; i < 10; i++) {
+                sink.writeUtf8(".");
+                sink.flush();
+                Thread.sleep(100);
+              }
+            } catch (IOException e) {
+              log.add(e.toString());
+              throw e;
+            } catch (Exception e) {
+              log.add(e.toString());
+            }
+          }
+        })
+        .build());
+
+    try (Response response = call.execute()) {
+      assertThat(response.body().string()).isEqualTo("success!");
+    }
+
+    mockDuplexResponseBody.awaitSuccess();
+
+    assertThat(log.take()).contains("StreamResetException: stream was reset: NO_ERROR");
   }
 
   private MockDuplexResponseBody enqueueResponseWithBody(

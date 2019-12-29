@@ -15,9 +15,12 @@
  */
 package okhttp3.mockwebserver.internal.duplex
 
+import okhttp3.internal.http2.ErrorCode
+import okhttp3.internal.http2.Http2Stream
 import okhttp3.mockwebserver.RecordedRequest
 import okio.BufferedSink
 import okio.BufferedSource
+import okio.buffer
 import okio.utf8Size
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -28,7 +31,7 @@ import java.util.concurrent.FutureTask
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 
-private typealias Action = (RecordedRequest, BufferedSource, BufferedSink) -> Unit
+private typealias Action = (RecordedRequest, BufferedSource, BufferedSink, Http2Stream) -> Unit
 
 /**
  * A scriptable request/response conversation. Create the script by calling methods like
@@ -39,17 +42,21 @@ class MockDuplexResponseBody : DuplexResponseBody {
   private val results = LinkedBlockingQueue<FutureTask<Void>>()
 
   fun receiveRequest(expected: String) = apply {
-    actions += { _, requestBody, _ ->
+    actions += { _, requestBody, _, _ ->
       assertEquals(expected, requestBody.readUtf8(expected.utf8Size()))
     }
   }
 
   fun exhaustRequest() = apply {
-    actions += { _, requestBody, _ -> assertTrue(requestBody.exhausted()) }
+    actions += { _, requestBody, _, _ -> assertTrue(requestBody.exhausted()) }
+  }
+
+  fun cancelStream(errorCode: ErrorCode) = apply {
+    actions += { _, _, _, stream -> stream.closeLater(errorCode) }
   }
 
   fun requestIOException() = apply {
-    actions += { _, requestBody, _ ->
+    actions += { _, requestBody, _, _ ->
       try {
         requestBody.exhausted()
         fail()
@@ -62,7 +69,7 @@ class MockDuplexResponseBody : DuplexResponseBody {
     s: String,
     responseSent: CountDownLatch = CountDownLatch(0)
   ) = apply {
-    actions += { _, _, responseBody ->
+    actions += { _, _, responseBody, _ ->
       responseBody.writeUtf8(s)
       responseBody.flush()
       responseSent.countDown()
@@ -70,27 +77,35 @@ class MockDuplexResponseBody : DuplexResponseBody {
   }
 
   fun exhaustResponse() = apply {
-    actions += { _, _, responseBody -> responseBody.close() }
+    actions += { _, _, responseBody, _ -> responseBody.close() }
   }
 
   fun sleep(duration: Long, unit: TimeUnit) = apply {
-    actions += { _, _, _ -> Thread.sleep(unit.toMillis(duration)) }
+    actions += { _, _, _, _ -> Thread.sleep(unit.toMillis(duration)) }
   }
 
-  override fun onRequest(
+  override fun onRequest(request: RecordedRequest, http2Stream: Http2Stream) {
+    val task = serviceStreamTask(request, http2Stream)
+    results.add(task)
+    task.run()
+  }
+
+  /** Returns a task that processes both request and response from [http2Stream]. */
+  private fun serviceStreamTask(
     request: RecordedRequest,
-    requestBody: BufferedSource,
-    responseBody: BufferedSink
-  ) {
-    val futureTask = FutureTask<Void> {
-      while (true) {
-        val action = actions.poll() ?: break
-        action(request, requestBody, responseBody)
+    http2Stream: Http2Stream
+  ): FutureTask<Void> {
+    return FutureTask<Void> {
+      http2Stream.getSource().buffer().use { requestBody ->
+        http2Stream.getSink().buffer().use { responseBody ->
+          while (true) {
+            val action = actions.poll() ?: break
+            action(request, requestBody, responseBody, http2Stream)
+          }
+        }
       }
       return@FutureTask null
     }
-    results.add(futureTask)
-    futureTask.run()
   }
 
   /** Returns once the duplex conversation completes successfully. */
