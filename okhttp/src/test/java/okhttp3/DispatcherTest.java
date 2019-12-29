@@ -279,8 +279,8 @@ public final class DispatcherTest {
     dispatcher.setMaxRequests(2); // Trigger promotion.
     callback.await(request2.url()).assertFailure(InterruptedIOException.class);
 
-    assertThat(listener.recordedEventTypes()).containsExactly("CallStart", "CallStart",
-        "CallFailed");
+    assertThat(listener.recordedEventTypes())
+        .containsExactly("CallStart", "CallStart", "CallFailed");
   }
 
   @Test public void executionRejectedAfterMaxRequestsPerHostChange() throws Exception {
@@ -292,8 +292,8 @@ public final class DispatcherTest {
     client.newCall(request2).enqueue(callback);
     dispatcher.setMaxRequestsPerHost(2); // Trigger promotion.
     callback.await(request2.url()).assertFailure(InterruptedIOException.class);
-    assertThat(listener.recordedEventTypes()).containsExactly("CallStart", "CallStart",
-        "CallFailed");
+    assertThat(listener.recordedEventTypes())
+        .containsExactly("CallStart", "CallStart", "CallFailed");
   }
 
   @Test public void executionRejectedAfterPrecedingCallFinishes() throws Exception {
@@ -305,8 +305,8 @@ public final class DispatcherTest {
     client.newCall(request2).enqueue(callback);
     executor.finishJob("http://a/1"); // Trigger promotion.
     callback.await(request2.url()).assertFailure(InterruptedIOException.class);
-    assertThat(listener.recordedEventTypes()).containsExactly("CallStart", "CallStart",
-        "CallFailed");
+    assertThat(listener.recordedEventTypes())
+        .containsExactly("CallStart", "CallStart", "CallFailed");
   }
 
   private Thread makeSynchronousCall(Call call) {

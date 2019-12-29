@@ -51,7 +51,7 @@ afterEvaluate { project ->
 }
 
 animalsniffer {
-    ignore 'javax.net.ssl.SSLParameters', 'javax.net.ssl.SSLSocket'
+  ignore 'javax.net.ssl.SSLParameters', 'javax.net.ssl.SSLSocket'
 }
 
 task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {

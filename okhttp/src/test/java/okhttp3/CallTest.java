@@ -54,10 +54,11 @@ import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLProtocolException;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
-import okhttp3.RecordingEventListener.CallEnd;
-import okhttp3.RecordingEventListener.ConnectionAcquired;
-import okhttp3.RecordingEventListener.ConnectionReleased;
-import okhttp3.RecordingEventListener.ResponseFailed;
+import okhttp3.CallEvent.CallEnd;
+import okhttp3.CallEvent.ConnectStart;
+import okhttp3.CallEvent.ConnectionAcquired;
+import okhttp3.CallEvent.ConnectionReleased;
+import okhttp3.CallEvent.ResponseFailed;
 import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.Version;
@@ -2988,7 +2989,9 @@ public final class CallTest {
       assertThat(response.body().string()).isNotBlank();
     }
 
-    long connectCount = listener.eventSequence.stream().filter((event) -> event instanceof RecordingEventListener.ConnectStart).count();
+    long connectCount = listener.getEventSequence().stream()
+        .filter((event) -> event instanceof ConnectStart)
+        .count();
     long expected = platform.isJdk8() ? 2 : 1;
     assertThat(connectCount).isEqualTo(expected);
   }

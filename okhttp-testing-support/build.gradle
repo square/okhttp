@@ -8,3 +8,7 @@ dependencies {
   
   compileOnly deps.jsr305
 }
+
+animalsniffer {
+  ignoreFailures = true
+}
