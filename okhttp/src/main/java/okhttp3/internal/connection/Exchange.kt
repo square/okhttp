@@ -119,7 +119,6 @@ class Exchange(
   @Throws(IOException::class)
   fun openResponseBody(response: Response): ResponseBody {
     try {
-      eventListener.responseBodyStart(call)
       val contentType = response.header("Content-Type")
       val contentLength = codec.reportedContentLength(response)
       val rawSource = codec.openResponseBodySource(response)
@@ -146,7 +145,7 @@ class Exchange(
   }
 
   fun webSocketUpgradeFailed() {
-    bodyComplete(-1L, true, true, null)
+    bodyComplete(-1L, responseDone = true, requestDone = true, e = null)
   }
 
   fun noNewExchangesOnConnection() {
@@ -253,7 +252,7 @@ class Exchange(
     private fun <E : IOException?> complete(e: E): E {
       if (completed) return e
       completed = true
-      return bodyComplete(bytesReceived, false, true, e)
+      return bodyComplete(bytesReceived, responseDone = false, requestDone = true, e = e)
     }
   }
 
@@ -263,6 +262,7 @@ class Exchange(
     private val contentLength: Long
   ) : ForwardingSource(delegate) {
     private var bytesReceived = 0L
+    private var invokeStartEvent = true
     private var completed = false
     private var closed = false
 
@@ -277,6 +277,12 @@ class Exchange(
       check(!closed) { "closed" }
       try {
         val read = delegate.read(sink, byteCount)
+
+        if (invokeStartEvent) {
+          invokeStartEvent = false
+          eventListener.responseBodyStart(call)
+        }
+
         if (read == -1L) {
           complete(null)
           return -1L
@@ -313,7 +319,12 @@ class Exchange(
     fun <E : IOException?> complete(e: E): E {
       if (completed) return e
       completed = true
-      return bodyComplete(bytesReceived, true, false, e)
+      // If the body is closed without reading any bytes send a responseBodyStart() now.
+      if (e == null && invokeStartEvent) {
+        invokeStartEvent = false
+        eventListener.responseBodyStart(call)
+      }
+      return bodyComplete(bytesReceived, responseDone = true, requestDone = false, e = e)
     }
   }
 

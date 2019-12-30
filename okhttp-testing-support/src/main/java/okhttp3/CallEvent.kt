@@ -22,150 +22,178 @@ import java.net.Proxy
 
 /** Data classes that correspond to each of the methods of [EventListener]. */
 sealed class CallEvent {
+  abstract val timestampNs: Long
   abstract val call: Call
 
   val name: String
     get() = javaClass.simpleName
 
-  open fun closes(): CallEvent? = null
+  /** Returns the open event that this close event closes, or null if this is not a close event. */
+  open fun closes(timestampNs: Long): CallEvent? = null
 
   data class ProxySelectStart(
+    override val timestampNs: Long,
     override val call: Call,
     val url: HttpUrl
   ) : CallEvent()
 
   data class ProxySelectEnd(
+    override val timestampNs: Long,
     override val call: Call,
     val url: HttpUrl,
     val proxies: List<Proxy>?
   ) : CallEvent()
 
   data class DnsStart(
+    override val timestampNs: Long,
     override val call: Call,
     val domainName: String
   ) : CallEvent()
 
   data class DnsEnd(
+    override val timestampNs: Long,
     override val call: Call,
     val domainName: String,
     val inetAddressList: List<InetAddress>
   ) : CallEvent() {
-    override fun closes() = DnsStart(call, domainName)
+    override fun closes(timestampNs: Long) = DnsStart(timestampNs, call, domainName)
   }
 
   data class ConnectStart(
+    override val timestampNs: Long,
     override val call: Call,
     val inetSocketAddress: InetSocketAddress,
     val proxy: Proxy?
   ) : CallEvent()
 
   data class ConnectEnd(
+    override val timestampNs: Long,
     override val call: Call,
     val inetSocketAddress: InetSocketAddress,
     val proxy: Proxy?,
     val protocol: Protocol?
   ) : CallEvent() {
-    override fun closes() = ConnectStart(call, inetSocketAddress, proxy)
+    override fun closes(timestampNs: Long) =
+        ConnectStart(timestampNs, call, inetSocketAddress, proxy)
   }
 
   data class ConnectFailed(
+    override val timestampNs: Long,
     override val call: Call,
     val inetSocketAddress: InetSocketAddress,
     val proxy: Proxy,
     val protocol: Protocol?,
     val ioe: IOException
   ) : CallEvent() {
-    override fun closes() = ConnectStart(call, inetSocketAddress, proxy)
+    override fun closes(timestampNs: Long) =
+        ConnectStart(timestampNs, call, inetSocketAddress, proxy)
   }
 
   data class SecureConnectStart(
+    override val timestampNs: Long,
     override val call: Call
   ) : CallEvent()
 
   data class SecureConnectEnd(
+    override val timestampNs: Long,
     override val call: Call,
     val handshake: Handshake?
   ) : CallEvent() {
-    override fun closes() = SecureConnectStart(call)
+    override fun closes(timestampNs: Long) = SecureConnectStart(timestampNs, call)
   }
 
   data class ConnectionAcquired(
+    override val timestampNs: Long,
     override val call: Call,
     val connection: Connection
   ) : CallEvent()
 
   data class ConnectionReleased(
+    override val timestampNs: Long,
     override val call: Call,
     val connection: Connection
   ) : CallEvent() {
-    override fun closes() = ConnectionAcquired(call, connection)
+    override fun closes(timestampNs: Long) = ConnectionAcquired(timestampNs, call, connection)
   }
 
   data class CallStart(
+    override val timestampNs: Long,
     override val call: Call
   ) : CallEvent()
 
   data class CallEnd(
+    override val timestampNs: Long,
     override val call: Call
   ) : CallEvent() {
-    override fun closes() = CallStart(call)
+    override fun closes(timestampNs: Long) = CallStart(timestampNs, call)
   }
 
   data class CallFailed(
+    override val timestampNs: Long,
     override val call: Call,
     val ioe: IOException
   ) : CallEvent()
 
   data class RequestHeadersStart(
+    override val timestampNs: Long,
     override val call: Call
   ) : CallEvent()
 
   data class RequestHeadersEnd(
+    override val timestampNs: Long,
     override val call: Call,
     val headerLength: Long
   ) : CallEvent() {
-    override fun closes() = RequestHeadersStart(call)
+    override fun closes(timestampNs: Long) = RequestHeadersStart(timestampNs, call)
   }
 
   data class RequestBodyStart(
+    override val timestampNs: Long,
     override val call: Call
   ) : CallEvent()
 
   data class RequestBodyEnd(
+    override val timestampNs: Long,
     override val call: Call,
     val bytesWritten: Long
   ) : CallEvent() {
-    override fun closes() = RequestBodyStart(call)
+    override fun closes(timestampNs: Long) = RequestBodyStart(timestampNs, call)
   }
 
   data class RequestFailed(
+    override val timestampNs: Long,
     override val call: Call,
     val ioe: IOException
   ) : CallEvent()
 
   data class ResponseHeadersStart(
+    override val timestampNs: Long,
     override val call: Call
   ) : CallEvent()
 
   data class ResponseHeadersEnd(
+    override val timestampNs: Long,
     override val call: Call,
     val headerLength: Long
   ) : CallEvent() {
-    override fun closes() = RequestHeadersStart(call)
+    override fun closes(timestampNs: Long) = RequestHeadersStart(timestampNs, call)
   }
 
   data class ResponseBodyStart(
+    override val timestampNs: Long,
     override val call: Call
   ) : CallEvent()
 
   data class ResponseBodyEnd(
+    override val timestampNs: Long,
     override val call: Call,
     val bytesRead: Long
   ) : CallEvent() {
-    override fun closes() = ResponseBodyStart(call)
+    override fun closes(timestampNs: Long) = ResponseBodyStart(timestampNs, call)
   }
 
   data class ResponseFailed(
+    override val timestampNs: Long,
     override val call: Call,
     val ioe: IOException
   ) : CallEvent()

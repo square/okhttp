@@ -891,9 +891,7 @@ class MockWebServer : ExternalResource(), Closeable {
         if (byteCountNum == 0L) return
       }
 
-      if (periodDelayMs != 0L) {
-        Thread.sleep(periodDelayMs)
-      }
+      sleepIfDelayed(periodDelayMs)
     }
   }
 
@@ -1047,11 +1045,12 @@ class MockWebServer : ExternalResource(), Closeable {
       }
       val http2Headers = mutableListOf<Header>()
       val statusParts = response.status.split(' ', limit = 3)
+      val headersDelayMs = response.getHeadersDelay(TimeUnit.MILLISECONDS)
+      val bodyDelayMs = response.getBodyDelay(TimeUnit.MILLISECONDS)
 
       if (statusParts.size < 2) {
         throw AssertionError("Unexpected status: ${response.status}")
       }
-      // TODO: constants for well-known header names.
       http2Headers.add(Header(Header.RESPONSE_STATUS, statusParts[1]))
       val headers = response.headers
       for ((name, value) in headers) {
@@ -1059,13 +1058,12 @@ class MockWebServer : ExternalResource(), Closeable {
       }
       val trailers = response.trailers
 
-      sleepIfDelayed(response.getHeadersDelay(TimeUnit.MILLISECONDS))
-
+      sleepIfDelayed(headersDelayMs)
       val body = response.getBody()
       val outFinished = (body == null &&
           response.pushPromises.isEmpty() &&
           !response.isDuplex)
-      val flushHeaders = body == null
+      val flushHeaders = body == null || bodyDelayMs != 0L
       require(!outFinished || trailers.size == 0) {
         "unsupported: no body and non-empty trailers $trailers"
       }
@@ -1076,7 +1074,7 @@ class MockWebServer : ExternalResource(), Closeable {
       pushPromises(stream, request, response.pushPromises)
       if (body != null) {
         stream.getSink().buffer().use { sink ->
-          sleepIfDelayed(response.getBodyDelay(TimeUnit.MILLISECONDS))
+          sleepIfDelayed(bodyDelayMs)
           throttledTransfer(response, socket, body, sink, body.size, false)
         }
       } else if (response.isDuplex) {

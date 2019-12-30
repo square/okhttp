@@ -16,6 +16,7 @@
 package okhttp3;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -28,17 +29,25 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import okhttp3.CallEvent.CallEnd;
 import okhttp3.CallEvent.CallFailed;
+import okhttp3.CallEvent.CallStart;
 import okhttp3.CallEvent.ConnectEnd;
 import okhttp3.CallEvent.ConnectFailed;
 import okhttp3.CallEvent.ConnectStart;
 import okhttp3.CallEvent.ConnectionAcquired;
+import okhttp3.CallEvent.ConnectionReleased;
 import okhttp3.CallEvent.DnsEnd;
 import okhttp3.CallEvent.DnsStart;
+import okhttp3.CallEvent.ProxySelectEnd;
+import okhttp3.CallEvent.ProxySelectStart;
 import okhttp3.CallEvent.RequestBodyEnd;
+import okhttp3.CallEvent.RequestBodyStart;
 import okhttp3.CallEvent.RequestHeadersEnd;
+import okhttp3.CallEvent.RequestHeadersStart;
 import okhttp3.CallEvent.ResponseBodyEnd;
+import okhttp3.CallEvent.ResponseBodyStart;
 import okhttp3.CallEvent.ResponseFailed;
 import okhttp3.CallEvent.ResponseHeadersEnd;
+import okhttp3.CallEvent.ResponseHeadersStart;
 import okhttp3.CallEvent.SecureConnectEnd;
 import okhttp3.CallEvent.SecureConnectStart;
 import okhttp3.internal.DoubleInetAddressDns;
@@ -153,9 +162,12 @@ public final class EventListenerTest {
   }
 
   @Test public void failedCallEventSequence() {
-    server.enqueue(new MockResponse().setHeadersDelay(2, TimeUnit.SECONDS));
+    server.enqueue(new MockResponse()
+        .setHeadersDelay(2, TimeUnit.SECONDS));
 
-    client = client.newBuilder().readTimeout(250, TimeUnit.MILLISECONDS).build();
+    client = client.newBuilder()
+        .readTimeout(250, TimeUnit.MILLISECONDS)
+        .build();
 
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
@@ -170,8 +182,7 @@ public final class EventListenerTest {
     assertThat(listener.recordedEventTypes()).containsExactly("CallStart",
         "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
         "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
-        "RequestHeadersEnd", "ResponseHeadersStart", "ResponseFailed", "ConnectionReleased",
-        "CallFailed");
+        "RequestHeadersEnd", "ResponseFailed", "ConnectionReleased", "CallFailed");
   }
 
   @Test public void failedDribbledCallEventSequence() throws IOException {
@@ -1138,7 +1149,9 @@ public final class EventListenerTest {
 
   private void requestBodySuccess(RequestBody body, Matcher<Long> requestBodyBytes,
       Matcher<Long> responseHeaderLength) throws IOException {
-    server.enqueue(new MockResponse().setResponseCode(200).setBody("World!"));
+    server.enqueue(new MockResponse()
+        .setResponseCode(200)
+        .setBody("World!"));
 
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
@@ -1149,6 +1162,115 @@ public final class EventListenerTest {
 
     assertBytesReadWritten(listener, any(Long.class), requestBodyBytes, responseHeaderLength,
         equalTo(6L));
+  }
+
+  @Test public void timeToFirstByteHttp1OverHttps() throws IOException {
+    enableTlsWithTunnel(false);
+    server.setProtocols(asList(Protocol.HTTP_1_1));
+
+    timeToFirstByte();
+  }
+
+  @Test public void timeToFirstByteHttp2OverHttps() throws IOException {
+    platform.assumeHttp2Support();
+    enableTlsWithTunnel(false);
+    server.setProtocols(asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
+
+    timeToFirstByte();
+  }
+
+  /**
+   * Test to confirm that events are reported at the time they occur and no earlier and no later.
+   * This inserts a bunch of synthetic 250 ms delays into both client and server and confirms that
+   * the same delays make it back into the events.
+   *
+   * We've had bugs where we report an event when we request data rather than when the data actually
+   * arrives. https://github.com/square/okhttp/issues/5578
+   */
+  private void timeToFirstByte() throws IOException {
+    long applicationInterceptorDelay = 250L;
+    long networkInterceptorDelay = 250L;
+    long requestBodyDelay = 250L;
+    long responseHeadersStartDelay = 250L;
+    long responseBodyStartDelay = 250L;
+    long responseBodyEndDelay = 250L;
+
+    // Warm up the client so the timing part of the test gets a pooled connection.
+    server.enqueue(new MockResponse());
+    Call warmUpCall = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    try (Response warmUpResponse = warmUpCall.execute()) {
+      warmUpResponse.body().string();
+    }
+    listener.clearAllEvents();
+
+    // Create a client with artificial delays.
+    client = client.newBuilder()
+        .addInterceptor(chain -> {
+          try {
+            Thread.sleep(applicationInterceptorDelay);
+            return chain.proceed(chain.request());
+          } catch (InterruptedException e) {
+            throw new InterruptedIOException();
+          }
+        })
+        .addNetworkInterceptor(chain -> {
+          try {
+            Thread.sleep(networkInterceptorDelay);
+            return chain.proceed(chain.request());
+          } catch (InterruptedException e) {
+            throw new InterruptedIOException();
+          }
+        })
+        .build();
+
+    // Create a request body with artificial delays.
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .post(new RequestBody() {
+          @Override public @Nullable MediaType contentType() {
+            return null;
+          }
+
+          @Override public void writeTo(BufferedSink sink) throws IOException {
+            try {
+              Thread.sleep(requestBodyDelay);
+              sink.writeUtf8("abc");
+            } catch (InterruptedException e) {
+              throw new InterruptedIOException();
+            }
+          }
+        })
+        .build());
+
+    // Create a response with artificial delays.
+    server.enqueue(new MockResponse()
+        .setHeadersDelay(responseHeadersStartDelay, TimeUnit.MILLISECONDS)
+        .setBodyDelay(responseBodyStartDelay, TimeUnit.MILLISECONDS)
+        .throttleBody(5, responseBodyEndDelay, TimeUnit.MILLISECONDS)
+        .setBody("fghijk"));
+
+    // Make the call.
+    try (Response response = call.execute()) {
+      assertThat(response.body().string()).isEqualTo("fghijk");
+    }
+
+    // Confirm the events occur when expected.
+    listener.takeEvent(CallStart.class, 0L);
+    listener.takeEvent(ProxySelectStart.class, applicationInterceptorDelay);
+    listener.takeEvent(ProxySelectEnd.class, 0L);
+    listener.takeEvent(ConnectionAcquired.class, 0L);
+    listener.takeEvent(RequestHeadersStart.class, networkInterceptorDelay);
+    listener.takeEvent(RequestHeadersEnd.class, 0L);
+    listener.takeEvent(RequestBodyStart.class, 0L);
+    listener.takeEvent(RequestBodyEnd.class, requestBodyDelay);
+    listener.takeEvent(ResponseHeadersStart.class, responseHeadersStartDelay);
+    listener.takeEvent(ResponseHeadersEnd.class, 0L);
+    listener.takeEvent(ResponseBodyStart.class, responseBodyStartDelay);
+    listener.takeEvent(ResponseBodyEnd.class, responseBodyEndDelay);
+    listener.takeEvent(ConnectionReleased.class, 0L);
+    listener.takeEvent(CallEnd.class, 0L);
   }
 
   private void enableTlsWithTunnel(boolean tunnelProxy) {
@@ -1268,5 +1390,28 @@ public final class EventListenerTest {
         "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart", "RequestHeadersEnd",
         "ResponseHeadersStart", "RequestBodyStart", "RequestBodyEnd", "ResponseHeadersEnd",
         "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
+  }
+
+  @Test public void timeToFirstByteGapBetweenResponseHeaderStartAndEnd() throws IOException {
+    long responseHeadersStartDelay = 250L;
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.EXPECT_CONTINUE)
+        .setHeadersDelay(responseHeadersStartDelay, TimeUnit.MILLISECONDS));
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .header("Expect", "100-continue")
+        .post(RequestBody.create("abc", MediaType.get("text/plain")))
+        .build();
+
+    Call call = client.newCall(request);
+    try (Response response = call.execute()) {
+      assertThat(response.body().string()).isEqualTo("");
+    }
+
+    listener.removeUpToEvent(ResponseHeadersStart.class);
+    listener.takeEvent(RequestBodyStart.class, 0L);
+    listener.takeEvent(RequestBodyEnd.class, 0L);
+    listener.takeEvent(ResponseHeadersEnd.class, responseHeadersStartDelay);
   }
 }
