@@ -35,7 +35,7 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
 
     exchange.writeRequestHeaders(request)
 
-    var responseHeadersStarted = false
+    var invokeStartEvent = true
     var responseBuilder: Response.Builder? = null
     if (HttpMethod.permitsRequestBody(request.method) && requestBody != null) {
       // If there's a "Expect: 100-continue" header on the request, wait for a "HTTP/1.1 100
@@ -43,9 +43,9 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
       // what we did get (such as a 4xx response) without ever transmitting the request body.
       if ("100-continue".equals(request.header("Expect"), ignoreCase = true)) {
         exchange.flushRequest()
-        responseHeadersStarted = true
+        responseBuilder = exchange.readResponseHeaders(expectContinue = true)
         exchange.responseHeadersStart()
-        responseBuilder = exchange.readResponseHeaders(true)
+        invokeStartEvent = false
       }
       if (responseBuilder == null) {
         if (requestBody.isDuplex()) {
@@ -75,11 +75,12 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
     if (requestBody == null || !requestBody.isDuplex()) {
       exchange.finishRequest()
     }
-    if (!responseHeadersStarted) {
-      exchange.responseHeadersStart()
-    }
     if (responseBuilder == null) {
-      responseBuilder = exchange.readResponseHeaders(false)!!
+      responseBuilder = exchange.readResponseHeaders(expectContinue = false)!!
+      if (invokeStartEvent) {
+        exchange.responseHeadersStart()
+        invokeStartEvent = false
+      }
     }
     var response = responseBuilder
         .request(request)
@@ -89,9 +90,13 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
         .build()
     var code = response.code
     if (code == 100) {
-      // server sent a 100-continue even though we did not request one.
-      // try again to read the actual response
-      response = exchange.readResponseHeaders(false)!!
+      // Server sent a 100-continue even though we did not request one. Try again to read the actual
+      // response status.
+      responseBuilder = exchange.readResponseHeaders(expectContinue = false)!!
+      if (invokeStartEvent) {
+        exchange.responseHeadersStart()
+      }
+      response = responseBuilder
           .request(request)
           .handshake(exchange.connection()!!.handshake())
           .sentRequestAtMillis(sentRequestMillis)

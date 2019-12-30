@@ -25,23 +25,34 @@ import java.net.Proxy
  * your application's HTTP calls.
  *
  * All start/connect/acquire events will eventually receive a matching end/release event, either
- * successful (non-null parameters), or failed (non-null throwable).  The first common parameters of
+ * successful (non-null parameters), or failed (non-null throwable). The first common parameters of
  * each event pair are used to link the event in case of concurrent or repeated events e.g.
- * dnsStart(call, domainName) -> dnsEnd(call, domainName, inetAddressList).
+ * `dnsStart(call, domainName)` → `dnsEnd(call, domainName, inetAddressList)`.
  *
- * Nesting is as follows
+ * Events are typically nested with this structure:
  *
- *  * call -> (dns -> connect -> secure connect)* -> request events
- *  * call -> (connection acquire/release)*
+ *  * call ([callStart], [callEnd], [callFailed])
+ *    * proxy selection ([proxySelectStart], [proxySelectEnd])
+ *    * dns ([dnsStart], [dnsEnd])
+ *    * connect ([connectStart], [connectEnd], [connectFailed])
+ *      * secure connect ([secureConnectStart], [secureConnectEnd])
+ *    * connection held ([connectionAcquired], [connectionReleased])
+ *      * request ([requestFailed])
+ *        * headers ([requestHeadersStart], [requestHeadersEnd])
+ *        * body ([requestBodyStart], [requestBodyEnd])
+ *      * response ([responseFailed])
+ *        * headers ([responseHeadersStart], [responseHeadersEnd])
+ *        * body ([responseBodyStart], [responseBodyEnd])
  *
- * Request events are ordered:
+ * This nesting is typical but not strict. For example, when calls use "Expect: continue" the
+ * request body start and end events occur within the response header events. Similarly,
+ * [duplex calls][RequestBody.isDuplex] interleave the request and response bodies.
  *
- * requestHeaders -> requestBody -> responseHeaders -> responseBody
+ * Since connections may be reused, the proxy selection, DNS, and connect events may not be present
+ * for a call. In future releases of OkHttp these events may also occur concurrently to permit
+ * multiple routes to be attempted simultaneously.
  *
- * Since connections may be reused, the dns and connect events may not be present for a call, or may
- * be repeated in case of failure retries, even concurrently in case of happy eyeballs type
- * scenarios. A redirect cross domain, or to use https may cause additional connection and request
- * events.
+ * Events and sequences of events may be repeated for retries and follow-ups.
  *
  * All event methods must execute fast, without external locking, cannot throw exceptions, attempt
  * to mutate the event parameters, or be re-entrant back into the client. Any IO - writing to files
@@ -284,12 +295,15 @@ abstract class EventListener {
   }
 
   /**
-   * Invoked just prior to receiving response headers.
+   * Invoked when response headers are first returned from the server.
    *
    * The connection is implicit, and will generally relate to the last [connectionAcquired] event.
    *
    * This can be invoked more than 1 time for a single [Call]. For example, if the response to the
    * [Call.request] is a redirect to a different address.
+   *
+   * Prior to OkHttp 4.3 this was incorrectly invoked when the client was ready to read headers.
+   * This was misleading for tracing because it was too early.
    */
   open fun responseHeadersStart(
     call: Call
@@ -311,12 +325,21 @@ abstract class EventListener {
   }
 
   /**
-   * Invoked just prior to receiving the response body.
+   * Invoked when data from the response body is first available to the application.
+   *
+   * This is typically invoked immediately before bytes are returned to the application. If the
+   * response body is empty this is invoked immediately before returning that to the application.
+   *
+   * If the application closes the response body before attempting a read, this is invoked at the
+   * time it is closed.
    *
    * The connection is implicit, and will generally relate to the last [connectionAcquired] event.
    *
    * This will usually be invoked only 1 time for a single [Call], exceptions are a limited set of
    * cases including failure recovery.
+   *
+   * Prior to OkHttp 4.3 this was incorrectly invoked when the client was ready to read the response
+   * body. This was misleading for tracing because it was too early.
    */
   open fun responseBodyStart(
     call: Call
@@ -329,6 +352,10 @@ abstract class EventListener {
    * Will only be invoked for requests having a response body e.g. won't be invoked for a web socket
    * upgrade.
    *
+   * If the response body is closed before the response body is exhausted, this is invoked at the
+   * time it is closed. In such calls [byteCount] is the number of bytes returned to the
+   * application. This may be smaller than the resource's byte count if were read to completion.
+   *
    * This method is always invoked after [responseBodyStart].
    */
   open fun responseBodyEnd(
@@ -340,8 +367,11 @@ abstract class EventListener {
   /**
    * Invoked when a response fails to be read.
    *
-   * This method is invoked after [responseHeadersStart] or [responseBodyStart]. Note that response
-   * failures do not necessarily fail the entire call.
+   * Note that response failures do not necessarily fail the entire call.
+   *
+   * Starting with OkHttp 4.3 this may be invoked without a prior call to [responseHeadersStart]
+   * or [responseBodyStart]. In earlier releases this method was documented to only be invoked after
+   * one of those methods.
    */
   open fun responseFailed(
     call: Call,

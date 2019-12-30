@@ -1168,7 +1168,7 @@ public final class CallTest {
     server.setDispatcher(dispatcher);
 
     listener = new RecordingEventListener() {
-      @Override public void responseHeadersStart(Call call) {
+      @Override public void requestHeadersEnd(Call call, Request request) {
         requestFinished.countDown();
         super.responseHeadersStart(call);
       }
