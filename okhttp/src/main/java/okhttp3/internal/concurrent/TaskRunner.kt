@@ -41,7 +41,7 @@ import java.util.logging.Logger
 class TaskRunner(
   val backend: Backend
 ) {
-  private var nextQueueName = 1
+  private var nextQueueName = 10000
   private var coordinatorWaiting = false
   private var coordinatorWakeUpAt = 0L
 
@@ -133,7 +133,7 @@ class TaskRunner(
     busyQueues.remove(queue)
 
     if (delayNanos != -1L && !cancelActiveTask && !queue.shutdown) {
-      queue.scheduleAndDecide(task, delayNanos)
+      queue.scheduleAndDecide(task, delayNanos, recurrence = true)
     }
 
     if (queue.futureTasks.isNotEmpty()) {

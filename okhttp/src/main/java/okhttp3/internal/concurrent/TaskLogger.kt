@@ -48,30 +48,34 @@ internal inline fun <T> logElapsed(
     if (loggingEnabled) {
       val elapsedNs = queue.taskRunner.backend.nanoTime() - startNs
       if (completedNormally) {
-        log(task, queue, "finished in ${formatDuration(elapsedNs)}")
+        log(task, queue, "finished run in ${formatDuration(elapsedNs)}")
       } else {
-        log(task, queue, "failed in ${formatDuration(elapsedNs)}")
+        log(task, queue, "failed a run in ${formatDuration(elapsedNs)}")
       }
     }
   }
 }
 
 private fun log(task: Task, queue: TaskQueue, message: String) {
-  TaskRunner.logger.fine("${queue.name} $message: ${task.name}")
+  TaskRunner.logger.fine("${queue.name} ${String.format("%-22s", message)}: ${task.name}")
 }
 
 /**
- * Returns a duration in the nearest whole-number units like "999 µs" or "1 ms". This rounds 0.5
+ * Returns a duration in the nearest whole-number units like "999 µs" or "  1 s ". This rounds 0.5
  * units away from 0 and 0.499 towards 0. The smallest unit this returns is "µs"; the largest unit
- * it returns is "s". For values in [-499..499] this returns "0 µs".
+ * it returns is "s". For values in [-499..499] this returns "  0 µs".
+ *
+ * The returned string attempts to be column-aligned to 6 characters. For negative and large values
+ * the returned string may be longer.
  */
 fun formatDuration(ns: Long): String {
-  return when {
-    ns <= -999_500_000 -> "${(ns - 500_000_000) / 1_000_000_000} s"
+  val s = when {
+    ns <= -999_500_000 -> "${(ns - 500_000_000) / 1_000_000_000} s "
     ns <= -999_500 -> "${(ns - 500_000) / 1_000_000} ms"
     ns <= 0 -> "${(ns - 500) / 1_000} µs"
     ns < 999_500 -> "${(ns + 500) / 1_000} µs"
     ns < 999_500_000 -> "${(ns + 500_000) / 1_000_000} ms"
-    else -> "${(ns + 500_000_000) / 1_000_000_000} s"
+    else -> "${(ns + 500_000_000) / 1_000_000_000} s "
   }
+  return String.format("%6s", s)
 }
