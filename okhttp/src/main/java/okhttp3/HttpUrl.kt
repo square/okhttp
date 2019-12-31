@@ -1140,6 +1140,8 @@ class HttpUrl internal constructor(
      * particularly strict for certain components.
      */
     internal fun reencodeForUri() = apply {
+      host = host?.replace(Regex("[\"<>^`{|}]"), "")
+
       for (i in 0 until encodedPathSegments.size) {
         encodedPathSegments[i] = encodedPathSegments[i].canonicalize(
             encodeSet = PATH_SEGMENT_ENCODE_SET_URI,
@@ -1147,6 +1149,7 @@ class HttpUrl internal constructor(
             strict = true
         )
       }
+
       val encodedQueryNamesAndValues = this.encodedQueryNamesAndValues
       if (encodedQueryNamesAndValues != null) {
         for (i in 0 until encodedQueryNamesAndValues.size) {
@@ -1158,6 +1161,7 @@ class HttpUrl internal constructor(
           )
         }
       }
+
       encodedFragment = encodedFragment?.canonicalize(
           encodeSet = FRAGMENT_ENCODE_SET_URI,
           alreadyEncoded = true,
