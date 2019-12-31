@@ -178,6 +178,53 @@ public final class HttpOverHttp2Test {
         (server.getHostName() + ":" + server.getPort()));
   }
 
+  @Test public void get204Response() throws Exception {
+    MockResponse responseWithoutBody = new MockResponse();
+    responseWithoutBody.status("HTTP/1.1 204");
+    responseWithoutBody.removeHeader("Content-Length");
+    server.enqueue(responseWithoutBody);
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/foo"))
+        .build());
+    Response response = call.execute();
+
+    // Body contains nothing.
+    assertThat(response.body().bytes().length).isEqualTo(0);
+    assertThat(response.body().contentLength()).isEqualTo(0);
+
+    // Content-Length header doesn't exist in a 204 response.
+    assertThat(response.header("content-length")).isNull();
+
+    assertThat(response.code()).isEqualTo(204);
+
+    RecordedRequest request = server.takeRequest();
+    assertThat(request.getRequestLine()).isEqualTo("GET /foo HTTP/1.1");
+  }
+
+  @Test public void head() throws Exception {
+    MockResponse mockResponse = new MockResponse().setHeader("Content-Length", 5);
+    mockResponse.status("HTTP/1.1 200");
+    server.enqueue(mockResponse);
+
+    Call call = client.newCall(new Request.Builder()
+        .head()
+        .url(server.url("/foo"))
+        .build());
+
+    Response response = call.execute();
+
+    // Body contains nothing.
+    assertThat(response.body().bytes().length).isEqualTo(0);
+    assertThat(response.body().contentLength()).isEqualTo(0);
+
+    // Content-Length header stays correctly.
+    assertThat(response.header("content-length")).isEqualTo("5");
+
+    RecordedRequest request = server.takeRequest();
+    assertThat(request.getRequestLine()).isEqualTo("HEAD /foo HTTP/1.1");
+  }
+
   @Test public void emptyResponse() throws IOException {
     server.enqueue(new MockResponse());
 
