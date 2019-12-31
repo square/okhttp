@@ -18,7 +18,6 @@ package okhttp3.internal.concurrent
 import okhttp3.internal.assertThreadDoesntHoldLock
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.RejectedExecutionException
-import java.util.concurrent.TimeUnit
 
 /**
  * A set of tasks that are executed in sequential order.
@@ -101,25 +100,42 @@ class TaskQueue internal constructor(
     }, delayNanos)
   }
 
-  /** Returns true if this queue became idle before the timeout elapsed. */
-  fun awaitIdle(delayNanos: Long): Boolean {
-    val latch = CountDownLatch(1)
-
-    val task = object : Task("OkHttp awaitIdle", cancelable = false) {
-      override fun runOnce(): Long {
-        latch.countDown()
-        return -1L
-      }
-    }
-
-    // Don't delegate to schedule because that has to honor shutdown rules.
+  /** Returns a latch that reaches 0 when the queue is next idle. */
+  fun idleLatch(): CountDownLatch {
     synchronized(taskRunner) {
-      if (scheduleAndDecide(task, 0L)) {
+      // If the queue is already idle, that's easy.
+      if (activeTask == null && futureTasks.isEmpty()) {
+        return CountDownLatch(0)
+      }
+
+      // If there's an existing AwaitIdleTask, use it. This is necessary when the executor is
+      // shutdown but still busy as we can't enqueue in that case.
+      val existingTask = activeTask
+      if (existingTask is AwaitIdleTask) {
+        return existingTask.latch
+      }
+      for (futureTask in futureTasks) {
+        if (futureTask is AwaitIdleTask) {
+          return futureTask.latch
+        }
+      }
+
+      // Don't delegate to schedule() because that enforces shutdown rules.
+      val newTask = AwaitIdleTask()
+      if (scheduleAndDecide(newTask, 0L)) {
         taskRunner.kickCoordinator(this)
       }
+      return newTask.latch
     }
+  }
 
-    return latch.await(delayNanos, TimeUnit.NANOSECONDS)
+  private class AwaitIdleTask : Task("OkHttp awaitIdle", cancelable = false) {
+    val latch = CountDownLatch(1)
+
+    override fun runOnce(): Long {
+      latch.countDown()
+      return -1L
+    }
   }
 
   /** Adds [task] to run in [delayNanos]. Returns true if the coordinator is impacted. */
