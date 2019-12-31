@@ -125,10 +125,13 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
     headersToRedact = newHeadersToRedact
   }
 
-  @Deprecated(
-      message = "Moved to var. Replace setLevel(...) with level(...) to fix Java",
-      replaceWith = ReplaceWith(expression = "apply { this.level = level }"),
-      level = DeprecationLevel.WARNING)
+  /**
+   * Sets the level and returns this.
+   *
+   * This was deprecated in OkHttp 4.0 in favor of the [level] val. In OkHttp 4.3 it is
+   * un-deprecated because Java callers can't chain when assigning Kotlin vals. (The getter remains
+   * deprecated).
+   */
   fun setLevel(level: Level) = apply {
     this.level = level
   }

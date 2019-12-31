@@ -105,10 +105,13 @@ class MockResponse : Cloneable {
       level = DeprecationLevel.ERROR)
   fun getStatus(): String = status
 
-  @Deprecated(
-      message = "moved to var.  Replace setStatus(...) with status(...) to fix Java",
-      replaceWith = ReplaceWith(expression = "apply { this.status = status }"),
-      level = DeprecationLevel.WARNING)
+  /**
+   * Sets the status and returns this.
+   *
+   * This was deprecated in OkHttp 4.0 in favor of the [status] val. In OkHttp 4.3 it is
+   * un-deprecated because Java callers can't chain when assigning Kotlin vals. (The getter remains
+   * deprecated).
+   */
   fun setStatus(status: String) = apply {
     this.status = status
   }
@@ -219,10 +222,13 @@ class MockResponse : Cloneable {
       level = DeprecationLevel.ERROR)
   fun getHeaders(): Headers = headers
 
-  @Deprecated(
-      message = "moved to var. Replace setHeaders(...) with headers(...) to fix Java",
-      replaceWith = ReplaceWith(expression = "apply { this.headers = headers }"),
-      level = DeprecationLevel.WARNING)
+  /**
+   * Sets the headers and returns this.
+   *
+   * This was deprecated in OkHttp 4.0 in favor of the [headers] val. In OkHttp 4.3 it is
+   * un-deprecated because Java callers can't chain when assigning Kotlin vals. (The getter remains
+   * deprecated).
+   */
   fun setHeaders(headers: Headers) = apply { this.headers = headers }
 
   @JvmName("-deprecated_getTrailers")
@@ -232,10 +238,13 @@ class MockResponse : Cloneable {
       level = DeprecationLevel.ERROR)
   fun getTrailers(): Headers = trailers
 
-  @Deprecated(
-      message = "moved to var. Replace setTrailers(...) with trailers(...) to fix Java",
-      replaceWith = ReplaceWith(expression = "apply { this.trailers = trailers }"),
-      level = DeprecationLevel.WARNING)
+  /**
+   * Sets the trailers and returns this.
+   *
+   * This was deprecated in OkHttp 4.0 in favor of the [trailers] val. In OkHttp 4.3 it is
+   * un-deprecated because Java callers can't chain when assigning Kotlin vals. (The getter remains
+   * deprecated).
+   */
   fun setTrailers(trailers: Headers) = apply { this.trailers = trailers }
 
   @JvmName("-deprecated_getSocketPolicy")
@@ -245,10 +254,13 @@ class MockResponse : Cloneable {
       level = DeprecationLevel.ERROR)
   fun getSocketPolicy() = socketPolicy
 
-  @Deprecated(
-      message = "moved to var. Replace setSocketPolicy(...) with socketPolicy(...) to fix Java",
-      replaceWith = ReplaceWith(expression = "apply { this.socketPolicy = socketPolicy }"),
-      level = DeprecationLevel.WARNING)
+  /**
+   * Sets the socket policy and returns this.
+   *
+   * This was deprecated in OkHttp 4.0 in favor of the [socketPolicy] val. In OkHttp 4.3 it is
+   * un-deprecated because Java callers can't chain when assigning Kotlin vals. (The getter remains
+   * deprecated).
+   */
   fun setSocketPolicy(socketPolicy: SocketPolicy) = apply {
     this.socketPolicy = socketPolicy
   }
@@ -260,10 +272,13 @@ class MockResponse : Cloneable {
       level = DeprecationLevel.ERROR)
   fun getHttp2ErrorCode() = http2ErrorCode
 
-  @Deprecated(
-      message = "moved to var. Replace setHttp2ErrorCode(...) with http2ErrorCode(...) to fix Java",
-      replaceWith = ReplaceWith(expression = "apply { this.http2ErrorCode = http2ErrorCode }"),
-      level = DeprecationLevel.WARNING)
+  /**
+   * Sets the HTTP/2 error code and returns this.
+   *
+   * This was deprecated in OkHttp 4.0 in favor of the [http2ErrorCode] val. In OkHttp 4.3 it is
+   * un-deprecated because Java callers can't chain when assigning Kotlin vals. (The getter remains
+   * deprecated).
+   */
   fun setHttp2ErrorCode(http2ErrorCode: Int) = apply {
     this.http2ErrorCode = http2ErrorCode
   }
