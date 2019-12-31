@@ -13,6 +13,8 @@
         <meta name="description" content="An HTTP & HTTP/2 client for Android and Java applications">
       
       
+        <link rel="canonical" href="https://square.github.com/okhttp/4.x/okhttp/okhttp3/-event-listener/response-body-end/">
+      
       
         <meta name="author" content="Square, Inc.">
       
@@ -100,7 +102,7 @@
   <nav class="md-header-nav md-grid">
     <div class="md-flex">
       <div class="md-flex__cell md-flex__cell--shrink">
-        <a href="../../../../.." title="OkHttp" class="md-header-nav__button md-logo">
+        <a href="https://square.github.com/okhttp/" title="OkHttp" class="md-header-nav__button md-logo">
           
             <img src="../../../../../images/icon-square.png" width="24" height="24">
           
@@ -192,7 +194,7 @@
                   <div class="md-sidebar__inner">
                     <nav class="md-nav md-nav--primary" data-md-level="0">
   <label class="md-nav__title md-nav__title--site" for="__drawer">
-    <a href="../../../../.." title="OkHttp" class="md-nav__button md-logo">
+    <a href="https://square.github.com/okhttp/" title="OkHttp" class="md-nav__button md-logo">
       
         <img src="../../../../../images/icon-square.png" width="48" height="48">
       
@@ -642,6 +644,9 @@
 <p>Invoked immediately after receiving a response body and completing reading it.</p>
 <p>Will only be invoked for requests having a response body e.g. won&rsquo;t be invoked for a web socket
 upgrade.</p>
+<p>If the response body is closed before the response body is exhausted, this is invoked at the
+time it is closed. In such calls <a href="./#okhttp3.EventListener$responseBodyEnd(okhttp3.Call, kotlin.Long)/byteCount">byteCount</a> is the number of bytes returned to the
+application. This may be smaller than the resource&rsquo;s byte count if were read to completion.</p>
 <p>This method is always invoked after <a href="../response-body-start/">responseBodyStart</a>.</p>
                 
                   

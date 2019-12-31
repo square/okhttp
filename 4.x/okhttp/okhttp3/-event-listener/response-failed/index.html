@@ -13,6 +13,8 @@
         <meta name="description" content="An HTTP & HTTP/2 client for Android and Java applications">
       
       
+        <link rel="canonical" href="https://square.github.com/okhttp/4.x/okhttp/okhttp3/-event-listener/response-failed/">
+      
       
         <meta name="author" content="Square, Inc.">
       
@@ -100,7 +102,7 @@
   <nav class="md-header-nav md-grid">
     <div class="md-flex">
       <div class="md-flex__cell md-flex__cell--shrink">
-        <a href="../../../../.." title="OkHttp" class="md-header-nav__button md-logo">
+        <a href="https://square.github.com/okhttp/" title="OkHttp" class="md-header-nav__button md-logo">
           
             <img src="../../../../../images/icon-square.png" width="24" height="24">
           
@@ -192,7 +194,7 @@
                   <div class="md-sidebar__inner">
                     <nav class="md-nav md-nav--primary" data-md-level="0">
   <label class="md-nav__title md-nav__title--site" for="__drawer">
-    <a href="../../../../.." title="OkHttp" class="md-nav__button md-logo">
+    <a href="https://square.github.com/okhttp/" title="OkHttp" class="md-nav__button md-logo">
       
         <img src="../../../../../images/icon-square.png" width="48" height="48">
       
@@ -640,8 +642,10 @@
 <h1 id="responsefailed">responseFailed<a class="headerlink" href="#responsefailed" title="Permanent link">&para;</a></h1>
 <p><code>open fun responseFailed(call:</code><a href="../../-call/"><code>Call</code></a><code>, ioe:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/io/IOException.html"><code>IOException</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></p>
 <p>Invoked when a response fails to be read.</p>
-<p>This method is invoked after <a href="../response-headers-start/">responseHeadersStart</a> or <a href="../response-body-start/">responseBodyStart</a>. Note that response
-failures do not necessarily fail the entire call.</p>
+<p>Note that response failures do not necessarily fail the entire call.</p>
+<p>Starting with OkHttp 4.3 this may be invoked without a prior call to <a href="../response-headers-start/">responseHeadersStart</a>
+or <a href="../response-body-start/">responseBodyStart</a>. In earlier releases this method was documented to only be invoked after
+one of those methods.</p>
                 
                   
                 

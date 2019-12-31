@@ -13,6 +13,8 @@
         <meta name="description" content="An HTTP & HTTP/2 client for Android and Java applications">
       
       
+        <link rel="canonical" href="https://square.github.com/okhttp/4.x/okhttp/okhttp3/-event-listener/-init-/">
+      
       
         <meta name="author" content="Square, Inc.">
       
@@ -100,7 +102,7 @@
   <nav class="md-header-nav md-grid">
     <div class="md-flex">
       <div class="md-flex__cell md-flex__cell--shrink">
-        <a href="../../../../.." title="OkHttp" class="md-header-nav__button md-logo">
+        <a href="https://square.github.com/okhttp/" title="OkHttp" class="md-header-nav__button md-logo">
           
             <img src="../../../../../images/icon-square.png" width="24" height="24">
           
@@ -192,7 +194,7 @@
                   <div class="md-sidebar__inner">
                     <nav class="md-nav md-nav--primary" data-md-level="0">
   <label class="md-nav__title md-nav__title--site" for="__drawer">
-    <a href="../../../../.." title="OkHttp" class="md-nav__button md-logo">
+    <a href="https://square.github.com/okhttp/" title="OkHttp" class="md-nav__button md-logo">
       
         <img src="../../../../../images/icon-square.png" width="48" height="48">
       
@@ -642,20 +644,39 @@
 <p>Listener for metrics events. Extend this class to monitor the quantity, size, and duration of
 your application&rsquo;s HTTP calls.</p>
 <p>All start/connect/acquire events will eventually receive a matching end/release event, either
-successful (non-null parameters), or failed (non-null throwable).  The first common parameters of
+successful (non-null parameters), or failed (non-null throwable). The first common parameters of
 each event pair are used to link the event in case of concurrent or repeated events e.g.
-dnsStart(call, domainName) -&amp;gt; dnsEnd(call, domainName, inetAddressList).</p>
-<p>Nesting is as follows</p>
+<code>dnsStart(call, domainName)</code> → <code>dnsEnd(call, domainName, inetAddressList)</code>.</p>
+<p>Events are typically nested with this structure:</p>
 <ul>
-<li>call -&amp;gt; (dns -&amp;gt; connect -&amp;gt; secure connect)* -&amp;gt; request events</li>
-<li>call -&amp;gt; (connection acquire/release)*</li>
+<li>call (<a href="../call-start/">callStart</a>, <a href="../call-end/">callEnd</a>, <a href="../call-failed/">callFailed</a>)</li>
+<li>proxy selection (<a href="../proxy-select-start/">proxySelectStart</a>, <a href="../proxy-select-end/">proxySelectEnd</a>)</li>
+<li>dns (<a href="../dns-start/">dnsStart</a>, <a href="../dns-end/">dnsEnd</a>)</li>
+<li>connect (<a href="../connect-start/">connectStart</a>, <a href="../connect-end/">connectEnd</a>, <a href="../connect-failed/">connectFailed</a>)<ul>
+<li>secure connect (<a href="../secure-connect-start/">secureConnectStart</a>, <a href="../secure-connect-end/">secureConnectEnd</a>)</li>
 </ul>
-<p>Request events are ordered:</p>
-<p>requestHeaders -&amp;gt; requestBody -&amp;gt; responseHeaders -&amp;gt; responseBody</p>
-<p>Since connections may be reused, the dns and connect events may not be present for a call, or may
-be repeated in case of failure retries, even concurrently in case of happy eyeballs type
-scenarios. A redirect cross domain, or to use https may cause additional connection and request
-events.</p>
+</li>
+<li>connection held (<a href="../connection-acquired/">connectionAcquired</a>, <a href="../connection-released/">connectionReleased</a>)<ul>
+<li>request (<a href="../request-failed/">requestFailed</a>)<ul>
+<li>headers (<a href="../request-headers-start/">requestHeadersStart</a>, <a href="../request-headers-end/">requestHeadersEnd</a>)</li>
+<li>body (<a href="../request-body-start/">requestBodyStart</a>, <a href="../request-body-end/">requestBodyEnd</a>)</li>
+</ul>
+</li>
+<li>response (<a href="../response-failed/">responseFailed</a>)<ul>
+<li>headers (<a href="../response-headers-start/">responseHeadersStart</a>, <a href="../response-headers-end/">responseHeadersEnd</a>)</li>
+<li>body (<a href="../response-body-start/">responseBodyStart</a>, <a href="../response-body-end/">responseBodyEnd</a>)</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>This nesting is typical but not strict. For example, when calls use &ldquo;Expect: continue&rdquo; the
+request body start and end events occur within the response header events. Similarly,
+<a href="../../-request-body/is-duplex/">duplex calls</a> interleave the request and response bodies.</p>
+<p>Since connections may be reused, the proxy selection, DNS, and connect events may not be present
+for a call. In future releases of OkHttp these events may also occur concurrently to permit
+multiple routes to be attempted simultaneously.</p>
+<p>Events and sequences of events may be repeated for retries and follow-ups.</p>
 <p>All event methods must execute fast, without external locking, cannot throw exceptions, attempt
 to mutate the event parameters, or be re-entrant back into the client. Any IO - writing to files
 or network should be done asynchronously.</p>

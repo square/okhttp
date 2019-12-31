@@ -13,6 +13,8 @@
         <meta name="description" content="An HTTP & HTTP/2 client for Android and Java applications">
       
       
+        <link rel="canonical" href="https://square.github.com/okhttp/tls_configuration_history/">
+      
       
         <meta name="author" content="Square, Inc.">
       
@@ -100,7 +102,7 @@
   <nav class="md-header-nav md-grid">
     <div class="md-flex">
       <div class="md-flex__cell md-flex__cell--shrink">
-        <a href=".." title="OkHttp" class="md-header-nav__button md-logo">
+        <a href="https://square.github.com/okhttp/" title="OkHttp" class="md-header-nav__button md-logo">
           
             <img src="../images/icon-square.png" width="24" height="24">
           
@@ -192,7 +194,7 @@
                   <div class="md-sidebar__inner">
                     <nav class="md-nav md-nav--primary" data-md-level="0">
   <label class="md-nav__title md-nav__title--site" for="__drawer">
-    <a href=".." title="OkHttp" class="md-nav__button md-logo">
+    <a href="https://square.github.com/okhttp/" title="OkHttp" class="md-nav__button md-logo">
       
         <img src="../images/icon-square.png" width="48" height="48">
       
@@ -872,7 +874,7 @@
                 <h1 id="tls-configuration-history">TLS Configuration History<a class="headerlink" href="#tls-configuration-history" title="Permanent link">&para;</a></h1>
 <p>OkHttp tracks the dynamic TLS ecosystem to balance connectivity and security. This page is a log of
 changes we&rsquo;ve made over time to OkHttp&rsquo;s default TLS options.</p>
-<h2 id="okhttp-314"><a href="https://github.com/square/okhttp/blob/master/CHANGELOG.md#version-3140">OkHttp 3.14</a><a class="headerlink" href="#okhttp-314" title="Permanent link">&para;</a></h2>
+<h2 id="okhttp-314"><a href="https://square.github.io/okhttp/changelog_3x/#version-310">OkHttp 3.14</a><a class="headerlink" href="#okhttp-314" title="Permanent link">&para;</a></h2>
 <p><em>2019-03-14</em></p>
 <p>Remove 2 TLSv1.3 cipher suites that are neither available on OkHttp’s host platforms nor enabled in releases of Chrome and Firefox.</p>
 <h5 id="restricted_tls-cipher-suites">RESTRICTED_TLS cipher suites<a class="headerlink" href="#restricted_tls-cipher-suites" title="Permanent link">&para;</a></h5>
@@ -910,7 +912,7 @@ changes we&rsquo;ve made over time to OkHttp&rsquo;s default TLS options.</p>
 <li><strong>REMOVED:</strong> <del>TLS_AES_128_CCM_SHA256<a href="#tlsv13_only">¹</a></del></li>
 <li><strong>REMOVED:</strong> <del>TLS_AES_128_CCM_8_SHA256<a href="#tlsv13_only">¹</a></del></li>
 </ul>
-<h2 id="okhttp-313"><a href="https://github.com/square/okhttp/blob/master/CHANGELOG.md#version-3130">OkHttp 3.13</a><a class="headerlink" href="#okhttp-313" title="Permanent link">&para;</a></h2>
+<h2 id="okhttp-313"><a href="https://square.github.io/okhttp/changelog_3x/#version-340">OkHttp 3.13</a><a class="headerlink" href="#okhttp-313" title="Permanent link">&para;</a></h2>
 <p><em>2019-02-04</em></p>
 <p>Remove TLSv1.1 and TLSv1 from MODERN_TLS. Change COMPATIBLE_TLS to support all TLS versions.</p>
 <h5 id="restricted_tls-versions">RESTRICTED_TLS versions<a class="headerlink" href="#restricted_tls-versions" title="Permanent link">&para;</a></h5>
@@ -932,7 +934,7 @@ changes we&rsquo;ve made over time to OkHttp&rsquo;s default TLS options.</p>
 <li><strong>NEW:</strong> TLSv1.1</li>
 <li>TLSv1</li>
 </ul>
-<h2 id="okhttp-312"><a href="https://github.com/square/okhttp/blob/master/CHANGELOG.md#version-3120">OkHttp 3.12</a><a class="headerlink" href="#okhttp-312" title="Permanent link">&para;</a></h2>
+<h2 id="okhttp-312"><a href="https://square.github.io/okhttp/changelog_3x/#version-330">OkHttp 3.12</a><a class="headerlink" href="#okhttp-312" title="Permanent link">&para;</a></h2>
 <p><em>2018-11-16</em></p>
 <p>Added support for TLSv1.3.</p>
 <h5 id="restricted_tls-cipher-suites_1">RESTRICTED_TLS cipher suites<a class="headerlink" href="#restricted_tls-cipher-suites_1" title="Permanent link">&para;</a></h5>
@@ -986,7 +988,7 @@ changes we&rsquo;ve made over time to OkHttp&rsquo;s default TLS options.</p>
 <ul>
 <li>TLSv1</li>
 </ul>
-<h2 id="okhttp-311"><a href="https://github.com/square/okhttp/blob/master/CHANGELOG.md#version-3110">OkHttp 3.11</a><a class="headerlink" href="#okhttp-311" title="Permanent link">&para;</a></h2>
+<h2 id="okhttp-311"><a href="https://square.github.io/okhttp/changelog_3x/#version-320">OkHttp 3.11</a><a class="headerlink" href="#okhttp-311" title="Permanent link">&para;</a></h2>
 <p><em>2018-07-12</em></p>
 <p>Added a new extra strict RESTRICTED_TLS configuration inspired by <a href="https://cloud.google.com/load-balancing/docs/ssl-policies-concepts">Google Cloud’s similar policy</a>. It is appropriate when both the host platform
 (JVM/Conscrypt/Android) and target webserver are current.</p>
@@ -1003,7 +1005,7 @@ changes we&rsquo;ve made over time to OkHttp&rsquo;s default TLS options.</p>
 <ul>
 <li>TLSv1.2</li>
 </ul>
-<h2 id="okhttp-310"><a href="https://github.com/square/okhttp/blob/master/CHANGELOG.md#version-3100">OkHttp 3.10</a><a class="headerlink" href="#okhttp-310" title="Permanent link">&para;</a></h2>
+<h2 id="okhttp-310"><a href="https://square.github.io/okhttp/changelog_3x/#version-310">OkHttp 3.10</a><a class="headerlink" href="#okhttp-310" title="Permanent link">&para;</a></h2>
 <p><em>2018-02-24</em></p>
 <p>Remove two rarely-used cipher suites from the default set. This tracks a <a href="https://developers.google.com/web/updates/2016/12/chrome-56-deprecations#remove_cbc-mode_ecdsa_ciphers_in_tls">Chromium change</a> to remove these cipher suites because they are fragile and rarely-used.</p>
 <h5 id="modern_tls-compatible_tls-cipher-suites_2">MODERN_TLS / COMPATIBLE_TLS cipher suites<a class="headerlink" href="#modern_tls-compatible_tls-cipher-suites_2" title="Permanent link">&para;</a></h5>
@@ -1024,7 +1026,7 @@ changes we&rsquo;ve made over time to OkHttp&rsquo;s default TLS options.</p>
 <li><strong>REMOVED:</strong> <del>TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA</del></li>
 <li><strong>REMOVED:</strong> <del>TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA</del></li>
 </ul>
-<h2 id="okhttp-35"><a href="https://github.com/square/okhttp/blob/master/CHANGELOG.md#version-350">OkHttp 3.5</a><a class="headerlink" href="#okhttp-35" title="Permanent link">&para;</a></h2>
+<h2 id="okhttp-35"><a href="https://square.github.io/okhttp/changelog_3x/#version-350">OkHttp 3.5</a><a class="headerlink" href="#okhttp-35" title="Permanent link">&para;</a></h2>
 <p><em>2016-11-30</em></p>
 <p>Remove three old cipher suites and add five new ones. This tracks changes in what&rsquo;s available on
 Android and Java, and also what cipher suites recent releases of Chrome and Firefox support by
@@ -1050,7 +1052,7 @@ default.</p>
 <li><strong>REMOVED:</strong> <del>TLS_DHE_RSA_WITH_AES_128_GCM_SHA256</del></li>
 <li><strong>REMOVED:</strong> <del>TLS_DHE_RSA_WITH_AES_256_CBC_SHA</del></li>
 </ul>
-<h2 id="okhttp-30"><a href="https://github.com/square/okhttp/blob/master/CHANGELOG.md#version-300">OkHttp 3.0</a><a class="headerlink" href="#okhttp-30" title="Permanent link">&para;</a></h2>
+<h2 id="okhttp-30"><a href="https://square.github.io/okhttp/changelog_3x/#version-300">OkHttp 3.0</a><a class="headerlink" href="#okhttp-30" title="Permanent link">&para;</a></h2>
 <p><em>2016-01-13</em></p>
 <h5 id="modern_tls-compatible_tls-cipher-suites_4">MODERN_TLS / COMPATIBLE_TLS cipher suites<a class="headerlink" href="#modern_tls-compatible_tls-cipher-suites_4" title="Permanent link">&para;</a></h5>
 <ul>
@@ -1066,8 +1068,7 @@ default.</p>
 <li>TLS_RSA_WITH_AES_128_GCM_SHA256<a href="#http2_naughty">²</a></li>
 <li>TLS_RSA_WITH_AES_128_CBC_SHA<a href="#http2_naughty">²</a></li>
 <li>TLS_RSA_WITH_AES_256_CBC_SHA<a href="#http2_naughty">²</a></li>
-<li>TLS_RSA_WITH_3DES_EDE_CBC_SHA<a href="#http2_naughty">²</a>
-</dl></li>
+<li>TLS_RSA_WITH_3DES_EDE_CBC_SHA<a href="#http2_naughty">²</a></li>
 </ul>
 <h5 id="modern_tls-versions_2">MODERN_TLS versions<a class="headerlink" href="#modern_tls-versions_2" title="Permanent link">&para;</a></h5>
 <ul>

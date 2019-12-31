@@ -13,6 +13,8 @@
         <meta name="description" content="An HTTP & HTTP/2 client for Android and Java applications">
       
       
+        <link rel="canonical" href="https://square.github.com/okhttp/">
+      
       
         <meta name="author" content="Square, Inc.">
       
@@ -100,7 +102,7 @@
   <nav class="md-header-nav md-grid">
     <div class="md-flex">
       <div class="md-flex__cell md-flex__cell--shrink">
-        <a href="." title="OkHttp" class="md-header-nav__button md-logo">
+        <a href="https://square.github.com/okhttp/" title="OkHttp" class="md-header-nav__button md-logo">
           
             <img src="images/icon-square.png" width="24" height="24">
           
@@ -192,7 +194,7 @@
                   <div class="md-sidebar__inner">
                     <nav class="md-nav md-nav--primary" data-md-level="0">
   <label class="md-nav__title md-nav__title--site" for="__drawer">
-    <a href="." title="OkHttp" class="md-nav__button md-logo">
+    <a href="https://square.github.com/okhttp/" title="OkHttp" class="md-nav__button md-logo">
       
         <img src="images/icon-square.png" width="48" height="48">
       
@@ -800,7 +802,7 @@ supports both synchronous blocking calls and async calls with callbacks.</p>
 <span class="n">OkHttpClient</span> <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OkHttpClient</span><span class="o">();</span>
 
 <span class="n">String</span> <span class="nf">post</span><span class="o">(</span><span class="n">String</span> <span class="n">url</span><span class="o">,</span> <span class="n">String</span> <span class="n">json</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="o">{</span>
-  <span class="n">RequestBody</span> <span class="n">body</span> <span class="o">=</span> <span class="n">RequestBody</span><span class="o">.</span><span class="na">create</span><span class="o">(</span><span class="n">JSON</span><span class="o">,</span> <span class="n">json</span><span class="o">);</span>
+  <span class="n">RequestBody</span> <span class="n">body</span> <span class="o">=</span> <span class="n">RequestBody</span><span class="o">.</span><span class="na">create</span><span class="o">(</span><span class="n">json</span><span class="o">,</span> <span class="n">JSON</span><span class="o">);</span>
   <span class="n">Request</span> <span class="n">request</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Request</span><span class="o">.</span><span class="na">Builder</span><span class="o">()</span>
       <span class="o">.</span><span class="na">url</span><span class="o">(</span><span class="n">url</span><span class="o">)</span>
       <span class="o">.</span><span class="na">post</span><span class="o">(</span><span class="n">body</span><span class="o">)</span>
@@ -830,13 +832,15 @@ support for TLS 1.2 and should not be used. But because upgrading is difficult w
 critical fixes to the <a href="https://github.com/square/okhttp/tree/okhttp_3.12.x">3.12.x branch</a> through December 31, 2020.</p>
 <h2 id="releases">Releases<a class="headerlink" href="#releases" title="Permanent link">&para;</a></h2>
 <p>Our <a href="http://square.github.io/okhttp/changelog/">change log</a> has release history.</p>
-<div class="codehilite"><pre><span></span><span class="n">implementation</span><span class="p">(</span><span class="s">&quot;com.squareup.okhttp3:okhttp:4.2.1&quot;</span><span class="p">)</span>
+<p>The latest release is available on <a href="https://search.maven.org/artifact/com.squareup.okhttp3/okhttp/4.2.2/jar">Maven Central</a>.</p>
+<div class="codehilite"><pre><span></span><span class="n">implementation</span><span class="p">(</span><span class="s">&quot;com.squareup.okhttp3:okhttp:4.2.2&quot;</span><span class="p">)</span>
 </pre></div>
 
 <p>Snapshot builds are <a href="https://oss.sonatype.org/content/repositories/snapshots/">available</a>. <a href="https://square.github.io/okhttp/r8_proguard/">R8 and ProGuard</a> rules are available.</p>
 <h2 id="mockwebserver">MockWebServer<a class="headerlink" href="#mockwebserver" title="Permanent link">&para;</a></h2>
 <p>OkHttp includes a library for testing HTTP, HTTPS, and HTTP/2 clients.</p>
-<div class="codehilite"><pre><span></span><span class="n">testImplementation</span><span class="p">(</span><span class="s">&quot;com.squareup.okhttp3:mockwebserver:4.2.1&quot;</span><span class="p">)</span>
+<p>The latest release is available on <a href="https://search.maven.org/artifact/com.squareup.okhttp3/mockwebserver/4.2.2/jar">Maven Central</a>.</p>
+<div class="codehilite"><pre><span></span><span class="n">testImplementation</span><span class="p">(</span><span class="s">&quot;com.squareup.okhttp3:mockwebserver:4.2.2&quot;</span><span class="p">)</span>
 </pre></div>
 
 <h2 id="license">License<a class="headerlink" href="#license" title="Permanent link">&para;</a></h2>

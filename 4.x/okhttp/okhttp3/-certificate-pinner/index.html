@@ -13,6 +13,8 @@
         <meta name="description" content="An HTTP & HTTP/2 client for Android and Java applications">
       
       
+        <link rel="canonical" href="https://square.github.com/okhttp/4.x/okhttp/okhttp3/-certificate-pinner/">
+      
       
         <meta name="author" content="Square, Inc.">
       
@@ -100,7 +102,7 @@
   <nav class="md-header-nav md-grid">
     <div class="md-flex">
       <div class="md-flex__cell md-flex__cell--shrink">
-        <a href="../../../.." title="OkHttp" class="md-header-nav__button md-logo">
+        <a href="https://square.github.com/okhttp/" title="OkHttp" class="md-header-nav__button md-logo">
           
             <img src="../../../../images/icon-square.png" width="24" height="24">
           
@@ -192,7 +194,7 @@
                   <div class="md-sidebar__inner">
                     <nav class="md-nav md-nav--primary" data-md-level="0">
   <label class="md-nav__title md-nav__title--site" for="__drawer">
-    <a href="../../../.." title="OkHttp" class="md-nav__button md-logo">
+    <a href="https://square.github.com/okhttp/" title="OkHttp" class="md-nav__button md-logo">
       
         <img src="../../../../images/icon-square.png" width="48" height="48">
       
@@ -634,6 +636,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#domain-patterns" title="Domain Patterns" class="md-nav__link">
+    Domain Patterns
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#warning-certificate-pinning-is-dangerous" title="Warning: Certificate Pinning is Dangerous!" class="md-nav__link">
     Warning: Certificate Pinning is Dangerous!
   </a>
@@ -754,21 +763,32 @@ certificate pinner&rsquo;s configuration:</p>
     .build();
 </pre></div>
 
+<h2 id="domain-patterns">Domain Patterns<a class="headerlink" href="#domain-patterns" title="Permanent link">&para;</a></h2>
 <p>Pinning is per-hostname and/or per-wildcard pattern. To pin both <code>publicobject.com</code> and
-<code>www.publicobject.com</code>, you must configure both hostnames.</p>
-<p>Wildcard pattern rules:</p>
-<ol>
-<li>Asterisk <code>*</code> is only permitted in the left-most domain name label and must be the only
-    character in that label (i.e., must match the whole left-most label). For example,
-    <code>*.example.com</code> is permitted, while <code>*a.example.com</code>, <code>a*.example.com</code>, <code>a*b.example.com</code>,
-    <code>a.*.example.com</code> are not permitted.</li>
-<li>Asterisk <code>*</code> cannot match across domain name labels. For example, <code>*.example.com</code> matches
-    <code>test.example.com</code> but does not match <code>sub.test.example.com</code>.</li>
-<li>Wildcard patterns for single-label domain names are not permitted.</li>
-</ol>
-<p>If hostname pinned directly and via wildcard pattern, both direct and wildcard pins will be used.
-For example: <code>*.example.com</code> pinned with <code>pin1</code> and <code>a.example.com</code> pinned with <code>pin2</code>, to check
-<code>a.example.com</code> both <code>pin1</code> and <code>pin2</code> will be used.</p>
+<code>www.publicobject.com</code> you must configure both hostnames. Or you may use patterns to match
+sets of related domain names. The following forms are permitted:</p>
+<ul>
+<li>
+<p><strong>Full domain name</strong>: you may pin an exact domain name like <code>www.publicobject.com</code>. It won&rsquo;t
+    match additional prefixes (<code>us-west.www.publicobject.com</code>) or suffixes (<code>publicobject.com</code>).</p>
+</li>
+<li>
+<p><strong>Any number of subdomains</strong>: Use two asterisks to like <code>**.publicobject.com</code> to match any
+    number of prefixes (<code>us-west.www.publicobject.com</code>, <code>www.publicobject.com</code>) including no
+    prefix at all (<code>publicobject.com</code>). For most applications this is the best way to configure
+    certificate pinning.</p>
+</li>
+<li>
+<p><strong>Exactly one subdomain</strong>: Use a single asterisk like <code>*.publicobject.com</code> to match exactly
+    one prefix (<code>www.publicobject.com</code>, <code>api.publicobject.com</code>). Be careful with this approach as
+    no pinning will be enforced if additional prefixes are present, or if no prefixes are present.</p>
+</li>
+</ul>
+<p>Note that any other form is unsupported. You may not use asterisks in any position other than
+the leftmost label.</p>
+<p>If multiple patterns match a hostname, any match is sufficient. For example, suppose pin A
+applies to <code>*.publicobject.com</code> and pin B applies to <code>api.publicobject.com</code>. Handshakes for
+<code>api.publicobject.com</code> are valid if either A&rsquo;s or B&rsquo;s certificate is in the chain.</p>
 <h2 id="warning-certificate-pinning-is-dangerous">Warning: Certificate Pinning is Dangerous!<a class="headerlink" href="#warning-certificate-pinning-is-dangerous" title="Permanent link">&para;</a></h2>
 <p>Pinning certificates limits your server team&rsquo;s abilities to update their TLS certificates. By
 pinning certificates, you take on additional operational complexity and limit your ability to

@@ -13,6 +13,8 @@
         <meta name="description" content="An HTTP & HTTP/2 client for Android and Java applications">
       
       
+        <link rel="canonical" href="https://square.github.com/okhttp/recipes/">
+      
       
         <meta name="author" content="Square, Inc.">
       
@@ -100,7 +102,7 @@
   <nav class="md-header-nav md-grid">
     <div class="md-flex">
       <div class="md-flex__cell md-flex__cell--shrink">
-        <a href=".." title="OkHttp" class="md-header-nav__button md-logo">
+        <a href="https://square.github.com/okhttp/" title="OkHttp" class="md-header-nav__button md-logo">
           
             <img src="../images/icon-square.png" width="24" height="24">
           
@@ -192,7 +194,7 @@
                   <div class="md-sidebar__inner">
                     <nav class="md-nav md-nav--primary" data-md-level="0">
   <label class="md-nav__title md-nav__title--site" for="__drawer">
-    <a href=".." title="OkHttp" class="md-nav__button md-logo">
+    <a href="https://square.github.com/okhttp/" title="OkHttp" class="md-nav__button md-logo">
       
         <img src="../images/icon-square.png" width="48" height="48">
       
@@ -1417,7 +1419,7 @@
 <div class="superfences-content"><div class="codehilite"><pre><span></span>  <span class="k">private</span> <span class="k">val</span> <span class="py">client</span><span class="p">:</span> <span class="n">OkHttpClient</span> <span class="p">=</span> <span class="n">OkHttpClient</span><span class="p">.</span><span class="n">Builder</span><span class="p">()</span>
       <span class="p">.</span><span class="n">cache</span><span class="p">(</span><span class="n">Cache</span><span class="p">(</span>
           <span class="n">directory</span> <span class="p">=</span> <span class="n">cacheDirectory</span><span class="p">,</span>
-          <span class="n">maxSize</span> <span class="p">=</span> <span class="m">10L</span> <span class="p">*</span> <span class="m">1024L</span> <span class="p">*</span> <span class="m">1024L</span> <span class="c1">// 1 MiB</span>
+          <span class="n">maxSize</span> <span class="p">=</span> <span class="m">10L</span> <span class="p">*</span> <span class="m">1024L</span> <span class="p">*</span> <span class="m">1024L</span> <span class="c1">// 10 MiB</span>
       <span class="p">))</span>
       <span class="p">.</span><span class="n">build</span><span class="p">()</span>
 

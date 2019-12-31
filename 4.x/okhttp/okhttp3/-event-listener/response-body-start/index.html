@@ -13,6 +13,8 @@
         <meta name="description" content="An HTTP & HTTP/2 client for Android and Java applications">
       
       
+        <link rel="canonical" href="https://square.github.com/okhttp/4.x/okhttp/okhttp3/-event-listener/response-body-start/">
+      
       
         <meta name="author" content="Square, Inc.">
       
@@ -100,7 +102,7 @@
   <nav class="md-header-nav md-grid">
     <div class="md-flex">
       <div class="md-flex__cell md-flex__cell--shrink">
-        <a href="../../../../.." title="OkHttp" class="md-header-nav__button md-logo">
+        <a href="https://square.github.com/okhttp/" title="OkHttp" class="md-header-nav__button md-logo">
           
             <img src="../../../../../images/icon-square.png" width="24" height="24">
           
@@ -192,7 +194,7 @@
                   <div class="md-sidebar__inner">
                     <nav class="md-nav md-nav--primary" data-md-level="0">
   <label class="md-nav__title md-nav__title--site" for="__drawer">
-    <a href="../../../../.." title="OkHttp" class="md-nav__button md-logo">
+    <a href="https://square.github.com/okhttp/" title="OkHttp" class="md-nav__button md-logo">
       
         <img src="../../../../../images/icon-square.png" width="48" height="48">
       
@@ -639,10 +641,16 @@
                 <p><a href="../../../">okhttp</a> / <a href="../../">okhttp3</a> / <a href="../">EventListener</a> / <a href="./">responseBodyStart</a></p>
 <h1 id="responsebodystart">responseBodyStart<a class="headerlink" href="#responsebodystart" title="Permanent link">&para;</a></h1>
 <p><code>open fun responseBodyStart(call:</code><a href="../../-call/"><code>Call</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></p>
-<p>Invoked just prior to receiving the response body.</p>
+<p>Invoked when data from the response body is first available to the application.</p>
+<p>This is typically invoked immediately before bytes are returned to the application. If the
+response body is empty this is invoked immediately before returning that to the application.</p>
+<p>If the application closes the response body before attempting a read, this is invoked at the
+time it is closed.</p>
 <p>The connection is implicit, and will generally relate to the last <a href="../connection-acquired/">connectionAcquired</a> event.</p>
 <p>This will usually be invoked only 1 time for a single <a href="../../-call/">Call</a>, exceptions are a limited set of
 cases including failure recovery.</p>
+<p>Prior to OkHttp 4.3 this was incorrectly invoked when the client was ready to read the response
+body. This was misleading for tracing because it was too early.</p>
                 
                   
                 
