@@ -36,10 +36,12 @@ Committer's Guides
 ------------------
 
  * [Concurrency][concurrency]
+ * [Debug Logging][debug_logging]
  * [Releasing][releasing]
 
  [cla]: https://spreadsheets.google.com/spreadsheet/viewform?formkey=dDViT2xzUHAwRkI3X3k5Z0lQM091OGc6MQ&ndplr=1
  [concurrency]: http://square.github.io/okhttp/concurrency/
+ [debug_logging]: http://square.github.io/okhttp/debug_logging/
  [releasing]: http://square.github.io/okhttp/releasing/
  [security]: http://square.github.io/okhttp/security/
  [works_with_okhttp]: http://square.github.io/okhttp/works_with_okhttp/

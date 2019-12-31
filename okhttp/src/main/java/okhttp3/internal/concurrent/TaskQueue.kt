@@ -68,7 +68,7 @@ class TaskQueue internal constructor(
         throw RejectedExecutionException()
       }
 
-      if (scheduleAndDecide(task, delayNanos)) {
+      if (scheduleAndDecide(task, delayNanos, recurrence = false)) {
         taskRunner.kickCoordinator(this)
       }
     }
@@ -122,7 +122,7 @@ class TaskQueue internal constructor(
 
       // Don't delegate to schedule() because that enforces shutdown rules.
       val newTask = AwaitIdleTask()
-      if (scheduleAndDecide(newTask, 0L)) {
+      if (scheduleAndDecide(newTask, 0L, recurrence = false)) {
         taskRunner.kickCoordinator(this)
       }
       return newTask.latch
@@ -139,7 +139,7 @@ class TaskQueue internal constructor(
   }
 
   /** Adds [task] to run in [delayNanos]. Returns true if the coordinator is impacted. */
-  internal fun scheduleAndDecide(task: Task, delayNanos: Long): Boolean {
+  internal fun scheduleAndDecide(task: Task, delayNanos: Long, recurrence: Boolean): Boolean {
     task.initQueue(this)
 
     val now = taskRunner.backend.nanoTime()
@@ -155,7 +155,10 @@ class TaskQueue internal constructor(
       futureTasks.removeAt(existingIndex) // Already scheduled later: reschedule below!
     }
     task.nextExecuteNanoTime = executeNanoTime
-    taskLog(task, this) { "scheduled after ${formatDuration(executeNanoTime - now)}" }
+    taskLog(task, this) {
+      if (recurrence) "run again after ${formatDuration(executeNanoTime - now)}"
+      else "scheduled after ${formatDuration(executeNanoTime - now)}"
+    }
 
     // Insert in chronological order. Always compare deltas because nanoTime() is permitted to wrap.
     var insertAt = futureTasks.indexOfFirst { it.nextExecuteNanoTime - now > delayNanos }
