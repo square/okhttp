@@ -82,11 +82,22 @@ class TaskRunnerRealBackendTest {
       return@schedule -1L
     }
 
-    queue.awaitIdle(TimeUnit.MILLISECONDS.toNanos(500))
+    queue.idleLatch().await(500, TimeUnit.MILLISECONDS)
 
     assertThat(log.take()).isEqualTo("failing task running")
     assertThat(log.take()).isEqualTo("uncaught exception: java.lang.RuntimeException: boom!")
     assertThat(log.take()).isEqualTo("normal task running")
     assertThat(log).isEmpty()
+  }
+
+  @Test fun idleLatchAfterShutdown() {
+    queue.schedule("task") {
+      Thread.sleep(250)
+      backend.shutdown()
+      return@schedule -1L
+    }
+
+    assertThat(queue.idleLatch().await(500L, TimeUnit.MILLISECONDS)).isTrue()
+    assertThat(queue.idleLatch().count).isEqualTo(0)
   }
 }

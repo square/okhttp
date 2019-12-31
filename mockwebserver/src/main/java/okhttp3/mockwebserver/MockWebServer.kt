@@ -448,7 +448,7 @@ class MockWebServer : ExternalResource(), Closeable {
 
     // Await shutdown.
     for (queue in taskRunner.activeQueues()) {
-      if (!queue.awaitIdle(TimeUnit.SECONDS.toNanos(5))) {
+      if (!queue.idleLatch().await(5, TimeUnit.SECONDS)) {
         throw IOException("Gave up waiting for queue to shut down")
       }
     }

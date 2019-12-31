@@ -259,14 +259,14 @@ class RealWebSocket(
   /** For testing: wait until the web socket's executor has terminated. */
   @Throws(InterruptedException::class)
   fun awaitTermination(timeout: Long, timeUnit: TimeUnit) {
-    taskQueue.awaitIdle(timeUnit.toNanos(timeout))
+    taskQueue.idleLatch().await(timeout, timeUnit)
   }
 
   /** For testing: force this web socket to release its threads. */
   @Throws(InterruptedException::class)
   fun tearDown() {
     taskQueue.shutdown()
-    taskQueue.awaitIdle(TimeUnit.SECONDS.toNanos(10L))
+    taskQueue.idleLatch().await(10, TimeUnit.SECONDS)
   }
 
   @Synchronized fun sentPingCount(): Int = sentPingCount

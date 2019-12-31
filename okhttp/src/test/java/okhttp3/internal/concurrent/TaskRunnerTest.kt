@@ -623,6 +623,30 @@ class TaskRunnerTest {
     )
   }
 
+  @Test fun idleLatch() {
+    redQueue.execute("task") {
+      log += "run@${taskFaker.nanoTime}"
+    }
+
+    val idleLatch = redQueue.idleLatch()
+    assertThat(idleLatch.count).isEqualTo(1)
+
+    taskFaker.advanceUntil(0.µs)
+    assertThat(log).containsExactly("run@0")
+
+    assertThat(idleLatch.count).isEqualTo(0)
+  }
+
+  @Test fun multipleCallsToIdleLatchReturnSameInstance() {
+    redQueue.execute("task") {
+      log += "run@${taskFaker.nanoTime}"
+    }
+
+    val idleLatch1 = redQueue.idleLatch()
+    val idleLatch2 = redQueue.idleLatch()
+    assertThat(idleLatch2).isSameAs(idleLatch1)
+  }
+
   private val Int.µs: Long
     get() = this * 1_000L
 }
