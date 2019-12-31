@@ -1,6 +1,48 @@
 Change Log
 ==========
 
+## Version 4.3.0
+
+_2019-12-31_
+
+ *  Fix: Degrade HTTP/2 connections after a timeout. When an HTTP/2 stream times out it may impact
+    the stream only or the entire connection. With this fix OkHttp will now send HTTP/2 pings after 
+    a stream timeout to determine whether the connection should remain eligible for pooling.
+
+ *  Fix: Don't call `EventListener.responseHeadersStart()` or `responseBodyStart()` until bytes have
+    been received. Previously these events were incorrectly sent too early, when OkHttp was ready to
+    read the response headers or body, which mislead tracing tools. Note that the `responseFailed()`
+    event always used to follow one of these events; now it may be sent without them.
+
+ *  New: Upgrade to Kotlin 1.3.61.
+ 
+ *  New: Match any number of subdomains with two asterisks in `CertificatePinner`. For example, 
+    `**.squareup.com` matches `us-west.www.squareup.com`, `www.squareup.com` and `squareup.com`.
+
+ *  New: Share threads more aggressively between OkHttp's HTTP/2 connections, connection pool, 
+    web sockets, and cache. OkHttp has a new internal task runner abstraction for managed task
+    scheduling. In your debugger you will see new thread names and more use of daemon threads.
+
+ *  Fix: Don't drop callbacks on unexpected exceptions. When an interceptor throws an unchecked 
+    exception the callback is now notified that the call was canceled. The exception is still sent 
+    to the uncaught exception handler for reporting and recovery.
+
+ *  Fix: Un-deprecate `MockResponse.setHeaders()` and other setters. These were deprecated in OkHttp
+    4.0 but that broke method chaining for Java callers.
+
+ *  Fix: Don't crash on HTTP/2 HEAD requests when the `Content-Length` header is present but is not
+    consistent with the length of the response body.
+
+ *  Fix: Don't crash when converting a `HttpUrl` instance with an unresolvable hostname to a URI.
+    The new behavior strips invalid characters like `"` and `{` from the hostname before converting.
+
+ *  Fix: Undo a performance regression introduced in OkHttp 4.0 caused by differences in behavior
+    between Kotlin's `assert()` and Java's `assert()`. (Kotlin always evaluates the argument; Java
+    only does when assertions are enabled.) 
+
+ *  Fix: Honor `RequestBody.isOneShot()` in `HttpLoggingInterceptor`.
+
+
 ## Version 4.2.2
 
 _2019-10-06_
