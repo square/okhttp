@@ -17,8 +17,8 @@ package okhttp3;
 
 import java.net.URI;
 import java.net.URL;
-import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import okhttp3.internal.Util;
 import okio.Buffer;
@@ -32,155 +32,34 @@ class UrlComponentEncodingTester {
   private static final int UNICODE_3 = 0xffff; // Arbitrary code point that's 3 bytes in UTF-8.
   private static final int UNICODE_4 = 0x10ffff; // Arbitrary code point that's 4 bytes in UTF-8.
 
+  private final Map<Integer, Encoding> encodings = new LinkedHashMap<>();
+  private final StringBuilder uriEscapedCodePoints = new StringBuilder();
+  private final StringBuilder uriStrippedCodePoints = new StringBuilder();
+
+  private UrlComponentEncodingTester() {
+  }
+
   /**
-   * The default encode set for the ASCII range. The specific rules vary per-component: for example,
-   * '?' may be identity-encoded in a fragment, but must be percent-encoded in a path.
+   * Returns a new instance configured with a default encode set for the ASCII range. The specific
+   * rules vary per-component: for example, '?' may be identity-encoded in a fragment, but must be
+   * percent-encoded in a path.
    *
    * See https://url.spec.whatwg.org/#percent-encoded-bytes
    */
-  private static final Map<Integer, Encoding> defaultEncodings;
-
-  static {
-    Map<Integer, Encoding> map = new LinkedHashMap<>();
-    map.put(       0x0, Encoding.PERCENT); // Null character
-    map.put(       0x1, Encoding.PERCENT); // Start of Header
-    map.put(       0x2, Encoding.PERCENT); // Start of Text
-    map.put(       0x3, Encoding.PERCENT); // End of Text
-    map.put(       0x4, Encoding.PERCENT); // End of Transmission
-    map.put(       0x5, Encoding.PERCENT); // Enquiry
-    map.put(       0x6, Encoding.PERCENT); // Acknowledgment
-    map.put(       0x7, Encoding.PERCENT); // Bell
-    map.put((int) '\b', Encoding.PERCENT); // Backspace
-    map.put((int) '\t', Encoding.SKIP);    // Horizontal Tab
-    map.put((int) '\n', Encoding.SKIP);    // Line feed
-    map.put(       0xb, Encoding.PERCENT); // Vertical Tab
-    map.put((int) '\f', Encoding.SKIP);    // Form feed
-    map.put((int) '\r', Encoding.SKIP);    // Carriage return
-    map.put(       0xe, Encoding.PERCENT); // Shift Out
-    map.put(       0xf, Encoding.PERCENT); // Shift In
-    map.put(      0x10, Encoding.PERCENT); // Data Link Escape
-    map.put(      0x11, Encoding.PERCENT); // Device Control 1 (oft. XON)
-    map.put(      0x12, Encoding.PERCENT); // Device Control 2
-    map.put(      0x13, Encoding.PERCENT); // Device Control 3 (oft. XOFF)
-    map.put(      0x14, Encoding.PERCENT); // Device Control 4
-    map.put(      0x15, Encoding.PERCENT); // Negative Acknowledgment
-    map.put(      0x16, Encoding.PERCENT); // Synchronous idle
-    map.put(      0x17, Encoding.PERCENT); // End of Transmission Block
-    map.put(      0x18, Encoding.PERCENT); // Cancel
-    map.put(      0x19, Encoding.PERCENT); // End of Medium
-    map.put(      0x1a, Encoding.PERCENT); // Substitute
-    map.put(      0x1b, Encoding.PERCENT); // Escape
-    map.put(      0x1c, Encoding.PERCENT); // File Separator
-    map.put(      0x1d, Encoding.PERCENT); // Group Separator
-    map.put(      0x1e, Encoding.PERCENT); // Record Separator
-    map.put(      0x1f, Encoding.PERCENT); // Unit Separator
-    map.put((int)  ' ', Encoding.PERCENT);
-    map.put((int)  '!', Encoding.IDENTITY);
-    map.put((int)  '"', Encoding.PERCENT);
-    map.put((int)  '#', Encoding.PERCENT);
-    map.put((int)  '$', Encoding.IDENTITY);
-    map.put((int)  '%', Encoding.IDENTITY);
-    map.put((int)  '&', Encoding.IDENTITY);
-    map.put((int) '\'', Encoding.IDENTITY);
-    map.put((int)  '(', Encoding.IDENTITY);
-    map.put((int)  ')', Encoding.IDENTITY);
-    map.put((int)  '*', Encoding.IDENTITY);
-    map.put((int)  '+', Encoding.IDENTITY);
-    map.put((int)  ',', Encoding.IDENTITY);
-    map.put((int)  '-', Encoding.IDENTITY);
-    map.put((int)  '.', Encoding.IDENTITY);
-    map.put((int)  '/', Encoding.IDENTITY);
-    map.put((int)  '0', Encoding.IDENTITY);
-    map.put((int)  '1', Encoding.IDENTITY);
-    map.put((int)  '2', Encoding.IDENTITY);
-    map.put((int)  '3', Encoding.IDENTITY);
-    map.put((int)  '4', Encoding.IDENTITY);
-    map.put((int)  '5', Encoding.IDENTITY);
-    map.put((int)  '6', Encoding.IDENTITY);
-    map.put((int)  '7', Encoding.IDENTITY);
-    map.put((int)  '8', Encoding.IDENTITY);
-    map.put((int)  '9', Encoding.IDENTITY);
-    map.put((int)  ':', Encoding.IDENTITY);
-    map.put((int)  ';', Encoding.IDENTITY);
-    map.put((int)  '<', Encoding.PERCENT);
-    map.put((int)  '=', Encoding.IDENTITY);
-    map.put((int)  '>', Encoding.PERCENT);
-    map.put((int)  '?', Encoding.PERCENT);
-    map.put((int)  '@', Encoding.IDENTITY);
-    map.put((int)  'A', Encoding.IDENTITY);
-    map.put((int)  'B', Encoding.IDENTITY);
-    map.put((int)  'C', Encoding.IDENTITY);
-    map.put((int)  'D', Encoding.IDENTITY);
-    map.put((int)  'E', Encoding.IDENTITY);
-    map.put((int)  'F', Encoding.IDENTITY);
-    map.put((int)  'G', Encoding.IDENTITY);
-    map.put((int)  'H', Encoding.IDENTITY);
-    map.put((int)  'I', Encoding.IDENTITY);
-    map.put((int)  'J', Encoding.IDENTITY);
-    map.put((int)  'K', Encoding.IDENTITY);
-    map.put((int)  'L', Encoding.IDENTITY);
-    map.put((int)  'M', Encoding.IDENTITY);
-    map.put((int)  'N', Encoding.IDENTITY);
-    map.put((int)  'O', Encoding.IDENTITY);
-    map.put((int)  'P', Encoding.IDENTITY);
-    map.put((int)  'Q', Encoding.IDENTITY);
-    map.put((int)  'R', Encoding.IDENTITY);
-    map.put((int)  'S', Encoding.IDENTITY);
-    map.put((int)  'T', Encoding.IDENTITY);
-    map.put((int)  'U', Encoding.IDENTITY);
-    map.put((int)  'V', Encoding.IDENTITY);
-    map.put((int)  'W', Encoding.IDENTITY);
-    map.put((int)  'X', Encoding.IDENTITY);
-    map.put((int)  'Y', Encoding.IDENTITY);
-    map.put((int)  'Z', Encoding.IDENTITY);
-    map.put((int)  '[', Encoding.IDENTITY);
-    map.put((int) '\\', Encoding.IDENTITY);
-    map.put((int)  ']', Encoding.IDENTITY);
-    map.put((int)  '^', Encoding.IDENTITY);
-    map.put((int)  '_', Encoding.IDENTITY);
-    map.put((int)  '`', Encoding.PERCENT);
-    map.put((int)  'a', Encoding.IDENTITY);
-    map.put((int)  'b', Encoding.IDENTITY);
-    map.put((int)  'c', Encoding.IDENTITY);
-    map.put((int)  'd', Encoding.IDENTITY);
-    map.put((int)  'e', Encoding.IDENTITY);
-    map.put((int)  'f', Encoding.IDENTITY);
-    map.put((int)  'g', Encoding.IDENTITY);
-    map.put((int)  'h', Encoding.IDENTITY);
-    map.put((int)  'i', Encoding.IDENTITY);
-    map.put((int)  'j', Encoding.IDENTITY);
-    map.put((int)  'k', Encoding.IDENTITY);
-    map.put((int)  'l', Encoding.IDENTITY);
-    map.put((int)  'm', Encoding.IDENTITY);
-    map.put((int)  'n', Encoding.IDENTITY);
-    map.put((int)  'o', Encoding.IDENTITY);
-    map.put((int)  'p', Encoding.IDENTITY);
-    map.put((int)  'q', Encoding.IDENTITY);
-    map.put((int)  'r', Encoding.IDENTITY);
-    map.put((int)  's', Encoding.IDENTITY);
-    map.put((int)  't', Encoding.IDENTITY);
-    map.put((int)  'u', Encoding.IDENTITY);
-    map.put((int)  'v', Encoding.IDENTITY);
-    map.put((int)  'w', Encoding.IDENTITY);
-    map.put((int)  'x', Encoding.IDENTITY);
-    map.put((int)  'y', Encoding.IDENTITY);
-    map.put((int)  'z', Encoding.IDENTITY);
-    map.put((int)  '{', Encoding.IDENTITY);
-    map.put((int)  '|', Encoding.IDENTITY);
-    map.put((int)  '}', Encoding.IDENTITY);
-    map.put((int)  '~', Encoding.IDENTITY);
-    map.put(      0x7f, Encoding.PERCENT); // Delete
-    map.put( UNICODE_2, Encoding.PERCENT);
-    map.put( UNICODE_3, Encoding.PERCENT);
-    map.put( UNICODE_4, Encoding.PERCENT);
-    defaultEncodings = Collections.unmodifiableMap(map);
+  public static UrlComponentEncodingTester newInstance() {
+    return new UrlComponentEncodingTester()
+        .allAscii(Encoding.IDENTITY)
+        .nonPrintableAscii(Encoding.PERCENT)
+        .override(Encoding.SKIP, '\t', '\n', '\f', '\r')
+        .override(Encoding.PERCENT, ' ', '"', '#', '<', '>', '?', '`')
+        .override(Encoding.PERCENT, UNICODE_2, UNICODE_3, UNICODE_4);
   }
 
-  private final Map<Integer, Encoding> encodings;
-  private final StringBuilder uriEscapedCodePoints = new StringBuilder();
-
-  public UrlComponentEncodingTester() {
-    this.encodings = new LinkedHashMap<>(defaultEncodings);
+  private UrlComponentEncodingTester allAscii(Encoding encoding) {
+    for (int i = 0; i < 128; i++) {
+      encodings.put(i, encoding);
+    }
+    return this;
   }
 
   public UrlComponentEncodingTester override(Encoding encoding, int... codePoints) {
@@ -190,19 +69,61 @@ class UrlComponentEncodingTester {
     return this;
   }
 
-  public UrlComponentEncodingTester identityForNonAscii() {
-    encodings.put(UNICODE_2, Encoding.IDENTITY);
-    encodings.put(UNICODE_3, Encoding.IDENTITY);
-    encodings.put(UNICODE_4, Encoding.IDENTITY);
+  public UrlComponentEncodingTester nonPrintableAscii(Encoding encoding) {
+    encodings.put(       0x0, encoding); // Null character
+    encodings.put(       0x1, encoding); // Start of Header
+    encodings.put(       0x2, encoding); // Start of Text
+    encodings.put(       0x3, encoding); // End of Text
+    encodings.put(       0x4, encoding); // End of Transmission
+    encodings.put(       0x5, encoding); // Enquiry
+    encodings.put(       0x6, encoding); // Acknowledgment
+    encodings.put(       0x7, encoding); // Bell
+    encodings.put((int) '\b', encoding); // Backspace
+    encodings.put(       0xb, encoding); // Vertical Tab
+    encodings.put(       0xe, encoding); // Shift Out
+    encodings.put(       0xf, encoding); // Shift In
+    encodings.put(      0x10, encoding); // Data Link Escape
+    encodings.put(      0x11, encoding); // Device Control 1 (oft. XON)
+    encodings.put(      0x12, encoding); // Device Control 2
+    encodings.put(      0x13, encoding); // Device Control 3 (oft. XOFF)
+    encodings.put(      0x14, encoding); // Device Control 4
+    encodings.put(      0x15, encoding); // Negative Acknowledgment
+    encodings.put(      0x16, encoding); // Synchronous idle
+    encodings.put(      0x17, encoding); // End of Transmission Block
+    encodings.put(      0x18, encoding); // Cancel
+    encodings.put(      0x19, encoding); // End of Medium
+    encodings.put(      0x1a, encoding); // Substitute
+    encodings.put(      0x1b, encoding); // Escape
+    encodings.put(      0x1c, encoding); // File Separator
+    encodings.put(      0x1d, encoding); // Group Separator
+    encodings.put(      0x1e, encoding); // Record Separator
+    encodings.put(      0x1f, encoding); // Unit Separator
+    encodings.put(      0x7f, encoding); // Delete
+    return this;
+  }
+
+  public UrlComponentEncodingTester nonAscii(Encoding encoding) {
+    encodings.put(UNICODE_2, encoding);
+    encodings.put(UNICODE_3, encoding);
+    encodings.put(UNICODE_4, encoding);
     return this;
   }
 
   /**
-   * Configure a character to be skipped but only for conversion to and from {@code java.net.URI}.
-   * That class is more strict than the others.
+   * Configure code points to be escaped for conversion to {@code java.net.URI}. That class is more
+   * strict than the others.
    */
-  public UrlComponentEncodingTester skipForUri(int... codePoints) {
+  public UrlComponentEncodingTester escapeForUri(int... codePoints) {
     uriEscapedCodePoints.append(new String(codePoints, 0, codePoints.length));
+    return this;
+  }
+
+  /**
+   * Configure code points to be stripped in conversion to {@code java.net.URI}. That class is more
+   * strict than the others.
+   */
+  public UrlComponentEncodingTester stripForUri(int... codePoints) {
+    uriStrippedCodePoints.append(new String(codePoints, 0, codePoints.length));
     return this;
   }
 
@@ -210,53 +131,58 @@ class UrlComponentEncodingTester {
     for (Map.Entry<Integer, Encoding> entry : encodings.entrySet()) {
       Encoding encoding = entry.getValue();
       int codePoint = entry.getKey();
-      testEncodeAndDecode(codePoint, component);
+      String codePointString = Encoding.IDENTITY.encode(codePoint);
+
+      if (encoding == Encoding.FORBIDDEN) {
+        testForbidden(codePoint, codePointString, component);
+        continue;
+      }
+
+      testEncodeAndDecode(codePoint, codePointString, component);
       if (encoding == Encoding.SKIP) continue;
 
-      testParseOriginal(codePoint, encoding, component);
+      testParseOriginal(codePoint, codePointString, encoding, component);
       testParseAlreadyEncoded(codePoint, encoding, component);
       testToUrl(codePoint, encoding, component);
       testFromUrl(codePoint, encoding, component);
-
-      if (codePoint != '%') {
-        boolean uriEscaped = uriEscapedCodePoints.indexOf(
-            Encoding.IDENTITY.encode(codePoint)) != -1;
-        testUri(codePoint, encoding, component, uriEscaped);
-      }
+      testUri(codePoint, codePointString, encoding, component);
     }
     return this;
   }
 
   private void testParseAlreadyEncoded(int codePoint, Encoding encoding, Component component) {
-    String encoded = encoding.encode(codePoint);
-    String urlString = component.urlString(encoded);
+    String expected = component.canonicalize(encoding.encode(codePoint));
+    String urlString = component.urlString(expected);
     HttpUrl url = HttpUrl.get(urlString);
-    if (!component.encodedValue(url).equals(encoded)) {
-      fail(Util.format("Encoding %s %#x using %s", component, codePoint, encoding));
+    String actual = component.encodedValue(url);
+    if (!actual.equals(expected)) {
+      fail(Util.format("Encoding %s %#x using %s: '%s' != '%s'",
+          component, codePoint, encoding, actual, expected));
     }
   }
 
-  private void testEncodeAndDecode(int codePoint, Component component) {
-    String expected = Encoding.IDENTITY.encode(codePoint);
+  private void testEncodeAndDecode(int codePoint, String codePointString, Component component) {
     HttpUrl.Builder builder = HttpUrl.get("http://host/").newBuilder();
-    component.set(builder, expected);
+    component.set(builder, codePointString);
     HttpUrl url = builder.build();
+    String expected = component.canonicalize(codePointString);
     String actual = component.get(url);
     if (!expected.equals(actual)) {
       fail(Util.format("Roundtrip %s %#x %s", component, codePoint, url));
     }
   }
 
-  private void testParseOriginal(int codePoint, Encoding encoding, Component component) {
-    String encoded = encoding.encode(codePoint);
+  private void testParseOriginal(
+      int codePoint, String codePointString, Encoding encoding, Component component) {
+    String expected = encoding.encode(codePoint);
     if (encoding != Encoding.PERCENT) return;
-    String identity = Encoding.IDENTITY.encode(codePoint);
-    String urlString = component.urlString(identity);
+    String urlString = component.urlString(codePointString);
     HttpUrl url = HttpUrl.get(urlString);
 
-    String s = component.encodedValue(url);
-    if (!s.equals(encoded)) {
-      fail(Util.format("Encoding %s %#02x using %s", component, codePoint, encoding));
+    String actual = component.encodedValue(url);
+    if (!actual.equals(expected)) {
+      fail(Util.format("Encoding %s %#02x using %s: '%s' != '%s'",
+          component, codePoint, encoding, actual, expected));
     }
   }
 
@@ -279,28 +205,49 @@ class UrlComponentEncodingTester {
   }
 
   private void testUri(
-      int codePoint, Encoding encoding, Component component, boolean uriEscaped) {
-    String string = new String(new int[] {codePoint}, 0, 1);
+      int codePoint, String codePointString, Encoding encoding, Component component) {
+    if (codePoint == '%') return;
+
     String encoded = encoding.encode(codePoint);
     HttpUrl httpUrl = HttpUrl.get(component.urlString(encoded));
     URI uri = httpUrl.uri();
     HttpUrl toAndFromUri = HttpUrl.get(uri);
+
+    boolean uriStripped = uriStrippedCodePoints.indexOf(codePointString) != -1;
+    if (uriStripped) {
+      if (!uri.toString().equals(component.urlString(""))) {
+        fail(Util.format("Encoding %s %#x using %s", component, codePoint, encoding));
+      }
+      return;
+    }
+
+    // If the URI has more escaping than the HttpURL, check that the decoded values still match.
+    boolean uriEscaped = uriEscapedCodePoints.indexOf(codePointString) != -1;
     if (uriEscaped) {
-      // The URI has more escaping than the HttpURL. Check that the decoded values still match.
       if (uri.toString().equals(httpUrl.toString())) {
         fail(Util.format("Encoding %s %#x using %s", component, codePoint, encoding));
       }
-      if (!component.get(toAndFromUri).equals(string)) {
+      if (!component.get(toAndFromUri).equals(codePointString)) {
         fail(Util.format("Encoding %s %#x using %s", component, codePoint, encoding));
       }
-    } else {
-      // Check that the URI and HttpURL have the exact same escaping.
-      if (!toAndFromUri.equals(httpUrl)) {
-        fail(Util.format("Encoding %s %#x using %s", component, codePoint, encoding));
-      }
-      if (!uri.toString().equals(httpUrl.toString())) {
-        fail(Util.format("Encoding %s %#x using %s", component, codePoint, encoding));
-      }
+      return;
+    }
+
+    // Check that the URI and HttpURL have the exact same escaping.
+    if (!toAndFromUri.equals(httpUrl)) {
+      fail(Util.format("Encoding %s %#x using %s", component, codePoint, encoding));
+    }
+    if (!uri.toString().equals(httpUrl.toString())) {
+      fail(Util.format("Encoding %s %#x using %s", component, codePoint, encoding));
+    }
+  }
+
+  private void testForbidden(int codePoint, String codePointString, Component component) {
+    HttpUrl.Builder builder = HttpUrl.get("http://host/").newBuilder();
+    try {
+      component.set(builder, codePointString);
+      fail(Util.format("Accepted forbidden code point %s %#x", component, codePoint));
+    } catch (IllegalArgumentException expected) {
     }
   }
 
@@ -322,6 +269,10 @@ class UrlComponentEncodingTester {
       }
     },
 
+    /** URLs that contain this character in this component are invalid. */
+    FORBIDDEN,
+
+    /** This code point is special and should not be tested. */
     SKIP;
 
     public String encode(int codePoint) {
@@ -362,6 +313,28 @@ class UrlComponentEncodingTester {
 
       @Override public String get(HttpUrl url) {
         return url.password();
+      }
+    },
+    HOST {
+      @Override public String urlString(String value) {
+        return "http://a" + value + "z.com/";
+      }
+
+      @Override public String encodedValue(HttpUrl url) {
+        return get(url);
+      }
+
+      @Override public void set(HttpUrl.Builder builder, String value) {
+        builder.host("a" + value + "z.com");
+      }
+
+      @Override public String get(HttpUrl url) {
+        String host = url.host();
+        return host.substring(1, host.length() - 5).toLowerCase(Locale.ROOT);
+      }
+
+      @Override public String canonicalize(String s) {
+        return s.toLowerCase(Locale.US);
       }
     },
     PATH {
@@ -448,5 +421,13 @@ class UrlComponentEncodingTester {
     public abstract void set(HttpUrl.Builder builder, String value);
 
     public abstract String get(HttpUrl url);
+
+    /**
+     * Returns a character equivalent to 's' in this component. This is used to convert hostname
+     * characters to lowercase.
+     */
+    public String canonicalize(String s) {
+      return s;
+    }
   }
 }

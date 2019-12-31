@@ -365,18 +365,18 @@ public final class HttpUrlTest {
   }
 
   @Test public void usernameCharacters() throws Exception {
-    new UrlComponentEncodingTester()
+    UrlComponentEncodingTester.newInstance()
         .override(Encoding.PERCENT, '[', ']', '{', '}', '|', '^', '\'', ';', '=', '@')
         .override(Encoding.SKIP, ':', '/', '\\', '?', '#')
-        .skipForUri('%')
+        .escapeForUri('%')
         .test(Component.USER);
   }
 
   @Test public void passwordCharacters() throws Exception {
-    new UrlComponentEncodingTester()
+    UrlComponentEncodingTester.newInstance()
         .override(Encoding.PERCENT, '[', ']', '{', '}', '|', '^', '\'', ':', ';', '=', '@')
         .override(Encoding.SKIP, '/', '\\', '?', '#')
-        .skipForUri('%')
+        .escapeForUri('%')
         .test(Component.PASSWORD);
   }
 
@@ -417,6 +417,27 @@ public final class HttpUrlTest {
 
   @Test public void hostnameMappingLastDisallowedCodePoint() throws Exception {
     assertInvalid("http://\uDBFF\uDFFF", "Invalid URL host: \"\uDBFF\uDFFF\"");
+  }
+
+  @Test public void hostnameUri() throws Exception {
+    // Host names are special:
+    //
+    //  * Several characters are forbidden and must throw exceptions if used.
+    //  * They don't use percent escaping at all.
+    //  * They use punycode for internationalization.
+    //  * URI is much more strict that HttpUrl or URL on what's accepted.
+    //
+    // HttpUrl is quite lenient with what characters it accepts. In particular, characters like '{'
+    // and '"' are permitted but unlikely to occur in real-world URLs. Unfortunately we can't just
+    // lock it down due to URL templating: "http://{env}.{dc}.example.com".
+    UrlComponentEncodingTester.newInstance()
+        .nonPrintableAscii(Encoding.FORBIDDEN)
+        .nonAscii(Encoding.FORBIDDEN)
+        .override(Encoding.FORBIDDEN, '\t', '\n', '\f', '\r', ' ')
+        .override(Encoding.FORBIDDEN, '#', '%', '/', ':', '?', '@', '[', '\\', ']')
+        .override(Encoding.IDENTITY, '\"', '<', '>', '^', '`', '{', '|', '}')
+        .stripForUri('\"', '<', '>', '^', '`', '{', '|', '}')
+        .test(Component.HOST);
   }
 
   @Test public void hostIpv6() throws Exception {
@@ -623,6 +644,24 @@ public final class HttpUrlTest {
     assertThat(parse("http://host./").host()).isEqualTo("host.");
   }
 
+  /**
+   * Strip unexpected characters when converting to URI (which is more strict).
+   * https://github.com/square/okhttp/issues/5667
+   */
+  @Test public void hostToUriStripsCharacters() throws Exception {
+    HttpUrl httpUrl = HttpUrl.get("http://example\".com/");
+    assertThat(httpUrl.uri().toString()).isEqualTo("http://example.com/");
+  }
+
+  /**
+   * Confirm that URI retains other characters.
+   * https://github.com/square/okhttp/issues/5236
+   */
+  @Test public void hostToUriStripsCharacters2() throws Exception {
+    HttpUrl httpUrl = HttpUrl.get("http://${tracker}/");
+    assertThat(httpUrl.uri().toString()).isEqualTo("http://$tracker/");
+  }
+
   @Test public void port() throws Exception {
     assertThat(parse("http://host:80/")).isEqualTo(parse("http://host/"));
     assertThat(parse("http://host:99/")).isEqualTo(parse("http://host:99/"));
@@ -636,36 +675,36 @@ public final class HttpUrlTest {
   }
 
   @Test public void pathCharacters() throws Exception {
-    new UrlComponentEncodingTester()
+    UrlComponentEncodingTester.newInstance()
         .override(Encoding.PERCENT, '^', '{', '}', '|')
         .override(Encoding.SKIP, '\\', '?', '#')
-        .skipForUri('%', '[', ']')
+        .escapeForUri('%', '[', ']')
         .test(Component.PATH);
   }
 
   @Test public void queryCharacters() throws Exception {
-    new UrlComponentEncodingTester()
+    UrlComponentEncodingTester.newInstance()
         .override(Encoding.IDENTITY, '?', '`')
         .override(Encoding.PERCENT, '\'')
         .override(Encoding.SKIP, '#', '+')
-        .skipForUri('%', '\\', '^', '`', '{', '|', '}')
+        .escapeForUri('%', '\\', '^', '`', '{', '|', '}')
         .test(Component.QUERY);
   }
 
   @Test public void queryValueCharacters() throws Exception {
-    new UrlComponentEncodingTester()
+    UrlComponentEncodingTester.newInstance()
         .override(Encoding.IDENTITY, '?', '`')
         .override(Encoding.PERCENT, '\'')
         .override(Encoding.SKIP, '#', '+')
-        .skipForUri('%', '\\', '^', '`', '{', '|', '}')
+        .escapeForUri('%', '\\', '^', '`', '{', '|', '}')
         .test(Component.QUERY_VALUE);
   }
 
   @Test public void fragmentCharacters() throws Exception {
-    new UrlComponentEncodingTester()
+    UrlComponentEncodingTester.newInstance()
         .override(Encoding.IDENTITY, ' ', '"', '#', '<', '>', '?', '`')
-        .skipForUri('%', ' ', '"', '#', '<', '>', '\\', '^', '`', '{', '|', '}')
-        .identityForNonAscii()
+        .escapeForUri('%', ' ', '"', '#', '<', '>', '\\', '^', '`', '{', '|', '}')
+        .nonAscii(Encoding.IDENTITY)
         .test(Component.FRAGMENT);
   }
 
