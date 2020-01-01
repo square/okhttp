@@ -120,6 +120,7 @@ class OkHttpTest {
 
       var socketClass: String? = null
 
+      // Need fresh client to reset sslSocketFactoryOrNull
       client = OkHttpClient.Builder().eventListenerFactory(clientTestRule.wrap(object : EventListener() {
         override fun connectionAcquired(call: Call, connection: Connection) {
           socketClass = connection.socket().javaClass.name
@@ -155,6 +156,7 @@ class OkHttpTest {
 
       var socketClass: String? = null
 
+      // Need fresh client to reset sslSocketFactoryOrNull
       client = OkHttpClient.Builder().eventListenerFactory(clientTestRule.wrap(object : EventListener() {
         override fun connectionAcquired(call: Call, connection: Connection) {
           socketClass = connection.socket().javaClass.name
