@@ -38,7 +38,6 @@ import okhttp3.internal.platform.Platform
 import okhttp3.logging.LoggingEventListener
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
-import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.internal.TlsUtil.localhost
 import okio.ByteString.Companion.toByteString
@@ -146,7 +145,6 @@ class OkHttpTest {
   }
 
   @Test
-  @Flaky
   fun testRequestUsesPlayProvider() {
     assumeNetwork()
 
