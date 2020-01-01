@@ -8,7 +8,7 @@ A gradle module for running Android instrumentation tests on device or emulator.
 2. Turn on logs with logcat
 
 ```
-$ adb logcat '*:E' OkHttp:D
+$ adb logcat '*:E' OkHttp:D Http2:D TestRunner:D TaskRunner:D
 ...
 01-01 12:53:32.811 10999 11089 D OkHttp  : [49 ms] responseHeadersEnd: Response{protocol=h2, code=200, message=, url=https://1.1.1.1/dns-query?dns=AAABAAABAAAAAAAAA3d3dwhmYWNlYm9vawNjb20AABwAAQ}
 01-01 12:53:32.811 10999 11089 D OkHttp  : [49 ms] responseBodyStart

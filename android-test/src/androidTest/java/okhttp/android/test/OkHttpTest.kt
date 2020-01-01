@@ -45,6 +45,7 @@ import org.junit.Assert.fail
 import org.junit.Assume.assumeNoException
 import org.junit.Assume.assumeTrue
 import org.junit.Before
+import org.junit.BeforeClass
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
@@ -406,6 +407,15 @@ class OkHttpTest {
       InetAddress.getByName("www.google.com")
     } catch (uhe: UnknownHostException) {
       assumeNoException(uhe)
+    }
+  }
+
+  companion object {
+    @BeforeClass
+    @JvmStatic
+    fun hookLogging() {
+      OkHttpDebugLogcat.enableHttp2()
+      OkHttpDebugLogcat.enableTaskRunner()
     }
   }
 }
