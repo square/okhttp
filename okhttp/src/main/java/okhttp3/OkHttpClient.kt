@@ -736,12 +736,6 @@ open class OkHttpClient internal constructor(
       this.x509TrustManagerOrNull = trustManager
     }
 
-    fun resetSslSocketFactory() = apply {
-      this.sslSocketFactoryOrNull = null
-      this.certificateChainCleaner = null
-      this.x509TrustManagerOrNull = null
-    }
-
     fun connectionSpecs(connectionSpecs: List<ConnectionSpec>) = apply {
       this.connectionSpecs = connectionSpecs.toImmutableList()
     }

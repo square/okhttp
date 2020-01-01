@@ -120,11 +120,11 @@ class OkHttpTest {
 
       var socketClass: String? = null
 
-      client = client.newBuilder().eventListenerFactory(clientTestRule.wrap(object : EventListener() {
+      client = OkHttpClient.Builder().eventListenerFactory(clientTestRule.wrap(object : EventListener() {
         override fun connectionAcquired(call: Call, connection: Connection) {
           socketClass = connection.socket().javaClass.name
         }
-      })).resetSslSocketFactory().build()
+      })).build()
 
       val response = client.newCall(request).execute()
 
@@ -155,11 +155,11 @@ class OkHttpTest {
 
       var socketClass: String? = null
 
-      client = client.newBuilder().eventListenerFactory(clientTestRule.wrap(object : EventListener() {
+      client = OkHttpClient.Builder().eventListenerFactory(clientTestRule.wrap(object : EventListener() {
         override fun connectionAcquired(call: Call, connection: Connection) {
           socketClass = connection.socket().javaClass.name
         }
-      })).resetSslSocketFactory().build()
+      })).build()
 
       val response = client.newCall(request).execute()
 
