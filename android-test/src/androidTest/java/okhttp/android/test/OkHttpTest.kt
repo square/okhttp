@@ -167,7 +167,6 @@ class OkHttpTest {
         assertEquals(Protocol.HTTP_2, response.protocol)
         assertEquals(TlsVersion.TLS_1_2, response.handshake?.tlsVersion)
         assertEquals(200, response.code)
-        // see https://github.com/google/conscrypt/blob/b9463b2f74df42d85c73715a5f19e005dfb7b802/android/src/main/java/org/conscrypt/Platform.java#L613
         assertEquals("com.google.android.gms.org.conscrypt.Java8FileDescriptorSocket", socketClass)
       }
     } finally {
