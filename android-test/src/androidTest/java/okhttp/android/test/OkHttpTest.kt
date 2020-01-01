@@ -38,6 +38,7 @@ import okhttp3.internal.platform.Platform
 import okhttp3.logging.LoggingEventListener
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.internal.TlsUtil.localhost
 import okio.ByteString.Companion.toByteString
@@ -120,17 +121,16 @@ class OkHttpTest {
 
       var socketClass: String? = null
 
-      client = OkHttpClient.Builder().eventListener(object : EventListener() {
+      client = client.newBuilder().eventListenerFactory(clientTestRule.wrap(object : EventListener() {
         override fun connectionAcquired(call: Call, connection: Connection) {
           socketClass = connection.socket().javaClass.name
         }
-      }).build()
+      })).resetSslSocketFactory().build()
 
       val response = client.newCall(request).execute()
 
       response.use {
         assertEquals(Protocol.HTTP_2, response.protocol)
-        assertEquals(TlsVersion.TLS_1_3, response.handshake?.tlsVersion)
         assertEquals(200, response.code)
         // see https://github.com/google/conscrypt/blob/b9463b2f74df42d85c73715a5f19e005dfb7b802/android/src/main/java/org/conscrypt/Platform.java#L613
         if (Build.VERSION.SDK_INT >= 24) {
@@ -138,6 +138,7 @@ class OkHttpTest {
         } else {
           assertEquals("org.conscrypt.ConscryptFileDescriptorSocket", socketClass)
         }
+        assertEquals(TlsVersion.TLS_1_3, response.handshake?.tlsVersion)
       }
     } finally {
       Security.removeProvider("Conscrypt")
@@ -145,6 +146,7 @@ class OkHttpTest {
   }
 
   @Test
+  @Flaky
   fun testRequestUsesPlayProvider() {
     assumeNetwork()
 
@@ -155,19 +157,19 @@ class OkHttpTest {
 
       var socketClass: String? = null
 
-      client = OkHttpClient.Builder().eventListener(object : EventListener() {
+      client = client.newBuilder().eventListenerFactory(clientTestRule.wrap(object : EventListener() {
         override fun connectionAcquired(call: Call, connection: Connection) {
           socketClass = connection.socket().javaClass.name
         }
-      }).build()
+      })).resetSslSocketFactory().build()
 
       val response = client.newCall(request).execute()
 
       response.use {
         assertEquals(Protocol.HTTP_2, response.protocol)
-        assertEquals(TlsVersion.TLS_1_2, response.handshake?.tlsVersion)
         assertEquals(200, response.code)
         assertEquals("com.google.android.gms.org.conscrypt.Java8FileDescriptorSocket", socketClass)
+        assertEquals(TlsVersion.TLS_1_2, response.handshake?.tlsVersion)
       }
     } finally {
       Security.removeProvider("GmsCore_OpenSSL")
@@ -182,15 +184,15 @@ class OkHttpTest {
 
     var socketClass: String? = null
 
-    val client2 = client.newBuilder()
-        .eventListener(object : EventListener() {
+    client = client.newBuilder()
+        .eventListenerFactory(clientTestRule.wrap(object : EventListener() {
           override fun connectionAcquired(call: Call, connection: Connection) {
             socketClass = connection.socket().javaClass.name
           }
-        })
+        }))
         .build()
 
-    val response = client2.newCall(request).execute()
+    val response = client.newCall(request).execute()
 
     response.use {
       assertEquals(Protocol.HTTP_2, response.protocol)
@@ -332,7 +334,7 @@ class OkHttpTest {
 
     enableTls()
 
-    client = client.newBuilder().eventListener(eventListener).build()
+    client = client.newBuilder().eventListenerFactory(clientTestRule.wrap(eventListener)).build()
 
     server.enqueue(MockResponse().setBody("abc1"))
     server.enqueue(MockResponse().setBody("abc2"))
@@ -367,13 +369,13 @@ class OkHttpTest {
 
     enableTls()
 
-    client = client.newBuilder().eventListener(object : EventListener() {
+    client = client.newBuilder().eventListenerFactory(clientTestRule.wrap(object : EventListener() {
       override fun connectionAcquired(call: Call, connection: Connection) {
         val sslSocket = connection.socket() as SSLSocket
 
         sessionIds.add(sslSocket.session.id.toByteString().hex())
       }
-    }).build()
+    })).build()
 
     server.enqueue(MockResponse().setBody("abc1"))
     server.enqueue(MockResponse().setBody("abc2"))
@@ -400,7 +402,7 @@ class OkHttpTest {
     assumeNetwork()
 
     client = client.newBuilder()
-        .eventListenerFactory(LoggingEventListener.Factory())
+        .eventListenerFactory(clientTestRule.wrap(LoggingEventListener.Factory()))
         .build()
 
     val dohDns = buildCloudflareIp(client)
