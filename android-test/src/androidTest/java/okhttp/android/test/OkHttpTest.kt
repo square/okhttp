@@ -16,15 +16,18 @@
 package okhttp.android.test
 
 import android.os.Build
+import android.support.test.InstrumentationRegistry
 import android.support.test.runner.AndroidJUnit4
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import com.google.android.gms.security.ProviderInstaller
 import okhttp3.Call
 import okhttp3.CertificatePinner
 import okhttp3.Connection
 import okhttp3.EventListener
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
+import okhttp3.OkHttpClientTestRule
 import okhttp3.Protocol
 import okhttp3.RecordingEventListener
 import okhttp3.Request
@@ -35,6 +38,7 @@ import okhttp3.internal.platform.Platform
 import okhttp3.logging.LoggingEventListener
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import okhttp3.testing.PlatformRule
 import okhttp3.tls.internal.TlsUtil.localhost
 import okio.ByteString.Companion.toByteString
 import org.conscrypt.Conscrypt
@@ -64,7 +68,15 @@ import okhttp3.internal.platform.Android10Platform
  */
 @RunWith(AndroidJUnit4::class)
 class OkHttpTest {
-  private lateinit var client: OkHttpClient
+  @Suppress("RedundantVisibilityModifier")
+  @JvmField
+  @Rule public val platform = PlatformRule()
+
+  @Suppress("RedundantVisibilityModifier")
+  @JvmField
+  @Rule public val clientTestRule = OkHttpClientTestRule()
+
+  private var client = clientTestRule.newClient()
 
   private val moshi = Moshi.Builder()
       .add(KotlinJsonAdapterFactory())
@@ -74,16 +86,6 @@ class OkHttpTest {
   @Rule
   val server = MockWebServer()
   private val handshakeCertificates = localhost()
-
-  @Before
-  fun createClient() {
-    client = OkHttpClient.Builder().build()
-  }
-
-  @After
-  fun cleanup() {
-    client.dispatcher.executorService.shutdownNow()
-  }
 
   @Test
   fun testPlatform() {
@@ -139,6 +141,37 @@ class OkHttpTest {
       }
     } finally {
       Security.removeProvider("Conscrypt")
+    }
+  }
+
+  @Test
+  fun testRequestUsesPlayProvider() {
+    assumeNetwork()
+
+    try {
+      ProviderInstaller.installIfNeeded(InstrumentationRegistry.getTargetContext())
+
+      val request = Request.Builder().url("https://facebook.com/robots.txt").build()
+
+      var socketClass: String? = null
+
+      client = OkHttpClient.Builder().eventListener(object : EventListener() {
+        override fun connectionAcquired(call: Call, connection: Connection) {
+          socketClass = connection.socket().javaClass.name
+        }
+      }).build()
+
+      val response = client.newCall(request).execute()
+
+      response.use {
+        assertEquals(Protocol.HTTP_2, response.protocol)
+        assertEquals(TlsVersion.TLS_1_2, response.handshake?.tlsVersion)
+        assertEquals(200, response.code)
+        // see https://github.com/google/conscrypt/blob/b9463b2f74df42d85c73715a5f19e005dfb7b802/android/src/main/java/org/conscrypt/Platform.java#L613
+        assertEquals("com.google.android.gms.org.conscrypt.Java8FileDescriptorSocket", socketClass)
+      }
+    } finally {
+      Security.removeProvider("GmsCore_OpenSSL")
     }
   }
 
