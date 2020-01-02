@@ -110,7 +110,7 @@ final class ExchangeFinder {
 
       // If this is a brand new connection, we can skip the extensive health checks.
       synchronized (connectionPool) {
-        if (candidate.successCount == 0) {
+        if (candidate.successCount == 0 && !candidate.isMultiplexed()) {
           return candidate;
         }
       }

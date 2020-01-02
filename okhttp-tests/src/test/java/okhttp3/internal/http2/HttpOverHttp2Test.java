@@ -1195,6 +1195,95 @@ public final class HttpOverHttp2Test {
         (long) 0);
   }
 
+  @Test public void streamTimeoutDegradesConnectionAfterNoPong() throws Exception {
+    client = client.newBuilder()
+        .readTimeout(500, MILLISECONDS)
+        .build();
+
+    // Stalling the socket will cause TWO requests to time out!
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.STALL_SOCKET_AT_START));
+
+    // The 3rd request should be sent to a fresh connection.
+    server.enqueue(new MockResponse()
+        .setBody("fresh connection"));
+
+    // The first call times out.
+    Call call1 = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    try {
+      call1.execute();
+      fail();
+    } catch (SocketTimeoutException expected) {
+    }
+
+    // The second call times out because it uses the same bad connection.
+    Call call2 = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    try {
+      call2.execute();
+      fail();
+    } catch (SocketTimeoutException expected) {
+    }
+
+    // But after the degraded pong timeout, that connection is abandoned.
+    Thread.sleep(TimeUnit.NANOSECONDS.toMillis(Http2Connection.DEGRADED_PONG_TIMEOUT_NS));
+    Call call3 = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    try (Response response = call3.execute()) {
+      Assertions.assertThat(response.body().string()).isEqualTo("fresh connection");
+    }
+  }
+
+  @Test public void oneStreamTimeoutDoesNotBreakConnection() throws Exception {
+    client = client.newBuilder()
+        .readTimeout(500, MILLISECONDS)
+        .build();
+
+    server.enqueue(new MockResponse()
+        .setBodyDelay(1_000, MILLISECONDS)
+        .setBody("a"));
+    server.enqueue(new MockResponse()
+        .setBody("b"));
+    server.enqueue(new MockResponse()
+        .setBody("c"));
+
+    // The first call times out.
+    Call call1 = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    try (Response response = call1.execute()) {
+      response.body().string();
+      fail();
+    } catch (SocketTimeoutException expected) {
+    }
+
+    // The second call succeeds.
+    Call call2 = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    try (Response response = call2.execute()) {
+      Assertions.assertThat(response.body().string()).isEqualTo("b");
+    }
+
+    // Calls succeed after the degraded pong timeout because the degraded pong was received.
+    Thread.sleep(TimeUnit.NANOSECONDS.toMillis(Http2Connection.DEGRADED_PONG_TIMEOUT_NS));
+    Call call3 = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    try (Response response = call3.execute()) {
+      Assertions.assertThat(response.body().string()).isEqualTo("c");
+    }
+
+    // All calls share a connection.
+    Assertions.assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
+    Assertions.assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(1);
+    Assertions.assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(2);
+  }
+
   private String firstFrame(List<String> logs, String type) {
     for (String log: logs) {
       if (log.contains(type)) {

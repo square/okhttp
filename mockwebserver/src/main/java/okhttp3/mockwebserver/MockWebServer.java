@@ -507,6 +507,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
         }
 
         if (socketPolicy == STALL_SOCKET_AT_START) {
+          dispatchBookkeepingRequest(sequenceNumber, socket);
           return; // Ignore the socket until the server is shut down!
         }
 
