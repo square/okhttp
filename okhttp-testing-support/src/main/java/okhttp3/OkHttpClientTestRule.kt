@@ -23,6 +23,7 @@ import org.junit.runner.Description
 import org.junit.runners.model.Statement
 import java.net.InetAddress
 import java.util.concurrent.TimeUnit
+import java.util.logging.Logger
 
 /**
  * Apply this rule to all tests. It adds additional checks for leaked resources and uncaught
@@ -35,9 +36,14 @@ class OkHttpClientTestRule : TestRule {
   private val clientEventsList = mutableListOf<String>()
   private var testClient: OkHttpClient? = null
   private var uncaughtException: Throwable? = null
+  var logger: Logger? = null
 
   fun wrap(eventListener: EventListener) = object : EventListener.Factory {
     override fun create(call: Call) = ClientRuleEventListener(eventListener) { addEvent(it) }
+  }
+
+  fun wrap(eventListenerFactory: EventListener.Factory) = object : EventListener.Factory {
+    override fun create(call: Call) = ClientRuleEventListener(eventListenerFactory.create(call)) { addEvent(it) }
   }
 
   /**
@@ -68,6 +74,7 @@ class OkHttpClientTestRule : TestRule {
   }
 
   @Synchronized private fun addEvent(event: String) {
+    logger?.info(event)
     clientEventsList.add(event)
   }
 
