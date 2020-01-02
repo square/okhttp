@@ -36,6 +36,7 @@ class OkHttpClientTestRule : TestRule {
   private val clientEventsList = mutableListOf<String>()
   private var testClient: OkHttpClient? = null
   private var uncaughtException: Throwable? = null
+  var logger: Logger? = null
 
   fun wrap(eventListener: EventListener) = object : EventListener.Factory {
     override fun create(call: Call) = ClientRuleEventListener(eventListener) { addEvent(it) }
@@ -73,7 +74,7 @@ class OkHttpClientTestRule : TestRule {
   }
 
   @Synchronized private fun addEvent(event: String) {
-    logger.info(event)
+    logger?.info(event)
     clientEventsList.add(event)
   }
 
@@ -150,8 +151,6 @@ class OkHttpClientTestRule : TestRule {
   }
 
   companion object {
-    val logger: Logger = Logger.getLogger(OkHttpClientTestRule::class.java.name)
-
     /**
      * A network that resolves only one IP address per host. Use this when testing route selection
      * fallbacks to prevent the host machine's various IP addresses from interfering.

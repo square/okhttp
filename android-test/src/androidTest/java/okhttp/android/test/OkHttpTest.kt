@@ -60,6 +60,7 @@ import java.security.cert.X509Certificate
 import java.security.Security
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocket
+import java.util.logging.Logger
 import okhttp3.internal.platform.AndroidPlatform
 import okhttp3.internal.platform.Android10Platform
 
@@ -74,7 +75,9 @@ class OkHttpTest {
 
   @Suppress("RedundantVisibilityModifier")
   @JvmField
-  @Rule public val clientTestRule = OkHttpClientTestRule()
+  @Rule public val clientTestRule = OkHttpClientTestRule().apply {
+    logger = Logger.getLogger(OkHttpTest::class.java.name)
+  }
 
   private var client = clientTestRule.newClient()
 
