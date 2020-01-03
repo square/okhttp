@@ -726,6 +726,22 @@ open class OkHttpClient internal constructor(
      *     .sslSocketFactory(sslSocketFactory, trustManager)
      *     .build();
      * ```
+     *
+     * ## TrustManagers on Android are Weird!
+     *
+     * Trust managers targeting Android must also define a method that has this signature:
+     *
+     * ```
+     *    @SuppressWarnings("unused")
+     *    public List<X509Certificate> checkServerTrusted(
+     *        X509Certificate[] chain, String authType, String host) throws CertificateException {
+     *    }
+     * ```
+     *
+     * This method works like [X509TrustManager.checkServerTrusted] but it receives the hostname of
+     * the server as an extra parameter. Regardless of what checks this method performs, OkHttp will
+     * always check that the server's certificates match its hostname using the [HostnameVerifier].
+     * See [android.net.http.X509TrustManagerExtensions] for more information.
      */
     fun sslSocketFactory(
       sslSocketFactory: SSLSocketFactory,
