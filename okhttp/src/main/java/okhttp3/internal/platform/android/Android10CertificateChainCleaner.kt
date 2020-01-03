@@ -17,6 +17,7 @@ package okhttp3.internal.platform.android
 
 import android.net.http.X509TrustManagerExtensions
 import okhttp3.internal.tls.CertificateChainCleaner
+import java.lang.IllegalArgumentException
 import java.security.cert.Certificate
 import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
@@ -52,4 +53,14 @@ internal class Android10CertificateChainCleaner(
           other.trustManager === this.trustManager
 
   override fun hashCode(): Int = System.identityHashCode(trustManager)
+
+  companion object {
+    fun buildIfSupported(trustManager: X509TrustManager): Android10CertificateChainCleaner? {
+      return try {
+        Android10CertificateChainCleaner(trustManager)
+      } catch (iae: IllegalArgumentException) {
+        null
+      }
+    }
+  }
 }

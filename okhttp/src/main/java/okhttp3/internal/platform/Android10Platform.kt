@@ -59,7 +59,7 @@ class Android10Platform : Platform() {
       NetworkSecurityPolicy.getInstance().isCleartextTrafficPermitted(hostname)
 
   override fun buildCertificateChainCleaner(trustManager: X509TrustManager): CertificateChainCleaner =
-      Android10CertificateChainCleaner(trustManager)
+      Android10CertificateChainCleaner.buildIfSupported(trustManager) ?: super.buildCertificateChainCleaner(trustManager)
 
   companion object {
     val isSupported: Boolean = isAndroid && Build.VERSION.SDK_INT >= 29

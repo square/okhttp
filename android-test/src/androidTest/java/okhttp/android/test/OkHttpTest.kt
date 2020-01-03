@@ -58,8 +58,10 @@ import java.net.InetAddress
 import java.net.UnknownHostException
 import java.security.cert.X509Certificate
 import java.security.Security
+import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocket
+import javax.net.ssl.X509TrustManager
 import java.util.logging.Logger
 import okhttp3.internal.platform.AndroidPlatform
 import okhttp3.internal.platform.Android10Platform
@@ -414,6 +416,64 @@ class OkHttpTest {
 
     dohEnabledClient.get("https://www.twitter.com/robots.txt")
     dohEnabledClient.get("https://www.facebook.com/robots.txt")
+  }
+
+  @Test
+  fun testCustomTrustManager() {
+    assumeNetwork()
+
+    val tm = object : X509TrustManager {
+      override fun checkClientTrusted(p0: Array<out X509Certificate>?, p1: String?) {}
+
+      override fun checkServerTrusted(p0: Array<out X509Certificate>?, p1: String?) {}
+
+      override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
+    }
+
+    val sslContext = Platform.get().newSSLContext().apply {
+      init(null, arrayOf(tm), null)
+    }
+    val sf = sslContext.socketFactory
+
+    val hnv = HostnameVerifier { _, _ -> true }
+
+    client = client.newBuilder()
+        .eventListener(EventListener.NONE)
+        .sslSocketFactory(sf, tm)
+        .hostnameVerifier(hnv)
+        .build()
+
+    client.get("https://www.facebook.com/robots.txt")
+  }
+
+  @Test
+  fun testCustomTrustManagerWithCheck() {
+    assumeNetwork()
+
+    val tm = object : X509TrustManager {
+      override fun checkClientTrusted(p0: Array<out X509Certificate>?, p1: String?) {}
+
+      override fun checkServerTrusted(p0: Array<out X509Certificate>?, p1: String?) {}
+
+      fun checkServerTrusted(p0: Array<out X509Certificate>?, p1: String?, p2: String?) = p0?.toList()
+
+      override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
+    }
+
+    val sslContext = Platform.get().newSSLContext().apply {
+      init(null, arrayOf(tm), null)
+    }
+    val sf = sslContext.socketFactory
+
+    val hnv = HostnameVerifier { _, _ -> true }
+
+    client = client.newBuilder()
+        .eventListener(EventListener.NONE)
+        .sslSocketFactory(sf, tm)
+        .hostnameVerifier(hnv)
+        .build()
+
+    client.get("https://www.facebook.com/robots.txt")
   }
 
   private fun OkHttpClient.get(url: String) {
