@@ -629,6 +629,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#version-3145" title="Version 3.14.5" class="md-nav__link">
+    Version 3.14.5
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-3144" title="Version 3.14.4" class="md-nav__link">
     Version 3.14.4
   </a>
@@ -673,6 +680,13 @@
         <li class="md-nav__item">
   <a href="#version-3130" title="Version 3.13.0" class="md-nav__link">
     Version 3.13.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-3127" title="Version 3.12.7" class="md-nav__link">
+    Version 3.12.7
   </a>
   
 </li>
@@ -907,6 +921,13 @@
                 
                 
                 <h1 id="okhttp-3x-change-log">OkHttp 3.x Change Log<a class="headerlink" href="#okhttp-3x-change-log" title="Permanent link">&para;</a></h1>
+<h2 id="version-3145">Version 3.14.5<a class="headerlink" href="#version-3145" title="Permanent link">&para;</a></h2>
+<p><em>2020-01-03</em></p>
+<ul>
+<li>Fix: Degrade HTTP/2 connections after a timeout. When an HTTP/2 stream times out it may impact
+    the stream only or the entire connection. With this fix OkHttp will now send HTTP/2 pings after 
+    a stream timeout to determine whether the connection should remain eligible for pooling.</li>
+</ul>
 <h2 id="version-3144">Version 3.14.4<a class="headerlink" href="#version-3144" title="Permanent link">&para;</a></h2>
 <p><em>2019-09-29</em></p>
 <ul>
@@ -1085,6 +1106,13 @@ difficult we will backport critical fixes to the 3.12.x branch through December 
 <li>New: API to access headers as <code>java.time.Instant</code>.</li>
 <li>New: Fail fast if a <code>SSLSocketFactory</code> is used as a <code>SocketFactory</code>.</li>
 <li>New: Log the TLS handshake in <code>LoggingEventListener</code>.</li>
+</ul>
+<h2 id="version-3127">Version 3.12.7<a class="headerlink" href="#version-3127" title="Permanent link">&para;</a></h2>
+<p><em>2020-01-03</em></p>
+<ul>
+<li>Fix: Degrade HTTP/2 connections after a timeout. When an HTTP/2 stream times out it may impact
+    the stream only or the entire connection. With this fix OkHttp will now send HTTP/2 pings after 
+    a stream timeout to determine whether the connection should remain eligible for pooling.</li>
 </ul>
 <h2 id="version-3126">Version 3.12.6<a class="headerlink" href="#version-3126" title="Permanent link">&para;</a></h2>
 <p><em>2019-09-29</em></p>

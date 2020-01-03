@@ -625,6 +625,22 @@
     
   
   
+    <label class="md-nav__title" for="__toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#trustmanagers-on-android-are-weird" title="TrustManagers on Android are Weird!" class="md-nav__link">
+    TrustManagers on Android are Weird!
+  </a>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -664,6 +680,19 @@ OkHttpClient client = new OkHttpClient.Builder()
     .sslSocketFactory(sslSocketFactory, trustManager)
     .build();
 </pre></div>
+
+<h2 id="trustmanagers-on-android-are-weird">TrustManagers on Android are Weird!<a class="headerlink" href="#trustmanagers-on-android-are-weird" title="Permanent link">&para;</a></h2>
+<p>Trust managers targeting Android must also define a method that has this signature:</p>
+<div class="codehilite"><pre><span></span>    @SuppressWarnings(&quot;unused&quot;)
+    public List&lt;X509Certificate&gt; checkServerTrusted(
+        X509Certificate[] chain, String authType, String host) throws CertificateException {
+    }
+</pre></div>
+
+<p>This method works like <a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/X509TrustManager.html#checkServerTrusted(java.security.cert.X509Certificate[], java.lang.String)">X509TrustManager.checkServerTrusted</a> but it receives the hostname of
+the server as an extra parameter. Regardless of what checks this method performs, OkHttp will
+always check that the server&rsquo;s certificates match its hostname using the <a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/HostnameVerifier.html">HostnameVerifier</a>.
+See <a href="#">android.net.http.X509TrustManagerExtensions</a> for more information.</p>
                 
                   
                 
