@@ -580,7 +580,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     }
 
     if (http2Connection != null) {
-      return !http2Connection.isShutdown();
+      return http2Connection.isHealthy(System.nanoTime());
     }
 
     if (doExtensiveChecks) {

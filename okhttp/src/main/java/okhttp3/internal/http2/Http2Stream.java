@@ -671,6 +671,7 @@ public final class Http2Stream {
   class StreamTimeout extends AsyncTimeout {
     @Override protected void timedOut() {
       closeLater(ErrorCode.CANCEL);
+      connection.sendDegradedPingLater();
     }
 
     @Override protected IOException newTimeoutException(IOException cause) {
