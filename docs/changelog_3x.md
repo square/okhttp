@@ -1,6 +1,15 @@
 OkHttp 3.x Change Log
 =====================
 
+## Version 3.14.5
+
+_2020-01-03_
+
+ *  Fix: Degrade HTTP/2 connections after a timeout. When an HTTP/2 stream times out it may impact
+    the stream only or the entire connection. With this fix OkHttp will now send HTTP/2 pings after 
+    a stream timeout to determine whether the connection should remain eligible for pooling.
+
+
 ## Version 3.14.4
 
 _2019-09-29_
@@ -174,6 +183,15 @@ _2019-02-04_
  *  New: API to access headers as `java.time.Instant`.
  *  New: Fail fast if a `SSLSocketFactory` is used as a `SocketFactory`.
  *  New: Log the TLS handshake in `LoggingEventListener`.
+
+
+## Version 3.12.7
+
+_2020-01-03_
+
+ *  Fix: Degrade HTTP/2 connections after a timeout. When an HTTP/2 stream times out it may impact
+    the stream only or the entire connection. With this fix OkHttp will now send HTTP/2 pings after 
+    a stream timeout to determine whether the connection should remain eligible for pooling.
 
 
 ## Version 3.12.6
