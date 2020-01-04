@@ -285,8 +285,10 @@ class OkHttpTest {
 
     response.use {
       assertEquals(200, response.code)
+      assertEquals(Protocol.HTTP_2, response.protocol)
+      assertEquals(TlsVersion.TLS_1_2, response.handshake?.tlsVersion)
       assertEquals("CN=localhost",
-          (response.handshake!!.peerCertificates.single() as X509Certificate).subjectDN.name)
+          (response.handshake!!.peerCertificates.first() as X509Certificate).subjectDN.name)
     }
   }
 
