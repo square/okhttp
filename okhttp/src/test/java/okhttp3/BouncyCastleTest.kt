@@ -16,7 +16,6 @@
 package okhttp3
 
 import okhttp3.TestUtil.assumeNetwork
-import okhttp3.internal.platform.OpenJSSEPlatform
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.testing.PlatformRule
@@ -83,12 +82,6 @@ class BouncyCastleTest {
       assertThat(it.protocol).isEqualTo(Protocol.HTTP_1_1)
       assertThat(it.handshake!!.tlsVersion).isEqualTo(TlsVersion.TLS_1_3)
     }
-  }
-
-  @Test
-  fun testBuildIfSupported() {
-    val actual = OpenJSSEPlatform.buildIfSupported()
-    assertThat(actual).isNotNull
   }
 
   private fun enableTls() {
