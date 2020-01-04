@@ -42,13 +42,11 @@ import okhttp3.testing.PlatformRule
 import okhttp3.tls.internal.TlsUtil.localhost
 import okio.ByteString.Companion.toByteString
 import org.conscrypt.Conscrypt
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Assume.assumeNoException
 import org.junit.Assume.assumeTrue
-import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Ignore
 import org.junit.Rule
@@ -422,55 +420,59 @@ class OkHttpTest {
   fun testCustomTrustManager() {
     assumeNetwork()
 
-    val tm = object : X509TrustManager {
-      override fun checkClientTrusted(p0: Array<out X509Certificate>?, p1: String?) {}
+    val trustManager = object : X509TrustManager {
+      override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
 
-      override fun checkServerTrusted(p0: Array<out X509Certificate>?, p1: String?) {}
+      override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
 
       override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
     }
 
     val sslContext = Platform.get().newSSLContext().apply {
-      init(null, arrayOf(tm), null)
+      init(null, arrayOf(trustManager), null)
     }
-    val sf = sslContext.socketFactory
+    val sslSocketFactory = sslContext.socketFactory
 
-    val hnv = HostnameVerifier { _, _ -> true }
+    val hostnameVerifier = HostnameVerifier { _, _ -> true }
 
     client = client.newBuilder()
+        // avoid cleaning bug for now
         .eventListener(EventListener.NONE)
-        .sslSocketFactory(sf, tm)
-        .hostnameVerifier(hnv)
+        .sslSocketFactory(sslSocketFactory, trustManager)
+        .hostnameVerifier(hostnameVerifier)
         .build()
 
     client.get("https://www.facebook.com/robots.txt")
   }
 
   @Test
-  fun testCustomTrustManagerWithCheck() {
+  fun testCustomTrustManagerWithAndroidCheck() {
     assumeNetwork()
 
-    val tm = object : X509TrustManager {
-      override fun checkClientTrusted(p0: Array<out X509Certificate>?, p1: String?) {}
+    val trustManager = object : X509TrustManager {
+      override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
 
-      override fun checkServerTrusted(p0: Array<out X509Certificate>?, p1: String?) {}
+      override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
 
-      fun checkServerTrusted(p0: Array<out X509Certificate>?, p1: String?, p2: String?) = p0?.toList()
+      @Suppress("unused", "UNUSED_PARAMETER")
+      // called by Android via reflection in X509TrustManagerExtensions
+      fun checkServerTrusted(chain: Array<out X509Certificate>, authType: String, hostname: String) = chain.toList()
 
       override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
     }
 
     val sslContext = Platform.get().newSSLContext().apply {
-      init(null, arrayOf(tm), null)
+      init(null, arrayOf(trustManager), null)
     }
-    val sf = sslContext.socketFactory
+    val sslSocketFactory = sslContext.socketFactory
 
-    val hnv = HostnameVerifier { _, _ -> true }
+    val hostnameVerifier = HostnameVerifier { _, _ -> true }
 
     client = client.newBuilder()
+        // avoid cleaning bug for now
         .eventListener(EventListener.NONE)
-        .sslSocketFactory(sf, tm)
-        .hostnameVerifier(hnv)
+        .sslSocketFactory(sslSocketFactory, trustManager)
+        .hostnameVerifier(hostnameVerifier)
         .build()
 
     client.get("https://www.facebook.com/robots.txt")

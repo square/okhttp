@@ -32,17 +32,16 @@ import javax.net.ssl.X509TrustManager
  * handshake.
  */
 internal class Android10CertificateChainCleaner(
-  private val trustManager: X509TrustManager
+  private val trustManager: X509TrustManager,
+  private val x509TrustManagerExtensions: X509TrustManagerExtensions
 ) : CertificateChainCleaner() {
-  val extensions = X509TrustManagerExtensions(trustManager)
-
   @Suppress("UNCHECKED_CAST")
   @Throws(SSLPeerUnverifiedException::class)
   override
   fun clean(chain: List<Certificate>, hostname: String): List<Certificate> {
     val certificates = (chain as List<X509Certificate>).toTypedArray()
     try {
-      return extensions.checkServerTrusted(certificates, "RSA", hostname)
+      return x509TrustManagerExtensions.checkServerTrusted(certificates, "RSA", hostname)
     } catch (ce: CertificateException) {
       throw SSLPeerUnverifiedException(ce.message).apply { initCause(ce) }
     }
@@ -56,10 +55,16 @@ internal class Android10CertificateChainCleaner(
 
   companion object {
     fun buildIfSupported(trustManager: X509TrustManager): Android10CertificateChainCleaner? {
-      return try {
-        Android10CertificateChainCleaner(trustManager)
+      val extensions = try {
+        X509TrustManagerExtensions(trustManager)
       } catch (iae: IllegalArgumentException) {
+        // X509TrustManagerExtensions checks for checkServerTrusted(X509Certificate[], String, String)
         null
+      }
+
+      return when {
+        extensions != null -> Android10CertificateChainCleaner(trustManager, extensions)
+        else -> null
       }
     }
   }
