@@ -45,13 +45,13 @@ import okio.ByteString.Companion.toByteString
 import org.conscrypt.Conscrypt
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
+import org.junit.Assume.assumeNoException
+import org.junit.Assume.assumeTrue
 import org.junit.BeforeClass
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
-import org.junit.Assert.fail
-import org.junit.Assume.assumeNoException
-import org.junit.Assume.assumeTrue
 import org.junit.runner.RunWith
 import java.net.InetAddress
 import java.net.UnknownHostException
