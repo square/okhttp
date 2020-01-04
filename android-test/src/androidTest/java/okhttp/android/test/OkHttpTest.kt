@@ -48,10 +48,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Assume.assumeNoException
 import org.junit.Assume.assumeTrue
-import org.junit.BeforeClass
-import org.junit.Ignore
-import org.junit.Rule
-import org.junit.Test
 import org.junit.runner.RunWith
 import java.net.InetAddress
 import java.net.UnknownHostException
@@ -62,6 +58,7 @@ import javax.net.ssl.SSLSocket
 import java.util.logging.Logger
 import okhttp3.internal.platform.AndroidPlatform
 import okhttp3.internal.platform.Android10Platform
+import org.junit.*
 
 /**
  * Run with "./gradlew :android-test:connectedCheck" and make sure ANDROID_SDK_ROOT is set.
