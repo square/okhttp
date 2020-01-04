@@ -161,7 +161,7 @@ class OkHttpTest {
       try {
         ProviderInstaller.installIfNeeded(InstrumentationRegistry.getTargetContext())
       } catch (gpsnae: GooglePlayServicesNotAvailableException) {
-        throw AssumptionViolatedException("Google Play Services not available")
+        assumeNoException("Google Play Services not available", gpsnae)
       }
 
       val request = Request.Builder().url("https://facebook.com/robots.txt").build()
