@@ -18,6 +18,7 @@ package okhttp.android.test
 import android.os.Build
 import android.support.test.InstrumentationRegistry
 import android.support.test.runner.AndroidJUnit4
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import com.google.android.gms.security.ProviderInstaller
@@ -42,13 +43,11 @@ import okhttp3.testing.PlatformRule
 import okhttp3.tls.internal.TlsUtil.localhost
 import okio.ByteString.Companion.toByteString
 import org.conscrypt.Conscrypt
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Assume.assumeNoException
 import org.junit.Assume.assumeTrue
-import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Ignore
 import org.junit.Rule
@@ -159,7 +158,11 @@ class OkHttpTest {
     assumeNetwork()
 
     try {
-      ProviderInstaller.installIfNeeded(InstrumentationRegistry.getTargetContext())
+      try {
+        ProviderInstaller.installIfNeeded(InstrumentationRegistry.getTargetContext())
+      } catch (gpsnae: GooglePlayServicesNotAvailableException) {
+        throw AssumptionViolatedException("Google Play Services not available")
+      }
 
       val request = Request.Builder().url("https://facebook.com/robots.txt").build()
 
