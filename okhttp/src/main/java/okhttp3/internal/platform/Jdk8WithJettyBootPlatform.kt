@@ -32,6 +32,7 @@ class Jdk8WithJettyBootPlatform(
 ) : Platform() {
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
+    hostname: String?,
     protocols: List<Protocol>
   ) {
     val names = alpnProtocolNames(protocols)

@@ -24,6 +24,7 @@ import javax.net.ssl.X509TrustManager
 open class Jdk9Platform : Platform() {
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
+    hostname: String?,
     protocols: List<@JvmSuppressWildcards Protocol>
   ) {
     val sslParameters = sslSocket.sslParameters

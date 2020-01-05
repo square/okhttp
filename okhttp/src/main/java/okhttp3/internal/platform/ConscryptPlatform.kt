@@ -64,6 +64,7 @@ class ConscryptPlatform private constructor() : Platform() {
 
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
+    hostname: String?,
     protocols: List<@JvmSuppressWildcards Protocol>
   ) {
     if (Conscrypt.isConscrypt(sslSocket)) {
@@ -74,7 +75,7 @@ class ConscryptPlatform private constructor() : Platform() {
       val names = alpnProtocolNames(protocols)
       Conscrypt.setApplicationProtocols(sslSocket, names.toTypedArray())
     } else {
-      super.configureTlsExtensions(sslSocket, protocols)
+      super.configureTlsExtensions(sslSocket, hostname, protocols)
     }
   }
 
