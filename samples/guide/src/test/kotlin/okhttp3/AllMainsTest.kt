@@ -46,6 +46,7 @@ class AllMainsTest(val className: String) {
     }
   }
 
+  @Suppress("UNUSED_PARAMETER")
   private fun expectedFailure(
     className: String,
     cause: Throwable
