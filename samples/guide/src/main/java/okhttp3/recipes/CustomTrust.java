@@ -23,6 +23,8 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.util.Arrays;
 import java.util.Collection;
+
+import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
@@ -39,21 +41,30 @@ import okio.Buffer;
 public final class CustomTrust {
   private final OkHttpClient client;
 
+  class KeyAndTrustManagers {
+    final KeyManager[] keyManagers;
+    final TrustManager[] trustManagers;
+
+    KeyAndTrustManagers(KeyManager[] keyManagers, TrustManager[] trustManagers) {
+      this.keyManagers = keyManagers;
+      this.trustManagers = trustManagers;
+    }
+  }
+
   public CustomTrust() {
-    X509TrustManager trustManager;
     SSLSocketFactory sslSocketFactory;
     try {
-      trustManager = trustManagerForCertificates(trustedCertificatesInputStream());
+      KeyAndTrustManagers keyAndTrustManagers = trustManagerForCertificates(trustedCertificatesInputStream());
       SSLContext sslContext = SSLContext.getInstance("TLS");
-      sslContext.init(null, new TrustManager[] { trustManager }, null);
+      sslContext.init(keyAndTrustManagers.keyManagers, keyAndTrustManagers.trustManagers, null);
       sslSocketFactory = sslContext.getSocketFactory();
+
+      client = new OkHttpClient.Builder()
+              .sslSocketFactory(sslSocketFactory, (X509TrustManager) keyAndTrustManagers.trustManagers[0])
+              .build();
     } catch (GeneralSecurityException e) {
       throw new RuntimeException(e);
     }
-
-    client = new OkHttpClient.Builder()
-        .sslSocketFactory(sslSocketFactory, trustManager)
-        .build();
   }
 
   public void run() throws Exception {
@@ -172,7 +183,7 @@ public final class CustomTrust {
    * not use custom trusted certificates in production without the blessing of your server's TLS
    * administrator.
    */
-  private X509TrustManager trustManagerForCertificates(InputStream in)
+  private KeyAndTrustManagers trustManagerForCertificates(InputStream in)
       throws GeneralSecurityException {
     CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
     Collection<? extends Certificate> certificates = certificateFactory.generateCertificates(in);
@@ -196,12 +207,7 @@ public final class CustomTrust {
     TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(
         TrustManagerFactory.getDefaultAlgorithm());
     trustManagerFactory.init(keyStore);
-    TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
-    if (trustManagers.length != 1 || !(trustManagers[0] instanceof X509TrustManager)) {
-      throw new IllegalStateException("Unexpected default trust managers:"
-          + Arrays.toString(trustManagers));
-    }
-    return (X509TrustManager) trustManagers[0];
+    return new KeyAndTrustManagers(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers());
   }
 
   private KeyStore newEmptyKeyStore(char[] password) throws GeneralSecurityException {

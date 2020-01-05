@@ -23,24 +23,19 @@ import java.io.IOException
 import java.io.InputStream
 import java.security.KeyStore
 import java.security.cert.CertificateFactory
-import java.util.Arrays
-import javax.net.ssl.KeyManagerFactory
-import javax.net.ssl.SSLContext
-import javax.net.ssl.TrustManager
-import javax.net.ssl.TrustManagerFactory
-import javax.net.ssl.X509TrustManager
+import javax.net.ssl.*
 
 class CustomTrust {
   private val client: OkHttpClient
 
   init {
-    val trustManager = trustManagerForCertificates(trustedCertificatesInputStream())
+    val (keyManagers, trustManagers) = trustManagerForCertificates(trustedCertificatesInputStream())
     val sslContext = SSLContext.getInstance("TLS")
-    sslContext.init(null, arrayOf<TrustManager>(trustManager), null)
+    sslContext.init(keyManagers, trustManagers, null)
     val sslSocketFactory = sslContext.socketFactory
 
     client = OkHttpClient.Builder()
-        .sslSocketFactory(sslSocketFactory, trustManager)
+        .sslSocketFactory(sslSocketFactory, trustManagers[0] as X509TrustManager)
         .build()
   }
 
@@ -162,7 +157,7 @@ class CustomTrust {
    * not use custom trusted certificates in production without the blessing of your server's TLS
    * administrator.
    */
-  private fun trustManagerForCertificates(inputStream: InputStream): X509TrustManager {
+  private fun trustManagerForCertificates(inputStream: InputStream): Pair<Array<KeyManager>, Array<TrustManager>> {
     val certificateFactory = CertificateFactory.getInstance("X.509")
     val certificates = certificateFactory.generateCertificates(inputStream)
     require(!certificates.isEmpty()) { "expected non-empty set of trusted certificates" }
@@ -184,11 +179,8 @@ class CustomTrust {
         TrustManagerFactory.getDefaultAlgorithm()
     )
     trustManagerFactory.init(keyStore)
-    val trustManagers = trustManagerFactory.trustManagers
-    check(trustManagers.size == 1 && trustManagers[0] is X509TrustManager) {
-      "Unexpected default trust managers: ${Arrays.toString(trustManagers)}"
-    }
-    return trustManagers[0] as X509TrustManager
+
+    return Pair(keyManagerFactory.keyManagers, trustManagerFactory.trustManagers)
   }
 
   private fun newEmptyKeyStore(password: CharArray): KeyStore {

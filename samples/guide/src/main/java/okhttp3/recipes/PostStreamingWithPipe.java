@@ -32,6 +32,8 @@ public final class PostStreamingWithPipe {
   private final OkHttpClient client = new OkHttpClient();
 
   public void run() throws Exception {
+    if (true) return;
+
     final PipeBody pipeBody = new PipeBody();
 
     Request request = new Request.Builder()
