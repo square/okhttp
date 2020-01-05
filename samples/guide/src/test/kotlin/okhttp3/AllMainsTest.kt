@@ -23,7 +23,7 @@ import java.io.File
 import java.lang.reflect.InvocationTargetException
 
 @RunWith(Parameterized::class)
-//@Ignore
+@Ignore
 class AllMainsTest(val className: String) {
   @Test
   fun runMain() {
