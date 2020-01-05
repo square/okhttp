@@ -30,7 +30,15 @@ class AllMainsTest(val className: String) {
     val mainMethod = Class.forName(className)
         .methods.find { it.name == "main" }
     try {
-      mainMethod?.invoke(null, arrayOf<String>())
+      if (mainMethod != null) {
+        if (mainMethod.parameters.isEmpty()) {
+          mainMethod.invoke(null)
+        } else {
+          mainMethod.invoke(null, arrayOf<String>())
+        }
+      } else {
+        System.err.println("No main for $className")
+      }
     } catch (ite: InvocationTargetException) {
       if (!expectedFailure(className, ite.cause!!)) {
         throw ite.cause!!
@@ -38,6 +46,7 @@ class AllMainsTest(val className: String) {
     }
   }
 
+  @Suppress("UNUSED_PARAMETER")
   private fun expectedFailure(
     className: String,
     cause: Throwable
@@ -58,8 +67,10 @@ class AllMainsTest(val className: String) {
       val mainFiles = mainFiles()
       return mainFiles.map {
         val suffix = it.path.replace("${prefix}samples/guide/src/main/java/", "")
-        suffix.replace("(.*)\\.(?:kt|java)".toRegex()) { mr ->
+        suffix.replace("(.*)\\.java".toRegex()) { mr ->
           mr.groupValues[1].replace('/', '.')
+        }.replace("(.*)\\.kt".toRegex()) { mr ->
+          mr.groupValues[1].replace('/', '.') + "Kt"
         }
       }.sorted()
     }
