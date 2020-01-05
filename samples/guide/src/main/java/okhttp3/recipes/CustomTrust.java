@@ -21,7 +21,6 @@ import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
-import java.util.Arrays;
 import java.util.Collection;
 
 import javax.net.ssl.KeyManager;
@@ -54,13 +53,15 @@ public final class CustomTrust {
   public CustomTrust() {
     SSLSocketFactory sslSocketFactory;
     try {
-      KeyAndTrustManagers keyAndTrustManagers = trustManagerForCertificates(trustedCertificatesInputStream());
+      KeyAndTrustManagers keyAndTrustManagers =
+              trustManagerForCertificates(trustedCertificatesInputStream());
       SSLContext sslContext = SSLContext.getInstance("TLS");
       sslContext.init(keyAndTrustManagers.keyManagers, keyAndTrustManagers.trustManagers, null);
       sslSocketFactory = sslContext.getSocketFactory();
 
+      X509TrustManager trustManager = (X509TrustManager) keyAndTrustManagers.trustManagers[0];
       client = new OkHttpClient.Builder()
-              .sslSocketFactory(sslSocketFactory, (X509TrustManager) keyAndTrustManagers.trustManagers[0])
+              .sslSocketFactory(sslSocketFactory, trustManager)
               .build();
     } catch (GeneralSecurityException e) {
       throw new RuntimeException(e);
@@ -236,7 +237,9 @@ public final class CustomTrust {
     TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(
         TrustManagerFactory.getDefaultAlgorithm());
     trustManagerFactory.init(keyStore);
-    return new KeyAndTrustManagers(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers());
+    return new KeyAndTrustManagers(
+            keyManagerFactory.getKeyManagers(),
+            trustManagerFactory.getTrustManagers());
   }
 
   private KeyStore newEmptyKeyStore(char[] password) throws GeneralSecurityException {
