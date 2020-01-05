@@ -391,7 +391,7 @@ class MockWebServer : ExternalResource(), Closeable {
 
     taskRunner.newQueue().execute("MockWebServer $portField", cancelable = false) {
       try {
-        logger.info("$this starting to accept connections")
+        logger.fine("$this starting to accept connections")
         acceptConnections()
       } catch (e: Throwable) {
         logger.log(Level.WARNING, "$this failed unexpectedly", e)
@@ -422,7 +422,7 @@ class MockWebServer : ExternalResource(), Closeable {
       try {
         socket = serverSocket!!.accept()
       } catch (e: SocketException) {
-        logger.info("${this@MockWebServer} done accepting connections: ${e.message}")
+        logger.fine("${this@MockWebServer} done accepting connections: ${e.message}")
         return
       }
 
@@ -468,7 +468,7 @@ class MockWebServer : ExternalResource(), Closeable {
       try {
         SocketHandler(raw).handle()
       } catch (e: IOException) {
-        logger.info("$this connection from ${raw.inetAddress} failed: $e")
+        logger.fine("$this connection from ${raw.inetAddress} failed: $e")
       } catch (e: Exception) {
         logger.log(Level.SEVERE, "$this connection from ${raw.inetAddress} crashed", e)
       }
@@ -619,8 +619,8 @@ class MockWebServer : ExternalResource(), Closeable {
         writeHttpResponse(socket, sink, response)
       }
 
-      if (logger.isLoggable(Level.INFO)) {
-        logger.info(
+      if (logger.isLoggable(Level.FINE)) {
+        logger.fine(
             "${this@MockWebServer} received request: $request and responded: $response")
       }
 
@@ -968,8 +968,8 @@ class MockWebServer : ExternalResource(), Closeable {
         return
       }
       writeResponse(stream, request, response)
-      if (logger.isLoggable(Level.INFO)) {
-        logger.info(
+      if (logger.isLoggable(Level.FINE)) {
+        logger.fine(
             "${this@MockWebServer} received request: $request " +
                 "and responded: $response protocol is $protocol")
       }
