@@ -57,8 +57,10 @@ import java.net.InetAddress
 import java.net.UnknownHostException
 import java.security.cert.X509Certificate
 import java.security.Security
+import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocket
+import javax.net.ssl.X509TrustManager
 import java.util.logging.Logger
 import okhttp3.internal.platform.AndroidPlatform
 import okhttp3.internal.platform.Android10Platform
@@ -425,6 +427,68 @@ class OkHttpTest {
 
     dohEnabledClient.get("https://www.twitter.com/robots.txt")
     dohEnabledClient.get("https://www.facebook.com/robots.txt")
+  }
+
+  @Test
+  fun testCustomTrustManager() {
+    assumeNetwork()
+
+    val trustManager = object : X509TrustManager {
+      override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
+
+      override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
+
+      override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
+    }
+
+    val sslContext = Platform.get().newSSLContext().apply {
+      init(null, arrayOf(trustManager), null)
+    }
+    val sslSocketFactory = sslContext.socketFactory
+
+    val hostnameVerifier = HostnameVerifier { _, _ -> true }
+
+    client = client.newBuilder()
+        // avoid cleaning bug for now
+        .eventListener(EventListener.NONE)
+        .sslSocketFactory(sslSocketFactory, trustManager)
+        .hostnameVerifier(hostnameVerifier)
+        .build()
+
+    client.get("https://www.facebook.com/robots.txt")
+  }
+
+  @Test
+  fun testCustomTrustManagerWithAndroidCheck() {
+    assumeNetwork()
+
+    val trustManager = object : X509TrustManager {
+      override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
+
+      override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
+
+      @Suppress("unused", "UNUSED_PARAMETER")
+      // called by Android via reflection in X509TrustManagerExtensions
+      fun checkServerTrusted(chain: Array<out X509Certificate>, authType: String, hostname: String) = chain.toList()
+
+      override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
+    }
+
+    val sslContext = Platform.get().newSSLContext().apply {
+      init(null, arrayOf(trustManager), null)
+    }
+    val sslSocketFactory = sslContext.socketFactory
+
+    val hostnameVerifier = HostnameVerifier { _, _ -> true }
+
+    client = client.newBuilder()
+        // avoid cleaning bug for now
+        .eventListener(EventListener.NONE)
+        .sslSocketFactory(sslSocketFactory, trustManager)
+        .hostnameVerifier(hostnameVerifier)
+        .build()
+
+    client.get("https://www.facebook.com/robots.txt")
   }
 
   private fun OkHttpClient.get(url: String) {
