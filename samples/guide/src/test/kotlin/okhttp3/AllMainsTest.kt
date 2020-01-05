@@ -31,7 +31,11 @@ class AllMainsTest(val className: String) {
         .methods.find { it.name == "main" }
     try {
       if (mainMethod != null) {
-        mainMethod.invoke(null, arrayOf<String>())
+        if (mainMethod.parameters.isEmpty()) {
+          mainMethod.invoke(null)
+        } else {
+          mainMethod.invoke(null, arrayOf<String>())
+        }
       } else {
         System.err.println("No main for $className")
       }

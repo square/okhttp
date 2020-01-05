@@ -24,7 +24,7 @@ class CertificatePinning {
   private val client = OkHttpClient.Builder()
       .certificatePinner(
           CertificatePinner.Builder()
-              .add("publicobject.com", "sha256/afwiKY3RxoMmLkuRW1l7QsPZTJPwDS2pdDROQjXw8ig=")
+              .add("publicobject.com", "sha256/Vjs8r4z+80wjNcr1YKepWQboSIRi63WsWXhIMN+eWys=")
               .build())
       .build()
 
