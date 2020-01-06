@@ -449,8 +449,6 @@ class OkHttpTest {
     val hostnameVerifier = HostnameVerifier { _, _ -> true }
 
     client = client.newBuilder()
-        // avoid cleaning bug for now
-        .eventListener(EventListener.NONE)
         .sslSocketFactory(sslSocketFactory, trustManager)
         .hostnameVerifier(hostnameVerifier)
         .build()
@@ -482,8 +480,6 @@ class OkHttpTest {
     val hostnameVerifier = HostnameVerifier { _, _ -> true }
 
     client = client.newBuilder()
-        // avoid cleaning bug for now
-        .eventListener(EventListener.NONE)
         .sslSocketFactory(sslSocketFactory, trustManager)
         .hostnameVerifier(hostnameVerifier)
         .build()
