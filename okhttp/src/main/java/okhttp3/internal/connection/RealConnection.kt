@@ -343,7 +343,7 @@ class RealConnection(
       // Configure the socket's ciphers, TLS versions, and extensions.
       val connectionSpec = connectionSpecSelector.configureSecureSocket(sslSocket)
       if (connectionSpec.supportsTlsExtensions) {
-        Platform.get().configureTlsExtensions(sslSocket, address.protocols)
+        Platform.get().configureTlsExtensions(sslSocket, address.url.host, address.protocols)
       }
 
       // Force handshake. This can throw!

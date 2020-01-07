@@ -110,6 +110,19 @@ class OkHttpTest {
   }
 
   @Test
+  fun testRequestWithSniRequirement() {
+    assumeNetwork()
+
+    val request = Request.Builder().url("https://docs.fabric.io/android/changelog.html").build()
+
+    val response = client.newCall(request).execute()
+
+    response.use {
+      assertEquals(200, response.code)
+    }
+  }
+
+  @Test
   fun testConscryptRequest() {
     assumeNetwork()
 

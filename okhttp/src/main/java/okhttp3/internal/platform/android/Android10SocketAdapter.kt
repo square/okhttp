@@ -48,6 +48,7 @@ class Android10SocketAdapter : SocketAdapter {
 
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
+    hostname: String?,
     protocols: List<Protocol>
   ) {
     socketFactory.setUseSessionTickets(sslSocket, true)

@@ -72,11 +72,12 @@ class AndroidPlatform : Platform() {
 
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
+    hostname: String?,
     protocols: List<@JvmSuppressWildcards Protocol>
   ) {
     // No TLS extensions if the socket class is custom.
     socketAdapters.find { it.matchesSocket(sslSocket) }
-        ?.configureTlsExtensions(sslSocket, protocols)
+        ?.configureTlsExtensions(sslSocket, hostname, protocols)
   }
 
   override fun getSelectedProtocol(sslSocket: SSLSocket) =

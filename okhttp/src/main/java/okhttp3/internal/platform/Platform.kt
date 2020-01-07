@@ -100,6 +100,7 @@ open class Platform {
    */
   open fun configureTlsExtensions(
     sslSocket: SSLSocket,
+    hostname: String?,
     protocols: List<@JvmSuppressWildcards Protocol>
   ) {
   }
