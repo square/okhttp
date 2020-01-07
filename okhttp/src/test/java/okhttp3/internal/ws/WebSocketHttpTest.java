@@ -762,6 +762,16 @@ public final class WebSocketHttpTest {
     assertThat(webServer.takeRequest().getSequenceNumber()).isEqualTo(1);
   }
 
+  /** https://github.com/square/okhttp/issues/5705 */
+  @Test public void closeWithoutSuccessfulConnect() {
+    Request request = new Request.Builder()
+        .url(webServer.url("/"))
+        .build();
+    WebSocket webSocket = client.newWebSocket(request, clientListener);
+    webSocket.send("hello");
+    webSocket.close(1000, null);
+  }
+
   private MockResponse upgradeResponse(RecordedRequest request) {
     String key = request.getHeader("Sec-WebSocket-Key");
     return new MockResponse()
