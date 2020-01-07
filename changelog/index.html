@@ -866,11 +866,9 @@
 <ul>
 <li>Fix: Don&rsquo;t crash with a <code>NullPointerException</code> when a web socket is closed before it connects.
     This regression was introduced in OkHttp 4.3.0.</li>
-<li>Fix: Don&rsquo;t crash with an <code>IllegalArgumentException</code> when using custom trust managers on Android<ol>
-<li>Android uses reflection to look up a magic <code>checkServerTrusted()</code> method and we didn&rsquo;t
-have it.</li>
-</ol>
-</li>
+<li>Fix: Don&rsquo;t crash with an <code>IllegalArgumentException</code> when using custom trust managers on 
+    Android 10. Android uses reflection to look up a magic <code>checkServerTrusted()</code> method and we 
+    didn&rsquo;t have it.</li>
 <li>Fix: Explicitly specify the remote server name when making HTTPS connections on Android 5. In
     4.3.0 we introduced a regression where server name indication (SNI) was broken on Android 5.</li>
 </ul>
