@@ -30,7 +30,7 @@ public class Jdk9PlatformTest {
   }
 
   @Test
-  public void testToStringIsClassname() throws NoSuchMethodException {
+  public void testToStringIsClassname() {
     assertThat(new Jdk9Platform().toString()).isEqualTo("Jdk9Platform");
   }
 }
