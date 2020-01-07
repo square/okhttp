@@ -593,6 +593,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#version-431" title="Version 4.3.1" class="md-nav__link">
+    Version 4.3.1
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-430" title="Version 4.3.0" class="md-nav__link">
     Version 4.3.0
   </a>
@@ -744,6 +751,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#version-431" title="Version 4.3.1" class="md-nav__link">
+    Version 4.3.1
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-430" title="Version 4.3.0" class="md-nav__link">
     Version 4.3.0
   </a>
@@ -847,6 +861,19 @@
                 
                 
                 <h1 id="change-log">Change Log<a class="headerlink" href="#change-log" title="Permanent link">&para;</a></h1>
+<h2 id="version-431">Version 4.3.1<a class="headerlink" href="#version-431" title="Permanent link">&para;</a></h2>
+<p><em>2019-01-07</em></p>
+<ul>
+<li>Fix: Don&rsquo;t crash with a <code>NullPointerException</code> when a web socket is closed before it connects.
+    This regression was introduced in OkHttp 4.3.0.</li>
+<li>Fix: Don&rsquo;t crash with an <code>IllegalArgumentException</code> when using custom trust managers on Android<ol>
+<li>Android uses reflection to look up a magic <code>checkServerTrusted()</code> method and we didn&rsquo;t
+have it.</li>
+</ol>
+</li>
+<li>Fix: Explicitly specify the remote server name when making HTTPS connections on Android 5. In
+    4.3.0 we introduced a regression where server name indication (SNI) was broken on Android 5.</li>
+</ul>
 <h2 id="version-430">Version 4.3.0<a class="headerlink" href="#version-430" title="Permanent link">&para;</a></h2>
 <p><em>2019-12-31</em></p>
 <ul>

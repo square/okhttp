@@ -741,6 +741,9 @@ export SONATYPE_NEXUS_PASSWORD=`pbpaste`
 sed -i &quot;&quot; \
   &quot;s/\&quot;com.squareup.okhttp3:\([^\:]*\):[^\&quot;]*\&quot;/\&quot;com.squareup.okhttp3:\1:$RELEASE_VERSION\&quot;/g&quot; \
   `find . -name &quot;README.md&quot;`
+sed -i &quot;&quot; \
+  &quot;s/\/com.squareup.okhttp3\/\([^\:]*\)\/[^\/]*\//\/com.squareup.okhttp3\/\1\/$RELEASE_VERSION\//g&quot; \
+  `find . -name &quot;README.md&quot;`
 ./gradlew clean uploadArchives
 </pre></div>
 
