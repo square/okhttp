@@ -83,6 +83,9 @@ Cutting a Release
     sed -i "" \
       "s/\"com.squareup.okhttp3:\([^\:]*\):[^\"]*\"/\"com.squareup.okhttp3:\1:$RELEASE_VERSION\"/g" \
       `find . -name "README.md"`
+    sed -i "" \
+      "s/\/com.squareup.okhttp3\/\([^\:]*\)\/[^\/]*\//\/com.squareup.okhttp3\/\1\/$RELEASE_VERSION\//g" \
+      `find . -name "README.md"`
     ./gradlew clean uploadArchives
     ```
 
