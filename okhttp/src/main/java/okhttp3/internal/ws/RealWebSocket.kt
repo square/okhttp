@@ -395,7 +395,10 @@ class RealWebSocket(
   private fun runWriter() {
     this.assertThreadHoldsLock()
 
-    taskQueue.schedule(writerTask!!)
+    val writerTask = writerTask
+    if (writerTask != null) {
+      taskQueue.schedule(writerTask)
+    }
   }
 
   /**
