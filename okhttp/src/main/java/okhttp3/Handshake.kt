@@ -121,10 +121,15 @@ class Handshake internal constructor(
   }
 
   override fun toString(): String {
+    val peerCertificatesString = try {
+      peerCertificates.map { it.name }.toString()
+    } catch (_: SSLPeerUnverifiedException) {
+      "Failed: SSLPeerUnverifiedException"
+    }
     return "Handshake{" +
         "tlsVersion=$tlsVersion " +
         "cipherSuite=$cipherSuite " +
-        "peerCertificates=${peerCertificates.map { it.name }} " +
+        "peerCertificates=$peerCertificatesString " +
         "localCertificates=${localCertificates.map { it.name }}}"
   }
 
