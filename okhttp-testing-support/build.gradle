@@ -2,6 +2,8 @@ dependencies {
   api project(':okhttp')
   api deps.junit
   api deps.assertj
+  api deps.bouncycastle
+  api deps.bouncycastletls
   api deps.conscrypt
   api deps.corretto
   api deps.openjsse

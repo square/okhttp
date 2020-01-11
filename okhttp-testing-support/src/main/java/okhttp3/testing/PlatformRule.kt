@@ -22,6 +22,8 @@ import okhttp3.internal.platform.OpenJSSEPlatform
 import com.amazon.corretto.crypto.provider.AmazonCorrettoCryptoProvider
 import com.amazon.corretto.crypto.provider.SelfTestStatus
 import okhttp3.internal.platform.Platform
+import org.bouncycastle.jce.provider.BouncyCastleProvider
+import org.bouncycastle.jsse.provider.BouncyCastleJsseProvider
 import org.conscrypt.Conscrypt
 import org.hamcrest.BaseMatcher
 import org.hamcrest.CoreMatchers
@@ -221,6 +223,11 @@ open class PlatformRule @JvmOverloads constructor(
         CORRETTO_PROPERTY))
   }
 
+  fun assumeBouncyCastle() {
+    assumeThat(getPlatformSystemProperty(), equalTo(
+            BOUNCYCASTLE_PROPERTY))
+  }
+
   fun assumeHttp2Support() {
     assumeThat(getPlatformSystemProperty(), not(
         JDK8_PROPERTY))
@@ -256,6 +263,11 @@ open class PlatformRule @JvmOverloads constructor(
         CORRETTO_PROPERTY))
   }
 
+  fun assumeNotBouncyCastle() {
+    assumeThat(getPlatformSystemProperty(), not(
+            BOUNCYCASTLE_PROPERTY))
+  }
+
   fun assumeNotHttp2Support() {
     assumeThat(getPlatformSystemProperty(), equalTo(
         JDK8_PROPERTY))
@@ -273,6 +285,7 @@ open class PlatformRule @JvmOverloads constructor(
     const val JDK8_ALPN_PROPERTY = "jdk8alpn"
     const val JDK8_PROPERTY = "jdk8"
     const val OPENJSSE_PROPERTY = "openjsse"
+    const val BOUNCYCASTLE_PROPERTY = "bouncycastle"
 
     init {
       if (getPlatformSystemProperty() == CONSCRYPT_PROPERTY && Security.getProviders()[0].name != "Conscrypt") {
@@ -296,6 +309,9 @@ open class PlatformRule @JvmOverloads constructor(
         }
 
         Security.insertProviderAt(OpenJSSE(), 1)
+      } else if (getPlatformSystemProperty() == BOUNCYCASTLE_PROPERTY && Security.getProviders()[0].name != "BC") {
+        Security.insertProviderAt(BouncyCastleProvider(), 1)
+        Security.insertProviderAt(BouncyCastleJsseProvider(), 2)
       } else if (getPlatformSystemProperty() == CORRETTO_PROPERTY) {
         AmazonCorrettoCryptoProvider.install()
 
@@ -339,6 +355,9 @@ open class PlatformRule @JvmOverloads constructor(
 
     @JvmStatic
     fun jdk8alpn() = PlatformRule(JDK8_ALPN_PROPERTY)
+
+    @JvmStatic
+    fun bouncycastle() = PlatformRule(BOUNCYCASTLE_PROPERTY)
 
     @JvmStatic
     fun isAlpnBootEnabled(): Boolean = try {

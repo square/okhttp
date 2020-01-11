@@ -31,9 +31,11 @@ import javax.net.ServerSocketFactory;
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocket;
 import okhttp3.Handshake;
+import okhttp3.testing.PlatformRule;
 import okio.ByteString;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import static java.util.Arrays.asList;
@@ -42,6 +44,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeFalse;
 
 public final class HandshakeCertificatesTest {
+  @Rule
+  public PlatformRule platform = new PlatformRule();
+
   private ExecutorService executorService;
   private ServerSocket serverSocket;
 
