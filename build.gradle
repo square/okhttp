@@ -104,9 +104,17 @@ subprojects { project ->
   targetCompatibility = JavaVersion.VERSION_1_8
 
   checkstyleMain.exclude '**/CipherSuite.java'
+  configurations {
+    checkstyleConfig
+  }
+  dependencies {
+    checkstyleConfig dependencies.create("com.puppycrawl.tools:checkstyle:${versions.checkstyle}") {
+      transitive = false
+    }
+  }
   afterEvaluate {
     checkstyle {
-      configFile = rootProject.file('checkstyle.xml')
+      config = resources.text.fromArchiveEntry(configurations.checkstyleConfig, 'google_checks.xml')
       toolVersion "${versions.checkstyle}"
       sourceSets = [project.sourceSets.main]
     }
