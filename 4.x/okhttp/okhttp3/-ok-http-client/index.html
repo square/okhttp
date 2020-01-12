@@ -704,7 +704,7 @@
                 
                 <p><a href="../../">okhttp</a> / <a href="../">okhttp3</a> / <a href="./">OkHttpClient</a></p>
 <h1 id="okhttpclient">OkHttpClient<a class="headerlink" href="#okhttpclient" title="Permanent link">&para;</a></h1>
-<p><code>open class OkHttpClient :</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-cloneable/index.html"><code>Cloneable</code></a><code>,</code><a href="../-call/-factory/"><code>Call.Factory</code></a><code>,</code><a href="../-web-socket/-factory/"><code>WebSocket.Factory</code></a></p>
+<p><code>open class OkHttpClient :</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-cloneable/index.html"><code>Cloneable</code></a><code>, Factory, Factory</code></p>
 <p>Factory for <a href="../-call/">calls</a>, which can be used to send HTTP requests and read their responses.</p>
 <h2 id="okhttpclients-should-be-shared">OkHttpClients Should Be Shared<a class="headerlink" href="#okhttpclients-should-be-shared" title="Permanent link">&para;</a></h2>
 <p>OkHttp performs best when you create a single <code>OkHttpClient</code> instance and reuse it for all of
@@ -805,7 +805,7 @@ remain idle.</p>
 </tr>
 <tr>
 <td><a href="call-timeout-millis/">callTimeoutMillis</a></td>
-<td><code>val callTimeoutMillis:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><br>Default call timeout (in milliseconds). By default there is no timeout for complete calls, but there is for the connect, write, and read actions within a call.</td>
+<td>Default call timeout (in milliseconds). By default there is no timeout for complete calls, but there is for the connect, write, and read actions within a call.<code>val callTimeoutMillis:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a></td>
 </tr>
 <tr>
 <td><a href="certificate-chain-cleaner/">certificateChainCleaner</a></td>
@@ -825,7 +825,7 @@ remain idle.</p>
 </tr>
 <tr>
 <td><a href="connect-timeout-millis/">connectTimeoutMillis</a></td>
-<td><code>val connectTimeoutMillis:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><br>Default connect timeout (in milliseconds). The default is 10 seconds.</td>
+<td>Default connect timeout (in milliseconds). The default is 10 seconds.<code>val connectTimeoutMillis:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a></td>
 </tr>
 <tr>
 <td><a href="cookie-jar/">cookieJar</a></td>
@@ -841,7 +841,7 @@ remain idle.</p>
 </tr>
 <tr>
 <td><a href="event-listener-factory/">eventListenerFactory</a></td>
-<td><code>val eventListenerFactory:</code><a href="../-event-listener/-factory/"><code>EventListener.Factory</code></a></td>
+<td><code>val eventListenerFactory: Factory</code></td>
 </tr>
 <tr>
 <td><a href="follow-redirects/">followRedirects</a></td>
@@ -857,15 +857,15 @@ remain idle.</p>
 </tr>
 <tr>
 <td><a href="interceptors/">interceptors</a></td>
-<td><code>val interceptors:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="../-interceptor/"><code>Interceptor</code></a><code>&gt;</code><br>Returns an immutable list of interceptors that observe the full span of each call: from before the connection is established (if any) until after the response source is selected (either the origin server, cache, or both).</td>
+<td>Returns an immutable list of interceptors that observe the full span of each call: from before the connection is established (if any) until after the response source is selected (either the origin server, cache, or both).<code>val interceptors:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="../-interceptor/"><code>Interceptor</code></a><code>&gt;</code></td>
 </tr>
 <tr>
 <td><a href="network-interceptors/">networkInterceptors</a></td>
-<td><code>val networkInterceptors:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="../-interceptor/"><code>Interceptor</code></a><code>&gt;</code><br>Returns an immutable list of interceptors that observe a single network request and response. These interceptors must call <a href="../-interceptor/-chain/proceed/">Interceptor.Chain.proceed</a> exactly once: it is an error for a network interceptor to short-circuit or repeat a network request.</td>
+<td>Returns an immutable list of interceptors that observe a single network request and response. These interceptors must call <a href="../-interceptor/-chain/proceed/">Interceptor.Chain.proceed</a> exactly once: it is an error for a network interceptor to short-circuit or repeat a network request.<code>val networkInterceptors:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="../-interceptor/"><code>Interceptor</code></a><code>&gt;</code></td>
 </tr>
 <tr>
 <td><a href="ping-interval-millis/">pingIntervalMillis</a></td>
-<td><code>val pingIntervalMillis:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><br>Web socket and HTTP/2 ping interval (in milliseconds). By default pings are not sent.</td>
+<td>Web socket and HTTP/2 ping interval (in milliseconds). By default pings are not sent.<code>val pingIntervalMillis:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a></td>
 </tr>
 <tr>
 <td><a href="protocols/">protocols</a></td>
@@ -885,7 +885,7 @@ remain idle.</p>
 </tr>
 <tr>
 <td><a href="read-timeout-millis/">readTimeoutMillis</a></td>
-<td><code>val readTimeoutMillis:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><br>Default read timeout (in milliseconds). The default is 10 seconds.</td>
+<td>Default read timeout (in milliseconds). The default is 10 seconds.<code>val readTimeoutMillis:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a></td>
 </tr>
 <tr>
 <td><a href="retry-on-connection-failure/">retryOnConnectionFailure</a></td>
@@ -901,7 +901,7 @@ remain idle.</p>
 </tr>
 <tr>
 <td><a href="write-timeout-millis/">writeTimeoutMillis</a></td>
-<td><code>val writeTimeoutMillis:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><br>Default write timeout (in milliseconds). The default is 10 seconds.</td>
+<td>Default write timeout (in milliseconds). The default is 10 seconds.<code>val writeTimeoutMillis:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a></td>
 </tr>
 <tr>
 <td><a href="x509-trust-manager/">x509TrustManager</a></td>
@@ -920,15 +920,15 @@ remain idle.</p>
 <tbody>
 <tr>
 <td><a href="new-builder/">newBuilder</a></td>
-<td><code>open fun newBuilder():</code><a href="-builder/"><code>OkHttpClient.Builder</code></a></td>
+<td><code>open fun newBuilder(): Builder</code></td>
 </tr>
 <tr>
 <td><a href="new-call/">newCall</a></td>
-<td><code>open fun newCall(request:</code><a href="../-request/"><code>Request</code></a><code>):</code><a href="../-call/"><code>Call</code></a><br>Prepares the <a href="new-call/#okhttp3.OkHttpClient$newCall(okhttp3.Request)/request">request</a> to be executed at some point in the future.</td>
+<td>Prepares the <a href="new-call/#okhttp3.OkHttpClient$newCall(okhttp3.Request)/request">request</a> to be executed at some point in the future.<code>open fun newCall(request:</code><a href="../-request/"><code>Request</code></a><code>):</code><a href="../-call/"><code>Call</code></a></td>
 </tr>
 <tr>
 <td><a href="new-web-socket/">newWebSocket</a></td>
-<td><code>open fun newWebSocket(request:</code><a href="../-request/"><code>Request</code></a><code>, listener:</code><a href="../-web-socket-listener/"><code>WebSocketListener</code></a><code>):</code><a href="../-web-socket/"><code>WebSocket</code></a><br>Uses <a href="new-web-socket/#okhttp3.OkHttpClient$newWebSocket(okhttp3.Request, okhttp3.WebSocketListener)/request">request</a> to connect a new web socket.</td>
+<td>Uses <a href="new-web-socket/#okhttp3.OkHttpClient$newWebSocket(okhttp3.Request, okhttp3.WebSocketListener)/request">request</a> to connect a new web socket.<code>open fun newWebSocket(request:</code><a href="../-request/"><code>Request</code></a><code>, listener:</code><a href="../-web-socket-listener/"><code>WebSocketListener</code></a><code>):</code><a href="../-web-socket/"><code>WebSocket</code></a></td>
 </tr>
 </tbody>
 </table>

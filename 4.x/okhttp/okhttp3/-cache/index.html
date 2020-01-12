@@ -787,7 +787,7 @@ directives. It even offers convenient constants <a href="../-cache-control/-f-o-
 <tbody>
 <tr>
 <td><a href="-init-/">&lt;init&gt;</a></td>
-<td><code>Cache(directory:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/io/File.html"><code>File</code></a><code>, maxSize:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>)</code><br>Create a cache of at most <a href="-init-/#okhttp3.Cache$&lt;init&gt;(java.io.File, kotlin.Long)/maxSize">maxSize</a> bytes in <a href="-init-/#okhttp3.Cache$&lt;init&gt;(java.io.File, kotlin.Long)/directory">directory</a>.</td>
+<td>Create a cache of at most <a href="-init-/#okhttp3.Cache$&lt;init&gt;(java.io.File, kotlin.Long)/maxSize">maxSize</a> bytes in <a href="-init-/#okhttp3.Cache$&lt;init&gt;(java.io.File, kotlin.Long)/directory">directory</a>.<code>Cache(directory:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/io/File.html"><code>File</code></a><code>, maxSize:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>)</code></td>
 </tr>
 </tbody>
 </table>
@@ -825,11 +825,11 @@ directives. It even offers convenient constants <a href="../-cache-control/-f-o-
 </tr>
 <tr>
 <td><a href="delete/">delete</a></td>
-<td><code>fun delete():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Closes the cache and deletes all of its stored values. This will delete all files in the cache directory including files that weren&rsquo;t created by the cache.</td>
+<td>Closes the cache and deletes all of its stored values. This will delete all files in the cache directory including files that weren&rsquo;t created by the cache.<code>fun delete():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 <tr>
 <td><a href="evict-all/">evictAll</a></td>
-<td><code>fun evictAll():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Deletes all values stored in the cache. In-flight writes to the cache will complete normally, but the corresponding responses will not be stored.</td>
+<td>Deletes all values stored in the cache. In-flight writes to the cache will complete normally, but the corresponding responses will not be stored.<code>fun evictAll():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 <tr>
 <td><a href="flush/">flush</a></td>
@@ -841,11 +841,11 @@ directives. It even offers convenient constants <a href="../-cache-control/-f-o-
 </tr>
 <tr>
 <td><a href="initialize/">initialize</a></td>
-<td><code>fun initialize():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Initialize the cache. This will include reading the journal files from the storage and building up the necessary in-memory cache information.</td>
+<td>Initialize the cache. This will include reading the journal files from the storage and building up the necessary in-memory cache information.<code>fun initialize():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 <tr>
 <td><a href="max-size/">maxSize</a></td>
-<td><code>fun maxSize():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><br>Max size of the cache (in bytes).</td>
+<td>Max size of the cache (in bytes).<code>fun maxSize():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a></td>
 </tr>
 <tr>
 <td><a href="network-count/">networkCount</a></td>
@@ -861,7 +861,7 @@ directives. It even offers convenient constants <a href="../-cache-control/-f-o-
 </tr>
 <tr>
 <td><a href="urls/">urls</a></td>
-<td><code>fun urls():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-iterator/index.html"><code>MutableIterator</code></a><code>&lt;</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>&gt;</code><br>Returns an iterator over the URLs in this cache. This iterator doesn&rsquo;t throw <code>ConcurrentModificationException</code>, but if new responses are added while iterating, their URLs will not be returned. If existing responses are evicted during iteration, they will be absent (unless they were already returned).</td>
+<td>Returns an iterator over the URLs in this cache. This iterator doesn&rsquo;t throw <code>ConcurrentModificationException</code>, but if new responses are added while iterating, their URLs will not be returned. If existing responses are evicted during iteration, they will be absent (unless they were already returned).<code>fun urls():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-iterator/index.html"><code>MutableIterator</code></a><code>&lt;</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>&gt;</code></td>
 </tr>
 <tr>
 <td><a href="write-abort-count/">writeAbortCount</a></td>
@@ -884,7 +884,7 @@ directives. It even offers convenient constants <a href="../-cache-control/-f-o-
 <tbody>
 <tr>
 <td><a href="has-vary-all/">hasVaryAll</a></td>
-<td><code>fun</code><a href="../-response/"><code>Response</code></a><code>.hasVaryAll():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><br>Returns true if a Vary header contains an asterisk. Such responses cannot be cached.</td>
+<td>Returns true if a Vary header contains an asterisk. Such responses cannot be cached.<code>fun</code><a href="../-response/"><code>Response</code></a><code>.hasVaryAll():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a></td>
 </tr>
 <tr>
 <td><a href="key/">key</a></td>
@@ -892,11 +892,11 @@ directives. It even offers convenient constants <a href="../-cache-control/-f-o-
 </tr>
 <tr>
 <td><a href="vary-headers/">varyHeaders</a></td>
-<td><code>fun</code><a href="../-response/"><code>Response</code></a><code>.varyHeaders():</code><a href="../-headers/"><code>Headers</code></a><br>Returns the subset of the headers in this&rsquo;s request that impact the content of this&rsquo;s body.</td>
+<td>Returns the subset of the headers in this&rsquo;s request that impact the content of this&rsquo;s body.<code>fun</code><a href="../-response/"><code>Response</code></a><code>.varyHeaders():</code><a href="../-headers/"><code>Headers</code></a></td>
 </tr>
 <tr>
 <td><a href="vary-matches/">varyMatches</a></td>
-<td><code>fun varyMatches(cachedResponse:</code><a href="../-response/"><code>Response</code></a><code>, cachedRequest:</code><a href="../-headers/"><code>Headers</code></a><code>, newRequest:</code><a href="../-request/"><code>Request</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><br>Returns true if none of the Vary headers have changed between <a href="vary-matches/#okhttp3.Cache.Companion$varyMatches(okhttp3.Response, okhttp3.Headers, okhttp3.Request)/cachedRequest">cachedRequest</a> and <a href="vary-matches/#okhttp3.Cache.Companion$varyMatches(okhttp3.Response, okhttp3.Headers, okhttp3.Request)/newRequest">newRequest</a>.</td>
+<td>Returns true if none of the Vary headers have changed between <a href="vary-matches/#okhttp3.Cache.Companion$varyMatches(okhttp3.Response, okhttp3.Headers, okhttp3.Request)/cachedRequest">cachedRequest</a> and <a href="vary-matches/#okhttp3.Cache.Companion$varyMatches(okhttp3.Response, okhttp3.Headers, okhttp3.Request)/newRequest">newRequest</a>.<code>fun varyMatches(cachedResponse:</code><a href="../-response/"><code>Response</code></a><code>, cachedRequest:</code><a href="../-headers/"><code>Headers</code></a><code>, newRequest:</code><a href="../-request/"><code>Request</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a></td>
 </tr>
 </tbody>
 </table>

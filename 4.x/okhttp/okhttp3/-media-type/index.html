@@ -684,11 +684,11 @@ or response body.</p>
 <tbody>
 <tr>
 <td><a href="subtype/">subtype</a></td>
-<td><code>val subtype:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><br>Returns a specific media subtype, such as &ldquo;plain&rdquo; or &ldquo;png&rdquo;, &ldquo;mpeg&rdquo;, &ldquo;mp4&rdquo; or &ldquo;xml&rdquo;.</td>
+<td>Returns a specific media subtype, such as &ldquo;plain&rdquo; or &ldquo;png&rdquo;, &ldquo;mpeg&rdquo;, &ldquo;mp4&rdquo; or &ldquo;xml&rdquo;.<code>val subtype:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a></td>
 </tr>
 <tr>
 <td><a href="type/">type</a></td>
-<td><code>val type:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><br>Returns the high-level media type, such as &ldquo;text&rdquo;, &ldquo;image&rdquo;, &ldquo;audio&rdquo;, &ldquo;video&rdquo;, or &ldquo;application&rdquo;.</td>
+<td>Returns the high-level media type, such as &ldquo;text&rdquo;, &ldquo;image&rdquo;, &ldquo;audio&rdquo;, &ldquo;video&rdquo;, or &ldquo;application&rdquo;.<code>val type:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -703,7 +703,7 @@ or response body.</p>
 <tbody>
 <tr>
 <td><a href="charset/">charset</a></td>
-<td><code>fun charset(defaultValue:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/nio/charset/Charset.html"><code>Charset</code></a><code>? = null):</code><a href="https://docs.oracle.com/javase/8/docs/api/java/nio/charset/Charset.html"><code>Charset</code></a><code>?</code><br>Returns the charset of this media type, or <a href="charset/#okhttp3.MediaType$charset(java.nio.charset.Charset)/defaultValue">defaultValue</a> if either this media type doesn&rsquo;t specify a charset, of it its charset is unsupported by the current runtime.</td>
+<td>Returns the charset of this media type, or <a href="charset/#okhttp3.MediaType$charset(java.nio.charset.Charset)/defaultValue">defaultValue</a> if either this media type doesn&rsquo;t specify a charset, of it its charset is unsupported by the current runtime.<code>fun charset(defaultValue:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/nio/charset/Charset.html"><code>Charset</code></a><code>? = null):</code><a href="https://docs.oracle.com/javase/8/docs/api/java/nio/charset/Charset.html"><code>Charset</code></a><code>?</code></td>
 </tr>
 <tr>
 <td><a href="equals/">equals</a></td>
@@ -715,7 +715,7 @@ or response body.</p>
 </tr>
 <tr>
 <td><a href="to-string/">toString</a></td>
-<td><code>fun toString():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><br>Returns the encoded media type, like &ldquo;text/plain; charset=utf-8&rdquo;, appropriate for use in a Content-Type header.</td>
+<td>Returns the encoded media type, like &ldquo;text/plain; charset=utf-8&rdquo;, appropriate for use in a Content-Type header.<code>fun toString():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -730,11 +730,11 @@ or response body.</p>
 <tbody>
 <tr>
 <td><a href="to-media-type/">toMediaType</a></td>
-<td><code>fun</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>.toMediaType():</code><a href="./"><code>MediaType</code></a><br>Returns a media type for this string.</td>
+<td>Returns a media type for this string.<code>fun</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>.toMediaType():</code><a href="./"><code>MediaType</code></a></td>
 </tr>
 <tr>
 <td><a href="to-media-type-or-null/">toMediaTypeOrNull</a></td>
-<td><code>fun</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>.toMediaTypeOrNull():</code><a href="./"><code>MediaType</code></a><code>?</code><br>Returns a media type for this, or null if this is not a well-formed media type.</td>
+<td>Returns a media type for this, or null if this is not a well-formed media type.<code>fun</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>.toMediaTypeOrNull():</code><a href="./"><code>MediaType</code></a><code>?</code></td>
 </tr>
 </tbody>
 </table>

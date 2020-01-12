@@ -690,11 +690,11 @@
 <tbody>
 <tr>
 <td><a href="add-platform-trusted-certificates/">addPlatformTrustedCertificates</a></td>
-<td><code>fun addPlatformTrustedCertificates():</code><a href="./"><code>HandshakeCertificates.Builder</code></a><br>Add all of the host platform&rsquo;s trusted root certificates. This set varies by platform (Android vs. Java), by platform release (Android 4.4 vs. Android 9), and with user customizations.</td>
+<td>Add all of the host platform&rsquo;s trusted root certificates. This set varies by platform (Android vs. Java), by platform release (Android 4.4 vs. Android 9), and with user customizations.<code>fun addPlatformTrustedCertificates(): Builder</code></td>
 </tr>
 <tr>
 <td><a href="add-trusted-certificate/">addTrustedCertificate</a></td>
-<td><code>fun addTrustedCertificate(certificate:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/security/cert/X509Certificate.html"><code>X509Certificate</code></a><code>):</code><a href="./"><code>HandshakeCertificates.Builder</code></a><br>Add a trusted root certificate to use when authenticating a peer. Peers must provide a chain of certificates whose root is one of these.</td>
+<td>Add a trusted root certificate to use when authenticating a peer. Peers must provide a chain of certificates whose root is one of these.<code>fun addTrustedCertificate(certificate:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/security/cert/X509Certificate.html"><code>X509Certificate</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="build/">build</a></td>
@@ -702,7 +702,7 @@
 </tr>
 <tr>
 <td><a href="held-certificate/">heldCertificate</a></td>
-<td><code>fun heldCertificate(heldCertificate:</code><a href="../../-held-certificate/"><code>HeldCertificate</code></a><code>, vararg intermediates:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/security/cert/X509Certificate.html"><code>X509Certificate</code></a><code>):</code><a href="./"><code>HandshakeCertificates.Builder</code></a><br>Configure the certificate chain to use when being authenticated. The first certificate is the held certificate, further certificates are included in the handshake so the peer can build a trusted path to a trusted root certificate.</td>
+<td>Configure the certificate chain to use when being authenticated. The first certificate is the held certificate, further certificates are included in the handshake so the peer can build a trusted path to a trusted root certificate.<code>fun heldCertificate(heldCertificate:</code><a href="../../-held-certificate/"><code>HeldCertificate</code></a><code>, vararg intermediates:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/security/cert/X509Certificate.html"><code>X509Certificate</code></a><code>): Builder</code></td>
 </tr>
 </tbody>
 </table>

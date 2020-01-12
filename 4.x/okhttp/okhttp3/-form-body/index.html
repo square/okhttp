@@ -649,13 +649,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#inherited-functions" title="Inherited Functions" class="md-nav__link">
-    Inherited Functions
-  </a>
-  
-</li>
-      
       
       
       
@@ -704,7 +697,7 @@
 <tbody>
 <tr>
 <td><a href="size/">size</a></td>
-<td><code>val size:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><br>The number of key-value pairs in this form-encoded body.</td>
+<td>The number of key-value pairs in this form-encoded body.<code>val size:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -719,11 +712,11 @@
 <tbody>
 <tr>
 <td><a href="content-length/">contentLength</a></td>
-<td><code>fun contentLength():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><br>Returns the number of bytes that will be written to sink in a call to <a href="../-request-body/write-to/">writeTo</a>, or -1 if that count is unknown.</td>
+<td>Returns the number of bytes that will be written to sink in a call to <a href="../-request-body/write-to/">writeTo</a>, or -1 if that count is unknown.<code>fun contentLength():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a></td>
 </tr>
 <tr>
 <td><a href="content-type/">contentType</a></td>
-<td><code>fun contentType():</code><a href="../-media-type/"><code>MediaType</code></a><br>Returns the Content-Type header for this body.</td>
+<td>Returns the Content-Type header for this body.<code>fun contentType():</code><a href="../-media-type/"><code>MediaType</code></a></td>
 </tr>
 <tr>
 <td><a href="encoded-name/">encodedName</a></td>
@@ -743,26 +736,7 @@
 </tr>
 <tr>
 <td><a href="write-to/">writeTo</a></td>
-<td><code>fun writeTo(sink:</code><a href="https://square.github.io/okio/2.x/okio/okio/-buffered-sink/index.md"><code>BufferedSink</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Writes the content of this request to <a href="../-request-body/write-to/#okhttp3.RequestBody$writeTo(okio.BufferedSink)/sink">sink</a>.</td>
-</tr>
-</tbody>
-</table>
-<h3 id="inherited-functions">Inherited Functions<a class="headerlink" href="#inherited-functions" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Summary</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a href="../-request-body/is-duplex/">isDuplex</a></td>
-<td><code>open fun isDuplex():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><br>A duplex request body is special in how it is <strong>transmitted</strong> on the network and in the <strong>API contract</strong> between OkHttp and the application.</td>
-</tr>
-<tr>
-<td><a href="../-request-body/is-one-shot/">isOneShot</a></td>
-<td><code>open fun isOneShot():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><br>Returns true if this body expects at most one call to <a href="../-request-body/write-to/">writeTo</a> and can be transmitted at most once. This is typically used when writing the request body is destructive and it is not possible to recreate the request body after it has been sent.</td>
+<td>Writes the content of this request to <a href="../-request-body/write-to/#okhttp3.RequestBody$writeTo(okio.BufferedSink)/sink">sink</a>.<code>fun writeTo(sink:</code><a href="https://square.github.io/okio/2.x/okio/okio/-buffered-sink/index.md"><code>BufferedSink</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 </tbody>
 </table>

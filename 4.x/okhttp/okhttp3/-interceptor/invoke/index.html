@@ -640,7 +640,7 @@
                 
                 <p><a href="../../../">okhttp</a> / <a href="../../">okhttp3</a> / <a href="../">Interceptor</a> / <a href="./">invoke</a></p>
 <h1 id="invoke">invoke<a class="headerlink" href="#invoke" title="Permanent link">&para;</a></h1>
-<p><code>inline operator fun invoke(crossinline block: (chain:</code><a href="../-chain/"><code>Interceptor.Chain</code></a><code>) -&gt;</code><a href="../../-response/"><code>Response</code></a><code>):</code><a href="../"><code>Interceptor</code></a></p>
+<p><code>operator inline fun invoke(crossinline block: (chain: Chain) -&gt;</code><a href="../../-response/"><code>Response</code></a><code>):</code><a href="../"><code>Interceptor</code></a></p>
 <p>Constructs an interceptor for a lambda. This compact syntax is most useful for inline
 interceptors.</p>
 <div class="codehilite"><pre><span></span>val interceptor = Interceptor { chain: Interceptor.Chain -&gt;

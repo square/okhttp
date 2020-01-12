@@ -715,7 +715,7 @@ whitespace.</p>
 <tbody>
 <tr>
 <td><a href="size/">size</a></td>
-<td><code>val size:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><br>Returns the number of field values.</td>
+<td>Returns the number of field values.<code>val size:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -730,23 +730,23 @@ whitespace.</p>
 <tbody>
 <tr>
 <td><a href="byte-count/">byteCount</a></td>
-<td><code>fun byteCount():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><br>Returns the number of bytes required to encode these headers using HTTP/1.1. This is also the approximate size of HTTP/2 headers before they are compressed with HPACK. This value is intended to be used as a metric: smaller headers are more efficient to encode and transmit.</td>
+<td>Returns the number of bytes required to encode these headers using HTTP/1.1. This is also the approximate size of HTTP/2 headers before they are compressed with HPACK. This value is intended to be used as a metric: smaller headers are more efficient to encode and transmit.<code>fun byteCount():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a></td>
 </tr>
 <tr>
 <td><a href="equals/">equals</a></td>
-<td><code>fun equals(other:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><code>Any</code></a><code>?):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><br>Returns true if <code>other</code> is a <code>Headers</code> object with the same headers, with the same casing, in the same order. Note that two headers instances may be <em>semantically</em> equal but not equal according to this method. In particular, none of the following sets of headers are equal according to this method:</td>
+<td>Returns true if <code>other</code> is a <code>Headers</code> object with the same headers, with the same casing, in the same order. Note that two headers instances may be <em>semantically</em> equal but not equal according to this method. In particular, none of the following sets of headers are equal according to this method:<code>fun equals(other:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><code>Any</code></a><code>?):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a></td>
 </tr>
 <tr>
 <td><a href="get/">get</a></td>
-<td><code>operator fun get(name:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>?</code><br>Returns the last value corresponding to the specified field, or null.</td>
+<td>Returns the last value corresponding to the specified field, or null.<code>operator fun get(name:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>?</code></td>
 </tr>
 <tr>
 <td><a href="get-date/">getDate</a></td>
-<td><code>fun getDate(name:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/Date.html"><code>Date</code></a><code>?</code><br>Returns the last value corresponding to the specified field parsed as an HTTP date, or null if either the field is absent or cannot be parsed as a date.</td>
+<td>Returns the last value corresponding to the specified field parsed as an HTTP date, or null if either the field is absent or cannot be parsed as a date.<code>fun getDate(name:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/Date.html"><code>Date</code></a><code>?</code></td>
 </tr>
 <tr>
 <td><a href="get-instant/">getInstant</a></td>
-<td><code>fun getInstant(name:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="https://docs.oracle.com/javase/8/docs/api/java/time/Instant.html"><code>Instant</code></a><code>?</code><br>Returns the last value corresponding to the specified field parsed as an HTTP date, or null if either the field is absent or cannot be parsed as a date.</td>
+<td>Returns the last value corresponding to the specified field parsed as an HTTP date, or null if either the field is absent or cannot be parsed as a date.<code>fun getInstant(name:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="https://docs.oracle.com/javase/8/docs/api/java/time/Instant.html"><code>Instant</code></a><code>?</code></td>
 </tr>
 <tr>
 <td><a href="hash-code/">hashCode</a></td>
@@ -758,15 +758,15 @@ whitespace.</p>
 </tr>
 <tr>
 <td><a href="name/">name</a></td>
-<td><code>fun name(index:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><br>Returns the field at <code>position</code>.</td>
+<td>Returns the field at <code>position</code>.<code>fun name(index:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a></td>
 </tr>
 <tr>
 <td><a href="names/">names</a></td>
-<td><code>fun names():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html"><code>Set</code></a><code>&lt;</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>&gt;</code><br>Returns an immutable case-insensitive set of header names.</td>
+<td>Returns an immutable case-insensitive set of header names.<code>fun names():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html"><code>Set</code></a><code>&lt;</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>&gt;</code></td>
 </tr>
 <tr>
 <td><a href="new-builder/">newBuilder</a></td>
-<td><code>fun newBuilder():</code><a href="-builder/"><code>Headers.Builder</code></a></td>
+<td><code>fun newBuilder(): Builder</code></td>
 </tr>
 <tr>
 <td><a href="to-multimap/">toMultimap</a></td>
@@ -778,11 +778,11 @@ whitespace.</p>
 </tr>
 <tr>
 <td><a href="value/">value</a></td>
-<td><code>fun value(index:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><br>Returns the value at <code>index</code>.</td>
+<td>Returns the value at <code>index</code>.<code>fun value(index:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a></td>
 </tr>
 <tr>
 <td><a href="values/">values</a></td>
-<td><code>fun values(name:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>&gt;</code><br>Returns an immutable list of the header values for <code>name</code>.</td>
+<td>Returns an immutable list of the header values for <code>name</code>.<code>fun values(name:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>&gt;</code></td>
 </tr>
 </tbody>
 </table>
@@ -797,11 +797,11 @@ whitespace.</p>
 <tbody>
 <tr>
 <td><a href="headers-of/">headersOf</a></td>
-<td><code>fun headersOf(vararg namesAndValues:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="./"><code>Headers</code></a><br>Returns headers for the alternating header names and values. There must be an even number of arguments, and they must alternate between header names and values.</td>
+<td>Returns headers for the alternating header names and values. There must be an even number of arguments, and they must alternate between header names and values.<code>fun headersOf(vararg namesAndValues:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="./"><code>Headers</code></a></td>
 </tr>
 <tr>
 <td><a href="to-headers/">toHeaders</a></td>
-<td><code>fun</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-map/index.html"><code>Map</code></a><code>&lt;</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>,</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>&gt;.toHeaders():</code><a href="./"><code>Headers</code></a><br>Returns headers for the header names and values in the <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-map/index.html">Map</a>.</td>
+<td>Returns headers for the header names and values in the <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-map/index.html">Map</a>.<code>fun</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-map/index.html"><code>Map</code></a><code>&lt;</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>,</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>&gt;.toHeaders():</code><a href="./"><code>Headers</code></a></td>
 </tr>
 </tbody>
 </table>

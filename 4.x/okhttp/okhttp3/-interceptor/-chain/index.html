@@ -672,7 +672,7 @@
 </tr>
 <tr>
 <td><a href="connection/">connection</a></td>
-<td><code>abstract fun connection():</code><a href="../../-connection/"><code>Connection</code></a><code>?</code><br>Returns the connection the request will be executed on. This is only available in the chains of network interceptors; for application interceptors this is always null.</td>
+<td>Returns the connection the request will be executed on. This is only available in the chains of network interceptors; for application interceptors this is always null.<code>abstract fun connection():</code><a href="../../-connection/"><code>Connection</code></a><code>?</code></td>
 </tr>
 <tr>
 <td><a href="connect-timeout-millis/">connectTimeoutMillis</a></td>
@@ -692,15 +692,15 @@
 </tr>
 <tr>
 <td><a href="with-connect-timeout/">withConnectTimeout</a></td>
-<td><code>abstract fun withConnectTimeout(timeout:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><code>, unit:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><code>TimeUnit</code></a><code>):</code><a href="./"><code>Interceptor.Chain</code></a></td>
+<td><code>abstract fun withConnectTimeout(timeout:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><code>, unit:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><code>TimeUnit</code></a><code>): Chain</code></td>
 </tr>
 <tr>
 <td><a href="with-read-timeout/">withReadTimeout</a></td>
-<td><code>abstract fun withReadTimeout(timeout:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><code>, unit:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><code>TimeUnit</code></a><code>):</code><a href="./"><code>Interceptor.Chain</code></a></td>
+<td><code>abstract fun withReadTimeout(timeout:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><code>, unit:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><code>TimeUnit</code></a><code>): Chain</code></td>
 </tr>
 <tr>
 <td><a href="with-write-timeout/">withWriteTimeout</a></td>
-<td><code>abstract fun withWriteTimeout(timeout:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><code>, unit:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><code>TimeUnit</code></a><code>):</code><a href="./"><code>Interceptor.Chain</code></a></td>
+<td><code>abstract fun withWriteTimeout(timeout:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><code>, unit:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><code>TimeUnit</code></a><code>): Chain</code></td>
 </tr>
 <tr>
 <td><a href="write-timeout-millis/">writeTimeoutMillis</a></td>

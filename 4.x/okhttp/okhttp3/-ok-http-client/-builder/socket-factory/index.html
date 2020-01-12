@@ -640,7 +640,7 @@
                 
                 <p><a href="../../../../">okhttp</a> / <a href="../../../">okhttp3</a> / <a href="../../">OkHttpClient</a> / <a href="../">Builder</a> / <a href="./">socketFactory</a></p>
 <h1 id="socketfactory">socketFactory<a class="headerlink" href="#socketfactory" title="Permanent link">&para;</a></h1>
-<p><code>fun socketFactory(socketFactory:</code><a href="https://docs.oracle.com/javase/8/docs/api/javax/net/SocketFactory.html"><code>SocketFactory</code></a><code>):</code><a href="../"><code>OkHttpClient.Builder</code></a></p>
+<p><code>fun socketFactory(socketFactory:</code><a href="https://docs.oracle.com/javase/8/docs/api/javax/net/SocketFactory.html"><code>SocketFactory</code></a><code>): Builder</code></p>
 <p>Sets the socket factory used to create connections. OkHttp only uses the parameterless
 <a href="https://docs.oracle.com/javase/8/docs/api/javax/net/SocketFactory.html#createSocket()">SocketFactory.createSocket</a> method to create unconnected sockets. Overriding this method,
 e. g., allows the socket to be bound to a specific local address.</p>

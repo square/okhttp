@@ -683,7 +683,7 @@
 <tbody>
 <tr>
 <td><a href="-init-/">&lt;init&gt;</a></td>
-<td><code>Challenge(scheme:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>, realm:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>)``Challenge(scheme:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>, authParams:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-map/index.html"><code>Map</code></a><code>&lt;</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>?,</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>&gt;)</code><br>An <a href="https://tools.ietf.org/html/rfc7235">RFC 7235</a> challenge.</td>
+<td><code>Challenge(scheme:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>, realm:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>)</code><br>An <a href="https://tools.ietf.org/html/rfc7235">RFC 7235</a> challenge.<code>Challenge(scheme:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>, authParams:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-map/index.html"><code>Map</code></a><code>&lt;</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>?,</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>&gt;)</code></td>
 </tr>
 </tbody>
 </table>
@@ -698,19 +698,19 @@
 <tbody>
 <tr>
 <td><a href="auth-params/">authParams</a></td>
-<td><code>val authParams:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-map/index.html"><code>Map</code></a><code>&lt;</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>?,</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>&gt;</code><br>Returns the auth params, including <a href="#">realm</a> and <a href="#">charset</a> if present, but as strings. The map&rsquo;s keys are lowercase and should be treated case-insensitively.</td>
+<td>Returns the auth params, including <a href="#">realm</a> and <a href="#">charset</a> if present, but as strings. The map&rsquo;s keys are lowercase and should be treated case-insensitively.<code>val authParams:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-map/index.html"><code>Map</code></a><code>&lt;</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>?,</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>&gt;</code></td>
 </tr>
 <tr>
 <td><a href="charset/">charset</a></td>
-<td><code>val charset:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/nio/charset/Charset.html"><code>Charset</code></a><br>The charset that should be used to encode the credentials.</td>
+<td>The charset that should be used to encode the credentials.<code>val charset:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/nio/charset/Charset.html"><code>Charset</code></a></td>
 </tr>
 <tr>
 <td><a href="realm/">realm</a></td>
-<td><code>val realm:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>?</code><br>Returns the protection space.</td>
+<td>Returns the protection space.<code>val realm:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>?</code></td>
 </tr>
 <tr>
 <td><a href="scheme/">scheme</a></td>
-<td><code>val scheme:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><br>Returns the authentication scheme, like <code>Basic</code>.</td>
+<td>Returns the authentication scheme, like <code>Basic</code>.<code>val scheme:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -737,7 +737,7 @@
 </tr>
 <tr>
 <td><a href="with-charset/">withCharset</a></td>
-<td><code>fun withCharset(charset:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/nio/charset/Charset.html"><code>Charset</code></a><code>):</code><a href="./"><code>Challenge</code></a><br>Returns a copy of this charset that expects a credential encoded with <a href="with-charset/#okhttp3.Challenge$withCharset(java.nio.charset.Charset)/charset">charset</a>.</td>
+<td>Returns a copy of this charset that expects a credential encoded with <a href="with-charset/#okhttp3.Challenge$withCharset(java.nio.charset.Charset)/charset">charset</a>.<code>fun withCharset(charset:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/nio/charset/Charset.html"><code>Charset</code></a><code>):</code><a href="./"><code>Challenge</code></a></td>
 </tr>
 </tbody>
 </table>

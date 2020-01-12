@@ -684,7 +684,7 @@ in sequence.</p>
 <tbody>
 <tr>
 <td><a href="-init-/">&lt;init&gt;</a></td>
-<td><code>MockWebServer()</code><br>A scriptable web server. Callers supply canned responses and the server replays them upon request in sequence.</td>
+<td>A scriptable web server. Callers supply canned responses and the server replays them upon request in sequence.<code>MockWebServer()</code></td>
 </tr>
 </tbody>
 </table>
@@ -699,11 +699,11 @@ in sequence.</p>
 <tbody>
 <tr>
 <td><a href="body-limit/">bodyLimit</a></td>
-<td><code>var bodyLimit:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><br>The number of bytes of the POST body to keep in memory to the given limit.</td>
+<td>The number of bytes of the POST body to keep in memory to the given limit.<code>var bodyLimit:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a></td>
 </tr>
 <tr>
 <td><a href="dispatcher/">dispatcher</a></td>
-<td><code>var dispatcher:</code><a href="../-dispatcher/"><code>Dispatcher</code></a><br>The dispatcher used to respond to HTTP requests. The default dispatcher is a <a href="../-queue-dispatcher/">QueueDispatcher</a>, which serves a fixed sequence of responses from a <a href="enqueue/">queue</a>.</td>
+<td>The dispatcher used to respond to HTTP requests. The default dispatcher is a <a href="../-queue-dispatcher/">QueueDispatcher</a>, which serves a fixed sequence of responses from a <a href="enqueue/">queue</a>.<code>var dispatcher:</code><a href="../-dispatcher/"><code>Dispatcher</code></a></td>
 </tr>
 <tr>
 <td><a href="host-name/">hostName</a></td>
@@ -715,15 +715,15 @@ in sequence.</p>
 </tr>
 <tr>
 <td><a href="protocol-negotiation-enabled/">protocolNegotiationEnabled</a></td>
-<td><code>var protocolNegotiationEnabled:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><br>True if ALPN is used on incoming HTTPS connections to negotiate a protocol like HTTP/1.1 or HTTP/2. This is true by default; set to false to disable negotiation and restrict connections to HTTP/1.1.</td>
+<td>True if ALPN is used on incoming HTTPS connections to negotiate a protocol like HTTP/1.1 or HTTP/2. This is true by default; set to false to disable negotiation and restrict connections to HTTP/1.1.<code>var protocolNegotiationEnabled:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a></td>
 </tr>
 <tr>
 <td><a href="protocols/">protocols</a></td>
-<td><code>var protocols:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;Protocol&gt;</code><br>The protocols supported by ALPN on incoming HTTPS connections in order of preference. The list must contain <a href="#">Protocol.HTTP_1_1</a>. It must not contain null.</td>
+<td>The protocols supported by ALPN on incoming HTTPS connections in order of preference. The list must contain <a href="#">Protocol.HTTP_1_1</a>. It must not contain null.<code>var protocols:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;Protocol&gt;</code></td>
 </tr>
 <tr>
 <td><a href="request-count/">requestCount</a></td>
-<td><code>val requestCount:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><br>The number of HTTP requests received thus far by this server. This may exceed the number of HTTP connections when connection reuse is in practice.</td>
+<td>The number of HTTP requests received thus far by this server. This may exceed the number of HTTP connections when connection reuse is in practice.<code>val requestCount:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a></td>
 </tr>
 <tr>
 <td><a href="server-socket-factory/">serverSocketFactory</a></td>
@@ -754,19 +754,19 @@ in sequence.</p>
 </tr>
 <tr>
 <td><a href="enqueue/">enqueue</a></td>
-<td><code>fun enqueue(response:</code><a href="../-mock-response/"><code>MockResponse</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Scripts <a href="enqueue/#okhttp3.mockwebserver.MockWebServer$enqueue(okhttp3.mockwebserver.MockResponse)/response">response</a> to be returned to a request made in sequence. The first request is served by the first enqueued response; the second request by the second enqueued response; and so on.</td>
+<td>Scripts <a href="enqueue/#okhttp3.mockwebserver.MockWebServer$enqueue(okhttp3.mockwebserver.MockResponse)/response">response</a> to be returned to a request made in sequence. The first request is served by the first enqueued response; the second request by the second enqueued response; and so on.<code>fun enqueue(response:</code><a href="../-mock-response/"><code>MockResponse</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 <tr>
 <td><a href="no-client-auth/">noClientAuth</a></td>
-<td><code>fun noClientAuth():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Configure the server to not perform SSL authentication of the client. This leaves authentication to another layer such as in an HTTP cookie or header. This is the default and most common configuration.</td>
+<td>Configure the server to not perform SSL authentication of the client. This leaves authentication to another layer such as in an HTTP cookie or header. This is the default and most common configuration.<code>fun noClientAuth():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 <tr>
 <td><a href="request-client-auth/">requestClientAuth</a></td>
-<td><code>fun requestClientAuth():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Configure the server to <a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLSocket.html#setWantClientAuth(boolean)">want client auth</a>. If the client presents a certificate that is <a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/TrustManager.html">trusted</a> the handshake will proceed normally. The connection will also proceed normally if the client presents no certificate at all! But if the client presents an untrusted certificate the handshake will fail and no connection will be established.</td>
+<td>Configure the server to <a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLSocket.html#setWantClientAuth(boolean)">want client auth</a>. If the client presents a certificate that is <a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/TrustManager.html">trusted</a> the handshake will proceed normally. The connection will also proceed normally if the client presents no certificate at all! But if the client presents an untrusted certificate the handshake will fail and no connection will be established.<code>fun requestClientAuth():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 <tr>
 <td><a href="require-client-auth/">requireClientAuth</a></td>
-<td><code>fun requireClientAuth():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Configure the server to <a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLSocket.html#setNeedClientAuth(boolean)">need client auth</a>. If the client presents a certificate that is <a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/TrustManager.html">trusted</a> the handshake will proceed normally. If the client presents an untrusted certificate or no certificate at all the handshake will fail and no connection will be established.</td>
+<td>Configure the server to <a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLSocket.html#setNeedClientAuth(boolean)">need client auth</a>. If the client presents a certificate that is <a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/TrustManager.html">trusted</a> the handshake will proceed normally. If the client presents an untrusted certificate or no certificate at all the handshake will fail and no connection will be established.<code>fun requireClientAuth():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 <tr>
 <td><a href="shutdown/">shutdown</a></td>
@@ -774,11 +774,11 @@ in sequence.</p>
 </tr>
 <tr>
 <td><a href="start/">start</a></td>
-<td><code>fun start(port:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><code>= 0):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Starts the server on the loopback interface for the given port.<code>fun start(inetAddress:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetAddress.html"><code>InetAddress</code></a><code>, port:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Starts the server on the given address and port.</td>
+<td>Starts the server on the loopback interface for the given port.<code>fun start(port:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><code>= 0):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Starts the server on the given address and port.<code>fun start(inetAddress:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetAddress.html"><code>InetAddress</code></a><code>, port:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 <tr>
 <td><a href="take-request/">takeRequest</a></td>
-<td><code>fun takeRequest():</code><a href="../-recorded-request/"><code>RecordedRequest</code></a><br>Awaits the next HTTP request, removes it, and returns it. Callers should use this to verify the request was sent as intended. This method will block until the request is available, possibly forever.<code>fun takeRequest(timeout:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>, unit:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><code>TimeUnit</code></a><code>):</code><a href="../-recorded-request/"><code>RecordedRequest</code></a><code>?</code><br>Awaits the next HTTP request (waiting up to the specified wait time if necessary), removes it, and returns it. Callers should use this to verify the request was sent as intended within the given time.</td>
+<td>Awaits the next HTTP request, removes it, and returns it. Callers should use this to verify the request was sent as intended. This method will block until the request is available, possibly forever.<code>fun takeRequest():</code><a href="../-recorded-request/"><code>RecordedRequest</code></a><br>Awaits the next HTTP request (waiting up to the specified wait time if necessary), removes it, and returns it. Callers should use this to verify the request was sent as intended within the given time.<code>fun takeRequest(timeout:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>, unit:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><code>TimeUnit</code></a><code>):</code><a href="../-recorded-request/"><code>RecordedRequest</code></a><code>?</code></td>
 </tr>
 <tr>
 <td><a href="to-proxy-address/">toProxyAddress</a></td>
@@ -790,11 +790,11 @@ in sequence.</p>
 </tr>
 <tr>
 <td><a href="url/">url</a></td>
-<td><code>fun url(path:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>): HttpUrl</code><br>Returns a URL for connecting to this server.</td>
+<td>Returns a URL for connecting to this server.<code>fun url(path:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>): HttpUrl</code></td>
 </tr>
 <tr>
 <td><a href="use-https/">useHttps</a></td>
-<td><code>fun useHttps(sslSocketFactory:</code><a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLSocketFactory.html"><code>SSLSocketFactory</code></a><code>, tunnelProxy:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Serve requests with HTTPS rather than otherwise.</td>
+<td>Serve requests with HTTPS rather than otherwise.<code>fun useHttps(sslSocketFactory:</code><a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLSocketFactory.html"><code>SSLSocketFactory</code></a><code>, tunnelProxy:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 </tbody>
 </table>

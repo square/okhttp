@@ -743,7 +743,7 @@ or network should be done asynchronously.</p>
 <tbody>
 <tr>
 <td><a href="-init-/">&lt;init&gt;</a></td>
-<td><code>EventListener()</code><br>Listener for metrics events. Extend this class to monitor the quantity, size, and duration of your application&rsquo;s HTTP calls.</td>
+<td>Listener for metrics events. Extend this class to monitor the quantity, size, and duration of your application&rsquo;s HTTP calls.<code>EventListener()</code></td>
 </tr>
 </tbody>
 </table>
@@ -758,99 +758,99 @@ or network should be done asynchronously.</p>
 <tbody>
 <tr>
 <td><a href="call-end/">callEnd</a></td>
-<td><code>open fun callEnd(call:</code><a href="../-call/"><code>Call</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Invoked immediately after a call has completely ended.  This includes delayed consumption of response body by the caller.</td>
+<td>Invoked immediately after a call has completely ended.  This includes delayed consumption of response body by the caller.<code>open fun callEnd(call:</code><a href="../-call/"><code>Call</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 <tr>
 <td><a href="call-failed/">callFailed</a></td>
-<td><code>open fun callFailed(call:</code><a href="../-call/"><code>Call</code></a><code>, ioe:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/io/IOException.html"><code>IOException</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Invoked when a call fails permanently.</td>
+<td>Invoked when a call fails permanently.<code>open fun callFailed(call:</code><a href="../-call/"><code>Call</code></a><code>, ioe:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/io/IOException.html"><code>IOException</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 <tr>
 <td><a href="call-start/">callStart</a></td>
-<td><code>open fun callStart(call:</code><a href="../-call/"><code>Call</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Invoked as soon as a call is enqueued or executed by a client. In case of thread or stream limits, this call may be executed well before processing the request is able to begin.</td>
+<td>Invoked as soon as a call is enqueued or executed by a client. In case of thread or stream limits, this call may be executed well before processing the request is able to begin.<code>open fun callStart(call:</code><a href="../-call/"><code>Call</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 <tr>
 <td><a href="connect-end/">connectEnd</a></td>
-<td><code>open fun connectEnd(call:</code><a href="../-call/"><code>Call</code></a><code>, inetSocketAddress:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetSocketAddress.html"><code>InetSocketAddress</code></a><code>, proxy:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html"><code>Proxy</code></a><code>, protocol:</code><a href="../-protocol/"><code>Protocol</code></a><code>?):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Invoked immediately after a socket connection was attempted.</td>
+<td>Invoked immediately after a socket connection was attempted.<code>open fun connectEnd(call:</code><a href="../-call/"><code>Call</code></a><code>, inetSocketAddress:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetSocketAddress.html"><code>InetSocketAddress</code></a><code>, proxy:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html"><code>Proxy</code></a><code>, protocol:</code><a href="../-protocol/"><code>Protocol</code></a><code>?):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 <tr>
 <td><a href="connect-failed/">connectFailed</a></td>
-<td><code>open fun connectFailed(call:</code><a href="../-call/"><code>Call</code></a><code>, inetSocketAddress:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetSocketAddress.html"><code>InetSocketAddress</code></a><code>, proxy:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html"><code>Proxy</code></a><code>, protocol:</code><a href="../-protocol/"><code>Protocol</code></a><code>?, ioe:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/io/IOException.html"><code>IOException</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Invoked when a connection attempt fails. This failure is not terminal if further routes are available and failure recovery is enabled.</td>
+<td>Invoked when a connection attempt fails. This failure is not terminal if further routes are available and failure recovery is enabled.<code>open fun connectFailed(call:</code><a href="../-call/"><code>Call</code></a><code>, inetSocketAddress:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetSocketAddress.html"><code>InetSocketAddress</code></a><code>, proxy:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html"><code>Proxy</code></a><code>, protocol:</code><a href="../-protocol/"><code>Protocol</code></a><code>?, ioe:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/io/IOException.html"><code>IOException</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 <tr>
 <td><a href="connection-acquired/">connectionAcquired</a></td>
-<td><code>open fun connectionAcquired(call:</code><a href="../-call/"><code>Call</code></a><code>, connection:</code><a href="../-connection/"><code>Connection</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Invoked after a connection has been acquired for the <code>call</code>.</td>
+<td>Invoked after a connection has been acquired for the <code>call</code>.<code>open fun connectionAcquired(call:</code><a href="../-call/"><code>Call</code></a><code>, connection:</code><a href="../-connection/"><code>Connection</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 <tr>
 <td><a href="connection-released/">connectionReleased</a></td>
-<td><code>open fun connectionReleased(call:</code><a href="../-call/"><code>Call</code></a><code>, connection:</code><a href="../-connection/"><code>Connection</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Invoked after a connection has been released for the <code>call</code>.</td>
+<td>Invoked after a connection has been released for the <code>call</code>.<code>open fun connectionReleased(call:</code><a href="../-call/"><code>Call</code></a><code>, connection:</code><a href="../-connection/"><code>Connection</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 <tr>
 <td><a href="connect-start/">connectStart</a></td>
-<td><code>open fun connectStart(call:</code><a href="../-call/"><code>Call</code></a><code>, inetSocketAddress:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetSocketAddress.html"><code>InetSocketAddress</code></a><code>, proxy:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html"><code>Proxy</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Invoked just prior to initiating a socket connection.</td>
+<td>Invoked just prior to initiating a socket connection.<code>open fun connectStart(call:</code><a href="../-call/"><code>Call</code></a><code>, inetSocketAddress:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetSocketAddress.html"><code>InetSocketAddress</code></a><code>, proxy:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html"><code>Proxy</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 <tr>
 <td><a href="dns-end/">dnsEnd</a></td>
-<td><code>open fun dnsEnd(call:</code><a href="../-call/"><code>Call</code></a><code>, domainName:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>, inetAddressList:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetAddress.html"><code>InetAddress</code></a><code>&gt;):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Invoked immediately after a DNS lookup.</td>
+<td>Invoked immediately after a DNS lookup.<code>open fun dnsEnd(call:</code><a href="../-call/"><code>Call</code></a><code>, domainName:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>, inetAddressList:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetAddress.html"><code>InetAddress</code></a><code>&gt;):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 <tr>
 <td><a href="dns-start/">dnsStart</a></td>
-<td><code>open fun dnsStart(call:</code><a href="../-call/"><code>Call</code></a><code>, domainName:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Invoked just prior to a DNS lookup. See <a href="../-dns/lookup/">Dns.lookup</a>.</td>
+<td>Invoked just prior to a DNS lookup. See <a href="../-dns/lookup/">Dns.lookup</a>.<code>open fun dnsStart(call:</code><a href="../-call/"><code>Call</code></a><code>, domainName:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 <tr>
 <td><a href="proxy-select-end/">proxySelectEnd</a></td>
-<td><code>open fun proxySelectEnd(call:</code><a href="../-call/"><code>Call</code></a><code>, url:</code><a href="../-http-url/"><code>HttpUrl</code></a><code>, proxies:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html"><code>Proxy</code></a><code>&gt;):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Invoked after proxy selection.</td>
+<td>Invoked after proxy selection.<code>open fun proxySelectEnd(call:</code><a href="../-call/"><code>Call</code></a><code>, url:</code><a href="../-http-url/"><code>HttpUrl</code></a><code>, proxies:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html"><code>Proxy</code></a><code>&gt;):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 <tr>
 <td><a href="proxy-select-start/">proxySelectStart</a></td>
-<td><code>open fun proxySelectStart(call:</code><a href="../-call/"><code>Call</code></a><code>, url:</code><a href="../-http-url/"><code>HttpUrl</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Invoked prior to a proxy selection.</td>
+<td>Invoked prior to a proxy selection.<code>open fun proxySelectStart(call:</code><a href="../-call/"><code>Call</code></a><code>, url:</code><a href="../-http-url/"><code>HttpUrl</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 <tr>
 <td><a href="request-body-end/">requestBodyEnd</a></td>
-<td><code>open fun requestBodyEnd(call:</code><a href="../-call/"><code>Call</code></a><code>, byteCount:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Invoked immediately after sending a request body.</td>
+<td>Invoked immediately after sending a request body.<code>open fun requestBodyEnd(call:</code><a href="../-call/"><code>Call</code></a><code>, byteCount:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 <tr>
 <td><a href="request-body-start/">requestBodyStart</a></td>
-<td><code>open fun requestBodyStart(call:</code><a href="../-call/"><code>Call</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Invoked just prior to sending a request body.  Will only be invoked for request allowing and having a request body to send.</td>
+<td>Invoked just prior to sending a request body.  Will only be invoked for request allowing and having a request body to send.<code>open fun requestBodyStart(call:</code><a href="../-call/"><code>Call</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 <tr>
 <td><a href="request-failed/">requestFailed</a></td>
-<td><code>open fun requestFailed(call:</code><a href="../-call/"><code>Call</code></a><code>, ioe:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/io/IOException.html"><code>IOException</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Invoked when a request fails to be written.</td>
+<td>Invoked when a request fails to be written.<code>open fun requestFailed(call:</code><a href="../-call/"><code>Call</code></a><code>, ioe:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/io/IOException.html"><code>IOException</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 <tr>
 <td><a href="request-headers-end/">requestHeadersEnd</a></td>
-<td><code>open fun requestHeadersEnd(call:</code><a href="../-call/"><code>Call</code></a><code>, request:</code><a href="../-request/"><code>Request</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Invoked immediately after sending request headers.</td>
+<td>Invoked immediately after sending request headers.<code>open fun requestHeadersEnd(call:</code><a href="../-call/"><code>Call</code></a><code>, request:</code><a href="../-request/"><code>Request</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 <tr>
 <td><a href="request-headers-start/">requestHeadersStart</a></td>
-<td><code>open fun requestHeadersStart(call:</code><a href="../-call/"><code>Call</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Invoked just prior to sending request headers.</td>
+<td>Invoked just prior to sending request headers.<code>open fun requestHeadersStart(call:</code><a href="../-call/"><code>Call</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 <tr>
 <td><a href="response-body-end/">responseBodyEnd</a></td>
-<td><code>open fun responseBodyEnd(call:</code><a href="../-call/"><code>Call</code></a><code>, byteCount:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Invoked immediately after receiving a response body and completing reading it.</td>
+<td>Invoked immediately after receiving a response body and completing reading it.<code>open fun responseBodyEnd(call:</code><a href="../-call/"><code>Call</code></a><code>, byteCount:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 <tr>
 <td><a href="response-body-start/">responseBodyStart</a></td>
-<td><code>open fun responseBodyStart(call:</code><a href="../-call/"><code>Call</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Invoked when data from the response body is first available to the application.</td>
+<td>Invoked when data from the response body is first available to the application.<code>open fun responseBodyStart(call:</code><a href="../-call/"><code>Call</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 <tr>
 <td><a href="response-failed/">responseFailed</a></td>
-<td><code>open fun responseFailed(call:</code><a href="../-call/"><code>Call</code></a><code>, ioe:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/io/IOException.html"><code>IOException</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Invoked when a response fails to be read.</td>
+<td>Invoked when a response fails to be read.<code>open fun responseFailed(call:</code><a href="../-call/"><code>Call</code></a><code>, ioe:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/io/IOException.html"><code>IOException</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 <tr>
 <td><a href="response-headers-end/">responseHeadersEnd</a></td>
-<td><code>open fun responseHeadersEnd(call:</code><a href="../-call/"><code>Call</code></a><code>, response:</code><a href="../-response/"><code>Response</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Invoked immediately after receiving response headers.</td>
+<td>Invoked immediately after receiving response headers.<code>open fun responseHeadersEnd(call:</code><a href="../-call/"><code>Call</code></a><code>, response:</code><a href="../-response/"><code>Response</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 <tr>
 <td><a href="response-headers-start/">responseHeadersStart</a></td>
-<td><code>open fun responseHeadersStart(call:</code><a href="../-call/"><code>Call</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Invoked when response headers are first returned from the server.</td>
+<td>Invoked when response headers are first returned from the server.<code>open fun responseHeadersStart(call:</code><a href="../-call/"><code>Call</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 <tr>
 <td><a href="secure-connect-end/">secureConnectEnd</a></td>
-<td><code>open fun secureConnectEnd(call:</code><a href="../-call/"><code>Call</code></a><code>, handshake:</code><a href="../-handshake/"><code>Handshake</code></a><code>?):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Invoked immediately after a TLS connection was attempted.</td>
+<td>Invoked immediately after a TLS connection was attempted.<code>open fun secureConnectEnd(call:</code><a href="../-call/"><code>Call</code></a><code>, handshake:</code><a href="../-handshake/"><code>Handshake</code></a><code>?):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 <tr>
 <td><a href="secure-connect-start/">secureConnectStart</a></td>
-<td><code>open fun secureConnectStart(call:</code><a href="../-call/"><code>Call</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Invoked just prior to initiating a TLS connection.</td>
+<td>Invoked just prior to initiating a TLS connection.<code>open fun secureConnectStart(call:</code><a href="../-call/"><code>Call</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 </tbody>
 </table>

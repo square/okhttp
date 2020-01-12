@@ -635,13 +635,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#inheritors" title="Inheritors" class="md-nav__link">
-    Inheritors
-  </a>
-  
-</li>
-      
       
       
       
@@ -675,22 +668,7 @@
 <tbody>
 <tr>
 <td><a href="new-web-socket/">newWebSocket</a></td>
-<td><code>abstract fun newWebSocket(request:</code><a href="../../-request/"><code>Request</code></a><code>, listener:</code><a href="../../-web-socket-listener/"><code>WebSocketListener</code></a><code>):</code><a href="../"><code>WebSocket</code></a><br>Creates a new web socket and immediately returns it. Creating a web socket initiates an asynchronous process to connect the socket. Once that succeeds or fails, <code>listener</code> will be notified. The caller must either close or cancel the returned web socket when it is no longer in use.</td>
-</tr>
-</tbody>
-</table>
-<h3 id="inheritors">Inheritors<a class="headerlink" href="#inheritors" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Summary</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a href="../../-ok-http-client/">OkHttpClient</a></td>
-<td><code>open class OkHttpClient :</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-cloneable/index.html"><code>Cloneable</code></a><code>,</code><a href="../../-call/-factory/"><code>Call.Factory</code></a><code>,</code><a href="./"><code>WebSocket.Factory</code></a><br>Factory for <a href="../../-call/">calls</a>, which can be used to send HTTP requests and read their responses.</td>
+<td>Creates a new web socket and immediately returns it. Creating a web socket initiates an asynchronous process to connect the socket. Once that succeeds or fails, <code>listener</code> will be notified. The caller must either close or cancel the returned web socket when it is no longer in use.<code>abstract fun newWebSocket(request:</code><a href="../../-request/"><code>Request</code></a><code>, listener:</code><a href="../../-web-socket-listener/"><code>WebSocketListener</code></a><code>):</code><a href="../"><code>WebSocket</code></a></td>
 </tr>
 </tbody>
 </table>

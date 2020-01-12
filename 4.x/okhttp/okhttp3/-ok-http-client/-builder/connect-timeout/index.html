@@ -640,8 +640,8 @@
                 
                 <p><a href="../../../../">okhttp</a> / <a href="../../../">okhttp3</a> / <a href="../../">OkHttpClient</a> / <a href="../">Builder</a> / <a href="./">connectTimeout</a></p>
 <h1 id="connecttimeout">connectTimeout<a class="headerlink" href="#connecttimeout" title="Permanent link">&para;</a></h1>
-<p><code>fun connectTimeout(timeout:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>, unit:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><code>TimeUnit</code></a><code>):</code><a href="../"><code>OkHttpClient.Builder</code></a>
-<code>@IgnoreJRERequirement fun connectTimeout(duration:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/time/Duration.html"><code>Duration</code></a><code>):</code><a href="../"><code>OkHttpClient.Builder</code></a></p>
+<p><code>fun connectTimeout(timeout:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>, unit:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><code>TimeUnit</code></a><code>): Builder</code>
+<code>@IgnoreJRERequirement fun connectTimeout(duration:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/time/Duration.html"><code>Duration</code></a><code>): Builder</code></p>
 <p>Sets the default connect timeout for new connections. A value of 0 means no timeout,
 otherwise values must be between 1 and <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Integer.html#MAX_VALUE">Integer.MAX_VALUE</a> when converted to milliseconds.</p>
 <p>The connect timeout is applied when connecting a TCP socket to the target host. The default

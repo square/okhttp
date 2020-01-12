@@ -699,7 +699,7 @@ on what responses can be stored, and which requests can be satisfied by those st
 <tbody>
 <tr>
 <td><a href="-builder/">Builder</a></td>
-<td><code>class Builder</code><br>Builds a <code>Cache-Control</code> request header.</td>
+<td>Builds a <code>Cache-Control</code> request header.<code>class Builder</code></td>
 </tr>
 </tbody>
 </table>
@@ -726,7 +726,7 @@ on what responses can be stored, and which requests can be satisfied by those st
 </tr>
 <tr>
 <td><a href="max-age-seconds/">maxAgeSeconds</a></td>
-<td><code>val maxAgeSeconds:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><br>The duration past the response&rsquo;s served date that it can be served without validation.</td>
+<td>The duration past the response&rsquo;s served date that it can be served without validation.<code>val maxAgeSeconds:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a></td>
 </tr>
 <tr>
 <td><a href="max-stale-seconds/">maxStaleSeconds</a></td>
@@ -742,11 +742,11 @@ on what responses can be stored, and which requests can be satisfied by those st
 </tr>
 <tr>
 <td><a href="no-cache/">noCache</a></td>
-<td><code>val noCache:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><br>In a response, this field&rsquo;s name &ldquo;no-cache&rdquo; is misleading. It doesn&rsquo;t prevent us from caching the response; it only means we have to validate the response with the origin server before returning it. We can do this with a conditional GET.</td>
+<td>In a response, this field&rsquo;s name &ldquo;no-cache&rdquo; is misleading. It doesn&rsquo;t prevent us from caching the response; it only means we have to validate the response with the origin server before returning it. We can do this with a conditional GET.<code>val noCache:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a></td>
 </tr>
 <tr>
 <td><a href="no-store/">noStore</a></td>
-<td><code>val noStore:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><br>If true, this response should not be cached.</td>
+<td>If true, this response should not be cached.<code>val noStore:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a></td>
 </tr>
 <tr>
 <td><a href="no-transform/">noTransform</a></td>
@@ -754,11 +754,11 @@ on what responses can be stored, and which requests can be satisfied by those st
 </tr>
 <tr>
 <td><a href="only-if-cached/">onlyIfCached</a></td>
-<td><code>val onlyIfCached:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><br>This field&rsquo;s name &ldquo;only-if-cached&rdquo; is misleading. It actually means &ldquo;do not use the network&rdquo;. It is set by a client who only wants to make a request if it can be fully satisfied by the cache. Cached responses that would require validation (ie. conditional gets) are not permitted if this header is set.</td>
+<td>This field&rsquo;s name &ldquo;only-if-cached&rdquo; is misleading. It actually means &ldquo;do not use the network&rdquo;. It is set by a client who only wants to make a request if it can be fully satisfied by the cache. Cached responses that would require validation (ie. conditional gets) are not permitted if this header is set.<code>val onlyIfCached:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a></td>
 </tr>
 <tr>
 <td><a href="s-max-age-seconds/">sMaxAgeSeconds</a></td>
-<td><code>val sMaxAgeSeconds:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><br>The &ldquo;s-maxage&rdquo; directive is the max age for shared caches. Not to be confused with &ldquo;max-age&rdquo; for non-shared caches, As in Firefox and Chrome, this directive is not honored by this cache.</td>
+<td>The &ldquo;s-maxage&rdquo; directive is the max age for shared caches. Not to be confused with &ldquo;max-age&rdquo; for non-shared caches, As in Firefox and Chrome, this directive is not honored by this cache.<code>val sMaxAgeSeconds:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -788,11 +788,11 @@ on what responses can be stored, and which requests can be satisfied by those st
 <tbody>
 <tr>
 <td><a href="-f-o-r-c-e_-c-a-c-h-e/">FORCE_CACHE</a></td>
-<td><code>val FORCE_CACHE:</code><a href="./"><code>CacheControl</code></a><br>Cache control request directives that uses the cache only, even if the cached response is stale. If the response isn&rsquo;t available in the cache or requires server validation, the call will fail with a <code>504 Unsatisfiable Request</code>.</td>
+<td>Cache control request directives that uses the cache only, even if the cached response is stale. If the response isn&rsquo;t available in the cache or requires server validation, the call will fail with a <code>504 Unsatisfiable Request</code>.<code>val FORCE_CACHE:</code><a href="./"><code>CacheControl</code></a></td>
 </tr>
 <tr>
 <td><a href="-f-o-r-c-e_-n-e-t-w-o-r-k/">FORCE_NETWORK</a></td>
-<td><code>val FORCE_NETWORK:</code><a href="./"><code>CacheControl</code></a><br>Cache control request directives that require network validation of responses. Note that such requests may be assisted by the cache via conditional GET requests.</td>
+<td>Cache control request directives that require network validation of responses. Note that such requests may be assisted by the cache via conditional GET requests.<code>val FORCE_NETWORK:</code><a href="./"><code>CacheControl</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -807,7 +807,7 @@ on what responses can be stored, and which requests can be satisfied by those st
 <tbody>
 <tr>
 <td><a href="parse/">parse</a></td>
-<td><code>fun parse(headers:</code><a href="../-headers/"><code>Headers</code></a><code>):</code><a href="./"><code>CacheControl</code></a><br>Returns the cache directives of <a href="parse/#okhttp3.CacheControl.Companion$parse(okhttp3.Headers)/headers">headers</a>. This honors both Cache-Control and Pragma headers if they are present.</td>
+<td>Returns the cache directives of <a href="parse/#okhttp3.CacheControl.Companion$parse(okhttp3.Headers)/headers">headers</a>. This honors both Cache-Control and Pragma headers if they are present.<code>fun parse(headers:</code><a href="../-headers/"><code>Headers</code></a><code>):</code><a href="./"><code>CacheControl</code></a></td>
 </tr>
 </tbody>
 </table>

@@ -668,7 +668,7 @@
 <tbody>
 <tr>
 <td><a href="new-event-source/">newEventSource</a></td>
-<td><code>abstract fun newEventSource(request: Request, listener:</code><a href="../../-event-source-listener/"><code>EventSourceListener</code></a><code>):</code><a href="../"><code>EventSource</code></a><br>Creates a new event source and immediately returns it. Creating an event source initiates an asynchronous process to connect the socket. Once that succeeds or fails, <code>listener</code> will be notified. The caller must cancel the returned event source when it is no longer in use.</td>
+<td>Creates a new event source and immediately returns it. Creating an event source initiates an asynchronous process to connect the socket. Once that succeeds or fails, <code>listener</code> will be notified. The caller must cancel the returned event source when it is no longer in use.<code>abstract fun newEventSource(request: Request, listener:</code><a href="../../-event-source-listener/"><code>EventSourceListener</code></a><code>):</code><a href="../"><code>EventSource</code></a></td>
 </tr>
 </tbody>
 </table>

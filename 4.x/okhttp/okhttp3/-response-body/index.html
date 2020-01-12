@@ -751,7 +751,7 @@ re-read the bytes of the response. Use this one shot to read the entire response
 <tbody>
 <tr>
 <td><a href="-init-/">&lt;init&gt;</a></td>
-<td><code>ResponseBody()</code><br>A one-shot stream from the origin server to the client application with the raw bytes of the response body. Each response body is supported by an active connection to the webserver. This imposes both obligations and limits on the client application.</td>
+<td>A one-shot stream from the origin server to the client application with the raw bytes of the response body. Each response body is supported by an active connection to the webserver. This imposes both obligations and limits on the client application.<code>ResponseBody()</code></td>
 </tr>
 </tbody>
 </table>
@@ -766,7 +766,7 @@ re-read the bytes of the response. Use this one shot to read the entire response
 <tbody>
 <tr>
 <td><a href="bytes/">bytes</a></td>
-<td><code>fun bytes():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html"><code>ByteArray</code></a><br>Returns the response as a byte array.</td>
+<td>Returns the response as a byte array.<code>fun bytes():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html"><code>ByteArray</code></a></td>
 </tr>
 <tr>
 <td><a href="byte-stream/">byteStream</a></td>
@@ -774,11 +774,11 @@ re-read the bytes of the response. Use this one shot to read the entire response
 </tr>
 <tr>
 <td><a href="byte-string/">byteString</a></td>
-<td><code>fun byteString():</code><a href="https://square.github.io/okio/2.x/okio/okio/-byte-string/index.md"><code>ByteString</code></a><br>Returns the response as a <a href="https://square.github.io/okio/2.x/okio/okio/-byte-string/index.md">ByteString</a>.</td>
+<td>Returns the response as a <a href="https://square.github.io/okio/2.x/okio/okio/-byte-string/index.md">ByteString</a>.<code>fun byteString():</code><a href="https://square.github.io/okio/2.x/okio/okio/-byte-string/index.md"><code>ByteString</code></a></td>
 </tr>
 <tr>
 <td><a href="char-stream/">charStream</a></td>
-<td><code>fun charStream():</code><a href="https://docs.oracle.com/javase/8/docs/api/java/io/Reader.html"><code>Reader</code></a><br>Returns the response as a character stream.</td>
+<td>Returns the response as a character stream.<code>fun charStream():</code><a href="https://docs.oracle.com/javase/8/docs/api/java/io/Reader.html"><code>Reader</code></a></td>
 </tr>
 <tr>
 <td><a href="close/">close</a></td>
@@ -786,7 +786,7 @@ re-read the bytes of the response. Use this one shot to read the entire response
 </tr>
 <tr>
 <td><a href="content-length/">contentLength</a></td>
-<td><code>abstract fun contentLength():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><br>Returns the number of bytes in that will returned by <a href="bytes/">bytes</a>, or <a href="byte-stream/">byteStream</a>, or -1 if unknown.</td>
+<td>Returns the number of bytes in that will returned by <a href="bytes/">bytes</a>, or <a href="byte-stream/">byteStream</a>, or -1 if unknown.<code>abstract fun contentLength():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a></td>
 </tr>
 <tr>
 <td><a href="content-type/">contentType</a></td>
@@ -798,7 +798,7 @@ re-read the bytes of the response. Use this one shot to read the entire response
 </tr>
 <tr>
 <td><a href="string/">string</a></td>
-<td><code>fun string():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><br>Returns the response as a string.</td>
+<td>Returns the response as a string.<code>fun string():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -813,11 +813,11 @@ re-read the bytes of the response. Use this one shot to read the entire response
 <tbody>
 <tr>
 <td><a href="as-response-body/">asResponseBody</a></td>
-<td><code>fun</code><a href="https://square.github.io/okio/2.x/okio/okio/-buffered-source/index.md"><code>BufferedSource</code></a><code>.asResponseBody(contentType:</code><a href="../-media-type/"><code>MediaType</code></a><code>? = null, contentLength:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>= -1L):</code><a href="./"><code>ResponseBody</code></a><br>Returns a new response body that transmits this source.</td>
+<td>Returns a new response body that transmits this source.<code>fun</code><a href="https://square.github.io/okio/2.x/okio/okio/-buffered-source/index.md"><code>BufferedSource</code></a><code>.asResponseBody(contentType:</code><a href="../-media-type/"><code>MediaType</code></a><code>? = null, contentLength:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>= -1L):</code><a href="./"><code>ResponseBody</code></a></td>
 </tr>
 <tr>
 <td><a href="to-response-body/">toResponseBody</a></td>
-<td><code>fun</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>.toResponseBody(contentType:</code><a href="../-media-type/"><code>MediaType</code></a><code>? = null):</code><a href="./"><code>ResponseBody</code></a><br>Returns a new response body that transmits this string. If <a href="to-response-body/#okhttp3.ResponseBody.Companion$toResponseBody(kotlin.String, okhttp3.MediaType)/contentType">contentType</a> is non-null and lacks a charset, this will use UTF-8.<code>fun</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html"><code>ByteArray</code></a><code>.toResponseBody(contentType:</code><a href="../-media-type/"><code>MediaType</code></a><code>? = null):</code><a href="./"><code>ResponseBody</code></a><br>Returns a new response body that transmits this byte array.<code>fun</code><a href="https://square.github.io/okio/2.x/okio/okio/-byte-string/index.md"><code>ByteString</code></a><code>.toResponseBody(contentType:</code><a href="../-media-type/"><code>MediaType</code></a><code>? = null):</code><a href="./"><code>ResponseBody</code></a><br>Returns a new response body that transmits this byte string.</td>
+<td>Returns a new response body that transmits this string. If <a href="to-response-body/#okhttp3.ResponseBody.Companion$toResponseBody(kotlin.String, okhttp3.MediaType)/contentType">contentType</a> is non-null and lacks a charset, this will use UTF-8.<code>fun</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>.toResponseBody(contentType:</code><a href="../-media-type/"><code>MediaType</code></a><code>? = null):</code><a href="./"><code>ResponseBody</code></a><br>Returns a new response body that transmits this byte array.<code>fun</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html"><code>ByteArray</code></a><code>.toResponseBody(contentType:</code><a href="../-media-type/"><code>MediaType</code></a><code>? = null):</code><a href="./"><code>ResponseBody</code></a><br>Returns a new response body that transmits this byte string.<code>fun</code><a href="https://square.github.io/okio/2.x/okio/okio/-byte-string/index.md"><code>ByteString</code></a><code>.toResponseBody(contentType:</code><a href="../-media-type/"><code>MediaType</code></a><code>? = null):</code><a href="./"><code>ResponseBody</code></a></td>
 </tr>
 </tbody>
 </table>

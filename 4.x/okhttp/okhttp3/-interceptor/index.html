@@ -700,7 +700,7 @@ or response.</p>
 <tbody>
 <tr>
 <td><a href="intercept/">intercept</a></td>
-<td><code>abstract fun intercept(chain:</code><a href="-chain/"><code>Interceptor.Chain</code></a><code>):</code><a href="../-response/"><code>Response</code></a></td>
+<td><code>abstract fun intercept(chain: Chain):</code><a href="../-response/"><code>Response</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -715,7 +715,7 @@ or response.</p>
 <tbody>
 <tr>
 <td><a href="invoke/">invoke</a></td>
-<td><code>operator fun invoke(block: (chain:</code><a href="-chain/"><code>Interceptor.Chain</code></a><code>) -&gt;</code><a href="../-response/"><code>Response</code></a><code>):</code><a href="./"><code>Interceptor</code></a><br>Constructs an interceptor for a lambda. This compact syntax is most useful for inline interceptors.</td>
+<td>Constructs an interceptor for a lambda. This compact syntax is most useful for inline interceptors.<code>operator fun invoke(block: (chain: Chain) -&gt;</code><a href="../-response/"><code>Response</code></a><code>):</code><a href="./"><code>Interceptor</code></a></td>
 </tr>
 </tbody>
 </table>

@@ -690,7 +690,7 @@
 <tbody>
 <tr>
 <td><a href="add-header/">addHeader</a></td>
-<td><code>open fun addHeader(name:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>, value:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="./"><code>Request.Builder</code></a><br>Adds a header with <a href="add-header/#okhttp3.Request.Builder$addHeader(kotlin.String, kotlin.String)/name">name</a> and <a href="add-header/#okhttp3.Request.Builder$addHeader(kotlin.String, kotlin.String)/value">value</a>. Prefer this method for multiply-valued headers like &ldquo;Cookie&rdquo;.</td>
+<td>Adds a header with <a href="add-header/#okhttp3.Request.Builder$addHeader(kotlin.String, kotlin.String)/name">name</a> and <a href="add-header/#okhttp3.Request.Builder$addHeader(kotlin.String, kotlin.String)/value">value</a>. Prefer this method for multiply-valued headers like &ldquo;Cookie&rdquo;.<code>open fun addHeader(name:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>, value:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="build/">build</a></td>
@@ -698,55 +698,55 @@
 </tr>
 <tr>
 <td><a href="cache-control/">cacheControl</a></td>
-<td><code>open fun cacheControl(cacheControl:</code><a href="../../-cache-control/"><code>CacheControl</code></a><code>):</code><a href="./"><code>Request.Builder</code></a><br>Sets this request&rsquo;s <code>Cache-Control</code> header, replacing any cache control headers already present. If <a href="cache-control/#okhttp3.Request.Builder$cacheControl(okhttp3.CacheControl)/cacheControl">cacheControl</a> doesn&rsquo;t define any directives, this clears this request&rsquo;s cache-control headers.</td>
+<td>Sets this request&rsquo;s <code>Cache-Control</code> header, replacing any cache control headers already present. If <a href="cache-control/#okhttp3.Request.Builder$cacheControl(okhttp3.CacheControl)/cacheControl">cacheControl</a> doesn&rsquo;t define any directives, this clears this request&rsquo;s cache-control headers.<code>open fun cacheControl(cacheControl:</code><a href="../../-cache-control/"><code>CacheControl</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="delete/">delete</a></td>
-<td><code>open fun delete(body:</code><a href="../../-request-body/"><code>RequestBody</code></a><code>? = EMPTY_REQUEST):</code><a href="./"><code>Request.Builder</code></a></td>
+<td><code>open fun delete(body:</code><a href="../../-request-body/"><code>RequestBody</code></a><code>? = EMPTY_REQUEST): Builder</code></td>
 </tr>
 <tr>
 <td><a href="get/">get</a></td>
-<td><code>open fun get():</code><a href="./"><code>Request.Builder</code></a></td>
+<td><code>open fun get(): Builder</code></td>
 </tr>
 <tr>
 <td><a href="head/">head</a></td>
-<td><code>open fun head():</code><a href="./"><code>Request.Builder</code></a></td>
+<td><code>open fun head(): Builder</code></td>
 </tr>
 <tr>
 <td><a href="header/">header</a></td>
-<td><code>open fun header(name:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>, value:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="./"><code>Request.Builder</code></a><br>Sets the header named <a href="header/#okhttp3.Request.Builder$header(kotlin.String, kotlin.String)/name">name</a> to <a href="header/#okhttp3.Request.Builder$header(kotlin.String, kotlin.String)/value">value</a>. If this request already has any headers with that name, they are all replaced.</td>
+<td>Sets the header named <a href="header/#okhttp3.Request.Builder$header(kotlin.String, kotlin.String)/name">name</a> to <a href="header/#okhttp3.Request.Builder$header(kotlin.String, kotlin.String)/value">value</a>. If this request already has any headers with that name, they are all replaced.<code>open fun header(name:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>, value:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="headers/">headers</a></td>
-<td><code>open fun headers(headers:</code><a href="../../-headers/"><code>Headers</code></a><code>):</code><a href="./"><code>Request.Builder</code></a><br>Removes all headers on this builder and adds <a href="headers/#okhttp3.Request.Builder$headers(okhttp3.Headers)/headers">headers</a>.</td>
+<td>Removes all headers on this builder and adds <a href="headers/#okhttp3.Request.Builder$headers(okhttp3.Headers)/headers">headers</a>.<code>open fun headers(headers:</code><a href="../../-headers/"><code>Headers</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="method/">method</a></td>
-<td><code>open fun method(method:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>, body:</code><a href="../../-request-body/"><code>RequestBody</code></a><code>?):</code><a href="./"><code>Request.Builder</code></a></td>
+<td><code>open fun method(method:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>, body:</code><a href="../../-request-body/"><code>RequestBody</code></a><code>?): Builder</code></td>
 </tr>
 <tr>
 <td><a href="patch/">patch</a></td>
-<td><code>open fun patch(body:</code><a href="../../-request-body/"><code>RequestBody</code></a><code>):</code><a href="./"><code>Request.Builder</code></a></td>
+<td><code>open fun patch(body:</code><a href="../../-request-body/"><code>RequestBody</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="post/">post</a></td>
-<td><code>open fun post(body:</code><a href="../../-request-body/"><code>RequestBody</code></a><code>):</code><a href="./"><code>Request.Builder</code></a></td>
+<td><code>open fun post(body:</code><a href="../../-request-body/"><code>RequestBody</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="put/">put</a></td>
-<td><code>open fun put(body:</code><a href="../../-request-body/"><code>RequestBody</code></a><code>):</code><a href="./"><code>Request.Builder</code></a></td>
+<td><code>open fun put(body:</code><a href="../../-request-body/"><code>RequestBody</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="remove-header/">removeHeader</a></td>
-<td><code>open fun removeHeader(name:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="./"><code>Request.Builder</code></a><br>Removes all headers named <a href="remove-header/#okhttp3.Request.Builder$removeHeader(kotlin.String)/name">name</a> on this builder.</td>
+<td>Removes all headers named <a href="remove-header/#okhttp3.Request.Builder$removeHeader(kotlin.String)/name">name</a> on this builder.<code>open fun removeHeader(name:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="tag/">tag</a></td>
-<td><code>open fun tag(tag:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><code>Any</code></a><code>?):</code><a href="./"><code>Request.Builder</code></a><br>Attaches <a href="tag/#okhttp3.Request.Builder$tag(kotlin.Any)/tag">tag</a> to the request using <code>Object.class</code> as a key.<code>open fun &lt;T&gt; tag(type:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html"><code>Class</code></a><code>&lt;in</code><a href="tag/#T"><code>T</code></a><code>&gt;, tag:</code><a href="tag/#T"><code>T</code></a><code>?):</code><a href="./"><code>Request.Builder</code></a><br>Attaches <a href="tag/#okhttp3.Request.Builder$tag(java.lang.Class((okhttp3.Request.Builder.tag.T)), okhttp3.Request.Builder.tag.T)/tag">tag</a> to the request using <a href="tag/#okhttp3.Request.Builder$tag(java.lang.Class((okhttp3.Request.Builder.tag.T)), okhttp3.Request.Builder.tag.T)/type">type</a> as a key. Tags can be read from a request using <a href="../tag/">Request.tag</a>. Use null to remove any existing tag assigned for <a href="tag/#okhttp3.Request.Builder$tag(java.lang.Class((okhttp3.Request.Builder.tag.T)), okhttp3.Request.Builder.tag.T)/type">type</a>.</td>
+<td>Attaches <a href="tag/#okhttp3.Request.Builder$tag(kotlin.Any)/tag">tag</a> to the request using <code>Object.class</code> as a key.<code>open fun tag(tag:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><code>Any</code></a><code>?): Builder</code><br>Attaches <a href="tag/#okhttp3.Request.Builder$tag(java.lang.Class((okhttp3.Request.Builder.tag.T)), okhttp3.Request.Builder.tag.T)/tag">tag</a> to the request using <a href="tag/#okhttp3.Request.Builder$tag(java.lang.Class((okhttp3.Request.Builder.tag.T)), okhttp3.Request.Builder.tag.T)/type">type</a> as a key. Tags can be read from a request using <a href="../tag/">Request.tag</a>. Use null to remove any existing tag assigned for <a href="tag/#okhttp3.Request.Builder$tag(java.lang.Class((okhttp3.Request.Builder.tag.T)), okhttp3.Request.Builder.tag.T)/type">type</a>.<code>open fun &lt;T&gt; tag(type:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html"><code>Class</code></a><code>&lt;in T&gt;, tag: T?): Builder</code></td>
 </tr>
 <tr>
 <td><a href="url/">url</a></td>
-<td><code>open fun url(url:</code><a href="../../-http-url/"><code>HttpUrl</code></a><code>):</code><a href="./"><code>Request.Builder</code></a><code>open fun url(url:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="./"><code>Request.Builder</code></a><br><code>open fun url(url:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/URL.html"><code>URL</code></a><code>):</code><a href="./"><code>Request.Builder</code></a><br>Sets the URL target of this request.</td>
+<td><code>open fun url(url:</code><a href="../../-http-url/"><code>HttpUrl</code></a><code>): Builder</code><br>Sets the URL target of this request.<code>open fun url(url:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>): Builder</code><br><code>open fun url(url:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/URL.html"><code>URL</code></a><code>): Builder</code></td>
 </tr>
 </tbody>
 </table>

@@ -692,19 +692,19 @@ represents a single request/response pair (stream), it cannot be executed twice.
 <tbody>
 <tr>
 <td><a href="cancel/">cancel</a></td>
-<td><code>abstract fun cancel():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Cancels the request, if possible. Requests that are already complete cannot be canceled.</td>
+<td>Cancels the request, if possible. Requests that are already complete cannot be canceled.<code>abstract fun cancel():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 <tr>
 <td><a href="clone/">clone</a></td>
-<td><code>abstract fun clone():</code><a href="./"><code>Call</code></a><br>Create a new, identical call to this one which can be enqueued or executed even if this call has already been.</td>
+<td>Create a new, identical call to this one which can be enqueued or executed even if this call has already been.<code>abstract fun clone():</code><a href="./"><code>Call</code></a></td>
 </tr>
 <tr>
 <td><a href="enqueue/">enqueue</a></td>
-<td><code>abstract fun enqueue(responseCallback:</code><a href="../-callback/"><code>Callback</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Schedules the request to be executed at some point in the future.</td>
+<td>Schedules the request to be executed at some point in the future.<code>abstract fun enqueue(responseCallback:</code><a href="../-callback/"><code>Callback</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 <tr>
 <td><a href="execute/">execute</a></td>
-<td><code>abstract fun execute():</code><a href="../-response/"><code>Response</code></a><br>Invokes the request immediately, and blocks until the response can be processed or is in error.</td>
+<td>Invokes the request immediately, and blocks until the response can be processed or is in error.<code>abstract fun execute():</code><a href="../-response/"><code>Response</code></a></td>
 </tr>
 <tr>
 <td><a href="is-canceled/">isCanceled</a></td>
@@ -712,15 +712,15 @@ represents a single request/response pair (stream), it cannot be executed twice.
 </tr>
 <tr>
 <td><a href="is-executed/">isExecuted</a></td>
-<td><code>abstract fun isExecuted():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><br>Returns true if this call has been either <a href="execute/">executed</a> or <a href="enqueue/">enqueued</a>. It is an error to execute a call more than once.</td>
+<td>Returns true if this call has been either <a href="execute/">executed</a> or <a href="enqueue/">enqueued</a>. It is an error to execute a call more than once.<code>abstract fun isExecuted():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a></td>
 </tr>
 <tr>
 <td><a href="request/">request</a></td>
-<td><code>abstract fun request():</code><a href="../-request/"><code>Request</code></a><br>Returns the original request that initiated this call.</td>
+<td>Returns the original request that initiated this call.<code>abstract fun request():</code><a href="../-request/"><code>Request</code></a></td>
 </tr>
 <tr>
 <td><a href="timeout/">timeout</a></td>
-<td><code>abstract fun timeout():</code><a href="https://square.github.io/okio/2.x/okio/okio/-timeout/index.md"><code>Timeout</code></a><br>Returns a timeout that spans the entire call: resolving DNS, connecting, writing the request body, server processing, and reading the response body. If the call requires redirects or retries all must complete within one timeout period.</td>
+<td>Returns a timeout that spans the entire call: resolving DNS, connecting, writing the request body, server processing, and reading the response body. If the call requires redirects or retries all must complete within one timeout period.<code>abstract fun timeout():</code><a href="https://square.github.io/okio/2.x/okio/okio/-timeout/index.md"><code>Timeout</code></a></td>
 </tr>
 </tbody>
 </table>

@@ -683,7 +683,7 @@
 <tbody>
 <tr>
 <td><a href="-init-/">&lt;init&gt;</a></td>
-<td><code>MockResponse()</code><br>A scripted response to be replayed by the mock web server.</td>
+<td>A scripted response to be replayed by the mock web server.<code>MockResponse()</code></td>
 </tr>
 </tbody>
 </table>
@@ -702,11 +702,11 @@
 </tr>
 <tr>
 <td><a href="headers/">headers</a></td>
-<td><code>var headers: Headers</code><br>The HTTP headers, such as &ldquo;Content-Length: 0&rdquo;.</td>
+<td>The HTTP headers, such as &ldquo;Content-Length: 0&rdquo;.<code>var headers: Headers</code></td>
 </tr>
 <tr>
 <td><a href="http2-error-code/">http2ErrorCode</a></td>
-<td><code>var http2ErrorCode:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><br>Sets the <a href="https://tools.ietf.org/html/rfc7540#section-7">HTTP/2 error code</a> to be returned when resetting the stream. This is only valid with <a href="../-socket-policy/-r-e-s-e-t_-s-t-r-e-a-m_-a-t_-s-t-a-r-t/">SocketPolicy.RESET_STREAM_AT_START</a>.</td>
+<td>Sets the <a href="https://tools.ietf.org/html/rfc7540#section-7">HTTP/2 error code</a> to be returned when resetting the stream. This is only valid with <a href="../-socket-policy/-r-e-s-e-t_-s-t-r-e-a-m_-a-t_-s-t-a-r-t/">SocketPolicy.RESET_STREAM_AT_START</a>.<code>var http2ErrorCode:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a></td>
 </tr>
 <tr>
 <td><a href="is-duplex/">isDuplex</a></td>
@@ -714,7 +714,7 @@
 </tr>
 <tr>
 <td><a href="push-promises/">pushPromises</a></td>
-<td><code>val pushPromises:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="../-push-promise/"><code>PushPromise</code></a><code>&gt;</code><br>Returns the streams the server will push with this response.</td>
+<td>Returns the streams the server will push with this response.<code>val pushPromises:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="../-push-promise/"><code>PushPromise</code></a><code>&gt;</code></td>
 </tr>
 <tr>
 <td><a href="settings/">settings</a></td>
@@ -726,7 +726,7 @@
 </tr>
 <tr>
 <td><a href="status/">status</a></td>
-<td><code>var status:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><br>Returns the HTTP response line, such as &ldquo;HTTP/1.1 200 OK&rdquo;.</td>
+<td>Returns the HTTP response line, such as &ldquo;HTTP/1.1 200 OK&rdquo;.<code>var status:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a></td>
 </tr>
 <tr>
 <td><a href="throttle-bytes-per-period/">throttleBytesPerPeriod</a></td>
@@ -753,15 +753,15 @@
 <tbody>
 <tr>
 <td><a href="add-header/">addHeader</a></td>
-<td><code>fun addHeader(header:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="./"><code>MockResponse</code></a><br>Adds <a href="add-header/#okhttp3.mockwebserver.MockResponse$addHeader(kotlin.String)/header">header</a> as an HTTP header. For well-formed HTTP <a href="add-header/#okhttp3.mockwebserver.MockResponse$addHeader(kotlin.String)/header">header</a> should contain a name followed by a colon and a value.<code>fun addHeader(name:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>, value:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><code>Any</code></a><code>):</code><a href="./"><code>MockResponse</code></a><br>Adds a new header with the name and value. This may be used to add multiple headers with the same name.</td>
+<td>Adds <a href="add-header/#okhttp3.mockwebserver.MockResponse$addHeader(kotlin.String)/header">header</a> as an HTTP header. For well-formed HTTP <a href="add-header/#okhttp3.mockwebserver.MockResponse$addHeader(kotlin.String)/header">header</a> should contain a name followed by a colon and a value.<code>fun addHeader(header:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="./"><code>MockResponse</code></a><br>Adds a new header with the name and value. This may be used to add multiple headers with the same name.<code>fun addHeader(name:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>, value:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><code>Any</code></a><code>):</code><a href="./"><code>MockResponse</code></a></td>
 </tr>
 <tr>
 <td><a href="add-header-lenient/">addHeaderLenient</a></td>
-<td><code>fun addHeaderLenient(name:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>, value:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><code>Any</code></a><code>):</code><a href="./"><code>MockResponse</code></a><br>Adds a new header with the name and value. This may be used to add multiple headers with the same name. Unlike <a href="add-header/">addHeader</a> this does not validate the name and value.</td>
+<td>Adds a new header with the name and value. This may be used to add multiple headers with the same name. Unlike <a href="add-header/">addHeader</a> this does not validate the name and value.<code>fun addHeaderLenient(name:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>, value:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><code>Any</code></a><code>):</code><a href="./"><code>MockResponse</code></a></td>
 </tr>
 <tr>
 <td><a href="clear-headers/">clearHeaders</a></td>
-<td><code>fun clearHeaders():</code><a href="./"><code>MockResponse</code></a><br>Removes all HTTP headers including any &ldquo;Content-Length&rdquo; and &ldquo;Transfer-encoding&rdquo; headers that were added by default.</td>
+<td>Removes all HTTP headers including any &ldquo;Content-Length&rdquo; and &ldquo;Transfer-encoding&rdquo; headers that were added by default.<code>fun clearHeaders():</code><a href="./"><code>MockResponse</code></a></td>
 </tr>
 <tr>
 <td><a href="clone/">clone</a></td>
@@ -769,7 +769,7 @@
 </tr>
 <tr>
 <td><a href="get-body/">getBody</a></td>
-<td><code>fun getBody():</code><a href="https://square.github.io/okio/2.x/okio/okio/-buffer/index.md"><code>Buffer</code></a><code>?</code><br>Returns a copy of the raw HTTP payload.</td>
+<td>Returns a copy of the raw HTTP payload.<code>fun getBody():</code><a href="https://square.github.io/okio/2.x/okio/okio/-buffer/index.md"><code>Buffer</code></a><code>?</code></td>
 </tr>
 <tr>
 <td><a href="get-body-delay/">getBodyDelay</a></td>
@@ -785,27 +785,27 @@
 </tr>
 <tr>
 <td><a href="remove-header/">removeHeader</a></td>
-<td><code>fun removeHeader(name:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="./"><code>MockResponse</code></a><br>Removes all headers named <a href="remove-header/#okhttp3.mockwebserver.MockResponse$removeHeader(kotlin.String)/name">name</a>.</td>
+<td>Removes all headers named <a href="remove-header/#okhttp3.mockwebserver.MockResponse$removeHeader(kotlin.String)/name">name</a>.<code>fun removeHeader(name:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="./"><code>MockResponse</code></a></td>
 </tr>
 <tr>
 <td><a href="set-body/">setBody</a></td>
-<td><code>fun setBody(body:</code><a href="https://square.github.io/okio/2.x/okio/okio/-buffer/index.md"><code>Buffer</code></a><code>):</code><a href="./"><code>MockResponse</code></a><br><code>fun setBody(duplexResponseBody:</code><a href="../../okhttp3.mockwebserver.internal.duplex/-duplex-response-body/"><code>DuplexResponseBody</code></a><code>):</code><a href="./"><code>MockResponse</code></a><code>fun setBody(body:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="./"><code>MockResponse</code></a><br>Sets the response body to the UTF-8 encoded bytes of <a href="set-body/#okhttp3.mockwebserver.MockResponse$setBody(kotlin.String)/body">body</a>.</td>
+<td><code>fun setBody(body:</code><a href="https://square.github.io/okio/2.x/okio/okio/-buffer/index.md"><code>Buffer</code></a><code>):</code><a href="./"><code>MockResponse</code></a><br><code>fun setBody(duplexResponseBody:</code><a href="../../okhttp3.mockwebserver.internal.duplex/-duplex-response-body/"><code>DuplexResponseBody</code></a><code>):</code><a href="./"><code>MockResponse</code></a><br>Sets the response body to the UTF-8 encoded bytes of <a href="set-body/#okhttp3.mockwebserver.MockResponse$setBody(kotlin.String)/body">body</a>.<code>fun setBody(body:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="./"><code>MockResponse</code></a></td>
 </tr>
 <tr>
 <td><a href="set-body-delay/">setBodyDelay</a></td>
-<td><code>fun setBodyDelay(delay:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>, unit:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><code>TimeUnit</code></a><code>):</code><a href="./"><code>MockResponse</code></a><br>Set the delayed time of the response body to <a href="set-body-delay/#okhttp3.mockwebserver.MockResponse$setBodyDelay(kotlin.Long, java.util.concurrent.TimeUnit)/delay">delay</a>. This applies to the response body only; response headers are not affected.</td>
+<td>Set the delayed time of the response body to <a href="set-body-delay/#okhttp3.mockwebserver.MockResponse$setBodyDelay(kotlin.Long, java.util.concurrent.TimeUnit)/delay">delay</a>. This applies to the response body only; response headers are not affected.<code>fun setBodyDelay(delay:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>, unit:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><code>TimeUnit</code></a><code>):</code><a href="./"><code>MockResponse</code></a></td>
 </tr>
 <tr>
 <td><a href="set-chunked-body/">setChunkedBody</a></td>
-<td><code>fun setChunkedBody(body:</code><a href="https://square.github.io/okio/2.x/okio/okio/-buffer/index.md"><code>Buffer</code></a><code>, maxChunkSize:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><code>):</code><a href="./"><code>MockResponse</code></a><br>Sets the response body to <a href="set-chunked-body/#okhttp3.mockwebserver.MockResponse$setChunkedBody(okio.Buffer, kotlin.Int)/body">body</a>, chunked every <a href="set-chunked-body/#okhttp3.mockwebserver.MockResponse$setChunkedBody(okio.Buffer, kotlin.Int)/maxChunkSize">maxChunkSize</a> bytes.<code>fun setChunkedBody(body:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>, maxChunkSize:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><code>):</code><a href="./"><code>MockResponse</code></a><br>Sets the response body to the UTF-8 encoded bytes of <a href="set-chunked-body/#okhttp3.mockwebserver.MockResponse$setChunkedBody(kotlin.String, kotlin.Int)/body">body</a>, chunked every <a href="set-chunked-body/#okhttp3.mockwebserver.MockResponse$setChunkedBody(kotlin.String, kotlin.Int)/maxChunkSize">maxChunkSize</a> bytes.</td>
+<td>Sets the response body to <a href="set-chunked-body/#okhttp3.mockwebserver.MockResponse$setChunkedBody(okio.Buffer, kotlin.Int)/body">body</a>, chunked every <a href="set-chunked-body/#okhttp3.mockwebserver.MockResponse$setChunkedBody(okio.Buffer, kotlin.Int)/maxChunkSize">maxChunkSize</a> bytes.<code>fun setChunkedBody(body:</code><a href="https://square.github.io/okio/2.x/okio/okio/-buffer/index.md"><code>Buffer</code></a><code>, maxChunkSize:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><code>):</code><a href="./"><code>MockResponse</code></a><br>Sets the response body to the UTF-8 encoded bytes of <a href="set-chunked-body/#okhttp3.mockwebserver.MockResponse$setChunkedBody(kotlin.String, kotlin.Int)/body">body</a>, chunked every <a href="set-chunked-body/#okhttp3.mockwebserver.MockResponse$setChunkedBody(kotlin.String, kotlin.Int)/maxChunkSize">maxChunkSize</a> bytes.<code>fun setChunkedBody(body:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>, maxChunkSize:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><code>):</code><a href="./"><code>MockResponse</code></a></td>
 </tr>
 <tr>
 <td><a href="set-header/">setHeader</a></td>
-<td><code>fun setHeader(name:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>, value:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><code>Any</code></a><code>):</code><a href="./"><code>MockResponse</code></a><br>Removes all headers named <a href="set-header/#okhttp3.mockwebserver.MockResponse$setHeader(kotlin.String, kotlin.Any)/name">name</a>, then adds a new header with the name and value.</td>
+<td>Removes all headers named <a href="set-header/#okhttp3.mockwebserver.MockResponse$setHeader(kotlin.String, kotlin.Any)/name">name</a>, then adds a new header with the name and value.<code>fun setHeader(name:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>, value:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><code>Any</code></a><code>):</code><a href="./"><code>MockResponse</code></a></td>
 </tr>
 <tr>
 <td><a href="set-headers/">setHeaders</a></td>
-<td><code>fun setHeaders(headers: Headers):</code><a href="./"><code>MockResponse</code></a><br>Sets the headers and returns this.</td>
+<td>Sets the headers and returns this.<code>fun setHeaders(headers: Headers):</code><a href="./"><code>MockResponse</code></a></td>
 </tr>
 <tr>
 <td><a href="set-headers-delay/">setHeadersDelay</a></td>
@@ -813,7 +813,7 @@
 </tr>
 <tr>
 <td><a href="set-http2-error-code/">setHttp2ErrorCode</a></td>
-<td><code>fun setHttp2ErrorCode(http2ErrorCode:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><code>):</code><a href="./"><code>MockResponse</code></a><br>Sets the HTTP/2 error code and returns this.</td>
+<td>Sets the HTTP/2 error code and returns this.<code>fun setHttp2ErrorCode(http2ErrorCode:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><code>):</code><a href="./"><code>MockResponse</code></a></td>
 </tr>
 <tr>
 <td><a href="set-response-code/">setResponseCode</a></td>
@@ -821,19 +821,19 @@
 </tr>
 <tr>
 <td><a href="set-socket-policy/">setSocketPolicy</a></td>
-<td><code>fun setSocketPolicy(socketPolicy:</code><a href="../-socket-policy/"><code>SocketPolicy</code></a><code>):</code><a href="./"><code>MockResponse</code></a><br>Sets the socket policy and returns this.</td>
+<td>Sets the socket policy and returns this.<code>fun setSocketPolicy(socketPolicy:</code><a href="../-socket-policy/"><code>SocketPolicy</code></a><code>):</code><a href="./"><code>MockResponse</code></a></td>
 </tr>
 <tr>
 <td><a href="set-status/">setStatus</a></td>
-<td><code>fun setStatus(status:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="./"><code>MockResponse</code></a><br>Sets the status and returns this.</td>
+<td>Sets the status and returns this.<code>fun setStatus(status:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="./"><code>MockResponse</code></a></td>
 </tr>
 <tr>
 <td><a href="set-trailers/">setTrailers</a></td>
-<td><code>fun setTrailers(trailers: Headers):</code><a href="./"><code>MockResponse</code></a><br>Sets the trailers and returns this.</td>
+<td>Sets the trailers and returns this.<code>fun setTrailers(trailers: Headers):</code><a href="./"><code>MockResponse</code></a></td>
 </tr>
 <tr>
 <td><a href="throttle-body/">throttleBody</a></td>
-<td><code>fun throttleBody(bytesPerPeriod:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>, period:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>, unit:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><code>TimeUnit</code></a><code>):</code><a href="./"><code>MockResponse</code></a><br>Throttles the request reader and response writer to sleep for the given period after each series of <a href="throttle-body/#okhttp3.mockwebserver.MockResponse$throttleBody(kotlin.Long, kotlin.Long, java.util.concurrent.TimeUnit)/bytesPerPeriod">bytesPerPeriod</a> bytes are transferred. Use this to simulate network behavior.</td>
+<td>Throttles the request reader and response writer to sleep for the given period after each series of <a href="throttle-body/#okhttp3.mockwebserver.MockResponse$throttleBody(kotlin.Long, kotlin.Long, java.util.concurrent.TimeUnit)/bytesPerPeriod">bytesPerPeriod</a> bytes are transferred. Use this to simulate network behavior.<code>fun throttleBody(bytesPerPeriod:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>, period:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>, unit:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><code>TimeUnit</code></a><code>):</code><a href="./"><code>MockResponse</code></a></td>
 </tr>
 <tr>
 <td><a href="to-string/">toString</a></td>
@@ -841,15 +841,15 @@
 </tr>
 <tr>
 <td><a href="with-push/">withPush</a></td>
-<td><code>fun withPush(promise:</code><a href="../-push-promise/"><code>PushPromise</code></a><code>):</code><a href="./"><code>MockResponse</code></a><br>When <a href="#">protocols</a> include <a href="#">HTTP_2</a>, this attaches a pushed stream to this response.</td>
+<td>When <a href="#">protocols</a> include <a href="#">HTTP_2</a>, this attaches a pushed stream to this response.<code>fun withPush(promise:</code><a href="../-push-promise/"><code>PushPromise</code></a><code>):</code><a href="./"><code>MockResponse</code></a></td>
 </tr>
 <tr>
 <td><a href="with-settings/">withSettings</a></td>
-<td><code>fun withSettings(settings: Settings):</code><a href="./"><code>MockResponse</code></a><br>When <a href="#">protocols</a> include <a href="#">HTTP_2</a>, this pushes <a href="with-settings/#okhttp3.mockwebserver.MockResponse$withSettings(okhttp3.internal.http2.Settings)/settings">settings</a> before writing the response.</td>
+<td>When <a href="#">protocols</a> include <a href="#">HTTP_2</a>, this pushes <a href="with-settings/#okhttp3.mockwebserver.MockResponse$withSettings(okhttp3.internal.http2.Settings)/settings">settings</a> before writing the response.<code>fun withSettings(settings: Settings):</code><a href="./"><code>MockResponse</code></a></td>
 </tr>
 <tr>
 <td><a href="with-web-socket-upgrade/">withWebSocketUpgrade</a></td>
-<td><code>fun withWebSocketUpgrade(listener: WebSocketListener):</code><a href="./"><code>MockResponse</code></a><br>Attempts to perform a web socket upgrade on the connection. This will overwrite any previously set status or body.</td>
+<td>Attempts to perform a web socket upgrade on the connection. This will overwrite any previously set status or body.<code>fun withWebSocketUpgrade(listener: WebSocketListener):</code><a href="./"><code>MockResponse</code></a></td>
 </tr>
 </tbody>
 </table>

@@ -690,11 +690,11 @@
 <tbody>
 <tr>
 <td><a href="add-header/">addHeader</a></td>
-<td><code>open fun addHeader(name:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>, value:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="./"><code>Response.Builder</code></a><br>Adds a header with <a href="add-header/#okhttp3.Response.Builder$addHeader(kotlin.String, kotlin.String)/name">name</a> to <a href="add-header/#okhttp3.Response.Builder$addHeader(kotlin.String, kotlin.String)/value">value</a>. Prefer this method for multiply-valued headers like &ldquo;Set-Cookie&rdquo;.</td>
+<td>Adds a header with <a href="add-header/#okhttp3.Response.Builder$addHeader(kotlin.String, kotlin.String)/name">name</a> to <a href="add-header/#okhttp3.Response.Builder$addHeader(kotlin.String, kotlin.String)/value">value</a>. Prefer this method for multiply-valued headers like &ldquo;Set-Cookie&rdquo;.<code>open fun addHeader(name:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>, value:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="body/">body</a></td>
-<td><code>open fun body(body:</code><a href="../../-response-body/"><code>ResponseBody</code></a><code>?):</code><a href="./"><code>Response.Builder</code></a></td>
+<td><code>open fun body(body:</code><a href="../../-response-body/"><code>ResponseBody</code></a><code>?): Builder</code></td>
 </tr>
 <tr>
 <td><a href="build/">build</a></td>
@@ -702,55 +702,55 @@
 </tr>
 <tr>
 <td><a href="cache-response/">cacheResponse</a></td>
-<td><code>open fun cacheResponse(cacheResponse:</code><a href="../"><code>Response</code></a><code>?):</code><a href="./"><code>Response.Builder</code></a></td>
+<td><code>open fun cacheResponse(cacheResponse:</code><a href="../"><code>Response</code></a><code>?): Builder</code></td>
 </tr>
 <tr>
 <td><a href="code/">code</a></td>
-<td><code>open fun code(code:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><code>):</code><a href="./"><code>Response.Builder</code></a></td>
+<td><code>open fun code(code:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="handshake/">handshake</a></td>
-<td><code>open fun handshake(handshake:</code><a href="../../-handshake/"><code>Handshake</code></a><code>?):</code><a href="./"><code>Response.Builder</code></a></td>
+<td><code>open fun handshake(handshake:</code><a href="../../-handshake/"><code>Handshake</code></a><code>?): Builder</code></td>
 </tr>
 <tr>
 <td><a href="header/">header</a></td>
-<td><code>open fun header(name:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>, value:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="./"><code>Response.Builder</code></a><br>Sets the header named <a href="header/#okhttp3.Response.Builder$header(kotlin.String, kotlin.String)/name">name</a> to <a href="header/#okhttp3.Response.Builder$header(kotlin.String, kotlin.String)/value">value</a>. If this request already has any headers with that name, they are all replaced.</td>
+<td>Sets the header named <a href="header/#okhttp3.Response.Builder$header(kotlin.String, kotlin.String)/name">name</a> to <a href="header/#okhttp3.Response.Builder$header(kotlin.String, kotlin.String)/value">value</a>. If this request already has any headers with that name, they are all replaced.<code>open fun header(name:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>, value:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="headers/">headers</a></td>
-<td><code>open fun headers(headers:</code><a href="../../-headers/"><code>Headers</code></a><code>):</code><a href="./"><code>Response.Builder</code></a><br>Removes all headers on this builder and adds <a href="headers/#okhttp3.Response.Builder$headers(okhttp3.Headers)/headers">headers</a>.</td>
+<td>Removes all headers on this builder and adds <a href="headers/#okhttp3.Response.Builder$headers(okhttp3.Headers)/headers">headers</a>.<code>open fun headers(headers:</code><a href="../../-headers/"><code>Headers</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="message/">message</a></td>
-<td><code>open fun message(message:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="./"><code>Response.Builder</code></a></td>
+<td><code>open fun message(message:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="network-response/">networkResponse</a></td>
-<td><code>open fun networkResponse(networkResponse:</code><a href="../"><code>Response</code></a><code>?):</code><a href="./"><code>Response.Builder</code></a></td>
+<td><code>open fun networkResponse(networkResponse:</code><a href="../"><code>Response</code></a><code>?): Builder</code></td>
 </tr>
 <tr>
 <td><a href="prior-response/">priorResponse</a></td>
-<td><code>open fun priorResponse(priorResponse:</code><a href="../"><code>Response</code></a><code>?):</code><a href="./"><code>Response.Builder</code></a></td>
+<td><code>open fun priorResponse(priorResponse:</code><a href="../"><code>Response</code></a><code>?): Builder</code></td>
 </tr>
 <tr>
 <td><a href="protocol/">protocol</a></td>
-<td><code>open fun protocol(protocol:</code><a href="../../-protocol/"><code>Protocol</code></a><code>):</code><a href="./"><code>Response.Builder</code></a></td>
+<td><code>open fun protocol(protocol:</code><a href="../../-protocol/"><code>Protocol</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="received-response-at-millis/">receivedResponseAtMillis</a></td>
-<td><code>open fun receivedResponseAtMillis(receivedResponseAtMillis:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>):</code><a href="./"><code>Response.Builder</code></a></td>
+<td><code>open fun receivedResponseAtMillis(receivedResponseAtMillis:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="remove-header/">removeHeader</a></td>
-<td><code>open fun removeHeader(name:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="./"><code>Response.Builder</code></a><br>Removes all headers named <a href="remove-header/#okhttp3.Response.Builder$removeHeader(kotlin.String)/name">name</a> on this builder.</td>
+<td>Removes all headers named <a href="remove-header/#okhttp3.Response.Builder$removeHeader(kotlin.String)/name">name</a> on this builder.<code>open fun removeHeader(name:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="request/">request</a></td>
-<td><code>open fun request(request:</code><a href="../../-request/"><code>Request</code></a><code>):</code><a href="./"><code>Response.Builder</code></a></td>
+<td><code>open fun request(request:</code><a href="../../-request/"><code>Request</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="sent-request-at-millis/">sentRequestAtMillis</a></td>
-<td><code>open fun sentRequestAtMillis(sentRequestAtMillis:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>):</code><a href="./"><code>Response.Builder</code></a></td>
+<td><code>open fun sentRequestAtMillis(sentRequestAtMillis:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>): Builder</code></td>
 </tr>
 </tbody>
 </table>

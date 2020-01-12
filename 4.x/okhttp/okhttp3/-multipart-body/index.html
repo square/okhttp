@@ -650,13 +650,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#inherited-functions" title="Inherited Functions" class="md-nav__link">
-    Inherited Functions
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#companion-object-properties" title="Companion Object Properties" class="md-nav__link">
     Companion Object Properties
   </a>
@@ -720,11 +713,11 @@
 </tr>
 <tr>
 <td><a href="parts/">parts</a></td>
-<td><code>val parts:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="-part/"><code>MultipartBody.Part</code></a><code>&gt;</code></td>
+<td><code>val parts:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;Part&gt;</code></td>
 </tr>
 <tr>
 <td><a href="size/">size</a></td>
-<td><code>val size:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><br>The number of parts in this multipart body.</td>
+<td>The number of parts in this multipart body.<code>val size:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a></td>
 </tr>
 <tr>
 <td><a href="type/">type</a></td>
@@ -743,38 +736,19 @@
 <tbody>
 <tr>
 <td><a href="content-length/">contentLength</a></td>
-<td><code>fun contentLength():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><br>Returns the number of bytes that will be written to sink in a call to <a href="../-request-body/write-to/">writeTo</a>, or -1 if that count is unknown.</td>
+<td>Returns the number of bytes that will be written to sink in a call to <a href="../-request-body/write-to/">writeTo</a>, or -1 if that count is unknown.<code>fun contentLength():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a></td>
 </tr>
 <tr>
 <td><a href="content-type/">contentType</a></td>
-<td><code>fun contentType():</code><a href="../-media-type/"><code>MediaType</code></a><br>A combination of <a href="#">type</a> and <a href="#">boundaryByteString</a>.</td>
+<td>A combination of <a href="#">type</a> and <a href="#">boundaryByteString</a>.<code>fun contentType():</code><a href="../-media-type/"><code>MediaType</code></a></td>
 </tr>
 <tr>
 <td><a href="part/">part</a></td>
-<td><code>fun part(index:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><code>):</code><a href="-part/"><code>MultipartBody.Part</code></a></td>
+<td><code>fun part(index:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><code>): Part</code></td>
 </tr>
 <tr>
 <td><a href="write-to/">writeTo</a></td>
-<td><code>fun writeTo(sink:</code><a href="https://square.github.io/okio/2.x/okio/okio/-buffered-sink/index.md"><code>BufferedSink</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Writes the content of this request to <a href="../-request-body/write-to/#okhttp3.RequestBody$writeTo(okio.BufferedSink)/sink">sink</a>.</td>
-</tr>
-</tbody>
-</table>
-<h3 id="inherited-functions">Inherited Functions<a class="headerlink" href="#inherited-functions" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Summary</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a href="../-request-body/is-duplex/">isDuplex</a></td>
-<td><code>open fun isDuplex():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><br>A duplex request body is special in how it is <strong>transmitted</strong> on the network and in the <strong>API contract</strong> between OkHttp and the application.</td>
-</tr>
-<tr>
-<td><a href="../-request-body/is-one-shot/">isOneShot</a></td>
-<td><code>open fun isOneShot():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><br>Returns true if this body expects at most one call to <a href="../-request-body/write-to/">writeTo</a> and can be transmitted at most once. This is typically used when writing the request body is destructive and it is not possible to recreate the request body after it has been sent.</td>
+<td>Writes the content of this request to <a href="../-request-body/write-to/#okhttp3.RequestBody$writeTo(okio.BufferedSink)/sink">sink</a>.<code>fun writeTo(sink:</code><a href="https://square.github.io/okio/2.x/okio/okio/-buffered-sink/index.md"><code>BufferedSink</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -789,23 +763,23 @@
 <tbody>
 <tr>
 <td><a href="-a-l-t-e-r-n-a-t-i-v-e/">ALTERNATIVE</a></td>
-<td><code>val ALTERNATIVE:</code><a href="../-media-type/"><code>MediaType</code></a><br>The &ldquo;multipart/alternative&rdquo; type is syntactically identical to &ldquo;multipart/mixed&rdquo;, but the semantics are different. In particular, each of the body parts is an &ldquo;alternative&rdquo; version of the same information.</td>
+<td>The &ldquo;multipart/alternative&rdquo; type is syntactically identical to &ldquo;multipart/mixed&rdquo;, but the semantics are different. In particular, each of the body parts is an &ldquo;alternative&rdquo; version of the same information.<code>val ALTERNATIVE:</code><a href="../-media-type/"><code>MediaType</code></a></td>
 </tr>
 <tr>
 <td><a href="-d-i-g-e-s-t/">DIGEST</a></td>
-<td><code>val DIGEST:</code><a href="../-media-type/"><code>MediaType</code></a><br>This type is syntactically identical to &ldquo;multipart/mixed&rdquo;, but the semantics are different. In particular, in a digest, the default <code>Content-Type</code> value for a body part is changed from &ldquo;text/plain&rdquo; to &ldquo;message/rfc822&rdquo;.</td>
+<td>This type is syntactically identical to &ldquo;multipart/mixed&rdquo;, but the semantics are different. In particular, in a digest, the default <code>Content-Type</code> value for a body part is changed from &ldquo;text/plain&rdquo; to &ldquo;message/rfc822&rdquo;.<code>val DIGEST:</code><a href="../-media-type/"><code>MediaType</code></a></td>
 </tr>
 <tr>
 <td><a href="-f-o-r-m/">FORM</a></td>
-<td><code>val FORM:</code><a href="../-media-type/"><code>MediaType</code></a><br>The media-type multipart/form-data follows the rules of all multipart MIME data streams as outlined in RFC 2046. In forms, there are a series of fields to be supplied by the user who fills out the form. Each field has a name. Within a given form, the names are unique.</td>
+<td>The media-type multipart/form-data follows the rules of all multipart MIME data streams as outlined in RFC 2046. In forms, there are a series of fields to be supplied by the user who fills out the form. Each field has a name. Within a given form, the names are unique.<code>val FORM:</code><a href="../-media-type/"><code>MediaType</code></a></td>
 </tr>
 <tr>
 <td><a href="-m-i-x-e-d/">MIXED</a></td>
-<td><code>val MIXED:</code><a href="../-media-type/"><code>MediaType</code></a><br>The &ldquo;mixed&rdquo; subtype of &ldquo;multipart&rdquo; is intended for use when the body parts are independent and need to be bundled in a particular order. Any &ldquo;multipart&rdquo; subtypes that an implementation does not recognize must be treated as being of subtype &ldquo;mixed&rdquo;.</td>
+<td>The &ldquo;mixed&rdquo; subtype of &ldquo;multipart&rdquo; is intended for use when the body parts are independent and need to be bundled in a particular order. Any &ldquo;multipart&rdquo; subtypes that an implementation does not recognize must be treated as being of subtype &ldquo;mixed&rdquo;.<code>val MIXED:</code><a href="../-media-type/"><code>MediaType</code></a></td>
 </tr>
 <tr>
 <td><a href="-p-a-r-a-l-l-e-l/">PARALLEL</a></td>
-<td><code>val PARALLEL:</code><a href="../-media-type/"><code>MediaType</code></a><br>This type is syntactically identical to &ldquo;multipart/mixed&rdquo;, but the semantics are different. In particular, in a parallel entity, the order of body parts is not significant.</td>
+<td>This type is syntactically identical to &ldquo;multipart/mixed&rdquo;, but the semantics are different. In particular, in a parallel entity, the order of body parts is not significant.<code>val PARALLEL:</code><a href="../-media-type/"><code>MediaType</code></a></td>
 </tr>
 </tbody>
 </table>

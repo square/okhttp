@@ -736,23 +736,23 @@ its incoming messages.</p>
 <tbody>
 <tr>
 <td><a href="cancel/">cancel</a></td>
-<td><code>abstract fun cancel():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Immediately and violently release resources held by this web socket, discarding any enqueued messages. This does nothing if the web socket has already been closed or canceled.</td>
+<td>Immediately and violently release resources held by this web socket, discarding any enqueued messages. This does nothing if the web socket has already been closed or canceled.<code>abstract fun cancel():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 <tr>
 <td><a href="close/">close</a></td>
-<td><code>abstract fun close(code:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><code>, reason:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>?):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><br>Attempts to initiate a graceful shutdown of this web socket. Any already-enqueued messages will be transmitted before the close message is sent but subsequent calls to <a href="send/">send</a> will return false and their messages will not be enqueued.</td>
+<td>Attempts to initiate a graceful shutdown of this web socket. Any already-enqueued messages will be transmitted before the close message is sent but subsequent calls to <a href="send/">send</a> will return false and their messages will not be enqueued.<code>abstract fun close(code:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><code>, reason:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>?):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a></td>
 </tr>
 <tr>
 <td><a href="queue-size/">queueSize</a></td>
-<td><code>abstract fun queueSize():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><br>Returns the size in bytes of all messages enqueued to be transmitted to the server. This doesn&rsquo;t include framing overhead. It also doesn&rsquo;t include any bytes buffered by the operating system or network intermediaries. This method returns 0 if no messages are waiting in the queue. If may return a nonzero value after the web socket has been canceled; this indicates that enqueued messages were not transmitted.</td>
+<td>Returns the size in bytes of all messages enqueued to be transmitted to the server. This doesn&rsquo;t include framing overhead. It also doesn&rsquo;t include any bytes buffered by the operating system or network intermediaries. This method returns 0 if no messages are waiting in the queue. If may return a nonzero value after the web socket has been canceled; this indicates that enqueued messages were not transmitted.<code>abstract fun queueSize():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a></td>
 </tr>
 <tr>
 <td><a href="request/">request</a></td>
-<td><code>abstract fun request():</code><a href="../-request/"><code>Request</code></a><br>Returns the original request that initiated this web socket.</td>
+<td>Returns the original request that initiated this web socket.<code>abstract fun request():</code><a href="../-request/"><code>Request</code></a></td>
 </tr>
 <tr>
 <td><a href="send/">send</a></td>
-<td><code>abstract fun send(text:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><br>Attempts to enqueue <code>text</code> to be UTF-8 encoded and sent as a the data of a text (type <code>0x1</code>) message.<code>abstract fun send(bytes:</code><a href="https://square.github.io/okio/2.x/okio/okio/-byte-string/index.md"><code>ByteString</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><br>Attempts to enqueue <code>bytes</code> to be sent as a the data of a binary (type <code>0x2</code>) message.</td>
+<td>Attempts to enqueue <code>text</code> to be UTF-8 encoded and sent as a the data of a text (type <code>0x1</code>) message.<code>abstract fun send(text:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><br>Attempts to enqueue <code>bytes</code> to be sent as a the data of a binary (type <code>0x2</code>) message.<code>abstract fun send(bytes:</code><a href="https://square.github.io/okio/2.x/okio/okio/-byte-string/index.md"><code>ByteString</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a></td>
 </tr>
 </tbody>
 </table>

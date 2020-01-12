@@ -640,8 +640,8 @@
                 
                 <p><a href="../../../../">okhttp</a> / <a href="../../../">okhttp3</a> / <a href="../../">OkHttpClient</a> / <a href="../">Builder</a> / <a href="./">pingInterval</a></p>
 <h1 id="pinginterval">pingInterval<a class="headerlink" href="#pinginterval" title="Permanent link">&para;</a></h1>
-<p><code>fun pingInterval(interval:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>, unit:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><code>TimeUnit</code></a><code>):</code><a href="../"><code>OkHttpClient.Builder</code></a>
-<code>@IgnoreJRERequirement fun pingInterval(duration:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/time/Duration.html"><code>Duration</code></a><code>):</code><a href="../"><code>OkHttpClient.Builder</code></a></p>
+<p><code>fun pingInterval(interval:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>, unit:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><code>TimeUnit</code></a><code>): Builder</code>
+<code>@IgnoreJRERequirement fun pingInterval(duration:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/time/Duration.html"><code>Duration</code></a><code>): Builder</code></p>
 <p>Sets the interval between HTTP/2 and web socket pings initiated by this client. Use this to
 automatically send ping frames until either the connection fails or it is closed. This keeps
 the connection alive and may detect connectivity failures.</p>

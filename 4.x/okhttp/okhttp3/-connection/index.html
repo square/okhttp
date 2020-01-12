@@ -728,19 +728,19 @@ been found. But only complete the stream once its data stream has been exhausted
 <tbody>
 <tr>
 <td><a href="handshake/">handshake</a></td>
-<td><code>abstract fun handshake():</code><a href="../-handshake/"><code>Handshake</code></a><code>?</code><br>Returns the TLS handshake used to establish this connection, or null if the connection is not HTTPS.</td>
+<td>Returns the TLS handshake used to establish this connection, or null if the connection is not HTTPS.<code>abstract fun handshake():</code><a href="../-handshake/"><code>Handshake</code></a><code>?</code></td>
 </tr>
 <tr>
 <td><a href="protocol/">protocol</a></td>
-<td><code>abstract fun protocol():</code><a href="../-protocol/"><code>Protocol</code></a><br>Returns the protocol negotiated by this connection, or <a href="../-protocol/-h-t-t-p_1_1/">Protocol.HTTP_1_1</a> if no protocol has been negotiated. This method returns <a href="../-protocol/-h-t-t-p_1_1/">Protocol.HTTP_1_1</a> even if the remote peer is using <a href="../-protocol/-h-t-t-p_1_0/">Protocol.HTTP_1_0</a>.</td>
+<td>Returns the protocol negotiated by this connection, or <a href="../-protocol/-h-t-t-p_1_1/">Protocol.HTTP_1_1</a> if no protocol has been negotiated. This method returns <a href="../-protocol/-h-t-t-p_1_1/">Protocol.HTTP_1_1</a> even if the remote peer is using <a href="../-protocol/-h-t-t-p_1_0/">Protocol.HTTP_1_0</a>.<code>abstract fun protocol():</code><a href="../-protocol/"><code>Protocol</code></a></td>
 </tr>
 <tr>
 <td><a href="route/">route</a></td>
-<td><code>abstract fun route():</code><a href="../-route/"><code>Route</code></a><br>Returns the route used by this connection.</td>
+<td>Returns the route used by this connection.<code>abstract fun route():</code><a href="../-route/"><code>Route</code></a></td>
 </tr>
 <tr>
 <td><a href="socket/">socket</a></td>
-<td><code>abstract fun socket():</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/Socket.html"><code>Socket</code></a><br>Returns the socket that this connection is using. Returns an <a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLSocket.html">SSL socket</a> if this connection is HTTPS. If this is an HTTP/2 connection the socket may be shared by multiple concurrent calls.</td>
+<td>Returns the socket that this connection is using. Returns an <a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLSocket.html">SSL socket</a> if this connection is HTTPS. If this is an HTTP/2 connection the socket may be shared by multiple concurrent calls.<code>abstract fun socket():</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/Socket.html"><code>Socket</code></a></td>
 </tr>
 </tbody>
 </table>

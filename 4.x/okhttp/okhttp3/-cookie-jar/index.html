@@ -683,11 +683,11 @@ updating and expiring cookies.</p>
 <tbody>
 <tr>
 <td><a href="load-for-request/">loadForRequest</a></td>
-<td><code>abstract fun loadForRequest(url:</code><a href="../-http-url/"><code>HttpUrl</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="../-cookie/"><code>Cookie</code></a><code>&gt;</code><br>Load cookies from the jar for an HTTP request to <a href="load-for-request/#okhttp3.CookieJar$loadForRequest(okhttp3.HttpUrl)/url">url</a>. This method returns a possibly empty list of cookies for the network request.</td>
+<td>Load cookies from the jar for an HTTP request to <a href="load-for-request/#okhttp3.CookieJar$loadForRequest(okhttp3.HttpUrl)/url">url</a>. This method returns a possibly empty list of cookies for the network request.<code>abstract fun loadForRequest(url:</code><a href="../-http-url/"><code>HttpUrl</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="../-cookie/"><code>Cookie</code></a><code>&gt;</code></td>
 </tr>
 <tr>
 <td><a href="save-from-response/">saveFromResponse</a></td>
-<td><code>abstract fun saveFromResponse(url:</code><a href="../-http-url/"><code>HttpUrl</code></a><code>, cookies:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="../-cookie/"><code>Cookie</code></a><code>&gt;):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Saves <a href="save-from-response/#okhttp3.CookieJar$saveFromResponse(okhttp3.HttpUrl, kotlin.collections.List((okhttp3.Cookie)))/cookies">cookies</a> from an HTTP response to this store according to this jar&rsquo;s policy.</td>
+<td>Saves <a href="save-from-response/#okhttp3.CookieJar$saveFromResponse(okhttp3.HttpUrl, kotlin.collections.List((okhttp3.Cookie)))/cookies">cookies</a> from an HTTP response to this store according to this jar&rsquo;s policy.<code>abstract fun saveFromResponse(url:</code><a href="../-http-url/"><code>HttpUrl</code></a><code>, cookies:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="../-cookie/"><code>Cookie</code></a><code>&gt;):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -702,7 +702,7 @@ updating and expiring cookies.</p>
 <tbody>
 <tr>
 <td><a href="-n-o_-c-o-o-k-i-e-s/">NO_COOKIES</a></td>
-<td><code>val NO_COOKIES:</code><a href="./"><code>CookieJar</code></a><br>A cookie jar that never accepts any cookies.</td>
+<td>A cookie jar that never accepts any cookies.<code>val NO_COOKIES:</code><a href="./"><code>CookieJar</code></a></td>
 </tr>
 </tbody>
 </table>

@@ -646,7 +646,7 @@ that key.</p>
 <p>Prior to OkHttp 3.11, this method never returned null if no tag was attached. Instead it
 returned either this request, or the request upon which this request was derived with
 <a href="../new-builder/">newBuilder</a>.</p>
-<p><code>fun &lt;T&gt; tag(type:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html"><code>Class</code></a><code>&lt;out</code><a href="./#T"><code>T</code></a><code>&gt;):</code><a href="./#T"><code>T</code></a><code>?</code></p>
+<p><code>fun &lt;T&gt; tag(type:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html"><code>Class</code></a><code>&lt;out T&gt;): T?</code></p>
 <p>Returns the tag attached with <a href="./#okhttp3.Request$tag(java.lang.Class((okhttp3.Request.tag.T)))/type">type</a> as a key, or null if no tag is attached with that
 key.</p>
                 

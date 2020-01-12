@@ -704,23 +704,23 @@
 <tbody>
 <tr>
 <td><a href="content-length/">contentLength</a></td>
-<td><code>open fun contentLength():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><br>Returns the number of bytes that will be written to sink in a call to <a href="write-to/">writeTo</a>, or -1 if that count is unknown.</td>
+<td>Returns the number of bytes that will be written to sink in a call to <a href="write-to/">writeTo</a>, or -1 if that count is unknown.<code>open fun contentLength():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a></td>
 </tr>
 <tr>
 <td><a href="content-type/">contentType</a></td>
-<td><code>abstract fun contentType():</code><a href="../-media-type/"><code>MediaType</code></a><code>?</code><br>Returns the Content-Type header for this body.</td>
+<td>Returns the Content-Type header for this body.<code>abstract fun contentType():</code><a href="../-media-type/"><code>MediaType</code></a><code>?</code></td>
 </tr>
 <tr>
 <td><a href="is-duplex/">isDuplex</a></td>
-<td><code>open fun isDuplex():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><br>A duplex request body is special in how it is <strong>transmitted</strong> on the network and in the <strong>API contract</strong> between OkHttp and the application.</td>
+<td>A duplex request body is special in how it is <strong>transmitted</strong> on the network and in the <strong>API contract</strong> between OkHttp and the application.<code>open fun isDuplex():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a></td>
 </tr>
 <tr>
 <td><a href="is-one-shot/">isOneShot</a></td>
-<td><code>open fun isOneShot():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><br>Returns true if this body expects at most one call to <a href="write-to/">writeTo</a> and can be transmitted at most once. This is typically used when writing the request body is destructive and it is not possible to recreate the request body after it has been sent.</td>
+<td>Returns true if this body expects at most one call to <a href="write-to/">writeTo</a> and can be transmitted at most once. This is typically used when writing the request body is destructive and it is not possible to recreate the request body after it has been sent.<code>open fun isOneShot():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a></td>
 </tr>
 <tr>
 <td><a href="write-to/">writeTo</a></td>
-<td><code>abstract fun writeTo(sink:</code><a href="https://square.github.io/okio/2.x/okio/okio/-buffered-sink/index.md"><code>BufferedSink</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Writes the content of this request to <a href="write-to/#okhttp3.RequestBody$writeTo(okio.BufferedSink)/sink">sink</a>.</td>
+<td>Writes the content of this request to <a href="write-to/#okhttp3.RequestBody$writeTo(okio.BufferedSink)/sink">sink</a>.<code>abstract fun writeTo(sink:</code><a href="https://square.github.io/okio/2.x/okio/okio/-buffered-sink/index.md"><code>BufferedSink</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -735,11 +735,11 @@
 <tbody>
 <tr>
 <td><a href="as-request-body/">asRequestBody</a></td>
-<td><code>fun</code><a href="https://docs.oracle.com/javase/8/docs/api/java/io/File.html"><code>File</code></a><code>.asRequestBody(contentType:</code><a href="../-media-type/"><code>MediaType</code></a><code>? = null):</code><a href="./"><code>RequestBody</code></a><br>Returns a new request body that transmits the content of this.</td>
+<td>Returns a new request body that transmits the content of this.<code>fun</code><a href="https://docs.oracle.com/javase/8/docs/api/java/io/File.html"><code>File</code></a><code>.asRequestBody(contentType:</code><a href="../-media-type/"><code>MediaType</code></a><code>? = null):</code><a href="./"><code>RequestBody</code></a></td>
 </tr>
 <tr>
 <td><a href="to-request-body/">toRequestBody</a></td>
-<td><code>fun</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>.toRequestBody(contentType:</code><a href="../-media-type/"><code>MediaType</code></a><code>? = null):</code><a href="./"><code>RequestBody</code></a><br>Returns a new request body that transmits this string. If <a href="to-request-body/#okhttp3.RequestBody.Companion$toRequestBody(kotlin.String, okhttp3.MediaType)/contentType">contentType</a> is non-null and lacks a charset, this will use UTF-8.<code>fun</code><a href="https://square.github.io/okio/2.x/okio/okio/-byte-string/index.md"><code>ByteString</code></a><code>.toRequestBody(contentType:</code><a href="../-media-type/"><code>MediaType</code></a><code>? = null):</code><a href="./"><code>RequestBody</code></a><br><code>fun</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html"><code>ByteArray</code></a><code>.toRequestBody(contentType:</code><a href="../-media-type/"><code>MediaType</code></a><code>? = null, offset:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><code>= 0, byteCount:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><code>= size):</code><a href="./"><code>RequestBody</code></a><br>Returns a new request body that transmits this.</td>
+<td>Returns a new request body that transmits this string. If <a href="to-request-body/#okhttp3.RequestBody.Companion$toRequestBody(kotlin.String, okhttp3.MediaType)/contentType">contentType</a> is non-null and lacks a charset, this will use UTF-8.<code>fun</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>.toRequestBody(contentType:</code><a href="../-media-type/"><code>MediaType</code></a><code>? = null):</code><a href="./"><code>RequestBody</code></a><br>Returns a new request body that transmits this.<code>fun</code><a href="https://square.github.io/okio/2.x/okio/okio/-byte-string/index.md"><code>ByteString</code></a><code>.toRequestBody(contentType:</code><a href="../-media-type/"><code>MediaType</code></a><code>? = null):</code><a href="./"><code>RequestBody</code></a><br><code>fun</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html"><code>ByteArray</code></a><code>.toRequestBody(contentType:</code><a href="../-media-type/"><code>MediaType</code></a><code>? = null, offset:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><code>= 0, byteCount:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><code>= size):</code><a href="./"><code>RequestBody</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -758,7 +758,7 @@
 </tr>
 <tr>
 <td><a href="../-multipart-body/">MultipartBody</a></td>
-<td><code>class MultipartBody :</code><a href="./"><code>RequestBody</code></a><br>An <a href="http://www.ietf.org/rfc/rfc2387.txt">RFC 2387</a>-compliant request body.</td>
+<td>An <a href="http://www.ietf.org/rfc/rfc2387.txt">RFC 2387</a>-compliant request body.<code>class MultipartBody :</code><a href="./"><code>RequestBody</code></a></td>
 </tr>
 </tbody>
 </table>

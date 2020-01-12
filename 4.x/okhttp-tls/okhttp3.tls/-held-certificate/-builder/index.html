@@ -676,7 +676,7 @@
 <tbody>
 <tr>
 <td><a href="-init-/">&lt;init&gt;</a></td>
-<td><code>Builder()</code><br>Build a held certificate with reasonable defaults.</td>
+<td>Build a held certificate with reasonable defaults.<code>Builder()</code></td>
 </tr>
 </tbody>
 </table>
@@ -691,7 +691,7 @@
 <tbody>
 <tr>
 <td><a href="add-subject-alternative-name/">addSubjectAlternativeName</a></td>
-<td><code>fun addSubjectAlternativeName(altName:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="./"><code>HeldCertificate.Builder</code></a><br>Adds a subject alternative name (SAN) to the certificate. This is usually a literal hostname, a literal IP address, or a hostname pattern. If no subject alternative names are added that extension will be omitted.</td>
+<td>Adds a subject alternative name (SAN) to the certificate. This is usually a literal hostname, a literal IP address, or a hostname pattern. If no subject alternative names are added that extension will be omitted.<code>fun addSubjectAlternativeName(altName:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="build/">build</a></td>
@@ -699,43 +699,43 @@
 </tr>
 <tr>
 <td><a href="certificate-authority/">certificateAuthority</a></td>
-<td><code>fun certificateAuthority(maxIntermediateCas:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><code>):</code><a href="./"><code>HeldCertificate.Builder</code></a><br>Set this certificate to be a signing certificate, with up to <code>maxIntermediateCas</code> intermediate signing certificates beneath it.</td>
+<td>Set this certificate to be a signing certificate, with up to <code>maxIntermediateCas</code> intermediate signing certificates beneath it.<code>fun certificateAuthority(maxIntermediateCas:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="common-name/">commonName</a></td>
-<td><code>fun commonName(cn:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="./"><code>HeldCertificate.Builder</code></a><br>Set this certificate&rsquo;s common name (CN). Historically this held the hostname of TLS certificate, but that practice was deprecated by <a href="https://tools.ietf.org/html/rfc2818">RFC 2818</a> and replaced with <a href="add-subject-alternative-name/">addSubjectAlternativeName</a>. If unset a random string will be used.</td>
+<td>Set this certificate&rsquo;s common name (CN). Historically this held the hostname of TLS certificate, but that practice was deprecated by <a href="https://tools.ietf.org/html/rfc2818">RFC 2818</a> and replaced with <a href="add-subject-alternative-name/">addSubjectAlternativeName</a>. If unset a random string will be used.<code>fun commonName(cn:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="duration/">duration</a></td>
-<td><code>fun duration(duration:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>, unit:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><code>TimeUnit</code></a><code>):</code><a href="./"><code>HeldCertificate.Builder</code></a><br>Sets the certificate to be valid immediately and until the specified duration has elapsed. The precision of this field is seconds; further precision will be truncated.</td>
+<td>Sets the certificate to be valid immediately and until the specified duration has elapsed. The precision of this field is seconds; further precision will be truncated.<code>fun duration(duration:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>, unit:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><code>TimeUnit</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="ecdsa256/">ecdsa256</a></td>
-<td><code>fun ecdsa256():</code><a href="./"><code>HeldCertificate.Builder</code></a><br>Configure the certificate to generate a 256-bit ECDSA key, which provides about 128 bits of security. ECDSA keys are noticeably faster than RSA keys.</td>
+<td>Configure the certificate to generate a 256-bit ECDSA key, which provides about 128 bits of security. ECDSA keys are noticeably faster than RSA keys.<code>fun ecdsa256(): Builder</code></td>
 </tr>
 <tr>
 <td><a href="key-pair/">keyPair</a></td>
-<td><code>fun keyPair(keyPair:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/security/KeyPair.html"><code>KeyPair</code></a><code>):</code><a href="./"><code>HeldCertificate.Builder</code></a><br><code>fun keyPair(publicKey:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/security/PublicKey.html"><code>PublicKey</code></a><code>, privateKey:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/security/PrivateKey.html"><code>PrivateKey</code></a><code>):</code><a href="./"><code>HeldCertificate.Builder</code></a><br>Sets the public/private key pair used for this certificate. If unset a key pair will be generated.</td>
+<td>Sets the public/private key pair used for this certificate. If unset a key pair will be generated.<code>fun keyPair(keyPair:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/security/KeyPair.html"><code>KeyPair</code></a><code>): Builder</code><br><code>fun keyPair(publicKey:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/security/PublicKey.html"><code>PublicKey</code></a><code>, privateKey:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/security/PrivateKey.html"><code>PrivateKey</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="organizational-unit/">organizationalUnit</a></td>
-<td><code>fun organizationalUnit(ou:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="./"><code>HeldCertificate.Builder</code></a><br>Sets the certificate&rsquo;s organizational unit (OU). If unset this field will be omitted.</td>
+<td>Sets the certificate&rsquo;s organizational unit (OU). If unset this field will be omitted.<code>fun organizationalUnit(ou:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="rsa2048/">rsa2048</a></td>
-<td><code>fun rsa2048():</code><a href="./"><code>HeldCertificate.Builder</code></a><br>Configure the certificate to generate a 2048-bit RSA key, which provides about 112 bits of security. RSA keys are interoperable with very old clients that don&rsquo;t support ECDSA.</td>
+<td>Configure the certificate to generate a 2048-bit RSA key, which provides about 112 bits of security. RSA keys are interoperable with very old clients that don&rsquo;t support ECDSA.<code>fun rsa2048(): Builder</code></td>
 </tr>
 <tr>
 <td><a href="serial-number/">serialNumber</a></td>
-<td><code>fun serialNumber(serialNumber:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/math/BigInteger.html"><code>BigInteger</code></a><code>):</code><a href="./"><code>HeldCertificate.Builder</code></a><br><code>fun serialNumber(serialNumber:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>):</code><a href="./"><code>HeldCertificate.Builder</code></a><br>Sets this certificate&rsquo;s serial number. If unset the serial number will be 1.</td>
+<td>Sets this certificate&rsquo;s serial number. If unset the serial number will be 1.<code>fun serialNumber(serialNumber:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/math/BigInteger.html"><code>BigInteger</code></a><code>): Builder</code><br><code>fun serialNumber(serialNumber:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="signed-by/">signedBy</a></td>
-<td><code>fun signedBy(signedBy:</code><a href="../"><code>HeldCertificate</code></a><code>?):</code><a href="./"><code>HeldCertificate.Builder</code></a><br>Set the certificate that will issue this certificate. If unset the certificate will be self-signed.</td>
+<td>Set the certificate that will issue this certificate. If unset the certificate will be self-signed.<code>fun signedBy(signedBy:</code><a href="../"><code>HeldCertificate</code></a><code>?): Builder</code></td>
 </tr>
 <tr>
 <td><a href="validity-interval/">validityInterval</a></td>
-<td><code>fun validityInterval(notBefore:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>, notAfter:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>):</code><a href="./"><code>HeldCertificate.Builder</code></a><br>Sets the certificate to be valid in <code>[notBefore..notAfter]</code>. Both endpoints are specified in the format of <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/System.html#currentTimeMillis()">System.currentTimeMillis</a>. Specify -1L for both values to use the default interval, 24 hours starting when the certificate is created.</td>
+<td>Sets the certificate to be valid in <code>[notBefore..notAfter]</code>. Both endpoints are specified in the format of <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/System.html#currentTimeMillis()">System.currentTimeMillis</a>. Specify -1L for both values to use the default interval, 24 hours starting when the certificate is created.<code>fun validityInterval(notBefore:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>, notAfter:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>): Builder</code></td>
 </tr>
 </tbody>
 </table>

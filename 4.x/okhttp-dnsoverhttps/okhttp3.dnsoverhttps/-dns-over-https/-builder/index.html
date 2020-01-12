@@ -690,7 +690,7 @@
 <tbody>
 <tr>
 <td><a href="bootstrap-dns-hosts/">bootstrapDnsHosts</a></td>
-<td><code>fun bootstrapDnsHosts(bootstrapDnsHosts:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetAddress.html"><code>InetAddress</code></a><code>&gt;?):</code><a href="./"><code>DnsOverHttps.Builder</code></a><br><code>fun bootstrapDnsHosts(vararg bootstrapDnsHosts:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetAddress.html"><code>InetAddress</code></a><code>):</code><a href="./"><code>DnsOverHttps.Builder</code></a></td>
+<td><code>fun bootstrapDnsHosts(bootstrapDnsHosts:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetAddress.html"><code>InetAddress</code></a><code>&gt;?): Builder</code><br><code>fun bootstrapDnsHosts(vararg bootstrapDnsHosts:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetAddress.html"><code>InetAddress</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="build/">build</a></td>
@@ -698,31 +698,31 @@
 </tr>
 <tr>
 <td><a href="client/">client</a></td>
-<td><code>fun client(client: OkHttpClient):</code><a href="./"><code>DnsOverHttps.Builder</code></a></td>
+<td><code>fun client(client: OkHttpClient): Builder</code></td>
 </tr>
 <tr>
 <td><a href="include-i-pv6/">includeIPv6</a></td>
-<td><code>fun includeIPv6(includeIPv6:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><code>):</code><a href="./"><code>DnsOverHttps.Builder</code></a></td>
+<td><code>fun includeIPv6(includeIPv6:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="post/">post</a></td>
-<td><code>fun post(post:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><code>):</code><a href="./"><code>DnsOverHttps.Builder</code></a></td>
+<td><code>fun post(post:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="resolve-private-addresses/">resolvePrivateAddresses</a></td>
-<td><code>fun resolvePrivateAddresses(resolvePrivateAddresses:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><code>):</code><a href="./"><code>DnsOverHttps.Builder</code></a></td>
+<td><code>fun resolvePrivateAddresses(resolvePrivateAddresses:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="resolve-public-addresses/">resolvePublicAddresses</a></td>
-<td><code>fun resolvePublicAddresses(resolvePublicAddresses:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><code>):</code><a href="./"><code>DnsOverHttps.Builder</code></a></td>
+<td><code>fun resolvePublicAddresses(resolvePublicAddresses:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="system-dns/">systemDns</a></td>
-<td><code>fun systemDns(systemDns: Dns):</code><a href="./"><code>DnsOverHttps.Builder</code></a></td>
+<td><code>fun systemDns(systemDns: Dns): Builder</code></td>
 </tr>
 <tr>
 <td><a href="url/">url</a></td>
-<td><code>fun url(url: HttpUrl):</code><a href="./"><code>DnsOverHttps.Builder</code></a></td>
+<td><code>fun url(url: HttpUrl): Builder</code></td>
 </tr>
 </tbody>
 </table>

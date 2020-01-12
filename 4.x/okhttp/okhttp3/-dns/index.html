@@ -680,7 +680,7 @@ or to force a specific known IP address.</p>
 <tbody>
 <tr>
 <td><a href="lookup/">lookup</a></td>
-<td><code>abstract fun lookup(hostname:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetAddress.html"><code>InetAddress</code></a><code>&gt;</code><br>Returns the IP addresses of <code>hostname</code>, in the order they will be attempted by OkHttp. If a connection to an address fails, OkHttp will retry the connection with the next address until either a connection is made, the set of IP addresses is exhausted, or a limit is exceeded.</td>
+<td>Returns the IP addresses of <code>hostname</code>, in the order they will be attempted by OkHttp. If a connection to an address fails, OkHttp will retry the connection with the next address until either a connection is made, the set of IP addresses is exhausted, or a limit is exceeded.<code>abstract fun lookup(hostname:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetAddress.html"><code>InetAddress</code></a><code>&gt;</code></td>
 </tr>
 </tbody>
 </table>
@@ -695,7 +695,7 @@ or to force a specific known IP address.</p>
 <tbody>
 <tr>
 <td><a href="-s-y-s-t-e-m/">SYSTEM</a></td>
-<td><code>val SYSTEM:</code><a href="./"><code>Dns</code></a><br>A DNS that uses <a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetAddress.html#getAllByName(java.lang.String)">InetAddress.getAllByName</a> to ask the underlying operating system to lookup IP addresses. Most custom <a href="./">Dns</a> implementations should delegate to this instance.</td>
+<td>A DNS that uses <a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetAddress.html#getAllByName(java.lang.String)">InetAddress.getAllByName</a> to ask the underlying operating system to lookup IP addresses. Most custom <a href="./">Dns</a> implementations should delegate to this instance.<code>val SYSTEM:</code><a href="./"><code>Dns</code></a></td>
 </tr>
 </tbody>
 </table>

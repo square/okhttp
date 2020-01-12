@@ -766,7 +766,7 @@ client. Subject alternative names are not used for client authentication.</p>
 <tbody>
 <tr>
 <td><a href="-builder/">Builder</a></td>
-<td><code>class Builder</code><br>Build a held certificate with reasonable defaults.</td>
+<td>Build a held certificate with reasonable defaults.<code>class Builder</code></td>
 </tr>
 </tbody>
 </table>
@@ -781,7 +781,7 @@ client. Subject alternative names are not used for client authentication.</p>
 <tbody>
 <tr>
 <td><a href="-init-/">&lt;init&gt;</a></td>
-<td><code>HeldCertificate(keyPair:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/security/KeyPair.html"><code>KeyPair</code></a><code>, certificate:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/security/cert/X509Certificate.html"><code>X509Certificate</code></a><code>)</code><br>A certificate and its private key. These are some properties of certificates that are used with TLS:</td>
+<td>A certificate and its private key. These are some properties of certificates that are used with TLS:<code>HeldCertificate(keyPair:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/security/KeyPair.html"><code>KeyPair</code></a><code>, certificate:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/security/cert/X509Certificate.html"><code>X509Certificate</code></a><code>)</code></td>
 </tr>
 </tbody>
 </table>
@@ -815,15 +815,15 @@ client. Subject alternative names are not used for client authentication.</p>
 <tbody>
 <tr>
 <td><a href="certificate-pem/">certificatePem</a></td>
-<td><code>fun certificatePem():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><br>Returns the certificate encoded in <a href="https://tools.ietf.org/html/rfc7468">PEM format</a>.</td>
+<td>Returns the certificate encoded in <a href="https://tools.ietf.org/html/rfc7468">PEM format</a>.<code>fun certificatePem():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a></td>
 </tr>
 <tr>
 <td><a href="private-key-pkcs1-pem/">privateKeyPkcs1Pem</a></td>
-<td><code>fun privateKeyPkcs1Pem():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><br>Returns the RSA private key encoded in <a href="https://tools.ietf.org/html/rfc8017">PKCS #1</a> <a href="https://tools.ietf.org/html/rfc7468">PEM format</a>.</td>
+<td>Returns the RSA private key encoded in <a href="https://tools.ietf.org/html/rfc8017">PKCS #1</a> <a href="https://tools.ietf.org/html/rfc7468">PEM format</a>.<code>fun privateKeyPkcs1Pem():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a></td>
 </tr>
 <tr>
 <td><a href="private-key-pkcs8-pem/">privateKeyPkcs8Pem</a></td>
-<td><code>fun privateKeyPkcs8Pem():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><br>Returns the RSA private key encoded in <a href="https://tools.ietf.org/html/rfc5208">PKCS #8</a> <a href="https://tools.ietf.org/html/rfc7468">PEM format</a>.</td>
+<td>Returns the RSA private key encoded in <a href="https://tools.ietf.org/html/rfc5208">PKCS #8</a> <a href="https://tools.ietf.org/html/rfc7468">PEM format</a>.<code>fun privateKeyPkcs8Pem():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -838,7 +838,7 @@ client. Subject alternative names are not used for client authentication.</p>
 <tbody>
 <tr>
 <td><a href="decode/">decode</a></td>
-<td><code>fun decode(certificateAndPrivateKeyPem:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="./"><code>HeldCertificate</code></a><br>Decodes a multiline string that contains both a <a href="certificate-pem/">certificate</a> and a <a href="private-key-pkcs8-pem/">private key</a>, both <a href="https://tools.ietf.org/html/rfc7468">PEM-encoded</a>. A typical input string looks like this:</td>
+<td>Decodes a multiline string that contains both a <a href="certificate-pem/">certificate</a> and a <a href="private-key-pkcs8-pem/">private key</a>, both <a href="https://tools.ietf.org/html/rfc7468">PEM-encoded</a>. A typical input string looks like this:<code>fun decode(certificateAndPrivateKeyPem:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="./"><code>HeldCertificate</code></a></td>
 </tr>
 </tbody>
 </table>

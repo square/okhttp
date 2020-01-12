@@ -716,7 +716,7 @@ because the TLS ecosystem is dynamic and staying up to date is necessary to stay
 <tbody>
 <tr>
 <td><a href="cipher-suites/">cipherSuites</a></td>
-<td><code>val cipherSuites:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="../-cipher-suite/"><code>CipherSuite</code></a><code>&gt;?</code><br>Returns the cipher suites to use for a connection. Returns null if all of the SSL socket&rsquo;s enabled cipher suites should be used.</td>
+<td>Returns the cipher suites to use for a connection. Returns null if all of the SSL socket&rsquo;s enabled cipher suites should be used.<code>val cipherSuites:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="../-cipher-suite/"><code>CipherSuite</code></a><code>&gt;?</code></td>
 </tr>
 <tr>
 <td><a href="is-tls/">isTls</a></td>
@@ -728,7 +728,7 @@ because the TLS ecosystem is dynamic and staying up to date is necessary to stay
 </tr>
 <tr>
 <td><a href="tls-versions/">tlsVersions</a></td>
-<td><code>val tlsVersions:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="../-tls-version/"><code>TlsVersion</code></a><code>&gt;?</code><br>Returns the TLS versions to use when negotiating a connection. Returns null if all of the SSL socket&rsquo;s enabled TLS versions should be used.</td>
+<td>Returns the TLS versions to use when negotiating a connection. Returns null if all of the SSL socket&rsquo;s enabled TLS versions should be used.<code>val tlsVersions:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="../-tls-version/"><code>TlsVersion</code></a><code>&gt;?</code></td>
 </tr>
 </tbody>
 </table>
@@ -751,7 +751,7 @@ because the TLS ecosystem is dynamic and staying up to date is necessary to stay
 </tr>
 <tr>
 <td><a href="is-compatible/">isCompatible</a></td>
-<td><code>fun isCompatible(socket:</code><a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLSocket.html"><code>SSLSocket</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><br>Returns <code>true</code> if the socket, as currently configured, supports this connection spec. In order for a socket to be compatible the enabled cipher suites and protocols must intersect.</td>
+<td>Returns <code>true</code> if the socket, as currently configured, supports this connection spec. In order for a socket to be compatible the enabled cipher suites and protocols must intersect.<code>fun isCompatible(socket:</code><a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLSocket.html"><code>SSLSocket</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a></td>
 </tr>
 <tr>
 <td><a href="to-string/">toString</a></td>
@@ -770,19 +770,19 @@ because the TLS ecosystem is dynamic and staying up to date is necessary to stay
 <tbody>
 <tr>
 <td><a href="-c-l-e-a-r-t-e-x-t/">CLEARTEXT</a></td>
-<td><code>val CLEARTEXT:</code><a href="./"><code>ConnectionSpec</code></a><br>Unencrypted, unauthenticated connections for <code>http:</code> URLs.</td>
+<td>Unencrypted, unauthenticated connections for <code>http:</code> URLs.<code>val CLEARTEXT:</code><a href="./"><code>ConnectionSpec</code></a></td>
 </tr>
 <tr>
 <td><a href="-c-o-m-p-a-t-i-b-l-e_-t-l-s/">COMPATIBLE_TLS</a></td>
-<td><code>val COMPATIBLE_TLS:</code><a href="./"><code>ConnectionSpec</code></a><br>A backwards-compatible fallback configuration that works on obsolete client platforms and can connect to obsolete servers. When possible, prefer to upgrade your client platform or server rather than using this configuration.</td>
+<td>A backwards-compatible fallback configuration that works on obsolete client platforms and can connect to obsolete servers. When possible, prefer to upgrade your client platform or server rather than using this configuration.<code>val COMPATIBLE_TLS:</code><a href="./"><code>ConnectionSpec</code></a></td>
 </tr>
 <tr>
 <td><a href="-m-o-d-e-r-n_-t-l-s/">MODERN_TLS</a></td>
-<td><code>val MODERN_TLS:</code><a href="./"><code>ConnectionSpec</code></a><br>A modern TLS configuration that works on most client platforms and can connect to most servers. This is OkHttp&rsquo;s default configuration.</td>
+<td>A modern TLS configuration that works on most client platforms and can connect to most servers. This is OkHttp&rsquo;s default configuration.<code>val MODERN_TLS:</code><a href="./"><code>ConnectionSpec</code></a></td>
 </tr>
 <tr>
 <td><a href="-r-e-s-t-r-i-c-t-e-d_-t-l-s/">RESTRICTED_TLS</a></td>
-<td><code>val RESTRICTED_TLS:</code><a href="./"><code>ConnectionSpec</code></a><br>A secure TLS connection that requires a recent client platform and a recent server.</td>
+<td>A secure TLS connection that requires a recent client platform and a recent server.<code>val RESTRICTED_TLS:</code><a href="./"><code>ConnectionSpec</code></a></td>
 </tr>
 </tbody>
 </table>

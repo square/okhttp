@@ -701,63 +701,63 @@ value that may be consumed only once and then closed. All other properties are i
 <tbody>
 <tr>
 <td><a href="body/">body</a></td>
-<td><code>val body:</code><a href="../-response-body/"><code>ResponseBody</code></a><code>?</code><br>Returns a non-null value if this response was passed to <a href="../-callback/on-response/">Callback.onResponse</a> or returned from <a href="../-call/execute/">Call.execute</a>. Response bodies must be <a href="../-response-body/">closed</a> and may be consumed only once.</td>
+<td>Returns a non-null value if this response was passed to <a href="../-callback/on-response/">Callback.onResponse</a> or returned from <a href="../-call/execute/">Call.execute</a>. Response bodies must be <a href="../-response-body/">closed</a> and may be consumed only once.<code>val body:</code><a href="../-response-body/"><code>ResponseBody</code></a><code>?</code></td>
 </tr>
 <tr>
 <td><a href="cache-control/">cacheControl</a></td>
-<td><code>val cacheControl:</code><a href="../-cache-control/"><code>CacheControl</code></a><br>Returns the cache control directives for this response. This is never null, even if this response contains no <code>Cache-Control</code> header.</td>
+<td>Returns the cache control directives for this response. This is never null, even if this response contains no <code>Cache-Control</code> header.<code>val cacheControl:</code><a href="../-cache-control/"><code>CacheControl</code></a></td>
 </tr>
 <tr>
 <td><a href="cache-response/">cacheResponse</a></td>
-<td><code>val cacheResponse:</code><a href="./"><code>Response</code></a><code>?</code><br>Returns the raw response received from the cache. Will be null if this response didn&rsquo;t use the cache. For conditional get requests the cache response and network response may both be non-null. The body of the returned response should not be read.</td>
+<td>Returns the raw response received from the cache. Will be null if this response didn&rsquo;t use the cache. For conditional get requests the cache response and network response may both be non-null. The body of the returned response should not be read.<code>val cacheResponse:</code><a href="./"><code>Response</code></a><code>?</code></td>
 </tr>
 <tr>
 <td><a href="code/">code</a></td>
-<td><code>val code:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><br>Returns the HTTP status code.</td>
+<td>Returns the HTTP status code.<code>val code:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a></td>
 </tr>
 <tr>
 <td><a href="handshake/">handshake</a></td>
-<td><code>val handshake:</code><a href="../-handshake/"><code>Handshake</code></a><code>?</code><br>Returns the TLS handshake of the connection that carried this response, or null if the response was received without TLS.</td>
+<td>Returns the TLS handshake of the connection that carried this response, or null if the response was received without TLS.<code>val handshake:</code><a href="../-handshake/"><code>Handshake</code></a><code>?</code></td>
 </tr>
 <tr>
 <td><a href="headers/">headers</a></td>
-<td><code>val headers:</code><a href="../-headers/"><code>Headers</code></a><br>Returns the HTTP headers.</td>
+<td>Returns the HTTP headers.<code>val headers:</code><a href="../-headers/"><code>Headers</code></a></td>
 </tr>
 <tr>
 <td><a href="is-redirect/">isRedirect</a></td>
-<td><code>val isRedirect:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><br>Returns true if this response redirects to another resource.</td>
+<td>Returns true if this response redirects to another resource.<code>val isRedirect:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a></td>
 </tr>
 <tr>
 <td><a href="is-successful/">isSuccessful</a></td>
-<td><code>val isSuccessful:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><br>Returns true if the code is in [200..300), which means the request was successfully received, understood, and accepted.</td>
+<td>Returns true if the code is in [200..300), which means the request was successfully received, understood, and accepted.<code>val isSuccessful:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a></td>
 </tr>
 <tr>
 <td><a href="message/">message</a></td>
-<td><code>val message:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><br>Returns the HTTP status message.</td>
+<td>Returns the HTTP status message.<code>val message:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a></td>
 </tr>
 <tr>
 <td><a href="network-response/">networkResponse</a></td>
-<td><code>val networkResponse:</code><a href="./"><code>Response</code></a><code>?</code><br>Returns the raw response received from the network. Will be null if this response didn&rsquo;t use the network, such as when the response is fully cached. The body of the returned response should not be read.</td>
+<td>Returns the raw response received from the network. Will be null if this response didn&rsquo;t use the network, such as when the response is fully cached. The body of the returned response should not be read.<code>val networkResponse:</code><a href="./"><code>Response</code></a><code>?</code></td>
 </tr>
 <tr>
 <td><a href="prior-response/">priorResponse</a></td>
-<td><code>val priorResponse:</code><a href="./"><code>Response</code></a><code>?</code><br>Returns the response for the HTTP redirect or authorization challenge that triggered this response, or null if this response wasn&rsquo;t triggered by an automatic retry. The body of the returned response should not be read because it has already been consumed by the redirecting client.</td>
+<td>Returns the response for the HTTP redirect or authorization challenge that triggered this response, or null if this response wasn&rsquo;t triggered by an automatic retry. The body of the returned response should not be read because it has already been consumed by the redirecting client.<code>val priorResponse:</code><a href="./"><code>Response</code></a><code>?</code></td>
 </tr>
 <tr>
 <td><a href="protocol/">protocol</a></td>
-<td><code>val protocol:</code><a href="../-protocol/"><code>Protocol</code></a><br>Returns the HTTP protocol, such as <a href="../-protocol/-h-t-t-p_1_1/">Protocol.HTTP_1_1</a> or <a href="../-protocol/-h-t-t-p_1_0/">Protocol.HTTP_1_0</a>.</td>
+<td>Returns the HTTP protocol, such as <a href="../-protocol/-h-t-t-p_1_1/">Protocol.HTTP_1_1</a> or <a href="../-protocol/-h-t-t-p_1_0/">Protocol.HTTP_1_0</a>.<code>val protocol:</code><a href="../-protocol/"><code>Protocol</code></a></td>
 </tr>
 <tr>
 <td><a href="received-response-at-millis/">receivedResponseAtMillis</a></td>
-<td><code>val receivedResponseAtMillis:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><br>Returns a <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/System.html#currentTimeMillis()">timestamp</a> taken immediately after OkHttp received this response&rsquo;s headers from the network. If this response is being served from the cache then this is the timestamp of the original response.</td>
+<td>Returns a <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/System.html#currentTimeMillis()">timestamp</a> taken immediately after OkHttp received this response&rsquo;s headers from the network. If this response is being served from the cache then this is the timestamp of the original response.<code>val receivedResponseAtMillis:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a></td>
 </tr>
 <tr>
 <td><a href="request/">request</a></td>
-<td><code>val request:</code><a href="../-request/"><code>Request</code></a><br>The wire-level request that initiated this HTTP response. This is not necessarily the same request issued by the application:</td>
+<td>The wire-level request that initiated this HTTP response. This is not necessarily the same request issued by the application:<code>val request:</code><a href="../-request/"><code>Request</code></a></td>
 </tr>
 <tr>
 <td><a href="sent-request-at-millis/">sentRequestAtMillis</a></td>
-<td><code>val sentRequestAtMillis:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><br>Returns a <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/System.html#currentTimeMillis()">timestamp</a> taken immediately before OkHttp transmitted the initiating request over the network. If this response is being served from the cache then this is the timestamp of the original request.</td>
+<td>Returns a <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/System.html#currentTimeMillis()">timestamp</a> taken immediately before OkHttp transmitted the initiating request over the network. If this response is being served from the cache then this is the timestamp of the original request.<code>val sentRequestAtMillis:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -772,11 +772,11 @@ value that may be consumed only once and then closed. All other properties are i
 <tbody>
 <tr>
 <td><a href="challenges/">challenges</a></td>
-<td><code>fun challenges():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="../-challenge/"><code>Challenge</code></a><code>&gt;</code><br>Returns the RFC 7235 authorization challenges appropriate for this response&rsquo;s code. If the response code is 401 unauthorized, this returns the &ldquo;WWW-Authenticate&rdquo; challenges. If the response code is 407 proxy unauthorized, this returns the &ldquo;Proxy-Authenticate&rdquo; challenges. Otherwise this returns an empty list of challenges.</td>
+<td>Returns the RFC 7235 authorization challenges appropriate for this response&rsquo;s code. If the response code is 401 unauthorized, this returns the &ldquo;WWW-Authenticate&rdquo; challenges. If the response code is 407 proxy unauthorized, this returns the &ldquo;Proxy-Authenticate&rdquo; challenges. Otherwise this returns an empty list of challenges.<code>fun challenges():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="../-challenge/"><code>Challenge</code></a><code>&gt;</code></td>
 </tr>
 <tr>
 <td><a href="close/">close</a></td>
-<td><code>fun close():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Closes the response body. Equivalent to <code>body().close()</code>.</td>
+<td>Closes the response body. Equivalent to <code>body().close()</code>.<code>fun close():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 <tr>
 <td><a href="header/">header</a></td>
@@ -788,11 +788,11 @@ value that may be consumed only once and then closed. All other properties are i
 </tr>
 <tr>
 <td><a href="new-builder/">newBuilder</a></td>
-<td><code>fun newBuilder():</code><a href="-builder/"><code>Response.Builder</code></a></td>
+<td><code>fun newBuilder(): Builder</code></td>
 </tr>
 <tr>
 <td><a href="peek-body/">peekBody</a></td>
-<td><code>fun peekBody(byteCount:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>):</code><a href="../-response-body/"><code>ResponseBody</code></a><br>Peeks up to <a href="peek-body/#okhttp3.Response$peekBody(kotlin.Long)/byteCount">byteCount</a> bytes from the response body and returns them as a new response body. If fewer than <a href="peek-body/#okhttp3.Response$peekBody(kotlin.Long)/byteCount">byteCount</a> bytes are in the response body, the full response body is returned. If more than <a href="peek-body/#okhttp3.Response$peekBody(kotlin.Long)/byteCount">byteCount</a> bytes are in the response body, the returned value will be truncated to <a href="peek-body/#okhttp3.Response$peekBody(kotlin.Long)/byteCount">byteCount</a> bytes.</td>
+<td>Peeks up to <a href="peek-body/#okhttp3.Response$peekBody(kotlin.Long)/byteCount">byteCount</a> bytes from the response body and returns them as a new response body. If fewer than <a href="peek-body/#okhttp3.Response$peekBody(kotlin.Long)/byteCount">byteCount</a> bytes are in the response body, the full response body is returned. If more than <a href="peek-body/#okhttp3.Response$peekBody(kotlin.Long)/byteCount">byteCount</a> bytes are in the response body, the returned value will be truncated to <a href="peek-body/#okhttp3.Response$peekBody(kotlin.Long)/byteCount">byteCount</a> bytes.<code>fun peekBody(byteCount:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>):</code><a href="../-response-body/"><code>ResponseBody</code></a></td>
 </tr>
 <tr>
 <td><a href="to-string/">toString</a></td>
@@ -800,7 +800,7 @@ value that may be consumed only once and then closed. All other properties are i
 </tr>
 <tr>
 <td><a href="trailers/">trailers</a></td>
-<td><code>fun trailers():</code><a href="../-headers/"><code>Headers</code></a><br>Returns the trailers after the HTTP response, which may be empty. It is an error to call this before the entire HTTP response body has been consumed.</td>
+<td>Returns the trailers after the HTTP response, which may be empty. It is an error to call this before the entire HTTP response body has been consumed.<code>fun trailers():</code><a href="../-headers/"><code>Headers</code></a></td>
 </tr>
 </tbody>
 </table>

@@ -729,23 +729,23 @@
 <tbody>
 <tr>
 <td><a href="-address/">Address</a></td>
-<td><code>class Address</code><br>A specification for a connection to an origin server. For simple connections, this is the server&rsquo;s hostname and port. If an explicit proxy is requested (or <a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html#NO_PROXY">no proxy</a> is explicitly requested), this also includes that proxy information. For secure connections the address also includes the SSL socket factory, hostname verifier, and certificate pinner.</td>
+<td>A specification for a connection to an origin server. For simple connections, this is the server&rsquo;s hostname and port. If an explicit proxy is requested (or <a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html#NO_PROXY">no proxy</a> is explicitly requested), this also includes that proxy information. For secure connections the address also includes the SSL socket factory, hostname verifier, and certificate pinner.<code>class Address</code></td>
 </tr>
 <tr>
 <td><a href="-authenticator/">Authenticator</a></td>
-<td><code>interface Authenticator</code><br>Performs either <strong>preemptive</strong> authentication before connecting to a proxy server, or <strong>reactive</strong> authentication after receiving a challenge from either an origin web server or proxy server.</td>
+<td>Performs either <strong>preemptive</strong> authentication before connecting to a proxy server, or <strong>reactive</strong> authentication after receiving a challenge from either an origin web server or proxy server.<code>interface Authenticator</code></td>
 </tr>
 <tr>
 <td><a href="-cache/">Cache</a></td>
-<td><code>class Cache :</code><a href="https://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html"><code>Closeable</code></a><code>,</code><a href="https://docs.oracle.com/javase/8/docs/api/java/io/Flushable.html"><code>Flushable</code></a><br>Caches HTTP and HTTPS responses to the filesystem so they may be reused, saving time and bandwidth.</td>
+<td>Caches HTTP and HTTPS responses to the filesystem so they may be reused, saving time and bandwidth.<code>class Cache :</code><a href="https://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html"><code>Closeable</code></a><code>,</code><a href="https://docs.oracle.com/javase/8/docs/api/java/io/Flushable.html"><code>Flushable</code></a></td>
 </tr>
 <tr>
 <td><a href="-cache-control/">CacheControl</a></td>
-<td><code>class CacheControl</code><br>A Cache-Control header with cache directives from a server or client. These directives set policy on what responses can be stored, and which requests can be satisfied by those stored responses.</td>
+<td>A Cache-Control header with cache directives from a server or client. These directives set policy on what responses can be stored, and which requests can be satisfied by those stored responses.<code>class CacheControl</code></td>
 </tr>
 <tr>
 <td><a href="-call/">Call</a></td>
-<td><code>interface Call :</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-cloneable/index.html"><code>Cloneable</code></a><br>A call is a request that has been prepared for execution. A call can be canceled. As this object represents a single request/response pair (stream), it cannot be executed twice.</td>
+<td>A call is a request that has been prepared for execution. A call can be canceled. As this object represents a single request/response pair (stream), it cannot be executed twice.<code>interface Call :</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-cloneable/index.html"><code>Cloneable</code></a></td>
 </tr>
 <tr>
 <td><a href="-callback/">Callback</a></td>
@@ -753,51 +753,51 @@
 </tr>
 <tr>
 <td><a href="-certificate-pinner/">CertificatePinner</a></td>
-<td><code>class CertificatePinner</code><br>Constrains which certificates are trusted. Pinning certificates defends against attacks on certificate authorities. It also prevents connections through man-in-the-middle certificate authorities either known or unknown to the application&rsquo;s user. This class currently pins a certificate&rsquo;s Subject Public Key Info as described on <a href="http://goo.gl/AIx3e5">Adam Langley&rsquo;s Weblog</a>. Pins are either base64 SHA-256 hashes as in <a href="http://tools.ietf.org/html/rfc7469">HTTP Public Key Pinning (HPKP)</a> or SHA-1 base64 hashes as in Chromium&rsquo;s <a href="http://goo.gl/XDh6je">static certificates</a>.</td>
+<td>Constrains which certificates are trusted. Pinning certificates defends against attacks on certificate authorities. It also prevents connections through man-in-the-middle certificate authorities either known or unknown to the application&rsquo;s user. This class currently pins a certificate&rsquo;s Subject Public Key Info as described on <a href="http://goo.gl/AIx3e5">Adam Langley&rsquo;s Weblog</a>. Pins are either base64 SHA-256 hashes as in <a href="http://tools.ietf.org/html/rfc7469">HTTP Public Key Pinning (HPKP)</a> or SHA-1 base64 hashes as in Chromium&rsquo;s <a href="http://goo.gl/XDh6je">static certificates</a>.<code>class CertificatePinner</code></td>
 </tr>
 <tr>
 <td><a href="-challenge/">Challenge</a></td>
-<td><code>class Challenge</code><br>An <a href="https://tools.ietf.org/html/rfc7235">RFC 7235</a> challenge.</td>
+<td>An <a href="https://tools.ietf.org/html/rfc7235">RFC 7235</a> challenge.<code>class Challenge</code></td>
 </tr>
 <tr>
 <td><a href="-cipher-suite/">CipherSuite</a></td>
-<td><code>class CipherSuite</code><br><a href="https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml">TLS cipher suites</a>.</td>
+<td><a href="https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml">TLS cipher suites</a>.<code>class CipherSuite</code></td>
 </tr>
 <tr>
 <td><a href="-connection/">Connection</a></td>
-<td><code>interface Connection</code><br>The sockets and streams of an HTTP, HTTPS, or HTTPS+HTTP/2 connection. May be used for multiple HTTP request/response exchanges. Connections may be direct to the origin server or via a proxy.</td>
+<td>The sockets and streams of an HTTP, HTTPS, or HTTPS+HTTP/2 connection. May be used for multiple HTTP request/response exchanges. Connections may be direct to the origin server or via a proxy.<code>interface Connection</code></td>
 </tr>
 <tr>
 <td><a href="-connection-pool/">ConnectionPool</a></td>
-<td><code>class ConnectionPool</code><br>Manages reuse of HTTP and HTTP/2 connections for reduced network latency. HTTP requests that share the same <a href="-address/">Address</a> may share a <a href="-connection/">Connection</a>. This class implements the policy of which connections to keep open for future use.</td>
+<td>Manages reuse of HTTP and HTTP/2 connections for reduced network latency. HTTP requests that share the same <a href="-address/">Address</a> may share a <a href="-connection/">Connection</a>. This class implements the policy of which connections to keep open for future use.<code>class ConnectionPool</code></td>
 </tr>
 <tr>
 <td><a href="-connection-spec/">ConnectionSpec</a></td>
-<td><code>class ConnectionSpec</code><br>Specifies configuration for the socket connection that HTTP traffic travels through. For <code>https:</code> URLs, this includes the TLS version and cipher suites to use when negotiating a secure connection.</td>
+<td>Specifies configuration for the socket connection that HTTP traffic travels through. For <code>https:</code> URLs, this includes the TLS version and cipher suites to use when negotiating a secure connection.<code>class ConnectionSpec</code></td>
 </tr>
 <tr>
 <td><a href="-cookie/">Cookie</a></td>
-<td><code>class Cookie</code><br>An <a href="http://tools.ietf.org/html/rfc6265">RFC 6265</a> Cookie.</td>
+<td>An <a href="http://tools.ietf.org/html/rfc6265">RFC 6265</a> Cookie.<code>class Cookie</code></td>
 </tr>
 <tr>
 <td><a href="-cookie-jar/">CookieJar</a></td>
-<td><code>interface CookieJar</code><br>Provides <strong>policy</strong> and <strong>persistence</strong> for HTTP cookies.</td>
+<td>Provides <strong>policy</strong> and <strong>persistence</strong> for HTTP cookies.<code>interface CookieJar</code></td>
 </tr>
 <tr>
 <td><a href="-credentials/">Credentials</a></td>
-<td><code>object Credentials</code><br>Factory for HTTP authorization credentials.</td>
+<td>Factory for HTTP authorization credentials.<code>object Credentials</code></td>
 </tr>
 <tr>
 <td><a href="-dispatcher/">Dispatcher</a></td>
-<td><code>class Dispatcher</code><br>Policy on when async requests are executed.</td>
+<td>Policy on when async requests are executed.<code>class Dispatcher</code></td>
 </tr>
 <tr>
 <td><a href="-dns/">Dns</a></td>
-<td><code>interface Dns</code><br>A domain name service that resolves IP addresses for host names. Most applications will use the <a href="-dns/-s-y-s-t-e-m/">system DNS service</a>, which is the default. Some applications may provide their own implementation to use a different DNS server, to prefer IPv6 addresses, to prefer IPv4 addresses, or to force a specific known IP address.</td>
+<td>A domain name service that resolves IP addresses for host names. Most applications will use the <a href="-dns/-s-y-s-t-e-m/">system DNS service</a>, which is the default. Some applications may provide their own implementation to use a different DNS server, to prefer IPv6 addresses, to prefer IPv4 addresses, or to force a specific known IP address.<code>interface Dns</code></td>
 </tr>
 <tr>
 <td><a href="-event-listener/">EventListener</a></td>
-<td><code>abstract class EventListener</code><br>Listener for metrics events. Extend this class to monitor the quantity, size, and duration of your application&rsquo;s HTTP calls.</td>
+<td>Listener for metrics events. Extend this class to monitor the quantity, size, and duration of your application&rsquo;s HTTP calls.<code>abstract class EventListener</code></td>
 </tr>
 <tr>
 <td><a href="-form-body/">FormBody</a></td>
@@ -805,39 +805,39 @@
 </tr>
 <tr>
 <td><a href="-handshake/">Handshake</a></td>
-<td><code>class Handshake</code><br>A record of a TLS handshake. For HTTPS clients, the client is <em>local</em> and the remote server is its <em>peer</em>.</td>
+<td>A record of a TLS handshake. For HTTPS clients, the client is <em>local</em> and the remote server is its <em>peer</em>.<code>class Handshake</code></td>
 </tr>
 <tr>
 <td><a href="-headers/">Headers</a></td>
-<td><code>class Headers :</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-iterable/index.html"><code>Iterable</code></a><code>&lt;</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-pair/index.html"><code>Pair</code></a><code>&lt;</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>,</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>&gt;&gt;</code><br>The header fields of a single HTTP message. Values are uninterpreted strings; use <code>Request</code> and <code>Response</code> for interpreted headers. This class maintains the order of the header fields within the HTTP message.</td>
+<td>The header fields of a single HTTP message. Values are uninterpreted strings; use <code>Request</code> and <code>Response</code> for interpreted headers. This class maintains the order of the header fields within the HTTP message.<code>class Headers :</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-iterable/index.html"><code>Iterable</code></a><code>&lt;</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-pair/index.html"><code>Pair</code></a><code>&lt;</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>,</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>&gt;&gt;</code></td>
 </tr>
 <tr>
 <td><a href="-http-url/">HttpUrl</a></td>
-<td><code>class HttpUrl</code><br>A uniform resource locator (URL) with a scheme of either <code>http</code> or <code>https</code>. Use this class to compose and decompose Internet addresses. For example, this code will compose and print a URL for Google search:</td>
+<td>A uniform resource locator (URL) with a scheme of either <code>http</code> or <code>https</code>. Use this class to compose and decompose Internet addresses. For example, this code will compose and print a URL for Google search:<code>class HttpUrl</code></td>
 </tr>
 <tr>
 <td><a href="-interceptor/">Interceptor</a></td>
-<td><code>interface Interceptor</code><br>Observes, modifies, and potentially short-circuits requests going out and the corresponding responses coming back in. Typically interceptors add, remove, or transform headers on the request or response.</td>
+<td>Observes, modifies, and potentially short-circuits requests going out and the corresponding responses coming back in. Typically interceptors add, remove, or transform headers on the request or response.<code>interface Interceptor</code></td>
 </tr>
 <tr>
 <td><a href="-media-type/">MediaType</a></td>
-<td><code>class MediaType</code><br>An <a href="http://tools.ietf.org/html/rfc2045">RFC 2045</a> Media Type, appropriate to describe the content type of an HTTP request or response body.</td>
+<td>An <a href="http://tools.ietf.org/html/rfc2045">RFC 2045</a> Media Type, appropriate to describe the content type of an HTTP request or response body.<code>class MediaType</code></td>
 </tr>
 <tr>
 <td><a href="-multipart-body/">MultipartBody</a></td>
-<td><code>class MultipartBody :</code><a href="-request-body/"><code>RequestBody</code></a><br>An <a href="http://www.ietf.org/rfc/rfc2387.txt">RFC 2387</a>-compliant request body.</td>
+<td>An <a href="http://www.ietf.org/rfc/rfc2387.txt">RFC 2387</a>-compliant request body.<code>class MultipartBody :</code><a href="-request-body/"><code>RequestBody</code></a></td>
 </tr>
 <tr>
 <td><a href="-ok-http-client/">OkHttpClient</a></td>
-<td><code>open class OkHttpClient :</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-cloneable/index.html"><code>Cloneable</code></a><code>,</code><a href="-call/-factory/"><code>Call.Factory</code></a><code>,</code><a href="-web-socket/-factory/"><code>WebSocket.Factory</code></a><br>Factory for <a href="-call/">calls</a>, which can be used to send HTTP requests and read their responses.</td>
+<td>Factory for <a href="-call/">calls</a>, which can be used to send HTTP requests and read their responses.<code>open class OkHttpClient :</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-cloneable/index.html"><code>Cloneable</code></a><code>, Factory, Factory</code></td>
 </tr>
 <tr>
 <td><a href="-protocol/">Protocol</a></td>
-<td><code>enum class Protocol</code><br>Protocols that OkHttp implements for <a href="http://tools.ietf.org/html/draft-ietf-tls-applayerprotoneg">ALPN</a> selection.</td>
+<td>Protocols that OkHttp implements for <a href="http://tools.ietf.org/html/draft-ietf-tls-applayerprotoneg">ALPN</a> selection.<code>enum class Protocol</code></td>
 </tr>
 <tr>
 <td><a href="-request/">Request</a></td>
-<td><code>class Request</code><br>An HTTP request. Instances of this class are immutable if their <a href="#">body</a> is null or itself immutable.</td>
+<td>An HTTP request. Instances of this class are immutable if their <a href="#">body</a> is null or itself immutable.<code>class Request</code></td>
 </tr>
 <tr>
 <td><a href="-request-body/">RequestBody</a></td>
@@ -845,23 +845,23 @@
 </tr>
 <tr>
 <td><a href="-response/">Response</a></td>
-<td><code>class Response :</code><a href="https://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html"><code>Closeable</code></a><br>An HTTP response. Instances of this class are not immutable: the response body is a one-shot value that may be consumed only once and then closed. All other properties are immutable.</td>
+<td>An HTTP response. Instances of this class are not immutable: the response body is a one-shot value that may be consumed only once and then closed. All other properties are immutable.<code>class Response :</code><a href="https://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html"><code>Closeable</code></a></td>
 </tr>
 <tr>
 <td><a href="-response-body/">ResponseBody</a></td>
-<td><code>abstract class ResponseBody :</code><a href="https://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html"><code>Closeable</code></a><br>A one-shot stream from the origin server to the client application with the raw bytes of the response body. Each response body is supported by an active connection to the webserver. This imposes both obligations and limits on the client application.</td>
+<td>A one-shot stream from the origin server to the client application with the raw bytes of the response body. Each response body is supported by an active connection to the webserver. This imposes both obligations and limits on the client application.<code>abstract class ResponseBody :</code><a href="https://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html"><code>Closeable</code></a></td>
 </tr>
 <tr>
 <td><a href="-route/">Route</a></td>
-<td><code>class Route</code><br>The concrete route used by a connection to reach an abstract origin server. When creating a connection the client has many options:</td>
+<td>The concrete route used by a connection to reach an abstract origin server. When creating a connection the client has many options:<code>class Route</code></td>
 </tr>
 <tr>
 <td><a href="-tls-version/">TlsVersion</a></td>
-<td><code>enum class TlsVersion</code><br>Versions of TLS that can be offered when negotiating a secure socket. See <a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLSocket.html#setEnabledProtocols(java.lang.String[])">javax.net.ssl.SSLSocket.setEnabledProtocols</a>.</td>
+<td>Versions of TLS that can be offered when negotiating a secure socket. See <a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLSocket.html#setEnabledProtocols(java.lang.String[])">javax.net.ssl.SSLSocket.setEnabledProtocols</a>.<code>enum class TlsVersion</code></td>
 </tr>
 <tr>
 <td><a href="-web-socket/">WebSocket</a></td>
-<td><code>interface WebSocket</code><br>A non-blocking interface to a web socket. Use the <a href="-web-socket/-factory/">factory</a> to create instances; usually this is <a href="-ok-http-client/">OkHttpClient</a>.</td>
+<td>A non-blocking interface to a web socket. Use the <a href="-web-socket/-factory/">factory</a> to create instances; usually this is <a href="-ok-http-client/">OkHttpClient</a>.<code>interface WebSocket</code></td>
 </tr>
 <tr>
 <td><a href="-web-socket-listener/">WebSocketListener</a></td>

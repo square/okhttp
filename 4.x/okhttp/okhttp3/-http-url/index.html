@@ -1032,35 +1032,35 @@ invalid URL. You can even be explicit about whether each component has been enco
 <tbody>
 <tr>
 <td><a href="encoded-fragment/">encodedFragment</a></td>
-<td><code>val encodedFragment:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>?</code><br>This URL&rsquo;s encoded fragment, like <code>"abc"</code> for <code>http://host/#abc</code>. This is null if the URL has no fragment.</td>
+<td>This URL&rsquo;s encoded fragment, like <code>"abc"</code> for <code>http://host/#abc</code>. This is null if the URL has no fragment.<code>val encodedFragment:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>?</code></td>
 </tr>
 <tr>
 <td><a href="encoded-password/">encodedPassword</a></td>
-<td><code>val encodedPassword:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><br>The password, or an empty string if none is set.</td>
+<td>The password, or an empty string if none is set.<code>val encodedPassword:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a></td>
 </tr>
 <tr>
 <td><a href="encoded-path/">encodedPath</a></td>
-<td><code>val encodedPath:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><br>The entire path of this URL encoded for use in HTTP resource resolution. The returned path will start with <code>"/"</code>.</td>
+<td>The entire path of this URL encoded for use in HTTP resource resolution. The returned path will start with <code>"/"</code>.<code>val encodedPath:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a></td>
 </tr>
 <tr>
 <td><a href="encoded-path-segments/">encodedPathSegments</a></td>
-<td><code>val encodedPathSegments:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>&gt;</code><br>A list of encoded path segments like <code>["a", "b", "c"]</code> for the URL <code>http://host/a/b/c</code>. This list is never empty though it may contain a single empty string.</td>
+<td>A list of encoded path segments like <code>["a", "b", "c"]</code> for the URL <code>http://host/a/b/c</code>. This list is never empty though it may contain a single empty string.<code>val encodedPathSegments:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>&gt;</code></td>
 </tr>
 <tr>
 <td><a href="encoded-query/">encodedQuery</a></td>
-<td><code>val encodedQuery:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>?</code><br>The query of this URL, encoded for use in HTTP resource resolution. This string may be null (for URLs with no query), empty (for URLs with an empty query) or non-empty (all other URLs).</td>
+<td>The query of this URL, encoded for use in HTTP resource resolution. This string may be null (for URLs with no query), empty (for URLs with an empty query) or non-empty (all other URLs).<code>val encodedQuery:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>?</code></td>
 </tr>
 <tr>
 <td><a href="encoded-username/">encodedUsername</a></td>
-<td><code>val encodedUsername:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><br>The username, or an empty string if none is set.</td>
+<td>The username, or an empty string if none is set.<code>val encodedUsername:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a></td>
 </tr>
 <tr>
 <td><a href="fragment/">fragment</a></td>
-<td><code>val fragment:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>?</code><br>This URL&rsquo;s fragment, like <code>"abc"</code> for <code>http://host/#abc</code>. This is null if the URL has no fragment.</td>
+<td>This URL&rsquo;s fragment, like <code>"abc"</code> for <code>http://host/#abc</code>. This is null if the URL has no fragment.<code>val fragment:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>?</code></td>
 </tr>
 <tr>
 <td><a href="host/">host</a></td>
-<td><code>val host:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><br>The host address suitable for use with <a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetAddress.html#getAllByName(java.lang.String)">InetAddress.getAllByName</a>. May be:</td>
+<td>The host address suitable for use with <a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetAddress.html#getAllByName(java.lang.String)">InetAddress.getAllByName</a>. May be:<code>val host:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a></td>
 </tr>
 <tr>
 <td><a href="is-https/">isHttps</a></td>
@@ -1068,39 +1068,39 @@ invalid URL. You can even be explicit about whether each component has been enco
 </tr>
 <tr>
 <td><a href="password/">password</a></td>
-<td><code>val password:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><br>Returns the decoded password, or an empty string if none is present.</td>
+<td>Returns the decoded password, or an empty string if none is present.<code>val password:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a></td>
 </tr>
 <tr>
 <td><a href="path-segments/">pathSegments</a></td>
-<td><code>val pathSegments:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>&gt;</code><br>A list of path segments like <code>["a", "b", "c"]</code> for the URL <code>http://host/a/b/c</code>. This list is never empty though it may contain a single empty string.</td>
+<td>A list of path segments like <code>["a", "b", "c"]</code> for the URL <code>http://host/a/b/c</code>. This list is never empty though it may contain a single empty string.<code>val pathSegments:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>&gt;</code></td>
 </tr>
 <tr>
 <td><a href="path-size/">pathSize</a></td>
-<td><code>val pathSize:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><br>The number of segments in this URL&rsquo;s path. This is also the number of slashes in this URL&rsquo;s path, like 3 in <code>http://host/a/b/c</code>. This is always at least 1.</td>
+<td>The number of segments in this URL&rsquo;s path. This is also the number of slashes in this URL&rsquo;s path, like 3 in <code>http://host/a/b/c</code>. This is always at least 1.<code>val pathSize:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a></td>
 </tr>
 <tr>
 <td><a href="port/">port</a></td>
-<td><code>val port:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><br>The explicitly-specified port if one was provided, or the default port for this URL&rsquo;s scheme. For example, this returns 8443 for <code>https://square.com:8443/</code> and 443 for <code>https://square.com/</code>. The result is in <code>[1..65535]</code>.</td>
+<td>The explicitly-specified port if one was provided, or the default port for this URL&rsquo;s scheme. For example, this returns 8443 for <code>https://square.com:8443/</code> and 443 for <code>https://square.com/</code>. The result is in <code>[1..65535]</code>.<code>val port:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a></td>
 </tr>
 <tr>
 <td><a href="query/">query</a></td>
-<td><code>val query:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>?</code><br>This URL&rsquo;s query, like <code>"abc"</code> for <code>http://host/?abc</code>. Most callers should prefer <a href="query-parameter-name/">queryParameterName</a> and <a href="query-parameter-value/">queryParameterValue</a> because these methods offer direct access to individual query parameters.</td>
+<td>This URL&rsquo;s query, like <code>"abc"</code> for <code>http://host/?abc</code>. Most callers should prefer <a href="query-parameter-name/">queryParameterName</a> and <a href="query-parameter-value/">queryParameterValue</a> because these methods offer direct access to individual query parameters.<code>val query:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>?</code></td>
 </tr>
 <tr>
 <td><a href="query-parameter-names/">queryParameterNames</a></td>
-<td><code>val queryParameterNames:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html"><code>Set</code></a><code>&lt;</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>&gt;</code><br>The distinct query parameter names in this URL, like <code>["a", "b"]</code> for <code>http://host/?a=apple&amp;b=banana</code>. If this URL has no query this is the empty set.</td>
+<td>The distinct query parameter names in this URL, like <code>["a", "b"]</code> for <code>http://host/?a=apple&amp;b=banana</code>. If this URL has no query this is the empty set.<code>val queryParameterNames:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html"><code>Set</code></a><code>&lt;</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>&gt;</code></td>
 </tr>
 <tr>
 <td><a href="query-size/">querySize</a></td>
-<td><code>val querySize:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><br>The number of query parameters in this URL, like 2 for <code>http://host/?a=apple&amp;b=banana</code>. If this URL has no query this is 0. Otherwise it is one more than the number of <code>"&amp;"</code> separators in the query.</td>
+<td>The number of query parameters in this URL, like 2 for <code>http://host/?a=apple&amp;b=banana</code>. If this URL has no query this is 0. Otherwise it is one more than the number of <code>"&amp;"</code> separators in the query.<code>val querySize:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a></td>
 </tr>
 <tr>
 <td><a href="scheme/">scheme</a></td>
-<td><code>val scheme:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><br>Either &ldquo;http&rdquo; or &ldquo;https&rdquo;.</td>
+<td>Either &ldquo;http&rdquo; or &ldquo;https&rdquo;.<code>val scheme:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a></td>
 </tr>
 <tr>
 <td><a href="username/">username</a></td>
-<td><code>val username:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><br>The decoded username, or an empty string if none is present.</td>
+<td>The decoded username, or an empty string if none is present.<code>val username:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -1123,35 +1123,35 @@ invalid URL. You can even be explicit about whether each component has been enco
 </tr>
 <tr>
 <td><a href="new-builder/">newBuilder</a></td>
-<td><code>fun newBuilder():</code><a href="-builder/"><code>HttpUrl.Builder</code></a><br>Returns a builder based on this URL.<code>fun newBuilder(link:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="-builder/"><code>HttpUrl.Builder</code></a><code>?</code><br>Returns a builder for the URL that would be retrieved by following <code>link</code> from this URL, or null if the resulting URL is not well-formed.</td>
+<td>Returns a builder based on this URL.<code>fun newBuilder(): Builder</code><br>Returns a builder for the URL that would be retrieved by following <code>link</code> from this URL, or null if the resulting URL is not well-formed.<code>fun newBuilder(link:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>): Builder?</code></td>
 </tr>
 <tr>
 <td><a href="query-parameter/">queryParameter</a></td>
-<td><code>fun queryParameter(name:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>?</code><br>The first query parameter named <code>name</code> decoded using UTF-8, or null if there is no such query parameter.</td>
+<td>The first query parameter named <code>name</code> decoded using UTF-8, or null if there is no such query parameter.<code>fun queryParameter(name:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>?</code></td>
 </tr>
 <tr>
 <td><a href="query-parameter-name/">queryParameterName</a></td>
-<td><code>fun queryParameterName(index:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><br>Returns the name of the query parameter at <code>index</code>. For example this returns <code>"a"</code> for <code>queryParameterName(0)</code> on <code>http://host/?a=apple&amp;b=banana</code>. This throws if <code>index</code> is not less than the <a href="#">query size</a>.</td>
+<td>Returns the name of the query parameter at <code>index</code>. For example this returns <code>"a"</code> for <code>queryParameterName(0)</code> on <code>http://host/?a=apple&amp;b=banana</code>. This throws if <code>index</code> is not less than the <a href="#">query size</a>.<code>fun queryParameterName(index:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a></td>
 </tr>
 <tr>
 <td><a href="query-parameter-value/">queryParameterValue</a></td>
-<td><code>fun queryParameterValue(index:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>?</code><br>Returns the value of the query parameter at <code>index</code>. For example this returns <code>"apple"</code> for <code>queryParameterName(0)</code> on <code>http://host/?a=apple&amp;b=banana</code>. This throws if <code>index</code> is not less than the <a href="#">query size</a>.</td>
+<td>Returns the value of the query parameter at <code>index</code>. For example this returns <code>"apple"</code> for <code>queryParameterName(0)</code> on <code>http://host/?a=apple&amp;b=banana</code>. This throws if <code>index</code> is not less than the <a href="#">query size</a>.<code>fun queryParameterValue(index:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>?</code></td>
 </tr>
 <tr>
 <td><a href="query-parameter-values/">queryParameterValues</a></td>
-<td><code>fun queryParameterValues(name:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>?&gt;</code><br>Returns all values for the query parameter <code>name</code> ordered by their appearance in this URL. For example this returns <code>["banana"]</code> for <code>queryParameterValue("b")</code> on <code>http://host/?a=apple&amp;b=banana</code>.</td>
+<td>Returns all values for the query parameter <code>name</code> ordered by their appearance in this URL. For example this returns <code>["banana"]</code> for <code>queryParameterValue("b")</code> on <code>http://host/?a=apple&amp;b=banana</code>.<code>fun queryParameterValues(name:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>?&gt;</code></td>
 </tr>
 <tr>
 <td><a href="redact/">redact</a></td>
-<td><code>fun redact():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><br>Returns a string with containing this URL with its username, password, query, and fragment stripped, and its path replaced with <code>/...</code>. For example, redacting <code>http://username:password@example.com/path</code> returns <code>http://example.com/...</code>.</td>
+<td>Returns a string with containing this URL with its username, password, query, and fragment stripped, and its path replaced with <code>/...</code>. For example, redacting <code>http://username:password@example.com/path</code> returns <code>http://example.com/...</code>.<code>fun redact():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a></td>
 </tr>
 <tr>
 <td><a href="resolve/">resolve</a></td>
-<td><code>fun resolve(link:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="./"><code>HttpUrl</code></a><code>?</code><br>Returns the URL that would be retrieved by following <code>link</code> from this URL, or null if the resulting URL is not well-formed.</td>
+<td>Returns the URL that would be retrieved by following <code>link</code> from this URL, or null if the resulting URL is not well-formed.<code>fun resolve(link:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="./"><code>HttpUrl</code></a><code>?</code></td>
 </tr>
 <tr>
 <td><a href="top-private-domain/">topPrivateDomain</a></td>
-<td><code>fun topPrivateDomain():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>?</code><br>Returns the domain name of this URL&rsquo;s <a href="#">host</a> that is one level beneath the public suffix by consulting the <a href="https://publicsuffix.org">public suffix list</a>. Returns null if this URL&rsquo;s <a href="#">host</a> is an IP address or is considered a public suffix by the public suffix list.</td>
+<td>Returns the domain name of this URL&rsquo;s <a href="#">host</a> that is one level beneath the public suffix by consulting the <a href="https://publicsuffix.org">public suffix list</a>. Returns null if this URL&rsquo;s <a href="#">host</a> is an IP address or is considered a public suffix by the public suffix list.<code>fun topPrivateDomain():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>?</code></td>
 </tr>
 <tr>
 <td><a href="to-string/">toString</a></td>
@@ -1159,11 +1159,11 @@ invalid URL. You can even be explicit about whether each component has been enco
 </tr>
 <tr>
 <td><a href="to-uri/">toUri</a></td>
-<td><code>fun toUri():</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/URI.html"><code>URI</code></a><br>Returns this URL as a <a href="https://docs.oracle.com/javase/8/docs/api/java/net/URI.html">java.net.URI</a>. Because <code>URI</code> is more strict than this class, the returned URI may be semantically different from this URL:</td>
+<td>Returns this URL as a <a href="https://docs.oracle.com/javase/8/docs/api/java/net/URI.html">java.net.URI</a>. Because <code>URI</code> is more strict than this class, the returned URI may be semantically different from this URL:<code>fun toUri():</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/URI.html"><code>URI</code></a></td>
 </tr>
 <tr>
 <td><a href="to-url/">toUrl</a></td>
-<td><code>fun toUrl():</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/URL.html"><code>URL</code></a><br>Returns this URL as a <a href="https://docs.oracle.com/javase/8/docs/api/java/net/URL.html">java.net.URL</a>.</td>
+<td>Returns this URL as a <a href="https://docs.oracle.com/javase/8/docs/api/java/net/URL.html">java.net.URL</a>.<code>fun toUrl():</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/URL.html"><code>URL</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -1178,15 +1178,15 @@ invalid URL. You can even be explicit about whether each component has been enco
 <tbody>
 <tr>
 <td><a href="default-port/">defaultPort</a></td>
-<td><code>fun defaultPort(scheme:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><br>Returns 80 if <code>scheme.equals("http")</code>, 443 if <code>scheme.equals("https")</code> and -1 otherwise.</td>
+<td>Returns 80 if <code>scheme.equals("http")</code>, 443 if <code>scheme.equals("https")</code> and -1 otherwise.<code>fun defaultPort(scheme:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a></td>
 </tr>
 <tr>
 <td><a href="to-http-url/">toHttpUrl</a></td>
-<td><code>fun</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>.toHttpUrl():</code><a href="./"><code>HttpUrl</code></a><br>Returns a new <a href="./">HttpUrl</a> representing this.</td>
+<td>Returns a new <a href="./">HttpUrl</a> representing this.<code>fun</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>.toHttpUrl():</code><a href="./"><code>HttpUrl</code></a></td>
 </tr>
 <tr>
 <td><a href="to-http-url-or-null/">toHttpUrlOrNull</a></td>
-<td><code>fun</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>.toHttpUrlOrNull():</code><a href="./"><code>HttpUrl</code></a><code>?</code><br>Returns a new <code>HttpUrl</code> representing <code>url</code> if it is a well-formed HTTP or HTTPS URL, or null if it isn&rsquo;t.<code>fun</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/URL.html"><code>URL</code></a><code>.toHttpUrlOrNull():</code><a href="./"><code>HttpUrl</code></a><code>?</code><br>Returns an <a href="./">HttpUrl</a> for this if its protocol is <code>http</code> or <code>https</code>, or null if it has any other protocol.<code>fun</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/URI.html"><code>URI</code></a><code>.toHttpUrlOrNull():</code><a href="./"><code>HttpUrl</code></a><code>?</code></td>
+<td>Returns a new <code>HttpUrl</code> representing <code>url</code> if it is a well-formed HTTP or HTTPS URL, or null if it isn&rsquo;t.<code>fun</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>.toHttpUrlOrNull():</code><a href="./"><code>HttpUrl</code></a><code>?</code><br>Returns an <a href="./">HttpUrl</a> for this if its protocol is <code>http</code> or <code>https</code>, or null if it has any other protocol.<code>fun</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/URL.html"><code>URL</code></a><code>.toHttpUrlOrNull():</code><a href="./"><code>HttpUrl</code></a><code>?``fun</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/URI.html"><code>URI</code></a><code>.toHttpUrlOrNull():</code><a href="./"><code>HttpUrl</code></a><code>?</code></td>
 </tr>
 </tbody>
 </table>

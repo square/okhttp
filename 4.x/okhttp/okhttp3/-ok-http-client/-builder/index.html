@@ -690,15 +690,15 @@
 <tbody>
 <tr>
 <td><a href="add-interceptor/">addInterceptor</a></td>
-<td><code>fun addInterceptor(interceptor:</code><a href="../../-interceptor/"><code>Interceptor</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br><code>fun addInterceptor(block: (chain:</code><a href="../../-interceptor/-chain/"><code>Interceptor.Chain</code></a><code>) -&gt;</code><a href="../../-response/"><code>Response</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a></td>
+<td><code>fun addInterceptor(interceptor:</code><a href="../../-interceptor/"><code>Interceptor</code></a><code>): Builder</code><br><code>fun addInterceptor(block: (chain: Chain) -&gt;</code><a href="../../-response/"><code>Response</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="add-network-interceptor/">addNetworkInterceptor</a></td>
-<td><code>fun addNetworkInterceptor(interceptor:</code><a href="../../-interceptor/"><code>Interceptor</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br><code>fun addNetworkInterceptor(block: (chain:</code><a href="../../-interceptor/-chain/"><code>Interceptor.Chain</code></a><code>) -&gt;</code><a href="../../-response/"><code>Response</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a></td>
+<td><code>fun addNetworkInterceptor(interceptor:</code><a href="../../-interceptor/"><code>Interceptor</code></a><code>): Builder</code><br><code>fun addNetworkInterceptor(block: (chain: Chain) -&gt;</code><a href="../../-response/"><code>Response</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="authenticator/">authenticator</a></td>
-<td><code>fun authenticator(authenticator:</code><a href="../../-authenticator/"><code>Authenticator</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Sets the authenticator used to respond to challenges from origin servers. Use <a href="proxy-authenticator/">proxyAuthenticator</a> to set the authenticator for proxy servers.</td>
+<td>Sets the authenticator used to respond to challenges from origin servers. Use <a href="proxy-authenticator/">proxyAuthenticator</a> to set the authenticator for proxy servers.<code>fun authenticator(authenticator:</code><a href="../../-authenticator/"><code>Authenticator</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="build/">build</a></td>
@@ -706,107 +706,107 @@
 </tr>
 <tr>
 <td><a href="cache/">cache</a></td>
-<td><code>fun cache(cache:</code><a href="../../-cache/"><code>Cache</code></a><code>?):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Sets the response cache to be used to read and write cached responses.</td>
+<td>Sets the response cache to be used to read and write cached responses.<code>fun cache(cache:</code><a href="../../-cache/"><code>Cache</code></a><code>?): Builder</code></td>
 </tr>
 <tr>
 <td><a href="call-timeout/">callTimeout</a></td>
-<td><code>fun callTimeout(timeout:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>, unit:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><code>TimeUnit</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br><code>fun callTimeout(duration:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/time/Duration.html"><code>Duration</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Sets the default timeout for complete calls. A value of 0 means no timeout, otherwise values must be between 1 and <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Integer.html#MAX_VALUE">Integer.MAX_VALUE</a> when converted to milliseconds.</td>
+<td>Sets the default timeout for complete calls. A value of 0 means no timeout, otherwise values must be between 1 and <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Integer.html#MAX_VALUE">Integer.MAX_VALUE</a> when converted to milliseconds.<code>fun callTimeout(timeout:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>, unit:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><code>TimeUnit</code></a><code>): Builder</code><br><code>fun callTimeout(duration:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/time/Duration.html"><code>Duration</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="certificate-pinner/">certificatePinner</a></td>
-<td><code>fun certificatePinner(certificatePinner:</code><a href="../../-certificate-pinner/"><code>CertificatePinner</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Sets the certificate pinner that constrains which certificates are trusted. By default HTTPS connections rely on only the <a href="#">SSL socket factory</a> to establish trust. Pinning certificates avoids the need to trust certificate authorities.</td>
+<td>Sets the certificate pinner that constrains which certificates are trusted. By default HTTPS connections rely on only the <a href="#">SSL socket factory</a> to establish trust. Pinning certificates avoids the need to trust certificate authorities.<code>fun certificatePinner(certificatePinner:</code><a href="../../-certificate-pinner/"><code>CertificatePinner</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="connection-pool/">connectionPool</a></td>
-<td><code>fun connectionPool(connectionPool:</code><a href="../../-connection-pool/"><code>ConnectionPool</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Sets the connection pool used to recycle HTTP and HTTPS connections.</td>
+<td>Sets the connection pool used to recycle HTTP and HTTPS connections.<code>fun connectionPool(connectionPool:</code><a href="../../-connection-pool/"><code>ConnectionPool</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="connection-specs/">connectionSpecs</a></td>
-<td><code>fun connectionSpecs(connectionSpecs:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="../../-connection-spec/"><code>ConnectionSpec</code></a><code>&gt;):</code><a href="./"><code>OkHttpClient.Builder</code></a></td>
+<td><code>fun connectionSpecs(connectionSpecs:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="../../-connection-spec/"><code>ConnectionSpec</code></a><code>&gt;): Builder</code></td>
 </tr>
 <tr>
 <td><a href="connect-timeout/">connectTimeout</a></td>
-<td><code>fun connectTimeout(timeout:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>, unit:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><code>TimeUnit</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br><code>fun connectTimeout(duration:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/time/Duration.html"><code>Duration</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Sets the default connect timeout for new connections. A value of 0 means no timeout, otherwise values must be between 1 and <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Integer.html#MAX_VALUE">Integer.MAX_VALUE</a> when converted to milliseconds.</td>
+<td>Sets the default connect timeout for new connections. A value of 0 means no timeout, otherwise values must be between 1 and <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Integer.html#MAX_VALUE">Integer.MAX_VALUE</a> when converted to milliseconds.<code>fun connectTimeout(timeout:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>, unit:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><code>TimeUnit</code></a><code>): Builder</code><br><code>fun connectTimeout(duration:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/time/Duration.html"><code>Duration</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="cookie-jar/">cookieJar</a></td>
-<td><code>fun cookieJar(cookieJar:</code><a href="../../-cookie-jar/"><code>CookieJar</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Sets the handler that can accept cookies from incoming HTTP responses and provides cookies to outgoing HTTP requests.</td>
+<td>Sets the handler that can accept cookies from incoming HTTP responses and provides cookies to outgoing HTTP requests.<code>fun cookieJar(cookieJar:</code><a href="../../-cookie-jar/"><code>CookieJar</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="dispatcher/">dispatcher</a></td>
-<td><code>fun dispatcher(dispatcher:</code><a href="../../-dispatcher/"><code>Dispatcher</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Sets the dispatcher used to set policy and execute asynchronous requests. Must not be null.</td>
+<td>Sets the dispatcher used to set policy and execute asynchronous requests. Must not be null.<code>fun dispatcher(dispatcher:</code><a href="../../-dispatcher/"><code>Dispatcher</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="dns/">dns</a></td>
-<td><code>fun dns(dns:</code><a href="../../-dns/"><code>Dns</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Sets the DNS service used to lookup IP addresses for hostnames.</td>
+<td>Sets the DNS service used to lookup IP addresses for hostnames.<code>fun dns(dns:</code><a href="../../-dns/"><code>Dns</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="event-listener/">eventListener</a></td>
-<td><code>fun eventListener(eventListener:</code><a href="../../-event-listener/"><code>EventListener</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Configure a single client scoped listener that will receive all analytic events for this client.</td>
+<td>Configure a single client scoped listener that will receive all analytic events for this client.<code>fun eventListener(eventListener:</code><a href="../../-event-listener/"><code>EventListener</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="event-listener-factory/">eventListenerFactory</a></td>
-<td><code>fun eventListenerFactory(eventListenerFactory:</code><a href="../../-event-listener/-factory/"><code>EventListener.Factory</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Configure a factory to provide per-call scoped listeners that will receive analytic events for this client.</td>
+<td>Configure a factory to provide per-call scoped listeners that will receive analytic events for this client.<code>fun eventListenerFactory(eventListenerFactory: Factory): Builder</code></td>
 </tr>
 <tr>
 <td><a href="follow-redirects/">followRedirects</a></td>
-<td><code>fun followRedirects(followRedirects:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Configure this client to follow redirects. If unset, redirects will be followed.</td>
+<td>Configure this client to follow redirects. If unset, redirects will be followed.<code>fun followRedirects(followRedirects:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="follow-ssl-redirects/">followSslRedirects</a></td>
-<td><code>fun followSslRedirects(followProtocolRedirects:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Configure this client to follow redirects from HTTPS to HTTP and from HTTP to HTTPS.</td>
+<td>Configure this client to follow redirects from HTTPS to HTTP and from HTTP to HTTPS.<code>fun followSslRedirects(followProtocolRedirects:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="hostname-verifier/">hostnameVerifier</a></td>
-<td><code>fun hostnameVerifier(hostnameVerifier:</code><a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/HostnameVerifier.html"><code>HostnameVerifier</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Sets the verifier used to confirm that response certificates apply to requested hostnames for HTTPS connections.</td>
+<td>Sets the verifier used to confirm that response certificates apply to requested hostnames for HTTPS connections.<code>fun hostnameVerifier(hostnameVerifier:</code><a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/HostnameVerifier.html"><code>HostnameVerifier</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="interceptors/">interceptors</a></td>
-<td><code>fun interceptors():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-list/index.html"><code>MutableList</code></a><code>&lt;</code><a href="../../-interceptor/"><code>Interceptor</code></a><code>&gt;</code><br>Returns a modifiable list of interceptors that observe the full span of each call: from before the connection is established (if any) until after the response source is selected (either the origin server, cache, or both).</td>
+<td>Returns a modifiable list of interceptors that observe the full span of each call: from before the connection is established (if any) until after the response source is selected (either the origin server, cache, or both).<code>fun interceptors():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-list/index.html"><code>MutableList</code></a><code>&lt;</code><a href="../../-interceptor/"><code>Interceptor</code></a><code>&gt;</code></td>
 </tr>
 <tr>
 <td><a href="network-interceptors/">networkInterceptors</a></td>
-<td><code>fun networkInterceptors():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-list/index.html"><code>MutableList</code></a><code>&lt;</code><a href="../../-interceptor/"><code>Interceptor</code></a><code>&gt;</code><br>Returns a modifiable list of interceptors that observe a single network request and response. These interceptors must call <a href="../../-interceptor/-chain/proceed/">Interceptor.Chain.proceed</a> exactly once: it is an error for a network interceptor to short-circuit or repeat a network request.</td>
+<td>Returns a modifiable list of interceptors that observe a single network request and response. These interceptors must call <a href="../../-interceptor/-chain/proceed/">Interceptor.Chain.proceed</a> exactly once: it is an error for a network interceptor to short-circuit or repeat a network request.<code>fun networkInterceptors():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-list/index.html"><code>MutableList</code></a><code>&lt;</code><a href="../../-interceptor/"><code>Interceptor</code></a><code>&gt;</code></td>
 </tr>
 <tr>
 <td><a href="ping-interval/">pingInterval</a></td>
-<td><code>fun pingInterval(interval:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>, unit:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><code>TimeUnit</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br><code>fun pingInterval(duration:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/time/Duration.html"><code>Duration</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Sets the interval between HTTP/2 and web socket pings initiated by this client. Use this to automatically send ping frames until either the connection fails or it is closed. This keeps the connection alive and may detect connectivity failures.</td>
+<td>Sets the interval between HTTP/2 and web socket pings initiated by this client. Use this to automatically send ping frames until either the connection fails or it is closed. This keeps the connection alive and may detect connectivity failures.<code>fun pingInterval(interval:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>, unit:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><code>TimeUnit</code></a><code>): Builder</code><br><code>fun pingInterval(duration:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/time/Duration.html"><code>Duration</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="protocols/">protocols</a></td>
-<td><code>fun protocols(protocols:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="../../-protocol/"><code>Protocol</code></a><code>&gt;):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Configure the protocols used by this client to communicate with remote servers. By default this client will prefer the most efficient transport available, falling back to more ubiquitous protocols. Applications should only call this method to avoid specific compatibility problems, such as web servers that behave incorrectly when HTTP/2 is enabled.</td>
+<td>Configure the protocols used by this client to communicate with remote servers. By default this client will prefer the most efficient transport available, falling back to more ubiquitous protocols. Applications should only call this method to avoid specific compatibility problems, such as web servers that behave incorrectly when HTTP/2 is enabled.<code>fun protocols(protocols:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="../../-protocol/"><code>Protocol</code></a><code>&gt;): Builder</code></td>
 </tr>
 <tr>
 <td><a href="proxy/">proxy</a></td>
-<td><code>fun proxy(proxy:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html"><code>Proxy</code></a><code>?):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Sets the HTTP proxy that will be used by connections created by this client. This takes precedence over <a href="proxy-selector/">proxySelector</a>, which is only honored when this proxy is null (which it is by default). To disable proxy use completely, call <code>proxy(Proxy.NO_PROXY)</code>.</td>
+<td>Sets the HTTP proxy that will be used by connections created by this client. This takes precedence over <a href="proxy-selector/">proxySelector</a>, which is only honored when this proxy is null (which it is by default). To disable proxy use completely, call <code>proxy(Proxy.NO_PROXY)</code>.<code>fun proxy(proxy:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html"><code>Proxy</code></a><code>?): Builder</code></td>
 </tr>
 <tr>
 <td><a href="proxy-authenticator/">proxyAuthenticator</a></td>
-<td><code>fun proxyAuthenticator(proxyAuthenticator:</code><a href="../../-authenticator/"><code>Authenticator</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Sets the authenticator used to respond to challenges from proxy servers. Use <a href="authenticator/">authenticator</a> to set the authenticator for origin servers.</td>
+<td>Sets the authenticator used to respond to challenges from proxy servers. Use <a href="authenticator/">authenticator</a> to set the authenticator for origin servers.<code>fun proxyAuthenticator(proxyAuthenticator:</code><a href="../../-authenticator/"><code>Authenticator</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="proxy-selector/">proxySelector</a></td>
-<td><code>fun proxySelector(proxySelector:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/ProxySelector.html"><code>ProxySelector</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Sets the proxy selection policy to be used if no <a href="proxy/">proxy</a> is specified explicitly. The proxy selector may return multiple proxies; in that case they will be tried in sequence until a successful connection is established.</td>
+<td>Sets the proxy selection policy to be used if no <a href="proxy/">proxy</a> is specified explicitly. The proxy selector may return multiple proxies; in that case they will be tried in sequence until a successful connection is established.<code>fun proxySelector(proxySelector:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/ProxySelector.html"><code>ProxySelector</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="read-timeout/">readTimeout</a></td>
-<td><code>fun readTimeout(timeout:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>, unit:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><code>TimeUnit</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br><code>fun readTimeout(duration:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/time/Duration.html"><code>Duration</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Sets the default read timeout for new connections. A value of 0 means no timeout, otherwise values must be between 1 and <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Integer.html#MAX_VALUE">Integer.MAX_VALUE</a> when converted to milliseconds.</td>
+<td>Sets the default read timeout for new connections. A value of 0 means no timeout, otherwise values must be between 1 and <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Integer.html#MAX_VALUE">Integer.MAX_VALUE</a> when converted to milliseconds.<code>fun readTimeout(timeout:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>, unit:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><code>TimeUnit</code></a><code>): Builder</code><br><code>fun readTimeout(duration:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/time/Duration.html"><code>Duration</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="retry-on-connection-failure/">retryOnConnectionFailure</a></td>
-<td><code>fun retryOnConnectionFailure(retryOnConnectionFailure:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Configure this client to retry or not when a connectivity problem is encountered. By default, this client silently recovers from the following problems:</td>
+<td>Configure this client to retry or not when a connectivity problem is encountered. By default, this client silently recovers from the following problems:<code>fun retryOnConnectionFailure(retryOnConnectionFailure:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="socket-factory/">socketFactory</a></td>
-<td><code>fun socketFactory(socketFactory:</code><a href="https://docs.oracle.com/javase/8/docs/api/javax/net/SocketFactory.html"><code>SocketFactory</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Sets the socket factory used to create connections. OkHttp only uses the parameterless <a href="https://docs.oracle.com/javase/8/docs/api/javax/net/SocketFactory.html#createSocket()">SocketFactory.createSocket</a> method to create unconnected sockets. Overriding this method, e. g., allows the socket to be bound to a specific local address.</td>
+<td>Sets the socket factory used to create connections. OkHttp only uses the parameterless <a href="https://docs.oracle.com/javase/8/docs/api/javax/net/SocketFactory.html#createSocket()">SocketFactory.createSocket</a> method to create unconnected sockets. Overriding this method, e. g., allows the socket to be bound to a specific local address.<code>fun socketFactory(socketFactory:</code><a href="https://docs.oracle.com/javase/8/docs/api/javax/net/SocketFactory.html"><code>SocketFactory</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="ssl-socket-factory/">sslSocketFactory</a></td>
-<td><code>fun sslSocketFactory(sslSocketFactory:</code><a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLSocketFactory.html"><code>SSLSocketFactory</code></a><code>, trustManager:</code><a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/X509TrustManager.html"><code>X509TrustManager</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Sets the socket factory and trust manager used to secure HTTPS connections. If unset, the system defaults will be used.</td>
+<td>Sets the socket factory and trust manager used to secure HTTPS connections. If unset, the system defaults will be used.<code>fun sslSocketFactory(sslSocketFactory:</code><a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLSocketFactory.html"><code>SSLSocketFactory</code></a><code>, trustManager:</code><a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/X509TrustManager.html"><code>X509TrustManager</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="write-timeout/">writeTimeout</a></td>
-<td><code>fun writeTimeout(timeout:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>, unit:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><code>TimeUnit</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br><code>fun writeTimeout(duration:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/time/Duration.html"><code>Duration</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Sets the default write timeout for new connections. A value of 0 means no timeout, otherwise values must be between 1 and <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Integer.html#MAX_VALUE">Integer.MAX_VALUE</a> when converted to milliseconds.</td>
+<td>Sets the default write timeout for new connections. A value of 0 means no timeout, otherwise values must be between 1 and <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Integer.html#MAX_VALUE">Integer.MAX_VALUE</a> when converted to milliseconds.<code>fun writeTimeout(timeout:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>, unit:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><code>TimeUnit</code></a><code>): Builder</code><br><code>fun writeTimeout(duration:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/time/Duration.html"><code>Duration</code></a><code>): Builder</code></td>
 </tr>
 </tbody>
 </table>

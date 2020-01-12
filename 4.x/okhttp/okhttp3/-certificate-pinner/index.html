@@ -809,7 +809,7 @@ accepted by <a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/Tru
 <tbody>
 <tr>
 <td><a href="-builder/">Builder</a></td>
-<td><code>class Builder</code><br>Builds a configured certificate pinner.</td>
+<td>Builds a configured certificate pinner.<code>class Builder</code></td>
 </tr>
 </tbody>
 </table>
@@ -824,7 +824,7 @@ accepted by <a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/Tru
 <tbody>
 <tr>
 <td><a href="check/">check</a></td>
-<td><code>fun check(hostname:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>, peerCertificates:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="https://docs.oracle.com/javase/8/docs/api/java/security/cert/Certificate.html"><code>Certificate</code></a><code>&gt;):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Confirms that at least one of the certificates pinned for <code>hostname</code> is in <code>peerCertificates</code>. Does nothing if there are no certificates pinned for <code>hostname</code>. OkHttp calls this after a successful TLS handshake, but before the connection is used.</td>
+<td>Confirms that at least one of the certificates pinned for <code>hostname</code> is in <code>peerCertificates</code>. Does nothing if there are no certificates pinned for <code>hostname</code>. OkHttp calls this after a successful TLS handshake, but before the connection is used.<code>fun check(hostname:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>, peerCertificates:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="https://docs.oracle.com/javase/8/docs/api/java/security/cert/Certificate.html"><code>Certificate</code></a><code>&gt;):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 <tr>
 <td><a href="equals/">equals</a></td>
@@ -862,7 +862,7 @@ accepted by <a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/Tru
 <tbody>
 <tr>
 <td><a href="pin/">pin</a></td>
-<td><code>fun pin(certificate:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/security/cert/Certificate.html"><code>Certificate</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><br>Returns the SHA-256 of <code>certificate</code>&lsquo;s public key.</td>
+<td>Returns the SHA-256 of <code>certificate</code>&lsquo;s public key.<code>fun pin(certificate:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/security/cert/Certificate.html"><code>Certificate</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a></td>
 </tr>
 </tbody>
 </table>
