@@ -63,8 +63,6 @@ open class PlatformRule @JvmOverloads constructor(
         try {
           setupPlatform()
 
-          System.err.println("Running with ${Platform.get().javaClass.simpleName}")
-
           base.evaluate()
         } catch (e: AssumptionViolatedException) {
           throw e
@@ -90,6 +88,10 @@ open class PlatformRule @JvmOverloads constructor(
       Platform.resetForTests(platform)
     } else {
       Platform.resetForTests()
+    }
+
+    if (requiredPlatformName != null) {
+      System.err.println("Running with ${Platform.get().javaClass.simpleName}")
     }
   }
 
@@ -288,43 +290,46 @@ open class PlatformRule @JvmOverloads constructor(
     const val BOUNCYCASTLE_PROPERTY = "bouncycastle"
 
     init {
-      if (getPlatformSystemProperty() == CONSCRYPT_PROPERTY && Security.getProviders()[0].name != "Conscrypt") {
+      val platformSystemProperty = getPlatformSystemProperty()
+
+      if (platformSystemProperty == CONSCRYPT_PROPERTY && Security.getProviders()[0].name != "Conscrypt") {
         if (!Conscrypt.isAvailable()) {
           System.err.println("Warning: Conscrypt not available")
         }
 
         val provider = Conscrypt.newProviderBuilder().provideTrustManager(true).build()
         Security.insertProviderAt(provider, 1)
-      } else if (getPlatformSystemProperty() == JDK8_ALPN_PROPERTY) {
+      } else if (platformSystemProperty == JDK8_ALPN_PROPERTY) {
         if (!isAlpnBootEnabled()) {
           System.err.println("Warning: ALPN Boot not enabled")
         }
-      } else if (getPlatformSystemProperty() == JDK8_PROPERTY) {
+      } else if (platformSystemProperty == JDK8_PROPERTY) {
         if (isAlpnBootEnabled()) {
           System.err.println("Warning: ALPN Boot enabled unintentionally")
         }
-      } else if (getPlatformSystemProperty() == OPENJSSE_PROPERTY && Security.getProviders()[0].name != "OpenJSSE") {
+      } else if (platformSystemProperty == OPENJSSE_PROPERTY && Security.getProviders()[0].name != "OpenJSSE") {
         if (!OpenJSSEPlatform.isSupported) {
           System.err.println("Warning: OpenJSSE not available")
         }
 
         Security.insertProviderAt(OpenJSSE(), 1)
-      } else if (getPlatformSystemProperty() == BOUNCYCASTLE_PROPERTY && Security.getProviders()[0].name != "BC") {
+      } else if (platformSystemProperty == BOUNCYCASTLE_PROPERTY && Security.getProviders()[0].name != "BC") {
         Security.insertProviderAt(BouncyCastleProvider(), 1)
         Security.insertProviderAt(BouncyCastleJsseProvider(), 2)
-      } else if (getPlatformSystemProperty() == CORRETTO_PROPERTY) {
+      } else if (platformSystemProperty == CORRETTO_PROPERTY) {
         AmazonCorrettoCryptoProvider.install()
 
         AmazonCorrettoCryptoProvider.INSTANCE.assertHealthy()
       }
 
       Platform.resetForTests()
+
+      System.err.println("Running Tests with ${Platform.get().javaClass.simpleName}")
     }
 
     @JvmStatic
     fun getPlatformSystemProperty(): String {
-      var property: String? = System.getProperty(
-          PROPERTY_NAME)
+      var property: String? = System.getProperty(PROPERTY_NAME)
 
       if (property == null) {
         property = when (Platform.get()) {
