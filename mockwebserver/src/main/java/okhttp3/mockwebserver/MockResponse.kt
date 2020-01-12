@@ -15,13 +15,13 @@
  */
 package okhttp3.mockwebserver
 
+import java.util.concurrent.TimeUnit
 import okhttp3.Headers
 import okhttp3.WebSocketListener
 import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.http2.Settings
 import okhttp3.mockwebserver.internal.duplex.DuplexResponseBody
 import okio.Buffer
-import java.util.concurrent.TimeUnit
 
 /** A scripted response to be replayed by the mock web server. */
 class MockResponse : Cloneable {

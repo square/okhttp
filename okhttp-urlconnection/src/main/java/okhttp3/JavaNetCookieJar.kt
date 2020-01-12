@@ -15,15 +15,15 @@
  */
 package okhttp3
 
+import java.io.IOException
+import java.net.CookieHandler
+import java.net.HttpCookie
+import java.util.Collections
 import okhttp3.internal.cookieToString
 import okhttp3.internal.delimiterOffset
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.WARN
 import okhttp3.internal.trimSubstring
-import java.io.IOException
-import java.net.CookieHandler
-import java.net.HttpCookie
-import java.util.Collections
 
 /** A cookie jar that delegates to a [java.net.CookieHandler]. */
 class JavaNetCookieJar(private val cookieHandler: CookieHandler) : CookieJar {

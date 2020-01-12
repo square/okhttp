@@ -21,10 +21,9 @@ import okhttp3.Cookie
 import okhttp3.CookieJar
 import okhttp3.Interceptor
 import okhttp3.Response
+import okhttp3.internal.toHostHeader
 import okhttp3.internal.userAgent
 import okio.GzipSource
-
-import okhttp3.internal.toHostHeader
 import okio.buffer
 
 /**

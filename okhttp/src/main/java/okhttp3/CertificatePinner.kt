@@ -15,14 +15,14 @@
  */
 package okhttp3
 
+import java.security.cert.Certificate
+import java.security.cert.X509Certificate
+import javax.net.ssl.SSLPeerUnverifiedException
 import okhttp3.internal.tls.CertificateChainCleaner
 import okhttp3.internal.toCanonicalHost
 import okio.ByteString
 import okio.ByteString.Companion.decodeBase64
 import okio.ByteString.Companion.toByteString
-import java.security.cert.Certificate
-import java.security.cert.X509Certificate
-import javax.net.ssl.SSLPeerUnverifiedException
 
 /**
  * Constrains which certificates are trusted. Pinning certificates defends against attacks on

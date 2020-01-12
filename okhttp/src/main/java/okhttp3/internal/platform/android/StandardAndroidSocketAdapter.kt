@@ -15,11 +15,11 @@
  */
 package okhttp3.internal.platform.android
 
-import okhttp3.internal.platform.Platform
-import okhttp3.internal.readFieldOrNull
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
+import okhttp3.internal.platform.Platform
+import okhttp3.internal.readFieldOrNull
 
 /**
  * Base Android reflection based SocketAdapter for the built in Android SSLSocket.

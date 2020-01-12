@@ -15,11 +15,11 @@
  */
 package okhttp3.internal.http2
 
+import java.io.IOException
 import okhttp3.internal.and
 import okio.BufferedSink
 import okio.BufferedSource
 import okio.ByteString
-import java.io.IOException
 
 /**
  * This class was originally composed from the following classes in

@@ -16,16 +16,6 @@
 package okhttp3.internal.platform
 
 import android.os.Build
-import okhttp3.Protocol
-import okhttp3.internal.platform.android.AndroidCertificateChainCleaner
-import okhttp3.internal.platform.android.CloseGuard
-import okhttp3.internal.platform.android.ConscryptSocketAdapter
-import okhttp3.internal.platform.android.DeferredSocketAdapter
-import okhttp3.internal.platform.android.StandardAndroidSocketAdapter
-import okhttp3.internal.platform.android.androidLog
-import okhttp3.internal.tls.BasicTrustRootIndex
-import okhttp3.internal.tls.CertificateChainCleaner
-import okhttp3.internal.tls.TrustRootIndex
 import java.io.IOException
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
@@ -36,6 +26,16 @@ import java.security.cert.X509Certificate
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
+import okhttp3.Protocol
+import okhttp3.internal.platform.android.AndroidCertificateChainCleaner
+import okhttp3.internal.platform.android.CloseGuard
+import okhttp3.internal.platform.android.ConscryptSocketAdapter
+import okhttp3.internal.platform.android.DeferredSocketAdapter
+import okhttp3.internal.platform.android.StandardAndroidSocketAdapter
+import okhttp3.internal.platform.android.androidLog
+import okhttp3.internal.tls.BasicTrustRootIndex
+import okhttp3.internal.tls.CertificateChainCleaner
+import okhttp3.internal.tls.TrustRootIndex
 
 /** Android 5+. */
 class AndroidPlatform : Platform() {

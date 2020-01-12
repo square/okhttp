@@ -15,6 +15,11 @@
  */
 package okhttp3.internal.http2
 
+import java.io.IOException
+import java.net.ProtocolException
+import java.util.ArrayList
+import java.util.Locale
+import java.util.concurrent.TimeUnit
 import okhttp3.Headers
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -40,11 +45,6 @@ import okhttp3.internal.http2.Header.Companion.TARGET_SCHEME_UTF8
 import okhttp3.internal.immutableListOf
 import okio.Sink
 import okio.Source
-import java.io.IOException
-import java.net.ProtocolException
-import java.util.ArrayList
-import java.util.Locale
-import java.util.concurrent.TimeUnit
 
 /** Encode requests and responses using HTTP/2 frames. */
 class Http2ExchangeCodec(

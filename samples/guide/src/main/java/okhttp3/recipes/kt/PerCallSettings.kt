@@ -15,10 +15,10 @@
  */
 package okhttp3.recipes.kt
 
-import okhttp3.OkHttpClient
-import okhttp3.Request
 import java.io.IOException
 import java.util.concurrent.TimeUnit
+import okhttp3.OkHttpClient
+import okhttp3.Request
 
 class PerCallSettings {
   private val client = OkHttpClient()

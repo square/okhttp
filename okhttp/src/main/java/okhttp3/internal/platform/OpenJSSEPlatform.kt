@@ -15,7 +15,6 @@
  */
 package okhttp3.internal.platform
 
-import okhttp3.Protocol
 import java.security.KeyStore
 import java.security.Provider
 import javax.net.ssl.SSLContext
@@ -23,6 +22,7 @@ import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
+import okhttp3.Protocol
 
 /**
  * Platform using OpenJSSE (https://github.com/openjsse/openjsse) if installed as the first

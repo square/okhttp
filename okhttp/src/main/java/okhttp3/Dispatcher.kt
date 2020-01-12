@@ -15,9 +15,6 @@
  */
 package okhttp3
 
-import okhttp3.RealCall.AsyncCall
-import okhttp3.internal.assertThreadDoesntHoldLock
-import okhttp3.internal.threadFactory
 import java.util.ArrayDeque
 import java.util.Collections
 import java.util.Deque
@@ -25,6 +22,9 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.SynchronousQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
+import okhttp3.RealCall.AsyncCall
+import okhttp3.internal.assertThreadDoesntHoldLock
+import okhttp3.internal.threadFactory
 
 /**
  * Policy on when async requests are executed.

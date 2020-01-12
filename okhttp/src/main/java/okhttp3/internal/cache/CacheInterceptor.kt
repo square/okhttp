@@ -16,6 +16,10 @@
  */
 package okhttp3.internal.cache
 
+import java.io.IOException
+import java.net.HttpURLConnection.HTTP_GATEWAY_TIMEOUT
+import java.net.HttpURLConnection.HTTP_NOT_MODIFIED
+import java.util.concurrent.TimeUnit.MILLISECONDS
 import okhttp3.Cache
 import okhttp3.Headers
 import okhttp3.Interceptor
@@ -32,10 +36,6 @@ import okio.Buffer
 import okio.Source
 import okio.Timeout
 import okio.buffer
-import java.io.IOException
-import java.net.HttpURLConnection.HTTP_GATEWAY_TIMEOUT
-import java.net.HttpURLConnection.HTTP_NOT_MODIFIED
-import java.util.concurrent.TimeUnit.MILLISECONDS
 
 /** Serves requests from the cache and writes responses to the cache. */
 class CacheInterceptor(internal val cache: Cache?) : Interceptor {

@@ -15,13 +15,13 @@
  */
 package okhttp3.internal.platform.android
 
+import javax.net.ssl.SSLSocket
+import javax.net.ssl.SSLSocketFactory
+import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol
 import okhttp3.internal.platform.ConscryptPlatform
 import okhttp3.internal.platform.Platform
 import org.conscrypt.Conscrypt
-import javax.net.ssl.SSLSocket
-import javax.net.ssl.SSLSocketFactory
-import javax.net.ssl.X509TrustManager
 
 /**
  * Simple non-reflection SocketAdapter for Conscrypt.

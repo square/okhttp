@@ -15,12 +15,6 @@
  */
 package okhttp3
 
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.internal.closeQuietly
-import okhttp3.internal.readBomAsCharset
-import okio.Buffer
-import okio.BufferedSource
-import okio.ByteString
 import java.io.Closeable
 import java.io.IOException
 import java.io.InputStream
@@ -28,6 +22,12 @@ import java.io.InputStreamReader
 import java.io.Reader
 import java.nio.charset.Charset
 import kotlin.text.Charsets.UTF_8
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.internal.closeQuietly
+import okhttp3.internal.readBomAsCharset
+import okio.Buffer
+import okio.BufferedSource
+import okio.ByteString
 
 /**
  * A one-shot stream from the origin server to the client application with the raw bytes of the

@@ -15,6 +15,7 @@
  */
 package okhttp3.brotli
 
+import java.io.IOException
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Protocol
 import okhttp3.Request
@@ -26,7 +27,6 @@ import okio.ByteString.Companion.encodeUtf8
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.fail
 import org.junit.Test
-import java.io.IOException
 
 class BrotliInterceptorTest {
   @Test

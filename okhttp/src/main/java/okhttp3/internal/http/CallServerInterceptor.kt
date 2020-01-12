@@ -15,12 +15,12 @@
  */
 package okhttp3.internal.http
 
+import java.io.IOException
+import java.net.ProtocolException
 import okhttp3.Interceptor
 import okhttp3.Response
 import okhttp3.internal.EMPTY_RESPONSE
 import okio.buffer
-import java.io.IOException
-import java.net.ProtocolException
 
 /** This is the last interceptor in the chain. It makes a network call to the server. */
 class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {

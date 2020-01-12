@@ -15,8 +15,6 @@
  */
 package okhttp3.tls.internal
 
-import okhttp3.tls.HandshakeCertificates
-import okhttp3.tls.HeldCertificate
 import java.io.InputStream
 import java.net.InetAddress
 import java.security.KeyStore
@@ -26,6 +24,8 @@ import javax.net.ssl.KeyManagerFactory
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509KeyManager
 import javax.net.ssl.X509TrustManager
+import okhttp3.tls.HandshakeCertificates
+import okhttp3.tls.HeldCertificate
 
 object TlsUtil {
   val password = "password".toCharArray()

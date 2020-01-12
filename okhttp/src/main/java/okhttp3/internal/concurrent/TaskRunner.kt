@@ -15,17 +15,17 @@
  */
 package okhttp3.internal.concurrent
 
+import java.util.concurrent.SynchronousQueue
+import java.util.concurrent.ThreadFactory
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
+import java.util.logging.Logger
 import okhttp3.internal.addIfAbsent
 import okhttp3.internal.assertThreadDoesntHoldLock
 import okhttp3.internal.assertThreadHoldsLock
 import okhttp3.internal.concurrent.TaskRunner.Companion.INSTANCE
 import okhttp3.internal.notify
 import okhttp3.internal.threadFactory
-import java.util.concurrent.SynchronousQueue
-import java.util.concurrent.ThreadFactory
-import java.util.concurrent.ThreadPoolExecutor
-import java.util.concurrent.TimeUnit
-import java.util.logging.Logger
 
 /**
  * A set of worker threads that are shared among a set of task queues.

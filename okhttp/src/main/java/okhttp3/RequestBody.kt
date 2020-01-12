@@ -15,15 +15,15 @@
  */
 package okhttp3
 
+import java.io.File
+import java.io.IOException
+import java.nio.charset.Charset
+import kotlin.text.Charsets.UTF_8
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.internal.checkOffsetAndCount
 import okio.BufferedSink
 import okio.ByteString
 import okio.source
-import java.io.File
-import java.io.IOException
-import java.nio.charset.Charset
-import kotlin.text.Charsets.UTF_8
 
 abstract class RequestBody {
 

@@ -15,14 +15,14 @@
  */
 package okhttp3
 
+import java.util.Arrays
+import java.util.Objects
+import javax.net.ssl.SSLSocket
 import okhttp3.ConnectionSpec.Builder
 import okhttp3.internal.concat
 import okhttp3.internal.hasIntersection
 import okhttp3.internal.indexOf
 import okhttp3.internal.intersect
-import java.util.Arrays
-import java.util.Objects
-import javax.net.ssl.SSLSocket
 
 /**
  * Specifies configuration for the socket connection that HTTP traffic travels through. For `https:`

@@ -15,14 +15,14 @@
  */
 package okhttp3
 
+import java.io.IOException
+import java.util.UUID
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.internal.toImmutableList
 import okio.Buffer
 import okio.BufferedSink
 import okio.ByteString
 import okio.ByteString.Companion.encodeUtf8
-import java.io.IOException
-import java.util.UUID
 
 /**
  * An [RFC 2387][rfc_2387]-compliant request body.

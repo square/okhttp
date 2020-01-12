@@ -15,14 +15,14 @@
  */
 package okhttp3.internal.concurrent
 
-import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.data.Offset
-import org.junit.After
-import org.junit.Test
 import java.lang.Thread.UncaughtExceptionHandler
 import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
+import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.data.Offset
+import org.junit.After
+import org.junit.Test
 
 /**
  * Integration test to confirm that [TaskRunner] works with a real backend. Business logic is all

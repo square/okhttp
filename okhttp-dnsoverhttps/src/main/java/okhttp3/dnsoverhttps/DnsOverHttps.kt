@@ -15,6 +15,11 @@
  */
 package okhttp3.dnsoverhttps
 
+import java.io.IOException
+import java.net.InetAddress
+import java.net.UnknownHostException
+import java.util.ArrayList
+import java.util.concurrent.CountDownLatch
 import okhttp3.CacheControl
 import okhttp3.Call
 import okhttp3.Callback
@@ -29,11 +34,6 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
-import java.io.IOException
-import java.net.InetAddress
-import java.net.UnknownHostException
-import java.util.ArrayList
-import java.util.concurrent.CountDownLatch
 
 /**
  * [DNS over HTTPS implementation][doh_spec].

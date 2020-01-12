@@ -15,10 +15,6 @@
  */
 package okhttp3.recipes.kt
 
-import okhttp3.CertificatePinner
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okio.Buffer
 import java.io.IOException
 import java.io.InputStream
 import java.security.KeyStore
@@ -29,6 +25,10 @@ import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
+import okhttp3.CertificatePinner
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okio.Buffer
 
 class CustomTrust {
   private val client: OkHttpClient

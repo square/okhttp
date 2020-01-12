@@ -16,6 +16,21 @@
  */
 package okhttp3.internal.connection
 
+import java.io.IOException
+import java.lang.ref.Reference
+import java.net.ConnectException
+import java.net.HttpURLConnection.HTTP_OK
+import java.net.HttpURLConnection.HTTP_PROXY_AUTH
+import java.net.ProtocolException
+import java.net.Proxy
+import java.net.Socket
+import java.net.SocketException
+import java.net.SocketTimeoutException
+import java.net.UnknownServiceException
+import java.security.cert.X509Certificate
+import java.util.concurrent.TimeUnit.MILLISECONDS
+import javax.net.ssl.SSLPeerUnverifiedException
+import javax.net.ssl.SSLSocket
 import okhttp3.Address
 import okhttp3.Call
 import okhttp3.CertificatePinner
@@ -54,21 +69,6 @@ import okio.BufferedSource
 import okio.buffer
 import okio.sink
 import okio.source
-import java.io.IOException
-import java.lang.ref.Reference
-import java.net.ConnectException
-import java.net.HttpURLConnection.HTTP_OK
-import java.net.HttpURLConnection.HTTP_PROXY_AUTH
-import java.net.ProtocolException
-import java.net.Proxy
-import java.net.Socket
-import java.net.SocketException
-import java.net.SocketTimeoutException
-import java.net.UnknownServiceException
-import java.security.cert.X509Certificate
-import java.util.concurrent.TimeUnit.MILLISECONDS
-import javax.net.ssl.SSLPeerUnverifiedException
-import javax.net.ssl.SSLSocket
 
 class RealConnection(
   val connectionPool: RealConnectionPool,

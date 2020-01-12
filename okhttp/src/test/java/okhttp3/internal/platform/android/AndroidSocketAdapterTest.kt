@@ -15,6 +15,9 @@
  */
 package okhttp3.internal.platform.android
 
+import java.security.Provider
+import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLSocket
 import okhttp3.DelegatingSSLSocket
 import okhttp3.DelegatingSSLSocketFactory
 import okhttp3.Protocol.HTTP_1_1
@@ -31,9 +34,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import java.security.Provider
-import javax.net.ssl.SSLContext
-import javax.net.ssl.SSLSocket
 
 @RunWith(Parameterized::class)
 class AndroidSocketAdapterTest(private val adapter: SocketAdapter) {

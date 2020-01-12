@@ -15,6 +15,8 @@
  */
 package okhttp3.internal.http
 
+import java.io.IOException
+import java.util.concurrent.TimeUnit
 import okhttp3.Call
 import okhttp3.Connection
 import okhttp3.Interceptor
@@ -23,8 +25,6 @@ import okhttp3.Response
 import okhttp3.internal.checkDuration
 import okhttp3.internal.connection.Exchange
 import okhttp3.internal.connection.Transmitter
-import java.io.IOException
-import java.util.concurrent.TimeUnit
 
 /**
  * A concrete interceptor chain that carries the entire interceptor chain: all application

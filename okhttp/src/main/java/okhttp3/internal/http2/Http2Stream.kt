@@ -15,6 +15,11 @@
  */
 package okhttp3.internal.http2
 
+import java.io.EOFException
+import java.io.IOException
+import java.io.InterruptedIOException
+import java.net.SocketTimeoutException
+import java.util.ArrayDeque
 import okhttp3.Headers
 import okhttp3.internal.EMPTY_HEADERS
 import okhttp3.internal.assertThreadDoesntHoldLock
@@ -27,11 +32,6 @@ import okio.BufferedSource
 import okio.Sink
 import okio.Source
 import okio.Timeout
-import java.io.EOFException
-import java.io.IOException
-import java.io.InterruptedIOException
-import java.net.SocketTimeoutException
-import java.util.ArrayDeque
 
 /** A logical bidirectional stream. */
 @Suppress("NAME_SHADOWING")

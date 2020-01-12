@@ -15,6 +15,9 @@
  */
 package okhttp3.internal.ws
 
+import java.io.IOException
+import java.net.ProtocolException
+import java.util.concurrent.TimeUnit
 import okhttp3.internal.and
 import okhttp3.internal.toHexString
 import okhttp3.internal.ws.WebSocketProtocol.B0_FLAG_FIN
@@ -39,9 +42,6 @@ import okhttp3.internal.ws.WebSocketProtocol.toggleMask
 import okio.Buffer
 import okio.BufferedSource
 import okio.ByteString
-import java.io.IOException
-import java.net.ProtocolException
-import java.util.concurrent.TimeUnit
 
 /**
  * An [RFC 6455][rfc_6455]-compatible WebSocket frame reader.

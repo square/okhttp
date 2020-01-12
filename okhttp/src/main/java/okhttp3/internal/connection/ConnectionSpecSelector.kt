@@ -15,7 +15,6 @@
  */
 package okhttp3.internal.connection
 
-import okhttp3.ConnectionSpec
 import java.io.IOException
 import java.io.InterruptedIOException
 import java.net.ProtocolException
@@ -25,6 +24,7 @@ import javax.net.ssl.SSLException
 import javax.net.ssl.SSLHandshakeException
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocket
+import okhttp3.ConnectionSpec
 
 /**
  * Handles the connection spec fallback strategy: When a secure socket connection fails due to a

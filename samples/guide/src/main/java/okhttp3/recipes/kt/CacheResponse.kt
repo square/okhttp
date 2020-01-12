@@ -15,11 +15,11 @@
  */
 package okhttp3.recipes.kt
 
+import java.io.File
+import java.io.IOException
 import okhttp3.Cache
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import java.io.File
-import java.io.IOException
 
 class CacheResponse(cacheDirectory: File) {
   private val client: OkHttpClient = OkHttpClient.Builder()

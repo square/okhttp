@@ -15,9 +15,9 @@
  */
 package okhttp3
 
+import java.util.concurrent.TimeUnit
 import okhttp3.internal.indexOfNonWhitespace
 import okhttp3.internal.toNonNegativeInt
-import java.util.concurrent.TimeUnit
 
 /**
  * A Cache-Control header with cache directives from a server or client. These directives set policy

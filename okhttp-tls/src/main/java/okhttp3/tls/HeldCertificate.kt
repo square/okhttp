@@ -15,19 +15,6 @@
  */
 package okhttp3.tls
 
-import okhttp3.internal.canParseAsIpAddress
-import okio.Buffer
-import okio.ByteString
-import okio.ByteString.Companion.decodeBase64
-import okio.ByteString.Companion.toByteString
-import org.bouncycastle.asn1.ASN1Encodable
-import org.bouncycastle.asn1.DERSequence
-import org.bouncycastle.asn1.pkcs.PrivateKeyInfo
-import org.bouncycastle.asn1.x509.BasicConstraints
-import org.bouncycastle.asn1.x509.GeneralName
-import org.bouncycastle.asn1.x509.X509Extensions
-import org.bouncycastle.jce.provider.BouncyCastleProvider
-import org.bouncycastle.x509.X509V3CertificateGenerator
 import java.math.BigInteger
 import java.security.GeneralSecurityException
 import java.security.KeyFactory
@@ -47,6 +34,19 @@ import java.util.Date
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 import javax.security.auth.x500.X500Principal
+import okhttp3.internal.canParseAsIpAddress
+import okio.Buffer
+import okio.ByteString
+import okio.ByteString.Companion.decodeBase64
+import okio.ByteString.Companion.toByteString
+import org.bouncycastle.asn1.ASN1Encodable
+import org.bouncycastle.asn1.DERSequence
+import org.bouncycastle.asn1.pkcs.PrivateKeyInfo
+import org.bouncycastle.asn1.x509.BasicConstraints
+import org.bouncycastle.asn1.x509.GeneralName
+import org.bouncycastle.asn1.x509.X509Extensions
+import org.bouncycastle.jce.provider.BouncyCastleProvider
+import org.bouncycastle.x509.X509V3CertificateGenerator
 
 /**
  * A certificate and its private key. These are some properties of certificates that are used with

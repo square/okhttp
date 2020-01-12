@@ -15,6 +15,20 @@
  */
 package okhttp3.curl
 
+import java.io.IOException
+import java.security.cert.X509Certificate
+import java.util.Properties
+import java.util.concurrent.TimeUnit.SECONDS
+import java.util.logging.ConsoleHandler
+import java.util.logging.Level
+import java.util.logging.LogRecord
+import java.util.logging.Logger
+import java.util.logging.SimpleFormatter
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.SSLSocketFactory
+import javax.net.ssl.TrustManager
+import javax.net.ssl.X509TrustManager
+import kotlin.system.exitProcess
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
@@ -34,20 +48,6 @@ import picocli.CommandLine.Command
 import picocli.CommandLine.IVersionProvider
 import picocli.CommandLine.Option
 import picocli.CommandLine.Parameters
-import java.io.IOException
-import java.security.cert.X509Certificate
-import java.util.Properties
-import java.util.concurrent.TimeUnit.SECONDS
-import java.util.logging.ConsoleHandler
-import java.util.logging.Level
-import java.util.logging.LogRecord
-import java.util.logging.Logger
-import java.util.logging.SimpleFormatter
-import javax.net.ssl.HostnameVerifier
-import javax.net.ssl.SSLSocketFactory
-import javax.net.ssl.TrustManager
-import javax.net.ssl.X509TrustManager
-import kotlin.system.exitProcess
 
 @Command(name = NAME, description = ["A curl for the next-generation web."],
     mixinStandardHelpOptions = true, versionProvider = Main.VersionProvider::class)

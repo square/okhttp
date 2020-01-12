@@ -17,6 +17,10 @@
 
 package okhttp3.internal.http
 
+import java.io.EOFException
+import java.net.HttpURLConnection.HTTP_NOT_MODIFIED
+import java.net.HttpURLConnection.HTTP_NO_CONTENT
+import java.util.Collections
 import okhttp3.Challenge
 import okhttp3.Cookie
 import okhttp3.CookieJar
@@ -29,10 +33,6 @@ import okhttp3.internal.platform.Platform
 import okhttp3.internal.skipAll
 import okio.Buffer
 import okio.ByteString.Companion.encodeUtf8
-import java.io.EOFException
-import java.net.HttpURLConnection.HTTP_NOT_MODIFIED
-import java.net.HttpURLConnection.HTTP_NO_CONTENT
-import java.util.Collections
 
 private val QUOTED_STRING_DELIMITERS = "\"\\".encodeUtf8()
 private val TOKEN_DELIMITERS = "\t ,=".encodeUtf8()

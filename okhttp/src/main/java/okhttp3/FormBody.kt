@@ -15,6 +15,8 @@
  */
 package okhttp3
 
+import java.io.IOException
+import java.nio.charset.Charset
 import okhttp3.HttpUrl.Companion.FORM_ENCODE_SET
 import okhttp3.HttpUrl.Companion.canonicalize
 import okhttp3.HttpUrl.Companion.percentDecode
@@ -22,8 +24,6 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.internal.toImmutableList
 import okio.Buffer
 import okio.BufferedSink
-import java.io.IOException
-import java.nio.charset.Charset
 
 class FormBody internal constructor(
   encodedNames: List<String>,

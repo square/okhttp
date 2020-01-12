@@ -15,9 +15,9 @@
  */
 package okhttp3.internal.concurrent
 
-import okhttp3.internal.assertThreadDoesntHoldLock
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.RejectedExecutionException
+import okhttp3.internal.assertThreadDoesntHoldLock
 
 /**
  * A set of tasks that are executed in sequential order.

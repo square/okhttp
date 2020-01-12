@@ -15,6 +15,8 @@
  */
 package okhttp3.internal.ws
 
+import java.io.IOException
+import java.util.Random
 import okhttp3.internal.ws.WebSocketProtocol.B0_FLAG_FIN
 import okhttp3.internal.ws.WebSocketProtocol.B1_FLAG_MASK
 import okhttp3.internal.ws.WebSocketProtocol.OPCODE_CONTINUATION
@@ -32,8 +34,6 @@ import okio.BufferedSink
 import okio.ByteString
 import okio.Sink
 import okio.Timeout
-import java.io.IOException
-import java.util.Random
 
 /**
  * An [RFC 6455][rfc_6455]-compatible WebSocket frame writer.

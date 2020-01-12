@@ -15,13 +15,13 @@
  */
 package okhttp3.internal.platform.android
 
-import okhttp3.internal.tls.CertificateChainCleaner
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.security.cert.Certificate
 import java.security.cert.X509Certificate
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.X509TrustManager
+import okhttp3.internal.tls.CertificateChainCleaner
 
 /**
  * Legacy Android implementation of CertificateChainCleaner relying on reflection.

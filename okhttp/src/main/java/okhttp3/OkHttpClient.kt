@@ -15,6 +15,20 @@
  */
 package okhttp3
 
+import java.net.Proxy
+import java.net.ProxySelector
+import java.net.Socket
+import java.security.GeneralSecurityException
+import java.time.Duration
+import java.util.Collections
+import java.util.Random
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.TimeUnit
+import javax.net.SocketFactory
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.SSLSocketFactory
+import javax.net.ssl.TrustManager
+import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol.HTTP_1_1
 import okhttp3.Protocol.HTTP_2
 import okhttp3.internal.asFactory
@@ -30,20 +44,6 @@ import okhttp3.internal.ws.RealWebSocket
 import okio.Sink
 import okio.Source
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
-import java.net.Proxy
-import java.net.ProxySelector
-import java.net.Socket
-import java.security.GeneralSecurityException
-import java.time.Duration
-import java.util.Collections
-import java.util.Random
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.TimeUnit
-import javax.net.SocketFactory
-import javax.net.ssl.HostnameVerifier
-import javax.net.ssl.SSLSocketFactory
-import javax.net.ssl.TrustManager
-import javax.net.ssl.X509TrustManager
 
 /**
  * Factory for [calls][Call], which can be used to send HTTP requests and read their responses.

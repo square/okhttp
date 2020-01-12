@@ -15,12 +15,6 @@
  */
 package okhttp3
 
-import okhttp3.ResponseBody.Companion.asResponseBody
-import okhttp3.internal.connection.Exchange
-import okhttp3.internal.http.StatusLine.Companion.HTTP_PERM_REDIRECT
-import okhttp3.internal.http.StatusLine.Companion.HTTP_TEMP_REDIRECT
-import okhttp3.internal.http.parseChallenges
-import okio.Buffer
 import java.io.Closeable
 import java.io.IOException
 import java.net.HttpURLConnection.HTTP_MOVED_PERM
@@ -29,6 +23,12 @@ import java.net.HttpURLConnection.HTTP_MULT_CHOICE
 import java.net.HttpURLConnection.HTTP_PROXY_AUTH
 import java.net.HttpURLConnection.HTTP_SEE_OTHER
 import java.net.HttpURLConnection.HTTP_UNAUTHORIZED
+import okhttp3.ResponseBody.Companion.asResponseBody
+import okhttp3.internal.connection.Exchange
+import okhttp3.internal.http.StatusLine.Companion.HTTP_PERM_REDIRECT
+import okhttp3.internal.http.StatusLine.Companion.HTTP_TEMP_REDIRECT
+import okhttp3.internal.http.parseChallenges
+import okio.Buffer
 
 /**
  * An HTTP response. Instances of this class are not immutable: the response body is a one-shot
