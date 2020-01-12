@@ -595,11 +595,15 @@ public final class Http2Connection implements Closeable {
       degradedPingsSent++;
       degradedPongDeadlineNs = System.nanoTime() + DEGRADED_PONG_TIMEOUT_NS;
     }
-    writerExecutor.execute(new NamedRunnable("OkHttp %s ping", hostname) {
-      @Override public void execute() {
-        writePing(false, DEGRADED_PING, 0);
-      }
-    });
+    try {
+      writerExecutor.execute(new NamedRunnable("OkHttp %s ping", hostname) {
+        @Override public void execute() {
+          writePing(false, DEGRADED_PING, 0);
+        }
+      });
+    } catch (RejectedExecutionException ignored) {
+      // This connection has been closed.
+    }
   }
 
   public static class Builder {
