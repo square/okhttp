@@ -1,6 +1,14 @@
 OkHttp 3.x Change Log
 =====================
 
+## Version 3.14.6
+
+_2020-01-11_
+
+ *  Fix: Don't crash if the connection is closed when sending a degraded ping. This fixes a 
+    regression that was introduced in OkHttp 3.14.5.
+
+
 ## Version 3.14.5
 
 _2020-01-03_
@@ -183,6 +191,14 @@ _2019-02-04_
  *  New: API to access headers as `java.time.Instant`.
  *  New: Fail fast if a `SSLSocketFactory` is used as a `SocketFactory`.
  *  New: Log the TLS handshake in `LoggingEventListener`.
+
+
+## Version 3.12.8
+
+_2020-01-11_
+
+ *  Fix: Don't crash if the connection is closed when sending a degraded ping. This fixes a 
+    regression that was introduced in OkHttp 3.12.7.
 
 
 ## Version 3.12.7
