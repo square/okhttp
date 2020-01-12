@@ -15,12 +15,12 @@
  */
 package okhttp3.internal.http
 
-import okhttp3.internal.UTC
 import java.text.DateFormat
 import java.text.ParsePosition
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import okhttp3.internal.UTC
 
 /** The last four-digit year: "Fri, 31 Dec 9999 23:59:59 GMT". */
 internal const val MAX_DATE = 253402300799999L

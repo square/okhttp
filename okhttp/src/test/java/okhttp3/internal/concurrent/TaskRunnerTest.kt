@@ -15,12 +15,12 @@
  */
 package okhttp3.internal.concurrent
 
+import java.util.concurrent.RejectedExecutionException
 import okhttp3.TestLogHandler
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.fail
 import org.junit.Rule
 import org.junit.Test
-import java.util.concurrent.RejectedExecutionException
 
 class TaskRunnerTest {
   @Rule @JvmField val testLogHandler = TestLogHandler(TaskRunner::class.java)

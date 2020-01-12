@@ -15,17 +15,17 @@
  */
 package okhttp3.internal.publicsuffix
 
-import okhttp3.internal.and
-import okhttp3.internal.platform.Platform
-import okio.GzipSource
-import okio.buffer
-import okio.source
 import java.io.IOException
 import java.io.InterruptedIOException
 import java.net.IDN
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
+import okhttp3.internal.and
+import okhttp3.internal.platform.Platform
+import okio.GzipSource
+import okio.buffer
+import okio.source
 
 /**
  * A database of public suffixes provided by [publicsuffix.org][publicsuffix_org].

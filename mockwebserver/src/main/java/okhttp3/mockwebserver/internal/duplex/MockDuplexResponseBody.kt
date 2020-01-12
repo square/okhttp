@@ -15,6 +15,11 @@
  */
 package okhttp3.mockwebserver.internal.duplex
 
+import java.io.IOException
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.FutureTask
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.TimeUnit
 import okhttp3.internal.http2.ErrorCode
 import okhttp3.internal.http2.Http2Stream
 import okhttp3.mockwebserver.RecordedRequest
@@ -25,11 +30,6 @@ import okio.utf8Size
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
-import java.io.IOException
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.FutureTask
-import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.TimeUnit
 
 private typealias Action = (RecordedRequest, BufferedSource, BufferedSink, Http2Stream) -> Unit
 

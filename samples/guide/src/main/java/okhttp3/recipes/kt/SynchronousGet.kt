@@ -15,9 +15,9 @@
  */
 package okhttp3.recipes.kt
 
+import java.io.IOException
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import java.io.IOException
 
 class SynchronousGet {
   private val client = OkHttpClient()

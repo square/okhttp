@@ -15,10 +15,10 @@
  */
 package okhttp3.internal
 
+import java.util.LinkedHashMap
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.fail
 import org.junit.Test
-import java.util.LinkedHashMap
 
 class UtilTest {
   @Test fun immutableMap() {

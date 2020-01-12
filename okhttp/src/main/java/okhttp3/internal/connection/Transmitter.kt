@@ -15,6 +15,13 @@
  */
 package okhttp3.internal.connection
 
+import java.io.IOException
+import java.io.InterruptedIOException
+import java.lang.ref.WeakReference
+import java.net.Socket
+import java.util.concurrent.TimeUnit.MILLISECONDS
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.SSLSocketFactory
 import okhttp3.Address
 import okhttp3.Call
 import okhttp3.CertificatePinner
@@ -25,18 +32,11 @@ import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.internal.assertThreadHoldsLock
-import okhttp3.internal.closeQuietly
 import okhttp3.internal.canReuseConnectionFor
+import okhttp3.internal.closeQuietly
 import okhttp3.internal.platform.Platform
 import okio.AsyncTimeout
 import okio.Timeout
-import java.io.IOException
-import java.io.InterruptedIOException
-import java.lang.ref.WeakReference
-import java.net.Socket
-import java.util.concurrent.TimeUnit.MILLISECONDS
-import javax.net.ssl.HostnameVerifier
-import javax.net.ssl.SSLSocketFactory
 
 /**
  * Bridge between OkHttp's application and network layers. This class exposes high-level application

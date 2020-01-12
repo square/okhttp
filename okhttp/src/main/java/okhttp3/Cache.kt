@@ -15,6 +15,16 @@
  */
 package okhttp3
 
+import java.io.Closeable
+import java.io.File
+import java.io.Flushable
+import java.io.IOException
+import java.security.cert.Certificate
+import java.security.cert.CertificateEncodingException
+import java.security.cert.CertificateException
+import java.security.cert.CertificateFactory
+import java.util.NoSuchElementException
+import java.util.TreeSet
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.internal.EMPTY_HEADERS
 import okhttp3.internal.cache.CacheRequest
@@ -38,16 +48,6 @@ import okio.ForwardingSource
 import okio.Sink
 import okio.Source
 import okio.buffer
-import java.io.Closeable
-import java.io.File
-import java.io.Flushable
-import java.io.IOException
-import java.security.cert.Certificate
-import java.security.cert.CertificateEncodingException
-import java.security.cert.CertificateException
-import java.security.cert.CertificateFactory
-import java.util.NoSuchElementException
-import java.util.TreeSet
 
 /**
  * Caches HTTP and HTTPS responses to the filesystem so they may be reused, saving time and

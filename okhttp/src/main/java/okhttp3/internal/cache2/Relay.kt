@@ -15,6 +15,9 @@
  */
 package okhttp3.internal.cache2
 
+import java.io.File
+import java.io.IOException
+import java.io.RandomAccessFile
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.notifyAll
 import okio.Buffer
@@ -22,9 +25,6 @@ import okio.ByteString
 import okio.ByteString.Companion.encodeUtf8
 import okio.Source
 import okio.Timeout
-import java.io.File
-import java.io.IOException
-import java.io.RandomAccessFile
 
 /**
  * Replicates a single upstream source into multiple downstream sources. Each downstream source

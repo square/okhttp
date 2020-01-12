@@ -15,13 +15,13 @@
 
 package okhttp3.dnsoverhttps
 
-import okio.Buffer
-import okio.ByteString
-import okio.utf8Size
 import java.io.EOFException
 import java.net.InetAddress
 import java.net.UnknownHostException
 import java.nio.charset.StandardCharsets
+import okio.Buffer
+import okio.ByteString
+import okio.utf8Size
 
 /**
  * Trivial Dns Encoder/Decoder, basically ripped from Netty full implementation.

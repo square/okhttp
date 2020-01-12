@@ -15,6 +15,11 @@
  */
 package okhttp3
 
+import java.io.IOException
+import java.io.InterruptedIOException
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.RejectedExecutionException
+import java.util.concurrent.atomic.AtomicInteger
 import okhttp3.internal.assertThreadDoesntHoldLock
 import okhttp3.internal.cache.CacheInterceptor
 import okhttp3.internal.closeQuietly
@@ -28,11 +33,6 @@ import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.INFO
 import okhttp3.internal.threadName
 import okio.Timeout
-import java.io.IOException
-import java.io.InterruptedIOException
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.RejectedExecutionException
-import java.util.concurrent.atomic.AtomicInteger
 
 internal class RealCall private constructor(
   val client: OkHttpClient,

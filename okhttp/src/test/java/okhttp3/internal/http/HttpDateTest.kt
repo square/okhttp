@@ -15,12 +15,12 @@
  */
 package okhttp3.internal.http
 
+import java.util.Date
+import java.util.TimeZone
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import java.util.Date
-import java.util.TimeZone
 
 class HttpDateTest {
 

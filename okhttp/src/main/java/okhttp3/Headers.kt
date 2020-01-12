@@ -17,11 +17,6 @@
 
 package okhttp3
 
-import okhttp3.Headers.Builder
-import okhttp3.internal.format
-import okhttp3.internal.http.toHttpDateOrNull
-import okhttp3.internal.http.toHttpDateString
-import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 import java.time.Instant
 import java.util.ArrayList
 import java.util.Collections
@@ -29,6 +24,11 @@ import java.util.Date
 import java.util.Locale
 import java.util.TreeMap
 import java.util.TreeSet
+import okhttp3.Headers.Builder
+import okhttp3.internal.format
+import okhttp3.internal.http.toHttpDateOrNull
+import okhttp3.internal.http.toHttpDateString
+import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 
 /**
  * The header fields of a single HTTP message. Values are uninterpreted strings; use `Request` and

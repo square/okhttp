@@ -106,11 +106,11 @@ public final class WebSocketWriterTest {
 
     BufferedSink sink = Okio.buffer(serverWriter.newMessageSink(OPCODE_TEXT, length));
     Buffer body = bytes.clone();
-    sink.write(body.readByteString(20_000));
-    sink.write(body.readByteString(20_000));
-    sink.write(body.readByteString(20_000));
-    sink.write(body.readByteString(20_000));
-    sink.write(body.readByteString(20_000));
+    sink.write(body.readByteString(20_000).toByteArray());
+    sink.write(body.readByteString(20_000).toByteArray());
+    sink.write(body.readByteString(20_000).toByteArray());
+    sink.write(body.readByteString(20_000).toByteArray());
+    sink.write(body.readByteString(20_000).toByteArray());
     sink.close();
 
     assertData("017e4000");

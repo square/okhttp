@@ -15,6 +15,14 @@
  */
 package okhttp3.internal.ws
 
+import java.io.Closeable
+import java.io.IOException
+import java.net.ProtocolException
+import java.net.SocketTimeoutException
+import java.util.ArrayDeque
+import java.util.Random
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeUnit.MILLISECONDS
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.EventListener
@@ -41,14 +49,6 @@ import okio.ByteString
 import okio.ByteString.Companion.encodeUtf8
 import okio.ByteString.Companion.toByteString
 import okio.buffer
-import java.io.Closeable
-import java.io.IOException
-import java.net.ProtocolException
-import java.net.SocketTimeoutException
-import java.util.ArrayDeque
-import java.util.Random
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeUnit.MILLISECONDS
 
 class RealWebSocket(
   taskRunner: TaskRunner,

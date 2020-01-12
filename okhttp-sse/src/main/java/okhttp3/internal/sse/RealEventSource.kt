@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.sse
 
+import java.io.IOException
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.EventListener
@@ -26,7 +27,6 @@ import okhttp3.internal.EMPTY_RESPONSE
 import okhttp3.internal.connection.Exchange
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSourceListener
-import java.io.IOException
 
 class RealEventSource(
   private val request: Request,

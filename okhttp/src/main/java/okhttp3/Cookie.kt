@@ -15,6 +15,12 @@
  */
 package okhttp3
 
+import java.util.Calendar
+import java.util.Collections
+import java.util.Date
+import java.util.GregorianCalendar
+import java.util.Locale
+import java.util.regex.Pattern
 import okhttp3.internal.UTC
 import okhttp3.internal.canParseAsIpAddress
 import okhttp3.internal.delimiterOffset
@@ -25,12 +31,6 @@ import okhttp3.internal.publicsuffix.PublicSuffixDatabase
 import okhttp3.internal.toCanonicalHost
 import okhttp3.internal.trimSubstring
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
-import java.util.Calendar
-import java.util.Collections
-import java.util.Date
-import java.util.GregorianCalendar
-import java.util.Locale
-import java.util.regex.Pattern
 
 /**
  * An [RFC 6265](http://tools.ietf.org/html/rfc6265) Cookie.

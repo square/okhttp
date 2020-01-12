@@ -33,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 import javax.annotation.Nullable;
+import javax.net.ssl.SSLException;
 import okhttp3.Cache;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -1337,7 +1338,7 @@ public final class HttpOverHttp2Test {
     try {
       call1.execute();
       fail();
-    } catch (SocketTimeoutException expected) {
+    } catch (SocketTimeoutException | SSLException expected) {
     }
 
     // The second call times out because it uses the same bad connection.

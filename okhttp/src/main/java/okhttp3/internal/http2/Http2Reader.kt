@@ -15,8 +15,13 @@
  */
 package okhttp3.internal.http2
 
-import okhttp3.internal.format
+import java.io.Closeable
+import java.io.EOFException
+import java.io.IOException
+import java.util.logging.Level.FINE
+import java.util.logging.Logger
 import okhttp3.internal.and
+import okhttp3.internal.format
 import okhttp3.internal.http2.Http2.CONNECTION_PREFACE
 import okhttp3.internal.http2.Http2.FLAG_ACK
 import okhttp3.internal.http2.Http2.FLAG_COMPRESSED
@@ -42,11 +47,6 @@ import okio.BufferedSource
 import okio.ByteString
 import okio.Source
 import okio.Timeout
-import java.io.Closeable
-import java.io.EOFException
-import java.io.IOException
-import java.util.logging.Level.FINE
-import java.util.logging.Logger
 
 /**
  * Reads HTTP/2 transport frames.

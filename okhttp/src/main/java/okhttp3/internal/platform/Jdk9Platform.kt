@@ -15,10 +15,10 @@
  */
 package okhttp3.internal.platform
 
-import okhttp3.Protocol
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
+import okhttp3.Protocol
 
 /** OpenJDK 9+. */
 open class Jdk9Platform : Platform() {

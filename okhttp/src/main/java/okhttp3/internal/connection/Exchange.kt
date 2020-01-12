@@ -15,6 +15,9 @@
  */
 package okhttp3.internal.connection
 
+import java.io.IOException
+import java.net.ProtocolException
+import java.net.SocketException
 import okhttp3.Call
 import okhttp3.EventListener
 import okhttp3.Headers
@@ -30,9 +33,6 @@ import okio.ForwardingSource
 import okio.Sink
 import okio.Source
 import okio.buffer
-import java.io.IOException
-import java.net.ProtocolException
-import java.net.SocketException
 
 /**
  * Transmits a single HTTP request and a response pair. This layers connection management and events

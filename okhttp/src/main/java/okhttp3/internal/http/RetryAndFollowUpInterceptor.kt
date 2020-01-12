@@ -15,18 +15,6 @@
  */
 package okhttp3.internal.http
 
-import okhttp3.Interceptor
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Response
-import okhttp3.Route
-import okhttp3.internal.closeQuietly
-import okhttp3.internal.connection.RouteException
-import okhttp3.internal.connection.Transmitter
-import okhttp3.internal.http.StatusLine.Companion.HTTP_PERM_REDIRECT
-import okhttp3.internal.http.StatusLine.Companion.HTTP_TEMP_REDIRECT
-import okhttp3.internal.http2.ConnectionShutdownException
-import okhttp3.internal.canReuseConnectionFor
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InterruptedIOException
@@ -44,6 +32,18 @@ import java.net.SocketTimeoutException
 import java.security.cert.CertificateException
 import javax.net.ssl.SSLHandshakeException
 import javax.net.ssl.SSLPeerUnverifiedException
+import okhttp3.Interceptor
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
+import okhttp3.Route
+import okhttp3.internal.canReuseConnectionFor
+import okhttp3.internal.closeQuietly
+import okhttp3.internal.connection.RouteException
+import okhttp3.internal.connection.Transmitter
+import okhttp3.internal.http.StatusLine.Companion.HTTP_PERM_REDIRECT
+import okhttp3.internal.http.StatusLine.Companion.HTTP_TEMP_REDIRECT
+import okhttp3.internal.http2.ConnectionShutdownException
 
 /**
  * This interceptor recovers from failures and follows redirects as necessary. It may throw an

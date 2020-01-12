@@ -16,14 +16,6 @@
  */
 package okhttp3.internal.platform
 
-import okhttp3.OkHttpClient
-import okhttp3.Protocol
-import okhttp3.internal.readFieldOrNull
-import okhttp3.internal.tls.BasicCertificateChainCleaner
-import okhttp3.internal.tls.BasicTrustRootIndex
-import okhttp3.internal.tls.CertificateChainCleaner
-import okhttp3.internal.tls.TrustRootIndex
-import okio.Buffer
 import java.io.IOException
 import java.net.InetSocketAddress
 import java.net.Socket
@@ -36,6 +28,14 @@ import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
+import okhttp3.OkHttpClient
+import okhttp3.Protocol
+import okhttp3.internal.readFieldOrNull
+import okhttp3.internal.tls.BasicCertificateChainCleaner
+import okhttp3.internal.tls.BasicTrustRootIndex
+import okhttp3.internal.tls.CertificateChainCleaner
+import okhttp3.internal.tls.TrustRootIndex
+import okio.Buffer
 
 /**
  * Access to platform-specific features.

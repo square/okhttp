@@ -19,13 +19,13 @@
 
 package okhttp3.internal
 
+import javax.net.ssl.SSLSocket
 import okhttp3.Cache
 import okhttp3.ConnectionSpec
 import okhttp3.Cookie
 import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.Request
-import javax.net.ssl.SSLSocket
 
 fun parseCookie(currentTimeMillis: Long, url: HttpUrl, setCookie: String): Cookie? =
     Cookie.parse(currentTimeMillis, url, setCookie)

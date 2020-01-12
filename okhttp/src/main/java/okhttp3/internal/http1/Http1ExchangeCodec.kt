@@ -15,6 +15,10 @@
  */
 package okhttp3.internal.http1
 
+import java.io.EOFException
+import java.io.IOException
+import java.net.ProtocolException
+import java.util.concurrent.TimeUnit.MILLISECONDS
 import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
@@ -39,10 +43,6 @@ import okio.ForwardingTimeout
 import okio.Sink
 import okio.Source
 import okio.Timeout
-import java.io.EOFException
-import java.io.IOException
-import java.net.ProtocolException
-import java.util.concurrent.TimeUnit.MILLISECONDS
 
 /**
  * A socket connection that can be used to send HTTP/1.1 messages. This class strictly enforces the

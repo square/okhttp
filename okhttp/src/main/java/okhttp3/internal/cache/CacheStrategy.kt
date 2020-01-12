@@ -15,11 +15,6 @@
  */
 package okhttp3.internal.cache
 
-import okhttp3.Request
-import okhttp3.Response
-import okhttp3.internal.http.StatusLine
-import okhttp3.internal.http.toHttpDateOrNull
-import okhttp3.internal.toNonNegativeInt
 import java.net.HttpURLConnection.HTTP_BAD_METHOD
 import java.net.HttpURLConnection.HTTP_GONE
 import java.net.HttpURLConnection.HTTP_MOVED_PERM
@@ -33,6 +28,11 @@ import java.net.HttpURLConnection.HTTP_OK
 import java.net.HttpURLConnection.HTTP_REQ_TOO_LONG
 import java.util.Date
 import java.util.concurrent.TimeUnit.SECONDS
+import okhttp3.Request
+import okhttp3.Response
+import okhttp3.internal.http.StatusLine
+import okhttp3.internal.http.toHttpDateOrNull
+import okhttp3.internal.toNonNegativeInt
 
 /**
  * Given a request and cached response, this figures out whether to use the network, the cache, or

@@ -15,12 +15,12 @@
  */
 package okhttp3.internal.sse
 
+import java.io.IOException
 import okhttp3.internal.toLongOrDefault
 import okio.Buffer
 import okio.BufferedSource
 import okio.ByteString.Companion.encodeUtf8
 import okio.Options
-import java.io.IOException
 
 class ServerSentEventReader(
   private val source: BufferedSource,

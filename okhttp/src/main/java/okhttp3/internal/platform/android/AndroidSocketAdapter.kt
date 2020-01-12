@@ -15,15 +15,15 @@
  */
 package okhttp3.internal.platform.android
 
-import okhttp3.Protocol
-import okhttp3.internal.platform.AndroidPlatform
-import okhttp3.internal.platform.Platform
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.nio.charset.StandardCharsets
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
+import okhttp3.Protocol
+import okhttp3.internal.platform.AndroidPlatform
+import okhttp3.internal.platform.Platform
 
 /**
  * Modern reflection based SocketAdapter for Conscrypt class SSLSockets.

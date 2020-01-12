@@ -15,11 +15,11 @@
  */
 package okhttp3.internal
 
-import okio.Buffer
 import java.net.IDN
 import java.net.InetAddress
 import java.util.Arrays
 import java.util.Locale
+import okio.Buffer
 
 /**
  * If this is an IP address, this returns the IP address in canonical form.

@@ -17,6 +17,9 @@ package okhttp3.internal.platform
 
 import android.os.Build
 import android.security.NetworkSecurityPolicy
+import javax.net.ssl.SSLSocket
+import javax.net.ssl.SSLSocketFactory
+import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol
 import okhttp3.internal.platform.AndroidPlatform.Companion.isAndroid
 import okhttp3.internal.platform.android.Android10CertificateChainCleaner
@@ -25,9 +28,6 @@ import okhttp3.internal.platform.android.ConscryptSocketAdapter
 import okhttp3.internal.platform.android.DeferredSocketAdapter
 import okhttp3.internal.platform.android.androidLog
 import okhttp3.internal.tls.CertificateChainCleaner
-import javax.net.ssl.SSLSocket
-import javax.net.ssl.SSLSocketFactory
-import javax.net.ssl.X509TrustManager
 
 /** Android 29+. */
 class Android10Platform : Platform() {

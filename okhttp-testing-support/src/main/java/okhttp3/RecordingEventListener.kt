@@ -15,6 +15,13 @@
  */
 package okhttp3
 
+import java.io.IOException
+import java.net.InetAddress
+import java.net.InetSocketAddress
+import java.net.Proxy
+import java.util.Deque
+import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.concurrent.TimeUnit
 import okhttp3.CallEvent.CallEnd
 import okhttp3.CallEvent.CallFailed
 import okhttp3.CallEvent.CallStart
@@ -42,13 +49,6 @@ import okhttp3.CallEvent.SecureConnectStart
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.data.Offset
 import org.junit.Assert.assertTrue
-import java.io.IOException
-import java.net.InetAddress
-import java.net.InetSocketAddress
-import java.net.Proxy
-import java.util.Deque
-import java.util.concurrent.ConcurrentLinkedDeque
-import java.util.concurrent.TimeUnit
 
 open class RecordingEventListener : EventListener() {
   val eventSequence: Deque<CallEvent> = ConcurrentLinkedDeque()

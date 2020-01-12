@@ -15,11 +15,11 @@
  */
 package okhttp3
 
+import java.net.URL
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.internal.EMPTY_REQUEST
 import okhttp3.internal.http.HttpMethod
 import okhttp3.internal.toImmutableMap
-import java.net.URL
 
 /**
  * An HTTP request. Instances of this class are immutable if their [body] is null or itself

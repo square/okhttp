@@ -15,6 +15,8 @@
  */
 package okhttp3.internal.connection
 
+import java.io.IOException
+import java.net.Socket
 import okhttp3.Address
 import okhttp3.Call
 import okhttp3.EventListener
@@ -26,8 +28,6 @@ import okhttp3.internal.assertThreadHoldsLock
 import okhttp3.internal.canReuseConnectionFor
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.http.ExchangeCodec
-import java.io.IOException
-import java.net.Socket
 
 /**
  * Attempts to find the connections for a sequence of exchanges. This uses the following strategies:

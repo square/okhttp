@@ -15,6 +15,10 @@
  */
 package okhttp3.internal.http2
 
+import java.io.IOException
+import java.util.Arrays
+import java.util.Collections
+import java.util.LinkedHashMap
 import okhttp3.internal.and
 import okhttp3.internal.http2.Header.Companion.RESPONSE_STATUS
 import okhttp3.internal.http2.Header.Companion.TARGET_AUTHORITY
@@ -26,10 +30,6 @@ import okio.BufferedSource
 import okio.ByteString
 import okio.Source
 import okio.buffer
-import java.io.IOException
-import java.util.Arrays
-import java.util.Collections
-import java.util.LinkedHashMap
 
 /**
  * Read and write HPACK v10.

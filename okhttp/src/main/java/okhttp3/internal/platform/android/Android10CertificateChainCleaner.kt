@@ -16,13 +16,13 @@
 package okhttp3.internal.platform.android
 
 import android.net.http.X509TrustManagerExtensions
-import okhttp3.internal.tls.CertificateChainCleaner
 import java.lang.IllegalArgumentException
 import java.security.cert.Certificate
 import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.X509TrustManager
+import okhttp3.internal.tls.CertificateChainCleaner
 
 /**
  * Android Q+ implementation of CertificateChainCleaner using direct Android API calls.

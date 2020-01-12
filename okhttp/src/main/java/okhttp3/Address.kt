@@ -15,13 +15,13 @@
  */
 package okhttp3
 
-import okhttp3.internal.toImmutableList
 import java.net.Proxy
 import java.net.ProxySelector
 import java.util.Objects
 import javax.net.SocketFactory
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSocketFactory
+import okhttp3.internal.toImmutableList
 
 /**
  * A specification for a connection to an origin server. For simple connections, this is the

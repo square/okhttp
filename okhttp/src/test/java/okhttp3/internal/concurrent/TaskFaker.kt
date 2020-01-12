@@ -15,12 +15,12 @@
  */
 package okhttp3.internal.concurrent
 
+import java.util.concurrent.Executors
 import okhttp3.internal.assertThreadDoesntHoldLock
 import okhttp3.internal.assertThreadHoldsLock
 import okhttp3.internal.notify
 import okhttp3.internal.wait
 import org.assertj.core.api.Assertions.assertThat
-import java.util.concurrent.Executors
 
 /**
  * Runs a [TaskRunner] in a controlled environment so that everything is sequential and

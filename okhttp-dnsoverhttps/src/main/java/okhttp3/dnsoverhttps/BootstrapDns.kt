@@ -15,9 +15,9 @@
  */
 package okhttp3.dnsoverhttps
 
-import okhttp3.Dns
 import java.net.InetAddress
 import java.net.UnknownHostException
+import okhttp3.Dns
 
 /**
  * Internal Bootstrap DNS implementation for handling initial connection to DNS over HTTPS server.

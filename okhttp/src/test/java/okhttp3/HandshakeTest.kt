@@ -15,13 +15,13 @@
  */
 package okhttp3
 
+import java.io.IOException
+import java.security.cert.Certificate
 import okhttp3.Handshake.Companion.handshake
 import okhttp3.tls.HeldCertificate
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.fail
 import org.junit.Test
-import java.io.IOException
-import java.security.cert.Certificate
 
 class HandshakeTest {
   val serverRoot = HeldCertificate.Builder()

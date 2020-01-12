@@ -16,6 +16,10 @@
  */
 package okhttp3.internal.connection
 
+import java.io.IOException
+import java.net.Proxy
+import java.util.ArrayDeque
+import java.util.concurrent.TimeUnit
 import okhttp3.Address
 import okhttp3.ConnectionPool
 import okhttp3.Route
@@ -26,10 +30,6 @@ import okhttp3.internal.concurrent.TaskQueue
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.connection.Transmitter.TransmitterReference
 import okhttp3.internal.platform.Platform
-import java.io.IOException
-import java.net.Proxy
-import java.util.ArrayDeque
-import java.util.concurrent.TimeUnit
 
 class RealConnectionPool(
   taskRunner: TaskRunner,

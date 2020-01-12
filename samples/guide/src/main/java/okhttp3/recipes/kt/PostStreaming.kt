@@ -15,12 +15,12 @@
  */
 package okhttp3.recipes.kt
 
+import java.io.IOException
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
 import okio.BufferedSink
-import java.io.IOException
 
 class PostStreaming {
   private val client = OkHttpClient()

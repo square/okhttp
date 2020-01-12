@@ -15,6 +15,10 @@
  */
 package okhttp3.internal.http2
 
+import java.io.Closeable
+import java.io.IOException
+import java.util.logging.Level.FINE
+import java.util.logging.Logger
 import okhttp3.internal.format
 import okhttp3.internal.http2.Http2.CONNECTION_PREFACE
 import okhttp3.internal.http2.Http2.FLAG_ACK
@@ -35,10 +39,6 @@ import okhttp3.internal.http2.Http2.frameLog
 import okhttp3.internal.writeMedium
 import okio.Buffer
 import okio.BufferedSink
-import java.io.Closeable
-import java.io.IOException
-import java.util.logging.Level.FINE
-import java.util.logging.Logger
 
 /** Writes HTTP/2 transport frames. */
 @Suppress("NAME_SHADOWING")

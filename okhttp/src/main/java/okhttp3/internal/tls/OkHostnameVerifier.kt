@@ -16,13 +16,13 @@
  */
 package okhttp3.internal.tls
 
-import okhttp3.internal.canParseAsIpAddress
 import java.security.cert.CertificateParsingException
 import java.security.cert.X509Certificate
 import java.util.Locale
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLException
 import javax.net.ssl.SSLSession
+import okhttp3.internal.canParseAsIpAddress
 
 /**
  * A HostnameVerifier consistent with [RFC 2818][rfc_2818].

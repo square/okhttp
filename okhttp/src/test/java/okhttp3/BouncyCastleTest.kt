@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import java.net.InetAddress
 import okhttp3.TestUtil.assumeNetwork
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -29,7 +30,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.openjsse.sun.security.ssl.SSLSocketFactoryImpl
 import org.openjsse.sun.security.ssl.SSLSocketImpl
-import java.net.InetAddress
 
 class BouncyCastleTest {
   @JvmField @Rule var platform = PlatformRule()

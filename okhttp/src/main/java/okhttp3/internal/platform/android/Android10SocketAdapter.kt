@@ -17,12 +17,12 @@ package okhttp3.internal.platform.android
 
 import android.net.SSLCertificateSocketFactory
 import android.os.Build
-import okhttp3.Protocol
-import okhttp3.internal.platform.AndroidPlatform.Companion.isAndroid
-import okhttp3.internal.platform.Platform
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
+import okhttp3.Protocol
+import okhttp3.internal.platform.AndroidPlatform.Companion.isAndroid
+import okhttp3.internal.platform.Platform
 
 /**
  * Simple non-reflection SocketAdapter for Android Q.

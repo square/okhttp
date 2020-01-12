@@ -15,12 +15,12 @@
  */
 package okhttp3
 
+import java.io.File
+import java.lang.reflect.InvocationTargetException
 import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import java.io.File
-import java.lang.reflect.InvocationTargetException
 
 @RunWith(Parameterized::class)
 @Ignore
