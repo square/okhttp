@@ -46,6 +46,7 @@ nav:
   - 'HTTPS': https.md
   - 'Events': events.md
   - 'Works with OkHttp': works_with_okhttp.md
+  - 'Security Providers': security_providers.md
   - 'Stack Overflow ⏏': https://stackoverflow.com/questions/tagged/okhttp?sort=active
   - '4.x API':
     - 'okhttp': 4.x/okhttp/okhttp3/index.md
