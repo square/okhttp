@@ -25,6 +25,7 @@ import java.security.PublicKey
 import java.security.SecureRandom
 import java.security.Security
 import java.security.cert.CertificateFactory
+import java.security.cert.CertificateParsingException
 import java.security.cert.X509Certificate
 import java.security.interfaces.ECPublicKey
 import java.security.interfaces.RSAPrivateKey
@@ -47,7 +48,6 @@ import org.bouncycastle.asn1.x509.GeneralName
 import org.bouncycastle.asn1.x509.X509Extensions
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.x509.X509V3CertificateGenerator
-import java.security.cert.CertificateParsingException
 
 /**
  * A certificate and its private key. These are some properties of certificates that are used with
