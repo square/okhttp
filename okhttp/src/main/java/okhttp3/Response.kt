@@ -302,10 +302,19 @@ class Response internal constructor(
     checkNotNull(body) { "response is not eligible for a body and must not be closed" }.close()
   }
 
+  /**
+   * Returns the sequence of Responses that
+   */
   fun responses(): Iterable<Response> = generateSequence(this) {
     it.priorResponse
   }.asIterable()
 
+  /**
+   * Returns the number of network Responses that were received to get to this final Response.
+   *
+   * The minimum is 1. A 401 response that is then correctly authenticated will have a response
+   * count of 2.
+   */
   val responseCount = responses().count()
 
   override fun toString() =
