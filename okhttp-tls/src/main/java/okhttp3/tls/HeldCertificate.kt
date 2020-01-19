@@ -47,6 +47,7 @@ import org.bouncycastle.asn1.x509.GeneralName
 import org.bouncycastle.asn1.x509.X509Extensions
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.x509.X509V3CertificateGenerator
+import java.security.cert.CertificateParsingException
 
 /**
  * A certificate and its private key. These are some properties of certificates that are used with
@@ -516,9 +517,17 @@ class HeldCertificate(
     }
 
     private fun decodePem(pem: String): X509Certificate {
-      val certificates = CertificateFactory.getInstance("X.509")
+      val certificateFactory = CertificateFactory.getInstance("X.509")
+      val certificates = certificateFactory
           .generateCertificates(Buffer().writeUtf8(pem).inputStream())
-      return certificates.iterator().next() as X509Certificate
+
+      try {
+        return certificates.single() as X509Certificate
+      } catch (nsee: NoSuchElementException) {
+        throw CertificateParsingException(nsee)
+      } catch (iae: IllegalArgumentException) {
+        throw CertificateParsingException(iae)
+      }
     }
 
     private fun decodePkcs8(data: ByteString, keyAlgorithm: String): PrivateKey {
