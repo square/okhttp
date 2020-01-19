@@ -340,7 +340,7 @@ class RealWebSocket(
         readerToClose = this.reader
         this.reader = null
         deflaterToClose = this.messageDeflater
-        this.writer = null
+        this.messageDeflater = null
         this.taskQueue.shutdown()
       }
     }
@@ -475,7 +475,7 @@ class RealWebSocket(
             readerToClose = this.reader
             this.reader = null
             deflaterToClose = this.messageDeflater
-            this.writer = null
+            this.messageDeflater = null
             this.taskQueue.shutdown()
           } else {
             // When we request a graceful close also schedule a cancel of the web socket.
@@ -572,7 +572,7 @@ class RealWebSocket(
       readerToClose = this.reader
       this.reader = null
       deflaterToClose = this.messageDeflater
-      this.writer = null
+      this.messageDeflater = null
       taskQueue.shutdown()
     }
 
