@@ -16,6 +16,7 @@
 package okhttp3;
 
 import java.io.IOException;
+import javax.annotation.Nullable;
 import okio.Buffer;
 import okio.BufferedSource;
 import okio.Okio;
@@ -63,13 +64,27 @@ public final class ResponseTest {
   }
 
   @Test public void negativeStatusCodeThrowsIllegalStateException() {
-    assertThatThrownBy(() -> newResponse(responseBody("set status code -1"), -1))
+    assertThatThrownBy(() -> newResponse(responseBody("set status code -1"), -1, null))
         .isInstanceOf(IllegalStateException.class);
   }
 
   @Test public void zeroStatusCodeIsValid() {
-    Response response = newResponse(responseBody("set status code 0"), 0);
+    Response response = newResponse(responseBody("set status code 0"), 0, null);
     assertThat(response.code()).isEqualTo(0);
+  }
+
+  @Test public void priorResponses() {
+    Response firstResponse = newResponse(null, 401, null);
+    Response secondResponse = newResponse(null, 401, firstResponse);
+    Response thirdResponse = newResponse(responseBody("third"), 401, secondResponse);
+
+    assertThat(firstResponse.getResponseCount()).isEqualTo(1);
+    assertThat(secondResponse.getResponseCount()).isEqualTo(2);
+    assertThat(thirdResponse.getResponseCount()).isEqualTo(3);
+
+    assertThat(thirdResponse.responses()).containsExactly(thirdResponse, secondResponse, firstResponse);
+    assertThat(secondResponse.responses()).containsExactly(secondResponse, firstResponse);
+    assertThat(firstResponse.responses()).containsExactly(firstResponse);
   }
 
   /**
@@ -100,10 +115,10 @@ public final class ResponseTest {
   }
 
   private Response newResponse(ResponseBody responseBody) {
-    return newResponse(responseBody, 200);
+    return newResponse(responseBody, 200, null);
   }
 
-  private Response newResponse(ResponseBody responseBody, int code) {
+  private Response newResponse(@Nullable ResponseBody responseBody, int code, @Nullable Response priorResponse) {
     return new Response.Builder()
         .request(new Request.Builder()
             .url("https://example.com/")
@@ -112,6 +127,7 @@ public final class ResponseTest {
         .code(code)
         .message("OK")
         .body(responseBody)
+        .priorResponse(priorResponse)
         .build();
   }
 }

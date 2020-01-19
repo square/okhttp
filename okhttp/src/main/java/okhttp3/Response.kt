@@ -302,6 +302,12 @@ class Response internal constructor(
     checkNotNull(body) { "response is not eligible for a body and must not be closed" }.close()
   }
 
+  fun responses(): Iterable<Response> = generateSequence(this) {
+    it.priorResponse
+  }.asIterable()
+
+  val responseCount = responses().count()
+
   override fun toString() =
       "Response{protocol=$protocol, code=$code, message=$message, url=${request.url}}"
 
