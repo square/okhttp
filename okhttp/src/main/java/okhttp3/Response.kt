@@ -303,7 +303,7 @@ class Response internal constructor(
   }
 
   /**
-   * Returns the sequence of Responses that
+   * Returns the sequence of Responses that led to this final Response.
    */
   fun responses(): Iterable<Response> = generateSequence(this) {
     it.priorResponse
