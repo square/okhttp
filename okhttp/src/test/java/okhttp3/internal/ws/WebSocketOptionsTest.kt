@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.ws
 
+import java.net.ProtocolException
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
@@ -23,7 +24,6 @@ import org.junit.Assert.fail
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import java.net.ProtocolException
 
 @RunWith(Parameterized::class)
 internal class WebSocketOptionsTest(

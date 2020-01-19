@@ -15,9 +15,9 @@
  */
 package okhttp3.internal.ws
 
-import okhttp3.Response
 import java.io.IOException
 import java.net.ProtocolException
+import okhttp3.Response
 
 data class WebSocketOptions(
   @JvmField val compressionEnabled: Boolean,

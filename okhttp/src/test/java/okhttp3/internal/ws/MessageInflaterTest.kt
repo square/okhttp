@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.ws
 
+import java.io.EOFException
 import okhttp3.WebPlatformUrlTest
 import okio.Buffer
 import okio.BufferedSource
@@ -24,7 +25,6 @@ import okio.source
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.fail
 import org.junit.Test
-import java.io.EOFException
 
 internal class MessageInflaterTest {
 
