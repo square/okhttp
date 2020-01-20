@@ -142,11 +142,11 @@ public final class HandshakeCertificatesTest {
         .build();
     X509Certificate[] acceptedIssuers = handshakeCertificates.trustManager().getAcceptedIssuers();
     Set<String> names = Arrays.stream(acceptedIssuers)
-        .map(cert -> cert.getSubjectDN().getName().split("[ ,]")[0])
+        .map(cert -> cert.getSubjectDN().getName())
         .collect(Collectors.toCollection(LinkedHashSet::new));
 
     // It's safe to assume all platforms will have a major Internet certificate issuer.
-    assertThat(names).contains("CN=Entrust");
+    assertThat(names).anyMatch(s -> s.matches("[A-Z]+=Entrust.*"));
   }
 
   private InetSocketAddress startTlsServer() throws IOException {

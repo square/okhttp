@@ -256,10 +256,21 @@ public final class HeldCertificateTest {
         + "MEECAQAwEwYHKoZIzj0CAQYIKoZIzj0DAQcEJzAlAgEBBCA7ODT0xhGSNn4ESj6J\n"
         + "lu/GJQZoU9lDrCPeUcQ28tzOWw==\n"
         + "-----END PRIVATE KEY-----\n";
+    String bcPkcs8Pem = ""
+        + "-----BEGIN PRIVATE KEY-----\n"
+        + "ME0CAQAwEwYHKoZIzj0CAQYIKoZIzj0DAQcEMzAxAgEBBCA7ODT0xhGSNn4ESj6J\n"
+        + "lu/GJQZoU9lDrCPeUcQ28tzOW6AKBggqhkjOPQMBBw==\n"
+        + "-----END PRIVATE KEY-----\n";
 
     HeldCertificate heldCertificate = HeldCertificate.decode(certificatePem + pkcs8Pem);
     assertThat(heldCertificate.certificatePem()).isEqualTo(certificatePem);
-    assertThat(heldCertificate.privateKeyPkcs8Pem()).isEqualTo(pkcs8Pem);
+
+    // Slightly different encoding
+    if (platform.isBouncyCastle()) {
+      assertThat(heldCertificate.privateKeyPkcs8Pem()).isEqualTo(bcPkcs8Pem);
+    } else {
+      assertThat(heldCertificate.privateKeyPkcs8Pem()).isEqualTo(pkcs8Pem);
+    }
 
     X509Certificate certificate = heldCertificate.certificate();
     assertThat(certificate.getNotBefore().getTime()).isEqualTo(5_000L);
