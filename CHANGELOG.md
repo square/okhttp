@@ -3,7 +3,7 @@ Change Log
 
 ## Version 4.3.1
 
-_2019-01-07_
+_2020-01-07_
 
  *  Fix: Don't crash with a `NullPointerException` when a web socket is closed before it connects.
     This regression was introduced in OkHttp 4.3.0.
