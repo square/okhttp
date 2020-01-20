@@ -251,7 +251,7 @@ class Http1ExchangeCodec(
   private fun newUnknownLengthSource(): Source {
     check(state == STATE_OPEN_RESPONSE_BODY) { "state: $state" }
     state = STATE_READING_RESPONSE_BODY
-    realConnection!!.noNewExchanges()
+    realConnection?.noNewExchanges()
     return UnknownLengthSource()
   }
 
@@ -351,7 +351,7 @@ class Http1ExchangeCodec(
       return try {
         source.read(sink, byteCount)
       } catch (e: IOException) {
-        realConnection!!.noNewExchanges()
+        realConnection?.noNewExchanges()
         responseBodyComplete()
         throw e
       }
@@ -388,7 +388,7 @@ class Http1ExchangeCodec(
 
       val read = super.read(sink, minOf(bytesRemaining, byteCount))
       if (read == -1L) {
-        realConnection!!.noNewExchanges() // The server didn't supply the promised content length.
+        realConnection?.noNewExchanges() // The server didn't supply the promised content length.
         val e = ProtocolException("unexpected end of stream")
         responseBodyComplete()
         throw e
@@ -406,7 +406,7 @@ class Http1ExchangeCodec(
 
       if (bytesRemaining != 0L &&
           !discard(ExchangeCodec.DISCARD_STREAM_TIMEOUT_MILLIS, MILLISECONDS)) {
-        realConnection!!.noNewExchanges() // Unread bytes remain on the stream.
+        realConnection?.noNewExchanges() // Unread bytes remain on the stream.
         responseBodyComplete()
       }
 
@@ -432,7 +432,7 @@ class Http1ExchangeCodec(
 
       val read = super.read(sink, minOf(byteCount, bytesRemainingInChunk))
       if (read == -1L) {
-        realConnection!!.noNewExchanges() // The server didn't supply the promised chunk length.
+        realConnection?.noNewExchanges() // The server didn't supply the promised chunk length.
         val e = ProtocolException("unexpected end of stream")
         responseBodyComplete()
         throw e
@@ -469,7 +469,7 @@ class Http1ExchangeCodec(
       if (closed) return
       if (hasMoreChunks &&
           !discard(ExchangeCodec.DISCARD_STREAM_TIMEOUT_MILLIS, MILLISECONDS)) {
-        realConnection!!.noNewExchanges() // Unread bytes remain on the stream.
+        realConnection?.noNewExchanges() // Unread bytes remain on the stream.
         responseBodyComplete()
       }
       closed = true
