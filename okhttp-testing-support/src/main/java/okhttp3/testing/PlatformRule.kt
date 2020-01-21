@@ -193,6 +193,8 @@ open class PlatformRule @JvmOverloads constructor(
 
   fun isJdk8Alpn() = getPlatformSystemProperty() == JDK8_ALPN_PROPERTY
 
+  fun isBouncyCastle() = getPlatformSystemProperty() == BOUNCYCASTLE_PROPERTY
+
   fun hasHttp2Support() = !isJdk8()
 
   fun assumeConscrypt() {
