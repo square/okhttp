@@ -96,8 +96,11 @@ import org.junit.rules.ExternalResource
  * A scriptable web server. Callers supply canned responses and the server replays them upon request
  * in sequence.
  */
-class MockWebServer private constructor(port: Int = -1) :
-        ExternalResource(), Closeable {
+class MockWebServer private constructor(
+        port: Int = -1,
+        sslSocketFactory: SSLSocketFactory?,
+        tunnelProxy: Boolean
+) : ExternalResource(), Closeable {
   private val taskRunnerBackend = TaskRunner.RealBackend(
       threadFactory("MockWebServer TaskRunner", daemon = false))
   private val taskRunner = TaskRunner(taskRunnerBackend)
@@ -210,10 +213,14 @@ class MockWebServer private constructor(port: Int = -1) :
   }
 
   constructor() :
-    this(port = 0) {}
+    this(port = 0,
+         sslSocketFactory = null,
+         tunnelProxy = false) {}
 
   init {
       this.portField = port
+      this.sslSocketFactory = sslSocketFactory
+      this.tunnelProxy = tunnelProxy
   }
 
   @JvmName("-deprecated_port")
@@ -1137,6 +1144,8 @@ class MockWebServer private constructor(port: Int = -1) :
   }
 
   class Builder {
+    internal var sslSocketFactory: SSLSocketFactory? = null
+    internal var tunnelProxy: Boolean = false
     internal var port: Int = 0
 
     /**
@@ -1151,12 +1160,36 @@ class MockWebServer private constructor(port: Int = -1) :
     }
 
     /**
+     * Configures the server to serve requests with HTTPS rather than otherwise.
+     *
+     * @param sslSocketFactory the sslSocketFactory that will be used to negotiate the TLS handshake.
+     * @see MockWebServer.Builder.tunnelProxy
+     */
+    fun useHttps(sslSocketFactory: SSLSocketFactory) = apply {
+      requireNotNull(sslSocketFactory) { "null sslSocketFactory" }
+      this.sslSocketFactory = sslSocketFactory
+    }
+
+    /**
+     * Configures the server to expect the HTTP CONNECT method before negotiating TLS.
+     *
+     * @see MockWebServer.Builder.useHttps
+     */
+    fun tunnelProxy() = apply {
+      this.tunnelProxy = true
+    }
+
+    /**
      * Creates a pre-configured non-started [MockWebServer].
      *
      * The instance created can also be used as a JUnit [org.junit.Rule]
      */
     fun build(): MockWebServer {
-      return MockWebServer(port = port)
+      return MockWebServer(
+              port = port,
+              sslSocketFactory = sslSocketFactory,
+              tunnelProxy = tunnelProxy
+      )
     }
   }
 

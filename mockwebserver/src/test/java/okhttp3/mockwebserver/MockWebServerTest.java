@@ -622,7 +622,20 @@ public final class MockWebServerTest {
       assertThat(server.getPort()).isEqualTo(randomPort);
     }
   }
-  
+
+  @Test public void builderWithTls() throws Exception {
+    HandshakeCertificates handshakeCertificates = localhost();
+    try(MockWebServer server = new MockWebServer.Builder()
+        .useHttps(handshakeCertificates.sslSocketFactory())
+        .build()) {
+      server.enqueue(new MockResponse());
+
+      HttpsURLConnection connection = (HttpsURLConnection) server.url("/").url().openConnection();
+      connection.setSSLSocketFactory(handshakeCertificates.sslSocketFactory());
+      assertThat(connection.getResponseCode()).isEqualTo(HttpURLConnection.HTTP_OK);
+    }
+  }
+
   public static String getPlatform() {
     return System.getProperty("okhttp.platform", "jdk8");
   }
