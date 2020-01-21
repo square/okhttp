@@ -10,6 +10,7 @@ if (properties.containsKey('android.injected.invoked.from.ide') ||
 
 include ':okcurl'
 include ':okhttp'
+include ':okhttp-bom'
 include ':okhttp-brotli'
 include ':okhttp-dnsoverhttps'
 include ':okhttp-hpacktests'
