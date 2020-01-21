@@ -96,7 +96,8 @@ import org.junit.rules.ExternalResource
  * A scriptable web server. Callers supply canned responses and the server replays them upon request
  * in sequence.
  */
-class MockWebServer : ExternalResource(), Closeable {
+class MockWebServer private constructor(port: Int = -1) :
+        ExternalResource(), Closeable {
   private val taskRunnerBackend = TaskRunner.RealBackend(
       threadFactory("MockWebServer TaskRunner", daemon = false))
   private val taskRunner = TaskRunner(taskRunnerBackend)
@@ -145,12 +146,22 @@ class MockWebServer : ExternalResource(), Closeable {
   var dispatcher: Dispatcher = QueueDispatcher()
 
   private var portField: Int = -1
+  /**
+   * The port that this server listens to.
+   *
+   * Starts the server if it isn't already started.
+   */
   val port: Int
     get() {
       before()
       return portField
     }
 
+  /**
+   * The hostname that this server listens to.
+   *
+   * Starts the server if it isn't already started.
+   */
   val hostName: String
     get() {
       before()
@@ -186,15 +197,23 @@ class MockWebServer : ExternalResource(), Closeable {
       field = protocolList
     }
 
-  private var started: Boolean = false
+  @get:JvmName("isStarted") var started: Boolean = false
+    private set
 
   @Synchronized override fun before() {
     if (started) return
     try {
-      start()
+      start(portField)
     } catch (e: IOException) {
       throw RuntimeException(e)
     }
+  }
+
+  constructor() :
+    this(port = 0) {}
+
+  init {
+      this.portField = port
   }
 
   @JvmName("-deprecated_port")
@@ -224,6 +243,8 @@ class MockWebServer : ExternalResource(), Closeable {
   /**
    * Returns a URL for connecting to this server.
    *
+   * Starts the server if it isn't already started.
+   * 
    * @param path the request path, such as "/".
    */
   fun url(path: String): HttpUrl {
@@ -357,7 +378,8 @@ class MockWebServer : ExternalResource(), Closeable {
    * use port 0 to avoid flakiness when a specific port is unavailable.
    */
   @Throws(IOException::class)
-  @JvmOverloads fun start(port: Int = 0) = start(InetAddress.getByName("localhost"), port)
+  @JvmOverloads fun start(port: Int = 0) =
+      start(InetAddress.getByName("localhost"), if (port == 0 && portField >= 0) portField else port)
 
   /**
    * Starts the server on the given address and port.
@@ -367,7 +389,10 @@ class MockWebServer : ExternalResource(), Closeable {
    * use port 0 to avoid flakiness when a specific port is unavailable.
    */
   @Throws(IOException::class)
-  fun start(inetAddress: InetAddress, port: Int) = start(InetSocketAddress(inetAddress, port))
+  fun start(inetAddress: InetAddress, port: Int) = start(InetSocketAddress(
+      inetAddress,
+      if (port == 0 && portField >= 0) portField else port)
+  )
 
   /**
    * Starts the server and binds to the given socket address.
@@ -1108,6 +1133,30 @@ class MockWebServer : ExternalResource(), Closeable {
         val pushedStream = stream.connection.pushStream(stream.id, pushedHeaders, hasBody)
         writeResponse(pushedStream, request, pushPromise.response)
       }
+    }
+  }
+
+  class Builder {
+    internal var port: Int = 0
+
+    /**
+     * Configure the server for the given port.
+     *
+     * @param port the port to listen to. Don't use this method if the server can use any available port. Automated
+     * tests should always use port 0 to avoid flakiness when a specific port is unavailable.
+     */
+    fun port(port: Int) = apply {
+      require(port in 1..65535) { "unexpected port: $port" }
+      this.port = port
+    }
+
+    /**
+     * Creates a pre-configured non-started [MockWebServer].
+     *
+     * The instance created can also be used as a JUnit [org.junit.Rule]
+     */
+    fun build(): MockWebServer {
+      return MockWebServer(port = port)
     }
   }
 

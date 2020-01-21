@@ -30,6 +30,7 @@ import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.net.ssl.HttpsURLConnection;
@@ -40,6 +41,7 @@ import okhttp3.Protocol;
 import okhttp3.RecordingHostnameVerifier;
 import okhttp3.tls.HandshakeCertificates;
 import okhttp3.tls.HeldCertificate;
+import org.assertj.core.api.Assertions;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
@@ -594,6 +596,33 @@ public final class MockWebServerTest {
     assertThat(handshake.peerCertificates().size()).isEqualTo(1);
   }
 
+  @Test public void builderDefaults() throws Exception {
+    try(MockWebServer server = new MockWebServer.Builder().build()) {
+      assertThat(server.isStarted()).describedAs("build does not start the server").isFalse();
+      server.start();
+
+      server.enqueue(new MockResponse());
+      HttpURLConnection connection = (HttpURLConnection) server.url("/").url().openConnection();
+      assertThat(connection.getResponseCode()).isEqualTo(HttpURLConnection.HTTP_OK);
+      assertThat(server.getPort()).isGreaterThan(0);
+    } catch (java.net.SocketTimeoutException expected) {
+    } 
+  }
+
+  @Test public void builderWithPort() throws Exception {
+    int randomPort = new Random().nextInt((50_000 - 40_000) + 1) + 40_000;
+    try(MockWebServer server = new MockWebServer.Builder()
+        .port(randomPort)
+        .build()) {
+      server.start();
+      server.enqueue(new MockResponse());
+
+      HttpURLConnection connection = (HttpURLConnection) server.url("/").url().openConnection();
+      assertThat(connection.getResponseCode()).isEqualTo(HttpURLConnection.HTTP_OK);
+      assertThat(server.getPort()).isEqualTo(randomPort);
+    }
+  }
+  
   public static String getPlatform() {
     return System.getProperty("okhttp.platform", "jdk8");
   }
