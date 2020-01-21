@@ -1,5 +1,3 @@
-apply plugin: 'com.vanniktech.maven.publish'
-
 jar {
   manifest {
     attributes('Automatic-Module-Name': 'okhttp3.dnsoverhttps')

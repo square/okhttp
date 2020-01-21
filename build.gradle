@@ -46,8 +46,6 @@ buildscript {
   ]
 
   dependencies {
-    // TODO(jwilson): configure maven-publish-plugin to limit which artifacts are published.
-    classpath 'com.vanniktech:gradle-maven-publish-plugin:0.8.0'
     classpath 'net.ltgt.gradle:gradle-errorprone-plugin:1.1.1'
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${versions.kotlin}"
     classpath "org.jetbrains.dokka:dokka-gradle-plugin:0.10.0"
@@ -69,8 +67,9 @@ plugins {
 }
 
 allprojects {
-  group = GROUP
-  version = VERSION_NAME
+  group = 'com.squareup.okhttp3'
+  project.ext.artifactId = artifactId(project)
+  version = '4.4.0-SNAPSHOT'
 
   repositories {
     mavenCentral()
@@ -89,8 +88,7 @@ allprojects {
 }
 
 subprojects { project ->
-  if (project.name == 'android-test')
-    return
+  if (project.name == 'android-test') return
 
   apply plugin: 'java'
   apply plugin: 'java-library'
@@ -100,6 +98,8 @@ subprojects { project ->
   apply plugin: 'net.ltgt.errorprone'
   apply plugin: 'org.jetbrains.dokka'
   apply plugin: 'com.diffplug.gradle.spotless'
+  apply plugin: 'maven-publish'
+  apply plugin: 'signing'
   sourceCompatibility = JavaVersion.VERSION_1_8
   targetCompatibility = JavaVersion.VERSION_1_8
 
@@ -197,26 +197,57 @@ subprojects { project ->
     }
   }
 
-  // We have to set the dokka configuration after evaluation since the com.vanniktech.maven.publish
-  // plugin overwrites our dokka configuration on projects where it's applied.
-  afterEvaluate { p ->
-    p.tasks.dokka {
-      configuration {
-        reportUndocumented = false
-        skipDeprecated = true
-        jdkVersion = 8
-        perPackageOption {
-          prefix = "okhttp3.internal"
-          suppress = true
-        }
-        if (project.file('Module.md').exists()) {
-          includes = ['Module.md']
-        }
-        externalDocumentationLink {
-          url = new URL("https://square.github.io/okio/2.x/okio/")
-          packageListUrl = new URL("https://square.github.io/okio/2.x/okio/package-list")
+  dokka {
+    configuration {
+      reportUndocumented = false
+      skipDeprecated = true
+      jdkVersion = 8
+      perPackageOption {
+        prefix = "okhttp3.internal"
+        suppress = true
+      }
+      if (project.file('Module.md').exists()) {
+        includes = ['Module.md']
+      }
+      externalDocumentationLink {
+        url = new URL("https://square.github.io/okio/2.x/okio/")
+        packageListUrl = new URL("https://square.github.io/okio/2.x/okio/package-list")
+      }
+    }
+  }
+
+  if (project.ext.artifactId != null) {
+    publishing {
+      java {
+        withJavadocJar()
+        withSourcesJar()
+      }
+      publications {
+        maven(MavenPublication) {
+          groupId = project.group
+          artifactId = project.ext.artifactId
+          version = project.version
+          from components.java
+          pom {
+            url = 'https://square.github.io/okhttp/'
+            licenses {
+              license {
+                name = 'The Apache Software License, Version 2.0'
+                url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+              }
+            }
+            scm {
+              connection = 'scm:git:https://github.com/square/okhttp.git'
+              developerConnection = 'scm:git:ssh://git@github.com/square/okhttp.git'
+              url = 'https://github.com/square/okhttp'
+            }
+          }
         }
       }
+    }
+
+    signing {
+      sign publishing.publications.maven
     }
   }
 }
@@ -241,6 +272,23 @@ def alpnBootVersion() {
   if (!patchVersionMatcher.find()) return null
   def patchVersion = Integer.parseInt(patchVersionMatcher.group(1))
   return alpnBootVersionForPatchVersion(javaVersion, patchVersion)
+}
+
+def artifactId(Project project) {
+  if (project.name == 'okhttp-logging-interceptor') {
+    return 'logging-interceptor'
+  } else if (project.name == 'mockwebserver'
+      || project.name == 'okcurl'
+      || project.name == 'okhttp'
+      || project.name == 'okhttp-brotli'
+      || project.name == 'okhttp-dnsoverhttps'
+      || project.name == 'okhttp-sse'
+      || project.name == 'okhttp-tls'
+      || project.name == 'okhttp-urlconnection') {
+    return project.name
+  } else {
+    return null
+  }
 }
 
 def alpnBootVersionForPatchVersion(String javaVersion, int patchVersion) {
@@ -282,8 +330,8 @@ def alpnBootVersionForPatchVersion(String javaVersion, int patchVersion) {
  * https://github.com/Visistema/Groovy1/blob/ba5eb9b2f19ca0cc8927359ce414c4e1974b7016/gradle/binarycompatibility.gradle#L48
  */
 ext.baselineJar = { project, version ->
-  def group = project.property("GROUP")
-  def artifactId = project.property("POM_ARTIFACT_ID")
+  def group = project.group
+  def artifactId = project.ext.artifactId
   try {
     String jarFile = "$artifactId-${version}.jar"
     project.group = 'virtual_group_for_japicmp' // Prevent it from resolving the current version.

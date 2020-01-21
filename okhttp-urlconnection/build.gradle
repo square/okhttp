@@ -1,4 +1,3 @@
-apply plugin: 'com.vanniktech.maven.publish'
 apply plugin: 'me.champeau.gradle.japicmp'
 
 jar {
