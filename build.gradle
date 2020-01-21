@@ -66,9 +66,28 @@ plugins {
   id 'me.champeau.gradle.japicmp' version '0.2.9'
 }
 
+/** Returns the artifact ID for the project, or null if it is not published. */
+ext.publishedArtifactId = { project ->
+  if (project.name == 'okhttp-logging-interceptor') {
+    return 'logging-interceptor'
+  } else if (project.name == 'mockwebserver'
+          || project.name == 'okcurl'
+          || project.name == 'okhttp'
+          || project.name == 'okhttp-bom'
+          || project.name == 'okhttp-brotli'
+          || project.name == 'okhttp-dnsoverhttps'
+          || project.name == 'okhttp-sse'
+          || project.name == 'okhttp-tls'
+          || project.name == 'okhttp-urlconnection') {
+    return project.name
+  } else {
+    return null // Not published.
+  }
+}
+
 allprojects {
   group = 'com.squareup.okhttp3'
-  project.ext.artifactId = artifactId(project)
+  project.ext.artifactId = rootProject.ext.publishedArtifactId(project)
   version = '4.4.0-SNAPSHOT'
 
   repositories {
@@ -87,8 +106,10 @@ allprojects {
   }
 }
 
+/** Configure building for Java+Kotlin projects. */
 subprojects { project ->
   if (project.name == 'android-test') return
+  if (project.name == 'okhttp-bom') return
 
   apply plugin: 'java'
   apply plugin: 'java-library'
@@ -98,8 +119,6 @@ subprojects { project ->
   apply plugin: 'net.ltgt.errorprone'
   apply plugin: 'org.jetbrains.dokka'
   apply plugin: 'com.diffplug.gradle.spotless'
-  apply plugin: 'maven-publish'
-  apply plugin: 'signing'
   sourceCompatibility = JavaVersion.VERSION_1_8
   targetCompatibility = JavaVersion.VERSION_1_8
 
@@ -215,42 +234,61 @@ subprojects { project ->
       }
     }
   }
+}
 
-  if (project.ext.artifactId != null) {
-    publishing {
+/** Configure publishing and signing for published Java and JavaPlatform subprojects. */
+subprojects { project ->
+  if (project.ext.artifactId == null) return
+  def bom = project.ext.artifactId == 'okhttp-bom'
+
+  if (bom) {
+    apply plugin: 'java-platform'
+  }
+
+  apply plugin: 'maven-publish'
+  apply plugin: 'signing'
+
+  publishing {
+    if (!bom) {
       java {
         withJavadocJar()
         withSourcesJar()
       }
-      publications {
-        maven(MavenPublication) {
-          groupId = project.group
-          artifactId = project.ext.artifactId
-          version = project.version
+    }
+
+    publications {
+      maven(MavenPublication) {
+        groupId = project.group
+        artifactId = project.ext.artifactId
+        version = project.version
+        if (bom) {
+          from components.javaPlatform
+        } else {
           from components.java
-          pom {
-            url = 'https://square.github.io/okhttp/'
-            licenses {
-              license {
-                name = 'The Apache Software License, Version 2.0'
-                url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-              }
+        }
+        pom {
+          url = 'https://square.github.io/okhttp/'
+          licenses {
+            license {
+              name = 'The Apache Software License, Version 2.0'
+              url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
             }
-            scm {
-              connection = 'scm:git:https://github.com/square/okhttp.git'
-              developerConnection = 'scm:git:ssh://git@github.com/square/okhttp.git'
-              url = 'https://github.com/square/okhttp'
-            }
+          }
+          scm {
+            connection = 'scm:git:https://github.com/square/okhttp.git'
+            developerConnection = 'scm:git:ssh://git@github.com/square/okhttp.git'
+            url = 'https://github.com/square/okhttp'
           }
         }
       }
     }
+  }
 
-    signing {
-      sign publishing.publications.maven
-    }
+  signing {
+    sign publishing.publications.maven
   }
 }
+
 
 tasks.wrapper {
   distributionType = Wrapper.DistributionType.ALL
@@ -272,23 +310,6 @@ def alpnBootVersion() {
   if (!patchVersionMatcher.find()) return null
   def patchVersion = Integer.parseInt(patchVersionMatcher.group(1))
   return alpnBootVersionForPatchVersion(javaVersion, patchVersion)
-}
-
-def artifactId(Project project) {
-  if (project.name == 'okhttp-logging-interceptor') {
-    return 'logging-interceptor'
-  } else if (project.name == 'mockwebserver'
-      || project.name == 'okcurl'
-      || project.name == 'okhttp'
-      || project.name == 'okhttp-brotli'
-      || project.name == 'okhttp-dnsoverhttps'
-      || project.name == 'okhttp-sse'
-      || project.name == 'okhttp-tls'
-      || project.name == 'okhttp-urlconnection') {
-    return project.name
-  } else {
-    return null
-  }
 }
 
 def alpnBootVersionForPatchVersion(String javaVersion, int patchVersion) {
