@@ -16,6 +16,7 @@ dependencies {
   testImplementation project(':okhttp-testing-support')
   testImplementation project(':okhttp-tls')
   testImplementation deps.assertj
+  testImplementation deps.guava
 }
 
 afterEvaluate { project ->

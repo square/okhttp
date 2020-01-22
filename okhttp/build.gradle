@@ -40,6 +40,7 @@ dependencies {
   testImplementation deps.junit
   testImplementation deps.assertj
   testImplementation deps.openjsse
+  testImplementation deps.guava
   testCompileOnly deps.jsr305
 }
 
