@@ -29,6 +29,7 @@ dependencies {
   compileOnly deps.openjsse
   compileOnly deps.jsr305
   compileOnly deps.animalSniffer
+  compileOnly deps.guava
 
   testImplementation project(':okhttp-testing-support')
   testImplementation project(':okhttp-tls')
