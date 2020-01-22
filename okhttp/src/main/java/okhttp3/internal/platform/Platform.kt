@@ -196,6 +196,12 @@ open class Platform {
         return "OpenJSSE" == preferredProvider
       }
 
+    private val isBouncyCastlePreferred: Boolean
+      get() {
+        val preferredProvider = Security.getProviders()[0].name
+        return preferredProvider.startsWith("BC")
+      }
+
     /** Attempt to match the host runtime to a capable Platform implementation. */
     private fun findPlatform(): Platform {
       val android10 = Android10Platform.buildIfSupported()
@@ -215,6 +221,14 @@ open class Platform {
 
         if (conscrypt != null) {
           return conscrypt
+        }
+      }
+
+      if (isBouncyCastlePreferred) {
+        val bc = BouncyCastlePlatform.buildIfSupported()
+
+        if (bc != null) {
+          return bc
         }
       }
 

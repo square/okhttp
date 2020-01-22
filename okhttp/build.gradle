@@ -25,6 +25,8 @@ dependencies {
   api deps.okio
   api deps.kotlinStdlib
   compileOnly deps.android
+  compileOnly deps.bouncycastledebug
+  compileOnly deps.bouncycastletls
   compileOnly deps.conscrypt
   compileOnly deps.openjsse
   compileOnly deps.jsr305
