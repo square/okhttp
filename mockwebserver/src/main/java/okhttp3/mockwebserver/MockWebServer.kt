@@ -97,11 +97,11 @@ import org.junit.rules.ExternalResource
  * in sequence.
  */
 class MockWebServer private constructor(
-        port: Int = -1,
-        sslSocketFactory: SSLSocketFactory?,
-        tunnelProxy: Boolean,
-        clientAuth: Int,
-        protocols: List<Protocol>
+  port: Int = -1,
+  sslSocketFactory: SSLSocketFactory?,
+  tunnelProxy: Boolean,
+  clientAuth: Int,
+  protocols: List<Protocol>
 ) : ExternalResource(), Closeable {
   private val taskRunnerBackend = TaskRunner.RealBackend(
       threadFactory("MockWebServer TaskRunner", daemon = false))
@@ -227,7 +227,7 @@ class MockWebServer private constructor(
     this.sslSocketFactory = sslSocketFactory
     this.tunnelProxy = tunnelProxy
     this.clientAuth = clientAuth
-    this.protocols = if(protocols.isNullOrEmpty()) immutableListOf(Protocol.HTTP_2, Protocol.HTTP_1_1) else protocols
+    this.protocols = if (protocols.isNullOrEmpty()) immutableListOf(Protocol.HTTP_2, Protocol.HTTP_1_1) else protocols
   }
 
   @JvmName("-deprecated_port")
@@ -258,7 +258,7 @@ class MockWebServer private constructor(
    * Returns a URL for connecting to this server.
    *
    * Starts the server if it isn't already started.
-   * 
+   *
    * @param path the request path, such as "/".
    */
   fun url(path: String): HttpUrl {
