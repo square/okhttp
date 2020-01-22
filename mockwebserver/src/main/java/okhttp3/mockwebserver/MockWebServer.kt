@@ -100,6 +100,7 @@ class MockWebServer private constructor(
         port: Int = -1,
         sslSocketFactory: SSLSocketFactory?,
         tunnelProxy: Boolean,
+        clientAuth: Int,
         protocols: List<Protocol>
 ) : ExternalResource(), Closeable {
   private val taskRunnerBackend = TaskRunner.RealBackend(
@@ -217,14 +218,16 @@ class MockWebServer private constructor(
       port = 0,
       sslSocketFactory = null,
       tunnelProxy = false,
-      protocols = immutableListOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
+      clientAuth = CLIENT_AUTH_NONE,
+      protocols = emptyList()
   ) {}
 
   init {
     this.portField = port
     this.sslSocketFactory = sslSocketFactory
     this.tunnelProxy = tunnelProxy
-    this.protocols = protocols
+    this.clientAuth = clientAuth
+    this.protocols = if(protocols.isNullOrEmpty()) immutableListOf(Protocol.HTTP_2, Protocol.HTTP_1_1) else protocols
   }
 
   @JvmName("-deprecated_port")
@@ -1150,6 +1153,7 @@ class MockWebServer private constructor(
   class Builder {
     internal var sslSocketFactory: SSLSocketFactory? = null
     internal var tunnelProxy: Boolean = false
+    internal var clientAuth = CLIENT_AUTH_NONE
     internal var port: Int = 0
     var protocols: List<Protocol> = ArrayList()
 
@@ -1185,6 +1189,36 @@ class MockWebServer private constructor(
     }
 
     /**
+     * Configure the server to not perform SSL authentication of the client. This leaves
+     * authentication to another layer such as in an HTTP cookie or header. This is the default and
+     * most common configuration.
+     */
+    fun noClientAuth() = apply {
+      this.clientAuth = CLIENT_AUTH_NONE
+    }
+
+    /**
+     * Configure the server to [want client auth][SSLSocket.setWantClientAuth]. If the
+     * client presents a certificate that is [trusted][TrustManager] the handshake will
+     * proceed normally. The connection will also proceed normally if the client presents no
+     * certificate at all! But if the client presents an untrusted certificate the handshake
+     * will fail and no connection will be established.
+     */
+    fun requestClientAuth() = apply {
+      this.clientAuth = CLIENT_AUTH_REQUESTED
+    }
+
+    /**
+     * Configure the server to [need client auth][SSLSocket.setNeedClientAuth]. If the
+     * client presents a certificate that is [trusted][TrustManager] the handshake will
+     * proceed normally. If the client presents an untrusted certificate or no certificate at all the
+     * handshake will fail and no connection will be established.
+     */
+    fun requireClientAuth() = apply {
+      this.clientAuth = CLIENT_AUTH_REQUIRED
+    }
+
+    /**
      * Configure the server protocols supported by ALPN on incoming HTTPS connections in order of preference.
      * The list must contain [Protocol.HTTP_1_1]. It must not contain null.
      *
@@ -1205,6 +1239,7 @@ class MockWebServer private constructor(
           port = port,
           sslSocketFactory = sslSocketFactory,
           tunnelProxy = tunnelProxy,
+          clientAuth = clientAuth,
           protocols = protocols
       )
     }

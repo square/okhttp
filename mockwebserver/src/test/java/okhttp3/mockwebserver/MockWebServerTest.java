@@ -635,6 +635,54 @@ public final class MockWebServerTest {
     }
   }
 
+  @Test public void builderWithClientAuth() throws Exception {
+    assumeFalse(getPlatform().equals("conscrypt"));
+
+    HeldCertificate clientCa = new HeldCertificate.Builder()
+        .certificateAuthority(0)
+        .build();
+    HeldCertificate serverCa = new HeldCertificate.Builder()
+        .certificateAuthority(0)
+        .build();
+    HeldCertificate serverCertificate = new HeldCertificate.Builder()
+        .signedBy(serverCa)
+        .addSubjectAlternativeName(server.getHostName())
+        .build();
+    HandshakeCertificates serverHandshakeCertificates = new HandshakeCertificates.Builder()
+        .addTrustedCertificate(clientCa.certificate())
+        .heldCertificate(serverCertificate)
+        .build();
+
+    HeldCertificate clientCertificate = new HeldCertificate.Builder()
+        .signedBy(clientCa)
+        .build();
+    HandshakeCertificates clientHandshakeCertificates = new HandshakeCertificates.Builder()
+        .addTrustedCertificate(serverCa.certificate())
+        .heldCertificate(clientCertificate)
+        .build();
+
+    try(MockWebServer server = new MockWebServer.Builder()
+        .useHttps(serverHandshakeCertificates.sslSocketFactory())
+        .requestClientAuth()
+        .build()) {
+      server.enqueue(new MockResponse());
+
+      HttpsURLConnection connection = (HttpsURLConnection) server.url("/").url().openConnection();
+      connection.setSSLSocketFactory(clientHandshakeCertificates.sslSocketFactory());
+      assertThat(connection.getResponseCode()).isEqualTo(HttpURLConnection.HTTP_OK);
+
+      RecordedRequest request = server.takeRequest();
+      assertThat(request.getRequestUrl().scheme()).isEqualTo("https");
+      Handshake handshake = request.getHandshake();
+      assertThat(handshake.tlsVersion()).isNotNull();
+      assertThat(handshake.cipherSuite()).isNotNull();
+      assertThat(handshake.localPrincipal()).isNotNull();
+      assertThat(handshake.localCertificates().size()).isEqualTo(1);
+      assertThat(handshake.peerPrincipal()).isNotNull();
+      assertThat(handshake.peerCertificates().size()).isEqualTo(1);
+    }
+  }
+
   @Test public void builderWithProtocols() {
     MockWebServer server = new MockWebServer.Builder()
         .protocols(Protocol.H2_PRIOR_KNOWLEDGE)
