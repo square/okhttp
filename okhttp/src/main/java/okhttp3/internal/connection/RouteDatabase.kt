@@ -15,7 +15,9 @@
  */
 package okhttp3.internal.connection
 
+import com.google.common.cache.CacheBuilder
 import okhttp3.Route
+import java.time.Duration
 
 /**
  * A blacklist of failed routes to avoid when creating a new connection to a target address. This is
@@ -24,18 +26,21 @@ import okhttp3.Route
  * preferred.
  */
 class RouteDatabase {
-  private val failedRoutes = mutableSetOf<Route>()
+  private val failedRoutes = CacheBuilder.newBuilder()
+          .maximumSize(1000)
+          .expireAfterAccess(Duration.ofMinutes(10))
+          .build<Route, Object>()
 
   /** Records a failure connecting to [failedRoute]. */
   @Synchronized fun failed(failedRoute: Route) {
-    failedRoutes.add(failedRoute)
+    failedRoutes.put(failedRoute, Object())
   }
 
   /** Records success connecting to [route]. */
   @Synchronized fun connected(route: Route) {
-    failedRoutes.remove(route)
+    failedRoutes.invalidate(route)
   }
 
   /** Returns true if [route] has failed recently and should be avoided. */
-  @Synchronized fun shouldPostpone(route: Route): Boolean = route in failedRoutes
+  @Synchronized fun shouldPostpone(route: Route): Boolean = failedRoutes.getIfPresent(route) != null
 }
