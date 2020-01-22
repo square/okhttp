@@ -128,6 +128,7 @@ public final class HandshakeCertificatesTest {
         .build();
 
     HandshakeCertificates handshakeCertificates = new HandshakeCertificates.Builder()
+        .addTrustedCertificate(root.certificate()) // BouncyCastle requires at least one
         .heldCertificate(certificate, intermediate.certificate())
         .build();
     assertPrivateKeysEquals(certificate.keyPair().getPrivate(),
