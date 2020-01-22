@@ -20,7 +20,12 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.GeneralSecurityException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
+import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
@@ -31,10 +36,18 @@ import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import javax.net.ServerSocketFactory;
 import javax.net.SocketFactory;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
 import okhttp3.Handshake;
+import okhttp3.OkHttpDebugLogging;
+import okhttp3.internal.platform.Platform;
 import okhttp3.testing.PlatformRule;
 import okio.ByteString;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -53,6 +66,7 @@ public final class HandshakeCertificatesTest {
   private ServerSocket serverSocket;
 
   @Before public void setUp() {
+    OkHttpDebugLogging.INSTANCE.enable("org.bouncycastle");
     executorService = Executors.newCachedThreadPool();
   }
 
@@ -78,7 +92,7 @@ public final class HandshakeCertificatesTest {
         .build();
 
     HeldCertificate serverRoot = new HeldCertificate.Builder()
-        .certificateAuthority(1)
+        .certificateAuthority(2)
         .build();
     HeldCertificate serverIntermediate = new HeldCertificate.Builder()
         .certificateAuthority(0)
@@ -89,16 +103,18 @@ public final class HandshakeCertificatesTest {
         .build();
 
     HandshakeCertificates server = new HandshakeCertificates.Builder()
+        .addTrustedCertificate(serverRoot.certificate())
         .addTrustedCertificate(clientRoot.certificate())
         .heldCertificate(serverCertificate, serverIntermediate.certificate())
         .build();
 
     HandshakeCertificates client = new HandshakeCertificates.Builder()
         .addTrustedCertificate(serverRoot.certificate())
+        .addTrustedCertificate(clientRoot.certificate())
         .heldCertificate(clientCertificate, clientIntermediate.certificate())
         .build();
 
-    InetSocketAddress serverAddress = startTlsServer();
+    InetSocketAddress serverAddress = startTlsServer(server);
     Future<Handshake> serverHandshakeFuture = doServerHandshake(server);
     Future<Handshake> clientHandshakeFuture = doClientHandshake(client, serverAddress);
 
@@ -128,6 +144,7 @@ public final class HandshakeCertificatesTest {
         .build();
 
     HandshakeCertificates handshakeCertificates = new HandshakeCertificates.Builder()
+        .addTrustedCertificate(root.certificate()) // BouncyCastle requires at least one
         .heldCertificate(certificate, intermediate.certificate())
         .build();
     assertPrivateKeysEquals(certificate.keyPair().getPrivate(),
@@ -149,8 +166,12 @@ public final class HandshakeCertificatesTest {
     assertThat(names).anyMatch(s -> s.matches("[A-Z]+=Entrust.*"));
   }
 
-  private InetSocketAddress startTlsServer() throws IOException {
-    ServerSocketFactory serverSocketFactory = ServerSocketFactory.getDefault();
+  private InetSocketAddress startTlsServer(HandshakeCertificates server)
+      throws IOException, GeneralSecurityException {
+    SSLContext sslContext = Platform.get().newSSLContext();
+    SecureRandom random = SecureRandom.getInstance("DEFAULT", BouncyCastleProvider.PROVIDER_NAME);
+    sslContext.init(new KeyManager[] {server.keyManager()}, new TrustManager[] {server.trustManager()}, random);
+    ServerSocketFactory serverSocketFactory = sslContext.getServerSocketFactory();
     serverSocket = serverSocketFactory.createServerSocket();
     InetAddress serverAddress = InetAddress.getByName("localhost");
     serverSocket.bind(new InetSocketAddress(serverAddress, 0), 50);
@@ -159,20 +180,39 @@ public final class HandshakeCertificatesTest {
 
   private Future<Handshake> doServerHandshake(HandshakeCertificates server) {
     return executorService.submit(() -> {
-      Socket rawSocket = null;
+      //Socket rawSocket = null;
+
+      SSLServerSocket sslServerSocket = null;
       SSLSocket sslSocket = null;
       try {
-        rawSocket = serverSocket.accept();
-        sslSocket = (SSLSocket) server.sslSocketFactory().createSocket(rawSocket,
-            rawSocket.getInetAddress().getHostAddress(), rawSocket.getPort(), true /* autoClose */);
-        sslSocket.setUseClientMode(false);
-        sslSocket.setWantClientAuth(true);
-        sslSocket.startHandshake();
+        //rawSocket = serverSocket.accept();
+        sslServerSocket =
+            (SSLServerSocket) server.sslServerSocketFactory().createServerSocket(0);
+        //sslSocket.setUseClientMode(false);
+        sslServerSocket.setNeedClientAuth(true);
+
+        //sslSocket.addHandshakeCompletedListener(handshakeCompletedEvent -> {
+        //  try {
+        //    System.out.println(handshakeCompletedEvent.getPeerPrincipal());
+        //  } catch (SSLPeerUnverifiedException e) {
+        //    e.printStackTrace();
+        //  }
+        //});
+
+        sslSocket = (SSLSocket) sslServerSocket.accept();
+
+        System.out.println("server: " + sslSocket.getSession());
+
+        //System.out.println("server handshake start " + Thread.currentThread().getName());
+        //sslSocket.startHandshake();
+        //System.out.println("server handshake finish ");
+
+        sslSocket.getOutputStream().write(42);
+
+        System.out.println("server write finish");
+
         return Handshake.get(sslSocket.getSession());
       } finally {
-        if (rawSocket != null) {
-          closeQuietly(rawSocket);
-        }
         if (sslSocket != null) {
           closeQuietly(sslSocket);
         }
@@ -187,15 +227,26 @@ public final class HandshakeCertificatesTest {
       rawSocket.connect(serverAddress);
       SSLSocket sslSocket = null;
       try {
-        sslSocket = (SSLSocket) client.sslSocketFactory().createSocket(rawSocket,
+        SSLSocketFactory sslSocketFactory = client.sslSocketFactory();
+        sslSocket = (SSLSocket) sslSocketFactory.createSocket(rawSocket,
             rawSocket.getInetAddress().getHostAddress(), rawSocket.getPort(), true /* autoClose */);
+        System.out.println("client handshake start");
         sslSocket.startHandshake();
-        return Handshake.get(sslSocket.getSession());
+        System.out.println("client handshake finish");
+
+        Handshake handshake = Handshake.get(sslSocket.getSession());
+        System.out.println(handshake);
+
+        sslSocket.getOutputStream().write(42);
+
+        System.out.println("client write finish");
+
+        return handshake;
       } finally {
-        closeQuietly(rawSocket);
-        if (sslSocket != null) {
-          closeQuietly(sslSocket);
-        }
+        //if (sslSocket != null) {
+        //  closeQuietly(sslSocket);
+        //}
+        //closeQuietly(rawSocket);
       }
     });
   }

@@ -3,7 +3,12 @@ dependencies {
   api deps.junit
   api deps.assertj
   api deps.bouncycastle
-  api deps.bouncycastletls
+  implementation deps.bouncycastlepkix, {
+    exclude module:"bcprov-jdk15on"
+  }
+  implementation deps.bouncycastletls, {
+    exclude module:"bcprov-jdk15on"
+  }
   api deps.conscrypt
   api deps.corretto
   api deps.openjsse

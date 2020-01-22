@@ -15,19 +15,21 @@
  */
 package okhttp3.tls
 
+import okhttp3.CertificatePinner
+import okhttp3.internal.platform.Platform
+import okhttp3.tls.internal.TlsUtil.newKeyManager
+import okhttp3.tls.internal.TlsUtil.newTrustManager
+import org.bouncycastle.jce.provider.BouncyCastleProvider
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
 import java.util.Collections
 import javax.net.ssl.KeyManager
 import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLServerSocketFactory
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509KeyManager
 import javax.net.ssl.X509TrustManager
-import okhttp3.CertificatePinner
-import okhttp3.internal.platform.Platform
-import okhttp3.tls.internal.TlsUtil.newKeyManager
-import okhttp3.tls.internal.TlsUtil.newTrustManager
 
 /**
  * Certificates to identify which peers to trust and also to earn the trust of those peers in kind.
@@ -87,9 +89,13 @@ class HandshakeCertificates private constructor(
 
   fun sslSocketFactory(): SSLSocketFactory = sslContext().socketFactory
 
+  fun sslServerSocketFactory(): SSLServerSocketFactory? = sslContext().serverSocketFactory
+
   fun sslContext(): SSLContext {
     return Platform.get().newSSLContext().apply {
-      init(arrayOf<KeyManager>(keyManager), arrayOf<TrustManager>(trustManager), SecureRandom())
+      val random =
+        SecureRandom.getInstance("DEFAULT", BouncyCastleProvider.PROVIDER_NAME)
+      init(arrayOf<KeyManager>(keyManager), arrayOf<TrustManager>(trustManager), random)
     }
   }
 

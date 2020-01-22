@@ -26,6 +26,8 @@ import javax.net.ssl.X509KeyManager
 import javax.net.ssl.X509TrustManager
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
+import org.bouncycastle.jce.provider.BouncyCastleProvider
+import org.bouncycastle.jsse.provider.BouncyCastleJsseProvider
 
 object TlsUtil {
   val password = "password".toCharArray()
@@ -57,7 +59,7 @@ object TlsUtil {
       trustStore.setCertificateEntry("cert_$i", trustedCertificates[i])
     }
 
-    val factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
+    val factory = TrustManagerFactory.getInstance("PKIX", BouncyCastleJsseProvider.PROVIDER_NAME)
     factory.init(trustStore)
     val result = factory.trustManagers!!
     check(result.size == 1 && result[0] is X509TrustManager) {
@@ -85,7 +87,8 @@ object TlsUtil {
       keyStore.setKeyEntry("private", heldCertificate.keyPair.private, password, chain)
     }
 
-    val factory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm())
+    val factory = KeyManagerFactory.getInstance("PKIX", BouncyCastleJsseProvider.PROVIDER_NAME)
+//    val factory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm())
     factory.init(keyStore, password)
     val result = factory.keyManagers!!
     check(result.size == 1 && result[0] is X509KeyManager) {

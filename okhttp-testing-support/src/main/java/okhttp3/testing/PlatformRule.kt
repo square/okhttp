@@ -25,6 +25,7 @@ import okhttp3.internal.platform.OpenJSSEPlatform
 import okhttp3.internal.platform.Platform
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.jsse.provider.BouncyCastleJsseProvider
+import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider
 import org.conscrypt.Conscrypt
 import org.hamcrest.BaseMatcher
 import org.hamcrest.CoreMatchers
@@ -318,6 +319,7 @@ open class PlatformRule @JvmOverloads constructor(
       } else if (platformSystemProperty == BOUNCYCASTLE_PROPERTY && Security.getProviders()[0].name != "BC") {
         Security.insertProviderAt(BouncyCastleProvider(), 1)
         Security.insertProviderAt(BouncyCastleJsseProvider(), 2)
+        Security.insertProviderAt(BouncyCastlePQCProvider(), 3)
       } else if (platformSystemProperty == CORRETTO_PROPERTY) {
         AmazonCorrettoCryptoProvider.install()
 

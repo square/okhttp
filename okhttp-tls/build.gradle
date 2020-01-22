@@ -11,6 +11,12 @@ dependencies {
   api deps.okio
   implementation project(':okhttp')
   implementation deps.bouncycastle
+  implementation deps.bouncycastlepkix, {
+    exclude module:"bcprov-jdk15on"
+  }
+  implementation deps.bouncycastletls, {
+    exclude module:"bcprov-jdk15on"
+  }
   compileOnly deps.jsr305
 
   testImplementation project(':okhttp-testing-support')
