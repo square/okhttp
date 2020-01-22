@@ -33,7 +33,7 @@ class RouteDatabase {
 
   /** Records a failure connecting to [failedRoute]. */
   @Synchronized fun failed(failedRoute: Route) {
-    failedRoutes.put(failedRoute, Object())
+    failedRoutes.put(failedRoute, Any())
   }
 
   /** Records success connecting to [route]. */
