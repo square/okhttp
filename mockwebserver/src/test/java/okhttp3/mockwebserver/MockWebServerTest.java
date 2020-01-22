@@ -605,8 +605,7 @@ public final class MockWebServerTest {
       HttpURLConnection connection = (HttpURLConnection) server.url("/").url().openConnection();
       assertThat(connection.getResponseCode()).isEqualTo(HttpURLConnection.HTTP_OK);
       assertThat(server.getPort()).isGreaterThan(0);
-    } catch (java.net.SocketTimeoutException expected) {
-    } 
+    }
   }
 
   @Test public void builderWithPort() throws Exception {
@@ -634,6 +633,14 @@ public final class MockWebServerTest {
       connection.setSSLSocketFactory(handshakeCertificates.sslSocketFactory());
       assertThat(connection.getResponseCode()).isEqualTo(HttpURLConnection.HTTP_OK);
     }
+  }
+
+  @Test public void builderWithProtocols() {
+    MockWebServer server = new MockWebServer.Builder()
+        .protocols(Protocol.H2_PRIOR_KNOWLEDGE)
+        .build();
+
+    assertThat(server.protocols()).containsExactly(Protocol.H2_PRIOR_KNOWLEDGE);
   }
 
   public static String getPlatform() {

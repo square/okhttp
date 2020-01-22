@@ -99,7 +99,8 @@ import org.junit.rules.ExternalResource
 class MockWebServer private constructor(
         port: Int = -1,
         sslSocketFactory: SSLSocketFactory?,
-        tunnelProxy: Boolean
+        tunnelProxy: Boolean,
+        protocols: List<Protocol>
 ) : ExternalResource(), Closeable {
   private val taskRunnerBackend = TaskRunner.RealBackend(
       threadFactory("MockWebServer TaskRunner", daemon = false))
@@ -212,15 +213,18 @@ class MockWebServer private constructor(
     }
   }
 
-  constructor() :
-    this(port = 0,
-         sslSocketFactory = null,
-         tunnelProxy = false) {}
+  constructor() : this(
+      port = 0,
+      sslSocketFactory = null,
+      tunnelProxy = false,
+      protocols = immutableListOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
+  ) {}
 
   init {
-      this.portField = port
-      this.sslSocketFactory = sslSocketFactory
-      this.tunnelProxy = tunnelProxy
+    this.portField = port
+    this.sslSocketFactory = sslSocketFactory
+    this.tunnelProxy = tunnelProxy
+    this.protocols = protocols
   }
 
   @JvmName("-deprecated_port")
@@ -1147,6 +1151,7 @@ class MockWebServer private constructor(
     internal var sslSocketFactory: SSLSocketFactory? = null
     internal var tunnelProxy: Boolean = false
     internal var port: Int = 0
+    var protocols: List<Protocol> = ArrayList()
 
     /**
      * Configure the server for the given port.
@@ -1180,15 +1185,27 @@ class MockWebServer private constructor(
     }
 
     /**
+     * Configure the server protocols supported by ALPN on incoming HTTPS connections in order of preference.
+     * The list must contain [Protocol.HTTP_1_1]. It must not contain null.
+     *
+     * This list is ignored when [negotiation is disabled][protocolNegotiationEnabled].
+     */
+    fun protocols(vararg protocols: Protocol) = apply {
+      require(null !in protocols as Array<out Protocol?>) { "protocols must not contain null" }
+      this.protocols = protocols.toList()
+    }
+
+    /**
      * Creates a pre-configured non-started [MockWebServer].
      *
      * The instance created can also be used as a JUnit [org.junit.Rule]
      */
     fun build(): MockWebServer {
       return MockWebServer(
-              port = port,
-              sslSocketFactory = sslSocketFactory,
-              tunnelProxy = tunnelProxy
+          port = port,
+          sslSocketFactory = sslSocketFactory,
+          tunnelProxy = tunnelProxy,
+          protocols = protocols
       )
     }
   }
