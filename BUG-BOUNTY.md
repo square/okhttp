@@ -6,5 +6,5 @@ can make. We therefore encourage reporting security issues with the code
 contained in this repository.
 
 If you believe you have discovered a security vulnerability, please follow the
-guidelines at bugcrowd.com/squareopensource
+guidelines at https://bugcrowd.com/squareopensource
 
