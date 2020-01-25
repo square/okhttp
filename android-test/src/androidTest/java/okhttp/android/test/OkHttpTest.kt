@@ -33,6 +33,7 @@ import okhttp3.Protocol
 import okhttp3.RecordingEventListener
 import okhttp3.Request
 import okhttp3.TlsVersion
+import okhttp3.android.OkHttpAndroidClientFactory
 import okhttp3.dnsoverhttps.DnsOverHttps
 import okhttp3.internal.asFactory
 import okhttp3.internal.platform.Platform
@@ -64,6 +65,7 @@ import javax.net.ssl.X509TrustManager
 import java.util.logging.Logger
 import okhttp3.internal.platform.AndroidPlatform
 import okhttp3.internal.platform.Android10Platform
+import java.util.concurrent.TimeUnit
 
 /**
  * Run with "./gradlew :android-test:connectedCheck" and make sure ANDROID_SDK_ROOT is set.
@@ -498,6 +500,21 @@ class OkHttpTest {
         .build()
 
     client.get("https://www.facebook.com/robots.txt")
+  }
+
+  @Test
+  fun testFactory() {
+    val ctxt = InstrumentationRegistry.getTargetContext().applicationContext
+
+    val factory = OkHttpAndroidClientFactory.build(ctxt) {
+      connectTimeout(5, TimeUnit.SECONDS)
+    }
+
+    factory.client
+
+    factory.newClient {
+
+    }
   }
 
   private fun OkHttpClient.get(url: String) {
