@@ -122,7 +122,10 @@ class Transmitter(
       if (this.request!!.url.canReuseConnectionFor(request.url) && exchangeFinder!!.hasRouteToTry()) {
         return // Already ready.
       }
-      check(exchange == null) { "Transmitter has existing exchange, has an app interceptor left prior responses open?" }
+      check(exchange == null) {
+        "cannot make a new request because the previous response is still open: " +
+                "please call response.close()"
+      }
 
       if (exchangeFinder != null) {
         maybeReleaseConnection(null, true)
