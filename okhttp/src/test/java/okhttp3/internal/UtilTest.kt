@@ -34,4 +34,26 @@ class UtilTest {
     } catch (_: UnsupportedOperationException) {
     }
   }
+
+  @Test fun removeFirst() {
+    val set = mutableSetOf<String>()
+    set += "s"
+    set += "q"
+    set += "u"
+    set += "a"
+    set += "r"
+    set += "e"
+    assertThat(set.removeFirst()).isEqualTo("s")
+    assertThat(set).containsExactly("q", "u", "a", "r", "e")
+    assertThat(set.removeFirst()).isEqualTo("q")
+    assertThat(set).containsExactly("u", "a", "r", "e")
+    assertThat(set.removeFirst()).isEqualTo("u")
+    assertThat(set).containsExactly("a", "r", "e")
+    assertThat(set.removeFirst()).isEqualTo("a")
+    assertThat(set).containsExactly("r", "e")
+    assertThat(set.removeFirst()).isEqualTo("r")
+    assertThat(set).containsExactly("e")
+    assertThat(set.removeFirst()).isEqualTo("e")
+    assertThat(set).isEmpty()
+  }
 }

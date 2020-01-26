@@ -16,6 +16,7 @@
 package okhttp3.internal.connection
 
 import okhttp3.Route
+import okhttp3.internal.removeFirst
 
 /**
  * A blacklist of failed routes to avoid when creating a new connection to a target address. This is
@@ -24,10 +25,19 @@ import okhttp3.Route
  * preferred.
  */
 class RouteDatabase {
+  /**
+   * Don't grow unbounded, especially since the [SSLSocketFactory] instances held by [Route] may
+   * be quite large: 270 KiB according to a report on issue 5746.
+   */
+  private val maxSize = 128
+
   private val failedRoutes = mutableSetOf<Route>()
 
   /** Records a failure connecting to [failedRoute]. */
   @Synchronized fun failed(failedRoute: Route) {
+    if (failedRoutes.size == maxSize) {
+      failedRoutes.removeFirst()
+    }
     failedRoutes.add(failedRoute)
   }
 

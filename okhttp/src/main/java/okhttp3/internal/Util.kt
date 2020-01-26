@@ -172,6 +172,17 @@ fun Array<String>.concat(value: String): Array<String> {
 }
 
 /**
+ * Removes the first element of this non-empty set and returns it. If this set was created with
+ * [mutableSetOf] this returns the oldest element in the set.
+ */
+fun <T : Any?> MutableSet<T>.removeFirst(): T {
+  val i = iterator()
+  val result = i.next()
+  i.remove()
+  return result
+}
+
+/**
  * Increments [startIndex] until this string is not ASCII whitespace. Stops at [endIndex].
  */
 fun String.indexOfFirstNonAsciiWhitespace(startIndex: Int = 0, endIndex: Int = length): Int {
