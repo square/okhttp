@@ -16,8 +16,6 @@
  */
 package okhttp3.internal.connection
 
-import java.io.IOException
-import java.net.Proxy
 import java.util.ArrayDeque
 import java.util.concurrent.TimeUnit
 import okhttp3.Address
@@ -46,7 +44,7 @@ class RealConnectionPool(
   }
 
   private val connections = ArrayDeque<RealConnection>()
-  val routeDatabase = RouteDatabase()
+//  val routeDatabase = RouteDatabase()
 
   init {
     // Put a floor on the keep alive duration, otherwise cleanup will spin loop.
@@ -225,18 +223,6 @@ class RealConnectionPool(
     }
 
     return references.size
-  }
-
-  /** Track a bad route in the route database. Other routes will be attempted first. */
-  fun connectFailed(failedRoute: Route, failure: IOException) {
-    // Tell the proxy selector when we fail to connect on a fresh connection.
-    if (failedRoute.proxy.type() != Proxy.Type.DIRECT) {
-      val address = failedRoute.address
-      address.proxySelector.connectFailed(
-          address.url.toUri(), failedRoute.proxy.address(), failure)
-    }
-
-    routeDatabase.failed(failedRoute)
   }
 
   companion object {

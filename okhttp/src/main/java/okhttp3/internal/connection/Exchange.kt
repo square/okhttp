@@ -167,7 +167,7 @@ class Exchange(
 
   private fun trackFailure(e: IOException) {
     finder.trackFailure()
-    codec.connection()!!.trackFailure(e)
+    codec.connection()!!.trackFailure(transmitter.client, e)
   }
 
   fun <E : IOException?> bodyComplete(

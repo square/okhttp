@@ -15,16 +15,24 @@
  */
 package okhttp3;
 
+import java.io.IOException;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.ResponseCache;
+import java.net.SocketAddress;
+import java.net.URI;
+import java.security.KeyManagementException;
 import java.util.AbstractList;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.X509TrustManager;
+import okhttp3.internal.platform.Platform;
 import okhttp3.internal.proxy.NullProxySelector;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -33,8 +41,12 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
 public final class OkHttpClientTest {
@@ -308,5 +320,61 @@ public final class OkHttpClientTest {
     client = new OkHttpClient.Builder().proxySelector(new FakeProxySelector()).build();
     assertThat(client.proxy()).isNull();
     assertThat(client.proxySelector()).isInstanceOf(FakeProxySelector.class);
+  }
+
+  @Test
+  public void sharesRouteDatabase() throws KeyManagementException {
+    OkHttpClient client = new OkHttpClient.Builder().build();
+
+    ProxySelector proxySelector = new ProxySelector() {
+      @Override
+      public List<Proxy> select(URI uri) {
+        return emptyList();
+      }
+
+      @Override
+      public void connectFailed(URI uri, SocketAddress socketAddress, IOException e) {
+      }
+    };
+
+    X509TrustManager trustManager = Platform.get().platformTrustManager();
+    SSLContext sslContext = Platform.get().newSSLContext();
+    sslContext.init(null, null, null);
+
+    // new client, may share all same fields but likely different connection pool
+    assertNotSame(client.getRouteDatabase(), new OkHttpClient.Builder().build().getRouteDatabase());
+
+    // same client with no change affecting route db
+    assertSame(client.getRouteDatabase(), client.newBuilder().build().getRouteDatabase());
+    assertSame(client.getRouteDatabase(),
+        client.newBuilder().callTimeout(5, TimeUnit.SECONDS).build().getRouteDatabase());
+
+    // logically different scope of client for route db
+    assertNotSame(client.getRouteDatabase(),
+        client.newBuilder().dns(hostname -> Collections.emptyList()).build().getRouteDatabase());
+    assertNotSame(client.getRouteDatabase(), client.newBuilder()
+        .proxyAuthenticator((route, response) -> null)
+        .build()
+        .getRouteDatabase());
+    assertNotSame(client.getRouteDatabase(),
+        client.newBuilder().protocols(singletonList(Protocol.HTTP_1_1)).build().getRouteDatabase());
+    assertNotSame(client.getRouteDatabase(), client.newBuilder()
+        .connectionSpecs(singletonList(ConnectionSpec.COMPATIBLE_TLS))
+        .build()
+        .getRouteDatabase());
+    assertNotSame(client.getRouteDatabase(),
+        client.newBuilder().proxySelector(proxySelector).build().getRouteDatabase());
+    assertNotSame(client.getRouteDatabase(),
+        client.newBuilder().proxy(Proxy.NO_PROXY).build().getRouteDatabase());
+    assertNotSame(client.getRouteDatabase(), client.newBuilder()
+        .sslSocketFactory(sslContext.getSocketFactory(), trustManager)
+        .build()
+        .getRouteDatabase());
+    assertNotSame(client.getRouteDatabase(),
+        client.newBuilder().hostnameVerifier((s, sslSession) -> false).build().getRouteDatabase());
+    assertNotSame(client.getRouteDatabase(), client.newBuilder()
+        .certificatePinner(new CertificatePinner.Builder().build())
+        .build()
+        .getRouteDatabase());
   }
 }

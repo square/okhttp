@@ -59,7 +59,7 @@ class ExchangeFinder(
 
   // State guarded by connectionPool.
   private val routeSelector: RouteSelector = RouteSelector(
-      address, connectionPool.routeDatabase, call, eventListener)
+      address, transmitter.client.routeDatabase, call, eventListener)
   private var connectingConnection: RealConnection? = null
   private var hasStreamFailure = false
   private var nextRouteToTry: Route? = null
@@ -244,7 +244,7 @@ class ExchangeFinder(
         call,
         eventListener
     )
-    connectionPool.routeDatabase.connected(result!!.route())
+    transmitter.client.routeDatabase.connected(result!!.route())
 
     var socket: Socket? = null
     synchronized(connectionPool) {
