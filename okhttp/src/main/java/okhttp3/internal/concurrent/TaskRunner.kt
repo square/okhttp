@@ -25,6 +25,7 @@ import okhttp3.internal.assertThreadDoesntHoldLock
 import okhttp3.internal.assertThreadHoldsLock
 import okhttp3.internal.concurrent.TaskRunner.Companion.INSTANCE
 import okhttp3.internal.notify
+import okhttp3.internal.okHttpName
 import okhttp3.internal.threadFactory
 
 /**
@@ -305,7 +306,7 @@ class TaskRunner(
 
   companion object {
     @JvmField
-    val INSTANCE = TaskRunner(RealBackend(threadFactory("OkHttp TaskRunner", daemon = true)))
+    val INSTANCE = TaskRunner(RealBackend(threadFactory("$okHttpName TaskRunner", daemon = true)))
 
     val logger: Logger = Logger.getLogger(TaskRunner::class.java.name)
   }

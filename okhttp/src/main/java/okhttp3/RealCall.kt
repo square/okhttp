@@ -29,6 +29,7 @@ import okhttp3.internal.http.BridgeInterceptor
 import okhttp3.internal.http.CallServerInterceptor
 import okhttp3.internal.http.RealInterceptorChain
 import okhttp3.internal.http.RetryAndFollowUpInterceptor
+import okhttp3.internal.okHttpName
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.INFO
 import okhttp3.internal.threadName
@@ -131,7 +132,7 @@ internal class RealCall private constructor(
     }
 
     override fun run() {
-      threadName("OkHttp ${redactedUrl()}") {
+      threadName("$okHttpName ${redactedUrl()}") {
         var signalledCallback = false
         transmitter.timeoutEnter()
         try {
