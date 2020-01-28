@@ -29,6 +29,7 @@ import okhttp3.internal.concurrent.Task
 import okhttp3.internal.concurrent.TaskQueue
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.connection.Transmitter.TransmitterReference
+import okhttp3.internal.okHttpName
 import okhttp3.internal.platform.Platform
 
 class RealConnectionPool(
@@ -41,7 +42,7 @@ class RealConnectionPool(
   private val keepAliveDurationNs: Long = timeUnit.toNanos(keepAliveDuration)
 
   private val cleanupQueue: TaskQueue = taskRunner.newQueue()
-  private val cleanupTask = object : Task("OkHttp ConnectionPool") {
+  private val cleanupTask = object : Task("$okHttpName ConnectionPool") {
     override fun runOnce() = cleanup(System.nanoTime())
   }
 

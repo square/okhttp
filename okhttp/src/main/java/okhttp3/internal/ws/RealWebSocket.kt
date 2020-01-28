@@ -38,6 +38,7 @@ import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.Task
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.connection.Exchange
+import okhttp3.internal.okHttpName
 import okhttp3.internal.ws.WebSocketProtocol.CLOSE_CLIENT_GOING_AWAY
 import okhttp3.internal.ws.WebSocketProtocol.CLOSE_MESSAGE_MAX
 import okhttp3.internal.ws.WebSocketProtocol.OPCODE_BINARY
@@ -164,7 +165,7 @@ class RealWebSocket(
 
         // Process all web socket messages.
         try {
-          val name = "OkHttp WebSocket ${request.url.redact()}"
+          val name = "$okHttpName WebSocket ${request.url.redact()}"
           initReaderAndWriter(name, streams)
           listener.onOpen(this@RealWebSocket, response)
           loopReader()

@@ -29,6 +29,7 @@ import okhttp3.internal.http2.ErrorCode.REFUSED_STREAM
 import okhttp3.internal.http2.Settings.Companion.DEFAULT_INITIAL_WINDOW_SIZE
 import okhttp3.internal.ignoreIoExceptions
 import okhttp3.internal.notifyAll
+import okhttp3.internal.okHttpName
 import okhttp3.internal.peerName
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.INFO
@@ -574,7 +575,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     ) = apply {
       this.socket = socket
       this.connectionName = when {
-        client -> "OkHttp $peerName"
+        client -> "$okHttpName $peerName"
         else -> "MockWebServer $peerName"
       }
       this.source = source
