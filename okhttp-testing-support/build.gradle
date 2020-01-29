@@ -4,6 +4,7 @@ dependencies {
   api deps.assertj
   api deps.bouncycastledebug
   implementation deps.bouncycastlepkix, {
+    // prefer debug build for our own testing
     exclude module:"bcprov-jdk15on"
   }
   implementation deps.bouncycastletls, {
