@@ -33,17 +33,19 @@ object OkHttpDebugLogging {
 
   fun enableTaskRunner() = enable(TaskRunner::class)
 
-  private fun enable(loggerClass: KClass<*>) {
-    val logger = Logger.getLogger(loggerClass.java.name)
+  fun enable(loggerClass: String) {
+    val logger = Logger.getLogger(loggerClass)
     if (configuredLoggers.add(logger)) {
       logger.addHandler(ConsoleHandler().apply {
         level = Level.FINE
         formatter = object : SimpleFormatter() {
           override fun format(record: LogRecord) =
-              String.format("[%1\$tF %1\$tT] %2\$s %n", record.millis, record.message)
+            String.format("[%1\$tF %1\$tT] %2\$s %n", record.millis, record.message)
         }
       })
-      logger.level = Level.FINE
+      logger.level = Level.FINEST
     }
   }
+
+  fun enable(loggerClass: KClass<*>) = enable(loggerClass.java.name)
 }
