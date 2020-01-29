@@ -651,11 +651,23 @@ class RealConnection(
 
   override fun handshake(): Handshake? = handshake
 
+  /** Track a bad route in the route database. Other routes will be attempted first. */
+  internal fun connectFailed(client: OkHttpClient, failedRoute: Route, failure: IOException) {
+    // Tell the proxy selector when we fail to connect on a fresh connection.
+    if (failedRoute.proxy.type() != Proxy.Type.DIRECT) {
+      val address = failedRoute.address
+      address.proxySelector.connectFailed(
+          address.url.toUri(), failedRoute.proxy.address(), failure)
+    }
+
+    client.routeDatabase.failed(failedRoute)
+  }
+
   /**
    * Track a failure using this connection. This may prevent both the connection and its route from
    * being used for future exchanges.
    */
-  internal fun trackFailure(e: IOException?) {
+  internal fun trackFailure(client: OkHttpClient, e: IOException?) {
     connectionPool.assertThreadDoesntHoldLock()
 
     synchronized(connectionPool) {
@@ -686,7 +698,7 @@ class RealConnection(
         // If this route hasn't completed a call, avoid it for new connections.
         if (successCount == 0) {
           if (e != null) {
-            connectionPool.connectFailed(route, e)
+            connectFailed(client, route, e)
           }
           routeFailureCount++
         }

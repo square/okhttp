@@ -34,6 +34,7 @@ import okhttp3.Protocol.HTTP_2
 import okhttp3.internal.asFactory
 import okhttp3.internal.checkDuration
 import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.connection.RouteDatabase
 import okhttp3.internal.immutableListOf
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.proxy.NullProxySelector
@@ -208,6 +209,8 @@ open class OkHttpClient internal constructor(
 
   /** Web socket and HTTP/2 ping interval (in milliseconds). By default pings are not sent. */
   @get:JvmName("pingIntervalMillis") val pingIntervalMillis: Int = builder.pingInterval
+
+  val routeDatabase: RouteDatabase = builder.routeDatabase ?: RouteDatabase()
 
   constructor() : this(Builder())
 
@@ -469,6 +472,7 @@ open class OkHttpClient internal constructor(
     internal var readTimeout = 10_000
     internal var writeTimeout = 10_000
     internal var pingInterval = 0
+    internal var routeDatabase: RouteDatabase? = null
 
     internal constructor(okHttpClient: OkHttpClient) : this() {
       this.dispatcher = okHttpClient.dispatcher
@@ -499,6 +503,7 @@ open class OkHttpClient internal constructor(
       this.readTimeout = okHttpClient.readTimeoutMillis
       this.writeTimeout = okHttpClient.writeTimeoutMillis
       this.pingInterval = okHttpClient.pingIntervalMillis
+      this.routeDatabase = okHttpClient.routeDatabase
     }
 
     /**
@@ -635,6 +640,9 @@ open class OkHttpClient internal constructor(
      * If unset, the [system-wide default][Dns.SYSTEM] DNS will be used.
      */
     fun dns(dns: Dns) = apply {
+      if (dns != this.dns) {
+        this.routeDatabase = null
+      }
       this.dns = dns
     }
 
@@ -644,6 +652,9 @@ open class OkHttpClient internal constructor(
      * by default). To disable proxy use completely, call `proxy(Proxy.NO_PROXY)`.
      */
     fun proxy(proxy: Proxy?) = apply {
+      if (proxy != this.proxy) {
+        this.routeDatabase = null
+      }
       this.proxy = proxy
     }
 
@@ -655,6 +666,10 @@ open class OkHttpClient internal constructor(
      * If unset, the [system-wide default][ProxySelector.getDefault] proxy selector will be used.
      */
     fun proxySelector(proxySelector: ProxySelector) = apply {
+      if (proxySelector != this.proxySelector) {
+        this.routeDatabase = null
+      }
+
       this.proxySelector = proxySelector
     }
 
@@ -665,6 +680,10 @@ open class OkHttpClient internal constructor(
      * If unset, the [no authentication will be attempted][Authenticator.NONE].
      */
     fun proxyAuthenticator(proxyAuthenticator: Authenticator) = apply {
+      if (proxyAuthenticator != this.proxyAuthenticator) {
+        this.routeDatabase = null
+      }
+
       this.proxyAuthenticator = proxyAuthenticator
     }
 
@@ -677,6 +696,11 @@ open class OkHttpClient internal constructor(
      */
     fun socketFactory(socketFactory: SocketFactory) = apply {
       require(socketFactory !is SSLSocketFactory) { "socketFactory instanceof SSLSocketFactory" }
+
+      if (socketFactory != this.socketFactory) {
+        this.routeDatabase = null
+      }
+
       this.socketFactory = socketFactory
     }
 
@@ -694,6 +718,10 @@ open class OkHttpClient internal constructor(
         level = DeprecationLevel.ERROR
     )
     fun sslSocketFactory(sslSocketFactory: SSLSocketFactory) = apply {
+      if (sslSocketFactory != this.sslSocketFactoryOrNull) {
+        this.routeDatabase = null
+      }
+
       this.sslSocketFactoryOrNull = sslSocketFactory
       this.certificateChainCleaner = Platform.get().buildCertificateChainCleaner(sslSocketFactory)
     }
@@ -747,12 +775,20 @@ open class OkHttpClient internal constructor(
       sslSocketFactory: SSLSocketFactory,
       trustManager: X509TrustManager
     ) = apply {
+      if (sslSocketFactory != this.sslSocketFactoryOrNull || trustManager != this.x509TrustManagerOrNull) {
+        this.routeDatabase = null
+      }
+
       this.sslSocketFactoryOrNull = sslSocketFactory
       this.certificateChainCleaner = CertificateChainCleaner.get(trustManager)
       this.x509TrustManagerOrNull = trustManager
     }
 
     fun connectionSpecs(connectionSpecs: List<ConnectionSpec>) = apply {
+      if (connectionSpecs != this.connectionSpecs) {
+        this.routeDatabase = null
+      }
+
       this.connectionSpecs = connectionSpecs.toImmutableList()
     }
 
@@ -809,6 +845,10 @@ open class OkHttpClient internal constructor(
       @Suppress("DEPRECATION")
       protocolsCopy.remove(Protocol.SPDY_3)
 
+      if (protocolsCopy != this.protocols) {
+        this.routeDatabase = null
+      }
+
       // Assign as an unmodifiable list. This is effectively immutable.
       this.protocols = Collections.unmodifiableList(protocolsCopy)
     }
@@ -820,6 +860,10 @@ open class OkHttpClient internal constructor(
      * If unset, a default hostname verifier will be used.
      */
     fun hostnameVerifier(hostnameVerifier: HostnameVerifier) = apply {
+      if (hostnameVerifier != this.hostnameVerifier) {
+        this.routeDatabase = null
+      }
+
       this.hostnameVerifier = hostnameVerifier
     }
 
@@ -829,6 +873,10 @@ open class OkHttpClient internal constructor(
      * Pinning certificates avoids the need to trust certificate authorities.
      */
     fun certificatePinner(certificatePinner: CertificatePinner) = apply {
+      if (certificatePinner != this.certificatePinner) {
+        this.routeDatabase = null
+      }
+
       this.certificatePinner = certificatePinner
     }
 

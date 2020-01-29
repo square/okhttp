@@ -48,7 +48,7 @@ import okio.Timeout
  * canceling may break the entire connection.
  */
 class Transmitter(
-  private val client: OkHttpClient,
+  internal val client: OkHttpClient,
   private val call: Call
 ) {
   private val connectionPool: RealConnectionPool = client.connectionPool.delegate
