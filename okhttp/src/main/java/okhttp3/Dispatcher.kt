@@ -24,6 +24,7 @@ import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import okhttp3.RealCall.AsyncCall
 import okhttp3.internal.assertThreadDoesntHoldLock
+import okhttp3.internal.okHttpName
 import okhttp3.internal.threadFactory
 
 /**
@@ -91,7 +92,7 @@ class Dispatcher constructor() {
     get() {
       if (executorServiceOrNull == null) {
         executorServiceOrNull = ThreadPoolExecutor(0, Int.MAX_VALUE, 60, TimeUnit.SECONDS,
-            SynchronousQueue(), threadFactory("OkHttp Dispatcher", false))
+            SynchronousQueue(), threadFactory("$okHttpName Dispatcher", false))
       }
       return executorServiceOrNull!!
     }
