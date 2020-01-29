@@ -44,7 +44,6 @@ class RealConnectionPool(
   }
 
   private val connections = ArrayDeque<RealConnection>()
-//  val routeDatabase = RouteDatabase()
 
   init {
     // Put a floor on the keep alive duration, otherwise cleanup will spin loop.
