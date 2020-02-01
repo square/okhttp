@@ -996,6 +996,59 @@ public final class CacheTest {
     assertThat(get(url).body().string()).isEqualTo("B");
   }
 
+  @Test public void serverReturnsUpdatedBodyForSameETag() throws Exception {
+    server.enqueue(new MockResponse()
+        .setResponseCode(HttpURLConnection.HTTP_NOT_FOUND)
+        .setBody("A")
+        .addHeader("Last-Modified: " + formatDate(-2, TimeUnit.HOURS))
+        .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS)));
+    server.enqueue(new MockResponse()
+        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .addHeader("ETag: C")
+        .addHeader("Last-Modified: " + formatDate(-2, TimeUnit.HOURS))
+        .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS)));
+    server.enqueue(new MockResponse()
+        .setResponseCode(HttpURLConnection.HTTP_OK)
+        .setBody("B")
+        .addHeader("ETag: C")
+        .addHeader("Last-Modified: " + formatDate(-2, TimeUnit.HOURS))
+        .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS)));
+    server.enqueue(new MockResponse()
+        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .addHeader("ETag: C")
+        .addHeader("Last-Modified: " + formatDate(-2, TimeUnit.HOURS))
+        .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS)));
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .cacheControl(new CacheControl.Builder().maxAge(0, TimeUnit.MINUTES).build())
+        .build();
+
+    try (Response response = client.newCall(request).execute()) {
+      assertThat(response.networkResponse().code()).isEqualTo(HttpURLConnection.HTTP_NOT_FOUND);
+      assertThat(response.code()).isEqualTo(HttpURLConnection.HTTP_NOT_FOUND);
+      assertThat(response.body().string()).isEqualTo("A");
+    }
+
+    try (Response response = client.newCall(request).execute()) {
+      assertThat(response.networkResponse().code()).isEqualTo(HttpURLConnection.HTTP_NOT_MODIFIED);
+      assertThat(response.code()).isEqualTo(HttpURLConnection.HTTP_NOT_FOUND);
+      assertThat(response.body().string()).isEqualTo("A");
+    }
+
+    try (Response response = client.newCall(request).execute()) {
+      assertThat(response.networkResponse().code()).isEqualTo(HttpURLConnection.HTTP_OK);
+      assertThat(response.code()).isEqualTo(HttpURLConnection.HTTP_OK);
+      assertThat(response.body().string()).isEqualTo("B");
+    }
+
+    try (Response response = client.newCall(request).execute()) {
+      assertThat(response.networkResponse().code()).isEqualTo(HttpURLConnection.HTTP_NOT_MODIFIED);
+      assertThat(response.code()).isEqualTo(HttpURLConnection.HTTP_OK);
+      assertThat(response.body().string()).isEqualTo("B");
+    }
+  }
+
   @Test public void clientSideNoStore() throws Exception {
     server.enqueue(new MockResponse()
         .addHeader("Cache-Control: max-age=60")
