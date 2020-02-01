@@ -108,6 +108,8 @@ class ConscryptPlatform private constructor() : Platform() {
         Conscrypt.isAvailable() && atLeastVersion(2, 1, 0) -> true
         else -> false
       }
+    } catch (e: NoClassDefFoundError) {
+      false
     } catch (e: ClassNotFoundException) {
       false
     }
