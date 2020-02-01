@@ -1000,24 +1000,23 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setResponseCode(HttpURLConnection.HTTP_NOT_FOUND)
         .setBody("A")
-        .addHeader("Last-Modified: " + formatDate(-2, TimeUnit.HOURS))
-        .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS)));
+        .addHeader("Cache-Control: max-age=60")
+//        .addHeader("Last-Modified: " + formatDate(-2, TimeUnit.SECONDS))
+        .addHeader("ETag: C")
+    );
     server.enqueue(new MockResponse()
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
-        .addHeader("ETag: C")
-        .addHeader("Last-Modified: " + formatDate(-2, TimeUnit.HOURS))
-        .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS)));
+        .addHeader("Cache-Control: max-age=60")
+        .addHeader("ETag: C"));
     server.enqueue(new MockResponse()
         .setResponseCode(HttpURLConnection.HTTP_OK)
         .setBody("B")
-        .addHeader("ETag: C")
-        .addHeader("Last-Modified: " + formatDate(-2, TimeUnit.HOURS))
-        .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS)));
+        .addHeader("Cache-Control: max-age=60")
+        .addHeader("ETag: C"));
     server.enqueue(new MockResponse()
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
-        .addHeader("ETag: C")
-        .addHeader("Last-Modified: " + formatDate(-2, TimeUnit.HOURS))
-        .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS)));
+        .addHeader("Cache-Control: max-age=60")
+        .addHeader("ETag: C"));
 
     Request request = new Request.Builder()
         .url(server.url("/"))
@@ -1036,11 +1035,21 @@ public final class CacheTest {
       assertThat(response.body().string()).isEqualTo("A");
     }
 
+    request = new Request.Builder()
+        .url(server.url("/"))
+        .cacheControl(new CacheControl.Builder().noCache().build())
+        .build();
+
     try (Response response = client.newCall(request).execute()) {
       assertThat(response.networkResponse().code()).isEqualTo(HttpURLConnection.HTTP_OK);
       assertThat(response.code()).isEqualTo(HttpURLConnection.HTTP_OK);
       assertThat(response.body().string()).isEqualTo("B");
     }
+
+    request = new Request.Builder()
+        .url(server.url("/"))
+        .cacheControl(new CacheControl.Builder().maxAge(0, TimeUnit.MINUTES).build())
+        .build();
 
     try (Response response = client.newCall(request).execute()) {
       assertThat(response.networkResponse().code()).isEqualTo(HttpURLConnection.HTTP_NOT_MODIFIED);
