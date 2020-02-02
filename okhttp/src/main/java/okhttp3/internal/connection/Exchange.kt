@@ -156,7 +156,7 @@ class Exchange(
    */
   fun detachWithViolence() {
     codec.cancel()
-    call.exchangeMessageDone(this, requestDone = true, responseDone = true, e = null)
+    call.messageDone(this, requestDone = true, responseDone = true, e = null)
   }
 
   private fun trackFailure(e: IOException) {
@@ -187,11 +187,11 @@ class Exchange(
         eventListener.responseBodyEnd(call, bytesRead)
       }
     }
-    return call.exchangeMessageDone(this, requestDone, responseDone, e)
+    return call.messageDone(this, requestDone, responseDone, e)
   }
 
   fun noRequestBody() {
-    call.exchangeMessageDone(this, requestDone = true, responseDone = false, e = null)
+    call.messageDone(this, requestDone = true, responseDone = false, e = null)
   }
 
   /** A request body that fires events when it completes. */

@@ -21,7 +21,6 @@ import java.util.ArrayList
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import okhttp3.Headers
-import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
@@ -29,6 +28,7 @@ import okhttp3.Response
 import okhttp3.internal.connection.RealConnection
 import okhttp3.internal.headersContentLength
 import okhttp3.internal.http.ExchangeCodec
+import okhttp3.internal.http.RealInterceptorChain
 import okhttp3.internal.http.RequestLine
 import okhttp3.internal.http.StatusLine
 import okhttp3.internal.http.StatusLine.Companion.HTTP_CONTINUE
@@ -50,7 +50,7 @@ import okio.Source
 class Http2ExchangeCodec(
   client: OkHttpClient,
   private val realConnection: RealConnection,
-  private val chain: Interceptor.Chain,
+  private val chain: RealInterceptorChain,
   private val connection: Http2Connection
 ) : ExchangeCodec {
   @Volatile private var stream: Http2Stream? = null
@@ -84,8 +84,8 @@ class Http2ExchangeCodec(
       stream!!.closeLater(ErrorCode.CANCEL)
       throw IOException("Canceled")
     }
-    stream!!.readTimeout().timeout(chain.readTimeoutMillis().toLong(), TimeUnit.MILLISECONDS)
-    stream!!.writeTimeout().timeout(chain.writeTimeoutMillis().toLong(), TimeUnit.MILLISECONDS)
+    stream!!.readTimeout().timeout(chain.readTimeoutMillis.toLong(), TimeUnit.MILLISECONDS)
+    stream!!.writeTimeout().timeout(chain.writeTimeoutMillis.toLong(), TimeUnit.MILLISECONDS)
   }
 
   override fun flushRequest() {

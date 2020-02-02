@@ -28,8 +28,8 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
   @Throws(IOException::class)
   override fun intercept(chain: Interceptor.Chain): Response {
     val realChain = chain as RealInterceptorChain
-    val exchange = realChain.exchange()
-    val request = realChain.request()
+    val exchange = realChain.exchange!!
+    val request = realChain.request
     val requestBody = request.body
     val sentRequestMillis = System.currentTimeMillis()
 
