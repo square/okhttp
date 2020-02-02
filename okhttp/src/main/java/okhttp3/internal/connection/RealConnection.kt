@@ -115,7 +115,7 @@ class RealConnection(
   private var allocationLimit = 1
 
   /** Current calls carried by this connection. */
-  val transmitters = mutableListOf<Reference<Transmitter>>()
+  val calls = mutableListOf<Reference<RealCall>>()
 
   /** Nanotime timestamp when `allocations.size()` reached zero. */
   internal var idleAtNanos = Long.MAX_VALUE
@@ -498,7 +498,7 @@ class RealConnection(
    */
   internal fun isEligible(address: Address, routes: List<Route>?): Boolean {
     // If this connection is not accepting new exchanges, we're done.
-    if (transmitters.size >= allocationLimit || noNewExchanges) return false
+    if (calls.size >= allocationLimit || noNewExchanges) return false
 
     // If the non-host fields of the address don't overlap, we're done.
     if (!this.route.address.equalsNonHost(address)) return false

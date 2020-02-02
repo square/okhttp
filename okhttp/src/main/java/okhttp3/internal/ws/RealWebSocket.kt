@@ -28,7 +28,6 @@ import okhttp3.Callback
 import okhttp3.EventListener
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
-import okhttp3.RealCall
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.WebSocket
@@ -38,6 +37,7 @@ import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.Task
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.connection.Exchange
+import okhttp3.internal.connection.RealCall
 import okhttp3.internal.okHttpName
 import okhttp3.internal.ws.WebSocketProtocol.CLOSE_CLIENT_GOING_AWAY
 import okhttp3.internal.ws.WebSocketProtocol.CLOSE_MESSAGE_MAX
@@ -148,7 +148,7 @@ class RealWebSocket(
         .header("Sec-WebSocket-Key", key)
         .header("Sec-WebSocket-Version", "13")
         .build()
-    call = RealCall.newRealCall(webSocketClient, request, forWebSocket = true)
+    call = RealCall(webSocketClient, request, forWebSocket = true)
     call!!.enqueue(object : Callback {
       override fun onResponse(call: Call, response: Response) {
         val exchange = response.exchange

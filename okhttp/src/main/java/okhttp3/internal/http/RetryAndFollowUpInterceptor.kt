@@ -39,8 +39,8 @@ import okhttp3.Response
 import okhttp3.Route
 import okhttp3.internal.canReuseConnectionFor
 import okhttp3.internal.closeQuietly
+import okhttp3.internal.connection.RealCall
 import okhttp3.internal.connection.RouteException
-import okhttp3.internal.connection.Transmitter
 import okhttp3.internal.http.StatusLine.Companion.HTTP_PERM_REDIRECT
 import okhttp3.internal.http.StatusLine.Companion.HTTP_TEMP_REDIRECT
 import okhttp3.internal.http2.ConnectionShutdownException
@@ -55,36 +55,36 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
   override fun intercept(chain: Interceptor.Chain): Response {
     var request = chain.request()
     val realChain = chain as RealInterceptorChain
-    val transmitter = realChain.transmitter()
+    val call = realChain.call()
     var followUpCount = 0
     var priorResponse: Response? = null
     while (true) {
-      transmitter.prepareToConnect(request)
+      call.prepareExchangeFinder(request)
 
-      if (transmitter.isCanceled) {
+      if (call.isCanceled()) {
         throw IOException("Canceled")
       }
 
       var response: Response
       var success = false
       try {
-        response = realChain.proceed(request, transmitter, null)
+        response = realChain.proceed(request, null)
         success = true
       } catch (e: RouteException) {
         // The attempt to connect via a route failed. The request will not have been sent.
-        if (!recover(e.lastConnectException, transmitter, false, request)) {
+        if (!recover(e.lastConnectException, call, false, request)) {
           throw e.firstConnectException
         }
         continue
       } catch (e: IOException) {
         // An attempt to communicate with a server failed. The request may have been sent.
         val requestSendStarted = e !is ConnectionShutdownException
-        if (!recover(e, transmitter, requestSendStarted, request)) throw e
+        if (!recover(e, call, requestSendStarted, request)) throw e
         continue
       } finally {
         // The network call threw an exception. Release any resources.
         if (!success) {
-          transmitter.exchangeDoneDueToException()
+          call.exchangeDoneDueToException()
         }
       }
 
@@ -103,7 +103,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
 
       if (followUp == null) {
         if (exchange != null && exchange.isDuplex) {
-          transmitter.timeoutEarlyExit()
+          call.timeoutEarlyExit()
         }
         return response
       }
@@ -114,7 +114,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
       }
 
       response.body?.closeQuietly()
-      if (transmitter.hasExchange()) {
+      if (call.hasExchange()) {
         exchange?.detachWithViolence()
       }
 
@@ -135,7 +135,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
    */
   private fun recover(
     e: IOException,
-    transmitter: Transmitter,
+    call: RealCall,
     requestSendStarted: Boolean,
     userRequest: Request
   ): Boolean {
@@ -149,7 +149,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
     if (!isRecoverable(e, requestSendStarted)) return false
 
     // No more routes to attempt.
-    if (!transmitter.canRetry()) return false
+    if (!call.canRetry()) return false
     // For failure recovery, use the same route selector with a new connection.
     return true
   }

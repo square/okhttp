@@ -18,6 +18,7 @@ package okhttp3
 import java.util.concurrent.AbstractExecutorService
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit
+import okhttp3.internal.connection.RealCall
 import org.assertj.core.api.Assertions.assertThat
 
 internal class RecordingExecutor(

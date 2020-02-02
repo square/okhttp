@@ -18,7 +18,6 @@ package okhttp3.internal.connection
 import java.io.IOException
 import java.net.Socket
 import okhttp3.Address
-import okhttp3.Call
 import okhttp3.EventListener
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -49,17 +48,16 @@ import okhttp3.internal.http.ExchangeCodec
  * It is possible to cancel the finding process.
  */
 class ExchangeFinder(
-  private val transmitter: Transmitter,
   private val connectionPool: RealConnectionPool,
   private val address: Address,
-  private val call: Call,
+  private val call: RealCall,
   private val eventListener: EventListener
 ) {
   private var routeSelection: RouteSelector.Selection? = null
 
   // State guarded by connectionPool.
   private val routeSelector: RouteSelector = RouteSelector(
-      address, transmitter.client.routeDatabase, call, eventListener)
+      address, call.client.routeDatabase, call, eventListener)
   private var connectingConnection: RealConnection? = null
   private var hasStreamFailure = false
   private var nextRouteToTry: Route? = null
@@ -152,32 +150,32 @@ class ExchangeFinder(
     var releasedConnection: RealConnection?
     val toClose: Socket?
     synchronized(connectionPool) {
-      if (transmitter.isCanceled) throw IOException("Canceled")
+      if (call.isCanceled()) throw IOException("Canceled")
       hasStreamFailure = false // This is a fresh attempt.
 
-      releasedConnection = transmitter.connection
-      toClose = if (transmitter.connection != null && transmitter.connection!!.noNewExchanges) {
-        transmitter.releaseConnectionNoEvents()
+      releasedConnection = call.connection
+      toClose = if (call.connection != null && call.connection!!.noNewExchanges) {
+        call.releaseConnectionNoEvents()
       } else {
         null
       }
 
-      if (transmitter.connection != null) {
+      if (call.connection != null) {
         // We had an already-allocated connection and it's good.
-        result = transmitter.connection
+        result = call.connection
         releasedConnection = null
       }
 
       if (result == null) {
         // Attempt to get a connection from the pool.
-        if (connectionPool.transmitterAcquirePooledConnection(address, transmitter, null, false)) {
+        if (connectionPool.callAcquirePooledConnection(address, call, null, false)) {
           foundPooledConnection = true
-          result = transmitter.connection
+          result = call.connection
         } else if (nextRouteToTry != null) {
           selectedRoute = nextRouteToTry
           nextRouteToTry = null
         } else if (retryCurrentRoute()) {
-          selectedRoute = transmitter.connection!!.route()
+          selectedRoute = call.connection!!.route()
         }
       }
     }
@@ -203,16 +201,15 @@ class ExchangeFinder(
 
     var routes: List<Route>? = null
     synchronized(connectionPool) {
-      if (transmitter.isCanceled) throw IOException("Canceled")
+      if (call.isCanceled()) throw IOException("Canceled")
 
       if (newRouteSelection) {
         // Now that we have a set of IP addresses, make another attempt at getting a connection from
         // the pool. This could match due to connection coalescing.
         routes = routeSelection!!.routes
-        if (connectionPool.transmitterAcquirePooledConnection(
-                address, transmitter, routes, false)) {
+        if (connectionPool.callAcquirePooledConnection(address, call, routes, false)) {
           foundPooledConnection = true
-          result = transmitter.connection
+          result = call.connection
         }
       }
 
@@ -244,25 +241,25 @@ class ExchangeFinder(
         call,
         eventListener
     )
-    transmitter.client.routeDatabase.connected(result!!.route())
+    call.client.routeDatabase.connected(result!!.route())
 
     var socket: Socket? = null
     synchronized(connectionPool) {
       connectingConnection = null
       // Last attempt at connection coalescing, which only occurs if we attempted multiple
       // concurrent connections to the same host.
-      if (connectionPool.transmitterAcquirePooledConnection(address, transmitter, routes, true)) {
+      if (connectionPool.callAcquirePooledConnection(address, call, routes, true)) {
         // We lost the race! Close the connection we created and return the pooled connection.
         result!!.noNewExchanges = true
         socket = result!!.socket()
-        result = transmitter.connection
+        result = call.connection
 
         // It's possible for us to obtain a coalesced connection that is immediately unhealthy. In
         // that case we will retry the route we just successfully connected with.
         nextRouteToTry = selectedRoute
       } else {
         connectionPool.put(result!!)
-        transmitter.acquireConnectionNoEvents(result!!)
+        call.acquireConnectionNoEvents(result!!)
       }
     }
     socket?.closeQuietly()
@@ -299,7 +296,7 @@ class ExchangeFinder(
       }
       if (retryCurrentRoute()) {
         // Lock in the route because retryCurrentRoute() is racy and we don't want to call it twice.
-        nextRouteToTry = transmitter.connection!!.route()
+        nextRouteToTry = call.connection!!.route()
         return true
       }
       return (routeSelection?.hasNext() ?: false) || routeSelector.hasNext()
@@ -312,8 +309,8 @@ class ExchangeFinder(
    * coalesced connections.
    */
   private fun retryCurrentRoute(): Boolean {
-    return transmitter.connection != null &&
-        transmitter.connection!!.routeFailureCount == 0 &&
-        transmitter.connection!!.route().address.url.canReuseConnectionFor(address.url)
+    return call.connection != null &&
+        call.connection!!.routeFailureCount == 0 &&
+        call.connection!!.route().address.url.canReuseConnectionFor(address.url)
   }
 }

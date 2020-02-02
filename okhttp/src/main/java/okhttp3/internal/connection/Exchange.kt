@@ -18,7 +18,6 @@ package okhttp3.internal.connection
 import java.io.IOException
 import java.net.ProtocolException
 import java.net.SocketException
-import okhttp3.Call
 import okhttp3.EventListener
 import okhttp3.Headers
 import okhttp3.Request
@@ -39,8 +38,7 @@ import okio.buffer
  * on [ExchangeCodec], which handles the actual I/O.
  */
 class Exchange(
-  internal val transmitter: Transmitter,
-  internal val call: Call,
+  internal val call: RealCall,
   internal val eventListener: EventListener,
   private val finder: ExchangeFinder,
   private val codec: ExchangeCodec
@@ -134,13 +132,9 @@ class Exchange(
   @Throws(IOException::class)
   fun trailers(): Headers = codec.trailers()
 
-  fun timeoutEarlyExit() {
-    transmitter.timeoutEarlyExit()
-  }
-
   @Throws(SocketException::class)
   fun newWebSocketStreams(): RealWebSocket.Streams {
-    transmitter.timeoutEarlyExit()
+    call.timeoutEarlyExit()
     return codec.connection()!!.newWebSocketStreams(this)
   }
 
@@ -162,12 +156,12 @@ class Exchange(
    */
   fun detachWithViolence() {
     codec.cancel()
-    transmitter.exchangeMessageDone(this, true, true, null)
+    call.exchangeMessageDone(this, requestDone = true, responseDone = true, e = null)
   }
 
   private fun trackFailure(e: IOException) {
     finder.trackFailure()
-    codec.connection()!!.trackFailure(transmitter.client, e)
+    codec.connection()!!.trackFailure(call.client, e)
   }
 
   fun <E : IOException?> bodyComplete(
@@ -193,11 +187,11 @@ class Exchange(
         eventListener.responseBodyEnd(call, bytesRead)
       }
     }
-    return transmitter.exchangeMessageDone(this, requestDone, responseDone, e)
+    return call.exchangeMessageDone(this, requestDone, responseDone, e)
   }
 
   fun noRequestBody() {
-    transmitter.exchangeMessageDone(this, true, false, null)
+    call.exchangeMessageDone(this, requestDone = true, responseDone = false, e = null)
   }
 
   /** A request body that fires events when it completes. */
@@ -326,9 +320,5 @@ class Exchange(
       }
       return bodyComplete(bytesReceived, responseDone = true, requestDone = false, e = e)
     }
-  }
-
-  companion object {
-    fun get(response: Response): Exchange? = response.exchange
   }
 }
