@@ -17,29 +17,27 @@ package okhttp3.internal.http
 
 import java.io.IOException
 import java.util.concurrent.TimeUnit
-import okhttp3.Call
 import okhttp3.Connection
 import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.internal.checkDuration
 import okhttp3.internal.connection.Exchange
-import okhttp3.internal.connection.Transmitter
+import okhttp3.internal.connection.RealCall
 
 /**
  * A concrete interceptor chain that carries the entire interceptor chain: all application
  * interceptors, the OkHttp core, all network interceptors, and finally the network caller.
  *
- * If the chain is for an application interceptor then [connection] must be null.
- * Otherwise it is for a network interceptor and [connection] must be non-null.
+ * If the chain is for an application interceptor then [exchange] must be null. Otherwise it is for
+ * a network interceptor and [exchange] must be non-null.
  */
 class RealInterceptorChain(
   private val interceptors: List<Interceptor>,
-  private val transmitter: Transmitter,
+  private val call: RealCall,
   private val exchange: Exchange?,
   private val index: Int,
   private val request: Request,
-  private val call: Call,
   private val connectTimeout: Int,
   private val readTimeout: Int,
   private val writeTimeout: Int
@@ -47,65 +45,61 @@ class RealInterceptorChain(
 
   private var calls: Int = 0
 
-  override fun connection(): Connection? {
-    return exchange?.connection()
-  }
+  override fun connection(): Connection? = exchange?.connection()
 
   override fun connectTimeoutMillis(): Int = connectTimeout
 
   override fun withConnectTimeout(timeout: Int, unit: TimeUnit): Interceptor.Chain {
     val millis = checkDuration("timeout", timeout.toLong(), unit)
-    return RealInterceptorChain(interceptors, transmitter, exchange, index, request, call,
-        millis, readTimeout, writeTimeout)
+    return RealInterceptorChain(interceptors, call, exchange, index, request, millis,
+        readTimeout, writeTimeout)
   }
 
   override fun readTimeoutMillis(): Int = readTimeout
 
   override fun withReadTimeout(timeout: Int, unit: TimeUnit): Interceptor.Chain {
     val millis = checkDuration("timeout", timeout.toLong(), unit)
-    return RealInterceptorChain(interceptors, transmitter, exchange, index, request, call,
-        connectTimeout, millis, writeTimeout)
+    return RealInterceptorChain(interceptors, call, exchange, index, request, connectTimeout,
+        millis, writeTimeout)
   }
 
   override fun writeTimeoutMillis(): Int = writeTimeout
 
   override fun withWriteTimeout(timeout: Int, unit: TimeUnit): Interceptor.Chain {
     val millis = checkDuration("timeout", timeout.toLong(), unit)
-    return RealInterceptorChain(interceptors, transmitter, exchange, index, request, call,
-        connectTimeout, readTimeout, millis)
+    return RealInterceptorChain(interceptors, call, exchange, index, request, connectTimeout,
+        readTimeout, millis)
   }
-
-  fun transmitter(): Transmitter = transmitter
 
   fun exchange(): Exchange = exchange!!
 
-  override fun call(): Call = call
+  override fun call(): RealCall = call
 
   override fun request(): Request = request
 
   override fun proceed(request: Request): Response {
-    return proceed(request, transmitter, exchange)
+    return proceed(request, exchange)
   }
 
   @Throws(IOException::class)
-  fun proceed(request: Request, transmitter: Transmitter, exchange: Exchange?): Response {
+  fun proceed(request: Request, exchange: Exchange?): Response {
     if (index >= interceptors.size) throw AssertionError()
 
     calls++
 
-    // If we already have a stream, confirm that the incoming request will use it.
+    // If we already have an exchange, confirm that the incoming request will use it.
     check(this.exchange == null || this.exchange.connection()!!.supportsUrl(request.url)) {
       "network interceptor ${interceptors[index - 1]} must retain the same host and port"
     }
 
-    // If we already have a stream, confirm that this is the only call to chain.proceed().
+    // If we already have an exchange, confirm that this is the only call to chain.proceed().
     check(this.exchange == null || calls <= 1) {
       "network interceptor ${interceptors[index - 1]} must call proceed() exactly once"
     }
 
     // Call the next interceptor in the chain.
-    val next = RealInterceptorChain(interceptors, transmitter, exchange,
-        index + 1, request, call, connectTimeout, readTimeout, writeTimeout)
+    val next = RealInterceptorChain(interceptors, call, exchange,
+        index + 1, request, connectTimeout, readTimeout, writeTimeout)
     val interceptor = interceptors[index]
 
     @Suppress("USELESS_ELVIS")

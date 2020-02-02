@@ -23,7 +23,6 @@ import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import javax.net.SocketFactory;
 import okhttp3.Address;
-import okhttp3.Call;
 import okhttp3.ConnectionPool;
 import okhttp3.Dns;
 import okhttp3.OkHttpClient;
@@ -89,10 +88,9 @@ public final class ConnectionPoolTest {
       OkHttpClient client = new OkHttpClient.Builder()
           .connectionPool(poolApi)
           .build();
-      Call call = client.newCall(newRequest(addressA));
-      Transmitter transmitter = new Transmitter(client, call);
-      transmitter.prepareToConnect(call.request());
-      transmitter.acquireConnectionNoEvents(c1);
+      RealCall call = (RealCall) client.newCall(newRequest(addressA));
+      call.prepareExchangeFinder(call.request());
+      call.acquireConnectionNoEvents(c1);
     }
 
     // Running at time 50, the pool returns that nothing can be evicted until time 150.
@@ -177,7 +175,7 @@ public final class ConnectionPoolTest {
 
     awaitGarbageCollection();
     assertThat(pool.cleanup(100L)).isEqualTo(0L);
-    assertThat(c1.getTransmitters()).isEmpty();
+    assertThat(c1.getCalls()).isEmpty();
 
     // Can't allocate once a leak has been detected.
     assertThat(c1.getNoNewExchanges()).isTrue();
@@ -212,10 +210,9 @@ public final class ConnectionPoolTest {
       OkHttpClient client = new OkHttpClient.Builder()
           .connectionPool(pool)
           .build();
-      Call call = client.newCall(newRequest(connection.route().address()));
-      Transmitter transmitter = new Transmitter(client, call);
-      transmitter.prepareToConnect(call.request());
-      transmitter.acquireConnectionNoEvents(connection);
+      RealCall call = (RealCall) client.newCall(newRequest(connection.route().address()));
+      call.prepareExchangeFinder(call.request());
+      call.acquireConnectionNoEvents(connection);
     }
   }
 

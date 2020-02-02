@@ -22,8 +22,9 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.SynchronousQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
-import okhttp3.RealCall.AsyncCall
 import okhttp3.internal.assertThreadDoesntHoldLock
+import okhttp3.internal.connection.RealCall
+import okhttp3.internal.connection.RealCall.AsyncCall
 import okhttp3.internal.okHttpName
 import okhttp3.internal.threadFactory
 

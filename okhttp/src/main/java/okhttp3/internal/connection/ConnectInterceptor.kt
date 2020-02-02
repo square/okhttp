@@ -28,12 +28,12 @@ object ConnectInterceptor : Interceptor {
   override fun intercept(chain: Interceptor.Chain): Response {
     val realChain = chain as RealInterceptorChain
     val request = realChain.request()
-    val transmitter = realChain.transmitter()
+    val call = realChain.call()
 
     // We need the network to satisfy this request. Possibly for validating a conditional GET.
     val doExtensiveHealthChecks = request.method != "GET"
-    val exchange = transmitter.newExchange(chain, doExtensiveHealthChecks)
+    val exchange = call.newExchange(chain, doExtensiveHealthChecks)
 
-    return realChain.proceed(request, transmitter, exchange)
+    return realChain.proceed(request, exchange)
   }
 }
