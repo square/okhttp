@@ -97,15 +97,38 @@ class RealCall(
   // Guarded by this.
   private var executed = false
 
-  @Synchronized override fun isExecuted(): Boolean = executed
+  override fun timeout() = timeout
+
+  @SuppressWarnings("CloneDoesntCallSuperClone") // We are a final type & this saves clearing state.
+  override fun clone() = RealCall(client, originalRequest, forWebSocket)
+
+  override fun request(): Request = originalRequest
+
+  /**
+   * Immediately closes the socket connection if it's currently held. Use this to interrupt an
+   * in-flight request from any thread. It's the caller's responsibility to close the request body
+   * and response body streams; otherwise resources may be leaked.
+   *
+   * This method is safe to be called concurrently, but provides limited guarantees. If a transport
+   * layer connection has been established (such as a HTTP/2 stream) that is terminated. Otherwise
+   * if a socket connection is being established, that is terminated.
+   */
+  override fun cancel() {
+    val exchangeToCancel: Exchange?
+    val connectionToCancel: RealConnection?
+    synchronized(connectionPool) {
+      canceled = true
+      exchangeToCancel = exchange
+      connectionToCancel = exchangeFinder?.connectingConnection() ?: connection
+    }
+    exchangeToCancel?.cancel() ?: connectionToCancel?.cancel()
+  }
 
   override fun isCanceled(): Boolean {
     synchronized(connectionPool) {
       return canceled
     }
   }
-
-  override fun request(): Request = originalRequest
 
   override fun execute(): Response {
     synchronized(this) {
@@ -131,112 +154,12 @@ class RealCall(
     client.dispatcher.enqueue(AsyncCall(responseCallback))
   }
 
-  /**
-   * Immediately closes the socket connection if it's currently held. Use this to interrupt an
-   * in-flight request from any thread. It's the caller's responsibility to close the request body
-   * and response body streams; otherwise resources may be leaked.
-   *
-   * This method is safe to be called concurrently, but provides limited guarantees. If a transport
-   * layer connection has been established (such as a HTTP/2 stream) that is terminated. Otherwise
-   * if a socket connection is being established, that is terminated.
-   */
-  override fun cancel() {
-    val exchangeToCancel: Exchange?
-    val connectionToCancel: RealConnection?
-    synchronized(connectionPool) {
-      canceled = true
-      exchangeToCancel = exchange
-      connectionToCancel = exchangeFinder?.connectingConnection() ?: connection
-    }
-    exchangeToCancel?.cancel() ?: connectionToCancel?.cancel()
+  @Synchronized override fun isExecuted(): Boolean = executed
+
+  private fun callStart() {
+    this.callStackTrace = Platform.get().getStackTraceForCloseable("response.body().close()")
+    eventListener.callStart(this)
   }
-
-  override fun timeout() = timeout
-
-  @SuppressWarnings("CloneDoesntCallSuperClone") // We are a final type & this saves clearing state.
-  override fun clone() = RealCall(client, originalRequest, forWebSocket)
-
-  internal inner class AsyncCall(
-    private val responseCallback: Callback
-  ) : Runnable {
-    @Volatile private var callsPerHost = AtomicInteger(0)
-
-    fun callsPerHost(): AtomicInteger = callsPerHost
-
-    fun reuseCallsPerHostFrom(other: AsyncCall) {
-      this.callsPerHost = other.callsPerHost
-    }
-
-    fun host(): String = originalRequest.url.host
-
-    fun request(): Request = originalRequest
-
-    fun get(): RealCall = this@RealCall
-
-    /**
-     * Attempt to enqueue this async call on [executorService]. This will attempt to clean up
-     * if the executor has been shut down by reporting the call as failed.
-     */
-    fun executeOn(executorService: ExecutorService) {
-      client.dispatcher.assertThreadDoesntHoldLock()
-
-      var success = false
-      try {
-        executorService.execute(this)
-        success = true
-      } catch (e: RejectedExecutionException) {
-        val ioException = InterruptedIOException("executor rejected")
-        ioException.initCause(e)
-        noMoreExchanges(ioException)
-        responseCallback.onFailure(this@RealCall, ioException)
-      } finally {
-        if (!success) {
-          client.dispatcher.finished(this) // This call is no longer running!
-        }
-      }
-    }
-
-    override fun run() {
-      threadName("OkHttp ${redactedUrl()}") {
-        var signalledCallback = false
-        timeout.enter()
-        try {
-          val response = getResponseWithInterceptorChain()
-          signalledCallback = true
-          responseCallback.onResponse(this@RealCall, response)
-        } catch (e: IOException) {
-          if (signalledCallback) {
-            // Do not signal the callback twice!
-            Platform.get().log("Callback failure for ${toLoggableString()}", Platform.INFO, e)
-          } else {
-            responseCallback.onFailure(this@RealCall, e)
-          }
-        } catch (t: Throwable) {
-          cancel()
-          if (!signalledCallback) {
-            val canceledException = IOException("canceled due to $t")
-            canceledException.addSuppressed(t)
-            responseCallback.onFailure(this@RealCall, canceledException)
-          }
-          throw t
-        } finally {
-          client.dispatcher.finished(this)
-        }
-      }
-    }
-  }
-
-  /**
-   * Returns a string that describes this call. Doesn't include a full URL as that might contain
-   * sensitive information.
-   */
-  private fun toLoggableString(): String {
-    return ((if (isCanceled()) "canceled " else "") +
-        (if (forWebSocket) "web socket" else "call") +
-        " to " + redactedUrl())
-  }
-
-  internal fun redactedUrl(): String = originalRequest.url.redact()
 
   @Throws(IOException::class)
   internal fun getResponseWithInterceptorChain(): Response {
@@ -252,9 +175,16 @@ class RealCall(
     }
     interceptors += CallServerInterceptor(forWebSocket)
 
-    val chain = RealInterceptorChain(interceptors, this, null, 0, originalRequest,
-        client.connectTimeoutMillis,
-        client.readTimeoutMillis, client.writeTimeoutMillis)
+    val chain = RealInterceptorChain(
+        call = this,
+        interceptors = interceptors,
+        index = 0,
+        exchange = null,
+        request = originalRequest,
+        connectTimeoutMillis = client.connectTimeoutMillis,
+        readTimeoutMillis = client.readTimeoutMillis,
+        writeTimeoutMillis = client.writeTimeoutMillis
+    )
 
     var calledNoMoreExchanges = false
     try {
@@ -272,31 +202,6 @@ class RealCall(
         noMoreExchanges(null)
       }
     }
-  }
-
-  /**
-   * Stops applying the timeout before the call is entirely complete. This is used for WebSockets
-   * and duplex calls where the timeout only applies to the initial setup.
-   */
-  fun timeoutEarlyExit() {
-    check(!timeoutEarlyExit)
-    timeoutEarlyExit = true
-    timeout.exit()
-  }
-
-  private fun <E : IOException?> timeoutExit(cause: E): E {
-    if (timeoutEarlyExit) return cause
-    if (!timeout.exit()) return cause
-
-    val e = InterruptedIOException("timeout")
-    if (cause != null) e.initCause(cause)
-    @Suppress("UNCHECKED_CAST") // E is either IOException or IOException?
-    return e as E
-  }
-
-  private fun callStart() {
-    this.callStackTrace = Platform.get().getStackTraceForCloseable("response.body().close()")
-    eventListener.callStart(this)
   }
 
   /**
@@ -321,38 +226,16 @@ class RealCall(
     }
 
     this.exchangeFinderRequest = request
-    this.exchangeFinder =
-        ExchangeFinder(connectionPool, createAddress(request.url), this, eventListener)
-  }
-
-  private fun createAddress(url: HttpUrl): Address {
-    var sslSocketFactory: SSLSocketFactory? = null
-    var hostnameVerifier: HostnameVerifier? = null
-    var certificatePinner: CertificatePinner? = null
-    if (url.isHttps) {
-      sslSocketFactory = client.sslSocketFactory
-      hostnameVerifier = client.hostnameVerifier
-      certificatePinner = client.certificatePinner
-    }
-
-    return Address(
-        uriHost = url.host,
-        uriPort = url.port,
-        dns = client.dns,
-        socketFactory = client.socketFactory,
-        sslSocketFactory = sslSocketFactory,
-        hostnameVerifier = hostnameVerifier,
-        certificatePinner = certificatePinner,
-        proxyAuthenticator = client.proxyAuthenticator,
-        proxy = client.proxy,
-        protocols = client.protocols,
-        connectionSpecs = client.connectionSpecs,
-        proxySelector = client.proxySelector
+    this.exchangeFinder = ExchangeFinder(
+        connectionPool,
+        createAddress(request.url),
+        this,
+        eventListener
     )
   }
 
-  /** Returns a new exchange to carry a new request and response. */
-  internal fun newExchange(chain: Interceptor.Chain, doExtensiveHealthChecks: Boolean): Exchange {
+  /** Finds a new or pooled connection to carry a forthcoming request and response. */
+  internal fun prepareNewExchange(chain: RealInterceptorChain): Exchange {
     synchronized(connectionPool) {
       check(!noMoreExchanges) { "released" }
       check(exchange == null) {
@@ -361,7 +244,7 @@ class RealCall(
       }
     }
 
-    val codec = exchangeFinder!!.find(client, chain, doExtensiveHealthChecks)
+    val codec = exchangeFinder!!.find(client, chain)
     val result = Exchange(this, eventListener, exchangeFinder!!, codec)
 
     synchronized(connectionPool) {
@@ -381,38 +264,6 @@ class RealCall(
   }
 
   /**
-   * Remove this call from the connection's list of allocations. Returns a socket that the caller
-   * should close.
-   */
-  internal fun releaseConnectionNoEvents(): Socket? {
-    connectionPool.assertThreadHoldsLock()
-
-    val index = connection!!.calls.indexOfFirst { it.get() == this@RealCall }
-    check(index != -1)
-
-    val released = this.connection
-    released!!.calls.removeAt(index)
-    this.connection = null
-
-    if (released.calls.isEmpty()) {
-      released.idleAtNanos = System.nanoTime()
-      if (connectionPool.connectionBecameIdle(released)) {
-        return released.socket()
-      }
-    }
-
-    return null
-  }
-
-  internal fun exchangeDoneDueToException() {
-    synchronized(connectionPool) {
-      exchange?.detachWithViolence()
-      check(!noMoreExchanges)
-      exchange = null
-    }
-  }
-
-  /**
    * Releases resources held with the request or response of [exchange]. This should be called when
    * the request completes normally or when it fails due to an exception, in which case [e] should
    * be non-null.
@@ -420,7 +271,7 @@ class RealCall(
    * If the exchange was canceled or timed out, this will wrap [e] in an exception that provides
    * that additional context. Otherwise [e] is returned as-is.
    */
-  internal fun <E : IOException?> exchangeMessageDone(
+  internal fun <E : IOException?> messageDone(
     exchange: Exchange,
     requestDone: Boolean,
     responseDone: Boolean,
@@ -503,11 +354,171 @@ class RealCall(
     return result
   }
 
-  fun canRetry() = exchangeFinder!!.hasStreamFailure() && exchangeFinder!!.hasRouteToTry()
+  /**
+   * Remove this call from the connection's list of allocations. Returns a socket that the caller
+   * should close.
+   */
+  internal fun releaseConnectionNoEvents(): Socket? {
+    connectionPool.assertThreadHoldsLock()
+
+    val index = connection!!.calls.indexOfFirst { it.get() == this@RealCall }
+    check(index != -1)
+
+    val released = this.connection
+    released!!.calls.removeAt(index)
+    this.connection = null
+
+    if (released.calls.isEmpty()) {
+      released.idleAtNanos = System.nanoTime()
+      if (connectionPool.connectionBecameIdle(released)) {
+        return released.socket()
+      }
+    }
+
+    return null
+  }
+
+  private fun <E : IOException?> timeoutExit(cause: E): E {
+    if (timeoutEarlyExit) return cause
+    if (!timeout.exit()) return cause
+
+    val e = InterruptedIOException("timeout")
+    if (cause != null) e.initCause(cause)
+    @Suppress("UNCHECKED_CAST") // E is either IOException or IOException?
+    return e as E
+  }
+
+  /**
+   * Stops applying the timeout before the call is entirely complete. This is used for WebSockets
+   * and duplex calls where the timeout only applies to the initial setup.
+   */
+  fun timeoutEarlyExit() {
+    check(!timeoutEarlyExit)
+    timeoutEarlyExit = true
+    timeout.exit()
+  }
+
+  internal fun exchangeDoneDueToException() {
+    synchronized(connectionPool) {
+      exchange?.detachWithViolence()
+      check(!noMoreExchanges)
+      exchange = null
+    }
+  }
+
+  private fun createAddress(url: HttpUrl): Address {
+    var sslSocketFactory: SSLSocketFactory? = null
+    var hostnameVerifier: HostnameVerifier? = null
+    var certificatePinner: CertificatePinner? = null
+    if (url.isHttps) {
+      sslSocketFactory = client.sslSocketFactory
+      hostnameVerifier = client.hostnameVerifier
+      certificatePinner = client.certificatePinner
+    }
+
+    return Address(
+        uriHost = url.host,
+        uriPort = url.port,
+        dns = client.dns,
+        socketFactory = client.socketFactory,
+        sslSocketFactory = sslSocketFactory,
+        hostnameVerifier = hostnameVerifier,
+        certificatePinner = certificatePinner,
+        proxyAuthenticator = client.proxyAuthenticator,
+        proxy = client.proxy,
+        protocols = client.protocols,
+        connectionSpecs = client.connectionSpecs,
+        proxySelector = client.proxySelector
+    )
+  }
 
   fun hasExchange(): Boolean {
     synchronized(connectionPool) {
       return exchange != null
+    }
+  }
+
+  fun canRetry() = exchangeFinder!!.hasStreamFailure() && exchangeFinder!!.hasRouteToTry()
+
+  /**
+   * Returns a string that describes this call. Doesn't include a full URL as that might contain
+   * sensitive information.
+   */
+  private fun toLoggableString(): String {
+    return ((if (isCanceled()) "canceled " else "") +
+        (if (forWebSocket) "web socket" else "call") +
+        " to " + redactedUrl())
+  }
+
+  internal fun redactedUrl(): String = originalRequest.url.redact()
+
+  internal inner class AsyncCall(
+    private val responseCallback: Callback
+  ) : Runnable {
+    @Volatile private var callsPerHost = AtomicInteger(0)
+
+    fun callsPerHost(): AtomicInteger = callsPerHost
+
+    fun reuseCallsPerHostFrom(other: AsyncCall) {
+      this.callsPerHost = other.callsPerHost
+    }
+
+    fun host(): String = originalRequest.url.host
+
+    fun request(): Request = originalRequest
+
+    fun get(): RealCall = this@RealCall
+
+    /**
+     * Attempt to enqueue this async call on [executorService]. This will attempt to clean up
+     * if the executor has been shut down by reporting the call as failed.
+     */
+    fun executeOn(executorService: ExecutorService) {
+      client.dispatcher.assertThreadDoesntHoldLock()
+
+      var success = false
+      try {
+        executorService.execute(this)
+        success = true
+      } catch (e: RejectedExecutionException) {
+        val ioException = InterruptedIOException("executor rejected")
+        ioException.initCause(e)
+        noMoreExchanges(ioException)
+        responseCallback.onFailure(this@RealCall, ioException)
+      } finally {
+        if (!success) {
+          client.dispatcher.finished(this) // This call is no longer running!
+        }
+      }
+    }
+
+    override fun run() {
+      threadName("OkHttp ${redactedUrl()}") {
+        var signalledCallback = false
+        timeout.enter()
+        try {
+          val response = getResponseWithInterceptorChain()
+          signalledCallback = true
+          responseCallback.onResponse(this@RealCall, response)
+        } catch (e: IOException) {
+          if (signalledCallback) {
+            // Do not signal the callback twice!
+            Platform.get().log("Callback failure for ${toLoggableString()}", Platform.INFO, e)
+          } else {
+            responseCallback.onFailure(this@RealCall, e)
+          }
+        } catch (t: Throwable) {
+          cancel()
+          if (!signalledCallback) {
+            val canceledException = IOException("canceled due to $t")
+            canceledException.addSuppressed(t)
+            responseCallback.onFailure(this@RealCall, canceledException)
+          }
+          throw t
+        } finally {
+          client.dispatcher.finished(this)
+        }
+      }
     }
   }
 

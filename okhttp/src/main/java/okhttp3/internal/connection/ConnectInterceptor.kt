@@ -21,19 +21,16 @@ import okhttp3.Interceptor
 import okhttp3.Response
 import okhttp3.internal.http.RealInterceptorChain
 
-/** Opens a connection to the target server and proceeds to the next interceptor. */
+/**
+ * Opens a connection to the target server and proceeds to the next interceptor. The network might
+ * be used for the returned response, or to validate a cached response with a conditional GET.
+ */
 object ConnectInterceptor : Interceptor {
-
   @Throws(IOException::class)
   override fun intercept(chain: Interceptor.Chain): Response {
     val realChain = chain as RealInterceptorChain
-    val request = realChain.request()
-    val call = realChain.call()
-
-    // We need the network to satisfy this request. Possibly for validating a conditional GET.
-    val doExtensiveHealthChecks = request.method != "GET"
-    val exchange = call.newExchange(chain, doExtensiveHealthChecks)
-
-    return realChain.proceed(request, exchange)
+    val exchange = realChain.call.prepareNewExchange(chain)
+    val connectedChain = realChain.copy(exchange = exchange)
+    return connectedChain.proceed(realChain.request)
   }
 }
