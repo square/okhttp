@@ -36,7 +36,11 @@ commands:
           name: Save test results
           command: |
             mkdir -p ~/test-results/junit/
+            if [ -x /usr/bin/find ]; then
+            /usr/bin/find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/test-results/junit/ \;
+            else
             find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/test-results/junit/ \;
+            fi
           when: always
 
       - store_test_results:
