@@ -192,6 +192,8 @@ public final class DuplexTest {
   }
 
   @Test public void serverReadsHeadersData() throws Exception {
+    TestUtil.assumeNotWindows();
+
     enableProtocol(Protocol.HTTP_2);
     MockDuplexResponseBody mockDuplexResponseBody = enqueueResponseWithBody(
         new MockResponse()

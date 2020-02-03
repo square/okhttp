@@ -1319,6 +1319,8 @@ public final class HttpOverHttp2Test {
   }
 
   @Test public void streamTimeoutDegradesConnectionAfterNoPong() throws Exception {
+    TestUtil.assumeNotWindows();
+
     client = client.newBuilder()
         .readTimeout(500, MILLISECONDS)
         .build();
