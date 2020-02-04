@@ -19,7 +19,6 @@ import java.io.IOException
 import java.net.Socket
 import okhttp3.Address
 import okhttp3.EventListener
-import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Route
 import okhttp3.internal.assertThreadDoesntHoldLock
@@ -27,6 +26,7 @@ import okhttp3.internal.assertThreadHoldsLock
 import okhttp3.internal.canReuseConnectionFor
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.http.ExchangeCodec
+import okhttp3.internal.http.RealInterceptorChain
 
 /**
  * Attempts to find the connections for a sequence of exchanges. This uses the following strategies:
@@ -64,23 +64,16 @@ class ExchangeFinder(
 
   fun find(
     client: OkHttpClient,
-    chain: Interceptor.Chain,
-    doExtensiveHealthChecks: Boolean
+    chain: RealInterceptorChain
   ): ExchangeCodec {
-    val connectTimeout = chain.connectTimeoutMillis()
-    val readTimeout = chain.readTimeoutMillis()
-    val writeTimeout = chain.writeTimeoutMillis()
-    val pingIntervalMillis = client.pingIntervalMillis
-    val connectionRetryEnabled = client.retryOnConnectionFailure
-
     try {
       val resultConnection = findHealthyConnection(
-          connectTimeout = connectTimeout,
-          readTimeout = readTimeout,
-          writeTimeout = writeTimeout,
-          pingIntervalMillis = pingIntervalMillis,
-          connectionRetryEnabled = connectionRetryEnabled,
-          doExtensiveHealthChecks = doExtensiveHealthChecks
+          connectTimeout = chain.connectTimeoutMillis,
+          readTimeout = chain.readTimeoutMillis,
+          writeTimeout = chain.writeTimeoutMillis,
+          pingIntervalMillis = client.pingIntervalMillis,
+          connectionRetryEnabled = client.retryOnConnectionFailure,
+          doExtensiveHealthChecks = chain.request.method != "GET"
       )
       return resultConnection.newCodec(client, chain)
     } catch (e: RouteException) {

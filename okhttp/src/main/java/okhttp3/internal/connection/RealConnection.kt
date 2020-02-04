@@ -40,7 +40,6 @@ import okhttp3.EventListener
 import okhttp3.Handshake
 import okhttp3.Handshake.Companion.handshake
 import okhttp3.HttpUrl
-import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
@@ -51,6 +50,7 @@ import okhttp3.internal.assertThreadDoesntHoldLock
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.http.ExchangeCodec
+import okhttp3.internal.http.RealInterceptorChain
 import okhttp3.internal.http1.Http1ExchangeCodec
 import okhttp3.internal.http2.ConnectionShutdownException
 import okhttp3.internal.http2.ErrorCode
@@ -564,7 +564,7 @@ class RealConnection(
   }
 
   @Throws(SocketException::class)
-  internal fun newCodec(client: OkHttpClient, chain: Interceptor.Chain): ExchangeCodec {
+  internal fun newCodec(client: OkHttpClient, chain: RealInterceptorChain): ExchangeCodec {
     val socket = this.socket!!
     val source = this.source!!
     val sink = this.sink!!
@@ -574,8 +574,8 @@ class RealConnection(
       Http2ExchangeCodec(client, this, chain, http2Connection)
     } else {
       socket.soTimeout = chain.readTimeoutMillis()
-      source.timeout().timeout(chain.readTimeoutMillis().toLong(), MILLISECONDS)
-      sink.timeout().timeout(chain.writeTimeoutMillis().toLong(), MILLISECONDS)
+      source.timeout().timeout(chain.readTimeoutMillis.toLong(), MILLISECONDS)
+      sink.timeout().timeout(chain.writeTimeoutMillis.toLong(), MILLISECONDS)
       Http1ExchangeCodec(client, this, source, sink)
     }
   }

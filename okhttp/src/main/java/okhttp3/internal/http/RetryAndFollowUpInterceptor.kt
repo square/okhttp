@@ -53,9 +53,9 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
 
   @Throws(IOException::class)
   override fun intercept(chain: Interceptor.Chain): Response {
-    var request = chain.request()
     val realChain = chain as RealInterceptorChain
-    val call = realChain.call()
+    var request = chain.request
+    val call = realChain.call
     var followUpCount = 0
     var priorResponse: Response? = null
     while (true) {
@@ -68,7 +68,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
       var response: Response
       var success = false
       try {
-        response = realChain.proceed(request, null)
+        response = realChain.proceed(request)
         success = true
       } catch (e: RouteException) {
         // The attempt to connect via a route failed. The request will not have been sent.
