@@ -1,5 +1,8 @@
 version: 2.1
 
+orbs:
+  windows: circleci/windows@2.4.0
+
 commands:
   runtests:
     description: "Run tests"
@@ -33,7 +36,11 @@ commands:
           name: Save test results
           command: |
             mkdir -p ~/test-results/junit/
+            if [ -x /usr/bin/find ]; then
+            /usr/bin/find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/test-results/junit/ \;
+            else
             find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/test-results/junit/ \;
+            fi
           when: always
 
       - store_test_results:
@@ -174,6 +181,22 @@ jobs:
       - runtests:
           platform: jdk9
 
+  testjdk12windows:
+    executor:
+      name: windows/default
+      shell: bash.exe
+
+    environment:
+      JVM_OPTS: -Xmx1g
+      TERM: dumb
+
+    steps:
+      - checkout
+
+      - runtests:
+          platform: jdk9
+
+
   testjdk13:
     docker:
       - image: circleci/openjdk:13.0.1-jdk-buster
@@ -244,6 +267,11 @@ workflows:
             branches:
               ignore:
                 - gh-pages
+      - testjdk12windows:
+          filters:
+            branches:
+              ignore:
+                - gh-pages
       - testjdk13:
           filters:
             branches:
@@ -274,6 +302,9 @@ workflows:
           requires:
             - compile
       - testjdk11:
+          requires:
+            - compile
+      - testjdk12windows:
           requires:
             - compile
       - testjdk13:

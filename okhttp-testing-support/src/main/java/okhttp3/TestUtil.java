@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.List;
 import okhttp3.internal.http2.Header;
 
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeNoException;
 
 public final class TestUtil {
@@ -64,4 +65,17 @@ public final class TestUtil {
       assumeNoException(uhe);
     }
   }
+
+  public static void assumeNotWindows() {
+    boolean isWindows = false;
+    try {
+      String osName = System.getProperty("os.name");
+      isWindows = osName.startsWith("Windows");
+    } catch (final Exception ex) {
+      // Any exception means this is not a Windows system
+      // or we do not have permissions to check
+    }
+    assumeFalse("This test fails on Windows.", isWindows);
+  }
+
 }

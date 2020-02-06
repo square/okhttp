@@ -38,6 +38,7 @@ import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okhttp3.Protocol;
 import okhttp3.RecordingHostnameVerifier;
+import okhttp3.TestUtil;
 import okhttp3.tls.HandshakeCertificates;
 import okhttp3.tls.HeldCertificate;
 import org.junit.Ignore;
@@ -248,6 +249,8 @@ public final class MockWebServerTest {
    * should yield one sleep for a total delay of 500ms.
    */
   @Test public void throttleRequest() throws Exception {
+    TestUtil.assumeNotWindows();
+
     server.enqueue(new MockResponse()
         .throttleBody(3, 500, TimeUnit.MILLISECONDS));
 
@@ -267,6 +270,8 @@ public final class MockWebServerTest {
    * should yield one sleep for a total delay of 500ms.
    */
   @Test public void throttleResponse() throws Exception {
+    TestUtil.assumeNotWindows();
+
     server.enqueue(new MockResponse()
         .setBody("ABCDEF")
         .throttleBody(3, 500, TimeUnit.MILLISECONDS));
@@ -288,6 +293,8 @@ public final class MockWebServerTest {
 
   /** Delay the response body by sleeping 1s. */
   @Test public void delayResponse() throws IOException {
+    TestUtil.assumeNotWindows();
+
     server.enqueue(new MockResponse()
         .setBody("ABCDEF")
         .setBodyDelay(1, SECONDS));

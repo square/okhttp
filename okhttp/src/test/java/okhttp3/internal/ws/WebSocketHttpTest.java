@@ -33,6 +33,7 @@ import okhttp3.RecordingHostnameVerifier;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.TestLogHandler;
+import okhttp3.TestUtil;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okhttp3.internal.concurrent.TaskRunner;
@@ -134,6 +135,8 @@ public final class WebSocketHttpTest {
   }
 
   @Test public void nullByteStringThrows() {
+    TestUtil.assumeNotWindows();
+
     webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
     WebSocket webSocket = newWebSocket();
 
@@ -485,6 +488,8 @@ public final class WebSocketHttpTest {
   }
 
   @Test public void wsScheme() {
+    TestUtil.assumeNotWindows();
+
     websocketScheme("ws");
   }
 
@@ -620,6 +625,8 @@ public final class WebSocketHttpTest {
    * 1000 ms.
    */
   @Test public void unacknowledgedPingFailsConnection() {
+    TestUtil.assumeNotWindows();
+
     client = client.newBuilder()
         .pingInterval(500, TimeUnit.MILLISECONDS)
         .build();

@@ -1338,6 +1338,7 @@ public final class CallTest {
   }
 
   @Test public void tlsHostnameVerificationFailure() throws Exception {
+    TestUtil.assumeNotWindows();
     server.enqueue(new MockResponse());
 
     HeldCertificate serverCertificate = new HeldCertificate.Builder()
