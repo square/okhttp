@@ -29,7 +29,7 @@ object ConnectInterceptor : Interceptor {
   @Throws(IOException::class)
   override fun intercept(chain: Interceptor.Chain): Response {
     val realChain = chain as RealInterceptorChain
-    val exchange = realChain.call.prepareNewExchange(chain)
+    val exchange = realChain.call.initExchange(chain)
     val connectedChain = realChain.copy(exchange = exchange)
     return connectedChain.proceed(realChain.request)
   }

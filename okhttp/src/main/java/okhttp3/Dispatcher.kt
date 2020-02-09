@@ -117,8 +117,8 @@ class Dispatcher constructor() {
 
       // Mutate the AsyncCall so that it shares the AtomicInteger of an existing running call to
       // the same host.
-      if (!call.get().forWebSocket) {
-        val existingCall = findExistingCallWithHost(call.host())
+      if (!call.call.forWebSocket) {
+        val existingCall = findExistingCallWithHost(call.host)
         if (existingCall != null) call.reuseCallsPerHostFrom(existingCall)
       }
     }
@@ -127,10 +127,10 @@ class Dispatcher constructor() {
 
   private fun findExistingCallWithHost(host: String): AsyncCall? {
     for (existingCall in runningAsyncCalls) {
-      if (existingCall.host() == host) return existingCall
+      if (existingCall.host == host) return existingCall
     }
     for (existingCall in readyAsyncCalls) {
-      if (existingCall.host() == host) return existingCall
+      if (existingCall.host == host) return existingCall
     }
     return null
   }
@@ -141,10 +141,10 @@ class Dispatcher constructor() {
    */
   @Synchronized fun cancelAll() {
     for (call in readyAsyncCalls) {
-      call.get().cancel()
+      call.call.cancel()
     }
     for (call in runningAsyncCalls) {
-      call.get().cancel()
+      call.call.cancel()
     }
     for (call in runningSyncCalls) {
       call.cancel()
@@ -169,10 +169,10 @@ class Dispatcher constructor() {
         val asyncCall = i.next()
 
         if (runningAsyncCalls.size >= this.maxRequests) break // Max capacity.
-        if (asyncCall.callsPerHost().get() >= this.maxRequestsPerHost) continue // Host max capacity.
+        if (asyncCall.callsPerHost.get() >= this.maxRequestsPerHost) continue // Host max capacity.
 
         i.remove()
-        asyncCall.callsPerHost().incrementAndGet()
+        asyncCall.callsPerHost.incrementAndGet()
         executableCalls.add(asyncCall)
         runningAsyncCalls.add(asyncCall)
       }
@@ -194,7 +194,7 @@ class Dispatcher constructor() {
 
   /** Used by `AsyncCall#run` to signal completion. */
   internal fun finished(call: AsyncCall) {
-    call.callsPerHost().decrementAndGet()
+    call.callsPerHost.decrementAndGet()
     finished(runningAsyncCalls, call)
   }
 
@@ -219,12 +219,12 @@ class Dispatcher constructor() {
 
   /** Returns a snapshot of the calls currently awaiting execution. */
   @Synchronized fun queuedCalls(): List<Call> {
-    return Collections.unmodifiableList(readyAsyncCalls.map { it.get() })
+    return Collections.unmodifiableList(readyAsyncCalls.map { it.call })
   }
 
   /** Returns a snapshot of the calls currently being executed. */
   @Synchronized fun runningCalls(): List<Call> {
-    return Collections.unmodifiableList(runningSyncCalls + runningAsyncCalls.map { it.get() })
+    return Collections.unmodifiableList(runningSyncCalls + runningAsyncCalls.map { it.call })
   }
 
   @Synchronized fun queuedCallsCount(): Int = readyAsyncCalls.size

@@ -70,6 +70,7 @@ task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {
       'okhttp3.internal.cache2',
       'okhttp3.internal.connection',
       'okhttp3.internal.http',
+      'okhttp3.internal.http1',
       'okhttp3.internal.http2',
       'okhttp3.internal.io',
       'okhttp3.internal.platform',

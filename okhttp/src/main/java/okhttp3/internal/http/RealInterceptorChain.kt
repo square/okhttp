@@ -56,7 +56,7 @@ class RealInterceptorChain(
   ) = RealInterceptorChain(call, interceptors, index, exchange, request, connectTimeoutMillis,
       readTimeoutMillis, writeTimeoutMillis)
 
-  override fun connection(): Connection? = exchange?.connection()
+  override fun connection(): Connection? = exchange?.connection
 
   override fun connectTimeoutMillis(): Int = connectTimeoutMillis
 
@@ -84,7 +84,7 @@ class RealInterceptorChain(
     calls++
 
     if (exchange != null) {
-      check(exchange.connection()!!.supportsUrl(request.url)) {
+      check(exchange.connection.supportsUrl(request.url)) {
         "network interceptor ${interceptors[index - 1]} must retain the same host and port"
       }
       check(calls == 1) {

@@ -26,7 +26,6 @@ import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.ProtocolException;
 import java.net.Proxy;
-import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.net.UnknownServiceException;
@@ -994,10 +993,7 @@ public final class CallTest {
   @Test
   public void interceptorCallsProceedWithoutClosingPriorResponse() throws Exception {
     server.enqueue(new MockResponse()
-        .setBodyDelay(250, TimeUnit.MILLISECONDS)
         .setBody("abc"));
-    server.enqueue(new MockResponse()
-        .setBody("def"));
 
     client = clientTestRule.newClientBuilder()
         .addInterceptor(new Interceptor() {
@@ -1017,8 +1013,7 @@ public final class CallTest {
     Request request = new Request.Builder()
         .url(server.url("/"))
         .build();
-    executeSynchronously(request)
-        .assertFailure(SocketException.class);
+    executeSynchronously(request).assertBody("abc");
   }
 
   /**

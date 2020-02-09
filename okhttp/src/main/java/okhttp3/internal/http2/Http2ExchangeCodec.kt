@@ -49,9 +49,9 @@ import okio.Source
 /** Encode requests and responses using HTTP/2 frames. */
 class Http2ExchangeCodec(
   client: OkHttpClient,
-  private val realConnection: RealConnection,
+  override val connection: RealConnection,
   private val chain: RealInterceptorChain,
-  private val connection: Http2Connection
+  private val http2Connection: Http2Connection
 ) : ExchangeCodec {
   @Volatile private var stream: Http2Stream? = null
 
@@ -62,11 +62,7 @@ class Http2ExchangeCodec(
   }
 
   @Volatile
-  private var canceled: Boolean = false
-
-  override fun connection(): RealConnection {
-    return realConnection
-  }
+  private var canceled = false
 
   override fun createRequestBody(request: Request, contentLength: Long): Sink {
     return stream!!.getSink()
@@ -77,7 +73,7 @@ class Http2ExchangeCodec(
 
     val hasRequestBody = request.body != null
     val requestHeaders = http2HeadersList(request)
-    stream = connection.newStream(requestHeaders, hasRequestBody)
+    stream = http2Connection.newStream(requestHeaders, hasRequestBody)
     // We may have been asked to cancel while creating the new stream and sending the request
     // headers, but there was still no stream to close.
     if (canceled) {
@@ -89,7 +85,7 @@ class Http2ExchangeCodec(
   }
 
   override fun flushRequest() {
-    connection.flush()
+    http2Connection.flush()
   }
 
   override fun finishRequest() {

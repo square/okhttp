@@ -25,9 +25,8 @@ import okio.Source
 
 /** Encodes HTTP requests and decodes HTTP responses. */
 interface ExchangeCodec {
-
   /** Returns the connection that carries this codec. */
-  fun connection(): RealConnection?
+  val connection: RealConnection
 
   /** Returns an output stream where the request body can be streamed. */
   @Throws(IOException::class)

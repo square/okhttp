@@ -61,7 +61,7 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
         }
       } else {
         exchange.noRequestBody()
-        if (!exchange.connection()!!.isMultiplexed) {
+        if (!exchange.connection.isMultiplexed) {
           // If the "Expect: 100-continue" expectation wasn't met, prevent the HTTP/1 connection
           // from being reused. Otherwise we're still obligated to transmit the request body to
           // leave the connection in a consistent state.
@@ -84,7 +84,7 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
     }
     var response = responseBuilder
         .request(request)
-        .handshake(exchange.connection()!!.handshake())
+        .handshake(exchange.connection.handshake())
         .sentRequestAtMillis(sentRequestMillis)
         .receivedResponseAtMillis(System.currentTimeMillis())
         .build()
@@ -98,7 +98,7 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
       }
       response = responseBuilder
           .request(request)
-          .handshake(exchange.connection()!!.handshake())
+          .handshake(exchange.connection.handshake())
           .sentRequestAtMillis(sentRequestMillis)
           .receivedResponseAtMillis(System.currentTimeMillis())
           .build()
