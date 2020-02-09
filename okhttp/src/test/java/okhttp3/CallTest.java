@@ -3031,6 +3031,35 @@ public final class CallTest {
     assertThat(hostnameVerifier.calls).containsExactly("verify android.com");
   }
 
+  /**
+   * We had a bug where OkHttp would crash if HTTP proxies returned a truncated response.
+   * https://github.com/square/okhttp/issues/5727
+   */
+  @Test public void proxyUpgradeFailsWithTruncatedResponse() throws Exception {
+    server.enqueue(new MockResponse()
+        .setBody("abc")
+        .setHeader("Content-Length", "5")
+        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END));
+
+    RecordingHostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
+    client = client.newBuilder()
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
+        .proxy(server.toProxyAddress())
+        .hostnameVerifier(hostnameVerifier)
+        .build();
+
+    Request request = new Request.Builder()
+        .url("https://android.com/foo")
+        .build();
+    try {
+      client.newCall(request).execute();
+      fail();
+    } catch (IOException expected) {
+      assertThat(expected).hasMessage("unexpected end of stream");
+    }
+  }
+
   /** Respond to a proxy authorization challenge. */
   @Test public void proxyAuthenticateOnConnect() throws Exception {
     server.useHttps(handshakeCertificates.sslSocketFactory(), true);
