@@ -43,6 +43,8 @@ class StatusLine(
     /** Numeric status code, 307: Temporary Redirect. */
     const val HTTP_TEMP_REDIRECT = 307
     const val HTTP_PERM_REDIRECT = 308
+    /** RFC 7540, Section 9.1.2. Retry these if the exchange used connection coalescing. */
+    const val HTTP_MISDIRECTED_REQUEST = 421
     const val HTTP_CONTINUE = 100
 
     fun get(response: Response): StatusLine {

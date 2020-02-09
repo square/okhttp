@@ -41,6 +41,7 @@ import okhttp3.internal.closeQuietly
 import okhttp3.internal.connection.Exchange
 import okhttp3.internal.connection.RealCall
 import okhttp3.internal.connection.RouteException
+import okhttp3.internal.http.StatusLine.Companion.HTTP_MISDIRECTED_REQUEST
 import okhttp3.internal.http.StatusLine.Companion.HTTP_PERM_REDIRECT
 import okhttp3.internal.http.StatusLine.Companion.HTTP_TEMP_REDIRECT
 import okhttp3.internal.http2.ConnectionShutdownException
@@ -263,6 +264,24 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
 
         return null
       }
+
+      HTTP_MISDIRECTED_REQUEST -> {
+        // OkHttp can coalesce HTTP/2 connections even if the domain names are different. See
+        // RealConnection.isEligible(). If we attempted this and the server returned HTTP 421, then
+        // we can retry on a different connection.
+        val requestBody = userResponse.request.body
+        if (requestBody != null && requestBody.isOneShot()) {
+          return null
+        }
+
+        if (exchange == null || !exchange.isCoalescedConnection) {
+          return null
+        }
+
+        exchange.connection.noCoalescedConnections()
+        return userResponse.request
+      }
+
       else -> return null
     }
   }

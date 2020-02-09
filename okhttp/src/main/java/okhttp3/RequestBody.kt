@@ -90,6 +90,7 @@ abstract class RequestBody {
    *  * A client timeout (HTTP 408).
    *  * A authorization challenge (HTTP 401 and 407) that is satisfied by the [Authenticator].
    *  * A retryable server failure (HTTP 503 with a `Retry-After: 0` response header).
+   *  * A misdirected request (HTTP 421) on a coalesced connection.
    */
   open fun isOneShot(): Boolean = false
 
