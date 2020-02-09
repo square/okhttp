@@ -49,6 +49,9 @@ class Exchange(
 
   internal val connection: RealConnection = codec.connection
 
+  internal val isCoalescedConnection: Boolean
+    get() = finder.address.url.host != connection.route().address.url.host
+
   @Throws(IOException::class)
   fun writeRequestHeaders(request: Request) {
     try {

@@ -148,7 +148,8 @@ class ExchangeFinder(
       hasStreamFailure = false // This is a fresh attempt.
 
       releasedConnection = call.connection
-      toClose = if (call.connection != null && call.connection!!.noNewExchanges) {
+      toClose = if (call.connection != null &&
+          (call.connection!!.noNewExchanges || !call.connection!!.supportsUrl(address.url))) {
         call.releaseConnectionNoEvents()
       } else {
         null
