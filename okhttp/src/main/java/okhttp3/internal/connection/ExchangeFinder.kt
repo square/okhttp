@@ -19,6 +19,7 @@ import java.io.IOException
 import java.net.Socket
 import okhttp3.Address
 import okhttp3.EventListener
+import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Route
 import okhttp3.internal.assertThreadDoesntHoldLock
@@ -49,7 +50,7 @@ import okhttp3.internal.http.RealInterceptorChain
  */
 class ExchangeFinder(
   private val connectionPool: RealConnectionPool,
-  private val address: Address,
+  internal val address: Address,
   private val call: RealCall,
   private val eventListener: EventListener
 ) {
@@ -300,8 +301,11 @@ class ExchangeFinder(
    * coalesced connections.
    */
   private fun retryCurrentRoute(): Boolean {
-    return call.connection != null &&
-        call.connection!!.routeFailureCount == 0 &&
-        call.connection!!.route().address.url.canReuseConnectionFor(address.url)
+    val connection = call.connection
+    return connection != null &&
+        connection.routeFailureCount == 0 &&
+        connection.route().address.url.canReuseConnectionFor(address.url)
   }
+
+  fun canReuseFinderFor(httpUrl: HttpUrl) = httpUrl.canReuseConnectionFor(address.url)
 }

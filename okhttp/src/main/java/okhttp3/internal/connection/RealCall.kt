@@ -39,7 +39,6 @@ import okhttp3.Response
 import okhttp3.internal.assertThreadDoesntHoldLock
 import okhttp3.internal.assertThreadHoldsLock
 import okhttp3.internal.cache.CacheInterceptor
-import okhttp3.internal.canReuseConnectionFor
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.http.BridgeInterceptor
 import okhttp3.internal.http.CallServerInterceptor
@@ -82,9 +81,6 @@ class RealCall(
   /** Finds an exchange to send the next request and receive the next response. */
   private var exchangeFinder: ExchangeFinder? = null
 
-  /** The request that specified the current [exchangeFinder]. */
-  private var exchangeFinderRequest: Request? = null
-
   // Guarded by connectionPool.
   var connection: RealConnection? = null
   private var exchange: Exchange? = null
@@ -96,6 +92,14 @@ class RealCall(
 
   // Guarded by this.
   private var executed = false
+
+  /**
+   * This is the same value as [exchange], but scoped to the execution of the network interceptors.
+   * The [exchange] field is assigned to null when its streams end, which may be before or after the
+   * network interceptors return.
+   */
+  internal var interceptorScopedExchange: Exchange? = null
+    private set
 
   override fun timeout() = timeout
 
@@ -205,27 +209,27 @@ class RealCall(
   }
 
   /**
-   * Prepare to find an exchange to carry [request]. This prefers to use the existing connection
-   * if it exists.
+   * Prepare for a potential trip through all of this call's network interceptors. This prepares to
+   * find an exchange to carry the request.
+   *
+   * Note that an exchange will not be needed if the request is satisfied by the cache.
    */
-  fun prepareExchangeFinder(request: Request) {
-    if (exchangeFinderRequest != null) {
-      if (exchangeFinderRequest!!.url.canReuseConnectionFor(request.url) &&
-          exchangeFinder!!.hasRouteToTry()) {
-        return // Already ready.
-      }
-      check(exchange == null) {
-        "cannot make a new request because the previous response is still open: " +
-            "please call response.close()"
-      }
-
-      if (exchangeFinder != null) {
-        maybeReleaseConnection(null, true)
-        exchangeFinder = null
-      }
+  fun enterNetworkInterceptorExchange(request: Request) {
+    check(interceptorScopedExchange == null)
+    check(exchange == null) {
+      "cannot make a new request because the previous response is still open: " +
+          "please call response.close()"
     }
 
-    this.exchangeFinderRequest = request
+    val exchangeFinder = this.exchangeFinder
+    if (exchangeFinder != null) {
+      if (exchangeFinder.canReuseFinderFor(request.url) && exchangeFinder.hasRouteToTry()) {
+        return // Already ready.
+      }
+
+      maybeReleaseConnection(null, true)
+    }
+
     this.exchangeFinder = ExchangeFinder(
         connectionPool,
         createAddress(request.url),
@@ -235,17 +239,15 @@ class RealCall(
   }
 
   /** Finds a new or pooled connection to carry a forthcoming request and response. */
-  internal fun prepareNewExchange(chain: RealInterceptorChain): Exchange {
+  internal fun initExchange(chain: RealInterceptorChain): Exchange {
     synchronized(connectionPool) {
       check(!noMoreExchanges) { "released" }
-      check(exchange == null) {
-        "cannot make a new request because the previous response is still open: " +
-            "please call response.close()"
-      }
+      check(exchange == null)
     }
 
     val codec = exchangeFinder!!.find(client, chain)
     val result = Exchange(this, eventListener, exchangeFinder!!, codec)
+    this.interceptorScopedExchange = result
 
     synchronized(connectionPool) {
       this.exchange = result
@@ -294,7 +296,7 @@ class RealCall(
       }
       if (exchangeRequestDone && exchangeResponseDone && changed) {
         exchangeDone = true
-        this.exchange!!.connection()!!.successCount++
+        this.exchange!!.connection.successCount++
         this.exchange = null
       }
     }
@@ -398,12 +400,19 @@ class RealCall(
     timeout.exit()
   }
 
-  internal fun exchangeDoneDueToException() {
-    synchronized(connectionPool) {
+  /**
+   * @param closeExchange true if the current exchange should be closed because it will not be used.
+   *     This is usually due to either an exception or a retry.
+   */
+  internal fun exitNetworkInterceptorExchange(closeExchange: Boolean) {
+    check(!noMoreExchanges) { "released" }
+
+    if (closeExchange) {
       exchange?.detachWithViolence()
-      check(!noMoreExchanges)
-      exchange = null
+      check(exchange == null)
     }
+
+    interceptorScopedExchange = null
   }
 
   private fun createAddress(url: HttpUrl): Address {
@@ -432,12 +441,6 @@ class RealCall(
     )
   }
 
-  fun hasExchange(): Boolean {
-    synchronized(connectionPool) {
-      return exchange != null
-    }
-  }
-
   fun canRetry() = exchangeFinder!!.hasStreamFailure() && exchangeFinder!!.hasRouteToTry()
 
   /**
@@ -455,19 +458,21 @@ class RealCall(
   internal inner class AsyncCall(
     private val responseCallback: Callback
   ) : Runnable {
-    @Volatile private var callsPerHost = AtomicInteger(0)
-
-    fun callsPerHost(): AtomicInteger = callsPerHost
+    @Volatile var callsPerHost = AtomicInteger(0)
+      private set
 
     fun reuseCallsPerHostFrom(other: AsyncCall) {
       this.callsPerHost = other.callsPerHost
     }
 
-    fun host(): String = originalRequest.url.host
+    val host: String
+      get() = originalRequest.url.host
 
-    fun request(): Request = originalRequest
+    val request: Request
+        get() = originalRequest
 
-    fun get(): RealCall = this@RealCall
+    val call: RealCall
+        get() = this@RealCall
 
     /**
      * Attempt to enqueue this async call on [executorService]. This will attempt to clean up
