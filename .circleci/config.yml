@@ -54,7 +54,7 @@ commands:
 jobs:
   compile:
     docker:
-      - image: circleci/openjdk:11.0.5-jdk-stretch
+      - image: circleci/openjdk:11.0.6-jdk-stretch
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -84,7 +84,7 @@ jobs:
 
   checkjdk11:
     docker:
-      - image: circleci/openjdk:11.0.5-jdk-stretch
+      - image: circleci/openjdk:11.0.6-jdk-stretch
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -117,7 +117,7 @@ jobs:
 
   testjdk8:
     docker:
-      - image: circleci/openjdk:11.0.5-jdk-stretch
+      - image: circleci/openjdk:11.0.6-jdk-stretch
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -132,7 +132,7 @@ jobs:
 
   testjdk8alpn:
     docker:
-      - image: circleci/openjdk:11.0.5-jdk-stretch
+      - image: circleci/openjdk:11.0.6-jdk-stretch
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -147,7 +147,7 @@ jobs:
 
   testopenjsse:
     docker:
-      - image: circleci/openjdk:11.0.5-jdk-stretch
+      - image: circleci/openjdk:11.0.6-jdk-stretch
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -162,7 +162,7 @@ jobs:
 
   testjdk11:
     docker:
-      - image: circleci/openjdk:11.0.5-jdk-stretch
+      - image: circleci/openjdk:11.0.6-jdk-stretch
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -176,7 +176,7 @@ jobs:
 
   testjdk13:
     docker:
-      - image: circleci/openjdk:13.0.1-jdk-buster
+      - image: circleci/openjdk:13.0.2-jdk-buster
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -190,7 +190,7 @@ jobs:
 
   testconscrypt:
     docker:
-      - image: circleci/openjdk:11.0.5-jdk-stretch
+      - image: circleci/openjdk:11.0.6-jdk-stretch
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -204,7 +204,7 @@ jobs:
 
   testcorretto:
     docker:
-      - image: circleci/openjdk:11.0.5-jdk-stretch
+      - image: circleci/openjdk:11.0.6-jdk-stretch
 
     environment:
       JVM_OPTS: -Xmx1g
