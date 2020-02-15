@@ -28,6 +28,9 @@ import okhttp3.internal.canReuseConnectionFor
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.http.ExchangeCodec
 import okhttp3.internal.http.RealInterceptorChain
+import okhttp3.internal.http2.ConnectionShutdownException
+import okhttp3.internal.http2.ErrorCode
+import okhttp3.internal.http2.StreamResetException
 
 /**
  * Attempts to find the connections for a sequence of exchanges. This uses the following strategies:
@@ -60,7 +63,9 @@ class ExchangeFinder(
   private val routeSelector: RouteSelector = RouteSelector(
       address, call.client.routeDatabase, call, eventListener)
   private var connectingConnection: RealConnection? = null
-  private var hasStreamFailure = false
+  private var refusedStreamCount = 0
+  private var connectionShutdownCount = 0
+  private var otherFailureCount = 0
   private var nextRouteToTry: Route? = null
 
   fun find(
@@ -78,10 +83,10 @@ class ExchangeFinder(
       )
       return resultConnection.newCodec(client, chain)
     } catch (e: RouteException) {
-      trackFailure()
+      trackFailure(e.lastConnectException)
       throw e
     } catch (e: IOException) {
-      trackFailure()
+      trackFailure(e)
       throw RouteException(e)
     }
   }
@@ -145,7 +150,6 @@ class ExchangeFinder(
     val toClose: Socket?
     synchronized(connectionPool) {
       if (call.isCanceled()) throw IOException("Canceled")
-      hasStreamFailure = false // This is a fresh attempt.
 
       releasedConnection = call.connection
       toClose = if (call.connection != null &&
@@ -162,6 +166,11 @@ class ExchangeFinder(
       }
 
       if (result == null) {
+        // The connection hasn't had any problems for this call.
+        refusedStreamCount = 0
+        connectionShutdownCount = 0
+        otherFailureCount = 0
+
         // Attempt to get a connection from the pool.
         if (connectionPool.callAcquirePooledConnection(address, call, null, false)) {
           foundPooledConnection = true
@@ -266,18 +275,25 @@ class ExchangeFinder(
     return connectingConnection
   }
 
-  fun trackFailure() {
+  fun trackFailure(e: IOException) {
     connectionPool.assertThreadDoesntHoldLock()
 
     synchronized(connectionPool) {
-      hasStreamFailure = true // Permit retries.
+      nextRouteToTry = null
+      if (e is StreamResetException && e.errorCode == ErrorCode.REFUSED_STREAM) {
+        refusedStreamCount++
+      } else if (e is ConnectionShutdownException) {
+        connectionShutdownCount++
+      } else {
+        otherFailureCount++
+      }
     }
   }
 
   /** Returns true if there is a failure that retrying might fix. */
   fun hasStreamFailure(): Boolean {
     synchronized(connectionPool) {
-      return hasStreamFailure
+      return refusedStreamCount > 0 || connectionShutdownCount > 0 || otherFailureCount > 0
     }
   }
 
@@ -302,6 +318,10 @@ class ExchangeFinder(
    * coalesced connections.
    */
   private fun retryCurrentRoute(): Boolean {
+    if (refusedStreamCount > 1 || connectionShutdownCount > 1 || otherFailureCount > 0) {
+      return false // This route has too many problems to retry.
+    }
+
     val connection = call.connection
     return connection != null &&
         connection.routeFailureCount == 0 &&

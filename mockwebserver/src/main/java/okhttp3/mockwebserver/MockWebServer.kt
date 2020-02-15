@@ -559,10 +559,7 @@ class MockWebServer : ExternalResource(), Closeable {
       openClientSockets.remove(socket)
     }
 
-    /**
-     * Respond to CONNECT requests until a SWITCH_TO_SSL_AT_END response is
-     * dispatched.
-     */
+    /** Respond to `CONNECT` requests until a `SWITCH_TO_SSL_AT_END` response is dispatched. */
     @Throws(IOException::class, InterruptedException::class)
     private fun createTunnel() {
       val source = raw.source().buffer()
