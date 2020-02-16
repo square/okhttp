@@ -31,7 +31,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.logging.Logger;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLException;
 import okhttp3.Cache;
@@ -104,7 +103,6 @@ public final class HttpOverHttp2Test {
   // Flaky https://github.com/square/okhttp/issues/4632
   // Flaky https://github.com/square/okhttp/issues/4633
 
-  private static final Logger http2Logger = Logger.getLogger(Http2.class.getName());
   private static final HandshakeCertificates handshakeCertificates = localhost();
 
   @Parameters(name = "{0}")
@@ -114,8 +112,9 @@ public final class HttpOverHttp2Test {
 
   private final PlatformRule platform = new PlatformRule();
   private final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
-  @Rule public final TestRule chain =
-      RuleChain.outerRule(platform).around(clientTestRule).around(new Timeout(5, SECONDS));
+  @Rule public final TestRule chain = RuleChain.outerRule(platform)
+      .around(clientTestRule)
+      .around(new Timeout(5, SECONDS));
   @Rule public final TemporaryFolder tempDir = new TemporaryFolder();
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final TestLogHandler testLogHandler = new TestLogHandler(Http2.class);
@@ -1529,7 +1528,7 @@ public final class HttpOverHttp2Test {
               assertThat(response.body().string()).isEqualTo("ABC");
               // Wait until the GOAWAY has been processed.
               RealConnection connection = (RealConnection) chain.connection();
-              while (connection.isHealthy(false)) ;
+              while (connection.isHealthy(false));
             }
             return chain.proceed(chain.request());
           }
