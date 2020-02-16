@@ -94,19 +94,23 @@ class RouteSelector(
 
   /** Prepares the proxy servers to try. */
   private fun resetNextProxy(url: HttpUrl, proxy: Proxy?) {
-    eventListener.proxySelectStart(call, url)
-    proxies = if (proxy != null) {
+    fun selectProxies(): List<Proxy> {
       // If the user specifies a proxy, try that and only that.
-      listOf(proxy)
-    } else {
+      if (proxy != null) return listOf(proxy)
+
+      // If the URI lacks a host (as in "http://</"), don't call the ProxySelector.
+      val uri = url.toUri()
+      if (uri.host == null) return immutableListOf(Proxy.NO_PROXY)
+
       // Try each of the ProxySelector choices until one connection succeeds.
-      val proxiesOrNull = address.proxySelector.select(url.toUri())
-      if (proxiesOrNull != null && proxiesOrNull.isNotEmpty()) {
-        proxiesOrNull.toImmutableList()
-      } else {
-        immutableListOf(Proxy.NO_PROXY)
-      }
+      val proxiesOrNull = address.proxySelector.select(uri)
+      if (proxiesOrNull.isNullOrEmpty()) return immutableListOf(Proxy.NO_PROXY)
+
+      return proxiesOrNull.toImmutableList()
     }
+
+    eventListener.proxySelectStart(call, url)
+    proxies = selectProxies()
     nextProxyIndex = 0
     eventListener.proxySelectEnd(call, url, proxies)
   }
