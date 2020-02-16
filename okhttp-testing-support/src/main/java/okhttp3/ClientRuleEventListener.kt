@@ -184,6 +184,12 @@ class ClientRuleEventListener(val delegate: EventListener = NONE, var logger: (S
     delegate.callFailed(call, ioe)
   }
 
+  override fun canceled(call: Call) {
+    logWithTime("canceled")
+
+    delegate.canceled(call)
+  }
+
   private fun logWithTime(message: String) {
     val timeMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNs)
     logger.invoke("[$timeMs ms] $message")

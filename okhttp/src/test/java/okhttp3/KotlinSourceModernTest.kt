@@ -387,6 +387,7 @@ class KotlinSourceModernTest {
       override fun responseFailed(call: Call, ioe: IOException) = TODO()
       override fun callEnd(call: Call) = TODO()
       override fun callFailed(call: Call, ioe: IOException) = TODO()
+      override fun canceled(call: Call) = TODO()
     }
     val none: EventListener = EventListener.NONE
   }

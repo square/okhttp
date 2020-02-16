@@ -151,6 +151,10 @@ class LoggingEventListener private constructor(
     logWithTime("callFailed: $ioe")
   }
 
+  override fun canceled(call: Call) {
+    logWithTime("canceled")
+  }
+
   private fun logWithTime(message: String) {
     val timeMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNs)
     logger.log("[$timeMs ms] $message")
