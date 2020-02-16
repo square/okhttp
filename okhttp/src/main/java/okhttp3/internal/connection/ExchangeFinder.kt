@@ -57,8 +57,7 @@ class ExchangeFinder(
   private var routeSelection: RouteSelector.Selection? = null
 
   // State guarded by connectionPool.
-  private val routeSelector: RouteSelector = RouteSelector(
-      address, call.client.routeDatabase, call, eventListener)
+  private var routeSelector: RouteSelector? = null
   private var connectingConnection: RealConnection? = null
   private var hasStreamFailure = false
   private var nextRouteToTry: Route? = null
@@ -188,8 +187,13 @@ class ExchangeFinder(
     // If we need a route selection, make one. This is a blocking operation.
     var newRouteSelection = false
     if (selectedRoute == null && (routeSelection == null || !routeSelection!!.hasNext())) {
+      var localRouteSelector = routeSelector
+      if (localRouteSelector == null) {
+        localRouteSelector = RouteSelector(address, call.client.routeDatabase, call, eventListener)
+        this.routeSelector = localRouteSelector
+      }
       newRouteSelection = true
-      routeSelection = routeSelector.next()
+      routeSelection = localRouteSelector.next()
     }
 
     var routes: List<Route>? = null
@@ -287,12 +291,21 @@ class ExchangeFinder(
       if (nextRouteToTry != null) {
         return true
       }
+
       if (retryCurrentRoute()) {
         // Lock in the route because retryCurrentRoute() is racy and we don't want to call it twice.
         nextRouteToTry = call.connection!!.route()
         return true
       }
-      return (routeSelection?.hasNext() ?: false) || routeSelector.hasNext()
+
+      // If we have a routes left, use 'em.
+      if (routeSelection?.hasNext() == true) return true
+
+      // If we haven't initialized the route selector yet, assume it'll have at least one route.
+      val localRouteSelector = routeSelector ?: return true
+
+      // If we do have a route selector, use its routes.
+      return localRouteSelector.hasNext()
     }
   }
 

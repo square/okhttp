@@ -690,7 +690,7 @@ class RealConnection(
       if (e is StreamResetException) {
         when (e.errorCode) {
           ErrorCode.REFUSED_STREAM -> {
-            // Retry REFUSED_STREAM errors once on the same connection.
+            // Stop using this connection on the 2nd REFUSED_STREAM error.
             refusedStreamCount++
             if (refusedStreamCount > 1) {
               noNewExchanges = true
@@ -699,7 +699,7 @@ class RealConnection(
           }
 
           ErrorCode.CANCEL -> {
-            // Keep the connection for CANCEL errors.
+            // Permit any number of CANCEL errors on each connection.
           }
 
           else -> {

@@ -37,8 +37,6 @@ import okhttp3.CallEvent.ConnectionAcquired;
 import okhttp3.CallEvent.ConnectionReleased;
 import okhttp3.CallEvent.DnsEnd;
 import okhttp3.CallEvent.DnsStart;
-import okhttp3.CallEvent.ProxySelectEnd;
-import okhttp3.CallEvent.ProxySelectStart;
 import okhttp3.CallEvent.RequestBodyEnd;
 import okhttp3.CallEvent.RequestBodyStart;
 import okhttp3.CallEvent.RequestHeadersEnd;
@@ -228,8 +226,7 @@ public final class EventListenerTest {
       assertThat(expected.getMessage()).isEqualTo("Canceled");
     }
 
-    assertThat(listener.recordedEventTypes())
-        .containsExactly("CallStart", "ProxySelectStart", "ProxySelectEnd", "CallFailed");
+    assertThat(listener.recordedEventTypes()).containsExactly("CallStart", "CallFailed");
   }
 
   private void assertSuccessfulEventOrder(Matcher<Response> responseMatcher) throws IOException {
@@ -269,8 +266,7 @@ public final class EventListenerTest {
     Response response = call.execute();
     response.close();
 
-    assertThat(listener.recordedEventTypes()).containsExactly("CallStart",
-        "ProxySelectStart", "ProxySelectEnd", "ConnectionAcquired",
+    assertThat(listener.recordedEventTypes()).containsExactly("CallStart", "ConnectionAcquired",
         "RequestHeadersStart", "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd",
         "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
   }
@@ -1258,9 +1254,7 @@ public final class EventListenerTest {
 
     // Confirm the events occur when expected.
     listener.takeEvent(CallStart.class, 0L);
-    listener.takeEvent(ProxySelectStart.class, applicationInterceptorDelay);
-    listener.takeEvent(ProxySelectEnd.class, 0L);
-    listener.takeEvent(ConnectionAcquired.class, 0L);
+    listener.takeEvent(ConnectionAcquired.class, applicationInterceptorDelay);
     listener.takeEvent(RequestHeadersStart.class, networkInterceptorDelay);
     listener.takeEvent(RequestHeadersEnd.class, 0L);
     listener.takeEvent(RequestBodyStart.class, 0L);
@@ -1283,10 +1277,9 @@ public final class EventListenerTest {
   }
 
   @Test public void redirectUsingSameConnectionEventSequence() throws IOException {
-    server.enqueue(
-        new MockResponse()
-            .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
-            .addHeader("Location: /foo"));
+    server.enqueue(new MockResponse()
+        .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
+        .addHeader("Location: /foo"));
     server.enqueue(new MockResponse());
 
     Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
