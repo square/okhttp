@@ -440,6 +440,13 @@ public final class HttpUrlTest {
         .test(Component.HOST);
   }
 
+  /** This one's ugly: the HttpUrl's host is non-empty, but the URI's host is null. */
+  @Test public void hostContainsOnlyStrippedCharacters() throws Exception {
+    HttpUrl url = parse("http://>/");
+    assertThat(url.host()).isEqualTo(">");
+    assertThat(url.uri().getHost()).isNull();
+  }
+
   @Test public void hostIpv6() throws Exception {
     // Square braces are absent from host()...
     assertThat(parse("http://[::1]/").host()).isEqualTo("::1");
