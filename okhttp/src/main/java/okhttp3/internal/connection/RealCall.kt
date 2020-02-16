@@ -213,29 +213,24 @@ class RealCall(
    * find an exchange to carry the request.
    *
    * Note that an exchange will not be needed if the request is satisfied by the cache.
+   *
+   * @param newExchangeFinder true if this is not a retry and new routing can be performed.
    */
-  fun enterNetworkInterceptorExchange(request: Request) {
+  fun enterNetworkInterceptorExchange(request: Request, newExchangeFinder: Boolean) {
     check(interceptorScopedExchange == null)
     check(exchange == null) {
       "cannot make a new request because the previous response is still open: " +
           "please call response.close()"
     }
 
-    val exchangeFinder = this.exchangeFinder
-    if (exchangeFinder != null) {
-      if (exchangeFinder.canReuseFinderFor(request.url) && exchangeFinder.hasRouteToTry()) {
-        return // Already ready.
-      }
-
-      maybeReleaseConnection(null, true)
+    if (newExchangeFinder) {
+      this.exchangeFinder = ExchangeFinder(
+          connectionPool,
+          createAddress(request.url),
+          this,
+          eventListener
+      )
     }
-
-    this.exchangeFinder = ExchangeFinder(
-        connectionPool,
-        createAddress(request.url),
-        this,
-        eventListener
-    )
   }
 
   /** Finds a new or pooled connection to carry a forthcoming request and response. */
@@ -441,7 +436,7 @@ class RealCall(
     )
   }
 
-  fun canRetry() = exchangeFinder!!.hasStreamFailure() && exchangeFinder!!.hasRouteToTry()
+  fun retryAfterFailure() = exchangeFinder!!.retryAfterFailure()
 
   /**
    * Returns a string that describes this call. Doesn't include a full URL as that might contain

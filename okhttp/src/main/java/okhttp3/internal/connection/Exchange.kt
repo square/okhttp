@@ -163,7 +163,7 @@ class Exchange(
   }
 
   private fun trackFailure(e: IOException) {
-    finder.trackFailure()
+    finder.trackFailure(e)
     codec.connection.trackFailure(call.client, e)
   }
 
