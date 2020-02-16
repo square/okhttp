@@ -853,6 +853,33 @@ public final class HttpOverHttp2Test {
     assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(1);
   }
 
+  /**
+   * We had a bug where we'd perform infinite retries of route that fail with connection shutdown
+   * errors. The problem was that the logic that decided whether to reuse a route didn't track
+   * certain HTTP/2 errors. https://github.com/square/okhttp/issues/5547
+   */
+  @Test
+  public void noRecoveryFromTwoRefusedStreams() throws Exception {
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
+        .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.getHttpCode()));
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
+        .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.getHttpCode()));
+    server.enqueue(new MockResponse()
+        .setBody("abc"));
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    try {
+      call.execute();
+      fail();
+    } catch (StreamResetException expected) {
+      assertThat(expected.errorCode).isEqualTo(ErrorCode.REFUSED_STREAM);
+    }
+  }
+
   @Test public void recoverFromOneInternalErrorRequiresNewConnection() throws Exception {
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)

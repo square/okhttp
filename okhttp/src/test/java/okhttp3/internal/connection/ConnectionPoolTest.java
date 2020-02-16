@@ -89,7 +89,7 @@ public final class ConnectionPoolTest {
           .connectionPool(poolApi)
           .build();
       RealCall call = (RealCall) client.newCall(newRequest(addressA));
-      call.enterNetworkInterceptorExchange(call.request());
+      call.enterNetworkInterceptorExchange(call.request(), true);
       call.acquireConnectionNoEvents(c1);
     }
 
@@ -211,7 +211,7 @@ public final class ConnectionPoolTest {
           .connectionPool(pool)
           .build();
       RealCall call = (RealCall) client.newCall(newRequest(connection.route().address()));
-      call.enterNetworkInterceptorExchange(call.request());
+      call.enterNetworkInterceptorExchange(call.request(), true);
       call.acquireConnectionNoEvents(connection);
     }
   }
