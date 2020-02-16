@@ -683,13 +683,13 @@ class RealConnection(
    * Track a failure using this connection. This may prevent both the connection and its route from
    * being used for future exchanges.
    */
-  internal fun trackFailure(client: OkHttpClient, e: IOException?) {
+  internal fun trackFailure(call: RealCall, e: IOException?) {
     connectionPool.assertThreadDoesntHoldLock()
 
     synchronized(connectionPool) {
       if (e is StreamResetException) {
-        when (e.errorCode) {
-          ErrorCode.REFUSED_STREAM -> {
+        when {
+          e.errorCode == ErrorCode.REFUSED_STREAM -> {
             // Stop using this connection on the 2nd REFUSED_STREAM error.
             refusedStreamCount++
             if (refusedStreamCount > 1) {
@@ -698,8 +698,8 @@ class RealConnection(
             }
           }
 
-          ErrorCode.CANCEL -> {
-            // Permit any number of CANCEL errors on each connection.
+          e.errorCode == ErrorCode.CANCEL && call.isCanceled() -> {
+            // Permit any number of CANCEL errors on locally-canceled calls.
           }
 
           else -> {
@@ -714,7 +714,7 @@ class RealConnection(
         // If this route hasn't completed a call, avoid it for new connections.
         if (successCount == 0) {
           if (e != null) {
-            connectFailed(client, route, e)
+            connectFailed(call.client, route, e)
           }
           routeFailureCount++
         }

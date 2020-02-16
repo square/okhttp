@@ -881,9 +881,17 @@ public final class HttpOverHttp2Test {
   }
 
   @Test public void recoverFromOneInternalErrorRequiresNewConnection() throws Exception {
+    recoverFromOneHttp2ErrorRequiresNewConnection(ErrorCode.INTERNAL_ERROR);
+  }
+
+  @Test public void recoverFromOneCancelRequiresNewConnection() throws Exception {
+    recoverFromOneHttp2ErrorRequiresNewConnection(ErrorCode.CANCEL);
+  }
+
+  private void recoverFromOneHttp2ErrorRequiresNewConnection(ErrorCode errorCode) throws Exception {
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
-        .setHttp2ErrorCode(ErrorCode.INTERNAL_ERROR.getHttpCode()));
+        .setHttp2ErrorCode(errorCode.getHttpCode()));
     server.enqueue(new MockResponse()
         .setBody("abc"));
 
@@ -1062,6 +1070,10 @@ public final class HttpOverHttp2Test {
 
   @Test public void noRecoveryFromInternalErrorWithRetryDisabled() throws Exception {
     noRecoveryFromErrorWithRetryDisabled(ErrorCode.INTERNAL_ERROR);
+  }
+
+  @Test public void noRecoveryFromCancelWithRetryDisabled() throws Exception {
+    noRecoveryFromErrorWithRetryDisabled(ErrorCode.CANCEL);
   }
 
   private void noRecoveryFromErrorWithRetryDisabled(ErrorCode errorCode) throws Exception {
