@@ -153,7 +153,7 @@ class RealConnectionPool(
         idleConnectionCount++
 
         // If the connection is ready to be evicted, we're done.
-        val idleDurationNs = now - connection.idleAtNanos
+        val idleDurationNs = now - connection.idleAtNs
         if (idleDurationNs > longestIdleDurationNs) {
           longestIdleDurationNs = idleDurationNs
           longestIdleConnection = connection
@@ -217,7 +217,7 @@ class RealConnectionPool(
 
       // If this was the last allocation, the connection is eligible for immediate eviction.
       if (references.isEmpty()) {
-        connection.idleAtNanos = now - keepAliveDurationNs
+        connection.idleAtNs = now - keepAliveDurationNs
         return 0
       }
     }
