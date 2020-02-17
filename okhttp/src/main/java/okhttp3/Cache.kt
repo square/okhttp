@@ -233,11 +233,9 @@ class Cache internal constructor(
     val snapshot = (cached.body as CacheResponseBody).snapshot
     var editor: DiskLruCache.Editor? = null
     try {
-      editor = snapshot.edit() // Returns null if snapshot is not current.
-      if (editor != null) {
-        entry.writeTo(editor)
-        editor.commit()
-      }
+      editor = snapshot.edit() ?: return // edit() returns null if snapshot is not current.
+      entry.writeTo(editor)
+      editor.commit()
     } catch (_: IOException) {
       abortQuietly(editor)
     }
@@ -299,7 +297,7 @@ class Cache internal constructor(
     return object : MutableIterator<String> {
       val delegate: MutableIterator<DiskLruCache.Snapshot> = cache.snapshots()
       var nextUrl: String? = null
-      var canRemove: Boolean = false
+      var canRemove = false
 
       override fun hasNext(): Boolean {
         if (nextUrl != null) return true
@@ -393,7 +391,7 @@ class Cache internal constructor(
   ) : CacheRequest {
     private val cacheOut: Sink = editor.newSink(ENTRY_BODY)
     private val body: Sink
-    internal var done: Boolean = false
+    internal var done = false
 
     init {
       this.body = object : ForwardingSink(cacheOut) {
@@ -559,42 +557,42 @@ class Cache internal constructor(
 
     @Throws(IOException::class)
     fun writeTo(editor: DiskLruCache.Editor) {
-      val sink = editor.newSink(ENTRY_METADATA).buffer()
-      sink.writeUtf8(url).writeByte('\n'.toInt())
-      sink.writeUtf8(requestMethod).writeByte('\n'.toInt())
-      sink.writeDecimalLong(varyHeaders.size.toLong()).writeByte('\n'.toInt())
-      for (i in 0 until varyHeaders.size) {
-        sink.writeUtf8(varyHeaders.name(i))
-            .writeUtf8(": ")
-            .writeUtf8(varyHeaders.value(i))
-            .writeByte('\n'.toInt())
-      }
+      editor.newSink(ENTRY_METADATA).buffer().use { sink ->
+        sink.writeUtf8(url).writeByte('\n'.toInt())
+        sink.writeUtf8(requestMethod).writeByte('\n'.toInt())
+        sink.writeDecimalLong(varyHeaders.size.toLong()).writeByte('\n'.toInt())
+        for (i in 0 until varyHeaders.size) {
+          sink.writeUtf8(varyHeaders.name(i))
+              .writeUtf8(": ")
+              .writeUtf8(varyHeaders.value(i))
+              .writeByte('\n'.toInt())
+        }
 
-      sink.writeUtf8(StatusLine(protocol, code, message).toString()).writeByte('\n'.toInt())
-      sink.writeDecimalLong((responseHeaders.size + 2).toLong()).writeByte('\n'.toInt())
-      for (i in 0 until responseHeaders.size) {
-        sink.writeUtf8(responseHeaders.name(i))
+        sink.writeUtf8(StatusLine(protocol, code, message).toString()).writeByte('\n'.toInt())
+        sink.writeDecimalLong((responseHeaders.size + 2).toLong()).writeByte('\n'.toInt())
+        for (i in 0 until responseHeaders.size) {
+          sink.writeUtf8(responseHeaders.name(i))
+              .writeUtf8(": ")
+              .writeUtf8(responseHeaders.value(i))
+              .writeByte('\n'.toInt())
+        }
+        sink.writeUtf8(SENT_MILLIS)
             .writeUtf8(": ")
-            .writeUtf8(responseHeaders.value(i))
+            .writeDecimalLong(sentRequestMillis)
             .writeByte('\n'.toInt())
-      }
-      sink.writeUtf8(SENT_MILLIS)
-          .writeUtf8(": ")
-          .writeDecimalLong(sentRequestMillis)
-          .writeByte('\n'.toInt())
-      sink.writeUtf8(RECEIVED_MILLIS)
-          .writeUtf8(": ")
-          .writeDecimalLong(receivedResponseMillis)
-          .writeByte('\n'.toInt())
+        sink.writeUtf8(RECEIVED_MILLIS)
+            .writeUtf8(": ")
+            .writeDecimalLong(receivedResponseMillis)
+            .writeByte('\n'.toInt())
 
-      if (isHttps) {
-        sink.writeByte('\n'.toInt())
-        sink.writeUtf8(handshake!!.cipherSuite.javaName).writeByte('\n'.toInt())
-        writeCertList(sink, handshake.peerCertificates)
-        writeCertList(sink, handshake.localCertificates)
-        sink.writeUtf8(handshake.tlsVersion.javaName).writeByte('\n'.toInt())
+        if (isHttps) {
+          sink.writeByte('\n'.toInt())
+          sink.writeUtf8(handshake!!.cipherSuite.javaName).writeByte('\n'.toInt())
+          writeCertList(sink, handshake.peerCertificates)
+          writeCertList(sink, handshake.localCertificates)
+          sink.writeUtf8(handshake.tlsVersion.javaName).writeByte('\n'.toInt())
+        }
       }
-      sink.close()
     }
 
     @Throws(IOException::class)
@@ -660,10 +658,10 @@ class Cache internal constructor(
 
     companion object {
       /** Synthetic response header: the local time when the request was sent. */
-      private val SENT_MILLIS = Platform.get().getPrefix() + "-Sent-Millis"
+      private val SENT_MILLIS = "${Platform.get().getPrefix()}-Sent-Millis"
 
       /** Synthetic response header: the local time when the response was received. */
-      private val RECEIVED_MILLIS = Platform.get().getPrefix() + "-Received-Millis"
+      private val RECEIVED_MILLIS = "${Platform.get().getPrefix()}-Received-Millis"
     }
   }
 
