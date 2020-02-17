@@ -24,11 +24,11 @@ import java.net.ResponseCache;
 import java.net.SocketAddress;
 import java.net.URI;
 import java.security.KeyManagementException;
+import java.time.Duration;
 import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.X509TrustManager;
@@ -75,35 +75,35 @@ public final class OkHttpClientTest {
   @Test public void timeoutValidRange() {
     OkHttpClient.Builder builder = new OkHttpClient.Builder();
     try {
-      builder.callTimeout(1, TimeUnit.NANOSECONDS);
+      builder.callTimeout(Duration.ofNanos(1));
     } catch (IllegalArgumentException ignored) {
     }
     try {
-      builder.connectTimeout(1, TimeUnit.NANOSECONDS);
+      builder.connectTimeout(Duration.ofNanos(1));
     } catch (IllegalArgumentException ignored) {
     }
     try {
-      builder.writeTimeout(1, TimeUnit.NANOSECONDS);
+      builder.writeTimeout(Duration.ofNanos(1));
     } catch (IllegalArgumentException ignored) {
     }
     try {
-      builder.readTimeout(1, TimeUnit.NANOSECONDS);
+      builder.readTimeout(Duration.ofNanos(1));
     } catch (IllegalArgumentException ignored) {
     }
     try {
-      builder.callTimeout(365, TimeUnit.DAYS);
+      builder.callTimeout(Duration.ofDays(365));
     } catch (IllegalArgumentException ignored) {
     }
     try {
-      builder.connectTimeout(365, TimeUnit.DAYS);
+      builder.connectTimeout(Duration.ofDays(365));
     } catch (IllegalArgumentException ignored) {
     }
     try {
-      builder.writeTimeout(365, TimeUnit.DAYS);
+      builder.writeTimeout(Duration.ofDays(365));
     } catch (IllegalArgumentException ignored) {
     }
     try {
-      builder.readTimeout(365, TimeUnit.DAYS);
+      builder.readTimeout(Duration.ofDays(365));
     } catch (IllegalArgumentException ignored) {
     }
   }
@@ -347,7 +347,7 @@ public final class OkHttpClientTest {
     // same client with no change affecting route db
     assertSame(client.getRouteDatabase(), client.newBuilder().build().getRouteDatabase());
     assertSame(client.getRouteDatabase(),
-        client.newBuilder().callTimeout(5, TimeUnit.SECONDS).build().getRouteDatabase());
+        client.newBuilder().callTimeout(Duration.ofSeconds(5)).build().getRouteDatabase());
 
     // logically different scope of client for route db
     assertNotSame(client.getRouteDatabase(),

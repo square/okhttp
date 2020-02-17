@@ -22,6 +22,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.UnknownHostException;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -164,7 +165,7 @@ public final class EventListenerTest {
         .setHeadersDelay(2, TimeUnit.SECONDS));
 
     client = client.newBuilder()
-        .readTimeout(250, TimeUnit.MILLISECONDS)
+        .readTimeout(Duration.ofMillis(250))
         .build();
 
     Call call = client.newCall(new Request.Builder()
@@ -190,7 +191,7 @@ public final class EventListenerTest {
 
     client = client.newBuilder()
         .protocols(Collections.singletonList(Protocol.HTTP_1_1))
-        .readTimeout(250, TimeUnit.MILLISECONDS)
+        .readTimeout(Duration.ofMillis(250))
         .build();
 
     Call call = client.newCall(new Request.Builder()
