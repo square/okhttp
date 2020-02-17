@@ -162,7 +162,6 @@ class ExchangeFinder(
         // We had an already-allocated connection and it's good.
         result = call.connection
         releasedConnection = null
-        nextRouteToTry = null
       }
 
       if (result == null) {
@@ -284,6 +283,7 @@ class ExchangeFinder(
     connectionPool.assertThreadDoesntHoldLock()
 
     synchronized(connectionPool) {
+      nextRouteToTry = null
       if (e is StreamResetException && e.errorCode == ErrorCode.REFUSED_STREAM) {
         refusedStreamCount++
       } else if (e is ConnectionShutdownException) {
