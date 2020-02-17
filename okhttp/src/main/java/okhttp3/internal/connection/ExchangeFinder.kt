@@ -112,15 +112,7 @@ class ExchangeFinder(
           connectionRetryEnabled = connectionRetryEnabled
       )
 
-      // If this is a brand new connection, we can skip the extensive health checks.
-      synchronized(connectionPool) {
-        if (candidate.successCount == 0) {
-          return candidate
-        }
-      }
-
-      // Do a (potentially slow) check to confirm that the pooled connection is still good. If it
-      // isn't, take it out of the pool and start again.
+      // Confirm that the connection is good. If it isn't, take it out of the pool and start again.
       if (!candidate.isHealthy(doExtensiveHealthChecks)) {
         candidate.noNewExchanges()
         continue

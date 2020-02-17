@@ -54,6 +54,17 @@ public final class ConnectionReuseTest {
     assertConnectionReused(request, request);
   }
 
+  @Test public void connectionsAreReusedForPosts() throws Exception {
+    server.enqueue(new MockResponse().setBody("a"));
+    server.enqueue(new MockResponse().setBody("b"));
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .post(RequestBody.create("request body", MediaType.get("text/plain")))
+        .build();
+    assertConnectionReused(request, request);
+  }
+
   @Test public void connectionsAreReusedWithHttp2() throws Exception {
     enableHttp2();
     server.enqueue(new MockResponse().setBody("a"));
@@ -175,30 +186,6 @@ public final class ConnectionReuseTest {
     Response responseB = client.newCall(request).execute();
     assertThat(responseB.body().string()).isEqualTo("b");
     assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(1);
-    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
-  }
-
-  @Test public void staleConnectionNotReusedForNonIdempotentRequest() throws Exception {
-    server.enqueue(new MockResponse().setBody("a")
-        .setSocketPolicy(SocketPolicy.SHUTDOWN_OUTPUT_AT_END));
-    server.enqueue(new MockResponse().setBody("b"));
-
-    Request requestA = new Request.Builder()
-        .url(server.url("/"))
-        .build();
-    Response responseA = client.newCall(requestA).execute();
-    assertThat(responseA.body().string()).isEqualTo("a");
-    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
-
-    // Give the socket a chance to become stale.
-    Thread.sleep(250);
-
-    Request requestB = new Request.Builder()
-        .url(server.url("/"))
-        .post(RequestBody.create("b", MediaType.get("text/plain")))
-        .build();
-    Response responseB = client.newCall(requestB).execute();
-    assertThat(responseB.body().string()).isEqualTo("b");
     assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
   }
 

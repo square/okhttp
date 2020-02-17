@@ -25,7 +25,6 @@ import java.net.ProtocolException
 import java.net.Proxy
 import java.net.Socket
 import java.net.SocketException
-import java.net.SocketTimeoutException
 import java.net.UnknownServiceException
 import java.security.cert.X509Certificate
 import java.util.concurrent.TimeUnit.MILLISECONDS
@@ -59,6 +58,7 @@ import okhttp3.internal.http2.Http2ExchangeCodec
 import okhttp3.internal.http2.Http2Stream
 import okhttp3.internal.http2.Settings
 import okhttp3.internal.http2.StreamResetException
+import okhttp3.internal.isHealthy
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.tls.OkHostnameVerifier
 import okhttp3.internal.toHostHeader
@@ -123,8 +123,8 @@ class RealConnection(
   /** Current calls carried by this connection. */
   val calls = mutableListOf<Reference<RealCall>>()
 
-  /** Nanotime timestamp when `allocations.size()` reached zero. */
-  internal var idleAtNanos = Long.MAX_VALUE
+  /** Timestamp when `allocations.size()` reached zero. Also assigned upon initial connection. */
+  internal var idleAtNs = Long.MAX_VALUE
 
   /**
    * Returns true if this is an HTTP/2 connection. Such connections can be used in multiple HTTP
@@ -227,6 +227,8 @@ class RealConnection(
       throw RouteException(ProtocolException(
           "Too many tunnel connections attempted: $MAX_TUNNEL_ATTEMPTS"))
     }
+
+    idleAtNs = System.nanoTime()
   }
 
   /**
@@ -622,6 +624,8 @@ class RealConnection(
 
   /** Returns true if this connection is ready to host new streams. */
   fun isHealthy(doExtensiveChecks: Boolean): Boolean {
+    val nowNs = System.nanoTime()
+
     val socket = this.socket!!
     val source = this.source!!
     if (socket.isClosed || socket.isInputShutdown || socket.isOutputShutdown) {
@@ -630,23 +634,12 @@ class RealConnection(
 
     val http2Connection = this.http2Connection
     if (http2Connection != null) {
-      return http2Connection.isHealthy(System.nanoTime())
+      return http2Connection.isHealthy(nowNs)
     }
 
-    if (doExtensiveChecks) {
-      try {
-        val readTimeout = socket.soTimeout
-        try {
-          socket.soTimeout = 1
-          return !source.exhausted()
-        } finally {
-          socket.soTimeout = readTimeout
-        }
-      } catch (_: SocketTimeoutException) {
-        // Read timed out; socket is good.
-      } catch (_: IOException) {
-        return false // Couldn't read; socket is closed.
-      }
+    val idleDurationNs = nowNs - idleAtNs
+    if (idleDurationNs >= IDLE_CONNECTION_HEALTHY_NS && doExtensiveChecks) {
+      return socket.isHealthy(source)
     }
 
     return true
@@ -736,6 +729,7 @@ class RealConnection(
   companion object {
     private const val NPE_THROW_WITH_NULL = "throw with null exception"
     private const val MAX_TUNNEL_ATTEMPTS = 21
+    internal const val IDLE_CONNECTION_HEALTHY_NS = 10_000_000_000 // 10 seconds.
 
     fun newTestConnection(
       connectionPool: RealConnectionPool,
@@ -745,7 +739,7 @@ class RealConnection(
     ): RealConnection {
       val result = RealConnection(connectionPool, route)
       result.socket = socket
-      result.idleAtNanos = idleAtNanos
+      result.idleAtNs = idleAtNanos
       return result
     }
   }

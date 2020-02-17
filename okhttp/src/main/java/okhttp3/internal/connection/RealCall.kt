@@ -368,7 +368,7 @@ class RealCall(
     this.connection = null
 
     if (released.calls.isEmpty()) {
-      released.idleAtNanos = System.nanoTime()
+      released.idleAtNs = System.nanoTime()
       if (connectionPool.connectionBecameIdle(released)) {
         return released.socket()
       }
