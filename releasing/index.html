@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\s\-]+">
       
       <link rel="shortcut icon" href="../images/icon-square.png">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.4.0">
+      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/application.0284f74d.css">
+      <link rel="stylesheet" href="../assets/stylesheets/application.1b62728e.css">
       
-        <link rel="stylesheet" href="../assets/stylesheets/application-palette.01803549.css">
+        <link rel="stylesheet" href="../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,12 +57,12 @@
       
     
     
-      <script src="../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../assets/javascripts/modernizr.268332fc.js"></script>
     
     
       
         <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono&display=fallback">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
         <style>body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}</style>
       
     
@@ -185,7 +185,7 @@
         
       
       
-      <main class="md-main">
+      <main class="md-main" role="main">
         <div class="md-main__inner md-grid" data-md-component="container">
           
             
@@ -326,6 +326,18 @@
 
 
   <li class="md-nav__item">
+    <a href="../security_providers/" title="Security Providers" class="md-nav__link">
+      Security Providers
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
     <a href="https://stackoverflow.com/questions/tagged/okhttp?sort=active" title="Stack Overflow ⏏" class="md-nav__link">
       Stack Overflow ⏏
     </a>
@@ -339,13 +351,13 @@
 
   <li class="md-nav__item md-nav__item--nested">
     
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-10" type="checkbox" id="nav-10">
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-11" type="checkbox" id="nav-11">
     
-    <label class="md-nav__link" for="nav-10">
+    <label class="md-nav__link" for="nav-11">
       4.x API
     </label>
     <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
-      <label class="md-nav__title" for="nav-10">
+      <label class="md-nav__title" for="nav-11">
         4.x API
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
@@ -459,13 +471,13 @@
 
   <li class="md-nav__item md-nav__item--nested">
     
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-11" type="checkbox" id="nav-11">
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-12" type="checkbox" id="nav-12">
     
-    <label class="md-nav__link" for="nav-11">
+    <label class="md-nav__link" for="nav-12">
       3.x API
     </label>
     <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
-      <label class="md-nav__title" for="nav-11">
+      <label class="md-nav__title" for="nav-12">
         3.x API
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
@@ -629,28 +641,28 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#prerequisite-sonatype-maven-central-account" title="Prerequisite: Sonatype (Maven Central) Account" class="md-nav__link">
+  <a href="#prerequisite-sonatype-maven-central-account" class="md-nav__link">
     Prerequisite: Sonatype (Maven Central) Account
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#prerequisite-gpg-keys" title="Prerequisite: GPG Keys" class="md-nav__link">
+  <a href="#prerequisite-gpg-keys" class="md-nav__link">
     Prerequisite: GPG Keys
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#prerequisite-gradle-properties" title="Prerequisite: Gradle Properties" class="md-nav__link">
+  <a href="#prerequisite-gradle-properties" class="md-nav__link">
     Prerequisite: Gradle Properties
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#cutting-a-release" title="Cutting a Release" class="md-nav__link">
+  <a href="#cutting-a-release" class="md-nav__link">
     Cutting a Release
   </a>
   
@@ -736,15 +748,15 @@ export SONATYPE_NEXUS_PASSWORD=`pbpaste`
 <li>
 <p>Update, build, and upload:</p>
 <div class="codehilite"><pre><span></span>sed -i &quot;&quot; \
-  &quot;s/VERSION_NAME=.*/VERSION_NAME=$RELEASE_VERSION/g&quot; \
-  gradle.properties
+  &quot;s/version = &#39;.*&#39;/version = &#39;$RELEASE_VERSION&#39;/g&quot; \
+  build.gradle
 sed -i &quot;&quot; \
   &quot;s/\&quot;com.squareup.okhttp3:\([^\:]*\):[^\&quot;]*\&quot;/\&quot;com.squareup.okhttp3:\1:$RELEASE_VERSION\&quot;/g&quot; \
   `find . -name &quot;README.md&quot;`
 sed -i &quot;&quot; \
   &quot;s/\/com.squareup.okhttp3\/\([^\:]*\)\/[^\/]*\//\/com.squareup.okhttp3\/\1\/$RELEASE_VERSION\//g&quot; \
   `find . -name &quot;README.md&quot;`
-./gradlew clean uploadArchives
+./gradlew clean publishAllPublicationsToMavencentralRepository
 </pre></div>
 
 </li>
@@ -757,8 +769,8 @@ sed -i &quot;&quot; \
 <div class="codehilite"><pre><span></span>git commit -am &quot;Prepare for release $RELEASE_VERSION.&quot;
 git tag -a parent-$RELEASE_VERSION -m &quot;Version $RELEASE_VERSION&quot;
 sed -i &quot;&quot; \
-  &quot;s/VERSION_NAME=.*/VERSION_NAME=$NEXT_VERSION/g&quot; \
-  gradle.properties
+  &quot;s/version = &#39;.*&#39;/version = &#39;$NEXT_VERSION&#39;/g&quot; \
+  build.gradle
 git commit -am &quot;Prepare next development version.&quot;
 git push &amp;&amp; git push --tags
 </pre></div>
@@ -767,6 +779,7 @@ git push &amp;&amp; git push --tags
 </ol>
                 
                   
+                
                 
               
               
@@ -803,7 +816,7 @@ git push &amp;&amp; git push --tags
       
     </div>
     
-      <script src="../assets/javascripts/application.245445c6.js"></script>
+      <script src="../assets/javascripts/application.808e90bb.js"></script>
       
       <script>app.initialize({version:"1.0.4",url:{base:".."}})</script>
       

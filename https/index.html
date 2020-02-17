@@ -38,7 +38,7 @@
         <meta name="lang:search.tokenizer" content="[\s\-]+">
       
       <link rel="shortcut icon" href="../images/icon-square.png">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.4.0">
+      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
     
     
       
@@ -46,9 +46,9 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/application.0284f74d.css">
+      <link rel="stylesheet" href="../assets/stylesheets/application.1b62728e.css">
       
-        <link rel="stylesheet" href="../assets/stylesheets/application-palette.01803549.css">
+        <link rel="stylesheet" href="../assets/stylesheets/application-palette.a8b3c06d.css">
       
       
         
@@ -57,12 +57,12 @@
       
     
     
-      <script src="../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../assets/javascripts/modernizr.268332fc.js"></script>
     
     
       
         <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono&display=fallback">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
         <style>body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}</style>
       
     
@@ -185,7 +185,7 @@
         
       
       
-      <main class="md-main">
+      <main class="md-main" role="main">
         <div class="md-main__inner md-grid" data-md-component="container">
           
             
@@ -317,14 +317,14 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#certificate-pinning-kt-java" title="Certificate Pinning (.kt, .java)" class="md-nav__link">
+  <a href="#certificate-pinning-kt-java" class="md-nav__link">
     Certificate Pinning (.kt, .java)
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#customizing-trusted-certificates-kt-java" title="Customizing Trusted Certificates (.kt, .java)" class="md-nav__link">
+  <a href="#customizing-trusted-certificates-kt-java" class="md-nav__link">
     Customizing Trusted Certificates (.kt, .java)
   </a>
   
@@ -371,6 +371,18 @@
 
 
   <li class="md-nav__item">
+    <a href="../security_providers/" title="Security Providers" class="md-nav__link">
+      Security Providers
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
     <a href="https://stackoverflow.com/questions/tagged/okhttp?sort=active" title="Stack Overflow ⏏" class="md-nav__link">
       Stack Overflow ⏏
     </a>
@@ -384,13 +396,13 @@
 
   <li class="md-nav__item md-nav__item--nested">
     
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-10" type="checkbox" id="nav-10">
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-11" type="checkbox" id="nav-11">
     
-    <label class="md-nav__link" for="nav-10">
+    <label class="md-nav__link" for="nav-11">
       4.x API
     </label>
     <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
-      <label class="md-nav__title" for="nav-10">
+      <label class="md-nav__title" for="nav-11">
         4.x API
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
@@ -504,13 +516,13 @@
 
   <li class="md-nav__item md-nav__item--nested">
     
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-11" type="checkbox" id="nav-11">
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-12" type="checkbox" id="nav-12">
     
-    <label class="md-nav__link" for="nav-11">
+    <label class="md-nav__link" for="nav-12">
       3.x API
     </label>
     <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
-      <label class="md-nav__title" for="nav-11">
+      <label class="md-nav__title" for="nav-12">
         3.x API
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
@@ -674,14 +686,14 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#certificate-pinning-kt-java" title="Certificate Pinning (.kt, .java)" class="md-nav__link">
+  <a href="#certificate-pinning-kt-java" class="md-nav__link">
     Certificate Pinning (.kt, .java)
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#customizing-trusted-certificates-kt-java" title="Customizing Trusted Certificates (.kt, .java)" class="md-nav__link">
+  <a href="#customizing-trusted-certificates-kt-java" class="md-nav__link">
     Customizing Trusted Certificates (.kt, .java)
   </a>
   
@@ -722,24 +734,24 @@
 </ul>
 <p>These loosely follow the model set in <a href="https://cloud.google.com/load-balancing/docs/ssl-policies-concepts">Google Cloud Policies</a>. We <a href="../tls_configuration_history/">track changes</a> to this policy.</p>
 <p>By default, OkHttp will attempt a <code>MODERN_TLS</code> connection.  However by configuring the client connectionSpecs you can allow a fall back to <code>COMPATIBLE_TLS</code> connection if the modern configuration fails.</p>
-<div class="codehilite"><pre><span></span><span class="n">OkHttpClient</span> <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OkHttpClient</span><span class="o">.</span><span class="na">Builder</span><span class="o">()</span>
-    <span class="o">.</span><span class="na">connectionSpecs</span><span class="o">(</span><span class="n">Arrays</span><span class="o">.</span><span class="na">asList</span><span class="o">(</span><span class="n">ConnectionSpec</span><span class="o">.</span><span class="na">MODERN_TLS</span><span class="o">,</span> <span class="n">ConnectionSpec</span><span class="o">.</span><span class="na">COMPATIBLE_TLS</span><span class="o">))</span>
-    <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+<div class="codehilite"><pre><span></span><span class="n">OkHttpClient</span> <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OkHttpClient</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
+    <span class="p">.</span><span class="na">connectionSpecs</span><span class="p">(</span><span class="n">Arrays</span><span class="p">.</span><span class="na">asList</span><span class="p">(</span><span class="n">ConnectionSpec</span><span class="p">.</span><span class="na">MODERN_TLS</span><span class="p">,</span> <span class="n">ConnectionSpec</span><span class="p">.</span><span class="na">COMPATIBLE_TLS</span><span class="p">))</span>
+    <span class="p">.</span><span class="na">build</span><span class="p">();</span>
 </pre></div>
 
 <p>The TLS versions and cipher suites in each spec can change with each release. For example, in OkHttp 2.2 we dropped support for SSL 3.0 in response to the <a href="http://googleonlinesecurity.blogspot.ca/2014/10/this-poodle-bites-exploiting-ssl-30.html">POODLE</a> attack. And in OkHttp 2.3 we dropped support for <a href="http://en.wikipedia.org/wiki/RC4#Security">RC4</a>. As with your desktop web browser, staying up-to-date with OkHttp is the best way to stay secure.</p>
 <p>You can build your own connection spec with a custom set of TLS versions and cipher suites. For example, this configuration is limited to three highly-regarded cipher suites. Its drawback is that it requires Android 5.0+ and a similarly current webserver.</p>
-<div class="codehilite"><pre><span></span><span class="n">ConnectionSpec</span> <span class="n">spec</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ConnectionSpec</span><span class="o">.</span><span class="na">Builder</span><span class="o">(</span><span class="n">ConnectionSpec</span><span class="o">.</span><span class="na">MODERN_TLS</span><span class="o">)</span>
-    <span class="o">.</span><span class="na">tlsVersions</span><span class="o">(</span><span class="n">TlsVersion</span><span class="o">.</span><span class="na">TLS_1_2</span><span class="o">)</span>
-    <span class="o">.</span><span class="na">cipherSuites</span><span class="o">(</span>
-          <span class="n">CipherSuite</span><span class="o">.</span><span class="na">TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256</span><span class="o">,</span>
-          <span class="n">CipherSuite</span><span class="o">.</span><span class="na">TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256</span><span class="o">,</span>
-          <span class="n">CipherSuite</span><span class="o">.</span><span class="na">TLS_DHE_RSA_WITH_AES_128_GCM_SHA256</span><span class="o">)</span>
-    <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+<div class="codehilite"><pre><span></span><span class="n">ConnectionSpec</span> <span class="n">spec</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ConnectionSpec</span><span class="p">.</span><span class="na">Builder</span><span class="p">(</span><span class="n">ConnectionSpec</span><span class="p">.</span><span class="na">MODERN_TLS</span><span class="p">)</span>
+    <span class="p">.</span><span class="na">tlsVersions</span><span class="p">(</span><span class="n">TlsVersion</span><span class="p">.</span><span class="na">TLS_1_2</span><span class="p">)</span>
+    <span class="p">.</span><span class="na">cipherSuites</span><span class="p">(</span>
+          <span class="n">CipherSuite</span><span class="p">.</span><span class="na">TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256</span><span class="p">,</span>
+          <span class="n">CipherSuite</span><span class="p">.</span><span class="na">TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256</span><span class="p">,</span>
+          <span class="n">CipherSuite</span><span class="p">.</span><span class="na">TLS_DHE_RSA_WITH_AES_128_GCM_SHA256</span><span class="p">)</span>
+    <span class="p">.</span><span class="na">build</span><span class="p">();</span>
 
-<span class="n">OkHttpClient</span> <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OkHttpClient</span><span class="o">.</span><span class="na">Builder</span><span class="o">()</span>
-    <span class="o">.</span><span class="na">connectionSpecs</span><span class="o">(</span><span class="n">Collections</span><span class="o">.</span><span class="na">singletonList</span><span class="o">(</span><span class="n">spec</span><span class="o">))</span>
-    <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+<span class="n">OkHttpClient</span> <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OkHttpClient</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
+    <span class="p">.</span><span class="na">connectionSpecs</span><span class="p">(</span><span class="n">Collections</span><span class="p">.</span><span class="na">singletonList</span><span class="p">(</span><span class="n">spec</span><span class="p">))</span>
+    <span class="p">.</span><span class="na">build</span><span class="p">();</span>
 </pre></div>
 
 <h3 id="certificate-pinning-kt-java">Certificate Pinning (<a href="https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/kt/CertificatePinning.kt">.kt</a>, <a href="https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/CertificatePinning.java">.java</a>)<a class="headerlink" href="#certificate-pinning-kt-java" title="Permanent link">&para;</a></h3>
@@ -771,26 +783,26 @@
 </pre></div></div>
 <input name="__tabs_1" type="radio" id="__tab_1_1" />
 <label for="__tab_1_1">Java</label>
-<div class="superfences-content"><div class="codehilite"><pre><span></span>  <span class="kd">private</span> <span class="kd">final</span> <span class="n">OkHttpClient</span> <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OkHttpClient</span><span class="o">.</span><span class="na">Builder</span><span class="o">()</span>
-      <span class="o">.</span><span class="na">certificatePinner</span><span class="o">(</span>
-          <span class="k">new</span> <span class="n">CertificatePinner</span><span class="o">.</span><span class="na">Builder</span><span class="o">()</span>
-              <span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;publicobject.com&quot;</span><span class="o">,</span> <span class="s">&quot;sha256/afwiKY3RxoMmLkuRW1l7QsPZTJPwDS2pdDROQjXw8ig=&quot;</span><span class="o">)</span>
-              <span class="o">.</span><span class="na">build</span><span class="o">())</span>
-      <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+<div class="superfences-content"><div class="codehilite"><pre><span></span>  <span class="kd">private</span> <span class="kd">final</span> <span class="n">OkHttpClient</span> <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OkHttpClient</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
+      <span class="p">.</span><span class="na">certificatePinner</span><span class="p">(</span>
+          <span class="k">new</span> <span class="n">CertificatePinner</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
+              <span class="p">.</span><span class="na">add</span><span class="p">(</span><span class="s">&quot;publicobject.com&quot;</span><span class="p">,</span> <span class="s">&quot;sha256/afwiKY3RxoMmLkuRW1l7QsPZTJPwDS2pdDROQjXw8ig=&quot;</span><span class="p">)</span>
+              <span class="p">.</span><span class="na">build</span><span class="p">())</span>
+      <span class="p">.</span><span class="na">build</span><span class="p">();</span>
 
-  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
-    <span class="n">Request</span> <span class="n">request</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Request</span><span class="o">.</span><span class="na">Builder</span><span class="o">()</span>
-        <span class="o">.</span><span class="na">url</span><span class="o">(</span><span class="s">&quot;https://publicobject.com/robots.txt&quot;</span><span class="o">)</span>
-        <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="p">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="p">{</span>
+    <span class="n">Request</span> <span class="n">request</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Request</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
+        <span class="p">.</span><span class="na">url</span><span class="p">(</span><span class="s">&quot;https://publicobject.com/robots.txt&quot;</span><span class="p">)</span>
+        <span class="p">.</span><span class="na">build</span><span class="p">();</span>
 
-    <span class="k">try</span> <span class="o">(</span><span class="n">Response</span> <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="na">newCall</span><span class="o">(</span><span class="n">request</span><span class="o">).</span><span class="na">execute</span><span class="o">())</span> <span class="o">{</span>
-      <span class="k">if</span> <span class="o">(!</span><span class="n">response</span><span class="o">.</span><span class="na">isSuccessful</span><span class="o">())</span> <span class="k">throw</span> <span class="k">new</span> <span class="n">IOException</span><span class="o">(</span><span class="s">&quot;Unexpected code &quot;</span> <span class="o">+</span> <span class="n">response</span><span class="o">);</span>
+    <span class="k">try</span> <span class="p">(</span><span class="n">Response</span> <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="p">.</span><span class="na">newCall</span><span class="p">(</span><span class="n">request</span><span class="p">).</span><span class="na">execute</span><span class="p">())</span> <span class="p">{</span>
+      <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">response</span><span class="p">.</span><span class="na">isSuccessful</span><span class="p">())</span> <span class="k">throw</span> <span class="k">new</span> <span class="n">IOException</span><span class="p">(</span><span class="s">&quot;Unexpected code &quot;</span> <span class="o">+</span> <span class="n">response</span><span class="p">);</span>
 
-      <span class="k">for</span> <span class="o">(</span><span class="n">Certificate</span> <span class="n">certificate</span> <span class="o">:</span> <span class="n">response</span><span class="o">.</span><span class="na">handshake</span><span class="o">().</span><span class="na">peerCertificates</span><span class="o">())</span> <span class="o">{</span>
-        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">CertificatePinner</span><span class="o">.</span><span class="na">pin</span><span class="o">(</span><span class="n">certificate</span><span class="o">));</span>
-      <span class="o">}</span>
-    <span class="o">}</span>
-  <span class="o">}</span>
+      <span class="k">for</span> <span class="p">(</span><span class="n">Certificate</span> <span class="n">certificate</span> <span class="p">:</span> <span class="n">response</span><span class="p">.</span><span class="na">handshake</span><span class="p">().</span><span class="na">peerCertificates</span><span class="p">())</span> <span class="p">{</span>
+        <span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">CertificatePinner</span><span class="p">.</span><span class="na">pin</span><span class="p">(</span><span class="n">certificate</span><span class="p">));</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
 </pre></div></div>
 </div>
 <h3 id="customizing-trusted-certificates-kt-java">Customizing Trusted Certificates (<a href="https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/kt/CustomTrust.kt">.kt</a>, <a href="https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/CustomTrust.java">.java</a>)<a class="headerlink" href="#customizing-trusted-certificates-kt-java" title="Permanent link">&para;</a></h3>
@@ -842,45 +854,46 @@
 </pre></div></div>
 <input name="__tabs_2" type="radio" id="__tab_2_1" />
 <label for="__tab_2_1">Java</label>
-<div class="superfences-content"><div class="codehilite"><pre><span></span>  <span class="kd">private</span> <span class="kd">final</span> <span class="n">OkHttpClient</span> <span class="n">client</span><span class="o">;</span>
+<div class="superfences-content"><div class="codehilite"><pre><span></span>  <span class="kd">private</span> <span class="kd">final</span> <span class="n">OkHttpClient</span> <span class="n">client</span><span class="p">;</span>
 
-  <span class="kd">public</span> <span class="nf">CustomTrust</span><span class="o">()</span> <span class="o">{</span>
-    <span class="n">X509TrustManager</span> <span class="n">trustManager</span><span class="o">;</span>
-    <span class="n">SSLSocketFactory</span> <span class="n">sslSocketFactory</span><span class="o">;</span>
-    <span class="k">try</span> <span class="o">{</span>
-      <span class="n">trustManager</span> <span class="o">=</span> <span class="n">trustManagerForCertificates</span><span class="o">(</span><span class="n">trustedCertificatesInputStream</span><span class="o">());</span>
-      <span class="n">SSLContext</span> <span class="n">sslContext</span> <span class="o">=</span> <span class="n">SSLContext</span><span class="o">.</span><span class="na">getInstance</span><span class="o">(</span><span class="s">&quot;TLS&quot;</span><span class="o">);</span>
-      <span class="n">sslContext</span><span class="o">.</span><span class="na">init</span><span class="o">(</span><span class="kc">null</span><span class="o">,</span> <span class="k">new</span> <span class="n">TrustManager</span><span class="o">[]</span> <span class="o">{</span> <span class="n">trustManager</span> <span class="o">},</span> <span class="kc">null</span><span class="o">);</span>
-      <span class="n">sslSocketFactory</span> <span class="o">=</span> <span class="n">sslContext</span><span class="o">.</span><span class="na">getSocketFactory</span><span class="o">();</span>
-    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">GeneralSecurityException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
-      <span class="k">throw</span> <span class="k">new</span> <span class="n">RuntimeException</span><span class="o">(</span><span class="n">e</span><span class="o">);</span>
-    <span class="o">}</span>
+  <span class="kd">public</span> <span class="nf">CustomTrust</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">X509TrustManager</span> <span class="n">trustManager</span><span class="p">;</span>
+    <span class="n">SSLSocketFactory</span> <span class="n">sslSocketFactory</span><span class="p">;</span>
+    <span class="k">try</span> <span class="p">{</span>
+      <span class="n">trustManager</span> <span class="o">=</span> <span class="n">trustManagerForCertificates</span><span class="p">(</span><span class="n">trustedCertificatesInputStream</span><span class="p">());</span>
+      <span class="n">SSLContext</span> <span class="n">sslContext</span> <span class="o">=</span> <span class="n">SSLContext</span><span class="p">.</span><span class="na">getInstance</span><span class="p">(</span><span class="s">&quot;TLS&quot;</span><span class="p">);</span>
+      <span class="n">sslContext</span><span class="p">.</span><span class="na">init</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span> <span class="k">new</span> <span class="n">TrustManager</span><span class="o">[]</span> <span class="p">{</span> <span class="n">trustManager</span> <span class="p">},</span> <span class="kc">null</span><span class="p">);</span>
+      <span class="n">sslSocketFactory</span> <span class="o">=</span> <span class="n">sslContext</span><span class="p">.</span><span class="na">getSocketFactory</span><span class="p">();</span>
+    <span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="n">GeneralSecurityException</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">throw</span> <span class="k">new</span> <span class="n">RuntimeException</span><span class="p">(</span><span class="n">e</span><span class="p">);</span>
+    <span class="p">}</span>
 
-    <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OkHttpClient</span><span class="o">.</span><span class="na">Builder</span><span class="o">()</span>
-        <span class="o">.</span><span class="na">sslSocketFactory</span><span class="o">(</span><span class="n">sslSocketFactory</span><span class="o">,</span> <span class="n">trustManager</span><span class="o">)</span>
-        <span class="o">.</span><span class="na">build</span><span class="o">();</span>
-  <span class="o">}</span>
+    <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OkHttpClient</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
+        <span class="p">.</span><span class="na">sslSocketFactory</span><span class="p">(</span><span class="n">sslSocketFactory</span><span class="p">,</span> <span class="n">trustManager</span><span class="p">)</span>
+        <span class="p">.</span><span class="na">build</span><span class="p">();</span>
+  <span class="p">}</span>
 
-  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
-    <span class="n">Request</span> <span class="n">request</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Request</span><span class="o">.</span><span class="na">Builder</span><span class="o">()</span>
-        <span class="o">.</span><span class="na">url</span><span class="o">(</span><span class="s">&quot;https://publicobject.com/helloworld.txt&quot;</span><span class="o">)</span>
-        <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="p">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="p">{</span>
+    <span class="n">Request</span> <span class="n">request</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Request</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
+        <span class="p">.</span><span class="na">url</span><span class="p">(</span><span class="s">&quot;https://publicobject.com/helloworld.txt&quot;</span><span class="p">)</span>
+        <span class="p">.</span><span class="na">build</span><span class="p">();</span>
 
-    <span class="n">Response</span> <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="na">newCall</span><span class="o">(</span><span class="n">request</span><span class="o">).</span><span class="na">execute</span><span class="o">();</span>
-    <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">response</span><span class="o">.</span><span class="na">body</span><span class="o">().</span><span class="na">string</span><span class="o">());</span>
-  <span class="o">}</span>
+    <span class="n">Response</span> <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="p">.</span><span class="na">newCall</span><span class="p">(</span><span class="n">request</span><span class="p">).</span><span class="na">execute</span><span class="p">();</span>
+    <span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">response</span><span class="p">.</span><span class="na">body</span><span class="p">().</span><span class="na">string</span><span class="p">());</span>
+  <span class="p">}</span>
 
-  <span class="kd">private</span> <span class="n">InputStream</span> <span class="nf">trustedCertificatesInputStream</span><span class="o">()</span> <span class="o">{</span>
-    <span class="o">...</span> <span class="c1">// Full source omitted. See sample.</span>
-  <span class="o">}</span>
+  <span class="kd">private</span> <span class="n">InputStream</span> <span class="nf">trustedCertificatesInputStream</span><span class="p">()</span> <span class="p">{</span>
+    <span class="p">...</span> <span class="c1">// Full source omitted. See sample.</span>
+  <span class="p">}</span>
 
-  <span class="kd">public</span> <span class="n">SSLContext</span> <span class="nf">sslContextForTrustedCertificates</span><span class="o">(</span><span class="n">InputStream</span> <span class="n">in</span><span class="o">)</span> <span class="o">{</span>
-    <span class="o">...</span> <span class="c1">// Full source omitted. See sample.</span>
-  <span class="o">}</span>
+  <span class="kd">public</span> <span class="n">SSLContext</span> <span class="nf">sslContextForTrustedCertificates</span><span class="p">(</span><span class="n">InputStream</span> <span class="n">in</span><span class="p">)</span> <span class="p">{</span>
+    <span class="p">...</span> <span class="c1">// Full source omitted. See sample.</span>
+  <span class="p">}</span>
 </pre></div></div>
 </div>
                 
                   
+                
                 
               
               
@@ -952,7 +965,7 @@
       
     </div>
     
-      <script src="../assets/javascripts/application.245445c6.js"></script>
+      <script src="../assets/javascripts/application.808e90bb.js"></script>
       
       <script>app.initialize({version:"1.0.4",url:{base:".."}})</script>
       
