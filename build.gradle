@@ -90,7 +90,7 @@ ext.publishedArtifactId = { project ->
 allprojects {
   group = 'com.squareup.okhttp3'
   project.ext.artifactId = rootProject.ext.publishedArtifactId(project)
-  version = '4.4.0-SNAPSHOT'
+  version = '4.4.0'
 
   repositories {
     mavenCentral()
@@ -269,6 +269,8 @@ subprojects { project ->
           from components.java
         }
         pom {
+          name = project.name
+          description = 'Square’s meticulous HTTP client for Java and Kotlin.'
           url = 'https://square.github.io/okhttp/'
           licenses {
             license {
@@ -276,11 +278,27 @@ subprojects { project ->
               url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
             }
           }
+          developers {
+            developer {
+              name = 'Square, Inc.'
+            }
+          }
           scm {
             connection = 'scm:git:https://github.com/square/okhttp.git'
             developerConnection = 'scm:git:ssh://git@github.com/square/okhttp.git'
             url = 'https://github.com/square/okhttp'
           }
+        }
+      }
+    }
+
+    repositories {
+      maven {
+        name = "mavencentral"
+        url = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+        credentials {
+          username System.getenv('SONATYPE_NEXUS_USERNAME')
+          password System.getenv('SONATYPE_NEXUS_PASSWORD')
         }
       }
     }

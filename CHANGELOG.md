@@ -1,6 +1,43 @@
 Change Log
 ==========
 
+## Version 4.4.0
+
+_2020-02-17_
+
+ *  New: Support `canceled()` as an event that can be observed by `EventListener`. This should be
+    useful for splitting out canceled calls in metrics.
+
+ *  New: Publish a [bill of materials (BOM)][bom] for OkHttp. Depend on this from Gradle or Maven to
+    keep all of your OkHttp artifacts on the same version, even if they're declared via transitive
+    dependencies. You can even omit versions when declaring other OkHttp dependencies.
+
+    ```kotlin
+    dependencies {
+       api(platform("com.squareup.okhttp3:okhttp-bom:4.4.0"))
+       api("com.squareup.okhttp3:okhttp")              // No version!
+       api("com.squareup.okhttp3:logging-interceptor") // No version!
+    }
+    ```
+
+ *  New: Upgrade to Okio 2.4.3.
+
+    ```kotlin
+    implementation("com.squareup.okio:okio:2.4.3")
+    ```
+
+ *  Fix: Limit retry attempts for HTTP/2 `REFUSED_STREAM` and `CANCEL` failures.
+ *  Fix: Retry automatically when incorrectly sharing a connection among multiple hostnames. OkHttp
+    shares connections when hosts share both IP addresses and certificates, such as `squareup.com`
+    and `www.squareup.com`. If a server refuses such sharing it will return HTTP 421 and OkHttp will
+    automatically retry on an unshared connection.
+ *  Fix: Don't crash if a TLS tunnel's response body is truncated.
+ *  Fix: Don't track unusable routes beyond their usefulness. We had a bug where we could track
+    certain bad routes indefinitely; now we only track the ones that could be necessary.
+ *  Fix: Defer proxy selection until a proxy is required. This saves calls to `ProxySelector` on
+    calls that use a pooled connection.
+
+
 ## Version 4.3.1
 
 _2020-01-07_
@@ -216,6 +253,7 @@ _2019-06-03_
 [Change log](http://square.github.io/okhttp/changelog_3x/)
 
 
+ [bom]: https://docs.gradle.org/6.2/userguide/platforms.html#sub:bom_import
  [iana_websocket]: https://www.iana.org/assignments/websocket/websocket.txt
  [okhttp4_blog_post]: https://cashapp.github.io/2019-06-26/okhttp-4-goes-kotlin
  [upgrading_to_okhttp_4]: https://square.github.io/okhttp/upgrading_to_okhttp_4/

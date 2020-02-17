@@ -86,7 +86,7 @@ Cutting a Release
     sed -i "" \
       "s/\/com.squareup.okhttp3\/\([^\:]*\)\/[^\/]*\//\/com.squareup.okhttp3\/\1\/$RELEASE_VERSION\//g" \
       `find . -name "README.md"`
-    ./gradlew clean uploadArchives
+    ./gradlew clean publishAllPublicationsToMavencentralRepository
     ```
 
 5. Visit [Sonatype Nexus][sonatype_nexus] to promote (close then release) the artifact. Or drop it
