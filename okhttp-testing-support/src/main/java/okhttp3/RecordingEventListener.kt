@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit
 import okhttp3.CallEvent.CallEnd
 import okhttp3.CallEvent.CallFailed
 import okhttp3.CallEvent.CallStart
+import okhttp3.CallEvent.Canceled
 import okhttp3.CallEvent.ConnectEnd
 import okhttp3.CallEvent.ConnectFailed
 import okhttp3.CallEvent.ConnectStart
@@ -249,4 +250,8 @@ open class RecordingEventListener : EventListener() {
     call: Call,
     ioe: IOException
   ) = logEvent(CallFailed(System.nanoTime(), call, ioe))
+
+  override fun canceled(
+    call: Call
+  ) = logEvent(Canceled(System.nanoTime(), call))
 }

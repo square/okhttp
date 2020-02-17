@@ -226,7 +226,41 @@ public final class EventListenerTest {
       assertThat(expected.getMessage()).isEqualTo("Canceled");
     }
 
-    assertThat(listener.recordedEventTypes()).containsExactly("CallStart", "CallFailed");
+    assertThat(listener.recordedEventTypes()).containsExactly(
+        "Canceled", "CallStart", "CallFailed");
+  }
+
+  @Test public void cancelAsyncCall() throws IOException {
+    server.enqueue(new MockResponse()
+        .setBody("abc"));
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    call.enqueue(new Callback() {
+      @Override public void onFailure(Call call, IOException e) {
+      }
+
+      @Override public void onResponse(Call call, Response response) throws IOException {
+        response.close();
+      }
+    });
+    call.cancel();
+
+    assertThat(listener.recordedEventTypes()).contains("Canceled");
+  }
+
+  @Test public void multipleCancelsEmitsOnlyOneEvent() throws IOException {
+    server.enqueue(new MockResponse()
+        .setBody("abc"));
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    call.cancel();
+    call.cancel();
+
+    assertThat(listener.recordedEventTypes()).containsExactly("Canceled");
   }
 
   private void assertSuccessfulEventOrder(Matcher<Response> responseMatcher) throws IOException {

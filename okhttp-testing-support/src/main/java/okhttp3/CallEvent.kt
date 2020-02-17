@@ -134,6 +134,11 @@ sealed class CallEvent {
     val ioe: IOException
   ) : CallEvent()
 
+  data class Canceled(
+    override val timestampNs: Long,
+    override val call: Call
+  ) : CallEvent()
+
   data class RequestHeadersStart(
     override val timestampNs: Long,
     override val call: Call

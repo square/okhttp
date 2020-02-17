@@ -121,11 +121,13 @@ class RealCall(
     val exchangeToCancel: Exchange?
     val connectionToCancel: RealConnection?
     synchronized(connectionPool) {
+      if (canceled) return // Already canceled.
       canceled = true
       exchangeToCancel = exchange
       connectionToCancel = exchangeFinder?.connectingConnection() ?: connection
     }
     exchangeToCancel?.cancel() ?: connectionToCancel?.cancel()
+    eventListener.canceled(this)
   }
 
   override fun isCanceled(): Boolean {
