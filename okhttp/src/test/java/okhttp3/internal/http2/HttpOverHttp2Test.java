@@ -113,8 +113,8 @@ public final class HttpOverHttp2Test {
   private final PlatformRule platform = new PlatformRule();
   private final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
   @Rule public final TestRule chain = RuleChain.outerRule(platform)
-      .around(clientTestRule)
-      .around(new Timeout(5, SECONDS));
+      .around(new Timeout(60, SECONDS))
+      .around(clientTestRule);
   @Rule public final TemporaryFolder tempDir = new TemporaryFolder();
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final TestLogHandler testLogHandler = new TestLogHandler(Http2.class);
