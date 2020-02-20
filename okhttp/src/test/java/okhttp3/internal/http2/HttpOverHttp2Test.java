@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.net.Authenticator;
 import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -546,7 +547,7 @@ public final class HttpOverHttp2Test {
     server.enqueue(new MockResponse().setBody("A"));
 
     client = client.newBuilder()
-        .readTimeout(1000, MILLISECONDS)
+        .readTimeout(Duration.ofSeconds(1))
         .build();
 
     // Make a call expecting a timeout reading the response headers.
@@ -584,7 +585,7 @@ public final class HttpOverHttp2Test {
         .throttleBody(1024, 1, SECONDS)); // Slow connection 1KiB/second.
 
     client = client.newBuilder()
-        .readTimeout(2, SECONDS)
+        .readTimeout(Duration.ofSeconds(2))
         .build();
 
     Call call = client.newCall(new Request.Builder()
@@ -610,7 +611,7 @@ public final class HttpOverHttp2Test {
         .setBody(body));
 
     client = client.newBuilder()
-        .readTimeout(500, MILLISECONDS) // Half a second to read something.
+        .readTimeout(Duration.ofMillis(500)) // Half a second to read something.
         .build();
 
     // Make a call expecting a timeout reading the response body.
@@ -643,7 +644,7 @@ public final class HttpOverHttp2Test {
         .setBodyDelay(1, SECONDS));
 
     OkHttpClient client1 = client.newBuilder()
-        .readTimeout(2000, MILLISECONDS)
+        .readTimeout(Duration.ofSeconds(2))
         .build();
     Call call1 = client1
         .newCall(new Request.Builder()
@@ -651,7 +652,7 @@ public final class HttpOverHttp2Test {
             .build());
 
     OkHttpClient client2 = client.newBuilder()
-        .readTimeout(200, MILLISECONDS)
+        .readTimeout(Duration.ofMillis(200))
         .build();
     Call call2 = client2
         .newCall(new Request.Builder()
@@ -1286,7 +1287,7 @@ public final class HttpOverHttp2Test {
   @Test public void pingsTransmitted() throws Exception {
     // Ping every 500 ms, starting at 500 ms.
     client = client.newBuilder()
-        .pingInterval(500, TimeUnit.MILLISECONDS)
+        .pingInterval(Duration.ofMillis(500))
         .build();
 
     // Delay the response to give 1 ping enough time to be sent and replied to.
@@ -1323,8 +1324,8 @@ public final class HttpOverHttp2Test {
 
     // Ping every 500 ms, starting at 500 ms.
     client = client.newBuilder()
-        .readTimeout(10, TimeUnit.SECONDS) // Confirm we fail before the read timeout.
-        .pingInterval(500, TimeUnit.MILLISECONDS)
+        .readTimeout(Duration.ofSeconds(10)) // Confirm we fail before the read timeout.
+        .pingInterval(Duration.ofMillis(500))
         .build();
 
     // Set up the server to ignore the socket. It won't respond to pings!
@@ -1360,7 +1361,7 @@ public final class HttpOverHttp2Test {
     TestUtil.assumeNotWindows();
 
     client = client.newBuilder()
-        .readTimeout(500, MILLISECONDS)
+        .readTimeout(Duration.ofMillis(500))
         .build();
 
     // Stalling the socket will cause TWO requests to time out!
@@ -1403,7 +1404,7 @@ public final class HttpOverHttp2Test {
 
   @Test public void oneStreamTimeoutDoesNotBreakConnection() throws Exception {
     client = client.newBuilder()
-        .readTimeout(500, MILLISECONDS)
+        .readTimeout(Duration.ofMillis(500))
         .build();
 
     server.enqueue(new MockResponse()

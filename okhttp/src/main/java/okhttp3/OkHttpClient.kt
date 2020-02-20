@@ -24,6 +24,7 @@ import java.util.Collections
 import java.util.Random
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeUnit.MILLISECONDS
 import javax.net.SocketFactory
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSocketFactory
@@ -905,7 +906,7 @@ open class OkHttpClient internal constructor(
      */
     @IgnoreJRERequirement
     fun callTimeout(duration: Duration) = apply {
-      callTimeout = checkDuration("timeout", duration.toMillis(), TimeUnit.MILLISECONDS)
+      callTimeout(duration.toMillis(), MILLISECONDS)
     }
 
     /**
@@ -928,7 +929,7 @@ open class OkHttpClient internal constructor(
      */
     @IgnoreJRERequirement
     fun connectTimeout(duration: Duration) = apply {
-      connectTimeout = checkDuration("timeout", duration.toMillis(), TimeUnit.MILLISECONDS)
+      connectTimeout(duration.toMillis(), MILLISECONDS)
     }
 
     /**
@@ -957,7 +958,7 @@ open class OkHttpClient internal constructor(
      */
     @IgnoreJRERequirement
     fun readTimeout(duration: Duration) = apply {
-      readTimeout = checkDuration("timeout", duration.toMillis(), TimeUnit.MILLISECONDS)
+      readTimeout(duration.toMillis(), MILLISECONDS)
     }
 
     /**
@@ -984,7 +985,7 @@ open class OkHttpClient internal constructor(
      */
     @IgnoreJRERequirement
     fun writeTimeout(duration: Duration) = apply {
-      writeTimeout = checkDuration("timeout", duration.toMillis(), TimeUnit.MILLISECONDS)
+      writeTimeout(duration.toMillis(), MILLISECONDS)
     }
 
     /**
@@ -1019,7 +1020,7 @@ open class OkHttpClient internal constructor(
      */
     @IgnoreJRERequirement
     fun pingInterval(duration: Duration) = apply {
-      pingInterval = checkDuration("timeout", duration.toMillis(), TimeUnit.MILLISECONDS)
+      pingInterval(duration.toMillis(), MILLISECONDS)
     }
 
     fun build(): OkHttpClient = OkHttpClient(this)

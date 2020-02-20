@@ -38,6 +38,7 @@ import java.net.UnknownHostException;
 import java.security.KeyStore;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -2572,7 +2573,7 @@ public final class URLConnectionTest {
             return socket;
           }
         })
-        .writeTimeout(500, TimeUnit.MILLISECONDS)
+        .writeTimeout(Duration.ofMillis(500))
         .build();
 
     server.start();
