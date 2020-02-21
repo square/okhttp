@@ -48,7 +48,7 @@
     <airlift.version>0.7</airlift.version>
     <!-- ALPN library targeted to Java 7 -->
     <alpn.jdk7.version>7.1.2.v20141202</alpn.jdk7.version>
-    <android.version>4.1.1.4</android.version>
+    <robolectric.version>10-robolectric-5803371</robolectric.version>
     <animal.sniffer.version>1.15</animal.sniffer.version>
     <apache.http.version>4.2.6</apache.http.version>
     <bouncycastle.version>1.60</bouncycastle.version>
@@ -124,9 +124,9 @@
         <version>${guava.version}</version>
       </dependency>
       <dependency>
-        <groupId>com.google.android</groupId>
-        <artifactId>android</artifactId>
-        <version>${android.version}</version>
+        <groupId>org.robolectric</groupId>
+        <artifactId>android-all</artifactId>
+        <version>${robolectric.version}</version>
       </dependency>
       <dependency>
         <groupId>com.squareup.moshi</groupId>
