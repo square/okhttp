@@ -25,7 +25,7 @@ android {
     versionName "1.0"
 
     testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-    testInstrumentationRunnerArguments(['notClass': 'org.conscrypt.KitKatPlatformOpenSSLSocketImplAdapter'])
+    testInstrumentationRunnerArguments(['notClass': 'org.conscrypt.KitKatPlatformOpenSSLSocketImplAdapter,org.bouncycastle.pqc.crypto.qtesla.QTeslaKeyEncodingTests'])
   }
 }
 
