@@ -41,7 +41,7 @@
 
     <!-- Compilation -->
     <airlift.version>0.8</airlift.version>
-    <android.version>4.1.1.4</android.version>
+    <robolectric.version>10-robolectric-5803371</robolectric.version>
     <animal.sniffer.version>1.17</animal.sniffer.version>
     <bouncycastle.version>1.60</bouncycastle.version>
     <guava.version>27.0.1-jre</guava.version>
@@ -112,9 +112,9 @@
         <version>${guava.version}</version>
       </dependency>
       <dependency>
-        <groupId>com.google.android</groupId>
-        <artifactId>android</artifactId>
-        <version>${android.version}</version>
+        <groupId>org.robolectric</groupId>
+        <artifactId>android-all</artifactId>
+        <version>${robolectric.version}</version>
       </dependency>
       <dependency>
         <groupId>com.squareup.moshi</groupId>

@@ -16,7 +16,8 @@
 package okhttp3.internal.platform;
 
 import android.annotation.SuppressLint;
-import java.lang.reflect.InvocationTargetException;
+import android.net.ssl.SSLSockets;
+import android.os.Build;
 import java.lang.reflect.Method;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -26,16 +27,10 @@ import okhttp3.Protocol;
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
 
 /** Android 10+. */
+@SuppressLint("NewApi")
 class Android10Platform extends AndroidPlatform {
-  private final Method setUseSessionTickets;
-  private final Method isSupportedSocket;
-
-  Android10Platform(Class<?> sslParametersClass,
-      Method setUseSessionTickets,
-      Method isSupportedSocket) {
+  Android10Platform(Class<?> sslParametersClass) {
     super(sslParametersClass, null, null, null, null, null);
-    this.setUseSessionTickets = setUseSessionTickets;
-    this.isSupportedSocket = isSupportedSocket;
   }
 
   @SuppressLint("NewApi")
@@ -54,22 +49,11 @@ class Android10Platform extends AndroidPlatform {
   }
 
   private void enableSessionTickets(SSLSocket sslSocket) {
-    try {
-      if (isSupported(sslSocket)) {
-        // TODO we should ideally build against Android R public APIs instead of reflection
-        setUseSessionTickets.invoke(null, sslSocket, true);
-      }
-    } catch (IllegalAccessException | InvocationTargetException e) {
-      throw new AssertionError(e);
+    if (SSLSockets.isSupportedSocket(sslSocket)) {
+      SSLSockets.setUseSessionTickets(sslSocket, true);
     }
   }
 
-  private boolean isSupported(SSLSocket sslSocket)
-      throws InvocationTargetException, IllegalAccessException {
-    return (boolean) isSupportedSocket.invoke(null, sslSocket);
-  }
-
-  @SuppressLint("NewApi")
   @IgnoreJRERequirement
   @Override public @Nullable String getSelectedProtocol(SSLSocket socket) {
     String alpnResult = socket.getApplicationProtocol();
@@ -82,16 +66,15 @@ class Android10Platform extends AndroidPlatform {
   }
 
   public static @Nullable Platform buildIfSupported() {
-    // Attempt to find Android 10+ APIs.
     try {
-      Class<?> sslParametersClass = Class.forName("com.android.org.conscrypt.SSLParametersImpl");
-      Class<?> sslSocketsClass = Class.forName("android.net.ssl.SSLSockets");
-      Method setUseSessionTickets = sslSocketsClass.getDeclaredMethod(
-          "setUseSessionTickets", SSLSocket.class, boolean.class);
-      Method isSupportedSocket = sslSocketsClass.getMethod("isSupportedSocket", SSLSocket.class);
-      return new Android10Platform(sslParametersClass, setUseSessionTickets, isSupportedSocket);
+      if (Build.VERSION.SDK_INT >= 29) {
+        Class<?> sslParametersClass = Class.forName("com.android.org.conscrypt.SSLParametersImpl");
+
+        return new Android10Platform(sslParametersClass);
+      }
     } catch (ReflectiveOperationException ignored) {
-      return null; // Not an Android 11+ runtime.
     }
+
+    return null; // Not an Android 10+ runtime.
   }
 }
