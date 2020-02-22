@@ -25,7 +25,7 @@ buildscript {
 
   ext.deps = [
       'picocli': "info.picocli:picocli:${versions.picocli}",
-      'android': "org.robolectric:android-all:9-robolectric-4913185-2",
+      'android': "org.robolectric:android-all:10-robolectric-5803371",
       'animalSniffer': "org.codehaus.mojo:animal-sniffer-annotations:${versions.animalSniffer}",
       'assertj': "org.assertj:assertj-core:${versions.assertj}",
       'bouncycastle': "org.bouncycastle:bcprov-jdk15on:${versions.bouncycastle}",

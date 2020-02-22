@@ -15,7 +15,8 @@
  */
 package okhttp3.internal.platform.android
 
-import android.net.SSLCertificateSocketFactory
+import android.annotation.SuppressLint
+import android.net.ssl.SSLSockets
 import android.os.Build
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
@@ -28,9 +29,6 @@ import okhttp3.internal.platform.Platform
  * Simple non-reflection SocketAdapter for Android Q.
  */
 class Android10SocketAdapter : SocketAdapter {
-  private val socketFactory =
-      SSLCertificateSocketFactory.getDefault(10000) as SSLCertificateSocketFactory
-
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? = null
 
   override fun matchesSocketFactory(sslSocketFactory: SSLSocketFactory): Boolean = false
@@ -40,18 +38,20 @@ class Android10SocketAdapter : SocketAdapter {
 
   override fun isSupported(): Boolean = Companion.isSupported()
 
+  @SuppressLint("NewApi")
   override fun getSelectedProtocol(sslSocket: SSLSocket): String? =
       when (val protocol = sslSocket.applicationProtocol) {
         null, "" -> null
         else -> protocol
       }
 
+  @SuppressLint("NewApi")
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
     hostname: String?,
     protocols: List<Protocol>
   ) {
-    socketFactory.setUseSessionTickets(sslSocket, true)
+    SSLSockets.setUseSessionTickets(sslSocket, true)
 
     val sslParameters = sslSocket.sslParameters
 
