@@ -28,24 +28,22 @@ import okhttp3.internal.platform.Platform
 /**
  * Simple non-reflection SocketAdapter for Android Q.
  */
+@SuppressLint("NewApi")
 class Android10SocketAdapter : SocketAdapter {
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? = null
 
   override fun matchesSocketFactory(sslSocketFactory: SSLSocketFactory): Boolean = false
 
-  override fun matchesSocket(sslSocket: SSLSocket): Boolean = sslSocket.javaClass.name.startsWith(
-      "com.android.org.conscrypt")
+  override fun matchesSocket(sslSocket: SSLSocket): Boolean = SSLSockets.isSupportedSocket(sslSocket)
 
   override fun isSupported(): Boolean = Companion.isSupported()
 
-  @SuppressLint("NewApi")
   override fun getSelectedProtocol(sslSocket: SSLSocket): String? =
       when (val protocol = sslSocket.applicationProtocol) {
         null, "" -> null
         else -> protocol
       }
 
-  @SuppressLint("NewApi")
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
     hostname: String?,
