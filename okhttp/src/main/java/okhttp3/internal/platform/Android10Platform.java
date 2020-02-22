@@ -17,7 +17,6 @@ package okhttp3.internal.platform;
 
 import android.annotation.SuppressLint;
 import android.net.ssl.SSLSockets;
-import android.os.Build;
 import java.util.List;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLParameters;
@@ -29,7 +28,7 @@ import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
 @SuppressLint("NewApi")
 class Android10Platform extends AndroidPlatform {
   Android10Platform(Class<?> sslParametersClass) {
-    super(sslParametersClass, null, null, null, null, null);
+    super(sslParametersClass, null, null, null, null);
   }
 
   @SuppressLint("NewApi")
