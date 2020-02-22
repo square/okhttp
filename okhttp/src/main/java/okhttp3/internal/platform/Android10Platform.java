@@ -18,7 +18,6 @@ package okhttp3.internal.platform;
 import android.annotation.SuppressLint;
 import android.net.ssl.SSLSockets;
 import android.os.Build;
-import java.lang.reflect.Method;
 import java.util.List;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLParameters;
@@ -67,8 +66,9 @@ class Android10Platform extends AndroidPlatform {
 
   public static @Nullable Platform buildIfSupported() {
     try {
-      if (Build.VERSION.SDK_INT >= 29) {
-        Class<?> sslParametersClass = Class.forName("com.android.org.conscrypt.SSLParametersImpl");
+      if (getSdkInt() >= 29) {
+        Class<?> sslParametersClass =
+            Class.forName("com.android.org.conscrypt.SSLParametersImpl");
 
         return new Android10Platform(sslParametersClass);
       }
