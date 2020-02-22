@@ -49,7 +49,7 @@
     <!-- ALPN library targeted to Java 7 -->
     <alpn.jdk7.version>7.1.2.v20141202</alpn.jdk7.version>
     <robolectric.version>10-robolectric-5803371</robolectric.version>
-    <animal.sniffer.version>1.15</animal.sniffer.version>
+    <animal.sniffer.version>1.17</animal.sniffer.version>
     <apache.http.version>4.2.6</apache.http.version>
     <bouncycastle.version>1.60</bouncycastle.version>
     <guava.version>16.0</guava.version>
