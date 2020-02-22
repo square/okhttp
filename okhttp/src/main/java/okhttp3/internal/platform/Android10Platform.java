@@ -89,7 +89,7 @@ class Android10Platform extends AndroidPlatform {
       Method setUseSessionTickets = sslSocketsClass.getDeclaredMethod(
           "setUseSessionTickets", SSLSocket.class, boolean.class);
       Method isSupportedSocket = sslSocketsClass.getMethod("isSupportedSocket", SSLSocket.class);
-      return new Android11Platform(sslParametersClass, setUseSessionTickets, isSupportedSocket);
+      return new Android10Platform(sslParametersClass, setUseSessionTickets, isSupportedSocket);
     } catch (ReflectiveOperationException ignored) {
       return null; // Not an Android 11+ runtime.
     }
