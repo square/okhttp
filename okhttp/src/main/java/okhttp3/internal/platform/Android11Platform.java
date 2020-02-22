@@ -54,6 +54,7 @@ class Android11Platform extends AndroidPlatform {
   private void enableSessionTickets(SSLSocket sslSocket) {
     try {
       if (isSupported(sslSocket)) {
+        // TODO we should ideally build against Android R public APIs instead of reflection
         setUseSessionTickets.invoke(null, sslSocket, true);
       }
     } catch (IllegalAccessException | InvocationTargetException e) {
