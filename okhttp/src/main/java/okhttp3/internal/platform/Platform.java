@@ -199,10 +199,10 @@ public class Platform {
 
   /** Attempt to match the host runtime to a capable Platform implementation. */
   private static Platform findPlatform() {
-    Platform android11 = Android11Platform.buildIfSupported();
+    Platform android10 = Android10Platform.buildIfSupported();
 
-    if (android11 != null) {
-      return android11;
+    if (android10 != null) {
+      return android10;
     }
 
     Platform android = AndroidPlatform.buildIfSupported();

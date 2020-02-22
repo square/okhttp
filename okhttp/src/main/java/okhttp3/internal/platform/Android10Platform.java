@@ -26,11 +26,11 @@ import okhttp3.Protocol;
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
 
 /** Android 10+. */
-class Android11Platform extends AndroidPlatform {
+class Android10Platform extends AndroidPlatform {
   private final Method setUseSessionTickets;
   private final Method isSupportedSocket;
 
-  Android11Platform(Class<?> sslParametersClass,
+  Android10Platform(Class<?> sslParametersClass,
       Method setUseSessionTickets,
       Method isSupportedSocket) {
     super(sslParametersClass, null, null, null, null, null);
