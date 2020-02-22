@@ -25,14 +25,14 @@ import javax.net.ssl.SSLSocket;
 import okhttp3.Protocol;
 
 /** Android 11+. */
-class Android11Platform extends BaseAndroidPlatform {
+class Android11Platform extends AndroidPlatform {
   private final Method setUseSessionTickets;
   private final Method isSupportedSocket;
 
   Android11Platform(Class<?> sslParametersClass,
       Method setUseSessionTickets,
       Method isSupportedSocket) {
-    super(sslParametersClass);
+    super(sslParametersClass, null, null, null, null, null);
     this.setUseSessionTickets = setUseSessionTickets;
     this.isSupportedSocket = isSupportedSocket;
   }
@@ -40,20 +40,22 @@ class Android11Platform extends BaseAndroidPlatform {
   @SuppressLint("NewApi")
   @Override public void configureTlsExtensions(
       SSLSocket sslSocket, String hostname, List<Protocol> protocols) {
+    enableSessionTickets(sslSocket);
+
+    SSLParameters sslParameters = sslSocket.getSSLParameters();
+
+    // Enable ALPN.
+    String[] protocolsArray = Platform.alpnProtocolNames(protocols).toArray(new String[0]);
+    sslParameters.setApplicationProtocols(protocolsArray);
+
+    sslSocket.setSSLParameters(sslParameters);
+  }
+
+  private void enableSessionTickets(SSLSocket sslSocket) {
     try {
-      if (!isSupported(sslSocket)) {
-        return; // No TLS extensions if the socket class is custom.
+      if (isSupported(sslSocket)) {
+        setUseSessionTickets.invoke(null, sslSocket, true);
       }
-
-      setUseSessionTickets.invoke(null, sslSocket, true);
-
-      SSLParameters sslParameters = sslSocket.getSSLParameters();
-
-      // Enable ALPN.
-      String[] protocolsArray = Platform.alpnProtocolNames(protocols).toArray(new String[0]);
-      sslParameters.setApplicationProtocols(protocolsArray);
-
-      sslSocket.setSSLParameters(sslParameters);
     } catch (IllegalAccessException | InvocationTargetException e) {
       throw new AssertionError(e);
     }
@@ -66,25 +68,17 @@ class Android11Platform extends BaseAndroidPlatform {
 
   @SuppressLint("NewApi")
   @Override public @Nullable String getSelectedProtocol(SSLSocket socket) {
-    try {
-      if (!isSupported(socket)) {
-        return null; // No TLS extensions if the socket class is custom.
-      }
+    String alpnResult = socket.getApplicationProtocol();
 
-      String alpnResult = socket.getApplicationProtocol();
-
-      if (alpnResult == null || alpnResult.isEmpty()) {
-        return null;
-      }
-
-      return alpnResult;
-    } catch (IllegalAccessException | InvocationTargetException e) {
-      throw new AssertionError(e);
+    if (alpnResult == null || alpnResult.isEmpty()) {
+      return null;
     }
+
+    return alpnResult;
   }
 
   public static @Nullable Platform buildIfSupported() {
-    // Attempt to find Android 5+ APIs.
+    // Attempt to find Android 11+ APIs.
     try {
       Class<?> sslParametersClass = Class.forName("com.android.org.conscrypt.SSLParametersImpl");
       Class<?> sslSocketsClass = Class.forName("android.net.ssl.SSLSockets");
