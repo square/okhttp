@@ -23,6 +23,7 @@ import javax.annotation.Nullable;
 import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLSocket;
 import okhttp3.Protocol;
+import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
 
 /** Android 11+. */
 class Android11Platform extends AndroidPlatform {
@@ -38,6 +39,7 @@ class Android11Platform extends AndroidPlatform {
   }
 
   @SuppressLint("NewApi")
+  @IgnoreJRERequirement
   @Override public void configureTlsExtensions(
       SSLSocket sslSocket, String hostname, List<Protocol> protocols) {
     enableSessionTickets(sslSocket);
@@ -68,6 +70,7 @@ class Android11Platform extends AndroidPlatform {
   }
 
   @SuppressLint("NewApi")
+  @IgnoreJRERequirement
   @Override public @Nullable String getSelectedProtocol(SSLSocket socket) {
     String alpnResult = socket.getApplicationProtocol();
 
