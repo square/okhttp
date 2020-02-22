@@ -25,7 +25,7 @@ import javax.net.ssl.SSLSocket;
 import okhttp3.Protocol;
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
 
-/** Android 11+. */
+/** Android 10+. */
 class Android11Platform extends AndroidPlatform {
   private final Method setUseSessionTickets;
   private final Method isSupportedSocket;
@@ -82,7 +82,7 @@ class Android11Platform extends AndroidPlatform {
   }
 
   public static @Nullable Platform buildIfSupported() {
-    // Attempt to find Android 11+ APIs.
+    // Attempt to find Android 10+ APIs.
     try {
       Class<?> sslParametersClass = Class.forName("com.android.org.conscrypt.SSLParametersImpl");
       Class<?> sslSocketsClass = Class.forName("android.net.ssl.SSLSockets");
