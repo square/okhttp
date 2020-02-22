@@ -24,7 +24,7 @@
     </dependency>
     <dependency>
       <groupId>org.robolectric</groupId>
-      <artifactId>android-all</artifactId>HandshakeCertificatesTest
+      <artifactId>android-all</artifactId>
       <scope>provided</scope>
     </dependency>
     <dependency>
