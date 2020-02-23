@@ -237,6 +237,10 @@ class AndroidPlatform extends Platform {
   }
 
   public static Platform buildIfSupported() {
+    if (getSdkInt() == 0) {
+      return null;
+    }
+
     // Attempt to find Android 2.3+ APIs.
     try {
       Class<?> sslParametersClass;
@@ -457,6 +461,15 @@ class AndroidPlatform extends Platform {
       return SSLContext.getInstance("TLS");
     } catch (NoSuchAlgorithmException e) {
       throw new IllegalStateException("No TLS provider", e);
+    }
+  }
+
+  static int getSdkInt() {
+    try {
+      return Build.VERSION.SDK_INT;
+    } catch (NoClassDefFoundError ignored) {
+      // fails fatally against robolectric classes
+      return 0;
     }
   }
 }

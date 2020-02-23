@@ -23,8 +23,8 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>com.google.android</groupId>
-      <artifactId>android</artifactId>
+      <groupId>org.robolectric</groupId>
+      <artifactId>android-all</artifactId>
       <scope>provided</scope>
     </dependency>
     <dependency>
