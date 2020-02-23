@@ -200,6 +200,7 @@ class AndroidPlatform : Platform() {
 
     val isSupported: Boolean = when {
       !isAndroid -> false
+      Build.VERSION.SDK_INT >= 30 -> false // graylisted methods are banned
       else -> {
         // Fail Fast
         check(

@@ -38,12 +38,14 @@ class Android10SocketAdapter : SocketAdapter {
 
   override fun isSupported(): Boolean = Companion.isSupported()
 
+  @SuppressLint("NewApi")
   override fun getSelectedProtocol(sslSocket: SSLSocket): String? =
       when (val protocol = sslSocket.applicationProtocol) {
         null, "" -> null
         else -> protocol
       }
 
+  @SuppressLint("NewApi")
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
     hostname: String?,
