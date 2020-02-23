@@ -17,7 +17,6 @@ package okhttp3.internal.platform;
 
 import android.annotation.SuppressLint;
 import android.net.ssl.SSLSockets;
-import android.os.Build;
 import java.util.List;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLParameters;
