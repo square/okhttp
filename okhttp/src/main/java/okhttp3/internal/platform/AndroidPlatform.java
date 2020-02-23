@@ -214,9 +214,14 @@ class AndroidPlatform extends Platform {
   }
 
   public static @Nullable Platform buildIfSupported() {
+    if (getSdkInt() == 0) {
+      return null;
+    }
+
     // Attempt to find Android 5+ APIs.
     Class<?> sslParametersClass;
     Class<?> sslSocketClass;
+
     try {
       sslParametersClass = Class.forName("com.android.org.conscrypt.SSLParametersImpl");
       sslSocketClass = Class.forName("com.android.org.conscrypt.OpenSSLSocketImpl");
@@ -419,6 +424,15 @@ class AndroidPlatform extends Platform {
       return SSLContext.getInstance("TLS");
     } catch (NoSuchAlgorithmException e) {
       throw new IllegalStateException("No TLS provider", e);
+    }
+  }
+
+  static int getSdkInt() {
+    try {
+      return Build.VERSION.SDK_INT;
+    } catch (NoClassDefFoundError ignored) {
+      // fails fatally against robolectric classes
+      return 0;
     }
   }
 }
