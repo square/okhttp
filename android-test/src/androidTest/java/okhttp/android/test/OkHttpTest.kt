@@ -360,8 +360,6 @@ class OkHttpTest {
 
   @Test
   fun testEventListener() {
-    client.connectionPool.evictAll()
-
     val eventListener = RecordingEventListener()
 
     enableTls()
