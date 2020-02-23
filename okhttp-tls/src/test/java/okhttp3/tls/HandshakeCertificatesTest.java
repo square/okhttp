@@ -22,11 +22,13 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 import javax.net.ServerSocketFactory;
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocket;
@@ -126,6 +128,7 @@ public final class HandshakeCertificatesTest {
         .build();
 
     HandshakeCertificates handshakeCertificates = new HandshakeCertificates.Builder()
+        .addTrustedCertificate(root.certificate()) // BouncyCastle requires at least one
         .heldCertificate(certificate, intermediate.certificate())
         .build();
     assertPrivateKeysEquals(certificate.keyPair().getPrivate(),
@@ -138,14 +141,13 @@ public final class HandshakeCertificatesTest {
     HandshakeCertificates handshakeCertificates = new HandshakeCertificates.Builder()
         .addPlatformTrustedCertificates()
         .build();
-    Set<String> names = new LinkedHashSet<>();
-    for (X509Certificate certificate : handshakeCertificates.trustManager().getAcceptedIssuers()) {
-      // Abbreviate a long name like "CN=Entrust Root Certification Authority - G2, OU=..."
-      String name = certificate.getSubjectDN().getName();
-      names.add(name.substring(0, name.indexOf(" ")));
-    }
+    X509Certificate[] acceptedIssuers = handshakeCertificates.trustManager().getAcceptedIssuers();
+    Set<String> names = Arrays.stream(acceptedIssuers)
+        .map(cert -> cert.getSubjectDN().getName())
+        .collect(Collectors.toCollection(LinkedHashSet::new));
+
     // It's safe to assume all platforms will have a major Internet certificate issuer.
-    assertThat(names).contains("CN=Entrust");
+    assertThat(names).anyMatch(s -> s.matches("[A-Z]+=Entrust.*"));
   }
 
   private InetSocketAddress startTlsServer() throws IOException {

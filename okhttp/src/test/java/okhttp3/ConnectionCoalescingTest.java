@@ -100,8 +100,8 @@ public final class ConnectionCoalescingTest {
    * are used if present no special consideration of common name.
    */
   @Test public void commonThenAlternative() throws Exception {
-    server.enqueue(new MockResponse().setResponseCode(200));
-    server.enqueue(new MockResponse().setResponseCode(200));
+    server.enqueue(new MockResponse());
+    server.enqueue(new MockResponse());
 
     assert200Http2Response(execute(url), server.getHostName());
 
@@ -116,8 +116,8 @@ public final class ConnectionCoalescingTest {
    * names are used if present no special consideration of common name.
    */
   @Test public void alternativeThenCommon() throws Exception {
-    server.enqueue(new MockResponse().setResponseCode(200));
-    server.enqueue(new MockResponse().setResponseCode(200));
+    server.enqueue(new MockResponse());
+    server.enqueue(new MockResponse());
 
     HttpUrl sanUrl = url.newBuilder().host("san.com").build();
     assert200Http2Response(execute(sanUrl), "san.com");
@@ -129,8 +129,8 @@ public final class ConnectionCoalescingTest {
 
   /** Test a previously coalesced connection that's no longer healthy. */
   @Test public void staleCoalescedConnection() throws Exception {
-    server.enqueue(new MockResponse().setResponseCode(200));
-    server.enqueue(new MockResponse().setResponseCode(200));
+    server.enqueue(new MockResponse());
+    server.enqueue(new MockResponse());
 
     AtomicReference<Connection> connection = new AtomicReference<>();
     client = client.newBuilder()
@@ -163,8 +163,8 @@ public final class ConnectionCoalescingTest {
    * - The second request discovers the coalesced connection is unhealthy just after acquiring it.
    */
   @Test public void coalescedConnectionDestroyedAfterAcquire() throws Exception {
-    server.enqueue(new MockResponse().setResponseCode(200));
-    server.enqueue(new MockResponse().setResponseCode(200));
+    server.enqueue(new MockResponse());
+    server.enqueue(new MockResponse());
 
     dns.set("san.com", Dns.SYSTEM.lookup(server.getHostName()).subList(0, 1));
     HttpUrl sanUrl = url.newBuilder().host("san.com").build();
@@ -255,7 +255,7 @@ public final class ConnectionCoalescingTest {
 
   /** If the existing connection matches a SAN but not a match for DNS then skip. */
   @Test public void skipsWhenDnsDontMatch() throws Exception {
-    server.enqueue(new MockResponse().setResponseCode(200));
+    server.enqueue(new MockResponse());
 
     assert200Http2Response(execute(url), server.getHostName());
 
@@ -269,7 +269,7 @@ public final class ConnectionCoalescingTest {
 
   /** Not in the certificate SAN. */
   @Test public void skipsWhenNotSubjectAltName() throws Exception {
-    server.enqueue(new MockResponse().setResponseCode(200));
+    server.enqueue(new MockResponse());
 
     assert200Http2Response(execute(url), server.getHostName());
 
@@ -289,8 +289,8 @@ public final class ConnectionCoalescingTest {
         .build();
     client = client.newBuilder().certificatePinner(pinner).build();
 
-    server.enqueue(new MockResponse().setResponseCode(200));
-    server.enqueue(new MockResponse().setResponseCode(200));
+    server.enqueue(new MockResponse());
+    server.enqueue(new MockResponse());
 
     assert200Http2Response(execute(url), server.getHostName());
 
@@ -308,7 +308,7 @@ public final class ConnectionCoalescingTest {
         .build();
     client = client.newBuilder().certificatePinner(pinner).build();
 
-    server.enqueue(new MockResponse().setResponseCode(200));
+    server.enqueue(new MockResponse());
 
     assert200Http2Response(execute(url), server.getHostName());
 
@@ -329,8 +329,8 @@ public final class ConnectionCoalescingTest {
     HostnameVerifier verifier = (name, session) -> true;
     client = client.newBuilder().hostnameVerifier(verifier).build();
 
-    server.enqueue(new MockResponse().setResponseCode(200));
-    server.enqueue(new MockResponse().setResponseCode(200));
+    server.enqueue(new MockResponse());
+    server.enqueue(new MockResponse());
 
     assert200Http2Response(execute(url), server.getHostName());
 
@@ -346,8 +346,8 @@ public final class ConnectionCoalescingTest {
    * first DNS result for the first time.
    */
   @Test public void prefersExistingCompatible() throws Exception {
-    server.enqueue(new MockResponse().setResponseCode(200));
-    server.enqueue(new MockResponse().setResponseCode(200));
+    server.enqueue(new MockResponse());
+    server.enqueue(new MockResponse());
 
     AtomicInteger connectCount = new AtomicInteger();
     EventListener listener = new EventListener() {
@@ -375,8 +375,8 @@ public final class ConnectionCoalescingTest {
   /** Check that wildcard SANs are supported. */
   @Test public void commonThenWildcard() throws Exception {
 
-    server.enqueue(new MockResponse().setResponseCode(200));
-    server.enqueue(new MockResponse().setResponseCode(200));
+    server.enqueue(new MockResponse());
+    server.enqueue(new MockResponse());
 
     assert200Http2Response(execute(url), server.getHostName());
 
@@ -392,8 +392,8 @@ public final class ConnectionCoalescingTest {
         .addNetworkInterceptor(chain -> chain.proceed(chain.request()))
         .build();
 
-    server.enqueue(new MockResponse().setResponseCode(200));
-    server.enqueue(new MockResponse().setResponseCode(200));
+    server.enqueue(new MockResponse());
+    server.enqueue(new MockResponse());
 
     assert200Http2Response(execute(url), server.getHostName());
 
@@ -401,6 +401,35 @@ public final class ConnectionCoalescingTest {
     assert200Http2Response(execute(sanUrl), "san.com");
 
     assertThat(client.connectionPool().connectionCount()).isEqualTo(1);
+  }
+
+  @Test public void misdirectedRequestResponseCode() throws Exception {
+    server.enqueue(new MockResponse()
+        .setBody("seed connection"));
+    server.enqueue(new MockResponse()
+        .setResponseCode(421)
+        .setBody("misdirected!"));
+    server.enqueue(new MockResponse()
+        .setBody("after misdirect"));
+
+    // Seed the connection pool.
+    assert200Http2Response(execute(url), server.getHostName());
+
+    // Use the coalesced connection which should retry on a fresh connection.
+    HttpUrl sanUrl = url.newBuilder()
+        .host("san.com")
+        .build();
+    try (Response response = execute(sanUrl)) {
+      assertThat(response.code()).isEqualTo(200);
+      assertThat(response.priorResponse().code()).isEqualTo(421);
+      assertThat(response.body().string()).isEqualTo("after misdirect");
+    }
+
+    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
+    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(1);
+    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0); // Fresh connection.
+
+    assertThat(client.connectionPool().connectionCount()).isEqualTo(2);
   }
 
   private Response execute(HttpUrl url) throws IOException {

@@ -58,7 +58,7 @@ class OpenJSSETest {
       assertEquals(TlsVersion.TLS_1_3, response.handshake?.tlsVersion)
       assertEquals(Protocol.HTTP_2, response.protocol)
 
-      assertThat(response.exchange?.connection()?.socket()).isInstanceOf(SSLSocketImpl::class.java)
+      assertThat(response.exchange?.connection?.socket()).isInstanceOf(SSLSocketImpl::class.java)
     }
   }
 

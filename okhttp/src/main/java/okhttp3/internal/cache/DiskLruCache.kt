@@ -30,6 +30,7 @@ import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.Task
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.io.FileSystem
+import okhttp3.internal.okHttpName
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.WARN
 import okio.BufferedSink
@@ -169,7 +170,7 @@ class DiskLruCache internal constructor(
   private var nextSequenceNumber: Long = 0
 
   private val cleanupQueue = taskRunner.newQueue()
-  private val cleanupTask = object : Task("OkHttp Cache") {
+  private val cleanupTask = object : Task("$okHttpName Cache") {
     override fun runOnce(): Long {
       synchronized(this@DiskLruCache) {
         if (!initialized || closed) {

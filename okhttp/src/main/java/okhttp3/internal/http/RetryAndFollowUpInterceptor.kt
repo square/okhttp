@@ -36,11 +36,12 @@ import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.Route
 import okhttp3.internal.canReuseConnectionFor
 import okhttp3.internal.closeQuietly
+import okhttp3.internal.connection.Exchange
+import okhttp3.internal.connection.RealCall
 import okhttp3.internal.connection.RouteException
-import okhttp3.internal.connection.Transmitter
+import okhttp3.internal.http.StatusLine.Companion.HTTP_MISDIRECTED_REQUEST
 import okhttp3.internal.http.StatusLine.Companion.HTTP_PERM_REDIRECT
 import okhttp3.internal.http.StatusLine.Companion.HTTP_TEMP_REDIRECT
 import okhttp3.internal.http2.ConnectionShutdownException
@@ -53,77 +54,78 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
 
   @Throws(IOException::class)
   override fun intercept(chain: Interceptor.Chain): Response {
-    var request = chain.request()
     val realChain = chain as RealInterceptorChain
-    val transmitter = realChain.transmitter()
+    var request = chain.request
+    val call = realChain.call
     var followUpCount = 0
     var priorResponse: Response? = null
+    var newExchangeFinder = true
     while (true) {
-      transmitter.prepareToConnect(request)
-
-      if (transmitter.isCanceled) {
-        throw IOException("Canceled")
-      }
+      call.enterNetworkInterceptorExchange(request, newExchangeFinder)
 
       var response: Response
-      var success = false
+      var closeActiveExchange = true
       try {
-        response = realChain.proceed(request, transmitter, null)
-        success = true
-      } catch (e: RouteException) {
-        // The attempt to connect via a route failed. The request will not have been sent.
-        if (!recover(e.lastConnectException, transmitter, false, request)) {
-          throw e.firstConnectException
+        if (call.isCanceled()) {
+          throw IOException("Canceled")
         }
-        continue
-      } catch (e: IOException) {
-        // An attempt to communicate with a server failed. The request may have been sent.
-        val requestSendStarted = e !is ConnectionShutdownException
-        if (!recover(e, transmitter, requestSendStarted, request)) throw e
-        continue
+
+        try {
+          response = realChain.proceed(request)
+          newExchangeFinder = true
+        } catch (e: RouteException) {
+          // The attempt to connect via a route failed. The request will not have been sent.
+          if (!recover(e.lastConnectException, call, request, requestSendStarted = false)) {
+            throw e.firstConnectException
+          }
+          newExchangeFinder = false
+          continue
+        } catch (e: IOException) {
+          // An attempt to communicate with a server failed. The request may have been sent.
+          if (!recover(e, call, request, requestSendStarted = e !is ConnectionShutdownException)) {
+            throw e
+          }
+          newExchangeFinder = false
+          continue
+        }
+
+        // Attach the prior response if it exists. Such responses never have a body.
+        if (priorResponse != null) {
+          response = response.newBuilder()
+              .priorResponse(priorResponse.newBuilder()
+                  .body(null)
+                  .build())
+              .build()
+        }
+
+        val exchange = call.interceptorScopedExchange
+        val followUp = followUpRequest(response, exchange)
+
+        if (followUp == null) {
+          if (exchange != null && exchange.isDuplex) {
+            call.timeoutEarlyExit()
+          }
+          closeActiveExchange = false
+          return response
+        }
+
+        val followUpBody = followUp.body
+        if (followUpBody != null && followUpBody.isOneShot()) {
+          closeActiveExchange = false
+          return response
+        }
+
+        response.body?.closeQuietly()
+
+        if (++followUpCount > MAX_FOLLOW_UPS) {
+          throw ProtocolException("Too many follow-up requests: $followUpCount")
+        }
+
+        request = followUp
+        priorResponse = response
       } finally {
-        // The network call threw an exception. Release any resources.
-        if (!success) {
-          transmitter.exchangeDoneDueToException()
-        }
+        call.exitNetworkInterceptorExchange(closeActiveExchange)
       }
-
-      // Attach the prior response if it exists. Such responses never have a body.
-      if (priorResponse != null) {
-        response = response.newBuilder()
-            .priorResponse(priorResponse.newBuilder()
-                .body(null)
-                .build())
-            .build()
-      }
-
-      val exchange = response.exchange
-      val route = exchange?.connection()?.route()
-      val followUp = followUpRequest(response, route)
-
-      if (followUp == null) {
-        if (exchange != null && exchange.isDuplex) {
-          transmitter.timeoutEarlyExit()
-        }
-        return response
-      }
-
-      val followUpBody = followUp.body
-      if (followUpBody != null && followUpBody.isOneShot()) {
-        return response
-      }
-
-      response.body?.closeQuietly()
-      if (transmitter.hasExchange()) {
-        exchange?.detachWithViolence()
-      }
-
-      if (++followUpCount > MAX_FOLLOW_UPS) {
-        throw ProtocolException("Too many follow-up requests: $followUpCount")
-      }
-
-      request = followUp
-      priorResponse = response
     }
   }
 
@@ -135,9 +137,9 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
    */
   private fun recover(
     e: IOException,
-    transmitter: Transmitter,
-    requestSendStarted: Boolean,
-    userRequest: Request
+    call: RealCall,
+    userRequest: Request,
+    requestSendStarted: Boolean
   ): Boolean {
     // The application layer has forbidden retries.
     if (!client.retryOnConnectionFailure) return false
@@ -149,7 +151,8 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
     if (!isRecoverable(e, requestSendStarted)) return false
 
     // No more routes to attempt.
-    if (!transmitter.canRetry()) return false
+    if (!call.retryAfterFailure()) return false
+
     // For failure recovery, use the same route selector with a new connection.
     return true
   }
@@ -197,7 +200,8 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
    * follow-up is either unnecessary or not applicable, this returns null.
    */
   @Throws(IOException::class)
-  private fun followUpRequest(userResponse: Response, route: Route?): Request? {
+  private fun followUpRequest(userResponse: Response, exchange: Exchange?): Request? {
+    val route = exchange?.connection?.route()
     val responseCode = userResponse.code
 
     val method = userResponse.request.method
@@ -265,6 +269,24 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
 
         return null
       }
+
+      HTTP_MISDIRECTED_REQUEST -> {
+        // OkHttp can coalesce HTTP/2 connections even if the domain names are different. See
+        // RealConnection.isEligible(). If we attempted this and the server returned HTTP 421, then
+        // we can retry on a different connection.
+        val requestBody = userResponse.request.body
+        if (requestBody != null && requestBody.isOneShot()) {
+          return null
+        }
+
+        if (exchange == null || !exchange.isCoalescedConnection) {
+          return null
+        }
+
+        exchange.connection.noCoalescedConnections()
+        return userResponse.request
+      }
+
       else -> return null
     }
   }

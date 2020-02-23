@@ -21,6 +21,7 @@ import java.io.InterruptedIOException;
 import java.net.HttpURLConnection;
 import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
+import java.time.Duration;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -33,6 +34,7 @@ import okhttp3.RecordingHostnameVerifier;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.TestLogHandler;
+import okhttp3.TestUtil;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okhttp3.internal.concurrent.TaskRunner;
@@ -76,8 +78,8 @@ public final class WebSocketHttpTest {
   private final WebSocketRecorder serverListener = new WebSocketRecorder("server");
   private final Random random = new Random(0);
   private OkHttpClient client = clientTestRule.newClientBuilder()
-      .writeTimeout(500, TimeUnit.MILLISECONDS)
-      .readTimeout(500, TimeUnit.MILLISECONDS)
+      .writeTimeout(Duration.ofMillis(500))
+      .readTimeout(Duration.ofMillis(500))
       .addInterceptor(chain -> {
         Response response = chain.proceed(chain.request());
         // Ensure application interceptors never see a null body.
@@ -136,6 +138,8 @@ public final class WebSocketHttpTest {
   }
 
   @Test public void nullByteStringThrows() {
+    TestUtil.assumeNotWindows();
+
     webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
     WebSocket webSocket = newWebSocket();
 
@@ -528,6 +532,8 @@ public final class WebSocketHttpTest {
   }
 
   @Test public void wsScheme() {
+    TestUtil.assumeNotWindows();
+
     websocketScheme("ws");
   }
 
@@ -607,7 +613,7 @@ public final class WebSocketHttpTest {
 
   @Test public void clientPingsServerOnInterval() throws Exception {
     client = client.newBuilder()
-        .pingInterval(500, TimeUnit.MILLISECONDS)
+        .pingInterval(Duration.ofMillis(500))
         .build();
 
     webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
@@ -663,8 +669,10 @@ public final class WebSocketHttpTest {
    * 1000 ms.
    */
   @Test public void unacknowledgedPingFailsConnection() {
+    TestUtil.assumeNotWindows();
+
     client = client.newBuilder()
-        .pingInterval(500, TimeUnit.MILLISECONDS)
+        .pingInterval(Duration.ofMillis(500))
         .build();
 
     // Stall in onOpen to prevent pongs from being sent.
@@ -747,9 +755,9 @@ public final class WebSocketHttpTest {
         .setHeadersDelay(500, TimeUnit.MILLISECONDS));
 
     client = client.newBuilder()
-        .readTimeout(0, TimeUnit.MILLISECONDS)
-        .writeTimeout(0, TimeUnit.MILLISECONDS)
-        .callTimeout(100, TimeUnit.MILLISECONDS)
+        .readTimeout(Duration.ZERO)
+        .writeTimeout(Duration.ZERO)
+        .callTimeout(Duration.ofMillis(100))
         .build();
 
     newWebSocket();
@@ -758,7 +766,7 @@ public final class WebSocketHttpTest {
 
   @Test public void callTimeoutDoesNotApplyOnceConnected() throws Exception {
     client = client.newBuilder()
-        .callTimeout(100, TimeUnit.MILLISECONDS)
+        .callTimeout(Duration.ofMillis(100))
         .build();
 
     webServer.enqueue(new MockResponse()

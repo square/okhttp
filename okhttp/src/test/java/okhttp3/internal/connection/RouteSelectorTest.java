@@ -181,6 +181,30 @@ public final class RouteSelectorTest {
     proxySelector.assertRequests(); // No proxy selector requests!
   }
 
+  /**
+   * Don't call through to the proxy selector if we don't have a host name.
+   * https://github.com/square/okhttp/issues/5770
+   */
+  @Test public void proxySelectorNotCalledForNullHost() throws Exception {
+    // The string '>' is okay in a hostname in HttpUrl, which does very light hostname validation.
+    // It is not okay in URI, and so it's stripped and we get a URI with a null host.
+    String bogusHostname = ">";
+    Address address = new Address(bogusHostname, uriPort, dns, socketFactory, null, null, null,
+        authenticator, null, protocols, connectionSpecs, proxySelector);
+    RouteSelector routeSelector = new RouteSelector(address, routeDatabase, call,
+        EventListener.NONE);
+
+    assertThat(routeSelector.hasNext()).isTrue();
+    dns.set(bogusHostname, dns.allocate(1));
+    RouteSelector.Selection selection = routeSelector.next();
+    assertRoute(selection.next(), address, NO_PROXY, dns.lookup(bogusHostname, 0), uriPort);
+
+    assertThat(selection.hasNext()).isFalse();
+    assertThat(routeSelector.hasNext()).isFalse();
+    dns.assertRequests(bogusHostname);
+    proxySelector.assertRequests(); // No proxy selector requests!
+  }
+
   @Test public void proxySelectorReturnsNull() throws Exception {
     ProxySelector nullProxySelector = new ProxySelector() {
       @Override public List<Proxy> select(URI uri) {

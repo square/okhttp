@@ -26,11 +26,11 @@ import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.ProtocolException;
 import java.net.Proxy;
-import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.net.UnknownServiceException;
 import java.security.cert.Certificate;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -890,15 +890,15 @@ public final class CallTest {
     server.enqueue(new MockResponse().setBody("abc"));
     server.enqueue(new MockResponse().setBody("def").throttleBody(1, 750, TimeUnit.MILLISECONDS));
 
-    // First request: time out after 1000ms.
+    // First request: time out after 1s.
     client = client.newBuilder()
-        .readTimeout(1000, TimeUnit.MILLISECONDS)
+        .readTimeout(Duration.ofSeconds(1))
         .build();
     executeSynchronously("/a").assertBody("abc");
 
     // Second request: time out after 250ms.
     client = client.newBuilder()
-        .readTimeout(250, TimeUnit.MILLISECONDS)
+        .readTimeout(Duration.ofMillis(250))
         .build();
     Request request = new Request.Builder().url(server.url("/b")).build();
     Response response = client.newCall(request).execute();
@@ -929,7 +929,7 @@ public final class CallTest {
         .setBody("unreachable!"));
 
     client = client.newBuilder()
-        .readTimeout(100, TimeUnit.MILLISECONDS)
+        .readTimeout(Duration.ofMillis(100))
         .build();
 
     Request request = new Request.Builder().url(server.url("/")).build();
@@ -954,8 +954,8 @@ public final class CallTest {
         .setBody("success!"));
     client = client.newBuilder()
         .proxySelector(proxySelector)
-        .readTimeout(100, TimeUnit.MILLISECONDS)
-        .connectTimeout(100, TimeUnit.MILLISECONDS)
+        .readTimeout(Duration.ofMillis(100))
+        .connectTimeout(Duration.ofMillis(100))
         .build();
 
     Request request = new Request.Builder().url("http://android.com/").build();
@@ -994,10 +994,7 @@ public final class CallTest {
   @Test
   public void interceptorCallsProceedWithoutClosingPriorResponse() throws Exception {
     server.enqueue(new MockResponse()
-        .setBodyDelay(250, TimeUnit.MILLISECONDS)
         .setBody("abc"));
-    server.enqueue(new MockResponse()
-        .setBody("def"));
 
     client = clientTestRule.newClientBuilder()
         .addInterceptor(new Interceptor() {
@@ -1017,8 +1014,7 @@ public final class CallTest {
     Request request = new Request.Builder()
         .url(server.url("/"))
         .build();
-    executeSynchronously(request)
-        .assertFailure(SocketException.class);
+    executeSynchronously(request).assertBody("abc");
   }
 
   /**
@@ -1037,7 +1033,7 @@ public final class CallTest {
 
     client = client.newBuilder()
         .proxySelector(proxySelector)
-        .readTimeout(100, TimeUnit.MILLISECONDS)
+        .readTimeout(Duration.ofMillis(100))
         .build();
 
     Request request = new Request.Builder().url("http://android.com/").build();
@@ -1338,6 +1334,7 @@ public final class CallTest {
   }
 
   @Test public void tlsHostnameVerificationFailure() throws Exception {
+    TestUtil.assumeNotWindows();
     server.enqueue(new MockResponse());
 
     HeldCertificate serverCertificate = new HeldCertificate.Builder()
@@ -2770,7 +2767,7 @@ public final class CallTest {
         .setSocketPolicy(SocketPolicy.NO_RESPONSE));
 
     client = client.newBuilder()
-        .readTimeout(500, TimeUnit.MILLISECONDS)
+        .readTimeout(Duration.ofMillis(500))
         .build();
 
     Request request = new Request.Builder()
@@ -2819,7 +2816,7 @@ public final class CallTest {
 
   @Test public void serverRespondsWith100ContinueOnly() throws Exception {
     client = client.newBuilder()
-        .readTimeout(1, TimeUnit.SECONDS)
+        .readTimeout(Duration.ofSeconds(1))
         .build();
 
     server.enqueue(new MockResponse()
@@ -3033,6 +3030,35 @@ public final class CallTest {
     assertThat(get.getHeader("User-Agent")).isEqualTo("App 1.0");
 
     assertThat(hostnameVerifier.calls).containsExactly("verify android.com");
+  }
+
+  /**
+   * We had a bug where OkHttp would crash if HTTP proxies returned a truncated response.
+   * https://github.com/square/okhttp/issues/5727
+   */
+  @Test public void proxyUpgradeFailsWithTruncatedResponse() throws Exception {
+    server.enqueue(new MockResponse()
+        .setBody("abc")
+        .setHeader("Content-Length", "5")
+        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END));
+
+    RecordingHostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
+    client = client.newBuilder()
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
+        .proxy(server.toProxyAddress())
+        .hostnameVerifier(hostnameVerifier)
+        .build();
+
+    Request request = new Request.Builder()
+        .url("https://android.com/foo")
+        .build();
+    try {
+      client.newCall(request).execute();
+      fail();
+    } catch (IOException expected) {
+      assertThat(expected).hasMessage("unexpected end of stream");
+    }
   }
 
   /** Respond to a proxy authorization challenge. */

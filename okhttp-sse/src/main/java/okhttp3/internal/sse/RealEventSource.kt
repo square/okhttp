@@ -24,7 +24,7 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.ResponseBody
 import okhttp3.internal.EMPTY_RESPONSE
-import okhttp3.internal.connection.Exchange
+import okhttp3.internal.connection.RealCall
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSourceListener
 
@@ -32,13 +32,13 @@ class RealEventSource(
   private val request: Request,
   private val listener: EventSourceListener
 ) : EventSource, ServerSentEventReader.Callback, Callback {
-  private lateinit var call: Call
+  private lateinit var call: RealCall
 
   fun connect(client: OkHttpClient) {
     val client = client.newBuilder()
         .eventListener(EventListener.NONE)
         .build()
-    call = client.newCall(request)
+    call = client.newCall(request) as RealCall
     call.enqueue(this)
   }
 
@@ -62,7 +62,7 @@ class RealEventSource(
       }
 
       // This is a long-lived response. Cancel full-call timeouts.
-      Exchange.get(response)?.timeoutEarlyExit()
+      call.timeoutEarlyExit()
 
       // Replace the body with an empty one so the callbacks can't see real data.
       val response = response.newBuilder()

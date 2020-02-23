@@ -196,6 +196,11 @@ open class Platform {
         return "OpenJSSE" == preferredProvider
       }
 
+    private val isBouncyCastlePreferred: Boolean
+      get() {
+        return System.getProperty("okhttp.platform") == "bouncycastle"
+      }
+
     /** Attempt to match the host runtime to a capable Platform implementation. */
     private fun findPlatform(): Platform {
       val android10 = Android10Platform.buildIfSupported()
@@ -215,6 +220,14 @@ open class Platform {
 
         if (conscrypt != null) {
           return conscrypt
+        }
+      }
+
+      if (isBouncyCastlePreferred) {
+        val bc = BouncyCastlePlatform.buildIfSupported()
+
+        if (bc != null) {
+          return bc
         }
       }
 

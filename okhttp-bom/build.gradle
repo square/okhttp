@@ -1,0 +1,10 @@
+dependencies {
+  constraints {
+    rootProject.subprojects { subproject ->
+      def artifactId = rootProject.ext.publishedArtifactId(subproject)
+      if (artifactId != null && project.name != 'okhttp-bom') {
+        api subproject
+      }
+    }
+  }
+}

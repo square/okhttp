@@ -1,4 +1,3 @@
-apply plugin: 'com.vanniktech.maven.publish'
 apply plugin: 'me.champeau.gradle.japicmp'
 
 jar {
@@ -18,7 +17,7 @@ compileKotlin {
 task copyJavaTemplates(type: Copy) {
   from 'src/main/java-templates'
   into "$buildDir/generated/sources/java-templates/java/main"
-  expand('projectVersion': "$VERSION_NAME")
+  expand('projectVersion': "${project.version}")
   filteringCharset = 'UTF-8'
 }
 
@@ -26,6 +25,8 @@ dependencies {
   api deps.okio
   api deps.kotlinStdlib
   compileOnly deps.android
+  compileOnly deps.bouncycastledebug
+  compileOnly deps.bouncycastletls
   compileOnly deps.conscrypt
   compileOnly deps.openjsse
   compileOnly deps.jsr305
@@ -69,6 +70,7 @@ task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {
       'okhttp3.internal.cache2',
       'okhttp3.internal.connection',
       'okhttp3.internal.http',
+      'okhttp3.internal.http1',
       'okhttp3.internal.http2',
       'okhttp3.internal.io',
       'okhttp3.internal.platform',

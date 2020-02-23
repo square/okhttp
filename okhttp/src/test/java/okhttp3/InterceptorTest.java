@@ -20,6 +20,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.time.Duration;
 import java.util.Locale;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -693,7 +694,7 @@ public final class InterceptorTest {
     new Socket().connect(serverSocket.getLocalSocketAddress());
 
     client = client.newBuilder()
-        .connectTimeout(5, TimeUnit.SECONDS)
+        .connectTimeout(Duration.ofSeconds(5))
         .addInterceptor(interceptor1)
         .addInterceptor(interceptor2)
         .build();
@@ -733,7 +734,7 @@ public final class InterceptorTest {
     };
 
     client = client.newBuilder()
-        .readTimeout(5, TimeUnit.SECONDS)
+        .readTimeout(Duration.ofSeconds(5))
         .addInterceptor(interceptor1)
         .addInterceptor(interceptor2)
         .build();
@@ -771,7 +772,7 @@ public final class InterceptorTest {
     };
 
     client = client.newBuilder()
-        .writeTimeout(5, TimeUnit.SECONDS)
+        .writeTimeout(Duration.ofSeconds(5))
         .addInterceptor(interceptor1)
         .addInterceptor(interceptor2)
         .build();

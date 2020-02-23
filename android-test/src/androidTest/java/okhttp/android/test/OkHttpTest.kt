@@ -310,7 +310,8 @@ class OkHttpTest {
     response.use {
       assertEquals(200, response.code)
       assertEquals(Protocol.HTTP_2, response.protocol)
-      assertEquals(TlsVersion.TLS_1_2, response.handshake?.tlsVersion)
+      val tlsVersion = response.handshake?.tlsVersion
+      assertTrue(tlsVersion == TlsVersion.TLS_1_2 || tlsVersion == TlsVersion.TLS_1_3)
       assertEquals("CN=localhost",
           (response.handshake!!.peerCertificates.first() as X509Certificate).subjectDN.name)
     }
@@ -386,7 +387,7 @@ class OkHttpTest {
       assertEquals(200, response.code)
     }
 
-    assertEquals(listOf("CallStart", "ProxySelectStart", "ProxySelectEnd",
+    assertEquals(listOf("CallStart",
         "ConnectionAcquired", "RequestHeadersStart", "RequestHeadersEnd", "ResponseHeadersStart",
         "ResponseHeadersEnd", "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased",
         "CallEnd"), eventListener.recordedEventTypes())

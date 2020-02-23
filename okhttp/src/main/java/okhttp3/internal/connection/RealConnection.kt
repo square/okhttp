@@ -25,7 +25,6 @@ import java.net.ProtocolException
 import java.net.Proxy
 import java.net.Socket
 import java.net.SocketException
-import java.net.SocketTimeoutException
 import java.net.UnknownServiceException
 import java.security.cert.X509Certificate
 import java.util.concurrent.TimeUnit.MILLISECONDS
@@ -40,7 +39,6 @@ import okhttp3.EventListener
 import okhttp3.Handshake
 import okhttp3.Handshake.Companion.handshake
 import okhttp3.HttpUrl
-import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
@@ -51,6 +49,7 @@ import okhttp3.internal.assertThreadDoesntHoldLock
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.http.ExchangeCodec
+import okhttp3.internal.http.RealInterceptorChain
 import okhttp3.internal.http1.Http1ExchangeCodec
 import okhttp3.internal.http2.ConnectionShutdownException
 import okhttp3.internal.http2.ErrorCode
@@ -59,6 +58,7 @@ import okhttp3.internal.http2.Http2ExchangeCodec
 import okhttp3.internal.http2.Http2Stream
 import okhttp3.internal.http2.Settings
 import okhttp3.internal.http2.StreamResetException
+import okhttp3.internal.isHealthy
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.tls.OkHostnameVerifier
 import okhttp3.internal.toHostHeader
@@ -100,6 +100,12 @@ class RealConnection(
   var noNewExchanges = false
 
   /**
+   * If true, this connection may not be used for coalesced requests. These are requests that could
+   * share the same connection without sharing the same hostname.
+   */
+  private var noCoalescedConnections = false
+
+  /**
    * The number of times there was a problem establishing a stream that could be due to route
    * chosen. Guarded by [connectionPool].
    */
@@ -115,10 +121,10 @@ class RealConnection(
   private var allocationLimit = 1
 
   /** Current calls carried by this connection. */
-  val transmitters = mutableListOf<Reference<Transmitter>>()
+  val calls = mutableListOf<Reference<RealCall>>()
 
-  /** Nanotime timestamp when `allocations.size()` reached zero. */
-  internal var idleAtNanos = Long.MAX_VALUE
+  /** Timestamp when `allocations.size()` reached zero. Also assigned upon initial connection. */
+  internal var idleAtNs = Long.MAX_VALUE
 
   /**
    * Returns true if this is an HTTP/2 connection. Such connections can be used in multiple HTTP
@@ -133,6 +139,15 @@ class RealConnection(
 
     synchronized(connectionPool) {
       noNewExchanges = true
+    }
+  }
+
+  /** Prevent this connection from being used for hosts other than the one in [route]. */
+  fun noCoalescedConnections() {
+    connectionPool.assertThreadDoesntHoldLock()
+
+    synchronized(connectionPool) {
+      noCoalescedConnections = true
     }
   }
 
@@ -212,6 +227,8 @@ class RealConnection(
       throw RouteException(ProtocolException(
           "Too many tunnel connections attempted: $MAX_TUNNEL_ATTEMPTS"))
     }
+
+    idleAtNs = System.nanoTime()
   }
 
   /**
@@ -420,7 +437,7 @@ class RealConnection(
     while (true) {
       val source = this.source!!
       val sink = this.sink!!
-      val tunnelCodec = Http1ExchangeCodec(null, null, source, sink)
+      val tunnelCodec = Http1ExchangeCodec(null, this, source, sink)
       source.timeout().timeout(readTimeout.toLong(), MILLISECONDS)
       sink.timeout().timeout(writeTimeout.toLong(), MILLISECONDS)
       tunnelCodec.writeRequest(nextRequest.headers, requestLine)
@@ -498,7 +515,7 @@ class RealConnection(
    */
   internal fun isEligible(address: Address, routes: List<Route>?): Boolean {
     // If this connection is not accepting new exchanges, we're done.
-    if (transmitters.size >= allocationLimit || noNewExchanges) return false
+    if (calls.size >= allocationLimit || noNewExchanges) return false
 
     // If the non-host fields of the address don't overlap, we're done.
     if (!this.route.address.equalsNonHost(address)) return false
@@ -559,12 +576,13 @@ class RealConnection(
     }
 
     // We have a host mismatch. But if the certificate matches, we're still good.
-    return handshake != null && OkHostnameVerifier.verify(
-        url.host, handshake!!.peerCertificates[0] as X509Certificate)
+    return !noCoalescedConnections &&
+        handshake != null &&
+        OkHostnameVerifier.verify(url.host, handshake!!.peerCertificates[0] as X509Certificate)
   }
 
   @Throws(SocketException::class)
-  internal fun newCodec(client: OkHttpClient, chain: Interceptor.Chain): ExchangeCodec {
+  internal fun newCodec(client: OkHttpClient, chain: RealInterceptorChain): ExchangeCodec {
     val socket = this.socket!!
     val source = this.source!!
     val sink = this.sink!!
@@ -574,8 +592,8 @@ class RealConnection(
       Http2ExchangeCodec(client, this, chain, http2Connection)
     } else {
       socket.soTimeout = chain.readTimeoutMillis()
-      source.timeout().timeout(chain.readTimeoutMillis().toLong(), MILLISECONDS)
-      sink.timeout().timeout(chain.writeTimeoutMillis().toLong(), MILLISECONDS)
+      source.timeout().timeout(chain.readTimeoutMillis.toLong(), MILLISECONDS)
+      sink.timeout().timeout(chain.writeTimeoutMillis.toLong(), MILLISECONDS)
       Http1ExchangeCodec(client, this, source, sink)
     }
   }
@@ -606,6 +624,8 @@ class RealConnection(
 
   /** Returns true if this connection is ready to host new streams. */
   fun isHealthy(doExtensiveChecks: Boolean): Boolean {
+    val nowNs = System.nanoTime()
+
     val socket = this.socket!!
     val source = this.source!!
     if (socket.isClosed || socket.isInputShutdown || socket.isOutputShutdown) {
@@ -614,23 +634,12 @@ class RealConnection(
 
     val http2Connection = this.http2Connection
     if (http2Connection != null) {
-      return http2Connection.isHealthy(System.nanoTime())
+      return http2Connection.isHealthy(nowNs)
     }
 
-    if (doExtensiveChecks) {
-      try {
-        val readTimeout = socket.soTimeout
-        try {
-          socket.soTimeout = 1
-          return !source.exhausted()
-        } finally {
-          socket.soTimeout = readTimeout
-        }
-      } catch (_: SocketTimeoutException) {
-        // Read timed out; socket is good.
-      } catch (_: IOException) {
-        return false // Couldn't read; socket is closed.
-      }
+    val idleDurationNs = nowNs - idleAtNs
+    if (idleDurationNs >= IDLE_CONNECTION_HEALTHY_NS && doExtensiveChecks) {
+      return socket.isHealthy(source)
     }
 
     return true
@@ -651,18 +660,30 @@ class RealConnection(
 
   override fun handshake(): Handshake? = handshake
 
+  /** Track a bad route in the route database. Other routes will be attempted first. */
+  internal fun connectFailed(client: OkHttpClient, failedRoute: Route, failure: IOException) {
+    // Tell the proxy selector when we fail to connect on a fresh connection.
+    if (failedRoute.proxy.type() != Proxy.Type.DIRECT) {
+      val address = failedRoute.address
+      address.proxySelector.connectFailed(
+          address.url.toUri(), failedRoute.proxy.address(), failure)
+    }
+
+    client.routeDatabase.failed(failedRoute)
+  }
+
   /**
    * Track a failure using this connection. This may prevent both the connection and its route from
    * being used for future exchanges.
    */
-  internal fun trackFailure(e: IOException?) {
+  internal fun trackFailure(call: RealCall, e: IOException?) {
     connectionPool.assertThreadDoesntHoldLock()
 
     synchronized(connectionPool) {
       if (e is StreamResetException) {
-        when (e.errorCode) {
-          ErrorCode.REFUSED_STREAM -> {
-            // Retry REFUSED_STREAM errors once on the same connection.
+        when {
+          e.errorCode == ErrorCode.REFUSED_STREAM -> {
+            // Stop using this connection on the 2nd REFUSED_STREAM error.
             refusedStreamCount++
             if (refusedStreamCount > 1) {
               noNewExchanges = true
@@ -670,8 +691,8 @@ class RealConnection(
             }
           }
 
-          ErrorCode.CANCEL -> {
-            // Keep the connection for CANCEL errors.
+          e.errorCode == ErrorCode.CANCEL && call.isCanceled() -> {
+            // Permit any number of CANCEL errors on locally-canceled calls.
           }
 
           else -> {
@@ -686,7 +707,7 @@ class RealConnection(
         // If this route hasn't completed a call, avoid it for new connections.
         if (successCount == 0) {
           if (e != null) {
-            connectionPool.connectFailed(route, e)
+            connectFailed(call.client, route, e)
           }
           routeFailureCount++
         }
@@ -708,6 +729,7 @@ class RealConnection(
   companion object {
     private const val NPE_THROW_WITH_NULL = "throw with null exception"
     private const val MAX_TUNNEL_ATTEMPTS = 21
+    internal const val IDLE_CONNECTION_HEALTHY_NS = 10_000_000_000 // 10 seconds.
 
     fun newTestConnection(
       connectionPool: RealConnectionPool,
@@ -717,7 +739,7 @@ class RealConnection(
     ): RealConnection {
       val result = RealConnection(connectionPool, route)
       result.socket = socket
-      result.idleAtNanos = idleAtNanos
+      result.idleAtNs = idleAtNanos
       return result
     }
   }

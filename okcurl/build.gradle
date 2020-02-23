@@ -1,4 +1,3 @@
-apply plugin: 'com.vanniktech.maven.publish'
 apply plugin: 'com.github.johnrengelman.shadow'
 
 jar {
@@ -18,7 +17,7 @@ compileJava {
 task copyResourcesTemplates(type: Copy) {
   from 'src/main/resources-templates'
   into "$buildDir/generated/resources-templates"
-  expand('projectVersion': "$VERSION_NAME")
+  expand('projectVersion': "${project.version}")
   filteringCharset = 'UTF-8'
 }
 

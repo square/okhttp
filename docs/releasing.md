@@ -78,15 +78,15 @@ Cutting a Release
 
     ```
     sed -i "" \
-      "s/VERSION_NAME=.*/VERSION_NAME=$RELEASE_VERSION/g" \
-      gradle.properties
+      "s/version = '.*'/version = '$RELEASE_VERSION'/g" \
+      build.gradle
     sed -i "" \
       "s/\"com.squareup.okhttp3:\([^\:]*\):[^\"]*\"/\"com.squareup.okhttp3:\1:$RELEASE_VERSION\"/g" \
       `find . -name "README.md"`
     sed -i "" \
       "s/\/com.squareup.okhttp3\/\([^\:]*\)\/[^\/]*\//\/com.squareup.okhttp3\/\1\/$RELEASE_VERSION\//g" \
       `find . -name "README.md"`
-    ./gradlew clean uploadArchives
+    ./gradlew clean publishAllPublicationsToMavencentralRepository
     ```
 
 5. Visit [Sonatype Nexus][sonatype_nexus] to promote (close then release) the artifact. Or drop it
@@ -98,8 +98,8 @@ Cutting a Release
     git commit -am "Prepare for release $RELEASE_VERSION."
     git tag -a parent-$RELEASE_VERSION -m "Version $RELEASE_VERSION"
     sed -i "" \
-      "s/VERSION_NAME=.*/VERSION_NAME=$NEXT_VERSION/g" \
-      gradle.properties
+      "s/version = '.*'/version = '$NEXT_VERSION'/g" \
+      build.gradle
     git commit -am "Prepare next development version."
     git push && git push --tags
     ```

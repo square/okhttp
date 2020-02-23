@@ -22,6 +22,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.UnknownHostException;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -37,8 +38,6 @@ import okhttp3.CallEvent.ConnectionAcquired;
 import okhttp3.CallEvent.ConnectionReleased;
 import okhttp3.CallEvent.DnsEnd;
 import okhttp3.CallEvent.DnsStart;
-import okhttp3.CallEvent.ProxySelectEnd;
-import okhttp3.CallEvent.ProxySelectStart;
 import okhttp3.CallEvent.RequestBodyEnd;
 import okhttp3.CallEvent.RequestBodyStart;
 import okhttp3.CallEvent.RequestHeadersEnd;
@@ -166,7 +165,7 @@ public final class EventListenerTest {
         .setHeadersDelay(2, TimeUnit.SECONDS));
 
     client = client.newBuilder()
-        .readTimeout(250, TimeUnit.MILLISECONDS)
+        .readTimeout(Duration.ofMillis(250))
         .build();
 
     Call call = client.newCall(new Request.Builder()
@@ -192,7 +191,7 @@ public final class EventListenerTest {
 
     client = client.newBuilder()
         .protocols(Collections.singletonList(Protocol.HTTP_1_1))
-        .readTimeout(250, TimeUnit.MILLISECONDS)
+        .readTimeout(Duration.ofMillis(250))
         .build();
 
     Call call = client.newCall(new Request.Builder()
@@ -228,8 +227,41 @@ public final class EventListenerTest {
       assertThat(expected.getMessage()).isEqualTo("Canceled");
     }
 
-    assertThat(listener.recordedEventTypes())
-        .containsExactly("CallStart", "ProxySelectStart", "ProxySelectEnd", "CallFailed");
+    assertThat(listener.recordedEventTypes()).containsExactly(
+        "Canceled", "CallStart", "CallFailed");
+  }
+
+  @Test public void cancelAsyncCall() throws IOException {
+    server.enqueue(new MockResponse()
+        .setBody("abc"));
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    call.enqueue(new Callback() {
+      @Override public void onFailure(Call call, IOException e) {
+      }
+
+      @Override public void onResponse(Call call, Response response) throws IOException {
+        response.close();
+      }
+    });
+    call.cancel();
+
+    assertThat(listener.recordedEventTypes()).contains("Canceled");
+  }
+
+  @Test public void multipleCancelsEmitsOnlyOneEvent() throws IOException {
+    server.enqueue(new MockResponse()
+        .setBody("abc"));
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    call.cancel();
+    call.cancel();
+
+    assertThat(listener.recordedEventTypes()).containsExactly("Canceled");
   }
 
   private void assertSuccessfulEventOrder(Matcher<Response> responseMatcher) throws IOException {
@@ -269,8 +301,7 @@ public final class EventListenerTest {
     Response response = call.execute();
     response.close();
 
-    assertThat(listener.recordedEventTypes()).containsExactly("CallStart",
-        "ProxySelectStart", "ProxySelectEnd", "ConnectionAcquired",
+    assertThat(listener.recordedEventTypes()).containsExactly("CallStart", "ConnectionAcquired",
         "RequestHeadersStart", "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd",
         "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
   }
@@ -1258,9 +1289,7 @@ public final class EventListenerTest {
 
     // Confirm the events occur when expected.
     listener.takeEvent(CallStart.class, 0L);
-    listener.takeEvent(ProxySelectStart.class, applicationInterceptorDelay);
-    listener.takeEvent(ProxySelectEnd.class, 0L);
-    listener.takeEvent(ConnectionAcquired.class, 0L);
+    listener.takeEvent(ConnectionAcquired.class, applicationInterceptorDelay);
     listener.takeEvent(RequestHeadersStart.class, networkInterceptorDelay);
     listener.takeEvent(RequestHeadersEnd.class, 0L);
     listener.takeEvent(RequestBodyStart.class, 0L);
@@ -1283,10 +1312,9 @@ public final class EventListenerTest {
   }
 
   @Test public void redirectUsingSameConnectionEventSequence() throws IOException {
-    server.enqueue(
-        new MockResponse()
-            .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
-            .addHeader("Location: /foo"));
+    server.enqueue(new MockResponse()
+        .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
+        .addHeader("Location: /foo"));
     server.enqueue(new MockResponse());
 
     Call call = client.newCall(new Request.Builder().url(server.url("/")).build());

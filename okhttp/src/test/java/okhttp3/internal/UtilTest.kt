@@ -15,7 +15,12 @@
  */
 package okhttp3.internal
 
+import java.net.InetAddress
+import java.net.ServerSocket
+import java.net.Socket
 import java.util.LinkedHashMap
+import okio.buffer
+import okio.source
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.fail
 import org.junit.Test
@@ -33,5 +38,19 @@ class UtilTest {
       fail()
     } catch (_: UnsupportedOperationException) {
     }
+  }
+
+  @Test fun socketIsHealthy() {
+    val localhost = InetAddress.getLoopbackAddress()
+    val serverSocket = ServerSocket(0, 1, localhost)
+
+    val socket = Socket()
+    socket.connect(serverSocket.localSocketAddress)
+    val socketSource = socket.source().buffer()
+
+    assertThat(socket.isHealthy(socketSource)).isTrue()
+
+    serverSocket.close()
+    assertThat(socket.isHealthy(socketSource)).isFalse()
   }
 }

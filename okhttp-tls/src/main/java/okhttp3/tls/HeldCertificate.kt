@@ -25,6 +25,7 @@ import java.security.PublicKey
 import java.security.SecureRandom
 import java.security.Security
 import java.security.cert.CertificateFactory
+import java.security.cert.CertificateParsingException
 import java.security.cert.X509Certificate
 import java.security.interfaces.ECPublicKey
 import java.security.interfaces.RSAPrivateKey
@@ -516,9 +517,17 @@ class HeldCertificate(
     }
 
     private fun decodePem(pem: String): X509Certificate {
-      val certificates = CertificateFactory.getInstance("X.509")
+      val certificateFactory = CertificateFactory.getInstance("X.509")
+      val certificates = certificateFactory
           .generateCertificates(Buffer().writeUtf8(pem).inputStream())
-      return certificates.iterator().next() as X509Certificate
+
+      try {
+        return certificates.single() as X509Certificate
+      } catch (nsee: NoSuchElementException) {
+        throw CertificateParsingException(nsee)
+      } catch (iae: IllegalArgumentException) {
+        throw CertificateParsingException(iae)
+      }
     }
 
     private fun decodePkcs8(data: ByteString, keyAlgorithm: String): PrivateKey {

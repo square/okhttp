@@ -401,6 +401,27 @@ abstract class EventListener {
   ) {
   }
 
+  /**
+   * Invoked when a call is canceled.
+   *
+   * Like all methods in this interface, this is invoked on the thread that triggered the event. But
+   * while other events occur sequentially; cancels may occur concurrently with other events. For
+   * example, thread A may be executing [responseBodyStart] while thread B executes [canceled].
+   * Implementations must support such concurrent calls.
+   *
+   * Note that cancellation is best-effort and that a call may proceed normally after it has been
+   * canceled. For example, happy-path events like [requestHeadersStart] and [requestHeadersEnd] may
+   * occur after a call is canceled. Typically cancellation takes effect when an expensive I/O
+   * operation is required.
+   *
+   * This is invoked at most once, even if [Call.cancel] is invoked multiple times. It may be
+   * invoked at any point in a call's life, including before [callStart] and after [callEnd].
+   */
+  open fun canceled(
+    call: Call
+  ) {
+  }
+
   interface Factory {
     /**
      * Creates an instance of the [EventListener] for a particular [Call]. The returned

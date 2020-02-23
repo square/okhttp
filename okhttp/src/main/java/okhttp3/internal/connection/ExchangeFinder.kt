@@ -18,9 +18,7 @@ package okhttp3.internal.connection
 import java.io.IOException
 import java.net.Socket
 import okhttp3.Address
-import okhttp3.Call
 import okhttp3.EventListener
-import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Route
 import okhttp3.internal.assertThreadDoesntHoldLock
@@ -28,9 +26,14 @@ import okhttp3.internal.assertThreadHoldsLock
 import okhttp3.internal.canReuseConnectionFor
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.http.ExchangeCodec
+import okhttp3.internal.http.RealInterceptorChain
+import okhttp3.internal.http2.ConnectionShutdownException
+import okhttp3.internal.http2.ErrorCode
+import okhttp3.internal.http2.StreamResetException
 
 /**
- * Attempts to find the connections for a sequence of exchanges. This uses the following strategies:
+ * Attempts to find the connections for an exchange and any retries that follow. This uses the
+ * following strategies:
  *
  *  1. If the current call already has a connection that can satisfy the request it is used. Using
  *     the same connection for an initial exchange and its follow-ups may improve locality.
@@ -49,47 +52,40 @@ import okhttp3.internal.http.ExchangeCodec
  * It is possible to cancel the finding process.
  */
 class ExchangeFinder(
-  private val transmitter: Transmitter,
   private val connectionPool: RealConnectionPool,
-  private val address: Address,
-  private val call: Call,
+  internal val address: Address,
+  private val call: RealCall,
   private val eventListener: EventListener
 ) {
   private var routeSelection: RouteSelector.Selection? = null
 
   // State guarded by connectionPool.
-  private val routeSelector: RouteSelector = RouteSelector(
-      address, connectionPool.routeDatabase, call, eventListener)
+  private var routeSelector: RouteSelector? = null
   private var connectingConnection: RealConnection? = null
-  private var hasStreamFailure = false
+  private var refusedStreamCount = 0
+  private var connectionShutdownCount = 0
+  private var otherFailureCount = 0
   private var nextRouteToTry: Route? = null
 
   fun find(
     client: OkHttpClient,
-    chain: Interceptor.Chain,
-    doExtensiveHealthChecks: Boolean
+    chain: RealInterceptorChain
   ): ExchangeCodec {
-    val connectTimeout = chain.connectTimeoutMillis()
-    val readTimeout = chain.readTimeoutMillis()
-    val writeTimeout = chain.writeTimeoutMillis()
-    val pingIntervalMillis = client.pingIntervalMillis
-    val connectionRetryEnabled = client.retryOnConnectionFailure
-
     try {
       val resultConnection = findHealthyConnection(
-          connectTimeout = connectTimeout,
-          readTimeout = readTimeout,
-          writeTimeout = writeTimeout,
-          pingIntervalMillis = pingIntervalMillis,
-          connectionRetryEnabled = connectionRetryEnabled,
-          doExtensiveHealthChecks = doExtensiveHealthChecks
+          connectTimeout = chain.connectTimeoutMillis,
+          readTimeout = chain.readTimeoutMillis,
+          writeTimeout = chain.writeTimeoutMillis,
+          pingIntervalMillis = client.pingIntervalMillis,
+          connectionRetryEnabled = client.retryOnConnectionFailure,
+          doExtensiveHealthChecks = chain.request.method != "GET"
       )
       return resultConnection.newCodec(client, chain)
     } catch (e: RouteException) {
-      trackFailure()
+      trackFailure(e.lastConnectException)
       throw e
     } catch (e: IOException) {
-      trackFailure()
+      trackFailure(e)
       throw RouteException(e)
     }
   }
@@ -116,15 +112,7 @@ class ExchangeFinder(
           connectionRetryEnabled = connectionRetryEnabled
       )
 
-      // If this is a brand new connection, we can skip the extensive health checks.
-      synchronized(connectionPool) {
-        if (candidate.successCount == 0) {
-          return candidate
-        }
-      }
-
-      // Do a (potentially slow) check to confirm that the pooled connection is still good. If it
-      // isn't, take it out of the pool and start again.
+      // Confirm that the connection is good. If it isn't, take it out of the pool and start again.
       if (!candidate.isHealthy(doExtensiveHealthChecks)) {
         candidate.noNewExchanges()
         continue
@@ -152,32 +140,35 @@ class ExchangeFinder(
     var releasedConnection: RealConnection?
     val toClose: Socket?
     synchronized(connectionPool) {
-      if (transmitter.isCanceled) throw IOException("Canceled")
-      hasStreamFailure = false // This is a fresh attempt.
+      if (call.isCanceled()) throw IOException("Canceled")
 
-      releasedConnection = transmitter.connection
-      toClose = if (transmitter.connection != null && transmitter.connection!!.noNewExchanges) {
-        transmitter.releaseConnectionNoEvents()
+      releasedConnection = call.connection
+      toClose = if (call.connection != null &&
+          (call.connection!!.noNewExchanges || !call.connection!!.supportsUrl(address.url))) {
+        call.releaseConnectionNoEvents()
       } else {
         null
       }
 
-      if (transmitter.connection != null) {
+      if (call.connection != null) {
         // We had an already-allocated connection and it's good.
-        result = transmitter.connection
+        result = call.connection
         releasedConnection = null
       }
 
       if (result == null) {
+        // The connection hasn't had any problems for this call.
+        refusedStreamCount = 0
+        connectionShutdownCount = 0
+        otherFailureCount = 0
+
         // Attempt to get a connection from the pool.
-        if (connectionPool.transmitterAcquirePooledConnection(address, transmitter, null, false)) {
+        if (connectionPool.callAcquirePooledConnection(address, call, null, false)) {
           foundPooledConnection = true
-          result = transmitter.connection
+          result = call.connection
         } else if (nextRouteToTry != null) {
           selectedRoute = nextRouteToTry
           nextRouteToTry = null
-        } else if (retryCurrentRoute()) {
-          selectedRoute = transmitter.connection!!.route()
         }
       }
     }
@@ -197,22 +188,26 @@ class ExchangeFinder(
     // If we need a route selection, make one. This is a blocking operation.
     var newRouteSelection = false
     if (selectedRoute == null && (routeSelection == null || !routeSelection!!.hasNext())) {
+      var localRouteSelector = routeSelector
+      if (localRouteSelector == null) {
+        localRouteSelector = RouteSelector(address, call.client.routeDatabase, call, eventListener)
+        this.routeSelector = localRouteSelector
+      }
       newRouteSelection = true
-      routeSelection = routeSelector.next()
+      routeSelection = localRouteSelector.next()
     }
 
     var routes: List<Route>? = null
     synchronized(connectionPool) {
-      if (transmitter.isCanceled) throw IOException("Canceled")
+      if (call.isCanceled()) throw IOException("Canceled")
 
       if (newRouteSelection) {
         // Now that we have a set of IP addresses, make another attempt at getting a connection from
         // the pool. This could match due to connection coalescing.
         routes = routeSelection!!.routes
-        if (connectionPool.transmitterAcquirePooledConnection(
-                address, transmitter, routes, false)) {
+        if (connectionPool.callAcquirePooledConnection(address, call, routes, false)) {
           foundPooledConnection = true
-          result = transmitter.connection
+          result = call.connection
         }
       }
 
@@ -244,25 +239,25 @@ class ExchangeFinder(
         call,
         eventListener
     )
-    connectionPool.routeDatabase.connected(result!!.route())
+    call.client.routeDatabase.connected(result!!.route())
 
     var socket: Socket? = null
     synchronized(connectionPool) {
       connectingConnection = null
       // Last attempt at connection coalescing, which only occurs if we attempted multiple
       // concurrent connections to the same host.
-      if (connectionPool.transmitterAcquirePooledConnection(address, transmitter, routes, true)) {
+      if (connectionPool.callAcquirePooledConnection(address, call, routes, true)) {
         // We lost the race! Close the connection we created and return the pooled connection.
         result!!.noNewExchanges = true
         socket = result!!.socket()
-        result = transmitter.connection
+        result = call.connection
 
         // It's possible for us to obtain a coalesced connection that is immediately unhealthy. In
         // that case we will retry the route we just successfully connected with.
         nextRouteToTry = selectedRoute
       } else {
         connectionPool.put(result!!)
-        transmitter.acquireConnectionNoEvents(result!!)
+        call.acquireConnectionNoEvents(result!!)
       }
     }
     socket?.closeQuietly()
@@ -276,33 +271,49 @@ class ExchangeFinder(
     return connectingConnection
   }
 
-  fun trackFailure() {
+  fun trackFailure(e: IOException) {
     connectionPool.assertThreadDoesntHoldLock()
 
     synchronized(connectionPool) {
-      hasStreamFailure = true // Permit retries.
+      nextRouteToTry = null
+      if (e is StreamResetException && e.errorCode == ErrorCode.REFUSED_STREAM) {
+        refusedStreamCount++
+      } else if (e is ConnectionShutdownException) {
+        connectionShutdownCount++
+      } else {
+        otherFailureCount++
+      }
     }
   }
 
-  /** Returns true if there is a failure that retrying might fix. */
-  fun hasStreamFailure(): Boolean {
+  /**
+   * Returns true if the current route has a failure that retrying could fix, and that there's
+   * a route to retry on.
+   */
+  fun retryAfterFailure(): Boolean {
     synchronized(connectionPool) {
-      return hasStreamFailure
-    }
-  }
+      if (refusedStreamCount == 0 && connectionShutdownCount == 0 && otherFailureCount == 0) {
+        return false // Nothing to recover from.
+      }
 
-  /** Returns true if a current route is still good or if there are routes we haven't tried yet. */
-  fun hasRouteToTry(): Boolean {
-    synchronized(connectionPool) {
       if (nextRouteToTry != null) {
         return true
       }
+
       if (retryCurrentRoute()) {
         // Lock in the route because retryCurrentRoute() is racy and we don't want to call it twice.
-        nextRouteToTry = transmitter.connection!!.route()
+        nextRouteToTry = call.connection!!.route()
         return true
       }
-      return (routeSelection?.hasNext() ?: false) || routeSelector.hasNext()
+
+      // If we have a routes left, use 'em.
+      if (routeSelection?.hasNext() == true) return true
+
+      // If we haven't initialized the route selector yet, assume it'll have at least one route.
+      val localRouteSelector = routeSelector ?: return true
+
+      // If we do have a route selector, use its routes.
+      return localRouteSelector.hasNext()
     }
   }
 
@@ -312,8 +323,13 @@ class ExchangeFinder(
    * coalesced connections.
    */
   private fun retryCurrentRoute(): Boolean {
-    return transmitter.connection != null &&
-        transmitter.connection!!.routeFailureCount == 0 &&
-        transmitter.connection!!.route().address.url.canReuseConnectionFor(address.url)
+    if (refusedStreamCount > 1 || connectionShutdownCount > 1 || otherFailureCount > 0) {
+      return false // This route has too many problems to retry.
+    }
+
+    val connection = call.connection
+    return connection != null &&
+        connection.routeFailureCount == 0 &&
+        connection.route().address.url.canReuseConnectionFor(address.url)
   }
 }

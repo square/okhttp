@@ -23,6 +23,8 @@ import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+
+import okhttp3.TestUtil;
 import okhttp3.internal.concurrent.TaskFaker;
 import okhttp3.internal.concurrent.TaskRunner;
 import okhttp3.internal.io.FaultyFileSystem;
@@ -321,6 +323,8 @@ public final class DiskLruCacheTest {
    * the same key can see different data.
    */
   @Test public void readAndWriteOverlapsMaintainConsistency() throws Exception {
+    TestUtil.assumeNotWindows();
+
     DiskLruCache.Editor v1Creator = cache.edit("k1");
     setString(v1Creator, 0, "AAaa");
     setString(v1Creator, 1, "BBbb");
@@ -995,6 +999,8 @@ public final class DiskLruCacheTest {
   }
 
   @Test public void editSameVersion() throws Exception {
+    TestUtil.assumeNotWindows();
+
     set("a", "a", "a");
     DiskLruCache.Snapshot snapshot = cache.get("a");
     DiskLruCache.Editor editor = snapshot.edit();
@@ -1004,6 +1010,8 @@ public final class DiskLruCacheTest {
   }
 
   @Test public void editSnapshotAfterChangeAborted() throws Exception {
+    TestUtil.assumeNotWindows();
+
     set("a", "a", "a");
     DiskLruCache.Snapshot snapshot = cache.get("a");
     DiskLruCache.Editor toAbort = snapshot.edit();
@@ -1016,6 +1024,8 @@ public final class DiskLruCacheTest {
   }
 
   @Test public void editSnapshotAfterChangeCommitted() throws Exception {
+    TestUtil.assumeNotWindows();
+
     set("a", "a", "a");
     DiskLruCache.Snapshot snapshot = cache.get("a");
     DiskLruCache.Editor toAbort = snapshot.edit();
@@ -1025,6 +1035,8 @@ public final class DiskLruCacheTest {
   }
 
   @Test public void editSinceEvicted() throws Exception {
+    TestUtil.assumeNotWindows();
+
     cache.close();
     createNewCacheWithSize(10);
     set("a", "aa", "aaa"); // size 5
@@ -1036,6 +1048,8 @@ public final class DiskLruCacheTest {
   }
 
   @Test public void editSinceEvictedAndRecreated() throws Exception {
+    TestUtil.assumeNotWindows();
+
     cache.close();
     createNewCacheWithSize(10);
     set("a", "aa", "aaa"); // size 5
@@ -1049,6 +1063,8 @@ public final class DiskLruCacheTest {
 
   /** @see <a href="https://github.com/JakeWharton/DiskLruCache/issues/2">Issue #2</a> */
   @Test public void aggressiveClearingHandlesWrite() throws Exception {
+    TestUtil.assumeNotWindows();
+
     fileSystem.deleteContents(tempDir.getRoot());
     set("a", "a", "a");
     assertValue("a", "a", "a");
@@ -1056,6 +1072,8 @@ public final class DiskLruCacheTest {
 
   /** @see <a href="https://github.com/JakeWharton/DiskLruCache/issues/2">Issue #2</a> */
   @Test public void aggressiveClearingHandlesEdit() throws Exception {
+    TestUtil.assumeNotWindows();
+
     set("a", "a", "a");
     DiskLruCache.Editor a = cache.get("a").edit();
     fileSystem.deleteContents(tempDir.getRoot());
@@ -1071,6 +1089,8 @@ public final class DiskLruCacheTest {
 
   /** @see <a href="https://github.com/JakeWharton/DiskLruCache/issues/2">Issue #2</a> */
   @Test public void aggressiveClearingHandlesPartialEdit() throws Exception {
+    TestUtil.assumeNotWindows();
+
     set("a", "a", "a");
     set("b", "b", "b");
     DiskLruCache.Editor a = cache.get("a").edit();
@@ -1083,6 +1103,8 @@ public final class DiskLruCacheTest {
 
   /** @see <a href="https://github.com/JakeWharton/DiskLruCache/issues/2">Issue #2</a> */
   @Test public void aggressiveClearingHandlesRead() throws Exception {
+    TestUtil.assumeNotWindows();
+
     fileSystem.deleteContents(tempDir.getRoot());
     assertThat(cache.get("a")).isNull();
   }
@@ -1139,6 +1161,8 @@ public final class DiskLruCacheTest {
   }
 
   @Test public void evictAllDoesntInterruptPartialRead() throws Exception {
+    TestUtil.assumeNotWindows();
+
     set("a", "a", "a");
     DiskLruCache.Snapshot a = cache.get("a");
     assertSnapshotValue(a, 0, "a");
@@ -1150,6 +1174,8 @@ public final class DiskLruCacheTest {
   }
 
   @Test public void editSnapshotAfterEvictAllReturnsNullDueToStaleValue() throws Exception {
+    TestUtil.assumeNotWindows();
+
     set("a", "a", "a");
     DiskLruCache.Snapshot a = cache.get("a");
     cache.evictAll();
@@ -1617,6 +1643,8 @@ public final class DiskLruCacheTest {
   }
 
   @Test public void editsDiscardedAfterEditorDetached() throws Exception {
+    TestUtil.assumeNotWindows();
+
     set("k1", "a", "a");
 
     // Create an editor, then detach it.

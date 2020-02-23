@@ -18,7 +18,6 @@ package okhttp3.internal.connection
 import java.io.IOException
 import java.net.ProtocolException
 import java.net.SocketException
-import okhttp3.Call
 import okhttp3.EventListener
 import okhttp3.Headers
 import okhttp3.Request
@@ -39,17 +38,19 @@ import okio.buffer
  * on [ExchangeCodec], which handles the actual I/O.
  */
 class Exchange(
-  internal val transmitter: Transmitter,
-  internal val call: Call,
+  internal val call: RealCall,
   internal val eventListener: EventListener,
   private val finder: ExchangeFinder,
   private val codec: ExchangeCodec
 ) {
   /** Returns true if the request body need not complete before the response body starts. */
-  var isDuplex: Boolean = false
+  internal var isDuplex: Boolean = false
     private set
 
-  fun connection(): RealConnection? = codec.connection()
+  internal val connection: RealConnection = codec.connection
+
+  internal val isCoalescedConnection: Boolean
+    get() = finder.address.url.host != connection.route().address.url.host
 
   @Throws(IOException::class)
   fun writeRequestHeaders(request: Request) {
@@ -134,14 +135,10 @@ class Exchange(
   @Throws(IOException::class)
   fun trailers(): Headers = codec.trailers()
 
-  fun timeoutEarlyExit() {
-    transmitter.timeoutEarlyExit()
-  }
-
   @Throws(SocketException::class)
   fun newWebSocketStreams(): RealWebSocket.Streams {
-    transmitter.timeoutEarlyExit()
-    return codec.connection()!!.newWebSocketStreams(this)
+    call.timeoutEarlyExit()
+    return codec.connection.newWebSocketStreams(this)
   }
 
   fun webSocketUpgradeFailed() {
@@ -149,7 +146,7 @@ class Exchange(
   }
 
   fun noNewExchangesOnConnection() {
-    codec.connection()!!.noNewExchanges()
+    codec.connection.noNewExchanges()
   }
 
   fun cancel() {
@@ -162,12 +159,12 @@ class Exchange(
    */
   fun detachWithViolence() {
     codec.cancel()
-    transmitter.exchangeMessageDone(this, true, true, null)
+    call.messageDone(this, requestDone = true, responseDone = true, e = null)
   }
 
   private fun trackFailure(e: IOException) {
-    finder.trackFailure()
-    codec.connection()!!.trackFailure(e)
+    finder.trackFailure(e)
+    codec.connection.trackFailure(call, e)
   }
 
   fun <E : IOException?> bodyComplete(
@@ -193,11 +190,11 @@ class Exchange(
         eventListener.responseBodyEnd(call, bytesRead)
       }
     }
-    return transmitter.exchangeMessageDone(this, requestDone, responseDone, e)
+    return call.messageDone(this, requestDone, responseDone, e)
   }
 
   fun noRequestBody() {
-    transmitter.exchangeMessageDone(this, true, false, null)
+    call.messageDone(this, requestDone = true, responseDone = false, e = null)
   }
 
   /** A request body that fires events when it completes. */
@@ -326,9 +323,5 @@ class Exchange(
       }
       return bodyComplete(bytesReceived, responseDone = true, requestDone = false, e = e)
     }
-  }
-
-  companion object {
-    fun get(response: Response): Exchange? = response.exchange
   }
 }

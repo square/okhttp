@@ -83,9 +83,14 @@ abstract class RequestBody {
    * This method returns false unless it is overridden by a subclass.
    *
    * By default OkHttp will attempt to retransmit request bodies when the original request fails
-   * due to a stale connection, a client timeout (HTTP 408), a satisfied authorization challenge
-   * (HTTP 401 and 407), or a retryable server failure (HTTP 503 with a `Retry-After: 0`
-   * header).
+   * due to any of:
+   *
+   *  * A stale connection. The request was made on a reused connection and that reused connection
+   *    has since been closed by the server.
+   *  * A client timeout (HTTP 408).
+   *  * A authorization challenge (HTTP 401 and 407) that is satisfied by the [Authenticator].
+   *  * A retryable server failure (HTTP 503 with a `Retry-After: 0` response header).
+   *  * A misdirected request (HTTP 421) on a coalesced connection.
    */
   open fun isOneShot(): Boolean = false
 

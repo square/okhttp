@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.platform
 
+import android.annotation.TargetApi
 import android.os.Build
 import android.security.NetworkSecurityPolicy
 import javax.net.ssl.SSLSocket
@@ -55,6 +56,7 @@ class Android10Platform : Platform() {
     androidLog(level, message, t)
   }
 
+  @TargetApi(Build.VERSION_CODES.N)
   override fun isCleartextTrafficPermitted(hostname: String): Boolean =
       NetworkSecurityPolicy.getInstance().isCleartextTrafficPermitted(hostname)
 

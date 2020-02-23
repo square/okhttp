@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.net.Authenticator;
 import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -31,7 +32,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.logging.Logger;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLException;
 import okhttp3.Cache;
@@ -104,7 +104,6 @@ public final class HttpOverHttp2Test {
   // Flaky https://github.com/square/okhttp/issues/4632
   // Flaky https://github.com/square/okhttp/issues/4633
 
-  private static final Logger http2Logger = Logger.getLogger(Http2.class.getName());
   private static final HandshakeCertificates handshakeCertificates = localhost();
 
   @Parameters(name = "{0}")
@@ -114,8 +113,9 @@ public final class HttpOverHttp2Test {
 
   private final PlatformRule platform = new PlatformRule();
   private final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
-  @Rule public final TestRule chain =
-      RuleChain.outerRule(platform).around(clientTestRule).around(new Timeout(5, SECONDS));
+  @Rule public final TestRule chain = RuleChain.outerRule(platform)
+      .around(new Timeout(60, SECONDS))
+      .around(clientTestRule);
   @Rule public final TemporaryFolder tempDir = new TemporaryFolder();
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final TestLogHandler testLogHandler = new TestLogHandler(Http2.class);
@@ -547,7 +547,7 @@ public final class HttpOverHttp2Test {
     server.enqueue(new MockResponse().setBody("A"));
 
     client = client.newBuilder()
-        .readTimeout(1000, MILLISECONDS)
+        .readTimeout(Duration.ofSeconds(1))
         .build();
 
     // Make a call expecting a timeout reading the response headers.
@@ -585,7 +585,7 @@ public final class HttpOverHttp2Test {
         .throttleBody(1024, 1, SECONDS)); // Slow connection 1KiB/second.
 
     client = client.newBuilder()
-        .readTimeout(2, SECONDS)
+        .readTimeout(Duration.ofSeconds(2))
         .build();
 
     Call call = client.newCall(new Request.Builder()
@@ -611,7 +611,7 @@ public final class HttpOverHttp2Test {
         .setBody(body));
 
     client = client.newBuilder()
-        .readTimeout(500, MILLISECONDS) // Half a second to read something.
+        .readTimeout(Duration.ofMillis(500)) // Half a second to read something.
         .build();
 
     // Make a call expecting a timeout reading the response body.
@@ -644,7 +644,7 @@ public final class HttpOverHttp2Test {
         .setBodyDelay(1, SECONDS));
 
     OkHttpClient client1 = client.newBuilder()
-        .readTimeout(2000, MILLISECONDS)
+        .readTimeout(Duration.ofSeconds(2))
         .build();
     Call call1 = client1
         .newCall(new Request.Builder()
@@ -652,7 +652,7 @@ public final class HttpOverHttp2Test {
             .build());
 
     OkHttpClient client2 = client.newBuilder()
-        .readTimeout(200, MILLISECONDS)
+        .readTimeout(Duration.ofMillis(200))
         .build();
     Call call2 = client2
         .newCall(new Request.Builder()
@@ -854,10 +854,45 @@ public final class HttpOverHttp2Test {
     assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(1);
   }
 
-  @Test public void recoverFromOneInternalErrorRequiresNewConnection() throws Exception {
+  /**
+   * We had a bug where we'd perform infinite retries of route that fail with connection shutdown
+   * errors. The problem was that the logic that decided whether to reuse a route didn't track
+   * certain HTTP/2 errors. https://github.com/square/okhttp/issues/5547
+   */
+  @Test
+  public void noRecoveryFromTwoRefusedStreams() throws Exception {
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
-        .setHttp2ErrorCode(ErrorCode.INTERNAL_ERROR.getHttpCode()));
+        .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.getHttpCode()));
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
+        .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.getHttpCode()));
+    server.enqueue(new MockResponse()
+        .setBody("abc"));
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    try {
+      call.execute();
+      fail();
+    } catch (StreamResetException expected) {
+      assertThat(expected.errorCode).isEqualTo(ErrorCode.REFUSED_STREAM);
+    }
+  }
+
+  @Test public void recoverFromOneInternalErrorRequiresNewConnection() throws Exception {
+    recoverFromOneHttp2ErrorRequiresNewConnection(ErrorCode.INTERNAL_ERROR);
+  }
+
+  @Test public void recoverFromOneCancelRequiresNewConnection() throws Exception {
+    recoverFromOneHttp2ErrorRequiresNewConnection(ErrorCode.CANCEL);
+  }
+
+  private void recoverFromOneHttp2ErrorRequiresNewConnection(ErrorCode errorCode) throws Exception {
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
+        .setHttp2ErrorCode(errorCode.getHttpCode()));
     server.enqueue(new MockResponse()
         .setBody("abc"));
 
@@ -1036,6 +1071,10 @@ public final class HttpOverHttp2Test {
 
   @Test public void noRecoveryFromInternalErrorWithRetryDisabled() throws Exception {
     noRecoveryFromErrorWithRetryDisabled(ErrorCode.INTERNAL_ERROR);
+  }
+
+  @Test public void noRecoveryFromCancelWithRetryDisabled() throws Exception {
+    noRecoveryFromErrorWithRetryDisabled(ErrorCode.CANCEL);
   }
 
   private void noRecoveryFromErrorWithRetryDisabled(ErrorCode errorCode) throws Exception {
@@ -1248,7 +1287,7 @@ public final class HttpOverHttp2Test {
   @Test public void pingsTransmitted() throws Exception {
     // Ping every 500 ms, starting at 500 ms.
     client = client.newBuilder()
-        .pingInterval(500, TimeUnit.MILLISECONDS)
+        .pingInterval(Duration.ofMillis(500))
         .build();
 
     // Delay the response to give 1 ping enough time to be sent and replied to.
@@ -1285,8 +1324,8 @@ public final class HttpOverHttp2Test {
 
     // Ping every 500 ms, starting at 500 ms.
     client = client.newBuilder()
-        .readTimeout(10, TimeUnit.SECONDS) // Confirm we fail before the read timeout.
-        .pingInterval(500, TimeUnit.MILLISECONDS)
+        .readTimeout(Duration.ofSeconds(10)) // Confirm we fail before the read timeout.
+        .pingInterval(Duration.ofMillis(500))
         .build();
 
     // Set up the server to ignore the socket. It won't respond to pings!
@@ -1319,8 +1358,10 @@ public final class HttpOverHttp2Test {
   }
 
   @Test public void streamTimeoutDegradesConnectionAfterNoPong() throws Exception {
+    TestUtil.assumeNotWindows();
+
     client = client.newBuilder()
-        .readTimeout(500, MILLISECONDS)
+        .readTimeout(Duration.ofMillis(500))
         .build();
 
     // Stalling the socket will cause TWO requests to time out!
@@ -1363,7 +1404,7 @@ public final class HttpOverHttp2Test {
 
   @Test public void oneStreamTimeoutDoesNotBreakConnection() throws Exception {
     client = client.newBuilder()
-        .readTimeout(500, MILLISECONDS)
+        .readTimeout(Duration.ofMillis(500))
         .build();
 
     server.enqueue(new MockResponse()
@@ -1527,7 +1568,7 @@ public final class HttpOverHttp2Test {
               assertThat(response.body().string()).isEqualTo("ABC");
               // Wait until the GOAWAY has been processed.
               RealConnection connection = (RealConnection) chain.connection();
-              while (connection.isHealthy(false)) ;
+              while (connection.isHealthy(false));
             }
             return chain.proceed(chain.request());
           }

@@ -16,8 +16,6 @@
  */
 package okhttp3.internal.connection
 
-import java.io.IOException
-import java.net.Proxy
 import java.util.ArrayDeque
 import java.util.concurrent.TimeUnit
 import okhttp3.Address
@@ -28,7 +26,8 @@ import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.Task
 import okhttp3.internal.concurrent.TaskQueue
 import okhttp3.internal.concurrent.TaskRunner
-import okhttp3.internal.connection.Transmitter.TransmitterReference
+import okhttp3.internal.connection.RealCall.CallReference
+import okhttp3.internal.okHttpName
 import okhttp3.internal.platform.Platform
 
 class RealConnectionPool(
@@ -41,12 +40,11 @@ class RealConnectionPool(
   private val keepAliveDurationNs: Long = timeUnit.toNanos(keepAliveDuration)
 
   private val cleanupQueue: TaskQueue = taskRunner.newQueue()
-  private val cleanupTask = object : Task("OkHttp ConnectionPool") {
+  private val cleanupTask = object : Task("$okHttpName ConnectionPool") {
     override fun runOnce() = cleanup(System.nanoTime())
   }
 
   private val connections = ArrayDeque<RealConnection>()
-  val routeDatabase = RouteDatabase()
 
   init {
     // Put a floor on the keep alive duration, otherwise cleanup will spin loop.
@@ -54,7 +52,7 @@ class RealConnectionPool(
   }
 
   @Synchronized fun idleConnectionCount(): Int {
-    return connections.count { it.transmitters.isEmpty() }
+    return connections.count { it.calls.isEmpty() }
   }
 
   @Synchronized fun connectionCount(): Int {
@@ -62,16 +60,16 @@ class RealConnectionPool(
   }
 
   /**
-   * Attempts to acquire a recycled connection to [address] for [transmitter]. Returns true if a
-   * connection was acquired.
+   * Attempts to acquire a recycled connection to [address] for [call]. Returns true if a connection
+   * was acquired.
    *
    * If [routes] is non-null these are the resolved routes (ie. IP addresses) for the connection.
    * This is used to coalesce related domains to the same HTTP/2 connection, such as `square.com`
    * and `square.ca`.
    */
-  fun transmitterAcquirePooledConnection(
+  fun callAcquirePooledConnection(
     address: Address,
-    transmitter: Transmitter,
+    call: RealCall,
     routes: List<Route>?,
     requireMultiplexed: Boolean
   ): Boolean {
@@ -80,7 +78,7 @@ class RealConnectionPool(
     for (connection in connections) {
       if (requireMultiplexed && !connection.isMultiplexed) continue
       if (!connection.isEligible(address, routes)) continue
-      transmitter.acquireConnectionNoEvents(connection)
+      call.acquireConnectionNoEvents(connection)
       return true
     }
     return false
@@ -116,7 +114,7 @@ class RealConnectionPool(
       val i = connections.iterator()
       while (i.hasNext()) {
         val connection = i.next()
-        if (connection.transmitters.isEmpty()) {
+        if (connection.calls.isEmpty()) {
           connection.noNewExchanges = true
           evictedConnections.add(connection)
           i.remove()
@@ -155,7 +153,7 @@ class RealConnectionPool(
         idleConnectionCount++
 
         // If the connection is ready to be evicted, we're done.
-        val idleDurationNs = now - connection.idleAtNanos
+        val idleDurationNs = now - connection.idleAtNs
         if (idleDurationNs > longestIdleDurationNs) {
           longestIdleDurationNs = idleDurationNs
           longestIdleConnection = connection
@@ -193,12 +191,12 @@ class RealConnectionPool(
   }
 
   /**
-   * Prunes any leaked transmitters and then returns the number of remaining live transmitters on
-   * [connection]. Transmitters are leaked if the connection is tracking them but the application
-   * code has abandoned them. Leak detection is imprecise and relies on garbage collection.
+   * Prunes any leaked calls and then returns the number of remaining live calls on [connection].
+   * Calls are leaked if the connection is tracking them but the application code has abandoned
+   * them. Leak detection is imprecise and relies on garbage collection.
    */
   private fun pruneAndGetAllocationCount(connection: RealConnection, now: Long): Int {
-    val references = connection.transmitters
+    val references = connection.calls
     var i = 0
     while (i < references.size) {
       val reference = references[i]
@@ -208,35 +206,23 @@ class RealConnectionPool(
         continue
       }
 
-      // We've discovered a leaked transmitter. This is an application bug.
-      val transmitterRef = reference as TransmitterReference
+      // We've discovered a leaked call. This is an application bug.
+      val callReference = reference as CallReference
       val message = "A connection to ${connection.route().address.url} was leaked. " +
           "Did you forget to close a response body?"
-      Platform.get().logCloseableLeak(message, transmitterRef.callStackTrace)
+      Platform.get().logCloseableLeak(message, callReference.callStackTrace)
 
       references.removeAt(i)
       connection.noNewExchanges = true
 
       // If this was the last allocation, the connection is eligible for immediate eviction.
       if (references.isEmpty()) {
-        connection.idleAtNanos = now - keepAliveDurationNs
+        connection.idleAtNs = now - keepAliveDurationNs
         return 0
       }
     }
 
     return references.size
-  }
-
-  /** Track a bad route in the route database. Other routes will be attempted first. */
-  fun connectFailed(failedRoute: Route, failure: IOException) {
-    // Tell the proxy selector when we fail to connect on a fresh connection.
-    if (failedRoute.proxy.type() != Proxy.Type.DIRECT) {
-      val address = failedRoute.address
-      address.proxySelector.connectFailed(
-          address.url.toUri(), failedRoute.proxy.address(), failure)
-    }
-
-    routeDatabase.failed(failedRoute)
   }
 
   companion object {

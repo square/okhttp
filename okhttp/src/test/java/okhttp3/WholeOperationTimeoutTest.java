@@ -18,6 +18,7 @@ package okhttp3;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.HttpURLConnection;
+import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -54,7 +55,7 @@ public final class WholeOperationTimeoutTest {
         .build();
 
     OkHttpClient timeoutClient = client.newBuilder()
-        .callTimeout(456, TimeUnit.MILLISECONDS)
+        .callTimeout(Duration.ofMillis(456))
         .build();
 
     Call call = timeoutClient.newCall(request);

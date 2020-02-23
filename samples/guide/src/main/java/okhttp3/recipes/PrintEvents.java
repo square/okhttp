@@ -196,5 +196,9 @@ public final class PrintEvents {
     @Override public void callFailed(Call call, IOException ioe) {
       printEvent("callFailed");
     }
+
+    @Override public void canceled(Call call) {
+      printEvent("canceled");
+    }
   }
 }

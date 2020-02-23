@@ -18,6 +18,7 @@ package okhttp3.internal.concurrent
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.RejectedExecutionException
 import okhttp3.internal.assertThreadDoesntHoldLock
+import okhttp3.internal.okHttpName
 
 /**
  * A set of tasks that are executed in sequential order.
@@ -129,7 +130,7 @@ class TaskQueue internal constructor(
     }
   }
 
-  private class AwaitIdleTask : Task("OkHttp awaitIdle", cancelable = false) {
+  private class AwaitIdleTask : Task("$okHttpName awaitIdle", cancelable = false) {
     val latch = CountDownLatch(1)
 
     override fun runOnce(): Long {
