@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.platform.android
 
+import android.annotation.SuppressLint
 import android.net.SSLCertificateSocketFactory
 import android.os.Build
 import javax.net.ssl.SSLSocket
@@ -40,12 +41,14 @@ class Android10SocketAdapter : SocketAdapter {
 
   override fun isSupported(): Boolean = Companion.isSupported()
 
+  @SuppressLint("NewApi")
   override fun getSelectedProtocol(sslSocket: SSLSocket): String? =
       when (val protocol = sslSocket.applicationProtocol) {
         null, "" -> null
         else -> protocol
       }
 
+  @SuppressLint("NewApi")
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
     hostname: String?,
