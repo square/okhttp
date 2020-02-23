@@ -130,9 +130,15 @@ public final class RealWebSocketTest {
 
   @Test public void serverCloseThenClientClose() throws IOException {
     server.webSocket.close(1000, "Hello!");
+
     client.processNextFrame();
     client.listener.assertClosing(1000, "Hello!");
     assertThat(client.webSocket.close(1000, "Bye!")).isTrue();
+    client.listener.assertClosed(1000, "Hello!");
+
+    server.processNextFrame();
+    server.listener.assertClosing(1000, "Bye!");
+    server.listener.assertClosed(1000, "Bye!");
   }
 
   @Test public void emptyCloseInitiatesShutdown() throws IOException {
