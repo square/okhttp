@@ -138,7 +138,7 @@ public final class HandshakeCertificatesTest {
       names.add(name.substring(0, name.indexOf(" ")));
     }
     // It's safe to assume all platforms will have a major Internet certificate issuer.
-    assertTrue(names.toString(), names.contains("CN=Entrust"));
+    assertTrue(names.toString(), names.contains("CN=VeriSign"));
   }
 
   private InetSocketAddress startTlsServer() throws IOException {
