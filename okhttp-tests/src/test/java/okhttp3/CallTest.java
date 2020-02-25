@@ -1290,7 +1290,8 @@ public final class CallTest {
   @Test public void anonCipherSuiteUnsupported() throws Exception {
     // The _anon_ suites became unsupported in "1.8.0_201" and "11.0.2".
     assumeFalse(System.getProperty("java.version", "unknown").matches("1\\.8\\.0_1\\d\\d"));
-    assumeFalse(System.getProperty("java.version", "unknown").matches("11"));
+    assumeFalse(System.getProperty("java.version", "unknown").matches("9\\..*"));
+    assumeFalse(System.getProperty("java.version", "unknown").matches("11\\..*"));
 
     server.enqueue(new MockResponse());
 
