@@ -1,6 +1,14 @@
 OkHttp 3.x Change Log
 =====================
 
+## Version 3.14.7
+
+_2020-02-24_
+
+ *  Fix: Don't crash on Android 11 due to use of restricted methods. This prevents a crash with the
+    exception, "Expected Android API level 21+ but was 29".
+
+
 ## Version 3.14.6
 
 _2020-01-11_
@@ -191,6 +199,14 @@ _2019-02-04_
  *  New: API to access headers as `java.time.Instant`.
  *  New: Fail fast if a `SSLSocketFactory` is used as a `SocketFactory`.
  *  New: Log the TLS handshake in `LoggingEventListener`.
+
+
+## Version 3.12.9
+
+_2020-02-24_
+
+ *  Fix: Don't crash on Android 11 due to use of restricted methods. This prevents a crash with the
+    exception, "Expected Android API level 21+ but was 29".
 
 
 ## Version 3.12.8
