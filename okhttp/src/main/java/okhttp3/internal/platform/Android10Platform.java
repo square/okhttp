@@ -71,7 +71,7 @@ class Android10Platform extends AndroidPlatform {
 
         return new Android10Platform(sslParametersClass);
       }
-    } catch (ReflectiveOperationException ignored) {
+    } catch (ClassNotFoundException ignored) {
     }
 
     return null; // Not an Android 10+ runtime.
