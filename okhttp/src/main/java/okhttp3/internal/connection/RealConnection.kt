@@ -582,7 +582,7 @@ class RealConnection(
           handshake != null &&
           OkHostnameVerifier.verify(url.host, handshake!!.peerCertificates[0] as X509Certificate)
     } catch (_: SSLPeerUnverifiedException) {
-      // OkHostnameVerifier isn't guaranteed to work is user has disabled security via
+      // OkHostnameVerifier isn't guaranteed to work if user has disabled security via
       // TrustManager and hostnameVerifier
       connectionPool.assertThreadHoldsLock()
       noCoalescedConnections = true
