@@ -501,6 +501,8 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
         writer.windowUpdate(0, (windowSize - DEFAULT_INITIAL_WINDOW_SIZE).toLong())
       }
     }
+    // Thread doesn't use client Dispatcher, since it is scoped potentially across clients via
+    // ConnectionPool.
     Thread(readerRunnable, connectionName).apply {
       isDaemon = daemon
     }.start()
