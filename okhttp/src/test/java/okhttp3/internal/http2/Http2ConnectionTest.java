@@ -505,7 +505,7 @@ public final class Http2ConnectionTest {
         .socket(socket)
         .pushObserver(IGNORE)
         .build();
-    connection.start(false);
+    connection.start(/* sendConnectionPreface = */ false);
     socket.shutdownOutput();
     try {
       connection.newStream(headerEntries("a", longString), false);
@@ -1814,7 +1814,7 @@ public final class Http2ConnectionTest {
     Http2Connection connection = new Http2Connection.Builder(true, TaskRunner.INSTANCE)
         .socket(peer.openSocket())
         .build();
-    connection.start(false);
+    connection.start(/* sendConnectionPreface = */ false);
 
     Http2Stream stream = connection.newStream(headerEntries("b", "banana"), false);
     try {
@@ -1882,7 +1882,7 @@ public final class Http2ConnectionTest {
         .pushObserver(pushObserver)
         .listener(listener)
         .build();
-    connection.start(false);
+    connection.start(/* sendConnectionPreface = */ false);
 
     // verify the peer received the ACK
     InFrame ackFrame = peer.takeFrame();
