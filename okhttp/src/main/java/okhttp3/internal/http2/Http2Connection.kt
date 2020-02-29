@@ -489,9 +489,10 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
    *
    * @param sendConnectionPreface true to send connection preface frames. This should always be true
    *     except for in tests that don't check for a connection preface.
+   * @param daemon whether to use a Daemon thread for the connection.
    */
   @Throws(IOException::class) @JvmOverloads
-  fun start(sendConnectionPreface: Boolean = true) {
+  fun start(sendConnectionPreface: Boolean = true, daemon: Boolean = true) {
     if (sendConnectionPreface) {
       writer.connectionPreface()
       writer.settings(okHttpSettings)
@@ -500,7 +501,9 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
         writer.windowUpdate(0, (windowSize - DEFAULT_INITIAL_WINDOW_SIZE).toLong())
       }
     }
-    Thread(readerRunnable, connectionName).start() // Not a daemon thread.
+    Thread(readerRunnable, connectionName).apply {
+      isDaemon = daemon
+    }.start()
   }
 
   /** Merges [settings] into this peer's settings and sends them to the remote peer. */
