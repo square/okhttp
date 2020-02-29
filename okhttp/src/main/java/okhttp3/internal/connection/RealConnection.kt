@@ -575,10 +575,16 @@ class RealConnection(
       return true // Host match. The URL is supported.
     }
 
-    // We have a host mismatch. But if the certificate matches, we're still good.
-    return !noCoalescedConnections &&
-        handshake != null &&
-        OkHostnameVerifier.verify(url.host, handshake!!.peerCertificates[0] as X509Certificate)
+    try {
+      // We have a host mismatch. But if the certificate matches, we're still good.
+      return !noCoalescedConnections &&
+          handshake != null &&
+          OkHostnameVerifier.verify(url.host, handshake!!.peerCertificates[0] as X509Certificate)
+    } catch (_: SSLPeerUnverifiedException) {
+      // OkHostnameVerifier isn't guaranteed to work is user has disabled security via
+      // TrustManager and hostnameVerifier
+      return false
+    }
   }
 
   @Throws(SocketException::class)
