@@ -46,6 +46,7 @@ import okhttp3.Response
 import okhttp3.Route
 import okhttp3.internal.EMPTY_RESPONSE
 import okhttp3.internal.assertThreadDoesntHoldLock
+import okhttp3.internal.assertThreadHoldsLock
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.http.ExchangeCodec
@@ -583,6 +584,8 @@ class RealConnection(
     } catch (_: SSLPeerUnverifiedException) {
       // OkHostnameVerifier isn't guaranteed to work is user has disabled security via
       // TrustManager and hostnameVerifier
+      connectionPool.assertThreadHoldsLock()
+      noCoalescedConnections = true
       return false
     }
   }
