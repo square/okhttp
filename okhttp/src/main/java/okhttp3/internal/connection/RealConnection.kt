@@ -584,7 +584,6 @@ class RealConnection(
     } catch (_: SSLPeerUnverifiedException) {
       // OkHostnameVerifier isn't guaranteed to work if user has disabled security via
       // TrustManager and hostnameVerifier
-      connectionPool.assertThreadHoldsLock()
       noCoalescedConnections = true
       return false
     }
