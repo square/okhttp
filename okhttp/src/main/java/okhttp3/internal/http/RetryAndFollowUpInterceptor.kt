@@ -60,6 +60,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
     var followUpCount = 0
     var priorResponse: Response? = null
     var newExchangeFinder = true
+    var recoveredFailures: MutableList<IOException>? = null
     while (true) {
       call.enterNetworkInterceptorExchange(request, newExchangeFinder)
 
@@ -76,14 +77,18 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
         } catch (e: RouteException) {
           // The attempt to connect via a route failed. The request will not have been sent.
           if (!recover(e.lastConnectException, call, request, requestSendStarted = false)) {
-            throw e.firstConnectException
+            throw e.firstConnectException.withSuppressed(recoveredFailures)
+          } else {
+            recoveredFailures = recoveredFailures.appendOrCreateList(e.firstConnectException)
           }
           newExchangeFinder = false
           continue
         } catch (e: IOException) {
           // An attempt to communicate with a server failed. The request may have been sent.
           if (!recover(e, call, request, requestSendStarted = e !is ConnectionShutdownException)) {
-            throw e
+            throw e.withSuppressed(recoveredFailures)
+          } else {
+            recoveredFailures = recoveredFailures.appendOrCreateList(e)
           }
           newExchangeFinder = false
           continue
@@ -349,3 +354,13 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
     private const val MAX_FOLLOW_UPS = 20
   }
 }
+
+private fun Exception.withSuppressed(suppressed: MutableList<IOException>?): Throwable {
+  if (suppressed != null) {
+    for (it in suppressed) this.addSuppressed(it)
+  }
+  return this
+}
+
+private fun <E> MutableList<E>?.appendOrCreateList(e: E): MutableList<E> =
+    this?.apply { add(e) } ?: mutableListOf(e)
