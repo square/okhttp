@@ -357,7 +357,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
 
 private fun Exception.withSuppressed(suppressed: MutableList<IOException>?): Throwable {
   if (suppressed != null) {
-    for (it in suppressed) this.addSuppressed(it)
+    for (e in suppressed) addSuppressed(e)
   }
   return this
 }
