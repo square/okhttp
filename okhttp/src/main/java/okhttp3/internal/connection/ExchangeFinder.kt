@@ -17,6 +17,7 @@ package okhttp3.internal.connection
 
 import java.io.IOException
 import java.net.Socket
+import javax.net.ssl.SSLPeerUnverifiedException
 import okhttp3.Address
 import okhttp3.EventListener
 import okhttp3.OkHttpClient
@@ -30,7 +31,6 @@ import okhttp3.internal.http.RealInterceptorChain
 import okhttp3.internal.http2.ConnectionShutdownException
 import okhttp3.internal.http2.ErrorCode
 import okhttp3.internal.http2.StreamResetException
-import javax.net.ssl.SSLPeerUnverifiedException
 
 /**
  * Attempts to find the connections for an exchange and any retries that follow. This uses the
