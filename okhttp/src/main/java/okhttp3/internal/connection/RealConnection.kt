@@ -566,6 +566,8 @@ class RealConnection(
   }
 
   fun supportsUrl(url: HttpUrl): Boolean {
+    connectionPool.assertThreadHoldsLock()
+
     val routeUrl = route.address.url
 
     if (url.port != routeUrl.port) {
@@ -583,7 +585,7 @@ class RealConnection(
           OkHostnameVerifier.verify(url.host, handshake!!.peerCertificates[0] as X509Certificate)
     } catch (_: SSLPeerUnverifiedException) {
       // OkHostnameVerifier isn't guaranteed to work if user has disabled security via
-      // TrustManager and hostnameVerifier
+      // TrustManager and hostnameVerifier.
       noCoalescedConnections = true
       return false
     }
