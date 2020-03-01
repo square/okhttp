@@ -31,8 +31,8 @@ import okhttp3.internal.threadFactory
 /**
  * A set of worker threads that are shared among a set of task queues.
  *
- * Use [INSTANCE] for a task runner that uses daemon threads. There is not currently a shared
- * instance for non-daemon threads.
+ * Use [INSTANCE] for a task runner that uses daemon threads. Use [NON_DAEMON] for non-daemon
+ * threads.
  *
  * The task runner is also responsible for releasing held threads when the library is unloaded.
  * This is for the benefit of container environments that implement code unloading.
@@ -307,6 +307,9 @@ class TaskRunner(
   companion object {
     @JvmField
     val INSTANCE = TaskRunner(RealBackend(threadFactory("$okHttpName TaskRunner", daemon = true)))
+
+    @JvmField
+    val NON_DAEMON = TaskRunner(RealBackend(threadFactory("$okHttpName TaskRunner", daemon = false)))
 
     val logger: Logger = Logger.getLogger(TaskRunner::class.java.name)
   }

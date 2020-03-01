@@ -503,9 +503,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     }
     // Thread doesn't use client Dispatcher, since it is scoped potentially across clients via
     // ConnectionPool.
-    Thread(readerRunnable, connectionName).apply {
-      isDaemon = daemon
-    }.start()
+    TaskRunner.NON_DAEMON.newQueue().execute(name = connectionName, block = readerRunnable)
   }
 
   /** Merges [settings] into this peer's settings and sends them to the remote peer. */
@@ -610,8 +608,8 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
    */
   inner class ReaderRunnable internal constructor(
     internal val reader: Http2Reader
-  ) : Runnable, Http2Reader.Handler {
-    override fun run() {
+  ) : Http2Reader.Handler, () -> Unit {
+    override fun invoke() {
       var connectionErrorCode = ErrorCode.INTERNAL_ERROR
       var streamErrorCode = ErrorCode.INTERNAL_ERROR
       var errorException: IOException? = null
