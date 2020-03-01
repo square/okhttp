@@ -46,6 +46,7 @@ import okhttp3.Response
 import okhttp3.Route
 import okhttp3.internal.EMPTY_RESPONSE
 import okhttp3.internal.assertThreadDoesntHoldLock
+import okhttp3.internal.assertThreadHoldsLock
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.http.ExchangeCodec
@@ -538,7 +539,7 @@ class RealConnection(
 
     // 3. This connection's server certificate's must cover the new host.
     if (address.hostnameVerifier !== OkHostnameVerifier) return false
-    if (!supportsUrl(address.url)) return false
+    if (!safeSupportsUrl(address.url)) return false
 
     // 4. Certificate pinning must match the host.
     try {
@@ -562,6 +563,22 @@ class RealConnection(
           route.proxy.type() == Proxy.Type.DIRECT &&
           route.socketAddress == it.socketAddress
     }
+  }
+
+  /**
+   * The same as [supportsUrl] but catching any issues that would disqualify this live Connection
+   * for use across others urls. In that case noCoalescedConnections is updated, but the method
+   * must be called within the connectionPool lock.
+   */
+  fun safeSupportsUrl(url: HttpUrl) = try {
+    connectionPool.assertThreadHoldsLock()
+
+    supportsUrl(url)
+  } catch (_: SSLPeerUnverifiedException) {
+    // OkHostnameVerifier isn't guaranteed to work if user has disabled security via
+    // TrustManager and hostnameVerifier.
+    noCoalescedConnections = true
+    false
   }
 
   fun supportsUrl(url: HttpUrl): Boolean {

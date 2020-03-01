@@ -17,7 +17,6 @@ package okhttp3.internal.connection
 
 import java.io.IOException
 import java.net.Socket
-import javax.net.ssl.SSLPeerUnverifiedException
 import okhttp3.Address
 import okhttp3.EventListener
 import okhttp3.OkHttpClient
@@ -123,17 +122,6 @@ class ExchangeFinder(
     }
   }
 
-  private fun RealConnection.isSupported() = try {
-    connectionPool.assertThreadHoldsLock()
-
-    supportsUrl(address.url)
-  } catch (_: SSLPeerUnverifiedException) {
-    // OkHostnameVerifier isn't guaranteed to work if user has disabled security via
-    // TrustManager and hostnameVerifier.
-    noCoalescedConnections = true
-    false
-  }
-
   /**
    * Returns a connection to host a new stream. This prefers the existing connection if it exists,
    * then the pool, finally building a new connection.
@@ -157,7 +145,7 @@ class ExchangeFinder(
       val existingCallConnection = call.connection
       releasedConnection = existingCallConnection
       toClose = if (existingCallConnection != null &&
-          (existingCallConnection.noNewExchanges || !existingCallConnection.isSupported())) {
+          (existingCallConnection.noNewExchanges || !existingCallConnection.safeSupportsUrl(address.url))) {
         call.releaseConnectionNoEvents()
       } else {
         null
