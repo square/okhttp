@@ -154,18 +154,18 @@ class ExchangeFinder(
     synchronized(connectionPool) {
       if (call.isCanceled()) throw IOException("Canceled")
 
-      val callConnection = call.connection
-      releasedConnection = callConnection
-      toClose = if (callConnection != null &&
-          (callConnection.noNewExchanges || !callConnection.isSupported())) {
+      val existingCallConnection = call.connection
+      releasedConnection = existingCallConnection
+      toClose = if (existingCallConnection != null &&
+          (existingCallConnection.noNewExchanges || !existingCallConnection.isSupported())) {
         call.releaseConnectionNoEvents()
       } else {
         null
       }
 
-      if (callConnection != null) {
+      if (call.connection != null) {
         // We had an already-allocated connection and it's good.
-        result = callConnection
+        result = call.connection
         releasedConnection = null
       }
 
@@ -178,7 +178,7 @@ class ExchangeFinder(
         // Attempt to get a connection from the pool.
         if (connectionPool.callAcquirePooledConnection(address, call, null, false)) {
           foundPooledConnection = true
-          result = callConnection
+          result = call.connection
         } else if (nextRouteToTry != null) {
           selectedRoute = nextRouteToTry
           nextRouteToTry = null
