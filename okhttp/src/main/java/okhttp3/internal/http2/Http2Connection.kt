@@ -489,10 +489,10 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
    *
    * @param sendConnectionPreface true to send connection preface frames. This should always be true
    *     except for in tests that don't check for a connection preface.
-   * @param daemon whether to use a Daemon thread for the connection.
+   * @param taskRunner the TaskRunner to use, daemon by default.
    */
   @Throws(IOException::class) @JvmOverloads
-  fun start(sendConnectionPreface: Boolean = true, daemon: Boolean = true) {
+  fun start(sendConnectionPreface: Boolean = true, taskRunner: TaskRunner = TaskRunner.INSTANCE) {
     if (sendConnectionPreface) {
       writer.connectionPreface()
       writer.settings(okHttpSettings)
@@ -503,7 +503,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     }
     // Thread doesn't use client Dispatcher, since it is scoped potentially across clients via
     // ConnectionPool.
-    TaskRunner.NON_DAEMON.newQueue().execute(name = connectionName, block = readerRunnable)
+    taskRunner.newQueue().execute(name = connectionName, block = readerRunnable)
   }
 
   /** Merges [settings] into this peer's settings and sends them to the remote peer. */
