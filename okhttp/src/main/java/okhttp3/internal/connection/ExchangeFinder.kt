@@ -30,6 +30,7 @@ import okhttp3.internal.http.RealInterceptorChain
 import okhttp3.internal.http2.ConnectionShutdownException
 import okhttp3.internal.http2.ErrorCode
 import okhttp3.internal.http2.StreamResetException
+import javax.net.ssl.SSLPeerUnverifiedException
 
 /**
  * Attempts to find the connections for an exchange and any retries that follow. This uses the
@@ -122,6 +123,17 @@ class ExchangeFinder(
     }
   }
 
+  private fun RealConnection.isSupported() = try {
+    connectionPool.assertThreadHoldsLock()
+
+    supportsUrl(address.url)
+  } catch (_: SSLPeerUnverifiedException) {
+    // OkHostnameVerifier isn't guaranteed to work if user has disabled security via
+    // TrustManager and hostnameVerifier.
+    noCoalescedConnections = true
+    false
+  }
+
   /**
    * Returns a connection to host a new stream. This prefers the existing connection if it exists,
    * then the pool, finally building a new connection.
@@ -142,17 +154,18 @@ class ExchangeFinder(
     synchronized(connectionPool) {
       if (call.isCanceled()) throw IOException("Canceled")
 
-      releasedConnection = call.connection
-      toClose = if (call.connection != null &&
-          (call.connection!!.noNewExchanges || !call.connection!!.supportsUrl(address.url))) {
+      val callConnection = call.connection
+      releasedConnection = callConnection
+      toClose = if (callConnection != null &&
+          (callConnection.noNewExchanges || !callConnection.isSupported())) {
         call.releaseConnectionNoEvents()
       } else {
         null
       }
 
-      if (call.connection != null) {
+      if (callConnection != null) {
         // We had an already-allocated connection and it's good.
-        result = call.connection
+        result = callConnection
         releasedConnection = null
       }
 
@@ -165,7 +178,7 @@ class ExchangeFinder(
         // Attempt to get a connection from the pool.
         if (connectionPool.callAcquirePooledConnection(address, call, null, false)) {
           foundPooledConnection = true
-          result = call.connection
+          result = callConnection
         } else if (nextRouteToTry != null) {
           selectedRoute = nextRouteToTry
           nextRouteToTry = null

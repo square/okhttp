@@ -46,7 +46,6 @@ import okhttp3.Response
 import okhttp3.Route
 import okhttp3.internal.EMPTY_RESPONSE
 import okhttp3.internal.assertThreadDoesntHoldLock
-import okhttp3.internal.assertThreadHoldsLock
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.http.ExchangeCodec
@@ -104,7 +103,7 @@ class RealConnection(
    * If true, this connection may not be used for coalesced requests. These are requests that could
    * share the same connection without sharing the same hostname.
    */
-  private var noCoalescedConnections = false
+  internal var noCoalescedConnections = false
 
   /**
    * The number of times there was a problem establishing a stream that could be due to route
@@ -566,8 +565,6 @@ class RealConnection(
   }
 
   fun supportsUrl(url: HttpUrl): Boolean {
-    connectionPool.assertThreadHoldsLock()
-
     val routeUrl = route.address.url
 
     if (url.port != routeUrl.port) {
@@ -578,17 +575,10 @@ class RealConnection(
       return true // Host match. The URL is supported.
     }
 
-    try {
-      // We have a host mismatch. But if the certificate matches, we're still good.
-      return !noCoalescedConnections &&
-          handshake != null &&
-          OkHostnameVerifier.verify(url.host, handshake!!.peerCertificates[0] as X509Certificate)
-    } catch (_: SSLPeerUnverifiedException) {
-      // OkHostnameVerifier isn't guaranteed to work if user has disabled security via
-      // TrustManager and hostnameVerifier.
-      noCoalescedConnections = true
-      return false
-    }
+    // We have a host mismatch. But if the certificate matches, we're still good.
+    return !noCoalescedConnections &&
+        handshake != null &&
+        OkHostnameVerifier.verify(url.host, handshake!!.peerCertificates[0] as X509Certificate)
   }
 
   @Throws(SocketException::class)
