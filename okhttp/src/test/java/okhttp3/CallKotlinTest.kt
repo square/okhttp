@@ -223,7 +223,6 @@ class CallKotlinTest {
 
     server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))
 
-    // Pin publicobject.com's cert.
     client = client.newBuilder()
         .proxySelector(proxySelector)
         .readTimeout(Duration.ofMillis(100))
