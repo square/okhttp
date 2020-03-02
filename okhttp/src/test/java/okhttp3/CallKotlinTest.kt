@@ -228,21 +228,17 @@ class CallKotlinTest {
         .proxySelector(proxySelector)
         .readTimeout(Duration.ofMillis(100))
         .connectTimeout(Duration.ofMillis(100))
-        .certificatePinner(CertificatePinner.Builder()
-            .add(server.hostName, "sha1/DmxUShsZuNiqPQsX2Oi9uv2sCnw=")
-            .build())
         .build()
 
     val request = Request.Builder().url(server.url("/")).build()
     try {
       client.newCall(request).execute()
       fail()
-    } catch (expected: SocketException) {
-      expected.printStackTrace()
-
-      assertThat(expected.message).startsWith("Connection reset")
+    } catch (expected: IOException) {
       assertThat(expected.suppressed).hasSize(1)
-      assertThat(expected.suppressed[0]).isInstanceOf(SocketTimeoutException::class.java)
+      val suppressed = expected.suppressed[0]
+      assertThat(suppressed).isInstanceOf(IOException::class.java)
+      assertThat(suppressed).isNotSameAs(expected)
     }
   }
 }
