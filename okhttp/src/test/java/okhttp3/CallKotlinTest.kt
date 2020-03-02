@@ -17,8 +17,6 @@ package okhttp3
 
 import java.io.IOException
 import java.net.Proxy
-import java.net.SocketException
-import java.net.SocketTimeoutException
 import java.security.cert.X509Certificate
 import java.time.Duration
 import java.util.concurrent.TimeUnit
