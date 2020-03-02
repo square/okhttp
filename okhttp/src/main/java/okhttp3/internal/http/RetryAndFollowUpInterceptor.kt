@@ -45,6 +45,7 @@ import okhttp3.internal.http.StatusLine.Companion.HTTP_MISDIRECTED_REQUEST
 import okhttp3.internal.http.StatusLine.Companion.HTTP_PERM_REDIRECT
 import okhttp3.internal.http.StatusLine.Companion.HTTP_TEMP_REDIRECT
 import okhttp3.internal.http2.ConnectionShutdownException
+import okhttp3.internal.withSuppressed
 
 /**
  * This interceptor recovers from failures and follows redirects as necessary. It may throw an
@@ -60,7 +61,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
     var followUpCount = 0
     var priorResponse: Response? = null
     var newExchangeFinder = true
-    var recoveredFailures: MutableList<IOException>? = null
+    var recoveredFailures = listOf<IOException>()
     while (true) {
       call.enterNetworkInterceptorExchange(request, newExchangeFinder)
 
@@ -79,7 +80,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
           if (!recover(e.lastConnectException, call, request, requestSendStarted = false)) {
             throw e.firstConnectException.withSuppressed(recoveredFailures)
           } else {
-            recoveredFailures = recoveredFailures.appendOrCreateList(e.firstConnectException)
+            recoveredFailures += e.firstConnectException
           }
           newExchangeFinder = false
           continue
@@ -88,7 +89,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
           if (!recover(e, call, request, requestSendStarted = e !is ConnectionShutdownException)) {
             throw e.withSuppressed(recoveredFailures)
           } else {
-            recoveredFailures = recoveredFailures.appendOrCreateList(e)
+            recoveredFailures += e
           }
           newExchangeFinder = false
           continue
@@ -354,13 +355,3 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
     private const val MAX_FOLLOW_UPS = 20
   }
 }
-
-private fun Exception.withSuppressed(suppressed: MutableList<IOException>?): Throwable {
-  if (suppressed != null) {
-    for (e in suppressed) addSuppressed(e)
-  }
-  return this
-}
-
-private fun <E> MutableList<E>?.appendOrCreateList(e: E): MutableList<E> =
-    this?.apply { add(e) } ?: mutableListOf(e)
