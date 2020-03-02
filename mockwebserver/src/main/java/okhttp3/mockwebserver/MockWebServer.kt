@@ -536,7 +536,7 @@ class MockWebServer : ExternalResource(), Closeable {
             .socket(socket)
             .listener(http2SocketHandler)
             .build()
-        connection.start(taskRunner = TaskRunner.NON_DAEMON)
+        connection.start(taskRunner = taskRunner)
         openConnections.add(connection)
         openClientSockets.remove(socket)
         return
