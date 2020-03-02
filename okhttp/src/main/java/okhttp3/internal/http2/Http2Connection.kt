@@ -489,9 +489,10 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
    *
    * @param sendConnectionPreface true to send connection preface frames. This should always be true
    *     except for in tests that don't check for a connection preface.
+   * @param taskRunner the TaskRunner to use, daemon by default.
    */
   @Throws(IOException::class) @JvmOverloads
-  fun start(sendConnectionPreface: Boolean = true) {
+  fun start(sendConnectionPreface: Boolean = true, taskRunner: TaskRunner = TaskRunner.INSTANCE) {
     if (sendConnectionPreface) {
       writer.connectionPreface()
       writer.settings(okHttpSettings)
@@ -500,7 +501,9 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
         writer.windowUpdate(0, (windowSize - DEFAULT_INITIAL_WINDOW_SIZE).toLong())
       }
     }
-    Thread(readerRunnable, connectionName).start() // Not a daemon thread.
+    // Thread doesn't use client Dispatcher, since it is scoped potentially across clients via
+    // ConnectionPool.
+    taskRunner.newQueue().execute(name = connectionName, block = readerRunnable)
   }
 
   /** Merges [settings] into this peer's settings and sends them to the remote peer. */
@@ -605,8 +608,8 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
    */
   inner class ReaderRunnable internal constructor(
     internal val reader: Http2Reader
-  ) : Runnable, Http2Reader.Handler {
-    override fun run() {
+  ) : Http2Reader.Handler, () -> Unit {
+    override fun invoke() {
       var connectionErrorCode = ErrorCode.INTERNAL_ERROR
       var streamErrorCode = ErrorCode.INTERNAL_ERROR
       var errorException: IOException? = null
