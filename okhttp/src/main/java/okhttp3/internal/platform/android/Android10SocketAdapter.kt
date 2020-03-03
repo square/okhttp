@@ -18,14 +18,14 @@ package okhttp3.internal.platform.android
 import android.annotation.SuppressLint
 import android.net.SSLCertificateSocketFactory
 import android.os.Build
+import java.io.IOException
+import java.lang.IllegalArgumentException
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol
 import okhttp3.internal.platform.AndroidPlatform.Companion.isAndroid
 import okhttp3.internal.platform.Platform
-import java.io.IOException
-import java.lang.IllegalArgumentException
 
 /**
  * Simple non-reflection SocketAdapter for Android Q.
