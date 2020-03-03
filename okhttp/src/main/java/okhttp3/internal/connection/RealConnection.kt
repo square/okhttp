@@ -46,7 +46,6 @@ import okhttp3.Response
 import okhttp3.Route
 import okhttp3.internal.EMPTY_RESPONSE
 import okhttp3.internal.assertThreadDoesntHoldLock
-import okhttp3.internal.assertThreadHoldsLock
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.http.ExchangeCodec
@@ -104,7 +103,7 @@ class RealConnection(
    * If true, this connection may not be used for coalesced requests. These are requests that could
    * share the same connection without sharing the same hostname.
    */
-  internal var noCoalescedConnections = false
+  private var noCoalescedConnections = false
 
   /**
    * The number of times there was a problem establishing a stream that could be due to route
@@ -539,7 +538,7 @@ class RealConnection(
 
     // 3. This connection's server certificate's must cover the new host.
     if (address.hostnameVerifier !== OkHostnameVerifier) return false
-    if (!safeSupportsUrl(address.url)) return false
+    if (!supportsUrl(address.url)) return false
 
     // 4. Certificate pinning must match the host.
     try {
@@ -565,22 +564,6 @@ class RealConnection(
     }
   }
 
-  /**
-   * The same as [supportsUrl] but catching any issues that would disqualify this live Connection
-   * for use across others urls. In that case noCoalescedConnections is updated, but the method
-   * must be called within the connectionPool lock.
-   */
-  fun safeSupportsUrl(url: HttpUrl) = try {
-    connectionPool.assertThreadHoldsLock()
-
-    supportsUrl(url)
-  } catch (_: SSLPeerUnverifiedException) {
-    // OkHostnameVerifier isn't guaranteed to work if user has disabled security via
-    // TrustManager and hostnameVerifier.
-    noCoalescedConnections = true
-    false
-  }
-
   fun supportsUrl(url: HttpUrl): Boolean {
     val routeUrl = route.address.url
 
@@ -593,9 +576,14 @@ class RealConnection(
     }
 
     // We have a host mismatch. But if the certificate matches, we're still good.
-    return !noCoalescedConnections &&
-        handshake != null &&
-        OkHostnameVerifier.verify(url.host, handshake!!.peerCertificates[0] as X509Certificate)
+    return !noCoalescedConnections && handshake != null && certificateSupportHost(url, handshake!!)
+  }
+
+  private fun certificateSupportHost(url: HttpUrl, handshake: Handshake): Boolean {
+    val peerCertificates = handshake.peerCertificates
+
+    return peerCertificates.isNotEmpty() && OkHostnameVerifier.verify(url.host,
+        peerCertificates[0] as X509Certificate)
   }
 
   @Throws(SocketException::class)

@@ -22,6 +22,7 @@ import java.security.cert.X509Certificate
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSession
 import okhttp3.internal.immutableListOf
+import okhttp3.internal.platform.Platform
 import okhttp3.internal.toImmutableList
 
 /**
@@ -48,8 +49,14 @@ class Handshake internal constructor(
   peerCertificatesFn: () -> List<Certificate>
 ) {
   /** Returns a possibly-empty list of certificates that identify the remote peer. */
-  @get:JvmName("peerCertificates") val peerCertificates: List<Certificate> by lazy(
-      peerCertificatesFn)
+  @get:JvmName("peerCertificates") val peerCertificates: List<Certificate> by lazy {
+    try {
+      peerCertificatesFn()
+    } catch (spue: SSLPeerUnverifiedException) {
+      Platform.get().log("Unable to verify connection certificates", Platform.INFO, spue)
+      listOf<Certificate>()
+    }
+  }
 
   @JvmName("-deprecated_tlsVersion")
   @Deprecated(
