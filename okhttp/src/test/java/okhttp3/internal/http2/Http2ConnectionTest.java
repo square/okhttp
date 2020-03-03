@@ -27,6 +27,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import okhttp3.Headers;
 import okhttp3.internal.Util;
+import okhttp3.internal.concurrent.TaskFaker;
+import okhttp3.internal.concurrent.TaskQueue;
 import okhttp3.internal.concurrent.TaskRunner;
 import okhttp3.internal.http2.MockHttp2Peer.InFrame;
 import okio.AsyncTimeout;
@@ -505,7 +507,7 @@ public final class Http2ConnectionTest {
         .socket(socket)
         .pushObserver(IGNORE)
         .build();
-    connection.start(false);
+    connection.start(/* sendConnectionPreface = */ false);
     socket.shutdownOutput();
     try {
       connection.newStream(headerEntries("a", longString), false);
@@ -1814,7 +1816,7 @@ public final class Http2ConnectionTest {
     Http2Connection connection = new Http2Connection.Builder(true, TaskRunner.INSTANCE)
         .socket(peer.openSocket())
         .build();
-    connection.start(false);
+    connection.start(/* sendConnectionPreface = */ false);
 
     Http2Stream stream = connection.newStream(headerEntries("b", "banana"), false);
     try {
@@ -1830,6 +1832,24 @@ public final class Http2ConnectionTest {
     InFrame goaway = peer.takeFrame();
     assertThat(goaway.type).isEqualTo(Http2.TYPE_GOAWAY);
     assertThat(goaway.errorCode).isEqualTo(ErrorCode.PROTOCOL_ERROR);
+  }
+
+  @Test public void connectionUsesTaskRunner() throws Exception {
+    peer.acceptFrame(); // SYN_STREAM.
+    peer.play();
+
+    TaskFaker taskFaker = new TaskFaker();
+    TaskRunner taskRunner = taskFaker.getTaskRunner();
+
+    Socket socket = peer.openSocket();
+    Http2Connection connection = new Http2Connection.Builder(true, taskRunner)
+        .socket(socket)
+        .pushObserver(IGNORE)
+        .build();
+    connection.start(/* sendConnectionPreface = */ false, taskRunner);
+
+    List<TaskQueue> queues = taskRunner.activeQueues();
+    assertThat(queues).hasSize(1);
   }
 
   private Buffer data(int byteCount) {
@@ -1882,7 +1902,7 @@ public final class Http2ConnectionTest {
         .pushObserver(pushObserver)
         .listener(listener)
         .build();
-    connection.start(false);
+    connection.start(/* sendConnectionPreface = */ false);
 
     // verify the peer received the ACK
     InFrame ackFrame = peer.takeFrame();

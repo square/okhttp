@@ -201,6 +201,14 @@ _2019-02-04_
  *  New: Log the TLS handshake in `LoggingEventListener`.
 
 
+## Version 3.12.10
+
+_2020-02-29_
+
+ *  Fix: Don't crash on Android 4.1 when detecting methods that became restricted in Android 11.
+    Supporting a full decade of Android releases on our 3.12.x branch is tricky!
+
+
 ## Version 3.12.9
 
 _2020-02-24_
