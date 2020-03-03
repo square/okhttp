@@ -116,7 +116,7 @@ class AndroidPlatform extends Platform {
   }
 
   @Override public void configureTlsExtensions(
-      SSLSocket sslSocket, String hostname, List<Protocol> protocols) {
+      SSLSocket sslSocket, String hostname, List<Protocol> protocols) throws IOException {
     // Enable SNI and session tickets.
     if (hostname != null) {
       setUseSessionTickets.invokeOptionalWithoutCheckedException(sslSocket, true);
