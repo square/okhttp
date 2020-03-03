@@ -106,7 +106,7 @@ class AndroidPlatform extends Platform {
   }
 
   @Override public void configureTlsExtensions(
-      SSLSocket sslSocket, String hostname, List<Protocol> protocols) {
+      SSLSocket sslSocket, String hostname, List<Protocol> protocols) throws IOException {
     if (!sslSocketClass.isInstance(sslSocket)) {
       return; // No TLS extensions if the socket class is custom.
     }

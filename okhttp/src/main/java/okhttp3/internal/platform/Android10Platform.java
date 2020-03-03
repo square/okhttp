@@ -17,6 +17,7 @@ package okhttp3.internal.platform;
 
 import android.annotation.SuppressLint;
 import android.net.ssl.SSLSockets;
+import java.io.IOException;
 import java.util.List;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLParameters;
@@ -34,16 +35,21 @@ class Android10Platform extends AndroidPlatform {
   @SuppressLint("NewApi")
   @IgnoreJRERequirement
   @Override public void configureTlsExtensions(
-      SSLSocket sslSocket, String hostname, List<Protocol> protocols) {
-    enableSessionTickets(sslSocket);
+      SSLSocket sslSocket, String hostname, List<Protocol> protocols) throws IOException {
+    try {
+      enableSessionTickets(sslSocket);
 
-    SSLParameters sslParameters = sslSocket.getSSLParameters();
+      SSLParameters sslParameters = sslSocket.getSSLParameters();
 
-    // Enable ALPN.
-    String[] protocolsArray = Platform.alpnProtocolNames(protocols).toArray(new String[0]);
-    sslParameters.setApplicationProtocols(protocolsArray);
+      // Enable ALPN.
+      String[] protocolsArray = Platform.alpnProtocolNames(protocols).toArray(new String[0]);
+      sslParameters.setApplicationProtocols(protocolsArray);
 
-    sslSocket.setSSLParameters(sslParameters);
+      sslSocket.setSSLParameters(sslParameters);
+    } catch (IllegalArgumentException iae) {
+      // probably java.lang.IllegalArgumentException: Invalid input to toASCII from IDN.toASCII
+      throw new IOException("Android internal error", iae);
+    }
   }
 
   private void enableSessionTickets(SSLSocket sslSocket) {
