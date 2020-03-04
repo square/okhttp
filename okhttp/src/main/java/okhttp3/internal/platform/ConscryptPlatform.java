@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.platform;
 
+import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.util.List;
@@ -63,7 +64,7 @@ public class ConscryptPlatform extends Platform {
   }
 
   @Override public void configureTlsExtensions(
-      SSLSocket sslSocket, String hostname, List<Protocol> protocols) {
+      SSLSocket sslSocket, String hostname, List<Protocol> protocols) throws IOException {
     if (Conscrypt.isConscrypt(sslSocket)) {
       // Enable SNI and session tickets.
       if (hostname != null) {

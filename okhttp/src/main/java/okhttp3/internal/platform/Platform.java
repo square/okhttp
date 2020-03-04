@@ -110,7 +110,7 @@ public class Platform {
    * @param hostname non-null for client-side handshakes; null for server-side handshakes.
    */
   public void configureTlsExtensions(SSLSocket sslSocket, @Nullable String hostname,
-      List<Protocol> protocols) {
+      List<Protocol> protocols) throws IOException {
   }
 
   /**
