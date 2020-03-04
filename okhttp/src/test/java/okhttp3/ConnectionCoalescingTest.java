@@ -435,8 +435,7 @@ public final class ConnectionCoalescingTest {
   }
 
   /**
-   * Test connecting to the main host then an alternative, although only subject alternative names
-   * are used if present no special consideration of common name.
+   * Won't coalesce if we can't clean certs e.g. a dev setup.
    */
   @Test public void redirectWithDevSetup() throws Exception {
     X509TrustManager TRUST_MANAGER = new X509TrustManager() {
