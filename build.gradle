@@ -20,7 +20,7 @@ buildscript {
       'okio': '2.4.3',
       'ktlint': '0.36.0',
       'picocli': '4.2.0',
-      'openjsse': '1.1.1'
+      'openjsse': '1.1.0'
   ]
 
   ext.deps = [
