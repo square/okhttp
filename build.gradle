@@ -7,7 +7,7 @@ buildscript {
       'bouncycastle': '1.64',
       'brotli': '0.1.2',
       'checkstyle': '8.28',
-      'conscrypt': '2.4.0',
+      'conscrypt': '2.2.1',
       'corretto': '1.2.0',
       'findbugs': '3.0.2',
       'guava': '28.2-jre',
@@ -20,7 +20,7 @@ buildscript {
       'okio': '2.4.3',
       'ktlint': '0.36.0',
       'picocli': '4.2.0',
-      'openjsse': '1.1.2'
+      'openjsse': '1.1.1'
   ]
 
   ext.deps = [
