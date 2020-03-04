@@ -22,7 +22,6 @@ import java.security.cert.X509Certificate
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSession
 import okhttp3.internal.immutableListOf
-import okhttp3.internal.platform.Platform
 import okhttp3.internal.toImmutableList
 
 /**
@@ -53,7 +52,6 @@ class Handshake internal constructor(
     try {
       peerCertificatesFn()
     } catch (spue: SSLPeerUnverifiedException) {
-      Platform.get().log("Unable to verify connection certificates", Platform.INFO, spue)
       listOf<Certificate>()
     }
   }
@@ -128,11 +126,7 @@ class Handshake internal constructor(
   }
 
   override fun toString(): String {
-    val peerCertificatesString = try {
-      peerCertificates.map { it.name }.toString()
-    } catch (_: SSLPeerUnverifiedException) {
-      "Failed: SSLPeerUnverifiedException"
-    }
+    val peerCertificatesString = peerCertificates.map { it.name }.toString()
     return "Handshake{" +
         "tlsVersion=$tlsVersion " +
         "cipherSuite=$cipherSuite " +
