@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import com.android.internal.annotations.VisibleForTesting
 import java.net.Proxy
 import java.net.ProxySelector
 import java.net.Socket
@@ -42,6 +43,7 @@ import okhttp3.internal.platform.Platform
 import okhttp3.internal.proxy.NullProxySelector
 import okhttp3.internal.tls.CertificateChainCleaner
 import okhttp3.internal.tls.OkHostnameVerifier
+import okhttp3.internal.tls.WhitelistedTrustManager
 import okhttp3.internal.toImmutableList
 import okhttp3.internal.ws.RealWebSocket
 import okio.Sink
@@ -986,6 +988,20 @@ open class OkHttpClient internal constructor(
     @IgnoreJRERequirement
     fun writeTimeout(duration: Duration) = apply {
       writeTimeout(duration.toMillis(), MILLISECONDS)
+    }
+
+    @VisibleForTesting
+    fun enableDevWhitelist(vararg hosts: String) = apply {
+      check(Platform.get().isDevelopmentMode ?: false) {
+        "Not allowed for production builds"
+      }
+
+      val tm = Platform.get().platformTrustManager()
+      val trustManager = WhitelistedTrustManager(tm, *hosts)
+      val sf = Platform.get().newSSLContext().apply {
+        init(null, arrayOf(trustManager), null)
+      }.socketFactory
+      sslSocketFactory(sf, trustManager)
     }
 
     /**

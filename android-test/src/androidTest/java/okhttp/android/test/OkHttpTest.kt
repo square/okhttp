@@ -64,8 +64,10 @@ import javax.net.ssl.X509TrustManager
 import java.util.logging.Logger
 import okhttp3.internal.platform.AndroidPlatform
 import okhttp3.internal.platform.Android10Platform
+import org.junit.After
 import java.io.IOException
 import java.lang.IllegalArgumentException
+import java.net.HttpURLConnection.HTTP_MOVED_TEMP
 
 /**
  * Run with "./gradlew :android-test:connectedCheck" and make sure ANDROID_SDK_ROOT is set.
@@ -92,6 +94,11 @@ class OkHttpTest {
   @Rule
   val server = MockWebServer()
   private val handshakeCertificates = localhost()
+
+  @After
+  fun closeConnections() {
+    client.connectionPool.evictAll()
+  }
 
   @Test
   fun testPlatform() {
@@ -517,6 +524,35 @@ class OkHttpTest {
       // https://github.com/square/okhttp/issues/5840
       assertEquals("Android internal error", ioe.message)
       assertEquals(IllegalArgumentException::class.java, ioe.cause!!.javaClass)
+    }
+  }
+
+  @Test
+  fun testDevWhitelist() {
+    assumeNetwork()
+    enableTls()
+
+    // overrides self signed cert in enableTls
+    client = client.newBuilder().enableDevWhitelist("localhost").build()
+
+    server.enqueue(MockResponse()
+        .setResponseCode(HTTP_MOVED_TEMP)
+        .setHeader("Location", "https://www.google.com/robots.txt"))
+
+    val request = Request.Builder().url(server.url("/")).build()
+
+    val response = client.newCall(request).execute()
+
+    response.use {
+      assertEquals(200, response.code)
+
+      // non whitelisted host will still have full security in place
+      assertTrue(response.handshake!!.peerCertificates.isNotEmpty())
+      assertEquals("www.google.com", response.request.url.host)
+
+      // whitelisted host won't have cleaned peer certificates
+      assertTrue(response.priorResponse!!.handshake!!.peerCertificates.isEmpty())
+      assertEquals("localhost", response.priorResponse!!.request.url.host)
     }
   }
 

@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.platform
 
+import android.content.pm.ApplicationInfo
 import android.os.Build
 import java.io.IOException
 import java.lang.reflect.InvocationTargetException
@@ -46,6 +47,9 @@ class AndroidPlatform : Platform() {
   ).filter { it.isSupported() }
 
   private val closeGuard = CloseGuard.get()
+
+  override val isDevelopmentMode: Boolean?
+    get() = true // TODO we need to have some awareness of Android Environment
 
   @Throws(IOException::class)
   override fun connectSocket(

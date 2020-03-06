@@ -65,6 +65,11 @@ import okio.Buffer
  * Supported on Android 6.0+ via `NetworkSecurityPolicy`.
  */
 open class Platform {
+  /**
+   * Returns whether the app is running in development mode.
+   * Null means the platform does not have such a concept.
+   */
+  open val isDevelopmentMode: Boolean? = null // TODO check for a system property?
 
   /** Prefix used on custom headers. */
   fun getPrefix() = "OkHttp"
