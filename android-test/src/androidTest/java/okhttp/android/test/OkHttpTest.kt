@@ -538,8 +538,10 @@ class OkHttpTest {
     val ctxt = InstrumentationRegistry.getTargetContext().applicationContext
 
     val clientFactory = OkHttpAndroidClientFactory.build(ctxt, BuildConfig::class.java) {
-      // overrides self signed cert in enableTls
-      enableDevWhitelist("localhost")
+      if (BuildConfig.DEBUG) {
+        // overrides self signed cert in enableTls
+        enableDevWhitelist("localhost")
+      }
 
       enableCache(cacheSize = 10 * MiB)
 
