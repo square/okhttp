@@ -40,7 +40,6 @@ import okhttp3.internal.connection.RouteDatabase
 import okhttp3.internal.immutableListOf
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.proxy.NullProxySelector
-import okhttp3.internal.tls.AllowlistedTrustManager
 import okhttp3.internal.tls.CertificateChainCleaner
 import okhttp3.internal.tls.OkHostnameVerifier
 import okhttp3.internal.toImmutableList
@@ -987,19 +986,6 @@ open class OkHttpClient internal constructor(
     @IgnoreJRERequirement
     fun writeTimeout(duration: Duration) = apply {
       writeTimeout(duration.toMillis(), MILLISECONDS)
-    }
-
-    fun enableDevWhitelist(vararg hosts: String) = apply {
-      check(Platform.get().isDevelopmentMode) {
-        "Not allowed for production builds"
-      }
-
-      val tm = Platform.get().platformTrustManager()
-      val trustManager = AllowlistedTrustManager(tm, *hosts)
-      val sf = Platform.get().newSSLContext().apply {
-        init(null, arrayOf(trustManager), null)
-      }.socketFactory
-      sslSocketFactory(sf, trustManager)
     }
 
     /**
