@@ -15,7 +15,6 @@
  */
 package okhttp3.internal.platform
 
-import android.content.pm.ApplicationInfo
 import android.os.Build
 import java.io.IOException
 import java.lang.reflect.InvocationTargetException

@@ -7,7 +7,7 @@ import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
 import javax.net.ssl.X509TrustManager
 
-class WhitelistedTrustManager(private val delegate: X509TrustManager, private vararg val hosts: String): X509TrustManager {
+class AllowlistedTrustManager(private val delegate: X509TrustManager, private vararg val hosts: String) : X509TrustManager {
   val delegateMethod = lookupDelegateMethod()
 
   override fun checkClientTrusted(chain: Array<out X509Certificate>, authType: String?) {
@@ -19,7 +19,7 @@ class WhitelistedTrustManager(private val delegate: X509TrustManager, private va
   }
 
   fun checkServerTrusted(chain: Array<out X509Certificate>, authType: String, host: String): List<Certificate> {
-    if (isWhitelisted(host)) {
+    if (isAllowed(host)) {
       return listOf()
     }
 
@@ -30,7 +30,7 @@ class WhitelistedTrustManager(private val delegate: X509TrustManager, private va
     throw CertificateException("Failed to call checkServerTrusted")
   }
 
-  fun isWhitelisted(host: String): Boolean = hosts.contains(host)
+  fun isAllowed(host: String): Boolean = hosts.contains(host)
 
   override fun getAcceptedIssuers(): Array<X509Certificate> = delegate.acceptedIssuers
 

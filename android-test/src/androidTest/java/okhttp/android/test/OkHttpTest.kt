@@ -528,7 +528,7 @@ class OkHttpTest {
   }
 
   @Test
-  fun testDevWhitelist() {
+  fun testDevAllowlist() {
     assumeNetwork()
     enableTls()
 
