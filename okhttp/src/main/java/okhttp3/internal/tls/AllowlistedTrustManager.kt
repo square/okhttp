@@ -15,6 +15,7 @@ class AllowlistedTrustManager(private val delegate: X509TrustManager, private va
   }
 
   override fun checkServerTrusted(chain: Array<out X509Certificate>, authType: String) {
+    // TODO this may cause the allowlist to fail on older clients.
     delegate.checkServerTrusted(chain, authType)
   }
 

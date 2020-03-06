@@ -70,6 +70,7 @@ import java.io.IOException
 import java.lang.IllegalArgumentException
 import java.lang.RuntimeException
 import java.net.HttpURLConnection.HTTP_MOVED_TEMP
+import java.util.concurrent.TimeUnit
 
 /**
  * Run with "./gradlew :android-test:connectedCheck" and make sure ANDROID_SDK_ROOT is set.
@@ -534,13 +535,15 @@ class OkHttpTest {
     assumeNetwork()
     enableTls()
 
-    println(BuildConfig.DEBUG)
-
     val ctxt = InstrumentationRegistry.getTargetContext().applicationContext
 
     val clientFactory = OkHttpAndroidClientFactory.build(ctxt, BuildConfig::class.java) {
       // overrides self signed cert in enableTls
       enableDevWhitelist("localhost")
+
+      client {
+        callTimeout(2, TimeUnit.SECONDS)
+      }
     }
 
     val androidClient = clientFactory.client

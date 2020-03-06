@@ -19,6 +19,10 @@ class OkHttpAndroidClientFactory private constructor(val client: OkHttpClient) {
     }
 
     class OkHttpAndroidClientFactoryInit(private val clientBuilder: OkHttpClient.Builder) {
+        /**
+         * Consider using https://developer.android.com/training/articles/security-config#TrustingDebugCa
+         * instead?
+         */
         fun enableDevWhitelist(vararg hosts: String) = apply {
             check(Platform.get().isDevelopmentMode) {
                 "Not allowed for production builds"
