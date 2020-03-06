@@ -1,6 +1,7 @@
 package okhttp3.android
 
 import android.content.Context
+import okhttp3.Cache
 import okhttp3.OkHttpClient
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.android.BuildConfig
@@ -18,7 +19,7 @@ class OkHttpAndroidClientFactory private constructor(val client: OkHttpClient) {
         client.connectionPool.evictAll()
     }
 
-    class OkHttpAndroidClientFactoryInit(private val clientBuilder: OkHttpClient.Builder) {
+    class OkHttpAndroidClientFactoryInit(private val clientBuilder: OkHttpClient.Builder, private val ctxt: Context) {
         /**
          * Consider using https://developer.android.com/training/articles/security-config#TrustingDebugCa
          * instead?
@@ -36,13 +37,20 @@ class OkHttpAndroidClientFactory private constructor(val client: OkHttpClient) {
             clientBuilder.sslSocketFactory(sf, trustManager)
         }
 
+        fun enableCache(cacheSize: Long = 10 * MiB) {
+            client {
+                cache(Cache(ctxt.cacheDir, cacheSize))
+            }
+        }
+
         fun client(init: OkHttpClient.Builder.() -> Unit = {}) {
             init(clientBuilder)
         }
     }
 
     companion object {
-        @JvmOverloads
+        const val MiB = 1024L * 1024L
+
         fun build(appCtxt: Context, buildConfigClass: Class<*>, init: OkHttpAndroidClientFactoryInit.() -> Unit = {}): OkHttpAndroidClientFactory {
             check(Platform.get().isAndroid) {
                 "OkHttpAndroidClientFactory is only for Android"
@@ -53,7 +61,7 @@ class OkHttpAndroidClientFactory private constructor(val client: OkHttpClient) {
             Platform.get().isDevelopmentMode = buildConfig.DEBUG
 
             val builder = OkHttpClient.Builder()
-            init(OkHttpAndroidClientFactoryInit(builder))
+            init(OkHttpAndroidClientFactoryInit(builder, ctxt = appCtxt))
             val client = builder.build()
 
             return OkHttpAndroidClientFactory(client)

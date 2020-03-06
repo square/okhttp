@@ -34,6 +34,7 @@ import okhttp3.RecordingEventListener
 import okhttp3.Request
 import okhttp3.TlsVersion
 import okhttp3.android.OkHttpAndroidClientFactory
+import okhttp3.android.OkHttpAndroidClientFactory.Companion.MiB
 import okhttp3.dnsoverhttps.DnsOverHttps
 import okhttp3.internal.asFactory
 import okhttp3.internal.platform.Platform
@@ -68,7 +69,6 @@ import okhttp3.internal.platform.Android10Platform
 import org.junit.After
 import java.io.IOException
 import java.lang.IllegalArgumentException
-import java.lang.RuntimeException
 import java.net.HttpURLConnection.HTTP_MOVED_TEMP
 import java.util.concurrent.TimeUnit
 
@@ -285,7 +285,7 @@ class OkHttpTest {
   )
 
   @Test
-  @Ignore
+  @Ignore("Rate Limiting in place")
   fun testSSLFeatures() {
     assumeNetwork()
 
@@ -540,6 +540,8 @@ class OkHttpTest {
     val clientFactory = OkHttpAndroidClientFactory.build(ctxt, BuildConfig::class.java) {
       // overrides self signed cert in enableTls
       enableDevWhitelist("localhost")
+
+      enableCache(cacheSize = 10 * MiB)
 
       client {
         callTimeout(2, TimeUnit.SECONDS)
