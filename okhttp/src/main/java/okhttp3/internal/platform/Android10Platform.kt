@@ -38,8 +38,7 @@ class Android10Platform : Platform() {
       DeferredSocketAdapter("com.google.android.gms.org.conscrypt")
   ).filter { it.isSupported() }
 
-  override val isDevelopmentMode: Boolean?
-    get() = true // TODO we need to have some awareness of Android Environment
+  override val isAndroid = true
 
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? =
       socketAdapters.find { it.matchesSocketFactory(sslSocketFactory) }

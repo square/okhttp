@@ -47,8 +47,7 @@ class AndroidPlatform : Platform() {
 
   private val closeGuard = CloseGuard.get()
 
-  override val isDevelopmentMode: Boolean?
-    get() = true // TODO we need to have some awareness of Android Environment
+  override val isAndroid = true
 
   @Throws(IOException::class)
   override fun connectSocket(

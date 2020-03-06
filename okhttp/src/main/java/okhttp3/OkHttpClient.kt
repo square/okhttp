@@ -990,7 +990,7 @@ open class OkHttpClient internal constructor(
     }
 
     fun enableDevWhitelist(vararg hosts: String) = apply {
-      check(Platform.get().isDevelopmentMode ?: false) {
+      check(Platform.get().isDevelopmentMode) {
         "Not allowed for production builds"
       }
 

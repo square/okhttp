@@ -69,7 +69,10 @@ open class Platform {
    * Returns whether the app is running in development mode.
    * Null means the platform does not have such a concept.
    */
-  open val isDevelopmentMode: Boolean? = null // TODO check for a system property?
+  var isDevelopmentMode: Boolean = false
+    internal set
+
+  open val isAndroid = false
 
   /** Prefix used on custom headers. */
   fun getPrefix() = "OkHttp"

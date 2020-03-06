@@ -101,6 +101,11 @@ class TaskQueue internal constructor(
     }, delayNanos)
   }
 
+  fun activeTaskNames(): List<String> = synchronized(taskRunner) {
+    (listOfNotNull(activeTask) + futureTasks).map { it }.filterNot { it is AwaitIdleTask }
+        .map { it.name }
+  }
+
   /** Returns a latch that reaches 0 when the queue is next idle. */
   fun idleLatch(): CountDownLatch {
     synchronized(taskRunner) {

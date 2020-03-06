@@ -33,6 +33,7 @@ import okhttp3.Protocol
 import okhttp3.RecordingEventListener
 import okhttp3.Request
 import okhttp3.TlsVersion
+import okhttp3.android.OkHttpAndroidClientFactory
 import okhttp3.dnsoverhttps.DnsOverHttps
 import okhttp3.internal.asFactory
 import okhttp3.internal.platform.Platform
@@ -67,6 +68,7 @@ import okhttp3.internal.platform.Android10Platform
 import org.junit.After
 import java.io.IOException
 import java.lang.IllegalArgumentException
+import java.lang.RuntimeException
 import java.net.HttpURLConnection.HTTP_MOVED_TEMP
 
 /**
@@ -532,8 +534,16 @@ class OkHttpTest {
     assumeNetwork()
     enableTls()
 
-    // overrides self signed cert in enableTls
-    client = client.newBuilder().enableDevWhitelist("localhost").build()
+    println(BuildConfig.DEBUG)
+
+    val ctxt = InstrumentationRegistry.getTargetContext().applicationContext
+
+    val clientFactory = OkHttpAndroidClientFactory.build(ctxt, BuildConfig::class.java) {
+      // overrides self signed cert in enableTls
+      enableDevWhitelist("localhost")
+    }
+
+    val androidClient = clientFactory.client
 
     server.enqueue(MockResponse()
         .setResponseCode(HTTP_MOVED_TEMP)
@@ -541,7 +551,7 @@ class OkHttpTest {
 
     val request = Request.Builder().url(server.url("/")).build()
 
-    val response = client.newCall(request).execute()
+    val response = androidClient.newCall(request).execute()
 
     response.use {
       assertEquals(200, response.code)
@@ -554,6 +564,8 @@ class OkHttpTest {
       assertTrue(response.priorResponse!!.handshake!!.peerCertificates.isEmpty())
       assertEquals("localhost", response.priorResponse!!.request.url.host)
     }
+
+    clientFactory.shutdown()
   }
 
   private fun OkHttpClient.get(url: String) {
