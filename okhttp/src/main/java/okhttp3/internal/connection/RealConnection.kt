@@ -576,9 +576,14 @@ class RealConnection(
     }
 
     // We have a host mismatch. But if the certificate matches, we're still good.
-    return !noCoalescedConnections &&
-        handshake != null &&
-        OkHostnameVerifier.verify(url.host, handshake!!.peerCertificates[0] as X509Certificate)
+    return !noCoalescedConnections && handshake != null && certificateSupportHost(url, handshake!!)
+  }
+
+  private fun certificateSupportHost(url: HttpUrl, handshake: Handshake): Boolean {
+    val peerCertificates = handshake.peerCertificates
+
+    return peerCertificates.isNotEmpty() && OkHostnameVerifier.verify(url.host,
+        peerCertificates[0] as X509Certificate)
   }
 
   @Throws(SocketException::class)
