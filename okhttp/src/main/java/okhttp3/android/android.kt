@@ -65,5 +65,5 @@ fun enableGooglePlayServicesProvider(applicationContext: Context) {
 }
 
 fun OkHttpClient.Builder.enableCache(applicationContext: Context, cacheSize: Long = 10 * MiB) {
-    cache(Cache(applicationContext.cacheDir, cacheSize))
+    cache(Cache(applicationContext.cacheDir.resolve("okhttp-cache"), cacheSize))
 }
