@@ -48,8 +48,13 @@ class Handshake internal constructor(
   peerCertificatesFn: () -> List<Certificate>
 ) {
   /** Returns a possibly-empty list of certificates that identify the remote peer. */
-  @get:JvmName("peerCertificates") val peerCertificates: List<Certificate> by lazy(
-      peerCertificatesFn)
+  @get:JvmName("peerCertificates") val peerCertificates: List<Certificate> by lazy {
+    try {
+      peerCertificatesFn()
+    } catch (spue: SSLPeerUnverifiedException) {
+      listOf<Certificate>()
+    }
+  }
 
   @JvmName("-deprecated_tlsVersion")
   @Deprecated(
@@ -121,11 +126,7 @@ class Handshake internal constructor(
   }
 
   override fun toString(): String {
-    val peerCertificatesString = try {
-      peerCertificates.map { it.name }.toString()
-    } catch (_: SSLPeerUnverifiedException) {
-      "Failed: SSLPeerUnverifiedException"
-    }
+    val peerCertificatesString = peerCertificates.map { it.name }.toString()
     return "Handshake{" +
         "tlsVersion=$tlsVersion " +
         "cipherSuite=$cipherSuite " +

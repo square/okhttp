@@ -142,9 +142,10 @@ class ExchangeFinder(
     synchronized(connectionPool) {
       if (call.isCanceled()) throw IOException("Canceled")
 
-      releasedConnection = call.connection
-      toClose = if (call.connection != null &&
-          (call.connection!!.noNewExchanges || !call.connection!!.supportsUrl(address.url))) {
+      val callConnection = call.connection // changes within this overall method
+      releasedConnection = callConnection
+      toClose = if (callConnection != null && (callConnection.noNewExchanges ||
+              !callConnection.supportsUrl(address.url))) {
         call.releaseConnectionNoEvents()
       } else {
         null
