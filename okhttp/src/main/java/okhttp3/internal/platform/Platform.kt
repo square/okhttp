@@ -69,7 +69,7 @@ open class Platform {
    * Returns whether the app is running in development mode.
    * Null means the platform does not have such a concept.
    */
-  var isDevelopmentMode: Boolean = false
+  var isDevelopmentMode: Boolean? = null
     internal set
 
   open val isAndroid = false

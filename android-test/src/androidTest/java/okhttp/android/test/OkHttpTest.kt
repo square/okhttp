@@ -18,10 +18,13 @@ package okhttp.android.test
 import android.os.Build
 import android.support.test.InstrumentationRegistry
 import android.support.test.runner.AndroidJUnit4
-import com.google.android.gms.common.GooglePlayServicesNotAvailableException
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import com.google.android.gms.security.ProviderInstaller
+import okhttp3.android.MiB
+import okhttp3.android.enableCache
+import okhttp3.android.enableDevWhitelist
+import okhttp3.android.enableGooglePlayServicesProvider
+import okhttp3.android.setDevMode
 import okhttp3.Call
 import okhttp3.CertificatePinner
 import okhttp3.Connection
@@ -33,8 +36,6 @@ import okhttp3.Protocol
 import okhttp3.RecordingEventListener
 import okhttp3.Request
 import okhttp3.TlsVersion
-import okhttp3.android.OkHttpAndroidClientFactory
-import okhttp3.android.OkHttpAndroidClientFactory.Companion.MiB
 import okhttp3.dnsoverhttps.DnsOverHttps
 import okhttp3.internal.asFactory
 import okhttp3.internal.platform.Platform
@@ -185,11 +186,7 @@ class OkHttpTest {
     assumeNetwork()
 
     try {
-      try {
-        ProviderInstaller.installIfNeeded(InstrumentationRegistry.getTargetContext())
-      } catch (gpsnae: GooglePlayServicesNotAvailableException) {
-        assumeNoException("Google Play Services not available", gpsnae)
-      }
+      enableGooglePlayServicesProvider(InstrumentationRegistry.getTargetContext().applicationContext)
 
       val request = Request.Builder().url("https://facebook.com/robots.txt").build()
 
@@ -535,22 +532,22 @@ class OkHttpTest {
     assumeNetwork()
     enableTls()
 
+    setDevMode(BuildConfig::class.java)
+
     val ctxt = InstrumentationRegistry.getTargetContext().applicationContext
 
-    val clientFactory = OkHttpAndroidClientFactory.build(ctxt, BuildConfig::class.java) {
-      if (BuildConfig.DEBUG) {
-        // overrides self signed cert in enableTls
-        enableDevWhitelist("localhost")
-      }
+    client = client.newBuilder()
+        .apply {
+          if (BuildConfig.DEBUG) {
+            // overrides self signed cert in enableTls
+            enableDevWhitelist("localhost")
+          }
 
-      enableCache(cacheSize = 10 * MiB)
+          enableCache(ctxt, cacheSize = 10 * MiB)
 
-      client {
-        callTimeout(2, TimeUnit.SECONDS)
-      }
-    }
-
-    val androidClient = clientFactory.client
+          callTimeout(2, TimeUnit.SECONDS)
+        }
+        .build()
 
     server.enqueue(MockResponse()
         .setResponseCode(HTTP_MOVED_TEMP)
@@ -558,7 +555,7 @@ class OkHttpTest {
 
     val request = Request.Builder().url(server.url("/")).build()
 
-    val response = androidClient.newCall(request).execute()
+    val response = client.newCall(request).execute()
 
     response.use {
       assertEquals(200, response.code)
@@ -571,8 +568,6 @@ class OkHttpTest {
       assertTrue(response.priorResponse!!.handshake!!.peerCertificates.isEmpty())
       assertEquals("localhost", response.priorResponse!!.request.url.host)
     }
-
-    clientFactory.shutdown()
   }
 
   private fun OkHttpClient.get(url: String) {
