@@ -1,12 +1,12 @@
 package okhttp3.android
 
 import android.content.Context
+import java.lang.reflect.InvocationTargetException
 import okhttp3.Cache
 import okhttp3.OkHttpClient
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.android.BuildConfig
 import okhttp3.internal.tls.AllowlistedTrustManager
-import java.lang.reflect.InvocationTargetException
 
 const val MiB = 1024L * 1024L
 
