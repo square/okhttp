@@ -15,6 +15,7 @@
  */
 package okhttp.android.test
 
+import android.content.Context
 import android.os.Build
 import android.support.test.InstrumentationRegistry
 import android.support.test.runner.AndroidJUnit4
@@ -22,8 +23,7 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import okhttp3.android.MiB
 import okhttp3.android.enableCache
-import okhttp3.android.enableDevWhitelist
-import okhttp3.android.enableGooglePlayServicesProvider
+import okhttp3.android.enableDevAllowlist
 import okhttp3.android.setDevMode
 import okhttp3.Call
 import okhttp3.CertificatePinner
@@ -36,6 +36,8 @@ import okhttp3.Protocol
 import okhttp3.RecordingEventListener
 import okhttp3.Request
 import okhttp3.TlsVersion
+import okhttp3.android.checkIsAndroid
+import okhttp3.android.enableGooglePlayServicesProvider
 import okhttp3.dnsoverhttps.DnsOverHttps
 import okhttp3.internal.asFactory
 import okhttp3.internal.platform.Platform
@@ -202,9 +204,9 @@ class OkHttpTest {
       val response = client.newCall(request).execute()
 
       response.use {
+        assertEquals("com.google.android.gms.org.conscrypt.Java8FileDescriptorSocket", socketClass)
         assertEquals(Protocol.HTTP_2, response.protocol)
         assertEquals(200, response.code)
-        assertEquals("com.google.android.gms.org.conscrypt.Java8FileDescriptorSocket", socketClass)
         assertEquals(TlsVersion.TLS_1_2, response.handshake?.tlsVersion)
       }
     } finally {
@@ -231,6 +233,7 @@ class OkHttpTest {
     val response = client.newCall(request).execute()
 
     response.use {
+      assertTrue(socketClass?.startsWith("com.android.org.conscrypt.") == true)
       assertEquals(Protocol.HTTP_2, response.protocol)
       if (Build.VERSION.SDK_INT >= 29) {
         assertEquals(TlsVersion.TLS_1_3, response.handshake?.tlsVersion)
@@ -238,7 +241,6 @@ class OkHttpTest {
         assertEquals(TlsVersion.TLS_1_2, response.handshake?.tlsVersion)
       }
       assertEquals(200, response.code)
-      assertTrue(socketClass?.startsWith("com.android.org.conscrypt.") == true)
     }
   }
 
@@ -540,7 +542,7 @@ class OkHttpTest {
         .apply {
           if (BuildConfig.DEBUG) {
             // overrides self signed cert in enableTls
-            enableDevWhitelist("localhost")
+            enableDevAllowlist("localhost")
           }
 
           enableCache(ctxt, cacheSize = 10 * MiB)

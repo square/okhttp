@@ -6,8 +6,7 @@ import okhttp3.OkHttpClient
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.android.BuildConfig
 import okhttp3.internal.tls.AllowlistedTrustManager
-import com.google.android.gms.common.GooglePlayServicesNotAvailableException
-import com.google.android.gms.security.ProviderInstaller
+import java.lang.reflect.InvocationTargetException
 
 const val MiB = 1024L * 1024L
 
@@ -25,7 +24,7 @@ fun setDevMode(buildConfigClass: Class<*>? = null, buildConfig: BuildConfig? = n
  * Consider using https://developer.android.com/training/articles/security-config#TrustingDebugCa
  * instead?
  */
-fun OkHttpClient.Builder.enableDevWhitelist(vararg hosts: String) = apply {
+fun OkHttpClient.Builder.enableDevAllowlist(vararg hosts: String) = apply {
   checkIsAndroid()
 
   val developmentMode = Platform.get().isDevelopmentMode
@@ -50,20 +49,21 @@ fun checkIsAndroid() {
   }
 }
 
-fun OkHttpClient.Builder.enableCache(applicationContext: Context, cacheSize: Long = 10 * MiB) {
-    cache(Cache(applicationContext.cacheDir, cacheSize))
-}
-
 fun enableGooglePlayServicesProvider(applicationContext: Context) {
   checkIsAndroid()
 
   try {
-    ProviderInstaller.installIfNeeded(applicationContext)
-  } catch (gpsnae: GooglePlayServicesNotAvailableException) {
+    val method = Class.forName("com.google.android.gms.security.ProviderInstaller")
+        .getMethod("installIfNeeded", Context::class.java)
+
+    method.invoke(null, applicationContext)
+  } catch (e: ReflectiveOperationException) {
+  } catch (ite: InvocationTargetException) {
+    // GooglePlayServicesNotAvailableException
+    throw ite.targetException
   }
 }
 
-fun OkHttpClient.shutdown() {
-  dispatcher.executorService.shutdown()
-  connectionPool.evictAll()
+fun OkHttpClient.Builder.enableCache(applicationContext: Context, cacheSize: Long = 10 * MiB) {
+    cache(Cache(applicationContext.cacheDir, cacheSize))
 }

@@ -31,7 +31,6 @@ dependencies {
   compileOnly deps.openjsse
   compileOnly deps.jsr305
   compileOnly deps.animalSniffer
-  api 'com.google.android.gms:play-services-safetynet:17.0.0'
 
   testImplementation project(':okhttp-testing-support')
   testImplementation project(':okhttp-tls')
