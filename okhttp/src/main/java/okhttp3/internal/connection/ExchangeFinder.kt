@@ -19,6 +19,7 @@ import java.io.IOException
 import java.net.Socket
 import okhttp3.Address
 import okhttp3.EventListener
+import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Route
 import okhttp3.internal.assertThreadDoesntHoldLock
@@ -145,7 +146,7 @@ class ExchangeFinder(
       val callConnection = call.connection // changes within this overall method
       releasedConnection = callConnection
       toClose = if (callConnection != null && (callConnection.noNewExchanges ||
-              !callConnection.supportsUrl(address.url))) {
+              !sameHostAndPort(callConnection.route().address.url))) {
         call.releaseConnectionNoEvents()
       } else {
         null
@@ -332,5 +333,15 @@ class ExchangeFinder(
     return connection != null &&
         connection.routeFailureCount == 0 &&
         connection.route().address.url.canReuseConnectionFor(address.url)
+  }
+
+  /**
+   * Returns true if the host and port are unchanged from when this was created. This is used to
+   * detect if followups need to do a full connection-finding process including DNS resolution, and
+   * certificate pin checks.
+   */
+  fun sameHostAndPort(url: HttpUrl): Boolean {
+    val routeUrl = address.url
+    return url.port == routeUrl.port && url.host == routeUrl.host
   }
 }
