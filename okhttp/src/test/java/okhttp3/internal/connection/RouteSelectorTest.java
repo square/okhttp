@@ -472,7 +472,7 @@ public final class RouteSelectorTest {
         InetSocketAddress.createUnresolved("host", 1234));
     assertThat(route.toString()).isEqualTo(
         PlatformVersion.INSTANCE.getMajorVersion() >= 14
-            ? "Route{host/unresolved:1234}"
+            ? "Route{host/<unresolved>:1234}"
             : "Route{host:1234}");
   }
 
