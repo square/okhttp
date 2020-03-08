@@ -49,7 +49,6 @@ import okio.BufferedSource
 import okio.ByteString
 import okio.ByteString.Companion.encodeUtf8
 import okio.ByteString.Companion.toByteString
-import okio.buffer
 
 class RealWebSocket(
   taskRunner: TaskRunner,
@@ -457,13 +456,10 @@ class RealWebSocket(
       if (pong != null) {
         writer!!.writePong(pong)
       } else if (messageOrClose is Message) {
-        val data = (messageOrClose as Message).data
-        val sink = writer!!.newMessageSink(
-            (messageOrClose as Message).formatOpcode, data.size.toLong()).buffer()
-        sink.write(data)
-        sink.close()
+        val message = messageOrClose as Message
+        writer!!.writeMessageFrame(message.formatOpcode, message.data)
         synchronized(this) {
-          queueSize -= data.size.toLong()
+          queueSize -= message.data.size.toLong()
         }
       } else if (messageOrClose is Close) {
         val close = messageOrClose as Close
