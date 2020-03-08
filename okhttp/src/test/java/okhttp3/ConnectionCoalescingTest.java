@@ -26,6 +26,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.X509TrustManager;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -269,8 +270,24 @@ public final class ConnectionCoalescingTest {
     }
   }
 
+  @Test public void skipsOnRedirectWhenDnsDontMatch() throws Exception {
+    server.enqueue(new MockResponse()
+        .setResponseCode(301)
+        .addHeader("Location", url.newBuilder().host("differentdns.com").build()));
+    server.enqueue(new MockResponse()
+        .setBody("unexpected call"));
+
+    try {
+      Response response = execute(url);
+      response.close();
+      fail("expected a failed attempt to connect");
+    } catch (IOException expected) {
+    }
+  }
+
   /** Not in the certificate SAN. */
   @Test public void skipsWhenNotSubjectAltName() throws Exception {
+    server.enqueue(new MockResponse());
     server.enqueue(new MockResponse());
 
     assert200Http2Response(execute(url), server.getHostName());
@@ -280,7 +297,21 @@ public final class ConnectionCoalescingTest {
     try {
       execute(nonsanUrl);
       fail("expected a failed attempt to connect");
-    } catch (IOException expected) {
+    } catch (SSLPeerUnverifiedException expected) {
+    }
+  }
+
+  @Test public void skipsOnRedirectWhenNotSubjectAltName() throws Exception {
+    server.enqueue(new MockResponse()
+        .setResponseCode(301)
+        .addHeader("Location", url.newBuilder().host("nonsan.com").build()));
+    server.enqueue(new MockResponse());
+
+    try {
+      Response response = execute(url);
+      response.close();
+      fail("expected a failed attempt to connect");
+    } catch (SSLPeerUnverifiedException expected) {
     }
   }
 
@@ -323,6 +354,24 @@ public final class ConnectionCoalescingTest {
     }
   }
 
+  @Test public void skipsOnRedirectWhenCertificatePinningFails() throws Exception {
+    CertificatePinner pinner = new CertificatePinner.Builder()
+        .add("san.com", "sha1/afwiKY3RxoMmLkuRW1l7QsPZTJPwDS2pdDROQjXw8ig=")
+        .build();
+    client = client.newBuilder().certificatePinner(pinner).build();
+
+    server.enqueue(new MockResponse()
+        .setResponseCode(301)
+        .addHeader("Location", url.newBuilder().host("san.com").build()));
+    server.enqueue(new MockResponse());
+
+    try {
+      execute(url);
+      fail("expected a failed attempt to connect");
+    } catch (SSLPeerUnverifiedException expected) {
+    }
+  }
+
   /**
    * Skips coalescing when hostname verifier is overridden since the intention of the hostname
    * verification is a black box.
@@ -341,6 +390,22 @@ public final class ConnectionCoalescingTest {
     assert200Http2Response(execute(sanUrl), "san.com");
 
     assertThat(client.connectionPool().connectionCount()).isEqualTo(2);
+  }
+
+  @Test public void skipsOnRedirectWhenHostnameVerifierUsed() throws Exception {
+    HostnameVerifier verifier = (name, session) -> true;
+    client = client.newBuilder().hostnameVerifier(verifier).build();
+
+    server.enqueue(new MockResponse()
+        .setResponseCode(301)
+        .addHeader("Location", url.newBuilder().host("san.com").build()));
+    server.enqueue(new MockResponse());
+
+    assert200Http2Response(execute(url), "san.com");
+
+    assertThat(client.connectionPool().connectionCount()).isEqualTo(2);
+    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0); // Fresh connection.
+    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0); // Fresh connection.
   }
 
   /**
@@ -376,7 +441,6 @@ public final class ConnectionCoalescingTest {
 
   /** Check that wildcard SANs are supported. */
   @Test public void commonThenWildcard() throws Exception {
-
     server.enqueue(new MockResponse());
     server.enqueue(new MockResponse());
 
