@@ -605,6 +605,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#version-441" class="md-nav__link">
+    Version 4.4.1
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-440" class="md-nav__link">
     Version 4.4.0
   </a>
@@ -770,6 +777,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#version-441" class="md-nav__link">
+    Version 4.4.1
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-440" class="md-nav__link">
     Version 4.4.0
   </a>
@@ -887,6 +901,22 @@
                 
                 
                 <h1 id="change-log">Change Log<a class="headerlink" href="#change-log" title="Permanent link">&para;</a></h1>
+<h2 id="version-441">Version 4.4.1<a class="headerlink" href="#version-441" title="Permanent link">&para;</a></h2>
+<p><em>2020-03-08</em></p>
+<ul>
+<li>
+<p>Fix: Don&rsquo;t reuse a connection on redirect if certs match but DNS does not. For better
+    locality and performance OkHttp attempts to use the same pooled connection across redirects and
+    follow-ups. It independently shares connections when the IP addresses and certificates match,
+    even if the host names do not. In 4.4.0 we introduced a regression where we shared a connection
+    when certificates matched but the DNS addresses did not. This would only occur when following a
+    redirect from one hostname to another, and where both hosts had common certificates.</p>
+</li>
+<li>
+<p>Fix: Don&rsquo;t fail on a redirect when a client has configured a &lsquo;trust everything&rsquo; trust manager.
+    Typically this would cause certain redirects to fail in debug and development configurations.</p>
+</li>
+</ul>
 <h2 id="version-440">Version 4.4.0<a class="headerlink" href="#version-440" title="Permanent link">&para;</a></h2>
 <p><em>2020-02-17</em></p>
 <ul>
