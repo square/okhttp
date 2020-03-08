@@ -58,9 +58,19 @@ fun enableGooglePlayServicesProvider(applicationContext: Context) {
 
     method.invoke(null, applicationContext)
   } catch (e: ReflectiveOperationException) {
+    Platform.get().log("Google Play Services Provider not on classpath", Platform.WARN, e)
   } catch (ite: InvocationTargetException) {
-    // GooglePlayServicesNotAvailableException
-    throw ite.targetException
+    val e = ite.targetException
+
+    when (e.javaClass.simpleName) {
+      "GooglePlayServicesNotAvailableException" -> Platform.get().log("Google Play Services not available", Platform.WARN, e)
+      "GooglePlayServicesRepairableException" -> {
+        // GooglePlayServicesRepairableException standard flow allows inline upgrade
+        // see https://developers.google.com/android/reference/com/google/android/gms/common/GooglePlayServicesRepairableException
+        Platform.get().log("Google Play Services out of date", Platform.WARN, e)
+      }
+      else -> throw e
+    }
   }
 }
 
