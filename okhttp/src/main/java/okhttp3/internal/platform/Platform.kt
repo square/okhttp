@@ -72,6 +72,12 @@ open class Platform {
   var isDevelopmentMode: Boolean? = null
     internal set
 
+  /**
+   * Returns whether the app is backgrounded.
+   * Null means the platform does not have such a concept.
+   */
+  var isBackgrounded: Boolean? = null
+
   open val isAndroid = false
 
   /** Prefix used on custom headers. */

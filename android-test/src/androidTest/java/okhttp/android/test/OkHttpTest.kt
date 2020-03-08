@@ -15,10 +15,9 @@
  */
 package okhttp.android.test
 
-import android.content.Context
 import android.os.Build
-import android.support.test.InstrumentationRegistry
-import android.support.test.runner.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import okhttp3.android.MiB
@@ -36,8 +35,6 @@ import okhttp3.Protocol
 import okhttp3.RecordingEventListener
 import okhttp3.Request
 import okhttp3.TlsVersion
-import okhttp3.android.checkIsAndroid
-import okhttp3.android.enableGooglePlayServicesProvider
 import okhttp3.dnsoverhttps.DnsOverHttps
 import okhttp3.internal.asFactory
 import okhttp3.internal.platform.Platform
@@ -188,7 +185,10 @@ class OkHttpTest {
     assumeNetwork()
 
     try {
-      enableGooglePlayServicesProvider(InstrumentationRegistry.getTargetContext().applicationContext)
+      val applicationContext =
+          InstrumentationRegistry.getInstrumentation().context.applicationContext
+
+      enableGooglePlayServicesProvider(applicationContext)
 
       val request = Request.Builder().url("https://facebook.com/robots.txt").build()
 
@@ -535,8 +535,11 @@ class OkHttpTest {
     enableTls()
 
     setDevMode(BuildConfig::class.java)
+    watchBackgroundStatus()
 
-    val ctxt = InstrumentationRegistry.getTargetContext().applicationContext
+    println(Platform.get().isBackgrounded)
+
+    val ctxt = InstrumentationRegistry.getInstrumentation().context
 
     client = client.newBuilder()
         .apply {
@@ -546,6 +549,9 @@ class OkHttpTest {
           }
 
           enableCache(ctxt, cacheSize = 10 * MiB)
+
+          // terminate and avoid all network activity when in background
+          watchBackgroundStatus(BackgroundActivity.INACTIVE)
 
           callTimeout(2, TimeUnit.SECONDS)
         }

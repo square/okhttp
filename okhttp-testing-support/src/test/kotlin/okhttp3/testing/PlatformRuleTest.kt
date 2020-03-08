@@ -23,9 +23,7 @@ import org.junit.Test
  * Sanity test for checking which environment and IDE is picking up.
  */
 class PlatformRuleTest {
-  @Suppress("RedundantVisibilityModifier")
-  @JvmField
-  @Rule public val platform = PlatformRule()
+  @get:Rule val platform = PlatformRule()
 
   @Test
   fun testMode() {

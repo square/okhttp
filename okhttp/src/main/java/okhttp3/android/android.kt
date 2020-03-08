@@ -1,7 +1,6 @@
 package okhttp3.android
 
 import android.content.Context
-import java.lang.reflect.InvocationTargetException
 import okhttp3.Cache
 import okhttp3.OkHttpClient
 import okhttp3.internal.platform.Platform
@@ -46,31 +45,6 @@ fun OkHttpClient.Builder.enableDevAllowlist(vararg hosts: String) = apply {
 fun checkIsAndroid() {
   check(Platform.get().isAndroid) {
     "Only for use in Android environments"
-  }
-}
-
-fun enableGooglePlayServicesProvider(applicationContext: Context) {
-  checkIsAndroid()
-
-  try {
-    val method = Class.forName("com.google.android.gms.security.ProviderInstaller")
-        .getMethod("installIfNeeded", Context::class.java)
-
-    method.invoke(null, applicationContext)
-  } catch (e: ReflectiveOperationException) {
-    Platform.get().log("Google Play Services Provider not on classpath", Platform.WARN, e)
-  } catch (ite: InvocationTargetException) {
-    val e = ite.targetException
-
-    when (e.javaClass.simpleName) {
-      "GooglePlayServicesNotAvailableException" -> Platform.get().log("Google Play Services not available", Platform.WARN, e)
-      "GooglePlayServicesRepairableException" -> {
-        // GooglePlayServicesRepairableException standard flow allows inline upgrade
-        // see https://developers.google.com/android/reference/com/google/android/gms/common/GooglePlayServicesRepairableException
-        Platform.get().log("Google Play Services out of date", Platform.WARN, e)
-      }
-      else -> throw e
-    }
   }
 }
 
