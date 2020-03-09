@@ -270,8 +270,7 @@ workflows:
       - testjdk12windows:
           filters:
             branches:
-              ignore:
-                - gh-pages
+              only: master
       - testjdk13:
           filters:
             branches:
