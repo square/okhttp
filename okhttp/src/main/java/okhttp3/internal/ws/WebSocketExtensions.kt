@@ -16,7 +16,7 @@
 package okhttp3.internal.ws
 
 import java.io.IOException
-import okhttp3.Response
+import okhttp3.Headers
 import okhttp3.internal.delimiterOffset
 import okhttp3.internal.trimSubstring
 
@@ -82,7 +82,7 @@ data class WebSocketExtensions(
     private const val HEADER_WEB_SOCKET_EXTENSION = "Sec-WebSocket-Extensions"
 
     @Throws(IOException::class)
-    fun parse(response: Response): WebSocketExtensions {
+    fun parse(responseHeaders: Headers): WebSocketExtensions {
       // Note that this code does case-insensitive comparisons, even though the spec doesn't specify
       // whether extension tokens and parameters are case-insensitive or not.
 
@@ -94,11 +94,11 @@ data class WebSocketExtensions(
       var unexpectedValues = false
 
       // Parse each header.
-      for (i in 0 until response.headers.size) {
-        if (!response.headers.name(i).equals(HEADER_WEB_SOCKET_EXTENSION, ignoreCase = true)) {
+      for (i in 0 until responseHeaders.size) {
+        if (!responseHeaders.name(i).equals(HEADER_WEB_SOCKET_EXTENSION, ignoreCase = true)) {
           continue // Not a header we're interested in.
         }
-        val header = response.headers.value(i)
+        val header = responseHeaders.value(i)
 
         // Parse each extension.
         var pos = 0

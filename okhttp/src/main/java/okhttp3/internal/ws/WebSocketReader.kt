@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.ws
 
+import java.io.Closeable
 import java.io.IOException
 import java.net.ProtocolException
 import java.util.concurrent.TimeUnit
@@ -50,19 +51,20 @@ import okio.ByteString
  *
  * [rfc_6455]: http://tools.ietf.org/html/rfc6455
  */
-internal class WebSocketReader(
+class WebSocketReader(
   private val isClient: Boolean,
   val source: BufferedSource,
-  private val frameCallback: FrameCallback
-) {
-
-  var closed = false
+  private val frameCallback: FrameCallback,
+  private val messageInflater: MessageInflater?
+) : Closeable {
+  private var closed = false
 
   // Stateful data about the current frame.
   private var opcode = 0
   private var frameLength = 0L
   private var isFinalFrame = false
   private var isControlFrame = false
+  private var readingCompressedMessage = false
 
   private val controlFrameBuffer = Buffer()
   private val messageFrameBuffer = Buffer()
@@ -125,12 +127,25 @@ internal class WebSocketReader(
     }
 
     val reservedFlag1 = b0 and B0_FLAG_RSV1 != 0
-    val reservedFlag2 = b0 and B0_FLAG_RSV2 != 0
-    val reservedFlag3 = b0 and B0_FLAG_RSV3 != 0
-    if (reservedFlag1 || reservedFlag2 || reservedFlag3) {
-      // Reserved flags are for extensions which we currently do not support.
-      throw ProtocolException("Reserved flags are unsupported.")
+    when (opcode) {
+      OPCODE_TEXT, OPCODE_BINARY -> {
+        if (reservedFlag1) {
+          if (messageInflater == null) throw ProtocolException("Unexpected rsv1 flag")
+          readingCompressedMessage = true
+        } else {
+          readingCompressedMessage = false
+        }
+      }
+      else -> {
+        if (reservedFlag1) throw ProtocolException("Unexpected rsv1 flag")
+      }
     }
+
+    val reservedFlag2 = b0 and B0_FLAG_RSV2 != 0
+    if (reservedFlag2) throw ProtocolException("Unexpected rsv2 flag")
+
+    val reservedFlag3 = b0 and B0_FLAG_RSV3 != 0
+    if (reservedFlag3) throw ProtocolException("Unexpected rsv3 flag")
 
     val b1 = source.readByte() and 0xff
 
@@ -216,6 +231,10 @@ internal class WebSocketReader(
 
     readMessage()
 
+    if (readingCompressedMessage) {
+      messageInflater!!.inflate(messageFrameBuffer)
+    }
+
     if (opcode == OPCODE_TEXT) {
       frameCallback.onReadMessage(messageFrameBuffer.readUtf8())
     } else {
@@ -263,5 +282,10 @@ internal class WebSocketReader(
         throw ProtocolException("Expected continuation opcode. Got: ${opcode.toHexString()}")
       }
     }
+  }
+
+  @Throws(IOException::class)
+  override fun close() {
+    messageInflater?.close()
   }
 }

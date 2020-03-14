@@ -21,10 +21,12 @@ import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import okhttp3.Headers;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.internal.concurrent.TaskRunner;
+import okio.Buffer;
 import okio.ByteString;
 import okio.Okio;
 import okio.Pipe;
@@ -357,6 +359,48 @@ public final class RealWebSocketTest {
         250d));
   }
 
+  @Test public void writesUncompressedMessageIfCompressionDisabled() throws IOException {
+    server.initWebSocket(random, 0);
+
+    server.webSocket.send(ByteString.encodeUtf8("Hello"));
+
+    Buffer buffer = new Buffer();
+    server2client.source().read(buffer, Integer.MAX_VALUE);
+
+    assertThat(buffer.readByteString())
+        .isEqualTo(ByteString.decodeHex("820548656c6c6f")); // Uncompressed Hello
+  }
+
+  @Test public void writesUncompressedMessageIfMessageTooSmall()
+      throws IOException {
+    server.initWebSocket(random, 0,
+        Headers.of("Sec-WebSocket-Extensions", "permessage-deflate"));
+
+    // Length 5 is less than 10, our minimum compressed size.
+    server.webSocket.send(ByteString.encodeUtf8("Hello"));
+
+    Buffer buffer = new Buffer();
+    server2client.source().read(buffer, Integer.MAX_VALUE);
+
+    assertThat(buffer.readByteString())
+        .isEqualTo(ByteString.decodeHex("820548656c6c6f")); // Uncompressed
+  }
+
+  @Ignore
+  @Test public void writesCompressedMessage() throws IOException {
+    server.initWebSocket(random, 0,
+        Headers.of("Sec-WebSocket-Extensions", "permessage-deflate"));
+
+    // Length 35 is greater than 10, our minimum compressed size.
+    server.webSocket.send(ByteString.encodeUtf8("Hello Hello Hello Hello Hello Hello"));
+
+    Buffer buffer = new Buffer();
+    server2client.source().read(buffer, Integer.MAX_VALUE);
+
+    assertThat(buffer.readByteString())
+        .isEqualTo(ByteString.decodeHex("c20bf248cdc9c957f0c0470200")); // Compressed
+  }
+
   /** One peer's streams, listener, and web socket in the test. */
   private static class TestStreams extends RealWebSocket.Streams {
     private final String name;
@@ -372,11 +416,17 @@ public final class RealWebSocketTest {
     }
 
     public void initWebSocket(Random random, int pingIntervalMillis) throws IOException {
+      initWebSocket(random, pingIntervalMillis, Headers.of());
+    }
+
+    public void initWebSocket(
+        Random random, int pingIntervalMillis, Headers responseHeaders) throws IOException {
       String url = "http://example.com/websocket";
       Response response = new Response.Builder()
           .code(101)
           .message("OK")
           .request(new Request.Builder().url(url).build())
+          .headers(responseHeaders)
           .protocol(Protocol.HTTP_1_1)
           .build();
       webSocket = new RealWebSocket(

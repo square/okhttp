@@ -215,7 +215,13 @@ class RealWebSocket(
     synchronized(this) {
       this.name = name
       this.streams = streams
-      this.writer = WebSocketWriter(streams.client, streams.sink, random)
+      this.writer = WebSocketWriter(
+          isClient = streams.client,
+          sink = streams.sink,
+          random = random,
+          messageDeflater = null,
+          minimumDeflateSize = Long.MAX_VALUE
+      )
       this.writerTask = WriterTask()
       if (pingIntervalMillis != 0L) {
         val pingIntervalNanos = MILLISECONDS.toNanos(pingIntervalMillis)
@@ -229,7 +235,12 @@ class RealWebSocket(
       }
     }
 
-    reader = WebSocketReader(streams.client, streams.source, this)
+    reader = WebSocketReader(
+        isClient = streams.client,
+        source = streams.source,
+        frameCallback = this,
+        messageInflater = null
+    )
   }
 
   /** Receive frames until there are no more. Invoked only by the reader thread. */
@@ -304,6 +315,8 @@ class RealWebSocket(
     require(code != -1)
 
     var toClose: Streams? = null
+    var readerToClose: WebSocketReader? = null
+    var writerToClose: WebSocketWriter? = null
     synchronized(this) {
       check(receivedCloseCode == -1) { "already closed" }
       receivedCloseCode = code
@@ -311,6 +324,10 @@ class RealWebSocket(
       if (enqueuedClose && messageAndCloseQueue.isEmpty()) {
         toClose = this.streams
         this.streams = null
+        readerToClose = this.reader
+        this.reader = null
+        writerToClose = this.writer
+        this.writer = null
         this.taskQueue.shutdown()
       }
     }
@@ -323,6 +340,8 @@ class RealWebSocket(
       }
     } finally {
       toClose?.closeQuietly()
+      readerToClose?.closeQuietly()
+      writerToClose?.closeQuietly()
     }
   }
 
@@ -422,6 +441,8 @@ class RealWebSocket(
     var receivedCloseCode = -1
     var receivedCloseReason: String? = null
     var streamsToClose: Streams? = null
+    var readerToClose: WebSocketReader? = null
+    var writerToClose: WebSocketWriter? = null
 
     synchronized(this@RealWebSocket) {
       if (failed) {
@@ -438,6 +459,10 @@ class RealWebSocket(
           if (receivedCloseCode != -1) {
             streamsToClose = this.streams
             this.streams = null
+            readerToClose = this.reader
+            this.reader = null
+            writerToClose = this.writer
+            this.writer = null
             this.taskQueue.shutdown()
           } else {
             // When we request a graceful close also schedule a cancel of the web socket.
@@ -476,6 +501,8 @@ class RealWebSocket(
       return true
     } finally {
       streamsToClose?.closeQuietly()
+      readerToClose?.closeQuietly()
+      writerToClose?.closeQuietly()
     }
   }
 
@@ -505,11 +532,17 @@ class RealWebSocket(
 
   fun failWebSocket(e: Exception, response: Response?) {
     val streamsToClose: Streams?
+    val readerToClose: WebSocketReader?
+    val writerToClose: WebSocketWriter?
     synchronized(this) {
       if (failed) return // Already failed.
       failed = true
       streamsToClose = this.streams
       this.streams = null
+      readerToClose = this.reader
+      this.reader = null
+      writerToClose = this.writer
+      this.writer = null
       taskQueue.shutdown()
     }
 
@@ -517,6 +550,8 @@ class RealWebSocket(
       listener.onFailure(this, e, response)
     } finally {
       streamsToClose?.closeQuietly()
+      readerToClose?.closeQuietly()
+      writerToClose?.closeQuietly()
     }
   }
 

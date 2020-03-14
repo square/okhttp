@@ -780,6 +780,33 @@ public final class WebSocketHttpTest {
     webSocket.close(1000, null);
   }
 
+  @Ignore
+  @Test public void compressedMessages() {
+    client = client.newBuilder()
+        .addInterceptor(chain -> {
+          assertThat(chain.request().header("Sec-WebSocket-Extensions"))
+              .isEqualTo("permessage-deflate");
+          return chain.proceed(chain.request());
+        })
+        .build();
+
+    webServer.enqueue(new MockResponse()
+        .addHeader("Sec-WebSocket-Extensions", "permessage-deflate")
+        .withWebSocketUpgrade(serverListener));
+
+    WebSocket client = newWebSocket();
+    clientListener.assertOpen();
+    WebSocket server = serverListener.assertOpen();
+
+    server.send("Hello this is a compressed message from the server!");
+    clientListener.assertTextMessage("Hello this is a compressed message from the server!");
+
+    client.send("Hello this is a compressed message from the client!");
+    serverListener.assertTextMessage("Hello this is a compressed message from the client!");
+
+    closeWebSockets(client, server);
+  }
+
   private MockResponse upgradeResponse(RecordedRequest request) {
     String key = request.getHeader("Sec-WebSocket-Key");
     return new MockResponse()
