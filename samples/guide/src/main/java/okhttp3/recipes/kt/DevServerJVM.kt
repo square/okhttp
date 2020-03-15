@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Square, Inc.
+ * Copyright (C) 2020 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,91 +22,71 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.tls.internal.TlsUtil
 import java.io.IOException
-import java.lang.reflect.InvocationTargetException
-import java.lang.reflect.Method
 import java.net.HttpURLConnection.HTTP_MOVED_TEMP
+import java.net.Socket
 import java.security.KeyStore
-import java.security.cert.Certificate
 import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
+import javax.net.ssl.SSLEngine
 import javax.net.ssl.TrustManagerFactory
-import javax.net.ssl.X509TrustManager
+import javax.net.ssl.X509ExtendedTrustManager
 
-class AllowlistedTrustManager(
-    private val delegate: X509TrustManager,
-    private vararg val hosts: String) : X509TrustManager {
-  val delegateMethod = lookupDelegateMethod()
-
+class JVMAllowlistedTrustManager(
+    private val delegate: X509ExtendedTrustManager,
+    private vararg val hosts: String) : X509ExtendedTrustManager() {
   override fun checkClientTrusted(chain: Array<out X509Certificate>, authType: String?) {
-    delegate.checkClientTrusted(chain, authType)
+    throw CertificateException("Unsupported client operation")
+  }
+
+  override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?,
+      engine: SSLEngine?) {
+    throw CertificateException("Unsupported client operation")
+  }
+
+  override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?,
+      socket: Socket?) {
+    throw CertificateException("Unsupported client operation")
   }
 
   override fun checkServerTrusted(chain: Array<out X509Certificate>, authType: String) {
-    // FYI This skips checks on JVM and older Android
-    // TODO could check the certificate alternative names, but this is trivially spoofable
-    println("Skipping all security checks")
-    println(chain.map { it.subjectDN.name })
+    throw CertificateException("Unsupported operation")
   }
 
-  /**
-   * Android method to clean and sort certificates.
-   */
-  fun checkServerTrusted(chain: Array<out X509Certificate>, authType: String,
-      host: String): List<Certificate> {
+  override fun checkServerTrusted(chain: Array<out X509Certificate>, authType: String,
+      socket: Socket) {
+    val host = socket.inetAddress.hostName
 
     if (isAllowed(host)) {
       println("Skipping security checks for $host")
       println(chain.map { it.subjectDN.name })
-
-      return listOf()
+    } else {
+      println("Running security checks for $host")
+      println(chain.map { it.subjectDN.name }.take(1))
+      delegate.checkServerTrusted(chain, authType, socket)
     }
+  }
 
-    println("Running security checks for $host")
-    println(chain.map { it.subjectDN.name }.take(1))
+  override fun checkServerTrusted(chain: Array<out X509Certificate>, authType: String,
+      engine: SSLEngine) {
+    val host = engine.peerHost
 
-    if (delegateMethod != null) {
-      return invokeDelegateMethod(delegateMethod, chain, authType, host)
+    if (isAllowed(host)) {
+      println("Skipping security checks for $host")
+      println(chain.map { it.subjectDN.name })
+    } else {
+      println("Running security checks for $host")
+      println(chain.map { it.subjectDN.name }.take(1))
+
+      delegate.checkServerTrusted(chain, authType, engine)
     }
-
-    throw CertificateException("Failed to call checkServerTrusted")
   }
 
   fun isAllowed(host: String): Boolean = hosts.contains(host)
 
   override fun getAcceptedIssuers(): Array<X509Certificate> = delegate.acceptedIssuers
-
-  private fun lookupDelegateMethod(): Method? {
-    return try {
-      delegate.javaClass.getMethod("checkServerTrusted",
-          Array<X509Certificate>::class.java, String::class.java, String::class.java)
-    } catch (nsme: NoSuchMethodException) {
-      null
-    }
-  }
-
-  @Suppress("UNCHECKED_CAST")
-  private fun invokeDelegateMethod(
-      delegateMethod: Method,
-      chain: Array<out X509Certificate>,
-      authType: String,
-      host: String
-  ): List<Certificate> {
-    try {
-      return delegateMethod.invoke(delegate, chain, authType, host) as List<Certificate>
-    } catch (ite: InvocationTargetException) {
-      throw ite.targetException
-    }
-  }
 }
 
-fun platformTrustManager(): X509TrustManager {
-  val factory = TrustManagerFactory.getInstance(
-      TrustManagerFactory.getDefaultAlgorithm())
-  factory.init(null as KeyStore?)
-  return factory.trustManagers!![0] as X509TrustManager
-}
-
-class DevServer {
+class DevServerJVM {
   val handshakeCertificates = TlsUtil.localhost()
 
   val server = MockWebServer().apply {
@@ -120,7 +100,7 @@ class DevServer {
   val hosts = arrayOf(server.hostName)
 
   val platformTrustManager = platformTrustManager()
-  val trustManager = AllowlistedTrustManager(platformTrustManager, *hosts)
+  val trustManager = JVMAllowlistedTrustManager(platformTrustManager, *hosts)
   val sslSocketFactory = Platform.get().newSSLContext().apply {
     init(null, arrayOf(trustManager), null)
   }.socketFactory
@@ -128,6 +108,13 @@ class DevServer {
   val client = OkHttpClient.Builder()
       .sslSocketFactory(sslSocketFactory, trustManager)
       .build()
+
+  fun platformTrustManager(): X509ExtendedTrustManager {
+    val factory = TrustManagerFactory.getInstance(
+        TrustManagerFactory.getDefaultAlgorithm())
+    factory.init(null as KeyStore?)
+    return factory.trustManagers!![0] as X509ExtendedTrustManager
+  }
 
   fun run() {
     try {
@@ -147,5 +134,5 @@ class DevServer {
 }
 
 fun main() {
-  DevServer().run()
+  DevServerJVM().run()
 }
