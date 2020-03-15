@@ -15,12 +15,6 @@
  */
 package okhttp3.recipes.kt
 
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.internal.platform.Platform
-import okhttp3.mockwebserver.MockResponse
-import okhttp3.mockwebserver.MockWebServer
-import okhttp3.tls.internal.TlsUtil
 import java.io.IOException
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
@@ -31,10 +25,17 @@ import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.internal.platform.Platform
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
+import okhttp3.tls.internal.TlsUtil
 
 class AndroidAllowlistedTrustManager(
-    private val delegate: X509TrustManager,
-    private vararg val hosts: String) : X509TrustManager {
+  private val delegate: X509TrustManager,
+  private vararg val hosts: String
+) : X509TrustManager {
   val delegateMethod = lookupDelegateMethod()
 
   override fun checkClientTrusted(chain: Array<out X509Certificate>, authType: String?) {
@@ -48,8 +49,11 @@ class AndroidAllowlistedTrustManager(
   /**
    * Android method to clean and sort certificates, called via reflection.
    */
-  fun checkServerTrusted(chain: Array<out X509Certificate>, authType: String,
-      host: String): List<Certificate> {
+  fun checkServerTrusted(
+    chain: Array<out X509Certificate>,
+    authType: String,
+    host: String
+  ): List<Certificate> {
 
     if (isAllowed(host)) {
       println("Skipping security checks for $host")
@@ -83,10 +87,10 @@ class AndroidAllowlistedTrustManager(
 
   @Suppress("UNCHECKED_CAST")
   private fun invokeDelegateMethod(
-      delegateMethod: Method,
-      chain: Array<out X509Certificate>,
-      authType: String,
-      host: String
+    delegateMethod: Method,
+    chain: Array<out X509Certificate>,
+    authType: String,
+    host: String
   ): List<Certificate> {
     try {
       return delegateMethod.invoke(delegate, chain, authType, host) as List<Certificate>

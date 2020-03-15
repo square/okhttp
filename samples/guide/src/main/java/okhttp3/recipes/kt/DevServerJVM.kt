@@ -15,12 +15,6 @@
  */
 package okhttp3.recipes.kt
 
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.internal.platform.Platform
-import okhttp3.mockwebserver.MockResponse
-import okhttp3.mockwebserver.MockWebServer
-import okhttp3.tls.internal.TlsUtil
 import java.io.IOException
 import java.net.HttpURLConnection.HTTP_MOVED_TEMP
 import java.net.Socket
@@ -30,21 +24,34 @@ import java.security.cert.X509Certificate
 import javax.net.ssl.SSLEngine
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509ExtendedTrustManager
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.internal.platform.Platform
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
+import okhttp3.tls.internal.TlsUtil
 
 class JVMAllowlistedTrustManager(
-    private val delegate: X509ExtendedTrustManager,
-    private vararg val hosts: String) : X509ExtendedTrustManager() {
+  private val delegate: X509ExtendedTrustManager,
+  private vararg val hosts: String
+) : X509ExtendedTrustManager() {
   override fun checkClientTrusted(chain: Array<out X509Certificate>, authType: String?) {
     throw CertificateException("Unsupported client operation")
   }
 
-  override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?,
-      engine: SSLEngine?) {
+  override fun checkClientTrusted(
+    chain: Array<out X509Certificate>?,
+    authType: String?,
+    engine: SSLEngine?
+  ) {
     throw CertificateException("Unsupported client operation")
   }
 
-  override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?,
-      socket: Socket?) {
+  override fun checkClientTrusted(
+    chain: Array<out X509Certificate>?,
+    authType: String?,
+    socket: Socket?
+  ) {
     throw CertificateException("Unsupported client operation")
   }
 
@@ -52,8 +59,11 @@ class JVMAllowlistedTrustManager(
     throw CertificateException("Unsupported operation")
   }
 
-  override fun checkServerTrusted(chain: Array<out X509Certificate>, authType: String,
-      socket: Socket) {
+  override fun checkServerTrusted(
+    chain: Array<out X509Certificate>,
+    authType: String,
+    socket: Socket
+  ) {
     val host = socket.inetAddress.hostName
 
     if (isAllowed(host)) {
@@ -66,8 +76,11 @@ class JVMAllowlistedTrustManager(
     }
   }
 
-  override fun checkServerTrusted(chain: Array<out X509Certificate>, authType: String,
-      engine: SSLEngine) {
+  override fun checkServerTrusted(
+    chain: Array<out X509Certificate>,
+    authType: String,
+    engine: SSLEngine
+  ) {
     val host = engine.peerHost
 
     if (isAllowed(host)) {
