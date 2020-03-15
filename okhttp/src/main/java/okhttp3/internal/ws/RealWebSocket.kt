@@ -56,7 +56,14 @@ class RealWebSocket(
   private val originalRequest: Request,
   internal val listener: WebSocketListener,
   private val random: Random,
-  private val pingIntervalMillis: Long
+  private val pingIntervalMillis: Long,
+  /**
+   * For clients this is initially null, and will be assigned to the agreed-upon extensions. For
+   * servers it should be the agreed-upon extensions immediately.
+   */
+  private var extensions: WebSocketExtensions?,
+  /** If compression is negotiated, outbound messages of this size and larger will be compressed. */
+  private var minimumDeflateSize: Long
 ) : WebSocket, WebSocketReader.FrameCallback {
   private val key: String
 
@@ -155,6 +162,8 @@ class RealWebSocket(
         try {
           checkUpgradeSuccess(response, exchange)
           streams = exchange!!.newWebSocketStreams()
+          // TODO(jwilson): use request & response headers to negotiate extensions.
+          extensions = WebSocketExtensions()
         } catch (e: IOException) {
           exchange?.webSocketUpgradeFailed()
           failWebSocket(e, response)
@@ -212,6 +221,7 @@ class RealWebSocket(
 
   @Throws(IOException::class)
   fun initReaderAndWriter(name: String, streams: Streams) {
+    val extensions = this.extensions!!
     synchronized(this) {
       this.name = name
       this.streams = streams
@@ -219,8 +229,8 @@ class RealWebSocket(
           isClient = streams.client,
           sink = streams.sink,
           random = random,
-          messageDeflater = null,
-          minimumDeflateSize = Long.MAX_VALUE
+          messageDeflater = extensions.newMessageDeflater(streams.client),
+          minimumDeflateSize = minimumDeflateSize
       )
       this.writerTask = WriterTask()
       if (pingIntervalMillis != 0L) {
@@ -239,7 +249,7 @@ class RealWebSocket(
         isClient = streams.client,
         source = streams.source,
         frameCallback = this,
-        messageInflater = null
+        messageInflater = extensions.newMessageInflater(streams.client)
     )
   }
 

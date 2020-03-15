@@ -48,7 +48,7 @@ class WebSocketWriter(
   private val messageDeflater: MessageDeflater?,
   private val minimumDeflateSize: Long
 ) : Closeable {
-  /** This buffer is holds outbound data for compression and masking. */
+  /** This holds outbound data for compression and masking. */
   private val messageBuffer = Buffer()
 
   /** The [Buffer] of [sink]. Write to this and then flush/emit [sink]. */

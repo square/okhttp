@@ -64,6 +64,7 @@ import okhttp3.internal.platform.Platform
 import okhttp3.internal.threadFactory
 import okhttp3.internal.toImmutableList
 import okhttp3.internal.ws.RealWebSocket
+import okhttp3.internal.ws.WebSocketExtensions
 import okhttp3.internal.ws.WebSocketProtocol
 import okhttp3.mockwebserver.SocketPolicy.CONTINUE_ALWAYS
 import okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AFTER_REQUEST
@@ -786,7 +787,9 @@ class MockWebServer : ExternalResource(), Closeable {
         originalRequest = fancyRequest,
         listener = response.webSocketListener!!,
         random = SecureRandom(),
-        pingIntervalMillis = 0
+        pingIntervalMillis = 0,
+        extensions = WebSocketExtensions.parse(response.headers),
+        minimumDeflateSize = 0L // Compress all messages if compression is enabled.
     )
     response.webSocketListener!!.onOpen(webSocket, fancyResponse)
     val name = "MockWebServer WebSocket ${request.path!!}"
