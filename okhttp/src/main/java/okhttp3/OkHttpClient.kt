@@ -248,12 +248,16 @@ open class OkHttpClient internal constructor(
 
   /** Uses [request] to connect a new web socket. */
   override fun newWebSocket(request: Request, listener: WebSocketListener): WebSocket {
+    // Compress messages 1 KiB or larger.
+    val minimumDeflateSize = 1024L
     val webSocket = RealWebSocket(
-        TaskRunner.INSTANCE,
-        request,
-        listener,
-        Random(),
-        pingIntervalMillis.toLong()
+        taskRunner = TaskRunner.INSTANCE,
+        originalRequest = request,
+        listener = listener,
+        random = Random(),
+        pingIntervalMillis = pingIntervalMillis.toLong(),
+        extensions = null, // Always null for clients.
+        minimumDeflateSize = minimumDeflateSize
     )
     webSocket.connect(this)
     return webSocket

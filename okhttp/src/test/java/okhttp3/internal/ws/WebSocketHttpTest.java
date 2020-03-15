@@ -838,8 +838,8 @@ public final class WebSocketHttpTest {
   }
 
   private RealWebSocket newWebSocket(Request request) {
-    RealWebSocket webSocket = new RealWebSocket(
-        TaskRunner.INSTANCE, request, clientListener, random, client.pingIntervalMillis());
+    RealWebSocket webSocket = new RealWebSocket(TaskRunner.INSTANCE, request, clientListener,
+        random, client.pingIntervalMillis(), null, 0L);
     webSocket.connect(client);
     return webSocket;
   }

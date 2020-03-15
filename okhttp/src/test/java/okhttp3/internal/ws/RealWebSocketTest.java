@@ -25,8 +25,8 @@ import okhttp3.Headers;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.TestUtil;
 import okhttp3.internal.concurrent.TaskRunner;
-import okio.Buffer;
 import okio.ByteString;
 import okio.Okio;
 import okio.Pipe;
@@ -43,6 +43,13 @@ public final class RealWebSocketTest {
   // NOTE: Fields are named 'client' and 'server' for cognitive simplicity. This differentiation has
   // zero effect on the behavior of the WebSocket API which is why tests are only written once
   // from the perspective of a single peer.
+
+  /**
+   * Compress messages of length 10 bytes or longer. This should be big enough to realize real
+   * compression on a message like 'aaaaaaaaaa...'. We check if compression was applied just by
+   * looking at the size if the inbound buffer.
+   */
+  private static final int MINIMUM_DEFLATE_SIZE = 10;
 
   private final Random random = new Random(0);
   private final Pipe client2Server = new Pipe(1024L);
@@ -359,46 +366,39 @@ public final class RealWebSocketTest {
         250d));
   }
 
-  @Test public void writesUncompressedMessageIfCompressionDisabled() throws IOException {
-    server.initWebSocket(random, 0);
+  @Test public void messagesNotCompressedWhenNotConfigured() throws IOException {
+    String message = TestUtil.repeat('a', MINIMUM_DEFLATE_SIZE);
+    server.webSocket.send(message);
 
-    server.webSocket.send(ByteString.encodeUtf8("Hello"));
-
-    Buffer buffer = new Buffer();
-    server2client.source().read(buffer, Integer.MAX_VALUE);
-
-    assertThat(buffer.readByteString())
-        .isEqualTo(ByteString.decodeHex("820548656c6c6f")); // Uncompressed Hello
+    assertThat(client.clientSourceBufferSize()).isGreaterThan(message.length()); // Not compressed.
+    assertThat(client.processNextFrame()).isTrue();
+    client.listener.assertTextMessage(message);
   }
 
-  @Test public void writesUncompressedMessageIfMessageTooSmall()
-      throws IOException {
-    server.initWebSocket(random, 0,
-        Headers.of("Sec-WebSocket-Extensions", "permessage-deflate"));
+  @Test public void messagesCompressedWhenConfigured() throws IOException {
+    Headers headers = Headers.of("Sec-WebSocket-Extensions", "permessage-deflate");
+    client.initWebSocket(random, 0, headers);
+    server.initWebSocket(random, 0, headers);
 
-    // Length 5 is less than 10, our minimum compressed size.
-    server.webSocket.send(ByteString.encodeUtf8("Hello"));
+    String message = TestUtil.repeat('a', MINIMUM_DEFLATE_SIZE);
+    server.webSocket.send(message);
 
-    Buffer buffer = new Buffer();
-    server2client.source().read(buffer, Integer.MAX_VALUE);
-
-    assertThat(buffer.readByteString())
-        .isEqualTo(ByteString.decodeHex("820548656c6c6f")); // Uncompressed
+    assertThat(client.clientSourceBufferSize()).isLessThan(message.length()); // Compressed!
+    assertThat(client.processNextFrame()).isTrue();
+    client.listener.assertTextMessage(message);
   }
 
-  @Ignore
-  @Test public void writesCompressedMessage() throws IOException {
-    server.initWebSocket(random, 0,
-        Headers.of("Sec-WebSocket-Extensions", "permessage-deflate"));
+  @Test public void smallMessagesNotCompressed() throws IOException {
+    Headers headers = Headers.of("Sec-WebSocket-Extensions", "permessage-deflate");
+    client.initWebSocket(random, 0, headers);
+    server.initWebSocket(random, 0, headers);
 
-    // Length 35 is greater than 10, our minimum compressed size.
-    server.webSocket.send(ByteString.encodeUtf8("Hello Hello Hello Hello Hello Hello"));
+    String message = TestUtil.repeat('a', MINIMUM_DEFLATE_SIZE - 1);
+    server.webSocket.send(message);
 
-    Buffer buffer = new Buffer();
-    server2client.source().read(buffer, Integer.MAX_VALUE);
-
-    assertThat(buffer.readByteString())
-        .isEqualTo(ByteString.decodeHex("c20bf248cdc9c957f0c0470200")); // Compressed
+    assertThat(client.clientSourceBufferSize()).isGreaterThan(message.length()); // Not compressed.
+    assertThat(client.processNextFrame()).isTrue();
+    client.listener.assertTextMessage(message);
   }
 
   /** One peer's streams, listener, and web socket in the test. */
@@ -429,9 +429,19 @@ public final class RealWebSocketTest {
           .headers(responseHeaders)
           .protocol(Protocol.HTTP_1_1)
           .build();
-      webSocket = new RealWebSocket(
-          TaskRunner.INSTANCE, response.request(), listener, random, pingIntervalMillis);
+      webSocket = new RealWebSocket(TaskRunner.INSTANCE, response.request(), listener, random,
+          pingIntervalMillis, WebSocketExtensions.Companion.parse(responseHeaders),
+          MINIMUM_DEFLATE_SIZE);
       webSocket.initReaderAndWriter(name, this);
+    }
+
+    /**
+     * Peeks the number of bytes available for the client to read immediately. This doesn't block so
+     * it requires that bytes have already been flushed by the server.
+     */
+    public long clientSourceBufferSize() throws IOException {
+      getSource().request(1L);
+      return getSource().buffer().size();
     }
 
     public boolean processNextFrame() throws IOException {
