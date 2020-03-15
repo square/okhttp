@@ -52,12 +52,19 @@ public final class WebSocketWriterTest {
   };
 
   // Mutually exclusive. Use the one corresponding to the peer whose behavior you wish to test.
-  private final WebSocketWriter serverWriter = new WebSocketWriter(false, data, random);
-  private final WebSocketWriter clientWriter = new WebSocketWriter(true, data, random);
+  private final WebSocketWriter serverWriter = new WebSocketWriter(false, data, random, null, 0L);
+  private final WebSocketWriter clientWriter = new WebSocketWriter(true, data, random, null, 0L);
 
   @Test public void serverTextMessage() throws IOException {
     serverWriter.writeMessageFrame(OPCODE_TEXT, ByteString.encodeUtf8("Hello"));
     assertData("810548656c6c6f");
+  }
+
+  @Test public void serverCompressedTextMessage() throws IOException {
+    WebSocketWriter serverWriter = new WebSocketWriter(
+        false, data, random, new MessageDeflater(false), 0L);
+    serverWriter.writeMessageFrame(OPCODE_TEXT, ByteString.encodeUtf8("Hello"));
+    assertData("c107f248cdc9c90700");
   }
 
   @Test public void serverSmallBufferedPayloadWrittenAsOneFrame() throws IOException {
@@ -83,6 +90,13 @@ public final class WebSocketWriterTest {
     clientWriter.writeMessageFrame(OPCODE_TEXT, ByteString.encodeUtf8("Hello"));
 
     assertData("818560b420bb28d14cd70f");
+  }
+
+  @Test public void clientCompressedTextMessage() throws IOException {
+    WebSocketWriter clientWriter = new WebSocketWriter(
+        false, data, random, new MessageDeflater(false), 0L);
+    clientWriter.writeMessageFrame(OPCODE_TEXT, ByteString.encodeUtf8("Hello"));
+    assertData("c107f248cdc9c90700");
   }
 
   @Test public void serverBinaryMessage() throws IOException {
