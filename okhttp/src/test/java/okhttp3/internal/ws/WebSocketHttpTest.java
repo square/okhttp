@@ -370,6 +370,16 @@ public final class WebSocketHttpTest {
         "Expected 'Sec-WebSocket-Accept' header value 'ujmZX4KXZqjwy6vi1aQFH5p4Ygk=' but was 'magic'");
   }
 
+  @Test public void clientIncludesForbiddenHeader() throws IOException {
+    newWebSocket(new Request.Builder()
+        .url(webServer.url("/"))
+        .header("Sec-WebSocket-Extensions", "permessage-deflate")
+        .build());
+
+    clientListener.assertFailure(ProtocolException.class,
+        "Request header not permitted: 'Sec-WebSocket-Extensions'");
+  }
+
   @Test public void webSocketAndApplicationInterceptors() {
     final AtomicInteger interceptedCount = new AtomicInteger();
 
@@ -780,31 +790,101 @@ public final class WebSocketHttpTest {
     webSocket.close(1000, null);
   }
 
-  @Ignore
-  @Test public void compressedMessages() {
-    client = client.newBuilder()
-        .addInterceptor(chain -> {
-          assertThat(chain.request().header("Sec-WebSocket-Extensions"))
-              .isEqualTo("permessage-deflate");
-          return chain.proceed(chain.request());
-        })
-        .build();
+  @Test public void compressedMessages() throws Exception {
+    successfulExtensions("permessage-deflate");
+  }
 
+  @Test public void compressedMessagesNoClientContextTakeover() throws Exception {
+    successfulExtensions("permessage-deflate; client_no_context_takeover");
+  }
+
+  @Test public void compressedMessagesNoServerContextTakeover() throws Exception {
+    successfulExtensions("permessage-deflate; server_no_context_takeover");
+  }
+
+  @Test public void unexpectedExtensionParameter() throws Exception {
+    extensionNegotiationFailure("permessage-deflate; unknown_parameter=15");
+  }
+
+  @Test public void clientMaxWindowBitsIncluded() throws Exception {
+    extensionNegotiationFailure("permessage-deflate; client_max_window_bits=15");
+  }
+
+  @Test public void serverMaxWindowBitsTooLow() throws Exception {
+    extensionNegotiationFailure("permessage-deflate; server_max_window_bits=7");
+  }
+
+  @Test public void serverMaxWindowBitsTooHigh() throws Exception {
+    extensionNegotiationFailure("permessage-deflate; server_max_window_bits=16");
+  }
+
+  @Test public void serverMaxWindowBitsJustRight() throws Exception {
+    successfulExtensions("permessage-deflate; server_max_window_bits=15");
+  }
+
+  private void successfulExtensions(String extensionsHeader) throws Exception {
     webServer.enqueue(new MockResponse()
-        .addHeader("Sec-WebSocket-Extensions", "permessage-deflate")
+        .addHeader("Sec-WebSocket-Extensions", extensionsHeader)
         .withWebSocketUpgrade(serverListener));
 
     WebSocket client = newWebSocket();
     clientListener.assertOpen();
     WebSocket server = serverListener.assertOpen();
 
-    server.send("Hello this is a compressed message from the server!");
-    clientListener.assertTextMessage("Hello this is a compressed message from the server!");
+    // Server to client message big enough to be compressed.
+    String message1 = TestUtil.repeat('a', (int) RealWebSocket.DEFAULT_MINIMUM_DEFLATE_SIZE);
+    server.send(message1);
+    clientListener.assertTextMessage(message1);
 
-    client.send("Hello this is a compressed message from the client!");
-    serverListener.assertTextMessage("Hello this is a compressed message from the client!");
+    // Client to server message big enough to be compressed.
+    String message2 = TestUtil.repeat('b', (int) RealWebSocket.DEFAULT_MINIMUM_DEFLATE_SIZE);
+    client.send(message2);
+    serverListener.assertTextMessage(message2);
+
+    // Empty server to client message.
+    String message3 = "";
+    server.send(message3);
+    clientListener.assertTextMessage(message3);
+
+    // Empty client to server message.
+    String message4 = "";
+    client.send(message4);
+    serverListener.assertTextMessage(message4);
+
+    // Server to client message that shares context with message1.
+    String message5 = message1 + message1;
+    server.send(message5);
+    clientListener.assertTextMessage(message5);
+
+    // Client to server message that shares context with message2.
+    String message6 = message2 + message2;
+    client.send(message6);
+    serverListener.assertTextMessage(message6);
 
     closeWebSockets(client, server);
+
+    RecordedRequest upgradeRequest = webServer.takeRequest();
+    assertThat(upgradeRequest.getHeader("Sec-WebSocket-Extensions"))
+        .isEqualTo("permessage-deflate");
+  }
+
+  private void extensionNegotiationFailure(String extensionsHeader) throws Exception {
+    webServer.enqueue(new MockResponse()
+        .addHeader("Sec-WebSocket-Extensions", extensionsHeader)
+        .withWebSocketUpgrade(serverListener));
+
+    newWebSocket();
+    clientListener.assertOpen();
+    WebSocket server = serverListener.assertOpen();
+
+    String clientReason = "unexpected Sec-WebSocket-Extensions in response header";
+    serverListener.assertClosing(1010, clientReason);
+    server.close(1010, "");
+    clientListener.assertClosing(1010, "");
+    clientListener.assertClosed(1010, "");
+    serverListener.assertClosed(1010, clientReason);
+    clientListener.assertExhausted();
+    serverListener.assertExhausted();
   }
 
   private MockResponse upgradeResponse(RecordedRequest request) {
