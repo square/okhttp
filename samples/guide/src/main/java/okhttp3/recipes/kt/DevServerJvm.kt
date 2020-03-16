@@ -33,7 +33,7 @@ import okhttp3.tls.internal.TlsUtil
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 
 @IgnoreJRERequirement
-class JVMAllowlistedTrustManager(
+class JvmAllowlistedTrustManager(
   private val delegate: X509ExtendedTrustManager,
   private vararg val hosts: String
 ) : X509ExtendedTrustManager() {
@@ -116,7 +116,7 @@ class DevServerJvm {
   val hosts = arrayOf(server.hostName)
 
   val platformTrustManager = platformTrustManager()
-  val trustManager = JVMAllowlistedTrustManager(platformTrustManager, *hosts)
+  val trustManager = JvmAllowlistedTrustManager(platformTrustManager, *hosts)
   val sslSocketFactory = Platform.get().newSSLContext().apply {
     init(null, arrayOf(trustManager), null)
   }.socketFactory
