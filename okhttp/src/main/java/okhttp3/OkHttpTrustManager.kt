@@ -65,9 +65,7 @@ class OkHttpTrustManagerJvm(
     authType: String,
     socket: Socket
   ) {
-    if (!allowedPredicate(socket.inetAddress.hostName)) {
-      delegate.checkServerTrusted(chain, authType, socket)
-    }
+      checkServerTrusted(chain, authType, socket.inetAddress.hostName)
   }
 
   override fun checkServerTrusted(
@@ -75,9 +73,7 @@ class OkHttpTrustManagerJvm(
     authType: String,
     engine: SSLEngine
   ) {
-    if (!allowedPredicate(engine.peerHost)) {
-      delegate.checkServerTrusted(chain, authType, engine)
-    }
+    checkServerTrusted(chain, authType, engine.peerHost)
   }
 
   override fun checkClientTrusted(
