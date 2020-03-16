@@ -102,7 +102,7 @@ class JVMAllowlistedTrustManager(
 }
 
 @IgnoreJRERequirement
-class DevServerJVM {
+class DevServerJvm {
   val handshakeCertificates = TlsUtil.localhost()
 
   val server = MockWebServer().apply {
@@ -150,5 +150,5 @@ class DevServerJVM {
 }
 
 fun main() {
-  DevServerJVM().run()
+  DevServerJvm().run()
 }
