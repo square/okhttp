@@ -16,89 +16,17 @@
 package okhttp3.recipes.kt
 
 import java.io.IOException
-import java.lang.reflect.InvocationTargetException
-import java.lang.reflect.Method
 import java.net.HttpURLConnection.HTTP_MOVED_TEMP
 import java.security.KeyStore
-import java.security.cert.Certificate
-import java.security.cert.CertificateException
-import java.security.cert.X509Certificate
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 import okhttp3.OkHttpClient
+import okhttp3.OkHttpTrustManager
 import okhttp3.Request
 import okhttp3.internal.platform.Platform
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.tls.internal.TlsUtil
-
-class AndroidAllowlistedTrustManager(
-  private val delegate: X509TrustManager,
-  private vararg val hosts: String
-) : X509TrustManager {
-  val delegateMethod = lookupDelegateMethod()
-
-  override fun checkClientTrusted(chain: Array<out X509Certificate>, authType: String?) {
-    delegate.checkClientTrusted(chain, authType)
-  }
-
-  override fun checkServerTrusted(chain: Array<out X509Certificate>, authType: String) {
-    throw CertificateException("Unsupported operation")
-  }
-
-  /**
-   * Android method to clean and sort certificates, called via reflection.
-   */
-  fun checkServerTrusted(
-    chain: Array<out X509Certificate>,
-    authType: String,
-    host: String
-  ): List<Certificate> {
-
-    if (isAllowed(host)) {
-      println("Skipping security checks for $host")
-      println(chain.map { it.subjectDN.name })
-
-      return listOf()
-    }
-
-    println("Running security checks for $host")
-    println(chain.map { it.subjectDN.name }.take(1))
-
-    if (delegateMethod != null) {
-      return invokeDelegateMethod(delegateMethod, chain, authType, host)
-    }
-
-    throw CertificateException("Failed to call checkServerTrusted")
-  }
-
-  fun isAllowed(host: String): Boolean = hosts.contains(host)
-
-  override fun getAcceptedIssuers(): Array<X509Certificate> = delegate.acceptedIssuers
-
-  private fun lookupDelegateMethod(): Method? {
-    return try {
-      delegate.javaClass.getMethod("checkServerTrusted",
-          Array<X509Certificate>::class.java, String::class.java, String::class.java)
-    } catch (nsme: NoSuchMethodException) {
-      null
-    }
-  }
-
-  @Suppress("UNCHECKED_CAST")
-  private fun invokeDelegateMethod(
-    delegateMethod: Method,
-    chain: Array<out X509Certificate>,
-    authType: String,
-    host: String
-  ): List<Certificate> {
-    try {
-      return delegateMethod.invoke(delegate, chain, authType, host) as List<Certificate>
-    } catch (ite: InvocationTargetException) {
-      throw ite.targetException
-    }
-  }
-}
 
 class DevServerAndroid {
   val handshakeCertificates = TlsUtil.localhost()
@@ -114,7 +42,7 @@ class DevServerAndroid {
   val hosts = arrayOf(server.hostName)
 
   val platformTrustManager = platformTrustManager()
-  val trustManager = AndroidAllowlistedTrustManager(platformTrustManager, *hosts)
+  val trustManager = OkHttpTrustManager.create(platformTrustManager) { hosts.contains(it) }
   val sslSocketFactory = Platform.get().newSSLContext().apply {
     init(null, arrayOf(trustManager), null)
   }.socketFactory

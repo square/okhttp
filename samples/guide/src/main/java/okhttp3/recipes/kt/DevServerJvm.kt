@@ -17,89 +17,17 @@ package okhttp3.recipes.kt
 
 import java.io.IOException
 import java.net.HttpURLConnection.HTTP_MOVED_TEMP
-import java.net.Socket
 import java.security.KeyStore
-import java.security.cert.CertificateException
-import java.security.cert.X509Certificate
-import javax.net.ssl.SSLEngine
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509ExtendedTrustManager
 import okhttp3.OkHttpClient
+import okhttp3.OkHttpTrustManager
 import okhttp3.Request
 import okhttp3.internal.platform.Platform
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.tls.internal.TlsUtil
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
-
-@IgnoreJRERequirement
-class JvmAllowlistedTrustManager(
-  private val delegate: X509ExtendedTrustManager,
-  private vararg val hosts: String
-) : X509ExtendedTrustManager() {
-  override fun checkClientTrusted(chain: Array<out X509Certificate>, authType: String?) {
-    throw CertificateException("Unsupported client operation")
-  }
-
-  override fun checkClientTrusted(
-    chain: Array<out X509Certificate>?,
-    authType: String?,
-    engine: SSLEngine?
-  ) {
-    throw CertificateException("Unsupported client operation")
-  }
-
-  override fun checkClientTrusted(
-    chain: Array<out X509Certificate>?,
-    authType: String?,
-    socket: Socket?
-  ) {
-    throw CertificateException("Unsupported client operation")
-  }
-
-  override fun checkServerTrusted(chain: Array<out X509Certificate>, authType: String) {
-    throw CertificateException("Unsupported operation")
-  }
-
-  override fun checkServerTrusted(
-    chain: Array<out X509Certificate>,
-    authType: String,
-    socket: Socket
-  ) {
-    val host = socket.inetAddress.hostName
-
-    if (isAllowed(host)) {
-      println("Skipping security checks for $host")
-      println(chain.map { it.subjectDN.name })
-    } else {
-      println("Running security checks for $host")
-      println(chain.map { it.subjectDN.name }.take(1))
-      delegate.checkServerTrusted(chain, authType, socket)
-    }
-  }
-
-  override fun checkServerTrusted(
-    chain: Array<out X509Certificate>,
-    authType: String,
-    engine: SSLEngine
-  ) {
-    val host = engine.peerHost
-
-    if (isAllowed(host)) {
-      println("Skipping security checks for $host")
-      println(chain.map { it.subjectDN.name })
-    } else {
-      println("Running security checks for $host")
-      println(chain.map { it.subjectDN.name }.take(1))
-
-      delegate.checkServerTrusted(chain, authType, engine)
-    }
-  }
-
-  fun isAllowed(host: String): Boolean = hosts.contains(host)
-
-  override fun getAcceptedIssuers(): Array<X509Certificate> = delegate.acceptedIssuers
-}
 
 @IgnoreJRERequirement
 class DevServerJvm {
@@ -116,7 +44,7 @@ class DevServerJvm {
   val hosts = arrayOf(server.hostName)
 
   val platformTrustManager = platformTrustManager()
-  val trustManager = JvmAllowlistedTrustManager(platformTrustManager, *hosts)
+  val trustManager = OkHttpTrustManager.create(platformTrustManager) { hosts.contains(it) }
   val sslSocketFactory = Platform.get().newSSLContext().apply {
     init(null, arrayOf(trustManager), null)
   }.socketFactory

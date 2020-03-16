@@ -45,6 +45,8 @@ class AndroidPlatform : Platform() {
       DeferredSocketAdapter("com.google.android.gms.org.conscrypt")
   ).filter { it.isSupported() }
 
+  override val isAndroid = true
+
   private val closeGuard = CloseGuard.get()
 
   @Throws(IOException::class)

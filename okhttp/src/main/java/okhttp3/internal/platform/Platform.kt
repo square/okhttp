@@ -65,6 +65,7 @@ import okio.Buffer
  * Supported on Android 6.0+ via `NetworkSecurityPolicy`.
  */
 open class Platform {
+  open val isAndroid: Boolean = false
 
   /** Prefix used on custom headers. */
   fun getPrefix() = "OkHttp"
