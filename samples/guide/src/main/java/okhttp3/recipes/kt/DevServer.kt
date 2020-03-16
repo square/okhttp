@@ -19,7 +19,7 @@ import java.io.IOException
 import java.net.HttpURLConnection.HTTP_MOVED_TEMP
 import java.security.KeyStore
 import javax.net.ssl.TrustManagerFactory
-import javax.net.ssl.X509ExtendedTrustManager
+import javax.net.ssl.X509TrustManager
 import okhttp3.OkHttpClient
 import okhttp3.OkHttpTrustManager
 import okhttp3.Request
@@ -27,10 +27,8 @@ import okhttp3.internal.platform.Platform
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.tls.internal.TlsUtil
-import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 
-@IgnoreJRERequirement
-class DevServerJvm {
+class DevServer {
   val handshakeCertificates = TlsUtil.localhost()
 
   val server = MockWebServer().apply {
@@ -53,11 +51,11 @@ class DevServerJvm {
       .sslSocketFactory(sslSocketFactory, trustManager)
       .build()
 
-  fun platformTrustManager(): X509ExtendedTrustManager {
+  fun platformTrustManager(): X509TrustManager {
     val factory = TrustManagerFactory.getInstance(
         TrustManagerFactory.getDefaultAlgorithm())
     factory.init(null as KeyStore?)
-    return factory.trustManagers!![0] as X509ExtendedTrustManager
+    return factory.trustManagers!![0] as X509TrustManager
   }
 
   fun run() {
@@ -78,5 +76,5 @@ class DevServerJvm {
 }
 
 fun main() {
-  DevServerJvm().run()
+  DevServer().run()
 }
