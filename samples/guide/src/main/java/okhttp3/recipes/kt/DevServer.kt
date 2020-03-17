@@ -27,6 +27,15 @@ import okhttp3.internal.platform.Platform
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.tls.internal.TlsUtil
+import java.security.cert.X509Certificate
+
+object InsecureTrustManager : X509TrustManager {
+  override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {}
+
+  override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {}
+
+  override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
+}
 
 class DevServer {
   val handshakeCertificates = TlsUtil.localhost()
@@ -42,7 +51,7 @@ class DevServer {
   val hosts = arrayOf(server.hostName)
 
   val platformTrustManager = platformTrustManager()
-  val trustManager = OkHttpTrustManager.create(platformTrustManager) { hosts.contains(it) }
+  val trustManager = OkHttpTrustManager.hostOverride(platformTrustManager, "localhost", InsecureTrustManager)
   val sslSocketFactory = Platform.get().newSSLContext().apply {
     init(null, arrayOf(trustManager), null)
   }.socketFactory
