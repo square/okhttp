@@ -35,6 +35,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import static okhttp3.internal.ws.RealWebSocket.DEFAULT_MINIMUM_DEFLATE_SIZE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
 import static org.junit.Assert.fail;
@@ -44,16 +45,9 @@ public final class RealWebSocketTest {
   // zero effect on the behavior of the WebSocket API which is why tests are only written once
   // from the perspective of a single peer.
 
-  /**
-   * Compress messages of length 10 bytes or longer. This should be big enough to realize real
-   * compression on a message like 'aaaaaaaaaa...'. We check if compression was applied just by
-   * looking at the size if the inbound buffer.
-   */
-  private static final int MINIMUM_DEFLATE_SIZE = 10;
-
   private final Random random = new Random(0);
-  private final Pipe client2Server = new Pipe(1024L);
-  private final Pipe server2client = new Pipe(1024L);
+  private final Pipe client2Server = new Pipe(8192L);
+  private final Pipe server2client = new Pipe(8192L);
 
   private TestStreams client = new TestStreams(true, server2client, client2Server);
   private TestStreams server = new TestStreams(false, client2Server, server2client);
@@ -367,7 +361,7 @@ public final class RealWebSocketTest {
   }
 
   @Test public void messagesNotCompressedWhenNotConfigured() throws IOException {
-    String message = TestUtil.repeat('a', MINIMUM_DEFLATE_SIZE);
+    String message = TestUtil.repeat('a', (int) DEFAULT_MINIMUM_DEFLATE_SIZE);
     server.webSocket.send(message);
 
     assertThat(client.clientSourceBufferSize()).isGreaterThan(message.length()); // Not compressed.
@@ -380,7 +374,7 @@ public final class RealWebSocketTest {
     client.initWebSocket(random, 0, headers);
     server.initWebSocket(random, 0, headers);
 
-    String message = TestUtil.repeat('a', MINIMUM_DEFLATE_SIZE);
+    String message = TestUtil.repeat('a', (int) DEFAULT_MINIMUM_DEFLATE_SIZE);
     server.webSocket.send(message);
 
     assertThat(client.clientSourceBufferSize()).isLessThan(message.length()); // Compressed!
@@ -393,7 +387,7 @@ public final class RealWebSocketTest {
     client.initWebSocket(random, 0, headers);
     server.initWebSocket(random, 0, headers);
 
-    String message = TestUtil.repeat('a', MINIMUM_DEFLATE_SIZE - 1);
+    String message = TestUtil.repeat('a', (int) DEFAULT_MINIMUM_DEFLATE_SIZE - 1);
     server.webSocket.send(message);
 
     assertThat(client.clientSourceBufferSize()).isGreaterThan(message.length()); // Not compressed.
@@ -431,7 +425,7 @@ public final class RealWebSocketTest {
           .build();
       webSocket = new RealWebSocket(TaskRunner.INSTANCE, response.request(), listener, random,
           pingIntervalMillis, WebSocketExtensions.Companion.parse(responseHeaders),
-          MINIMUM_DEFLATE_SIZE);
+          DEFAULT_MINIMUM_DEFLATE_SIZE);
       webSocket.initReaderAndWriter(name, this);
     }
 
@@ -441,7 +435,7 @@ public final class RealWebSocketTest {
      */
     public long clientSourceBufferSize() throws IOException {
       getSource().request(1L);
-      return getSource().buffer().size();
+      return getSource().getBuffer().size();
     }
 
     public boolean processNextFrame() throws IOException {
