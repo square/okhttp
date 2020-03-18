@@ -1,6 +1,21 @@
 Change Log
 ==========
 
+## Version 4.4.1
+
+_2020-03-08_
+
+ *  Fix: Don't reuse a connection on redirect if certs match but DNS does not. For better
+    locality and performance OkHttp attempts to use the same pooled connection across redirects and
+    follow-ups. It independently shares connections when the IP addresses and certificates match,
+    even if the host names do not. In 4.4.0 we introduced a regression where we shared a connection
+    when certificates matched but the DNS addresses did not. This would only occur when following a
+    redirect from one hostname to another, and where both hosts had common certificates.
+
+ *  Fix: Don't fail on a redirect when a client has configured a 'trust everything' trust manager.
+    Typically this would cause certain redirects to fail in debug and development configurations.
+
+
 ## Version 4.4.0
 
 _2020-02-17_

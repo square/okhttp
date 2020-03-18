@@ -15,31 +15,19 @@
  */
 package okhttp3.internal.ws
 
-import okhttp3.Protocol
-import okhttp3.Request
-import okhttp3.Response
+import okhttp3.Headers.Companion.headersOf
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
 class WebSocketExtensionsTest {
-  private val minimalResponse = Response.Builder()
-      .protocol(Protocol.HTTP_1_1)
-      .code(200)
-      .message("OK")
-      .request(
-          Request.Builder()
-              .url("https://example.com/")
-              .build()
-      )
-      .build()
-
   @Test
   fun emptyHeader() {
     assertThat(parse("")).isEqualTo(WebSocketExtensions())
   }
 
-  @Test fun noExtensionHeader() {
-    assertThat(WebSocketExtensions.parse(minimalResponse))
+  @Test
+  fun noExtensionHeader() {
+    assertThat(WebSocketExtensions.parse(headersOf()))
         .isEqualTo(WebSocketExtensions())
   }
 
@@ -79,11 +67,10 @@ class WebSocketExtensionsTest {
 
   @Test
   fun multiplePerMessageDeflateHeaders() {
-    val response = minimalResponse.newBuilder()
-        .header("Sec-WebSocket-Extensions", "")
-        .header("Sec-WebSocket-Extensions", "permessage-deflate")
-        .build()
-    val extensions = WebSocketExtensions.parse(response)
+    val extensions = WebSocketExtensions.parse(headersOf(
+        "Sec-WebSocket-Extensions", "",
+        "Sec-WebSocket-Extensions", "permessage-deflate"
+    ))
     assertThat(extensions)
         .isEqualTo(WebSocketExtensions(
             perMessageDeflate = true
@@ -232,10 +219,6 @@ class WebSocketExtensionsTest {
         ))
   }
 
-  private fun parse(extension: String): WebSocketExtensions {
-    val response = minimalResponse.newBuilder()
-        .header("Sec-WebSocket-Extensions", extension)
-        .build()
-    return WebSocketExtensions.parse(response)
-  }
+  private fun parse(extension: String) =
+    WebSocketExtensions.parse(headersOf("Sec-WebSocket-Extensions", extension))
 }

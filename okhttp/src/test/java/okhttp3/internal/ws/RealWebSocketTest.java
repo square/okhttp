@@ -21,9 +21,11 @@ import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import okhttp3.Headers;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.TestUtil;
 import okhttp3.internal.concurrent.TaskRunner;
 import okio.ByteString;
 import okio.Okio;
@@ -41,6 +43,13 @@ public final class RealWebSocketTest {
   // NOTE: Fields are named 'client' and 'server' for cognitive simplicity. This differentiation has
   // zero effect on the behavior of the WebSocket API which is why tests are only written once
   // from the perspective of a single peer.
+
+  /**
+   * Compress messages of length 10 bytes or longer. This should be big enough to realize real
+   * compression on a message like 'aaaaaaaaaa...'. We check if compression was applied just by
+   * looking at the size if the inbound buffer.
+   */
+  private static final int MINIMUM_DEFLATE_SIZE = 10;
 
   private final Random random = new Random(0);
   private final Pipe client2Server = new Pipe(1024L);
@@ -357,6 +366,41 @@ public final class RealWebSocketTest {
         250d));
   }
 
+  @Test public void messagesNotCompressedWhenNotConfigured() throws IOException {
+    String message = TestUtil.repeat('a', MINIMUM_DEFLATE_SIZE);
+    server.webSocket.send(message);
+
+    assertThat(client.clientSourceBufferSize()).isGreaterThan(message.length()); // Not compressed.
+    assertThat(client.processNextFrame()).isTrue();
+    client.listener.assertTextMessage(message);
+  }
+
+  @Test public void messagesCompressedWhenConfigured() throws IOException {
+    Headers headers = Headers.of("Sec-WebSocket-Extensions", "permessage-deflate");
+    client.initWebSocket(random, 0, headers);
+    server.initWebSocket(random, 0, headers);
+
+    String message = TestUtil.repeat('a', MINIMUM_DEFLATE_SIZE);
+    server.webSocket.send(message);
+
+    assertThat(client.clientSourceBufferSize()).isLessThan(message.length()); // Compressed!
+    assertThat(client.processNextFrame()).isTrue();
+    client.listener.assertTextMessage(message);
+  }
+
+  @Test public void smallMessagesNotCompressed() throws IOException {
+    Headers headers = Headers.of("Sec-WebSocket-Extensions", "permessage-deflate");
+    client.initWebSocket(random, 0, headers);
+    server.initWebSocket(random, 0, headers);
+
+    String message = TestUtil.repeat('a', MINIMUM_DEFLATE_SIZE - 1);
+    server.webSocket.send(message);
+
+    assertThat(client.clientSourceBufferSize()).isGreaterThan(message.length()); // Not compressed.
+    assertThat(client.processNextFrame()).isTrue();
+    client.listener.assertTextMessage(message);
+  }
+
   /** One peer's streams, listener, and web socket in the test. */
   private static class TestStreams extends RealWebSocket.Streams {
     private final String name;
@@ -372,16 +416,32 @@ public final class RealWebSocketTest {
     }
 
     public void initWebSocket(Random random, int pingIntervalMillis) throws IOException {
+      initWebSocket(random, pingIntervalMillis, Headers.of());
+    }
+
+    public void initWebSocket(
+        Random random, int pingIntervalMillis, Headers responseHeaders) throws IOException {
       String url = "http://example.com/websocket";
       Response response = new Response.Builder()
           .code(101)
           .message("OK")
           .request(new Request.Builder().url(url).build())
+          .headers(responseHeaders)
           .protocol(Protocol.HTTP_1_1)
           .build();
-      webSocket = new RealWebSocket(
-          TaskRunner.INSTANCE, response.request(), listener, random, pingIntervalMillis);
+      webSocket = new RealWebSocket(TaskRunner.INSTANCE, response.request(), listener, random,
+          pingIntervalMillis, WebSocketExtensions.Companion.parse(responseHeaders),
+          MINIMUM_DEFLATE_SIZE);
       webSocket.initReaderAndWriter(name, this);
+    }
+
+    /**
+     * Peeks the number of bytes available for the client to read immediately. This doesn't block so
+     * it requires that bytes have already been flushed by the server.
+     */
+    public long clientSourceBufferSize() throws IOException {
+      getSource().request(1L);
+      return getSource().buffer().size();
     }
 
     public boolean processNextFrame() throws IOException {
