@@ -16,7 +16,9 @@ dependencies {
   implementation deps.bouncycastletls, {
     exclude module:"bcprov-jdk15on"
   }
+  compileOnly deps.android
   compileOnly deps.jsr305
+  compileOnly deps.animalSniffer
 
   testImplementation project(':okhttp-testing-support')
   testImplementation deps.junit

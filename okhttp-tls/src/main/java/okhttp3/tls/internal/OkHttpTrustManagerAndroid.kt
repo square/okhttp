@@ -1,13 +1,32 @@
-package okhttp3.internal.platform.android
+/*
+ * Copyright (C) 2020 Square, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package okhttp3.tls.internal
 
-import okhttp3.TrustManagerOverride
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.security.cert.Certificate
 import java.security.cert.X509Certificate
 import javax.net.ssl.X509TrustManager
 
-internal class TrustManagerWrapperAndroid(val trustManager: X509TrustManager): X509TrustManager {
+internal open class TrustManagerOverrideAndroid(
+  val predicate: (String) -> Boolean,
+  val trustManager: TrustManagerWrapperAndroid
+)
+
+internal class TrustManagerWrapperAndroid(val trustManager: X509TrustManager) : X509TrustManager {
   val delegateMethod by lazy { lookupAndroidDelegateMethod() }
 
   override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String) {
@@ -58,10 +77,13 @@ internal class TrustManagerWrapperAndroid(val trustManager: X509TrustManager): X
 }
 
 internal class OkHttpTrustManagerAndroid(
-  internal val default: TrustManagerWrapperAndroid,
-  internal val overrides: List<TrustManagerOverride<TrustManagerWrapperAndroid>>
+  val defaultTrustManager: X509TrustManager,
+  overridesList: List<TrustManagerOverride>
 ) : X509TrustManager {
-  internal fun findByHost(peerHost: String): X509TrustManager {
+  internal val default = TrustManagerWrapperAndroid(defaultTrustManager)
+  internal val overrides = overridesList.map { TrustManagerOverrideAndroid(it.predicate, TrustManagerWrapperAndroid(defaultTrustManager)) }
+
+  internal fun findByHost(peerHost: String): TrustManagerWrapperAndroid {
     overrides.forEach {
       if (it.predicate(peerHost)) {
         return it.trustManager
@@ -81,8 +103,7 @@ internal class OkHttpTrustManagerAndroid(
     println("Running security checks for $host")
     println(chain.map { it.subjectDN.name }.take(1))
 
-//    return invokeDelegateMethod(delegateMethod, chain, authType, host)
-    TODO()
+    return tm.checkServerTrusted(chain, authType, host)
   }
 
   override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String) {

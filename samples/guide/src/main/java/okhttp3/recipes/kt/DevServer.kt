@@ -21,21 +21,12 @@ import java.security.KeyStore
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 import okhttp3.OkHttpClient
-import okhttp3.OkHttpTrustManager
 import okhttp3.Request
 import okhttp3.internal.platform.Platform
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import okhttp3.tls.OkHttpTrustManager
 import okhttp3.tls.internal.TlsUtil
-import java.security.cert.X509Certificate
-
-object InsecureTrustManager : X509TrustManager {
-  override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {}
-
-  override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {}
-
-  override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
-}
 
 class DevServer {
   val handshakeCertificates = TlsUtil.localhost()
@@ -48,10 +39,11 @@ class DevServer {
         .setHeader("Location", "https://www.google.com/robots.txt"))
   }
 
-  val hosts = arrayOf(server.hostName)
-
   val platformTrustManager = platformTrustManager()
-  val trustManager = OkHttpTrustManager.hostOverride(platformTrustManager, "localhost", InsecureTrustManager)
+  val trustManager = OkHttpTrustManager.Builder(platformTrustManager)
+      .insecure("mydevserver")
+      .hostOverride("localhost", handshakeCertificates.trustManager)
+      .build()
   val sslSocketFactory = Platform.get().newSSLContext().apply {
     init(null, arrayOf(trustManager), null)
   }.socketFactory
