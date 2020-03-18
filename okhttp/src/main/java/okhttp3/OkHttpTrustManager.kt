@@ -8,21 +8,25 @@ import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 import javax.net.ssl.X509ExtendedTrustManager
 import javax.net.ssl.X509TrustManager
 
-interface OkHttpTrustManager : X509TrustManager {
-  companion object {
+object OkHttpTrustManager {
+  class Builder(var delegate: X509TrustManager) {
+    private var overrides: MutableList<Override> = mutableListOf()
+
+    fun delegate(delegate: X509TrustManager) = apply {
+      this.delegate = delegate
+    }
+
+    fun hostOverride(hostName: String, trustManager: X509TrustManager) = apply {
+      this.overrides.add(Override({ it == hostName }, trustManager))
+    }
+
     @IgnoreJRERequirement
     @SuppressLint("NewApi")
-    fun hostOverride(
-      delegate: X509TrustManager,
-      host: String,
-      overrideTrustManager: X509TrustManager
-    ): OkHttpTrustManager {
-      val override: (String) -> X509TrustManager? = { if (it == host) overrideTrustManager else null }
-
+    fun build(): X509TrustManager {
       return if (Platform.get().isAndroid) {
-        OkHttpTrustManagerAndroid(delegate, listOf(override))
+        OkHttpTrustManagerAndroid(delegate, overrides.toList())
       } else {
-        OkHttpTrustManagerJvm(delegate as X509ExtendedTrustManager, listOf(override))
+        OkHttpTrustManagerJvm(delegate as X509ExtendedTrustManager, overrides.toList())
       }
     }
   }

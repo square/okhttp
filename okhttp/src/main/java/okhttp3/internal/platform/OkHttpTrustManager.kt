@@ -1,24 +1,34 @@
 package okhttp3.internal.platform
 
 import android.annotation.SuppressLint
-import okhttp3.OkHttpTrustManager
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 import java.net.Socket
-import java.security.cert.Certificate
 import java.security.cert.X509Certificate
 import javax.net.ssl.SSLEngine
 import javax.net.ssl.X509ExtendedTrustManager
 import javax.net.ssl.X509TrustManager
 
+internal open class TrustManagerOverride<out T: X509TrustManager>(val predicate: (String) -> Boolean, open val trustManager: T)
+
 @IgnoreJRERequirement
 @SuppressLint("NewApi")
-class OkHttpTrustManagerJvm(
-  internal val delegate: X509TrustManager,
-  internal val overrides: List<(String) -> X509TrustManager?>
-) : X509ExtendedTrustManager(), OkHttpTrustManager {
+internal class OkHttpTrustManagerJvm(
+  internal val default: X509TrustManager,
+  internal val overrides: List<TrustManagerOverride>
+) : X509ExtendedTrustManager() {
+
+  internal fun findByHost(peerHost: String): X509TrustManager {
+    overrides.forEach {
+      if (it.predicate(peerHost)) {
+        return it.trustManager
+      }
+    }
+
+    return default
+  }
 
   override fun checkClientTrusted(chain: Array<out X509Certificate>, authType: String) {
-    delegate.checkClientTrusted(chain, authType)
+    default.checkClientTrusted(chain, authType)
   }
 
   override fun checkClientTrusted(
@@ -27,10 +37,10 @@ class OkHttpTrustManagerJvm(
     engine: SSLEngine
   ) {
     // TODO should this use overrides or fail unsupported
-    if (delegate is X509ExtendedTrustManager) {
-      delegate.checkClientTrusted(chain, authType, engine)
+    if (default is X509ExtendedTrustManager) {
+      default.checkClientTrusted(chain, authType, engine)
     } else {
-      delegate.checkClientTrusted(chain, authType)
+      default.checkClientTrusted(chain, authType)
     }
   }
 
@@ -40,15 +50,15 @@ class OkHttpTrustManagerJvm(
     socket: Socket
   ) {
     // TODO should this use overrides or fail unsupported
-    if (delegate is X509ExtendedTrustManager) {
-      delegate.checkClientTrusted(chain, authType, socket)
+    if (default is X509ExtendedTrustManager) {
+      default.checkClientTrusted(chain, authType, socket)
     } else {
-      delegate.checkClientTrusted(chain, authType)
+      default.checkClientTrusted(chain, authType)
     }
   }
 
   override fun checkServerTrusted(chain: Array<out X509Certificate>, authType: String) {
-    delegate.checkServerTrusted(chain, authType)
+    default.checkServerTrusted(chain, authType)
   }
 
   override fun checkServerTrusted(
@@ -57,7 +67,7 @@ class OkHttpTrustManagerJvm(
     socket: Socket
   ) {
     val peerHost = socket.inetAddress.hostName
-    val tm = findTrustManager(peerHost)
+    val tm = findByHost(peerHost)
 
     println("Running security checks for $peerHost using $tm")
     println(chain.map { it.subjectDN.name }.take(1))
@@ -74,7 +84,7 @@ class OkHttpTrustManagerJvm(
     authType: String,
     engine: SSLEngine
   ) {
-    val tm = findTrustManager(engine.peerHost)
+    val tm = findByHost(engine.peerHost)
 
     if (tm is X509ExtendedTrustManager) {
       tm.checkServerTrusted(chain, authType, engine)
@@ -83,16 +93,5 @@ class OkHttpTrustManagerJvm(
     }
   }
 
-  private fun findTrustManager(peerHost: String): X509TrustManager {
-    overrides.forEach {
-      val tm = it(peerHost)
-      if (tm != null) {
-        return tm
-      }
-    }
-
-    return delegate
-  }
-
-  override fun getAcceptedIssuers(): Array<X509Certificate> = delegate.acceptedIssuers
+  override fun getAcceptedIssuers(): Array<X509Certificate> = default.acceptedIssuers
 }

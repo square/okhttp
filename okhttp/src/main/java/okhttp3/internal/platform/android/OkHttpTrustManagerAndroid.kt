@@ -1,51 +1,36 @@
 package okhttp3.internal.platform.android
 
-import okhttp3.OkHttpTrustManager
+import okhttp3.internal.platform.TrustManagerOverride
+import okhttp3.internal.platform.findByHost
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.security.cert.Certificate
 import java.security.cert.X509Certificate
 import javax.net.ssl.X509TrustManager
 
-class OkHttpTrustManagerAndroid(
-  internal val delegate: X509TrustManager,
-  internal val overrides: List<(String) -> X509TrustManager?>
-) : OkHttpTrustManager {
-  val delegateMethod = lookupDelegateMethod()
+internal class TrustManagerWrapperAndroid(val trustManager: X509TrustManager): X509TrustManager {
+  val delegateMethod by lazy { lookupAndroidDelegateMethod() }
 
   fun checkServerTrusted(
     chain: Array<out X509Certificate>,
     authType: String,
     host: String
   ): List<Certificate> {
-
-    TODO()
-//    if (allowedPredicate(host)) {
-//      println("Skipping security checks for $host")
-//      println(chain.map { it.subjectDN.name })
-//
-//      return listOf()
-//    }
-
     println("Running security checks for $host")
     println(chain.map { it.subjectDN.name }.take(1))
 
-    return invokeDelegateMethod(delegateMethod, chain, authType, host)
+    return delegateMethod?.let {
+      invokeDelegateMethod(it, chain, authType, host)
+    }.orEmpty()
   }
 
-  override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {
-    delegate.checkServerTrusted(chain, authType)
-  }
-
-  override fun checkClientTrusted(chain: Array<out X509Certificate>, authType: String) {
-    delegate.checkClientTrusted(chain, authType)
-  }
-
-  override fun getAcceptedIssuers(): Array<X509Certificate> = delegate.acceptedIssuers
-
-  private fun lookupDelegateMethod(): Method {
-    return delegate.javaClass.getMethod("checkServerTrusted",
-        Array<X509Certificate>::class.java, String::class.java, String::class.java)
+  private fun lookupAndroidDelegateMethod(): Method? {
+    return try {
+      trustManager.javaClass.getMethod("checkServerTrusted",
+          Array<X509Certificate>::class.java, String::class.java, String::class.java)
+    } catch (nsme: NoSuchMethodException) {
+      null
+    }
   }
 
   @Suppress("UNCHECKED_CAST")
@@ -56,9 +41,47 @@ class OkHttpTrustManagerAndroid(
     host: String
   ): List<Certificate> {
     try {
-      return delegateMethod.invoke(delegate, chain, authType, host) as List<Certificate>
+      return delegateMethod.invoke(trustManager, chain, authType, host) as List<Certificate>
     } catch (ite: InvocationTargetException) {
       throw ite.targetException
     }
   }
+}
+
+internal class OkHttpTrustManagerAndroid(
+  internal val default: TrustManagerWrapperAndroid,
+  internal val overrides: List<TrustManagerOverride<TrustManagerWrapperAndroid>>
+) : X509TrustManager {
+  internal fun findByHost(peerHost: String): X509TrustManager {
+    overrides.forEach {
+      if (it.predicate(peerHost)) {
+        return it.trustManager
+      }
+    }
+
+    return default
+  }
+
+  fun checkServerTrusted(
+    chain: Array<out X509Certificate>,
+    authType: String,
+    host: String
+  ): List<Certificate> {
+    val tm = findByHost(host)
+
+    println("Running security checks for $host")
+    println(chain.map { it.subjectDN.name }.take(1))
+
+    return invokeDelegateMethod(delegateMethod, chain, authType, host)
+  }
+
+  override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String) {
+    default.checkServerTrusted(chain, authType)
+  }
+
+  override fun checkClientTrusted(chain: Array<out X509Certificate>, authType: String) {
+    default.checkClientTrusted(chain, authType)
+  }
+
+  override fun getAcceptedIssuers(): Array<X509Certificate> = default.acceptedIssuers
 }
