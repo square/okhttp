@@ -605,6 +605,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#version-450-rc1" class="md-nav__link">
+    Version 4.5.0-RC1
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-441" class="md-nav__link">
     Version 4.4.1
   </a>
@@ -777,6 +784,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#version-450-rc1" class="md-nav__link">
+    Version 4.5.0-RC1
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-441" class="md-nav__link">
     Version 4.4.1
   </a>
@@ -901,6 +915,23 @@
                 
                 
                 <h1 id="change-log">Change Log<a class="headerlink" href="#change-log" title="Permanent link">&para;</a></h1>
+<h2 id="version-450-rc1">Version 4.5.0-RC1<a class="headerlink" href="#version-450-rc1" title="Permanent link">&para;</a></h2>
+<p><em>2020-03-17</em></p>
+<p><strong>This release candidate turns on web socket compression.</strong></p>
+<p>The <a href="https://tools.ietf.org/html/rfc7692">spec</a> includes a sophisticated mechanism for client and server to negotiate
+compression features. We strive to offer great performance in our default configuration and so we&rsquo;re
+making compression the default for everyone starting with this release candidate.</p>
+<p>Please be considerate of your servers and their operators as you roll out this release. Compression
+saves bandwidth but it costs CPU and memory! If you run into a problem you may need to adjust or
+disable the <code>permessage-deflate</code> compression settings on your server.</p>
+<p>Note that OkHttp won&rsquo;t use compression when sending messages smaller than 1 KiB.</p>
+<ul>
+<li>Fix: Don&rsquo;t crash when the URL hostname contains an underscore on Android.</li>
+<li>Fix: Change HTTP/2 to use a daemon thread for its socket reader. If you&rsquo;ve ever seen a command
+    line application hang after all of the work is done, it may be due to a non-daemon thread like
+    this one.</li>
+<li>New: Include suppressed exceptions when all routes to a target service fail.</li>
+</ul>
 <h2 id="version-441">Version 4.4.1<a class="headerlink" href="#version-441" title="Permanent link">&para;</a></h2>
 <p><em>2020-03-08</em></p>
 <ul>

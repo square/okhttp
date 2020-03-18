@@ -654,7 +654,8 @@
 <h1 id="queuesize">queueSize<a class="headerlink" href="#queuesize" title="Permanent link">&para;</a></h1>
 <p><code>abstract fun queueSize():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a></p>
 <p>Returns the size in bytes of all messages enqueued to be transmitted to the server. This
-doesn&rsquo;t include framing overhead. It also doesn&rsquo;t include any bytes buffered by the operating
+doesn&rsquo;t include framing overhead. If compression is enabled, uncompressed messages size
+is used to calculate this value. It also doesn&rsquo;t include any bytes buffered by the operating
 system or network intermediaries. This method returns 0 if no messages are waiting in the
 queue. If may return a nonzero value after the web socket has been canceled; this indicates
 that enqueued messages were not transmitted.</p>
