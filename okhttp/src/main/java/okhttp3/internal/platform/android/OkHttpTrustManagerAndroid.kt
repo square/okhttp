@@ -1,7 +1,6 @@
 package okhttp3.internal.platform.android
 
-import okhttp3.internal.platform.TrustManagerOverride
-import okhttp3.internal.platform.findByHost
+import okhttp3.TrustManagerOverride
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.security.cert.Certificate
@@ -10,6 +9,16 @@ import javax.net.ssl.X509TrustManager
 
 internal class TrustManagerWrapperAndroid(val trustManager: X509TrustManager): X509TrustManager {
   val delegateMethod by lazy { lookupAndroidDelegateMethod() }
+
+  override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String) {
+    trustManager.checkServerTrusted(chain, authType)
+  }
+
+  override fun checkClientTrusted(chain: Array<out X509Certificate>, authType: String) {
+    trustManager.checkClientTrusted(chain, authType)
+  }
+
+  override fun getAcceptedIssuers(): Array<X509Certificate> = trustManager.acceptedIssuers
 
   fun checkServerTrusted(
     chain: Array<out X509Certificate>,
@@ -72,7 +81,8 @@ internal class OkHttpTrustManagerAndroid(
     println("Running security checks for $host")
     println(chain.map { it.subjectDN.name }.take(1))
 
-    return invokeDelegateMethod(delegateMethod, chain, authType, host)
+//    return invokeDelegateMethod(delegateMethod, chain, authType, host)
+    TODO()
   }
 
   override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String) {

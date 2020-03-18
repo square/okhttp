@@ -1,6 +1,7 @@
 package okhttp3.internal.platform
 
 import android.annotation.SuppressLint
+import okhttp3.TrustManagerOverride
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 import java.net.Socket
 import java.security.cert.X509Certificate
@@ -8,13 +9,11 @@ import javax.net.ssl.SSLEngine
 import javax.net.ssl.X509ExtendedTrustManager
 import javax.net.ssl.X509TrustManager
 
-internal open class TrustManagerOverride<out T: X509TrustManager>(val predicate: (String) -> Boolean, open val trustManager: T)
-
 @IgnoreJRERequirement
 @SuppressLint("NewApi")
 internal class OkHttpTrustManagerJvm(
   internal val default: X509TrustManager,
-  internal val overrides: List<TrustManagerOverride>
+  internal val overrides: List<TrustManagerOverride<X509TrustManager>>
 ) : X509ExtendedTrustManager() {
 
   internal fun findByHost(peerHost: String): X509TrustManager {
