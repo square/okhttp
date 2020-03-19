@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.tls.internal
+package okhttp3.internal.tls
 
 import android.annotation.SuppressLint
 import java.net.Socket

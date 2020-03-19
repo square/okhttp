@@ -42,6 +42,7 @@ import okhttp3.internal.platform.Platform
 import okhttp3.internal.proxy.NullProxySelector
 import okhttp3.internal.tls.CertificateChainCleaner
 import okhttp3.internal.tls.OkHostnameVerifier
+import okhttp3.internal.tls.TrustManagerBridge
 import okhttp3.internal.toImmutableList
 import okhttp3.internal.ws.RealWebSocket
 import okio.Sink
@@ -1025,6 +1026,19 @@ open class OkHttpClient internal constructor(
     @IgnoreJRERequirement
     fun pingInterval(duration: Duration) = apply {
       pingInterval(duration.toMillis(), MILLISECONDS)
+    }
+
+    fun insecureTrustManager(hostName: String): Builder {
+      // TODO could build this up and defer to later, to avoid overwriting other changes
+      val trustManager = TrustManagerBridge.Builder()
+          .insecure(hostName)
+          .build()
+
+      val sslSocketFactory = Platform.get().newSSLContext().apply {
+        init(null, arrayOf(trustManager), null)
+      }.socketFactory
+
+      return sslSocketFactory(sslSocketFactory, trustManager)
     }
 
     fun build(): OkHttpClient = OkHttpClient(this)

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.tls.internal
+package okhttp3.internal.tls
 
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
@@ -80,8 +80,12 @@ internal class OkHttpTrustManagerAndroid(
   val defaultTrustManager: X509TrustManager,
   overridesList: List<TrustManagerOverride>
 ) : X509TrustManager {
-  internal val default = TrustManagerWrapperAndroid(defaultTrustManager)
-  internal val overrides = overridesList.map { TrustManagerOverrideAndroid(it.predicate, TrustManagerWrapperAndroid(defaultTrustManager)) }
+  internal val default =
+      TrustManagerWrapperAndroid(defaultTrustManager)
+  internal val overrides = overridesList.map {
+    TrustManagerOverrideAndroid(it.predicate,
+        TrustManagerWrapperAndroid(defaultTrustManager))
+  }
 
   internal fun findByHost(peerHost: String): TrustManagerWrapperAndroid {
     overrides.forEach {

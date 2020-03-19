@@ -15,18 +15,13 @@
  */
 package okhttp3.recipes.kt
 
-import java.io.IOException
-import java.net.HttpURLConnection.HTTP_MOVED_TEMP
-import java.security.KeyStore
-import javax.net.ssl.TrustManagerFactory
-import javax.net.ssl.X509TrustManager
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.internal.platform.Platform
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
-import okhttp3.tls.OkHttpTrustManager
 import okhttp3.tls.internal.TlsUtil
+import java.io.IOException
+import java.net.HttpURLConnection.HTTP_MOVED_TEMP
 
 class DevServer {
   val handshakeCertificates = TlsUtil.localhost()
@@ -39,25 +34,9 @@ class DevServer {
         .setHeader("Location", "https://www.google.com/robots.txt"))
   }
 
-  val platformTrustManager = platformTrustManager()
-  val trustManager = OkHttpTrustManager.Builder(platformTrustManager)
-      .insecure("mydevserver")
-      .hostOverride("localhost", handshakeCertificates.trustManager)
-      .build()
-  val sslSocketFactory = Platform.get().newSSLContext().apply {
-    init(null, arrayOf(trustManager), null)
-  }.socketFactory
-
   val client = OkHttpClient.Builder()
-      .sslSocketFactory(sslSocketFactory, trustManager)
+      .insecureTrustManager("localhost")
       .build()
-
-  fun platformTrustManager(): X509TrustManager {
-    val factory = TrustManagerFactory.getInstance(
-        TrustManagerFactory.getDefaultAlgorithm())
-    factory.init(null as KeyStore?)
-    return factory.trustManagers!![0] as X509TrustManager
-  }
 
   fun run() {
     try {
