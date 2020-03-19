@@ -259,7 +259,8 @@ class RealWebSocket(
           isClient = streams.client,
           sink = streams.sink,
           random = random,
-          messageDeflater = extensions.newMessageDeflater(streams.client),
+          perMessageDeflate = extensions.perMessageDeflate,
+          noContextTakeover = extensions.noContextTakeover(streams.client),
           minimumDeflateSize = minimumDeflateSize
       )
       this.writerTask = WriterTask()
@@ -279,7 +280,8 @@ class RealWebSocket(
         isClient = streams.client,
         source = streams.source,
         frameCallback = this,
-        messageInflater = extensions.newMessageInflater(streams.client)
+        perMessageDeflate = extensions.perMessageDeflate,
+        noContextTakeover = extensions.noContextTakeover(!streams.client)
     )
   }
 

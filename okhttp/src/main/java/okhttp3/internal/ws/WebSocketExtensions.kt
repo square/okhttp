@@ -79,28 +79,12 @@ data class WebSocketExtensions(
   @JvmField val unknownValues: Boolean = false
 ) {
 
-  /** Returns a message deflater as specified by this, or null if compression is not enabled. */
-  fun newMessageDeflater(client: Boolean): MessageDeflater? {
-    if (!perMessageDeflate) return null
-
-    val noContextTakeover = when {
-      client -> clientNoContextTakeover // Compressing client.
-      else -> serverNoContextTakeover // Compressing server.
+  fun noContextTakeover(clientOriginated: Boolean): Boolean {
+    if (clientOriginated) {
+      return clientNoContextTakeover // Client is deflating.
+    } else {
+      return serverNoContextTakeover // Server is deflating.
     }
-
-    return MessageDeflater(noContextTakeover)
-  }
-
-  /** Returns a message inflater as specified by this, or null if compression is not enabled. */
-  fun newMessageInflater(client: Boolean): MessageInflater? {
-    if (!perMessageDeflate) return null
-
-    val noContextTakeover = when {
-      client -> serverNoContextTakeover // Decompressing client.
-      else -> clientNoContextTakeover // Decompressing server.
-    }
-
-    return MessageInflater(noContextTakeover)
   }
 
   companion object {

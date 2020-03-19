@@ -35,13 +35,13 @@ public final class WebSocketReaderTest {
 
   // Mutually exclusive. Use the one corresponding to the peer whose behavior you wish to test.
   final WebSocketReader serverReader =
-      new WebSocketReader(false, data, callback.asFrameCallback(), null);
+      new WebSocketReader(false, data, callback.asFrameCallback(), false, false);
   final WebSocketReader serverReaderWithCompression =
-      new WebSocketReader(false, data, callback.asFrameCallback(), new MessageInflater(false));
+      new WebSocketReader(false, data, callback.asFrameCallback(), true, false);
   final WebSocketReader clientReader =
-      new WebSocketReader(true, data, callback.asFrameCallback(), null);
+      new WebSocketReader(true, data, callback.asFrameCallback(), false, false);
   final WebSocketReader clientReaderWithCompression =
-      new WebSocketReader(true, data, callback.asFrameCallback(), new MessageInflater(false));
+      new WebSocketReader(true, data, callback.asFrameCallback(), true, false);
 
   @After public void tearDown() {
     callback.assertExhausted();
@@ -423,6 +423,10 @@ public final class WebSocketReaderTest {
   }
 
   @Test public void clientWithCompressionCannotBeUsedAfterClose() throws IOException {
+    data.write(ByteString.decodeHex("c107f248cdc9c90700")); // Hello
+    clientReaderWithCompression.processNextFrame();
+    callback.assertTextMessage("Hello");
+
     data.write(ByteString.decodeHex("c107f248cdc9c90700")); // Hello
     clientReaderWithCompression.close();
     try {
