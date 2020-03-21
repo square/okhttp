@@ -16,14 +16,13 @@
 package okhttp.android.test.compare;
 
 import android.support.test.runner.AndroidJUnit4
-import okhttp3.mockwebserver.MockResponse
-import okhttp3.mockwebserver.MockWebServer
+import okhttp3.Protocol
 import org.apache.hc.client5.http.classic.methods.HttpGet
 import org.apache.hc.client5.http.impl.classic.HttpClients
-import org.apache.hc.core5.http.io.entity.EntityUtils
+import org.apache.hc.core5.http.HttpVersion
+import org.apache.hc.core5.http.ProtocolVersion
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.After
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -34,30 +33,18 @@ import org.junit.runner.RunWith
  */
 @RunWith(AndroidJUnit4::class)
 class ApacheHttpClientTest {
-  @JvmField @Rule val server = MockWebServer()
-
-  private val httpClient = HttpClients.createDefault()
+  private var httpClient = HttpClients.createDefault()
 
   @After fun tearDown() {
     httpClient.close()
   }
 
   @Test fun get() {
-    server.enqueue(MockResponse()
-        .setBody("hello, Apache HttpClient 5.x"))
-
-    val request = HttpGet(server.url("/").toUri())
-    request.addHeader("Accept", "text/plain")
+    val request = HttpGet("https://google.com/robots.txt")
 
     httpClient.execute(request).use { response ->
       assertThat(response.code).isEqualTo(200)
-      assertThat(EntityUtils.toString(response.entity)).isEqualTo("hello, Apache HttpClient 5.x")
+      assertThat(response.version).isEqualTo(HttpVersion.HTTP_2)
     }
-
-    val recorded = server.takeRequest()
-    assertThat(recorded.getHeader("Accept")).isEqualTo("text/plain")
-    assertThat(recorded.getHeader("Accept-Encoding")).isEqualTo("gzip, x-gzip, deflate")
-    assertThat(recorded.getHeader("Connection")).isEqualTo("keep-alive")
-    assertThat(recorded.getHeader("User-Agent")).startsWith("Apache-HttpClient/5.0")
   }
 }

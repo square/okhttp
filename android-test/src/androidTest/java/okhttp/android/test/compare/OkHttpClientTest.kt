@@ -17,9 +17,11 @@ package okhttp.android.test.compare;
 
 import android.support.test.runner.AndroidJUnit4
 import okhttp3.OkHttpClient
+import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import okhttp3.tls.internal.TlsUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Rule
 import org.junit.Test
@@ -32,26 +34,15 @@ import org.junit.runner.RunWith
  */
 @RunWith(AndroidJUnit4::class)
 class OkHttpClientTest {
-  @JvmField @Rule val server = MockWebServer()
-
-  private val client = OkHttpClient()
+  private var client = OkHttpClient()
 
   @Test fun get() {
-    server.enqueue(MockResponse()
-        .setBody("hello, OkHttp"))
-
     val request = Request.Builder()
-        .url(server.url("/"))
-        .header("Accept", "text/plain")
+        .url("https://google.com/robots.txt")
         .build()
-    val response = client.newCall(request).execute()
-    assertThat(response.code).isEqualTo(200)
-    assertThat(response.body!!.string()).isEqualTo("hello, OkHttp")
-
-    val recorded = server.takeRequest()
-    assertThat(recorded.getHeader("Accept")).isEqualTo("text/plain")
-    assertThat(recorded.getHeader("Accept-Encoding")).isEqualTo("gzip")
-    assertThat(recorded.getHeader("Connection")).isEqualTo("Keep-Alive")
-    assertThat(recorded.getHeader("User-Agent")).matches("okhttp/.*")
+    client.newCall(request).execute().use { response ->
+      assertThat(response.code).isEqualTo(200)
+      assertThat(response.protocol).isEqualTo(Protocol.HTTP_2)
+    }
   }
 }

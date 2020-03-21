@@ -16,6 +16,10 @@ android {
     targetCompatibility JavaVersion.VERSION_1_8
   }
 
+  packagingOptions {
+    exclude("META-INF/DEPENDENCIES")
+  }
+
   compileSdkVersion 29
 
   defaultConfig {
