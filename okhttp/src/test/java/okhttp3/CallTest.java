@@ -61,6 +61,7 @@ import okhttp3.CallEvent.ConnectionReleased;
 import okhttp3.CallEvent.ResponseFailed;
 import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.RecordingOkAuthenticator;
+import okhttp3.internal.Util;
 import okhttp3.internal.Version;
 import okhttp3.internal.http.RecordingProxySelector;
 import okhttp3.internal.io.InMemoryFileSystem;
@@ -3790,6 +3791,20 @@ public final class CallTest {
       assertThat(source.exhausted()).isTrue();
       assertThat(response.trailers()).isEqualTo(Headers.of("trailers", "boom"));
     }
+  }
+
+  @Test public void connectionIsImmediatelyUnhealthy() throws Exception {
+    EventListener listener = new EventListener() {
+      @Override public void connectionAcquired(Call call, Connection connection) {
+        Util.closeQuietly(connection.socket());
+      }
+    };
+
+    client = client.newBuilder()
+        .eventListener(listener)
+        .build();
+
+    executeSynchronously("/").assertFailure(IOException.class);
   }
 
   @Test public void requestBodyThrowsUnrelatedToNetwork() throws Exception {
