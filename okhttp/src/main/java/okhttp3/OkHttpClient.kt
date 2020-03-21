@@ -776,7 +776,7 @@ open class OkHttpClient internal constructor(
      *
      * ## TrustManagers on Android are Weird!
      *
-     * Trust managers targeting Android must also define a method that has this signature:
+     * Trust managers targeting Android can also define a method that has this signature:
      *
      * ```
      *    @SuppressWarnings("unused")
@@ -784,6 +784,8 @@ open class OkHttpClient internal constructor(
      *        X509Certificate[] chain, String authType, String host) throws CertificateException {
      *    }
      * ```
+     *
+     * n.b. OkHttp will generate a wrapper with this method for you, if you don't.
      *
      * This method works like [X509TrustManager.checkServerTrusted] but it receives the hostname of
      * the server as an extra parameter. Regardless of what checks this method performs, OkHttp will

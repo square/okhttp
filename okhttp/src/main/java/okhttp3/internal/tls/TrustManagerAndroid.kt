@@ -39,11 +39,13 @@ internal class TrustManagerWrapperAndroid(val trustManager: X509TrustManager) : 
 
   override fun getAcceptedIssuers(): Array<X509Certificate> = trustManager.acceptedIssuers
 
+  // Allows to keep using the X509TrustManagerExtensions to clean certificates
   fun checkServerTrusted(
     chain: Array<out X509Certificate>,
     authType: String,
     host: String
   ): List<Certificate> {
+    // TODO review security implications here of orEmpty
     return delegateMethod?.let {
       invokeDelegateMethod(it, chain, authType, host)
     }.orEmpty()

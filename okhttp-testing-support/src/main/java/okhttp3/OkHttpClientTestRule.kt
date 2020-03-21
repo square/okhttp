@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import okhttp3.internal.concurrent.TaskRunner
 import java.net.InetAddress
 import java.util.logging.Logger
 import okhttp3.testing.Flaky
@@ -22,6 +23,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
+import java.util.concurrent.TimeUnit
 
 /**
  * Apply this rule to all tests. It adds additional checks for leaked resources and uncaught
@@ -91,11 +93,11 @@ class OkHttpClientTestRule : TestRule {
   }
 
   private fun ensureAllTaskQueuesIdle() {
-//    for (queue in TaskRunner.INSTANCE.activeQueues()) {
-//      assertThat(queue.idleLatch().await(1_000L, TimeUnit.MILLISECONDS))
-//          .withFailMessage("Queue still active after 1000 ms")
-//          .isTrue()
-//    }
+    for (queue in TaskRunner.INSTANCE.activeQueues()) {
+      assertThat(queue.idleLatch().await(1_000L, TimeUnit.MILLISECONDS))
+          .withFailMessage("Queue still active after 1000 ms")
+          .isTrue()
+    }
   }
 
   override fun apply(base: Statement, description: Description): Statement {
