@@ -162,7 +162,7 @@ open class Platform {
   open fun configureSslSocketFactory(socketFactory: SSLSocketFactory) {
   }
 
-  open fun configureTrustManager(trustManager: X509TrustManager?) {
+  open fun configureTrustManager(trustManager: X509TrustManager) {
   }
 
   override fun toString(): String = javaClass.simpleName

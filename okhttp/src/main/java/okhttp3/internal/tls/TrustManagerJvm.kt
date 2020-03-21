@@ -23,11 +23,6 @@ import javax.net.ssl.X509ExtendedTrustManager
 import javax.net.ssl.X509TrustManager
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 
-internal open class TrustManagerOverride(
-  val predicate: (String) -> Boolean,
-  val trustManager: X509TrustManager
-)
-
 @IgnoreJRERequirement
 @SuppressLint("NewApi")
 class OkHttpTrustManagerJvm internal constructor(
@@ -37,13 +32,10 @@ class OkHttpTrustManagerJvm internal constructor(
 
   internal fun findByHost(peerHost: String): X509TrustManager {
     overrides.forEach {
-      println("Checking $peerHost against ${it.trustManager.javaClass.simpleName} ${it.trustManager.acceptedIssuers.size}")
       if (it.predicate(peerHost)) {
         return it.trustManager
       }
     }
-
-    println("Using default ${default.javaClass.simpleName} ${default.acceptedIssuers.size}")
 
     return default
   }
@@ -89,9 +81,6 @@ class OkHttpTrustManagerJvm internal constructor(
   ) {
     val peerHost = socket.inetAddress.hostName
     val trustManager = findByHost(peerHost)
-
-    println("Running security checks for $peerHost using ${trustManager.javaClass.simpleName}")
-    println(chain.map { it.subjectDN.name }.take(1))
 
     if (trustManager is X509ExtendedTrustManager) {
       trustManager.checkServerTrusted(chain, authType, socket)

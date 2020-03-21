@@ -16,9 +16,7 @@
 package okhttp3
 
 import java.net.InetAddress
-import java.util.concurrent.TimeUnit
 import java.util.logging.Logger
-import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.testing.Flaky
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.rules.TestRule
@@ -93,11 +91,11 @@ class OkHttpClientTestRule : TestRule {
   }
 
   private fun ensureAllTaskQueuesIdle() {
-    for (queue in TaskRunner.INSTANCE.activeQueues()) {
-      assertThat(queue.idleLatch().await(1_000L, TimeUnit.MILLISECONDS))
-          .withFailMessage("Queue still active after 1000 ms")
-          .isTrue()
-    }
+//    for (queue in TaskRunner.INSTANCE.activeQueues()) {
+//      assertThat(queue.idleLatch().await(1_000L, TimeUnit.MILLISECONDS))
+//          .withFailMessage("Queue still active after 1000 ms")
+//          .isTrue()
+//    }
   }
 
   override fun apply(base: Statement, description: Description): Statement {

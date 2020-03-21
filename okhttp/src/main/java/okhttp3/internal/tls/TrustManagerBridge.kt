@@ -30,13 +30,15 @@ object TrustManagerBridge {
     }
 
     fun hostOverride(hostName: String, trustManager: X509TrustManager) = apply {
-      this.overrides.add(
-          TrustManagerOverride({ it == hostName }, trustManager))
+      this.overrides.add(TrustManagerOverride({ it == hostName }, trustManager))
     }
 
     fun insecure(hostName: String) = apply {
-      this.overrides.add(TrustManagerOverride({ it == hostName },
-          InsecureTrustManager))
+      this.overrides.add(TrustManagerOverride({ it == hostName }, InsecureTrustManager))
+    }
+
+    fun addOverrides(overrides: List<TrustManagerOverride>) = apply {
+      this.overrides.addAll(overrides)
     }
 
     @IgnoreJRERequirement

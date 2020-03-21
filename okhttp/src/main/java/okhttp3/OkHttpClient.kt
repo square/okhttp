@@ -41,8 +41,10 @@ import okhttp3.internal.immutableListOf
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.proxy.NullProxySelector
 import okhttp3.internal.tls.CertificateChainCleaner
+import okhttp3.internal.tls.InsecureTrustManager
 import okhttp3.internal.tls.OkHostnameVerifier
 import okhttp3.internal.tls.TrustManagerBridge
+import okhttp3.internal.tls.TrustManagerOverride
 import okhttp3.internal.toImmutableList
 import okhttp3.internal.ws.RealWebSocket
 import okio.Sink
@@ -218,15 +220,26 @@ open class OkHttpClient internal constructor(
   constructor() : this(Builder())
 
   init {
+    x509TrustManager = if (builder.trustManagerOverrides != null) {
+      TrustManagerBridge.Builder()
+          .addOverrides(builder.trustManagerOverrides!!)
+          .apply {
+            if (builder.x509TrustManagerOrNull != null) {
+              this.default(builder.x509TrustManagerOrNull!!)
+            }
+          }
+          .build()
+    } else {
+      builder.x509TrustManagerOrNull
+    }
+
     if (builder.sslSocketFactoryOrNull != null || connectionSpecs.none { it.isTls }) {
       this.sslSocketFactoryOrNull = builder.sslSocketFactoryOrNull
       this.certificateChainCleaner = builder.certificateChainCleaner
-      this.x509TrustManager = builder.x509TrustManagerOrNull
     } else {
-      this.x509TrustManager = Platform.get().platformTrustManager()
-      Platform.get().configureTrustManager(x509TrustManager)
-      this.sslSocketFactoryOrNull = newSslSocketFactory(x509TrustManager!!)
-      this.certificateChainCleaner = CertificateChainCleaner.get(x509TrustManager!!)
+      val trustManager = x509TrustManager ?: Platform.get().platformTrustManager()
+      this.sslSocketFactoryOrNull = newSslSocketFactory(trustManager)
+      this.certificateChainCleaner = CertificateChainCleaner.get(trustManager)
     }
 
     if (sslSocketFactoryOrNull != null) {
@@ -478,6 +491,7 @@ open class OkHttpClient internal constructor(
     internal var writeTimeout = 10_000
     internal var pingInterval = 0
     internal var routeDatabase: RouteDatabase? = null
+    internal var trustManagerOverrides: MutableList<TrustManagerOverride>? = null
 
     internal constructor(okHttpClient: OkHttpClient) : this() {
       this.dispatcher = okHttpClient.dispatcher
@@ -1028,17 +1042,22 @@ open class OkHttpClient internal constructor(
       pingInterval(duration.toMillis(), MILLISECONDS)
     }
 
-    fun insecureTrustManager(hostName: String): Builder {
-      // TODO could build this up and defer to later, to avoid overwriting other changes
-      val trustManager = TrustManagerBridge.Builder()
-          .insecure(hostName)
-          .build()
+    /**
+     * Set an override for host to allow insecure connections, typically a devserver with
+     * a self-signed certificate unavailable to the dev build of the client.
+     *
+     * n.b. not for production use.
+     *
+     * @param the exact hostname from the URL for insecure connections.
+     */
+    fun insecureTrustManager(hostName: String): Builder = apply {
+      val override = TrustManagerOverride({ hostName == it }, InsecureTrustManager)
 
-      val sslSocketFactory = Platform.get().newSSLContext().apply {
-        init(null, arrayOf(trustManager), null)
-      }.socketFactory
+      val overrides = trustManagerOverrides ?: mutableListOf<TrustManagerOverride>().also {
+        this.trustManagerOverrides = it
+      }
 
-      return sslSocketFactory(sslSocketFactory, trustManager)
+      overrides.add(override)
     }
 
     fun build(): OkHttpClient = OkHttpClient(this)

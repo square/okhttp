@@ -15,13 +15,9 @@
  */
 package okhttp3.internal.tls
 
-import java.security.cert.X509Certificate
 import javax.net.ssl.X509TrustManager
 
-internal object InsecureTrustManager : X509TrustManager {
-  override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {}
-
-  override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {}
-
-  override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
-}
+open class TrustManagerOverride(
+  val predicate: (String) -> Boolean,
+  val trustManager: X509TrustManager
+)

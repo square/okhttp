@@ -44,9 +44,6 @@ internal class TrustManagerWrapperAndroid(val trustManager: X509TrustManager) : 
     authType: String,
     host: String
   ): List<Certificate> {
-    println("Running security checks for $host")
-    println(chain.map { it.subjectDN.name }.take(1))
-
     return delegateMethod?.let {
       invokeDelegateMethod(it, chain, authType, host)
     }.orEmpty()
@@ -83,8 +80,7 @@ internal class OkHttpTrustManagerAndroid(
   internal val default =
       TrustManagerWrapperAndroid(defaultTrustManager)
   internal val overrides = overridesList.map {
-    TrustManagerOverrideAndroid(it.predicate,
-        TrustManagerWrapperAndroid(defaultTrustManager))
+    TrustManagerOverrideAndroid(it.predicate, TrustManagerWrapperAndroid(it.trustManager))
   }
 
   internal fun findByHost(peerHost: String): TrustManagerWrapperAndroid {
@@ -102,12 +98,9 @@ internal class OkHttpTrustManagerAndroid(
     authType: String,
     host: String
   ): List<Certificate> {
-    val tm = findByHost(host)
+    val trustManager = findByHost(host)
 
-    println("Running security checks for $host")
-    println(chain.map { it.subjectDN.name }.take(1))
-
-    return tm.checkServerTrusted(chain, authType, host)
+    return trustManager.checkServerTrusted(chain, authType, host)
   }
 
   override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String) {

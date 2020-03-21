@@ -66,6 +66,7 @@ import okhttp3.internal.platform.AndroidPlatform
 import okhttp3.internal.platform.Android10Platform
 import java.io.IOException
 import java.lang.IllegalArgumentException
+import java.net.HttpURLConnection
 
 /**
  * Run with "./gradlew :android-test:connectedCheck" and make sure ANDROID_SDK_ROOT is set.
@@ -315,6 +316,29 @@ class OkHttpTest {
       val tlsVersion = response.handshake?.tlsVersion
       assertTrue(tlsVersion == TlsVersion.TLS_1_2 || tlsVersion == TlsVersion.TLS_1_3)
       assertEquals("CN=localhost",
+          (response.handshake!!.peerCertificates.first() as X509Certificate).subjectDN.name)
+    }
+  }
+
+  @Test
+  fun testDevserverSupport() {
+    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+    client = client.newBuilder().insecureTrustManager(server.hostName).build()
+
+    server.enqueue(MockResponse()
+        .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
+        .setHeader("Location", "https://www.google.com/robots.txt"))
+
+    val request = Request.Builder().url(server.url("/")).build()
+
+    val response = client.newCall(request).execute()
+
+    response.use {
+      assertEquals(200, response.code)
+      assertEquals(Protocol.HTTP_2, response.protocol)
+      val tlsVersion = response.handshake?.tlsVersion
+      assertTrue(tlsVersion == TlsVersion.TLS_1_2 || tlsVersion == TlsVersion.TLS_1_3)
+      assertEquals("CN=www.google.com,O=Google LLC,L=Mountain View,ST=California,C=US",
           (response.handshake!!.peerCertificates.first() as X509Certificate).subjectDN.name)
     }
   }

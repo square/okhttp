@@ -41,7 +41,9 @@ class ConscryptPlatform private constructor() : Platform() {
       SSLContext.getInstance("TLS", provider)
 
   override fun platformTrustManager(): X509TrustManager {
-    return Conscrypt.getDefaultX509TrustManager()
+    return Conscrypt.getDefaultX509TrustManager().also {
+      configureTrustManager(it)
+    }
   }
 
   public override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? =
@@ -92,7 +94,7 @@ class ConscryptPlatform private constructor() : Platform() {
     }
   }
 
-  override fun configureTrustManager(trustManager: X509TrustManager?) {
+  override fun configureTrustManager(trustManager: X509TrustManager) {
     if (Conscrypt.isConscrypt(trustManager)) {
       // OkHttp will verify
       Conscrypt.setHostnameVerifier(trustManager) { _, _ -> true }

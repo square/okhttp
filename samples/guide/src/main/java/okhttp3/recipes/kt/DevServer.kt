@@ -15,13 +15,13 @@
  */
 package okhttp3.recipes.kt
 
+import java.io.IOException
+import java.net.HttpURLConnection.HTTP_MOVED_TEMP
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.tls.internal.TlsUtil
-import java.io.IOException
-import java.net.HttpURLConnection.HTTP_MOVED_TEMP
 
 class DevServer {
   val handshakeCertificates = TlsUtil.localhost()
