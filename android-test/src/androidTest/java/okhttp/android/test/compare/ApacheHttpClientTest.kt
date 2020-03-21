@@ -44,7 +44,7 @@ class ApacheHttpClientTest {
 
     httpClient.execute(request).use { response ->
       assertThat(response.code).isEqualTo(200)
-      assertThat(response.version).isEqualTo(HttpVersion.HTTP_2)
+      assertThat(response.version).isEqualTo(HttpVersion.HTTP_1_1)
     }
   }
 }
