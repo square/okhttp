@@ -59,7 +59,7 @@ object OkHostnameVerifier : HostnameVerifier {
     }
 
     return getSubjectAltNames(certificate, ALT_IPA_NAME).any {
-      ipAddress.equals(it.toCanonicalHost(), ignoreCase = true)
+      ipAddress == it.toCanonicalHost()
     }
   }
 
