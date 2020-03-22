@@ -17,6 +17,7 @@ android {
   }
 
   packagingOptions {
+    // issue merging due to conflict with httpclient and something else
     exclude("META-INF/DEPENDENCIES")
   }
 
