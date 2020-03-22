@@ -44,6 +44,7 @@ class ApacheHttpClientTest {
 
     httpClient.execute(request).use { response ->
       assertThat(response.code).isEqualTo(200)
+      // TODO reenable ALPN later
       assertThat(response.version).isEqualTo(HttpVersion.HTTP_1_1)
     }
   }
