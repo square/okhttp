@@ -545,17 +545,12 @@ public final class HostnameVerifierTest {
     assertThat(verifier.verify("::1", session)).isTrue();
     assertThat(verifier.verify("::2", session)).isFalse();
     assertThat(verifier.verify("::5", session)).isTrue();
+    assertThat(verifier.verify("2a03:2880:f003:c07:face:b00c::2", session)).isTrue();
     assertThat(verifier.verify("2a03:2880:f003:c07:face:b00c:0:2", session)).isTrue();
+    assertThat(verifier.verify("2a03:2880:f003:c07:FACE:B00C:0:2", session)).isTrue();
     assertThat(verifier.verify("2a03:2880:f003:c07:face:b00c:0:3", session)).isFalse();
     assertThat(verifier.verify("127.0.0.1", session)).isFalse();
     assertThat(verifier.verify("192.168.1.1", session)).isTrue();
-
-    try {
-      verifier.verify("2a03:2880:f003:c07:face:b00c::2", session);
-      fail();
-    } catch (IllegalStateException ise) {
-      // expected
-    }
   }
 
   @Test public void verifyAsIpAddress() {

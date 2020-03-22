@@ -53,13 +53,10 @@ object OkHostnameVerifier : HostnameVerifier {
 
   /** Returns true if [certificate] matches [ipAddress]. */
   private fun verifyIpAddress(ipAddress: String, certificate: X509Certificate): Boolean {
-    if (assertionsEnabled) {
-      // HttpUrl has already canonicalized the ipAddress
-      check(ipAddress == ipAddress.toCanonicalHost()) { "Non canonical host passed in '$ipAddress'" }
-    }
+    val canonicalIpAddress = ipAddress.toCanonicalHost()
 
     return getSubjectAltNames(certificate, ALT_IPA_NAME).any {
-      ipAddress == it.toCanonicalHost()
+      canonicalIpAddress == it.toCanonicalHost()
     }
   }
 
