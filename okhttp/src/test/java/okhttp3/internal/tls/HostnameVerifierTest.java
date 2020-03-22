@@ -516,6 +516,34 @@ public final class HostnameVerifierTest {
     assertThat(verifier.verify("quux.com", session)).isFalse();
   }
 
+  @Test public void subjectAltNameWithIPv6Address() throws Exception {
+    // $ cat ./cert.cnf
+    // [req]
+    // distinguished_name=distinguished_name
+    // req_extensions=req_extensions
+    // x509_extensions=x509_extensions
+    // [distinguished_name]
+    // [req_extensions]
+    // [x509_extensions]
+    // subjectAltName=IP:0:0:0:0:0:0:0:1
+    //
+    // $ openssl req -x509 -nodes -days 36500 -subj '/CN=foo.com' -config ./cert.cnf \
+    //     -newkey rsa:512 -out cert.pem
+    SSLSession session = session(""
+        + "-----BEGIN CERTIFICATE-----\n"
+        + "MIIBPTCB6KADAgECAgkAtb7i/qF94lcwDQYJKoZIhvcNAQELBQAwEjEQMA4GA1UE\n"
+        + "AwwHZm9vLmNvbTAgFw0yMDAzMjIxMDQ1MDFaGA8yMTIwMDIyNzEwNDUwMVowEjEQ\n"
+        + "MA4GA1UEAwwHZm9vLmNvbTBcMA0GCSqGSIb3DQEBAQUAA0sAMEgCQQDsKO3C4UiW\n"
+        + "/cihdtKEgYw5wZVHKddWoShi4eMpDvESqTf+ikGC1y/7VihMILlsaomgiUdWQ4zp\n"
+        + "q40LCcVN4KzZAgMBAAGjHzAdMBsGA1UdEQQUMBKHEAAAAAAAAAAAAAAAAAAAAAEw\n"
+        + "DQYJKoZIhvcNAQELBQADQQBkjb4M3cNsExUAH+zbWKvYvPcaFtnmnxT26ZKwlLd7\n"
+        + "YfBU6GYPfDiLGuDCOD9N+tS0tqgbMqNXsMWb05bDNcLB\n"
+        + "-----END CERTIFICATE-----");
+    assertThat(verifier.verify("foo.com", session)).isFalse();
+    assertThat(verifier.verify("::1", session)).isTrue();
+    assertThat(verifier.verify("::2", session)).isFalse();
+  }
+
   @Test public void verifyAsIpAddress() {
     // IPv4
     assertThat(Util.canParseAsIpAddress("127.0.0.1")).isTrue();

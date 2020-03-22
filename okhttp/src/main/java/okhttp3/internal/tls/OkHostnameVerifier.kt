@@ -16,6 +16,7 @@
  */
 package okhttp3.internal.tls
 
+import okhttp3.internal.assertionsEnabled
 import java.security.cert.CertificateParsingException
 import java.security.cert.X509Certificate
 import java.util.Locale
@@ -23,6 +24,7 @@ import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLException
 import javax.net.ssl.SSLSession
 import okhttp3.internal.canParseAsIpAddress
+import okhttp3.internal.toCanonicalHost
 
 /**
  * A HostnameVerifier consistent with [RFC 2818][rfc_2818].
@@ -51,8 +53,13 @@ object OkHostnameVerifier : HostnameVerifier {
 
   /** Returns true if [certificate] matches [ipAddress]. */
   private fun verifyIpAddress(ipAddress: String, certificate: X509Certificate): Boolean {
+    if (assertionsEnabled) {
+      // HttpUrl has already canonicalized the ipAddress
+      check(ipAddress == ipAddress.toCanonicalHost()) { "Non canonical host passed in '$ipAddress'" }
+    }
+
     return getSubjectAltNames(certificate, ALT_IPA_NAME).any {
-      ipAddress.equals(it, ignoreCase = true)
+      ipAddress.equals(it.toCanonicalHost(), ignoreCase = true)
     }
   }
 
