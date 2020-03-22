@@ -16,7 +16,6 @@
  */
 package okhttp3.internal.tls
 
-import okhttp3.internal.assertionsEnabled
 import java.security.cert.CertificateParsingException
 import java.security.cert.X509Certificate
 import java.util.Locale

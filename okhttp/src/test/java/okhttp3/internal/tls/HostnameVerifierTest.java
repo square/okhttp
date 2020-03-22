@@ -30,7 +30,6 @@ import org.junit.Test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
 
 /**
  * Tests for our hostname verifier. Most of these tests are from AOSP, which itself includes tests
