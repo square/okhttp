@@ -38,7 +38,7 @@ dependencies {
   implementation "org.jetbrains.kotlin:kotlin-reflect:${versions.kotlin}"
   implementation 'com.google.android.gms:play-services-safetynet:17.0.0'
   implementation project(':okhttp')
-  testImplementation 'junit:junit:4.12'
+  testImplementation 'junit:junit:4.13'
   androidTestImplementation(project(':okhttp-testing-support')) {
     exclude group: 'org.openjsse', module: 'openjsse'
     exclude group: 'org.conscrypt', module: 'conscrypt-openjdk-uber'
@@ -51,7 +51,7 @@ dependencies {
   androidTestImplementation project(':okhttp-logging-interceptor')
   androidTestImplementation 'com.android.support.test:runner:1.0.2'
   androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
-  androidTestImplementation 'com.squareup.moshi:moshi:1.8.0'
-  androidTestImplementation 'com.squareup.moshi:moshi-kotlin:1.8.0'
   androidTestImplementation 'org.apache.httpcomponents.client5:httpclient5:5.0'
+  androidTestImplementation 'com.squareup.moshi:moshi:1.9.2'
+  androidTestImplementation 'com.squareup.moshi:moshi-kotlin:1.9.2'
 }
