@@ -74,7 +74,7 @@ public final class OkHttpClientTest {
 
   @Test public void webSocketDefaults() {
     OkHttpClient client = clientTestRule.newClient();
-    assertThat(client.webSocketMinimumDeflateSizeBytes()).isEqualTo(1024);
+    assertThat(client.minWebSocketMessageToCompress()).isEqualTo(1024);
   }
 
   @Test public void timeoutValidRange() {
@@ -383,14 +383,14 @@ public final class OkHttpClientTest {
         .getRouteDatabase());
   }
 
-  @Test public void webSocketMinimumDeflateSizeNegative() {
+  @Test public void minWebSocketMessageToCompressNegative() {
     OkHttpClient.Builder builder = new OkHttpClient.Builder();
     try {
-      builder.webSocketMinimumDeflateSize(-1024);
+      builder.minWebSocketMessageToCompress(-1024);
       fail();
     } catch (IllegalArgumentException expected) {
       assertThat(expected.getMessage())
-              .isEqualTo("webSocketMinimumDeflateSize must be positive: -1024");
+              .isEqualTo("minWebSocketMessageToCompress must be positive: -1024");
     }
   }
 }

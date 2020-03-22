@@ -216,8 +216,8 @@ open class OkHttpClient internal constructor(
    * Minimum outbound web socket message size (in bytes) that will be compressed.
    * The default is 1024 bytes.
    */
-  @get:JvmName("webSocketMinimumDeflateSizeBytes")
-  val webSocketMinimumDeflateSizeBytes: Long = builder.webSocketMinimumDeflateSize
+  @get:JvmName("minWebSocketMessageToCompress")
+  val minWebSocketMessageToCompress: Long = builder.minWebSocketMessageToCompress
 
   val routeDatabase: RouteDatabase = builder.routeDatabase ?: RouteDatabase()
 
@@ -262,7 +262,7 @@ open class OkHttpClient internal constructor(
         random = Random(),
         pingIntervalMillis = pingIntervalMillis.toLong(),
         extensions = null, // Always null for clients.
-        minimumDeflateSize = webSocketMinimumDeflateSizeBytes
+        minimumDeflateSize = minWebSocketMessageToCompress
     )
     webSocket.connect(this)
     return webSocket
@@ -481,7 +481,7 @@ open class OkHttpClient internal constructor(
     internal var readTimeout = 10_000
     internal var writeTimeout = 10_000
     internal var pingInterval = 0
-    internal var webSocketMinimumDeflateSize = RealWebSocket.DEFAULT_MINIMUM_DEFLATE_SIZE
+    internal var minWebSocketMessageToCompress = RealWebSocket.DEFAULT_MINIMUM_DEFLATE_SIZE
     internal var routeDatabase: RouteDatabase? = null
 
     internal constructor(okHttpClient: OkHttpClient) : this() {
@@ -513,7 +513,7 @@ open class OkHttpClient internal constructor(
       this.readTimeout = okHttpClient.readTimeoutMillis
       this.writeTimeout = okHttpClient.writeTimeoutMillis
       this.pingInterval = okHttpClient.pingIntervalMillis
-      this.webSocketMinimumDeflateSize = okHttpClient.webSocketMinimumDeflateSizeBytes
+      this.minWebSocketMessageToCompress = okHttpClient.minWebSocketMessageToCompress
       this.routeDatabase = okHttpClient.routeDatabase
     }
 
@@ -1041,12 +1041,12 @@ open class OkHttpClient internal constructor(
      *
      * 1024 by default.
      */
-    fun webSocketMinimumDeflateSize(bytes: Long) = apply {
+    fun minWebSocketMessageToCompress(bytes: Long) = apply {
       require(bytes >= 0) {
-        "webSocketMinimumDeflateSize must be positive: $bytes"
+        "minWebSocketMessageToCompress must be positive: $bytes"
       }
 
-      this.webSocketMinimumDeflateSize = bytes
+      this.minWebSocketMessageToCompress = bytes
     }
 
     fun build(): OkHttpClient = OkHttpClient(this)
