@@ -1042,6 +1042,10 @@ open class OkHttpClient internal constructor(
      * 1024 by default.
      */
     fun webSocketMinimumDeflateSize(bytes: Long) = apply {
+      require(bytes >= 0) {
+        "webSocketMinimumDeflateSize must be positive: $bytes"
+      }
+
       this.webSocketMinimumDeflateSize = bytes
     }
 
