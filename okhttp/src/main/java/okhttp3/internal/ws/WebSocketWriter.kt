@@ -45,7 +45,8 @@ class WebSocketWriter(
   private val isClient: Boolean,
   val sink: BufferedSink,
   val random: Random,
-  private val messageDeflater: MessageDeflater?,
+  private val perMessageDeflate: Boolean,
+  private val noContextTakeover: Boolean,
   private val minimumDeflateSize: Long
 ) : Closeable {
   /** This holds outbound data for compression and masking. */
@@ -54,6 +55,9 @@ class WebSocketWriter(
   /** The [Buffer] of [sink]. Write to this and then flush/emit [sink]. */
   private val sinkBuffer: Buffer = sink.buffer
   private var writerClosed = false
+
+  /** Lazily initialized on first use. */
+  private var messageDeflater: MessageDeflater? = null
 
   // Masks are only a concern for client writers.
   private val maskKey: ByteArray? = if (isClient) ByteArray(4) else null
@@ -145,8 +149,9 @@ class WebSocketWriter(
     messageBuffer.write(data)
 
     var b0 = formatOpcode or B0_FLAG_FIN
-    val messageDeflater = this.messageDeflater
-    if (messageDeflater != null && data.size >= minimumDeflateSize) {
+    if (perMessageDeflate && data.size >= minimumDeflateSize) {
+      val messageDeflater = this.messageDeflater
+          ?: MessageDeflater(noContextTakeover).also { this.messageDeflater = it }
       messageDeflater.deflate(messageBuffer)
       b0 = b0 or B0_FLAG_RSV1
     }

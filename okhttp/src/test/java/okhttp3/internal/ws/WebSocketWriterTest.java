@@ -52,8 +52,10 @@ public final class WebSocketWriterTest {
   };
 
   // Mutually exclusive. Use the one corresponding to the peer whose behavior you wish to test.
-  private final WebSocketWriter serverWriter = new WebSocketWriter(false, data, random, null, 0L);
-  private final WebSocketWriter clientWriter = new WebSocketWriter(true, data, random, null, 0L);
+  private final WebSocketWriter serverWriter = new WebSocketWriter(
+      false, data, random, false, false, 0L);
+  private final WebSocketWriter clientWriter = new WebSocketWriter(
+      true, data, random, false, false, 0L);
 
   @Test public void serverTextMessage() throws IOException {
     serverWriter.writeMessageFrame(OPCODE_TEXT, ByteString.encodeUtf8("Hello"));
@@ -62,7 +64,7 @@ public final class WebSocketWriterTest {
 
   @Test public void serverCompressedTextMessage() throws IOException {
     WebSocketWriter serverWriter = new WebSocketWriter(
-        false, data, random, new MessageDeflater(false), 0L);
+        false, data, random, true, false, 0L);
     serverWriter.writeMessageFrame(OPCODE_TEXT, ByteString.encodeUtf8("Hello"));
     assertData("c107f248cdc9c90700");
   }
@@ -94,7 +96,7 @@ public final class WebSocketWriterTest {
 
   @Test public void clientCompressedTextMessage() throws IOException {
     WebSocketWriter clientWriter = new WebSocketWriter(
-        false, data, random, new MessageDeflater(false), 0L);
+        false, data, random, true, false, 0L);
     clientWriter.writeMessageFrame(OPCODE_TEXT, ByteString.encodeUtf8("Hello"));
     assertData("c107f248cdc9c90700");
   }
