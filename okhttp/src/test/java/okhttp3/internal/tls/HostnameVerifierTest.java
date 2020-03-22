@@ -30,6 +30,7 @@ import org.junit.Test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.fail;
 
 /**
  * Tests for our hostname verifier. Most of these tests are from AOSP, which itself includes tests
@@ -516,7 +517,7 @@ public final class HostnameVerifierTest {
     assertThat(verifier.verify("quux.com", session)).isFalse();
   }
 
-  @Test public void subjectAltNameWithIPv6Address() throws Exception {
+  @Test public void subjectAltNameWithIPAddresses() throws Exception {
     // $ cat ./cert.cnf
     // [req]
     // distinguished_name=distinguished_name
@@ -525,23 +526,36 @@ public final class HostnameVerifierTest {
     // [distinguished_name]
     // [req_extensions]
     // [x509_extensions]
-    // subjectAltName=IP:0:0:0:0:0:0:0:1
+    // subjectAltName=IP:0:0:0:0:0:0:0:1,IP:2a03:2880:f003:c07:face:b00c::2,IP:0::5,IP:192.168.1.1
     //
     // $ openssl req -x509 -nodes -days 36500 -subj '/CN=foo.com' -config ./cert.cnf \
     //     -newkey rsa:512 -out cert.pem
     SSLSession session = session(""
         + "-----BEGIN CERTIFICATE-----\n"
-        + "MIIBPTCB6KADAgECAgkAtb7i/qF94lcwDQYJKoZIhvcNAQELBQAwEjEQMA4GA1UE\n"
-        + "AwwHZm9vLmNvbTAgFw0yMDAzMjIxMDQ1MDFaGA8yMTIwMDIyNzEwNDUwMVowEjEQ\n"
-        + "MA4GA1UEAwwHZm9vLmNvbTBcMA0GCSqGSIb3DQEBAQUAA0sAMEgCQQDsKO3C4UiW\n"
-        + "/cihdtKEgYw5wZVHKddWoShi4eMpDvESqTf+ikGC1y/7VihMILlsaomgiUdWQ4zp\n"
-        + "q40LCcVN4KzZAgMBAAGjHzAdMBsGA1UdEQQUMBKHEAAAAAAAAAAAAAAAAAAAAAEw\n"
-        + "DQYJKoZIhvcNAQELBQADQQBkjb4M3cNsExUAH+zbWKvYvPcaFtnmnxT26ZKwlLd7\n"
-        + "YfBU6GYPfDiLGuDCOD9N+tS0tqgbMqNXsMWb05bDNcLB\n"
+        + "MIIBaDCCARKgAwIBAgIJALxN+AOBVGwQMA0GCSqGSIb3DQEBCwUAMBIxEDAOBgNV\n"
+        + "BAMMB2Zvby5jb20wIBcNMjAwMzIyMTEwNDI4WhgPMjEyMDAyMjcxMTA0MjhaMBIx\n"
+        + "EDAOBgNVBAMMB2Zvby5jb20wXDANBgkqhkiG9w0BAQEFAANLADBIAkEAlnVbVfQ9\n"
+        + "4aYjrPCcFuxOpjXuvyOc9Hcha4K7TfXyfsrjhAvCjCBIT/TiLOUVF3sx4yoCAtX8\n"
+        + "wmt404tTbKD6UwIDAQABo0kwRzBFBgNVHREEPjA8hxAAAAAAAAAAAAAAAAAAAAAB\n"
+        + "hxAqAyiA8AMMB/rOsAwAAAAChxAAAAAAAAAAAAAAAAAAAAAFhwTAqAEBMA0GCSqG\n"
+        + "SIb3DQEBCwUAA0EAPSOYHJh7hB4ElBqTCAFW+T5Y7mXsv9nQjBJ7w0YIw83V2PEI\n"
+        + "3KbBIyGTrqHD6lG8QGZy+yNkIcRlodG8OfQRUg==\n"
         + "-----END CERTIFICATE-----");
     assertThat(verifier.verify("foo.com", session)).isFalse();
     assertThat(verifier.verify("::1", session)).isTrue();
     assertThat(verifier.verify("::2", session)).isFalse();
+    assertThat(verifier.verify("::5", session)).isTrue();
+    assertThat(verifier.verify("2a03:2880:f003:c07:face:b00c:0:2", session)).isTrue();
+    assertThat(verifier.verify("2a03:2880:f003:c07:face:b00c:0:3", session)).isFalse();
+    assertThat(verifier.verify("127.0.0.1", session)).isFalse();
+    assertThat(verifier.verify("192.168.1.1", session)).isTrue();
+
+    try {
+      verifier.verify("2a03:2880:f003:c07:face:b00c::2", session);
+      fail();
+    } catch (IllegalStateException ise) {
+      // expected
+    }
   }
 
   @Test public void verifyAsIpAddress() {
