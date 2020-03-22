@@ -1039,7 +1039,7 @@ open class OkHttpClient internal constructor(
      *
      * Set to 0 to enable compression for all outbound messages.
      *
-     * [RealWebSocket.DEFAULT_MINIMUM_DEFLATE_SIZE] by default.
+     * 1024 by default.
      */
     fun webSocketMinimumDeflateSize(bytes: Long) = apply {
       this.webSocketMinimumDeflateSize = bytes
