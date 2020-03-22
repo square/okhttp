@@ -212,6 +212,13 @@ open class OkHttpClient internal constructor(
   /** Web socket and HTTP/2 ping interval (in milliseconds). By default pings are not sent. */
   @get:JvmName("pingIntervalMillis") val pingIntervalMillis: Int = builder.pingInterval
 
+  /**
+   * Minimum outbound web socket message size (in bytes) that will be compressed.
+   * The default is 1024 bytes.
+   */
+  @get:JvmName("webSocketMinimumDeflateSizeBytes")
+  val webSocketMinimumDeflateSizeBytes: Long = builder.webSocketMinimumDeflateSize
+
   val routeDatabase: RouteDatabase = builder.routeDatabase ?: RouteDatabase()
 
   constructor() : this(Builder())
@@ -255,7 +262,7 @@ open class OkHttpClient internal constructor(
         random = Random(),
         pingIntervalMillis = pingIntervalMillis.toLong(),
         extensions = null, // Always null for clients.
-        minimumDeflateSize = RealWebSocket.DEFAULT_MINIMUM_DEFLATE_SIZE
+        minimumDeflateSize = webSocketMinimumDeflateSizeBytes
     )
     webSocket.connect(this)
     return webSocket
@@ -474,6 +481,7 @@ open class OkHttpClient internal constructor(
     internal var readTimeout = 10_000
     internal var writeTimeout = 10_000
     internal var pingInterval = 0
+    internal var webSocketMinimumDeflateSize = RealWebSocket.DEFAULT_MINIMUM_DEFLATE_SIZE
     internal var routeDatabase: RouteDatabase? = null
 
     internal constructor(okHttpClient: OkHttpClient) : this() {
@@ -505,6 +513,7 @@ open class OkHttpClient internal constructor(
       this.readTimeout = okHttpClient.readTimeoutMillis
       this.writeTimeout = okHttpClient.writeTimeoutMillis
       this.pingInterval = okHttpClient.pingIntervalMillis
+      this.webSocketMinimumDeflateSize = okHttpClient.webSocketMinimumDeflateSizeBytes
       this.routeDatabase = okHttpClient.routeDatabase
     }
 
@@ -1023,6 +1032,17 @@ open class OkHttpClient internal constructor(
     @IgnoreJRERequirement
     fun pingInterval(duration: Duration) = apply {
       pingInterval(duration.toMillis(), MILLISECONDS)
+    }
+
+    /**
+     * Sets minimum outbound web socket message size (in bytes) that will be compressed.
+     *
+     * Set to 0 to enable compression for all outbound messages.
+     *
+     * [RealWebSocket.DEFAULT_MINIMUM_DEFLATE_SIZE] by default.
+     */
+    fun webSocketMinimumDeflateSize(bytes: Long) = apply {
+      this.webSocketMinimumDeflateSize = bytes
     }
 
     fun build(): OkHttpClient = OkHttpClient(this)
