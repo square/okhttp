@@ -550,6 +550,8 @@ public final class HostnameVerifierTest {
     assertThat(verifier.verify("2a03:2880:f003:c07:face:b00c:0:3", session)).isFalse();
     assertThat(verifier.verify("127.0.0.1", session)).isFalse();
     assertThat(verifier.verify("192.168.1.1", session)).isTrue();
+    assertThat(verifier.verify("::ffff:192.168.1.1", session)).isTrue();
+    assertThat(verifier.verify("0:0:0:0:0:FFFF:C0A8:0101", session)).isTrue();
   }
 
   @Test public void verifyAsIpAddress() {
