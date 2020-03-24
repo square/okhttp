@@ -872,6 +872,10 @@ remain idle.</p>
 <td>Returns an immutable list of interceptors that observe the full span of each call: from before the connection is established (if any) until after the response source is selected (either the origin server, cache, or both).<code>val interceptors:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="../-interceptor/"><code>Interceptor</code></a><code>&gt;</code></td>
 </tr>
 <tr>
+<td><a href="min-web-socket-message-to-compress/">minWebSocketMessageToCompress</a></td>
+<td>Minimum outbound web socket message size (in bytes) that will be compressed. The default is 1024 bytes.<code>val minWebSocketMessageToCompress:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a></td>
+</tr>
+<tr>
 <td><a href="network-interceptors/">networkInterceptors</a></td>
 <td>Returns an immutable list of interceptors that observe a single network request and response. These interceptors must call <a href="../-interceptor/-chain/proceed/">Interceptor.Chain.proceed</a> exactly once: it is an error for a network interceptor to short-circuit or repeat a network request.<code>val networkInterceptors:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="../-interceptor/"><code>Interceptor</code></a><code>&gt;</code></td>
 </tr>
