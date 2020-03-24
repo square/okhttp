@@ -16,6 +16,11 @@ android {
     targetCompatibility JavaVersion.VERSION_1_8
   }
 
+  packagingOptions {
+    // issue merging due to conflict with httpclient and something else
+    exclude("META-INF/DEPENDENCIES")
+  }
+
   compileSdkVersion 29
 
   defaultConfig {
@@ -47,6 +52,7 @@ dependencies {
   androidTestImplementation project(':okhttp-logging-interceptor')
   androidTestImplementation 'com.android.support.test:runner:1.0.2'
   androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+  androidTestImplementation 'org.apache.httpcomponents.client5:httpclient5:5.0'
   androidTestImplementation 'com.squareup.moshi:moshi:1.9.2'
   androidTestImplementation 'com.squareup.moshi:moshi-kotlin:1.9.2'
 }
