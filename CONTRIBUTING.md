@@ -32,6 +32,20 @@ Contribute code changes through GitHub by forking the repository and sending a p
 squash all pull requests on merge.
 
 
+Gradle Setup
+------------
+
+```
+$ cat local.properties
+sdk.dir=PATH_TO_ANDROID_HOME/sdk
+org.gradle.caching=true
+```
+
+Running Android Tests
+---------------------
+
+$ ANDROID_SDK_ROOT=PATH_TO_ANDROID_HOME/sdk ./gradlew :android-test:connectedCheck
+
 Committer's Guides
 ------------------
 
