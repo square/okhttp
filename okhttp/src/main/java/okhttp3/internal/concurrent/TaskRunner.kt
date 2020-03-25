@@ -242,9 +242,9 @@ class TaskRunner(
     }
   }
 
-  public fun cancelAll() {
+  fun cancelAll() {
     for (i in busyQueues.size - 1 downTo 0) {
-      readyQueues[i].cancelAllAndDecide()
+      busyQueues[i].cancelAllAndDecide()
     }
     for (i in readyQueues.size - 1 downTo 0) {
       val queue = readyQueues[i]
