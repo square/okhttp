@@ -242,6 +242,18 @@
 
 
   <li class="md-nav__item">
+    <a href="https://stackoverflow.com/questions/tagged/okhttp?sort=active" title="Stack Overflow ⏏" class="md-nav__link">
+      Stack Overflow ⏏
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
     <a href="../calls/" title="Calls" class="md-nav__link">
       Calls
     </a>
@@ -266,20 +278,8 @@
 
 
   <li class="md-nav__item">
-    <a href="../recipes/" title="Recipes" class="md-nav__link">
-      Recipes
-    </a>
-  </li>
-
-    
-      
-      
-      
-
-
-  <li class="md-nav__item">
-    <a href="../interceptors/" title="Interceptors" class="md-nav__link">
-      Interceptors
+    <a href="../events/" title="Events" class="md-nav__link">
+      Events
     </a>
   </li>
 
@@ -302,8 +302,8 @@
 
 
   <li class="md-nav__item">
-    <a href="../events/" title="Events" class="md-nav__link">
-      Events
+    <a href="../interceptors/" title="Interceptors" class="md-nav__link">
+      Interceptors
     </a>
   </li>
 
@@ -314,8 +314,20 @@
 
 
   <li class="md-nav__item">
-    <a href="../works_with_okhttp/" title="Works with OkHttp" class="md-nav__link">
-      Works with OkHttp
+    <a href="../recipes/" title="Recipes" class="md-nav__link">
+      Recipes
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../security/" title="Security" class="md-nav__link">
+      Security
     </a>
   </li>
 
@@ -338,8 +350,20 @@
 
 
   <li class="md-nav__item">
-    <a href="https://stackoverflow.com/questions/tagged/okhttp?sort=active" title="Stack Overflow ⏏" class="md-nav__link">
-      Stack Overflow ⏏
+    <a href="../works_with_okhttp/" title="Works with OkHttp" class="md-nav__link">
+      Works with OkHttp
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../upgrading_to_okhttp_4/" title="Upgrading to OkHttp 4" class="md-nav__link">
+      Upgrading to OkHttp 4
     </a>
   </li>
 
@@ -351,13 +375,13 @@
 
   <li class="md-nav__item md-nav__item--nested">
     
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-11" type="checkbox" id="nav-11">
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-13" type="checkbox" id="nav-13">
     
-    <label class="md-nav__link" for="nav-11">
+    <label class="md-nav__link" for="nav-13">
       4.x API
     </label>
     <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
-      <label class="md-nav__title" for="nav-11">
+      <label class="md-nav__title" for="nav-13">
         4.x API
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
@@ -471,14 +495,14 @@
 
   <li class="md-nav__item md-nav__item--nested">
     
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-12" type="checkbox" id="nav-12">
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-14" type="checkbox" id="nav-14">
     
-    <label class="md-nav__link" for="nav-12">
-      3.x API
+    <label class="md-nav__link" for="nav-14">
+      3.12.x API
     </label>
     <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
-      <label class="md-nav__title" for="nav-12">
-        3.x API
+      <label class="md-nav__title" for="nav-14">
+        3.12.x API
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
         
@@ -588,18 +612,6 @@
       
       
 
-
-  <li class="md-nav__item">
-    <a href="../upgrading_to_okhttp_4/" title="Upgrading to OkHttp 4" class="md-nav__link">
-      Upgrading to OkHttp 4
-    </a>
-  </li>
-
-    
-      
-      
-      
-
   
 
 
@@ -631,6 +643,20 @@
         <li class="md-nav__item">
   <a href="#code-contributions" class="md-nav__link">
     Code Contributions
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gradle-setup" class="md-nav__link">
+    Gradle Setup
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-android-tests" class="md-nav__link">
+    Running Android Tests
   </a>
   
 </li>
@@ -693,6 +719,20 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#gradle-setup" class="md-nav__link">
+    Gradle Setup
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-android-tests" class="md-nav__link">
+    Running Android Tests
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#committers-guides" class="md-nav__link">
     Committer's Guides
   </a>
@@ -737,6 +777,14 @@ something that integrates with OkHttp, tell us so that we can link it!</p>
 readable as possible.</p>
 <p>Contribute code changes through GitHub by forking the repository and sending a pull request. We
 squash all pull requests on merge.</p>
+<h2 id="gradle-setup">Gradle Setup<a class="headerlink" href="#gradle-setup" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span>$ cat local.properties
+sdk.dir=PATH_TO_ANDROID_HOME/sdk
+org.gradle.caching=true
+</pre></div>
+
+<h2 id="running-android-tests">Running Android Tests<a class="headerlink" href="#running-android-tests" title="Permanent link">&para;</a></h2>
+<p>$ ANDROID_SDK_ROOT=PATH_TO_ANDROID_HOME/sdk ./gradlew :android-test:connectedCheck</p>
 <h2 id="committers-guides">Committer&rsquo;s Guides<a class="headerlink" href="#committers-guides" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="http://square.github.io/okhttp/concurrency/">Concurrency</a></li>
@@ -764,7 +812,7 @@ squash all pull requests on merge.</p>
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid">
         
-          <a href="../upgrading_to_okhttp_4/" title="Upgrading to OkHttp 4" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../changelog/" title="Change Log" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-flex__cell md-flex__cell--shrink">
               <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
             </div>
@@ -773,7 +821,7 @@ squash all pull requests on merge.</p>
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Upgrading to OkHttp 4
+                Change Log
               </span>
             </div>
           </a>
