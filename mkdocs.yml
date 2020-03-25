@@ -53,7 +53,7 @@ nav:
   - 'Security Providers': security_providers.md
   - 'TLS Configuration History': tls_configuration_history.md
   - 'Works with OkHttp': works_with_okhttp.md
-  - 'Upgrading to OkHttp 4': upgrading_to_okhttp_4.md 
+  - 'Upgrading to OkHttp 4': upgrading_to_okhttp_4.md
   - '4.x API':
     - 'okhttp': 4.x/okhttp/okhttp3/index.md
     - 'brotli': 4.x/okhttp-brotli/okhttp3.brotli/index.md
@@ -63,7 +63,7 @@ nav:
     - 'tls': 4.x/okhttp-tls/okhttp3.tls/index.md
     - 'urlconnection': 4.x/okhttp-urlconnection/okhttp3/index.md
     - 'mockwebserver': 4.x/mockwebserver/okhttp3.mockwebserver/index.md
-  - '3.x API':
+  - '3.12.x API':
     - 'okhttp ⏏': https://square.github.io/okhttp/3.x/okhttp/
     - 'dnsoverhttps ⏏': https://square.github.io/okhttp/3.x/okhttp-dnsoverhttps/
     - 'logging-interceptor ⏏': https://square.github.io/okhttp/3.x/logging-interceptor/
