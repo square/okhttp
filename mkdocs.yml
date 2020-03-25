@@ -49,7 +49,6 @@ nav:
   - 'Recipes': recipes.md
   - 'Security': security.md
   - 'Security Providers': security_providers.md
-  - 'TLS Configuration History': tls_configuration_history.md
   - 'Works with OkHttp': works_with_okhttp.md
   - 'Upgrading to OkHttp 4': upgrading_to_okhttp_4.md
   - '4.x API':
