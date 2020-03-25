@@ -39,15 +39,21 @@ markdown_extensions:
 
 nav:
   - 'Overview': index.md
+  - 'Stack Overflow ⏏': https://stackoverflow.com/questions/tagged/okhttp?sort=active
   - 'Calls': calls.md
   - 'Connections': connections.md
-  - 'Recipes': recipes.md
-  - 'Interceptors': interceptors.md
-  - 'HTTPS': https.md
+  - 'Concurrency': concurrency.md
+  - 'Debug Logging': debug_logging.md
   - 'Events': events.md
-  - 'Works with OkHttp': works_with_okhttp.md
+  - 'HTTPS': https.md
+  - 'Interceptors': interceptors.md
+  - 'R8/Proguard': r8_proguard.md
+  - 'Recipes': recipes.md
+  - 'Security': security.md
   - 'Security Providers': security_providers.md
-  - 'Stack Overflow ⏏': https://stackoverflow.com/questions/tagged/okhttp?sort=active
+  - 'TLS Configuration History': tls_configuration_history.md
+  - 'Works with OkHttp': works_with_okhttp.md
+  - 'Upgrading to OkHttp 4': upgrading_to_okhttp_4.md 
   - '4.x API':
     - 'okhttp': 4.x/okhttp/okhttp3/index.md
     - 'brotli': 4.x/okhttp-brotli/okhttp3.brotli/index.md
@@ -66,7 +72,6 @@ nav:
     - 'urlconnection ⏏': https://square.github.io/okhttp/3.x/okhttp-urlconnection/
     - 'mockwebserver ⏏': https://square.github.io/okhttp/3.x/mockwebserver/
   - 'Change Log': changelog.md
-  - 'Upgrading to OkHttp 4': upgrading_to_okhttp_4.md
   - 'Contributing': contributing.md
   - 'Code of Conduct': code_of_conduct.md
 
