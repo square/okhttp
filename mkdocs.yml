@@ -42,8 +42,6 @@ nav:
   - 'Stack Overflow ⏏': https://stackoverflow.com/questions/tagged/okhttp?sort=active
   - 'Calls': calls.md
   - 'Connections': connections.md
-  - 'Concurrency': concurrency.md
-  - 'Debug Logging': debug_logging.md
   - 'Events': events.md
   - 'HTTPS': https.md
   - 'Interceptors': interceptors.md
