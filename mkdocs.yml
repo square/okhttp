@@ -45,7 +45,6 @@ nav:
   - 'Events': events.md
   - 'HTTPS': https.md
   - 'Interceptors': interceptors.md
-  - 'R8/Proguard': r8_proguard.md
   - 'Recipes': recipes.md
   - 'Security': security.md
   - 'Security Providers': security_providers.md
