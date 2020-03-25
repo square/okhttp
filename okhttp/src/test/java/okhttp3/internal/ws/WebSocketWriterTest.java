@@ -18,13 +18,9 @@ package okhttp3.internal.ws;
 import java.io.EOFException;
 import java.io.IOException;
 import java.util.Random;
-import okhttp3.RequestBody;
 import okhttp3.internal.Util;
 import okio.Buffer;
-import okio.BufferedSink;
 import okio.ByteString;
-import okio.Okio;
-import okio.Sink;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -49,203 +45,115 @@ public final class WebSocketWriterTest {
   @Rule public final TestRule noDataLeftBehind = (base, description) -> new Statement() {
     @Override public void evaluate() throws Throwable {
       base.evaluate();
-      assertThat(data.readByteString().hex()).overridingErrorMessage("Data not empty").isEqualTo(
-          "");
+      assertThat(data.readByteString().hex())
+          .overridingErrorMessage("Data not empty")
+          .isEqualTo("");
     }
   };
 
   // Mutually exclusive. Use the one corresponding to the peer whose behavior you wish to test.
-  private final WebSocketWriter serverWriter = new WebSocketWriter(false, data, random);
-  private final WebSocketWriter clientWriter = new WebSocketWriter(true, data, random);
+  private final WebSocketWriter serverWriter = new WebSocketWriter(
+      false, data, random, false, false, 0L);
+  private final WebSocketWriter clientWriter = new WebSocketWriter(
+      true, data, random, false, false, 0L);
 
   @Test public void serverTextMessage() throws IOException {
-    BufferedSink sink = Okio.buffer(serverWriter.newMessageSink(OPCODE_TEXT, -1));
+    serverWriter.writeMessageFrame(OPCODE_TEXT, ByteString.encodeUtf8("Hello"));
+    assertData("810548656c6c6f");
+  }
 
-    sink.writeUtf8("Hel").flush();
-    assertData("010348656c");
-
-    sink.writeUtf8("lo").flush();
-    assertData("00026c6f");
-
-    sink.close();
-    assertData("8000");
+  @Test public void serverCompressedTextMessage() throws IOException {
+    WebSocketWriter serverWriter = new WebSocketWriter(
+        false, data, random, true, false, 0L);
+    serverWriter.writeMessageFrame(OPCODE_TEXT, ByteString.encodeUtf8("Hello"));
+    assertData("c107f248cdc9c90700");
   }
 
   @Test public void serverSmallBufferedPayloadWrittenAsOneFrame() throws IOException {
     int length = 5;
-    byte[] bytes = binaryData(length);
-
-    RequestBody body = RequestBody.create(bytes, null);
-    BufferedSink sink = Okio.buffer(serverWriter.newMessageSink(OPCODE_TEXT, length));
-    body.writeTo(sink);
-    sink.close();
+    ByteString payload = ByteString.of(binaryData(length));
+    serverWriter.writeMessageFrame(OPCODE_TEXT, payload);
 
     assertData("8105");
-    assertData(bytes);
-    assertThat(data.exhausted()).isTrue();
+    assertData(payload);
   }
 
   @Test public void serverLargeBufferedPayloadWrittenAsOneFrame() throws IOException {
     int length = 12345;
-    byte[] bytes = binaryData(length);
-
-    RequestBody body = RequestBody.create(bytes, null);
-    BufferedSink sink = Okio.buffer(serverWriter.newMessageSink(OPCODE_TEXT, length));
-    body.writeTo(sink);
-    sink.close();
+    ByteString payload = ByteString.of(binaryData(length));
+    serverWriter.writeMessageFrame(OPCODE_TEXT, payload);
 
     assertData("817e");
     assertData(Util.format("%04x", length));
-    assertData(bytes);
-    assertThat(data.exhausted()).isTrue();
-  }
-
-  @Test public void serverLargeNonBufferedPayloadWrittenAsMultipleFrames() throws IOException {
-    int length = 100_000;
-    Buffer bytes = new Buffer().write(binaryData(length));
-
-    BufferedSink sink = Okio.buffer(serverWriter.newMessageSink(OPCODE_TEXT, length));
-    Buffer body = bytes.clone();
-    sink.write(body.readByteString(20_000).toByteArray());
-    sink.write(body.readByteString(20_000).toByteArray());
-    sink.write(body.readByteString(20_000).toByteArray());
-    sink.write(body.readByteString(20_000).toByteArray());
-    sink.write(body.readByteString(20_000).toByteArray());
-    sink.close();
-
-    assertData("017e4000");
-    assertData(bytes.readByteArray(16_384));
-    assertData("007e4000");
-    assertData(bytes.readByteArray(16_384));
-    assertData("007e6000");
-    assertData(bytes.readByteArray(24_576));
-    assertData("007e4000");
-    assertData(bytes.readByteArray(16_384));
-    assertData("007e6000");
-    assertData(bytes.readByteArray(24_576));
-    assertData("807e06a0");
-    assertData(bytes.readByteArray(1_696));
-    assertThat(data.exhausted()).isTrue();
-  }
-
-  @Test public void closeFlushes() throws IOException {
-    BufferedSink sink = Okio.buffer(serverWriter.newMessageSink(OPCODE_TEXT, -1));
-
-    sink.writeUtf8("Hel").flush();
-    assertData("010348656c");
-
-    sink.writeUtf8("lo").close();
-    assertData("80026c6f");
-  }
-
-  @Test public void noWritesAfterClose() throws IOException {
-    Sink sink = serverWriter.newMessageSink(OPCODE_TEXT, -1);
-
-    sink.close();
-    assertData("8100");
-
-    Buffer payload = new Buffer().writeUtf8("Hello");
-    try {
-      // Write to the unbuffered sink as BufferedSink keeps its own closed state.
-      sink.write(payload, payload.size());
-      fail();
-    } catch (IOException e) {
-      assertThat(e.getMessage()).isEqualTo("closed");
-    }
+    assertData(payload);
   }
 
   @Test public void clientTextMessage() throws IOException {
-    BufferedSink sink = Okio.buffer(clientWriter.newMessageSink(OPCODE_TEXT, -1));
+    clientWriter.writeMessageFrame(OPCODE_TEXT, ByteString.encodeUtf8("Hello"));
 
-    sink.writeUtf8("Hel").flush();
-    assertData("018360b420bb28d14c");
+    assertData("818560b420bb28d14cd70f");
+  }
 
-    sink.writeUtf8("lo").flush();
-    assertData("00823851d9d4543e");
-
-    sink.close();
-    assertData("80807acb933d");
+  @Test public void clientCompressedTextMessage() throws IOException {
+    WebSocketWriter clientWriter = new WebSocketWriter(
+        false, data, random, true, false, 0L);
+    clientWriter.writeMessageFrame(OPCODE_TEXT, ByteString.encodeUtf8("Hello"));
+    assertData("c107f248cdc9c90700");
   }
 
   @Test public void serverBinaryMessage() throws IOException {
-    ByteString data = ByteString.decodeHex(""
+    ByteString payload = ByteString.decodeHex(""
         + "60b420bb3851d9d47acb933dbe70399bf6c92da33af01d4fb7"
         + "70e98c0325f41d3ebaf8986da712c82bcd4d554bf0b54023c2");
 
-    BufferedSink sink = Okio.buffer(serverWriter.newMessageSink(OPCODE_BINARY, -1));
+    serverWriter.writeMessageFrame(OPCODE_BINARY, payload);
 
-    sink.write(data).flush();
-    assertData("0232");
-    assertData(data);
-
-    sink.write(data).flush();
-    assertData("0032");
-    assertData(data);
-
-    sink.close();
-    assertData("8000");
+    assertData("8232");
+    assertData(payload);
   }
 
   @Test public void serverMessageLengthShort() throws IOException {
-    Sink sink = serverWriter.newMessageSink(OPCODE_BINARY, -1);
-
     // Create a payload which will overflow the normal payload byte size.
     Buffer payload = new Buffer();
     while (payload.completeSegmentByteCount() <= PAYLOAD_BYTE_MAX) {
       payload.writeByte('0');
     }
-    long byteCount = payload.completeSegmentByteCount();
+
+    serverWriter.writeMessageFrame(OPCODE_BINARY, payload.snapshot());
 
     // Write directly to the unbuffered sink. This ensures it will become single frame.
-    sink.write(payload.clone(), byteCount);
-    assertData("027e"); // 'e' == 4-byte follow-up length.
+    assertData("827e"); // 'e' == 4-byte follow-up length.
     assertData(Util.format("%04X", payload.completeSegmentByteCount()));
-    assertData(payload.readByteArray());
-
-    sink.close();
-    assertData("8000");
+    assertData(payload.readByteString());
   }
 
   @Test public void serverMessageLengthLong() throws IOException {
-    Sink sink = serverWriter.newMessageSink(OPCODE_BINARY, -1);
-
     // Create a payload which will overflow the normal and short payload byte size.
     Buffer payload = new Buffer();
     while (payload.completeSegmentByteCount() <= PAYLOAD_SHORT_MAX) {
       payload.writeByte('0');
     }
-    long byteCount = payload.completeSegmentByteCount();
+
+    serverWriter.writeMessageFrame(OPCODE_BINARY, payload.snapshot());
 
     // Write directly to the unbuffered sink. This ensures it will become single frame.
-    sink.write(payload.clone(), byteCount);
-    assertData("027f"); // 'f' == 16-byte follow-up length.
-    assertData(Util.format("%016X", byteCount));
-    assertData(payload.readByteArray(byteCount));
-
-    sink.close();
-    assertData("8000");
+    assertData("827f"); // 'f' == 16-byte follow-up length.
+    assertData(Util.format("%016X", payload.size()));
+    assertData(payload.readByteString());
   }
 
   @Test public void clientBinary() throws IOException {
-    ByteString data = ByteString.decodeHex(""
+    ByteString payload = ByteString.decodeHex(""
         + "60b420bb3851d9d47acb933dbe70399bf6c92da33af01d4fb7"
         + "70e98c0325f41d3ebaf8986da712c82bcd4d554bf0b54023c2");
 
-    BufferedSink sink = Okio.buffer(clientWriter.newMessageSink(OPCODE_BINARY, -1));
+    clientWriter.writeMessageFrame(OPCODE_BINARY, payload);
 
-    sink.write(data).flush();
-    assertData("02b2");
+    assertData("82b2");
     assertData("60b420bb");
     assertData(""
         + "0000000058e5f96f1a7fb386dec41920967d0d185a443df4d7"
         + "c4c9376391d4a65e0ed8230d1332734b796dee2b4495fb4376");
-
-    sink.write(data).close();
-    assertData("80b2");
-    assertData("3851d9d4");
-    assertData(""
-        + "58e5f96f00000000429a4ae98621e04fce98f47702a1c49b8f"
-        + "2130583b742dc906eb214c55f6cb1c139c948173a16c941b93");
   }
 
   @Test public void serverEmptyClose() throws IOException {
@@ -372,35 +280,13 @@ public final class WebSocketWriterTest {
     }
   }
 
-  @Test public void twoMessageSinksThrows() {
-    clientWriter.newMessageSink(OPCODE_TEXT, -1);
-    try {
-      clientWriter.newMessageSink(OPCODE_TEXT, -1);
-      fail();
-    } catch (IllegalStateException e) {
-      assertThat(e.getMessage()).isEqualTo(
-          "Another message writer is active. Did you call close()?");
-    }
-  }
-
   private void assertData(String hex) throws EOFException {
     assertData(ByteString.decodeHex(hex));
   }
 
   private void assertData(ByteString expected) throws EOFException {
-    ByteString actual = data.readByteString(expected.size());
+    ByteString actual = data.readByteString(Math.min(expected.size(), data.size()));
     assertThat(actual).isEqualTo(expected);
-  }
-
-  private void assertData(byte[] data) throws IOException {
-    int byteCount = 16;
-    for (int i = 0; i < data.length; i += byteCount) {
-      int count = Math.min(byteCount, data.length - i);
-      Buffer expectedChunk = new Buffer();
-      expectedChunk.write(data, i, count);
-      assertThat(this.data.readByteString(count)).overridingErrorMessage("At " + i).isEqualTo(
-          expectedChunk.readByteString());
-    }
   }
 
   private static byte[] binaryData(int length) {

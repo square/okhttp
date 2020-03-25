@@ -72,6 +72,11 @@ public final class OkHttpClientTest {
     assertThat(client.pingIntervalMillis()).isEqualTo(0);
   }
 
+  @Test public void webSocketDefaults() {
+    OkHttpClient client = clientTestRule.newClient();
+    assertThat(client.minWebSocketMessageToCompress()).isEqualTo(1024);
+  }
+
   @Test public void timeoutValidRange() {
     OkHttpClient.Builder builder = new OkHttpClient.Builder();
     try {
@@ -376,5 +381,16 @@ public final class OkHttpClientTest {
         .certificatePinner(new CertificatePinner.Builder().build())
         .build()
         .getRouteDatabase());
+  }
+
+  @Test public void minWebSocketMessageToCompressNegative() {
+    OkHttpClient.Builder builder = new OkHttpClient.Builder();
+    try {
+      builder.minWebSocketMessageToCompress(-1024);
+      fail();
+    } catch (IllegalArgumentException expected) {
+      assertThat(expected.getMessage())
+              .isEqualTo("minWebSocketMessageToCompress must be positive: -1024");
+    }
   }
 }

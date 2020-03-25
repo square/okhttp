@@ -23,6 +23,7 @@ import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLException
 import javax.net.ssl.SSLSession
 import okhttp3.internal.canParseAsIpAddress
+import okhttp3.internal.toCanonicalHost
 
 /**
  * A HostnameVerifier consistent with [RFC 2818][rfc_2818].
@@ -51,8 +52,10 @@ object OkHostnameVerifier : HostnameVerifier {
 
   /** Returns true if [certificate] matches [ipAddress]. */
   private fun verifyIpAddress(ipAddress: String, certificate: X509Certificate): Boolean {
+    val canonicalIpAddress = ipAddress.toCanonicalHost()
+
     return getSubjectAltNames(certificate, ALT_IPA_NAME).any {
-      ipAddress.equals(it, ignoreCase = true)
+      canonicalIpAddress == it.toCanonicalHost()
     }
   }
 

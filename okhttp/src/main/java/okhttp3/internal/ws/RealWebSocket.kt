@@ -49,7 +49,6 @@ import okio.BufferedSource
 import okio.ByteString
 import okio.ByteString.Companion.encodeUtf8
 import okio.ByteString.Companion.toByteString
-import okio.buffer
 
 class RealWebSocket(
   taskRunner: TaskRunner,
@@ -57,7 +56,14 @@ class RealWebSocket(
   private val originalRequest: Request,
   internal val listener: WebSocketListener,
   private val random: Random,
-  private val pingIntervalMillis: Long
+  private val pingIntervalMillis: Long,
+  /**
+   * For clients this is initially null, and will be assigned to the agreed-upon extensions. For
+   * servers it should be the agreed-upon extensions immediately.
+   */
+  private var extensions: WebSocketExtensions?,
+  /** If compression is negotiated, outbound messages of this size and larger will be compressed. */
+  private var minimumDeflateSize: Long
 ) : WebSocket, WebSocketReader.FrameCallback {
   private val key: String
 
@@ -138,6 +144,12 @@ class RealWebSocket(
   }
 
   fun connect(client: OkHttpClient) {
+    if (originalRequest.header("Sec-WebSocket-Extensions") != null) {
+      failWebSocket(ProtocolException(
+          "Request header not permitted: 'Sec-WebSocket-Extensions'"), null)
+      return
+    }
+
     val webSocketClient = client.newBuilder()
         .eventListener(EventListener.NONE)
         .protocols(ONLY_HTTP1)
@@ -147,6 +159,7 @@ class RealWebSocket(
         .header("Connection", "Upgrade")
         .header("Sec-WebSocket-Key", key)
         .header("Sec-WebSocket-Version", "13")
+        .header("Sec-WebSocket-Extensions", "permessage-deflate")
         .build()
     call = RealCall(webSocketClient, request, forWebSocket = true)
     call!!.enqueue(object : Callback {
@@ -161,6 +174,17 @@ class RealWebSocket(
           failWebSocket(e, response)
           response.closeQuietly()
           return
+        }
+
+        // Apply the extensions. If they're unacceptable initiate a graceful shut down.
+        // TODO(jwilson): Listeners should get onFailure() instead of onClosing() + onClosed(1010).
+        val extensions = WebSocketExtensions.parse(response.headers)
+        this@RealWebSocket.extensions = extensions
+        if (!extensions.isValid()) {
+          synchronized(this@RealWebSocket) {
+            messageAndCloseQueue.clear() // Don't transmit any messages.
+            close(1010, "unexpected Sec-WebSocket-Extensions in response header")
+          }
         }
 
         // Process all web socket messages.
@@ -178,6 +202,20 @@ class RealWebSocket(
         failWebSocket(e, null)
       }
     })
+  }
+
+  private fun WebSocketExtensions.isValid(): Boolean {
+    // If the server returned parameters we don't understand, fail the web socket.
+    if (unknownValues) return false
+
+    // If the server returned a value for client_max_window_bits, fail the web socket.
+    if (clientMaxWindowBits != null) return false
+
+    // If the server returned an illegal server_max_window_bits, fail the web socket.
+    if (serverMaxWindowBits != null && serverMaxWindowBits !in 8..15) return false
+
+    // Success.
+    return true
   }
 
   @Throws(IOException::class)
@@ -213,10 +251,18 @@ class RealWebSocket(
 
   @Throws(IOException::class)
   fun initReaderAndWriter(name: String, streams: Streams) {
+    val extensions = this.extensions!!
     synchronized(this) {
       this.name = name
       this.streams = streams
-      this.writer = WebSocketWriter(streams.client, streams.sink, random)
+      this.writer = WebSocketWriter(
+          isClient = streams.client,
+          sink = streams.sink,
+          random = random,
+          perMessageDeflate = extensions.perMessageDeflate,
+          noContextTakeover = extensions.noContextTakeover(streams.client),
+          minimumDeflateSize = minimumDeflateSize
+      )
       this.writerTask = WriterTask()
       if (pingIntervalMillis != 0L) {
         val pingIntervalNanos = MILLISECONDS.toNanos(pingIntervalMillis)
@@ -230,7 +276,13 @@ class RealWebSocket(
       }
     }
 
-    reader = WebSocketReader(streams.client, streams.source, this)
+    reader = WebSocketReader(
+        isClient = streams.client,
+        source = streams.source,
+        frameCallback = this,
+        perMessageDeflate = extensions.perMessageDeflate,
+        noContextTakeover = extensions.noContextTakeover(!streams.client)
+    )
   }
 
   /** Receive frames until there are no more. Invoked only by the reader thread. */
@@ -305,6 +357,8 @@ class RealWebSocket(
     require(code != -1)
 
     var toClose: Streams? = null
+    var readerToClose: WebSocketReader? = null
+    var writerToClose: WebSocketWriter? = null
     synchronized(this) {
       check(receivedCloseCode == -1) { "already closed" }
       receivedCloseCode = code
@@ -312,6 +366,10 @@ class RealWebSocket(
       if (enqueuedClose && messageAndCloseQueue.isEmpty()) {
         toClose = this.streams
         this.streams = null
+        readerToClose = this.reader
+        this.reader = null
+        writerToClose = this.writer
+        this.writer = null
         this.taskQueue.shutdown()
       }
     }
@@ -324,6 +382,8 @@ class RealWebSocket(
       }
     } finally {
       toClose?.closeQuietly()
+      readerToClose?.closeQuietly()
+      writerToClose?.closeQuietly()
     }
   }
 
@@ -423,6 +483,8 @@ class RealWebSocket(
     var receivedCloseCode = -1
     var receivedCloseReason: String? = null
     var streamsToClose: Streams? = null
+    var readerToClose: WebSocketReader? = null
+    var writerToClose: WebSocketWriter? = null
 
     synchronized(this@RealWebSocket) {
       if (failed) {
@@ -439,6 +501,10 @@ class RealWebSocket(
           if (receivedCloseCode != -1) {
             streamsToClose = this.streams
             this.streams = null
+            readerToClose = this.reader
+            this.reader = null
+            writerToClose = this.writer
+            this.writer = null
             this.taskQueue.shutdown()
           } else {
             // When we request a graceful close also schedule a cancel of the web socket.
@@ -457,13 +523,10 @@ class RealWebSocket(
       if (pong != null) {
         writer!!.writePong(pong)
       } else if (messageOrClose is Message) {
-        val data = (messageOrClose as Message).data
-        val sink = writer!!.newMessageSink(
-            (messageOrClose as Message).formatOpcode, data.size.toLong()).buffer()
-        sink.write(data)
-        sink.close()
+        val message = messageOrClose as Message
+        writer!!.writeMessageFrame(message.formatOpcode, message.data)
         synchronized(this) {
-          queueSize -= data.size.toLong()
+          queueSize -= message.data.size.toLong()
         }
       } else if (messageOrClose is Close) {
         val close = messageOrClose as Close
@@ -480,6 +543,8 @@ class RealWebSocket(
       return true
     } finally {
       streamsToClose?.closeQuietly()
+      readerToClose?.closeQuietly()
+      writerToClose?.closeQuietly()
     }
   }
 
@@ -509,11 +574,17 @@ class RealWebSocket(
 
   fun failWebSocket(e: Exception, response: Response?) {
     val streamsToClose: Streams?
+    val readerToClose: WebSocketReader?
+    val writerToClose: WebSocketWriter?
     synchronized(this) {
       if (failed) return // Already failed.
       failed = true
       streamsToClose = this.streams
       this.streams = null
+      readerToClose = this.reader
+      this.reader = null
+      writerToClose = this.writer
+      this.writer = null
       taskQueue.shutdown()
     }
 
@@ -521,6 +592,8 @@ class RealWebSocket(
       listener.onFailure(this, e, response)
     } finally {
       streamsToClose?.closeQuietly()
+      readerToClose?.closeQuietly()
+      writerToClose?.closeQuietly()
     }
   }
 
@@ -566,5 +639,15 @@ class RealWebSocket(
      * the server doesn't respond the web socket will be canceled.
      */
     private const val CANCEL_AFTER_CLOSE_MILLIS = 60L * 1000
+
+    /**
+     * The smallest message that will be compressed. We use 1024 because smaller messages already
+     * fit comfortably within a single ethernet packet (1500 bytes) even with framing overhead.
+     *
+     * For tests this must be big enough to realize real compression on test messages like
+     * 'aaaaaaaaaa...'. Our tests check if compression was applied just by looking at the size if
+     * the inbound buffer.
+     */
+    const val DEFAULT_MINIMUM_DEFLATE_SIZE = 1024L
   }
 }

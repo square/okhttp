@@ -187,18 +187,18 @@ class Dispatcher constructor() {
     return isRunning
   }
 
-  /** Used by `Call#execute` to signal it is in-flight. */
+  /** Used by [Call.execute] to signal it is in-flight. */
   @Synchronized internal fun executed(call: RealCall) {
     runningSyncCalls.add(call)
   }
 
-  /** Used by `AsyncCall#run` to signal completion. */
+  /** Used by [AsyncCall.run] to signal completion. */
   internal fun finished(call: AsyncCall) {
     call.callsPerHost.decrementAndGet()
     finished(runningAsyncCalls, call)
   }
 
-  /** Used by `Call#execute` to signal completion. */
+  /** Used by [Call.execute] to signal completion. */
   internal fun finished(call: RealCall) {
     finished(runningSyncCalls, call)
   }

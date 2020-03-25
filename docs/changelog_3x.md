@@ -1,6 +1,14 @@
 OkHttp 3.x Change Log
 =====================
 
+## Version 3.14.7
+
+_2020-02-24_
+
+ *  Fix: Don't crash on Android 11 due to use of restricted methods. This prevents a crash with the
+    exception, "Expected Android API level 21+ but was 29".
+
+
 ## Version 3.14.6
 
 _2020-01-11_
@@ -158,7 +166,8 @@ _2019-02-04_
 
     The OkHttp 3.12.x branch will be our long-term branch for Android 2.3+ (API level 9+) and Java
     7+. These platforms lack support for TLS 1.2 and should not be used. But because upgrading is
-    difficult we will backport critical fixes to the 3.12.x branch through December 31, 2020.
+    difficult we will backport critical fixes to the 3.12.x branch through December 31, 2021. (This
+    commitment was originally through December 31, 2020; we have since extended it.)
 
  *  **TLSv1 and TLSv1.1 are no longer enabled by default.** Major web browsers are working towards
     removing these versions altogether in early 2020. If your servers aren't ready yet you can
@@ -191,6 +200,22 @@ _2019-02-04_
  *  New: API to access headers as `java.time.Instant`.
  *  New: Fail fast if a `SSLSocketFactory` is used as a `SocketFactory`.
  *  New: Log the TLS handshake in `LoggingEventListener`.
+
+
+## Version 3.12.10
+
+_2020-02-29_
+
+ *  Fix: Don't crash on Android 4.1 when detecting methods that became restricted in Android 11.
+    Supporting a full decade of Android releases on our 3.12.x branch is tricky!
+
+
+## Version 3.12.9
+
+_2020-02-24_
+
+ *  Fix: Don't crash on Android 11 due to use of restricted methods. This prevents a crash with the
+    exception, "Expected Android API level 21+ but was 29".
 
 
 ## Version 3.12.8

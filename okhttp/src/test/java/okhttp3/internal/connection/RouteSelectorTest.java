@@ -41,6 +41,8 @@ import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Route;
 import okhttp3.internal.http.RecordingProxySelector;
+import okhttp3.testing.PlatformRule;
+import okhttp3.testing.PlatformVersion;
 import okhttp3.tls.HandshakeCertificates;
 import org.junit.Before;
 import org.junit.Rule;
@@ -53,6 +55,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public final class RouteSelectorTest {
+  @Rule public final PlatformRule platform = new PlatformRule();
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
   public final List<ConnectionSpec> connectionSpecs = immutableListOf(
@@ -467,7 +470,10 @@ public final class RouteSelectorTest {
   @Test public void routeToString() throws Exception {
     Route route = new Route(httpAddress(), Proxy.NO_PROXY,
         InetSocketAddress.createUnresolved("host", 1234));
-    assertThat(route.toString()).isEqualTo("Route{host:1234}");
+    assertThat(route.toString()).isEqualTo(
+        PlatformVersion.INSTANCE.getMajorVersion() >= 14
+            ? "Route{host/<unresolved>:1234}"
+            : "Route{host:1234}");
   }
 
   private void assertRoute(Route route, Address address, Proxy proxy, InetAddress socketAddress,

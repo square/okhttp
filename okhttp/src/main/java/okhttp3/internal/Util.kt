@@ -581,3 +581,11 @@ internal inline fun Any.assertThreadDoesntHoldLock() {
     throw AssertionError("Thread ${Thread.currentThread().name} MUST NOT hold lock on $this")
   }
 }
+
+fun Exception.withSuppressed(suppressed: List<Exception>): Throwable = apply {
+  if (suppressed.size > 1) {
+    println(suppressed)
+  }
+
+  for (e in suppressed) addSuppressed(e)
+}

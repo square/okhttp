@@ -21,9 +21,11 @@ import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import okhttp3.Headers;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.TestUtil;
 import okhttp3.internal.concurrent.TaskRunner;
 import okio.ByteString;
 import okio.Okio;
@@ -33,6 +35,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import static okhttp3.internal.ws.RealWebSocket.DEFAULT_MINIMUM_DEFLATE_SIZE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
 import static org.junit.Assert.fail;
@@ -43,8 +46,8 @@ public final class RealWebSocketTest {
   // from the perspective of a single peer.
 
   private final Random random = new Random(0);
-  private final Pipe client2Server = new Pipe(1024L);
-  private final Pipe server2client = new Pipe(1024L);
+  private final Pipe client2Server = new Pipe(8192L);
+  private final Pipe server2client = new Pipe(8192L);
 
   private TestStreams client = new TestStreams(true, server2client, client2Server);
   private TestStreams server = new TestStreams(false, client2Server, server2client);
@@ -130,9 +133,15 @@ public final class RealWebSocketTest {
 
   @Test public void serverCloseThenClientClose() throws IOException {
     server.webSocket.close(1000, "Hello!");
+
     client.processNextFrame();
     client.listener.assertClosing(1000, "Hello!");
     assertThat(client.webSocket.close(1000, "Bye!")).isTrue();
+    client.listener.assertClosed(1000, "Hello!");
+
+    server.processNextFrame();
+    server.listener.assertClosing(1000, "Bye!");
+    server.listener.assertClosed(1000, "Bye!");
   }
 
   @Test public void emptyCloseInitiatesShutdown() throws IOException {
@@ -351,6 +360,41 @@ public final class RealWebSocketTest {
         250d));
   }
 
+  @Test public void messagesNotCompressedWhenNotConfigured() throws IOException {
+    String message = TestUtil.repeat('a', (int) DEFAULT_MINIMUM_DEFLATE_SIZE);
+    server.webSocket.send(message);
+
+    assertThat(client.clientSourceBufferSize()).isGreaterThan(message.length()); // Not compressed.
+    assertThat(client.processNextFrame()).isTrue();
+    client.listener.assertTextMessage(message);
+  }
+
+  @Test public void messagesCompressedWhenConfigured() throws IOException {
+    Headers headers = Headers.of("Sec-WebSocket-Extensions", "permessage-deflate");
+    client.initWebSocket(random, 0, headers);
+    server.initWebSocket(random, 0, headers);
+
+    String message = TestUtil.repeat('a', (int) DEFAULT_MINIMUM_DEFLATE_SIZE);
+    server.webSocket.send(message);
+
+    assertThat(client.clientSourceBufferSize()).isLessThan(message.length()); // Compressed!
+    assertThat(client.processNextFrame()).isTrue();
+    client.listener.assertTextMessage(message);
+  }
+
+  @Test public void smallMessagesNotCompressed() throws IOException {
+    Headers headers = Headers.of("Sec-WebSocket-Extensions", "permessage-deflate");
+    client.initWebSocket(random, 0, headers);
+    server.initWebSocket(random, 0, headers);
+
+    String message = TestUtil.repeat('a', (int) DEFAULT_MINIMUM_DEFLATE_SIZE - 1);
+    server.webSocket.send(message);
+
+    assertThat(client.clientSourceBufferSize()).isGreaterThan(message.length()); // Not compressed.
+    assertThat(client.processNextFrame()).isTrue();
+    client.listener.assertTextMessage(message);
+  }
+
   /** One peer's streams, listener, and web socket in the test. */
   private static class TestStreams extends RealWebSocket.Streams {
     private final String name;
@@ -366,16 +410,32 @@ public final class RealWebSocketTest {
     }
 
     public void initWebSocket(Random random, int pingIntervalMillis) throws IOException {
+      initWebSocket(random, pingIntervalMillis, Headers.of());
+    }
+
+    public void initWebSocket(
+        Random random, int pingIntervalMillis, Headers responseHeaders) throws IOException {
       String url = "http://example.com/websocket";
       Response response = new Response.Builder()
           .code(101)
           .message("OK")
           .request(new Request.Builder().url(url).build())
+          .headers(responseHeaders)
           .protocol(Protocol.HTTP_1_1)
           .build();
-      webSocket = new RealWebSocket(
-          TaskRunner.INSTANCE, response.request(), listener, random, pingIntervalMillis);
+      webSocket = new RealWebSocket(TaskRunner.INSTANCE, response.request(), listener, random,
+          pingIntervalMillis, WebSocketExtensions.Companion.parse(responseHeaders),
+          DEFAULT_MINIMUM_DEFLATE_SIZE);
       webSocket.initReaderAndWriter(name, this);
+    }
+
+    /**
+     * Peeks the number of bytes available for the client to read immediately. This doesn't block so
+     * it requires that bytes have already been flushed by the server.
+     */
+    public long clientSourceBufferSize() throws IOException {
+      getSource().request(1L);
+      return getSource().getBuffer().size();
     }
 
     public boolean processNextFrame() throws IOException {

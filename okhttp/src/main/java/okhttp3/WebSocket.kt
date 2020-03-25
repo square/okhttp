@@ -55,7 +55,8 @@ interface WebSocket {
 
   /**
    * Returns the size in bytes of all messages enqueued to be transmitted to the server. This
-   * doesn't include framing overhead. It also doesn't include any bytes buffered by the operating
+   * doesn't include framing overhead. If compression is enabled, uncompressed messages size
+   * is used to calculate this value. It also doesn't include any bytes buffered by the operating
    * system or network intermediaries. This method returns 0 if no messages are waiting in the
    * queue. If may return a nonzero value after the web socket has been canceled; this indicates
    * that enqueued messages were not transmitted.

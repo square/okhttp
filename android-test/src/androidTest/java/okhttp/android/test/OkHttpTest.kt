@@ -64,6 +64,8 @@ import javax.net.ssl.X509TrustManager
 import java.util.logging.Logger
 import okhttp3.internal.platform.AndroidPlatform
 import okhttp3.internal.platform.Android10Platform
+import java.io.IOException
+import java.lang.IllegalArgumentException
 
 /**
  * Run with "./gradlew :android-test:connectedCheck" and make sure ANDROID_SDK_ROOT is set.
@@ -499,6 +501,23 @@ class OkHttpTest {
         .build()
 
     client.get("https://www.facebook.com/robots.txt")
+  }
+
+  @Test
+  fun testUnderscoreRequest() {
+    assumeNetwork()
+
+    val request =
+        Request.Builder().url("https://example_underscore_123.s3.amazonaws.com/").build()
+
+    try {
+      client.newCall(request).execute()
+      // Hopefully this passes
+    } catch (ioe: IOException) {
+      // https://github.com/square/okhttp/issues/5840
+      assertEquals("Android internal error", ioe.message)
+      assertEquals(IllegalArgumentException::class.java, ioe.cause!!.javaClass)
+    }
   }
 
   private fun OkHttpClient.get(url: String) {

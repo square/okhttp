@@ -15,11 +15,12 @@
  */
 package okhttp3.internal.ws
 
+import java.io.Closeable
 import java.io.IOException
 import java.util.Random
 import okhttp3.internal.ws.WebSocketProtocol.B0_FLAG_FIN
+import okhttp3.internal.ws.WebSocketProtocol.B0_FLAG_RSV1
 import okhttp3.internal.ws.WebSocketProtocol.B1_FLAG_MASK
-import okhttp3.internal.ws.WebSocketProtocol.OPCODE_CONTINUATION
 import okhttp3.internal.ws.WebSocketProtocol.OPCODE_CONTROL_CLOSE
 import okhttp3.internal.ws.WebSocketProtocol.OPCODE_CONTROL_PING
 import okhttp3.internal.ws.WebSocketProtocol.OPCODE_CONTROL_PONG
@@ -32,8 +33,6 @@ import okhttp3.internal.ws.WebSocketProtocol.validateCloseCode
 import okio.Buffer
 import okio.BufferedSink
 import okio.ByteString
-import okio.Sink
-import okio.Timeout
 
 /**
  * An [RFC 6455][rfc_6455]-compatible WebSocket frame writer.
@@ -42,20 +41,23 @@ import okio.Timeout
  *
  * [rfc_6455]: http://tools.ietf.org/html/rfc6455
  */
-internal class WebSocketWriter(
+class WebSocketWriter(
   private val isClient: Boolean,
   val sink: BufferedSink,
-  val random: Random
-) {
+  val random: Random,
+  private val perMessageDeflate: Boolean,
+  private val noContextTakeover: Boolean,
+  private val minimumDeflateSize: Long
+) : Closeable {
+  /** This holds outbound data for compression and masking. */
+  private val messageBuffer = Buffer()
 
   /** The [Buffer] of [sink]. Write to this and then flush/emit [sink]. */
   private val sinkBuffer: Buffer = sink.buffer
   private var writerClosed = false
 
-  val buffer = Buffer()
-  private val frameSink = FrameSink()
-
-  var activeWriter: Boolean = false
+  /** Lazily initialized on first use. */
+  private var messageDeflater: MessageDeflater? = null
 
   // Masks are only a concern for client writers.
   private val maskKey: ByteArray? = if (isClient) ByteArray(4) else null
@@ -140,36 +142,20 @@ internal class WebSocketWriter(
     sink.flush()
   }
 
-  /**
-   * Stream a message payload as a series of frames. This allows control frames to be interleaved
-   * between parts of the message.
-   */
-  fun newMessageSink(formatOpcode: Int, contentLength: Long): Sink {
-    check(!activeWriter) { "Another message writer is active. Did you call close()?" }
-    activeWriter = true
-
-    // Reset FrameSink state for a new writer.
-    frameSink.formatOpcode = formatOpcode
-    frameSink.contentLength = contentLength
-    frameSink.isFirstFrame = true
-    frameSink.closed = false
-
-    return frameSink
-  }
-
   @Throws(IOException::class)
-  fun writeMessageFrame(
-    formatOpcode: Int,
-    byteCount: Long,
-    isFirstFrame: Boolean,
-    isFinal: Boolean
-  ) {
+  fun writeMessageFrame(formatOpcode: Int, data: ByteString) {
     if (writerClosed) throw IOException("closed")
 
-    var b0 = if (isFirstFrame) formatOpcode else OPCODE_CONTINUATION
-    if (isFinal) {
-      b0 = b0 or B0_FLAG_FIN
+    messageBuffer.write(data)
+
+    var b0 = formatOpcode or B0_FLAG_FIN
+    if (perMessageDeflate && data.size >= minimumDeflateSize) {
+      val messageDeflater = this.messageDeflater
+          ?: MessageDeflater(noContextTakeover).also { this.messageDeflater = it }
+      messageDeflater.deflate(messageBuffer)
+      b0 = b0 or B0_FLAG_RSV1
     }
+    val dataSize = messageBuffer.size
     sinkBuffer.writeByte(b0)
 
     var b1 = 0
@@ -177,19 +163,19 @@ internal class WebSocketWriter(
       b1 = b1 or B1_FLAG_MASK
     }
     when {
-      byteCount <= PAYLOAD_BYTE_MAX -> {
-        b1 = b1 or byteCount.toInt()
+      dataSize <= PAYLOAD_BYTE_MAX -> {
+        b1 = b1 or dataSize.toInt()
         sinkBuffer.writeByte(b1)
       }
-      byteCount <= PAYLOAD_SHORT_MAX -> {
+      dataSize <= PAYLOAD_SHORT_MAX -> {
         b1 = b1 or PAYLOAD_SHORT
         sinkBuffer.writeByte(b1)
-        sinkBuffer.writeShort(byteCount.toInt())
+        sinkBuffer.writeShort(dataSize.toInt())
       }
       else -> {
         b1 = b1 or PAYLOAD_LONG
         sinkBuffer.writeByte(b1)
-        sinkBuffer.writeLong(byteCount)
+        sinkBuffer.writeLong(dataSize)
       }
     }
 
@@ -197,63 +183,19 @@ internal class WebSocketWriter(
       random.nextBytes(maskKey!!)
       sinkBuffer.write(maskKey)
 
-      if (byteCount > 0L) {
-        val bufferStart = sinkBuffer.size
-        sinkBuffer.write(buffer, byteCount)
-
-        sinkBuffer.readAndWriteUnsafe(maskCursor!!)
-        maskCursor.seek(bufferStart)
+      if (dataSize > 0L) {
+        messageBuffer.readAndWriteUnsafe(maskCursor!!)
+        maskCursor.seek(0L)
         toggleMask(maskCursor, maskKey)
         maskCursor.close()
       }
-    } else {
-      sinkBuffer.write(buffer, byteCount)
     }
 
+    sinkBuffer.write(messageBuffer, dataSize)
     sink.emit()
   }
 
-  internal inner class FrameSink : Sink {
-    var formatOpcode = 0
-    var contentLength = 0L
-    var isFirstFrame = false
-    var closed = false
-
-    @Throws(IOException::class)
-    override fun write(source: Buffer, byteCount: Long) {
-      if (closed) throw IOException("closed")
-
-      buffer.write(source, byteCount)
-
-      // Determine if this is a buffered write which we can defer until close() flushes.
-      val deferWrite = isFirstFrame &&
-          contentLength != -1L &&
-          buffer.size > contentLength - 8192 /* segment size */
-
-      val emitCount = buffer.completeSegmentByteCount()
-      if (emitCount > 0L && !deferWrite) {
-        writeMessageFrame(formatOpcode, emitCount, isFirstFrame, isFinal = false)
-        isFirstFrame = false
-      }
-    }
-
-    @Throws(IOException::class)
-    override fun flush() {
-      if (closed) throw IOException("closed")
-
-      writeMessageFrame(formatOpcode, buffer.size, isFirstFrame, isFinal = false)
-      isFirstFrame = false
-    }
-
-    override fun timeout(): Timeout = sink.timeout()
-
-    @Throws(IOException::class)
-    override fun close() {
-      if (closed) throw IOException("closed")
-
-      writeMessageFrame(formatOpcode, buffer.size, isFirstFrame, isFinal = true)
-      closed = true
-      activeWriter = false
-    }
+  override fun close() {
+    messageDeflater?.close()
   }
 }
