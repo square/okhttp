@@ -242,7 +242,7 @@ class TaskRunner(
     }
   }
 
-  private fun cancelAll() {
+  public fun cancelAll() {
     for (i in busyQueues.size - 1 downTo 0) {
       readyQueues[i].cancelAllAndDecide()
     }
