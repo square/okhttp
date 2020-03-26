@@ -22,6 +22,7 @@ import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.testing.Flaky
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
@@ -94,13 +95,11 @@ class OkHttpClientTestRule : TestRule {
   }
 
   private fun ensureAllTaskQueuesIdle() {
-    try {
-      for (queue in TaskRunner.INSTANCE.activeQueues()) {
-        assertTrue("Queue still active after 1000 ms",
-            queue.idleLatch().await(1_000L, TimeUnit.MILLISECONDS))
+    for (queue in TaskRunner.INSTANCE.activeQueues()) {
+      if (!queue.idleLatch().await(1_000L, TimeUnit.MILLISECONDS)) {
+        TaskRunner.INSTANCE.cancelAll()
+        fail("Queue still active after 1000 ms")
       }
-    } finally {
-      TaskRunner.INSTANCE.cancelAll()
     }
   }
 

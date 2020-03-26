@@ -167,6 +167,7 @@ class OkHttpTest {
       }
     } finally {
       Security.removeProvider("Conscrypt")
+      client.close()
     }
   }
 
@@ -202,6 +203,7 @@ class OkHttpTest {
       }
     } finally {
       Security.removeProvider("GmsCore_OpenSSL")
+      client.close()
     }
   }
 
@@ -549,6 +551,11 @@ class OkHttpTest {
     } catch (uhe: UnknownHostException) {
       assumeNoException(uhe)
     }
+  }
+
+  fun OkHttpClient.close() {
+    dispatcher.executorService.shutdown()
+    connectionPool.evictAll()
   }
 
   companion object {
