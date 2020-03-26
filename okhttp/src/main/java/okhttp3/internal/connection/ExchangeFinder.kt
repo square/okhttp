@@ -124,11 +124,15 @@ class ExchangeFinder(
       // Make sure we have some routes left to try. One example where we may exhaust all the routes
       // would happen if we made a new connection and it immediately is detected as unhealthy.
       synchronized(connectionPool) {
+        if (nextRouteToTry != null) return@synchronized
+
         val routesLeft = routeSelection?.hasNext() ?: true
+        if (routesLeft) return@synchronized
+
         val routesSelectionLeft = routeSelector?.hasNext() ?: true
-        if (nextRouteToTry == null && !routesLeft && !routesSelectionLeft) {
-          throw IOException("exhausted all routes")
-        }
+        if (routesSelectionLeft) return@synchronized
+
+        throw IOException("exhausted all routes")
       }
     }
   }
