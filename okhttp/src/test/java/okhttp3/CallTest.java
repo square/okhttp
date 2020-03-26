@@ -3804,7 +3804,9 @@ public final class CallTest {
         .eventListener(listener)
         .build();
 
-    executeSynchronously("/").assertFailure(IOException.class);
+    executeSynchronously("/")
+        .assertFailure(IOException.class)
+        .assertFailure("exhausted all routes");
   }
 
   @Test public void requestBodyThrowsUnrelatedToNetwork() throws Exception {
