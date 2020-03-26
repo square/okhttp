@@ -15,17 +15,16 @@
  */
 package okhttp3
 
-import java.net.InetAddress
-import java.util.concurrent.TimeUnit
-import java.util.logging.Logger
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.testing.Flaky
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
+import java.net.InetAddress
+import java.util.concurrent.TimeUnit
+import java.util.logging.Logger
 
 /**
  * Apply this rule to all tests. It adds additional checks for leaked resources and uncaught
