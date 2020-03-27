@@ -144,6 +144,12 @@ class RealWebSocket(
   }
 
   fun connect(client: OkHttpClient) {
+    if (originalRequest.header("Sec-WebSocket-Extensions") != null) {
+      failWebSocket(ProtocolException(
+          "Request header not permitted: 'Sec-WebSocket-Extensions'"), null)
+      return
+    }
+
     val webSocketClient = client.newBuilder()
         .eventListener(EventListener.NONE)
         .protocols(ONLY_HTTP1)
@@ -153,6 +159,7 @@ class RealWebSocket(
         .header("Connection", "Upgrade")
         .header("Sec-WebSocket-Key", key)
         .header("Sec-WebSocket-Version", "13")
+        .header("Sec-WebSocket-Extensions", "permessage-deflate")
         .build()
     call = RealCall(webSocketClient, request, forWebSocket = true)
     call!!.enqueue(object : Callback {
@@ -162,13 +169,22 @@ class RealWebSocket(
         try {
           checkUpgradeSuccess(response, exchange)
           streams = exchange!!.newWebSocketStreams()
-          // TODO(jwilson): use request & response headers to negotiate extensions.
-          extensions = WebSocketExtensions()
         } catch (e: IOException) {
           exchange?.webSocketUpgradeFailed()
           failWebSocket(e, response)
           response.closeQuietly()
           return
+        }
+
+        // Apply the extensions. If they're unacceptable initiate a graceful shut down.
+        // TODO(jwilson): Listeners should get onFailure() instead of onClosing() + onClosed(1010).
+        val extensions = WebSocketExtensions.parse(response.headers)
+        this@RealWebSocket.extensions = extensions
+        if (!extensions.isValid()) {
+          synchronized(this@RealWebSocket) {
+            messageAndCloseQueue.clear() // Don't transmit any messages.
+            close(1010, "unexpected Sec-WebSocket-Extensions in response header")
+          }
         }
 
         // Process all web socket messages.
@@ -186,6 +202,20 @@ class RealWebSocket(
         failWebSocket(e, null)
       }
     })
+  }
+
+  private fun WebSocketExtensions.isValid(): Boolean {
+    // If the server returned parameters we don't understand, fail the web socket.
+    if (unknownValues) return false
+
+    // If the server returned a value for client_max_window_bits, fail the web socket.
+    if (clientMaxWindowBits != null) return false
+
+    // If the server returned an illegal server_max_window_bits, fail the web socket.
+    if (serverMaxWindowBits != null && serverMaxWindowBits !in 8..15) return false
+
+    // Success.
+    return true
   }
 
   @Throws(IOException::class)
@@ -229,7 +259,8 @@ class RealWebSocket(
           isClient = streams.client,
           sink = streams.sink,
           random = random,
-          messageDeflater = extensions.newMessageDeflater(streams.client),
+          perMessageDeflate = extensions.perMessageDeflate,
+          noContextTakeover = extensions.noContextTakeover(streams.client),
           minimumDeflateSize = minimumDeflateSize
       )
       this.writerTask = WriterTask()
@@ -249,7 +280,8 @@ class RealWebSocket(
         isClient = streams.client,
         source = streams.source,
         frameCallback = this,
-        messageInflater = extensions.newMessageInflater(streams.client)
+        perMessageDeflate = extensions.perMessageDeflate,
+        noContextTakeover = extensions.noContextTakeover(!streams.client)
     )
   }
 
@@ -607,5 +639,15 @@ class RealWebSocket(
      * the server doesn't respond the web socket will be canceled.
      */
     private const val CANCEL_AFTER_CLOSE_MILLIS = 60L * 1000
+
+    /**
+     * The smallest message that will be compressed. We use 1024 because smaller messages already
+     * fit comfortably within a single ethernet packet (1500 bytes) even with framing overhead.
+     *
+     * For tests this must be big enough to realize real compression on test messages like
+     * 'aaaaaaaaaa...'. Our tests check if compression was applied just by looking at the size if
+     * the inbound buffer.
+     */
+    const val DEFAULT_MINIMUM_DEFLATE_SIZE = 1024L
   }
 }

@@ -55,7 +55,8 @@ class WebSocketReader(
   private val isClient: Boolean,
   val source: BufferedSource,
   private val frameCallback: FrameCallback,
-  private val messageInflater: MessageInflater?
+  private val perMessageDeflate: Boolean,
+  private val noContextTakeover: Boolean
 ) : Closeable {
   private var closed = false
 
@@ -68,6 +69,9 @@ class WebSocketReader(
 
   private val controlFrameBuffer = Buffer()
   private val messageFrameBuffer = Buffer()
+
+  /** Lazily initialized on first use. */
+  private var messageInflater: MessageInflater? = null
 
   // Masks are only a concern for server writers.
   private val maskKey: ByteArray? = if (isClient) null else ByteArray(4)
@@ -130,7 +134,7 @@ class WebSocketReader(
     when (opcode) {
       OPCODE_TEXT, OPCODE_BINARY -> {
         if (reservedFlag1) {
-          if (messageInflater == null) throw ProtocolException("Unexpected rsv1 flag")
+          if (!perMessageDeflate) throw ProtocolException("Unexpected rsv1 flag")
           readingCompressedMessage = true
         } else {
           readingCompressedMessage = false
@@ -232,7 +236,9 @@ class WebSocketReader(
     readMessage()
 
     if (readingCompressedMessage) {
-      messageInflater!!.inflate(messageFrameBuffer)
+      val messageInflater = this.messageInflater
+          ?: MessageInflater(noContextTakeover).also { this.messageInflater = it }
+      messageInflater.inflate(messageFrameBuffer)
     }
 
     if (opcode == OPCODE_TEXT) {

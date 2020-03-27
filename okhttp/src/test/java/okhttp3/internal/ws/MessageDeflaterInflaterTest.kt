@@ -50,6 +50,19 @@ internal class MessageDeflaterInflaterTest {
     assertThat(inflated).isEqualTo(goldenValue)
   }
 
+  @Test fun `inflate deflate empty message`() {
+    val deflater = MessageDeflater(false)
+    val inflater = MessageInflater(false)
+
+    val goldenValue = "".encodeUtf8()
+
+    val deflated = deflater.deflate(goldenValue)
+    assertThat(deflated).isEqualTo("00".decodeHex())
+    val inflated = inflater.inflate(deflated)
+
+    assertThat(inflated).isEqualTo(goldenValue)
+  }
+
   @Test fun `inflate deflate with context takeover`() {
     val deflater = MessageDeflater(false)
     val inflater = MessageInflater(false)

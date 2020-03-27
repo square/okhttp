@@ -1,6 +1,29 @@
 Change Log
 ==========
 
+## Version 4.5.0-RC1
+
+_2020-03-17_
+
+**This release candidate turns on web socket compression.**
+
+The [spec][rfc_7692] includes a sophisticated mechanism for client and server to negotiate
+compression features. We strive to offer great performance in our default configuration and so we're
+making compression the default for everyone starting with this release candidate.
+
+Please be considerate of your servers and their operators as you roll out this release. Compression
+saves bandwidth but it costs CPU and memory! If you run into a problem you may need to adjust or
+disable the `permessage-deflate` compression settings on your server.
+
+Note that OkHttp won't use compression when sending messages smaller than 1 KiB.
+
+ *  Fix: Don't crash when the URL hostname contains an underscore on Android.
+ *  Fix: Change HTTP/2 to use a daemon thread for its socket reader. If you've ever seen a command
+    line application hang after all of the work is done, it may be due to a non-daemon thread like
+    this one.
+ *  New: Include suppressed exceptions when all routes to a target service fail.
+
+
 ## Version 4.4.1
 
 _2020-03-08_
@@ -272,3 +295,4 @@ _2019-06-03_
  [iana_websocket]: https://www.iana.org/assignments/websocket/websocket.txt
  [okhttp4_blog_post]: https://cashapp.github.io/2019-06-26/okhttp-4-goes-kotlin
  [upgrading_to_okhttp_4]: https://square.github.io/okhttp/upgrading_to_okhttp_4/
+ [rfc_7692]: https://tools.ietf.org/html/rfc7692

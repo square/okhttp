@@ -3,11 +3,11 @@ Security Policy
 
 ## Supported Versions
 
-| Version | Supported  | Notes          |
-| ------- | ---------- | -------------- |
-| 4.x     | ✅         |                |
-| 3.14.x  | ✅         |                |
-| 3.12.x  | ✅         | Android 2.3+ (API level 9+) and Java 7+. Platforms may not support TLSv1.2. Until December 31, 2020  |
+| Version | Supported        | Notes          |
+| ------- | ---------------- | -------------- |
+| 4.x     | ✅               |  Android 5.0+ (API level 21+) and on Java 8+. |
+| 3.14.x  | Until 2020-06-30 |                |
+| 3.12.x  | Until 2021-12-31 | Android 2.3+ (API level 9+) and Java 7+. Platforms may not support TLSv1.2. |
 
 
 ## Reporting a Vulnerability

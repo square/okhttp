@@ -166,7 +166,8 @@ _2019-02-04_
 
     The OkHttp 3.12.x branch will be our long-term branch for Android 2.3+ (API level 9+) and Java
     7+. These platforms lack support for TLS 1.2 and should not be used. But because upgrading is
-    difficult we will backport critical fixes to the 3.12.x branch through December 31, 2020.
+    difficult we will backport critical fixes to the 3.12.x branch through December 31, 2021. (This
+    commitment was originally through December 31, 2020; we have since extended it.)
 
  *  **TLSv1 and TLSv1.1 are no longer enabled by default.** Major web browsers are working towards
     removing these versions altogether in early 2020. If your servers aren't ready yet you can

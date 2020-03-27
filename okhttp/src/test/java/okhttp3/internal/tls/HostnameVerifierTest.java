@@ -516,6 +516,44 @@ public final class HostnameVerifierTest {
     assertThat(verifier.verify("quux.com", session)).isFalse();
   }
 
+  @Test public void subjectAltNameWithIPAddresses() throws Exception {
+    // $ cat ./cert.cnf
+    // [req]
+    // distinguished_name=distinguished_name
+    // req_extensions=req_extensions
+    // x509_extensions=x509_extensions
+    // [distinguished_name]
+    // [req_extensions]
+    // [x509_extensions]
+    // subjectAltName=IP:0:0:0:0:0:0:0:1,IP:2a03:2880:f003:c07:face:b00c::2,IP:0::5,IP:192.168.1.1
+    //
+    // $ openssl req -x509 -nodes -days 36500 -subj '/CN=foo.com' -config ./cert.cnf \
+    //     -newkey rsa:512 -out cert.pem
+    SSLSession session = session(""
+        + "-----BEGIN CERTIFICATE-----\n"
+        + "MIIBaDCCARKgAwIBAgIJALxN+AOBVGwQMA0GCSqGSIb3DQEBCwUAMBIxEDAOBgNV\n"
+        + "BAMMB2Zvby5jb20wIBcNMjAwMzIyMTEwNDI4WhgPMjEyMDAyMjcxMTA0MjhaMBIx\n"
+        + "EDAOBgNVBAMMB2Zvby5jb20wXDANBgkqhkiG9w0BAQEFAANLADBIAkEAlnVbVfQ9\n"
+        + "4aYjrPCcFuxOpjXuvyOc9Hcha4K7TfXyfsrjhAvCjCBIT/TiLOUVF3sx4yoCAtX8\n"
+        + "wmt404tTbKD6UwIDAQABo0kwRzBFBgNVHREEPjA8hxAAAAAAAAAAAAAAAAAAAAAB\n"
+        + "hxAqAyiA8AMMB/rOsAwAAAAChxAAAAAAAAAAAAAAAAAAAAAFhwTAqAEBMA0GCSqG\n"
+        + "SIb3DQEBCwUAA0EAPSOYHJh7hB4ElBqTCAFW+T5Y7mXsv9nQjBJ7w0YIw83V2PEI\n"
+        + "3KbBIyGTrqHD6lG8QGZy+yNkIcRlodG8OfQRUg==\n"
+        + "-----END CERTIFICATE-----");
+    assertThat(verifier.verify("foo.com", session)).isFalse();
+    assertThat(verifier.verify("::1", session)).isTrue();
+    assertThat(verifier.verify("::2", session)).isFalse();
+    assertThat(verifier.verify("::5", session)).isTrue();
+    assertThat(verifier.verify("2a03:2880:f003:c07:face:b00c::2", session)).isTrue();
+    assertThat(verifier.verify("2a03:2880:f003:c07:face:b00c:0:2", session)).isTrue();
+    assertThat(verifier.verify("2a03:2880:f003:c07:FACE:B00C:0:2", session)).isTrue();
+    assertThat(verifier.verify("2a03:2880:f003:c07:face:b00c:0:3", session)).isFalse();
+    assertThat(verifier.verify("127.0.0.1", session)).isFalse();
+    assertThat(verifier.verify("192.168.1.1", session)).isTrue();
+    assertThat(verifier.verify("::ffff:192.168.1.1", session)).isTrue();
+    assertThat(verifier.verify("0:0:0:0:0:FFFF:C0A8:0101", session)).isTrue();
+  }
+
   @Test public void verifyAsIpAddress() {
     // IPv4
     assertThat(Util.canParseAsIpAddress("127.0.0.1")).isTrue();

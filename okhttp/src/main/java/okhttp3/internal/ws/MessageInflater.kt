@@ -35,6 +35,14 @@ class MessageInflater(
   fun inflate(buffer: Buffer) {
     require(deflatedBytes.size == 0L)
 
+    // Handle the empty message special case. The compressed empty message is one byte, '0x00'. We
+    // can't use the normal flow here because inflaterSource.read() throws EOFException if the
+    // deflated stream isn't complete but there's no bytes to return.
+    if (buffer.size == 1L && buffer[0L] == 0.toByte()) {
+      buffer.skip(1L)
+      return
+    }
+
     if (noContextTakeover) {
       inflater.reset()
     }
