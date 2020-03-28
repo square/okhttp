@@ -76,13 +76,17 @@ internal class TrustManagerWrapperAndroid(val trustManager: X509TrustManager) : 
 }
 
 internal class OkHttpTrustManagerAndroid(
-  val defaultTrustManager: X509TrustManager,
+  defaultTrustManager: X509TrustManager,
   overridesList: List<TrustManagerOverride>
 ) : X509TrustManager {
   internal val default =
       TrustManagerWrapperAndroid(defaultTrustManager)
   internal val overrides = overridesList.map {
     TrustManagerOverrideAndroid(it.predicate, TrustManagerWrapperAndroid(it.trustManager))
+  }
+
+  init {
+    println(this)
   }
 
   internal fun findByHost(peerHost: String): TrustManagerWrapperAndroid {

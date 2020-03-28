@@ -541,8 +541,8 @@ class OkHttpTest {
       // Hopefully this passes
     } catch (ioe: IOException) {
       // https://github.com/square/okhttp/issues/5840
-      assertEquals("Android internal error", ioe.message)
-      assertEquals(IllegalArgumentException::class.java, ioe.cause!!.javaClass)
+      val exceptions = generateSequence(ioe as Throwable) { e -> e.cause }.toList()
+      assertTrue(exceptions.any { it is IllegalArgumentException })
     }
   }
 

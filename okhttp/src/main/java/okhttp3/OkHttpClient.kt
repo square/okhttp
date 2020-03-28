@@ -227,8 +227,8 @@ open class OkHttpClient internal constructor(
   constructor() : this(Builder())
 
   init {
-    x509TrustManager = if (builder.trustManagerOverrides != null) {
-      TrustManagerBridge.Builder()
+    if (builder.trustManagerOverrides != null) {
+      builder.x509TrustManagerOrNull = TrustManagerBridge.Builder()
           .addOverrides(builder.trustManagerOverrides!!)
           .apply {
             if (builder.x509TrustManagerOrNull != null) {
@@ -236,17 +236,16 @@ open class OkHttpClient internal constructor(
             }
           }
           .build()
-    } else {
-      builder.x509TrustManagerOrNull
     }
 
     if (builder.sslSocketFactoryOrNull != null || connectionSpecs.none { it.isTls }) {
       this.sslSocketFactoryOrNull = builder.sslSocketFactoryOrNull
       this.certificateChainCleaner = builder.certificateChainCleaner
+      this.x509TrustManager = builder.x509TrustManagerOrNull
     } else {
-      val trustManager = x509TrustManager ?: Platform.get().platformTrustManager()
-      this.sslSocketFactoryOrNull = newSslSocketFactory(trustManager)
-      this.certificateChainCleaner = CertificateChainCleaner.get(trustManager)
+      this.x509TrustManager = builder.x509TrustManagerOrNull ?: Platform.get().platformTrustManager()
+      this.sslSocketFactoryOrNull = newSslSocketFactory(x509TrustManager!!)
+      this.certificateChainCleaner = CertificateChainCleaner.get(x509TrustManager!!)
     }
 
     if (sslSocketFactoryOrNull != null) {
@@ -744,6 +743,10 @@ open class OkHttpClient internal constructor(
         level = DeprecationLevel.ERROR
     )
     fun sslSocketFactory(sslSocketFactory: SSLSocketFactory) = apply {
+      check(trustManagerOverrides == null) {
+        "Can't override sslSocketFactory with trustManagerOverrides in place"
+      }
+
       if (sslSocketFactory != this.sslSocketFactoryOrNull) {
         this.routeDatabase = null
       }
@@ -803,6 +806,10 @@ open class OkHttpClient internal constructor(
       sslSocketFactory: SSLSocketFactory,
       trustManager: X509TrustManager
     ) = apply {
+      check(trustManagerOverrides == null) {
+        "Can't override sslSocketFactory with trustManagerOverrides in place"
+      }
+
       if (sslSocketFactory != this.sslSocketFactoryOrNull || trustManager != this.x509TrustManagerOrNull) {
         this.routeDatabase = null
       }
@@ -1070,6 +1077,8 @@ open class OkHttpClient internal constructor(
      * Set an override for host to allow insecure connections, typically a devserver with
      * a self-signed certificate unavailable to the dev build of the client.
      *
+     * This will clear out any existing sslSocketFactory, so call this before setting
+     *
      * n.b. not for production use.
      *
      * @param the exact hostname from the URL for insecure connections.
@@ -1082,6 +1091,9 @@ open class OkHttpClient internal constructor(
       }
 
       overrides.add(override)
+
+      // invalidate and rebuild sslSocketFactory later
+      this.sslSocketFactoryOrNull = null
     }
 
     fun build(): OkHttpClient = OkHttpClient(this)
