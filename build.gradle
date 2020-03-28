@@ -359,10 +359,13 @@ def alpnBootVersionForPatchVersion(String javaVersion, int patchVersion) {
       return '8.1.11.v20170118'
     case 161..181:
       return '8.1.12.v20180117'
-    case 191..232:
-      return '8.1.13.v20181017'
+    // These are Oracle releases for which the source code is not available, or it is unclear what
+    // exactly is because there is no correspondent tag in the OpenJDK repository. We assume that
+    // the source code for these releases is equivalent (at least for the files modified to make
+    // ALPN work) to the release that follows (for example, for 1.8.0u211 we assume that the source
+    // code is equivalent to 1.8.0u212, for 1.8.0u221 we assume 1.8.0u222, etc.).
     default:
-      throw new IllegalStateException("Unexpected Java version: ${javaVersion}")
+      return '8.1.13.v20181017'
   }
 }
 
