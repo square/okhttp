@@ -18,16 +18,15 @@ package okhttp3.internal.tls
 import android.os.Build
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
-import java.security.cert.Certificate
 import java.security.cert.X509Certificate
 import javax.net.ssl.X509TrustManager
 
 internal open class TrustManagerOverrideAndroid(
   val predicate: (String) -> Boolean,
-  val trustManager: TrustManagerWrapperAndroid
+  val trustManager: AndroidTrustManager
 )
 
-internal class TrustManagerWrapperAndroid(val trustManager: X509TrustManager) : X509TrustManager {
+internal class TrustManagerWrapperAndroid(val trustManager: X509TrustManager) : AndroidTrustManager {
   val delegateMethod by lazy { lookupAndroidDelegateMethod() }
 
   override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String) {
@@ -41,16 +40,22 @@ internal class TrustManagerWrapperAndroid(val trustManager: X509TrustManager) : 
   override fun getAcceptedIssuers(): Array<X509Certificate> = trustManager.acceptedIssuers
 
   // Allows to keep using the X509TrustManagerExtensions to clean certificates
-  fun checkServerTrusted(
-    chain: Array<out X509Certificate>,
+  override fun checkServerTrusted(
+    chain: Array<X509Certificate>,
     authType: String,
     host: String
-  ): List<Certificate> {
+  ): List<X509Certificate> {
+    if (trustManager is AndroidTrustManager) {
+      return trustManager.checkServerTrusted(chain, authType, host)
+    }
+
     // TODO review security implications here of orEmpty
     return delegateMethod?.let {
       invokeDelegateMethod(it, chain, authType, host)
     }.orEmpty()
   }
+
+  override fun isSameTrustConfiguration(host1: String, host2: String): Boolean = false
 
   private fun lookupAndroidDelegateMethod(): Method? {
     return try {
@@ -67,9 +72,9 @@ internal class TrustManagerWrapperAndroid(val trustManager: X509TrustManager) : 
     chain: Array<out X509Certificate>,
     authType: String,
     host: String
-  ): List<Certificate> {
+  ): List<X509Certificate> {
     try {
-      return delegateMethod.invoke(trustManager, chain, authType, host) as List<Certificate>
+      return delegateMethod.invoke(trustManager, chain, authType, host) as List<X509Certificate>
     } catch (ite: InvocationTargetException) {
       throw ite.targetException
     }
@@ -79,7 +84,7 @@ internal class TrustManagerWrapperAndroid(val trustManager: X509TrustManager) : 
 internal class TrustManagerAndroid(
   defaultTrustManager: X509TrustManager,
   overridesList: List<TrustManagerOverride>
-) : X509TrustManager {
+) : AndroidTrustManager {
   init {
     check(Build.VERSION.SDK_INT >= 26) {
       "TrustManagerAndroid only supported on Android 26+"
@@ -92,7 +97,7 @@ internal class TrustManagerAndroid(
     TrustManagerOverrideAndroid(it.predicate, TrustManagerWrapperAndroid(it.trustManager))
   }
 
-  internal fun findByHost(peerHost: String): TrustManagerWrapperAndroid {
+  internal fun findByHost(peerHost: String): AndroidTrustManager {
     overrides.forEach {
       if (it.predicate(peerHost)) {
         return it.trustManager
@@ -102,19 +107,17 @@ internal class TrustManagerAndroid(
     return default
   }
 
-  @Suppress("unused")
-  fun checkServerTrusted(
-    chain: Array<out X509Certificate>,
+  override fun checkServerTrusted(
+    chain: Array<X509Certificate>,
     authType: String,
     host: String
-  ): List<Certificate> {
+  ): List<X509Certificate> {
     val trustManager = findByHost(host)
 
     return trustManager.checkServerTrusted(chain, authType, host)
   }
 
-  @Suppress("unused")
-  fun isSameTrustConfiguration(host1: String, host2: String) = false
+  override fun isSameTrustConfiguration(host1: String, host2: String) = false
 
   override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String) {
     default.checkServerTrusted(chain, authType)
