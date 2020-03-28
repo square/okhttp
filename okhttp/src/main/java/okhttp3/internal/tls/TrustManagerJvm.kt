@@ -25,7 +25,7 @@ import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 
 @IgnoreJRERequirement
 @SuppressLint("NewApi")
-class OkHttpTrustManagerJvm internal constructor(
+class TrustManagerJvm internal constructor(
   internal val default: X509TrustManager,
   internal val overrides: List<TrustManagerOverride>
 ) : X509ExtendedTrustManager() {

@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.tls
 
+import android.os.Build
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.security.cert.Certificate
@@ -75,18 +76,20 @@ internal class TrustManagerWrapperAndroid(val trustManager: X509TrustManager) : 
   }
 }
 
-internal class OkHttpTrustManagerAndroid(
+internal class TrustManagerAndroid(
   defaultTrustManager: X509TrustManager,
   overridesList: List<TrustManagerOverride>
 ) : X509TrustManager {
+  init {
+    check(Build.VERSION.SDK_INT >= 26) {
+      "TrustManagerAndroid only supported on Android 26+"
+    }
+  }
+
   internal val default =
       TrustManagerWrapperAndroid(defaultTrustManager)
   internal val overrides = overridesList.map {
     TrustManagerOverrideAndroid(it.predicate, TrustManagerWrapperAndroid(it.trustManager))
-  }
-
-  init {
-    println(this)
   }
 
   internal fun findByHost(peerHost: String): TrustManagerWrapperAndroid {
@@ -99,6 +102,7 @@ internal class OkHttpTrustManagerAndroid(
     return default
   }
 
+  @Suppress("unused")
   fun checkServerTrusted(
     chain: Array<out X509Certificate>,
     authType: String,
@@ -108,6 +112,9 @@ internal class OkHttpTrustManagerAndroid(
 
     return trustManager.checkServerTrusted(chain, authType, host)
   }
+
+  @Suppress("unused")
+  fun isSameTrustConfiguration(host1: String, host2: String) = false
 
   override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String) {
     default.checkServerTrusted(chain, authType)

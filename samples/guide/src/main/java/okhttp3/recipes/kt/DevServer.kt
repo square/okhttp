@@ -35,7 +35,7 @@ class DevServer {
   }
 
   val client = OkHttpClient.Builder()
-      .insecureTrustManager("localhost")
+      .insecureForHost("localhost")
       .build()
 
   fun run() {

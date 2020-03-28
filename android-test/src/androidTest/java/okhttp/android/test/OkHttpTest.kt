@@ -19,9 +19,9 @@ import android.os.Build
 import android.support.test.InstrumentationRegistry
 import android.support.test.runner.AndroidJUnit4
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException
+import com.google.android.gms.security.ProviderInstaller
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import com.google.android.gms.security.ProviderInstaller
 import okhttp3.Call
 import okhttp3.CertificatePinner
 import okhttp3.Connection
@@ -32,9 +32,12 @@ import okhttp3.OkHttpClientTestRule
 import okhttp3.Protocol
 import okhttp3.RecordingEventListener
 import okhttp3.Request
+import okhttp3.Response
 import okhttp3.TlsVersion
 import okhttp3.dnsoverhttps.DnsOverHttps
 import okhttp3.internal.asFactory
+import okhttp3.internal.platform.Android10Platform
+import okhttp3.internal.platform.AndroidPlatform
 import okhttp3.internal.platform.Platform
 import okhttp3.logging.LoggingEventListener
 import okhttp3.mockwebserver.MockResponse
@@ -53,20 +56,18 @@ import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.io.IOException
+import java.net.HttpURLConnection
 import java.net.InetAddress
 import java.net.UnknownHostException
-import java.security.cert.X509Certificate
 import java.security.Security
+import java.security.cert.X509Certificate
+import java.util.logging.Logger
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocket
+import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
-import java.util.logging.Logger
-import okhttp3.internal.platform.AndroidPlatform
-import okhttp3.internal.platform.Android10Platform
-import java.io.IOException
-import java.lang.IllegalArgumentException
-import java.net.HttpURLConnection
 
 /**
  * Run with "./gradlew :android-test:connectedCheck" and make sure ANDROID_SDK_ROOT is set.
@@ -199,7 +200,17 @@ class OkHttpTest {
       response.use {
         assertEquals(Protocol.HTTP_2, response.protocol)
         assertEquals(200, response.code)
-        assertEquals("com.google.android.gms.org.conscrypt.Java8FileDescriptorSocket", socketClass)
+        when {
+          Build.VERSION.SDK_INT >= 24 -> {
+            assertEquals("com.google.android.gms.org.conscrypt.Java8FileDescriptorSocket", socketClass)
+          }
+          Build.VERSION.SDK_INT < 22 -> {
+            assertEquals("com.google.android.gms.org.conscrypt.KitKatPlatformOpenSSLSocketImplAdapter", socketClass)
+          }
+          else -> {
+            assertEquals("com.google.android.gms.org.conscrypt.ConscryptFileDescriptorSocket", socketClass)
+          }
+        }
         assertEquals(TlsVersion.TLS_1_2, response.handshake?.tlsVersion)
       }
     } finally {
@@ -253,7 +264,7 @@ class OkHttpTest {
 
   @Test
   fun testHttpRequestBlocked() {
-    assumeTrue(Build.VERSION.SDK_INT >= 23)
+    assumeTrue(Build.VERSION.SDK_INT >= 28)
 
     val request = Request.Builder().url("http://squareup.com/robots.txt").build()
 
@@ -324,8 +335,48 @@ class OkHttpTest {
 
   @Test
   fun testDevserverSupport() {
+    assumeTrue(Build.VERSION.SDK_INT >= 26)
+
     server.useHttps(handshakeCertificates.sslSocketFactory(), false)
-    client = client.newBuilder().insecureTrustManager(server.hostName).build()
+    client = client.newBuilder().insecureForHost(server.hostName).build()
+
+    server.enqueue(MockResponse()
+        .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
+        .setHeader("Location", "https://www.google.com/robots.txt"))
+
+    val request = Request.Builder().url(server.url("/")).build()
+
+    val response = client.newCall(request).execute()
+
+    response.use {
+      assertEquals(listOf("CN=${server.hostName}"), response.priorResponse?.subjectNames)
+
+      assertEquals(200, response.code)
+      assertEquals(Protocol.HTTP_2, response.protocol)
+      val tlsVersion = response.handshake?.tlsVersion
+      assertTrue(tlsVersion == TlsVersion.TLS_1_2 || tlsVersion == TlsVersion.TLS_1_3)
+      assertEquals("CN=www.google.com,O=Google LLC,L=Mountain View,ST=California,C=US",
+          (response.handshake!!.peerCertificates.first() as X509Certificate).subjectDN.name)
+    }
+  }
+
+  @Test
+  fun testInsecureTrustManager() {
+    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+
+    // trust manager without special android checkServerTrusted method
+    val trustManager = object : X509TrustManager {
+      override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {}
+
+      override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {}
+
+      override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
+    }
+
+    val sslContext = Platform.get().newSSLContext()
+    sslContext.init(null, arrayOf<TrustManager>(trustManager), null)
+
+    client = client.newBuilder().sslSocketFactory(sslContext.socketFactory, trustManager).build()
 
     server.enqueue(MockResponse()
         .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
@@ -340,10 +391,62 @@ class OkHttpTest {
       assertEquals(Protocol.HTTP_2, response.protocol)
       val tlsVersion = response.handshake?.tlsVersion
       assertTrue(tlsVersion == TlsVersion.TLS_1_2 || tlsVersion == TlsVersion.TLS_1_3)
-      assertEquals("CN=www.google.com,O=Google LLC,L=Mountain View,ST=California,C=US",
-          (response.handshake!!.peerCertificates.first() as X509Certificate).subjectDN.name)
+      assertEquals(listOf<String>(), response.subjectNames)
     }
   }
+
+  @Test
+  fun testInsecureTrustManagerWithAndroidMethod() {
+    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+
+    // trust manager with special android checkServerTrusted method
+    val trustManager = object : X509TrustManager {
+      override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {}
+
+      override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {}
+
+      @Suppress("unused")
+      fun checkServerTrusted(chain: Array<X509Certificate>, authType: String, host: String): List<X509Certificate> {
+        return chain.toList()
+      }
+
+      @Suppress("unused")
+      fun isSameTrustConfiguration(host1: String, host2: String) = true
+
+      override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
+    }
+
+    val sslContext = Platform.get().newSSLContext()
+    sslContext.init(null, arrayOf<TrustManager>(trustManager), null)
+
+    client = client.newBuilder().sslSocketFactory(sslContext.socketFactory, trustManager).build()
+
+    server.enqueue(MockResponse()
+        .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
+        .setHeader("Location", "https://www.google.com/robots.txt"))
+
+    val request = Request.Builder().url(server.url("/")).build()
+
+    val response = client.newCall(request).execute()
+
+    response.use {
+      assertEquals(200, response.code)
+      assertEquals(Protocol.HTTP_2, response.protocol)
+      val tlsVersion = response.handshake?.tlsVersion
+      assertTrue(tlsVersion == TlsVersion.TLS_1_2 || tlsVersion == TlsVersion.TLS_1_3)
+      if (Build.VERSION.SDK_INT >= 26) {
+        val subjectNames = response.subjectNames
+        assertEquals(
+            listOf("CN=www.google.com,O=Google LLC,L=Mountain View,ST=California,C=US"),
+            subjectNames.take(1))
+      } else {
+        assertEquals(listOf<String>(), response.subjectNames)
+      }
+    }
+  }
+
+  private val Response.subjectNames: List<String>
+    get() = handshake!!.peerCertificates.map { (it as X509Certificate).subjectDN.name }
 
   @Test
   fun testCertificatePinningFailure() {
@@ -423,6 +526,8 @@ class OkHttpTest {
 
   @Test
   fun testSessionReuse() {
+    assumeTrue(Build.VERSION.SDK_INT >= 28)
+
     val sessionIds = mutableListOf<String>()
 
     enableTls()

@@ -16,12 +16,18 @@
 package okhttp3.internal.tls
 
 import java.security.cert.X509Certificate
-import javax.net.ssl.X509TrustManager
 
-internal object InsecureTrustManager : X509TrustManager {
+internal object InsecureTrustManager : AndroidTrustManager {
   override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {}
 
   override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {}
+
+  @Suppress("unused")
+  override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String, host: String): List<X509Certificate> =
+    chain.toList()
+
+  @Suppress("unused")
+  override fun isSameTrustConfiguration(host1: String, host2: String) = true
 
   override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
 }

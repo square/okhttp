@@ -795,8 +795,6 @@ open class OkHttpClient internal constructor(
      *    }
      * ```
      *
-     * n.b. OkHttp will generate a wrapper with this method for you, if you don't.
-     *
      * This method works like [X509TrustManager.checkServerTrusted] but it receives the hostname of
      * the server as an extra parameter. Regardless of what checks this method performs, OkHttp will
      * always check that the server's certificates match its hostname using the [HostnameVerifier].
@@ -1077,13 +1075,13 @@ open class OkHttpClient internal constructor(
      * Set an override for host to allow insecure connections, typically a devserver with
      * a self-signed certificate unavailable to the dev build of the client.
      *
-     * This will clear out any existing sslSocketFactory, so call this before setting
+     * This will override any existing sslSocketFactory with the platform default.
      *
      * n.b. not for production use.
      *
      * @param the exact hostname from the URL for insecure connections.
      */
-    fun insecureTrustManager(hostName: String): Builder = apply {
+    fun insecureForHost(hostName: String): Builder = apply {
       val override = TrustManagerOverride({ hostName == it }, InsecureTrustManager)
 
       val overrides = trustManagerOverrides ?: mutableListOf<TrustManagerOverride>().also {

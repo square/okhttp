@@ -47,9 +47,9 @@ object TrustManagerBridge {
       val defaultTrustManager = default ?: Platform.get().platformTrustManager()
 
       return if (Platform.get().isAndroid) {
-        OkHttpTrustManagerAndroid(defaultTrustManager, overrides.toList())
+        TrustManagerAndroid(defaultTrustManager, overrides.toList())
       } else {
-        OkHttpTrustManagerJvm(defaultTrustManager as X509ExtendedTrustManager, overrides.toList())
+        TrustManagerJvm(defaultTrustManager as X509ExtendedTrustManager, overrides.toList())
       }
     }
   }
