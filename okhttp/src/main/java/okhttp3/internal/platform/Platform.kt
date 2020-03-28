@@ -87,7 +87,7 @@ open class Platform {
       // Attempt to get the trust manager from an OpenJDK socket factory. We attempt this on all
       // platforms in order to support Robolectric, which mixes classes from both Android and the
       // Oracle JDK. Note that we don't support HTTP/2 or other nice features on Robolectric.
-      val sslContextClass = Class.forName("sun.security.ssl.SSLContextImpl")
+      val sslContextClass = Class.forName("sun.security.ssl.SSLContextImpl", false, javaClass.classLoader)
       val context = readFieldOrNull(sslSocketFactory, sslContextClass, "context") ?: return null
       readFieldOrNull(context, X509TrustManager::class.java, "trustManager")
     } catch (e: ClassNotFoundException) {

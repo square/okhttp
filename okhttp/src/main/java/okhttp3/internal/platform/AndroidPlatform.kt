@@ -100,7 +100,7 @@ class AndroidPlatform : Platform() {
 
   override fun isCleartextTrafficPermitted(hostname: String): Boolean {
     return try {
-      val networkPolicyClass = Class.forName("android.security.NetworkSecurityPolicy")
+      val networkPolicyClass = Class.forName("android.security.NetworkSecurityPolicy", false, javaClass.classLoader)
       val getInstanceMethod = networkPolicyClass.getMethod("getInstance")
       val networkSecurityPolicy = getInstanceMethod.invoke(null)
       api24IsCleartextTrafficPermitted(hostname, networkPolicyClass, networkSecurityPolicy)
@@ -184,7 +184,7 @@ class AndroidPlatform : Platform() {
   companion object {
     val isAndroid: Boolean = try {
       // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
-      Class.forName("com.android.org.conscrypt.OpenSSLSocketImpl")
+      Class.forName("com.android.org.conscrypt.OpenSSLSocketImpl", false, javaClass.classLoader)
 
       // account for android-all, forces UnsatisfiedLinkError in Intellij
       check(Build.VERSION.SDK_INT > 0)
