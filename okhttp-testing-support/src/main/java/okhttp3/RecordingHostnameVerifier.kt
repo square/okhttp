@@ -13,19 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3;
+package okhttp3
 
-import java.util.ArrayList;
-import java.util.List;
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLSession;
+import java.util.ArrayList
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.SSLSession
 
-public final class RecordingHostnameVerifier implements HostnameVerifier {
-  public final List<String> calls = new ArrayList<>();
-
-  @Override
-  public synchronized boolean verify(String hostname, SSLSession session) {
-    calls.add("verify " + hostname);
-    return true;
+class RecordingHostnameVerifier : HostnameVerifier {
+  @JvmField
+  val calls: MutableList<String> = ArrayList()
+  @Synchronized override fun verify(
+    hostname: String,
+    session: SSLSession
+  ): Boolean {
+    calls.add("verify $hostname")
+    return true
   }
 }
