@@ -1077,7 +1077,7 @@ open class OkHttpClient internal constructor(
      *
      * This will override any existing sslSocketFactory with the platform default.
      *
-     * n.b. not for production use.
+     * n.b. not for production use, only available from Android version 26.
      *
      * @param the exact hostname from the URL for insecure connections.
      */
