@@ -120,9 +120,9 @@ class OkHttpClientTestRule : TestRule {
           throw t
         } finally {
           Thread.setDefaultUncaughtExceptionHandler(defaultUncaughtExceptionHandler)
-//          ensureAllConnectionsReleased()
+          ensureAllConnectionsReleased()
           releaseClient()
-//          ensureAllTaskQueuesIdle()
+          ensureAllTaskQueuesIdle()
         }
       }
 
