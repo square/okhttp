@@ -50,6 +50,11 @@ import javax.net.ssl.X509TrustManager
 class TrustManagerBridgeTest {
   private lateinit var platformTrustManager: X509TrustManager
 
+  val LOCALHOST_DNS = object : Dns {
+    override fun lookup(hostname: String): List<InetAddress> =
+      listOf(InetAddress.getByName("localhost"))
+  }
+
   @get:Rule
   val clientTestRule = OkHttpClientTestRule()
 
@@ -75,17 +80,9 @@ class TrustManagerBridgeTest {
       .insecure("www.facebook.com")
       .build() as X509ExtendedTrustManager
 
-  val sslContext = Platform.get()
-      .newSSLContext()
-      .apply {
-        init(null, arrayOf<TrustManager>(bridge), null)
-      }
-
   var client = clientTestRule.newClientBuilder()
-      .sslSocketFactory(sslContext.socketFactory, bridge)
-      // required to allow redirect www.facebook.com -> localhost
-      // TODO consider customising the hostname verifier also
-      .hostnameVerifier(HostnameVerifier { hostName, session -> true })
+      .insecureForHost("localhost")
+      .insecureForHost("www.facebook.com")
       .build()
 
   @get:Rule
@@ -195,10 +192,7 @@ class TrustManagerBridgeTest {
   fun testFacebookFakedHttps() {
     server.enqueue(MockResponse().setBody("X"))
 
-    client = client.newBuilder().dns(object : Dns {
-      override fun lookup(hostname: String): List<InetAddress> =
-        listOf(InetAddress.getByName("localhost"))
-    }).build()
+    client = client.newBuilder().dns(LOCALHOST_DNS).build()
 
     get("https://www.facebook.com:${server.port}/robots.txt").use { response ->
       assertEquals("X", response.body!!.string())
@@ -211,10 +205,7 @@ class TrustManagerBridgeTest {
   fun testGoogleFakedHttpsFails() {
     server.enqueue(MockResponse().setBody("X"))
 
-    client = client.newBuilder().dns(object : Dns {
-      override fun lookup(hostname: String): List<InetAddress> =
-        listOf(InetAddress.getByName("localhost"))
-    }).build()
+    client = client.newBuilder().dns(LOCALHOST_DNS).build()
 
     try {
       get("https://www.google.com:${server.port}/robots.txt").close()

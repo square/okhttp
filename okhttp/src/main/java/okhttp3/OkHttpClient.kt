@@ -41,6 +41,7 @@ import okhttp3.internal.immutableListOf
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.proxy.NullProxySelector
 import okhttp3.internal.tls.CertificateChainCleaner
+import okhttp3.internal.tls.HostnameVerifierOverride
 import okhttp3.internal.tls.InsecureTrustManager
 import okhttp3.internal.tls.OkHostnameVerifier
 import okhttp3.internal.tls.TrustManagerBridge
@@ -50,6 +51,7 @@ import okhttp3.internal.ws.RealWebSocket
 import okio.Sink
 import okio.Source
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
+import javax.net.ssl.SSLSession
 
 /**
  * Factory for [calls][Call], which can be used to send HTTP requests and read their responses.
@@ -191,7 +193,7 @@ open class OkHttpClient internal constructor(
 
   @get:JvmName("protocols") val protocols: List<Protocol> = builder.protocols
 
-  @get:JvmName("hostnameVerifier") val hostnameVerifier: HostnameVerifier = builder.hostnameVerifier
+  @get:JvmName("hostnameVerifier") val hostnameVerifier: HostnameVerifier
 
   @get:JvmName("certificatePinner") val certificatePinner: CertificatePinner
 
@@ -236,6 +238,10 @@ open class OkHttpClient internal constructor(
             }
           }
           .build()
+
+      this.hostnameVerifier = HostnameVerifierOverride(builder.hostnameVerifier, builder.trustManagerOverrides!!.toList())
+    } else {
+      this.hostnameVerifier = builder.hostnameVerifier
     }
 
     if (builder.sslSocketFactoryOrNull != null || connectionSpecs.none { it.isTls }) {
@@ -1082,7 +1088,7 @@ open class OkHttpClient internal constructor(
      * @param the exact hostname from the URL for insecure connections.
      */
     fun insecureForHost(hostName: String): Builder = apply {
-      val override = TrustManagerOverride({ hostName == it }, InsecureTrustManager)
+      val override = TrustManagerOverride({ hostName == it }, OkHostnameVerifier.Insecure, InsecureTrustManager)
 
       val overrides = trustManagerOverrides ?: mutableListOf<TrustManagerOverride>().also {
         this.trustManagerOverrides = it
