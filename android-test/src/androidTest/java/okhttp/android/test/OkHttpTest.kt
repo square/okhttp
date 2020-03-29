@@ -513,9 +513,8 @@ class OkHttpTest {
         Request.Builder().url("https://example_underscore_123.s3.amazonaws.com/").build()
 
     try {
-      val response = client.newCall(request).execute()
+      client.newCall(request).execute().close()
       // Hopefully this passes
-      response.close()
     } catch (ioe: IOException) {
       // https://github.com/square/okhttp/issues/5840
       assertEquals("Android internal error", ioe.message)
