@@ -275,7 +275,7 @@ class MockWebServer : ExternalResource(), Closeable {
    *
    * @param tunnelProxy true to expect the HTTP CONNECT method before negotiating TLS.
    */
-  fun useHttps(sslSocketFactory: SSLSocketFactory, tunnelProxy: Boolean) {
+  fun useHttps(sslSocketFactory: SSLSocketFactory, tunnelProxy: Boolean = false) {
     this.sslSocketFactory = sslSocketFactory
     this.tunnelProxy = tunnelProxy
   }
