@@ -18,7 +18,7 @@ package okhttp3.internal.tls
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSession
 
-class HostnameVerifierOverride(val default: HostnameVerifier, val overrides: List<TrustManagerOverride>): HostnameVerifier {
+class HostnameVerifierOverride(val default: HostnameVerifier, val overrides: List<TrustManagerOverride>) : HostnameVerifier {
   override fun verify(hostName: String, session: SSLSession): Boolean {
     val verifier = overrides.find {
       it.predicate(hostName) && it.hostnameVerifier != null
