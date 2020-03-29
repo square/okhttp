@@ -1084,7 +1084,7 @@ open class OkHttpClient internal constructor(
      *
      * n.b. not for production use, only available from Android version 26.
      *
-     * @param the exact hostname from the URL for insecure connections.
+     * @param hostName the exact hostname from the URL for insecure connections.
      */
     fun insecureForHost(hostName: String): Builder = apply {
       val override = TrustManagerOverride({ hostName == it }, OkHostnameVerifier.Insecure, InsecureTrustManager)
