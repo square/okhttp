@@ -49,10 +49,10 @@ class StandardAndroidSocketAdapter(
     @Suppress("UNCHECKED_CAST")
     fun buildIfSupported(packageName: String = "com.android.org.conscrypt"): SocketAdapter? {
       return try {
-        val sslSocketClass = Class.forName("$packageName.OpenSSLSocketImpl", false, javaClass.classLoader) as Class<in SSLSocket>
+        val sslSocketClass = Class.forName("$packageName.OpenSSLSocketImpl") as Class<in SSLSocket>
         val sslSocketFactoryClass =
-            Class.forName("$packageName.OpenSSLSocketFactoryImpl", false, javaClass.classLoader) as Class<in SSLSocketFactory>
-        val paramsClass = Class.forName("$packageName.SSLParametersImpl", false, javaClass.classLoader)
+            Class.forName("$packageName.OpenSSLSocketFactoryImpl") as Class<in SSLSocketFactory>
+        val paramsClass = Class.forName("$packageName.SSLParametersImpl")
 
         StandardAndroidSocketAdapter(sslSocketClass, sslSocketFactoryClass, paramsClass)
       } catch (e: Exception) {

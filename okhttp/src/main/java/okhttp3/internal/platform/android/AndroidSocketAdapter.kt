@@ -98,7 +98,7 @@ open class AndroidSocketAdapter(private val sslSocketClass: Class<in SSLSocket>)
     fun buildIfSupported(packageName: String): SocketAdapter? {
       return try {
         @Suppress("UNCHECKED_CAST")
-        val sslSocketClass = Class.forName("$packageName.OpenSSLSocketImpl", false, javaClass.classLoader) as Class<in SSLSocket>
+        val sslSocketClass = Class.forName("$packageName.OpenSSLSocketImpl") as Class<in SSLSocket>
 
         AndroidSocketAdapter(sslSocketClass)
       } catch (e: Exception) {
