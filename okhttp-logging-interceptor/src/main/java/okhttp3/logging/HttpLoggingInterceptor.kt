@@ -37,7 +37,10 @@ import okio.GzipSource
  * change slightly between releases. If you need a stable logging format, use your own interceptor.
  */
 class HttpLoggingInterceptor @JvmOverloads constructor(
-  private val logger: Logger = Logger.DEFAULT
+  private val logger: Logger = Logger.DEFAULT,
+  private val formatBody: Boolean = false,
+  private val jsonIndentSpaces: Int = 2,
+  private val showExtraHeaders: Boolean = false
 ) : Interceptor {
 
   @Volatile private var headersToRedact = emptySet<String>()
@@ -158,6 +161,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
     val requestBody = request.body
 
     val connection = chain.connection()
+    showExtraHeader("╔════════  Request ${request.method}  ═════════════════════════════")
     var requestStartMessage =
         ("--> ${request.method} ${request.url}${if (connection != null) " " + connection.protocol() else ""}")
     if (!logHeaders && requestBody != null) {
@@ -183,9 +187,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
         }
       }
 
-      for (i in 0 until headers.size) {
-        logHeader(headers, i)
-      }
+      logHeaders(headers)
 
       if (!logBody || requestBody == null) {
         logger.log("--> END ${request.method}")
@@ -227,14 +229,13 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
     val responseBody = response.body!!
     val contentLength = responseBody.contentLength()
     val bodySize = if (contentLength != -1L) "$contentLength-byte" else "unknown-length"
+    showExtraHeader("╔════════  RESPONSE  ════════════════════════════════")
     logger.log(
         "<-- ${response.code}${if (response.message.isEmpty()) "" else ' ' + response.message} ${response.request.url} (${tookMs}ms${if (!logHeaders) ", $bodySize body" else ""})")
 
     if (logHeaders) {
       val headers = response.headers
-      for (i in 0 until headers.size) {
-        logHeader(headers, i)
-      }
+      logHeaders(headers)
 
       if (!logBody || !response.promisesBody()) {
         logger.log("<-- END HTTP")
@@ -245,6 +246,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
         source.request(Long.MAX_VALUE) // Buffer the entire body.
         var buffer = source.buffer
 
+        showExtraHeader("─────────  BODY  ───────────────────────────────────")
         var gzippedLength: Long? = null
         if ("gzip".equals(headers["Content-Encoding"], ignoreCase = true)) {
           gzippedLength = buffer.size
@@ -254,9 +256,6 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
           }
         }
 
-        val contentType = responseBody.contentType()
-        val charset: Charset = contentType?.charset(UTF_8) ?: UTF_8
-
         if (!buffer.isProbablyUtf8()) {
           logger.log("")
           logger.log("<-- END HTTP (binary ${buffer.size}-byte body omitted)")
@@ -264,24 +263,35 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
         }
 
         if (contentLength != 0L) {
+          val charset: Charset = responseBody.contentType()?.charset(UTF_8) ?: UTF_8
           logger.log("")
-          logger.log(buffer.clone().readString(charset))
+          logger.log(formatJSONBody(buffer.clone().readString(charset), jsonIndentSpaces))
         }
 
-        if (gzippedLength != null) {
-          logger.log("<-- END HTTP (${buffer.size}-byte, $gzippedLength-gzipped-byte body)")
-        } else {
+        if (gzippedLength == null) {
           logger.log("<-- END HTTP (${buffer.size}-byte body)")
+        } else {
+          logger.log("<-- END HTTP (${buffer.size}-byte, $gzippedLength-gzipped-byte body)")
         }
       }
     }
 
     return response
   }
+  private fun showExtraHeader(message: String) {
+    if (showExtraHeaders) {
+      logger.log(message)
+    }
+  }
 
-  private fun logHeader(headers: Headers, i: Int) {
-    val value = if (headers.name(i) in headersToRedact) "██" else headers.value(i)
-    logger.log(headers.name(i) + ": " + value)
+  private fun logHeaders(headers: Headers) {
+    if (headers.size > 0) {
+      showExtraHeader("─────────  HEADERS  ─────────────────────────────────")
+    }
+    for (i in 0 until headers.size) {
+      val value = if (headers.name(i) in headersToRedact) "██" else headers.value(i)
+      logger.log(headers.name(i) + ": " + value)
+    }
   }
 
   private fun bodyHasUnknownEncoding(headers: Headers): Boolean {
@@ -289,4 +299,66 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
     return !contentEncoding.equals("identity", ignoreCase = true) &&
         !contentEncoding.equals("gzip", ignoreCase = true)
   }
+  private fun formatJSONBody(body: String, indentSpaces: Int = 2): String {
+    if (body.trimStart()[0] != '{' && body.trimStart()[0] != '[' || !formatBody) {
+      return body
+    }
+    val bodyCharArray = body.toCharArray()
+    val newline = System.lineSeparator()
+    val formattedBodyBuilder = StringBuilder()
+    var notBetweenQuotes = true
+    var index = 0
+    var baseIndent = 0
+
+    loop@ while (index < bodyCharArray.size) {
+      val character = bodyCharArray[index]
+      if (character == '\"') {
+        formattedBodyBuilder.append(character)
+        notBetweenQuotes = !notBetweenQuotes
+        index++
+        continue@loop
+      }
+      if (notBetweenQuotes) {
+        when (character) {
+          '{', '[' -> {
+            baseIndent += indentSpaces
+            formattedBodyBuilder.append(character + newline + createIndentSpace(baseIndent))
+            index++
+            continue@loop
+          }
+          '}', ']' -> {
+            baseIndent -= indentSpaces
+            formattedBodyBuilder.append(
+                    newline + (if (baseIndent > 0) createIndentSpace(baseIndent) else "") + character
+            )
+            index++
+            continue@loop
+          }
+          ':' -> {
+            formattedBodyBuilder.append("$character ")
+            index++
+            continue@loop
+          }
+          ',' -> {
+            formattedBodyBuilder.append(
+              character + newline + if (baseIndent > 0) createIndentSpace(baseIndent) else ""
+            )
+            index++
+            continue@loop
+          }
+          else -> if (Character.isWhitespace(character)) {
+            index++
+            continue@loop
+          }
+        }
+      }
+      formattedBodyBuilder.append(
+        character.toString() + if (character == '\\') bodyCharArray[++index] else ""
+      )
+      index++
+    }
+    return formattedBodyBuilder.toString()
+  }
+
+  private fun createIndentSpace(indent: Int) = String.format("%${indent}s", "")
 }

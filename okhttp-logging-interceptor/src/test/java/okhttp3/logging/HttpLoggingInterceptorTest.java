@@ -59,6 +59,7 @@ public final class HttpLoggingInterceptorTest {
   private final HandshakeCertificates handshakeCertificates = localhost();
   private final HostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
   private OkHttpClient client;
+  private OkHttpClient clientWithFormatter;
   private String host;
   private HttpUrl url;
 
@@ -66,11 +67,25 @@ public final class HttpLoggingInterceptorTest {
   private final HttpLoggingInterceptor networkInterceptor =
       new HttpLoggingInterceptor(networkLogs);
 
+
   private final LogRecorder applicationLogs = new LogRecorder();
   private final HttpLoggingInterceptor applicationInterceptor =
       new HttpLoggingInterceptor(applicationLogs);
 
   private Interceptor extraNetworkInterceptor = null;
+  String newline = System.lineSeparator();
+  String jsonBody = "{\"object\":{\"a\":\"b\",\"c\":\"d\"}, \"array\":[ 1, 2 ], \"msg\":\"Hello World\"}";
+  String jsonBodyFormatted = "{" + newline +
+      "   \"object\": {" + newline +
+      "      \"a\": \"b\"," + newline +
+      "      \"c\": \"d\"" + newline +
+      "   }," + newline +
+      "   \"array\": [" + newline +
+      "      1," + newline +
+      "      2" + newline +
+      "   ]," + newline +
+      "   \"msg\": \"Hello World\"" + newline +
+      "}";
 
   private void setLevel(Level level) {
     networkInterceptor.setLevel(level);
@@ -402,6 +417,40 @@ public final class HttpLoggingInterceptorTest {
         .assertNoMoreLogs();
   }
 
+  @Test public void showAdditionalHeaders() throws IOException {
+    final HttpLoggingInterceptor applicationInterceptorWithHeaders =
+        new HttpLoggingInterceptor(applicationLogs, true, 3, true);
+    applicationInterceptorWithHeaders.setLevel(Level.HEADERS);
+
+    clientWithFormatter = new OkHttpClient.Builder()
+        .addInterceptor(applicationInterceptorWithHeaders)
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
+        .hostnameVerifier(hostnameVerifier)
+        .build();
+
+    server.enqueue(new MockResponse()
+        .setHeader("Content-Type", PLAIN));
+    Response response = clientWithFormatter.newCall(
+        request().addHeader("Connection", "Keep-Alive").build()
+    ).execute();
+    response.body().close();
+
+    applicationLogs
+        .assertLogEqual("╔════════  Request GET  ═════════════════════════════")
+        .assertLogEqual("--> GET " + url)
+        .assertLogEqual("─────────  HEADERS  ─────────────────────────────────")
+        .assertLogEqual("Connection: Keep-Alive")
+        .assertLogEqual("--> END GET")
+        .assertLogEqual("╔════════  RESPONSE  ════════════════════════════════")
+        .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
+        .assertLogEqual("─────────  HEADERS  ─────────────────────────────────")
+        .assertLogEqual("Content-Length: 0")
+        .assertLogEqual("Content-Type: text/plain; charset=utf-8")
+        .assertLogEqual("<-- END HTTP")
+        .assertNoMoreLogs();
+  }
+
   @Test public void bodyGet() throws IOException {
     setLevel(Level.BODY);
 
@@ -539,6 +588,68 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("<-- END HTTP (6-byte body)")
         .assertNoMoreLogs();
   }
+
+  @Test public void bodyResponseBodyFormatted() throws IOException {
+    final HttpLoggingInterceptor applicationInterceptorFormatted =
+        new HttpLoggingInterceptor(applicationLogs, true, 3, false);
+    applicationInterceptorFormatted.setLevel(Level.BODY);
+
+    clientWithFormatter = new OkHttpClient.Builder()
+        .addInterceptor(applicationInterceptorFormatted)
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
+        .hostnameVerifier(hostnameVerifier)
+        .build();
+
+    server.enqueue(new MockResponse()
+        .setBody(jsonBody)
+        .setHeader("Content-Type", PLAIN));
+    Response response = clientWithFormatter.newCall(request().build()).execute();
+    response.body().close();
+
+    applicationLogs
+        .assertLogEqual("--> GET " + url)
+        .assertLogEqual("--> END GET")
+        .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
+        .assertLogEqual("Content-Length: 67")
+        .assertLogEqual("Content-Type: text/plain; charset=utf-8")
+        .assertLogEqual("")
+        .assertLogEqual(jsonBodyFormatted)
+        .assertLogEqual("<-- END HTTP (67-byte body)")
+        .assertNoMoreLogs();
+  }
+
+  @Test public void bodyResponseBodyNotFormatted() throws IOException {
+    final HttpLoggingInterceptor applicationInterceptorNotFormatted =
+        new HttpLoggingInterceptor(applicationLogs);
+    applicationInterceptorNotFormatted.setLevel(Level.BODY);
+
+    clientWithFormatter = new OkHttpClient.Builder()
+        .addInterceptor(applicationInterceptorNotFormatted)
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
+        .hostnameVerifier(hostnameVerifier)
+        .build();
+
+    server.enqueue(new MockResponse()
+        .setBody(jsonBody)
+        .setHeader("Content-Type", PLAIN));
+    Response response = clientWithFormatter.newCall(request().build()).execute();
+    response.body().close();
+
+    applicationLogs
+        .assertLogEqual("--> GET " + url)
+        .assertLogEqual("--> END GET")
+        .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
+        .assertLogEqual("Content-Length: 67")
+        .assertLogEqual("Content-Type: text/plain; charset=utf-8")
+        .assertLogEqual("")
+        .assertLogEqual(jsonBody)
+        .assertLogEqual("<-- END HTTP (67-byte body)")
+        .assertNoMoreLogs();
+  }
+
+
 
   @Test public void bodyResponseBodyChunked() throws IOException {
     setLevel(Level.BODY);
