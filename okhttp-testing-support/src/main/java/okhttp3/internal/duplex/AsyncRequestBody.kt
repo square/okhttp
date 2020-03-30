@@ -15,13 +15,13 @@
  */
 package okhttp3.internal.duplex
 
-import java.util.concurrent.BlockingQueue
-import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.TimeUnit.SECONDS
 import junit.framework.TestCase
 import okhttp3.MediaType
 import okhttp3.RequestBody
 import okio.BufferedSink
+import java.util.concurrent.BlockingQueue
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.TimeUnit.SECONDS
 
 /** A duplex request body that keeps the provided sinks so they can be written to later.  */
 class AsyncRequestBody : RequestBody() {

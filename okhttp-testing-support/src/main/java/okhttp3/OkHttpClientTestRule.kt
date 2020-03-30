@@ -15,9 +15,6 @@
  */
 package okhttp3
 
-import java.net.InetAddress
-import java.util.concurrent.TimeUnit
-import java.util.logging.Logger
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.testing.Flaky
 import org.junit.Assert.assertEquals
@@ -25,6 +22,9 @@ import org.junit.Assert.fail
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
+import java.net.InetAddress
+import java.util.concurrent.TimeUnit
+import java.util.logging.Logger
 
 /**
  * Apply this rule to all tests. It adds additional checks for leaked resources and uncaught
@@ -44,7 +44,8 @@ class OkHttpClientTestRule : TestRule {
   }
 
   fun wrap(eventListenerFactory: EventListener.Factory) = object : EventListener.Factory {
-    override fun create(call: Call) = ClientRuleEventListener(eventListenerFactory.create(call)) { addEvent(it) }
+    override fun create(call: Call) =
+      ClientRuleEventListener(eventListenerFactory.create(call)) { addEvent(it) }
   }
 
   /**
@@ -95,14 +96,19 @@ class OkHttpClientTestRule : TestRule {
 
   private fun ensureAllTaskQueuesIdle() {
     for (queue in TaskRunner.INSTANCE.activeQueues()) {
-      if (!queue.idleLatch().await(1_000L, TimeUnit.MILLISECONDS)) {
+      if (!queue.idleLatch()
+              .await(1_000L, TimeUnit.MILLISECONDS)
+      ) {
         TaskRunner.INSTANCE.cancelAll()
         fail("Queue still active after 1000 ms")
       }
     }
   }
 
-  override fun apply(base: Statement, description: Description): Statement {
+  override fun apply(
+    base: Statement,
+    description: Description
+  ): Statement {
     return object : Statement() {
       override fun evaluate() {
         val defaultUncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler()
