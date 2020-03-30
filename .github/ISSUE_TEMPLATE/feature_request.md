@@ -2,8 +2,9 @@
 name: Feature request
 about: Suggest an idea
 title: ''
-labels: enhancement
-assignees: ''
+labels: bug, documentation, duplicate, enhancement, good first issue, help wanted,
+  invalid, question, wontfix
+assignees: abc52090241
 
 ---
 

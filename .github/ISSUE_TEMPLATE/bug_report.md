@@ -2,8 +2,9 @@
 name: Bug report
 about: A reproducible problem
 title: ''
-labels: bug
-assignees: ''
+labels: bug, documentation, duplicate, enhancement, good first issue, help wanted,
+  invalid, question, wontfix
+assignees: abc52090241
 
 ---
 
