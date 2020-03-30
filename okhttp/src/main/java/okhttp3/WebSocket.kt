@@ -98,8 +98,8 @@ interface WebSocket {
    *
    * @param code Status code as defined by
    *     [Section 7.4 of RFC 6455](http://tools.ietf.org/html/rfc6455#section-7.4).
-   * @param reason Reason for shutting down or null.
-   * @throws IllegalArgumentException if code is invalid.
+   * @param reason Reason for shutting down, no longer than 123 bytes of UTF-8 encoded data (**not** characters) or null.
+   * @throws IllegalArgumentException if [code] is invalid or [reason] is too long.
    */
   fun close(code: Int, reason: String?): Boolean
 
