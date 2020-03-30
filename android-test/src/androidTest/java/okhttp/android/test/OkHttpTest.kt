@@ -513,7 +513,7 @@ class OkHttpTest {
         Request.Builder().url("https://example_underscore_123.s3.amazonaws.com/").build()
 
     try {
-      client.newCall(request).execute()
+      client.newCall(request).execute().close()
       // Hopefully this passes
     } catch (ioe: IOException) {
       // https://github.com/square/okhttp/issues/5840
