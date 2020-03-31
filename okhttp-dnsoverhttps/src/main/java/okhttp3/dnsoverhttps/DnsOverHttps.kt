@@ -34,6 +34,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
+import java.net.HttpURLConnection
 
 /**
  * [DNS over HTTPS implementation][doh_spec].
@@ -194,7 +195,7 @@ class DnsOverHttps internal constructor(
 
         val cacheResponse = client.newCall(cacheRequest).execute()
 
-        if (cacheResponse.code != 504) {
+        if (cacheResponse.code != HttpURLConnection.HTTP_GATEWAY_TIMEOUT) {
           return cacheResponse
         }
       } catch (ioe: IOException) {
