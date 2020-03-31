@@ -34,7 +34,6 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
-import java.util.concurrent.TimeUnit
 
 /**
  * [DNS over HTTPS implementation][doh_spec].
