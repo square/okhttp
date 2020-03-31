@@ -187,7 +187,7 @@ class DnsOverHttps internal constructor(
     if (!post && client.cache != null) {
       try {
         // Use the cache without hitting the network first
-        // 504 code indicates that the
+        // 504 code indicates that the Cache is stale
         val preferCache = CacheControl.Builder()
             .onlyIfCached()
             .build()
