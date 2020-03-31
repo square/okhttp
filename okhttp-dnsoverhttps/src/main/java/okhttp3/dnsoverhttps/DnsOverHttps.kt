@@ -186,9 +186,10 @@ class DnsOverHttps internal constructor(
   private fun getCacheOnlyResponse(request: Request): Response? {
     if (!post && client.cache != null) {
       try {
+        // Use the cache without hitting the network first
+        // 504 code indicates that the
         val preferCache = CacheControl.Builder()
             .onlyIfCached()
-            .maxAge(Integer.MAX_VALUE, TimeUnit.SECONDS)
             .build()
         val cacheRequest = request.newBuilder().cacheControl(preferCache).build()
 
