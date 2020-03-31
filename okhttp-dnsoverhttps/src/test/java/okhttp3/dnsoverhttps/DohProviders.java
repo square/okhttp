@@ -45,14 +45,14 @@ public class DohProviders {
 
   static DnsOverHttps buildCloudflareIp(OkHttpClient bootstrapClient) {
     return new DnsOverHttps.Builder().client(bootstrapClient)
-        .url(HttpUrl.get("https://1.1.1.1/dns-query?ct=application/dns-udpwireformat"))
+        .url(HttpUrl.get("https://1.1.1.1/dns-query"))
         .includeIPv6(false)
         .build();
   }
 
   static DnsOverHttps buildCloudflare(OkHttpClient bootstrapClient) {
     return new DnsOverHttps.Builder().client(bootstrapClient)
-        .url(HttpUrl.get("https://1.1.1.1/dns-query?ct=application/dns-udpwireformat"))
+        .url(HttpUrl.get("https://1.1.1.1/dns-query"))
         .bootstrapDnsHosts(getByIp("1.1.1.1"), getByIp("1.0.0.1"))
         .includeIPv6(false)
         .build();
