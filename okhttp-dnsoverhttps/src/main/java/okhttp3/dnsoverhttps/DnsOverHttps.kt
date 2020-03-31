@@ -16,6 +16,7 @@
 package okhttp3.dnsoverhttps
 
 import java.io.IOException
+import java.net.HttpURLConnection
 import java.net.InetAddress
 import java.net.UnknownHostException
 import java.util.ArrayList
@@ -34,7 +35,6 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
-import java.net.HttpURLConnection
 
 /**
  * [DNS over HTTPS implementation][doh_spec].
