@@ -34,6 +34,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
+import java.util.concurrent.TimeUnit
 
 /**
  * [DNS over HTTPS implementation][doh_spec].
@@ -185,7 +186,11 @@ class DnsOverHttps internal constructor(
   private fun getCacheOnlyResponse(request: Request): Response? {
     if (!post && client.cache != null) {
       try {
-        val cacheRequest = request.newBuilder().cacheControl(CacheControl.FORCE_CACHE).build()
+        val preferCache = CacheControl.Builder()
+            .onlyIfCached()
+            .maxAge(Integer.MAX_VALUE, TimeUnit.SECONDS)
+            .build()
+        val cacheRequest = request.newBuilder().cacheControl(preferCache).build()
 
         val cacheResponse = client.newCall(cacheRequest).execute()
 
