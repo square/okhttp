@@ -3897,6 +3897,35 @@ public final class CallTest {
     assertThat(closed.get()).isTrue();
   }
 
+  @Test public void rogueConnectionSeeder() throws Exception {
+    // Seed the connection pool with a rogue connection.
+    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_END));
+    executeSynchronously("/").assertCode(200);
+
+    // A client that repeatedly seeds the connection pool with a rogue connection.
+    OkHttpClient seedClient = client.newBuilder()
+        .eventListener(new EventListener() {
+          @Override public void connectionAcquired(Call call, Connection connection) {
+            server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_END));
+            try {
+              executeSynchronously("/").assertCode(200);
+            } catch (IOException e) {
+              fail();
+            }
+          }
+        })
+        .build();
+
+    Call call = seedClient.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    try {
+      call.execute();
+      fail();
+    } catch (IOException expected) {
+    }
+  }
+
   private void makeFailingCall() {
     RequestBody requestBody = new RequestBody() {
       @Override public MediaType contentType() {
