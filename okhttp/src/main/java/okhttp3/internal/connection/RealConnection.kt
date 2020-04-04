@@ -631,9 +631,11 @@ class RealConnection(
   fun isHealthy(doExtensiveChecks: Boolean): Boolean {
     val nowNs = System.nanoTime()
 
+    val rawSocket = this.rawSocket!!
     val socket = this.socket!!
     val source = this.source!!
-    if (socket.isClosed || socket.isInputShutdown || socket.isOutputShutdown) {
+    if (rawSocket.isClosed || socket.isClosed || socket.isInputShutdown ||
+            socket.isOutputShutdown) {
       return false
     }
 
