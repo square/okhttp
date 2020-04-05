@@ -24,6 +24,7 @@ import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol
+import okhttp3.internal.SuppressSignatureCheck
 import okhttp3.internal.platform.AndroidPlatform.Companion.isAndroid
 import okhttp3.internal.platform.Platform
 
@@ -31,6 +32,7 @@ import okhttp3.internal.platform.Platform
  * Simple non-reflection SocketAdapter for Android Q.
  */
 @SuppressLint("NewApi")
+@SuppressSignatureCheck
 class Android10SocketAdapter : SocketAdapter {
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? = null
 
@@ -68,6 +70,7 @@ class Android10SocketAdapter : SocketAdapter {
     }
   }
 
+  @SuppressSignatureCheck
   companion object {
     fun buildIfSupported(): SocketAdapter? =
         if (isSupported()) Android10SocketAdapter() else null

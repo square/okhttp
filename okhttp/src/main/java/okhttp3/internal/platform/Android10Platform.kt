@@ -22,6 +22,7 @@ import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol
+import okhttp3.internal.SuppressSignatureCheck
 import okhttp3.internal.platform.AndroidPlatform.Companion.isAndroid
 import okhttp3.internal.platform.android.Android10CertificateChainCleaner
 import okhttp3.internal.platform.android.Android10SocketAdapter
@@ -31,6 +32,7 @@ import okhttp3.internal.platform.android.androidLog
 import okhttp3.internal.tls.CertificateChainCleaner
 
 /** Android 29+. */
+@SuppressSignatureCheck
 class Android10Platform : Platform() {
   private val socketAdapters = listOfNotNull(
       Android10SocketAdapter.buildIfSupported(),
