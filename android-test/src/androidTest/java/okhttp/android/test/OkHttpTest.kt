@@ -167,6 +167,7 @@ class OkHttpTest {
       }
     } finally {
       Security.removeProvider("Conscrypt")
+      client.close()
     }
   }
 
@@ -202,6 +203,7 @@ class OkHttpTest {
       }
     } finally {
       Security.removeProvider("GmsCore_OpenSSL")
+      client.close()
     }
   }
 
@@ -511,7 +513,7 @@ class OkHttpTest {
         Request.Builder().url("https://example_underscore_123.s3.amazonaws.com/").build()
 
     try {
-      client.newCall(request).execute()
+      client.newCall(request).execute().close()
       // Hopefully this passes
     } catch (ioe: IOException) {
       // https://github.com/square/okhttp/issues/5840
@@ -549,6 +551,11 @@ class OkHttpTest {
     } catch (uhe: UnknownHostException) {
       assumeNoException(uhe)
     }
+  }
+
+  fun OkHttpClient.close() {
+    dispatcher.executorService.shutdown()
+    connectionPool.evictAll()
   }
 
   companion object {

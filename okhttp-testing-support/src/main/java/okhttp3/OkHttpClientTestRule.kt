@@ -20,7 +20,8 @@ import java.util.concurrent.TimeUnit
 import java.util.logging.Logger
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.testing.Flaky
-import org.assertj.core.api.Assertions.assertThat
+import org.junit.Assert.assertEquals
+import org.junit.Assert.fail
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
@@ -88,15 +89,16 @@ class OkHttpClientTestRule : TestRule {
     testClient?.let {
       val connectionPool = it.connectionPool
       connectionPool.evictAll()
-      assertThat(connectionPool.connectionCount()).isEqualTo(0)
+      assertEquals(0, connectionPool.connectionCount())
     }
   }
 
   private fun ensureAllTaskQueuesIdle() {
     for (queue in TaskRunner.INSTANCE.activeQueues()) {
-      assertThat(queue.idleLatch().await(1_000L, TimeUnit.MILLISECONDS))
-          .withFailMessage("Queue still active after 1000 ms")
-          .isTrue()
+      if (!queue.idleLatch().await(1_000L, TimeUnit.MILLISECONDS)) {
+        TaskRunner.INSTANCE.cancelAll()
+        fail("Queue still active after 1000 ms")
+      }
     }
   }
 

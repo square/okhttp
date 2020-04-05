@@ -16,6 +16,7 @@
 package okhttp3.dnsoverhttps
 
 import java.io.IOException
+import java.net.HttpURLConnection
 import java.net.InetAddress
 import java.net.UnknownHostException
 import java.util.ArrayList
@@ -185,11 +186,16 @@ class DnsOverHttps internal constructor(
   private fun getCacheOnlyResponse(request: Request): Response? {
     if (!post && client.cache != null) {
       try {
-        val cacheRequest = request.newBuilder().cacheControl(CacheControl.FORCE_CACHE).build()
+        // Use the cache without hitting the network first
+        // 504 code indicates that the Cache is stale
+        val preferCache = CacheControl.Builder()
+            .onlyIfCached()
+            .build()
+        val cacheRequest = request.newBuilder().cacheControl(preferCache).build()
 
         val cacheResponse = client.newCall(cacheRequest).execute()
 
-        if (cacheResponse.code != 504) {
+        if (cacheResponse.code != HttpURLConnection.HTTP_GATEWAY_TIMEOUT) {
           return cacheResponse
         }
       } catch (ioe: IOException) {

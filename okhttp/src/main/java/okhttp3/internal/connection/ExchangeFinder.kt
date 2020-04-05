@@ -113,13 +113,27 @@ class ExchangeFinder(
           connectionRetryEnabled = connectionRetryEnabled
       )
 
-      // Confirm that the connection is good. If it isn't, take it out of the pool and start again.
-      if (!candidate.isHealthy(doExtensiveHealthChecks)) {
-        candidate.noNewExchanges()
-        continue
+      // Confirm that the connection is good.
+      if (candidate.isHealthy(doExtensiveHealthChecks)) {
+        return candidate
       }
 
-      return candidate
+      // If it isn't, take it out of the pool.
+      candidate.noNewExchanges()
+
+      // Make sure we have some routes left to try. One example where we may exhaust all the routes
+      // would happen if we made a new connection and it immediately is detected as unhealthy.
+      synchronized(connectionPool) {
+        if (nextRouteToTry != null) return@synchronized
+
+        val routesLeft = routeSelection?.hasNext() ?: true
+        if (routesLeft) return@synchronized
+
+        val routesSelectionLeft = routeSelector?.hasNext() ?: true
+        if (routesSelectionLeft) return@synchronized
+
+        throw IOException("exhausted all routes")
+      }
     }
   }
 
