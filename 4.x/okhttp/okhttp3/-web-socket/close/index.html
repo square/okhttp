@@ -696,9 +696,9 @@ a graceful shutdown was already underway or if the web socket is already closed 
 <h3 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">&para;</a></h3>
 <p><code>code</code> - Status code as defined by
     <a href="http://tools.ietf.org/html/rfc6455#section-7.4">Section 7.4 of RFC 6455</a>.</p>
-<p><code>reason</code> - Reason for shutting down or null.</p>
+<p><code>reason</code> - Reason for shutting down, no longer than 123 bytes of UTF-8 encoded data (<strong>not</strong> characters) or null.</p>
 <h3 id="exceptions">Exceptions<a class="headerlink" href="#exceptions" title="Permanent link">&para;</a></h3>
-<p><code>IllegalArgumentException</code> - if code is invalid.</p>
+<p><code>IllegalArgumentException</code> - if <a href="./#okhttp3.WebSocket$close(kotlin.Int, kotlin.String)/code">code</a> is invalid or <a href="./#okhttp3.WebSocket$close(kotlin.Int, kotlin.String)/reason">reason</a> is too long.</p>
                 
                   
                 
