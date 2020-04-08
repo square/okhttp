@@ -15,6 +15,12 @@
  */
 package okhttp3.internal.io
 
+import java.io.File
+import java.io.FileNotFoundException
+import java.io.IOException
+import java.util.ArrayList
+import java.util.IdentityHashMap
+import java.util.LinkedHashMap
 import okio.Buffer
 import okio.ForwardingSink
 import okio.ForwardingSource
@@ -23,12 +29,6 @@ import okio.Source
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
-import java.io.File
-import java.io.FileNotFoundException
-import java.io.IOException
-import java.util.ArrayList
-import java.util.IdentityHashMap
-import java.util.LinkedHashMap
 
 /** A simple file system where all files are held in memory. Not safe for concurrent use.  */
 class InMemoryFileSystem : FileSystem, TestRule {

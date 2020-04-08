@@ -15,13 +15,13 @@
  */
 package okhttp3
 
-import okhttp3.internal.http2.Header
-import org.junit.Assume
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.UnknownHostException
 import java.util.ArrayList
 import java.util.Arrays
+import okhttp3.internal.http2.Header
+import org.junit.Assume
 
 object TestUtil {
   @JvmField

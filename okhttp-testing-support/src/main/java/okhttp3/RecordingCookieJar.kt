@@ -15,10 +15,10 @@
  */
 package okhttp3
 
-import org.assertj.core.api.Assertions
 import java.util.ArrayDeque
 import java.util.ArrayList
 import java.util.Deque
+import org.assertj.core.api.Assertions
 
 class RecordingCookieJar : CookieJar {
   private val requestCookies: Deque<List<Cookie>> =

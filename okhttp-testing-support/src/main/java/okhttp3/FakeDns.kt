@@ -15,11 +15,11 @@
  */
 package okhttp3
 
-import org.assertj.core.api.Assertions
 import java.net.InetAddress
 import java.net.UnknownHostException
 import java.util.ArrayList
 import java.util.LinkedHashMap
+import org.assertj.core.api.Assertions
 
 class FakeDns : Dns {
   private val hostAddresses: MutableMap<String, List<InetAddress>> =
