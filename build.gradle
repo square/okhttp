@@ -141,7 +141,7 @@ subprojects { project ->
     }
   }
 
-  // Animal Sniffer confirms we don't use APIs not on both Java 8.
+  // Animal Sniffer confirms we generally don't use APIs not on Java 8.
   animalsniffer {
     // https://github.com/mojohaus/animal-sniffer/issues/70
     excludeJars "android-all-*"
