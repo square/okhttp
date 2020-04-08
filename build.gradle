@@ -141,8 +141,9 @@ subprojects { project ->
     }
   }
 
-  // Animal Sniffer confirms we don't use APIs not on both Java 8 and Android 5.
+  // Animal Sniffer confirms we don't use APIs not on both Java 8.
   animalsniffer {
+    // https://github.com/mojohaus/animal-sniffer/issues/70
     excludeJars "android-all-*"
     annotation "okhttp3.internal.SuppressSignatureCheck"
     sourceSets = [sourceSets.main]
