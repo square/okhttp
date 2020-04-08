@@ -15,13 +15,6 @@
  */
 package okhttp3
 
-import java.io.IOException
-import java.net.InetAddress
-import java.net.InetSocketAddress
-import java.net.Proxy
-import java.util.Deque
-import java.util.concurrent.ConcurrentLinkedDeque
-import java.util.concurrent.TimeUnit
 import okhttp3.CallEvent.CallEnd
 import okhttp3.CallEvent.CallFailed
 import okhttp3.CallEvent.CallStart
@@ -50,6 +43,13 @@ import okhttp3.CallEvent.SecureConnectStart
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.data.Offset
 import org.junit.Assert.assertTrue
+import java.io.IOException
+import java.net.InetAddress
+import java.net.InetSocketAddress
+import java.net.Proxy
+import java.util.Deque
+import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.concurrent.TimeUnit
 
 open class RecordingEventListener : EventListener() {
   val eventSequence: Deque<CallEvent> = ConcurrentLinkedDeque()
@@ -90,7 +90,10 @@ open class RecordingEventListener : EventListener() {
    * @param elapsedMs the time in milliseconds elapsed since the immediately-preceding event, or
    *     -1L to take any duration.
    */
-  fun takeEvent(eventClass: Class<*>? = null, elapsedMs: Long = -1L): CallEvent {
+  fun takeEvent(
+    eventClass: Class<*>? = null,
+    elapsedMs: Long = -1L
+  ): CallEvent {
     val result = eventSequence.remove()
     val actualElapsedNs = result.timestampNs - (lastTimestampNs ?: result.timestampNs)
     lastTimestampNs = result.timestampNs
@@ -100,7 +103,10 @@ open class RecordingEventListener : EventListener() {
     }
 
     if (elapsedMs != -1L) {
-      assertThat(TimeUnit.NANOSECONDS.toMillis(actualElapsedNs).toDouble())
+      assertThat(
+          TimeUnit.NANOSECONDS.toMillis(actualElapsedNs)
+              .toDouble()
+      )
           .isCloseTo(elapsedMs.toDouble(), Offset.offset(100.0))
     }
 
@@ -119,7 +125,7 @@ open class RecordingEventListener : EventListener() {
     for (lock in forbiddenLocks) {
       assertThat(Thread.holdsLock(lock))
           .overridingErrorMessage(lock.toString())
-          .isFalse()
+          .isFalse
     }
 
     val startEvent = e.closes(-1L)
