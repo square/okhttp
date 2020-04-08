@@ -30,15 +30,15 @@ import okhttp3.OkHttpClient;
 public class DohProviders {
   static DnsOverHttps buildGoogle(OkHttpClient bootstrapClient) {
     return new DnsOverHttps.Builder().client(bootstrapClient)
-        .url(HttpUrl.get("https://dns.google.com/experimental"))
-        .bootstrapDnsHosts(getByIp("216.58.204.78"), getByIp("2a00:1450:4009:814:0:0:0:200e"))
+        .url(HttpUrl.get("https://dns.google/dns-query"))
+        .bootstrapDnsHosts(getByIp("8.8.4.4"), getByIp("8.8.8.8"))
         .build();
   }
 
   static DnsOverHttps buildGooglePost(OkHttpClient bootstrapClient) {
     return new DnsOverHttps.Builder().client(bootstrapClient)
-        .url(HttpUrl.get("https://dns.google.com/experimental"))
-        .bootstrapDnsHosts(getByIp("216.58.204.78"), getByIp("2a00:1450:4009:814:0:0:0:200e"))
+        .url(HttpUrl.get("https://dns.google/dns-query"))
+        .bootstrapDnsHosts(getByIp("8.8.4.4"), getByIp("8.8.8.8"))
         .post(true)
         .build();
   }
@@ -52,8 +52,8 @@ public class DohProviders {
 
   static DnsOverHttps buildCloudflare(OkHttpClient bootstrapClient) {
     return new DnsOverHttps.Builder().client(bootstrapClient)
-        .url(HttpUrl.get("https://cloudflare-dns.com/dns-query"))
-        .bootstrapDnsHosts(getByIp("1.1.1.1"))
+        .url(HttpUrl.get("https://1.1.1.1/dns-query"))
+        .bootstrapDnsHosts(getByIp("1.1.1.1"), getByIp("1.0.0.1"))
         .includeIPv6(false)
         .build();
   }
@@ -61,8 +61,7 @@ public class DohProviders {
   static DnsOverHttps buildCloudflarePost(OkHttpClient bootstrapClient) {
     return new DnsOverHttps.Builder().client(bootstrapClient)
         .url(HttpUrl.get("https://cloudflare-dns.com/dns-query"))
-        .bootstrapDnsHosts(getByIp("104.16.111.25"), getByIp("104.16.112.25"),
-            getByIp("2400:cb00:2048:1:0:0:6810:7019"), getByIp("2400:cb00:2048:1:0:0:6810:6f19"))
+        .bootstrapDnsHosts(getByIp("1.1.1.1"), getByIp("1.0.0.1"))
         .includeIPv6(false)
         .post(true)
         .build();
