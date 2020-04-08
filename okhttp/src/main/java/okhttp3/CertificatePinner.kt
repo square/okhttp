@@ -18,6 +18,7 @@ package okhttp3
 import java.security.cert.Certificate
 import java.security.cert.X509Certificate
 import javax.net.ssl.SSLPeerUnverifiedException
+import okhttp3.internal.filterList
 import okhttp3.internal.tls.CertificateChainCleaner
 import okhttp3.internal.toCanonicalHost
 import okio.ByteString
@@ -212,16 +213,7 @@ class CertificatePinner internal constructor(
    * Returns list of matching certificates' pins for the hostname. Returns an empty list if the
    * hostname does not have pinned certificates.
    */
-  internal fun findMatchingPins(hostname: String): List<Pin> {
-    var result: List<Pin> = emptyList()
-    for (pin in pins) {
-      if (pin.matches(hostname)) {
-        if (result.isEmpty()) result = mutableListOf()
-        (result as MutableList<Pin>).add(pin)
-      }
-    }
-    return result
-  }
+  fun findMatchingPins(hostname: String): List<Pin> = pins.filterList { it.matches(hostname) }
 
   /** Returns a certificate pinner that uses `certificateChainCleaner`. */
   internal fun withCertificateChainCleaner(
@@ -247,9 +239,9 @@ class CertificatePinner internal constructor(
     return result
   }
 
-  internal data class Pin(
+  data class Pin internal constructor(
     /** A hostname like `example.com` or a pattern like `*.example.com` (canonical form). */
-    private val pattern: String,
+    val pattern: String,
     /** Either `sha1/` or `sha256/`. */
     val hashAlgorithm: String,
     /** The hash of the pinned certificate using [hashAlgorithm]. */
@@ -276,6 +268,30 @@ class CertificatePinner internal constructor(
     }
 
     override fun toString(): String = hashAlgorithm + hash.base64()
+
+    companion object {
+      fun newPin(pattern: String, pin: String): Pin {
+        require((pattern.startsWith("*.") && pattern.indexOf("*", 1) == -1) ||
+            (pattern.startsWith("**.") && pattern.indexOf("*", 2) == -1) ||
+            pattern.indexOf("*") == -1) {
+          "Unexpected pattern: $pattern"
+        }
+        val canonicalPattern =
+          pattern.toCanonicalHost() ?: throw IllegalArgumentException("Invalid pattern: $pattern")
+
+        return when {
+          pin.startsWith("sha1/") -> {
+            val hash = pin.substring("sha1/".length).decodeBase64()!!
+            Pin(canonicalPattern, "sha1/", hash)
+          }
+          pin.startsWith("sha256/") -> {
+            val hash = pin.substring("sha256/".length).decodeBase64()!!
+            Pin(canonicalPattern, "sha256/", hash)
+          }
+          else -> throw IllegalArgumentException("pins must start with 'sha256/' or 'sha1/': $pin")
+        }
+      }
+    }
   }
 
   /** Builds a configured certificate pinner. */
@@ -291,7 +307,7 @@ class CertificatePinner internal constructor(
      */
     fun add(pattern: String, vararg pins: String) = apply {
       for (pin in pins) {
-        this.pins.add(newPin(pattern, pin))
+        this.pins.add(Pin.newPin(pattern, pin))
       }
     }
 
@@ -317,29 +333,7 @@ class CertificatePinner internal constructor(
     internal fun X509Certificate.toSha1ByteString(): ByteString =
         publicKey.encoded.toByteString().sha1()
 
-    internal fun X509Certificate.toSha256ByteString(): ByteString =
+    fun X509Certificate.toSha256ByteString(): ByteString =
         publicKey.encoded.toByteString().sha256()
-
-    internal fun newPin(pattern: String, pin: String): Pin {
-      require((pattern.startsWith("*.") && pattern.indexOf("*", 1) == -1) ||
-          (pattern.startsWith("**.") && pattern.indexOf("*", 2) == -1) ||
-          pattern.indexOf("*") == -1) {
-        "Unexpected pattern: $pattern"
-      }
-      val canonicalPattern =
-          pattern.toCanonicalHost() ?: throw IllegalArgumentException("Invalid pattern: $pattern")
-
-      return when {
-        pin.startsWith("sha1/") -> {
-          val hash = pin.substring("sha1/".length).decodeBase64()!!
-          Pin(canonicalPattern, "sha1/", hash)
-        }
-        pin.startsWith("sha256/") -> {
-          val hash = pin.substring("sha256/".length).decodeBase64()!!
-          Pin(canonicalPattern, "sha256/", hash)
-        }
-        else -> throw IllegalArgumentException("pins must start with 'sha256/' or 'sha1/': $pin")
-      }
-    }
   }
 }
