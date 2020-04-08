@@ -15,13 +15,13 @@
  */
 package okhttp3
 
-import java.io.IOException
 import okhttp3.Interceptor.Chain
 import okio.Buffer
 import okio.BufferedSink
 import okio.ForwardingSink
 import okio.Sink
 import okio.buffer
+import java.io.IOException
 
 /** Rewrites the request body sent to the server to be all uppercase.  */
 class UppercaseRequestInterceptor : Interceptor {

@@ -15,6 +15,8 @@
  */
 package okhttp3
 
+import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.http2.Http2
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.logging.ConsoleHandler
 import java.util.logging.Level
@@ -22,8 +24,6 @@ import java.util.logging.LogRecord
 import java.util.logging.Logger
 import java.util.logging.SimpleFormatter
 import kotlin.reflect.KClass
-import okhttp3.internal.concurrent.TaskRunner
-import okhttp3.internal.http2.Http2
 
 object OkHttpDebugLogging {
   // Keep references to loggers to prevent their configuration from being GC'd.

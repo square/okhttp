@@ -74,7 +74,7 @@ sealed class CallEvent {
     val protocol: Protocol?
   ) : CallEvent() {
     override fun closes(timestampNs: Long) =
-        ConnectStart(timestampNs, call, inetSocketAddress, proxy)
+      ConnectStart(timestampNs, call, inetSocketAddress, proxy)
   }
 
   data class ConnectFailed(
@@ -86,7 +86,7 @@ sealed class CallEvent {
     val ioe: IOException
   ) : CallEvent() {
     override fun closes(timestampNs: Long) =
-        ConnectStart(timestampNs, call, inetSocketAddress, proxy)
+      ConnectStart(timestampNs, call, inetSocketAddress, proxy)
   }
 
   data class SecureConnectStart(
