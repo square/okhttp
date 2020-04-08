@@ -20,11 +20,9 @@ import java.net.Proxy
 import java.net.ProxySelector
 import java.net.SocketAddress
 import java.net.URI
-import java.util.ArrayList
 
 class FakeProxySelector : ProxySelector() {
-  val proxies: MutableList<Proxy> =
-    ArrayList()
+  val proxies: MutableList<Proxy> = mutableListOf()
 
   fun addProxy(proxy: Proxy): FakeProxySelector {
     proxies.add(proxy)
@@ -33,9 +31,7 @@ class FakeProxySelector : ProxySelector() {
 
   override fun select(uri: URI): List<Proxy> {
     // Don't handle 'socket' schemes, which the RI's Socket class may request (for SOCKS).
-    return if (uri.scheme == "http" || uri.scheme == "https") proxies else listOf(
-        Proxy.NO_PROXY
-    )
+    return if (uri.scheme == "http" || uri.scheme == "https") proxies else listOf(Proxy.NO_PROXY)
   }
 
   override fun connectFailed(

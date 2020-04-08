@@ -15,16 +15,13 @@
  */
 package okhttp3
 
+import org.assertj.core.api.Assertions.assertThat
 import java.util.ArrayDeque
-import java.util.ArrayList
 import java.util.Deque
-import org.assertj.core.api.Assertions
 
 class RecordingCookieJar : CookieJar {
-  private val requestCookies: Deque<List<Cookie>> =
-    ArrayDeque()
-  private val responseCookies: Deque<List<Cookie>> =
-    ArrayDeque()
+  private val requestCookies: Deque<List<Cookie>> = ArrayDeque()
+  private val responseCookies: Deque<List<Cookie>> = ArrayDeque()
 
   fun enqueueRequestCookies(vararg cookies: Cookie) {
     requestCookies.add(cookies.toList())
@@ -35,14 +32,7 @@ class RecordingCookieJar : CookieJar {
   }
 
   fun assertResponseCookies(vararg cookies: String?) {
-    val actualCookies = takeResponseCookies()
-    val actualCookieStrings: MutableList<String> =
-      ArrayList()
-    for (cookie in actualCookies) {
-      actualCookieStrings.add(cookie.toString())
-    }
-    Assertions.assertThat(actualCookieStrings)
-        .containsExactly(*cookies)
+    assertThat(takeResponseCookies().map(Cookie::toString)).containsExactly(*cookies)
   }
 
   override fun saveFromResponse(

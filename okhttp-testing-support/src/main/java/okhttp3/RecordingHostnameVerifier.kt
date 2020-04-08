@@ -15,13 +15,13 @@
  */
 package okhttp3
 
-import java.util.ArrayList
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSession
 
 class RecordingHostnameVerifier : HostnameVerifier {
   @JvmField
-  val calls: MutableList<String> = ArrayList()
+  val calls: MutableList<String> = mutableListOf()
+
   @Synchronized override fun verify(
     hostname: String,
     session: SSLSession

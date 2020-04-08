@@ -15,12 +15,6 @@
  */
 package okhttp3.internal.io
 
-import java.io.File
-import java.io.FileNotFoundException
-import java.io.IOException
-import java.util.ArrayList
-import java.util.IdentityHashMap
-import java.util.LinkedHashMap
 import okio.Buffer
 import okio.ForwardingSink
 import okio.ForwardingSource
@@ -29,15 +23,16 @@ import okio.Source
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
+import java.io.File
+import java.io.FileNotFoundException
+import java.io.IOException
+import java.util.IdentityHashMap
 
 /** A simple file system where all files are held in memory. Not safe for concurrent use.  */
 class InMemoryFileSystem : FileSystem, TestRule {
-  private val files: MutableMap<File, Buffer> =
-    LinkedHashMap()
-  private val openSources: MutableMap<Source, File> =
-    IdentityHashMap()
-  private val openSinks: MutableMap<Sink, File> =
-    IdentityHashMap()
+  private val files: MutableMap<File, Buffer> = mutableMapOf()
+  private val openSources: MutableMap<Source, File> = IdentityHashMap()
+  private val openSinks: MutableMap<Sink, File> = IdentityHashMap()
 
   override fun apply(
     base: Statement,
@@ -52,8 +47,7 @@ class InMemoryFileSystem : FileSystem, TestRule {
   }
 
   fun ensureResourcesClosed() {
-    val openResources: MutableList<String> =
-      ArrayList()
+    val openResources: MutableList<String> = mutableListOf()
     for (file in openSources.values) {
       openResources.add("Source for $file")
     }

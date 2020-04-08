@@ -1178,8 +1178,8 @@ class HttpUrl internal constructor(
           password = encodedPassword.percentDecode(),
           host = host ?: throw IllegalStateException("host == null"),
           port = effectivePort(),
-          pathSegments = encodedPathSegments.percentDecode() as List<String>,
-          queryNamesAndValues = encodedQueryNamesAndValues?.percentDecode(plusIsSpace = true),
+          pathSegments = encodedPathSegments.map { it.percentDecode() },
+          queryNamesAndValues = encodedQueryNamesAndValues?.map { it?.percentDecode(plusIsSpace = true) },
           fragment = encodedFragment?.percentDecode(),
           url = toString()
       )
@@ -1739,15 +1739,6 @@ class HttpUrl internal constructor(
         writeUtf8CodePoint(codePoint)
         i += Character.charCount(codePoint)
       }
-    }
-
-    private fun List<String?>.percentDecode(plusIsSpace: Boolean = false): List<String?> {
-      val size = size
-      val result = ArrayList<String?>(size)
-      for (i in this) {
-        result.add(i?.percentDecode(plusIsSpace = plusIsSpace))
-      }
-      return Collections.unmodifiableList(result)
     }
 
     private fun String.isPercentEncoded(pos: Int, limit: Int): Boolean {

@@ -15,17 +15,13 @@
  */
 package okhttp3
 
+import org.assertj.core.api.Assertions.assertThat
 import java.net.InetAddress
 import java.net.UnknownHostException
-import java.util.ArrayList
-import java.util.LinkedHashMap
-import org.assertj.core.api.Assertions
 
 class FakeDns : Dns {
-  private val hostAddresses: MutableMap<String, List<InetAddress>> =
-    LinkedHashMap()
-  private val requestedHosts: MutableList<String> =
-    ArrayList()
+  private val hostAddresses: MutableMap<String, List<InetAddress>> = mutableMapOf()
+  private val requestedHosts: MutableList<String> = mutableListOf()
   private var nextAddress = 100
 
   /** Sets the results for `hostname`.  */
@@ -50,27 +46,21 @@ class FakeDns : Dns {
     return hostAddresses[hostname]!!.get(index)
   }
 
-  @Throws(
-      UnknownHostException::class
-  )
+  @Throws(UnknownHostException::class)
   override fun lookup(hostname: String): List<InetAddress> {
     requestedHosts.add(hostname)
-    val result = hostAddresses[hostname]
-    if (result != null) return result
-    throw UnknownHostException()
+    return hostAddresses[hostname] ?: throw UnknownHostException()
   }
 
   fun assertRequests(vararg expectedHosts: String?) {
-    Assertions.assertThat(requestedHosts)
-        .containsExactly(*expectedHosts)
+    assertThat(requestedHosts).containsExactly(*expectedHosts)
     requestedHosts.clear()
   }
 
   /** Allocates and returns `count` fake addresses like [255.0.0.100, 255.0.0.101].  */
   fun allocate(count: Int): List<InetAddress> {
     return try {
-      val result: MutableList<InetAddress> =
-        ArrayList()
+      val result: MutableList<InetAddress> = mutableListOf()
       for (i in 0 until count) {
         if (nextAddress > 255) {
           throw AssertionError("too many addresses allocated")

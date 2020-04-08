@@ -15,13 +15,12 @@
  */
 package okhttp3
 
+import okhttp3.internal.http2.Header
+import org.junit.Assume
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.UnknownHostException
-import java.util.ArrayList
 import java.util.Arrays
-import okhttp3.internal.http2.Header
-import org.junit.Assume
 
 object TestUtil {
   @JvmField
@@ -30,14 +29,7 @@ object TestUtil {
 
   @JvmStatic
   fun headerEntries(vararg elements: String?): List<Header> {
-    val result: MutableList<Header> =
-      ArrayList(elements.size / 2)
-    var i = 0
-    while (i < elements.size) {
-      result.add(Header(elements[i]!!, elements[i + 1]!!))
-      i += 2
-    }
-    return result
+    return List(elements.size / 2) { Header(elements[it * 2]!!, elements[it * 2 + 1]!!) }
   }
 
   @JvmStatic
