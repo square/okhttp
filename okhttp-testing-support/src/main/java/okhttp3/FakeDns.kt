@@ -15,9 +15,9 @@
  */
 package okhttp3
 
-import org.assertj.core.api.Assertions.assertThat
 import java.net.InetAddress
 import java.net.UnknownHostException
+import org.assertj.core.api.Assertions.assertThat
 
 class FakeDns : Dns {
   private val hostAddresses: MutableMap<String, List<InetAddress>> = mutableMapOf()

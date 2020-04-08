@@ -43,16 +43,16 @@ class UppercaseResponseInterceptor : Interceptor {
 
   private fun uppercaseSource(source: BufferedSource): ForwardingSource {
     return object : ForwardingSource(source) {
-      @Throws(IOException::class) override fun read(
+      @Throws(IOException::class)
+      override fun read(
         sink: Buffer,
         byteCount: Long
       ): Long {
         val buffer = Buffer()
         val read = delegate.read(buffer, byteCount)
-        if (read != -1L) sink.write(
-            buffer.readByteString()
-                .toAsciiUppercase()
-        )
+        if (read != -1L) {
+          sink.write(buffer.readByteString().toAsciiUppercase())
+        }
         return read
       }
     }

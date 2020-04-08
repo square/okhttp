@@ -18,33 +18,29 @@ package okhttp3.internal.duplex
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit.SECONDS
-import junit.framework.TestCase
 import okhttp3.MediaType
 import okhttp3.RequestBody
 import okio.BufferedSink
+import org.junit.Assert.assertTrue
 
 /** A duplex request body that keeps the provided sinks so they can be written to later.  */
 class AsyncRequestBody : RequestBody() {
-  private val requestBodySinks: BlockingQueue<BufferedSink> =
-    LinkedBlockingQueue()
+  private val requestBodySinks: BlockingQueue<BufferedSink> = LinkedBlockingQueue()
 
-  override fun contentType(): MediaType? {
-    return null
-  }
+  override fun contentType(): MediaType? = null
 
   override fun writeTo(sink: BufferedSink) {
     requestBodySinks.add(sink)
   }
 
-  override fun isDuplex(): Boolean {
-    return true
-  }
+  override fun isDuplex(): Boolean = true
 
-  @Throws(InterruptedException::class) fun takeSink(): BufferedSink {
+  @Throws(InterruptedException::class)
+  fun takeSink(): BufferedSink {
     return requestBodySinks.poll(5, SECONDS) ?: throw AssertionError("no sink to take")
   }
 
   fun assertNoMoreSinks() {
-    TestCase.assertTrue(requestBodySinks.isEmpty())
+    assertTrue(requestBodySinks.isEmpty())
   }
 }

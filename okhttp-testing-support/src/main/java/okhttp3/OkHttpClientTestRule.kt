@@ -96,9 +96,7 @@ class OkHttpClientTestRule : TestRule {
 
   private fun ensureAllTaskQueuesIdle() {
     for (queue in TaskRunner.INSTANCE.activeQueues()) {
-      if (!queue.idleLatch()
-              .await(1_000L, TimeUnit.MILLISECONDS)
-      ) {
+      if (!queue.idleLatch().await(1_000L, TimeUnit.MILLISECONDS)) {
         TaskRunner.INSTANCE.cancelAll()
         fail("Queue still active after 1000 ms")
       }

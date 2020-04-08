@@ -15,17 +15,16 @@
  */
 package okhttp3
 
-import okhttp3.internal.http2.Header
-import org.junit.Assume
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.UnknownHostException
 import java.util.Arrays
+import okhttp3.internal.http2.Header
+import org.junit.Assume
 
 object TestUtil {
   @JvmField
-  val UNREACHABLE_ADDRESS =
-    InetSocketAddress("198.51.100.1", 8080)
+  val UNREACHABLE_ADDRESS = InetSocketAddress("198.51.100.1", 8080)
 
   @JvmStatic
   fun headerEntries(vararg elements: String?): List<Header> {
@@ -50,8 +49,7 @@ object TestUtil {
   @Throws(Exception::class)
   @JvmStatic
   fun awaitGarbageCollection() {
-    Runtime.getRuntime()
-        .gc()
+    Runtime.getRuntime().gc()
     Thread.sleep(100)
     System.runFinalization()
   }
