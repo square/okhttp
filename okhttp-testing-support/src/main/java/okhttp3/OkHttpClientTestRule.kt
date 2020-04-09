@@ -44,7 +44,8 @@ class OkHttpClientTestRule : TestRule {
   }
 
   fun wrap(eventListenerFactory: EventListener.Factory) = object : EventListener.Factory {
-    override fun create(call: Call) = ClientRuleEventListener(eventListenerFactory.create(call)) { addEvent(it) }
+    override fun create(call: Call) =
+      ClientRuleEventListener(eventListenerFactory.create(call)) { addEvent(it) }
   }
 
   /**
@@ -102,7 +103,10 @@ class OkHttpClientTestRule : TestRule {
     }
   }
 
-  override fun apply(base: Statement, description: Description): Statement {
+  override fun apply(
+    base: Statement,
+    description: Description
+  ): Statement {
     return object : Statement() {
       override fun evaluate() {
         val defaultUncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler()

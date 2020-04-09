@@ -13,31 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3;
+package okhttp3
 
-import java.io.IOException;
-import java.net.Proxy;
-import java.net.ProxySelector;
-import java.net.SocketAddress;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.io.IOException
+import java.net.Proxy
+import java.net.ProxySelector
+import java.net.SocketAddress
+import java.net.URI
 
-public final class FakeProxySelector extends ProxySelector {
-  public final List<Proxy> proxies = new ArrayList<>();
+class FakeProxySelector : ProxySelector() {
+  val proxies: MutableList<Proxy> = mutableListOf()
 
-  public FakeProxySelector addProxy(Proxy proxy) {
-    proxies.add(proxy);
-    return this;
+  fun addProxy(proxy: Proxy): FakeProxySelector {
+    proxies.add(proxy)
+    return this
   }
 
-  @Override public List<Proxy> select(URI uri) {
+  override fun select(uri: URI): List<Proxy> {
     // Don't handle 'socket' schemes, which the RI's Socket class may request (for SOCKS).
-    return uri.getScheme().equals("http") || uri.getScheme().equals("https") ? proxies
-        : Collections.singletonList(Proxy.NO_PROXY);
+    return if (uri.scheme == "http" || uri.scheme == "https") proxies else listOf(Proxy.NO_PROXY)
   }
 
-  @Override public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
+  override fun connectFailed(
+    uri: URI,
+    sa: SocketAddress,
+    ioe: IOException
+  ) {
   }
 }

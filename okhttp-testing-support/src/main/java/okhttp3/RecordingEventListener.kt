@@ -90,7 +90,10 @@ open class RecordingEventListener : EventListener() {
    * @param elapsedMs the time in milliseconds elapsed since the immediately-preceding event, or
    *     -1L to take any duration.
    */
-  fun takeEvent(eventClass: Class<*>? = null, elapsedMs: Long = -1L): CallEvent {
+  fun takeEvent(
+    eventClass: Class<*>? = null,
+    elapsedMs: Long = -1L
+  ): CallEvent {
     val result = eventSequence.remove()
     val actualElapsedNs = result.timestampNs - (lastTimestampNs ?: result.timestampNs)
     lastTimestampNs = result.timestampNs
@@ -100,7 +103,10 @@ open class RecordingEventListener : EventListener() {
     }
 
     if (elapsedMs != -1L) {
-      assertThat(TimeUnit.NANOSECONDS.toMillis(actualElapsedNs).toDouble())
+      assertThat(
+          TimeUnit.NANOSECONDS.toMillis(actualElapsedNs)
+              .toDouble()
+      )
           .isCloseTo(elapsedMs.toDouble(), Offset.offset(100.0))
     }
 
