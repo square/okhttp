@@ -270,6 +270,7 @@ class CertificatePinner internal constructor(
     override fun toString(): String = hashAlgorithm + hash.base64()
 
     companion object {
+      @JvmStatic
       fun newPin(pattern: String, pin: String): Pin {
         require((pattern.startsWith("*.") && pattern.indexOf("*", 1) == -1) ||
             (pattern.startsWith("**.") && pattern.indexOf("*", 2) == -1) ||
