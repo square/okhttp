@@ -16,8 +16,8 @@
 package okhttp.android.test
 
 import android.os.Build
-import android.support.test.InstrumentationRegistry
-import android.support.test.runner.AndroidJUnit4
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -177,7 +177,7 @@ class OkHttpTest {
 
     try {
       try {
-        ProviderInstaller.installIfNeeded(InstrumentationRegistry.getTargetContext())
+        ProviderInstaller.installIfNeeded(InstrumentationRegistry.getInstrumentation().targetContext)
       } catch (gpsnae: GooglePlayServicesNotAvailableException) {
         assumeNoException("Google Play Services not available", gpsnae)
       }
