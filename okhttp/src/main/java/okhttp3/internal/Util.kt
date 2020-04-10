@@ -589,3 +589,14 @@ fun Exception.withSuppressed(suppressed: List<Exception>): Throwable = apply {
 
   for (e in suppressed) addSuppressed(e)
 }
+
+inline fun <T> Iterable<T>.filterList(predicate: T.() -> Boolean): List<T> {
+  var result: List<T> = emptyList()
+  for (i in this) {
+    if (predicate(i)) {
+      if (result.isEmpty()) result = mutableListOf()
+      (result as MutableList<T>).add(i)
+    }
+  }
+  return result
+}
