@@ -294,8 +294,28 @@ class CertificatePinner internal constructor(
         else -> hostname == pattern
       }
     }
-
+    
     override fun toString(): String = hashAlgorithm + "/" + hash.base64()
+
+    override fun equals(other: Any?): Boolean {
+      if (this === other) return true
+      if (javaClass != other?.javaClass) return false
+
+      other as Pin
+
+      if (pattern != other.pattern) return false
+      if (hashAlgorithm != other.hashAlgorithm) return false
+      if (hash != other.hash) return false
+
+      return true
+    }
+
+    override fun hashCode(): Int {
+      var result = pattern.hashCode()
+      result = 31 * result + hashAlgorithm.hashCode()
+      result = 31 * result + hash.hashCode()
+      return result
+    }
   }
 
   /** Builds a configured certificate pinner. */
