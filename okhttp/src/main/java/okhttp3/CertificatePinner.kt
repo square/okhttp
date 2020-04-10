@@ -239,6 +239,7 @@ class CertificatePinner internal constructor(
     return result
   }
 
+  /** A hostname pattern and certificate hash for Certificate Pinning. */
   class Pin(pattern: String, pin: String) {
     /** A hostname like `example.com` or a pattern like `*.example.com` (canonical form). */
     val pattern: String
