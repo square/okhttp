@@ -135,7 +135,7 @@ import okio.ByteString.Companion.toByteString
 @Suppress("NAME_SHADOWING")
 class CertificatePinner internal constructor(
   private val pins: Set<Pin>,
-  internal val certificateChainCleaner: CertificateChainCleaner?
+  internal val certificateChainCleaner: CertificateChainCleaner? = null
 ) {
   /**
    * Confirms that at least one of the certificates pinned for `hostname` is in `peerCertificates`.
@@ -166,11 +166,11 @@ class CertificatePinner internal constructor(
 
       for (pin in pins) {
         when (pin.hashAlgorithm) {
-          "sha256/" -> {
+          "sha256" -> {
             if (sha256 == null) sha256 = peerCertificate.toSha256ByteString()
             if (pin.hash == sha256) return // Success!
           }
-          "sha1/" -> {
+          "sha1" -> {
             if (sha1 == null) sha1 = peerCertificate.toSha1ByteString()
             if (pin.hash == sha1) return // Success!
           }
@@ -213,7 +213,7 @@ class CertificatePinner internal constructor(
    * Returns list of matching certificates' pins for the hostname. Returns an empty list if the
    * hostname does not have pinned certificates.
    */
-  fun findMatchingPins(hostname: String): List<Pin> = pins.filterList { it.matches(hostname) }
+  fun findMatchingPins(hostname: String): List<Pin> = pins.filterList { matches(hostname) }
 
   /** Returns a certificate pinner that uses `certificateChainCleaner`. */
   internal fun withCertificateChainCleaner(
@@ -239,14 +239,42 @@ class CertificatePinner internal constructor(
     return result
   }
 
-  data class Pin internal constructor(
+  class Pin internal constructor(
+    pattern: String,
+    pin: String
+  ) {
     /** A hostname like `example.com` or a pattern like `*.example.com` (canonical form). */
-    val pattern: String,
-    /** Either `sha1/` or `sha256/`. */
-    val hashAlgorithm: String,
+    val pattern: String
+
+    /** Either `sha1` or `sha256`. */
+    val hashAlgorithm: String
+
     /** The hash of the pinned certificate using [hashAlgorithm]. */
     val hash: ByteString
-  ) {
+
+    init {
+      require((pattern.startsWith("*.") && pattern.indexOf("*", 1) == -1) ||
+          (pattern.startsWith("**.") && pattern.indexOf("*", 2) == -1) ||
+          pattern.indexOf("*") == -1) {
+        "Unexpected pattern: $pattern"
+      }
+
+      this.pattern =
+        pattern.toCanonicalHost() ?: throw IllegalArgumentException("Invalid pattern: $pattern")
+
+      when {
+        pin.startsWith("sha1/") -> {
+          this.hashAlgorithm = "sha1"
+          this.hash = pin.substring("sha1/".length).decodeBase64() ?: throw IllegalArgumentException("Invalid pin hash: $pin")
+        }
+        pin.startsWith("sha256/") -> {
+          this.hashAlgorithm = "sha256"
+          this.hash = pin.substring("sha256/".length).decodeBase64() ?: throw IllegalArgumentException("Invalid pin hash: $pin")
+        }
+        else -> throw IllegalArgumentException("pins must start with 'sha256/' or 'sha1/': $pin")
+      }
+    }
+
     fun matches(hostname: String): Boolean {
       return when {
         pattern.startsWith("**.") -> {
@@ -267,32 +295,7 @@ class CertificatePinner internal constructor(
       }
     }
 
-    override fun toString(): String = hashAlgorithm + hash.base64()
-
-    companion object {
-      @JvmStatic
-      fun newPin(pattern: String, pin: String): Pin {
-        require((pattern.startsWith("*.") && pattern.indexOf("*", 1) == -1) ||
-            (pattern.startsWith("**.") && pattern.indexOf("*", 2) == -1) ||
-            pattern.indexOf("*") == -1) {
-          "Unexpected pattern: $pattern"
-        }
-        val canonicalPattern =
-          pattern.toCanonicalHost() ?: throw IllegalArgumentException("Invalid pattern: $pattern")
-
-        return when {
-          pin.startsWith("sha1/") -> {
-            val hash = pin.substring("sha1/".length).decodeBase64()!!
-            Pin(canonicalPattern, "sha1/", hash)
-          }
-          pin.startsWith("sha256/") -> {
-            val hash = pin.substring("sha256/".length).decodeBase64()!!
-            Pin(canonicalPattern, "sha256/", hash)
-          }
-          else -> throw IllegalArgumentException("pins must start with 'sha256/' or 'sha1/': $pin")
-        }
-      }
-    }
+    override fun toString(): String = hashAlgorithm + "/" + hash.base64()
   }
 
   /** Builds a configured certificate pinner. */
@@ -308,11 +311,11 @@ class CertificatePinner internal constructor(
      */
     fun add(pattern: String, vararg pins: String) = apply {
       for (pin in pins) {
-        this.pins.add(Pin.newPin(pattern, pin))
+        this.pins.add(Pin(pattern, pin))
       }
     }
 
-    fun build(): CertificatePinner = CertificatePinner(pins.toSet(), null)
+    fun build(): CertificatePinner = CertificatePinner(pins.toSet())
   }
 
   companion object {

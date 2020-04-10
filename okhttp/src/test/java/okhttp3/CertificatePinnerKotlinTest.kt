@@ -39,8 +39,8 @@ class CertificatePinnerKotlinTest {
         .build()
 
     val expectedPins = listOf(
-        Pin.newPin("first.com", certA1Sha256Pin),
-        Pin.newPin("first.com", certB1Sha256Pin))
+        Pin("first.com", certA1Sha256Pin),
+        Pin("first.com", certB1Sha256Pin))
     assertThat(certificatePinner.findMatchingPins("first.com")).isEqualTo(expectedPins)
   }
 
@@ -52,8 +52,8 @@ class CertificatePinnerKotlinTest {
         .build()
 
     val expectedPins = listOf(
-        Pin.newPin("*.example.com", certA1Sha256Pin),
-        Pin.newPin("a.example.com", certB1Sha256Pin))
+        Pin("*.example.com", certA1Sha256Pin),
+        Pin("a.example.com", certB1Sha256Pin))
     assertThat(certificatePinner.findMatchingPins("a.example.com")).isEqualTo(expectedPins)
   }
 
@@ -75,7 +75,7 @@ class CertificatePinnerKotlinTest {
         .add("**.example.com", certA1Sha256Pin)
         .build()
 
-    val expectedPin1 = listOf(Pin.newPin("**.example.com", certA1Sha256Pin))
+    val expectedPin1 = listOf(Pin("**.example.com", certA1Sha256Pin))
     assertThat(certificatePinner.findMatchingPins("example.com")).isEqualTo(expectedPin1)
     assertThat(certificatePinner.findMatchingPins(".example.com")).isEqualTo(expectedPin1)
     assertThat(certificatePinner.findMatchingPins("..example.com")).isEqualTo(expectedPin1)
@@ -100,10 +100,10 @@ class CertificatePinnerKotlinTest {
         .add("*.MyExample.Com", certB1Sha256Pin)
         .build()
 
-    val expectedPin1 = listOf(Pin.newPin("EXAMPLE.com", certA1Sha256Pin))
+    val expectedPin1 = listOf(Pin("EXAMPLE.com", certA1Sha256Pin))
     assertThat(certificatePinner.findMatchingPins("example.com")).isEqualTo(expectedPin1)
 
-    val expectedPin2 = listOf(Pin.newPin("*.MyExample.Com", certB1Sha256Pin))
+    val expectedPin2 = listOf(Pin("*.MyExample.Com", certB1Sha256Pin))
     assertThat(certificatePinner.findMatchingPins("a.myexample.com")).isEqualTo(expectedPin2)
   }
 
@@ -112,7 +112,7 @@ class CertificatePinnerKotlinTest {
         .add("σkhttp.com", certA1Sha256Pin)
         .build()
 
-    val expectedPin = listOf(Pin.newPin("σkhttp.com", certA1Sha256Pin))
+    val expectedPin = listOf(Pin("σkhttp.com", certA1Sha256Pin))
     assertThat(certificatePinner.findMatchingPins("xn--khttp-fde.com")).isEqualTo(expectedPin)
   }
 
@@ -131,7 +131,7 @@ class CertificatePinnerKotlinTest {
     assertThat(certificatePinner.findMatchingPins("ple.com")).isEmpty()
     assertThat(certificatePinner.findMatchingPins("com")).isEmpty()
 
-    val expectedPin = Pin.newPin("*.example.com", certA1Sha256Pin)
+    val expectedPin = Pin("*.example.com", certA1Sha256Pin)
     assertThat(certificatePinner.findMatchingPins("a.example.com")).containsExactly(expectedPin)
     assertThat(certificatePinner.findMatchingPins(".example.com")).containsExactly(expectedPin)
     assertThat(certificatePinner.findMatchingPins("example.example.com"))

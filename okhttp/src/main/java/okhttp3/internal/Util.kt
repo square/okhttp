@@ -57,13 +57,11 @@ import okio.Source
 
 @JvmField
 val EMPTY_BYTE_ARRAY = ByteArray(0)
-
 @JvmField
 val EMPTY_HEADERS = headersOf()
 
 @JvmField
 val EMPTY_RESPONSE = EMPTY_BYTE_ARRAY.toResponseBody()
-
 @JvmField
 val EMPTY_REQUEST = EMPTY_BYTE_ARRAY.toRequestBody()
 
@@ -91,13 +89,9 @@ val UTC = TimeZone.getTimeZone("GMT")!!
  * verification).
  */
 private val VERIFY_AS_IP_ADDRESS =
-  "([0-9a-fA-F]*:[0-9a-fA-F:.]*)|([\\d.]+)".toRegex()
+    "([0-9a-fA-F]*:[0-9a-fA-F:.]*)|([\\d.]+)".toRegex()
 
-fun checkOffsetAndCount(
-  arrayLength: Long,
-  offset: Long,
-  count: Long
-) {
+fun checkOffsetAndCount(arrayLength: Long, offset: Long, count: Long) {
   if (offset or count < 0L || offset > arrayLength || arrayLength - offset < count) {
     throw ArrayIndexOutOfBoundsException()
   }
@@ -168,11 +162,8 @@ fun HttpUrl.toHostHeader(includeDefaultPort: Boolean = false): String {
   }
 }
 
-fun Array<String>.indexOf(
-  value: String,
-  comparator: Comparator<String>
-): Int =
-  indexOfFirst { comparator.compare(it, value) == 0 }
+fun Array<String>.indexOf(value: String, comparator: Comparator<String>): Int =
+    indexOfFirst { comparator.compare(it, value) == 0 }
 
 @Suppress("UNCHECKED_CAST")
 fun Array<String>.concat(value: String): Array<String> {
@@ -184,10 +175,7 @@ fun Array<String>.concat(value: String): Array<String> {
 /**
  * Increments [startIndex] until this string is not ASCII whitespace. Stops at [endIndex].
  */
-fun String.indexOfFirstNonAsciiWhitespace(
-  startIndex: Int = 0,
-  endIndex: Int = length
-): Int {
+fun String.indexOfFirstNonAsciiWhitespace(startIndex: Int = 0, endIndex: Int = length): Int {
   for (i in startIndex until endIndex) {
     when (this[i]) {
       '\t', '\n', '\u000C', '\r', ' ' -> Unit
@@ -200,10 +188,7 @@ fun String.indexOfFirstNonAsciiWhitespace(
 /**
  * Decrements [endIndex] until `input[endIndex - 1]` is not ASCII whitespace. Stops at [startIndex].
  */
-fun String.indexOfLastNonAsciiWhitespace(
-  startIndex: Int = 0,
-  endIndex: Int = length
-): Int {
+fun String.indexOfLastNonAsciiWhitespace(startIndex: Int = 0, endIndex: Int = length): Int {
   for (i in endIndex - 1 downTo startIndex) {
     when (this[i]) {
       '\t', '\n', '\u000C', '\r', ' ' -> Unit
@@ -214,10 +199,7 @@ fun String.indexOfLastNonAsciiWhitespace(
 }
 
 /** Equivalent to `string.substring(startIndex, endIndex).trim()`. */
-fun String.trimSubstring(
-  startIndex: Int = 0,
-  endIndex: Int = length
-): String {
+fun String.trimSubstring(startIndex: Int = 0, endIndex: Int = length): String {
   val start = indexOfFirstNonAsciiWhitespace(startIndex, endIndex)
   val end = indexOfLastNonAsciiWhitespace(start, endIndex)
   return substring(start, end)
@@ -227,11 +209,7 @@ fun String.trimSubstring(
  * Returns the index of the first character in this string that contains a character in
  * [delimiters]. Returns endIndex if there is no such character.
  */
-fun String.delimiterOffset(
-  delimiters: String,
-  startIndex: Int = 0,
-  endIndex: Int = length
-): Int {
+fun String.delimiterOffset(delimiters: String, startIndex: Int = 0, endIndex: Int = length): Int {
   for (i in startIndex until endIndex) {
     if (this[i] in delimiters) return i
   }
@@ -242,11 +220,7 @@ fun String.delimiterOffset(
  * Returns the index of the first character in this string that is [delimiter]. Returns [endIndex]
  * if there is no such character.
  */
-fun String.delimiterOffset(
-  delimiter: Char,
-  startIndex: Int = 0,
-  endIndex: Int = length
-): Int {
+fun String.delimiterOffset(delimiter: Char, startIndex: Int = 0, endIndex: Int = length): Int {
   for (i in startIndex until endIndex) {
     if (this[i] == delimiter) return i
   }
@@ -273,10 +247,7 @@ fun String.canParseAsIpAddress(): Boolean {
 }
 
 /** Returns a [Locale.US] formatted [String]. */
-fun format(
-  format: String,
-  vararg args: Any
-): String {
+fun format(format: String, vararg args: Any): String {
   return String.format(Locale.US, format, *args)
 }
 
@@ -293,11 +264,7 @@ fun BufferedSource.readBomAsCharset(default: Charset): Charset {
   }
 }
 
-fun checkDuration(
-  name: String,
-  duration: Long,
-  unit: TimeUnit?
-): Int {
+fun checkDuration(name: String, duration: Long, unit: TimeUnit?): Int {
   check(duration >= 0L) { "$name < 0" }
   check(unit != null) { "unit == null" }
   val millis = unit.toMillis(duration)
@@ -357,10 +324,7 @@ fun BufferedSource.readMedium(): Int {
  * deadline if one exists already.
  */
 @Throws(IOException::class)
-fun Source.skipAll(
-  duration: Int,
-  timeUnit: TimeUnit
-): Boolean {
+fun Source.skipAll(duration: Int, timeUnit: TimeUnit): Boolean {
   val nowNs = System.nanoTime()
   val originalDurationNs = if (timeout().hasDeadline()) {
     timeout().deadlineNanoTime() - nowNs
@@ -390,10 +354,7 @@ fun Source.skipAll(
  * source is helpful, such as when doing so completes a cache body or frees a socket connection for
  * reuse.
  */
-fun Source.discard(
-  timeout: Int,
-  timeUnit: TimeUnit
-): Boolean = try {
+fun Source.discard(timeout: Int, timeUnit: TimeUnit): Boolean = try {
   this.skipAll(timeout, timeUnit)
 } catch (_: IOException) {
   false
@@ -437,10 +398,7 @@ inline fun ignoreIoExceptions(block: () -> Unit) {
   }
 }
 
-inline fun threadName(
-  name: String,
-  block: () -> Unit
-) {
+inline fun threadName(name: String, block: () -> Unit) {
   val currentThread = Thread.currentThread()
   val oldName = currentThread.name
   currentThread.name = name
@@ -569,11 +527,7 @@ inline fun Any.notify() = (this as Object).notify()
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "NOTHING_TO_INLINE")
 inline fun Any.notifyAll() = (this as Object).notifyAll()
 
-fun <T> readFieldOrNull(
-  instance: Any,
-  fieldType: Class<T>,
-  fieldName: String
-): T? {
+fun <T> readFieldOrNull(instance: Any, fieldType: Class<T>, fieldName: String): T? {
   var c: Class<*> = instance.javaClass
   while (c != Any::class.java) {
     try {
@@ -612,8 +566,7 @@ internal val assertionsEnabled = OkHttpClient::class.java.desiredAssertionStatus
  */
 @JvmField
 internal val okHttpName =
-  OkHttpClient::class.java.name.removePrefix("okhttp3.")
-      .removeSuffix("Client")
+    OkHttpClient::class.java.name.removePrefix("okhttp3.").removeSuffix("Client")
 
 @Suppress("NOTHING_TO_INLINE")
 internal inline fun Any.assertThreadHoldsLock() {
@@ -637,7 +590,7 @@ fun Exception.withSuppressed(suppressed: List<Exception>): Throwable = apply {
   for (e in suppressed) addSuppressed(e)
 }
 
-inline fun <T> Iterable<T>.filterList(predicate: (T) -> Boolean): List<T> {
+inline fun <T> Iterable<T>.filterList(predicate: T.() -> Boolean): List<T> {
   var result: List<T> = emptyList()
   for (i in this) {
     if (predicate(i)) {
