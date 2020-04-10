@@ -15,10 +15,14 @@
  */
 package okhttp3
 
-import okhttp3.CertificatePinner.Companion.toSha1ByteString
+import okhttp3.CertificatePinner.Companion.sha1Hash
 import okhttp3.CertificatePinner.Pin
 import okhttp3.tls.HeldCertificate
+import okio.ByteString.Companion.decodeBase64
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class CertificatePinnerKotlinTest {
@@ -26,7 +30,7 @@ class CertificatePinnerKotlinTest {
   @Test
   fun successfulCheckSha1Pin() {
     val certificatePinner = CertificatePinner.Builder()
-        .add("example.com", "sha1/" + certA1.certificate.toSha1ByteString().base64())
+        .add("example.com", "sha1/" + certA1.certificate.sha1Hash().base64())
         .build()
 
     certificatePinner.check("example.com", listOf(certA1.certificate))
@@ -138,6 +142,31 @@ class CertificatePinnerKotlinTest {
         .containsExactly(expectedPin)
   }
 
+  @Test fun testGoodPin() {
+    val pin = Pin(
+        "**.example.co.uk",
+        "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+    )
+    assertEquals("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=".decodeBase64(), pin.hash)
+    assertEquals("sha256", pin.hashAlgorithm)
+    assertEquals("**.example.co.uk", pin.pattern)
+    assertTrue(pin.matchesHostname("www.example.co.uk"))
+    assertTrue(pin.matchesHostname("gopher.example.co.uk"))
+    assertFalse(pin.matchesHostname("www.example.com"))
+  }
+
+  @Test fun testMatchesSha256() {
+    val pin = Pin("example.com", certA1Sha256Pin)
+    assertTrue(pin.matchesCertificate(certA1.certificate))
+    assertFalse(pin.matchesCertificate(certB1.certificate))
+  }
+
+  @Test fun testMatchesSha1() {
+    val pin = Pin("example.com", certC1Sha1Pin)
+    assertTrue(pin.matchesCertificate(certC1.certificate))
+    assertFalse(pin.matchesCertificate(certB1.certificate))
+  }
+
   companion object {
     internal var certA1: HeldCertificate = HeldCertificate.Builder()
         .serialNumber(100L)
@@ -153,5 +182,6 @@ class CertificatePinnerKotlinTest {
         .serialNumber(300L)
         .build()
     internal var certC1Sha256Pin = CertificatePinner.pin(certC1.certificate)
+    var certC1Sha1Pin = "sha1/" + certC1.certificate.sha1Hash().base64()
   }
 }

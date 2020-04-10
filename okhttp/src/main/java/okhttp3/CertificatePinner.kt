@@ -167,11 +167,11 @@ class CertificatePinner internal constructor(
       for (pin in pins) {
         when (pin.hashAlgorithm) {
           "sha256" -> {
-            if (sha256 == null) sha256 = peerCertificate.toSha256ByteString()
+            if (sha256 == null) sha256 = peerCertificate.sha256Hash()
             if (pin.hash == sha256) return // Success!
           }
           "sha1" -> {
-            if (sha1 == null) sha1 = peerCertificate.toSha1ByteString()
+            if (sha1 == null) sha1 = peerCertificate.sha1Hash()
             if (pin.hash == sha1) return // Success!
           }
           else -> throw AssertionError("unsupported hashAlgorithm: ${pin.hashAlgorithm}")
@@ -213,7 +213,7 @@ class CertificatePinner internal constructor(
    * Returns list of matching certificates' pins for the hostname. Returns an empty list if the
    * hostname does not have pinned certificates.
    */
-  fun findMatchingPins(hostname: String): List<Pin> = pins.filterList { matches(hostname) }
+  fun findMatchingPins(hostname: String): List<Pin> = pins.filterList { matchesHostname(hostname) }
 
   /** Returns a certificate pinner that uses `certificateChainCleaner`. */
   internal fun withCertificateChainCleaner(
@@ -239,10 +239,7 @@ class CertificatePinner internal constructor(
     return result
   }
 
-  class Pin internal constructor(
-    pattern: String,
-    pin: String
-  ) {
+  class Pin(pattern: String, pin: String) {
     /** A hostname like `example.com` or a pattern like `*.example.com` (canonical form). */
     val pattern: String
 
@@ -275,7 +272,7 @@ class CertificatePinner internal constructor(
       }
     }
 
-    fun matches(hostname: String): Boolean {
+    fun matchesHostname(hostname: String): Boolean {
       return when {
         pattern.startsWith("**.") -> {
           // With ** empty prefixes match so exclude the dot from regionMatches().
@@ -294,14 +291,20 @@ class CertificatePinner internal constructor(
         else -> hostname == pattern
       }
     }
-    
-    override fun toString(): String = hashAlgorithm + "/" + hash.base64()
+
+    fun matchesCertificate(certificate: X509Certificate): Boolean {
+        return when (hashAlgorithm) {
+          "sha256" -> hash == certificate.sha256Hash()
+          "sha1" -> hash == certificate.sha1Hash()
+          else -> false
+        }
+    }
+
+    override fun toString(): String = "$hashAlgorithm/${hash.base64()}"
 
     override fun equals(other: Any?): Boolean {
       if (this === other) return true
-      if (javaClass != other?.javaClass) return false
-
-      other as Pin
+      if (other !is Pin) return false
 
       if (pattern != other.pattern) return false
       if (hashAlgorithm != other.hashAlgorithm) return false
@@ -342,6 +345,14 @@ class CertificatePinner internal constructor(
     @JvmField
     val DEFAULT = Builder().build()
 
+    @JvmStatic
+    fun X509Certificate.sha1Hash(): ByteString =
+      publicKey.encoded.toByteString().sha1()
+
+    @JvmStatic
+    fun X509Certificate.sha256Hash(): ByteString =
+      publicKey.encoded.toByteString().sha256()
+
     /**
      * Returns the SHA-256 of `certificate`'s public key.
      *
@@ -351,13 +362,7 @@ class CertificatePinner internal constructor(
     @JvmStatic
     fun pin(certificate: Certificate): String {
       require(certificate is X509Certificate) { "Certificate pinning requires X509 certificates" }
-      return "sha256/${certificate.toSha256ByteString().base64()}"
+      return "sha256/${certificate.sha256Hash().base64()}"
     }
-
-    internal fun X509Certificate.toSha1ByteString(): ByteString =
-        publicKey.encoded.toByteString().sha1()
-
-    fun X509Certificate.toSha256ByteString(): ByteString =
-        publicKey.encoded.toByteString().sha256()
   }
 }

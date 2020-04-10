@@ -21,6 +21,7 @@ import org.junit.Test;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import static okhttp3.CertificatePinner.sha1Hash;
 import static okio.ByteString.decodeBase64;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
@@ -42,7 +43,7 @@ public final class CertificatePinnerTest {
   static HeldCertificate certC1 = new HeldCertificate.Builder()
       .serialNumber(300L)
       .build();
-  static String certC1Sha256Pin = CertificatePinner.pin(certC1.certificate());
+  static String certC1Sha1Pin = "sha1/" + sha1Hash(certC1.certificate()).base64();
 
   @Test public void malformedPin() throws Exception {
     CertificatePinner.Builder builder = new CertificatePinner.Builder();
@@ -273,14 +274,31 @@ public final class CertificatePinnerTest {
 
   @Test
   public void testGoodPin() {
-    CertificatePinner.Pin pin = new CertificatePinner.Pin("**.example.co.uk", "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
+    CertificatePinner.Pin pin = new CertificatePinner.Pin("**.example.co.uk",
+        "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
 
     assertEquals(decodeBase64("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="), pin.getHash());
     assertEquals("sha256", pin.getHashAlgorithm());
     assertEquals("**.example.co.uk", pin.getPattern());
 
-    assertTrue(pin.matches("www.example.co.uk"));
-    assertTrue(pin.matches("gopher.example.co.uk"));
-    assertFalse(pin.matches("www.example.com"));
+    assertTrue(pin.matchesHostname("www.example.co.uk"));
+    assertTrue(pin.matchesHostname("gopher.example.co.uk"));
+    assertFalse(pin.matchesHostname("www.example.com"));
+  }
+
+  @Test
+  public void testMatchesSha256() {
+    CertificatePinner.Pin pin = new CertificatePinner.Pin("example.com", certA1Sha256Pin);
+
+    assertTrue(pin.matchesCertificate(certA1.certificate()));
+    assertFalse(pin.matchesCertificate(certB1.certificate()));
+  }
+
+  @Test
+  public void testMatchesSha1() {
+    CertificatePinner.Pin pin = new CertificatePinner.Pin("example.com", certC1Sha1Pin);
+
+    assertTrue(pin.matchesCertificate(certC1.certificate()));
+    assertFalse(pin.matchesCertificate(certB1.certificate()));
   }
 }
