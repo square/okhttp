@@ -19,8 +19,10 @@ import java.io.IOException
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.Proxy
+import okhttp3.internal.SuppressSignatureCheck
 
 /** Data classes that correspond to each of the methods of [EventListener]. */
+@SuppressSignatureCheck
 sealed class CallEvent {
   abstract val timestampNs: Long
   abstract val call: Call

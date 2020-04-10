@@ -16,10 +16,12 @@
 package okhttp3.internal.platform.android
 
 import android.util.Log
+import okhttp3.internal.SuppressSignatureCheck
 import okhttp3.internal.platform.Platform
 
 private const val MAX_LOG_LENGTH = 4000
 
+@SuppressSignatureCheck
 internal fun androidLog(level: Int, message: String, t: Throwable?) {
   var logMessage = message
   val logLevel = when (level) {

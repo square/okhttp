@@ -16,7 +16,7 @@
 package okhttp3.internal.platform.android
 
 import android.annotation.SuppressLint
-import android.net.SSLCertificateSocketFactory
+import android.net.ssl.SSLSockets
 import android.os.Build
 import java.io.IOException
 import java.lang.IllegalArgumentException
@@ -24,22 +24,21 @@ import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol
+import okhttp3.internal.SuppressSignatureCheck
 import okhttp3.internal.platform.AndroidPlatform.Companion.isAndroid
 import okhttp3.internal.platform.Platform
 
 /**
  * Simple non-reflection SocketAdapter for Android Q.
  */
+@SuppressLint("NewApi")
+@SuppressSignatureCheck
 class Android10SocketAdapter : SocketAdapter {
-  private val socketFactory =
-      SSLCertificateSocketFactory.getDefault(10000) as SSLCertificateSocketFactory
-
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? = null
 
   override fun matchesSocketFactory(sslSocketFactory: SSLSocketFactory): Boolean = false
 
-  override fun matchesSocket(sslSocket: SSLSocket): Boolean = sslSocket.javaClass.name.startsWith(
-      "com.android.org.conscrypt")
+  override fun matchesSocket(sslSocket: SSLSocket): Boolean = SSLSockets.isSupportedSocket(sslSocket)
 
   override fun isSupported(): Boolean = Companion.isSupported()
 
@@ -57,7 +56,7 @@ class Android10SocketAdapter : SocketAdapter {
     protocols: List<Protocol>
   ) {
     try {
-      socketFactory.setUseSessionTickets(sslSocket, true)
+      SSLSockets.setUseSessionTickets(sslSocket, true)
 
       val sslParameters = sslSocket.sslParameters
 
@@ -71,6 +70,7 @@ class Android10SocketAdapter : SocketAdapter {
     }
   }
 
+  @SuppressSignatureCheck
   companion object {
     fun buildIfSupported(): SocketAdapter? =
         if (isSupported()) Android10SocketAdapter() else null
