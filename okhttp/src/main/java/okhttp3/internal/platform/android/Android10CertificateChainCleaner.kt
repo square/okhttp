@@ -22,6 +22,7 @@ import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.X509TrustManager
+import okhttp3.internal.SuppressSignatureCheck
 import okhttp3.internal.tls.CertificateChainCleaner
 
 /**
@@ -37,6 +38,7 @@ internal class Android10CertificateChainCleaner(
 ) : CertificateChainCleaner() {
   @Suppress("UNCHECKED_CAST")
   @Throws(SSLPeerUnverifiedException::class)
+  @SuppressSignatureCheck
   override
   fun clean(chain: List<Certificate>, hostname: String): List<Certificate> {
     val certificates = (chain as List<X509Certificate>).toTypedArray()
@@ -54,6 +56,7 @@ internal class Android10CertificateChainCleaner(
   override fun hashCode(): Int = System.identityHashCode(trustManager)
 
   companion object {
+    @SuppressSignatureCheck
     fun buildIfSupported(trustManager: X509TrustManager): Android10CertificateChainCleaner? {
       val extensions = try {
         X509TrustManagerExtensions(trustManager)

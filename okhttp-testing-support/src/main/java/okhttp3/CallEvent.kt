@@ -19,8 +19,10 @@ import java.io.IOException
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.Proxy
+import okhttp3.internal.SuppressSignatureCheck
 
 /** Data classes that correspond to each of the methods of [EventListener]. */
+@SuppressSignatureCheck
 sealed class CallEvent {
   abstract val timestampNs: Long
   abstract val call: Call
@@ -74,7 +76,7 @@ sealed class CallEvent {
     val protocol: Protocol?
   ) : CallEvent() {
     override fun closes(timestampNs: Long) =
-        ConnectStart(timestampNs, call, inetSocketAddress, proxy)
+      ConnectStart(timestampNs, call, inetSocketAddress, proxy)
   }
 
   data class ConnectFailed(
@@ -86,7 +88,7 @@ sealed class CallEvent {
     val ioe: IOException
   ) : CallEvent() {
     override fun closes(timestampNs: Long) =
-        ConnectStart(timestampNs, call, inetSocketAddress, proxy)
+      ConnectStart(timestampNs, call, inetSocketAddress, proxy)
   }
 
   data class SecureConnectStart(

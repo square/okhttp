@@ -19,9 +19,11 @@ import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol
+import okhttp3.internal.SuppressSignatureCheck
 
 /** OpenJDK 9+. */
 open class Jdk9Platform : Platform() {
+  @SuppressSignatureCheck
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
     hostname: String?,
@@ -36,6 +38,7 @@ open class Jdk9Platform : Platform() {
     sslSocket.sslParameters = sslParameters
   }
 
+  @SuppressSignatureCheck
   override fun getSelectedProtocol(sslSocket: SSLSocket): String? {
     // SSLSocket.getApplicationProtocol returns "" if application protocols values will not
     // be used. Observed if you didn't specify SSLParameters.setApplicationProtocols

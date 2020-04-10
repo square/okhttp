@@ -55,7 +55,10 @@ open class PlatformRule @JvmOverloads constructor(
 ) : TestRule {
   private val versionChecks = mutableListOf<Pair<Matcher<out Any>, Matcher<out Any>>>()
 
-  override fun apply(base: Statement, description: org.junit.runner.Description): Statement {
+  override fun apply(
+    base: Statement,
+    description: org.junit.runner.Description
+  ): Statement {
     return object : Statement() {
       @Throws(Throwable::class)
       override fun evaluate() {
@@ -198,83 +201,131 @@ open class PlatformRule @JvmOverloads constructor(
   fun hasHttp2Support() = !isJdk8()
 
   fun assumeConscrypt() {
-    assumeThat(getPlatformSystemProperty(), equalTo(
-        CONSCRYPT_PROPERTY))
+    assumeThat(
+        getPlatformSystemProperty(), equalTo(
+        CONSCRYPT_PROPERTY
+    )
+    )
   }
 
   fun assumeJdk9() {
-    assumeThat(getPlatformSystemProperty(), equalTo(
-        JDK9_PROPERTY))
+    assumeThat(
+        getPlatformSystemProperty(), equalTo(
+        JDK9_PROPERTY
+    )
+    )
   }
 
   fun assumeOpenJSSE() {
-    assumeThat(getPlatformSystemProperty(), equalTo(
-        OPENJSSE_PROPERTY))
+    assumeThat(
+        getPlatformSystemProperty(), equalTo(
+        OPENJSSE_PROPERTY
+    )
+    )
   }
 
   fun assumeJdk8() {
-    assumeThat(getPlatformSystemProperty(), equalTo(
-        JDK8_PROPERTY))
+    assumeThat(
+        getPlatformSystemProperty(), equalTo(
+        JDK8_PROPERTY
+    )
+    )
   }
 
   fun assumeJdk8Alpn() {
-    assumeThat(getPlatformSystemProperty(), equalTo(
-        JDK8_ALPN_PROPERTY))
+    assumeThat(
+        getPlatformSystemProperty(), equalTo(
+        JDK8_ALPN_PROPERTY
+    )
+    )
   }
 
   fun assumeCorretto() {
-    assumeThat(getPlatformSystemProperty(), equalTo(
-        CORRETTO_PROPERTY))
+    assumeThat(
+        getPlatformSystemProperty(), equalTo(
+        CORRETTO_PROPERTY
+    )
+    )
   }
 
   fun assumeBouncyCastle() {
-    assumeThat(getPlatformSystemProperty(), equalTo(
-            BOUNCYCASTLE_PROPERTY))
+    assumeThat(
+        getPlatformSystemProperty(), equalTo(
+        BOUNCYCASTLE_PROPERTY
+    )
+    )
   }
 
   fun assumeHttp2Support() {
-    assumeThat(getPlatformSystemProperty(), not(
-        JDK8_PROPERTY))
+    assumeThat(
+        getPlatformSystemProperty(), not(
+        JDK8_PROPERTY
+    )
+    )
   }
 
   fun assumeNotConscrypt() {
-    assumeThat(getPlatformSystemProperty(), not(
-        CONSCRYPT_PROPERTY))
+    assumeThat(
+        getPlatformSystemProperty(), not(
+        CONSCRYPT_PROPERTY
+    )
+    )
   }
 
   fun assumeNotJdk9() {
-    assumeThat(getPlatformSystemProperty(), not(
-        JDK9_PROPERTY))
+    assumeThat(
+        getPlatformSystemProperty(), not(
+        JDK9_PROPERTY
+    )
+    )
   }
 
   fun assumeNotJdk8() {
-    assumeThat(getPlatformSystemProperty(), not(
-        JDK8_PROPERTY))
+    assumeThat(
+        getPlatformSystemProperty(), not(
+        JDK8_PROPERTY
+    )
+    )
   }
 
   fun assumeNotJdk8Alpn() {
-    assumeThat(getPlatformSystemProperty(), not(
-        JDK8_ALPN_PROPERTY))
+    assumeThat(
+        getPlatformSystemProperty(), not(
+        JDK8_ALPN_PROPERTY
+    )
+    )
   }
 
   fun assumeNotOpenJSSE() {
-    assumeThat(getPlatformSystemProperty(), not(
-        OPENJSSE_PROPERTY))
+    assumeThat(
+        getPlatformSystemProperty(), not(
+        OPENJSSE_PROPERTY
+    )
+    )
   }
 
   fun assumeNotCorretto() {
-    assumeThat(getPlatformSystemProperty(), not(
-        CORRETTO_PROPERTY))
+    assumeThat(
+        getPlatformSystemProperty(), not(
+        CORRETTO_PROPERTY
+    )
+    )
   }
 
   fun assumeNotBouncyCastle() {
-    assumeThat(getPlatformSystemProperty(), not(
-            BOUNCYCASTLE_PROPERTY))
+    assumeThat(
+        getPlatformSystemProperty(), not(
+        BOUNCYCASTLE_PROPERTY
+    )
+    )
   }
 
   fun assumeNotHttp2Support() {
-    assumeThat(getPlatformSystemProperty(), equalTo(
-        JDK8_PROPERTY))
+    assumeThat(
+        getPlatformSystemProperty(), equalTo(
+        JDK8_PROPERTY
+    )
+    )
   }
 
   fun assumeJettyBootEnabled() {
@@ -299,7 +350,9 @@ open class PlatformRule @JvmOverloads constructor(
           System.err.println("Warning: Conscrypt not available")
         }
 
-        val provider = Conscrypt.newProviderBuilder().provideTrustManager(true).build()
+        val provider = Conscrypt.newProviderBuilder()
+            .provideTrustManager(true)
+            .build()
         Security.insertProviderAt(provider, 1)
       } else if (platformSystemProperty == JDK8_ALPN_PROPERTY) {
         if (!isAlpnBootEnabled()) {
@@ -385,6 +438,7 @@ open class PlatformRule @JvmOverloads constructor(
     }
 
     val isCorrettoInstalled: Boolean =
-        isCorrettoSupported && Security.getProviders().first().name == AmazonCorrettoCryptoProvider.PROVIDER_NAME
+      isCorrettoSupported && Security.getProviders()
+          .first().name == AmazonCorrettoCryptoProvider.PROVIDER_NAME
   }
 }
