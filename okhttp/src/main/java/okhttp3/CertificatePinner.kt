@@ -134,7 +134,7 @@ import okio.ByteString.Companion.toByteString
  */
 @Suppress("NAME_SHADOWING")
 class CertificatePinner internal constructor(
-  private val pins: Set<Pin>,
+  val pins: Set<Pin>,
   internal val certificateChainCleaner: CertificateChainCleaner? = null
 ) {
   /**
@@ -324,7 +324,7 @@ class CertificatePinner internal constructor(
 
   /** Builds a configured certificate pinner. */
   class Builder {
-    private val pins = mutableListOf<Pin>()
+    val pins = mutableListOf<Pin>()
 
     /**
      * Pins certificates for `pattern`.

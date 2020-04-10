@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import okhttp3.CertificatePinner.Builder
 import okhttp3.CertificatePinner.Companion.sha1Hash
 import okhttp3.CertificatePinner.Pin
 import okhttp3.tls.HeldCertificate
@@ -24,6 +25,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.Arrays
+import java.util.HashSet
 
 class CertificatePinnerKotlinTest {
 
@@ -165,6 +168,20 @@ class CertificatePinnerKotlinTest {
     val pin = Pin("example.com", certC1Sha1Pin)
     assertTrue(pin.matchesCertificate(certC1.certificate))
     assertFalse(pin.matchesCertificate(certB1.certificate))
+  }
+
+  @Test fun pinList() {
+    val builder = Builder()
+        .add("example.com", CertificatePinnerTest.certA1Sha256Pin)
+        .add("www.example.com", CertificatePinnerTest.certA1Sha256Pin)
+    val certificatePinner = builder.build()
+
+    val expectedPins =
+      listOf(Pin("example.com", CertificatePinnerTest.certA1Sha256Pin),
+          Pin("www.example.com", CertificatePinnerTest.certA1Sha256Pin))
+
+    assertEquals(expectedPins, builder.pins)
+    assertEquals(expectedPins.toSet(), certificatePinner.pins)
   }
 
   companion object {

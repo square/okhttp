@@ -15,11 +15,15 @@
  */
 package okhttp3;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import okhttp3.tls.HeldCertificate;
 import org.junit.Test;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static okhttp3.CertificatePinner.sha1Hash;
 import static okio.ByteString.decodeBase64;
@@ -300,5 +304,19 @@ public final class CertificatePinnerTest {
 
     assertTrue(pin.matchesCertificate(certC1.certificate()));
     assertFalse(pin.matchesCertificate(certB1.certificate()));
+  }
+
+  @Test public void pinList() {
+    CertificatePinner.Builder builder = new CertificatePinner.Builder()
+        .add("example.com", certA1Sha256Pin)
+        .add("www.example.com", certA1Sha256Pin);
+    CertificatePinner certificatePinner = builder.build();
+
+    List<CertificatePinner.Pin> expectedPins =
+        asList(new CertificatePinner.Pin("example.com", certA1Sha256Pin),
+            new CertificatePinner.Pin("www.example.com", certA1Sha256Pin));
+
+    assertEquals(expectedPins, builder.getPins());
+    assertEquals(new HashSet<>(expectedPins), certificatePinner.getPins());
   }
 }
