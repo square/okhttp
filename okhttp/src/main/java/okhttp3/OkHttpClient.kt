@@ -240,7 +240,7 @@ open class OkHttpClient internal constructor(
     }
 
     this.certificatePinner = builder.certificatePinner
-        .withCertificateChainCleaner(certificateChainCleaner)
+        .withCertificateChainCleaner(certificateChainCleaner!!)
 
     check(null !in (interceptors as List<Interceptor?>)) {
       "Null interceptor: $interceptors"
