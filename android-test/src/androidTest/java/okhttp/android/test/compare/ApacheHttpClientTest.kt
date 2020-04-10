@@ -15,12 +15,10 @@
  */
 package okhttp.android.test.compare;
 
-import android.support.test.runner.AndroidJUnit4
-import okhttp3.Protocol
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.apache.hc.client5.http.classic.methods.HttpGet
 import org.apache.hc.client5.http.impl.classic.HttpClients
 import org.apache.hc.core5.http.HttpVersion
-import org.apache.hc.core5.http.ProtocolVersion
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.After
 import org.junit.Test

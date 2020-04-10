@@ -29,7 +29,7 @@ android {
     versionCode 1
     versionName "1.0"
 
-    testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     testInstrumentationRunnerArguments(['notClass': 'org.conscrypt.KitKatPlatformOpenSSLSocketImplAdapter,org.bouncycastle.pqc.crypto.qtesla.QTeslaKeyEncodingTests'])
   }
 }
@@ -50,8 +50,8 @@ dependencies {
   androidTestImplementation project(':okhttp-tls')
   androidTestImplementation project(':okhttp-dnsoverhttps')
   androidTestImplementation project(':okhttp-logging-interceptor')
-  androidTestImplementation 'com.android.support.test:runner:1.0.2'
-  androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+  androidTestImplementation 'androidx.test.ext:junit:1.1.1'
+  androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
   androidTestImplementation 'org.apache.httpcomponents.client5:httpclient5:5.0'
   androidTestImplementation 'com.squareup.moshi:moshi:1.9.2'
   androidTestImplementation 'com.squareup.moshi:moshi-kotlin:1.9.2'
