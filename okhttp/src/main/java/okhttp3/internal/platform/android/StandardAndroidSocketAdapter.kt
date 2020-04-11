@@ -28,8 +28,7 @@ class StandardAndroidSocketAdapter(
   sslSocketClass: Class<in SSLSocket>,
   private val sslSocketFactoryClass: Class<in SSLSocketFactory>,
   private val paramClass: Class<*>
-) : AndroidSocketAdapter(
-    sslSocketClass) {
+) : AndroidSocketAdapter(sslSocketClass) {
 
   override fun matchesSocketFactory(sslSocketFactory: SSLSocketFactory): Boolean =
       sslSocketFactoryClass.isInstance(sslSocketFactory)

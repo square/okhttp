@@ -26,6 +26,7 @@ import okhttp3.internal.SuppressSignatureCheck
 import okhttp3.internal.platform.AndroidPlatform.Companion.isAndroid
 import okhttp3.internal.platform.android.Android10CertificateChainCleaner
 import okhttp3.internal.platform.android.Android10SocketAdapter
+import okhttp3.internal.platform.android.BouncyCastleSocketAdapter
 import okhttp3.internal.platform.android.ConscryptSocketAdapter
 import okhttp3.internal.platform.android.DeferredSocketAdapter
 import okhttp3.internal.platform.android.androidLog
@@ -37,7 +38,8 @@ class Android10Platform : Platform() {
   private val socketAdapters = listOfNotNull(
       Android10SocketAdapter.buildIfSupported(),
       ConscryptSocketAdapter.buildIfSupported(),
-      DeferredSocketAdapter("com.google.android.gms.org.conscrypt")
+      DeferredSocketAdapter("com.google.android.gms.org.conscrypt"),
+      BouncyCastleSocketAdapter.buildIfSupported()
   ).filter { it.isSupported() }
 
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? =

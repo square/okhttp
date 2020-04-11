@@ -548,12 +548,12 @@ class OkHttpTest {
       response.use {
         assertEquals(Protocol.HTTP_2, response.protocol)
         assertEquals(200, response.code)
-        assertEquals("org.conscrypt.ConscryptFileDescriptorSocket", socketClass)
-        assertEquals(TlsVersion.TLS_1_3, response.handshake?.tlsVersion)
+        assertEquals("org.bouncycastle.jsse.provider.ProvSSLSocketWrap", socketClass)
+        assertEquals(TlsVersion.TLS_1_2, response.handshake?.tlsVersion)
       }
     } finally {
-      Security.removeProvider("BC")
       Security.removeProvider("BCJSSE")
+      Security.removeProvider("BC")
       client.close()
     }
   }

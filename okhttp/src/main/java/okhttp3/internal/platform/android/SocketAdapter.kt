@@ -24,7 +24,7 @@ interface SocketAdapter {
   fun isSupported(): Boolean
   fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager?
   fun matchesSocket(sslSocket: SSLSocket): Boolean
-  fun matchesSocketFactory(sslSocketFactory: SSLSocketFactory): Boolean
+  fun matchesSocketFactory(sslSocketFactory: SSLSocketFactory): Boolean = false
 
   fun configureTlsExtensions(
     sslSocket: SSLSocket,
