@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.net.ServerSocketFactory;
@@ -32,18 +33,42 @@ import okhttp3.OkHttpClientTestRule;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.internal.connection.RealCall;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okio.Buffer;
 import okio.BufferedSink;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
+import static java.util.Arrays.asList;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+@RunWith(Parameterized.class)
 public final class CancelTest {
+  private Thread threadToCancel;
+
+  enum CancelMode {
+    CANCEL,
+    INTERRUPT
+  }
+
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
+  private final CancelMode mode;
+
+  @Parameterized.Parameters(name = "{0}")
+  public static Collection<CancelMode> cancelModes() {
+    return asList(CancelMode.values());
+  }
+
+  public CancelTest(CancelMode mode) {
+    this.mode = mode;
+  }
 
   // The size of the socket buffers in bytes.
   private static final int SOCKET_BUFFER_SIZE = 256 * 1024;
@@ -51,7 +76,7 @@ public final class CancelTest {
   private MockWebServer server;
   private OkHttpClient client;
 
-  @Before public void setUp() throws Exception {
+  @Before public void setUp() {
     // Sockets on some platforms can have large buffers that mean writes do not block when
     // required. These socket factories explicitly set the buffer sizes on sockets created.
     server = new MockWebServer();
@@ -72,6 +97,8 @@ public final class CancelTest {
           }
         })
         .build();
+
+    threadToCancel = Thread.currentThread();
   }
 
   @Test public void cancelWritingRequestBody() throws Exception {
@@ -101,6 +128,7 @@ public final class CancelTest {
       call.execute();
       fail();
     } catch (IOException expected) {
+      assertEquals(mode == CancelMode.INTERRUPT, Thread.interrupted());
     }
   }
 
@@ -125,6 +153,7 @@ public final class CancelTest {
       }
       fail("Expected connection to be closed");
     } catch (IOException expected) {
+      assertEquals(mode == CancelMode.INTERRUPT, Thread.interrupted());
     }
 
     responseBody.close();
@@ -141,7 +170,11 @@ public final class CancelTest {
   private void cancelLater(Call call, int delayMillis) {
     Thread interruptingCow = new Thread(() -> {
       sleep(delayMillis);
-      call.cancel();
+      if (mode == CancelMode.CANCEL) {
+        call.cancel();
+      } else {
+        threadToCancel.interrupt();
+      }
     });
     interruptingCow.start();
   }
