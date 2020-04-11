@@ -16,7 +16,6 @@
 package okhttp3.internal.sse;
 
 import java.util.concurrent.TimeUnit;
-import kotlin.jvm.JvmField;
 import okhttp3.OkHttpClient;
 import okhttp3.OkHttpClientTestRule;
 import okhttp3.Request;
@@ -32,7 +31,7 @@ import org.junit.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public final class EventSourceHttpTest {
-  @JvmField @Rule public final PlatformRule platform = new PlatformRule();
+  @Rule public final PlatformRule platform = new PlatformRule();
 
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();

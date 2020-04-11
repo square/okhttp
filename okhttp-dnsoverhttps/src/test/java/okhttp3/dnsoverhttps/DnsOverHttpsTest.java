@@ -23,7 +23,6 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import kotlin.jvm.JvmField;
 import okhttp3.Cache;
 import okhttp3.Dns;
 import okhttp3.HttpUrl;
@@ -45,7 +44,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public class DnsOverHttpsTest {
-  @JvmField @Rule public final PlatformRule platform = new PlatformRule();
+  @Rule public final PlatformRule platform = new PlatformRule();
 
   @Rule public final MockWebServer server = new MockWebServer();
 

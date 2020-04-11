@@ -280,35 +280,35 @@ workflows:
               ignore:
                 - master
                 - gh-pages
-#      - testjdk8:
-#          filters:
-#            branches:
-#              ignore:
-#                - gh-pages
-#      - testjdk8alpn:
-#          filters:
-#            branches:
-#              only: master
+      - testjdk8:
+          filters:
+            branches:
+              ignore:
+                - gh-pages
+      - testjdk8alpn:
+          filters:
+            branches:
+              only: master
       - testjdk11:
           filters:
             branches:
               ignore:
                 - gh-pages
-#      - testjdk12windows:
-#          filters:
-#            branches:
-#              only: master
-#      - testjdk13:
-#          filters:
-#            branches:
-#              ignore:
-#                - gh-pages
-#      - testjdk14:
-#          filters:
-#            branches:
-#              ignore:
-#                - gh-pages
-      - testbouncycastle
+      - testjdk12windows:
+          filters:
+            branches:
+              only: master
+      - testjdk13:
+          filters:
+            branches:
+              ignore:
+                - gh-pages
+      - testjdk14:
+          filters:
+            branches:
+              ignore:
+                - gh-pages
+      #- testbouncycastle
       #- testopenjsse
       #- testconscrypt
       #- testcorretto
