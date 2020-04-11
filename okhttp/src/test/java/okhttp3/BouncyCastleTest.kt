@@ -37,7 +37,6 @@ class BouncyCastleTest {
   }
 
   @Test
-  @Ignore
   fun testMozilla() {
     assumeNetwork()
 

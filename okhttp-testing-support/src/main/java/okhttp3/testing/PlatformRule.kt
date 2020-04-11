@@ -17,7 +17,6 @@ package okhttp3.testing
 
 import com.amazon.corretto.crypto.provider.AmazonCorrettoCryptoProvider
 import com.amazon.corretto.crypto.provider.SelfTestStatus
-import java.security.Security
 import okhttp3.internal.platform.ConscryptPlatform
 import okhttp3.internal.platform.Jdk8WithJettyBootPlatform
 import okhttp3.internal.platform.Jdk9Platform
@@ -41,6 +40,7 @@ import org.junit.AssumptionViolatedException
 import org.junit.rules.TestRule
 import org.junit.runners.model.Statement
 import org.openjsse.net.ssl.OpenJSSE
+import java.security.Security
 
 /**
  * Marks a test as Platform aware, before the test runs a consistent Platform will be
