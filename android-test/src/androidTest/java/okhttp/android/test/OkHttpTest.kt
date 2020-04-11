@@ -525,6 +525,7 @@ class OkHttpTest {
   }
 
   @Test
+  @Ignore("breaks conscrypt test")
   fun testBouncyCastleRequest() {
     assumeNetwork()
 
