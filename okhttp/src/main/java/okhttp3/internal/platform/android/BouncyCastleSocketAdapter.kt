@@ -49,15 +49,14 @@ class BouncyCastleSocketAdapter : SocketAdapter {
   ) {
     // No TLS extensions if the socket class is custom.
     if (matchesSocket(sslSocket)) {
-      val s = sslSocket as BCSSLSocket
+      val bcSocket = sslSocket as BCSSLSocket
 
-      // Enable ALPN.
-      val sslParameters = sslSocket.parameters
+      val sslParameters = bcSocket.parameters
 
       // Enable ALPN.
       sslParameters.applicationProtocols = Platform.alpnProtocolNames(protocols).toTypedArray()
 
-      sslSocket.parameters = sslParameters
+      bcSocket.parameters = sslParameters
     }
   }
 
