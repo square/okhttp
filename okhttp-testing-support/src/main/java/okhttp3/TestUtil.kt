@@ -20,7 +20,8 @@ import java.net.InetSocketAddress
 import java.net.UnknownHostException
 import java.util.Arrays
 import okhttp3.internal.http2.Header
-import org.junit.Assume
+import org.junit.Assume.assumeFalse
+import org.junit.Assume.assumeNoException
 
 object TestUtil {
   @JvmField
@@ -59,20 +60,16 @@ object TestUtil {
     try {
       InetAddress.getByName("www.google.com")
     } catch (uhe: UnknownHostException) {
-      Assume.assumeNoException(uhe)
+      assumeNoException(uhe)
     }
   }
 
   @JvmStatic
   fun assumeNotWindows() {
-    var isWindows = false
-    try {
-      val osName = System.getProperty("os.name")
-      isWindows = osName.startsWith("Windows")
-    } catch (ex: Exception) {
-      // Any exception means this is not a Windows system
-      // or we do not have permissions to check
-    }
-    Assume.assumeFalse("This test fails on Windows.", isWindows)
+    assumeFalse("This test fails on Windows.", windows)
   }
+
+  @JvmStatic
+  val windows: Boolean
+    get() = System.getProperty("os.name", "?").startsWith("Windows")
 }

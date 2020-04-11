@@ -102,6 +102,8 @@ interface FileSystem {
           }
         }
       }
+
+      override fun toString() = "FileSystem.SYSTEM"
     }
   }
 
