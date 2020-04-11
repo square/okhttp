@@ -38,6 +38,7 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okio.Buffer;
 import okio.BufferedSink;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -45,6 +46,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import static java.util.Arrays.asList;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 @RunWith(Parameterized.class)
@@ -60,7 +62,7 @@ public final class CancelTest {
   private final CancelMode mode;
 
   @Parameterized.Parameters(name = "{0}")
-  public static Collection<CancelMode> createStories() {
+  public static Collection<CancelMode> cancelModes() {
     return asList(CancelMode.values());
   }
 
@@ -126,6 +128,7 @@ public final class CancelTest {
       call.execute();
       fail();
     } catch (IOException expected) {
+      assertEquals(mode == CancelMode.INTERRUPT, Thread.interrupted());
     }
   }
 
@@ -150,6 +153,7 @@ public final class CancelTest {
       }
       fail("Expected connection to be closed");
     } catch (IOException expected) {
+      assertEquals(mode == CancelMode.INTERRUPT, Thread.interrupted());
     }
 
     responseBody.close();
