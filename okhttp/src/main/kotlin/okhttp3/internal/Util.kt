@@ -18,6 +18,7 @@
 package okhttp3.internal
 
 import java.io.Closeable
+import java.io.File
 import java.io.IOException
 import java.io.InterruptedIOException
 import java.net.InetSocketAddress
@@ -48,6 +49,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
 import okhttp3.internal.http2.Header
+import okhttp3.internal.io.FileSystem
 import okio.Buffer
 import okio.BufferedSink
 import okio.BufferedSource
@@ -512,6 +514,29 @@ fun ServerSocket.closeQuietly() {
     throw rethrown
   } catch (_: Exception) {
   }
+}
+
+/**
+ * Returns true if file streams can be manipulated independently of their paths. This is typically
+ * true for systems like Mac, Unix, and Linux that use inodes in their file system interface. It is
+ * typically false on Windows.
+ *
+ * If this returns false we won't permit simultaneous reads and writes. When writes commit we need
+ * to delete the previous snapshots, and that won't succeed if the file is open. (We do permit
+ * multiple simultaneous reads.)
+ *
+ * @param file a file in the directory to check. This file shouldn't already exist!
+ */
+fun FileSystem.isCivilized(file: File): Boolean {
+  sink(file).use {
+    try {
+      delete(file)
+      return true
+    } catch (_: IOException) {
+    }
+  }
+  delete(file)
+  return false
 }
 
 fun Long.toHexString(): String = java.lang.Long.toHexString(this)

@@ -19,6 +19,7 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.util.IdentityHashMap
+import okhttp3.TestUtil.isDescendentOf
 import okio.Buffer
 import okio.ForwardingSink
 import okio.ForwardingSource
@@ -30,16 +31,13 @@ import org.junit.runners.model.Statement
 
 /** A simple file system where all files are held in memory. Not safe for concurrent use.  */
 class InMemoryFileSystem : FileSystem, TestRule {
-  private val files: MutableMap<File, Buffer> = mutableMapOf()
-  private val openSources: MutableMap<Source, File> = IdentityHashMap()
-  private val openSinks: MutableMap<Sink, File> = IdentityHashMap()
+  private val files = mutableMapOf<File, Buffer>()
+  private val openSources = IdentityHashMap<Source, File>()
+  private val openSinks = IdentityHashMap<Sink, File>()
 
-  override fun apply(
-    base: Statement,
-    description: Description
-  ): Statement {
+  override fun apply(base: Statement, description: Description): Statement {
     return object : Statement() {
-      @Throws(Throwable::class) override fun evaluate() {
+      override fun evaluate() {
         base.evaluate()
         ensureResourcesClosed()
       }
@@ -47,32 +45,25 @@ class InMemoryFileSystem : FileSystem, TestRule {
   }
 
   fun ensureResourcesClosed() {
-    val openResources: MutableList<String> = mutableListOf()
+    val openResources = mutableListOf<String>()
     for (file in openSources.values) {
       openResources.add("Source for $file")
     }
     for (file in openSinks.values) {
       openResources.add("Sink for $file")
     }
-    if (!openResources.isEmpty()) {
-      val builder =
-        StringBuilder("Resources acquired but not closed:")
-      for (resource in openResources) {
-        builder.append("\n * ")
-            .append(resource)
-      }
-      throw IllegalStateException(builder.toString())
+    check(openResources.isEmpty()) {
+      "Resources acquired but not closed:\n * ${openResources.joinToString(separator = "\n * ")}"
     }
   }
 
-  @Throws(
-      FileNotFoundException::class
-  ) override fun source(file: File): Source {
+  @Throws(FileNotFoundException::class)
+  override fun source(file: File): Source {
     val result = files[file] ?: throw FileNotFoundException()
     val source: Source = result.clone()
     openSources[source] = file
     return object : ForwardingSource(source) {
-      @Throws(IOException::class) override fun close() {
+      override fun close() {
         openSources.remove(source)
         super.close()
       }
@@ -80,20 +71,12 @@ class InMemoryFileSystem : FileSystem, TestRule {
   }
 
   @Throws(FileNotFoundException::class)
-  override fun sink(file: File): Sink {
-    return sink(file, false)
-  }
+  override fun sink(file: File) = sink(file, false)
 
-  @Throws(
-      FileNotFoundException::class
-  ) override fun appendingSink(file: File): Sink {
-    return sink(file, true)
-  }
+  @Throws(FileNotFoundException::class)
+  override fun appendingSink(file: File) = sink(file, true)
 
-  private fun sink(
-    file: File,
-    appending: Boolean
-  ): Sink {
+  private fun sink(file: File, appending: Boolean): Sink {
     var result: Buffer? = null
     if (appending) {
       result = files[file]
@@ -105,7 +88,7 @@ class InMemoryFileSystem : FileSystem, TestRule {
     val sink: Sink = result
     openSinks[sink] = file
     return object : ForwardingSink(sink) {
-      @Throws(IOException::class) override fun close() {
+      override fun close() {
         openSinks.remove(sink)
         super.close()
       }
@@ -117,33 +100,21 @@ class InMemoryFileSystem : FileSystem, TestRule {
     files.remove(file)
   }
 
-  override fun exists(file: File): Boolean {
-    return files.containsKey(file)
+  override fun exists(file: File) = files.containsKey(file)
+
+  override fun size(file: File) = files[file]?.size ?: 0L
+
+  @Throws(IOException::class)
+  override fun rename(from: File, to: File) {
+    files[to] = files.remove(from) ?: throw FileNotFoundException()
   }
 
-  override fun size(file: File): Long {
-    val buffer = files[file]
-    return buffer?.size ?: 0L
-  }
-
-  @Throws(IOException::class) override fun rename(
-    from: File,
-    to: File
-  ) {
-    val buffer = files.remove(from) ?: throw FileNotFoundException()
-    files[to] = buffer
-  }
-
-  @Throws(
-      IOException::class
-  ) override fun deleteContents(directory: File) {
-    val prefix = "$directory/"
+  @Throws(IOException::class)
+  override fun deleteContents(directory: File) {
     val i = files.keys.iterator()
     while (i.hasNext()) {
       val file = i.next()
-      if (file.toString()
-              .startsWith(prefix)
-      ) i.remove()
+      if (file.isDescendentOf(directory)) i.remove()
     }
   }
 
