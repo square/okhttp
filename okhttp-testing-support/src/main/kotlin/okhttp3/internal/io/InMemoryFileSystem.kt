@@ -146,4 +146,6 @@ class InMemoryFileSystem : FileSystem, TestRule {
       ) i.remove()
     }
   }
+
+  override fun toString() = "InMemoryFileSystem"
 }
