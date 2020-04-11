@@ -143,6 +143,7 @@ public final class LoggingEventListenerTest {
   @Test
   public void secureGet() throws Exception {
     TestUtil.assumeNotWindows();
+    platform.assumeNotBouncyCastle();
 
     server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     url = server.url("/");
@@ -211,6 +212,7 @@ public final class LoggingEventListenerTest {
   @Test
   public void connectFail() {
     TestUtil.assumeNotWindows();
+    platform.assumeNotBouncyCastle();
 
     server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     server.setProtocols(asList(HTTP_2, HTTP_1_1));

@@ -75,6 +75,7 @@ public final class CacheTest {
 
   @Before public void setUp() throws Exception {
     platform.assumeNotOpenJSSE();
+    platform.assumeNotBouncyCastle();
 
     server.setProtocolNegotiationEnabled(false);
     cache = new Cache(new File("/cache/"), Integer.MAX_VALUE, fileSystem);

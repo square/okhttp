@@ -63,6 +63,7 @@ public final class DuplexTest {
   @Before public void setUp() {
     platform.assumeNotOpenJSSE();
     platform.assumeHttp2Support();
+    platform.assumeNotBouncyCastle();
   }
 
   @Test public void http1DoesntSupportDuplex() throws IOException {
