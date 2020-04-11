@@ -15,11 +15,22 @@
  */
 package okhttp3;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import okhttp3.tls.HeldCertificate;
 import org.junit.Test;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
+import static okhttp3.CertificatePinner.sha1Hash;
+import static okio.ByteString.decodeBase64;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class CertificatePinnerTest {
@@ -36,7 +47,7 @@ public final class CertificatePinnerTest {
   static HeldCertificate certC1 = new HeldCertificate.Builder()
       .serialNumber(300L)
       .build();
-  static String certC1Sha256Pin = CertificatePinner.pin(certC1.certificate());
+  static String certC1Sha1Pin = "sha1/" + sha1Hash(certC1.certificate()).base64();
 
   @Test public void malformedPin() throws Exception {
     CertificatePinner.Builder builder = new CertificatePinner.Builder();
@@ -52,7 +63,7 @@ public final class CertificatePinnerTest {
     try {
       builder.add("example.com", "sha1/DmxUShsZuNiqPQsX2Oi9uv2sCnw*");
       fail();
-    } catch (NullPointerException expected) {
+    } catch (IllegalArgumentException expected) {
     }
   }
 
@@ -80,7 +91,15 @@ public final class CertificatePinnerTest {
         .add("example.com", certA1Sha256Pin)
         .build();
 
-    certificatePinner.check("example.com", certA1.certificate());
+    certificatePinner.check("example.com", singletonList(certA1.certificate()));
+  }
+
+  @Test public void successfulMatchAcceptsAnyMatchingCertificateOld() throws Exception {
+    CertificatePinner certificatePinner = new CertificatePinner.Builder()
+        .add("example.com", certB1Sha256Pin)
+        .build();
+
+    certificatePinner.check("example.com", certA1.certificate(), certB1.certificate());
   }
 
   @Test public void successfulMatchAcceptsAnyMatchingCertificate() throws Exception {
@@ -88,7 +107,7 @@ public final class CertificatePinnerTest {
         .add("example.com", certB1Sha256Pin)
         .build();
 
-    certificatePinner.check("example.com", certA1.certificate(), certB1.certificate());
+    certificatePinner.check("example.com", asList(certA1.certificate(), certB1.certificate()));
   }
 
   @Test public void unsuccessfulCheck() throws Exception {
@@ -108,8 +127,8 @@ public final class CertificatePinnerTest {
         .add("example.com", certA1Sha256Pin, certB1Sha256Pin)
         .build();
 
-    certificatePinner.check("example.com", certA1.certificate());
-    certificatePinner.check("example.com", certB1.certificate());
+    certificatePinner.check("example.com", singletonList(certA1.certificate()));
+    certificatePinner.check("example.com", singletonList(certB1.certificate()));
   }
 
   @Test public void multipleHostnamesForOneCertificate() throws Exception {
@@ -118,13 +137,13 @@ public final class CertificatePinnerTest {
         .add("www.example.com", certA1Sha256Pin)
         .build();
 
-    certificatePinner.check("example.com", certA1.certificate());
-    certificatePinner.check("www.example.com", certA1.certificate());
+    certificatePinner.check("example.com", singletonList(certA1.certificate()));
+    certificatePinner.check("www.example.com", singletonList(certA1.certificate()));
   }
 
   @Test public void absentHostnameMatches() throws Exception {
     CertificatePinner certificatePinner = new CertificatePinner.Builder().build();
-    certificatePinner.check("example.com", certA1.certificate());
+    certificatePinner.check("example.com", singletonList(certA1.certificate()));
   }
 
   @Test public void successfulCheckForWildcardHostname() throws Exception {
@@ -132,7 +151,7 @@ public final class CertificatePinnerTest {
         .add("*.example.com", certA1Sha256Pin)
         .build();
 
-    certificatePinner.check("a.example.com", certA1.certificate());
+    certificatePinner.check("a.example.com", singletonList(certA1.certificate()));
   }
 
   @Test public void successfulMatchAcceptsAnyMatchingCertificateForWildcardHostname()
@@ -141,7 +160,7 @@ public final class CertificatePinnerTest {
         .add("*.example.com", certB1Sha256Pin)
         .build();
 
-    certificatePinner.check("a.example.com", certA1.certificate(), certB1.certificate());
+    certificatePinner.check("a.example.com", asList(certA1.certificate(), certB1.certificate()));
   }
 
   @Test public void unsuccessfulCheckForWildcardHostname() throws Exception {
@@ -150,7 +169,7 @@ public final class CertificatePinnerTest {
         .build();
 
     try {
-      certificatePinner.check("a.example.com", certB1.certificate());
+      certificatePinner.check("a.example.com", singletonList(certB1.certificate()));
       fail();
     } catch (SSLPeerUnverifiedException expected) {
     }
@@ -161,8 +180,8 @@ public final class CertificatePinnerTest {
         .add("*.example.com", certA1Sha256Pin, certB1Sha256Pin)
         .build();
 
-    certificatePinner.check("a.example.com", certA1.certificate());
-    certificatePinner.check("a.example.com", certB1.certificate());
+    certificatePinner.check("a.example.com", singletonList(certA1.certificate()));
+    certificatePinner.check("a.example.com", singletonList(certB1.certificate()));
   }
 
   @Test public void successfulCheckForOneHostnameWithWildcardAndDirectCertificate()
@@ -172,8 +191,8 @@ public final class CertificatePinnerTest {
         .add("a.example.com", certB1Sha256Pin)
         .build();
 
-    certificatePinner.check("a.example.com", certA1.certificate());
-    certificatePinner.check("a.example.com", certB1.certificate());
+    certificatePinner.check("a.example.com", singletonList(certA1.certificate()));
+    certificatePinner.check("a.example.com", singletonList(certB1.certificate()));
   }
 
   @Test public void unsuccessfulCheckForOneHostnameWithWildcardAndDirectCertificate()
@@ -184,7 +203,7 @@ public final class CertificatePinnerTest {
         .build();
 
     try {
-      certificatePinner.check("a.example.com", certC1.certificate());
+      certificatePinner.check("a.example.com", singletonList(certC1.certificate()));
       fail();
     } catch (SSLPeerUnverifiedException expected) {
     }
@@ -197,30 +216,107 @@ public final class CertificatePinnerTest {
 
     // Should be pinned:
     try {
-      certificatePinner.check("example.co.uk", certB1.certificate());
+      certificatePinner.check("example.co.uk", singletonList(certB1.certificate()));
       fail();
     } catch (SSLPeerUnverifiedException expected) {
     }
     try {
-      certificatePinner.check("foo.example.co.uk", certB1.certificate());
+      certificatePinner.check("foo.example.co.uk", singletonList(certB1.certificate()));
       fail();
     } catch (SSLPeerUnverifiedException expected) {
     }
     try {
-      certificatePinner.check("foo.bar.example.co.uk", certB1.certificate());
+      certificatePinner.check("foo.bar.example.co.uk", singletonList(certB1.certificate()));
       fail();
     } catch (SSLPeerUnverifiedException expected) {
     }
     try {
-      certificatePinner.check("foo.bar.baz.example.co.uk", certB1.certificate());
+      certificatePinner.check("foo.bar.baz.example.co.uk", singletonList(certB1.certificate()));
       fail();
     } catch (SSLPeerUnverifiedException expected) {
     }
 
     // Should not be pinned:
-    certificatePinner.check("uk", certB1.certificate());
-    certificatePinner.check("co.uk", certB1.certificate());
-    certificatePinner.check("anotherexample.co.uk", certB1.certificate());
-    certificatePinner.check("foo.anotherexample.co.uk", certB1.certificate());
+    certificatePinner.check("uk", singletonList(certB1.certificate()));
+    certificatePinner.check("co.uk", singletonList(certB1.certificate()));
+    certificatePinner.check("anotherexample.co.uk", singletonList(certB1.certificate()));
+    certificatePinner.check("foo.anotherexample.co.uk", singletonList(certB1.certificate()));
+  }
+
+  @Test
+  public void testBadPin() {
+    try {
+      new CertificatePinner.Pin("example.co.uk",
+          "sha256/a");
+      fail();
+    } catch (IllegalArgumentException iae) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testBadAlgorithm() {
+    try {
+      new CertificatePinner.Pin("example.co.uk",
+          "sha512/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
+      fail();
+    } catch (IllegalArgumentException iae) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testBadHost() {
+    try {
+      new CertificatePinner.Pin("example.*",
+          "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
+      fail();
+    } catch (IllegalArgumentException iae) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testGoodPin() {
+    CertificatePinner.Pin pin = new CertificatePinner.Pin("**.example.co.uk",
+        "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
+
+    assertEquals(decodeBase64("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="), pin.getHash());
+    assertEquals("sha256", pin.getHashAlgorithm());
+    assertEquals("**.example.co.uk", pin.getPattern());
+
+    assertTrue(pin.matchesHostname("www.example.co.uk"));
+    assertTrue(pin.matchesHostname("gopher.example.co.uk"));
+    assertFalse(pin.matchesHostname("www.example.com"));
+  }
+
+  @Test
+  public void testMatchesSha256() {
+    CertificatePinner.Pin pin = new CertificatePinner.Pin("example.com", certA1Sha256Pin);
+
+    assertTrue(pin.matchesCertificate(certA1.certificate()));
+    assertFalse(pin.matchesCertificate(certB1.certificate()));
+  }
+
+  @Test
+  public void testMatchesSha1() {
+    CertificatePinner.Pin pin = new CertificatePinner.Pin("example.com", certC1Sha1Pin);
+
+    assertTrue(pin.matchesCertificate(certC1.certificate()));
+    assertFalse(pin.matchesCertificate(certB1.certificate()));
+  }
+
+  @Test public void pinList() {
+    CertificatePinner.Builder builder = new CertificatePinner.Builder()
+        .add("example.com", certA1Sha256Pin)
+        .add("www.example.com", certA1Sha256Pin);
+    CertificatePinner certificatePinner = builder.build();
+
+    List<CertificatePinner.Pin> expectedPins =
+        asList(new CertificatePinner.Pin("example.com", certA1Sha256Pin),
+            new CertificatePinner.Pin("www.example.com", certA1Sha256Pin));
+
+    assertEquals(expectedPins, builder.getPins());
+    assertEquals(new HashSet<>(expectedPins), certificatePinner.getPins());
   }
 }

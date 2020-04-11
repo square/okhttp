@@ -20,7 +20,6 @@ import okhttp3.mockwebserver.MockWebServer
 import okhttp3.testing.PlatformRule
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 
@@ -37,7 +36,6 @@ class BouncyCastleTest {
   }
 
   @Test
-  @Ignore
   fun testMozilla() {
     assumeNetwork()
 

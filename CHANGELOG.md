@@ -1,6 +1,30 @@
 Change Log
 ==========
 
+## Version 4.5.0
+
+_2020-04-06_
+
+**This release fixes a severe bug where OkHttp incorrectly detected and recovered from unhealthy
+connections.** Stale or canceled connections were incorrectly attempted when they shouldn't have
+been, leading to rare cases of infinite retries. Please upgrade to this release!
+
+ *  Fix: don't return stale DNS entries in `DnsOverHttps`. We were caching DNS results indefinitely
+    rather than the duration specified in the response's cache-control header.
+ *  Fix: Verify certificate IP addresses in canonical form. When a server presents a TLS certificate
+    containing an IP address we must match that address against the URL's IP address, even when the
+    two addresses are encoded differently, such as `192.168.1.1` and `0::0:0:FFFF:C0A8:101`. Note
+    that OkHttp incorrectly rejected valid certificates resulting in a failure to connect; at no
+    point were invalid certificates accepted.
+ *  New: `OkHttpClient.Builder.minWebSocketMessageToCompress()` configures a threshold for
+    compressing outbound web socket messages. Configure this with 0L to always compress outbound
+    messages and `Long.MAX_VALUE` to never compress outbound messages. The default is 1024L which
+    compresses messages of size 1 KiB and larger. (Inbound messages are compressed or not based on
+    the web socket server's configuration.)
+ *  New: Defer constructing `Inflater` and `Deflater` instances until they are needed. This saves
+    memory if web socket compression is negotiated but not used.
+
+
 ## Version 4.5.0-RC1
 
 _2020-03-17_

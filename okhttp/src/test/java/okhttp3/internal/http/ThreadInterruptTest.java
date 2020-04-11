@@ -34,6 +34,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.testing.PlatformRule;
 import okio.Buffer;
 import okio.BufferedSink;
 import org.junit.After;
@@ -44,6 +45,7 @@ import org.junit.Test;
 import static org.junit.Assert.fail;
 
 public final class ThreadInterruptTest {
+  @Rule public final PlatformRule platform = new PlatformRule();
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
   // The size of the socket buffers in bytes.

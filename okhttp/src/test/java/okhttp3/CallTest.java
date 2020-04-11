@@ -91,6 +91,7 @@ import org.junit.rules.Timeout;
 
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static okhttp3.CipherSuite.TLS_DH_anon_WITH_AES_128_GCM_SHA256;
 import static okhttp3.TestUtil.awaitGarbageCollection;
 import static okhttp3.internal.Internal.addHeaderLenient;
@@ -120,6 +121,7 @@ public final class CallTest {
 
   @Before public void setUp() {
     platform.assumeNotOpenJSSE();
+    platform.assumeNotBouncyCastle();
   }
 
   @After public void tearDown() throws Exception {
@@ -3834,6 +3836,37 @@ public final class CallTest {
   @Test public void requestBodyThrowsUnrelatedToNetwork_HTTP2() throws Exception {
     enableProtocol(Protocol.HTTP_2);
     requestBodyThrowsUnrelatedToNetwork();
+  }
+
+  /**
+   * This test cancels the call just after the response body ends. In effect we end up with a
+   * connection that returns to the connection pool with the underlying socket closed. This relies
+   * on an implementation detail so it might not be a valid test case in the future.
+   */
+  @Test public void cancelAfterResponseBodyEnd() throws Exception {
+    enableTls();
+    server.enqueue(new MockResponse().setBody("abc"));
+    server.enqueue(new MockResponse().setBody("def"));
+
+    client = client.newBuilder()
+        .protocols(singletonList(Protocol.HTTP_1_1))
+        .build();
+
+    OkHttpClient cancelClient = client.newBuilder()
+        .eventListener(new EventListener() {
+          @Override public void responseBodyEnd(Call call, long byteCount) {
+            call.cancel();
+          }
+        })
+        .build();
+
+    Call call = cancelClient.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response = call.execute();
+    assertThat(response.body().string()).isEqualTo("abc");
+
+    executeSynchronously("/").assertCode(200);
   }
 
   /** https://github.com/square/okhttp/issues/4583 */

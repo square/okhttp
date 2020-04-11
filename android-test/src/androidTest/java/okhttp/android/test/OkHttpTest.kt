@@ -16,8 +16,8 @@
 package okhttp.android.test
 
 import android.os.Build
-import android.support.test.InstrumentationRegistry
-import android.support.test.runner.AndroidJUnit4
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException
 import com.google.android.gms.security.ProviderInstaller
 import com.squareup.moshi.Moshi
@@ -45,6 +45,8 @@ import okhttp3.mockwebserver.MockWebServer
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.internal.TlsUtil.localhost
 import okio.ByteString.Companion.toByteString
+import org.bouncycastle.jce.provider.BouncyCastleProvider
+import org.bouncycastle.jsse.provider.BouncyCastleJsseProvider
 import org.conscrypt.Conscrypt
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -179,7 +181,7 @@ class OkHttpTest {
 
     try {
       try {
-        ProviderInstaller.installIfNeeded(InstrumentationRegistry.getTargetContext())
+        ProviderInstaller.installIfNeeded(InstrumentationRegistry.getInstrumentation().targetContext)
       } catch (gpsnae: GooglePlayServicesNotAvailableException) {
         assumeNoException("Google Play Services not available", gpsnae)
       }
@@ -642,12 +644,47 @@ class OkHttpTest {
         Request.Builder().url("https://example_underscore_123.s3.amazonaws.com/").build()
 
     try {
-      client.newCall(request).execute()
+      client.newCall(request).execute().close()
       // Hopefully this passes
     } catch (ioe: IOException) {
       // https://github.com/square/okhttp/issues/5840
       val exceptions = generateSequence(ioe as Throwable) { e -> e.cause }.toList()
       assertTrue(exceptions.any { it is IllegalArgumentException })
+    }
+  }
+
+  @Test
+  @Ignore("breaks conscrypt test")
+  fun testBouncyCastleRequest() {
+    assumeNetwork()
+
+    try {
+      Security.insertProviderAt(BouncyCastleProvider(), 1)
+      Security.insertProviderAt(BouncyCastleJsseProvider(), 2)
+
+      val request = Request.Builder().url("https://facebook.com/robots.txt").build()
+
+      var socketClass: String? = null
+
+      // Need fresh client to reset sslSocketFactoryOrNull
+      client = OkHttpClient.Builder().eventListenerFactory(clientTestRule.wrap(object : EventListener() {
+        override fun connectionAcquired(call: Call, connection: Connection) {
+          socketClass = connection.socket().javaClass.name
+        }
+      })).build()
+
+      val response = client.newCall(request).execute()
+
+      response.use {
+        assertEquals(Protocol.HTTP_2, response.protocol)
+        assertEquals(200, response.code)
+        assertEquals("org.bouncycastle.jsse.provider.ProvSSLSocketWrap", socketClass)
+        assertEquals(TlsVersion.TLS_1_2, response.handshake?.tlsVersion)
+      }
+    } finally {
+      Security.removeProvider("BCJSSE")
+      Security.removeProvider("BC")
+      client.close()
     }
   }
 

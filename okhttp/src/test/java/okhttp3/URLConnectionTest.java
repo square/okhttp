@@ -119,6 +119,7 @@ public final class URLConnectionTest {
   private @Nullable Cache cache;
 
   @Before public void setUp() {
+    platform.assumeNotBouncyCastle();
     server.setProtocolNegotiationEnabled(false);
   }
 

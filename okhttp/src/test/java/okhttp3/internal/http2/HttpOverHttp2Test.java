@@ -131,6 +131,7 @@ public final class HttpOverHttp2Test {
 
   @Before public void setUp() {
     platform.assumeNotOpenJSSE();
+    platform.assumeNotBouncyCastle();
 
     if (protocol == Protocol.HTTP_2) {
       platform.assumeHttp2Support();

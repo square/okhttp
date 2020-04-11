@@ -22,6 +22,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import okhttp3.Cache;
 import okhttp3.Dns;
 import okhttp3.HttpUrl;
@@ -30,6 +31,7 @@ import okhttp3.Protocol;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
+import okhttp3.testing.PlatformRule;
 import okio.Buffer;
 import okio.ByteString;
 import org.junit.Before;
@@ -42,6 +44,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public class DnsOverHttpsTest {
+  @Rule public final PlatformRule platform = new PlatformRule();
+
   @Rule public final MockWebServer server = new MockWebServer();
 
   private final OkHttpClient bootstrapClient =
@@ -175,6 +179,41 @@ public class DnsOverHttpsTest {
 
     result = cachedDns.lookup("google.com");
     assertThat(result).isEqualTo(singletonList(address("157.240.1.18")));
+  }
+
+  @Test public void usesCacheOnlyIfFresh() throws Exception {
+    Cache cache = new Cache(new File("./target/DnsOverHttpsTest.cache"), 100 * 1024);
+    OkHttpClient cachedClient = bootstrapClient.newBuilder().cache(cache).build();
+    DnsOverHttps cachedDns = buildLocalhost(cachedClient, false);
+
+    server.enqueue(dnsResponse(
+        "0000818000010003000000000567726170680866616365626f6f6b03636f6d0000010001c00c00050001"
+            + "00000a6d000603617069c012c0300005000100000cde000c04737461720463313072c012c04200010"
+            + "0010000003b00049df00112").setHeader("cache-control", "max-age=1"));
+
+    List<InetAddress> result = cachedDns.lookup("google.com");
+
+    assertThat(result).containsExactly(address("157.240.1.18"));
+
+    RecordedRequest recordedRequest = server.takeRequest(0, TimeUnit.SECONDS);
+    assertThat(recordedRequest.getMethod()).isEqualTo("GET");
+    assertThat(recordedRequest.getPath()).isEqualTo(
+        "/lookup?ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ");
+
+    Thread.sleep(2000);
+
+    server.enqueue(dnsResponse(
+        "0000818000010003000000000567726170680866616365626f6f6b03636f6d0000010001c00c00050001"
+            + "00000a6d000603617069c012c0300005000100000cde000c04737461720463313072c012c04200010"
+            + "0010000003b00049df00112").setHeader("cache-control", "max-age=1"));
+
+    result = cachedDns.lookup("google.com");
+    assertThat(result).isEqualTo(singletonList(address("157.240.1.18")));
+
+    recordedRequest = server.takeRequest(0, TimeUnit.SECONDS);
+    assertThat(recordedRequest.getMethod()).isEqualTo("GET");
+    assertThat(recordedRequest.getPath()).isEqualTo(
+        "/lookup?ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ");
   }
 
   private MockResponse dnsResponse(String s) {

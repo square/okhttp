@@ -34,6 +34,7 @@ import okio.BufferedSink
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestRule
@@ -47,6 +48,11 @@ class CallKotlinTest {
 
   private var client = clientTestRule.newClient()
   private val handshakeCertificates = localhost()
+
+  @Before
+  fun setup() {
+    platform.assumeNotBouncyCastle()
+  }
 
   @Test
   fun legalToExecuteTwiceCloning() {
