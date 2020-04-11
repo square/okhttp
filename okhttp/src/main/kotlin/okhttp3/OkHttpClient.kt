@@ -19,6 +19,7 @@ import java.net.Proxy
 import java.net.ProxySelector
 import java.net.Socket
 import java.security.GeneralSecurityException
+import java.security.SecureRandom
 import java.time.Duration
 import java.util.Collections
 import java.util.Random
@@ -1061,10 +1062,13 @@ open class OkHttpClient internal constructor(
     private fun newSslSocketFactory(trustManager: X509TrustManager): SSLSocketFactory {
       try {
         val sslContext = Platform.get().newSSLContext()
-        sslContext.init(null, arrayOf<TrustManager>(trustManager), null)
+        // no support for bouncycastle SecureRandom on Android
+        // see JcaTlsCryptoProvider.create
+        val random = SecureRandom()
+        sslContext.init(null, arrayOf<TrustManager>(trustManager), random)
         return sslContext.socketFactory
       } catch (e: GeneralSecurityException) {
-        throw AssertionError("No System TLS", e) // The system has no TLS. Just give up.
+        throw AssertionError("No System TLS: " + e, e) // The system has no TLS. Just give up.
       }
     }
   }

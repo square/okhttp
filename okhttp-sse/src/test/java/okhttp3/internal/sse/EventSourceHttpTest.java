@@ -23,6 +23,7 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.sse.EventSource;
 import okhttp3.sse.EventSources;
+import okhttp3.testing.PlatformRule;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
@@ -30,6 +31,8 @@ import org.junit.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public final class EventSourceHttpTest {
+  @Rule public final PlatformRule platform = new PlatformRule();
+
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 

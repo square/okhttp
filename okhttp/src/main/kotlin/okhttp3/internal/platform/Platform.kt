@@ -198,7 +198,8 @@ open class Platform {
 
     private val isBouncyCastlePreferred: Boolean
       get() {
-        return System.getProperty("okhttp.platform") == "bouncycastle"
+        val preferredProvider = Security.getProviders()[0].name
+        return "BC" == preferredProvider
       }
 
     /** Attempt to match the host runtime to a capable Platform implementation. */

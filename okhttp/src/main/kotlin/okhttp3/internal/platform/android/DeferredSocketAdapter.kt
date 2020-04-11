@@ -78,8 +78,4 @@ class DeferredSocketAdapter(private val socketPackage: String) : SocketAdapter {
     // not supported with modern Android and opt-in Gms Provider
     return null
   }
-
-  override fun matchesSocketFactory(sslSocketFactory: SSLSocketFactory): Boolean {
-    return false
-  }
 }

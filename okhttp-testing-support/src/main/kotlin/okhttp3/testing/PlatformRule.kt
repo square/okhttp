@@ -313,6 +313,9 @@ open class PlatformRule @JvmOverloads constructor(
   }
 
   fun assumeNotBouncyCastle() {
+    // Most failures are with MockWebServer
+    // org.bouncycastle.tls.TlsFatalAlertReceived: handshake_failure(40)
+    //        at org.bouncycastle.tls.TlsProtocol.handleAlertMessage(TlsProtocol.java:241)
     assumeThat(
         getPlatformSystemProperty(), not(
         BOUNCYCASTLE_PROPERTY

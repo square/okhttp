@@ -99,6 +99,7 @@ public final class EventListenerTest {
 
   @Before public void setUp() {
     platform.assumeNotOpenJSSE();
+    platform.assumeNotBouncyCastle();
 
     listener.forbidLock(RealConnectionPool.Companion.get(client.connectionPool()));
     listener.forbidLock(client.dispatcher());

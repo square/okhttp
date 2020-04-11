@@ -88,6 +88,7 @@ public final class WebSocketHttpTest {
 
   @Before public void setUp() {
     platform.assumeNotOpenJSSE();
+    platform.assumeNotBouncyCastle();
   }
 
   @After public void tearDown() {

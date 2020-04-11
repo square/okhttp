@@ -64,6 +64,8 @@ import javax.net.ssl.X509TrustManager
 import java.util.logging.Logger
 import okhttp3.internal.platform.AndroidPlatform
 import okhttp3.internal.platform.Android10Platform
+import org.bouncycastle.jce.provider.BouncyCastleProvider
+import org.bouncycastle.jsse.provider.BouncyCastleJsseProvider
 import java.io.IOException
 import java.lang.IllegalArgumentException
 
@@ -519,6 +521,41 @@ class OkHttpTest {
       // https://github.com/square/okhttp/issues/5840
       assertEquals("Android internal error", ioe.message)
       assertEquals(IllegalArgumentException::class.java, ioe.cause!!.javaClass)
+    }
+  }
+
+  @Test
+  @Ignore("breaks conscrypt test")
+  fun testBouncyCastleRequest() {
+    assumeNetwork()
+
+    try {
+      Security.insertProviderAt(BouncyCastleProvider(), 1)
+      Security.insertProviderAt(BouncyCastleJsseProvider(), 2)
+
+      val request = Request.Builder().url("https://facebook.com/robots.txt").build()
+
+      var socketClass: String? = null
+
+      // Need fresh client to reset sslSocketFactoryOrNull
+      client = OkHttpClient.Builder().eventListenerFactory(clientTestRule.wrap(object : EventListener() {
+        override fun connectionAcquired(call: Call, connection: Connection) {
+          socketClass = connection.socket().javaClass.name
+        }
+      })).build()
+
+      val response = client.newCall(request).execute()
+
+      response.use {
+        assertEquals(Protocol.HTTP_2, response.protocol)
+        assertEquals(200, response.code)
+        assertEquals("org.bouncycastle.jsse.provider.ProvSSLSocketWrap", socketClass)
+        assertEquals(TlsVersion.TLS_1_2, response.handshake?.tlsVersion)
+      }
+    } finally {
+      Security.removeProvider("BCJSSE")
+      Security.removeProvider("BC")
+      client.close()
     }
   }
 

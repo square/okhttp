@@ -39,8 +39,10 @@ import okhttp3.HttpUrl;
 import okhttp3.Protocol;
 import okhttp3.RecordingHostnameVerifier;
 import okhttp3.TestUtil;
+import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okhttp3.tls.HeldCertificate;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
@@ -61,9 +63,15 @@ import static org.junit.Assume.assumeFalse;
 
 @SuppressWarnings({"ArraysAsListWithZeroOrOneArgument", "deprecation"})
 public final class MockWebServerTest {
+  @Rule public PlatformRule platform = new PlatformRule();
+
   @Rule public final MockWebServer server = new MockWebServer();
 
   @Rule public Timeout globalTimeout = Timeout.seconds(30);
+
+  @Before public void checkPlatforms() {
+    platform.assumeNotBouncyCastle();
+  }
 
   @Test public void defaultMockResponse() {
     MockResponse response = new MockResponse();

@@ -36,8 +36,6 @@ import okhttp3.internal.platform.Platform
 class Android10SocketAdapter : SocketAdapter {
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? = null
 
-  override fun matchesSocketFactory(sslSocketFactory: SSLSocketFactory): Boolean = false
-
   override fun matchesSocket(sslSocket: SSLSocket): Boolean = SSLSockets.isSupportedSocket(sslSocket)
 
   override fun isSupported(): Boolean = Companion.isSupported()

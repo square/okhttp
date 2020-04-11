@@ -29,6 +29,7 @@ import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol
 import okhttp3.internal.SuppressSignatureCheck
 import okhttp3.internal.platform.android.AndroidCertificateChainCleaner
+import okhttp3.internal.platform.android.BouncyCastleSocketAdapter
 import okhttp3.internal.platform.android.CloseGuard
 import okhttp3.internal.platform.android.ConscryptSocketAdapter
 import okhttp3.internal.platform.android.DeferredSocketAdapter
@@ -44,7 +45,8 @@ class AndroidPlatform : Platform() {
   private val socketAdapters = listOfNotNull(
       StandardAndroidSocketAdapter.buildIfSupported(),
       ConscryptSocketAdapter.buildIfSupported(),
-      DeferredSocketAdapter("com.google.android.gms.org.conscrypt")
+      DeferredSocketAdapter("com.google.android.gms.org.conscrypt"),
+      BouncyCastleSocketAdapter.buildIfSupported()
   ).filter { it.isSupported() }
 
   private val closeGuard = CloseGuard.get()
