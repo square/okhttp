@@ -570,7 +570,6 @@ class OkHttpTest {
     } finally {
       Security.removeProvider("BCJSSE")
       Security.removeProvider("BC")
-      client.close()
     }
   }
 
