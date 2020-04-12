@@ -48,6 +48,7 @@ import okhttp3.internal.http.CancelTest.ConnectionType.HTTP
 import okhttp3.internal.http.CancelTest.ConnectionType.HTTPS
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import okhttp3.testing.PlatformRule
 import okhttp3.tls.internal.TlsUtil
 import okio.Buffer
 import okio.BufferedSink
@@ -62,6 +63,8 @@ import org.junit.runners.Parameterized.Parameters
 
 @RunWith(Parameterized::class)
 class CancelTest(mode: Pair<CancelMode, ConnectionType>) {
+  @JvmField @Rule val platform = PlatformRule()
+
   val cancelMode = mode.first
   val connectionType = mode.second
 
@@ -87,6 +90,10 @@ class CancelTest(mode: Pair<CancelMode, ConnectionType>) {
   val listener = RecordingEventListener()
 
   @Before fun setUp() {
+    if (connectionType == H2) {
+      platform.assumeHttp2Support()
+    }
+
     // Sockets on some platforms can have large buffers that mean writes do not block when
     // required. These socket factories explicitly set the buffer sizes on sockets created.
     server = MockWebServer()
