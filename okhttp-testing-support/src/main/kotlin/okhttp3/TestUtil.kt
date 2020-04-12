@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import java.io.File
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.UnknownHostException
@@ -40,6 +41,12 @@ object TestUtil {
     val array = CharArray(count)
     Arrays.fill(array, c)
     return String(array)
+  }
+
+  tailrec fun File.isDescendentOf(directory: File): Boolean {
+    val parentFile = parentFile ?: return false
+    if (parentFile == directory) return true
+    return parentFile.isDescendentOf(directory)
   }
 
   /**

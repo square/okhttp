@@ -107,4 +107,8 @@ public final class FaultyFileSystem implements FileSystem {
       super.write(source, byteCount);
     }
   }
+
+  @Override public String toString() {
+    return "Faulty " + delegate;
+  }
 }
