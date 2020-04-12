@@ -609,6 +609,21 @@ public final class MockWebServerTest {
     assertThat(handshake.peerCertificates().size()).isEqualTo(1);
   }
 
+  @Test
+  public void shutdownTwice() throws IOException {
+    MockWebServer server2 = new MockWebServer();
+
+    server2.start();
+    server2.shutdown();
+    try {
+      server2.start();
+      fail();
+    } catch (IllegalArgumentException iae) {
+      // expected
+    }
+    server2.shutdown();
+  }
+
   public static String getPlatform() {
     return System.getProperty("okhttp.platform", "jdk8");
   }
