@@ -622,7 +622,7 @@ open class OkHttpClient internal constructor(
 
     /**
      * Configure this client to allow protocol redirects from HTTPS to HTTP and from HTTP to HTTPS.
-     * Redirects are still first restricted by [followRedirects].
+     * Redirects are still first restricted by [followRedirects].  Defaults to true.
      *
      * @param followProtocolRedirects whether to follow redirects between HTTPS and HTTP.
      */
