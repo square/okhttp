@@ -53,7 +53,7 @@ open class Jdk9Platform : Platform() {
     }
   }
 
-  public override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? {
+  override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? {
     // Not supported due to access checks on JDK 9+:
     // java.lang.reflect.InaccessibleObjectException: Unable to make member of class
     // sun.security.ssl.SSLSocketFactoryImpl accessible:  module java.base does not export

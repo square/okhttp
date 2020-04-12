@@ -104,17 +104,13 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
     BODY
   }
 
-  interface Logger {
+  fun interface Logger {
     fun log(message: String)
 
     companion object {
       /** A [Logger] defaults output appropriate for the current platform. */
       @JvmField
-      val DEFAULT: Logger = object : Logger {
-        override fun log(message: String) {
-          Platform.get().log(message)
-        }
-      }
+      val DEFAULT: Logger = Logger { Platform.get().log(it) }
     }
   }
 

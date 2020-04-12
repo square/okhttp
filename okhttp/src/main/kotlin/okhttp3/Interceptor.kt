@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit
  * responses coming back in. Typically interceptors add, remove, or transform headers on the request
  * or response.
  */
-interface Interceptor {
+fun interface Interceptor {
   @Throws(IOException::class)
   fun intercept(chain: Chain): Response
 
@@ -39,9 +39,7 @@ interface Interceptor {
      * ```
      */
     inline operator fun invoke(crossinline block: (chain: Chain) -> Response): Interceptor =
-        object : Interceptor {
-          override fun intercept(chain: Chain) = block(chain)
-        }
+      Interceptor { block(it) }
   }
 
   interface Chain {

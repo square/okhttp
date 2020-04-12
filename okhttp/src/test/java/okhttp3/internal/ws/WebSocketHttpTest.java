@@ -147,6 +147,8 @@ public final class WebSocketHttpTest {
     try {
       webSocket.send((ByteString) null);
       fail();
+    } catch (NullPointerException expected) {
+      // Kotlin 1.4
     } catch (IllegalArgumentException expected) {
     }
 

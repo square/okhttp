@@ -56,7 +56,7 @@ class JavaHttpClientTest {
     assertThat(recorded.getHeader("Accept-Encoding")).isNull() // No built-in gzip.
     assertThat(recorded.getHeader("Connection")).isEqualTo("Upgrade, HTTP2-Settings")
     assertThat(recorded.getHeader("Content-Length")).isEqualTo("0")
-    assertThat(recorded.getHeader("HTTP2-Settings")).isNotNull()
+    assertThat(recorded.getHeader("HTTP2-Settings")).isNotNull
     assertThat(recorded.getHeader("Upgrade")).isEqualTo("h2c") // HTTP/2 over plaintext!
     assertThat(recorded.getHeader("User-Agent")).matches("Java-http-client/.*")
   }

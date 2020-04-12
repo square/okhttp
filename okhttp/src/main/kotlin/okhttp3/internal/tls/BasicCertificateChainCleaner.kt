@@ -46,7 +46,7 @@ class BasicCertificateChainCleaner(
    */
   @Throws(SSLPeerUnverifiedException::class)
   override fun clean(chain: List<Certificate>, hostname: String): List<Certificate> {
-    val queue: Deque<Certificate> = ArrayDeque<Certificate>(chain)
+    val queue: Deque<Certificate> = ArrayDeque(chain)
     val result = mutableListOf<Certificate>()
     result.add(queue.removeFirst())
     var foundTrustedCertificate = false

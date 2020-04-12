@@ -1,4 +1,4 @@
-import net.ltgt.gradle.errorprone.CheckSeverity
+//import net.ltgt.gradle.errorprone.CheckSeverity
 
 buildscript {
   ext.versions = [
@@ -15,7 +15,7 @@ buildscript {
       'jnrUnixsocket': '0.28',
       'jsoup': '1.13.1',
       'junit': '4.13',
-      'kotlin': '1.3.71',
+      'kotlin': '1.4-M1',
       'moshi': '1.9.2',
       'okio': '2.6.0',
       'ktlint': '0.36.0',
@@ -39,7 +39,7 @@ buildscript {
       'jsoup': "org.jsoup:jsoup:${versions.jsoup}",
       'jsr305': "com.google.code.findbugs:jsr305:${versions.findbugs}",
       'junit': "junit:junit:${versions.junit}",
-      'kotlinStdlib': "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin}",
+      'kotlinStdlib': "org.jetbrains.kotlin:kotlin-stdlib:1.4-M1",
       'moshi': "com.squareup.moshi:moshi:${versions.moshi}",
       'moshiKotlin': "com.squareup.moshi:moshi-kotlin-codegen:${versions.moshi}",
       'okio': "com.squareup.okio:okio:${versions.okio}",
@@ -48,7 +48,7 @@ buildscript {
 
   dependencies {
     classpath 'net.ltgt.gradle:gradle-errorprone-plugin:1.1.1'
-    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${versions.kotlin}"
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.4-M1"
     classpath "org.jetbrains.dokka:dokka-gradle-plugin:0.10.1"
     classpath 'com.diffplug.spotless:spotless-plugin-gradle:3.27.1'
     classpath 'com.android.tools.build:gradle:3.6.2'
@@ -58,6 +58,9 @@ buildscript {
     mavenCentral()
     gradlePluginPortal()
     google()
+    maven {
+      url = "https://dl.bintray.com/kotlin/kotlin-eap/"
+    }
   }
 }
 
@@ -97,6 +100,9 @@ allprojects {
       url 'https://dl.bintray.com/kotlin/dokka'
     }
     google()
+    maven {
+      url = "https://dl.bintray.com/kotlin/kotlin-eap/"
+    }
   }
 
   task downloadDependencies() {
@@ -112,12 +118,14 @@ subprojects { project ->
   if (project.name == 'android-test') return
   if (project.name == 'okhttp-bom') return
 
+  apply plugin: "kotlin"
   apply plugin: 'java'
   apply plugin: 'java-library'
   apply plugin: 'org.jetbrains.kotlin.platform.jvm'
   apply plugin: 'checkstyle'
   apply plugin: 'ru.vyarus.animalsniffer'
-  apply plugin: 'net.ltgt.errorprone'
+  // TODO raise issue
+//  apply plugin: 'net.ltgt.errorprone'
   apply plugin: 'org.jetbrains.dokka'
   apply plugin: 'com.diffplug.gradle.spotless'
   sourceCompatibility = JavaVersion.VERSION_1_8
@@ -205,20 +213,20 @@ subprojects { project ->
     }
   }
 
-  dependencies {
+//  dependencies {
     //noinspection GradleDynamicVersion
-    errorproneJavac 'com.google.errorprone:javac:9+181-r4173-1'
-    errorprone 'com.google.errorprone:error_prone_core:2.3.4'
-  }
+//    errorproneJavac 'com.google.errorprone:javac:9+181-r4173-1'
+//    errorprone 'com.google.errorprone:error_prone_core:2.3.4'
+//  }
   tasks.withType(JavaCompile).configureEach {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
 
-    options.errorprone {
-      check("MissingFail", CheckSeverity.ERROR)
-      check("MissingOverride", CheckSeverity.ERROR)
-      enabled = JavaVersion.current() < JavaVersion.VERSION_12
-    }
+//    options.errorprone {
+//      check("MissingFail", CheckSeverity.ERROR)
+//      check("MissingOverride", CheckSeverity.ERROR)
+//      enabled = JavaVersion.current() < JavaVersion.VERSION_12
+//    }
   }
 
   dokka {

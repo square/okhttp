@@ -39,14 +39,11 @@ class OkHttpClientTestRule : TestRule {
   private var uncaughtException: Throwable? = null
   var logger: Logger? = null
 
-  fun wrap(eventListener: EventListener) = object : EventListener.Factory {
-    override fun create(call: Call) = ClientRuleEventListener(eventListener) { addEvent(it) }
-  }
+  fun wrap(eventListener: EventListener) =
+    EventListener.Factory { ClientRuleEventListener(eventListener, ::addEvent) }
 
-  fun wrap(eventListenerFactory: EventListener.Factory) = object : EventListener.Factory {
-    override fun create(call: Call) =
-      ClientRuleEventListener(eventListenerFactory.create(call)) { addEvent(it) }
-  }
+  fun wrap(eventListenerFactory: EventListener.Factory) =
+    EventListener.Factory { call -> ClientRuleEventListener(eventListenerFactory.create(call), ::addEvent) }
 
   /**
    * Returns an OkHttpClient for tests to use as a starting point.
@@ -62,9 +59,8 @@ class OkHttpClientTestRule : TestRule {
     if (client == null) {
       client = OkHttpClient.Builder()
           .dns(SINGLE_INET_ADDRESS_DNS) // Prevent unexpected fallback addresses.
-          .eventListenerFactory(object : EventListener.Factory {
-            override fun create(call: Call) = ClientRuleEventListener { addEvent(it) }
-          })
+          .eventListenerFactory(
+              EventListener.Factory { ClientRuleEventListener(logger = ::addEvent) })
           .build()
       testClient = client
     }

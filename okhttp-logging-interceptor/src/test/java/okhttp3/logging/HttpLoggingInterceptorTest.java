@@ -107,6 +107,8 @@ public final class HttpLoggingInterceptorTest {
     try {
       applicationInterceptor.setLevel(null);
       fail();
+    } catch (NullPointerException expected) {
+      // Kotlin 1.4
     } catch (IllegalArgumentException expected) {
     }
   }

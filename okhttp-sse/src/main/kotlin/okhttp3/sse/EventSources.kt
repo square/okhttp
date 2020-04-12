@@ -16,18 +16,15 @@
 package okhttp3.sse
 
 import okhttp3.OkHttpClient
-import okhttp3.Request
 import okhttp3.Response
 import okhttp3.internal.sse.RealEventSource
 
 object EventSources {
   @JvmStatic
   fun createFactory(client: OkHttpClient): EventSource.Factory {
-    return object : EventSource.Factory {
-      override fun newEventSource(request: Request, listener: EventSourceListener): EventSource {
-        return RealEventSource(request, listener).apply {
-          connect(client)
-        }
+    return EventSource.Factory { request, listener ->
+      RealEventSource(request, listener).apply {
+        connect(client)
       }
     }
   }
