@@ -640,10 +640,10 @@ open class OkHttpClient internal constructor(
     }
 
     /**
-     * Configure this client to follow redirects from HTTPS to HTTP and from HTTP to HTTPS.
+     * Configure this client to allow protocol redirects from HTTPS to HTTP and from HTTP to HTTPS.
+     * Redirects are still first restricted by [followRedirects].  Defaults to true.
      *
-     * If unset, protocol redirects will be followed. This is different than the built-in
-     * `HttpURLConnection`'s default.
+     * @param followProtocolRedirects whether to follow redirects between HTTPS and HTTP.
      */
     fun followSslRedirects(followProtocolRedirects: Boolean) = apply {
       this.followSslRedirects = followProtocolRedirects

@@ -16,18 +16,22 @@
 package okhttp3.internal.cache
 
 import java.io.File
+import java.io.FileNotFoundException
 import java.io.IOException
 import java.util.ArrayDeque
 import java.util.NoSuchElementException
-import okhttp3.TestUtil.assumeNotWindows
+import okhttp3.TestUtil
 import okhttp3.internal.cache.DiskLruCache.Editor
 import okhttp3.internal.cache.DiskLruCache.Snapshot
 import okhttp3.internal.concurrent.TaskFaker
 import okhttp3.internal.io.FaultyFileSystem
 import okhttp3.internal.io.FileSystem
+import okhttp3.internal.io.InMemoryFileSystem
+import okhttp3.internal.io.WindowsFileSystem
 import okio.Source
 import okio.buffer
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assumptions.assumeThat
 import org.junit.After
 import org.junit.Assert.fail
 import org.junit.Before
@@ -35,15 +39,32 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import org.junit.rules.Timeout
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
+import org.junit.runners.Parameterized.Parameters
 
-class DiskLruCacheTest {
+@RunWith(Parameterized::class)
+class DiskLruCacheTest(
+  baseFileSystem: FileSystem,
+  private val windows: Boolean
+) {
+  private var fileSystem = FaultyFileSystem(baseFileSystem)
+
   @Rule @JvmField
   val tempDir = TemporaryFolder()
 
   @Rule @JvmField
   val timeout = Timeout(60 * 1000)
 
-  private val fileSystem = FaultyFileSystem(FileSystem.SYSTEM)
+  companion object {
+    @Parameters(name = "{0}") @JvmStatic
+    fun parameters(): Collection<Array<Any>> = listOf(
+        arrayOf(FileSystem.SYSTEM, TestUtil.windows),
+        arrayOf(WindowsFileSystem(InMemoryFileSystem()), true),
+        arrayOf(InMemoryFileSystem(), false)
+    )
+  }
+
   private val appVersion = 100
   private lateinit var cacheDir: File
   private lateinit var journalFile: File
@@ -65,6 +86,7 @@ class DiskLruCacheTest {
 
   @Before fun setUp() {
     cacheDir = tempDir.root
+    fileSystem.deleteContents(cacheDir)
     journalFile = File(cacheDir, DiskLruCache.JOURNAL_FILE)
     journalBkpFile = File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP)
     createNewCache()
@@ -227,10 +249,16 @@ class DiskLruCacheTest {
     assertJournalEquals("DIRTY k1", "REMOVE k1")
   }
 
-  @Test fun unterminatedEditIsRevertedOnClose() {
-    cache.edit("k1")
+  /** On Windows we have to wait until the edit is committed before we can delete its files. */
+  @Test fun `unterminated edit is reverted on cache close`() {
+    val editor = cache.edit("k1")!!
+    editor.setString(0, "AB")
+    editor.setString(1, "C")
     cache.close()
-    assertJournalEquals("DIRTY k1", "REMOVE k1")
+    val expected = if (windows) arrayOf("DIRTY k1") else arrayOf("DIRTY k1", "REMOVE k1")
+    assertJournalEquals(*expected)
+    editor.commit()
+    assertJournalEquals(*expected) // 'REMOVE k1' not written because journal is closed.
   }
 
   @Test fun journalDoesNotIncludeReadOfYetUnpublishedValue() {
@@ -300,7 +328,7 @@ class DiskLruCacheTest {
    * the same key can see different data.
    */
   @Test fun readAndWriteOverlapsMaintainConsistency() {
-    assumeNotWindows()
+    assumeThat(windows).isFalse() // Can't edit while a read is in progress.
 
     val v1Creator = cache.edit("k1")!!
     v1Creator.setString(0, "AAaa")
@@ -338,7 +366,7 @@ class DiskLruCacheTest {
     writeFile(cleanFile1, "B")
     writeFile(dirtyFile0, "C")
     writeFile(dirtyFile1, "D")
-    createJournal("CLEAN k1 1 1", "DIRTY   k1")
+    createJournal("CLEAN k1 1 1", "DIRTY k1")
     createNewCache()
     assertThat(fileSystem.exists(cleanFile0)).isFalse()
     assertThat(fileSystem.exists(cleanFile1)).isFalse()
@@ -946,9 +974,9 @@ class DiskLruCacheTest {
   }
 
   @Test fun editSameVersion() {
-    assumeNotWindows()
     set("a", "a", "a")
     val snapshot = cache["a"]!!
+    snapshot.close()
     val editor = snapshot.edit()!!
     editor.setString(1, "a2")
     editor.commit()
@@ -956,9 +984,9 @@ class DiskLruCacheTest {
   }
 
   @Test fun editSnapshotAfterChangeAborted() {
-    assumeNotWindows()
     set("a", "a", "a")
     val snapshot = cache["a"]!!
+    snapshot.close()
     val toAbort = snapshot.edit()!!
     toAbort.setString(0, "b")
     toAbort.abort()
@@ -969,9 +997,9 @@ class DiskLruCacheTest {
   }
 
   @Test fun editSnapshotAfterChangeCommitted() {
-    assumeNotWindows()
     set("a", "a", "a")
     val snapshot = cache["a"]!!
+    snapshot.close()
     val toAbort = snapshot.edit()!!
     toAbort.setString(0, "b")
     toAbort.commit()
@@ -979,7 +1007,6 @@ class DiskLruCacheTest {
   }
 
   @Test fun editSinceEvicted() {
-    assumeNotWindows()
     cache.close()
     createNewCacheWithSize(10)
     set("a", "aa", "aaa") // size 5
@@ -991,11 +1018,11 @@ class DiskLruCacheTest {
   }
 
   @Test fun editSinceEvictedAndRecreated() {
-    assumeNotWindows()
     cache.close()
     createNewCacheWithSize(10)
     set("a", "aa", "aaa") // size 5
     val snapshot = cache["a"]!!
+    snapshot.close()
     set("b", "bb", "bbb") // size 5
     set("c", "cc", "ccc") // size 5; will evict 'A'
     set("a", "a", "aaaa") // size 5; will evict 'B'
@@ -1005,7 +1032,8 @@ class DiskLruCacheTest {
 
   /** @see [Issue 2](https://github.com/JakeWharton/DiskLruCache/issues/2) */
   @Test fun aggressiveClearingHandlesWrite() {
-    assumeNotWindows()
+    assumeThat(windows).isFalse() // Can't deleteContents while the journal is open.
+
     fileSystem.deleteContents(tempDir.root)
     set("a", "a", "a")
     assertValue("a", "a", "a")
@@ -1013,9 +1041,10 @@ class DiskLruCacheTest {
 
   /** @see [Issue 2](https://github.com/JakeWharton/DiskLruCache/issues/2) */
   @Test fun aggressiveClearingHandlesEdit() {
-    assumeNotWindows()
+    assumeThat(windows).isFalse() // Can't deleteContents while the journal is open.
+
     set("a", "a", "a")
-    val a = cache["a"]!!.edit()!!
+    val a = cache.edit("a")!!
     fileSystem.deleteContents(tempDir.root)
     a.setString(1, "a2")
     a.commit()
@@ -1029,10 +1058,11 @@ class DiskLruCacheTest {
 
   /** @see [Issue 2](https://github.com/JakeWharton/DiskLruCache/issues/2) */
   @Test fun aggressiveClearingHandlesPartialEdit() {
-    assumeNotWindows()
+    assumeThat(windows).isFalse() // Can't deleteContents while the journal is open.
+
     set("a", "a", "a")
     set("b", "b", "b")
-    val a = cache["a"]!!.edit()!!
+    val a = cache.edit("a")!!
     a.setString(0, "a1")
     fileSystem.deleteContents(tempDir.root)
     a.setString(1, "a2")
@@ -1042,7 +1072,8 @@ class DiskLruCacheTest {
 
   /** @see [Issue 2](https://github.com/JakeWharton/DiskLruCache/issues/2) */
   @Test fun aggressiveClearingHandlesRead() {
-    assumeNotWindows()
+    assumeThat(windows).isFalse() // Can't deleteContents while the journal is open.
+
     fileSystem.deleteContents(tempDir.root)
     assertThat(cache["a"]).isNull()
   }
@@ -1052,13 +1083,17 @@ class DiskLruCacheTest {
    * being edited required deletion for the operation to complete.
    */
   @Test fun trimToSizeWithActiveEdit() {
+    val expectedByteCount = if (windows) 10L else 0L
+    val afterRemoveFileContents = if (windows) "a1234" else null
+
     set("a", "a1234", "a1234")
     val a = cache.edit("a")!!
     a.setString(0, "a123")
     cache.maxSize = 8 // Smaller than the sum of active edits!
     cache.flush() // Force trimToSize().
-    assertThat(cache.size()).isEqualTo(0)
-    assertThat(cache["a"]).isNull()
+    assertThat(cache.size()).isEqualTo(expectedByteCount)
+    assertThat(readFileOrNull(getCleanFile("a", 0))).isEqualTo(afterRemoveFileContents)
+    assertThat(readFileOrNull(getCleanFile("a", 1))).isEqualTo(afterRemoveFileContents)
 
     // After the edit is completed, its entry is still gone.
     a.setString(1, "a1")
@@ -1087,37 +1122,47 @@ class DiskLruCacheTest {
   }
 
   @Test fun evictAllWithPartialEditDoesNotStoreAValue() {
+    val expectedByteCount = if (windows) 2L else 0L
+
     set("a", "a", "a")
     val a = cache.edit("a")!!
     a.setString(0, "a1")
     a.setString(1, "a2")
     cache.evictAll()
-    assertThat(cache.size()).isEqualTo(0)
+    assertThat(cache.size()).isEqualTo(expectedByteCount)
     a.commit()
     assertAbsent("a")
   }
 
   @Test fun evictAllDoesntInterruptPartialRead() {
-    assumeNotWindows()
+    val expectedByteCount = if (windows) 2L else 0L
+    val afterRemoveFileContents = if (windows) "a" else null
+
     set("a", "a", "a")
     cache["a"]!!.use {
       it.assertValue(0, "a")
       cache.evictAll()
-      assertThat(cache.size()).isEqualTo(0)
-      assertAbsent("a")
+      assertThat(cache.size()).isEqualTo(expectedByteCount)
+      assertThat(readFileOrNull(getCleanFile("a", 0))).isEqualTo(afterRemoveFileContents)
+      assertThat(readFileOrNull(getCleanFile("a", 1))).isEqualTo(afterRemoveFileContents)
       it.assertValue(1, "a")
     }
+    assertThat(cache.size()).isEqualTo(0L)
   }
 
   @Test fun editSnapshotAfterEvictAllReturnsNullDueToStaleValue() {
-    assumeNotWindows()
+    val expectedByteCount = if (windows) 2L else 0L
+    val afterRemoveFileContents = if (windows) "a" else null
+
     set("a", "a", "a")
     cache["a"]!!.use {
       cache.evictAll()
-      assertThat(cache.size()).isEqualTo(0)
-      assertAbsent("a")
+      assertThat(cache.size()).isEqualTo(expectedByteCount)
+      assertThat(readFileOrNull(getCleanFile("a", 0))).isEqualTo(afterRemoveFileContents)
+      assertThat(readFileOrNull(getCleanFile("a", 1))).isEqualTo(afterRemoveFileContents)
       assertThat(it.edit()).isNull()
     }
+    assertThat(cache.size()).isEqualTo(0L)
   }
 
   @Test operator fun iterator() {
@@ -1514,6 +1559,8 @@ class DiskLruCacheTest {
   }
 
   @Test fun noSizeCorruptionAfterCreatorDetached() {
+    assumeThat(windows).isFalse() // Windows can't have two concurrent editors.
+
     // Create an editor for k1. Detach it by clearing the cache.
     val editor = cache.edit("k1")!!
     editor.setString(0, "a")
@@ -1531,6 +1578,8 @@ class DiskLruCacheTest {
   }
 
   @Test fun noSizeCorruptionAfterEditorDetached() {
+    assumeThat(windows).isFalse() // Windows can't have two concurrent editors.
+
     set("k1", "a", "a")
 
     // Create an editor for k1. Detach it by clearing the cache.
@@ -1556,8 +1605,23 @@ class DiskLruCacheTest {
     assertThat(editor.newSource(0)).isNull()
   }
 
-  @Test fun editsDiscardedAfterEditorDetached() {
-    assumeNotWindows()
+  @Test fun `edit discarded after editor detached`() {
+    set("k1", "a", "a")
+
+    // Create an editor, then detach it.
+    val editor = cache.edit("k1")!!
+    editor.newSink(0).buffer().use { sink ->
+      cache.evictAll()
+
+      // Complete the original edit. It goes into a black hole.
+      sink.writeUtf8("bb")
+    }
+    assertThat(cache["k1"]).isNull()
+  }
+
+  @Test fun `edit discarded after editor detached with concurrent write`() {
+    assumeThat(windows).isFalse() // Windows can't have two concurrent editors.
+
     set("k1", "a", "a")
 
     // Create an editor, then detach it.
@@ -1594,6 +1658,167 @@ class DiskLruCacheTest {
     creator.commit()
     val snapshotAfterCommit = cache.snapshots()
     assertThat(snapshotAfterCommit.hasNext()).withFailMessage("Entry has been removed during creation.").isTrue()
+  }
+
+  @Test fun `Windows cannot read while writing`() {
+    assumeThat(windows).isTrue()
+
+    set("k1", "a", "a")
+    val editor = cache.edit("k1")!!
+    assertThat(cache["k1"]).isNull()
+    editor.commit()
+  }
+
+  @Test fun `Windows cannot write while reading`() {
+    assumeThat(windows).isTrue()
+
+    set("k1", "a", "a")
+    val snapshot = cache["k1"]!!
+    assertThat(cache.edit("k1")).isNull()
+    snapshot.close()
+  }
+
+  @Test fun `can read while reading`() {
+    set("k1", "a", "a")
+    cache["k1"]!!.use { snapshot1 ->
+      snapshot1.assertValue(0, "a")
+      cache["k1"]!!.use { snapshot2 ->
+        snapshot2.assertValue(0, "a")
+        snapshot1.assertValue(1, "a")
+        snapshot2.assertValue(1, "a")
+      }
+    }
+  }
+
+  @Test fun `remove while reading creates zombie that is removed when read finishes`() {
+    val afterRemoveFileContents = if (windows) "a" else null
+
+    set("k1", "a", "a")
+    cache["k1"]!!.use { snapshot1 ->
+      cache.remove("k1")
+
+      // On Windows files still exist with open with 2 open sources.
+      assertThat(readFileOrNull(getCleanFile("k1", 0))).isEqualTo(afterRemoveFileContents)
+      assertThat(readFileOrNull(getDirtyFile("k1", 0))).isNull()
+
+      // On Windows files still exist with open with 1 open source.
+      snapshot1.assertValue(0, "a")
+      assertThat(readFileOrNull(getCleanFile("k1", 0))).isEqualTo(afterRemoveFileContents)
+      assertThat(readFileOrNull(getDirtyFile("k1", 0))).isNull()
+
+      // On all platforms files are deleted when all sources are closed.
+      snapshot1.assertValue(1, "a")
+      assertThat(readFileOrNull(getCleanFile("k1", 0))).isNull()
+      assertThat(readFileOrNull(getDirtyFile("k1", 0))).isNull()
+    }
+  }
+
+  @Test fun `remove while writing creates zombie that is removed when write finishes`() {
+    val afterRemoveFileContents = if (windows) "a" else null
+
+    set("k1", "a", "a")
+    val editor = cache.edit("k1")!!
+    cache.remove("k1")
+    assertThat(cache["k1"]).isNull()
+
+    // On Windows files still exist while being edited.
+    assertThat(readFileOrNull(getCleanFile("k1", 0))).isEqualTo(afterRemoveFileContents)
+    assertThat(readFileOrNull(getDirtyFile("k1", 0))).isNull()
+
+    // On all platforms files are deleted when the edit completes.
+    editor.commit()
+    assertThat(readFileOrNull(getCleanFile("k1", 0))).isNull()
+    assertThat(readFileOrNull(getDirtyFile("k1", 0))).isNull()
+  }
+
+  @Test fun `Windows cannot read zombie entry`() {
+    assumeThat(windows).isTrue()
+
+    set("k1", "a", "a")
+    cache["k1"]!!.use {
+      cache.remove("k1")
+      assertThat(cache["k1"]).isNull()
+    }
+  }
+
+  @Test fun `Windows cannot write zombie entry`() {
+    assumeThat(windows).isTrue()
+
+    set("k1", "a", "a")
+    cache["k1"]!!.use {
+      cache.remove("k1")
+      assertThat(cache.edit("k1")).isNull()
+    }
+  }
+
+  @Test fun `removed entry absent when iterating`() {
+    set("k1", "a", "a")
+    cache["k1"]!!.use {
+      cache.remove("k1")
+      val snapshots = cache.snapshots()
+      assertThat(snapshots.hasNext()).isFalse()
+    }
+  }
+
+  @Test fun `close with zombie read`() {
+    val afterRemoveFileContents = if (windows) "a" else null
+
+    set("k1", "a", "a")
+    cache["k1"]!!.use {
+      cache.remove("k1")
+
+      // After we close the cache the files continue to exist!
+      cache.close()
+      assertThat(readFileOrNull(getCleanFile("k1", 0))).isEqualTo(afterRemoveFileContents)
+      assertThat(readFileOrNull(getDirtyFile("k1", 0))).isNull()
+
+      // But they disappear when the sources are closed.
+      it.assertValue(0, "a")
+      it.assertValue(1, "a")
+      assertThat(readFileOrNull(getCleanFile("k1", 0))).isNull()
+      assertThat(readFileOrNull(getDirtyFile("k1", 0))).isNull()
+    }
+  }
+
+  @Test fun `close with zombie write`() {
+    val afterRemoveCleanFileContents = if (windows) "a" else null
+    val afterRemoveDirtyFileContents = if (windows) "" else null
+
+    set("k1", "a", "a")
+    val editor = cache.edit("k1")!!
+    val sink0 = editor.newSink(0)
+    cache.remove("k1")
+
+    // After we close the cache the files continue to exist!
+    cache.close()
+    assertThat(readFileOrNull(getCleanFile("k1", 0))).isEqualTo(afterRemoveCleanFileContents)
+    assertThat(readFileOrNull(getDirtyFile("k1", 0))).isEqualTo(afterRemoveDirtyFileContents)
+
+    // But they disappear when the edit completes.
+    sink0.close()
+    editor.commit()
+    assertThat(readFileOrNull(getCleanFile("k1", 0))).isNull()
+    assertThat(readFileOrNull(getDirtyFile("k1", 0))).isNull()
+  }
+
+  @Test fun `close with completed zombie write`() {
+    val afterRemoveCleanFileContents = if (windows) "a" else null
+    val afterRemoveDirtyFileContents = if (windows) "b" else null
+
+    set("k1", "a", "a")
+    val editor = cache.edit("k1")!!
+    editor.setString(0, "b")
+    cache.remove("k1")
+
+    // After we close the cache the files continue to exist!
+    cache.close()
+    assertThat(readFileOrNull(getCleanFile("k1", 0))).isEqualTo(afterRemoveCleanFileContents)
+    assertThat(readFileOrNull(getDirtyFile("k1", 0))).isEqualTo(afterRemoveDirtyFileContents)
+
+    // But they disappear when the edit completes.
+    editor.commit()
+    assertThat(readFileOrNull(getCleanFile("k1", 0))).isNull()
+    assertThat(readFileOrNull(getDirtyFile("k1", 0))).isNull()
   }
 
   private fun assertJournalEquals(vararg expectedBodyLines: String) {
@@ -1653,6 +1878,16 @@ class DiskLruCacheTest {
     }
   }
 
+  private fun readFileOrNull(file: File): String? {
+    try {
+      fileSystem.source(file).buffer().use {
+        return it.readUtf8()
+      }
+    } catch (_: FileNotFoundException) {
+      return null
+    }
+  }
+
   fun writeFile(file: File, content: String) {
     fileSystem.sink(file).buffer().use { sink ->
       sink.writeUtf8(content)
@@ -1709,8 +1944,10 @@ class DiskLruCacheTest {
   }
 
   private fun Snapshot.assertValue(index: Int, value: String) {
-    assertThat(sourceAsString(getSource(index))).isEqualTo(value)
-    assertThat(getLength(index)).isEqualTo(value.length.toLong())
+    getSource(index).use { source ->
+      assertThat(sourceAsString(source)).isEqualTo(value)
+      assertThat(getLength(index)).isEqualTo(value.length.toLong())
+    }
   }
 
   private fun sourceAsString(source: Source) = source.buffer().readUtf8()
