@@ -16,6 +16,7 @@
 package okhttp3.internal.tls
 
 import android.os.Build
+import okhttp3.internal.SuppressSignatureCheck
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.security.cert.X509Certificate
@@ -81,6 +82,7 @@ internal class TrustManagerWrapperAndroid(val trustManager: X509TrustManager) : 
   }
 }
 
+@SuppressSignatureCheck
 internal class TrustManagerAndroid(
   defaultTrustManager: X509TrustManager,
   overridesList: List<TrustManagerOverride>
