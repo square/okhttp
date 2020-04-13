@@ -224,29 +224,47 @@ open class OkHttpClient internal constructor(
   constructor() : this(Builder())
 
   init {
-    if (builder.sslSocketFactoryOrNull != null || connectionSpecs.none { it.isTls }) {
+    if (connectionSpecs.none { it.isTls }) {
+      this.sslSocketFactoryOrNull = null
+      this.certificateChainCleaner = null
+      this.x509TrustManager = null
+      this.certificatePinner = CertificatePinner.DEFAULT
+    } else if (builder.sslSocketFactoryOrNull != null) {
       this.sslSocketFactoryOrNull = builder.sslSocketFactoryOrNull
       this.certificateChainCleaner = builder.certificateChainCleaner
       this.x509TrustManager = builder.x509TrustManagerOrNull
+      this.certificatePinner = builder.certificatePinner
     } else {
       this.x509TrustManager = Platform.get().platformTrustManager()
       Platform.get().configureTrustManager(x509TrustManager)
       this.sslSocketFactoryOrNull = newSslSocketFactory(x509TrustManager!!)
-      this.certificateChainCleaner = CertificateChainCleaner.get(x509TrustManager!!)
-    }
-
-    if (sslSocketFactoryOrNull != null) {
       Platform.get().configureSslSocketFactory(sslSocketFactoryOrNull)
+      this.certificateChainCleaner = CertificateChainCleaner.get(x509TrustManager!!)
+      this.certificatePinner = builder.certificatePinner
+          .withCertificateChainCleaner(certificateChainCleaner)
     }
-
-    this.certificatePinner = builder.certificatePinner
-        .withCertificateChainCleaner(certificateChainCleaner)
 
     check(null !in (interceptors as List<Interceptor?>)) {
       "Null interceptor: $interceptors"
     }
     check(null !in (networkInterceptors as List<Interceptor?>)) {
       "Null network interceptor: $networkInterceptors"
+    }
+
+    verifyClientSslState()
+  }
+
+  private fun verifyClientSslState() {
+    if (connectionSpecs.none { it.isTls }) {
+      check(sslSocketFactoryOrNull == null)
+      check(certificateChainCleaner == null)
+      check(x509TrustManager == null)
+      check(certificatePinner == CertificatePinner.DEFAULT)
+    } else {
+      checkNotNull(sslSocketFactoryOrNull == null)
+      checkNotNull(certificateChainCleaner == null)
+      checkNotNull(x509TrustManager == null)
+      checkNotNull(certificatePinner == CertificatePinner.DEFAULT)
     }
   }
 
