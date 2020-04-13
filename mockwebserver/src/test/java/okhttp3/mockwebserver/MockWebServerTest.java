@@ -27,7 +27,6 @@ import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -607,6 +606,21 @@ public final class MockWebServerTest {
     assertThat(handshake.localCertificates().size()).isEqualTo(1);
     assertThat(handshake.peerPrincipal()).isNotNull();
     assertThat(handshake.peerCertificates().size()).isEqualTo(1);
+  }
+
+  @Test
+  public void shutdownTwice() throws IOException {
+    MockWebServer server2 = new MockWebServer();
+
+    server2.start();
+    server2.shutdown();
+    try {
+      server2.start();
+      fail();
+    } catch (IllegalArgumentException iae) {
+      // expected
+    }
+    server2.shutdown();
   }
 
   public static String getPlatform() {
