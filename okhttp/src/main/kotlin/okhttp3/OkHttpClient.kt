@@ -258,10 +258,9 @@ open class OkHttpClient internal constructor(
       check(x509TrustManager == null)
       check(certificatePinner == CertificatePinner.DEFAULT)
     } else {
-      checkNotNull(sslSocketFactoryOrNull)
-      checkNotNull(certificateChainCleaner)
-      checkNotNull(x509TrustManager)
-      checkNotNull(certificatePinner)
+      checkNotNull(sslSocketFactoryOrNull) { "sslSocketFactory == null" }
+      checkNotNull(certificateChainCleaner) { "certificateChainCleaner == null" }
+      checkNotNull(x509TrustManager) { "x509TrustManager == null" }
     }
   }
 
