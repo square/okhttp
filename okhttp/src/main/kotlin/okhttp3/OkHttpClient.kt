@@ -231,9 +231,10 @@ open class OkHttpClient internal constructor(
       this.certificatePinner = CertificatePinner.DEFAULT
     } else if (builder.sslSocketFactoryOrNull != null) {
       this.sslSocketFactoryOrNull = builder.sslSocketFactoryOrNull
-      this.certificateChainCleaner = builder.certificateChainCleaner
+      this.certificateChainCleaner = builder.certificateChainCleaner!!
       this.x509TrustManager = builder.x509TrustManagerOrNull
       this.certificatePinner = builder.certificatePinner
+          .withCertificateChainCleaner(certificateChainCleaner!!)
     } else {
       this.x509TrustManager = Platform.get().platformTrustManager()
       Platform.get().configureTrustManager(x509TrustManager)
@@ -241,9 +242,13 @@ open class OkHttpClient internal constructor(
       Platform.get().configureSslSocketFactory(sslSocketFactoryOrNull)
       this.certificateChainCleaner = CertificateChainCleaner.get(x509TrustManager!!)
       this.certificatePinner = builder.certificatePinner
-          .withCertificateChainCleaner(certificateChainCleaner)
+          .withCertificateChainCleaner(certificateChainCleaner!!)
     }
 
+    verifyClientState()
+  }
+
+  private fun verifyClientState() {
     check(null !in (interceptors as List<Interceptor?>)) {
       "Null interceptor: $interceptors"
     }
@@ -251,10 +256,6 @@ open class OkHttpClient internal constructor(
       "Null network interceptor: $networkInterceptors"
     }
 
-    verifyClientSslState()
-  }
-
-  private fun verifyClientSslState() {
     if (connectionSpecs.none { it.isTls }) {
       check(sslSocketFactoryOrNull == null)
       check(certificateChainCleaner == null)
