@@ -17,6 +17,7 @@ package okhttp3.internal.io
 
 import java.io.File
 import java.util.Collections
+import okhttp3.TestUtil.isDescendentOf
 import okio.ForwardingSink
 import okio.ForwardingSource
 import okio.IOException
@@ -63,12 +64,6 @@ class WindowsFileSystem(val delegate: FileSystem) : FileSystem {
     }
     if (openChild != null) throw IOException("file is open $openChild")
     delegate.deleteContents(directory)
-  }
-
-  private tailrec fun File.isDescendentOf(directory: File): Boolean {
-    val parentFile = parentFile ?: return false
-    if (parentFile == directory) return true
-    return parentFile.isDescendentOf(directory)
   }
 
   private inner class FileSink(val file: File, delegate: Sink) : ForwardingSink(delegate) {

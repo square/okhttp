@@ -68,6 +68,10 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.jsse.provider.BouncyCastleJsseProvider
 import java.io.IOException
 import java.lang.IllegalArgumentException
+import java.security.KeyStore
+import java.security.SecureRandom
+import javax.net.ssl.TrustManager
+import javax.net.ssl.TrustManagerFactory
 
 /**
  * Run with "./gradlew :android-test:connectedCheck" and make sure ANDROID_SDK_ROOT is set.
@@ -533,16 +537,27 @@ class OkHttpTest {
       Security.insertProviderAt(BouncyCastleProvider(), 1)
       Security.insertProviderAt(BouncyCastleJsseProvider(), 2)
 
-      val request = Request.Builder().url("https://facebook.com/robots.txt").build()
-
       var socketClass: String? = null
 
-      // Need fresh client to reset sslSocketFactoryOrNull
-      client = OkHttpClient.Builder().eventListenerFactory(clientTestRule.wrap(object : EventListener() {
-        override fun connectionAcquired(call: Call, connection: Connection) {
-          socketClass = connection.socket().javaClass.name
-        }
-      })).build()
+      val trustManager = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm()).apply {
+        init(null as KeyStore?)
+      }.trustManagers.first() as X509TrustManager
+
+      val sslContext = Platform.get().newSSLContext().apply {
+        // TODO remove most of this code after https://github.com/bcgit/bc-java/issues/686
+        init(null, arrayOf(trustManager), SecureRandom())
+      }
+
+      client = client.newBuilder()
+          .sslSocketFactory(sslContext.socketFactory, trustManager)
+          .eventListenerFactory(clientTestRule.wrap(object : EventListener() {
+            override fun connectionAcquired(call: Call, connection: Connection) {
+              socketClass = connection.socket().javaClass.name
+            }
+          }))
+          .build()
+
+      val request = Request.Builder().url("https://facebook.com/robots.txt").build()
 
       val response = client.newCall(request).execute()
 
@@ -555,7 +570,6 @@ class OkHttpTest {
     } finally {
       Security.removeProvider("BCJSSE")
       Security.removeProvider("BC")
-      client.close()
     }
   }
 
