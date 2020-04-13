@@ -2,14 +2,9 @@ dependencies {
   api project(':okhttp')
   api deps.junit
   api deps.assertj
-  api deps.bouncycastledebug
-  implementation deps.bouncycastlepkix, {
-    // prefer debug build for our own testing
-    exclude module:"bcprov-jdk15on"
-  }
-  implementation deps.bouncycastletls, {
-    exclude module:"bcprov-jdk15on"
-  }
+  api deps.bouncycastle
+  implementation deps.bouncycastlepkix
+  implementation deps.bouncycastletls
   api deps.conscrypt
   api deps.corretto
   api deps.openjsse

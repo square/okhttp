@@ -753,6 +753,8 @@ public final class HttpLoggingInterceptorTest {
   }
 
   @Test public void http2() throws Exception {
+    platform.assumeNotBouncyCastle();
+
     server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     url = server.url("/");
 
@@ -832,6 +834,7 @@ public final class HttpLoggingInterceptorTest {
 
   @Test public void duplexRequestsAreNotLogged() throws Exception {
     platform.assumeHttp2Support();
+    platform.assumeNotBouncyCastle();
 
     server.useHttps(handshakeCertificates.sslSocketFactory(), false); // HTTP/2
     url = server.url("/");

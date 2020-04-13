@@ -56,6 +56,7 @@ public final class ConnectionCoalescingTest {
 
   @Before public void setUp() throws Exception {
     platform.assumeHttp2Support();
+    platform.assumeNotBouncyCastle();
 
     rootCa = new HeldCertificate.Builder()
         .serialNumber(1L)

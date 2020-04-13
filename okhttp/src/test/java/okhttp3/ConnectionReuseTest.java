@@ -66,6 +66,8 @@ public final class ConnectionReuseTest {
   }
 
   @Test public void connectionsAreReusedWithHttp2() throws Exception {
+    platform.assumeNotBouncyCastle();
+
     enableHttp2();
     server.enqueue(new MockResponse().setBody("a"));
     server.enqueue(new MockResponse().setBody("b"));
@@ -190,6 +192,8 @@ public final class ConnectionReuseTest {
   }
 
   @Test public void http2ConnectionsAreSharedBeforeResponseIsConsumed() throws Exception {
+    platform.assumeNotBouncyCastle();
+
     enableHttp2();
     server.enqueue(new MockResponse().setBody("a"));
     server.enqueue(new MockResponse().setBody("b"));
@@ -230,6 +234,8 @@ public final class ConnectionReuseTest {
   }
 
   @Test public void connectionsAreNotReusedIfSslSocketFactoryChanges() throws Exception {
+    platform.assumeNotBouncyCastle();
+
     enableHttps();
     server.enqueue(new MockResponse());
     server.enqueue(new MockResponse());
@@ -257,6 +263,8 @@ public final class ConnectionReuseTest {
   }
 
   @Test public void connectionsAreNotReusedIfHostnameVerifierChanges() throws Exception {
+    platform.assumeNotBouncyCastle();
+
     enableHttps();
     server.enqueue(new MockResponse());
     server.enqueue(new MockResponse());

@@ -121,6 +121,7 @@ public final class CallTest {
 
   @Before public void setUp() {
     platform.assumeNotOpenJSSE();
+    platform.assumeNotBouncyCastle();
   }
 
   @After public void tearDown() throws Exception {

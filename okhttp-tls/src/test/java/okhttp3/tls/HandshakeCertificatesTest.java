@@ -64,7 +64,8 @@ public final class HandshakeCertificatesTest {
   }
 
   @Test public void clientAndServer() throws Exception {
-    assumeFalse(getPlatform().equals("conscrypt"));
+    platform.assumeNotConscrypt();
+    platform.assumeNotBouncyCastle();
 
     HeldCertificate clientRoot = new HeldCertificate.Builder()
         .certificateAuthority(1)

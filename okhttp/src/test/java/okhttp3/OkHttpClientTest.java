@@ -36,6 +36,7 @@ import okhttp3.internal.platform.Platform;
 import okhttp3.internal.proxy.NullProxySelector;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.testing.PlatformRule;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
@@ -50,6 +51,8 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
 public final class OkHttpClientTest {
+  @Rule public PlatformRule platform = new PlatformRule();
+
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 

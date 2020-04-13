@@ -238,6 +238,20 @@ jobs:
       - runtests:
           platform: conscrypt
 
+  testbouncycastle:
+    docker:
+      - image: circleci/openjdk:11.0.6-jdk-stretch
+
+    environment:
+      JVM_OPTS: -Xmx1g
+      TERM: dumb
+
+    steps:
+      - checkout
+
+      - runtests:
+          platform: bouncycastle
+
   testcorretto:
     docker:
       - image: circleci/openjdk:11.0.6-jdk-stretch
@@ -294,6 +308,7 @@ workflows:
             branches:
               ignore:
                 - gh-pages
+      #- testbouncycastle
       #- testopenjsse
       #- testconscrypt
       #- testcorretto
