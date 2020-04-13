@@ -18,7 +18,6 @@ package okhttp3
 import java.net.Proxy
 import java.net.ProxySelector
 import java.net.Socket
-import java.security.GeneralSecurityException
 import java.time.Duration
 import java.util.Collections
 import java.util.Random
@@ -28,7 +27,6 @@ import java.util.concurrent.TimeUnit.MILLISECONDS
 import javax.net.SocketFactory
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSocketFactory
-import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol.HTTP_1_1
 import okhttp3.Protocol.HTTP_2
@@ -237,9 +235,7 @@ open class OkHttpClient internal constructor(
           .withCertificateChainCleaner(certificateChainCleaner!!)
     } else {
       this.x509TrustManager = Platform.get().platformTrustManager()
-      Platform.get().configureTrustManager(x509TrustManager)
-      this.sslSocketFactoryOrNull = newSslSocketFactory(x509TrustManager!!)
-      Platform.get().configureSslSocketFactory(sslSocketFactoryOrNull)
+      this.sslSocketFactoryOrNull = Platform.get().newSslSocketFactory(x509TrustManager!!)
       this.certificateChainCleaner = CertificateChainCleaner.get(x509TrustManager!!)
       this.certificatePinner = builder.certificatePinner
           .withCertificateChainCleaner(certificateChainCleaner!!)
@@ -753,7 +749,10 @@ open class OkHttpClient internal constructor(
       }
 
       this.sslSocketFactoryOrNull = sslSocketFactory
-      this.certificateChainCleaner = Platform.get().buildCertificateChainCleaner(sslSocketFactory)
+      this.x509TrustManagerOrNull = Platform.get().trustManager(sslSocketFactory) ?: throw IllegalStateException(
+          "Unable to extract the trust manager on ${Platform.get()}, " +
+              "sslSocketFactory is ${sslSocketFactory.javaClass}")
+      this.certificateChainCleaner = Platform.get().buildCertificateChainCleaner(x509TrustManagerOrNull!!)
     }
 
     /**
@@ -1076,15 +1075,5 @@ open class OkHttpClient internal constructor(
 
     internal val DEFAULT_CONNECTION_SPECS = immutableListOf(
         ConnectionSpec.MODERN_TLS, ConnectionSpec.CLEARTEXT)
-
-    private fun newSslSocketFactory(trustManager: X509TrustManager): SSLSocketFactory {
-      try {
-        val sslContext = Platform.get().newSSLContext()
-        sslContext.init(null, arrayOf<TrustManager>(trustManager), null)
-        return sslContext.socketFactory
-      } catch (e: GeneralSecurityException) {
-        throw AssertionError("No System TLS: " + e, e) // The system has no TLS. Just give up.
-      }
-    }
   }
 }

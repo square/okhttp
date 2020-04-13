@@ -19,6 +19,7 @@ package okhttp3.internal.platform
 import java.io.IOException
 import java.net.InetSocketAddress
 import java.net.Socket
+import java.security.GeneralSecurityException
 import java.security.KeyStore
 import java.security.Security
 import java.util.logging.Level
@@ -26,6 +27,7 @@ import java.util.logging.Logger
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
+import javax.net.ssl.TrustManager
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 import okhttp3.OkHttpClient
@@ -82,7 +84,7 @@ open class Platform {
     return trustManagers[0] as X509TrustManager
   }
 
-  protected open fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? {
+  open fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? {
     return try {
       // Attempt to get the trust manager from an OpenJDK socket factory. We attempt this on all
       // platforms in order to support Robolectric, which mixes classes from both Android and the
@@ -148,20 +150,17 @@ open class Platform {
   open fun buildCertificateChainCleaner(trustManager: X509TrustManager): CertificateChainCleaner =
       BasicCertificateChainCleaner(buildTrustRootIndex(trustManager))
 
-  fun buildCertificateChainCleaner(sslSocketFactory: SSLSocketFactory): CertificateChainCleaner {
-    val trustManager = trustManager(sslSocketFactory) ?: throw IllegalStateException(
-        "Unable to extract the trust manager on ${get()}, " +
-            "sslSocketFactory is ${sslSocketFactory.javaClass}")
-    return buildCertificateChainCleaner(trustManager)
-  }
-
   open fun buildTrustRootIndex(trustManager: X509TrustManager): TrustRootIndex =
       BasicTrustRootIndex(*trustManager.acceptedIssuers)
 
-  open fun configureSslSocketFactory(socketFactory: SSLSocketFactory) {
-  }
-
-  open fun configureTrustManager(trustManager: X509TrustManager?) {
+  open fun newSslSocketFactory(trustManager: X509TrustManager): SSLSocketFactory {
+    try {
+      return newSSLContext().apply {
+        init(null, arrayOf<TrustManager>(trustManager), null)
+      }.socketFactory
+    } catch (e: GeneralSecurityException) {
+      throw AssertionError("No System TLS: $e", e) // The system has no TLS. Just give up.
+    }
   }
 
   override fun toString(): String = javaClass.simpleName
