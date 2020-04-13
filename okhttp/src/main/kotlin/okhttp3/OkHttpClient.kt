@@ -232,7 +232,7 @@ open class OkHttpClient internal constructor(
     } else if (builder.sslSocketFactoryOrNull != null) {
       this.sslSocketFactoryOrNull = builder.sslSocketFactoryOrNull
       this.certificateChainCleaner = builder.certificateChainCleaner!!
-      this.x509TrustManager = builder.x509TrustManagerOrNull
+      this.x509TrustManager = builder.x509TrustManagerOrNull!!
       this.certificatePinner = builder.certificatePinner
           .withCertificateChainCleaner(certificateChainCleaner!!)
     } else {
