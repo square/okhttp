@@ -39,7 +39,7 @@ import okhttp3.OkHttpClient
 import okhttp3.OkHttpClientTestRule
 import okhttp3.Protocol.HTTP_1_1
 import okhttp3.RecordingEventListener
-import okhttp3.Request.Builder
+import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.internal.http.CancelTest.CancelMode.CANCEL
 import okhttp3.internal.http.CancelTest.CancelMode.INTERRUPT
@@ -52,6 +52,7 @@ import okhttp3.testing.PlatformRule
 import okhttp3.tls.internal.TlsUtil
 import okio.Buffer
 import okio.BufferedSink
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
 import org.junit.Before
@@ -63,7 +64,7 @@ import org.junit.runners.Parameterized.Parameters
 
 @RunWith(Parameterized::class)
 class CancelTest(mode: Pair<CancelMode, ConnectionType>) {
-  @JvmField @Rule val platform = PlatformRule()
+  @get:Rule val platform = PlatformRule()
 
   val cancelMode = mode.first
   val connectionType = mode.second
@@ -113,9 +114,8 @@ class CancelTest(mode: Pair<CancelMode, ConnectionType>) {
 
     client = clientTestRule.newClientBuilder()
         .socketFactory(object : DelegatingSocketFactory(SocketFactory.getDefault()) {
-          @Throws(
-              IOException::class
-          ) override fun configureSocket(socket: Socket): Socket {
+          @Throws(IOException::class)
+          override fun configureSocket(socket: Socket): Socket {
             socket.sendBufferSize = SOCKET_BUFFER_SIZE
             socket.receiveBufferSize = SOCKET_BUFFER_SIZE
             return socket
@@ -134,7 +134,7 @@ class CancelTest(mode: Pair<CancelMode, ConnectionType>) {
   fun cancelWritingRequestBody() {
     server.enqueue(MockResponse())
     val call = client.newCall(
-        Builder()
+        Request.Builder()
             .url(server.url("/"))
             .post(object : RequestBody() {
               override fun contentType(): MediaType? {
@@ -161,7 +161,6 @@ class CancelTest(mode: Pair<CancelMode, ConnectionType>) {
     } catch (expected: IOException) {
       assertEquals(cancelMode == INTERRUPT, Thread.interrupted())
     }
-    assertEquals(if (connectionType == H2) 1 else 0, client.connectionPool.connectionCount())
   }
 
   @Test
@@ -173,10 +172,10 @@ class CancelTest(mode: Pair<CancelMode, ConnectionType>) {
                 Buffer()
                     .write(ByteArray(responseBodySize))
             )
-            .throttleBody(64 * 1024.toLong(), 125, MILLISECONDS)
+            .throttleBody(64 * 1024, 125, MILLISECONDS)
     ) // 500 Kbps
     val call = client.newCall(
-        Builder()
+        Request.Builder()
             .url(server.url("/"))
             .build()
     )
@@ -204,14 +203,14 @@ class CancelTest(mode: Pair<CancelMode, ConnectionType>) {
                 Buffer()
                     .write(ByteArray(responseBodySize))
             )
-            .throttleBody(64 * 1024.toLong(), 125, MILLISECONDS)
+            .throttleBody(64 * 1024, 125, MILLISECONDS)
     ) // 500 Kbps
     server.enqueue(MockResponse().apply {
       setResponseCode(200)
       setBody(".")
     })
 
-    val call = client.newCall(Builder().url(server.url("/")).build())
+    val call = client.newCall(Request.Builder().url(server.url("/")).build())
     val response = call.execute()
     cancelLater(call, 500)
     val responseBody = response.body!!.byteStream()
@@ -226,28 +225,45 @@ class CancelTest(mode: Pair<CancelMode, ConnectionType>) {
     responseBody.close()
     assertEquals(if (connectionType == H2) 1 else 0, client.connectionPool.connectionCount())
 
-    val call2 = client.newCall(Builder().url(server.url("/")).build())
+    val expectedEvents = mutableListOf<String>().apply {
+      addAll(listOf("CallStart", "ConnectStart", "ConnectEnd", "ConnectionAcquired"))
+      if (cancelMode == CANCEL) {
+        add("Canceled")
+      }
+      addAll(listOf("ResponseFailed", "ConnectionReleased"))
+    }
+
+    val events = listener.eventSequence.filter { isConnectionEvent(it) }.map { it.name }
+    listener.clearAllEvents()
+    assertThat(events).isEqualTo(expectedEvents)
+
+    val call2 = client.newCall(Request.Builder().url(server.url("/")).build())
     call2.execute().use {
       assertEquals(".", it.body!!.string())
     }
 
-    val events = listener.eventSequence.filter { isConnectionEvent(it) }.map { it.name }
-
-    val expectedEvents = when {
-      cancelMode == CANCEL && connectionType == H2 -> listOf("CallStart", "ConnectStart", "ConnectEnd", "ConnectionAcquired", "Canceled", "ResponseFailed", "ConnectionReleased", "CallStart", "ConnectionAcquired", "ConnectionReleased", "CallEnd")
-      cancelMode == CANCEL && connectionType == HTTPS -> listOf("CallStart", "ConnectStart", "ConnectEnd", "ConnectionAcquired", "Canceled", "ResponseFailed", "ConnectionReleased", "CallStart", "ConnectStart", "ConnectEnd", "ConnectionAcquired", "ConnectionReleased", "CallEnd")
-      cancelMode == CANCEL && connectionType == HTTP -> listOf("CallStart", "ConnectStart", "ConnectEnd", "ConnectionAcquired", "Canceled", "ResponseFailed", "ConnectionReleased", "CallStart", "ConnectStart", "ConnectEnd", "ConnectionAcquired", "ConnectionReleased", "CallEnd")
-      cancelMode == INTERRUPT && connectionType == H2 -> listOf("CallStart", "ConnectStart", "ConnectEnd", "ConnectionAcquired", "ResponseFailed", "ConnectionReleased", "CallStart", "ConnectionAcquired", "ConnectionReleased", "CallEnd")
-      cancelMode == INTERRUPT && connectionType == HTTPS -> listOf("CallStart", "ConnectStart", "ConnectEnd", "ConnectionAcquired", "ResponseFailed", "ConnectionReleased", "CallStart", "ConnectStart", "ConnectEnd", "ConnectionAcquired", "ConnectionReleased", "CallEnd")
-      cancelMode == INTERRUPT && connectionType == HTTP -> listOf("CallStart", "ConnectStart", "ConnectEnd", "ConnectionAcquired", "ResponseFailed", "ConnectionReleased", "CallStart", "ConnectStart", "ConnectEnd", "ConnectionAcquired", "ConnectionReleased", "CallEnd")
-      else -> listOf()
+    val events2 = listener.eventSequence.filter { isConnectionEvent(it) }.map { it.name }
+    val expectedEvents2 = mutableListOf<String>().apply {
+      add("CallStart")
+      if (connectionType != H2) {
+        addAll(listOf("ConnectStart", "ConnectEnd"))
+      }
+      addAll(listOf("ConnectionAcquired", "ConnectionReleased", "CallEnd"))
     }
 
-    assertEquals(expectedEvents, events)
+    assertThat(events2).isEqualTo(expectedEvents2)
   }
 
   private fun isConnectionEvent(it: CallEvent?) =
-    it is CallStart || it is CallEnd || it is ConnectStart || it is ConnectEnd || it is ConnectionAcquired || it is ConnectionReleased || it is Canceled || it is RequestFailed || it is ResponseFailed
+    it is CallStart ||
+        it is CallEnd ||
+        it is ConnectStart ||
+        it is ConnectEnd ||
+        it is ConnectionAcquired ||
+        it is ConnectionReleased ||
+        it is Canceled ||
+        it is RequestFailed ||
+        it is ResponseFailed
 
   private fun sleep(delayMillis: Int) {
     try {
