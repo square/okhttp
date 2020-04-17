@@ -103,18 +103,10 @@ class AndroidPlatform : Platform() {
     }
   }
 
-  override fun isCleartextTrafficPermitted(hostname: String): Boolean {
-    if (Build.VERSION.SDK_INT < 23) {
-      return true
-    }
-
-    val networkSecurityPolicy = NetworkSecurityPolicy.getInstance()
-
-    if (Build.VERSION.SDK_INT > 24) {
-      return networkSecurityPolicy.isCleartextTrafficPermitted(hostname)
-    }
-
-    return networkSecurityPolicy.isCleartextTrafficPermitted
+  override fun isCleartextTrafficPermitted(hostname: String): Boolean = when {
+    Build.VERSION.SDK_INT >= 24 -> NetworkSecurityPolicy.getInstance().isCleartextTrafficPermitted(hostname)
+    Build.VERSION.SDK_INT >= 23 -> NetworkSecurityPolicy.getInstance().isCleartextTrafficPermitted
+    else -> true
   }
 
   override fun buildCertificateChainCleaner(trustManager: X509TrustManager): CertificateChainCleaner =
