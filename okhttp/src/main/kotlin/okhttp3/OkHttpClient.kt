@@ -18,7 +18,6 @@ package okhttp3
 import java.net.Proxy
 import java.net.ProxySelector
 import java.net.Socket
-import java.security.GeneralSecurityException
 import java.time.Duration
 import java.util.Collections
 import java.util.Random
@@ -28,7 +27,6 @@ import java.util.concurrent.TimeUnit.MILLISECONDS
 import javax.net.SocketFactory
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSocketFactory
-import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol.HTTP_1_1
 import okhttp3.Protocol.HTTP_2
@@ -224,29 +222,45 @@ open class OkHttpClient internal constructor(
   constructor() : this(Builder())
 
   init {
-    if (builder.sslSocketFactoryOrNull != null || connectionSpecs.none { it.isTls }) {
+    if (connectionSpecs.none { it.isTls }) {
+      this.sslSocketFactoryOrNull = null
+      this.certificateChainCleaner = null
+      this.x509TrustManager = null
+      this.certificatePinner = CertificatePinner.DEFAULT
+    } else if (builder.sslSocketFactoryOrNull != null) {
       this.sslSocketFactoryOrNull = builder.sslSocketFactoryOrNull
-      this.certificateChainCleaner = builder.certificateChainCleaner
-      this.x509TrustManager = builder.x509TrustManagerOrNull
+      this.certificateChainCleaner = builder.certificateChainCleaner!!
+      this.x509TrustManager = builder.x509TrustManagerOrNull!!
+      this.certificatePinner = builder.certificatePinner
+          .withCertificateChainCleaner(certificateChainCleaner!!)
     } else {
       this.x509TrustManager = Platform.get().platformTrustManager()
-      Platform.get().configureTrustManager(x509TrustManager)
-      this.sslSocketFactoryOrNull = newSslSocketFactory(x509TrustManager!!)
+      this.sslSocketFactoryOrNull = Platform.get().newSslSocketFactory(x509TrustManager!!)
       this.certificateChainCleaner = CertificateChainCleaner.get(x509TrustManager!!)
+      this.certificatePinner = builder.certificatePinner
+          .withCertificateChainCleaner(certificateChainCleaner!!)
     }
 
-    if (sslSocketFactoryOrNull != null) {
-      Platform.get().configureSslSocketFactory(sslSocketFactoryOrNull)
-    }
+    verifyClientState()
+  }
 
-    this.certificatePinner = builder.certificatePinner
-        .withCertificateChainCleaner(certificateChainCleaner)
-
+  private fun verifyClientState() {
     check(null !in (interceptors as List<Interceptor?>)) {
       "Null interceptor: $interceptors"
     }
     check(null !in (networkInterceptors as List<Interceptor?>)) {
       "Null network interceptor: $networkInterceptors"
+    }
+
+    if (connectionSpecs.none { it.isTls }) {
+      check(sslSocketFactoryOrNull == null)
+      check(certificateChainCleaner == null)
+      check(x509TrustManager == null)
+      check(certificatePinner == CertificatePinner.DEFAULT)
+    } else {
+      checkNotNull(sslSocketFactoryOrNull) { "sslSocketFactory == null" }
+      checkNotNull(certificateChainCleaner) { "certificateChainCleaner == null" }
+      checkNotNull(x509TrustManager) { "x509TrustManager == null" }
     }
   }
 
@@ -734,7 +748,10 @@ open class OkHttpClient internal constructor(
       }
 
       this.sslSocketFactoryOrNull = sslSocketFactory
-      this.certificateChainCleaner = Platform.get().buildCertificateChainCleaner(sslSocketFactory)
+      this.x509TrustManagerOrNull = Platform.get().trustManager(sslSocketFactory) ?: throw IllegalStateException(
+          "Unable to extract the trust manager on ${Platform.get()}, " +
+              "sslSocketFactory is ${sslSocketFactory.javaClass}")
+      this.certificateChainCleaner = Platform.get().buildCertificateChainCleaner(x509TrustManagerOrNull!!)
     }
 
     /**
@@ -1057,15 +1074,5 @@ open class OkHttpClient internal constructor(
 
     internal val DEFAULT_CONNECTION_SPECS = immutableListOf(
         ConnectionSpec.MODERN_TLS, ConnectionSpec.CLEARTEXT)
-
-    private fun newSslSocketFactory(trustManager: X509TrustManager): SSLSocketFactory {
-      try {
-        val sslContext = Platform.get().newSSLContext()
-        sslContext.init(null, arrayOf<TrustManager>(trustManager), null)
-        return sslContext.socketFactory
-      } catch (e: GeneralSecurityException) {
-        throw AssertionError("No System TLS: " + e, e) // The system has no TLS. Just give up.
-      }
-    }
   }
 }
