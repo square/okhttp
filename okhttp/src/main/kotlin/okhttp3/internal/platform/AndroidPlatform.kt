@@ -16,6 +16,7 @@
 package okhttp3.internal.platform
 
 import android.os.Build
+import android.security.NetworkSecurityPolicy
 import java.io.IOException
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
@@ -103,48 +104,17 @@ class AndroidPlatform : Platform() {
   }
 
   override fun isCleartextTrafficPermitted(hostname: String): Boolean {
-    return try {
-      val networkPolicyClass = Class.forName("android.security.NetworkSecurityPolicy")
-      val getInstanceMethod = networkPolicyClass.getMethod("getInstance")
-      val networkSecurityPolicy = getInstanceMethod.invoke(null)
-      api24IsCleartextTrafficPermitted(hostname, networkPolicyClass, networkSecurityPolicy)
-    } catch (_: ClassNotFoundException) {
-      super.isCleartextTrafficPermitted(hostname)
-    } catch (_: NoSuchMethodException) {
-      super.isCleartextTrafficPermitted(hostname)
-    } catch (e: IllegalAccessException) {
-      throw AssertionError("unable to determine cleartext support", e)
-    } catch (e: IllegalArgumentException) {
-      throw AssertionError("unable to determine cleartext support", e)
-    } catch (e: InvocationTargetException) {
-      throw AssertionError("unable to determine cleartext support", e)
+    if (Build.VERSION.SDK_INT < 23) {
+      return true
     }
-  }
 
-  @Throws(InvocationTargetException::class, IllegalAccessException::class)
-  private fun api24IsCleartextTrafficPermitted(
-    hostname: String,
-    networkPolicyClass: Class<*>,
-    networkSecurityPolicy: Any
-  ): Boolean = try {
-    val isCleartextTrafficPermittedMethod = networkPolicyClass
-        .getMethod("isCleartextTrafficPermitted", String::class.java)
-    isCleartextTrafficPermittedMethod.invoke(networkSecurityPolicy, hostname) as Boolean
-  } catch (_: NoSuchMethodException) {
-    api23IsCleartextTrafficPermitted(hostname, networkPolicyClass, networkSecurityPolicy)
-  }
+    val networkSecurityPolicy = NetworkSecurityPolicy.getInstance()
 
-  @Throws(InvocationTargetException::class, IllegalAccessException::class)
-  private fun api23IsCleartextTrafficPermitted(
-    hostname: String,
-    networkPolicyClass: Class<*>,
-    networkSecurityPolicy: Any
-  ): Boolean = try {
-    val isCleartextTrafficPermittedMethod = networkPolicyClass
-        .getMethod("isCleartextTrafficPermitted")
-    isCleartextTrafficPermittedMethod.invoke(networkSecurityPolicy) as Boolean
-  } catch (_: NoSuchMethodException) {
-    super.isCleartextTrafficPermitted(hostname)
+    if (Build.VERSION.SDK_INT > 24) {
+      return networkSecurityPolicy.isCleartextTrafficPermitted(hostname)
+    }
+
+    return networkSecurityPolicy.isCleartextTrafficPermitted
   }
 
   override fun buildCertificateChainCleaner(trustManager: X509TrustManager): CertificateChainCleaner =
