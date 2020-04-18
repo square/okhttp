@@ -231,9 +231,10 @@ open class OkHttpClient internal constructor(
       this.certificateChainCleaner = null
       this.x509TrustManager = null
       this.certificatePinner = CertificatePinner.DEFAULT
+      this.hostnameVerifier = OkHostnameVerifier
     } else {
       if (builder.trustManagerOverrides != null) {
-        builder.x509TrustManagerOrNull = TrustManagerBridge.Builder()
+        this.x509TrustManager = TrustManagerBridge.Builder()
             .addOverrides(builder.trustManagerOverrides!!)
             .apply {
               if (builder.x509TrustManagerOrNull != null) {
@@ -244,20 +245,17 @@ open class OkHttpClient internal constructor(
 
         this.hostnameVerifier = HostnameVerifierOverride(builder.hostnameVerifier, builder.trustManagerOverrides!!.toList())
       } else {
+        this.x509TrustManager = builder.x509TrustManagerOrNull ?: Platform.get().platformTrustManager()
         this.hostnameVerifier = builder.hostnameVerifier
       }
 
       if (builder.sslSocketFactoryOrNull != null) {
         this.sslSocketFactoryOrNull = builder.sslSocketFactoryOrNull
         this.certificateChainCleaner = builder.certificateChainCleaner!!
-        this.x509TrustManager = builder.x509TrustManagerOrNull!!
         this.certificatePinner = builder.certificatePinner
             .withCertificateChainCleaner(certificateChainCleaner!!)
       } else {
-        this.x509TrustManager = Platform.get()
-            .platformTrustManager()
-        this.sslSocketFactoryOrNull = Platform.get()
-            .newSslSocketFactory(x509TrustManager!!)
+        this.sslSocketFactoryOrNull = Platform.get().newSslSocketFactory(x509TrustManager!!)
         this.certificateChainCleaner = CertificateChainCleaner.get(x509TrustManager!!)
         this.certificatePinner = builder.certificatePinner
             .withCertificateChainCleaner(certificateChainCleaner!!)

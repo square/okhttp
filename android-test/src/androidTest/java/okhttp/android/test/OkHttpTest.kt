@@ -340,7 +340,8 @@ class OkHttpTest {
 
   @Test
   fun testDevserverSupport() {
-    assumeTrue(Build.VERSION.SDK_INT >= 26)
+    // See testCustomTrustManagerWithAndroidCheck - not available before 24
+    assumeTrue(Build.VERSION.SDK_INT >= 24)
 
     server.useHttps(handshakeCertificates.sslSocketFactory(), false)
     client = client.newBuilder().insecureForHost(server.hostName).build()
