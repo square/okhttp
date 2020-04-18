@@ -15,9 +15,10 @@
  */
 package okhttp3.internal.platform.android
 
-import java.lang.reflect.InvocationTargetException
-import java.lang.reflect.Method
+import android.net.http.X509TrustManagerExtensions
+import java.lang.IllegalArgumentException
 import java.security.cert.Certificate
+import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.X509TrustManager
@@ -25,30 +26,25 @@ import okhttp3.internal.SuppressSignatureCheck
 import okhttp3.internal.tls.CertificateChainCleaner
 
 /**
- * Legacy Android implementation of CertificateChainCleaner relying on reflection.
- *
- * X509TrustManagerExtensions was added to Android in API 17 (Android 4.2, released in late 2012).
- * This is the best way to get a clean chain on Android because it uses the same code as the TLS
- * handshake.
+ * Android implementation of CertificateChainCleaner using direct Android API calls.
+ * Not used if X509TrustManager doesn't implement [X509TrustManager.checkServerTrusted] with
+ * an additional host param.
  */
 internal class AndroidCertificateChainCleaner(
   private val trustManager: X509TrustManager,
-  private val x509TrustManagerExtensions: Any,
-  private val checkServerTrusted: Method
+  private val x509TrustManagerExtensions: X509TrustManagerExtensions
 ) : CertificateChainCleaner() {
-
-  @Suppress("UNCHECKED_CAST") // Reflection on List<Certificate>
+  @Suppress("UNCHECKED_CAST")
   @Throws(SSLPeerUnverifiedException::class)
   @SuppressSignatureCheck
   override
-  fun clean(chain: List<Certificate>, hostname: String): List<Certificate> = try {
+  fun clean(chain: List<Certificate>, hostname: String): List<Certificate> {
     val certificates = (chain as List<X509Certificate>).toTypedArray()
-    checkServerTrusted.invoke(
-        x509TrustManagerExtensions, certificates, "RSA", hostname) as List<Certificate>
-  } catch (e: InvocationTargetException) {
-    throw SSLPeerUnverifiedException(e.message).apply { initCause(e) }
-  } catch (e: IllegalAccessException) {
-    throw AssertionError(e)
+    try {
+      return x509TrustManagerExtensions.checkServerTrusted(certificates, "RSA", hostname)
+    } catch (ce: CertificateException) {
+      throw SSLPeerUnverifiedException(ce.message).apply { initCause(ce) }
+    }
   }
 
   override fun equals(other: Any?): Boolean =
@@ -58,16 +54,19 @@ internal class AndroidCertificateChainCleaner(
   override fun hashCode(): Int = System.identityHashCode(trustManager)
 
   companion object {
-    fun build(trustManager: X509TrustManager): AndroidCertificateChainCleaner? = try {
-      val extensionsClass = Class.forName("android.net.http.X509TrustManagerExtensions")
-      val constructor = extensionsClass.getConstructor(X509TrustManager::class.java)
-      val extensions = constructor.newInstance(trustManager)
-      val checkServerTrusted = extensionsClass.getMethod(
-          "checkServerTrusted", Array<X509Certificate>::class.java, String::class.java,
-          String::class.java)
-      AndroidCertificateChainCleaner(trustManager, extensions, checkServerTrusted)
-    } catch (_: Exception) {
-      null
+    @SuppressSignatureCheck
+    fun buildIfSupported(trustManager: X509TrustManager): AndroidCertificateChainCleaner? {
+      val extensions = try {
+        X509TrustManagerExtensions(trustManager)
+      } catch (iae: IllegalArgumentException) {
+        // X509TrustManagerExtensions checks for checkServerTrusted(X509Certificate[], String, String)
+        null
+      }
+
+      return when {
+        extensions != null -> AndroidCertificateChainCleaner(trustManager, extensions)
+        else -> null
+      }
     }
   }
 }

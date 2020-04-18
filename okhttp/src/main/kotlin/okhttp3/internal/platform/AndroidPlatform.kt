@@ -148,7 +148,7 @@ class AndroidPlatform : Platform() {
   }
 
   override fun buildCertificateChainCleaner(trustManager: X509TrustManager): CertificateChainCleaner =
-        AndroidCertificateChainCleaner.build(trustManager) ?: super.buildCertificateChainCleaner(trustManager)
+        AndroidCertificateChainCleaner.buildIfSupported(trustManager) ?: super.buildCertificateChainCleaner(trustManager)
 
   override fun buildTrustRootIndex(trustManager: X509TrustManager): TrustRootIndex = try {
     // From org.conscrypt.TrustManagerImpl, we want the method with this signature:
