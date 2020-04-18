@@ -15,13 +15,15 @@
  */
 package okhttp3.internal.platform
 
+import java.security.KeyStore
 import java.security.Provider
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
+import javax.net.ssl.TrustManager
+import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol
-import okhttp3.internal.readFieldOrNull
 import org.conscrypt.Conscrypt
 
 /**
@@ -41,28 +43,18 @@ class ConscryptPlatform private constructor() : Platform() {
       SSLContext.getInstance("TLS", provider)
 
   override fun platformTrustManager(): X509TrustManager {
-    return Conscrypt.getDefaultX509TrustManager().also {
-      configureTrustManager(it)
+    val trustManagers = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm()).apply {
+      init(null as KeyStore?)
+    }.trustManagers!!
+    check(trustManagers.size == 1 && trustManagers[0] is X509TrustManager) {
+      "Unexpected default trust managers: ${trustManagers.contentToString()}"
     }
+    val x509TrustManager = trustManagers[0] as X509TrustManager
+    Conscrypt.setHostnameVerifier(x509TrustManager) { _, _ -> true }
+    return x509TrustManager
   }
 
-  public override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? =
-      if (!Conscrypt.isConscrypt(sslSocketFactory)) {
-        super.trustManager(sslSocketFactory)
-      } else {
-        try {
-          // org.conscrypt.SSLParametersImpl
-          val sp = readFieldOrNull(sslSocketFactory, Any::class.java, "sslParameters")
-
-          when {
-            sp != null -> readFieldOrNull(sp, X509TrustManager::class.java, "x509TrustManager")
-            else -> null
-          }
-        } catch (e: Exception) {
-          throw UnsupportedOperationException(
-              "clientBuilder.sslSocketFactory(SSLSocketFactory) not supported on Conscrypt", e)
-        }
-      }
+  override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? = null
 
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
@@ -88,16 +80,11 @@ class ConscryptPlatform private constructor() : Platform() {
         super.getSelectedProtocol(sslSocket)
       }
 
-  override fun configureSslSocketFactory(socketFactory: SSLSocketFactory) {
-    if (Conscrypt.isConscrypt(socketFactory)) {
-      Conscrypt.setUseEngineSocket(socketFactory, true)
-    }
-  }
-
-  override fun configureTrustManager(trustManager: X509TrustManager) {
-    if (Conscrypt.isConscrypt(trustManager)) {
-      // OkHttp will verify
-      Conscrypt.setHostnameVerifier(trustManager) { _, _ -> true }
+  override fun newSslSocketFactory(trustManager: X509TrustManager): SSLSocketFactory {
+    return newSSLContext().apply {
+      init(null, arrayOf<TrustManager>(trustManager), null)
+    }.socketFactory.also {
+      Conscrypt.setUseEngineSocket(it, true)
     }
   }
 

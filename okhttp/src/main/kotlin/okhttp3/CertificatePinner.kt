@@ -217,7 +217,7 @@ class CertificatePinner internal constructor(
 
   /** Returns a certificate pinner that uses `certificateChainCleaner`. */
   internal fun withCertificateChainCleaner(
-    certificateChainCleaner: CertificateChainCleaner?
+    certificateChainCleaner: CertificateChainCleaner
   ): CertificatePinner {
     return if (this.certificateChainCleaner == certificateChainCleaner) {
       this
