@@ -66,6 +66,7 @@ import okhttp3.internal.platform.AndroidPlatform
 import okhttp3.internal.platform.Android10Platform
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.jsse.provider.BouncyCastleJsseProvider
+import org.junit.Assert.assertFalse
 import java.io.IOException
 import java.lang.IllegalArgumentException
 import java.security.KeyStore
@@ -484,14 +485,21 @@ class OkHttpTest {
   fun testCustomTrustManagerWithAndroidCheck() {
     assumeNetwork()
 
+    var withHostCalled = false
+    var withoutHostCalled = false
     val trustManager = object : X509TrustManager {
       override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
 
-      override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
+      override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {
+        withoutHostCalled = true
+      }
 
       @Suppress("unused", "UNUSED_PARAMETER")
       // called by Android via reflection in X509TrustManagerExtensions
-      fun checkServerTrusted(chain: Array<out X509Certificate>, authType: String, hostname: String) = chain.toList()
+      fun checkServerTrusted(chain: Array<out X509Certificate>, authType: String, hostname: String): List<X509Certificate> {
+        withHostCalled = true
+        return chain.toList()
+      }
 
       override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
     }
@@ -509,6 +517,14 @@ class OkHttpTest {
         .build()
 
     client.get("https://www.facebook.com/robots.txt")
+
+    if (Build.VERSION.SDK_INT < 24) {
+      assertFalse(withHostCalled)
+      assertTrue(withoutHostCalled)
+    } else {
+      assertTrue(withHostCalled)
+      assertFalse(withoutHostCalled)
+    }
   }
 
   @Test
