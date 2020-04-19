@@ -174,7 +174,7 @@ class TrustManagerBridgeTest {
     val bridge2 = OkHttpClient.Builder().build().x509TrustManager!!
 
     assertTrue(bridge2 is X509ExtendedTrustManager)
-    assertNotEquals(TrustManagerJvm::class.java, bridge2.javaClass)
+    assertEquals(platformTrustManager.javaClass, bridge2.javaClass)
   }
 
   @Test
