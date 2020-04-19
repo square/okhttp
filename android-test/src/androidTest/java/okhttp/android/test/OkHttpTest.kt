@@ -49,6 +49,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.jsse.provider.BouncyCastleJsseProvider
 import org.conscrypt.Conscrypt
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Assume.assumeNoException
@@ -70,17 +71,6 @@ import java.util.logging.Logger
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocket
-import javax.net.ssl.X509TrustManager
-import java.util.logging.Logger
-import okhttp3.internal.platform.AndroidPlatform
-import okhttp3.internal.platform.Android10Platform
-import org.bouncycastle.jce.provider.BouncyCastleProvider
-import org.bouncycastle.jsse.provider.BouncyCastleJsseProvider
-import org.junit.Assert.assertFalse
-import java.io.IOException
-import java.lang.IllegalArgumentException
-import java.security.KeyStore
-import java.security.SecureRandom
 import javax.net.ssl.TrustManager
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
