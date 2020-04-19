@@ -19,7 +19,7 @@ import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.X509TrustManager
 
 open class TrustManagerOverride(
-  val predicate: (String) -> Boolean,
+  val hostname: String,
   val hostnameVerifier: HostnameVerifier? = null,
   val trustManager: X509TrustManager
 )

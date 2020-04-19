@@ -32,7 +32,7 @@ class TrustManagerJvm internal constructor(
 
   internal fun findByHost(peerHost: String): X509TrustManager {
     overrides.forEach {
-      if (it.predicate(peerHost)) {
+      if (it.hostname == peerHost) {
         return it.trustManager
       }
     }

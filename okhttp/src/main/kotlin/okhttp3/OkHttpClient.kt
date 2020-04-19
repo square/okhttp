@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit.MILLISECONDS
 import javax.net.SocketFactory
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSocketFactory
+import javax.net.ssl.X509ExtendedTrustManager
 import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol.HTTP_1_1
 import okhttp3.Protocol.HTTP_2
@@ -42,7 +43,8 @@ import okhttp3.internal.tls.CertificateChainCleaner
 import okhttp3.internal.tls.HostnameVerifierOverride
 import okhttp3.internal.tls.InsecureTrustManager
 import okhttp3.internal.tls.OkHostnameVerifier
-import okhttp3.internal.tls.TrustManagerBridge
+import okhttp3.internal.tls.TrustManagerAndroid
+import okhttp3.internal.tls.TrustManagerJvm
 import okhttp3.internal.tls.TrustManagerOverride
 import okhttp3.internal.toImmutableList
 import okhttp3.internal.ws.RealWebSocket
@@ -226,6 +228,8 @@ open class OkHttpClient internal constructor(
   constructor() : this(Builder())
 
   init {
+    val platform = Platform.get()
+
     if (connectionSpecs.none { it.isTls }) {
       this.sslSocketFactoryOrNull = null
       this.certificateChainCleaner = null
@@ -234,18 +238,27 @@ open class OkHttpClient internal constructor(
       this.hostnameVerifier = OkHostnameVerifier
     } else {
       if (builder.trustManagerOverrides != null) {
-        this.x509TrustManager = TrustManagerBridge.Builder()
-            .addOverrides(builder.trustManagerOverrides!!)
-            .apply {
-              if (builder.x509TrustManagerOrNull != null) {
-                this.default(builder.x509TrustManagerOrNull!!)
-              }
-            }
-            .build()
+//        this.x509TrustManager = TrustManagerBridge.Builder()
+//            .addOverrides(builder.trustManagerOverrides!!)
+//            .apply {
+//              if (builder.x509TrustManagerOrNull != null) {
+//                this.default(builder.x509TrustManagerOrNull!!)
+//              }
+//            }
+//            .build()
+//
+        val defaultTrustManager = builder.x509TrustManagerOrNull ?: platform.platformTrustManager()
+        val overrides = builder.trustManagerOverrides!!.toList()
+
+        this.x509TrustManager = if (Platform.get().isAndroid) {
+          TrustManagerAndroid(defaultTrustManager, overrides)
+        } else {
+          TrustManagerJvm(defaultTrustManager as X509ExtendedTrustManager, overrides)
+        }
 
         this.hostnameVerifier = HostnameVerifierOverride(builder.hostnameVerifier, builder.trustManagerOverrides!!.toList())
       } else {
-        this.x509TrustManager = builder.x509TrustManagerOrNull ?: Platform.get().platformTrustManager()
+        this.x509TrustManager = builder.x509TrustManagerOrNull ?: platform.platformTrustManager()
         this.hostnameVerifier = builder.hostnameVerifier
       }
 
@@ -255,7 +268,7 @@ open class OkHttpClient internal constructor(
         this.certificatePinner = builder.certificatePinner
             .withCertificateChainCleaner(certificateChainCleaner!!)
       } else {
-        this.sslSocketFactoryOrNull = Platform.get().newSslSocketFactory(x509TrustManager!!)
+        this.sslSocketFactoryOrNull = platform.newSslSocketFactory(x509TrustManager!!)
         this.certificateChainCleaner = CertificateChainCleaner.get(x509TrustManager!!)
         this.certificatePinner = builder.certificatePinner
             .withCertificateChainCleaner(certificateChainCleaner!!)
@@ -1102,12 +1115,16 @@ open class OkHttpClient internal constructor(
      *
      * This will override any existing sslSocketFactory with the platform default.
      *
-     * n.b. not for production use, only available from Android version 26.
+     * This is specifically only for development use, any use in production builds should be
+     * considered a bug.
      *
-     * @param hostName the exact hostname from the URL for insecure connections.
+     * n.b. only available from Android version 24, due to use of host specific certificate checks
+     * added in Android.
+     *
+     * @param hostname the exact hostname from the URL for insecure connections.
      */
-    fun insecureForHost(hostName: String): Builder = apply {
-      val override = TrustManagerOverride({ hostName == it }, OkHostnameVerifier.Insecure, InsecureTrustManager)
+    fun insecureForHost(hostname: String): Builder = apply {
+      val override = TrustManagerOverride(hostname, OkHostnameVerifier.Insecure, InsecureTrustManager)
 
       val overrides = trustManagerOverrides ?: mutableListOf<TrustManagerOverride>().also {
         this.trustManagerOverrides = it

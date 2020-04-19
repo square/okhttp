@@ -19,11 +19,11 @@ import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSession
 
 class HostnameVerifierOverride(val default: HostnameVerifier, val overrides: List<TrustManagerOverride>) : HostnameVerifier {
-  override fun verify(hostName: String, session: SSLSession): Boolean {
+  override fun verify(hostname: String, session: SSLSession): Boolean {
     val verifier = overrides.find {
-      it.predicate(hostName) && it.hostnameVerifier != null
+      it.hostname == hostname && it.hostnameVerifier != null
     }?.hostnameVerifier ?: default
 
-    return verifier.verify(hostName, session)
+    return verifier.verify(hostname, session)
   }
 }

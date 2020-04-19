@@ -23,12 +23,12 @@ import javax.net.ssl.X509TrustManager
 import okhttp3.internal.SuppressSignatureCheck
 
 internal open class TrustManagerOverrideAndroid(
-  val predicate: (String) -> Boolean,
+  val hostname: String,
   val trustManager: AndroidTrustManager
 )
 
 internal class TrustManagerWrapperAndroid(val trustManager: X509TrustManager) : AndroidTrustManager {
-  val delegateMethod by lazy { lookupAndroidDelegateMethod() }
+  val delegateMethod = lookupAndroidDelegateMethod()
 
   override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String) {
     trustManager.checkServerTrusted(chain, authType)
@@ -44,15 +44,15 @@ internal class TrustManagerWrapperAndroid(val trustManager: X509TrustManager) : 
   override fun checkServerTrusted(
     chain: Array<X509Certificate>,
     authType: String,
-    host: String
+    hostname: String
   ): List<X509Certificate> {
     if (trustManager is AndroidTrustManager) {
-      return trustManager.checkServerTrusted(chain, authType, host)
+      return trustManager.checkServerTrusted(chain, authType, hostname)
     }
 
     // TODO review security implications here of orEmpty
     return delegateMethod?.let {
-      invokeDelegateMethod(it, chain, authType, host)
+      invokeDelegateMethod(it, chain, authType, hostname)
     }.orEmpty()
   }
 
@@ -96,12 +96,12 @@ internal class TrustManagerAndroid(
   internal val default =
       TrustManagerWrapperAndroid(defaultTrustManager)
   internal val overrides = overridesList.map {
-    TrustManagerOverrideAndroid(it.predicate, TrustManagerWrapperAndroid(it.trustManager))
+    TrustManagerOverrideAndroid(it.hostname, TrustManagerWrapperAndroid(it.trustManager))
   }
 
   internal fun findByHost(peerHost: String): AndroidTrustManager {
     overrides.forEach {
-      if (it.predicate(peerHost)) {
+      if (it.hostname == peerHost) {
         return it.trustManager
       }
     }
