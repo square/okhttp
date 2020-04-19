@@ -1124,7 +1124,7 @@ open class OkHttpClient internal constructor(
      * @param hostname the exact hostname from the URL for insecure connections.
      */
     fun insecureForHost(hostname: String): Builder = apply {
-      val override = TrustManagerOverride(hostname, OkHostnameVerifier.Insecure, InsecureTrustManager)
+      val override = TrustManagerOverride(hostname, OkHostnameVerifier.INSECURE, InsecureTrustManager)
 
       val overrides = trustManagerOverrides ?: mutableListOf<TrustManagerOverride>().also {
         this.trustManagerOverrides = it

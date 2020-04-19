@@ -15,13 +15,8 @@
  */
 package okhttp3.internal.tls
 
-import java.net.InetAddress
-import java.security.GeneralSecurityException
-import java.security.cert.X509Certificate
-import javax.net.ssl.SSLPeerUnverifiedException
-import javax.net.ssl.TrustManager
-import javax.net.ssl.X509ExtendedTrustManager
-import javax.net.ssl.X509TrustManager
+import okhttp3.CertificatePinner.Companion.DEFAULT
+import okhttp3.ConnectionSpec.Companion.CLEARTEXT
 import okhttp3.Dns
 import okhttp3.OkHttpClient
 import okhttp3.OkHttpClientTestRule
@@ -29,7 +24,6 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.TestUtil.assumeNetwork
 import okhttp3.internal.platform.Platform
-import okhttp3.internal.tls.TrustManagerBridge.Builder
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.testing.Flaky
@@ -38,12 +32,22 @@ import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.net.InetAddress
+import java.security.GeneralSecurityException
+import java.security.cert.X509Certificate
+import javax.net.ssl.SSLPeerUnverifiedException
+import javax.net.ssl.TrustManager
+import javax.net.ssl.X509ExtendedTrustManager
+import javax.net.ssl.X509TrustManager
 
 @Flaky
 class TrustManagerBridgeTest {
@@ -74,11 +78,6 @@ class TrustManagerBridgeTest {
   @get:Rule
   val platform = PlatformRule()
 
-  val bridge = Builder()
-      .insecure("localhost")
-      .insecure("www.facebook.com")
-      .build() as X509ExtendedTrustManager
-
   var client = clientTestRule.newClientBuilder()
       .insecureForHost("localhost")
       .insecureForHost("www.facebook.com")
@@ -89,7 +88,7 @@ class TrustManagerBridgeTest {
     val serverSslContext = Platform.get()
         .newSSLContext()
         .apply {
-          init(arrayOf(localhost.keyManager), arrayOf<TrustManager>(bridge), null)
+          init(arrayOf(localhost.keyManager), arrayOf<TrustManager>(client.x509TrustManager!!), null)
         }
 
     useHttps(serverSslContext.socketFactory)
@@ -127,9 +126,47 @@ class TrustManagerBridgeTest {
     client.close()
   }
 
+  @Test fun testBuilderChains() {
+    val client1a = OkHttpClient.Builder().build()
+    val client1b = client1a.newBuilder().build()
+    assertSame(client1a.sslSocketFactory, client1b.sslSocketFactory)
+    assertSame(client1a.x509TrustManager, client1b.x509TrustManager)
+    assertSame(client1a.certificateChainCleaner, client1b.certificateChainCleaner)
+    assertSame(client1a.certificatePinner, client1b.certificatePinner)
+
+    val clientHostOverrides = client1a.newBuilder().insecureForHost("localhost").build()
+    assertNotSame(client1a.sslSocketFactory, clientHostOverrides.sslSocketFactory)
+    assertNotSame(client1a.x509TrustManager, clientHostOverrides.x509TrustManager)
+    assertNotSame(client1a.certificateChainCleaner, clientHostOverrides.certificateChainCleaner)
+    // equals of BasicCertificateChainCleaner causes this to match
+    assertSame(client1a.certificatePinner, clientHostOverrides.certificatePinner)
+
+    // Plaintext tests
+    val plaintextClient = client1a.newBuilder().connectionSpecs(listOf(CLEARTEXT)).build()
+    try {
+      plaintextClient.sslSocketFactory
+      fail()
+    } catch (ise: IllegalStateException) {
+      //expected
+    }
+    assertNull(plaintextClient.x509TrustManager)
+    assertNull(plaintextClient.certificateChainCleaner)
+    assertSame(DEFAULT, plaintextClient.certificatePinner)
+    // avoids using INSECURE because it would persist to chained
+    assertSame(OkHostnameVerifier, plaintextClient.hostnameVerifier)
+  }
+
   @Test
   fun testWithoutOverrides() {
-    val bridge2 = Builder().build()
+    val bridge2 = OkHttpClient.Builder().build().x509TrustManager!!
+
+    assertTrue(bridge2 is X509ExtendedTrustManager)
+    assertNotEquals(TrustManagerJvm::class.java, bridge2.javaClass)
+  }
+
+  @Test
+  fun testWithOverrides() {
+    val bridge2 = OkHttpClient.Builder().insecureForHost("localhost").build().x509TrustManager!!
 
     assertTrue(bridge2 is X509ExtendedTrustManager)
     assertEquals(TrustManagerJvm::class.java, bridge2.javaClass)
@@ -140,23 +177,16 @@ class TrustManagerBridgeTest {
   }
 
   @Test
-  fun testWithOverrides() {
-    val bridge = Builder().insecure("localhost")
-        .build()
-
-    assertTrue(bridge is X509ExtendedTrustManager)
-    assertEquals(TrustManagerJvm::class.java, bridge.javaClass)
-  }
-
-  @Test
   fun testCheckServerTrustedGoogleNoHost() {
-    bridge.checkServerTrusted(googleCerts.toTypedArray(), "DHE_DSS")
+    assumeNetwork()
+
+    client.x509TrustManager!!.checkServerTrusted(googleCerts.toTypedArray(), "DHE_DSS")
   }
 
   @Test
   fun testCheckServerTrustedGoogleNoHostFailing() {
     try {
-      bridge.checkServerTrusted(arrayOf(heldCertificate.certificate), "DHE_DSS")
+      client.x509TrustManager!!.checkServerTrusted(arrayOf(heldCertificate.certificate), "DHE_DSS")
       fail("expected to fail without targeted request")
     } catch (_: GeneralSecurityException) {
       // expected

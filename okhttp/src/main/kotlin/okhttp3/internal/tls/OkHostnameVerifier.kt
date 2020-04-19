@@ -32,7 +32,7 @@ import okhttp3.internal.toCanonicalHost
  */
 @Suppress("NAME_SHADOWING")
 object OkHostnameVerifier : HostnameVerifier {
-  val Insecure = HostnameVerifier { _, _ -> true }
+  val INSECURE = HostnameVerifier { _, _ -> true }
 
   private const val ALT_DNS_NAME = 2
   private const val ALT_IPA_NAME = 7
