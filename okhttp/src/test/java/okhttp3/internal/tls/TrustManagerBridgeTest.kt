@@ -15,6 +15,13 @@
  */
 package okhttp3.internal.tls
 
+import java.net.InetAddress
+import java.security.GeneralSecurityException
+import java.security.cert.X509Certificate
+import javax.net.ssl.SSLPeerUnverifiedException
+import javax.net.ssl.TrustManager
+import javax.net.ssl.X509ExtendedTrustManager
+import javax.net.ssl.X509TrustManager
 import okhttp3.CertificatePinner.Companion.DEFAULT
 import okhttp3.ConnectionSpec.Companion.CLEARTEXT
 import okhttp3.ConnectionSpec.Companion.MODERN_TLS
@@ -43,13 +50,6 @@ import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import java.net.InetAddress
-import java.security.GeneralSecurityException
-import java.security.cert.X509Certificate
-import javax.net.ssl.SSLPeerUnverifiedException
-import javax.net.ssl.TrustManager
-import javax.net.ssl.X509ExtendedTrustManager
-import javax.net.ssl.X509TrustManager
 
 @Flaky
 class TrustManagerBridgeTest {
@@ -149,7 +149,7 @@ class TrustManagerBridgeTest {
       plaintextClient.sslSocketFactory
       fail()
     } catch (ise: IllegalStateException) {
-      //expected
+      // expected
     }
     assertNull(plaintextClient.x509TrustManager)
     assertNull(plaintextClient.certificateChainCleaner)
