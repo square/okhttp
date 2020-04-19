@@ -3,7 +3,11 @@ Android Test
 
 A gradle module for running Android instrumentation tests on a device or emulator.
 
-1. Run an Emulator using Android Studio or from command line i.e. emulator-headless.
+1. Run an Emulator using Android Studio or from command line.
+
+```
+$ emulator -no-window @pixel5
+```
 
 2. Turn on logs with logcat
 
