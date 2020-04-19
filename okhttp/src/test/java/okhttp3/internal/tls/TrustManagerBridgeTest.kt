@@ -17,6 +17,7 @@ package okhttp3.internal.tls
 
 import okhttp3.CertificatePinner.Companion.DEFAULT
 import okhttp3.ConnectionSpec.Companion.CLEARTEXT
+import okhttp3.ConnectionSpec.Companion.MODERN_TLS
 import okhttp3.Dns
 import okhttp3.OkHttpClient
 import okhttp3.OkHttpClientTestRule
@@ -33,6 +34,7 @@ import okhttp3.tls.HeldCertificate
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
@@ -151,6 +153,17 @@ class TrustManagerBridgeTest {
     }
     assertNull(plaintextClient.x509TrustManager)
     assertNull(plaintextClient.certificateChainCleaner)
+    assertSame(DEFAULT, plaintextClient.certificatePinner)
+    // avoids using INSECURE because it would persist to chained
+    assertSame(OkHostnameVerifier, plaintextClient.hostnameVerifier)
+
+    val client2 = plaintextClient.newBuilder().connectionSpecs(listOf(MODERN_TLS)).build()
+    assertNotNull(client2.x509TrustManager)
+    assertNotNull(client2.certificateChainCleaner)
+    assertNotNull(client2.certificatePinner)
+    assertNotSame(client1a.sslSocketFactory, client2.sslSocketFactory)
+    assertNotSame(client1a.x509TrustManager, client2.x509TrustManager)
+    assertNotSame(client1a.certificateChainCleaner, client2.certificateChainCleaner)
     assertSame(DEFAULT, plaintextClient.certificatePinner)
     // avoids using INSECURE because it would persist to chained
     assertSame(OkHostnameVerifier, plaintextClient.hostnameVerifier)
