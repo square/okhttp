@@ -1101,13 +1101,22 @@ open class OkHttpClient internal constructor(
     }
 
     /**
-     * Set an override for host to allow insecure connections, typically a devserver with
-     * a self-signed certificate unavailable to the dev build of the client.
+     * Configures OkHttp to not authenticate the HTTPS server on to [hostName]. This makes the
+     * client vulnerable to man-in-the-middle attacks and should only be used only in private
+     * development environments and only to carry test data.
      *
-     * This will override any existing sslSocketFactory with the platform default.
+     * The following protections are removed:
+     * - The server’s TLS certificate **does not need to be signed** by a trusted certificate
+     * authority. Instead, OkHttp will trust any well-formed certificate, even if it is self-signed.
+     * This is necessary for testing against localhost, or in development environments where a
+     * certificate authority is not possible.
+     * - The server’s TLS certificate **does not need to match** the requested hostname. For
+     * example, if the certificate is issued to `example.com` and the request is to `localhost`,
+     * the certificate will still be accepted!
      *
-     * This is specifically only for development use, any use in production builds should be
-     * considered a bug.
+     * Other TLS features are still used but provide no security benefits in absence of the above
+     * gaps. For example, an insecure TLS connection is capable of negotiating HTTP/2 with ALPN and
+     * it also has a regular-looking handshake.
      *
      * n.b. only available from Android version 24, due to use of host specific certificate checks
      * added in Android.

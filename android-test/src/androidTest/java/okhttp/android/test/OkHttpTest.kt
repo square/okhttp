@@ -359,7 +359,6 @@ class OkHttpTest {
       assertEquals(Protocol.HTTP_2, response.protocol)
       val tlsVersion = response.handshake?.tlsVersion
       assertTrue(tlsVersion == TlsVersion.TLS_1_2 || tlsVersion == TlsVersion.TLS_1_3)
-
     }
   }
 
