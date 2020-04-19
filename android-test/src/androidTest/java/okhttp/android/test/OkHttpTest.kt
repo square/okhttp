@@ -201,15 +201,9 @@ class OkHttpTest {
         assertEquals(Protocol.HTTP_2, response.protocol)
         assertEquals(200, response.code)
         when {
-          Build.VERSION.SDK_INT >= 24 -> {
-            assertEquals("com.google.android.gms.org.conscrypt.Java8FileDescriptorSocket", socketClass)
-          }
-          Build.VERSION.SDK_INT < 22 -> {
-            assertEquals("com.google.android.gms.org.conscrypt.KitKatPlatformOpenSSLSocketImplAdapter", socketClass)
-          }
-          else -> {
-            assertEquals("com.google.android.gms.org.conscrypt.ConscryptFileDescriptorSocket", socketClass)
-          }
+          Build.VERSION.SDK_INT >= 24 -> assertEquals("org.conscrypt.Java8FileDescriptorSocket", socketClass)
+          Build.VERSION.SDK_INT >= 23 -> assertEquals("org.conscrypt.ConscryptFileDescriptorSocket", socketClass)
+          else -> assertEquals("org.conscrypt.KitKatPlatformOpenSSLSocketImplAdapter", socketClass)
         }
         assertEquals(TlsVersion.TLS_1_2, response.handshake?.tlsVersion)
       }

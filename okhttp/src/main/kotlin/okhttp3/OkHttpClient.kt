@@ -238,15 +238,6 @@ open class OkHttpClient internal constructor(
       this.hostnameVerifier = OkHostnameVerifier
     } else {
       if (builder.trustManagerOverrides != null) {
-//        this.x509TrustManager = TrustManagerBridge.Builder()
-//            .addOverrides(builder.trustManagerOverrides!!)
-//            .apply {
-//              if (builder.x509TrustManagerOrNull != null) {
-//                this.default(builder.x509TrustManagerOrNull!!)
-//              }
-//            }
-//            .build()
-//
         val defaultTrustManager = builder.x509TrustManagerOrNull ?: platform.platformTrustManager()
         val overrides = builder.trustManagerOverrides!!.toList()
 
