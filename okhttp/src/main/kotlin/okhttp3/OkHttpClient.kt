@@ -27,7 +27,6 @@ import java.util.concurrent.TimeUnit.MILLISECONDS
 import javax.net.SocketFactory
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSocketFactory
-import javax.net.ssl.X509ExtendedTrustManager
 import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol.HTTP_1_1
 import okhttp3.Protocol.HTTP_2
@@ -244,7 +243,7 @@ open class OkHttpClient internal constructor(
         this.x509TrustManager = if (Platform.get().isAndroid) {
           TrustManagerAndroid(defaultTrustManager, overrides)
         } else {
-          TrustManagerJvm(defaultTrustManager as X509ExtendedTrustManager, overrides)
+          TrustManagerJvm(defaultTrustManager, overrides)
         }
 
         this.hostnameVerifier = HostnameVerifierOverride(builder.hostnameVerifier, builder.trustManagerOverrides!!.toList())

@@ -29,7 +29,6 @@ class TrustManagerJvm internal constructor(
   internal val default: X509TrustManager,
   internal val overrides: List<TrustManagerOverride>
 ) : X509ExtendedTrustManager() {
-
   internal fun findByHost(peerHost: String): X509TrustManager {
     overrides.forEach {
       if (it.hostname == peerHost) {
