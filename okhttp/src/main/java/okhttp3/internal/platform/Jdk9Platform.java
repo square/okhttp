@@ -27,6 +27,9 @@ import okhttp3.Protocol;
 
 /** OpenJDK 9+. */
 final class Jdk9Platform extends Platform {
+  private static final int majorVersion =
+      Integer.getInteger(System.getProperty("java.specification.version", "8"));
+
   final Method setProtocolMethod;
   final Method getProtocolMethod;
 
@@ -79,6 +82,11 @@ final class Jdk9Platform extends Platform {
   }
 
   public static Jdk9Platform buildIfSupported() {
+    boolean isAvailable = majorVersion >= 9;
+    if (majorVersion < 9) {
+      return null;
+    }
+
     // Find JDK 9 new methods
     try {
       Method setProtocolMethod =
@@ -87,9 +95,7 @@ final class Jdk9Platform extends Platform {
 
       return new Jdk9Platform(setProtocolMethod, getProtocolMethod);
     } catch (NoSuchMethodException ignored) {
-      // pre JDK 9
+      return null;
     }
-
-    return null;
   }
 }
