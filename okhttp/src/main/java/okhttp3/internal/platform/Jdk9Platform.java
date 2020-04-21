@@ -68,8 +68,16 @@ final class Jdk9Platform extends Platform {
       }
 
       return protocol;
-    } catch (IllegalAccessException | InvocationTargetException e) {
-      throw assertionError("unable to get selected protocols", e);
+    } catch (InvocationTargetException e) {
+      if (e.getCause() instanceof UnsupportedOperationException) {
+        // Handle UnsupportedOperationException as it is defined in the public API
+        // https://docs.oracle.com/javase/9/docs/api/javax/net/ssl/SSLSocket.html#getApplicationProtocol--
+        return null;
+      }
+
+      throw assertionError("failed to get ALPN selected protocol", e);
+    } catch (IllegalAccessException e) {
+      throw assertionError("failed to get ALPN selected protocol", e);
     }
   }
 
@@ -83,7 +91,7 @@ final class Jdk9Platform extends Platform {
   }
 
   public static Jdk9Platform buildIfSupported() {
-    // Find JDK 9 new methods
+    // Find JDK 9 new methods, also present on JDK8 after build 252.
     try {
       Method setProtocolMethod =
           SSLParameters.class.getMethod("setApplicationProtocols", String[].class);
