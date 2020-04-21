@@ -47,7 +47,7 @@ open class Jdk9Platform : Platform() {
         null, "" -> null
         else -> protocol
       }
-    } catch (UnsupportedOperationException e) {
+    } catch (e: UnsupportedOperationException) {
       // https://docs.oracle.com/javase/9/docs/api/javax/net/ssl/SSLSocket.html#getApplicationProtocol--
       return null;
     }
