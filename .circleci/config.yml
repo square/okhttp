@@ -61,7 +61,7 @@ commands:
 jobs:
   compile:
     docker:
-      - image: circleci/openjdk:11.0.6-jdk-stretch
+      - image: circleci/openjdk:11.0.7-jdk-stretch
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -91,7 +91,7 @@ jobs:
 
   checkjdk11:
     docker:
-      - image: circleci/openjdk:11.0.6-jdk-stretch
+      - image: circleci/openjdk:11.0.7-jdk-stretch
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -124,7 +124,7 @@ jobs:
 
   testjdk8:
     docker:
-      - image: circleci/openjdk:11.0.6-jdk-stretch
+      - image: circleci/openjdk:11.0.7-jdk-stretch
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -139,7 +139,7 @@ jobs:
 
   testjdk8alpn:
     docker:
-      - image: circleci/openjdk:11.0.6-jdk-stretch
+      - image: circleci/openjdk:11.0.7-jdk-stretch
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -154,7 +154,7 @@ jobs:
 
   testopenjsse:
     docker:
-      - image: circleci/openjdk:11.0.6-jdk-stretch
+      - image: circleci/openjdk:11.0.7-jdk-stretch
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -169,7 +169,7 @@ jobs:
 
   testjdk11:
     docker:
-      - image: circleci/openjdk:11.0.6-jdk-stretch
+      - image: circleci/openjdk:11.0.7-jdk-stretch
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -212,7 +212,7 @@ jobs:
 
   testjdk14:
     docker:
-      - image: circleci/openjdk:14-ea-34-jdk-buster
+      - image: circleci/openjdk:14.0.1-jdk-buster
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -226,7 +226,7 @@ jobs:
 
   testconscrypt:
     docker:
-      - image: circleci/openjdk:11.0.6-jdk-stretch
+      - image: circleci/openjdk:11.0.7-jdk-stretch
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -240,7 +240,7 @@ jobs:
 
   testbouncycastle:
     docker:
-      - image: circleci/openjdk:11.0.6-jdk-stretch
+      - image: circleci/openjdk:11.0.7-jdk-stretch
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -254,7 +254,7 @@ jobs:
 
   testcorretto:
     docker:
-      - image: circleci/openjdk:11.0.6-jdk-stretch
+      - image: circleci/openjdk:11.0.7-jdk-stretch
 
     environment:
       JVM_OPTS: -Xmx1g
