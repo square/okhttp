@@ -139,7 +139,7 @@ jobs:
 
   testjdk8alpn:
     docker:
-      - image: circleci/openjdk:11.0.7-jdk-buster
+      - image: circleci/openjdk:11.0.6-jdk-stretch
 
     environment:
       JVM_OPTS: -Xmx1g
