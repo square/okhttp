@@ -35,6 +35,20 @@ public class Jdk9PlatformTest {
   }
 
   @Test
+  public void buildsWhenJdk8() {
+    platform.assumeJdk8();
+
+    try {
+      SSLSocket.class.getMethod("getApplicationProtocol");
+
+      // also present on JDK8 after build 252.
+      assertThat(Jdk9Platform.Companion.buildIfSupported()).isNotNull();
+    } catch (NoSuchMethodException nsme) {
+      assertThat(Jdk9Platform.Companion.buildIfSupported()).isNull();
+    }
+  }
+
+  @Test
   public void testToStringIsClassname() {
     assertThat(new Jdk9Platform().toString()).isEqualTo("Jdk9Platform");
   }
