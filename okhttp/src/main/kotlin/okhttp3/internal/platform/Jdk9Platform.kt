@@ -66,9 +66,9 @@ open class Jdk9Platform : Platform() {
     val isAvailable: Boolean
 
     init {
-      val jdkVersion = System.getProperty("java.specification.version")
+      val jdkVersion: String? = System.getProperty("java.specification.version")
 
-      val majorVersion = jdkVersion.toIntOrNull()
+      val majorVersion = jdkVersion?.toIntOrNull()
 
       isAvailable = if (majorVersion != null) {
         majorVersion >= 9
