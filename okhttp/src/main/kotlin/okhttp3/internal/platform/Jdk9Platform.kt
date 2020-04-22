@@ -66,8 +66,21 @@ open class Jdk9Platform : Platform() {
     val isAvailable: Boolean
 
     init {
-      val majorVersion: Int = Integer.getInteger("java.specification.version") ?: 8
-      isAvailable = majorVersion >= 9
+      val jdkVersion = System.getProperty("java.specification.version")
+
+      val majorVersion = jdkVersion.toIntOrNull()
+
+      isAvailable = if (majorVersion != null) {
+        majorVersion >= 9
+      } else {
+        try {
+          // also present on JDK8 after build 252.
+          SSLSocket::class.java.getMethod("getApplicationProtocol")
+          true
+        } catch (nsme: NoSuchMethodException) {
+          false
+        }
+      }
     }
 
     fun buildIfSupported(): Jdk9Platform? = if (isAvailable) Jdk9Platform() else null
