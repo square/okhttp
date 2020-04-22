@@ -55,6 +55,8 @@ public class Jdk9PlatformTest {
 
   @Test
   public void selectedProtocolIsNullWhenSslSocketThrowsExceptionForApplicationProtocol() {
+    platform.assumeJdk9();
+
     assertThat(new Jdk9Platform().getSelectedProtocol(
         new SSLSocket() {
           @Override public String getApplicationProtocol() {
