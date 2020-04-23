@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import okhttp3.internal.authenticator.JavaNetAuthenticator
 import java.io.IOException
 
 /**
@@ -114,5 +115,9 @@ interface Authenticator {
     private class AuthenticatorNone : Authenticator {
       override fun authenticate(route: Route?, response: Response): Request? = null
     }
+
+    /** An authenticator that knows no credentials and makes no attempt to authenticate. */
+    @JvmField
+    val JAVA_NET_AUTHENTICATOR: Authenticator = JavaNetAuthenticator()
   }
 }
