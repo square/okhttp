@@ -1,5 +1,10 @@
 package okhttp3.internal.authenticator
 
+import java.net.Authenticator
+import java.net.InetAddress
+import java.net.InetSocketAddress
+import java.net.Proxy
+import javax.net.SocketFactory
 import okhttp3.Address
 import okhttp3.CertificatePinner
 import okhttp3.ConnectionSpec
@@ -18,11 +23,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
-import java.net.Authenticator
-import java.net.InetAddress
-import java.net.InetSocketAddress
-import java.net.Proxy
-import javax.net.SocketFactory
 
 // Most tests from URLConnectionTest
 class JavaNetAuthenticatorTest {

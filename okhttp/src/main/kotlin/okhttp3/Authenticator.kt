@@ -15,8 +15,8 @@
  */
 package okhttp3
 
-import okhttp3.internal.authenticator.JavaNetAuthenticator
 import java.io.IOException
+import okhttp3.internal.authenticator.JavaNetAuthenticator
 
 /**
  * Performs either **preemptive** authentication before connecting to a proxy server, or
