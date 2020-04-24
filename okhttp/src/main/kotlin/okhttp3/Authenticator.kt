@@ -16,6 +16,7 @@
 package okhttp3
 
 import java.io.IOException
+import okhttp3.internal.authenticator.JavaNetAuthenticator
 
 /**
  * Performs either **preemptive** authentication before connecting to a proxy server, or
@@ -114,5 +115,9 @@ interface Authenticator {
     private class AuthenticatorNone : Authenticator {
       override fun authenticate(route: Route?, response: Response): Request? = null
     }
+
+    /** An authenticator that uses the java.net.Authenticator global authenticator. */
+    @JvmField
+    val JAVA_NET_AUTHENTICATOR: Authenticator = JavaNetAuthenticator()
   }
 }

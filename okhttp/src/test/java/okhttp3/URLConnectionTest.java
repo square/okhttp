@@ -1024,7 +1024,7 @@ public final class URLConnectionTest {
         .setBody("A"));
 
     client = client.newBuilder()
-        .proxyAuthenticator(new JavaNetAuthenticator())
+        .proxyAuthenticator(okhttp3.Authenticator.JAVA_NET_AUTHENTICATOR)
         .proxy(server.toProxyAddress())
         .sslSocketFactory(
             handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
