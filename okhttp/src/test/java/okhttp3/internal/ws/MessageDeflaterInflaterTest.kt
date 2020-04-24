@@ -16,6 +16,7 @@
 package okhttp3.internal.ws
 
 import java.io.EOFException
+import okhttp3.TestUtil.fragmentBuffer
 import okio.Buffer
 import okio.ByteString
 import okio.ByteString.Companion.decodeHex
@@ -116,15 +117,15 @@ internal class MessageDeflaterInflaterTest {
     }
   }
 
-  @Test fun `inflate empty buffer`() {
+  /**
+   * Test for an [EOFException] caused by mishandling of fragmented buffers in web socket
+   * compression. https://github.com/square/okhttp/issues/5965
+   */
+  @Test fun `inflate golden value in buffer that has been fragmented`() {
     val inflater = MessageInflater(false)
-
-    try {
-      inflater.inflate(Buffer())
-      fail()
-    } catch (e: EOFException) {
-      assertThat(e.message).isEqualTo("source exhausted prematurely")
-    }
+    val buffer = fragmentBuffer(Buffer().write("f248cdc9c957c8cc4bcb492cc9cccf530400".decodeHex()))
+    inflater.inflate(buffer)
+    assertThat(buffer.readUtf8()).isEqualTo("Hello inflation!")
   }
 
   private fun MessageDeflater.deflate(byteString: ByteString): ByteString {

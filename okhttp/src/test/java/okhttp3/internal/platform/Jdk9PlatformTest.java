@@ -15,6 +15,8 @@
  */
 package okhttp3.internal.platform;
 
+import javax.net.ssl.SSLSocket;
+import okhttp3.DelegatingSSLSocket;
 import okhttp3.testing.PlatformRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -22,15 +24,43 @@ import org.junit.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class Jdk9PlatformTest {
-  @Rule public final PlatformRule platform = new PlatformRule("jdk9");
+  @Rule public final PlatformRule platform = new PlatformRule();
 
   @Test
   public void buildsWhenJdk9() {
+    platform.assumeJdk9();
     assertThat(Jdk9Platform.Companion.buildIfSupported()).isNotNull();
+  }
+
+  @Test
+  public void buildsWhenJdk8() {
+    platform.assumeJdk8();
+
+    try {
+      SSLSocket.class.getMethod("getApplicationProtocol");
+
+      // also present on JDK8 after build 252.
+      assertThat(Jdk9Platform.Companion.buildIfSupported()).isNotNull();
+    } catch (NoSuchMethodException nsme) {
+      assertThat(Jdk9Platform.Companion.buildIfSupported()).isNull();
+    }
   }
 
   @Test
   public void testToStringIsClassname() {
     assertThat(new Jdk9Platform().toString()).isEqualTo("Jdk9Platform");
+  }
+
+  @Test
+  public void selectedProtocolIsNullWhenSslSocketThrowsExceptionForApplicationProtocol() {
+    platform.assumeJdk9();
+
+    DelegatingSSLSocket applicationProtocolUnsupported = new DelegatingSSLSocket(null) {
+      @Override public String getApplicationProtocol() {
+        throw new UnsupportedOperationException("Mock exception");
+      }
+    };
+
+    assertThat(new Jdk9Platform().getSelectedProtocol(applicationProtocolUnsupported)).isNull();
   }
 }

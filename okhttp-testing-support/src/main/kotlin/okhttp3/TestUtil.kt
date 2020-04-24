@@ -21,6 +21,7 @@ import java.net.InetSocketAddress
 import java.net.UnknownHostException
 import java.util.Arrays
 import okhttp3.internal.http2.Header
+import okio.Buffer
 import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeNoException
 
@@ -41,6 +42,31 @@ object TestUtil {
     val array = CharArray(count)
     Arrays.fill(array, c)
     return String(array)
+  }
+
+  /**
+   * Okio buffers are internally implemented as a linked list of arrays. Usually this implementation
+   * detail is invisible to the caller, but subtle use of certain APIs may depend on these internal
+   * structures.
+   *
+   * We make such subtle calls in [okhttp3.internal.ws.MessageInflater] because we try to read a
+   * compressed stream that is terminated in a web socket frame even though the DEFLATE stream is
+   * not terminated.
+   *
+   * Use this method to create a degenerate Okio Buffer where each byte is in a separate segment of
+   * the internal list.
+   */
+  @JvmStatic
+  fun fragmentBuffer(buffer: Buffer): Buffer {
+    // Write each byte into a new buffer, then clone it so that the segments are shared.
+    // Shared segments cannot be compacted so we'll get a long chain of short segments.
+    val result = Buffer()
+    while (!buffer.exhausted()) {
+      val box = Buffer()
+      box.write(buffer, 1)
+      result.write(box.copy(), 1)
+    }
+    return result
   }
 
   tailrec fun File.isDescendentOf(directory: File): Boolean {
