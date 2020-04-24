@@ -54,7 +54,7 @@ object TestUtil {
    * not terminated.
    *
    * Use this method to create a degenerate okio Buffer where each byte is in a separate segment of
-   * the internal array.
+   * the internal list.
    */
   @JvmStatic
   fun fragmentBuffer(buffer: Buffer): Buffer {
