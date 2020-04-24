@@ -46,7 +46,7 @@ object TestUtil {
 
   /**
    * Okio buffers are internally implemented as a linked list of arrays. Usually this implementation
-   * details is invisible to the caller, but subtle use of certain APIs may depend on these internal
+   * detail is invisible to the caller, but subtle use of certain APIs may depend on these internal
    * structures.
    *
    * We make such subtle calls in [okhttp3.internal.ws.MessageInflater] because we try to read a
