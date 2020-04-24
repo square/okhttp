@@ -40,11 +40,16 @@ open class Jdk9Platform : Platform() {
 
   @SuppressSignatureCheck
   override fun getSelectedProtocol(sslSocket: SSLSocket): String? {
-    // SSLSocket.getApplicationProtocol returns "" if application protocols values will not
-    // be used. Observed if you didn't specify SSLParameters.setApplicationProtocols
-    return when (val protocol = sslSocket.applicationProtocol) {
-      null, "" -> null
-      else -> protocol
+    try {
+      // SSLSocket.getApplicationProtocol returns "" if application protocols values will not
+      // be used. Observed if you didn't specify SSLParameters.setApplicationProtocols
+      return when (val protocol = sslSocket.applicationProtocol) {
+        null, "" -> null
+        else -> protocol
+      }
+    } catch (e: UnsupportedOperationException) {
+      // https://docs.oracle.com/javase/9/docs/api/javax/net/ssl/SSLSocket.html#getApplicationProtocol--
+      return null
     }
   }
 
@@ -61,8 +66,21 @@ open class Jdk9Platform : Platform() {
     val isAvailable: Boolean
 
     init {
-      val majorVersion: Int = Integer.getInteger("java.specification.version") ?: 8
-      isAvailable = majorVersion >= 9
+      val jdkVersion: String? = System.getProperty("java.specification.version")
+
+      val majorVersion = jdkVersion?.toIntOrNull()
+
+      isAvailable = if (majorVersion != null) {
+        majorVersion >= 9
+      } else {
+        try {
+          // also present on JDK8 after build 252.
+          SSLSocket::class.java.getMethod("getApplicationProtocol")
+          true
+        } catch (nsme: NoSuchMethodException) {
+          false
+        }
+      }
     }
 
     fun buildIfSupported(): Jdk9Platform? = if (isAvailable) Jdk9Platform() else null
