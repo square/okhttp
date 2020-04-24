@@ -53,7 +53,7 @@ object TestUtil {
    * compressed stream that is terminated in a web socket frame even though the DEFLATE stream is
    * not terminated.
    *
-   * Use this method to create a degenerate okio Buffer where each byte is in a separate segment of
+   * Use this method to create a degenerate Okio Buffer where each byte is in a separate segment of
    * the internal list.
    */
   @JvmStatic
