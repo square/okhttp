@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2020 Square, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package okhttp3.internal.authenticator
 
 import java.net.Authenticator
@@ -5,6 +20,7 @@ import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.Proxy
 import javax.net.SocketFactory
+import junit.framework.TestCase.assertNull
 import okhttp3.Address
 import okhttp3.CertificatePinner
 import okhttp3.ConnectionSpec
@@ -20,7 +36,6 @@ import okhttp3.internal.tls.OkHostnameVerifier
 import okhttp3.tls.internal.TlsUtil
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
 
@@ -66,9 +81,26 @@ class JavaNetAuthenticatorTest {
         .build()
     val authRequest = authenticator.authenticate(route, response)
 
-    assertNotNull(authRequest)
     assertEquals(
         "Basic ${RecordingAuthenticator.BASE_64_CREDENTIALS}", authRequest!!.header("Authorization")
     )
+  }
+
+  @Test
+  fun noSupportForNonBasicAuth() {
+    val request = Request.Builder()
+        .url("https://server/robots.txt")
+        .build()
+
+    val response = Response.Builder()
+        .request(request)
+        .code(401)
+        .header("WWW-Authenticate", "UnsupportedScheme realm=\"User Visible Realm\"")
+        .protocol(HTTP_2)
+        .message("Unauthorized")
+        .build()
+
+    val authRequest = authenticator.authenticate(null, response)
+    assertNull(authRequest)
   }
 }

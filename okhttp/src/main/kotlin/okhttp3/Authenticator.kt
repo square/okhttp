@@ -116,7 +116,7 @@ interface Authenticator {
       override fun authenticate(route: Route?, response: Response): Request? = null
     }
 
-    /** An authenticator that knows no credentials and makes no attempt to authenticate. */
+    /** An authenticator that uses the java.net.Authenticator global authenticator. */
     @JvmField
     val JAVA_NET_AUTHENTICATOR: Authenticator = JavaNetAuthenticator()
   }
