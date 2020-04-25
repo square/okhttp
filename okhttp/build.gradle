@@ -2,7 +2,7 @@ apply plugin: 'me.champeau.gradle.japicmp'
 
 jar {
   manifest {
-    attributes('Automatic-Module-Name': 'okhttp3')
+    attributes('Automatic-Module-Name': 'okhttp3', 'Implementation-Version': project.version)
   }
 }
 
