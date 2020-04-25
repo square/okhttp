@@ -294,10 +294,6 @@ workflows:
             branches:
               ignore:
                 - gh-pages
-      - testjdk12windows:
-          filters:
-            branches:
-              only: master
       - testjdk13:
           filters:
             branches:
@@ -308,6 +304,7 @@ workflows:
             branches:
               ignore:
                 - gh-pages
+      #- testjdk12windows:
       #- testbouncycastle
       #- testopenjsse
       #- testconscrypt
