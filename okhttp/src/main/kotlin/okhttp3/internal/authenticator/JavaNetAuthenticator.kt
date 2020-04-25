@@ -29,7 +29,7 @@ import okhttp3.Route
 
 /**
  * Adapts [Authenticator] to [okhttp3.Authenticator]. Configure OkHttp to use [Authenticator] with
- * [OkHttpClient.Builder.authenticator] or [OkHttpClient.Builder.proxyAuthenticator].
+ * [okhttp3.OkHttpClient.Builder.authenticator] or [okhttp3.OkHttpClient.Builder.proxyAuthenticator].
  */
 class JavaNetAuthenticator(private val defaultDns: Dns = Dns.SYSTEM) : okhttp3.Authenticator {
   @Throws(IOException::class)
