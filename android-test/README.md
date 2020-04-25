@@ -44,3 +44,5 @@ BUILD SUCCESSFUL in 1m 30s
 63 actionable tasks: 61 executed, 2 up-to-date
 
 ```
+
+n.b. use ANDROID_SERIAL=emulator-5554 or similar if you need to select between devices.
