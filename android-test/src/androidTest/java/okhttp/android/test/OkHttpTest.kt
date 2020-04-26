@@ -64,6 +64,7 @@ import javax.net.ssl.X509TrustManager
 import java.util.logging.Logger
 import okhttp3.internal.platform.AndroidPlatform
 import okhttp3.internal.platform.Android10Platform
+import okhttp3.internal.platform.Logger.Level
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.jsse.provider.BouncyCastleJsseProvider
 import org.junit.Assert.assertFalse
@@ -86,7 +87,26 @@ class OkHttpTest {
   @Suppress("RedundantVisibilityModifier")
   @JvmField
   @Rule public val clientTestRule = OkHttpClientTestRule().apply {
-    logger = Logger.getLogger(OkHttpTest::class.java.name)
+    logger = object: okhttp3.internal.platform.Logger {
+      override fun debug(message: String, e: Throwable?) {
+        log(Level.DEBUG, message, e)
+      }
+
+      override fun info(message: String, e: Throwable?) {
+        log(Level.INFO, message, e)
+      }
+
+      override fun warn(message: String, e: Throwable?) {
+        log(Level.WARN, message, e)
+      }
+
+      private fun log(level: Level, message: String, e: Throwable?) {
+        println("$level $message")
+        e?.printStackTrace()
+      }
+
+      override fun isLoggable(level: Level): Boolean = true
+    }
   }
 
   private var client = clientTestRule.newClient()

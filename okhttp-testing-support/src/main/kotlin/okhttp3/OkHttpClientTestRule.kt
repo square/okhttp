@@ -18,6 +18,7 @@ package okhttp3
 import java.net.InetAddress
 import java.util.concurrent.TimeUnit
 import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.platform.Logger
 import okhttp3.testing.Flaky
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
@@ -36,6 +37,7 @@ class OkHttpClientTestRule : TestRule {
   private val clientEventsList = mutableListOf<String>()
   private var testClient: OkHttpClient? = null
   private var uncaughtException: Throwable? = null
+  var logger: Logger? = null
 
   fun wrap(eventListener: EventListener) = object : EventListener.Factory {
     override fun create(call: Call) = ClientRuleEventListener(eventListener) { addEvent(it) }
@@ -74,6 +76,7 @@ class OkHttpClientTestRule : TestRule {
   }
 
   @Synchronized private fun addEvent(event: String) {
+    logger?.info(event)
     clientEventsList.add(event)
   }
 
