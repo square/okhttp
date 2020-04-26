@@ -71,6 +71,7 @@ import java.io.IOException
 import java.lang.IllegalArgumentException
 import java.security.KeyStore
 import java.security.SecureRandom
+import java.security.cert.CertificateException
 import javax.net.ssl.TrustManager
 import javax.net.ssl.TrustManagerFactory
 
@@ -539,8 +540,16 @@ class OkHttpTest {
       // Hopefully this passes
     } catch (ioe: IOException) {
       // https://github.com/square/okhttp/issues/5840
-      assertEquals("Android internal error", ioe.message)
-      assertEquals(IllegalArgumentException::class.java, ioe.cause!!.javaClass)
+      when (ioe.cause) {
+        is IllegalArgumentException -> {
+          assertEquals("Android internal error", ioe.message)
+        }
+        is CertificateException -> {
+          assertTrue(ioe.cause?.cause is IllegalArgumentException)
+          assertEquals(true, ioe.cause?.cause?.message?.startsWith("Invalid input to toASCII"))
+        }
+        else -> throw ioe
+      }
     }
   }
 
