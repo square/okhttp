@@ -37,6 +37,7 @@ private val Level.toAndroid: Int
     WARN -> Log.WARN
   }
 
+@SuppressSignatureCheck
 class AndroidLogger(val name: String) : Logger {
   override fun debug(message: String, e: Throwable?) {
     androidLog(DEBUG.toAndroid, message, e)
