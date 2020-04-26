@@ -120,6 +120,14 @@ open class Platform {
     socket.connect(address, connectTimeout)
   }
 
+  @Deprecated("Moved to logger field", replaceWith = ReplaceWith("logger.info(message, t)"))
+  fun log(message: String, level: Int = INFO, t: Throwable? = null) {
+    when (level) {
+      INFO -> logger.info(message, t)
+      WARN -> logger.warn(message, t)
+    }
+  }
+
   open fun isCleartextTrafficPermitted(hostname: String): Boolean = true
 
   /**
@@ -166,6 +174,9 @@ open class Platform {
 
   companion object {
     @Volatile private var platform = findPlatform()
+
+    const val INFO = 4
+    const val WARN = 5
 
     @JvmStatic
     fun get(): Platform = platform

@@ -40,7 +40,6 @@ import okio.Source;
 
 import static java.util.Arrays.asList;
 import static okhttp3.internal.Util.closeQuietly;
-import static okhttp3.internal.platform.Platform.INFO;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 
 /** A basic HTTP/2 server that serves the contents of a local directory. */
@@ -126,7 +125,7 @@ public final class Http2Server extends Http2Connection.Listener {
         send404(stream, path);
       }
     } catch (IOException e) {
-      Platform.get().log("Failure serving Http2Stream: " + e.getMessage(), INFO, null);
+      Platform.get().getLogger().info("Failure serving Http2Stream: " + e.getMessage(), null);
     }
   }
 

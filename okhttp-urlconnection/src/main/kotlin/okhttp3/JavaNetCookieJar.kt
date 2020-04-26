@@ -22,7 +22,6 @@ import java.util.Collections
 import okhttp3.internal.cookieToString
 import okhttp3.internal.delimiterOffset
 import okhttp3.internal.platform.Platform
-import okhttp3.internal.platform.Platform.Companion.WARN
 import okhttp3.internal.trimSubstring
 
 /** A cookie jar that delegates to a [java.net.CookieHandler]. */
@@ -37,7 +36,7 @@ class JavaNetCookieJar(private val cookieHandler: CookieHandler) : CookieJar {
     try {
       cookieHandler.put(url.toUri(), multimap)
     } catch (e: IOException) {
-      Platform.get().log("Saving cookies failed for " + url.resolve("/...")!!, WARN, e)
+      Platform.get().logger.warn("Saving cookies failed for " + url.resolve("/..."), e)
     }
   }
 
@@ -46,7 +45,7 @@ class JavaNetCookieJar(private val cookieHandler: CookieHandler) : CookieJar {
       // The RI passes all headers. We don't have 'em, so we don't pass 'em!
       cookieHandler.get(url.toUri(), emptyMap<String, List<String>>())
     } catch (e: IOException) {
-      Platform.get().log("Loading cookies failed for " + url.resolve("/...")!!, WARN, e)
+      Platform.get().logger.warn("Loading cookies failed for " + url.resolve("/..."), e)
       return emptyList()
     }
 
