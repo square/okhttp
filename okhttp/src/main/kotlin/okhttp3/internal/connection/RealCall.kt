@@ -505,7 +505,7 @@ class RealCall(
         } catch (e: IOException) {
           if (signalledCallback) {
             // Do not signal the callback twice!
-            Platform.get().log("Callback failure for ${toLoggableString()}", Platform.INFO, e)
+            Platform.get().logger.info("Callback failure for ${toLoggableString()}", e)
           } else {
             responseCallback.onFailure(this@RealCall, e)
           }

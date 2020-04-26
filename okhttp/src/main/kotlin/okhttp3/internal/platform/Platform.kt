@@ -22,7 +22,6 @@ import java.net.Socket
 import java.security.GeneralSecurityException
 import java.security.KeyStore
 import java.security.Security
-import java.util.logging.Level
 import java.util.logging.Logger
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocket
@@ -32,6 +31,7 @@ import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
+import okhttp3.internal.platform.Logger.Level.DEBUG
 import okhttp3.internal.readFieldOrNull
 import okhttp3.internal.tls.BasicCertificateChainCleaner
 import okhttp3.internal.tls.BasicTrustRootIndex
@@ -67,6 +67,7 @@ import okio.Buffer
  * Supported on Android 6.0+ via `NetworkSecurityPolicy`.
  */
 open class Platform {
+  val logger = getLogger(OkHttpClient::class.java.name)
 
   /** Prefix used on custom headers. */
   fun getPrefix() = "OkHttp"
@@ -119,11 +120,6 @@ open class Platform {
     socket.connect(address, connectTimeout)
   }
 
-  open fun log(message: String, level: Int = INFO, t: Throwable? = null) {
-    val logLevel = if (level == WARN) Level.WARNING else Level.INFO
-    logger.log(logLevel, message, t)
-  }
-
   open fun isCleartextTrafficPermitted(hostname: String): Boolean = true
 
   /**
@@ -133,7 +129,7 @@ open class Platform {
    */
   open fun getStackTraceForCloseable(closer: String): Any? {
     return when {
-      logger.isLoggable(Level.FINE) -> Throwable(closer) // These are expensive to allocate.
+      logger.isLoggable(DEBUG) -> Throwable(closer) // These are expensive to allocate.
       else -> null
     }
   }
@@ -144,7 +140,7 @@ open class Platform {
       logMessage += " To see where this was allocated, set the OkHttpClient logger level to " +
           "FINE: Logger.getLogger(OkHttpClient.class.getName()).setLevel(Level.FINE);"
     }
-    log(logMessage, WARN, stackTrace as Throwable?)
+    logger.warn(logMessage, stackTrace as? Throwable)
   }
 
   open fun buildCertificateChainCleaner(trustManager: X509TrustManager): CertificateChainCleaner =
@@ -165,13 +161,11 @@ open class Platform {
 
   override fun toString(): String = javaClass.simpleName
 
+  open fun getLogger(name: String): okhttp3.internal.platform.Logger =
+    JulLogger(Logger.getLogger(name))
+
   companion object {
     @Volatile private var platform = findPlatform()
-
-    const val INFO = 4
-    const val WARN = 5
-
-    private val logger = Logger.getLogger(OkHttpClient::class.java.name)
 
     @JvmStatic
     fun get(): Platform = platform

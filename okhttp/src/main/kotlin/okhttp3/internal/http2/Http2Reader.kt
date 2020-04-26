@@ -18,8 +18,6 @@ package okhttp3.internal.http2
 import java.io.Closeable
 import java.io.EOFException
 import java.io.IOException
-import java.util.logging.Level.FINE
-import java.util.logging.Logger
 import okhttp3.internal.and
 import okhttp3.internal.format
 import okhttp3.internal.http2.Http2.CONNECTION_PREFACE
@@ -41,6 +39,8 @@ import okhttp3.internal.http2.Http2.TYPE_RST_STREAM
 import okhttp3.internal.http2.Http2.TYPE_SETTINGS
 import okhttp3.internal.http2.Http2.TYPE_WINDOW_UPDATE
 import okhttp3.internal.http2.Http2.frameLog
+import okhttp3.internal.platform.Logger.Level.DEBUG
+import okhttp3.internal.platform.Platform
 import okhttp3.internal.readMedium
 import okio.Buffer
 import okio.BufferedSource
@@ -75,7 +75,7 @@ class Http2Reader(
     } else {
       // The server reads the CONNECTION_PREFACE byte string.
       val connectionPreface = source.readByteString(Http2.CONNECTION_PREFACE.size.toLong())
-      if (logger.isLoggable(FINE)) logger.fine(format("<< CONNECTION ${connectionPreface.hex()}"))
+      if (logger.isLoggable(DEBUG)) logger.debug(format("<< CONNECTION ${connectionPreface.hex()}"))
       if (CONNECTION_PREFACE != connectionPreface) {
         throw IOException("Expected a connection header but was ${connectionPreface.utf8()}")
       }
@@ -111,7 +111,7 @@ class Http2Reader(
     }
     val flags = source.readByte() and 0xff
     val streamId = source.readInt() and 0x7fffffff // Ignore reserved bit.
-    if (logger.isLoggable(FINE)) logger.fine(frameLog(true, streamId, length, type, flags))
+    if (logger.isLoggable(DEBUG)) logger.debug(frameLog(true, streamId, length, type, flags))
 
     when (type) {
       TYPE_DATA -> readData(handler, length, flags, streamId)
@@ -359,7 +359,7 @@ class Http2Reader(
       length = left
       val type = source.readByte() and 0xff
       flags = source.readByte() and 0xff
-      if (logger.isLoggable(FINE)) logger.fine(frameLog(true, streamId, length, type, flags))
+      if (logger.isLoggable(DEBUG)) logger.debug(frameLog(true, streamId, length, type, flags))
       streamId = source.readInt() and 0x7fffffff
       if (type != TYPE_CONTINUATION) throw IOException("$type != TYPE_CONTINUATION")
       if (streamId != previousStreamId) throw IOException("TYPE_CONTINUATION streamId changed")
@@ -491,7 +491,7 @@ class Http2Reader(
   }
 
   companion object {
-    val logger: Logger = Logger.getLogger(Http2::class.java.name)
+    val logger = Platform.get().getLogger(Http2::class.java.name)
 
     @Throws(IOException::class)
     fun lengthWithoutPadding(length: Int, flags: Int, padding: Int): Int {

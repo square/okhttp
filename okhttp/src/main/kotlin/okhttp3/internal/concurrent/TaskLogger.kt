@@ -15,14 +15,14 @@
  */
 package okhttp3.internal.concurrent
 
-import java.util.logging.Level
+import okhttp3.internal.platform.Logger.Level.DEBUG
 
 internal inline fun taskLog(
   task: Task,
   queue: TaskQueue,
   messageBlock: () -> String
 ) {
-  if (TaskRunner.logger.isLoggable(Level.FINE)) {
+  if (TaskRunner.logger.isLoggable(DEBUG)) {
     log(task, queue, messageBlock())
   }
 }
@@ -33,7 +33,7 @@ internal inline fun <T> logElapsed(
   block: () -> T
 ): T {
   var startNs = -1L
-  val loggingEnabled = TaskRunner.logger.isLoggable(Level.FINE)
+  val loggingEnabled = TaskRunner.logger.isLoggable(DEBUG)
   if (loggingEnabled) {
     startNs = queue.taskRunner.backend.nanoTime()
     log(task, queue, "starting")
@@ -57,7 +57,7 @@ internal inline fun <T> logElapsed(
 }
 
 private fun log(task: Task, queue: TaskQueue, message: String) {
-  TaskRunner.logger.fine("${queue.name} ${String.format("%-22s", message)}: ${task.name}")
+  TaskRunner.logger.debug("${queue.name} ${String.format("%-22s", message)}: ${task.name}")
 }
 
 /**

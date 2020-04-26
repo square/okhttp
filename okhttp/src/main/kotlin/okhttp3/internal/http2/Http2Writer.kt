@@ -17,8 +17,6 @@ package okhttp3.internal.http2
 
 import java.io.Closeable
 import java.io.IOException
-import java.util.logging.Level.FINE
-import java.util.logging.Logger
 import okhttp3.internal.format
 import okhttp3.internal.http2.Http2.CONNECTION_PREFACE
 import okhttp3.internal.http2.Http2.FLAG_ACK
@@ -36,6 +34,8 @@ import okhttp3.internal.http2.Http2.TYPE_RST_STREAM
 import okhttp3.internal.http2.Http2.TYPE_SETTINGS
 import okhttp3.internal.http2.Http2.TYPE_WINDOW_UPDATE
 import okhttp3.internal.http2.Http2.frameLog
+import okhttp3.internal.platform.Logger.Level.DEBUG
+import okhttp3.internal.platform.Platform
 import okhttp3.internal.writeMedium
 import okio.Buffer
 import okio.BufferedSink
@@ -55,8 +55,8 @@ class Http2Writer(
   fun connectionPreface() {
     if (closed) throw IOException("closed")
     if (!client) return // Nothing to write; servers don't send connection headers!
-    if (logger.isLoggable(FINE)) {
-      logger.fine(format(">> CONNECTION ${CONNECTION_PREFACE.hex()}"))
+    if (logger.isLoggable(DEBUG)) {
+      logger.debug(format(">> CONNECTION ${CONNECTION_PREFACE.hex()}"))
     }
     sink.write(CONNECTION_PREFACE)
     sink.flush()
@@ -255,7 +255,7 @@ class Http2Writer(
 
   @Throws(IOException::class)
   fun frameHeader(streamId: Int, length: Int, type: Int, flags: Int) {
-    if (logger.isLoggable(FINE)) logger.fine(frameLog(false, streamId, length, type, flags))
+    if (logger.isLoggable(DEBUG)) logger.debug(frameLog(false, streamId, length, type, flags))
     require(length <= maxFrameSize) { "FRAME_SIZE_ERROR length > $maxFrameSize: $length" }
     require(streamId and 0x80000000.toInt() == 0) { "reserved bit set: $streamId" }
     sink.writeMedium(length)
@@ -311,6 +311,6 @@ class Http2Writer(
   }
 
   companion object {
-    private val logger = Logger.getLogger(Http2::class.java.name)
+    private val logger = Platform.get().getLogger(Http2::class.java.name)
   }
 }

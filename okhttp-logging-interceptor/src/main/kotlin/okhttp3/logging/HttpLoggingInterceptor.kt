@@ -112,7 +112,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
       @JvmField
       val DEFAULT: Logger = object : Logger {
         override fun log(message: String) {
-          Platform.get().log(message)
+          Platform.get().logger.info(message)
         }
       }
     }

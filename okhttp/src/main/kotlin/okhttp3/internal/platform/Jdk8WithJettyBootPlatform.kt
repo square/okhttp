@@ -62,7 +62,9 @@ class Jdk8WithJettyBootPlatform(
     try {
       val provider = Proxy.getInvocationHandler(getMethod.invoke(null, sslSocket)) as AlpnProvider
       if (!provider.unsupported && provider.selected == null) {
-        log("ALPN callback dropped: HTTP/2 is disabled. " + "Is alpn-boot on the boot class path?")
+        logger.debug(
+            "ALPN callback dropped: HTTP/2 is disabled. Is alpn-boot on the boot class path?"
+        )
         return null
       }
       return if (provider.unsupported) null else provider.selected

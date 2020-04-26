@@ -99,7 +99,7 @@ open class AndroidSocketAdapter(private val sslSocketClass: Class<in SSLSocket>)
 
         AndroidSocketAdapter(sslSocketClass)
       } catch (e: Exception) {
-        androidLog(Platform.WARN, "unable to load android socket classes", e)
+        Platform.get().logger.warn("unable to load android socket classes", e)
         null
       }
     }

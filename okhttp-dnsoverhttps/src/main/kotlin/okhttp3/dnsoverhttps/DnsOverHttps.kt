@@ -210,7 +210,7 @@ class DnsOverHttps internal constructor(
   @Throws(Exception::class)
   private fun readResponse(hostname: String, response: Response): List<InetAddress> {
     if (response.cacheResponse == null && response.protocol !== Protocol.HTTP_2) {
-      Platform.get().log("Incorrect protocol: ${response.protocol}", Platform.WARN)
+      Platform.get().logger.warn("Incorrect protocol: ${response.protocol}")
     }
 
     response.use {

@@ -33,7 +33,6 @@ import okhttp3.internal.io.FileSystem
 import okhttp3.internal.isCivilized
 import okhttp3.internal.okHttpName
 import okhttp3.internal.platform.Platform
-import okhttp3.internal.platform.Platform.Companion.WARN
 import okio.BufferedSink
 import okio.ForwardingSource
 import okio.Sink
@@ -238,9 +237,8 @@ class DiskLruCache internal constructor(
         initialized = true
         return
       } catch (journalIsCorrupt: IOException) {
-        Platform.get().log(
+        Platform.get().logger.warn(
             "DiskLruCache $directory is corrupt: ${journalIsCorrupt.message}, removing",
-            WARN,
             journalIsCorrupt)
       }
 

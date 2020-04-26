@@ -19,7 +19,7 @@ import java.net.HttpURLConnection
 import java.net.HttpURLConnection.HTTP_UNAVAILABLE
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
-import java.util.logging.Logger
+import okhttp3.internal.platform.Platform
 
 /**
  * Default dispatcher that processes a script of responses. Populate the script by calling [enqueueResponse].
@@ -85,6 +85,6 @@ open class QueueDispatcher : Dispatcher() {
       this.status = "HTTP/1.1 $HTTP_UNAVAILABLE shutting down"
     }
 
-    private val logger = Logger.getLogger(QueueDispatcher::class.java.name)
+    private val logger = Platform.get().getLogger(QueueDispatcher::class.java.name)
   }
 }

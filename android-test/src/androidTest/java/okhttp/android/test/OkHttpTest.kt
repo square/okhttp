@@ -72,7 +72,6 @@ import java.lang.IllegalArgumentException
 import java.security.KeyStore
 import java.security.SecureRandom
 import java.security.cert.CertificateException
-import javax.net.ssl.TrustManager
 import javax.net.ssl.TrustManagerFactory
 
 /**
@@ -297,7 +296,7 @@ class OkHttpTest {
       moshi.adapter(HowsMySslResults::class.java).fromJson(response.body!!.string())!!
     }
 
-    Platform.get().log("results $results", Platform.WARN)
+    Platform.get().getLogger(OkHttpTest::class.java.simpleName).warn("results $results")
 
     assertTrue(results.session_ticket_supported)
     assertEquals("Probably Okay", results.rating)

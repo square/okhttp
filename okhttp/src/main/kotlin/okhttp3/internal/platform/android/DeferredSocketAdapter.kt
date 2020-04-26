@@ -64,8 +64,7 @@ class DeferredSocketAdapter(private val socketPackage: String) : SocketAdapter {
 
         delegate = AndroidSocketAdapter(possibleClass)
       } catch (e: Exception) {
-        Platform.get()
-            .log("Failed to initialize DeferredSocketAdapter $socketPackage", Platform.WARN, e)
+        Platform.get().logger.warn("Failed to initialize DeferredSocketAdapter $socketPackage", e)
       }
 
       initialized = true

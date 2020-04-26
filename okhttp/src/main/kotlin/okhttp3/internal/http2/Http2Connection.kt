@@ -32,7 +32,6 @@ import okhttp3.internal.notifyAll
 import okhttp3.internal.okHttpName
 import okhttp3.internal.peerName
 import okhttp3.internal.platform.Platform
-import okhttp3.internal.platform.Platform.Companion.INFO
 import okhttp3.internal.toHeaders
 import okhttp3.internal.wait
 import okio.Buffer
@@ -688,7 +687,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
             try {
               listener.onStream(newStream)
             } catch (e: IOException) {
-              Platform.get().log("Http2Connection.Listener failure for $connectionName", INFO, e)
+              Platform.get().logger.info("Http2Connection.Listener failure for $connectionName", e)
               ignoreIoExceptions {
                 newStream.close(ErrorCode.PROTOCOL_ERROR, e)
               }

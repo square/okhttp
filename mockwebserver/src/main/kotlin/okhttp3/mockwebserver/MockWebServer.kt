@@ -36,8 +36,6 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.logging.Level
-import java.util.logging.Logger
 import javax.net.ServerSocketFactory
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocket
@@ -60,6 +58,7 @@ import okhttp3.internal.http2.Header
 import okhttp3.internal.http2.Http2Connection
 import okhttp3.internal.http2.Http2Stream
 import okhttp3.internal.immutableListOf
+import okhttp3.internal.platform.Logger.Level.DEBUG
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.threadFactory
 import okhttp3.internal.toImmutableList
@@ -392,10 +391,10 @@ class MockWebServer : ExternalResource(), Closeable {
 
     taskRunner.newQueue().execute("MockWebServer $portField", cancelable = false) {
       try {
-        logger.fine("$this starting to accept connections")
+        logger.debug("$this starting to accept connections")
         acceptConnections()
       } catch (e: Throwable) {
-        logger.log(Level.WARNING, "$this failed unexpectedly", e)
+        logger.warn("$this failed unexpectedly", e)
       }
 
       // Release all sockets and all threads, even if any close fails.
@@ -423,7 +422,7 @@ class MockWebServer : ExternalResource(), Closeable {
       try {
         socket = serverSocket!!.accept()
       } catch (e: SocketException) {
-        logger.fine("${this@MockWebServer} done accepting connections: ${e.message}")
+        logger.debug("${this@MockWebServer} done accepting connections: ${e.message}")
         return
       }
 
@@ -460,7 +459,7 @@ class MockWebServer : ExternalResource(), Closeable {
     try {
       shutdown()
     } catch (e: IOException) {
-      logger.log(Level.WARNING, "MockWebServer shutdown failed", e)
+      logger.warn("MockWebServer shutdown failed", e)
     }
   }
 
@@ -469,9 +468,9 @@ class MockWebServer : ExternalResource(), Closeable {
       try {
         SocketHandler(raw).handle()
       } catch (e: IOException) {
-        logger.fine("$this connection from ${raw.inetAddress} failed: $e")
+        logger.debug("$this connection from ${raw.inetAddress} failed: $e")
       } catch (e: Exception) {
-        logger.log(Level.SEVERE, "$this connection from ${raw.inetAddress} crashed", e)
+        logger.warn("$this connection from ${raw.inetAddress} crashed", e)
       }
     }
   }
@@ -552,7 +551,7 @@ class MockWebServer : ExternalResource(), Closeable {
       }
 
       if (sequenceNumber == 0) {
-        logger.warning(
+        logger.warn(
             "${this@MockWebServer} connection from ${raw.inetAddress} didn't make a request")
       }
 
@@ -620,8 +619,8 @@ class MockWebServer : ExternalResource(), Closeable {
         writeHttpResponse(socket, sink, response)
       }
 
-      if (logger.isLoggable(Level.FINE)) {
-        logger.fine(
+      if (logger.isLoggable(DEBUG)) {
+        logger.debug(
             "${this@MockWebServer} received request: $request and responded: $response")
       }
 
@@ -971,10 +970,10 @@ class MockWebServer : ExternalResource(), Closeable {
         return
       }
       writeResponse(stream, request, response)
-      if (logger.isLoggable(Level.FINE)) {
-        logger.fine(
-            "${this@MockWebServer} received request: $request " +
-                "and responded: $response protocol is $protocol")
+      if (logger.isLoggable(DEBUG)) {
+        logger.debug(
+            "${this@MockWebServer} received request: $request and responded: $response protocol is $protocol"
+        )
       }
 
       if (response.socketPolicy === DISCONNECT_AT_END) {
@@ -1145,6 +1144,6 @@ class MockWebServer : ExternalResource(), Closeable {
       override fun getAcceptedIssuers(): Array<X509Certificate> = throw AssertionError()
     }
 
-    private val logger = Logger.getLogger(MockWebServer::class.java.name)
+    private val logger = Platform.get().getLogger(MockWebServer::class.java.name)
   }
 }
