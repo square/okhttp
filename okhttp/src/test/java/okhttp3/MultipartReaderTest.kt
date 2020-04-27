@@ -19,6 +19,7 @@ import java.io.EOFException
 import java.net.ProtocolException
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.ResponseBody.Companion.toResponseBody
 import okio.Buffer
 import org.assertj.core.api.Assertions.assertThat
@@ -498,5 +499,43 @@ class MultipartReaderTest {
       fail()
     } catch (expected: EOFException) {
     }
+  }
+
+  /** Confirm that [MultipartBody] and [MultipartReader] can work together. */
+  @Test fun `multipart round trip`() {
+    val body = MultipartBody.Builder("boundary")
+        .setType(MultipartBody.PARALLEL)
+        .addPart("Quick".toRequestBody("text/plain".toMediaType()))
+        .addFormDataPart("color", "Brown")
+        .addFormDataPart("animal", "fox.txt", "Fox".toRequestBody())
+        .build()
+
+    val bodyContent = Buffer()
+    body.writeTo(bodyContent)
+
+    val reader = MultipartReader(bodyContent, "boundary")
+
+    val quickPart = reader.nextPart()!!
+    assertThat(quickPart.headers).isEqualTo(headersOf(
+        "Content-Type", "text/plain; charset=utf-8",
+        "Content-Length", "5"
+    ))
+    assertThat(quickPart.body.readUtf8()).isEqualTo("Quick")
+
+    val brownPart = reader.nextPart()!!
+    assertThat(brownPart.headers).isEqualTo(headersOf(
+        "Content-Disposition", "form-data; name=\"color\"",
+        "Content-Length", "5"
+    ))
+    assertThat(brownPart.body.readUtf8()).isEqualTo("Brown")
+
+    val foxPart = reader.nextPart()!!
+    assertThat(foxPart.headers).isEqualTo(headersOf(
+        "Content-Disposition", "form-data; name=\"animal\"; filename=\"fox.txt\"",
+        "Content-Length", "3"
+    ))
+    assertThat(foxPart.body.readUtf8()).isEqualTo("Fox")
+
+    assertThat(reader.nextPart()).isNull()
   }
 }
