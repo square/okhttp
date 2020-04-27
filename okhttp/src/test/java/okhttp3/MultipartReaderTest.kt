@@ -18,6 +18,8 @@ package okhttp3
 import java.io.EOFException
 import java.net.ProtocolException
 import okhttp3.Headers.Companion.headersOf
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.ResponseBody.Companion.toResponseBody
 import okio.Buffer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.fail
@@ -66,6 +68,27 @@ class MultipartReaderTest {
     assertThat(parts.nextPart()).isNull()
   }
 
+  @Test fun `parse from response body`() {
+    val multipart = """
+        |--simple boundary
+        |
+        |abcd
+        |--simple boundary--
+        """.trimMargin()
+        .replace("\n", "\r\n")
+
+    val responseBody = multipart.toResponseBody(
+        "application/multipart; boundary=\"simple boundary\"".toMediaType())
+
+    val parts = MultipartReader(responseBody)
+    assertThat(parts.boundary).isEqualTo("simple boundary")
+
+    val part = parts.nextPart()!!
+    assertThat(part.body.readUtf8()).isEqualTo("abcd")
+
+    assertThat(parts.nextPart()).isNull()
+  }
+
   @Test fun `truncated multipart`() {
     val multipart = """
         |--simple boundary
@@ -89,6 +112,25 @@ class MultipartReaderTest {
 
     try {
       assertThat(parts.nextPart()).isNull()
+      fail()
+    } catch (expected: EOFException) {
+    }
+  }
+
+  @Test fun `malformed headers`() {
+    val multipart = """
+        |--simple boundary
+        |abcd
+        |""".trimMargin()
+        .replace("\n", "\r\n")
+
+    val parts = MultipartReader(
+        boundary = "simple boundary",
+        source = Buffer().writeUtf8(multipart)
+    )
+
+    try {
+      parts.nextPart()
       fail()
     } catch (expected: EOFException) {
     }
@@ -443,5 +485,18 @@ class MultipartReaderTest {
     assertThat(parts.nextPart()).isNotNull()
     assertThat(parts.nextPart()).isNull()
     assertThat(parts.nextPart()).isNull()
+  }
+
+  @Test fun `empty source`() {
+    val parts = MultipartReader(
+        boundary = "simple boundary",
+        source = Buffer()
+    )
+
+    try {
+      parts.nextPart()
+      fail()
+    } catch (expected: EOFException) {
+    }
   }
 }

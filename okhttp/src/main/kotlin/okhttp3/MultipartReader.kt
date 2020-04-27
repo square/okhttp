@@ -21,7 +21,6 @@ import java.net.ProtocolException
 import okhttp3.internal.http1.HeadersReader
 import okio.Buffer
 import okio.BufferedSource
-import okio.ByteString
 import okio.ByteString.Companion.encodeUtf8
 import okio.Options
 import okio.Source
@@ -35,10 +34,8 @@ import okio.buffer
  * Typical use loops over the parts in sequence:
  *
  * ```
- * val multipartReader = MultipartReader(
- *     boundary = "...",
- *     source = source
- * )
+ * val response: Response = call.execute()
+ * val multipartReader = MultipartReader(response.body!!)
  *
  * multipartReader.use {
  *   while (true) {
@@ -57,7 +54,7 @@ import okio.buffer
  *
  * [rfc_2046]: http://www.ietf.org/rfc/rfc2046.txt
  */
-class MultipartReader(
+class MultipartReader @Throws(IOException::class) constructor(
   private val source: BufferedSource,
   @get:JvmName("boundary") val boundary: String
 ) : Closeable {
@@ -71,18 +68,10 @@ class MultipartReader(
    * This delimiter typically precedes all subsequent parts. It may also precede the first part
    * if the body contains a preamble.
    */
-  private val crlfDashDashBoundary: ByteString = Buffer()
+  private val crlfDashDashBoundary = Buffer()
       .writeUtf8("\r\n--")
       .writeUtf8(boundary)
       .readByteString()
-
-  /** These options follow the boundary. */
-  private val afterBoundaryOptions = Options.of(
-      "\r\n".encodeUtf8(), // 0.  "\r\n"  More parts.
-      "--".encodeUtf8(), // 1.  "--"    No more parts.
-      " ".encodeUtf8(), // 2.  " "     Optional whitespace. Only used if there are more parts.
-      "\t".encodeUtf8() // 3.  "\t"    Optional whitespace. Only used if there are more parts.
-  )
 
   private var partCount = 0
   private var closed = false
@@ -92,12 +81,19 @@ class MultipartReader(
   private var currentPart: PartSource? = null
 
   @Throws(IOException::class)
+  constructor(response: ResponseBody) : this(
+      source = response.source(),
+      boundary = response.contentType()?.parameter("boundary")
+          ?: throw ProtocolException("expected the Content-Type to have a boundary parameter")
+  )
+
+  @Throws(IOException::class)
   fun nextPart(): Part? {
     check(!closed) { "closed" }
 
     if (noMoreParts) return null
 
-    // Read a boundary, skipping the remainer of the preceding part as necessary.
+    // Read a boundary, skipping the remainder of the preceding part as necessary.
     if (partCount == 0 && source.rangeEquals(0L, dashDashBoundary)) {
       // This is the first part. Consume "--" followed by the boundary.
       source.skip(dashDashBoundary.size.toLong())
@@ -200,4 +196,14 @@ class MultipartReader(
     @get:JvmName("headers") val headers: Headers,
     @get:JvmName("body") val body: BufferedSource
   ) : Closeable by body
+
+  internal companion object {
+    /** These options follow the boundary. */
+    val afterBoundaryOptions = Options.of(
+        "\r\n".encodeUtf8(), // 0.  "\r\n"  More parts.
+        "--".encodeUtf8(), //   1.  "--"    No more parts.
+        " ".encodeUtf8(), //    2.  " "     Optional whitespace. Only used if there are more parts.
+        "\t".encodeUtf8() //    3.  "\t"    Optional whitespace. Only used if there are more parts.
+    )
+  }
 }
