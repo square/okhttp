@@ -38,7 +38,8 @@ class MediaType private constructor(
    */
   @get:JvmName("subtype") val subtype: String,
 
-  private val charset: String?
+  /** Alternating parameter names with their values, like `["charset', "utf-8"]`. */
+  private val parameterNamesAndValues: Array<String>
 ) {
 
   /**
@@ -47,11 +48,25 @@ class MediaType private constructor(
    */
   @JvmOverloads
   fun charset(defaultValue: Charset? = null): Charset? {
+    val charset = parameter("charset") ?: return defaultValue
     return try {
-      if (charset != null) Charset.forName(charset) else defaultValue
+      Charset.forName(charset)
     } catch (_: IllegalArgumentException) {
       defaultValue // This charset is invalid or unsupported. Give up.
     }
+  }
+
+  /**
+   * Returns the parameter [name] of this media type, or null if this media type does not define
+   * such a parameter.
+   */
+  fun parameter(name: String): String? {
+    for (i in parameterNamesAndValues.indices step 2) {
+      if (parameterNamesAndValues[i].equals(name, ignoreCase = true)) {
+        return parameterNamesAndValues[i + 1]
+      }
+    }
+    return null
   }
 
   @JvmName("-deprecated_type")
@@ -97,7 +112,7 @@ class MediaType private constructor(
       val type = typeSubtype.group(1).toLowerCase(Locale.US)
       val subtype = typeSubtype.group(2).toLowerCase(Locale.US)
 
-      var charset: String? = null
+      val parameterNamesAndValues = mutableListOf<String>()
       val parameter = PARAMETER.matcher(this)
       var s = typeSubtype.end()
       while (s < length) {
@@ -107,13 +122,13 @@ class MediaType private constructor(
         }
 
         val name = parameter.group(1)
-        if (name == null || !name.equals("charset", ignoreCase = true)) {
+        if (name == null) {
           s = parameter.end()
           continue
         }
-        val charsetParameter: String
+
         val token = parameter.group(2)
-        charsetParameter = when {
+        val value = when {
           token == null -> {
             // Value is "double-quoted". That's valid and our regex group already strips the quotes.
             parameter.group(3)
@@ -124,14 +139,13 @@ class MediaType private constructor(
           }
           else -> token
         }
-        require(charset == null || charsetParameter.equals(charset, ignoreCase = true)) {
-          "Multiple charsets defined: \"$charset\" and: \"$charsetParameter\" for: \"$this\""
-        }
-        charset = charsetParameter
+
+        parameterNamesAndValues += name
+        parameterNamesAndValues += value
         s = parameter.end()
       }
 
-      return MediaType(this, type, subtype, charset)
+      return MediaType(this, type, subtype, parameterNamesAndValues.toTypedArray())
     }
 
     /** Returns a media type for this, or null if this is not a well-formed media type. */
