@@ -17,6 +17,7 @@ package okhttp3.internal.publicsuffix;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import okhttp3.OkHttpClient;
@@ -42,19 +43,38 @@ public final class PublicSuffixListGenerator {
   private static final String OKHTTP_RESOURCE_DIR = "okhttp" + File.separator + "src"
       + File.separator + "main" + File.separator + "resources" + File.separator
       + "okhttp3" + File.separator + "internal" + File.separator + "publicsuffix";
+  private static final String OKHTTP_TEST_RESOURCE_DIR = "okhttp" + File.separator + "src"
+      + File.separator + "test" + File.separator + "resources" + File.separator
+      + "okhttp3" + File.separator + "internal" + File.separator + "publicsuffix";
+  private static final File publicSuffixListDotDat
+      = new File(OKHTTP_TEST_RESOURCE_DIR, "public_suffix_list.dat");
 
   private static final ByteString EXCEPTION_RULE_MARKER = ByteString.encodeUtf8("!");
   private static final String WILDCARD_CHAR = "*";
 
   public static void main(String... args) throws IOException {
+    File resources = new File(OKHTTP_RESOURCE_DIR);
+    File testResources = publicSuffixListDotDat.getParentFile();
+    for (File file : Arrays.asList(resources, testResources)) {
+      if (!file.mkdirs() && !file.exists()) {
+        throw new RuntimeException("Unable to create resource directory " + file);
+      }
+    }
+
     OkHttpClient client = new OkHttpClient.Builder().build();
     Request request = new Request.Builder()
         .url("https://publicsuffix.org/list/public_suffix_list.dat")
         .build();
-    SortedSet<ByteString> sortedRules = new TreeSet<>();
-    SortedSet<ByteString> sortedExceptionRules = new TreeSet<>();
     try (Response response = client.newCall(request).execute()) {
       BufferedSource source = response.body().source();
+      try (Sink fileSink = Okio.sink(publicSuffixListDotDat)) {
+        source.readAll(fileSink);
+      }
+    }
+
+    SortedSet<ByteString> sortedRules = new TreeSet<>();
+    SortedSet<ByteString> sortedExceptionRules = new TreeSet<>();
+    try (BufferedSource source = Okio.buffer(Okio.source(publicSuffixListDotDat))) {
       int totalRuleBytes = 0;
       int totalExceptionRuleBytes = 0;
       while (!source.exhausted()) {
@@ -75,11 +95,6 @@ public final class PublicSuffixListGenerator {
           totalRuleBytes += rule.size() + 1; // We use '\n' for end of value.
           sortedRules.add(rule);
         }
-      }
-
-      File resources = new File(OKHTTP_RESOURCE_DIR);
-      if (!resources.mkdirs() && !resources.exists()) {
-        throw new RuntimeException("Unable to create resource directory!");
       }
 
       Sink fileSink = Okio.sink(new File(resources,
