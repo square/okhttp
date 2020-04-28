@@ -78,7 +78,6 @@ import okio.BufferedSource;
 import okio.GzipSink;
 import okio.Okio;
 import okio.Utf8;
-import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.AssumptionViolatedException;
 import org.junit.Before;
@@ -2371,13 +2370,13 @@ public final class URLConnectionTest {
   }
 
   class RevertInterceptor implements Interceptor {
-    @NotNull @Override public Response intercept(@NotNull Chain chain) throws IOException {
+    @Override public Response intercept(Chain chain) throws IOException {
       Response response = chain.proceed(chain.request());
 
       return remapResponse(response);
     }
 
-    @NotNull private Response remapResponse(Response response) {
+    private Response remapResponse(Response response) {
       if (response.request().method().equals("POST") && (response.code() == HTTP_TEMP_REDIRECT || response.code() == HTTP_PERM_REDIRECT)) {
         // special response code to indicate custom rules
         return response.newBuilder().code(response.code() + 10).build();
