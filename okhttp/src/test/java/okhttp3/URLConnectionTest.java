@@ -86,7 +86,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import static java.net.HttpURLConnection.HTTP_MOVED_PERM;
 import static java.net.HttpURLConnection.HTTP_MOVED_TEMP;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
@@ -2369,25 +2368,48 @@ public final class URLConnectionTest {
     testRedirect(false, "POST");
   }
 
-  class RevertInterceptor implements Interceptor {
+  /**
+   * In OkHttp 4.5 and earlier, HTTP 307 and 308 redirects were only honored if the request method
+   * was GET or HEAD.
+   *
+   * In OkHttp 4.6 and later, HTTP 307 and 308 redirects are honored for all request methods.
+   *
+   * If you're upgrading to OkHttp 4.6 and would like to retain the previous behavior, install this
+   * as a **network interceptor**. It will strip the `Location` header of impacted responses to
+   * prevent the redirect.
+   *
+   * <pre>{@code
+   *
+   *    OkHttpClient client = client.newBuilder()
+   *        .addNetworkInterceptor(new LegacyRedirectInterceptor())
+   *        .build();
+   *
+   * }</pre>
+   */
+  static class LegacyRedirectInterceptor implements Interceptor {
     @Override public Response intercept(Chain chain) throws IOException {
       Response response = chain.proceed(chain.request());
 
-      return remapResponse(response);
-    }
+      int code = response.code();
+      if (code != HTTP_TEMP_REDIRECT && code != HTTP_PERM_REDIRECT) return response;
 
-    private Response remapResponse(Response response) {
-      if (response.request().method().equals("POST") && (response.code() == HTTP_TEMP_REDIRECT || response.code() == HTTP_PERM_REDIRECT)) {
-        // special response code to indicate custom rules
-        return response.newBuilder().code(response.code() + 10).build();
-      }
+      String method = response.request().method();
+      if (method.equals("GET") || method.equals("HEAD")) return response;
 
-      return response;
+      String location = response.header("Location");
+      if (location == null) return response;
+
+      return response.newBuilder()
+          .removeHeader("Location")
+          .header("LegacyRedirectInterceptor-Location", location)
+          .build();
     }
   }
 
   @Test public void response307WithPostReverted() throws Exception {
-    client = client.newBuilder().addNetworkInterceptor(new RevertInterceptor()).build();
+    client = client.newBuilder()
+        .addNetworkInterceptor(new LegacyRedirectInterceptor())
+        .build();
 
     MockResponse response1 = new MockResponse()
         .setResponseCode(HTTP_TEMP_REDIRECT)
@@ -2411,7 +2433,9 @@ public final class URLConnectionTest {
   }
 
   @Test public void response308WithPostReverted() throws Exception {
-    client = client.newBuilder().addNetworkInterceptor(new RevertInterceptor()).build();
+    client = client.newBuilder()
+        .addNetworkInterceptor(new LegacyRedirectInterceptor())
+        .build();
 
     MockResponse response1 = new MockResponse()
         .setResponseCode(HTTP_PERM_REDIRECT)
