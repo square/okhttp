@@ -1,6 +1,13 @@
 OkHttp 3.x Change Log
 =====================
 
+## Version 3.14.8
+
+_2020-04-28_
+
+ *  Fix: Don't crash on Java 8u252 which introduces an API previously found only on Java 9 and
+    above. See [Jetty's overview][jetty_8_252] of the API change and its consequences.
+
 ## Version 3.14.7
 
 _2020-02-24_
@@ -200,6 +207,14 @@ _2019-02-04_
  *  New: API to access headers as `java.time.Instant`.
  *  New: Fail fast if a `SSLSocketFactory` is used as a `SocketFactory`.
  *  New: Log the TLS handshake in `LoggingEventListener`.
+
+
+## Version 3.12.11
+
+_2020-04-28_
+
+ *  Fix: Don't crash on Java 8u252 which introduces an API previously found only on Java 9 and
+    above. See [Jetty's overview][jetty_8_252] of the API change and its consequences.
 
 
 ## Version 3.12.10
@@ -1077,6 +1092,7 @@ stuck on the old version.
  [conscrypt_dependency]: https://github.com/google/conscrypt/#download
  [grpc_http2]: https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md
  [https_server_sample]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/HttpsServer.java
+ [jetty_8_252]: https://webtide.com/jetty-alpn-java-8u252/
  [junit_5_rules]: https://junit.org/junit5/docs/current/user-guide/#migrating-from-junit4-rulesupport
  [major_versions]: https://jakewharton.com/java-interoperability-policy-for-major-version-updates/
  [maven_provided]: https://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html

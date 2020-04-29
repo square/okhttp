@@ -1,6 +1,65 @@
 Change Log
 ==========
 
+## Version 4.6.0
+
+_2020-04-28_
+
+ *  Fix: Follow HTTP 307 and 308 redirects on methods other than GET and POST. We're reluctant to
+    change OkHttp's behavior in handling common HTTP status codes, but this fix is overdue! The new
+    behavior is now consistent with [RFC 7231][rfc_7231_647], which is newer than OkHttp itself.
+    If you want this update with the old behavior use [this interceptor][legacy_interceptor].
+
+ *  Fix: Don't crash decompressing web sockets messages. We had a bug where we assumed deflated
+    bytes in would always yield deflated bytes out and this isn't always the case!
+
+ *  Fix: Reliably update and invalidate the disk cache on windows. As originally designed our
+    internal `DiskLruCache` assumes an inode-like file system, where it's fine to delete files that
+    are currently being read or written. On Windows the file system forbids this so we must be more
+    careful when deleting and renaming files.
+
+ *  Fix: Don't crash on Java 8u252 which introduces an API previously found only on Java 9 and
+    above. See [Jetty's overview][jetty_8_252] of the API change and its consequences.
+
+ *  New: `MultipartReader` is a streaming decoder for [MIME multipart (RFC 2045)][rfc_2045]
+    messages. It complements `MultipartBody` which is our streaming encoder.
+
+    ```kotlin
+    val response: Response = call.execute()
+    val multipartReader = MultipartReader(response.body!!)
+
+    multipartReader.use {
+      while (true) {
+        val part = multipartReader.nextPart() ?: break
+        process(part.headers, part.body)
+      }
+    }
+    ```
+
+ *  New: `MediaType.parameter()` gets a parameter like `boundary` from a media type like
+    `multipart/mixed; boundary="abc"`.
+
+ *  New: `Authenticator.JAVA_NET_AUTHENTICATOR` forwards authentication requests to
+    `java.net.Authenticator`. This obsoletes `JavaNetAuthenticator` in the `okhttp-urlconnection`
+    module.
+
+ *  New: `CertificatePinner` now offers an API for inspecting the configured pins.
+
+ *  Upgrade: [Okio 2.6.0][okio_2_6_0].
+
+    ```kotlin
+    implementation("com.squareup.okio:okio:2.6.0")
+    ```
+
+ *  Upgrade: [publicsuffix.org data][public_suffix]. This powers `HttpUrl.topPrivateDomain()`.
+    It's also how OkHttp knows which domains can share cookies with one another.
+
+ *  Upgrade: [Bouncy Castle 1.65][bouncy_castle_releases]. This dependency is required by the
+    `okhttp-tls` module.
+
+ *  Upgrade: [Kotlin 1.3.71][kotlin_1_3_71].
+
+
 ## Version 4.5.0
 
 _2020-04-06_
@@ -316,7 +375,15 @@ _2019-06-03_
 
 
  [bom]: https://docs.gradle.org/6.2/userguide/platforms.html#sub:bom_import
+ [bouncy_castle_releases]: https://www.bouncycastle.org/releasenotes.html
  [iana_websocket]: https://www.iana.org/assignments/websocket/websocket.txt
+ [jetty_8_252]: https://webtide.com/jetty-alpn-java-8u252/
+ [kotlin_1_3_71]: https://github.com/JetBrains/kotlin/releases/tag/v1.3.71
+ [legacy_interceptor]: https://gist.github.com/swankjesse/80135f4e03629527e723ab3bcf64be0b
  [okhttp4_blog_post]: https://cashapp.github.io/2019-06-26/okhttp-4-goes-kotlin
+ [okio_2_6_0]: https://square.github.io/okio/changelog/#version-260
+ [public_suffix]: https://publicsuffix.org/
  [upgrading_to_okhttp_4]: https://square.github.io/okhttp/upgrading_to_okhttp_4/
+ [rfc_2045]: https://tools.ietf.org/html/rfc2045
+ [rfc_7231_647]: https://tools.ietf.org/html/rfc7231#section-6.4.7
  [rfc_7692]: https://tools.ietf.org/html/rfc7692
