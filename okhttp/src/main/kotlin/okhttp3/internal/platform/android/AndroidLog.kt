@@ -82,7 +82,7 @@ object AndroidLog {
       }
       logger.addHandler(object : Handler() {
         override fun publish(record: LogRecord) {
-          androidLog(logName, record.androidLevel, "XXX ${record.message}", record.thrown)
+          androidLog(logName, record.androidLevel, record.message, record.thrown)
         }
 
         override fun flush() {
