@@ -55,7 +55,7 @@ class StandardAndroidSocketAdapter(
 
         StandardAndroidSocketAdapter(sslSocketClass, sslSocketFactoryClass, paramsClass)
       } catch (e: Exception) {
-        androidLog(Platform.WARN, "unable to load android socket classes", e)
+        Platform.get().log(level = Platform.WARN, message = "unable to load android socket classes", t = e)
         null
       }
     }
