@@ -66,8 +66,8 @@ final class Jdk9Platform extends Platform {
       return protocol;
     } catch (InvocationTargetException e) {
       if (e.getCause() instanceof UnsupportedOperationException) {
-        // Handle UnsupportedOperationException as it is defined in the public API
-        // https://docs.oracle.com/javase/9/docs/api/javax/net/ssl/SSLSocket.html#getApplicationProtocol--
+        // Handle UnsupportedOperationException as it is defined in the getApplicationProtocol API.
+        // https://docs.oracle.com/javase/9/docs/api/javax/net/ssl/SSLSocket.html
         return null;
       }
 
