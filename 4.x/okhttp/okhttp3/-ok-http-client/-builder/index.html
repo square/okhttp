@@ -778,7 +778,7 @@
 </tr>
 <tr>
 <td><a href="follow-ssl-redirects/">followSslRedirects</a></td>
-<td>Configure this client to follow redirects from HTTPS to HTTP and from HTTP to HTTPS.<code>fun followSslRedirects(followProtocolRedirects:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><code>): Builder</code></td>
+<td>Configure this client to allow protocol redirects from HTTPS to HTTP and from HTTP to HTTPS. Redirects are still first restricted by <a href="follow-redirects/">followRedirects</a>.  Defaults to true.<code>fun followSslRedirects(followProtocolRedirects:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><code>): Builder</code></td>
 </tr>
 <tr>
 <td><a href="hostname-verifier/">hostnameVerifier</a></td>

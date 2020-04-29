@@ -649,6 +649,22 @@
     
   
   
+    <label class="md-nav__title" for="__toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#parameters" class="md-nav__link">
+    Parameters
+  </a>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -665,9 +681,10 @@
                 <p><a href="../../../../">okhttp</a> / <a href="../../../">okhttp3</a> / <a href="../../">OkHttpClient</a> / <a href="../">Builder</a> / <a href="./">followSslRedirects</a></p>
 <h1 id="followsslredirects">followSslRedirects<a class="headerlink" href="#followsslredirects" title="Permanent link">&para;</a></h1>
 <p><code>fun followSslRedirects(followProtocolRedirects:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><code>): Builder</code></p>
-<p>Configure this client to follow redirects from HTTPS to HTTP and from HTTP to HTTPS.</p>
-<p>If unset, protocol redirects will be followed. This is different than the built-in
-<code>HttpURLConnection</code>&lsquo;s default.</p>
+<p>Configure this client to allow protocol redirects from HTTPS to HTTP and from HTTP to HTTPS.
+Redirects are still first restricted by <a href="../follow-redirects/">followRedirects</a>.  Defaults to true.</p>
+<h3 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">&para;</a></h3>
+<p><code>followProtocolRedirects</code> - whether to follow redirects between HTTPS and HTTP.</p>
                 
                   
                 

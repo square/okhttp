@@ -689,6 +689,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#properties" class="md-nav__link">
+    Properties
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#functions" class="md-nav__link">
     Functions
   </a>
@@ -835,6 +842,25 @@ accepted by <a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/Tru
 <td><a href="-builder/">Builder</a></td>
 <td>Builds a configured certificate pinner.<code>class Builder</code></td>
 </tr>
+<tr>
+<td><a href="-pin/">Pin</a></td>
+<td>A hostname pattern and certificate hash for Certificate Pinning.<code>class Pin</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="properties">Properties<a class="headerlink" href="#properties" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="pins/">pins</a></td>
+<td><code>val pins:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html"><code>Set</code></a><code>&lt;Pin&gt;</code></td>
+</tr>
 </tbody>
 </table>
 <h3 id="functions">Functions<a class="headerlink" href="#functions" title="Permanent link">&para;</a></h3>
@@ -853,6 +879,10 @@ accepted by <a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/Tru
 <tr>
 <td><a href="equals/">equals</a></td>
 <td><code>fun equals(other:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><code>Any</code></a><code>?):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a></td>
+</tr>
+<tr>
+<td><a href="find-matching-pins/">findMatchingPins</a></td>
+<td>Returns list of matching certificates&rsquo; pins for the hostname. Returns an empty list if the hostname does not have pinned certificates.<code>fun findMatchingPins(hostname:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;Pin&gt;</code></td>
 </tr>
 <tr>
 <td><a href="hash-code/">hashCode</a></td>
@@ -887,6 +917,14 @@ accepted by <a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/Tru
 <tr>
 <td><a href="pin/">pin</a></td>
 <td>Returns the SHA-256 of <code>certificate</code>&lsquo;s public key.<code>fun pin(certificate:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/security/cert/Certificate.html"><code>Certificate</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a></td>
+</tr>
+<tr>
+<td><a href="sha1-hash/">sha1Hash</a></td>
+<td><code>fun</code><a href="https://docs.oracle.com/javase/8/docs/api/java/security/cert/X509Certificate.html"><code>X509Certificate</code></a><code>.sha1Hash():</code><a href="https://square.github.io/okio/2.x/okio/okio/-byte-string/index.md"><code>ByteString</code></a></td>
+</tr>
+<tr>
+<td><a href="sha256-hash/">sha256Hash</a></td>
+<td><code>fun</code><a href="https://docs.oracle.com/javase/8/docs/api/java/security/cert/X509Certificate.html"><code>X509Certificate</code></a><code>.sha256Hash():</code><a href="https://square.github.io/okio/2.x/okio/okio/-byte-string/index.md"><code>ByteString</code></a></td>
 </tr>
 </tbody>
 </table>

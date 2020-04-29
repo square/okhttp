@@ -852,6 +852,10 @@
 <td>An <a href="http://www.ietf.org/rfc/rfc2387.txt">RFC 2387</a>-compliant request body.<code>class MultipartBody :</code><a href="-request-body/"><code>RequestBody</code></a></td>
 </tr>
 <tr>
+<td><a href="-multipart-reader/">MultipartReader</a></td>
+<td>Reads a stream of <a href="http://www.ietf.org/rfc/rfc2046.txt">RFC 2046</a> multipart body parts. Callers read parts one-at-a-time until <a href="-multipart-reader/next-part/">nextPart</a> returns null. After calling <a href="-multipart-reader/next-part/">nextPart</a> any preceding parts should not be read.<code>class MultipartReader :</code><a href="https://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html"><code>Closeable</code></a></td>
+</tr>
+<tr>
 <td><a href="-ok-http-client/">OkHttpClient</a></td>
 <td>Factory for <a href="-call/">calls</a>, which can be used to send HTTP requests and read their responses.<code>open class OkHttpClient :</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-cloneable/index.html"><code>Cloneable</code></a><code>, Factory, Factory</code></td>
 </tr>

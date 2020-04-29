@@ -834,6 +834,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#okhttp3multipartreader" class="md-nav__link">
+    okhttp3.MultipartReader
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#okhttp3okhttpclient" class="md-nav__link">
     okhttp3.OkHttpClient
   </a>
@@ -1048,6 +1055,10 @@ or response body.</p>
 <p>|</p>
 <h5 id="okhttp3multipartbody"><a href="../okhttp3/-multipart-body/">okhttp3.MultipartBody</a><a class="headerlink" href="#okhttp3multipartbody" title="Permanent link">&para;</a></h5>
 <p>An <a href="http://www.ietf.org/rfc/rfc2387.txt">RFC 2387</a>-compliant request body.</p>
+<p>|</p>
+<h5 id="okhttp3multipartreader"><a href="../okhttp3/-multipart-reader/">okhttp3.MultipartReader</a><a class="headerlink" href="#okhttp3multipartreader" title="Permanent link">&para;</a></h5>
+<p>Reads a stream of <a href="http://www.ietf.org/rfc/rfc2046.txt">RFC 2046</a> multipart body parts. Callers read parts one-at-a-time
+until <a href="../okhttp3/-multipart-reader/next-part/">nextPart</a> returns null. After calling <a href="../okhttp3/-multipart-reader/next-part/">nextPart</a> any preceding parts should not be read.</p>
 <p>|</p>
 <h5 id="okhttp3okhttpclient"><a href="../okhttp3/-ok-http-client/">okhttp3.OkHttpClient</a><a class="headerlink" href="#okhttp3okhttpclient" title="Permanent link">&para;</a></h5>
 <p>Factory for <a href="../okhttp3/-call/">calls</a>, which can be used to send HTTP requests and read their responses.</p>

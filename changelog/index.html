@@ -629,6 +629,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#version-460" class="md-nav__link">
+    Version 4.6.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-450" class="md-nav__link">
     Version 4.5.0
   </a>
@@ -803,6 +810,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#version-460" class="md-nav__link">
+    Version 4.6.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-450" class="md-nav__link">
     Version 4.5.0
   </a>
@@ -941,6 +955,74 @@
                 
                 
                 <h1 id="change-log">Change Log<a class="headerlink" href="#change-log" title="Permanent link">&para;</a></h1>
+<h2 id="version-460">Version 4.6.0<a class="headerlink" href="#version-460" title="Permanent link">&para;</a></h2>
+<p><em>2020-04-28</em></p>
+<ul>
+<li>
+<p>Fix: Follow HTTP 307 and 308 redirects on methods other than GET and POST. We&rsquo;re reluctant to
+    change OkHttp&rsquo;s behavior in handling common HTTP status codes, but this fix is overdue! The new
+    behavior is now consistent with <a href="https://tools.ietf.org/html/rfc7231#section-6.4.7">RFC 7231</a>, which is newer than OkHttp itself.
+    If you want this update with the old behavior use <a href="https://gist.github.com/swankjesse/80135f4e03629527e723ab3bcf64be0b">this interceptor</a>.</p>
+</li>
+<li>
+<p>Fix: Don&rsquo;t crash decompressing web sockets messages. We had a bug where we assumed deflated
+    bytes in would always yield deflated bytes out and this isn&rsquo;t always the case!</p>
+</li>
+<li>
+<p>Fix: Reliably update and invalidate the disk cache on windows. As originally designed our
+    internal <code>DiskLruCache</code> assumes an inode-like file system, where it&rsquo;s fine to delete files that
+    are currently being read or written. On Windows the file system forbids this so we must be more
+    careful when deleting and renaming files.</p>
+</li>
+<li>
+<p>Fix: Don&rsquo;t crash on Java 8u252 which introduces an API previously found only on Java 9 and
+    above. See <a href="https://webtide.com/jetty-alpn-java-8u252/">Jetty&rsquo;s overview</a> of the API change and its consequences.</p>
+</li>
+<li>
+<p>New: <code>MultipartReader</code> is a streaming decoder for <a href="https://tools.ietf.org/html/rfc2045">MIME multipart (RFC 2045)</a>
+    messages. It complements <code>MultipartBody</code> which is our streaming encoder.</p>
+<div class="codehilite"><pre><span></span><span class="k">val</span> <span class="py">response</span><span class="p">:</span> <span class="n">Response</span> <span class="p">=</span> <span class="n">call</span><span class="p">.</span><span class="n">execute</span><span class="p">()</span>
+<span class="k">val</span> <span class="py">multipartReader</span> <span class="p">=</span> <span class="n">MultipartReader</span><span class="p">(</span><span class="n">response</span><span class="p">.</span><span class="n">body</span><span class="o">!!</span><span class="p">)</span>
+
+<span class="n">multipartReader</span><span class="p">.</span><span class="n">use</span> <span class="p">{</span>
+  <span class="k">while</span> <span class="p">(</span><span class="k">true</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">val</span> <span class="py">part</span> <span class="p">=</span> <span class="n">multipartReader</span><span class="p">.</span><span class="n">nextPart</span><span class="p">()</span> <span class="o">?:</span> <span class="k">break</span>
+    <span class="n">process</span><span class="p">(</span><span class="n">part</span><span class="p">.</span><span class="n">headers</span><span class="p">,</span> <span class="n">part</span><span class="p">.</span><span class="n">body</span><span class="p">)</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+</li>
+<li>
+<p>New: <code>MediaType.parameter()</code> gets a parameter like <code>boundary</code> from a media type like
+    <code>multipart/mixed; boundary="abc"</code>.</p>
+</li>
+<li>
+<p>New: <code>Authenticator.JAVA_NET_AUTHENTICATOR</code> forwards authentication requests to
+    <code>java.net.Authenticator</code>. This obsoletes <code>JavaNetAuthenticator</code> in the <code>okhttp-urlconnection</code>
+    module.</p>
+</li>
+<li>
+<p>New: <code>CertificatePinner</code> now offers an API for inspecting the configured pins.</p>
+</li>
+<li>
+<p>Upgrade: <a href="https://square.github.io/okio/changelog/#version-260">Okio 2.6.0</a>.</p>
+<div class="codehilite"><pre><span></span><span class="n">implementation</span><span class="p">(</span><span class="s">&quot;com.squareup.okio:okio:2.6.0&quot;</span><span class="p">)</span>
+</pre></div>
+
+</li>
+<li>
+<p>Upgrade: <a href="https://publicsuffix.org/">publicsuffix.org data</a>. This powers <code>HttpUrl.topPrivateDomain()</code>.
+    It&rsquo;s also how OkHttp knows which domains can share cookies with one another.</p>
+</li>
+<li>
+<p>Upgrade: <a href="https://www.bouncycastle.org/releasenotes.html">Bouncy Castle 1.65</a>. This dependency is required by the
+    <code>okhttp-tls</code> module.</p>
+</li>
+<li>
+<p>Upgrade: <a href="https://github.com/JetBrains/kotlin/releases/tag/v1.3.71">Kotlin 1.3.71</a>.</p>
+</li>
+</ul>
 <h2 id="version-450">Version 4.5.0<a class="headerlink" href="#version-450" title="Permanent link">&para;</a></h2>
 <p><em>2020-04-06</em></p>
 <p><strong>This release fixes a severe bug where OkHttp incorrectly detected and recovered from unhealthy
