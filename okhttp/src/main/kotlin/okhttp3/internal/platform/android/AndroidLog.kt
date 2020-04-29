@@ -34,10 +34,10 @@ private val LogRecord.androidLevel: Int
     else -> Log.DEBUG
   }
 
+@SuppressSignatureCheck
 object AndroidLog {
   private const val MAX_LOG_LENGTH = 4000
 
-  @SuppressSignatureCheck
   internal fun androidLog(tag: String, logLevel: Int, message: String, t: Throwable?) {
     var logMessage = message
     if (t != null) logMessage = logMessage + '\n'.toString() + Log.getStackTraceString(t)
