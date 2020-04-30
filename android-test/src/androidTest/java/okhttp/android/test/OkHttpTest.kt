@@ -19,9 +19,9 @@ import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException
+import com.google.android.gms.security.ProviderInstaller
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import com.google.android.gms.security.ProviderInstaller
 import okhttp3.Call
 import okhttp3.CertificatePinner
 import okhttp3.Connection
@@ -35,6 +35,8 @@ import okhttp3.Request
 import okhttp3.TlsVersion
 import okhttp3.dnsoverhttps.DnsOverHttps
 import okhttp3.internal.asFactory
+import okhttp3.internal.platform.Android10Platform
+import okhttp3.internal.platform.AndroidPlatform
 import okhttp3.internal.platform.Platform
 import okhttp3.logging.LoggingEventListener
 import okhttp3.mockwebserver.MockResponse
@@ -42,38 +44,33 @@ import okhttp3.mockwebserver.MockWebServer
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.internal.TlsUtil.localhost
 import okio.ByteString.Companion.toByteString
+import org.bouncycastle.jce.provider.BouncyCastleProvider
+import org.bouncycastle.jsse.provider.BouncyCastleJsseProvider
 import org.conscrypt.Conscrypt
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Assume.assumeNoException
 import org.junit.Assume.assumeTrue
-import org.junit.BeforeClass
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.io.IOException
 import java.net.InetAddress
 import java.net.UnknownHostException
-import java.security.cert.X509Certificate
+import java.security.KeyStore
+import java.security.SecureRandom
 import java.security.Security
+import java.security.cert.CertificateException
+import java.security.cert.X509Certificate
+import java.util.logging.Logger
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocket
-import javax.net.ssl.X509TrustManager
-import java.util.logging.Logger
-import okhttp3.internal.platform.AndroidPlatform
-import okhttp3.internal.platform.Android10Platform
-import org.bouncycastle.jce.provider.BouncyCastleProvider
-import org.bouncycastle.jsse.provider.BouncyCastleJsseProvider
-import org.junit.Assert.assertFalse
-import java.io.IOException
-import java.lang.IllegalArgumentException
-import java.security.KeyStore
-import java.security.SecureRandom
-import java.security.cert.CertificateException
-import javax.net.ssl.TrustManager
 import javax.net.ssl.TrustManagerFactory
+import javax.net.ssl.X509TrustManager
 
 /**
  * Run with "./gradlew :android-test:connectedCheck" and make sure ANDROID_SDK_ROOT is set.
@@ -632,14 +629,5 @@ class OkHttpTest {
   fun OkHttpClient.close() {
     dispatcher.executorService.shutdown()
     connectionPool.evictAll()
-  }
-
-  companion object {
-    @BeforeClass
-    @JvmStatic
-    fun hookLogging() {
-      OkHttpDebugLogcat.enableHttp2()
-      OkHttpDebugLogcat.enableTaskRunner()
-    }
   }
 }

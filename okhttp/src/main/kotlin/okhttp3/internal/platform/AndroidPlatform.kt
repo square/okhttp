@@ -35,7 +35,6 @@ import okhttp3.internal.platform.android.CloseGuard
 import okhttp3.internal.platform.android.ConscryptSocketAdapter
 import okhttp3.internal.platform.android.DeferredSocketAdapter
 import okhttp3.internal.platform.android.StandardAndroidSocketAdapter
-import okhttp3.internal.platform.android.androidLog
 import okhttp3.internal.tls.BasicTrustRootIndex
 import okhttp3.internal.tls.CertificateChainCleaner
 import okhttp3.internal.tls.TrustRootIndex
@@ -88,10 +87,6 @@ class AndroidPlatform : Platform() {
   override fun getSelectedProtocol(sslSocket: SSLSocket) =
       // No TLS extensions if the socket class is custom.
       socketAdapters.find { it.matchesSocket(sslSocket) }?.getSelectedProtocol(sslSocket)
-
-  override fun log(message: String, level: Int, t: Throwable?) {
-    androidLog(level, message, t)
-  }
 
   override fun getStackTraceForCloseable(closer: String): Any? = closeGuard.createAndOpen(closer)
 

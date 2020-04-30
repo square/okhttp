@@ -32,6 +32,7 @@ import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
+import okhttp3.internal.platform.android.AndroidLog
 import okhttp3.internal.readFieldOrNull
 import okhttp3.internal.tls.BasicCertificateChainCleaner
 import okhttp3.internal.tls.BasicTrustRootIndex
@@ -203,13 +204,17 @@ open class Platform {
 
     /** Attempt to match the host runtime to a capable Platform implementation. */
     private fun findPlatform(): Platform {
-      val android10 = Android10Platform.buildIfSupported()
+      val android10 = Android10Platform.buildIfSupported()?.also {
+        AndroidLog.enable()
+      }
 
       if (android10 != null) {
         return android10
       }
 
-      val android = AndroidPlatform.buildIfSupported()
+      val android = AndroidPlatform.buildIfSupported()?.also {
+        AndroidLog.enable()
+      }
 
       if (android != null) {
         return android
