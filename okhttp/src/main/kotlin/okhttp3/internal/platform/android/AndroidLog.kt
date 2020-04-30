@@ -25,6 +25,7 @@ import okhttp3.OkHttpClient
 import okhttp3.internal.SuppressSignatureCheck
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.http2.Http2
+import okhttp3.internal.platform.android.AndroidLog.androidLog
 
 private val LogRecord.androidLevel: Int
   get() = when {
@@ -33,12 +34,34 @@ private val LogRecord.androidLevel: Int
     else -> Log.DEBUG
   }
 
+object AndroidLogHandler : Handler() {
+  override fun publish(record: LogRecord) {
+    androidLog(record.loggerName, record.androidLevel, record.message, record.thrown)
+  }
+
+  override fun flush() {
+  }
+
+  override fun close() {
+  }
+}
+
 @SuppressSignatureCheck
 object AndroidLog {
   private const val MAX_LOG_LENGTH = 4000
 
+  // Keep references to loggers to prevent their configuration from being GC'd.
+  private val configuredLoggers = CopyOnWriteArraySet<Logger>()
+
+  private val knownLoggers = LinkedHashMap<String, String>().apply {
+      this[OkHttpClient::class.java.`package`.name] = "OkHttp"
+      this[OkHttpClient::class.java.name] = "okhttp.OkHttpClient"
+      this[Http2::class.java.name] = "okhttp.Http2"
+      this[TaskRunner::class.java.name] = "okhttp.TaskRunner"
+    }.toMap()
+
   internal fun androidLog(loggerName: String, logLevel: Int, message: String, t: Throwable?) {
-    val tag = knownLoggers[loggerName] ?: loggerName
+    val tag = loggerTag(loggerName)
 
     if (Log.isLoggable(tag, logLevel)) {
       var logMessage = message
@@ -60,32 +83,25 @@ object AndroidLog {
     }
   }
 
-  // Keep references to loggers to prevent their configuration from being GC'd.
-  private val configuredLoggers = CopyOnWriteArraySet<Logger>()
-
-  private val knownLoggers = LinkedHashMap<String, String>().apply {
-    this[OkHttpClient::class.java.`package`.name] = "OkHttp"
-    this[OkHttpClient::class.java.name] = "okhttp.OkHttpClient"
-    this[Http2::class.java.name] = "okhttp.Http2"
-    this[TaskRunner::class.java.name] = "okhttp.TaskRunner"
-  }.toMap()
+  private fun loggerTag(loggerName: String) = knownLoggers[loggerName] ?: loggerName
 
   fun enable() {
-    val logger = Logger.getLogger(OkHttpClient::class.java.`package`.name)
+    for ((logger, tag) in knownLoggers) {
+      enableLogging(logger, tag)
+    }
+  }
+
+  private fun enableLogging(logger: String, tag: String) {
+    val logger = Logger.getLogger(logger)
     if (configuredLoggers.add(logger)) {
-      // log everything and filter in androidLog method below
-      logger.level = Level.FINE
-      logger.addHandler(object : Handler() {
-        override fun publish(record: LogRecord) {
-          androidLog(record.loggerName, record.androidLevel, record.message, record.thrown)
-        }
-
-        override fun flush() {
-        }
-
-        override fun close() {
-        }
-      })
+      logger.useParentHandlers = false
+      // log based on levels at startup to avoid logging each frame
+      logger.level = when {
+        Log.isLoggable(tag, Log.DEBUG) -> Level.FINE
+        Log.isLoggable(tag, Log.INFO) -> Level.INFO
+        else -> Level.WARNING
+      }
+      logger.addHandler(AndroidLogHandler)
     }
   }
 }
