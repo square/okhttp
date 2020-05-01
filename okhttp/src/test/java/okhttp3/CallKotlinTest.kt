@@ -28,6 +28,7 @@ import okhttp3.internal.http.RecordingProxySelector
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.SocketPolicy
+import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.internal.TlsUtil.localhost
 import okio.BufferedSink
@@ -44,7 +45,9 @@ class CallKotlinTest {
   @JvmField @Rule val platform = PlatformRule()
   @JvmField @Rule val timeout: TestRule = Timeout(30_000, TimeUnit.MILLISECONDS)
   @JvmField @Rule val server = MockWebServer()
-  @JvmField @Rule val clientTestRule = OkHttpClientTestRule()
+  @JvmField @Rule val clientTestRule = OkHttpClientTestRule().apply {
+    recordFrames = true
+  }
 
   private var client = clientTestRule.newClient()
   private val handshakeCertificates = localhost()
@@ -74,6 +77,7 @@ class CallKotlinTest {
   }
 
   @Test
+  @Flaky
   fun testMockWebserverRequest() {
     enableTls()
 
