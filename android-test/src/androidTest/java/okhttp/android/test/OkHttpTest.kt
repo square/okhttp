@@ -23,6 +23,7 @@ import com.google.android.gms.security.ProviderInstaller
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import okhttp3.Cache
+import okhttp3.CacheControl
 import okhttp3.Call
 import okhttp3.CertificatePinner
 import okhttp3.Connection
@@ -42,6 +43,7 @@ import okhttp3.internal.platform.Platform
 import okhttp3.logging.LoggingEventListener
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.internal.TlsUtil.localhost
 import okio.ByteString.Companion.toByteString
@@ -68,6 +70,7 @@ import java.security.SecureRandom
 import java.security.Security
 import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
+import java.util.concurrent.TimeUnit.SECONDS
 import java.util.logging.Logger
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLPeerUnverifiedException
@@ -599,8 +602,12 @@ class OkHttpTest {
   }
 
   @Test
+  @Flaky
   fun testCachedRequest() {
-    assumeNetwork()
+    enableTls()
+
+    server.enqueue(MockResponse().setBody("abc").addHeader("cache-control: public, max-age=3"))
+    server.enqueue(MockResponse().setBody("abc"))
 
     val ctxt = InstrumentationRegistry.getInstrumentation().targetContext.applicationContext
 
@@ -613,7 +620,7 @@ class OkHttpTest {
           .build()
 
       val request = Request.Builder()
-          .url("https://httpbin.org/cache/3")
+          .url(server.url("/"))
           .build()
 
       client.newCall(request)
@@ -622,6 +629,9 @@ class OkHttpTest {
             assertEquals(200, it.code)
             assertNull(it.cacheResponse)
             assertNotNull(it.networkResponse)
+
+            assertEquals(3, it.cacheControl.maxAgeSeconds)
+            assertTrue(it.cacheControl.isPublic)
           }
 
       client.newCall(request)
@@ -632,20 +642,9 @@ class OkHttpTest {
             assertNull(it.networkResponse)
           }
 
-      Thread.sleep(5000)
-
-      client.newCall(request)
-          .execute()
-          .use {
-            assertEquals(200, it.code)
-            // TODO understand this?
-            assertNotNull(it.cacheResponse)
-            assertNotNull(it.networkResponse)
-          }
-
       assertEquals(1, cache.hitCount())
-      assertEquals(2, cache.networkCount())
-      assertEquals(3, cache.requestCount())
+      assertEquals(1, cache.networkCount())
+      assertEquals(2, cache.requestCount())
     } finally {
       cache.delete()
     }
