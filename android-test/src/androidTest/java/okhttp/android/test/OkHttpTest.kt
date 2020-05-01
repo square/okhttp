@@ -23,7 +23,6 @@ import com.google.android.gms.security.ProviderInstaller
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import okhttp3.Cache
-import okhttp3.CacheControl
 import okhttp3.Call
 import okhttp3.CertificatePinner
 import okhttp3.Connection
@@ -43,7 +42,6 @@ import okhttp3.internal.platform.Platform
 import okhttp3.logging.LoggingEventListener
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
-import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.internal.TlsUtil.localhost
 import okio.ByteString.Companion.toByteString
@@ -70,7 +68,6 @@ import java.security.SecureRandom
 import java.security.Security
 import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
-import java.util.concurrent.TimeUnit.SECONDS
 import java.util.logging.Logger
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLPeerUnverifiedException
@@ -602,7 +599,6 @@ class OkHttpTest {
   }
 
   @Test
-  @Flaky
   fun testCachedRequest() {
     enableTls()
 
