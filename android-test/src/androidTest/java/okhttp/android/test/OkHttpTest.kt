@@ -595,6 +595,21 @@ class OkHttpTest {
     }
   }
 
+  @Test
+  fun testCachedRequest() {
+    assumeNetwork()
+
+    client = client.newBuilder().cache(Cache())
+
+    val request = Request.Builder().url("https://api.twitter.com/robots.txt").build()
+
+    val response = client.newCall(request).execute()
+
+    response.use {
+      assertEquals(200, response.code)
+    }
+  }
+
   private fun OkHttpClient.get(url: String) {
     val request = Request.Builder().url(url).build()
     val response = this.newCall(request).execute()
