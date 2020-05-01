@@ -22,6 +22,7 @@ import com.google.android.gms.common.GooglePlayServicesNotAvailableException
 import com.google.android.gms.security.ProviderInstaller
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import okhttp3.Cache
 import okhttp3.Call
 import okhttp3.CertificatePinner
 import okhttp3.Connection
@@ -49,6 +50,8 @@ import org.bouncycastle.jsse.provider.BouncyCastleJsseProvider
 import org.conscrypt.Conscrypt
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Assume.assumeNoException
@@ -592,6 +595,54 @@ class OkHttpTest {
     } finally {
       Security.removeProvider("BCJSSE")
       Security.removeProvider("BC")
+    }
+  }
+
+  @Test
+  fun testCachedRequest() {
+    enableTls()
+
+    server.enqueue(MockResponse().setBody("abc").addHeader("cache-control: public, max-age=3"))
+    server.enqueue(MockResponse().setBody("abc"))
+
+    val ctxt = InstrumentationRegistry.getInstrumentation().targetContext.applicationContext
+
+    val cacheSize = 1L * 1024 * 1024 // 1MB
+    val cache = Cache(ctxt.cacheDir.resolve("testCache"), cacheSize)
+
+    try {
+      client = client.newBuilder()
+          .cache(cache)
+          .build()
+
+      val request = Request.Builder()
+          .url(server.url("/"))
+          .build()
+
+      client.newCall(request)
+          .execute()
+          .use {
+            assertEquals(200, it.code)
+            assertNull(it.cacheResponse)
+            assertNotNull(it.networkResponse)
+
+            assertEquals(3, it.cacheControl.maxAgeSeconds)
+            assertTrue(it.cacheControl.isPublic)
+          }
+
+      client.newCall(request)
+          .execute()
+          .use {
+            assertEquals(200, it.code)
+            assertNotNull(it.cacheResponse)
+            assertNull(it.networkResponse)
+          }
+
+      assertEquals(1, cache.hitCount())
+      assertEquals(1, cache.networkCount())
+      assertEquals(2, cache.requestCount())
+    } finally {
+      cache.delete()
     }
   }
 
