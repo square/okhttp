@@ -36,6 +36,8 @@ import okhttp3.Request
 import okhttp3.TlsVersion
 import okhttp3.dnsoverhttps.DnsOverHttps
 import okhttp3.internal.asFactory
+import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.http2.Http2
 import okhttp3.internal.platform.Android10Platform
 import okhttp3.internal.platform.AndroidPlatform
 import okhttp3.internal.platform.Platform
@@ -68,6 +70,10 @@ import java.security.SecureRandom
 import java.security.Security
 import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.logging.Handler
+import java.util.logging.Level
+import java.util.logging.LogRecord
 import java.util.logging.Logger
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLPeerUnverifiedException
@@ -599,6 +605,56 @@ class OkHttpTest {
   }
 
   @Test
+  fun testLoggingLevels() {
+    enableTls()
+
+    val testHandler = object : Handler() {
+      val calls = mutableMapOf<String, AtomicInteger>()
+
+      override fun publish(record: LogRecord) {
+        calls.getOrPut(record.loggerName) { AtomicInteger(0) }
+            .incrementAndGet()
+      }
+
+      override fun flush() {
+      }
+
+      override fun close() {
+      }
+    }.apply {
+      level = Level.FINEST
+    }
+
+    Logger.getLogger("")
+        .addHandler(testHandler)
+    Logger.getLogger("okhttp3")
+        .addHandler(testHandler)
+    Logger.getLogger(Http2::class.java.name)
+        .addHandler(testHandler)
+    Logger.getLogger(TaskRunner::class.java.name)
+        .addHandler(testHandler)
+    Logger.getLogger(OkHttpClient::class.java.name)
+        .addHandler(testHandler)
+
+    server.enqueue(MockResponse().setBody("abc"))
+
+    val request = Request.Builder()
+        .url(server.url("/"))
+        .build()
+
+    val response = client.newCall(request)
+        .execute()
+
+    response.use {
+      assertEquals(200, response.code)
+      assertEquals(Protocol.HTTP_2, response.protocol)
+    }
+
+    // Only logs to the test logger above
+    // Will fail if "adb shell setprop log.tag.okhttp.Http2 DEBUG" is called
+    assertEquals(setOf(OkHttpTest::class.java.name), testHandler.calls.keys)
+  }
+
   fun testCachedRequest() {
     enableTls()
 
