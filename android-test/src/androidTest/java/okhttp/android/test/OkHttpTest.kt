@@ -22,6 +22,7 @@ import com.google.android.gms.common.GooglePlayServicesNotAvailableException
 import com.google.android.gms.security.ProviderInstaller
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import okhttp3.Cache
 import okhttp3.Call
 import okhttp3.CertificatePinner
 import okhttp3.Connection
@@ -51,6 +52,8 @@ import org.bouncycastle.jsse.provider.BouncyCastleJsseProvider
 import org.conscrypt.Conscrypt
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Assume.assumeNoException
@@ -605,11 +608,12 @@ class OkHttpTest {
   fun testLoggingLevels() {
     enableTls()
 
-    val testHandler = object: Handler() {
+    val testHandler = object : Handler() {
       val calls = mutableMapOf<String, AtomicInteger>()
 
       override fun publish(record: LogRecord) {
-        calls.getOrPut(record.loggerName) { AtomicInteger(0) }.incrementAndGet()
+        calls.getOrPut(record.loggerName) { AtomicInteger(0) }
+            .incrementAndGet()
       }
 
       override fun flush() {
@@ -621,17 +625,25 @@ class OkHttpTest {
       level = Level.FINEST
     }
 
-    Logger.getLogger("").addHandler(testHandler)
-    Logger.getLogger("okhttp3").addHandler(testHandler)
-    Logger.getLogger(Http2::class.java.name).addHandler(testHandler)
-    Logger.getLogger(TaskRunner::class.java.name).addHandler(testHandler)
-    Logger.getLogger(OkHttpClient::class.java.name).addHandler(testHandler)
+    Logger.getLogger("")
+        .addHandler(testHandler)
+    Logger.getLogger("okhttp3")
+        .addHandler(testHandler)
+    Logger.getLogger(Http2::class.java.name)
+        .addHandler(testHandler)
+    Logger.getLogger(TaskRunner::class.java.name)
+        .addHandler(testHandler)
+    Logger.getLogger(OkHttpClient::class.java.name)
+        .addHandler(testHandler)
 
     server.enqueue(MockResponse().setBody("abc"))
 
-    val request = Request.Builder().url(server.url("/")).build()
+    val request = Request.Builder()
+        .url(server.url("/"))
+        .build()
 
-    val response = client.newCall(request).execute()
+    val response = client.newCall(request)
+        .execute()
 
     response.use {
       assertEquals(200, response.code)
@@ -641,6 +653,53 @@ class OkHttpTest {
     // Only logs to the test logger above
     // Will fail if "adb shell setprop log.tag.okhttp.Http2 DEBUG" is called
     assertEquals(setOf(OkHttpTest::class.java.name), testHandler.calls.keys)
+  }
+
+  fun testCachedRequest() {
+    enableTls()
+
+    server.enqueue(MockResponse().setBody("abc").addHeader("cache-control: public, max-age=3"))
+    server.enqueue(MockResponse().setBody("abc"))
+
+    val ctxt = InstrumentationRegistry.getInstrumentation().targetContext.applicationContext
+
+    val cacheSize = 1L * 1024 * 1024 // 1MB
+    val cache = Cache(ctxt.cacheDir.resolve("testCache"), cacheSize)
+
+    try {
+      client = client.newBuilder()
+          .cache(cache)
+          .build()
+
+      val request = Request.Builder()
+          .url(server.url("/"))
+          .build()
+
+      client.newCall(request)
+          .execute()
+          .use {
+            assertEquals(200, it.code)
+            assertNull(it.cacheResponse)
+            assertNotNull(it.networkResponse)
+
+            assertEquals(3, it.cacheControl.maxAgeSeconds)
+            assertTrue(it.cacheControl.isPublic)
+          }
+
+      client.newCall(request)
+          .execute()
+          .use {
+            assertEquals(200, it.code)
+            assertNotNull(it.cacheResponse)
+            assertNull(it.networkResponse)
+          }
+
+      assertEquals(1, cache.hitCount())
+      assertEquals(1, cache.networkCount())
+      assertEquals(2, cache.requestCount())
+    } finally {
+      cache.delete()
+    }
   }
 
   private fun OkHttpClient.get(url: String) {
