@@ -424,6 +424,8 @@ abstract class EventListener {
 
   /**
    * Invoked when a call fails due to cache rules. e.g. onlyIfCached and no cache entry.
+   *
+   * Events will only be received when a Cache is configured for the client.
    */
   open fun cacheFailure(call: Call, response: Response) {
   }
@@ -432,6 +434,8 @@ abstract class EventListener {
    * Invoked when a result is served from the cache. n.b The response should be used
    * to determine exactly how the cache came to be used, e.g. with a conditional cache response
    * from the network.
+   *
+   * Events will only be received when a Cache is configured for the client.
    */
   open fun cacheMiss(call: Call, response: Response) {
   }
@@ -440,6 +444,8 @@ abstract class EventListener {
    * Invoked when a response is served from the network. n.b The response should be used
    * to determine exactly how the cache came to be used, e.g. with a conditional cache response
    * from the network.
+   *
+   * Events will only be received when a Cache is configured for the client.
    */
   open fun cacheHit(call: Call, response: Response) {
   }
