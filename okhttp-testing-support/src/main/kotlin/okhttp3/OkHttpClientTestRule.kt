@@ -17,8 +17,12 @@ package okhttp3
 
 import java.net.InetAddress
 import java.util.concurrent.TimeUnit
+import java.util.logging.Handler
+import java.util.logging.Level
+import java.util.logging.LogRecord
 import java.util.logging.Logger
 import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.http2.Http2
 import okhttp3.testing.Flaky
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
@@ -38,6 +42,38 @@ class OkHttpClientTestRule : TestRule {
   private var testClient: OkHttpClient? = null
   private var uncaughtException: Throwable? = null
   var logger: Logger? = null
+
+  var recordEvents = true
+  var recordTaskRunner = false
+  var recordFrames = false
+
+  private val testLogHandler = object : Handler() {
+    override fun publish(record: LogRecord) {
+      val name = record.loggerName
+      val recorded = (recordTaskRunner && name == TaskRunner::class.java.name) || (recordFrames && name == Http2::class.java.name)
+
+      if (recorded) {
+        synchronized(clientEventsList) {
+          clientEventsList.add(record.message)
+        }
+      }
+    }
+
+    override fun flush() {
+    }
+
+    override fun close() {
+    }
+  }.apply {
+    level = Level.FINEST
+  }
+
+  private fun applyLogger(fn: Logger.() -> Unit) {
+    Logger.getLogger(OkHttpClient::class.java.`package`.name).fn()
+    Logger.getLogger(OkHttpClient::class.java.name).fn()
+    Logger.getLogger(Http2::class.java.name).fn()
+    Logger.getLogger(TaskRunner::class.java.name).fn()
+  }
 
   fun wrap(eventListener: EventListener) = object : EventListener.Factory {
     override fun create(call: Call) = ClientRuleEventListener(eventListener) { addEvent(it) }
@@ -76,8 +112,13 @@ class OkHttpClientTestRule : TestRule {
   }
 
   @Synchronized private fun addEvent(event: String) {
-    logger?.info(event)
-    clientEventsList.add(event)
+    if (recordEvents) {
+      logger?.info(event)
+
+      synchronized(clientEventsList) {
+        clientEventsList.add(event)
+      }
+    }
   }
 
   @Synchronized private fun initUncaughtException(throwable: Throwable) {
@@ -114,6 +155,11 @@ class OkHttpClientTestRule : TestRule {
           initUncaughtException(throwable)
         }
         try {
+          applyLogger {
+            addHandler(testLogHandler)
+            level = Level.FINEST
+          }
+
           base.evaluate()
           if (uncaughtException != null) {
             throw AssertionError("uncaught exception thrown during test", uncaughtException)
@@ -123,6 +169,11 @@ class OkHttpClientTestRule : TestRule {
           logEvents()
           throw t
         } finally {
+          applyLogger {
+            removeHandler(testLogHandler)
+            level = Level.INFO
+          }
+
           Thread.setDefaultUncaughtExceptionHandler(defaultUncaughtExceptionHandler)
           ensureAllConnectionsReleased()
           releaseClient()
@@ -149,10 +200,12 @@ class OkHttpClientTestRule : TestRule {
 
   @Synchronized private fun logEvents() {
     // Will be ineffective if test overrides the listener
-    println("Events (${clientEventsList.size})")
+    synchronized(clientEventsList) {
+      println("Events (${clientEventsList.size})")
 
-    for (e in clientEventsList) {
-      println(e)
+      for (e in clientEventsList) {
+        println(e)
+      }
     }
   }
 
