@@ -1467,8 +1467,40 @@ public final class EventListenerTest {
     assertThat(listener.recordedEventTypes()).containsExactly("CallStart",
         "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
         "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
-        "RequestHeadersEnd", "CacheMiss", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
-        "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
+        "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "CacheMiss",
+        "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
+  }
+
+  @Test public void conditionalCache() throws IOException {
+    enableCache();
+
+    server.enqueue(new MockResponse()
+        .addHeader("ETag: v1")
+        .setBody("abc"));
+    server.enqueue(new MockResponse()
+        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+
+    Response response = call.execute();
+    assertThat(response.code()).isEqualTo(200);
+    response.close();
+
+    listener.clearAllEvents();
+
+    call = call.clone();
+
+    response = call.execute();
+    assertThat(response.code()).isEqualTo(200);
+    assertThat(response.body().string()).isEqualTo("abc");
+    response.close();
+
+    assertThat(listener.recordedEventTypes()).containsExactly("CallStart",
+        "ConnectionAcquired", "RequestHeadersStart",
+        "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd",
+        "ResponseBodyStart", "ResponseBodyEnd", "CacheHit", "ConnectionReleased", "CallEnd");
   }
 
   @Test public void cacheFailed() throws IOException {

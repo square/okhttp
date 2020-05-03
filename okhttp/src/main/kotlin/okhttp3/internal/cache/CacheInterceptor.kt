@@ -21,6 +21,8 @@ import java.net.HttpURLConnection.HTTP_GATEWAY_TIMEOUT
 import java.net.HttpURLConnection.HTTP_NOT_MODIFIED
 import java.util.concurrent.TimeUnit.MILLISECONDS
 import okhttp3.Cache
+import okhttp3.EventListener
+import okhttp3.EventListener.Companion
 import okhttp3.Headers
 import okhttp3.Interceptor
 import okhttp3.Protocol
@@ -53,7 +55,7 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
     val cacheResponse = strategy.cacheResponse
 
     cache?.trackResponse(strategy)
-    val listener = (call as RealCall).eventListener
+    val listener = (call as? RealCall)?.eventListener ?: EventListener.NONE
 
     if (cacheCandidate != null && cacheResponse == null) {
       // The cache candidate wasn't applicable. Close it.
