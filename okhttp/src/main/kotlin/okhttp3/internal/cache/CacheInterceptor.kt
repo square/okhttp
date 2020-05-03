@@ -22,7 +22,6 @@ import java.net.HttpURLConnection.HTTP_NOT_MODIFIED
 import java.util.concurrent.TimeUnit.MILLISECONDS
 import okhttp3.Cache
 import okhttp3.EventListener
-import okhttp3.EventListener.Companion
 import okhttp3.Headers
 import okhttp3.Interceptor
 import okhttp3.Protocol
