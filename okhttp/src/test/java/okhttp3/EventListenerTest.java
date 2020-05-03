@@ -1462,7 +1462,7 @@ public final class EventListenerTest {
     Response response = call.execute();
     assertThat(response.code()).isEqualTo(200);
     assertThat(response.body().string()).isEqualTo("abc");
-    response.body().close();
+    response.close();
 
     assertThat(listener.recordedEventTypes()).containsExactly("CallStart",
         "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
@@ -1496,7 +1496,7 @@ public final class EventListenerTest {
     Response response = call.execute();
     assertThat(response.code()).isEqualTo(200);
     assertThat(response.body().string()).isEqualTo("abc");
-    response.body().close();
+    response.close();
 
     listener.clearAllEvents();
 
@@ -1504,7 +1504,7 @@ public final class EventListenerTest {
     response = call.execute();
     assertThat(response.code()).isEqualTo(200);
     assertThat(response.body().string()).isEqualTo("abc");
-    response.body().close();
+    response.close();
 
     assertThat(listener.recordedEventTypes()).containsExactly("CallStart", "CacheHit", "CallEnd");
   }
