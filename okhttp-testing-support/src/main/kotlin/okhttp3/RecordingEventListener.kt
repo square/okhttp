@@ -22,6 +22,9 @@ import java.net.Proxy
 import java.util.Deque
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.TimeUnit
+import okhttp3.CallEvent.CacheFailed
+import okhttp3.CallEvent.CacheHit
+import okhttp3.CallEvent.CacheMiss
 import okhttp3.CallEvent.CallEnd
 import okhttp3.CallEvent.CallFailed
 import okhttp3.CallEvent.CallStart
@@ -260,4 +263,19 @@ open class RecordingEventListener : EventListener() {
   override fun canceled(
     call: Call
   ) = logEvent(Canceled(System.nanoTime(), call))
+
+  override fun cacheFailure(
+    call: Call,
+    response: Response
+  ) = logEvent(CacheFailed(System.nanoTime(), call))
+
+  override fun cacheMiss(
+    call: Call,
+    response: Response
+  ) = logEvent(CacheMiss(System.nanoTime(), call))
+
+  override fun cacheHit(
+    call: Call,
+    response: Response
+  ) = logEvent(CacheHit(System.nanoTime(), call))
 }

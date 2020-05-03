@@ -241,6 +241,24 @@ class ClientRuleEventListener(
     delegate.canceled(call)
   }
 
+  override fun cacheFailure(call: Call, response: Response) {
+    logWithTime("cacheFailure")
+
+    delegate.cacheFailure(call, response)
+  }
+
+  override fun cacheMiss(call: Call, response: Response) {
+    logWithTime("cacheMiss")
+
+    delegate.cacheMiss(call, response)
+  }
+
+  override fun cacheHit(call: Call, response: Response) {
+    logWithTime("cacheHit")
+
+    delegate.cacheHit(call, response)
+  }
+
   private fun logWithTime(message: String) {
     val timeMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNs)
     logger.invoke("[$timeMs ms] $message")

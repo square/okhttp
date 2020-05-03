@@ -15,6 +15,7 @@
  */
 package okhttp3;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.HttpURLConnection;
@@ -65,6 +66,7 @@ import org.hamcrest.BaseMatcher;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -96,6 +98,7 @@ public final class EventListenerTest {
       .eventListenerFactory(clientTestRule.wrap(listener))
       .build();
   private SocksProxy socksProxy;
+  private Cache cache = null;
 
   @Before public void setUp() {
     platform.assumeNotOpenJSSE();
@@ -108,6 +111,9 @@ public final class EventListenerTest {
   @After public void tearDown() throws Exception {
     if (socksProxy != null) {
       socksProxy.shutdown();
+    }
+    if (cache != null) {
+      cache.delete();
     }
   }
 
@@ -1442,5 +1448,76 @@ public final class EventListenerTest {
     listener.takeEvent(RequestBodyStart.class, 0L);
     listener.takeEvent(RequestBodyEnd.class, 0L);
     listener.takeEvent(ResponseHeadersEnd.class, responseHeadersStartDelay);
+  }
+
+  @Test public void cacheMiss() throws IOException {
+    enableCache();
+
+    server.enqueue(new MockResponse()
+        .setBody("abc"));
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response = call.execute();
+    assertThat(response.code()).isEqualTo(200);
+    assertThat(response.body().string()).isEqualTo("abc");
+    response.body().close();
+
+    assertThat(listener.recordedEventTypes()).containsExactly("CallStart",
+        "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
+        "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
+        "RequestHeadersEnd", "CacheMiss", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
+        "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
+  }
+
+  @Test public void cacheFailed() throws IOException {
+    enableCache();
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .cacheControl(CacheControl.FORCE_CACHE)
+        .build());
+    Response response = call.execute();
+    assertThat(response.code()).isEqualTo(504);
+    response.close();
+
+    assertThat(listener.recordedEventTypes()).containsExactly("CallStart", "CacheFailure", "CallEnd");
+  }
+
+  @Test public void cacheHit() throws IOException {
+    enableCache();
+
+    server.enqueue(new MockResponse().setBody("abc").addHeader("cache-control: public, max-age=300"));
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response = call.execute();
+    assertThat(response.code()).isEqualTo(200);
+    assertThat(response.body().string()).isEqualTo("abc");
+    response.body().close();
+
+    listener.clearAllEvents();
+
+    call = call.clone();
+    response = call.execute();
+    assertThat(response.code()).isEqualTo(200);
+    assertThat(response.body().string()).isEqualTo("abc");
+    response.body().close();
+
+    assertThat(listener.recordedEventTypes()).containsExactly("CallStart", "CacheHit", "CallEnd");
+  }
+
+  @NotNull private Cache enableCache() throws IOException {
+    cache = makeCache();
+    client = client.newBuilder().cache(cache).build();
+    return cache;
+  }
+
+  @NotNull private Cache makeCache() throws IOException {
+    File cacheDir = File.createTempFile("cache-", ".dir");
+    cacheDir.delete();
+    return new Cache(cacheDir, 1024 * 1024);
   }
 }

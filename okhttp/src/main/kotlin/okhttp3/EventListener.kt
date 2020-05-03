@@ -422,6 +422,28 @@ abstract class EventListener {
   ) {
   }
 
+  /**
+   * Invoked when a call fails due to cache rules. e.g. onlyIfCached and no cache entry.
+   */
+  open fun cacheFailure(call: Call, response: Response) {
+  }
+
+  /**
+   * Invoked when a result is served from the cache. n.b The response should be used
+   * to determine exactly how the cache came to be used, e.g. with a conditional cache response
+   * from the network.
+   */
+  open fun cacheMiss(call: Call, response: Response) {
+  }
+
+  /**
+   * Invoked when a response is served from the network. n.b The response should be used
+   * to determine exactly how the cache came to be used, e.g. with a conditional cache response
+   * from the network.
+   */
+  open fun cacheHit(call: Call, response: Response) {
+  }
+
   interface Factory {
     /**
      * Creates an instance of the [EventListener] for a particular [Call]. The returned
