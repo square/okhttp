@@ -72,9 +72,8 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
           .sentRequestAtMillis(-1L)
           .receivedResponseAtMillis(System.currentTimeMillis())
           .build().also {
-            if (cache != null) {
-              listener.cacheFailure(call, it)
-            }
+            // unconditionally log a cache related failure
+            listener.cacheFailure(call, it)
           }
     }
 
