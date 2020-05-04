@@ -729,30 +729,30 @@ open class OkHttpClient internal constructor(
       this.socketFactory = socketFactory
     }
 
-    /**
-     * Sets the socket factory used to secure HTTPS connections. If unset, the system default will
-     * be used.
-     *
-     * @deprecated [SSLSocketFactory] does not expose its [X509TrustManager], which is a field that
-     *     OkHttp needs to build a clean certificate chain. This method instead must use reflection
-     *     to extract the trust manager. Applications should prefer to call
-     *     `sslSocketFactory(SSLSocketFactory, X509TrustManager)`, which avoids such reflection.
-     */
-    @Deprecated(
-        message = "Use the sslSocketFactory overload that accepts a X509TrustManager.",
-        level = DeprecationLevel.ERROR
-    )
-    fun sslSocketFactory(sslSocketFactory: SSLSocketFactory) = apply {
-      if (sslSocketFactory != this.sslSocketFactoryOrNull) {
-        this.routeDatabase = null
-      }
+      /**
+       * Sets the socket factory used to secure HTTPS connections. If unset, the system default will
+       * be used.
+       *
+       * @deprecated [SSLSocketFactory] does not expose its [X509TrustManager], which is a field that
+       *     OkHttp needs to build a clean certificate chain. This method instead must use reflection
+       *     to extract the trust manager. Applications should prefer to call
+       *     `sslSocketFactory(SSLSocketFactory, X509TrustManager)`, which avoids such reflection.
+       */
+      @Deprecated(
+          message = "Use the sslSocketFactory overload that accepts a X509TrustManager.",
+          level = DeprecationLevel.ERROR
+      )
+      fun sslSocketFactory(sslSocketFactory: SSLSocketFactory) = apply {
+        if (sslSocketFactory != this.sslSocketFactoryOrNull) {
+          this.routeDatabase = null
+        }
 
-      this.sslSocketFactoryOrNull = sslSocketFactory
-      this.x509TrustManagerOrNull = Platform.get().trustManager(sslSocketFactory) ?: throw IllegalStateException(
-          "Unable to extract the trust manager on ${Platform.get()}, " +
-              "sslSocketFactory is ${sslSocketFactory.javaClass}")
-      this.certificateChainCleaner = Platform.get().buildCertificateChainCleaner(x509TrustManagerOrNull!!)
-    }
+        this.sslSocketFactoryOrNull = sslSocketFactory
+        this.x509TrustManagerOrNull = Platform.get().trustManager(sslSocketFactory) ?: throw IllegalStateException(
+            "Unable to extract the trust manager on ${Platform.get()}, " +
+                "sslSocketFactory is ${sslSocketFactory.javaClass}")
+        this.certificateChainCleaner = Platform.get().buildCertificateChainCleaner(x509TrustManagerOrNull!!)
+      }
 
     /**
      * Sets the socket factory and trust manager used to secure HTTPS connections. If unset, the
