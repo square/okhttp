@@ -81,9 +81,7 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
       return cacheResponse!!.newBuilder()
           .cacheResponse(stripBody(cacheResponse))
           .build().also {
-            if (cache != null) {
-              listener.cacheHit(call, it)
-            }
+            listener.cacheHit(call, it)
           }
     }
 
