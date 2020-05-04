@@ -430,7 +430,7 @@ abstract class EventListener {
   }
 
   /**
-   * Invoked when a result is served from the cache. The Response is provided since their may
+   * Invoked when a result is served from the cache. The Response is provided since there may
    * not be the normal event sequences received.
    *
    * Events will only be received when a Cache is configured for the client.
