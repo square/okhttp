@@ -72,8 +72,7 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
           .sentRequestAtMillis(-1L)
           .receivedResponseAtMillis(System.currentTimeMillis())
           .build().also {
-            // unconditionally log a cache related failure
-            listener.cacheFailure(call, it)
+            listener.satisfactionFailure(call, it)
           }
     }
 
@@ -86,6 +85,12 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
               listener.cacheHit(call, it)
             }
           }
+    }
+
+    if (cacheResponse != null) {
+      listener.cacheConditionalHit(call, cacheResponse)
+    } else if (cache != null) {
+      listener.cacheMiss(call)
     }
 
     var networkResponse: Response? = null
@@ -133,7 +138,10 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
         // Offer this request to the cache.
         val cacheRequest = cache.put(response)
         return cacheWritingResponse(cacheRequest, response).also {
-          listener.cacheMiss(call, it)
+          if (cacheResponse != null) {
+            // This will log a conditional cache miss only.
+            listener.cacheMiss(call)
+          }
         }
       }
 
@@ -146,11 +154,7 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
       }
     }
 
-    return response.also {
-      if (cache != null) {
-        listener.cacheMiss(call, response)
-      }
-    }
+    return response
   }
 
   /**

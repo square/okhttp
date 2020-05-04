@@ -241,22 +241,28 @@ class ClientRuleEventListener(
     delegate.canceled(call)
   }
 
-  override fun cacheFailure(call: Call, response: Response) {
-    logWithTime("cacheFailure")
+  override fun satisfactionFailure(call: Call, response: Response) {
+    logWithTime("satisfactionFailure")
 
-    delegate.cacheFailure(call, response)
+    delegate.satisfactionFailure(call, response)
   }
 
-  override fun cacheMiss(call: Call, response: Response) {
+  override fun cacheMiss(call: Call) {
     logWithTime("cacheMiss")
 
-    delegate.cacheMiss(call, response)
+    delegate.cacheMiss(call)
   }
 
   override fun cacheHit(call: Call, response: Response) {
     logWithTime("cacheHit")
 
     delegate.cacheHit(call, response)
+  }
+
+  override fun cacheConditionalHit(call: Call, response: Response) {
+    logWithTime("cacheConditionalHit")
+
+    delegate.cacheConditionalHit(call, response)
   }
 
   private fun logWithTime(message: String) {

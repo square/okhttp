@@ -66,7 +66,6 @@ import org.hamcrest.BaseMatcher;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
-import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -1464,10 +1463,10 @@ public final class EventListenerTest {
     assertThat(response.body().string()).isEqualTo("abc");
     response.close();
 
-    assertThat(listener.recordedEventTypes()).containsExactly("CallStart",
+    assertThat(listener.recordedEventTypes()).containsExactly("CallStart", "CacheMiss",
         "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
         "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
-        "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "CacheMiss",
+        "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd",
         "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
   }
 
@@ -1497,13 +1496,13 @@ public final class EventListenerTest {
     assertThat(response.body().string()).isEqualTo("abc");
     response.close();
 
-    assertThat(listener.recordedEventTypes()).containsExactly("CallStart",
+    assertThat(listener.recordedEventTypes()).containsExactly("CallStart", "CacheConditionalHit",
         "ConnectionAcquired", "RequestHeadersStart",
         "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd",
         "ResponseBodyStart", "ResponseBodyEnd", "CacheHit", "ConnectionReleased", "CallEnd");
   }
 
-  @Test public void cacheFailed() throws IOException {
+  @Test public void satisfactionFailure() throws IOException {
     enableCache();
 
     Call call = client.newCall(new Request.Builder()
@@ -1514,7 +1513,7 @@ public final class EventListenerTest {
     assertThat(response.code()).isEqualTo(504);
     response.close();
 
-    assertThat(listener.recordedEventTypes()).containsExactly("CallStart", "CacheFailure", "CallEnd");
+    assertThat(listener.recordedEventTypes()).containsExactly("CallStart", "SatisfactionFailure", "CallEnd");
   }
 
   @Test public void cacheHit() throws IOException {
@@ -1541,13 +1540,13 @@ public final class EventListenerTest {
     assertThat(listener.recordedEventTypes()).containsExactly("CallStart", "CacheHit", "CallEnd");
   }
 
-  @NotNull private Cache enableCache() throws IOException {
+  private Cache enableCache() throws IOException {
     cache = makeCache();
     client = client.newBuilder().cache(cache).build();
     return cache;
   }
 
-  @NotNull private Cache makeCache() throws IOException {
+  private Cache makeCache() throws IOException {
     File cacheDir = File.createTempFile("cache-", ".dir");
     cacheDir.delete();
     return new Cache(cacheDir, 1024 * 1024);
