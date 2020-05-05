@@ -16,7 +16,7 @@ server behaviour when ambiguous.
       .build()
 ```
 
-## Event Listener
+## EventListener events 
 
 Cache Events are exposed via the EventListener API.  Typical scenarios are
 
@@ -55,11 +55,39 @@ response only if the response code is HTTP_NOT_MODIFIED (304).
  - **CacheHit**
  - ConnectionReleased
  - CallEnd
+ 
+## Cache directory
+
+The cache directory must be exclusively owned by a single instance.
+
+Deleting the cache when it is no longer needed can be done.  However this may delete the purpose of the cache
+which is designed to persist between app restarts.
+
+```
+cache.delete()
+```
+ 
+## Pruning the Cache
+
+Pruning the entire Cache to clear space temporarily, can be done using evictAll.
+
+```
+cache.evictAll()
+```
+
+Removing individual items can be done using the urls iterator.
+
+```
+    val urlIterator = cache.urls()
+    while (urlIterator.hasNext()) {
+      if (urlIterator.next().startsWith("https://www.google.com/")) {
+        urlIterator.remove()
+      }
+    }
+```
 
 ### TODO
 
  - HTTP caching heuristics source?
  - why you need to read the entire response before an entry is stored
- - the cache must not compete with other processes for the same directory
- - pruning the cache manually
  - cache with offline only (accept stale) or offline preferred behaviour
