@@ -430,19 +430,19 @@ abstract class EventListener {
   }
 
   /**
-   * Invoked when a result is served from the cache. The Response is provided since there may
-   * not be the normal event sequences received.
+   * Invoked when a result is served from the cache. The Response provided is the top level
+   * Response and normal event sequences will not be received.
    *
-   * Events will only be received when a Cache is configured for the client.
+   * This event will only be received when a Cache is configured for the client.
    */
   open fun cacheHit(call: Call, response: Response) {
   }
 
   /**
    * Invoked when a response will be served from the network. The Response will be
-   * available via following events.
+   * available from normal event sequences.
    *
-   * Events will only be received when a Cache is configured for the client.
+   * This event will only be received when a Cache is configured for the client.
    */
   open fun cacheMiss(call: Call) {
   }
@@ -452,7 +452,7 @@ abstract class EventListener {
    * cached Response freshness. Will be followed by cacheHit or cacheMiss after the network
    * Response is available.
    *
-   * Events will only be received when a Cache is configured for the client.
+   * This event will only be received when a Cache is configured for the client.
    */
   open fun cacheConditionalHit(call: Call, cachedResponse: Response) {
   }

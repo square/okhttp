@@ -259,10 +259,10 @@ class ClientRuleEventListener(
     delegate.cacheHit(call, response)
   }
 
-  override fun cacheConditionalHit(call: Call, response: Response) {
+  override fun cacheConditionalHit(call: Call, cachedResponse: Response) {
     logWithTime("cacheConditionalHit")
 
-    delegate.cacheConditionalHit(call, response)
+    delegate.cacheConditionalHit(call, cachedResponse)
   }
 
   private fun logWithTime(message: String) {

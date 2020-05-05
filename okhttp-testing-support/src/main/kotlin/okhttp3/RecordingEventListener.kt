@@ -279,6 +279,6 @@ open class RecordingEventListener : EventListener() {
     response: Response
   ) = logEvent(CacheHit(System.nanoTime(), call))
 
-  override fun cacheConditionalHit(call: Call, response: Response) =
+  override fun cacheConditionalHit(call: Call, cachedResponse: Response) =
     logEvent(CacheConditionalHit(System.nanoTime(), call))
 }
