@@ -22,6 +22,9 @@ import java.net.Proxy
 import java.util.Deque
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.TimeUnit
+import okhttp3.CallEvent.CacheConditionalHit
+import okhttp3.CallEvent.CacheHit
+import okhttp3.CallEvent.CacheMiss
 import okhttp3.CallEvent.CallEnd
 import okhttp3.CallEvent.CallFailed
 import okhttp3.CallEvent.CallStart
@@ -45,6 +48,7 @@ import okhttp3.CallEvent.ResponseBodyStart
 import okhttp3.CallEvent.ResponseFailed
 import okhttp3.CallEvent.ResponseHeadersEnd
 import okhttp3.CallEvent.ResponseHeadersStart
+import okhttp3.CallEvent.SatisfactionFailure
 import okhttp3.CallEvent.SecureConnectEnd
 import okhttp3.CallEvent.SecureConnectStart
 import org.assertj.core.api.Assertions.assertThat
@@ -260,4 +264,21 @@ open class RecordingEventListener : EventListener() {
   override fun canceled(
     call: Call
   ) = logEvent(Canceled(System.nanoTime(), call))
+
+  override fun satisfactionFailure(
+    call: Call,
+    response: Response
+  ) = logEvent(SatisfactionFailure(System.nanoTime(), call))
+
+  override fun cacheMiss(
+    call: Call
+  ) = logEvent(CacheMiss(System.nanoTime(), call))
+
+  override fun cacheHit(
+    call: Call,
+    response: Response
+  ) = logEvent(CacheHit(System.nanoTime(), call))
+
+  override fun cacheConditionalHit(call: Call, cachedResponse: Response) =
+    logEvent(CacheConditionalHit(System.nanoTime(), call))
 }

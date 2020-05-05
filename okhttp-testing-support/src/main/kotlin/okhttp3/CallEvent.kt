@@ -204,4 +204,24 @@ sealed class CallEvent {
     override val call: Call,
     val ioe: IOException
   ) : CallEvent()
+
+  data class SatisfactionFailure(
+    override val timestampNs: Long,
+    override val call: Call
+  ) : CallEvent()
+
+  data class CacheHit(
+    override val timestampNs: Long,
+    override val call: Call
+  ) : CallEvent()
+
+  data class CacheMiss(
+    override val timestampNs: Long,
+    override val call: Call
+  ) : CallEvent()
+
+  data class CacheConditionalHit(
+    override val timestampNs: Long,
+    override val call: Call
+  ) : CallEvent()
 }
