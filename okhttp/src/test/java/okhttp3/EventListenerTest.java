@@ -78,6 +78,7 @@ import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.any;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
 
@@ -1500,6 +1501,40 @@ public final class EventListenerTest {
         "ConnectionAcquired", "RequestHeadersStart",
         "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd",
         "ResponseBodyStart", "ResponseBodyEnd", "CacheHit", "ConnectionReleased", "CallEnd");
+  }
+
+  @Test public void conditionalCacheMiss() throws IOException {
+    enableCache();
+
+    server.enqueue(new MockResponse()
+        .addHeader("ETag: v1")
+        .setBody("abc"));
+    server.enqueue(new MockResponse()
+        .setResponseCode(HttpURLConnection.HTTP_OK)
+        .addHeader("ETag: v2")
+        .setBody("abd"));
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+
+    Response response = call.execute();
+    assertThat(response.code()).isEqualTo(200);
+    response.close();
+
+    listener.clearAllEvents();
+
+    call = call.clone();
+
+    response = call.execute();
+    assertThat(response.code()).isEqualTo(200);
+    assertThat(response.body().string()).isEqualTo("abd");
+    response.close();
+
+    assertThat(listener.recordedEventTypes()).containsExactly("CallStart", "CacheConditionalHit",
+        "ConnectionAcquired", "RequestHeadersStart",
+        "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "CacheMiss",
+        "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
   }
 
   @Test public void satisfactionFailure() throws IOException {
