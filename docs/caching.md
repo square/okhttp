@@ -16,37 +16,49 @@ server behaviour when ambiguous.
       .build()
 ```
 
-### Event Listeners
+## Event Listener
 
 Cache Events are exposed via the EventListener API.  Typical scenarios are
 
- Cache Hit
+### Cache Hit
+
+In the ideal scenario, the cache can fulfill the request without any conditional call to the network.
+This will skip the normal events such as DNS, connecting to the network, and reading the response body.
+
  - CallStart
- - _CacheHit_
+ - **CacheHit**
  - CallEnd
  
-Cache Miss
+### Cache Miss
+
+Under a cache miss, the normal request events are seen, but an additional event shows the presence of the cache.
+
  - CallStart 
- - _CacheMiss_
+ - **CacheMiss**
  - ProxySelectStart
  - ... Standard Events ...
  - CallEnd
         
- Conditional Cache Hit
+### Conditional Cache Hit
+ 
+When cache flags, require checking the cache results are still valid, an early cacheConditionalHit event is
+received, followed by a cache hit or miss.  Critically in the cache hit scenario, the response body will be 0 bytes.
+
+The response will have non-null cacheResponse and networkResponse. The cacheResponse will be used as the top level
+response only if the response code is HTTP_NOT_MODIFIED (304).
  
  - CallStart
- - _CacheConditionalHit_
+ - **CacheConditionalHit**
  - ConnectionAcquired
  - ... Standard Events...
  - ResponseBodyEnd _(0 bytes)_
- - _CacheHit_
+ - **CacheHit**
  - ConnectionReleased
  - CallEnd
 
 ### TODO
 
  - HTTP caching heuristics source?
- - what it means if cacheResponse() and networkResponse() are both non-null (issue #4539)
  - why you need to read the entire response before an entry is stored
  - the cache must not compete with other processes for the same directory
  - pruning the cache manually
