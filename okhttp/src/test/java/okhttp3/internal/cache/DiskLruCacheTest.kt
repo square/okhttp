@@ -54,7 +54,7 @@ class DiskLruCacheTest(
   val tempDir = TemporaryFolder()
 
   @Rule @JvmField
-  val timeout = Timeout(60 * 1000)
+  val timeout = Timeout.seconds(60)
 
   companion object {
     @Parameters(name = "{0}") @JvmStatic
