@@ -18,12 +18,18 @@ server behaviour when ambiguous.
 
 ## EventListener events 
 
-Cache Events are exposed via the EventListener API.  Typical scenarios are
+Cache Events are exposed via the EventListener API.  Typical scenarios are below.
 
 ### Cache Hit
 
 In the ideal scenario, the cache can fulfill the request without any conditional call to the network.
 This will skip the normal events such as DNS, connecting to the network, and reading the response body.
+
+As recommended by the HTTP RFC, the max age of a document is defaulted to 10% of the 
+document's age at the time it was served based on "Last-Modified". Default expiration dates aren't used for URIs 
+containing a query.
+
+Warning about cached results are returned in the "Warning" header. 
 
  - CallStart
  - **CacheHit**
@@ -86,8 +92,12 @@ Removing individual items can be done using the urls iterator.
     }
 ```
 
-### TODO
+### Troubleshooting
 
- - HTTP caching heuristics source?
- - why you need to read the entire response before an entry is stored
- - cache with offline only (accept stale) or offline preferred behaviour
+1. Valid cacheable responses are not being cached
+
+Make sure you are reading responses fully, as unless they are read fully, cancelled or stalled Responses will not be cached.
+
+### Overriding normal cache behaviour
+
+See Cache documentation. https://square.github.io/okhttp/4.x/okhttp/okhttp3/-cache/
