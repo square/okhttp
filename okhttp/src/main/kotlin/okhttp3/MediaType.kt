@@ -19,6 +19,8 @@ import java.nio.charset.Charset
 import java.util.Locale
 import java.util.regex.Pattern
 
+val charsetRegex = "[a-zA-Z0-9-+.:_]+".toRegex()
+
 /**
  * An [RFC 2045][rfc_2045] Media Type, appropriate to describe the content type of an HTTP request
  * or response body.
@@ -52,8 +54,8 @@ class MediaType private constructor(
     return try {
       Charset.forName(charset).also {
         // avoid doing this on the happy path, but check for some class of mismatches
-        if (it.name().length != charset.length) {
-
+        if (it.name().length != charset.length && !charsetRegex.matches(charset)) {
+          return defaultValue
         }
       }
     } catch (_: IllegalArgumentException) {
