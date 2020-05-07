@@ -19,7 +19,7 @@ import java.nio.charset.Charset
 import java.util.Locale
 import java.util.regex.Pattern
 
-val charsetRegex = "[a-zA-Z0-9][a-zA-Z0-9-+.:_]*".toRegex()
+private val charsetRegex = "[a-zA-Z0-9][a-zA-Z0-9-+.:_]*".toRegex()
 
 /**
  * An [RFC 2045][rfc_2045] Media Type, appropriate to describe the content type of an HTTP request
