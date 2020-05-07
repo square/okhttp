@@ -35,7 +35,7 @@ import okhttp3.internal.authenticator.JavaNetAuthenticator
  * Prior to sending any CONNECT request OkHttp always calls the proxy authenticator so that it may
  * prepare preemptive authentication. OkHttp will call [authenticate] with a fake `HTTP/1.1 407
  * Proxy Authentication Required` response that has a `Proxy-Authenticate: OkHttp-Preemptive`
- * challenge. The proxy authenticator may return either either an authenticated request, or null to
+ * challenge. The proxy authenticator may return either an authenticated request, or null to
  * connect without authentication.
  *
  * ```
