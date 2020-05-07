@@ -37,6 +37,8 @@ containing a query.
 ### Cache Miss
 
 Under a cache miss the normal request events are seen but an additional event shows the presence of the cache.
+Cache Miss will be typical if the item has not been read from the network, is uncacheable, or is past it's 
+lifetime based on Response cache headers.
 
  - CallStart 
  - **CacheMiss**
