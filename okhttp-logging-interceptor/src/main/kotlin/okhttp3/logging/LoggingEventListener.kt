@@ -155,6 +155,22 @@ class LoggingEventListener private constructor(
     logWithTime("canceled")
   }
 
+  override fun satisfactionFailure(call: Call, response: Response) {
+    logWithTime("satisfactionFailure: $response")
+  }
+
+  override fun cacheHit(call: Call, response: Response) {
+    logWithTime("cacheHit: $response")
+  }
+
+  override fun cacheMiss(call: Call) {
+    logWithTime("cacheMiss")
+  }
+
+  override fun cacheConditionalHit(call: Call, cachedResponse: Response) {
+    logWithTime("cacheConditionalHit: $cachedResponse")
+  }
+
   private fun logWithTime(message: String) {
     val timeMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNs)
     logger.log("[$timeMs ms] $message")
