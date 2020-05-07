@@ -35,6 +35,7 @@ import org.hamcrest.Matcher
 import org.hamcrest.StringDescription
 import org.hamcrest.TypeSafeMatcher
 import org.junit.Assert
+import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeThat
 import org.junit.Assume.assumeTrue
 import org.junit.AssumptionViolatedException
@@ -333,6 +334,10 @@ open class PlatformRule @JvmOverloads constructor(
 
   fun assumeJettyBootEnabled() {
     assumeTrue("ALPN Boot not enabled", isAlpnBootEnabled())
+  }
+
+  fun assumeNotAndroid() {
+    assumeFalse("Android Platform", PlatformVersion.isAndroid)
   }
 
   companion object {

@@ -17,13 +17,20 @@ package okhttp3.testing
 
 object PlatformVersion {
   val majorVersion: Int by lazy {
-    when (val jvmSpecVersion = getJvmSpecVersion()) {
-      "1.8" -> 8
-      else -> jvmSpecVersion.toInt()
+    if (isAndroid) {
+      throw UnsupportedOperationException("Platform major version unsupported for Android")
+    } else {
+      when (val jvmSpecVersion = getJvmSpecVersion()) {
+        "1.8" -> 8
+        else -> jvmSpecVersion!!.toInt()
+      }
     }
   }
 
-  fun getJvmSpecVersion(): String {
-    return System.getProperty("java.specification.version", "unknown")
+  fun getJvmSpecVersion(): String? = when {
+    isAndroid -> throw UnsupportedOperationException("Platform major version unsupported for Android")
+    else -> System.getProperty("java.specification.version", "unknown")
   }
+
+  val isAndroid = System.getProperty("java.vm.name") == "Dalvik"
 }
