@@ -53,8 +53,8 @@ class MediaType private constructor(
     val charset = parameter("charset") ?: return defaultValue
     return try {
       Charset.forName(charset).also {
-        // avoid doing this on the happy path
         if (it.name() != charset && !charsetRegex.matches(charset)) {
+          // Check for valid charset name only if we didn't find exact match.
           return defaultValue
         }
       }
