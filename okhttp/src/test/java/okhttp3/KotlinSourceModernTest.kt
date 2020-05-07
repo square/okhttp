@@ -119,14 +119,6 @@ class KotlinSourceModernTest {
   @Test @Ignore
   fun cache() {
     val cache = Cache(File("/cache/"), Integer.MAX_VALUE.toLong())
-
-    val urlIterator = cache.urls()
-    while (urlIterator.hasNext()) {
-      if (urlIterator.next() == "https://www.google.com") {
-        urlIterator.remove()
-      }
-    }
-
     cache.initialize()
     cache.delete()
     cache.evictAll()
