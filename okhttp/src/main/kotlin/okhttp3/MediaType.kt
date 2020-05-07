@@ -50,7 +50,12 @@ class MediaType private constructor(
   fun charset(defaultValue: Charset? = null): Charset? {
     val charset = parameter("charset") ?: return defaultValue
     return try {
-      Charset.forName(charset)
+      Charset.forName(charset).also {
+        // avoid doing this on the happy path, but check for some class of mismatches
+        if (it.name().length != charset.length) {
+
+        }
+      }
     } catch (_: IllegalArgumentException) {
       defaultValue // This charset is invalid or unsupported. Give up.
     }
