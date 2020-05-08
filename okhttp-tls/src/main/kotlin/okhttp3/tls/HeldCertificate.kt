@@ -491,7 +491,7 @@ class HeldCertificate(
 
     private fun decode(certificatePem: String, pkcs8Base64Text: String): HeldCertificate {
       val certificate = try {
-        decodePem(certificatePem)
+        decodeCertificate(certificatePem)
       } catch (e: GeneralSecurityException) {
         throw IllegalArgumentException("failed to decode certificate", e)
       }
@@ -516,7 +516,25 @@ class HeldCertificate(
       return HeldCertificate(keyPair, certificate)
     }
 
-    private fun decodePem(pem: String): X509Certificate {
+    /**
+     * Decodes a multiline string that contains a [certificate][certificatePem] which is
+     * [PEM-encoded][rfc_7468]. A typical input string looks like this:
+     *
+     * ```
+     * -----BEGIN CERTIFICATE-----
+     * MIIBYTCCAQegAwIBAgIBKjAKBggqhkjOPQQDAjApMRQwEgYDVQQLEwtlbmdpbmVl
+     * cmluZzERMA8GA1UEAxMIY2FzaC5hcHAwHhcNNzAwMTAxMDAwMDA1WhcNNzAwMTAx
+     * MDAwMDEwWjApMRQwEgYDVQQLEwtlbmdpbmVlcmluZzERMA8GA1UEAxMIY2FzaC5h
+     * cHAwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAASda8ChkQXxGELnrV/oBnIAx3dD
+     * ocUOJfdz4pOJTP6dVQB9U3UBiW5uSX/MoOD0LL5zG3bVyL3Y6pDwKuYvfLNhoyAw
+     * HjAcBgNVHREBAf8EEjAQhwQBAQEBgghjYXNoLmFwcDAKBggqhkjOPQQDAgNIADBF
+     * AiAyHHg1N6YDDQiY920+cnI5XSZwEGhAtb9PYWO8bLmkcQIhAI2CfEZf3V/obmdT
+     * yyaoEufLKVXhrTQhRfodTeigi4RX
+     * -----END CERTIFICATE-----
+     * ```
+     */
+    @JvmStatic
+    fun decodeCertificate(pem: String): X509Certificate {
       val certificateFactory = CertificateFactory.getInstance("X.509")
       val certificates = certificateFactory
           .generateCertificates(Buffer().writeUtf8(pem).inputStream())
