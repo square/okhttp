@@ -17,9 +17,10 @@ package okhttp3.recipes.kt
 
 import java.io.IOException
 import okhttp3.OkHttpClient
-import okhttp3.Request
+import okhttp3.Request.Builder
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate.Companion.decodeCertificate
+import java.security.cert.X509Certificate
 
 class CustomTrust {
   // PEM files for root certificates of Comodo and Entrust. These two CAs are sufficient to view
@@ -64,6 +65,7 @@ class CustomTrust {
     
     """.trimIndent()
 
+  // CN=Entrust Root Certification Authority, OU="(c) 2006 Entrust, Inc.", OU=www.entrust.net/CPS is incorporated by reference, O="Entrust, Inc.", C=US
   var entrustRootCertificateAuthority = """
     -----BEGIN CERTIFICATE-----
     MIIEkTCCA3mgAwIBAgIERWtQVDANBgkqhkiG9w0BAQUFADCBsDELMAkGA1UEBhMC
@@ -95,6 +97,7 @@ class CustomTrust {
     
     """.trimIndent()
 
+  // CN=Let's Encrypt Authority X3, O=Let's Encrypt, C=US
   var letsEncryptCertificateAuthority = """
     -----BEGIN CERTIFICATE-----
     MIIEkjCCA3qgAwIBAgIQCgFBQgAAAVOFc2oLheynCDANBgkqhkiG9w0BAQsFADA/
@@ -140,7 +143,8 @@ class CustomTrust {
       HandshakeCertificates.Builder()
           .addTrustedCertificate(letsEncryptCertificate)
           .addTrustedCertificate(entrustRootCertificate)
-          .addTrustedCertificate(comodoRsaCertification) // Uncomment if standard certificates are also required.
+          .addTrustedCertificate(comodoRsaCertification)
+          // Uncomment if standard certificates are also required.
           // .addPlatformTrustedCertificates()
           .build()
     client = OkHttpClient.Builder()
@@ -149,18 +153,27 @@ class CustomTrust {
   }
 
   fun run() {
-    val request = Request.Builder()
-        .url("https://publicobject.com/helloworld.txt")
-        .build()
+    showUrl("https://squareup.com/robots.txt")
+    showUrl("https://publicobject.com/helloworld.txt")
+  }
+
+  private fun showUrl(url: String) {
+    val request = Builder().url(url).build()
     client.newCall(request)
         .execute()
         .use { response ->
-          if (!response.isSuccessful) throw IOException("Unexpected code $response")
-          val responseHeaders = response.headers
-          for (i in 0 until responseHeaders.size) {
-            println(responseHeaders.name(i) + ": " + responseHeaders.value(i))
+          if (!response.isSuccessful) {
+            val responseHeaders = response.headers
+            for (i in 0 until responseHeaders.size) {
+              println(responseHeaders.name(i) + ": " + responseHeaders.value(i))
+            }
+            throw IOException("Unexpected code $response")
           }
           println(response.body!!.string())
+
+          for (peerCertificate in response.handshake?.peerCertificates.orEmpty()) {
+            println((peerCertificate as X509Certificate).subjectDN)
+          }
         }
   }
 }
