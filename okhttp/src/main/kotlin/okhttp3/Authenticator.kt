@@ -97,8 +97,8 @@ import okhttp3.internal.authenticator.JavaNetAuthenticator
  * ## Authentication Retries
  *
  * If your authentication may be flaky and requires retries you should apply some policy
- * to limit the retries by the class or errors and number of attempts.  To get the number of
- * attempts to the current point use the following function.
+ * to limit the retries by the class of errors and number of attempts.  To get the number of
+ * attempts to the current point use this function.
  *
  * ```
  * private int responseCount(Response response) {
