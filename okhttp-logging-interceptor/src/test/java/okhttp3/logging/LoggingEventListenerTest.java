@@ -237,9 +237,9 @@ public final class LoggingEventListenerTest {
         .assertLogMatch("connectStart: " + url.host() + "/.+ DIRECT")
         .assertLogMatch("secureConnectStart")
         .assertLogMatch(
-            "connectFailed: null javax\\.net\\.ssl\\.(?:SSLProtocolException|SSLHandshakeException): (?:Unexpected handshake message: client_hello|Handshake message sequence violation, 1|Read error).*")
+            "connectFailed: null javax\\.net\\.ssl\\.(?:SSLProtocolException|SSLHandshakeException): (?:Unexpected handshake message: client_hello|Handshake message sequence violation, 1|Read error|Handshake failed).*")
         .assertLogMatch(
-            "callFailed: javax\\.net\\.ssl\\.(?:SSLProtocolException|SSLHandshakeException): (?:Unexpected handshake message: client_hello|Handshake message sequence violation, 1|Read error).*")
+            "callFailed: javax\\.net\\.ssl\\.(?:SSLProtocolException|SSLHandshakeException): (?:Unexpected handshake message: client_hello|Handshake message sequence violation, 1|Read error|Handshake failed).*")
         .assertNoMoreLogs();
   }
 
