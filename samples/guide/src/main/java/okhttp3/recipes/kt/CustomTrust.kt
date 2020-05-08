@@ -16,11 +16,11 @@
 package okhttp3.recipes.kt
 
 import java.io.IOException
+import java.security.cert.X509Certificate
 import okhttp3.OkHttpClient
 import okhttp3.Request.Builder
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate.Companion.decodeCertificate
-import java.security.cert.X509Certificate
 
 class CustomTrust {
   // PEM files for root certificates of Comodo and Entrust. These two CAs are sufficient to view
