@@ -15,11 +15,11 @@
  */
 package okhttp3.recipes.kt
 
+import java.io.IOException
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate.Companion.decodeCertificate
-import java.io.IOException
 
 class CustomTrust {
   // PEM files for root certificates of Comodo and Entrust. These two CAs are sufficient to view
@@ -141,7 +141,7 @@ class CustomTrust {
           .addTrustedCertificate(letsEncryptCertificate)
           .addTrustedCertificate(entrustRootCertificate)
           .addTrustedCertificate(comodoRsaCertification) // Uncomment if standard certificates are also required.
-          //.addPlatformTrustedCertificates()
+          // .addPlatformTrustedCertificates()
           .build()
     client = OkHttpClient.Builder()
         .sslSocketFactory(certificates.sslSocketFactory(), certificates.trustManager)

@@ -141,7 +141,6 @@ public final class CustomTrust {
         //.addPlatformTrustedCertificates()
         .build();
 
-
     client = new OkHttpClient.Builder()
             .sslSocketFactory(certificates.sslSocketFactory(), certificates.trustManager())
             .build();
