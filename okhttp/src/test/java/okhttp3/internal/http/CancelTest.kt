@@ -225,17 +225,15 @@ class CancelTest(mode: Pair<CancelMode, ConnectionType>) {
     responseBody.close()
     assertEquals(if (connectionType == H2) 1 else 0, client.connectionPool.connectionCount())
 
-    val expectedEvents = mutableListOf<String>().apply {
-      addAll(listOf("CallStart", "ConnectStart", "ConnectEnd", "ConnectionAcquired"))
-      if (cancelMode == CANCEL) {
-        add("Canceled")
-      }
-      addAll(listOf("ResponseFailed", "ConnectionReleased"))
-    }
-
     val events = listener.eventSequence.filter { isConnectionEvent(it) }.map { it.name }
     listener.clearAllEvents()
-    assertThat(events).isEqualTo(expectedEvents)
+
+    assertThat(events).startsWith("CallStart", "ConnectStart", "ConnectEnd", "ConnectionAcquired")
+    if (cancelMode == CANCEL) {
+      assertThat(events).contains("Canceled")
+    }
+    assertThat(events).contains("ResponseFailed")
+    assertThat(events).endsWith("ConnectionReleased")
 
     val call2 = client.newCall(Request.Builder().url(server.url("/")).build())
     call2.execute().use {
