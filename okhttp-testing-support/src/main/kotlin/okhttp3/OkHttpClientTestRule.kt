@@ -136,13 +136,13 @@ class OkHttpClientTestRule : TestRule {
   }
 
   private fun ensureAllTaskQueuesIdle() {
-    val entryTime = System.currentTimeMillis()
+    val entryTime = System.nanoTime()
 
     for (queue in TaskRunner.INSTANCE.activeQueues()) {
       // We wait at most 1 second, so we don't ever turn multiple lost threads into
       // a test timeout failure.
-      val waitTime = (System.currentTimeMillis() - entryTime) + 1_000L
-      if (!queue.idleLatch().await(waitTime, TimeUnit.MILLISECONDS)) {
+      val waitTime = (entryTime + 1_000_000_000L - System.nanoTime())
+      if (!queue.idleLatch().await(waitTime, TimeUnit.NANOSECONDS)) {
         TaskRunner.INSTANCE.cancelAll()
         fail("Queue still active after 1000 ms")
       }
@@ -159,7 +159,8 @@ class OkHttpClientTestRule : TestRule {
         Thread.setDefaultUncaughtExceptionHandler { _, throwable ->
           initUncaughtException(throwable)
         }
-        var failed = false
+        val taskQueuesWereIdle = TaskRunner.INSTANCE.activeQueues().isEmpty()
+        var failure: Throwable? = null
         try {
           applyLogger {
             addHandler(testLogHandler)
@@ -172,7 +173,7 @@ class OkHttpClientTestRule : TestRule {
           }
           logEventsIfFlaky(description)
         } catch (t: Throwable) {
-          failed = true
+          failure = t
           logEvents()
           throw t
         } finally {
@@ -186,20 +187,29 @@ class OkHttpClientTestRule : TestRule {
             ensureAllConnectionsReleased()
             releaseClient()
           } catch (ae: AssertionError) {
-            if (!failed) {
-              // Prefer keeping the inflight failure, but don't release this in-use client.
-              failed = true
-              throw ae
+            // Prefer keeping the inflight failure, but don't release this in-use client.
+            if (failure != null) {
+              failure.addSuppressed(ae)
+            } else {
+              failure = ae
             }
-          } finally {
-            try {
+          }
+
+          try {
+            if (taskQueuesWereIdle) {
               ensureAllTaskQueuesIdle()
-            } catch (ae: AssertionError) {
-              if (!failed) {
-                // Prefer keeping the inflight failure.
-                throw ae
-              }
             }
+          } catch (ae: AssertionError) {
+            // Prefer keeping the inflight failure, but don't release this in-use client.
+            if (failure != null) {
+              failure.addSuppressed(ae)
+            } else {
+              failure = ae
+            }
+          }
+
+          if (failure != null) {
+            throw failure
           }
         }
       }
