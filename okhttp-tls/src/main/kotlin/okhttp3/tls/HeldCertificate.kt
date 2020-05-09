@@ -24,8 +24,6 @@ import java.security.PrivateKey
 import java.security.PublicKey
 import java.security.SecureRandom
 import java.security.Security
-import java.security.cert.CertificateFactory
-import java.security.cert.CertificateParsingException
 import java.security.cert.X509Certificate
 import java.security.interfaces.ECPublicKey
 import java.security.interfaces.RSAPrivateKey
@@ -36,7 +34,6 @@ import java.util.UUID
 import java.util.concurrent.TimeUnit
 import javax.security.auth.x500.X500Principal
 import okhttp3.internal.canParseAsIpAddress
-import okio.Buffer
 import okio.ByteString
 import okio.ByteString.Companion.decodeBase64
 import okio.ByteString.Companion.toByteString
@@ -120,6 +117,7 @@ import org.bouncycastle.x509.X509V3CertificateGenerator
  * a chain of certificates. The server uses a set of trusted root certificates to authenticate the
  * client. Subject alternative names are not used for client authentication.
  */
+@Suppress("DEPRECATION")
 class HeldCertificate(
   @get:JvmName("keyPair") val keyPair: KeyPair,
   @get:JvmName("certificate") val certificate: X509Certificate
@@ -144,13 +142,7 @@ class HeldCertificate(
    *
    * [rfc_7468]: https://tools.ietf.org/html/rfc7468
    */
-  fun certificatePem(): String {
-    return buildString {
-      append("-----BEGIN CERTIFICATE-----\n")
-      encodeBase64Lines(certificate.encoded.toByteString())
-      append("-----END CERTIFICATE-----\n")
-    }
-  }
+  fun certificatePem(): String = certificate.certificatePem()
 
   /**
    * Returns the RSA private key encoded in [PKCS #8][rfc_5208] [PEM format][rfc_7468].
@@ -184,13 +176,6 @@ class HeldCertificate(
   private fun pkcs1Bytes(): ByteString {
     val privateKeyInfo = PrivateKeyInfo.getInstance(keyPair.private.encoded)
     return privateKeyInfo.parsePrivateKey().toASN1Primitive().encoded.toByteString()
-  }
-
-  private fun StringBuilder.encodeBase64Lines(data: ByteString) {
-    val base64 = data.base64()
-    for (i in 0 until base64.length step 64) {
-      append(base64, i, minOf(i + 64, base64.length)).append('\n')
-    }
   }
 
   /** Build a held certificate with reasonable defaults. */
@@ -490,49 +475,31 @@ class HeldCertificate(
     }
 
     private fun decode(certificatePem: String, pkcs8Base64Text: String): HeldCertificate {
-      val certificate = try {
-        decodePem(certificatePem)
-      } catch (e: GeneralSecurityException) {
-        throw IllegalArgumentException("failed to decode certificate", e)
+      val certificate = certificatePem.decodeCertificatePem()
+
+      val pkcs8Bytes = pkcs8Base64Text.decodeBase64()
+          ?: throw IllegalArgumentException("failed to decode private key")
+
+      // The private key doesn't tell us its type but it's okay because the certificate knows!
+      val keyType = when (certificate.publicKey) {
+        is ECPublicKey -> "EC"
+        is RSAPublicKey -> "RSA"
+        else -> throw IllegalArgumentException("unexpected key type: ${certificate.publicKey}")
       }
 
-      val privateKey = try {
-        val pkcs8Bytes = pkcs8Base64Text.decodeBase64()
-            ?: throw IllegalArgumentException("failed to decode private key")
-
-        // The private key doesn't tell us its type but it's okay because the certificate knows!
-        val keyType = when (certificate.publicKey) {
-          is ECPublicKey -> "EC"
-          is RSAPublicKey -> "RSA"
-          else -> throw IllegalArgumentException("unexpected key type: ${certificate.publicKey}")
-        }
-
-        decodePkcs8(pkcs8Bytes, keyType)
-      } catch (e: GeneralSecurityException) {
-        throw IllegalArgumentException("failed to decode private key", e)
-      }
+      val privateKey = decodePkcs8(pkcs8Bytes, keyType)
 
       val keyPair = KeyPair(certificate.publicKey, privateKey)
       return HeldCertificate(keyPair, certificate)
     }
 
-    private fun decodePem(pem: String): X509Certificate {
-      val certificateFactory = CertificateFactory.getInstance("X.509")
-      val certificates = certificateFactory
-          .generateCertificates(Buffer().writeUtf8(pem).inputStream())
-
-      try {
-        return certificates.single() as X509Certificate
-      } catch (nsee: NoSuchElementException) {
-        throw CertificateParsingException(nsee)
-      } catch (iae: IllegalArgumentException) {
-        throw CertificateParsingException(iae)
-      }
-    }
-
     private fun decodePkcs8(data: ByteString, keyAlgorithm: String): PrivateKey {
-      val keyFactory = KeyFactory.getInstance(keyAlgorithm)
-      return keyFactory.generatePrivate(PKCS8EncodedKeySpec(data.toByteArray()))
+      try {
+        val keyFactory = KeyFactory.getInstance(keyAlgorithm)
+        return keyFactory.generatePrivate(PKCS8EncodedKeySpec(data.toByteArray()))
+      } catch (e: GeneralSecurityException) {
+        throw IllegalArgumentException("failed to decode private key", e)
+      }
     }
   }
 }
