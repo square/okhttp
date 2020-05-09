@@ -13,12 +13,12 @@ commands:
         type: string
         default: ""
     steps:
-      - restore_cache:
-          keys:
-            # restore compilation and wrapper from previous branch/job build or master
-            - v4-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}
-            - v4-master-compile
-
+#       - restore_cache:
+#           keys:
+#             # restore compilation and wrapper from previous branch/job build or master
+#             - v4-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}
+#             - v4-master-compile
+# 
       - run:
           name: Run tests
           command: ./gradlew --build-cache --parallel --continue test
