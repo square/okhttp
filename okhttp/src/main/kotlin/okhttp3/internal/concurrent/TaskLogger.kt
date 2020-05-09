@@ -57,9 +57,7 @@ internal inline fun <T> logElapsed(
 }
 
 private fun log(task: Task, queue: TaskQueue, message: String) {
-  if (TaskRunner.logger.isLoggable(Level.FINE)) {
-    TaskRunner.logger.fine("${queue.name} ${String.format("%-22s", message)}: ${task.name}")
-  }
+  TaskRunner.logger.fine("${queue.name} ${String.format("%-22s", message)}: ${task.name}")
 }
 
 /**
