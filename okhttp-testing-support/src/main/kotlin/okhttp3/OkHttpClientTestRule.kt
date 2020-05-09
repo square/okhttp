@@ -188,15 +188,17 @@ class OkHttpClientTestRule : TestRule {
           } catch (ae: AssertionError) {
             if (!failed) {
               // Prefer keeping the inflight failure, but don't release this in-use client.
+              failed = true
               throw ae
             }
-          }
-          try {
-            ensureAllTaskQueuesIdle()
-          } catch (ae: AssertionError) {
-            if (!failed) {
-              // Prefer keeping the inflight failure.
-              throw ae
+          } finally {
+            try {
+              ensureAllTaskQueuesIdle()
+            } catch (ae: AssertionError) {
+              if (!failed) {
+                // Prefer keeping the inflight failure.
+                throw ae
+              }
             }
           }
         }
