@@ -136,8 +136,13 @@ class OkHttpClientTestRule : TestRule {
   }
 
   private fun ensureAllTaskQueuesIdle() {
+    val entryTime = System.currentTimeMillis()
+
     for (queue in TaskRunner.INSTANCE.activeQueues()) {
-      if (!queue.idleLatch().await(1_000L, TimeUnit.MILLISECONDS)) {
+      // We wait at most 1 second, so we don't ever turn multiple lost threads into
+      // a test timeout failure.
+      val waitTime = (System.currentTimeMillis() - entryTime) + 1_000L
+      if (!queue.idleLatch().await(waitTime, TimeUnit.MILLISECONDS)) {
         TaskRunner.INSTANCE.cancelAll()
         fail("Queue still active after 1000 ms")
       }
@@ -154,6 +159,7 @@ class OkHttpClientTestRule : TestRule {
         Thread.setDefaultUncaughtExceptionHandler { _, throwable ->
           initUncaughtException(throwable)
         }
+        var failed = false
         try {
           applyLogger {
             addHandler(testLogHandler)
@@ -166,6 +172,7 @@ class OkHttpClientTestRule : TestRule {
           }
           logEventsIfFlaky(description)
         } catch (t: Throwable) {
+          failed = true
           logEvents()
           throw t
         } finally {
@@ -175,9 +182,23 @@ class OkHttpClientTestRule : TestRule {
           }
 
           Thread.setDefaultUncaughtExceptionHandler(defaultUncaughtExceptionHandler)
-          ensureAllConnectionsReleased()
-          releaseClient()
-          ensureAllTaskQueuesIdle()
+          try {
+            ensureAllConnectionsReleased()
+            releaseClient()
+          } catch (ae: AssertionError) {
+            if (!failed) {
+              // Prefer keeping the inflight failure, but don't release this in-use client.
+              throw ae
+            }
+          }
+          try {
+            ensureAllTaskQueuesIdle()
+          } catch (ae: AssertionError) {
+            if (!failed) {
+              // Prefer keeping the inflight failure.
+              throw ae
+            }
+          }
         }
       }
 
