@@ -23,6 +23,8 @@ import java.security.cert.CertificateFactory
 import java.security.cert.CertificateParsingException
 import java.security.cert.X509Certificate
 import okio.Buffer
+import okio.ByteString
+import okio.ByteString.Companion.toByteString
 
 /**
  * Decodes a multiline string that contains a [certificate][certificatePem] which is
@@ -55,5 +57,25 @@ fun String.decodeCertificatePem(): X509Certificate {
     throw CertificateParsingException(iae)
   } catch (e: GeneralSecurityException) {
     throw IllegalArgumentException("failed to decode certificate", e)
+  }
+}
+
+/**
+ * Returns the certificate encoded in [PEM format][rfc_7468].
+ *
+ * [rfc_7468]: https://tools.ietf.org/html/rfc7468
+ */
+fun X509Certificate.certificatePem(): String {
+  return buildString {
+    append("-----BEGIN CERTIFICATE-----\n")
+    encodeBase64Lines(encoded.toByteString())
+    append("-----END CERTIFICATE-----\n")
+  }
+}
+
+internal fun StringBuilder.encodeBase64Lines(data: ByteString) {
+  val base64 = data.base64()
+  for (i in 0 until base64.length step 64) {
+    append(base64, i, minOf(i + 64, base64.length)).append('\n')
   }
 }

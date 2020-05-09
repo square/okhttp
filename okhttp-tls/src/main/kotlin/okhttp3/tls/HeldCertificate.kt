@@ -142,13 +142,7 @@ class HeldCertificate(
    *
    * [rfc_7468]: https://tools.ietf.org/html/rfc7468
    */
-  fun certificatePem(): String {
-    return buildString {
-      append("-----BEGIN CERTIFICATE-----\n")
-      encodeBase64Lines(certificate.encoded.toByteString())
-      append("-----END CERTIFICATE-----\n")
-    }
-  }
+  fun certificatePem(): String = certificate.certificatePem()
 
   /**
    * Returns the RSA private key encoded in [PKCS #8][rfc_5208] [PEM format][rfc_7468].
@@ -182,13 +176,6 @@ class HeldCertificate(
   private fun pkcs1Bytes(): ByteString {
     val privateKeyInfo = PrivateKeyInfo.getInstance(keyPair.private.encoded)
     return privateKeyInfo.parsePrivateKey().toASN1Primitive().encoded.toByteString()
-  }
-
-  private fun StringBuilder.encodeBase64Lines(data: ByteString) {
-    val base64 = data.base64()
-    for (i in 0 until base64.length step 64) {
-      append(base64, i, minOf(i + 64, base64.length)).append('\n')
-    }
   }
 
   /** Build a held certificate with reasonable defaults. */
