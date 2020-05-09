@@ -62,11 +62,10 @@ class CustomTrust {
     0MC2Hb46TpSi125sC8KKfPog88Tk5c0NqMuRkrF8hey1FGlmDoLnzc7ILaZRfyHB
     NVOFBkpdn627G190
     -----END CERTIFICATE-----
-    
-    """.trimIndent()
+    """.trimIndent().decodeCertificatePem()
 
   // CN=Entrust Root Certification Authority, OU="(c) 2006 Entrust, Inc.", OU=www.entrust.net/CPS is incorporated by reference, O="Entrust, Inc.", C=US
-  var entrustRootCertificateAuthority = """
+  val entrustRootCertificateAuthority = """
     -----BEGIN CERTIFICATE-----
     MIIEkTCCA3mgAwIBAgIERWtQVDANBgkqhkiG9w0BAQUFADCBsDELMAkGA1UEBhMC
     VVMxFjAUBgNVBAoTDUVudHJ1c3QsIEluYy4xOTA3BgNVBAsTMHd3dy5lbnRydXN0
@@ -94,11 +93,10 @@ class CustomTrust {
     eu6FSqdQgPCnXEqULl8FmTxSQeDNtGPPAUO6nIPcj2A781q0tHuu2guQOHXvgR1m
     0vdXcDazv/wor3ElhVsT/h5/WrQ8
     -----END CERTIFICATE-----
-    
-    """.trimIndent()
+    """.trimIndent().decodeCertificatePem()
 
   // CN=Let's Encrypt Authority X3, O=Let's Encrypt, C=US
-  var letsEncryptCertificateAuthority = """
+  val letsEncryptCertificateAuthority = """
     -----BEGIN CERTIFICATE-----
     MIIEkjCCA3qgAwIBAgIQCgFBQgAAAVOFc2oLheynCDANBgkqhkiG9w0BAQsFADA/
     MSQwIgYDVQQKExtEaWdpdGFsIFNpZ25hdHVyZSBUcnVzdCBDby4xFzAVBgNVBAMT
@@ -126,21 +124,18 @@ class CustomTrust {
     PfZ+G6Z6h7mjem0Y+iWlkYcV4PIWL1iwBi8saCbGS5jN2p8M+X+Q7UNKEkROb3N6
     KOqkqm57TH2H3eDJAkSnh6/DNFu0Qg==
     -----END CERTIFICATE-----
-    """.trimIndent()
+    """.trimIndent().decodeCertificatePem()
 
   private val client: OkHttpClient
 
   init {
     // This implementation just embeds the PEM files in Java strings; most applications will
     // instead read this from a resource file that gets bundled with the application.
-    val letsEncryptCertificate = letsEncryptCertificateAuthority.decodeCertificatePem()
-    val entrustRootCertificate = entrustRootCertificateAuthority.decodeCertificatePem()
-    val comodoRsaCertification = comodoRsaCertificationAuthority.decodeCertificatePem()
     val certificates =
       HandshakeCertificates.Builder()
-          .addTrustedCertificate(letsEncryptCertificate)
-          .addTrustedCertificate(entrustRootCertificate)
-          .addTrustedCertificate(comodoRsaCertification)
+          .addTrustedCertificate(letsEncryptCertificateAuthority)
+          .addTrustedCertificate(entrustRootCertificateAuthority)
+          .addTrustedCertificate(comodoRsaCertificationAuthority)
           // Uncomment if standard certificates are also required.
           // .addPlatformTrustedCertificates()
           .build()

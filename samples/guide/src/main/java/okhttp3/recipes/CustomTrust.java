@@ -29,7 +29,7 @@ public final class CustomTrust {
   // https://publicobject.com (Comodo) and https://squareup.com (Entrust). But they aren't
   // sufficient to connect to most HTTPS sites including https://godaddy.com and https://visa.com.
   // Typically developers will need to get a PEM file from their organization's TLS administrator.
-  String comodoRsaCertificationAuthority = ""
+  X509Certificate comodoRsaCertificationAuthority = Certificates.decodeCertificatePem(""
       + "-----BEGIN CERTIFICATE-----\n"
       + "MIIF2DCCA8CgAwIBAgIQTKr5yttjb+Af907YWwOGnTANBgkqhkiG9w0BAQwFADCB\n"
       + "hTELMAkGA1UEBhMCR0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4G\n"
@@ -63,9 +63,9 @@ public final class CustomTrust {
       + "QOhTsiedSrnAdyGN/4fy3ryM7xfft0kL0fJuMAsaDk527RH89elWsn2/x20Kk4yl\n"
       + "0MC2Hb46TpSi125sC8KKfPog88Tk5c0NqMuRkrF8hey1FGlmDoLnzc7ILaZRfyHB\n"
       + "NVOFBkpdn627G190\n"
-      + "-----END CERTIFICATE-----\n";
+      + "-----END CERTIFICATE-----\n");
 
-  String entrustRootCertificateAuthority = ""
+  X509Certificate entrustRootCertificateAuthority = Certificates.decodeCertificatePem(""
       + "-----BEGIN CERTIFICATE-----\n"
       + "MIIEkTCCA3mgAwIBAgIERWtQVDANBgkqhkiG9w0BAQUFADCBsDELMAkGA1UEBhMC\n"
       + "VVMxFjAUBgNVBAoTDUVudHJ1c3QsIEluYy4xOTA3BgNVBAsTMHd3dy5lbnRydXN0\n"
@@ -92,9 +92,9 @@ public final class CustomTrust {
       + "9WQcCk3RvKqsnyrQ/39/2n3qse0wJcGE2jTSW3iDVuycNsMm4hH2Z0kdkquM++v/\n"
       + "eu6FSqdQgPCnXEqULl8FmTxSQeDNtGPPAUO6nIPcj2A781q0tHuu2guQOHXvgR1m\n"
       + "0vdXcDazv/wor3ElhVsT/h5/WrQ8\n"
-      + "-----END CERTIFICATE-----\n";
+      + "-----END CERTIFICATE-----\n");
 
-  String letsEncryptCertificateAuthority = ""
+  X509Certificate letsEncryptCertificateAuthority = Certificates.decodeCertificatePem(""
       + "-----BEGIN CERTIFICATE-----\n"
       +  "MIIEkjCCA3qgAwIBAgIQCgFBQgAAAVOFc2oLheynCDANBgkqhkiG9w0BAQsFADA/\n"
       +  "MSQwIgYDVQQKExtEaWdpdGFsIFNpZ25hdHVyZSBUcnVzdCBDby4xFzAVBgNVBAMT\n"
@@ -121,21 +121,18 @@ public final class CustomTrust {
       +  "X4Po1QYz+3dszkDqMp4fklxBwXRsW10KXzPMTZ+sOPAveyxindmjkW8lGy+QsRlG\n"
       +  "PfZ+G6Z6h7mjem0Y+iWlkYcV4PIWL1iwBi8saCbGS5jN2p8M+X+Q7UNKEkROb3N6\n"
       +  "KOqkqm57TH2H3eDJAkSnh6/DNFu0Qg==\n"
-      +  "-----END CERTIFICATE-----";
+      +  "-----END CERTIFICATE-----");
 
   private final OkHttpClient client;
 
   public CustomTrust() {
     // This implementation just embeds the PEM files in Java strings; most applications will
     // instead read this from a resource file that gets bundled with the application.
-    X509Certificate letsEncryptCertificate = Certificates.decodeCertificatePem(letsEncryptCertificateAuthority);
-    X509Certificate entrustRootCertificate = Certificates.decodeCertificatePem(entrustRootCertificateAuthority);
-    X509Certificate comodoRsaCertification = Certificates.decodeCertificatePem(comodoRsaCertificationAuthority);
 
     HandshakeCertificates certificates = new HandshakeCertificates.Builder()
-        .addTrustedCertificate(letsEncryptCertificate)
-        .addTrustedCertificate(entrustRootCertificate)
-        .addTrustedCertificate(comodoRsaCertification)
+        .addTrustedCertificate(letsEncryptCertificateAuthority)
+        .addTrustedCertificate(entrustRootCertificateAuthority)
+        .addTrustedCertificate(comodoRsaCertificationAuthority)
         // Uncomment if standard certificates are also required.
         //.addPlatformTrustedCertificates()
         .build();
