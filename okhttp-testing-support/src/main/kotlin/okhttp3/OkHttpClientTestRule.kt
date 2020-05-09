@@ -19,6 +19,7 @@ import java.net.InetAddress
 import java.util.concurrent.TimeUnit
 import java.util.logging.Handler
 import java.util.logging.Level
+import java.util.logging.LogManager
 import java.util.logging.LogRecord
 import java.util.logging.Logger
 import okhttp3.internal.concurrent.TaskRunner
@@ -136,8 +137,13 @@ class OkHttpClientTestRule : TestRule {
   }
 
   private fun ensureAllTaskQueuesIdle() {
+    val entryTime = System.nanoTime()
+
     for (queue in TaskRunner.INSTANCE.activeQueues()) {
-      if (!queue.idleLatch().await(1_000L, TimeUnit.MILLISECONDS)) {
+      // We wait at most 1 second, so we don't ever turn multiple lost threads into
+      // a test timeout failure.
+      val waitTime = (entryTime + 1_000_000_000L - System.nanoTime())
+      if (!queue.idleLatch().await(waitTime, TimeUnit.NANOSECONDS)) {
         TaskRunner.INSTANCE.cancelAll()
         fail("Queue still active after 1000 ms")
       }
@@ -154,10 +160,13 @@ class OkHttpClientTestRule : TestRule {
         Thread.setDefaultUncaughtExceptionHandler { _, throwable ->
           initUncaughtException(throwable)
         }
+        val taskQueuesWereIdle = TaskRunner.INSTANCE.activeQueues().isEmpty()
+        var failure: Throwable? = null
         try {
           applyLogger {
             addHandler(testLogHandler)
             level = Level.FINEST
+            useParentHandlers = false
           }
 
           base.evaluate()
@@ -166,18 +175,41 @@ class OkHttpClientTestRule : TestRule {
           }
           logEventsIfFlaky(description)
         } catch (t: Throwable) {
+          failure = t
           logEvents()
           throw t
         } finally {
-          applyLogger {
-            removeHandler(testLogHandler)
-            level = Level.INFO
-          }
+          LogManager.getLogManager().reset()
 
           Thread.setDefaultUncaughtExceptionHandler(defaultUncaughtExceptionHandler)
-          ensureAllConnectionsReleased()
-          releaseClient()
-          ensureAllTaskQueuesIdle()
+          try {
+            ensureAllConnectionsReleased()
+            releaseClient()
+          } catch (ae: AssertionError) {
+            // Prefer keeping the inflight failure, but don't release this in-use client.
+            if (failure != null) {
+              failure.addSuppressed(ae)
+            } else {
+              failure = ae
+            }
+          }
+
+          try {
+            if (taskQueuesWereIdle) {
+              ensureAllTaskQueuesIdle()
+            }
+          } catch (ae: AssertionError) {
+            // Prefer keeping the inflight failure, but don't release this in-use client.
+            if (failure != null) {
+              failure.addSuppressed(ae)
+            } else {
+              failure = ae
+            }
+          }
+
+          if (failure != null) {
+            throw failure
+          }
         }
       }
 

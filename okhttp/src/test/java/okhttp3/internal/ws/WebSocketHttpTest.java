@@ -53,6 +53,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
 
 import static java.util.Arrays.asList;
 import static okhttp3.TestUtil.repeat;
@@ -66,8 +67,10 @@ public final class WebSocketHttpTest {
   // Flaky https://github.com/square/okhttp/issues/4515
   // Flaky https://github.com/square/okhttp/issues/4953
 
-  @Rule public final MockWebServer webServer = new MockWebServer();
-  @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
+  final MockWebServer webServer = new MockWebServer();
+  final OkHttpClientTestRule clientTestRule = configureClientTestRule();
+
+  @Rule public final RuleChain orderedRules = RuleChain.outerRule(clientTestRule).around(webServer);
   @Rule public final PlatformRule platform = new PlatformRule();
   @Rule public final TestLogHandler testLogHandler = new TestLogHandler(OkHttpClient.class);
 
@@ -85,6 +88,12 @@ public final class WebSocketHttpTest {
         return response;
       })
       .build();
+
+  private OkHttpClientTestRule configureClientTestRule() {
+    OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
+    clientTestRule.setRecordTaskRunner(true);
+    return clientTestRule;
+  }
 
   @Before public void setUp() {
     platform.assumeNotOpenJSSE();
