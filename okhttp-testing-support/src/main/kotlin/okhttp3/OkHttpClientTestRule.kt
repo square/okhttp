@@ -19,6 +19,7 @@ import java.net.InetAddress
 import java.util.concurrent.TimeUnit
 import java.util.logging.Handler
 import java.util.logging.Level
+import java.util.logging.LogManager
 import java.util.logging.LogRecord
 import java.util.logging.Logger
 import okhttp3.internal.concurrent.TaskRunner
@@ -165,6 +166,7 @@ class OkHttpClientTestRule : TestRule {
           applyLogger {
             addHandler(testLogHandler)
             level = Level.FINEST
+            useParentHandlers = false
           }
 
           base.evaluate()
@@ -177,10 +179,7 @@ class OkHttpClientTestRule : TestRule {
           logEvents()
           throw t
         } finally {
-          applyLogger {
-            removeHandler(testLogHandler)
-            level = Level.INFO
-          }
+          LogManager.getLogManager().reset()
 
           Thread.setDefaultUncaughtExceptionHandler(defaultUncaughtExceptionHandler)
           try {
