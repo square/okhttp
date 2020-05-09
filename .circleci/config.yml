@@ -23,7 +23,7 @@ commands:
           name: Run tests
           command: ./gradlew --build-cache --parallel --continue test
           environment:
-            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dokhttp.platform=<< parameters.platform >> -Dorg.gradle.workers.max=3 -Xmx1G << parameters.testjdk >>
+            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dokhttp.platform=<< parameters.platform >> -Dorg.gradle.workers.max=2 -Xmx2G << parameters.testjdk >>
 
       - save_cache:
           paths:
@@ -80,7 +80,7 @@ jobs:
           name: Run tests
           command: ./gradlew --parallel --build-cache test
           environment:
-            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dokhttp.platform=jdk9 -Dorg.gradle.workers.max=3 -Xmx1G
+            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dokhttp.platform=jdk9 -Dorg.gradle.workers.max=2 -Xmx2G
 
       - save_cache:
           paths:
@@ -109,7 +109,7 @@ jobs:
           name: Run checks
           command: ./gradlew --parallel --continue --build-cache check -x test
           environment:
-            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=3 -Xmx1G
+            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=2 -Xmx2G
 
       - run:
           name: Save gradle reports
