@@ -16,15 +16,13 @@
 package okhttp3.recipes;
 
 import java.io.IOException;
-import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import okhttp3.Headers;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.tls.Certificates;
 import okhttp3.tls.HandshakeCertificates;
-
-import static okhttp3.tls.HeldCertificate.decodeCertificate;
 
 public final class CustomTrust {
   // PEM files for root certificates of Comodo and Entrust. These two CAs are sufficient to view
@@ -130,9 +128,9 @@ public final class CustomTrust {
   public CustomTrust() {
     // This implementation just embeds the PEM files in Java strings; most applications will
     // instead read this from a resource file that gets bundled with the application.
-    X509Certificate letsEncryptCertificate = decodeCertificate(letsEncryptCertificateAuthority);
-    X509Certificate entrustRootCertificate = decodeCertificate(entrustRootCertificateAuthority);
-    X509Certificate comodoRsaCertification = decodeCertificate(comodoRsaCertificationAuthority);
+    X509Certificate letsEncryptCertificate = Certificates.decodeCertificatePem(letsEncryptCertificateAuthority);
+    X509Certificate entrustRootCertificate = Certificates.decodeCertificatePem(entrustRootCertificateAuthority);
+    X509Certificate comodoRsaCertification = Certificates.decodeCertificatePem(comodoRsaCertificationAuthority);
 
     HandshakeCertificates certificates = new HandshakeCertificates.Builder()
         .addTrustedCertificate(letsEncryptCertificate)

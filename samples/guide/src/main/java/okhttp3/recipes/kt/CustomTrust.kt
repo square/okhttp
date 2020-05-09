@@ -20,7 +20,7 @@ import java.security.cert.X509Certificate
 import okhttp3.OkHttpClient
 import okhttp3.Request.Builder
 import okhttp3.tls.HandshakeCertificates
-import okhttp3.tls.HeldCertificate.Companion.decodeCertificate
+import okhttp3.tls.decodeCertificatePem
 
 class CustomTrust {
   // PEM files for root certificates of Comodo and Entrust. These two CAs are sufficient to view
@@ -133,12 +133,9 @@ class CustomTrust {
   init {
     // This implementation just embeds the PEM files in Java strings; most applications will
     // instead read this from a resource file that gets bundled with the application.
-    val letsEncryptCertificate =
-      decodeCertificate(letsEncryptCertificateAuthority)
-    val entrustRootCertificate =
-      decodeCertificate(entrustRootCertificateAuthority)
-    val comodoRsaCertification =
-      decodeCertificate(comodoRsaCertificationAuthority)
+    val letsEncryptCertificate = letsEncryptCertificateAuthority.decodeCertificatePem()
+    val entrustRootCertificate = entrustRootCertificateAuthority.decodeCertificatePem()
+    val comodoRsaCertification = comodoRsaCertificationAuthority.decodeCertificatePem()
     val certificates =
       HandshakeCertificates.Builder()
           .addTrustedCertificate(letsEncryptCertificate)
