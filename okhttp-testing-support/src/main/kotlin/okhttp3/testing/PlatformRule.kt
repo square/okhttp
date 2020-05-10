@@ -348,15 +348,21 @@ open class PlatformRule @JvmOverloads constructor(
     init {
       val platformSystemProperty = getPlatformSystemProperty()
 
-      if (platformSystemProperty == CONSCRYPT_PROPERTY && Security.getProviders()[0].name != "Conscrypt") {
-        if (!Conscrypt.isAvailable()) {
-          System.err.println("Warning: Conscrypt not available")
+      if (platformSystemProperty == JDK9_PROPERTY) {
+        if (System.getProperty("javax.net.debug") == null) {
+          System.setProperty("javax.net.debug", "")
         }
+      } else if (platformSystemProperty == CONSCRYPT_PROPERTY) {
+        if (Security.getProviders()[0].name != "Conscrypt") {
+          if (!Conscrypt.isAvailable()) {
+            System.err.println("Warning: Conscrypt not available")
+          }
 
-        val provider = Conscrypt.newProviderBuilder()
-            .provideTrustManager(true)
-            .build()
-        Security.insertProviderAt(provider, 1)
+          val provider = Conscrypt.newProviderBuilder()
+              .provideTrustManager(true)
+              .build()
+          Security.insertProviderAt(provider, 1)
+        }
       } else if (platformSystemProperty == JDK8_ALPN_PROPERTY) {
         if (!isAlpnBootEnabled()) {
           System.err.println("Warning: ALPN Boot not enabled")
@@ -368,6 +374,10 @@ open class PlatformRule @JvmOverloads constructor(
       } else if (platformSystemProperty == OPENJSSE_PROPERTY && Security.getProviders()[0].name != "OpenJSSE") {
         if (!OpenJSSEPlatform.isSupported) {
           System.err.println("Warning: OpenJSSE not available")
+        }
+
+        if (System.getProperty("javax.net.debug") == null) {
+          System.setProperty("javax.net.debug", "")
         }
 
         Security.insertProviderAt(OpenJSSE(), 1)
