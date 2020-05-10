@@ -8,7 +8,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 
-class IssueTemplate: IssueBase() {
+class IssueTemplate : IssueBase() {
   @Before
   fun setup() {
     enableTls()

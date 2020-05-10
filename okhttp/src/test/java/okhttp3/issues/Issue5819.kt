@@ -1,5 +1,6 @@
 package okhttp3.issues
 
+import java.io.IOException
 import okhttp3.Call
 import okhttp3.Connection
 import okhttp3.EventListener
@@ -9,10 +10,8 @@ import okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AT_END
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
 import org.junit.Test
-import java.io.IOException
-import java.util.concurrent.TimeUnit.SECONDS
 
-class Issue5819: IssueBase() {
+class Issue5819 : IssueBase() {
   @Test
   fun rogueConnectionSeeder() {
     clientTestRule.recordEvents = true
@@ -34,7 +33,7 @@ class Issue5819: IssueBase() {
             call: Call,
             connection: Connection
           ) {
-            server.enqueue(MockResponse().setSocketPolicy(DISCONNECT_AT_END));
+            server.enqueue(MockResponse().setSocketPolicy(DISCONNECT_AT_END))
             try {
               client.newCall(seedRequest).execute().use {
                 assertEquals(200, it.code)

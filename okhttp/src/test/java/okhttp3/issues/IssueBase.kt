@@ -1,8 +1,7 @@
 package okhttp3.issues
 
-import okhttp3.OkHttpClient
+import java.util.concurrent.TimeUnit.MILLISECONDS
 import okhttp3.OkHttpClientTestRule
-import okhttp3.RecordedResponse
 import okhttp3.Request
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -15,8 +14,6 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 import org.junit.rules.TestRule
 import org.junit.rules.Timeout
-import java.io.IOException
-import java.util.concurrent.TimeUnit.MILLISECONDS
 
 @Flaky
 open class IssueBase {
