@@ -25,7 +25,6 @@ open class IssueBase {
   val server = MockWebServer()
   val clientTestRule = OkHttpClientTestRule().apply {
     recordFrames = false
-    recordSslDebug = false
     recordEvents = true
     recordTaskRunner = false
   }

@@ -14,7 +14,6 @@ class IssueTemplate: IssueBase() {
     enableTls()
 
     clientTestRule.recordEvents = true
-    clientTestRule.recordSslDebug = true
   }
 
   @Test
