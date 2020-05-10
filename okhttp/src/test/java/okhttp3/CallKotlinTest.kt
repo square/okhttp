@@ -47,7 +47,6 @@ class CallKotlinTest {
   @JvmField @Rule val server = MockWebServer()
   @JvmField @Rule val clientTestRule = OkHttpClientTestRule().apply {
     recordFrames = true
-    recordSslDebug = true
   }
 
   private var client = clientTestRule.newClient()
