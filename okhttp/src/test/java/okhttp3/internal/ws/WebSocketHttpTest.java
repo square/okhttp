@@ -100,8 +100,13 @@ public final class WebSocketHttpTest {
     platform.assumeNotBouncyCastle();
   }
 
-  @After public void tearDown() {
+  @After public void tearDown() throws InterruptedException {
     clientListener.assertExhausted();
+
+    if (client.connectionPool().connectionCount() > 1) {
+      // Minimise test flakiness due to possible race conditions with connections closing
+      Thread.sleep(500L);
+    }
   }
 
   @Test public void textMessage() {
@@ -570,6 +575,8 @@ public final class WebSocketHttpTest {
 
     clientListener.assertFailure(SocketTimeoutException.class, "timeout", "Read timed out");
     assertThat(webSocket.close(1000, null)).isFalse();
+
+    System.out.println(client.connectionPool().connectionCount());
   }
 
   @Test public void readTimeoutDoesNotApplyAcrossFrames() throws Exception {
