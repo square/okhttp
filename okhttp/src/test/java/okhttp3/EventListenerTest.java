@@ -71,7 +71,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestName;
 import org.junit.rules.Timeout;
 
 import static java.util.Arrays.asList;
