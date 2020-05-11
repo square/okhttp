@@ -54,6 +54,7 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
+import org.junit.rules.TestName;
 
 import static java.util.Arrays.asList;
 import static okhttp3.TestUtil.repeat;
@@ -73,6 +74,7 @@ public final class WebSocketHttpTest {
   @Rule public final RuleChain orderedRules = RuleChain.outerRule(clientTestRule).around(webServer);
   @Rule public final PlatformRule platform = new PlatformRule();
   @Rule public final TestLogHandler testLogHandler = new TestLogHandler(OkHttpClient.class);
+  @Rule public final TestName testName = new TestName();
 
   private final HandshakeCertificates handshakeCertificates = localhost();
   private final WebSocketRecorder clientListener = new WebSocketRecorder("client");
@@ -103,8 +105,10 @@ public final class WebSocketHttpTest {
   @After public void tearDown() throws InterruptedException {
     clientListener.assertExhausted();
 
-    if (client.connectionPool().connectionCount() > 1) {
-      // Minimise test flakiness due to possible race conditions with connections closing
+    if (client.connectionPool().connectionCount() > 0) {
+      // Minimise test flakiness due to possible race conditions with connections closing.
+      // Some number of tests will report here, but not fail due to this delay.
+      System.out.println(testName.getMethodName());
       Thread.sleep(500L);
     }
   }
