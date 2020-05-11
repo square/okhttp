@@ -108,9 +108,49 @@ public final class EventSourceHttpTest {
     listener.assertFailure("timeout");
   }
 
+  @Test public void retainsAccept() {
+    server.enqueue(new MockResponse().setBody(""
+        + "data: hey\n"
+        + "\n").setHeader("content-type", "text/event-stream"));
+
+    EventSource source = newEventSource("text/plain");
+
+    assertThat(source.request().url().encodedPath()).isEqualTo("/");
+    assertThat(source.request().header("Accept")).isEqualTo("text/plain");
+
+    listener.assertOpen();
+    listener.assertEvent(null, null, "hey");
+    listener.assertClose();
+  }
+
+  @Test public void setsMissingAccept() {
+    server.enqueue(new MockResponse().setBody(""
+        + "data: hey\n"
+        + "\n").setHeader("content-type", "text/event-stream"));
+
+    EventSource source = newEventSource();
+
+    assertThat(source.request().url().encodedPath()).isEqualTo("/");
+    assertThat(source.request().header("Accept")).isEqualTo("text/event-stream");
+
+    listener.assertOpen();
+    listener.assertEvent(null, null, "hey");
+    listener.assertClose();
+  }
+
   private EventSource newEventSource() {
-    Request request = new Request.Builder()
-        .url(server.url("/"))
+    return newEventSource(null);
+  }
+
+  private EventSource newEventSource(String accept) {
+    Request.Builder builder = new Request.Builder()
+        .url(server.url("/"));
+
+    if (accept != null) {
+      builder.header("Accept", accept);
+    }
+
+    Request request = builder
         .build();
     EventSource.Factory factory = EventSources.createFactory(client);
     return factory.newEventSource(request, listener);
