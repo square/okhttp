@@ -108,7 +108,7 @@ public final class WebSocketHttpTest {
     if (client.connectionPool().connectionCount() > 0) {
       // Minimise test flakiness due to possible race conditions with connections closing.
       // Some number of tests will report here, but not fail due to this delay.
-      System.out.println(testName.getMethodName());
+      System.out.println("Delaying to avoid flakes: " + testName.getMethodName());
       Thread.sleep(500L);
     }
   }
@@ -579,8 +579,6 @@ public final class WebSocketHttpTest {
 
     clientListener.assertFailure(SocketTimeoutException.class, "timeout", "Read timed out");
     assertThat(webSocket.close(1000, null)).isFalse();
-
-    System.out.println(client.connectionPool().connectionCount());
   }
 
   @Test public void readTimeoutDoesNotApplyAcrossFrames() throws Exception {
