@@ -71,6 +71,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 import org.junit.rules.Timeout;
 
 import static java.util.Arrays.asList;
@@ -90,6 +91,7 @@ public final class EventListenerTest {
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
   @Rule public final Timeout timeoutRule = new Timeout(20, TimeUnit.SECONDS);
+  @Rule public final TestName testName = new TestName();
 
   private final RecordingEventListener listener = new RecordingEventListener();
   private final HandshakeCertificates handshakeCertificates = localhost();
@@ -114,6 +116,13 @@ public final class EventListenerTest {
     }
     if (cache != null) {
       cache.delete();
+    }
+
+    if (client.connectionPool().connectionCount() > 0) {
+      // Minimise test flakiness due to possible race conditions with connections closing.
+      // Some number of tests will report here, but not fail due to this delay.
+      System.out.println("Delaying to avoid flakes: " + testName.getMethodName());
+      Thread.sleep(500L);
     }
   }
 
