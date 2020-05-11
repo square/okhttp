@@ -266,7 +266,12 @@ class ClientRuleEventListener(
   }
 
   private fun logWithTime(message: String) {
-    val timeMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNs)
+    val timeMs = if (startNs == 0L) {
+      0L
+    } else {
+      TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNs)
+    }
+
     logger.invoke("[$timeMs ms] $message")
   }
 }
