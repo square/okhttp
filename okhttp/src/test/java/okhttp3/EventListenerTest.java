@@ -79,7 +79,6 @@ import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.any;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
 
@@ -91,7 +90,6 @@ public final class EventListenerTest {
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
   @Rule public final Timeout timeoutRule = new Timeout(20, TimeUnit.SECONDS);
-  @Rule public final TestName testName = new TestName();
 
   private final RecordingEventListener listener = new RecordingEventListener();
   private final HandshakeCertificates handshakeCertificates = localhost();
@@ -122,7 +120,7 @@ public final class EventListenerTest {
     if (client.connectionPool().connectionCount() > 0) {
       // Minimise test flakiness due to possible race conditions with connections closing.
       // Some number of tests will report here, but not fail due to this delay.
-      System.out.println("Delaying to avoid flakes: " + testName.getMethodName());
+      System.out.println("Delaying to avoid flakes");
       Thread.sleep(500L);
       System.out.println("After delay: " + client.connectionPool().connectionCount());
     }
