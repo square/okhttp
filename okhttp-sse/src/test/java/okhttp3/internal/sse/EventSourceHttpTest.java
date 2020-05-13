@@ -16,6 +16,7 @@
 package okhttp3.internal.sse;
 
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import okhttp3.OkHttpClient;
 import okhttp3.OkHttpClientTestRule;
 import okhttp3.Request;
@@ -140,7 +141,7 @@ public final class EventSourceHttpTest {
     return newEventSource(null);
   }
 
-  private EventSource newEventSource(String accept) {
+  private EventSource newEventSource(@Nullable String accept) {
     Request.Builder builder = new Request.Builder()
         .url(server.url("/"));
 
