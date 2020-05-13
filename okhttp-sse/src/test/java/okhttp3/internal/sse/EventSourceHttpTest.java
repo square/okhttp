@@ -108,34 +108,32 @@ public final class EventSourceHttpTest {
     listener.assertFailure("timeout");
   }
 
-  @Test public void retainsAccept() {
+  @Test public void retainsAccept() throws InterruptedException {
     server.enqueue(new MockResponse().setBody(""
         + "data: hey\n"
         + "\n").setHeader("content-type", "text/event-stream"));
 
     EventSource source = newEventSource("text/plain");
 
-    assertThat(source.request().url().encodedPath()).isEqualTo("/");
-    assertThat(source.request().header("Accept")).isEqualTo("text/plain");
-
     listener.assertOpen();
     listener.assertEvent(null, null, "hey");
     listener.assertClose();
+
+    assertThat(server.takeRequest().getHeader("Accept")).isEqualTo("text/plain");
   }
 
-  @Test public void setsMissingAccept() {
+  @Test public void setsMissingAccept() throws InterruptedException {
     server.enqueue(new MockResponse().setBody(""
         + "data: hey\n"
         + "\n").setHeader("content-type", "text/event-stream"));
 
     EventSource source = newEventSource();
 
-    assertThat(source.request().url().encodedPath()).isEqualTo("/");
-    assertThat(source.request().header("Accept")).isEqualTo("text/event-stream");
-
     listener.assertOpen();
     listener.assertEvent(null, null, "hey");
     listener.assertClose();
+
+    assertThat(server.takeRequest().getHeader("Accept")).isEqualTo("text/event-stream");
   }
 
   private EventSource newEventSource() {
