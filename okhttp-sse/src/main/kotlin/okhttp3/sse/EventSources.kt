@@ -25,7 +25,14 @@ object EventSources {
   fun createFactory(client: OkHttpClient): EventSource.Factory {
     return object : EventSource.Factory {
       override fun newEventSource(request: Request, listener: EventSourceListener): EventSource {
-        return RealEventSource(request, listener).apply {
+        val actualRequest =
+          if (request.header("Accept") == null) {
+            request.newBuilder().addHeader("Accept", "text/event-stream").build()
+          } else {
+            request
+          }
+
+        return RealEventSource(actualRequest, listener).apply {
           connect(client)
         }
       }
