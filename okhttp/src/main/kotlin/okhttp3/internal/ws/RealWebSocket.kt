@@ -549,11 +549,11 @@ class RealWebSocket(
   }
 
   internal fun writePingFrame() {
-    val writer: WebSocketWriter?
+    val writer: WebSocketWriter
     val failedPing: Int
     synchronized(this) {
       if (failed) return
-      writer = this.writer
+      writer = this.writer ?: return
       failedPing = if (awaitingPong) sentPingCount else -1
       sentPingCount++
       awaitingPong = true
@@ -566,7 +566,7 @@ class RealWebSocket(
     }
 
     try {
-      writer!!.writePing(ByteString.EMPTY)
+      writer.writePing(ByteString.EMPTY)
     } catch (e: IOException) {
       failWebSocket(e, null)
     }
