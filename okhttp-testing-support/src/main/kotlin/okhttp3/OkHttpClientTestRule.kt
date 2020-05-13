@@ -43,6 +43,7 @@ class OkHttpClientTestRule : TestRule {
   private var testClient: OkHttpClient? = null
   private var uncaughtException: Throwable? = null
   var logger: Logger? = null
+  lateinit var testName: String
 
   var recordEvents = true
   var recordTaskRunner = false
@@ -131,7 +132,16 @@ class OkHttpClientTestRule : TestRule {
   fun ensureAllConnectionsReleased() {
     testClient?.let {
       val connectionPool = it.connectionPool
+
       connectionPool.evictAll()
+      if (connectionPool.connectionCount() > 0) {
+        // Minimise test flakiness due to possible race conditions with connections closing.
+        // Some number of tests will report here, but not fail due to this delay.
+        println("Delaying to avoid flakes")
+        Thread.sleep(500L)
+        println("After delay: " + connectionPool.connectionCount())
+      }
+
       assertEquals(0, connectionPool.connectionCount())
     }
   }
@@ -156,6 +166,8 @@ class OkHttpClientTestRule : TestRule {
   ): Statement {
     return object : Statement() {
       override fun evaluate() {
+        testName = description.methodName
+
         val defaultUncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { _, throwable ->
           initUncaughtException(throwable)
@@ -233,7 +245,7 @@ class OkHttpClientTestRule : TestRule {
   @Synchronized private fun logEvents() {
     // Will be ineffective if test overrides the listener
     synchronized(clientEventsList) {
-      println("Events (${clientEventsList.size})")
+      println("$testName Events (${clientEventsList.size})")
 
       for (e in clientEventsList) {
         println(e)
