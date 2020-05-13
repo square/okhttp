@@ -65,7 +65,7 @@ class RealCall(
 ) : Call {
   private val connectionPool: RealConnectionPool = client.connectionPool.delegate
 
-  private val eventListener: EventListener = client.eventListenerFactory.create(this)
+  internal val eventListener: EventListener = client.eventListenerFactory.create(this)
 
   private val timeout = object : AsyncTimeout() {
     override fun timedOut() {

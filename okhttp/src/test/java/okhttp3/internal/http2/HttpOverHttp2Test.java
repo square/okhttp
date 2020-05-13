@@ -72,6 +72,7 @@ import okio.Buffer;
 import okio.BufferedSink;
 import okio.GzipSink;
 import okio.Okio;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -112,7 +113,7 @@ public final class HttpOverHttp2Test {
   }
 
   private final PlatformRule platform = new PlatformRule();
-  private final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
+  private final OkHttpClientTestRule clientTestRule = configureClientTestRule();
   @Rule public final TestRule chain = RuleChain.outerRule(platform)
       .around(new Timeout(60, SECONDS))
       .around(clientTestRule);
@@ -127,6 +128,13 @@ public final class HttpOverHttp2Test {
 
   public HttpOverHttp2Test(Protocol protocol) {
     this.protocol = protocol;
+  }
+
+
+  @NotNull private OkHttpClientTestRule configureClientTestRule() {
+    OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
+    clientTestRule.setRecordTaskRunner(true);
+    return clientTestRule;
   }
 
   @Before public void setUp() {

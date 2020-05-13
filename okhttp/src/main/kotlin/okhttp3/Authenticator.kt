@@ -35,7 +35,7 @@ import okhttp3.internal.authenticator.JavaNetAuthenticator
  * Prior to sending any CONNECT request OkHttp always calls the proxy authenticator so that it may
  * prepare preemptive authentication. OkHttp will call [authenticate] with a fake `HTTP/1.1 407
  * Proxy Authentication Required` response that has a `Proxy-Authenticate: OkHttp-Preemptive`
- * challenge. The proxy authenticator may return either either an authenticated request, or null to
+ * challenge. The proxy authenticator may return either an authenticated request, or null to
  * connect without authentication.
  *
  * ```
@@ -93,6 +93,22 @@ import okhttp3.internal.authenticator.JavaNetAuthenticator
  *
  * Applications may configure OkHttp with an authenticator for origin servers, or proxy servers,
  * or both.
+ *
+ * ## Authentication Retries
+ *
+ * If your authentication may be flaky and requires retries you should apply some policy
+ * to limit the retries by the class of errors and number of attempts.  To get the number of
+ * attempts to the current point use this function.
+ *
+ * ```
+ * private int responseCount(Response response) {
+ *   int result = 1;
+ *   while ((response = response.priorResponse()) != null) {
+ *     result++;
+ *   }
+ *   return result;
+ * }
+ * ```
  *
  * [1]: https://tools.ietf.org/html/rfc2817
  */

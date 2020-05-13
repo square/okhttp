@@ -22,10 +22,13 @@ import java.security.cert.Certificate
 import java.security.cert.X509Certificate
 import javax.net.ssl.KeyManagerFactory
 import javax.net.ssl.TrustManagerFactory
+import javax.net.ssl.X509ExtendedTrustManager
 import javax.net.ssl.X509KeyManager
 import javax.net.ssl.X509TrustManager
+import okhttp3.internal.platform.AndroidPlatform
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
+import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 
 object TlsUtil {
   val password = "password".toCharArray()
@@ -47,10 +50,11 @@ object TlsUtil {
   fun localhost(): HandshakeCertificates = localhost
 
   /** Returns a trust manager that trusts `trustedCertificates`. */
-  @JvmStatic
+  @JvmStatic @IgnoreJRERequirement
   fun newTrustManager(
     keyStoreType: String?,
-    trustedCertificates: List<X509Certificate>
+    trustedCertificates: List<X509Certificate>,
+    insecureHosts: List<String>
   ): X509TrustManager {
     val trustStore = newEmptyKeyStore(keyStoreType)
     for (i in trustedCertificates.indices) {
@@ -64,7 +68,13 @@ object TlsUtil {
       "Unexpected trust managers: ${result.contentToString()}"
     }
 
-    return result[0] as X509TrustManager
+    val trustManager = result[0] as X509TrustManager
+
+    return when {
+      insecureHosts.isEmpty() -> trustManager
+      AndroidPlatform.isAndroid -> InsecureAndroidTrustManager(trustManager, insecureHosts)
+      else -> InsecureExtendedTrustManager(trustManager as X509ExtendedTrustManager, insecureHosts)
+    }
   }
 
   /**

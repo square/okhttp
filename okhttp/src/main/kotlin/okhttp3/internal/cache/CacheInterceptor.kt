@@ -21,12 +21,14 @@ import java.net.HttpURLConnection.HTTP_GATEWAY_TIMEOUT
 import java.net.HttpURLConnection.HTTP_NOT_MODIFIED
 import java.util.concurrent.TimeUnit.MILLISECONDS
 import okhttp3.Cache
+import okhttp3.EventListener
 import okhttp3.Headers
 import okhttp3.Interceptor
 import okhttp3.Protocol
 import okhttp3.Response
 import okhttp3.internal.EMPTY_RESPONSE
 import okhttp3.internal.closeQuietly
+import okhttp3.internal.connection.RealCall
 import okhttp3.internal.discard
 import okhttp3.internal.http.ExchangeCodec
 import okhttp3.internal.http.HttpMethod
@@ -42,6 +44,7 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
 
   @Throws(IOException::class)
   override fun intercept(chain: Interceptor.Chain): Response {
+    val call = chain.call()
     val cacheCandidate = cache?.get(chain.request())
 
     val now = System.currentTimeMillis()
@@ -51,6 +54,7 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
     val cacheResponse = strategy.cacheResponse
 
     cache?.trackResponse(strategy)
+    val listener = (call as? RealCall)?.eventListener ?: EventListener.NONE
 
     if (cacheCandidate != null && cacheResponse == null) {
       // The cache candidate wasn't applicable. Close it.
@@ -67,14 +71,24 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
           .body(EMPTY_RESPONSE)
           .sentRequestAtMillis(-1L)
           .receivedResponseAtMillis(System.currentTimeMillis())
-          .build()
+          .build().also {
+            listener.satisfactionFailure(call, it)
+          }
     }
 
     // If we don't need the network, we're done.
     if (networkRequest == null) {
       return cacheResponse!!.newBuilder()
           .cacheResponse(stripBody(cacheResponse))
-          .build()
+          .build().also {
+            listener.cacheHit(call, it)
+          }
+    }
+
+    if (cacheResponse != null) {
+      listener.cacheConditionalHit(call, cacheResponse)
+    } else if (cache != null) {
+      listener.cacheMiss(call)
     }
 
     var networkResponse: Response? = null
@@ -104,7 +118,9 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
         // Content-Encoding header (as performed by initContentStream()).
         cache!!.trackConditionalCacheHit()
         cache.update(cacheResponse, response)
-        return response
+        return response.also {
+          listener.cacheHit(call, it)
+        }
       } else {
         cacheResponse.body?.closeQuietly()
       }
@@ -119,7 +135,12 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
       if (response.promisesBody() && CacheStrategy.isCacheable(response, networkRequest)) {
         // Offer this request to the cache.
         val cacheRequest = cache.put(response)
-        return cacheWritingResponse(cacheRequest, response)
+        return cacheWritingResponse(cacheRequest, response).also {
+          if (cacheResponse != null) {
+            // This will log a conditional cache miss only.
+            listener.cacheMiss(call)
+          }
+        }
       }
 
       if (HttpMethod.invalidatesCache(networkRequest.method)) {

@@ -26,7 +26,7 @@ class ClientRuleEventListener(
   var logger: (String) -> Unit
 ) : EventListener(),
     EventListener.Factory {
-  private var startNs: Long = 0
+  private var startNs: Long? = null
 
   override fun create(call: Call): EventListener = this
 
@@ -241,8 +241,39 @@ class ClientRuleEventListener(
     delegate.canceled(call)
   }
 
+  override fun satisfactionFailure(call: Call, response: Response) {
+    logWithTime("satisfactionFailure")
+
+    delegate.satisfactionFailure(call, response)
+  }
+
+  override fun cacheMiss(call: Call) {
+    logWithTime("cacheMiss")
+
+    delegate.cacheMiss(call)
+  }
+
+  override fun cacheHit(call: Call, response: Response) {
+    logWithTime("cacheHit")
+
+    delegate.cacheHit(call, response)
+  }
+
+  override fun cacheConditionalHit(call: Call, cachedResponse: Response) {
+    logWithTime("cacheConditionalHit")
+
+    delegate.cacheConditionalHit(call, cachedResponse)
+  }
+
   private fun logWithTime(message: String) {
-    val timeMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNs)
+    val startNs = startNs
+    val timeMs = if (startNs == null) {
+      // Event occurred before start, for an example an early cancel.
+      0L
+    } else {
+      TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNs)
+    }
+
     logger.invoke("[$timeMs ms] $message")
   }
 }

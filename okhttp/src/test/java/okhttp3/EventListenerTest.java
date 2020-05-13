@@ -15,6 +15,7 @@
  */
 package okhttp3;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.HttpURLConnection;
@@ -96,6 +97,7 @@ public final class EventListenerTest {
       .eventListenerFactory(clientTestRule.wrap(listener))
       .build();
   private SocksProxy socksProxy;
+  private Cache cache = null;
 
   @Before public void setUp() {
     platform.assumeNotOpenJSSE();
@@ -108,6 +110,9 @@ public final class EventListenerTest {
   @After public void tearDown() throws Exception {
     if (socksProxy != null) {
       socksProxy.shutdown();
+    }
+    if (cache != null) {
+      cache.delete();
     }
   }
 
@@ -1442,5 +1447,142 @@ public final class EventListenerTest {
     listener.takeEvent(RequestBodyStart.class, 0L);
     listener.takeEvent(RequestBodyEnd.class, 0L);
     listener.takeEvent(ResponseHeadersEnd.class, responseHeadersStartDelay);
+  }
+
+  @Test public void cacheMiss() throws IOException {
+    enableCache();
+
+    server.enqueue(new MockResponse()
+        .setBody("abc"));
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response = call.execute();
+    assertThat(response.code()).isEqualTo(200);
+    assertThat(response.body().string()).isEqualTo("abc");
+    response.close();
+
+    assertThat(listener.recordedEventTypes()).containsExactly("CallStart", "CacheMiss",
+        "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
+        "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
+        "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd",
+        "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
+  }
+
+  @Test public void conditionalCache() throws IOException {
+    enableCache();
+
+    server.enqueue(new MockResponse()
+        .addHeader("ETag: v1")
+        .setBody("abc"));
+    server.enqueue(new MockResponse()
+        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+
+    Response response = call.execute();
+    assertThat(response.code()).isEqualTo(200);
+    response.close();
+
+    listener.clearAllEvents();
+
+    call = call.clone();
+
+    response = call.execute();
+    assertThat(response.code()).isEqualTo(200);
+    assertThat(response.body().string()).isEqualTo("abc");
+    response.close();
+
+    assertThat(listener.recordedEventTypes()).containsExactly("CallStart", "CacheConditionalHit",
+        "ConnectionAcquired", "RequestHeadersStart",
+        "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd",
+        "ResponseBodyStart", "ResponseBodyEnd", "CacheHit", "ConnectionReleased", "CallEnd");
+  }
+
+  @Test public void conditionalCacheMiss() throws IOException {
+    enableCache();
+
+    server.enqueue(new MockResponse()
+        .addHeader("ETag: v1")
+        .setBody("abc"));
+    server.enqueue(new MockResponse()
+        .setResponseCode(HttpURLConnection.HTTP_OK)
+        .addHeader("ETag: v2")
+        .setBody("abd"));
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+
+    Response response = call.execute();
+    assertThat(response.code()).isEqualTo(200);
+    response.close();
+
+    listener.clearAllEvents();
+
+    call = call.clone();
+
+    response = call.execute();
+    assertThat(response.code()).isEqualTo(200);
+    assertThat(response.body().string()).isEqualTo("abd");
+    response.close();
+
+    assertThat(listener.recordedEventTypes()).containsExactly("CallStart", "CacheConditionalHit",
+        "ConnectionAcquired", "RequestHeadersStart",
+        "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "CacheMiss",
+        "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
+  }
+
+  @Test public void satisfactionFailure() throws IOException {
+    enableCache();
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .cacheControl(CacheControl.FORCE_CACHE)
+        .build());
+    Response response = call.execute();
+    assertThat(response.code()).isEqualTo(504);
+    response.close();
+
+    assertThat(listener.recordedEventTypes()).containsExactly("CallStart", "SatisfactionFailure", "CallEnd");
+  }
+
+  @Test public void cacheHit() throws IOException {
+    enableCache();
+
+    server.enqueue(new MockResponse().setBody("abc").addHeader("cache-control: public, max-age=300"));
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response = call.execute();
+    assertThat(response.code()).isEqualTo(200);
+    assertThat(response.body().string()).isEqualTo("abc");
+    response.close();
+
+    listener.clearAllEvents();
+
+    call = call.clone();
+    response = call.execute();
+    assertThat(response.code()).isEqualTo(200);
+    assertThat(response.body().string()).isEqualTo("abc");
+    response.close();
+
+    assertThat(listener.recordedEventTypes()).containsExactly("CallStart", "CacheHit", "CallEnd");
+  }
+
+  private Cache enableCache() throws IOException {
+    cache = makeCache();
+    client = client.newBuilder().cache(cache).build();
+    return cache;
+  }
+
+  private Cache makeCache() throws IOException {
+    File cacheDir = File.createTempFile("cache-", ".dir");
+    cacheDir.delete();
+    return new Cache(cacheDir, 1024 * 1024);
   }
 }
