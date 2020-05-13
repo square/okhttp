@@ -18,6 +18,7 @@ package okhttp3.tls
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
 import java.util.Collections
+import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.KeyManager
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocketFactory
@@ -26,6 +27,7 @@ import javax.net.ssl.X509KeyManager
 import javax.net.ssl.X509TrustManager
 import okhttp3.CertificatePinner
 import okhttp3.internal.platform.Platform
+import okhttp3.internal.toImmutableList
 import okhttp3.tls.internal.TlsUtil.newKeyManager
 import okhttp3.tls.internal.TlsUtil.newTrustManager
 
@@ -97,6 +99,7 @@ class HandshakeCertificates private constructor(
     private var heldCertificate: HeldCertificate? = null
     private var intermediates: Array<X509Certificate>? = null
     private val trustedCertificates = mutableListOf<X509Certificate>()
+    private val insecureHosts = mutableListOf<String>()
 
     /**
      * Configure the certificate chain to use when being authenticated. The first certificate is
@@ -140,9 +143,37 @@ class HandshakeCertificates private constructor(
       Collections.addAll(trustedCertificates, *platformTrustManager.acceptedIssuers)
     }
 
+    /**
+     * Configures this to not authenticate the HTTPS server on to [hostname]. This makes the user
+     * vulnerable to man-in-the-middle attacks and should only be used only in private development
+     * environments and only to carry test data.
+     *
+     * The server’s TLS certificate **does not need to be signed** by a trusted certificate
+     * authority. Instead, it will trust any well-formed certificate, even if it is self-signed.
+     * This is necessary for testing against localhost or in development environments where a
+     * certificate authority is not possible.
+     *
+     * The server’s TLS certificate still must match the requested hostname. For example, if the
+     * certificate is issued to `example.com` and the request is to `localhost`, the connection will
+     * fail. Use a custom [HostnameVerifier] to ignore such problems.
+     *
+     * Other TLS features are still used but provide no security benefits in absence of the above
+     * gaps. For example, an insecure TLS connection is capable of negotiating HTTP/2 with ALPN and
+     * it also has a regular-looking handshake.
+     *
+     * **This feature is not supported on Android API levels less than 24.** Prior releases lacked
+     * a mechanism to trust some hosts and not others.
+     *
+     * @param hostname the exact hostname from the URL for insecure connections.
+     */
+    fun addInsecureHost(hostname: String) = apply {
+      insecureHosts += hostname
+    }
+
     fun build(): HandshakeCertificates {
+      val immutableInsecureHosts = insecureHosts.toImmutableList()
       val keyManager = newKeyManager(null, heldCertificate, *(intermediates ?: emptyArray()))
-      val trustManager = newTrustManager(null, trustedCertificates)
+      val trustManager = newTrustManager(null, trustedCertificates, immutableInsecureHosts)
       return HandshakeCertificates(keyManager, trustManager)
     }
   }
