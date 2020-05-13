@@ -139,7 +139,7 @@ public final class WebSocketHttpTest {
     try {
       webSocket.send((String) null);
       fail();
-    } catch (IllegalArgumentException expected) {
+    } catch (NullPointerException | IllegalArgumentException expected) {
     }
 
     closeWebSockets(webSocket, server);
