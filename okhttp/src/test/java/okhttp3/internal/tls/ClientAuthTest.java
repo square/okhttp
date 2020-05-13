@@ -19,6 +19,7 @@ import java.net.SocketException;
 import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
+import java.util.Collections;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
@@ -286,8 +287,8 @@ public final class ClientAuthTest {
     try {
       X509KeyManager keyManager = newKeyManager(
           null, serverCert, serverIntermediateCa.certificate());
-      X509TrustManager trustManager = newTrustManager(
-          null, asList(serverRootCa.certificate(), clientRootCa.certificate()));
+      X509TrustManager trustManager = newTrustManager(null,
+          asList(serverRootCa.certificate(), clientRootCa.certificate()), Collections.emptyList());
       SSLContext sslContext = SSLContext.getInstance("TLS");
       sslContext.init(new KeyManager[] {keyManager}, new TrustManager[] {trustManager},
           new SecureRandom());

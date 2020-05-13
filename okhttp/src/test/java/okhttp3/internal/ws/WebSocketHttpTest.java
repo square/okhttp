@@ -100,7 +100,7 @@ public final class WebSocketHttpTest {
     platform.assumeNotBouncyCastle();
   }
 
-  @After public void tearDown() {
+  @After public void tearDown() throws InterruptedException {
     clientListener.assertExhausted();
   }
 
