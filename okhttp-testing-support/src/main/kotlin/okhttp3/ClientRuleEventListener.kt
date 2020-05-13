@@ -26,7 +26,7 @@ class ClientRuleEventListener(
   var logger: (String) -> Unit
 ) : EventListener(),
     EventListener.Factory {
-  private var startNs: Long = 0
+  private var startNs: Long? = null
 
   override fun create(call: Call): EventListener = this
 
@@ -266,7 +266,9 @@ class ClientRuleEventListener(
   }
 
   private fun logWithTime(message: String) {
-    val timeMs = if (startNs == 0L) {
+    val startNs = startNs
+    val timeMs = if (startNs == null) {
+      // Event occurred before start, for an example an early cancel.
       0L
     } else {
       TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNs)

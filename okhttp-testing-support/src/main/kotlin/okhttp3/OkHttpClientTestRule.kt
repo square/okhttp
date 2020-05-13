@@ -132,7 +132,16 @@ class OkHttpClientTestRule : TestRule {
   fun ensureAllConnectionsReleased() {
     testClient?.let {
       val connectionPool = it.connectionPool
+
       connectionPool.evictAll()
+      if (connectionPool.connectionCount() > 0) {
+        // Minimise test flakiness due to possible race conditions with connections closing.
+        // Some number of tests will report here, but not fail due to this delay.
+        println("Delaying to avoid flakes")
+        Thread.sleep(500L)
+        println("After delay: " + connectionPool.connectionCount())
+      }
+
       assertEquals(0, connectionPool.connectionCount())
     }
   }

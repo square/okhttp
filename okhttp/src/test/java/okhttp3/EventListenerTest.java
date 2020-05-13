@@ -114,15 +114,6 @@ public final class EventListenerTest {
     if (cache != null) {
       cache.delete();
     }
-
-    client.connectionPool().evictAll();
-    if (client.connectionPool().connectionCount() > 0) {
-      // Minimise test flakiness due to possible race conditions with connections closing.
-      // Some number of tests will report here, but not fail due to this delay.
-      System.out.println("Delaying to avoid flakes");
-      Thread.sleep(500L);
-      System.out.println("After delay: " + client.connectionPool().connectionCount());
-    }
   }
 
   @Test public void successfulCallEventSequence() throws IOException {
