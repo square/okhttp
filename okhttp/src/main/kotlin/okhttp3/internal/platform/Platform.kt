@@ -206,7 +206,8 @@ open class Platform {
 
     /** Attempt to match the host runtime to a capable Platform implementation. */
     private fun findPlatform(): Platform {
-      // This explicit check avoids
+      // This explicit check avoids activating in Android Studio with Android specific classes
+      // available when running plugins inside the IDE.
       if (isAndroid) {
         val android10 = Android10Platform.buildIfSupported()
             ?.also {
