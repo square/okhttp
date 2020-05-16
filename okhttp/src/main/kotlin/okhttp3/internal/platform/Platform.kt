@@ -207,12 +207,10 @@ open class Platform {
       }
 
     /** Attempt to match the host runtime to a capable Platform implementation. */
-    private fun findPlatform(): Platform {
-      if (isAndroid) {
-        return findAndroidPlatform()
-      } else {
-        return findJvmPlatform()
-      }
+    private fun findPlatform(): Platform = if (isAndroid) {
+      findAndroidPlatform()
+    } else {
+      findJvmPlatform()
     }
 
     private fun findAndroidPlatform(): Platform {
