@@ -70,6 +70,10 @@ class Android10Platform extends AndroidPlatform {
   }
 
   public static @Nullable Platform buildIfSupported() {
+    if (!Platform.isAndroid()) {
+      return null;
+    }
+
     try {
       if (getSdkInt() >= 29) {
         Class<?> sslParametersClass =

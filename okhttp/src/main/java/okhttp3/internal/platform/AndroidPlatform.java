@@ -237,7 +237,7 @@ class AndroidPlatform extends Platform {
   }
 
   public static Platform buildIfSupported() {
-    if (getSdkInt() == 0) {
+    if (!Platform.isAndroid()) {
       return null;
     }
 
