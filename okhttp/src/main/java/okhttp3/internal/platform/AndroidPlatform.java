@@ -214,7 +214,7 @@ class AndroidPlatform extends Platform {
   }
 
   public static @Nullable Platform buildIfSupported() {
-    if (getSdkInt() == 0) {
+    if (!Platform.isAndroid()) {
       return null;
     }
 

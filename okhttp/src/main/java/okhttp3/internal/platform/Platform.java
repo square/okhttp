@@ -199,18 +199,20 @@ public class Platform {
 
   /** Attempt to match the host runtime to a capable Platform implementation. */
   private static Platform findPlatform() {
-    Platform android10 = Android10Platform.buildIfSupported();
-
-    if (android10 != null) {
-      return android10;
+    if (isAndroid()) {
+      return findAndroidPlatform();
+    } else {
+      return findJvmPlatform();
     }
+  }
 
-    Platform android = AndroidPlatform.buildIfSupported();
+  public static boolean isAndroid() {
+    // This explicit check avoids activating in Android Studio with Android specific classes
+    // available when running plugins inside the IDE.
+    return "Dalvik".equals(System.getProperty("java.vm.name"));
+  }
 
-    if (android != null) {
-      return android;
-    }
-
+  private static Platform findJvmPlatform() {
     if (isConscryptPreferred()) {
       Platform conscrypt = ConscryptPlatform.buildIfSupported();
 
@@ -233,6 +235,22 @@ public class Platform {
 
     // Probably an Oracle JDK like OpenJDK.
     return new Platform();
+  }
+
+  private static Platform findAndroidPlatform() {
+    Platform android10 = Android10Platform.buildIfSupported();
+
+    if (android10 != null) {
+      return android10;
+    }
+
+    Platform android = AndroidPlatform.buildIfSupported();
+
+    if (android == null) {
+      throw new NullPointerException("No platform found on Android");
+    }
+
+    return android;
   }
 
   /**
