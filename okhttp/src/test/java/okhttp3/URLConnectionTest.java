@@ -63,7 +63,6 @@ import javax.net.ssl.X509TrustManager;
 import okhttp3.internal.Internal;
 import okhttp3.internal.RecordingAuthenticator;
 import okhttp3.internal.RecordingOkAuthenticator;
-import okhttp3.internal.Version;
 import okhttp3.internal.platform.Platform;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -94,6 +93,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static okhttp3.internal.Internal.addHeaderLenient;
 import static okhttp3.internal.Util.immutableListOf;
+import static okhttp3.internal.Util.userAgent;
 import static okhttp3.internal.http.StatusLine.HTTP_PERM_REDIRECT;
 import static okhttp3.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AFTER_REQUEST;
@@ -1002,7 +1002,7 @@ public final class URLConnectionTest {
     RecordedRequest connect = server.takeRequest();
     assertThat(connect.getHeader("Private")).isNull();
     assertThat(connect.getHeader("Proxy-Authorization")).isNull();
-    assertThat(connect.getHeader("User-Agent")).isEqualTo(Version.userAgent);
+    assertThat(connect.getHeader("User-Agent")).isEqualTo(userAgent);
     assertThat(connect.getHeader("Host")).isEqualTo("android.com:443");
     assertThat(connect.getHeader("Proxy-Connection")).isEqualTo("Keep-Alive");
 
@@ -3630,7 +3630,7 @@ public final class URLConnectionTest {
     assertContent("abc", getResponse(newRequest("/")));
 
     RecordedRequest request = server.takeRequest();
-    assertThat(request.getHeader("User-Agent")).isEqualTo(Version.userAgent);
+    assertThat(request.getHeader("User-Agent")).isEqualTo(userAgent);
   }
 
   @Test public void urlWithSpaceInHost() {
