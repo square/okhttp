@@ -94,6 +94,9 @@ class Main : Runnable {
   @Option(names = ["-v", "--verbose"], description = ["Makes $NAME verbose during the operation"])
   var verbose: Boolean = false
 
+  @Option(names = ["--ssldebug"], description = ["Output SSL Debug"])
+  var sslDebug: Boolean = false
+
   @Option(names = ["--completionScript"], hidden = true)
   var completionScript: Boolean = false
 
@@ -110,6 +113,10 @@ class Main : Runnable {
 
     if (showHttp2Frames) {
       enableHttp2FrameLogging()
+    }
+
+    if (sslDebug) {
+      enableSslDebugging()
     }
 
     client = createClient()
@@ -228,9 +235,14 @@ class Main : Runnable {
     internal const val NAME = "okcurl"
     internal const val DEFAULT_TIMEOUT = -1
     private var frameLogger: Logger? = null
+    private var sslLogger: Logger? = null
 
     @JvmStatic
     fun main(args: Array<String>) {
+      if (System.getProperty("javax.net.debug") == null) {
+        System.setProperty("javax.net.debug", "")
+      }
+
       exitProcess(CommandLine(Main()).execute(*args))
     }
 
@@ -266,6 +278,25 @@ class Main : Runnable {
           formatter = object : SimpleFormatter() {
             override fun format(record: LogRecord): String {
               return format("%s%n", record.message)
+            }
+          }
+        })
+      }
+    }
+
+    private fun enableSslDebugging() {
+      sslLogger = Logger.getLogger("javax.net.ssl").apply {
+        level = Level.FINE
+        addHandler(ConsoleHandler().apply {
+          level = Level.FINE
+          formatter = object : SimpleFormatter() {
+            override fun format(record: LogRecord): String {
+              val parameters = record.parameters
+              if (parameters != null) {
+                return format("%s%n%s%n", record.message, record.parameters.first())
+              } else {
+                return format("%s%n", record.message)
+              }
             }
           }
         })
