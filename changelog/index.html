@@ -266,6 +266,18 @@
 
 
   <li class="md-nav__item">
+    <a href="../caching/" title="Caching" class="md-nav__link">
+      Caching
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
     <a href="../connections/" title="Connections" class="md-nav__link">
       Connections
     </a>
@@ -375,13 +387,13 @@
 
   <li class="md-nav__item md-nav__item--nested">
     
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-13" type="checkbox" id="nav-13">
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-14" type="checkbox" id="nav-14">
     
-    <label class="md-nav__link" for="nav-13">
+    <label class="md-nav__link" for="nav-14">
       4.x API
     </label>
     <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
-      <label class="md-nav__title" for="nav-13">
+      <label class="md-nav__title" for="nav-14">
         4.x API
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
@@ -495,13 +507,13 @@
 
   <li class="md-nav__item md-nav__item--nested">
     
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-14" type="checkbox" id="nav-14">
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-15" type="checkbox" id="nav-15">
     
-    <label class="md-nav__link" for="nav-14">
+    <label class="md-nav__link" for="nav-15">
       3.12.x API
     </label>
     <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
-      <label class="md-nav__title" for="nav-14">
+      <label class="md-nav__title" for="nav-15">
         3.12.x API
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
@@ -627,6 +639,13 @@
   
     <label class="md-nav__title" for="__toc">Table of contents</label>
     <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#version-470" class="md-nav__link">
+    Version 4.7.0
+  </a>
+  
+</li>
       
         <li class="md-nav__item">
   <a href="#version-460" class="md-nav__link">
@@ -810,6 +829,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#version-470" class="md-nav__link">
+    Version 4.7.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-460" class="md-nav__link">
     Version 4.6.0
   </a>
@@ -955,6 +981,49 @@
                 
                 
                 <h1 id="change-log">Change Log<a class="headerlink" href="#change-log" title="Permanent link">&para;</a></h1>
+<h2 id="version-470">Version 4.7.0<a class="headerlink" href="#version-470" title="Permanent link">&para;</a></h2>
+<p><em>2020-05-17</em></p>
+<ul>
+<li>
+<p>New: <code>HandshakeCertificates.Builder.addInsecureHost()</code> makes it easy to turn off security in
+    private development environments that only carry test data. Prefer this over creating an
+    all-trusting <code>TrustManager</code> because only hosts on the allowlist are insecure. From
+    <a href="https://github.com/square/okhttp/blob/482f88300f78c3419b04379fc26c3683c10d6a9d/samples/guide/src/main/java/okhttp3/recipes/kt/DevServer.kt">our DevServer sample</a>:</p>
+<div class="codehilite"><pre><span></span><span class="k">val</span> <span class="py">clientCertificates</span> <span class="p">=</span> <span class="n">HandshakeCertificates</span><span class="p">.</span><span class="n">Builder</span><span class="p">()</span>
+    <span class="p">.</span><span class="n">addPlatformTrustedCertificates</span><span class="p">()</span>
+    <span class="p">.</span><span class="n">addInsecureHost</span><span class="p">(</span><span class="s">&quot;localhost&quot;</span><span class="p">)</span>
+    <span class="p">.</span><span class="n">build</span><span class="p">()</span>
+
+<span class="k">val</span> <span class="py">client</span> <span class="p">=</span> <span class="n">OkHttpClient</span><span class="p">.</span><span class="n">Builder</span><span class="p">()</span>
+    <span class="p">.</span><span class="n">sslSocketFactory</span><span class="p">(</span><span class="n">clientCertificates</span><span class="p">.</span><span class="n">sslSocketFactory</span><span class="p">(),</span> <span class="n">clientCertificates</span><span class="p">.</span><span class="n">trustManager</span><span class="p">)</span>
+    <span class="p">.</span><span class="n">build</span><span class="p">()</span>
+</pre></div>
+
+</li>
+<li>
+<p>New: Add <code>cacheHit</code>, <code>cacheMiss</code>, and <code>cacheConditionalHit()</code> events to <code>EventListener</code>. Use
+    these in logs, metrics, and even test cases to confirm your cache headers are configured as
+    expected.</p>
+</li>
+<li>
+<p>New: Constant string <code>okhttp3.VERSION</code>. This is a string like &ldquo;4.5.0-RC1&rdquo;, &ldquo;4.5.0&rdquo;, or
+    &ldquo;4.6.0-SNAPSHOT&rdquo; indicating the version of OkHttp in the current runtime. Use this to include
+    the OkHttp version in custom <code>User-Agent</code> headers.</p>
+</li>
+<li>
+<p>Fix: Don&rsquo;t crash when running as a plugin in Android Studio Canary 4.1. To enable
+    platform-specific TLS features OkHttp must detect whether it&rsquo;s running in a JVM or in Android.
+    The upcoming Android Studio runs in a JVM but has classes from Android and that confused OkHttp!</p>
+</li>
+<li>
+<p>Fix: Include the header <code>Accept: text/event-stream</code> for SSE calls. This header is not added if
+    the request already contains an <code>Accept</code> header.</p>
+</li>
+<li>
+<p>Fix: Don&rsquo;t crash with a <code>NullPointerException</code> if a server sends a close while we&rsquo;re sending a
+    ping. OkHttp had a race condition bug.</p>
+</li>
+</ul>
 <h2 id="version-460">Version 4.6.0<a class="headerlink" href="#version-460" title="Permanent link">&para;</a></h2>
 <p><em>2020-04-28</em></p>
 <ul>

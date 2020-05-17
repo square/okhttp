@@ -266,6 +266,18 @@
 
 
   <li class="md-nav__item">
+    <a href="../../../../caching/" title="Caching" class="md-nav__link">
+      Caching
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
     <a href="../../../../connections/" title="Connections" class="md-nav__link">
       Connections
     </a>
@@ -375,13 +387,13 @@
 
   <li class="md-nav__item md-nav__item--nested">
     
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-13" type="checkbox" id="nav-13">
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-14" type="checkbox" id="nav-14">
     
-    <label class="md-nav__link" for="nav-13">
+    <label class="md-nav__link" for="nav-14">
       4.x API
     </label>
     <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
-      <label class="md-nav__title" for="nav-13">
+      <label class="md-nav__title" for="nav-14">
         4.x API
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
@@ -495,13 +507,13 @@
 
   <li class="md-nav__item md-nav__item--nested">
     
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-14" type="checkbox" id="nav-14">
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-15" type="checkbox" id="nav-15">
     
-    <label class="md-nav__link" for="nav-14">
+    <label class="md-nav__link" for="nav-15">
       3.12.x API
     </label>
     <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
-      <label class="md-nav__title" for="nav-14">
+      <label class="md-nav__title" for="nav-15">
         3.12.x API
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
@@ -664,6 +676,13 @@
     Reactive Authentication
   </a>
   
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#authentication-retries" class="md-nav__link">
+    Authentication Retries
+  </a>
+  
     <nav class="md-nav">
       <ul class="md-nav__list">
         
@@ -721,7 +740,7 @@ server&rsquo;s hostname is sent to the proxy.</p>
 <p>Prior to sending any CONNECT request OkHttp always calls the proxy authenticator so that it may
 prepare preemptive authentication. OkHttp will call <a href="authenticate/">authenticate</a> with a fake <code>HTTP/1.1 407
 Proxy Authentication Required</code> response that has a <code>Proxy-Authenticate: OkHttp-Preemptive</code>
-challenge. The proxy authenticator may return either either an authenticated request, or null to
+challenge. The proxy authenticator may return either an authenticated request, or null to
 connect without authentication.</p>
 <div class="codehilite"><pre><span></span>for (Challenge challenge : response.challenges()) {
   // If this is preemptive auth, use a preemptive credential.
@@ -769,6 +788,19 @@ return response.request().newBuilder()
 both.</p>
 <p>Applications may configure OkHttp with an authenticator for origin servers, or proxy servers,
 or both.</p>
+<h2 id="authentication-retries">Authentication Retries<a class="headerlink" href="#authentication-retries" title="Permanent link">&para;</a></h2>
+<p>If your authentication may be flaky and requires retries you should apply some policy
+to limit the retries by the class of errors and number of attempts.  To get the number of
+attempts to the current point use this function.</p>
+<div class="codehilite"><pre><span></span>private int responseCount(Response response) {
+  int result = 1;
+  while ((response = response.priorResponse()) != null) {
+    result++;
+  }
+  return result;
+}
+</pre></div>
+
 <h3 id="functions">Functions<a class="headerlink" href="#functions" title="Permanent link">&para;</a></h3>
 <table>
 <thead>

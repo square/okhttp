@@ -266,6 +266,18 @@
 
 
   <li class="md-nav__item">
+    <a href="../../../../caching/" title="Caching" class="md-nav__link">
+      Caching
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
     <a href="../../../../connections/" title="Connections" class="md-nav__link">
       Connections
     </a>
@@ -375,13 +387,13 @@
 
   <li class="md-nav__item md-nav__item--nested">
     
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-13" type="checkbox" id="nav-13">
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-14" type="checkbox" id="nav-14">
     
-    <label class="md-nav__link" for="nav-13">
+    <label class="md-nav__link" for="nav-14">
       4.x API
     </label>
     <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
-      <label class="md-nav__title" for="nav-13">
+      <label class="md-nav__title" for="nav-14">
         4.x API
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
@@ -495,13 +507,13 @@
 
   <li class="md-nav__item md-nav__item--nested">
     
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-14" type="checkbox" id="nav-14">
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-15" type="checkbox" id="nav-15">
     
-    <label class="md-nav__link" for="nav-14">
+    <label class="md-nav__link" for="nav-15">
       3.12.x API
     </label>
     <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
-      <label class="md-nav__title" for="nav-14">
+      <label class="md-nav__title" for="nav-15">
         3.12.x API
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
@@ -717,6 +729,18 @@ slightly between releases. If you need a stable logging format, use your own eve
 </thead>
 <tbody>
 <tr>
+<td><a href="cache-conditional-hit/">cacheConditionalHit</a></td>
+<td><code>fun cacheConditionalHit(call: Call, cachedResponse: Response):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
+</tr>
+<tr>
+<td><a href="cache-hit/">cacheHit</a></td>
+<td><code>fun cacheHit(call: Call, response: Response):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
+</tr>
+<tr>
+<td><a href="cache-miss/">cacheMiss</a></td>
+<td><code>fun cacheMiss(call: Call):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
+</tr>
+<tr>
 <td><a href="call-end/">callEnd</a></td>
 <td><code>fun callEnd(call: Call):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
@@ -807,6 +831,10 @@ slightly between releases. If you need a stable logging format, use your own eve
 <tr>
 <td><a href="response-headers-start/">responseHeadersStart</a></td>
 <td><code>fun responseHeadersStart(call: Call):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
+</tr>
+<tr>
+<td><a href="satisfaction-failure/">satisfactionFailure</a></td>
+<td><code>fun satisfactionFailure(call: Call, response: Response):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 <tr>
 <td><a href="secure-connect-end/">secureConnectEnd</a></td>

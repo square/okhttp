@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
      <loc>https://square.github.com/okhttp/</loc>
-     <lastmod>2020-04-29</lastmod>
+     <lastmod>2020-05-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
@@ -12,92 +12,97 @@
     </url>
     <url>
      <loc>https://square.github.com/okhttp/calls/</loc>
-     <lastmod>2020-04-29</lastmod>
+     <lastmod>2020-05-17</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+    <url>
+     <loc>https://square.github.com/okhttp/caching/</loc>
+     <lastmod>2020-05-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>https://square.github.com/okhttp/connections/</loc>
-     <lastmod>2020-04-29</lastmod>
+     <lastmod>2020-05-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>https://square.github.com/okhttp/events/</loc>
-     <lastmod>2020-04-29</lastmod>
+     <lastmod>2020-05-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>https://square.github.com/okhttp/https/</loc>
-     <lastmod>2020-04-29</lastmod>
+     <lastmod>2020-05-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>https://square.github.com/okhttp/interceptors/</loc>
-     <lastmod>2020-04-29</lastmod>
+     <lastmod>2020-05-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>https://square.github.com/okhttp/recipes/</loc>
-     <lastmod>2020-04-29</lastmod>
+     <lastmod>2020-05-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>https://square.github.com/okhttp/security/</loc>
-     <lastmod>2020-04-29</lastmod>
+     <lastmod>2020-05-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>https://square.github.com/okhttp/security_providers/</loc>
-     <lastmod>2020-04-29</lastmod>
+     <lastmod>2020-05-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>https://square.github.com/okhttp/works_with_okhttp/</loc>
-     <lastmod>2020-04-29</lastmod>
+     <lastmod>2020-05-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>https://square.github.com/okhttp/upgrading_to_okhttp_4/</loc>
-     <lastmod>2020-04-29</lastmod>
+     <lastmod>2020-05-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>https://square.github.com/okhttp/4.x/okhttp/okhttp3/</loc>
-     <lastmod>2020-04-29</lastmod>
+     <lastmod>2020-05-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>https://square.github.com/okhttp/4.x/okhttp-brotli/okhttp3.brotli/</loc>
-     <lastmod>2020-04-29</lastmod>
+     <lastmod>2020-05-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>https://square.github.com/okhttp/4.x/okhttp-dnsoverhttps/okhttp3.dnsoverhttps/</loc>
-     <lastmod>2020-04-29</lastmod>
+     <lastmod>2020-05-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>https://square.github.com/okhttp/4.x/okhttp-logging-interceptor/okhttp3.logging/</loc>
-     <lastmod>2020-04-29</lastmod>
+     <lastmod>2020-05-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>https://square.github.com/okhttp/4.x/okhttp-sse/okhttp3.sse/</loc>
-     <lastmod>2020-04-29</lastmod>
+     <lastmod>2020-05-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>https://square.github.com/okhttp/4.x/okhttp-tls/okhttp3.tls/</loc>
-     <lastmod>2020-04-29</lastmod>
+     <lastmod>2020-05-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>https://square.github.com/okhttp/4.x/okhttp-urlconnection/okhttp3/</loc>
-     <lastmod>2020-04-29</lastmod>
+     <lastmod>2020-05-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>https://square.github.com/okhttp/4.x/mockwebserver/okhttp3.mockwebserver/</loc>
-     <lastmod>2020-04-29</lastmod>
+     <lastmod>2020-05-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
@@ -137,17 +142,17 @@
     </url>
     <url>
      <loc>https://square.github.com/okhttp/changelog/</loc>
-     <lastmod>2020-04-29</lastmod>
+     <lastmod>2020-05-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>https://square.github.com/okhttp/contributing/</loc>
-     <lastmod>2020-04-29</lastmod>
+     <lastmod>2020-05-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>https://square.github.com/okhttp/code_of_conduct/</loc>
-     <lastmod>2020-04-29</lastmod>
+     <lastmod>2020-05-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
 </urlset>

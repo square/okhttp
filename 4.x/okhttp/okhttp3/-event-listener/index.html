@@ -266,6 +266,18 @@
 
 
   <li class="md-nav__item">
+    <a href="../../../../caching/" title="Caching" class="md-nav__link">
+      Caching
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
     <a href="../../../../connections/" title="Connections" class="md-nav__link">
       Connections
     </a>
@@ -375,13 +387,13 @@
 
   <li class="md-nav__item md-nav__item--nested">
     
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-13" type="checkbox" id="nav-13">
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-14" type="checkbox" id="nav-14">
     
-    <label class="md-nav__link" for="nav-13">
+    <label class="md-nav__link" for="nav-14">
       4.x API
     </label>
     <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
-      <label class="md-nav__title" for="nav-13">
+      <label class="md-nav__title" for="nav-14">
         4.x API
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
@@ -495,13 +507,13 @@
 
   <li class="md-nav__item md-nav__item--nested">
     
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-14" type="checkbox" id="nav-14">
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-15" type="checkbox" id="nav-15">
     
-    <label class="md-nav__link" for="nav-14">
+    <label class="md-nav__link" for="nav-15">
       3.12.x API
     </label>
     <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
-      <label class="md-nav__title" for="nav-14">
+      <label class="md-nav__title" for="nav-15">
         3.12.x API
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
@@ -781,6 +793,18 @@ or network should be done asynchronously.</p>
 </thead>
 <tbody>
 <tr>
+<td><a href="cache-conditional-hit/">cacheConditionalHit</a></td>
+<td>Invoked when a response will be served from the cache or network based on validating the cached Response freshness. Will be followed by cacheHit or cacheMiss after the network Response is available.<code>open fun cacheConditionalHit(call:</code><a href="../-call/"><code>Call</code></a><code>, cachedResponse:</code><a href="../-response/"><code>Response</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
+</tr>
+<tr>
+<td><a href="cache-hit/">cacheHit</a></td>
+<td>Invoked when a result is served from the cache. The Response provided is the top level Response and normal event sequences will not be received.<code>open fun cacheHit(call:</code><a href="../-call/"><code>Call</code></a><code>, response:</code><a href="../-response/"><code>Response</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
+</tr>
+<tr>
+<td><a href="cache-miss/">cacheMiss</a></td>
+<td>Invoked when a response will be served from the network. The Response will be available from normal event sequences.<code>open fun cacheMiss(call:</code><a href="../-call/"><code>Call</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
+</tr>
+<tr>
 <td><a href="call-end/">callEnd</a></td>
 <td>Invoked immediately after a call has completely ended.  This includes delayed consumption of response body by the caller.<code>open fun callEnd(call:</code><a href="../-call/"><code>Call</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
@@ -871,6 +895,10 @@ or network should be done asynchronously.</p>
 <tr>
 <td><a href="response-headers-start/">responseHeadersStart</a></td>
 <td>Invoked when response headers are first returned from the server.<code>open fun responseHeadersStart(call:</code><a href="../-call/"><code>Call</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
+</tr>
+<tr>
+<td><a href="satisfaction-failure/">satisfactionFailure</a></td>
+<td>Invoked when a call fails due to cache rules. For example, we&rsquo;re forbidden from using the network and the cache is insufficient<code>open fun satisfactionFailure(call:</code><a href="../-call/"><code>Call</code></a><code>, response:</code><a href="../-response/"><code>Response</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></td>
 </tr>
 <tr>
 <td><a href="secure-connect-end/">secureConnectEnd</a></td>
