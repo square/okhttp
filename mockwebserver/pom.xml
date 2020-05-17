@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.squareup.okhttp3</groupId>
     <artifactId>parent</artifactId>
-    <version>3.14.9</version>
+    <version>3.14.10-SNAPSHOT</version>
   </parent>
 
   <artifactId>mockwebserver</artifactId>
