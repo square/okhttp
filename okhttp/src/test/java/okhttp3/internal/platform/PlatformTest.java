@@ -42,4 +42,12 @@ public class PlatformTest {
   public void testToStringIsClassname() {
     assertThat(new Platform().toString()).isEqualTo("Platform");
   }
+
+  @Test
+  public void testNotAndroid() {
+    platform.assumeNotAndroid();
+
+    // This is tautological so just confirms that it runs.
+    assertThat(Platform.Companion.isAndroid()).isEqualTo(false);
+  }
 }

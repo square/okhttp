@@ -109,6 +109,8 @@ class OkHttpTest {
 
   @Test
   fun testPlatform() {
+    assertTrue(Platform.isAndroid)
+
     if (Build.VERSION.SDK_INT >= 29) {
       assertTrue(Platform.get() is Android10Platform)
     } else {

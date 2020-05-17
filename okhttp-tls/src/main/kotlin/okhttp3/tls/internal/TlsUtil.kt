@@ -25,7 +25,7 @@ import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509ExtendedTrustManager
 import javax.net.ssl.X509KeyManager
 import javax.net.ssl.X509TrustManager
-import okhttp3.internal.platform.AndroidPlatform
+import okhttp3.internal.platform.Platform
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
@@ -72,7 +72,7 @@ object TlsUtil {
 
     return when {
       insecureHosts.isEmpty() -> trustManager
-      AndroidPlatform.isAndroid -> InsecureAndroidTrustManager(trustManager, insecureHosts)
+      Platform.isAndroid -> InsecureAndroidTrustManager(trustManager, insecureHosts)
       else -> InsecureExtendedTrustManager(trustManager as X509ExtendedTrustManager, insecureHosts)
     }
   }
