@@ -63,6 +63,14 @@ class OkHttpClientTestRule : TestRule {
       if (recorded) {
         synchronized(clientEventsList) {
           clientEventsList.add(record.message)
+
+          if (record.loggerName == "javax.net.ssl") {
+            val parameters = record.parameters
+
+            if (parameters != null) {
+              clientEventsList.add(parameters.first().toString())
+            }
+          }
         }
       }
     }
