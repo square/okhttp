@@ -44,6 +44,7 @@ import okhttp3.EventListener
 import okhttp3.Headers
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.HttpUrl
+import okhttp3.OkHttp
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
@@ -625,3 +626,5 @@ inline fun <T> Iterable<T>.filterList(predicate: T.() -> Boolean): List<T> {
   }
   return result
 }
+
+const val userAgent = "okhttp/${OkHttp.VERSION}"
