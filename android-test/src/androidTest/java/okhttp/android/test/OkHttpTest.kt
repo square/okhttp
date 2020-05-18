@@ -45,6 +45,7 @@ import okhttp3.logging.LoggingEventListener
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.testing.PlatformRule
+import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.internal.TlsUtil.localhost
 import okio.ByteString.Companion.toByteString
 import org.bouncycastle.jce.provider.BouncyCastleProvider
@@ -68,6 +69,7 @@ import java.net.UnknownHostException
 import java.security.KeyStore
 import java.security.SecureRandom
 import java.security.Security
+import java.security.cert.Certificate
 import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
 import java.util.concurrent.atomic.AtomicInteger
@@ -124,11 +126,22 @@ class OkHttpTest {
 
     val request = Request.Builder().url("https://api.twitter.com/robots.txt").build()
 
+    val clientCertificates = HandshakeCertificates.Builder()
+        .addPlatformTrustedCertificates()
+        .addInsecureHost(server.hostName)
+        .build()
+
+    client = client.newBuilder()
+        .sslSocketFactory(clientCertificates.sslSocketFactory(), clientCertificates.trustManager)
+        .build()
+
     val response = client.newCall(request).execute()
 
     response.use {
       assertEquals(200, response.code)
     }
+
+    localhostInsecureRequest();
   }
 
   @Test
@@ -155,12 +168,20 @@ class OkHttpTest {
 
       var socketClass: String? = null
 
+      val clientCertificates = HandshakeCertificates.Builder()
+          .addPlatformTrustedCertificates()
+          .addInsecureHost(server.hostName)
+          .build()
+
       // Need fresh client to reset sslSocketFactoryOrNull
-      client = OkHttpClient.Builder().eventListenerFactory(clientTestRule.wrap(object : EventListener() {
+      client = OkHttpClient.Builder()
+          .eventListenerFactory(clientTestRule.wrap(object : EventListener() {
         override fun connectionAcquired(call: Call, connection: Connection) {
           socketClass = connection.socket().javaClass.name
         }
-      })).build()
+      }))
+          .sslSocketFactory(clientCertificates.sslSocketFactory(), clientCertificates.trustManager)
+          .build()
 
       val response = client.newCall(request).execute()
 
@@ -181,6 +202,8 @@ class OkHttpTest {
         }
         assertEquals(TlsVersion.TLS_1_3, response.handshake?.tlsVersion)
       }
+
+      localhostInsecureRequest();
     } finally {
       Security.removeProvider("Conscrypt")
       client.close()
@@ -198,16 +221,24 @@ class OkHttpTest {
         assumeNoException("Google Play Services not available", gpsnae)
       }
 
+      val clientCertificates = HandshakeCertificates.Builder()
+          .addPlatformTrustedCertificates()
+          .addInsecureHost(server.hostName)
+          .build()
+
       val request = Request.Builder().url("https://facebook.com/robots.txt").build()
 
       var socketClass: String? = null
 
       // Need fresh client to reset sslSocketFactoryOrNull
-      client = OkHttpClient.Builder().eventListenerFactory(clientTestRule.wrap(object : EventListener() {
+      client = OkHttpClient.Builder()
+          .eventListenerFactory(clientTestRule.wrap(object : EventListener() {
         override fun connectionAcquired(call: Call, connection: Connection) {
           socketClass = connection.socket().javaClass.name
         }
-      })).build()
+      }))
+          .sslSocketFactory(clientCertificates.sslSocketFactory(), clientCertificates.trustManager)
+          .build()
 
       val response = client.newCall(request).execute()
 
@@ -217,9 +248,24 @@ class OkHttpTest {
         assertEquals("com.google.android.gms.org.conscrypt.Java8FileDescriptorSocket", socketClass)
         assertEquals(TlsVersion.TLS_1_2, response.handshake?.tlsVersion)
       }
+
+      localhostInsecureRequest();
     } finally {
       Security.removeProvider("GmsCore_OpenSSL")
       client.close()
+    }
+  }
+
+  private fun localhostInsecureRequest() {
+    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+
+    server.enqueue(MockResponse().setResponseCode(200))
+
+    val request = Request.Builder().url(server.url("/")).build()
+
+    client.newCall(request).execute().use {
+      assertEquals(200, it.code)
+      assertEquals(listOf<Certificate>(), it.handshake?.peerCertificates)
     }
   }
 
@@ -231,12 +277,18 @@ class OkHttpTest {
 
     var socketClass: String? = null
 
+    val clientCertificates = HandshakeCertificates.Builder()
+        .addPlatformTrustedCertificates()
+        .addInsecureHost(server.hostName)
+        .build()
+
     client = client.newBuilder()
         .eventListenerFactory(clientTestRule.wrap(object : EventListener() {
           override fun connectionAcquired(call: Call, connection: Connection) {
             socketClass = connection.socket().javaClass.name
           }
         }))
+        .sslSocketFactory(clientCertificates.sslSocketFactory(), clientCertificates.trustManager)
         .build()
 
     val response = client.newCall(request).execute()
@@ -251,6 +303,8 @@ class OkHttpTest {
       assertEquals(200, response.code)
       assertTrue(socketClass?.startsWith("com.android.org.conscrypt.") == true)
     }
+
+    localhostInsecureRequest();
   }
 
   @Test
