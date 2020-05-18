@@ -72,9 +72,9 @@ Further examples are on the [OkHttp Recipes page][recipes].
 Requirements
 ------------
 
-OkHttp works on Android 5.0+ (API level 21+) and on Java 8+.
+OkHttp works on Android 5.0+ (API level 21+) and on Java version 8+.
 
-OkHttp depends on [Okio][okio] for high-performance I/O and the [Kotlin standard library][kotlin]. Both are small libraries with strong backward-compatibility.
+OkHttp depends on [Okio][okio] for high-performance I/O and the [Kotlin standard library][kotlin]. Both are small libraries with strong backward-compatibilities.
 
 We highly recommend you keep OkHttp up-to-date. As with auto-updating web browsers, staying current
 with HTTPS clients is an important defense against potential security problems. [We
@@ -114,7 +114,7 @@ MockWebServer
 OkHttp includes a library for testing HTTP, HTTPS, and HTTP/2 clients.
 
 The latest release is available on [Maven Central](https://search.maven.org/artifact/com.squareup.okhttp3/mockwebserver/4.6.0/jar).
-
+Go and check out.
 ```kotlin
 testImplementation("com.squareup.okhttp3:mockwebserver:4.7.0")
 ```
