@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+## Version 4.7.1
+
+_2020-05-18_
+
+ *  Fix: Pass the right arguments in the trust manager created for `addInsecureHost()`. Without the
+    fix insecure hosts crash with an `IllegalArgumentException` on Android.
+
+
 ## Version 4.7.0
 
 _2020-05-17_
