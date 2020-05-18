@@ -72,9 +72,9 @@ Further examples are on the [OkHttp Recipes page][recipes].
 Requirements
 ------------
 
-OkHttp works on Android 5.0+ (API level 21+) and on Java 8+.
+OkHttp works on Android 5.0+ (API level 21+) and on Java version 8+.
 
-OkHttp depends on [Okio][okio] for high-performance I/O and the [Kotlin standard library][kotlin]. Both are small libraries with strong backward-compatibility.
+OkHttp depends on [Okio][okio] for high-performance I/O and the [Kotlin standard library][kotlin]. Both are small libraries with strong backward-compatibilities.
 
 We highly recommend you keep OkHttp up-to-date. As with auto-updating web browsers, staying current
 with HTTPS clients is an important defense against potential security problems. [We
@@ -89,7 +89,7 @@ the first security provider:
 Security.insertProviderAt(Conscrypt.newProvider(), 1);
 ```
 
-The OkHttp 3.12.x branch supports Android 2.3+ (API level 9+) and Java 7+. These platforms lack
+The OkHttp 3.12.x branch supports Android 2.3+ (API level 9+) and Java version 7+. These platforms lack
 support for TLS 1.2 and should not be used. But because upgrading is difficult we will backport
 critical fixes to the [3.12.x branch][okhttp_312x] through December 31, 2021.
 
@@ -106,7 +106,7 @@ implementation("com.squareup.okhttp3:okhttp:4.7.0")
 ```
 
 Snapshot builds are [available][snap]. [R8 and ProGuard][r8_proguard] rules are available.
-
+We are working on new releaes.
 
 MockWebServer
 -------------
