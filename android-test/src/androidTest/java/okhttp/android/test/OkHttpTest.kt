@@ -140,7 +140,7 @@ class OkHttpTest {
       assertEquals(200, response.code)
     }
 
-    localhostRequest();
+    localhostInsecureRequest();
   }
 
   @Test
@@ -202,7 +202,7 @@ class OkHttpTest {
         assertEquals(TlsVersion.TLS_1_3, response.handshake?.tlsVersion)
       }
 
-      localhostRequest();
+      localhostInsecureRequest();
     } finally {
       Security.removeProvider("Conscrypt")
       client.close()
@@ -248,14 +248,14 @@ class OkHttpTest {
         assertEquals(TlsVersion.TLS_1_2, response.handshake?.tlsVersion)
       }
 
-      localhostRequest();
+      localhostInsecureRequest();
     } finally {
       Security.removeProvider("GmsCore_OpenSSL")
       client.close()
     }
   }
 
-  private fun localhostRequest() {
+  private fun localhostInsecureRequest() {
     enableTls()
 
     server.enqueue(MockResponse().setResponseCode(200))
@@ -264,6 +264,7 @@ class OkHttpTest {
 
     client.newCall(request).execute().use {
       assertEquals(200, it.code)
+      assertEquals(listOf("CN=${server.hostName}"), it.handshake?.peerCertificates?.map { (it as X509Certificate).subjectDN.name })
     }
   }
 
@@ -302,7 +303,7 @@ class OkHttpTest {
       assertTrue(socketClass?.startsWith("com.android.org.conscrypt.") == true)
     }
 
-    localhostRequest();
+    localhostInsecureRequest();
   }
 
   @Test
