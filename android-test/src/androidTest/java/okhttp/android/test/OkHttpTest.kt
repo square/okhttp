@@ -301,6 +301,8 @@ class OkHttpTest {
       assertEquals(200, response.code)
       assertTrue(socketClass?.startsWith("com.android.org.conscrypt.") == true)
     }
+
+    localhostRequest();
   }
 
   @Test
