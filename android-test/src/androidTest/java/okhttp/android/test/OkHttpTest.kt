@@ -69,6 +69,7 @@ import java.net.UnknownHostException
 import java.security.KeyStore
 import java.security.SecureRandom
 import java.security.Security
+import java.security.cert.Certificate
 import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
 import java.util.concurrent.atomic.AtomicInteger
@@ -127,7 +128,7 @@ class OkHttpTest {
 
     val clientCertificates = HandshakeCertificates.Builder()
         .addPlatformTrustedCertificates()
-        .addInsecureHost("localhost")
+        .addInsecureHost(server.hostName)
         .build()
 
     client = client.newBuilder()
@@ -256,7 +257,7 @@ class OkHttpTest {
   }
 
   private fun localhostInsecureRequest() {
-    enableTls()
+    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
 
     server.enqueue(MockResponse().setResponseCode(200))
 
@@ -264,7 +265,7 @@ class OkHttpTest {
 
     client.newCall(request).execute().use {
       assertEquals(200, it.code)
-      assertEquals(listOf("CN=${server.hostName}"), it.handshake?.peerCertificates?.map { (it as X509Certificate).subjectDN.name })
+      assertEquals(listOf<Certificate>(), it.handshake?.peerCertificates)
     }
   }
 
