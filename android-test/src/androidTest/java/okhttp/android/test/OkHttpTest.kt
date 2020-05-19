@@ -128,7 +128,11 @@ class OkHttpTest {
 
     val clientCertificates = HandshakeCertificates.Builder()
         .addPlatformTrustedCertificates()
-        .addInsecureHost(server.hostName)
+        .apply {
+          if (Build.VERSION.SDK_INT >= 24) {
+            addInsecureHost(server.hostName)
+          }
+        }
         .build()
 
     client = client.newBuilder()
@@ -141,7 +145,9 @@ class OkHttpTest {
       assertEquals(200, response.code)
     }
 
-    localhostInsecureRequest();
+    if (Build.VERSION.SDK_INT >= 24) {
+      localhostInsecureRequest();
+    }
   }
 
   @Test
@@ -278,8 +284,11 @@ class OkHttpTest {
     var socketClass: String? = null
 
     val clientCertificates = HandshakeCertificates.Builder()
-        .addPlatformTrustedCertificates()
-        .addInsecureHost(server.hostName)
+        .addPlatformTrustedCertificates().apply {
+          if (Build.VERSION.SDK_INT >= 24) {
+            addInsecureHost(server.hostName)
+          }
+        }
         .build()
 
     client = client.newBuilder()
@@ -304,7 +313,9 @@ class OkHttpTest {
       assertTrue(socketClass?.startsWith("com.android.org.conscrypt.") == true)
     }
 
-    localhostInsecureRequest();
+    if (Build.VERSION.SDK_INT >= 24) {
+      localhostInsecureRequest();
+    }
   }
 
   @Test
