@@ -1,6 +1,53 @@
 Change Log
 ==========
 
+## Version 4.7.1
+
+_2020-05-18_
+
+ *  Fix: Pass the right arguments in the trust manager created for `addInsecureHost()`. Without the
+    fix insecure hosts crash with an `IllegalArgumentException` on Android.
+
+
+## Version 4.7.0
+
+_2020-05-17_
+
+ *  New: `HandshakeCertificates.Builder.addInsecureHost()` makes it easy to turn off security in
+    private development environments that only carry test data. Prefer this over creating an
+    all-trusting `TrustManager` because only hosts on the allowlist are insecure. From
+    [our DevServer sample][dev_server]:
+
+    ```kotlin
+    val clientCertificates = HandshakeCertificates.Builder()
+        .addPlatformTrustedCertificates()
+        .addInsecureHost("localhost")
+        .build()
+
+    val client = OkHttpClient.Builder()
+        .sslSocketFactory(clientCertificates.sslSocketFactory(), clientCertificates.trustManager)
+        .build()
+    ```
+
+ *  New: Add `cacheHit`, `cacheMiss`, and `cacheConditionalHit()` events to `EventListener`. Use
+    these in logs, metrics, and even test cases to confirm your cache headers are configured as
+    expected.
+
+ *  New: Constant string `okhttp3.VERSION`. This is a string like "4.5.0-RC1", "4.5.0", or
+    "4.6.0-SNAPSHOT" indicating the version of OkHttp in the current runtime. Use this to include
+    the OkHttp version in custom `User-Agent` headers.
+
+ *  Fix: Don't crash when running as a plugin in Android Studio Canary 4.1. To enable
+    platform-specific TLS features OkHttp must detect whether it's running in a JVM or in Android.
+    The upcoming Android Studio runs in a JVM but has classes from Android and that confused OkHttp!
+
+ *  Fix: Include the header `Accept: text/event-stream` for SSE calls. This header is not added if
+    the request already contains an `Accept` header.
+
+ *  Fix: Don't crash with a `NullPointerException` if a server sends a close while we're sending a
+    ping. OkHttp had a race condition bug.
+
+
 ## Version 4.6.0
 
 _2020-04-28_
@@ -376,6 +423,7 @@ _2019-06-03_
 
  [bom]: https://docs.gradle.org/6.2/userguide/platforms.html#sub:bom_import
  [bouncy_castle_releases]: https://www.bouncycastle.org/releasenotes.html
+ [dev_server]: https://github.com/square/okhttp/blob/482f88300f78c3419b04379fc26c3683c10d6a9d/samples/guide/src/main/java/okhttp3/recipes/kt/DevServer.kt
  [iana_websocket]: https://www.iana.org/assignments/websocket/websocket.txt
  [jetty_8_252]: https://webtide.com/jetty-alpn-java-8u252/
  [kotlin_1_3_71]: https://github.com/JetBrains/kotlin/releases/tag/v1.3.71
@@ -387,3 +435,4 @@ _2019-06-03_
  [rfc_2045]: https://tools.ietf.org/html/rfc2045
  [rfc_7231_647]: https://tools.ietf.org/html/rfc7231#section-6.4.7
  [rfc_7692]: https://tools.ietf.org/html/rfc7692
+ [semver]: https://semver.org/

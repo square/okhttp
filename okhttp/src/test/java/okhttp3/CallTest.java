@@ -62,7 +62,6 @@ import okhttp3.CallEvent.ResponseFailed;
 import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.Util;
-import okhttp3.internal.Version;
 import okhttp3.internal.http.RecordingProxySelector;
 import okhttp3.internal.io.InMemoryFileSystem;
 import okhttp3.mockwebserver.Dispatcher;
@@ -95,6 +94,7 @@ import static java.util.Collections.singletonList;
 import static okhttp3.CipherSuite.TLS_DH_anon_WITH_AES_128_GCM_SHA256;
 import static okhttp3.TestUtil.awaitGarbageCollection;
 import static okhttp3.internal.Internal.addHeaderLenient;
+import static okhttp3.internal.Util.userAgent;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
@@ -2711,7 +2711,7 @@ public final class CallTest {
     executeSynchronously("/");
 
     RecordedRequest recordedRequest = server.takeRequest();
-    assertThat(recordedRequest.getHeader("User-Agent")).matches(Version.userAgent);
+    assertThat(recordedRequest.getHeader("User-Agent")).matches(userAgent);
   }
 
   @Test public void setFollowRedirectsFalse() throws Exception {
@@ -3024,7 +3024,7 @@ public final class CallTest {
 
     RecordedRequest connect = server.takeRequest();
     assertThat(connect.getHeader("Private")).isNull();
-    assertThat(connect.getHeader("User-Agent")).isEqualTo(Version.userAgent);
+    assertThat(connect.getHeader("User-Agent")).isEqualTo(userAgent);
     assertThat(connect.getHeader("Proxy-Connection")).isEqualTo("Keep-Alive");
     assertThat(connect.getHeader("Host")).isEqualTo("android.com:443");
 
