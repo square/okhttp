@@ -21,8 +21,6 @@ import android.os.Build
 import java.io.IOException
 import java.lang.IllegalArgumentException
 import javax.net.ssl.SSLSocket
-import javax.net.ssl.SSLSocketFactory
-import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol
 import okhttp3.internal.SuppressSignatureCheck
 import okhttp3.internal.platform.Platform
@@ -34,8 +32,6 @@ import okhttp3.internal.platform.Platform.Companion.isAndroid
 @SuppressLint("NewApi")
 @SuppressSignatureCheck
 class Android10SocketAdapter : SocketAdapter {
-  override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? = null
-
   override fun matchesSocket(sslSocket: SSLSocket): Boolean = SSLSockets.isSupportedSocket(sslSocket)
 
   override fun isSupported(): Boolean = Companion.isSupported()

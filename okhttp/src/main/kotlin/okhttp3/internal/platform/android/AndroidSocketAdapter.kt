@@ -19,26 +19,23 @@ import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.nio.charset.StandardCharsets
 import javax.net.ssl.SSLSocket
-import javax.net.ssl.SSLSocketFactory
-import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol
 import okhttp3.internal.platform.AndroidPlatform
 import okhttp3.internal.platform.Platform
+import org.conscrypt.Conscrypt
 
 /**
  * Modern reflection based SocketAdapter for Conscrypt class SSLSockets.
  */
 open class AndroidSocketAdapter(private val sslSocketClass: Class<in SSLSocket>) : SocketAdapter {
   private val setUseSessionTickets: Method =
-      sslSocketClass.getDeclaredMethod("setUseSessionTickets", Boolean::class.javaPrimitiveType)
+    sslSocketClass.getDeclaredMethod("setUseSessionTickets", Boolean::class.javaPrimitiveType)
   private val setHostname = sslSocketClass.getMethod("setHostname", String::class.java)
   private val getAlpnSelectedProtocol = sslSocketClass.getMethod("getAlpnSelectedProtocol")
   private val setAlpnProtocols =
-      sslSocketClass.getMethod("setAlpnProtocols", ByteArray::class.java)
+    sslSocketClass.getMethod("setAlpnProtocols", ByteArray::class.java)
 
   override fun isSupported(): Boolean = AndroidPlatform.isSupported
-
-  override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? = null
 
   override fun matchesSocket(sslSocket: SSLSocket): Boolean = sslSocketClass.isInstance(sslSocket)
 
@@ -59,8 +56,10 @@ open class AndroidSocketAdapter(private val sslSocketClass: Class<in SSLSocket>)
         }
 
         // Enable ALPN.
-        setAlpnProtocols.invoke(sslSocket,
-            Platform.concatLengthPrefixed(protocols))
+        setAlpnProtocols.invoke(
+            sslSocket,
+            Platform.concatLengthPrefixed(protocols)
+        )
       } catch (e: IllegalAccessException) {
         throw AssertionError(e)
       } catch (e: InvocationTargetException) {
@@ -79,11 +78,11 @@ open class AndroidSocketAdapter(private val sslSocketClass: Class<in SSLSocket>)
       val alpnResult = getAlpnSelectedProtocol.invoke(sslSocket) as ByteArray?
       if (alpnResult != null) String(alpnResult, StandardCharsets.UTF_8) else null
     } catch (e: NullPointerException) {
-        when {
-            // https://github.com/square/okhttp/issues/5587
-            e.message == "ssl == null" -> null
-            else -> throw e
-        }
+      when {
+        // https://github.com/square/okhttp/issues/5587
+        e.message == "ssl == null" -> null
+        else -> throw e
+      }
     } catch (e: IllegalAccessException) {
       throw AssertionError(e)
     } catch (e: InvocationTargetException) {
@@ -97,10 +96,50 @@ open class AndroidSocketAdapter(private val sslSocketClass: Class<in SSLSocket>)
         @Suppress("UNCHECKED_CAST")
         val sslSocketClass = Class.forName("$packageName.OpenSSLSocketImpl") as Class<in SSLSocket>
 
-        AndroidSocketAdapter(sslSocketClass)
+        buildIfSupported(sslSocketClass)
       } catch (e: Exception) {
-        Platform.get().log(level = Platform.WARN, message = "unable to load android socket classes", t = e)
+        Platform.get()
+            .log(level = Platform.WARN, message = "unable to load android socket classes", t = e)
         null
+      }
+    }
+
+    fun buildIfSupported(actualSSLSocketClass: Class<in SSLSocket>): SocketAdapter? {
+      try {
+        return build(actualSSLSocketClass)
+      } catch (e: Exception) {
+        Platform.get()
+            .log(
+                "Failed to initialize AndroidSocketAdapter from $actualSSLSocketClass",
+                Platform.WARN, e
+            )
+        return null
+      }
+    }
+
+    private fun build(actualSSLSocketClass: Class<in SSLSocket>): AndroidSocketAdapter {
+      var possibleClass: Class<in SSLSocket> = actualSSLSocketClass
+      while (possibleClass.simpleName != "OpenSSLSocketImpl") {
+        possibleClass = possibleClass.superclass
+
+        if (possibleClass == null) {
+          throw AssertionError(
+              "No OpenSSLSocketImpl superclass of socket of type $actualSSLSocketClass"
+          )
+        }
+      }
+
+      return AndroidSocketAdapter(possibleClass)
+    }
+
+    fun factory(packageName: String): DeferredSocketAdapter.Factory {
+      return object : DeferredSocketAdapter.Factory {
+        override fun matchesSocket(sslSocket: SSLSocket): Boolean =
+          sslSocket.javaClass.name.startsWith("$packageName.")
+
+        override fun create(sslSocket: SSLSocket): SocketAdapter {
+          return build(sslSocket.javaClass)
+        }
       }
     }
   }
