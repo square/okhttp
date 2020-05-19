@@ -29,9 +29,11 @@ import okhttp3.ConnectionSpec
 import okhttp3.ConnectionSpec.Builder
 import okhttp3.EventListener
 import okhttp3.Handshake
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.TlsVersion.TLS_1_2
+import okhttp3.dnsoverhttps.DnsOverHttps
 import okio.ByteString.Companion.toByteString
 
 /**
@@ -99,7 +101,10 @@ class WireSharkKeyLoggerListener : EventListener() {
     logger.addHandler(loggerHandler)
   }
 
-  override fun secureConnectEnd(call: Call, handshake: Handshake?) {
+  override fun secureConnectEnd(
+    call: Call,
+    handshake: Handshake?
+  ) {
     logger.removeHandler(loggerHandler)
   }
 
@@ -108,20 +113,25 @@ class WireSharkKeyLoggerListener : EventListener() {
     logger.removeHandler(loggerHandler)
   }
 
-  override fun connectionAcquired(call: Call, connection: Connection) {
+  override fun connectionAcquired(
+    call: Call,
+    connection: Connection
+  ) {
     if (random != null) {
       val sslSocket = connection.socket() as SSLSocket
       val session = sslSocket.session
 
-      val masterSecretHex = session.masterSecret.encoded.toByteString()
-          .hex()
+      val masterSecretHex = session.masterSecret?.encoded?.toByteString()
+          ?.hex()
 //          p(masterSecretHex)
 //          p(session.id.toByteString().hex())
 
-      val keyLog = "CLIENT_RANDOM $random $masterSecretHex"
+      if (masterSecretHex != null) {
+        val keyLog = "CLIENT_RANDOM $random $masterSecretHex"
 
-      println(keyLog)
-      File("/tmp/key.log").appendText("$keyLog\n")
+        println(keyLog)
+        File("/tmp/key.log").appendText("$keyLog\n")
+      }
     }
 
     random = null
@@ -136,12 +146,12 @@ class WireSharkKeyLoggerListener : EventListener() {
   companion object {
     private lateinit var logger: Logger
 
-    private val SSLSession.masterSecret: SecretKey
+    private val SSLSession.masterSecret: SecretKey?
       get() = javaClass.getDeclaredField("masterSecret")
           .apply {
             isAccessible = true
           }
-          .get(this) as SecretKey
+          .get(this) as? SecretKey
 
     val randomRegex = "\"random\"\\s+:\\s+\"([^\"]+)\"".toRegex()
 
@@ -162,9 +172,21 @@ class WiresharkExample {
         .tlsVersions(TLS_1_2)
 //        .cipherSuites(CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256)
         .build()
+
+  var bootstrapClient = OkHttpClient.Builder()
+      .connectionSpecs(listOf(connectionSpec))
+      .eventListenerFactory(WireSharkKeyLoggerListener.Factory())
+      .build()
+
+  val dns = DnsOverHttps.Builder().client(bootstrapClient)
+    .url("https://1.1.1.1/dns-query".toHttpUrl())
+    .includeIPv6(false)
+    .build()
+
   val client = OkHttpClient.Builder()
       .connectionSpecs(listOf(connectionSpec))
       .eventListenerFactory(WireSharkKeyLoggerListener.Factory())
+      .dns(dns)
       .build()
 
   fun run() {
