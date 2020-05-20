@@ -186,7 +186,8 @@ open class Platform {
 
     // This explicit check avoids activating in Android Studio with Android specific classes
     // available when running plugins inside the IDE.
-    val isAndroid = "Dalvik" == System.getProperty("java.vm.name")
+    val isAndroid: Boolean
+        get() = "Dalvik" == System.getProperty("java.vm.name")
 
     private val isConscryptPreferred: Boolean
       get() {
