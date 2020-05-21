@@ -33,6 +33,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.TlsVersion.TLS_1_2
+import okhttp3.brotli.BrotliInterceptor
 import okhttp3.dnsoverhttps.DnsOverHttps
 import okio.ByteString.Companion.toByteString
 
@@ -42,9 +43,14 @@ import okio.ByteString.Companion.toByteString
  */
 class WireSharkKeyLoggerListener : EventListener() {
   var random: String? = null
+  lateinit var currentThread: Thread
 
   val loggerHandler = object : Handler() {
     override fun publish(record: LogRecord) {
+      // Try to avoid multi threading issues with concurrent requests
+      if (Thread.currentThread() != currentThread)
+        return
+
       // https://timothybasanov.com/2016/05/26/java-pre-master-secret.html
       // https://security.stackexchange.com/questions/35639/decrypting-tls-in-wireshark-when-using-dhe-rsa-ciphersuites
       // https://stackoverflow.com/questions/36240279/how-do-i-extract-the-pre-master-secret-using-an-openssl-based-client
@@ -98,6 +104,8 @@ class WireSharkKeyLoggerListener : EventListener() {
 
   override fun secureConnectStart(call: Call) {
     // Register to capture "Produced ClientHello handshake message".
+
+    currentThread = Thread.currentThread()
     logger.addHandler(loggerHandler)
   }
 
@@ -175,6 +183,7 @@ class WiresharkExample {
 
   var bootstrapClient = OkHttpClient.Builder()
       .connectionSpecs(listOf(connectionSpec))
+      .addInterceptor(BrotliInterceptor)
       .eventListenerFactory(WireSharkKeyLoggerListener.Factory())
       .build()
 
@@ -186,6 +195,7 @@ class WiresharkExample {
   val client = OkHttpClient.Builder()
       .connectionSpecs(listOf(connectionSpec))
       .eventListenerFactory(WireSharkKeyLoggerListener.Factory())
+      .addInterceptor(BrotliInterceptor)
       .dns(dns)
       .build()
 

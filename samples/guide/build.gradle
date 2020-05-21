@@ -5,6 +5,7 @@ dependencies {
   implementation project(':mockwebserver')
   implementation project(':okhttp-tls')
   implementation project(':okhttp-dnsoverhttps')
+  implementation project(':okhttp-brotli')
   implementation deps.animalSniffer
   implementation deps.moshi
   kapt deps.moshiKotlin
