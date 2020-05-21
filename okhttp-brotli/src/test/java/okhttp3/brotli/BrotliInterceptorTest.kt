@@ -22,6 +22,7 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
 import okio.ByteString
+import okio.ByteString.Companion.EMPTY
 import okio.ByteString.Companion.decodeHex
 import okio.ByteString.Companion.encodeUtf8
 import org.assertj.core.api.Assertions.assertThat
@@ -93,6 +94,20 @@ class BrotliInterceptorTest {
       assertThat(ioe).hasMessage("Brotli stream decoding failed")
       assertThat(ioe.cause?.javaClass?.simpleName).isEqualTo("BrotliRuntimeException")
     }
+  }
+
+  @Test
+  fun testSkipUncompressNoContentResponse() {
+    val response = response("https://httpbin.org/brotli", EMPTY) {
+      header("Content-Encoding", "br")
+      code(204)
+      message("NO CONTENT")
+    }
+
+    val same = BrotliInterceptor.uncompress(response)
+
+    val responseString = same.body?.string()
+    assertThat(responseString).isEmpty()
   }
 
   private fun response(
