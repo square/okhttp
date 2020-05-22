@@ -17,9 +17,9 @@ package okhttp3.logging
 
 import java.io.IOException
 import java.nio.charset.Charset
-import java.nio.charset.StandardCharsets.UTF_8
 import java.util.TreeSet
 import java.util.concurrent.TimeUnit
+import kotlin.text.Charsets.UTF_8
 import okhttp3.Headers
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
