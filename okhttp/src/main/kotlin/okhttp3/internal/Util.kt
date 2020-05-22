@@ -26,9 +26,6 @@ import java.net.ServerSocket
 import java.net.Socket
 import java.net.SocketTimeoutException
 import java.nio.charset.Charset
-import java.nio.charset.StandardCharsets.UTF_16BE
-import java.nio.charset.StandardCharsets.UTF_16LE
-import java.nio.charset.StandardCharsets.UTF_8
 import java.util.Arrays
 import java.util.Collections
 import java.util.Comparator
@@ -37,6 +34,9 @@ import java.util.Locale
 import java.util.TimeZone
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
+import kotlin.text.Charsets.UTF_8
+import kotlin.text.Charsets.UTF_16BE
+import kotlin.text.Charsets.UTF_16LE
 import kotlin.text.Charsets.UTF_32BE
 import kotlin.text.Charsets.UTF_32LE
 import okhttp3.Call

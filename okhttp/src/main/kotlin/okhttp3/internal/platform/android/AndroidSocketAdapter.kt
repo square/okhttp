@@ -17,7 +17,6 @@ package okhttp3.internal.platform.android
 
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
-import java.nio.charset.StandardCharsets
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
@@ -77,7 +76,7 @@ open class AndroidSocketAdapter(private val sslSocketClass: Class<in SSLSocket>)
 
     return try {
       val alpnResult = getAlpnSelectedProtocol.invoke(sslSocket) as ByteArray?
-      if (alpnResult != null) String(alpnResult, StandardCharsets.UTF_8) else null
+      if (alpnResult != null) String(alpnResult, Charsets.UTF_8) else null
     } catch (e: NullPointerException) {
         when {
             // https://github.com/square/okhttp/issues/5587

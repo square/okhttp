@@ -18,9 +18,9 @@ package okhttp3.internal.publicsuffix
 import java.io.IOException
 import java.io.InterruptedIOException
 import java.net.IDN
-import java.nio.charset.StandardCharsets.UTF_8
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.text.Charsets.UTF_8
 import okhttp3.internal.and
 import okhttp3.internal.platform.Platform
 import okio.GzipSource
