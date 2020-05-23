@@ -161,12 +161,6 @@ public final class URLResponseConnectionTest {
     return result.toString();
   }
 
-  private Request newRequest(HttpUrl url) {
-    return new Request.Builder()
-            .url(url)
-            .build();
-  }
-
   @Test public void response307WithPostReverted() throws Exception {
     client = client.newBuilder()
             .addNetworkInterceptor(new URLConnectionTest.LegacyRedirectInterceptor())
