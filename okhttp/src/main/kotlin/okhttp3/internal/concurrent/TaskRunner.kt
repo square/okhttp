@@ -264,14 +264,6 @@ class TaskRunner(
   }
 
   class RealBackend(threadFactory: ThreadFactory) : Backend {
-    private val executor = ThreadPoolExecutor(
-        0, // corePoolSize.
-        Int.MAX_VALUE, // maximumPoolSize.
-        60L, TimeUnit.SECONDS, // keepAliveTime.
-        SynchronousQueue(),
-        threadFactory
-    )
-
     override fun beforeTask(taskRunner: TaskRunner) {
     }
 
@@ -295,12 +287,12 @@ class TaskRunner(
       }
     }
 
+    val startVirtualMethod = Thread::class.java.getMethod("startVirtualThread", Runnable::class.java)
     override fun execute(runnable: Runnable) {
-      executor.execute(runnable)
+      startVirtualMethod.invoke(null, runnable)
     }
 
     fun shutdown() {
-      executor.shutdown()
     }
   }
 
