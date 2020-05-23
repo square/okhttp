@@ -1744,11 +1744,11 @@ public final class HttpUrlTest {
   @Test public void topPrivateDomain() {
     assertThat(parse("https://google.com").topPrivateDomain()).isEqualTo("google.com");
     assertThat(parse("https://adwords.google.co.uk").topPrivateDomain())
-        .isEqualTo("google.co.uk");
+            .isEqualTo("google.co.uk");
     assertThat(parse("https://栃.栃木.jp").topPrivateDomain())
-        .isEqualTo("xn--ewv.xn--4pvxs.jp");
+            .isEqualTo("xn--ewv.xn--4pvxs.jp");
     assertThat(parse("https://xn--ewv.xn--4pvxs.jp").topPrivateDomain())
-        .isEqualTo("xn--ewv.xn--4pvxs.jp");
+            .isEqualTo("xn--ewv.xn--4pvxs.jp");
 
     assertThat(parse("https://co.uk").topPrivateDomain()).isNull();
     assertThat(parse("https://square").topPrivateDomain()).isNull();
@@ -1757,6 +1757,31 @@ public final class HttpUrlTest {
     assertThat(parse("https://localhost").topPrivateDomain()).isNull();
     assertThat(parse("https://127.0.0.1").topPrivateDomain()).isNull();
   }
+
+  @Test public void urlHostWithNul() {
+    try {
+      HttpUrl.get("http://host\u0000/");
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+  }
+
+  @Test public void urlWithSpaceInHost() {
+    try {
+      HttpUrl.get("http://and roid.com/");
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+  }
+
+  @Test public void urlWithBadAsciiHost() {
+    try {
+      HttpUrl.get("http://host\u0001/");
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+  }
+
 
   private void assertInvalid(String string, String exceptionMessage) {
     if (useGet) {

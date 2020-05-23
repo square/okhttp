@@ -158,24 +158,9 @@ public final class URLConnectionTest {
       fail();
     } catch (IllegalArgumentException expected) {
     }
-    try {
-      new Request.Builder()
-          .addHeader(null, "k");
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
-    try {
-      new Request.Builder()
-          .addHeader("NullValue", null);
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
-    try {
-      new Request.Builder()
-          .addHeader("AnotherNullValue", null);
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    addHeader(null, "k");
+    addHeader("NullValue", null);
+    addHeader("AnotherNullValue", null);
 
     Response response = getResponse(request);
     response.close();
@@ -426,72 +411,9 @@ public final class URLConnectionTest {
 
   enum WriteKind {BYTE_BY_BYTE, SMALL_BUFFERS, LARGE_BUFFERS}
 
-  @Test public void chunkedUpload_byteByByte() throws Exception {
-    doUpload(TransferKind.CHUNKED, WriteKind.BYTE_BY_BYTE);
-  }
 
-  @Test public void chunkedUpload_smallBuffers() throws Exception {
-    doUpload(TransferKind.CHUNKED, WriteKind.SMALL_BUFFERS);
-  }
 
-  @Test public void chunkedUpload_largeBuffers() throws Exception {
-    doUpload(TransferKind.CHUNKED, WriteKind.LARGE_BUFFERS);
-  }
 
-  @Test public void fixedLengthUpload_byteByByte() throws Exception {
-    doUpload(TransferKind.FIXED_LENGTH, WriteKind.BYTE_BY_BYTE);
-  }
-
-  @Test public void fixedLengthUpload_smallBuffers() throws Exception {
-    doUpload(TransferKind.FIXED_LENGTH, WriteKind.SMALL_BUFFERS);
-  }
-
-  @Test public void fixedLengthUpload_largeBuffers() throws Exception {
-    doUpload(TransferKind.FIXED_LENGTH, WriteKind.LARGE_BUFFERS);
-  }
-
-  private void doUpload(TransferKind uploadKind, WriteKind writeKind) throws Exception {
-    int n = 512 * 1024;
-    server.setBodyLimit(0);
-    server.enqueue(new MockResponse());
-
-    RequestBody requestBody = new RequestBody() {
-      @Override public @Nullable MediaType contentType() {
-        return null;
-      }
-
-      @Override public long contentLength() {
-        return uploadKind == TransferKind.CHUNKED ? -1L : n;
-      }
-
-      @Override public void writeTo(BufferedSink sink) throws IOException {
-        if (writeKind == WriteKind.BYTE_BY_BYTE) {
-          for (int i = 0; i < n; ++i) {
-            sink.writeByte('x');
-          }
-        } else {
-          byte[] buf = new byte[writeKind == WriteKind.SMALL_BUFFERS ? 256 : 64 * 1024];
-          Arrays.fill(buf, (byte) 'x');
-          for (int i = 0; i < n; i += buf.length) {
-            sink.write(buf, 0, Math.min(buf.length, n - i));
-          }
-        }
-      }
-    };
-
-    Response response = getResponse(new Request.Builder()
-        .url(server.url("/"))
-        .post(requestBody)
-        .build());
-    assertThat(response.code()).isEqualTo(200);
-    RecordedRequest request = server.takeRequest();
-    assertThat(request.getBodySize()).isEqualTo(n);
-    if (uploadKind == TransferKind.CHUNKED) {
-      assertThat(request.getChunkSizes()).isNotEmpty();
-    } else {
-      assertThat(request.getChunkSizes()).isEmpty();
-    }
-  }
 
   @Test public void connectViaHttps() throws Exception {
     server.useHttps(handshakeCertificates.sslSocketFactory(), false);
@@ -707,32 +629,7 @@ public final class URLConnectionTest {
     assertThat(server.getRequestCount()).isEqualTo(0);
   }
 
-  @Test public void connectViaProxyUsingProxyArg() throws Exception {
-    testConnectViaProxy(ProxyConfig.CREATE_ARG);
-  }
 
-  @Test public void connectViaProxyUsingProxySystemProperty() throws Exception {
-    testConnectViaProxy(ProxyConfig.PROXY_SYSTEM_PROPERTY);
-  }
-
-  @Test public void connectViaProxyUsingHttpProxySystemProperty() throws Exception {
-    testConnectViaProxy(ProxyConfig.HTTP_PROXY_SYSTEM_PROPERTY);
-  }
-
-  private void testConnectViaProxy(ProxyConfig proxyConfig) throws Exception {
-    MockResponse mockResponse = new MockResponse()
-        .setBody("this response comes via a proxy");
-    server.enqueue(mockResponse);
-
-    HttpUrl url = HttpUrl.parse("http://android.com/foo");
-    Response response = proxyConfig.connect(server, client, url).execute();
-    assertContent("this response comes via a proxy", response);
-
-    RecordedRequest request = server.takeRequest();
-    assertThat(request.getRequestLine()).isEqualTo(
-        "GET http://android.com/foo HTTP/1.1");
-    assertThat(request.getHeader("Host")).isEqualTo("android.com");
-  }
 
   @Test public void contentDisagreesWithContentLengthHeaderBodyTooLong() throws IOException {
     server.enqueue(new MockResponse()
@@ -852,85 +749,9 @@ public final class URLConnectionTest {
     }
   }
 
-  @Test public void connectViaHttpProxyToHttpsUsingProxyArgWithNoProxy() throws Exception {
-    testConnectViaDirectProxyToHttps(ProxyConfig.NO_PROXY);
-  }
 
-  @Test public void connectViaHttpProxyToHttpsUsingHttpProxySystemProperty() throws Exception {
-    // https should not use http proxy
-    testConnectViaDirectProxyToHttps(ProxyConfig.HTTP_PROXY_SYSTEM_PROPERTY);
-  }
 
-  private void testConnectViaDirectProxyToHttps(ProxyConfig proxyConfig) throws Exception {
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false);
-    server.enqueue(new MockResponse()
-        .setBody("this response comes via HTTPS"));
 
-    HttpUrl url = server.url("/foo");
-    client = client.newBuilder()
-        .sslSocketFactory(
-            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
-        .hostnameVerifier(new RecordingHostnameVerifier())
-        .build();
-    Call call = proxyConfig.connect(server, client, url);
-
-    assertContent("this response comes via HTTPS", call.execute());
-
-    RecordedRequest request = server.takeRequest();
-    assertThat(request.getRequestLine()).isEqualTo("GET /foo HTTP/1.1");
-  }
-
-  @Test public void connectViaHttpProxyToHttpsUsingProxyArg() throws Exception {
-    testConnectViaHttpProxyToHttps(ProxyConfig.CREATE_ARG);
-  }
-
-  /**
-   * We weren't honoring all of the appropriate proxy system properties when connecting via HTTPS.
-   * http://b/3097518
-   */
-  @Test public void connectViaHttpProxyToHttpsUsingProxySystemProperty() throws Exception {
-    testConnectViaHttpProxyToHttps(ProxyConfig.PROXY_SYSTEM_PROPERTY);
-  }
-
-  @Test public void connectViaHttpProxyToHttpsUsingHttpsProxySystemProperty() throws Exception {
-    testConnectViaHttpProxyToHttps(ProxyConfig.HTTPS_PROXY_SYSTEM_PROPERTY);
-  }
-
-  /**
-   * We were verifying the wrong hostname when connecting to an HTTPS site through a proxy.
-   * http://b/3097277
-   */
-  private void testConnectViaHttpProxyToHttps(ProxyConfig proxyConfig) throws Exception {
-    RecordingHostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
-
-    server.useHttps(handshakeCertificates.sslSocketFactory(), true);
-    server.enqueue(new MockResponse()
-        .setSocketPolicy(UPGRADE_TO_SSL_AT_END)
-        .clearHeaders());
-    server.enqueue(new MockResponse()
-        .setBody("this response comes via a secure proxy"));
-
-    HttpUrl url = HttpUrl.parse("https://android.com/foo");
-    client = client.newBuilder()
-        .sslSocketFactory(
-            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
-        .hostnameVerifier(hostnameVerifier)
-        .build();
-    Call call = proxyConfig.connect(server, client, url);
-
-    assertContent("this response comes via a secure proxy", call.execute());
-
-    RecordedRequest connect = server.takeRequest();
-    assertThat(connect.getRequestLine()).overridingErrorMessage(
-        "Connect line failure on proxy").isEqualTo("CONNECT android.com:443 HTTP/1.1");
-    assertThat(connect.getHeader("Host")).isEqualTo("android.com:443");
-
-    RecordedRequest get = server.takeRequest();
-    assertThat(get.getRequestLine()).isEqualTo("GET /foo HTTP/1.1");
-    assertThat(get.getHeader("Host")).isEqualTo("android.com");
-    assertThat(hostnameVerifier.calls).isEqualTo(
-        asList("verify android.com"));
-  }
 
   /** Tolerate bad https proxy response when using HttpResponseCache. Android bug 6754912. */
   @Test public void connectViaHttpProxyToHttpsUsingBadProxyAndHttpResponseCache() throws Exception {
@@ -1352,21 +1173,7 @@ public final class URLConnectionTest {
     assertThat(request.getHeader("Accept-Encoding")).isEqualTo("gzip");
   }
 
-  @Test public void gzipAndConnectionReuseWithFixedLength() throws Exception {
-    testClientConfiguredGzipContentEncodingAndConnectionReuse(TransferKind.FIXED_LENGTH, false);
-  }
 
-  @Test public void gzipAndConnectionReuseWithChunkedEncoding() throws Exception {
-    testClientConfiguredGzipContentEncodingAndConnectionReuse(TransferKind.CHUNKED, false);
-  }
-
-  @Test public void gzipAndConnectionReuseWithFixedLengthAndTls() throws Exception {
-    testClientConfiguredGzipContentEncodingAndConnectionReuse(TransferKind.FIXED_LENGTH, true);
-  }
-
-  @Test public void gzipAndConnectionReuseWithChunkedEncodingAndTls() throws Exception {
-    testClientConfiguredGzipContentEncodingAndConnectionReuse(TransferKind.CHUNKED, true);
-  }
 
   @Test public void clientConfiguredCustomContentEncoding() throws Exception {
     server.enqueue(new MockResponse()
@@ -1384,47 +1191,7 @@ public final class URLConnectionTest {
     assertThat(request.getHeader("Accept-Encoding")).isEqualTo("custom");
   }
 
-  /**
-   * Test a bug where gzip input streams weren't exhausting the input stream, which corrupted the
-   * request that followed or prevented connection reuse. http://code.google.com/p/android/issues/detail?id=7059
-   * http://code.google.com/p/android/issues/detail?id=38817
-   */
-  private void testClientConfiguredGzipContentEncodingAndConnectionReuse(TransferKind transferKind,
-      boolean tls) throws Exception {
-    if (tls) {
-      SSLSocketFactory socketFactory = handshakeCertificates.sslSocketFactory();
-      RecordingHostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
-      server.useHttps(socketFactory, false);
-      client = client.newBuilder()
-          .sslSocketFactory(socketFactory, handshakeCertificates.trustManager())
-          .hostnameVerifier(hostnameVerifier)
-          .build();
-    }
 
-    MockResponse responseOne = new MockResponse()
-        .addHeader("Content-Encoding: gzip");
-    transferKind.setBody(responseOne, gzip("one (gzipped)"), 5);
-    server.enqueue(responseOne);
-    MockResponse responseTwo = new MockResponse();
-    transferKind.setBody(responseTwo, "two (identity)", 5);
-    server.enqueue(responseTwo);
-
-    Response response1 = getResponse(new Request.Builder()
-        .header("Accept-Encoding", "gzip")
-        .url(server.url("/"))
-        .build());
-    InputStream gunzippedIn = new GZIPInputStream(response1.body().byteStream());
-    assertThat(readAscii(gunzippedIn, Integer.MAX_VALUE)).isEqualTo(
-        "one (gzipped)");
-    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
-
-    Response response2 = getResponse(new Request.Builder()
-        .url(server.url("/"))
-        .build());
-    assertThat(readAscii(response2.body().byteStream(), Integer.MAX_VALUE)).isEqualTo(
-        "two (identity)");
-    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(1);
-  }
 
   @Test public void transparentGzipWorksAfterExceptionRecovery() throws Exception {
     server.enqueue(new MockResponse()
@@ -2192,38 +1959,6 @@ public final class URLConnectionTest {
         "Expected connection reuse").isEqualTo(1);
   }
 
-  @Test public void redirectWithProxySelector() throws Exception {
-    final List<URI> proxySelectionRequests = new ArrayList<>();
-    client = client.newBuilder()
-        .proxySelector(new ProxySelector() {
-          @Override public List<Proxy> select(URI uri) {
-            proxySelectionRequests.add(uri);
-            MockWebServer proxyServer = (uri.getPort() == server.getPort())
-                ? server
-                : server2;
-            return asList(proxyServer.toProxyAddress());
-          }
-
-          @Override public void connectFailed(URI uri, SocketAddress address, IOException failure) {
-            throw new AssertionError();
-          }
-        })
-        .build();
-
-    server2.enqueue(new MockResponse()
-        .setBody("This is the 2nd server!"));
-
-    server.enqueue(new MockResponse()
-        .setResponseCode(HTTP_MOVED_TEMP)
-        .addHeader("Location: " + server2.url("/b").toString())
-        .setBody("This page has moved!"));
-
-    assertContent("This is the 2nd server!", getResponse(newRequest("/a")));
-
-    assertThat(proxySelectionRequests).isEqualTo(
-        asList(server.url("/").url().toURI(), server2.url("/").url().toURI()));
-  }
-
   @Test public void redirectWithAuthentication() throws Exception {
     server2.enqueue(new MockResponse()
         .setBody("Page 2"));
@@ -2242,55 +1977,6 @@ public final class URLConnectionTest {
     RecordedRequest redirectRequest = server2.takeRequest();
     assertThat(redirectRequest.getHeader("Authorization")).isNull();
     assertThat(redirectRequest.getPath()).isEqualTo("/b");
-  }
-
-  @Test public void response300MultipleChoiceWithPost() throws Exception {
-    // Chrome doesn't follow the redirect, but Firefox and the RI both do
-    testResponseRedirectedWithPost(HttpURLConnection.HTTP_MULT_CHOICE, TransferKind.END_OF_STREAM);
-  }
-
-  @Test public void response301MovedPermanentlyWithPost() throws Exception {
-    testResponseRedirectedWithPost(HttpURLConnection.HTTP_MOVED_PERM, TransferKind.END_OF_STREAM);
-  }
-
-  @Test public void response302MovedTemporarilyWithPost() throws Exception {
-    testResponseRedirectedWithPost(HTTP_MOVED_TEMP, TransferKind.END_OF_STREAM);
-  }
-
-  @Test public void response303SeeOtherWithPost() throws Exception {
-    testResponseRedirectedWithPost(HttpURLConnection.HTTP_SEE_OTHER, TransferKind.END_OF_STREAM);
-  }
-
-  @Test public void postRedirectToGetWithChunkedRequest() throws Exception {
-    testResponseRedirectedWithPost(HTTP_MOVED_TEMP, TransferKind.CHUNKED);
-  }
-
-  @Test public void postRedirectToGetWithStreamedRequest() throws Exception {
-    testResponseRedirectedWithPost(HTTP_MOVED_TEMP, TransferKind.FIXED_LENGTH);
-  }
-
-  private void testResponseRedirectedWithPost(int redirectCode, TransferKind transferKind)
-      throws Exception {
-    server.enqueue(new MockResponse()
-        .setResponseCode(redirectCode)
-        .addHeader("Location: /page2")
-        .setBody("This page has moved!"));
-    server.enqueue(new MockResponse()
-        .setBody("Page 2"));
-
-    Response response = getResponse(new Request.Builder()
-        .url(server.url("/page1"))
-        .post(transferKind.newRequestBody("ABCD"))
-        .build());
-    assertThat(readAscii(response.body().byteStream(), Integer.MAX_VALUE)).isEqualTo(
-        "Page 2");
-
-    RecordedRequest page1 = server.takeRequest();
-    assertThat(page1.getRequestLine()).isEqualTo("POST /page1 HTTP/1.1");
-    assertThat(page1.getBody().readUtf8()).isEqualTo("ABCD");
-
-    RecordedRequest page2 = server.takeRequest();
-    assertThat(page2.getRequestLine()).isEqualTo("GET /page2 HTTP/1.1");
   }
 
   @Test public void redirectedPostStripsRequestBodyHeaders() throws Exception {
@@ -2318,55 +2004,9 @@ public final class URLConnectionTest {
     assertThat(page2.getHeader("Transfer-Encoding")).isNull();
   }
 
-  @Test public void response305UseProxy() throws Exception {
-    server.enqueue(new MockResponse()
-        .setResponseCode(HttpURLConnection.HTTP_USE_PROXY)
-        .addHeader("Location: " + server.url("/").url())
-        .setBody("This page has moved!"));
-    server.enqueue(new MockResponse()
-        .setBody("Proxy Response"));
 
-    Response response = getResponse(newRequest("/foo"));
-    // Fails on the RI, which gets "Proxy Response".
-    assertThat(readAscii(response.body().byteStream(), Integer.MAX_VALUE)).isEqualTo(
-        "This page has moved!");
 
-    RecordedRequest page1 = server.takeRequest();
-    assertThat(page1.getRequestLine()).isEqualTo("GET /foo HTTP/1.1");
-    assertThat(server.getRequestCount()).isEqualTo(1);
-  }
 
-  @Test public void response307WithGet() throws Exception {
-    testRedirect(true, "GET");
-  }
-
-  @Test public void response307WithHead() throws Exception {
-    testRedirect(true, "HEAD");
-  }
-
-  @Test public void response307WithOptions() throws Exception {
-    testRedirect(true, "OPTIONS");
-  }
-
-  @Test public void response307WithPost() throws Exception {
-    testRedirect(true, "POST");
-  }
-
-  @Test public void response308WithGet() throws Exception {
-    testRedirect(false, "GET");
-  }
-
-  @Test public void response308WithHead() throws Exception {
-    testRedirect(false, "HEAD");
-  }
-
-  @Test public void response308WithOptions() throws Exception {
-    testRedirect(false, "OPTIONS");
-  }
-
-  @Test public void response308WithPost() throws Exception {
-    testRedirect(false, "POST");
-  }
 
   /**
    * In OkHttp 4.5 and earlier, HTTP 307 and 308 redirects were only honored if the request method
@@ -2404,94 +2044,6 @@ public final class URLConnectionTest {
           .header("LegacyRedirectInterceptor-Location", location)
           .build();
     }
-  }
-
-  @Test public void response307WithPostReverted() throws Exception {
-    client = client.newBuilder()
-        .addNetworkInterceptor(new LegacyRedirectInterceptor())
-        .build();
-
-    MockResponse response1 = new MockResponse()
-        .setResponseCode(HTTP_TEMP_REDIRECT)
-        .setBody("This page has moved!")
-        .addHeader("Location: /page2");
-    server.enqueue(response1);
-
-    Request.Builder requestBuilder = new Request.Builder()
-        .url(server.url("/page1"));
-    requestBuilder.post(RequestBody.create("ABCD", null));
-
-    Response response = getResponse(requestBuilder.build());
-    String responseString = readAscii(response.body().byteStream(), Integer.MAX_VALUE);
-
-    RecordedRequest page1 = server.takeRequest();
-    assertThat(page1.getRequestLine()).isEqualTo(("POST /page1 HTTP/1.1"));
-
-    assertThat(page1.getBody().readUtf8()).isEqualTo("ABCD");
-    assertThat(server.getRequestCount()).isEqualTo(1);
-    assertThat(responseString).isEqualTo("This page has moved!");
-  }
-
-  @Test public void response308WithPostReverted() throws Exception {
-    client = client.newBuilder()
-        .addNetworkInterceptor(new LegacyRedirectInterceptor())
-        .build();
-
-    MockResponse response1 = new MockResponse()
-        .setResponseCode(HTTP_PERM_REDIRECT)
-        .setBody("This page has moved!")
-        .addHeader("Location: /page2");
-    server.enqueue(response1);
-
-    Request.Builder requestBuilder = new Request.Builder()
-        .url(server.url("/page1"));
-    requestBuilder.post(RequestBody.create("ABCD", null));
-
-    Response response = getResponse(requestBuilder.build());
-    String responseString = readAscii(response.body().byteStream(), Integer.MAX_VALUE);
-
-    RecordedRequest page1 = server.takeRequest();
-    assertThat(page1.getRequestLine()).isEqualTo(("POST /page1 HTTP/1.1"));
-
-    assertThat(page1.getBody().readUtf8()).isEqualTo("ABCD");
-    assertThat(server.getRequestCount()).isEqualTo(1);
-    assertThat(responseString).isEqualTo("This page has moved!");
-  }
-
-  private void testRedirect(boolean temporary, String method) throws Exception {
-    MockResponse response1 = new MockResponse()
-        .setResponseCode(temporary ? HTTP_TEMP_REDIRECT : HTTP_PERM_REDIRECT)
-        .addHeader("Location: /page2");
-    if (!method.equals("HEAD")) {
-      response1.setBody("This page has moved!");
-    }
-    server.enqueue(response1);
-    server.enqueue(new MockResponse()
-        .setBody("Page 2"));
-
-    Request.Builder requestBuilder = new Request.Builder()
-        .url(server.url("/page1"));
-    if (method.equals("POST")) {
-      requestBuilder.post(RequestBody.create("ABCD", null));
-    } else {
-      requestBuilder.method(method, null);
-    }
-
-    Response response = getResponse(requestBuilder.build());
-    String responseString = readAscii(response.body().byteStream(), Integer.MAX_VALUE);
-
-    RecordedRequest page1 = server.takeRequest();
-    assertThat(page1.getRequestLine()).isEqualTo((method + " /page1 HTTP/1.1"));
-
-    if (method.equals("GET")) {
-      assertThat(responseString).isEqualTo("Page 2");
-    } else if (method.equals("HEAD")) {
-      assertThat(responseString).isEqualTo("");
-    }
-
-    assertThat(server.getRequestCount()).isEqualTo(2);
-    RecordedRequest page2 = server.takeRequest();
-    assertThat(page2.getRequestLine()).isEqualTo((method + " /page2 HTTP/1.1"));
   }
 
   @Test public void follow20Redirects() throws Exception {
@@ -2796,53 +2348,6 @@ public final class URLConnectionTest {
     assertThat(in.read()).isEqualTo(-1);
   }
 
-  @Test public void flushAfterStreamTransmittedWithChunkedEncoding() throws IOException {
-    testFlushAfterStreamTransmitted(TransferKind.CHUNKED);
-  }
-
-  @Test public void flushAfterStreamTransmittedWithFixedLength() throws IOException {
-    testFlushAfterStreamTransmitted(TransferKind.FIXED_LENGTH);
-  }
-
-  @Test public void flushAfterStreamTransmittedWithNoLengthHeaders() throws IOException {
-    testFlushAfterStreamTransmitted(TransferKind.END_OF_STREAM);
-  }
-
-  /**
-   * We explicitly permit apps to close the upload stream even after it has been transmitted.  We
-   * also permit flush so that buffered streams can do a no-op flush when they are closed.
-   * http://b/3038470
-   */
-  private void testFlushAfterStreamTransmitted(TransferKind transferKind) throws IOException {
-    server.enqueue(new MockResponse()
-        .setBody("abc"));
-
-    AtomicReference<BufferedSink> sinkReference = new AtomicReference<>();
-    Response response = getResponse(new Request.Builder()
-        .url(server.url("/"))
-        .post(new ForwardingRequestBody(transferKind.newRequestBody("def")) {
-          @Override public void writeTo(BufferedSink sink) throws IOException {
-            sinkReference.set(sink);
-            super.writeTo(sink);
-          }
-        })
-        .build());
-
-    assertThat(readAscii(response.body().byteStream(), Integer.MAX_VALUE)).isEqualTo(
-        "abc");
-
-    try {
-      sinkReference.get().flush();
-      fail();
-    } catch (IllegalStateException expected) {
-    }
-    try {
-      sinkReference.get().write("ghi".getBytes(UTF_8));
-      sinkReference.get().emit();
-      fail();
-    } catch (IllegalStateException expected) {
-    }
-  }
 
   @Test public void getHeadersThrows() {
     server.enqueue(new MockResponse()
@@ -2983,100 +2488,6 @@ public final class URLConnectionTest {
     }
   }
 
-  // http://code.google.com/p/android/issues/detail?id=20442
-  @Test public void inputStreamAvailableWithChunkedEncoding() throws Exception {
-    testInputStreamAvailable(TransferKind.CHUNKED);
-  }
-
-  @Test public void inputStreamAvailableWithContentLengthHeader() throws Exception {
-    testInputStreamAvailable(TransferKind.FIXED_LENGTH);
-  }
-
-  @Test public void inputStreamAvailableWithNoLengthHeaders() throws Exception {
-    testInputStreamAvailable(TransferKind.END_OF_STREAM);
-  }
-
-  private void testInputStreamAvailable(TransferKind transferKind) throws IOException {
-    String body = "ABCDEFGH";
-    MockResponse mockResponse = new MockResponse();
-    transferKind.setBody(mockResponse, body, 4);
-    server.enqueue(mockResponse);
-    Response response = getResponse(newRequest("/"));
-    InputStream in = response.body().byteStream();
-    for (int i = 0; i < body.length(); i++) {
-      assertThat(in.available()).isGreaterThanOrEqualTo(0);
-      assertThat(in.read()).isEqualTo(body.charAt(i));
-    }
-    assertThat(in.available()).isEqualTo(0);
-    assertThat(in.read()).isEqualTo(-1);
-  }
-
-  @Test public void postFailsWithBufferedRequestForSmallRequest() throws Exception {
-    reusedConnectionFailsWithPost(TransferKind.END_OF_STREAM, 1024);
-  }
-
-  @Test public void postFailsWithBufferedRequestForLargeRequest() throws Exception {
-    reusedConnectionFailsWithPost(TransferKind.END_OF_STREAM, 16384);
-  }
-
-  @Test public void postFailsWithChunkedRequestForSmallRequest() throws Exception {
-    reusedConnectionFailsWithPost(TransferKind.CHUNKED, 1024);
-  }
-
-  @Test public void postFailsWithChunkedRequestForLargeRequest() throws Exception {
-    reusedConnectionFailsWithPost(TransferKind.CHUNKED, 16384);
-  }
-
-  @Test public void postFailsWithFixedLengthRequestForSmallRequest() throws Exception {
-    reusedConnectionFailsWithPost(TransferKind.FIXED_LENGTH, 1024);
-  }
-
-  @Test public void postFailsWithFixedLengthRequestForLargeRequest() throws Exception {
-    reusedConnectionFailsWithPost(TransferKind.FIXED_LENGTH, 16384);
-  }
-
-  private void reusedConnectionFailsWithPost(TransferKind transferKind, int requestSize)
-      throws Exception {
-    server.enqueue(new MockResponse()
-        .setBody("A")
-        .setSocketPolicy(DISCONNECT_AT_END));
-    server.enqueue(new MockResponse()
-        .setBody("B"));
-    server.enqueue(new MockResponse()
-        .setBody("C"));
-
-    assertContent("A", getResponse(newRequest("/a")));
-
-    // Give the server time to disconnect.
-    Thread.sleep(500);
-
-    // If the request body is larger than OkHttp's replay buffer, the failure may still occur.
-    char[] requestBodyChars = new char[requestSize];
-    Arrays.fill(requestBodyChars, 'x');
-    String requestBody = new String(requestBodyChars);
-
-    for (int j = 0; j < 2; j++) {
-      try {
-        Response response = getResponse(new Request.Builder()
-            .url(server.url("/b"))
-            .post(transferKind.newRequestBody(requestBody))
-            .build());
-        assertContent("B", response);
-        break;
-      } catch (IOException socketException) {
-        // If there's a socket exception, this must have a streamed request body.
-        assertThat(j).isEqualTo(0);
-        assertThat(transferKind).isIn(TransferKind.CHUNKED, TransferKind.FIXED_LENGTH);
-      }
-    }
-
-    RecordedRequest requestA = server.takeRequest();
-    assertThat(requestA.getPath()).isEqualTo("/a");
-    RecordedRequest requestB = server.takeRequest();
-    assertThat(requestB.getPath()).isEqualTo("/b");
-    assertThat(requestB.getBody().readUtf8()).isEqualTo(requestBody);
-  }
-
   @Test public void postBodyRetransmittedOnFailureRecovery() throws Exception {
     server.enqueue(new MockResponse()
         .setBody("abc"));
@@ -3160,7 +2571,7 @@ public final class URLConnectionTest {
     }
   }
 
-  @Test @Ignore public void testPooledConnectionsDetectHttp10() {
+  /*@Test @Ignore public void testPooledConnectionsDetectHttp10() {
     // TODO: write a test that shows pooled connections detect HTTP/1.0 (vs. HTTP/1.1)
     fail("TODO");
   }
@@ -3172,7 +2583,7 @@ public final class URLConnectionTest {
   @Test @Ignore public void cookiesAndTrailers() {
     // Do cookie headers get processed too many times?
     fail("TODO");
-  }
+  }*/
 
   @Test public void emptyRequestHeaderValueIsAllowed() throws Exception {
     server.enqueue(new MockResponse()
@@ -3218,33 +2629,16 @@ public final class URLConnectionTest {
   }
 
   @Test public void requestHeaderValidationIsStrict() {
+    addHeader("a\tb", "Value");
+    addHeader("Name", "c\u007fd");
+    addHeader("", "Value");
+    addHeader("\ud83c\udf69", "Value");
+    addHeader("name", "\u2615\ufe0f");
+  }
+
+  private void addHeader(String name, String value){
     try {
-      new Request.Builder()
-          .addHeader("a\tb", "Value");
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
-    try {
-      new Request.Builder()
-          .addHeader("Name", "c\u007fd");
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
-    try {
-      new Request.Builder()
-          .addHeader("", "Value");
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
-    try {
-      new Request.Builder()
-          .addHeader("\ud83c\udf69", "Value");
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
-    try {
-      new Request.Builder()
-          .addHeader("Name", "\u2615\ufe0f");
+      new Request.Builder().addHeader(name, value);
       fail();
     } catch (IllegalArgumentException expected) {
     }
@@ -3267,17 +2661,13 @@ public final class URLConnectionTest {
     assertThat(response.header("")).isEqualTo("ef");
   }
 
-  @Test @Ignore public void deflateCompression() {
+  /*@Test @Ignore public void deflateCompression() {
     fail("TODO");
   }
 
   @Test @Ignore public void postBodiesRetransmittedOnIpAddressProblems() {
     fail("TODO");
-  }
-
-  @Test @Ignore public void pooledConnectionProblemsNotReportedToProxySelector() {
-    fail("TODO");
-  }
+  }*/
 
   @Test public void customBasicAuthenticator() throws Exception {
     server.enqueue(new MockResponse()
@@ -3424,39 +2814,9 @@ public final class URLConnectionTest {
     assertThat(response.protocol()).isEqualTo(Protocol.HTTP_1_1);
   }
 
-  /** For example, empty Protobuf RPC messages end up as a zero-length POST. */
-  @Test public void zeroLengthPost() throws Exception {
-    zeroLengthPayload("POST");
-  }
 
-  @Test public void zeroLengthPost_HTTP_2() throws Exception {
-    enableProtocol(Protocol.HTTP_2);
-    zeroLengthPost();
-  }
 
-  /** For example, creating an Amazon S3 bucket ends up as a zero-length POST. */
-  @Test public void zeroLengthPut() throws Exception {
-    zeroLengthPayload("PUT");
-  }
 
-  @Test public void zeroLengthPut_HTTP_2() throws Exception {
-    enableProtocol(Protocol.HTTP_2);
-    zeroLengthPut();
-  }
-
-  private void zeroLengthPayload(String method) throws Exception {
-    server.enqueue(new MockResponse());
-
-    Response response = getResponse(new Request.Builder()
-        .url(server.url("/"))
-        .method(method, RequestBody.create("", null))
-        .build());
-    assertContent("", response);
-    RecordedRequest zeroLengthPayload = server.takeRequest();
-    assertThat(zeroLengthPayload.getMethod()).isEqualTo(method);
-    assertThat(zeroLengthPayload.getHeader("content-length")).isEqualTo("0");
-    assertThat(zeroLengthPayload.getBodySize()).isEqualTo(0L);
-  }
 
   @Test public void setProtocols() throws Exception {
     server.enqueue(new MockResponse()
@@ -3633,30 +2993,6 @@ public final class URLConnectionTest {
     assertThat(request.getHeader("User-Agent")).isEqualTo(userAgent);
   }
 
-  @Test public void urlWithSpaceInHost() {
-    try {
-      HttpUrl.get("http://and roid.com/");
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
-  }
-
-  @Test public void urlWithSpaceInHostViaHttpProxy() {
-    try {
-      HttpUrl.get("http://and roid.com/");
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
-  }
-
-  @Test public void urlHostWithNul() {
-    try {
-      HttpUrl.get("http://host\u0000/");
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
-  }
-
   @Test public void urlRedirectToHostWithNul() throws Exception {
     String redirectUrl = "http://host\u0000/";
     server.enqueue(new MockResponse()
@@ -3666,14 +3002,6 @@ public final class URLConnectionTest {
     Response response = getResponse(newRequest("/"));
     assertThat(response.code()).isEqualTo(302);
     assertThat(response.header("Location")).isEqualTo(redirectUrl);
-  }
-
-  @Test public void urlWithBadAsciiHost() {
-    try {
-      HttpUrl.get("http://host\u0001/");
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
   }
 
   @Test public void setSslSocketFactoryFailsOnJdk9() {
@@ -3764,7 +3092,7 @@ public final class URLConnectionTest {
   }
 
   /** Returns a gzipped copy of {@code bytes}. */
-  public Buffer gzip(String data) throws IOException {
+  private Buffer gzip(String data) throws IOException {
     Buffer result = new Buffer();
     BufferedSink gzipSink = Okio.buffer(new GzipSink(result));
     gzipSink.writeUtf8(data);
@@ -3786,122 +3114,9 @@ public final class URLConnectionTest {
     return new LinkedHashSet<>(asList(elements));
   }
 
-  enum TransferKind {
-    CHUNKED {
-      @Override void setBody(MockResponse response, Buffer content, int chunkSize) {
-        response.setChunkedBody(content, chunkSize);
-      }
 
-      @Override RequestBody newRequestBody(String body) {
-        return new RequestBody() {
-          @Override public long contentLength() {
-            return -1L;
-          }
 
-          @Override public @Nullable MediaType contentType() {
-            return null;
-          }
 
-          @Override public void writeTo(BufferedSink sink) throws IOException {
-            sink.writeUtf8(body);
-          }
-        };
-      }
-    },
-    FIXED_LENGTH {
-      @Override void setBody(MockResponse response, Buffer content, int chunkSize) {
-        response.setBody(content);
-      }
-
-      @Override RequestBody newRequestBody(String body) {
-        return new RequestBody() {
-          @Override public long contentLength() {
-            return Utf8.size(body);
-          }
-
-          @Override public @Nullable MediaType contentType() {
-            return null;
-          }
-
-          @Override public void writeTo(BufferedSink sink) throws IOException {
-            sink.writeUtf8(body);
-          }
-        };
-      }
-    },
-    END_OF_STREAM {
-      @Override void setBody(MockResponse response, Buffer content, int chunkSize) {
-        response.setBody(content);
-        response.setSocketPolicy(DISCONNECT_AT_END);
-        response.removeHeader("Content-Length");
-      }
-
-      @Override RequestBody newRequestBody(String body) {
-        throw new AssumptionViolatedException("END_OF_STREAM not implemented for requests");
-      }
-    };
-
-    abstract void setBody(MockResponse response, Buffer content, int chunkSize) throws IOException;
-
-    abstract RequestBody newRequestBody(String body);
-
-    void setBody(MockResponse response, String content, int chunkSize) throws IOException {
-      setBody(response, new Buffer().writeUtf8(content), chunkSize);
-    }
-  }
-
-  enum ProxyConfig {
-    NO_PROXY() {
-      @Override public Call.Factory connect(MockWebServer server, OkHttpClient client) {
-        return client.newBuilder()
-            .proxy(Proxy.NO_PROXY)
-            .build();
-      }
-    },
-
-    CREATE_ARG() {
-      @Override public Call.Factory connect(MockWebServer server, OkHttpClient client) {
-        return client.newBuilder()
-            .proxy(server.toProxyAddress())
-            .build();
-      }
-    },
-
-    PROXY_SYSTEM_PROPERTY() {
-      @Override public Call.Factory connect(MockWebServer server, OkHttpClient client) {
-        System.setProperty("proxyHost", server.getHostName());
-        System.setProperty("proxyPort", Integer.toString(server.getPort()));
-        return client;
-      }
-    },
-
-    HTTP_PROXY_SYSTEM_PROPERTY() {
-      @Override public Call.Factory connect(MockWebServer server, OkHttpClient client) {
-        System.setProperty("http.proxyHost", server.getHostName());
-        System.setProperty("http.proxyPort", Integer.toString(server.getPort()));
-        return client;
-      }
-    },
-
-    HTTPS_PROXY_SYSTEM_PROPERTY() {
-      @Override public Call.Factory connect(MockWebServer server, OkHttpClient client) {
-        System.setProperty("https.proxyHost", server.getHostName());
-        System.setProperty("https.proxyPort", Integer.toString(server.getPort()));
-        return client;
-      }
-    };
-
-    public abstract Call.Factory connect(MockWebServer server, OkHttpClient client)
-        throws IOException;
-
-    public Call connect(
-        MockWebServer server, OkHttpClient client, HttpUrl url) throws IOException {
-      Request request = new Request.Builder()
-          .url(url)
-          .build();
-      return connect(server, client).newCall(request);
-    }
-  }
 
   private static class RecordingTrustManager implements X509TrustManager {
     private final List<String> calls = new ArrayList<>();
