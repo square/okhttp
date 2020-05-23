@@ -215,7 +215,7 @@ class WiresharkExample {
       sendTestRequest(twitterRequest)
       sendTestRequest(googleRequest)
 
-      Thread.sleep(500)
+      Thread.sleep(2000)
     }
   }
 
@@ -233,6 +233,12 @@ class WiresharkExample {
 }
 
 fun main() {
+  println("TLSv1.2 traffic will be logged automatically")
+  println("Follow instructions at https://github.com/neykov/extract-tls-secrets for TLSv1.3")
+  println("Pid: ${ProcessHandle.current().pid()}")
+
+  Thread.sleep(10000)
+
   WireSharkKeyLoggerListener.register()
 
   val example = WiresharkExample()
