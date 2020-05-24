@@ -15,11 +15,11 @@
  */
 package okhttp3.internal.concurrent
 
-import okhttp3.internal.notify
 import java.util.concurrent.SynchronousQueue
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
+import okhttp3.internal.notify
 
 class RealBackend(threadFactory: ThreadFactory) : Backend {
   private val executor = ThreadPoolExecutor(

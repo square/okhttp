@@ -16,10 +16,10 @@
 package okhttp3.internal.concurrent
 
 import android.annotation.SuppressLint
-import okhttp3.internal.notify
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
+import okhttp3.internal.notify
 
 @SuppressLint("NewApi")
 class LoomBackend() : Backend {
