@@ -45,7 +45,7 @@ class TaskRunnerRealBackendTest {
     }
   }
 
-  private val backend = TaskRunner.RealBackend(threadFactory)
+  private val backend = RealBackend(threadFactory)
   private val taskRunner = TaskRunner(backend)
   private val queue = taskRunner.newQueue()
 

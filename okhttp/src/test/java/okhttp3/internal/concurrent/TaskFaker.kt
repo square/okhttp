@@ -60,7 +60,7 @@ class TaskFaker {
   private var executedTaskLimit = Int.MAX_VALUE
 
   /** A task runner that posts tasks to this fake. Tasks won't be executed until requested. */
-  val taskRunner: TaskRunner = TaskRunner(object : TaskRunner.Backend {
+  val taskRunner: TaskRunner = TaskRunner(object : Backend {
     override fun beforeTask(taskRunner: TaskRunner) {
       taskRunner.assertThreadHoldsLock()
 

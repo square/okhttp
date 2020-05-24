@@ -52,6 +52,7 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.closeQuietly
+import okhttp3.internal.concurrent.RealBackend
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.duplex.MwsDuplexAccess
 import okhttp3.internal.http.HttpMethod
@@ -98,7 +99,7 @@ import org.junit.rules.ExternalResource
  * in sequence.
  */
 class MockWebServer : ExternalResource(), Closeable {
-  private val taskRunnerBackend = TaskRunner.RealBackend(
+  private val taskRunnerBackend = RealBackend(
       threadFactory("MockWebServer TaskRunner", daemon = false))
   private val taskRunner = TaskRunner(taskRunnerBackend)
   private val requestQueue = LinkedBlockingQueue<RecordedRequest>()

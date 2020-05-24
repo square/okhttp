@@ -255,50 +255,15 @@ class TaskRunner(
     }
   }
 
-  interface Backend {
-    fun beforeTask(taskRunner: TaskRunner)
-    fun nanoTime(): Long
-    fun coordinatorNotify(taskRunner: TaskRunner)
-    fun coordinatorWait(taskRunner: TaskRunner, nanos: Long)
-    fun execute(runnable: Runnable)
-  }
-
-  class RealBackend(threadFactory: ThreadFactory) : Backend {
-    override fun beforeTask(taskRunner: TaskRunner) {
-    }
-
-    override fun nanoTime() = System.nanoTime()
-
-    override fun coordinatorNotify(taskRunner: TaskRunner) {
-      taskRunner.notify()
-    }
-
-    /**
-     * Wait a duration in nanoseconds. Unlike [java.lang.Object.wait] this interprets 0 as
-     * "don't wait" instead of "wait forever".
-     */
-    @Throws(InterruptedException::class)
-    @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
-    override fun coordinatorWait(taskRunner: TaskRunner, nanos: Long) {
-      val ms = nanos / 1_000_000L
-      val ns = nanos - (ms * 1_000_000L)
-      if (ms > 0L || nanos > 0) {
-        (taskRunner as Object).wait(ms, ns.toInt())
-      }
-    }
-
-    val startVirtualMethod = Thread::class.java.getMethod("startVirtualThread", Runnable::class.java)
-    override fun execute(runnable: Runnable) {
-      startVirtualMethod.invoke(null, runnable)
-    }
-
-    fun shutdown() {
-    }
-  }
-
   companion object {
     @JvmField
-    val INSTANCE = TaskRunner(RealBackend(threadFactory("$okHttpName TaskRunner", daemon = true)))
+    val INSTANCE = TaskRunner(backend())
+
+    private fun backend(): Backend = if (LoomBackend.isSupported) {
+      LoomBackend()
+    } else {
+      RealBackend(threadFactory("$okHttpName TaskRunner", daemon = true))
+    }
 
     val logger: Logger = Logger.getLogger(TaskRunner::class.java.name)
   }
