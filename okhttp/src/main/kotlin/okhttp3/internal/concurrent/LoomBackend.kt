@@ -15,13 +15,13 @@
  */
 package okhttp3.internal.concurrent
 
-import android.annotation.SuppressLint
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
+import okhttp3.internal.SuppressSignatureCheck
 import okhttp3.internal.notify
 
-@SuppressLint("NewApi")
+@SuppressSignatureCheck
 class LoomBackend() : Backend {
   val publicLookup: MethodHandles.Lookup = MethodHandles.publicLookup()
 
