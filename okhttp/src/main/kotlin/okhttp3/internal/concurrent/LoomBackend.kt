@@ -57,6 +57,8 @@ class LoomBackend() : Backend {
   }
 
   override fun execute(runnable: Runnable) {
+    // We can't call optimal invokeExact until Kotlin 1.4.
+    // https://youtrack.jetbrains.com/issue/KT-14416
     startVirtualMethod.invokeWithArguments(runnable)
   }
 
