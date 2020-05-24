@@ -15,53 +15,17 @@
  */
 package okhttp3;
 
-import okhttp3.internal.Internal;
-import okhttp3.internal.RecordingAuthenticator;
-import okhttp3.internal.RecordingOkAuthenticator;
-import okhttp3.internal.platform.Platform;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
-import okhttp3.mockwebserver.SocketPolicy;
-import okhttp3.testing.Flaky;
-import okhttp3.testing.PlatformRule;
-import okhttp3.tls.HandshakeCertificates;
 import okio.*;
 import org.junit.*;
-import org.junit.rules.TemporaryFolder;
 
 import javax.annotation.Nullable;
-import javax.net.ServerSocketFactory;
-import javax.net.SocketFactory;
-import javax.net.ssl.*;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.Authenticator;
-import java.net.*;
-import java.security.KeyStore;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
-import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.zip.GZIPInputStream;
 
-import static java.net.HttpURLConnection.HTTP_MOVED_TEMP;
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Arrays.asList;
-import static java.util.Locale.US;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
-import static okhttp3.internal.Internal.addHeaderLenient;
-import static okhttp3.internal.Util.immutableListOf;
-import static okhttp3.internal.Util.userAgent;
-import static okhttp3.internal.http.StatusLine.HTTP_PERM_REDIRECT;
-import static okhttp3.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
-import static okhttp3.mockwebserver.SocketPolicy.*;
-import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
 
 public final class URLConnectionUploadTest {
 
