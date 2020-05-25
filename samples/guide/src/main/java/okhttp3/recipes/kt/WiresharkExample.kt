@@ -53,7 +53,10 @@ import okio.ByteString.Companion.toByteString
  *
  * @see https://stackoverflow.com/questions/61929216/how-to-log-tlsv1-3-keys-in-jsse-for-wireshark-to-decode-traffic
  */
-class WireSharkKeyLoggerListener(private val logFile: File, private val verbose: Boolean = false) : EventListener() {
+class WireSharkKeyLoggerListener(
+  private val logFile: File,
+  private val verbose: Boolean = false
+) : EventListener() {
   var random: String? = null
   lateinit var currentThread: Thread
 
@@ -144,7 +147,8 @@ class WireSharkKeyLoggerListener(private val logFile: File, private val verbose:
       val sslSocket = connection.socket() as SSLSocket
       val session = sslSocket.session
 
-      val masterSecretHex = session.masterSecret?.encoded?.toByteString()?.hex()
+      val masterSecretHex = session.masterSecret?.encoded?.toByteString()
+          ?.hex()
 
       if (masterSecretHex != null) {
         val keyLog = "CLIENT_RANDOM $random $masterSecretHex"
@@ -159,7 +163,10 @@ class WireSharkKeyLoggerListener(private val logFile: File, private val verbose:
     random = null
   }
 
-  class Factory(private val logFile: File, private val verbose: Boolean = false) : EventListener.Factory {
+  class Factory(
+    private val logFile: File,
+    private val verbose: Boolean = false
+  ) : EventListener.Factory {
     override fun create(call: Call): EventListener {
       return WireSharkKeyLoggerListener(logFile, verbose)
     }
@@ -188,7 +195,7 @@ class WireSharkKeyLoggerListener(private val logFile: File, private val verbose:
   }
 }
 
-val eventListenerFactory = WireSharkKeyLoggerListener.Factory(File("/tmp/key.log"))
+val eventListenerFactory = WireSharkKeyLoggerListener.Factory(File("/tmp/key.log"), verbose = true)
 
 @SuppressSignatureCheck
 class WiresharkExample(private val tlsVersions: List<TlsVersion>) {
@@ -203,10 +210,11 @@ class WiresharkExample(private val tlsVersions: List<TlsVersion>) {
       .eventListenerFactory(eventListenerFactory)
       .build()
 
-  val dns = DnsOverHttps.Builder().client(bootstrapClient)
-    .url("https://1.1.1.1/dns-query".toHttpUrl())
-    .includeIPv6(false)
-    .build()
+  val dns = DnsOverHttps.Builder()
+      .client(bootstrapClient)
+      .url("https://1.1.1.1/dns-query".toHttpUrl())
+      .includeIPv6(false)
+      .build()
 
   val client = OkHttpClient.Builder()
       .connectionSpecs(listOf(connectionSpec))
@@ -223,7 +231,10 @@ class WiresharkExample(private val tlsVersions: List<TlsVersion>) {
     if (tlsVersions.contains(TLS_1_3)) {
       println("TLSv1.3 requires an external command run before first traffic is sent")
       println("Follow instructions at https://github.com/neykov/extract-tls-secrets for TLSv1.3")
-      println("Pid: ${ProcessHandle.current().pid()}")
+      println(
+          "Pid: ${ProcessHandle.current()
+              .pid()}"
+      )
 
       Thread.sleep(10000)
     }
