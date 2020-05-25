@@ -1823,7 +1823,7 @@ public final class Http2ConnectionTest {
       stream.takeHeaders();
       fail();
     } catch (IOException expected) {
-      assertThat(expected.getMessage()).isEqualTo("Expected a SETTINGS frame but was 1");
+      assertThat(expected.getMessage()).isEqualTo("Expected a SETTINGS frame but was HEADERS");
     }
 
     // verify the peer received what was expected
