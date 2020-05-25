@@ -190,6 +190,7 @@ class WireSharkKeyLoggerListener(private val logFile: File, private val verbose:
 
 val eventListenerFactory = WireSharkKeyLoggerListener.Factory(File("/tmp/key.log"))
 
+@SuppressSignatureCheck
 class WiresharkExample(private val tlsVersions: List<TlsVersion>) {
   val connectionSpec =
     Builder(ConnectionSpec.RESTRICTED_TLS)
@@ -265,7 +266,6 @@ class WiresharkExample(private val tlsVersions: List<TlsVersion>) {
   }
 }
 
-@SuppressSignatureCheck
 fun main() {
   // Call this before anything else initialises the JSSE stack.
   WireSharkKeyLoggerListener.register()
