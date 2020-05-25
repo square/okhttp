@@ -16,6 +16,7 @@
 package okhttp3.recipes.kt
 
 import java.io.File
+import java.io.IOException
 import java.util.logging.Handler
 import java.util.logging.Level
 import java.util.logging.LogRecord
@@ -32,25 +33,36 @@ import okhttp3.Handshake
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.TlsVersion
 import okhttp3.TlsVersion.TLS_1_2
+import okhttp3.TlsVersion.TLS_1_3
 import okhttp3.brotli.BrotliInterceptor
 import okhttp3.dnsoverhttps.DnsOverHttps
 import okhttp3.internal.SuppressSignatureCheck
 import okio.ByteString.Companion.toByteString
 
 /**
- * Logs SSL keys to /tmp/key.log, allowing Wireshark to decode traffic and be examined with http2
- * filter.
+ * Logs SSL keys to a log file, allowing Wireshark to decode traffic and be examined with http2
+ * filter. The approach is to hook into JSSE log events for the messages between client and server
+ * during handshake, and then take the agreed masterSecret from private fields of the session.
+ *
+ * Copy WireSharkKeyLoggerListener to your test code to use in development.
+ *
+ * This logs TLSv1.2 on a JVM (OpenJDK 11+) without any additional code.  For TLSv1.3
+ * an existing external tool is required.
+ *
+ * @see https://stackoverflow.com/questions/61929216/how-to-log-tlsv1-3-keys-in-jsse-for-wireshark-to-decode-traffic
  */
-class WireSharkKeyLoggerListener : EventListener() {
+class WireSharkKeyLoggerListener(private val logFile: File, private val verbose: Boolean = false) : EventListener() {
   var random: String? = null
   lateinit var currentThread: Thread
 
-  val loggerHandler = object : Handler() {
+  private val loggerHandler = object : Handler() {
     override fun publish(record: LogRecord) {
       // Try to avoid multi threading issues with concurrent requests
-      if (Thread.currentThread() != currentThread)
+      if (Thread.currentThread() != currentThread) {
         return
+      }
 
       // https://timothybasanov.com/2016/05/26/java-pre-master-secret.html
       // https://security.stackexchange.com/questions/35639/decrypting-tls-in-wireshark-when-using-dhe-rsa-ciphersuites
@@ -74,16 +86,19 @@ class WireSharkKeyLoggerListener : EventListener() {
       // Plaintext before ENCRYPTION
       // Plaintext after DECRYPTION
       val message = record.message
-
       val parameters = record.parameters
 
       if (parameters != null && !message.startsWith("Raw") && !message.startsWith("Plaintext")) {
-//        p(record.message)
-//        p(record.parameters[0])
-        val param = parameters[0] as String
+        if (verbose) {
+          println(record.message)
+          println(record.parameters[0])
+        }
+
+        // JSSE logs additional messages as parameters that are not referenced in the log message.
+        val parameter = parameters[0] as String
 
         if (message == "Produced ClientHello handshake message") {
-          random = readClientRandom(param)
+          random = readClientRandom(parameter)
         }
       }
     }
@@ -105,7 +120,6 @@ class WireSharkKeyLoggerListener : EventListener() {
 
   override fun secureConnectStart(call: Call) {
     // Register to capture "Produced ClientHello handshake message".
-
     currentThread = Thread.currentThread()
     logger.addHandler(loggerHandler)
   }
@@ -130,25 +144,24 @@ class WireSharkKeyLoggerListener : EventListener() {
       val sslSocket = connection.socket() as SSLSocket
       val session = sslSocket.session
 
-      val masterSecretHex = session.masterSecret?.encoded?.toByteString()
-          ?.hex()
-//          p(masterSecretHex)
-//          p(session.id.toByteString().hex())
+      val masterSecretHex = session.masterSecret?.encoded?.toByteString()?.hex()
 
       if (masterSecretHex != null) {
         val keyLog = "CLIENT_RANDOM $random $masterSecretHex"
 
-        println(keyLog)
-        File("/tmp/key.log").appendText("$keyLog\n")
+        if (verbose) {
+          println(keyLog)
+        }
+        logFile.appendText("$keyLog\n")
       }
     }
 
     random = null
   }
 
-  class Factory : EventListener.Factory {
+  class Factory(private val logFile: File, private val verbose: Boolean = false) : EventListener.Factory {
     override fun create(call: Call): EventListener {
-      return WireSharkKeyLoggerListener()
+      return WireSharkKeyLoggerListener(logFile, verbose)
     }
   }
 
@@ -165,7 +178,7 @@ class WireSharkKeyLoggerListener : EventListener() {
     val randomRegex = "\"random\"\\s+:\\s+\"([^\"]+)\"".toRegex()
 
     fun register() {
-      // Enable JUL logging for SSL events.
+      // Enable JUL logging for SSL events, must be activated early or via -D option.
       System.setProperty("javax.net.debug", "")
       logger = Logger.getLogger("javax.net.ssl")
           .apply {
@@ -175,17 +188,18 @@ class WireSharkKeyLoggerListener : EventListener() {
   }
 }
 
-class WiresharkExample {
+val eventListenerFactory = WireSharkKeyLoggerListener.Factory(File("/tmp/key.log"))
+
+class WiresharkExample(private val tlsVersions: List<TlsVersion>) {
   val connectionSpec =
     Builder(ConnectionSpec.RESTRICTED_TLS)
-        .tlsVersions(TLS_1_2)
-//        .cipherSuites(CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256)
+        .tlsVersions(*tlsVersions.toTypedArray())
         .build()
 
   var bootstrapClient = OkHttpClient.Builder()
       .connectionSpecs(listOf(connectionSpec))
       .addInterceptor(BrotliInterceptor)
-      .eventListenerFactory(WireSharkKeyLoggerListener.Factory())
+      .eventListenerFactory(eventListenerFactory)
       .build()
 
   val dns = DnsOverHttps.Builder().client(bootstrapClient)
@@ -195,12 +209,24 @@ class WiresharkExample {
 
   val client = OkHttpClient.Builder()
       .connectionSpecs(listOf(connectionSpec))
-      .eventListenerFactory(WireSharkKeyLoggerListener.Factory())
+      .eventListenerFactory(eventListenerFactory)
       .addInterceptor(BrotliInterceptor)
       .dns(dns)
       .build()
 
   fun run() {
+    if (tlsVersions.contains(TLS_1_2)) {
+      println("TLSv1.2 traffic will be logged automatically")
+    }
+
+    if (tlsVersions.contains(TLS_1_3)) {
+      println("TLSv1.3 requires an external command run before first traffic is sent")
+      println("Follow instructions at https://github.com/neykov/extract-tls-secrets for TLSv1.3")
+      println("Pid: ${ProcessHandle.current().pid()}")
+
+      Thread.sleep(10000)
+    }
+
     val fbRequest = Request.Builder()
         .url("https://graph.facebook.com/robots.txt?s=fb")
         .build()
@@ -212,37 +238,39 @@ class WiresharkExample {
         .build()
 
     for (i in 1..2) {
+      // Space out traffic to make it easier to demarcate.
       sendTestRequest(fbRequest)
+      Thread.sleep(1000)
       sendTestRequest(twitterRequest)
+      Thread.sleep(1000)
       sendTestRequest(googleRequest)
-
       Thread.sleep(2000)
     }
   }
 
   private fun sendTestRequest(twitterRequest: Request) {
-    client.newCall(twitterRequest)
-        .execute()
-        .use {
-          val firstLine = it.body!!.string()
-              .lines()
-              .first()
-          println("${it.code} ${it.request.url.host} $firstLine")
-          Unit
-        }
+    try {
+      client.newCall(twitterRequest)
+          .execute()
+          .use {
+            val firstLine = it.body!!.string()
+                .lines()
+                .first()
+            println("${it.code} ${it.request.url.host} $firstLine")
+            Unit
+          }
+    } catch (e: IOException) {
+      System.err.println(e)
+    }
   }
 }
 
 @SuppressSignatureCheck
 fun main() {
-  println("TLSv1.2 traffic will be logged automatically")
-  println("Follow instructions at https://github.com/neykov/extract-tls-secrets for TLSv1.3")
-  println("Pid: ${ProcessHandle.current().pid()}")
-
-  Thread.sleep(10000)
-
+  // Call this before anything else initialises the JSSE stack.
   WireSharkKeyLoggerListener.register()
 
-  val example = WiresharkExample()
+  // TLSv1.2 works without additional setup.
+  val example = WiresharkExample(tlsVersions = listOf(TlsVersion.TLS_1_2))
   example.run()
 }
