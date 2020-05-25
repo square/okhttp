@@ -35,6 +35,7 @@ import okhttp3.Request
 import okhttp3.TlsVersion.TLS_1_2
 import okhttp3.brotli.BrotliInterceptor
 import okhttp3.dnsoverhttps.DnsOverHttps
+import okhttp3.internal.SuppressSignatureCheck
 import okio.ByteString.Companion.toByteString
 
 /**
@@ -232,6 +233,7 @@ class WiresharkExample {
   }
 }
 
+@SuppressSignatureCheck
 fun main() {
   println("TLSv1.2 traffic will be logged automatically")
   println("Follow instructions at https://github.com/neykov/extract-tls-secrets for TLSv1.3")
