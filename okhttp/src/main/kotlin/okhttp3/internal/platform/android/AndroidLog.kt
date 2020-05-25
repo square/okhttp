@@ -83,7 +83,11 @@ object AndroidLog {
     }
   }
 
-  private fun loggerTag(loggerName: String) = knownLoggers[loggerName] ?: loggerName
+  private fun loggerTag(loggerName: String): String {
+    // We need to handle long logger names before they hit Log.
+    // java.lang.IllegalArgumentException: Log tag "okhttp3.mockwebserver.MockWebServer" exceeds limit of 23 characters
+    return knownLoggers[loggerName] ?: loggerName.take(23)
+  }
 
   fun enable() {
     for ((logger, tag) in knownLoggers) {
