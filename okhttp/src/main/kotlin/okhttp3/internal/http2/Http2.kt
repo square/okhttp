@@ -112,12 +112,15 @@ object Http2 {
     type: Int,
     flags: Int
   ): String {
-    val formattedType = if (type < FRAME_NAMES.size) FRAME_NAMES[type] else format("0x%02x", type)
+    val formattedType = formattedType(type)
     val formattedFlags = formatFlags(type, flags)
     val direction = if (inbound) "<<" else ">>"
     return format("%s 0x%08x %5d %-13s %s",
         direction, streamId, length, formattedType, formattedFlags)
   }
+
+  internal fun formattedType(type: Int) =
+    if (type < FRAME_NAMES.size) FRAME_NAMES[type] else format("0x%02x", type)
 
   /**
    * Looks up valid string representing flags from the table. Invalid combinations are represented
