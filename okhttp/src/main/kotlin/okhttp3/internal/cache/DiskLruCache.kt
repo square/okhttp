@@ -746,13 +746,13 @@ class DiskLruCache internal constructor(
     initialize()
     return object : MutableIterator<Snapshot> {
       /** Iterate a copy of the entries to defend against concurrent modification errors. */
-      val delegate = ArrayList(lruEntries.values).iterator()
+      private val delegate = ArrayList(lruEntries.values).iterator()
 
       /** The snapshot to return from [next]. Null if we haven't computed that yet. */
-      var nextSnapshot: Snapshot? = null
+      private var nextSnapshot: Snapshot? = null
 
       /** The snapshot to remove with [remove]. Null if removal is illegal. */
-      var removeSnapshot: Snapshot? = null
+      private var removeSnapshot: Snapshot? = null
 
       override fun hasNext(): Boolean {
         if (nextSnapshot != null) return true
@@ -1031,7 +1031,7 @@ class DiskLruCache internal constructor(
 
       lockingSourceCount++
       return object : ForwardingSource(fileSource) {
-        var closed = false
+        private var closed = false
         override fun close() {
           super.close()
           if (!closed) {
