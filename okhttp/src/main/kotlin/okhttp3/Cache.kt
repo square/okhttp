@@ -295,9 +295,9 @@ class Cache internal constructor(
   @Throws(IOException::class)
   fun urls(): MutableIterator<String> {
     return object : MutableIterator<String> {
-      val delegate: MutableIterator<DiskLruCache.Snapshot> = cache.snapshots()
-      var nextUrl: String? = null
-      var canRemove = false
+      private val delegate: MutableIterator<DiskLruCache.Snapshot> = cache.snapshots()
+      private var nextUrl: String? = null
+      private var canRemove = false
 
       override fun hasNext(): Boolean {
         if (nextUrl != null) return true

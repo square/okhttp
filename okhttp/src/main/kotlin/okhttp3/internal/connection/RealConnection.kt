@@ -127,7 +127,7 @@ class RealConnection(
    */
   internal var routeFailureCount = 0
 
-  internal var successCount = 0
+  private var successCount = 0
   private var refusedStreamCount = 0
 
   /**
@@ -146,25 +146,21 @@ class RealConnection(
    * Returns true if this is an HTTP/2 connection. Such connections can be used in multiple HTTP
    * requests simultaneously.
    */
-  val isMultiplexed: Boolean
+  internal val isMultiplexed: Boolean
     get() = http2Connection != null
 
   /** Prevent further exchanges from being created on this connection. */
-  fun noNewExchanges() {
-    assertThreadDoesntHoldLock()
-
-    synchronized(this) {
-      noNewExchanges = true
-    }
+  @Synchronized internal fun noNewExchanges() {
+    noNewExchanges = true
   }
 
   /** Prevent this connection from being used for hosts other than the one in [route]. */
-  fun noCoalescedConnections() {
-    assertThreadDoesntHoldLock()
+  @Synchronized internal fun noCoalescedConnections() {
+    noCoalescedConnections = true
+  }
 
-    synchronized(this) {
-      noCoalescedConnections = true
-    }
+  @Synchronized internal fun incrementSuccessCount() {
+    successCount++
   }
 
   fun connect(
@@ -681,10 +677,8 @@ class RealConnection(
   }
 
   /** When settings are received, adjust the allocation limit. */
-  override fun onSettings(connection: Http2Connection, settings: Settings) {
-    synchronized(this) {
-      allocationLimit = settings.getMaxConcurrentStreams()
-    }
+  @Synchronized override fun onSettings(connection: Http2Connection, settings: Settings) {
+    allocationLimit = settings.getMaxConcurrentStreams()
   }
 
   override fun handshake(): Handshake? = handshake
@@ -705,43 +699,38 @@ class RealConnection(
    * Track a failure using this connection. This may prevent both the connection and its route from
    * being used for future exchanges.
    */
-  internal fun trackFailure(call: RealCall, e: IOException?) {
-    assertThreadDoesntHoldLock()
-
-    synchronized(this) {
-      if (e is StreamResetException) {
-        when {
-          e.errorCode == ErrorCode.REFUSED_STREAM -> {
-            // Stop using this connection on the 2nd REFUSED_STREAM error.
-            refusedStreamCount++
-            if (refusedStreamCount > 1) {
-              noNewExchanges = true
-              routeFailureCount++
-            }
-          }
-
-          e.errorCode == ErrorCode.CANCEL && call.isCanceled() -> {
-            // Permit any number of CANCEL errors on locally-canceled calls.
-          }
-
-          else -> {
-            // Everything else wants a fresh connection.
+  @Synchronized internal fun trackFailure(call: RealCall, e: IOException?) {
+    if (e is StreamResetException) {
+      when {
+        e.errorCode == ErrorCode.REFUSED_STREAM -> {
+          // Stop using this connection on the 2nd REFUSED_STREAM error.
+          refusedStreamCount++
+          if (refusedStreamCount > 1) {
             noNewExchanges = true
             routeFailureCount++
           }
         }
-      } else if (!isMultiplexed || e is ConnectionShutdownException) {
-        noNewExchanges = true
 
-        // If this route hasn't completed a call, avoid it for new connections.
-        if (successCount == 0) {
-          if (e != null) {
-            connectFailed(call.client, route, e)
-          }
+        e.errorCode == ErrorCode.CANCEL && call.isCanceled() -> {
+          // Permit any number of CANCEL errors on locally-canceled calls.
+        }
+
+        else -> {
+          // Everything else wants a fresh connection.
+          noNewExchanges = true
           routeFailureCount++
         }
       }
-      return@synchronized // Keep synchronized {} happy.
+    } else if (!isMultiplexed || e is ConnectionShutdownException) {
+      noNewExchanges = true
+
+      // If this route hasn't completed a call, avoid it for new connections.
+      if (successCount == 0) {
+        if (e != null) {
+          connectFailed(call.client, route, e)
+        }
+        routeFailureCount++
+      }
     }
   }
 
