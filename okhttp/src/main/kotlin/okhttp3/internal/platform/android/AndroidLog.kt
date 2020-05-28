@@ -54,11 +54,16 @@ object AndroidLog {
   private val configuredLoggers = CopyOnWriteArraySet<Logger>()
 
   private val knownLoggers = LinkedHashMap<String, String>().apply {
-      this[OkHttpClient::class.java.`package`.name] = "OkHttp"
-      this[OkHttpClient::class.java.name] = "okhttp.OkHttpClient"
-      this[Http2::class.java.name] = "okhttp.Http2"
-      this[TaskRunner::class.java.name] = "okhttp.TaskRunner"
-    }.toMap()
+    val packageName = OkHttpClient::class.java.`package`?.name
+
+    if (packageName != null) {
+      this[packageName] = "OkHttp"
+    }
+
+    this[OkHttpClient::class.java.name] = "okhttp.OkHttpClient"
+    this[Http2::class.java.name] = "okhttp.Http2"
+    this[TaskRunner::class.java.name] = "okhttp.TaskRunner"
+  }.toMap()
 
   internal fun androidLog(loggerName: String, logLevel: Int, message: String, t: Throwable?) {
     val tag = loggerTag(loggerName)
