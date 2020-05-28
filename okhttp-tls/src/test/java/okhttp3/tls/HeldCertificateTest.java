@@ -478,6 +478,8 @@ public final class HeldCertificateTest {
           + "lu/GJQZoU9lDrCPeUcQ28tzOWw==\n"
           + "-----END PRIVATE KEY-----\n");
       fail();
+    } catch (CertificateParsingException expected) {
+      // java.security.cert.CertificateParsingException: java.util.NoSuchElementException: List is empty.
     } catch (IllegalArgumentException expected) {
       assertThat(expected).hasMessage("failed to decode certificate");
     }

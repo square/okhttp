@@ -45,6 +45,7 @@ import org.bouncycastle.asn1.x509.GeneralName
 import org.bouncycastle.asn1.x509.X509Extensions
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.x509.X509V3CertificateGenerator
+import java.security.cert.CertificateParsingException
 
 /**
  * A certificate and its private key. These are some properties of certificates that are used with
@@ -450,6 +451,7 @@ class HeldCertificate(
      * [rfc_5208]: https://tools.ietf.org/html/rfc5208
      */
     @JvmStatic
+    @Throws(CertificateParsingException::class)
     fun decode(certificateAndPrivateKeyPem: String): HeldCertificate {
       var certificatePem: String? = null
       var pkcs8Base64: String? = null
