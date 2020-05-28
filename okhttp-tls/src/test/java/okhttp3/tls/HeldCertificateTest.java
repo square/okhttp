@@ -405,7 +405,7 @@ public final class HeldCertificateTest {
         .isEqualTo("CN=cash.app,OU=engineering");
   }
 
-  @Test public void decodeWrongNumber() {
+  @Test public void decodeWrongNumber() throws CertificateParsingException {
     String certificatePem = ""
         + "-----BEGIN CERTIFICATE-----\n"
         + "MIIBYTCCAQegAwIBAgIBKjAKBggqhkjOPQQDAjApMRQwEgYDVQQLEwtlbmdpbmVl\n"
@@ -452,7 +452,7 @@ public final class HeldCertificateTest {
     }
   }
 
-  @Test public void decodeWrongType() {
+  @Test public void decodeWrongType() throws CertificateParsingException {
     try {
       HeldCertificate.decode(""
           + "-----BEGIN CERTIFICATE-----\n"
@@ -467,7 +467,7 @@ public final class HeldCertificateTest {
     }
   }
 
-  @Test public void decodeMalformed() {
+  @Test public void decodeMalformed() throws CertificateParsingException {
     try {
       HeldCertificate.decode(""
           + "-----BEGIN CERTIFICATE-----\n"
