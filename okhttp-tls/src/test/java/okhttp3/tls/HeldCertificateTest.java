@@ -284,7 +284,7 @@ public final class HeldCertificateTest {
         .isEqualTo("CN=cash.app,OU=engineering");
   }
 
-  @Test public void decodeRsa512() throws Exception {
+  @Test public void decodeRsa512() {
     // The certificate + private key below was generated with OpenSSL. Never generate certificates
     // with MD5 or 512-bit RSA; that's insecure!
     //
@@ -479,7 +479,9 @@ public final class HeldCertificateTest {
           + "-----END PRIVATE KEY-----\n");
       fail();
     } catch (IllegalArgumentException expected) {
-      assertThat(expected).hasMessage("failed to decode certificate");
+      if (!platform.isConscrypt()) {
+        assertThat(expected).hasMessage("failed to decode certificate");
+      }
     }
     try {
       HeldCertificate.decode(""
@@ -498,7 +500,9 @@ public final class HeldCertificateTest {
           + "-----END PRIVATE KEY-----\n");
       fail();
     } catch (IllegalArgumentException expected) {
-      assertThat(expected).hasMessage("failed to decode private key");
+      if (!platform.isConscrypt()) {
+        assertThat(expected).hasMessage("failed to decode private key");
+      }
     }
   }
 }
