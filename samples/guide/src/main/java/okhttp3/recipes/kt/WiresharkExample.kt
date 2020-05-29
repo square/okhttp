@@ -30,14 +30,11 @@ import okhttp3.ConnectionSpec
 import okhttp3.ConnectionSpec.Builder
 import okhttp3.EventListener
 import okhttp3.Handshake
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.TlsVersion
 import okhttp3.TlsVersion.TLS_1_2
 import okhttp3.TlsVersion.TLS_1_3
-import okhttp3.brotli.BrotliInterceptor
-import okhttp3.dnsoverhttps.DnsOverHttps
 import okhttp3.internal.SuppressSignatureCheck
 import okio.ByteString.Companion.toByteString
 
@@ -204,23 +201,9 @@ class WiresharkExample(private val tlsVersions: List<TlsVersion>) {
         .tlsVersions(*tlsVersions.toTypedArray())
         .build()
 
-  var bootstrapClient = OkHttpClient.Builder()
-      .connectionSpecs(listOf(connectionSpec))
-      .addInterceptor(BrotliInterceptor)
-      .eventListenerFactory(eventListenerFactory)
-      .build()
-
-  val dns = DnsOverHttps.Builder()
-      .client(bootstrapClient)
-      .url("https://1.1.1.1/dns-query".toHttpUrl())
-      .includeIPv6(false)
-      .build()
-
   val client = OkHttpClient.Builder()
       .connectionSpecs(listOf(connectionSpec))
       .eventListenerFactory(eventListenerFactory)
-      .addInterceptor(BrotliInterceptor)
-      .dns(dns)
       .build()
 
   fun run() {
@@ -231,10 +214,7 @@ class WiresharkExample(private val tlsVersions: List<TlsVersion>) {
     if (tlsVersions.contains(TLS_1_3)) {
       println("TLSv1.3 requires an external command run before first traffic is sent")
       println("Follow instructions at https://github.com/neykov/extract-tls-secrets for TLSv1.3")
-      println(
-          "Pid: ${ProcessHandle.current()
-              .pid()}"
-      )
+      println("Pid: ${ProcessHandle.current().pid()}")
 
       Thread.sleep(10000)
     }
