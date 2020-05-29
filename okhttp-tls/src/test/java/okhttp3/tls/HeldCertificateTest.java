@@ -284,7 +284,7 @@ public final class HeldCertificateTest {
         .isEqualTo("CN=cash.app,OU=engineering");
   }
 
-  @Test public void decodeRsa512() throws Exception {
+  @Test public void decodeRsa512() {
     // The certificate + private key below was generated with OpenSSL. Never generate certificates
     // with MD5 or 512-bit RSA; that's insecure!
     //
@@ -405,7 +405,7 @@ public final class HeldCertificateTest {
         .isEqualTo("CN=cash.app,OU=engineering");
   }
 
-  @Test public void decodeWrongNumber() throws CertificateParsingException {
+  @Test public void decodeWrongNumber() {
     String certificatePem = ""
         + "-----BEGIN CERTIFICATE-----\n"
         + "MIIBYTCCAQegAwIBAgIBKjAKBggqhkjOPQQDAjApMRQwEgYDVQQLEwtlbmdpbmVl\n"
@@ -452,7 +452,7 @@ public final class HeldCertificateTest {
     }
   }
 
-  @Test public void decodeWrongType() throws CertificateParsingException {
+  @Test public void decodeWrongType() {
     try {
       HeldCertificate.decode(""
           + "-----BEGIN CERTIFICATE-----\n"
@@ -467,7 +467,7 @@ public final class HeldCertificateTest {
     }
   }
 
-  @Test public void decodeMalformed() throws CertificateParsingException {
+  @Test public void decodeMalformed() {
     try {
       HeldCertificate.decode(""
           + "-----BEGIN CERTIFICATE-----\n"
@@ -478,10 +478,10 @@ public final class HeldCertificateTest {
           + "lu/GJQZoU9lDrCPeUcQ28tzOWw==\n"
           + "-----END PRIVATE KEY-----\n");
       fail();
-    } catch (CertificateParsingException expected) {
-      // java.security.cert.CertificateParsingException: java.util.NoSuchElementException: List is empty.
     } catch (IllegalArgumentException expected) {
-      assertThat(expected).hasMessage("failed to decode certificate");
+      if (!platform.isConscrypt()) {
+        assertThat(expected).hasMessage("failed to decode certificate");
+      }
     }
     try {
       HeldCertificate.decode(""
@@ -500,7 +500,9 @@ public final class HeldCertificateTest {
           + "-----END PRIVATE KEY-----\n");
       fail();
     } catch (IllegalArgumentException expected) {
-      assertThat(expected).hasMessage("failed to decode private key");
+      if (!platform.isConscrypt()) {
+        assertThat(expected).hasMessage("failed to decode private key");
+      }
     }
   }
 }

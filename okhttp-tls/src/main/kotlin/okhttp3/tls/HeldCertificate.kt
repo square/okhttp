@@ -24,7 +24,6 @@ import java.security.PrivateKey
 import java.security.PublicKey
 import java.security.SecureRandom
 import java.security.Security
-import java.security.cert.CertificateParsingException
 import java.security.cert.X509Certificate
 import java.security.interfaces.ECPublicKey
 import java.security.interfaces.RSAPrivateKey
@@ -451,7 +450,6 @@ class HeldCertificate(
      * [rfc_5208]: https://tools.ietf.org/html/rfc5208
      */
     @JvmStatic
-    @Throws(CertificateParsingException::class)
     fun decode(certificateAndPrivateKeyPem: String): HeldCertificate {
       var certificatePem: String? = null
       var pkcs8Base64: String? = null

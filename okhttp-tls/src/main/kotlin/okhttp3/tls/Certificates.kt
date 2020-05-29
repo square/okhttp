@@ -20,7 +20,6 @@ package okhttp3.tls
 
 import java.security.GeneralSecurityException
 import java.security.cert.CertificateFactory
-import java.security.cert.CertificateParsingException
 import java.security.cert.X509Certificate
 import okio.Buffer
 import okio.ByteString
@@ -52,9 +51,9 @@ fun String.decodeCertificatePem(): X509Certificate {
 
     return certificates.single() as X509Certificate
   } catch (nsee: NoSuchElementException) {
-    throw CertificateParsingException(nsee)
+    throw IllegalArgumentException("failed to decode certificate", nsee)
   } catch (iae: IllegalArgumentException) {
-    throw CertificateParsingException(iae)
+    throw IllegalArgumentException("failed to decode certificate", iae)
   } catch (e: GeneralSecurityException) {
     throw IllegalArgumentException("failed to decode certificate", e)
   }
