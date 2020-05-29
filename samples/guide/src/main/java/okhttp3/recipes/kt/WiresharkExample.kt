@@ -27,7 +27,6 @@ import javax.net.ssl.SSLSocket
 import okhttp3.Call
 import okhttp3.Connection
 import okhttp3.ConnectionSpec
-import okhttp3.ConnectionSpec.Builder
 import okhttp3.EventListener
 import okhttp3.Handshake
 import okhttp3.OkHttpClient
@@ -197,7 +196,7 @@ val eventListenerFactory = WireSharkKeyLoggerListener.Factory(File("/tmp/key.log
 @SuppressSignatureCheck
 class WiresharkExample(private val tlsVersions: List<TlsVersion>) {
   val connectionSpec =
-    Builder(ConnectionSpec.RESTRICTED_TLS)
+    ConnectionSpec.Builder(ConnectionSpec.RESTRICTED_TLS)
         .tlsVersions(*tlsVersions.toTypedArray())
         .build()
 
