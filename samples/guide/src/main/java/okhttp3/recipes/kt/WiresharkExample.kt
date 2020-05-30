@@ -51,8 +51,58 @@ import okio.ByteString.Companion.toByteString
  * This logs TLSv1.2 on a JVM (OpenJDK 11+) without any additional code.  For TLSv1.3
  * an existing external tool is required.
  *
- * @see https://stackoverflow.com/questions/61929216/how-to-log-tlsv1-3-keys-in-jsse-for-wireshark-to-decode-traffic
+ * See https://stackoverflow.com/questions/61929216/how-to-log-tlsv1-3-keys-in-jsse-for-wireshark-to-decode-traffic
  */
+class WireSharkListenerFactory(
+  private val logFile: File,
+  private val tlsVersions: List<TlsVersion>,
+  private val launch: Launch? = null
+) : EventListener.Factory {
+  override fun create(call: Call): EventListener {
+    return WireSharkKeyLoggerListener(logFile, launch == null)
+  }
+
+  fun launchWireShark(): Process? {
+    // Space out traffic to make it easier to demarcate.
+    when (launch) {
+      null -> {
+        if (tlsVersions.contains(TLS_1_2)) {
+          println("TLSv1.2 traffic will be logged automatically and available via wireshark")
+        }
+
+        if (tlsVersions.contains(TLS_1_3)) {
+          println("TLSv1.3 requires an external command run before first traffic is sent")
+          println("Follow instructions at https://github.com/neykov/extract-tls-secrets for TLSv1.3")
+          println("Pid: ${ProcessHandle.current().pid()}")
+
+          Thread.sleep(10000)
+        }
+      }
+      CommandLine -> {
+        return ProcessBuilder(
+            "tshark", "-l", "-V", "-o", "tls.keylog_file:$logFile", "-Y", "http2", "-O", "http2,tls")
+            .redirectInput(File("/dev/null"))
+            .redirectOutput(Redirect.INHERIT)
+            .redirectError(Redirect.INHERIT)
+            .start()
+      }
+      Gui -> {
+        return ProcessBuilder(
+            "nohup", "wireshark", "-o", "tls.keylog_file:$logFile", "-S", "-l", "-Y", "http2", "-k")
+            .redirectInput(File("/dev/null"))
+            .redirectOutput(File("/dev/null"))
+            .redirectError(Redirect.INHERIT)
+            .start().also {
+              // Give it time to start collecting
+              Thread.sleep(2000)
+            }
+      }
+    }
+
+    return null
+  }
+}
+
 class WireSharkKeyLoggerListener(
   private val logFile: File,
   private val verbose: Boolean = false
@@ -163,15 +213,6 @@ class WireSharkKeyLoggerListener(
     random = null
   }
 
-  class Factory(
-    private val logFile: File,
-    private val verbose: Boolean = false
-  ) : EventListener.Factory {
-    override fun create(call: Call): EventListener {
-      return WireSharkKeyLoggerListener(logFile, verbose)
-    }
-  }
-
   enum class Launch {
     Gui, CommandLine
   }
@@ -201,15 +242,14 @@ class WireSharkKeyLoggerListener(
 }
 
 @SuppressSignatureCheck
-class WiresharkExample(private val tlsVersions: List<TlsVersion>, private val launch: Launch? = null) {
+class WiresharkExample(tlsVersions: List<TlsVersion>, private val launch: Launch? = null) {
   private val connectionSpec =
     ConnectionSpec.Builder(ConnectionSpec.RESTRICTED_TLS)
         .tlsVersions(*tlsVersions.toTypedArray())
         .build()
 
-  private val logFile = File("/tmp/key.log")
-
-  private val eventListenerFactory = WireSharkKeyLoggerListener.Factory(logFile, verbose = launch == null)
+  private val eventListenerFactory = WireSharkListenerFactory(
+      logFile = File("/tmp/key.log"), tlsVersions = tlsVersions, launch = launch)
 
   val client = OkHttpClient.Builder()
       .connectionSpecs(listOf(connectionSpec))
@@ -217,42 +257,8 @@ class WiresharkExample(private val tlsVersions: List<TlsVersion>, private val la
       .build()
 
   fun run() {
-    var process: Process? = null
-
-    // Space out traffic to make it easier to demarcate.
-    when (launch) {
-      null -> {
-        if (tlsVersions.contains(TLS_1_2)) {
-          println("TLSv1.2 traffic will be logged automatically and available via wireshark")
-        }
-
-        if (tlsVersions.contains(TLS_1_3)) {
-          println("TLSv1.3 requires an external command run before first traffic is sent")
-          println("Follow instructions at https://github.com/neykov/extract-tls-secrets for TLSv1.3")
-          println("Pid: ${ProcessHandle.current().pid()}")
-
-          Thread.sleep(10000)
-        }
-
-        process = null
-      }
-      CommandLine -> {
-        process = ProcessBuilder(
-            "tshark", "-l", "-V", "-o", "tls.keylog_file:$logFile", "-Y", "http2")
-            .redirectInput(File("/dev/null"))
-            .redirectOutput(Redirect.INHERIT)
-            .redirectError(Redirect.INHERIT)
-            .start()
-      }
-      Gui -> {
-        process = ProcessBuilder(
-            "wireshark", "-o", "tls.keylog_file:$logFile", "-Y", "http2", "-k")
-            .redirectInput(File("/dev/null"))
-            .redirectOutput(File("/dev/null"))
-            .redirectError(File("/dev/null"))
-            .start()
-      }
-    }
+    // Launch wireshark in the background
+    val process = eventListenerFactory.launchWireShark()
 
     val fbRequest = Request.Builder()
         .url("https://graph.facebook.com/robots.txt?s=fb")
@@ -278,19 +284,25 @@ class WiresharkExample(private val tlsVersions: List<TlsVersion>, private val la
       client.connectionPool.evictAll()
       client.dispatcher.executorService.shutdownNow()
 
-      process?.destroyForcibly()
+      if (launch == CommandLine) {
+        process?.destroyForcibly()
+      }
     }
   }
 
-  private fun sendTestRequest(twitterRequest: Request) {
+  private fun sendTestRequest(request: Request) {
     try {
-      client.newCall(twitterRequest)
+      if (this.launch != CommandLine) {
+        println(request.url)
+      }
+
+      client.newCall(request)
           .execute()
           .use {
             val firstLine = it.body!!.string()
                 .lines()
                 .first()
-            if (this.launch == null) {
+            if (this.launch != CommandLine) {
               println("${it.code} ${it.request.url.host} $firstLine")
             }
             Unit
@@ -305,7 +317,6 @@ fun main() {
   // Call this before anything else initialises the JSSE stack.
   WireSharkKeyLoggerListener.register()
 
-  // TLSv1.2 works without additional setup.
   val example = WiresharkExample(tlsVersions = listOf(TlsVersion.TLS_1_2), launch = CommandLine)
   example.run()
 }
