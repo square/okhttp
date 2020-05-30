@@ -17,6 +17,7 @@ package okhttp3.recipes.kt
 
 import java.io.File
 import java.io.IOException
+import java.lang.ProcessBuilder.Redirect
 import java.util.logging.Handler
 import java.util.logging.Level
 import java.util.logging.LogRecord
@@ -35,6 +36,9 @@ import okhttp3.TlsVersion
 import okhttp3.TlsVersion.TLS_1_2
 import okhttp3.TlsVersion.TLS_1_3
 import okhttp3.internal.SuppressSignatureCheck
+import okhttp3.recipes.kt.WireSharkKeyLoggerListener.Launch
+import okhttp3.recipes.kt.WireSharkKeyLoggerListener.Launch.CommandLine
+import okhttp3.recipes.kt.WireSharkKeyLoggerListener.Launch.Gui
 import okio.ByteString.Companion.toByteString
 
 /**
@@ -168,6 +172,10 @@ class WireSharkKeyLoggerListener(
     }
   }
 
+  enum class Launch {
+    Gui, CommandLine
+  }
+
   companion object {
     private lateinit var logger: Logger
 
@@ -186,19 +194,22 @@ class WireSharkKeyLoggerListener(
       logger = Logger.getLogger("javax.net.ssl")
           .apply {
             level = Level.FINEST
+            useParentHandlers = false
           }
     }
   }
 }
 
-val eventListenerFactory = WireSharkKeyLoggerListener.Factory(File("/tmp/key.log"), verbose = true)
-
 @SuppressSignatureCheck
-class WiresharkExample(private val tlsVersions: List<TlsVersion>) {
-  val connectionSpec =
+class WiresharkExample(private val tlsVersions: List<TlsVersion>, private val launch: Launch? = null) {
+  private val connectionSpec =
     ConnectionSpec.Builder(ConnectionSpec.RESTRICTED_TLS)
         .tlsVersions(*tlsVersions.toTypedArray())
         .build()
+
+  private val logFile = File("/tmp/key.log")
+
+  private val eventListenerFactory = WireSharkKeyLoggerListener.Factory(logFile, verbose = launch == null)
 
   val client = OkHttpClient.Builder()
       .connectionSpecs(listOf(connectionSpec))
@@ -206,16 +217,41 @@ class WiresharkExample(private val tlsVersions: List<TlsVersion>) {
       .build()
 
   fun run() {
-    if (tlsVersions.contains(TLS_1_2)) {
-      println("TLSv1.2 traffic will be logged automatically")
-    }
+    var process: Process? = null
 
-    if (tlsVersions.contains(TLS_1_3)) {
-      println("TLSv1.3 requires an external command run before first traffic is sent")
-      println("Follow instructions at https://github.com/neykov/extract-tls-secrets for TLSv1.3")
-      println("Pid: ${ProcessHandle.current().pid()}")
+    // Space out traffic to make it easier to demarcate.
+    when (launch) {
+      null -> {
+        if (tlsVersions.contains(TLS_1_2)) {
+          println("TLSv1.2 traffic will be logged automatically and available via wireshark")
+        }
 
-      Thread.sleep(10000)
+        if (tlsVersions.contains(TLS_1_3)) {
+          println("TLSv1.3 requires an external command run before first traffic is sent")
+          println("Follow instructions at https://github.com/neykov/extract-tls-secrets for TLSv1.3")
+          println("Pid: ${ProcessHandle.current().pid()}")
+
+          Thread.sleep(10000)
+        }
+
+        process = null
+      }
+      CommandLine -> {
+        process = ProcessBuilder(
+            "tshark", "-l", "-V", "-o", "tls.keylog_file:$logFile", "-Y", "http2")
+            .redirectInput(File("/dev/null"))
+            .redirectOutput(Redirect.INHERIT)
+            .redirectError(Redirect.INHERIT)
+            .start()
+      }
+      Gui -> {
+        process = ProcessBuilder(
+            "wireshark", "-o", "tls.keylog_file:$logFile", "-Y", "http2", "-k")
+            .redirectInput(File("/dev/null"))
+            .redirectOutput(File("/dev/null"))
+            .redirectError(File("/dev/null"))
+            .start()
+      }
     }
 
     val fbRequest = Request.Builder()
@@ -228,14 +264,21 @@ class WiresharkExample(private val tlsVersions: List<TlsVersion>) {
         .url("https://www.google.com/robots.txt?s=g")
         .build()
 
-    for (i in 1..2) {
-      // Space out traffic to make it easier to demarcate.
-      sendTestRequest(fbRequest)
-      Thread.sleep(1000)
-      sendTestRequest(twitterRequest)
-      Thread.sleep(1000)
-      sendTestRequest(googleRequest)
-      Thread.sleep(2000)
+    try {
+      for (i in 1..2) {
+        // Space out traffic to make it easier to demarcate.
+        sendTestRequest(fbRequest)
+        Thread.sleep(1000)
+        sendTestRequest(twitterRequest)
+        Thread.sleep(1000)
+        sendTestRequest(googleRequest)
+        Thread.sleep(2000)
+      }
+    } finally {
+      client.connectionPool.evictAll()
+      client.dispatcher.executorService.shutdownNow()
+
+      process?.destroyForcibly()
     }
   }
 
@@ -247,7 +290,9 @@ class WiresharkExample(private val tlsVersions: List<TlsVersion>) {
             val firstLine = it.body!!.string()
                 .lines()
                 .first()
-            println("${it.code} ${it.request.url.host} $firstLine")
+            if (this.launch == null) {
+              println("${it.code} ${it.request.url.host} $firstLine")
+            }
             Unit
           }
     } catch (e: IOException) {
@@ -261,6 +306,6 @@ fun main() {
   WireSharkKeyLoggerListener.register()
 
   // TLSv1.2 works without additional setup.
-  val example = WiresharkExample(tlsVersions = listOf(TlsVersion.TLS_1_2))
+  val example = WiresharkExample(tlsVersions = listOf(TlsVersion.TLS_1_2), launch = CommandLine)
   example.run()
 }
