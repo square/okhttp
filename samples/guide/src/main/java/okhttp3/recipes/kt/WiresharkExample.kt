@@ -63,7 +63,6 @@ class WireSharkListenerFactory(
   }
 
   fun launchWireShark(): Process? {
-    // Space out traffic to make it easier to demarcate.
     when (launch) {
       null -> {
         if (tlsVersions.contains(TLS_1_2)) {
