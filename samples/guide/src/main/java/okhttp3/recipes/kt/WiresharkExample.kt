@@ -17,6 +17,7 @@ package okhttp3.recipes.kt
 
 import java.io.File
 import java.io.IOException
+import java.lang.ProcessBuilder.Redirect
 import java.util.logging.Handler
 import java.util.logging.Level
 import java.util.logging.LogRecord
@@ -35,6 +36,9 @@ import okhttp3.TlsVersion
 import okhttp3.TlsVersion.TLS_1_2
 import okhttp3.TlsVersion.TLS_1_3
 import okhttp3.internal.SuppressSignatureCheck
+import okhttp3.recipes.kt.WireSharkListenerFactory.WireSharkKeyLoggerListener.Launch
+import okhttp3.recipes.kt.WireSharkListenerFactory.WireSharkKeyLoggerListener.Launch.CommandLine
+import okhttp3.recipes.kt.WireSharkListenerFactory.WireSharkKeyLoggerListener.Launch.Gui
 import okio.ByteString.Companion.toByteString
 
 /**
@@ -47,124 +51,177 @@ import okio.ByteString.Companion.toByteString
  * This logs TLSv1.2 on a JVM (OpenJDK 11+) without any additional code.  For TLSv1.3
  * an existing external tool is required.
  *
- * @see https://stackoverflow.com/questions/61929216/how-to-log-tlsv1-3-keys-in-jsse-for-wireshark-to-decode-traffic
+ * See https://stackoverflow.com/questions/61929216/how-to-log-tlsv1-3-keys-in-jsse-for-wireshark-to-decode-traffic
+ *
+ * Steps to run in your own code
+ *
+ * 1. In your main method `WireSharkListenerFactory.register()`
+ * 2. Create Listener factory `val eventListenerFactory = WireSharkListenerFactory(
+logFile = File("/tmp/key.log"), tlsVersions = tlsVersions, launch = launch)`
+ * 3. Register with `client.eventListenerFactory(eventListenerFactory)`
+ * 4. Launch wireshark if not done externally `val process = eventListenerFactory.launchWireShark()`
  */
-class WireSharkKeyLoggerListener(
+@SuppressSignatureCheck
+class WireSharkListenerFactory(
   private val logFile: File,
-  private val verbose: Boolean = false
-) : EventListener() {
-  var random: String? = null
-  lateinit var currentThread: Thread
+  private val tlsVersions: List<TlsVersion>,
+  private val launch: Launch? = null
+) : EventListener.Factory {
+  override fun create(call: Call): EventListener {
+    return WireSharkKeyLoggerListener(logFile, launch == null)
+  }
 
-  private val loggerHandler = object : Handler() {
-    override fun publish(record: LogRecord) {
-      // Try to avoid multi threading issues with concurrent requests
-      if (Thread.currentThread() != currentThread) {
-        return
+  fun launchWireShark(): Process? {
+    when (launch) {
+      null -> {
+        if (tlsVersions.contains(TLS_1_2)) {
+          println("TLSv1.2 traffic will be logged automatically and available via wireshark")
+        }
+
+        if (tlsVersions.contains(TLS_1_3)) {
+          println("TLSv1.3 requires an external command run before first traffic is sent")
+          println("Follow instructions at https://github.com/neykov/extract-tls-secrets for TLSv1.3")
+          println("Pid: ${ProcessHandle.current().pid()}")
+
+          Thread.sleep(10000)
+        }
       }
-
-      // https://timothybasanov.com/2016/05/26/java-pre-master-secret.html
-      // https://security.stackexchange.com/questions/35639/decrypting-tls-in-wireshark-when-using-dhe-rsa-ciphersuites
-      // https://stackoverflow.com/questions/36240279/how-do-i-extract-the-pre-master-secret-using-an-openssl-based-client
-
-      // TLSv1.2 Events
-      // Produced ClientHello handshake message
-      // Consuming ServerHello handshake message
-      // Consuming server Certificate handshake message
-      // Consuming server CertificateStatus handshake message
-      // Found trusted certificate
-      // Consuming ECDH ServerKeyExchange handshake message
-      // Consuming ServerHelloDone handshake message
-      // Produced ECDHE ClientKeyExchange handshake message
-      // Produced client Finished handshake message
-      // Consuming server Finished handshake message
-      // Produced ClientHello handshake message
-      //
-      // Raw write
-      // Raw read
-      // Plaintext before ENCRYPTION
-      // Plaintext after DECRYPTION
-      val message = record.message
-      val parameters = record.parameters
-
-      if (parameters != null && !message.startsWith("Raw") && !message.startsWith("Plaintext")) {
-        if (verbose) {
-          println(record.message)
-          println(record.parameters[0])
-        }
-
-        // JSSE logs additional messages as parameters that are not referenced in the log message.
-        val parameter = parameters[0] as String
-
-        if (message == "Produced ClientHello handshake message") {
-          random = readClientRandom(parameter)
-        }
+      CommandLine -> {
+        return ProcessBuilder(
+            "tshark", "-l", "-V", "-o", "tls.keylog_file:$logFile", "-Y", "http2", "-O", "http2,tls")
+            .redirectInput(File("/dev/null"))
+            .redirectOutput(Redirect.INHERIT)
+            .redirectError(Redirect.INHERIT)
+            .start()
+      }
+      Gui -> {
+        return ProcessBuilder(
+            "nohup", "wireshark", "-o", "tls.keylog_file:$logFile", "-S", "-l", "-Y", "http2", "-k")
+            .redirectInput(File("/dev/null"))
+            .redirectOutput(File("/dev/null"))
+            .redirectError(Redirect.INHERIT)
+            .start().also {
+              // Give it time to start collecting
+              Thread.sleep(2000)
+            }
       }
     }
 
-    override fun flush() {}
-
-    override fun close() {}
+    return null
   }
 
-  private fun readClientRandom(param: String): String? {
-    val matchResult = randomRegex.find(param)
-
-    return if (matchResult != null) {
-      matchResult.groupValues[1].replace(" ", "")
-    } else {
-      null
-    }
-  }
-
-  override fun secureConnectStart(call: Call) {
-    // Register to capture "Produced ClientHello handshake message".
-    currentThread = Thread.currentThread()
-    logger.addHandler(loggerHandler)
-  }
-
-  override fun secureConnectEnd(
-    call: Call,
-    handshake: Handshake?
-  ) {
-    logger.removeHandler(loggerHandler)
-  }
-
-  override fun callEnd(call: Call) {
-    // Cleanup log handler if failed.
-    logger.removeHandler(loggerHandler)
-  }
-
-  override fun connectionAcquired(
-    call: Call,
-    connection: Connection
-  ) {
-    if (random != null) {
-      val sslSocket = connection.socket() as SSLSocket
-      val session = sslSocket.session
-
-      val masterSecretHex = session.masterSecret?.encoded?.toByteString()
-          ?.hex()
-
-      if (masterSecretHex != null) {
-        val keyLog = "CLIENT_RANDOM $random $masterSecretHex"
-
-        if (verbose) {
-          println(keyLog)
-        }
-        logFile.appendText("$keyLog\n")
-      }
-    }
-
-    random = null
-  }
-
-  class Factory(
+  class WireSharkKeyLoggerListener(
     private val logFile: File,
     private val verbose: Boolean = false
-  ) : EventListener.Factory {
-    override fun create(call: Call): EventListener {
-      return WireSharkKeyLoggerListener(logFile, verbose)
+  ) : EventListener() {
+    var random: String? = null
+    lateinit var currentThread: Thread
+
+    private val loggerHandler = object : Handler() {
+      override fun publish(record: LogRecord) {
+        // Try to avoid multi threading issues with concurrent requests
+        if (Thread.currentThread() != currentThread) {
+          return
+        }
+
+        // https://timothybasanov.com/2016/05/26/java-pre-master-secret.html
+        // https://security.stackexchange.com/questions/35639/decrypting-tls-in-wireshark-when-using-dhe-rsa-ciphersuites
+        // https://stackoverflow.com/questions/36240279/how-do-i-extract-the-pre-master-secret-using-an-openssl-based-client
+
+        // TLSv1.2 Events
+        // Produced ClientHello handshake message
+        // Consuming ServerHello handshake message
+        // Consuming server Certificate handshake message
+        // Consuming server CertificateStatus handshake message
+        // Found trusted certificate
+        // Consuming ECDH ServerKeyExchange handshake message
+        // Consuming ServerHelloDone handshake message
+        // Produced ECDHE ClientKeyExchange handshake message
+        // Produced client Finished handshake message
+        // Consuming server Finished handshake message
+        // Produced ClientHello handshake message
+        //
+        // Raw write
+        // Raw read
+        // Plaintext before ENCRYPTION
+        // Plaintext after DECRYPTION
+        val message = record.message
+        val parameters = record.parameters
+
+        if (parameters != null && !message.startsWith("Raw") && !message.startsWith("Plaintext")) {
+          if (verbose) {
+            println(record.message)
+            println(record.parameters[0])
+          }
+
+          // JSSE logs additional messages as parameters that are not referenced in the log message.
+          val parameter = parameters[0] as String
+
+          if (message == "Produced ClientHello handshake message") {
+            random = readClientRandom(parameter)
+          }
+        }
+      }
+
+      override fun flush() {}
+
+      override fun close() {}
+    }
+
+    private fun readClientRandom(param: String): String? {
+      val matchResult = randomRegex.find(param)
+
+      return if (matchResult != null) {
+        matchResult.groupValues[1].replace(" ", "")
+      } else {
+        null
+      }
+    }
+
+    override fun secureConnectStart(call: Call) {
+      // Register to capture "Produced ClientHello handshake message".
+      currentThread = Thread.currentThread()
+      logger.addHandler(loggerHandler)
+    }
+
+    override fun secureConnectEnd(
+      call: Call,
+      handshake: Handshake?
+    ) {
+      logger.removeHandler(loggerHandler)
+    }
+
+    override fun callEnd(call: Call) {
+      // Cleanup log handler if failed.
+      logger.removeHandler(loggerHandler)
+    }
+
+    override fun connectionAcquired(
+      call: Call,
+      connection: Connection
+    ) {
+      if (random != null) {
+        val sslSocket = connection.socket() as SSLSocket
+        val session = sslSocket.session
+
+        val masterSecretHex = session.masterSecret?.encoded?.toByteString()
+            ?.hex()
+
+        if (masterSecretHex != null) {
+          val keyLog = "CLIENT_RANDOM $random $masterSecretHex"
+
+          if (verbose) {
+            println(keyLog)
+          }
+          logFile.appendText("$keyLog\n")
+        }
+      }
+
+      random = null
+    }
+
+    enum class Launch {
+      Gui, CommandLine
     }
   }
 
@@ -186,19 +243,21 @@ class WireSharkKeyLoggerListener(
       logger = Logger.getLogger("javax.net.ssl")
           .apply {
             level = Level.FINEST
+            useParentHandlers = false
           }
     }
   }
 }
 
-val eventListenerFactory = WireSharkKeyLoggerListener.Factory(File("/tmp/key.log"), verbose = true)
-
 @SuppressSignatureCheck
-class WiresharkExample(private val tlsVersions: List<TlsVersion>) {
-  val connectionSpec =
+class WiresharkExample(tlsVersions: List<TlsVersion>, private val launch: Launch? = null) {
+  private val connectionSpec =
     ConnectionSpec.Builder(ConnectionSpec.RESTRICTED_TLS)
         .tlsVersions(*tlsVersions.toTypedArray())
         .build()
+
+  private val eventListenerFactory = WireSharkListenerFactory(
+      logFile = File("/tmp/key.log"), tlsVersions = tlsVersions, launch = launch)
 
   val client = OkHttpClient.Builder()
       .connectionSpecs(listOf(connectionSpec))
@@ -206,17 +265,8 @@ class WiresharkExample(private val tlsVersions: List<TlsVersion>) {
       .build()
 
   fun run() {
-    if (tlsVersions.contains(TLS_1_2)) {
-      println("TLSv1.2 traffic will be logged automatically")
-    }
-
-    if (tlsVersions.contains(TLS_1_3)) {
-      println("TLSv1.3 requires an external command run before first traffic is sent")
-      println("Follow instructions at https://github.com/neykov/extract-tls-secrets for TLSv1.3")
-      println("Pid: ${ProcessHandle.current().pid()}")
-
-      Thread.sleep(10000)
-    }
+    // Launch wireshark in the background
+    val process = eventListenerFactory.launchWireShark()
 
     val fbRequest = Request.Builder()
         .url("https://graph.facebook.com/robots.txt?s=fb")
@@ -228,26 +278,41 @@ class WiresharkExample(private val tlsVersions: List<TlsVersion>) {
         .url("https://www.google.com/robots.txt?s=g")
         .build()
 
-    for (i in 1..2) {
-      // Space out traffic to make it easier to demarcate.
-      sendTestRequest(fbRequest)
-      Thread.sleep(1000)
-      sendTestRequest(twitterRequest)
-      Thread.sleep(1000)
-      sendTestRequest(googleRequest)
-      Thread.sleep(2000)
+    try {
+      for (i in 1..2) {
+        // Space out traffic to make it easier to demarcate.
+        sendTestRequest(fbRequest)
+        Thread.sleep(1000)
+        sendTestRequest(twitterRequest)
+        Thread.sleep(1000)
+        sendTestRequest(googleRequest)
+        Thread.sleep(2000)
+      }
+    } finally {
+      client.connectionPool.evictAll()
+      client.dispatcher.executorService.shutdownNow()
+
+      if (launch == CommandLine) {
+        process?.destroyForcibly()
+      }
     }
   }
 
-  private fun sendTestRequest(twitterRequest: Request) {
+  private fun sendTestRequest(request: Request) {
     try {
-      client.newCall(twitterRequest)
+      if (this.launch != CommandLine) {
+        println(request.url)
+      }
+
+      client.newCall(request)
           .execute()
           .use {
             val firstLine = it.body!!.string()
                 .lines()
                 .first()
-            println("${it.code} ${it.request.url.host} $firstLine")
+            if (this.launch != CommandLine) {
+              println("${it.code} ${it.request.url.host} $firstLine")
+            }
             Unit
           }
     } catch (e: IOException) {
@@ -258,9 +323,8 @@ class WiresharkExample(private val tlsVersions: List<TlsVersion>) {
 
 fun main() {
   // Call this before anything else initialises the JSSE stack.
-  WireSharkKeyLoggerListener.register()
+  WireSharkListenerFactory.register()
 
-  // TLSv1.2 works without additional setup.
-  val example = WiresharkExample(tlsVersions = listOf(TlsVersion.TLS_1_2))
+  val example = WiresharkExample(tlsVersions = listOf(TlsVersion.TLS_1_2), launch = CommandLine)
   example.run()
 }
