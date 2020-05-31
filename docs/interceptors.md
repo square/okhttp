@@ -124,13 +124,14 @@ Each interceptor chain has relative merits.
  * Observe the application's original intent. Unconcerned with OkHttp-injected headers like `If-None-Match`.
  * Permitted to short-circuit and not call `Chain.proceed()`.
  * Permitted to retry and make multiple calls to `Chain.proceed()`.
+ * Can adjust Call timeouts using withConnectTimeout, withReadTimeout, withWriteTimeout.
 
 **Network Interceptors**
 
  * Able to operate on intermediate responses like redirects and retries.
  * Not invoked for cached responses that short-circuit the network.
  * Observe the data just as it will be transmitted over the network.
- * Access to the `Connection` that carries the request.
+ * Access to the `Connection` that carries the request..
 
 ### Rewriting Requests
 
