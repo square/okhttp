@@ -135,6 +135,21 @@ jobs:
 
       - runtests:
           platform: jdk8
+          testjdk: -Dtest.java.home=/usr/local/jdk-8.0.242
+
+  testjdk8_252:
+    docker:
+      - image: yschimke/multijdk:latest
+
+    environment:
+      JVM_OPTS: -Xmx1g
+      TERM: dumb
+
+    steps:
+      - checkout
+
+      - runtests:
+          platform: jdk8alpn
           testjdk: -Dtest.java.home=/usr/local/jdk-8.0.252
 
   testjdk8alpn:
@@ -150,7 +165,7 @@ jobs:
 
       - runtests:
           platform: jdk8alpn
-          testjdk: -Dtest.java.home=/usr/local/jdk-8.0.252 -Dalpn.boot.version=8.1.13.v20181017
+          testjdk: -Dtest.java.home=/usr/local/jdk-8.0.242 -Dalpn.boot.version=8.1.13.v20181017
 
   testopenjsse:
     docker:
@@ -165,7 +180,7 @@ jobs:
 
       - runtests:
           platform: openjsse
-          testjdk: -Dtest.java.home=/usr/lib/jvm/java-8-openjdk-amd64
+          testjdk: -Dtest.java.home=/usr/local/jdk-8.0.242
 
   testjdk11:
     docker:
@@ -209,6 +224,7 @@ jobs:
 
       - runtests:
           platform: jdk9
+          testjdk: -Dtest.java.home=/usr/local/jdk-14.0.1
 
   testconscrypt:
     docker:
@@ -271,10 +287,6 @@ workflows:
             branches:
               ignore:
                 - gh-pages
-      - testjdk8alpn:
-          filters:
-            branches:
-              only: master
       - testjdk11:
           filters:
             branches:
@@ -306,6 +318,9 @@ workflows:
           requires:
             - compile
       - testjdk8alpn:
+          requires:
+            - compile
+      - testjdk8_252:
           requires:
             - compile
       - testopenjsse:
