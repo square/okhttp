@@ -226,6 +226,21 @@ jobs:
           platform: jdk9
           testjdk: -Dtest.java.home=/usr/local/jdk-14.0.1
 
+  testjdk15:
+    docker:
+      - image: yschimke/multijdk:latest
+
+    environment:
+      JVM_OPTS: -Xmx1g
+      TERM: dumb
+
+    steps:
+      - checkout
+
+      - runtests:
+          platform: jdk9
+          testjdk: -Dtest.java.home=/usr/local/jdk-15
+
   testconscrypt:
     docker:
       - image: yschimke/multijdk:latest
@@ -297,11 +312,17 @@ workflows:
             branches:
               ignore:
                 - gh-pages
+      - testjdk15:
+          filters:
+            branches:
+              ignore:
+                - gh-pages
       #- testjdk12windows:
-      #- testbouncycastle
-      #- testopenjsse
-      #- testconscrypt
-      #- testcorretto
+      # PR testing below
+      - testbouncycastle
+      - testopenjsse
+      - testconscrypt
+      - testcorretto
   nightly:
     triggers:
       - schedule:
@@ -327,6 +348,12 @@ workflows:
           requires:
             - compile
       - testjdk11:
+          requires:
+            - compile
+      - testjdk14:
+          requires:
+            - compile
+      - testjdk15:
           requires:
             - compile
       - testjdk12windows:
