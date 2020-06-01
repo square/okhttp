@@ -44,6 +44,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 public final class InterceptorTest {
@@ -752,6 +753,48 @@ public final class InterceptorTest {
       body.string();
       fail();
     } catch (SocketTimeoutException expected) {
+    }
+  }
+
+  @Test public void networkInterceptorCannotChangeReadTimeout() throws Exception {
+    addInterceptor(true, chain ->
+        chain.withReadTimeout(100, TimeUnit.MILLISECONDS).proceed(chain.request()));
+
+    Request request1 = new Request.Builder().url(server.url("/")).build();
+    Call call = client.newCall(request1);
+    try {
+      call.execute();
+      fail();
+    } catch (IllegalStateException expected) {
+      assertThat(expected.getMessage()).isEqualTo("Timeouts can't be adjusted in a network interceptor");
+    }
+  }
+
+  @Test public void networkInterceptorCannotChangeWriteTimeout() throws Exception {
+    addInterceptor(true, chain ->
+        chain.withWriteTimeout(100, TimeUnit.MILLISECONDS).proceed(chain.request()));
+
+    Request request1 = new Request.Builder().url(server.url("/")).build();
+    Call call = client.newCall(request1);
+    try {
+      call.execute();
+      fail();
+    } catch (IllegalStateException expected) {
+      assertThat(expected.getMessage()).isEqualTo("Timeouts can't be adjusted in a network interceptor");
+    }
+  }
+
+  @Test public void networkInterceptorCannotChangeConnectTimeout() throws Exception {
+    addInterceptor(true, chain ->
+        chain.withConnectTimeout(100, TimeUnit.MILLISECONDS).proceed(chain.request()));
+
+    Request request1 = new Request.Builder().url(server.url("/")).build();
+    Call call = client.newCall(request1);
+    try {
+      call.execute();
+      fail();
+    } catch (IllegalStateException expected) {
+      assertThat(expected.getMessage()).isEqualTo("Timeouts can't be adjusted in a network interceptor");
     }
   }
 
