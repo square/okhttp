@@ -9,6 +9,7 @@ Here’s some libraries that work nicely with OkHttp.
  * [CWAC-NetSecurity](https://github.com/commonsguy/cwac-netsecurity): Simplifying Secure Internet Access.
  * [Flipper](https://fbflipper.com/): A desktop debugging platform for mobile developers.
  * [Fresco](https://github.com/facebook/fresco): An Android library for managing images and the memory they use.
+ * [hub4j/github-api](https://github.com/hub4j/github-api) A library for interacting with the GitHub API in Java.
  * [Glide](https://github.com/bumptech/glide): An image loading and caching library for Android focused on smooth scrolling.
  * [GoogleAppEngineOkHttp](https://github.com/apkelly/GoogleAppEngineOkHttp): An OkHttp Call that works on Google App Engine.
  * [Hunter](https://github.com/Leaking/Hunter): Configure all OkHttpClients centrally.
