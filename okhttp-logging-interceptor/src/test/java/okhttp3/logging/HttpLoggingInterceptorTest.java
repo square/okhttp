@@ -26,6 +26,7 @@ import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
+import okhttp3.mockwebserver.SocketPolicy;
 import okhttp3.testing.PlatformRule;
 import okhttp3.Protocol;
 import okhttp3.RecordingHostnameVerifier;
@@ -432,17 +433,30 @@ public final class HttpLoggingInterceptorTest {
 
   @Test public void bodyGet204() throws IOException {
     setLevel(Level.BODY);
-    bodyGetNoBody(204);
+    bodyGetNoBody(204, 0);
   }
 
   @Test public void bodyGet205() throws IOException {
     setLevel(Level.BODY);
-    bodyGetNoBody(205);
+    bodyGetNoBody(205, 0);
   }
 
-  private void bodyGetNoBody(int code) throws IOException {
-    server.enqueue(new MockResponse()
-        .setStatus("HTTP/1.1 " + code + " No Content"));
+  @Test public void bodyGet500() throws IOException {
+    setLevel(Level.BODY);
+    bodyGetNoBody(500, 4192);
+  }
+
+  private void bodyGetNoBody(int code, int contentLength) throws IOException {
+    if (contentLength == 0) {
+      server.enqueue(new MockResponse()
+          .setStatus("HTTP/1.1 " + code + " No Content"));
+    } else {
+      server.enqueue(new MockResponse()
+          .setStatus("HTTP/1.1 " + code + " No Content")
+          .setBody("")
+      .setHeader("Content-Length", contentLength)
+      .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END));
+    }
     Response response = client.newCall(request().build()).execute();
     response.body().close();
 
@@ -450,7 +464,7 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("--> GET " + url)
         .assertLogEqual("--> END GET")
         .assertLogMatch("<-- " + code + " No Content " + url + " \\(\\d+ms\\)")
-        .assertLogEqual("Content-Length: 0")
+        .assertLogEqual("Content-Length: " + contentLength)
         .assertLogEqual("<-- END HTTP (0-byte body)")
         .assertNoMoreLogs();
 
@@ -462,7 +476,7 @@ public final class HttpLoggingInterceptorTest {
         .assertLogMatch("User-Agent: okhttp/.+")
         .assertLogEqual("--> END GET")
         .assertLogMatch("<-- " + code + " No Content " + url + " \\(\\d+ms\\)")
-        .assertLogEqual("Content-Length: 0")
+        .assertLogEqual("Content-Length: " + contentLength)
         .assertLogEqual("<-- END HTTP (0-byte body)")
         .assertNoMoreLogs();
   }
