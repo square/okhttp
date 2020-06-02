@@ -22,7 +22,6 @@ import javax.net.ssl.SSLSocket
 import okhttp3.Protocol
 import okhttp3.internal.platform.AndroidPlatform
 import okhttp3.internal.platform.Platform
-import org.conscrypt.Conscrypt
 
 /**
  * Modern reflection based SocketAdapter for Conscrypt class SSLSockets.
