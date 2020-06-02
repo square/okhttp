@@ -117,8 +117,8 @@ open class AndroidSocketAdapter(private val sslSocketClass: Class<in SSLSocket>)
     }
 
     private fun build(actualSSLSocketClass: Class<in SSLSocket>): AndroidSocketAdapter {
-      var possibleClass: Class<in SSLSocket> = actualSSLSocketClass
-      while (possibleClass.simpleName != "OpenSSLSocketImpl") {
+      var possibleClass: Class<in SSLSocket>? = actualSSLSocketClass
+      while (possibleClass != null && possibleClass.simpleName != "OpenSSLSocketImpl") {
         possibleClass = possibleClass.superclass
 
         if (possibleClass == null) {
@@ -128,7 +128,7 @@ open class AndroidSocketAdapter(private val sslSocketClass: Class<in SSLSocket>)
         }
       }
 
-      return AndroidSocketAdapter(possibleClass)
+      return AndroidSocketAdapter(possibleClass!!)
     }
 
     fun factory(packageName: String): DeferredSocketAdapter.Factory {
