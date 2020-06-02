@@ -54,7 +54,7 @@ class ConscryptSocketAdapter : SocketAdapter {
   companion object {
     val factory = object : DeferredSocketAdapter.Factory {
       override fun matchesSocket(sslSocket: SSLSocket): Boolean {
-        return Conscrypt.isConscrypt(sslSocket)
+        return ConscryptPlatform.isSupported && Conscrypt.isConscrypt(sslSocket)
       }
       override fun create(sslSocket: SSLSocket): SocketAdapter = ConscryptSocketAdapter()
     }
