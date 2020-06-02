@@ -20,6 +20,7 @@ import okhttp3.Protocol
 import okhttp3.internal.platform.BouncyCastlePlatform
 import okhttp3.internal.platform.Platform
 import org.bouncycastle.jsse.BCSSLSocket
+import org.conscrypt.Conscrypt
 
 /**
  * Simple non-reflection SocketAdapter for BouncyCastle.
@@ -57,7 +58,11 @@ class BouncyCastleSocketAdapter : SocketAdapter {
   }
 
   companion object {
-    fun buildIfSupported(): SocketAdapter? =
-        if (BouncyCastlePlatform.isSupported) BouncyCastleSocketAdapter() else null
+    val factory = object : DeferredSocketAdapter.Factory {
+      override fun matchesSocket(sslSocket: SSLSocket): Boolean {
+        return BouncyCastlePlatform.isSupported && sslSocket is BCSSLSocket
+      }
+      override fun create(sslSocket: SSLSocket): SocketAdapter = BouncyCastleSocketAdapter()
+    }
   }
 }

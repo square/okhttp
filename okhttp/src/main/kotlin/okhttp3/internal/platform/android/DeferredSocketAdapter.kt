@@ -19,7 +19,7 @@ import javax.net.ssl.SSLSocket
 import okhttp3.Protocol
 
 /**
- * Deferred implementation of SocketAdapter that can only work by observing the socket
+ * Deferred implementation of SocketAdapter that works by observing the socket
  * and initializing on first use.
  */
 class DeferredSocketAdapter(private val socketAdapterFactory: Factory) : SocketAdapter {

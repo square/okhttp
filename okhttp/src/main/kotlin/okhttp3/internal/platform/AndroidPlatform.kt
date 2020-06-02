@@ -46,8 +46,9 @@ class AndroidPlatform : Platform() {
   private val socketAdapters = listOfNotNull(
       StandardAndroidSocketAdapter.buildIfSupported(),
       DeferredSocketAdapter(AndroidSocketAdapter.factory("com.google.android.gms.org.conscrypt")),
+      // Delay and Defer any initialisation of Conscrypt and BouncyCastle
       DeferredSocketAdapter(ConscryptSocketAdapter.factory),
-      BouncyCastleSocketAdapter.buildIfSupported()
+      DeferredSocketAdapter(BouncyCastleSocketAdapter.factory)
   ).filter { it.isSupported() }
 
   private val closeGuard = CloseGuard.get()

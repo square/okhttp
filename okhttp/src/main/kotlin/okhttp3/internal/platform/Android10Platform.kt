@@ -37,8 +37,9 @@ class Android10Platform : Platform() {
   private val socketAdapters = listOfNotNull(
       Android10SocketAdapter.buildIfSupported(),
       DeferredSocketAdapter(AndroidSocketAdapter.factory("com.google.android.gms.org.conscrypt")),
+      // Delay and Defer any initialisation of Conscrypt and BouncyCastle
       DeferredSocketAdapter(ConscryptSocketAdapter.factory),
-      BouncyCastleSocketAdapter.buildIfSupported()
+      DeferredSocketAdapter(BouncyCastleSocketAdapter.factory)
   ).filter { it.isSupported() }
 
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? =
