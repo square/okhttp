@@ -69,30 +69,26 @@ This is necessary for bookkeeping when creating new streams. Correct framing req
 
 ## Connection Pool
 
-### Background
-
 A primary responsibility for any HTTP client is to efficiently manage network connections. Creating and establishing new connections require a fair amount of overhead and added latency. OkHttp will make every effort to reuse existing connections to avoid this overhead and added latency.
 
-Every OkHttpClient uses a connection pool. Its job is to maintain a reference to all open connections. When an HTTP request is started, OkHttp will attempt to reuse an existing connection from the pool. If there are no existing connections, a new one is created and put into the connection pool. For http/2, the connection can be reused immediately. For http/1, the request must be completed before it can be reused.
+Every OkHttpClient uses a connection pool. Its job is to maintain a reference to all open connections. When an HTTP request is started, OkHttp will attempt to reuse an existing connection from the pool. If there are no existing connections, a new one is created and put into the connection pool. For HTTP/2, the connection can be reused immediately. For HTTP/1, the request must be completed before it can be reused.
 
-Since HTTP requests frequently happen in parallel, the connection pool implementation must be thread-safe.
+Since HTTP requests frequently happen in parallel, connection pooling must be thread-safe.
 
-### ConnectionPool, RealConnection, and StreamAllocation
+These are the primary classes involved with establishing, sharing, and terminating connections:
 
-The primary classes involved with establishing, sharing and terminating connections are ConnectionPool, RealConnection and StreamAllocation.
+ * **RealConnectionPool** manages reuse of HTTP and HTTP/2 connections for reduced latency. Every OkHttpClient has one, and its lifetime spans the lifetime of the OkHttpClient.
 
-**ConnectionPool**: Manages reuse of HTTP and HTTP/2 connections for reduced latency. Every OkHttpClient has one, and its lifetime spans the lifetime of the OkHttpClient.
+ * **RealConnection** is the socket and streams of an HTTP/1 or HTTP/2 connection. These are created on demand to fulfill HTTP requests. They may be reused for many HTTP request/response exchanges. Their lifetime is typically shorter than a connection pool.
 
-**RealConnection**: The socket and streams of an HTTP and HTTP/2 connection. These are created on demand to fulfill HTTP requests. They may be reused for many HTTP request/response exchanges. Their lifetime is typically shorter than ConnectionPool.
+ * **Exchange** carries a single HTTP request/response pair.
 
-**StreamAllocation**: Coordinates the relationship between connections, streams and calls. These are created for a single HTTP request/response exchange. Their lifetime is typically shorter than RealConnection.
+ * **ExchangeFinder** chooses which connection carries each exchange. Where possible it will use the same connection for all exchanges in a single call. It prefers reusing pooled connections over establishing new connections.      
 
-### Locks
+#### Per-Connection Locks
 
-A single lock is used to synchronize and guard the state of ConnectionPool, RealConnection and StreamAllocation.
+Each connection has its own lock. The connections in the pool are all in a `ConcurrentLinkedQueue`. Due to data races, iterators of this queue may return removed connections. Callers must check the connection's `noNewExchanges` property before using connections from the pool.
 
-### ConnectionPool
+The connection lock is never held while doing I/O (even closing a socket) to prevent contention.
 
-The fields in ConnectionPool, RealConnection and StreamAllocation are all guarded by the connection pool instance. This lock is never held while doing I/O (even closing a socket) to prevent contention.
-
-A single lock is preferred to avoid deadlock scenarios and the added overhead of aggregate lock/unlock that would occur if multiple locks were used.
+A lock-per-connection is used to maximize concurrency.

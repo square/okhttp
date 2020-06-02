@@ -16,7 +16,7 @@
  */
 package okhttp3.internal.connection
 
-import java.util.ArrayDeque
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
 import okhttp3.Address
 import okhttp3.ConnectionPool
@@ -44,18 +44,25 @@ class RealConnectionPool(
     override fun runOnce() = cleanup(System.nanoTime())
   }
 
-  private val connections = ArrayDeque<RealConnection>()
+  /**
+   * Holding the lock of the connection being added or removed when mutating this, and check its
+   * [RealConnection.noNewExchanges] property. This defends against races where a connection is
+   * simultaneously adopted and removed.
+   */
+  private val connections = ConcurrentLinkedQueue<RealConnection>()
 
   init {
     // Put a floor on the keep alive duration, otherwise cleanup will spin loop.
     require(keepAliveDuration > 0L) { "keepAliveDuration <= 0: $keepAliveDuration" }
   }
 
-  @Synchronized fun idleConnectionCount(): Int {
-    return connections.count { it.calls.isEmpty() }
+  fun idleConnectionCount(): Int {
+    return connections.count {
+      synchronized(it) { it.calls.isEmpty() }
+    }
   }
 
-  @Synchronized fun connectionCount(): Int {
+  fun connectionCount(): Int {
     return connections.size
   }
 
@@ -73,32 +80,33 @@ class RealConnectionPool(
     routes: List<Route>?,
     requireMultiplexed: Boolean
   ): Boolean {
-    this.assertThreadHoldsLock()
-
     for (connection in connections) {
-      if (requireMultiplexed && !connection.isMultiplexed) continue
-      if (!connection.isEligible(address, routes)) continue
-      call.acquireConnectionNoEvents(connection)
-      return true
+      synchronized(connection) {
+        if (requireMultiplexed && !connection.isMultiplexed) return@synchronized
+        if (!connection.isEligible(address, routes)) return@synchronized
+        call.acquireConnectionNoEvents(connection)
+        return true
+      }
     }
     return false
   }
 
   fun put(connection: RealConnection) {
-    this.assertThreadHoldsLock()
+    connection.assertThreadHoldsLock()
 
     connections.add(connection)
     cleanupQueue.schedule(cleanupTask)
   }
 
   /**
-   * Notify this pool that [connection] has become idle. Returns true if the connection has
-   * been removed from the pool and should be closed.
+   * Notify this pool that [connection] has become idle. Returns true if the connection has been
+   * removed from the pool and should be closed.
    */
   fun connectionBecameIdle(connection: RealConnection): Boolean {
-    this.assertThreadHoldsLock()
+    connection.assertThreadHoldsLock()
 
     return if (connection.noNewExchanges || maxIdleConnections == 0) {
+      connection.noNewExchanges = true
       connections.remove(connection)
       if (connections.isEmpty()) cleanupQueue.cancelAll()
       true
@@ -109,23 +117,22 @@ class RealConnectionPool(
   }
 
   fun evictAll() {
-    val evictedConnections = mutableListOf<RealConnection>()
-    synchronized(this) {
-      val i = connections.iterator()
-      while (i.hasNext()) {
-        val connection = i.next()
+    val i = connections.iterator()
+    while (i.hasNext()) {
+      val connection = i.next()
+      val socketToClose = synchronized(connection) {
         if (connection.calls.isEmpty()) {
-          connection.noNewExchanges = true
-          evictedConnections.add(connection)
           i.remove()
+          connection.noNewExchanges = true
+          return@synchronized connection.socket()
+        } else {
+          return@synchronized null
         }
       }
-      if (connections.isEmpty()) cleanupQueue.cancelAll()
+      socketToClose?.closeQuietly()
     }
 
-    for (connection in evictedConnections) {
-      connection.socket().closeQuietly()
-    }
+    if (connections.isEmpty()) cleanupQueue.cancelAll()
   }
 
   /**
@@ -142,52 +149,61 @@ class RealConnectionPool(
     var longestIdleDurationNs = Long.MIN_VALUE
 
     // Find either a connection to evict, or the time that the next eviction is due.
-    synchronized(this) {
-      for (connection in connections) {
+    for (connection in connections) {
+      synchronized(connection) {
         // If the connection is in use, keep searching.
         if (pruneAndGetAllocationCount(connection, now) > 0) {
           inUseConnectionCount++
-          continue
-        }
+        } else {
+          idleConnectionCount++
 
-        idleConnectionCount++
-
-        // If the connection is ready to be evicted, we're done.
-        val idleDurationNs = now - connection.idleAtNs
-        if (idleDurationNs > longestIdleDurationNs) {
-          longestIdleDurationNs = idleDurationNs
-          longestIdleConnection = connection
-        }
-      }
-
-      when {
-        longestIdleDurationNs >= this.keepAliveDurationNs
-            || idleConnectionCount > this.maxIdleConnections -> {
-          // We've found a connection to evict. Remove it from the list, then close it below
-          // (outside of the synchronized block).
-          connections.remove(longestIdleConnection)
-          if (connections.isEmpty()) cleanupQueue.cancelAll()
-        }
-        idleConnectionCount > 0 -> {
-          // A connection will be ready to evict soon.
-          return keepAliveDurationNs - longestIdleDurationNs
-        }
-        inUseConnectionCount > 0 -> {
-          // All connections are in use. It'll be at least the keep alive duration 'til we run
-          // again.
-          return keepAliveDurationNs
-        }
-        else -> {
-          // No connections, idle or in use.
-          return -1
+          // If the connection is ready to be evicted, we're done.
+          val idleDurationNs = now - connection.idleAtNs
+          if (idleDurationNs > longestIdleDurationNs) {
+            longestIdleDurationNs = idleDurationNs
+            longestIdleConnection = connection
+          } else {
+            Unit
+          }
         }
       }
     }
 
-    longestIdleConnection!!.socket().closeQuietly()
+    when {
+      longestIdleDurationNs >= this.keepAliveDurationNs
+          || idleConnectionCount > this.maxIdleConnections -> {
+        // We've chosen a connection to evict. Confirm it's still okay to be evict, then close it.
+        val connection = longestIdleConnection!!
+        synchronized(connection) {
+          if (connection.calls.isNotEmpty()) return 0L // No longer idle.
+          if (connection.idleAtNs + longestIdleDurationNs != now) return 0L // No longer oldest.
+          connection.noNewExchanges = true
+          connections.remove(longestIdleConnection)
+        }
 
-    // Cleanup again immediately.
-    return 0L
+        connection.socket().closeQuietly()
+        if (connections.isEmpty()) cleanupQueue.cancelAll()
+
+        // Clean up again immediately.
+        return 0L
+      }
+
+      idleConnectionCount > 0 -> {
+        // A connection will be ready to evict soon.
+        return keepAliveDurationNs - longestIdleDurationNs
+      }
+
+      inUseConnectionCount > 0 -> {
+        // All connections are in use. It'll be at least the keep alive duration 'til we run
+        // again.
+        return keepAliveDurationNs
+      }
+
+      else -> {
+        // No connections, idle or in use.
+        return -1
+      }
+    }
   }
 
   /**
@@ -196,6 +212,8 @@ class RealConnectionPool(
    * them. Leak detection is imprecise and relies on garbage collection.
    */
   private fun pruneAndGetAllocationCount(connection: RealConnection, now: Long): Int {
+    connection.assertThreadHoldsLock()
+
     val references = connection.calls
     var i = 0
     while (i < references.size) {

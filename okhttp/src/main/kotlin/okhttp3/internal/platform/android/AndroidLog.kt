@@ -54,11 +54,16 @@ object AndroidLog {
   private val configuredLoggers = CopyOnWriteArraySet<Logger>()
 
   private val knownLoggers = LinkedHashMap<String, String>().apply {
-      this[OkHttpClient::class.java.`package`.name] = "OkHttp"
-      this[OkHttpClient::class.java.name] = "okhttp.OkHttpClient"
-      this[Http2::class.java.name] = "okhttp.Http2"
-      this[TaskRunner::class.java.name] = "okhttp.TaskRunner"
-    }.toMap()
+    val packageName = OkHttpClient::class.java.`package`?.name
+
+    if (packageName != null) {
+      this[packageName] = "OkHttp"
+    }
+
+    this[OkHttpClient::class.java.name] = "okhttp.OkHttpClient"
+    this[Http2::class.java.name] = "okhttp.Http2"
+    this[TaskRunner::class.java.name] = "okhttp.TaskRunner"
+  }.toMap()
 
   internal fun androidLog(loggerName: String, logLevel: Int, message: String, t: Throwable?) {
     val tag = loggerTag(loggerName)
@@ -83,7 +88,11 @@ object AndroidLog {
     }
   }
 
-  private fun loggerTag(loggerName: String) = knownLoggers[loggerName] ?: loggerName
+  private fun loggerTag(loggerName: String): String {
+    // We need to handle long logger names before they hit Log.
+    // java.lang.IllegalArgumentException: Log tag "okhttp3.mockwebserver.MockWebServer" exceeds limit of 23 characters
+    return knownLoggers[loggerName] ?: loggerName.take(23)
+  }
 
   fun enable() {
     for ((logger, tag) in knownLoggers) {

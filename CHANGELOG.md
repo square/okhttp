@@ -1,6 +1,15 @@
 Change Log
 ==========
 
+## Version 4.7.2
+
+_2020-05-20_
+
+ *  Fix: Don't crash inspecting whether the host platform is JVM or Android. With 4.7.0 and 4.7.1 we
+    had a crash `IllegalArgumentException: Not a Conscrypt trust manager` because we depended on
+    initialization order of companion objects.
+
+
 ## Version 4.7.1
 
 _2020-05-18_

@@ -10,7 +10,13 @@ OkHttpDebugLogging.enableHttp2()
 OkHttpDebugLogging.enableTaskRunner()
 ```
 
-On Android, use [OkHttpDebugLogcat.kt] instead. It connects OkHttp logs to Logcat in Android Studio.
+### Activating on Android
+
+```
+$ adb shell setprop log.tag.okhttp.Http2 DEBUG
+$ adb shell setprop log.tag.okhttp.TaskRunner DEBUG
+$ adb logcat '*:E' 'okhttp.Http2:D' 'okhttp.TaskRunner:D'
+```
 
 ### HTTP/2 Frame Logging
 
@@ -53,5 +59,4 @@ This logs task enqueues, starts, and finishes.
 [2020-01-01 00:00:00] Q10000 finished run in 739 µs: OkHttp ConnectionPool
 ```
 
-[OkHttpDebugLogging.kt]: https://github.com/square/okhttp/blob/master/okhttp-testing-support/src/main/java/okhttp3/OkHttpDebugLogging.kt
-[OkHttpDebugLogcat.kt]: https://github.com/square/okhttp/blob/master/android-test/src/androidTest/java/okhttp/android/test/OkHttpDebugLogcat.kt
+[OkHttpDebugLogging.kt]: https://github.com/square/okhttp/blob/master/okhttp-testing-support/src/main/kotlin/okhttp3/OkHttpDebugLogging.kt
