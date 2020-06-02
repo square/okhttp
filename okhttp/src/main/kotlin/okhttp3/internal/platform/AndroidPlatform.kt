@@ -45,8 +45,8 @@ import okhttp3.internal.tls.TrustRootIndex
 class AndroidPlatform : Platform() {
   private val socketAdapters = listOfNotNull(
       StandardAndroidSocketAdapter.buildIfSupported(),
-      DeferredSocketAdapter(ConscryptSocketAdapter.factory),
       DeferredSocketAdapter(AndroidSocketAdapter.factory("com.google.android.gms.org.conscrypt")),
+      DeferredSocketAdapter(ConscryptSocketAdapter.factory),
       BouncyCastleSocketAdapter.buildIfSupported()
   ).filter { it.isSupported() }
 
