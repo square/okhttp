@@ -20,7 +20,6 @@ import okhttp3.Protocol
 import okhttp3.internal.platform.BouncyCastlePlatform
 import okhttp3.internal.platform.Platform
 import org.bouncycastle.jsse.BCSSLSocket
-import org.conscrypt.Conscrypt
 
 /**
  * Simple non-reflection SocketAdapter for BouncyCastle.
