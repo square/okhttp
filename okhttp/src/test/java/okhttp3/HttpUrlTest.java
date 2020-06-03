@@ -1759,6 +1759,7 @@ public final class HttpUrlTest {
 
     // https://github.com/square/okhttp/issues/6109
     assertThat(parse("http://a./").topPrivateDomain()).isNull();
+    assertThat(parse("http://./").topPrivateDomain()).isNull();
 
     assertThat(parse("http://squareup.com./").topPrivateDomain()).isEqualTo("squareup.com");
   }
@@ -1767,9 +1768,8 @@ public final class HttpUrlTest {
   public void unparseableTopPrivateDomain() {
     assertInvalid("http://a../", "Invalid URL host: \"a..\"");
     assertInvalid("http://..a/", "Invalid URL host: \"..a\"");
-    assertInvalid("http://a..b/", "Invalid URL host: \"a.b\"");
+    assertInvalid("http://a..b/", "Invalid URL host: \"a..b\"");
     assertInvalid("http://.a/", "Invalid URL host: \".a\"");
-    assertInvalid("http://./", "Invalid URL host: \".\"");
     assertInvalid("http://../", "Invalid URL host: \"..\"");
   }
 
