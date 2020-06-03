@@ -65,7 +65,9 @@ class PublicSuffixDatabase {
    *     encoded.
    */
   fun getEffectiveTldPlusOne(domain: String): String? {
-    val domainLabels = splitDomain(domain)
+    // We use UTF-8 in the list so we need to convert to Unicode.
+    val unicodeDomain = IDN.toUnicode(domain)
+    val domainLabels = splitDomain(unicodeDomain)
 
     val rule = findMatchingRule(domainLabels)
     if (domainLabels.size == rule.size && rule[0][0] != EXCEPTION_MARKER) {
@@ -80,13 +82,11 @@ class PublicSuffixDatabase {
       domainLabels.size - (rule.size + 1)
     }
 
-    return domain.split('.').asSequence().drop(firstLabelOffset).joinToString(".")
+    return splitDomain(domain).asSequence().drop(firstLabelOffset).joinToString(".")
   }
 
   private fun splitDomain(domain: String): List<String> {
-    // We use UTF-8 in the list so we need to convert to Unicode.
-    val unicodeDomain = IDN.toUnicode(domain)
-    val domainLabels = unicodeDomain.split('.')
+    val domainLabels = domain.split('.')
 
     if (domainLabels.lastOrNull() == "") {
       // allow for domain name trailing dot
