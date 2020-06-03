@@ -88,7 +88,7 @@ class PublicSuffixDatabase {
   private fun splitDomain(domain: String): List<String> {
     val domainLabels = domain.split('.')
 
-    if (domainLabels.lastOrNull() == "") {
+    if (domainLabels.last() == "") {
       // allow for domain name trailing dot
       return domainLabels.dropLast(1)
     }
