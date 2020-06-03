@@ -1756,6 +1756,9 @@ public final class HttpUrlTest {
     assertThat(parse("https://xn--4pvxs.jp").topPrivateDomain()).isNull();
     assertThat(parse("https://localhost").topPrivateDomain()).isNull();
     assertThat(parse("https://127.0.0.1").topPrivateDomain()).isNull();
+
+    // https://github.com/square/okhttp/issues/6109
+    assertThat(parse("http://a./").topPrivateDomain()).isNull();
   }
 
   private void assertInvalid(String string, String exceptionMessage) {
