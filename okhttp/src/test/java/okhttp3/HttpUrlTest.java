@@ -1756,6 +1756,21 @@ public final class HttpUrlTest {
     assertThat(parse("https://xn--4pvxs.jp").topPrivateDomain()).isNull();
     assertThat(parse("https://localhost").topPrivateDomain()).isNull();
     assertThat(parse("https://127.0.0.1").topPrivateDomain()).isNull();
+
+    // https://github.com/square/okhttp/issues/6109
+    assertThat(parse("http://a./").topPrivateDomain()).isNull();
+    assertThat(parse("http://./").topPrivateDomain()).isNull();
+
+    assertThat(parse("http://squareup.com./").topPrivateDomain()).isEqualTo("squareup.com");
+  }
+
+  @Test
+  public void unparseableTopPrivateDomain() {
+    assertInvalid("http://a../", "Invalid URL host: \"a..\"");
+    assertInvalid("http://..a/", "Invalid URL host: \"..a\"");
+    assertInvalid("http://a..b/", "Invalid URL host: \"a..b\"");
+    assertInvalid("http://.a/", "Invalid URL host: \".a\"");
+    assertInvalid("http://../", "Invalid URL host: \"..\"");
   }
 
   private void assertInvalid(String string, String exceptionMessage) {
