@@ -108,6 +108,8 @@ task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {
       'okhttp3.OkHttpClient#socketFactory()',
       'okhttp3.OkHttpClient#sslSocketFactory()',
       'okhttp3.OkHttpClient#writeTimeoutMillis()',
+      'okhttp3.OkHttpClient#writeTimeoutMillis()',
+      'okhttp3.Request$Builder#delete()',
   ]
 }
 check.dependsOn(japicmp)
