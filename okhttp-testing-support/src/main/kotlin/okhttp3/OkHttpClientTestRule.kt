@@ -48,15 +48,29 @@ class OkHttpClientTestRule : TestRule {
   var recordEvents = true
   var recordTaskRunner = false
   var recordFrames = false
+  var recordSslDebug = false
 
   private val testLogHandler = object : Handler() {
     override fun publish(record: LogRecord) {
       val name = record.loggerName
-      val recorded = (recordTaskRunner && name == TaskRunner::class.java.name) || (recordFrames && name == Http2::class.java.name)
+      val recorded = when (name) {
+        TaskRunner::class.java.name -> recordTaskRunner
+        Http2::class.java.name -> recordFrames
+        "javax.net.ssl" -> recordSslDebug
+        else -> false
+      }
 
       if (recorded) {
         synchronized(clientEventsList) {
           clientEventsList.add(record.message)
+
+          if (record.loggerName == "javax.net.ssl") {
+            val parameters = record.parameters
+
+            if (parameters != null) {
+              clientEventsList.add(parameters.first().toString())
+            }
+          }
         }
       }
     }
@@ -75,6 +89,7 @@ class OkHttpClientTestRule : TestRule {
     Logger.getLogger(OkHttpClient::class.java.name).fn()
     Logger.getLogger(Http2::class.java.name).fn()
     Logger.getLogger(TaskRunner::class.java.name).fn()
+    Logger.getLogger("javax.net.ssl").fn()
   }
 
   fun wrap(eventListener: EventListener) =

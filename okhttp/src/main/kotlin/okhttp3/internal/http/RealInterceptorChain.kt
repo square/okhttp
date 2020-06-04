@@ -60,18 +60,27 @@ class RealInterceptorChain(
 
   override fun connectTimeoutMillis(): Int = connectTimeoutMillis
 
-  override fun withConnectTimeout(timeout: Int, unit: TimeUnit): Interceptor.Chain =
-      copy(connectTimeoutMillis = checkDuration("connectTimeout", timeout.toLong(), unit))
+  override fun withConnectTimeout(timeout: Int, unit: TimeUnit): Interceptor.Chain {
+    check(exchange == null) { "Timeouts can't be adjusted in a network interceptor" }
+
+    return copy(connectTimeoutMillis = checkDuration("connectTimeout", timeout.toLong(), unit))
+  }
 
   override fun readTimeoutMillis(): Int = readTimeoutMillis
 
-  override fun withReadTimeout(timeout: Int, unit: TimeUnit): Interceptor.Chain =
-      copy(readTimeoutMillis = checkDuration("readTimeout", timeout.toLong(), unit))
+  override fun withReadTimeout(timeout: Int, unit: TimeUnit): Interceptor.Chain {
+    check(exchange == null) { "Timeouts can't be adjusted in a network interceptor" }
+
+    return copy(readTimeoutMillis = checkDuration("readTimeout", timeout.toLong(), unit))
+  }
 
   override fun writeTimeoutMillis(): Int = writeTimeoutMillis
 
-  override fun withWriteTimeout(timeout: Int, unit: TimeUnit): Interceptor.Chain =
-      copy(writeTimeoutMillis = checkDuration("writeTimeout", timeout.toLong(), unit))
+  override fun withWriteTimeout(timeout: Int, unit: TimeUnit): Interceptor.Chain {
+    check(exchange == null) { "Timeouts can't be adjusted in a network interceptor" }
+
+    return copy(writeTimeoutMillis = checkDuration("writeTimeout", timeout.toLong(), unit))
+  }
 
   override fun call(): Call = call
 

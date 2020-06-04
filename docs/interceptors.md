@@ -124,6 +124,7 @@ Each interceptor chain has relative merits.
  * Observe the application's original intent. Unconcerned with OkHttp-injected headers like `If-None-Match`.
  * Permitted to short-circuit and not call `Chain.proceed()`.
  * Permitted to retry and make multiple calls to `Chain.proceed()`.
+ * Can adjust Call timeouts using withConnectTimeout, withReadTimeout, withWriteTimeout.
 
 **Network Interceptors**
 

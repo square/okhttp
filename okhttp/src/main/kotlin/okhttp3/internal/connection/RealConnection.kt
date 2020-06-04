@@ -46,6 +46,7 @@ import okhttp3.Response
 import okhttp3.Route
 import okhttp3.internal.EMPTY_RESPONSE
 import okhttp3.internal.assertThreadDoesntHoldLock
+import okhttp3.internal.assertThreadHoldsLock
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.http.ExchangeCodec
@@ -70,12 +71,23 @@ import okio.buffer
 import okio.sink
 import okio.source
 
+/**
+ * A connection to a remote web server capable of carrying 1 or more concurrent streams.
+ *
+ * A connection's lifecycle has two phases.
+ *
+ *  1. While it's connecting, the connection is owned by a single call using single thread. In this
+ *     phase the connection is not shared and no locking is necessary.
+ *
+ *  2. Once connected, a connection is shared to a connection pool. In this phase accesses to the
+ *     connection's state must be guarded by holding a lock on the connection.
+ */
 class RealConnection(
   val connectionPool: RealConnectionPool,
   private val route: Route
 ) : Http2Connection.Listener(), Connection {
 
-  // The fields below are initialized by connect() and never reassigned.
+  // These properties are initialized by connect() and never reassigned.
 
   /** The low-level TCP socket. */
   private var rawSocket: Socket? = null
@@ -91,11 +103,15 @@ class RealConnection(
   private var source: BufferedSource? = null
   private var sink: BufferedSink? = null
 
-  // The fields below track connection state and are guarded by connectionPool.
+  // These properties are guarded by this.
 
   /**
-   * If true, no new exchanges can be created on this connection. Once true this is always true.
-   * Guarded by [connectionPool].
+   * If true, no new exchanges can be created on this connection. It is necessary to set this to
+   * true when removing a connection from the pool; otherwise a racing caller might get it from the
+   * pool when it shouldn't. Symmetrically, this must always be checked before returning a
+   * connection from the pool.
+   *
+   * Once true this is always true. Guarded by this.
    */
   var noNewExchanges = false
 
@@ -107,11 +123,11 @@ class RealConnection(
 
   /**
    * The number of times there was a problem establishing a stream that could be due to route
-   * chosen. Guarded by [connectionPool].
+   * chosen. Guarded by this.
    */
   internal var routeFailureCount = 0
 
-  internal var successCount = 0
+  private var successCount = 0
   private var refusedStreamCount = 0
 
   /**
@@ -130,25 +146,21 @@ class RealConnection(
    * Returns true if this is an HTTP/2 connection. Such connections can be used in multiple HTTP
    * requests simultaneously.
    */
-  val isMultiplexed: Boolean
+  internal val isMultiplexed: Boolean
     get() = http2Connection != null
 
   /** Prevent further exchanges from being created on this connection. */
-  fun noNewExchanges() {
-    connectionPool.assertThreadDoesntHoldLock()
-
-    synchronized(connectionPool) {
-      noNewExchanges = true
-    }
+  @Synchronized internal fun noNewExchanges() {
+    noNewExchanges = true
   }
 
   /** Prevent this connection from being used for hosts other than the one in [route]. */
-  fun noCoalescedConnections() {
-    connectionPool.assertThreadDoesntHoldLock()
+  @Synchronized internal fun noCoalescedConnections() {
+    noCoalescedConnections = true
+  }
 
-    synchronized(connectionPool) {
-      noCoalescedConnections = true
-    }
+  @Synchronized internal fun incrementSuccessCount() {
+    successCount++
   }
 
   fun connect(
@@ -514,6 +526,8 @@ class RealConnection(
    * `route` is the resolved route for a connection.
    */
   internal fun isEligible(address: Address, routes: List<Route>?): Boolean {
+    assertThreadHoldsLock()
+
     // If this connection is not accepting new exchanges, we're done.
     if (calls.size >= allocationLimit || noNewExchanges) return false
 
@@ -564,7 +578,9 @@ class RealConnection(
     }
   }
 
-  fun supportsUrl(url: HttpUrl): Boolean {
+  private fun supportsUrl(url: HttpUrl): Boolean {
+    assertThreadHoldsLock()
+
     val routeUrl = route.address.url
 
     if (url.port != routeUrl.port) {
@@ -629,6 +645,8 @@ class RealConnection(
 
   /** Returns true if this connection is ready to host new streams. */
   fun isHealthy(doExtensiveChecks: Boolean): Boolean {
+    assertThreadDoesntHoldLock()
+
     val nowNs = System.nanoTime()
 
     val rawSocket = this.rawSocket!!
@@ -644,7 +662,7 @@ class RealConnection(
       return http2Connection.isHealthy(nowNs)
     }
 
-    val idleDurationNs = nowNs - idleAtNs
+    val idleDurationNs = synchronized(this) { nowNs - idleAtNs }
     if (idleDurationNs >= IDLE_CONNECTION_HEALTHY_NS && doExtensiveChecks) {
       return socket.isHealthy(source)
     }
@@ -659,10 +677,8 @@ class RealConnection(
   }
 
   /** When settings are received, adjust the allocation limit. */
-  override fun onSettings(connection: Http2Connection, settings: Settings) {
-    synchronized(connectionPool) {
-      allocationLimit = settings.getMaxConcurrentStreams()
-    }
+  @Synchronized override fun onSettings(connection: Http2Connection, settings: Settings) {
+    allocationLimit = settings.getMaxConcurrentStreams()
   }
 
   override fun handshake(): Handshake? = handshake
@@ -683,43 +699,38 @@ class RealConnection(
    * Track a failure using this connection. This may prevent both the connection and its route from
    * being used for future exchanges.
    */
-  internal fun trackFailure(call: RealCall, e: IOException?) {
-    connectionPool.assertThreadDoesntHoldLock()
-
-    synchronized(connectionPool) {
-      if (e is StreamResetException) {
-        when {
-          e.errorCode == ErrorCode.REFUSED_STREAM -> {
-            // Stop using this connection on the 2nd REFUSED_STREAM error.
-            refusedStreamCount++
-            if (refusedStreamCount > 1) {
-              noNewExchanges = true
-              routeFailureCount++
-            }
-          }
-
-          e.errorCode == ErrorCode.CANCEL && call.isCanceled() -> {
-            // Permit any number of CANCEL errors on locally-canceled calls.
-          }
-
-          else -> {
-            // Everything else wants a fresh connection.
+  @Synchronized internal fun trackFailure(call: RealCall, e: IOException?) {
+    if (e is StreamResetException) {
+      when {
+        e.errorCode == ErrorCode.REFUSED_STREAM -> {
+          // Stop using this connection on the 2nd REFUSED_STREAM error.
+          refusedStreamCount++
+          if (refusedStreamCount > 1) {
             noNewExchanges = true
             routeFailureCount++
           }
         }
-      } else if (!isMultiplexed || e is ConnectionShutdownException) {
-        noNewExchanges = true
 
-        // If this route hasn't completed a call, avoid it for new connections.
-        if (successCount == 0) {
-          if (e != null) {
-            connectFailed(call.client, route, e)
-          }
+        e.errorCode == ErrorCode.CANCEL && call.isCanceled() -> {
+          // Permit any number of CANCEL errors on locally-canceled calls.
+        }
+
+        else -> {
+          // Everything else wants a fresh connection.
+          noNewExchanges = true
           routeFailureCount++
         }
       }
-      return@synchronized // Keep synchronized {} happy.
+    } else if (!isMultiplexed || e is ConnectionShutdownException) {
+      noNewExchanges = true
+
+      // If this route hasn't completed a call, avoid it for new connections.
+      if (successCount == 0) {
+        if (e != null) {
+          connectFailed(call.client, route, e)
+        }
+        routeFailureCount++
+      }
     }
   }
 
@@ -742,11 +753,11 @@ class RealConnection(
       connectionPool: RealConnectionPool,
       route: Route,
       socket: Socket,
-      idleAtNanos: Long
+      idleAtNs: Long
     ): RealConnection {
       val result = RealConnection(connectionPool, route)
       result.socket = socket
-      result.idleAtNs = idleAtNanos
+      result.idleAtNs = idleAtNs
       return result
     }
   }

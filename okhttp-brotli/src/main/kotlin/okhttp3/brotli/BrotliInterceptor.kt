@@ -18,6 +18,7 @@ package okhttp3.brotli
 import okhttp3.Interceptor
 import okhttp3.Response
 import okhttp3.ResponseBody.Companion.asResponseBody
+import okhttp3.internal.http.promisesBody
 import okio.GzipSource
 import okio.buffer
 import okio.source
@@ -44,6 +45,9 @@ object BrotliInterceptor : Interceptor {
       }
 
   internal fun uncompress(response: Response): Response {
+    if (!response.promisesBody()) {
+      return response
+    }
     val body = response.body ?: return response
     val encoding = response.header("Content-Encoding") ?: return response
 

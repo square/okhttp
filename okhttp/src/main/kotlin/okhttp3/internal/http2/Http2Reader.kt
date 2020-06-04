@@ -40,6 +40,7 @@ import okhttp3.internal.http2.Http2.TYPE_PUSH_PROMISE
 import okhttp3.internal.http2.Http2.TYPE_RST_STREAM
 import okhttp3.internal.http2.Http2.TYPE_SETTINGS
 import okhttp3.internal.http2.Http2.TYPE_WINDOW_UPDATE
+import okhttp3.internal.http2.Http2.formattedType
 import okhttp3.internal.http2.Http2.frameLog
 import okhttp3.internal.readMedium
 import okio.Buffer
@@ -106,12 +107,13 @@ class Http2Reader(
       throw IOException("FRAME_SIZE_ERROR: $length")
     }
     val type = source.readByte() and 0xff
-    if (requireSettings && type != TYPE_SETTINGS) {
-      throw IOException("Expected a SETTINGS frame but was $type")
-    }
     val flags = source.readByte() and 0xff
     val streamId = source.readInt() and 0x7fffffff // Ignore reserved bit.
     if (logger.isLoggable(FINE)) logger.fine(frameLog(true, streamId, length, type, flags))
+
+    if (requireSettings && type != TYPE_SETTINGS) {
+      throw IOException("Expected a SETTINGS frame but was ${formattedType(type)}")
+    }
 
     when (type) {
       TYPE_DATA -> readData(handler, length, flags, streamId)

@@ -184,6 +184,11 @@ open class Platform {
     fun alpnProtocolNames(protocols: List<Protocol>) =
         protocols.filter { it != Protocol.HTTP_1_0 }.map { it.toString() }
 
+    // This explicit check avoids activating in Android Studio with Android specific classes
+    // available when running plugins inside the IDE.
+    val isAndroid: Boolean
+        get() = "Dalvik" == System.getProperty("java.vm.name")
+
     private val isConscryptPreferred: Boolean
       get() {
         val preferredProvider = Security.getProviders()[0].name
@@ -203,23 +208,18 @@ open class Platform {
       }
 
     /** Attempt to match the host runtime to a capable Platform implementation. */
-    private fun findPlatform(): Platform {
-      val android10 = Android10Platform.buildIfSupported()?.also {
-        AndroidLog.enable()
-      }
+    private fun findPlatform(): Platform = if (isAndroid) {
+      findAndroidPlatform()
+    } else {
+      findJvmPlatform()
+    }
 
-      if (android10 != null) {
-        return android10
-      }
+    private fun findAndroidPlatform(): Platform {
+      AndroidLog.enable()
+      return Android10Platform.buildIfSupported() ?: AndroidPlatform.buildIfSupported()!!
+    }
 
-      val android = AndroidPlatform.buildIfSupported()?.also {
-        AndroidLog.enable()
-      }
-
-      if (android != null) {
-        return android
-      }
-
+    private fun findJvmPlatform(): Platform {
       if (isConscryptPreferred) {
         val conscrypt = ConscryptPlatform.buildIfSupported()
 
@@ -244,16 +244,21 @@ open class Platform {
         }
       }
 
+      // An Oracle JDK 9 like OpenJDK, or JDK 8 251+.
       val jdk9 = Jdk9Platform.buildIfSupported()
 
       if (jdk9 != null) {
         return jdk9
       }
 
-      // An Oracle JDK 8 like OpenJDK.
+      // An Oracle JDK 8 like OpenJDK, pre 251.
       val jdkWithJettyBoot = Jdk8WithJettyBootPlatform.buildIfSupported()
 
-      return jdkWithJettyBoot ?: Platform()
+      if (jdkWithJettyBoot != null) {
+        return jdkWithJettyBoot
+      }
+
+      return Platform()
     }
 
     /**

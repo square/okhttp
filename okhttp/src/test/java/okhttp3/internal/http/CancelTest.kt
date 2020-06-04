@@ -95,6 +95,8 @@ class CancelTest(mode: Pair<CancelMode, ConnectionType>) {
       platform.assumeHttp2Support()
     }
 
+    platform.assumeNotBouncyCastle()
+
     // Sockets on some platforms can have large buffers that mean writes do not block when
     // required. These socket factories explicitly set the buffer sizes on sockets created.
     server = MockWebServer()

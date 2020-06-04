@@ -84,12 +84,12 @@ public final class ConnectionPoolTest {
     ConnectionPool poolApi = new ConnectionPool(pool);
 
     RealConnection c1 = newConnection(pool, routeA1, 50L);
-    synchronized (pool) {
-      OkHttpClient client = new OkHttpClient.Builder()
-          .connectionPool(poolApi)
-          .build();
-      RealCall call = (RealCall) client.newCall(newRequest(addressA));
-      call.enterNetworkInterceptorExchange(call.request(), true);
+    OkHttpClient client = new OkHttpClient.Builder()
+        .connectionPool(poolApi)
+        .build();
+    RealCall call = (RealCall) client.newCall(newRequest(addressA));
+    call.enterNetworkInterceptorExchange(call.request(), true);
+    synchronized (c1) {
       call.acquireConnectionNoEvents(c1);
     }
 
@@ -206,12 +206,12 @@ public final class ConnectionPoolTest {
 
   /** Use a helper method so there's no hidden reference remaining on the stack. */
   private void allocateAndLeakAllocation(ConnectionPool pool, RealConnection connection) {
-    synchronized (RealConnectionPool.Companion.get(pool)) {
-      OkHttpClient client = new OkHttpClient.Builder()
-          .connectionPool(pool)
-          .build();
-      RealCall call = (RealCall) client.newCall(newRequest(connection.route().address()));
-      call.enterNetworkInterceptorExchange(call.request(), true);
+    OkHttpClient client = new OkHttpClient.Builder()
+        .connectionPool(pool)
+        .build();
+    RealCall call = (RealCall) client.newCall(newRequest(connection.route().address()));
+    call.enterNetworkInterceptorExchange(call.request(), true);
+    synchronized (connection) {
       call.acquireConnectionNoEvents(connection);
     }
   }
@@ -219,7 +219,7 @@ public final class ConnectionPoolTest {
   private RealConnection newConnection(RealConnectionPool pool, Route route, long idleAtNanos) {
     RealConnection result = RealConnection.Companion.newTestConnection(
         pool, route, new Socket(), idleAtNanos);
-    synchronized (pool) {
+    synchronized (result) {
       pool.put(result);
     }
     return result;

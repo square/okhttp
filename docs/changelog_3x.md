@@ -1,6 +1,15 @@
 OkHttp 3.x Change Log
 =====================
 
+## Version 3.14.9
+
+_2020-05-17_
+
+ *  Fix: Don't crash when running as a plugin in Android Studio Canary 4.1. To enable
+    platform-specific TLS features OkHttp must detect whether it's running in a JVM or in Android.
+    The upcoming Android Studio runs in a JVM but has classes from Android and that confused OkHttp!
+
+
 ## Version 3.14.8
 
 _2020-04-28_
@@ -207,6 +216,15 @@ _2019-02-04_
  *  New: API to access headers as `java.time.Instant`.
  *  New: Fail fast if a `SSLSocketFactory` is used as a `SocketFactory`.
  *  New: Log the TLS handshake in `LoggingEventListener`.
+
+
+## Version 3.12.12
+
+_2020-05-17_
+
+ *  Fix: Don't crash when running as a plugin in Android Studio Canary 4.1. To enable
+    platform-specific TLS features OkHttp must detect whether it's running in a JVM or in Android.
+    The upcoming Android Studio runs in a JVM but has classes from Android and that confused OkHttp!
 
 
 ## Version 3.12.11

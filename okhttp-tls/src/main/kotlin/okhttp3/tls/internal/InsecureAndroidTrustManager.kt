@@ -45,7 +45,7 @@ internal class InsecureAndroidTrustManager(
     try {
       val method = checkServerTrustedMethod
           ?: throw CertificateException("Failed to call checkServerTrusted")
-      return method.invoke(this, chain, authType, host) as List<Certificate>
+      return method.invoke(delegate, chain, authType, host) as List<Certificate>
     } catch (e: InvocationTargetException) {
       throw e.targetException
     }

@@ -35,6 +35,7 @@ import org.hamcrest.Matcher
 import org.hamcrest.StringDescription
 import org.hamcrest.TypeSafeMatcher
 import org.junit.Assert
+import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeThat
 import org.junit.Assume.assumeTrue
 import org.junit.AssumptionViolatedException
@@ -264,6 +265,10 @@ open class PlatformRule @JvmOverloads constructor(
     )
   }
 
+  fun assumeAndroid() {
+    assumeTrue("Only Android platform supported", Platform.isAndroid)
+  }
+
   fun assumeNotConscrypt() {
     assumeThat(
         getPlatformSystemProperty(), not(
@@ -335,6 +340,10 @@ open class PlatformRule @JvmOverloads constructor(
     assumeTrue("ALPN Boot not enabled", isAlpnBootEnabled())
   }
 
+  fun assumeNotAndroid() {
+    assumeFalse("Android platform not supported", Platform.isAndroid)
+  }
+
   companion object {
     const val PROPERTY_NAME = "okhttp.platform"
     const val CONSCRYPT_PROPERTY = "conscrypt"
@@ -348,15 +357,21 @@ open class PlatformRule @JvmOverloads constructor(
     init {
       val platformSystemProperty = getPlatformSystemProperty()
 
-      if (platformSystemProperty == CONSCRYPT_PROPERTY && Security.getProviders()[0].name != "Conscrypt") {
-        if (!Conscrypt.isAvailable()) {
-          System.err.println("Warning: Conscrypt not available")
+      if (platformSystemProperty == JDK9_PROPERTY) {
+        if (System.getProperty("javax.net.debug") == null) {
+          System.setProperty("javax.net.debug", "")
         }
+      } else if (platformSystemProperty == CONSCRYPT_PROPERTY) {
+        if (Security.getProviders()[0].name != "Conscrypt") {
+          if (!Conscrypt.isAvailable()) {
+            System.err.println("Warning: Conscrypt not available")
+          }
 
-        val provider = Conscrypt.newProviderBuilder()
-            .provideTrustManager(true)
-            .build()
-        Security.insertProviderAt(provider, 1)
+          val provider = Conscrypt.newProviderBuilder()
+              .provideTrustManager(true)
+              .build()
+          Security.insertProviderAt(provider, 1)
+        }
       } else if (platformSystemProperty == JDK8_ALPN_PROPERTY) {
         if (!isAlpnBootEnabled()) {
           System.err.println("Warning: ALPN Boot not enabled")
@@ -368,6 +383,10 @@ open class PlatformRule @JvmOverloads constructor(
       } else if (platformSystemProperty == OPENJSSE_PROPERTY && Security.getProviders()[0].name != "OpenJSSE") {
         if (!OpenJSSEPlatform.isSupported) {
           System.err.println("Warning: OpenJSSE not available")
+        }
+
+        if (System.getProperty("javax.net.debug") == null) {
+          System.setProperty("javax.net.debug", "")
         }
 
         Security.insertProviderAt(OpenJSSE(), 1)

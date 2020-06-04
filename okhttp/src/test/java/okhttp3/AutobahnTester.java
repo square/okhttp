@@ -20,8 +20,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import okhttp3.internal.Version;
 import okio.ByteString;
+
+import static okhttp3.internal.Util.userAgent;
 
 /**
  * Exercises the web socket implementation against the <a
@@ -131,7 +132,7 @@ public final class AutobahnTester {
 
   private void updateReports() {
     final CountDownLatch latch = new CountDownLatch(1);
-    newWebSocket("/updateReports?agent=" + Version.userAgent, new WebSocketListener() {
+    newWebSocket("/updateReports?agent=" + userAgent, new WebSocketListener() {
       @Override public void onClosing(WebSocket webSocket, int code, String reason) {
         webSocket.close(1000, null);
         latch.countDown();
