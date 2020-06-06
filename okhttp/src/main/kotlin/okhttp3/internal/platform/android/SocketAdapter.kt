@@ -22,7 +22,7 @@ import okhttp3.Protocol
 
 interface SocketAdapter {
   fun isSupported(): Boolean
-  fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager?
+  fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? = null
   fun matchesSocket(sslSocket: SSLSocket): Boolean
   fun matchesSocketFactory(sslSocketFactory: SSLSocketFactory): Boolean = false
 
