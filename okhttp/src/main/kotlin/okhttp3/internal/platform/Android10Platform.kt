@@ -36,7 +36,7 @@ import okhttp3.internal.tls.CertificateChainCleaner
 class Android10Platform : Platform() {
   private val socketAdapters = listOfNotNull(
       Android10SocketAdapter.buildIfSupported(),
-      DeferredSocketAdapter(AndroidSocketAdapter.factory("com.google.android.gms.org.conscrypt")),
+      DeferredSocketAdapter(AndroidSocketAdapter.playProviderFactory),
       // Delay and Defer any initialisation of Conscrypt and BouncyCastle
       DeferredSocketAdapter(ConscryptSocketAdapter.factory),
       DeferredSocketAdapter(BouncyCastleSocketAdapter.factory)
