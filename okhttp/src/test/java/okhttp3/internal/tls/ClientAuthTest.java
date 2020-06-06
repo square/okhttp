@@ -15,11 +15,13 @@
  */
 package okhttp3.internal.tls;
 
+import java.io.IOException;
 import java.net.SocketException;
 import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
+import java.util.List;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
@@ -31,8 +33,10 @@ import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
 import javax.security.auth.x500.X500Principal;
 import okhttp3.Call;
+import okhttp3.CallEvent;
 import okhttp3.OkHttpClient;
 import okhttp3.OkHttpClientTestRule;
+import okhttp3.RecordingEventListener;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.internal.http2.ConnectionShutdownException;
@@ -51,6 +55,7 @@ import static okhttp3.testing.PlatformRule.getPlatformSystemProperty;
 import static okhttp3.tls.internal.TlsUtil.newKeyManager;
 import static okhttp3.tls.internal.TlsUtil.newTrustManager;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 public final class ClientAuthTest {
@@ -263,6 +268,56 @@ public final class ClientAuthTest {
     } catch (ConnectionShutdownException expected) {
       // It didn't fail until it reached the application layer.
     }
+  }
+
+  @Test public void invalidClientAuthEvents() throws Throwable {
+    server.enqueue(new MockResponse().setBody("abc"));
+
+    clientCert = new HeldCertificate.Builder()
+        .signedBy(clientIntermediateCa)
+        .serialNumber(4L)
+        .commonName("Jethro Willis")
+        .addSubjectAlternativeName("jethrowillis.com")
+        .validityInterval(1, 2)
+        .build();
+
+    OkHttpClient client = buildClient(clientCert, clientIntermediateCa.certificate());
+
+    RecordingEventListener listener = new RecordingEventListener();
+
+    client = client.newBuilder()
+        .eventListener(listener)
+        .build();
+
+    SSLSocketFactory socketFactory = buildServerSslSocketFactory();
+
+    server.useHttps(socketFactory, false);
+    server.requireClientAuth();
+
+    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
+
+    try {
+      call.execute();
+      fail();
+    } catch (IOException expected) {
+    }
+
+    // Observed Events are variable
+    // JDK 14
+    // CallStart, ProxySelectStart, ProxySelectEnd, DnsStart, DnsEnd, ConnectStart, SecureConnectStart,
+    // SecureConnectEnd, ConnectEnd, ConnectionAcquired, RequestHeadersStart, RequestHeadersEnd,
+    // ResponseFailed, ConnectionReleased, CallFailed
+    // JDK 8
+    // CallStart, ProxySelectStart, ProxySelectEnd, DnsStart, DnsEnd, ConnectStart, SecureConnectStart,
+    // ConnectFailed, CallFailed
+    // Gradle - JDK 11
+    // CallStart, ProxySelectStart, ProxySelectEnd, DnsStart, DnsEnd, ConnectStart, SecureConnectStart,
+    // SecureConnectEnd, ConnectFailed, CallFailed
+
+    List<String> recordedEventTypes = listener.recordedEventTypes();
+    assertThat(recordedEventTypes).startsWith(
+        "CallStart", "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd", "ConnectStart", "SecureConnectStart");
+    assertThat(recordedEventTypes).endsWith("CallFailed");
   }
 
   private OkHttpClient buildClient(
