@@ -21,6 +21,7 @@ import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
+import java.util.List;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
@@ -301,10 +302,22 @@ public final class ClientAuthTest {
     } catch (IOException expected) {
     }
 
-    assertEquals(asList(
-        "CallStart", "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd", "ConnectStart",
-        "SecureConnectStart", "SecureConnectEnd", "ConnectFailed", "CallFailed"
-    ), listener.recordedEventTypes());
+    // Observed Events are variable
+    // JDK 14
+    // CallStart, ProxySelectStart, ProxySelectEnd, DnsStart, DnsEnd, ConnectStart, SecureConnectStart,
+    // SecureConnectEnd, ConnectEnd, ConnectionAcquired, RequestHeadersStart, RequestHeadersEnd,
+    // ResponseFailed, ConnectionReleased, CallFailed
+    // JDK 8
+    // CallStart, ProxySelectStart, ProxySelectEnd, DnsStart, DnsEnd, ConnectStart, SecureConnectStart,
+    // ConnectFailed, CallFailed
+    // Gradle - JDK 11
+    // CallStart, ProxySelectStart, ProxySelectEnd, DnsStart, DnsEnd, ConnectStart, SecureConnectStart,
+    // SecureConnectEnd, ConnectFailed, CallFailed
+
+    List<String> recordedEventTypes = listener.recordedEventTypes();
+    assertThat(recordedEventTypes).startsWith(
+        "CallStart", "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd", "ConnectStart", "SecureConnectStart");
+    assertThat(recordedEventTypes).endsWith("CallFailed");
   }
 
   private OkHttpClient buildClient(
