@@ -15,9 +15,6 @@
  */
 package okhttp3.recipes.kt
 
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.internal.platform.Platform
 import java.io.IOException
 import java.security.KeyStore
 import java.security.SecureRandom
@@ -31,6 +28,9 @@ import javax.security.auth.callback.Callback
 import javax.security.auth.callback.CallbackHandler
 import javax.security.auth.callback.PasswordCallback
 import javax.security.auth.callback.UnsupportedCallbackException
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.internal.platform.Platform
 
 object ConsoleCallbackHandler : CallbackHandler {
   override fun handle(callbacks: Array<Callback>) {
@@ -44,18 +44,6 @@ object ConsoleCallbackHandler : CallbackHandler {
           System.err.println(c.prompt)
           c.password = System.`in`.bufferedReader().readLine().toCharArray()
         }
-      } else {
-        throw UnsupportedCallbackException(c)
-      }
-    }
-  }
-}
-
-class FixedCallbackHandler(val result: String): CallbackHandler {
-  override fun handle(callbacks: Array<Callback>) {
-    for (c in callbacks) {
-      if (c is PasswordCallback) {
-        c.password = result.toCharArray()
       } else {
         throw UnsupportedCallbackException(c)
       }
@@ -78,7 +66,7 @@ class FixedCallbackHandler(val result: String): CallbackHandler {
  */
 class YubikeyClientAuth() {
   fun run() {
-    // typical PKCS11 slot
+    // The typical PKCS11 slot, may vary with different hardware.
     val slot = 0
 
     val config = "--name=OpenSC\nlibrary=/Library/OpenSC/lib/opensc-pkcs11.so\nslot=$slot\n"
@@ -88,11 +76,7 @@ class YubikeyClientAuth() {
     val pkcs11 = Security.getProvider("SunPKCS11").configure(config)
     Security.addProvider(pkcs11)
 
-    // Or fixed
     val callbackHandler = ConsoleCallbackHandler
-
-    val keystore = KeyStore.getInstance("PKCS11", pkcs11)
-    keystore.load { KeyStore.CallbackHandlerProtection(callbackHandler) }
 
     val builderList: List<KeyStore.Builder> = Arrays.asList(
         KeyStore.Builder.newInstance("PKCS11", null, KeyStore.CallbackHandlerProtection(callbackHandler))
