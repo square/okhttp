@@ -100,7 +100,6 @@ class AndroidSocketAdapterTest(private val adapter: SocketAdapter) {
       return listOfNotNull(
           DeferredSocketAdapter(ConscryptSocketAdapter.factory),
           DeferredSocketAdapter(AndroidSocketAdapter.factory("org.conscrypt")),
-          AndroidSocketAdapter.buildIfSupported("org.conscrypt"),
           StandardAndroidSocketAdapter.buildIfSupported("org.conscrypt")
       )
     }

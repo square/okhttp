@@ -25,6 +25,10 @@ import okhttp3.internal.platform.Platform
 
 /**
  * Modern reflection based SocketAdapter for Conscrypt class SSLSockets.
+ *
+ * This is used directly for providers where class name is known e.g. the Google Play Provider
+ * but we can't compile directly against it, or in fact reliably know if it is registered and
+ * on classpath.
  */
 open class AndroidSocketAdapter(private val sslSocketClass: Class<in SSLSocket>) : SocketAdapter {
   private val setUseSessionTickets: Method =
@@ -90,32 +94,12 @@ open class AndroidSocketAdapter(private val sslSocketClass: Class<in SSLSocket>)
   }
 
   companion object {
-    fun buildIfSupported(packageName: String): SocketAdapter? {
-      return try {
-        @Suppress("UNCHECKED_CAST")
-        val sslSocketClass = Class.forName("$packageName.OpenSSLSocketImpl") as Class<in SSLSocket>
-
-        buildIfSupported(sslSocketClass)
-      } catch (e: Exception) {
-        Platform.get()
-            .log(level = Platform.WARN, message = "unable to load android socket classes", t = e)
-        null
-      }
-    }
-
-    fun buildIfSupported(actualSSLSocketClass: Class<in SSLSocket>): SocketAdapter? {
-      try {
-        return build(actualSSLSocketClass)
-      } catch (e: Exception) {
-        Platform.get()
-            .log(
-                "Failed to initialize AndroidSocketAdapter from $actualSSLSocketClass",
-                Platform.WARN, e
-            )
-        return null
-      }
-    }
-
+    /**
+     * Builds a SocketAdapter from an observed implementation class, by grabbing the Class
+     * reference to perform reflection on at runtime.
+     *
+     * @param actualSSLSocketClass the runtime class of Conscrypt class socket.
+     */
     private fun build(actualSSLSocketClass: Class<in SSLSocket>): AndroidSocketAdapter {
       var possibleClass: Class<in SSLSocket>? = actualSSLSocketClass
       while (possibleClass != null && possibleClass.simpleName != "OpenSSLSocketImpl") {

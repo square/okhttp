@@ -22,7 +22,8 @@ import okhttp3.internal.platform.Platform
 import org.conscrypt.Conscrypt
 
 /**
- * Simple non-reflection SocketAdapter for Conscrypt.
+ * Simple non-reflection SocketAdapter for Conscrypt when included as an pplication dependency
+ * directly.
  */
 class ConscryptSocketAdapter : SocketAdapter {
   override fun matchesSocket(sslSocket: SSLSocket): Boolean = Conscrypt.isConscrypt(sslSocket)

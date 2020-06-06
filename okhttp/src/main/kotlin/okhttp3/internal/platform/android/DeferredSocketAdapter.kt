@@ -21,6 +21,10 @@ import okhttp3.Protocol
 /**
  * Deferred implementation of SocketAdapter that works by observing the socket
  * and initializing on first use.
+ *
+ * We use this because eager classpath checks cause confusion and excessive logging in Android,
+ * and we can't rely on classnames after proguard, so are probably best served by falling through
+ * to a situation of trying our least likely noisiest options.
  */
 class DeferredSocketAdapter(private val socketAdapterFactory: Factory) : SocketAdapter {
   private var delegate: SocketAdapter? = null
@@ -29,13 +33,8 @@ class DeferredSocketAdapter(private val socketAdapterFactory: Factory) : SocketA
     return true
   }
 
-  override fun matchesSocket(sslSocket: SSLSocket): Boolean {
-    if (socketAdapterFactory.matchesSocket(sslSocket)) {
-      return true
-    }
-
-    return false
-  }
+  override fun matchesSocket(sslSocket: SSLSocket): Boolean =
+    socketAdapterFactory.matchesSocket(sslSocket)
 
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,

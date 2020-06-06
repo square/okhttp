@@ -27,7 +27,9 @@ import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.isAndroid
 
 /**
- * Simple non-reflection SocketAdapter for Android Q.
+ * Simple non-reflection SocketAdapter for Android Q+.
+ *
+ * These API assumptions make it unsuitable for use on earlier Android versions.
  */
 @SuppressLint("NewApi")
 @SuppressSignatureCheck
