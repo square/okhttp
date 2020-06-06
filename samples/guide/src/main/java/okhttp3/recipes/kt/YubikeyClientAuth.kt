@@ -33,25 +33,6 @@ import okhttp3.Request
 import okhttp3.internal.SuppressSignatureCheck
 import okhttp3.internal.platform.Platform
 
-object ConsoleCallbackHandler : CallbackHandler {
-  override fun handle(callbacks: Array<Callback>) {
-    for (c in callbacks) {
-      if (c is PasswordCallback) {
-        val console = System.console()
-
-        if (console != null) {
-          c.password = console.readPassword(c.prompt)
-        } else {
-          System.err.println(c.prompt)
-          c.password = System.`in`.bufferedReader().readLine().toCharArray()
-        }
-      } else {
-        throw UnsupportedCallbackException(c)
-      }
-    }
-  }
-}
-
 /**
  * Example of using a hardware key to perform client auth.
  * Prefer recent JDK builds, and results are temperamental to slight environment changes.
@@ -82,22 +63,25 @@ class YubikeyClientAuth() {
 
     val builderList: List<KeyStore.Builder> = Arrays.asList(
         KeyStore.Builder.newInstance("PKCS11", null, KeyStore.CallbackHandlerProtection(callbackHandler))
-//        KeyStore.Builder.newInstance("PKCS12", null, File("keystore.p12"), PasswordProtection("rosebud".toCharArray()))
+
+        // Example if you want to combine multiple keystore types
+        // KeyStore.Builder.newInstance("PKCS12", null, File("keystore.p12"), PasswordProtection("rosebud".toCharArray()))
     )
 
-    val kmf = KeyManagerFactory.getInstance("NewSunX509")
-    kmf.init(KeyStoreBuilderParameters(builderList))
-    val km = kmf.keyManagers[0] as X509ExtendedKeyManager
+    val keyManagerFactory = KeyManagerFactory.getInstance("NewSunX509")
+    keyManagerFactory.init(KeyStoreBuilderParameters(builderList))
+    val keyManager = keyManagerFactory.keyManagers[0] as X509ExtendedKeyManager
 
-    val tm = Platform.get().platformTrustManager()
+    val trustManager = Platform.get().platformTrustManager()
 
     val sslContext = SSLContext.getInstance("TLS")
-    sslContext.init(arrayOf(km), arrayOf(tm), SecureRandom())
+    sslContext.init(arrayOf(keyManager), arrayOf(trustManager), SecureRandom())
 
     val client = OkHttpClient.Builder()
-        .sslSocketFactory(sslContext.socketFactory, tm)
+        .sslSocketFactory(sslContext.socketFactory, trustManager)
         .build()
 
+    // An example test URL that returns client certificate details.
     val request = Request.Builder()
         .url("https://prod.idrix.eu/secure/")
         .build()
@@ -106,6 +90,25 @@ class YubikeyClientAuth() {
       if (!response.isSuccessful) throw IOException("Unexpected code $response")
 
       println(response.body!!.string())
+    }
+  }
+}
+
+object ConsoleCallbackHandler : CallbackHandler {
+  override fun handle(callbacks: Array<Callback>) {
+    for (callback in callbacks) {
+      if (callback is PasswordCallback) {
+        val console = System.console()
+
+        if (console != null) {
+          callback.password = console.readPassword(callback.prompt)
+        } else {
+          System.err.println(callback.prompt)
+          callback.password = System.`in`.bufferedReader().readLine().toCharArray()
+        }
+      } else {
+        throw UnsupportedCallbackException(callback)
+      }
     }
   }
 }
