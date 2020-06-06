@@ -511,6 +511,9 @@ class MockWebServer : ExternalResource(), Closeable {
 
           sslSocket.startHandshake()
 
+          // Force completion of handshake here
+          sslSocket.getSession()
+
           if (protocolNegotiationEnabled) {
             val protocolString = Platform.get().getSelectedProtocol(sslSocket)
             protocol =
