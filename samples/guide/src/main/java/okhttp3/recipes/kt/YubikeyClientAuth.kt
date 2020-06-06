@@ -30,6 +30,7 @@ import javax.security.auth.callback.PasswordCallback
 import javax.security.auth.callback.UnsupportedCallbackException
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.internal.SuppressSignatureCheck
 import okhttp3.internal.platform.Platform
 
 object ConsoleCallbackHandler : CallbackHandler {
@@ -64,6 +65,7 @@ object ConsoleCallbackHandler : CallbackHandler {
  *
  * Install OpenSC separately. On a mac `brew cast install opensc`.
  */
+@SuppressSignatureCheck
 class YubikeyClientAuth() {
   fun run() {
     // The typical PKCS11 slot, may vary with different hardware.
