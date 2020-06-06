@@ -22,7 +22,7 @@ import okhttp3.internal.platform.Platform
 import org.conscrypt.Conscrypt
 
 /**
- * Simple non-reflection SocketAdapter for Conscrypt when included as an pplication dependency
+ * Simple non-reflection SocketAdapter for Conscrypt when included as an application dependency
  * directly.
  */
 class ConscryptSocketAdapter : SocketAdapter {
