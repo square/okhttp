@@ -157,7 +157,7 @@ public final class RealInterceptorChain implements Interceptor.Chain {
       throw new NullPointerException("interceptor " + interceptor + " returned null");
     }
 
-    if (response.body() == null) {
+    if ((response.code() < 400 || response.code() >= 500) && response.body() == null) {
       throw new IllegalStateException(
           "interceptor " + interceptor + " returned a response with no body");
     }

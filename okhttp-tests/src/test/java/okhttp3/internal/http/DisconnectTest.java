@@ -19,15 +19,25 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import javax.net.ServerSocketFactory;
 import javax.net.SocketFactory;
+
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpServer;
 import okhttp3.DelegatingServerSocketFactory;
 import okhttp3.DelegatingSocketFactory;
+import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.OkUrlFactory;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okio.Buffer;
@@ -35,6 +45,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static okhttp3.TestUtil.defaultClient;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 public final class DisconnectTest {
@@ -115,6 +126,46 @@ public final class DisconnectTest {
     }
 
     responseBody.close();
+  }
+
+  @Test public void readStatusForInterruptedRequest() throws Exception {
+    HttpServer server = HttpServer.create(new InetSocketAddress(0), 0);
+    server.createContext("/", new HttpHandler() {
+      byte[] buffer = new byte[1024];
+
+      @Override
+      public void handle(HttpExchange exchange) throws IOException {
+        InputStream inBody = exchange.getRequestBody();
+        for(int i = 0; i < 10; i++) {
+          inBody.read(buffer);
+        }
+        inBody.close();
+        OutputStream outBody = exchange.getResponseBody();
+        exchange.sendResponseHeaders(413, 65);
+        outBody.write("{\"error\":\"too_large\",\"reason\":\"the request entity is too large\"}\r\n".getBytes());
+
+        outBody.flush();
+        try {
+          Thread.sleep(1000);
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+        outBody.close();
+      }
+    });
+    server.setExecutor(Executors.newSingleThreadExecutor());
+    server.start();
+
+    int requestBodySize = 20 * 1024 * 1024; // 20 MiB
+
+    OkHttpClient client = new OkHttpClient();
+    Response response = client.newCall(
+            new Request.Builder()
+                    .url(String.format("http://localhost:%d/", server.getAddress().getPort()))
+                    .post(RequestBody.create(MediaType.get("text/plain"), new byte[requestBodySize]))
+                    .build()
+    ).execute();
+    assertEquals(413, response.code());
   }
 
   private void disconnectLater(final HttpURLConnection connection, final int delayMillis) {

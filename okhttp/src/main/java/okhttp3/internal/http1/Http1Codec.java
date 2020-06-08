@@ -181,7 +181,9 @@ public final class Http1Codec implements HttpCodec {
   }
 
   @Override public Response.Builder readResponseHeaders(boolean expectContinue) throws IOException {
-    if (state != STATE_OPEN_REQUEST_BODY && state != STATE_READ_RESPONSE_HEADERS) {
+    if (state != STATE_WRITING_REQUEST_BODY
+                    && state != STATE_OPEN_REQUEST_BODY
+                    && state != STATE_READ_RESPONSE_HEADERS) {
       throw new IllegalStateException("state: " + state);
     }
 

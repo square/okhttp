@@ -69,7 +69,29 @@ public final class CallServerInterceptor implements Interceptor {
             new CountingSink(httpCodec.createRequestBody(request, contentLength));
         BufferedSink bufferedRequestBody = Okio.buffer(requestBodyOut);
 
-        request.body().writeTo(bufferedRequestBody);
+        try {
+          request.body().writeTo(bufferedRequestBody);
+        } catch (IOException ioException) {
+          // As per https://tools.ietf.org/html/rfc2616#section-8.2.2 it might happen that the server sends an early
+          // response such as 413. Try and collect an early response
+          responseBuilder = httpCodec.readResponseHeaders(false);
+          Response response = responseBuilder
+                  .request(request)
+                  .handshake(streamAllocation.connection().handshake())
+                  .sentRequestAtMillis(sentRequestMillis)
+                  .receivedResponseAtMillis(System.currentTimeMillis())
+                  .build();
+          response = response.newBuilder().body(httpCodec.openResponseBody(response)).build();
+
+          int code = response.code();
+          if (code >= 400 && code < 500) {
+            realChain.eventListener()
+                    .responseHeadersEnd(realChain.call(), response);
+            return response;
+          }
+
+          throw ioException;
+        }
         bufferedRequestBody.close();
         realChain.eventListener()
             .requestBodyEnd(realChain.call(), requestBodyOut.successfulCount);
