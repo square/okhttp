@@ -16,19 +16,16 @@
 package okhttp3.internal.platform.android
 
 import javax.net.ssl.SSLSocket
-import javax.net.ssl.SSLSocketFactory
-import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol
 import okhttp3.internal.platform.ConscryptPlatform
 import okhttp3.internal.platform.Platform
 import org.conscrypt.Conscrypt
 
 /**
- * Simple non-reflection SocketAdapter for Conscrypt.
+ * Simple non-reflection SocketAdapter for Conscrypt when included as an application dependency
+ * directly.
  */
 class ConscryptSocketAdapter : SocketAdapter {
-  override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? = null
-
   override fun matchesSocket(sslSocket: SSLSocket): Boolean = Conscrypt.isConscrypt(sslSocket)
 
   override fun isSupported(): Boolean = ConscryptPlatform.isSupported
@@ -56,7 +53,11 @@ class ConscryptSocketAdapter : SocketAdapter {
   }
 
   companion object {
-    fun buildIfSupported(): SocketAdapter? =
-        if (ConscryptPlatform.isSupported) ConscryptSocketAdapter() else null
+    val factory = object : DeferredSocketAdapter.Factory {
+      override fun matchesSocket(sslSocket: SSLSocket): Boolean {
+        return ConscryptPlatform.isSupported && Conscrypt.isConscrypt(sslSocket)
+      }
+      override fun create(sslSocket: SSLSocket): SocketAdapter = ConscryptSocketAdapter()
+    }
   }
 }

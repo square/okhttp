@@ -16,8 +16,6 @@
 package okhttp3.internal.platform.android
 
 import javax.net.ssl.SSLSocket
-import javax.net.ssl.SSLSocketFactory
-import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol
 import okhttp3.internal.platform.BouncyCastlePlatform
 import okhttp3.internal.platform.Platform
@@ -27,8 +25,6 @@ import org.bouncycastle.jsse.BCSSLSocket
  * Simple non-reflection SocketAdapter for BouncyCastle.
  */
 class BouncyCastleSocketAdapter : SocketAdapter {
-  override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? = null
-
   override fun matchesSocket(sslSocket: SSLSocket): Boolean = sslSocket is BCSSLSocket
 
   override fun isSupported(): Boolean = BouncyCastlePlatform.isSupported
@@ -61,7 +57,11 @@ class BouncyCastleSocketAdapter : SocketAdapter {
   }
 
   companion object {
-    fun buildIfSupported(): SocketAdapter? =
-        if (BouncyCastlePlatform.isSupported) BouncyCastleSocketAdapter() else null
+    val factory = object : DeferredSocketAdapter.Factory {
+      override fun matchesSocket(sslSocket: SSLSocket): Boolean {
+        return BouncyCastlePlatform.isSupported && sslSocket is BCSSLSocket
+      }
+      override fun create(sslSocket: SSLSocket): SocketAdapter = BouncyCastleSocketAdapter()
+    }
   }
 }

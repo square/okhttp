@@ -16,26 +16,25 @@
 package okhttp3.internal.platform.android
 
 import javax.net.ssl.SSLSocket
-import javax.net.ssl.SSLSocketFactory
-import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol
-import okhttp3.internal.platform.Platform
 
 /**
- * Deferred implementation of SocketAdapter that can only work by observing the socket
+ * Deferred implementation of SocketAdapter that works by observing the socket
  * and initializing on first use.
+ *
+ * We use this because eager classpath checks cause confusion and excessive logging in Android,
+ * and we can't rely on classnames after proguard, so are probably best served by falling through
+ * to a situation of trying our least likely noisiest options.
  */
-class DeferredSocketAdapter(private val socketPackage: String) : SocketAdapter {
-  private var initialized = false
+class DeferredSocketAdapter(private val socketAdapterFactory: Factory) : SocketAdapter {
   private var delegate: SocketAdapter? = null
 
   override fun isSupported(): Boolean {
     return true
   }
 
-  override fun matchesSocket(sslSocket: SSLSocket): Boolean {
-    return sslSocket.javaClass.name.startsWith(socketPackage)
-  }
+  override fun matchesSocket(sslSocket: SSLSocket): Boolean =
+    socketAdapterFactory.matchesSocket(sslSocket)
 
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
@@ -49,33 +48,16 @@ class DeferredSocketAdapter(private val socketPackage: String) : SocketAdapter {
     return getDelegate(sslSocket)?.getSelectedProtocol(sslSocket)
   }
 
-  @Synchronized private fun getDelegate(actualSSLSocketClass: SSLSocket): SocketAdapter? {
-    if (!initialized) {
-      try {
-        var possibleClass: Class<in SSLSocket> = actualSSLSocketClass.javaClass
-        while (possibleClass.name != "$socketPackage.OpenSSLSocketImpl") {
-          possibleClass = possibleClass.superclass
-
-          if (possibleClass == null) {
-            throw AssertionError(
-                "No OpenSSLSocketImpl superclass of socket of type $actualSSLSocketClass")
-          }
-        }
-
-        delegate = AndroidSocketAdapter(possibleClass)
-      } catch (e: Exception) {
-        Platform.get()
-            .log("Failed to initialize DeferredSocketAdapter $socketPackage", Platform.WARN, e)
-      }
-
-      initialized = true
+  @Synchronized private fun getDelegate(sslSocket: SSLSocket): SocketAdapter? {
+    if (this.delegate == null && socketAdapterFactory.matchesSocket(sslSocket)) {
+      this.delegate = socketAdapterFactory.create(sslSocket)
     }
 
     return delegate
   }
 
-  override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? {
-    // not supported with modern Android and opt-in Gms Provider
-    return null
+  interface Factory {
+    fun matchesSocket(sslSocket: SSLSocket): Boolean
+    fun create(sslSocket: SSLSocket): SocketAdapter
   }
 }
