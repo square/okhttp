@@ -98,9 +98,8 @@ class AndroidSocketAdapterTest(private val adapter: SocketAdapter) {
     @Parameterized.Parameters(name = "{0}")
     fun data(): Collection<SocketAdapter> {
       return listOfNotNull(
-          ConscryptSocketAdapter.buildIfSupported(),
-          DeferredSocketAdapter("org.conscrypt"),
-          AndroidSocketAdapter.buildIfSupported("org.conscrypt"),
+          DeferredSocketAdapter(ConscryptSocketAdapter.factory),
+          DeferredSocketAdapter(AndroidSocketAdapter.factory("org.conscrypt")),
           StandardAndroidSocketAdapter.buildIfSupported("org.conscrypt")
       )
     }
