@@ -246,15 +246,12 @@ class CancelTest(mode: Pair<CancelMode, ConnectionType>) {
     }
 
     val events2 = listener.eventSequence.filter { isConnectionEvent(it) }.map { it.name }
-    val expectedEvents2 = mutableListOf<String>().apply {
-      add("CallStart")
-      if (connectionType != H2) {
-        addAll(listOf("ConnectStart", "ConnectEnd"))
-      }
-      addAll(listOf("ConnectionAcquired", "ConnectionReleased", "CallEnd"))
+    assertThat(events2).startsWith("CallStart")
+    if (connectionType != H2) {
+      assertThat(events2).contains("ConnectStart", "ConnectEnd")
     }
-
-    assertThat(events2).isEqualTo(expectedEvents2)
+    assertThat(events2).contains("ConnectionAcquired", "ConnectionReleased")
+    assertThat(events2).endsWith("ConnectionAcquired", "ConnectionReleased", "CallEnd")
   }
 
   private fun isConnectionEvent(it: CallEvent?) =
