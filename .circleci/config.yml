@@ -267,24 +267,6 @@ jobs:
       - runtests:
           platform: corretto
 
-  testrobovm:
-    runs-on: macos-latest
-
-    environment:
-      TERM: dumb
-
-    steps:
-      - checkout
-
-      - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@v1
-
-      - run:
-          name: Run Tests
-          command: ./gradlew okhttp:robovm-test:robovmTest
-          environment:
-              GRADLE_OPTS: -Dorg.gradle.daemon=false -Xmx1G
-
 workflows:
   version: 2
   commit:
@@ -319,11 +301,6 @@ workflows:
               ignore:
                 - gh-pages
       - testjdk14:
-          filters:
-            branches:
-              ignore:
-                - gh-pages
-      - testrobovm:
           filters:
             branches:
               ignore:
