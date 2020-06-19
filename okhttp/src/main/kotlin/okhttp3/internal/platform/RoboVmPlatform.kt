@@ -20,14 +20,11 @@ import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol
 import okhttp3.internal.platform.android.CloseGuard
+import okhttp3.internal.platform.android.SocketAdapter
 import okhttp3.internal.platform.android.StandardAndroidSocketAdapter
 
 /** Android 4 based platform for RoboVM */
-class RoboVmPlatform : Platform() {
-  private val socketAdapters = listOfNotNull(
-      StandardAndroidSocketAdapter.buildIfSupported()
-  )
-
+class RoboVmPlatform(private val socketAdapters: List<SocketAdapter>) : Platform() {
   private val closeGuard = CloseGuard.get()
 
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? =
@@ -55,6 +52,20 @@ class RoboVmPlatform : Platform() {
     if (!reported) {
       // Unable to report via CloseGuard. As a last-ditch effort, send it to the logger.
       log(message, WARN)
+    }
+  }
+
+  companion object {
+    fun buildIfSupported(): Platform? {
+      val isRoboVm = "RoboVM" == System.getProperty("java.vm.name")
+      if (isRoboVm) {
+        // if RoboVM and can create AndroidSocketAdapter for it
+        val androidAdapter = StandardAndroidSocketAdapter.buildIfSupported()
+        if (androidAdapter != null)
+          return RoboVmPlatform(listOf(androidAdapter))
+      }
+
+      return null
     }
   }
 }
