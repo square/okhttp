@@ -1,0 +1,22 @@
+apply plugin: 'java'
+apply plugin: 'robovm'
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+ext.mainClassName = 'okhttp.RoboVmPlatformTest'
+
+robovm {
+  archs = 'x86_64'
+}
+
+dependencies {
+  implementation project(':okhttp')
+  implementation deps.robovm
+}
+
+task robovmTest(type: Exec) {
+  dependsOn {
+    robovmInstall
+  }
+  commandLine './build/robovm/okhttp.RoboVmPlatformTest'
+}

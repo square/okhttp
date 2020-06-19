@@ -20,7 +20,8 @@ buildscript {
       'okio': '2.6.0',
       'ktlint': '0.36.0',
       'picocli': '4.2.0',
-      'openjsse': '1.1.0'
+      'openjsse': '1.1.0',
+      'robovm': '2.3.10-SNAPSHOT'
   ]
 
   ext.deps = [
@@ -43,7 +44,8 @@ buildscript {
       'moshi': "com.squareup.moshi:moshi:${versions.moshi}",
       'moshiKotlin': "com.squareup.moshi:moshi-kotlin-codegen:${versions.moshi}",
       'okio': "com.squareup.okio:okio:${versions.okio}",
-      'openjsse': "org.openjsse:openjsse:${versions.openjsse}"
+      'openjsse': "org.openjsse:openjsse:${versions.openjsse}",
+      'robovm': "com.mobidevelop.robovm:robovm-rt:${versions.robovm}"
   ]
 
   dependencies {
@@ -52,12 +54,14 @@ buildscript {
     classpath "org.jetbrains.dokka:dokka-gradle-plugin:0.10.1"
     classpath 'com.diffplug.spotless:spotless-plugin-gradle:3.27.1'
     classpath 'com.android.tools.build:gradle:3.6.2'
+    classpath "com.mobidevelop.robovm:robovm-gradle-plugin:${versions.robovm}"
   }
 
   repositories {
     mavenCentral()
     gradlePluginPortal()
     google()
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots' } // FIXME: WIP: remove once robovm 2.3.10 is released
   }
 }
 
@@ -97,6 +101,7 @@ allprojects {
       url 'https://dl.bintray.com/kotlin/dokka'
     }
     google()
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }  // FIXME: WIP: remove once robovm 2.3.10 is released
   }
 
   task downloadDependencies() {
