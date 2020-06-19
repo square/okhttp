@@ -189,7 +189,7 @@ open class Platform {
     val isAndroid: Boolean
         get() = "Dalvik" == System.getProperty("java.vm.name")
 
-    val isRoboVM: Boolean
+    val isRoboVm: Boolean
       get() = "RoboVM" == System.getProperty("java.vm.name")
 
     private val isConscryptPreferred: Boolean
@@ -211,8 +211,8 @@ open class Platform {
       }
 
     /** Attempt to match the host runtime to a capable Platform implementation. */
-    private fun findPlatform(): Platform = if (isRoboVM) {
-      RoboVMPlatform()
+    private fun findPlatform(): Platform = if (isRoboVm) {
+      RoboVmPlatform()
     } else if (isAndroid) {
       findAndroidPlatform()
     } else {

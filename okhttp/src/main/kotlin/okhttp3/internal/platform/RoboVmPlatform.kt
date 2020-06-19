@@ -15,36 +15,20 @@
  */
 package okhttp3.internal.platform
 
-import java.io.IOException
-import java.net.InetSocketAddress
-import java.net.Socket
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol
 import okhttp3.internal.platform.android.CloseGuard
-import okhttp3.internal.platform.android.ConscryptSocketAdapter
-import okhttp3.internal.platform.android.DeferredSocketAdapter
 import okhttp3.internal.platform.android.StandardAndroidSocketAdapter
 
 /** Android 4 based platform for RoboVM */
-class RoboVMPlatform : Platform() {
+class RoboVmPlatform : Platform() {
   private val socketAdapters = listOfNotNull(
-      StandardAndroidSocketAdapter.buildIfSupported(),
-      // Delay and Defer any initialisation of Conscrypt and BouncyCastle
-      DeferredSocketAdapter(ConscryptSocketAdapter.factory)
-  ).filter { it.isSupported() }
+      StandardAndroidSocketAdapter.buildIfSupported()
+  )
 
   private val closeGuard = CloseGuard.get()
-
-  @Throws(IOException::class)
-  override fun connectSocket(
-    socket: Socket,
-    address: InetSocketAddress,
-    connectTimeout: Int
-  ) {
-    socket.connect(address, connectTimeout)
-  }
 
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? =
       socketAdapters.find { it.matchesSocketFactory(sslSocketFactory) }
