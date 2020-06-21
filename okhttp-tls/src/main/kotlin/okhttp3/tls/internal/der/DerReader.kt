@@ -141,7 +141,7 @@ internal class DerReader(source: Source) {
     if (length0 == 0b1000_0000) {
       // Indefinite length.
       length = -1L
-    } else if (length0 and 0b1000_0000 == 0b1000_0000) {
+    } else if ((length0 and 0b1000_0000) == 0b1000_0000) {
       // Length specified over multiple bytes.
       val lengthBytes = length0 and 0b0111_1111
       var lengthBits = source.readByte().toLong() and 0xff
