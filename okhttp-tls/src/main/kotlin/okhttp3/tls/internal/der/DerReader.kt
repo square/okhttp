@@ -127,7 +127,7 @@ internal class DerReader(source: Source) {
       while (true) {
         val tagN = source.readByte().toInt() and 0xff
         tagBits += (tagN and 0b0111_1111)
-        if (tagN and 0b1000_0000 == 0b1000_0000) break
+        if ((tagN and 0b1000_0000) == 0b1000_0000) break
         tagBits = tagBits shl 7
       }
       tag = tagBits
