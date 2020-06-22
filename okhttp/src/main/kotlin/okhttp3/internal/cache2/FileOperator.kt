@@ -50,7 +50,7 @@ internal class FileOperator(
   }
 
   /**
-   * Copy [byteCount] bytes from the file at [pos] into `source`. It is the
+   * Copy [byteCount] bytes from the file at [pos] into `sink`. It is the
    * caller's responsibility to make sure there are sufficient bytes to read: if there aren't this
    * method throws an `EOFException`.
    */
