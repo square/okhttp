@@ -16,6 +16,7 @@
 package okhttp3.tls.internal.der
 
 import java.math.BigInteger
+import okhttp3.tls.HeldCertificate
 import okhttp3.tls.decodeCertificatePem
 import okio.ByteString.Companion.decodeBase64
 import okio.ByteString.Companion.decodeHex
@@ -296,7 +297,10 @@ internal class DerCertificatesTest {
                     Extension(
                         extnID = basicConstraints,
                         critical = true,
-                        extnValue = "30060101ff020101".decodeHex()
+                        extnValue = BasicConstraints(
+                            ca = true,
+                            pathLenConstraint = 1L
+                        )
                     ),
                     Extension(
                         extnID = authorityInfoAccess,
@@ -529,8 +533,10 @@ internal class DerCertificatesTest {
                     Extension(
                         extnID = subjectAltName,
                         critical = false,
-                        extnValue = "30188208636173682e617070820c7777772e636173682e617070"
-                            .decodeHex()
+                        extnValue = listOf(
+                            CertificateAdapters.generalNameDnsName to "cash.app",
+                            CertificateAdapters.generalNameDnsName to "www.cash.app"
+                        )
                     ),
                     Extension(
                         extnID = certificateTransparencySignedCertificateTimestamps,
@@ -591,7 +597,10 @@ internal class DerCertificatesTest {
                     Extension(
                         extnID = basicConstraints,
                         critical = false,
-                        extnValue = "3000".decodeHex()
+                        extnValue = BasicConstraints(
+                            ca = false,
+                            pathLenConstraint = null
+                        )
                     )
                 )
             ),
@@ -605,5 +614,27 @@ internal class DerCertificatesTest {
             )
         )
     )
+  }
+
+  @Test
+  fun `basic constraints extension`() {
+    val certificate = HeldCertificate.Builder()
+        .certificateAuthority(3)
+        .build()
+
+    val certificateByteString = certificate.certificate.encoded.toByteString()
+
+    val okHttpCertificate = CertificateAdapters.certificate
+        .fromDer(certificateByteString)
+
+    val basicConstraints = okHttpCertificate.tbsCertificate.extensions.first {
+      it.extnID == basicConstraints
+    }
+
+    assertThat(basicConstraints).isEqualTo(Extension(
+        extnID = ObjectIdentifiers.basicConstraints,
+        critical = true,
+        extnValue = BasicConstraints(true, 3)
+    ))
   }
 }

@@ -229,10 +229,24 @@ internal object Adapters {
         tag = 16L
     ) {
       override fun encode(writer: DerWriter, value: T) {
+        writer.pushTypeHint()
+        try {
+          encodeWithTypeHints(value, writer)
+        } finally {
+          writer.popTypeHint()
+        }
+      }
+
+      private fun encodeWithTypeHints(value: T, writer: DerWriter) {
         val list = decompose(value)
+
         for (i in list.indices) {
           val v = list[i]
           val adapter = members[i] as DerAdapter<Any?>
+
+          if (adapter.typeHint) {
+            writer.typeHint = v
+          }
 
           if (adapter.omitInSequence(v)) {
             // Skip.
@@ -243,18 +257,38 @@ internal object Adapters {
       }
 
       override fun decode(reader: DerReader, header: DerHeader): T {
+        reader.pushTypeHint()
+        try {
+          return decodeWithTypeHints(reader)
+        } finally {
+          reader.popTypeHint()
+        }
+      }
+
+      private fun decodeWithTypeHints(reader: DerReader): T {
         val list = mutableListOf<Any?>()
 
         while (list.size < members.size) {
           val member = members[list.size]
-          if (reader.hasNext() && member.matches(reader.peekedTagClass, reader.peekedTag)) {
-            list += reader.read(member)
-          } else if (member.isOptional) {
-            list += member.defaultValue
-          } else {
-            throw IOException("expected ${member.tagClass}/${member.tag} " +
-                "but was ${reader.peekedTagClass}/${reader.peekedTag}")
+
+          val value = when {
+            reader.hasNext() &&
+                member.matches(reader.peekedTagClass, reader.peekedTag) -> {
+              reader.read(member)
+            }
+            member.isOptional -> {
+              member.defaultValue
+            }
+            else -> {
+              throw IOException("expected ${member.tagClass}/${member.tag} " +
+                  "but was ${reader.peekedTagClass}/${reader.peekedTag}")
+            }
           }
+
+          if (member.typeHint) {
+            reader.typeHint = value
+          }
+          list += value
         }
 
         if (reader.hasNext()) {
@@ -285,6 +319,43 @@ internal object Adapters {
                 "expected a matching choice but was ${header.tagClass}/${header.tag}")
 
         return choice to choice.decode(reader, header)
+      }
+    }
+  }
+
+  /**
+   * This decodes an [OCTET_STRING] value into its contents, which are also expected to be ASN.1.
+   * To determine which type to decode as it uses a preceding member of the same SEQUENCE. For
+   * example, extensions type IDs specify what types to use for the corresponding values.
+   *
+   * If the hint is unknown [chooser] should return null which will cause the value to be decoded as
+   * an opaque byte string.
+   */
+  fun usingTypeHint(chooser: (Any?) -> DerAdapter<*>?): DerAdapter<Any?> {
+    return object : DerAdapter<Any?>(tagClass = OCTET_STRING.tagClass, tag = OCTET_STRING.tag) {
+      override fun encode(writer: DerWriter, value: Any?) {
+        val adapter = chooser(writer.typeHint)
+
+        // If we don't understand this hint, encode the body as a byte string. The byte string
+        // will include a tag and length header as a prefix.
+        if (adapter == null) {
+          (OCTET_STRING as DerAdapter<Any?>).encode(writer, value)
+          return
+        }
+
+        writer.write(adapter as DerAdapter<Any?>, value)
+      }
+
+      override fun decode(reader: DerReader, header: DerHeader): Any? {
+        val adapter = chooser(reader.typeHint)
+
+        // If we don't understand this hint, decode the body as a byte string. The byte string
+        // will include a tag and length header as a prefix.
+        if (adapter == null) {
+          return OCTET_STRING.decode(reader, header)
+        }
+
+        return reader.read(adapter as DerAdapter<Any?>)
       }
     }
   }

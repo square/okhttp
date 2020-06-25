@@ -55,6 +55,19 @@ internal class DerReader(source: Source) {
   val peekedTag: Long
     get() = peekedHeader?.tag ?: error("peekedTag only accessible after hasNext")
 
+  /** Type hints scoped to the call stack, manipulated with [pushTypeHint] and [popTypeHint]. */
+  private val typeHintStack = mutableListOf<Any?>()
+
+  /**
+   * The type hint for the current object. Used to pick adapters based on other fields, such as
+   * in extensions which have different types depending on their extension ID.
+   */
+  var typeHint: Any?
+    get() = typeHintStack.lastOrNull()
+    set(value) {
+      typeHintStack.set(typeHintStack.size - 1, value)
+    }
+
   private var constructed: Boolean = false
 
   private var peekedHeader: DerHeader? = null
@@ -152,6 +165,14 @@ internal class DerReader(source: Source) {
     if (tagClass == DerHeader.TAG_CLASS_UNIVERSAL && tag == DerHeader.TAG_END_OF_CONTENTS) return null
 
     return DerHeader(tagClass, tag, constructed, length)
+  }
+
+  fun pushTypeHint() {
+    typeHintStack.add(null)
+  }
+
+  fun popTypeHint() {
+    typeHintStack.removeAt(typeHintStack.size - 1)
   }
 
   fun readBoolean(): Boolean {

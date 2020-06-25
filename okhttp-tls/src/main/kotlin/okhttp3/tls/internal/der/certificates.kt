@@ -16,7 +16,6 @@
 package okhttp3.tls.internal.der
 
 import java.math.BigInteger
-import okio.ByteString
 
 internal data class Certificate(
   val tbsCertificate: TbsCertificate,
@@ -93,5 +92,10 @@ internal data class SubjectPublicKeyInfo(
 internal data class Extension(
   val extnID: String,
   val critical: Boolean,
-  val extnValue: ByteString
+  val extnValue: Any?
+)
+
+internal data class BasicConstraints(
+  val ca: Boolean,
+  val pathLenConstraint: Long?
 )

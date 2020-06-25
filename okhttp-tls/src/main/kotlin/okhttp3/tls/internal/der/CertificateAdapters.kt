@@ -16,7 +16,6 @@
 package okhttp3.tls.internal.der
 
 import java.math.BigInteger
-import okio.ByteString
 
 /**
  * ASN.1 adapters adapted from the specifications in [RFC 5280][rfc_5280].
@@ -77,6 +76,66 @@ internal object CertificateAdapters {
 
   /**
    * ```
+   * BasicConstraints ::= SEQUENCE {
+   *   cA                      BOOLEAN DEFAULT FALSE,
+   *   pathLenConstraint       INTEGER (0..MAX) OPTIONAL
+   * }
+   * ```
+   */
+  internal val basicConstraints = Adapters.sequence(
+      Adapters.BOOLEAN.optional(defaultValue = false),
+      Adapters.INTEGER_AS_LONG.optional(),
+      decompose = { listOf(it.ca, it.pathLenConstraint) },
+      construct = { BasicConstraints(it[0] as Boolean, it[1] as Long?) }
+  )
+
+  /**
+   * Note that only a subset of available choices are implemented.
+   *
+   * ```
+   * GeneralName ::= CHOICE {
+   *   otherName                       [0]     OtherName,
+   *   rfc822Name                      [1]     IA5String,
+   *   dNSName                         [2]     IA5String,
+   *   x400Address                     [3]     ORAddress,
+   *   directoryName                   [4]     Name,
+   *   ediPartyName                    [5]     EDIPartyName,
+   *   uniformResourceIdentifier       [6]     IA5String,
+   *   iPAddress                       [7]     OCTET STRING,
+   *   registeredID                    [8]     OBJECT IDENTIFIER
+   * }
+   * ```
+   */
+  internal val generalNameDnsName = Adapters.IA5_STRING.withTag(tag = 2L)
+  internal val generalNameIpAddress = Adapters.OCTET_STRING.withTag(tag = 7L)
+  internal val generalName = Adapters.choice(
+      generalNameDnsName,
+      generalNameIpAddress
+  )
+
+  /**
+   * ```
+   * SubjectAltName ::= GeneralNames
+   *
+   * GeneralNames ::= SEQUENCE SIZE (1..MAX) OF GeneralName
+   * ```
+   */
+  internal val subjectAltName = generalName.asSequenceOf()
+
+  /**
+   * This uses the preceding extension ID to select which adapter to use for the extension value
+   * that follows.
+   */
+  internal val extensionValue = Adapters.usingTypeHint { typeHint ->
+    when (typeHint) {
+      ObjectIdentifiers.subjectAltName -> subjectAltName
+      ObjectIdentifiers.basicConstraints -> basicConstraints
+      else -> null
+    }
+  }
+
+  /**
+   * ```
    * Extension ::= SEQUENCE  {
    *   extnID      OBJECT IDENTIFIER,
    *   critical    BOOLEAN DEFAULT FALSE,
@@ -88,11 +147,11 @@ internal object CertificateAdapters {
    * ```
    */
   internal val extension = Adapters.sequence(
-      Adapters.OBJECT_IDENTIFIER,
+      Adapters.OBJECT_IDENTIFIER.asTypeHint(),
       Adapters.BOOLEAN.optional(defaultValue = false),
-      Adapters.OCTET_STRING,
+      extensionValue,
       decompose = { listOf(it.extnID, it.critical, it.extnValue) },
-      construct = { Extension(it[0] as String, it[1] as Boolean, it[2] as ByteString) }
+      construct = { Extension(it[0] as String, it[1] as Boolean, it[2]) }
   )
 
   /**
