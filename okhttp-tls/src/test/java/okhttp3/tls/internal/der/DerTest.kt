@@ -16,12 +16,16 @@
 package okhttp3.tls.internal.der
 
 import java.math.BigInteger
+import java.net.InetAddress
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.TimeZone
+import okhttp3.tls.internal.der.CertificateAdapters.generalNameDnsName
+import okhttp3.tls.internal.der.CertificateAdapters.generalNameIpAddress
 import okio.Buffer
 import okio.ByteString.Companion.decodeHex
 import okio.ByteString.Companion.encodeUtf8
+import okio.ByteString.Companion.toByteString
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
@@ -746,24 +750,71 @@ internal class DerTest {
     assertThat(byteString).isEqualTo("0404030206A0".decodeHex())
   }
 
-  @Test fun `decode choice rfc822`() {
-    val rfc822 = GeneralName.ADAPTER.fromDer("810d61406578616d706c652e636f6d".decodeHex())
-    assertThat(rfc822).isEqualTo(GeneralName.rfc822Name to "a@example.com")
+  @Test fun `decode choice IP address`() {
+    val localhost = InetAddress.getByName("192.168.2.1").address.toByteString()
+    val adapterAndValue = CertificateAdapters.generalName.fromDer("8704c0a80201".decodeHex())
+    assertThat(adapterAndValue).isEqualTo(generalNameIpAddress to localhost)
   }
 
-  @Test fun `encode choice rfc822`() {
-    val byteString = GeneralName.ADAPTER.toDer(GeneralName.rfc822Name to "a@example.com")
-    assertThat(byteString).isEqualTo("810d61406578616d706c652e636f6d".decodeHex())
+  @Test fun `encode choice IP address`() {
+    val localhost = InetAddress.getByName("192.168.2.1").address.toByteString()
+    val byteString = CertificateAdapters.generalName.toDer(generalNameIpAddress to localhost)
+    assertThat(byteString).isEqualTo("8704c0a80201".decodeHex())
   }
 
   @Test fun `decode choice dns`() {
-    val dns = GeneralName.ADAPTER.fromDer("820b6578616d706c652e636f6d".decodeHex())
-    assertThat(dns).isEqualTo(GeneralName.dNSName to "example.com")
+    val dns = CertificateAdapters.generalName.fromDer("820b6578616d706c652e636f6d".decodeHex())
+    assertThat(dns).isEqualTo(generalNameDnsName to "example.com")
   }
 
   @Test fun `encode choice dns`() {
-    val byteString = GeneralName.ADAPTER.toDer(GeneralName.dNSName to "example.com")
+    val byteString = CertificateAdapters.generalName.toDer(generalNameDnsName to "example.com")
     assertThat(byteString).isEqualTo("820b6578616d706c652e636f6d".decodeHex())
+  }
+
+  @Test fun `extension with type hint for basic constraints`() {
+    val extension = Extension(
+        ObjectIdentifiers.basicConstraints,
+        false,
+        BasicConstraints(true, 4)
+    )
+    val bytes = "300f0603551d13240830060101ff020104".decodeHex()
+
+    assertThat(CertificateAdapters.extension.toDer(extension))
+        .isEqualTo(bytes)
+    assertThat(CertificateAdapters.extension.fromDer(bytes))
+        .isEqualTo(extension)
+  }
+
+  @Test fun `extension with type hint for subject alternative names`() {
+    val extension = Extension(
+        ObjectIdentifiers.subjectAltName,
+        false,
+        listOf(
+            generalNameDnsName to "cash.app",
+            generalNameDnsName to "www.cash.app"
+        )
+    )
+    val bytes = "30210603551d11241a30188208636173682e617070820c7777772e636173682e617070".decodeHex()
+
+    assertThat(CertificateAdapters.extension.toDer(extension))
+        .isEqualTo(bytes)
+    assertThat(CertificateAdapters.extension.fromDer(bytes))
+        .isEqualTo(extension)
+  }
+
+  @Test fun `extension with unknown type hint`() {
+    val extension = Extension(
+        "2.5.4.3", // common name is not an extension.
+        false,
+        "3006800109810109".decodeHex()
+    )
+    val bytes = "300f060355040304083006800109810109".decodeHex()
+
+    assertThat(CertificateAdapters.extension.toDer(extension))
+        .isEqualTo(bytes)
+    assertThat(CertificateAdapters.extension.fromDer(bytes))
+        .isEqualTo(extension)
   }
 
   private fun derAdapter(block: (Int, Long, Boolean, Long) -> Unit): DerAdapter<Unit> {
@@ -784,36 +835,6 @@ internal class DerTest {
 
       override fun decode(reader: DerReader, header: DerHeader): Unit? = throw error("unsupported")
     }, null)
-  }
-
-  /**
-   * ```
-   * GeneralName ::= CHOICE {
-   *   otherName                       [0]     OtherName,
-   *   rfc822Name                      [1]     IA5String,
-   *   dNSName                         [2]     IA5String,
-   *   x400Address                     [3]     ORAddress,
-   *   directoryName                   [4]     Name,
-   *   ediPartyName                    [5]     EDIPartyName,
-   *   uniformResourceIdentifier       [6]     IA5String,
-   *   iPAddress                       [7]     OCTET STRING,
-   *   registeredID                    [8]     OBJECT IDENTIFIER
-   * }
-   * ```
-   */
-  object GeneralName {
-    val rfc822Name = Adapters.IA5_STRING.withTag(tag = 1L)
-    val dNSName = Adapters.IA5_STRING.withTag(tag = 2L)
-    val uniformResourceIdentifier = Adapters.IA5_STRING.withTag(tag = 6L)
-    val iPAddress = Adapters.OCTET_STRING.withTag(tag = 7L)
-    val registeredID = Adapters.OBJECT_IDENTIFIER.withTag(tag = 8L)
-    val ADAPTER = Adapters.choice(
-        rfc822Name,
-        dNSName,
-        uniformResourceIdentifier,
-        iPAddress,
-        registeredID
-    )
   }
 
   /**

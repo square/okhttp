@@ -22,7 +22,7 @@ import okio.IOException
 /**
  * Reads a DER tag class, tag, length, and value and decodes it as value.
  */
-internal abstract class DerAdapter<T>(
+internal abstract class DerAdapter<T> private constructor(
   /** The tag class this adapter expects, or -1 to match any tag class. */
   val tagClass: Int,
 
@@ -30,11 +30,22 @@ internal abstract class DerAdapter<T>(
   val tag: Long,
 
   /** True if the default value should be used if this value is absent during decoding. */
-  val isOptional: Boolean = false,
+  val isOptional: Boolean,
 
   /** The value to return if this value is absent. Undefined unless this is optional. */
-  val defaultValue: T? = null
+  val defaultValue: T?,
+
+  /** True to set the encoded or decoded value as the type hint for the current SEQUENCE. */
+  val typeHint: Boolean
 ) {
+  internal constructor(tagClass: Int, tag: Long) : this(
+      tagClass = tagClass,
+      tag = tag,
+      isOptional = false,
+      defaultValue = null,
+      typeHint = false
+  )
+
   /**
    * Returns true if this adapter decodes values with [tagClass] and [tag]. Most adapters match
    * exactly one tag class and tag, but ANY adapters match anything and CHOICE adapters match
@@ -76,8 +87,9 @@ internal abstract class DerAdapter<T>(
     tagClass: Int = this.tagClass,
     tag: Long = this.tag,
     isOptional: Boolean = this.isOptional,
-    defaultValue: T? = this.defaultValue
-  ): DerAdapter<T> = object : DerAdapter<T>(tagClass, tag, isOptional, defaultValue) {
+    defaultValue: T? = this.defaultValue,
+    typeHint: Boolean = this.typeHint
+  ): DerAdapter<T> = object : DerAdapter<T>(tagClass, tag, isOptional, defaultValue, typeHint) {
     override fun encode(writer: DerWriter, value: T) = this@DerAdapter.encode(writer, value)
 
     override fun decode(reader: DerReader, header: DerHeader): T =
@@ -118,6 +130,14 @@ internal abstract class DerAdapter<T>(
         isOptional = true,
         defaultValue = defaultValue
     )
+  }
+
+  /**
+   * Returns a copy of this adapter that sets the encoded or decoded value as the type hint for the
+   * other adapters on this SEQUENCE to interrogate.
+   */
+  fun asTypeHint(): DerAdapter<T> {
+    return copy(typeHint = true)
   }
 
   /**

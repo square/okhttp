@@ -24,6 +24,19 @@ internal class DerWriter(sink: BufferedSink) {
   /** A stack of buffers that will be concatenated once we know the length of each. */
   private val stack = mutableListOf(sink)
 
+  /** Type hints scoped to the call stack, manipulated with [pushTypeHint] and [popTypeHint]. */
+  private val typeHintStack = mutableListOf<Any?>()
+
+  /**
+   * The type hint for the current object. Used to pick adapters based on other fields, such as
+   * in extensions which have different types depending on their extension ID.
+   */
+  var typeHint: Any?
+    get() = typeHintStack.lastOrNull()
+    set(value) {
+      typeHintStack[typeHintStack.size - 1] = value
+    }
+
   /** False unless we made a recursive call to [write] at the current stack frame. */
   private var constructed = false
 
@@ -81,6 +94,22 @@ internal class DerWriter(sink: BufferedSink) {
 
     // Write the payload.
     sink.writeAll(content)
+  }
+
+  /**
+   * Create a new namespace for type hints. Type hints from the enclosing type are no longer usable
+   * by the current type's members.
+   */
+  fun pushTypeHint() {
+    typeHintStack.add(null)
+  }
+
+  /**
+   * Remove the current namespace when it is going out of scope. Calls to [pushTypeHint] and
+   * [popTypeHint] should be balanced.
+   */
+  fun popTypeHint() {
+    typeHintStack.removeAt(typeHintStack.size - 1)
   }
 
   private fun sink(): BufferedSink = stack[stack.size - 1]
