@@ -17,7 +17,6 @@ package okhttp3.tls.internal.der
 
 import java.math.BigInteger
 import okhttp3.tls.decodeCertificatePem
-import okio.Buffer
 import okio.ByteString.Companion.decodeBase64
 import okio.ByteString.Companion.decodeHex
 import okio.ByteString.Companion.toByteString
@@ -50,7 +49,7 @@ internal class DerCertificatesTest {
 
   @Test
   fun `decode simple certificate`() {
-    val certificateString = """
+    val certificateBase64 = """
         |MIIBmjCCAQOgAwIBAgIBATANBgkqhkiG9w0BAQsFADATMREwDwYDVQQDEwhjYXNo
         |LmFwcDAeFw03MDAxMDEwMDAwMDBaFw03MDAxMDEwMDAwMDFaMBMxETAPBgNVBAMT
         |CGNhc2guYXBwMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCApFHhtrLan28q
@@ -61,17 +60,16 @@ internal class DerCertificatesTest {
         |8V0vxo1pHXnbBrnxhS/Z3TBerw8RyQqcaWOdp+pBXyIWmR+jHk9cHZCqQveTIBsY
         |jaA9VEhgdaVhxBsT2qzUNDsXlOzGsliznDfoqETb
         |""".trimMargin()
-    val certificateString2 = """
+    val certificateByteString = certificateBase64.decodeBase64()!!
+    val certificatePem = """
         |-----BEGIN CERTIFICATE-----
-        |$certificateString
+        |$certificateBase64
         |-----END CERTIFICATE-----
         |""".trimMargin()
 
-    val buffer = Buffer()
-        .write(certificateString.decodeBase64()!!)
-    val derReader = DerReader(buffer)
-    val javaCertificate = certificateString2.decodeCertificatePem()
-    val okHttpCertificate = derReader.read(CertificateAdapters.certificate)
+    val javaCertificate = certificatePem.decodeCertificatePem()
+    val okHttpCertificate = CertificateAdapters.certificate
+        .fromDer(certificateByteString)
 
     assertThat(okHttpCertificate.signatureValue.byteString)
         .isEqualTo(javaCertificate.signature.toByteString())
@@ -142,7 +140,7 @@ internal class DerCertificatesTest {
 
   @Test
   fun `decode CA certificate`() {
-    val certificateString = """
+    val certificateBase64 = """
         |MIIE/zCCA+egAwIBAgIEUdNARDANBgkqhkiG9w0BAQsFADCBsDELMAkGA1UEBhMC
         |VVMxFjAUBgNVBAoTDUVudHJ1c3QsIEluYy4xOTA3BgNVBAsTMHd3dy5lbnRydXN0
         |Lm5ldC9DUFMgaXMgaW5jb3Jwb3JhdGVkIGJ5IHJlZmVyZW5jZTEfMB0GA1UECxMW
@@ -171,17 +169,16 @@ internal class DerCertificatesTest {
         |Zb9n3srMM2XlQZHXN75BGpad5oqXnafOrE6aPb0BoGrZTyIAi0TVaWJ7LuvMuueS
         |fWlnPfy4fN5Bh9Bp6roKGHoalUOzeXEodm2h+1dK7E3IDhA=
         |""".trimMargin()
-    val certificateString2 = """
+    val certificateByteString = certificateBase64.decodeBase64()!!
+    val certificatePem = """
         |-----BEGIN CERTIFICATE-----
-        |$certificateString
+        |$certificateBase64
         |-----END CERTIFICATE-----
         |""".trimMargin()
 
-    val buffer = Buffer()
-        .write(certificateString.decodeBase64()!!)
-    val derReader = DerReader(buffer)
-    val javaCertificate = certificateString2.decodeCertificatePem()
-    val okHttpCertificate = derReader.read(CertificateAdapters.certificate)
+    val javaCertificate = certificatePem.decodeCertificatePem()
+    val okHttpCertificate = CertificateAdapters.certificate
+        .fromDer(certificateByteString)
 
     val publicKeyBytes = ("3082010a0282010100ba84b672db9e0c6be299e93001a776ea32b895411ac9da614e58" +
         "72cffef68279bf7361060aa527d8b35fd3454e1c72d64e32f2728a0ff78319d06a808000451eb0c7e79abf12" +
@@ -345,7 +342,7 @@ internal class DerCertificatesTest {
 
   @Test
   fun `decode typical certificate`() {
-    val certificateString = """
+    val certificateBase64 = """
         |MIIHHTCCBgWgAwIBAgIRAL5oALmpH7l6AAAAAFTRMh0wDQYJKoZIhvcNAQELBQAw
         |gboxCzAJBgNVBAYTAlVTMRYwFAYDVQQKEw1FbnRydXN0LCBJbmMuMSgwJgYDVQQL
         |Ex9TZWUgd3d3LmVudHJ1c3QubmV0L2xlZ2FsLXRlcm1zMTkwNwYDVQQLEzAoYykg
@@ -386,17 +383,16 @@ internal class DerCertificatesTest {
         |aJT7WeHs5bkf0dU7rtDefr0iKeqIxrlURPgbeWZF8GAkpdNaCwWMDAFO8DG04K+t
         |Aw==
         |""".trimMargin()
-    val certificateString2 = """
+    val certificateByteString = certificateBase64.decodeBase64()!!
+    val certificatePem = """
         |-----BEGIN CERTIFICATE-----
-        |$certificateString
+        |$certificateBase64
         |-----END CERTIFICATE-----
         |""".trimMargin()
 
-    val buffer = Buffer()
-        .write(certificateString.decodeBase64()!!)
-    val derReader = DerReader(buffer)
-    val javaCertificate = certificateString2.decodeCertificatePem()
-    val okHttpCertificate = derReader.read(CertificateAdapters.certificate)
+    val javaCertificate = certificatePem.decodeCertificatePem()
+    val okHttpCertificate = CertificateAdapters.certificate
+        .fromDer(certificateByteString)
 
     val publicKeyBytes = ("3082010a0282010100aafda24b05af6facacfd1bb82ed4b3d11e300dac6496b1481aa7" +
         "49af1c5874074b423ca31f226c7e435076ddaee0960f44a6914d5611f55208796531fc88e1661b063ecb4f32" +

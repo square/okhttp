@@ -44,7 +44,23 @@ internal data class TbsCertificate(
 
   /** Extensions ::= SEQUENCE SIZE (1..MAX) OF Extension */
   val extensions: List<Extension>
-)
+) {
+  // Avoid Long.hashCode(long) which isn't available on Android 5.
+  override fun hashCode(): Int {
+    var result = 0
+    result = 31 * result + version.toInt()
+    result = 31 * result + serialNumber.hashCode()
+    result = 31 * result + signature.hashCode()
+    result = 31 * result + issuer.hashCode()
+    result = 31 * result + validity.hashCode()
+    result = 31 * result + subject.hashCode()
+    result = 31 * result + subjectPublicKeyInfo.hashCode()
+    result = 31 * result + (issuerUniqueID?.hashCode() ?: 0)
+    result = 31 * result + (subjectUniqueID?.hashCode() ?: 0)
+    result = 31 * result + extensions.hashCode()
+    return result
+  }
+}
 
 internal data class AlgorithmIdentifier(
   val algorithm: String,
@@ -59,7 +75,15 @@ internal data class AttributeTypeAndValue(
 internal data class Validity(
   val notBefore: Long,
   val notAfter: Long
-)
+) {
+  // Avoid Long.hashCode(long) which isn't available on Android 5.
+  override fun hashCode(): Int {
+    var result = 0
+    result = 31 * result + notBefore.toInt()
+    result = 31 * result + notAfter.toInt()
+    return result
+  }
+}
 
 internal data class SubjectPublicKeyInfo(
   val algorithm: AlgorithmIdentifier,

@@ -45,9 +45,20 @@ internal object CertificateAdapters {
    * }
    * ```
    */
-  internal val validity = Adapters.sequence(time, time) {
-    Validity((it[0] as Pair<*, *>).second as Long, (it[1] as Pair<*, *>).second as Long)
-  }
+  internal val validity = Adapters.sequence(time, time,
+      decompose = {
+        listOf(
+            Adapters.GENERALIZED_TIME to it.notBefore,
+            Adapters.GENERALIZED_TIME to it.notAfter
+        )
+      },
+      construct = {
+        Validity(
+            notBefore = (it[0] as Pair<*, *>).second as Long,
+            notAfter = (it[1] as Pair<*, *>).second as Long
+        )
+      }
+  )
 
   /**
    * ```
@@ -59,12 +70,10 @@ internal object CertificateAdapters {
    */
   internal val algorithmIdentifier = Adapters.sequence(
       Adapters.OBJECT_IDENTIFIER,
-      Adapters.any().optional()
-  ) {
-    AlgorithmIdentifier(
-        it[0] as String, it[1]
-    )
-  }
+      Adapters.any().optional(),
+      decompose = { listOf(it.algorithm, it.parameters) },
+      construct = { AlgorithmIdentifier(it[0] as String, it[1]) }
+  )
 
   /**
    * ```
@@ -81,12 +90,10 @@ internal object CertificateAdapters {
   internal val extension = Adapters.sequence(
       Adapters.OBJECT_IDENTIFIER,
       Adapters.BOOLEAN.optional(defaultValue = false),
-      Adapters.OCTET_STRING
-  ) {
-    Extension(
-        it[0] as String, it[1] as Boolean, it[2] as ByteString
-    )
-  }
+      Adapters.OCTET_STRING,
+      decompose = { listOf(it.extnID, it.critical, it.extnValue) },
+      construct = { Extension(it[0] as String, it[1] as Boolean, it[2] as ByteString) }
+  )
 
   /**
    * ```
@@ -102,13 +109,10 @@ internal object CertificateAdapters {
    */
   internal val attributeTypeAndValue = Adapters.sequence(
       Adapters.OBJECT_IDENTIFIER,
-      Adapters.any()
-  ) {
-    AttributeTypeAndValue(
-        it[0] as String,
-        it[1]
-    )
-  }
+      Adapters.any(),
+      decompose = { listOf(it.type, it.value) },
+      construct = { AttributeTypeAndValue(it[0] as String, it[1]) }
+  )
 
   /**
    * ```
@@ -141,13 +145,10 @@ internal object CertificateAdapters {
    */
   internal val subjectPublicKeyInfo = Adapters.sequence(
       algorithmIdentifier,
-      Adapters.BIT_STRING
-  ) {
-    SubjectPublicKeyInfo(
-        it[0] as AlgorithmIdentifier,
-        it[1] as BitString
-    )
-  }
+      Adapters.BIT_STRING,
+      decompose = { listOf(it.algorithm, it.subjectPublicKey) },
+      construct = { SubjectPublicKeyInfo(it[0] as AlgorithmIdentifier, it[1] as BitString) }
+  )
 
   /**
    * ```
@@ -175,21 +176,36 @@ internal object CertificateAdapters {
       subjectPublicKeyInfo,
       Adapters.BIT_STRING.withTag(tag = 1L).optional(),
       Adapters.BIT_STRING.withTag(tag = 2L).optional(),
-      extension.asSequenceOf().withExplicitBox(tag = 3).optional(defaultValue = listOf())
-  ) {
-    TbsCertificate(
-        it[0] as Long,
-        it[1] as BigInteger,
-        it[2] as AlgorithmIdentifier,
-        (it[3] as Pair<*, *>).second as List<List<AttributeTypeAndValue>>,
-        it[4] as Validity,
-        (it[5] as Pair<*, *>).second as List<List<AttributeTypeAndValue>>,
-        it[6] as SubjectPublicKeyInfo,
-        it[7] as BitString?,
-        it[8] as BitString?,
-        it[9] as List<Extension>
-    )
-  }
+      extension.asSequenceOf().withExplicitBox(tag = 3).optional(defaultValue = listOf()),
+      decompose = {
+        listOf(
+            it.version,
+            it.serialNumber,
+            it.signature,
+            rdnSequence to it.issuer,
+            it.validity,
+            rdnSequence to it.subject,
+            it.subjectPublicKeyInfo,
+            it.issuerUniqueID,
+            it.subjectUniqueID,
+            it.extensions
+        )
+      },
+      construct = {
+        TbsCertificate(
+            version = it[0] as Long,
+            serialNumber = it[1] as BigInteger,
+            signature = it[2] as AlgorithmIdentifier,
+            issuer = (it[3] as Pair<*, *>).second as List<List<AttributeTypeAndValue>>,
+            validity = it[4] as Validity,
+            subject = (it[5] as Pair<*, *>).second as List<List<AttributeTypeAndValue>>,
+            subjectPublicKeyInfo = it[6] as SubjectPublicKeyInfo,
+            issuerUniqueID = it[7] as BitString?,
+            subjectUniqueID = it[8] as BitString?,
+            extensions = it[9] as List<Extension>
+        )
+      }
+  )
 
   /**
    * ```
@@ -203,12 +219,20 @@ internal object CertificateAdapters {
   internal val certificate = Adapters.sequence(
       tbsCertificate,
       algorithmIdentifier,
-      Adapters.BIT_STRING
-  ) {
-    Certificate(
-        it[0] as TbsCertificate,
-        it[1] as AlgorithmIdentifier,
-        it[2] as BitString
-    )
-  }
+      Adapters.BIT_STRING,
+      decompose = {
+        listOf(
+            it.tbsCertificate,
+            it.signatureAlgorithm,
+            it.signatureValue
+        )
+      },
+      construct = {
+        Certificate(
+            tbsCertificate = it[0] as TbsCertificate,
+            signatureAlgorithm = it[1] as AlgorithmIdentifier,
+            signatureValue = it[2] as BitString
+        )
+      }
+  )
 }

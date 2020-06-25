@@ -15,6 +15,8 @@
  */
 package okhttp3.tls.internal.der
 
+import okio.Buffer
+import okio.ByteString
 import okio.IOException
 
 /**
@@ -45,7 +47,30 @@ internal abstract class DerAdapter<T>(
         (this.tag == -1L || tag == this.tag)
   }
 
+  /**
+   * Returns true if [value] does not need to be included in the encoded data of a SEQUENCE value.
+   * Such values must be optional and equal to the optional default.
+   */
+  fun omitInSequence(value: T?): Boolean {
+    return isOptional && value == defaultValue
+  }
+
+  abstract fun encode(writer: DerWriter, value: T)
+
   abstract fun decode(reader: DerReader, header: DerHeader): T
+
+  fun toDer(value: T): ByteString {
+    val buffer = Buffer()
+    val writer = DerWriter(buffer)
+    writer.write(this, value)
+    return buffer.readByteString()
+  }
+
+  fun fromDer(byteString: ByteString): T {
+    val buffer = Buffer().write(byteString)
+    val reader = DerReader(buffer)
+    return reader.read(this)
+  }
 
   private fun copy(
     tagClass: Int = this.tagClass,
@@ -53,9 +78,10 @@ internal abstract class DerAdapter<T>(
     isOptional: Boolean = this.isOptional,
     defaultValue: T? = this.defaultValue
   ): DerAdapter<T> = object : DerAdapter<T>(tagClass, tag, isOptional, defaultValue) {
-    override fun decode(reader: DerReader, header: DerHeader): T {
-      return this@DerAdapter.decode(reader, header)
-    }
+    override fun encode(writer: DerWriter, value: T) = this@DerAdapter.encode(writer, value)
+
+    override fun decode(reader: DerReader, header: DerHeader): T =
+      this@DerAdapter.decode(reader, header)
   }
 
   /**
@@ -109,7 +135,9 @@ internal abstract class DerAdapter<T>(
     tagClass: Int = DerHeader.TAG_CLASS_CONTEXT_SPECIFIC,
     tag: Long
   ): DerAdapter<T> {
-    return Adapters.sequence(this) { list -> list[0] as T }
+    return Adapters.sequence(this,
+        decompose = { listOf(it) },
+        construct = { it[0] as T })
         .withTag(tagClass, tag)
   }
 
@@ -123,6 +151,12 @@ internal abstract class DerAdapter<T>(
         tagClass = tagClass,
         tag = tag
     ) {
+      override fun encode(writer: DerWriter, value: List<T>) {
+        for (v in value) {
+          writer.write(member, v)
+        }
+      }
+
       override fun decode(reader: DerReader, header: DerHeader): List<T> {
         val result = mutableListOf<T>()
 

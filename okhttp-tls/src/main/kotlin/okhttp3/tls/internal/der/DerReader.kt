@@ -123,14 +123,7 @@ internal class DerReader(source: Source) {
     val constructed = (tagAndClass and 0b0010_0000) == 0b0010_0000
     val tag0 = tagAndClass and 0b0001_1111
     if (tag0 == 0b0001_1111) {
-      var tagBits = 0L
-      while (true) {
-        val tagN = source.readByte().toInt() and 0xff
-        tagBits += (tagN and 0b0111_1111)
-        if ((tagN and 0b1000_0000) == 0b1000_0000) break
-        tagBits = tagBits shl 7
-      }
-      tag = tagBits
+      tag = readVariableLengthLong()
     } else {
       tag = tag0.toLong()
     }
@@ -147,8 +140,7 @@ internal class DerReader(source: Source) {
       var lengthBits = source.readByte().toLong() and 0xff
       for (i in 1 until lengthBytes) {
         lengthBits = lengthBits shl 8
-        lengthBits += source.readByte()
-            .toInt() and 0xff
+        lengthBits += source.readByte().toInt() and 0xff
       }
       length = lengthBits
     } else {
@@ -239,7 +231,7 @@ internal class DerReader(source: Source) {
   fun readObjectIdentifier(): String {
     val result = Buffer()
     val dot = '.'.toByte().toInt()
-    when (val xy = readSubidentifier()) {
+    when (val xy = readVariableLengthLong()) {
       in 0L until 40L -> {
         result.writeDecimalLong(0)
         result.writeByte(dot)
@@ -258,7 +250,7 @@ internal class DerReader(source: Source) {
     }
     while (byteCount < limit) {
       result.writeByte(dot)
-      result.writeDecimalLong(readSubidentifier())
+      result.writeDecimalLong(readVariableLengthLong())
     }
     return result.readUtf8()
   }
@@ -270,16 +262,18 @@ internal class DerReader(source: Source) {
       if (result.size > 0) {
         result.writeByte(dot)
       }
-      result.writeDecimalLong(readSubidentifier())
+      result.writeDecimalLong(readVariableLengthLong())
     }
     return result.readUtf8()
   }
 
-  private fun readSubidentifier(): Long {
+  /** Used for tags and subidentifiers. */
+  private fun readVariableLengthLong(): Long {
+    // TODO(jwilson): detect overflow.
     var result = 0L
     while (true) {
       val byteN = source.readByte().toLong() and 0xff
-      if (byteN and 0b1000_0000L == 0b1000_0000L) {
+      if ((byteN and 0b1000_0000L) == 0b1000_0000L) {
         result = (result + (byteN and 0b0111_1111)) shl 7
       } else {
         return result + byteN
