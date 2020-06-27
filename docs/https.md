@@ -43,6 +43,27 @@ OkHttpClient client = new OkHttpClient.Builder()
     .build();
 ```
 
+### Debugging TLS Handshake Failures
+
+The TLS handshake requires clients and servers to share a common TLS version and cipher suite. This
+depends on the JVM or Android version, OkHttp version, and web server configuration. If there is no
+common cipher suite and TLS version, your call will fail like this:
+
+```
+Caused by: javax.net.ssl.SSLProtocolException: SSL handshake aborted: ssl=0x7f2719a89e80:
+    Failure in SSL library, usually a protocol error
+        error:14077410:SSL routines:SSL23_GET_SERVER_HELLO:sslv3 alert handshake 
+        failure (external/openssl/ssl/s23_clnt.c:770 0x7f2728a53ea0:0x00000000)
+    at com.android.org.conscrypt.NativeCrypto.SSL_do_handshake(Native Method)
+```
+
+You can check a web server's configuration using [Qualys SSL Labs][qualys]. OkHttp's TLS
+configuration history is [tracked here][tls_configuration_history.md].
+
+Applications expected to be installed on older Android devices should consider adopting the
+[Google Play Services’ ProviderInstaller][provider_installer]. This will increase security for users
+and increase connectivity with web servers.
+
 ### Certificate Pinning ([.kt][CertificatePinningKotlin], [.java][CertificatePinningJava]) 
 
 By default, OkHttp trusts the certificate authorities of the host platform. This strategy maximizes connectivity, but it is subject to certificate authority attacks such as the [2011 DigiNotar attack](http://www.computerworld.com/article/2510951/cybercrime-hacking/hackers-spied-on-300-000-iranians-using-fake-google-certificate.html). It also assumes your HTTPS servers’ certificates are signed by a certificate authority.
@@ -185,3 +206,5 @@ The full code sample shows how to replace the host platform’s certificate auth
  [CustomTrustKotlin]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/kt/CustomTrust.kt
  [CertificatePinningJava]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/CertificatePinning.java
  [CertificatePinningKotlin]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/kt/CertificatePinning.kt
+ [provider_installer]: https://developer.android.com/training/articles/security-gms-provider
+ [qualys]: https://www.ssllabs.com/ssltest/
