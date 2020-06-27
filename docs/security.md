@@ -26,6 +26,14 @@ See our policies here.
 
 https://github.com/square/okhttp/blob/master/docs/tls_configuration_history.md
 
+This type of problem will typical surface as an error like
+
+```
+Caused by: javax.net.ssl.SSLProtocolException: SSL handshake aborted: ssl=0x7f2719a89e80: Failure in SSL library, usually a protocol error
+error:14077410:SSL routines:SSL23_GET_SERVER_HELLO:sslv3 alert handshake failure (external/openssl/ssl/s23_clnt.c:770 0x7f2728a53ea0:0x00000000)
+at com.android.org.conscrypt.NativeCrypto.SSL_do_handshake(Native Method)
+```
+
 ## Reporting a Vulnerability
 
 Square recognizes the important contributions the security research community
