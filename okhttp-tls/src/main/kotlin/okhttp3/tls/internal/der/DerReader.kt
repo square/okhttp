@@ -47,13 +47,7 @@ internal class DerReader(source: Source) {
     get() = countingSource.bytesRead - source.buffer.size
 
   /** How many bytes to read before [peekHeader] should return false, or -1L for no limit. */
-  var limit: Long = -1L
-
-  val peekedTagClass: Int
-    get() = peekedHeader?.tagClass ?: error("peekedTagClass only accessible after hasNext")
-
-  val peekedTag: Long
-    get() = peekedHeader?.tag ?: error("peekedTag only accessible after hasNext")
+  private var limit: Long = -1L
 
   /** Type hints scoped to the call stack, manipulated with [pushTypeHint] and [popTypeHint]. */
   private val typeHintStack = mutableListOf<Any?>()
@@ -68,6 +62,9 @@ internal class DerReader(source: Source) {
       typeHintStack.set(typeHintStack.size - 1, value)
     }
 
+  /** Names leading to the current location in the ASN.1 document. */
+  private val path = mutableListOf<String>()
+
   private var constructed: Boolean = false
 
   private var peekedHeader: DerHeader? = null
@@ -75,43 +72,7 @@ internal class DerReader(source: Source) {
   private val bytesLeft: Long
     get() = if (limit == -1L) -1L else limit - byteCount
 
-  fun hasNext(): Boolean {
-    if (peekedHeader == null) {
-      peekedHeader = peekHeader()
-    }
-    return peekedHeader != null
-  }
-
-  internal inline fun <T> read(block: (DerHeader) -> T): T {
-    if (!hasNext()) throw IOException("expected a value")
-
-    val header = peekedHeader!!
-    peekedHeader = null
-
-    val pushedLimit = limit
-    val pushedConstructed = constructed
-
-    limit = if (header.length != -1L) byteCount + header.length else -1L
-    constructed = header.constructed
-    try {
-      return block(header)
-    } finally {
-      limit = pushedLimit
-      constructed = pushedConstructed
-    }
-  }
-
-  fun <T> read(derAdapter: DerAdapter<T>): T {
-    return read { header ->
-      derAdapter.decode(this@DerReader, header)
-    }
-  }
-
-  private inline fun readAll(block: (DerHeader) -> Unit) {
-    while (hasNext()) {
-      read(block)
-    }
-  }
+  fun hasNext(): Boolean = peekHeader() != null
 
   /**
    * Returns the next header to process unless this scope is exhausted.
@@ -122,12 +83,31 @@ internal class DerReader(source: Source) {
    *  * We've read all of the bytes of an object whose length is known.
    *  * We've reached the [DerHeader.TAG_END_OF_CONTENTS] of an object whose length is unknown.
    */
-  private fun peekHeader(): DerHeader? {
+  fun peekHeader(): DerHeader? {
+    var result = peekedHeader
+
+    if (result == null) {
+      result = readHeader()
+      peekedHeader = result
+    }
+
+    if (result.isEndOfData) return null
+
+    return result
+  }
+
+  /**
+   * Consume the next header in the stream and return it. If there is no header to read because we
+   * have reached a limit, this returns [END_OF_DATA].
+   */
+  private fun readHeader(): DerHeader {
+    require(peekedHeader == null)
+
     // We've hit a local limit.
-    if (byteCount == limit) return null
+    if (byteCount == limit) return END_OF_DATA
 
     // We've exhausted the source stream.
-    if (limit == -1L && source.exhausted()) return null
+    if (limit == -1L && source.exhausted()) return END_OF_DATA
 
     // Read the tag.
     val tag: Long
@@ -161,10 +141,40 @@ internal class DerReader(source: Source) {
       length = (length0 and 0b0111_1111).toLong()
     }
 
-    // This tag indicates the end of the current scope.
-    if (tagClass == DerHeader.TAG_CLASS_UNIVERSAL && tag == DerHeader.TAG_END_OF_CONTENTS) return null
-
+    // Note that this may be be an encoded "end of data" header.
     return DerHeader(tagClass, tag, constructed, length)
+  }
+
+  /**
+   * Consume a header and execute [block], which should consume the entire value described by the
+   * header. It is an error to not consume a full value in [block].
+   */
+  internal inline fun <T> read(name: String?, block: (DerHeader) -> T): T {
+    if (!hasNext()) throw IOException("expected a value")
+
+    val header = peekedHeader!!
+    peekedHeader = null
+
+    val pushedLimit = limit
+    val pushedConstructed = constructed
+
+    limit = if (header.length != -1L) byteCount + header.length else -1L
+    constructed = header.constructed
+    if (name != null) path += name
+    try {
+      return block(header)
+    } finally {
+      peekedHeader = null
+      limit = pushedLimit
+      constructed = pushedConstructed
+      if (name != null) path.removeAt(path.size - 1)
+    }
+  }
+
+  private inline fun readAll(block: (DerHeader) -> Unit) {
+    while (hasNext()) {
+      read(null, block)
+    }
   }
 
   fun pushTypeHint() {
@@ -302,6 +312,8 @@ internal class DerReader(source: Source) {
     }
   }
 
+  override fun toString() = path.joinToString(separator = " / ")
+
   /** A source that keeps track of how many bytes it's consumed. */
   private class CountingSource(source: Source) : ForwardingSource(source) {
     var bytesRead = 0L
@@ -312,5 +324,19 @@ internal class DerReader(source: Source) {
       bytesRead += result
       return result
     }
+  }
+
+  companion object {
+    /**
+     * A synthetic value that indicates there's no more bytes. Values with equivalent data may also
+     * show up in ASN.1 streams to also indicate the end of SEQUENCE, SET or other constructed
+     * value.
+     */
+    val END_OF_DATA = DerHeader(
+        tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
+        tag = DerHeader.TAG_END_OF_CONTENTS,
+        constructed = false,
+        length = -1L
+    )
   }
 }

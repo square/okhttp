@@ -37,33 +37,26 @@ internal class DerWriter(sink: BufferedSink) {
       typeHintStack[typeHintStack.size - 1] = value
     }
 
+  /** Names leading to the current location in the ASN.1 document. */
+  private val path = mutableListOf<String>()
+
   /** False unless we made a recursive call to [write] at the current stack frame. */
   private var constructed = false
 
-  fun <T> write(derAdapter: DerAdapter<T>, value: T) {
-    // If the writer doesn't have a tag, it must delegate. Don't specify a tag yet.
-    if (derAdapter.tagClass == -1 && derAdapter.tag == -1L) {
-      derAdapter.encode(this, value)
-      return
-    }
-
-    write(derAdapter.tagClass, derAdapter.tag) {
-      derAdapter.encode(this@DerWriter, value)
-    }
-  }
-
-  private fun write(tagClass: Int, tag: Long, block: (BufferedSink) -> Unit) {
+  fun write(name: String, tagClass: Int, tag: Long, block: (BufferedSink) -> Unit) {
     val constructedBit: Int
     val content = Buffer()
 
     stack.add(content)
     constructed = false // The enclosed object written in block() is not constructed.
+    path += name
     try {
       block(content)
       constructedBit = if (constructed) 0b0010_0000 else 0
       constructed = true // The enclosing object is constructed.
     } finally {
       stack.removeAt(stack.size - 1)
+      path.removeAt(path.size - 1)
     }
 
     val sink = sink()
@@ -188,4 +181,6 @@ internal class DerWriter(sink: BufferedSink) {
       sink.writeByte(((v shr shift) and 0b0111_1111).toInt() or lastBit)
     }
   }
+
+  override fun toString() = path.joinToString(separator = " / ")
 }

@@ -27,78 +27,86 @@ import okio.ByteString
  * Built-in adapters for reading standard ASN.1 types.
  */
 internal object Adapters {
-  val BOOLEAN = object : DerAdapter<Boolean>(
+  val BOOLEAN = BasicDerAdapter(
+      name = "BOOLEAN",
       tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
-      tag = 1L
-  ) {
-    override fun encode(writer: DerWriter, value: Boolean) = writer.writeBoolean(value)
+      tag = 1L,
+      codec = object : BasicDerAdapter.Codec<Boolean> {
+        override fun decode(reader: DerReader) = reader.readBoolean()
+        override fun encode(writer: DerWriter, value: Boolean) = writer.writeBoolean(value)
+      }
+  )
 
-    override fun decode(reader: DerReader, header: DerHeader) = reader.readBoolean()
-  }
-
-  val INTEGER_AS_LONG = object : DerAdapter<Long>(
+  val INTEGER_AS_LONG = BasicDerAdapter(
+      name = "INTEGER",
       tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
-      tag = 2L
-  ) {
-    override fun encode(writer: DerWriter, value: Long) = writer.writeLong(value)
+      tag = 2L,
+      codec = object : BasicDerAdapter.Codec<Long> {
+        override fun decode(reader: DerReader) = reader.readLong()
+        override fun encode(writer: DerWriter, value: Long) = writer.writeLong(value)
+      }
+  )
 
-    override fun decode(reader: DerReader, header: DerHeader) = reader.readLong()
-  }
-
-  val INTEGER_AS_BIG_INTEGER = object : DerAdapter<BigInteger>(
+  val INTEGER_AS_BIG_INTEGER = BasicDerAdapter(
+      name = "INTEGER",
       tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
-      tag = 2L
-  ) {
-    override fun encode(writer: DerWriter, value: BigInteger) = writer.writeBigInteger(value)
+      tag = 2L,
+      codec = object : BasicDerAdapter.Codec<BigInteger> {
+        override fun decode(reader: DerReader) = reader.readBigInteger()
+        override fun encode(writer: DerWriter, value: BigInteger) = writer.writeBigInteger(value)
+      }
+  )
 
-    override fun decode(reader: DerReader, header: DerHeader) = reader.readBigInteger()
-  }
-
-  val BIT_STRING = object : DerAdapter<BitString>(
+  val BIT_STRING = BasicDerAdapter(
+      name = "BIT STRING",
       tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
-      tag = 3L
-  ) {
-    override fun encode(writer: DerWriter, value: BitString) = writer.writeBitString(value)
+      tag = 3L,
+      codec = object : BasicDerAdapter.Codec<BitString> {
+        override fun decode(reader: DerReader) = reader.readBitString()
+        override fun encode(writer: DerWriter, value: BitString) = writer.writeBitString(value)
+      }
+  )
 
-    override fun decode(reader: DerReader, header: DerHeader) = reader.readBitString()
-  }
-
-  val OCTET_STRING = object : DerAdapter<ByteString>(
+  val OCTET_STRING = BasicDerAdapter(
+      name = "OCTET STRING",
       tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
-      tag = 4L
-  ) {
-    override fun encode(writer: DerWriter, value: ByteString) = writer.writeOctetString(value)
+      tag = 4L,
+      codec = object : BasicDerAdapter.Codec<ByteString> {
+        override fun decode(reader: DerReader) = reader.readOctetString()
+        override fun encode(writer: DerWriter, value: ByteString) = writer.writeOctetString(value)
+      }
+  )
 
-    override fun decode(reader: DerReader, header: DerHeader) = reader.readOctetString()
-  }
-
-  val NULL = object : DerAdapter<Unit?>(
+  val NULL = BasicDerAdapter(
+      name = "NULL",
       tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
-      tag = 5L
-  ) {
-    override fun encode(writer: DerWriter, value: Unit?) {
-    }
+      tag = 5L,
+      codec = object : BasicDerAdapter.Codec<Unit?> {
+        override fun decode(reader: DerReader) = null
+        override fun encode(writer: DerWriter, value: Unit?) {
+        }
+      }
+  )
 
-    override fun decode(reader: DerReader, header: DerHeader): Unit? = null
-  }
-
-  val OBJECT_IDENTIFIER = object : DerAdapter<String>(
+  val OBJECT_IDENTIFIER = BasicDerAdapter(
+      name = "OBJECT IDENTIFIER",
       tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
-      tag = 6L
-  ) {
-    override fun encode(writer: DerWriter, value: String) = writer.writeObjectIdentifier(value)
+      tag = 6L,
+      codec = object : BasicDerAdapter.Codec<String> {
+        override fun decode(reader: DerReader) = reader.readObjectIdentifier()
+        override fun encode(writer: DerWriter, value: String) = writer.writeObjectIdentifier(value)
+      }
+  )
 
-    override fun decode(reader: DerReader, header: DerHeader) = reader.readObjectIdentifier()
-  }
-
-  val UTF8_STRING = object : DerAdapter<String>(
+  val UTF8_STRING = BasicDerAdapter(
+      name = "UTF8",
       tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
-      tag = 12L
-  ) {
-    override fun encode(writer: DerWriter, value: String) = writer.writeUtf8(value)
-
-    override fun decode(reader: DerReader, header: DerHeader) = reader.readUtf8String()
-  }
+      tag = 12L,
+      codec = object : BasicDerAdapter.Codec<String> {
+        override fun decode(reader: DerReader) = reader.readUtf8String()
+        override fun encode(writer: DerWriter, value: String) = writer.writeUtf8(value)
+      }
+  )
 
   /**
    * Permits alphanumerics, spaces, and these:
@@ -108,47 +116,50 @@ internal object Adapters {
    * ```
    */
   // TODO(jwilson): constrain to printable string characters.
-  val PRINTABLE_STRING = object : DerAdapter<String>(
+  val PRINTABLE_STRING = BasicDerAdapter(
+      name = "PRINTABLE STRING",
       tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
-      tag = 19L
-  ) {
-    override fun encode(writer: DerWriter, value: String) = writer.writeUtf8(value)
-
-    override fun decode(reader: DerReader, header: DerHeader) = reader.readUtf8String()
-  }
+      tag = 19L,
+      codec = object : BasicDerAdapter.Codec<String> {
+        override fun decode(reader: DerReader) = reader.readUtf8String()
+        override fun encode(writer: DerWriter, value: String) = writer.writeUtf8(value)
+      }
+  )
 
   /**
    * Based on International Alphabet No. 5. Note that there are bytes that IA5 and US-ASCII
    * disagree on interpretation.
    */
   // TODO(jwilson): constrain to IA5 characters.
-  val IA5_STRING = object : DerAdapter<String>(
+  val IA5_STRING = BasicDerAdapter(
+      name = "IA5 STRING",
       tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
-      tag = 22L
-  ) {
-    override fun encode(writer: DerWriter, value: String) = writer.writeUtf8(value)
-
-    override fun decode(reader: DerReader, header: DerHeader) = reader.readUtf8String()
-  }
+      tag = 22L,
+      codec = object : BasicDerAdapter.Codec<String> {
+        override fun decode(reader: DerReader) = reader.readUtf8String()
+        override fun encode(writer: DerWriter, value: String) = writer.writeUtf8(value)
+      }
+  )
 
   /**
    * A timestamp like "191216030210Z" or "191215190210-0800" for 2019-12-15T19:02:10-08:00. The
    * cutoff of the 2-digit year is 1950-01-01T00:00:00Z.
    */
-  val UTC_TIME = object : DerAdapter<Long>(
+  val UTC_TIME = BasicDerAdapter(
+      name = "UTC TIME",
       tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
-      tag = 23L
-  ) {
-    override fun encode(writer: DerWriter, value: Long) {
-      val string = formatUtcTime(value)
-      writer.writeUtf8(string)
-    }
-
-    override fun decode(reader: DerReader, header: DerHeader): Long {
-      val string = reader.readUtf8String()
-      return parseUtcTime(string)
-    }
-  }
+      tag = 23L,
+      codec = object : BasicDerAdapter.Codec<Long> {
+        override fun decode(reader: DerReader): Long {
+          val string = reader.readUtf8String()
+          return parseUtcTime(string)
+        }
+        override fun encode(writer: DerWriter, value: Long) {
+          val string = formatUtcTime(value)
+          return writer.writeUtf8(string)
+        }
+      }
+  )
 
   internal fun parseUtcTime(string: String): Long {
     val utc = TimeZone.getTimeZone("GMT")
@@ -175,20 +186,21 @@ internal object Adapters {
    * A timestamp like "191216030210Z" or "20191215190210-0800" for 2019-12-15T19:02:10-08:00. This
    * is the same as [UTC_TIME] with the exception of the 4-digit year.
    */
-  val GENERALIZED_TIME = object : DerAdapter<Long>(
+  val GENERALIZED_TIME = BasicDerAdapter(
+      name = "GENERALIZED TIME",
       tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
-      tag = 24L
-  ) {
-    override fun encode(writer: DerWriter, value: Long) {
-      val string = formatGeneralizedTime(value)
-      writer.writeUtf8(string)
-    }
-
-    override fun decode(reader: DerReader, header: DerHeader): Long {
-      val string = reader.readUtf8String()
-      return parseGeneralizedTime(string)
-    }
-  }
+      tag = 24L,
+      codec = object : BasicDerAdapter.Codec<Long> {
+        override fun decode(reader: DerReader): Long {
+          val string = reader.readUtf8String()
+          return parseGeneralizedTime(string)
+        }
+        override fun encode(writer: DerWriter, value: Long) {
+          val string = formatGeneralizedTime(value)
+          return writer.writeUtf8(string)
+        }
+      }
+  )
 
   internal fun parseGeneralizedTime(string: String): Long {
     val utc = TimeZone.getTimeZone("GMT")
@@ -220,142 +232,113 @@ internal object Adapters {
    * TODO: for set ofs, sort by encoded value when encoding.
    */
   fun <T> sequence(
+    name: String,
     vararg members: DerAdapter<*>,
     decompose: (T) -> List<*>,
     construct: (List<*>) -> T
-  ): DerAdapter<T> {
-    return object : DerAdapter<T>(
-        tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
-        tag = 16L
-    ) {
-      override fun encode(writer: DerWriter, value: T) {
-        writer.pushTypeHint()
-        try {
-          encodeWithTypeHints(value, writer)
-        } finally {
-          writer.popTypeHint()
-        }
-      }
-
-      private fun encodeWithTypeHints(value: T, writer: DerWriter) {
-        val list = decompose(value)
-
-        for (i in list.indices) {
-          val v = list[i]
-          val adapter = members[i] as DerAdapter<Any?>
-
-          if (adapter.typeHint) {
-            writer.typeHint = v
-          }
-
-          if (adapter.omitInSequence(v)) {
-            // Skip.
-          } else {
-            writer.write(adapter, v)
-          }
-        }
-      }
-
-      override fun decode(reader: DerReader, header: DerHeader): T {
+  ): BasicDerAdapter<T> {
+    val codec = object : BasicDerAdapter.Codec<T> {
+      override fun decode(reader: DerReader): T {
         reader.pushTypeHint()
         try {
-          return decodeWithTypeHints(reader)
+          val list = mutableListOf<Any?>()
+
+          while (list.size < members.size) {
+            val member = members[list.size]
+            list += member.readValue(reader)
+          }
+
+          if (reader.hasNext()) {
+            throw IOException("unexpected ${reader.peekHeader()}")
+          }
+
+          return construct(list)
         } finally {
           reader.popTypeHint()
         }
       }
 
-      private fun decodeWithTypeHints(reader: DerReader): T {
-        val list = mutableListOf<Any?>()
-
-        while (list.size < members.size) {
-          val member = members[list.size]
-
-          val value = when {
-            reader.hasNext() &&
-                member.matches(reader.peekedTagClass, reader.peekedTag) -> {
-              reader.read(member)
-            }
-            member.isOptional -> {
-              member.defaultValue
-            }
-            else -> {
-              throw IOException("expected ${member.tagClass}/${member.tag} " +
-                  "but was ${reader.peekedTagClass}/${reader.peekedTag}")
-            }
+      override fun encode(writer: DerWriter, value: T) {
+        val list = decompose(value)
+        writer.pushTypeHint()
+        try {
+          for (i in list.indices) {
+            val adapter = members[i] as DerAdapter<Any?>
+            adapter.writeValue(writer, list[i])
           }
-
-          if (member.typeHint) {
-            reader.typeHint = value
-          }
-          list += value
+        } finally {
+          writer.popTypeHint()
         }
-
-        if (reader.hasNext()) {
-          throw IOException("unexpected ${reader.peekedTagClass}/${reader.peekedTag}")
-        }
-
-        return construct(list)
       }
     }
+
+    return BasicDerAdapter(
+        name = name,
+        tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
+        tag = 16L,
+        codec = codec
+    )
   }
 
   /** Returns an adapter that decodes as the first of a list of available types. */
   fun choice(vararg choices: DerAdapter<*>): DerAdapter<Pair<DerAdapter<*>, Any?>> {
-    return object : DerAdapter<Pair<DerAdapter<*>, Any?>>(
-        tagClass = -1,
-        tag = -1L
-    ) {
-      override fun matches(tagClass: Int, tag: Long) = choices.any { it.matches(tagClass, tag) }
+    return object : DerAdapter<Pair<DerAdapter<*>, Any?>> {
+      override fun matches(header: DerHeader): Boolean = true
 
-      override fun encode(writer: DerWriter, value: Pair<DerAdapter<*>, Any?>) {
+      override fun readValue(reader: DerReader): Pair<DerAdapter<*>, Any?> {
+        val peekedHeader = reader.peekHeader()
+            ?: throw IOException("expected a value")
+
+        val choice = choices.firstOrNull { it.matches(peekedHeader) }
+            ?: throw IOException("expected a matching choice but was $peekedHeader")
+
+        return choice to choice.readValue(reader)
+      }
+
+      override fun writeValue(writer: DerWriter, value: Pair<DerAdapter<*>, Any?>) {
         val (adapter, v) = value
-        writer.write(adapter as DerAdapter<Any?>, v)
+        (adapter as DerAdapter<Any?>).writeValue(writer, v)
       }
 
-      override fun decode(reader: DerReader, header: DerHeader): Pair<DerAdapter<*>, Any?> {
-        val choice = choices.firstOrNull { it.matches(header.tagClass, header.tag) }
-            ?: throw IOException(
-                "expected a matching choice but was ${header.tagClass}/${header.tag}")
-
-        return choice to choice.decode(reader, header)
-      }
+      override fun toString() = choices.joinToString(separator = " OR ")
     }
   }
 
   /**
-   * This decodes an [OCTET_STRING] value into its contents, which are also expected to be ASN.1.
-   * To determine which type to decode as it uses a preceding member of the same SEQUENCE. For
+   * This decodes a value into its contents using a preceding member of the same SEQUENCE. For
    * example, extensions type IDs specify what types to use for the corresponding values.
    *
    * If the hint is unknown [chooser] should return null which will cause the value to be decoded as
    * an opaque byte string.
+   *
+   * This may optionally wrap the contents in a tag.
    */
-  fun usingTypeHint(chooser: (Any?) -> DerAdapter<*>?): DerAdapter<Any?> {
-    return object : DerAdapter<Any?>(tagClass = OCTET_STRING.tagClass, tag = OCTET_STRING.tag) {
-      override fun encode(writer: DerWriter, value: Any?) {
-        val adapter = chooser(writer.typeHint)
+  fun usingTypeHint(
+    chooser: (Any?) -> DerAdapter<*>?
+  ): DerAdapter<Any?> {
+    return object : DerAdapter<Any?> {
+      override fun matches(header: DerHeader): Boolean = true
 
+      override fun writeValue(writer: DerWriter, value: Any?) {
         // If we don't understand this hint, encode the body as a byte string. The byte string
         // will include a tag and length header as a prefix.
-        if (adapter == null) {
-          (OCTET_STRING as DerAdapter<Any?>).encode(writer, value)
-          return
-        }
+        val adapter = chooser(writer.typeHint)
 
-        writer.write(adapter as DerAdapter<Any?>, value)
+        if (adapter != null) {
+          (adapter as DerAdapter<Any?>).writeValue(writer, value)
+        } else {
+          writer.writeOctetString(value as ByteString)
+        }
       }
 
-      override fun decode(reader: DerReader, header: DerHeader): Any? {
+      override fun readValue(reader: DerReader): Any? {
         val adapter = chooser(reader.typeHint)
 
-        // If we don't understand this hint, decode the body as a byte string. The byte string
-        // will include a tag and length header as a prefix.
-        if (adapter == null) {
-          return OCTET_STRING.decode(reader, header)
+        if (adapter != null) {
+          return (adapter as DerAdapter<Any?>).readValue(reader)
+        } else {
+          return reader.readOctetString()
         }
-
-        return reader.read(adapter as DerAdapter<Any?>)
       }
     }
   }
@@ -380,42 +363,55 @@ internal object Adapters {
   )
 
   fun any(
-    vararg choices: Pair<KClass<*>, DerAdapter<*>> = defaultAnyChoices.toTypedArray()
+    vararg choices: Pair<KClass<*>, DerAdapter<*>> = defaultAnyChoices.toTypedArray(),
+    isOptional: Boolean = false,
+    optionalValue: Any? = null
   ): DerAdapter<Any?> {
-    return object : DerAdapter<Any?>(
-        tagClass = -1,
-        tag = -1L
-    ) {
-      override fun encode(writer: DerWriter, value: Any?) {
-        if (value is AnyValue) {
-          writer.write(withTag(value.tagClass, value.tag)) {
-            writer.writeOctetString(value.bytes)
+    return object : DerAdapter<Any?> {
+      override fun matches(header: DerHeader): Boolean = true
+
+      override fun writeValue(writer: DerWriter, value: Any?) {
+        when {
+          isOptional && value == optionalValue -> {
+            // Write nothing.
           }
-        } else {
-          for ((type, adapter) in choices) {
-            if (type.isInstance(value) || (value == null && type == Unit::class)) {
-              writer.write(adapter as DerAdapter<Any?>, value)
-              return
+
+          value is AnyValue -> {
+            writer.write("ANY", value.tagClass, value.tag) {
+              writer.writeOctetString(value.bytes)
+            }
+          }
+
+          else -> {
+            for ((type, adapter) in choices) {
+              if (type.isInstance(value) || (value == null && type == Unit::class)) {
+                (adapter as DerAdapter<Any?>).writeValue(writer, value)
+                return
+              }
             }
           }
         }
       }
 
-      override fun decode(reader: DerReader, header: DerHeader): Any? {
+      override fun readValue(reader: DerReader): Any? {
+        if (isOptional && !reader.hasNext()) return optionalValue
+
         for ((_, adapter) in choices) {
-          if (adapter.matches(header.tagClass, header.tag)) {
-            return adapter.decode(reader, header)
+          if (adapter.matches(reader.peekHeader()!!)) {
+            return adapter.readValue(reader)
           }
         }
 
-        val bytes = reader.readOctetString()
-        return AnyValue(
-            tagClass = header.tagClass,
-            tag = header.tag,
-            constructed = header.constructed,
-            length = header.length,
-            bytes = bytes
-        )
+        reader.read("ANY") { header ->
+          val bytes = reader.readOctetString()
+          return AnyValue(
+              tagClass = header.tagClass,
+              tag = header.tag,
+              constructed = header.constructed,
+              length = header.length,
+              bytes = bytes
+          )
+        }
       }
     }
   }
