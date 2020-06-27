@@ -52,6 +52,9 @@ internal data class DerHeader(
   /** Length of the message in bytes, or -1L if its length is unknown at the time of encoding. */
   var length: Long
 ) {
+  val isEndOfData: Boolean
+    get() = tagClass == TAG_CLASS_UNIVERSAL && tag == TAG_END_OF_CONTENTS
+
   // Avoid Long.hashCode(long) which isn't available on Android 5.
   override fun hashCode(): Int {
     var result = 0
@@ -61,6 +64,8 @@ internal data class DerHeader(
     result = 31 * result + length.toInt()
     return result
   }
+
+  override fun toString() = "$tagClass/$tag"
 
   companion object {
     const val TAG_CLASS_UNIVERSAL = 0b0000_0000

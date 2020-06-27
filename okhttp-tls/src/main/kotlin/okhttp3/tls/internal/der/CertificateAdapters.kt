@@ -16,6 +16,7 @@
 package okhttp3.tls.internal.der
 
 import java.math.BigInteger
+import okhttp3.tls.internal.der.Adapters.OCTET_STRING
 
 /**
  * ASN.1 adapters adapted from the specifications in [RFC 5280][rfc_5280].
@@ -44,7 +45,10 @@ internal object CertificateAdapters {
    * }
    * ```
    */
-  internal val validity = Adapters.sequence(time, time,
+  internal val validity = Adapters.sequence(
+      "Validity",
+      time,
+      time,
       decompose = {
         listOf(
             Adapters.GENERALIZED_TIME to it.notBefore,
@@ -68,8 +72,9 @@ internal object CertificateAdapters {
    * ```
    */
   internal val algorithmIdentifier = Adapters.sequence(
+      "AlgorithmIdentifier",
       Adapters.OBJECT_IDENTIFIER,
-      Adapters.any().optional(),
+      Adapters.any(isOptional = true, optionalValue = null),
       decompose = { listOf(it.algorithm, it.parameters) },
       construct = { AlgorithmIdentifier(it[0] as String, it[1]) }
   )
@@ -83,6 +88,7 @@ internal object CertificateAdapters {
    * ```
    */
   internal val basicConstraints = Adapters.sequence(
+      "BasicConstraints",
       Adapters.BOOLEAN.optional(defaultValue = false),
       Adapters.INTEGER_AS_LONG.optional(),
       decompose = { listOf(it.ca, it.pathLenConstraint) },
@@ -132,7 +138,7 @@ internal object CertificateAdapters {
       ObjectIdentifiers.basicConstraints -> basicConstraints
       else -> null
     }
-  }
+  }.withExplicitBox(tagClass = OCTET_STRING.tagClass, tag = OCTET_STRING.tag)
 
   /**
    * ```
@@ -147,6 +153,7 @@ internal object CertificateAdapters {
    * ```
    */
   internal val extension = Adapters.sequence(
+      "Extension",
       Adapters.OBJECT_IDENTIFIER.asTypeHint(),
       Adapters.BOOLEAN.optional(defaultValue = false),
       extensionValue,
@@ -167,6 +174,7 @@ internal object CertificateAdapters {
    * ```
    */
   internal val attributeTypeAndValue = Adapters.sequence(
+      "AttributeTypeAndValue",
       Adapters.OBJECT_IDENTIFIER,
       Adapters.any(),
       decompose = { listOf(it.type, it.value) },
@@ -203,6 +211,7 @@ internal object CertificateAdapters {
    * ```
    */
   internal val subjectPublicKeyInfo = Adapters.sequence(
+      "SubjectPublicKeyInfo",
       algorithmIdentifier,
       Adapters.BIT_STRING,
       decompose = { listOf(it.algorithm, it.subjectPublicKey) },
@@ -226,6 +235,7 @@ internal object CertificateAdapters {
    * ```
    */
   internal val tbsCertificate = Adapters.sequence(
+      "TBSCertificate",
       Adapters.INTEGER_AS_LONG.withTag(tag = 0L).optional(defaultValue = 0), // v1 == 0
       Adapters.INTEGER_AS_BIG_INTEGER,
       algorithmIdentifier,
@@ -276,6 +286,7 @@ internal object CertificateAdapters {
    * ```
    */
   internal val certificate = Adapters.sequence(
+      "Certificate",
       tbsCertificate,
       algorithmIdentifier,
       Adapters.BIT_STRING,
