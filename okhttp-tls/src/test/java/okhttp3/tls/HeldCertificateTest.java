@@ -208,8 +208,8 @@ public final class HeldCertificateTest {
         .signedBy(root)
         .build();
 
-    assertThat(root.certificate().getSigAlgName()).isEqualTo("SHA256WITHRSA");
-    assertThat(leaf.certificate().getSigAlgName()).isEqualTo("SHA256WITHRSA");
+    assertThat(root.certificate().getSigAlgName()).isEqualToIgnoringCase("SHA256WITHRSA");
+    assertThat(leaf.certificate().getSigAlgName()).isEqualToIgnoringCase("SHA256WITHRSA");
   }
 
   @Test public void rsaSignedByEcdsa() {
@@ -223,8 +223,8 @@ public final class HeldCertificateTest {
         .signedBy(root)
         .build();
 
-    assertThat(root.certificate().getSigAlgName()).isEqualTo("SHA256WITHECDSA");
-    assertThat(leaf.certificate().getSigAlgName()).isEqualTo("SHA256WITHECDSA");
+    assertThat(root.certificate().getSigAlgName()).isEqualToIgnoringCase("SHA256WITHECDSA");
+    assertThat(leaf.certificate().getSigAlgName()).isEqualToIgnoringCase("SHA256WITHECDSA");
   }
 
   @Test public void decodeEcdsa256() throws Exception {

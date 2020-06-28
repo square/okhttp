@@ -16,6 +16,7 @@
 package okhttp3.tls
 
 import java.math.BigInteger
+import java.net.InetAddress
 import java.security.GeneralSecurityException
 import java.security.KeyFactory
 import java.security.KeyPair
@@ -24,27 +25,32 @@ import java.security.PrivateKey
 import java.security.PublicKey
 import java.security.SecureRandom
 import java.security.Security
+import java.security.Signature
 import java.security.cert.X509Certificate
 import java.security.interfaces.ECPublicKey
 import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey
 import java.security.spec.PKCS8EncodedKeySpec
-import java.util.Date
 import java.util.UUID
 import java.util.concurrent.TimeUnit
-import javax.security.auth.x500.X500Principal
 import okhttp3.internal.canParseAsIpAddress
+import okhttp3.tls.internal.der.AlgorithmIdentifier
+import okhttp3.tls.internal.der.AttributeTypeAndValue
+import okhttp3.tls.internal.der.BasicConstraints
+import okhttp3.tls.internal.der.BitString
+import okhttp3.tls.internal.der.Certificate
+import okhttp3.tls.internal.der.CertificateAdapters
+import okhttp3.tls.internal.der.CertificateAdapters.generalNameDnsName
+import okhttp3.tls.internal.der.CertificateAdapters.generalNameIpAddress
+import okhttp3.tls.internal.der.Extension
+import okhttp3.tls.internal.der.ObjectIdentifiers
+import okhttp3.tls.internal.der.TbsCertificate
+import okhttp3.tls.internal.der.Validity
 import okio.ByteString
 import okio.ByteString.Companion.decodeBase64
 import okio.ByteString.Companion.toByteString
-import org.bouncycastle.asn1.ASN1Encodable
-import org.bouncycastle.asn1.DERSequence
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo
-import org.bouncycastle.asn1.x509.BasicConstraints
-import org.bouncycastle.asn1.x509.GeneralName
-import org.bouncycastle.asn1.x509.X509Extensions
 import org.bouncycastle.jce.provider.BouncyCastleProvider
-import org.bouncycastle.x509.X509V3CertificateGenerator
 
 /**
  * A certificate and its private key. These are some properties of certificates that are used with
@@ -315,88 +321,134 @@ class HeldCertificate(
     }
 
     fun build(): HeldCertificate {
-      // Subject, public & private keys for this certificate.
-      val heldKeyPair = keyPair ?: generateKeyPair()
-      val subject = buildSubject()
+      // Subject keys & identity.
+      val subjectKeyPair = keyPair ?: generateKeyPair()
+      val subjectPublicKeyInfo = CertificateAdapters.subjectPublicKeyInfo.fromDer(
+          subjectKeyPair.public.encoded.toByteString()
+      )
+      val subject: List<List<AttributeTypeAndValue>> = subject()
 
-      // Subject, public & private keys for this certificate's signer. It may be self signed!
-      val signedByKeyPair: KeyPair
-      val signedByPrincipal: X500Principal
+      // Issuer/signer keys & identity. May be the subject if it is self-signed.
+      val issuerKeyPair: KeyPair
+      val issuer: List<List<AttributeTypeAndValue>>
       if (signedBy != null) {
-        signedByKeyPair = signedBy!!.keyPair
-        signedByPrincipal = signedBy!!.certificate.subjectX500Principal
+        issuerKeyPair = signedBy!!.keyPair
+        issuer = CertificateAdapters.rdnSequence.fromDer(
+            signedBy!!.certificate.subjectX500Principal.encoded.toByteString()
+        )
       } else {
-        signedByKeyPair = heldKeyPair
-        signedByPrincipal = subject
+        issuerKeyPair = subjectKeyPair
+        issuer = subject
+      }
+      val signatureAlgorithm = signatureAlgorithm(issuerKeyPair)
+
+      // Subset of certificate data that's covered by the signature.
+      val tbsCertificate = TbsCertificate(
+          version = 2L, // v3.
+          serialNumber = serialNumber ?: BigInteger.ONE,
+          signature = signatureAlgorithm,
+          issuer = issuer,
+          validity = validity(),
+          subject = subject,
+          subjectPublicKeyInfo = subjectPublicKeyInfo,
+          issuerUniqueID = null,
+          subjectUniqueID = null,
+          extensions = extensions()
+      )
+
+      // Signature.
+      val signature = Signature.getInstance(tbsCertificate.signatureAlgorithmName).run {
+        initSign(issuerKeyPair.private)
+        update(CertificateAdapters.tbsCertificate.toDer(tbsCertificate).toByteArray())
+        sign().toByteString()
       }
 
-      // Generate & sign the certificate.
-      val notBefore = if (this.notBefore != -1L) {
-        this.notBefore
-      } else {
-        System.currentTimeMillis()
+      // Complete signed certificate.
+      val certificate = Certificate(
+          tbsCertificate = tbsCertificate,
+          signatureAlgorithm = signatureAlgorithm,
+          signatureValue = BitString(
+              byteString = signature,
+              unusedBitsCount = 0
+          )
+      )
+
+      return HeldCertificate(subjectKeyPair, certificate.toX509Certificate())
+    }
+
+    private fun subject(): List<List<AttributeTypeAndValue>> {
+      val result = mutableListOf<List<AttributeTypeAndValue>>()
+
+      if (ou != null) {
+        result += listOf(AttributeTypeAndValue(
+            type = ObjectIdentifiers.organizationalUnitName,
+            value = ou
+        ))
       }
-      val notAfter = if (this.notAfter != -1L) {
-        this.notAfter
-      } else {
-        notBefore + DEFAULT_DURATION_MILLIS
-      }
-      val serialNumber = if (this.serialNumber != null) {
-        this.serialNumber
-      } else {
-        BigInteger.ONE
-      }
-      val signatureAlgorithm = if (signedByKeyPair.private is RSAPrivateKey) {
-        "SHA256WithRSA"
-      } else {
-        "SHA256withECDSA"
-      }
-      val generator = X509V3CertificateGenerator()
-      generator.setSerialNumber(serialNumber)
-      generator.setIssuerDN(signedByPrincipal)
-      generator.setNotBefore(Date(notBefore))
-      generator.setNotAfter(Date(notAfter))
-      generator.setSubjectDN(subject)
-      generator.setPublicKey(heldKeyPair.public)
-      generator.setSignatureAlgorithm(signatureAlgorithm)
+
+      result += listOf(AttributeTypeAndValue(
+          type = ObjectIdentifiers.commonName,
+          value = cn ?: UUID.randomUUID().toString()
+      ))
+
+      return result
+    }
+
+    private fun validity(): Validity {
+      val notBefore = if (notBefore != -1L) notBefore else System.currentTimeMillis()
+      val notAfter = if (notAfter != -1L) notAfter else notBefore + DEFAULT_DURATION_MILLIS
+      return Validity(
+          notBefore = notBefore,
+          notAfter = notAfter
+      )
+    }
+
+    private fun extensions(): MutableList<Extension> {
+      val result = mutableListOf<Extension>()
 
       if (maxIntermediateCas != -1) {
-        generator.addExtension(X509Extensions.BasicConstraints, true,
-            BasicConstraints(maxIntermediateCas))
+        result += Extension(
+            extnID = ObjectIdentifiers.basicConstraints,
+            critical = true,
+            extnValue = BasicConstraints(
+                ca = true,
+                pathLenConstraint = 3
+            )
+        )
       }
 
       if (altNames.isNotEmpty()) {
-        val encodableAltNames = arrayOfNulls<ASN1Encodable>(altNames.size)
-        for (i in 0 until altNames.size) {
-          val altName = altNames[i]
-          val tag = when {
-            altName.canParseAsIpAddress() -> GeneralName.iPAddress
-            else -> GeneralName.dNSName
+        val extensionValue = altNames.map {
+          when {
+            it.canParseAsIpAddress() -> {
+              generalNameIpAddress to InetAddress.getByName(it).address.toByteString()
+            }
+            else -> {
+              generalNameDnsName to it
+            }
           }
-          encodableAltNames[i] = GeneralName(tag, altName)
         }
-        generator.addExtension(X509Extensions.SubjectAlternativeName, true,
-            DERSequence(encodableAltNames))
+        result += Extension(
+            extnID = ObjectIdentifiers.subjectAlternativeName,
+            critical = true,
+            extnValue = extensionValue
+        )
       }
 
-      val certificate = generator.generate(signedByKeyPair.private)
-      return HeldCertificate(heldKeyPair, certificate)
+      return result
     }
 
-    private fun buildSubject(): X500Principal {
-      val name = buildString {
-        append("CN=")
-        if (cn != null) {
-          append(cn)
-        } else {
-          append(UUID.randomUUID())
-        }
-        if (ou != null) {
-          append(", OU=")
-          append(ou)
-        }
+    private fun signatureAlgorithm(signedByKeyPair: KeyPair): AlgorithmIdentifier {
+      return when (signedByKeyPair.private) {
+        is RSAPrivateKey -> AlgorithmIdentifier(
+            algorithm = ObjectIdentifiers.sha256WithRSAEncryption,
+            parameters = null
+        )
+        else -> AlgorithmIdentifier(
+            algorithm = ObjectIdentifiers.sha256withEcdsa,
+            parameters = ByteString.EMPTY
+        )
       }
-      return X500Principal(name)
     }
 
     private fun generateKeyPair(): KeyPair {
