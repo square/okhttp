@@ -16,7 +16,6 @@
 package okhttp3.tls.internal.der
 
 import java.math.BigInteger
-import okhttp3.tls.internal.der.Adapters.OCTET_STRING
 
 /**
  * ASN.1 adapters adapted from the specifications in [RFC 5280][rfc_5280].
@@ -51,8 +50,9 @@ internal object CertificateAdapters {
       time,
       decompose = {
         listOf(
-            Adapters.GENERALIZED_TIME to it.notBefore,
-            Adapters.GENERALIZED_TIME to it.notAfter
+            // TODO(jwilson): when to use GENERALIZED_TIME? It will still work in 2050.
+            Adapters.UTC_TIME to it.notBefore,
+            Adapters.UTC_TIME to it.notAfter
         )
       },
       construct = {
@@ -62,6 +62,18 @@ internal object CertificateAdapters {
         )
       }
   )
+
+  val algorithmParameters = Adapters.usingTypeHint { typeHint ->
+    when (typeHint) {
+      // This type is pretty strange. The spec says that for certain algorithms we must encode null
+      // when it is present, and for others we must omit it!
+      // https://tools.ietf.org/html/rfc4055#section-2.1
+      ObjectIdentifiers.sha256WithRSAEncryption -> Adapters.NULL
+      ObjectIdentifiers.rsaEncryption -> Adapters.NULL
+      ObjectIdentifiers.ecPublicKey -> Adapters.OBJECT_IDENTIFIER
+      else -> null
+    }
+  }
 
   /**
    * ```
@@ -73,8 +85,8 @@ internal object CertificateAdapters {
    */
   internal val algorithmIdentifier = Adapters.sequence(
       "AlgorithmIdentifier",
-      Adapters.OBJECT_IDENTIFIER,
-      Adapters.any(isOptional = true, optionalValue = null),
+      Adapters.OBJECT_IDENTIFIER.asTypeHint(),
+      algorithmParameters,
       decompose = { listOf(it.algorithm, it.parameters) },
       construct = { AlgorithmIdentifier(it[0] as String, it[1]) }
   )
@@ -126,7 +138,7 @@ internal object CertificateAdapters {
    * GeneralNames ::= SEQUENCE SIZE (1..MAX) OF GeneralName
    * ```
    */
-  internal val subjectAltName = generalName.asSequenceOf()
+  internal val subjectAlternativeName = generalName.asSequenceOf()
 
   /**
    * This uses the preceding extension ID to select which adapter to use for the extension value
@@ -134,11 +146,15 @@ internal object CertificateAdapters {
    */
   internal val extensionValue = Adapters.usingTypeHint { typeHint ->
     when (typeHint) {
-      ObjectIdentifiers.subjectAltName -> subjectAltName
+      ObjectIdentifiers.subjectAlternativeName -> subjectAlternativeName
       ObjectIdentifiers.basicConstraints -> basicConstraints
       else -> null
     }
-  }.withExplicitBox(tagClass = OCTET_STRING.tagClass, tag = OCTET_STRING.tag)
+  }.withExplicitBox(
+      tagClass = Adapters.OCTET_STRING.tagClass,
+      tag = Adapters.OCTET_STRING.tag,
+      forceConstructed = false
+  )
 
   /**
    * ```
@@ -236,7 +252,7 @@ internal object CertificateAdapters {
    */
   internal val tbsCertificate = Adapters.sequence(
       "TBSCertificate",
-      Adapters.INTEGER_AS_LONG.withTag(tag = 0L).optional(defaultValue = 0), // v1 == 0
+      Adapters.INTEGER_AS_LONG.withExplicitBox(tag = 0L).optional(defaultValue = 0), // v1 == 0
       Adapters.INTEGER_AS_BIG_INTEGER,
       algorithmIdentifier,
       name,

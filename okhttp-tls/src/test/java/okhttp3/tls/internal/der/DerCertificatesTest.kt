@@ -16,8 +16,14 @@
 package okhttp3.tls.internal.der
 
 import java.math.BigInteger
+import java.security.KeyFactory
+import java.security.spec.PKCS8EncodedKeySpec
+import java.security.spec.X509EncodedKeySpec
 import okhttp3.tls.HeldCertificate
 import okhttp3.tls.decodeCertificatePem
+import okhttp3.tls.internal.der.ObjectIdentifiers.rsaEncryption
+import okhttp3.tls.internal.der.ObjectIdentifiers.sha256WithRSAEncryption
+import okio.ByteString
 import okio.ByteString.Companion.decodeBase64
 import okio.ByteString.Companion.decodeHex
 import okio.ByteString.Companion.toByteString
@@ -25,8 +31,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
 internal class DerCertificatesTest {
-  private val rsaEncryption = "1.2.840.113549.1.1.1"
-  private val sha256WithRSAEncryption = "1.2.840.113549.1.1.11"
   private val stateOrProvince = "1.3.6.1.4.1.311.60.2.1.2"
   private val country = "1.3.6.1.4.1.311.60.2.1.3"
   private val certificateTransparencySignedCertificateTimestamps = "1.3.6.1.4.1.11129.2.4.2"
@@ -87,7 +91,7 @@ internal class DerCertificatesTest {
     assertThat(okHttpCertificate).isEqualTo(
         Certificate(
             tbsCertificate = TbsCertificate(
-                version = 131330L,
+                version = 2L, // v3.
                 serialNumber = BigInteger.ONE,
                 signature = AlgorithmIdentifier(
                     algorithm = sha256WithRSAEncryption,
@@ -202,7 +206,7 @@ internal class DerCertificatesTest {
     assertThat(okHttpCertificate).isEqualTo(
         Certificate(
             tbsCertificate = TbsCertificate(
-                version = 131330L,
+                version = 2L, // v3.
                 serialNumber = BigInteger("1372799044"),
                 signature = AlgorithmIdentifier(
                     algorithm = sha256WithRSAEncryption,
@@ -419,7 +423,7 @@ internal class DerCertificatesTest {
     assertThat(okHttpCertificate).isEqualTo(
         Certificate(
             tbsCertificate = TbsCertificate(
-                version = 131330L,
+                version = 2L, // v3.
                 serialNumber = BigInteger("253093332781973022312510445874391888413"),
                 signature = AlgorithmIdentifier(
                     algorithm = sha256WithRSAEncryption,
@@ -617,9 +621,15 @@ internal class DerCertificatesTest {
   }
 
   @Test
-  fun `basic constraints extension`() {
+  fun `certificate attributes`() {
     val certificate = HeldCertificate.Builder()
         .certificateAuthority(3)
+        .commonName("Jurassic Park")
+        .organizationalUnit("Gene Research")
+        .addSubjectAlternativeName("*.example.com")
+        .addSubjectAlternativeName("www.example.org")
+        .validityInterval(-1000L, 2000L)
+        .serialNumber(17L)
         .build()
 
     val certificateByteString = certificate.certificate.encoded.toByteString()
@@ -627,14 +637,106 @@ internal class DerCertificatesTest {
     val okHttpCertificate = CertificateAdapters.certificate
         .fromDer(certificateByteString)
 
-    val basicConstraints = okHttpCertificate.tbsCertificate.extensions.first {
-      it.extnID == basicConstraints
-    }
-
-    assertThat(basicConstraints).isEqualTo(Extension(
+    assertThat(okHttpCertificate.basicConstraints).isEqualTo(Extension(
         extnID = ObjectIdentifiers.basicConstraints,
         critical = true,
         extnValue = BasicConstraints(true, 3)
     ))
+    assertThat(okHttpCertificate.commonName).isEqualTo("Jurassic Park")
+    assertThat(okHttpCertificate.organizationalUnitName).isEqualTo("Gene Research")
+    assertThat(okHttpCertificate.subjectAlternativeNames).isEqualTo(Extension(
+        extnID = ObjectIdentifiers.subjectAlternativeName,
+        critical = true,
+        extnValue = listOf(
+            CertificateAdapters.generalNameDnsName to "*.example.com",
+            CertificateAdapters.generalNameDnsName to "www.example.org"
+        )
+    ))
+    assertThat(okHttpCertificate.tbsCertificate.validity).isEqualTo(Validity(-1000L, 2000L))
+    assertThat(okHttpCertificate.tbsCertificate.serialNumber).isEqualTo(BigInteger("17"))
+  }
+
+  @Test
+  fun `public key`() {
+    val publicKeyBytes = ("MIGJAoGBAICkUeG2stqfbyr6gyiVm5pN9YEDRXlowi+rfYGyWhC7ouW9fXAnhgShQKMOU8" +
+        "62mG3tcttSYGdsjM3z1crhQlUzpKqncrzwqbzPuAyt2t9Oib/bvjAvbl8gJH7IMRDl9RVgGYkApdkXVqgjSYigTH" +
+        "TEWxCEgnrfu/YzEkO6l3rXAgMBAAE=").decodeBase64()!!
+    val privateKeyBytes = ("MIICdQIBADANBgkqhkiG9w0BAQEFAASCAl8wggJbAgEAAoGBAICkUeG2stqfbyr6gyiVm" +
+        "5pN9YEDRXlowi+rfYGyWhC7ouW9fXAnhgShQKMOU862mG3tcttSYGdsjM3z1crhQlUzpKqncrzwqbzPuAyt2t9Oi" +
+        "b/bvjAvbl8gJH7IMRDl9RVgGYkApdkXVqgjSYigTHTEWxCEgnrfu/YzEkO6l3rXAgMBAAECgYB99mhnB6piADOud" +
+        "dXv626NzUBTr4xbsYRTgSxHzwf50oFTTBSDuW+1IOBVyTWu94SSPyt0LllPbC8Di3sQSTnVGpSqAvEXknBMzIc0U" +
+        "O74Rn9p3gZjEenPt1l77fIBa2nK06/rdsJCoE/1P1JSfM9w7LU1RsTmseYMLeJl5F79gQJBAO/BbAKqg1yzK7Vij" +
+        "ygvBoUrr+rt2lbmKgcUQ/rxu8IIQk0M/xgJqSkXDXuOnboGM7sQSKfJAZUtT7xozvLzV7ECQQCJW59w7NIM0qZ/g" +
+        "IX2gcNZr1B/V3zcGlolTDciRm+fnKGNt2EEDKnVL3swzbEfTCa48IT0QKgZJqpXZERa26UHAkBLXmiP5f5pk8F3w" +
+        "cXzAeVw06z3k1IB41Tu6MX+CyPU+TeudRlz+wV8b0zDvK+EnRKCCbptVFj1Bkt8lQ4JfcnhAkAk2Y3Gz+HySrkcT" +
+        "7Cg12M/NkdUQnZe3jr88pt/+IGNwomc6Wt/mJ4fcWONTkGMcfOZff1NQeNXDAZ6941XCsIVAkASOg02PlVHLidU7" +
+        "mIE65swMM5/RNhS4aFjez/MwxFNOHaxc9VgCwYPXCLOtdf7AVovdyG0XWgbUXH+NyxKwboE").decodeBase64()!!
+
+    val x509PublicKey = encodeKey(
+        algorithm = "1.2.840.113549.1.1.1",
+        publicKeyBytes = publicKeyBytes
+    )
+    val keyFactory = KeyFactory.getInstance("RSA")
+    val publicKey = keyFactory.generatePublic(X509EncodedKeySpec(x509PublicKey.toByteArray()))
+    val privateKey = keyFactory.generatePrivate(PKCS8EncodedKeySpec(privateKeyBytes.toByteArray()))
+
+    val certificate = HeldCertificate.Builder()
+        .keyPair(publicKey, privateKey)
+        .build()
+
+    val certificateByteString = certificate.certificate.encoded.toByteString()
+
+    val okHttpCertificate = CertificateAdapters.certificate
+        .fromDer(certificateByteString)
+
+    assertThat(okHttpCertificate.tbsCertificate.subjectPublicKeyInfo.subjectPublicKey)
+        .isEqualTo(BitString(publicKeyBytes, 0))
+  }
+
+  @Test
+  fun `reencode golden EC certificate`() {
+    val certificateByteString = ("MIIBkjCCATmgAwIBAgIBETAKBggqhkjOPQQDAjAwMRYwFAYDVQQLEw1HZW5lIFJ" +
+        "lc2VhcmNoMRYwFAYDVQQDEw1KdXJhc3NpYyBQYXJrMB4XDTY5MTIzMTIzNTk1OVoXDTcwMDEwMTAwMDAwMlowMDE" +
+        "WMBQGA1UECxMNR2VuZSBSZXNlYXJjaDEWMBQGA1UEAxMNSnVyYXNzaWMgUGFyazBZMBMGByqGSM49AgEGCCqGSM4" +
+        "9AwEHA0IABKzhiMzpN+BkUSPLIKItu6O2iao2Pd7dxrvPdIs4xv9/2tPCVgUxevZ27qRcqZOnSd31ZP6B04vkXag" +
+        "/awy2/iujRDBCMBIGA1UdEwEB/wQIMAYBAf8CAQMwLAYDVR0RAQH/BCIwIIINKi5leGFtcGxlLmNvbYIPd3d3LmV" +
+        "4YW1wbGUub3JnMAoGCCqGSM49BAMCA0cAMEQCIHzutN/uzViLBXZ0slMqO5oz7ghgBgDbgo2ZyroVeQ/KAiB6Vqo" +
+        "QXETXce4IZyv3mwGWYePlXU2yMXtezbNluXqUxQ==").decodeBase64()!!
+
+    val decoded = CertificateAdapters.certificate.fromDer(certificateByteString)
+    val encoded = CertificateAdapters.certificate.toDer(decoded)
+
+    assertThat(encoded).isEqualTo(certificateByteString)
+  }
+
+  @Test
+  fun `reencode golden RSA certificate`() {
+    val certificateByteString = ("MIIDHzCCAgegAwIBAgIBETANBgkqhkiG9w0BAQsFADAwMRYwFAYDVQQLEw1HZW5" +
+        "lIFJlc2VhcmNoMRYwFAYDVQQDEw1KdXJhc3NpYyBQYXJrMB4XDTY5MTIzMTIzNTk1OVoXDTcwMDEwMTAwMDAwMlo" +
+        "wMDEWMBQGA1UECxMNR2VuZSBSZXNlYXJjaDEWMBQGA1UEAxMNSnVyYXNzaWMgUGFyazCCASIwDQYJKoZIhvcNAQE" +
+        "BBQADggEPADCCAQoCggEBAMfROxfCzmxIX5bDSZt6hstXALVeiywFFzTLW5UI0eKSDCliojmiKBcGR5ln7gVe6/t" +
+        "me35J9n+Xe5LLmRogMo1CxCoyJxuDX4RrTpPGSepJCrvsBaMA7bQXc/9SbckPF4DYGbE5j3L6IyFU++8RKep/xjc" +
+        "FAK4yhEgriDh7Gb+sbG6Mv2qTO4p6TR9WhMKXhMgHdk1JYyaSsJ+tSruKiPVmMAcQLBWgNez6MUIC1WVDyvCvfXI" +
+        "pgsxosVCMtEDSllYe2lVta5tq1RkyzrvkazMEROK+0CVTfg8CadyBn83WTdWRsAX3qiwng8fQU3R4D9HuF/monfH" +
+        "XuHsr53J+6v8CAwEAAaNEMEIwEgYDVR0TAQH/BAgwBgEB/wIBAzAsBgNVHREBAf8EIjAggg0qLmV4YW1wbGUuY29" +
+        "tgg93d3cuZXhhbXBsZS5vcmcwDQYJKoZIhvcNAQELBQADggEBAC/+HbZBfVzazPARyI90ot3wzyEmCnXEotNhyl3" +
+        "0QHZ6UGtJwvVBqY187xg9whytqdMFmadCp8FQT/dLRUn27gtQLOju4FfA3yetJ5oWjbgkaAr7YGP7Auz3o+w51aa" +
+        "YpseFTZ/zABwnADSiHCIl35TGZJa1XOl32+RWn9VhT92zm3R12FMBovpMFaDckSJAi0jhMHm/QsFK66V0DZxdvl9" +
+        "LX/UI7q870lojkolCmDJfftAnd2eazoY/O3TqP/duRH522U+C42nXRg9y0CFgzVWmee4EzsCHhkeHUDbsijgSHd4" +
+        "vjraGi943vN59SjQrflkISUnOqChOaWP0oSztRUA=").decodeBase64()!!
+
+    val decoded = CertificateAdapters.certificate.fromDer(certificateByteString)
+    val encoded = CertificateAdapters.certificate.toDer(decoded)
+
+    assertThat(encoded).isEqualTo(certificateByteString)
+  }
+
+  /** Converts public key bytes to SubjectPublicKeyInfo bytes. */
+  private fun encodeKey(algorithm: String, publicKeyBytes: ByteString): ByteString {
+    val subjectPublicKeyInfo = SubjectPublicKeyInfo(
+        algorithm = AlgorithmIdentifier(algorithm = algorithm, parameters = null),
+        subjectPublicKey = BitString(publicKeyBytes, 0)
+    )
+    return CertificateAdapters.subjectPublicKeyInfo.toDer(subjectPublicKeyInfo)
   }
 }

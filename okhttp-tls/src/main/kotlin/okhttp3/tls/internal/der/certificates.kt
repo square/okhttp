@@ -21,7 +21,37 @@ internal data class Certificate(
   val tbsCertificate: TbsCertificate,
   val signatureAlgorithm: AlgorithmIdentifier,
   val signatureValue: BitString
-)
+) {
+  val commonName: Any?
+    get() {
+      return tbsCertificate.subject
+          .flatten()
+          .firstOrNull { it.type == ObjectIdentifiers.commonName }
+          ?.value
+    }
+
+  val organizationalUnitName: Any?
+    get() {
+      return tbsCertificate.subject
+          .flatten()
+          .firstOrNull { it.type == ObjectIdentifiers.organizationalUnitName }
+          ?.value
+    }
+
+  val subjectAlternativeNames: Extension
+    get() {
+      return tbsCertificate.extensions.first {
+        it.extnID == ObjectIdentifiers.subjectAlternativeName
+      }
+    }
+
+  val basicConstraints: Extension
+    get() {
+      return tbsCertificate.extensions.first {
+        it.extnID == ObjectIdentifiers.basicConstraints
+      }
+    }
+}
 
 internal data class TbsCertificate(
   /** Version ::= INTEGER { v1(0), v2(1), v3(2) } */

@@ -40,8 +40,11 @@ internal class DerWriter(sink: BufferedSink) {
   /** Names leading to the current location in the ASN.1 document. */
   private val path = mutableListOf<String>()
 
-  /** False unless we made a recursive call to [write] at the current stack frame. */
-  private var constructed = false
+  /**
+   * False unless we made a recursive call to [write] at the current stack frame. The explicit box
+   * adapter can clear this to synthesize non-constructed values that are embedded in octet strings.
+   */
+  var constructed = false
 
   fun write(name: String, tagClass: Int, tag: Long, block: (BufferedSink) -> Unit) {
     val constructedBit: Int

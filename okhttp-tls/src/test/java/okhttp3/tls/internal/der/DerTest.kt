@@ -732,8 +732,9 @@ internal class DerTest {
         )
     )
 
-    // Note that the parameters value is omitted from the output because it is optional.
-    assertThat(byteString).isEqualTo("300b06092a864886f70d01010b".decodeHex())
+    // Note that the parameters value is included despite being optional because it's required by
+    // https://tools.ietf.org/html/rfc4055#section-2.1
+    assertThat(byteString).isEqualTo("300d06092a864886f70d01010b0500".decodeHex())
   }
 
   @Test fun `decode bit string`() {
@@ -784,7 +785,7 @@ internal class DerTest {
         false,
         BasicConstraints(true, 4)
     )
-    val bytes = "300f0603551d13240830060101ff020104".decodeHex()
+    val bytes = "300f0603551d13040830060101ff020104".decodeHex()
 
     assertThat(CertificateAdapters.extension.toDer(extension))
         .isEqualTo(bytes)
@@ -794,14 +795,14 @@ internal class DerTest {
 
   @Test fun `extension with type hint for subject alternative names`() {
     val extension = Extension(
-        ObjectIdentifiers.subjectAltName,
+        ObjectIdentifiers.subjectAlternativeName,
         false,
         listOf(
             generalNameDnsName to "cash.app",
             generalNameDnsName to "www.cash.app"
         )
     )
-    val bytes = "30210603551d11241a30188208636173682e617070820c7777772e636173682e617070".decodeHex()
+    val bytes = "30210603551d11041a30188208636173682e617070820c7777772e636173682e617070".decodeHex()
 
     assertThat(CertificateAdapters.extension.toDer(extension))
         .isEqualTo(bytes)

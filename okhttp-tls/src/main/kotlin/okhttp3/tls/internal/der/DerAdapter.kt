@@ -69,11 +69,17 @@ internal interface DerAdapter<T> {
   @Suppress("UNCHECKED_CAST") // read() produces a single element of the expected type.
   fun withExplicitBox(
     tagClass: Int = DerHeader.TAG_CLASS_CONTEXT_SPECIFIC,
-    tag: Long
+    tag: Long,
+    forceConstructed: Boolean? = null
   ): BasicDerAdapter<T> {
     val codec = object : BasicDerAdapter.Codec<T> {
       override fun decode(reader: DerReader) = readValue(reader)
-      override fun encode(writer: DerWriter, value: T) = writeValue(writer, value)
+      override fun encode(writer: DerWriter, value: T) {
+        writeValue(writer, value)
+        if (forceConstructed != null) {
+          writer.constructed = forceConstructed
+        }
+      }
     }
 
     return BasicDerAdapter(

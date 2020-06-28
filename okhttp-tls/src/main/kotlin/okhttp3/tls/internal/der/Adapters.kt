@@ -355,8 +355,8 @@ internal object Adapters {
       ByteString::class to OCTET_STRING,
       Unit::class to NULL,
       Nothing::class to OBJECT_IDENTIFIER,
-      String::class to UTF8_STRING,
-      Nothing::class to PRINTABLE_STRING,
+      Nothing::class to UTF8_STRING,
+      String::class to PRINTABLE_STRING,
       Nothing::class to IA5_STRING,
       Nothing::class to UTC_TIME,
       Long::class to GENERALIZED_TIME
