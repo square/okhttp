@@ -49,7 +49,6 @@ import okhttp3.tls.internal.der.Validity
 import okio.ByteString
 import okio.ByteString.Companion.decodeBase64
 import okio.ByteString.Companion.toByteString
-import org.bouncycastle.asn1.pkcs.PrivateKeyInfo
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 
 /**
@@ -180,8 +179,8 @@ class HeldCertificate(
   }
 
   private fun pkcs1Bytes(): ByteString {
-    val privateKeyInfo = PrivateKeyInfo.getInstance(keyPair.private.encoded)
-    return privateKeyInfo.parsePrivateKey().toASN1Primitive().encoded.toByteString()
+    val decoded = CertificateAdapters.privateKeyInfo.fromDer(keyPair.private.encoded.toByteString())
+    return decoded.privateKey
   }
 
   /** Build a held certificate with reasonable defaults. */

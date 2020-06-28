@@ -16,6 +16,7 @@
 package okhttp3.tls.internal.der
 
 import java.math.BigInteger
+import okio.ByteString
 
 /**
  * ASN.1 adapters adapted from the specifications in [RFC 5280][rfc_5280].
@@ -318,6 +319,27 @@ internal object CertificateAdapters {
             tbsCertificate = it[0] as TbsCertificate,
             signatureAlgorithm = it[1] as AlgorithmIdentifier,
             signatureValue = it[2] as BitString
+        )
+      }
+  )
+
+  internal val privateKeyInfo = Adapters.sequence(
+      "PrivateKeyInfo",
+      Adapters.INTEGER_AS_LONG,
+      algorithmIdentifier,
+      Adapters.OCTET_STRING,
+      decompose = {
+        listOf(
+            it.version,
+            it.algorithmIdentifier,
+            it.privateKey
+        )
+      },
+      construct = {
+        PrivateKeyInfo(
+            version = it[0] as Long,
+            algorithmIdentifier = it[1] as AlgorithmIdentifier,
+            privateKey = it[2] as ByteString
         )
       }
   )
