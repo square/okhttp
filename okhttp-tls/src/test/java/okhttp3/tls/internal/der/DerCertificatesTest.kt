@@ -23,6 +23,7 @@ import okhttp3.tls.HeldCertificate
 import okhttp3.tls.decodeCertificatePem
 import okhttp3.tls.internal.der.ObjectIdentifiers.rsaEncryption
 import okhttp3.tls.internal.der.ObjectIdentifiers.sha256WithRSAEncryption
+import okio.Buffer
 import okio.ByteString
 import okio.ByteString.Companion.decodeBase64
 import okio.ByteString.Companion.decodeHex
@@ -731,6 +732,67 @@ internal class DerCertificatesTest {
     assertThat(encoded).isEqualTo(certificateByteString)
   }
 
+  @Test
+  fun `RSA issuer and signature`() {
+    val root = HeldCertificate.Builder()
+        .certificateAuthority(0)
+        .rsa2048()
+        .build()
+    val certificate = HeldCertificate.Builder()
+        .signedBy(root)
+        .rsa2048()
+        .build()
+
+    val certificateByteString = certificate.certificate.encoded.toByteString()
+
+    // Valid signature.
+    val okHttpCertificate = CertificateAdapters.certificate
+        .fromDer(certificateByteString)
+    println(okHttpCertificate)
+    assertThat(okHttpCertificate.checkSignature(root.keyPair.public)).isTrue()
+
+    // Invalid signature.
+    val okHttpCertificateWithBadSignature = okHttpCertificate.copy(
+        signatureValue = okHttpCertificate.signatureValue.copy(
+            byteString = okHttpCertificate.signatureValue.byteString.offByOneBit()
+        )
+    )
+    assertThat(okHttpCertificateWithBadSignature.checkSignature(root.keyPair.public)).isFalse()
+
+    // Wrong public key.
+    assertThat(okHttpCertificate.checkSignature(certificate.keyPair.public)).isFalse()
+  }
+
+  @Test
+  fun `EC issuer and signature`() {
+    val root = HeldCertificate.Builder()
+        .certificateAuthority(0)
+        .ecdsa256()
+        .build()
+    val certificate = HeldCertificate.Builder()
+        .signedBy(root)
+        .ecdsa256()
+        .build()
+
+    val certificateByteString = certificate.certificate.encoded.toByteString()
+
+    // Valid signature.
+    val okHttpCertificate = CertificateAdapters.certificate
+        .fromDer(certificateByteString)
+    assertThat(okHttpCertificate.checkSignature(root.keyPair.public)).isTrue()
+
+    // Invalid signature.
+    val okHttpCertificateWithBadSignature = okHttpCertificate.copy(
+        signatureValue = okHttpCertificate.signatureValue.copy(
+            byteString = okHttpCertificate.signatureValue.byteString.offByOneBit()
+        )
+    )
+    assertThat(okHttpCertificateWithBadSignature.checkSignature(root.keyPair.public)).isFalse()
+
+    // Wrong public key.
+    assertThat(okHttpCertificate.checkSignature(certificate.keyPair.public)).isFalse()
+  }
+
   /** Converts public key bytes to SubjectPublicKeyInfo bytes. */
   private fun encodeKey(algorithm: String, publicKeyBytes: ByteString): ByteString {
     val subjectPublicKeyInfo = SubjectPublicKeyInfo(
@@ -738,5 +800,13 @@ internal class DerCertificatesTest {
         subjectPublicKey = BitString(publicKeyBytes, 0)
     )
     return CertificateAdapters.subjectPublicKeyInfo.toDer(subjectPublicKeyInfo)
+  }
+
+  /** Returns a byte string that differs from this one by one bit. */
+  private fun ByteString.offByOneBit(): ByteString {
+    return Buffer()
+        .write(this, 0, size - 1)
+        .writeByte(this[size - 1].toInt() xor 1)
+        .readByteString()
   }
 }
