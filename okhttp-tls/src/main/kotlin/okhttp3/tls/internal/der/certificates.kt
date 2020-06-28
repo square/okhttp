@@ -23,6 +23,7 @@ import java.security.SignatureException
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 import okio.Buffer
+import okio.ByteString
 
 internal data class Certificate(
   val tbsCertificate: TbsCertificate,
@@ -175,3 +176,41 @@ internal data class BasicConstraints(
   val ca: Boolean,
   val pathLenConstraint: Long?
 )
+
+/**
+ * A private key. Note that this class doesn't support attributes or an embedded public key.
+ *
+ * ```
+ * Version ::= INTEGER { v1(0), v2(1) } (v1, ..., v2)
+ *
+ * PrivateKeyAlgorithmIdentifier ::= AlgorithmIdentifier
+ *
+ * PrivateKey ::= OCTET STRING
+ *
+ * OneAsymmetricKey ::= SEQUENCE {
+ *   version                   Version,
+ *   privateKeyAlgorithm       PrivateKeyAlgorithmIdentifier,
+ *   privateKey                PrivateKey,
+ *   attributes            [0] Attributes OPTIONAL,
+ *   ...,
+ *   [[2: publicKey        [1] PublicKey OPTIONAL ]],
+ *   ...
+ * }
+ *
+ * PrivateKeyInfo ::= OneAsymmetricKey
+ * ```
+ */
+internal data class PrivateKeyInfo(
+  val version: Long, // v1(0), v2(1)
+  val algorithmIdentifier: AlgorithmIdentifier, // v1(0), v2(1)
+  val privateKey: ByteString
+) {
+  // Avoid Long.hashCode(long) which isn't available on Android 5.
+  override fun hashCode(): Int {
+    var result = 0
+    result = 31 * result + version.toInt()
+    result = 31 * result + algorithmIdentifier.hashCode()
+    result = 31 * result + privateKey.hashCode()
+    return result
+  }
+}

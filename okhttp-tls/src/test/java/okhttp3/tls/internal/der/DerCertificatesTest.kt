@@ -733,6 +733,30 @@ internal class DerCertificatesTest {
   }
 
   @Test
+  fun `private key info`() {
+    val privateKeyInfoByteString = ("MIICdQIBADANBgkqhkiG9w0BAQEFAASCAl8wggJbAgEAAoGBAICkUeG2stqf" +
+        "byr6gyiVm5pN9YEDRXlowi+rfYGyWhC7ouW9fXAnhgShQKMOU862mG3tcttSYGdsjM3z1crhQlUzpKqncrzwqbzP" +
+        "uAyt2t9Oib/bvjAvbl8gJH7IMRDl9RVgGYkApdkXVqgjSYigTHTEWxCEgnrfu/YzEkO6l3rXAgMBAAECgYB99mhn" +
+        "B6piADOuddXv626NzUBTr4xbsYRTgSxHzwf50oFTTBSDuW+1IOBVyTWu94SSPyt0LllPbC8Di3sQSTnVGpSqAvEX" +
+        "knBMzIc0UO74Rn9p3gZjEenPt1l77fIBa2nK06/rdsJCoE/1P1JSfM9w7LU1RsTmseYMLeJl5F79gQJBAO/BbAKq" +
+        "g1yzK7VijygvBoUrr+rt2lbmKgcUQ/rxu8IIQk0M/xgJqSkXDXuOnboGM7sQSKfJAZUtT7xozvLzV7ECQQCJW59w" +
+        "7NIM0qZ/gIX2gcNZr1B/V3zcGlolTDciRm+fnKGNt2EEDKnVL3swzbEfTCa48IT0QKgZJqpXZERa26UHAkBLXmiP" +
+        "5f5pk8F3wcXzAeVw06z3k1IB41Tu6MX+CyPU+TeudRlz+wV8b0zDvK+EnRKCCbptVFj1Bkt8lQ4JfcnhAkAk2Y3G" +
+        "z+HySrkcT7Cg12M/NkdUQnZe3jr88pt/+IGNwomc6Wt/mJ4fcWONTkGMcfOZff1NQeNXDAZ6941XCsIVAkASOg02" +
+        "PlVHLidU7mIE65swMM5/RNhS4aFjez/MwxFNOHaxc9VgCwYPXCLOtdf7AVovdyG0XWgbUXH+NyxKwboE")
+        .decodeBase64()!!
+
+    val decoded = CertificateAdapters.privateKeyInfo.fromDer(privateKeyInfoByteString)
+
+    assertThat(decoded.version).isEqualTo(0L)
+    assertThat(decoded.algorithmIdentifier).isEqualTo(AlgorithmIdentifier(rsaEncryption, null))
+    assertThat(decoded.privateKey.size).isEqualTo(607)
+
+    val encoded = CertificateAdapters.privateKeyInfo.toDer(decoded)
+    assertThat(encoded).isEqualTo(privateKeyInfoByteString)
+  }
+
+  @Test
   fun `RSA issuer and signature`() {
     val root = HeldCertificate.Builder()
         .certificateAuthority(0)
