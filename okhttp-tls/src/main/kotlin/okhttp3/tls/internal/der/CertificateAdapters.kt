@@ -17,6 +17,7 @@ package okhttp3.tls.internal.der
 
 import java.math.BigInteger
 import okio.ByteString
+import okio.IOException
 
 /**
  * ASN.1 adapters adapted from the specifications in [RFC 5280][rfc_5280].
@@ -31,11 +32,43 @@ internal object CertificateAdapters {
    *   generalTime    GeneralizedTime
    * }
    * ```
+   *
+   * RFC 5280, section 4.1.2.5:
+   *
+   * > CAs conforming to this profile MUST always encode certificate validity dates through the year
+   * > 2049 as UTCTime; certificate validity dates in 2050 or later MUST be encoded as
+   * > GeneralizedTime.
    */
-  internal val time = Adapters.choice(
-      Adapters.UTC_TIME,
-      Adapters.GENERALIZED_TIME
-  )
+  internal val time = object : DerAdapter<Long> {
+    override fun matches(header: DerHeader): Boolean {
+      return Adapters.UTC_TIME.matches(header) || Adapters.GENERALIZED_TIME.matches(header)
+    }
+
+    override fun readValue(reader: DerReader): Long {
+      val peekHeader = reader.peekHeader()
+          ?: throw IOException("expected time but was exhausted at $reader")
+
+      return when {
+        peekHeader.tagClass == Adapters.UTC_TIME.tagClass &&
+            peekHeader.tag == Adapters.UTC_TIME.tag -> {
+          Adapters.UTC_TIME.readValue(reader)
+        }
+        peekHeader.tagClass == Adapters.GENERALIZED_TIME.tagClass &&
+            peekHeader.tag == Adapters.GENERALIZED_TIME.tag -> {
+          Adapters.GENERALIZED_TIME.readValue(reader)
+        }
+        else -> throw IOException("expected time but was $peekHeader at $reader")
+      }
+    }
+
+    override fun writeValue(writer: DerWriter, value: Long) {
+      if (value < 2_524_608_000_000L) { // 2050-01-01T00:00:00Z
+        Adapters.UTC_TIME.writeValue(writer, value)
+      } else {
+        Adapters.GENERALIZED_TIME.writeValue(writer, value)
+      }
+    }
+  }
 
   /**
    * ```
@@ -50,16 +83,12 @@ internal object CertificateAdapters {
       time,
       time,
       decompose = {
-        listOf(
-            // TODO(jwilson): when to use GENERALIZED_TIME? It will still work in 2050.
-            Adapters.UTC_TIME to it.notBefore,
-            Adapters.UTC_TIME to it.notAfter
-        )
+        listOf(it.notBefore, it.notAfter)
       },
       construct = {
         Validity(
-            notBefore = (it[0] as Pair<*, *>).second as Long,
-            notAfter = (it[1] as Pair<*, *>).second as Long
+            notBefore = it[0] as Long,
+            notAfter = it[1] as Long
         )
       }
   )
