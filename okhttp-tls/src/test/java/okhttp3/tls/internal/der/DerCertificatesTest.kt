@@ -19,6 +19,9 @@ import java.math.BigInteger
 import java.security.KeyFactory
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.TimeZone
 import okhttp3.tls.HeldCertificate
 import okhttp3.tls.decodeCertificatePem
 import okhttp3.tls.internal.der.ObjectIdentifiers.rsaEncryption
@@ -694,6 +697,37 @@ internal class DerCertificatesTest {
         .isEqualTo(BitString(publicKeyBytes, 0))
   }
 
+  @Test fun `time before 2050 uses UTC_TIME`() {
+    val utcTimeDer = "170d3439313233313233353935395a".decodeHex()
+
+    val decoded = CertificateAdapters.time.fromDer(utcTimeDer)
+    val encoded = CertificateAdapters.time.toDer(decoded)
+
+    assertThat(decoded).isEqualTo(date("2049-12-31T23:59:59.000+0000").time)
+    assertThat(encoded).isEqualTo(utcTimeDer)
+  }
+
+  @Test fun `time not before 2050 uses GENERALIZED_TIME`() {
+    val generalizedTimeDer = "180f32303530303130313030303030305a".decodeHex()
+
+    val decoded = CertificateAdapters.time.fromDer(generalizedTimeDer)
+    val encoded = CertificateAdapters.time.toDer(decoded)
+
+    assertThat(decoded).isEqualTo(date("2050-01-01T00:00:00.000+0000").time)
+    assertThat(encoded).isEqualTo(generalizedTimeDer)
+  }
+
+  /**
+   * Conforming applications MUST be able to process validity dates that are encoded in either
+   * UTCTime or GeneralizedTime.
+   */
+  @Test fun `can read GENERALIZED_TIME before 2050`() {
+    val generalizedTimeDer = "180f32303439313233313233353935395a".decodeHex()
+
+    val decoded = CertificateAdapters.time.fromDer(generalizedTimeDer)
+    assertThat(decoded).isEqualTo(date("2049-12-31T23:59:59.000+0000").time)
+  }
+
   @Test
   fun `reencode golden EC certificate`() {
     val certificateByteString = ("MIIBkjCCATmgAwIBAgIBETAKBggqhkjOPQQDAjAwMRYwFAYDVQQLEw1HZW5lIFJ" +
@@ -832,5 +866,12 @@ internal class DerCertificatesTest {
         .write(this, 0, size - 1)
         .writeByte(this[size - 1].toInt() xor 1)
         .readByteString()
+  }
+
+  private fun date(s: String): Date {
+    return SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").run {
+      timeZone = TimeZone.getTimeZone("GMT")
+      parse(s)
+    }
   }
 }

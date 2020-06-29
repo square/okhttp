@@ -824,6 +824,15 @@ internal class DerTest {
         .isEqualTo(extension)
   }
 
+  /** Tags larger than 30 are a special case. */
+  @Test fun `large tag`() {
+    val bytes = "df83fb6800".decodeHex()
+
+    val adapter = Adapters.NULL.withTag(tagClass = DerHeader.TAG_CLASS_PRIVATE, tag = 65_000L)
+    assertThat(adapter.toDer(null)).isEqualTo(bytes)
+    assertThat(adapter.fromDer(bytes)).isNull()
+  }
+
   /**
    * ```
    * Point ::= SEQUENCE {
@@ -848,9 +857,9 @@ internal class DerTest {
   }
 
   private fun date(s: String): Date {
-    val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").apply {
+    return SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").run {
       timeZone = TimeZone.getTimeZone("GMT")
+      parse(s)
     }
-    return format.parse(s)
   }
 }
