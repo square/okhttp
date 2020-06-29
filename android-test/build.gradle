@@ -21,11 +21,11 @@ android {
     exclude("META-INF/DEPENDENCIES")
   }
 
-  compileSdkVersion 29
+  compileSdkVersion 30
 
   defaultConfig {
     minSdkVersion 21
-    targetSdkVersion 29
+    targetSdkVersion 30
     versionCode 1
     versionName "1.0"
 
@@ -57,4 +57,7 @@ dependencies {
   androidTestImplementation 'org.apache.httpcomponents.client5:httpclient5:5.0'
   androidTestImplementation 'com.squareup.moshi:moshi:1.9.2'
   androidTestImplementation 'com.squareup.moshi:moshi-kotlin:1.9.2'
+
+  debugImplementation 'androidx.fragment:fragment-testing:1.2.5'
+  implementation "androidx.biometric:biometric:1.1.0-alpha01"
 }

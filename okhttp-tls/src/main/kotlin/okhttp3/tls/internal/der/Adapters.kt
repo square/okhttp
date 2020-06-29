@@ -27,6 +27,16 @@ import okio.ByteString
  * Built-in adapters for reading standard ASN.1 types.
  */
 internal object Adapters {
+  val TODO = BasicDerAdapter(
+    name = "TODO",
+    tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
+    tag = 1L,
+    codec = object : BasicDerAdapter.Codec<Boolean> {
+      override fun decode(reader: DerReader) = TODO()
+      override fun encode(writer: DerWriter, value: Boolean) = TODO()
+    }
+  )
+
   val BOOLEAN = BasicDerAdapter(
       name = "BOOLEAN",
       tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
@@ -221,6 +231,16 @@ internal object Adapters {
     return dateFormat.format(date)
   }
 
+  inline fun <reified T: Enum<T>> enumerated() = BasicDerAdapter(
+    name = "ENUMERATED",
+    tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
+    tag = 10L,
+    codec = object : BasicDerAdapter.Codec<T> {
+      override fun decode(reader: DerReader) = enumValues<T>()[reader.readLong().toInt()]
+      override fun encode(writer: DerWriter, value: T) = writer.writeLong(value.ordinal.toLong())
+    }
+  )
+
   /**
    * Returns a composite adapter for a struct or data class. This may be used for both SEQUENCE and
    * SET types.
@@ -271,6 +291,58 @@ internal object Adapters {
         tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
         tag = 16L,
         codec = codec
+    )
+  }
+
+  /**
+   * Returns a composite adapter for a struct or data class. This may be used for both SEQUENCE and
+   * SET types.
+   *
+   * The fields are specified as a list of member adapters. When decoding, a value for each
+   * non-optional member but be included in sequence.
+   *
+   * TODO: for sets, sort by tag when encoding.
+   * TODO: for set ofs, sort by encoded value when encoding.
+   */
+  fun <T> sequence(
+    name: String,
+    vararg members: Pair<Long, DerAdapter<*>>,
+    decompose: (T) -> List<*>,
+    construct: (List<*>) -> T
+  ): BasicDerAdapter<T> {
+    val codec = object : BasicDerAdapter.Codec<T> {
+      override fun decode(reader: DerReader): T {
+        return reader.withTypeHint {
+          val list = arrayOfNulls<Any?>(members.size).toMutableList()
+
+          val memberMap = members.toMap()
+
+          while (reader.hasNext()) {
+            val header = reader.peekHeader()
+
+            val adapter = memberMap[header!!.tag]
+                          ?: throw IOException("no mapping for $header at $reader")
+
+            val value = adapter.fromDer(reader)
+
+            // TODO ouch
+            list[members.indexOfFirst { it.first ==  header.tag }] = value
+          }
+
+          return@withTypeHint construct(list)
+        }
+      }
+
+      override fun encode(writer: DerWriter, value: T) {
+        TODO()
+      }
+    }
+
+    return BasicDerAdapter(
+      name = name,
+      tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
+      tag = 16L,
+      codec = codec
     )
   }
 

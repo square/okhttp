@@ -18,6 +18,7 @@
 
 package okhttp3.tls
 
+import okhttp3.tls.internal.der.CertificateAdapters
 import java.security.GeneralSecurityException
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
@@ -70,6 +71,12 @@ fun X509Certificate.certificatePem(): String {
     encodeBase64Lines(encoded.toByteString())
     append("-----END CERTIFICATE-----\n")
   }
+}
+
+fun printcert(cert: X509Certificate) {
+  val cert2 = CertificateAdapters.certificate.fromDer(cert.encoded.toByteString())
+  println(cert2.attestation)
+  println(cert2)
 }
 
 internal fun StringBuilder.encodeBase64Lines(data: ByteString) {

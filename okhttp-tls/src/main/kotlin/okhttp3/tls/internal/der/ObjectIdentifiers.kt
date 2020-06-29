@@ -25,4 +25,5 @@ internal object ObjectIdentifiers {
   const val basicConstraints = "2.5.29.19"
   const val commonName = "2.5.4.3"
   const val organizationalUnitName = "2.5.4.11"
+  const val attestation = "1.3.6.1.4.1.11129.2.1.17"
 }
