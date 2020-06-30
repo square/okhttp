@@ -93,19 +93,16 @@ internal class DerWriter(sink: BufferedSink) {
   }
 
   /**
-   * Create a new namespace for type hints. Type hints from the enclosing type are no longer usable
-   * by the current type's members.
+   * Execute [block] with a new namespace for type hints. Type hints from the enclosing type are no
+   * longer usable by the current type's members.
    */
-  fun pushTypeHint() {
+  fun <T> withTypeHint(block: () -> T): T {
     typeHintStack.add(null)
-  }
-
-  /**
-   * Remove the current namespace when it is going out of scope. Calls to [pushTypeHint] and
-   * [popTypeHint] should be balanced.
-   */
-  fun popTypeHint() {
-    typeHintStack.removeAt(typeHintStack.size - 1)
+    try {
+      return block()
+    } finally {
+      typeHintStack.removeAt(typeHintStack.size - 1)
+    }
   }
 
   private fun sink(): BufferedSink = stack[stack.size - 1]

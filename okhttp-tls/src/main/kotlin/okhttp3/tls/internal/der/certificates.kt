@@ -49,14 +49,14 @@ internal data class Certificate(
   val subjectAlternativeNames: Extension
     get() {
       return tbsCertificate.extensions.first {
-        it.extnID == ObjectIdentifiers.subjectAlternativeName
+        it.id == ObjectIdentifiers.subjectAlternativeName
       }
     }
 
   val basicConstraints: Extension
     get() {
       return tbsCertificate.extensions.first {
-        it.extnID == ObjectIdentifiers.basicConstraints
+        it.id == ObjectIdentifiers.basicConstraints
       }
     }
 
@@ -65,10 +65,11 @@ internal data class Certificate(
   fun checkSignature(issuer: PublicKey): Boolean {
     val signedData = CertificateAdapters.tbsCertificate.toDer(tbsCertificate)
 
-    val signature = Signature.getInstance(tbsCertificate.signatureAlgorithmName)
-    signature.initVerify(issuer)
-    signature.update(signedData.toByteArray())
-    return signature.verify(signatureValue.byteString.toByteArray())
+    return Signature.getInstance(tbsCertificate.signatureAlgorithmName).run {
+      initVerify(issuer)
+      update(signedData.toByteArray())
+      verify(signatureValue.byteString.toByteArray())
+    }
   }
 
   fun toX509Certificate(): X509Certificate {
@@ -88,24 +89,16 @@ internal data class Certificate(
 }
 
 internal data class TbsCertificate(
-  /** Version ::= INTEGER { v1(0), v2(1), v3(2) } */
+  /** This is a integer enum. Use 0L for v1, 1L for v2, and 2L for v3. */
   val version: Long,
-
-  /** CertificateSerialNumber ::= INTEGER */
   val serialNumber: BigInteger,
   val signature: AlgorithmIdentifier,
   val issuer: List<List<AttributeTypeAndValue>>,
   val validity: Validity,
   val subject: List<List<AttributeTypeAndValue>>,
   val subjectPublicKeyInfo: SubjectPublicKeyInfo,
-
-  /** UniqueIdentifier ::= BIT STRING */
   val issuerUniqueID: BitString?,
-
-  /** UniqueIdentifier ::= BIT STRING */
   val subjectUniqueID: BitString?,
-
-  /** Extensions ::= SEQUENCE SIZE (1..MAX) OF Extension */
   val extensions: List<Extension>
 ) {
   /**
@@ -139,11 +132,14 @@ internal data class TbsCertificate(
 }
 
 internal data class AlgorithmIdentifier(
+  /** An OID string like "1.2.840.113549.1.1.11" for sha256WithRSAEncryption. */
   val algorithm: String,
+  /** Parameters of a type implied by [algorithm]. */
   val parameters: Any?
 )
 
 internal data class AttributeTypeAndValue(
+  /** An OID string like "2.5.4.11" for organizationalUnitName. */
   val type: String,
   val value: Any?
 )
@@ -167,39 +163,19 @@ internal data class SubjectPublicKeyInfo(
 )
 
 internal data class Extension(
-  val extnID: String,
+  val id: String,
   val critical: Boolean,
-  val extnValue: Any?
+  val value: Any?
 )
 
 internal data class BasicConstraints(
+  /** True if this certificate can be used as a Certificate Authority (CA). */
   val ca: Boolean,
-  val pathLenConstraint: Long?
+  /** The maximum number of intermediate CAs between this and leaf certificates. */
+  val maxIntermediateCas: Long?
 )
 
-/**
- * A private key. Note that this class doesn't support attributes or an embedded public key.
- *
- * ```
- * Version ::= INTEGER { v1(0), v2(1) } (v1, ..., v2)
- *
- * PrivateKeyAlgorithmIdentifier ::= AlgorithmIdentifier
- *
- * PrivateKey ::= OCTET STRING
- *
- * OneAsymmetricKey ::= SEQUENCE {
- *   version                   Version,
- *   privateKeyAlgorithm       PrivateKeyAlgorithmIdentifier,
- *   privateKey                PrivateKey,
- *   attributes            [0] Attributes OPTIONAL,
- *   ...,
- *   [[2: publicKey        [1] PublicKey OPTIONAL ]],
- *   ...
- * }
- *
- * PrivateKeyInfo ::= OneAsymmetricKey
- * ```
- */
+/** A private key. Note that this class doesn't support attributes or an embedded public key. */
 internal data class PrivateKeyInfo(
   val version: Long, // v1(0), v2(1)
   val algorithmIdentifier: AlgorithmIdentifier, // v1(0), v2(1)

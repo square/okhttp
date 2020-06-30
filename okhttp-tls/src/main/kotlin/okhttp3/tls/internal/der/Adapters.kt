@@ -239,35 +239,29 @@ internal object Adapters {
   ): BasicDerAdapter<T> {
     val codec = object : BasicDerAdapter.Codec<T> {
       override fun decode(reader: DerReader): T {
-        reader.pushTypeHint()
-        try {
+        return reader.withTypeHint {
           val list = mutableListOf<Any?>()
 
           while (list.size < members.size) {
             val member = members[list.size]
-            list += member.readValue(reader)
+            list += member.fromDer(reader)
           }
 
           if (reader.hasNext()) {
-            throw IOException("unexpected ${reader.peekHeader()}")
+            throw IOException("unexpected ${reader.peekHeader()} at $reader")
           }
 
-          return construct(list)
-        } finally {
-          reader.popTypeHint()
+          return@withTypeHint construct(list)
         }
       }
 
       override fun encode(writer: DerWriter, value: T) {
         val list = decompose(value)
-        writer.pushTypeHint()
-        try {
+        writer.withTypeHint {
           for (i in list.indices) {
             val adapter = members[i] as DerAdapter<Any?>
-            adapter.writeValue(writer, list[i])
+            adapter.toDer(writer, list[i])
           }
-        } finally {
-          writer.popTypeHint()
         }
       }
     }
@@ -285,19 +279,19 @@ internal object Adapters {
     return object : DerAdapter<Pair<DerAdapter<*>, Any?>> {
       override fun matches(header: DerHeader): Boolean = true
 
-      override fun readValue(reader: DerReader): Pair<DerAdapter<*>, Any?> {
+      override fun fromDer(reader: DerReader): Pair<DerAdapter<*>, Any?> {
         val peekedHeader = reader.peekHeader()
-            ?: throw IOException("expected a value")
+            ?: throw IOException("expected a value at $reader")
 
         val choice = choices.firstOrNull { it.matches(peekedHeader) }
-            ?: throw IOException("expected a matching choice but was $peekedHeader")
+            ?: throw IOException("expected a matching choice but was $peekedHeader at $reader")
 
-        return choice to choice.readValue(reader)
+        return choice to choice.fromDer(reader)
       }
 
-      override fun writeValue(writer: DerWriter, value: Pair<DerAdapter<*>, Any?>) {
+      override fun toDer(writer: DerWriter, value: Pair<DerAdapter<*>, Any?>) {
         val (adapter, v) = value
-        (adapter as DerAdapter<Any?>).writeValue(writer, v)
+        (adapter as DerAdapter<Any?>).toDer(writer, v)
       }
 
       override fun toString() = choices.joinToString(separator = " OR ")
@@ -317,27 +311,23 @@ internal object Adapters {
     chooser: (Any?) -> DerAdapter<*>?
   ): DerAdapter<Any?> {
     return object : DerAdapter<Any?> {
-      override fun matches(header: DerHeader): Boolean = true
+      override fun matches(header: DerHeader) = true
 
-      override fun writeValue(writer: DerWriter, value: Any?) {
+      override fun toDer(writer: DerWriter, value: Any?) {
         // If we don't understand this hint, encode the body as a byte string. The byte string
         // will include a tag and length header as a prefix.
-        val adapter = chooser(writer.typeHint)
-
-        if (adapter != null) {
-          (adapter as DerAdapter<Any?>).writeValue(writer, value)
-        } else {
-          writer.writeOctetString(value as ByteString)
+        val adapter = chooser(writer.typeHint) as DerAdapter<Any?>?
+        when {
+          adapter != null -> adapter.toDer(writer, value)
+          else -> writer.writeOctetString(value as ByteString)
         }
       }
 
-      override fun readValue(reader: DerReader): Any? {
-        val adapter = chooser(reader.typeHint)
-
-        if (adapter != null) {
-          return (adapter as DerAdapter<Any?>).readValue(reader)
-        } else {
-          return reader.readOctetString()
+      override fun fromDer(reader: DerReader): Any? {
+        val adapter = chooser(reader.typeHint) as DerAdapter<Any?>?
+        return when {
+          adapter != null -> adapter.fromDer(reader)
+          else -> reader.readOctetString()
         }
       }
     }
@@ -370,7 +360,7 @@ internal object Adapters {
     return object : DerAdapter<Any?> {
       override fun matches(header: DerHeader): Boolean = true
 
-      override fun writeValue(writer: DerWriter, value: Any?) {
+      override fun toDer(writer: DerWriter, value: Any?) {
         when {
           isOptional && value == optionalValue -> {
             // Write nothing.
@@ -385,7 +375,7 @@ internal object Adapters {
           else -> {
             for ((type, adapter) in choices) {
               if (type.isInstance(value) || (value == null && type == Unit::class)) {
-                (adapter as DerAdapter<Any?>).writeValue(writer, value)
+                (adapter as DerAdapter<Any?>).toDer(writer, value)
                 return
               }
             }
@@ -393,12 +383,12 @@ internal object Adapters {
         }
       }
 
-      override fun readValue(reader: DerReader): Any? {
+      override fun fromDer(reader: DerReader): Any? {
         if (isOptional && !reader.hasNext()) return optionalValue
 
         for ((_, adapter) in choices) {
           if (adapter.matches(reader.peekHeader()!!)) {
-            return adapter.readValue(reader)
+            return adapter.fromDer(reader)
           }
         }
 

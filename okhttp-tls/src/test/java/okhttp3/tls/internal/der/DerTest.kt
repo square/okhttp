@@ -22,6 +22,10 @@ import java.util.Date
 import java.util.TimeZone
 import okhttp3.tls.internal.der.CertificateAdapters.generalNameDnsName
 import okhttp3.tls.internal.der.CertificateAdapters.generalNameIpAddress
+import okhttp3.tls.internal.der.ObjectIdentifiers.basicConstraints
+import okhttp3.tls.internal.der.ObjectIdentifiers.commonName
+import okhttp3.tls.internal.der.ObjectIdentifiers.sha256WithRSAEncryption
+import okhttp3.tls.internal.der.ObjectIdentifiers.subjectAlternativeName
 import okio.Buffer
 import okio.ByteString.Companion.decodeHex
 import okio.ByteString.Companion.encodeUtf8
@@ -695,11 +699,11 @@ internal class DerTest {
 
   @Test fun `decode object identifier`() {
     val objectIdentifier = Adapters.OBJECT_IDENTIFIER.fromDer("06092a864886f70d01010b".decodeHex())
-    assertThat(objectIdentifier).isEqualTo("1.2.840.113549.1.1.11")
+    assertThat(objectIdentifier).isEqualTo(sha256WithRSAEncryption)
   }
 
   @Test fun `encode object identifier`() {
-    val byteString = Adapters.OBJECT_IDENTIFIER.toDer("1.2.840.113549.1.1.11")
+    val byteString = Adapters.OBJECT_IDENTIFIER.toDer(sha256WithRSAEncryption)
     assertThat(byteString).isEqualTo("06092a864886f70d01010b".decodeHex())
   }
 
@@ -718,7 +722,7 @@ internal class DerTest {
         .fromDer("300d06092a864886f70d01010b0500".decodeHex())
     assertThat(algorithmIdentifier).isEqualTo(
         AlgorithmIdentifier(
-            algorithm = "1.2.840.113549.1.1.11",
+            algorithm = sha256WithRSAEncryption,
             parameters = null
         )
     )
@@ -727,7 +731,7 @@ internal class DerTest {
   @Test fun `encode sequence algorithm`() {
     val byteString = CertificateAdapters.algorithmIdentifier.toDer(
         AlgorithmIdentifier(
-            algorithm = "1.2.840.113549.1.1.11",
+            algorithm = sha256WithRSAEncryption,
             parameters = null
         )
     )
@@ -781,7 +785,7 @@ internal class DerTest {
 
   @Test fun `extension with type hint for basic constraints`() {
     val extension = Extension(
-        ObjectIdentifiers.basicConstraints,
+        basicConstraints,
         false,
         BasicConstraints(true, 4)
     )
@@ -795,7 +799,7 @@ internal class DerTest {
 
   @Test fun `extension with type hint for subject alternative names`() {
     val extension = Extension(
-        ObjectIdentifiers.subjectAlternativeName,
+        subjectAlternativeName,
         false,
         listOf(
             generalNameDnsName to "cash.app",
@@ -812,7 +816,7 @@ internal class DerTest {
 
   @Test fun `extension with unknown type hint`() {
     val extension = Extension(
-        "2.5.4.3", // common name is not an extension.
+        commonName, // common name is not an extension.
         false,
         "3006800109810109".decodeHex()
     )
