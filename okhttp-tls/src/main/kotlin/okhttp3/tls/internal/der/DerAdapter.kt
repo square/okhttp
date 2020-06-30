@@ -18,6 +18,9 @@ package okhttp3.tls.internal.der
 import okio.Buffer
 import okio.ByteString
 
+/**
+ * Encode and decode a model object like a [Long] or [Certificate] as DER bytes.
+ */
 internal interface DerAdapter<T> {
   /** Returns true if this adapter can read [header] in a choice. */
   fun matches(header: DerHeader): Boolean
@@ -34,26 +37,26 @@ internal interface DerAdapter<T> {
    *
    * If there's nothing to read and no default value, this will throw an exception.
    */
-  fun readValue(reader: DerReader): T
+  fun fromDer(reader: DerReader): T
+
+  fun fromDer(byteString: ByteString): T {
+    val buffer = Buffer().write(byteString)
+    val reader = DerReader(buffer)
+    return fromDer(reader)
+  }
 
   /**
    * Writes [value] to this adapter, unless it is the default value and can be safely omitted.
    *
    * If this does write a value, it will write a tag and a length and a full value.
    */
-  fun writeValue(writer: DerWriter, value: T)
+  fun toDer(writer: DerWriter, value: T)
 
   fun toDer(value: T): ByteString {
     val buffer = Buffer()
     val writer = DerWriter(buffer)
-    writeValue(writer, value)
+    toDer(writer, value)
     return buffer.readByteString()
-  }
-
-  fun fromDer(byteString: ByteString): T {
-    val buffer = Buffer().write(byteString)
-    val reader = DerReader(buffer)
-    return readValue(reader)
   }
 
   /**
@@ -65,6 +68,10 @@ internal interface DerAdapter<T> {
    * ```
    * [5] EXPLICIT UTF8String
    * ```
+   *
+   * @param forceConstructed non-null to set the constructed bit to the specified value, even if the
+   *     writing process sets something else. This is used to encode SEQUENCES in values that are
+   *     declared to have non-constructed values, like OCTET STRING values.
    */
   @Suppress("UNCHECKED_CAST") // read() produces a single element of the expected type.
   fun withExplicitBox(
@@ -73,9 +80,9 @@ internal interface DerAdapter<T> {
     forceConstructed: Boolean? = null
   ): BasicDerAdapter<T> {
     val codec = object : BasicDerAdapter.Codec<T> {
-      override fun decode(reader: DerReader) = readValue(reader)
+      override fun decode(reader: DerReader) = fromDer(reader)
       override fun encode(writer: DerWriter, value: T) {
-        writeValue(writer, value)
+        toDer(writer, value)
         if (forceConstructed != null) {
           writer.constructed = forceConstructed
         }
@@ -99,14 +106,14 @@ internal interface DerAdapter<T> {
     val codec = object : BasicDerAdapter.Codec<List<T>> {
       override fun encode(writer: DerWriter, value: List<T>) {
         for (v in value) {
-          writeValue(writer, v)
+          toDer(writer, v)
         }
       }
 
       override fun decode(reader: DerReader): List<T> {
         val result = mutableListOf<T>()
         while (reader.hasNext()) {
-          result += readValue(reader)
+          result += fromDer(reader)
         }
         return result
       }

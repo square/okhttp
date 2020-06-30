@@ -52,7 +52,7 @@ internal data class BasicDerAdapter<T>(
 
   override fun matches(header: DerHeader) = header.tagClass == tagClass && header.tag == tag
 
-  override fun readValue(reader: DerReader): T {
+  override fun fromDer(reader: DerReader): T {
     val peekedHeader = reader.peekHeader()
     if (peekedHeader == null || peekedHeader.tagClass != tagClass || peekedHeader.tag != tag) {
       if (isOptional) return defaultValue as T
@@ -70,7 +70,7 @@ internal data class BasicDerAdapter<T>(
     return result
   }
 
-  override fun writeValue(writer: DerWriter, value: T) {
+  override fun toDer(writer: DerWriter, value: T) {
     if (typeHint) {
       writer.typeHint = value
     }
