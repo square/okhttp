@@ -18,10 +18,10 @@
 
 package okhttp3.tls
 
-import okhttp3.tls.internal.der.CertificateAdapters
 import java.security.GeneralSecurityException
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
+import okhttp3.tls.internal.der.CertificateAdapters
 import okio.Buffer
 import okio.ByteString
 import okio.ByteString.Companion.toByteString

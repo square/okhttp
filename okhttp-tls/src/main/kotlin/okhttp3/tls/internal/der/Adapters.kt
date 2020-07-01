@@ -231,7 +231,7 @@ internal object Adapters {
     return dateFormat.format(date)
   }
 
-  inline fun <reified T: Enum<T>> enumerated() = BasicDerAdapter(
+  inline fun <reified T : Enum<T>> enumerated() = BasicDerAdapter(
     name = "ENUMERATED",
     tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
     tag = 10L,
@@ -326,7 +326,7 @@ internal object Adapters {
             val value = adapter.fromDer(reader)
 
             // TODO ouch
-            list[members.indexOfFirst { it.first ==  header.tag }] = value
+            list[members.indexOfFirst { it.first == header.tag }] = value
           }
 
           return@withTypeHint construct(list)

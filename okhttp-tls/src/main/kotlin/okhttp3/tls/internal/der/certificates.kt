@@ -184,85 +184,87 @@ internal data class Attestation(
   }
 
   data class AuthorizationList(
-//* purpose                     [1] EXPLICIT SET OF INTEGER OPTIONAL,
+// * purpose                     [1] EXPLICIT SET OF INTEGER OPTIONAL,
     val purpose: Set<Int>?,
-//* algorithm                   [2] EXPLICIT INTEGER OPTIONAL,
+// * algorithm                   [2] EXPLICIT INTEGER OPTIONAL,
     val algorithm: Long?,
-//* keySize                     [3] EXPLICIT INTEGER OPTIONAL.
+// * keySize                     [3] EXPLICIT INTEGER OPTIONAL.
     val keySize: Long?,
-//* digest                      [5] EXPLICIT SET OF INTEGER OPTIONAL,
+// * digest                      [5] EXPLICIT SET OF INTEGER OPTIONAL,
     val digest: Set<Int>?,
-//* padding                     [6] EXPLICIT SET OF INTEGER OPTIONAL,
+// * padding                     [6] EXPLICIT SET OF INTEGER OPTIONAL,
     val padding: Set<Int>?,
-//* ecCurve                     [10] EXPLICIT INTEGER OPTIONAL,
+// * ecCurve                     [10] EXPLICIT INTEGER OPTIONAL,
     val ecCurve: Long?,
-//* rsaPublicExponent           [200] EXPLICIT INTEGER OPTIONAL,
+// * rsaPublicExponent           [200] EXPLICIT INTEGER OPTIONAL,
     val rsaPublicExponent: Long?,
-//* rollbackResistance          [303] EXPLICIT NULL OPTIONAL, # KM4
+// * rollbackResistance          [303] EXPLICIT NULL OPTIONAL, # KM4
     val rollbackResistance: Any?,
-//* activeDateTime              [400] EXPLICIT INTEGER OPTIONAL
+// * activeDateTime              [400] EXPLICIT INTEGER OPTIONAL
     val activeDateTime: Long?,
-//* originationExpireDateTime   [401] EXPLICIT INTEGER OPTIONAL
+// * originationExpireDateTime   [401] EXPLICIT INTEGER OPTIONAL
     val originationExpireDateTime: Long?,
-//* usageExpireDateTime         [402] EXPLICIT INTEGER OPTIONAL
+// * usageExpireDateTime         [402] EXPLICIT INTEGER OPTIONAL
     val usageExpireDateTime: Long?,
-//* noAuthRequired              [503] EXPLICIT NULL OPTIONAL,
+// * noAuthRequired              [503] EXPLICIT NULL OPTIONAL,
     val noAuthRequired: Any?,
-//* userAuthType                [504] EXPLICIT INTEGER OPTIONAL,
+// * userAuthType                [504] EXPLICIT INTEGER OPTIONAL,
     val userAuthType: Long?,
-//* authTimeout                 [505] EXPLICIT INTEGER OPTIONAL,
+// * authTimeout                 [505] EXPLICIT INTEGER OPTIONAL,
     val authTimeout: Long?,
-//* allowWhileOnBody            [506] EXPLICIT NULL OPTIONAL,
+// * allowWhileOnBody            [506] EXPLICIT NULL OPTIONAL,
     val allowWhileOnBody: Any?,
-//* trustedUserPresenceRequired [507] EXPLICIT NULL OPTIONAL, # KM4
+// * trustedUserPresenceRequired [507] EXPLICIT NULL OPTIONAL, # KM4
     val trustedUserPresenceRequired: Any?,
-//* trustedConfirmationRequired [508] EXPLICIT NULL OPTIONAL, # KM4
+// * trustedConfirmationRequired [508] EXPLICIT NULL OPTIONAL, # KM4
     val trustedConfirmationRequired: Any?,
-//* unlockedDeviceRequired      [509] EXPLICIT NULL OPTIONAL, # KM4
+// * unlockedDeviceRequired      [509] EXPLICIT NULL OPTIONAL, # KM4
     val unlockedDeviceRequired: Any?,
-//* allApplications             [600] EXPLICIT NULL OPTIONAL,
+// * allApplications             [600] EXPLICIT NULL OPTIONAL,
     val allApplications: Any?,
-//* applicationId               [601] EXPLICIT OCTET_STRING OPTIONAL,
+// * applicationId               [601] EXPLICIT OCTET_STRING OPTIONAL,
     val applicationId: ByteString?,
-//* creationDateTime            [701] EXPLICIT INTEGER OPTIONAL,
+// * creationDateTime            [701] EXPLICIT INTEGER OPTIONAL,
     val creationDateTime: Long?,
-//* origin                      [702] EXPLICIT INTEGER OPTIONAL,
+// * origin                      [702] EXPLICIT INTEGER OPTIONAL,
     val origin: Long?,
-//* rollbackResistant           [703] EXPLICIT NULL OPTIONAL, # KM2 and KM3 only.
+// * rollbackResistant           [703] EXPLICIT NULL OPTIONAL, # KM2 and KM3 only.
     val rollbackResistant: Any?,
-//* rootOfTrust                 [704] EXPLICIT RootOfTrust OPTIONAL,
+// * rootOfTrust                 [704] EXPLICIT RootOfTrust OPTIONAL,
     val rootOfTrust: RootOfTrust?,
-//* osVersion                   [705] EXPLICIT INTEGER OPTIONAL,
+// * osVersion                   [705] EXPLICIT INTEGER OPTIONAL,
     val osVersion: Long?,
-//* osPatchLevel                [706] EXPLICIT INTEGER OPTIONAL,
+// * osPatchLevel                [706] EXPLICIT INTEGER OPTIONAL,
     val osPatchLevel: Long?,
-//* attestationApplicationId    [709] EXPLICIT OCTET_STRING OPTIONAL, # KM3
+// * attestationApplicationId    [709] EXPLICIT OCTET_STRING OPTIONAL, # KM3
     val attestationApplicationId: ByteString?,
-//* attestationIdBrand          [710] EXPLICIT OCTET_STRING OPTIONAL, # KM3
+// * attestationIdBrand          [710] EXPLICIT OCTET_STRING OPTIONAL, # KM3
     val attestationIdBrand: ByteString?,
-//* attestationIdDevice         [711] EXPLICIT OCTET_STRING OPTIONAL, # KM3
+// * attestationIdDevice         [711] EXPLICIT OCTET_STRING OPTIONAL, # KM3
     val attestationIdDevice: ByteString?,
-//* attestationIdProduct        [712] EXPLICIT OCTET_STRING OPTIONAL, # KM3
+// * attestationIdProduct        [712] EXPLICIT OCTET_STRING OPTIONAL, # KM3
     val attestationIdProduct: ByteString?,
-//* attestationIdSerial         [713] EXPLICIT OCTET_STRING OPTIONAL, # KM3
+// * attestationIdSerial         [713] EXPLICIT OCTET_STRING OPTIONAL, # KM3
     val attestationIdSerial: ByteString?,
-//* attestationIdImei           [714] EXPLICIT OCTET_STRING OPTIONAL, # KM3
+// * attestationIdImei           [714] EXPLICIT OCTET_STRING OPTIONAL, # KM3
     val attestationIdImei: ByteString?,
-//* attestationIdMeid           [715] EXPLICIT OCTET_STRING OPTIONAL, # KM3
+// * attestationIdMeid           [715] EXPLICIT OCTET_STRING OPTIONAL, # KM3
     val attestationIdMeid: ByteString?,
-//* attestationIdManufacturer   [716] EXPLICIT OCTET_STRING OPTIONAL, # KM3
+// * attestationIdManufacturer   [716] EXPLICIT OCTET_STRING OPTIONAL, # KM3
     val attestationIdManufacturer: ByteString?,
-//* attestationIdModel          [717] EXPLICIT OCTET_STRING OPTIONAL, # KM3
+// * attestationIdModel          [717] EXPLICIT OCTET_STRING OPTIONAL, # KM3
     val attestationIdModel: ByteString?,
-//* vendorPatchLevel            [718] EXPLICIT INTEGER OPTIONAL, # KM4
+// * vendorPatchLevel            [718] EXPLICIT INTEGER OPTIONAL, # KM4
     val vendorPatchLevel: Long?,
-//* bootPatchLevel              [719] EXPLICIT INTEGER OPTIONAL, # KM4
+// * bootPatchLevel              [719] EXPLICIT INTEGER OPTIONAL, # KM4
     val bootPatchLevel: Long?
   ) {
-    data class RootOfTrust(val verifiedBootKey: ByteString,
-                           val deviceLocked: Boolean,
-                           val verifiedBootState: VerifiedBootState,
-                           val verifiedBootHash: ByteString) {
+    data class RootOfTrust(
+      val verifiedBootKey: ByteString,
+      val deviceLocked: Boolean,
+      val verifiedBootState: VerifiedBootState,
+      val verifiedBootHash: ByteString
+    ) {
       enum class VerifiedBootState {
         Verified, SelfSigned, Unverified, Failed
       }

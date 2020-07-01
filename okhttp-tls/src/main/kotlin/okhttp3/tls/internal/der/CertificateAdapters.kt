@@ -15,9 +15,9 @@
  */
 package okhttp3.tls.internal.der
 
+import java.math.BigInteger
 import okio.ByteString
 import okio.IOException
-import java.math.BigInteger
 
 /**
  * ASN.1 adapters adapted from the specifications in [RFC 5280][rfc_5280].
@@ -47,7 +47,7 @@ internal object CertificateAdapters {
 
     override fun fromDer(reader: DerReader): Long {
       val peekHeader = reader.peekHeader()
-                       ?: throw IOException("expected time but was exhausted at $reader")
+        ?: throw IOException("expected time but was exhausted at $reader")
 
       return when {
         peekHeader.tagClass == Adapters.UTC_TIME.tagClass &&
@@ -593,43 +593,7 @@ internal object CertificateAdapters {
       718L to Adapters.INTEGER_AS_LONG.withTag(128, 718),
       719L to Adapters.INTEGER_AS_LONG.withTag(128, 719),
       decompose = {
-        listOf(it.purpose
-               , it.algorithm
-               , it.keySize
-               , it.digest
-               , it.padding
-               , it.ecCurve
-               , it.rsaPublicExponent
-               , it.rollbackResistance
-               , it.activeDateTime
-               , it.originationExpireDateTime
-               , it.usageExpireDateTime
-               , it.noAuthRequired
-               , it.userAuthType
-               , it.authTimeout
-               , it.allowWhileOnBody
-               , it.trustedUserPresenceRequired
-               , it.trustedConfirmationRequired
-               , it.unlockedDeviceRequired
-               , it.allApplications
-               , it.applicationId
-               , it.creationDateTime
-               , it.origin
-               , it.rollbackResistant
-               , it.rootOfTrust
-               , it.osVersion
-               , it.osPatchLevel
-               , it.attestationApplicationId
-               , it.attestationIdBrand
-               , it.attestationIdDevice
-               , it.attestationIdProduct
-               , it.attestationIdSerial
-               , it.attestationIdImei
-               , it.attestationIdMeid
-               , it.attestationIdManufacturer
-               , it.attestationIdModel
-               , it.vendorPatchLevel
-               , it.bootPatchLevel
+        listOf(it.purpose, it.algorithm, it.keySize, it.digest, it.padding, it.ecCurve, it.rsaPublicExponent, it.rollbackResistance, it.activeDateTime, it.originationExpireDateTime, it.usageExpireDateTime, it.noAuthRequired, it.userAuthType, it.authTimeout, it.allowWhileOnBody, it.trustedUserPresenceRequired, it.trustedConfirmationRequired, it.unlockedDeviceRequired, it.allApplications, it.applicationId, it.creationDateTime, it.origin, it.rollbackResistant, it.rootOfTrust, it.osVersion, it.osPatchLevel, it.attestationApplicationId, it.attestationIdBrand, it.attestationIdDevice, it.attestationIdProduct, it.attestationIdSerial, it.attestationIdImei, it.attestationIdMeid, it.attestationIdManufacturer, it.attestationIdModel, it.vendorPatchLevel, it.bootPatchLevel
         )
       },
       construct = {
