@@ -134,6 +134,10 @@ internal class DerReader(source: Source) {
         }
 
         var lengthBits = source.readByte().toLong() and 0xff
+        if (lengthBits == 0L || lengthBytes == 1 && lengthBits and 0b1000_0000 == 0L) {
+          throw ProtocolException("Invalid encoding for length")
+        }
+
         for (i in 1 until lengthBytes) {
           lengthBits = lengthBits shl 8
           lengthBits += source.readByte().toInt() and 0xff

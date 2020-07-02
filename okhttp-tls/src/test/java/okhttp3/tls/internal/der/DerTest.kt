@@ -54,6 +54,39 @@ internal class DerTest {
     assertThat(derReader.hasNext()).isFalse()
   }
 
+  @Test fun `decode length encoded with leading zero byte`() {
+    val buffer = Buffer()
+        .writeByte(0b00000010)
+        .writeByte(0b10000010)
+        .writeByte(0b00000000)
+        .writeByte(0b01111111)
+
+    val derReader = DerReader(buffer)
+
+    try {
+      derReader.read("test") {}
+      fail()
+    } catch (e: ProtocolException) {
+      assertThat(e.message).isEqualTo("Invalid encoding for length")
+    }
+  }
+
+  @Test fun `decode length not encoded in shortest form possible`() {
+    val buffer = Buffer()
+        .writeByte(0b00000010)
+        .writeByte(0b10000001)
+        .writeByte(0b01111111)
+
+    val derReader = DerReader(buffer)
+
+    try {
+      derReader.read("test") {}
+      fail()
+    } catch (e: ProtocolException) {
+      assertThat(e.message).isEqualTo("Invalid encoding for length")
+    }
+  }
+
   @Test fun `decode length equal to Long MAX_VALUE`() {
     val buffer = Buffer()
         .writeByte(0b00000010)
