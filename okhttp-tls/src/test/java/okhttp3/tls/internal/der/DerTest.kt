@@ -17,6 +17,7 @@ package okhttp3.tls.internal.der
 
 import java.math.BigInteger
 import java.net.InetAddress
+import java.net.ProtocolException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.TimeZone
@@ -33,7 +34,6 @@ import okio.ByteString.Companion.toByteString
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.fail
 import org.junit.Test
-import java.net.ProtocolException
 
 internal class DerTest {
   @Test fun `decode tag and length`() {
