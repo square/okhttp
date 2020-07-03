@@ -129,11 +129,22 @@ internal class DerReader(source: Source) {
       (length0 and 0b1000_0000) == 0b1000_0000 -> {
         // Length specified over multiple bytes.
         val lengthBytes = length0 and 0b0111_1111
+        if (lengthBytes > 8) {
+          throw ProtocolException("Length encoded with more than 8 bytes is not supported")
+        }
+
         var lengthBits = source.readByte().toLong() and 0xff
+        if (lengthBits == 0L || lengthBytes == 1 && lengthBits and 0b1000_0000 == 0L) {
+          throw ProtocolException("Invalid encoding for length")
+        }
+
         for (i in 1 until lengthBytes) {
           lengthBits = lengthBits shl 8
           lengthBits += source.readByte().toInt() and 0xff
         }
+
+        if (lengthBits < 0) throw ProtocolException("Length > Long.MAX_VALUE is not supported")
+
         lengthBits
       }
       else -> {
