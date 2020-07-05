@@ -15,7 +15,7 @@
  */
 package okhttp3.tls.internal.der
 
-import okio.IOException
+import java.net.ProtocolException
 
 /**
  * Handles basic types that always use the same tag. This supports optional types and may set a type
@@ -56,7 +56,7 @@ internal data class BasicDerAdapter<T>(
     val peekedHeader = reader.peekHeader()
     if (peekedHeader == null || peekedHeader.tagClass != tagClass || peekedHeader.tag != tag) {
       if (isOptional) return defaultValue as T
-      throw IOException("expected $this but was $peekedHeader at $reader")
+      throw ProtocolException("expected $this but was $peekedHeader at $reader")
     }
 
     val result = reader.read(name) {

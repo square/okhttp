@@ -15,8 +15,8 @@
  */
 package okhttp3.tls.internal.der
 
-import java.io.IOException
 import java.math.BigInteger
+import java.net.ProtocolException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.TimeZone
@@ -202,6 +202,31 @@ internal object Adapters {
       }
   )
 
+  /** Decodes any value without interpretation as [AnyValue]. */
+  val ANY_VALUE = object : DerAdapter<AnyValue> {
+    override fun matches(header: DerHeader) = true
+
+    override fun fromDer(reader: DerReader): AnyValue {
+      reader.read("ANY") { header ->
+        val bytes = reader.readUnknown()
+        return AnyValue(
+            tagClass = header.tagClass,
+            tag = header.tag,
+            constructed = header.constructed,
+            length = header.length,
+            bytes = bytes
+        )
+      }
+    }
+
+    override fun toDer(writer: DerWriter, value: AnyValue) {
+      writer.write("ANY", value.tagClass, value.tag) {
+        writer.writeOctetString(value.bytes)
+        writer.constructed = value.constructed
+      }
+    }
+  }
+
   internal fun parseGeneralizedTime(string: String): Long {
     val utc = TimeZone.getTimeZone("GMT")
     val dateFormat = SimpleDateFormat("yyyyMMddHHmmssXX").apply {
@@ -248,7 +273,7 @@ internal object Adapters {
           }
 
           if (reader.hasNext()) {
-            throw IOException("unexpected ${reader.peekHeader()} at $reader")
+            throw ProtocolException("unexpected ${reader.peekHeader()} at $reader")
           }
 
           return@withTypeHint construct(list)
@@ -281,10 +306,11 @@ internal object Adapters {
 
       override fun fromDer(reader: DerReader): Pair<DerAdapter<*>, Any?> {
         val peekedHeader = reader.peekHeader()
-            ?: throw IOException("expected a value at $reader")
+            ?: throw ProtocolException("expected a value at $reader")
 
         val choice = choices.firstOrNull { it.matches(peekedHeader) }
-            ?: throw IOException("expected a matching choice but was $peekedHeader at $reader")
+            ?: throw ProtocolException(
+                "expected a matching choice but was $peekedHeader at $reader")
 
         return choice to choice.fromDer(reader)
       }
@@ -349,7 +375,8 @@ internal object Adapters {
       String::class to PRINTABLE_STRING,
       Nothing::class to IA5_STRING,
       Nothing::class to UTC_TIME,
-      Long::class to GENERALIZED_TIME
+      Long::class to GENERALIZED_TIME,
+      AnyValue::class to ANY_VALUE
   )
 
   fun any(
@@ -366,12 +393,6 @@ internal object Adapters {
             // Write nothing.
           }
 
-          value is AnyValue -> {
-            writer.write("ANY", value.tagClass, value.tag) {
-              writer.writeOctetString(value.bytes)
-            }
-          }
-
           else -> {
             for ((type, adapter) in choices) {
               if (type.isInstance(value) || (value == null && type == Unit::class)) {
@@ -386,22 +407,15 @@ internal object Adapters {
       override fun fromDer(reader: DerReader): Any? {
         if (isOptional && !reader.hasNext()) return optionalValue
 
+        val peekedHeader = reader.peekHeader()
+            ?: throw ProtocolException("expected a value at $reader")
         for ((_, adapter) in choices) {
-          if (adapter.matches(reader.peekHeader()!!)) {
+          if (adapter.matches(peekedHeader)) {
             return adapter.fromDer(reader)
           }
         }
 
-        reader.read("ANY") { header ->
-          val bytes = reader.readUnknown()
-          return AnyValue(
-              tagClass = header.tagClass,
-              tag = header.tag,
-              constructed = header.constructed,
-              length = header.length,
-              bytes = bytes
-          )
-        }
+        throw ProtocolException("expected any but was $peekedHeader at $reader")
       }
     }
   }

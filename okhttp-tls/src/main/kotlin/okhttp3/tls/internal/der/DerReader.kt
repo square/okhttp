@@ -21,7 +21,6 @@ import okio.Buffer
 import okio.BufferedSource
 import okio.ByteString
 import okio.ForwardingSource
-import okio.IOException
 import okio.Source
 import okio.buffer
 
@@ -161,7 +160,7 @@ internal class DerReader(source: Source) {
    * header. It is an error to not consume a full value in [block].
    */
   internal inline fun <T> read(name: String?, block: (DerHeader) -> T): T {
-    if (!hasNext()) throw IOException("expected a value")
+    if (!hasNext()) throw ProtocolException("expected a value")
 
     val header = peekedHeader!!
     peekedHeader = null
