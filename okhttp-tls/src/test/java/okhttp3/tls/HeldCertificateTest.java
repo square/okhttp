@@ -148,18 +148,18 @@ public final class HeldCertificateTest {
         .rsa2048()
         .build();
 
-    assertThat((""
+    assertThat(""
         + "-----BEGIN CERTIFICATE-----\n"
-        + "MIIBmjCCAQOgAwIBAgIBATANBgkqhkiG9w0BAQsFADATMREwDwYDVQQDEwhjYXNo\n"
-        + "LmFwcDAeFw03MDAxMDEwMDAwMDBaFw03MDAxMDEwMDAwMDFaMBMxETAPBgNVBAMT\n"
+        + "MIIBmjCCAQOgAwIBAgIBATANBgkqhkiG9w0BAQsFADATMREwDwYDVQQDDAhjYXNo\n"
+        + "LmFwcDAeFw03MDAxMDEwMDAwMDBaFw03MDAxMDEwMDAwMDFaMBMxETAPBgNVBAMM\n"
         + "CGNhc2guYXBwMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCApFHhtrLan28q\n"
         + "+oMolZuaTfWBA0V5aMIvq32BsloQu6LlvX1wJ4YEoUCjDlPOtpht7XLbUmBnbIzN\n"
         + "89XK4UJVM6Sqp3K88Km8z7gMrdrfTom/274wL25fICR+yDEQ5fUVYBmJAKXZF1ao\n"
-        + "I0mIoEx0xFsQhIJ637v2MxJDupd61wIDAQABMA0GCSqGSIb3DQEBCwUAA4GBADam\n"
-        + "UVwKh5Ry7es3OxtY3IgQunPUoLc0Gw71gl9Z+7t2FJ5VkcI5gWfutmdxZ2bDXCI8\n"
-        + "8V0vxo1pHXnbBrnxhS/Z3TBerw8RyQqcaWOdp+pBXyIWmR+jHk9cHZCqQveTIBsY\n"
-        + "jaA9VEhgdaVhxBsT2qzUNDsXlOzGsliznDfoqETb\n"
-        + "-----END CERTIFICATE-----\n")).isEqualTo(heldCertificate.certificatePem());
+        + "I0mIoEx0xFsQhIJ637v2MxJDupd61wIDAQABMA0GCSqGSIb3DQEBCwUAA4GBADHT\n"
+        + "vcjwl9Z4I5Cb2R1y7aaa860HkY2k3ThaDK5OJt6GYqJTA9P3LtX7VwQtL1TWqXGc\n"
+        + "+OEfl3zhm0PUqcbckMzhJtqIa7NkDSjNm71BKd843pIhGcEri69DcL/cR8T+eMex\n"
+        + "hadh7aGM9OjeL8gznLeq27Ly6Dj7Vkp5OmOrSKfn\n"
+        + "-----END CERTIFICATE-----\n").isEqualTo(heldCertificate.certificatePem());
 
     assertThat((""
         + "-----BEGIN RSA PRIVATE KEY-----\n"

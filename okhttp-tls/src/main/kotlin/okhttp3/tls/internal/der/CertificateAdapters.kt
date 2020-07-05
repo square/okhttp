@@ -262,7 +262,10 @@ internal object CertificateAdapters {
   private val attributeTypeAndValue: BasicDerAdapter<AttributeTypeAndValue> = Adapters.sequence(
       "AttributeTypeAndValue",
       Adapters.OBJECT_IDENTIFIER,
-      Adapters.any(),
+      Adapters.any(
+          String::class to Adapters.UTF8_STRING,
+          Nothing::class to Adapters.PRINTABLE_STRING
+      ),
       decompose = {
         listOf(
             it.type,
