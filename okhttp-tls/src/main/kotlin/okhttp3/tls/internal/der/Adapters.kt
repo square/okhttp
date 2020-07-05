@@ -327,7 +327,7 @@ internal object Adapters {
         val adapter = chooser(reader.typeHint) as DerAdapter<Any?>?
         return when {
           adapter != null -> adapter.fromDer(reader)
-          else -> reader.readOctetString()
+          else -> reader.readUnknown()
         }
       }
     }
@@ -393,7 +393,7 @@ internal object Adapters {
         }
 
         reader.read("ANY") { header ->
-          val bytes = reader.readOctetString()
+          val bytes = reader.readUnknown()
           return AnyValue(
               tagClass = header.tagClass,
               tag = header.tag,
