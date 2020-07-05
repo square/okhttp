@@ -123,19 +123,18 @@ internal class DerReader(source: Source) {
     val length0 = source.readByte().toInt() and 0xff
     val length = when {
       length0 == 0b1000_0000 -> {
-        // Indefinite length.
-        -1L
+        throw ProtocolException("indefinite length not permitted for DER")
       }
       (length0 and 0b1000_0000) == 0b1000_0000 -> {
         // Length specified over multiple bytes.
         val lengthBytes = length0 and 0b0111_1111
         if (lengthBytes > 8) {
-          throw ProtocolException("Length encoded with more than 8 bytes is not supported")
+          throw ProtocolException("length encoded with more than 8 bytes is not supported")
         }
 
         var lengthBits = source.readByte().toLong() and 0xff
         if (lengthBits == 0L || lengthBytes == 1 && lengthBits and 0b1000_0000 == 0L) {
-          throw ProtocolException("Invalid encoding for length")
+          throw ProtocolException("invalid encoding for length")
         }
 
         for (i in 1 until lengthBytes) {
@@ -143,7 +142,7 @@ internal class DerReader(source: Source) {
           lengthBits += source.readByte().toInt() and 0xff
         }
 
-        if (lengthBits < 0) throw ProtocolException("Length > Long.MAX_VALUE is not supported")
+        if (lengthBits < 0) throw ProtocolException("length > Long.MAX_VALUE")
 
         lengthBits
       }
@@ -225,55 +224,26 @@ internal class DerReader(source: Source) {
   }
 
   fun readBitString(): BitString {
-    val buffer = Buffer()
-    val unusedBitCount = readBitString(buffer)
-    return BitString(buffer.readByteString(), unusedBitCount)
-  }
-
-  private fun readBitString(sink: Buffer): Int {
-    if (bytesLeft != -1L) {
-      val unusedBitCount = source.readByte().toInt() and 0xff
-      source.read(sink, bytesLeft)
-      return unusedBitCount
-    } else {
-      var unusedBitCount = 0
-      readAll {
-        unusedBitCount = readBitString(sink)
-      }
-      return unusedBitCount
+    if (bytesLeft == -1L || constructed) {
+      throw ProtocolException("constructed bit strings not supported for DER")
     }
+    val unusedBitCount = source.readByte().toInt() and 0xff
+    val byteString = source.readByteString(bytesLeft)
+    return BitString(byteString, unusedBitCount)
   }
 
   fun readOctetString(): ByteString {
-    val buffer = Buffer()
-    readOctetString(buffer)
-    return buffer.readByteString()
-  }
-
-  private fun readOctetString(sink: Buffer) {
-    if (bytesLeft != -1L && !constructed) {
-      source.read(sink, bytesLeft)
-    } else {
-      readAll {
-        readOctetString(sink)
-      }
+    if (bytesLeft == -1L || constructed) {
+      throw ProtocolException("constructed octet strings not supported for DER")
     }
+    return source.readByteString(bytesLeft)
   }
 
   fun readUtf8String(): String {
-    val buffer = Buffer()
-    readUtf8String(buffer)
-    return buffer.readUtf8()
-  }
-
-  private fun readUtf8String(sink: Buffer) {
-    if (bytesLeft != -1L && !constructed) {
-      source.read(sink, bytesLeft)
-    } else {
-      readAll {
-        readUtf8String(sink)
-      }
+    if (bytesLeft == -1L || constructed) {
+      throw ProtocolException("constructed strings not supported for DER")
     }
+    return source.readUtf8(bytesLeft)
   }
 
   fun readObjectIdentifier(): String {
@@ -327,6 +297,11 @@ internal class DerReader(source: Source) {
         return result + byteN
       }
     }
+  }
+
+  /** Read a value as bytes without interpretation of its contents. */
+  fun readUnknown(): ByteString {
+    return source.readByteString(bytesLeft)
   }
 
   override fun toString() = path.joinToString(separator = " / ")
