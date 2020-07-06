@@ -34,6 +34,7 @@ import okio.Buffer
 import okio.ByteString
 import okio.ByteString.Companion.decodeBase64
 import okio.ByteString.Companion.decodeHex
+import okio.ByteString.Companion.encodeUtf8
 import okio.ByteString.Companion.toByteString
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
@@ -730,9 +731,9 @@ internal class DerCertificatesTest {
 
   @Test
   fun `reencode golden EC certificate`() {
-    val certificateByteString = ("MIIBkjCCATmgAwIBAgIBETAKBggqhkjOPQQDAjAwMRYwFAYDVQQLEw1HZW5lIFJ" +
-        "lc2VhcmNoMRYwFAYDVQQDEw1KdXJhc3NpYyBQYXJrMB4XDTY5MTIzMTIzNTk1OVoXDTcwMDEwMTAwMDAwMlowMDE" +
-        "WMBQGA1UECxMNR2VuZSBSZXNlYXJjaDEWMBQGA1UEAxMNSnVyYXNzaWMgUGFyazBZMBMGByqGSM49AgEGCCqGSM4" +
+    val certificateByteString = ("MIIBkjCCATmgAwIBAgIBETAKBggqhkjOPQQDAjAwMRYwFAYDVQQLDA1HZW5lIFJ" +
+        "lc2VhcmNoMRYwFAYDVQQDDA1KdXJhc3NpYyBQYXJrMB4XDTY5MTIzMTIzNTk1OVoXDTcwMDEwMTAwMDAwMlowMDE" +
+        "WMBQGA1UECwwNR2VuZSBSZXNlYXJjaDEWMBQGA1UEAwwNSnVyYXNzaWMgUGFyazBZMBMGByqGSM49AgEGCCqGSM4" +
         "9AwEHA0IABKzhiMzpN+BkUSPLIKItu6O2iao2Pd7dxrvPdIs4xv9/2tPCVgUxevZ27qRcqZOnSd31ZP6B04vkXag" +
         "/awy2/iujRDBCMBIGA1UdEwEB/wQIMAYBAf8CAQMwLAYDVR0RAQH/BCIwIIINKi5leGFtcGxlLmNvbYIPd3d3LmV" +
         "4YW1wbGUub3JnMAoGCCqGSM49BAMCA0cAMEQCIHzutN/uzViLBXZ0slMqO5oz7ghgBgDbgo2ZyroVeQ/KAiB6Vqo" +
@@ -746,9 +747,9 @@ internal class DerCertificatesTest {
 
   @Test
   fun `reencode golden RSA certificate`() {
-    val certificateByteString = ("MIIDHzCCAgegAwIBAgIBETANBgkqhkiG9w0BAQsFADAwMRYwFAYDVQQLEw1HZW5" +
-        "lIFJlc2VhcmNoMRYwFAYDVQQDEw1KdXJhc3NpYyBQYXJrMB4XDTY5MTIzMTIzNTk1OVoXDTcwMDEwMTAwMDAwMlo" +
-        "wMDEWMBQGA1UECxMNR2VuZSBSZXNlYXJjaDEWMBQGA1UEAxMNSnVyYXNzaWMgUGFyazCCASIwDQYJKoZIhvcNAQE" +
+    val certificateByteString = ("MIIDHzCCAgegAwIBAgIBETANBgkqhkiG9w0BAQsFADAwMRYwFAYDVQQLDA1HZW5" +
+        "lIFJlc2VhcmNoMRYwFAYDVQQDDA1KdXJhc3NpYyBQYXJrMB4XDTY5MTIzMTIzNTk1OVoXDTcwMDEwMTAwMDAwMlo" +
+        "wMDEWMBQGA1UECwwNR2VuZSBSZXNlYXJjaDEWMBQGA1UEAwwNSnVyYXNzaWMgUGFyazCCASIwDQYJKoZIhvcNAQE" +
         "BBQADggEPADCCAQoCggEBAMfROxfCzmxIX5bDSZt6hstXALVeiywFFzTLW5UI0eKSDCliojmiKBcGR5ln7gVe6/t" +
         "me35J9n+Xe5LLmRogMo1CxCoyJxuDX4RrTpPGSepJCrvsBaMA7bQXc/9SbckPF4DYGbE5j3L6IyFU++8RKep/xjc" +
         "FAK4yhEgriDh7Gb+sbG6Mv2qTO4p6TR9WhMKXhMgHdk1JYyaSsJ+tSruKiPVmMAcQLBWgNez6MUIC1WVDyvCvfXI" +
@@ -849,6 +850,50 @@ internal class DerCertificatesTest {
 
     // Wrong public key.
     assertThat(okHttpCertificate.checkSignature(certificate.keyPair.public)).isFalse()
+  }
+
+  /**
+   * We don't have API support for rfc822Name values (email addresses) in the subject alternative
+   * name, but we don't crash either.
+   */
+  @Test
+  fun `unsupported general name tag`() {
+    val certificateByteString = ("MIIFEDCCA/igAwIBAgIRAJK4dE9xztDibHKj2NXZJbIwDQYJKoZIhvcNAQELBQA" +
+        "wSDELMAkGA1UEBhMCVVMxIDAeBgNVBAoTF1NlY3VyZVRydXN0IENvcnBvcmF0aW9uMRcwFQYDVQQDEw5TZWN1cmV" +
+        "UcnVzdCBDQTAeFw0xNjA5MDExNDM1MzVaFw0yNDA5MjkxNDM1MzVaMIG1MQswCQYDVQQGEwJVUzERMA8GA1UECBM" +
+        "ISWxsaW5vaXMxEDAOBgNVBAcTB0NoaWNhZ28xITAfBgNVBAoTGFRydXN0d2F2ZSBIb2xkaW5ncywgSW5jLjE9MDs" +
+        "GA1UEAxM0VHJ1c3R3YXZlIE9yZ2FuaXphdGlvbiBWYWxpZGF0aW9uIFNIQTI1NiBDQSwgTGV2ZWwgMTEfMB0GCSq" +
+        "GSIb3DQEJARYQY2FAdHJ1c3R3YXZlLmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAOPTqIZSRwS" +
+        "f47okE5omzktvKR7wgqdWzznOnpUOtgwmBPwNeCV1LSPMmlHPZxY4enTc0eyoxTxKv6g6ZUJe39U74eYnwTTT9sE" +
+        "OnvNtE1pTzuB4Uf+YOPt4hZidTe5Ba8Q6dfz/Ht/vZXCbF3JFwrXxZEPbJaICap2grIqYHax+IEIYnBQC+WKh8Ng" +
+        "Cn3LWS0j6cYSN8SEjFf5SEMGT1iNtttb/QC3JKJIeaVunUyvMfMjVFMntc7eZrFs6rp3wY1WFVI+fy17uOoUvfTH" +
+        "8bvNAESUch7FyLh2zM8FVxqilT2XygHRwZeXtxJQozcDcvh4ItPb0uz6AFIYwn/8Gzp0CAwEAAaOCAYUwggGBMBI" +
+        "GA1UdEwEB/wQIMAYBAf8CAQAwHQYDVR0OBBYEFMrOHRgDdx4c83xYsppwqAiAFvSuMA4GA1UdDwEB/wQEAwIBhjA" +
+        "yBgNVHR8EKzApMCegJaAjhiFodHRwOi8vY3JsLnRydXN0d2F2ZS5jb20vU1RDQS5jcmwwPQYDVR0gBDYwNDAyBgR" +
+        "VHSAAMCowKAYIKwYBBQUHAgEWHGh0dHBzOi8vc3NsLnRydXN0d2F2ZS5jb20vQ0EwbAYIKwYBBQUHAQEEYDBeMCU" +
+        "GCCsGAQUFBzABhhlodHRwOi8vb2NzcC50cnVzdHdhdmUuY29tMDUGCCsGAQUFBzAChilodHRwOi8vc3NsLnRydXN" +
+        "0d2F2ZS5jb20vaXNzdWVycy9TVENBLmNydDAdBgNVHSUEFjAUBggrBgEFBQcDAgYIKwYBBQUHAwEwHwYDVR0jBBg" +
+        "wFoAUQjK2FvoE/f5dS3rD/fdMQB1aQ68wGwYDVR0RBBQwEoEQY2FAdHJ1c3R3YXZlLmNvbTANBgkqhkiG9w0BAQs" +
+        "FAAOCAQEAC0OvN7/UJBcRDXchA4b2qJo7mBD05+XR96N7vucMaanz26CnUxs1o8DcBckpqyEXCxdOanIr+/UJNbB" +
+        "LXLJCzNLJEJcgV9TjbVu33eQR23yMuXD+cZsqLMF+L5IIM47W8dlwKJvMy0xs7Jb1S3NOIhcoVu+XPzRsgKv8Yi2" +
+        "B6l278RfzegiCx4vYJv0pBjFzizEiFH9bWTYIOlIJJSM57hoICgjCTS8BoEgndwWIyc/nEmlYaUwmCo9QynY+UmW" +
+        "1WPWmVITEJPMdMK6AZqvvaWmuHJ6/vURaz+Hoc5D3z0yJDDCkv52bXV04ZoF6cbcWry7JvNA+djvay/4BRR4SZQ==")
+        .decodeBase64()!!
+
+    val decoded = CertificateAdapters.certificate.fromDer(certificateByteString)
+    assertThat(decoded.subjectAlternativeNames).isEqualTo(Extension(
+        id = subjectAlternativeName,
+        critical = false,
+        value = listOf(
+            Adapters.ANY_VALUE to AnyValue(
+                tagClass = DerHeader.TAG_CLASS_CONTEXT_SPECIFIC,
+                tag = 1L,
+                constructed = false,
+                length = 16,
+                bytes = "ca@trustwave.com".encodeUtf8()
+            )
+        )
+    ))
   }
 
   /** Converts public key bytes to SubjectPublicKeyInfo bytes. */
