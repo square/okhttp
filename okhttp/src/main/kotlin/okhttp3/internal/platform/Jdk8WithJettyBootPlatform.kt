@@ -77,14 +77,14 @@ class Jdk8WithJettyBootPlatform(
    * Handle the methods of ALPN's ClientProvider and ServerProvider without a compile-time
    * dependency on those interfaces.
    */
-  private class AlpnProvider internal constructor(
+  private class AlpnProvider(
     /** This peer's supported protocols. */
     private val protocols: List<String>
   ) : InvocationHandler {
     /** Set when remote peer notifies ALPN is unsupported. */
-    internal var unsupported: Boolean = false
+    var unsupported: Boolean = false
     /** The protocol the server selected. */
-    internal var selected: String? = null
+    var selected: String? = null
 
     @Throws(Throwable::class)
     override fun invoke(proxy: Any, method: Method, args: Array<Any>?): Any? {

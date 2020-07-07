@@ -340,7 +340,7 @@ class Http1ExchangeCodec(
      * Closes the cache entry and makes the socket available for reuse. This should be invoked when
      * the end of the body has been reached.
      */
-    internal fun responseBodyComplete() {
+    fun responseBodyComplete() {
       if (state == STATE_CLOSED) return
       if (state != STATE_READING_RESPONSE_BODY) throw IllegalStateException("state: $state")
 
@@ -351,7 +351,7 @@ class Http1ExchangeCodec(
   }
 
   /** An HTTP body with a fixed length specified in advance. */
-  private inner class FixedLengthSource internal constructor(private var bytesRemaining: Long) :
+  private inner class FixedLengthSource(private var bytesRemaining: Long) :
       AbstractSource() {
 
     init {
@@ -394,7 +394,7 @@ class Http1ExchangeCodec(
   }
 
   /** An HTTP body with alternating chunk sizes and chunk bodies. */
-  private inner class ChunkedSource internal constructor(private val url: HttpUrl) :
+  private inner class ChunkedSource(private val url: HttpUrl) :
       AbstractSource() {
     private var bytesRemainingInChunk = NO_CHUNK_YET
     private var hasMoreChunks = true

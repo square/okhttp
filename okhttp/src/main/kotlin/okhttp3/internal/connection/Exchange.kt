@@ -198,7 +198,7 @@ class Exchange(
   }
 
   /** A request body that fires events when it completes. */
-  private inner class RequestBodySink internal constructor(
+  private inner class RequestBodySink(
     delegate: Sink,
     /** The exact number of bytes to be written, or -1L if that is unknown. */
     private val contentLength: Long
