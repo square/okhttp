@@ -154,7 +154,8 @@ jobs:
 
   testopenjsse:
     docker:
-      - image: circleci/openjdk:11.0.7-jdk-buster
+      # Held back to ensure a JDK 8 is in the image, which is true for stretch but not buster
+      - image: circleci/openjdk:11.0.6-jdk-stretch
 
     environment:
       JVM_OPTS: -Xmx1g
