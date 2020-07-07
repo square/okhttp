@@ -81,14 +81,9 @@ open class AndroidSocketAdapter(private val sslSocketClass: Class<in SSLSocket>)
       val alpnResult = getAlpnSelectedProtocol.invoke(sslSocket) as ByteArray?
       if (alpnResult != null) String(alpnResult, StandardCharsets.UTF_8) else null
     } catch (e: NullPointerException) {
-<<<<<<< HEAD
-      when (e.message) {
-        "ssl == null" -> null // https://github.com/square/okhttp/issues/5587
-=======
       when {
         // https://github.com/square/okhttp/issues/5587
         e.message == "ssl == null" -> null
->>>>>>> master
         else -> throw e
       }
     } catch (e: IllegalAccessException) {
