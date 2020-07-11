@@ -63,7 +63,8 @@ internal object CertificateAdapters {
     }
 
     override fun toDer(writer: DerWriter, value: Long) {
-      if (value < 2_524_608_000_000L) { // 2050-01-01T00:00:00Z
+      // [1950-01-01T00:00:00..2050-01-01T00:00:00Z)
+      if (value in -631_152_000_000L until 2_524_608_000_000L) {
         Adapters.UTC_TIME.toDer(writer, value)
       } else {
         Adapters.GENERALIZED_TIME.toDer(writer, value)
