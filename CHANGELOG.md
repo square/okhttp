@@ -466,6 +466,7 @@ _2019-06-03_
  [legacy_interceptor]: https://gist.github.com/swankjesse/80135f4e03629527e723ab3bcf64be0b
  [okhttp4_blog_post]: https://cashapp.github.io/2019-06-26/okhttp-4-goes-kotlin
  [okio_2_6_0]: https://square.github.io/okio/changelog/#version-260
+ [okio_2_7_0]: https://square.github.io/okio/changelog/#version-270
  [public_suffix]: https://publicsuffix.org/
  [upgrading_to_okhttp_4]: https://square.github.io/okhttp/upgrading_to_okhttp_4/
  [rfc_2045]: https://tools.ietf.org/html/rfc2045
