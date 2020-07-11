@@ -665,6 +665,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#activating-on-android" class="md-nav__link">
+    Activating on Android
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#http2-frame-logging" class="md-nav__link">
     HTTP/2 Frame Logging
   </a>
@@ -699,13 +706,18 @@
                 
                 <h1 id="debug-logging">Debug Logging<a class="headerlink" href="#debug-logging" title="Permanent link">&para;</a></h1>
 <p>OkHttp has internal APIs to enable debug logging. It uses the <code>java.util.logging</code> API which can be
-tricky to configure. As a shortcut, you can paste <a href="https://github.com/square/okhttp/blob/master/okhttp-testing-support/src/main/java/okhttp3/OkHttpDebugLogging.kt">OkHttpDebugLogging.kt</a>. Then enable debug logging
+tricky to configure. As a shortcut, you can paste <a href="https://github.com/square/okhttp/blob/master/okhttp-testing-support/src/main/kotlin/okhttp3/OkHttpDebugLogging.kt">OkHttpDebugLogging.kt</a>. Then enable debug logging
 for whichever features you need:</p>
 <div class="codehilite"><pre><span></span>OkHttpDebugLogging.enableHttp2()
 OkHttpDebugLogging.enableTaskRunner()
 </pre></div>
 
-<p>On Android, use <a href="https://github.com/square/okhttp/blob/master/android-test/src/androidTest/java/okhttp/android/test/OkHttpDebugLogcat.kt">OkHttpDebugLogcat.kt</a> instead. It connects OkHttp logs to Logcat in Android Studio.</p>
+<h3 id="activating-on-android">Activating on Android<a class="headerlink" href="#activating-on-android" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span>$ adb shell setprop log.tag.okhttp.Http2 DEBUG
+$ adb shell setprop log.tag.okhttp.TaskRunner DEBUG
+$ adb logcat &#39;*:E&#39; &#39;okhttp.Http2:D&#39; &#39;okhttp.TaskRunner:D&#39;
+</pre></div>
+
 <h3 id="http2-frame-logging">HTTP/2 Frame Logging<a class="headerlink" href="#http2-frame-logging" title="Permanent link">&para;</a></h3>
 <p>This logs inbound (<code>&lt;&lt;</code>) and outbound (<code>&gt;&gt;</code>) frames for HTTP/2 connections.</p>
 <div class="codehilite"><pre><span></span>[2020-01-01 00:00:00] &gt;&gt; CONNECTION 505249202a20485454502f322e300d0a0d0a534d0d0a0d0a

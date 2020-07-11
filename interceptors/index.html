@@ -888,6 +888,7 @@ Connection: keep-alive
 <li>Observe the application&rsquo;s original intent. Unconcerned with OkHttp-injected headers like <code>If-None-Match</code>.</li>
 <li>Permitted to short-circuit and not call <code>Chain.proceed()</code>.</li>
 <li>Permitted to retry and make multiple calls to <code>Chain.proceed()</code>.</li>
+<li>Can adjust Call timeouts using withConnectTimeout, withReadTimeout, withWriteTimeout.</li>
 </ul>
 <p><strong>Network Interceptors</strong></p>
 <ul>

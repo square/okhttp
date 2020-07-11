@@ -641,6 +641,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#version-480" class="md-nav__link">
+    Version 4.8.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-472" class="md-nav__link">
     Version 4.7.2
   </a>
@@ -843,6 +850,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#version-480" class="md-nav__link">
+    Version 4.8.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-472" class="md-nav__link">
     Version 4.7.2
   </a>
@@ -1009,6 +1023,37 @@
                 
                 
                 <h1 id="change-log">Change Log<a class="headerlink" href="#change-log" title="Permanent link">&para;</a></h1>
+<h2 id="version-480">Version 4.8.0<a class="headerlink" href="#version-480" title="Permanent link">&para;</a></h2>
+<p><em>2020-07-11</em></p>
+<ul>
+<li>
+<p>New: Change <code>HeldCertificate.Builder</code> to use its own ASN.1 certificate encoder. This is part
+    of our effort to remove the okhttp-tls module&rsquo;s dependency on Bouncy Castle. We think Bouncy 
+    Castle is great! But it&rsquo;s a large dependency (6.5 MiB) and its security provider feature 
+    impacts VM-wide behavior.</p>
+</li>
+<li>
+<p>New: Reduce contention for applications that make a very high number of concurrent requests.
+    Previously OkHttp used its connection pool as a lock when making changes to connections and
+    calls. With this change each connection is locked independently.</p>
+</li>
+<li>
+<p>Upgrade: [Okio 2.7.0][okio_2_7_0].</p>
+<div class="codehilite"><pre><span></span><span class="n">implementation</span><span class="p">(</span><span class="s">&quot;com.squareup.okio:okio:2.7.0&quot;</span><span class="p">)</span>
+</pre></div>
+
+</li>
+<li>
+<p>Fix: Avoid log messages like &ldquo;Didn&rsquo;t find class org.conscrypt.ConscryptHostnameVerifier&rdquo; when
+    detecting the TLS capabilities of the host platform.</p>
+</li>
+<li>
+<p>Fix: Don&rsquo;t crash in <code>HttpUrl.topPrivateDomain()</code> when the hostname is malformed. </p>
+</li>
+<li>
+<p>Fix: Don&rsquo;t attempt Brotli decompression if the response body is empty.</p>
+</li>
+</ul>
 <h2 id="version-472">Version 4.7.2<a class="headerlink" href="#version-472" title="Permanent link">&para;</a></h2>
 <p><em>2020-05-20</em></p>
 <ul>

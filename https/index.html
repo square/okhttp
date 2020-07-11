@@ -329,6 +329,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#debugging-tls-handshake-failures" class="md-nav__link">
+    Debugging TLS Handshake Failures
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#certificate-pinning-kt-java" class="md-nav__link">
     Certificate Pinning (.kt, .java)
   </a>
@@ -710,6 +717,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#debugging-tls-handshake-failures" class="md-nav__link">
+    Debugging TLS Handshake Failures
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#certificate-pinning-kt-java" class="md-nav__link">
     Certificate Pinning (.kt, .java)
   </a>
@@ -778,6 +792,22 @@
     <span class="p">.</span><span class="na">build</span><span class="p">();</span>
 </pre></div>
 
+<h3 id="debugging-tls-handshake-failures">Debugging TLS Handshake Failures<a class="headerlink" href="#debugging-tls-handshake-failures" title="Permanent link">&para;</a></h3>
+<p>The TLS handshake requires clients and servers to share a common TLS version and cipher suite. This
+depends on the JVM or Android version, OkHttp version, and web server configuration. If there is no
+common cipher suite and TLS version, your call will fail like this:</p>
+<div class="codehilite"><pre><span></span>Caused by: javax.net.ssl.SSLProtocolException: SSL handshake aborted: ssl=0x7f2719a89e80:
+    Failure in SSL library, usually a protocol error
+        error:14077410:SSL routines:SSL23_GET_SERVER_HELLO:sslv3 alert handshake 
+        failure (external/openssl/ssl/s23_clnt.c:770 0x7f2728a53ea0:0x00000000)
+    at com.android.org.conscrypt.NativeCrypto.SSL_do_handshake(Native Method)
+</pre></div>
+
+<p>You can check a web server&rsquo;s configuration using <a href="https://www.ssllabs.com/ssltest/">Qualys SSL Labs</a>. OkHttp&rsquo;s TLS
+configuration history is [tracked here][tls_configuration_history.md].</p>
+<p>Applications expected to be installed on older Android devices should consider adopting the
+<a href="https://developer.android.com/training/articles/security-gms-provider">Google Play Services’ ProviderInstaller</a>. This will increase security for users
+and increase connectivity with web servers.</p>
 <h3 id="certificate-pinning-kt-java">Certificate Pinning (<a href="https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/kt/CertificatePinning.kt">.kt</a>, <a href="https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/CertificatePinning.java">.java</a>)<a class="headerlink" href="#certificate-pinning-kt-java" title="Permanent link">&para;</a></h3>
 <p>By default, OkHttp trusts the certificate authorities of the host platform. This strategy maximizes connectivity, but it is subject to certificate authority attacks such as the <a href="http://www.computerworld.com/article/2510951/cybercrime-hacking/hackers-spied-on-300-000-iranians-using-fake-google-certificate.html">2011 DigiNotar attack</a>. It also assumes your HTTPS servers’ certificates are signed by a certificate authority.</p>
 <p>Use <a href="http://square.github.io/okhttp/4.x/okhttp/okhttp3/-certificate-pinner/">CertificatePinner</a> to restrict which certificates and certificate authorities are trusted. Certificate pinning increases security, but limits your server team’s abilities to update their TLS certificates. <strong>Do not use certificate pinning without the blessing of your server’s TLS administrator!</strong></p>

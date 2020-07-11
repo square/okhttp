@@ -775,29 +775,8 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#background" class="md-nav__link">
-    Background
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#connectionpool-realconnection-and-streamallocation" class="md-nav__link">
-    ConnectionPool, RealConnection, and StreamAllocation
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#locks_1" class="md-nav__link">
-    Locks
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#connectionpool" class="md-nav__link">
-    ConnectionPool
+  <a href="#per-connection-locks" class="md-nav__link">
+    Per-Connection Locks
   </a>
   
 </li>
@@ -861,20 +840,28 @@
 <p>You&rsquo;re allowed to take the Http2Connection lock while holding the Http2Writer lock. But not vice-versa. Because taking the Http2Writer lock can block.</p>
 <p>This is necessary for bookkeeping when creating new streams. Correct framing requires that stream IDs are sequential on the socket, so we need to bundle assigning the ID with sending the <code>SYN_STREAM</code> frame.</p>
 <h2 id="connection-pool">Connection Pool<a class="headerlink" href="#connection-pool" title="Permanent link">&para;</a></h2>
-<h3 id="background">Background<a class="headerlink" href="#background" title="Permanent link">&para;</a></h3>
 <p>A primary responsibility for any HTTP client is to efficiently manage network connections. Creating and establishing new connections require a fair amount of overhead and added latency. OkHttp will make every effort to reuse existing connections to avoid this overhead and added latency.</p>
-<p>Every OkHttpClient uses a connection pool. Its job is to maintain a reference to all open connections. When an HTTP request is started, OkHttp will attempt to reuse an existing connection from the pool. If there are no existing connections, a new one is created and put into the connection pool. For http/2, the connection can be reused immediately. For http/1, the request must be completed before it can be reused.</p>
-<p>Since HTTP requests frequently happen in parallel, the connection pool implementation must be thread-safe.</p>
-<h3 id="connectionpool-realconnection-and-streamallocation">ConnectionPool, RealConnection, and StreamAllocation<a class="headerlink" href="#connectionpool-realconnection-and-streamallocation" title="Permanent link">&para;</a></h3>
-<p>The primary classes involved with establishing, sharing and terminating connections are ConnectionPool, RealConnection and StreamAllocation.</p>
-<p><strong>ConnectionPool</strong>: Manages reuse of HTTP and HTTP/2 connections for reduced latency. Every OkHttpClient has one, and its lifetime spans the lifetime of the OkHttpClient.</p>
-<p><strong>RealConnection</strong>: The socket and streams of an HTTP and HTTP/2 connection. These are created on demand to fulfill HTTP requests. They may be reused for many HTTP request/response exchanges. Their lifetime is typically shorter than ConnectionPool.</p>
-<p><strong>StreamAllocation</strong>: Coordinates the relationship between connections, streams and calls. These are created for a single HTTP request/response exchange. Their lifetime is typically shorter than RealConnection.</p>
-<h3 id="locks_1">Locks<a class="headerlink" href="#locks_1" title="Permanent link">&para;</a></h3>
-<p>A single lock is used to synchronize and guard the state of ConnectionPool, RealConnection and StreamAllocation.</p>
-<h3 id="connectionpool">ConnectionPool<a class="headerlink" href="#connectionpool" title="Permanent link">&para;</a></h3>
-<p>The fields in ConnectionPool, RealConnection and StreamAllocation are all guarded by the connection pool instance. This lock is never held while doing I/O (even closing a socket) to prevent contention.</p>
-<p>A single lock is preferred to avoid deadlock scenarios and the added overhead of aggregate lock/unlock that would occur if multiple locks were used.</p>
+<p>Every OkHttpClient uses a connection pool. Its job is to maintain a reference to all open connections. When an HTTP request is started, OkHttp will attempt to reuse an existing connection from the pool. If there are no existing connections, a new one is created and put into the connection pool. For HTTP/2, the connection can be reused immediately. For HTTP/1, the request must be completed before it can be reused.</p>
+<p>Since HTTP requests frequently happen in parallel, connection pooling must be thread-safe.</p>
+<p>These are the primary classes involved with establishing, sharing, and terminating connections:</p>
+<ul>
+<li>
+<p><strong>RealConnectionPool</strong> manages reuse of HTTP and HTTP/2 connections for reduced latency. Every OkHttpClient has one, and its lifetime spans the lifetime of the OkHttpClient.</p>
+</li>
+<li>
+<p><strong>RealConnection</strong> is the socket and streams of an HTTP/1 or HTTP/2 connection. These are created on demand to fulfill HTTP requests. They may be reused for many HTTP request/response exchanges. Their lifetime is typically shorter than a connection pool.</p>
+</li>
+<li>
+<p><strong>Exchange</strong> carries a single HTTP request/response pair.</p>
+</li>
+<li>
+<p><strong>ExchangeFinder</strong> chooses which connection carries each exchange. Where possible it will use the same connection for all exchanges in a single call. It prefers reusing pooled connections over establishing new connections.      </p>
+</li>
+</ul>
+<h4 id="per-connection-locks">Per-Connection Locks<a class="headerlink" href="#per-connection-locks" title="Permanent link">&para;</a></h4>
+<p>Each connection has its own lock. The connections in the pool are all in a <code>ConcurrentLinkedQueue</code>. Due to data races, iterators of this queue may return removed connections. Callers must check the connection&rsquo;s <code>noNewExchanges</code> property before using connections from the pool.</p>
+<p>The connection lock is never held while doing I/O (even closing a socket) to prevent contention.</p>
+<p>A lock-per-connection is used to maximize concurrency.</p>
                 
                   
                 
