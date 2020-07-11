@@ -729,6 +729,16 @@ internal class DerCertificatesTest {
     assertThat(decoded).isEqualTo(date("2049-12-31T23:59:59.000+0000").time)
   }
 
+  @Test fun `time before 1950 uses GENERALIZED_TIME`() {
+    val generalizedTimeDer = "180f31393439313233313233353935395a".decodeHex()
+
+    val decoded = CertificateAdapters.time.fromDer(generalizedTimeDer)
+    val encoded = CertificateAdapters.time.toDer(decoded)
+
+    assertThat(decoded).isEqualTo(date("1949-12-31T23:59:59.000+0000").time)
+    assertThat(encoded).isEqualTo(generalizedTimeDer)
+  }
+
   @Test
   fun `reencode golden EC certificate`() {
     val certificateByteString = ("MIIBkjCCATmgAwIBAgIBETAKBggqhkjOPQQDAjAwMRYwFAYDVQQLDA1HZW5lIFJ" +

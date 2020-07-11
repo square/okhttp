@@ -102,9 +102,8 @@ internal class DerTest {
 
     val derReader = DerReader(buffer)
 
-    derReader.read("test") { header ->
-      assertThat(header.length).isEqualTo(Long.MAX_VALUE)
-    }
+    val header = derReader.readHeader()
+    assertThat(header.length).isEqualTo(Long.MAX_VALUE)
   }
 
   @Test fun `decode length overflowing Long`() {
@@ -960,6 +959,28 @@ internal class DerTest {
     val adapter = Adapters.NULL.withTag(tagClass = DerHeader.TAG_CLASS_PRIVATE, tag = 65_000L)
     assertThat(adapter.toDer(null)).isEqualTo(bytes)
     assertThat(adapter.fromDer(bytes)).isNull()
+  }
+
+  /** Make the claimed length of a nested object larger than the enclosing object. */
+  @Test fun `large object inside small object`() {
+    val bytes = "301b300d06092a864886f70d010101050003847fffffff000504030201".decodeHex()
+    try {
+      CertificateAdapters.subjectPublicKeyInfo.fromDer(bytes)
+      fail()
+    } catch (expected: ProtocolException) {
+      assertThat(expected.message).isEqualTo("enclosed object too large")
+    }
+  }
+
+  /** Object identifiers are nominally self-delimiting. Outrun the limit with one. */
+  @Test fun `variable length long outruns limit`() {
+    val bytes = "060229ffffff7f".decodeHex()
+    try {
+      Adapters.OBJECT_IDENTIFIER.fromDer(bytes)
+      fail()
+    } catch (expected: ProtocolException) {
+      assertThat(expected.message).isEqualTo("unexpected byte count at OBJECT IDENTIFIER")
+    }
   }
 
   /**
