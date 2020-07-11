@@ -17,6 +17,7 @@ package okhttp3.tls.internal.der
 
 import java.math.BigInteger
 import java.net.ProtocolException
+import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.TimeZone
@@ -168,8 +169,12 @@ internal object Adapters {
       set2DigitYearStart(Date(-631152000000L)) // 1950-01-01T00:00:00Z.
     }
 
-    val parsed = dateFormat.parse(string)
-    return parsed.time
+    try {
+      val parsed = dateFormat.parse(string)
+      return parsed.time
+    } catch (e: ParseException) {
+      throw ProtocolException("Failed to parse UTCTime $string")
+    }
   }
 
   internal fun formatUtcTime(date: Long): String {
@@ -233,8 +238,12 @@ internal object Adapters {
       timeZone = utc
     }
 
-    val parsed = dateFormat.parse(string)
-    return parsed.time
+    try {
+      val parsed = dateFormat.parse(string)
+      return parsed.time
+    } catch (e: ParseException) {
+      throw ProtocolException("Failed to parse GeneralizedTime $string")
+    }
   }
 
   internal fun formatGeneralizedTime(date: Long): String {
