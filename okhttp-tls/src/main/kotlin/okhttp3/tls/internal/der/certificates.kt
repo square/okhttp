@@ -46,9 +46,9 @@ internal data class Certificate(
           ?.value
     }
 
-  val subjectAlternativeNames: Extension
+  val subjectAlternativeNames: Extension?
     get() {
-      return tbsCertificate.extensions.first {
+      return tbsCertificate.extensions.firstOrNull {
         it.id == ObjectIdentifiers.subjectAlternativeName
       }
     }
