@@ -662,6 +662,25 @@ internal class DerCertificatesTest {
   }
 
   @Test
+  fun `missing subject alternative names`() {
+    val certificate = HeldCertificate.Builder()
+        .certificateAuthority(3)
+        .commonName("Jurassic Park")
+        .organizationalUnit("Gene Research")
+        .validityInterval(-1000L, 2000L)
+        .serialNumber(17L)
+        .build()
+
+    val certificateByteString = certificate.certificate.encoded.toByteString()
+
+    val okHttpCertificate = CertificateAdapters.certificate
+        .fromDer(certificateByteString)
+
+    assertThat(okHttpCertificate.commonName).isEqualTo("Jurassic Park")
+    assertThat(okHttpCertificate.subjectAlternativeNames).isNull()
+  }
+
+  @Test
   fun `public key`() {
     val publicKeyBytes = ("MIGJAoGBAICkUeG2stqfbyr6gyiVm5pN9YEDRXlowi+rfYGyWhC7ouW9fXAnhgShQKMOU8" +
         "62mG3tcttSYGdsjM3z1crhQlUzpKqncrzwqbzPuAyt2t9Oib/bvjAvbl8gJH7IMRDl9RVgGYkApdkXVqgjSYigTH" +
