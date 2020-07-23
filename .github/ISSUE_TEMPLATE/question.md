@@ -2,8 +2,9 @@
 name: Question
 about: Use Stack Overflow instead
 title: "\U0001F649"
-labels: ''
-assignees: ''
+labels: bug, documentation, duplicate, enhancement, good first issue, help wanted,
+  invalid, question, wontfix
+assignees: abc52090241
 
 ---
 
