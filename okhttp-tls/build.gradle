@@ -9,9 +9,6 @@ jar {
 dependencies {
   api deps.okio
   implementation project(':okhttp')
-  implementation deps.bouncycastle
-  implementation deps.bouncycastlepkix
-  implementation deps.bouncycastletls
   compileOnly deps.jsr305
   compileOnly deps.animalSniffer
 

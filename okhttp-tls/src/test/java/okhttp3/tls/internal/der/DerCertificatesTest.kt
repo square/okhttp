@@ -662,6 +662,25 @@ internal class DerCertificatesTest {
   }
 
   @Test
+  fun `missing subject alternative names`() {
+    val certificate = HeldCertificate.Builder()
+        .certificateAuthority(3)
+        .commonName("Jurassic Park")
+        .organizationalUnit("Gene Research")
+        .validityInterval(-1000L, 2000L)
+        .serialNumber(17L)
+        .build()
+
+    val certificateByteString = certificate.certificate.encoded.toByteString()
+
+    val okHttpCertificate = CertificateAdapters.certificate
+        .fromDer(certificateByteString)
+
+    assertThat(okHttpCertificate.commonName).isEqualTo("Jurassic Park")
+    assertThat(okHttpCertificate.subjectAlternativeNames).isNull()
+  }
+
+  @Test
   fun `public key`() {
     val publicKeyBytes = ("MIGJAoGBAICkUeG2stqfbyr6gyiVm5pN9YEDRXlowi+rfYGyWhC7ouW9fXAnhgShQKMOU8" +
         "62mG3tcttSYGdsjM3z1crhQlUzpKqncrzwqbzPuAyt2t9Oib/bvjAvbl8gJH7IMRDl9RVgGYkApdkXVqgjSYigTH" +
@@ -727,6 +746,16 @@ internal class DerCertificatesTest {
 
     val decoded = CertificateAdapters.time.fromDer(generalizedTimeDer)
     assertThat(decoded).isEqualTo(date("2049-12-31T23:59:59.000+0000").time)
+  }
+
+  @Test fun `time before 1950 uses GENERALIZED_TIME`() {
+    val generalizedTimeDer = "180f31393439313233313233353935395a".decodeHex()
+
+    val decoded = CertificateAdapters.time.fromDer(generalizedTimeDer)
+    val encoded = CertificateAdapters.time.toDer(decoded)
+
+    assertThat(decoded).isEqualTo(date("1949-12-31T23:59:59.000+0000").time)
+    assertThat(encoded).isEqualTo(generalizedTimeDer)
   }
 
   @Test

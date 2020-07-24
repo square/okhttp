@@ -1,6 +1,33 @@
 Change Log
 ==========
 
+## Version 4.8.0
+
+_2020-07-11_
+
+ *  New: Change `HeldCertificate.Builder` to use its own ASN.1 certificate encoder. This is part
+    of our effort to remove the okhttp-tls module's dependency on Bouncy Castle. We think Bouncy 
+    Castle is great! But it's a large dependency (6.5 MiB) and its security provider feature 
+    impacts VM-wide behavior.
+
+ *  New: Reduce contention for applications that make a very high number of concurrent requests.
+    Previously OkHttp used its connection pool as a lock when making changes to connections and
+    calls. With this change each connection is locked independently.
+    
+ *  Upgrade: [Okio 2.7.0][okio_2_7_0].
+
+    ```kotlin
+    implementation("com.squareup.okio:okio:2.7.0")
+    ```
+
+ *  Fix: Avoid log messages like "Didn't find class org.conscrypt.ConscryptHostnameVerifier" when
+    detecting the TLS capabilities of the host platform.
+    
+ *  Fix: Don't crash in `HttpUrl.topPrivateDomain()` when the hostname is malformed. 
+
+ *  Fix: Don't attempt Brotli decompression if the response body is empty.
+
+
 ## Version 4.7.2
 
 _2020-05-20_
@@ -439,6 +466,7 @@ _2019-06-03_
  [legacy_interceptor]: https://gist.github.com/swankjesse/80135f4e03629527e723ab3bcf64be0b
  [okhttp4_blog_post]: https://cashapp.github.io/2019-06-26/okhttp-4-goes-kotlin
  [okio_2_6_0]: https://square.github.io/okio/changelog/#version-260
+ [okio_2_7_0]: https://square.github.io/okio/changelog/#version-270
  [public_suffix]: https://publicsuffix.org/
  [upgrading_to_okhttp_4]: https://square.github.io/okhttp/upgrading_to_okhttp_4/
  [rfc_2045]: https://tools.ietf.org/html/rfc2045

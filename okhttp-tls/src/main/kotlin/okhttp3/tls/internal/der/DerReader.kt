@@ -99,7 +99,7 @@ internal class DerReader(source: Source) {
    * Consume the next header in the stream and return it. If there is no header to read because we
    * have reached a limit, this returns [END_OF_DATA].
    */
-  private fun readHeader(): DerHeader {
+  internal fun readHeader(): DerHeader {
     require(peekedHeader == null)
 
     // We've hit a local limit.
@@ -168,22 +168,28 @@ internal class DerReader(source: Source) {
     val pushedLimit = limit
     val pushedConstructed = constructed
 
-    limit = if (header.length != -1L) byteCount + header.length else -1L
+    val newLimit = if (header.length != -1L) byteCount + header.length else -1L
+    if (pushedLimit != -1L && newLimit > pushedLimit) {
+      throw ProtocolException("enclosed object too large")
+    }
+
+    limit = newLimit
     constructed = header.constructed
     if (name != null) path += name
     try {
-      return block(header)
+      val result = block(header)
+
+      // The object processed bytes beyond its range.
+      if (newLimit != -1L && byteCount > newLimit) {
+        throw ProtocolException("unexpected byte count at $this")
+      }
+
+      return result
     } finally {
       peekedHeader = null
       limit = pushedLimit
       constructed = pushedConstructed
       if (name != null) path.removeAt(path.size - 1)
-    }
-  }
-
-  private inline fun readAll(block: (DerHeader) -> Unit) {
-    while (hasNext()) {
-      read(null, block)
     }
   }
 
@@ -225,6 +231,9 @@ internal class DerReader(source: Source) {
   fun readBitString(): BitString {
     if (bytesLeft == -1L || constructed) {
       throw ProtocolException("constructed bit strings not supported for DER")
+    }
+    if (bytesLeft < 1) {
+      throw ProtocolException("malformed bit string")
     }
     val unusedBitCount = source.readByte().toInt() and 0xff
     val byteString = source.readByteString(bytesLeft)

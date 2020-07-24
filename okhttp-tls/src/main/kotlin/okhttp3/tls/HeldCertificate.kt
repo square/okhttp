@@ -24,7 +24,6 @@ import java.security.KeyPairGenerator
 import java.security.PrivateKey
 import java.security.PublicKey
 import java.security.SecureRandom
-import java.security.Security
 import java.security.Signature
 import java.security.cert.X509Certificate
 import java.security.interfaces.ECPublicKey
@@ -54,7 +53,6 @@ import okhttp3.tls.internal.der.Validity
 import okio.ByteString
 import okio.ByteString.Companion.decodeBase64
 import okio.ByteString.Companion.toByteString
-import org.bouncycastle.jce.provider.BouncyCastleProvider
 
 /**
  * A certificate and its private key. These are some properties of certificates that are used with
@@ -464,10 +462,6 @@ class HeldCertificate(
 
     companion object {
       private const val DEFAULT_DURATION_MILLIS = 1000L * 60 * 60 * 24 // 24 hours.
-
-      init {
-        Security.addProvider(BouncyCastleProvider())
-      }
     }
   }
 

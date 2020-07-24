@@ -17,7 +17,7 @@ buildscript {
       'junit': '4.13',
       'kotlin': '1.4.0-rc',
       'moshi': '1.9.2',
-      'okio': '2.6.0',
+      'okio': '2.7.0',
       'ktlint': '0.37.0',
       'picocli': '4.2.0',
       'openjsse': '1.1.0'
@@ -92,7 +92,7 @@ ext.publishedArtifactId = { project ->
 allprojects {
   group = 'com.squareup.okhttp3'
   project.ext.artifactId = rootProject.ext.publishedArtifactId(project)
-  version = '4.8.0-SNAPSHOT'
+  version = '4.9.0-SNAPSHOT'
 
   repositories {
     mavenCentral()

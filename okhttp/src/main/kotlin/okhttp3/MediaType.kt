@@ -38,7 +38,7 @@ class MediaType private constructor(
    */
   @get:JvmName("subtype") val subtype: String,
 
-  /** Alternating parameter names with their values, like `["charset', "utf-8"]`. */
+  /** Alternating parameter names with their values, like `["charset", "utf-8"]`. */
   private val parameterNamesAndValues: Array<String>
 ) {
 

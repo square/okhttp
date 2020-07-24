@@ -102,9 +102,8 @@ internal class DerTest {
 
     val derReader = DerReader(buffer)
 
-    derReader.read("test") { header ->
-      assertThat(header.length).isEqualTo(Long.MAX_VALUE)
-    }
+    val header = derReader.readHeader()
+    assertThat(header.length).isEqualTo(Long.MAX_VALUE)
   }
 
   @Test fun `decode length overflowing Long`() {
@@ -497,55 +496,41 @@ internal class DerTest {
     assertThat(buffer.readByteString()).isEqualTo("300a1505536d6974680101ff".decodeHex())
   }
 
-  @Test fun `decode sequence of`() {
-    val list = Adapters.INTEGER_AS_LONG
-        .asSequenceOf()
-        .fromDer("3009020107020108020109".decodeHex())
-    assertThat(list).containsExactly(7L, 8L, 9L)
+  @Test fun `sequence of`() {
+    val bytes = "3009020107020108020109".decodeHex()
+    val sequenceOf = listOf(7L, 8L, 9L)
+    val adapter = Adapters.INTEGER_AS_LONG.asSequenceOf()
+    assertThat(adapter.fromDer(bytes)).isEqualTo(sequenceOf)
+    assertThat(adapter.toDer(sequenceOf)).isEqualTo(bytes)
   }
 
-  @Test fun `encode sequence of`() {
-    val byteString = Adapters.INTEGER_AS_LONG
-        .asSequenceOf()
-        .toDer(listOf(7L, 8L, 9L))
-    assertThat(byteString).isEqualTo("3009020107020108020109".decodeHex())
+  @Test fun `point with only x set`() {
+    val bytes = "3003800109".decodeHex()
+    val point = Point(9L, null)
+    assertThat(Point.ADAPTER.fromDer(bytes)).isEqualTo(point)
+    assertThat(Point.ADAPTER.toDer(point)).isEqualTo(bytes)
   }
 
-  @Test fun `decode point with only x set`() {
-    val point = Point.ADAPTER.fromDer("3003800109".decodeHex())
-    assertThat(point).isEqualTo(Point(9L, null))
+  @Test fun `point with only y set`() {
+    val bytes = "3003810109".decodeHex()
+    val point = Point(null, 9L)
+    assertThat(Point.ADAPTER.fromDer(bytes)).isEqualTo(point)
+    assertThat(Point.ADAPTER.toDer(point)).isEqualTo(bytes)
   }
 
-  @Test fun `encode point with only x set`() {
-    val point = Point.ADAPTER.fromDer("3003800109".decodeHex())
-    assertThat(point).isEqualTo(Point(9L, null))
+  @Test fun `point with both fields set`() {
+    val bytes = "3006800109810109".decodeHex()
+    val point = Point(9L, 9L)
+    assertThat(Point.ADAPTER.fromDer(bytes)).isEqualTo(point)
+    assertThat(Point.ADAPTER.toDer(point)).isEqualTo(bytes)
   }
 
-  @Test fun `decode point with only y set`() {
-    val point = Point.ADAPTER.fromDer("3003810109".decodeHex())
-    assertThat(point).isEqualTo(Point(null, 9L))
-  }
-
-  @Test fun `encode point with only y set`() {
-    val point = Point.ADAPTER.fromDer("3003810109".decodeHex())
-    assertThat(point).isEqualTo(Point(null, 9L))
-  }
-
-  @Test fun `decode point with both fields set`() {
-    val point = Point.ADAPTER.fromDer("3006800109810109".decodeHex())
-    assertThat(point).isEqualTo(Point(9L, 9L))
-  }
-
-  @Test fun `encode point with both fields set`() {
-    val point = Point.ADAPTER.fromDer("3006800109810109".decodeHex())
-    assertThat(point).isEqualTo(Point(9L, 9L))
-  }
-
-  @Test fun `decode implicit`() {
+  @Test fun `implicit tag`() {
     // [5] IMPLICIT UTF8String
+    val bytes = "85026869".decodeHex()
     val implicitAdapter = Adapters.UTF8_STRING.withTag(tag = 5L)
-    val string = implicitAdapter.fromDer("85026869".decodeHex())
-    assertThat(string).isEqualTo("hi")
+    assertThat(implicitAdapter.fromDer(bytes)).isEqualTo("hi")
+    assertThat(implicitAdapter.toDer("hi")).isEqualTo(bytes)
   }
 
   @Test fun `encode implicit`() {
@@ -555,169 +540,136 @@ internal class DerTest {
     assertThat(string).isEqualTo("hi")
   }
 
-  @Test fun `decode explicit`() {
+  @Test fun `explicit tag`() {
     // [5] EXPLICIT UTF8String
+    val bytes = "A5040C026869".decodeHex()
     val explicitAdapter = Adapters.UTF8_STRING.withExplicitBox(tag = 5L)
-    val string = explicitAdapter.fromDer("A5040C026869".decodeHex())
-    assertThat(string).isEqualTo("hi")
+    assertThat(explicitAdapter.fromDer(bytes)).isEqualTo("hi")
+    assertThat(explicitAdapter.toDer("hi")).isEqualTo(bytes)
   }
 
-  @Test fun `encode explicit`() {
-    // [5] EXPLICIT UTF8String
-    val explicitAdapter = Adapters.UTF8_STRING.withExplicitBox(tag = 5L)
-    val string = explicitAdapter.fromDer("A5040C026869".decodeHex())
-    assertThat(string).isEqualTo("hi")
+  @Test fun `boolean`() {
+    val bytes = "0101FF".decodeHex()
+    assertThat(Adapters.BOOLEAN.fromDer(bytes)).isEqualTo(true)
+    assertThat(Adapters.BOOLEAN.toDer(true)).isEqualTo(bytes)
   }
 
-  @Test fun `decode boolean`() {
-    val boolean = Adapters.BOOLEAN.fromDer("0101FF".decodeHex())
-    assertThat(boolean).isEqualTo(true)
-  }
-
-  @Test fun `encode boolean`() {
-    val byteString = Adapters.BOOLEAN.toDer(true)
-    assertThat(byteString).isEqualTo("0101FF".decodeHex())
-  }
-
-  @Test fun `decode positive integer`() {
-    val byteString = Adapters.INTEGER_AS_LONG.fromDer("020132".decodeHex())
-    assertThat(byteString).isEqualTo(50L)
-  }
-
-  @Test fun `encode positive integer`() {
-    val byteString = Adapters.INTEGER_AS_LONG.toDer(50L)
-    assertThat(byteString).isEqualTo("020132".decodeHex())
+  @Test fun `positive integer`() {
+    val bytes = "020132".decodeHex()
+    assertThat(Adapters.INTEGER_AS_LONG.toDer(50L)).isEqualTo(bytes)
+    assertThat(Adapters.INTEGER_AS_LONG.fromDer(bytes)).isEqualTo(50L)
   }
 
   @Test fun `decode negative integer`() {
-    val integer = Adapters.INTEGER_AS_LONG.fromDer("02019c".decodeHex())
-    assertThat(integer).isEqualTo(-100L)
+    val bytes = "02019c".decodeHex()
+    assertThat(Adapters.INTEGER_AS_LONG.fromDer(bytes)).isEqualTo(-100L)
+    assertThat(Adapters.INTEGER_AS_LONG.toDer(-100L)).isEqualTo(bytes)
   }
 
-  @Test fun `encode negative integer`() {
-    val byteString = Adapters.INTEGER_AS_LONG.toDer(-100L)
-    assertThat(byteString).isEqualTo("02019c".decodeHex())
+  @Test fun `five byte integer`() {
+    val bytes = "02058000000001".decodeHex()
+    assertThat(Adapters.INTEGER_AS_LONG.fromDer(bytes)).isEqualTo(-549755813887L)
+    assertThat(Adapters.INTEGER_AS_LONG.toDer(-549755813887L)).isEqualTo(bytes)
   }
 
-  @Test fun `decode five byte integer`() {
-    val integer = Adapters.INTEGER_AS_LONG.fromDer("02058000000001".decodeHex())
-    assertThat(integer).isEqualTo(-549755813887L)
+  @Test fun `eight zeros`() {
+    val bytes = "020200ff".decodeHex()
+    assertThat(Adapters.INTEGER_AS_LONG.fromDer(bytes)).isEqualTo(255)
+    assertThat(Adapters.INTEGER_AS_LONG.toDer(255)).isEqualTo(bytes)
   }
 
-  @Test fun `encode five byte integer`() {
-    val byteString = Adapters.INTEGER_AS_LONG.toDer(-549755813887L)
-    assertThat(byteString).isEqualTo("02058000000001".decodeHex())
+  @Test fun `eight ones`() {
+    val bytes = "0201ff".decodeHex()
+    assertThat(Adapters.INTEGER_AS_LONG.toDer(-1L)).isEqualTo(bytes)
+    assertThat(Adapters.INTEGER_AS_LONG.fromDer(bytes)).isEqualTo(-1L)
   }
 
-  @Test fun `decode with eight zeros`() {
-    val integer = Adapters.INTEGER_AS_LONG.fromDer("020200ff".decodeHex())
-    assertThat(integer).isEqualTo(255)
+  @Test fun `last byte all zeros`() {
+    val bytes = "0202ff00".decodeHex()
+    assertThat(Adapters.INTEGER_AS_LONG.toDer(-256L)).isEqualTo(bytes)
+    assertThat(Adapters.INTEGER_AS_LONG.fromDer(bytes)).isEqualTo(-256L)
   }
 
-  @Test fun `encode with eight zeros`() {
-    val byteString = Adapters.INTEGER_AS_LONG.toDer(255)
-    assertThat(byteString).isEqualTo("020200ff".decodeHex())
+  @Test fun `max long`() {
+    val bytes = "02087fffffffffffffff".decodeHex()
+    assertThat(Adapters.INTEGER_AS_LONG.fromDer(bytes)).isEqualTo(Long.MAX_VALUE)
+    assertThat(Adapters.INTEGER_AS_LONG.toDer(Long.MAX_VALUE)).isEqualTo(bytes)
   }
 
-  @Test fun `encode with eight ones`() {
-    val byteString = Adapters.INTEGER_AS_LONG.toDer(-1L)
-    assertThat(byteString).isEqualTo("0201ff".decodeHex())
+  @Test fun `min long`() {
+    val bytes = "02088000000000000000".decodeHex()
+    assertThat(Adapters.INTEGER_AS_LONG.fromDer(bytes)).isEqualTo(Long.MIN_VALUE)
+    assertThat(Adapters.INTEGER_AS_LONG.toDer(Long.MIN_VALUE)).isEqualTo(bytes)
   }
 
-  @Test fun `decode with eight ones`() {
-    val integer = Adapters.INTEGER_AS_LONG.fromDer("0201ff".decodeHex())
-    assertThat(integer).isEqualTo(-1L)
+  @Test fun `bigger than max long`() {
+    val bytes = "0209008000000000000001".decodeHex()
+    val bigInteger = BigInteger("9223372036854775809")
+    assertThat(Adapters.INTEGER_AS_BIG_INTEGER.fromDer(bytes)).isEqualTo(bigInteger)
+    assertThat(Adapters.INTEGER_AS_BIG_INTEGER.toDer(bigInteger)).isEqualTo(bytes)
   }
 
-  @Test fun `encode last byte all zeros`() {
-    val byteString = Adapters.INTEGER_AS_LONG.toDer(-256L)
-    assertThat(byteString).isEqualTo("0202ff00".decodeHex())
+  @Test fun `utf8 string`() {
+    val bytes = "0c04f09f988e".decodeHex()
+    assertThat(Adapters.UTF8_STRING.fromDer(bytes)).isEqualTo("\uD83D\uDE0E")
+    assertThat(Adapters.UTF8_STRING.toDer("\uD83D\uDE0E")).isEqualTo(bytes)
   }
 
-  @Test fun `decode last byte all zeros`() {
-    val integer = Adapters.INTEGER_AS_LONG.fromDer("0202ff00".decodeHex())
-    assertThat(integer).isEqualTo(-256L)
+  @Test fun `ia5 string`() {
+    val bytes = "16026869".decodeHex()
+    assertThat(Adapters.IA5_STRING.fromDer(bytes)).isEqualTo("hi")
+    assertThat(Adapters.IA5_STRING.toDer("hi")).isEqualTo(bytes)
   }
 
-  @Test fun `decode max long`() {
-    val integer = Adapters.INTEGER_AS_LONG.fromDer("02087fffffffffffffff".decodeHex())
-    assertThat(integer).isEqualTo(Long.MAX_VALUE)
+  @Test fun `printable string`() {
+    val bytes = "13026869".decodeHex()
+    assertThat(Adapters.PRINTABLE_STRING.fromDer(bytes)).isEqualTo("hi")
+    assertThat(Adapters.PRINTABLE_STRING.toDer("hi")).isEqualTo(bytes)
   }
 
-  @Test fun `encode max long`() {
-    val byteString = Adapters.INTEGER_AS_LONG.toDer(Long.MAX_VALUE)
-    assertThat(byteString).isEqualTo("02087fffffffffffffff".decodeHex())
-  }
-
-  @Test fun `decode min long`() {
-    val integer = Adapters.INTEGER_AS_LONG.fromDer("02088000000000000000".decodeHex())
-    assertThat(integer).isEqualTo(Long.MIN_VALUE)
-  }
-
-  @Test fun `encode min long`() {
-    val byteString = Adapters.INTEGER_AS_LONG.toDer(Long.MIN_VALUE)
-    assertThat(byteString).isEqualTo("02088000000000000000".decodeHex())
-  }
-
-  @Test fun `decode bigger than max long`() {
-    val bigInteger = Adapters.INTEGER_AS_BIG_INTEGER.fromDer("0209008000000000000001".decodeHex())
-    assertThat(bigInteger).isEqualTo(BigInteger("9223372036854775809"))
-  }
-
-  @Test fun `encode bigger than max long`() {
-    val byteString = Adapters.INTEGER_AS_BIG_INTEGER.toDer(BigInteger("9223372036854775809"))
-    assertThat(byteString).isEqualTo("0209008000000000000001".decodeHex())
-  }
-
-  @Test fun `decode utf8 string`() {
-    val string = Adapters.UTF8_STRING.fromDer("0c04f09f988e".decodeHex())
-    assertThat(string).isEqualTo("\uD83D\uDE0E")
-  }
-
-  @Test fun `encode utf8 string`() {
-    val byteString = Adapters.UTF8_STRING.toDer("\uD83D\uDE0E")
-    assertThat(byteString).isEqualTo("0c04f09f988e".decodeHex())
-  }
-
-  @Test fun `decode ia5`() {
-    val string = Adapters.IA5_STRING.fromDer("16026869".decodeHex())
-    assertThat(string).isEqualTo("hi")
-  }
-
-  @Test fun `encode ia5`() {
-    val byteString = Adapters.IA5_STRING.toDer("hi")
-    assertThat(byteString).isEqualTo("16026869".decodeHex())
-  }
-
-  @Test fun `decode printable string`() {
-    val string = Adapters.PRINTABLE_STRING.fromDer("13026869".decodeHex())
-    assertThat(string).isEqualTo("hi")
-  }
-
-  @Test fun `encode printable string`() {
-    val byteString = Adapters.PRINTABLE_STRING.toDer("hi")
-    assertThat(byteString).isEqualTo("13026869".decodeHex())
-  }
-
-  @Test fun `decode utc time`() {
+  @Test fun `decode utc time with offset`() {
     val time = Adapters.UTC_TIME.fromDer("17113139313231353139303231302d30383030".decodeHex())
     assertThat(time).isEqualTo(date("2019-12-16T03:02:10.000+0000").time)
   }
 
-  @Test fun `encode utc time`() {
-    val byteString = Adapters.UTC_TIME.toDer(date("2019-12-16T03:02:10.000+0000").time)
-    assertThat(byteString).isEqualTo("170d3139313231363033303231305a".decodeHex())
+  @Test fun `utc time`() {
+    val bytes = "170d3139313231363033303231305a".decodeHex()
+    val utcTime = date("2019-12-16T03:02:10.000+0000").time
+    assertThat(Adapters.UTC_TIME.toDer(utcTime)).isEqualTo(bytes)
+    assertThat(Adapters.UTC_TIME.fromDer(bytes)).isEqualTo(utcTime)
   }
 
-  @Test fun `decode generalized time`() {
+  @Test fun `cannot decode malformed utc time`() {
+    val bytes = "170d3139313231362333303231305a".decodeHex()
+    try {
+      Adapters.UTC_TIME.fromDer(bytes)
+      fail()
+    } catch (expected: ProtocolException) {
+      assertThat(expected).hasMessage("Failed to parse UTCTime 191216#30210Z")
+    }
+  }
+
+  @Test fun `decode generalized time with offset`() {
     val time = Adapters.GENERALIZED_TIME
         .fromDer("181332303139313231353139303231302d30383030".decodeHex())
     assertThat(time).isEqualTo(date("2019-12-16T03:02:10.000+0000").time)
   }
 
-  @Test fun `encode generalized time`() {
-    val byteString = Adapters.GENERALIZED_TIME.toDer(date("2019-12-16T03:02:10.000+0000").time)
-    assertThat(byteString).isEqualTo("180f32303139313231363033303231305a".decodeHex())
+  @Test fun `generalized time`() {
+    val bytes = "180f32303139313231363033303231305a".decodeHex()
+    val generalizedTime = date("2019-12-16T03:02:10.000+0000").time
+    assertThat(Adapters.GENERALIZED_TIME.fromDer(bytes)).isEqualTo(generalizedTime)
+    assertThat(Adapters.GENERALIZED_TIME.toDer(generalizedTime)).isEqualTo(bytes)
+  }
+
+  @Test fun `cannot decode malformed generalized time`() {
+    val bytes = "180f32303139313231362333303231305a".decodeHex()
+    try {
+      Adapters.GENERALIZED_TIME.fromDer(bytes)
+      fail()
+    } catch (expected: ProtocolException) {
+      assertThat(expected).hasMessage("Failed to parse GeneralizedTime 20191216#30210Z")
+    }
   }
 
   @Test fun `decode utc time two digit year cutoff is 1950`() {
@@ -769,62 +721,52 @@ internal class DerTest {
   }
 
   @Test fun `decode object identifier`() {
-    val objectIdentifier = Adapters.OBJECT_IDENTIFIER.fromDer("06092a864886f70d01010b".decodeHex())
-    assertThat(objectIdentifier).isEqualTo(sha256WithRSAEncryption)
+    val bytes = "06092a864886f70d01010b".decodeHex()
+    assertThat(Adapters.OBJECT_IDENTIFIER.fromDer(bytes)).isEqualTo(sha256WithRSAEncryption)
+    assertThat(Adapters.OBJECT_IDENTIFIER.toDer(sha256WithRSAEncryption)).isEqualTo(bytes)
   }
 
-  @Test fun `encode object identifier`() {
-    val byteString = Adapters.OBJECT_IDENTIFIER.toDer(sha256WithRSAEncryption)
-    assertThat(byteString).isEqualTo("06092a864886f70d01010b".decodeHex())
+  @Test fun `null value`() {
+    val bytes = "0500".decodeHex()
+    assertThat(Adapters.NULL.fromDer(bytes)).isNull()
+    assertThat(Adapters.NULL.toDer(null)).isEqualTo(bytes)
   }
 
-  @Test fun `decode null`() {
-    val unit = Adapters.NULL.fromDer("0500".decodeHex())
-    assertThat(unit).isNull()
-  }
-
-  @Test fun `encode null`() {
-    val byteString = Adapters.NULL.toDer(null)
-    assertThat(byteString).isEqualTo("0500".decodeHex())
-  }
-
-  @Test fun `decode sequence algorithm`() {
-    val algorithmIdentifier = CertificateAdapters.algorithmIdentifier
-        .fromDer("300d06092a864886f70d01010b0500".decodeHex())
-    assertThat(algorithmIdentifier).isEqualTo(
-        AlgorithmIdentifier(
-            algorithm = sha256WithRSAEncryption,
-            parameters = null
-        )
+  @Test fun `sequence algorithm`() {
+    val bytes = "300d06092a864886f70d01010b0500".decodeHex()
+    val algorithmIdentifier = AlgorithmIdentifier(
+        algorithm = sha256WithRSAEncryption,
+        parameters = null
     )
+    assertThat(CertificateAdapters.algorithmIdentifier.fromDer(bytes))
+        .isEqualTo(algorithmIdentifier)
+    assertThat(CertificateAdapters.algorithmIdentifier.toDer(algorithmIdentifier))
+        .isEqualTo(bytes)
   }
 
-  @Test fun `encode sequence algorithm`() {
-    val byteString = CertificateAdapters.algorithmIdentifier.toDer(
-        AlgorithmIdentifier(
-            algorithm = sha256WithRSAEncryption,
-            parameters = null
-        )
-    )
+  @Test fun `bit string`() {
+    val bytes = "0304066e5dc0".decodeHex()
+    val bitString = BitString("6e5dc0".decodeHex(), 6)
 
-    // Note that the parameters value is included despite being optional because it's required by
-    // https://tools.ietf.org/html/rfc4055#section-2.1
-    assertThat(byteString).isEqualTo("300d06092a864886f70d01010b0500".decodeHex())
+    assertThat(Adapters.BIT_STRING.fromDer(bytes)).isEqualTo(bitString)
+    assertThat(Adapters.BIT_STRING.toDer(bitString)).isEqualTo(bytes)
   }
 
-  @Test fun `decode bit string`() {
-    val bitString = Adapters.BIT_STRING.fromDer("0304066e5dc0".decodeHex())
-    assertThat(bitString).isEqualTo(BitString("6e5dc0".decodeHex(), 6))
+  @Test fun `cannot decode empty bit string`() {
+    val bytes = "0300".decodeHex()
+    try {
+      Adapters.BIT_STRING.fromDer(bytes)
+      fail()
+    } catch (expected: ProtocolException) {
+      assertThat(expected).hasMessage("malformed bit string")
+    }
   }
 
-  @Test fun `encode bit string`() {
-    val byteString = Adapters.BIT_STRING.toDer(BitString("6e5dc0".decodeHex(), 6))
-    assertThat(byteString).isEqualTo("0304066e5dc0".decodeHex())
-  }
-
-  @Test fun `decode octet string`() {
-    val octetString = Adapters.OCTET_STRING.fromDer("0404030206A0".decodeHex())
-    assertThat(octetString).isEqualTo("030206A0".decodeHex())
+  @Test fun `octet string`() {
+    val bytes = "0404030206A0".decodeHex()
+    val octetString = "030206A0".decodeHex()
+    assertThat(Adapters.OCTET_STRING.fromDer(bytes)).isEqualTo(octetString)
+    assertThat(Adapters.OCTET_STRING.toDer(octetString)).isEqualTo(bytes)
   }
 
   @Test fun `cannot decode constructed octet string`() {
@@ -881,31 +823,21 @@ internal class DerTest {
     }
   }
 
-  @Test fun `encode octet string`() {
-    val byteString = Adapters.OCTET_STRING.toDer("030206A0".decodeHex())
-    assertThat(byteString).isEqualTo("0404030206A0".decodeHex())
-  }
-
-  @Test fun `decode choice IP address`() {
+  @Test fun `choice IP address`() {
+    val bytes = "8704c0a80201".decodeHex()
     val localhost = InetAddress.getByName("192.168.2.1").address.toByteString()
-    val adapterAndValue = CertificateAdapters.generalName.fromDer("8704c0a80201".decodeHex())
-    assertThat(adapterAndValue).isEqualTo(generalNameIpAddress to localhost)
+    assertThat(CertificateAdapters.generalName.fromDer(bytes))
+        .isEqualTo(generalNameIpAddress to localhost)
+    assertThat(CertificateAdapters.generalName.toDer(generalNameIpAddress to localhost))
+        .isEqualTo(bytes)
   }
 
-  @Test fun `encode choice IP address`() {
-    val localhost = InetAddress.getByName("192.168.2.1").address.toByteString()
-    val byteString = CertificateAdapters.generalName.toDer(generalNameIpAddress to localhost)
-    assertThat(byteString).isEqualTo("8704c0a80201".decodeHex())
-  }
-
-  @Test fun `decode choice dns`() {
-    val dns = CertificateAdapters.generalName.fromDer("820b6578616d706c652e636f6d".decodeHex())
-    assertThat(dns).isEqualTo(generalNameDnsName to "example.com")
-  }
-
-  @Test fun `encode choice dns`() {
-    val byteString = CertificateAdapters.generalName.toDer(generalNameDnsName to "example.com")
-    assertThat(byteString).isEqualTo("820b6578616d706c652e636f6d".decodeHex())
+  @Test fun `choice dns`() {
+    val bytes = "820b6578616d706c652e636f6d".decodeHex()
+    assertThat(CertificateAdapters.generalName.fromDer(bytes))
+        .isEqualTo(generalNameDnsName to "example.com")
+    assertThat(CertificateAdapters.generalName.toDer(generalNameDnsName to "example.com"))
+        .isEqualTo(bytes)
   }
 
   @Test fun `extension with type hint for basic constraints`() {
@@ -960,6 +892,28 @@ internal class DerTest {
     val adapter = Adapters.NULL.withTag(tagClass = DerHeader.TAG_CLASS_PRIVATE, tag = 65_000L)
     assertThat(adapter.toDer(null)).isEqualTo(bytes)
     assertThat(adapter.fromDer(bytes)).isNull()
+  }
+
+  /** Make the claimed length of a nested object larger than the enclosing object. */
+  @Test fun `large object inside small object`() {
+    val bytes = "301b300d06092a864886f70d010101050003847fffffff000504030201".decodeHex()
+    try {
+      CertificateAdapters.subjectPublicKeyInfo.fromDer(bytes)
+      fail()
+    } catch (expected: ProtocolException) {
+      assertThat(expected.message).isEqualTo("enclosed object too large")
+    }
+  }
+
+  /** Object identifiers are nominally self-delimiting. Outrun the limit with one. */
+  @Test fun `variable length long outruns limit`() {
+    val bytes = "060229ffffff7f".decodeHex()
+    try {
+      Adapters.OBJECT_IDENTIFIER.fromDer(bytes)
+      fail()
+    } catch (expected: ProtocolException) {
+      assertThat(expected.message).isEqualTo("unexpected byte count at OBJECT IDENTIFIER")
+    }
   }
 
   /**
