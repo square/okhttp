@@ -110,7 +110,8 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
     companion object {
       /** A [Logger] defaults output appropriate for the current platform. */
       @JvmField
-      val DEFAULT: Logger = object : Logger {
+      val DEFAULT: Logger = DefaultLogger()
+      private class DefaultLogger : Logger {
         override fun log(message: String) {
           Platform.get().log(message)
         }
@@ -140,7 +141,8 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
   @Deprecated(
       message = "moved to var",
       replaceWith = ReplaceWith(expression = "level"),
-      level = DeprecationLevel.ERROR)
+      level = DeprecationLevel.ERROR
+  )
   fun getLevel(): Level = level
 
   @Throws(IOException::class)
