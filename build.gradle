@@ -51,7 +51,7 @@ buildscript {
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.0-rc"
     classpath "org.jetbrains.dokka:dokka-gradle-plugin:0.10.1"
     classpath 'com.diffplug.spotless:spotless-plugin-gradle:3.30.0'
-    classpath 'com.android.tools.build:gradle:3.6.3'
+    classpath 'com.android.tools.build:gradle:3.6.4'
   }
 
   repositories {
@@ -121,7 +121,6 @@ subprojects { project ->
   apply plugin: "kotlin"
   apply plugin: 'java'
   apply plugin: 'java-library'
-  apply plugin: 'org.jetbrains.kotlin.platform.jvm'
   apply plugin: 'checkstyle'
   apply plugin: 'ru.vyarus.animalsniffer'
 //  apply plugin: 'net.ltgt.errorprone'
@@ -169,6 +168,8 @@ subprojects { project ->
   tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
     kotlinOptions {
       jvmTarget = "1.8"
+      apiVersion = "1.4"
+      languageVersion = "1.4"
     }
   }
 
