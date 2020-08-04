@@ -87,6 +87,13 @@ public class DohProviders {
         .includeIPv6(false)
         .build();
   }
+  
+  static DnsOverHttps buildAlekbergNet(OkHttpClient bootstrapClient) {
+    return new DnsOverHttps.Builder().client(bootstrapClient)
+        .url(HttpUrl.get("https://dnsnl.alekberg.net/dns-query"))
+        .includeIPv6(false)
+        .build();
+  }
 
   public static List<DnsOverHttps> providers(OkHttpClient client, boolean http2Only,
       boolean workingOnly, boolean getOnly) {
