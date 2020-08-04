@@ -47,6 +47,7 @@ import javax.net.ssl.X509TrustManager
 import okhttp3.Headers
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.HttpUrl
+import okhttp3.OkHttp
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
@@ -98,6 +99,10 @@ import org.junit.rules.ExternalResource
  * in sequence.
  */
 class MockWebServer : ExternalResource(), Closeable {
+  init {
+    OkHttp.checkVersion("okhttp-mockwebserver", MockWebServerVersion.VERSION)
+  }
+
   private val taskRunnerBackend = TaskRunner.RealBackend(
       threadFactory("MockWebServer TaskRunner", daemon = false))
   private val taskRunner = TaskRunner(taskRunnerBackend)

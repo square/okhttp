@@ -32,4 +32,15 @@ object OkHttp {
    * [semver]: https://semver.org
    */
   const val VERSION = "$projectVersion"
+
+  internal val String.isRelease: Boolean
+  get() = matches("\\\\d+\\\\.\\\\d+\\\\.\\\\d+".toRegex())
+
+  fun checkVersion(module: String, moduleVersion: String, okhttpVersion: String = VERSION) {
+    if (moduleVersion != okhttpVersion) {
+      if (okhttpVersion.isRelease && moduleVersion.isRelease) {
+        check(moduleVersion == okhttpVersion) { "com.squareup.okhttp3:okhttp:\$okhttpVersion not compatible with com.squareup.okhttp3:\$module:\$moduleVersion" }
+      }
+    }
+  }
 }

@@ -16,11 +16,45 @@
 package okhttp3
 
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.Assert.assertEquals
+import org.junit.Assert.fail
 import org.junit.Test
 
 class OkHttpTest {
   @Test
   fun testVersion() {
     assertThat(OkHttp.VERSION).matches("[0-9]+\\.[0-9]+\\.[0-9]+(-.+)?")
+  }
+
+  @Test
+  fun testReleaseVersionCompatibity() {
+    OkHttp.checkVersion(module = "okhttp-mockwebserver", moduleVersion = "4.20.0", okhttpVersion = "4.20.0")
+  }
+
+  @Test
+  fun testReleaseVersionIncompatibity() {
+    try {
+      OkHttp.checkVersion(
+          module = "okhttp-mockwebserver", moduleVersion = "4.20.0", okhttpVersion = "4.21.0"
+      )
+      fail()
+    } catch (ise: IllegalStateException) {
+      assertEquals("com.squareup.okhttp3:okhttp:4.21.0 not compatible with com.squareup.okhttp3:okhttp-mockwebserver:4.20.0", ise.message)
+    }
+  }
+
+  @Test
+  fun testSnapshotVersionCompatibity() {
+    OkHttp.checkVersion(module = "okhttp-mockwebserver", moduleVersion = "4.20.0-SNAPSHOT", okhttpVersion = "4.20.0-SNAPSHOT")
+  }
+
+  @Test
+  fun testSnapshotReleaseVersionIncompatibity() {
+    OkHttp.checkVersion(module = "okhttp-mockwebserver", moduleVersion = "4.20.0", okhttpVersion = "4.21.0-SNAPSHOT")
+  }
+
+  @Test
+  fun testSnapshotDevVersionIncompatibity() {
+    OkHttp.checkVersion(module = "okhttp-mockwebserver", moduleVersion = "dev", okhttpVersion = "4.21.0-SNAPSHOT")
   }
 }

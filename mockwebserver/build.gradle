@@ -6,6 +6,21 @@ jar {
   }
 }
 
+sourceSets {
+  main.java.srcDirs += "$buildDir/generated/sources/java-templates/java/main"
+}
+
+compileKotlin {
+  dependsOn 'copyJavaTemplates'
+}
+
+task copyJavaTemplates(type: Copy) {
+  from 'src/main/java-templates'
+  into "$buildDir/generated/sources/java-templates/java/main"
+  expand('projectVersion': "${project.version}")
+  filteringCharset = 'UTF-8'
+}
+
 dependencies {
   api project(':okhttp')
   api deps.junit
