@@ -100,7 +100,7 @@ import org.junit.rules.ExternalResource
  */
 class MockWebServer : ExternalResource(), Closeable {
   init {
-    OkHttp.checkVersion("okhttp-mockwebserver", MockWebServerVersion.VERSION)
+    OkHttp.checkVersion("mockwebserver", MockWebServerVersion.VERSION)
   }
 
   private val taskRunnerBackend = TaskRunner.RealBackend(

@@ -35,11 +35,11 @@ class OkHttpTest {
   fun testReleaseVersionIncompatibity() {
     try {
       OkHttp.checkVersion(
-          module = "okhttp-mockwebserver", moduleVersion = "4.20.0", okhttpVersion = "4.21.0"
+          module = "mockwebserver", moduleVersion = "4.20.0", okhttpVersion = "4.21.0"
       )
       fail()
     } catch (ise: IllegalStateException) {
-      assertEquals("com.squareup.okhttp3:okhttp:4.21.0 not compatible with com.squareup.okhttp3:okhttp-mockwebserver:4.20.0", ise.message)
+      assertEquals("com.squareup.okhttp3:okhttp:4.21.0 is not compatible with com.squareup.okhttp3:mockwebserver:4.20.0", ise.message)
     }
   }
 
