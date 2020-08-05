@@ -15,12 +15,6 @@
  */
 package okhttp3.tls.internal.der
 
-import java.math.BigInteger
-import java.net.InetAddress
-import java.net.ProtocolException
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.TimeZone
 import okhttp3.tls.internal.der.CertificateAdapters.generalNameDnsName
 import okhttp3.tls.internal.der.CertificateAdapters.generalNameIpAddress
 import okhttp3.tls.internal.der.ObjectIdentifiers.basicConstraints
@@ -33,7 +27,15 @@ import okio.ByteString.Companion.encodeUtf8
 import okio.ByteString.Companion.toByteString
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.fail
+import org.junit.Ignore
 import org.junit.Test
+import java.math.BigInteger
+import java.net.InetAddress
+import java.net.ProtocolException
+import java.text.ParseException
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.TimeZone
 
 internal class DerTest {
   @Test fun `decode tag and length`() {
@@ -683,24 +685,12 @@ internal class DerTest {
     assertThat(string).isEqualTo("hi")
   }
 
-  @Test fun `encode ia5`() {
-    val byteString = Adapters.IA5_STRING.toDer("hi")
-    assertThat(byteString).isEqualTo("16026869".decodeHex())
-  }
-
-  @Test fun `decode printable string`() {
-    val string = Adapters.PRINTABLE_STRING.fromDer("13026869".decodeHex())
-    assertThat(string).isEqualTo("hi")
-  }
-
-  @Test fun `encode printable string`() {
-    val byteString = Adapters.PRINTABLE_STRING.toDer("hi")
-    assertThat(byteString).isEqualTo("13026869".decodeHex())
-  }
-
-  @Test fun `decode utc time`() {
-    val time = Adapters.UTC_TIME.fromDer("17113139313231353139303231302d30383030".decodeHex())
-    assertThat(time).isEqualTo(date("2019-12-16T03:02:10.000+0000").time)
+  @Test fun `cannot decode utc time with offset`() {
+    try {
+      Adapters.UTC_TIME.fromDer("17113139313231353139303231302d30383030".decodeHex())
+      fail()
+    } catch (expected: ParseException) {
+    }
   }
 
   @Test fun `encode utc time`() {
@@ -708,10 +698,21 @@ internal class DerTest {
     assertThat(byteString).isEqualTo("170d3139313231363033303231305a".decodeHex())
   }
 
-  @Test fun `decode generalized time`() {
-    val time = Adapters.GENERALIZED_TIME
-        .fromDer("181332303139313231353139303231302d30383030".decodeHex())
-    assertThat(time).isEqualTo(date("2019-12-16T03:02:10.000+0000").time)
+  @Test fun `cannot decode malformed utc time`() {
+    val bytes = "170d3139313231362333303231305a".decodeHex()
+    try {
+      Adapters.UTC_TIME.fromDer(bytes)
+      fail()
+    } catch (expected: ParseException) {
+    }
+  }
+
+  @Test fun `cannot decode generalized time with offset`() {
+    try {
+      Adapters.GENERALIZED_TIME.fromDer("181332303139313231353139303231302d30383030".decodeHex())
+      fail()
+    } catch (expected: ParseException) {
+    }
   }
 
   @Test fun `encode generalized time`() {
@@ -719,23 +720,25 @@ internal class DerTest {
     assertThat(byteString).isEqualTo("180f32303139313231363033303231305a".decodeHex())
   }
 
+  @Test fun `parse utc time`() {
+    assertThat(Adapters.parseUtcTime("920521000000Z"))
+        .isEqualTo(date("1992-05-21T00:00:00.000+0000").time)
+    assertThat(Adapters.parseUtcTime("920622123421Z"))
+        .isEqualTo(date("1992-06-22T12:34:21.000+0000").time)
+    assertThat(Adapters.parseUtcTime("920722132100Z"))
+        .isEqualTo(date("1992-07-22T13:21:00.000+0000").time)
+  }
+
   @Test fun `decode utc time two digit year cutoff is 1950`() {
-    assertThat(Adapters.parseUtcTime("500101000000-0000"))
+    assertThat(Adapters.parseUtcTime("500101000000Z"))
         .isEqualTo(date("1950-01-01T00:00:00.000+0000").time)
-    assertThat(Adapters.parseUtcTime("500101000000-0100"))
+    assertThat(Adapters.parseUtcTime("500101010000Z"))
         .isEqualTo(date("1950-01-01T01:00:00.000+0000").time)
 
-    assertThat(Adapters.parseUtcTime("491231235959+0100"))
+    assertThat(Adapters.parseUtcTime("491231225959Z"))
         .isEqualTo(date("2049-12-31T22:59:59.000+0000").time)
-    assertThat(Adapters.parseUtcTime("491231235959-0000"))
+    assertThat(Adapters.parseUtcTime("491231235959Z"))
         .isEqualTo(date("2049-12-31T23:59:59.000+0000").time)
-
-    // Note that time zone offsets aren't honored by Java's two-digit offset boundary! A savvy time
-    // traveler could exploit this to get a certificate that expires 100 years later than expected.
-    assertThat(Adapters.parseUtcTime("500101000000+0100"))
-        .isEqualTo(date("2049-12-31T23:00:00.000+0000").time)
-    assertThat(Adapters.parseUtcTime("491231235959-0100"))
-        .isEqualTo(date("2050-01-01T00:59:59.000+0000").time)
   }
 
   @Test fun `encode utc time two digit year cutoff is 1950`() {
@@ -746,14 +749,24 @@ internal class DerTest {
   }
 
   @Test fun `parse generalized time`() {
-    assertThat(Adapters.parseGeneralizedTime("18990101000000-0000"))
+    assertThat(Adapters.parseGeneralizedTime("18990101000000Z"))
         .isEqualTo(date("1899-01-01T00:00:00.000+0000").time)
-    assertThat(Adapters.parseGeneralizedTime("19500101000000-0000"))
+    assertThat(Adapters.parseGeneralizedTime("19500101000000Z"))
         .isEqualTo(date("1950-01-01T00:00:00.000+0000").time)
-    assertThat(Adapters.parseGeneralizedTime("20500101000000-0000"))
+    assertThat(Adapters.parseGeneralizedTime("20500101000000Z"))
         .isEqualTo(date("2050-01-01T00:00:00.000+0000").time)
-    assertThat(Adapters.parseGeneralizedTime("20990101000000-0000"))
+    assertThat(Adapters.parseGeneralizedTime("20990101000000Z"))
         .isEqualTo(date("2099-01-01T00:00:00.000+0000").time)
+    assertThat(Adapters.parseGeneralizedTime("19920521000000Z"))
+        .isEqualTo(date("1992-05-21T00:00:00.000+0000").time)
+    assertThat(Adapters.parseGeneralizedTime("19920622123421Z"))
+        .isEqualTo(date("1992-06-22T12:34:21.000+0000").time)
+  }
+
+  @Ignore("fractional seconds are not implemented")
+  @Test fun `parse generalized time with fractional seconds`() {
+    assertThat(Adapters.parseGeneralizedTime("19920722132100.3Z"))
+        .isEqualTo(date("1992-07-22T13:21:00.300+0000").time)
   }
 
   @Test fun `format generalized time`() {
