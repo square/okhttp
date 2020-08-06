@@ -99,10 +99,10 @@ Releases
 
 Our [change log][changelog] has release history.
 
-The latest release is available on [Maven Central](https://search.maven.org/artifact/com.squareup.okhttp3/okhttp/4.8.0/jar).
+The latest release is available on [Maven Central](https://search.maven.org/artifact/com.squareup.okhttp3/okhttp/4.8.1/jar).
 
 ```kotlin
-implementation("com.squareup.okhttp3:okhttp:4.8.0")
+implementation("com.squareup.okhttp3:okhttp:4.8.1")
 ```
 
 Snapshot builds are [available][snap]. [R8 and ProGuard][r8_proguard] rules are available.
@@ -113,10 +113,10 @@ MockWebServer
 
 OkHttp includes a library for testing HTTP, HTTPS, and HTTP/2 clients.
 
-The latest release is available on [Maven Central](https://search.maven.org/artifact/com.squareup.okhttp3/mockwebserver/4.8.0/jar).
+The latest release is available on [Maven Central](https://search.maven.org/artifact/com.squareup.okhttp3/mockwebserver/4.8.1/jar).
 
 ```kotlin
-testImplementation("com.squareup.okhttp3:mockwebserver:4.8.0")
+testImplementation("com.squareup.okhttp3:mockwebserver:4.8.1")
 ```
 
 License
