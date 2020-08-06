@@ -1,6 +1,15 @@
 Change Log
 ==========
 
+## Version 4.8.1
+
+_2020-08-06_
+
+ *  Fix: Don't crash in `HeldCertificate.Builder` when creating certificates on older versions of
+    Android, including Android 6. We were using a feature of `SimpleDateFormat` that wasn't
+    available in those versions!
+
+
 ## Version 4.8.0
 
 _2020-07-11_
