@@ -61,7 +61,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
     var followUpCount = 0
     var priorResponse: Response? = null
     var newExchangeFinder = true
-    var recoveredFailures = listOf<IOException>()
+    val recoveredFailures = mutableListOf<IOException>()
     while (true) {
       call.enterNetworkInterceptorExchange(request, newExchangeFinder)
 
