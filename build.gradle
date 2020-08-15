@@ -47,10 +47,8 @@ buildscript {
   ]
 
   dependencies {
-    classpath 'net.ltgt.gradle:gradle-errorprone-plugin:1.2.1'
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.0"
     classpath "org.jetbrains.dokka:dokka-gradle-plugin:0.10.1"
-    classpath 'com.diffplug.spotless:spotless-plugin-gradle:3.30.0'
     classpath 'com.android.tools.build:gradle:3.6.4'
   }
 
@@ -68,6 +66,8 @@ plugins {
   id 'ru.vyarus.animalsniffer' version '1.5.0'
   id 'com.github.johnrengelman.shadow' version '5.2.0'
   id 'me.champeau.gradle.japicmp' version '0.2.9'
+  id "com.diffplug.spotless" version "5.1.1"
+  id("net.ltgt.errorprone") version "1.2.1"
 }
 
 /** Returns the artifact ID for the project, or null if it is not published. */
@@ -123,9 +123,7 @@ subprojects { project ->
   apply plugin: 'java-library'
   apply plugin: 'checkstyle'
   apply plugin: 'ru.vyarus.animalsniffer'
-//  apply plugin: 'net.ltgt.errorprone'
   apply plugin: 'org.jetbrains.dokka'
-//  apply plugin: 'com.diffplug.gradle.spotless'
   sourceCompatibility = JavaVersion.VERSION_1_8
   targetCompatibility = JavaVersion.VERSION_1_8
 
