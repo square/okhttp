@@ -1145,6 +1145,6 @@ class MockWebServer : ExternalResource(), Closeable {
       override fun getAcceptedIssuers(): Array<X509Certificate> = throw AssertionError()
     }
 
-    private val logger = Logger.getLogger(MockWebServer::class.java.name)
+    private val logger = Logger.getLogger(MockWebServer::class.java.simpleName)
   }
 }
