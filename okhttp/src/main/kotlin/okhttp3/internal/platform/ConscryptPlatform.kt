@@ -83,9 +83,7 @@ class ConscryptPlatform private constructor() : Platform() {
   override fun newSslSocketFactory(trustManager: X509TrustManager): SSLSocketFactory {
     return newSSLContext().apply {
       init(null, arrayOf<TrustManager>(trustManager), null)
-    }.socketFactory.also {
-      Conscrypt.setUseEngineSocket(it, true)
-    }
+    }.socketFactory
   }
 
   companion object {
