@@ -50,7 +50,7 @@ class ConscryptPlatform private constructor() : Platform() {
       "Unexpected default trust managers: ${trustManagers.contentToString()}"
     }
     val x509TrustManager = trustManagers[0] as X509TrustManager
-    Conscrypt.setHostnameVerifier(x509TrustManager) { _, _ -> true }
+    Conscrypt.setHostnameVerifier(x509TrustManager) { _, _, _ -> true }
     return x509TrustManager
   }
 
