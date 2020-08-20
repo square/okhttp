@@ -17,7 +17,9 @@ package okhttp3.internal.platform
 
 import java.security.KeyStore
 import java.security.Provider
+import java.security.cert.X509Certificate
 import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLSession
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManager
@@ -25,6 +27,7 @@ import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol
 import org.conscrypt.Conscrypt
+import org.conscrypt.ConscryptHostnameVerifier
 
 /**
  * Platform using Conscrypt (conscrypt.org) if installed as the first Security Provider.
@@ -32,9 +35,7 @@ import org.conscrypt.Conscrypt
  * Requires org.conscrypt:conscrypt-openjdk-uber >= 2.1.0 on the classpath.
  */
 class ConscryptPlatform private constructor() : Platform() {
-  // n.b. We should consider defaulting to OpenJDK 11 trust manager
-  // https://groups.google.com/forum/#!topic/conscrypt/3vYzbesjOb4
-  private val provider: Provider = Conscrypt.newProviderBuilder().provideTrustManager(true).build()
+  private val provider: Provider = Conscrypt.newProvider()
 
   // See release notes https://groups.google.com/forum/#!forum/conscrypt
   // for version differences
@@ -50,8 +51,26 @@ class ConscryptPlatform private constructor() : Platform() {
       "Unexpected default trust managers: ${trustManagers.contentToString()}"
     }
     val x509TrustManager = trustManagers[0] as X509TrustManager
-    Conscrypt.setHostnameVerifier(x509TrustManager) { _, _ -> true }
+    // Disabled because OkHttp will run anyway
+    Conscrypt.setHostnameVerifier(x509TrustManager, DisabledHostnameVerifier)
     return x509TrustManager
+  }
+
+  internal object DisabledHostnameVerifier : ConscryptHostnameVerifier {
+    fun verify(
+      hostname: String?,
+      session: SSLSession?
+    ): Boolean {
+      return true
+    }
+
+    override fun verify(
+      certs: Array<out X509Certificate>?,
+      hostname: String?,
+      session: SSLSession?
+    ): Boolean {
+      return true
+    }
   }
 
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? = null
@@ -83,9 +102,7 @@ class ConscryptPlatform private constructor() : Platform() {
   override fun newSslSocketFactory(trustManager: X509TrustManager): SSLSocketFactory {
     return newSSLContext().apply {
       init(null, arrayOf<TrustManager>(trustManager), null)
-    }.socketFactory.also {
-      Conscrypt.setUseEngineSocket(it, true)
-    }
+    }.socketFactory
   }
 
   companion object {
@@ -94,6 +111,7 @@ class ConscryptPlatform private constructor() : Platform() {
       Class.forName("org.conscrypt.Conscrypt\$Version", false, javaClass.classLoader)
 
       when {
+        // Bump this version if we ever have a binary incompatibility
         Conscrypt.isAvailable() && atLeastVersion(2, 1, 0) -> true
         else -> false
       }
