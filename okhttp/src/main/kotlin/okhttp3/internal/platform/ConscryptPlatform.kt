@@ -35,9 +35,7 @@ import javax.net.ssl.SSLSession
  * Requires org.conscrypt:conscrypt-openjdk-uber >= 2.1.0 on the classpath.
  */
 class ConscryptPlatform private constructor() : Platform() {
-  // n.b. We should consider defaulting to OpenJDK 11 trust manager
-  // https://groups.google.com/forum/#!topic/conscrypt/3vYzbesjOb4
-  private val provider: Provider = Conscrypt.newProviderBuilder().provideTrustManager(true).build()
+  private val provider: Provider = Conscrypt.newProvider()
 
   // See release notes https://groups.google.com/forum/#!forum/conscrypt
   // for version differences
@@ -113,6 +111,7 @@ class ConscryptPlatform private constructor() : Platform() {
       Class.forName("org.conscrypt.Conscrypt\$Version", false, javaClass.classLoader)
 
       when {
+        // Bump this version if we ever have a binary incompatibility
         Conscrypt.isAvailable() && atLeastVersion(2, 1, 0) -> true
         else -> false
       }
