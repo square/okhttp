@@ -17,7 +17,9 @@ package okhttp3.internal.platform
 
 import java.security.KeyStore
 import java.security.Provider
+import java.security.cert.X509Certificate
 import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLSession
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManager
@@ -26,8 +28,6 @@ import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol
 import org.conscrypt.Conscrypt
 import org.conscrypt.ConscryptHostnameVerifier
-import java.security.cert.X509Certificate
-import javax.net.ssl.SSLSession
 
 /**
  * Platform using Conscrypt (conscrypt.org) if installed as the first Security Provider.
