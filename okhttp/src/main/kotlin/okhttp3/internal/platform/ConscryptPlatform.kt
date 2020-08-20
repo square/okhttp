@@ -25,6 +25,9 @@ import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol
 import org.conscrypt.Conscrypt
+import org.conscrypt.ConscryptHostnameVerifier
+import java.security.cert.X509Certificate
+import javax.net.ssl.SSLSession
 
 /**
  * Platform using Conscrypt (conscrypt.org) if installed as the first Security Provider.
@@ -50,8 +53,26 @@ class ConscryptPlatform private constructor() : Platform() {
       "Unexpected default trust managers: ${trustManagers.contentToString()}"
     }
     val x509TrustManager = trustManagers[0] as X509TrustManager
-    Conscrypt.setHostnameVerifier(x509TrustManager) { _, _, _ -> true }
+    // Disabled because OkHttp will run anyway
+    Conscrypt.setHostnameVerifier(x509TrustManager, DisabledHostnameVerifier)
     return x509TrustManager
+  }
+
+  internal object DisabledHostnameVerifier : ConscryptHostnameVerifier {
+    fun verify(
+      hostname: String?,
+      session: SSLSession?
+    ): Boolean {
+      return true
+    }
+
+    override fun verify(
+      certs: Array<out X509Certificate>?,
+      hostname: String?,
+      session: SSLSession?
+    ): Boolean {
+      return true
+    }
   }
 
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? = null
