@@ -49,7 +49,7 @@ buildscript {
   dependencies {
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.0"
     classpath "org.jetbrains.dokka:dokka-gradle-plugin:0.10.1"
-    classpath 'com.android.tools.build:gradle:4.0.1'
+    classpath "com.android.tools.build:gradle:4.0.1"
   }
 
   repositories {
@@ -60,11 +60,11 @@ buildscript {
 }
 
 plugins {
-  id 'ru.vyarus.animalsniffer' version '1.5.0'
-  id 'com.github.johnrengelman.shadow' version '5.2.0'
-  id 'me.champeau.gradle.japicmp' version '0.2.9'
+  id "ru.vyarus.animalsniffer" version "1.5.0"
+  id "com.github.johnrengelman.shadow" version "5.2.0"
+  id "me.champeau.gradle.japicmp" version "0.2.9"
   id "com.diffplug.spotless" version "5.1.2"
-  id("net.ltgt.errorprone") version "1.2.1"
+  id "net.ltgt.errorprone" version "1.2.1"
 }
 
 /** Returns the artifact ID for the project, or null if it is not published. */
