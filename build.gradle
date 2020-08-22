@@ -150,13 +150,6 @@ subprojects { project ->
     signature 'org.codehaus.mojo.signature:java18:1.0@signature'
   }
 
-  spotless {
-    kotlin {
-      target "**/*.kt"
-      ktlint(versions.ktlint).userData(['indent_size': '2', 'continuation_indent_size': '2'])
-    }
-  }
-
   tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
     kotlinOptions {
       jvmTarget = "1.8"
