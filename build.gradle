@@ -7,7 +7,7 @@ buildscript {
       'bouncycastle': '1.65',
       'brotli': '0.1.2',
       'checkstyle': '8.28',
-      'conscrypt': '2.4.0',
+      'conscrypt': '2.5.0',
       'corretto': '1.3.1',
       'findbugs': '3.0.2',
       'guava': '28.2-jre',
