@@ -63,6 +63,7 @@ object AndroidLog {
     this[OkHttpClient::class.java.name] = "okhttp.OkHttpClient"
     this[Http2::class.java.name] = "okhttp.Http2"
     this[TaskRunner::class.java.name] = "okhttp.TaskRunner"
+    this["okhttp3.mockwebserver.MockWebServer"] = "okhttp.MockWebServer"
   }.toMap()
 
   internal fun androidLog(loggerName: String, logLevel: Int, message: String, t: Throwable?) {
