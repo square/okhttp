@@ -42,13 +42,14 @@ public class CustomDispatcherTest {
         return new MockResponse();
       }
     };
-    assertThat(requestsMade.size()).isEqualTo(0);
+    int requestsMadeSize = requestsMade.size();
+    assertThat(requestsMadeSize).isEqualTo(0);
     mockWebServer.setDispatcher(dispatcher);
     final URL url = mockWebServer.url("/").url();
     final HttpURLConnection conn = (HttpURLConnection) url.openConnection();
     conn.getResponseCode(); // Force the connection to hit the "server".
     // Make sure our dispatcher got the request.
-    assertThat(requestsMade.size()).isEqualTo(1);
+    assertThat(requestsMadeSize).isEqualTo(1);
   }
 
   @Test public void outOfOrderResponses() throws Exception {
