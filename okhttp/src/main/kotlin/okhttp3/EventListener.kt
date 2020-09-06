@@ -457,7 +457,7 @@ abstract class EventListener {
   open fun cacheConditionalHit(call: Call, cachedResponse: Response) {
   }
 
-  interface Factory {
+  fun interface Factory {
     /**
      * Creates an instance of the [EventListener] for a particular [Call]. The returned
      * [EventListener] instance will be used during the lifecycle of [call].

@@ -104,7 +104,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
     BODY
   }
 
-  interface Logger {
+  fun interface Logger {
     fun log(message: String)
 
     companion object {

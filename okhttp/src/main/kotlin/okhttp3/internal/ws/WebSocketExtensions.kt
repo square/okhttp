@@ -80,10 +80,10 @@ data class WebSocketExtensions(
 ) {
 
   fun noContextTakeover(clientOriginated: Boolean): Boolean {
-    if (clientOriginated) {
-      return clientNoContextTakeover // Client is deflating.
+    return if (clientOriginated) {
+      clientNoContextTakeover // Client is deflating.
     } else {
-      return serverNoContextTakeover // Server is deflating.
+      serverNoContextTakeover // Server is deflating.
     }
   }
 

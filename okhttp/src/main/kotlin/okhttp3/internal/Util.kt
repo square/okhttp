@@ -29,7 +29,6 @@ import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets.UTF_16BE
 import java.nio.charset.StandardCharsets.UTF_16LE
 import java.nio.charset.StandardCharsets.UTF_8
-import java.util.Arrays
 import java.util.Collections
 import java.util.Comparator
 import java.util.LinkedHashMap
@@ -300,9 +299,7 @@ fun HttpUrl.canReuseConnectionFor(other: HttpUrl): Boolean = host == other.host 
     port == other.port &&
     scheme == other.scheme
 
-fun EventListener.asFactory() = object : EventListener.Factory {
-  override fun create(call: Call): EventListener = this@asFactory
-}
+fun EventListener.asFactory() = EventListener.Factory { this }
 
 infix fun Byte.and(mask: Int): Int = toInt() and mask
 infix fun Short.and(mask: Int): Int = toInt() and mask
@@ -378,18 +375,18 @@ fun Socket.peerName(): String {
  * @param source the source used to read bytes from the socket.
  */
 fun Socket.isHealthy(source: BufferedSource): Boolean {
-  try {
+  return try {
     val readTimeout = soTimeout
     try {
       soTimeout = 1
-      return !source.exhausted()
+      !source.exhausted()
     } finally {
       soTimeout = readTimeout
     }
   } catch (_: SocketTimeoutException) {
-    return true // Read timed out; socket is good.
+    true // Read timed out; socket is good.
   } catch (_: IOException) {
-    return false // Couldn't read; socket is closed.
+    false // Couldn't read; socket is closed.
   }
 }
 
@@ -473,7 +470,7 @@ fun <T> List<T>.toImmutableList(): List<T> {
 /** Returns an immutable list containing [elements]. */
 @SafeVarargs
 fun <T> immutableListOf(vararg elements: T): List<T> {
-  return Collections.unmodifiableList(Arrays.asList(*elements.clone()))
+  return Collections.unmodifiableList(listOf(*elements.clone()))
 }
 
 /** Returns an immutable copy of this. */

@@ -109,7 +109,7 @@ interface WebSocket {
    */
   fun cancel()
 
-  interface Factory {
+  fun interface Factory {
     /**
      * Creates a new web socket and immediately returns it. Creating a web socket initiates an
      * asynchronous process to connect the socket. Once that succeeds or fails, `listener` will be

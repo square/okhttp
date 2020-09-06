@@ -93,7 +93,7 @@ interface Call : Cloneable {
    */
   public override fun clone(): Call
 
-  interface Factory {
+  fun interface Factory {
     fun newCall(request: Request): Call
   }
 }

@@ -52,7 +52,7 @@ class Handshake internal constructor(
     try {
       peerCertificatesFn()
     } catch (spue: SSLPeerUnverifiedException) {
-      listOf<Certificate>()
+      listOf()
     }
   }
 
@@ -160,7 +160,7 @@ class Handshake internal constructor(
       val peerCertificatesCopy = try {
         peerCertificates.toImmutableList()
       } catch (_: SSLPeerUnverifiedException) {
-        listOf<Certificate>()
+        listOf()
       }
 
       return Handshake(tlsVersion, cipherSuite,

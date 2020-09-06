@@ -112,7 +112,7 @@ import okhttp3.internal.authenticator.JavaNetAuthenticator
  *
  * [1]: https://tools.ietf.org/html/rfc2817
  */
-interface Authenticator {
+fun interface Authenticator {
   /**
    * Returns a request that includes a credential to satisfy an authentication challenge in
    * [response]. Returns null if the challenge cannot be satisfied.

@@ -169,7 +169,7 @@ public final class OkHttpClientTest {
     try {
       builder.addInterceptor(null);
       fail();
-    } catch (IllegalArgumentException expected) {
+    } catch (NullPointerException expected) {
     }
   }
 
@@ -178,7 +178,7 @@ public final class OkHttpClientTest {
     try {
       builder.addNetworkInterceptor(null);
       fail();
-    } catch (IllegalArgumentException expected) {
+    } catch (NullPointerException expected) {
     }
   }
 

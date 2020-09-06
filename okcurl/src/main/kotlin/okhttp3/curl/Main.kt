@@ -168,11 +168,7 @@ class Main : Runnable {
       builder.hostnameVerifier(createInsecureHostnameVerifier())
     }
     if (verbose) {
-      val logger = object : HttpLoggingInterceptor.Logger {
-        override fun log(message: String) {
-          println(message)
-        }
-      }
+      val logger = HttpLoggingInterceptor.Logger(::println)
       builder.eventListenerFactory(LoggingEventListener.Factory(logger))
     }
     return builder.build()

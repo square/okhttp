@@ -386,12 +386,12 @@ class Cache internal constructor(
 
   @Synchronized fun requestCount(): Int = requestCount
 
-  private inner class RealCacheRequest internal constructor(
+  private inner class RealCacheRequest(
     private val editor: DiskLruCache.Editor
   ) : CacheRequest {
     private val cacheOut: Sink = editor.newSink(ENTRY_BODY)
     private val body: Sink
-    internal var done = false
+    var done = false
 
     init {
       this.body = object : ForwardingSink(cacheOut) {
@@ -489,8 +489,7 @@ class Cache internal constructor(
      * each on their own line. A length of -1 is used to encode a null array. The last line is
      * optional. If present, it contains the TLS version.
      */
-    @Throws(IOException::class)
-    internal constructor(rawSource: Source) {
+    @Throws(IOException::class) constructor(rawSource: Source) {
       try {
         val source = rawSource.buffer()
         url = source.readUtf8LineStrict()
@@ -542,7 +541,7 @@ class Cache internal constructor(
       }
     }
 
-    internal constructor(response: Response) {
+    constructor(response: Response) {
       this.url = response.request.url.toString()
       this.varyHeaders = response.varyHeaders()
       this.requestMethod = response.request.method
@@ -665,8 +664,8 @@ class Cache internal constructor(
     }
   }
 
-  private class CacheResponseBody internal constructor(
-    internal val snapshot: DiskLruCache.Snapshot,
+  private class CacheResponseBody(
+    val snapshot: DiskLruCache.Snapshot,
     private val contentType: String?,
     private val contentLength: String?
   ) : ResponseBody() {

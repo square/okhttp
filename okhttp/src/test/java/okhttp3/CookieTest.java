@@ -427,7 +427,7 @@ public final class CookieTest {
     try {
       new Cookie.Builder().name(null);
       fail();
-    } catch (IllegalArgumentException expected) {
+    } catch (NullPointerException expected) {
     }
     try {
       new Cookie.Builder().name(" a ");
@@ -440,7 +440,7 @@ public final class CookieTest {
     try {
       new Cookie.Builder().value(null);
       fail();
-    } catch (IllegalArgumentException expected) {
+    } catch (NullPointerException expected) {
     }
     try {
       new Cookie.Builder().value(" b ");
@@ -485,7 +485,7 @@ public final class CookieTest {
     try {
       new Cookie.Builder().hostOnlyDomain(null);
       fail();
-    } catch (IllegalArgumentException expected) {
+    } catch (NullPointerException expected) {
     }
     try {
       new Cookie.Builder().hostOnlyDomain("a/b");
@@ -518,7 +518,7 @@ public final class CookieTest {
     try {
       new Cookie.Builder().path(null);
       fail();
-    } catch (IllegalArgumentException expected) {
+    } catch (NullPointerException expected) {
     }
     try {
       new Cookie.Builder().path("foo");
