@@ -9,6 +9,7 @@ jar {
 dependencies {
   api project(':okhttp')
   compileOnly deps.jsr305
+  compileOnly deps.androidxAnnotation
 
   testCompileOnly deps.jsr305
   testImplementation deps.junit

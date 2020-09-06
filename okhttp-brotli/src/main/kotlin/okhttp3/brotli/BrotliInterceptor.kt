@@ -15,6 +15,7 @@
  */
 package okhttp3.brotli
 
+import androidx.annotation.RequiresApi
 import okhttp3.Interceptor
 import okhttp3.Response
 import okhttp3.ResponseBody.Companion.asResponseBody
@@ -30,6 +31,7 @@ import org.brotli.dec.BrotliInputStream
  * Adds Accept-Encoding: br to request and checks (and strips) for Content-Encoding: br in
  * responses.  n.b. this replaces the transparent gzip compression in BridgeInterceptor.
  */
+@RequiresApi(21)
 object BrotliInterceptor : Interceptor {
   override fun intercept(chain: Interceptor.Chain): Response =
       if (chain.request().header("Accept-Encoding") == null) {

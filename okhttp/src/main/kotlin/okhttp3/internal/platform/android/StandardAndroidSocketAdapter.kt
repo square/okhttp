@@ -15,6 +15,8 @@
  */
 package okhttp3.internal.platform.android
 
+import android.os.Build
+import android.os.SystemPropertiesProto
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
@@ -55,6 +57,11 @@ class StandardAndroidSocketAdapter(
         val sslSocketFactoryClass =
             Class.forName("$packageName.OpenSSLSocketFactoryImpl") as Class<in SSLSocketFactory>
         val paramsClass = Class.forName("$packageName.SSLParametersImpl")
+
+        // Only Conscrypt or Play services supported on older builds
+        if (Build.VERSION.SDK_INT < 21) {
+          null
+        }
 
         StandardAndroidSocketAdapter(sslSocketClass, sslSocketFactoryClass, paramsClass)
       } catch (e: Exception) {

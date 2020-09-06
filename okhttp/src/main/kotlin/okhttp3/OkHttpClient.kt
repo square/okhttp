@@ -15,6 +15,8 @@
  */
 package okhttp3
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import java.net.Proxy
 import java.net.ProxySelector
 import java.net.Socket
@@ -118,6 +120,7 @@ import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
  * OkHttp also uses daemon threads for HTTP/2 connections. These will exit automatically if they
  * remain idle.
  */
+@RequiresApi(Build.VERSION_CODES.JELLY_BEAN)
 open class OkHttpClient internal constructor(
   builder: Builder
 ) : Cloneable, Call.Factory, WebSocket.Factory {

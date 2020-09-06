@@ -15,6 +15,7 @@
  */
 package okhttp3.logging
 
+import androidx.annotation.RequiresApi
 import java.io.IOException
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets.UTF_8
@@ -36,6 +37,7 @@ import okio.GzipSource
  * The format of the logs created by this class should not be considered stable and may
  * change slightly between releases. If you need a stable logging format, use your own interceptor.
  */
+@RequiresApi(21)
 class HttpLoggingInterceptor @JvmOverloads constructor(
   private val logger: Logger = Logger.DEFAULT
 ) : Interceptor {

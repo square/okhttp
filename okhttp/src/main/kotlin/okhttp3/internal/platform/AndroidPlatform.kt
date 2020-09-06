@@ -40,7 +40,7 @@ import okhttp3.internal.tls.BasicTrustRootIndex
 import okhttp3.internal.tls.CertificateChainCleaner
 import okhttp3.internal.tls.TrustRootIndex
 
-/** Android 5+. */
+/** Android 4.1+. */
 @SuppressSignatureCheck
 class AndroidPlatform : Platform() {
   private val socketAdapters = listOfNotNull(
@@ -148,10 +148,15 @@ class AndroidPlatform : Platform() {
     val isSupported: Boolean = when {
       !isAndroid -> false
       Build.VERSION.SDK_INT >= 30 -> false // graylisted methods are banned
+      Build.VERSION.SDK_INT >= 21 -> true // Supported with modern TLSv1.2 on Android 5+
+      Build.VERSION.SDK_INT >= 16 -> {
+        check(ConscryptPlatform.isSupported) { "Android API level 16-21 requires conscrypt-android" }
+        true
+      }
       else -> {
         // Fail Fast
         check(
-            Build.VERSION.SDK_INT >= 21) { "Expected Android API level 21+ but was ${Build.VERSION.SDK_INT}" }
+            Build.VERSION.SDK_INT >= 16) { "Expected Android API level 16+ but was ${Build.VERSION.SDK_INT}" }
 
         true
       }

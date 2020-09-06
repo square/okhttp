@@ -15,6 +15,7 @@
  */
 package okhttp3.logging
 
+import androidx.annotation.RequiresApi
 import java.io.IOException
 import java.net.InetAddress
 import java.net.InetSocketAddress
@@ -37,6 +38,7 @@ import okhttp3.Response
  * The format of the logs created by this class should not be considered stable and may change
  * slightly between releases. If you need a stable logging format, use your own event listener.
  */
+@RequiresApi(21)
 class LoggingEventListener private constructor(
   private val logger: HttpLoggingInterceptor.Logger
 ) : EventListener() {

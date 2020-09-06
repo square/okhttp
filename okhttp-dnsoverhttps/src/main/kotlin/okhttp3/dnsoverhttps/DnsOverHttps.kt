@@ -15,6 +15,7 @@
  */
 package okhttp3.dnsoverhttps
 
+import androidx.annotation.RequiresApi
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.InetAddress
@@ -52,6 +53,7 @@ import okhttp3.internal.publicsuffix.PublicSuffixDatabase
  *
  * [doh_spec]: https://tools.ietf.org/html/draft-ietf-doh-dns-over-https-13
  */
+@RequiresApi(21)
 class DnsOverHttps internal constructor(
   @get:JvmName("client") val client: OkHttpClient,
   @get:JvmName("url") val url: HttpUrl,
