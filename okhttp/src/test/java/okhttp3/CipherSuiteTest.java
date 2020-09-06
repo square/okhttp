@@ -32,8 +32,6 @@ public class CipherSuiteTest {
       forJavaName(null);
       fail("Should have thrown");
     } catch (NullPointerException expected) {
-      // Kotlin 1.4
-    } catch (IllegalArgumentException expected) {
     }
   }
 

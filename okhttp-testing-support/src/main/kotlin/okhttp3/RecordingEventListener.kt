@@ -129,7 +129,7 @@ open class RecordingEventListener : EventListener() {
     for (lock in forbiddenLocks) {
       assertThat(Thread.holdsLock(lock))
           .overridingErrorMessage(lock.toString())
-          .isFalse
+          .isFalse()
     }
 
     val startEvent = e.closes(-1L)

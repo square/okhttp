@@ -15,14 +15,12 @@
  */
 package okhttp3;
 
-import java.io.IOException;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import kotlin.TypeCastException;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http2.Header;
@@ -203,7 +201,6 @@ public final class HeadersTest {
       fail();
     } catch (NullPointerException expected) {
       // Kotlin 1.4
-    } catch (TypeCastException expected) {
     }
   }
 
@@ -835,7 +832,6 @@ public final class HeadersTest {
       fail();
     } catch (NullPointerException expected) {
       // Kotlin 1.4
-    } catch (IllegalArgumentException expected) {
     }
   }
 
@@ -856,7 +852,6 @@ public final class HeadersTest {
       fail();
     } catch (NullPointerException expected) {
       // Kotlin 1.4
-    } catch (IllegalArgumentException expected) {
     }
   }
 
@@ -878,7 +873,6 @@ public final class HeadersTest {
       fail();
     } catch (NullPointerException expected) {
       // Kotlin 1.4
-    } catch (IllegalArgumentException expected) {
     }
   }
 
@@ -900,7 +894,6 @@ public final class HeadersTest {
       fail();
     } catch (NullPointerException expected) {
       // Kotlin 1.4
-    } catch (IllegalArgumentException expected) {
     }
   }
 }

@@ -196,20 +196,9 @@ subprojects { project ->
     }
   }
 
-//  dependencies {
-//    //noinspection GradleDynamicVersion
-//    errorproneJavac 'com.google.errorprone:javac:9+181-r4173-1'
-//    errorprone 'com.google.errorprone:error_prone_core:2.4.0'
-//  }
   tasks.withType(JavaCompile).configureEach {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
-
-//    options.errorprone {
-//      check("MissingFail", net.ltgt.gradle.errorprone.CheckSeverity.ERROR)
-//      check("MissingOverride", net.ltgt.gradle.errorprone.CheckSeverity.ERROR)
-//      enabled = JavaVersion.current() < JavaVersion.VERSION_12
-//    }
   }
 
   dokka {
