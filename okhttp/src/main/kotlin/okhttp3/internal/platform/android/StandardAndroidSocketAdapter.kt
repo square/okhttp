@@ -59,8 +59,12 @@ class StandardAndroidSocketAdapter(
         val paramsClass = Class.forName("$packageName.SSLParametersImpl")
 
         // Only Conscrypt or Play services supported on older builds
-        if (Build.VERSION.SDK_INT < 21) {
-          null
+        try {
+          if (Build.VERSION.SDK_INT < 21) {
+            null
+          }
+        } catch (e: NoClassDefFoundError) {
+          // expected during tests
         }
 
         StandardAndroidSocketAdapter(sslSocketClass, sslSocketFactoryClass, paramsClass)
