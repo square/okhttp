@@ -428,8 +428,6 @@ public final class CookieTest {
       new Cookie.Builder().name(null);
       fail();
     } catch (NullPointerException expected) {
-      // Kotlin 1.4
-    } catch (IllegalArgumentException expected) {
     }
     try {
       new Cookie.Builder().name(" a ");
@@ -443,8 +441,6 @@ public final class CookieTest {
       new Cookie.Builder().value(null);
       fail();
     } catch (NullPointerException expected) {
-      // Kotlin 1.4
-    } catch (IllegalArgumentException expected) {
     }
     try {
       new Cookie.Builder().value(" b ");
@@ -490,8 +486,6 @@ public final class CookieTest {
       new Cookie.Builder().hostOnlyDomain(null);
       fail();
     } catch (NullPointerException expected) {
-      // Kotlin 1.4
-    } catch (IllegalArgumentException expected) {
     }
     try {
       new Cookie.Builder().hostOnlyDomain("a/b");
@@ -525,8 +519,6 @@ public final class CookieTest {
       new Cookie.Builder().path(null);
       fail();
     } catch (NullPointerException expected) {
-      // Kotlin 1.4
-    } catch (IllegalArgumentException expected) {
     }
     try {
       new Cookie.Builder().path("foo");

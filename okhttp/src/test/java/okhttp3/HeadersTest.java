@@ -200,7 +200,6 @@ public final class HeadersTest {
       Headers.of(Collections.singletonMap("User-Agent", null));
       fail();
     } catch (NullPointerException expected) {
-      // Kotlin 1.4
     }
   }
 
@@ -831,7 +830,6 @@ public final class HeadersTest {
           .build();
       fail();
     } catch (NullPointerException expected) {
-      // Kotlin 1.4
     }
   }
 
@@ -851,7 +849,6 @@ public final class HeadersTest {
           .build();
       fail();
     } catch (NullPointerException expected) {
-      // Kotlin 1.4
     }
   }
 
@@ -872,7 +869,6 @@ public final class HeadersTest {
           .build();
       fail();
     } catch (NullPointerException expected) {
-      // Kotlin 1.4
     }
   }
 
@@ -893,7 +889,6 @@ public final class HeadersTest {
           .build();
       fail();
     } catch (NullPointerException expected) {
-      // Kotlin 1.4
     }
   }
 }

@@ -170,8 +170,6 @@ public final class OkHttpClientTest {
       builder.addInterceptor(null);
       fail();
     } catch (NullPointerException expected) {
-      // Kotlin 1.4
-    } catch (IllegalArgumentException expected) {
     }
   }
 
@@ -181,8 +179,6 @@ public final class OkHttpClientTest {
       builder.addNetworkInterceptor(null);
       fail();
     } catch (NullPointerException expected) {
-      // Kotlin 1.4
-    } catch (IllegalArgumentException expected) {
     }
   }
 

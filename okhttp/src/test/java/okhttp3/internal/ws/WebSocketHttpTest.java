@@ -139,7 +139,7 @@ public final class WebSocketHttpTest {
     try {
       webSocket.send((String) null);
       fail();
-    } catch (NullPointerException | IllegalArgumentException expected) {
+    } catch (NullPointerException expected) {
     }
 
     closeWebSockets(webSocket, server);
@@ -157,8 +157,6 @@ public final class WebSocketHttpTest {
       webSocket.send((ByteString) null);
       fail();
     } catch (NullPointerException expected) {
-      // Kotlin 1.4
-    } catch (IllegalArgumentException expected) {
     }
 
     closeWebSockets(webSocket, server);

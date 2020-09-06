@@ -196,29 +196,21 @@ public final class RequestTest {
       builder.header(null, "Value");
       fail();
     } catch (NullPointerException expected) {
-      // Kotlin 1.4
-    } catch (IllegalArgumentException expected) {
     }
     try {
       builder.addHeader(null, "Value");
       fail();
     } catch (NullPointerException expected) {
-      // Kotlin 1.4
-    } catch (IllegalArgumentException expected) {
     }
     try {
       builder.header("Name", null);
       fail();
     } catch (NullPointerException expected) {
-      // Kotlin 1.4
-    } catch (IllegalArgumentException expected) {
     }
     try {
       builder.addHeader("Name", null);
       fail();
     } catch (NullPointerException expected) {
-      // Kotlin 1.4
-    } catch (IllegalArgumentException expected) {
     }
   }
 
