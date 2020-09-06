@@ -1,4 +1,4 @@
-//import net.ltgt.gradle.errorprone.CheckSeverity
+import net.ltgt.gradle.errorprone.CheckSeverity
 
 buildscript {
   ext.versions = [
@@ -18,7 +18,7 @@ buildscript {
       'kotlin': '1.4.0',
       'moshi': '1.9.2',
       'okio': '2.8.0',
-      'ktlint': '0.37.0',
+      'ktlint': '0.38.0',
       'picocli': '4.2.0',
       'openjsse': '1.1.0'
   ]
@@ -39,7 +39,7 @@ buildscript {
       'jsoup': "org.jsoup:jsoup:${versions.jsoup}",
       'jsr305': "com.google.code.findbugs:jsr305:${versions.findbugs}",
       'junit': "junit:junit:${versions.junit}",
-      'kotlinStdlib': "org.jetbrains.kotlin:kotlin-stdlib:1.4.0",
+      'kotlinStdlib': "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin}",
       'moshi': "com.squareup.moshi:moshi:${versions.moshi}",
       'moshiKotlin': "com.squareup.moshi:moshi-kotlin-codegen:${versions.moshi}",
       'okio': "com.squareup.okio:okio:${versions.okio}",
@@ -49,25 +49,22 @@ buildscript {
   dependencies {
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.0"
     classpath "org.jetbrains.dokka:dokka-gradle-plugin:0.10.1"
-    classpath 'com.android.tools.build:gradle:3.6.4'
+    classpath "com.android.tools.build:gradle:4.0.1"
   }
 
   repositories {
     mavenCentral()
     gradlePluginPortal()
     google()
-    maven {
-      url = "https://dl.bintray.com/kotlin/kotlin-dev/"
-    }
   }
 }
 
 plugins {
-  id 'ru.vyarus.animalsniffer' version '1.5.0'
-  id 'com.github.johnrengelman.shadow' version '5.2.0'
-  id 'me.champeau.gradle.japicmp' version '0.2.9'
-  id "com.diffplug.spotless" version "5.1.1"
-  id("net.ltgt.errorprone") version "1.2.1"
+  id "ru.vyarus.animalsniffer" version "1.5.0"
+  id "com.github.johnrengelman.shadow" version "5.2.0"
+  id "me.champeau.gradle.japicmp" version "0.2.9"
+  id "com.diffplug.spotless" version "5.1.2"
+  id "net.ltgt.errorprone" version "1.2.1"
 }
 
 /** Returns the artifact ID for the project, or null if it is not published. */
@@ -100,9 +97,6 @@ allprojects {
       url 'https://dl.bintray.com/kotlin/dokka'
     }
     google()
-    maven {
-      url = "https://dl.bintray.com/kotlin/kotlin-dev/"
-    }
   }
 
   task downloadDependencies() {
@@ -118,7 +112,7 @@ subprojects { project ->
   if (project.name == 'android-test') return
   if (project.name == 'okhttp-bom') return
 
-  apply plugin: "kotlin"
+  apply plugin: "org.jetbrains.kotlin.jvm"
   apply plugin: 'java'
   apply plugin: 'java-library'
   apply plugin: 'checkstyle'
@@ -156,18 +150,9 @@ subprojects { project ->
     signature 'org.codehaus.mojo.signature:java18:1.0@signature'
   }
 
-//  spotless {
-//    kotlin {
-//      target "**/*.kt"
-//      ktlint(versions.ktlint).userData(['indent_size': '2', 'continuation_indent_size': '2'])
-//    }
-//  }
-
   tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
     kotlinOptions {
       jvmTarget = "1.8"
-      apiVersion = "1.4"
-      languageVersion = "1.4"
     }
   }
 
