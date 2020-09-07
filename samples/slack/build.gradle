@@ -1,0 +1,4 @@
+dependencies {
+  implementation project(':mockwebserver')
+  implementation deps.moshi
+}

@@ -1,0 +1,369 @@
+import net.ltgt.gradle.errorprone.CheckSeverity
+
+buildscript {
+  ext.versions = [
+      'animalSniffer': '1.18',
+      'assertj': '3.15.0',
+      'bouncycastle': '1.65',
+      'brotli': '0.1.2',
+      'checkstyle': '8.28',
+      'conscrypt': '2.5.0',
+      'corretto': '1.3.1',
+      'findbugs': '3.0.2',
+      'guava': '28.2-jre',
+      'java': '1.8',
+      'jnrUnixsocket': '0.28',
+      'jsoup': '1.13.1',
+      'junit': '4.13',
+      'kotlin': '1.4.0',
+      'moshi': '1.9.2',
+      'okio': '2.8.0',
+      'ktlint': '0.38.0',
+      'picocli': '4.2.0',
+      'openjsse': '1.1.0'
+  ]
+
+  ext.deps = [
+      'picocli': "info.picocli:picocli:${versions.picocli}",
+      'android': "org.robolectric:android-all:10-robolectric-5803371",
+      'animalSniffer': "org.codehaus.mojo:animal-sniffer-annotations:${versions.animalSniffer}",
+      'assertj': "org.assertj:assertj-core:${versions.assertj}",
+      'bouncycastle': "org.bouncycastle:bcprov-jdk15on:${versions.bouncycastle}",
+      'bouncycastlepkix': "org.bouncycastle:bcpkix-jdk15on:${versions.bouncycastle}",
+      'bouncycastletls': "org.bouncycastle:bctls-jdk15on:${versions.bouncycastle}",
+      'brotli': "org.brotli:dec:${versions.brotli}",
+      'conscrypt': "org.conscrypt:conscrypt-openjdk-uber:${versions.conscrypt}",
+      'corretto': "software.amazon.cryptools:AmazonCorrettoCryptoProvider:${versions.corretto}:linux-x86_64",
+      'guava': "com.google.guava:guava:${versions.guava}",
+      'jnrUnixsocket': "com.github.jnr:jnr-unixsocket:${versions.jnrUnixsocket}",
+      'jsoup': "org.jsoup:jsoup:${versions.jsoup}",
+      'jsr305': "com.google.code.findbugs:jsr305:${versions.findbugs}",
+      'junit': "junit:junit:${versions.junit}",
+      'kotlinStdlib': "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin}",
+      'moshi': "com.squareup.moshi:moshi:${versions.moshi}",
+      'moshiKotlin': "com.squareup.moshi:moshi-kotlin-codegen:${versions.moshi}",
+      'okio': "com.squareup.okio:okio:${versions.okio}",
+      'openjsse': "org.openjsse:openjsse:${versions.openjsse}"
+  ]
+
+  dependencies {
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.0"
+    classpath "org.jetbrains.dokka:dokka-gradle-plugin:0.10.1"
+    classpath "com.android.tools.build:gradle:4.0.1"
+  }
+
+  repositories {
+    mavenCentral()
+    gradlePluginPortal()
+    google()
+  }
+}
+
+plugins {
+  id "ru.vyarus.animalsniffer" version "1.5.0"
+  id "com.github.johnrengelman.shadow" version "5.2.0"
+  id "me.champeau.gradle.japicmp" version "0.2.9"
+  id "com.diffplug.spotless" version "5.1.2"
+  id "net.ltgt.errorprone" version "1.2.1"
+}
+
+/** Returns the artifact ID for the project, or null if it is not published. */
+ext.publishedArtifactId = { project ->
+  if (project.name == 'okhttp-logging-interceptor') {
+    return 'logging-interceptor'
+  } else if (project.name == 'mockwebserver'
+          || project.name == 'okcurl'
+          || project.name == 'okhttp'
+          || project.name == 'okhttp-bom'
+          || project.name == 'okhttp-brotli'
+          || project.name == 'okhttp-dnsoverhttps'
+          || project.name == 'okhttp-sse'
+          || project.name == 'okhttp-tls'
+          || project.name == 'okhttp-urlconnection') {
+    return project.name
+  } else {
+    return null // Not published.
+  }
+}
+
+allprojects {
+  group = 'com.squareup.okhttp3'
+  project.ext.artifactId = rootProject.ext.publishedArtifactId(project)
+  version = '4.9.0-SNAPSHOT'
+
+  repositories {
+    mavenCentral()
+    maven {
+      url 'https://dl.bintray.com/kotlin/dokka'
+    }
+    google()
+  }
+
+  task downloadDependencies() {
+    description 'Download all dependencies to the Gradle cache'
+    doLast {
+      configurations.findAll { it.canBeResolved }.files
+    }
+  }
+}
+
+/** Configure building for Java+Kotlin projects. */
+subprojects { project ->
+  if (project.name == 'android-test') return
+  if (project.name == 'okhttp-bom') return
+
+  apply plugin: "org.jetbrains.kotlin.jvm"
+  apply plugin: 'java'
+  apply plugin: 'java-library'
+  apply plugin: 'checkstyle'
+  apply plugin: 'ru.vyarus.animalsniffer'
+  apply plugin: 'org.jetbrains.dokka'
+  sourceCompatibility = JavaVersion.VERSION_1_8
+  targetCompatibility = JavaVersion.VERSION_1_8
+
+  checkstyleMain.exclude '**/CipherSuite.java'
+  configurations {
+    checkstyleConfig
+  }
+  dependencies {
+    checkstyleConfig dependencies.create("com.puppycrawl.tools:checkstyle:${versions.checkstyle}") {
+      transitive = false
+    }
+  }
+  afterEvaluate {
+    checkstyle {
+      config = resources.text.fromArchiveEntry(configurations.checkstyleConfig, 'google_checks.xml')
+      toolVersion "${versions.checkstyle}"
+      sourceSets = [project.sourceSets.main]
+    }
+  }
+
+  // Animal Sniffer confirms we generally don't use APIs not on Java 8.
+  animalsniffer {
+    // https://github.com/mojohaus/animal-sniffer/issues/70
+    excludeJars "android-all-*"
+    annotation "okhttp3.internal.SuppressSignatureCheck"
+    sourceSets = [sourceSets.main]
+  }
+  dependencies {
+    signature 'net.sf.androidscents.signature:android-api-level-21:5.0.1_r2@signature'
+    signature 'org.codehaus.mojo.signature:java18:1.0@signature'
+  }
+
+  tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+    kotlinOptions {
+      jvmTarget = "1.8"
+    }
+  }
+
+  def platform = System.getProperty("okhttp.platform", "jdk9")
+  def platformJavaHome = System.getProperty('test.java.home')
+
+  test {
+    jvmArgs += "-Dokhttp.platform=$platform"
+
+    if (platformJavaHome != null) {
+      executable = "$platformJavaHome/bin/java"
+    }
+
+    maxParallelForks Runtime.runtime.availableProcessors() * 2
+    testLogging {
+      exceptionFormat = 'full'
+    }
+
+    systemProperty 'okhttp.platform', platform
+  }
+
+  if (platform == "jdk8alpn") {
+    // Add alpn-boot on Java 8 so we can use HTTP/2 without a stable API.
+    def alpnBootVersion = alpnBootVersion()
+    if (alpnBootVersion != null) {
+      dependencies {
+        testCompile "org.mortbay.jetty.alpn:alpn-boot:$alpnBootVersion"
+      }
+      def alpnBootJar = configurations.testCompile.find { it.name.startsWith("alpn-boot-") }
+      test {
+        jvmArgs += "-Xbootclasspath/p:${alpnBootJar}"
+      }
+    }
+  } else if (platform == "conscrypt") {
+    dependencies {
+      testRuntime "org.conscrypt:conscrypt-openjdk-uber:${versions.conscrypt}"
+    }
+  } else if (platform == "openjsse") {
+    dependencies {
+      testRuntime deps.openjsse
+    }
+  }
+
+  tasks.withType(JavaCompile).configureEach {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+  }
+
+  dokka {
+    configuration {
+      reportUndocumented = false
+      skipDeprecated = true
+      jdkVersion = 8
+      perPackageOption {
+        prefix = "okhttp3.internal"
+        suppress = true
+      }
+      if (project.file('Module.md').exists()) {
+        includes = ['Module.md']
+      }
+      externalDocumentationLink {
+        url = new URL("https://square.github.io/okio/2.x/okio/")
+        packageListUrl = new URL("https://square.github.io/okio/2.x/okio/package-list")
+      }
+    }
+  }
+}
+
+/** Configure publishing and signing for published Java and JavaPlatform subprojects. */
+subprojects { project ->
+  if (project.ext.artifactId == null) return
+  def bom = project.ext.artifactId == 'okhttp-bom'
+
+  if (bom) {
+    apply plugin: 'java-platform'
+  }
+
+  apply plugin: 'maven-publish'
+  apply plugin: 'signing'
+
+  publishing {
+    if (!bom) {
+      java {
+        withJavadocJar()
+        withSourcesJar()
+      }
+    }
+
+    publications {
+      maven(MavenPublication) {
+        groupId = project.group
+        artifactId = project.ext.artifactId
+        version = project.version
+        if (bom) {
+          from components.javaPlatform
+        } else {
+          from components.java
+        }
+        pom {
+          name = project.name
+          description = 'Square’s meticulous HTTP client for Java and Kotlin.'
+          url = 'https://square.github.io/okhttp/'
+          licenses {
+            license {
+              name = 'The Apache Software License, Version 2.0'
+              url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+            }
+          }
+          developers {
+            developer {
+              name = 'Square, Inc.'
+            }
+          }
+          scm {
+            connection = 'scm:git:https://github.com/square/okhttp.git'
+            developerConnection = 'scm:git:ssh://git@github.com/square/okhttp.git'
+            url = 'https://github.com/square/okhttp'
+          }
+        }
+      }
+    }
+
+    repositories {
+      maven {
+        name = "mavencentral"
+        url = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+        credentials {
+          username System.getenv('SONATYPE_NEXUS_USERNAME')
+          password System.getenv('SONATYPE_NEXUS_PASSWORD')
+        }
+      }
+    }
+  }
+
+  signing {
+    sign publishing.publications.maven
+  }
+}
+
+
+tasks.wrapper {
+  distributionType = Wrapper.DistributionType.ALL
+}
+
+/**
+ * Returns the alpn-boot version specific to this OpenJDK 8 JVM, or null if this is not a Java 8 VM.
+ * https://github.com/xjdr/xio/blob/master/alpn-boot.gradle
+ */
+def alpnBootVersion() {
+  def version = System.getProperty('alpn.boot.version')
+
+  if (version != null) {
+    return version
+  }
+
+  def javaVersion = System.getProperty("java.version")
+  def patchVersionMatcher = (javaVersion =~ /1\.8\.0_(\d+)(-.*)?/)
+  if (!patchVersionMatcher.find()) return null
+  def patchVersion = Integer.parseInt(patchVersionMatcher.group(1))
+  return alpnBootVersionForPatchVersion(javaVersion, patchVersion)
+}
+
+def alpnBootVersionForPatchVersion(String javaVersion, int patchVersion) {
+  // https://www.eclipse.org/jetty/documentation/current/alpn-chapter.html#alpn-versions
+  switch (patchVersion) {
+    case 0..24:
+      return '8.1.0.v20141016'
+    case 25..30:
+      return '8.1.2.v20141202'
+    case 31..50:
+      return '8.1.3.v20150130'
+    case 51..59:
+      return '8.1.4.v20150727'
+    case 60..64:
+      return '8.1.5.v20150921'
+    case 65..70:
+      return '8.1.6.v20151105'
+    case 71..77:
+      return '8.1.7.v20160121'
+    case 78..101:
+      return '8.1.8.v20160420'
+    case 102..111:
+      return '8.1.9.v20160720'
+    case 112..120:
+      return '8.1.10.v20161026'
+    case 121..160:
+      return '8.1.11.v20170118'
+    case 161..181:
+      return '8.1.12.v20180117'
+    case 191..242:
+      return '8.1.13.v20181017'
+    default:
+      throw new IllegalStateException("Unexpected Java version: ${javaVersion}")
+  }
+}
+
+/**
+ * Returns a .jar file for the golden version of this project.
+ * https://github.com/Visistema/Groovy1/blob/ba5eb9b2f19ca0cc8927359ce414c4e1974b7016/gradle/binarycompatibility.gradle#L48
+ */
+ext.baselineJar = { project, version ->
+  def group = project.group
+  def artifactId = project.ext.artifactId
+  try {
+    String jarFile = "$artifactId-${version}.jar"
+    project.group = 'virtual_group_for_japicmp' // Prevent it from resolving the current version.
+    def dependency = project.dependencies.create("$group:$artifactId:$version@jar")
+    return project.configurations.detachedConfiguration(dependency).files
+        .find { (it.name == jarFile) }
+  } finally {
+    project.group = group
+  }
+}
+ext.baselineVersion = "3.14.1"

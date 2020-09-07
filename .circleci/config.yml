@@ -1,0 +1,345 @@
+version: 2.1
+
+orbs:
+  windows: circleci/windows@2.4.0
+
+commands:
+  runtests:
+    description: "Run tests"
+    parameters:
+      platform:
+        type: string
+      testjdk:
+        type: string
+        default: ""
+    steps:
+      - restore_cache:
+          keys:
+            # restore compilation and wrapper from previous branch/job build or master
+            - v4-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}
+            - v4-master-compile
+
+      - run:
+          name: Run tests
+          command: ./gradlew --build-cache --parallel --continue test
+          environment:
+            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dokhttp.platform=<< parameters.platform >> -Dorg.gradle.workers.max=3 -Xmx1G << parameters.testjdk >>
+
+      - save_cache:
+          paths:
+            - ~/.gradle/caches
+            - ~/.gradle/wrapper
+          key: v4-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}
+          when: always
+
+      - run:
+          name: Save test results
+          command: |
+            mkdir -p ~/test-results/junit/
+            if [ -x /usr/bin/find ]; then
+            /usr/bin/find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/test-results/junit/ \;
+            else
+            find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/test-results/junit/ \;
+            fi
+          when: always
+
+      - store_test_results:
+          name: Store test results
+          path: ~/test-results
+
+      - run:
+          name: Save gradle reports
+          command: |
+            mkdir -p ~/reports/
+            tar cf - */build/reports | (cd ~/reports/; tar xf -)
+          when: always
+
+      - store_artifacts:
+          name: Store gradle reports
+          path: ~/reports
+
+jobs:
+  compile:
+    docker:
+      - image: circleci/openjdk:11.0.7-jdk-buster
+
+    environment:
+      JVM_OPTS: -Xmx1g
+      TERM: dumb
+
+    steps:
+      - checkout
+
+      - run:
+          name: Compile
+          command: ./gradlew --parallel --build-cache downloadDependencies testClasses
+          environment:
+            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=3 -Xmx768m
+
+      - run:
+          name: Run tests
+          command: ./gradlew --parallel --build-cache test
+          environment:
+            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dokhttp.platform=jdk9 -Dorg.gradle.workers.max=3 -Xmx1G
+
+      - save_cache:
+          paths:
+            - ~/.gradle/caches
+            - ~/.gradle/wrapper
+          # Under normal usage, saves compiled results from master at least once a day
+          key: v4-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}-{{ epoch }}
+
+  checkjdk11:
+    docker:
+      - image: circleci/openjdk:11.0.7-jdk-buster
+
+    environment:
+      JVM_OPTS: -Xmx1g
+      TERM: dumb
+
+    steps:
+      - checkout
+
+      - restore_cache:
+          keys:
+            # restore compilation and wrapper from master build
+            - v4-master-compile
+
+      - run:
+          name: Run checks
+          command: ./gradlew --parallel --continue --build-cache check -x test
+          environment:
+            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=3 -Xmx1G
+
+      - run:
+          name: Save gradle reports
+          command: |
+            mkdir -p ~/reports/
+            tar cf - */build/reports | (cd ~/reports/; tar xf -)
+          when: always
+
+      - store_artifacts:
+          name: Store gradle reports
+          path: ~/reports
+
+  testjdk8:
+    docker:
+      - image: circleci/openjdk:11.0.6-jdk-stretch
+
+    environment:
+      JVM_OPTS: -Xmx1g
+      TERM: dumb
+
+    steps:
+      - checkout
+
+      - runtests:
+          platform: jdk8
+          testjdk: -Dtest.java.home=/usr/lib/jvm/java-8-openjdk-amd64
+
+  testjdk8alpn:
+    docker:
+      - image: circleci/openjdk:11.0.6-jdk-stretch
+
+    environment:
+      JVM_OPTS: -Xmx1g
+      TERM: dumb
+
+    steps:
+      - checkout
+
+      - runtests:
+          platform: jdk8alpn
+          testjdk: -Dtest.java.home=/usr/lib/jvm/java-8-openjdk-amd64 -Dalpn.boot.version=8.1.13.v20181017
+
+  testopenjsse:
+    docker:
+      # Held back to ensure a JDK 8 is in the image, which is true for stretch but not buster
+      - image: circleci/openjdk:11.0.6-jdk-stretch
+
+    environment:
+      JVM_OPTS: -Xmx1g
+      TERM: dumb
+
+    steps:
+      - checkout
+
+      - runtests:
+          platform: openjsse
+          testjdk: -Dtest.java.home=/usr/lib/jvm/java-8-openjdk-amd64
+
+  testjdk11:
+    docker:
+      - image: circleci/openjdk:11.0.7-jdk-buster
+
+    environment:
+      JVM_OPTS: -Xmx1g
+      TERM: dumb
+
+    steps:
+      - checkout
+
+      - runtests:
+          platform: jdk9
+
+  testjdk12windows:
+    executor:
+      name: windows/default
+      shell: bash.exe
+
+    environment:
+      JVM_OPTS: -Xmx1g
+      TERM: dumb
+
+    steps:
+      - checkout
+
+      - runtests:
+          platform: jdk9
+
+  testjdk13:
+    docker:
+      - image: circleci/openjdk:13.0.2-jdk-buster
+
+    environment:
+      JVM_OPTS: -Xmx1g
+      TERM: dumb
+
+    steps:
+      - checkout
+
+      - runtests:
+          platform: jdk9
+
+  testjdk14:
+    docker:
+      - image: circleci/openjdk:14.0.1-jdk-buster
+
+    environment:
+      JVM_OPTS: -Xmx1g
+      TERM: dumb
+
+    steps:
+      - checkout
+
+      - runtests:
+          platform: jdk9
+
+  testconscrypt:
+    docker:
+      - image: circleci/openjdk:11.0.7-jdk-buster
+
+    environment:
+      JVM_OPTS: -Xmx1g
+      TERM: dumb
+
+    steps:
+      - checkout
+
+      - runtests:
+          platform: conscrypt
+
+  testbouncycastle:
+    docker:
+      - image: circleci/openjdk:11.0.7-jdk-buster
+
+    environment:
+      JVM_OPTS: -Xmx1g
+      TERM: dumb
+
+    steps:
+      - checkout
+
+      - runtests:
+          platform: bouncycastle
+
+  testcorretto:
+    docker:
+      - image: circleci/openjdk:11.0.7-jdk-buster
+
+    environment:
+      JVM_OPTS: -Xmx1g
+      TERM: dumb
+
+    steps:
+      - checkout
+
+      - runtests:
+          platform: corretto
+
+workflows:
+  version: 2
+  commit:
+    jobs:
+      - compile:
+          filters:
+            branches:
+              only: master
+      - checkjdk11:
+          filters:
+            branches:
+              ignore:
+                - master
+                - gh-pages
+      - testjdk8:
+          filters:
+            branches:
+              ignore:
+                - gh-pages
+      - testjdk8alpn:
+          filters:
+            branches:
+              only: master
+      - testjdk11:
+          filters:
+            branches:
+              ignore:
+                - gh-pages
+      - testjdk13:
+          filters:
+            branches:
+              ignore:
+                - gh-pages
+      - testjdk14:
+          filters:
+            branches:
+              ignore:
+                - gh-pages
+      #- testjdk12windows:
+      #- testbouncycastle
+      #- testopenjsse
+      #- testconscrypt
+      #- testcorretto
+  nightly:
+    triggers:
+      - schedule:
+          cron: "4 1 * * *"
+          filters:
+            branches:
+              only: master
+    jobs:
+      - compile
+      - checkjdk11:
+          requires:
+            - compile
+      - testjdk8:
+          requires:
+            - compile
+      - testjdk8alpn:
+          requires:
+            - compile
+      - testopenjsse:
+          requires:
+            - compile
+      - testjdk11:
+          requires:
+            - compile
+      - testjdk12windows:
+          requires:
+            - compile
+      - testjdk13:
+          requires:
+            - compile
+      - testconscrypt:
+          requires:
+            - compile

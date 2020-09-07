@@ -1,0 +1,37 @@
+apply plugin: 'com.github.johnrengelman.shadow'
+
+jar {
+  manifest {
+    attributes 'Automatic-Module-Name': 'okhttp3.curl'
+    attributes 'Main-Class': 'okhttp3.curl.Main'
+  }
+}
+
+// resources-templates.
+sourceSets {
+  main.resources.srcDirs += "$buildDir/generated/resources-templates"
+}
+compileJava {
+  dependsOn 'copyResourcesTemplates'
+}
+task copyResourcesTemplates(type: Copy) {
+  from 'src/main/resources-templates'
+  into "$buildDir/generated/resources-templates"
+  expand('projectVersion': "${project.version}")
+  filteringCharset = 'UTF-8'
+}
+
+dependencies {
+  api project(':okhttp')
+  api project(':okhttp-logging-interceptor')
+  implementation deps.picocli
+  implementation deps.guava
+
+  testImplementation project(':okhttp-testing-support')
+  testImplementation deps.junit
+  testImplementation deps.assertj
+}
+
+shadowJar {
+  mergeServiceFiles()
+}

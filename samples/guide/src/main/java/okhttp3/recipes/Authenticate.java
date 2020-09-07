@@ -30,6 +30,10 @@ public final class Authenticate {
     client = new OkHttpClient.Builder()
         .authenticator(new Authenticator() {
           @Override public Request authenticate(Route route, Response response) throws IOException {
+            if (response.request().header("Authorization") != null) {
+              return null; // Give up, we've already attempted to authenticate.
+            }
+
             System.out.println("Authenticating for response: " + response);
             System.out.println("Challenges: " + response.challenges());
             String credential = Credentials.basic("jesse", "password1");

@@ -1,0 +1,24 @@
+jar {
+  manifest {
+    attributes('Automatic-Module-Name': 'okhttp3.brotli')
+  }
+}
+
+dependencies {
+  api project(':okhttp')
+  api deps.brotli
+  compileOnly deps.jsr305
+
+  testImplementation project(':okhttp-testing-support')
+  testImplementation project(':mockwebserver')
+  testImplementation deps.conscrypt
+  testImplementation deps.junit
+  testImplementation deps.assertj
+}
+
+afterEvaluate { project ->
+  project.tasks.dokka {
+    outputDirectory = "$rootDir/docs/4.x"
+    outputFormat = 'gfm'
+  }
+}

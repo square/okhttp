@@ -1,0 +1,60 @@
+apply plugin: 'com.android.library'
+apply plugin: 'org.jetbrains.kotlin.android'
+
+repositories {
+  jcenter {
+    // Required for a dependency of Android lint.
+    content {
+      includeGroup 'org.jetbrains.trove4j'
+    }
+  }
+}
+
+android {
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_1_8
+    targetCompatibility JavaVersion.VERSION_1_8
+  }
+
+  packagingOptions {
+    // issue merging due to conflict with httpclient and something else
+    exclude("META-INF/DEPENDENCIES")
+  }
+
+  compileSdkVersion 29
+
+  defaultConfig {
+    minSdkVersion 21
+    targetSdkVersion 29
+    versionCode 1
+    versionName "1.0"
+
+    testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    testInstrumentationRunnerArguments(['notClass': 'org.conscrypt.KitKatPlatformOpenSSLSocketImplAdapter,org.bouncycastle.pqc.crypto.qtesla.QTeslaKeyEncodingTests'])
+  }
+}
+
+dependencies {
+  implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${versions.kotlin}"
+  implementation "org.jetbrains.kotlin:kotlin-reflect:${versions.kotlin}"
+  implementation 'com.google.android.gms:play-services-safetynet:17.0.0'
+  implementation project(':okhttp')
+  testImplementation 'junit:junit:4.13'
+  androidTestImplementation(project(':okhttp-testing-support')) {
+    exclude group: 'org.openjsse', module: 'openjsse'
+    exclude group: 'org.conscrypt', module: 'conscrypt-openjdk-uber'
+    exclude group: 'software.amazon.cryptools', module: 'AmazonCorrettoCryptoProvider'
+  }
+  androidTestImplementation "org.bouncycastle:bcprov-jdk15on:${versions.bouncycastle}"
+  androidTestImplementation "org.bouncycastle:bctls-jdk15on:${versions.bouncycastle}"
+  androidTestImplementation "org.conscrypt:conscrypt-android:2.5.0"
+  androidTestImplementation project(':mockwebserver')
+  androidTestImplementation project(':okhttp-tls')
+  androidTestImplementation project(':okhttp-dnsoverhttps')
+  androidTestImplementation project(':okhttp-logging-interceptor')
+  androidTestImplementation 'androidx.test.ext:junit:1.1.1'
+  androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+  androidTestImplementation 'org.apache.httpcomponents.client5:httpclient5:5.0'
+  androidTestImplementation 'com.squareup.moshi:moshi:1.9.2'
+  androidTestImplementation 'com.squareup.moshi:moshi-kotlin:1.9.2'
+}

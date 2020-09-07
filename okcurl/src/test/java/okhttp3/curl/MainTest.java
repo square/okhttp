@@ -20,74 +20,85 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okio.Buffer;
 import org.junit.Test;
+import picocli.CommandLine;
 
-import static okhttp3.curl.Main.fromArgs;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class MainTest {
+  public static Main fromArgs(String... args) {
+    return CommandLine.populateCommand(new Main(), args);
+  }
+
   @Test public void simple() {
     Request request = fromArgs("http://example.com").createRequest();
-    assertEquals("GET", request.method());
-    assertEquals("http://example.com/", request.url().toString());
-    assertNull(request.body());
+    assertThat(request.method()).isEqualTo("GET");
+    assertThat(request.url().toString()).isEqualTo("http://example.com/");
+    assertThat(request.body()).isNull();
   }
 
   @Test public void put() throws IOException {
     Request request = fromArgs("-X", "PUT", "-d", "foo", "http://example.com").createRequest();
-    assertEquals("PUT", request.method());
-    assertEquals("http://example.com/", request.url().toString());
-    assertEquals(3, request.body().contentLength());
+    assertThat(request.method()).isEqualTo("PUT");
+    assertThat(request.url().toString()).isEqualTo("http://example.com/");
+    assertThat(request.body().contentLength()).isEqualTo(3);
   }
 
   @Test public void dataPost() {
     Request request = fromArgs("-d", "foo", "http://example.com").createRequest();
     RequestBody body = request.body();
-    assertEquals("POST", request.method());
-    assertEquals("http://example.com/", request.url().toString());
-    assertEquals("application/x-www-form-urlencoded; charset=utf-8", body.contentType().toString());
-    assertEquals("foo", bodyAsString(body));
+    assertThat(request.method()).isEqualTo("POST");
+    assertThat(request.url().toString()).isEqualTo("http://example.com/");
+    assertThat(body.contentType().toString()).isEqualTo(
+        "application/x-www-form-urlencoded; charset=utf-8");
+    assertThat(bodyAsString(body)).isEqualTo("foo");
   }
 
   @Test public void dataPut() {
     Request request = fromArgs("-d", "foo", "-X", "PUT", "http://example.com").createRequest();
     RequestBody body = request.body();
-    assertEquals("PUT", request.method());
-    assertEquals("http://example.com/", request.url().toString());
-    assertEquals("application/x-www-form-urlencoded; charset=utf-8", body.contentType().toString());
-    assertEquals("foo", bodyAsString(body));
+    assertThat(request.method()).isEqualTo("PUT");
+    assertThat(request.url().toString()).isEqualTo("http://example.com/");
+    assertThat(body.contentType().toString()).isEqualTo(
+        "application/x-www-form-urlencoded; charset=utf-8");
+    assertThat(bodyAsString(body)).isEqualTo("foo");
   }
 
   @Test public void contentTypeHeader() {
     Request request = fromArgs("-d", "foo", "-H", "Content-Type: application/json",
         "http://example.com").createRequest();
     RequestBody body = request.body();
-    assertEquals("POST", request.method());
-    assertEquals("http://example.com/", request.url().toString());
-    assertEquals("application/json; charset=utf-8", body.contentType().toString());
-    assertEquals("foo", bodyAsString(body));
+    assertThat(request.method()).isEqualTo("POST");
+    assertThat(request.url().toString()).isEqualTo("http://example.com/");
+    assertThat(body.contentType().toString()).isEqualTo("application/json; charset=utf-8");
+    assertThat(bodyAsString(body)).isEqualTo("foo");
   }
 
   @Test public void referer() {
     Request request = fromArgs("-e", "foo", "http://example.com").createRequest();
-    assertEquals("GET", request.method());
-    assertEquals("http://example.com/", request.url().toString());
-    assertEquals("foo", request.header("Referer"));
-    assertNull(request.body());
+    assertThat(request.method()).isEqualTo("GET");
+    assertThat(request.url().toString()).isEqualTo("http://example.com/");
+    assertThat(request.header("Referer")).isEqualTo("foo");
+    assertThat(request.body()).isNull();
   }
 
   @Test public void userAgent() {
     Request request = fromArgs("-A", "foo", "http://example.com").createRequest();
-    assertEquals("GET", request.method());
-    assertEquals("http://example.com/", request.url().toString());
-    assertEquals("foo", request.header("User-Agent"));
-    assertNull(request.body());
+    assertThat(request.method()).isEqualTo("GET");
+    assertThat(request.url().toString()).isEqualTo("http://example.com/");
+    assertThat(request.header("User-Agent")).isEqualTo("foo");
+    assertThat(request.body()).isNull();
+  }
+
+  @Test public void defaultUserAgent() {
+    Request request = fromArgs("http://example.com").createRequest();
+    assertThat(request.header("User-Agent")).startsWith("okcurl/");
   }
 
   @Test public void headerSplitWithDate() {
     Request request = fromArgs("-H", "If-Modified-Since: Mon, 18 Aug 2014 15:16:06 GMT",
         "http://example.com").createRequest();
-    assertEquals("Mon, 18 Aug 2014 15:16:06 GMT", request.header("If-Modified-Since"));
+    assertThat(request.header("If-Modified-Since")).isEqualTo(
+        "Mon, 18 Aug 2014 15:16:06 GMT");
   }
 
   private static String bodyAsString(RequestBody body) {

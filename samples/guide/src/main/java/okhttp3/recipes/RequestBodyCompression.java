@@ -39,7 +39,7 @@ public final class RequestBodyCompression {
    * https://console.developers.google.com/project
    */
   public static final String GOOGLE_API_KEY = "AIzaSyAx2WZYe0My0i-uGurpvraYJxO7XNbwiGs";
-  public static final MediaType MEDIA_TYPE_JSON = MediaType.parse("application/json");
+  public static final MediaType MEDIA_TYPE_JSON = MediaType.get("application/json");
 
   private final OkHttpClient client = new OkHttpClient.Builder()
       .addInterceptor(new GzipRequestInterceptor())
@@ -52,7 +52,7 @@ public final class RequestBodyCompression {
     Map<String, String> requestBody = new LinkedHashMap<>();
     requestBody.put("longUrl", "https://publicobject.com/2014/12/04/html-formatting-javadocs/");
     RequestBody jsonRequestBody = RequestBody.create(
-        MEDIA_TYPE_JSON, mapJsonAdapter.toJson(requestBody));
+        mapJsonAdapter.toJson(requestBody), MEDIA_TYPE_JSON);
     Request request = new Request.Builder()
         .url("https://www.googleapis.com/urlshortener/v1/url?key=" + GOOGLE_API_KEY)
         .post(jsonRequestBody)

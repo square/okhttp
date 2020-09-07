@@ -28,33 +28,54 @@ import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import javax.net.ssl.HttpsURLConnection;
+import okhttp3.Handshake;
 import okhttp3.Headers;
-import okhttp3.internal.Util;
-import org.junit.After;
+import okhttp3.HttpUrl;
+import okhttp3.Protocol;
+import okhttp3.RecordingHostnameVerifier;
+import okhttp3.TestUtil;
+import okhttp3.testing.PlatformRule;
+import okhttp3.tls.HandshakeCertificates;
+import okhttp3.tls.HeldCertificate;
+import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Arrays.asList;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static okhttp3.tls.internal.TlsUtil.localhost;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.data.Offset.offset;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 
+@SuppressWarnings({"ArraysAsListWithZeroOrOneArgument", "deprecation"})
 public final class MockWebServerTest {
+  @Rule public PlatformRule platform = new PlatformRule();
+
   @Rule public final MockWebServer server = new MockWebServer();
+
+  @Rule public Timeout globalTimeout = Timeout.seconds(30);
+
+  @Before public void checkPlatforms() {
+    platform.assumeNotBouncyCastle();
+  }
 
   @Test public void defaultMockResponse() {
     MockResponse response = new MockResponse();
-    assertEquals(Arrays.asList("Content-Length: 0"), headersToList(response));
-    assertEquals("HTTP/1.1 200 OK", response.getStatus());
+    assertThat(headersToList(response)).containsExactly("Content-Length: 0");
+    assertThat(response.getStatus()).isEqualTo("HTTP/1.1 200 OK");
   }
 
   @Test public void setResponseMockReason() {
@@ -70,21 +91,21 @@ public final class MockWebServerTest {
     for (int i = 0; i < 600; i++) {
       MockResponse response = new MockResponse().setResponseCode(i);
       String expectedReason = reasons[i / 100];
-      assertEquals("HTTP/1.1 " + i + " " + expectedReason, response.getStatus());
-      assertEquals(Arrays.asList("Content-Length: 0"), headersToList(response));
+      assertThat(response.getStatus()).isEqualTo(("HTTP/1.1 " + i + " " + expectedReason));
+      assertThat(headersToList(response)).containsExactly("Content-Length: 0");
     }
   }
 
   @Test public void setStatusControlsWholeStatusLine() {
     MockResponse response = new MockResponse().setStatus("HTTP/1.1 202 That'll do pig");
-    assertEquals(Arrays.asList("Content-Length: 0"), headersToList(response));
-    assertEquals("HTTP/1.1 202 That'll do pig", response.getStatus());
+    assertThat(headersToList(response)).containsExactly("Content-Length: 0");
+    assertThat(response.getStatus()).isEqualTo("HTTP/1.1 202 That'll do pig");
   }
 
   @Test public void setBodyAdjustsHeaders() throws IOException {
     MockResponse response = new MockResponse().setBody("ABC");
-    assertEquals(Arrays.asList("Content-Length: 3"), headersToList(response));
-    assertEquals("ABC", response.getBody().readUtf8());
+    assertThat(headersToList(response)).containsExactly("Content-Length: 3");
+    assertThat(response.getBody().readUtf8()).isEqualTo("ABC");
   }
 
   @Test public void mockResponseAddHeader() {
@@ -92,7 +113,7 @@ public final class MockWebServerTest {
         .clearHeaders()
         .addHeader("Cookie: s=square")
         .addHeader("Cookie", "a=android");
-    assertEquals(Arrays.asList("Cookie: s=square", "Cookie: a=android"), headersToList(response));
+    assertThat(headersToList(response)).containsExactly("Cookie: s=square", "Cookie: a=android");
   }
 
   @Test public void mockResponseSetHeader() {
@@ -102,7 +123,18 @@ public final class MockWebServerTest {
         .addHeader("Cookie: a=android")
         .addHeader("Cookies: delicious");
     response.setHeader("cookie", "r=robot");
-    assertEquals(Arrays.asList("Cookies: delicious", "cookie: r=robot"), headersToList(response));
+    assertThat(headersToList(response)).containsExactly("Cookies: delicious", "cookie: r=robot");
+  }
+
+  @Test public void mockResponseSetHeaders() {
+    MockResponse response = new MockResponse()
+        .clearHeaders()
+        .addHeader("Cookie: s=square")
+        .addHeader("Cookies: delicious");
+
+    response.setHeaders(new Headers.Builder().add("Cookie", "a=android").build());
+
+    assertThat(headersToList(response)).containsExactly("Cookie: a=android");
   }
 
   @Test public void regularResponse() throws Exception {
@@ -112,13 +144,16 @@ public final class MockWebServerTest {
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
     connection.setRequestProperty("Accept-Language", "en-US");
     InputStream in = connection.getInputStream();
-    BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-    assertEquals(HttpURLConnection.HTTP_OK, connection.getResponseCode());
-    assertEquals("hello world", reader.readLine());
+    BufferedReader reader = new BufferedReader(new InputStreamReader(in, UTF_8));
+    assertThat(connection.getResponseCode()).isEqualTo(HttpURLConnection.HTTP_OK);
+    assertThat(reader.readLine()).isEqualTo("hello world");
 
     RecordedRequest request = server.takeRequest();
-    assertEquals("GET / HTTP/1.1", request.getRequestLine());
-    assertEquals("en-US", request.getHeader("Accept-Language"));
+    assertThat(request.getRequestLine()).isEqualTo("GET / HTTP/1.1");
+    assertThat(request.getHeader("Accept-Language")).isEqualTo("en-US");
+
+    // Server has no more requests.
+    assertThat(server.takeRequest(100, MILLISECONDS)).isNull();
   }
 
   @Test public void redirect() throws Exception {
@@ -130,13 +165,13 @@ public final class MockWebServerTest {
 
     URLConnection connection = server.url("/").url().openConnection();
     InputStream in = connection.getInputStream();
-    BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-    assertEquals("This is the new location!", reader.readLine());
+    BufferedReader reader = new BufferedReader(new InputStreamReader(in, UTF_8));
+    assertThat(reader.readLine()).isEqualTo("This is the new location!");
 
     RecordedRequest first = server.takeRequest();
-    assertEquals("GET / HTTP/1.1", first.getRequestLine());
+    assertThat(first.getRequestLine()).isEqualTo("GET / HTTP/1.1");
     RecordedRequest redirect = server.takeRequest();
-    assertEquals("GET /new-path HTTP/1.1", redirect.getRequestLine());
+    assertThat(redirect.getRequestLine()).isEqualTo("GET /new-path HTTP/1.1");
   }
 
   /**
@@ -144,20 +179,18 @@ public final class MockWebServerTest {
    * response is ready.
    */
   @Test public void dispatchBlocksWaitingForEnqueue() throws Exception {
-    new Thread() {
-      @Override public void run() {
-        try {
-          Thread.sleep(1000);
-        } catch (InterruptedException ignored) {
-        }
-        server.enqueue(new MockResponse().setBody("enqueued in the background"));
+    new Thread(() -> {
+      try {
+        Thread.sleep(1000);
+      } catch (InterruptedException ignored) {
       }
-    }.start();
+      server.enqueue(new MockResponse().setBody("enqueued in the background"));
+    }).start();
 
     URLConnection connection = server.url("/").url().openConnection();
     InputStream in = connection.getInputStream();
-    BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-    assertEquals("enqueued in the background", reader.readLine());
+    BufferedReader reader = new BufferedReader(new InputStreamReader(in, UTF_8));
+    assertThat(reader.readLine()).isEqualTo("enqueued in the background");
   }
 
   @Test public void nonHexadecimalChunkSize() throws Exception {
@@ -185,9 +218,9 @@ public final class MockWebServerTest {
     URLConnection urlConnection = server.url("/").url().openConnection();
     urlConnection.setReadTimeout(1000);
     InputStream in = urlConnection.getInputStream();
-    assertEquals('A', in.read());
-    assertEquals('B', in.read());
-    assertEquals('C', in.read());
+    assertThat(in.read()).isEqualTo('A');
+    assertThat(in.read()).isEqualTo('B');
+    assertThat(in.read()).isEqualTo('C');
     try {
       in.read(); // if Content-Length was accurate, this would return -1 immediately
       fail();
@@ -196,21 +229,23 @@ public final class MockWebServerTest {
 
     URLConnection urlConnection2 = server.url("/").url().openConnection();
     InputStream in2 = urlConnection2.getInputStream();
-    assertEquals('D', in2.read());
-    assertEquals('E', in2.read());
-    assertEquals('F', in2.read());
-    assertEquals(-1, in2.read());
+    assertThat(in2.read()).isEqualTo('D');
+    assertThat(in2.read()).isEqualTo('E');
+    assertThat(in2.read()).isEqualTo('F');
+    assertThat(in2.read()).isEqualTo(-1);
 
-    assertEquals(0, server.takeRequest().getSequenceNumber());
-    assertEquals(0, server.takeRequest().getSequenceNumber());
+    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
+    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
   }
 
+  @Ignore("Not actually failing where expected")
   @Test public void disconnectAtStart() throws Exception {
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START));
     server.enqueue(new MockResponse()); // The jdk's HttpUrlConnection is a bastard.
     server.enqueue(new MockResponse());
     try {
       server.url("/a").url().openConnection().getInputStream();
+      fail();
     } catch (IOException expected) {
     }
     server.url("/b").url().openConnection().getInputStream(); // Should succeed.
@@ -221,20 +256,20 @@ public final class MockWebServerTest {
    * should yield one sleep for a total delay of 500ms.
    */
   @Test public void throttleRequest() throws Exception {
+    TestUtil.assumeNotWindows();
+
     server.enqueue(new MockResponse()
         .throttleBody(3, 500, TimeUnit.MILLISECONDS));
 
     long startNanos = System.nanoTime();
     URLConnection connection = server.url("/").url().openConnection();
     connection.setDoOutput(true);
-    connection.getOutputStream().write("ABCDEF".getBytes("UTF-8"));
+    connection.getOutputStream().write("ABCDEF".getBytes(UTF_8));
     InputStream in = connection.getInputStream();
-    assertEquals(-1, in.read());
+    assertThat(in.read()).isEqualTo(-1);
     long elapsedNanos = System.nanoTime() - startNanos;
     long elapsedMillis = NANOSECONDS.toMillis(elapsedNanos);
-
-    assertTrue(Util.format("Request + Response: %sms", elapsedMillis), elapsedMillis >= 500);
-    assertTrue(Util.format("Request + Response: %sms", elapsedMillis), elapsedMillis < 1000);
+    assertThat(elapsedMillis).isBetween(500L, 1000L);
   }
 
   /**
@@ -242,6 +277,8 @@ public final class MockWebServerTest {
    * should yield one sleep for a total delay of 500ms.
    */
   @Test public void throttleResponse() throws Exception {
+    TestUtil.assumeNotWindows();
+
     server.enqueue(new MockResponse()
         .setBody("ABCDEF")
         .throttleBody(3, 500, TimeUnit.MILLISECONDS));
@@ -249,22 +286,22 @@ public final class MockWebServerTest {
     long startNanos = System.nanoTime();
     URLConnection connection = server.url("/").url().openConnection();
     InputStream in = connection.getInputStream();
-    assertEquals('A', in.read());
-    assertEquals('B', in.read());
-    assertEquals('C', in.read());
-    assertEquals('D', in.read());
-    assertEquals('E', in.read());
-    assertEquals('F', in.read());
-    assertEquals(-1, in.read());
+    assertThat(in.read()).isEqualTo('A');
+    assertThat(in.read()).isEqualTo('B');
+    assertThat(in.read()).isEqualTo('C');
+    assertThat(in.read()).isEqualTo('D');
+    assertThat(in.read()).isEqualTo('E');
+    assertThat(in.read()).isEqualTo('F');
+    assertThat(in.read()).isEqualTo(-1);
     long elapsedNanos = System.nanoTime() - startNanos;
     long elapsedMillis = NANOSECONDS.toMillis(elapsedNanos);
-
-    assertTrue(Util.format("Request + Response: %sms", elapsedMillis), elapsedMillis >= 500);
-    assertTrue(Util.format("Request + Response: %sms", elapsedMillis), elapsedMillis < 1000);
+    assertThat(elapsedMillis).isBetween(500L, 1000L);
   }
 
   /** Delay the response body by sleeping 1s. */
   @Test public void delayResponse() throws IOException {
+    TestUtil.assumeNotWindows();
+
     server.enqueue(new MockResponse()
         .setBody("ABCDEF")
         .setBodyDelay(1, SECONDS));
@@ -272,15 +309,15 @@ public final class MockWebServerTest {
     long startNanos = System.nanoTime();
     URLConnection connection = server.url("/").url().openConnection();
     InputStream in = connection.getInputStream();
-    assertEquals('A', in.read());
+    assertThat(in.read()).isEqualTo('A');
     long elapsedNanos = System.nanoTime() - startNanos;
     long elapsedMillis = NANOSECONDS.toMillis(elapsedNanos);
-    assertTrue(Util.format("Request + Response: %sms", elapsedMillis), elapsedMillis >= 1000);
+    assertThat(elapsedMillis).isGreaterThanOrEqualTo(1000L);
 
     in.close();
   }
 
-  @Test public void disconnectRequestHalfway() throws IOException {
+  @Test public void disconnectRequestHalfway() throws Exception {
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_DURING_REQUEST_BODY));
     // Limit the size of the request body that the server holds in memory to an arbitrary
     // 3.5 MBytes so this test can pass on devices with little memory.
@@ -299,11 +336,16 @@ public final class MockWebServerTest {
       try {
         out.write(data);
         out.flush();
+        if (i == 513) {
+          // pause slightly after half way to make result more predictable
+          Thread.sleep(100);
+        }
       } catch (IOException e) {
         break;
       }
     }
-    assertEquals(512f, i, 10f); // Halfway +/- 1%
+    // Halfway +/- 0.5%
+    assertThat((float) i).isCloseTo(512f, offset(5f));
   }
 
   @Test public void disconnectResponseHalfway() throws IOException {
@@ -312,13 +354,13 @@ public final class MockWebServerTest {
         .setSocketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY));
 
     URLConnection connection = server.url("/").url().openConnection();
-    assertEquals(2, connection.getContentLength());
+    assertThat(connection.getContentLength()).isEqualTo(2);
     InputStream in = connection.getInputStream();
-    assertEquals('a', in.read());
+    assertThat(in.read()).isEqualTo('a');
     try {
       int byteRead = in.read();
       // OpenJDK behavior: end of stream.
-      assertEquals(-1, byteRead);
+      assertThat(byteRead).isEqualTo(-1);
     } catch (ProtocolException e) {
       // On Android, HttpURLConnection is implemented by OkHttp v2. OkHttp
       // treats an incomplete response body as a ProtocolException.
@@ -351,25 +393,21 @@ public final class MockWebServerTest {
     server.shutdown();
   }
 
-  @After public void tearDown() throws IOException {
-    server.shutdown();
+  @Test public void portImplicitlyStarts() {
+    assertThat(server.getPort()).isGreaterThan(0);
   }
 
-  @Test public void portImplicitlyStarts() throws IOException {
-    assertTrue(server.getPort() > 0);
+  @Test public void hostnameImplicitlyStarts() {
+    assertThat(server.getHostName()).isNotNull();
   }
 
-  @Test public void hostnameImplicitlyStarts() throws IOException {
-    assertNotNull(server.getHostName());
-  }
-
-  @Test public void toProxyAddressImplicitlyStarts() throws IOException {
-    assertNotNull(server.toProxyAddress());
+  @Test public void toProxyAddressImplicitlyStarts() {
+    assertThat(server.toProxyAddress()).isNotNull();
   }
 
   @Test public void differentInstancesGetDifferentPorts() throws IOException {
     MockWebServer other = new MockWebServer();
-    assertNotEquals(server.getPort(), other.getPort());
+    assertThat(other.getPort()).isNotEqualTo(server.getPort());
     other.shutdown();
   }
 
@@ -384,7 +422,7 @@ public final class MockWebServerTest {
 
     statement.evaluate();
 
-    assertTrue(called.get());
+    assertThat(called.get()).isTrue();
     try {
       server.url("/").url().openConnection().connect();
       fail();
@@ -404,5 +442,188 @@ public final class MockWebServerTest {
 
     // Shutting down the server should unblock the dispatcher.
     server.shutdown();
+  }
+
+  @Test public void requestUrlReconstructed() throws Exception {
+    server.enqueue(new MockResponse().setBody("hello world"));
+
+    URL url = server.url("/a/deep/path?key=foo%20bar").url();
+    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+    InputStream in = connection.getInputStream();
+    BufferedReader reader = new BufferedReader(new InputStreamReader(in, UTF_8));
+    assertThat(connection.getResponseCode()).isEqualTo(HttpURLConnection.HTTP_OK);
+    assertThat(reader.readLine()).isEqualTo("hello world");
+
+    RecordedRequest request = server.takeRequest();
+    assertThat(request.getRequestLine()).isEqualTo(
+        "GET /a/deep/path?key=foo%20bar HTTP/1.1");
+
+    HttpUrl requestUrl = request.getRequestUrl();
+    assertThat(requestUrl.scheme()).isEqualTo("http");
+    assertThat(requestUrl.host()).isEqualTo(server.getHostName());
+    assertThat(requestUrl.port()).isEqualTo(server.getPort());
+    assertThat(requestUrl.encodedPath()).isEqualTo("/a/deep/path");
+    assertThat(requestUrl.queryParameter("key")).isEqualTo("foo bar");
+  }
+
+  @Test public void shutdownServerAfterRequest() throws Exception {
+    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.SHUTDOWN_SERVER_AFTER_RESPONSE));
+
+    URL url = server.url("/").url();
+
+    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+    assertThat(connection.getResponseCode()).isEqualTo(HttpURLConnection.HTTP_OK);
+
+    HttpURLConnection refusedConnection = (HttpURLConnection) url.openConnection();
+
+    try {
+      refusedConnection.getResponseCode();
+      fail("Second connection should be refused");
+    } catch (ConnectException e) {
+      assertThat(e.getMessage()).contains("refused");
+    }
+  }
+
+  @Test public void http100Continue() throws Exception {
+    server.enqueue(new MockResponse().setBody("response"));
+
+    URL url = server.url("/").url();
+    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+    connection.setDoOutput(true);
+    connection.setRequestProperty("Expect", "100-Continue");
+    connection.getOutputStream().write("request".getBytes(UTF_8));
+
+    InputStream in = connection.getInputStream();
+    BufferedReader reader = new BufferedReader(new InputStreamReader(in, UTF_8));
+    assertThat(reader.readLine()).isEqualTo("response");
+
+    RecordedRequest request = server.takeRequest();
+    assertThat(request.getBody().readUtf8()).isEqualTo("request");
+  }
+
+  @Test public void testH2PriorKnowledgeServerFallback() {
+    try {
+      server.setProtocols(asList(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.HTTP_1_1));
+      fail();
+    } catch (IllegalArgumentException expected) {
+      assertThat(expected.getMessage()).isEqualTo(
+          ("protocols containing h2_prior_knowledge cannot use other protocols: "
+              + "[h2_prior_knowledge, http/1.1]"));
+    }
+  }
+
+  @Test public void testH2PriorKnowledgeServerDuplicates() {
+    try {
+      // Treating this use case as user error
+      server.setProtocols(asList(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.H2_PRIOR_KNOWLEDGE));
+      fail();
+    } catch (IllegalArgumentException expected) {
+      assertThat(expected.getMessage()).isEqualTo(
+          ("protocols containing h2_prior_knowledge cannot use other protocols: "
+              + "[h2_prior_knowledge, h2_prior_knowledge]"));
+    }
+  }
+
+  @Test public void testMockWebServerH2PriorKnowledgeProtocol() {
+    server.setProtocols(asList(Protocol.H2_PRIOR_KNOWLEDGE));
+
+    assertThat(server.protocols().size()).isEqualTo(1);
+    assertThat(server.protocols().get(0)).isEqualTo(Protocol.H2_PRIOR_KNOWLEDGE);
+  }
+
+  @Test public void https() throws Exception {
+    HandshakeCertificates handshakeCertificates = localhost();
+    server.useHttps(handshakeCertificates.sslSocketFactory(), false);
+    server.enqueue(new MockResponse().setBody("abc"));
+
+    HttpUrl url = server.url("/");
+    HttpsURLConnection connection = (HttpsURLConnection) url.url().openConnection();
+    connection.setSSLSocketFactory(handshakeCertificates.sslSocketFactory());
+    connection.setHostnameVerifier(new RecordingHostnameVerifier());
+
+    assertThat(connection.getResponseCode()).isEqualTo(HttpURLConnection.HTTP_OK);
+    BufferedReader reader =
+        new BufferedReader(new InputStreamReader(connection.getInputStream(), UTF_8));
+    assertThat(reader.readLine()).isEqualTo("abc");
+
+    RecordedRequest request = server.takeRequest();
+    assertThat(request.getRequestUrl().scheme()).isEqualTo("https");
+    Handshake handshake = request.getHandshake();
+    assertThat(handshake.tlsVersion()).isNotNull();
+    assertThat(handshake.cipherSuite()).isNotNull();
+    assertThat(handshake.localPrincipal()).isNotNull();
+    assertThat(handshake.localCertificates().size()).isEqualTo(1);
+    assertThat(handshake.peerPrincipal()).isNull();
+    assertThat(handshake.peerCertificates().size()).isEqualTo(0);
+  }
+
+  @Test public void httpsWithClientAuth() throws Exception {
+    assumeFalse(getPlatform().equals("conscrypt"));
+
+    HeldCertificate clientCa = new HeldCertificate.Builder()
+        .certificateAuthority(0)
+        .build();
+    HeldCertificate serverCa = new HeldCertificate.Builder()
+        .certificateAuthority(0)
+        .build();
+    HeldCertificate serverCertificate = new HeldCertificate.Builder()
+        .signedBy(serverCa)
+        .addSubjectAlternativeName(server.getHostName())
+        .build();
+    HandshakeCertificates serverHandshakeCertificates = new HandshakeCertificates.Builder()
+        .addTrustedCertificate(clientCa.certificate())
+        .heldCertificate(serverCertificate)
+        .build();
+
+    server.useHttps(serverHandshakeCertificates.sslSocketFactory(), false);
+    server.enqueue(new MockResponse().setBody("abc"));
+    server.requestClientAuth();
+
+    HeldCertificate clientCertificate = new HeldCertificate.Builder()
+        .signedBy(clientCa)
+        .build();
+    HandshakeCertificates clientHandshakeCertificates = new HandshakeCertificates.Builder()
+        .addTrustedCertificate(serverCa.certificate())
+        .heldCertificate(clientCertificate)
+        .build();
+
+    HttpUrl url = server.url("/");
+    HttpsURLConnection connection = (HttpsURLConnection) url.url().openConnection();
+    connection.setSSLSocketFactory(clientHandshakeCertificates.sslSocketFactory());
+    connection.setHostnameVerifier(new RecordingHostnameVerifier());
+
+    assertThat(connection.getResponseCode()).isEqualTo(HttpURLConnection.HTTP_OK);
+    BufferedReader reader =
+        new BufferedReader(new InputStreamReader(connection.getInputStream(), UTF_8));
+    assertThat(reader.readLine()).isEqualTo("abc");
+
+    RecordedRequest request = server.takeRequest();
+    assertThat(request.getRequestUrl().scheme()).isEqualTo("https");
+    Handshake handshake = request.getHandshake();
+    assertThat(handshake.tlsVersion()).isNotNull();
+    assertThat(handshake.cipherSuite()).isNotNull();
+    assertThat(handshake.localPrincipal()).isNotNull();
+    assertThat(handshake.localCertificates().size()).isEqualTo(1);
+    assertThat(handshake.peerPrincipal()).isNotNull();
+    assertThat(handshake.peerCertificates().size()).isEqualTo(1);
+  }
+
+  @Test
+  public void shutdownTwice() throws IOException {
+    MockWebServer server2 = new MockWebServer();
+
+    server2.start();
+    server2.shutdown();
+    try {
+      server2.start();
+      fail();
+    } catch (IllegalArgumentException iae) {
+      // expected
+    }
+    server2.shutdown();
+  }
+
+  public static String getPlatform() {
+    return System.getProperty("okhttp.platform", "jdk8");
   }
 }

@@ -1,6 +1,7 @@
 .classpath
 .project
 .settings
+.gradle
 eclipsebin
 
 bin
@@ -8,10 +9,12 @@ gen
 build
 out
 lib
+generated
 
 target
 pom.xml.*
 release.properties
+local.properties
 
 .idea
 *.iml
@@ -22,3 +25,9 @@ classes
 obj
 
 .DS_Store
+
+# Special Mkdocs files
+docs/4.x
+docs/changelog.md
+docs/contributing.md
+docs/index.md

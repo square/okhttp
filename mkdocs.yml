@@ -1,0 +1,74 @@
+site_name: OkHttp
+site_url: https://square.github.com/okhttp/
+repo_name: OkHttp
+repo_url: https://github.com/square/okhttp
+site_description: "An HTTP & HTTP/2 client for Android and Java applications"
+site_author: Square, Inc.
+remote_branch: gh-pages
+
+copyright: 'Copyright &copy; 2019 Square, Inc.'
+
+theme:
+  name: 'material'
+  favicon: images/icon-square.png
+  logo: images/icon-square.png
+  palette:
+    primary: 'teal'
+    accent: 'white'
+
+extra_css:
+  - 'css/app.css'
+
+markdown_extensions:
+  - smarty
+  - codehilite:
+      guess_lang: false
+  - footnotes
+  - meta
+  - toc:
+      permalink: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.inlinehilite
+  - pymdownx.magiclink
+  - pymdownx.smartsymbols
+  - pymdownx.superfences
+  - pymdownx.tilde
+  - tables
+
+nav:
+  - 'Overview': index.md
+  - 'Stack Overflow ⏏': https://stackoverflow.com/questions/tagged/okhttp?sort=active
+  - 'Calls': calls.md
+  - 'Caching': caching.md
+  - 'Connections': connections.md
+  - 'Events': events.md
+  - 'HTTPS': https.md
+  - 'Interceptors': interceptors.md
+  - 'Recipes': recipes.md
+  - 'Security': security.md
+  - 'Security Providers': security_providers.md
+  - 'Works with OkHttp': works_with_okhttp.md
+  - 'Upgrading to OkHttp 4': upgrading_to_okhttp_4.md
+  - '4.x API':
+    - 'okhttp': 4.x/okhttp/okhttp3/index.md
+    - 'brotli': 4.x/okhttp-brotli/okhttp3.brotli/index.md
+    - 'dnsoverhttps': 4.x/okhttp-dnsoverhttps/okhttp3.dnsoverhttps/index.md
+    - 'logging-interceptor': 4.x/okhttp-logging-interceptor/okhttp3.logging/index.md
+    - 'sse': 4.x/okhttp-sse/okhttp3.sse/index.md
+    - 'tls': 4.x/okhttp-tls/okhttp3.tls/index.md
+    - 'urlconnection': 4.x/okhttp-urlconnection/okhttp3/index.md
+    - 'mockwebserver': 4.x/mockwebserver/okhttp3.mockwebserver/index.md
+  - '3.12.x API':
+    - 'okhttp ⏏': https://square.github.io/okhttp/3.x/okhttp/
+    - 'dnsoverhttps ⏏': https://square.github.io/okhttp/3.x/okhttp-dnsoverhttps/
+    - 'logging-interceptor ⏏': https://square.github.io/okhttp/3.x/logging-interceptor/
+    - 'sse ⏏': https://square.github.io/okhttp/3.x/okhttp-sse/
+    - 'tls ⏏': https://square.github.io/okhttp/3.x/okhttp-tls/
+    - 'urlconnection ⏏': https://square.github.io/okhttp/3.x/okhttp-urlconnection/
+    - 'mockwebserver ⏏': https://square.github.io/okhttp/3.x/mockwebserver/
+  - 'Change Log': changelog.md
+  - 'Contributing': contributing.md
+  - 'Code of Conduct': code_of_conduct.md
+
