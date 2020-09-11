@@ -1,14 +1,12 @@
 
 
 
-
 <!doctype html>
 <html lang="en" class="no-js">
   <head>
     
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
-      <meta http-equiv="x-ua-compatible" content="ie=edge">
       
         <meta name="description" content="An HTTP & HTTP/2 client for Android and Java applications">
       
@@ -18,27 +16,8 @@
       
         <meta name="author" content="Square, Inc.">
       
-      
-        <meta name="lang:clipboard.copy" content="Copy to clipboard">
-      
-        <meta name="lang:clipboard.copied" content="Copied to clipboard">
-      
-        <meta name="lang:search.language" content="en">
-      
-        <meta name="lang:search.pipeline.stopwords" content="True">
-      
-        <meta name="lang:search.pipeline.trimmer" content="True">
-      
-        <meta name="lang:search.result.none" content="No matching documents">
-      
-        <meta name="lang:search.result.one" content="1 matching document">
-      
-        <meta name="lang:search.result.other" content="# matching documents">
-      
-        <meta name="lang:search.tokenizer" content="[\s\-]+">
-      
       <link rel="shortcut icon" href="../images/icon-square.png">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-5.5.7">
     
     
       
@@ -46,9 +25,9 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/application.1b62728e.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.b8ac9624.min.css">
       
-        <link rel="stylesheet" href="../assets/stylesheets/application-palette.a8b3c06d.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.28f3ef9a.min.css">
       
       
         
@@ -57,16 +36,13 @@
       
     
     
-      <script src="../assets/javascripts/modernizr.268332fc.js"></script>
-    
     
       
         <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
-        <style>body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}</style>
+        <style>body,input{font-family:"Roboto",-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono",SFMono-Regular,Consolas,Menlo,monospace}</style>
       
     
-    <link rel="stylesheet" href="../assets/fonts/material-icons.css">
     
     
       <link rel="stylesheet" href="../css/app.css">
@@ -77,73 +53,75 @@
     
   </head>
   
-    
-    
-    <body dir="ltr" data-md-color-primary="teal" data-md-color-accent="white">
   
-    <svg class="md-svg">
-      <defs>
-        
-        
-          <svg xmlns="http://www.w3.org/2000/svg" width="416" height="448" viewBox="0 0 416 448" id="__github"><path fill="currentColor" d="M160 304q0 10-3.125 20.5t-10.75 19T128 352t-18.125-8.5-10.75-19T96 304t3.125-20.5 10.75-19T128 256t18.125 8.5 10.75 19T160 304zm160 0q0 10-3.125 20.5t-10.75 19T288 352t-18.125-8.5-10.75-19T256 304t3.125-20.5 10.75-19T288 256t18.125 8.5 10.75 19T320 304zm40 0q0-30-17.25-51T296 232q-10.25 0-48.75 5.25Q229.5 240 208 240t-39.25-2.75Q130.75 232 120 232q-29.5 0-46.75 21T56 304q0 22 8 38.375t20.25 25.75 30.5 15 35 7.375 37.25 1.75h42q20.5 0 37.25-1.75t35-7.375 30.5-15 20.25-25.75T360 304zm56-44q0 51.75-15.25 82.75-9.5 19.25-26.375 33.25t-35.25 21.5-42.5 11.875-42.875 5.5T212 416q-19.5 0-35.5-.75t-36.875-3.125-38.125-7.5-34.25-12.875T37 371.5t-21.5-28.75Q0 312 0 260q0-59.25 34-99-6.75-20.5-6.75-42.5 0-29 12.75-54.5 27 0 47.5 9.875t47.25 30.875Q171.5 96 212 96q37 0 70 8 26.25-20.5 46.75-30.25T376 64q12.75 25.5 12.75 54.5 0 21.75-6.75 42 34 40 34 99.5z"/></svg>
-        
-      </defs>
-    </svg>
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="teal" data-md-color-accent="white">
+  
+    
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
-    <label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
-    
-      <a href="#https" tabindex="1" class="md-skip">
-        Skip to content
-      </a>
-    
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#https" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
     
       <header class="md-header" data-md-component="header">
-  <nav class="md-header-nav md-grid">
-    <div class="md-flex">
-      <div class="md-flex__cell md-flex__cell--shrink">
-        <a href="https://square.github.com/okhttp/" title="OkHttp" class="md-header-nav__button md-logo">
-          
-            <img src="../images/icon-square.png" width="24" height="24">
-          
-        </a>
-      </div>
-      <div class="md-flex__cell md-flex__cell--shrink">
-        <label class="md-icon md-icon--menu md-header-nav__button" for="__drawer"></label>
-      </div>
-      <div class="md-flex__cell md-flex__cell--stretch">
-        <div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
-          
-            <span class="md-header-nav__topic">
-              OkHttp
-            </span>
-            <span class="md-header-nav__topic">
-              
-                HTTPS
-              
-            </span>
-          
+  <nav class="md-header-nav md-grid" aria-label="Header">
+    <a href="https://square.github.com/okhttp/" title="OkHttp" class="md-header-nav__button md-logo" aria-label="OkHttp">
+      
+  <img src="../images/icon-square.png" alt="logo">
+
+    </a>
+    <label class="md-header-nav__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header-nav__title" data-md-component="header-title">
+      
+        <div class="md-header-nav__ellipsis">
+          <span class="md-header-nav__topic md-ellipsis">
+            OkHttp
+          </span>
+          <span class="md-header-nav__topic md-ellipsis">
+            
+              HTTPS
+            
+          </span>
         </div>
-      </div>
-      <div class="md-flex__cell md-flex__cell--shrink">
-        
-          <label class="md-icon md-icon--search md-header-nav__button" for="__search"></label>
-          
+      
+    </div>
+    
+      <label class="md-header-nav__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0116 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 019.5 16 6.5 6.5 0 013 9.5 6.5 6.5 0 019.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      
 <div class="md-search" data-md-component="search" role="dialog">
   <label class="md-search__overlay" for="__search"></label>
   <div class="md-search__inner" role="search">
     <form class="md-search__form" name="search">
-      <input type="text" class="md-search__input" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
-      <label class="md-icon md-search__icon" for="__search"></label>
-      <button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">
-        &#xE5CD;
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" data-md-state="active">
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0116 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 019.5 16 6.5 6.5 0 013 9.5 6.5 6.5 0 019.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <button type="reset" class="md-search__icon md-icon" aria-label="Clear" data-md-component="search-reset" tabindex="-1">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
       </button>
     </form>
     <div class="md-search__output">
       <div class="md-search__scrollwrap" data-md-scrollfix>
-        <div class="md-search-result" data-md-component="result">
+        <div class="md-search-result" data-md-component="search-result">
           <div class="md-search-result__meta">
-            Type to start searching
+            Initializing search
           </div>
           <ol class="md-search-result__list"></ol>
         </div>
@@ -151,71 +129,55 @@
     </div>
   </div>
 </div>
+    
+    
+      <div class="md-header-nav__source">
         
-      </div>
-      
-        <div class="md-flex__cell md-flex__cell--shrink">
-          <div class="md-header-nav__source">
-            
-
-
-  
-
-<a href="https://github.com/square/okhttp/" title="Go to repository" class="md-source" data-md-source="github">
-  
-    <div class="md-source__icon">
-      <svg viewBox="0 0 24 24" width="24" height="24">
-        <use xlink:href="#__github" width="24" height="24"></use>
-      </svg>
-    </div>
-  
+<a href="https://github.com/square/okhttp/" title="Go to repository" class="md-source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 00-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 01-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 000 40.81l195.61 195.6a28.86 28.86 0 0040.8 0l194.69-194.69a28.86 28.86 0 000-40.81z"/></svg>
+  </div>
   <div class="md-source__repository">
     OkHttp
   </div>
 </a>
-          </div>
-        </div>
-      
-    </div>
+      </div>
+    
   </nav>
 </header>
     
-    <div class="md-container">
+    <div class="md-container" data-md-component="container">
       
         
       
       
-      <main class="md-main" role="main">
-        <div class="md-main__inner md-grid" data-md-component="container">
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
           
             
               <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
                 <div class="md-sidebar__scrollwrap">
                   <div class="md-sidebar__inner">
-                    <nav class="md-nav md-nav--primary" data-md-level="0">
-  <label class="md-nav__title md-nav__title--site" for="__drawer">
-    <a href="https://square.github.com/okhttp/" title="OkHttp" class="md-nav__button md-logo">
+                    <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="https://square.github.com/okhttp/" title="OkHttp" class="md-nav__button md-logo" aria-label="OkHttp">
       
-        <img src="../images/icon-square.png" width="48" height="48">
-      
+  <img src="../images/icon-square.png" alt="logo">
+
     </a>
     OkHttp
   </label>
   
     <div class="md-nav__source">
       
-
-
-  
-
-<a href="https://github.com/square/okhttp/" title="Go to repository" class="md-source" data-md-source="github">
-  
-    <div class="md-source__icon">
-      <svg viewBox="0 0 24 24" width="24" height="24">
-        <use xlink:href="#__github" width="24" height="24"></use>
-      </svg>
-    </div>
-  
+<a href="https://github.com/square/okhttp/" title="Go to repository" class="md-source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 00-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 01-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 000 40.81l195.61 195.6a28.86 28.86 0 0040.8 0l194.69-194.69a28.86 28.86 0 000-40.81z"/></svg>
+  </div>
   <div class="md-source__repository">
     OkHttp
   </div>
@@ -305,13 +267,16 @@
 
   <li class="md-nav__item md-nav__item--active">
     
-    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
     
       
     
     
       <label class="md-nav__link md-nav__link--active" for="__toc">
         HTTPS
+        <span class="md-nav__icon md-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 9h14V7H3v2m0 4h14v-2H3v2m0 4h14v-2H3v2m16 0h2v-2h-2v2m0-10v2h2V7h-2m0 6h2v-2h-2v2z"/></svg>
+        </span>
       </label>
     
     <a href="./" title="HTTPS" class="md-nav__link md-nav__link--active">
@@ -319,13 +284,18 @@
     </a>
     
       
-<nav class="md-nav md-nav--secondary">
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
   
   
     
   
   
-    <label class="md-nav__title" for="__toc">Table of contents</label>
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </span>
+      Table of contents
+    </label>
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
@@ -348,10 +318,6 @@
   </a>
   
 </li>
-      
-      
-      
-      
       
     </ul>
   
@@ -439,13 +405,19 @@
 
   <li class="md-nav__item md-nav__item--nested">
     
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-14" type="checkbox" id="nav-14">
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-14" type="checkbox" id="nav-14">
     
     <label class="md-nav__link" for="nav-14">
       4.x API
+      <span class="md-nav__icon md-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M8.59 16.58L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.42z"/></svg>
+      </span>
     </label>
-    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+    <nav class="md-nav" aria-label="4.x API" data-md-level="1">
       <label class="md-nav__title" for="nav-14">
+        <span class="md-nav__icon md-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+        </span>
         4.x API
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
@@ -559,13 +531,19 @@
 
   <li class="md-nav__item md-nav__item--nested">
     
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-15" type="checkbox" id="nav-15">
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-15" type="checkbox" id="nav-15">
     
     <label class="md-nav__link" for="nav-15">
       3.12.x API
+      <span class="md-nav__icon md-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M8.59 16.58L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.42z"/></svg>
+      </span>
     </label>
-    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+    <nav class="md-nav" aria-label="3.12.x API" data-md-level="1">
       <label class="md-nav__title" for="nav-15">
+        <span class="md-nav__icon md-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+        </span>
         3.12.x API
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
@@ -707,13 +685,18 @@
                 <div class="md-sidebar__scrollwrap">
                   <div class="md-sidebar__inner">
                     
-<nav class="md-nav md-nav--secondary">
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
   
   
     
   
   
-    <label class="md-nav__title" for="__toc">Table of contents</label>
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </span>
+      Table of contents
+    </label>
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
@@ -737,10 +720,6 @@
   
 </li>
       
-      
-      
-      
-      
     </ul>
   
 </nav>
@@ -753,7 +732,12 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/square/okhttp/edit/master/docs/https.md" title="Edit this page" class="md-icon md-content__icon">&#xE3C9;</a>
+                  <a href="https://github.com/square/okhttp/edit/master/docs/https.md" title="Edit this page" class="md-content__button md-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+                  </a>
+                
+                
+                  
                 
                 
                 <h1 id="https">HTTPS<a class="headerlink" href="#https" title="Permanent link">&para;</a></h1>
@@ -772,14 +756,14 @@
 </ul>
 <p>These loosely follow the model set in <a href="https://cloud.google.com/load-balancing/docs/ssl-policies-concepts">Google Cloud Policies</a>. We <a href="../tls_configuration_history/">track changes</a> to this policy.</p>
 <p>By default, OkHttp will attempt a <code>MODERN_TLS</code> connection.  However by configuring the client connectionSpecs you can allow a fall back to <code>COMPATIBLE_TLS</code> connection if the modern configuration fails.</p>
-<div class="codehilite"><pre><span></span><span class="n">OkHttpClient</span> <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OkHttpClient</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><code><span class="n">OkHttpClient</span> <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OkHttpClient</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
     <span class="p">.</span><span class="na">connectionSpecs</span><span class="p">(</span><span class="n">Arrays</span><span class="p">.</span><span class="na">asList</span><span class="p">(</span><span class="n">ConnectionSpec</span><span class="p">.</span><span class="na">MODERN_TLS</span><span class="p">,</span> <span class="n">ConnectionSpec</span><span class="p">.</span><span class="na">COMPATIBLE_TLS</span><span class="p">))</span>
     <span class="p">.</span><span class="na">build</span><span class="p">();</span>
-</pre></div>
+</code></pre></div>
 
 <p>The TLS versions and cipher suites in each spec can change with each release. For example, in OkHttp 2.2 we dropped support for SSL 3.0 in response to the <a href="http://googleonlinesecurity.blogspot.ca/2014/10/this-poodle-bites-exploiting-ssl-30.html">POODLE</a> attack. And in OkHttp 2.3 we dropped support for <a href="http://en.wikipedia.org/wiki/RC4#Security">RC4</a>. As with your desktop web browser, staying up-to-date with OkHttp is the best way to stay secure.</p>
 <p>You can build your own connection spec with a custom set of TLS versions and cipher suites. For example, this configuration is limited to three highly-regarded cipher suites. Its drawback is that it requires Android 5.0+ and a similarly current webserver.</p>
-<div class="codehilite"><pre><span></span><span class="n">ConnectionSpec</span> <span class="n">spec</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ConnectionSpec</span><span class="p">.</span><span class="na">Builder</span><span class="p">(</span><span class="n">ConnectionSpec</span><span class="p">.</span><span class="na">MODERN_TLS</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="n">ConnectionSpec</span> <span class="n">spec</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ConnectionSpec</span><span class="p">.</span><span class="na">Builder</span><span class="p">(</span><span class="n">ConnectionSpec</span><span class="p">.</span><span class="na">MODERN_TLS</span><span class="p">)</span>
     <span class="p">.</span><span class="na">tlsVersions</span><span class="p">(</span><span class="n">TlsVersion</span><span class="p">.</span><span class="na">TLS_1_2</span><span class="p">)</span>
     <span class="p">.</span><span class="na">cipherSuites</span><span class="p">(</span>
           <span class="n">CipherSuite</span><span class="p">.</span><span class="na">TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256</span><span class="p">,</span>
@@ -790,164 +774,152 @@
 <span class="n">OkHttpClient</span> <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OkHttpClient</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
     <span class="p">.</span><span class="na">connectionSpecs</span><span class="p">(</span><span class="n">Collections</span><span class="p">.</span><span class="na">singletonList</span><span class="p">(</span><span class="n">spec</span><span class="p">))</span>
     <span class="p">.</span><span class="na">build</span><span class="p">();</span>
-</pre></div>
+</code></pre></div>
 
 <h3 id="debugging-tls-handshake-failures">Debugging TLS Handshake Failures<a class="headerlink" href="#debugging-tls-handshake-failures" title="Permanent link">&para;</a></h3>
 <p>The TLS handshake requires clients and servers to share a common TLS version and cipher suite. This
 depends on the JVM or Android version, OkHttp version, and web server configuration. If there is no
 common cipher suite and TLS version, your call will fail like this:</p>
-<div class="codehilite"><pre><span></span>Caused by: javax.net.ssl.SSLProtocolException: SSL handshake aborted: ssl=0x7f2719a89e80:
+<div class="highlight"><pre><span></span><code>Caused by: javax.net.ssl.SSLProtocolException: SSL handshake aborted: ssl=0x7f2719a89e80:
     Failure in SSL library, usually a protocol error
         error:14077410:SSL routines:SSL23_GET_SERVER_HELLO:sslv3 alert handshake 
         failure (external/openssl/ssl/s23_clnt.c:770 0x7f2728a53ea0:0x00000000)
     at com.android.org.conscrypt.NativeCrypto.SSL_do_handshake(Native Method)
-</pre></div>
+</code></pre></div>
 
 <p>You can check a web server&rsquo;s configuration using <a href="https://www.ssllabs.com/ssltest/">Qualys SSL Labs</a>. OkHttp&rsquo;s TLS
-configuration history is [tracked here][tls_configuration_history.md].</p>
+configuration history is <a href="../tls_configuration_history/">tracked here</a>.</p>
 <p>Applications expected to be installed on older Android devices should consider adopting the
 <a href="https://developer.android.com/training/articles/security-gms-provider">Google Play Services’ ProviderInstaller</a>. This will increase security for users
 and increase connectivity with web servers.</p>
 <h3 id="certificate-pinning-kt-java">Certificate Pinning (<a href="https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/kt/CertificatePinning.kt">.kt</a>, <a href="https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/CertificatePinning.java">.java</a>)<a class="headerlink" href="#certificate-pinning-kt-java" title="Permanent link">&para;</a></h3>
 <p>By default, OkHttp trusts the certificate authorities of the host platform. This strategy maximizes connectivity, but it is subject to certificate authority attacks such as the <a href="http://www.computerworld.com/article/2510951/cybercrime-hacking/hackers-spied-on-300-000-iranians-using-fake-google-certificate.html">2011 DigiNotar attack</a>. It also assumes your HTTPS servers’ certificates are signed by a certificate authority.</p>
 <p>Use <a href="http://square.github.io/okhttp/4.x/okhttp/okhttp3/-certificate-pinner/">CertificatePinner</a> to restrict which certificates and certificate authorities are trusted. Certificate pinning increases security, but limits your server team’s abilities to update their TLS certificates. <strong>Do not use certificate pinning without the blessing of your server’s TLS administrator!</strong></p>
-<div class="superfences-tabs">
-<input name="__tabs_1" type="radio" id="__tab_1_0" checked="checked" />
-<label for="__tab_1_0">Kotlin</label>
-<div class="superfences-content"><div class="codehilite"><pre><span></span>  <span class="k">private</span> <span class="k">val</span> <span class="py">client</span> <span class="p">=</span> <span class="n">OkHttpClient</span><span class="p">.</span><span class="n">Builder</span><span class="p">()</span>
-      <span class="p">.</span><span class="n">certificatePinner</span><span class="p">(</span>
-          <span class="n">CertificatePinner</span><span class="p">.</span><span class="n">Builder</span><span class="p">()</span>
-              <span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="s">&quot;publicobject.com&quot;</span><span class="p">,</span> <span class="s">&quot;sha256/afwiKY3RxoMmLkuRW1l7QsPZTJPwDS2pdDROQjXw8ig=&quot;</span><span class="p">)</span>
-              <span class="p">.</span><span class="n">build</span><span class="p">())</span>
-      <span class="p">.</span><span class="n">build</span><span class="p">()</span>
+<p>```Kotlin tab=
+  private val client = OkHttpClient.Builder()
+      .certificatePinner(
+          CertificatePinner.Builder()
+              .add(&ldquo;publicobject.com&rdquo;, &ldquo;sha256/afwiKY3RxoMmLkuRW1l7QsPZTJPwDS2pdDROQjXw8ig=&rdquo;)
+              .build())
+      .build()</p>
+<p>fun run() {
+    val request = Request.Builder()
+        .url(&ldquo;<a href="https://publicobject.com/robots.txt">https://publicobject.com/robots.txt</a>&rdquo;)
+        .build()</p>
+<div class="codehilite"><pre><span></span><code>client.newCall(request).execute().use { response -&gt;
+  if (!response.isSuccessful) throw IOException(&quot;Unexpected code $response&quot;)
 
-  <span class="k">fun</span> <span class="nf">run</span><span class="p">()</span> <span class="p">{</span>
-    <span class="k">val</span> <span class="py">request</span> <span class="p">=</span> <span class="n">Request</span><span class="p">.</span><span class="n">Builder</span><span class="p">()</span>
-        <span class="p">.</span><span class="n">url</span><span class="p">(</span><span class="s">&quot;https://publicobject.com/robots.txt&quot;</span><span class="p">)</span>
-        <span class="p">.</span><span class="n">build</span><span class="p">()</span>
+  for (certificate in response.handshake!!.peerCertificates) {
+    println(CertificatePinner.pin(certificate))
+  }
+}
+</code></pre></div>
 
-    <span class="n">client</span><span class="p">.</span><span class="n">newCall</span><span class="p">(</span><span class="n">request</span><span class="p">).</span><span class="n">execute</span><span class="p">().</span><span class="n">use</span> <span class="p">{</span> <span class="n">response</span> <span class="p">-&gt;</span>
-      <span class="k">if</span> <span class="p">(!</span><span class="n">response</span><span class="p">.</span><span class="n">isSuccessful</span><span class="p">)</span> <span class="k">throw</span> <span class="n">IOException</span><span class="p">(</span><span class="s">&quot;Unexpected code $response&quot;</span><span class="p">)</span>
 
-      <span class="k">for</span> <span class="p">(</span><span class="n">certificate</span> <span class="k">in</span> <span class="n">response</span><span class="p">.</span><span class="n">handshake</span><span class="o">!!</span><span class="p">.</span><span class="n">peerCertificates</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">println</span><span class="p">(</span><span class="n">CertificatePinner</span><span class="p">.</span><span class="n">pin</span><span class="p">(</span><span class="n">certificate</span><span class="p">))</span>
-      <span class="p">}</span>
-    <span class="p">}</span>
-  <span class="p">}</span>
-</pre></div></div>
-<input name="__tabs_1" type="radio" id="__tab_1_1" />
-<label for="__tab_1_1">Java</label>
-<div class="superfences-content"><div class="codehilite"><pre><span></span>  <span class="kd">private</span> <span class="kd">final</span> <span class="n">OkHttpClient</span> <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OkHttpClient</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
-      <span class="p">.</span><span class="na">certificatePinner</span><span class="p">(</span>
-          <span class="k">new</span> <span class="n">CertificatePinner</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
-              <span class="p">.</span><span class="na">add</span><span class="p">(</span><span class="s">&quot;publicobject.com&quot;</span><span class="p">,</span> <span class="s">&quot;sha256/afwiKY3RxoMmLkuRW1l7QsPZTJPwDS2pdDROQjXw8ig=&quot;</span><span class="p">)</span>
-              <span class="p">.</span><span class="na">build</span><span class="p">())</span>
-      <span class="p">.</span><span class="na">build</span><span class="p">();</span>
+<p>}
+<code></code>Java tab=
+  private final OkHttpClient client = new OkHttpClient.Builder()
+      .certificatePinner(
+          new CertificatePinner.Builder()
+              .add(&ldquo;publicobject.com&rdquo;, &ldquo;sha256/afwiKY3RxoMmLkuRW1l7QsPZTJPwDS2pdDROQjXw8ig=&rdquo;)
+              .build())
+      .build();
 
-  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="p">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="p">{</span>
-    <span class="n">Request</span> <span class="n">request</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Request</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
-        <span class="p">.</span><span class="na">url</span><span class="p">(</span><span class="s">&quot;https://publicobject.com/robots.txt&quot;</span><span class="p">)</span>
-        <span class="p">.</span><span class="na">build</span><span class="p">();</span>
+  public void run() throws Exception {
+    Request request = new Request.Builder()
+        .url(&ldquo;<a href="https://publicobject.com/robots.txt">https://publicobject.com/robots.txt</a>&rdquo;)
+        .build();
 
-    <span class="k">try</span> <span class="p">(</span><span class="n">Response</span> <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="p">.</span><span class="na">newCall</span><span class="p">(</span><span class="n">request</span><span class="p">).</span><span class="na">execute</span><span class="p">())</span> <span class="p">{</span>
-      <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">response</span><span class="p">.</span><span class="na">isSuccessful</span><span class="p">())</span> <span class="k">throw</span> <span class="k">new</span> <span class="n">IOException</span><span class="p">(</span><span class="s">&quot;Unexpected code &quot;</span> <span class="o">+</span> <span class="n">response</span><span class="p">);</span>
+    try (Response response = client.newCall(request).execute()) {
+      if (!response.isSuccessful()) throw new IOException(&ldquo;Unexpected code &rdquo; + response);
 
-      <span class="k">for</span> <span class="p">(</span><span class="n">Certificate</span> <span class="n">certificate</span> <span class="p">:</span> <span class="n">response</span><span class="p">.</span><span class="na">handshake</span><span class="p">().</span><span class="na">peerCertificates</span><span class="p">())</span> <span class="p">{</span>
-        <span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">CertificatePinner</span><span class="p">.</span><span class="na">pin</span><span class="p">(</span><span class="n">certificate</span><span class="p">));</span>
-      <span class="p">}</span>
-    <span class="p">}</span>
-  <span class="p">}</span>
-</pre></div></div>
-</div>
+      for (Certificate certificate : response.handshake().peerCertificates()) {
+        System.out.println(CertificatePinner.pin(certificate));
+      }
+    }
+  }
+```</p>
 <h3 id="customizing-trusted-certificates-kt-java">Customizing Trusted Certificates (<a href="https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/kt/CustomTrust.kt">.kt</a>, <a href="https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/CustomTrust.java">.java</a>)<a class="headerlink" href="#customizing-trusted-certificates-kt-java" title="Permanent link">&para;</a></h3>
 <p>The full code sample shows how to replace the host platform’s certificate authorities with your own set. As above, <strong>do not use custom certificates without the blessing of your server’s TLS administrator!</strong></p>
-<div class="superfences-tabs">
-<input name="__tabs_2" type="radio" id="__tab_2_0" checked="checked" />
-<label for="__tab_2_0">Kotlin</label>
-<div class="superfences-content"><div class="codehilite"><pre><span></span>  <span class="k">private</span> <span class="k">val</span> <span class="py">client</span><span class="p">:</span> <span class="n">OkHttpClient</span>
+<p>```Kotlin tab=
+  private val client: OkHttpClient</p>
+<p>init {
+    val trustManager = trustManagerForCertificates(trustedCertificatesInputStream())
+    val sslContext = SSLContext.getInstance(&ldquo;TLS&rdquo;)
+    sslContext.init(null, arrayOf<TrustManager>(trustManager), null)
+    val sslSocketFactory = sslContext.socketFactory</p>
+<div class="codehilite"><pre><span></span><code>client = OkHttpClient.Builder()
+    .sslSocketFactory(sslSocketFactory, trustManager)
+    .build()
+</code></pre></div>
 
-  <span class="n">init</span> <span class="p">{</span>
-    <span class="k">val</span> <span class="py">trustManager</span> <span class="p">=</span> <span class="n">trustManagerForCertificates</span><span class="p">(</span><span class="n">trustedCertificatesInputStream</span><span class="p">())</span>
-    <span class="k">val</span> <span class="py">sslContext</span> <span class="p">=</span> <span class="n">SSLContext</span><span class="p">.</span><span class="n">getInstance</span><span class="p">(</span><span class="s">&quot;TLS&quot;</span><span class="p">)</span>
-    <span class="n">sslContext</span><span class="p">.</span><span class="n">init</span><span class="p">(</span><span class="k">null</span><span class="p">,</span> <span class="n">arrayOf</span><span class="p">&lt;</span><span class="n">TrustManager</span><span class="p">&gt;(</span><span class="n">trustManager</span><span class="p">),</span> <span class="k">null</span><span class="p">)</span>
-    <span class="k">val</span> <span class="py">sslSocketFactory</span> <span class="p">=</span> <span class="n">sslContext</span><span class="p">.</span><span class="n">socketFactory</span>
 
-    <span class="n">client</span> <span class="p">=</span> <span class="n">OkHttpClient</span><span class="p">.</span><span class="n">Builder</span><span class="p">()</span>
-        <span class="p">.</span><span class="n">sslSocketFactory</span><span class="p">(</span><span class="n">sslSocketFactory</span><span class="p">,</span> <span class="n">trustManager</span><span class="p">)</span>
-        <span class="p">.</span><span class="n">build</span><span class="p">()</span>
-  <span class="p">}</span>
+<p>}</p>
+<p>fun run() {
+    val request = Request.Builder()
+        .url(&ldquo;<a href="https://publicobject.com/helloworld.txt">https://publicobject.com/helloworld.txt</a>&rdquo;)
+        .build()</p>
+<div class="codehilite"><pre><span></span><code>client.newCall(request).execute().use { response -&gt;
+  if (!response.isSuccessful) throw IOException(&quot;Unexpected code $response&quot;)
 
-  <span class="k">fun</span> <span class="nf">run</span><span class="p">()</span> <span class="p">{</span>
-    <span class="k">val</span> <span class="py">request</span> <span class="p">=</span> <span class="n">Request</span><span class="p">.</span><span class="n">Builder</span><span class="p">()</span>
-        <span class="p">.</span><span class="n">url</span><span class="p">(</span><span class="s">&quot;https://publicobject.com/helloworld.txt&quot;</span><span class="p">)</span>
-        <span class="p">.</span><span class="n">build</span><span class="p">()</span>
+  for ((name, value) in response.headers) {
+    println(&quot;$name: $value&quot;)
+  }
 
-    <span class="n">client</span><span class="p">.</span><span class="n">newCall</span><span class="p">(</span><span class="n">request</span><span class="p">).</span><span class="n">execute</span><span class="p">().</span><span class="n">use</span> <span class="p">{</span> <span class="n">response</span> <span class="p">-&gt;</span>
-      <span class="k">if</span> <span class="p">(!</span><span class="n">response</span><span class="p">.</span><span class="n">isSuccessful</span><span class="p">)</span> <span class="k">throw</span> <span class="n">IOException</span><span class="p">(</span><span class="s">&quot;Unexpected code $response&quot;</span><span class="p">)</span>
+  println(response.body!!.string())
+}
+</code></pre></div>
 
-      <span class="k">for</span> <span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="k">in</span> <span class="n">response</span><span class="p">.</span><span class="n">headers</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">println</span><span class="p">(</span><span class="s">&quot;$name: $value&quot;</span><span class="p">)</span>
-      <span class="p">}</span>
 
-      <span class="n">println</span><span class="p">(</span><span class="n">response</span><span class="p">.</span><span class="n">body</span><span class="o">!!</span><span class="p">.</span><span class="n">string</span><span class="p">())</span>
-    <span class="p">}</span>
-  <span class="p">}</span>
+<p>}</p>
+<p>/**
+   * Returns an input stream containing one or more certificate PEM files. This implementation just
+   * embeds the PEM files in Java strings; most applications will instead read this from a resource
+   * file that gets bundled with the application.
+   */
+  private fun trustedCertificatesInputStream(): InputStream {
+    &hellip; // Full source omitted. See sample.
+  }</p>
+<p>private fun trustManagerForCertificates(inputStream: InputStream): X509TrustManager {
+    &hellip; // Full source omitted. See sample.
+  }
+<div class="highlight"><pre><span></span><code>```Java tab=
+  private final OkHttpClient client;
 
-  <span class="cm">/**</span>
-<span class="cm">   * Returns an input stream containing one or more certificate PEM files. This implementation just</span>
-<span class="cm">   * embeds the PEM files in Java strings; most applications will instead read this from a resource</span>
-<span class="cm">   * file that gets bundled with the application.</span>
-<span class="cm">   */</span>
-  <span class="k">private</span> <span class="k">fun</span> <span class="nf">trustedCertificatesInputStream</span><span class="p">():</span> <span class="n">InputStream</span> <span class="p">{</span>
-    <span class="p">...</span> <span class="c1">// Full source omitted. See sample.</span>
-  <span class="p">}</span>
+  public CustomTrust() {
+    X509TrustManager trustManager;
+    SSLSocketFactory sslSocketFactory;
+    try {
+      trustManager = trustManagerForCertificates(trustedCertificatesInputStream());
+      SSLContext sslContext = SSLContext.getInstance(&quot;TLS&quot;);
+      sslContext.init(null, new TrustManager[] { trustManager }, null);
+      sslSocketFactory = sslContext.getSocketFactory();
+    } catch (GeneralSecurityException e) {
+      throw new RuntimeException(e);
+    }
 
-  <span class="k">private</span> <span class="k">fun</span> <span class="nf">trustManagerForCertificates</span><span class="p">(</span><span class="n">inputStream</span><span class="p">:</span> <span class="n">InputStream</span><span class="p">):</span> <span class="n">X509TrustManager</span> <span class="p">{</span>
-    <span class="p">...</span> <span class="c1">// Full source omitted. See sample.</span>
-  <span class="p">}</span>
-</pre></div></div>
-<input name="__tabs_2" type="radio" id="__tab_2_1" />
-<label for="__tab_2_1">Java</label>
-<div class="superfences-content"><div class="codehilite"><pre><span></span>  <span class="kd">private</span> <span class="kd">final</span> <span class="n">OkHttpClient</span> <span class="n">client</span><span class="p">;</span>
+    client = new OkHttpClient.Builder()
+        .sslSocketFactory(sslSocketFactory, trustManager)
+        .build();
+  }
 
-  <span class="kd">public</span> <span class="nf">CustomTrust</span><span class="p">()</span> <span class="p">{</span>
-    <span class="n">X509TrustManager</span> <span class="n">trustManager</span><span class="p">;</span>
-    <span class="n">SSLSocketFactory</span> <span class="n">sslSocketFactory</span><span class="p">;</span>
-    <span class="k">try</span> <span class="p">{</span>
-      <span class="n">trustManager</span> <span class="o">=</span> <span class="n">trustManagerForCertificates</span><span class="p">(</span><span class="n">trustedCertificatesInputStream</span><span class="p">());</span>
-      <span class="n">SSLContext</span> <span class="n">sslContext</span> <span class="o">=</span> <span class="n">SSLContext</span><span class="p">.</span><span class="na">getInstance</span><span class="p">(</span><span class="s">&quot;TLS&quot;</span><span class="p">);</span>
-      <span class="n">sslContext</span><span class="p">.</span><span class="na">init</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span> <span class="k">new</span> <span class="n">TrustManager</span><span class="o">[]</span> <span class="p">{</span> <span class="n">trustManager</span> <span class="p">},</span> <span class="kc">null</span><span class="p">);</span>
-      <span class="n">sslSocketFactory</span> <span class="o">=</span> <span class="n">sslContext</span><span class="p">.</span><span class="na">getSocketFactory</span><span class="p">();</span>
-    <span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="n">GeneralSecurityException</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span>
-      <span class="k">throw</span> <span class="k">new</span> <span class="n">RuntimeException</span><span class="p">(</span><span class="n">e</span><span class="p">);</span>
-    <span class="p">}</span>
+  public void run() throws Exception {
+    Request request = new Request.Builder()
+        .url(&quot;https://publicobject.com/helloworld.txt&quot;)
+        .build();
 
-    <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OkHttpClient</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
-        <span class="p">.</span><span class="na">sslSocketFactory</span><span class="p">(</span><span class="n">sslSocketFactory</span><span class="p">,</span> <span class="n">trustManager</span><span class="p">)</span>
-        <span class="p">.</span><span class="na">build</span><span class="p">();</span>
-  <span class="p">}</span>
+    Response response = client.newCall(request).execute();
+    System.out.println(response.body().string());
+  }
 
-  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="p">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="p">{</span>
-    <span class="n">Request</span> <span class="n">request</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Request</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
-        <span class="p">.</span><span class="na">url</span><span class="p">(</span><span class="s">&quot;https://publicobject.com/helloworld.txt&quot;</span><span class="p">)</span>
-        <span class="p">.</span><span class="na">build</span><span class="p">();</span>
+  private InputStream trustedCertificatesInputStream() {
+    ... // Full source omitted. See sample.
+  }
 
-    <span class="n">Response</span> <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="p">.</span><span class="na">newCall</span><span class="p">(</span><span class="n">request</span><span class="p">).</span><span class="na">execute</span><span class="p">();</span>
-    <span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">response</span><span class="p">.</span><span class="na">body</span><span class="p">().</span><span class="na">string</span><span class="p">());</span>
-  <span class="p">}</span>
-
-  <span class="kd">private</span> <span class="n">InputStream</span> <span class="nf">trustedCertificatesInputStream</span><span class="p">()</span> <span class="p">{</span>
-    <span class="p">...</span> <span class="c1">// Full source omitted. See sample.</span>
-  <span class="p">}</span>
-
-  <span class="kd">public</span> <span class="n">SSLContext</span> <span class="nf">sslContextForTrustedCertificates</span><span class="p">(</span><span class="n">InputStream</span> <span class="n">in</span><span class="p">)</span> <span class="p">{</span>
-    <span class="p">...</span> <span class="c1">// Full source omitted. See sample.</span>
-  <span class="p">}</span>
-</pre></div></div>
-</div>
-                
-                  
-                
+  public SSLContext sslContextForTrustedCertificates(InputStream in) {
+    ... // Full source omitted. See sample.
+  }
+</code></pre></div></p>
                 
               
               
@@ -964,34 +936,34 @@ and increase connectivity with web servers.</p>
 <footer class="md-footer">
   
     <div class="md-footer-nav">
-      <nav class="md-footer-nav__inner md-grid">
+      <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
         
-          <a href="../events/" title="Events" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
-            <div class="md-flex__cell md-flex__cell--shrink">
-              <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+          <a href="../events/" title="Events" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
             </div>
-            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
-              <span class="md-flex__ellipsis">
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
                 Events
-              </span>
+              </div>
             </div>
           </a>
         
         
-          <a href="../interceptors/" title="Interceptors" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
-            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
-              <span class="md-flex__ellipsis">
+          <a href="../interceptors/" title="Interceptors" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
                 Interceptors
-              </span>
+              </div>
             </div>
-            <div class="md-flex__cell md-flex__cell--shrink">
-              <i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
             </div>
           </a>
         
@@ -1006,11 +978,10 @@ and increase connectivity with web servers.</p>
             Copyright &copy; 2019 Square, Inc.
           </div>
         
-        powered by
-        <a href="https://www.mkdocs.org">MkDocs</a>
-        and
-        <a href="https://squidfunk.github.io/mkdocs-material/">
-          Material for MkDocs</a>
+        Made with
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+          Material for MkDocs
+        </a>
       </div>
       
     </div>
@@ -1019,9 +990,18 @@ and increase connectivity with web servers.</p>
       
     </div>
     
-      <script src="../assets/javascripts/application.808e90bb.js"></script>
+      <script src="../assets/javascripts/vendor.d1f5a259.min.js"></script>
+      <script src="../assets/javascripts/bundle.d5fec882.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
       
-      <script>app.initialize({version:"1.0.4",url:{base:".."}})</script>
+      <script>
+        app = initialize({
+          base: "..",
+          features: [],
+          search: Object.assign({
+            worker: "../assets/javascripts/worker/search.fae956e7.min.js"
+          }, typeof search !== "undefined" && search)
+        })
+      </script>
       
     
   </body>
