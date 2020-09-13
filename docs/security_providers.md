@@ -4,14 +4,14 @@ Security Providers
 
 ## Provider Status
 
-| Provider         | HTTP/2  | TLSv1.3      | Powered By      | Notes                                                        |
-| :--------------- | :------ | :----------- | :-------------- | :----------------------------------------------------------- |
-| JVM default      | Java 9+ | Java 11+     | [OpenJDK]       |                                                              |
-| Android default  | ✅      | Android 10+  | [BoringSSL]     |                                                              |
-| [Bouncy Castle]  | ✅      |              | [Bouncy Castle] | [Tracking bug.][bug5698]                                     |
-| [Conscrypt]      | ✅      | ✅           | [BoringSSL]     | Activated if Conscrypt is first registered provider.         |
-| [OpenJSSE]       |         | ✅           | [OpenJDK]       | OpenJDK backport.                                            |
-| [Corretto]       | ✅      | ✅           | [OpenSSL]       | Amazon's high-performance provider. [Tracking bug.][bug5592] |
+| Provider         | HTTP/2               | TLSv1.3      | Powered By      | Notes                                                        |
+| :--------------- | :------------------- | :----------- | :-------------- | :----------------------------------------------------------- |
+| JVM default      | Java 8u252+ or 9+    | Java 11+     | [OpenJDK]       |                                                              |
+| Android default  | ✅                   | Android 10+  | [BoringSSL]     |                                                              |
+| [Bouncy Castle]  | ✅                   |              | [Bouncy Castle] | [Tracking bug.][bug5698]                                     |
+| [Conscrypt]      | ✅                   | ✅           | [BoringSSL]     | Activated if Conscrypt is first registered provider.         |
+| [OpenJSSE]       |                      | ✅           | [OpenJDK]       | OpenJDK backport.                                            |
+| [Corretto]       | 9+                   | Java 11+     | [OpenSSL]       | Amazon's high-performance provider. [Tracking bug.][bug5592] |
 
 All providers support HTTP/1.1 and TLSv1.2.
 
