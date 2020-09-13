@@ -165,7 +165,7 @@ jobs:
 
       - runtests:
           platform: corretto
-          testjdk: -Dtest.java.home=/usr/lib/jvm/java-8-openjdk-amd64
+          testjdk: -Dtest.java.home=/usr/lib/jvm/java-8-openjdk-amd64 -Dalpn.boot.version=8.1.13.v20181017
 
   testopenjsse:
     docker:
