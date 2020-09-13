@@ -14,7 +14,7 @@ OkHttpClient client = new OkHttpClient.Builder()
 ```
 
 ```kotlin
-implementation("com.squareup.okhttp3:okhttp-brotli:4.8.1")
+implementation("com.squareup.okhttp3:okhttp-brotli:4.9.0")
 ```
 
  [1]: https://github.com/google/brotli

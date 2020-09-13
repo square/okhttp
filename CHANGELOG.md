@@ -1,6 +1,30 @@
 Change Log
 ==========
 
+## Version 4.9.0
+
+_2020-09-11_
+
+**With this release, `okhttp-tls` no longer depends on Bouncy Castle and doesn't install the
+Bouncy Castle security provider.** If you still need it, you can do it yourself: 
+
+```
+Security.addProvider(BouncyCastleProvider())
+```
+
+You will also need to configure this dependency:
+
+```
+dependencies {
+  implementation "org.bouncycastle:bcprov-jdk15on:1.65"
+}
+```
+
+ *  Upgrade: [Kotlin 1.4.10][kotlin_1_4_10]. We now use Kotlin 1.4.x [functional
+    interfaces][fun_interface] for `Authenticator`, `Interceptor`, and others.
+ *  Upgrade: Build with Conscrypt 2.5.1.
+
+
 ## Version 4.8.1
 
 _2020-08-06_
@@ -469,9 +493,11 @@ _2019-06-03_
  [bom]: https://docs.gradle.org/6.2/userguide/platforms.html#sub:bom_import
  [bouncy_castle_releases]: https://www.bouncycastle.org/releasenotes.html
  [dev_server]: https://github.com/square/okhttp/blob/482f88300f78c3419b04379fc26c3683c10d6a9d/samples/guide/src/main/java/okhttp3/recipes/kt/DevServer.kt
+ [fun_interface]: https://kotlinlang.org/docs/reference/fun-interfaces.html
  [iana_websocket]: https://www.iana.org/assignments/websocket/websocket.txt
  [jetty_8_252]: https://webtide.com/jetty-alpn-java-8u252/
  [kotlin_1_3_71]: https://github.com/JetBrains/kotlin/releases/tag/v1.3.71
+ [kotlin_1_4_10]: https://github.com/JetBrains/kotlin/releases/tag/v1.4.10
  [legacy_interceptor]: https://gist.github.com/swankjesse/80135f4e03629527e723ab3bcf64be0b
  [okhttp4_blog_post]: https://cashapp.github.io/2019-06-26/okhttp-4-goes-kotlin
  [okio_2_6_0]: https://square.github.io/okio/changelog/#version-260
