@@ -264,7 +264,7 @@ public final class ClientAuthTest {
       assertThat(PlatformVersion.INSTANCE.getMajorVersion()).isGreaterThanOrEqualTo(11);
     } catch (SocketException expected) {
       assertThat(getPlatformSystemProperty()).isIn(PlatformRule.JDK9_PROPERTY,
-          PlatformRule.CONSCRYPT_PROPERTY);
+          PlatformRule.CONSCRYPT_PROPERTY, PlatformRule.CORRETTO_PROPERTY);
     } catch (ConnectionShutdownException expected) {
       // It didn't fail until it reached the application layer.
     }
