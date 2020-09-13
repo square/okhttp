@@ -304,41 +304,11 @@ workflows:
           filters:
             branches:
               only: master
-      - checkjdk11:
-          filters:
-            branches:
-              ignore:
-                - master
-                - gh-pages
-      - testjdk8:
-          filters:
-            branches:
-              ignore:
-                - gh-pages
-      - testjdk8alpn:
-          filters:
-            branches:
-              only: master
       - testjdk11:
           filters:
             branches:
               ignore:
                 - gh-pages
-      - testjdk13:
-          filters:
-            branches:
-              ignore:
-                - gh-pages
-      - testjdk14:
-          filters:
-            branches:
-              ignore:
-                - gh-pages
-      #- testjdk12windows:
-      #- testbouncycastle
-      #- testopenjsse
-      #- testconscrypt
-      #- testcorretto
       - testjdk8corretto
       - testjdk11corretto
   nightly:
