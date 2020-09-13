@@ -202,67 +202,35 @@ open class PlatformRule @JvmOverloads constructor(
   fun hasHttp2Support() = !isJdk8()
 
   fun assumeConscrypt() {
-    assumeThat(
-        getPlatformSystemProperty(), equalTo(
-        CONSCRYPT_PROPERTY
-    )
-    )
+    assumeThat(getPlatformSystemProperty(), equalTo(CONSCRYPT_PROPERTY))
   }
 
   fun assumeJdk9() {
-    assumeThat(
-        getPlatformSystemProperty(), equalTo(
-        JDK9_PROPERTY
-    )
-    )
+    assumeThat(getPlatformSystemProperty(), equalTo(JDK9_PROPERTY))
   }
 
   fun assumeOpenJSSE() {
-    assumeThat(
-        getPlatformSystemProperty(), equalTo(
-        OPENJSSE_PROPERTY
-    )
-    )
+    assumeThat(getPlatformSystemProperty(), equalTo(OPENJSSE_PROPERTY))
   }
 
   fun assumeJdk8() {
-    assumeThat(
-        getPlatformSystemProperty(), equalTo(
-        JDK8_PROPERTY
-    )
-    )
+    assumeThat(getPlatformSystemProperty(), equalTo(JDK8_PROPERTY))
   }
 
   fun assumeJdk8Alpn() {
-    assumeThat(
-        getPlatformSystemProperty(), equalTo(
-        JDK8_ALPN_PROPERTY
-    )
-    )
+    assumeThat(getPlatformSystemProperty(), equalTo(JDK8_ALPN_PROPERTY))
   }
 
   fun assumeCorretto() {
-    assumeThat(
-        getPlatformSystemProperty(), equalTo(
-        CORRETTO_PROPERTY
-    )
-    )
+    assumeThat(getPlatformSystemProperty(), equalTo(CORRETTO_PROPERTY))
   }
 
   fun assumeBouncyCastle() {
-    assumeThat(
-        getPlatformSystemProperty(), equalTo(
-        BOUNCYCASTLE_PROPERTY
-    )
-    )
+    assumeThat(getPlatformSystemProperty(), equalTo(BOUNCYCASTLE_PROPERTY))
   }
 
   fun assumeHttp2Support() {
-    assumeThat(
-        getPlatformSystemProperty(), not(
-        JDK8_PROPERTY
-    )
-    )
+    assumeThat(getPlatformSystemProperty(), not(JDK8_PROPERTY))
   }
 
   fun assumeAndroid() {
@@ -270,70 +238,38 @@ open class PlatformRule @JvmOverloads constructor(
   }
 
   fun assumeNotConscrypt() {
-    assumeThat(
-        getPlatformSystemProperty(), not(
-        CONSCRYPT_PROPERTY
-    )
-    )
+    assumeThat(getPlatformSystemProperty(), not(CONSCRYPT_PROPERTY))
   }
 
   fun assumeNotJdk9() {
-    assumeThat(
-        getPlatformSystemProperty(), not(
-        JDK9_PROPERTY
-    )
-    )
+    assumeThat(getPlatformSystemProperty(), not(JDK9_PROPERTY))
   }
 
   fun assumeNotJdk8() {
-    assumeThat(
-        getPlatformSystemProperty(), not(
-        JDK8_PROPERTY
-    )
-    )
+    assumeThat(getPlatformSystemProperty(), not(JDK8_PROPERTY))
   }
 
   fun assumeNotJdk8Alpn() {
-    assumeThat(
-        getPlatformSystemProperty(), not(
-        JDK8_ALPN_PROPERTY
-    )
-    )
+    assumeThat(getPlatformSystemProperty(), not(JDK8_ALPN_PROPERTY))
   }
 
   fun assumeNotOpenJSSE() {
-    assumeThat(
-        getPlatformSystemProperty(), not(
-        OPENJSSE_PROPERTY
-    )
-    )
+    assumeThat(getPlatformSystemProperty(), not(OPENJSSE_PROPERTY))
   }
 
   fun assumeNotCorretto() {
-    assumeThat(
-        getPlatformSystemProperty(), not(
-        CORRETTO_PROPERTY
-    )
-    )
+    assumeThat(getPlatformSystemProperty(), not(CORRETTO_PROPERTY))
   }
 
   fun assumeNotBouncyCastle() {
     // Most failures are with MockWebServer
     // org.bouncycastle.tls.TlsFatalAlertReceived: handshake_failure(40)
     //        at org.bouncycastle.tls.TlsProtocol.handleAlertMessage(TlsProtocol.java:241)
-    assumeThat(
-        getPlatformSystemProperty(), not(
-        BOUNCYCASTLE_PROPERTY
-    )
-    )
+    assumeThat(getPlatformSystemProperty(), not(BOUNCYCASTLE_PROPERTY))
   }
 
   fun assumeNotHttp2Support() {
-    assumeThat(
-        getPlatformSystemProperty(), equalTo(
-        JDK8_PROPERTY
-    )
-    )
+    assumeThat(getPlatformSystemProperty(), equalTo(JDK8_PROPERTY))
   }
 
   fun assumeJettyBootEnabled() {
@@ -425,6 +361,9 @@ open class PlatformRule @JvmOverloads constructor(
 
     @JvmStatic
     fun conscrypt() = PlatformRule(CONSCRYPT_PROPERTY)
+
+    @JvmStatic
+    fun corretto() = PlatformRule(CORRETTO_PROPERTY)
 
     @JvmStatic
     fun openjsse() = PlatformRule(OPENJSSE_PROPERTY)

@@ -26,7 +26,7 @@ import org.junit.Test
 class CorrettoTest {
   @Suppress("RedundantVisibilityModifier")
   @JvmField
-  @Rule public val platform = PlatformRule.conscrypt()
+  @Rule public val platform = PlatformRule.corretto()
 
   @JvmField @Rule val clientTestRule = OkHttpClientTestRule()
 
@@ -50,7 +50,6 @@ class CorrettoTest {
   }
 
   @Test
-  @Ignore
   fun testGoogle() {
     assumeNetwork()
 

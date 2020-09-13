@@ -8,7 +8,7 @@ buildscript {
       'brotli': '0.1.2',
       'checkstyle': '8.28',
       'conscrypt': '2.5.0',
-      'corretto': '1.3.1',
+      'corretto': '1.5.0',
       'findbugs': '3.0.2',
       'guava': '28.2-jre',
       'java': '1.8',
