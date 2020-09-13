@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import com.amazon.corretto.crypto.provider.AmazonCorrettoCryptoProvider
 import okhttp3.TestUtil.assumeNetwork
 import okhttp3.testing.PlatformRule
 import org.assertj.core.api.Assertions.assertThat
@@ -34,6 +35,7 @@ class CorrettoTest {
 
   @Before fun setUp() {
     platform.assumeCorretto()
+    AmazonCorrettoCryptoProvider.INSTANCE.assertHealthy()
   }
 
   @Test
