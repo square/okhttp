@@ -37,7 +37,6 @@ class CorrettoTest {
   }
 
   @Test
-  @Ignore
   fun testMozilla() {
     assumeNetwork()
 
