@@ -7,7 +7,7 @@ server behaviour when ambiguous.
 
 # Basic Usage
 
-```Kotlin tab=
+```kotlin
   private val client: OkHttpClient = OkHttpClient.Builder()
       .cache(Cache(
           directory = File(application.cacheDir, "http_cache"),

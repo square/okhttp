@@ -242,7 +242,7 @@ OkHttp 4’s minimum requirements are Java 8+ and Android 5+. These requirements
 Here’s what you need in `build.gradle` to target Java 8 byte code for Kotlin, Java, and Android
 plugins respectively.
 
-```
+```groovy
 compileKotlin {
   kotlinOptions {
     jvmTarget = "1.8"
