@@ -795,131 +795,142 @@ and increase connectivity with web servers.</p>
 <h3 id="certificate-pinning-kt-java">Certificate Pinning (<a href="https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/kt/CertificatePinning.kt">.kt</a>, <a href="https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/CertificatePinning.java">.java</a>)<a class="headerlink" href="#certificate-pinning-kt-java" title="Permanent link">&para;</a></h3>
 <p>By default, OkHttp trusts the certificate authorities of the host platform. This strategy maximizes connectivity, but it is subject to certificate authority attacks such as the <a href="http://www.computerworld.com/article/2510951/cybercrime-hacking/hackers-spied-on-300-000-iranians-using-fake-google-certificate.html">2011 DigiNotar attack</a>. It also assumes your HTTPS servers’ certificates are signed by a certificate authority.</p>
 <p>Use <a href="http://square.github.io/okhttp/4.x/okhttp/okhttp3/-certificate-pinner/">CertificatePinner</a> to restrict which certificates and certificate authorities are trusted. Certificate pinning increases security, but limits your server team’s abilities to update their TLS certificates. <strong>Do not use certificate pinning without the blessing of your server’s TLS administrator!</strong></p>
-<p>```Kotlin tab=
-  private val client = OkHttpClient.Builder()
-      .certificatePinner(
-          CertificatePinner.Builder()
-              .add(&ldquo;publicobject.com&rdquo;, &ldquo;sha256/afwiKY3RxoMmLkuRW1l7QsPZTJPwDS2pdDROQjXw8ig=&rdquo;)
-              .build())
-      .build()</p>
-<p>fun run() {
-    val request = Request.Builder()
-        .url(&ldquo;<a href="https://publicobject.com/robots.txt">https://publicobject.com/robots.txt</a>&rdquo;)
-        .build()</p>
-<div class="codehilite"><pre><span></span><code>client.newCall(request).execute().use { response -&gt;
-  if (!response.isSuccessful) throw IOException(&quot;Unexpected code $response&quot;)
+<div class="tabbed-set" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><label for="__tabbed_1_1">Kotlin</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code>  <span class="k">private</span> <span class="k">val</span> <span class="py">client</span> <span class="p">=</span> <span class="n">OkHttpClient</span><span class="p">.</span><span class="n">Builder</span><span class="p">()</span>
+      <span class="p">.</span><span class="n">certificatePinner</span><span class="p">(</span>
+          <span class="n">CertificatePinner</span><span class="p">.</span><span class="n">Builder</span><span class="p">()</span>
+              <span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="s">&quot;publicobject.com&quot;</span><span class="p">,</span> <span class="s">&quot;sha256/afwiKY3RxoMmLkuRW1l7QsPZTJPwDS2pdDROQjXw8ig=&quot;</span><span class="p">)</span>
+              <span class="p">.</span><span class="n">build</span><span class="p">())</span>
+      <span class="p">.</span><span class="n">build</span><span class="p">()</span>
 
-  for (certificate in response.handshake!!.peerCertificates) {
-    println(CertificatePinner.pin(certificate))
-  }
-}
+  <span class="k">fun</span> <span class="nf">run</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">val</span> <span class="py">request</span> <span class="p">=</span> <span class="n">Request</span><span class="p">.</span><span class="n">Builder</span><span class="p">()</span>
+        <span class="p">.</span><span class="n">url</span><span class="p">(</span><span class="s">&quot;https://publicobject.com/robots.txt&quot;</span><span class="p">)</span>
+        <span class="p">.</span><span class="n">build</span><span class="p">()</span>
+
+    <span class="n">client</span><span class="p">.</span><span class="n">newCall</span><span class="p">(</span><span class="n">request</span><span class="p">).</span><span class="n">execute</span><span class="p">().</span><span class="n">use</span> <span class="p">{</span> <span class="n">response</span> <span class="p">-&gt;</span>
+      <span class="k">if</span> <span class="p">(!</span><span class="n">response</span><span class="p">.</span><span class="n">isSuccessful</span><span class="p">)</span> <span class="k">throw</span> <span class="n">IOException</span><span class="p">(</span><span class="s">&quot;Unexpected code $response&quot;</span><span class="p">)</span>
+
+      <span class="k">for</span> <span class="p">(</span><span class="n">certificate</span> <span class="k">in</span> <span class="n">response</span><span class="p">.</span><span class="n">handshake</span><span class="o">!!</span><span class="p">.</span><span class="n">peerCertificates</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">println</span><span class="p">(</span><span class="n">CertificatePinner</span><span class="p">.</span><span class="n">pin</span><span class="p">(</span><span class="n">certificate</span><span class="p">))</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
 </code></pre></div>
 
+</div>
+<input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><label for="__tabbed_1_2">Java</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code>  <span class="kd">private</span> <span class="kd">final</span> <span class="n">OkHttpClient</span> <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OkHttpClient</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
+      <span class="p">.</span><span class="na">certificatePinner</span><span class="p">(</span>
+          <span class="k">new</span> <span class="n">CertificatePinner</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
+              <span class="p">.</span><span class="na">add</span><span class="p">(</span><span class="s">&quot;publicobject.com&quot;</span><span class="p">,</span> <span class="s">&quot;sha256/afwiKY3RxoMmLkuRW1l7QsPZTJPwDS2pdDROQjXw8ig=&quot;</span><span class="p">)</span>
+              <span class="p">.</span><span class="na">build</span><span class="p">())</span>
+      <span class="p">.</span><span class="na">build</span><span class="p">();</span>
 
-<p>}
-<code></code>Java tab=
-  private final OkHttpClient client = new OkHttpClient.Builder()
-      .certificatePinner(
-          new CertificatePinner.Builder()
-              .add(&ldquo;publicobject.com&rdquo;, &ldquo;sha256/afwiKY3RxoMmLkuRW1l7QsPZTJPwDS2pdDROQjXw8ig=&rdquo;)
-              .build())
-      .build();
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="p">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="p">{</span>
+    <span class="n">Request</span> <span class="n">request</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Request</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
+        <span class="p">.</span><span class="na">url</span><span class="p">(</span><span class="s">&quot;https://publicobject.com/robots.txt&quot;</span><span class="p">)</span>
+        <span class="p">.</span><span class="na">build</span><span class="p">();</span>
 
-  public void run() throws Exception {
-    Request request = new Request.Builder()
-        .url(&ldquo;<a href="https://publicobject.com/robots.txt">https://publicobject.com/robots.txt</a>&rdquo;)
-        .build();
+    <span class="k">try</span> <span class="p">(</span><span class="n">Response</span> <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="p">.</span><span class="na">newCall</span><span class="p">(</span><span class="n">request</span><span class="p">).</span><span class="na">execute</span><span class="p">())</span> <span class="p">{</span>
+      <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">response</span><span class="p">.</span><span class="na">isSuccessful</span><span class="p">())</span> <span class="k">throw</span> <span class="k">new</span> <span class="n">IOException</span><span class="p">(</span><span class="s">&quot;Unexpected code &quot;</span> <span class="o">+</span> <span class="n">response</span><span class="p">);</span>
 
-    try (Response response = client.newCall(request).execute()) {
-      if (!response.isSuccessful()) throw new IOException(&ldquo;Unexpected code &rdquo; + response);
+      <span class="k">for</span> <span class="p">(</span><span class="n">Certificate</span> <span class="n">certificate</span> <span class="p">:</span> <span class="n">response</span><span class="p">.</span><span class="na">handshake</span><span class="p">().</span><span class="na">peerCertificates</span><span class="p">())</span> <span class="p">{</span>
+        <span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">CertificatePinner</span><span class="p">.</span><span class="na">pin</span><span class="p">(</span><span class="n">certificate</span><span class="p">));</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+</code></pre></div>
 
-      for (Certificate certificate : response.handshake().peerCertificates()) {
-        System.out.println(CertificatePinner.pin(certificate));
-      }
-    }
-  }
-```</p>
+</div>
+</div>
 <h3 id="customizing-trusted-certificates-kt-java">Customizing Trusted Certificates (<a href="https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/kt/CustomTrust.kt">.kt</a>, <a href="https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/CustomTrust.java">.java</a>)<a class="headerlink" href="#customizing-trusted-certificates-kt-java" title="Permanent link">&para;</a></h3>
 <p>The full code sample shows how to replace the host platform’s certificate authorities with your own set. As above, <strong>do not use custom certificates without the blessing of your server’s TLS administrator!</strong></p>
-<p>```Kotlin tab=
-  private val client: OkHttpClient</p>
-<p>init {
-    val trustManager = trustManagerForCertificates(trustedCertificatesInputStream())
-    val sslContext = SSLContext.getInstance(&ldquo;TLS&rdquo;)
-    sslContext.init(null, arrayOf<TrustManager>(trustManager), null)
-    val sslSocketFactory = sslContext.socketFactory</p>
-<div class="codehilite"><pre><span></span><code>client = OkHttpClient.Builder()
-    .sslSocketFactory(sslSocketFactory, trustManager)
-    .build()
+<div class="tabbed-set" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><label for="__tabbed_2_1">Kotlin</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code>  <span class="k">private</span> <span class="k">val</span> <span class="py">client</span><span class="p">:</span> <span class="n">OkHttpClient</span>
+
+  <span class="n">init</span> <span class="p">{</span>
+    <span class="k">val</span> <span class="py">trustManager</span> <span class="p">=</span> <span class="n">trustManagerForCertificates</span><span class="p">(</span><span class="n">trustedCertificatesInputStream</span><span class="p">())</span>
+    <span class="k">val</span> <span class="py">sslContext</span> <span class="p">=</span> <span class="n">SSLContext</span><span class="p">.</span><span class="n">getInstance</span><span class="p">(</span><span class="s">&quot;TLS&quot;</span><span class="p">)</span>
+    <span class="n">sslContext</span><span class="p">.</span><span class="n">init</span><span class="p">(</span><span class="k">null</span><span class="p">,</span> <span class="n">arrayOf</span><span class="p">&lt;</span><span class="n">TrustManager</span><span class="p">&gt;(</span><span class="n">trustManager</span><span class="p">),</span> <span class="k">null</span><span class="p">)</span>
+    <span class="k">val</span> <span class="py">sslSocketFactory</span> <span class="p">=</span> <span class="n">sslContext</span><span class="p">.</span><span class="n">socketFactory</span>
+
+    <span class="n">client</span> <span class="p">=</span> <span class="n">OkHttpClient</span><span class="p">.</span><span class="n">Builder</span><span class="p">()</span>
+        <span class="p">.</span><span class="n">sslSocketFactory</span><span class="p">(</span><span class="n">sslSocketFactory</span><span class="p">,</span> <span class="n">trustManager</span><span class="p">)</span>
+        <span class="p">.</span><span class="n">build</span><span class="p">()</span>
+  <span class="p">}</span>
+
+  <span class="k">fun</span> <span class="nf">run</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">val</span> <span class="py">request</span> <span class="p">=</span> <span class="n">Request</span><span class="p">.</span><span class="n">Builder</span><span class="p">()</span>
+        <span class="p">.</span><span class="n">url</span><span class="p">(</span><span class="s">&quot;https://publicobject.com/helloworld.txt&quot;</span><span class="p">)</span>
+        <span class="p">.</span><span class="n">build</span><span class="p">()</span>
+
+    <span class="n">client</span><span class="p">.</span><span class="n">newCall</span><span class="p">(</span><span class="n">request</span><span class="p">).</span><span class="n">execute</span><span class="p">().</span><span class="n">use</span> <span class="p">{</span> <span class="n">response</span> <span class="p">-&gt;</span>
+      <span class="k">if</span> <span class="p">(!</span><span class="n">response</span><span class="p">.</span><span class="n">isSuccessful</span><span class="p">)</span> <span class="k">throw</span> <span class="n">IOException</span><span class="p">(</span><span class="s">&quot;Unexpected code $response&quot;</span><span class="p">)</span>
+
+      <span class="k">for</span> <span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="k">in</span> <span class="n">response</span><span class="p">.</span><span class="n">headers</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">println</span><span class="p">(</span><span class="s">&quot;$name: $value&quot;</span><span class="p">)</span>
+      <span class="p">}</span>
+
+      <span class="n">println</span><span class="p">(</span><span class="n">response</span><span class="p">.</span><span class="n">body</span><span class="o">!!</span><span class="p">.</span><span class="n">string</span><span class="p">())</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="cm">/**</span>
+<span class="cm">   * Returns an input stream containing one or more certificate PEM files. This implementation just</span>
+<span class="cm">   * embeds the PEM files in Java strings; most applications will instead read this from a resource</span>
+<span class="cm">   * file that gets bundled with the application.</span>
+<span class="cm">   */</span>
+  <span class="k">private</span> <span class="k">fun</span> <span class="nf">trustedCertificatesInputStream</span><span class="p">():</span> <span class="n">InputStream</span> <span class="p">{</span>
+    <span class="p">...</span> <span class="c1">// Full source omitted. See sample.</span>
+  <span class="p">}</span>
+
+  <span class="k">private</span> <span class="k">fun</span> <span class="nf">trustManagerForCertificates</span><span class="p">(</span><span class="n">inputStream</span><span class="p">:</span> <span class="n">InputStream</span><span class="p">):</span> <span class="n">X509TrustManager</span> <span class="p">{</span>
+    <span class="p">...</span> <span class="c1">// Full source omitted. See sample.</span>
+  <span class="p">}</span>
 </code></pre></div>
 
+</div>
+<input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><label for="__tabbed_2_2">Java</label><div class="tabbed-content">
+<div class="highlight"><pre><span></span><code>  <span class="kd">private</span> <span class="kd">final</span> <span class="n">OkHttpClient</span> <span class="n">client</span><span class="p">;</span>
 
-<p>}</p>
-<p>fun run() {
-    val request = Request.Builder()
-        .url(&ldquo;<a href="https://publicobject.com/helloworld.txt">https://publicobject.com/helloworld.txt</a>&rdquo;)
-        .build()</p>
-<div class="codehilite"><pre><span></span><code>client.newCall(request).execute().use { response -&gt;
-  if (!response.isSuccessful) throw IOException(&quot;Unexpected code $response&quot;)
+  <span class="kd">public</span> <span class="nf">CustomTrust</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">X509TrustManager</span> <span class="n">trustManager</span><span class="p">;</span>
+    <span class="n">SSLSocketFactory</span> <span class="n">sslSocketFactory</span><span class="p">;</span>
+    <span class="k">try</span> <span class="p">{</span>
+      <span class="n">trustManager</span> <span class="o">=</span> <span class="n">trustManagerForCertificates</span><span class="p">(</span><span class="n">trustedCertificatesInputStream</span><span class="p">());</span>
+      <span class="n">SSLContext</span> <span class="n">sslContext</span> <span class="o">=</span> <span class="n">SSLContext</span><span class="p">.</span><span class="na">getInstance</span><span class="p">(</span><span class="s">&quot;TLS&quot;</span><span class="p">);</span>
+      <span class="n">sslContext</span><span class="p">.</span><span class="na">init</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span> <span class="k">new</span> <span class="n">TrustManager</span><span class="o">[]</span> <span class="p">{</span> <span class="n">trustManager</span> <span class="p">},</span> <span class="kc">null</span><span class="p">);</span>
+      <span class="n">sslSocketFactory</span> <span class="o">=</span> <span class="n">sslContext</span><span class="p">.</span><span class="na">getSocketFactory</span><span class="p">();</span>
+    <span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="n">GeneralSecurityException</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">throw</span> <span class="k">new</span> <span class="n">RuntimeException</span><span class="p">(</span><span class="n">e</span><span class="p">);</span>
+    <span class="p">}</span>
 
-  for ((name, value) in response.headers) {
-    println(&quot;$name: $value&quot;)
-  }
+    <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OkHttpClient</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
+        <span class="p">.</span><span class="na">sslSocketFactory</span><span class="p">(</span><span class="n">sslSocketFactory</span><span class="p">,</span> <span class="n">trustManager</span><span class="p">)</span>
+        <span class="p">.</span><span class="na">build</span><span class="p">();</span>
+  <span class="p">}</span>
 
-  println(response.body!!.string())
-}
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="p">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="p">{</span>
+    <span class="n">Request</span> <span class="n">request</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Request</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
+        <span class="p">.</span><span class="na">url</span><span class="p">(</span><span class="s">&quot;https://publicobject.com/helloworld.txt&quot;</span><span class="p">)</span>
+        <span class="p">.</span><span class="na">build</span><span class="p">();</span>
+
+    <span class="n">Response</span> <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="p">.</span><span class="na">newCall</span><span class="p">(</span><span class="n">request</span><span class="p">).</span><span class="na">execute</span><span class="p">();</span>
+    <span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">response</span><span class="p">.</span><span class="na">body</span><span class="p">().</span><span class="na">string</span><span class="p">());</span>
+  <span class="p">}</span>
+
+  <span class="kd">private</span> <span class="n">InputStream</span> <span class="nf">trustedCertificatesInputStream</span><span class="p">()</span> <span class="p">{</span>
+    <span class="p">...</span> <span class="c1">// Full source omitted. See sample.</span>
+  <span class="p">}</span>
+
+  <span class="kd">public</span> <span class="n">SSLContext</span> <span class="nf">sslContextForTrustedCertificates</span><span class="p">(</span><span class="n">InputStream</span> <span class="n">in</span><span class="p">)</span> <span class="p">{</span>
+    <span class="p">...</span> <span class="c1">// Full source omitted. See sample.</span>
+  <span class="p">}</span>
 </code></pre></div>
 
-
-<p>}</p>
-<p>/**
-   * Returns an input stream containing one or more certificate PEM files. This implementation just
-   * embeds the PEM files in Java strings; most applications will instead read this from a resource
-   * file that gets bundled with the application.
-   */
-  private fun trustedCertificatesInputStream(): InputStream {
-    &hellip; // Full source omitted. See sample.
-  }</p>
-<p>private fun trustManagerForCertificates(inputStream: InputStream): X509TrustManager {
-    &hellip; // Full source omitted. See sample.
-  }
-<div class="highlight"><pre><span></span><code>```Java tab=
-  private final OkHttpClient client;
-
-  public CustomTrust() {
-    X509TrustManager trustManager;
-    SSLSocketFactory sslSocketFactory;
-    try {
-      trustManager = trustManagerForCertificates(trustedCertificatesInputStream());
-      SSLContext sslContext = SSLContext.getInstance(&quot;TLS&quot;);
-      sslContext.init(null, new TrustManager[] { trustManager }, null);
-      sslSocketFactory = sslContext.getSocketFactory();
-    } catch (GeneralSecurityException e) {
-      throw new RuntimeException(e);
-    }
-
-    client = new OkHttpClient.Builder()
-        .sslSocketFactory(sslSocketFactory, trustManager)
-        .build();
-  }
-
-  public void run() throws Exception {
-    Request request = new Request.Builder()
-        .url(&quot;https://publicobject.com/helloworld.txt&quot;)
-        .build();
-
-    Response response = client.newCall(request).execute();
-    System.out.println(response.body().string());
-  }
-
-  private InputStream trustedCertificatesInputStream() {
-    ... // Full source omitted. See sample.
-  }
-
-  public SSLContext sslContextForTrustedCertificates(InputStream in) {
-    ... // Full source omitted. See sample.
-  }
-</code></pre></div></p>
+</div>
+</div>
                 
               
               

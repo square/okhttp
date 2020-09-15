@@ -667,82 +667,76 @@
 pragmatic caching behaviour, following common real-world browser like Firefox/Chrome and 
 server behaviour when ambiguous.</p>
 <h1 id="basic-usage">Basic Usage<a class="headerlink" href="#basic-usage" title="Permanent link">&para;</a></h1>
-<p><code>Kotlin tab=
-  private val client: OkHttpClient = OkHttpClient.Builder()
-      .cache(Cache(
-          directory = File(application.cacheDir, "http_cache"),
-          // $0.05 worth of phone storage in 2020
-          maxSize = 50L * 1024L * 1024L // 50 MiB
-      ))
-      .build()
-<div class="highlight"><pre><span></span><code>## EventListener events 
-
-Cache Events are exposed via the EventListener API.  Typical scenarios are below.
-
-### Cache Hit
-
-In the ideal scenario the cache can fulfill the request without any conditional call to the network.
-This will skip the normal events such as DNS, connecting to the network, and downloading the response body.
-
-As recommended by the HTTP RFC the max age of a document is defaulted to 10% of the 
-document&#39;s age at the time it was served based on &quot;Last-Modified&quot;. Default expiration dates aren&#39;t used for URIs 
-containing a query.
-
- - CallStart
- - **CacheHit**
- - CallEnd
-
-### Cache Miss
-
-Under a cache miss the normal request events are seen but an additional event shows the presence of the cache.
-Cache Miss will be typical if the item has not been read from the network, is uncacheable, or is past it&#39;s 
-lifetime based on Response cache headers.
-
- - CallStart 
- - **CacheMiss**
- - ProxySelectStart
- - ... Standard Events ...
- - CallEnd
-
-### Conditional Cache Hit
-
-When cache flags require checking the cache results are still valid an early cacheConditionalHit event is
-received followed by a cache hit or miss.  Critically in the cache hit scenario the server won’t send the response body.
-
-The response will have non-null `cacheResponse` and `networkResponse`. The cacheResponse will be used as the top level
-response only if the response code is HTTP/1.1 304 Not Modified.
-
- - CallStart
- - **CacheConditionalHit**
- - ConnectionAcquired
- - ... Standard Events...
- - ResponseBodyEnd _(0 bytes)_
- - **CacheHit**
- - ConnectionReleased
- - CallEnd
-
-## Cache directory
-
-The cache directory must be exclusively owned by a single instance.
-
-Deleting the cache when it is no longer needed can be done.  However this may delete the purpose of the cache
-which is designed to persist between app restarts.
+<div class="highlight"><pre><span></span><code>  <span class="k">private</span> <span class="k">val</span> <span class="py">client</span><span class="p">:</span> <span class="n">OkHttpClient</span> <span class="p">=</span> <span class="n">OkHttpClient</span><span class="p">.</span><span class="n">Builder</span><span class="p">()</span>
+      <span class="p">.</span><span class="n">cache</span><span class="p">(</span><span class="n">Cache</span><span class="p">(</span>
+          <span class="n">directory</span> <span class="p">=</span> <span class="n">File</span><span class="p">(</span><span class="n">application</span><span class="p">.</span><span class="n">cacheDir</span><span class="p">,</span> <span class="s">&quot;http_cache&quot;</span><span class="p">),</span>
+          <span class="c1">// $0.05 worth of phone storage in 2020</span>
+          <span class="n">maxSize</span> <span class="p">=</span> <span class="m">50L</span> <span class="p">*</span> <span class="m">1024L</span> <span class="p">*</span> <span class="m">1024L</span> <span class="c1">// 50 MiB</span>
+      <span class="p">))</span>
+      <span class="p">.</span><span class="n">build</span><span class="p">()</span>
 </code></pre></div>
-cache.delete()
-<div class="highlight"><pre><span></span><code>## Pruning the Cache
 
-Pruning the entire Cache to clear space temporarily can be done using evictAll.
+<h2 id="eventlistener-events">EventListener events<a class="headerlink" href="#eventlistener-events" title="Permanent link">&para;</a></h2>
+<p>Cache Events are exposed via the EventListener API.  Typical scenarios are below.</p>
+<h3 id="cache-hit">Cache Hit<a class="headerlink" href="#cache-hit" title="Permanent link">&para;</a></h3>
+<p>In the ideal scenario the cache can fulfill the request without any conditional call to the network.
+This will skip the normal events such as DNS, connecting to the network, and downloading the response body.</p>
+<p>As recommended by the HTTP RFC the max age of a document is defaulted to 10% of the 
+document&rsquo;s age at the time it was served based on &ldquo;Last-Modified&rdquo;. Default expiration dates aren&rsquo;t used for URIs 
+containing a query.</p>
+<ul>
+<li>CallStart</li>
+<li><strong>CacheHit</strong></li>
+<li>CallEnd</li>
+</ul>
+<h3 id="cache-miss">Cache Miss<a class="headerlink" href="#cache-miss" title="Permanent link">&para;</a></h3>
+<p>Under a cache miss the normal request events are seen but an additional event shows the presence of the cache.
+Cache Miss will be typical if the item has not been read from the network, is uncacheable, or is past it&rsquo;s 
+lifetime based on Response cache headers.</p>
+<ul>
+<li>CallStart </li>
+<li><strong>CacheMiss</strong></li>
+<li>ProxySelectStart</li>
+<li>&hellip; Standard Events &hellip;</li>
+<li>CallEnd</li>
+</ul>
+<h3 id="conditional-cache-hit">Conditional Cache Hit<a class="headerlink" href="#conditional-cache-hit" title="Permanent link">&para;</a></h3>
+<p>When cache flags require checking the cache results are still valid an early cacheConditionalHit event is
+received followed by a cache hit or miss.  Critically in the cache hit scenario the server won’t send the response body.</p>
+<p>The response will have non-null <code>cacheResponse</code> and <code>networkResponse</code>. The cacheResponse will be used as the top level
+response only if the response code is HTTP/1.1 304 Not Modified.</p>
+<ul>
+<li>CallStart</li>
+<li><strong>CacheConditionalHit</strong></li>
+<li>ConnectionAcquired</li>
+<li>&hellip; Standard Events&hellip;</li>
+<li>ResponseBodyEnd <em>(0 bytes)</em></li>
+<li><strong>CacheHit</strong></li>
+<li>ConnectionReleased</li>
+<li>CallEnd</li>
+</ul>
+<h2 id="cache-directory">Cache directory<a class="headerlink" href="#cache-directory" title="Permanent link">&para;</a></h2>
+<p>The cache directory must be exclusively owned by a single instance.</p>
+<p>Deleting the cache when it is no longer needed can be done.  However this may delete the purpose of the cache
+which is designed to persist between app restarts.</p>
+<div class="highlight"><pre><span></span><code>cache.delete()
 </code></pre></div>
-cache.evictAll()
-<div class="highlight"><pre><span></span><code>Removing individual items can be done using the urls iterator.
-This would be typical after a user initiates a force refresh by a pull to refresh type action.
+
+<h2 id="pruning-the-cache">Pruning the Cache<a class="headerlink" href="#pruning-the-cache" title="Permanent link">&para;</a></h2>
+<p>Pruning the entire Cache to clear space temporarily can be done using evictAll.</p>
+<div class="highlight"><pre><span></span><code>cache.evictAll()
 </code></pre></div>
-    val urlIterator = cache.urls()
+
+<p>Removing individual items can be done using the urls iterator.
+This would be typical after a user initiates a force refresh by a pull to refresh type action.</p>
+<div class="highlight"><pre><span></span><code>    val urlIterator = cache.urls()
     while (urlIterator.hasNext()) {
-      if (urlIterator.next().startsWith("https://www.google.com/")) {
+      if (urlIterator.next().startsWith(&quot;https://www.google.com/&quot;)) {
         urlIterator.remove()
       }
-    }</code></p>
+    }
+</code></pre></div>
+
 <h3 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h3>
 <ol>
 <li>Valid cacheable responses are not being cached</li>

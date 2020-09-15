@@ -1166,28 +1166,28 @@ release if you’re using ProGuard,</p>
 <a href="https://cashapp.github.io/2019-02-05/okhttp-3-13-requires-android-5">first introduced</a> with OkHttp 3.13.</p>
 <p>Here’s what you need in <code>build.gradle</code> to target Java 8 byte code for Kotlin, Java, and Android
 plugins respectively.</p>
-<div class="highlight"><pre><span></span><code>compileKotlin {
-  kotlinOptions {
-    jvmTarget = &quot;1.8&quot;
-  }
-}
-compileTestKotlin {
-  kotlinOptions {
-    jvmTarget = &quot;1.8&quot;
-  }
-}
+<div class="highlight"><pre><span></span><code><span class="n">compileKotlin</span> <span class="o">{</span>
+  <span class="n">kotlinOptions</span> <span class="o">{</span>
+    <span class="n">jvmTarget</span> <span class="o">=</span> <span class="s2">&quot;1.8&quot;</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+<span class="n">compileTestKotlin</span> <span class="o">{</span>
+  <span class="n">kotlinOptions</span> <span class="o">{</span>
+    <span class="n">jvmTarget</span> <span class="o">=</span> <span class="s2">&quot;1.8&quot;</span>
+  <span class="o">}</span>
+<span class="o">}</span>
 
-compileJava {
-  sourceCompatibility = JavaVersion.VERSION_1_8
-  targetCompatibility = JavaVersion.VERSION_1_8
-}
+<span class="n">compileJava</span> <span class="o">{</span>
+  <span class="n">sourceCompatibility</span> <span class="o">=</span> <span class="n">JavaVersion</span><span class="o">.</span><span class="na">VERSION_1_8</span>
+  <span class="n">targetCompatibility</span> <span class="o">=</span> <span class="n">JavaVersion</span><span class="o">.</span><span class="na">VERSION_1_8</span>
+<span class="o">}</span>
 
-android {
-  compileOptions {
-    sourceCompatibility JavaVersion.VERSION_1_8
-    targetCompatibility JavaVersion.VERSION_1_8
-  }
-}
+<span class="n">android</span> <span class="o">{</span>
+  <span class="n">compileOptions</span> <span class="o">{</span>
+    <span class="n">sourceCompatibility</span> <span class="n">JavaVersion</span><span class="o">.</span><span class="na">VERSION_1_8</span>
+    <span class="n">targetCompatibility</span> <span class="n">JavaVersion</span><span class="o">.</span><span class="na">VERSION_1_8</span>
+  <span class="o">}</span>
+<span class="o">}</span>
 </code></pre></div>
                 
               
