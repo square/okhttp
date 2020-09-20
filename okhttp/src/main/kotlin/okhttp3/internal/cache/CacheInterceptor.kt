@@ -34,9 +34,11 @@ import okhttp3.internal.http.ExchangeCodec
 import okhttp3.internal.http.HttpMethod
 import okhttp3.internal.http.RealResponseBody
 import okhttp3.internal.http.promisesBody
+import okhttp3.internal.platform.Platform
 import okio.Buffer
 import okio.Source
 import okio.buffer
+import java.lang.RuntimeException
 
 /** Serves requests from the cache and writes responses to the cache. */
 class CacheInterceptor(internal val cache: Cache?) : Interceptor {
@@ -44,7 +46,14 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
   @Throws(IOException::class)
   override fun intercept(chain: Interceptor.Chain): Response {
     val call = chain.call()
-    val cacheCandidate = cache?.get(chain.request())
+    val cacheCandidate = try {
+      cache?.get(chain.request())
+    } catch (re: RuntimeException) {
+      Platform.get()
+        .log("Unexpected cache exception for " + chain.request().url.redact(),
+          level = Platform.WARN, t = re)
+      null
+    }
 
     val now = System.currentTimeMillis()
 
