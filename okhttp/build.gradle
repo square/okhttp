@@ -1,9 +1,26 @@
 apply plugin: 'me.champeau.gradle.japicmp'
+applyOsgi(this)
 
 jar {
-  manifest {
-    attributes('Automatic-Module-Name': 'okhttp3')
-  }
+  // MANIFEST.MF, including OSGi bnd instructions.
+  // We export okhttp3.internal for our own modules use.
+  // The packages of all optional dependencies must be explicitly specified.
+  bnd '''
+  Export-Package: \
+  okhttp3,\
+  okhttp3.internal.*;okhttpinternal=true;mandatory:=okhttpinternal
+  Import-Package: \
+  android.*;resolution:=optional,\
+  com.oracle.svm.core.annotate;resolution:=optional,\
+  dalvik.system;resolution:=optional,\
+  org.conscrypt;resolution:=optional,\
+  org.bouncycastle.*;resolution:=optional,\
+  org.openjsse.*;resolution:=optional,\
+  sun.security.ssl;resolution:=optional,\
+  *
+  Automatic-Module-Name: okhttp3
+  Bundle-SymbolicName: com.squareup.okhttp3
+  '''
 }
 
 sourceSets {
@@ -21,9 +38,21 @@ task copyJavaTemplates(type: Copy) {
   filteringCharset = 'UTF-8'
 }
 
+// Expose OSGi jars to the test environment.
+configurations {
+  osgiTestDeploy
+}
+task copyOsgiTestDeployment(type: Copy) {
+  from configurations.osgiTestDeploy
+  into "${buildDir}/resources/test/okhttp3/osgi/deployments"
+}
+tasks.test.dependsOn(copyOsgiTestDeployment)
+
 dependencies {
   api deps.okio
   api deps.kotlinStdlib
+
+  // These compileOnly dependencies must also be listed in the OSGi configuration above.
   compileOnly deps.android
   compileOnly deps.bouncycastle
   compileOnly deps.bouncycastletls
@@ -47,10 +76,16 @@ dependencies {
   testImplementation project(':okhttp-urlconnection')
   testImplementation project(':mockwebserver')
   testImplementation project(':okhttp-logging-interceptor')
+  testImplementation project(':okhttp-brotli')
+  testImplementation project(':okhttp-dnsoverhttps')
+  testImplementation project(':okhttp-sse')
   testImplementation deps.conscrypt
   testImplementation deps.junit
   testImplementation deps.assertj
   testImplementation deps.openjsse
+  testImplementation deps.bndResolve
+  osgiTestDeploy deps.equinox
+  osgiTestDeploy deps.kotlinStdlibOsgi
   testCompileOnly deps.jsr305
 }
 
