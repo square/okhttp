@@ -20,7 +20,8 @@ buildscript {
       'okio': '2.8.0',
       'ktlint': '0.38.0',
       'picocli': '4.2.0',
-      'openjsse': '1.1.0'
+      'openjsse': '1.1.0',
+      'bndPlugin': '5.1.2'
   ]
 
   ext.deps = [
@@ -43,13 +44,15 @@ buildscript {
       'moshi': "com.squareup.moshi:moshi:${versions.moshi}",
       'moshiKotlin': "com.squareup.moshi:moshi-kotlin-codegen:${versions.moshi}",
       'okio': "com.squareup.okio:okio:${versions.okio}",
-      'openjsse': "org.openjsse:openjsse:${versions.openjsse}"
+      'openjsse': "org.openjsse:openjsse:${versions.openjsse}",
+      'bnd': "biz.aQute.bnd:biz.aQute.bnd.gradle:${versions.bndPlugin}"
   ]
 
   dependencies {
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.10"
     classpath "org.jetbrains.dokka:dokka-gradle-plugin:0.10.1"
     classpath "com.android.tools.build:gradle:4.0.1"
+    classpath deps.bnd
   }
 
   repositories {
@@ -118,6 +121,8 @@ subprojects { project ->
   apply plugin: 'checkstyle'
   apply plugin: 'ru.vyarus.animalsniffer'
   apply plugin: 'org.jetbrains.dokka'
+  apply plugin: 'biz.aQute.bnd.builder'
+  
   sourceCompatibility = JavaVersion.VERSION_1_8
   targetCompatibility = JavaVersion.VERSION_1_8
 

@@ -1,9 +1,19 @@
 apply plugin: 'me.champeau.gradle.japicmp'
 
 jar {
-  manifest {
-    attributes('Automatic-Module-Name': 'okhttp3.urlconnection')
-  }
+  // modify these lines for MANIFEST.MF properties or for specific bnd instructions
+  // because this project uses the same package name as the default okhttp project (which is mostly "invalid" for OSGi)
+  // we have to remove okhttp from the bnd classpath and import it's packages manually
+  bnd """
+  Export-Package: okhttp3
+  Import-Package: \
+  okhttp3;version="\${range;[==,+);\${version_cleanup;${project.version}}}",\
+  okhttp3.internal.*;version="\${range;[==,+);\${version_cleanup;${project.version}}}",\
+  *
+  Automatic-Module-Name: okhttp3.urlconnection
+  Bundle-SymbolicName: com.squareup.okhttp3.urlconnection
+  """
+  setClasspath(files([]))
 }
 
 dependencies {

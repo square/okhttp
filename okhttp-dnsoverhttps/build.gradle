@@ -1,7 +1,10 @@
 jar {
-  manifest {
-    attributes('Automatic-Module-Name': 'okhttp3.dnsoverhttps')
-  }
+  // modify these lines for MANIFEST.MF properties or for specific bnd instructions
+  bnd '''
+  Export-Package: okhttp3.dnsoverhttps
+  Automatic-Module-Name: okhttp3.dnsoverhttps
+  Bundle-SymbolicName: com.squareup.okhttp3.dnsoverhttps
+  '''
 }
 
 dependencies {

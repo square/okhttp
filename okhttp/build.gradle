@@ -1,9 +1,22 @@
 apply plugin: 'me.champeau.gradle.japicmp'
 
 jar {
-  manifest {
-    attributes('Automatic-Module-Name': 'okhttp3')
-  }
+  // modify these lines for MANIFEST.MF properties or for specific bnd instructions
+  // internal package needs to be exported too because interceptors use internal packages
+  bnd '''
+  Export-Package: \
+  okhttp3,\
+  okhttp3.internal.*
+  Import-Package: \
+  android.*;resolution:=optional,\
+  dalvik.system;resolution:=optional,\
+  org.conscrypt;resolution:=optional,\
+  org.bouncycastle.*;resolution:=optional,\
+  org.openjsse.*;resolution:=optional,\
+  *
+  Automatic-Module-Name: okhttp3
+  Bundle-SymbolicName: com.squareup.okhttp3
+  '''
 }
 
 sourceSets {
