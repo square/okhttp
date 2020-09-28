@@ -2,7 +2,7 @@ apply plugin: 'me.champeau.gradle.japicmp'
 
 jar {
   // modify these lines for MANIFEST.MF properties or for specific bnd instructions
-  // internal package needs to be exported too because interceptors use internal packages
+  // internal package needs to be exported too because sibling libraries use internal packages
   bnd '''
   Export-Package: \
   okhttp3,\
