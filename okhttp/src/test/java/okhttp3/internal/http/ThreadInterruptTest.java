@@ -17,12 +17,19 @@ package okhttp3.internal.http;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.net.ServerSocketFactory;
 import javax.net.SocketFactory;
+
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpServer;
 import okhttp3.Call;
 import okhttp3.DelegatingServerSocketFactory;
 import okhttp3.DelegatingSocketFactory;
@@ -42,6 +49,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 public final class ThreadInterruptTest {
@@ -137,6 +145,47 @@ public final class ThreadInterruptTest {
     }
 
     responseBody.close();
+  }
+
+  @Test public void readStatusForInterruptedRequest() throws Exception {
+    HttpServer server = HttpServer.create(new InetSocketAddress(0), 0);
+    server.createContext("/", new HttpHandler() {
+      final byte[] buffer = new byte[1024];
+
+      @Override
+      public void handle(HttpExchange exchange) throws IOException {
+        InputStream inBody = exchange.getRequestBody();
+        for (int i = 0; i < 10; i++) {
+          //noinspection ResultOfMethodCallIgnored
+          inBody.read(buffer);
+        }
+        inBody.close();
+        OutputStream outBody = exchange.getResponseBody();
+        exchange.sendResponseHeaders(413, 65);
+        outBody.write("{\"error\":\"too_large\",\"reason\":\"the request entity is too large\"}\r\n".getBytes());
+
+        outBody.flush();
+        try {
+          Thread.sleep(1000);
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+        outBody.close();
+      }
+    });
+    server.setExecutor(Executors.newSingleThreadExecutor());
+    server.start();
+
+    int requestBodySize = 20 * 1024 * 1024; // 20 MiB
+
+    OkHttpClient client = new OkHttpClient();
+    Response response = client.newCall(
+            new Request.Builder()
+                    .url(String.format("http://localhost:%d/", server.getAddress().getPort()))
+                    .post(RequestBody.create(new byte[requestBodySize]))
+                    .build()
+    ).execute();
+    assertEquals(413, response.code());
   }
 
   private void sleep(int delayMillis) {

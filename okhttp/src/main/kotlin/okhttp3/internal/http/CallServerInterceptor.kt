@@ -21,6 +21,7 @@ import okhttp3.Interceptor
 import okhttp3.Response
 import okhttp3.internal.EMPTY_RESPONSE
 import okio.buffer
+import java.net.SocketException
 
 /** This is the last interceptor in the chain. It makes a network call to the server. */
 class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
@@ -56,7 +57,30 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
         } else {
           // Write the request body if the "Expect: 100-continue" expectation was met.
           val bufferedRequestBody = exchange.createRequestBody(request, false).buffer()
-          requestBody.writeTo(bufferedRequestBody)
+          try {
+            requestBody.writeTo(bufferedRequestBody)
+          } catch (socketException: SocketException) {
+            // As per https://tools.ietf.org/html/rfc2616#section-8.2.2 it might happen that the server sends an early
+            // response such as 413. Try and collect an early response
+            responseBuilder = exchange.readResponseHeaders(expectContinue = false)!!
+            var response = responseBuilder
+              .request(request)
+              .handshake(exchange.connection.handshake())
+              .sentRequestAtMillis(sentRequestMillis)
+              .receivedResponseAtMillis(System.currentTimeMillis())
+              .build()
+            response = response.newBuilder()
+              .body(exchange.openResponseBody(response))
+              .build()
+
+            val code = response.code
+            if (code in 400..599) {
+              exchange.responseHeadersEnd(response)
+              return response
+            }
+
+            throw socketException
+          }
           bufferedRequestBody.close()
         }
       } else {
