@@ -3,10 +3,17 @@ Android Test
 
 A gradle module for running Android instrumentation tests on a device or emulator.
 
-1. Run an Emulator using Android Studio or from command line.
+1. Add an Emulator named `pixel5`, if you don't already have one
 
 ```
-$ emulator -no-window @pixel5
+$ sdkmanager --install "system-images;android-29;google_apis;x86"
+$ echo "no" | avdmanager --verbose create avd --force --name "pixel5" --device "pixel" --package "system-images;android-29;google_apis;x86" --tag "google_apis" --abi "x86"
+```
+
+2. Run an Emulator using Android Studio or from command line.
+
+```
+$ emulator -no-window -no-snapshot-load @pixel5
 ```
 
 2. Turn on logs with logcat

@@ -196,8 +196,14 @@ class OkHttpTest {
         assertEquals(200, response.code)
         // see https://github.com/google/conscrypt/blob/b9463b2f74df42d85c73715a5f19e005dfb7b802/android/src/main/java/org/conscrypt/Platform.java#L613
         when {
+            // TODO: how do we determine when we expect useEngineSocket to be true, resulting in org.conscrypt.Java8EngineSocket?
             Build.VERSION.SDK_INT >= 24 -> {
-              assertEquals("org.conscrypt.Java8FileDescriptorSocket", socketClass)
+              // Depending on JDK, it can be either Java8FileDescriptorSocket or Java8EngineSocket
+              try {
+                assertEquals("org.conscrypt.Java8FileDescriptorSocket", socketClass)
+              } catch (e: AssertionError) {
+                assertEquals("org.conscrypt.Java8EngineSocket", socketClass)
+              }
             }
             Build.VERSION.SDK_INT < 22 -> {
               assertEquals("org.conscrypt.KitKatPlatformOpenSSLSocketImplAdapter", socketClass)
