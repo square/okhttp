@@ -1,5 +1,3 @@
-import net.ltgt.gradle.errorprone.CheckSeverity
-
 buildscript {
   ext.versions = [
       'animalSniffer': '1.18',
@@ -21,7 +19,8 @@ buildscript {
       'ktlint': '0.38.0',
       'picocli': '4.2.0',
       'openjsse': '1.1.0',
-      'bndPlugin': '5.1.2'
+      'bnd': '5.1.2',
+      'equinox': '3.16.0'
   ]
 
   ext.deps = [
@@ -45,7 +44,10 @@ buildscript {
       'moshiKotlin': "com.squareup.moshi:moshi-kotlin-codegen:${versions.moshi}",
       'okio': "com.squareup.okio:okio:${versions.okio}",
       'openjsse': "org.openjsse:openjsse:${versions.openjsse}",
-      'bnd': "biz.aQute.bnd:biz.aQute.bnd.gradle:${versions.bndPlugin}"
+      'bnd': "biz.aQute.bnd:biz.aQute.bnd.gradle:${versions.bnd}",
+      'bndResolve': "biz.aQute.bnd:biz.aQute.resolve:${versions.bnd}",
+      'equinox': "org.eclipse.platform:org.eclipse.osgi:${versions.equinox}",
+      'kotlinStdlibOsgi': "org.jetbrains.kotlin:kotlin-osgi-bundle:${versions.kotlin}"
   ]
 
   dependencies {
@@ -110,6 +112,26 @@ allprojects {
   }
 }
 
+ext.applyOsgi = { project ->
+  project.apply plugin: 'biz.aQute.bnd.builder'
+
+  project.sourceSets {
+    // own source set for OSGi specific dependencies
+    osgi
+  }
+
+  project.jar { t ->
+    // this sets only the source set for OSGi
+    // setSourceSet is a method provided by bnd
+    t.setClasspath(project.sourceSets.osgi['compileClasspath'] + project.sourceSets.main['compileClasspath'])
+  }
+
+  project.dependencies {
+    // when we provide the OSGi version for the kotlin standard library BND can infer the bundle version for the import package statements
+    osgiApi deps.kotlinStdlibOsgi
+  }
+}
+
 /** Configure building for Java+Kotlin projects. */
 subprojects { project ->
   if (project.name == 'android-test') return
@@ -121,7 +143,7 @@ subprojects { project ->
   apply plugin: 'checkstyle'
   apply plugin: 'ru.vyarus.animalsniffer'
   apply plugin: 'org.jetbrains.dokka'
-  apply plugin: 'biz.aQute.bnd.builder'
+
   
   sourceCompatibility = JavaVersion.VERSION_1_8
   targetCompatibility = JavaVersion.VERSION_1_8

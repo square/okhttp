@@ -1,23 +1,20 @@
 apply plugin: 'me.champeau.gradle.japicmp'
+applyOsgi(this)
 
+def mainProj = project(':okhttp')
 jar {
   // modify these lines for MANIFEST.MF properties or for specific bnd instructions
-  // because this project uses the same package name as the default okhttp project (which is mostly "invalid" for OSGi)
-  // we have to remove okhttp from the bnd classpath and import it's packages manually
+  // urlconnection is a OSGi fragment because the package name is the same as the okhttp3 module
   bnd """
-  Export-Package: okhttp3
-  Import-Package: \
-  okhttp3;version="\${range;[==,+);\${version_cleanup;${project.version}}}",\
-  okhttp3.internal.*;version="\${range;[==,+);\${version_cleanup;${project.version}}}",\
-  *
+  Fragment-Host: com.squareup.okhttp3; bundle-version="\${range;[==,+);\${version_cleanup;${mainProj.version}}}"
   Automatic-Module-Name: okhttp3.urlconnection
   Bundle-SymbolicName: com.squareup.okhttp3.urlconnection
+  -removeheaders: Private-Package
   """
-  setClasspath(files([]))
 }
 
 dependencies {
-  api project(':okhttp')
+  api mainProj
   compileOnly deps.jsr305
   compileOnly deps.animalSniffer
 

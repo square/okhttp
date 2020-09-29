@@ -1,8 +1,10 @@
 apply plugin: 'me.champeau.gradle.japicmp'
+applyOsgi(this)
 
 jar {
   // modify these lines for MANIFEST.MF properties or for specific bnd instructions
   // internal package needs to be exported too because sibling libraries use internal packages
+  // if a dependency is added which is not necessarily required at runtime add the packages to the optional list
   bnd '''
   Export-Package: \
   okhttp3,\
@@ -13,6 +15,7 @@ jar {
   org.conscrypt;resolution:=optional,\
   org.bouncycastle.*;resolution:=optional,\
   org.openjsse.*;resolution:=optional,\
+  sun.security.ssl;resolution:=optional,\
   *
   Automatic-Module-Name: okhttp3
   Bundle-SymbolicName: com.squareup.okhttp3
@@ -34,6 +37,16 @@ task copyJavaTemplates(type: Copy) {
   filteringCharset = 'UTF-8'
 }
 
+// make osgiTestImplementation configuration jars available to the test environment
+configurations {
+  osgiTestImplementation
+}
+task copyOsgiTestDeployment(type: Copy) {
+  from configurations.osgiTestImplementation
+  into "${buildDir}/resources/test/okhttp3/osgi/deployments"
+}
+tasks.test.dependsOn(copyOsgiTestDeployment)
+
 dependencies {
   api deps.okio
   api deps.kotlinStdlib
@@ -50,10 +63,16 @@ dependencies {
   testImplementation project(':okhttp-urlconnection')
   testImplementation project(':mockwebserver')
   testImplementation project(':okhttp-logging-interceptor')
+  testImplementation project(':okhttp-brotli')
+  testImplementation project(':okhttp-dnsoverhttps')
+  testImplementation project(':okhttp-sse')
   testImplementation deps.conscrypt
   testImplementation deps.junit
   testImplementation deps.assertj
   testImplementation deps.openjsse
+  testImplementation deps.bndResolve
+  osgiTestImplementation deps.equinox
+  osgiTestImplementation deps.kotlinStdlibOsgi
   testCompileOnly deps.jsr305
 }
 

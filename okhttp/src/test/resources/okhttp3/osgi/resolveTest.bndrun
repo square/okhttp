@@ -1,0 +1,13 @@
+-runfw: org.eclipse.osgi
+-runee: JavaSE-1.8
+-runsystemcapabilities: ${native_capability}
+-resolve.effective: active;skip:="osgi.service"
+
+-runrequires: \
+	bnd.identity;version='latest';id='com.squareup.okhttp3',\
+    bnd.identity;version='latest';id='com.squareup.okhttp3.brotli',\
+    bnd.identity;version='latest';id='com.squareup.okhttp3.dnsoverhttps',\
+	bnd.identity;version='latest';id='com.squareup.okhttp3.logging',\
+    bnd.identity;version='latest';id='com.squareup.okhttp3.sse',\
+	bnd.identity;version='latest';id='com.squareup.okhttp3.tls',\
+	bnd.identity;version='latest';id='com.squareup.okhttp3.urlconnection'

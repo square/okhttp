@@ -1,4 +1,5 @@
 apply plugin: 'me.champeau.gradle.japicmp'
+applyOsgi(this)
 
 jar {
   // modify these lines for MANIFEST.MF properties or for specific bnd instructions

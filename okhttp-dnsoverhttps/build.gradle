@@ -1,3 +1,5 @@
+applyOsgi(this)
+
 jar {
   // modify these lines for MANIFEST.MF properties or for specific bnd instructions
   bnd '''

@@ -1,8 +1,8 @@
 apply plugin: 'me.champeau.gradle.japicmp'
+applyOsgi(this)
 
 jar {
   // modify these lines for MANIFEST.MF properties or for specific bnd instructions
-  // are okhttp3.tls.internal.* packages used in dependent libraries?
   bnd '''
   Export-Package: okhttp3.tls
   Automatic-Module-Name: okhttp3.tls
