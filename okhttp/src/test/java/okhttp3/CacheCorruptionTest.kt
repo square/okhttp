@@ -5,13 +5,12 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.internal.TlsUtil.localhost
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
-import java.io.IOException
 import java.net.CookieManager
 import java.net.ResponseCache
 import java.text.DateFormat
@@ -61,36 +60,69 @@ class CacheCorruptionTest {
     }
   }
 
-  @Test @Throws(IOException::class) fun corruptedCacheEntry() {
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
-    server.enqueue(MockResponse()
-      .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
-      .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
-      .setBody("ABC"))
-    client = client.newBuilder()
-      .sslSocketFactory(
-        handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager)
-      .hostnameVerifier(NULL_HOSTNAME_VERIFIER)
-      .build()
-    val request: Request = Request.Builder().url(server.url("/")).build()
-    val response1: Response = client.newCall(request).execute()
-    val bodySource = response1.body!!.source()
-    Assertions.assertThat(bodySource.readUtf8()).isEqualTo("ABC")
+  @Test fun corruptedCipher() {
+    val response = testCorruptingCache {
+      corruptMetadata {
+        it.replace("TLS_", "SLT_")
+      }
+    }
 
+    assertThat(response.body!!.string()).isEqualTo("ABC.1") // cached
+    assertThat(cache.requestCount()).isEqualTo(2)
+    assertThat(cache.networkCount()).isEqualTo(1)
+    assertThat(cache.hitCount()).isEqualTo(1)
+
+    assertThat(response.handshake?.cipherSuite?.javaName).startsWith("SLT_")
+  }
+
+  @Test fun truncatedMetadataEntry() {
+    val response = testCorruptingCache {
+      corruptMetadata {
+        // truncate metadata to 1/4 of length
+        it.substring(0, it.length / 4)
+      }
+    }
+
+    assertThat(response.body!!.string()).isEqualTo("ABC.2") // not cached
+    assertThat(cache.requestCount()).isEqualTo(2)
+    assertThat(cache.networkCount()).isEqualTo(2)
+    assertThat(cache.hitCount()).isEqualTo(0)
+  }
+
+  private fun corruptMetadata(corruptor: (String) -> String) {
     val metadataFile = fileSystem.files.keys.find { it.name.endsWith(".0") }
     val metadataBuffer = fileSystem.files[metadataFile]
 
     val contents = metadataBuffer!!.peek().readUtf8()
 
-    metadataBuffer.writeUtf8(contents.substring(0, contents.length / 4))
+    // mess with cipher suite
+    metadataBuffer.clear()
+    metadataBuffer.writeUtf8(corruptor(contents))
+  }
 
-//    println(metadataBuffer.peek().readUtf8())
+  private fun testCorruptingCache(corruptor: () -> Unit): Response {
+    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+    server.enqueue(MockResponse()
+        .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
+        .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
+        .setBody("ABC.1"))
+    server.enqueue(MockResponse()
+      .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
+      .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
+      .setBody("ABC.2"))
+    client = client.newBuilder()
+        .sslSocketFactory(
+          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager)
+        .hostnameVerifier(NULL_HOSTNAME_VERIFIER)
+        .build()
+    val request: Request = Request.Builder().url(server.url("/")).build()
+    val response1: Response = client.newCall(request).execute()
+    val bodySource = response1.body!!.source()
+    assertThat(bodySource.readUtf8()).isEqualTo("ABC.1")
 
-    val response2: Response = client.newCall(request).execute() // Cached!
-    Assertions.assertThat(response2.body!!.string()).isEqualTo("ABC")
-    Assertions.assertThat(cache.requestCount()).isEqualTo(2)
-    Assertions.assertThat(cache.networkCount()).isEqualTo(1)
-    Assertions.assertThat(cache.hitCount()).isEqualTo(1)
+    corruptor()
+
+    return client.newCall(request).execute()
   }
 
   /**
