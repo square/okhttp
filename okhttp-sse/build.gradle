@@ -3,7 +3,6 @@ applyOsgi(this)
 
 jar {
   // modify these lines for MANIFEST.MF properties or for specific bnd instructions
-  // is okhttp3.internal.sse package used in dependent libraries?
   bnd '''
   Export-Package: okhttp3.sse
   Automatic-Module-Name: okhttp3.sse
