@@ -46,6 +46,14 @@ Running Android Tests
 
 $ ANDROID_SDK_ROOT=PATH_TO_ANDROID_HOME/sdk ./gradlew :android-test:connectedCheck
 
+OSGi
+---------------------
+
+Ensure that added dependencies are OSGi compatible. 
+If added dependencies are optional the package imports in [okhttp/build.gradle][okhttp_build] need to
+be adjusted.
+
+
 Committer's Guides
 ------------------
 
@@ -59,3 +67,4 @@ Committer's Guides
  [releasing]: http://square.github.io/okhttp/releasing/
  [security]: http://square.github.io/okhttp/security/
  [works_with_okhttp]: http://square.github.io/okhttp/works_with_okhttp/
+ [okhttp_build]: https://github.com/square/okhttp/blob/master/okhttp/build.gradle
