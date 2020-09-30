@@ -90,7 +90,7 @@ public class OkHttpOsgiTest {
     }
 
     private void addPlugin(Workspace workspace, String alias, Class<?> pluginType, String key1, String value1, String key2, String value2) {
-        Map<String, String> props = new HashMap<>();
+        Map<String, String> props = new LinkedHashMap<>();
         props.put(key1, value1);
         props.put(key2, value2);
         addPlugin(workspace, alias, pluginType, props);
