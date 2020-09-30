@@ -8,7 +8,7 @@ jar {
   bnd '''
   Export-Package: \
   okhttp3,\
-  okhttp3.internal.*
+  okhttp3.internal.*;okhttpinternal=true;mandatory:=okhttpinternal
   Import-Package: \
   android.*;resolution:=optional,\
   dalvik.system;resolution:=optional,\
