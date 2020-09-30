@@ -4,7 +4,7 @@ applyOsgi(this)
 jar {
   // modify these lines for MANIFEST.MF properties or for specific bnd instructions
   // internal package needs to be exported too because sibling libraries use internal packages
-  // if a dependency is added which is not necessarily required at runtime add the packages to the optional list
+  // to prevent requiring certain android/ssl packages at runtime we explicitly define those as optional here
   bnd '''
   Export-Package: \
   okhttp3,\
@@ -37,7 +37,7 @@ task copyJavaTemplates(type: Copy) {
   filteringCharset = 'UTF-8'
 }
 
-// make osgiTestImplementation configuration jars available to the test environment
+// make osgiTestDeploy configuration jars available to the test environment
 configurations {
   osgiTestDeploy
 }
@@ -47,6 +47,8 @@ task copyOsgiTestDeployment(type: Copy) {
 }
 tasks.test.dependsOn(copyOsgiTestDeployment)
 
+// ensure that if a dependency is added here which is not necessarily required at runtime (compileOnly!)
+// is also added as a optional package import to the bnd definition above
 dependencies {
   api deps.okio
   api deps.kotlinStdlib
