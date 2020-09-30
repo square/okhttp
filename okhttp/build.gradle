@@ -39,10 +39,10 @@ task copyJavaTemplates(type: Copy) {
 
 // make osgiTestImplementation configuration jars available to the test environment
 configurations {
-  osgiTestImplementation
+  osgiTestDeploy
 }
 task copyOsgiTestDeployment(type: Copy) {
-  from configurations.osgiTestImplementation
+  from configurations.osgiTestDeploy
   into "${buildDir}/resources/test/okhttp3/osgi/deployments"
 }
 tasks.test.dependsOn(copyOsgiTestDeployment)
@@ -71,8 +71,8 @@ dependencies {
   testImplementation deps.assertj
   testImplementation deps.openjsse
   testImplementation deps.bndResolve
-  osgiTestImplementation deps.equinox
-  osgiTestImplementation deps.kotlinStdlibOsgi
+  osgiTestDeploy deps.equinox
+  osgiTestDeploy deps.kotlinStdlibOsgi
   testCompileOnly deps.jsr305
 }
 
