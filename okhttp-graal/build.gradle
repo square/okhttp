@@ -1,0 +1,28 @@
+jar {
+  manifest {
+    attributes('Automatic-Module-Name': 'okhttp3.graal')
+  }
+}
+
+dependencies {
+  api project(':okhttp')
+
+  compileOnly("org.graalvm.nativeimage:svm:20.2.0") {
+    // https://youtrack.jetbrains.com/issue/KT-29513
+    exclude group: 'org.graalvm.nativeimage'
+    exclude group: 'org.graalvm.truffle'
+    exclude group: 'org.graalvm.compiler'
+  }
+
+  testImplementation project(':okhttp-testing-support')
+  testImplementation project(':mockwebserver')
+  testImplementation deps.junit
+  testImplementation deps.assertj
+}
+
+afterEvaluate { project ->
+  project.tasks.dokka {
+    outputDirectory = "$rootDir/docs/4.x"
+    outputFormat = 'gfm'
+  }
+}

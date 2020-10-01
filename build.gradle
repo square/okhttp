@@ -19,7 +19,7 @@ buildscript {
       'moshi': '1.9.2',
       'okio': '2.8.0',
       'ktlint': '0.38.0',
-      'picocli': '4.2.0',
+      'picocli': '4.5.1',
       'openjsse': '1.1.0'
   ]
 
