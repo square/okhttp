@@ -49,7 +49,7 @@ shadowJar {
 
 graal {
   mainClass "okhttp3.curl.Main"
-  outputName "okurl"
+  outputName "okcurl"
   graalVersion "20.2.0"
   javaVersion "11"
 
