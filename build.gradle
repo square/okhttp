@@ -4,7 +4,7 @@ buildscript {
   ext.versions = [
       'animalSniffer': '1.18',
       'assertj': '3.15.0',
-      'bouncycastle': '1.65',
+      'bouncycastle': '1.66',
       'brotli': '0.1.2',
       'checkstyle': '8.28',
       'conscrypt': '2.5.1',
@@ -16,7 +16,7 @@ buildscript {
       'jsoup': '1.13.1',
       'junit': '4.13',
       'kotlin': '1.4.10',
-      'moshi': '1.9.2',
+      'moshi': '1.10.0',
       'okio': '2.8.0',
       'ktlint': '0.38.0',
       'picocli': '4.5.1',
