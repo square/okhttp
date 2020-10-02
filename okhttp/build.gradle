@@ -32,6 +32,16 @@ dependencies {
   compileOnly deps.jsr305
   compileOnly deps.animalSniffer
 
+  // graal build support
+  compileOnly("org.graalvm.nativeimage:svm:20.2.0") {
+    // Avoid kapt tripping up on a non jar dependency.
+    // Only annotations are needed here.
+    // https://youtrack.jetbrains.com/issue/KT-29513
+    exclude group: 'org.graalvm.nativeimage'
+    exclude group: 'org.graalvm.truffle'
+    exclude group: 'org.graalvm.compiler'
+  }
+
   testImplementation project(':okhttp-testing-support')
   testImplementation project(':okhttp-tls')
   testImplementation project(':okhttp-urlconnection')

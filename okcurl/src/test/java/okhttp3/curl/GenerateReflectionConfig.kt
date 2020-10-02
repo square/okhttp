@@ -15,7 +15,7 @@
  */
 package okhttp3.curl
 
-import picocli.CommandLine.Model.CommandSpec.*
+import picocli.CommandLine.Model.CommandSpec.forAnnotatedObject
 import picocli.codegen.aot.graalvm.ReflectionConfigGenerator
 import java.io.File
 

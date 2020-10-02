@@ -119,6 +119,19 @@ The latest release is available on [Maven Central](https://search.maven.org/arti
 testImplementation("com.squareup.okhttp3:mockwebserver:4.9.0")
 ```
 
+GraalVM Native Image
+--------------------
+
+Building your own native images with Graal https://www.graalvm.org/ should work automatically.
+Please report any bugs or workarounds you find.
+
+See okcurl module for an example build.
+
+```
+$ ./gradlew okcurl:nativeImage
+$ ./okcurl/build/graal/okcurl https://httpbin.org/get
+```
+
 License
 -------
 
