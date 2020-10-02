@@ -233,7 +233,7 @@ subprojects { project ->
   }
 
   apply plugin: 'maven-publish'
-//  apply plugin: 'signing'
+  apply plugin: 'signing'
 
   publishing {
     if (!bom) {
@@ -278,21 +278,20 @@ subprojects { project ->
     }
 
     repositories {
-      mavenLocal()
-//      maven {
-//        name = "mavencentral"
-//        url = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
-//        credentials {
-//          username System.getenv('SONATYPE_NEXUS_USERNAME')
-//          password System.getenv('SONATYPE_NEXUS_PASSWORD')
-//        }
-//      }
+      maven {
+        name = "mavencentral"
+        url = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+        credentials {
+          username System.getenv('SONATYPE_NEXUS_USERNAME')
+          password System.getenv('SONATYPE_NEXUS_PASSWORD')
+        }
+      }
     }
   }
 
-//  signing {
-//    sign publishing.publications.maven
-//  }
+  signing {
+    sign publishing.publications.maven
+  }
 }
 
 
