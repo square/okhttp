@@ -48,6 +48,7 @@ import picocli.CommandLine.Command
 import picocli.CommandLine.IVersionProvider
 import picocli.CommandLine.Option
 import picocli.CommandLine.Parameters
+import java.lang.IllegalArgumentException
 
 @Command(name = NAME, description = ["A curl for the next-generation web."],
     mixinStandardHelpOptions = true, versionProvider = Main.VersionProvider::class)
@@ -179,7 +180,9 @@ class Main : Runnable {
 
     val requestMethod = method ?: if (data != null) "POST" else "GET"
 
-    request.url(url!!)
+    val url = url ?: throw IllegalArgumentException("No url provided")
+
+    request.url(url)
 
     data?.let {
       request.method(requestMethod, it.toRequestBody(mediaType()))

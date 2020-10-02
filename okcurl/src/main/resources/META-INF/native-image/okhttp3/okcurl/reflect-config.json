@@ -1,0 +1,45 @@
+[
+  {
+    "name" : "okhttp3.curl.Main",
+    "allDeclaredConstructors" : true,
+    "allPublicConstructors" : true,
+    "allDeclaredMethods" : true,
+    "allPublicMethods" : true,
+    "fields" : [
+      { "name" : "allowInsecure" },
+      { "name" : "callTimeout" },
+      { "name" : "completionScript" },
+      { "name" : "connectTimeout" },
+      { "name" : "data" },
+      { "name" : "followRedirects" },
+      { "name" : "headers" },
+      { "name" : "method" },
+      { "name" : "readTimeout" },
+      { "name" : "referer" },
+      { "name" : "showHeaders" },
+      { "name" : "showHttp2Frames" },
+      { "name" : "sslDebug" },
+      { "name" : "url" },
+      { "name" : "userAgent" },
+      { "name" : "verbose" }
+    ]
+  },
+  {
+    "name" : "okhttp3.curl.Main$VersionProvider",
+    "allDeclaredConstructors" : true,
+    "allPublicConstructors" : true,
+    "allDeclaredMethods" : true,
+    "allPublicMethods" : true
+  },
+  {
+    "name" : "picocli.CommandLine$AutoHelpMixin",
+    "allDeclaredConstructors" : true,
+    "allPublicConstructors" : true,
+    "allDeclaredMethods" : true,
+    "allPublicMethods" : true,
+    "fields" : [
+      { "name" : "helpRequested" },
+      { "name" : "versionRequested" }
+    ]
+  }
+]
