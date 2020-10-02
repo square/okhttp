@@ -2,7 +2,7 @@ import net.ltgt.gradle.errorprone.CheckSeverity
 
 buildscript {
   ext.versions = [
-      'animalSniffer': '1.18',
+      'animalSniffer': '1.19',
       'assertj': '3.15.0',
       'bouncycastle': '1.65',
       'brotli': '0.1.2',
@@ -60,7 +60,7 @@ buildscript {
 }
 
 plugins {
-  id "ru.vyarus.animalsniffer" version "1.5.0"
+  id "ru.vyarus.animalsniffer" version "1.5.1"
   id "com.github.johnrengelman.shadow" version "5.2.0"
   id "me.champeau.gradle.japicmp" version "0.2.9"
   id "com.diffplug.spotless" version "5.1.2"
@@ -144,8 +144,6 @@ subprojects { project ->
 
   // Animal Sniffer confirms we generally don't use APIs not on Java 8.
   animalsniffer {
-    // https://github.com/mojohaus/animal-sniffer/issues/70
-    excludeJars "android-all-*"
     annotation "okhttp3.internal.SuppressSignatureCheck"
     sourceSets = [sourceSets.main]
   }
