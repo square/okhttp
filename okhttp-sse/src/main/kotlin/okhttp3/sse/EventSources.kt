@@ -17,7 +17,7 @@ package okhttp3.sse
 
 import okhttp3.OkHttpClient
 import okhttp3.Response
-import okhttp3.internal.sse.RealEventSource
+import okhttp3.sse.internal.RealEventSource
 
 object EventSources {
   @JvmStatic

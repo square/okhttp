@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.sse;
+package okhttp3.sse.internal;
 
 import java.util.Objects;
 import javax.annotation.Nullable;
