@@ -606,10 +606,6 @@ internal inline fun Any.assertThreadDoesntHoldLock() {
 }
 
 fun Exception.withSuppressed(suppressed: List<Exception>): Throwable = apply {
-  if (suppressed.size > 1) {
-    println(suppressed)
-  }
-
   for (e in suppressed) addSuppressed(e)
 }
 
