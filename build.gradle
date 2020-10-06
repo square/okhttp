@@ -16,8 +16,8 @@ buildscript {
       'jsoup': '1.13.1',
       'junit': '4.13',
       'kotlin': '1.4.10',
-      'moshi': '1.10.0',
-      'okio': '2.8.0',
+      'moshi': '1.11.0',
+      'okio': '2.9.0',
       'ktlint': '0.38.0',
       'picocli': '4.5.1',
       'openjsse': '1.1.0'
