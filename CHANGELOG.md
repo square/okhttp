@@ -10,10 +10,10 @@ _2020-10-06_
 GraalVM is an exciting new platform and we're eager to adopt it. The startup time improvements over
 the JVM are particularly impressive. Try it with okcurl:
  
-    ```
-    $ ./gradlew okcurl:nativeImage
-    $ ./okcurl/build/graal/okcurl https://cash.app/robots.txt
-    ```
+```
+$ ./gradlew okcurl:nativeImage
+$ ./okcurl/build/graal/okcurl https://cash.app/robots.txt
+```
 
 This is our first release that supports GraalVM. Our code on this platform is less mature than JVM
 and Android! Please report any issues you encounter: we'll fix them urgently.
@@ -23,6 +23,12 @@ and Android! Please report any issues you encounter: we'll fix them urgently.
     errors like `SocketException: Connection reset` and `StreamResetException: stream was reset: 
     CANCEL`.
  *  New: Support OSGi metadata.
+ *  Upgrade: [Okio 2.9.0][okio_2_9_0].
+
+    ```kotlin
+    implementation("com.squareup.okio:okio:2.9.0")
+    ```
+
 
 
 ## Version 4.9.0
@@ -527,6 +533,7 @@ _2019-06-03_
  [okhttp4_blog_post]: https://cashapp.github.io/2019-06-26/okhttp-4-goes-kotlin
  [okio_2_6_0]: https://square.github.io/okio/changelog/#version-260
  [okio_2_7_0]: https://square.github.io/okio/changelog/#version-270
+ [okio_2_9_0]: https://square.github.io/okio/changelog/#version-290
  [public_suffix]: https://publicsuffix.org/
  [upgrading_to_okhttp_4]: https://square.github.io/okhttp/upgrading_to_okhttp_4/
  [rfc_2045]: https://tools.ietf.org/html/rfc2045
