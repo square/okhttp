@@ -1,5 +1,3 @@
-import net.ltgt.gradle.errorprone.CheckSeverity
-
 buildscript {
   ext.versions = [
       'animalSniffer': '1.19',
@@ -20,7 +18,9 @@ buildscript {
       'okio': '2.9.0',
       'ktlint': '0.38.0',
       'picocli': '4.5.1',
-      'openjsse': '1.1.0'
+      'openjsse': '1.1.0',
+      'bnd': '5.1.2',
+      'equinox': '3.16.0'
   ]
 
   ext.deps = [
@@ -43,13 +43,18 @@ buildscript {
       'moshi': "com.squareup.moshi:moshi:${versions.moshi}",
       'moshiKotlin': "com.squareup.moshi:moshi-kotlin-codegen:${versions.moshi}",
       'okio': "com.squareup.okio:okio:${versions.okio}",
-      'openjsse': "org.openjsse:openjsse:${versions.openjsse}"
+      'openjsse': "org.openjsse:openjsse:${versions.openjsse}",
+      'bnd': "biz.aQute.bnd:biz.aQute.bnd.gradle:${versions.bnd}",
+      'bndResolve': "biz.aQute.bnd:biz.aQute.resolve:${versions.bnd}",
+      'equinox': "org.eclipse.platform:org.eclipse.osgi:${versions.equinox}",
+      'kotlinStdlibOsgi': "org.jetbrains.kotlin:kotlin-osgi-bundle:${versions.kotlin}"
   ]
 
   dependencies {
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.10"
     classpath "org.jetbrains.dokka:dokka-gradle-plugin:0.10.1"
     classpath "com.android.tools.build:gradle:4.0.1"
+    classpath deps.bnd
   }
 
   repositories {
@@ -107,6 +112,23 @@ allprojects {
   }
 }
 
+ext.applyOsgi = { project ->
+  project.apply plugin: 'biz.aQute.bnd.builder'
+
+  project.sourceSets {
+    osgi
+  }
+
+  project.jar { t ->
+    t.setClasspath(project.sourceSets.osgi['compileClasspath'] + project.sourceSets.main['compileClasspath'])
+  }
+
+  project.dependencies {
+    // The OSGi kotlin-stdlib lets bnd infer bundle versions.
+    osgiApi deps.kotlinStdlibOsgi
+  }
+}
+
 /** Configure building for Java+Kotlin projects. */
 subprojects { project ->
   if (project.name == 'android-test') return
@@ -118,6 +140,8 @@ subprojects { project ->
   apply plugin: 'checkstyle'
   apply plugin: 'ru.vyarus.animalsniffer'
   apply plugin: 'org.jetbrains.dokka'
+  apply plugin: 'biz.aQute.bnd.builder'
+
   sourceCompatibility = JavaVersion.VERSION_1_8
   targetCompatibility = JavaVersion.VERSION_1_8
 
