@@ -1050,12 +1050,9 @@
 <p><strong>This release candidate adds support for <a href="https://www.graalvm.org/">GraalVM</a>.</strong></p>
 <p>GraalVM is an exciting new platform and we&rsquo;re eager to adopt it. The startup time improvements over
 the JVM are particularly impressive. Try it with okcurl:</p>
-<div class="codehilite"><pre><span></span><code>```
-$ ./gradlew okcurl:nativeImage
+<div class="highlight"><pre><span></span><code>$ ./gradlew okcurl:nativeImage
 $ ./okcurl/build/graal/okcurl https://cash.app/robots.txt
-```
 </code></pre></div>
-
 
 <p>This is our first release that supports GraalVM. Our code on this platform is less mature than JVM
 and Android! Please report any issues you encounter: we&rsquo;ll fix them urgently.</p>
@@ -1065,6 +1062,12 @@ and Android! Please report any issues you encounter: we&rsquo;ll fix them urgent
     errors like <code>SocketException: Connection reset</code> and <code>StreamResetException: stream was reset: 
     CANCEL</code>.</li>
 <li>New: Support OSGi metadata.</li>
+<li>
+<p>Upgrade: <a href="https://square.github.io/okio/changelog/#version-290">Okio 2.9.0</a>.</p>
+<div class="highlight"><pre><span></span><code><span class="n">implementation</span><span class="p">(</span><span class="s">&quot;com.squareup.okio:okio:2.9.0&quot;</span><span class="p">)</span>
+</code></pre></div>
+
+</li>
 </ul>
 <h2 id="version-490">Version 4.9.0<a class="headerlink" href="#version-490" title="Permanent link">&para;</a></h2>
 <p><em>2020-09-11</em></p>
