@@ -8,6 +8,7 @@ if (properties.containsKey('android.injected.invoked.from.ide') ||
   include ':android-test'
 }
 
+include ':native-image-tests'
 include ':okcurl'
 include ':okhttp'
 include ':okhttp-bom'
