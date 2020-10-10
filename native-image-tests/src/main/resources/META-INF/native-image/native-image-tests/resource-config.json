@@ -1,0 +1,7 @@
+{
+  "resources":[
+    {"pattern":"\\QMETA-INF/services/org.junit.platform.engine.TestEngine\\E"}, 
+    {"pattern":"\\Qcom/amazon/corretto/crypto/provider/version.properties\\E"}
+  ],
+  "bundles":[]
+}

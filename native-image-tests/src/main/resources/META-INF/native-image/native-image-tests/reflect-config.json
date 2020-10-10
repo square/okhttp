@@ -1,0 +1,215 @@
+[
+{
+  "name":"apple.security.AppleProvider",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.amazon.corretto.crypto.provider.AmazonCorrettoCryptoProvider"
+},
+{
+  "name":"java.lang.Object",
+  "allDeclaredFields":true,
+  "allDeclaredMethods":true
+},
+{
+  "name":"java.nio.file.Path"
+},
+{
+  "name":"java.nio.file.Paths",
+  "methods":[{"name":"get","parameterTypes":["java.lang.String","java.lang.String[]"] }]
+},
+{
+  "name":"java.security.AlgorithmParametersSpi"
+},
+{
+  "name":"java.security.KeyStoreSpi"
+},
+{
+  "name":"java.security.SecureRandomParameters"
+},
+{
+  "name":"java.sql.Connection"
+},
+{
+  "name":"java.sql.Driver"
+},
+{
+  "name":"java.sql.DriverManager",
+  "methods":[
+    {"name":"getConnection","parameterTypes":["java.lang.String"] }, 
+    {"name":"getDriver","parameterTypes":["java.lang.String"] }
+  ]
+},
+{
+  "name":"java.sql.Time",
+  "methods":[{"name":"<init>","parameterTypes":["long"] }]
+},
+{
+  "name":"java.sql.Timestamp",
+  "methods":[{"name":"valueOf","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"java.time.Duration",
+  "methods":[{"name":"parse","parameterTypes":["java.lang.CharSequence"] }]
+},
+{
+  "name":"java.time.Instant",
+  "methods":[{"name":"parse","parameterTypes":["java.lang.CharSequence"] }]
+},
+{
+  "name":"java.time.LocalDate",
+  "methods":[{"name":"parse","parameterTypes":["java.lang.CharSequence"] }]
+},
+{
+  "name":"java.time.LocalDateTime",
+  "methods":[{"name":"parse","parameterTypes":["java.lang.CharSequence"] }]
+},
+{
+  "name":"java.time.LocalTime",
+  "methods":[{"name":"parse","parameterTypes":["java.lang.CharSequence"] }]
+},
+{
+  "name":"java.time.MonthDay",
+  "methods":[{"name":"parse","parameterTypes":["java.lang.CharSequence"] }]
+},
+{
+  "name":"java.time.OffsetDateTime",
+  "methods":[{"name":"parse","parameterTypes":["java.lang.CharSequence"] }]
+},
+{
+  "name":"java.time.OffsetTime",
+  "methods":[{"name":"parse","parameterTypes":["java.lang.CharSequence"] }]
+},
+{
+  "name":"java.time.Period",
+  "methods":[{"name":"parse","parameterTypes":["java.lang.CharSequence"] }]
+},
+{
+  "name":"java.time.Year",
+  "methods":[{"name":"parse","parameterTypes":["java.lang.CharSequence"] }]
+},
+{
+  "name":"java.time.YearMonth",
+  "methods":[{"name":"parse","parameterTypes":["java.lang.CharSequence"] }]
+},
+{
+  "name":"java.time.ZoneId",
+  "methods":[{"name":"of","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"java.time.ZoneOffset",
+  "methods":[{"name":"of","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"java.time.ZonedDateTime",
+  "methods":[{"name":"parse","parameterTypes":["java.lang.CharSequence"] }]
+},
+{
+  "name":"okhttp3.sse.internal.EventSourceHttpTest",
+  "allDeclaredFields":true,
+  "allDeclaredMethods":true,
+  "allPublicMethods":true,
+  "allPublicConstructors":true
+},
+{
+  "name":"org.junit.platform.console.options.AvailableOptions",
+  "allDeclaredFields":true,
+  "allDeclaredMethods":true
+},
+{
+  "name":"org.junit.runner.Description",
+  "fields":[{"name":"fUniqueId"}]
+},
+{
+  "name":"sun.security.pkcs12.PKCS12KeyStore",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.pkcs12.PKCS12KeyStore$DualFormatPKCS12",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.provider.JavaKeyStore$JKS",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.provider.NativePRNG",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.provider.SHA",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.provider.SHA2$SHA256",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.provider.X509Factory",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.rsa.RSAKeyFactory$Legacy",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.rsa.RSASignature$SHA256withRSA",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.ssl.SSLContextImpl$TLSContext",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.ssl.TrustManagerFactoryImpl$PKIXFactory",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.x509.AuthorityInfoAccessExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.AuthorityKeyIdentifierExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.BasicConstraintsExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.CRLDistributionPointsExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.CertificatePoliciesExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.ExtendedKeyUsageExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.IssuerAlternativeNameExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.KeyUsageExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.NetscapeCertTypeExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.PrivateKeyUsageExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.SubjectAlternativeNameExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.SubjectKeyIdentifierExtension",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+}
+]

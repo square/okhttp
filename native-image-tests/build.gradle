@@ -3,9 +3,14 @@ plugins {
 }
 
 dependencies {
+  implementation project(':okhttp-sse')
+  implementation project(':okhttp-testing-support')
+  implementation project(':mockwebserver')
+
   implementation deps.assertj
   implementation "org.junit.jupiter:junit-jupiter-api:5.7.0"
   implementation "org.junit.jupiter:junit-jupiter-engine:5.7.0"
+  implementation "org.junit.vintage:junit-vintage-engine:5.7.0"
   implementation "org.junit.platform:junit-platform-console:1.7.0"
 
   compileOnly deps.jsr305
@@ -15,13 +20,15 @@ animalsniffer {
   ignoreFailures = true
 }
 
-def graalHome = "/Library/Java/JavaVirtualMachines/graalvm-ce-java11-20.2.0/Contents/Home"
-def graalvmResources = project.file("$buildDir/graalvm/resources")
-def graalvmConfig = project.file("$graalvmResources/META-INF/native-image")
+def graalHome = "/Users/yschimke/.gradle/caches/com.palantir.graal/20.2.0/11/graalvm-ce-java11-20.2.0/Contents/Home"
+def graalvmResources = project.file("src/main/resources")
+def graalvmConfig = project.file("$graalvmResources/META-INF/native-image/native-image-tests")
 graalvmConfig.mkdirs()
 
 sourceSets {
   main.resources.srcDirs += graalvmResources
+
+  main.java.srcDirs += project.file("../okhttp-sse/src/test/java")
 }
 
 task seedGraalvmConfig(type: Exec) {
@@ -30,13 +37,12 @@ task seedGraalvmConfig(type: Exec) {
     "$graalHome/bin/java",
     "-agentlib:native-image-agent=config-output-dir=$graalvmConfig",
     "-classpath", sourceSets.main.runtimeClasspath.getAsPath(),
-    "org.junit.platform.console.ConsoleLauncher",
-    "--select-class", "okhttp3.SampleTest"
+    "okhttp3.RunTestsKt"
   )
 }
 
 graal {
-  mainClass "org.junit.platform.console.ConsoleLauncher"
+  mainClass "okhttp3.RunTestsKt"
   outputName "ConsoleLauncher"
   graalVersion "20.2.0"
   javaVersion "11"
