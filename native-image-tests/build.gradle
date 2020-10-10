@@ -20,7 +20,7 @@ animalsniffer {
   ignoreFailures = true
 }
 
-def graalHome = "/Users/yschimke/.gradle/caches/com.palantir.graal/20.2.0/11/graalvm-ce-java11-20.2.0/Contents/Home"
+def graalHome = "/Library/Java/JavaVirtualMachines/graalvm-ce-java11-20.2.0/Contents/Home"
 def graalvmResources = project.file("src/main/resources")
 def graalvmConfig = project.file("$graalvmResources/META-INF/native-image/native-image-tests")
 graalvmConfig.mkdirs()
