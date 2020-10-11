@@ -8,10 +8,19 @@ dependencies {
   implementation project(':mockwebserver')
 
   implementation deps.assertj
-  implementation "org.junit.jupiter:junit-jupiter-api:5.7.0"
-  implementation "org.junit.jupiter:junit-jupiter-engine:5.7.0"
+//  implementation "org.junit.jupiter:junit-jupiter-api:5.7.0"
+//  implementation "org.junit.jupiter:junit-jupiter-engine:5.7.0"
   implementation "org.junit.vintage:junit-vintage-engine:5.7.0"
   implementation "org.junit.platform:junit-platform-console:1.7.0"
+
+
+  compileOnly("org.graalvm.nativeimage:svm:20.2.0") {
+    // https://youtrack.jetbrains.com/issue/KT-29513
+//    exclude group: "org.graalvm.nativeimage"
+//    exclude group: "org.graalvm.truffle"
+//    exclude(group= "org.graalvm.sdk")
+//    exclude group: "org.graalvm.compiler"
+  }
 
   compileOnly deps.jsr305
 }
