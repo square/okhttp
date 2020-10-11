@@ -43,8 +43,12 @@ class Exchange(
   internal val finder: ExchangeFinder,
   private val codec: ExchangeCodec
 ) {
-  /** Returns true if the request body need not complete before the response body starts. */
+  /** True if the request body need not complete before the response body starts. */
   internal var isDuplex: Boolean = false
+    private set
+
+  /** True if there was an exception on the connection to the peer. */
+  internal var hasFailure: Boolean = false
     private set
 
   internal val connection: RealConnection = codec.connection
@@ -163,6 +167,7 @@ class Exchange(
   }
 
   private fun trackFailure(e: IOException) {
+    hasFailure = true
     finder.trackFailure(e)
     codec.connection.trackFailure(call, e)
   }
@@ -198,7 +203,7 @@ class Exchange(
   }
 
   /** A request body that fires events when it completes. */
-  private inner class RequestBodySink internal constructor(
+  private inner class RequestBodySink(
     delegate: Sink,
     /** The exact number of bytes to be written, or -1L if that is unknown. */
     private val contentLength: Long

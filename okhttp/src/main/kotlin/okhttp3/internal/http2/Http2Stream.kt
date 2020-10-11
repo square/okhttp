@@ -15,11 +15,6 @@
  */
 package okhttp3.internal.http2
 
-import java.io.EOFException
-import java.io.IOException
-import java.io.InterruptedIOException
-import java.net.SocketTimeoutException
-import java.util.ArrayDeque
 import okhttp3.Headers
 import okhttp3.internal.EMPTY_HEADERS
 import okhttp3.internal.assertThreadDoesntHoldLock
@@ -32,6 +27,11 @@ import okio.BufferedSource
 import okio.Sink
 import okio.Source
 import okio.Timeout
+import java.io.EOFException
+import java.io.IOException
+import java.io.InterruptedIOException
+import java.net.SocketTimeoutException
+import java.util.ArrayDeque
 
 /** A logical bidirectional stream. */
 @Suppress("NAME_SHADOWING")
@@ -61,7 +61,7 @@ class Http2Stream internal constructor(
   var writeBytesMaximum: Long = connection.peerSettings.initialWindowSize.toLong()
     internal set
 
-  /** Received headers yet to be [taken][takeHeaders], or [read][FramingSource.read]. */
+  /** Received headers yet to be [taken][takeHeaders]. */
   private val headersQueue = ArrayDeque<Headers>()
 
   /** True if response headers have been sent or received. */
@@ -154,13 +154,13 @@ class Http2Stream internal constructor(
    */
   @Synchronized @Throws(IOException::class)
   fun trailers(): Headers {
+    if (source.finished && source.receiveBuffer.exhausted() && source.readBuffer.exhausted()) {
+      return source.trailers ?: EMPTY_HEADERS
+    }
     if (errorCode != null) {
       throw errorException ?: StreamResetException(errorCode!!)
     }
-    check(source.finished && source.receiveBuffer.exhausted() && source.readBuffer.exhausted()) {
-      "too early; can't read the trailers yet"
-    }
-    return source.trailers ?: EMPTY_HEADERS
+    throw IllegalStateException("too early; can't read the trailers yet")
   }
 
   /**
@@ -276,10 +276,7 @@ class Http2Stream internal constructor(
     this.source.receive(source, length.toLong())
   }
 
-  /**
-   * Accept headers from the network and store them until the client calls [takeHeaders], or
-   * [FramingSource.read] them.
-   */
+  /** Accept headers from the network and store them until the client calls [takeHeaders]. */
   fun receiveHeaders(headers: Headers, inFinished: Boolean) {
     this@Http2Stream.assertThreadDoesntHoldLock()
 
@@ -353,7 +350,7 @@ class Http2Stream internal constructor(
         synchronized(this@Http2Stream) {
           readTimeout.enter()
           try {
-            if (errorCode != null) {
+            if (errorCode != null && !finished) {
               // Prepare to deliver an error.
               errorExceptionToDeliver = errorException ?: StreamResetException(errorCode!!)
             }
@@ -560,7 +557,7 @@ class Http2Stream internal constructor(
         checkOutNotClosed() // Kick out if the stream was reset or closed while waiting.
         toWrite = minOf(writeBytesMaximum - writeBytesTotal, sendBuffer.size)
         writeBytesTotal += toWrite
-        outFinished = outFinishedOnLastFrame && toWrite == sendBuffer.size && errorCode == null
+        outFinished = outFinishedOnLastFrame && toWrite == sendBuffer.size
       }
 
       writeTimeout.enter()
@@ -578,6 +575,7 @@ class Http2Stream internal constructor(
       synchronized(this@Http2Stream) {
         checkOutNotClosed()
       }
+      // TODO(jwilson): flush the connection?!
       while (sendBuffer.size > 0L) {
         emitFrame(false)
         connection.flush()

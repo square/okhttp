@@ -211,9 +211,9 @@ import okio.Buffer
  * Although they have different content, `java.net.URL` considers the following two URLs
  * equal, and the [equals()][Object.equals] method between them returns true:
  *
- *  * http://square.github.io/
+ *  * https://example.net/
  *
- *  * http://google.github.io/
+ *  * https://example.com/
  *
  * This is because those two hosts share the same IP address. This is an old, bad design decision
  * that makes `java.net.URL` unusable for many things. It shouldn't be used as a [Map] key or in a

@@ -203,8 +203,8 @@ class PublicSuffixDatabase {
 
   @Throws(IOException::class)
   private fun readTheList() {
-    var publicSuffixListBytes: ByteArray? = null
-    var publicSuffixExceptionListBytes: ByteArray? = null
+    var publicSuffixListBytes: ByteArray?
+    var publicSuffixExceptionListBytes: ByteArray?
 
     val resource =
         PublicSuffixDatabase::class.java.getResourceAsStream(PUBLIC_SUFFIX_RESOURCE) ?: return

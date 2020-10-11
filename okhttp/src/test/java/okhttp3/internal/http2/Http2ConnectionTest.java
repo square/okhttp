@@ -610,6 +610,105 @@ public final class Http2ConnectionTest {
     assertThat(synStream.headerBlock).isEqualTo(headerEntries("a", "artichaut"));
   }
 
+  /** A server RST_STREAM shouldn't prevent the client from consuming the response body. */
+  @Test public void serverResponseBodyRstStream() throws Exception {
+    // write the mocking script
+    peer.sendFrame().settings(new Settings());
+    peer.acceptFrame(); // ACK
+    peer.acceptFrame(); // SYN_STREAM
+    peer.acceptFrame(); // PING
+    peer.sendFrame().headers(false, 3, headerEntries("a", "android"));
+    peer.sendFrame().data(true, 3, new Buffer().writeUtf8("robot"), 5);
+    peer.sendFrame().rstStream(3, ErrorCode.NO_ERROR);
+    peer.sendFrame().ping(true, AWAIT_PING, 0); // PONG
+    peer.play();
+
+    // play it back
+    Http2Connection connection = connect(peer);
+    Http2Stream stream = connection.newStream(headerEntries(), false);
+    connection.writePingAndAwaitPong();
+    assertThat(stream.takeHeaders()).isEqualTo(Headers.of("a", "android"));
+    BufferedSource source = Okio.buffer(stream.getSource());
+    assertThat(source.readUtf8(5)).isEqualTo("robot");
+    stream.getSink().close();
+    assertThat(connection.openStreamCount()).isEqualTo(0);
+
+    // verify the peer received what was expected
+    InFrame synStream = peer.takeFrame();
+    assertThat(synStream.type).isEqualTo(Http2.TYPE_HEADERS);
+    InFrame ping = peer.takeFrame();
+    assertThat(ping.type).isEqualTo(Http2.TYPE_PING);
+  }
+
+  /** A server RST_STREAM shouldn't prevent the client from consuming trailers. */
+  @Test public void serverTrailersRstStream() throws Exception {
+    // write the mocking script
+    peer.sendFrame().settings(new Settings());
+    peer.acceptFrame(); // ACK
+    peer.acceptFrame(); // SYN_STREAM
+    peer.acceptFrame(); // PING
+    peer.sendFrame().headers(false, 3, headerEntries("a", "android"));
+    peer.sendFrame().headers(true, 3, headerEntries("z", "zebra"));
+    peer.sendFrame().rstStream(3, ErrorCode.NO_ERROR);
+    peer.sendFrame().ping(true, AWAIT_PING, 0); // PONG
+    peer.play();
+
+    // play it back
+    Http2Connection connection = connect(peer);
+    Http2Stream stream = connection.newStream(headerEntries(), true);
+    connection.writePingAndAwaitPong();
+    assertThat(stream.takeHeaders()).isEqualTo(Headers.of("a", "android"));
+    stream.getSink().close();
+    assertThat(stream.trailers()).isEqualTo(Headers.of("z", "zebra"));
+    assertThat(connection.openStreamCount()).isEqualTo(0);
+
+    // verify the peer received what was expected
+    InFrame synStream = peer.takeFrame();
+    assertThat(synStream.type).isEqualTo(Http2.TYPE_HEADERS);
+    InFrame ping = peer.takeFrame();
+    assertThat(ping.type).isEqualTo(Http2.TYPE_PING);
+  }
+
+  /**
+   * A server RST_STREAM shouldn't prevent the client from consuming the response body, even if it
+   * follows a truncated request body.
+   */
+  @Test public void clientRequestBodyServerResponseBodyRstStream() throws Exception {
+    // write the mocking script
+    peer.sendFrame().settings(new Settings());
+    peer.acceptFrame(); // ACK
+    peer.acceptFrame(); // SYN_STREAM
+    peer.acceptFrame(); // PING
+    peer.sendFrame().headers(false, 3, headerEntries("a", "android"));
+    peer.sendFrame().data(true, 3, new Buffer().writeUtf8("robot"), 5);
+    peer.sendFrame().rstStream(3, ErrorCode.NO_ERROR);
+    peer.sendFrame().ping(true, AWAIT_PING, 0); // PONG
+    peer.play();
+
+    // play it back
+    Http2Connection connection = connect(peer);
+    Http2Stream stream = connection.newStream(headerEntries(), true);
+    connection.writePingAndAwaitPong();
+    BufferedSink sink = Okio.buffer(stream.getSink());
+    sink.writeUtf8("abc");
+    try {
+      sink.close();
+      fail();
+    } catch (StreamResetException expected) {
+      assertThat(expected.errorCode).isEqualTo(ErrorCode.NO_ERROR);
+    }
+    assertThat(stream.takeHeaders()).isEqualTo(Headers.of("a", "android"));
+    BufferedSource source = Okio.buffer(stream.getSource());
+    assertThat(source.readUtf8(5)).isEqualTo("robot");
+    assertThat(connection.openStreamCount()).isEqualTo(0);
+
+    // verify the peer received what was expected
+    InFrame synStream = peer.takeFrame();
+    assertThat(synStream.type).isEqualTo(Http2.TYPE_HEADERS);
+    InFrame ping = peer.takeFrame();
+    assertThat(ping.type).isEqualTo(Http2.TYPE_PING);
+  }
+
   @Test public void serverWritesTrailersWithData() throws Exception {
     // We buffer some outbound data and headers and confirm that the END_STREAM flag comes with the
     // headers (and not with the data).

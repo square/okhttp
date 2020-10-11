@@ -197,7 +197,8 @@ class OkHttpTest {
         // see https://github.com/google/conscrypt/blob/b9463b2f74df42d85c73715a5f19e005dfb7b802/android/src/main/java/org/conscrypt/Platform.java#L613
         when {
             Build.VERSION.SDK_INT >= 24 -> {
-              assertEquals("org.conscrypt.Java8FileDescriptorSocket", socketClass)
+              // Conscrypt 2.5+ defaults to SSLEngine-based SSLSocket
+              assertEquals("org.conscrypt.Java8EngineSocket", socketClass)
             }
             Build.VERSION.SDK_INT < 22 -> {
               assertEquals("org.conscrypt.KitKatPlatformOpenSSLSocketImplAdapter", socketClass)

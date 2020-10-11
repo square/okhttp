@@ -31,7 +31,7 @@ public class CipherSuiteTest {
     try {
       forJavaName(null);
       fail("Should have thrown");
-    } catch (IllegalArgumentException expected) {
+    } catch (NullPointerException expected) {
     }
   }
 

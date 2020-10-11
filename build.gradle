@@ -1,13 +1,11 @@
-import net.ltgt.gradle.errorprone.CheckSeverity
-
 buildscript {
   ext.versions = [
-      'animalSniffer': '1.18',
+      'animalSniffer': '1.19',
       'assertj': '3.15.0',
-      'bouncycastle': '1.65',
+      'bouncycastle': '1.66',
       'brotli': '0.1.2',
       'checkstyle': '8.28',
-      'conscrypt': '2.4.0',
+      'conscrypt': '2.5.1',
       'corretto': '1.3.1',
       'findbugs': '3.0.2',
       'guava': '28.2-jre',
@@ -15,17 +13,19 @@ buildscript {
       'jnrUnixsocket': '0.28',
       'jsoup': '1.13.1',
       'junit': '4.13',
-      'kotlin': '1.3.72',
-      'moshi': '1.9.2',
-      'okio': '2.7.0',
-      'ktlint': '0.36.0',
-      'picocli': '4.2.0',
-      'openjsse': '1.1.0'
+      'kotlin': '1.4.10',
+      'moshi': '1.11.0',
+      'okio': '2.9.0',
+      'ktlint': '0.38.0',
+      'picocli': '4.5.1',
+      'openjsse': '1.1.0',
+      'bnd': '5.1.2',
+      'equinox': '3.16.0'
   ]
 
   ext.deps = [
       'picocli': "info.picocli:picocli:${versions.picocli}",
-      'android': "org.robolectric:android-all:10-robolectric-5803371",
+      'android': "org.robolectric:android-all:11-robolectric-6757853",
       'animalSniffer': "org.codehaus.mojo:animal-sniffer-annotations:${versions.animalSniffer}",
       'assertj': "org.assertj:assertj-core:${versions.assertj}",
       'bouncycastle': "org.bouncycastle:bcprov-jdk15on:${versions.bouncycastle}",
@@ -43,15 +43,18 @@ buildscript {
       'moshi': "com.squareup.moshi:moshi:${versions.moshi}",
       'moshiKotlin': "com.squareup.moshi:moshi-kotlin-codegen:${versions.moshi}",
       'okio': "com.squareup.okio:okio:${versions.okio}",
-      'openjsse': "org.openjsse:openjsse:${versions.openjsse}"
+      'openjsse': "org.openjsse:openjsse:${versions.openjsse}",
+      'bnd': "biz.aQute.bnd:biz.aQute.bnd.gradle:${versions.bnd}",
+      'bndResolve': "biz.aQute.bnd:biz.aQute.resolve:${versions.bnd}",
+      'equinox': "org.eclipse.platform:org.eclipse.osgi:${versions.equinox}",
+      'kotlinStdlibOsgi': "org.jetbrains.kotlin:kotlin-osgi-bundle:${versions.kotlin}"
   ]
 
   dependencies {
-    classpath 'net.ltgt.gradle:gradle-errorprone-plugin:1.1.1'
-    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${versions.kotlin}"
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.10"
     classpath "org.jetbrains.dokka:dokka-gradle-plugin:0.10.1"
-    classpath 'com.diffplug.spotless:spotless-plugin-gradle:3.27.1'
-    classpath 'com.android.tools.build:gradle:3.6.2'
+    classpath "com.android.tools.build:gradle:4.0.1"
+    classpath deps.bnd
   }
 
   repositories {
@@ -62,9 +65,11 @@ buildscript {
 }
 
 plugins {
-  id 'ru.vyarus.animalsniffer' version '1.5.0'
-  id 'com.github.johnrengelman.shadow' version '5.2.0'
-  id 'me.champeau.gradle.japicmp' version '0.2.9'
+  id "ru.vyarus.animalsniffer" version "1.5.1"
+  id "com.github.johnrengelman.shadow" version "5.2.0"
+  id "me.champeau.gradle.japicmp" version "0.2.9"
+  id "com.diffplug.spotless" version "5.1.2"
+  id "net.ltgt.errorprone" version "1.2.1"
 }
 
 /** Returns the artifact ID for the project, or null if it is not published. */
@@ -89,7 +94,7 @@ ext.publishedArtifactId = { project ->
 allprojects {
   group = 'com.squareup.okhttp3'
   project.ext.artifactId = rootProject.ext.publishedArtifactId(project)
-  version = '4.9.0-SNAPSHOT'
+  version = '4.10.0-SNAPSHOT'
 
   repositories {
     mavenCentral()
@@ -107,21 +112,42 @@ allprojects {
   }
 }
 
+ext.applyOsgi = { project ->
+  project.apply plugin: 'biz.aQute.bnd.builder'
+
+  project.sourceSets {
+    osgi
+  }
+
+  project.jar { t ->
+    t.setClasspath(project.sourceSets.osgi['compileClasspath'] + project.sourceSets.main['compileClasspath'])
+  }
+
+  project.dependencies {
+    // The OSGi kotlin-stdlib lets bnd infer bundle versions.
+    osgiApi deps.kotlinStdlibOsgi
+  }
+}
+
 /** Configure building for Java+Kotlin projects. */
 subprojects { project ->
   if (project.name == 'android-test') return
   if (project.name == 'okhttp-bom') return
 
+  apply plugin: "org.jetbrains.kotlin.jvm"
   apply plugin: 'java'
   apply plugin: 'java-library'
-  apply plugin: 'org.jetbrains.kotlin.platform.jvm'
   apply plugin: 'checkstyle'
   apply plugin: 'ru.vyarus.animalsniffer'
-  apply plugin: 'net.ltgt.errorprone'
   apply plugin: 'org.jetbrains.dokka'
-  apply plugin: 'com.diffplug.gradle.spotless'
+  apply plugin: 'biz.aQute.bnd.builder'
+
   sourceCompatibility = JavaVersion.VERSION_1_8
   targetCompatibility = JavaVersion.VERSION_1_8
+
+  tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+  }
 
   checkstyleMain.exclude '**/CipherSuite.java'
   configurations {
@@ -142,21 +168,12 @@ subprojects { project ->
 
   // Animal Sniffer confirms we generally don't use APIs not on Java 8.
   animalsniffer {
-    // https://github.com/mojohaus/animal-sniffer/issues/70
-    excludeJars "android-all-*"
     annotation "okhttp3.internal.SuppressSignatureCheck"
     sourceSets = [sourceSets.main]
   }
   dependencies {
     signature 'net.sf.androidscents.signature:android-api-level-21:5.0.1_r2@signature'
     signature 'org.codehaus.mojo.signature:java18:1.0@signature'
-  }
-
-  spotless {
-    kotlin {
-      target "**/*.kt"
-      ktlint(versions.ktlint).userData(['indent_size': '2', 'continuation_indent_size': '2'])
-    }
   }
 
   tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
@@ -205,20 +222,9 @@ subprojects { project ->
     }
   }
 
-  dependencies {
-    //noinspection GradleDynamicVersion
-    errorproneJavac 'com.google.errorprone:javac:9+181-r4173-1'
-    errorprone 'com.google.errorprone:error_prone_core:2.3.4'
-  }
   tasks.withType(JavaCompile).configureEach {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
-
-    options.errorprone {
-      check("MissingFail", CheckSeverity.ERROR)
-      check("MissingOverride", CheckSeverity.ERROR)
-      enabled = JavaVersion.current() < JavaVersion.VERSION_12
-    }
   }
 
   dokka {

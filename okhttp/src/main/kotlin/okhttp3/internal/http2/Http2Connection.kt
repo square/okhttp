@@ -737,10 +737,10 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
       synchronized(writer) {
         synchronized(this@Http2Connection) {
           val previousPeerSettings = peerSettings
-          if (clearPrevious) {
-            newPeerSettings = settings
+          newPeerSettings = if (clearPrevious) {
+            settings
           } else {
-            newPeerSettings = Settings().apply {
+            Settings().apply {
               merge(previousPeerSettings)
               merge(settings)
             }

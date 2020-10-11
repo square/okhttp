@@ -1,3 +1,9 @@
+plugins {
+  id "com.palantir.graal" version "0.7.1"
+}
+
+import org.apache.tools.ant.taskdefs.condition.Os
+
 apply plugin: 'com.github.johnrengelman.shadow'
 
 jar {
@@ -27,6 +33,9 @@ dependencies {
   implementation deps.picocli
   implementation deps.guava
 
+  implementation 'info.picocli:picocli-codegen:4.5.1'
+  annotationProcessor 'info.picocli:picocli-codegen:4.5.1'
+
   testImplementation project(':okhttp-testing-support')
   testImplementation deps.junit
   testImplementation deps.assertj
@@ -34,4 +43,22 @@ dependencies {
 
 shadowJar {
   mergeServiceFiles()
+}
+
+graal {
+  mainClass "okhttp3.curl.Main"
+  outputName "okcurl"
+  graalVersion "20.2.0"
+  javaVersion "11"
+
+  option "--enable-https"
+  option "--no-fallback"
+  option "--allow-incomplete-classpath"
+
+  if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+    // May be possible without, but autodetection is problematic on Windows 10
+    // see https://github.com/palantir/gradle-graal
+    // see https://www.graalvm.org/docs/reference-manual/native-image/#prerequisites
+    windowsVsVarsPath("C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\\Auxiliary\\Build\\vcvars64.bat")
+  }
 }

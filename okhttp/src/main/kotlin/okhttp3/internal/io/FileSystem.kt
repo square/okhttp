@@ -44,7 +44,8 @@ interface FileSystem {
   companion object {
     /** The host machine's local file system. */
     @JvmField
-    val SYSTEM: FileSystem = object : FileSystem {
+    val SYSTEM: FileSystem = SystemFileSystem()
+    private class SystemFileSystem : FileSystem {
       @Throws(FileNotFoundException::class)
       override fun source(file: File): Source = file.source()
 

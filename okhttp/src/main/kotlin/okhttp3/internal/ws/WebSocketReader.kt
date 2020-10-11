@@ -133,11 +133,11 @@ class WebSocketReader(
     val reservedFlag1 = b0 and B0_FLAG_RSV1 != 0
     when (opcode) {
       OPCODE_TEXT, OPCODE_BINARY -> {
-        if (reservedFlag1) {
+        readingCompressedMessage = if (reservedFlag1) {
           if (!perMessageDeflate) throw ProtocolException("Unexpected rsv1 flag")
-          readingCompressedMessage = true
+          true
         } else {
-          readingCompressedMessage = false
+          false
         }
       }
       else -> {

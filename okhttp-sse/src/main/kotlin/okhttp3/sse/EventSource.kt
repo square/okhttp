@@ -27,7 +27,7 @@ interface EventSource {
    */
   fun cancel()
 
-  interface Factory {
+  fun interface Factory {
     /**
      * Creates a new event source and immediately returns it. Creating an event source initiates an
      * asynchronous process to connect the socket. Once that succeeds or fails, `listener` will be

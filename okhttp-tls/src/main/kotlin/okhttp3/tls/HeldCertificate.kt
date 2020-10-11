@@ -153,7 +153,7 @@ class HeldCertificate(
   fun certificatePem(): String = certificate.certificatePem()
 
   /**
-   * Returns the RSA private key encoded in [PKCS #8][rfc_5208] [PEM format][rfc_7468].
+   * Returns the private key encoded in [PKCS #8][rfc_5208] [PEM format][rfc_7468].
    *
    * [rfc_5208]: https://tools.ietf.org/html/rfc5208
    * [rfc_7468]: https://tools.ietf.org/html/rfc7468

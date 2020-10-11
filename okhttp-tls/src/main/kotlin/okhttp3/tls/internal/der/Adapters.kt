@@ -164,7 +164,7 @@ internal object Adapters {
 
   internal fun parseUtcTime(string: String): Long {
     val utc = TimeZone.getTimeZone("GMT")
-    val dateFormat = SimpleDateFormat("yyMMddHHmmssXX").apply {
+    val dateFormat = SimpleDateFormat("yyMMddHHmmss'Z'").apply {
       timeZone = utc
       set2DigitYearStart(Date(-631152000000L)) // 1950-01-01T00:00:00Z.
     }
@@ -179,7 +179,7 @@ internal object Adapters {
 
   internal fun formatUtcTime(date: Long): String {
     val utc = TimeZone.getTimeZone("GMT")
-    val dateFormat = SimpleDateFormat("yyMMddHHmmssXX").apply {
+    val dateFormat = SimpleDateFormat("yyMMddHHmmss'Z'").apply {
       timeZone = utc
       set2DigitYearStart(Date(-631152000000L)) // 1950-01-01T00:00:00Z.
     }
@@ -234,7 +234,7 @@ internal object Adapters {
 
   internal fun parseGeneralizedTime(string: String): Long {
     val utc = TimeZone.getTimeZone("GMT")
-    val dateFormat = SimpleDateFormat("yyyyMMddHHmmssXX").apply {
+    val dateFormat = SimpleDateFormat("yyyyMMddHHmmss'Z'").apply {
       timeZone = utc
     }
 
@@ -248,7 +248,7 @@ internal object Adapters {
 
   internal fun formatGeneralizedTime(date: Long): String {
     val utc = TimeZone.getTimeZone("GMT")
-    val dateFormat = SimpleDateFormat("yyyyMMddHHmmssXX").apply {
+    val dateFormat = SimpleDateFormat("yyyyMMddHHmmss'Z'").apply {
       timeZone = utc
     }
 

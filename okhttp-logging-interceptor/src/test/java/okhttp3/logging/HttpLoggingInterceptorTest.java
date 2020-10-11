@@ -107,7 +107,7 @@ public final class HttpLoggingInterceptorTest {
     try {
       applicationInterceptor.setLevel(null);
       fail();
-    } catch (IllegalArgumentException expected) {
+    } catch (NullPointerException expected) {
     }
   }
 

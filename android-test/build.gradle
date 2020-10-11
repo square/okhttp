@@ -47,7 +47,7 @@ dependencies {
   }
   androidTestImplementation "org.bouncycastle:bcprov-jdk15on:${versions.bouncycastle}"
   androidTestImplementation "org.bouncycastle:bctls-jdk15on:${versions.bouncycastle}"
-  androidTestImplementation "org.conscrypt:conscrypt-android:2.4.0"
+  androidTestImplementation "org.conscrypt:conscrypt-android:2.5.0"
   androidTestImplementation project(':mockwebserver')
   androidTestImplementation project(':okhttp-tls')
   androidTestImplementation project(':okhttp-dnsoverhttps')

@@ -99,10 +99,10 @@ Releases
 
 Our [change log][changelog] has release history.
 
-The latest release is available on [Maven Central](https://search.maven.org/artifact/com.squareup.okhttp3/okhttp/4.8.0/jar).
+The latest release is available on [Maven Central](https://search.maven.org/artifact/com.squareup.okhttp3/okhttp/4.9.0/jar).
 
 ```kotlin
-implementation("com.squareup.okhttp3:okhttp:4.8.0")
+implementation("com.squareup.okhttp3:okhttp:4.9.0")
 ```
 
 Snapshot builds are [available][snap]. [R8 and ProGuard][r8_proguard] rules are available.
@@ -113,10 +113,23 @@ MockWebServer
 
 OkHttp includes a library for testing HTTP, HTTPS, and HTTP/2 clients.
 
-The latest release is available on [Maven Central](https://search.maven.org/artifact/com.squareup.okhttp3/mockwebserver/4.8.0/jar).
+The latest release is available on [Maven Central](https://search.maven.org/artifact/com.squareup.okhttp3/mockwebserver/4.9.0/jar).
 
 ```kotlin
-testImplementation("com.squareup.okhttp3:mockwebserver:4.8.0")
+testImplementation("com.squareup.okhttp3:mockwebserver:4.9.0")
+```
+
+GraalVM Native Image
+--------------------
+
+Building your own native images with Graal https://www.graalvm.org/ should work automatically.
+Please report any bugs or workarounds you find.
+
+See okcurl module for an example build.
+
+```
+$ ./gradlew okcurl:nativeImage
+$ ./okcurl/build/graal/okcurl https://httpbin.org/get
 ```
 
 License

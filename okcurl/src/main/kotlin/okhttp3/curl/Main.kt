@@ -48,6 +48,7 @@ import picocli.CommandLine.Command
 import picocli.CommandLine.IVersionProvider
 import picocli.CommandLine.Option
 import picocli.CommandLine.Parameters
+import java.lang.IllegalArgumentException
 
 @Command(name = NAME, description = ["A curl for the next-generation web."],
     mixinStandardHelpOptions = true, versionProvider = Main.VersionProvider::class)
@@ -168,11 +169,7 @@ class Main : Runnable {
       builder.hostnameVerifier(createInsecureHostnameVerifier())
     }
     if (verbose) {
-      val logger = object : HttpLoggingInterceptor.Logger {
-        override fun log(message: String) {
-          println(message)
-        }
-      }
+      val logger = HttpLoggingInterceptor.Logger(::println)
       builder.eventListenerFactory(LoggingEventListener.Factory(logger))
     }
     return builder.build()
@@ -183,7 +180,9 @@ class Main : Runnable {
 
     val requestMethod = method ?: if (data != null) "POST" else "GET"
 
-    request.url(url!!)
+    val url = url ?: throw IllegalArgumentException("No url provided")
+
+    request.url(url)
 
     data?.let {
       request.method(requestMethod, it.toRequestBody(mediaType()))

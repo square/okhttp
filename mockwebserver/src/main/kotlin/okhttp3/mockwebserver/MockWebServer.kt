@@ -17,8 +17,6 @@
 
 package okhttp3.mockwebserver
 
-import okhttp3.mockwebserver.internal.duplex.MockWebServerAsserts
-import org.junit.Assert
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.MultipleFailureException
@@ -33,20 +31,6 @@ import java.util.logging.Logger
  */
 class MockWebServer : TestRule, SimpleMockWebServer() {
   override fun apply(base: Statement, description: Description?): Statement {
-    MockWebServerAsserts.instance = object : MockWebServerAsserts() {
-      override fun assertEquals(expected: String, actual: String) {
-        Assert.assertEquals(expected, actual)
-      }
-
-      override fun assertTrue(actual: Boolean) {
-        Assert.assertTrue(actual)
-      }
-
-      override fun fail() {
-        Assert.fail()
-      }
-    }
-
     return statement(base)
   }
 

@@ -31,7 +31,7 @@ import org.junit.runners.model.Statement
 
 /** A simple file system where all files are held in memory. Not safe for concurrent use.  */
 class InMemoryFileSystem : FileSystem, TestRule {
-  private val files = mutableMapOf<File, Buffer>()
+  val files = mutableMapOf<File, Buffer>()
   private val openSources = IdentityHashMap<Source, File>()
   private val openSinks = IdentityHashMap<Sink, File>()
 

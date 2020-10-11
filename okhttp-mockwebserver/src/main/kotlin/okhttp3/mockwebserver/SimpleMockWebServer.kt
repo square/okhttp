@@ -66,21 +66,7 @@ import okhttp3.internal.toImmutableList
 import okhttp3.internal.ws.RealWebSocket
 import okhttp3.internal.ws.WebSocketExtensions
 import okhttp3.internal.ws.WebSocketProtocol
-import okhttp3.mockwebserver.SocketPolicy.CONTINUE_ALWAYS
-import okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AFTER_REQUEST
-import okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AT_END
-import okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AT_START
-import okhttp3.mockwebserver.SocketPolicy.DISCONNECT_DURING_REQUEST_BODY
-import okhttp3.mockwebserver.SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY
-import okhttp3.mockwebserver.SocketPolicy.EXPECT_CONTINUE
-import okhttp3.mockwebserver.SocketPolicy.FAIL_HANDSHAKE
-import okhttp3.mockwebserver.SocketPolicy.NO_RESPONSE
-import okhttp3.mockwebserver.SocketPolicy.RESET_STREAM_AT_START
-import okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_INPUT_AT_END
-import okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_OUTPUT_AT_END
-import okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_SERVER_AFTER_RESPONSE
-import okhttp3.mockwebserver.SocketPolicy.STALL_SOCKET_AT_START
-import okhttp3.mockwebserver.SocketPolicy.UPGRADE_TO_SSL_AT_END
+import okhttp3.mockwebserver.SocketPolicy.*
 import okhttp3.mockwebserver.internal.duplex.DuplexResponseBody
 import okio.Buffer
 import okio.BufferedSink
@@ -626,7 +612,7 @@ open class SimpleMockWebServer : Closeable {
 
       // See warnings associated with these socket policies in SocketPolicy.
       when (response.socketPolicy) {
-        DISCONNECT_AT_END -> {
+        DISCONNECT_AT_END, DO_NOT_READ_REQUEST_BODY -> {
           socket.close()
           return false
         }
@@ -718,7 +704,9 @@ open class SimpleMockWebServer : Closeable {
 
       var hasBody = false
       val policy = dispatcher.peek()
-      if (contentLength != -1L) {
+      if (policy.socketPolicy == DO_NOT_READ_REQUEST_BODY) {
+        // Ignore the body completely.
+      } else if (contentLength != -1L) {
         hasBody = contentLength > 0L
         throttledTransfer(policy, socket, source, requestBody.buffer(), contentLength, true)
       } else if (chunked) {
@@ -965,7 +953,8 @@ open class SimpleMockWebServer : Closeable {
 
       val response: MockResponse = dispatcher.dispatch(request)
 
-      if (response.socketPolicy === DISCONNECT_AFTER_REQUEST) {
+      val socketPolicy = response.socketPolicy
+      if (socketPolicy === DISCONNECT_AFTER_REQUEST) {
         socket.close()
         return
       }
@@ -976,9 +965,15 @@ open class SimpleMockWebServer : Closeable {
                 "and responded: $response protocol is $protocol")
       }
 
-      if (response.socketPolicy === DISCONNECT_AT_END) {
-        val connection = stream.connection
-        connection.shutdown(ErrorCode.NO_ERROR)
+      when (socketPolicy) {
+        DISCONNECT_AT_END -> {
+          stream.connection.shutdown(ErrorCode.NO_ERROR)
+        }
+        DO_NOT_READ_REQUEST_BODY -> {
+          stream.close(ErrorCode.fromHttp2(response.http2ErrorCode)!!, null)
+        }
+        else -> {
+        }
       }
     }
 
@@ -1018,7 +1013,7 @@ open class SimpleMockWebServer : Closeable {
       val body = Buffer()
       val requestLine = "$method $path HTTP/1.1"
       var exception: IOException? = null
-      if (readBody && !peek.isDuplex) {
+      if (readBody && !peek.isDuplex && peek.socketPolicy !== DO_NOT_READ_REQUEST_BODY) {
         try {
           val contentLengthString = headers["content-length"]
           val byteCount = contentLengthString?.toLong() ?: Long.MAX_VALUE

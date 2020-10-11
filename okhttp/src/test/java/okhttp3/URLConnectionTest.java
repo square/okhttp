@@ -156,25 +156,25 @@ public final class URLConnectionTest {
       new Request.Builder()
           .header(null, "j");
       fail();
-    } catch (IllegalArgumentException expected) {
+    } catch (NullPointerException expected) {
     }
     try {
       new Request.Builder()
           .addHeader(null, "k");
       fail();
-    } catch (IllegalArgumentException expected) {
+    } catch (NullPointerException expected) {
     }
     try {
       new Request.Builder()
           .addHeader("NullValue", null);
       fail();
-    } catch (IllegalArgumentException expected) {
+    } catch (NullPointerException expected) {
     }
     try {
       new Request.Builder()
           .addHeader("AnotherNullValue", null);
       fail();
-    } catch (IllegalArgumentException expected) {
+    } catch (NullPointerException expected) {
     }
 
     Response response = getResponse(request);
@@ -211,7 +211,7 @@ public final class URLConnectionTest {
     try {
       response.header(null);
       fail();
-    } catch (IllegalArgumentException expected) {
+    } catch (NullPointerException expected) {
     }
     Headers responseHeaders = response.headers();
     assertThat(new LinkedHashSet<>(responseHeaders.values("A"))).isEqualTo(
@@ -3578,6 +3578,8 @@ public final class URLConnectionTest {
     try {
       client.newBuilder().sslSocketFactory(null);
       fail();
+    } catch (NullPointerException expected) {
+      // Kotlin 1.4
     } catch (IllegalArgumentException expected) {
     }
   }

@@ -75,6 +75,13 @@ enum class SocketPolicy {
   /** Close connection after writing half of the response body (if present). */
   DISCONNECT_DURING_RESPONSE_BODY,
 
+  /**
+   * Process the response without even attempting to reading the request body. For HTTP/2 this will
+   * send [MockResponse.getHttp2ErrorCode] after the response body or trailers. For HTTP/1 this will
+   * close the socket after the response body or trailers.
+   */
+  DO_NOT_READ_REQUEST_BODY,
+
   /** Don't trust the client during the SSL handshake. */
   FAIL_HANDSHAKE,
 
