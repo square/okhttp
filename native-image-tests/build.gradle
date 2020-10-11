@@ -3,10 +3,23 @@ plugins {
 }
 
 dependencies {
+  implementation project(':okhttp-sse')
+  implementation project(':okhttp-testing-support')
+  implementation project(':mockwebserver')
+
   implementation deps.assertj
   implementation "org.junit.jupiter:junit-jupiter-api:5.7.0"
   implementation "org.junit.jupiter:junit-jupiter-engine:5.7.0"
+  implementation "org.junit.vintage:junit-vintage-engine:5.7.0"
   implementation "org.junit.platform:junit-platform-console:1.7.0"
+
+  compileOnly("org.graalvm.nativeimage:svm:20.2.0") {
+    // https://youtrack.jetbrains.com/issue/KT-29513
+    exclude group: "org.graalvm.nativeimage"
+    exclude group: "org.graalvm.truffle"
+//    exclude(group= "org.graalvm.sdk")
+    exclude group: "org.graalvm.compiler"
+  }
 
   compileOnly deps.jsr305
 }
@@ -22,6 +35,8 @@ graalvmConfig.mkdirs()
 
 sourceSets {
   main.resources.srcDirs += graalvmResources
+
+  main.java.srcDirs += project.file("../okhttp-sse/src/test/java")
 }
 
 task seedGraalvmConfig(type: Exec) {
@@ -31,7 +46,7 @@ task seedGraalvmConfig(type: Exec) {
     "-agentlib:native-image-agent=config-output-dir=$graalvmConfig",
     "-classpath", sourceSets.main.runtimeClasspath.getAsPath(),
     "org.junit.platform.console.ConsoleLauncher",
-    "--select-class", "okhttp3.SampleTest"
+    "--select-class", "okhttp3.sse.internal.EventSourceHttpTest"
   )
 }
 
