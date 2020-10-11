@@ -27,9 +27,6 @@ import okio.BufferedSink
 import okio.BufferedSource
 import okio.buffer
 import okio.utf8Size
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import org.junit.Assert.fail
 
 private typealias Action = (RecordedRequest, BufferedSource, BufferedSink, Http2Stream) -> Unit
 
@@ -43,12 +40,12 @@ class MockDuplexResponseBody : DuplexResponseBody {
 
   fun receiveRequest(expected: String) = apply {
     actions += { _, requestBody, _, _ ->
-      assertEquals(expected, requestBody.readUtf8(expected.utf8Size()))
+      MockWebServerAsserts.assertEquals(expected, requestBody.readUtf8(expected.utf8Size()))
     }
   }
 
   fun exhaustRequest() = apply {
-    actions += { _, requestBody, _, _ -> assertTrue(requestBody.exhausted()) }
+    actions += { _, requestBody, _, _ -> MockWebServerAsserts.assertTrue(requestBody.exhausted()) }
   }
 
   fun cancelStream(errorCode: ErrorCode) = apply {
@@ -59,7 +56,7 @@ class MockDuplexResponseBody : DuplexResponseBody {
     actions += { _, requestBody, _, _ ->
       try {
         requestBody.exhausted()
-        fail()
+        MockWebServerAsserts.fail()
       } catch (expected: IOException) {
       }
     }

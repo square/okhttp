@@ -91,7 +91,6 @@ import okio.Timeout
 import okio.buffer
 import okio.sink
 import okio.source
-import org.junit.rules.ExternalResource
 
 /**
  * A scriptable web server. Callers supply canned responses and the server replays them upon request

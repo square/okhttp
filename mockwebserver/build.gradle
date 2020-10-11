@@ -8,6 +8,7 @@ jar {
 
 dependencies {
   api project(':okhttp')
+  api project(':okhttp-mockwebserver')
   api deps.junit
 
   testImplementation project(':okhttp-testing-support')
