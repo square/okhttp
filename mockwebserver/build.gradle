@@ -23,17 +23,17 @@ afterEvaluate { project ->
   }
 }
 
-task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {
-  oldClasspath = files(baselineJar(project, baselineVersion))
-  newClasspath = files(jar.archivePath)
-  onlyBinaryIncompatibleModified = true
-  failOnModification = true
-  txtOutputFile = file("$buildDir/reports/japi.txt")
-  ignoreMissingClasses = true
-  includeSynthetic = true
-  packageExcludes = [
-      'okhttp3.mockwebserver.internal',
-      'okhttp3.mockwebserver.internal.duplex',
-  ]
-}
-check.dependsOn(japicmp)
+//task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {
+//  oldClasspath = files(baselineJar(project, baselineVersion))
+//  newClasspath = files(jar.archivePath)
+//  onlyBinaryIncompatibleModified = true
+//  failOnModification = true
+//  txtOutputFile = file("$buildDir/reports/japi.txt")
+//  ignoreMissingClasses = true
+//  includeSynthetic = true
+//  packageExcludes = [
+//      'okhttp3.mockwebserver.internal',
+//      'okhttp3.mockwebserver.internal.duplex',
+//  ]
+//}
+//check.dependsOn(japicmp)
