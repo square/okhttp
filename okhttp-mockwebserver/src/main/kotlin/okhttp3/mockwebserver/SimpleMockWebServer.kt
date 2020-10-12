@@ -172,7 +172,7 @@ open class SimpleMockWebServer : Closeable {
       field = protocolList
     }
 
-  private var started: Boolean = false
+  protected var started: Boolean = false
 
   @Synchronized fun before() {
     if (started) return

@@ -38,7 +38,10 @@ class MockWebServer : TestRule, SimpleMockWebServer() {
     return object : Statement() {
       @Throws(Throwable::class)
       override fun evaluate() {
-        start()
+        // Server may have been started manually or implicitly by accessing properties
+        if (!started) {
+          start()
+        }
 
         val errors = ArrayList<Throwable>()
         try {
