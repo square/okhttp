@@ -11,6 +11,7 @@ jar {
 }
 
 dependencies {
+  implementation deps.junit
   implementation project(':mockwebserver')
 }
 

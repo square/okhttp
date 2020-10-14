@@ -1,4 +1,5 @@
 dependencies {
+  implementation deps.junit
   implementation project(':mockwebserver')
   implementation deps.moshi
 }
