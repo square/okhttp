@@ -34,5 +34,9 @@ task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {
       'okhttp3.mockwebserver.internal',
       'okhttp3.mockwebserver.internal.duplex',
   ]
+  classExcludes = [
+      // interface moved to new superclass
+      'okhttp3.mockwebserver.MockWebServer',
+  ]
 }
 check.dependsOn(japicmp)
