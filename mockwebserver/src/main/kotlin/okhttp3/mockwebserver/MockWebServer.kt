@@ -17,6 +17,7 @@
 
 package okhttp3.mockwebserver
 
+import mockwebserver.MockWebServer
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.MultipleFailureException
@@ -29,7 +30,7 @@ import java.util.logging.Logger
  * A scriptable web server. Callers supply canned responses and the server replays them upon request
  * in sequence.
  */
-class MockWebServer : TestRule, SimpleMockWebServer() {
+class MockWebServer : TestRule, MockWebServer() {
   override fun apply(base: Statement, description: Description?): Statement {
     return statement(base)
   }

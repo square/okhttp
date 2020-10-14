@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package okhttp3.mockwebserver
+package mockwebserver
 
 import java.io.Closeable
 import java.io.IOException
@@ -66,6 +66,11 @@ import okhttp3.internal.toImmutableList
 import okhttp3.internal.ws.RealWebSocket
 import okhttp3.internal.ws.WebSocketExtensions
 import okhttp3.internal.ws.WebSocketProtocol
+import okhttp3.mockwebserver.Dispatcher
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.PushPromise
+import okhttp3.mockwebserver.QueueDispatcher
+import okhttp3.mockwebserver.RecordedRequest
 import okhttp3.mockwebserver.SocketPolicy.*
 import okhttp3.mockwebserver.internal.duplex.DuplexResponseBody
 import okio.Buffer
@@ -82,7 +87,7 @@ import okio.source
  * A scriptable web server. Callers supply canned responses and the server replays them upon request
  * in sequence.
  */
-open class SimpleMockWebServer : Closeable {
+open class MockWebServer : Closeable {
   private val taskRunnerBackend = TaskRunner.RealBackend(
       threadFactory("MockWebServer TaskRunner", daemon = false))
   private val taskRunner = TaskRunner(taskRunnerBackend)
@@ -408,7 +413,7 @@ open class SimpleMockWebServer : Closeable {
       try {
         socket = serverSocket!!.accept()
       } catch (e: SocketException) {
-        logger.fine("${this@SimpleMockWebServer} done accepting connections: ${e.message}")
+        logger.fine("${this@MockWebServer} done accepting connections: ${e.message}")
         return
       }
 
@@ -538,7 +543,7 @@ open class SimpleMockWebServer : Closeable {
 
       if (sequenceNumber == 0) {
         logger.warning(
-            "${this@SimpleMockWebServer} connection from ${raw.inetAddress} didn't make a request")
+            "${this@MockWebServer} connection from ${raw.inetAddress} didn't make a request")
       }
 
       socket.close()
@@ -607,7 +612,7 @@ open class SimpleMockWebServer : Closeable {
 
       if (logger.isLoggable(Level.FINE)) {
         logger.fine(
-            "${this@SimpleMockWebServer} received request: $request and responded: $response")
+            "${this@MockWebServer} received request: $request and responded: $response")
       }
 
       // See warnings associated with these socket policies in SocketPolicy.
@@ -961,7 +966,7 @@ open class SimpleMockWebServer : Closeable {
       writeResponse(stream, request, response)
       if (logger.isLoggable(Level.FINE)) {
         logger.fine(
-            "${this@SimpleMockWebServer} received request: $request " +
+            "${this@MockWebServer} received request: $request " +
                 "and responded: $response protocol is $protocol")
       }
 
@@ -1139,6 +1144,6 @@ open class SimpleMockWebServer : Closeable {
       override fun getAcceptedIssuers(): Array<X509Certificate> = throw AssertionError()
     }
 
-    private val logger = Logger.getLogger(SimpleMockWebServer::class.java.name)
+    private val logger = Logger.getLogger(MockWebServer::class.java.name)
   }
 }
