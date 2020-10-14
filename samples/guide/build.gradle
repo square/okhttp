@@ -2,6 +2,7 @@ apply plugin: 'kotlin-kapt'
 
 dependencies {
   implementation project(':okhttp')
+  implementation deps.junit
   implementation project(':mockwebserver')
   implementation project(':okhttp-tls')
   implementation deps.animalSniffer
