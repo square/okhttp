@@ -197,23 +197,9 @@ jobs:
       - runtests:
           platform: jdk9
 
-  testjdk13:
+  testjdk15:
     docker:
-      - image: circleci/openjdk:13.0.2-jdk-buster
-
-    environment:
-      JVM_OPTS: -Xmx1g
-      TERM: dumb
-
-    steps:
-      - checkout
-
-      - runtests:
-          platform: jdk9
-
-  testjdk14:
-    docker:
-      - image: circleci/openjdk:14.0.1-jdk-buster
+      - image: circleci/openjdk:15-jdk-buster
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -295,12 +281,7 @@ workflows:
             branches:
               ignore:
                 - gh-pages
-      - testjdk13:
-          filters:
-            branches:
-              ignore:
-                - gh-pages
-      - testjdk14:
+      - testjdk15:
           filters:
             branches:
               ignore:
@@ -337,7 +318,7 @@ workflows:
       - testjdk12windows:
           requires:
             - compile
-      - testjdk13:
+      - testjdk15:
           requires:
             - compile
       - testconscrypt:
