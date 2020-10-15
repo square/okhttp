@@ -149,6 +149,12 @@ subprojects { project ->
     options.encoding = 'UTF-8'
   }
 
+  java {
+    toolchain {
+      languageVersion = JavaLanguageVersion.of(11)
+    }
+  }
+
   checkstyleMain.exclude '**/CipherSuite.java'
   configurations {
     checkstyleConfig
@@ -186,6 +192,10 @@ subprojects { project ->
   def platformJavaHome = System.getProperty('test.java.home')
 
   test {
+    javaLauncher = javaToolchains.launcherFor {
+      languageVersion = JavaLanguageVersion.of(14)
+    }
+
     jvmArgs += "-Dokhttp.platform=$platform"
 
     if (platformJavaHome != null) {
