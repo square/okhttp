@@ -60,6 +60,9 @@ commands:
 
 jobs:
   compile:
+    docker:
+      - image: circleci/openjdk:11.0.7-jdk-buster
+
     environment:
       JVM_OPTS: -Xmx1g
       TERM: dumb
@@ -87,6 +90,9 @@ jobs:
           key: v4-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}-{{ epoch }}
 
   checkjdk11:
+    docker:
+      - image: circleci/openjdk:11.0.7-jdk-buster
+
     environment:
       JVM_OPTS: -Xmx1g
       TERM: dumb
@@ -117,6 +123,9 @@ jobs:
           path: ~/reports
 
   testjdk8:
+    docker:
+      - image: circleci/openjdk:11.0.7-jdk-buster
+
     environment:
       JVM_OPTS: -Xmx1g
       TERM: dumb
@@ -129,6 +138,9 @@ jobs:
           testjdk: -Dtest.java.version=8
 
   testjdk8alpn:
+    docker:
+      - image: circleci/openjdk:11.0.7-jdk-buster
+
     environment:
       JVM_OPTS: -Xmx1g
       TERM: dumb
@@ -141,6 +153,9 @@ jobs:
           testjdk: -Dtest.java.version=8 -Dalpn.boot.version=8.1.13.v20181017
 
   testopenjsse:
+    docker:
+      - image: circleci/openjdk:11.0.7-jdk-buster
+
     environment:
       JVM_OPTS: -Xmx1g
       TERM: dumb
@@ -153,6 +168,9 @@ jobs:
           testjdk: -Dtest.java.version=8
 
   testjdk11:
+    docker:
+      - image: circleci/openjdk:11.0.7-jdk-buster
+
     environment:
       JVM_OPTS: -Xmx1g
       TERM: dumb
@@ -164,6 +182,9 @@ jobs:
           platform: jdk9
 
   testjdk12windows:
+    docker:
+      - image: circleci/openjdk:11.0.7-jdk-buster
+
     executor:
       name: windows/default
       shell: bash.exe
@@ -179,6 +200,9 @@ jobs:
           platform: jdk9
 
   testjdk15:
+    docker:
+      - image: circleci/openjdk:11.0.7-jdk-buster
+
     environment:
       JVM_OPTS: -Xmx1g
       TERM: dumb
@@ -190,6 +214,9 @@ jobs:
           platform: jdk9
 
   testconscrypt:
+    docker:
+      - image: circleci/openjdk:11.0.7-jdk-buster
+
     environment:
       JVM_OPTS: -Xmx1g
       TERM: dumb
@@ -201,6 +228,9 @@ jobs:
           platform: conscrypt
 
   testbouncycastle:
+    docker:
+      - image: circleci/openjdk:11.0.7-jdk-buster
+
     environment:
       JVM_OPTS: -Xmx1g
       TERM: dumb
@@ -212,6 +242,9 @@ jobs:
           platform: bouncycastle
 
   testcorretto:
+    docker:
+      - image: circleci/openjdk:11.0.7-jdk-buster
+
     environment:
       JVM_OPTS: -Xmx1g
       TERM: dumb
