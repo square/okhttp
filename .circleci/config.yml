@@ -181,7 +181,7 @@ jobs:
       - runtests:
           platform: jdk9
 
-  testjdk12windows:
+  testjdkwindows:
     executor:
       name: windows/default
       shell: bash.exe
@@ -209,6 +209,7 @@ jobs:
 
       - runtests:
           platform: jdk9
+          testjdk: -Dtest.java.version=15
 
   testconscrypt:
     docker:
