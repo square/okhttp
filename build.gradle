@@ -189,17 +189,13 @@ subprojects { project ->
   }
 
   def platform = System.getProperty("okhttp.platform", "jdk9")
-  def platformJavaHome = System.getProperty('test.java.home')
+  def testJavaVersion = Integer.getInteger("test.java.version", 11)
 
   test {
-    javaLauncher = javaToolchains.launcherFor {
-      languageVersion = JavaLanguageVersion.of(14)
-    }
-
     jvmArgs += "-Dokhttp.platform=$platform"
 
-    if (platformJavaHome != null) {
-      executable = "$platformJavaHome/bin/java"
+    javaLauncher = javaToolchains.launcherFor {
+      languageVersion = JavaLanguageVersion.of(testJavaVersion)
     }
 
     maxParallelForks Runtime.runtime.availableProcessors() * 2
