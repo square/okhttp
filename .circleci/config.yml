@@ -286,7 +286,7 @@ workflows:
             branches:
               ignore:
                 - gh-pages
-      #- testjdk12windows:
+      #- testjdkwindows:
       #- testbouncycastle
       #- testopenjsse
       #- testconscrypt
@@ -315,7 +315,7 @@ workflows:
       - testjdk11:
           requires:
             - compile
-      - testjdk12windows:
+      - testjdkwindows:
           requires:
             - compile
       - testjdk15:
