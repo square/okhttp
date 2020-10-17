@@ -87,7 +87,7 @@ import okio.source
  * A scriptable web server. Callers supply canned responses and the server replays them upon request
  * in sequence.
  */
-open class MockWebServer : Closeable {
+class MockWebServer : Closeable {
   private val taskRunnerBackend = TaskRunner.RealBackend(
       threadFactory("MockWebServer TaskRunner", daemon = false))
   private val taskRunner = TaskRunner(taskRunnerBackend)
