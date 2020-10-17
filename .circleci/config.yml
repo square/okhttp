@@ -213,7 +213,7 @@ jobs:
 
   testjdk16:
     docker:
-      - image: circleci/openjdk:16-ea-18-jdk-buster
+      - image: circleci/openjdk:11.0.8-jdk-buster
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -276,31 +276,31 @@ workflows:
           filters:
             branches:
               only: master
-      - checkjdk11:
-          filters:
-            branches:
-              ignore:
-                - master
-                - gh-pages
-      - testjdk8:
-          filters:
-            branches:
-              ignore:
-                - gh-pages
-      - testjdk8alpn:
-          filters:
-            branches:
-              only: master
-      - testjdk11:
-          filters:
-            branches:
-              ignore:
-                - gh-pages
-      - testjdk15:
-          filters:
-            branches:
-              ignore:
-                - gh-pages
+#      - checkjdk11:
+#          filters:
+#            branches:
+#              ignore:
+#                - master
+#                - gh-pages
+#      - testjdk8:
+#          filters:
+#            branches:
+#              ignore:
+#                - gh-pages
+#      - testjdk8alpn:
+#          filters:
+#            branches:
+#              only: master
+#      - testjdk11:
+#          filters:
+#            branches:
+#              ignore:
+#                - gh-pages
+#      - testjdk15:
+#          filters:
+#            branches:
+#              ignore:
+#                - gh-pages
       - testjdk16:
           filters:
             branches:
