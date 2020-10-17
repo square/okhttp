@@ -1,4 +1,4 @@
-rootProject.name = 'okhttp-parent'
+rootProject.name = "🍓 okhttp"
 
 include ':mockwebserver'
 
