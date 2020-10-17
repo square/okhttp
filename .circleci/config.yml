@@ -211,6 +211,21 @@ jobs:
           platform: jdk9
           testjdk: -Dtest.java.version=15
 
+  testjdk16:
+    docker:
+      - image: circleci/openjdk:16-ea-18-jdk-buster
+
+    environment:
+      JVM_OPTS: -Xmx1g
+      TERM: dumb
+
+    steps:
+      - checkout
+
+      - runtests:
+          platform: jdk9
+          testjdk: -Dtest.java.version=16
+
   testconscrypt:
     docker:
       - image: circleci/openjdk:11.0.8-jdk-buster
@@ -282,6 +297,11 @@ workflows:
               ignore:
                 - gh-pages
       - testjdk15:
+          filters:
+            branches:
+              ignore:
+                - gh-pages
+      - testjdk16:
           filters:
             branches:
               ignore:
