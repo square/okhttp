@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package mockwebserver
+package mockwebserver3
 
 import java.io.Closeable
 import java.io.IOException
@@ -177,7 +177,7 @@ open class MockWebServer : Closeable {
       field = protocolList
     }
 
-  protected var started: Boolean = false
+  internal var started: Boolean = false
 
   @Synchronized fun before() {
     if (started) return
@@ -188,28 +188,10 @@ open class MockWebServer : Closeable {
     }
   }
 
-  @JvmName("-deprecated_port")
-  @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "port"),
-      level = DeprecationLevel.ERROR)
-  fun getPort(): Int = port
-
   fun toProxyAddress(): Proxy {
     before()
     val address = InetSocketAddress(inetSocketAddress!!.address.canonicalHostName, port)
     return Proxy(Proxy.Type.HTTP, address)
-  }
-
-  @JvmName("-deprecated_serverSocketFactory")
-  @Deprecated(
-      message = "moved to var",
-      replaceWith = ReplaceWith(
-          expression = "run { this.serverSocketFactory = serverSocketFactory }"
-      ),
-      level = DeprecationLevel.ERROR)
-  fun setServerSocketFactory(serverSocketFactory: ServerSocketFactory) = run {
-    this.serverSocketFactory = serverSocketFactory
   }
 
   /**
@@ -225,40 +207,6 @@ open class MockWebServer : Closeable {
         .build()
         .resolve(path)!!
   }
-
-  @JvmName("-deprecated_bodyLimit")
-  @Deprecated(
-      message = "moved to var",
-      replaceWith = ReplaceWith(
-          expression = "run { this.bodyLimit = bodyLimit }"
-      ),
-      level = DeprecationLevel.ERROR)
-  fun setBodyLimit(bodyLimit: Long) = run { this.bodyLimit = bodyLimit }
-
-  @JvmName("-deprecated_protocolNegotiationEnabled")
-  @Deprecated(
-      message = "moved to var",
-      replaceWith = ReplaceWith(
-          expression = "run { this.protocolNegotiationEnabled = protocolNegotiationEnabled }"
-      ),
-      level = DeprecationLevel.ERROR)
-  fun setProtocolNegotiationEnabled(protocolNegotiationEnabled: Boolean) = run {
-    this.protocolNegotiationEnabled = protocolNegotiationEnabled
-  }
-
-  @JvmName("-deprecated_protocols")
-  @Deprecated(
-      message = "moved to var",
-      replaceWith = ReplaceWith(expression = "run { this.protocols = protocols }"),
-      level = DeprecationLevel.ERROR)
-  fun setProtocols(protocols: List<Protocol>) = run { this.protocols = protocols }
-
-  @JvmName("-deprecated_protocols")
-  @Deprecated(
-      message = "moved to var",
-      replaceWith = ReplaceWith(expression = "protocols"),
-      level = DeprecationLevel.ERROR)
-  fun protocols(): List<Protocol> = protocols
 
   /**
    * Serve requests with HTTPS rather than otherwise.
@@ -307,7 +255,6 @@ open class MockWebServer : Closeable {
    *
    * @return the head of the request queue
    */
-  @Throws(InterruptedException::class)
   fun takeRequest(): RecordedRequest = requestQueue.take()
 
   /**
@@ -319,16 +266,8 @@ open class MockWebServer : Closeable {
    * @param unit a [TimeUnit] determining how to interpret the [timeout] parameter
    * @return the head of the request queue
    */
-  @Throws(InterruptedException::class)
   fun takeRequest(timeout: Long, unit: TimeUnit): RecordedRequest? =
       requestQueue.poll(timeout, unit)
-
-  @JvmName("-deprecated_requestCount")
-  @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "requestCount"),
-      level = DeprecationLevel.ERROR)
-  fun getRequestCount(): Int = requestCount
 
   /**
    * Scripts [response] to be returned to a request made in sequence. The first request is
@@ -347,7 +286,6 @@ open class MockWebServer : Closeable {
    * @param port the port to listen to, or 0 for any available port. Automated tests should always
    * use port 0 to avoid flakiness when a specific port is unavailable.
    */
-  @Throws(IOException::class)
   @JvmOverloads fun start(port: Int = 0) = start(InetAddress.getByName("localhost"), port)
 
   /**
@@ -357,7 +295,6 @@ open class MockWebServer : Closeable {
    * @param port the port to listen to, or 0 for any available port. Automated tests should always
    * use port 0 to avoid flakiness when a specific port is unavailable.
    */
-  @Throws(IOException::class)
   fun start(inetAddress: InetAddress, port: Int) = start(InetSocketAddress(inetAddress, port))
 
   /**
@@ -365,7 +302,7 @@ open class MockWebServer : Closeable {
    *
    * @param inetSocketAddress the socket address to bind the server on
    */
-  @Synchronized @Throws(IOException::class)
+  @Synchronized
   private fun start(inetSocketAddress: InetSocketAddress) {
     require(!started) { "start() already called" }
     started = true
@@ -406,7 +343,6 @@ open class MockWebServer : Closeable {
     }
   }
 
-  @Throws(Exception::class)
   private fun acceptConnections() {
     while (true) {
       val socket: Socket
@@ -429,7 +365,6 @@ open class MockWebServer : Closeable {
   }
 
   @Synchronized
-  @Throws(IOException::class)
   fun shutdown() {
     if (!started) return
     require(serverSocket != null) { "shutdown() before start()" }
@@ -469,7 +404,6 @@ open class MockWebServer : Closeable {
   internal inner class SocketHandler(private val raw: Socket) {
     private var sequenceNumber = 0
 
-    @Throws(Exception::class)
     fun handle() {
       val socketPolicy = dispatcher.peek().socketPolicy
       var protocol = Protocol.HTTP_1_1
@@ -554,7 +488,6 @@ open class MockWebServer : Closeable {
      * Respond to CONNECT requests until a SWITCH_TO_SSL_AT_END response is
      * dispatched.
      */
-    @Throws(IOException::class, InterruptedException::class)
     private fun createTunnel() {
       val source = raw.source().buffer()
       val sink = raw.sink().buffer()
@@ -569,7 +502,6 @@ open class MockWebServer : Closeable {
      * Reads a request and writes its response. Returns true if further calls should be attempted
      * on the socket.
      */
-    @Throws(IOException::class, InterruptedException::class)
     private fun processOneRequest(
       socket: Socket,
       source: BufferedSource,
@@ -632,7 +564,6 @@ open class MockWebServer : Closeable {
     }
   }
 
-  @Throws(Exception::class)
   private fun processHandshakeFailure(raw: Socket) {
     val context = SSLContext.getInstance("TLS")
     context.init(null, arrayOf<TrustManager>(UNTRUSTED_TRUST_MANAGER), SecureRandom())
@@ -647,7 +578,6 @@ open class MockWebServer : Closeable {
     socket.close()
   }
 
-  @Throws(InterruptedException::class)
   private fun dispatchBookkeepingRequest(sequenceNumber: Int, socket: Socket) {
     val request = RecordedRequest(
         "", headersOf(), emptyList(), 0L, Buffer(), sequenceNumber, socket)
@@ -657,7 +587,6 @@ open class MockWebServer : Closeable {
   }
 
   /** @param sequenceNumber the index of this request on this connection.*/
-  @Throws(IOException::class)
   private fun readRequest(
     socket: Socket,
     source: BufferedSource,
@@ -741,7 +670,6 @@ open class MockWebServer : Closeable {
         requestBody.buffer, sequenceNumber, socket, failure)
   }
 
-  @Throws(IOException::class)
   private fun handleWebSocketUpgrade(
     socket: Socket,
     source: BufferedSource,
@@ -798,7 +726,6 @@ open class MockWebServer : Closeable {
     }
   }
 
-  @Throws(IOException::class)
   private fun writeHttpResponse(socket: Socket, sink: BufferedSink, response: MockResponse) {
     sleepIfDelayed(response.getHeadersDelay(TimeUnit.MILLISECONDS))
     sink.writeUtf8(response.status)
@@ -815,7 +742,6 @@ open class MockWebServer : Closeable {
     }
   }
 
-  @Throws(IOException::class)
   private fun writeHeaders(sink: BufferedSink, headers: Headers) {
     for ((name, value) in headers) {
       sink.writeUtf8(name)
@@ -837,7 +763,6 @@ open class MockWebServer : Closeable {
    * Transfer bytes from [source] to [sink] until either [byteCount] bytes have
    * been transferred or [source] is exhausted. The transfer is throttled according to [policy].
    */
-  @Throws(IOException::class)
   private fun throttledTransfer(
     policy: MockResponse,
     socket: Socket,
@@ -890,7 +815,6 @@ open class MockWebServer : Closeable {
     }
   }
 
-  @Throws(IOException::class)
   private fun readEmptyLine(source: BufferedSource) {
     val line = source.readUtf8LineStrict()
     check(line.isEmpty()) { "Expected empty but was: $line" }
@@ -898,7 +822,6 @@ open class MockWebServer : Closeable {
 
   override fun toString(): String = "MockWebServer[$portField]"
 
-  @Throws(IOException::class)
   override fun close() = shutdown()
 
   /** A buffer wrapper that drops data after [bodyLimit] bytes. */
@@ -908,7 +831,6 @@ open class MockWebServer : Closeable {
     internal val buffer = Buffer()
     internal var receivedByteCount = 0L
 
-    @Throws(IOException::class)
     override fun write(source: Buffer, byteCount: Long) {
       val toRead = minOf(remainingByteCount, byteCount)
       if (toRead > 0L) {
@@ -922,13 +844,11 @@ open class MockWebServer : Closeable {
       receivedByteCount += byteCount
     }
 
-    @Throws(IOException::class)
     override fun flush() {
     }
 
     override fun timeout(): Timeout = Timeout.NONE
 
-    @Throws(IOException::class)
     override fun close() {
     }
   }
@@ -940,7 +860,6 @@ open class MockWebServer : Closeable {
   ) : Http2Connection.Listener() {
     private val sequenceNumber = AtomicInteger()
 
-    @Throws(IOException::class)
     override fun onStream(stream: Http2Stream) {
       val peekedResponse = dispatcher.peek()
       if (peekedResponse.socketPolicy === RESET_STREAM_AT_START) {
@@ -982,7 +901,6 @@ open class MockWebServer : Closeable {
       }
     }
 
-    @Throws(IOException::class)
     private fun readRequest(stream: Http2Stream): RecordedRequest {
       val streamHeaders = stream.takeHeaders()
       val httpHeaders = Headers.Builder()
@@ -1033,7 +951,6 @@ open class MockWebServer : Closeable {
           sequenceNumber.getAndIncrement(), socket, exception)
     }
 
-    @Throws(IOException::class)
     private fun writeResponse(
       stream: Http2Stream,
       request: RecordedRequest,
@@ -1087,7 +1004,6 @@ open class MockWebServer : Closeable {
       }
     }
 
-    @Throws(IOException::class)
     private fun pushPromises(
       stream: Http2Stream,
       request: RecordedRequest,
@@ -1130,7 +1046,6 @@ open class MockWebServer : Closeable {
     private const val CLIENT_AUTH_REQUIRED = 2
 
     private val UNTRUSTED_TRUST_MANAGER = object : X509TrustManager {
-      @Throws(CertificateException::class)
       override fun checkClientTrusted(
         chain: Array<X509Certificate>,
         authType: String
