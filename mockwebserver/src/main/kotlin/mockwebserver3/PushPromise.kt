@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Square, Inc.
+ * Copyright (C) 2014 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.mockwebserverwrapper
+package mockwebserver3
 
 import okhttp3.Headers
 
+/** An HTTP request initiated by the server. */
 class PushPromise(
   @get:JvmName("method") val method: String,
   @get:JvmName("path") val path: String,

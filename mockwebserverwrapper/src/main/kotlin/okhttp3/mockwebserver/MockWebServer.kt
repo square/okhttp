@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.mockwebserverwrapper
+package okhttp3.mockwebserver
 
 import okhttp3.HttpUrl
 import okhttp3.Protocol
@@ -29,7 +29,7 @@ import javax.net.ServerSocketFactory
 import javax.net.ssl.SSLSocketFactory
 
 class MockWebServer : ExternalResource(), Closeable {
-  val delegate = okhttp3.mockwebserver.MockWebServer()
+  val delegate = mockwebserver3.MockWebServer()
 
   val requestCount: Int by delegate::requestCount
 

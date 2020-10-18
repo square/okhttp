@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.mockwebserver.internal.duplex
+package mockwebserver3.internal.duplex
 
 import java.io.IOException
 import okhttp3.internal.http2.Http2Stream
-import okhttp3.mockwebserver.RecordedRequest
+import mockwebserver3.RecordedRequest
 
 interface DuplexResponseBody {
   @Throws(IOException::class)

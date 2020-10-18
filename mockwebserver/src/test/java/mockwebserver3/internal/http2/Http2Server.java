@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package okhttp3.mockwebserver.internal.http2;
+package mockwebserver3.internal.http2;
 
 import java.io.File;
 import java.io.IOException;

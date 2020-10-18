@@ -1,6 +1,8 @@
+apply plugin: 'me.champeau.gradle.japicmp'
+
 jar {
   manifest {
-    attributes('Automatic-Module-Name': 'okhttp3.mockwebserverwrapper')
+    attributes('Automatic-Module-Name': 'okhttp3.mockwebserver')
   }
 }
 
@@ -20,3 +22,23 @@ afterEvaluate { project ->
     outputFormat = 'gfm'
   }
 }
+
+task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {
+  oldClasspath = files(baselineJar(project, baselineVersion))
+  newClasspath = files(jar.archivePath)
+  onlyBinaryIncompatibleModified = true
+  failOnModification = true
+  txtOutputFile = file("$buildDir/reports/japi.txt")
+  ignoreMissingClasses = true
+  includeSynthetic = true
+  packageExcludes = [
+          'okhttp3.internal.duplex',
+          'okhttp3.mockwebserver.internal',
+          'okhttp3.mockwebserver.internal.duplex',
+  ]
+  classExcludes = [
+          // Became 'final' in 4.10.0.
+          'okhttp3.mockwebserver.QueueDispatcher',
+  ]
+}
+check.dependsOn(japicmp)

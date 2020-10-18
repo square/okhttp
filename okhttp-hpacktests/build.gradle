@@ -3,7 +3,7 @@ dependencies {
   testImplementation deps.moshi
   testImplementation project(':okhttp')
   testImplementation project(':okhttp-testing-support')
-  testImplementation project(':mockwebserver')
+  testImplementation project(':mockwebserverwrapper')
   testImplementation deps.junit
   testImplementation deps.assertj
 }
