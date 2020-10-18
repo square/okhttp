@@ -617,7 +617,7 @@ public final class MockWebServerTest {
     try {
       server2.start();
       fail();
-    } catch (IllegalArgumentException iae) {
+    } catch (IllegalStateException expected) {
       // expected
     }
     server2.shutdown();

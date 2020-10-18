@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
+import mockwebserver3.junit4.MockWebServerRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
@@ -29,9 +30,11 @@ import org.junit.rules.Timeout;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class CustomDispatcherTest {
-  @Rule public MockWebServer mockWebServer = new MockWebServer();
+  @Rule public MockWebServerRule mockWebServerRule = new MockWebServerRule();
 
   @Rule public Timeout globalTimeout = Timeout.seconds(30);
+
+  private final MockWebServer mockWebServer = mockWebServerRule.getServer();
 
   @Test public void simpleDispatch() throws Exception {
     final List<RecordedRequest> requestsMade = new ArrayList<>();

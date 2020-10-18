@@ -30,8 +30,8 @@ import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import javax.net.ssl.HttpsURLConnection;
+import mockwebserver3.junit4.MockWebServerRule;
 import okhttp3.Handshake;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
@@ -41,13 +41,12 @@ import okhttp3.TestUtil;
 import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okhttp3.tls.HeldCertificate;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
-import org.junit.runner.Description;
-import org.junit.runners.model.Statement;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
@@ -64,12 +63,20 @@ import static org.junit.Assume.assumeFalse;
 public final class MockWebServerTest {
   @Rule public PlatformRule platform = new PlatformRule();
 
-  @Rule public final MockWebServer server = new MockWebServer();
+  @Rule public final MockWebServerRule serverRule = new MockWebServerRule();
 
   @Rule public Timeout globalTimeout = Timeout.seconds(30);
 
-  @Before public void checkPlatforms() {
+  private final MockWebServer server = serverRule.getServer();
+
+  @Before public void setUp() throws IOException {
     platform.assumeNotBouncyCastle();
+    server.start();
+  }
+
+  @After
+  public void tearDown() throws Exception {
+    server.shutdown();
   }
 
   @Test public void defaultMockResponse() {
@@ -411,25 +418,6 @@ public final class MockWebServerTest {
     other.shutdown();
   }
 
-  @Test public void statementStartsAndStops() throws Throwable {
-    final AtomicBoolean called = new AtomicBoolean();
-    Statement statement = server.apply(new Statement() {
-      @Override public void evaluate() throws Throwable {
-        called.set(true);
-        server.url("/").url().openConnection().connect();
-      }
-    }, Description.EMPTY);
-
-    statement.evaluate();
-
-    assertThat(called.get()).isTrue();
-    try {
-      server.url("/").url().openConnection().connect();
-      fail();
-    } catch (ConnectException expected) {
-    }
-  }
-
   @Test public void shutdownWhileBlockedDispatching() throws Exception {
     // Enqueue a request that'll cause MockWebServer to hang on QueueDispatcher.dispatch().
     HttpURLConnection connection = (HttpURLConnection) server.url("/").url().openConnection();
@@ -609,6 +597,15 @@ public final class MockWebServerTest {
   }
 
   @Test
+  public void startTwice() throws IOException {
+    MockWebServer server2 = new MockWebServer();
+
+    server2.start();
+    server2.start();
+    server2.shutdown();
+  }
+
+  @Test
   public void shutdownTwice() throws IOException {
     MockWebServer server2 = new MockWebServer();
 
@@ -617,7 +614,7 @@ public final class MockWebServerTest {
     try {
       server2.start();
       fail();
-    } catch (IllegalArgumentException iae) {
+    } catch (IllegalStateException expected) {
       // expected
     }
     server2.shutdown();
