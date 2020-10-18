@@ -78,7 +78,7 @@ ext.publishedArtifactId = { project ->
     return 'logging-interceptor'
   } else if (project.name == 'mockwebserver') {
     return 'mockwebserver3'
-  } else if (project.name == 'mockwebserverwrapper') {
+  } else if (project.name == 'mockwebserver-deprecated') {
     return 'mockwebserver'
   } else if (project.name == 'okcurl'
           || project.name == 'okhttp'
