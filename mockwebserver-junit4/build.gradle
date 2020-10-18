@@ -1,0 +1,19 @@
+jar {
+  manifest {
+    attributes('Automatic-Module-Name': 'mockwebserver3.junit4')
+  }
+}
+
+dependencies {
+  api project(':mockwebserver')
+  api deps.junit
+
+  testImplementation deps.assertj
+}
+
+afterEvaluate { project ->
+  project.tasks.dokka {
+    outputDirectory = "$rootDir/docs/4.x"
+    outputFormat = 'gfm'
+  }
+}

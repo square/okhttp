@@ -74,6 +74,8 @@ dependencies {
   testImplementation project(':okhttp-testing-support')
   testImplementation project(':okhttp-tls')
   testImplementation project(':okhttp-urlconnection')
+  testImplementation project(':mockwebserver')
+  testImplementation project(':mockwebserver-junit4')
   testImplementation project(':mockwebserver-deprecated')
   testImplementation project(':okhttp-logging-interceptor')
   testImplementation project(':okhttp-brotli')

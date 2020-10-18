@@ -20,16 +20,13 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.FutureTask
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
+import mockwebserver3.RecordedRequest
 import okhttp3.internal.http2.ErrorCode
 import okhttp3.internal.http2.Http2Stream
-import mockwebserver3.RecordedRequest
 import okio.BufferedSink
 import okio.BufferedSource
 import okio.buffer
 import okio.utf8Size
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import org.junit.Assert.fail
 
 private typealias Action = (RecordedRequest, BufferedSource, BufferedSink, Http2Stream) -> Unit
 
@@ -43,12 +40,15 @@ class MockDuplexResponseBody : DuplexResponseBody {
 
   fun receiveRequest(expected: String) = apply {
     actions += { _, requestBody, _, _ ->
-      assertEquals(expected, requestBody.readUtf8(expected.utf8Size()))
+      val actual = requestBody.readUtf8(expected.utf8Size())
+      if (actual != expected) throw AssertionError("$actual != $expected")
     }
   }
 
   fun exhaustRequest() = apply {
-    actions += { _, requestBody, _, _ -> assertTrue(requestBody.exhausted()) }
+    actions += { _, requestBody, _, _ ->
+      if (!requestBody.exhausted()) throw AssertionError("expected exhausted")
+    }
   }
 
   fun cancelStream(errorCode: ErrorCode) = apply {
@@ -59,7 +59,7 @@ class MockDuplexResponseBody : DuplexResponseBody {
     actions += { _, requestBody, _, _ ->
       try {
         requestBody.exhausted()
-        fail()
+        throw AssertionError("expected IOException")
       } catch (expected: IOException) {
       }
     }

@@ -44,6 +44,23 @@ import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
+import mockwebserver3.SocketPolicy.CONTINUE_ALWAYS
+import mockwebserver3.SocketPolicy.DISCONNECT_AFTER_REQUEST
+import mockwebserver3.SocketPolicy.DISCONNECT_AT_END
+import mockwebserver3.SocketPolicy.DISCONNECT_AT_START
+import mockwebserver3.SocketPolicy.DISCONNECT_DURING_REQUEST_BODY
+import mockwebserver3.SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY
+import mockwebserver3.SocketPolicy.DO_NOT_READ_REQUEST_BODY
+import mockwebserver3.SocketPolicy.EXPECT_CONTINUE
+import mockwebserver3.SocketPolicy.FAIL_HANDSHAKE
+import mockwebserver3.SocketPolicy.NO_RESPONSE
+import mockwebserver3.SocketPolicy.RESET_STREAM_AT_START
+import mockwebserver3.SocketPolicy.SHUTDOWN_INPUT_AT_END
+import mockwebserver3.SocketPolicy.SHUTDOWN_OUTPUT_AT_END
+import mockwebserver3.SocketPolicy.SHUTDOWN_SERVER_AFTER_RESPONSE
+import mockwebserver3.SocketPolicy.STALL_SOCKET_AT_START
+import mockwebserver3.SocketPolicy.UPGRADE_TO_SSL_AT_END
+import mockwebserver3.internal.duplex.DuplexResponseBody
 import okhttp3.Headers
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.HttpUrl
@@ -66,23 +83,6 @@ import okhttp3.internal.toImmutableList
 import okhttp3.internal.ws.RealWebSocket
 import okhttp3.internal.ws.WebSocketExtensions
 import okhttp3.internal.ws.WebSocketProtocol
-import mockwebserver3.SocketPolicy.CONTINUE_ALWAYS
-import mockwebserver3.SocketPolicy.DISCONNECT_AFTER_REQUEST
-import mockwebserver3.SocketPolicy.DISCONNECT_AT_END
-import mockwebserver3.SocketPolicy.DISCONNECT_AT_START
-import mockwebserver3.SocketPolicy.DISCONNECT_DURING_REQUEST_BODY
-import mockwebserver3.SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY
-import mockwebserver3.SocketPolicy.DO_NOT_READ_REQUEST_BODY
-import mockwebserver3.SocketPolicy.EXPECT_CONTINUE
-import mockwebserver3.SocketPolicy.FAIL_HANDSHAKE
-import mockwebserver3.SocketPolicy.NO_RESPONSE
-import mockwebserver3.SocketPolicy.RESET_STREAM_AT_START
-import mockwebserver3.SocketPolicy.SHUTDOWN_INPUT_AT_END
-import mockwebserver3.SocketPolicy.SHUTDOWN_OUTPUT_AT_END
-import mockwebserver3.SocketPolicy.SHUTDOWN_SERVER_AFTER_RESPONSE
-import mockwebserver3.SocketPolicy.STALL_SOCKET_AT_START
-import mockwebserver3.SocketPolicy.UPGRADE_TO_SSL_AT_END
-import mockwebserver3.internal.duplex.DuplexResponseBody
 import okio.Buffer
 import okio.BufferedSink
 import okio.BufferedSource
@@ -92,13 +92,12 @@ import okio.Timeout
 import okio.buffer
 import okio.sink
 import okio.source
-import org.junit.rules.ExternalResource
 
 /**
  * A scriptable web server. Callers supply canned responses and the server replays them upon request
  * in sequence.
  */
-class MockWebServer : ExternalResource(), Closeable {
+class MockWebServer : Closeable {
   private val taskRunnerBackend = TaskRunner.RealBackend(
       threadFactory("MockWebServer TaskRunner", daemon = false))
   private val taskRunner = TaskRunner(taskRunnerBackend)
@@ -121,13 +120,13 @@ class MockWebServer : ExternalResource(), Closeable {
   var bodyLimit = Long.MAX_VALUE
 
   var serverSocketFactory: ServerSocketFactory? = null
-    get() {
+    @Synchronized get() {
       if (field == null && started) {
         field = ServerSocketFactory.getDefault() // Build the default value lazily.
       }
       return field
     }
-    set(value) {
+    @Synchronized set(value) {
       check(!started) { "serverSocketFactory must not be set after start()" }
       field = value
     }
@@ -189,9 +188,10 @@ class MockWebServer : ExternalResource(), Closeable {
     }
 
   private var started: Boolean = false
+  private var shutdown: Boolean = false
 
-  @Synchronized override fun before() {
-    if (started) return
+  @Synchronized private fun before() {
+    if (started) return // Don't call start() in case we're already shut down.
     try {
       start()
     } catch (e: IOException) {
@@ -378,7 +378,8 @@ class MockWebServer : ExternalResource(), Closeable {
    */
   @Synchronized @Throws(IOException::class)
   private fun start(inetSocketAddress: InetSocketAddress) {
-    require(!started) { "start() already called" }
+    check(!shutdown) { "shutdown() already called" }
+    if (started) return
     started = true
 
     this.inetSocketAddress = inetSocketAddress
@@ -442,11 +443,14 @@ class MockWebServer : ExternalResource(), Closeable {
   @Synchronized
   @Throws(IOException::class)
   fun shutdown() {
-    if (!started) return
-    require(serverSocket != null) { "shutdown() before start()" }
+    if (shutdown) return
+    shutdown = true
+
+    if (!started) return // Nothing to shut down.
+    val serverSocket = this.serverSocket ?: return // If this is null, start() must have failed.
 
     // Cause acceptConnections() to break out.
-    serverSocket!!.close()
+    serverSocket.close()
 
     // Await shutdown.
     for (queue in taskRunner.activeQueues()) {
@@ -455,14 +459,6 @@ class MockWebServer : ExternalResource(), Closeable {
       }
     }
     taskRunnerBackend.shutdown()
-  }
-
-  @Synchronized override fun after() {
-    try {
-      shutdown()
-    } catch (e: IOException) {
-      logger.log(Level.WARNING, "MockWebServer shutdown failed", e)
-    }
   }
 
   private fun serveConnection(raw: Socket) {
