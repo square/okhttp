@@ -1,7 +1,7 @@
 rootProject.name = 'okhttp-parent'
 
 include ':mockwebserver'
-include ':mockwebserverwrapper'
+include ':mockwebserver-deprecated'
 
 if (properties.containsKey('android.injected.invoked.from.ide') ||
         System.getenv('ANDROID_SDK_ROOT') != null) {

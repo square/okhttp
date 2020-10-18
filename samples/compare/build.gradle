@@ -1,6 +1,6 @@
 dependencies {
   implementation project(':okhttp')
-  implementation project(':mockwebserverwrapper')
+  implementation project(':mockwebserver-deprecated')
   implementation project(':okhttp-tls')
 
   testImplementation project(':okhttp-testing-support')
