@@ -149,6 +149,12 @@ subprojects { project ->
     options.encoding = 'UTF-8'
   }
 
+  java {
+    toolchain {
+      languageVersion = JavaLanguageVersion.of(11)
+    }
+  }
+
   checkstyleMain.exclude '**/CipherSuite.java'
   configurations {
     checkstyleConfig
@@ -183,13 +189,13 @@ subprojects { project ->
   }
 
   def platform = System.getProperty("okhttp.platform", "jdk9")
-  def platformJavaHome = System.getProperty('test.java.home')
+  def testJavaVersion = Integer.getInteger("test.java.version", 11)
 
   test {
     jvmArgs += "-Dokhttp.platform=$platform"
 
-    if (platformJavaHome != null) {
-      executable = "$platformJavaHome/bin/java"
+    javaLauncher = javaToolchains.launcherFor {
+      languageVersion = JavaLanguageVersion.of(testJavaVersion)
     }
 
     maxParallelForks Runtime.runtime.availableProcessors() * 2

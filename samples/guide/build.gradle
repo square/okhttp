@@ -9,6 +9,12 @@ dependencies {
   kapt deps.moshiKotlin
 }
 
+java {
+  toolchain {
+    languageVersion = JavaLanguageVersion.of(14)
+  }
+}
+
 tasks.withType(JavaCompile) {
   options.warnings = false
 }

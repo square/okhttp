@@ -61,7 +61,7 @@ commands:
 jobs:
   compile:
     docker:
-      - image: circleci/openjdk:11.0.7-jdk-buster
+      - image: circleci/openjdk:11.0.8-jdk-buster
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -91,7 +91,7 @@ jobs:
 
   checkjdk11:
     docker:
-      - image: circleci/openjdk:11.0.7-jdk-buster
+      - image: circleci/openjdk:11.0.8-jdk-buster
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -135,7 +135,7 @@ jobs:
 
       - runtests:
           platform: jdk8
-          testjdk: -Dtest.java.home=/usr/lib/jvm/java-8-openjdk-amd64
+          testjdk: -Dtest.java.version=8 -Dorg.gradle.java.installations.paths=/usr/lib/jvm/java-8-openjdk-amd64
 
   testjdk8alpn:
     docker:
@@ -150,12 +150,11 @@ jobs:
 
       - runtests:
           platform: jdk8alpn
-          testjdk: -Dtest.java.home=/usr/lib/jvm/java-8-openjdk-amd64 -Dalpn.boot.version=8.1.13.v20181017
+          testjdk: -Dtest.java.version=8 -Dalpn.boot.version=8.1.13.v20181017 -Dorg.gradle.java.installations.paths=/usr/lib/jvm/java-8-openjdk-amd64
 
   testopenjsse:
     docker:
-      # Held back to ensure a JDK 8 is in the image, which is true for stretch but not buster
-      - image: circleci/openjdk:11.0.6-jdk-stretch
+      - image: circleci/openjdk:11.0.8-jdk-buster
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -166,11 +165,11 @@ jobs:
 
       - runtests:
           platform: openjsse
-          testjdk: -Dtest.java.home=/usr/lib/jvm/java-8-openjdk-amd64
+          testjdk: -Dtest.java.version=8
 
   testjdk11:
     docker:
-      - image: circleci/openjdk:11.0.7-jdk-buster
+      - image: circleci/openjdk:11.0.8-jdk-buster
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -182,7 +181,7 @@ jobs:
       - runtests:
           platform: jdk9
 
-  testjdk12windows:
+  testjdkwindows:
     executor:
       name: windows/default
       shell: bash.exe
@@ -199,7 +198,7 @@ jobs:
 
   testjdk15:
     docker:
-      - image: circleci/openjdk:15-jdk-buster
+      - image: circleci/openjdk:11.0.8-jdk-buster
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -210,10 +209,11 @@ jobs:
 
       - runtests:
           platform: jdk9
+          testjdk: -Dtest.java.version=15
 
   testconscrypt:
     docker:
-      - image: circleci/openjdk:11.0.7-jdk-buster
+      - image: circleci/openjdk:11.0.8-jdk-buster
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -227,7 +227,7 @@ jobs:
 
   testbouncycastle:
     docker:
-      - image: circleci/openjdk:11.0.7-jdk-buster
+      - image: circleci/openjdk:11.0.8-jdk-buster
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -241,7 +241,7 @@ jobs:
 
   testcorretto:
     docker:
-      - image: circleci/openjdk:11.0.7-jdk-buster
+      - image: circleci/openjdk:11.0.8-jdk-buster
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -286,7 +286,7 @@ workflows:
             branches:
               ignore:
                 - gh-pages
-      #- testjdk12windows:
+      #- testjdkwindows:
       #- testbouncycastle
       #- testopenjsse
       #- testconscrypt
@@ -315,7 +315,7 @@ workflows:
       - testjdk11:
           requires:
             - compile
-      - testjdk12windows:
+      - testjdkwindows:
           requires:
             - compile
       - testjdk15:
