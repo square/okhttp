@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.mockwebserverwrapper
+package okhttp3.mockwebserver
 
 import java.util.concurrent.TimeUnit.MILLISECONDS
 
-internal fun Dispatcher.wrap(): okhttp3.mockwebserver.Dispatcher {
+internal fun Dispatcher.wrap(): mockwebserver3.Dispatcher {
   if (this is QueueDispatcher) return this.delegate
 
   val delegate = this
-  return object : okhttp3.mockwebserver.Dispatcher() {
+  return object : mockwebserver3.Dispatcher() {
     override fun dispatch(
-      request: okhttp3.mockwebserver.RecordedRequest
-    ): okhttp3.mockwebserver.MockResponse {
+      request: mockwebserver3.RecordedRequest
+    ): mockwebserver3.MockResponse {
       return delegate.dispatch(request.unwrap()).wrap()
     }
 
-    override fun peek(): okhttp3.mockwebserver.MockResponse {
+    override fun peek(): mockwebserver3.MockResponse {
       return delegate.peek().wrap()
     }
 
@@ -38,8 +38,8 @@ internal fun Dispatcher.wrap(): okhttp3.mockwebserver.Dispatcher {
   }
 }
 
-internal fun MockResponse.wrap(): okhttp3.mockwebserver.MockResponse {
-  val result = okhttp3.mockwebserver.MockResponse()
+internal fun MockResponse.wrap(): mockwebserver3.MockResponse {
+  val result = mockwebserver3.MockResponse()
   val copyFromWebSocketListener = webSocketListener
   if (copyFromWebSocketListener != null) {
     result.withWebSocketUpgrade(copyFromWebSocketListener)
@@ -64,8 +64,8 @@ internal fun MockResponse.wrap(): okhttp3.mockwebserver.MockResponse {
   return result
 }
 
-private fun PushPromise.wrap(): okhttp3.mockwebserver.PushPromise {
-  return okhttp3.mockwebserver.PushPromise(
+private fun PushPromise.wrap(): mockwebserver3.PushPromise {
+  return mockwebserver3.PushPromise(
     method = method,
     path = path,
     headers = headers,
@@ -73,7 +73,7 @@ private fun PushPromise.wrap(): okhttp3.mockwebserver.PushPromise {
   )
 }
 
-internal fun okhttp3.mockwebserver.RecordedRequest.unwrap(): RecordedRequest {
+internal fun mockwebserver3.RecordedRequest.unwrap(): RecordedRequest {
   return RecordedRequest(
     requestLine = requestLine,
     headers = headers,
@@ -89,6 +89,6 @@ internal fun okhttp3.mockwebserver.RecordedRequest.unwrap(): RecordedRequest {
   )
 }
 
-private fun SocketPolicy.wrap(): okhttp3.mockwebserver.SocketPolicy {
-  return okhttp3.mockwebserver.SocketPolicy.valueOf(name)
+private fun SocketPolicy.wrap(): mockwebserver3.SocketPolicy {
+  return mockwebserver3.SocketPolicy.valueOf(name)
 }

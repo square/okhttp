@@ -13,15 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.mockwebserverwrapper
+package okhttp3.mockwebserver
 
-abstract class Dispatcher {
-  @Throws(InterruptedException::class)
-  abstract fun dispatch(request: RecordedRequest): MockResponse
-
-  open fun peek(): MockResponse {
-    return MockResponse().apply { this.socketPolicy = SocketPolicy.KEEP_OPEN }
-  }
-
-  open fun shutdown() {}
+enum class SocketPolicy {
+  SHUTDOWN_SERVER_AFTER_RESPONSE,
+  KEEP_OPEN,
+  DISCONNECT_AT_END,
+  UPGRADE_TO_SSL_AT_END,
+  DISCONNECT_AT_START,
+  DISCONNECT_AFTER_REQUEST,
+  DISCONNECT_DURING_REQUEST_BODY,
+  DISCONNECT_DURING_RESPONSE_BODY,
+  DO_NOT_READ_REQUEST_BODY,
+  FAIL_HANDSHAKE,
+  SHUTDOWN_INPUT_AT_END,
+  SHUTDOWN_OUTPUT_AT_END,
+  STALL_SOCKET_AT_START,
+  NO_RESPONSE,
+  RESET_STREAM_AT_START,
+  EXPECT_CONTINUE,
+  CONTINUE_ALWAYS
 }

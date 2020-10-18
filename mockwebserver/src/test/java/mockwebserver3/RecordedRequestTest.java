@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package okhttp3.mockwebserver;
+package mockwebserver3;
 
 import java.net.InetAddress;
 import java.net.Socket;

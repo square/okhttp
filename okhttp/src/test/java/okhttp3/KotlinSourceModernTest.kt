@@ -46,6 +46,12 @@ import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509KeyManager
 import javax.net.ssl.X509TrustManager
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
+import mockwebserver3.PushPromise
+import mockwebserver3.QueueDispatcher
+import mockwebserver3.RecordedRequest
+import mockwebserver3.SocketPolicy
 import okhttp3.Handshake.Companion.handshake
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.Headers.Companion.toHeaders
@@ -62,12 +68,6 @@ import okhttp3.internal.proxy.NullProxySelector
 import okhttp3.internal.tls.OkHostnameVerifier
 import okhttp3.logging.HttpLoggingInterceptor
 import okhttp3.logging.LoggingEventListener
-import okhttp3.mockwebserver.MockResponse
-import okhttp3.mockwebserver.MockWebServer
-import okhttp3.mockwebserver.PushPromise
-import okhttp3.mockwebserver.QueueDispatcher
-import okhttp3.mockwebserver.RecordedRequest
-import okhttp3.mockwebserver.SocketPolicy
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import okhttp3.tls.internal.TlsUtil.localhost
@@ -323,7 +323,7 @@ class KotlinSourceModernTest {
 
   @Test @Ignore
   fun dispatcherFromMockWebServer() {
-    val dispatcher = object : okhttp3.mockwebserver.Dispatcher() {
+    val dispatcher = object : mockwebserver3.Dispatcher() {
       override fun dispatch(request: RecordedRequest): MockResponse = TODO()
       override fun peek(): MockResponse = TODO()
       override fun shutdown() = TODO()
@@ -743,7 +743,7 @@ class KotlinSourceModernTest {
     mockWebServer.start(0)
     mockWebServer.start(InetAddress.getLocalHost(), 0)
     mockWebServer.shutdown()
-    var dispatcher: okhttp3.mockwebserver.Dispatcher = mockWebServer.dispatcher
+    var dispatcher: mockwebserver3.Dispatcher = mockWebServer.dispatcher
     dispatcher = mockWebServer.dispatcher
     mockWebServer.dispatcher = QueueDispatcher()
     mockWebServer.dispatcher = QueueDispatcher()

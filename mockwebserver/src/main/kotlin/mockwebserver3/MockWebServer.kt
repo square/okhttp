@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package okhttp3.mockwebserver
+package mockwebserver3
 
 import java.io.Closeable
 import java.io.IOException
@@ -66,23 +66,23 @@ import okhttp3.internal.toImmutableList
 import okhttp3.internal.ws.RealWebSocket
 import okhttp3.internal.ws.WebSocketExtensions
 import okhttp3.internal.ws.WebSocketProtocol
-import okhttp3.mockwebserver.SocketPolicy.CONTINUE_ALWAYS
-import okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AFTER_REQUEST
-import okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AT_END
-import okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AT_START
-import okhttp3.mockwebserver.SocketPolicy.DISCONNECT_DURING_REQUEST_BODY
-import okhttp3.mockwebserver.SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY
-import okhttp3.mockwebserver.SocketPolicy.DO_NOT_READ_REQUEST_BODY
-import okhttp3.mockwebserver.SocketPolicy.EXPECT_CONTINUE
-import okhttp3.mockwebserver.SocketPolicy.FAIL_HANDSHAKE
-import okhttp3.mockwebserver.SocketPolicy.NO_RESPONSE
-import okhttp3.mockwebserver.SocketPolicy.RESET_STREAM_AT_START
-import okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_INPUT_AT_END
-import okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_OUTPUT_AT_END
-import okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_SERVER_AFTER_RESPONSE
-import okhttp3.mockwebserver.SocketPolicy.STALL_SOCKET_AT_START
-import okhttp3.mockwebserver.SocketPolicy.UPGRADE_TO_SSL_AT_END
-import okhttp3.mockwebserver.internal.duplex.DuplexResponseBody
+import mockwebserver3.SocketPolicy.CONTINUE_ALWAYS
+import mockwebserver3.SocketPolicy.DISCONNECT_AFTER_REQUEST
+import mockwebserver3.SocketPolicy.DISCONNECT_AT_END
+import mockwebserver3.SocketPolicy.DISCONNECT_AT_START
+import mockwebserver3.SocketPolicy.DISCONNECT_DURING_REQUEST_BODY
+import mockwebserver3.SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY
+import mockwebserver3.SocketPolicy.DO_NOT_READ_REQUEST_BODY
+import mockwebserver3.SocketPolicy.EXPECT_CONTINUE
+import mockwebserver3.SocketPolicy.FAIL_HANDSHAKE
+import mockwebserver3.SocketPolicy.NO_RESPONSE
+import mockwebserver3.SocketPolicy.RESET_STREAM_AT_START
+import mockwebserver3.SocketPolicy.SHUTDOWN_INPUT_AT_END
+import mockwebserver3.SocketPolicy.SHUTDOWN_OUTPUT_AT_END
+import mockwebserver3.SocketPolicy.SHUTDOWN_SERVER_AFTER_RESPONSE
+import mockwebserver3.SocketPolicy.STALL_SOCKET_AT_START
+import mockwebserver3.SocketPolicy.UPGRADE_TO_SSL_AT_END
+import mockwebserver3.internal.duplex.DuplexResponseBody
 import okio.Buffer
 import okio.BufferedSink
 import okio.BufferedSource

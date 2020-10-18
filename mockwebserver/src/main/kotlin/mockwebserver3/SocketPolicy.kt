@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package okhttp3.mockwebserver
+package mockwebserver3
 
 /**
  * What should be done with the incoming socket.

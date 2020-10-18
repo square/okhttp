@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.mockwebserverwrapper
+package okhttp3.mockwebserver
+
+import mockwebserver3.QueueDispatcher
 
 class QueueDispatcher : Dispatcher() {
-  internal val delegate = okhttp3.mockwebserver.QueueDispatcher()
+  internal val delegate = QueueDispatcher()
 
   @Throws(InterruptedException::class)
   override fun dispatch(request: RecordedRequest): MockResponse {

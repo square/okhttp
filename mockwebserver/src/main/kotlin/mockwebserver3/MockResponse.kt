@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Square, Inc.
+ * Copyright (C) 2011 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.mockwebserverwrapper
+package mockwebserver3
 
+import java.util.concurrent.TimeUnit
 import okhttp3.Headers
 import okhttp3.WebSocketListener
 import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.http2.Settings
+import mockwebserver3.internal.duplex.DuplexResponseBody
 import okio.Buffer
-import java.util.concurrent.TimeUnit
 
+/** A scripted response to be replayed by the mock web server. */
 class MockResponse : Cloneable {
+  /** Returns the HTTP response line, such as "HTTP/1.1 200 OK". */
   @set:JvmName("status")
   var status: String = ""
 
   private var headersBuilder = Headers.Builder()
   private var trailersBuilder = Headers.Builder()
 
+  /** The HTTP headers, such as "Content-Length: 0". */
   @set:JvmName("headers")
   var headers: Headers
     get() = headersBuilder.build()
@@ -53,6 +57,12 @@ class MockResponse : Cloneable {
   @set:JvmName("socketPolicy")
   var socketPolicy = SocketPolicy.KEEP_OPEN
 
+  /**
+   * Sets the [HTTP/2 error code](https://tools.ietf.org/html/rfc7540#section-7) to be
+   * returned when resetting the stream.
+   * This is only valid with [SocketPolicy.RESET_STREAM_AT_START] and
+   * [SocketPolicy.DO_NOT_READ_REQUEST_BODY].
+   */
   @set:JvmName("http2ErrorCode")
   var http2ErrorCode = -1
 
@@ -67,10 +77,16 @@ class MockResponse : Cloneable {
     private set
   var webSocketListener: WebSocketListener? = null
     private set
+  var duplexResponseBody: DuplexResponseBody? = null
+    private set
+  val isDuplex: Boolean
+    get() = duplexResponseBody != null
 
+  /** Returns the streams the server will push with this response. */
   val pushPromises: List<PushPromise>
     get() = promises
 
+  /** Creates a new mock response with an empty body. */
   init {
     setResponseCode(200)
     setHeader("Content-Length", 0L)
@@ -90,6 +106,13 @@ class MockResponse : Cloneable {
       level = DeprecationLevel.ERROR)
   fun getStatus(): String = status
 
+  /**
+   * Sets the status and returns this.
+   *
+   * This was deprecated in OkHttp 4.0 in favor of the [status] val. In OkHttp 4.3 it is
+   * un-deprecated because Java callers can't chain when assigning Kotlin vals. (The getter remains
+   * deprecated).
+   */
   fun setStatus(status: String) = apply {
     this.status = status
   }
@@ -106,31 +129,53 @@ class MockResponse : Cloneable {
     return apply { status = "HTTP/1.1 $code $reason" }
   }
 
+  /**
+   * Removes all HTTP headers including any "Content-Length" and "Transfer-encoding" headers that
+   * were added by default.
+   */
   fun clearHeaders() = apply {
     headersBuilder = Headers.Builder()
   }
 
+  /**
+   * Adds [header] as an HTTP header. For well-formed HTTP [header] should contain a
+   * name followed by a colon and a value.
+   */
   fun addHeader(header: String) = apply {
     headersBuilder.add(header)
   }
 
+  /**
+   * Adds a new header with the name and value. This may be used to add multiple headers with the
+   * same name.
+   */
   fun addHeader(name: String, value: Any) = apply {
     headersBuilder.add(name, value.toString())
   }
 
+  /**
+   * Adds a new header with the name and value. This may be used to add multiple headers with the
+   * same name. Unlike [addHeader] this does not validate the name and
+   * value.
+   */
   fun addHeaderLenient(name: String, value: Any) = apply {
     addHeaderLenient(headersBuilder, name, value.toString())
   }
 
+  /**
+   * Removes all headers named [name], then adds a new header with the name and value.
+   */
   fun setHeader(name: String, value: Any) = apply {
     removeHeader(name)
     addHeader(name, value)
   }
 
+  /** Removes all headers named [name]. */
   fun removeHeader(name: String) = apply {
     headersBuilder.removeAll(name)
   }
 
+  /** Returns a copy of the raw HTTP payload. */
   fun getBody(): Buffer? = body?.clone()
 
   fun setBody(body: Buffer) = apply {
@@ -138,8 +183,16 @@ class MockResponse : Cloneable {
     this.body = body.clone() // Defensive copy.
   }
 
+  /** Sets the response body to the UTF-8 encoded bytes of [body]. */
   fun setBody(body: String): MockResponse = setBody(Buffer().writeUtf8(body))
 
+  fun setBody(duplexResponseBody: DuplexResponseBody) = apply {
+    this.duplexResponseBody = duplexResponseBody
+  }
+
+  /**
+   * Sets the response body to [body], chunked every [maxChunkSize] bytes.
+   */
   fun setChunkedBody(body: Buffer, maxChunkSize: Int) = apply {
     removeHeader("Content-Length")
     headersBuilder.add(CHUNKED_BODY_HEADER)
@@ -156,6 +209,10 @@ class MockResponse : Cloneable {
     this.body = bytesOut
   }
 
+  /**
+   * Sets the response body to the UTF-8 encoded bytes of [body],
+   * chunked every [maxChunkSize] bytes.
+   */
   fun setChunkedBody(body: String, maxChunkSize: Int): MockResponse =
     setChunkedBody(Buffer().writeUtf8(body), maxChunkSize)
 
@@ -166,6 +223,13 @@ class MockResponse : Cloneable {
       level = DeprecationLevel.ERROR)
   fun getHeaders(): Headers = headers
 
+  /**
+   * Sets the headers and returns this.
+   *
+   * This was deprecated in OkHttp 4.0 in favor of the [headers] val. In OkHttp 4.3 it is
+   * un-deprecated because Java callers can't chain when assigning Kotlin vals. (The getter remains
+   * deprecated).
+   */
   fun setHeaders(headers: Headers) = apply { this.headers = headers }
 
   @JvmName("-deprecated_getTrailers")
@@ -175,6 +239,13 @@ class MockResponse : Cloneable {
       level = DeprecationLevel.ERROR)
   fun getTrailers(): Headers = trailers
 
+  /**
+   * Sets the trailers and returns this.
+   *
+   * This was deprecated in OkHttp 4.0 in favor of the [trailers] val. In OkHttp 4.3 it is
+   * un-deprecated because Java callers can't chain when assigning Kotlin vals. (The getter remains
+   * deprecated).
+   */
   fun setTrailers(trailers: Headers) = apply { this.trailers = trailers }
 
   @JvmName("-deprecated_getSocketPolicy")
@@ -184,6 +255,13 @@ class MockResponse : Cloneable {
       level = DeprecationLevel.ERROR)
   fun getSocketPolicy() = socketPolicy
 
+  /**
+   * Sets the socket policy and returns this.
+   *
+   * This was deprecated in OkHttp 4.0 in favor of the [socketPolicy] val. In OkHttp 4.3 it is
+   * un-deprecated because Java callers can't chain when assigning Kotlin vals. (The getter remains
+   * deprecated).
+   */
   fun setSocketPolicy(socketPolicy: SocketPolicy) = apply {
     this.socketPolicy = socketPolicy
   }
@@ -195,10 +273,21 @@ class MockResponse : Cloneable {
       level = DeprecationLevel.ERROR)
   fun getHttp2ErrorCode() = http2ErrorCode
 
+  /**
+   * Sets the HTTP/2 error code and returns this.
+   *
+   * This was deprecated in OkHttp 4.0 in favor of the [http2ErrorCode] val. In OkHttp 4.3 it is
+   * un-deprecated because Java callers can't chain when assigning Kotlin vals. (The getter remains
+   * deprecated).
+   */
   fun setHttp2ErrorCode(http2ErrorCode: Int) = apply {
     this.http2ErrorCode = http2ErrorCode
   }
 
+  /**
+   * Throttles the request reader and response writer to sleep for the given period after each
+   * series of [bytesPerPeriod] bytes are transferred. Use this to simulate network behavior.
+   */
   fun throttleBody(bytesPerPeriod: Long, period: Long, unit: TimeUnit) = apply {
     throttleBytesPerPeriod = bytesPerPeriod
     throttlePeriodAmount = period
@@ -208,6 +297,10 @@ class MockResponse : Cloneable {
   fun getThrottlePeriod(unit: TimeUnit): Long =
     unit.convert(throttlePeriodAmount, throttlePeriodUnit)
 
+  /**
+   * Set the delayed time of the response body to [delay]. This applies to the response body
+   * only; response headers are not affected.
+   */
   fun setBodyDelay(delay: Long, unit: TimeUnit) = apply {
     bodyDelayAmount = delay
     bodyDelayUnit = unit
@@ -224,14 +317,26 @@ class MockResponse : Cloneable {
   fun getHeadersDelay(unit: TimeUnit): Long =
     unit.convert(headersDelayAmount, headersDelayUnit)
 
+  /**
+   * When [protocols][MockWebServer.protocols] include [HTTP_2][okhttp3.Protocol], this attaches a
+   * pushed stream to this response.
+   */
   fun withPush(promise: PushPromise) = apply {
     promises.add(promise)
   }
 
+  /**
+   * When [protocols][MockWebServer.protocols] include [HTTP_2][okhttp3.Protocol], this pushes
+   * [settings] before writing the response.
+   */
   fun withSettings(settings: Settings) = apply {
     this.settings = settings
   }
 
+  /**
+   * Attempts to perform a web socket upgrade on the connection.
+   * This will overwrite any previously set status or body.
+   */
   fun withWebSocketUpgrade(listener: WebSocketListener) = apply {
     status = "HTTP/1.1 101 Switching Protocols"
     setHeader("Connection", "Upgrade")

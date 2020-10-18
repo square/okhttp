@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Google Inc.
+ * Copyright (C) 2020 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package okhttp3.mockwebserver
 
-import java.io.IOException
-import java.net.Inet6Address
-import java.net.Socket
-import javax.net.ssl.SSLSocket
 import okhttp3.Handshake
 import okhttp3.Handshake.Companion.handshake
 import okhttp3.Headers
@@ -27,46 +22,21 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.TlsVersion
 import okio.Buffer
+import java.io.IOException
+import java.net.Inet6Address
+import java.net.Socket
+import javax.net.ssl.SSLSocket
 
-/** An HTTP request that came into the mock web server. */
-class RecordedRequest @JvmOverloads constructor(
-  val requestLine: String,
-
-  /** All headers. */
-  val headers: Headers,
-
-  /**
-   * The sizes of the chunks of this request's body, or an empty list if the request's body
-   * was empty or unchunked.
-   */
-  val chunkSizes: List<Int>,
-
-  /** The total size of the body of this POST request (before truncation).*/
-  val bodySize: Long,
-
-  /** The body of this POST request. This may be truncated. */
-  val body: Buffer,
-
-  /**
-   * The index of this request on its HTTP connection. Since a single HTTP connection may serve
-   * multiple requests, each request is assigned its own sequence number.
-   */
-  val sequenceNumber: Int,
-  socket: Socket,
-
-  /**
-   * The failure MockWebServer recorded when attempting to decode this request. If, for example,
-   * the inbound request was truncated, this exception will be non-null.
-   */
-  val failure: IOException? = null
-) {
+class RecordedRequest {
+  val requestLine: String
+  val headers: Headers
+  val chunkSizes: List<Int>
+  val bodySize: Long
+  val body: Buffer
+  val sequenceNumber: Int
+  val failure: IOException?
   val method: String?
   val path: String?
-
-  /**
-   * The TLS handshake of the connection that carried this request, or null if the request was
-   * received without TLS.
-   */
   val handshake: Handshake?
   val requestUrl: HttpUrl?
 
@@ -78,11 +48,54 @@ class RecordedRequest @JvmOverloads constructor(
   val utf8Body: String
     get() = body.readUtf8()
 
-  /** Returns the connection's TLS version or null if the connection doesn't use SSL. */
   val tlsVersion: TlsVersion?
     get() = handshake?.tlsVersion
 
-  init {
+  internal constructor(
+    requestLine: String,
+    headers: Headers,
+    chunkSizes: List<Int>,
+    bodySize: Long,
+    body: Buffer,
+    sequenceNumber: Int,
+    failure: IOException?,
+    method: String?,
+    path: String?,
+    handshake: Handshake?,
+    requestUrl: HttpUrl?
+  ) {
+    this.requestLine = requestLine
+    this.headers = headers
+    this.chunkSizes = chunkSizes
+    this.bodySize = bodySize
+    this.body = body
+    this.sequenceNumber = sequenceNumber
+    this.failure = failure
+    this.method = method
+    this.path = path
+    this.handshake = handshake
+    this.requestUrl = requestUrl
+  }
+
+  @JvmOverloads
+  constructor(
+    requestLine: String,
+    headers: Headers,
+    chunkSizes: List<Int>,
+    bodySize: Long,
+    body: Buffer,
+    sequenceNumber: Int,
+    socket: Socket,
+    failure: IOException? = null
+  ) {
+    this.requestLine = requestLine;
+    this.headers = headers
+    this.chunkSizes = chunkSizes
+    this.bodySize = bodySize
+    this.body = body
+    this.sequenceNumber = sequenceNumber
+    this.failure = failure
+
     if (socket is SSLSocket) {
       try {
         this.handshake = socket.session.handshake()
@@ -131,7 +144,6 @@ class RecordedRequest @JvmOverloads constructor(
       level = DeprecationLevel.WARNING)
   fun getUtf8Body(): String = body.readUtf8()
 
-  /** Returns the first header named [name], or null if no such header exists. */
   fun getHeader(name: String): String? = headers.values(name).firstOrNull()
 
   override fun toString(): String = requestLine

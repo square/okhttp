@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.mockwebserver
+package mockwebserver3
 
 import java.net.HttpURLConnection
 import java.net.HttpURLConnection.HTTP_UNAVAILABLE
