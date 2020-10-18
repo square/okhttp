@@ -1,0 +1,22 @@
+jar {
+  manifest {
+    attributes('Automatic-Module-Name': 'okhttp3.mockwebserverwrapper')
+  }
+}
+
+dependencies {
+  api project(':okhttp')
+  api project(':mockwebserver')
+  api deps.junit
+
+  testImplementation project(':okhttp-testing-support')
+  testImplementation project(':okhttp-tls')
+  testImplementation deps.assertj
+}
+
+afterEvaluate { project ->
+  project.tasks.dokka {
+    outputDirectory = "$rootDir/docs/4.x"
+    outputFormat = 'gfm'
+  }
+}
