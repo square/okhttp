@@ -218,7 +218,7 @@ jobs:
     environment:
       JVM_OPTS: -Xmx1g
       TERM: dumb
-      JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64,/usr/local/openjdk-16
+      JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
 
     steps:
       - checkout
@@ -232,7 +232,7 @@ jobs:
 
       - runtests:
           platform: jdk9
-          testjdk: -Dtest.java.version=16 -Dorg.gradle.java.installations.paths=/usr/lib/jvm/java-11-openjdk-amd64
+          testjdk: -Dtest.java.version=16 -Dorg.gradle.java.installations.paths=/usr/lib/jvm/java-11-openjdk-amd64,/usr/local/openjdk-16
 
   testconscrypt:
     docker:
