@@ -1,4 +1,4 @@
 dependencies {
-  implementation project(':mockwebserver')
+  implementation project(':mockwebserver-deprecated')
   implementation deps.moshi
 }

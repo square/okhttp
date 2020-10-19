@@ -15,8 +15,8 @@
  */
 package okhttp3.internal.duplex
 
-import okhttp3.mockwebserver.MockResponse
-import okhttp3.mockwebserver.internal.duplex.DuplexResponseBody
+import mockwebserver3.MockResponse
+import mockwebserver3.internal.duplex.DuplexResponseBody
 
 /**
  * Internal access to MockWebServer APIs. Don't use this, don't use internal, these APIs are not

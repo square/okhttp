@@ -11,7 +11,7 @@ jar {
 }
 
 dependencies {
-  implementation project(':mockwebserver')
+  implementation project(':mockwebserver-deprecated')
 }
 
 shadowJar {

@@ -214,6 +214,7 @@ jobs:
   testjdk16:
     docker:
       - image: circleci/openjdk:11.0.8-jdk-buster
+      - image: circleci/openjdk:11.0.8-jdk-buster
 
     environment:
       JVM_OPTS: -Xmx1g

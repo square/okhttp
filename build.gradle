@@ -76,8 +76,11 @@ plugins {
 ext.publishedArtifactId = { project ->
   if (project.name == 'okhttp-logging-interceptor') {
     return 'logging-interceptor'
-  } else if (project.name == 'mockwebserver'
-          || project.name == 'okcurl'
+  } else if (project.name == 'mockwebserver') {
+    return 'mockwebserver3'
+  } else if (project.name == 'mockwebserver-deprecated') {
+    return 'mockwebserver'
+  } else if (project.name == 'okcurl'
           || project.name == 'okhttp'
           || project.name == 'okhttp-bom'
           || project.name == 'okhttp-brotli'

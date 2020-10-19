@@ -22,14 +22,15 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import mockwebserver3.MockResponse;
+import mockwebserver3.MockWebServer;
+import mockwebserver3.SocketPolicy;
+import mockwebserver3.internal.duplex.MockDuplexResponseBody;
+import mockwebserver3.junit4.MockWebServerRule;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.duplex.AsyncRequestBody;
 import okhttp3.internal.duplex.MwsDuplexAccess;
 import okhttp3.internal.http2.ErrorCode;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.SocketPolicy;
-import okhttp3.mockwebserver.internal.duplex.MockDuplexResponseBody;
 import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okio.BufferedSink;
@@ -51,9 +52,10 @@ import static org.junit.Assert.fail;
 public final class DuplexTest {
   @Rule public final PlatformRule platform = new PlatformRule();
   @Rule public final TestRule timeout = new Timeout(30_000, TimeUnit.MILLISECONDS);
-  @Rule public final MockWebServer server = new MockWebServer();
+  @Rule public final MockWebServerRule serverRule = new MockWebServerRule();
   @Rule public OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
+  private MockWebServer server = serverRule.getServer();
   private RecordingEventListener listener = new RecordingEventListener();
   private HandshakeCertificates handshakeCertificates = localhost();
   private OkHttpClient client = clientTestRule.newClientBuilder()
