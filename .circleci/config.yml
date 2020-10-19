@@ -227,6 +227,8 @@ jobs:
           command: |
             sudo apt-get update
             sudo apt-get -y install openjdk-11-jdk
+            echo PATH $PATH
+            echo JAVA_HOME $JAVA_HOME
 
       - runtests:
           platform: jdk9
