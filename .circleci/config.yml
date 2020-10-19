@@ -218,15 +218,14 @@ jobs:
     environment:
       JVM_OPTS: -Xmx1g
       TERM: dumb
-      JAVA_HOME: $HOME/openjdk11
+      JAVA_HOME: /usr/lib/jvm/openjdk-11-jdk
 
     steps:
       - checkout
 
       - run:
           command: |
-            export JAVA_HOME=$HOME/openjdk11
-            $TRAVIS_BUILD_DIR/install-jdk.sh --install openjdk11 --target $JAVA_HOME
+            sudo apt-get -y install openjdk-11-jdk
 
       - runtests:
           platform: jdk9
