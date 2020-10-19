@@ -237,7 +237,7 @@ jobs:
             echo JAVA_HOME $JAVA_HOME
             ls /usr/lib/jvm/java-11-openjdk-amd64
             ls /usr/local/openjdk-16
-            ls /usr/lib/jvm/openjdk-11
+            sudo rm -rf /usr/lib/jvm/openjdk-11
 
       - runtests:
           platform: jdk9
