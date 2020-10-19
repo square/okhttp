@@ -218,7 +218,7 @@ jobs:
     environment:
       JVM_OPTS: -Xmx1g
       TERM: dumb
-      JAVA_HOME: /usr/lib/jvm/openjdk-11-jdk
+      JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
 
     steps:
       - checkout
