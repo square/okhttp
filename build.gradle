@@ -150,6 +150,10 @@ subprojects { project ->
 
   tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
+
+    javaCompiler = javaToolchains.compilerFor {
+      languageVersion = JavaLanguageVersion.of(16)
+    }
   }
 
   java {
@@ -195,10 +199,6 @@ subprojects { project ->
 
   test {
     jvmArgs += "-Dokhttp.platform=$platform"
-
-    javaCompiler = javaToolchains.compilerFor {
-      languageVersion = JavaLanguageVersion.of(16)
-    }
 
     javaLauncher = javaToolchains.launcherFor {
       languageVersion = JavaLanguageVersion.of(16)
