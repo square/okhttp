@@ -241,7 +241,7 @@ jobs:
 
       - runtests:
           platform: jdk9
-          testjdk: -Dtest.java.version=16 -Porg.gradle.java.installations.paths=/usr/local/openjdk-16,/usr/lib/jvm/java-11-openjdk-amd64 -Porg.gradle.java.installations.auto-download=false
+          testjdk: -Dtest.java.version=16 -Dorg.gradle.java.installations.paths=/usr/local/openjdk-16,/usr/lib/jvm/java-11-openjdk-amd64 -Dorg.gradle.java.installations.auto-download=false
 
   testconscrypt:
     docker:
