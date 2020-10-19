@@ -227,8 +227,17 @@ jobs:
           command: |
             sudo apt-get update
             sudo apt-get -y install openjdk-11-jdk
+            sudo update-alternatives --install /usr/bin/java java /usr/lib/jvm/java-11-openjdk-amd64/bin/java 100
+            sudo update-alternatives --install /usr/bin/jar jar /usr/lib/jvm/java-11-openjdk-amd64/bin/jar 100
+            sudo update-alternatives --install /usr/bin/javac javac /usr/lib/jvm/java-11-openjdk-amd64/bin/javac 100
+            sudo update-alternatives --set java /usr/lib/jvm/java-11-openjdk-amd64/bin/java
+            sudo update-alternatives --set jar /usr/lib/jvm/java-11-openjdk-amd64/bin/jar
+            sudo update-alternatives --set javac /usr/lib/jvm/java-11-openjdk-amd64/bin/javac
             echo PATH $PATH
             echo JAVA_HOME $JAVA_HOME
+            ls /usr/lib/jvm/java-11-openjdk-amd64
+            ls /usr/local/openjdk-16
+            ls /usr/lib/jvm/openjdk-11
 
       - runtests:
           platform: jdk9
