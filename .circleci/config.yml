@@ -213,8 +213,7 @@ jobs:
 
   testjdk16:
     docker:
-      - image: circleci/openjdk:11.0.8-jdk-buster
-      - image: circleci/openjdk:11.0.8-jdk-buster
+      - image: circleci/openjdk:16-jdk-buster
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -222,6 +221,10 @@ jobs:
 
     steps:
       - checkout
+
+      - script:
+        - export JAVA_HOME=$HOME/openjdk11
+        - $TRAVIS_BUILD_DIR/install-jdk.sh --install openjdk11 --target $JAVA_HOME
 
       - runtests:
           platform: jdk9
