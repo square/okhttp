@@ -154,7 +154,7 @@ subprojects { project ->
 
   java {
     toolchain {
-      languageVersion = JavaLanguageVersion.of(11)
+      languageVersion = JavaLanguageVersion.of(16)
     }
   }
 
@@ -192,13 +192,12 @@ subprojects { project ->
   }
 
   def platform = System.getProperty("okhttp.platform", "jdk9")
-  def testJavaVersion = Integer.getInteger("test.java.version", 11)
 
   test {
     jvmArgs += "-Dokhttp.platform=$platform"
 
     javaLauncher = javaToolchains.launcherFor {
-      languageVersion = JavaLanguageVersion.of(testJavaVersion)
+      languageVersion = JavaLanguageVersion.of(16)
     }
 
     maxParallelForks Runtime.runtime.availableProcessors() * 2
