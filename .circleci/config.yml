@@ -218,13 +218,15 @@ jobs:
     environment:
       JVM_OPTS: -Xmx1g
       TERM: dumb
+      JAVA_HOME: $HOME/openjdk11
 
     steps:
       - checkout
 
-      - script:
-        - export JAVA_HOME=$HOME/openjdk11
-        - $TRAVIS_BUILD_DIR/install-jdk.sh --install openjdk11 --target $JAVA_HOME
+      - run:
+          command: |
+            export JAVA_HOME=$HOME/openjdk11
+            $TRAVIS_BUILD_DIR/install-jdk.sh --install openjdk11 --target $JAVA_HOME
 
       - runtests:
           platform: jdk9
