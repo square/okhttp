@@ -187,7 +187,7 @@ class MockWebServer : Closeable {
       field = protocolList
     }
 
-  private var started: Boolean = false
+  var started: Boolean = false
   private var shutdown: Boolean = false
 
   @Synchronized private fun before() {

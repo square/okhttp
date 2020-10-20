@@ -1,0 +1,24 @@
+jar {
+  manifest {
+    attributes('Automatic-Module-Name': 'mockwebserver3.junit5')
+  }
+}
+
+test {
+  useJUnitPlatform()
+}
+
+dependencies {
+  api project(':mockwebserver')
+  api deps.junit5Api
+
+  testRuntimeOnly deps.junit5Jupiter
+  testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:1.4.10")
+}
+
+afterEvaluate { project ->
+  project.tasks.dokka {
+    outputDirectory = "$rootDir/docs/4.x"
+    outputFormat = 'gfm'
+  }
+}
