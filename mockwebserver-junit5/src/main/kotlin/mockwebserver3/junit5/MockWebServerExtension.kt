@@ -20,6 +20,8 @@ import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.BeforeTestExecutionCallback
 import org.junit.jupiter.api.extension.ExtensionContext
+import org.junit.jupiter.api.extension.ParameterContext
+import org.junit.jupiter.api.extension.ParameterResolver
 import java.io.IOException
 import java.util.logging.Level
 import java.util.logging.Logger
@@ -41,8 +43,22 @@ import java.util.logging.Logger
  * @JvmField @RegisterExtension val mockWebServer: MockWebServerExtension = MockWebServerExtension()
  * ```
  */
-class MockWebServerExtension : BeforeEachCallback, AfterEachCallback, BeforeTestExecutionCallback {
+class MockWebServerExtension : BeforeEachCallback, AfterEachCallback, BeforeTestExecutionCallback, ParameterResolver {
   val server: MockWebServer = MockWebServer()
+
+  override fun supportsParameter(
+    parameterContext: ParameterContext?,
+    extensionContext: ExtensionContext?
+  ): Boolean {
+    return parameterContext!!.parameter.type === MockWebServer::class.java
+  }
+
+  override fun resolveParameter(
+    parameterContext: ParameterContext?,
+    extensionContext: ExtensionContext?
+  ): Any {
+    return server
+  }
 
   override fun beforeEach(context: ExtensionContext) {
     // Store MockWebServer in Global store in well defined location for use in other extensions
