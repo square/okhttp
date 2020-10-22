@@ -31,7 +31,10 @@ import java.util.logging.Logger
  *
  * In Java JUnit 5 tests (ie. tests annotated `@org.junit.jupiter.api.Test`), use this by defining
  * a field with the `@RegisterExtension` annotation.  When used with @ExtendWith, access the
- * server instance using the key MockWebServerExtension.MockWebServerKey.
+ * server instance using a parameter of type mockwebserver3.MockWebServer
+ *
+ * The MockWebServer instance is stored in the GLOBAL namespace using the key "MockWebServer".
+ * This can be useful for other plugins that want to observe the MockWebServer in a test.
  *
  * ```
  * @RegisterExtension public final MockWebServerExtension serverExtension = new MockWebServerExtension();
@@ -47,15 +50,15 @@ class MockWebServerExtension : BeforeEachCallback, AfterEachCallback, BeforeTest
   val server: MockWebServer = MockWebServer()
 
   override fun supportsParameter(
-    parameterContext: ParameterContext?,
-    extensionContext: ExtensionContext?
+    parameterContext: ParameterContext,
+    extensionContext: ExtensionContext
   ): Boolean {
-    return parameterContext!!.parameter.type === MockWebServer::class.java
+    return parameterContext.parameter.type === MockWebServer::class.java
   }
 
   override fun resolveParameter(
-    parameterContext: ParameterContext?,
-    extensionContext: ExtensionContext?
+    parameterContext: ParameterContext,
+    extensionContext: ExtensionContext
   ): Any {
     return server
   }
