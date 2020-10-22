@@ -16,6 +16,7 @@
 package mockwebserver3.junit5
 
 import mockwebserver3.MockWebServer
+import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.BeforeTestExecutionCallback
@@ -49,6 +50,7 @@ import java.util.logging.Logger
 class MockWebServerExtension : BeforeEachCallback, AfterEachCallback, BeforeTestExecutionCallback, ParameterResolver {
   val server: MockWebServer = MockWebServer()
 
+  @IgnoreJRERequirement
   override fun supportsParameter(
     parameterContext: ParameterContext,
     extensionContext: ExtensionContext

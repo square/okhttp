@@ -11,6 +11,7 @@ test {
 dependencies {
   api project(':mockwebserver')
   api deps.junit5Api
+  compileOnly deps.animalSniffer
 
   testRuntimeOnly deps.junit5Jupiter
   testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:1.4.10")
