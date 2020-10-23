@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package mockwebserver3.junit5
+package mockwebserver3.junit5.internal
 
 import mockwebserver3.MockWebServer
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement

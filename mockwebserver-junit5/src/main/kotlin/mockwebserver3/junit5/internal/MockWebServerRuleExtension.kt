@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package mockwebserver3.junit5
+package mockwebserver3.junit5.internal
 
 import mockwebserver3.MockWebServer
 import org.junit.jupiter.api.extension.AfterEachCallback
@@ -73,7 +73,7 @@ class MockWebServerRuleExtension : BeforeEachCallback, AfterEachCallback, Before
     context: ExtensionContext, testInstance: Any, testClass: Class<*>, predicate: Predicate<Field>
   ) {
     // TODO fake to make the test work for now
-    if (testInstance.javaClass.name == "mockwebserver3.junit5.ExampleOldSchoolMockWebServerTest") {
+    if (testInstance.javaClass.name == "mockwebserver3.junit5.internal.ExampleInjectedMockWebServerTest") {
       server = testInstance.javaClass.getMethod("getServer").invoke(testInstance) as MockWebServer?
     }
 

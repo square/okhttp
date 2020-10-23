@@ -1,4 +1,4 @@
-package mockwebserver3.junit5
+package mockwebserver3.junit5.internal
 
 import mockwebserver3.MockWebServer
 import org.junit.jupiter.api.Test
