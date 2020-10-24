@@ -44,12 +44,12 @@ task seedGraalvmConfig(type: Exec) {
     "$graalHome/bin/java",
     "-agentlib:native-image-agent=config-output-dir=$graalvmConfig",
     "-classpath", sourceSets.main.runtimeClasspath.getAsPath(),
-    "okhttp3.RunTests"
+    "okhttp3.RunTestsKt"
   )
 }
 
 graal {
-  mainClass "okhttp3.RunTests"
+  mainClass "okhttp3.RunTestsKt"
   outputName "ConsoleLauncher"
   graalVersion "20.2.0"
   javaVersion "11"
