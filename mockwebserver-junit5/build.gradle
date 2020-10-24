@@ -15,6 +15,7 @@ dependencies {
   compileOnly deps.animalSniffer
 
   testRuntimeOnly deps.junit5Jupiter
+  testImplementation deps.assertj
   testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:1.4.10")
 }
 
