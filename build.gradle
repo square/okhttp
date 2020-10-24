@@ -55,7 +55,7 @@ buildscript {
 
   dependencies {
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.10"
-    classpath "org.jetbrains.dokka:dokka-gradle-plugin:0.10.1"
+    classpath "org.jetbrains.dokka:dokka-gradle-plugin:1.4.10.2"
     classpath "com.android.tools.build:gradle:4.0.1"
     classpath deps.bnd
   }
@@ -64,6 +64,7 @@ buildscript {
     mavenCentral()
     gradlePluginPortal()
     google()
+    maven { url = "https://dl.bintray.com/kotlin/kotlinx/" }
   }
 }
 
@@ -111,6 +112,8 @@ allprojects {
     maven {
       url 'https://dl.bintray.com/kotlin/dokka'
     }
+    maven { url = "https://dl.bintray.com/kotlin/kotlinx/" }
+    maven { url = "https://dl.bintray.com/jetbrains/markdown" }
     google()
   }
 
@@ -243,24 +246,42 @@ subprojects { project ->
     targetCompatibility = JavaVersion.VERSION_1_8
   }
 
-  dokka {
-    configuration {
-      reportUndocumented = false
-      skipDeprecated = true
-      jdkVersion = 8
-      perPackageOption {
-        prefix = "okhttp3.internal"
-        suppress = true
-      }
-      if (project.file('Module.md').exists()) {
-        includes = ['Module.md']
-      }
-      externalDocumentationLink {
-        url = new URL("https://square.github.io/okio/2.x/okio/")
-        packageListUrl = new URL("https://square.github.io/okio/2.x/okio/package-list")
+  tasks.dokkaGfm.configure {
+    outputDirectory.set(new File(rootDir, "docs/4.x"))
+    dokkaSourceSets {
+      configureEach {
+        jdkVersion = 8
+        skipDeprecated = true
+        reportUndocumented = true
+        perPackageOption {
+          prefix = "okhttp3.internal"
+          suppress = true
+        }
+        externalDocumentationLink {
+          url.set(URL("https://square.github.io/okio/2.x/okio/"))
+          packageListUrl.set(URL("https://square.github.io/okio/2.x/okio/package-list"))
+        }
       }
     }
   }
+//  dokka {
+//    configuration {
+//      reportUndocumented = false
+//      skipDeprecated = true
+//      jdkVersion = 8
+//      perPackageOption {
+//        prefix = "okhttp3.internal"
+//        suppress = true
+//      }
+//      if (project.file('Module.md').exists()) {
+//        includes = ['Module.md']
+//      }
+//      externalDocumentationLink {
+//        url = new URL("https://square.github.io/okio/2.x/okio/")
+//        packageListUrl = new URL("https://square.github.io/okio/2.x/okio/package-list")
+//      }
+//    }
+//  }
 }
 
 /** Configure publishing and signing for published Java and JavaPlatform subprojects. */

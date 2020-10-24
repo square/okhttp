@@ -18,10 +18,3 @@ dependencies {
   testImplementation deps.assertj
   testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:1.4.10")
 }
-
-afterEvaluate { project ->
-  project.tasks.dokka {
-    outputDirectory = "$rootDir/docs/4.x"
-    outputFormat = 'gfm'
-  }
-}
