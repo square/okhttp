@@ -13,6 +13,7 @@ buildscript {
       'jnrUnixsocket': '0.28',
       'jsoup': '1.13.1',
       'junit': '4.13',
+      'junit5': '5.7.0',
       'kotlin': '1.4.10',
       'moshi': '1.11.0',
       'okio': '2.9.0',
@@ -39,6 +40,8 @@ buildscript {
       'jsoup': "org.jsoup:jsoup:${versions.jsoup}",
       'jsr305': "com.google.code.findbugs:jsr305:${versions.findbugs}",
       'junit': "junit:junit:${versions.junit}",
+      'junit5Api': "org.junit.jupiter:junit-jupiter-api:${versions.junit5}",
+      'junit5Jupiter': "org.junit.jupiter:junit-jupiter-engine:${versions.junit5}",
       'kotlinStdlib': "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin}",
       'moshi': "com.squareup.moshi:moshi:${versions.moshi}",
       'moshiKotlin': "com.squareup.moshi:moshi-kotlin-codegen:${versions.moshi}",
@@ -78,6 +81,10 @@ ext.publishedArtifactId = { project ->
     return 'logging-interceptor'
   } else if (project.name == 'mockwebserver') {
     return 'mockwebserver3'
+  } else if (project.name == 'mockwebserver-junit4') {
+    return 'mockwebserver3-junit4'
+  } else if (project.name == 'mockwebserver-junit5') {
+    return 'mockwebserver3-junit5'
   } else if (project.name == 'mockwebserver-deprecated') {
     return 'mockwebserver'
   } else if (project.name == 'okcurl'

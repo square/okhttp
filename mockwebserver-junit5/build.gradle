@@ -1,0 +1,27 @@
+jar {
+  manifest {
+    attributes('Automatic-Module-Name': 'mockwebserver3.junit5')
+  }
+}
+
+test {
+  useJUnitPlatform()
+  systemProperty 'junit.jupiter.extensions.autodetection.enabled', 'true'
+}
+
+dependencies {
+  api project(':mockwebserver')
+  api deps.junit5Api
+  compileOnly deps.animalSniffer
+
+  testRuntimeOnly deps.junit5Jupiter
+  testImplementation deps.assertj
+  testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:1.4.10")
+}
+
+afterEvaluate { project ->
+  project.tasks.dokka {
+    outputDirectory = "$rootDir/docs/4.x"
+    outputFormat = 'gfm'
+  }
+}
