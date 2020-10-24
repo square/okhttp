@@ -10,16 +10,23 @@ jar {
   '''
 }
 
+test {
+  useJUnitPlatform()
+  systemProperty 'junit.jupiter.extensions.autodetection.enabled', 'true'
+}
+
 dependencies {
   api project(':okhttp')
   compileOnly deps.jsr305
 
   testCompileOnly deps.jsr305
-  testImplementation deps.junit
-  testImplementation project(':mockwebserver-deprecated')
   testImplementation project(':okhttp-testing-support')
+  testImplementation project(':mockwebserver')
+  testImplementation project(':mockwebserver-junit5')
   testImplementation project(':okhttp-tls')
   testImplementation deps.assertj
+  testImplementation deps.junit5Api
+  testRuntimeOnly deps.junit5Jupiter
 }
 
 afterEvaluate { project ->

@@ -17,7 +17,7 @@ package okhttp3.logging
 
 import okio.Buffer
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class IsProbablyUtf8Test {
   @Test fun isProbablyUtf8() {

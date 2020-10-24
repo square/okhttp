@@ -8,6 +8,17 @@ dependencies {
   implementation "org.junit.jupiter:junit-jupiter-engine:5.7.0"
   implementation "org.junit.platform:junit-platform-console:1.7.0"
 
+  implementation project(':okhttp')
+  implementation project(':okhttp-logging-interceptor')
+  implementation project(':okhttp-testing-support')
+  implementation project(':okhttp-tls')
+  implementation project(':okhttp-sse')
+  implementation deps.assertj
+  implementation project(':mockwebserver')
+  implementation project(':mockwebserver-junit5')
+  implementation deps.junit5Api
+  implementation deps.junit5Jupiter
+
   compileOnly deps.jsr305
 }
 
@@ -22,6 +33,9 @@ graalvmConfig.mkdirs()
 
 sourceSets {
   main.resources.srcDirs += graalvmResources
+
+  main.java.srcDirs += project.file("../okhttp-logging-interceptor/src/test/java")
+  main.java.srcDirs += project.file("../okhttp-sse/src/test/java")
 }
 
 task seedGraalvmConfig(type: Exec) {
@@ -30,13 +44,12 @@ task seedGraalvmConfig(type: Exec) {
     "$graalHome/bin/java",
     "-agentlib:native-image-agent=config-output-dir=$graalvmConfig",
     "-classpath", sourceSets.main.runtimeClasspath.getAsPath(),
-    "org.junit.platform.console.ConsoleLauncher",
-    "--select-class", "okhttp3.SampleTest"
+    "okhttp3.RunTests"
   )
 }
 
 graal {
-  mainClass "org.junit.platform.console.ConsoleLauncher"
+  mainClass "okhttp3.RunTests"
   outputName "ConsoleLauncher"
   graalVersion "20.2.0"
   javaVersion "11"

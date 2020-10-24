@@ -21,6 +21,6 @@ import org.junit.jupiter.api.Test
 class SampleTest {
   @Test
   fun failingTest() {
-    assertThat("hello").isEqualTo("goodbye")
+    assertThat("hello").isEqualTo("hello")
   }
 }

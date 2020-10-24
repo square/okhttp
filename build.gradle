@@ -42,6 +42,7 @@ buildscript {
       'junit': "junit:junit:${versions.junit}",
       'junit5Api': "org.junit.jupiter:junit-jupiter-api:${versions.junit5}",
       'junit5Jupiter': "org.junit.jupiter:junit-jupiter-engine:${versions.junit5}",
+      'junit5Vintage': "org.junit.vintage:junit-vintage-engine:${versions.junit5}",
       'kotlinStdlib': "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin}",
       'moshi': "com.squareup.moshi:moshi:${versions.moshi}",
       'moshiKotlin': "com.squareup.moshi:moshi-kotlin-codegen:${versions.moshi}",

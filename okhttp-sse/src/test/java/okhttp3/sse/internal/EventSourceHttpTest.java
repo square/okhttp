@@ -18,29 +18,36 @@ package okhttp3.sse.internal;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import okhttp3.OkHttpClient;
-import okhttp3.OkHttpClientTestRule;
 import okhttp3.Request;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
+import mockwebserver3.MockResponse;
+import mockwebserver3.MockWebServer;
 import okhttp3.sse.EventSource;
 import okhttp3.sse.EventSources;
 import okhttp3.testing.PlatformRule;
-import org.junit.After;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public final class EventSourceHttpTest {
-  @Rule public final PlatformRule platform = new PlatformRule();
+  private final PlatformRule platform = new PlatformRule();
 
-  @Rule public final MockWebServer server = new MockWebServer();
-  @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
+  private MockWebServer server;
+  // TODO migrate to junit5
+  //private OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
   private final EventSourceRecorder listener = new EventSourceRecorder();
-  private OkHttpClient client = clientTestRule.newClient();
+  // TODO migrate to junit5
+  //private OkHttpClient client = clientTestRule.newClient();
+  private OkHttpClient client = new OkHttpClient();
 
-  @After public void after() {
+  @BeforeEach
+  public void setup(MockWebServer server) {
+    this.server = server;
+  }
+
+  @AfterEach public void after() {
     listener.assertExhausted();
   }
 

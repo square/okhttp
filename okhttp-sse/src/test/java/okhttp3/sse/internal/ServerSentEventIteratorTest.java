@@ -20,8 +20,8 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import javax.annotation.Nullable;
 import okio.Buffer;
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -29,7 +29,7 @@ public final class ServerSentEventIteratorTest {
   /** Either {@link Event} or {@link Long} items for events and retry changes, respectively. */
   private final Deque<Object> callbacks = new ArrayDeque<>();
 
-  @After public void after() {
+  @AfterEach public void after() {
     assertThat(callbacks).isEmpty();
   }
 

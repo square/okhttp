@@ -23,7 +23,8 @@ import okio.Buffer
  * sample of code points to detect unicode control characters commonly used in binary file
  * signatures.
  */
-internal fun Buffer.isProbablyUtf8(): Boolean {
+// TODO make non public
+fun Buffer.isProbablyUtf8(): Boolean {
   try {
     val prefix = Buffer()
     val byteCount = size.coerceAtMost(64)
