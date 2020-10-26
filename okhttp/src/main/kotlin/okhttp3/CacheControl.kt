@@ -156,7 +156,7 @@ class CacheControl private constructor(
         if (onlyIfCached) append("only-if-cached, ")
         if (noTransform) append("no-transform, ")
         if (immutable) append("immutable, ")
-        if (isEmpty()) return ""
+        if (isEmpty) return ""
         delete(length - 2, length)
       }
       headerValue = result

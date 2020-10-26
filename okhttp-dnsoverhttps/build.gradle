@@ -12,6 +12,8 @@ jar {
 dependencies {
   api project(':okhttp')
   compileOnly deps.jsr305
+  api 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.0-M1'
+//  api 'org.jetbrains.kotlinx:kotlinx-coroutines-flow:1.4.0-M1'
 
   testImplementation project(':okhttp-testing-support')
   testImplementation project(':mockwebserver-deprecated')

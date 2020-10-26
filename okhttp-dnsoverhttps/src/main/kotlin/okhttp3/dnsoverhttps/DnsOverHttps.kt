@@ -15,6 +15,7 @@
  */
 package okhttp3.dnsoverhttps
 
+import kotlinx.coroutines.flow.Flow
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.InetAddress
@@ -46,22 +47,21 @@ import okhttp3.internal.publicsuffix.PublicSuffixDatabase
  *
  * ### Warning: This is a non-final API.
  *
- * As of OkHttp 3.14, this feature is an unstable preview: the API is subject to change, and the
- * implementation is incomplete. We expect that OkHttp 4.6 or 4.7 will finalize this API. Until
+ * As of OkHttp 4.9, this feature is an unstable preview: the API is subject to change, and the
+ * implementation is incomplete. We expect that OkHttp 4.11 or 4.12 will finalize this API. Until
  * then, expect API and behavior changes when you update your OkHttp dependency.**
  *
  * [doh_spec]: https://tools.ietf.org/html/draft-ietf-doh-dns-over-https-13
  */
 class DnsOverHttps internal constructor(
-  @get:JvmName("client") val client: OkHttpClient,
+  @get:JvmName("client") val client: Call.Factory,
   @get:JvmName("url") val url: HttpUrl,
   @get:JvmName("includeIPv6") val includeIPv6: Boolean,
   @get:JvmName("post") val post: Boolean,
   @get:JvmName("resolvePrivateAddresses") val resolvePrivateAddresses: Boolean,
   @get:JvmName("resolvePublicAddresses") val resolvePublicAddresses: Boolean
-) : Dns {
-  @Throws(UnknownHostException::class)
-  override fun lookup(hostname: String): List<InetAddress> {
+) : AsyncDns {
+  override fun lookup(hostname: String): Flow<InetAddress> {
     if (!resolvePrivateAddresses || !resolvePublicAddresses) {
       val privateHost = isPrivateHost(hostname)
 
@@ -77,8 +77,7 @@ class DnsOverHttps internal constructor(
     return lookupHttps(hostname)
   }
 
-  @Throws(UnknownHostException::class)
-  private fun lookupHttps(hostname: String): List<InetAddress> {
+  private fun lookupHttps(hostname: String): Flow<InetAddress> {
     val networkRequests = ArrayList<Call>(2)
     val failures = ArrayList<Exception>(2)
     val results = ArrayList<InetAddress>(5)
@@ -184,7 +183,7 @@ class DnsOverHttps internal constructor(
   }
 
   private fun getCacheOnlyResponse(request: Request): Response? {
-    if (!post && client.cache != null) {
+    if (!post) {
       try {
         // Use the cache without hitting the network first
         // 504 code indicates that the Cache is stale

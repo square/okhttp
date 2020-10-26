@@ -161,7 +161,7 @@ public class DnsOverHttpsTest {
   @Test public void usesCache() throws Exception {
     Cache cache = new Cache(new File("./target/DnsOverHttpsTest.cache"), 100 * 1024);
     OkHttpClient cachedClient = bootstrapClient.newBuilder().cache(cache).build();
-    DnsOverHttps cachedDns = buildLocalhost(cachedClient, false);
+    Dns cachedDns = buildLocalhost(cachedClient, false);
 
     server.enqueue(dnsResponse(
         "0000818000010003000000000567726170680866616365626f6f6b03636f6d0000010001c00c00050001"
@@ -184,7 +184,7 @@ public class DnsOverHttpsTest {
   @Test public void usesCacheOnlyIfFresh() throws Exception {
     Cache cache = new Cache(new File("./target/DnsOverHttpsTest.cache"), 100 * 1024);
     OkHttpClient cachedClient = bootstrapClient.newBuilder().cache(cache).build();
-    DnsOverHttps cachedDns = buildLocalhost(cachedClient, false);
+    Dns cachedDns = buildLocalhost(cachedClient, false);
 
     server.enqueue(dnsResponse(
         "0000818000010003000000000567726170680866616365626f6f6b03636f6d0000010001c00c00050001"
@@ -222,13 +222,13 @@ public class DnsOverHttpsTest {
         .addHeader("content-length", s.length() / 2);
   }
 
-  private DnsOverHttps buildLocalhost(OkHttpClient bootstrapClient, boolean includeIPv6) {
+  private Dns buildLocalhost(OkHttpClient bootstrapClient, boolean includeIPv6) {
     HttpUrl url = server.url("/lookup?ct");
     return new DnsOverHttps.Builder().client(bootstrapClient)
         .includeIPv6(includeIPv6)
         .resolvePrivateAddresses(true)
         .url(url)
-        .build();
+        .build().toDns();
   }
 
   private static InetAddress address(String host) {
