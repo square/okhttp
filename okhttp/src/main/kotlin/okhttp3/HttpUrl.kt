@@ -293,7 +293,7 @@ class HttpUrl internal constructor(
    * The decoded username, or an empty string if none is present.
    *
    * | URL                              | `username()` |
-   * | :------------------------------- | :----------- |
+   * |  |  |
    * | `http://host/`                   | `""`         |
    * | `http://username@host/`          | `"username"` |
    * | `http://username:password@host/` | `"username"` |
@@ -305,7 +305,7 @@ class HttpUrl internal constructor(
    * Returns the decoded password, or an empty string if none is present.
    *
    * | URL                              | `password()` |
-   * | :------------------------------- | :----------- |
+   * |  |  |
    * | `http://host/`                   | `""`         |
    * | `http://username@host/`          | `""`         |
    * | `http://username:password@host/` | `"password"` |
@@ -325,7 +325,7 @@ class HttpUrl internal constructor(
    *  * An encoded IDN, like `xn--n3h.net`.
    *
    * | URL                   | `host()`        |
-   * | :-------------------- | :-------------- |
+   * |  |  |
    * | `http://android.com/` | `"android.com"` |
    * | `http://127.0.0.1/`   | `"127.0.0.1"`   |
    * | `http://[::1]/`       | `"::1"`         |
@@ -339,7 +339,7 @@ class HttpUrl internal constructor(
    * `https://square.com/`. The result is in `[1..65535]`.
    *
    * | URL                 | `port()` |
-   * | :------------------ | :------- |
+   * |  |  |
    * | `http://host/`      | `80`     |
    * | `http://host:8000/` | `8000`   |
    * | `https://host/`     | `443`    |
@@ -351,7 +351,7 @@ class HttpUrl internal constructor(
    * never empty though it may contain a single empty string.
    *
    * | URL                      | `pathSegments()`    |
-   * | :----------------------- | :------------------ |
+   * |  |  |
    * | `http://host/`           | `[""]`              |
    * | `http://host/a/b/c"`     | `["a", "b", "c"]`   |
    * | `http://host/a/b%20c/d"` | `["a", "b c", "d"]` |
@@ -370,7 +370,6 @@ class HttpUrl internal constructor(
    * fragment.
    *
    * | URL                    | `fragment()` |
-   * | :--------------------- | :----------- |
    * | `http://host/`         | null         |
    * | `http://host/#`        | `""`         |
    * | `http://host/#abc`     | `"abc"`      |
@@ -424,7 +423,7 @@ class HttpUrl internal constructor(
    * The username, or an empty string if none is set.
    *
    * | URL                              | `encodedUsername()` |
-   * | :------------------------------- | :------------------ |
+   * |  |  |
    * | `http://host/`                   | `""`                |
    * | `http://username@host/`          | `"username"`        |
    * | `http://username:password@host/` | `"username"`        |
@@ -442,7 +441,7 @@ class HttpUrl internal constructor(
    * The password, or an empty string if none is set.
    *
    * | URL                              | `encodedPassword()` |
-   * | :--------------------------------| :------------------ |
+   * | |  |
    * | `http://host/`                   | `""`                |
    * | `http://username@host/`          | `""`                |
    * | `http://username:password@host/` | `"password"`        |
@@ -461,7 +460,7 @@ class HttpUrl internal constructor(
    * path, like 3 in `http://host/a/b/c`. This is always at least 1.
    *
    * | URL                  | `pathSize()` |
-   * | :------------------- | :----------- |
+   * |  |  |
    * | `http://host/`       | `1`          |
    * | `http://host/a/b/c`  | `3`          |
    * | `http://host/a/b/c/` | `4`          |
@@ -473,7 +472,7 @@ class HttpUrl internal constructor(
    * start with `"/"`.
    *
    * | URL                     | `encodedPath()` |
-   * | :---------------------- | :-------------- |
+   * |  |  |
    * | `http://host/`          | `"/"`           |
    * | `http://host/a/b/c`     | `"/a/b/c"`      |
    * | `http://host/a/b%20c/d` | `"/a/b%20c/d"`  |
@@ -490,7 +489,7 @@ class HttpUrl internal constructor(
    * list is never empty though it may contain a single empty string.
    *
    * | URL                     | `encodedPathSegments()` |
-   * | :---------------------- | :---------------------- |
+   * |  |  |
    * | `http://host/`          | `[""]`                  |
    * | `http://host/a/b/c`     | `["a", "b", "c"]`       |
    * | `http://host/a/b%20c/d` | `["a", "b%20c", "d"]`   |
@@ -515,7 +514,7 @@ class HttpUrl internal constructor(
    * (for URLs with no query), empty (for URLs with an empty query) or non-empty (all other URLs).
    *
    * | URL                               | `encodedQuery()`       |
-   * | :-------------------------------- | :--------------------- |
+   * |  |  |
    * | `http://host/`                    | null                   |
    * | `http://host/?`                   | `""`                   |
    * | `http://host/?a=apple&k=key+lime` | `"a=apple&k=key+lime"` |
@@ -536,7 +535,7 @@ class HttpUrl internal constructor(
    * individual query parameters.
    *
    * | URL                               | `query()`              |
-   * | :-------------------------------- | :--------------------- |
+   * |  |  |
    * | `http://host/`                    | null                   |
    * | `http://host/?`                   | `""`                   |
    * | `http://host/?a=apple&k=key+lime` | `"a=apple&k=key lime"` |
@@ -557,7 +556,7 @@ class HttpUrl internal constructor(
    * query.
    *
    * | URL                               | `querySize()` |
-   * | :-------------------------------- | :------------ |
+   * |  |  |
    * | `http://host/`                    | `0`           |
    * | `http://host/?`                   | `1`           |
    * | `http://host/?a=apple&k=key+lime` | `2`           |
@@ -574,7 +573,7 @@ class HttpUrl internal constructor(
    * parameter.
    *
    * | URL                               | `queryParameter("a")` |
-   * | :-------------------------------- | :-------------------- |
+   * |  |  |
    * | `http://host/`                    | null                  |
    * | `http://host/?`                   | null                  |
    * | `http://host/?a=apple&k=key+lime` | `"apple"`             |
@@ -596,7 +595,7 @@ class HttpUrl internal constructor(
    * `http://host/?a=apple&b=banana`. If this URL has no query this is the empty set.
    *
    * | URL                               | `queryParameterNames()` |
-   * | :-------------------------------- | :---------------------- |
+   * |  |  |
    * | `http://host/`                    | `[]`                    |
    * | `http://host/?`                   | `[""]`                  |
    * | `http://host/?a=apple&k=key+lime` | `["a", "k"]`            |
@@ -619,7 +618,7 @@ class HttpUrl internal constructor(
    * `http://host/?a=apple&b=banana`.
    *
    * | URL                               | `queryParameterValues("a")` | `queryParameterValues("b")` |
-   * | :-------------------------------- | :-------------------------- | :-------------------------- |
+   * |  |  |  |
    * | `http://host/`                    | `[]`                        | `[]`                        |
    * | `http://host/?`                   | `[]`                        | `[]`                        |
    * | `http://host/?a=apple&k=key+lime` | `["apple"]`                 | `[]`                        |
@@ -643,7 +642,7 @@ class HttpUrl internal constructor(
    * `index` is not less than the [query size][querySize].
    *
    * | URL                               | `queryParameterName(0)` | `queryParameterName(1)` |
-   * | :-------------------------------- | :---------------------- | :---------------------- |
+   * |  |  |  |
    * | `http://host/`                    | exception               | exception               |
    * | `http://host/?`                   | `""`                    | exception               |
    * | `http://host/?a=apple&k=key+lime` | `"a"`                   | `"k"`                   |
@@ -661,7 +660,7 @@ class HttpUrl internal constructor(
    * than the [query size][querySize].
    *
    * | URL                               | `queryParameterValue(0)` | `queryParameterValue(1)` |
-   * | :-------------------------------- | :----------------------- | :----------------------- |
+   * |  |  |  |
    * | `http://host/`                    | exception                | exception                |
    * | `http://host/?`                   | null                     | exception                |
    * | `http://host/?a=apple&k=key+lime` | `"apple"`                | `"key lime"`             |
@@ -678,7 +677,6 @@ class HttpUrl internal constructor(
    * no fragment.
    *
    * | URL                    | `encodedFragment()` |
-   * | :--------------------- | :------------------ |
    * | `http://host/`         | null                |
    * | `http://host/#`        | `""`                |
    * | `http://host/#abc`     | `"abc"`             |
@@ -757,7 +755,7 @@ class HttpUrl internal constructor(
    * Instead, DNS is the recommended source for that information.
    *
    * | URL                           | `topPrivateDomain()` |
-   * | :---------------------------- | :------------------- |
+   * |  |  |
    * | `http://google.com`           | `"google.com"`       |
    * | `http://adwords.google.co.uk` | `"google.co.uk"`     |
    * | `http://square`               | null                 |
