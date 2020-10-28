@@ -61,7 +61,7 @@ object OkHostnameVerifier : HostnameVerifier {
 
   /** Returns true if [certificate] matches [hostname]. */
   private fun verifyHostname(hostname: String, certificate: X509Certificate): Boolean {
-    val hostname = hostname.toLowerCase(Locale.US)
+    val hostname = DnsUtils.normalizeIA5String(hostname)
     return getSubjectAltNames(certificate, ALT_DNS_NAME).any {
       verifyHostname(hostname, it)
     }
@@ -108,7 +108,7 @@ object OkHostnameVerifier : HostnameVerifier {
     }
     // Hostname and pattern are now absolute domain names.
 
-    pattern = pattern.toLowerCase(Locale.US)
+    pattern = DnsUtils.normalizeIA5String(pattern)
     // Hostname and pattern are now in lower case -- domain names are case-insensitive.
 
     if ("*" !in pattern) {
