@@ -18,17 +18,21 @@
 package okhttp3.internal.tls;
 
 import java.io.ByteArrayInputStream;
+import java.net.IDN;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSession;
 import javax.security.auth.x500.X500Principal;
 import okhttp3.FakeSSLSession;
+import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
+import okhttp3.tls.HeldCertificate;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static okhttp3.internal.HostnamesKt.toCanonicalHost;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -552,6 +556,32 @@ public final class HostnameVerifierTest {
     assertThat(verifier.verify("192.168.1.1", session)).isTrue();
     assertThat(verifier.verify("::ffff:192.168.1.1", session)).isTrue();
     assertThat(verifier.verify("0:0:0:0:0:FFFF:C0A8:0101", session)).isTrue();
+  }
+
+  @Test public void generatedCertificate() throws Exception {
+    HeldCertificate heldCertificate = new HeldCertificate.Builder()
+        .commonName("Foo Corp")
+        .addSubjectAlternativeName("foo.com")
+        .build();
+
+    SSLSession session = session(heldCertificate.certificatePem());
+    assertThat(verifier.verify("foo.com", session)).isTrue();
+    assertThat(verifier.verify("bar.com", session)).isFalse();
+  }
+
+  @Test public void specialK() throws Exception {
+    HeldCertificate heldCertificate = new HeldCertificate.Builder()
+        .commonName("Foo Corp")
+        .addSubjectAlternativeName("k.com")
+        .build();
+
+    SSLSession session = session(heldCertificate.certificatePem());
+    assertThat(verifier.verify("foo.com", session)).isFalse();
+    assertThat(verifier.verify("bar.com", session)).isFalse();
+    assertThat(verifier.verify("k.com", session)).isTrue();
+    assertThat(verifier.verify("K.com", session)).isTrue();
+
+    assertThat(verifier.verify("\u212A.com", session)).isFalse();
   }
 
   @Test public void verifyAsIpAddress() {
