@@ -32,10 +32,13 @@ package okhttp3.internal.tls
  * https://raw.githubusercontent.com/apache/httpcomponents-client/master/httpclient5/src/main/java/org/apache/hc/client5/http/utils/DnsUtils.java
  */
 internal object DnsUtils {
-  private fun isIA5(c: Char): Boolean {
-    return c < 128.toChar()
-  }
-
+  /**
+   * This strict interpretation of isUpper for IA5String achieves two things.
+   * Firstly it avoids converting Kelvin (k) to lowercase k.
+   * Secondly it avoids the simple and efficient lowercase ASCII conversion method below
+   * from being applied to other unicode uppercase characters and just moving them to another
+   * undesired unicode character.
+   */
   private fun isUpper(c: Char): Boolean {
     return c in 'A'..'Z'
   }
@@ -45,10 +48,6 @@ internal object DnsUtils {
     var pos = 0
     var remaining = s.length
     while (remaining > 0) {
-      // TODO enable if we agree to enforce here
-//      check (isIA5(s[pos])) {
-//        "Invalid char ${s[pos]} in hostname $s"
-//      }
       if (isUpper(s[pos])) {
         break
       }
