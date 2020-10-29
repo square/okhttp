@@ -16,6 +16,7 @@
 package mockwebserver3.junit5.internal
 
 import mockwebserver3.MockWebServer
+import okhttp3.internal.SuppressSignatureCheck
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -26,6 +27,7 @@ import java.util.logging.Level
 import java.util.logging.Logger
 
 /** Runs MockWebServer for the duration of a single test method. */
+@SuppressSignatureCheck
 class MockWebServerExtension: BeforeEachCallback, ParameterResolver {
   private val ExtensionContext.resource: Resource
     get() = getStore(ExtensionContext.Namespace.GLOBAL)
