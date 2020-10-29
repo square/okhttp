@@ -71,8 +71,7 @@ fun main() {
   val summary = summaryListener.summary
   summary.printTo(PrintWriter(System.out))
 
-  // TODO proper return code
-  exitProcess(-1)
+  exitProcess(if (summary.testsFailedCount != 0L) -1 else 0)
 }
 
 // https://github.com/junit-team/junit5/issues/2469

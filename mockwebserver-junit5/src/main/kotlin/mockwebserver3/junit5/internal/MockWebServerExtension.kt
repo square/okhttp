@@ -29,7 +29,7 @@ import java.util.logging.Logger
 class MockWebServerExtension: BeforeEachCallback, ParameterResolver {
   private val ExtensionContext.resource: Resource
     get() = getStore(ExtensionContext.Namespace.GLOBAL)
-      .getOrComputeIfAbsent(Resource::class.java)
+      .getOrComputeIfAbsent(Resource::class.java) { Resource() } as Resource
 
   private class Resource : ExtensionContext.Store.CloseableResource {
     private val servers = mutableListOf<MockWebServer>()
