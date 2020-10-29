@@ -40,6 +40,7 @@ val knownTests = listOf(okhttp3.sse.internal.EventSourceHttpTest::class.java,
 fun main() {
   System.setProperty("junit.jupiter.extensions.autodetection.enabled", "true")
 
+  // raised https://github.com/junit-team/junit5/issues/2468
   val config = object : LauncherConfig {
     override fun isTestEngineAutoRegistrationEnabled(): Boolean = false
 
@@ -74,6 +75,7 @@ fun main() {
   exitProcess(-1)
 }
 
+// https://github.com/junit-team/junit5/issues/2469
 private fun treeListener(): TestExecutionListener {
   return Class.forName(
     "org.junit.platform.console.tasks.TreePrintingListener").declaredConstructors.first()
