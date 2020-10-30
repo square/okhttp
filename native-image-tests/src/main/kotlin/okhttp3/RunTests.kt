@@ -40,23 +40,13 @@ val knownTests = listOf(okhttp3.sse.internal.EventSourceHttpTest::class.java,
 fun main() {
   System.setProperty("junit.jupiter.extensions.autodetection.enabled", "true")
 
-  // raised https://github.com/junit-team/junit5/issues/2468
-  val config = object : LauncherConfig {
-    override fun isTestEngineAutoRegistrationEnabled(): Boolean = false
-
-    override fun isTestExecutionListenerAutoRegistrationEnabled(): Boolean = false
-
-    override fun isPostDiscoveryFilterAutoRegistrationEnabled(): Boolean = false
-
-    override fun getAdditionalTestEngines(): MutableCollection<TestEngine> = mutableListOf(
-      JupiterTestEngine())
-
-    override fun getAdditionalTestExecutionListeners(): MutableCollection<TestExecutionListener> = mutableListOf()
-
-    override fun getAdditionalPostDiscoveryFilters(): MutableCollection<PostDiscoveryFilter> = mutableListOf()
-  }
-
-  val launcher: Launcher = LauncherFactory.create(config)
+  val config2 = LauncherConfig.builder()
+    .enableTestExecutionListenerAutoRegistration(false)
+    .enableTestEngineAutoRegistration(false)
+    .enablePostDiscoveryFilterAutoRegistration(false)
+    .addTestEngines(JupiterTestEngine())
+    .build()
+  val launcher: Launcher = LauncherFactory.create(config2)
 
   val request: LauncherDiscoveryRequest = LauncherDiscoveryRequestBuilder.request()
     .selectors(knownTests.map { selectClass(it) })
