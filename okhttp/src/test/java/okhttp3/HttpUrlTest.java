@@ -1784,6 +1784,14 @@ public final class HttpUrlTest {
     assertThat(parse("http://\u212A").host()).isEqualTo("k");
   }
 
+  @Test
+  public void quirks() throws Exception {
+    assertThat(parse("http://facebook.com").host()).isEqualTo("facebook.com");
+    assertThat(parse("http://facebooK.com").host()).isEqualTo("facebook.com");
+    assertThat(parse("http://Facebook.com").host()).isEqualTo("facebook.com");
+    assertThat(parse("http://FacebooK.com").host()).isEqualTo("facebook.com");
+  }
+
   private void assertInvalid(String string, String exceptionMessage) {
     if (useGet) {
       try {
