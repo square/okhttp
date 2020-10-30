@@ -18,8 +18,10 @@ package okhttp3.internal.tls
 
 import okhttp3.internal.canParseAsIpAddress
 import okhttp3.internal.toCanonicalHost
+import okio.utf8Size
 import java.security.cert.CertificateParsingException
 import java.security.cert.X509Certificate
+import java.util.Locale
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLException
 import javax.net.ssl.SSLSession
@@ -60,9 +62,21 @@ object OkHostnameVerifier : HostnameVerifier {
 
   /** Returns true if [certificate] matches [hostname]. */
   private fun verifyHostname(hostname: String, certificate: X509Certificate): Boolean {
-    val hostname = DnsUtils.normalizeIA5String(hostname)
+    val hostname = hostname.asciiToLowercase()
     return getSubjectAltNames(certificate, ALT_DNS_NAME).any {
       verifyHostname(hostname, it)
+    }
+  }
+
+  /**
+   * This is like [toLowerCase] except that it does nothing if this contains any non-ASCII
+   * characters. We want to avoid lower casing special chars like U+212A (Kelvin symbol) because
+   * they can return ASCII characters that match real hostnames.
+   */
+  private fun String.asciiToLowercase(): String {
+    return when {
+      length == utf8Size().toInt() -> toLowerCase(Locale.US) // This is an ASCII string.
+      else -> this
     }
   }
 
@@ -107,7 +121,7 @@ object OkHostnameVerifier : HostnameVerifier {
     }
     // Hostname and pattern are now absolute domain names.
 
-    pattern = DnsUtils.normalizeIA5String(pattern)
+    pattern = pattern.asciiToLowercase()
     // Hostname and pattern are now in lower case -- domain names are case-insensitive.
 
     if ("*" !in pattern) {
