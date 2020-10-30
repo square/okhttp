@@ -670,7 +670,9 @@ public final class HostnameVerifierTest {
         + "Ij1qLQ/YI8OogZPMk7YY46/ydWWp7UpD47zy/vKmm4pOc8Glc8MoDD6UADs=\n"
         + "-----END CERTIFICATE-----\n");
 
+    // Replacement characters are deliberate, from certificate loading.
     assertThat(verifier.verify("���.com", session)).isFalse();
+    assertThat(verifier.verify("℡.com", session)).isTrue();
   }
 
   @Test
