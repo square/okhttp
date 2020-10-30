@@ -39,6 +39,9 @@ import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeThat
 import org.junit.Assume.assumeTrue
 import org.junit.AssumptionViolatedException
+import org.junit.jupiter.api.extension.AfterEachCallback
+import org.junit.jupiter.api.extension.BeforeEachCallback
+import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.rules.TestRule
 import org.junit.runners.model.Statement
 import org.openjsse.net.ssl.OpenJSSE
@@ -53,8 +56,22 @@ import org.openjsse.net.ssl.OpenJSSE
 open class PlatformRule @JvmOverloads constructor(
   val requiredPlatformName: String? = null,
   val platform: Platform? = null
-) : TestRule {
+) : TestRule, BeforeEachCallback, AfterEachCallback {
   private val versionChecks = mutableListOf<Pair<Matcher<out Any>, Matcher<out Any>>>()
+
+  override fun beforeEach(context: ExtensionContext) {
+    setupPlatform()
+  }
+
+  override fun afterEach(context: ExtensionContext) {
+    resetPlatform()
+
+    // TODO(jwilson): JUnit 4 discards the exception if it is expected. Can we do that in JUnit 5?
+
+    if (context.executionException.isEmpty) {
+      failIfExpected()
+    }
+  }
 
   override fun apply(
     base: Statement,
