@@ -646,6 +646,33 @@ public final class HostnameVerifierTest {
     assertThat(verifier.verify("K.com", session)).isFalse();
   }
 
+  @Test public void replacementCharacter() throws Exception {
+    // $ cat ./cert.cnf
+    // [req]
+    // distinguished_name=distinguished_name
+    // req_extensions=req_extensions
+    // x509_extensions=x509_extensions
+    // [distinguished_name]
+    // [req_extensions]
+    // [x509_extensions]
+    // subjectAltName=DNS:℡.com,DNS:K.com
+    //
+    // $ openssl req -x509 -nodes -days 36500 -subj '/CN=foo.com' -config ./cert.cnf \
+    //     -newkey rsa:512 -out cert.pem
+    SSLSession session = session(""
+        + "-----BEGIN CERTIFICATE-----\n"
+        + "MIIBSDCB86ADAgECAhRLR4TGgXBegg0np90FZ1KPeWpDtjANBgkqhkiG9w0BAQsF\n"
+        + "ADASMRAwDgYDVQQDDAdmb28uY29tMCAXDTIwMTAyOTA2NTkwNVoYDzIxMjAxMDA1\n"
+        + "MDY1OTA1WjASMRAwDgYDVQQDDAdmb28uY29tMFwwDQYJKoZIhvcNAQEBBQADSwAw\n"
+        + "SAJBALQcTVW9aW++ClIV9/9iSzijsPvQGEu/FQOjIycSrSIheZyZmR8bluSNBq0C\n"
+        + "9fpalRKZb0S2tlCTi5WoX8d3K30CAwEAAaMfMB0wGwYDVR0RBBQwEoIH4oShLmNv\n"
+        + "bYIH4oSqLmNvbTANBgkqhkiG9w0BAQsFAANBAA1+/eDvSUGv78iEjNW+1w3OPAwt\n"
+        + "Ij1qLQ/YI8OogZPMk7YY46/ydWWp7UpD47zy/vKmm4pOc8Glc8MoDD6UADs=\n"
+        + "-----END CERTIFICATE-----\n");
+
+    assertThat(verifier.verify("���.com", session)).isFalse();
+  }
+
   @Test
   public void thatCatchesErrorsWithBadSession() {
     HostnameVerifier localVerifier = new OkHttpClient().hostnameVerifier();
