@@ -29,6 +29,12 @@ class TestRegistration: Feature {
     listener.declaredConstructors.forEach {
       RuntimeReflection.register(it)
     }
+
+    val timeoutResource = Class.forName("org.junit.jupiter.engine.extension.TimeoutExtension\$ExecutorResource")
+    RuntimeReflection.register(timeoutResource)
+    timeoutResource.declaredConstructors.forEach {
+      RuntimeReflection.register(it)
+    }
   }
 
   private fun registerTest(java: Class<*>) {

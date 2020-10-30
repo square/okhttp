@@ -138,7 +138,7 @@ import okio.buffer
  *
  * [rfc_7234]: http://tools.ietf.org/html/rfc7234
  */
-class Cache internal constructor(
+class Cache constructor(
   directory: File,
   maxSize: Long,
   fileSystem: FileSystem

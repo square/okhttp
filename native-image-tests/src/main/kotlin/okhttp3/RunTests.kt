@@ -35,6 +35,7 @@ val knownTests = listOf(okhttp3.sse.internal.EventSourceHttpTest::class.java,
   okhttp3.logging.LoggingEventListenerTest::class.java,
   okhttp3.logging.HttpLoggingInterceptorTest::class.java,
   okhttp3.sse.internal.ServerSentEventIteratorTest::class.java,
+  okhttp3.CallTest::class.java,
   SampleTest::class.java)
 
 fun main() {

@@ -66,7 +66,7 @@ private val BROWSER_COMPATIBLE_DATE_FORMATS =
     arrayOfNulls<DateFormat>(BROWSER_COMPATIBLE_DATE_FORMAT_STRINGS.size)
 
 /** Returns the date for this string, or null if the value couldn't be parsed. */
-internal fun String.toHttpDateOrNull(): Date? {
+fun String.toHttpDateOrNull(): Date? {
   if (isEmpty()) return null
 
   val position = ParsePosition(0)
@@ -103,4 +103,4 @@ internal fun String.toHttpDateOrNull(): Date? {
 }
 
 /** Returns the string for this date. */
-internal fun Date.toHttpDateString(): String = STANDARD_DATE_FORMAT.get().format(this)
+fun Date.toHttpDateString(): String = STANDARD_DATE_FORMAT.get().format(this)

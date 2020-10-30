@@ -24,7 +24,6 @@ dependencies {
   testImplementation deps.assertj
   testCompileOnly deps.jsr305
   testImplementation deps.junit5Api
-  testRuntimeOnly deps.junit5Jupiter
 }
 
 afterEvaluate { project ->

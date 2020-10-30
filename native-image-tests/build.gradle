@@ -17,9 +17,12 @@ dependencies {
   implementation project(':okhttp-sse')
   implementation deps.assertj
   implementation project(':mockwebserver')
+  implementation project(':mockwebserver-deprecated')
+  implementation project(':okhttp-urlconnection')
+  implementation project(':mockwebserver-junit4')
   implementation project(':mockwebserver-junit5')
+  implementation deps.bndResolve
   implementation deps.junit5Api
-  implementation deps.junit5Jupiter
 
   implementation("org.graalvm.nativeimage:svm:20.2.0") {
     // https://youtrack.jetbrains.com/issue/KT-29513
@@ -46,6 +49,7 @@ sourceSets {
 
   main.java.srcDirs += project.file("../okhttp-logging-interceptor/src/test/java")
   main.java.srcDirs += project.file("../okhttp-sse/src/test/java")
+  main.java.srcDirs += project.file("../okhttp/src/test/java")
 }
 
 task seedGraalvmConfig(type: Exec) {

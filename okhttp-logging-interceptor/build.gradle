@@ -26,7 +26,6 @@ dependencies {
   testImplementation project(':okhttp-tls')
   testImplementation deps.assertj
   testImplementation deps.junit5Api
-  testRuntimeOnly deps.junit5Jupiter
 }
 
 afterEvaluate { project ->
