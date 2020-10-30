@@ -6,9 +6,9 @@ plugins {
 
 dependencies {
   implementation deps.assertj
-  implementation "org.junit.jupiter:junit-jupiter-api:5.7.0"
-  implementation "org.junit.jupiter:junit-jupiter-engine:5.7.0"
-  implementation "org.junit.platform:junit-platform-console:1.7.0"
+  implementation deps.junit5Api
+  implementation deps.junit5JupiterEngine
+  implementation deps.junitPlatformConsole
 
   implementation project(':okhttp')
   implementation project(':okhttp-logging-interceptor')
