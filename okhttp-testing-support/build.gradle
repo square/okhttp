@@ -1,6 +1,7 @@
 dependencies {
   api project(':okhttp')
   api deps.junit
+  api deps.junit5Api
   api deps.assertj
   api deps.bouncycastle
   implementation deps.bouncycastlepkix
