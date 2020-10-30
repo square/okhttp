@@ -68,7 +68,7 @@ open class PlatformRule @JvmOverloads constructor(
 
     // TODO(jwilson): JUnit 4 discards the exception if it is expected. Can we do that in JUnit 5?
 
-    if (context.executionException.isEmpty) {
+    if (!context.executionException.isPresent) {
       failIfExpected()
     }
   }
