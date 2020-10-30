@@ -27,6 +27,7 @@ import okhttp3.FakeSSLSession;
 import okhttp3.OkHttpClient;
 import okhttp3.internal.Util;
 import okhttp3.tls.HeldCertificate;
+import okhttp3.tls.internal.TlsUtil;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -646,11 +647,14 @@ public final class HostnameVerifierTest {
   }
 
   @Test
-  public void thatOkHttpVerifierIsNotTrulyInternal() {
-    verifier = new OkHttpClient().hostnameVerifier();
+  public void thatCatchesErrorsWithBadSession() {
+    HostnameVerifier localVerifier = new OkHttpClient().hostnameVerifier();
 
     // Since this is public API, okhttp3.internal.tls.OkHostnameVerifier.verify is also
     assertThat(verifier).isInstanceOf(OkHostnameVerifier.class);
+
+    SSLSession session = TlsUtil.localhost().sslContext().createSSLEngine().getSession();
+    assertThat(localVerifier.verify("\uD83D\uDCA9.com", session)).isFalse();
   }
 
   @Test public void verifyAsIpAddress() {
