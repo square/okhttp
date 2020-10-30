@@ -24,6 +24,9 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
+import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -32,38 +35,50 @@ import org.junit.runners.model.Statement;
  * A log handler that records which log messages were published so that a calling test can make
  * assertions about them.
  */
-public final class TestLogHandler extends Handler implements TestRule {
+public final class TestLogHandler implements TestRule, BeforeEachCallback, AfterEachCallback {
   private final Logger logger;
   private final BlockingQueue<String> logs = new LinkedBlockingQueue<>();
+
+  private final Handler handler = new Handler() {
+    @Override public void publish(LogRecord logRecord) {
+      logs.add(logRecord.getLevel() + ": " + logRecord.getMessage());
+    }
+
+    @Override public void flush() {
+    }
+
+    @Override public void close() throws SecurityException {
+    }
+  };
+
+  private Level previousLevel;
 
   public TestLogHandler(Class<?> loggerName) {
     logger = Logger.getLogger(loggerName.getName());
   }
 
+  @Override public void beforeEach(ExtensionContext context) {
+    previousLevel = logger.getLevel();
+    logger.addHandler(handler);
+    logger.setLevel(Level.FINEST);
+  }
+
+  @Override public void afterEach(ExtensionContext context) {
+    logger.setLevel(previousLevel);
+    logger.removeHandler(handler);
+  }
+
   @Override public Statement apply(Statement base, Description description) {
     return new Statement() {
       @Override public void evaluate() throws Throwable {
-        Level previousLevel = logger.getLevel();
-        logger.addHandler(TestLogHandler.this);
-        logger.setLevel(Level.FINEST);
+        beforeEach(null);
         try {
           base.evaluate();
         } finally {
-          logger.setLevel(previousLevel);
-          logger.removeHandler(TestLogHandler.this);
+          afterEach(null);
         }
       }
     };
-  }
-
-  @Override public void publish(LogRecord logRecord) {
-    logs.add(logRecord.getLevel() + ": " + logRecord.getMessage());
-  }
-
-  @Override public void flush() {
-  }
-
-  @Override public void close() {
   }
 
   public List<String> takeAll() {

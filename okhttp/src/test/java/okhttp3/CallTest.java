@@ -60,7 +60,6 @@ import mockwebserver3.MockWebServer;
 import mockwebserver3.QueueDispatcher;
 import mockwebserver3.RecordedRequest;
 import mockwebserver3.SocketPolicy;
-import mockwebserver3.junit4.MockWebServerRule;
 import okhttp3.CallEvent.CallEnd;
 import okhttp3.CallEvent.ConnectStart;
 import okhttp3.CallEvent.ConnectionAcquired;
@@ -81,14 +80,12 @@ import okio.BufferedSource;
 import okio.ForwardingSource;
 import okio.GzipSink;
 import okio.Okio;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestRule;
-import org.junit.rules.Timeout;
-
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -103,17 +100,15 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 
+@Timeout(30)
 public final class CallTest {
-  @Rule public final PlatformRule platform = new PlatformRule();
-  @Rule public final TestRule timeout = new Timeout(30_000, TimeUnit.MILLISECONDS);
-  @Rule public final MockWebServerRule serverRule = new MockWebServerRule();
-  @Rule public final MockWebServerRule serverRule2 = new MockWebServerRule();
-  @Rule public final InMemoryFileSystem fileSystem = new InMemoryFileSystem();
-  @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
-  @Rule public final TestLogHandler testLogHandler = new TestLogHandler(OkHttpClient.class);
+  @RegisterExtension final PlatformRule platform = new PlatformRule();
+  @RegisterExtension final InMemoryFileSystem fileSystem = new InMemoryFileSystem();
+  @RegisterExtension final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
+  @RegisterExtension final TestLogHandler testLogHandler = new TestLogHandler(OkHttpClient.class);
 
-  private MockWebServer server = serverRule.getServer();
-  private MockWebServer server2 = serverRule2.getServer();
+  private final MockWebServer server;
+  private final MockWebServer server2;
   private RecordingEventListener listener = new RecordingEventListener();
   private HandshakeCertificates handshakeCertificates = localhost();
   private OkHttpClient client = clientTestRule.newClientBuilder()
@@ -122,12 +117,17 @@ public final class CallTest {
   private RecordingCallback callback = new RecordingCallback();
   private Cache cache = new Cache(new File("/cache/"), Integer.MAX_VALUE, fileSystem);
 
-  @Before public void setUp() {
+  public CallTest(MockWebServer server, MockWebServer server2) {
+    this.server = server;
+    this.server2 = server2;
+  }
+
+  @BeforeEach public void setUp() {
     platform.assumeNotOpenJSSE();
     platform.assumeNotBouncyCastle();
   }
 
-  @After public void tearDown() throws Exception {
+  @AfterEach public void tearDown() throws Exception {
     cache.delete();
   }
 
@@ -3330,7 +3330,7 @@ public final class CallTest {
   }
 
   /** https://github.com/square/okhttp/issues/4915 */
-  @Test @Ignore public void proxyDisconnectsAfterRequest() throws Exception {
+  @Test @Disabled public void proxyDisconnectsAfterRequest() throws Exception {
     server.useHttps(handshakeCertificates.sslSocketFactory(), true);
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST));
@@ -3474,7 +3474,7 @@ public final class CallTest {
     assertThat(server.takeRequest().getBody().readUtf8()).isEqualTo("abc");
   }
 
-  @Ignore // This may fail in DNS lookup, which we don't have timeouts for.
+  @Disabled // This may fail in DNS lookup, which we don't have timeouts for.
   @Test public void invalidHost() throws Exception {
     Request request = new Request.Builder()
         .url(HttpUrl.get("http://1234.1.1.1/"))

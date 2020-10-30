@@ -27,6 +27,9 @@ import okhttp3.internal.http2.Http2
 import okhttp3.testing.Flaky
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
+import org.junit.jupiter.api.extension.AfterEachCallback
+import org.junit.jupiter.api.extension.BeforeEachCallback
+import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
@@ -38,12 +41,14 @@ import org.junit.runners.model.Statement
  * Use [newClient] as a factory for a OkHttpClient instances. These instances are specifically
  * configured for testing.
  */
-class OkHttpClientTestRule : TestRule {
+class OkHttpClientTestRule : TestRule, BeforeEachCallback, AfterEachCallback {
   private val clientEventsList = mutableListOf<String>()
   private var testClient: OkHttpClient? = null
   private var uncaughtException: Throwable? = null
-  var logger: Logger? = null
-  lateinit var testName: String
+  private var logger: Logger? = null
+  private lateinit var testName: String
+  private var defaultUncaughtExceptionHandler: Thread.UncaughtExceptionHandler? = null
+  private var taskQueuesWereIdle: Boolean = false
 
   var recordEvents = true
   var recordTaskRunner = false
@@ -171,6 +176,69 @@ class OkHttpClientTestRule : TestRule {
     }
   }
 
+  override fun beforeEach(context: ExtensionContext) {
+    testName = context.displayName
+
+    beforeEach()
+  }
+
+  private fun beforeEach() {
+    defaultUncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler()
+    Thread.setDefaultUncaughtExceptionHandler { _, throwable ->
+      initUncaughtException(throwable)
+    }
+
+    taskQueuesWereIdle = TaskRunner.INSTANCE.activeQueues().isEmpty()
+
+    applyLogger {
+      addHandler(testLogHandler)
+      level = Level.FINEST
+      useParentHandlers = false
+    }
+  }
+
+  override fun afterEach(context: ExtensionContext) {
+    val failure = context.executionException.orElseGet { null }
+    val newFailure = afterEach(context.isFlaky(), failure)
+    if (failure == null && newFailure != null) throw newFailure
+  }
+
+  /** Returns the exception to fail with. */
+  private fun afterEach(isFlaky: Boolean, failure: Throwable?): Throwable? {
+    if (uncaughtException != null) {
+      return failure + AssertionError("uncaught exception thrown during test", uncaughtException)
+    }
+
+    if (isFlaky) {
+      logEvents()
+    }
+
+    LogManager.getLogManager().reset()
+
+    var result: Throwable? = failure
+    Thread.setDefaultUncaughtExceptionHandler(defaultUncaughtExceptionHandler)
+    try {
+      ensureAllConnectionsReleased()
+      releaseClient()
+    } catch (ae: AssertionError) {
+      result += ae
+    }
+
+    try {
+      if (taskQueuesWereIdle) {
+        ensureAllTaskQueuesIdle()
+      }
+    } catch (ae: AssertionError) {
+      result += ae
+    }
+
+    return result
+  }
+
+  private fun releaseClient() {
+    testClient?.dispatcher?.executorService?.shutdown()
+  }
+
   override fun apply(
     base: Statement,
     description: Description
@@ -178,79 +246,29 @@ class OkHttpClientTestRule : TestRule {
     return object : Statement() {
       override fun evaluate() {
         testName = description.methodName
+        beforeEach()
 
-        val defaultUncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler()
-        Thread.setDefaultUncaughtExceptionHandler { _, throwable ->
-          initUncaughtException(throwable)
-        }
-        val taskQueuesWereIdle = TaskRunner.INSTANCE.activeQueues().isEmpty()
         var failure: Throwable? = null
         try {
-          applyLogger {
-            addHandler(testLogHandler)
-            level = Level.FINEST
-            useParentHandlers = false
-          }
-
           base.evaluate()
-          if (uncaughtException != null) {
-            throw AssertionError("uncaught exception thrown during test", uncaughtException)
-          }
-          logEventsIfFlaky(description)
         } catch (t: Throwable) {
           failure = t
           logEvents()
-          throw t
-        } finally {
-          LogManager.getLogManager().reset()
-
-          Thread.setDefaultUncaughtExceptionHandler(defaultUncaughtExceptionHandler)
-          try {
-            ensureAllConnectionsReleased()
-            releaseClient()
-          } catch (ae: AssertionError) {
-            // Prefer keeping the inflight failure, but don't release this in-use client.
-            if (failure != null) {
-              failure.addSuppressed(ae)
-            } else {
-              failure = ae
-            }
-          }
-
-          try {
-            if (taskQueuesWereIdle) {
-              ensureAllTaskQueuesIdle()
-            }
-          } catch (ae: AssertionError) {
-            // Prefer keeping the inflight failure, but don't release this in-use client.
-            if (failure != null) {
-              failure.addSuppressed(ae)
-            } else {
-              failure = ae
-            }
-          }
-
-          if (failure != null) {
-            throw failure
-          }
         }
-      }
 
-      private fun releaseClient() {
-        testClient?.dispatcher?.executorService?.shutdown()
+        val newFailure = afterEach(description.isFlaky(), failure)
+        if (newFailure != null) throw newFailure
       }
     }
   }
 
-  private fun logEventsIfFlaky(description: Description) {
-    if (isTestFlaky(description)) {
-      logEvents()
-    }
-  }
+  private fun Description.isFlaky() =
+    annotations.any { it.annotationClass == Flaky::class } ||
+      testClass.annotations.any { it.annotationClass == Flaky::class }
 
-  private fun isTestFlaky(description: Description): Boolean {
-    return description.annotations.any { it.annotationClass == Flaky::class } ||
-        description.testClass.annotations.any { it.annotationClass == Flaky::class }
+  private fun ExtensionContext.isFlaky(): Boolean {
+    return (testMethod.orElseGet { null }?.isAnnotationPresent(Flaky::class.java) == true) ||
+      (testClass.orElseGet { null }?.isAnnotationPresent(Flaky::class.java) == true)
   }
 
   @Synchronized private fun logEvents() {
@@ -274,6 +292,14 @@ class OkHttpClientTestRule : TestRule {
         val addresses = Dns.SYSTEM.lookup(hostname)
         return listOf(addresses[0])
       }
+    }
+
+    private operator fun Throwable?.plus(throwable: Throwable): Throwable {
+      if (this != null) {
+        addSuppressed(throwable)
+        return this
+      }
+      return throwable
     }
   }
 }
