@@ -30,7 +30,6 @@ import okhttp3.OkHttpClient;
 import okhttp3.internal.Util;
 import okhttp3.tls.HeldCertificate;
 import okhttp3.tls.internal.TlsUtil;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -659,7 +658,7 @@ public final class HostnameVerifierTest {
     assertThat(verifier.verify("K.com", session)).isFalse();
   }
 
-  @NotNull private Stream<String> certificateSANs(X509Certificate peerCertificate)
+  private Stream<String> certificateSANs(X509Certificate peerCertificate)
       throws CertificateParsingException {
     return peerCertificate.getSubjectAlternativeNames().stream().map(c -> (String) c.get(1));
   }
