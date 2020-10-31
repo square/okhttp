@@ -41,21 +41,25 @@ val knownTests = listOf(okhttp3.sse.internal.EventSourceHttpTest::class.java,
 fun main() {
   System.setProperty("junit.jupiter.extensions.autodetection.enabled", "true")
 
-  val config2 = LauncherConfig.builder()
+  val summaryListener = SummaryGeneratingListener()
+  val treeListener = treeListener()
+
+  val jupiterTestEngine = JupiterTestEngine()
+
+  val config = LauncherConfig.builder()
     .enableTestExecutionListenerAutoRegistration(false)
     .enableTestEngineAutoRegistration(false)
     .enablePostDiscoveryFilterAutoRegistration(false)
-    .addTestEngines(JupiterTestEngine())
+    .addTestEngines(jupiterTestEngine)
+    .addTestExecutionListeners(summaryListener, treeListener, DotListener)
     .build()
-  val launcher: Launcher = LauncherFactory.create(config2)
+  val launcher: Launcher = LauncherFactory.create(config)
 
   val request: LauncherDiscoveryRequest = LauncherDiscoveryRequestBuilder.request()
+    // TODO replace junit.jupiter.extensions.autodetection.enabled with API approach.
+//    .enableImplicitConfigurationParameters(false)
     .selectors(knownTests.map { selectClass(it) })
     .build()
-
-  val summaryListener = SummaryGeneratingListener()
-  val treeListener = treeListener()
-  launcher.registerTestExecutionListeners(summaryListener, treeListener)
 
   val result = launcher.execute(request)
 
@@ -70,7 +74,6 @@ private fun treeListener(): TestExecutionListener {
   return Class.forName(
     "org.junit.platform.console.tasks.TreePrintingListener").declaredConstructors.first()
     .apply {
-      println(this)
       isAccessible = true
     }
     .newInstance(PrintWriter(System.out), false, Theme.UNICODE) as TestExecutionListener
