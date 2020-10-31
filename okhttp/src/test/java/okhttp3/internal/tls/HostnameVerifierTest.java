@@ -28,7 +28,6 @@ import okhttp3.OkHttpClient;
 import okhttp3.internal.Util;
 import okhttp3.tls.HeldCertificate;
 import okhttp3.tls.internal.TlsUtil;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -39,7 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * from the Apache HTTP Client test suite.
  */
 public final class HostnameVerifierTest {
-  private HostnameVerifier verifier = OkHostnameVerifier.INSTANCE;
+  private OkHostnameVerifier verifier = OkHostnameVerifier.INSTANCE;
 
   @Test public void verify() throws Exception {
     FakeSSLSession session = new FakeSSLSession();
@@ -151,7 +150,7 @@ public final class HostnameVerifierTest {
    * are parsed. Android fails to parse these, which means we fall back to the CN. The RI does parse
    * them, so the CN is unused.
    */
-  @Test @Ignore public void verifyNonAsciiSubjectAlt() throws Exception {
+  @Test public void verifyNonAsciiSubjectAlt() throws Exception {
     // CN=foo.com, subjectAlt=bar.com, subjectAlt=&#x82b1;&#x5b50;.co.jp
     // (hanako.co.jp in kanji)
     SSLSession session = session(""
@@ -336,7 +335,7 @@ public final class HostnameVerifierTest {
    * are parsed. Android fails to parse these, which means we fall back to the CN. The RI does parse
    * them, so the CN is unused.
    */
-  @Test @Ignore public void testWilcardNonAsciiSubjectAlt() throws Exception {
+  @Test public void testWilcardNonAsciiSubjectAlt() throws Exception {
     // CN=*.foo.com, subjectAlt=*.bar.com, subjectAlt=*.&#x82b1;&#x5b50;.co.jp
     // (*.hanako.co.jp in kanji)
     SSLSession session = session(""
@@ -672,7 +671,7 @@ public final class HostnameVerifierTest {
 
     // Replacement characters are deliberate, from certificate loading.
     assertThat(verifier.verify("���.com", session)).isFalse();
-    assertThat(verifier.verify("℡.com", session)).isTrue();
+    assertThat(verifier.verify("℡.com", session)).isFalse();
   }
 
   @Test
