@@ -37,11 +37,16 @@ object OkHostnameVerifier : HostnameVerifier {
   private const val ALT_IPA_NAME = 7
 
   override fun verify(host: String, session: SSLSession): Boolean {
-    return try {
-      verify(host, session.peerCertificates[0] as X509Certificate)
-    } catch (_: SSLException) {
+    return if (!host.isAscii()) {
       false
+    } else {
+      try {
+        verify(host, session.peerCertificates[0] as X509Certificate)
+      } catch (_: SSLException) {
+        false
+      }
     }
+
   }
 
   fun verify(host: String, certificate: X509Certificate): Boolean {
@@ -75,10 +80,13 @@ object OkHostnameVerifier : HostnameVerifier {
    */
   private fun String.asciiToLowercase(): String {
     return when {
-      length == utf8Size().toInt() -> toLowerCase(Locale.US) // This is an ASCII string.
+      isAscii() -> toLowerCase(Locale.US) // This is an ASCII string.
       else -> this
     }
   }
+
+  /** Returns true if the [String] is ASCII encoded (0-127). */
+  private fun String.isAscii() = length == utf8Size().toInt()
 
   /**
    * Returns true if [hostname] matches the domain name [pattern].
