@@ -15,21 +15,22 @@
  */
 package okhttp3
 
+import mockwebserver3.MockWebServer
 import okhttp3.TestUtil.assumeNetwork
-import okhttp3.mockwebserver.MockWebServer
 import okhttp3.testing.PlatformRule
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
-class BouncyCastleTest {
-  @JvmField @Rule var platform = PlatformRule()
-  @JvmField @Rule val clientTestRule = OkHttpClientTestRule()
-  @JvmField @Rule val server = MockWebServer()
+class BouncyCastleTest(
+  val server: MockWebServer
+) {
+  @JvmField @RegisterExtension var platform = PlatformRule()
+  @JvmField @RegisterExtension val clientTestRule = OkHttpClientTestRule()
   var client = clientTestRule.newClient()
 
-  @Before
+  @BeforeEach
   fun setUp() {
     OkHttpDebugLogging.enable("org.bouncycastle.jsse")
     platform.assumeBouncyCastle()

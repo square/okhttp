@@ -85,6 +85,7 @@ dependencies {
   testImplementation deps.conscrypt
   testImplementation deps.junit
   testImplementation deps.junit5Api
+  testImplementation deps.junit5JupiterParams
   testImplementation deps.assertj
   testImplementation deps.openjsse
   testImplementation deps.bndResolve
