@@ -34,15 +34,15 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okhttp3.logging.HttpLoggingInterceptor.Level;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
+import mockwebserver3.MockResponse;
+import mockwebserver3.MockWebServer;
 import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.ByteString;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -53,8 +53,8 @@ import static org.junit.Assume.assumeThat;
 public final class HttpLoggingInterceptorTest {
   private static final MediaType PLAIN = MediaType.get("text/plain; charset=utf-8");
 
-  @Rule public final PlatformRule platform = new PlatformRule();
-  @Rule public final MockWebServer server = new MockWebServer();
+  @RegisterExtension public final PlatformRule platform = new PlatformRule();
+  private MockWebServer server;
 
   private final HandshakeCertificates handshakeCertificates = localhost();
   private final HostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
@@ -77,7 +77,9 @@ public final class HttpLoggingInterceptorTest {
     applicationInterceptor.setLevel(level);
   }
 
-  @Before public void setUp() {
+  @BeforeEach public void setUp(MockWebServer server) {
+    this.server = server;
+
     client = new OkHttpClient.Builder()
         .addNetworkInterceptor(chain -> extraNetworkInterceptor != null
             ? extraNetworkInterceptor.intercept(chain)
