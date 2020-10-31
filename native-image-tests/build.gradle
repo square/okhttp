@@ -1,3 +1,5 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+
 plugins {
   id "com.palantir.graal" version "0.7.1"
 }
@@ -7,6 +9,28 @@ dependencies {
   implementation deps.junit5Api
   implementation deps.junit5JupiterEngine
   implementation deps.junitPlatformConsole
+
+  implementation project(':okhttp')
+  implementation project(':okhttp-logging-interceptor')
+  implementation project(':okhttp-testing-support')
+  implementation project(':okhttp-tls')
+  implementation project(':okhttp-sse')
+  implementation deps.assertj
+  implementation project(':mockwebserver')
+  implementation project(':mockwebserver-deprecated')
+  implementation project(':okhttp-urlconnection')
+  implementation project(':mockwebserver-junit4')
+  implementation project(':mockwebserver-junit5')
+  implementation deps.bndResolve
+  implementation deps.junit5Api
+
+  implementation("org.graalvm.nativeimage:svm:20.2.0") {
+    // https://youtrack.jetbrains.com/issue/KT-29513
+    exclude group: "org.graalvm.nativeimage"
+    exclude group: "org.graalvm.truffle"
+    //    exclude group= "org.graalvm.sdk"
+    exclude group: "org.graalvm.compiler"
+  }
 
   compileOnly deps.jsr305
 }
@@ -22,6 +46,10 @@ graalvmConfig.mkdirs()
 
 sourceSets {
   main.resources.srcDirs += graalvmResources
+
+  main.java.srcDirs += project.file("../okhttp-logging-interceptor/src/test/java")
+  main.java.srcDirs += project.file("../okhttp-sse/src/test/java")
+//  main.java.srcDirs += project.file("../okhttp/src/test/java")
 }
 
 task seedGraalvmConfig(type: Exec) {
@@ -30,13 +58,12 @@ task seedGraalvmConfig(type: Exec) {
     "$graalHome/bin/java",
     "-agentlib:native-image-agent=config-output-dir=$graalvmConfig",
     "-classpath", sourceSets.main.runtimeClasspath.getAsPath(),
-    "org.junit.platform.console.ConsoleLauncher",
-    "--select-class", "okhttp3.SampleTest"
+    "okhttp3.RunTestsKt"
   )
 }
 
 graal {
-  mainClass "org.junit.platform.console.ConsoleLauncher"
+  mainClass "okhttp3.RunTestsKt"
   outputName "ConsoleLauncher"
   graalVersion "20.2.0"
   javaVersion "11"
@@ -45,4 +72,11 @@ graal {
   option "--no-fallback"
   option "--allow-incomplete-classpath"
   option "--report-unsupported-elements-at-runtime"
+
+  if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+    // May be possible without, but autodetection is problematic on Windows 10
+    // see https://github.com/palantir/gradle-graal
+    // see https://www.graalvm.org/docs/reference-manual/native-image/#prerequisites
+    windowsVsVarsPath('C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\\Auxiliary\\Build\\vcvars64.bat')
+  }
 }
