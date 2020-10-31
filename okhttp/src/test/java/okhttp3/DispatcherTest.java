@@ -4,16 +4,16 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public final class DispatcherTest {
-  @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
+  @RegisterExtension public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
   RecordingExecutor executor = new RecordingExecutor(this);
   RecordingCallback callback = new RecordingCallback();
@@ -25,7 +25,7 @@ public final class DispatcherTest {
       .eventListenerFactory(clientTestRule.wrap(listener))
       .build();
 
-  @Before public void setUp() throws Exception {
+  @BeforeEach public void setUp() throws Exception {
     dispatcher.setMaxRequests(20);
     dispatcher.setMaxRequestsPerHost(10);
     listener.forbidLock(dispatcher);

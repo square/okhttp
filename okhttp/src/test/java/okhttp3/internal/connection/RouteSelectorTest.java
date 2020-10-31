@@ -44,9 +44,9 @@ import okhttp3.internal.http.RecordingProxySelector;
 import okhttp3.testing.PlatformRule;
 import okhttp3.testing.PlatformVersion;
 import okhttp3.tls.HandshakeCertificates;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static java.net.Proxy.NO_PROXY;
 import static okhttp3.internal.Util.immutableListOf;
@@ -55,8 +55,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public final class RouteSelectorTest {
-  @Rule public final PlatformRule platform = new PlatformRule();
-  @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
+  @RegisterExtension public final PlatformRule platform = new PlatformRule();
+  @RegisterExtension public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
   public final List<ConnectionSpec> connectionSpecs = immutableListOf(
       ConnectionSpec.MODERN_TLS,
@@ -86,7 +86,7 @@ public final class RouteSelectorTest {
   private final RecordingProxySelector proxySelector = new RecordingProxySelector();
   private RouteDatabase routeDatabase = new RouteDatabase();
 
-  @Before public void setUp() throws Exception {
+  @BeforeEach public void setUp() throws Exception {
     call = clientTestRule.newClient().newCall(new Request.Builder()
         .url("https://" + uriHost + ":" + uriPort + "/")
         .build());

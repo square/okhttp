@@ -25,14 +25,11 @@ import java.util.logging.Logger
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.http2.Http2
 import okhttp3.testing.Flaky
-import org.junit.Assert.assertEquals
-import org.junit.Assert.fail
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
-import org.junit.rules.TestRule
-import org.junit.runner.Description
-import org.junit.runners.model.Statement
 
 /**
  * Apply this rule to all tests. It adds additional checks for leaked resources and uncaught
@@ -41,7 +38,7 @@ import org.junit.runners.model.Statement
  * Use [newClient] as a factory for a OkHttpClient instances. These instances are specifically
  * configured for testing.
  */
-class OkHttpClientTestRule : TestRule, BeforeEachCallback, AfterEachCallback {
+class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
   private val clientEventsList = mutableListOf<String>()
   private var testClient: OkHttpClient? = null
   private var uncaughtException: Throwable? = null
@@ -57,8 +54,7 @@ class OkHttpClientTestRule : TestRule, BeforeEachCallback, AfterEachCallback {
 
   private val testLogHandler = object : Handler() {
     override fun publish(record: LogRecord) {
-      val name = record.loggerName
-      val recorded = when (name) {
+      val recorded = when (record.loggerName) {
         TaskRunner::class.java.name -> recordTaskRunner
         Http2::class.java.name -> recordFrames
         "javax.net.ssl" -> recordSslDebug
@@ -117,8 +113,7 @@ class OkHttpClientTestRule : TestRule, BeforeEachCallback, AfterEachCallback {
     if (client == null) {
       client = OkHttpClient.Builder()
           .dns(SINGLE_INET_ADDRESS_DNS) // Prevent unexpected fallback addresses.
-          .eventListenerFactory(
-              EventListener.Factory { ClientRuleEventListener(logger = ::addEvent) })
+          .eventListenerFactory { ClientRuleEventListener(logger = ::addEvent) }
           .build()
       testClient = client
     }
@@ -171,7 +166,7 @@ class OkHttpClientTestRule : TestRule, BeforeEachCallback, AfterEachCallback {
       val waitTime = (entryTime + 1_000_000_000L - System.nanoTime())
       if (!queue.idleLatch().await(waitTime, TimeUnit.NANOSECONDS)) {
         TaskRunner.INSTANCE.cancelAll()
-        fail("Queue still active after 1000 ms")
+        fail<Unit>("Queue still active after 1000 ms")
       }
     }
   }
@@ -199,17 +194,12 @@ class OkHttpClientTestRule : TestRule, BeforeEachCallback, AfterEachCallback {
 
   override fun afterEach(context: ExtensionContext) {
     val failure = context.executionException.orElseGet { null }
-    val newFailure = afterEach(context.isFlaky(), failure)
-    if (failure == null && newFailure != null) throw newFailure
-  }
 
-  /** Returns the exception to fail with. */
-  private fun afterEach(isFlaky: Boolean, failure: Throwable?): Throwable? {
     if (uncaughtException != null) {
-      return failure + AssertionError("uncaught exception thrown during test", uncaughtException)
+      throw failure + AssertionError("uncaught exception thrown during test", uncaughtException)
     }
 
-    if (isFlaky) {
+    if (context.isFlaky()) {
       logEvents()
     }
 
@@ -232,39 +222,12 @@ class OkHttpClientTestRule : TestRule, BeforeEachCallback, AfterEachCallback {
       result += ae
     }
 
-    return result
+    if (result != null) throw result
   }
 
   private fun releaseClient() {
     testClient?.dispatcher?.executorService?.shutdown()
   }
-
-  override fun apply(
-    base: Statement,
-    description: Description
-  ): Statement {
-    return object : Statement() {
-      override fun evaluate() {
-        testName = description.methodName
-        beforeEach()
-
-        var failure: Throwable? = null
-        try {
-          base.evaluate()
-        } catch (t: Throwable) {
-          failure = t
-          logEvents()
-        }
-
-        val newFailure = afterEach(description.isFlaky(), failure)
-        if (newFailure != null) throw newFailure
-      }
-    }
-  }
-
-  private fun Description.isFlaky() =
-    annotations.any { it.annotationClass == Flaky::class } ||
-      testClass.annotations.any { it.annotationClass == Flaky::class }
 
   private fun ExtensionContext.isFlaky(): Boolean {
     return (testMethod.orElseGet { null }?.isAnnotationPresent(Flaky::class.java) == true) ||
