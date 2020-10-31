@@ -15,16 +15,6 @@
  */
 package okhttp3
 
-import mockwebserver3.MockResponse
-import mockwebserver3.MockWebServer
-import okhttp3.internal.io.InMemoryFileSystem
-import okhttp3.testing.PlatformRule
-import okhttp3.tls.internal.TlsUtil.localhost
-import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.RegisterExtension
 import java.io.File
 import java.net.CookieManager
 import java.net.ResponseCache
@@ -36,6 +26,16 @@ import java.util.TimeZone
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSession
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
+import okhttp3.internal.io.InMemoryFileSystem
+import okhttp3.testing.PlatformRule
+import okhttp3.tls.internal.TlsUtil.localhost
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
 class CacheCorruptionTest(
   var server: MockWebServer

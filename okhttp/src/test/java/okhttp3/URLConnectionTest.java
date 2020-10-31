@@ -15,6 +15,7 @@
  */
 package okhttp3;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Authenticator;
@@ -60,14 +61,14 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
+import mockwebserver3.MockResponse;
+import mockwebserver3.MockWebServer;
+import mockwebserver3.RecordedRequest;
+import mockwebserver3.SocketPolicy;
 import okhttp3.internal.Internal;
 import okhttp3.internal.RecordingAuthenticator;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.platform.Platform;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.RecordedRequest;
-import okhttp3.mockwebserver.SocketPolicy;
 import okhttp3.testing.Flaky;
 import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
@@ -77,13 +78,14 @@ import okio.BufferedSource;
 import okio.GzipSink;
 import okio.Okio;
 import okio.Utf8;
-import org.junit.After;
-import org.junit.AssumptionViolatedException;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.rules.TemporaryFolder;
+import org.opentest4j.TestAbortedException;
 
 import static java.net.HttpURLConnection.HTTP_MOVED_TEMP;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -91,40 +93,43 @@ import static java.util.Arrays.asList;
 import static java.util.Locale.US;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static mockwebserver3.SocketPolicy.DISCONNECT_AFTER_REQUEST;
+import static mockwebserver3.SocketPolicy.DISCONNECT_AT_END;
+import static mockwebserver3.SocketPolicy.DISCONNECT_AT_START;
+import static mockwebserver3.SocketPolicy.FAIL_HANDSHAKE;
+import static mockwebserver3.SocketPolicy.SHUTDOWN_INPUT_AT_END;
+import static mockwebserver3.SocketPolicy.SHUTDOWN_OUTPUT_AT_END;
+import static mockwebserver3.SocketPolicy.UPGRADE_TO_SSL_AT_END;
 import static okhttp3.internal.Internal.addHeaderLenient;
 import static okhttp3.internal.Util.immutableListOf;
 import static okhttp3.internal.Util.userAgent;
 import static okhttp3.internal.http.StatusLine.HTTP_PERM_REDIRECT;
 import static okhttp3.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
-import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AFTER_REQUEST;
-import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
-import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
-import static okhttp3.mockwebserver.SocketPolicy.FAIL_HANDSHAKE;
-import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_INPUT_AT_END;
-import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_OUTPUT_AT_END;
-import static okhttp3.mockwebserver.SocketPolicy.UPGRADE_TO_SSL_AT_END;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 /** Android's URLConnectionTest, ported to exercise OkHttp's Call API. */
 public final class URLConnectionTest {
-  @Rule public final PlatformRule platform = new PlatformRule();
-  @Rule public final MockWebServer server = new MockWebServer();
-  @Rule public final MockWebServer server2 = new MockWebServer();
-  @Rule public final TemporaryFolder tempDir = new TemporaryFolder();
-  @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
+  @RegisterExtension public final PlatformRule platform = new PlatformRule();
+  @RegisterExtension public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
+  @TempDir File tempDir;
 
+  private MockWebServer server;
+  private MockWebServer server2;
   private HandshakeCertificates handshakeCertificates = localhost();
   private OkHttpClient client = clientTestRule.newClient();
   private @Nullable Cache cache;
 
-  @Before public void setUp() {
+  @BeforeEach public void setUp(MockWebServer server, MockWebServer server2) {
+    this.server = server;
+    this.server2 = server2;
+
     platform.assumeNotBouncyCastle();
     server.setProtocolNegotiationEnabled(false);
   }
 
-  @After public void tearDown() throws Exception {
+  @AfterEach public void tearDown() throws Exception {
     Authenticator.setDefault(null);
     System.clearProperty("proxyHost");
     System.clearProperty("proxyPort");
@@ -967,7 +972,7 @@ public final class URLConnectionTest {
   }
 
   private void initResponseCache() {
-    cache = new Cache(tempDir.getRoot(), Integer.MAX_VALUE);
+    cache = new Cache(tempDir, Integer.MAX_VALUE);
     client = client.newBuilder()
         .cache(cache)
         .build();
@@ -3160,16 +3165,16 @@ public final class URLConnectionTest {
     }
   }
 
-  @Test @Ignore public void testPooledConnectionsDetectHttp10() {
+  @Test @Disabled public void testPooledConnectionsDetectHttp10() {
     // TODO: write a test that shows pooled connections detect HTTP/1.0 (vs. HTTP/1.1)
     fail("TODO");
   }
 
-  @Test @Ignore public void postBodiesRetransmittedOnAuthProblems() {
+  @Test @Disabled public void postBodiesRetransmittedOnAuthProblems() {
     fail("TODO");
   }
 
-  @Test @Ignore public void cookiesAndTrailers() {
+  @Test @Disabled public void cookiesAndTrailers() {
     // Do cookie headers get processed too many times?
     fail("TODO");
   }
@@ -3267,15 +3272,15 @@ public final class URLConnectionTest {
     assertThat(response.header("")).isEqualTo("ef");
   }
 
-  @Test @Ignore public void deflateCompression() {
+  @Test @Disabled public void deflateCompression() {
     fail("TODO");
   }
 
-  @Test @Ignore public void postBodiesRetransmittedOnIpAddressProblems() {
+  @Test @Disabled public void postBodiesRetransmittedOnIpAddressProblems() {
     fail("TODO");
   }
 
-  @Test @Ignore public void pooledConnectionProblemsNotReportedToProxySelector() {
+  @Test @Disabled public void pooledConnectionProblemsNotReportedToProxySelector() {
     fail("TODO");
   }
 
@@ -3839,7 +3844,7 @@ public final class URLConnectionTest {
       }
 
       @Override RequestBody newRequestBody(String body) {
-        throw new AssumptionViolatedException("END_OF_STREAM not implemented for requests");
+        throw new TestAbortedException("END_OF_STREAM not implemented for requests");
       }
     };
 
