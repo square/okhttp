@@ -39,29 +39,6 @@ animalsniffer {
   ignoreFailures = true
 }
 
-def graalHome = "/Library/Java/JavaVirtualMachines/graalvm-ce-java11-20.2.0/Contents/Home"
-def graalvmResources = project.file("$buildDir/graalvm/resources")
-def graalvmConfig = project.file("$graalvmResources/META-INF/native-image")
-graalvmConfig.mkdirs()
-
-sourceSets {
-  main.resources.srcDirs += graalvmResources
-
-  main.java.srcDirs += project.file("../okhttp-logging-interceptor/src/test/java")
-  main.java.srcDirs += project.file("../okhttp-sse/src/test/java")
-//  main.java.srcDirs += project.file("../okhttp/src/test/java")
-}
-
-task seedGraalvmConfig(type: Exec) {
-  dependsOn("classes")
-  commandLine(
-    "$graalHome/bin/java",
-    "-agentlib:native-image-agent=config-output-dir=$graalvmConfig",
-    "-classpath", sourceSets.main.runtimeClasspath.getAsPath(),
-    "okhttp3.RunTestsKt"
-  )
-}
-
 graal {
   mainClass "okhttp3.RunTestsKt"
   outputName "ConsoleLauncher"

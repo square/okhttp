@@ -15,12 +15,37 @@
  */
 package okhttp3
 
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
 class SampleTest {
+  @JvmField @RegisterExtension val clientRule = OkHttpClientTestRule()
+
   @Test
   fun failingTest() {
     assertThat("hello").isEqualTo("goodbye")
+  }
+
+  @Test
+  fun testMockWebServer(server: MockWebServer) {
+    server.enqueue(MockResponse().setBody("abc"))
+
+    val client = clientRule.newClient()
+
+    client.newCall(Request.Builder().url(server.url("/")).build()).execute().use {
+      assertThat(it.body!!.string()).isEqualTo("abc")
+    }
+  }
+
+  @Test
+  fun testExternalSite() {
+    val client = clientRule.newClient()
+
+    client.newCall(Request.Builder().url("https://google.com/robots.txt").build()).execute().use {
+      assertThat(it.code).isEqualTo(200)
+    }
   }
 }
