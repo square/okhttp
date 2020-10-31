@@ -15,12 +15,8 @@
  */
 package okhttp3.internal.http
 
-import java.io.IOException
-import java.net.ServerSocket
-import java.net.Socket
-import java.util.concurrent.TimeUnit.MILLISECONDS
-import javax.net.ServerSocketFactory
-import javax.net.SocketFactory
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
 import okhttp3.Call
 import okhttp3.CallEvent
 import okhttp3.CallEvent.CallEnd
@@ -46,28 +42,28 @@ import okhttp3.internal.http.CancelTest.CancelMode.INTERRUPT
 import okhttp3.internal.http.CancelTest.ConnectionType.H2
 import okhttp3.internal.http.CancelTest.ConnectionType.HTTP
 import okhttp3.internal.http.CancelTest.ConnectionType.HTTPS
-import okhttp3.mockwebserver.MockResponse
-import okhttp3.mockwebserver.MockWebServer
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.internal.TlsUtil
 import okio.Buffer
 import okio.BufferedSink
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Assert.assertEquals
-import org.junit.Assert.fail
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
-import org.junit.runners.Parameterized.Parameters
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.api.fail
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
+import java.io.IOException
+import java.net.ServerSocket
+import java.net.Socket
+import java.util.concurrent.TimeUnit.MILLISECONDS
+import javax.net.ServerSocketFactory
+import javax.net.SocketFactory
 
-@RunWith(Parameterized::class)
-class CancelTest(mode: Pair<CancelMode, ConnectionType>) {
-  @get:Rule val platform = PlatformRule()
+class CancelTest {
+  @JvmField @RegisterExtension val platform = PlatformRule()
 
-  val cancelMode = mode.first
-  val connectionType = mode.second
+  lateinit var cancelMode: CancelMode
+  lateinit var connectionType: ConnectionType
 
   private var threadToCancel: Thread? = null
 
@@ -82,7 +78,7 @@ class CancelTest(mode: Pair<CancelMode, ConnectionType>) {
     HTTP
   }
 
-  @get:Rule val clientTestRule = OkHttpClientTestRule()
+  @JvmField @RegisterExtension val clientTestRule = OkHttpClientTestRule()
   val handshakeCertificates = TlsUtil.localhost()
 
   private lateinit var server: MockWebServer
@@ -90,7 +86,10 @@ class CancelTest(mode: Pair<CancelMode, ConnectionType>) {
 
   val listener = RecordingEventListener()
 
-  @Before fun setUp() {
+  fun setUp(mode: Pair<CancelMode, ConnectionType>) {
+    this.cancelMode = mode.first
+    this.connectionType = mode.second
+
     if (connectionType == H2) {
       platform.assumeHttp2Support()
     }
@@ -132,8 +131,10 @@ class CancelTest(mode: Pair<CancelMode, ConnectionType>) {
     threadToCancel = Thread.currentThread()
   }
 
-  @Test
-  fun cancelWritingRequestBody() {
+  @ParameterizedTest
+  @MethodSource("cancelModes")
+  fun cancelWritingRequestBody(mode: Pair<CancelMode, ConnectionType>) {
+    setUp(mode)
     server.enqueue(MockResponse())
     val call = client.newCall(
         Request.Builder()
@@ -159,14 +160,16 @@ class CancelTest(mode: Pair<CancelMode, ConnectionType>) {
     cancelLater(call, 500)
     try {
       call.execute()
-      fail()
+      fail("")
     } catch (expected: IOException) {
       assertEquals(cancelMode == INTERRUPT, Thread.interrupted())
     }
   }
 
-  @Test
-  fun cancelReadingResponseBody() {
+  @ParameterizedTest
+  @MethodSource("cancelModes")
+  fun cancelReadingResponseBody(mode: Pair<CancelMode, ConnectionType>) {
+    setUp(mode)
     val responseBodySize = 8 * 1024 * 1024 // 8 MiB.
     server.enqueue(
         MockResponse()
@@ -196,8 +199,10 @@ class CancelTest(mode: Pair<CancelMode, ConnectionType>) {
     assertEquals(if (connectionType == H2) 1 else 0, client.connectionPool.connectionCount())
   }
 
-  @Test
-  fun cancelAndFollowup() {
+  @ParameterizedTest
+  @MethodSource("cancelModes")
+  fun cancelAndFollowup(mode: Pair<CancelMode, ConnectionType>) {
+    setUp(mode)
     val responseBodySize = 8 * 1024 * 1024 // 8 MiB.
     server.enqueue(
         MockResponse()
@@ -291,7 +296,6 @@ class CancelTest(mode: Pair<CancelMode, ConnectionType>) {
   }
 
   companion object {
-    @Parameters(name = "{0}")
     @JvmStatic
     fun cancelModes() =
       CancelMode.values().flatMap { c -> ConnectionType.values().map { x -> Pair(c, x) } }

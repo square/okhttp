@@ -42,6 +42,7 @@ buildscript {
       'junit': "junit:junit:${versions.junit}",
       'junit5Api': "org.junit.jupiter:junit-jupiter-api:${versions.junit5}",
       'junit5JupiterEngine': "org.junit.jupiter:junit-jupiter-engine:${versions.junit5}",
+      'junit5JupiterParams': "org.junit.jupiter:junit-jupiter-params:${versions.junit5}",
       'junit5VintageEngine': "org.junit.vintage:junit-vintage-engine:${versions.junit5}",
       'junitPlatformConsole': "org.junit.platform:junit-platform-console:1.7.0",
       'kotlinStdlib': "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin}",

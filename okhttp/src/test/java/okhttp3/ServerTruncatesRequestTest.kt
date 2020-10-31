@@ -15,37 +15,29 @@
  */
 package okhttp3
 
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
+import mockwebserver3.SocketPolicy
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.internal.duplex.AsyncRequestBody
 import okhttp3.internal.http2.ErrorCode
-import okhttp3.mockwebserver.MockResponse
-import okhttp3.mockwebserver.MockWebServer
-import okhttp3.mockwebserver.SocketPolicy
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.internal.TlsUtil.localhost
 import okio.BufferedSink
 import okio.IOException
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Assert.fail
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TestRule
-import org.junit.rules.Timeout
-import java.util.concurrent.TimeUnit
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.api.fail
 
-class ServerTruncatesRequestTest {
-  @Rule @JvmField
-  val platform = PlatformRule()
-
-  @Rule @JvmField
-  val timeout: TestRule = Timeout(30_000, TimeUnit.MILLISECONDS)
-
-  @Rule @JvmField
-  val server = MockWebServer()
-
-  @Rule @JvmField
-  var clientTestRule = OkHttpClientTestRule()
+@Timeout(30)
+class ServerTruncatesRequestTest(
+  val server: MockWebServer
+) {
+  @RegisterExtension @JvmField val platform = PlatformRule()
+  @RegisterExtension @JvmField var clientTestRule = OkHttpClientTestRule()
 
   private val listener = RecordingEventListener()
   private val handshakeCertificates = localhost()
@@ -54,7 +46,7 @@ class ServerTruncatesRequestTest {
       .eventListenerFactory(clientTestRule.wrap(listener))
       .build()
 
-  @Before fun setUp() {
+  @BeforeEach fun setUp() {
     platform.assumeNotOpenJSSE()
     platform.assumeHttp2Support()
     platform.assumeNotBouncyCastle()
@@ -139,12 +131,12 @@ class ServerTruncatesRequestTest {
       val requestBodyOut = requestBody.takeSink()
       try {
         SlowRequestBody.writeTo(requestBodyOut)
-        fail()
+        fail("")
       } catch (expected: IOException) {
       }
       try {
         requestBodyOut.close()
-        fail()
+        fail("")
       } catch (expected: IOException) {
       }
     }
@@ -208,7 +200,7 @@ class ServerTruncatesRequestTest {
 
     try {
       callA.execute()
-      fail()
+      fail("")
     } catch (expected: IOException) {
       assertThat(expected).hasMessage("boom")
     }
@@ -264,7 +256,7 @@ class ServerTruncatesRequestTest {
         sink.flush()
         Thread.sleep(100)
       }
-      fail()
+      fail("")
     }
   }
 }

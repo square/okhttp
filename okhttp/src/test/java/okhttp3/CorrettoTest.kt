@@ -18,26 +18,23 @@ package okhttp3
 import okhttp3.TestUtil.assumeNetwork
 import okhttp3.testing.PlatformRule
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Before
-import org.junit.Ignore
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
 class CorrettoTest {
-  @Suppress("RedundantVisibilityModifier")
-  @JvmField
-  @Rule public val platform = PlatformRule.conscrypt()
-
-  @JvmField @Rule val clientTestRule = OkHttpClientTestRule()
+  @JvmField @RegisterExtension val platform = PlatformRule.conscrypt()
+  @JvmField @RegisterExtension val clientTestRule = OkHttpClientTestRule()
 
   private val client = clientTestRule.newClient()
 
-  @Before fun setUp() {
+  @BeforeEach fun setUp() {
     platform.assumeCorretto()
   }
 
   @Test
-  @Ignore
+  @Disabled
   fun testMozilla() {
     assumeNetwork()
 
@@ -50,7 +47,7 @@ class CorrettoTest {
   }
 
   @Test
-  @Ignore
+  @Disabled
   fun testGoogle() {
     assumeNetwork()
 
