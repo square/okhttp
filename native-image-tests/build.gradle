@@ -39,6 +39,11 @@ animalsniffer {
   ignoreFailures = true
 }
 
+sourceSets {
+  main.java.srcDirs += project.file("../okhttp-logging-interceptor/src/test/java")
+  main.java.srcDirs += project.file("../okhttp-sse/src/test/java")
+}
+
 graal {
   mainClass "okhttp3.RunTestsKt"
   outputName "ConsoleLauncher"
