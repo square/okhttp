@@ -11,9 +11,10 @@ if (properties.containsKey('android.injected.invoked.from.ide') ||
   include ':android-test'
 }
 
-//if (!properties.containsKey('android.injected.invoked.from.ide')) {
+if (!properties.containsKey('android.injected.invoked.from.ide')) {
+  // Not included in IDE as this confuses Intellij for obvious reasons.
   include ':native-image-tests'
-//}
+}
 
 include ':okcurl'
 include ':okhttp'
