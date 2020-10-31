@@ -49,7 +49,7 @@ sourceSets {
 
   main.java.srcDirs += project.file("../okhttp-logging-interceptor/src/test/java")
   main.java.srcDirs += project.file("../okhttp-sse/src/test/java")
-  main.java.srcDirs += project.file("../okhttp/src/test/java")
+//  main.java.srcDirs += project.file("../okhttp/src/test/java")
 }
 
 task seedGraalvmConfig(type: Exec) {

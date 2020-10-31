@@ -51,7 +51,7 @@ class Exchange(
   internal var hasFailure: Boolean = false
     private set
 
-  val connection: RealConnection = codec.connection
+  internal val connection: RealConnection = codec.connection
 
   internal val isCoalescedConnection: Boolean
     get() = finder.address.url.host != connection.route().address.url.host

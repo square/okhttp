@@ -193,7 +193,7 @@ class Dispatcher constructor() {
   }
 
   /** Used by [AsyncCall.run] to signal completion. */
-  fun finished(call: AsyncCall) {
+  internal fun finished(call: AsyncCall) {
     call.callsPerHost.decrementAndGet()
     finished(runningAsyncCalls, call)
   }

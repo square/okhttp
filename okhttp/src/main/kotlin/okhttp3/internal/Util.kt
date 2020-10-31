@@ -579,7 +579,7 @@ internal fun <E> MutableList<E>.addIfAbsent(element: E) {
 }
 
 @JvmField
-val assertionsEnabled = OkHttpClient::class.java.desiredAssertionStatus()
+internal val assertionsEnabled = OkHttpClient::class.java.desiredAssertionStatus()
 
 /**
  * Returns the string "OkHttp" unless the library has been shaded for inclusion in another library,
@@ -592,14 +592,14 @@ internal val okHttpName =
     OkHttpClient::class.java.name.removePrefix("okhttp3.").removeSuffix("Client")
 
 @Suppress("NOTHING_TO_INLINE")
-inline fun Any.assertThreadHoldsLock() {
+internal inline fun Any.assertThreadHoldsLock() {
   if (assertionsEnabled && !Thread.holdsLock(this)) {
     throw AssertionError("Thread ${Thread.currentThread().name} MUST hold lock on $this")
   }
 }
 
 @Suppress("NOTHING_TO_INLINE")
-inline fun Any.assertThreadDoesntHoldLock() {
+internal inline fun Any.assertThreadDoesntHoldLock() {
   if (assertionsEnabled && Thread.holdsLock(this)) {
     throw AssertionError("Thread ${Thread.currentThread().name} MUST NOT hold lock on $this")
   }

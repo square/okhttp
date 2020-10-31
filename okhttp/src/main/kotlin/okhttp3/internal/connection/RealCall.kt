@@ -467,7 +467,7 @@ class RealCall(
 
   internal fun redactedUrl(): String = originalRequest.url.redact()
 
-  inner class AsyncCall(
+  internal inner class AsyncCall(
     private val responseCallback: Callback
   ) : Runnable {
     @Volatile var callsPerHost = AtomicInteger(0)
