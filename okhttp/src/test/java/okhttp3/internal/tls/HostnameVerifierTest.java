@@ -19,7 +19,9 @@ package okhttp3.internal.tls;
 
 import java.io.ByteArrayInputStream;
 import java.security.cert.CertificateFactory;
+import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
+import java.util.stream.Stream;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSession;
 import javax.security.auth.x500.X500Principal;
@@ -28,6 +30,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.internal.Util;
 import okhttp3.tls.HeldCertificate;
 import okhttp3.tls.internal.TlsUtil;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -40,7 +43,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public final class HostnameVerifierTest {
   private OkHostnameVerifier verifier = OkHostnameVerifier.INSTANCE;
 
-  @Test public void verify() throws Exception {
+  @Test public void verify() {
     FakeSSLSession session = new FakeSSLSession();
     assertThat(verifier.verify("localhost", session)).isFalse();
   }
@@ -180,16 +183,20 @@ public final class HostnameVerifierTest {
         + "sWIKHYrmhCIRshUNohGXv50m2o+1w9oWmQ6Dkq7lCjfXfUB4wIbggJjpyEtbNqBt\n"
         + "j4MC2x5rfsLKKqToKmNE7pFEgqwe8//Aar1b+Qj+\n"
         + "-----END CERTIFICATE-----\n");
-    assertThat(verifier.verify("foo.com", session)).isTrue();
+
+    X509Certificate peerCertificate = ((X509Certificate) session.getPeerCertificates()[0]);
+    assertThat(certificateSANs(peerCertificate)).containsExactly("bar.com", "������.co.jp");
+
+    assertThat(verifier.verify("foo.com", session)).isFalse();
     assertThat(verifier.verify("a.foo.com", session)).isFalse();
     // these checks test alternative subjects. The test data contains an
     // alternative subject starting with a japanese kanji character. This is
     // not supported by Android because the underlying implementation from
     // harmony follows the definition from rfc 1034 page 10 for alternative
     // subject names. This causes the code to drop all alternative subjects.
-    // assertTrue(verifier.verify("bar.com", session));
-    // assertFalse(verifier.verify("a.bar.com", session));
-    // assertFalse(verifier.verify("a.\u82b1\u5b50.co.jp", session));
+    assertThat(verifier.verify("bar.com", session)).isTrue();
+    assertThat(verifier.verify("a.bar.com", session)).isFalse();
+    assertThat(verifier.verify("a.\u82b1\u5b50.co.jp", session)).isFalse();
   }
 
   @Test public void verifySubjectAltOnly() throws Exception {
@@ -331,9 +338,9 @@ public final class HostnameVerifierTest {
   }
 
   /**
-   * Ignored due to incompatibilities between Android and Java on how non-ASCII subject alt names
-   * are parsed. Android fails to parse these, which means we fall back to the CN. The RI does parse
-   * them, so the CN is unused.
+   * Previously ignored due to incompatibilities between Android and Java on how non-ASCII subject
+   * alt names are parsed. Android fails to parse these, which means we fall back to the CN.
+   * The RI does parse them, so the CN is unused.
    */
   @Test public void testWilcardNonAsciiSubjectAlt() throws Exception {
     // CN=*.foo.com, subjectAlt=*.bar.com, subjectAlt=*.&#x82b1;&#x5b50;.co.jp
@@ -365,20 +372,24 @@ public final class HostnameVerifierTest {
         + "qFr0AIZKBlg6NZZFf/0dP9zcKhzSriW27bY0XfzA6GSiRDXrDjgXq6baRT6YwgIg\n"
         + "pgJsDbJtZfHnV1nd3M6zOtQPm1TIQpNmMMMd/DPrGcUQerD3\n"
         + "-----END CERTIFICATE-----\n");
+
+    X509Certificate peerCertificate = ((X509Certificate) session.getPeerCertificates()[0]);
+    assertThat(certificateSANs(peerCertificate)).containsExactly("*.bar.com", "*.������.co.jp");
+
     // try the foo.com variations
-    assertThat(verifier.verify("foo.com", session)).isTrue();
-    assertThat(verifier.verify("www.foo.com", session)).isTrue();
-    assertThat(verifier.verify("\u82b1\u5b50.foo.com", session)).isTrue();
+    assertThat(verifier.verify("foo.com", session)).isFalse();
+    assertThat(verifier.verify("www.foo.com", session)).isFalse();
+    assertThat(verifier.verify("\u82b1\u5b50.foo.com", session)).isFalse();
     assertThat(verifier.verify("a.b.foo.com", session)).isFalse();
     // these checks test alternative subjects. The test data contains an
     // alternative subject starting with a japanese kanji character. This is
     // not supported by Android because the underlying implementation from
     // harmony follows the definition from rfc 1034 page 10 for alternative
     // subject names. This causes the code to drop all alternative subjects.
-    // assertFalse(verifier.verify("bar.com", session));
-    // assertTrue(verifier.verify("www.bar.com", session));
-    // assertTrue(verifier.verify("\u82b1\u5b50.bar.com", session));
-    // assertTrue(verifier.verify("a.b.bar.com", session));
+    assertThat(verifier.verify("bar.com", session)).isFalse();
+    assertThat(verifier.verify("www.bar.com", session)).isTrue();
+    assertThat(verifier.verify("\u82b1\u5b50.bar.com", session)).isFalse();
+    assertThat(verifier.verify("a.b.bar.com", session)).isFalse();
   }
 
   @Test public void subjectAltUsesLocalDomainAndIp() throws Exception {
@@ -636,6 +647,9 @@ public final class HostnameVerifierTest {
         + "Ij1qLQ/YI8OogZPMk7YY46/ydWWp7UpD47zy/vKmm4pOc8Glc8MoDD6UADs=\n"
         + "-----END CERTIFICATE-----\n");
 
+    X509Certificate peerCertificate = ((X509Certificate) session.getPeerCertificates()[0]);
+    assertThat(certificateSANs(peerCertificate)).containsExactly("���.com", "���.com");
+
     assertThat(verifier.verify("tel.com", session)).isFalse();
     assertThat(verifier.verify("k.com", session)).isFalse();
 
@@ -643,6 +657,11 @@ public final class HostnameVerifierTest {
     assertThat(verifier.verify("bar.com", session)).isFalse();
     assertThat(verifier.verify("k.com", session)).isFalse();
     assertThat(verifier.verify("K.com", session)).isFalse();
+  }
+
+  @NotNull private Stream<String> certificateSANs(X509Certificate peerCertificate)
+      throws CertificateParsingException {
+    return peerCertificate.getSubjectAlternativeNames().stream().map(c -> (String) c.get(1));
   }
 
   @Test public void replacementCharacter() throws Exception {
