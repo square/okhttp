@@ -19,7 +19,6 @@ import java.io.IOException
 import java.util.logging.Level
 import java.util.logging.Logger
 import mockwebserver3.MockWebServer
-import okhttp3.internal.SuppressSignatureCheck
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.AfterEachCallback

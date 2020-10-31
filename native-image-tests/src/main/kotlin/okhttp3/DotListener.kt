@@ -38,10 +38,6 @@ object DotListener: TestExecutionListener {
     }
   }
 
-  override fun testPlanExecutionStarted(testPlan: TestPlan?) {
-    println()
-  }
-
   override fun testPlanExecutionFinished(testPlan: TestPlan) {
     System.err.println()
   }
