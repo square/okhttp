@@ -22,19 +22,18 @@ import okhttp3.EventListener;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
-import okhttp3.Protocol;
 import okhttp3.TestUtil;
 import okhttp3.testing.PlatformRule;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.SocketPolicy;
+import mockwebserver3.MockResponse;
+import mockwebserver3.MockWebServer;
+import mockwebserver3.SocketPolicy;
 import okhttp3.tls.HandshakeCertificates;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static java.util.Arrays.asList;
 import static okhttp3.Protocol.HTTP_1_1;
@@ -46,8 +45,8 @@ import static org.junit.Assert.fail;
 public final class LoggingEventListenerTest {
   private static final MediaType PLAIN = MediaType.get("text/plain");
 
-  @Rule public final PlatformRule platform = new PlatformRule();
-  @Rule public final MockWebServer server = new MockWebServer();
+  @RegisterExtension public final PlatformRule platform = new PlatformRule();
+  private MockWebServer server;
 
   private final HandshakeCertificates handshakeCertificates = localhost();
   private final LogRecorder logRecorder = new LogRecorder();
@@ -56,8 +55,9 @@ public final class LoggingEventListenerTest {
   private OkHttpClient client;
   private HttpUrl url;
 
-  @Before
-  public void setUp() {
+  @BeforeEach
+  public void setUp(MockWebServer server) {
+    this.server = server;
     client =
         new OkHttpClient.Builder()
             .eventListenerFactory(loggingEventListenerFactory)
