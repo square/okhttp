@@ -11,10 +11,12 @@ dependencies {
   implementation deps.junitPlatformConsole
 
   implementation project(':okhttp')
+  implementation project(':okhttp-brotli')
+  implementation project(':okhttp-dnsoverhttps')
   implementation project(':okhttp-logging-interceptor')
+  implementation project(':okhttp-sse')
   implementation project(':okhttp-testing-support')
   implementation project(':okhttp-tls')
-  implementation project(':okhttp-sse')
   implementation deps.assertj
   implementation project(':mockwebserver')
   implementation project(':mockwebserver-deprecated')
@@ -42,6 +44,8 @@ animalsniffer {
 if (!properties.containsKey('android.injected.invoked.from.ide')) {
   sourceSets {
     // Not included in IDE as this confuses Intellij for obvious reasons.
+    main.java.srcDirs += project.file("../okhttp-brotli/src/test/java")
+    main.java.srcDirs += project.file("../okhttp-dnsoverhttps/src/test/java")
     main.java.srcDirs += project.file("../okhttp-logging-interceptor/src/test/java")
     main.java.srcDirs += project.file("../okhttp-sse/src/test/java")
   }

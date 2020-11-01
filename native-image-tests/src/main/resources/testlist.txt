@@ -1,5 +1,8 @@
 okhttp3.sse.internal.EventSourceHttpTest
+okhttp3.brotli.BrotliInterceptorTest
 okhttp3.logging.IsProbablyUtf8Test
 okhttp3.logging.LoggingEventListenerTest
 okhttp3.logging.HttpLoggingInterceptorTest
+okhttp3.dnsoverhttps.DnsOverHttpsTest
+okhttp3.brotli.BrotliInterceptorJavaApiTest
 okhttp3.SampleTest
