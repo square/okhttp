@@ -23,7 +23,6 @@ import okhttp3.UrlComponentEncodingTester.Component;
 import okhttp3.UrlComponentEncodingTester.Encoding;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.jupiter.api.Disabled;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -411,7 +410,7 @@ public final class HttpUrlTest {
     assertThat(parse("http://\uD87E\uDE1D").host()).isEqualTo("xn--pu5l");
   }
 
-  @Disabled("The java.net.IDN implementation doesn't ignore characters that it should.")
+  @Ignore("The java.net.IDN implementation doesn't ignore characters that it should.")
   @Test public void hostnameMappingLastIgnoredCodePoint() throws Exception {
     assertThat(parse("http://ab\uDB40\uDDEFcd").host()).isEqualTo("abcd");
   }
