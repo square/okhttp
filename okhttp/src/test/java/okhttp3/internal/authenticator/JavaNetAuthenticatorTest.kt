@@ -34,10 +34,10 @@ import okhttp3.internal.RecordingAuthenticator
 import okhttp3.internal.proxy.NullProxySelector
 import okhttp3.internal.tls.OkHostnameVerifier
 import okhttp3.tls.internal.TlsUtil
-import org.junit.After
-import org.junit.Assert.assertEquals
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 // Most tests from URLConnectionTest
 class JavaNetAuthenticatorTest {
@@ -47,12 +47,12 @@ class JavaNetAuthenticatorTest {
 
   val recordingAuthenticator = RecordingAuthenticator()
 
-  @Before
+  @BeforeEach
   fun setup() {
     Authenticator.setDefault(recordingAuthenticator)
   }
 
-  @After
+  @AfterEach
   fun tearDown() {
     Authenticator.setDefault(null)
   }
