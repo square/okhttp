@@ -1,0 +1,5 @@
+okhttp3.sse.internal.EventSourceHttpTest
+okhttp3.logging.IsProbablyUtf8Test
+okhttp3.logging.LoggingEventListenerTest
+okhttp3.logging.HttpLoggingInterceptorTest
+okhttp3.SampleTest
