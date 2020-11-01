@@ -15,31 +15,35 @@
  */
 package okhttp3.compare
 
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
 import java.net.http.HttpClient
 import java.net.http.HttpClient.Redirect.NORMAL
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse.BodyHandlers
-import okhttp3.mockwebserver.MockResponse
-import okhttp3.mockwebserver.MockWebServer
+import okhttp3.testing.PlatformRule
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Ignore
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
 /**
  * Java HTTP Client.
  *
  * https://openjdk.java.net/groups/net/httpclient/intro.html
+ *
+ * Baseline test if we ned to validate OkHttp behaviour against other popular clients.
  */
-@Ignore("Requires Java 11, but OkHttp runs on Java 8+")
 class JavaHttpClientTest {
-  @JvmField @Rule val server = MockWebServer()
+  @JvmField @RegisterExtension val platform = PlatformRule()
 
-  private val httpClient = HttpClient.newBuilder()
+  @Test fun get(server: MockWebServer) {
+    // Not available
+    platform.expectFailureOnJdkVersion(8)
+
+    val httpClient = HttpClient.newBuilder()
       .followRedirects(NORMAL)
       .build()
 
-  @Test fun get() {
     server.enqueue(MockResponse()
         .setBody("hello, Java HTTP Client"))
 

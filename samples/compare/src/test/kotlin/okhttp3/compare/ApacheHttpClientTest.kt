@@ -15,31 +15,30 @@
  */
 package okhttp3.compare
 
-import okhttp3.mockwebserver.MockResponse
-import okhttp3.mockwebserver.MockWebServer
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
 import org.apache.hc.client5.http.classic.methods.HttpGet
 import org.apache.hc.client5.http.impl.classic.HttpClients
 import org.apache.hc.core5.http.io.entity.EntityUtils
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.After
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Test
 
 /**
  * Apache HttpClient 5.x.
  *
  * https://hc.apache.org/httpcomponents-client-5.0.x/index.html
+ *
+ * Baseline test if we ned to validate OkHttp behaviour against other popular clients.
  */
 class ApacheHttpClientTest {
-  @JvmField @Rule val server = MockWebServer()
-
   private val httpClient = HttpClients.createDefault()
 
-  @After fun tearDown() {
+  @AfterEach fun tearDown() {
     httpClient.close()
   }
 
-  @Test fun get() {
+  @Test fun get(server: MockWebServer) {
     server.enqueue(MockResponse()
         .setBody("hello, Apache HttpClient 5.x"))
 
