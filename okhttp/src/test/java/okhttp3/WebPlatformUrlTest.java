@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import okio.BufferedSource;
 import okio.Okio;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
