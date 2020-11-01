@@ -22,8 +22,8 @@ import java.util.LinkedHashMap
 import okio.buffer
 import okio.source
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Assert.fail
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.fail
+import org.junit.jupiter.api.Test
 
 class UtilTest {
   @Test fun immutableMap() {
