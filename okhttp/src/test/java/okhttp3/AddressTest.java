@@ -19,7 +19,7 @@ import java.net.Proxy;
 import java.util.List;
 import javax.net.SocketFactory;
 import okhttp3.internal.http.RecordingProxySelector;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static okhttp3.internal.Util.immutableListOf;
 import static org.assertj.core.api.Assertions.assertThat;

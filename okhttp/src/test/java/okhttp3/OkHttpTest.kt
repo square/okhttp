@@ -16,7 +16,7 @@
 package okhttp3
 
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class OkHttpTest {
   @Test

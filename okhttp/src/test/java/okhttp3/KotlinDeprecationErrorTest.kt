@@ -46,7 +46,7 @@ import okhttp3.tls.HeldCertificate
 import okhttp3.tls.internal.TlsUtil.localhost
 import okio.Buffer
 import org.junit.Ignore
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 /**
  * Access every declaration that is deprecated with [DeprecationLevel.ERROR]. Although new Kotlin

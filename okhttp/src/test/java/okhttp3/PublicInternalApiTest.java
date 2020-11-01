@@ -17,7 +17,7 @@ package okhttp3;
 
 import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http.HttpMethod;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;

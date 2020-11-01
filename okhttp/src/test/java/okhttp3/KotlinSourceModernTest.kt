@@ -77,7 +77,7 @@ import okio.BufferedSource
 import okio.ByteString
 import okio.Timeout
 import org.junit.Ignore
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 /**
  * Access every type, function, and property from Kotlin to defend against unexpected regressions in

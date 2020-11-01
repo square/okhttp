@@ -26,7 +26,7 @@ import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http2.Header;
 import okhttp3.internal.http2.Http2ExchangeCodec;
 import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;

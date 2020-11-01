@@ -20,7 +20,7 @@ import java.util.HashSet;
 import java.util.List;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import okhttp3.tls.HeldCertificate;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
