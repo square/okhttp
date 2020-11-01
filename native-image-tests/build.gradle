@@ -59,6 +59,7 @@ graal {
   option "--report-unsupported-elements-at-runtime"
   option "-H:+ReportExceptionStackTraces"
   option "-H:+TraceClassInitialization"
+  option "--initialize-at-build-time=kotlin.text.Charsets"
 
   if (Os.isFamily(Os.FAMILY_WINDOWS)) {
     // May be possible without, but autodetection is problematic on Windows 10
