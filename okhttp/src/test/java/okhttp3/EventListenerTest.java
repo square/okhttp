@@ -29,6 +29,9 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
+import mockwebserver3.MockResponse;
+import mockwebserver3.MockWebServer;
+import mockwebserver3.SocketPolicy;
 import okhttp3.CallEvent.CallEnd;
 import okhttp3.CallEvent.CallFailed;
 import okhttp3.CallEvent.CallStart;
@@ -54,9 +57,6 @@ import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.connection.RealConnectionPool;
 import okhttp3.logging.HttpLoggingInterceptor;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.SocketPolicy;
 import okhttp3.testing.Flaky;
 import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
@@ -66,12 +66,12 @@ import org.hamcrest.BaseMatcher;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.Timeout;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static java.util.Arrays.asList;
 import static okhttp3.tls.internal.TlsUtil.localhost;
@@ -82,14 +82,14 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
 
 @Flaky // STDOUT logging enabled for test
+@Timeout(30)
 public final class EventListenerTest {
   public static final Matcher<Response> anyResponse = CoreMatchers.any(Response.class);
 
-  @Rule public final PlatformRule platform = new PlatformRule();
-  @Rule public final MockWebServer server = new MockWebServer();
-  @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
-  @Rule public final Timeout timeoutRule = new Timeout(20, TimeUnit.SECONDS);
+  @RegisterExtension public final PlatformRule platform = new PlatformRule();
+  @RegisterExtension public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
+  private MockWebServer server;
   private final RecordingEventListener listener = new RecordingEventListener();
   private final HandshakeCertificates handshakeCertificates = localhost();
 
@@ -99,7 +99,9 @@ public final class EventListenerTest {
   private SocksProxy socksProxy;
   private Cache cache = null;
 
-  @Before public void setUp() {
+  @BeforeEach public void setUp(MockWebServer server) {
+    this.server = server;
+
     platform.assumeNotOpenJSSE();
     platform.assumeNotBouncyCastle();
 
@@ -107,7 +109,7 @@ public final class EventListenerTest {
     listener.forbidLock(client.dispatcher());
   }
 
-  @After public void tearDown() throws Exception {
+  @AfterEach public void tearDown() throws Exception {
     if (socksProxy != null) {
       socksProxy.shutdown();
     }

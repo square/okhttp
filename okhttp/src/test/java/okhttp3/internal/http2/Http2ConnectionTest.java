@@ -38,11 +38,9 @@ import okio.BufferedSource;
 import okio.Okio;
 import okio.Sink;
 import okio.Source;
-import org.junit.After;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestRule;
-import org.junit.rules.Timeout;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
@@ -65,12 +63,11 @@ import static org.assertj.core.data.Offset.offset;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.fail;
 
+@Timeout(5)
 public final class Http2ConnectionTest {
   private final MockHttp2Peer peer = new MockHttp2Peer();
 
-  @Rule public final TestRule timeout = new Timeout(5_000, TimeUnit.MILLISECONDS);
-
-  @After public void tearDown() throws Exception {
+  @AfterEach public void tearDown() throws Exception {
     peer.close();
   }
 

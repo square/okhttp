@@ -16,15 +16,15 @@
 package okhttp3.internal.platform;
 
 import okhttp3.testing.PlatformRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static org.assertj.core.api.Java6Assertions.assertThat;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 public class Jdk8WithJettyBootPlatformTest {
-  @Rule public final PlatformRule platform = new PlatformRule();
+  @RegisterExtension public final PlatformRule platform = new PlatformRule();
 
   @Test
   public void testBuildsWithJettyBoot() {

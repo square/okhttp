@@ -22,8 +22,8 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import okhttp3.testing.PlatformRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static java.util.Arrays.asList;
 import static okhttp3.internal.Internal.applyConnectionSpec;
@@ -31,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public final class ConnectionSpecTest {
-  @Rule public final PlatformRule platform = new PlatformRule();
+  @RegisterExtension public final PlatformRule platform = new PlatformRule();
 
   @Test public void noTlsVersions() {
     try {

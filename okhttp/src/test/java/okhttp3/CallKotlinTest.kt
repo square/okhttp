@@ -15,6 +15,10 @@
  */
 package okhttp3
 
+import java.io.IOException
+import java.net.Proxy
+import java.security.cert.X509Certificate
+import java.time.Duration
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy
@@ -34,10 +38,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.fail
-import java.io.IOException
-import java.net.Proxy
-import java.security.cert.X509Certificate
-import java.time.Duration
 
 @Timeout(30)
 class CallKotlinTest(

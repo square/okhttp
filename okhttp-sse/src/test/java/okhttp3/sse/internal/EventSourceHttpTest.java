@@ -17,11 +17,11 @@ package okhttp3.sse.internal;
 
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
+import mockwebserver3.MockResponse;
+import mockwebserver3.MockWebServer;
 import okhttp3.OkHttpClient;
 import okhttp3.OkHttpClientTestRule;
 import okhttp3.Request;
-import mockwebserver3.MockResponse;
-import mockwebserver3.MockWebServer;
 import okhttp3.sse.EventSource;
 import okhttp3.sse.EventSources;
 import okhttp3.testing.PlatformRule;
@@ -33,7 +33,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public final class EventSourceHttpTest {
-  @RegisterExtension  public final PlatformRule platform = new PlatformRule();
+  @RegisterExtension public final PlatformRule platform = new PlatformRule();
 
   private MockWebServer server;
   @RegisterExtension public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();

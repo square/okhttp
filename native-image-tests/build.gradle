@@ -20,7 +20,7 @@ dependencies {
   implementation project(':mockwebserver-deprecated')
   implementation project(':okhttp-urlconnection')
   implementation project(':mockwebserver-junit4')
-  implementation project(':mockwebserver-junit5')
+  testRuntimeOnly project(':mockwebserver-junit5')
   implementation deps.bndResolve
   implementation deps.junit5Api
 
@@ -37,6 +37,11 @@ dependencies {
 
 animalsniffer {
   ignoreFailures = true
+}
+
+sourceSets {
+  main.java.srcDirs += project.file("../okhttp-logging-interceptor/src/test/java")
+  main.java.srcDirs += project.file("../okhttp-sse/src/test/java")
 }
 
 graal {

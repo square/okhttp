@@ -32,37 +32,35 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
 import javax.security.auth.x500.X500Principal;
+import mockwebserver3.MockResponse;
+import mockwebserver3.MockWebServer;
 import okhttp3.Call;
-import okhttp3.CallEvent;
 import okhttp3.OkHttpClient;
 import okhttp3.OkHttpClientTestRule;
 import okhttp3.RecordingEventListener;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.internal.http2.ConnectionShutdownException;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.testing.PlatformRule;
 import okhttp3.testing.PlatformVersion;
 import okhttp3.tls.HandshakeCertificates;
 import okhttp3.tls.HeldCertificate;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static java.util.Arrays.asList;
 import static okhttp3.testing.PlatformRule.getPlatformSystemProperty;
 import static okhttp3.tls.internal.TlsUtil.newKeyManager;
 import static okhttp3.tls.internal.TlsUtil.newTrustManager;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 public final class ClientAuthTest {
-  @Rule public final PlatformRule platform = new PlatformRule();
-  @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
-  @Rule public final MockWebServer server = new MockWebServer();
+  @RegisterExtension public final PlatformRule platform = new PlatformRule();
+  @RegisterExtension public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
+  private MockWebServer server;
   private HeldCertificate serverRootCa;
   private HeldCertificate serverIntermediateCa;
   private HeldCertificate serverCert;
@@ -70,8 +68,10 @@ public final class ClientAuthTest {
   private HeldCertificate clientIntermediateCa;
   private HeldCertificate clientCert;
 
-  @Before
-  public void setUp() {
+  @BeforeEach
+  public void setUp(MockWebServer server) {
+    this.server = server;
+
     platform.assumeNotOpenJSSE();
     platform.assumeNotBouncyCastle();
 

@@ -34,12 +34,12 @@ import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.HostnameVerifier;
+import mockwebserver3.MockResponse;
+import mockwebserver3.MockWebServer;
+import mockwebserver3.RecordedRequest;
 import okhttp3.internal.Internal;
 import okhttp3.internal.io.InMemoryFileSystem;
 import okhttp3.internal.platform.Platform;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
@@ -47,13 +47,13 @@ import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.GzipSink;
 import okio.Okio;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
+import static mockwebserver3.SocketPolicy.DISCONNECT_AT_END;
 import static okhttp3.internal.Internal.cacheGet;
-import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
@@ -62,18 +62,21 @@ import static org.junit.Assert.fail;
 public final class CacheTest {
   private static final HostnameVerifier NULL_HOSTNAME_VERIFIER = (name, session) -> true;
 
-  @Rule public MockWebServer server = new MockWebServer();
-  @Rule public MockWebServer server2 = new MockWebServer();
-  @Rule public InMemoryFileSystem fileSystem = new InMemoryFileSystem();
-  @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
-  @Rule public final PlatformRule platform = new PlatformRule();
+  @RegisterExtension public InMemoryFileSystem fileSystem = new InMemoryFileSystem();
+  @RegisterExtension public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
+  @RegisterExtension public final PlatformRule platform = new PlatformRule();
 
+  private MockWebServer server;
+  private MockWebServer server2;
   private final HandshakeCertificates handshakeCertificates = localhost();
   private OkHttpClient client;
   private Cache cache;
   private final CookieManager cookieManager = new CookieManager();
 
-  @Before public void setUp() throws Exception {
+  @BeforeEach public void setUp(MockWebServer server, MockWebServer server2) throws Exception {
+    this.server = server;
+    this.server2 = server2;
+
     platform.assumeNotOpenJSSE();
     platform.assumeNotBouncyCastle();
 
@@ -85,7 +88,7 @@ public final class CacheTest {
         .build();
   }
 
-  @After public void tearDown() throws Exception {
+  @AfterEach public void tearDown() throws Exception {
     ResponseCache.setDefault(null);
 
     if (cache != null) {
