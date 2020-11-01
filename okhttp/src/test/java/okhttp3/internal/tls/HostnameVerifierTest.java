@@ -30,7 +30,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.internal.Util;
 import okhttp3.tls.HeldCertificate;
 import okhttp3.tls.internal.TlsUtil;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;

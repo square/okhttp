@@ -48,7 +48,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import static okhttp3.tls.internal.TlsUtil.newKeyManager;
 import static okhttp3.tls.internal.TlsUtil.newTrustManager;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public final class CertificatePinnerChainValidationTest {
   @RegisterExtension PlatformRule platform = new PlatformRule();
