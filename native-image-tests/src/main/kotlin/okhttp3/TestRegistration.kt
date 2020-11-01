@@ -50,6 +50,9 @@ class TestRegistration : Feature {
           registerTest(testClass)
         }
       } catch (e: Exception) {
+        // If you throw an exception here then native image building fails half way through
+        // silently without rewriting the binary. So we report noisily, but keep going and prefer
+        // running most tests still.
         e.printStackTrace()
       }
     }
