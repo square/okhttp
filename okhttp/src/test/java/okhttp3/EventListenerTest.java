@@ -320,30 +320,28 @@ public final class EventListenerTest {
 
     if (requestHeaderLength != null) {
       RequestHeadersEnd responseHeadersEnd = listener.removeUpToEvent(RequestHeadersEnd.class);
-      Assert.assertThat("request header length", responseHeadersEnd.getHeaderLength(),
-          requestHeaderLength);
+      assertThat(responseHeadersEnd.getHeaderLength()).isEqualTo(requestHeaderLength);
     } else {
       assertThat(listener.recordedEventTypes()).doesNotContain("RequestHeadersEnd");
     }
 
     if (requestBodyBytes != null) {
       RequestBodyEnd responseBodyEnd = listener.removeUpToEvent(RequestBodyEnd.class);
-      Assert.assertThat("request body bytes", responseBodyEnd.getBytesWritten(), requestBodyBytes);
+      assertThat(responseBodyEnd.getBytesWritten()).isEqualTo(requestBodyBytes);
     } else {
       assertThat(listener.recordedEventTypes()).doesNotContain("RequestBodyEnd");
     }
 
     if (responseHeaderLength != null) {
       ResponseHeadersEnd responseHeadersEnd = listener.removeUpToEvent(ResponseHeadersEnd.class);
-      Assert.assertThat("response header length", responseHeadersEnd.getHeaderLength(),
-          responseHeaderLength);
+      assertThat(responseHeadersEnd.getHeaderLength()).isEqualTo(responseHeaderLength);
     } else {
       assertThat(listener.recordedEventTypes()).doesNotContain("ResponseHeadersEnd");
     }
 
     if (responseBodyBytes != null) {
       ResponseBodyEnd responseBodyEnd = listener.removeUpToEvent(ResponseBodyEnd.class);
-      Assert.assertThat("response body bytes", responseBodyEnd.getBytesRead(), responseBodyBytes);
+      assertThat(responseBodyEnd.getBytesRead()).isEqualTo(responseBodyBytes);
     } else {
       assertThat(listener.recordedEventTypes()).doesNotContain("ResponseBodyEnd");
     }
