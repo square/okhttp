@@ -17,7 +17,7 @@ package okhttp3.internal.ws
 
 import okhttp3.Headers.Companion.headersOf
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class WebSocketExtensionsTest {
   @Test

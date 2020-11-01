@@ -59,7 +59,6 @@ import static okhttp3.TestUtil.repeat;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
-import static org.junit.Assert.fail;
 
 @Flaky
 public final class WebSocketHttpTest {

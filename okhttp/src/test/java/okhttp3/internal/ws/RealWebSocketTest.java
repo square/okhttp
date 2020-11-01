@@ -30,10 +30,9 @@ import okhttp3.internal.concurrent.TaskRunner;
 import okio.ByteString;
 import okio.Okio;
 import okio.Pipe;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static okhttp3.internal.ws.RealWebSocket.DEFAULT_MINIMUM_DEFLATE_SIZE;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -52,12 +51,12 @@ public final class RealWebSocketTest {
   private TestStreams client = new TestStreams(true, server2client, client2Server);
   private TestStreams server = new TestStreams(false, client2Server, server2client);
 
-  @Before public void setUp() throws IOException {
+  @BeforeEach public void setUp() throws IOException {
     client.initWebSocket(random, 0);
     server.initWebSocket(random, 0);
   }
 
-  @After public void tearDown() throws Exception {
+  @AfterEach public void tearDown() throws Exception {
     client.listener.assertExhausted();
     server.listener.assertExhausted();
     server.getSource().close();

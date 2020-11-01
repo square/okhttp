@@ -31,7 +31,7 @@ import static okhttp3.internal.ws.WebSocketProtocol.OPCODE_TEXT;
 import static okhttp3.internal.ws.WebSocketProtocol.PAYLOAD_BYTE_MAX;
 import static okhttp3.internal.ws.WebSocketProtocol.PAYLOAD_SHORT_MAX;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public final class WebSocketWriterTest {
   private final Buffer data = new Buffer();
