@@ -16,7 +16,7 @@
 package okhttp3.internal.concurrent
 
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class TaskLoggerTest {
   @Test fun formatTime() {

@@ -21,8 +21,8 @@ import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.data.Offset
-import org.junit.After
-import org.junit.Test
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Test
 
 /**
  * Integration test to confirm that [TaskRunner] works with a real backend. Business logic is all
@@ -49,7 +49,7 @@ class TaskRunnerRealBackendTest {
   private val taskRunner = TaskRunner(backend)
   private val queue = taskRunner.newQueue()
 
-  @After fun tearDown() {
+  @AfterEach fun tearDown() {
     backend.shutdown()
   }
 
