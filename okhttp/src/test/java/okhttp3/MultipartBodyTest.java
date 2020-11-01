@@ -18,7 +18,7 @@ package okhttp3;
 import java.io.IOException;
 import okio.Buffer;
 import okio.BufferedSink;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;

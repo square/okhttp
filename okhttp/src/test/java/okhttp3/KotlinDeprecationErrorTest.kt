@@ -46,7 +46,8 @@ import okhttp3.tls.HeldCertificate
 import okhttp3.tls.internal.TlsUtil.localhost
 import okio.Buffer
 import org.junit.Ignore
-import org.junit.Test
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
 
 /**
  * Access every declaration that is deprecated with [DeprecationLevel.ERROR]. Although new Kotlin
@@ -60,7 +61,7 @@ import org.junit.Test
     "VARIABLE_WITH_REDUNDANT_INITIALIZER"
 )
 class KotlinDeprecationErrorTest {
-  @Test @Ignore
+  @Test @Disabled
   fun address() {
     val address: Address = newAddress()
     val url: HttpUrl = address.url()
@@ -76,13 +77,13 @@ class KotlinDeprecationErrorTest {
     val certificatePinner: CertificatePinner? = address.certificatePinner()
   }
 
-  @Test @Ignore
+  @Test @Disabled
   fun cache() {
     val cache = Cache(File("/cache/"), Integer.MAX_VALUE.toLong())
     val directory: File = cache.directory()
   }
 
-  @Test @Ignore
+  @Test @Disabled
   fun cacheControl() {
     val cacheControl: CacheControl = CacheControl.Builder().build()
     val noCache: Boolean = cacheControl.noCache()
@@ -98,7 +99,7 @@ class KotlinDeprecationErrorTest {
     val parse: CacheControl = CacheControl.parse(Headers.of())
   }
 
-  @Test @Ignore
+  @Test @Disabled
   fun challenge() {
     val challenge = Challenge("", mapOf<String?, String>("" to ""))
     val scheme: String = challenge.scheme()
@@ -107,13 +108,13 @@ class KotlinDeprecationErrorTest {
     val charset: Charset = challenge.charset()
   }
 
-  @Test @Ignore
+  @Test @Disabled
   fun cipherSuite() {
     val cipherSuite: CipherSuite = CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
     val javaName: String = cipherSuite.javaName()
   }
 
-  @Test @Ignore
+  @Test @Disabled
   fun connectionSpec() {
     val connectionSpec: ConnectionSpec = ConnectionSpec.RESTRICTED_TLS
     val tlsVersions: List<TlsVersion>? = connectionSpec.tlsVersions()
@@ -121,7 +122,7 @@ class KotlinDeprecationErrorTest {
     val supportsTlsExtensions: Boolean = connectionSpec.supportsTlsExtensions()
   }
 
-  @Test @Ignore
+  @Test @Disabled
   fun cookie() {
     val cookie: Cookie = Cookie.Builder().build()
     val name: String = cookie.name()
@@ -135,13 +136,13 @@ class KotlinDeprecationErrorTest {
     val secure: Boolean = cookie.secure()
   }
 
-  @Test @Ignore
+  @Test @Disabled
   fun formBody() {
     val formBody: FormBody = FormBody.Builder().build()
     val size: Int = formBody.size()
   }
 
-  @Test @Ignore
+  @Test @Disabled
   fun handshake() {
     val handshake: Handshake =
         Handshake.get((localhost().sslSocketFactory().createSocket() as SSLSocket).session)
@@ -153,20 +154,20 @@ class KotlinDeprecationErrorTest {
     val localPrincipal: Principal? = handshake.localPrincipal()
   }
 
-  @Test @Ignore
+  @Test @Disabled
   fun headers() {
     var headers: Headers = Headers.of("", "")
     headers = Headers.of(mapOf("" to ""))
     val size: Int = headers.size()
   }
 
-  @Test @Ignore
+  @Test @Disabled
   fun httpLoggingInterceptor() {
     val interceptor = HttpLoggingInterceptor()
     val level = interceptor.getLevel()
   }
 
-  @Test @Ignore
+  @Test @Disabled
   fun httpUrl() {
     val httpUrl: HttpUrl = HttpUrl.get("")
     val url: URL = httpUrl.url()
@@ -194,14 +195,14 @@ class KotlinDeprecationErrorTest {
     val parse: HttpUrl? = HttpUrl.parse("")
   }
 
-  @Test @Ignore
+  @Test @Disabled
   fun handshakeCertificates() {
     val handshakeCertificates = HandshakeCertificates.Builder().build()
     val keyManager: X509KeyManager = handshakeCertificates.keyManager()
     val trustManager: X509TrustManager = handshakeCertificates.trustManager()
   }
 
-  @Test @Ignore
+  @Test @Disabled
   fun handshakeCertificatesBuilder() {
     var builder: HandshakeCertificates.Builder = HandshakeCertificates.Builder()
     val heldCertificate: HeldCertificate = HeldCertificate.Builder().build()
@@ -209,14 +210,14 @@ class KotlinDeprecationErrorTest {
     builder = builder.addTrustedCertificate(heldCertificate.certificate())
   }
 
-  @Test @Ignore
+  @Test @Disabled
   fun heldCertificate() {
     val heldCertificate: HeldCertificate = HeldCertificate.Builder().build()
     val certificate: X509Certificate = heldCertificate.certificate()
     val keyPair: KeyPair = heldCertificate.keyPair()
   }
 
-  @Test @Ignore
+  @Test @Disabled
   fun mediaType() {
     val mediaType: MediaType = MediaType.get("")
     val type: String = mediaType.type()
@@ -224,7 +225,7 @@ class KotlinDeprecationErrorTest {
     val parse: MediaType? = MediaType.parse("")
   }
 
-  @Test @Ignore
+  @Test @Disabled
   fun mockResponse() {
     val mockResponse = MockResponse()
     var status: String = mockResponse.getStatus()
@@ -234,7 +235,7 @@ class KotlinDeprecationErrorTest {
     var http2ErrorCode: Int = mockResponse.getHttp2ErrorCode()
   }
 
-  @Test @Ignore
+  @Test @Disabled
   fun mockWebServer() {
     val mockWebServer = MockWebServer()
     var port: Int = mockWebServer.getPort()
@@ -245,7 +246,7 @@ class KotlinDeprecationErrorTest {
     var requestCount: Int = mockWebServer.getRequestCount()
   }
 
-  @Test @Ignore
+  @Test @Disabled
   fun multipartBody() {
     val multipartBody: MultipartBody = MultipartBody.Builder().build()
     val type: MediaType = multipartBody.type()
@@ -254,7 +255,7 @@ class KotlinDeprecationErrorTest {
     val parts: List<MultipartBody.Part> = multipartBody.parts()
   }
 
-  @Test @Ignore
+  @Test @Disabled
   fun multipartBodyPart() {
     val multipartBody: MultipartBody = MultipartBody.Builder().build()
     val part: MultipartBody.Part = multipartBody.part(0)
@@ -262,7 +263,7 @@ class KotlinDeprecationErrorTest {
     val body: RequestBody = part.body()
   }
 
-  @Test @Ignore
+  @Test @Disabled
   fun okHttpClient() {
     val client = OkHttpClient()
     val dispatcher: Dispatcher = client.dispatcher()
@@ -293,7 +294,7 @@ class KotlinDeprecationErrorTest {
     val pingIntervalMillis: Int = client.pingIntervalMillis()
   }
 
-  @Test @Ignore
+  @Test @Disabled
   fun pushPromise() {
     val pushPromise = PushPromise("", "", Headers.of(), MockResponse())
     val method: String = pushPromise.method()
@@ -302,13 +303,13 @@ class KotlinDeprecationErrorTest {
     val response: MockResponse = pushPromise.response()
   }
 
-  @Test @Ignore
+  @Test @Disabled
   fun recordedRequest() {
     val recordedRequest = RecordedRequest("", Headers.of(), listOf(), 0L, Buffer(), 0, Socket())
     var utf8Body: String = recordedRequest.utf8Body
   }
 
-  @Test @Ignore
+  @Test @Disabled
   fun request() {
     val request: Request = Request.Builder().build()
     val url: HttpUrl = request.url()
@@ -318,7 +319,7 @@ class KotlinDeprecationErrorTest {
     val cacheControl: CacheControl = request.cacheControl()
   }
 
-  @Test @Ignore
+  @Test @Disabled
   fun response() {
     val response: Response = Response.Builder().build()
     val request: Request = response.request()
@@ -336,7 +337,7 @@ class KotlinDeprecationErrorTest {
     val receivedResponseAtMillis: Long = response.receivedResponseAtMillis()
   }
 
-  @Test @Ignore
+  @Test @Disabled
   fun route() {
     val route: Route = newRoute()
     val address: Address = route.address()
@@ -344,7 +345,7 @@ class KotlinDeprecationErrorTest {
     val inetSocketAddress: InetSocketAddress = route.socketAddress()
   }
 
-  @Test @Ignore
+  @Test @Disabled
   fun tlsVersion() {
     val tlsVersion: TlsVersion = TlsVersion.TLS_1_3
     val javaName: String = tlsVersion.javaName()

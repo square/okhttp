@@ -26,7 +26,8 @@ import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http2.Header;
 import okhttp3.internal.http2.Http2ExchangeCodec;
 import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
@@ -730,7 +731,7 @@ public final class HeadersTest {
         new Challenge("Digest", Collections.emptyMap()));
   }
 
-  @Ignore("TODO(jwilson): reject parameters that use invalid characters")
+  @Disabled("TODO(jwilson): reject parameters that use invalid characters")
   @Test public void doubleQuoteInToken() {
     Headers headers = new Headers.Builder()
         .add("WWW-Authenticate", "Digest,,,, Basic ,,,realm=my\"realm")

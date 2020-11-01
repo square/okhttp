@@ -16,9 +16,10 @@
 package okhttp3;
 
 import java.io.IOException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class ProtocolTest {
   @Test
@@ -31,13 +32,15 @@ public class ProtocolTest {
     assertThat(Protocol.get("quic")).isEqualTo(Protocol.QUIC);
   }
 
-  @Test(expected = IOException.class)
-  public void testGetUnknown() throws IOException {
-    Protocol.get("tcp");
+  @Test
+  public void testGetUnknown() {
+    assertThrows(IOException.class, () -> {
+      Protocol.get("tcp");
+    });
   }
 
   @Test
-  public void testToString() throws IOException {
+  public void testToString() {
     assertThat(Protocol.HTTP_1_0.toString()).isEqualTo("http/1.0");
     assertThat(Protocol.HTTP_1_1.toString()).isEqualTo("http/1.1");
     assertThat(Protocol.SPDY_3.toString()).isEqualTo("spdy/3.1");
