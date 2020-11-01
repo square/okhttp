@@ -29,18 +29,16 @@ import org.junit.jupiter.api.extension.RegisterExtension
  *
  * https://square.github.io/okhttp/
  */
-class OkHttpClientTest(
-  private val server: MockWebServer
-) {
-  @RegisterExtension @JvmField val platform = PlatformRule()
+class OkHttpClientTest {
+  @JvmField @RegisterExtension val platform = PlatformRule()
 
-  private val client = OkHttpClient()
-
-  @Test fun get() {
+  @Test fun get(server: MockWebServer) {
     platform.assumeNotBouncyCastle()
 
     server.enqueue(MockResponse()
         .setBody("hello, OkHttp"))
+
+    val client = OkHttpClient()
 
     val request = Request.Builder()
         .url(server.url("/"))

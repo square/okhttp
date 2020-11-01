@@ -27,11 +27,10 @@ import org.junit.jupiter.api.Test
  * Jetty HTTP client.
  *
  * https://www.eclipse.org/jetty/documentation/current/http-client.html
+ *
+ * Baseline test if we ned to validate OkHttp behaviour against other popular clients.
  */
-class JettyHttpClientTest(
-  val server: MockWebServer
-) {
-
+class JettyHttpClientTest {
   private val client = HttpClient()
 
   @BeforeEach fun setUp() {
@@ -42,7 +41,7 @@ class JettyHttpClientTest(
     client.stop()
   }
 
-  @Test fun get() {
+  @Test fun get(server: MockWebServer) {
     server.enqueue(MockResponse()
         .setBody("hello, Jetty HTTP Client"))
 

@@ -28,17 +28,17 @@ import org.junit.jupiter.api.Test
  * Apache HttpClient 5.x.
  *
  * https://hc.apache.org/httpcomponents-client-5.0.x/index.html
+ *
+ * Baseline test if we ned to validate OkHttp behaviour against other popular clients.
  */
-class ApacheHttpClientTest(
-  private val server: MockWebServer
-) {
+class ApacheHttpClientTest {
   private val httpClient = HttpClients.createDefault()
 
   @AfterEach fun tearDown() {
     httpClient.close()
   }
 
-  @Test fun get() {
+  @Test fun get(server: MockWebServer) {
     server.enqueue(MockResponse()
         .setBody("hello, Apache HttpClient 5.x"))
 
