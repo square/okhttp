@@ -17,7 +17,7 @@ package okhttp3.internal.http2;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static okhttp3.internal.http2.Http2.FLAG_ACK;
 import static okhttp3.internal.http2.Http2.FLAG_END_HEADERS;

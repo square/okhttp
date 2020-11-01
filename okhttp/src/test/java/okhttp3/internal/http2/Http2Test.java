@@ -26,7 +26,7 @@ import okio.BufferedSource;
 import okio.ByteString;
 import okio.GzipSink;
 import okio.Okio;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static java.util.Arrays.asList;
 import static okhttp3.TestUtil.headerEntries;
@@ -37,7 +37,7 @@ import static okhttp3.internal.http2.Http2.FLAG_NONE;
 import static okhttp3.internal.http2.Http2.FLAG_PADDED;
 import static okhttp3.internal.http2.Http2.FLAG_PRIORITY;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public final class Http2Test {
   final Buffer frame = new Buffer();
@@ -259,7 +259,7 @@ public final class Http2Test {
 
     try {
       reader.nextFrame(false, new BaseTestHandler());
-      fail();
+      fail("");
     } catch (IOException e) {
       assertThat(e.getMessage()).isEqualTo("PROTOCOL_ERROR SETTINGS_ENABLE_PUSH != 0 or 1");
     }
