@@ -88,8 +88,8 @@ fun buildRequest(selectors: List<DiscoverySelector>): LauncherDiscoveryRequest {
   return request
 }
 
-fun findTests(): List<TestDescriptor> {
-  val request: LauncherDiscoveryRequest = buildRequest(testSelectors())
+fun findTests(selectors: List<DiscoverySelector>): List<TestDescriptor> {
+  val request: LauncherDiscoveryRequest = buildRequest(selectors)
   val testEngine = buildTestEngine()
   val filters = listOf<PostDiscoveryFilter>()
   val discoveryOrchestrator = EngineDiscoveryOrchestrator(listOf(testEngine), filters)
