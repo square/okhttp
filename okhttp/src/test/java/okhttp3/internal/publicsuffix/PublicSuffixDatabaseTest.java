@@ -21,7 +21,7 @@ import okio.Buffer;
 import okio.BufferedSource;
 import okio.GzipSource;
 import okio.Okio;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static okhttp3.internal.HostnamesKt.toCanonicalHost;
 import static okhttp3.internal.publicsuffix.PublicSuffixDatabase.PUBLIC_SUFFIX_RESOURCE;
