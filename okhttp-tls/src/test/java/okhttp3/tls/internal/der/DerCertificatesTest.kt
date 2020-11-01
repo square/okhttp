@@ -37,7 +37,7 @@ import okio.ByteString.Companion.decodeHex
 import okio.ByteString.Companion.encodeUtf8
 import okio.ByteString.Companion.toByteString
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 internal class DerCertificatesTest {
   private val stateOrProvince = "1.3.6.1.4.1.311.60.2.1.2"
