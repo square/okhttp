@@ -20,14 +20,14 @@ import java.util.Arrays;
 import java.util.List;
 import okio.Buffer;
 import okio.ByteString;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static java.util.Arrays.asList;
 import static okhttp3.TestUtil.headerEntries;
 import static okio.ByteString.decodeHex;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public final class HpackTest {
   private final Buffer bytesIn = new Buffer();
@@ -35,7 +35,7 @@ public final class HpackTest {
   private Buffer bytesOut = new Buffer();
   private Hpack.Writer hpackWriter;
 
-  @Before public void reset() {
+  @BeforeEach public void reset() {
     hpackReader = newReader(bytesIn);
     hpackWriter = new Hpack.Writer(4096, false, bytesOut);
   }
@@ -400,7 +400,7 @@ public final class HpackTest {
 
     try {
       hpackReader.readHeaders();
-      fail();
+      fail("");
     } catch (IOException e) {
       assertThat(e.getMessage()).isEqualTo("index == 0");
     }
