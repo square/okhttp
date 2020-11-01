@@ -17,11 +17,10 @@ package okhttp3
 
 import org.junit.jupiter.engine.JupiterTestEngine
 import org.junit.platform.console.options.Theme
-import org.junit.platform.engine.TestEngine
 import org.junit.platform.engine.discovery.DiscoverySelectors.selectClass
+import org.junit.platform.engine.discovery.DiscoverySelectors.selectPackage
 import org.junit.platform.launcher.Launcher
 import org.junit.platform.launcher.LauncherDiscoveryRequest
-import org.junit.platform.launcher.PostDiscoveryFilter
 import org.junit.platform.launcher.TestExecutionListener
 import org.junit.platform.launcher.core.LauncherConfig
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder
@@ -31,14 +30,16 @@ import java.io.PrintWriter
 import kotlin.system.exitProcess
 
 val knownTests = listOf(
-  okhttp3.logging.IsProbablyUtf8Test::class.java,
-  okhttp3.logging.LoggingEventListenerTest::class.java,
-  okhttp3.logging.HttpLoggingInterceptorTest::class.java,
-  okhttp3.sse.internal.EventSourceHttpTest::class.java,
-  okhttp3.sse.internal.ServerSentEventIteratorTest::class.java,
+//  okhttp3.logging.IsProbablyUtf8Test::class.java,
+//  okhttp3.logging.LoggingEventListenerTest::class.java,
+//  okhttp3.logging.HttpLoggingInterceptorTest::class.java,
+//  okhttp3.sse.internal.EventSourceHttpTest::class.java,
+//  okhttp3.sse.internal.ServerSentEventIteratorTest::class.java,
 //  okhttp3.CallTest::class.java,
 //  okhttp3.internal.http.CancelTest::class.java,
   SampleTest::class.java)
+
+val selectors = listOf(selectPackage("okhttp3"))
 
 fun main() {
   System.setProperty("junit.jupiter.extensions.autodetection.enabled", "true")
@@ -53,17 +54,17 @@ fun main() {
     .enableTestEngineAutoRegistration(false)
     .enablePostDiscoveryFilterAutoRegistration(false)
     .addTestEngines(jupiterTestEngine)
-    .addTestExecutionListeners(summaryListener, treeListener, DotListener)
+    .addTestExecutionListeners(DotListener, summaryListener, treeListener)
     .build()
   val launcher: Launcher = LauncherFactory.create(config)
 
   val request: LauncherDiscoveryRequest = LauncherDiscoveryRequestBuilder.request()
     // TODO replace junit.jupiter.extensions.autodetection.enabled with API approach.
 //    .enableImplicitConfigurationParameters(false)
-    .selectors(knownTests.map { selectClass(it) })
+    .selectors(selectors)
     .build()
 
-  val result = launcher.execute(request)
+  launcher.execute(request)
 
   val summary = summaryListener.summary
   summary.printTo(PrintWriter(System.out))

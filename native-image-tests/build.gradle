@@ -20,7 +20,7 @@ dependencies {
   implementation project(':mockwebserver-deprecated')
   implementation project(':okhttp-urlconnection')
   implementation project(':mockwebserver-junit4')
-  testRuntimeOnly project(':mockwebserver-junit5')
+  implementation project(':mockwebserver-junit5')
   implementation deps.bndResolve
   implementation deps.junit5Api
 
@@ -39,9 +39,12 @@ animalsniffer {
   ignoreFailures = true
 }
 
-sourceSets {
-  main.java.srcDirs += project.file("../okhttp-logging-interceptor/src/test/java")
-  main.java.srcDirs += project.file("../okhttp-sse/src/test/java")
+if (!properties.containsKey('android.injected.invoked.from.ide')) {
+  sourceSets {
+    // Not included in IDE as this confuses Intellij for obvious reasons.
+    main.java.srcDirs += project.file("../okhttp-logging-interceptor/src/test/java")
+    main.java.srcDirs += project.file("../okhttp-sse/src/test/java")
+  }
 }
 
 graal {
@@ -54,6 +57,7 @@ graal {
   option "--no-fallback"
   option "--allow-incomplete-classpath"
   option "--report-unsupported-elements-at-runtime"
+  option "-H:+ReportExceptionStackTraces"
 
   if (Os.isFamily(Os.FAMILY_WINDOWS)) {
     // May be possible without, but autodetection is problematic on Windows 10
