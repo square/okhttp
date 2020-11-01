@@ -15,24 +15,24 @@
  */
 package okhttp3.compare
 
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.mockwebserver.MockResponse
-import okhttp3.mockwebserver.MockWebServer
 import okhttp3.testing.PlatformRule
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
 /**
  * OkHttp.
  *
  * https://square.github.io/okhttp/
  */
-class OkHttpClientTest {
-  @get:Rule val platform = PlatformRule()
-
-  @JvmField @Rule val server = MockWebServer()
+class OkHttpClientTest(
+  private val server: MockWebServer
+) {
+  @RegisterExtension @JvmField val platform = PlatformRule()
 
   private val client = OkHttpClient()
 

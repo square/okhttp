@@ -24,12 +24,11 @@ import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.concurrent.TimeUnit;
-
 import okhttp3.testing.PlatformRule;
 import okio.ByteString;
 import org.bouncycastle.asn1.x509.GeneralName;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,8 +36,7 @@ import static org.assertj.core.data.Offset.offset;
 import static org.junit.Assert.fail;
 
 public final class HeldCertificateTest {
-  @Rule
-  public PlatformRule platform = new PlatformRule();
+  @RegisterExtension public PlatformRule platform = new PlatformRule();
 
   @Test public void defaultCertificate() throws CertificateParsingException {
     long now = System.currentTimeMillis();

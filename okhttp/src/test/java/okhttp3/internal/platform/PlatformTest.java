@@ -16,14 +16,13 @@
 package okhttp3.internal.platform;
 
 import okhttp3.testing.PlatformRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class PlatformTest {
-  @Rule
-  public PlatformRule platform = new PlatformRule();
+  @RegisterExtension public PlatformRule platform = new PlatformRule();
 
   @Test public void alwaysBuilds() {
     new Platform();

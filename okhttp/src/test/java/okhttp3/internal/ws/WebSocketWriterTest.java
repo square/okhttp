@@ -21,10 +21,9 @@ import java.util.Random;
 import okhttp3.internal.Util;
 import okio.Buffer;
 import okio.ByteString;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestRule;
-import org.junit.runners.model.Statement;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static okhttp3.TestUtil.repeat;
 import static okhttp3.internal.ws.WebSocketProtocol.OPCODE_BINARY;
@@ -39,16 +38,14 @@ public final class WebSocketWriterTest {
   private final Random random = new Random(0);
 
   /**
-   * Check all data as verified inside of the test. We do this in a rule instead of @After so that
+   * Check all data as verified inside of the test. We do this in an AfterEachCallback so that
    * exceptions thrown from the test do not cause this check to fail.
    */
-  @Rule public final TestRule noDataLeftBehind = (base, description) -> new Statement() {
-    @Override public void evaluate() throws Throwable {
-      base.evaluate();
-      assertThat(data.readByteString().hex())
-          .overridingErrorMessage("Data not empty")
-          .isEqualTo("");
-    }
+  @RegisterExtension public final AfterEachCallback noDataLeftBehind = context -> {
+    if (context.getExecutionException().isPresent()) return;
+    assertThat(data.readByteString().hex())
+        .overridingErrorMessage("Data not empty")
+        .isEqualTo("");
   };
 
   // Mutually exclusive. Use the one corresponding to the peer whose behavior you wish to test.

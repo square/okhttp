@@ -23,20 +23,20 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import mockwebserver3.MockResponse;
+import mockwebserver3.MockWebServer;
+import mockwebserver3.RecordedRequest;
 import okhttp3.Cache;
 import okhttp3.Dns;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.testing.PlatformRule;
 import okio.Buffer;
 import okio.ByteString;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -44,16 +44,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public class DnsOverHttpsTest {
-  @Rule public final PlatformRule platform = new PlatformRule();
+  @RegisterExtension public final PlatformRule platform = new PlatformRule();
 
-  @Rule public final MockWebServer server = new MockWebServer();
+  private MockWebServer server;
+  private Dns dns;
 
-  private final OkHttpClient bootstrapClient =
-      new OkHttpClient.Builder().protocols(asList(Protocol.HTTP_2, Protocol.HTTP_1_1)).build();
-  private Dns dns = buildLocalhost(bootstrapClient, false);
+  private final OkHttpClient bootstrapClient = new OkHttpClient.Builder()
+      .protocols(asList(Protocol.HTTP_2, Protocol.HTTP_1_1))
+      .build();
 
-  @Before public void setUp() {
+  @BeforeEach public void setUp(MockWebServer server) {
+    this.server = server;
     server.setProtocols(bootstrapClient.protocols());
+    dns = buildLocalhost(bootstrapClient, false);
   }
 
   @Test public void getOne() throws Exception {

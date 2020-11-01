@@ -28,27 +28,26 @@ import okio.ByteString;
 import okio.Okio;
 import okio.Pipe;
 import okio.Source;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public final class RelayTest {
-  @Rule public final TemporaryFolder tempDir = new TemporaryFolder();
-
+  @TempDir File tempDir;
   private ExecutorService executor = Executors.newCachedThreadPool();
   private ByteString metadata = ByteString.encodeUtf8("great metadata!");
   private File file;
 
-  @Before public void setUp() throws Exception {
-    file = tempDir.newFile();
+  @BeforeEach
+  void setUp() {
+    file = new File(tempDir, "test");
   }
 
-  @After public void tearDown() throws Exception {
+  @AfterEach public void tearDown() throws Exception {
     executor.shutdown();
   }
 
