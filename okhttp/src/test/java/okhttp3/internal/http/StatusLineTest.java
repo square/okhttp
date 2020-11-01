@@ -18,10 +18,10 @@ package okhttp3.internal.http;
 import java.io.IOException;
 import java.net.ProtocolException;
 import okhttp3.Protocol;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public final class StatusLineTest {
   @Test public void parse() throws IOException {
@@ -111,7 +111,7 @@ public final class StatusLineTest {
   private void assertInvalid(String statusLine) throws IOException {
     try {
       StatusLine.Companion.parse(statusLine);
-      fail();
+      fail("");
     } catch (ProtocolException expected) {
     }
   }

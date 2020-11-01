@@ -108,7 +108,7 @@ public final class ThreadInterruptTest {
     interruptLater(500);
     try {
       call.execute();
-      fail();
+      fail("");
     } catch (IOException expected) {
     }
   }
