@@ -32,12 +32,13 @@ import okio.Okio;
 import okio.Pipe;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static okhttp3.internal.ws.RealWebSocket.DEFAULT_MINIMUM_DEFLATE_SIZE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public final class RealWebSocketTest {
   // NOTE: Fields are named 'client' and 'server' for cognitive simplicity. This differentiation has
@@ -273,7 +274,7 @@ public final class RealWebSocketTest {
     client.listener.assertFailure(IOException.class, "source is closed");
   }
 
-  @Ignore // TODO(jwilson): come up with a way to test unchecked exceptions on the writer thread.
+  @Disabled // TODO(jwilson): come up with a way to test unchecked exceptions on the writer thread.
   @Test public void closeMessageAndConnectionCloseThrowingDoesNotMaskOriginal() throws IOException {
     client.getSink().close();
     client.closeThrows = true;
@@ -283,7 +284,7 @@ public final class RealWebSocketTest {
     assertThat(client.closed).isTrue();
   }
 
-  @Ignore // TODO(jwilson): come up with a way to test unchecked exceptions on the writer thread.
+  @Disabled // TODO(jwilson): come up with a way to test unchecked exceptions on the writer thread.
   @Test public void peerConnectionCloseThrowingPropagates() throws IOException {
     client.closeThrows = true;
 
