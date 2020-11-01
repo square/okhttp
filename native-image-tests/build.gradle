@@ -58,6 +58,7 @@ graal {
   option "--allow-incomplete-classpath"
   option "--report-unsupported-elements-at-runtime"
   option "-H:+ReportExceptionStackTraces"
+  option "-H:+TraceClassInitialization"
 
   if (Os.isFamily(Os.FAMILY_WINDOWS)) {
     // May be possible without, but autodetection is problematic on Windows 10

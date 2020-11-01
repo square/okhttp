@@ -21,10 +21,6 @@ import org.junit.platform.launcher.TestIdentifier
 import org.junit.platform.launcher.TestPlan
 
 object DotListener: TestExecutionListener {
-  override fun testPlanExecutionStarted(testPlan: TestPlan) {
-    println(testPlan.roots.flatMap { testPlan.getDescendants(it) }.filter { it.isContainer })
-  }
-
   override fun executionSkipped(testIdentifier: TestIdentifier, reason: String) {
     System.err.print("-")
   }
@@ -34,7 +30,7 @@ object DotListener: TestExecutionListener {
     testExecutionResult: TestExecutionResult
   ) {
     if (!testIdentifier.isContainer) {
-      when (testExecutionResult.status) {
+      when (testExecutionResult.status!!) {
         TestExecutionResult.Status.ABORTED -> System.err.print("E")
         TestExecutionResult.Status.FAILED -> System.err.print("F")
         TestExecutionResult.Status.SUCCESSFUL -> System.err.print(".")

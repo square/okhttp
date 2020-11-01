@@ -18,11 +18,12 @@ package okhttp3
 import com.oracle.svm.core.annotate.AutomaticFeature
 import org.graalvm.nativeimage.hosted.Feature
 import org.graalvm.nativeimage.hosted.RuntimeReflection
+import java.io.File
 
 @AutomaticFeature
-class TestRegistration: Feature {
-  override fun beforeAnalysis(access: Feature.BeforeAnalysisAccess?) {
-    knownTests.forEach(this::registerTest)
+class TestRegistration : Feature {
+  override fun beforeAnalysis(access: Feature.BeforeAnalysisAccess) {
+    registerKnownTests(access)
 
     val listener = Class.forName("org.junit.platform.console.tasks.TreePrintingListener")
     RuntimeReflection.register(listener)
@@ -30,10 +31,27 @@ class TestRegistration: Feature {
       RuntimeReflection.register(it)
     }
 
-    val timeoutResource = Class.forName("org.junit.jupiter.engine.extension.TimeoutExtension\$ExecutorResource")
+    val timeoutResource =
+      Class.forName("org.junit.jupiter.engine.extension.TimeoutExtension\$ExecutorResource")
     RuntimeReflection.register(timeoutResource)
     timeoutResource.declaredConstructors.forEach {
       RuntimeReflection.register(it)
+    }
+  }
+
+  private fun registerKnownTests(access: Feature.BeforeAnalysisAccess) {
+    val knownTestFile = File("src/main/resources/testlist.txt").absoluteFile
+    knownTestFile.readLines().forEach {
+      try {
+        val testClass = access.findClassByName(it)
+
+        if (testClass != null) {
+          access.registerAsUsed(testClass)
+          registerTest(testClass)
+        }
+      } catch (e: Exception) {
+        e.printStackTrace()
+      }
     }
   }
 
