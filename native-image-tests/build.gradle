@@ -1,7 +1,7 @@
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
-  id "com.palantir.graal" version "0.7.1"
+  id "com.palantir.graal" version "0.7.2"
 }
 
 dependencies {
