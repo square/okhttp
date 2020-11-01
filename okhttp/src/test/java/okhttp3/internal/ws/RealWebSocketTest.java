@@ -30,15 +30,15 @@ import okhttp3.internal.concurrent.TaskRunner;
 import okio.ByteString;
 import okio.Okio;
 import okio.Pipe;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import static okhttp3.internal.ws.RealWebSocket.DEFAULT_MINIMUM_DEFLATE_SIZE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public final class RealWebSocketTest {
   // NOTE: Fields are named 'client' and 'server' for cognitive simplicity. This differentiation has
@@ -52,12 +52,12 @@ public final class RealWebSocketTest {
   private TestStreams client = new TestStreams(true, server2client, client2Server);
   private TestStreams server = new TestStreams(false, client2Server, server2client);
 
-  @Before public void setUp() throws IOException {
+  @BeforeEach public void setUp() throws IOException {
     client.initWebSocket(random, 0);
     server.initWebSocket(random, 0);
   }
 
-  @After public void tearDown() throws Exception {
+  @AfterEach public void tearDown() throws Exception {
     client.listener.assertExhausted();
     server.listener.assertExhausted();
     server.getSource().close();
@@ -274,7 +274,7 @@ public final class RealWebSocketTest {
     client.listener.assertFailure(IOException.class, "source is closed");
   }
 
-  @Ignore // TODO(jwilson): come up with a way to test unchecked exceptions on the writer thread.
+  @Disabled // TODO(jwilson): come up with a way to test unchecked exceptions on the writer thread.
   @Test public void closeMessageAndConnectionCloseThrowingDoesNotMaskOriginal() throws IOException {
     client.getSink().close();
     client.closeThrows = true;
@@ -284,7 +284,7 @@ public final class RealWebSocketTest {
     assertThat(client.closed).isTrue();
   }
 
-  @Ignore // TODO(jwilson): come up with a way to test unchecked exceptions on the writer thread.
+  @Disabled // TODO(jwilson): come up with a way to test unchecked exceptions on the writer thread.
   @Test public void peerConnectionCloseThrowingPropagates() throws IOException {
     client.closeThrows = true;
 
