@@ -31,8 +31,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import okio.BufferedSource;
 import okio.Okio;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public final class OsgiTest {
   /** Each is the Bundle-SymbolicName of an OkHttp module's OSGi configuration. */
@@ -54,7 +54,7 @@ public final class OsgiTest {
   private File testResourceDir;
   private File workspaceDir;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     testResourceDir = new File("./build/resources/test/okhttp3/osgi");
     workspaceDir = new File(testResourceDir, "workspace");
