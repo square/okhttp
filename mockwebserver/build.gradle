@@ -9,7 +9,7 @@ dependencies {
 
   testImplementation project(':okhttp-testing-support')
   testImplementation project(':okhttp-tls')
-  testImplementation project(':mockwebserver-junit4')
+  testRuntimeOnly project(':mockwebserver-junit5')
   testImplementation deps.junit
   testImplementation deps.assertj
 }

@@ -18,13 +18,13 @@ package okhttp3.internal.platform;
 import javax.net.ssl.SSLSocket;
 import okhttp3.DelegatingSSLSocket;
 import okhttp3.testing.PlatformRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class Jdk9PlatformTest {
-  @Rule public final PlatformRule platform = new PlatformRule();
+  @RegisterExtension public final PlatformRule platform = new PlatformRule();
 
   @Test
   public void buildsWhenJdk9() {

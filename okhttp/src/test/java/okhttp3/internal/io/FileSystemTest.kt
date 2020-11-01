@@ -20,36 +20,42 @@ import java.io.IOException
 import okhttp3.TestUtil
 import okio.buffer
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TemporaryFolder
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
-import org.junit.runners.Parameterized.Parameters
+import org.junit.jupiter.api.io.TempDir
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
 
 /**
  * Test that our file system abstraction is consistent and sufficient for OkHttp's needs. We're
  * particularly interested in what happens when open files are moved or deleted on Windows.
  */
-@RunWith(Parameterized::class)
-class FileSystemTest(
-  private var fileSystem: FileSystem,
-  private val windows: Boolean
-) {
-  @Rule @JvmField val temporaryFolder = TemporaryFolder()
+class FileSystemTest {
+  @TempDir lateinit var temporaryFolder: File
+
+  private lateinit var fileSystem: FileSystem
+  private var windows: Boolean = false
 
   companion object {
-    @Parameters(name = "{0}") @JvmStatic
-    fun parameters(): Collection<Array<Any>> = listOf(
-        arrayOf(FileSystem.SYSTEM, TestUtil.windows),
-        arrayOf(InMemoryFileSystem(), false),
-        arrayOf(WindowsFileSystem(FileSystem.SYSTEM), true),
-        arrayOf(WindowsFileSystem(InMemoryFileSystem()), true)
+    @JvmStatic
+    fun parameters(): List<Pair<FileSystem, Boolean>> = listOf(
+        FileSystem.SYSTEM to TestUtil.windows,
+        InMemoryFileSystem() to false,
+        WindowsFileSystem(FileSystem.SYSTEM) to true,
+        WindowsFileSystem(InMemoryFileSystem()) to true
     )
   }
 
-  @Test fun `delete open for writing fails on Windows`() {
-    val file = temporaryFolder.newFile("file.txt")
+  internal fun setUp(fileSystem: FileSystem, windows: Boolean) {
+    this.fileSystem = fileSystem
+    this.windows = windows
+  }
+
+  @ParameterizedTest
+  @MethodSource("parameters")
+  fun `delete open for writing fails on Windows`(
+    parameters: Pair<FileSystem, Boolean>
+  ) {
+    setUp(parameters.first, parameters.second)
+    val file = File(temporaryFolder, "file.txt")
     expectIOExceptionOnWindows {
       fileSystem.sink(file).use {
         fileSystem.delete(file)
@@ -57,8 +63,13 @@ class FileSystemTest(
     }
   }
 
-  @Test fun `delete open for appending fails on Windows`() {
-    val file = temporaryFolder.newFile("file.txt")
+  @ParameterizedTest
+  @MethodSource("parameters")
+  fun `delete open for appending fails on Windows`(
+    parameters: Pair<FileSystem, Boolean>
+  ) {
+    setUp(parameters.first, parameters.second)
+    val file = File(temporaryFolder, "file.txt")
     file.write("abc")
     expectIOExceptionOnWindows {
       fileSystem.appendingSink(file).use {
@@ -67,8 +78,13 @@ class FileSystemTest(
     }
   }
 
-  @Test fun `delete open for reading fails on Windows`() {
-    val file = temporaryFolder.newFile("file.txt")
+  @ParameterizedTest
+  @MethodSource("parameters")
+  fun `delete open for reading fails on Windows`(
+    parameters: Pair<FileSystem, Boolean>
+  ) {
+    setUp(parameters.first, parameters.second)
+    val file = File(temporaryFolder, "file.txt")
     file.write("abc")
     expectIOExceptionOnWindows {
       fileSystem.source(file).use {
@@ -77,17 +93,27 @@ class FileSystemTest(
     }
   }
 
-  @Test fun `rename target exists succeeds on all platforms`() {
-    val from = temporaryFolder.newFile("from.txt")
-    val to = temporaryFolder.newFile("to.txt")
+  @ParameterizedTest
+  @MethodSource("parameters")
+  fun `rename target exists succeeds on all platforms`(
+    parameters: Pair<FileSystem, Boolean>
+  ) {
+    setUp(parameters.first, parameters.second)
+    val from = File(temporaryFolder, "from.txt")
+    val to = File(temporaryFolder, "to.txt")
     from.write("source file")
     to.write("target file")
     fileSystem.rename(from, to)
   }
 
-  @Test fun `rename source is open fails on Windows`() {
-    val from = temporaryFolder.newFile("from.txt")
-    val to = temporaryFolder.newFile("to.txt")
+  @ParameterizedTest
+  @MethodSource("parameters")
+  fun `rename source is open fails on Windows`(
+    parameters: Pair<FileSystem, Boolean>
+  ) {
+    setUp(parameters.first, parameters.second)
+    val from = File(temporaryFolder, "from.txt")
+    val to = File(temporaryFolder, "to.txt")
     from.write("source file")
     to.write("target file")
     expectIOExceptionOnWindows {
@@ -97,9 +123,14 @@ class FileSystemTest(
     }
   }
 
-  @Test fun `rename target is open fails on Windows`() {
-    val from = temporaryFolder.newFile("from.txt")
-    val to = temporaryFolder.newFile("to.txt")
+  @ParameterizedTest
+  @MethodSource("parameters")
+  fun `rename target is open fails on Windows`(
+    parameters: Pair<FileSystem, Boolean>
+  ) {
+    setUp(parameters.first, parameters.second)
+    val from = File(temporaryFolder, "from.txt")
+    val to = File(temporaryFolder, "to.txt")
     from.write("source file")
     to.write("target file")
     expectIOExceptionOnWindows {
@@ -109,8 +140,13 @@ class FileSystemTest(
     }
   }
 
-  @Test fun `delete contents of parent of file open for reading fails on Windows`() {
-    val parentA = temporaryFolder.newFolder("a")
+  @ParameterizedTest
+  @MethodSource("parameters")
+  fun `delete contents of parent of file open for reading fails on Windows`(
+    parameters: Pair<FileSystem, Boolean>
+  ) {
+    setUp(parameters.first, parameters.second)
+    val parentA = File(temporaryFolder, "a").also { it.mkdirs() }
     val parentAB = File(parentA, "b")
     val parentABC = File(parentAB, "c")
     val file = File(parentABC, "file.txt")

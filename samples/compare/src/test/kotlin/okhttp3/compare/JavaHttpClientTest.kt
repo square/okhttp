@@ -19,22 +19,21 @@ import java.net.http.HttpClient
 import java.net.http.HttpClient.Redirect.NORMAL
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse.BodyHandlers
-import okhttp3.mockwebserver.MockResponse
-import okhttp3.mockwebserver.MockWebServer
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Ignore
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
 
 /**
  * Java HTTP Client.
  *
  * https://openjdk.java.net/groups/net/httpclient/intro.html
  */
-@Ignore("Requires Java 11, but OkHttp runs on Java 8+")
-class JavaHttpClientTest {
-  @JvmField @Rule val server = MockWebServer()
-
+@Disabled("Requires Java 11, but OkHttp runs on Java 8+")
+class JavaHttpClientTest(
+  private val server: MockWebServer
+) {
   private val httpClient = HttpClient.newBuilder()
       .followRedirects(NORMAL)
       .build()

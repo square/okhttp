@@ -41,11 +41,12 @@ import okhttp3.TestUtil;
 import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okhttp3.tls.HeldCertificate;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.Timeout;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
@@ -61,15 +62,20 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 
 @SuppressWarnings({"ArraysAsListWithZeroOrOneArgument", "deprecation"})
+@Timeout(30)
 public final class MockWebServerTest {
-  @Rule public PlatformRule platform = new PlatformRule();
+  @RegisterExtension public PlatformRule platform = new PlatformRule();
 
-  @Rule public final MockWebServer server = new MockWebServer();
+  private final MockWebServer server = new MockWebServer();
 
-  @Rule public Timeout globalTimeout = Timeout.seconds(30);
-
-  @Before public void checkPlatforms() {
+  @BeforeEach public void setUp() throws IOException {
     platform.assumeNotBouncyCastle();
+    server.start();
+  }
+
+  @AfterEach
+  public void tearDown() throws Exception {
+    server.shutdown();
   }
 
   @Test public void defaultMockResponse() {
@@ -238,7 +244,7 @@ public final class MockWebServerTest {
     assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
   }
 
-  @Ignore("Not actually failing where expected")
+  @Disabled("Not actually failing where expected")
   @Test public void disconnectAtStart() throws Exception {
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START));
     server.enqueue(new MockResponse()); // The jdk's HttpUrlConnection is a bastard.

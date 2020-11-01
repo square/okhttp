@@ -15,30 +15,30 @@
  */
 package okhttp3.compare
 
-import okhttp3.mockwebserver.MockResponse
-import okhttp3.mockwebserver.MockWebServer
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.jetty.client.HttpClient
-import org.junit.After
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 /**
  * Jetty HTTP client.
  *
  * https://www.eclipse.org/jetty/documentation/current/http-client.html
  */
-class JettyHttpClientTest {
-  @JvmField @Rule val server = MockWebServer()
+class JettyHttpClientTest(
+  val server: MockWebServer
+) {
 
   private val client = HttpClient()
 
-  @Before fun setUp() {
+  @BeforeEach fun setUp() {
     client.start()
   }
 
-  @After fun tearDown() {
+  @AfterEach fun tearDown() {
     client.stop()
   }
 

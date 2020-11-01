@@ -35,28 +35,26 @@ import javax.net.ssl.SSLSocket;
 import okhttp3.Handshake;
 import okhttp3.testing.PlatformRule;
 import okio.ByteString;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static java.util.Arrays.asList;
 import static okhttp3.internal.Util.closeQuietly;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assume.assumeFalse;
 
 public final class HandshakeCertificatesTest {
-  @Rule
-  public PlatformRule platform = new PlatformRule();
+  @RegisterExtension public PlatformRule platform = new PlatformRule();
 
   private ExecutorService executorService;
   private ServerSocket serverSocket;
 
-  @Before public void setUp() {
+  @BeforeEach public void setUp() {
     executorService = Executors.newCachedThreadPool();
   }
 
-  @After public void tearDown() {
+  @AfterEach public void tearDown() {
     executorService.shutdown();
     if (serverSocket != null) {
       closeQuietly(serverSocket);
