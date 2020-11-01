@@ -66,7 +66,7 @@ import org.hamcrest.BaseMatcher;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
-import org.junit.jupiter.api.Assertions;
+import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -320,28 +320,30 @@ public final class EventListenerTest {
 
     if (requestHeaderLength != null) {
       RequestHeadersEnd responseHeadersEnd = listener.removeUpToEvent(RequestHeadersEnd.class);
-      assertThat(responseHeadersEnd.getHeaderLength()).isEqualTo(requestHeaderLength);
+      Assert.assertThat("request header length", responseHeadersEnd.getHeaderLength(),
+          requestHeaderLength);
     } else {
       assertThat(listener.recordedEventTypes()).doesNotContain("RequestHeadersEnd");
     }
 
     if (requestBodyBytes != null) {
       RequestBodyEnd responseBodyEnd = listener.removeUpToEvent(RequestBodyEnd.class);
-      assertThat(responseBodyEnd.getBytesWritten()).isEqualTo(requestBodyBytes);
+      Assert.assertThat("request body bytes", responseBodyEnd.getBytesWritten(), requestBodyBytes);
     } else {
       assertThat(listener.recordedEventTypes()).doesNotContain("RequestBodyEnd");
     }
 
     if (responseHeaderLength != null) {
       ResponseHeadersEnd responseHeadersEnd = listener.removeUpToEvent(ResponseHeadersEnd.class);
-      assertThat(responseHeadersEnd.getHeaderLength()).isEqualTo(responseHeaderLength);
+      Assert.assertThat("response header length", responseHeadersEnd.getHeaderLength(),
+          responseHeaderLength);
     } else {
       assertThat(listener.recordedEventTypes()).doesNotContain("ResponseHeadersEnd");
     }
 
     if (responseBodyBytes != null) {
       ResponseBodyEnd responseBodyEnd = listener.removeUpToEvent(ResponseBodyEnd.class);
-      assertThat(responseBodyEnd.getBytesRead()).isEqualTo(responseBodyBytes);
+      Assert.assertThat("response body bytes", responseBodyEnd.getBytesRead(), responseBodyBytes);
     } else {
       assertThat(listener.recordedEventTypes()).doesNotContain("ResponseBodyEnd");
     }
