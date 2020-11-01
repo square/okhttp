@@ -15,11 +15,12 @@
  */
 package okhttp3.brotli;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 public class BrotliInterceptorJavaApiTest {
-  @Test @Ignore
+  @Test
+  @Disabled("api only")
   public void testApi() {
     BrotliInterceptor.INSTANCE.intercept(null);
   }
