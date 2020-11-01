@@ -31,7 +31,7 @@ import okhttp3.Route;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.concurrent.TaskFaker;
 import okhttp3.internal.concurrent.TaskRunner;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static okhttp3.TestUtil.awaitGarbageCollection;
 import static org.assertj.core.api.Assertions.assertThat;
