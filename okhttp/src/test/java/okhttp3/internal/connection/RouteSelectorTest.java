@@ -52,7 +52,7 @@ import static java.net.Proxy.NO_PROXY;
 import static okhttp3.internal.Util.immutableListOf;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public final class RouteSelectorTest {
   @RegisterExtension public final PlatformRule platform = new PlatformRule();
@@ -107,7 +107,7 @@ public final class RouteSelectorTest {
     assertThat(selection.hasNext()).isFalse();
     try {
       selection.next();
-      fail();
+      fail("");
     } catch (NoSuchElementException expected) {
     }
 
