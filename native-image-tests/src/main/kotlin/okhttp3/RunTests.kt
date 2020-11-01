@@ -33,6 +33,10 @@ import org.junit.platform.launcher.listeners.SummaryGeneratingListener
 import java.io.PrintWriter
 import kotlin.system.exitProcess
 
+/**
+ * Graal main method to run tests with minimal reflection and automatic settings.
+ * Uses the test list in native-image-tests/src/main/resources/testlist.txt.
+ */
 fun main() {
   System.setProperty("junit.jupiter.extensions.autodetection.enabled", "true")
 
@@ -71,7 +75,6 @@ fun testSelectors(): List<DiscoverySelector> {
     .lines()
     .filter { it.isNotBlank() }
     .map {
-      println("T: $it")
       selectClass(Class.forName(it, false, sampleTestClass.classLoader))
     }
 }
