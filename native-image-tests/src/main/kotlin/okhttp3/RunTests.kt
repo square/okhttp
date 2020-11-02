@@ -74,8 +74,13 @@ fun testSelectors(): List<DiscoverySelector> {
     .readText()
     .lines()
     .filter { it.isNotBlank() }
-    .map {
-      selectClass(Class.forName(it, false, sampleTestClass.classLoader))
+    .mapNotNull {
+      try {
+        selectClass(Class.forName(it, false, sampleTestClass.classLoader))
+      } catch (cnfe: ClassNotFoundException) {
+        println(cnfe)
+        null
+      }
     }
 }
 
