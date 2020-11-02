@@ -24,9 +24,10 @@ import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.internal.IDLE_CONNECTION_HEALTHY_NS
 import okhttp3.internal.connection.RealConnection
-import okhttp3.internal.connection.RealConnection.Companion.IDLE_CONNECTION_HEALTHY_NS
 import okhttp3.internal.http.RecordingProxySelector
+import okhttp3.internal.idleAtNsAccessor
 import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.internal.TlsUtil.localhost
@@ -212,7 +213,7 @@ class CallKotlinTest(
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
 
     // Give the socket a chance to become stale.
-    connection!!.idleAtNs -= IDLE_CONNECTION_HEALTHY_NS
+    connection!!.idleAtNsAccessor -= IDLE_CONNECTION_HEALTHY_NS
     Thread.sleep(250)
 
     val requestB = Request.Builder()
