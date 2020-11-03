@@ -74,8 +74,15 @@ fun main(vararg args: String) {
   exitProcess(if (summary.testsFailedCount != 0L) -1 else 0)
 }
 
+/**
+ * Builds the Junit Test Engine for the native image.
+ */
 fun buildTestEngine(): TestEngine = JupiterTestEngine()
 
+/**
+ * Returns a fixed set of test classes from testlist.txt, skipping any not found in the
+ * current classpath.  The IDE runs with less classes to avoid conflicting module ownership.
+ */
 fun testSelectors(inputFile: File? = null): List<DiscoverySelector> {
   val sampleTestClass = SampleTest::class.java
 
@@ -96,6 +103,9 @@ fun testSelectors(inputFile: File? = null): List<DiscoverySelector> {
     }
 }
 
+/**
+ * Builds a Junit Test Plan request for a fixed set of classes, or potentially a recursive package.
+ */
 fun buildRequest(selectors: List<DiscoverySelector>): LauncherDiscoveryRequest {
   val request: LauncherDiscoveryRequest = LauncherDiscoveryRequestBuilder.request()
     // TODO replace junit.jupiter.extensions.autodetection.enabled with API approach.
@@ -105,6 +115,10 @@ fun buildRequest(selectors: List<DiscoverySelector>): LauncherDiscoveryRequest {
   return request
 }
 
+/**
+ * Flattens a test filter into a list of specific test descriptors, usually individual method in a
+ * test class annotated with @Test.
+ */
 fun findTests(selectors: List<DiscoverySelector>): List<TestDescriptor> {
   val request: LauncherDiscoveryRequest = buildRequest(selectors)
   val testEngine = buildTestEngine()
@@ -115,8 +129,13 @@ fun findTests(selectors: List<DiscoverySelector>): List<TestDescriptor> {
   return discovered.getEngineTestDescriptor(testEngine).descendants.toList()
 }
 
-// https://github.com/junit-team/junit5/issues/2469
-private fun treeListener(): TestExecutionListener {
+/**
+ * Builds the awkwardly package private TreePrintingListener listener which we would like to use
+ * from ConsoleLauncher.
+ *
+ * https://github.com/junit-team/junit5/issues/2469
+ */
+fun treeListener(): TestExecutionListener {
   return Class.forName(
     "org.junit.platform.console.tasks.TreePrintingListener").declaredConstructors.first()
     .apply {
