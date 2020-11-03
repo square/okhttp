@@ -140,7 +140,7 @@ class RealConnection(
   val calls = mutableListOf<Reference<RealCall>>()
 
   /** Timestamp when `allocations.size()` reached zero. Also assigned upon initial connection. */
-  internal var idleAtNs = Long.MAX_VALUE
+  var idleAtNs = Long.MAX_VALUE
 
   /**
    * Returns true if this is an HTTP/2 connection. Such connections can be used in multiple HTTP
@@ -747,7 +747,7 @@ class RealConnection(
   companion object {
     private const val NPE_THROW_WITH_NULL = "throw with null exception"
     private const val MAX_TUNNEL_ATTEMPTS = 21
-    internal const val IDLE_CONNECTION_HEALTHY_NS = 10_000_000_000 // 10 seconds.
+    const val IDLE_CONNECTION_HEALTHY_NS = 10_000_000_000 // 10 seconds.
 
     fun newTestConnection(
       connectionPool: RealConnectionPool,

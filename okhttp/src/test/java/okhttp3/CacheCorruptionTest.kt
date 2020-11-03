@@ -28,6 +28,7 @@ import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSession
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import okhttp3.internal.buildCache
 import okhttp3.internal.io.InMemoryFileSystem
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.internal.TlsUtil.localhost
@@ -55,7 +56,7 @@ class CacheCorruptionTest(
     platform.assumeNotOpenJSSE()
     platform.assumeNotBouncyCastle()
     server.protocolNegotiationEnabled = false
-    cache = Cache(File("/cache/"), Int.MAX_VALUE.toLong(), fileSystem)
+    cache = buildCache(File("/cache/"), Int.MAX_VALUE.toLong(), fileSystem)
     client = clientTestRule.newClientBuilder()
       .cache(cache)
       .cookieJar(JavaNetCookieJar(cookieManager))

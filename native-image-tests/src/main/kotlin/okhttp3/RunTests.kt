@@ -30,6 +30,7 @@ import org.junit.platform.launcher.core.LauncherConfig
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder
 import org.junit.platform.launcher.core.LauncherFactory
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener
+import java.io.File
 import java.io.PrintWriter
 import kotlin.system.exitProcess
 
@@ -37,10 +38,11 @@ import kotlin.system.exitProcess
  * Graal main method to run tests with minimal reflection and automatic settings.
  * Uses the test list in native-image-tests/src/main/resources/testlist.txt.
  */
-fun main() {
+fun main(vararg args: String) {
   System.setProperty("junit.jupiter.extensions.autodetection.enabled", "true")
 
-  val selectors = testSelectors()
+  val inputFile = if (args.isNotEmpty()) File(args[0]) else null
+  val selectors = testSelectors(inputFile)
 
   val summaryListener = SummaryGeneratingListener()
   val treeListener = treeListener()
@@ -58,7 +60,13 @@ fun main() {
 
   val request: LauncherDiscoveryRequest = buildRequest(selectors)
 
-  launcher.execute(request)
+  DotListener.install()
+
+  try {
+    launcher.execute(request)
+  } finally {
+    DotListener.uninstall()
+  }
 
   val summary = summaryListener.summary
   summary.printTo(PrintWriter(System.out))
@@ -75,17 +83,21 @@ fun buildTestEngine(): TestEngine = JupiterTestEngine()
  * Returns a fixed set of test classes from testlist.txt, skipping any not found in the
  * current classpath.  The IDE runs with less classes to avoid conflicting module ownership.
  */
-fun testSelectors(): List<DiscoverySelector> {
+fun testSelectors(inputFile: File? = null): List<DiscoverySelector> {
   val sampleTestClass = SampleTest::class.java
-  return sampleTestClass.getResource("/testlist.txt")
-    .readText()
-    .lines()
+
+  val lines =
+    inputFile?.readLines() ?: sampleTestClass.getResource("/testlist.txt").readText().lines()
+
+  val flatClassnameList = lines
     .filter { it.isNotBlank() }
+
+  return flatClassnameList
     .mapNotNull {
       try {
         selectClass(Class.forName(it, false, sampleTestClass.classLoader))
       } catch (cnfe: ClassNotFoundException) {
-        // ignored
+        println("Missing test class: $cnfe")
         null
       }
     }
