@@ -12,7 +12,6 @@ okhttp3.ConnectionCoalescingTest
 okhttp3.ConnectionReuseTest
 okhttp3.ConnectionSpecTest
 okhttp3.CookieTest
-okhttp3.CookiesTest
 okhttp3.DispatcherTest
 okhttp3.DuplexTest
 okhttp3.EventListenerTest
@@ -37,7 +36,6 @@ okhttp3.SampleTest
 okhttp3.ServerTruncatesRequestTest
 okhttp3.SocksProxyTest
 okhttp3.URLConnectionTest
-okhttp3.WholeOperationTimeoutTest
 okhttp3.brotli.BrotliInterceptorJavaApiTest
 okhttp3.brotli.BrotliInterceptorTest
 okhttp3.dnsoverhttps.DnsOverHttpsTest

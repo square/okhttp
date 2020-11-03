@@ -32,6 +32,7 @@ import mockwebserver3.MockWebServer;
 import mockwebserver3.RecordedRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
@@ -41,6 +42,7 @@ import static org.assertj.core.data.Offset.offset;
 import static org.junit.Assert.fail;
 
 /** Derived from Android's CookiesTest. */
+@Timeout(30)
 public class CookiesTest {
   @RegisterExtension public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 

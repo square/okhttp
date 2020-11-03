@@ -38,6 +38,10 @@ object DotListener: TestExecutionListener {
     originalSystemErr?.print(s)
   }
 
+  override fun executionStarted(testIdentifier: TestIdentifier?) {
+    originalSystemOut?.println(testIdentifier)
+  }
+
   override fun executionFinished(
     testIdentifier: TestIdentifier,
     testExecutionResult: TestExecutionResult
