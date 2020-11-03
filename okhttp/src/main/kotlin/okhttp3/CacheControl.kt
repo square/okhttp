@@ -156,7 +156,7 @@ class CacheControl private constructor(
         if (onlyIfCached) append("only-if-cached, ")
         if (noTransform) append("no-transform, ")
         if (immutable) append("immutable, ")
-        if (isEmpty()) return ""
+        if (length == 0) return "" // isEmpty() is problematic with Kotlin 1.4 and JDK 15
         delete(length - 2, length)
       }
       headerValue = result
