@@ -58,7 +58,11 @@ fun main() {
 
   val request: LauncherDiscoveryRequest = buildRequest(selectors)
 
+  DotListener.install()
+
   launcher.execute(request)
+
+  DotListener.uninstall()
 
   val summary = summaryListener.summary
   summary.printTo(PrintWriter(System.out))
