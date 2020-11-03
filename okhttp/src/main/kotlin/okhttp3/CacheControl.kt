@@ -156,7 +156,8 @@ class CacheControl private constructor(
         if (onlyIfCached) append("only-if-cached, ")
         if (noTransform) append("no-transform, ")
         if (immutable) append("immutable, ")
-        if (isEmpty()) return ""
+        // Avoid isEmpty() which is problematic with JDK 15.
+        if (length == 0) return ""
         delete(length - 2, length)
       }
       headerValue = result
