@@ -1985,6 +1985,24 @@ class DiskLruCacheTest {
     assertThat(cache.edit("k1")).isNull()
     snapshot.close()
   }
+  
+  @ParameterizedTest
+  @MethodSource("parameters")
+  fun `Windows cannot write while reading 2`(parameters: Pair<FileSystem, Boolean>) {
+    setUp(parameters.first, parameters.second)
+    assumeThat(windows).isTrue()
+
+    set("k1", "a", "a")
+    val snapshot = cache["k1"]!!
+    snapshot.close()
+    val editor = snapshot.edit()!!
+    //now wo can read using source
+    val source = editor.newSource(0)!!
+    editor.abort()
+    //now we can not edit
+    assertThat(cache.edit("k1")).isNull()
+    source.close()
+  }    
 
   @ParameterizedTest
   @MethodSource("parameters")
