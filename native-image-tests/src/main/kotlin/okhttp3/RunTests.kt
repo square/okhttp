@@ -82,7 +82,7 @@ fun testSelectors(): List<DiscoverySelector> {
       try {
         selectClass(Class.forName(it, false, sampleTestClass.classLoader))
       } catch (cnfe: ClassNotFoundException) {
-        println(cnfe)
+        println("Missing test class: " + cnfe)
         null
       }
     }
