@@ -32,9 +32,9 @@ import okio.ByteString.Companion.decodeHex
 import okio.ByteString.Companion.encodeUtf8
 import okio.ByteString.Companion.toByteString
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Assert.fail
-import org.junit.Ignore
-import org.junit.Test
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.fail
 
 internal class DerTest {
   @Test fun `decode tag and length`() {
@@ -66,7 +66,7 @@ internal class DerTest {
 
     try {
       derReader.read("test") {}
-      fail()
+      fail("")
     } catch (expected: ProtocolException) {
       assertThat(expected.message).isEqualTo("invalid encoding for length")
     }
@@ -82,7 +82,7 @@ internal class DerTest {
 
     try {
       derReader.read("test") {}
-      fail()
+      fail("")
     } catch (expected: ProtocolException) {
       assertThat(expected.message).isEqualTo("invalid encoding for length")
     }
@@ -124,7 +124,7 @@ internal class DerTest {
 
     try {
       derReader.read("test") {}
-      fail()
+      fail("")
     } catch (expected: ProtocolException) {
       assertThat(expected.message).isEqualTo("length > Long.MAX_VALUE")
     }
@@ -149,7 +149,7 @@ internal class DerTest {
 
     try {
       derReader.read("test") {}
-      fail()
+      fail("")
     } catch (expected: ProtocolException) {
       assertThat(expected.message)
           .isEqualTo("length encoded with more than 8 bytes is not supported")
@@ -631,7 +631,7 @@ internal class DerTest {
   @Test fun `cannot decode utc time with offset`() {
     try {
       Adapters.UTC_TIME.fromDer("17113139313231353139303231302d30383030".decodeHex())
-      fail()
+      fail("")
     } catch (expected: ProtocolException) {
       assertThat(expected).hasMessage("Failed to parse UTCTime 191215190210-0800")
     }
@@ -648,7 +648,7 @@ internal class DerTest {
     val bytes = "170d3139313231362333303231305a".decodeHex()
     try {
       Adapters.UTC_TIME.fromDer(bytes)
-      fail()
+      fail("")
     } catch (expected: ProtocolException) {
       assertThat(expected).hasMessage("Failed to parse UTCTime 191216#30210Z")
     }
@@ -657,7 +657,7 @@ internal class DerTest {
   @Test fun `cannot decode generalized time with offset`() {
     try {
       Adapters.GENERALIZED_TIME.fromDer("181332303139313231353139303231302d30383030".decodeHex())
-      fail()
+      fail("")
     } catch (expected: ProtocolException) {
       assertThat(expected).hasMessage("Failed to parse GeneralizedTime 20191215190210-0800")
     }
@@ -674,7 +674,7 @@ internal class DerTest {
     val bytes = "180f32303139313231362333303231305a".decodeHex()
     try {
       Adapters.GENERALIZED_TIME.fromDer(bytes)
-      fail()
+      fail("")
     } catch (expected: ProtocolException) {
       assertThat(expected).hasMessage("Failed to parse GeneralizedTime 20191216#30210Z")
     }
@@ -723,7 +723,7 @@ internal class DerTest {
         .isEqualTo(date("1992-06-22T12:34:21.000+0000").time)
   }
 
-  @Ignore("fractional seconds are not implemented")
+  @Disabled("fractional seconds are not implemented")
   @Test fun `parse generalized time with fractional seconds`() {
     assertThat(Adapters.parseGeneralizedTime("19920722132100.3Z"))
         .isEqualTo(date("1992-07-22T13:21:00.300+0000").time)
@@ -776,7 +776,7 @@ internal class DerTest {
     val bytes = "0300".decodeHex()
     try {
       Adapters.BIT_STRING.fromDer(bytes)
-      fail()
+      fail("")
     } catch (expected: ProtocolException) {
       assertThat(expected).hasMessage("malformed bit string")
     }
@@ -793,7 +793,7 @@ internal class DerTest {
     try {
       Adapters.OCTET_STRING.fromDer(
           "2410040668656c6c6f200406776f726c6421".decodeHex())
-      fail()
+      fail("")
     } catch (expected: ProtocolException) {
       assertThat(expected).hasMessage("constructed octet strings not supported for DER")
     }
@@ -803,7 +803,7 @@ internal class DerTest {
     try {
       Adapters.BIT_STRING.fromDer(
           "231203070068656c6c6f20030700776f726c6421".decodeHex())
-      fail()
+      fail("")
     } catch (expected: ProtocolException) {
       assertThat(expected).hasMessage("constructed bit strings not supported for DER")
     }
@@ -813,7 +813,7 @@ internal class DerTest {
     try {
       Adapters.UTF8_STRING.fromDer(
           "2c100c0668656c6c6f200c06776f726c6421".decodeHex())
-      fail()
+      fail("")
     } catch (expected: ProtocolException) {
       assertThat(expected).hasMessage("constructed strings not supported for DER")
     }
@@ -823,7 +823,7 @@ internal class DerTest {
     try {
       Adapters.BIT_STRING.fromDer(
           "23800303000A3B0305045F291CD00000".decodeHex())
-      fail()
+      fail("")
     } catch (expected: ProtocolException) {
       assertThat(expected).hasMessage("indefinite length not permitted for DER")
     }
@@ -837,7 +837,7 @@ internal class DerTest {
       derReader.read("test") {
         derReader.readOctetString()
       }
-      fail()
+      fail("")
     } catch (expected: Exception) {
       assertThat(expected).hasMessage("constructed octet strings not supported for DER")
     }
@@ -919,7 +919,7 @@ internal class DerTest {
     val bytes = "301b300d06092a864886f70d010101050003847fffffff000504030201".decodeHex()
     try {
       CertificateAdapters.subjectPublicKeyInfo.fromDer(bytes)
-      fail()
+      fail("")
     } catch (expected: ProtocolException) {
       assertThat(expected.message).isEqualTo("enclosed object too large")
     }
@@ -930,7 +930,7 @@ internal class DerTest {
     val bytes = "060229ffffff7f".decodeHex()
     try {
       Adapters.OBJECT_IDENTIFIER.fromDer(bytes)
-      fail()
+      fail("")
     } catch (expected: ProtocolException) {
       assertThat(expected.message).isEqualTo("unexpected byte count at OBJECT IDENTIFIER")
     }

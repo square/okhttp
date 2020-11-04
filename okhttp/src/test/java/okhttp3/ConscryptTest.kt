@@ -21,23 +21,20 @@ import okhttp3.internal.platform.Platform
 import okhttp3.testing.PlatformRule
 import org.assertj.core.api.Assertions.assertThat
 import org.conscrypt.Conscrypt
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Ignore
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
 class ConscryptTest {
-  @Suppress("RedundantVisibilityModifier")
-  @JvmField
-  @Rule public val platform = PlatformRule.conscrypt()
-
-  @JvmField @Rule val clientTestRule = OkHttpClientTestRule()
+  @JvmField @RegisterExtension val platform = PlatformRule.conscrypt()
+  @JvmField @RegisterExtension val clientTestRule = OkHttpClientTestRule()
 
   private val client = clientTestRule.newClient()
 
-  @Before fun setUp() {
+  @BeforeEach fun setUp() {
     platform.assumeConscrypt()
   }
 
@@ -47,7 +44,7 @@ class ConscryptTest {
   }
 
   @Test
-  @Ignore
+  @Disabled
   fun testMozilla() {
     assumeNetwork()
 
@@ -60,7 +57,7 @@ class ConscryptTest {
   }
 
   @Test
-  @Ignore
+  @Disabled
   fun testGoogle() {
     assumeNetwork()
 

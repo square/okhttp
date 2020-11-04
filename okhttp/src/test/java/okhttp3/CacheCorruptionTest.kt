@@ -15,16 +15,6 @@
  */
 package okhttp3
 
-import okhttp3.internal.io.InMemoryFileSystem
-import okhttp3.mockwebserver.MockResponse
-import okhttp3.mockwebserver.MockWebServer
-import okhttp3.testing.PlatformRule
-import okhttp3.tls.internal.TlsUtil.localhost
-import org.assertj.core.api.Assertions.assertThat
-import org.junit.After
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
 import java.io.File
 import java.net.CookieManager
 import java.net.ResponseCache
@@ -36,19 +26,24 @@ import java.util.TimeZone
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSession
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
+import okhttp3.internal.buildCache
+import okhttp3.internal.io.InMemoryFileSystem
+import okhttp3.testing.PlatformRule
+import okhttp3.tls.internal.TlsUtil.localhost
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
-class CacheCorruptionTest {
-  @get:Rule
-  var server = MockWebServer()
-
-  @get:Rule
-  var fileSystem = InMemoryFileSystem()
-
-  @get:Rule
-  val clientTestRule = OkHttpClientTestRule()
-
-  @get:Rule
-  val platform = PlatformRule()
+class CacheCorruptionTest(
+  var server: MockWebServer
+) {
+  @JvmField @RegisterExtension var fileSystem = InMemoryFileSystem()
+  @JvmField @RegisterExtension val clientTestRule = OkHttpClientTestRule()
+  @JvmField @RegisterExtension val platform = PlatformRule()
 
   private val handshakeCertificates = localhost()
   private lateinit var client: OkHttpClient
@@ -57,18 +52,18 @@ class CacheCorruptionTest {
     HostnameVerifier { name: String?, session: SSLSession? -> true }
   private val cookieManager = CookieManager()
 
-  @Before fun setUp() {
+  @BeforeEach fun setUp() {
     platform.assumeNotOpenJSSE()
     platform.assumeNotBouncyCastle()
     server.protocolNegotiationEnabled = false
-    cache = Cache(File("/cache/"), Int.MAX_VALUE.toLong(), fileSystem)
+    cache = buildCache(File("/cache/"), Int.MAX_VALUE.toLong(), fileSystem)
     client = clientTestRule.newClientBuilder()
       .cache(cache)
       .cookieJar(JavaNetCookieJar(cookieManager))
       .build()
   }
 
-  @After fun tearDown() {
+  @AfterEach fun tearDown() {
     ResponseCache.setDefault(null)
     if (this::cache.isInitialized) {
       cache.delete()

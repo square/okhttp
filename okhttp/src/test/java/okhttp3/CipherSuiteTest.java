@@ -15,7 +15,7 @@
  */
 package okhttp3;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static okhttp3.CipherSuite.TLS_KRB5_WITH_DES_CBC_MD5;
 import static okhttp3.CipherSuite.TLS_RSA_EXPORT_WITH_RC4_40_MD5;

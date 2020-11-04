@@ -1773,6 +1773,25 @@ public final class HttpUrlTest {
     assertInvalid("http://../", "Invalid URL host: \"..\"");
   }
 
+  @Test
+  public void hostnameTelephone() throws Exception {
+    // https://www.gosecure.net/blog/2020/10/27/weakness-in-java-tls-host-verification/
+
+    // Map the single character telephone symbol (℡) to the string "tel".
+    assertThat(parse("http://\u2121").host()).isEqualTo("tel");
+
+    // Map the Kelvin symbol (K) to the string "k".
+    assertThat(parse("http://\u212A").host()).isEqualTo("k");
+  }
+
+  @Test
+  public void quirks() throws Exception {
+    assertThat(parse("http://facebook.com").host()).isEqualTo("facebook.com");
+    assertThat(parse("http://facebooK.com").host()).isEqualTo("facebook.com");
+    assertThat(parse("http://Facebook.com").host()).isEqualTo("facebook.com");
+    assertThat(parse("http://FacebooK.com").host()).isEqualTo("facebook.com");
+  }
+
   private void assertInvalid(String string, String exceptionMessage) {
     if (useGet) {
       try {

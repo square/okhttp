@@ -37,16 +37,16 @@ import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.testing.PlatformRule;
 import okio.Buffer;
 import okio.BufferedSink;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static org.junit.Assert.fail;
 
 public final class ThreadInterruptTest {
-  @Rule public final PlatformRule platform = new PlatformRule();
-  @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
+  @RegisterExtension public final PlatformRule platform = new PlatformRule();
+  @RegisterExtension public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
   // The size of the socket buffers in bytes.
   private static final int SOCKET_BUFFER_SIZE = 256 * 1024;
@@ -54,7 +54,7 @@ public final class ThreadInterruptTest {
   private MockWebServer server;
   private OkHttpClient client;
 
-  @Before public void setUp() throws Exception {
+  @BeforeEach public void setUp() throws Exception {
     // Sockets on some platforms can have large buffers that mean writes do not block when
     // required. These socket factories explicitly set the buffer sizes on sockets created.
     server = new MockWebServer();
@@ -79,7 +79,7 @@ public final class ThreadInterruptTest {
         .build();
   }
 
-  @After public void tearDown() throws Exception {
+  @AfterEach public void tearDown() throws Exception {
     Thread.interrupted(); // Clear interrupted state.
   }
 
@@ -108,7 +108,7 @@ public final class ThreadInterruptTest {
     interruptLater(500);
     try {
       call.execute();
-      fail();
+      fail("");
     } catch (IOException expected) {
     }
   }

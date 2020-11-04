@@ -24,27 +24,25 @@ import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.ByteString;
 import okio.Okio;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public final class FileOperatorTest {
-  @Rule public final TemporaryFolder tempDir = new TemporaryFolder();
-
+  @TempDir public File tempDir;
   private File file;
   private RandomAccessFile randomAccessFile;
 
-  @Before public void setUp() throws Exception {
-    file = tempDir.newFile();
+  @BeforeEach public void setUp() throws Exception {
+    file = new File(tempDir, "test");
     randomAccessFile = new RandomAccessFile(file, "rw");
   }
 
-  @After public void tearDown() throws Exception {
+  @AfterEach public void tearDown() throws Exception {
     randomAccessFile.close();
   }
 

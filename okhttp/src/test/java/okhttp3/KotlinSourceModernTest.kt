@@ -76,8 +76,8 @@ import okio.BufferedSink
 import okio.BufferedSource
 import okio.ByteString
 import okio.Timeout
-import org.junit.Ignore
-import org.junit.Test
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
 
 /**
  * Access every type, function, and property from Kotlin to defend against unexpected regressions in
@@ -93,8 +93,9 @@ import org.junit.Test
     "RedundantExplicitType",
     "IMPLICIT_NOTHING_AS_TYPE_PARAMETER"
 )
+@Disabled
 class KotlinSourceModernTest {
-  @Test @Ignore
+  @Test
   fun address() {
     val address: Address = newAddress()
     val url: HttpUrl = address.url
@@ -109,14 +110,14 @@ class KotlinSourceModernTest {
     val certificatePinner: CertificatePinner? = address.certificatePinner
   }
 
-  @Test @Ignore
+  @Test
   fun authenticator() {
     var authenticator: Authenticator = object : Authenticator {
       override fun authenticate(route: Route?, response: Response): Request? = TODO()
     }
   }
 
-  @Test @Ignore
+  @Test
   fun cache() {
     val cache = Cache(File("/cache/"), Integer.MAX_VALUE.toLong())
     cache.initialize()
@@ -135,7 +136,7 @@ class KotlinSourceModernTest {
     val requestCount: Int = cache.requestCount()
   }
 
-  @Test @Ignore
+  @Test
   fun cacheControl() {
     val cacheControl: CacheControl = CacheControl.Builder().build()
     val noCache: Boolean = cacheControl.noCache
@@ -153,7 +154,7 @@ class KotlinSourceModernTest {
     val parse: CacheControl = CacheControl.parse(headersOf())
   }
 
-  @Test @Ignore
+  @Test
   fun cacheControlBuilder() {
     var builder: CacheControl.Builder = CacheControl.Builder()
     builder = builder.noCache()
@@ -167,12 +168,12 @@ class KotlinSourceModernTest {
     val cacheControl: CacheControl = builder.build()
   }
 
-  @Test @Ignore
+  @Test
   fun call() {
     val call: Call = newCall()
   }
 
-  @Test @Ignore
+  @Test
   fun callback() {
     val callback = object : Callback {
       override fun onFailure(call: Call, e: IOException) = TODO()
@@ -180,7 +181,7 @@ class KotlinSourceModernTest {
     }
   }
 
-  @Test @Ignore
+  @Test
   fun certificatePinner() {
     val heldCertificate: HeldCertificate = HeldCertificate.Builder().build()
     val certificate: X509Certificate = heldCertificate.certificate
@@ -192,13 +193,13 @@ class KotlinSourceModernTest {
     val default: CertificatePinner = CertificatePinner.DEFAULT
   }
 
-  @Test @Ignore
+  @Test
   fun certificatePinnerBuilder() {
     val builder: CertificatePinner.Builder = CertificatePinner.Builder()
     builder.add("", "pin1", "pin2")
   }
 
-  @Test @Ignore
+  @Test
   fun challenge() {
     var challenge = Challenge("", mapOf<String?, String>("" to ""))
     challenge = Challenge("", "")
@@ -209,14 +210,14 @@ class KotlinSourceModernTest {
     val utf8: Challenge = challenge.withCharset(Charsets.UTF_8)
   }
 
-  @Test @Ignore
+  @Test
   fun cipherSuite() {
     var cipherSuite: CipherSuite = CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
     cipherSuite = CipherSuite.forJavaName("")
     val javaName: String = cipherSuite.javaName
   }
 
-  @Test @Ignore
+  @Test
   fun connection() {
     val connection = object : Connection {
       override fun route(): Route = TODO()
@@ -226,7 +227,7 @@ class KotlinSourceModernTest {
     }
   }
 
-  @Test @Ignore
+  @Test
   fun connectionPool() {
     var connectionPool = ConnectionPool()
     connectionPool = ConnectionPool(0, 0L, TimeUnit.SECONDS)
@@ -235,7 +236,7 @@ class KotlinSourceModernTest {
     connectionPool.evictAll()
   }
 
-  @Test @Ignore
+  @Test
   fun connectionSpec() {
     var connectionSpec: ConnectionSpec = ConnectionSpec.RESTRICTED_TLS
     connectionSpec = ConnectionSpec.MODERN_TLS
@@ -248,7 +249,7 @@ class KotlinSourceModernTest {
         localhost().sslSocketFactory().createSocket() as SSLSocket)
   }
 
-  @Test @Ignore
+  @Test
   fun connectionSpecBuilder() {
     var builder = ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
     builder = builder.allEnabledCipherSuites()
@@ -260,7 +261,7 @@ class KotlinSourceModernTest {
     val connectionSpec: ConnectionSpec = builder.build()
   }
 
-  @Test @Ignore
+  @Test
   fun cookie() {
     val cookie: Cookie = Cookie.Builder().build()
     val name: String = cookie.name
@@ -277,7 +278,7 @@ class KotlinSourceModernTest {
     val cookies: List<Cookie> = Cookie.parseAll("".toHttpUrl(), headersOf())
   }
 
-  @Test @Ignore
+  @Test
   fun cookieBuilder() {
     var builder: Cookie.Builder = Cookie.Builder()
     builder = builder.name("")
@@ -291,7 +292,7 @@ class KotlinSourceModernTest {
     val cookie: Cookie = builder.build()
   }
 
-  @Test @Ignore
+  @Test
   fun cookieJar() {
     val cookieJar = object : CookieJar {
       override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) = TODO()
@@ -299,12 +300,12 @@ class KotlinSourceModernTest {
     }
   }
 
-  @Test @Ignore
+  @Test
   fun credentials() {
     val basic: String = Credentials.basic("", "")
   }
 
-  @Test @Ignore
+  @Test
   fun dispatcher() {
     var dispatcher = Dispatcher()
     dispatcher = Dispatcher(Executors.newCachedThreadPool())
@@ -321,7 +322,7 @@ class KotlinSourceModernTest {
     dispatcher.cancelAll()
   }
 
-  @Test @Ignore
+  @Test
   fun dispatcherFromMockWebServer() {
     val dispatcher = object : mockwebserver3.Dispatcher() {
       override fun dispatch(request: RecordedRequest): MockResponse = TODO()
@@ -330,7 +331,7 @@ class KotlinSourceModernTest {
     }
   }
 
-  @Test @Ignore
+  @Test
   fun dns() {
     var dns: Dns = object : Dns {
       override fun lookup(hostname: String): List<InetAddress> = TODO()
@@ -339,7 +340,7 @@ class KotlinSourceModernTest {
     val system: Dns = Dns.SYSTEM
   }
 
-  @Test @Ignore
+  @Test
   fun eventListener() {
     val eventListener = object : EventListener() {
       override fun callStart(call: Call) = TODO()
@@ -392,14 +393,14 @@ class KotlinSourceModernTest {
     val none: EventListener = EventListener.NONE
   }
 
-  @Test @Ignore
+  @Test
   fun eventListenerBuilder() {
     var builder: EventListener.Factory = object : EventListener.Factory {
       override fun create(call: Call): EventListener = TODO()
     }
   }
 
-  @Test @Ignore
+  @Test
   fun formBody() {
     val formBody: FormBody = FormBody.Builder().build()
     val size: Int = formBody.size
@@ -413,7 +414,7 @@ class KotlinSourceModernTest {
     val requestBody: RequestBody = formBody
   }
 
-  @Test @Ignore
+  @Test
   fun formBodyBuilder() {
     var builder: FormBody.Builder = FormBody.Builder()
     builder = FormBody.Builder(Charsets.UTF_8)
@@ -422,7 +423,7 @@ class KotlinSourceModernTest {
     val formBody: FormBody = builder.build()
   }
 
-  @Test @Ignore
+  @Test
   fun handshake() {
     var handshake: Handshake =
         (localhost().sslSocketFactory().createSocket() as SSLSocket).session.handshake()
@@ -441,7 +442,7 @@ class KotlinSourceModernTest {
     val localPrincipal: Principal? = handshake.localPrincipal
   }
 
-  @Test @Ignore
+  @Test
   fun headers() {
     var headers: Headers = headersOf("", "")
     headers = mapOf("" to "").toHeaders()
@@ -458,7 +459,7 @@ class KotlinSourceModernTest {
     val multimap: Map<String, List<String>> = headers.toMultimap()
   }
 
-  @Test @Ignore
+  @Test
   fun headersBuilder() {
     var builder: Headers.Builder = Headers.Builder()
     builder = builder.add("")
@@ -475,7 +476,7 @@ class KotlinSourceModernTest {
     val headers: Headers = builder.build()
   }
 
-  @Test @Ignore
+  @Test
   fun httpLoggingInterceptor() {
     var interceptor: HttpLoggingInterceptor = HttpLoggingInterceptor()
     interceptor = HttpLoggingInterceptor(HttpLoggingInterceptor.Logger.DEFAULT)
@@ -485,7 +486,7 @@ class KotlinSourceModernTest {
     interceptor.intercept(newInterceptorChain())
   }
 
-  @Test @Ignore
+  @Test
   fun httpLoggingInterceptorLevel() {
     val none: HttpLoggingInterceptor.Level = HttpLoggingInterceptor.Level.NONE
     val basic: HttpLoggingInterceptor.Level = HttpLoggingInterceptor.Level.BASIC
@@ -493,7 +494,7 @@ class KotlinSourceModernTest {
     val body: HttpLoggingInterceptor.Level = HttpLoggingInterceptor.Level.BODY
   }
 
-  @Test @Ignore
+  @Test
   fun httpLoggingInterceptorLogger() {
     var logger: HttpLoggingInterceptor.Logger = object : HttpLoggingInterceptor.Logger {
       override fun log(message: String) = TODO()
@@ -501,7 +502,7 @@ class KotlinSourceModernTest {
     val default: HttpLoggingInterceptor.Logger = HttpLoggingInterceptor.Logger.DEFAULT
   }
 
-  @Test @Ignore
+  @Test
   fun httpUrl() {
     val httpUrl: HttpUrl = "".toHttpUrl()
     val isHttps: Boolean = httpUrl.isHttps
@@ -539,7 +540,7 @@ class KotlinSourceModernTest {
     val defaultPort: Int = HttpUrl.defaultPort("")
   }
 
-  @Test @Ignore
+  @Test
   fun httpUrlBuilder() {
     var builder: HttpUrl.Builder = HttpUrl.Builder()
     builder = builder.scheme("")
@@ -570,7 +571,7 @@ class KotlinSourceModernTest {
     val httpUrl: HttpUrl = builder.build()
   }
 
-  @Test @Ignore
+  @Test
   fun interceptor() {
     var interceptor: Interceptor = object : Interceptor {
       override fun intercept(chain: Interceptor.Chain): Response = TODO()
@@ -578,12 +579,12 @@ class KotlinSourceModernTest {
     interceptor = Interceptor { it: Interceptor.Chain -> TODO() }
   }
 
-  @Test @Ignore
+  @Test
   fun interceptorChain() {
     val chain: Interceptor.Chain = newInterceptorChain()
   }
 
-  @Test @Ignore
+  @Test
   fun handshakeCertificates() {
     val handshakeCertificates = HandshakeCertificates.Builder().build()
     val keyManager: X509KeyManager = handshakeCertificates.keyManager
@@ -592,7 +593,7 @@ class KotlinSourceModernTest {
     val sslContext: SSLContext = handshakeCertificates.sslContext()
   }
 
-  @Test @Ignore
+  @Test
   fun handshakeCertificatesBuilder() {
     var builder: HandshakeCertificates.Builder = HandshakeCertificates.Builder()
     val heldCertificate = HeldCertificate.Builder().build()
@@ -602,7 +603,7 @@ class KotlinSourceModernTest {
     val handshakeCertificates: HandshakeCertificates = builder.build()
   }
 
-  @Test @Ignore
+  @Test
   fun heldCertificate() {
     val heldCertificate: HeldCertificate = HeldCertificate.Builder().build()
     val certificate: X509Certificate = heldCertificate.certificate
@@ -612,7 +613,7 @@ class KotlinSourceModernTest {
     val privateKeyPkcs1Pem: String = heldCertificate.privateKeyPkcs1Pem()
   }
 
-  @Test @Ignore
+  @Test
   fun heldCertificateBuilder() {
     val keyPair: KeyPair = KeyPairGenerator.getInstance("").genKeyPair()
     var builder: HeldCertificate.Builder = HeldCertificate.Builder()
@@ -632,7 +633,7 @@ class KotlinSourceModernTest {
     val heldCertificate: HeldCertificate = builder.build()
   }
 
-  @Test @Ignore
+  @Test
   fun javaNetAuthenticator() {
     val authenticator = JavaNetAuthenticator()
     val response = Response.Builder().build()
@@ -640,7 +641,7 @@ class KotlinSourceModernTest {
     request = authenticator.authenticate(null, response)
   }
 
-  @Test @Ignore
+  @Test
   fun javaNetCookieJar() {
     val cookieJar: JavaNetCookieJar = JavaNetCookieJar(newCookieHandler())
     val httpUrl = "".toHttpUrl()
@@ -648,12 +649,12 @@ class KotlinSourceModernTest {
     cookieJar.saveFromResponse(httpUrl, listOf(Cookie.Builder().build()))
   }
 
-  @Test @Ignore
+  @Test
   fun loggingEventListener() {
     var loggingEventListener: EventListener = LoggingEventListener.Factory().create(newCall())
   }
 
-  @Test @Ignore
+  @Test
   fun loggingEventListenerFactory() {
     var factory: LoggingEventListener.Factory = LoggingEventListener.Factory()
     factory = LoggingEventListener.Factory(HttpLoggingInterceptor.Logger.DEFAULT)
@@ -663,7 +664,7 @@ class KotlinSourceModernTest {
     val eventListener: EventListener = factory.create(newCall())
   }
 
-  @Test @Ignore
+  @Test
   fun mediaType() {
     val mediaType: MediaType = "".toMediaType()
     val defaultCharset: Charset? = mediaType.charset()
@@ -673,7 +674,7 @@ class KotlinSourceModernTest {
     val parse: MediaType? = "".toMediaTypeOrNull()
   }
 
-  @Test @Ignore
+  @Test
   fun mockResponse() {
     var mockResponse: MockResponse = MockResponse()
     var status: String = mockResponse.status
@@ -718,7 +719,7 @@ class KotlinSourceModernTest {
     webSocketListener = mockResponse.webSocketListener
   }
 
-  @Test @Ignore
+  @Test
   fun mockWebServer() {
     val mockWebServer: MockWebServer = MockWebServer()
     var port: Int = mockWebServer.port
@@ -750,7 +751,7 @@ class KotlinSourceModernTest {
     mockWebServer.close()
   }
 
-  @Test @Ignore
+  @Test
   fun multipartBody() {
     val multipartBody: MultipartBody = MultipartBody.Builder().build()
     val type: MediaType = multipartBody.type
@@ -768,7 +769,7 @@ class KotlinSourceModernTest {
     val form: MediaType = MultipartBody.FORM
   }
 
-  @Test @Ignore
+  @Test
   fun multipartBodyPart() {
     val requestBody: RequestBody = "".toRequestBody(null)
     var part: MultipartBody.Part = MultipartBody.Part.create(null, requestBody)
@@ -781,7 +782,7 @@ class KotlinSourceModernTest {
     val body: RequestBody = part.body
   }
 
-  @Test @Ignore
+  @Test
   fun multipartBodyBuilder() {
     val requestBody = "".toRequestBody(null)
     var builder: MultipartBody.Builder = MultipartBody.Builder()
@@ -797,7 +798,7 @@ class KotlinSourceModernTest {
     val multipartBody: MultipartBody = builder.build()
   }
 
-  @Test @Ignore
+  @Test
   fun okHttpClient() {
     val client: OkHttpClient = OkHttpClient()
     val dispatcher: Dispatcher = client.dispatcher
@@ -834,7 +835,7 @@ class KotlinSourceModernTest {
     val newBuilder: OkHttpClient.Builder = client.newBuilder()
   }
 
-  @Test @Ignore
+  @Test
   fun okHttpClientBuilder() {
     var builder: OkHttpClient.Builder = OkHttpClient.Builder()
     builder = builder.callTimeout(0L, TimeUnit.SECONDS)
@@ -882,7 +883,7 @@ class KotlinSourceModernTest {
     val client: OkHttpClient = builder.build()
   }
 
-  @Test @Ignore
+  @Test
   fun testAddInterceptor() {
     val builder = OkHttpClient.Builder()
 
@@ -892,13 +893,13 @@ class KotlinSourceModernTest {
     builder.networkInterceptors().add(i)
   }
 
-  @Test @Ignore
+  @Test
   fun protocol() {
     var protocol: Protocol = Protocol.HTTP_2
     protocol = Protocol.get("")
   }
 
-  @Test @Ignore
+  @Test
   fun pushPromise() {
     val pushPromise: PushPromise = PushPromise("", "", headersOf(), MockResponse())
     val method: String = pushPromise.method
@@ -907,7 +908,7 @@ class KotlinSourceModernTest {
     val response: MockResponse = pushPromise.response
   }
 
-  @Test @Ignore
+  @Test
   fun queueDispatcher() {
     var queueDispatcher: QueueDispatcher = object : QueueDispatcher() {
       override fun dispatch(request: RecordedRequest): MockResponse = TODO()
@@ -927,7 +928,7 @@ class KotlinSourceModernTest {
     queueDispatcher.setFailFast(MockResponse())
   }
 
-  @Test @Ignore
+  @Test
   fun recordedRequest() {
     var recordedRequest: RecordedRequest = RecordedRequest(
         "", headersOf(), listOf(), 0L, Buffer(), 0, Socket())
@@ -947,7 +948,7 @@ class KotlinSourceModernTest {
     var handshake: Handshake? = recordedRequest.handshake
   }
 
-  @Test @Ignore
+  @Test
   fun request() {
     val request: Request = Request.Builder().build()
     val isHttps: Boolean = request.isHttps
@@ -963,7 +964,7 @@ class KotlinSourceModernTest {
     val cacheControl: CacheControl = request.cacheControl
   }
 
-  @Test @Ignore
+  @Test
   fun requestBuilder() {
     val requestBody = "".toRequestBody(null)
     var builder = Request.Builder()
@@ -991,7 +992,7 @@ class KotlinSourceModernTest {
     val request: Request = builder.build()
   }
 
-  @Test @Ignore
+  @Test
   fun requestBody() {
     var requestBody: RequestBody = object : RequestBody() {
       override fun contentType(): MediaType? = TODO()
@@ -1012,7 +1013,7 @@ class KotlinSourceModernTest {
     requestBody = File("").asRequestBody("".toMediaTypeOrNull())
   }
 
-  @Test @Ignore
+  @Test
   fun response() {
     val response: Response = Response.Builder().build()
     val request: Request = response.request
@@ -1038,7 +1039,7 @@ class KotlinSourceModernTest {
     val receivedResponseAtMillis: Long = response.receivedResponseAtMillis
   }
 
-  @Test @Ignore
+  @Test
   fun responseBuilder() {
     var builder: Response.Builder = Response.Builder()
     builder = builder.request(Request.Builder().build())
@@ -1069,7 +1070,7 @@ class KotlinSourceModernTest {
     val response: Response = builder.build()
   }
 
-  @Test @Ignore
+  @Test
   fun responseBody() {
     var responseBody: ResponseBody = object : ResponseBody() {
       override fun contentType(): MediaType? = TODO()
@@ -1093,7 +1094,7 @@ class KotlinSourceModernTest {
     responseBody = Buffer().asResponseBody(null, 0L)
   }
 
-  @Test @Ignore
+  @Test
   fun route() {
     val route: Route = newRoute()
     val address: Address = route.address
@@ -1102,19 +1103,19 @@ class KotlinSourceModernTest {
     val requiresTunnel: Boolean = route.requiresTunnel()
   }
 
-  @Test @Ignore
+  @Test
   fun socketPolicy() {
     val socketPolicy: SocketPolicy = SocketPolicy.KEEP_OPEN
   }
 
-  @Test @Ignore
+  @Test
   fun tlsVersion() {
     var tlsVersion: TlsVersion = TlsVersion.TLS_1_3
     val javaName: String = tlsVersion.javaName
     tlsVersion = TlsVersion.forJavaName("")
   }
 
-  @Test @Ignore
+  @Test
   fun webSocket() {
     val webSocket = object : WebSocket {
       override fun request(): Request = TODO()
@@ -1126,7 +1127,7 @@ class KotlinSourceModernTest {
     }
   }
 
-  @Test @Ignore
+  @Test
   fun webSocketListener() {
     val webSocketListener = object : WebSocketListener() {
       override fun onOpen(webSocket: WebSocket, response: Response) = TODO()

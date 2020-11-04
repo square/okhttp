@@ -27,11 +27,13 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.RecordedRequest;
-import org.junit.Rule;
-import org.junit.Test;
+import mockwebserver3.MockResponse;
+import mockwebserver3.MockWebServer;
+import mockwebserver3.RecordedRequest;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
 import static java.util.Arrays.asList;
@@ -40,11 +42,17 @@ import static org.assertj.core.data.Offset.offset;
 import static org.junit.Assert.fail;
 
 /** Derived from Android's CookiesTest. */
+@Timeout(30)
 public class CookiesTest {
-  @Rule public final MockWebServer server = new MockWebServer();
-  @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
+  @RegisterExtension public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
+  private MockWebServer server;
   private OkHttpClient client = clientTestRule.newClient();
+
+  @BeforeEach
+  public void setUp(MockWebServer server) throws Exception {
+    this.server = server;
+  }
 
   @Test
   public void testNetscapeResponse() throws Exception {

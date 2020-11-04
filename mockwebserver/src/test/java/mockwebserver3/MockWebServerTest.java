@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.HttpsURLConnection;
-import mockwebserver3.junit4.MockWebServerRule;
 import okhttp3.Handshake;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
@@ -41,12 +40,12 @@ import okhttp3.TestUtil;
 import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okhttp3.tls.HeldCertificate;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.Timeout;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
@@ -60,21 +59,19 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 
 @SuppressWarnings({"ArraysAsListWithZeroOrOneArgument", "deprecation"})
+@Timeout(30)
 public final class MockWebServerTest {
-  @Rule public PlatformRule platform = new PlatformRule();
+  @RegisterExtension public PlatformRule platform = new PlatformRule();
 
-  @Rule public final MockWebServerRule serverRule = new MockWebServerRule();
+  private MockWebServer server;
 
-  @Rule public Timeout globalTimeout = Timeout.seconds(30);
-
-  private final MockWebServer server = serverRule.getServer();
-
-  @Before public void setUp() throws IOException {
+  @BeforeEach public void setUp(MockWebServer server) throws IOException {
+    this.server = server;
     platform.assumeNotBouncyCastle();
     server.start();
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws Exception {
     server.shutdown();
   }
@@ -245,7 +242,7 @@ public final class MockWebServerTest {
     assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
   }
 
-  @Ignore("Not actually failing where expected")
+  @Disabled("Not actually failing where expected")
   @Test public void disconnectAtStart() throws Exception {
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START));
     server.enqueue(new MockResponse()); // The jdk's HttpUrlConnection is a bastard.

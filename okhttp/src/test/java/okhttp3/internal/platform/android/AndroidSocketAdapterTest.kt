@@ -30,17 +30,12 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue
-import org.junit.Rule
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
+import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
 
-@RunWith(Parameterized::class)
-class AndroidSocketAdapterTest(private val adapter: SocketAdapter) {
-  @Suppress("RedundantVisibilityModifier")
-  @JvmField
-  @Rule
-  public val platform = PlatformRule.conscrypt()
+class AndroidSocketAdapterTest {
+  @RegisterExtension @JvmField val platform = PlatformRule.conscrypt()
 
   val context by lazy {
     val provider: Provider = Conscrypt.newProviderBuilder().provideTrustManager(true).build()
@@ -50,8 +45,9 @@ class AndroidSocketAdapterTest(private val adapter: SocketAdapter) {
     }
   }
 
-  @Test
-  fun testMatchesSupportedSocket() {
+  @ParameterizedTest
+  @MethodSource("data")
+  fun testMatchesSupportedSocket(adapter: SocketAdapter) {
     val socketFactory = context.socketFactory
 
     val sslSocket = socketFactory.createSocket() as SSLSocket
@@ -62,24 +58,27 @@ class AndroidSocketAdapterTest(private val adapter: SocketAdapter) {
     assertNull(adapter.getSelectedProtocol(sslSocket))
   }
 
-  @Test
-  fun testMatchesSupportedAndroidSocketFactory() {
+  @ParameterizedTest
+  @MethodSource("data")
+  fun testMatchesSupportedAndroidSocketFactory(adapter: SocketAdapter) {
     assumeTrue(adapter is StandardAndroidSocketAdapter)
 
     assertTrue(adapter.matchesSocketFactory(context.socketFactory))
     assertNotNull(adapter.trustManager(context.socketFactory))
   }
 
-  @Test
-  fun testDoesntMatchSupportedCustomSocketFactory() {
+  @ParameterizedTest
+  @MethodSource("data")
+  fun testDoesntMatchSupportedCustomSocketFactory(adapter: SocketAdapter) {
     assumeFalse(adapter is StandardAndroidSocketAdapter)
 
     assertFalse(adapter.matchesSocketFactory(context.socketFactory))
     assertNull(adapter.trustManager(context.socketFactory))
   }
 
-  @Test
-  fun testCustomSocket() {
+  @ParameterizedTest
+  @MethodSource("data")
+  fun testCustomSocket(adapter: SocketAdapter) {
     val socketFactory = DelegatingSSLSocketFactory(context.socketFactory)
 
     assertFalse(adapter.matchesSocketFactory(socketFactory))
@@ -95,7 +94,6 @@ class AndroidSocketAdapterTest(private val adapter: SocketAdapter) {
 
   companion object {
     @JvmStatic
-    @Parameterized.Parameters(name = "{0}")
     fun data(): Collection<SocketAdapter> {
       return listOfNotNull(
           DeferredSocketAdapter(ConscryptSocketAdapter.factory),

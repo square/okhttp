@@ -16,14 +16,15 @@
  */
 package okhttp3.internal.tls
 
+import okhttp3.internal.canParseAsIpAddress
+import okhttp3.internal.toCanonicalHost
+import okio.utf8Size
 import java.security.cert.CertificateParsingException
 import java.security.cert.X509Certificate
 import java.util.Locale
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLException
 import javax.net.ssl.SSLSession
-import okhttp3.internal.canParseAsIpAddress
-import okhttp3.internal.toCanonicalHost
 
 /**
  * A HostnameVerifier consistent with [RFC 2818][rfc_2818].
@@ -36,11 +37,16 @@ object OkHostnameVerifier : HostnameVerifier {
   private const val ALT_IPA_NAME = 7
 
   override fun verify(host: String, session: SSLSession): Boolean {
-    return try {
-      verify(host, session.peerCertificates[0] as X509Certificate)
-    } catch (_: SSLException) {
+    return if (!host.isAscii()) {
       false
+    } else {
+      try {
+        verify(host, session.peerCertificates[0] as X509Certificate)
+      } catch (_: SSLException) {
+        false
+      }
     }
+
   }
 
   fun verify(host: String, certificate: X509Certificate): Boolean {
@@ -61,11 +67,26 @@ object OkHostnameVerifier : HostnameVerifier {
 
   /** Returns true if [certificate] matches [hostname]. */
   private fun verifyHostname(hostname: String, certificate: X509Certificate): Boolean {
-    val hostname = hostname.toLowerCase(Locale.US)
+    val hostname = hostname.asciiToLowercase()
     return getSubjectAltNames(certificate, ALT_DNS_NAME).any {
       verifyHostname(hostname, it)
     }
   }
+
+  /**
+   * This is like [toLowerCase] except that it does nothing if this contains any non-ASCII
+   * characters. We want to avoid lower casing special chars like U+212A (Kelvin symbol) because
+   * they can return ASCII characters that match real hostnames.
+   */
+  private fun String.asciiToLowercase(): String {
+    return when {
+      isAscii() -> toLowerCase(Locale.US) // This is an ASCII string.
+      else -> this
+    }
+  }
+
+  /** Returns true if the [String] is ASCII encoded (0-127). */
+  private fun String.isAscii() = length == utf8Size().toInt()
 
   /**
    * Returns true if [hostname] matches the domain name [pattern].
@@ -108,7 +129,7 @@ object OkHostnameVerifier : HostnameVerifier {
     }
     // Hostname and pattern are now absolute domain names.
 
-    pattern = pattern.toLowerCase(Locale.US)
+    pattern = pattern.asciiToLowercase()
     // Hostname and pattern are now in lower case -- domain names are case-insensitive.
 
     if ("*" !in pattern) {

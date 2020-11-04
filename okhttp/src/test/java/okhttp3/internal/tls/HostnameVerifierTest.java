@@ -19,14 +19,18 @@ package okhttp3.internal.tls;
 
 import java.io.ByteArrayInputStream;
 import java.security.cert.CertificateFactory;
+import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
+import java.util.stream.Stream;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSession;
 import javax.security.auth.x500.X500Principal;
 import okhttp3.FakeSSLSession;
+import okhttp3.OkHttpClient;
 import okhttp3.internal.Util;
-import org.junit.Ignore;
-import org.junit.Test;
+import okhttp3.tls.HeldCertificate;
+import okhttp3.tls.internal.TlsUtil;
+import org.junit.jupiter.api.Test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -36,9 +40,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * from the Apache HTTP Client test suite.
  */
 public final class HostnameVerifierTest {
-  private HostnameVerifier verifier = OkHostnameVerifier.INSTANCE;
+  private OkHostnameVerifier verifier = OkHostnameVerifier.INSTANCE;
 
-  @Test public void verify() throws Exception {
+  @Test public void verify() {
     FakeSSLSession session = new FakeSSLSession();
     assertThat(verifier.verify("localhost", session)).isFalse();
   }
@@ -148,7 +152,7 @@ public final class HostnameVerifierTest {
    * are parsed. Android fails to parse these, which means we fall back to the CN. The RI does parse
    * them, so the CN is unused.
    */
-  @Test @Ignore public void verifyNonAsciiSubjectAlt() throws Exception {
+  @Test public void verifyNonAsciiSubjectAlt() throws Exception {
     // CN=foo.com, subjectAlt=bar.com, subjectAlt=&#x82b1;&#x5b50;.co.jp
     // (hanako.co.jp in kanji)
     SSLSession session = session(""
@@ -178,16 +182,20 @@ public final class HostnameVerifierTest {
         + "sWIKHYrmhCIRshUNohGXv50m2o+1w9oWmQ6Dkq7lCjfXfUB4wIbggJjpyEtbNqBt\n"
         + "j4MC2x5rfsLKKqToKmNE7pFEgqwe8//Aar1b+Qj+\n"
         + "-----END CERTIFICATE-----\n");
-    assertThat(verifier.verify("foo.com", session)).isTrue();
+
+    X509Certificate peerCertificate = ((X509Certificate) session.getPeerCertificates()[0]);
+    assertThat(certificateSANs(peerCertificate)).containsExactly("bar.com", "������.co.jp");
+
+    assertThat(verifier.verify("foo.com", session)).isFalse();
     assertThat(verifier.verify("a.foo.com", session)).isFalse();
     // these checks test alternative subjects. The test data contains an
     // alternative subject starting with a japanese kanji character. This is
     // not supported by Android because the underlying implementation from
     // harmony follows the definition from rfc 1034 page 10 for alternative
     // subject names. This causes the code to drop all alternative subjects.
-    // assertTrue(verifier.verify("bar.com", session));
-    // assertFalse(verifier.verify("a.bar.com", session));
-    // assertFalse(verifier.verify("a.\u82b1\u5b50.co.jp", session));
+    assertThat(verifier.verify("bar.com", session)).isTrue();
+    assertThat(verifier.verify("a.bar.com", session)).isFalse();
+    assertThat(verifier.verify("a.\u82b1\u5b50.co.jp", session)).isFalse();
   }
 
   @Test public void verifySubjectAltOnly() throws Exception {
@@ -329,11 +337,11 @@ public final class HostnameVerifierTest {
   }
 
   /**
-   * Ignored due to incompatibilities between Android and Java on how non-ASCII subject alt names
-   * are parsed. Android fails to parse these, which means we fall back to the CN. The RI does parse
-   * them, so the CN is unused.
+   * Previously ignored due to incompatibilities between Android and Java on how non-ASCII subject
+   * alt names are parsed. Android fails to parse these, which means we fall back to the CN.
+   * The RI does parse them, so the CN is unused.
    */
-  @Test @Ignore public void testWilcardNonAsciiSubjectAlt() throws Exception {
+  @Test public void testWilcardNonAsciiSubjectAlt() throws Exception {
     // CN=*.foo.com, subjectAlt=*.bar.com, subjectAlt=*.&#x82b1;&#x5b50;.co.jp
     // (*.hanako.co.jp in kanji)
     SSLSession session = session(""
@@ -363,20 +371,24 @@ public final class HostnameVerifierTest {
         + "qFr0AIZKBlg6NZZFf/0dP9zcKhzSriW27bY0XfzA6GSiRDXrDjgXq6baRT6YwgIg\n"
         + "pgJsDbJtZfHnV1nd3M6zOtQPm1TIQpNmMMMd/DPrGcUQerD3\n"
         + "-----END CERTIFICATE-----\n");
+
+    X509Certificate peerCertificate = ((X509Certificate) session.getPeerCertificates()[0]);
+    assertThat(certificateSANs(peerCertificate)).containsExactly("*.bar.com", "*.������.co.jp");
+
     // try the foo.com variations
-    assertThat(verifier.verify("foo.com", session)).isTrue();
-    assertThat(verifier.verify("www.foo.com", session)).isTrue();
-    assertThat(verifier.verify("\u82b1\u5b50.foo.com", session)).isTrue();
+    assertThat(verifier.verify("foo.com", session)).isFalse();
+    assertThat(verifier.verify("www.foo.com", session)).isFalse();
+    assertThat(verifier.verify("\u82b1\u5b50.foo.com", session)).isFalse();
     assertThat(verifier.verify("a.b.foo.com", session)).isFalse();
     // these checks test alternative subjects. The test data contains an
     // alternative subject starting with a japanese kanji character. This is
     // not supported by Android because the underlying implementation from
     // harmony follows the definition from rfc 1034 page 10 for alternative
     // subject names. This causes the code to drop all alternative subjects.
-    // assertFalse(verifier.verify("bar.com", session));
-    // assertTrue(verifier.verify("www.bar.com", session));
-    // assertTrue(verifier.verify("\u82b1\u5b50.bar.com", session));
-    // assertTrue(verifier.verify("a.b.bar.com", session));
+    assertThat(verifier.verify("bar.com", session)).isFalse();
+    assertThat(verifier.verify("www.bar.com", session)).isTrue();
+    assertThat(verifier.verify("\u82b1\u5b50.bar.com", session)).isFalse();
+    assertThat(verifier.verify("a.b.bar.com", session)).isFalse();
   }
 
   @Test public void subjectAltUsesLocalDomainAndIp() throws Exception {
@@ -552,6 +564,143 @@ public final class HostnameVerifierTest {
     assertThat(verifier.verify("192.168.1.1", session)).isTrue();
     assertThat(verifier.verify("::ffff:192.168.1.1", session)).isTrue();
     assertThat(verifier.verify("0:0:0:0:0:FFFF:C0A8:0101", session)).isTrue();
+  }
+
+  @Test public void generatedCertificate() throws Exception {
+    HeldCertificate heldCertificate = new HeldCertificate.Builder()
+        .commonName("Foo Corp")
+        .addSubjectAlternativeName("foo.com")
+        .build();
+
+    SSLSession session = session(heldCertificate.certificatePem());
+    assertThat(verifier.verify("foo.com", session)).isTrue();
+    assertThat(verifier.verify("bar.com", session)).isFalse();
+  }
+
+  @Test public void specialKInHostname() throws Exception {
+    // https://github.com/apache/httpcomponents-client/commit/303e435d7949652ea77a6c50df1c548682476b6e
+    // https://www.gosecure.net/blog/2020/10/27/weakness-in-java-tls-host-verification/
+
+    HeldCertificate heldCertificate = new HeldCertificate.Builder()
+        .commonName("Foo Corp")
+        .addSubjectAlternativeName("k.com")
+        .addSubjectAlternativeName("tel.com")
+        .build();
+
+    SSLSession session = session(heldCertificate.certificatePem());
+    assertThat(verifier.verify("foo.com", session)).isFalse();
+    assertThat(verifier.verify("bar.com", session)).isFalse();
+    assertThat(verifier.verify("k.com", session)).isTrue();
+    assertThat(verifier.verify("K.com", session)).isTrue();
+
+    assertThat(verifier.verify("\u2121.com", session)).isFalse();
+    assertThat(verifier.verify("℡.com", session)).isFalse();
+
+    // These should ideally be false, but we know that hostname is usually already checked by us
+    assertThat(verifier.verify("\u212A.com", session)).isFalse();
+    // Kelvin character below
+    assertThat(verifier.verify("K.com", session)).isFalse();
+  }
+
+  @Test public void specialKInCert() throws Exception {
+    // https://github.com/apache/httpcomponents-client/commit/303e435d7949652ea77a6c50df1c548682476b6e
+    // https://www.gosecure.net/blog/2020/10/27/weakness-in-java-tls-host-verification/
+
+    HeldCertificate heldCertificate = new HeldCertificate.Builder()
+        .commonName("Foo Corp")
+        .addSubjectAlternativeName("\u2121.com")
+        .addSubjectAlternativeName("\u212A.com")
+        .build();
+
+    SSLSession session = session(heldCertificate.certificatePem());
+    assertThat(verifier.verify("foo.com", session)).isFalse();
+    assertThat(verifier.verify("bar.com", session)).isFalse();
+    assertThat(verifier.verify("k.com", session)).isFalse();
+    assertThat(verifier.verify("K.com", session)).isFalse();
+
+    assertThat(verifier.verify("tel.com", session)).isFalse();
+    assertThat(verifier.verify("k.com", session)).isFalse();
+  }
+
+  @Test public void specialKInExternalCert() throws Exception {
+    // $ cat ./cert.cnf
+    // [req]
+    // distinguished_name=distinguished_name
+    // req_extensions=req_extensions
+    // x509_extensions=x509_extensions
+    // [distinguished_name]
+    // [req_extensions]
+    // [x509_extensions]
+    // subjectAltName=DNS:℡.com,DNS:K.com
+    //
+    // $ openssl req -x509 -nodes -days 36500 -subj '/CN=foo.com' -config ./cert.cnf \
+    //     -newkey rsa:512 -out cert.pem
+    SSLSession session = session(""
+        + "-----BEGIN CERTIFICATE-----\n"
+        + "MIIBSDCB86ADAgECAhRLR4TGgXBegg0np90FZ1KPeWpDtjANBgkqhkiG9w0BAQsF\n"
+        + "ADASMRAwDgYDVQQDDAdmb28uY29tMCAXDTIwMTAyOTA2NTkwNVoYDzIxMjAxMDA1\n"
+        + "MDY1OTA1WjASMRAwDgYDVQQDDAdmb28uY29tMFwwDQYJKoZIhvcNAQEBBQADSwAw\n"
+        + "SAJBALQcTVW9aW++ClIV9/9iSzijsPvQGEu/FQOjIycSrSIheZyZmR8bluSNBq0C\n"
+        + "9fpalRKZb0S2tlCTi5WoX8d3K30CAwEAAaMfMB0wGwYDVR0RBBQwEoIH4oShLmNv\n"
+        + "bYIH4oSqLmNvbTANBgkqhkiG9w0BAQsFAANBAA1+/eDvSUGv78iEjNW+1w3OPAwt\n"
+        + "Ij1qLQ/YI8OogZPMk7YY46/ydWWp7UpD47zy/vKmm4pOc8Glc8MoDD6UADs=\n"
+        + "-----END CERTIFICATE-----\n");
+
+    X509Certificate peerCertificate = ((X509Certificate) session.getPeerCertificates()[0]);
+    assertThat(certificateSANs(peerCertificate)).containsExactly("���.com", "���.com");
+
+    assertThat(verifier.verify("tel.com", session)).isFalse();
+    assertThat(verifier.verify("k.com", session)).isFalse();
+
+    assertThat(verifier.verify("foo.com", session)).isFalse();
+    assertThat(verifier.verify("bar.com", session)).isFalse();
+    assertThat(verifier.verify("k.com", session)).isFalse();
+    assertThat(verifier.verify("K.com", session)).isFalse();
+  }
+
+  private Stream<String> certificateSANs(X509Certificate peerCertificate)
+      throws CertificateParsingException {
+    return peerCertificate.getSubjectAlternativeNames().stream().map(c -> (String) c.get(1));
+  }
+
+  @Test public void replacementCharacter() throws Exception {
+    // $ cat ./cert.cnf
+    // [req]
+    // distinguished_name=distinguished_name
+    // req_extensions=req_extensions
+    // x509_extensions=x509_extensions
+    // [distinguished_name]
+    // [req_extensions]
+    // [x509_extensions]
+    // subjectAltName=DNS:℡.com,DNS:K.com
+    //
+    // $ openssl req -x509 -nodes -days 36500 -subj '/CN=foo.com' -config ./cert.cnf \
+    //     -newkey rsa:512 -out cert.pem
+    SSLSession session = session(""
+        + "-----BEGIN CERTIFICATE-----\n"
+        + "MIIBSDCB86ADAgECAhRLR4TGgXBegg0np90FZ1KPeWpDtjANBgkqhkiG9w0BAQsF\n"
+        + "ADASMRAwDgYDVQQDDAdmb28uY29tMCAXDTIwMTAyOTA2NTkwNVoYDzIxMjAxMDA1\n"
+        + "MDY1OTA1WjASMRAwDgYDVQQDDAdmb28uY29tMFwwDQYJKoZIhvcNAQEBBQADSwAw\n"
+        + "SAJBALQcTVW9aW++ClIV9/9iSzijsPvQGEu/FQOjIycSrSIheZyZmR8bluSNBq0C\n"
+        + "9fpalRKZb0S2tlCTi5WoX8d3K30CAwEAAaMfMB0wGwYDVR0RBBQwEoIH4oShLmNv\n"
+        + "bYIH4oSqLmNvbTANBgkqhkiG9w0BAQsFAANBAA1+/eDvSUGv78iEjNW+1w3OPAwt\n"
+        + "Ij1qLQ/YI8OogZPMk7YY46/ydWWp7UpD47zy/vKmm4pOc8Glc8MoDD6UADs=\n"
+        + "-----END CERTIFICATE-----\n");
+
+    // Replacement characters are deliberate, from certificate loading.
+    assertThat(verifier.verify("���.com", session)).isFalse();
+    assertThat(verifier.verify("℡.com", session)).isFalse();
+  }
+
+  @Test
+  public void thatCatchesErrorsWithBadSession() {
+    HostnameVerifier localVerifier = new OkHttpClient().hostnameVerifier();
+
+    // Since this is public API, okhttp3.internal.tls.OkHostnameVerifier.verify is also
+    assertThat(verifier).isInstanceOf(OkHostnameVerifier.class);
+
+    SSLSession session = TlsUtil.localhost().sslContext().createSSLEngine().getSession();
+    assertThat(localVerifier.verify("\uD83D\uDCA9.com", session)).isFalse();
   }
 
   @Test public void verifyAsIpAddress() {

@@ -19,10 +19,10 @@ import java.io.IOException;
 import java.util.Random;
 import okio.Buffer;
 import okio.ByteString;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /** Original version of this class was lifted from {@code com.twitter.hpack.HuffmanTest}. */
 public final class HuffmanTest {

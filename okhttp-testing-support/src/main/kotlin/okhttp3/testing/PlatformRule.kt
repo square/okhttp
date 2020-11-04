@@ -17,6 +17,7 @@ package okhttp3.testing
 
 import com.amazon.corretto.crypto.provider.AmazonCorrettoCryptoProvider
 import com.amazon.corretto.crypto.provider.SelfTestStatus
+import java.lang.reflect.Method
 import java.security.Security
 import okhttp3.internal.platform.ConscryptPlatform
 import okhttp3.internal.platform.Jdk8WithJettyBootPlatform
@@ -39,6 +40,11 @@ import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeThat
 import org.junit.Assume.assumeTrue
 import org.junit.AssumptionViolatedException
+import org.junit.jupiter.api.extension.AfterEachCallback
+import org.junit.jupiter.api.extension.BeforeEachCallback
+import org.junit.jupiter.api.extension.ExtensionContext
+import org.junit.jupiter.api.extension.InvocationInterceptor
+import org.junit.jupiter.api.extension.ReflectiveInvocationContext
 import org.junit.rules.TestRule
 import org.junit.runners.model.Statement
 import org.openjsse.net.ssl.OpenJSSE
@@ -53,8 +59,37 @@ import org.openjsse.net.ssl.OpenJSSE
 open class PlatformRule @JvmOverloads constructor(
   val requiredPlatformName: String? = null,
   val platform: Platform? = null
-) : TestRule {
+) : TestRule, BeforeEachCallback, AfterEachCallback, InvocationInterceptor {
   private val versionChecks = mutableListOf<Pair<Matcher<out Any>, Matcher<out Any>>>()
+
+  override fun beforeEach(context: ExtensionContext) {
+    setupPlatform()
+  }
+
+  override fun afterEach(context: ExtensionContext) {
+    resetPlatform()
+  }
+
+  override fun interceptTestMethod(
+    invocation: InvocationInterceptor.Invocation<Void>,
+    invocationContext: ReflectiveInvocationContext<Method>,
+    extensionContext: ExtensionContext
+  ) {
+    var failed = false
+    try {
+      invocation.proceed()
+    } catch (e: AssumptionViolatedException) {
+      throw e
+    } catch (e: Throwable) {
+      failed = true
+      rethrowIfNotExpected(e)
+    } finally {
+      resetPlatform()
+    }
+    if (!failed) {
+      failIfExpected()
+    }
+  }
 
   override fun apply(
     base: Statement,

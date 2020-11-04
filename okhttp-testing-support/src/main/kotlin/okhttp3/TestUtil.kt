@@ -22,8 +22,8 @@ import java.net.UnknownHostException
 import java.util.Arrays
 import okhttp3.internal.http2.Header
 import okio.Buffer
-import org.junit.Assume.assumeFalse
-import org.junit.Assume.assumeNoException
+import org.junit.jupiter.api.Assumptions.assumeFalse
+import org.junit.jupiter.api.Assumptions.assumeTrue
 
 object TestUtil {
   @JvmField
@@ -93,13 +93,13 @@ object TestUtil {
     try {
       InetAddress.getByName("www.google.com")
     } catch (uhe: UnknownHostException) {
-      assumeNoException(uhe)
+      assumeTrue(false, "requires network")
     }
   }
 
   @JvmStatic
   fun assumeNotWindows() {
-    assumeFalse("This test fails on Windows.", windows)
+    assumeFalse(windows, "This test fails on Windows.")
   }
 
   @JvmStatic

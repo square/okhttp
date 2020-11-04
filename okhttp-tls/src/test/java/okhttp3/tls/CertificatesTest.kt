@@ -15,8 +15,8 @@
  */
 package okhttp3.tls
 
-import org.junit.Assert
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
 class CertificatesTest {
   @Test fun testRoundtrip() {
@@ -35,6 +35,6 @@ class CertificatesTest {
       
       """.trimIndent()
     val certificate = certificateString.decodeCertificatePem()
-    Assert.assertEquals(certificateString, certificate.certificatePem())
+    assertEquals(certificateString, certificate.certificatePem())
   }
 }

@@ -21,13 +21,14 @@ import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
+import okhttp3.brotli.internal.uncompress
 import okio.ByteString
 import okio.ByteString.Companion.EMPTY
 import okio.ByteString.Companion.decodeHex
 import okio.ByteString.Companion.encodeUtf8
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Assert.fail
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.fail
 
 class BrotliInterceptorTest {
   @Test
@@ -42,7 +43,7 @@ class BrotliInterceptorTest {
       header("Content-Encoding", "br")
     }
 
-    val uncompressed = BrotliInterceptor.uncompress(response)
+    val uncompressed = uncompress(response)
 
     val responseString = uncompressed.body?.string()
     assertThat(responseString).contains("\"brotli\": true,")
@@ -62,7 +63,7 @@ class BrotliInterceptorTest {
       header("Content-Encoding", "gzip")
     }
 
-    val uncompressed = BrotliInterceptor.uncompress(response)
+    val uncompressed = uncompress(response)
 
     val responseString = uncompressed.body?.string()
     assertThat(responseString).contains("\"gzipped\": true,")
@@ -73,7 +74,7 @@ class BrotliInterceptorTest {
   fun testNoUncompress() {
     val response = response("https://httpbin.org/brotli", "XXXX".encodeUtf8())
 
-    val same = BrotliInterceptor.uncompress(response)
+    val same = uncompress(response)
 
     val responseString = same.body?.string()
     assertThat(responseString).isEqualTo("XXXX")
@@ -86,7 +87,7 @@ class BrotliInterceptorTest {
     }
 
     try {
-      val failingResponse = BrotliInterceptor.uncompress(response)
+      val failingResponse = uncompress(response)
       failingResponse.body?.string()
 
       fail("expected uncompress error")
@@ -104,7 +105,7 @@ class BrotliInterceptorTest {
       message("NO CONTENT")
     }
 
-    val same = BrotliInterceptor.uncompress(response)
+    val same = uncompress(response)
 
     val responseString = same.body?.string()
     assertThat(responseString).isEmpty()

@@ -22,24 +22,32 @@ import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
+import mockwebserver3.MockResponse;
+import mockwebserver3.MockWebServer;
 import okhttp3.testing.Flaky;
 import okio.BufferedSink;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
+@Timeout(30)
 public final class WholeOperationTimeoutTest {
   /** A large response body. Smaller bodies might successfully read after the socket is closed! */
   private static final String BIG_ENOUGH_BODY = TestUtil.repeat('a', 64 * 1024);
 
-  @Rule public final MockWebServer server = new MockWebServer();
-  @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
+  @RegisterExtension public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
+  private MockWebServer server;
   private final OkHttpClient client = clientTestRule.newClient();
+
+  @BeforeEach
+  public void setUp(MockWebServer server) throws Exception {
+    this.server = server;
+  }
 
   @Test public void defaultConfigIsNoTimeout() throws Exception {
     Request request = new Request.Builder()

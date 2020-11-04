@@ -35,29 +35,30 @@ import okhttp3.RecordingHostnameVerifier;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.internal.platform.Platform;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.SocketPolicy;
+import mockwebserver3.MockResponse;
+import mockwebserver3.MockWebServer;
+import mockwebserver3.SocketPolicy;
 import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okhttp3.tls.HeldCertificate;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static okhttp3.tls.internal.TlsUtil.newKeyManager;
 import static okhttp3.tls.internal.TlsUtil.newTrustManager;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public final class CertificatePinnerChainValidationTest {
-  @Rule public final PlatformRule platform = new PlatformRule();
-  @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
+  @RegisterExtension PlatformRule platform = new PlatformRule();
+  @RegisterExtension OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
-  @Rule public final MockWebServer server = new MockWebServer();
+  private MockWebServer server;
 
-  @Before
-  public void setup() {
+  @BeforeEach
+  public void setup(MockWebServer server) {
+    this.server = server;
     platform.assumeNotBouncyCastle();
   }
 

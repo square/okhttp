@@ -41,7 +41,10 @@ buildscript {
       'jsr305': "com.google.code.findbugs:jsr305:${versions.findbugs}",
       'junit': "junit:junit:${versions.junit}",
       'junit5Api': "org.junit.jupiter:junit-jupiter-api:${versions.junit5}",
-      'junit5Jupiter': "org.junit.jupiter:junit-jupiter-engine:${versions.junit5}",
+      'junit5JupiterEngine': "org.junit.jupiter:junit-jupiter-engine:${versions.junit5}",
+      'junit5JupiterParams': "org.junit.jupiter:junit-jupiter-params:${versions.junit5}",
+      'junit5VintageEngine': "org.junit.vintage:junit-vintage-engine:${versions.junit5}",
+      'junitPlatformConsole': "org.junit.platform:junit-platform-console:1.7.0",
       'kotlinStdlib': "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin}",
       'moshi': "com.squareup.moshi:moshi:${versions.moshi}",
       'moshiKotlin': "com.squareup.moshi:moshi-kotlin-codegen:${versions.moshi}",
@@ -203,7 +206,13 @@ subprojects { project ->
   def platform = System.getProperty("okhttp.platform", "jdk9")
   def testJavaVersion = Integer.getInteger("test.java.version", 11)
 
+  dependencies {
+    testRuntimeOnly(deps.junit5JupiterEngine)
+    testRuntimeOnly(deps.junit5VintageEngine)
+  }
+
   test {
+    useJUnitPlatform()
     jvmArgs += "-Dokhttp.platform=$platform"
 
     javaLauncher = javaToolchains.launcherFor {
@@ -216,6 +225,7 @@ subprojects { project ->
     }
 
     systemProperty 'okhttp.platform', platform
+    systemProperty 'junit.jupiter.extensions.autodetection.enabled', 'true'
   }
 
   if (platform == "jdk8alpn") {

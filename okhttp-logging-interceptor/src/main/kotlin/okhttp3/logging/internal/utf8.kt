@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.logging
+package okhttp3.logging.internal
 
 import java.io.EOFException
 import okio.Buffer
@@ -23,7 +23,7 @@ import okio.Buffer
  * sample of code points to detect unicode control characters commonly used in binary file
  * signatures.
  */
-internal fun Buffer.isProbablyUtf8(): Boolean {
+fun Buffer.isProbablyUtf8(): Boolean {
   try {
     val prefix = Buffer()
     val byteCount = size.coerceAtMost(64)

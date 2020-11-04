@@ -16,21 +16,22 @@
 package okhttp3
 
 import javax.net.ssl.SSLException
-import okhttp3.mockwebserver.MockResponse
-import okhttp3.mockwebserver.MockWebServer
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import okhttp3.tls.internal.TlsUtil.localhost
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Assert.fail
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.api.fail
 
-class InsecureForHostTest {
-  @JvmField @Rule val platform = PlatformRule()
-  @JvmField @Rule val server = MockWebServer()
-  @JvmField @Rule val clientTestRule = OkHttpClientTestRule()
+class InsecureForHostTest(
+  val server: MockWebServer
+) {
+  @RegisterExtension @JvmField val platform = PlatformRule()
+  @RegisterExtension @JvmField val clientTestRule = OkHttpClientTestRule()
 
   @Test fun `untrusted host in insecureHosts connects successfully`() {
     val serverCertificates = localhost()
@@ -83,7 +84,7 @@ class InsecureForHostTest {
         .build())
     try {
       call.execute()
-      fail()
+      fail("")
     } catch (expected: SSLException) {
     }
   }
@@ -107,7 +108,7 @@ class InsecureForHostTest {
         .build())
     try {
       call.execute()
-      fail()
+      fail("")
     } catch (expected: SSLException) {
     }
   }

@@ -26,6 +26,11 @@ import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import mockwebserver3.Dispatcher;
+import mockwebserver3.MockResponse;
+import mockwebserver3.MockWebServer;
+import mockwebserver3.RecordedRequest;
+import mockwebserver3.SocketPolicy;
 import okhttp3.OkHttpClient;
 import okhttp3.OkHttpClientTestRule;
 import okhttp3.Protocol;
@@ -38,42 +43,34 @@ import okhttp3.TestUtil;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okhttp3.internal.concurrent.TaskRunner;
-import okhttp3.mockwebserver.Dispatcher;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.RecordedRequest;
-import okhttp3.mockwebserver.SocketPolicy;
 import okhttp3.testing.Flaky;
 import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.ByteString;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.RuleChain;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static java.util.Arrays.asList;
 import static okhttp3.TestUtil.repeat;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 @Flaky
 public final class WebSocketHttpTest {
   // Flaky https://github.com/square/okhttp/issues/4515
   // Flaky https://github.com/square/okhttp/issues/4953
 
-  final MockWebServer webServer = new MockWebServer();
-  final OkHttpClientTestRule clientTestRule = configureClientTestRule();
+  @RegisterExtension OkHttpClientTestRule clientTestRule = configureClientTestRule();
+  @RegisterExtension PlatformRule platform = new PlatformRule();
+  @RegisterExtension TestLogHandler testLogHandler = new TestLogHandler(OkHttpClient.class);
 
-  @Rule public final RuleChain orderedRules = RuleChain.outerRule(clientTestRule).around(webServer);
-  @Rule public final PlatformRule platform = new PlatformRule();
-  @Rule public final TestLogHandler testLogHandler = new TestLogHandler(OkHttpClient.class);
-
+  private MockWebServer webServer;
   private final HandshakeCertificates handshakeCertificates = localhost();
   private final WebSocketRecorder clientListener = new WebSocketRecorder("client");
   private final WebSocketRecorder serverListener = new WebSocketRecorder("server");
@@ -95,12 +92,14 @@ public final class WebSocketHttpTest {
     return clientTestRule;
   }
 
-  @Before public void setUp() {
+  @BeforeEach public void setUp(MockWebServer webServer) {
+    this.webServer = webServer;
+
     platform.assumeNotOpenJSSE();
     platform.assumeNotBouncyCastle();
   }
 
-  @After public void tearDown() throws InterruptedException {
+  @AfterEach public void tearDown() throws InterruptedException {
     clientListener.assertExhausted();
   }
 
@@ -192,7 +191,7 @@ public final class WebSocketHttpTest {
     clientListener.assertFailure(e);
   }
 
-  @Ignore("AsyncCall currently lets runtime exceptions propagate.")
+  @Disabled("AsyncCall currently lets runtime exceptions propagate.")
   @Test public void throwingOnFailLogs() throws Exception {
     webServer.enqueue(new MockResponse().setResponseCode(200).setBody("Body"));
 

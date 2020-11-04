@@ -20,8 +20,8 @@ import java.security.cert.Certificate
 import okhttp3.Handshake.Companion.handshake
 import okhttp3.tls.HeldCertificate
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Assert.fail
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.fail
+import org.junit.jupiter.api.Test
 
 class HandshakeTest {
   val serverRoot = HeldCertificate.Builder()

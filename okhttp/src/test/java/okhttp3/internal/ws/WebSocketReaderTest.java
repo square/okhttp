@@ -22,8 +22,8 @@ import java.util.Random;
 import okhttp3.internal.Util;
 import okio.Buffer;
 import okio.ByteString;
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
@@ -43,7 +43,7 @@ public final class WebSocketReaderTest {
   final WebSocketReader clientReaderWithCompression =
       new WebSocketReader(true, data, callback.asFrameCallback(), true, false);
 
-  @After public void tearDown() {
+  @AfterEach public void tearDown() {
     callback.assertExhausted();
   }
 

@@ -18,16 +18,15 @@ package okhttp3.internal.http
 import java.util.Date
 import java.util.TimeZone
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.After
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 class HttpDateTest {
 
   private lateinit var originalDefault: TimeZone
 
-  @Before
-  @Throws(Exception::class)
+  @BeforeEach
   fun setUp() {
     originalDefault = TimeZone.getDefault()
     // The default timezone should affect none of these tests: HTTP specified GMT, so we set it to
@@ -35,7 +34,7 @@ class HttpDateTest {
     TimeZone.setDefault(TimeZone.getTimeZone("America/Los_Angeles"))
   }
 
-  @After
+  @AfterEach
   @Throws(Exception::class)
   fun tearDown() {
     TimeZone.setDefault(originalDefault)

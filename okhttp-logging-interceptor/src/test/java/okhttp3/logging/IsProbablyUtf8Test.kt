@@ -15,9 +15,10 @@
  */
 package okhttp3.logging
 
+import okhttp3.logging.internal.isProbablyUtf8
 import okio.Buffer
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class IsProbablyUtf8Test {
   @Test fun isProbablyUtf8() {

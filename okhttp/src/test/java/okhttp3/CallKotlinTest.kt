@@ -19,33 +19,32 @@ import java.io.IOException
 import java.net.Proxy
 import java.security.cert.X509Certificate
 import java.time.Duration
-import java.util.concurrent.TimeUnit
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
+import mockwebserver3.SocketPolicy
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.internal.connection.RealConnection
 import okhttp3.internal.connection.RealConnection.Companion.IDLE_CONNECTION_HEALTHY_NS
 import okhttp3.internal.http.RecordingProxySelector
-import okhttp3.mockwebserver.MockResponse
-import okhttp3.mockwebserver.MockWebServer
-import okhttp3.mockwebserver.SocketPolicy
 import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.internal.TlsUtil.localhost
 import okio.BufferedSink
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Assert.assertEquals
-import org.junit.Assert.fail
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TestRule
-import org.junit.rules.Timeout
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.api.fail
 
-class CallKotlinTest {
-  @JvmField @Rule val platform = PlatformRule()
-  @JvmField @Rule val timeout: TestRule = Timeout(30_000, TimeUnit.MILLISECONDS)
-  @JvmField @Rule val server = MockWebServer()
-  @JvmField @Rule val clientTestRule = OkHttpClientTestRule().apply {
+@Timeout(30)
+class CallKotlinTest(
+  val server: MockWebServer
+) {
+  @JvmField @RegisterExtension val platform = PlatformRule()
+  @JvmField @RegisterExtension val clientTestRule = OkHttpClientTestRule().apply {
     recordFrames = true
     recordSslDebug = true
   }
@@ -53,7 +52,7 @@ class CallKotlinTest {
   private var client = clientTestRule.newClient()
   private val handshakeCertificates = localhost()
 
-  @Before
+  @BeforeEach
   fun setup() {
     platform.assumeNotBouncyCastle()
   }
@@ -192,11 +191,9 @@ class CallKotlinTest {
     // Capture the connection so that we can later make it stale.
     var connection: RealConnection? = null
     client = client.newBuilder()
-        .addNetworkInterceptor(object : Interceptor {
-          override fun intercept(chain: Interceptor.Chain): Response {
-            connection = chain.connection() as RealConnection
-            return chain.proceed(chain.request())
-          }
+        .addNetworkInterceptor(Interceptor { chain ->
+          connection = chain.connection() as RealConnection
+          chain.proceed(chain.request())
         })
         .build()
 
@@ -241,7 +238,7 @@ class CallKotlinTest {
     val request = Request.Builder().url(server.url("/")).build()
     try {
       client.newCall(request).execute()
-      fail()
+      fail("")
     } catch (expected: IOException) {
       assertThat(expected.suppressed).hasSize(1)
       val suppressed = expected.suppressed[0]
