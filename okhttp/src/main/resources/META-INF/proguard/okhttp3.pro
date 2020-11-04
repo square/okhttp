@@ -10,3 +10,8 @@
 # OkHttp platform used only on JVM and when Conscrypt dependency is available.
 -dontwarn okhttp3.internal.platform.ConscryptPlatform
 -dontwarn org.conscrypt.ConscryptHostnameVerifier
+
+# For dev builds, allow for InsecureAndroidTrustManager
+-keepclassmembers class * implements javax.net.ssl.X509TrustManager {
+  public java.util.List checkServerTrusted(java.security.cert.X509Certificate[], java.lang.String, java.lang.String);
+}
