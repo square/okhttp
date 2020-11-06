@@ -17,6 +17,7 @@ package okhttp3
 
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import okhttp3.internal.publicsuffix.PublicSuffixDatabase
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -46,6 +47,13 @@ class SampleTest {
 
     client.newCall(Request.Builder().url("https://google.com/robots.txt").build()).execute().use {
       assertThat(it.code).isEqualTo(200)
+    }
+  }
+
+  @Test
+  fun testPublicSuffixes() {
+    PublicSuffixDatabase::class.java.getResourceAsStream(PublicSuffixDatabase.PUBLIC_SUFFIX_RESOURCE).use {
+      assertThat(it.available()).isGreaterThan(30000)
     }
   }
 }
