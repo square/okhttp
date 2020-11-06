@@ -28,11 +28,13 @@ import okhttp3.testing.Flaky;
 import okio.BufferedSink;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
+@Timeout(30)
 public final class WholeOperationTimeoutTest {
   /** A large response body. Smaller bodies might successfully read after the socket is closed! */
   private static final String BIG_ENOUGH_BODY = TestUtil.repeat('a', 64 * 1024);

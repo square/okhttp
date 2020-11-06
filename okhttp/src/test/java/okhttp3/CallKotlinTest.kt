@@ -191,11 +191,9 @@ class CallKotlinTest(
     // Capture the connection so that we can later make it stale.
     var connection: RealConnection? = null
     client = client.newBuilder()
-        .addNetworkInterceptor(object : Interceptor {
-          override fun intercept(chain: Interceptor.Chain): Response {
-            connection = chain.connection() as RealConnection
-            return chain.proceed(chain.request())
-          }
+        .addNetworkInterceptor(Interceptor { chain ->
+          connection = chain.connection() as RealConnection
+          chain.proceed(chain.request())
         })
         .build()
 
