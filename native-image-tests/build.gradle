@@ -42,7 +42,8 @@ animalsniffer {
   ignoreFailures = true
 }
 
-def isIDE = properties.containsKey('android.injected.invoked.from.ide') || System.getenv("XPC_SERVICE_NAME").contains("intellij")
+def isIDE = properties.containsKey('android.injected.invoked.from.ide') ||
+        (System.getenv("XPC_SERVICE_NAME") ?: "").contains("intellij")
 if (!isIDE) {
   sourceSets {
     // Not included in IDE as this confuses Intellij for obvious reasons.
