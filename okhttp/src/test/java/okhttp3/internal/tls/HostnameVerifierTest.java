@@ -188,9 +188,9 @@ public final class HostnameVerifierTest {
 
     X509Certificate peerCertificate = ((X509Certificate) session.getPeerCertificates()[0]);
     if (platform.isConscrypt()) {
-      assertThat(certificateSANs(peerCertificate)).containsExactly("*.bar.com");
+      assertThat(certificateSANs(peerCertificate)).containsExactly("bar.com");
     } else {
-      assertThat(certificateSANs(peerCertificate)).containsExactly("*.bar.com", "*.������.co.jp");
+      assertThat(certificateSANs(peerCertificate)).containsExactly("bar.com", "������.co.jp");
     }
 
     assertThat(verifier.verify("foo.com", session)).isFalse();
