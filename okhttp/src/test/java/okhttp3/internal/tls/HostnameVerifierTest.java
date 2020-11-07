@@ -377,9 +377,9 @@ public final class HostnameVerifierTest {
 
     X509Certificate peerCertificate = ((X509Certificate) session.getPeerCertificates()[0]);
     if (platform.isConscrypt()) {
-      assertThat(certificateSANs(peerCertificate)).containsExactly("*.bar.com", "*.������.co.jp");
-    } else {
       assertThat(certificateSANs(peerCertificate)).containsExactly("*.bar.com");
+    } else {
+      assertThat(certificateSANs(peerCertificate)).containsExactly("*.bar.com", "*.������.co.jp");
     }
 
     // try the foo.com variations
