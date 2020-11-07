@@ -107,7 +107,7 @@ class ConnectionSpec internal constructor(
    */
   private fun supportedSpec(sslSocket: SSLSocket, isFallback: Boolean): ConnectionSpec {
     var cipherSuitesIntersection = if (cipherSuitesAsString != null) {
-      sslSocket.enabledCipherSuites.intersect(cipherSuitesAsString, CipherSuite.ORDER_BY_NAME)
+      cipherSuitesAsString.intersect(sslSocket.enabledCipherSuites, CipherSuite.ORDER_BY_NAME)
     } else {
       sslSocket.enabledCipherSuites
     }
