@@ -28,9 +28,11 @@ import javax.security.auth.x500.X500Principal;
 import okhttp3.FakeSSLSession;
 import okhttp3.OkHttpClient;
 import okhttp3.internal.Util;
+import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HeldCertificate;
 import okhttp3.tls.internal.TlsUtil;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -41,6 +43,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public final class HostnameVerifierTest {
   private OkHostnameVerifier verifier = OkHostnameVerifier.INSTANCE;
+  @RegisterExtension public PlatformRule platform = new PlatformRule();
 
   @Test public void verify() {
     FakeSSLSession session = new FakeSSLSession();
@@ -373,7 +376,11 @@ public final class HostnameVerifierTest {
         + "-----END CERTIFICATE-----\n");
 
     X509Certificate peerCertificate = ((X509Certificate) session.getPeerCertificates()[0]);
-    assertThat(certificateSANs(peerCertificate)).containsExactly("*.bar.com", "*.������.co.jp");
+    if (platform.isConscrypt()) {
+      assertThat(certificateSANs(peerCertificate)).containsExactly("*.bar.com", "*.������.co.jp");
+    } else {
+      assertThat(certificateSANs(peerCertificate)).containsExactly("*.bar.com");
+    }
 
     // try the foo.com variations
     assertThat(verifier.verify("foo.com", session)).isFalse();
