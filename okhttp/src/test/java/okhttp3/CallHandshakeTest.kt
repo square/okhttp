@@ -64,7 +64,7 @@ class CallHandshakeTest {
 
   @Test
   fun testDefaultHandshakeCipherSuiteOrderingTls12Restricted() {
-    val client = makeClient(ConnectionSpec.RESTRICTED_TLS, TlsVersion.TLS_1_2, defaultEnabledCipherSuites.asReversed())
+    val client = makeClient(ConnectionSpec.RESTRICTED_TLS, TlsVersion.TLS_1_2)
 
     val handshake = makeRequest(client)
 
@@ -82,7 +82,7 @@ class CallHandshakeTest {
 
   @Test
   fun testDefaultHandshakeCipherSuiteOrderingTls12Modern() {
-    val client = makeClient(ConnectionSpec.MODERN_TLS, TlsVersion.TLS_1_2, defaultEnabledCipherSuites.asReversed())
+    val client = makeClient(ConnectionSpec.MODERN_TLS, TlsVersion.TLS_1_2)
 
     val handshake = makeRequest(client)
 
@@ -106,7 +106,7 @@ class CallHandshakeTest {
 
   @Test
   fun testDefaultHandshakeCipherSuiteOrderingTls13Modern() {
-    val client = makeClient(ConnectionSpec.MODERN_TLS, TlsVersion.TLS_1_3, defaultEnabledCipherSuites.asReversed())
+    val client = makeClient(ConnectionSpec.MODERN_TLS, TlsVersion.TLS_1_3)
 
     val handshake = makeRequest(client)
 
