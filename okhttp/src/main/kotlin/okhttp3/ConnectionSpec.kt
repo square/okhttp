@@ -23,6 +23,7 @@ import okhttp3.internal.concat
 import okhttp3.internal.hasIntersection
 import okhttp3.internal.indexOf
 import okhttp3.internal.intersect
+import okhttp3.internal.platform.Platform
 
 /**
  * Specifies configuration for the socket connection that HTTP traffic travels through. For `https:`
@@ -271,7 +272,7 @@ class ConnectionSpec internal constructor(
   @Suppress("DEPRECATION")
   companion object {
     // Most secure but generally supported list.
-    private val RESTRICTED_CIPHER_SUITES = arrayOf(
+    private val RESTRICTED_CIPHER_SUITES = platformOrdered(
         // TLSv1.3.
         CipherSuite.TLS_AES_128_GCM_SHA256,
         CipherSuite.TLS_AES_256_GCM_SHA384,
@@ -287,7 +288,7 @@ class ConnectionSpec internal constructor(
 
     // This is nearly equal to the cipher suites supported in Chrome 72, current as of 2019-02-24.
     // See https://tinyurl.com/okhttp-cipher-suites for availability.
-    private val APPROVED_CIPHER_SUITES = arrayOf(
+    private val APPROVED_CIPHER_SUITES = platformOrdered(
         // TLSv1.3.
         CipherSuite.TLS_AES_128_GCM_SHA256,
         CipherSuite.TLS_AES_256_GCM_SHA384,
@@ -311,10 +312,23 @@ class ConnectionSpec internal constructor(
         CipherSuite.TLS_RSA_WITH_AES_256_CBC_SHA,
         CipherSuite.TLS_RSA_WITH_3DES_EDE_CBC_SHA)
 
+    private fun platformOrdered(vararg ciphers: CipherSuite): List<CipherSuite> {
+      // TODO This is awkwardly timed (initializes a ssl context) but ensures both of:
+      // existing platform ordering during the handshake
+      // the implied order/filter of this list which is externally visible
+      val platformOrdered = Platform.get().newSSLContext().apply {
+        init(null, null, null)
+      }.socketFactory.supportedCipherSuites.toList()
+
+      return ciphers.sortedBy {  cipherSuite ->
+        platformOrdered.indexOf(cipherSuite.javaName).let { if (it == -1) Int.MAX_VALUE else it }
+      }
+    }
+
     /** A secure TLS connection that requires a recent client platform and a recent server. */
     @JvmField
     val RESTRICTED_TLS = Builder(true)
-        .cipherSuites(*RESTRICTED_CIPHER_SUITES)
+        .cipherSuites(*RESTRICTED_CIPHER_SUITES.toTypedArray())
         .tlsVersions(TlsVersion.TLS_1_3, TlsVersion.TLS_1_2)
         .supportsTlsExtensions(true)
         .build()
@@ -325,7 +339,7 @@ class ConnectionSpec internal constructor(
      */
     @JvmField
     val MODERN_TLS = Builder(true)
-        .cipherSuites(*APPROVED_CIPHER_SUITES)
+        .cipherSuites(*APPROVED_CIPHER_SUITES.toTypedArray())
         .tlsVersions(TlsVersion.TLS_1_3, TlsVersion.TLS_1_2)
         .supportsTlsExtensions(true)
         .build()
@@ -337,7 +351,7 @@ class ConnectionSpec internal constructor(
      */
     @JvmField
     val COMPATIBLE_TLS = Builder(true)
-        .cipherSuites(*APPROVED_CIPHER_SUITES)
+        .cipherSuites(*APPROVED_CIPHER_SUITES.toTypedArray())
         .tlsVersions(TlsVersion.TLS_1_3, TlsVersion.TLS_1_2, TlsVersion.TLS_1_1, TlsVersion.TLS_1_0)
         .supportsTlsExtensions(true)
         .build()

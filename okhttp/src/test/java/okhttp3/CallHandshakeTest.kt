@@ -17,6 +17,7 @@ package okhttp3
 
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import okhttp3.CipherSuite.Companion.TLS_RSA_WITH_3DES_EDE_CBC_SHA
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.internal.TlsUtil.localhost
 import org.assertj.core.api.Assertions.assertThat
@@ -64,7 +65,7 @@ class CallHandshakeTest {
 
   @Test
   fun testDefaultHandshakeCipherSuiteOrderingTls12Restricted() {
-    val client = makeClient(ConnectionSpec.RESTRICTED_TLS, TlsVersion.TLS_1_2, defaultEnabledCipherSuites.asReversed())
+    val client = makeClient(ConnectionSpec.RESTRICTED_TLS, TlsVersion.TLS_1_2)
 
     val handshake = makeRequest(client)
 
@@ -82,7 +83,7 @@ class CallHandshakeTest {
 
   @Test
   fun testDefaultHandshakeCipherSuiteOrderingTls12Modern() {
-    val client = makeClient(ConnectionSpec.MODERN_TLS, TlsVersion.TLS_1_2, defaultEnabledCipherSuites.asReversed())
+    val client = makeClient(ConnectionSpec.MODERN_TLS, TlsVersion.TLS_1_2)
 
     val handshake = makeRequest(client)
 
@@ -106,7 +107,7 @@ class CallHandshakeTest {
 
   @Test
   fun testDefaultHandshakeCipherSuiteOrderingTls13Modern() {
-    val client = makeClient(ConnectionSpec.MODERN_TLS, TlsVersion.TLS_1_3, defaultEnabledCipherSuites.asReversed())
+    val client = makeClient(ConnectionSpec.MODERN_TLS, TlsVersion.TLS_1_3)
 
     val handshake = makeRequest(client)
 
@@ -131,15 +132,15 @@ class CallHandshakeTest {
 
   @Test
   fun testHandshakeCipherSuiteOrderingWhenReversed() {
-    val client = makeClient(ConnectionSpec.RESTRICTED_TLS, TlsVersion.TLS_1_2, defaultEnabledCipherSuites.asReversed())
+    val reversed = ConnectionSpec.COMPATIBLE_TLS.cipherSuites!!.reversed()
+    val client = makeClient(ConnectionSpec.COMPATIBLE_TLS, TlsVersion.TLS_1_2, reversed)
 
-    val handshake = makeRequest(client)
+    makeRequest(client)
 
-    // TODO better selection
-    assertThat(handshake.cipherSuite).isIn(expectedModernTls12CipherSuites)
-
-    // TODO reversed ciphers
-    assertThat(handshakeEnabledCipherSuites).containsExactlyElementsOf(expectedConnectionCipherSuites(client))
+    val expectedConnectionCipherSuites = expectedConnectionCipherSuites(client)
+    // Will choose a poor cipher suite but not plaintext.
+//    assertThat(handshake.cipherSuite).isEqualTo("TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256")
+    assertThat(handshakeEnabledCipherSuites).containsExactlyElementsOf(expectedConnectionCipherSuites)
   }
 
   @Test
@@ -148,16 +149,15 @@ class CallHandshakeTest {
     makeRequest(client)
 
     val socketOrderedByDefaults = handshakeEnabledCipherSuites.sortedBy { defaultEnabledCipherSuites.indexOf(it) }
+
     assertThat(handshakeEnabledCipherSuites).containsExactlyElementsOf(socketOrderedByDefaults)
   }
 
   private fun expectedConnectionCipherSuites(client: OkHttpClient): Set<String> {
-    // TODO correct for the client provided order
-//    return client.connectionSpecs.first().cipherSuites!!.map { it.javaName }.intersect(defaultEnabledCipherSuites)
-    return defaultEnabledCipherSuites.intersect(client.connectionSpecs.first().cipherSuites!!.map { it.javaName })
+    return client.connectionSpecs.first().cipherSuites!!.map { it.javaName }.intersect(defaultEnabledCipherSuites)
   }
 
-  private fun makeClient(connectionSpec: ConnectionSpec? = null, tlsVersion: TlsVersion? = null, cipherSuites: List<String>? = null): OkHttpClient {
+  private fun makeClient(connectionSpec: ConnectionSpec? = null, tlsVersion: TlsVersion? = null, cipherSuites: List<CipherSuite>? = null): OkHttpClient {
     return this.client.newBuilder()
       .apply {
         if (connectionSpec != null) {
