@@ -17,13 +17,11 @@ package okhttp3.internal.io
 
 import okhttp3.SimpleProvider
 import okhttp3.TestUtil
-import okhttp3.internal.http2.HttpOverHttp2Test.ProtocolParamProvider
 import okio.buffer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
-import org.junit.jupiter.params.provider.MethodSource
 import java.io.File
 import java.io.IOException
 
