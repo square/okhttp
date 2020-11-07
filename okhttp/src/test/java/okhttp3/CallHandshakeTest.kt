@@ -17,6 +17,10 @@ package okhttp3
 
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import okhttp3.CipherSuite.Companion.TLS_AES_128_GCM_SHA256
+import okhttp3.CipherSuite.Companion.TLS_AES_256_GCM_SHA384
+import okhttp3.CipherSuite.Companion.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384
+import okhttp3.CipherSuite.Companion.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.internal.TlsUtil.localhost
 import org.assertj.core.api.Assertions.assertThat
@@ -42,8 +46,8 @@ class CallHandshakeTest {
   private lateinit var defaultEnabledCipherSuites: List<String>
   private lateinit var defaultSupportedCipherSuites: List<String>
 
-  val expectedModernTls12CipherSuites = listOf(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384)
-  val expectedModernTls13CipherSuites = listOf(CipherSuite.TLS_AES_128_GCM_SHA256)
+  val expectedModernTls12CipherSuites = listOf(TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384)
+  val expectedModernTls13CipherSuites = listOf(TLS_AES_128_GCM_SHA256, TLS_AES_256_GCM_SHA384)
 
   @BeforeEach
   fun setup(server: MockWebServer) {
