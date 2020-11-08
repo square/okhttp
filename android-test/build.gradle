@@ -4,10 +4,14 @@ apply plugin: "de.mannodermaus.android-junit5"
 
 buildscript {
   repositories {
+    mavenCentral()
+    gradlePluginPortal()
     google()
     jcenter {
       content {
         includeGroup 'de.mannodermaus.junit5'
+        includeGroup 'de.mannodermaus.gradle.plugins'
+        includeGroup 'com.github.zafarkhaja'
       }
     }
   }
