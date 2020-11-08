@@ -70,6 +70,7 @@ graal {
   option "-H:+TraceClassInitialization"
   option "--initialize-at-build-time=kotlin.text.Charsets"
   option "-H:EnableURLProtocols=http,https"
+  option "-H:+AddAllCharsets"
 
   if (Os.isFamily(Os.FAMILY_WINDOWS)) {
     // May be possible without, but autodetection is problematic on Windows 10
