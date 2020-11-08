@@ -25,9 +25,7 @@ import org.junit.jupiter.api.Test
 import java.security.cert.X509Certificate
 
 /**
- * OkHttp.
- *
- * https://square.github.io/okhttp/
+ * Test for new Let's Encrypt Root Certificate.
  */
 class LetsEncryptClientTest {
   @Test fun get() {
