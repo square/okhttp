@@ -15,15 +15,6 @@
  */
 package okhttp3.internal.cache
 
-import java.io.Closeable
-import java.io.EOFException
-import java.io.File
-import java.io.FileNotFoundException
-import java.io.Flushable
-import java.io.IOException
-import java.util.ArrayList
-import java.util.LinkedHashMap
-import java.util.NoSuchElementException
 import okhttp3.internal.assertThreadHoldsLock
 import okhttp3.internal.cache.DiskLruCache.Editor
 import okhttp3.internal.closeQuietly
@@ -34,12 +25,11 @@ import okhttp3.internal.isCivilized
 import okhttp3.internal.okHttpName
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.WARN
-import okio.BufferedSink
-import okio.ForwardingSource
-import okio.Sink
-import okio.Source
-import okio.blackholeSink
-import okio.buffer
+import okio.*
+import java.io.*
+import java.io.EOFException
+import java.io.IOException
+import java.util.*
 
 /**
  * A cache that uses a bounded amount of space on a filesystem. Each cache entry has a string key

@@ -21,6 +21,8 @@ import okhttp3.internal.publicsuffix.PublicSuffixDatabase
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ArgumentsSource
 
 class SampleTest {
   @JvmField @RegisterExtension val clientRule = OkHttpClientTestRule()
@@ -56,4 +58,13 @@ class SampleTest {
       assertThat(it.available()).isGreaterThan(30000)
     }
   }
+
+  @ParameterizedTest
+  @ArgumentsSource(SampleTestProvider::class)
+  fun testParams(mode: String) {
+  }
+}
+
+class SampleTestProvider: SimpleProvider() {
+  override fun arguments() = listOf("A", "B")
 }

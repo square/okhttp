@@ -21,6 +21,8 @@ import java.io.ByteArrayInputStream;
 import java.security.cert.CertificateFactory;
 import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
+import java.util.Collection;
+import java.util.List;
 import java.util.stream.Stream;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSession;
@@ -28,9 +30,11 @@ import javax.security.auth.x500.X500Principal;
 import okhttp3.FakeSSLSession;
 import okhttp3.OkHttpClient;
 import okhttp3.internal.Util;
+import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HeldCertificate;
 import okhttp3.tls.internal.TlsUtil;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -41,6 +45,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public final class HostnameVerifierTest {
   private OkHostnameVerifier verifier = OkHostnameVerifier.INSTANCE;
+  @RegisterExtension public PlatformRule platform = new PlatformRule();
 
   @Test public void verify() {
     FakeSSLSession session = new FakeSSLSession();
@@ -184,7 +189,11 @@ public final class HostnameVerifierTest {
         + "-----END CERTIFICATE-----\n");
 
     X509Certificate peerCertificate = ((X509Certificate) session.getPeerCertificates()[0]);
-    assertThat(certificateSANs(peerCertificate)).containsExactly("bar.com", "������.co.jp");
+    if (platform.isConscrypt()) {
+      assertThat(certificateSANs(peerCertificate)).containsExactly("bar.com");
+    } else {
+      assertThat(certificateSANs(peerCertificate)).containsExactly("bar.com", "������.co.jp");
+    }
 
     assertThat(verifier.verify("foo.com", session)).isFalse();
     assertThat(verifier.verify("a.foo.com", session)).isFalse();
@@ -373,7 +382,11 @@ public final class HostnameVerifierTest {
         + "-----END CERTIFICATE-----\n");
 
     X509Certificate peerCertificate = ((X509Certificate) session.getPeerCertificates()[0]);
-    assertThat(certificateSANs(peerCertificate)).containsExactly("*.bar.com", "*.������.co.jp");
+    if (platform.isConscrypt()) {
+      assertThat(certificateSANs(peerCertificate)).containsExactly("*.bar.com");
+    } else {
+      assertThat(certificateSANs(peerCertificate)).containsExactly("*.bar.com", "*.������.co.jp");
+    }
 
     // try the foo.com variations
     assertThat(verifier.verify("foo.com", session)).isFalse();
@@ -660,7 +673,13 @@ public final class HostnameVerifierTest {
 
   private Stream<String> certificateSANs(X509Certificate peerCertificate)
       throws CertificateParsingException {
-    return peerCertificate.getSubjectAlternativeNames().stream().map(c -> (String) c.get(1));
+    Collection<List<?>> subjectAlternativeNames = peerCertificate.getSubjectAlternativeNames();
+
+    if (subjectAlternativeNames == null) {
+      return Stream.empty();
+    } else {
+      return subjectAlternativeNames.stream().map(c -> (String) c.get(1));
+    }
   }
 
   @Test public void replacementCharacter() throws Exception {

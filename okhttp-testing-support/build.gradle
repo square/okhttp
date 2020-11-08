@@ -9,6 +9,9 @@ dependencies {
   api deps.conscrypt
   api deps.corretto
   api deps.openjsse
+
+  api deps.junit5Api
+  api deps.junit5JupiterParams
   
   compileOnly deps.jsr305
 }
