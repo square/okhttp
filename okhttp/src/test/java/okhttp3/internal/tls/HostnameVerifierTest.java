@@ -21,6 +21,8 @@ import java.io.ByteArrayInputStream;
 import java.security.cert.CertificateFactory;
 import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
+import java.util.Collection;
+import java.util.List;
 import java.util.stream.Stream;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSession;
@@ -660,7 +662,13 @@ public final class HostnameVerifierTest {
 
   private Stream<String> certificateSANs(X509Certificate peerCertificate)
       throws CertificateParsingException {
-    return peerCertificate.getSubjectAlternativeNames().stream().map(c -> (String) c.get(1));
+    Collection<List<?>> subjectAlternativeNames = peerCertificate.getSubjectAlternativeNames();
+
+    if (subjectAlternativeNames == null) {
+      return Stream.empty();
+    } else {
+      return subjectAlternativeNames.stream().map(c -> (String) c.get(1));
+    }
   }
 
   @Test public void replacementCharacter() throws Exception {
