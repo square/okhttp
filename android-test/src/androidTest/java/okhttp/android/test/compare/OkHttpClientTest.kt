@@ -15,20 +15,17 @@
  */
 package okhttp.android.test.compare;
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Test
-import org.junit.runner.RunWith
+import org.junit.jupiter.api.Test
 
 /**
  * OkHttp.
  *
  * https://square.github.io/okhttp/
  */
-@RunWith(AndroidJUnit4::class)
 class OkHttpClientTest {
   private var client = OkHttpClient()
 

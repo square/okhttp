@@ -15,25 +15,22 @@
  */
 package okhttp.android.test.compare;
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.apache.hc.client5.http.classic.methods.HttpGet
 import org.apache.hc.client5.http.impl.classic.HttpClients
 import org.apache.hc.core5.http.HttpVersion
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.After
-import org.junit.Test
-import org.junit.runner.RunWith
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Test
 
 /**
  * Apache HttpClient 5.x.
  *
  * https://hc.apache.org/httpcomponents-client-5.0.x/index.html
  */
-@RunWith(AndroidJUnit4::class)
 class ApacheHttpClientTest {
   private var httpClient = HttpClients.createDefault()
 
-  @After fun tearDown() {
+  @AfterEach fun tearDown() {
     httpClient.close()
   }
 
