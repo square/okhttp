@@ -26,6 +26,21 @@ class TestRegistration : Feature {
     registerKnownTests(access)
 
     registerJupiterClasses(access)
+
+    registerParamProvider(access, "okhttp3.SampleTestProvider")
+    registerParamProvider(access, "okhttp3.internal.http.CancelModelParamProvider")
+    registerParamProvider(access, "okhttp3.internal.cache.FileSystemParamProvider")
+    registerParamProvider(access, "okhttp3.internal.http2.HttpOverHttp2Test\$ProtocolParamProvider")
+    registerParamProvider(access, "okhttp3.internal.io.FileSystemParamProvider")
+  }
+
+  private fun registerParamProvider(access: Feature.BeforeAnalysisAccess, provider: String) {
+    val providerClass = access.findClassByName(provider)
+    if (providerClass != null) {
+      registerTest(access, providerClass)
+    } else {
+      println("Missing $provider")
+    }
   }
 
   private fun registerJupiterClasses(access: Feature.BeforeAnalysisAccess) {
