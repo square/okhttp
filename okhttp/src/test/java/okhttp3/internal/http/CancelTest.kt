@@ -37,6 +37,7 @@ import okhttp3.Protocol.HTTP_1_1
 import okhttp3.RecordingEventListener
 import okhttp3.Request
 import okhttp3.RequestBody
+import okhttp3.SimpleProvider
 import okhttp3.internal.http.CancelTest.CancelMode.CANCEL
 import okhttp3.internal.http.CancelTest.CancelMode.INTERRUPT
 import okhttp3.internal.http.CancelTest.ConnectionType.H2
@@ -48,10 +49,11 @@ import okio.Buffer
 import okio.BufferedSink
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.fail
 import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.MethodSource
+import org.junit.jupiter.params.provider.ArgumentsSource
 import java.io.IOException
 import java.net.ServerSocket
 import java.net.Socket
@@ -59,6 +61,7 @@ import java.util.concurrent.TimeUnit.MILLISECONDS
 import javax.net.ServerSocketFactory
 import javax.net.SocketFactory
 
+@Timeout(30)
 class CancelTest {
   @JvmField @RegisterExtension val platform = PlatformRule()
 
@@ -132,7 +135,7 @@ class CancelTest {
   }
 
   @ParameterizedTest
-  @MethodSource("cancelModes")
+  @ArgumentsSource(CancelModelParamProvider::class)
   fun cancelWritingRequestBody(mode: Pair<CancelMode, ConnectionType>) {
     setUp(mode)
     server.enqueue(MockResponse())
@@ -167,7 +170,7 @@ class CancelTest {
   }
 
   @ParameterizedTest
-  @MethodSource("cancelModes")
+  @ArgumentsSource(CancelModelParamProvider::class)
   fun cancelReadingResponseBody(mode: Pair<CancelMode, ConnectionType>) {
     setUp(mode)
     val responseBodySize = 8 * 1024 * 1024 // 8 MiB.
@@ -200,7 +203,7 @@ class CancelTest {
   }
 
   @ParameterizedTest
-  @MethodSource("cancelModes")
+  @ArgumentsSource(CancelModelParamProvider::class)
   fun cancelAndFollowup(mode: Pair<CancelMode, ConnectionType>) {
     setUp(mode)
     val responseBodySize = 8 * 1024 * 1024 // 8 MiB.
@@ -296,11 +299,11 @@ class CancelTest {
   }
 
   companion object {
-    @JvmStatic
-    fun cancelModes() =
-      CancelMode.values().flatMap { c -> ConnectionType.values().map { x -> Pair(c, x) } }
-
     // The size of the socket buffers in bytes.
     private const val SOCKET_BUFFER_SIZE = 256 * 1024
   }
+}
+
+class CancelModelParamProvider: SimpleProvider() {
+  override fun arguments() = CancelTest.CancelMode.values().flatMap { c -> CancelTest.ConnectionType.values().map { x -> Pair(c, x) } }
 }

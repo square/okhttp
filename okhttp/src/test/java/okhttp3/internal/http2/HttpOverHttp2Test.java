@@ -23,7 +23,6 @@ import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
 import java.time.Duration;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -60,6 +59,7 @@ import okhttp3.RecordingHostnameVerifier;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.SimpleProvider;
 import okhttp3.TestLogHandler;
 import okhttp3.TestUtil;
 import okhttp3.internal.DoubleInetAddressDns;
@@ -79,8 +79,7 @@ import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
@@ -103,9 +102,11 @@ public final class HttpOverHttp2Test {
 
   private static final HandshakeCertificates handshakeCertificates = localhost();
 
-  @Parameters(name = "{0}")
-  public static Collection<Protocol> data() {
-    return asList(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.HTTP_2);
+  public static class ProtocolParamProvider extends SimpleProvider {
+    @Override
+    public List<Object> arguments() {
+      return asList(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.HTTP_2);
+    }
   }
 
   @TempDir public File tempDir;
@@ -158,7 +159,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void get(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -184,7 +185,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void get204Response(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -212,7 +213,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void head(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -239,7 +240,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void emptyResponse(
       Protocol protocol, MockWebServer mockWebServer) throws IOException {
     setUp(protocol, mockWebServer);
@@ -255,7 +256,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void noDefaultContentLengthOnStreamingPost(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -286,7 +287,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void userSuppliedContentLengthHeader(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -322,7 +323,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void closeAfterFlush(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -360,7 +361,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void connectionReuse(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -388,7 +389,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void connectionWindowUpdateAfterCanceling(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -431,7 +432,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void connectionWindowUpdateOnClose(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -460,7 +461,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void concurrentRequestWithEmptyFlowControlWindow(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -498,7 +499,7 @@ public final class HttpOverHttp2Test {
 
   /** https://github.com/square/okhttp/issues/373 */
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   @Disabled public void synchronousRequest(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -515,7 +516,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void gzippedResponseBody(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -532,7 +533,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void authenticate(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -562,7 +563,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void redirect(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -585,7 +586,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void readAfterLastByte(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -607,7 +608,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void readResponseHeaderTimeout(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -647,7 +648,7 @@ public final class HttpOverHttp2Test {
    * seconds.  If our implementation is acting correctly, it will not throw, as it is progressing.
    */
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void readTimeoutMoreGranularThanBodySize(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -675,7 +676,7 @@ public final class HttpOverHttp2Test {
    * time.
    */
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void readTimeoutOnSlowConnection(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -715,7 +716,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void connectionTimeout(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -754,7 +755,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void responsesAreCached(
       Protocol protocol, MockWebServer mockWebServer) throws IOException {
     setUp(protocol, mockWebServer);
@@ -794,7 +795,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void conditionalCache(
       Protocol protocol, MockWebServer mockWebServer) throws IOException {
     setUp(protocol, mockWebServer);
@@ -830,7 +831,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void responseCachedWithoutConsumingFullBody(
       Protocol protocol, MockWebServer mockWebServer) throws IOException {
     setUp(protocol, mockWebServer);
@@ -861,7 +862,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void sendRequestCookies(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -888,7 +889,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void receiveResponseCookies(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -910,7 +911,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void cancelWithStreamNotCompleted(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -940,7 +941,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void recoverFromOneRefusedStreamReusesConnection(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -968,7 +969,7 @@ public final class HttpOverHttp2Test {
    * certain HTTP/2 errors. https://github.com/square/okhttp/issues/5547
    */
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void noRecoveryFromTwoRefusedStreams(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -993,7 +994,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void recoverFromOneInternalErrorRequiresNewConnection(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -1001,7 +1002,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void recoverFromOneCancelRequiresNewConnection(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -1032,7 +1033,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void recoverFromMultipleRefusedStreamsRequiresNewConnection(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -1064,7 +1065,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void recoverFromCancelReusesConnection(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -1101,7 +1102,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void recoverFromMultipleCancelReusesConnection(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -1197,7 +1198,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void noRecoveryFromRefusedStreamWithRetryDisabled(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -1205,7 +1206,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void noRecoveryFromInternalErrorWithRetryDisabled(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -1213,7 +1214,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void noRecoveryFromCancelWithRetryDisabled(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -1243,7 +1244,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void recoverFromConnectionNoNewStreamsOnFollowUp(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -1313,7 +1314,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void nonAsciiResponseHeader(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -1332,7 +1333,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void serverSendsPushPromise_GET(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -1365,7 +1366,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void serverSendsPushPromise_HEAD(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -1397,7 +1398,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void noDataFramesSentWithNullRequestBody(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -1421,7 +1422,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void emptyDataFrameSentWithEmptyBody(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -1452,7 +1453,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void pingsTransmitted(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -1488,7 +1489,7 @@ public final class HttpOverHttp2Test {
 
   @Flaky
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void missingPongsFailsConnection(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -1533,7 +1534,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void streamTimeoutDegradesConnectionAfterNoPong(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -1582,7 +1583,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void oneStreamTimeoutDoesNotBreakConnection(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -1655,7 +1656,7 @@ public final class HttpOverHttp2Test {
    * confirm that the third concurrent request prepared a new connection.
    */
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void settingsLimitsMaxConcurrentStreams(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -1707,7 +1708,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void connectionNotReusedAfterShutdown(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -1737,7 +1738,7 @@ public final class HttpOverHttp2Test {
    * writing our request, we get a GOAWAY frame from the server.
    */
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void connectionShutdownAfterHealthCheck(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -1782,7 +1783,7 @@ public final class HttpOverHttp2Test {
 
   @Flaky
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void responseHeadersAfterGoaway(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -1820,7 +1821,7 @@ public final class HttpOverHttp2Test {
    * <p>This test uses proxy tunnels to get a hook while a connection is being established.
    */
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void concurrentHttp2ConnectionsDeduplicated(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -1906,7 +1907,7 @@ public final class HttpOverHttp2Test {
 
   /** https://github.com/square/okhttp/issues/3103 */
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void domainFronting(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -1968,7 +1969,7 @@ public final class HttpOverHttp2Test {
 
   /** https://github.com/square/okhttp/issues/4875 */
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void shutdownAfterLateCoalescing(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
@@ -2005,7 +2006,7 @@ public final class HttpOverHttp2Test {
   }
 
   @ParameterizedTest
-  @MethodSource("data")
+  @ArgumentsSource(ProtocolParamProvider.class)
   public void cancelWhileWritingRequestBodySendsCancelToServer(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);

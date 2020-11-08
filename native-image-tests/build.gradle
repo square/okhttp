@@ -42,7 +42,9 @@ animalsniffer {
   ignoreFailures = true
 }
 
-if (!properties.containsKey('android.injected.invoked.from.ide')) {
+def isIDE = properties.containsKey('android.injected.invoked.from.ide') ||
+        (System.getenv("XPC_SERVICE_NAME") ?: "").contains("intellij")
+if (!isIDE) {
   sourceSets {
     // Not included in IDE as this confuses Intellij for obvious reasons.
     main.java.srcDirs += project.file("../okhttp/src/test/java")

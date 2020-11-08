@@ -89,5 +89,8 @@ class TestRegistration : Feature {
     java.declaredFields.forEach {
       RuntimeReflection.register(it)
     }
+    java.methods.forEach {
+      RuntimeReflection.register(it)
+    }
   }
 }

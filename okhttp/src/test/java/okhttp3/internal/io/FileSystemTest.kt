@@ -15,14 +15,24 @@
  */
 package okhttp3.internal.io
 
-import java.io.File
-import java.io.IOException
+import okhttp3.SimpleProvider
 import okhttp3.TestUtil
 import okio.buffer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.MethodSource
+import org.junit.jupiter.params.provider.ArgumentsSource
+import java.io.File
+import java.io.IOException
+
+class FileSystemParamProvider: SimpleProvider() {
+  override fun arguments() = listOf(
+    FileSystem.SYSTEM to TestUtil.windows,
+    InMemoryFileSystem() to false,
+    WindowsFileSystem(FileSystem.SYSTEM) to true,
+    WindowsFileSystem(InMemoryFileSystem()) to true
+  )
+}
 
 /**
  * Test that our file system abstraction is consistent and sufficient for OkHttp's needs. We're
@@ -34,23 +44,13 @@ class FileSystemTest {
   private lateinit var fileSystem: FileSystem
   private var windows: Boolean = false
 
-  companion object {
-    @JvmStatic
-    fun parameters(): List<Pair<FileSystem, Boolean>> = listOf(
-        FileSystem.SYSTEM to TestUtil.windows,
-        InMemoryFileSystem() to false,
-        WindowsFileSystem(FileSystem.SYSTEM) to true,
-        WindowsFileSystem(InMemoryFileSystem()) to true
-    )
-  }
-
   internal fun setUp(fileSystem: FileSystem, windows: Boolean) {
     this.fileSystem = fileSystem
     this.windows = windows
   }
 
   @ParameterizedTest
-  @MethodSource("parameters")
+  @ArgumentsSource(FileSystemParamProvider::class)
   fun `delete open for writing fails on Windows`(
     parameters: Pair<FileSystem, Boolean>
   ) {
@@ -64,7 +64,7 @@ class FileSystemTest {
   }
 
   @ParameterizedTest
-  @MethodSource("parameters")
+  @ArgumentsSource(FileSystemParamProvider::class)
   fun `delete open for appending fails on Windows`(
     parameters: Pair<FileSystem, Boolean>
   ) {
@@ -79,7 +79,7 @@ class FileSystemTest {
   }
 
   @ParameterizedTest
-  @MethodSource("parameters")
+  @ArgumentsSource(FileSystemParamProvider::class)
   fun `delete open for reading fails on Windows`(
     parameters: Pair<FileSystem, Boolean>
   ) {
@@ -94,7 +94,7 @@ class FileSystemTest {
   }
 
   @ParameterizedTest
-  @MethodSource("parameters")
+  @ArgumentsSource(FileSystemParamProvider::class)
   fun `rename target exists succeeds on all platforms`(
     parameters: Pair<FileSystem, Boolean>
   ) {
@@ -107,7 +107,7 @@ class FileSystemTest {
   }
 
   @ParameterizedTest
-  @MethodSource("parameters")
+  @ArgumentsSource(FileSystemParamProvider::class)
   fun `rename source is open fails on Windows`(
     parameters: Pair<FileSystem, Boolean>
   ) {
@@ -124,7 +124,7 @@ class FileSystemTest {
   }
 
   @ParameterizedTest
-  @MethodSource("parameters")
+  @ArgumentsSource(FileSystemParamProvider::class)
   fun `rename target is open fails on Windows`(
     parameters: Pair<FileSystem, Boolean>
   ) {
@@ -141,7 +141,7 @@ class FileSystemTest {
   }
 
   @ParameterizedTest
-  @MethodSource("parameters")
+  @ArgumentsSource(FileSystemParamProvider::class)
   fun `delete contents of parent of file open for reading fails on Windows`(
     parameters: Pair<FileSystem, Boolean>
   ) {
