@@ -23,7 +23,6 @@ import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
 import java.time.Duration;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -42,7 +41,27 @@ import mockwebserver3.PushPromise;
 import mockwebserver3.QueueDispatcher;
 import mockwebserver3.RecordedRequest;
 import mockwebserver3.SocketPolicy;
-import okhttp3.*;
+import okhttp3.Cache;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Connection;
+import okhttp3.Cookie;
+import okhttp3.Credentials;
+import okhttp3.EventListener;
+import okhttp3.Headers;
+import okhttp3.Interceptor;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.OkHttpClientTestRule;
+import okhttp3.Protocol;
+import okhttp3.RecordingCookieJar;
+import okhttp3.RecordingHostnameVerifier;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.SimpleProvider;
+import okhttp3.TestLogHandler;
+import okhttp3.TestUtil;
 import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.Util;
@@ -54,7 +73,6 @@ import okio.Buffer;
 import okio.BufferedSink;
 import okio.GzipSink;
 import okio.Okio;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Timeout;
@@ -62,8 +80,6 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.runners.Parameterized.Parameters;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
@@ -87,7 +103,6 @@ public final class HttpOverHttp2Test {
   private static final HandshakeCertificates handshakeCertificates = localhost();
 
   public static class ProtocolParamProvider extends SimpleProvider {
-    @NotNull
     @Override
     public List<Object> arguments() {
       return asList(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.HTTP_2);
