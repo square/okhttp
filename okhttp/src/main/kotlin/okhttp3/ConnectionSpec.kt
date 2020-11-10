@@ -106,11 +106,8 @@ class ConnectionSpec internal constructor(
    * Returns a copy of this that omits cipher suites and TLS versions not enabled by [sslSocket].
    */
   private fun supportedSpec(sslSocket: SSLSocket, isFallback: Boolean): ConnectionSpec {
-    var cipherSuitesIntersection = if (cipherSuitesAsString != null) {
-      sslSocket.enabledCipherSuites.intersect(cipherSuitesAsString, CipherSuite.ORDER_BY_NAME)
-    } else {
-      sslSocket.enabledCipherSuites
-    }
+    val socketEnabledCipherSuites = sslSocket.enabledCipherSuites
+    var cipherSuitesIntersection: Array<String> = effectiveCipherSuites(socketEnabledCipherSuites)
 
     val tlsVersionsIntersection = if (tlsVersionsAsString != null) {
       sslSocket.enabledProtocols.intersect(tlsVersionsAsString, naturalOrder())
@@ -132,6 +129,14 @@ class ConnectionSpec internal constructor(
         .cipherSuites(*cipherSuitesIntersection)
         .tlsVersions(*tlsVersionsIntersection)
         .build()
+  }
+
+  internal fun effectiveCipherSuites(socketEnabledCipherSuites: Array<String>): Array<String> {
+    return if (cipherSuitesAsString != null) {
+      socketEnabledCipherSuites.intersect(cipherSuitesAsString, CipherSuite.ORDER_BY_NAME)
+    } else {
+      socketEnabledCipherSuites
+    }
   }
 
   /**
