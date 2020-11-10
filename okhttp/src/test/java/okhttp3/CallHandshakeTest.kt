@@ -27,6 +27,7 @@ import okhttp3.CipherSuite.Companion.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA2
 import okhttp3.CipherSuite.Companion.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
 import okhttp3.CipherSuite.Companion.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
 import okhttp3.CipherSuite.Companion.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
+import okhttp3.internal.effectiveCipherSuites
 import okhttp3.internal.platform.Platform
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.internal.TlsUtil.localhost
