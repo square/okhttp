@@ -2,7 +2,7 @@ buildscript {
   ext.versions = [
       'animalSniffer': '1.19',
       'assertj': '3.15.0',
-      'bouncycastle': '1.66',
+      'bouncycastle': '1.67',
       'brotli': '0.1.2',
       'checkstyle': '8.28',
       'conscrypt': '2.5.1',
