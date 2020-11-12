@@ -311,6 +311,10 @@ open class PlatformRule @JvmOverloads constructor(
     assumeThat(Platform.isAndroid).isFalse
   }
 
+  fun assumeJdkVersion(majorVersion: Int) {
+    assumeThat(PlatformVersion.majorVersion).isEqualTo(majorVersion)
+  }
+
   companion object {
     const val PROPERTY_NAME = "okhttp.platform"
     const val CONSCRYPT_PROPERTY = "conscrypt"
