@@ -15,6 +15,7 @@
  */
 package okhttp.android.test.letsencrypt;
 
+import android.os.Build
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
@@ -29,7 +30,15 @@ import java.security.cert.X509Certificate
  */
 class LetsEncryptClientTest {
   @Test fun get() {
-    val cert: X509Certificate = """
+    // These tests wont actually run before Android 8.0 as per
+    // https://github.com/mannodermaus/android-junit5
+    // Raised https://github.com/mannodermaus/android-junit5/issues/228 to reevaluate
+    val androidMorEarlier = Build.VERSION.SDK_INT <= 23
+
+    val clientBuilder = OkHttpClient.Builder()
+
+    if (androidMorEarlier) {
+      val cert: X509Certificate = """
       -----BEGIN CERTIFICATE-----
       MIIFazCCA1OgAwIBAgIRAIIQz7DSQONZRGPgu2OCiwAwDQYJKoZIhvcNAQELBQAw
       TzELMAkGA1UEBhMCVVMxKTAnBgNVBAoTIEludGVybmV0IFNlY3VyaXR5IFJlc2Vh
@@ -63,21 +72,24 @@ class LetsEncryptClientTest {
       -----END CERTIFICATE-----
   """.trimIndent().decodeCertificatePem()
 
-    val handshakeCertificates = HandshakeCertificates.Builder()
-      // TODO reenable in official answers
+      val handshakeCertificates = HandshakeCertificates.Builder()
+        // TODO reenable in official answers
 //      .addPlatformTrustedCertificates()
-      .addTrustedCertificate(cert)
-      .build()
+        .addTrustedCertificate(cert)
+        .build()
 
-    val client = OkHttpClient.Builder()
-      .sslSocketFactory(handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager)
-      .build()
+      clientBuilder
+        .sslSocketFactory(handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager)
+    }
+
+    val client = clientBuilder.build()
 
     val request = Request.Builder()
-        .url("https://valid-isrgrootx1.letsencrypt.org")
-        .build()
+      .url("https://valid-isrgrootx1.letsencrypt.org/robots.txt")
+      .build()
     client.newCall(request).execute().use { response ->
-      assertThat(response.code).isEqualTo(200)
+      assertThat(response.code).isEqualTo(404)
       assertThat(response.protocol).isEqualTo(Protocol.HTTP_2)
     }
   }
