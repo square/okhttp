@@ -11,6 +11,8 @@ if (properties.containsKey('android.injected.invoked.from.ide') ||
   include ':android-test'
 }
 
+include ':regression-test'
+
 include ':native-image-tests'
 
 include ':okcurl'
