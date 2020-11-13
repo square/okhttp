@@ -17,12 +17,16 @@ package okhttp3
 
 import com.oracle.svm.core.annotate.AutomaticFeature
 import org.graalvm.nativeimage.hosted.Feature
+import org.graalvm.nativeimage.hosted.RuntimeClassInitialization
 import org.graalvm.nativeimage.hosted.RuntimeReflection
 import java.io.File
 
 @AutomaticFeature
 class TestRegistration : Feature {
   override fun beforeAnalysis(access: Feature.BeforeAnalysisAccess) {
+    // Presumably needed for parsing the testlist.txt file.
+    RuntimeClassInitialization.initializeAtBuildTime(access.findClassByName("kotlin.text.Charsets"))
+
     registerKnownTests(access)
 
     registerJupiterClasses(access)

@@ -62,15 +62,11 @@ graal {
   graalVersion "20.2.0"
   javaVersion "11"
 
-  option "--enable-https"
   option "--no-fallback"
   option "--allow-incomplete-classpath"
   option "--report-unsupported-elements-at-runtime"
   option "-H:+ReportExceptionStackTraces"
   option "-H:+TraceClassInitialization"
-  option "--initialize-at-build-time=kotlin.text.Charsets"
-  option "-H:EnableURLProtocols=http,https"
-  option "-H:+AddAllCharsets"
 
   if (Os.isFamily(Os.FAMILY_WINDOWS)) {
     // May be possible without, but autodetection is problematic on Windows 10
