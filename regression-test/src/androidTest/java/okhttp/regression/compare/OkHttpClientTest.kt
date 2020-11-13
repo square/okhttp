@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp.android.test.compare;
+package okhttp.regression.compare;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
-import org.assertj.core.api.Assertions.assertThat
+import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -37,8 +37,8 @@ class OkHttpClientTest {
         .url("https://google.com/robots.txt")
         .build()
     client.newCall(request).execute().use { response ->
-      assertThat(response.code).isEqualTo(200)
-      assertThat(response.protocol).isEqualTo(Protocol.HTTP_2)
+      assertEquals(200, response.code())
+      assertEquals(Protocol.HTTP_2, response.protocol())
     }
   }
 }
