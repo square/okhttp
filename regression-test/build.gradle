@@ -21,7 +21,7 @@ android {
     exclude("META-INF/DEPENDENCIES")
   }
 
-  compileSdkVersion 29
+  compileSdkVersion 30
 
   defaultConfig {
     minSdkVersion 21
@@ -38,7 +38,7 @@ dependencies {
   implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${versions.kotlin}"
   implementation "org.jetbrains.kotlin:kotlin-reflect:${versions.kotlin}"
   implementation 'com.google.android.gms:play-services-safetynet:17.0.0'
-  implementation("com.squareup.okhttp3:okhttp:3.12.12")
+  implementation "com.squareup.okhttp3:okhttp:3.12.12"
   androidTestImplementation("com.squareup.okhttp3:mockwebserver:3.12.12")
   androidTestImplementation "org.bouncycastle:bcprov-jdk15to18:${versions.bouncycastle}"
   androidTestImplementation "org.bouncycastle:bctls-jdk15to18:${versions.bouncycastle}"
