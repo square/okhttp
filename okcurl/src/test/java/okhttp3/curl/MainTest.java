@@ -19,7 +19,7 @@ import java.io.IOException;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okio.Buffer;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import picocli.CommandLine;
 
 import static org.assertj.core.api.Assertions.assertThat;
