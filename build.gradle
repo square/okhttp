@@ -146,6 +146,7 @@ ext.applyOsgi = { project ->
 subprojects { project ->
   if (project.name == 'android-test') return
   if (project.name == 'okhttp-bom') return
+  if (project.name == 'regression-test') return
 
   apply plugin: "org.jetbrains.kotlin.jvm"
   apply plugin: 'java'
