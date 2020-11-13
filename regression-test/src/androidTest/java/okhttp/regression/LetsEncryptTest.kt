@@ -28,9 +28,10 @@ import org.junit.runner.RunWith
 import javax.net.ssl.SSLHandshakeException
 
 /**
- * OkHttp.
+ * Let's Encrypt expiring root test.
  *
- * https://square.github.io/okhttp/
+ * Read https://community.letsencrypt.org/t/mobile-client-workarounds-for-isrg-issue/137807
+ * for background.
  */
 @RunWith(AndroidJUnit4::class)
 class LetsEncryptTest {
