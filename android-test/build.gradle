@@ -44,7 +44,7 @@ android {
     exclude("META-INF/LICENSE-notice.md")
   }
 
-  compileSdkVersion 29
+  compileSdkVersion 30
 
   defaultConfig {
     minSdkVersion 21
@@ -63,7 +63,6 @@ dependencies {
   api "org.jetbrains.kotlin:kotlin-reflect:${versions.kotlin}"
   implementation 'com.google.android.gms:play-services-safetynet:17.0.0'
   api project(':okhttp')
-  implementation 'com.google.android.gms:play-services-safetynet:17.0.0'
 
   androidTestImplementation(project(':okhttp-testing-support')) {
     exclude group: 'org.openjsse', module: 'openjsse'
