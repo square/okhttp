@@ -63,8 +63,8 @@ dependencies {
   api "org.jetbrains.kotlin:kotlin-reflect:${versions.kotlin}"
   implementation 'com.google.android.gms:play-services-safetynet:17.0.0'
   api project(':okhttp')
-  testImplementation "org.junit.jupiter:junit-jupiter-api:5.7.0"
-  testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.7.0"
+  implementation 'com.google.android.gms:play-services-safetynet:17.0.0'
+
   androidTestImplementation(project(':okhttp-testing-support')) {
     exclude group: 'org.openjsse', module: 'openjsse'
     exclude group: 'org.conscrypt', module: 'conscrypt-openjdk-uber'

@@ -53,7 +53,7 @@ import okhttp3.CallEvent.SecureConnectEnd
 import okhttp3.CallEvent.SecureConnectStart
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.data.Offset
-import org.junit.Assert.assertTrue
+import org.junit.jupiter.api.Assertions.assertTrue
 
 open class RecordingEventListener : EventListener() {
   val eventSequence: Deque<CallEvent> = ConcurrentLinkedDeque()

@@ -36,6 +36,7 @@ buildscript {
       'conscrypt': "org.conscrypt:conscrypt-openjdk-uber:${versions.conscrypt}",
       'corretto': "software.amazon.cryptools:AmazonCorrettoCryptoProvider:${versions.corretto}:linux-x86_64",
       'guava': "com.google.guava:guava:${versions.guava}",
+      'hamcrest': 'org.hamcrest:hamcrest-library:2.1',
       'jnrUnixsocket': "com.github.jnr:jnr-unixsocket:${versions.jnrUnixsocket}",
       'jsoup': "org.jsoup:jsoup:${versions.jsoup}",
       'jsr305': "com.google.code.findbugs:jsr305:${versions.findbugs}",

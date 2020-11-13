@@ -32,7 +32,6 @@ import org.hamcrest.Matcher
 import org.hamcrest.StringDescription
 import org.hamcrest.TypeSafeMatcher
 import org.junit.jupiter.api.Assertions.fail
-import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Assumptions.assumeFalse
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.extension.AfterEachCallback
@@ -40,8 +39,6 @@ import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.InvocationInterceptor
 import org.junit.jupiter.api.extension.ReflectiveInvocationContext
-import org.junit.rules.TestRule
-import org.junit.runners.model.Statement
 import org.openjsse.net.ssl.OpenJSSE
 import org.opentest4j.TestAbortedException
 import java.lang.reflect.Method
@@ -57,7 +54,7 @@ import java.security.Security
 open class PlatformRule @JvmOverloads constructor(
   val requiredPlatformName: String? = null,
   val platform: Platform? = null
-) : TestRule, BeforeEachCallback, AfterEachCallback, InvocationInterceptor {
+) : BeforeEachCallback, AfterEachCallback, InvocationInterceptor {
   private val versionChecks = mutableListOf<Pair<Matcher<out Any>, Matcher<out Any>>>()
 
   override fun beforeEach(context: ExtensionContext) {
@@ -86,33 +83,6 @@ open class PlatformRule @JvmOverloads constructor(
     }
     if (!failed) {
       failIfExpected()
-    }
-  }
-
-  override fun apply(
-    base: Statement,
-    description: org.junit.runner.Description
-  ): Statement {
-    return object : Statement() {
-      @Throws(Throwable::class)
-      override fun evaluate() {
-        var failed = false
-        try {
-          setupPlatform()
-
-          base.evaluate()
-        } catch (e: TestAbortedException) {
-          throw e
-        } catch (e: Throwable) {
-          failed = true
-          rethrowIfNotExpected(e)
-        } finally {
-          resetPlatform()
-        }
-        if (!failed) {
-          failIfExpected()
-        }
-      }
     }
   }
 

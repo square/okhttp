@@ -19,35 +19,23 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.util.IdentityHashMap
-import okhttp3.TestUtil.isDescendentOf
 import okio.Buffer
 import okio.ForwardingSink
 import okio.ForwardingSource
 import okio.Sink
 import okio.Source
+import okhttp3.TestUtil.isDescendentOf
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
-import org.junit.rules.TestRule
-import org.junit.runner.Description
-import org.junit.runners.model.Statement
 
 /** A simple file system where all files are held in memory. Not safe for concurrent use.  */
-class InMemoryFileSystem : FileSystem, TestRule, AfterEachCallback {
+class InMemoryFileSystem : FileSystem, AfterEachCallback {
   val files = mutableMapOf<File, Buffer>()
   private val openSources = IdentityHashMap<Source, File>()
   private val openSinks = IdentityHashMap<Sink, File>()
 
   override fun afterEach(context: ExtensionContext?) {
     ensureResourcesClosed()
-  }
-
-  override fun apply(base: Statement, description: Description): Statement {
-    return object : Statement() {
-      override fun evaluate() {
-        base.evaluate()
-        ensureResourcesClosed()
-      }
-    }
   }
 
   fun ensureResourcesClosed() {
