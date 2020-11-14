@@ -20,6 +20,7 @@ import java.util.Objects
 import javax.net.ssl.SSLSocket
 import okhttp3.ConnectionSpec.Builder
 import okhttp3.internal.concat
+import okhttp3.internal.effectiveCipherSuites
 import okhttp3.internal.hasIntersection
 import okhttp3.internal.indexOf
 import okhttp3.internal.intersect
@@ -47,7 +48,7 @@ import okhttp3.internal.platform.Platform
 class ConnectionSpec internal constructor(
   @get:JvmName("isTls") val isTls: Boolean,
   @get:JvmName("supportsTlsExtensions") val supportsTlsExtensions: Boolean,
-  private val cipherSuitesAsString: Array<String>?,
+  internal val cipherSuitesAsString: Array<String>?,
   private val tlsVersionsAsString: Array<String>?
 ) {
 
@@ -107,19 +108,8 @@ class ConnectionSpec internal constructor(
    * Returns a copy of this that omits cipher suites and TLS versions not enabled by [sslSocket].
    */
   private fun supportedSpec(sslSocket: SSLSocket, isFallback: Boolean): ConnectionSpec {
-    var cipherSuitesIntersection = if (cipherSuitesAsString != null) {
-      // 3 options here for ordering
-      // 1) Legacy Platform - based on the Platform/Provider existing ordering in
-      // sslSocket.enabledCipherSuites
-      // 2) OkHttp Client - based on MODERN_CIPHER_SUITES source code ordering
-      // 3) Caller specified but assuming the visible defaults in MODERN_CIPHER_SUITES are rejigged
-      // to match legacy i.e. the platform/provider
-      //
-      // Opting for 3 here and in MODERN_CIPHER_SUITES via platformOrdered
-      cipherSuitesAsString.intersect(sslSocket.enabledCipherSuites, CipherSuite.ORDER_BY_NAME)
-    } else {
-      sslSocket.enabledCipherSuites
-    }
+    val socketEnabledCipherSuites = sslSocket.enabledCipherSuites
+    var cipherSuitesIntersection: Array<String> = effectiveCipherSuites(socketEnabledCipherSuites)
 
     val tlsVersionsIntersection = if (tlsVersionsAsString != null) {
       sslSocket.enabledProtocols.intersect(tlsVersionsAsString, naturalOrder())

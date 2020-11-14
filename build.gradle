@@ -2,7 +2,7 @@ buildscript {
   ext.versions = [
       'animalSniffer': '1.19',
       'assertj': '3.15.0',
-      'bouncycastle': '1.66',
+      'bouncycastle': '1.67',
       'brotli': '0.1.2',
       'checkstyle': '8.28',
       'conscrypt': '2.5.1',
@@ -29,13 +29,14 @@ buildscript {
       'android': "org.robolectric:android-all:11-robolectric-6757853",
       'animalSniffer': "org.codehaus.mojo:animal-sniffer-annotations:${versions.animalSniffer}",
       'assertj': "org.assertj:assertj-core:${versions.assertj}",
-      'bouncycastle': "org.bouncycastle:bcprov-jdk15on:${versions.bouncycastle}",
-      'bouncycastlepkix': "org.bouncycastle:bcpkix-jdk15on:${versions.bouncycastle}",
-      'bouncycastletls': "org.bouncycastle:bctls-jdk15on:${versions.bouncycastle}",
+      'bouncycastle': "org.bouncycastle:bcprov-jdk15to18:${versions.bouncycastle}",
+      'bouncycastlepkix': "org.bouncycastle:bcpkix-jdk15to18:${versions.bouncycastle}",
+      'bouncycastletls': "org.bouncycastle:bctls-jdk15to18:${versions.bouncycastle}",
       'brotli': "org.brotli:dec:${versions.brotli}",
       'conscrypt': "org.conscrypt:conscrypt-openjdk-uber:${versions.conscrypt}",
       'corretto': "software.amazon.cryptools:AmazonCorrettoCryptoProvider:${versions.corretto}:linux-x86_64",
       'guava': "com.google.guava:guava:${versions.guava}",
+      'hamcrest': 'org.hamcrest:hamcrest-library:2.1',
       'jnrUnixsocket': "com.github.jnr:jnr-unixsocket:${versions.jnrUnixsocket}",
       'jsoup': "org.jsoup:jsoup:${versions.jsoup}",
       'jsr305': "com.google.code.findbugs:jsr305:${versions.findbugs}",
@@ -59,7 +60,7 @@ buildscript {
   dependencies {
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.10"
     classpath "org.jetbrains.dokka:dokka-gradle-plugin:0.10.1"
-    classpath "com.android.tools.build:gradle:4.0.1"
+    classpath "com.android.tools.build:gradle:4.0.2"
     classpath deps.bnd
   }
 
@@ -146,6 +147,7 @@ ext.applyOsgi = { project ->
 subprojects { project ->
   if (project.name == 'android-test') return
   if (project.name == 'okhttp-bom') return
+  if (project.name == 'regression-test') return
 
   apply plugin: "org.jetbrains.kotlin.jvm"
   apply plugin: 'java'

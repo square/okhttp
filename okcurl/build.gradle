@@ -1,5 +1,5 @@
 plugins {
-  id "com.palantir.graal" version "0.7.1"
+  id "com.palantir.graal" version "0.7.2"
 }
 
 import org.apache.tools.ant.taskdefs.condition.Os
@@ -33,11 +33,11 @@ dependencies {
   implementation deps.picocli
   implementation deps.guava
 
-  implementation 'info.picocli:picocli-codegen:4.5.1'
-  annotationProcessor 'info.picocli:picocli-codegen:4.5.1'
+  implementation 'info.picocli:picocli-codegen:4.5.2'
+  annotationProcessor 'info.picocli:picocli-codegen:4.5.2'
 
   testImplementation project(':okhttp-testing-support')
-  testImplementation deps.junit
+  testImplementation deps.junit5Api
   testImplementation deps.assertj
 }
 
@@ -51,7 +51,6 @@ graal {
   graalVersion "20.2.0"
   javaVersion "11"
 
-  option "--enable-https"
   option "--no-fallback"
   option "--allow-incomplete-classpath"
 
