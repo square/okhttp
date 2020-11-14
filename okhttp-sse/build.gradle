@@ -16,7 +16,7 @@ dependencies {
 
   testImplementation project(':okhttp-testing-support')
   testImplementation project(':mockwebserver')
-  testRuntimeOnly project(':mockwebserver-junit5')
+  testImplementation project(':mockwebserver-junit5')
   testImplementation deps.junit
   testImplementation deps.assertj
   testCompileOnly deps.jsr305
