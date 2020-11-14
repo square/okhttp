@@ -42,6 +42,7 @@ android {
     exclude("META-INF/DEPENDENCIES")
     exclude("META-INF/LICENSE.md")
     exclude("META-INF/LICENSE-notice.md")
+    exclude("README.txt")
   }
 
   compileSdkVersion 30

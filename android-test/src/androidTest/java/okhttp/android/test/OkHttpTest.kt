@@ -107,8 +107,6 @@ class OkHttpTest(val server: MockWebServer) {
 
   private val handshakeCertificates = localhost()
 
-
-
   @Test
   fun testPlatform() {
     assertTrue(Platform.isAndroid)
