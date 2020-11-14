@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit.SECONDS
 import okhttp3.MediaType
 import okhttp3.RequestBody
 import okio.BufferedSink
-import org.junit.Assert.assertTrue
+import org.junit.jupiter.api.Assertions.assertTrue
 
 /** A duplex request body that keeps the provided sinks so they can be written to later.  */
 class AsyncRequestBody : RequestBody() {

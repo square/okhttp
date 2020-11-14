@@ -42,10 +42,11 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
   private val clientEventsList = mutableListOf<String>()
   private var testClient: OkHttpClient? = null
   private var uncaughtException: Throwable? = null
-  private var logger: Logger? = null
   private lateinit var testName: String
   private var defaultUncaughtExceptionHandler: Thread.UncaughtExceptionHandler? = null
   private var taskQueuesWereIdle: Boolean = false
+
+  var logger: Logger? = null
 
   var recordEvents = true
   var recordTaskRunner = false
