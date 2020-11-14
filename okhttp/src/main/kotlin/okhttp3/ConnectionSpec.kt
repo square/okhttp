@@ -270,8 +270,7 @@ class ConnectionSpec internal constructor(
   @Suppress("DEPRECATION")
   companion object {
     // Most secure but generally supported list.
-    private val RESTRICTED_CIPHER_SUITES = platformOrdered(
-      // TLSv1.3.
+    private val RESTRICTED_CIPHER_SUITES = arrayOf(// TLSv1.3.
       CipherSuite.TLS_AES_128_GCM_SHA256,
       CipherSuite.TLS_AES_256_GCM_SHA384,
       CipherSuite.TLS_CHACHA20_POLY1305_SHA256,
@@ -282,12 +281,11 @@ class ConnectionSpec internal constructor(
       CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
       CipherSuite.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
       CipherSuite.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
-      CipherSuite.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256)
+      CipherSuite.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256).toList()
 
     // This is nearly equal to the cipher suites supported in Chrome 72, current as of 2019-02-24.
     // See https://tinyurl.com/okhttp-cipher-suites for availability.
-    private val APPROVED_CIPHER_SUITES = platformOrdered(
-      // TLSv1.3.
+    private val APPROVED_CIPHER_SUITES = arrayOf(// TLSv1.3.
       CipherSuite.TLS_AES_128_GCM_SHA256,
       CipherSuite.TLS_AES_256_GCM_SHA384,
       CipherSuite.TLS_CHACHA20_POLY1305_SHA256,
@@ -308,19 +306,7 @@ class ConnectionSpec internal constructor(
       CipherSuite.TLS_RSA_WITH_AES_256_GCM_SHA384,
       CipherSuite.TLS_RSA_WITH_AES_128_CBC_SHA,
       CipherSuite.TLS_RSA_WITH_AES_256_CBC_SHA,
-      CipherSuite.TLS_RSA_WITH_3DES_EDE_CBC_SHA)
-
-    private fun platformOrdered(vararg ciphers: CipherSuite): List<CipherSuite> {
-      // TODO confirm this doesn't cause delays on startup path via earlier initialisation
-      // of crypto libraries before first use
-      val platformOrdered = Platform.get().newSSLContext().apply {
-        init(null, null, null)
-      }.socketFactory.supportedCipherSuites.toList()
-
-      return ciphers.sortedBy { cipherSuite ->
-        platformOrdered.indexOf(cipherSuite.javaName).let { if (it == -1) Int.MAX_VALUE else it }
-      }
-    }
+      CipherSuite.TLS_RSA_WITH_3DES_EDE_CBC_SHA).toList()
 
     /** A secure TLS connection that requires a recent client platform and a recent server. */
     @JvmField
