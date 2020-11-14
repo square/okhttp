@@ -55,9 +55,26 @@ android {
 
     // Make sure to use the AndroidJUnitRunner (or a sub-class) in order to hook in the JUnit 5 Test Builder
     testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-    testInstrumentationRunnerArguments(['runnerBuilder': 'de.mannodermaus.junit5.AndroidJUnit5Builder'])
+    testInstrumentationRunnerArguments([
+            'runnerBuilder': 'de.mannodermaus.junit5.AndroidJUnit5Builder',
+            'notPackage': 'org.bouncycastle'
+    ])
   }
 }
+
+def isIDE = properties.containsKey('android.injected.invoked.from.ide') ||
+        (System.getenv("XPC_SERVICE_NAME") ?: "").contains("intellij") ||
+        System.getenv("IDEA_INITIAL_DIRECTORY") != null
+//if (!isIDE) {
+sourceSets {
+  // Not included in IDE as this confuses Intellij for obvious reasons.
+  //    main.java.srcDirs += project.file("../okhttp/src/test/java")
+  main.java.srcDirs += project.file("../okhttp-brotli/src/test/java")
+  main.java.srcDirs += project.file("../okhttp-dnsoverhttps/src/test/java")
+  main.java.srcDirs += project.file("../okhttp-logging-interceptor/src/test/java")
+  main.java.srcDirs += project.file("../okhttp-sse/src/test/java")
+}
+//}
 
 dependencies {
   api "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${versions.kotlin}"
