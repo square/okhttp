@@ -15,14 +15,15 @@
  */
 package okhttp3.internal.http2;
 
-import java.util.Collection;
+import java.util.List;
+import okhttp3.SimpleProvider;
 import okhttp3.internal.http2.hpackjson.Case;
 import okhttp3.internal.http2.hpackjson.Story;
 import okio.Buffer;
-import org.junit.Assume;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 
 /**
  * Tests for round-tripping headers through hpack..
@@ -30,35 +31,31 @@ import org.junit.runners.Parameterized;
 // TODO: update hpack-test-case with the output of our encoder.
 // This test will hide complementary bugs in the encoder and decoder,
 // We should test that the encoder is producing responses that are
-// d]
-@RunWith(Parameterized.class)
 public class HpackRoundTripTest extends HpackDecodeTestBase {
 
   private static final String[] RAW_DATA = {"raw-data"};
 
-  @Parameterized.Parameters(name = "{0}")
-  public static Collection<Story[]> getStories() throws Exception {
-    return createStories(RAW_DATA);
+  static class StoriesTestProvider extends SimpleProvider {
+    @NotNull @Override public List<Object> arguments() throws Exception {
+      return createStories(RAW_DATA);
+    }
   }
 
   private Buffer bytesOut = new Buffer();
   private Hpack.Writer hpackWriter = new Hpack.Writer(bytesOut);
 
-  public HpackRoundTripTest(Story story) {
-    super(story);
-  }
+  @ParameterizedTest
+  @ArgumentsSource(StoriesTestProvider.class)
+  public void testRoundTrip(Story story) throws Exception {
+    Assumptions.assumeFalse(story == Story.MISSING, "Test stories missing, checkout git submodule");
 
-  @Test
-  public void testRoundTrip() throws Exception {
-    Assume.assumeFalse("Test stories missing, checkout git submodule", getStory() == Story.MISSING);
-
-    Story story = getStory().clone();
+    Story story2 = story.clone();
     // Mutate cases in base class.
-    for (Case caze : story.getCases()) {
+    for (Case caze : story2.getCases()) {
       hpackWriter.writeHeaders(caze.getHeaders());
       caze.setWire(bytesOut.readByteString());
     }
 
-    testDecoder(story);
+    testDecoder(story2);
   }
 }
