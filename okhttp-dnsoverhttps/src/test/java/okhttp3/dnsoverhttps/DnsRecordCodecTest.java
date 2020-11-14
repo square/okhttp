@@ -19,12 +19,12 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.List;
 import okio.ByteString;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static okhttp3.dnsoverhttps.DnsRecordCodec.TYPE_A;
 import static okhttp3.dnsoverhttps.DnsRecordCodec.TYPE_AAAA;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.fail;
 
 public class DnsRecordCodecTest {
   @Test public void testGoogleDotComEncoding() {
@@ -75,7 +75,7 @@ public class DnsRecordCodecTest {
           + "0000000100000e7364666c6b686673646c6b6a64660265650000010001c01b00060001000007070038026e"
           + "7303746c64c01b0a686f73746d61737465720d6565737469696e7465726e6574c01b5adb12c100000e1000"
           + "0003840012750000000e10"));
-      fail();
+      fail("");
     } catch (UnknownHostException uhe) {
       assertThat(uhe.getMessage()).isEqualTo("sdflkhfsdlkjdf.ee: NXDOMAIN");
     }
