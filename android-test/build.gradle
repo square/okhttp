@@ -55,7 +55,10 @@ android {
 
     // Make sure to use the AndroidJUnitRunner (or a sub-class) in order to hook in the JUnit 5 Test Builder
     testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-    testInstrumentationRunnerArguments(['runnerBuilder': 'de.mannodermaus.junit5.AndroidJUnit5Builder'])
+    testInstrumentationRunnerArguments([
+            'runnerBuilder': 'de.mannodermaus.junit5.AndroidJUnit5Builder',
+            'notPackage': 'org.bouncycastle'
+    ])
   }
 }
 
