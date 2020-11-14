@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 import mockwebserver3.MockResponse;
 import mockwebserver3.MockWebServer;
 import mockwebserver3.RecordedRequest;
+import mockwebserver3.junit5.internal.MockWebServerExtension;
 import okhttp3.Cache;
 import okhttp3.Dns;
 import okhttp3.HttpUrl;
@@ -36,6 +37,7 @@ import okio.Buffer;
 import okio.ByteString;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static java.util.Arrays.asList;
@@ -43,6 +45,7 @@ import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
+@ExtendWith(MockWebServerExtension.class)
 public class DnsOverHttpsTest {
   @RegisterExtension public final PlatformRule platform = new PlatformRule();
 
