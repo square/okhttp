@@ -15,31 +15,29 @@
  */
 package okhttp3.internal.http2;
 
-import java.util.Collection;
+import java.util.List;
+import okhttp3.SimpleProvider;
 import okhttp3.internal.http2.hpackjson.Story;
-import org.junit.Assume;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import static okhttp3.internal.http2.hpackjson.HpackJsonUtil.storiesForCurrentDraft;
 
-@RunWith(Parameterized.class)
 public class HpackDecodeInteropTest extends HpackDecodeTestBase {
 
-  public HpackDecodeInteropTest(Story story) {
-    super(story);
+  @ParameterizedTest
+  @ArgumentsSource(StoriesTestProvider.class)
+  public void testGoodDecoderInterop(Story story) throws Exception {
+    Assumptions.assumeFalse(story == Story.MISSING, "Test stories missing, checkout git submodule");
+
+    testDecoder(story);
   }
 
-  @Parameterized.Parameters(name = "{0}")
-  public static Collection<Story[]> createStories() throws Exception {
-    return createStories(storiesForCurrentDraft());
-  }
-
-  @Test
-  public void testGoodDecoderInterop() throws Exception {
-    Assume.assumeFalse("Test stories missing, checkout git submodule", getStory() == Story.MISSING);
-
-    testDecoder();
+  static class StoriesTestProvider extends SimpleProvider {
+    @NotNull @Override public List<Object> arguments() throws Exception {
+      return createStories(storiesForCurrentDraft());
+    }
   }
 }
