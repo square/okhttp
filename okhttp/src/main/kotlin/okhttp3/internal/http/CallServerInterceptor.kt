@@ -21,6 +21,7 @@ import okhttp3.Interceptor
 import okhttp3.Response
 import okhttp3.internal.EMPTY_RESPONSE
 import okhttp3.internal.http2.ConnectionShutdownException
+import okhttp3.internal.withSuppressed
 import okio.buffer
 
 /** This is the last interceptor in the chain. It makes a network call to the server. */
@@ -142,7 +143,7 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
       return response
     } catch (e: IOException) {
       if (sendRequestException != null) {
-        sendRequestException.addSuppressed(e)
+        sendRequestException.withSuppressed(e)
         throw sendRequestException
       }
       throw e

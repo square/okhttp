@@ -48,6 +48,7 @@ import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
+import okhttp3.internal.graal.UtilJava
 import okhttp3.internal.http2.Header
 import okhttp3.internal.io.FileSystem
 import okio.Buffer
@@ -605,8 +606,12 @@ inline fun Any.assertThreadDoesntHoldLock() {
   }
 }
 
-fun Exception.withSuppressed(suppressed: List<Exception>): Throwable = apply {
-  for (e in suppressed) addSuppressed(e)
+fun Exception.withSuppressed(suppressed: Throwable): Throwable = apply {
+  UtilJava.addSuppressed(this, suppressed)
+}
+
+fun Exception.withSuppressed(suppressed: List<Throwable>): Throwable = apply {
+  for (e in suppressed) UtilJava.addSuppressed(this, e)
 }
 
 inline fun <T> Iterable<T>.filterList(predicate: T.() -> Boolean): List<T> {

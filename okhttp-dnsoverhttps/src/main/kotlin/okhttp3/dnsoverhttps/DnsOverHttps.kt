@@ -35,6 +35,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
+import okhttp3.internal.withSuppressed
 
 /**
  * [DNS over HTTPS implementation][doh_spec].
@@ -177,7 +178,7 @@ class DnsOverHttps internal constructor(
     unknownHostException.initCause(failure)
 
     for (i in 1 until failures.size) {
-      unknownHostException.addSuppressed(failures[i])
+      unknownHostException.withSuppressed(failures[i])
     }
 
     throw unknownHostException

@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.connection
 
+import okhttp3.internal.withSuppressed
 import java.io.IOException
 
 /**
@@ -27,7 +28,7 @@ class RouteException internal constructor(val firstConnectException: IOException
     private set
 
   fun addConnectException(e: IOException) {
-    firstConnectException.addSuppressed(e)
+    firstConnectException.withSuppressed(e)
     lastConnectException = e
   }
 }

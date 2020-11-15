@@ -23,6 +23,7 @@ import java.util.logging.LogManager
 import java.util.logging.LogRecord
 import java.util.logging.Logger
 import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.graal.UtilJava
 import okhttp3.internal.http2.Http2
 import okhttp3.testing.Flaky
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -260,7 +261,7 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
 
     private operator fun Throwable?.plus(throwable: Throwable): Throwable {
       if (this != null) {
-        addSuppressed(throwable)
+        UtilJava.addSuppressed(this, throwable)
         return this
       }
       return throwable

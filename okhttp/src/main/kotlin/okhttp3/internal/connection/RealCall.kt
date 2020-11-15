@@ -36,17 +36,15 @@ import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.internal.assertThreadDoesntHoldLock
-import okhttp3.internal.assertThreadHoldsLock
+import okhttp3.internal.*
 import okhttp3.internal.cache.CacheInterceptor
-import okhttp3.internal.closeQuietly
 import okhttp3.internal.http.BridgeInterceptor
 import okhttp3.internal.http.CallServerInterceptor
 import okhttp3.internal.http.RealInterceptorChain
 import okhttp3.internal.http.RetryAndFollowUpInterceptor
 import okhttp3.internal.platform.Platform
-import okhttp3.internal.threadName
 import okio.AsyncTimeout
+import kotlin.addSuppressed
 
 /**
  * Bridge between OkHttp's application and network layers. This class exposes high-level application
@@ -528,7 +526,7 @@ class RealCall(
           cancel()
           if (!signalledCallback) {
             val canceledException = IOException("canceled due to $t")
-            canceledException.addSuppressed(t)
+            canceledException.withSuppressed(t)
             responseCallback.onFailure(this@RealCall, canceledException)
           }
           throw t

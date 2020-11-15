@@ -26,6 +26,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.internal.connection.RealConnection
 import okhttp3.internal.connection.RealConnection.Companion.IDLE_CONNECTION_HEALTHY_NS
+import okhttp3.internal.graal.UtilJava
 import okhttp3.internal.http.RecordingProxySelector
 import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule
@@ -240,8 +241,10 @@ class CallKotlinTest(
       client.newCall(request).execute()
       fail("")
     } catch (expected: IOException) {
-      assertThat(expected.suppressed).hasSize(1)
-      val suppressed = expected.suppressed[0]
+      val suppressed1 = UtilJava.getSuppressedExceptions(expected)
+
+      assertThat(suppressed1).hasSize(1)
+      val suppressed = suppressed1[0]
       assertThat(suppressed).isInstanceOf(IOException::class.java)
       assertThat(suppressed).isNotSameAs(expected)
     }

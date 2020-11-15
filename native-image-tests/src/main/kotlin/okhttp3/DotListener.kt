@@ -42,6 +42,10 @@ object DotListener: TestExecutionListener {
     testIdentifier: TestIdentifier,
     testExecutionResult: TestExecutionResult
   ) {
+    testExecutionResult.throwable?.ifPresent {
+      it.printStackTrace(originalSystemErr)
+    }
+
     if (!testIdentifier.isContainer) {
       when (testExecutionResult.status!!) {
         TestExecutionResult.Status.ABORTED -> printStatus("E")
