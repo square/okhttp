@@ -24,17 +24,20 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import mockwebserver3.MockResponse;
 import mockwebserver3.MockWebServer;
+import mockwebserver3.junit5.internal.MockWebServerExtension;
 import okhttp3.testing.Flaky;
 import okio.BufferedSink;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 @Timeout(30)
+@ExtendWith(MockWebServerExtension.class)
 public final class WholeOperationTimeoutTest {
   /** A large response body. Smaller bodies might successfully read after the socket is closed! */
   private static final String BIG_ENOUGH_BODY = TestUtil.repeat('a', 64 * 1024);

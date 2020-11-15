@@ -18,9 +18,12 @@ package okhttp3;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import mockwebserver3.junit5.internal.MockWebServerExtension;
 import okio.BufferedSource;
 import okio.Okio;
 import org.junit.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
@@ -30,6 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /** Runs the web platform URL tests against Java URL models. */
 @RunWith(Parameterized.class)
+@ExtendWith(MockWebServerExtension.class)
 public final class WebPlatformUrlTest {
   @Parameterized.Parameters(name = "{0}")
   public static List<Object[]> parameters() {

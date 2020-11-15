@@ -32,6 +32,7 @@ import javax.annotation.Nullable;
 import mockwebserver3.MockResponse;
 import mockwebserver3.MockWebServer;
 import mockwebserver3.SocketPolicy;
+import mockwebserver3.junit5.internal.MockWebServerExtension;
 import okhttp3.CallEvent.CallEnd;
 import okhttp3.CallEvent.CallFailed;
 import okhttp3.CallEvent.CallStart;
@@ -71,6 +72,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static java.util.Arrays.asList;
@@ -83,6 +85,7 @@ import static org.junit.Assume.assumeThat;
 
 @Flaky // STDOUT logging enabled for test
 @Timeout(30)
+@ExtendWith(MockWebServerExtension.class)
 public final class EventListenerTest {
   public static final Matcher<Response> anyResponse = CoreMatchers.any(Response.class);
 

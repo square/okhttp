@@ -17,32 +17,13 @@ package okhttp3.internal.http
 
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import okhttp3.Call
-import okhttp3.CallEvent
-import okhttp3.CallEvent.CallEnd
-import okhttp3.CallEvent.CallStart
-import okhttp3.CallEvent.Canceled
-import okhttp3.CallEvent.ConnectEnd
-import okhttp3.CallEvent.ConnectStart
-import okhttp3.CallEvent.ConnectionAcquired
-import okhttp3.CallEvent.ConnectionReleased
-import okhttp3.CallEvent.RequestFailed
-import okhttp3.CallEvent.ResponseFailed
-import okhttp3.DelegatingServerSocketFactory
-import okhttp3.DelegatingSocketFactory
-import okhttp3.MediaType
-import okhttp3.OkHttpClient
-import okhttp3.OkHttpClientTestRule
+import mockwebserver3.junit5.internal.MockWebServerExtension
+import okhttp3.*
+import okhttp3.CallEvent.*
 import okhttp3.Protocol.HTTP_1_1
-import okhttp3.RecordingEventListener
-import okhttp3.Request
-import okhttp3.RequestBody
-import okhttp3.SimpleProvider
 import okhttp3.internal.http.CancelTest.CancelMode.CANCEL
 import okhttp3.internal.http.CancelTest.CancelMode.INTERRUPT
-import okhttp3.internal.http.CancelTest.ConnectionType.H2
-import okhttp3.internal.http.CancelTest.ConnectionType.HTTP
-import okhttp3.internal.http.CancelTest.ConnectionType.HTTPS
+import okhttp3.internal.http.CancelTest.ConnectionType.*
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.internal.TlsUtil
 import okio.Buffer
@@ -50,6 +31,7 @@ import okio.BufferedSink
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Timeout
+import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.fail
 import org.junit.jupiter.params.ParameterizedTest
@@ -62,6 +44,7 @@ import javax.net.ServerSocketFactory
 import javax.net.SocketFactory
 
 @Timeout(30)
+@ExtendWith(MockWebServerExtension::class)
 class CancelTest {
   @JvmField @RegisterExtension val platform = PlatformRule()
 
@@ -140,25 +123,26 @@ class CancelTest {
     setUp(mode)
     server.enqueue(MockResponse())
     val call = client.newCall(
-        Request.Builder()
-            .url(server.url("/"))
-            .post(object : RequestBody() {
-              override fun contentType(): MediaType? {
-                return null
-              }
+      Request.Builder()
+        .url(server.url("/"))
+        .post(object : RequestBody() {
+          override fun contentType(): MediaType? {
+            return null
+          }
 
-              @Throws(
-                  IOException::class
-              ) override fun writeTo(sink: BufferedSink) {
-                for (i in 0..9) {
-                  sink.writeByte(0)
-                  sink.flush()
-                  sleep(100)
-                }
-                fail("Expected connection to be closed")
-              }
-            })
-            .build()
+          @Throws(
+            IOException::class
+          )
+          override fun writeTo(sink: BufferedSink) {
+            for (i in 0..9) {
+              sink.writeByte(0)
+              sink.flush()
+              sleep(100)
+            }
+            fail("Expected connection to be closed")
+          }
+        })
+        .build()
     )
     cancelLater(call, 500)
     try {
@@ -175,17 +159,17 @@ class CancelTest {
     setUp(mode)
     val responseBodySize = 8 * 1024 * 1024 // 8 MiB.
     server.enqueue(
-        MockResponse()
-            .setBody(
-                Buffer()
-                    .write(ByteArray(responseBodySize))
-            )
-            .throttleBody(64 * 1024, 125, MILLISECONDS)
+      MockResponse()
+        .setBody(
+          Buffer()
+            .write(ByteArray(responseBodySize))
+        )
+        .throttleBody(64 * 1024, 125, MILLISECONDS)
     ) // 500 Kbps
     val call = client.newCall(
-        Request.Builder()
-            .url(server.url("/"))
-            .build()
+      Request.Builder()
+        .url(server.url("/"))
+        .build()
     )
     val response = call.execute()
     cancelLater(call, 500)
@@ -208,12 +192,12 @@ class CancelTest {
     setUp(mode)
     val responseBodySize = 8 * 1024 * 1024 // 8 MiB.
     server.enqueue(
-        MockResponse()
-            .setBody(
-                Buffer()
-                    .write(ByteArray(responseBodySize))
-            )
-            .throttleBody(64 * 1024, 125, MILLISECONDS)
+      MockResponse()
+        .setBody(
+          Buffer()
+            .write(ByteArray(responseBodySize))
+        )
+        .throttleBody(64 * 1024, 125, MILLISECONDS)
     ) // 500 Kbps
     server.enqueue(MockResponse().apply {
       setResponseCode(200)

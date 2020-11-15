@@ -60,6 +60,7 @@ import mockwebserver3.MockWebServer;
 import mockwebserver3.QueueDispatcher;
 import mockwebserver3.RecordedRequest;
 import mockwebserver3.SocketPolicy;
+import mockwebserver3.junit5.internal.MockWebServerExtension;
 import okhttp3.CallEvent.CallEnd;
 import okhttp3.CallEvent.ConnectStart;
 import okhttp3.CallEvent.ConnectionAcquired;
@@ -85,6 +86,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
 import static java.util.Arrays.asList;
@@ -101,6 +103,7 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 
 @Timeout(30)
+@ExtendWith(MockWebServerExtension.class)
 public final class CallTest {
   @RegisterExtension final PlatformRule platform = new PlatformRule();
   @RegisterExtension final InMemoryFileSystem fileSystem = new InMemoryFileSystem();

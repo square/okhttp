@@ -16,13 +16,16 @@
 package okhttp3
 
 import mockwebserver3.MockWebServer
+import mockwebserver3.junit5.internal.MockWebServerExtension
 import okhttp3.TestUtil.assumeNetwork
 import okhttp3.testing.PlatformRule
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.RegisterExtension
 
+@ExtendWith(MockWebServerExtension::class)
 class BouncyCastleTest(
   val server: MockWebServer
 ) {

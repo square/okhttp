@@ -32,6 +32,7 @@ import mockwebserver3.MockResponse;
 import mockwebserver3.MockWebServer;
 import mockwebserver3.RecordedRequest;
 import mockwebserver3.SocketPolicy;
+import mockwebserver3.junit5.internal.MockWebServerExtension;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.ForwardingSink;
@@ -42,11 +43,13 @@ import okio.Sink;
 import okio.Source;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
+@ExtendWith(MockWebServerExtension.class)
 public final class InterceptorTest {
   @RegisterExtension public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 

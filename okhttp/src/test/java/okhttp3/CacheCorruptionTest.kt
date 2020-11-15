@@ -15,19 +15,9 @@
  */
 package okhttp3
 
-import java.io.File
-import java.net.CookieManager
-import java.net.ResponseCache
-import java.text.DateFormat
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import java.util.TimeZone
-import java.util.concurrent.TimeUnit
-import javax.net.ssl.HostnameVerifier
-import javax.net.ssl.SSLSession
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.junit5.internal.MockWebServerExtension
 import okhttp3.internal.buildCache
 import okhttp3.internal.io.InMemoryFileSystem
 import okhttp3.testing.PlatformRule
@@ -36,8 +26,19 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.RegisterExtension
+import java.io.File
+import java.net.CookieManager
+import java.net.ResponseCache
+import java.text.DateFormat
+import java.text.SimpleDateFormat
+import java.util.*
+import java.util.concurrent.TimeUnit
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.SSLSession
 
+@ExtendWith(MockWebServerExtension::class)
 class CacheCorruptionTest(
   var server: MockWebServer
 ) {
@@ -113,9 +114,9 @@ class CacheCorruptionTest(
   private fun testCorruptingCache(corruptor: () -> Unit): Response {
     server.useHttps(handshakeCertificates.sslSocketFactory(), false)
     server.enqueue(MockResponse()
-        .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
-        .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
-        .setBody("ABC.1"))
+      .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
+      .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
+      .setBody("ABC.1"))
     server.enqueue(MockResponse()
       .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
       .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))

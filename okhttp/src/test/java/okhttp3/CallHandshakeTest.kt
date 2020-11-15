@@ -17,6 +17,7 @@ package okhttp3
 
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.junit5.internal.MockWebServerExtension
 import okhttp3.CipherSuite.Companion.TLS_AES_128_GCM_SHA256
 import okhttp3.CipherSuite.Companion.TLS_AES_256_GCM_SHA384
 import okhttp3.CipherSuite.Companion.TLS_CHACHA20_POLY1305_SHA256
@@ -34,9 +35,11 @@ import okhttp3.tls.internal.TlsUtil.localhost
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.RegisterExtension
 import javax.net.ssl.SSLSocket
 
+@ExtendWith(MockWebServerExtension::class)
 class CallHandshakeTest {
   private lateinit var client: OkHttpClient
   private lateinit var server: MockWebServer

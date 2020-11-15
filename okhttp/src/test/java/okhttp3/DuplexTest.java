@@ -26,6 +26,7 @@ import mockwebserver3.MockResponse;
 import mockwebserver3.MockWebServer;
 import mockwebserver3.SocketPolicy;
 import mockwebserver3.internal.duplex.MockDuplexResponseBody;
+import mockwebserver3.junit5.internal.MockWebServerExtension;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.duplex.AsyncRequestBody;
 import okhttp3.internal.duplex.MwsDuplexAccess;
@@ -39,6 +40,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static java.util.Arrays.asList;
@@ -48,6 +50,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 @Timeout(30)
+@ExtendWith(MockWebServerExtension.class)
 public final class DuplexTest {
   @RegisterExtension public final PlatformRule platform = new PlatformRule();
   @RegisterExtension public OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();

@@ -18,6 +18,7 @@ package okhttp3
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy
+import mockwebserver3.junit5.internal.MockWebServerExtension
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.internal.duplex.AsyncRequestBody
 import okhttp3.internal.http2.ErrorCode
@@ -29,10 +30,12 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
+import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.fail
 
 @Timeout(30)
+@ExtendWith(MockWebServerExtension::class)
 class ServerTruncatesRequestTest(
   val server: MockWebServer
 ) {
@@ -63,14 +66,14 @@ class ServerTruncatesRequestTest(
 
   private fun serverTruncatesRequestOnLongPost(https: Boolean) {
     server.enqueue(MockResponse()
-        .setSocketPolicy(SocketPolicy.DO_NOT_READ_REQUEST_BODY)
-        .setBody("abc")
-        .apply { this.http2ErrorCode = ErrorCode.NO_ERROR.httpCode })
+      .setSocketPolicy(SocketPolicy.DO_NOT_READ_REQUEST_BODY)
+      .setBody("abc")
+      .apply { this.http2ErrorCode = ErrorCode.NO_ERROR.httpCode })
 
     val call = client.newCall(Request.Builder()
-        .url(server.url("/"))
-        .post(SlowRequestBody)
-        .build())
+      .url(server.url("/"))
+      .post(SlowRequestBody)
+      .build())
 
     call.execute().use { response ->
       assertThat(response.body!!.string()).isEqualTo("abc")
@@ -115,16 +118,16 @@ class ServerTruncatesRequestTest(
     enableProtocol(Protocol.HTTP_2)
 
     server.enqueue(MockResponse()
-        .setSocketPolicy(SocketPolicy.DO_NOT_READ_REQUEST_BODY)
-        .setBody("abc")
-        .apply { this.http2ErrorCode = ErrorCode.NO_ERROR.httpCode })
+      .setSocketPolicy(SocketPolicy.DO_NOT_READ_REQUEST_BODY)
+      .setBody("abc")
+      .apply { this.http2ErrorCode = ErrorCode.NO_ERROR.httpCode })
 
     val requestBody = AsyncRequestBody()
 
     val call = client.newCall(Request.Builder()
-        .url(server.url("/"))
-        .post(requestBody)
-        .build())
+      .url(server.url("/"))
+      .post(requestBody)
+      .build())
 
     call.execute().use { response ->
       assertThat(response.body!!.string()).isEqualTo("abc")
@@ -172,9 +175,9 @@ class ServerTruncatesRequestTest(
     server.enqueue(mockResponse)
 
     val call = client.newCall(Request.Builder()
-        .url(server.url("/"))
-        .post(SlowRequestBody)
-        .build())
+      .url(server.url("/"))
+      .post(SlowRequestBody)
+      .build())
 
     call.execute().use { response ->
       assertThat(response.body!!.string()).isEqualTo("abc")
@@ -194,9 +197,9 @@ class ServerTruncatesRequestTest(
     }
 
     val callA = client.newCall(Request.Builder()
-        .url(server.url("/"))
-        .post(requestBody)
-        .build())
+      .url(server.url("/"))
+      .post(requestBody)
+      .build())
 
     try {
       callA.execute()
@@ -210,8 +213,8 @@ class ServerTruncatesRequestTest(
     // Confirm that the connection pool was not corrupted by making another call. This doesn't use
     // makeSimpleCall() because it uses the MockResponse enqueued above.
     val callB = client.newCall(Request.Builder()
-        .url(server.url("/"))
-        .build())
+      .url(server.url("/"))
+      .build())
     callB.execute().use { response ->
       assertThat(response.body!!.string()).isEqualTo("abc")
     }
@@ -220,8 +223,8 @@ class ServerTruncatesRequestTest(
   private fun makeSimpleCall() {
     server.enqueue(MockResponse().setBody("healthy"))
     val callB = client.newCall(Request.Builder()
-        .url(server.url("/"))
-        .build())
+      .url(server.url("/"))
+      .build())
     callB.execute().use { response ->
       assertThat(response.body!!.string()).isEqualTo("healthy")
     }
@@ -238,8 +241,8 @@ class ServerTruncatesRequestTest(
   private fun enableTls() {
     client = client.newBuilder()
         .sslSocketFactory(
-            handshakeCertificates.sslSocketFactory(),
-            handshakeCertificates.trustManager
+          handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager
         )
         .hostnameVerifier(RecordingHostnameVerifier())
         .build()

@@ -15,13 +15,10 @@
  */
 package okhttp3
 
-import java.io.IOException
-import java.net.Proxy
-import java.security.cert.X509Certificate
-import java.time.Duration
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy
+import mockwebserver3.junit5.internal.MockWebServerExtension
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.internal.connection.RealConnection
@@ -36,10 +33,16 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
+import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.fail
+import java.io.IOException
+import java.net.Proxy
+import java.security.cert.X509Certificate
+import java.time.Duration
 
 @Timeout(30)
+@ExtendWith(MockWebServerExtension::class)
 class CallKotlinTest(
   val server: MockWebServer
 ) {
@@ -90,14 +93,14 @@ class CallKotlinTest(
     response.use {
       assertEquals(200, response.code)
       assertEquals("CN=localhost",
-          (response.handshake!!.peerCertificates.single() as X509Certificate).subjectDN.name)
+        (response.handshake!!.peerCertificates.single() as X509Certificate).subjectDN.name)
     }
   }
 
   private fun enableTls() {
     client = client.newBuilder()
         .sslSocketFactory(
-            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager)
+          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager)
         .build()
     server.useHttps(handshakeCertificates.sslSocketFactory(), false)
   }
@@ -198,7 +201,7 @@ class CallKotlinTest(
         .build()
 
     server.enqueue(MockResponse().setBody("a")
-        .setSocketPolicy(SocketPolicy.SHUTDOWN_OUTPUT_AT_END))
+      .setSocketPolicy(SocketPolicy.SHUTDOWN_OUTPUT_AT_END))
     server.enqueue(MockResponse().setBody("b"))
 
     val requestA = Request.Builder()

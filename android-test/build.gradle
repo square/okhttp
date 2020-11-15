@@ -63,11 +63,18 @@ android {
             'runnerBuilder': 'de.mannodermaus.junit5.AndroidJUnit5Builder',
             'notPackage': 'org.bouncycastle'
     ])
+
+    testOptions {
+      junitPlatform {
+        configurationParameter 'junit.jupiter.extensions.autodetection.enabled', 'true'
+      }
+    }
   }
 
-  if (!isIDE) {
+  if (isIDE) {
     sourceSets {
       named("androidTest") {
+        it.java.srcDirs += project.file("../okhttp/src/test/java")
         it.java.srcDirs += project.file("../okhttp-brotli/src/test/java")
         it.java.srcDirs += project.file("../okhttp-dnsoverhttps/src/test/java")
         it.java.srcDirs += project.file("../okhttp-logging-interceptor/src/test/java")
@@ -75,6 +82,20 @@ android {
       }
     }
   }
+}
+
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+  kotlinOptions {
+    jvmTarget = "1.8"
+  }
+}
+
+tasks.withType(JavaCompile).configureEach {
+  sourceCompatibility = JavaVersion.VERSION_1_8
+  targetCompatibility = JavaVersion.VERSION_1_8
 }
 
 dependencies {
@@ -98,6 +119,7 @@ dependencies {
   androidTestImplementation project(':okhttp-sse')
   androidTestImplementation project(':okhttp-testing-support')
   androidTestImplementation project(':okhttp-tls')
+  androidTestImplementation project(':okhttp-urlconnection')
   androidTestImplementation 'androidx.test.ext:junit:1.1.2'
   androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
   androidTestImplementation 'org.apache.httpcomponents.client5:httpclient5:5.0'

@@ -21,8 +21,11 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+
+import mockwebserver3.junit5.internal.MockWebServerExtension;
 import okhttp3.testing.PlatformRule;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static java.util.Arrays.asList;
@@ -30,6 +33,7 @@ import static okhttp3.internal.Internal.applyConnectionSpec;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
+@ExtendWith(MockWebServerExtension.class)
 public final class ConnectionSpecTest {
   @RegisterExtension public final PlatformRule platform = new PlatformRule();
 

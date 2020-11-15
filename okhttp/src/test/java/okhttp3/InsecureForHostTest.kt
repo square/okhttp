@@ -15,18 +15,21 @@
  */
 package okhttp3
 
-import javax.net.ssl.SSLException
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.junit5.internal.MockWebServerExtension
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import okhttp3.tls.internal.TlsUtil.localhost
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.fail
+import javax.net.ssl.SSLException
 
+@ExtendWith(MockWebServerExtension::class)
 class InsecureForHostTest(
   val server: MockWebServer
 ) {
@@ -48,8 +51,8 @@ class InsecureForHostTest(
         .build()
 
     val call = client.newCall(Request.Builder()
-        .url(server.url("/"))
-        .build())
+      .url(server.url("/"))
+      .build())
     val response = call.execute()
     assertThat(response.code).isEqualTo(200)
     assertThat(response.handshake!!.cipherSuite).isNotNull()
@@ -80,8 +83,8 @@ class InsecureForHostTest(
         .build()
 
     val call = client.newCall(Request.Builder()
-        .url(server.url("/"))
-        .build())
+      .url(server.url("/"))
+      .build())
     try {
       call.execute()
       fail("")
@@ -104,8 +107,8 @@ class InsecureForHostTest(
         .build()
 
     val call = client.newCall(Request.Builder()
-        .url(server.url("/"))
-        .build())
+      .url(server.url("/"))
+      .build())
     try {
       call.execute()
       fail("")

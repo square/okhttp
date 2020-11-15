@@ -41,6 +41,7 @@ import mockwebserver3.PushPromise;
 import mockwebserver3.QueueDispatcher;
 import mockwebserver3.RecordedRequest;
 import mockwebserver3.SocketPolicy;
+import mockwebserver3.junit5.internal.MockWebServerExtension;
 import okhttp3.Cache;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -76,6 +77,7 @@ import okio.Okio;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -96,6 +98,7 @@ import static org.junit.Assume.assumeTrue;
 /** Test how HTTP/2 interacts with HTTP features. */
 @Timeout(60)
 @Flaky
+@ExtendWith(MockWebServerExtension.class)
 public final class HttpOverHttp2Test {
   // Flaky https://github.com/square/okhttp/issues/4632
   // Flaky https://github.com/square/okhttp/issues/4633
