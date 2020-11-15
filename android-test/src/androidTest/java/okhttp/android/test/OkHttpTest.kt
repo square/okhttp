@@ -331,6 +331,7 @@ class OkHttpTest(val server: MockWebServer) {
   }
 
   @Test
+  @Disabled("cleartext required for additional okhttp wide tests")
   fun testHttpRequestBlocked() {
     assumeTrue(Build.VERSION.SDK_INT >= 23)
 
@@ -671,6 +672,7 @@ class OkHttpTest(val server: MockWebServer) {
   }
 
   @Test
+  @Disabled("TODO: currently logging okhttp3.internal.concurrent.TaskRunner, okhttp3.internal.http2.Http2")
   fun testLoggingLevels() {
     enableTls()
 

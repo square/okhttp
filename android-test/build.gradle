@@ -31,6 +31,10 @@ repositories {
   }
 }
 
+def isIDE = properties.containsKey('android.injected.invoked.from.ide') ||
+        (System.getenv("XPC_SERVICE_NAME") ?: "").contains("intellij") ||
+        System.getenv("IDEA_INITIAL_DIRECTORY") != null
+
 android {
   compileOptions {
     sourceCompatibility JavaVersion.VERSION_1_8
@@ -60,6 +64,17 @@ android {
             'notPackage': 'org.bouncycastle'
     ])
   }
+
+  if (!isIDE) {
+    sourceSets {
+      named("androidTest") {
+        it.java.srcDirs += project.file("../okhttp-brotli/src/test/java")
+        it.java.srcDirs += project.file("../okhttp-dnsoverhttps/src/test/java")
+        it.java.srcDirs += project.file("../okhttp-logging-interceptor/src/test/java")
+        it.java.srcDirs += project.file("../okhttp-sse/src/test/java")
+      }
+    }
+  }
 }
 
 dependencies {
@@ -77,10 +92,12 @@ dependencies {
   androidTestImplementation "org.bouncycastle:bctls-jdk15to18:${versions.bouncycastle}"
   androidTestImplementation "org.conscrypt:conscrypt-android:2.5.1"
   androidTestImplementation project(':mockwebserver-junit5')
-  androidTestImplementation project(':okhttp-tls')
+  androidTestImplementation project(':okhttp-brotli')
   androidTestImplementation project(':okhttp-dnsoverhttps')
   androidTestImplementation project(':okhttp-logging-interceptor')
+  androidTestImplementation project(':okhttp-sse')
   androidTestImplementation project(':okhttp-testing-support')
+  androidTestImplementation project(':okhttp-tls')
   androidTestImplementation 'androidx.test.ext:junit:1.1.2'
   androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
   androidTestImplementation 'org.apache.httpcomponents.client5:httpclient5:5.0'

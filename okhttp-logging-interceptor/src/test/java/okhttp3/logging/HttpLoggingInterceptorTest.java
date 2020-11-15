@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import javax.net.ssl.HostnameVerifier;
+import mockwebserver3.junit5.internal.MockWebServerExtension;
 import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
 import okhttp3.MediaType;
@@ -42,6 +43,7 @@ import okio.BufferedSink;
 import okio.ByteString;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static okhttp3.tls.internal.TlsUtil.localhost;
@@ -50,6 +52,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
 
+@ExtendWith(MockWebServerExtension.class)
 public final class HttpLoggingInterceptorTest {
   private static final MediaType PLAIN = MediaType.get("text/plain; charset=utf-8");
 
