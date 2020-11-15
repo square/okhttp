@@ -71,7 +71,7 @@ android {
     }
   }
 
-  if (isIDE) {
+  if (!isIDE) {
     sourceSets {
       named("androidTest") {
         it.java.srcDirs += project.file("../okhttp/src/test/java")
