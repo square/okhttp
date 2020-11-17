@@ -26,44 +26,26 @@
  */
 package okhttp.regression.compare
 
-import org.apache.hc.core5.http.nio.ssl.TlsStrategy
-import org.apache.hc.client5.http.ssl.ClientTlsStrategyBuilder
-import org.apache.hc.client5.http.impl.nio.PoolingAsyncClientConnectionManager
-import org.apache.hc.client5.http.impl.nio.PoolingAsyncClientConnectionManagerBuilder
-import org.apache.hc.client5.http.impl.async.HttpAsyncClients
-import org.apache.hc.core5.http2.HttpVersionPolicy
-import org.apache.hc.core5.http.HttpHost
-import org.apache.hc.client5.http.protocol.HttpClientContext
-import org.apache.hc.client5.http.async.methods.SimpleHttpRequest
 import org.apache.hc.client5.http.async.methods.SimpleHttpRequests
 import org.apache.hc.client5.http.async.methods.SimpleHttpResponse
 import org.apache.hc.client5.http.async.methods.SimpleRequestProducer
 import org.apache.hc.client5.http.async.methods.SimpleResponseConsumer
+import org.apache.hc.client5.http.impl.async.HttpAsyncClients
+import org.apache.hc.client5.http.protocol.HttpClientContext
 import org.apache.hc.core5.concurrent.FutureCallback
+import org.apache.hc.core5.http.HttpHost
 import org.apache.hc.core5.http.ProtocolVersion
 import org.apache.hc.core5.io.CloseMode
 import org.junit.Assert
 import org.junit.Test
-import java.io.IOException
-import java.lang.Exception
-import java.util.concurrent.ExecutionException
 
 /**
  * https://hc.apache.org/httpcomponents-client-5.0.x/httpclient5/examples/AsyncClientTlsAlpn.java
  */
 class ApacheHttpClientHttp2Test {
-  @Test @Throws(ExecutionException::class, InterruptedException::class, IOException::class)
+  @Test
   fun testHttp2() {
-    val tlsStrategy = ClientTlsStrategyBuilder.create()
-      .useSystemProperties()
-      .build()
-    val cm = PoolingAsyncClientConnectionManagerBuilder.create()
-      .setTlsStrategy(tlsStrategy)
-      .build()
-    val client = HttpAsyncClients.custom()
-      .setVersionPolicy(HttpVersionPolicy.NEGOTIATE)
-      .setConnectionManager(cm)
-      .build()
+    val client = HttpAsyncClients.custom().build()
 
     client.use { client ->
         client.start()
