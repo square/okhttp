@@ -45,7 +45,7 @@ import org.junit.Test
 class ApacheHttpClientHttp2Test {
   @Test
   fun testHttp2() {
-    val client = HttpAsyncClients.custom().build()
+    val client = HttpAsyncClients.createHttp2Default()
 
     client.use { client ->
         client.start()
