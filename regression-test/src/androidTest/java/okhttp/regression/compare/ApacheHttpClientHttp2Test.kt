@@ -57,9 +57,6 @@ class ApacheHttpClientHttp2Test {
       println("${response.body.bodyText.substring(0, 20)}...")
 
       Assert.assertEquals(ProtocolVersion("HTTP", 2, 0), response.version)
-
-      println("Shutting down")
-      client.close(CloseMode.GRACEFUL)
     }
   }
 }
