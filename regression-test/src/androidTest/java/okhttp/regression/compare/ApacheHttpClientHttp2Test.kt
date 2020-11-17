@@ -28,12 +28,8 @@ package okhttp.regression.compare
 
 import org.apache.hc.client5.http.async.methods.SimpleHttpRequests
 import org.apache.hc.client5.http.async.methods.SimpleHttpResponse
-import org.apache.hc.client5.http.async.methods.SimpleRequestProducer
-import org.apache.hc.client5.http.async.methods.SimpleResponseConsumer
 import org.apache.hc.client5.http.impl.async.HttpAsyncClients
-import org.apache.hc.client5.http.protocol.HttpClientContext
 import org.apache.hc.core5.concurrent.FutureCallback
-import org.apache.hc.core5.http.HttpHost
 import org.apache.hc.core5.http.ProtocolVersion
 import org.apache.hc.core5.io.CloseMode
 import org.junit.Assert
@@ -42,6 +38,9 @@ import org.junit.Test
 /**
  * Simplified from
  * https://hc.apache.org/httpcomponents-client-5.0.x/httpclient5/examples/AsyncClientTlsAlpn.java
+ *
+ * Mainly intended to verify behaviour of popular clients across Android versions, similar
+ * to observing Firefox or Chrome browser behaviour.
  */
 class ApacheHttpClientHttp2Test {
   @Test
