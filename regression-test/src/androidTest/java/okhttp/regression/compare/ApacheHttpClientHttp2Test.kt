@@ -24,92 +24,81 @@
  * <http://www.apache.org/>.
  *
  */
-package okhttp.regression.compare;
+package okhttp.regression.compare
 
-import java.io.IOException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import javax.net.ssl.SSLSession;
-import org.apache.hc.client5.http.async.methods.SimpleHttpRequest;
-import org.apache.hc.client5.http.async.methods.SimpleHttpRequests;
-import org.apache.hc.client5.http.async.methods.SimpleHttpResponse;
-import org.apache.hc.client5.http.async.methods.SimpleRequestProducer;
-import org.apache.hc.client5.http.async.methods.SimpleResponseConsumer;
-import org.apache.hc.client5.http.impl.async.CloseableHttpAsyncClient;
-import org.apache.hc.client5.http.impl.async.HttpAsyncClients;
-import org.apache.hc.client5.http.impl.nio.PoolingAsyncClientConnectionManager;
-import org.apache.hc.client5.http.impl.nio.PoolingAsyncClientConnectionManagerBuilder;
-import org.apache.hc.client5.http.protocol.HttpClientContext;
-import org.apache.hc.client5.http.ssl.ClientTlsStrategyBuilder;
-import org.apache.hc.core5.concurrent.FutureCallback;
-import org.apache.hc.core5.http.HttpHost;
-import org.apache.hc.core5.http.ProtocolVersion;
-import org.apache.hc.core5.http.nio.ssl.TlsStrategy;
-import org.apache.hc.core5.http2.HttpVersionPolicy;
-import org.apache.hc.core5.io.CloseMode;
-import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
+import org.apache.hc.core5.http.nio.ssl.TlsStrategy
+import org.apache.hc.client5.http.ssl.ClientTlsStrategyBuilder
+import org.apache.hc.client5.http.impl.nio.PoolingAsyncClientConnectionManager
+import org.apache.hc.client5.http.impl.nio.PoolingAsyncClientConnectionManagerBuilder
+import org.apache.hc.client5.http.impl.async.HttpAsyncClients
+import org.apache.hc.core5.http2.HttpVersionPolicy
+import org.apache.hc.core5.http.HttpHost
+import org.apache.hc.client5.http.protocol.HttpClientContext
+import org.apache.hc.client5.http.async.methods.SimpleHttpRequest
+import org.apache.hc.client5.http.async.methods.SimpleHttpRequests
+import org.apache.hc.client5.http.async.methods.SimpleHttpResponse
+import org.apache.hc.client5.http.async.methods.SimpleRequestProducer
+import org.apache.hc.client5.http.async.methods.SimpleResponseConsumer
+import org.apache.hc.core5.concurrent.FutureCallback
+import org.apache.hc.core5.http.ProtocolVersion
+import org.apache.hc.core5.io.CloseMode
+import org.junit.Assert
+import org.junit.Test
+import java.io.IOException
+import java.lang.Exception
+import java.util.concurrent.ExecutionException
 
 /**
  * https://hc.apache.org/httpcomponents-client-5.0.x/httpclient5/examples/AsyncClientTlsAlpn.java
  */
-public class ApacheHttpClientHttp2Test {
-  @Test
-  public void testHttp2() throws ExecutionException, InterruptedException, IOException {
-    final TlsStrategy tlsStrategy = ClientTlsStrategyBuilder.create()
-        .useSystemProperties()
-        .build();
-    final PoolingAsyncClientConnectionManager cm = PoolingAsyncClientConnectionManagerBuilder.create()
-        .setTlsStrategy(tlsStrategy)
-        .build();
-    try (final CloseableHttpAsyncClient client = HttpAsyncClients.custom()
-        .setVersionPolicy(HttpVersionPolicy.NEGOTIATE)
-        .setConnectionManager(cm)
-        .build()) {
+class ApacheHttpClientHttp2Test {
+  @Test @Throws(ExecutionException::class, InterruptedException::class, IOException::class)
+  fun testHttp2() {
+    val tlsStrategy = ClientTlsStrategyBuilder.create()
+      .useSystemProperties()
+      .build()
+    val cm = PoolingAsyncClientConnectionManagerBuilder.create()
+      .setTlsStrategy(tlsStrategy)
+      .build()
+    val client = HttpAsyncClients.custom()
+      .setVersionPolicy(HttpVersionPolicy.NEGOTIATE)
+      .setConnectionManager(cm)
+      .build()
 
-      client.start();
-
-      final HttpHost target = new HttpHost("https", "google.com", 443);
-      final String requestUri = "/robots.txt";
-      final HttpClientContext clientContext = HttpClientContext.create();
-
-      final SimpleHttpRequest request = SimpleHttpRequests.get(target, requestUri);
-      final Future<SimpleHttpResponse> future = client.execute(
+    client.use { client ->
+        client.start()
+        val target = HttpHost("https", "google.com", 443)
+        val requestUri = "/robots.txt"
+        val clientContext = HttpClientContext.create()
+        val request = SimpleHttpRequests.get(target, requestUri)
+        val future = client.execute(
           SimpleRequestProducer.create(request),
           SimpleResponseConsumer.create(),
           clientContext,
-          new FutureCallback<SimpleHttpResponse>() {
-
-            @Override
-            public void completed(final SimpleHttpResponse response) {
-              System.out.println("Protocol " + response.getVersion());
-              System.out.println(requestUri + "->" + response.getCode());
-              System.out.println(response.getBody());
-              final SSLSession sslSession = clientContext.getSSLSession();
+          object : FutureCallback<SimpleHttpResponse> {
+            override fun completed(response: SimpleHttpResponse) {
+              println("Protocol " + response.version)
+              println(requestUri + "->" + response.code)
+              println(response.body)
+              val sslSession = clientContext.sslSession
               if (sslSession != null) {
-                System.out.println("SSL protocol " + sslSession.getProtocol());
-                System.out.println("SSL cipher suite " + sslSession.getCipherSuite());
+                println("SSL protocol " + sslSession.protocol)
+                println("SSL cipher suite " + sslSession.cipherSuite)
               }
-
-              assertEquals(new ProtocolVersion("HTTP", 2, 0), response.getVersion());
+              Assert.assertEquals(ProtocolVersion("HTTP", 2, 0), response.version)
             }
 
-            @Override
-            public void failed(final Exception ex) {
-              System.out.println(requestUri + "->" + ex);
+            override fun failed(ex: Exception) {
+              println("$requestUri->$ex")
             }
 
-            @Override
-            public void cancelled() {
-              System.out.println(requestUri + " cancelled");
+            override fun cancelled() {
+              println("$requestUri cancelled")
             }
-
-          });
-      future.get();
-
-      System.out.println("Shutting down");
-      client.close(CloseMode.GRACEFUL);
-    }
+          })
+        future.get()
+        println("Shutting down")
+        client.close(CloseMode.GRACEFUL)
+      }
   }
 }
