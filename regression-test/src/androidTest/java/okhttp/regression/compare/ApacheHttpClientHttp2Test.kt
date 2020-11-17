@@ -40,6 +40,7 @@ import org.junit.Assert
 import org.junit.Test
 
 /**
+ * Simplified from
  * https://hc.apache.org/httpcomponents-client-5.0.x/httpclient5/examples/AsyncClientTlsAlpn.java
  */
 class ApacheHttpClientHttp2Test {
@@ -49,33 +50,24 @@ class ApacheHttpClientHttp2Test {
 
     client.use { client ->
         client.start()
-        val target = HttpHost("https", "google.com", 443)
-        val requestUri = "/robots.txt"
-        val clientContext = HttpClientContext.create()
-        val request = SimpleHttpRequests.get(target, requestUri)
+        val request = SimpleHttpRequests.get("https://google.com/robots.txt")
         val future = client.execute(
-          SimpleRequestProducer.create(request),
-          SimpleResponseConsumer.create(),
-          clientContext,
+          request,
           object : FutureCallback<SimpleHttpResponse> {
             override fun completed(response: SimpleHttpResponse) {
-              println("Protocol " + response.version)
-              println(requestUri + "->" + response.code)
-              println(response.body)
-              val sslSession = clientContext.sslSession
-              if (sslSession != null) {
-                println("SSL protocol " + sslSession.protocol)
-                println("SSL cipher suite " + sslSession.cipherSuite)
-              }
+              println("Protocol ${response.version}")
+              println("Response ${response.code}")
+              println("${response.body.bodyText.substring(0, 20)}...")
+
               Assert.assertEquals(ProtocolVersion("HTTP", 2, 0), response.version)
             }
 
             override fun failed(ex: Exception) {
-              println("$requestUri->$ex")
+              println("Failed: $ex")
             }
 
             override fun cancelled() {
-              println("$requestUri cancelled")
+              println("Cancelled")
             }
           })
         future.get()
