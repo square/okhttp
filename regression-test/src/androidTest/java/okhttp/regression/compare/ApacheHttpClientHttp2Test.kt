@@ -31,7 +31,6 @@ import org.apache.hc.client5.http.async.methods.SimpleHttpResponse
 import org.apache.hc.client5.http.impl.async.HttpAsyncClients
 import org.apache.hc.core5.concurrent.FutureCallback
 import org.apache.hc.core5.http.ProtocolVersion
-import org.apache.hc.core5.io.CloseMode
 import org.junit.Assert
 import org.junit.Test
 
