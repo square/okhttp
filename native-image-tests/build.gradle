@@ -27,7 +27,7 @@ dependencies {
   implementation deps.junit5Api
   implementation deps.junit5JupiterParams
 
-  implementation("org.graalvm.nativeimage:svm:20.2.0") {
+  implementation("org.graalvm.nativeimage:svm:20.3.0") {
     // https://youtrack.jetbrains.com/issue/KT-29513
     exclude group: "org.graalvm.nativeimage"
     exclude group: "org.graalvm.truffle"
@@ -59,14 +59,13 @@ if (!isIDE) {
 graal {
   mainClass "okhttp3.RunTestsKt"
   outputName "ConsoleLauncher"
-  graalVersion "20.2.0"
+  graalVersion "20.3.0"
   javaVersion "11"
 
   option "--no-fallback"
   option "--allow-incomplete-classpath"
   option "--report-unsupported-elements-at-runtime"
   option "-H:+ReportExceptionStackTraces"
-  option "-H:+TraceClassInitialization"
 
   if (Os.isFamily(Os.FAMILY_WINDOWS)) {
     // May be possible without, but autodetection is problematic on Windows 10
