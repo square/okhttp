@@ -190,7 +190,7 @@ public final class HostnameVerifierTest {
         + "-----END CERTIFICATE-----\n");
 
     X509Certificate peerCertificate = ((X509Certificate) session.getPeerCertificates()[0]);
-    if (Platform.COMPANION.isAndroid() || platform.isConscrypt()) {
+    if (Platform.Companion.isAndroid() || platform.isConscrypt()) {
       assertThat(certificateSANs(peerCertificate)).containsExactly("bar.com");
     } else {
       assertThat(certificateSANs(peerCertificate)).containsExactly("bar.com", "������.co.jp");
@@ -383,7 +383,7 @@ public final class HostnameVerifierTest {
         + "-----END CERTIFICATE-----\n");
 
     X509Certificate peerCertificate = ((X509Certificate) session.getPeerCertificates()[0]);
-    if (Platform.COMPANION.isAndroid() || platform.isConscrypt()) {
+    if (Platform.Companion.isAndroid() || platform.isConscrypt()) {
       assertThat(certificateSANs(peerCertificate)).containsExactly("*.bar.com");
     } else {
       assertThat(certificateSANs(peerCertificate)).containsExactly("*.bar.com", "*.������.co.jp");
@@ -661,7 +661,7 @@ public final class HostnameVerifierTest {
         + "-----END CERTIFICATE-----\n");
 
     X509Certificate peerCertificate = ((X509Certificate) session.getPeerCertificates()[0]);
-    if (Platform.COMPANION.isAndroid()) {
+    if (Platform.Companion.isAndroid()) {
       assertThat(certificateSANs(peerCertificate)).containsExactly();
     } else {
       assertThat(certificateSANs(peerCertificate)).containsExactly("���.com", "���.com");
