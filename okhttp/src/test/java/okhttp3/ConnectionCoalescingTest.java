@@ -39,7 +39,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public final class ConnectionCoalescingTest {
   @RegisterExtension public final PlatformRule platform = new PlatformRule();

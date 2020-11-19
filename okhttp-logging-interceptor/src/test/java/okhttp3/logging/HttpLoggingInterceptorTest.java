@@ -41,6 +41,8 @@ import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.ByteString;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,8 +51,8 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeThat;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 @ExtendWith(MockWebServerExtension.class)
 public final class HttpLoggingInterceptorTest {
@@ -767,7 +769,7 @@ public final class HttpLoggingInterceptorTest {
 
     server.enqueue(new MockResponse());
     Response response = client.newCall(request().build()).execute();
-    assumeThat(response.protocol(), equalTo(Protocol.HTTP_2));
+    assumeTrue(response.protocol().equals(Protocol.HTTP_2));
 
     applicationLogs
         .assertLogEqual("--> GET " + url)
@@ -868,7 +870,7 @@ public final class HttpLoggingInterceptorTest {
         .post(asyncRequestBody)
         .build();
     Response response = client.newCall(request).execute();
-    assumeThat(response.protocol(), equalTo(Protocol.HTTP_2));
+    Assumptions.assumeTrue(response.protocol().equals(Protocol.HTTP_2));
 
     assertThat(response.body().string()).isEqualTo("Hello response!");
 
