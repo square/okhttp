@@ -33,6 +33,8 @@ import static org.junit.Assert.fail;
 
 @RunWith(Parameterized.class)
 public final class HttpUrlTest {
+  @RegisterExtension public final PlatformRule platform = new PlatformRule();
+
   @Parameterized.Parameters(name = "Use get = {0}")
   public static Collection<Object[]> parameters() {
     return asList(
@@ -1511,6 +1513,9 @@ public final class HttpUrlTest {
   }
 
   @Test public void fromJavaNetUrlUnsupportedScheme() throws Exception {
+    // java.net.MalformedURLException: unknown protocol: mailto
+    platform.assumeNotAndroid();
+
     URL javaNetUrl = new URL("mailto:user@example.com");
     assertThat(HttpUrl.get(javaNetUrl)).isNull();
   }
