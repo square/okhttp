@@ -23,7 +23,7 @@ import static okhttp3.CipherSuite.TLS_RSA_WITH_AES_128_CBC_SHA256;
 import static okhttp3.CipherSuite.forJavaName;
 import static okhttp3.internal.Internal.applyConnectionSpec;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
 public class CipherSuiteTest {
