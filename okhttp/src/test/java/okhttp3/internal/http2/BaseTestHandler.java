@@ -20,7 +20,7 @@ import java.util.List;
 import okio.BufferedSource;
 import okio.ByteString;
 
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 class BaseTestHandler implements Http2Reader.Handler {
   @Override public void data(boolean inFinished, int streamId, BufferedSource source, int length)

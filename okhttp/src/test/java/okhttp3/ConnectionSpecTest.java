@@ -28,7 +28,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import static java.util.Arrays.asList;
 import static okhttp3.internal.Internal.applyConnectionSpec;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public final class ConnectionSpecTest {
   @RegisterExtension public final PlatformRule platform = new PlatformRule();

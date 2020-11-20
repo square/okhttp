@@ -39,7 +39,7 @@ import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /** Derived from Android's CookiesTest. */
 @Timeout(30)
