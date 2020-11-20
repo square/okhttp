@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.Collections;
 import okhttp3.UrlComponentEncodingTester.Component;
 import okhttp3.UrlComponentEncodingTester.Encoding;
+import okhttp3.testing.PlatformRule;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
