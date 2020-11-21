@@ -102,7 +102,6 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 
 @Timeout(30)
-@Tag("Slow")
 public final class CallTest {
   @RegisterExtension final PlatformRule platform = new PlatformRule();
   @RegisterExtension final InMemoryFileSystem fileSystem = new InMemoryFileSystem();
@@ -2217,6 +2216,7 @@ public final class CallTest {
     assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(2);
   }
 
+  @Tag("Slow")
   @Test public void follow20Redirects() throws Exception {
     for (int i = 0; i < 20; i++) {
       server.enqueue(new MockResponse()
@@ -2231,6 +2231,7 @@ public final class CallTest {
         .assertBody("Success!");
   }
 
+  @Tag("Slow")
   @Test public void follow20Redirects_Async() throws Exception {
     for (int i = 0; i < 20; i++) {
       server.enqueue(new MockResponse()
@@ -2247,6 +2248,7 @@ public final class CallTest {
         .assertBody("Success!");
   }
 
+  @Tag("Slow")
   @Test public void doesNotFollow21Redirects() throws Exception {
     for (int i = 0; i < 21; i++) {
       server.enqueue(new MockResponse()
@@ -2263,6 +2265,7 @@ public final class CallTest {
     }
   }
 
+  @Tag("Slow")
   @Test public void doesNotFollow21Redirects_Async() throws Exception {
     for (int i = 0; i < 21; i++) {
       server.enqueue(new MockResponse()
@@ -2325,10 +2328,12 @@ public final class CallTest {
     assertThat(server.getRequestCount()).isEqualTo(0);
   }
 
+  @Tag("Slowish")
   @Test public void cancelDuringHttpConnect() throws Exception {
     cancelDuringConnect("http");
   }
 
+  @Tag("Slowish")
   @Test public void cancelDuringHttpsConnect() throws Exception {
     cancelDuringConnect("https");
   }
@@ -2770,6 +2775,7 @@ public final class CallTest {
     expect100ContinueEmptyRequestBody();
   }
 
+  @Tag("Slowish")
   @Test public void expect100ContinueTimesOutWithoutContinue() throws Exception {
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.NO_RESPONSE));
@@ -2795,6 +2801,7 @@ public final class CallTest {
     assertThat(recordedRequest.getBody().readUtf8()).isEqualTo("");
   }
 
+  @Tag("Slowish")
   @Test public void expect100ContinueTimesOutWithoutContinue_HTTP2() throws Exception {
     enableProtocol(Protocol.HTTP_2);
     expect100ContinueTimesOutWithoutContinue();
@@ -2822,6 +2829,7 @@ public final class CallTest {
     serverRespondsWithUnsolicited100Continue();
   }
 
+  @Tag("Slow")
   @Test public void serverRespondsWith100ContinueOnly() throws Exception {
     client = client.newBuilder()
         .readTimeout(Duration.ofSeconds(1))
@@ -2846,6 +2854,7 @@ public final class CallTest {
     assertThat(recordedRequest.getBody().readUtf8()).isEqualTo("abc");
   }
 
+  @Tag("Slow")
   @Test public void serverRespondsWith100ContinueOnly_HTTP2() throws Exception {
     enableProtocol(Protocol.HTTP_2);
     serverRespondsWith100ContinueOnly();
@@ -2869,11 +2878,13 @@ public final class CallTest {
     assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(1);
   }
 
+  @Tag("Slow")
   @Test public void successfulExpectContinuePermitsConnectionReuseWithHttp2() throws Exception {
     enableProtocol(Protocol.HTTP_2);
     successfulExpectContinuePermitsConnectionReuse();
   }
 
+  @Tag("Slow")
   @Test public void unsuccessfulExpectContinuePreventsConnectionReuse() throws Exception {
     server.enqueue(new MockResponse());
     server.enqueue(new MockResponse());
@@ -3606,6 +3617,7 @@ public final class CallTest {
         + " Did you forget to close a response body?");
   }
 
+  @Tag("Slowish")
   @Test public void asyncLeakedResponseBodyLogsStackTrace() throws Exception {
     server.enqueue(new MockResponse()
         .setBody("This gets leaked."));
