@@ -44,7 +44,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 @ExtendWith(MockWebServerExtension.class)
 @Tag("Slowish")

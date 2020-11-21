@@ -15,7 +15,6 @@
  */
 package okhttp3;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import javax.net.ssl.SSLPeerUnverifiedException;
@@ -23,15 +22,14 @@ import okhttp3.tls.HeldCertificate;
 import org.junit.jupiter.api.Test;
 
 import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static okhttp3.CertificatePinner.sha1Hash;
 import static okio.ByteString.decodeBase64;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public final class CertificatePinnerTest {
   static HeldCertificate certA1 = new HeldCertificate.Builder()

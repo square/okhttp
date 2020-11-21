@@ -27,7 +27,7 @@ import static java.util.Arrays.asList;
 import static okhttp3.internal.Internal.parseCookie;
 import static okhttp3.internal.http.DatesKt.MAX_DATE;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public final class CookieTest {
   HttpUrl url = HttpUrl.get("https://example.com/");

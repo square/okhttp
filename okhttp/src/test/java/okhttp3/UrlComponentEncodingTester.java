@@ -24,7 +24,7 @@ import okhttp3.internal.Util;
 import okio.Buffer;
 import okio.ByteString;
 
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /** Tests how each code point is encoded and decoded in the context of each URL component. */
 class UrlComponentEncodingTester {

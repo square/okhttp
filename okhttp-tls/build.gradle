@@ -17,6 +17,7 @@ dependencies {
   compileOnly deps.animalSniffer
 
   testImplementation project(':okhttp-testing-support')
+  testImplementation project(':mockwebserver-junit5')
   testImplementation deps.junit
   testImplementation deps.assertj
 }
