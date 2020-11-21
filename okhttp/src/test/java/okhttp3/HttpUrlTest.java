@@ -34,7 +34,7 @@ import static org.junit.Assert.fail;
 
 @RunWith(Parameterized.class)
 public final class HttpUrlTest {
-  @RegisterExtension public final PlatformRule platform = new PlatformRule();
+  public final PlatformRule platform = new PlatformRule();
 
   @Parameterized.Parameters(name = "Use get = {0}")
   public static Collection<Object[]> parameters() {
