@@ -184,7 +184,12 @@ public class MediaTypeTest {
   @ParameterizedTest @ArgumentsSource(BooleanParamProvider.class)
   public void testCharsetNameIsDoubleQuotedAndSingleQuoted(boolean useGet) throws Exception {
     MediaType mediaType = parse("text/plain;charset=\"'utf-8'\"", useGet);
-    assertThat(mediaType.charset()).isNull();
+    if (Platform.Companion.isAndroid()) {
+      // Charset.forName("'utf-8'") == UTF-8
+      assertThat(mediaType.charset().name()).isEqualTo("UTF-8");
+    } else {
+      assertThat(mediaType.charset()).isNull();
+    }
   }
 
   @ParameterizedTest @ArgumentsSource(BooleanParamProvider.class)

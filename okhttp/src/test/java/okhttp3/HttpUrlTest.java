@@ -20,6 +20,7 @@ import java.net.URL;
 import java.util.Collections;
 import okhttp3.UrlComponentEncodingTester.Component;
 import okhttp3.UrlComponentEncodingTester.Encoding;
+import okhttp3.testing.PlatformRule;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
@@ -29,10 +30,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
 
 public final class HttpUrlTest {
+  public final PlatformRule platform = new PlatformRule();
+
   HttpUrl parse(String url, boolean useGet) {
-    return useGet
-        ? HttpUrl.get(url)
-        : HttpUrl.parse(url);
+    return HttpUrl.parse(url);
   }
 
   @ParameterizedTest @ArgumentsSource(BooleanParamProvider.class)
@@ -1684,6 +1685,8 @@ public final class HttpUrlTest {
 
   @ParameterizedTest @ArgumentsSource(BooleanParamProvider.class)
   public void fromJavaNetUrlUnsupportedScheme(boolean useGet) throws Exception {
+    // java.net.MalformedURLException: unknown protocol: mailto
+    platform.assumeNotAndroid();
     URL javaNetUrl = new URL("mailto:user@example.com");
     assertThat(HttpUrl.get(javaNetUrl)).isNull();
   }

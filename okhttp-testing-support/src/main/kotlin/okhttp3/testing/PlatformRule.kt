@@ -284,6 +284,7 @@ open class PlatformRule @JvmOverloads constructor(
   }
 
   fun assumeJdkVersion(majorVersion: Int) {
+    assumeNotAndroid()
     assumeTrue(PlatformVersion.majorVersion == majorVersion)
   }
 
