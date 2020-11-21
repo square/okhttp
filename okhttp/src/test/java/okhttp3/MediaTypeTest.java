@@ -18,6 +18,7 @@ package okhttp3;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
+import okhttp3.internal.platform.Platform;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -184,7 +185,12 @@ public class MediaTypeTest {
 
   @Test public void testCharsetNameIsDoubleQuotedAndSingleQuoted() throws Exception {
     MediaType mediaType = parse("text/plain;charset=\"'utf-8'\"");
-    assertThat(mediaType.charset()).isNull();
+    if (Platform.Companion.isAndroid()) {
+      // Charset.forName("'utf-8'") == UTF-8
+      assertThat(mediaType.charset().name()).isEqualTo("UTF-8");
+    } else {
+      assertThat(mediaType.charset()).isNull();
+    }
   }
 
   @Test public void testCharsetNameIsDoubleQuotedSingleQuote() throws Exception {
