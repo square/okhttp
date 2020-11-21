@@ -22,12 +22,14 @@ import okhttp3.Request
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.decodeCertificatePem
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import java.security.cert.X509Certificate
 
 /**
  * Test for new Let's Encrypt Root Certificate.
  */
+@Tag("Remote")
 class LetsEncryptClientTest {
   @Test fun get() {
     // These tests wont actually run before Android 8.0 as per

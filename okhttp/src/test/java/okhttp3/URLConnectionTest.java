@@ -81,6 +81,7 @@ import okio.Utf8;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.io.TempDir;
@@ -110,6 +111,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 /** Android's URLConnectionTest, ported to exercise OkHttp's Call API. */
+@Tag("Slow")
 public final class URLConnectionTest {
   @RegisterExtension public final PlatformRule platform = new PlatformRule();
   @RegisterExtension public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();

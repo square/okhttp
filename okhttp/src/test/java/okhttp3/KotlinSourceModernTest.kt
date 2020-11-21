@@ -76,6 +76,8 @@ import okio.BufferedSink
 import okio.BufferedSource
 import okio.ByteString
 import okio.Timeout
+import org.junit.jupiter.api.Assumptions.assumeFalse
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
@@ -95,6 +97,11 @@ import org.junit.jupiter.api.Test
 )
 @Disabled
 class KotlinSourceModernTest {
+  @BeforeEach
+  fun disabled() {
+    assumeFalse(true)
+  }
+
   @Test
   fun address() {
     val address: Address = newAddress()

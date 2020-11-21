@@ -83,6 +83,7 @@ import okio.Okio;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -101,6 +102,7 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 
 @Timeout(30)
+@Tag("Slow")
 public final class CallTest {
   @RegisterExtension final PlatformRule platform = new PlatformRule();
   @RegisterExtension final InMemoryFileSystem fileSystem = new InMemoryFileSystem();
