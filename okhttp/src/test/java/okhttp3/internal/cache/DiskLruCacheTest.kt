@@ -29,6 +29,7 @@ import okio.buffer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assumptions
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.fail
 import org.junit.jupiter.api.io.TempDir
@@ -49,6 +50,7 @@ class FileSystemParamProvider: SimpleProvider() {
 }
 
 @Timeout(60)
+@Tag("Slow")
 class DiskLruCacheTest {
   private lateinit var fileSystem: FaultyFileSystem
   private var windows: Boolean = false
@@ -492,7 +494,7 @@ class DiskLruCacheTest {
     writeFile(getCleanFile("k1", 1), "B")
     fileSystem.sink(journalFile).buffer().use {
       it.writeUtf8(
-          """
+        """
           |${DiskLruCache.MAGIC}
           |${DiskLruCache.VERSION_1}
           |100
@@ -1058,7 +1060,7 @@ class DiskLruCacheTest {
 
     // Cause the rebuild action to fail.
     fileSystem.setFaultyRename(
-        File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), true
+      File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), true
     )
     taskFaker.runNextTask()
 
@@ -1959,7 +1961,8 @@ class DiskLruCacheTest {
     creator.commit()
     val snapshotAfterCommit = cache.snapshots()
     assertThat(snapshotAfterCommit.hasNext()).withFailMessage(
-        "Entry has been removed during creation.").isTrue()
+      "Entry has been removed during creation."
+    ).isTrue()
   }
 
   @ParameterizedTest
@@ -2158,13 +2161,14 @@ class DiskLruCacheTest {
 
   private fun assertJournalEquals(vararg expectedBodyLines: String) {
     assertThat(readJournalLines()).isEqualTo(
-        listOf(DiskLruCache.MAGIC, DiskLruCache.VERSION_1, "100", "2", "") + expectedBodyLines)
+      listOf(DiskLruCache.MAGIC, DiskLruCache.VERSION_1, "100", "2", "") + expectedBodyLines
+    )
   }
 
   private fun createJournal(vararg bodyLines: String) {
     createJournalWithHeader(
-        DiskLruCache.MAGIC,
-        DiskLruCache.VERSION_1, "100", "2", "", *bodyLines
+      DiskLruCache.MAGIC,
+      DiskLruCache.VERSION_1, "100", "2", "", *bodyLines
     )
   }
 
@@ -2177,7 +2181,8 @@ class DiskLruCacheTest {
     vararg bodyLines: String
   ) {
     fileSystem.sink(journalFile).buffer().use { sink ->
-      sink.writeUtf8("""
+      sink.writeUtf8(
+        """
         |$magic
         |$version
         |$appVersion

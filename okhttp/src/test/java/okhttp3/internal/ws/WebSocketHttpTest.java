@@ -51,6 +51,7 @@ import okio.ByteString;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -62,6 +63,7 @@ import static org.assertj.core.data.Offset.offset;
 import static org.junit.jupiter.api.Assertions.fail;
 
 @Flaky
+@Tag("Slow")
 public final class WebSocketHttpTest {
   // Flaky https://github.com/square/okhttp/issues/4515
   // Flaky https://github.com/square/okhttp/issues/4953
