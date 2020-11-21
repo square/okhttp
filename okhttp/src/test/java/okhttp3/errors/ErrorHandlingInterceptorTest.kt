@@ -16,11 +16,15 @@
 package okhttp3.errors
 
 import mockwebserver3.MockWebServer
+import okhttp3.CertificatePinner
+import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClientTestRule
 import okhttp3.RecordingHostnameVerifier
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.errors.ErrorType.Companion.DNS_NAME_NOT_RESOLVED
+import okhttp3.errors.ErrorType.Companion.TLS_CERT_PINNED_KEY_NOT_IN_CERT_CHAIN
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.internal.TlsUtil
 import org.assertj.core.api.Assertions.assertThat
@@ -59,7 +63,7 @@ class ErrorHandlingInterceptorTest(
     val url = "https://blah.invalid"
 
     try {
-      makeRequest(url)
+      makeRequest(url.toHttpUrl())
     } catch (e: DnsNameNotResolvedException) {
       assertThat(e.primaryErrorType).isEqualTo(DNS_NAME_NOT_RESOLVED)
       assertThat(e.targetHostname).isEqualTo("blah.invalid")
@@ -67,7 +71,31 @@ class ErrorHandlingInterceptorTest(
     }
   }
 
-  private fun makeRequest(url: String): Response {
+  @Test
+  fun testCertPinningFailure() {
+    enableTls()
+
+    client = client.newBuilder()
+      .certificatePinner(
+        CertificatePinner.Builder()
+          .add(server.hostName, "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
+          .build()
+      )
+      .build()
+
+    try {
+      makeRequest(server.url("/"))
+    } catch (e: CertPinnedKeyNotInCertChainException) {
+      assertThat(e.primaryErrorType).isEqualTo(TLS_CERT_PINNED_KEY_NOT_IN_CERT_CHAIN)
+      assertThat(e.hostname).isEqualTo(server.hostName)
+      assertThat(e.matchingPins).containsExactly(
+        CertificatePinner.Pin(server.hostName, "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+      )
+      assertThat(e.peerCertificates.first().subjectAlternativeNames.first()).isEqualTo(listOf(2, "localhost"))
+    }
+  }
+
+  private fun makeRequest(url: HttpUrl): Response {
     return client.newCall(Request.Builder().url(url).build()).execute()
   }
 }

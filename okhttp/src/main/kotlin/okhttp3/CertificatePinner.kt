@@ -199,7 +199,7 @@ class CertificatePinner internal constructor(
       }
     }
     throw CertPinnedKeyNotInCertChainException(
-      message, hostname = "hostname", matchingPins = pins, peerCertificates = peerCertificates
+      message, hostname = hostname, matchingPins = pins, peerCertificates = peerCertificates
     )
   }
 
