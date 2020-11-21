@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.data.Offset
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 
 /**
@@ -31,6 +32,7 @@ import org.junit.jupiter.api.Test
  * This test is doing real sleeping with tolerances of 250 ms. Hopefully that's enough for even the
  * busiest of CI servers.
  */
+@Tag("Slowish")
 class TaskRunnerRealBackendTest {
   private val log = LinkedBlockingDeque<String>()
 

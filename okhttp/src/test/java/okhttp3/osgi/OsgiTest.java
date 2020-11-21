@@ -32,8 +32,10 @@ import java.util.stream.Collectors;
 import okio.BufferedSource;
 import okio.Okio;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+@Tag("Slow")
 public final class OsgiTest {
   /** Each is the Bundle-SymbolicName of an OkHttp module's OSGi configuration. */
   private static final List<String> REQUIRED_BUNDLES = Arrays.asList(

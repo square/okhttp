@@ -16,6 +16,7 @@
 package okhttp3
 
 import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
 import java.io.File
@@ -50,6 +51,7 @@ internal class MainTestProvider : SimpleProvider() {
 }
 
 @Disabled("Don't run by default")
+@Tag("Slow")
 class AllMainsTest {
   @ParameterizedTest
   @ArgumentsSource(MainTestProvider::class)

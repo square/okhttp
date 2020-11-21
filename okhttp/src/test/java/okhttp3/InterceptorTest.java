@@ -41,12 +41,14 @@ import okio.Okio;
 import okio.Sink;
 import okio.Source;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
 
+@Tag("Slow")
 public final class InterceptorTest {
   @RegisterExtension public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
