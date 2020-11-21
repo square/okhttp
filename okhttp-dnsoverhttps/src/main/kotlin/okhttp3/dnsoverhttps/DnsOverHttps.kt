@@ -33,6 +33,8 @@ import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import okhttp3.errors.DnsFailedException
+import okhttp3.errors.DnsNameNotResolvedException
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
 
@@ -66,11 +68,11 @@ class DnsOverHttps internal constructor(
       val privateHost = isPrivateHost(hostname)
 
       if (privateHost && !resolvePrivateAddresses) {
-        throw UnknownHostException("private hosts not resolved")
+        throw DnsFailedException(message = "private hosts not resolved", targetHostname = hostname)
       }
 
       if (!privateHost && !resolvePublicAddresses) {
-        throw UnknownHostException("public hosts not resolved")
+        throw DnsFailedException("public hosts not resolved", targetHostname = hostname)
       }
     }
 
@@ -164,16 +166,16 @@ class DnsOverHttps internal constructor(
   @Throws(UnknownHostException::class)
   private fun throwBestFailure(hostname: String, failures: List<Exception>): List<InetAddress> {
     if (failures.isEmpty()) {
-      throw UnknownHostException(hostname)
+      throw DnsFailedException(targetHostname = hostname)
     }
 
     val failure = failures[0]
 
     if (failure is UnknownHostException) {
-      throw failure
+      throw DnsNameNotResolvedException(cause = failure, host = hostname)
     }
 
-    val unknownHostException = UnknownHostException(hostname)
+    val unknownHostException = DnsNameNotResolvedException(cause = failure, host = hostname)
     unknownHostException.initCause(failure)
 
     for (i in 1 until failures.size) {
