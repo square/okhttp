@@ -18,5 +18,9 @@ package okhttp3.errors
 interface TypedException {
   val primaryErrorType: ErrorType?
 
-  val errorTypes: Set<ErrorType>
+  open val errorTypes: Set<ErrorType>
+    get() = setOfNotNull(primaryErrorType)
+
+  open val errorDetails: Map<String, Any>
+    get() = mapOf()
 }

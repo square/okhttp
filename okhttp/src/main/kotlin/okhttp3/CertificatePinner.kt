@@ -198,7 +198,9 @@ class CertificatePinner internal constructor(
         append(pin)
       }
     }
-    throw CertPinnedKeyNotInCertChainException(message, matchingPins = pins, peerCertificates = peerCertificates)
+    throw CertPinnedKeyNotInCertChainException(
+      message, hostname = "hostname", matchingPins = pins, peerCertificates = peerCertificates
+    )
   }
 
   @Deprecated(

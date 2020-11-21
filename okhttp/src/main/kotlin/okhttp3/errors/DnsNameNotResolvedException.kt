@@ -28,7 +28,6 @@ class DnsNameNotResolvedException(
   }
 
   override val primaryErrorType = DNS_NAME_NOT_RESOLVED
-  override val errorTypes = setOf(DNS_NAME_NOT_RESOLVED)
 
   val targetHostname: String? =
     when {
@@ -38,4 +37,7 @@ class DnsNameNotResolvedException(
       }
       else -> { null }
     }
+
+  override val errorDetails: Map<String, Any>
+    get() = if (targetHostname == null) mapOf() else mapOf("hostname" to targetHostname)
 }

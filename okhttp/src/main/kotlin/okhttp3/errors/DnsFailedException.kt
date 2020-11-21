@@ -29,5 +29,6 @@ class DnsFailedException(
   }
 
   override val primaryErrorType = DNS_FAILED
-  override val errorTypes = setOf(DNS_FAILED)
+  override val errorDetails: Map<String, Any>
+    get() = if (targetHostname == null) mapOf() else mapOf("hostname" to targetHostname)
 }

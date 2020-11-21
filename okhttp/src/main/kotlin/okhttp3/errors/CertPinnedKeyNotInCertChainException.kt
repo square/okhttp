@@ -22,9 +22,11 @@ import javax.net.ssl.SSLPeerUnverifiedException
 
 class CertPinnedKeyNotInCertChainException(
   reason: String,
+  val hostname: String,
   val matchingPins: List<CertificatePinner.Pin>,
   val peerCertificates: List<X509Certificate>
 ): SSLPeerUnverifiedException(reason), TypedException {
   override val primaryErrorType = TLS_CERT_PINNED_KEY_NOT_IN_CERT_CHAIN
-  override val errorTypes = setOf(TLS_CERT_PINNED_KEY_NOT_IN_CERT_CHAIN)
+  override val errorDetails: Map<String, Any>
+    get() = mapOf("hostname" to hostname, "matchingPins" to matchingPins, "peerCertificates" to peerCertificates)
 }
