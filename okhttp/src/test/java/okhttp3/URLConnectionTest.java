@@ -61,6 +61,7 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
+import kotlin.Unit;
 import mockwebserver3.MockResponse;
 import mockwebserver3.MockWebServer;
 import mockwebserver3.RecordedRequest;
@@ -85,7 +86,6 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.io.TempDir;
-import org.junit.rules.TemporaryFolder;
 import org.opentest4j.TestAbortedException;
 
 import static java.net.HttpURLConnection.HTTP_MOVED_TEMP;
@@ -101,6 +101,7 @@ import static mockwebserver3.SocketPolicy.FAIL_HANDSHAKE;
 import static mockwebserver3.SocketPolicy.SHUTDOWN_INPUT_AT_END;
 import static mockwebserver3.SocketPolicy.SHUTDOWN_OUTPUT_AT_END;
 import static mockwebserver3.SocketPolicy.UPGRADE_TO_SSL_AT_END;
+import static okhttp3.TestUtil.assertSuppressed;
 import static okhttp3.internal.Internal.addHeaderLenient;
 import static okhttp3.internal.Util.immutableListOf;
 import static okhttp3.internal.Util.userAgent;
@@ -648,7 +649,10 @@ public final class URLConnectionTest {
       getResponse(newRequest("/foo"));
       fail();
     } catch (IOException expected) {
-      assertThat(expected.getSuppressed().length).isEqualTo(1);
+      assertSuppressed(expected, throwables -> {
+        assertThat(throwables).hasSize(1);
+        return Unit.INSTANCE;
+      });
     }
   }
 

@@ -16,8 +16,10 @@
 package okhttp3.internal.connection;
 
 import java.io.IOException;
+import kotlin.Unit;
 import org.junit.jupiter.api.Test;
 
+import static okhttp3.TestUtil.assertSuppressed;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class RouteExceptionTest {
@@ -39,10 +41,12 @@ public class RouteExceptionTest {
 
     IOException connectionIOException = re.getFirstConnectException();
     assertThat(connectionIOException).isSameAs(firstException);
-    Throwable[] suppressedExceptions = connectionIOException.getSuppressed();
-    assertThat(suppressedExceptions.length).isEqualTo(2);
-    assertThat(suppressedExceptions[0]).isSameAs(secondException);
-    assertThat(suppressedExceptions[1]).isSameAs(thirdException);
+    assertSuppressed(connectionIOException, suppressedExceptions -> {
+      assertThat(suppressedExceptions.size()).isEqualTo(2);
+      assertThat(suppressedExceptions.get(0)).isSameAs(secondException);
+      assertThat(suppressedExceptions.get(1)).isSameAs(thirdException);
+      return Unit.INSTANCE;
+    });
 
     assertThat(re.getLastConnectException()).isSameAs(thirdException);
   }
