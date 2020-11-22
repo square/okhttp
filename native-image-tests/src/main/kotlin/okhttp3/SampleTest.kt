@@ -28,8 +28,8 @@ class SampleTest {
   @JvmField @RegisterExtension val clientRule = OkHttpClientTestRule()
 
   @Test
-  fun failingTest() {
-    assertThat("hello").isEqualTo("goodbye")
+  fun passingTest() {
+    assertThat("hello").isEqualTo("hello")
   }
 
   @Test

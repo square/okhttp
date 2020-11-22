@@ -18,7 +18,7 @@ package okhttp3.tls;
 import java.security.cert.X509Certificate;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class CertificatesJavaTest {
   @Test

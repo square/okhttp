@@ -44,6 +44,7 @@ import okhttp3.tls.HeldCertificate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -63,6 +64,7 @@ import static org.junit.Assume.assumeFalse;
 
 @SuppressWarnings({"ArraysAsListWithZeroOrOneArgument", "deprecation"})
 @Timeout(30)
+@Tag("Slow")
 public final class MockWebServerTest {
   @RegisterExtension public PlatformRule platform = new PlatformRule();
 

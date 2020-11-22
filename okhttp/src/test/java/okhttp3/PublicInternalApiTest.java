@@ -19,8 +19,8 @@ import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http.HttpMethod;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SuppressWarnings("ALL") public class PublicInternalApiTest {
   @Test public void permitsRequestBody() {

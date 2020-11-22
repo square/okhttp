@@ -15,8 +15,6 @@
  */
 package okhttp3
 
-import java.io.EOFException
-import java.net.ProtocolException
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -24,8 +22,12 @@ import okhttp3.ResponseBody.Companion.toResponseBody
 import okio.Buffer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.fail
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
+import java.io.EOFException
+import java.net.ProtocolException
 
+@Tag("Slowish")
 class MultipartReaderTest {
   @Test fun `parse multipart`() {
     val multipart = """
@@ -47,23 +49,27 @@ class MultipartReaderTest {
         .replace("\n", "\r\n")
 
     val parts = MultipartReader(
-        boundary = "simple boundary",
-        source = Buffer().writeUtf8(multipart)
+      boundary = "simple boundary",
+      source = Buffer().writeUtf8(multipart)
     )
     assertThat(parts.boundary).isEqualTo("simple boundary")
 
     val partAbc = parts.nextPart()!!
-    assertThat(partAbc.headers).isEqualTo(headersOf(
+    assertThat(partAbc.headers).isEqualTo(
+      headersOf(
         "Content-Type", "text/plain; charset=utf-8",
         "Content-ID", "abc"
-    ))
+      )
+    )
     assertThat(partAbc.body.readUtf8()).isEqualTo("abcd\r\nefgh")
 
     val partIjk = parts.nextPart()!!
-    assertThat(partIjk.headers).isEqualTo(headersOf(
+    assertThat(partIjk.headers).isEqualTo(
+      headersOf(
         "Content-Type", "text/plain; charset=utf-8",
         "Content-ID", "ijk"
-    ))
+      )
+    )
     assertThat(partIjk.body.readUtf8()).isEqualTo("ijkl\r\nmnop\r\n")
 
     assertThat(parts.nextPart()).isNull()
@@ -79,7 +85,8 @@ class MultipartReaderTest {
         .replace("\n", "\r\n")
 
     val responseBody = multipart.toResponseBody(
-        "application/multipart; boundary=\"simple boundary\"".toMediaType())
+      "application/multipart; boundary=\"simple boundary\"".toMediaType()
+    )
 
     val parts = MultipartReader(responseBody)
     assertThat(parts.boundary).isEqualTo("simple boundary")
@@ -100,8 +107,8 @@ class MultipartReaderTest {
         .replace("\n", "\r\n")
 
     val parts = MultipartReader(
-        boundary = "simple boundary",
-        source = Buffer().writeUtf8(multipart)
+      boundary = "simple boundary",
+      source = Buffer().writeUtf8(multipart)
     )
 
     val part = parts.nextPart()!!
@@ -126,8 +133,8 @@ class MultipartReaderTest {
         .replace("\n", "\r\n")
 
     val parts = MultipartReader(
-        boundary = "simple boundary",
-        source = Buffer().writeUtf8(multipart)
+      boundary = "simple boundary",
+      source = Buffer().writeUtf8(multipart)
     )
 
     try {
@@ -151,8 +158,8 @@ class MultipartReaderTest {
         .replace(Regex("(?m)abcd\r\n"), "abcd\n")
 
     val parts = MultipartReader(
-        boundary = "simple boundary",
-        source = Buffer().writeUtf8(multipart)
+      boundary = "simple boundary",
+      source = Buffer().writeUtf8(multipart)
     )
 
     val part = parts.nextPart()!!
@@ -174,8 +181,8 @@ class MultipartReaderTest {
         .replace("\n", "\r\n")
 
     val parts = MultipartReader(
-        boundary = "simple boundary",
-        source = Buffer().writeUtf8(multipart)
+      boundary = "simple boundary",
+      source = Buffer().writeUtf8(multipart)
     )
 
     val part = parts.nextPart()!!
@@ -199,8 +206,8 @@ class MultipartReaderTest {
         .replace("\n", "\r\n")
 
     val parts = MultipartReader(
-        boundary = "simple boundary",
-        source = Buffer().writeUtf8(multipart)
+      boundary = "simple boundary",
+      source = Buffer().writeUtf8(multipart)
     )
 
     parts.nextPart()!!
@@ -225,8 +232,8 @@ class MultipartReaderTest {
         .replace("\n", "\r\n")
 
     val parts = MultipartReader(
-        boundary = "simple boundary",
-        source = Buffer().writeUtf8(multipart)
+      boundary = "simple boundary",
+      source = Buffer().writeUtf8(multipart)
     )
 
     val partAbc = parts.nextPart()!!
@@ -253,8 +260,8 @@ class MultipartReaderTest {
         .replace("\n", "\r\n")
 
     val parts = MultipartReader(
-        boundary = "simple boundary",
-        source = Buffer().writeUtf8(multipart)
+      boundary = "simple boundary",
+      source = Buffer().writeUtf8(multipart)
     )
 
     val part = parts.nextPart()!!
@@ -270,8 +277,8 @@ class MultipartReaderTest {
 
   @Test fun `cannot call nextPart after calling close`() {
     val parts = MultipartReader(
-        boundary = "simple boundary",
-        source = Buffer()
+      boundary = "simple boundary",
+      source = Buffer()
     )
 
     parts.close()
@@ -291,8 +298,8 @@ class MultipartReaderTest {
         .replace("\n", "\r\n")
 
     val parts = MultipartReader(
-        boundary = "simple boundary",
-        source = Buffer().writeUtf8(multipart)
+      boundary = "simple boundary",
+      source = Buffer().writeUtf8(multipart)
     )
 
     try {
@@ -315,8 +322,8 @@ class MultipartReaderTest {
         .replace("\n", "\r\n")
 
     val parts = MultipartReader(
-        boundary = "simple boundary",
-        source = Buffer().writeUtf8(multipart)
+      boundary = "simple boundary",
+      source = Buffer().writeUtf8(multipart)
     )
 
     val part = parts.nextPart()!!
@@ -337,8 +344,8 @@ class MultipartReaderTest {
         .replace("\n", "\r\n")
 
     val parts = MultipartReader(
-        boundary = "simple boundary",
-        source = Buffer().writeUtf8(multipart)
+      boundary = "simple boundary",
+      source = Buffer().writeUtf8(multipart)
     )
 
     val part = parts.nextPart()!!
@@ -359,8 +366,8 @@ class MultipartReaderTest {
         .replace("\n", "\r\n")
 
     val parts = MultipartReader(
-        boundary = "simple boundary",
-        source = Buffer().writeUtf8(multipart)
+      boundary = "simple boundary",
+      source = Buffer().writeUtf8(multipart)
     )
 
     val part = parts.nextPart()!!
@@ -381,8 +388,8 @@ class MultipartReaderTest {
         .replace("\n", "\r\n")
 
     val parts = MultipartReader(
-        boundary = "simple boundary",
-        source = Buffer().writeUtf8(multipart)
+      boundary = "simple boundary",
+      source = Buffer().writeUtf8(multipart)
     )
 
     val part = parts.nextPart()!!
@@ -400,8 +407,8 @@ class MultipartReaderTest {
         .replace("\n", "\r\n")
 
     val parts = MultipartReader(
-        boundary = "simple boundary",
-        source = Buffer().writeUtf8(multipart)
+      boundary = "simple boundary",
+      source = Buffer().writeUtf8(multipart)
     )
 
     try {
@@ -422,8 +429,8 @@ class MultipartReaderTest {
         .replace("\n", "\r\n")
 
     val parts = MultipartReader(
-        boundary = "simple boundary",
-        source = Buffer().writeUtf8(multipart)
+      boundary = "simple boundary",
+      source = Buffer().writeUtf8(multipart)
     )
 
     parts.nextPart()
@@ -451,8 +458,8 @@ class MultipartReaderTest {
         .replace("\n", "\r\n")
 
     val parts = MultipartReader(
-        boundary = "-",
-        source = Buffer().writeUtf8(multipart)
+      boundary = "-",
+      source = Buffer().writeUtf8(multipart)
     )
 
     val partAbc = parts.nextPart()!!
@@ -479,8 +486,8 @@ class MultipartReaderTest {
         .replace("\n", "\r\n")
 
     val parts = MultipartReader(
-        boundary = "simple boundary",
-        source = Buffer().writeUtf8(multipart)
+      boundary = "simple boundary",
+      source = Buffer().writeUtf8(multipart)
     )
 
     assertThat(parts.nextPart()).isNotNull()
@@ -490,8 +497,8 @@ class MultipartReaderTest {
 
   @Test fun `empty source`() {
     val parts = MultipartReader(
-        boundary = "simple boundary",
-        source = Buffer()
+      boundary = "simple boundary",
+      source = Buffer()
     )
 
     try {
@@ -516,24 +523,30 @@ class MultipartReaderTest {
     val reader = MultipartReader(bodyContent, "boundary")
 
     val quickPart = reader.nextPart()!!
-    assertThat(quickPart.headers).isEqualTo(headersOf(
+    assertThat(quickPart.headers).isEqualTo(
+      headersOf(
         "Content-Type", "text/plain; charset=utf-8",
         "Content-Length", "5"
-    ))
+      )
+    )
     assertThat(quickPart.body.readUtf8()).isEqualTo("Quick")
 
     val brownPart = reader.nextPart()!!
-    assertThat(brownPart.headers).isEqualTo(headersOf(
+    assertThat(brownPart.headers).isEqualTo(
+      headersOf(
         "Content-Disposition", "form-data; name=\"color\"",
         "Content-Length", "5"
-    ))
+      )
+    )
     assertThat(brownPart.body.readUtf8()).isEqualTo("Brown")
 
     val foxPart = reader.nextPart()!!
-    assertThat(foxPart.headers).isEqualTo(headersOf(
+    assertThat(foxPart.headers).isEqualTo(
+      headersOf(
         "Content-Disposition", "form-data; name=\"animal\"; filename=\"fox.txt\"",
         "Content-Length", "3"
-    ))
+      )
+    )
     assertThat(foxPart.body.readUtf8()).isEqualTo("Fox")
 
     assertThat(reader.nextPart()).isNull()

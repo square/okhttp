@@ -49,6 +49,7 @@ import okio.GzipSink;
 import okio.Okio;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -57,8 +58,9 @@ import static okhttp3.internal.Internal.cacheGet;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
+@Tag("Slow")
 public final class CacheTest {
   private static final HostnameVerifier NULL_HOSTNAME_VERIFIER = (name, session) -> true;
 

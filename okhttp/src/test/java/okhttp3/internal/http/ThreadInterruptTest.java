@@ -39,11 +39,13 @@ import okio.Buffer;
 import okio.BufferedSink;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
+@Tag("Slowish")
 public final class ThreadInterruptTest {
   @RegisterExtension public final PlatformRule platform = new PlatformRule();
   @RegisterExtension public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();

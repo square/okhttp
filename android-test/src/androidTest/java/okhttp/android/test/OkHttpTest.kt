@@ -60,6 +60,7 @@ import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -88,6 +89,7 @@ import javax.net.ssl.X509TrustManager
  * Run with "./gradlew :android-test:connectedCheck" and make sure ANDROID_SDK_ROOT is set.
  */
 @ExtendWith(MockWebServerExtension::class)
+@Tag("Slow")
 class OkHttpTest(val server: MockWebServer) {
   @Suppress("RedundantVisibilityModifier")
   @JvmField

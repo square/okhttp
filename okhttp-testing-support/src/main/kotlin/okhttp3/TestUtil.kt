@@ -29,6 +29,10 @@ object TestUtil {
   @JvmField
   val UNREACHABLE_ADDRESS = InetSocketAddress("198.51.100.1", 8080)
 
+  /** See `org.graalvm.nativeimage.ImageInfo`. */
+  @JvmStatic
+  private val isGraalVmImage = System.getProperty("org.graalvm.nativeimage.imagecode") != null
+
   @JvmStatic
   fun headerEntries(vararg elements: String?): List<Header> {
     return List(elements.size / 2) { Header(elements[it * 2]!!, elements[it * 2 + 1]!!) }
@@ -105,4 +109,16 @@ object TestUtil {
   @JvmStatic
   val windows: Boolean
     get() = System.getProperty("os.name", "?").startsWith("Windows")
+
+  /**
+   * Make assertions about the suppressed exceptions on this. Prefer this over making direct calls
+   * so tests pass on GraalVM, where suppressed exceptions are silently discarded.
+   *
+   * https://github.com/oracle/graal/issues/3008
+   */
+  @JvmStatic
+  fun Throwable.assertSuppressed(block: (List<@JvmSuppressWildcards Throwable>) -> Unit) {
+    if (isGraalVmImage) return
+    block(suppressed.toList())
+  }
 }

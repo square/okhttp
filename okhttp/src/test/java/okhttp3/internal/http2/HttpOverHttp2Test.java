@@ -75,6 +75,7 @@ import okio.GzipSink;
 import okio.Okio;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.io.TempDir;
@@ -89,13 +90,14 @@ import static okhttp3.internal.Util.discard;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /** Test how HTTP/2 interacts with HTTP features. */
 @Timeout(60)
 @Flaky
+@Tag("Slow")
 public final class HttpOverHttp2Test {
   // Flaky https://github.com/square/okhttp/issues/4632
   // Flaky https://github.com/square/okhttp/issues/4633

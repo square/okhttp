@@ -30,6 +30,7 @@ import javax.security.auth.x500.X500Principal;
 import okhttp3.FakeSSLSession;
 import okhttp3.OkHttpClient;
 import okhttp3.internal.Util;
+import okhttp3.internal.platform.Platform;
 import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HeldCertificate;
 import okhttp3.tls.internal.TlsUtil;
@@ -189,7 +190,7 @@ public final class HostnameVerifierTest {
         + "-----END CERTIFICATE-----\n");
 
     X509Certificate peerCertificate = ((X509Certificate) session.getPeerCertificates()[0]);
-    if (platform.isConscrypt()) {
+    if (Platform.Companion.isAndroid() || platform.isConscrypt()) {
       assertThat(certificateSANs(peerCertificate)).containsExactly("bar.com");
     } else {
       assertThat(certificateSANs(peerCertificate)).containsExactly("bar.com", "������.co.jp");
@@ -382,7 +383,7 @@ public final class HostnameVerifierTest {
         + "-----END CERTIFICATE-----\n");
 
     X509Certificate peerCertificate = ((X509Certificate) session.getPeerCertificates()[0]);
-    if (platform.isConscrypt()) {
+    if (Platform.Companion.isAndroid() || platform.isConscrypt()) {
       assertThat(certificateSANs(peerCertificate)).containsExactly("*.bar.com");
     } else {
       assertThat(certificateSANs(peerCertificate)).containsExactly("*.bar.com", "*.������.co.jp");
@@ -660,7 +661,11 @@ public final class HostnameVerifierTest {
         + "-----END CERTIFICATE-----\n");
 
     X509Certificate peerCertificate = ((X509Certificate) session.getPeerCertificates()[0]);
-    assertThat(certificateSANs(peerCertificate)).containsExactly("���.com", "���.com");
+    if (Platform.Companion.isAndroid()) {
+      assertThat(certificateSANs(peerCertificate)).containsExactly();
+    } else {
+      assertThat(certificateSANs(peerCertificate)).containsExactly("���.com", "���.com");
+    }
 
     assertThat(verifier.verify("tel.com", session)).isFalse();
     assertThat(verifier.verify("k.com", session)).isFalse();

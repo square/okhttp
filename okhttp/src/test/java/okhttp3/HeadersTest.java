@@ -35,7 +35,7 @@ import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static okhttp3.TestUtil.headerEntries;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public final class HeadersTest {
   @Test public void readNameValueBlockDropsForbiddenHeadersHttp2() {

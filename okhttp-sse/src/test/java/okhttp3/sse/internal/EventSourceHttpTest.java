@@ -28,6 +28,7 @@ import okhttp3.sse.EventSources;
 import okhttp3.testing.PlatformRule;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -35,6 +36,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockWebServerExtension.class)
+@Tag("Slowish")
 public final class EventSourceHttpTest {
   @RegisterExtension public final PlatformRule platform = new PlatformRule();
 

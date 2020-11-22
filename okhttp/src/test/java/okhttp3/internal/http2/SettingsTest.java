@@ -15,7 +15,7 @@
  */
 package okhttp3.internal.http2;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static okhttp3.internal.http2.Settings.DEFAULT_INITIAL_WINDOW_SIZE;
 import static okhttp3.internal.http2.Settings.MAX_CONCURRENT_STREAMS;

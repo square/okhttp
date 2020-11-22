@@ -49,6 +49,7 @@ import okio.Buffer
 import okio.BufferedSink
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.fail
@@ -62,6 +63,7 @@ import javax.net.ServerSocketFactory
 import javax.net.SocketFactory
 
 @Timeout(30)
+@Tag("Slow")
 class CancelTest {
   @JvmField @RegisterExtension val platform = PlatformRule()
 
@@ -125,7 +127,9 @@ class CancelTest {
             return socket
           }
         })
-        .sslSocketFactory(handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager)
+        .sslSocketFactory(
+          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
+        )
         .eventListener(listener)
         .apply {
           if (connectionType == HTTPS) { protocols(listOf(HTTP_1_1)) }
@@ -140,25 +144,25 @@ class CancelTest {
     setUp(mode)
     server.enqueue(MockResponse())
     val call = client.newCall(
-        Request.Builder()
-            .url(server.url("/"))
-            .post(object : RequestBody() {
-              override fun contentType(): MediaType? {
-                return null
-              }
+      Request.Builder()
+        .url(server.url("/"))
+        .post(object : RequestBody() {
+          override fun contentType(): MediaType? {
+            return null
+          }
 
-              @Throws(
-                  IOException::class
-              ) override fun writeTo(sink: BufferedSink) {
-                for (i in 0..9) {
-                  sink.writeByte(0)
-                  sink.flush()
-                  sleep(100)
-                }
-                fail("Expected connection to be closed")
-              }
-            })
-            .build()
+          @Throws(
+            IOException::class
+          ) override fun writeTo(sink: BufferedSink) {
+            for (i in 0..9) {
+              sink.writeByte(0)
+              sink.flush()
+              sleep(100)
+            }
+            fail("Expected connection to be closed")
+          }
+        })
+        .build()
     )
     cancelLater(call, 500)
     try {
@@ -175,17 +179,17 @@ class CancelTest {
     setUp(mode)
     val responseBodySize = 8 * 1024 * 1024 // 8 MiB.
     server.enqueue(
-        MockResponse()
-            .setBody(
-                Buffer()
-                    .write(ByteArray(responseBodySize))
-            )
-            .throttleBody(64 * 1024, 125, MILLISECONDS)
+      MockResponse()
+        .setBody(
+          Buffer()
+            .write(ByteArray(responseBodySize))
+        )
+        .throttleBody(64 * 1024, 125, MILLISECONDS)
     ) // 500 Kbps
     val call = client.newCall(
-        Request.Builder()
-            .url(server.url("/"))
-            .build()
+      Request.Builder()
+        .url(server.url("/"))
+        .build()
     )
     val response = call.execute()
     cancelLater(call, 500)
@@ -208,12 +212,12 @@ class CancelTest {
     setUp(mode)
     val responseBodySize = 8 * 1024 * 1024 // 8 MiB.
     server.enqueue(
-        MockResponse()
-            .setBody(
-                Buffer()
-                    .write(ByteArray(responseBodySize))
-            )
-            .throttleBody(64 * 1024, 125, MILLISECONDS)
+      MockResponse()
+        .setBody(
+          Buffer()
+            .write(ByteArray(responseBodySize))
+        )
+        .throttleBody(64 * 1024, 125, MILLISECONDS)
     ) // 500 Kbps
     server.enqueue(MockResponse().apply {
       setResponseCode(200)
@@ -305,5 +309,7 @@ class CancelTest {
 }
 
 class CancelModelParamProvider: SimpleProvider() {
-  override fun arguments() = CancelTest.CancelMode.values().flatMap { c -> CancelTest.ConnectionType.values().map { x -> Pair(c, x) } }
+  override fun arguments() = CancelTest.CancelMode.values().flatMap { c -> CancelTest.ConnectionType.values().map { x -> Pair(
+    c, x
+  ) } }
 }

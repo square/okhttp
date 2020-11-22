@@ -36,6 +36,7 @@ import okhttp3.testing.PlatformRule;
 import okio.Buffer;
 import okio.ByteString;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -43,9 +44,10 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 @ExtendWith(MockWebServerExtension.class)
+@Tag("Slowish")
 public class DnsOverHttpsTest {
   @RegisterExtension public final PlatformRule platform = new PlatformRule();
 

@@ -34,6 +34,7 @@ import javax.net.ssl.X509TrustManager;
 import javax.security.auth.x500.X500Principal;
 import mockwebserver3.MockResponse;
 import mockwebserver3.MockWebServer;
+import mockwebserver3.junit5.internal.MockWebServerExtension;
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
 import okhttp3.OkHttpClientTestRule;
@@ -46,7 +47,9 @@ import okhttp3.testing.PlatformVersion;
 import okhttp3.tls.HandshakeCertificates;
 import okhttp3.tls.HeldCertificate;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static java.util.Arrays.asList;
@@ -54,8 +57,10 @@ import static okhttp3.testing.PlatformRule.getPlatformSystemProperty;
 import static okhttp3.tls.internal.TlsUtil.newKeyManager;
 import static okhttp3.tls.internal.TlsUtil.newTrustManager;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
+@Tag("Slowish")
+@ExtendWith(MockWebServerExtension.class)
 public final class ClientAuthTest {
   @RegisterExtension public final PlatformRule platform = new PlatformRule();
   @RegisterExtension public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();

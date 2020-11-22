@@ -27,13 +27,14 @@ import java.util.concurrent.TimeUnit;
 import okhttp3.testing.PlatformRule;
 import okio.ByteString;
 import org.bouncycastle.asn1.x509.GeneralName;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public final class HeldCertificateTest {
   @RegisterExtension public PlatformRule platform = new PlatformRule();
