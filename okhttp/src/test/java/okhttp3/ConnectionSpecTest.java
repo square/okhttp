@@ -17,6 +17,7 @@ package okhttp3;
 
 import okhttp3.internal.platform.Platform;
 import okhttp3.testing.PlatformRule;
+import okhttp3.testing.PlatformVersion;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -262,12 +263,20 @@ public final class ConnectionSpecTest {
     assertThat(tlsSpec.tlsVersions()).isNull();
 
     SSLSocket sslSocket = (SSLSocket) SSLSocketFactory.getDefault().createSocket();
-    sslSocket.setEnabledProtocols(new String[] {
-        TlsVersion.SSL_3_0.javaName(),
-        TlsVersion.TLS_1_1.javaName(),
-        TlsVersion.TLS_1_2.javaName(),
-        TlsVersion.TLS_1_3.javaName()
-    });
+    if (PlatformVersion.INSTANCE.getMajorVersion() > 11) {
+      sslSocket.setEnabledProtocols(new String[] {
+          TlsVersion.SSL_3_0.javaName(),
+          TlsVersion.TLS_1_1.javaName(),
+          TlsVersion.TLS_1_2.javaName(),
+          TlsVersion.TLS_1_3.javaName()
+      });
+    } else {
+      sslSocket.setEnabledProtocols(new String[] {
+          TlsVersion.SSL_3_0.javaName(),
+          TlsVersion.TLS_1_1.javaName(),
+          TlsVersion.TLS_1_2.javaName()
+      });
+    }
 
     applyConnectionSpec(tlsSpec, sslSocket, false);
     if (Platform.Companion.isAndroid()) {
@@ -286,9 +295,15 @@ public final class ConnectionSpecTest {
             TlsVersion.TLS_1_2.javaName());
       }
     } else {
-      assertThat(sslSocket.getEnabledProtocols()).containsExactly(
-          TlsVersion.SSL_3_0.javaName(), TlsVersion.TLS_1_1.javaName(),
-          TlsVersion.TLS_1_2.javaName(), TlsVersion.TLS_1_3.javaName());
+      if (PlatformVersion.INSTANCE.getMajorVersion() > 11) {
+        assertThat(sslSocket.getEnabledProtocols()).containsExactly(
+            TlsVersion.SSL_3_0.javaName(), TlsVersion.TLS_1_1.javaName(),
+            TlsVersion.TLS_1_2.javaName(), TlsVersion.TLS_1_3.javaName());
+      } else {
+        assertThat(sslSocket.getEnabledProtocols()).containsExactly(
+            TlsVersion.SSL_3_0.javaName(), TlsVersion.TLS_1_1.javaName(),
+            TlsVersion.TLS_1_2.javaName());
+      }
     }
   }
 
