@@ -157,9 +157,6 @@ subprojects { project ->
   apply plugin: 'org.jetbrains.dokka'
   apply plugin: 'biz.aQute.bnd.builder'
 
-  sourceCompatibility = JavaVersion.VERSION_1_8
-  targetCompatibility = JavaVersion.VERSION_1_8
-
   tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
   }
