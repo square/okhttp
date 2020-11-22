@@ -137,21 +137,6 @@ jobs:
           platform: jdk8
           testjdk: -Dtest.java.version=8 -Dorg.gradle.java.installations.paths=/usr/lib/jvm/java-8-openjdk-amd64
 
-  testjdk8alpn:
-    docker:
-      - image: circleci/openjdk:11.0.6-jdk-stretch
-
-    environment:
-      JVM_OPTS: -Xmx1g
-      TERM: dumb
-
-    steps:
-      - checkout
-
-      - runtests:
-          platform: jdk8alpn
-          testjdk: -Dtest.java.version=8 -Dalpn.boot.version=8.1.13.v20181017 -Dorg.gradle.java.installations.paths=/usr/lib/jvm/java-8-openjdk-amd64
-
   testopenjsse:
     docker:
       - image: circleci/openjdk:11.0.8-jdk-buster
@@ -272,10 +257,6 @@ workflows:
             branches:
               ignore:
                 - gh-pages
-      - testjdk8alpn:
-          filters:
-            branches:
-              only: master
       - testjdk11:
           filters:
             branches:
@@ -304,9 +285,6 @@ workflows:
           requires:
             - compile
       - testjdk8:
-          requires:
-            - compile
-      - testjdk8alpn:
           requires:
             - compile
       - testopenjsse:
