@@ -18,7 +18,6 @@ package okhttp3.testing
 import com.amazon.corretto.crypto.provider.AmazonCorrettoCryptoProvider
 import com.amazon.corretto.crypto.provider.SelfTestStatus
 import okhttp3.internal.platform.ConscryptPlatform
-import okhttp3.internal.platform.Jdk8WithJettyBootPlatform
 import okhttp3.internal.platform.Jdk9Platform
 import okhttp3.internal.platform.OpenJSSEPlatform
 import okhttp3.internal.platform.Platform
@@ -198,8 +197,6 @@ open class PlatformRule @JvmOverloads constructor(
 
   fun isJdk8() = getPlatformSystemProperty() == JDK8_PROPERTY
 
-  fun isJdk8Alpn() = getPlatformSystemProperty() == JDK8_ALPN_PROPERTY
-
   fun isBouncyCastle() = getPlatformSystemProperty() == BOUNCYCASTLE_PROPERTY
 
   fun hasHttp2Support() = !isJdk8()
@@ -218,10 +215,6 @@ open class PlatformRule @JvmOverloads constructor(
 
   fun assumeJdk8() {
     assumeTrue(getPlatformSystemProperty() == JDK8_PROPERTY)
-  }
-
-  fun assumeJdk8Alpn() {
-    assumeTrue(getPlatformSystemProperty() == JDK8_ALPN_PROPERTY)
   }
 
   fun assumeCorretto() {
@@ -252,10 +245,6 @@ open class PlatformRule @JvmOverloads constructor(
     assumeTrue(getPlatformSystemProperty() != JDK8_PROPERTY)
   }
 
-  fun assumeNotJdk8Alpn() {
-    assumeTrue(getPlatformSystemProperty() != JDK8_ALPN_PROPERTY)
-  }
-
   fun assumeNotOpenJSSE() {
     assumeTrue(getPlatformSystemProperty() != OPENJSSE_PROPERTY)
   }
@@ -275,10 +264,6 @@ open class PlatformRule @JvmOverloads constructor(
     assumeTrue(getPlatformSystemProperty() == JDK8_PROPERTY)
   }
 
-  fun assumeJettyBootEnabled() {
-    assumeTrue(isAlpnBootEnabled())
-  }
-
   fun assumeNotAndroid() {
     assumeFalse(Platform.isAndroid)
   }
@@ -293,7 +278,6 @@ open class PlatformRule @JvmOverloads constructor(
     const val CONSCRYPT_PROPERTY = "conscrypt"
     const val CORRETTO_PROPERTY = "corretto"
     const val JDK9_PROPERTY = "jdk9"
-    const val JDK8_ALPN_PROPERTY = "jdk8alpn"
     const val JDK8_PROPERTY = "jdk8"
     const val OPENJSSE_PROPERTY = "openjsse"
     const val BOUNCYCASTLE_PROPERTY = "bouncycastle"
@@ -315,14 +299,6 @@ open class PlatformRule @JvmOverloads constructor(
               .provideTrustManager(true)
               .build()
           Security.insertProviderAt(provider, 1)
-        }
-      } else if (platformSystemProperty == JDK8_ALPN_PROPERTY) {
-        if (!isAlpnBootEnabled()) {
-          System.err.println("Warning: ALPN Boot not enabled")
-        }
-      } else if (platformSystemProperty == JDK8_PROPERTY) {
-        if (isAlpnBootEnabled()) {
-          System.err.println("Warning: ALPN Boot enabled unintentionally")
         }
       } else if (platformSystemProperty == OPENJSSE_PROPERTY && Security.getProviders()[0].name != "OpenJSSE") {
         if (!OpenJSSEPlatform.isSupported) {
@@ -356,7 +332,6 @@ open class PlatformRule @JvmOverloads constructor(
         property = when (Platform.get()) {
           is ConscryptPlatform -> CONSCRYPT_PROPERTY
           is OpenJSSEPlatform -> OPENJSSE_PROPERTY
-          is Jdk8WithJettyBootPlatform -> CONSCRYPT_PROPERTY
           is Jdk9Platform -> {
             if (isCorrettoInstalled) CORRETTO_PROPERTY else JDK9_PROPERTY
           }
@@ -380,18 +355,7 @@ open class PlatformRule @JvmOverloads constructor(
     fun jdk8() = PlatformRule(JDK8_PROPERTY)
 
     @JvmStatic
-    fun jdk8alpn() = PlatformRule(JDK8_ALPN_PROPERTY)
-
-    @JvmStatic
     fun bouncycastle() = PlatformRule(BOUNCYCASTLE_PROPERTY)
-
-    @JvmStatic
-    fun isAlpnBootEnabled(): Boolean = try {
-      Class.forName("org.eclipse.jetty.alpn.ALPN", true, null)
-      true
-    } catch (cnfe: ClassNotFoundException) {
-      false
-    }
 
     val isCorrettoSupported: Boolean = try {
       // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.

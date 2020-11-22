@@ -22,7 +22,6 @@ import okhttp3.internal.platform.Android10Platform
 import okhttp3.internal.platform.AndroidPlatform
 import okhttp3.internal.platform.BouncyCastlePlatform
 import okhttp3.internal.platform.ConscryptPlatform
-import okhttp3.internal.platform.Jdk8WithJettyBootPlatform
 import okhttp3.internal.platform.Jdk9Platform
 import okhttp3.internal.platform.OpenJSSEPlatform
 import okhttp3.internal.platform.Platform
@@ -45,11 +44,6 @@ class TargetBouncyCastlePlatform {
 @TargetClass(ConscryptPlatform::class)
 @Delete
 class TargetConscryptPlatform {
-}
-
-@TargetClass(Jdk8WithJettyBootPlatform::class)
-@Delete
-class TargetJdk8WithJettyBootPlatform {
 }
 
 @TargetClass(OpenJSSEPlatform::class)

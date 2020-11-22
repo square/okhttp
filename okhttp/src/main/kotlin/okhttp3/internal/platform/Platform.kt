@@ -251,13 +251,6 @@ open class Platform {
         return jdk9
       }
 
-      // An Oracle JDK 8 like OpenJDK, pre 251.
-      val jdkWithJettyBoot = Jdk8WithJettyBootPlatform.buildIfSupported()
-
-      if (jdkWithJettyBoot != null) {
-        return jdkWithJettyBoot
-      }
-
       return Platform()
     }
 
