@@ -15,7 +15,6 @@
  */
 package okhttp3;
 
-import android.os.Build;
 import okhttp3.internal.platform.Platform;
 import okhttp3.testing.PlatformRule;
 import org.junit.jupiter.api.Test;
@@ -234,7 +233,8 @@ public final class ConnectionSpecTest {
     applyConnectionSpec(tlsSpec, sslSocket, false);
     if (Platform.Companion.isAndroid()) {
       // https://developer.android.com/reference/javax/net/ssl/SSLSocket
-      if (Build.VERSION.SDK_INT >= 29) {
+      Integer sdkVersion = Platform.Companion.androidSdkVersion();
+      if (sdkVersion != null && sdkVersion >= 29) {
         assertThat(sslSocket.getEnabledCipherSuites()).containsExactly(
             CipherSuite.TLS_AES_128_GCM_SHA256.javaName(),
             CipherSuite.TLS_AES_256_GCM_SHA384.javaName(),
@@ -271,12 +271,13 @@ public final class ConnectionSpecTest {
 
     applyConnectionSpec(tlsSpec, sslSocket, false);
     if (Platform.Companion.isAndroid()) {
+      Integer sdkVersion = Platform.Companion.androidSdkVersion();
       // https://developer.android.com/reference/javax/net/ssl/SSLSocket
-      if (Build.VERSION.SDK_INT >= 29) {
+      if (sdkVersion != null && sdkVersion >= 29) {
         assertThat(sslSocket.getEnabledProtocols()).containsExactly(
             TlsVersion.TLS_1_1.javaName(), TlsVersion.TLS_1_2.javaName(),
             TlsVersion.TLS_1_3.javaName());
-      } else if (Build.VERSION.SDK_INT >= 26) {
+      } else if (sdkVersion != null && sdkVersion >= 26) {
         assertThat(sslSocket.getEnabledProtocols()).containsExactly(
             TlsVersion.TLS_1_1.javaName(), TlsVersion.TLS_1_2.javaName());
       } else {
