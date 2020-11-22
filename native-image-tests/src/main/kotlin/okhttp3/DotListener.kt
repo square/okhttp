@@ -44,7 +44,7 @@ object DotListener: TestExecutionListener {
   ) {
     if (!testIdentifier.isContainer) {
       when (testExecutionResult.status!!) {
-        TestExecutionResult.Status.ABORTED -> printStatus("E")
+        TestExecutionResult.Status.ABORTED -> printStatus("-")
         TestExecutionResult.Status.FAILED -> printStatus("F")
         TestExecutionResult.Status.SUCCESSFUL -> printStatus(".")
       }

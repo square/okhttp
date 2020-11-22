@@ -30,8 +30,7 @@ object TestUtil {
   val UNREACHABLE_ADDRESS = InetSocketAddress("198.51.100.1", 8080)
 
   /** See `org.graalvm.nativeimage.ImageInfo`. */
-  @JvmStatic
-  private val isGraalVmImage = System.getProperty("org.graalvm.nativeimage.imagecode") != null
+  @JvmStatic val isGraalVmImage = System.getProperty("org.graalvm.nativeimage.imagecode") != null
 
   @JvmStatic
   fun headerEntries(vararg elements: String?): List<Header> {

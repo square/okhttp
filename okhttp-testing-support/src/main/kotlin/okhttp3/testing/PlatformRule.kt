@@ -17,6 +17,7 @@ package okhttp3.testing
 
 import com.amazon.corretto.crypto.provider.AmazonCorrettoCryptoProvider
 import com.amazon.corretto.crypto.provider.SelfTestStatus
+import okhttp3.TestUtil
 import okhttp3.internal.platform.ConscryptPlatform
 import okhttp3.internal.platform.Jdk8WithJettyBootPlatform
 import okhttp3.internal.platform.Jdk9Platform
@@ -121,11 +122,15 @@ open class PlatformRule @JvmOverloads constructor(
   }
 
   fun expectFailureFromJdkVersion(majorVersion: Int) {
-    expectFailure(fromMajor(majorVersion))
+    if (!TestUtil.isGraalVmImage) {
+      expectFailure(fromMajor(majorVersion))
+    }
   }
 
   fun expectFailureOnJdkVersion(majorVersion: Int) {
-    expectFailure(onMajor(majorVersion))
+    if (!TestUtil.isGraalVmImage) {
+      expectFailure(onMajor(majorVersion))
+    }
   }
 
   private fun expectFailure(
@@ -202,6 +207,8 @@ open class PlatformRule @JvmOverloads constructor(
 
   fun isBouncyCastle() = getPlatformSystemProperty() == BOUNCYCASTLE_PROPERTY
 
+  fun isGraalVMImage() = TestUtil.isGraalVmImage
+
   fun hasHttp2Support() = !isJdk8()
 
   fun assumeConscrypt() {
@@ -238,6 +245,10 @@ open class PlatformRule @JvmOverloads constructor(
 
   fun assumeAndroid() {
     assumeTrue(Platform.isAndroid)
+  }
+
+  fun assumeGraalVMImage() {
+    assumeTrue(isGraalVMImage())
   }
 
   fun assumeNotConscrypt() {
@@ -283,8 +294,13 @@ open class PlatformRule @JvmOverloads constructor(
     assumeFalse(Platform.isAndroid)
   }
 
+  fun assumeNotGraalVMImage() {
+    assumeFalse(isGraalVMImage())
+  }
+
   fun assumeJdkVersion(majorVersion: Int) {
     assumeNotAndroid()
+    assumeNotGraalVMImage()
     assumeTrue(PlatformVersion.majorVersion == majorVersion)
   }
 
