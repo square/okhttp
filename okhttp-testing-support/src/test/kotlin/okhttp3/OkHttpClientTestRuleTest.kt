@@ -16,6 +16,7 @@
 package okhttp3
 
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -25,6 +26,7 @@ import org.junit.jupiter.api.parallel.ResourceAccessMode
 import org.junit.jupiter.api.parallel.ResourceLock
 
 @ResourceLock(value = "tasks", mode = ResourceAccessMode.READ_WRITE)
+@Tag("Serial")
 class OkHttpClientTestRuleTest {
   lateinit var extensionContext: ExtensionContext
 

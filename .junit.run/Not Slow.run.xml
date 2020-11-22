@@ -9,7 +9,7 @@
     <option name="TEST_SEARCH_SCOPE">
       <value defaultName="wholeProject" />
     </option>
-    <tag value="!Slow &amp; !Slowish &amp; !Remote &amp; !Android" />
+    <tag value="!Slow &amp; !Slowish &amp; !Remote &amp; !Android &amp; !Serial" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>

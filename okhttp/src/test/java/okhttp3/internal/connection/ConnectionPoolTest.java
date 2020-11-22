@@ -31,6 +31,7 @@ import okhttp3.Route;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.concurrent.TaskFaker;
 import okhttp3.internal.concurrent.TaskRunner;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.ResourceAccessMode;
 import org.junit.jupiter.api.parallel.ResourceLock;
@@ -39,6 +40,7 @@ import static okhttp3.TestUtil.awaitGarbageCollection;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ResourceLock(value = "tasks", mode = ResourceAccessMode.READ_WRITE)
+@Tag("Serial")
 public final class ConnectionPoolTest {
   /** The fake task runner prevents the cleanup runnable from being started. */
   private final TaskRunner taskRunner = new TaskFaker().getTaskRunner();

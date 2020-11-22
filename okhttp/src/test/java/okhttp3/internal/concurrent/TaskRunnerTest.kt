@@ -18,6 +18,7 @@ package okhttp3.internal.concurrent
 import java.util.concurrent.RejectedExecutionException
 import okhttp3.TestLogHandler
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.fail
@@ -25,6 +26,7 @@ import org.junit.jupiter.api.parallel.ResourceAccessMode
 import org.junit.jupiter.api.parallel.ResourceLock
 
 @ResourceLock(value = "logs", mode = ResourceAccessMode.READ_WRITE)
+@Tag("Serial")
 class TaskRunnerTest {
   @RegisterExtension @JvmField val testLogHandler = TestLogHandler(TaskRunner::class.java)
 
