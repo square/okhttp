@@ -287,7 +287,8 @@ public final class ConnectionSpecTest {
       }
     } else {
       assertThat(sslSocket.getEnabledProtocols()).containsExactly(
-          TlsVersion.SSL_3_0.javaName(), TlsVersion.TLS_1_1.javaName());
+          TlsVersion.SSL_3_0.javaName(), TlsVersion.TLS_1_1.javaName(),
+          TlsVersion.TLS_1_2.javaName(), TlsVersion.TLS_1_3.javaName());
     }
   }
 
