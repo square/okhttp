@@ -4,7 +4,7 @@
     <option name="MAIN_CLASS_NAME" value="" />
     <option name="METHOD_NAME" value="" />
     <option name="TEST_OBJECT" value="tags" />
-    <option name="VM_PARAMETERS" value="-ea -Djunit.jupiter.extensions.autodetection.enabled=true" />
+    <option name="VM_PARAMETERS" value="-ea -Djunit.jupiter.extensions.autodetection.enabled=true -Djunit.jupiter.execution.parallel.enabled=true -Djunit.jupiter.execution.parallel.mode.default=concurrent" />
     <option name="PARAMETERS" value="" />
     <option name="TEST_SEARCH_SCOPE">
       <value defaultName="wholeProject" />

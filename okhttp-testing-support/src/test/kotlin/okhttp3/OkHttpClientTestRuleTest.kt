@@ -21,7 +21,10 @@ import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.fail
+import org.junit.jupiter.api.parallel.ResourceAccessMode
+import org.junit.jupiter.api.parallel.ResourceLock
 
+@ResourceLock(value = "tasks", mode = ResourceAccessMode.READ_WRITE)
 class OkHttpClientTestRuleTest {
   lateinit var extensionContext: ExtensionContext
 

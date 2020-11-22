@@ -87,6 +87,9 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
+
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -102,6 +105,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 @Timeout(30)
+@Execution(ExecutionMode.CONCURRENT)
 public final class CallTest {
   @RegisterExtension final PlatformRule platform = new PlatformRule();
   @RegisterExtension final InMemoryFileSystem fileSystem = new InMemoryFileSystem();
@@ -754,6 +758,7 @@ public final class CallTest {
     assertThat(server.takeRequest().getHeader("User-Agent")).isEqualTo("AsyncApiTest");
   }
 
+  @Tag("Slowish")
   @Test public void exceptionThrownByOnResponseIsRedactedAndLogged() throws Exception {
     server.enqueue(new MockResponse());
 
@@ -3597,6 +3602,7 @@ public final class CallTest {
         .assertBody("");
   }
 
+  @Tag("Slowish")
   @Test public void leakedResponseBodyLogsStackTrace() throws Exception {
     server.enqueue(new MockResponse()
         .setBody("This gets leaked."));
