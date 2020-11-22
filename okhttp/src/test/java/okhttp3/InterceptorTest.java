@@ -28,6 +28,7 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import kotlin.Unit;
 import mockwebserver3.MockResponse;
 import mockwebserver3.MockWebServer;
 import mockwebserver3.RecordedRequest;
@@ -45,6 +46,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import static okhttp3.TestUtil.assertSuppressed;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -545,7 +547,10 @@ public final class InterceptorTest {
     RecordedResponse recordedResponse = callback.await(server.url("/"));
     assertThat(recordedResponse.failure)
         .hasMessage("canceled due to java.lang.RuntimeException: boom!");
-    assertThat(recordedResponse.failure).hasSuppressedException(boom);
+    assertSuppressed(recordedResponse.failure, throwables -> {
+      assertThat(throwables).contains(boom);
+      return Unit.INSTANCE;
+    });
     assertThat(call.isCanceled()).isTrue();
 
     assertThat(executor.takeException()).isEqualTo(boom);
