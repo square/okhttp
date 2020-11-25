@@ -16,7 +16,6 @@
  */
 package okhttp3.internal.platform
 
-import android.os.Build
 import java.io.IOException
 import java.net.InetSocketAddress
 import java.net.Socket
@@ -273,14 +272,6 @@ open class Platform {
         result.writeUtf8(protocol)
       }
       return result.readByteArray()
-    }
-
-    fun androidSdkVersion(): Int? {
-      return if (isAndroid) {
-        Build.VERSION.SDK_INT
-      } else {
-        null
-      }
     }
   }
 }

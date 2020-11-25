@@ -15,6 +15,7 @@
  */
 package okhttp3.testing
 
+import android.os.Build
 import com.amazon.corretto.crypto.provider.AmazonCorrettoCryptoProvider
 import com.amazon.corretto.crypto.provider.SelfTestStatus
 import okhttp3.internal.platform.ConscryptPlatform
@@ -287,6 +288,17 @@ open class PlatformRule @JvmOverloads constructor(
     assumeNotAndroid()
     assumeTrue(PlatformVersion.majorVersion == majorVersion)
   }
+
+  fun androidSdkVersion(): Int? {
+    return if (Platform.isAndroid) {
+      Build.VERSION.SDK_INT
+    } else {
+      null
+    }
+  }
+
+  val isAndroid: Boolean
+    get() = Platform.Companion.isAndroid
 
   companion object {
     const val PROPERTY_NAME = "okhttp.platform"

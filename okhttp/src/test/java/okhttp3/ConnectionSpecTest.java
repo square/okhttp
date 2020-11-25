@@ -232,9 +232,9 @@ public final class ConnectionSpecTest {
     });
 
     applyConnectionSpec(tlsSpec, sslSocket, false);
-    if (Platform.Companion.isAndroid()) {
+    if (platform.isAndroid()) {
       // https://developer.android.com/reference/javax/net/ssl/SSLSocket
-      Integer sdkVersion = Platform.Companion.androidSdkVersion();
+      Integer sdkVersion = platform.androidSdkVersion();
       if (sdkVersion != null && sdkVersion >= 29) {
         assertThat(sslSocket.getEnabledCipherSuites()).containsExactly(
             CipherSuite.TLS_AES_128_GCM_SHA256.javaName(),
@@ -280,7 +280,7 @@ public final class ConnectionSpecTest {
 
     applyConnectionSpec(tlsSpec, sslSocket, false);
     if (Platform.Companion.isAndroid()) {
-      Integer sdkVersion = Platform.Companion.androidSdkVersion();
+      Integer sdkVersion = platform.androidSdkVersion();
       // https://developer.android.com/reference/javax/net/ssl/SSLSocket
       if (sdkVersion != null && sdkVersion >= 29) {
         assertThat(sslSocket.getEnabledProtocols()).containsExactly(

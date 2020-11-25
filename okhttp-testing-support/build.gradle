@@ -12,6 +12,7 @@ dependencies {
   api deps.junit5JupiterParams
   
   compileOnly deps.jsr305
+  compileOnly deps.android
 }
 
 animalsniffer {
