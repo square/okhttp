@@ -180,14 +180,15 @@ public class CrossSigningTest {
     checkRequest(client, "valid-isrgrootx1.letsencrypt.org", false);
 
     // check on complete certificates because name match is not enough
-    assertEquals(asList(validisrgrootx1, letsencryptx3crosssigned),
+    assertCertsEquals(asList(validisrgrootx1, letsencryptx3crosssigned),
         peerCertificates);
   }
 
   /**
    * Ideal but strange case, we have new ISRG and DST certificate and both intermediate forms
-   * in root CA and everything works as expected. Surprinsgly DST Root is used in peer certs
-   * and retained. This doesn't even logicall make sense as the peer certificates.
+   * in root CA and everything works as expected. Surprisingly DST Root is used in peer certs
+   * and retained. This doesn't even logically make sense as the served peer certificates
+   * differ.
    */
   @Test public void passesWithAll() throws IOException, CertificateException {
     OkHttpClient client = buildClient(
@@ -195,7 +196,7 @@ public class CrossSigningTest {
 
     checkRequest(client, "valid-isrgrootx1.letsencrypt.org", false);
 
-    assertEquals(asList(validisrgrootx1, letsencryptx3crosssigned, trustidx3root),
+    assertCertsEquals(asList(validisrgrootx1, letsencryptx3crosssigned, trustidx3root),
         peerCertificates);
   }
 
@@ -222,7 +223,7 @@ public class CrossSigningTest {
 
     checkRequest(client, "valid-isrgrootx1.letsencrypt.org", false);
 
-    assertCertsEquals(asList(validisrgrootx1, letsencryptauthorityx3, trustidx3root),
+    assertCertsEquals(asList(validisrgrootx1, letsencryptx3crosssigned, trustidx3root),
         peerCertificates);
   }
 
@@ -237,7 +238,7 @@ public class CrossSigningTest {
 
     checkRequest(client, "valid-isrgrootx1.letsencrypt.org", false);
 
-    assertCertsEquals(asList(validisrgrootx1, letsencryptauthorityx3, trustidx3root),
+    assertCertsEquals(asList(validisrgrootx1, letsencryptx3crosssigned, trustidx3root),
         peerCertificates);
   }
 
@@ -281,6 +282,7 @@ public class CrossSigningTest {
 
   private void assertCertsEquals(List<X509Certificate> expected, List<X509Certificate> actual) {
     assertEquals(names(expected), names(actual));
+    assertEquals(expected, actual);
   }
 
   private List<String> names(List<X509Certificate> certificates) {
