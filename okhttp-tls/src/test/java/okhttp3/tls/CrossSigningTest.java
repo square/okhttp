@@ -18,6 +18,8 @@ package okhttp3.tls;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.security.Provider;
+import java.security.Security;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -28,7 +30,12 @@ import okhttp3.CertificatePinner;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.internal.platform.ConscryptPlatform;
+import okhttp3.internal.platform.Platform;
+import org.conscrypt.Conscrypt;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
@@ -60,11 +67,31 @@ public class CrossSigningTest {
   private X509Certificate trustidx3root;
   private X509Certificate letsencryptx3crosssigned;
 
-  private final OkHttpClient cleanClient = new OkHttpClient();
+  private OkHttpClient cleanClient;
   private List<X509Certificate> peerCertificates;
+
+  private static boolean isConscrypt = false;
+
+  @BeforeAll
+  public static void optionallyInstallConscrypt() {
+    if (isConscrypt) {
+      Provider provider = Conscrypt.newProviderBuilder().build();
+      Security.insertProviderAt(provider, 1);
+
+      Platform.Companion.resetForTests(ConscryptPlatform.Companion.buildIfSupported());
+    }
+  }
+
+  @AfterAll
+  public static void optionallyRemoveConscrypt() {
+    Security.removeProvider("Conscrypt");
+    Platform.Companion.resetForTests();
+  }
 
   @BeforeEach
   public void setup() throws CertificateException, IOException {
+    cleanClient = new OkHttpClient();
+
     validisrgrootx1 = toCert("-----BEGIN CERTIFICATE-----\n"
         + "MIIFeDCCBGCgAwIBAgISA00GltSI+wZA2ESjiBZW8SKYMA0GCSqGSIb3DQEBCwUA\n"
         + "MEoxCzAJBgNVBAYTAlVTMRYwFAYDVQQKEw1MZXQncyBFbmNyeXB0MSMwIQYDVQQD\n"
@@ -202,8 +229,13 @@ public class CrossSigningTest {
 
     checkRequest(client, "valid-isrgrootx1.letsencrypt.org", false);
 
-    assertCertsEquals(asList(validisrgrootx1, letsencryptx3crosssigned, trustidx3root),
-        peerCertificates);
+    if (isConscrypt) {
+      assertCertsEquals(asList(validisrgrootx1, letsencryptauthorityx3, isrgrootx1),
+          peerCertificates);
+    } else {
+      assertCertsEquals(asList(validisrgrootx1, letsencryptx3crosssigned, trustidx3root),
+          peerCertificates);
+    }
   }
 
   /**
@@ -215,7 +247,14 @@ public class CrossSigningTest {
         asList(isrgrootx1, trustidx3root, letsencryptauthorityx3, letsencryptx3crosssigned),
         singletonList(isrgrootx1));
 
-    checkRequest(client, "valid-isrgrootx1.letsencrypt.org", true);
+    if (isConscrypt) {
+      // pinning failure
+      checkRequest(client, "valid-isrgrootx1.letsencrypt.org", false);
+      assertCertsEquals(asList(validisrgrootx1, letsencryptauthorityx3, isrgrootx1),
+          peerCertificates);
+    } else {
+      checkRequest(client, "valid-isrgrootx1.letsencrypt.org", true);
+    }
   }
 
   /**
@@ -227,10 +266,15 @@ public class CrossSigningTest {
         asList(isrgrootx1, trustidx3root, letsencryptauthorityx3, letsencryptx3crosssigned),
         singletonList(trustidx3root));
 
-    checkRequest(client, "valid-isrgrootx1.letsencrypt.org", false);
+    if (isConscrypt) {
+      // pinning failure
+      checkRequest(client, "valid-isrgrootx1.letsencrypt.org", true);
+    } else {
+      checkRequest(client, "valid-isrgrootx1.letsencrypt.org", false);
 
-    assertCertsEquals(asList(validisrgrootx1, letsencryptx3crosssigned, trustidx3root),
-        peerCertificates);
+      assertCertsEquals(asList(validisrgrootx1, letsencryptx3crosssigned, trustidx3root),
+          peerCertificates);
+    }
   }
 
   /**
@@ -244,8 +288,13 @@ public class CrossSigningTest {
 
     checkRequest(client, "valid-isrgrootx1.letsencrypt.org", false);
 
-    assertCertsEquals(asList(validisrgrootx1, letsencryptx3crosssigned, trustidx3root),
-        peerCertificates);
+    if (isConscrypt) {
+      assertCertsEquals(asList(validisrgrootx1, letsencryptauthorityx3, isrgrootx1),
+          peerCertificates);
+    } else {
+      assertCertsEquals(asList(validisrgrootx1, letsencryptx3crosssigned, trustidx3root),
+          peerCertificates);
+    }
   }
 
   /**

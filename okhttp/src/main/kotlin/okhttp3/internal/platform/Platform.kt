@@ -177,6 +177,7 @@ open class Platform {
     @JvmStatic
     fun get(): Platform = platform
 
+    @JvmOverloads
     fun resetForTests(platform: Platform = findPlatform()) {
       this.platform = platform
     }
