@@ -18,21 +18,17 @@ package okhttp3.tls;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.List;
-import java.util.stream.Collectors;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import okhttp3.CertificatePinner;
 import okhttp3.OkHttpClient;
-import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
 import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -119,6 +115,14 @@ public class CrossSigningTest {
     CertificateFactory cf = CertificateFactory.getInstance("X.509");
     return (X509Certificate) cf.generateCertificate(
         new ByteArrayInputStream(pem.getBytes(StandardCharsets.UTF_8)));
+  }
+
+  @Test public void testPins() throws IOException, CertificateException {
+    assertEquals("sha256/SJqhYQhQqJxyAhe52dvcf4CRgRnzK4jC3TvPrx3ikHk=", pin(validisrgrootx1));
+    assertEquals("sha256/C5+lpZ7tcVwmwQIMcRtPbsQtWLABXhQzejna0wHFr8M=", pin(isrgrootx1));
+    assertEquals("sha256/YLh1dUR9y6Kja30RrAn7JKnbQG/uEtLMkBgFF2Fuihg=", pin(letsencryptauthorityx3));
+    assertEquals("sha256/Vjs8r4z+80wjNcr1YKepWQboSIRi63WsWXhIMN+eWys=", pin(trustidx3root));
+    assertEquals("sha256/YLh1dUR9y6Kja30RrAn7JKnbQG/uEtLMkBgFF2Fuihg=", pin(letsencryptx3crosssigned));
   }
 
   /**
@@ -338,7 +342,6 @@ public class CrossSigningTest {
         .build();
     try (Response response = client.newCall(request).execute()) {
       assertTrue(response.code() == 200 || response.code() == 404);
-      assertEquals(Protocol.HTTP_2, response.protocol());
       peerCertificates = (List<X509Certificate>) response.handshake()
           .peerCertificates()
           .stream()
