@@ -30,6 +30,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -51,6 +52,7 @@ import static org.junit.jupiter.api.Assertions.fail;
  */
 @Execution(ExecutionMode.CONCURRENT)
 @Tag("Remote")
+@Disabled("Don't run by default as it's basically undefined.")
 public class CrossSigningTest {
   private X509Certificate validisrgrootx1;
   private X509Certificate isrgrootx1;
