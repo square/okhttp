@@ -84,8 +84,10 @@ public class CrossSigningTest {
 
   @AfterAll
   public static void optionallyRemoveConscrypt() {
-    Security.removeProvider("Conscrypt");
-    Platform.Companion.resetForTests();
+    if (isConscrypt) {
+      Security.removeProvider("Conscrypt");
+      Platform.Companion.resetForTests();
+    }
   }
 
   @BeforeEach
