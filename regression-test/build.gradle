@@ -53,4 +53,6 @@ dependencies {
   androidTestImplementation 'org.apache.httpcomponents.client5:httpclient5:5.0'
   androidTestImplementation 'com.squareup.moshi:moshi:1.11.0'
   androidTestImplementation 'com.squareup.moshi:moshi-kotlin:1.11.0'
+
+  androidTestImplementation "io.envoyproxy.envoymobile:envoy:0.3.1.11112020@aar"
 }
