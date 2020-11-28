@@ -20,16 +20,16 @@ import java.security.cert.X509Certificate
 
 fun <E : Throwable> E.withNetworkErrorLogging(errorType: ErrorType, vararg details: Pair<String, Any?>): E {
   return this.also {
-    addSuppressed(NetworkError(NetworkErrorLogging(errorType, errorDetails = mapOf(*details))))
+    addSuppressed(NetworkError(errorType, *details))
   }
 }
 
 val Throwable.errorDetails: NetworkErrorLogging?
   get() {
-    val sequence: Sequence<Throwable> =
+    val sequence =
       generateSequence(this) { if (it.cause == it) null else it.cause }.flatMap { listOf(it) + it.suppressedExceptions }
 
-    return sequence.map { if (it is NetworkError) it.details else null }.first()
+    return sequence.mapNotNull { if (it is NetworkError) it.details else null }.first()
   }
 
 val NetworkErrorLogging.hostname: String?
@@ -40,50 +40,3 @@ val NetworkErrorLogging.matchingPins: List<CertificatePinner.Pin>?
 
 val NetworkErrorLogging.peerCertificates: List<X509Certificate>?
   get() = errorDetails["peerCertificates"] as? List<X509Certificate>
-
-//class DnsNameNotResolvedException(
-//  message: String? = null,
-//  cause: Exception? = null,
-//  host: String? = null
-//) : UnknownHostException(message ?: cause?.message), TypedException {
-//  init {
-//    initCause(cause)
-//  }
-//
-//  override val primaryErrorType = ErrorType.DNS_NAME_NOT_RESOLVED
-//
-//  val targetHostname: String? =
-//    when {
-//      host != null -> { host }
-//      this.message?.endsWith(": Name or service not known") == true -> {
-//        this.message.substringBefore(":")
-//      }
-//      else -> { null }
-//    }
-
-
-//class DnsFailedException(
-//  message: String? = null,
-//  cause: Exception? = null,
-//  val targetHostname: String? = null
-//) : UnknownHostException(message ?: cause?.message), TypedException {
-//  init {
-//    initCause(cause)
-//  }
-//
-//  override val primaryErrorType = ErrorType.DNS_FAILED
-//  override val errorDetails: Map<String, Any>
-//    get() = if (targetHostname == null) mapOf() else mapOf("hostname" to targetHostname)
-//}
-
-
-//class CertPinnedKeyNotInCertChainException(
-//  reason: String,
-//  val hostname: String,
-//  val matchingPins: List<CertificatePinner.Pin>,
-//  val peerCertificates: List<X509Certificate>
-//): SSLPeerUnverifiedException(reason), TypedException {
-//  override val primaryErrorType = ErrorType.TLS_CERT_PINNED_KEY_NOT_IN_CERT_CHAIN
-//  override val errorDetails: Map<String, Any>
-//    get() = mapOf("hostname" to hostname, "matchingPins" to matchingPins, "peerCertificates" to peerCertificates)
-//}

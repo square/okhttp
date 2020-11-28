@@ -18,6 +18,9 @@ package okhttp3
 import java.net.InetAddress
 import java.net.UnknownHostException
 import okhttp3.Dns.Companion.SYSTEM
+import okhttp3.errors.ErrorType.Companion.DNS_FAILED
+import okhttp3.errors.ErrorType.Companion.DNS_NAME_NOT_RESOLVED
+import okhttp3.errors.withNetworkErrorLogging
 
 /**
  * A domain name service that resolves IP addresses for host names. Most applications will use the
@@ -47,9 +50,12 @@ interface Dns {
       override fun lookup(hostname: String): List<InetAddress> {
         try {
           return InetAddress.getAllByName(hostname).toList()
+        } catch (e: UnknownHostException) {
+          throw e.withNetworkErrorLogging(DNS_NAME_NOT_RESOLVED, "hostname" to hostname)
         } catch (e: NullPointerException) {
           throw UnknownHostException("Broken system behaviour for dns lookup of $hostname").apply {
             initCause(e)
+            withNetworkErrorLogging(DNS_FAILED, "hostname" to hostname)
           }
         }
       }

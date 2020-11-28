@@ -65,10 +65,10 @@ class ErrorHandlingInterceptorTest {
     try {
       makeRequest(url.toHttpUrl())
     } catch (e: UnknownHostException) {
-      val errorDetails = e.errorDetails!!
+      val errorDetails = e.errorDetails
 
-      assertThat(errorDetails.errorType).isEqualTo(DNS_NAME_NOT_RESOLVED)
-      assertThat(errorDetails.hostname).isEqualTo("blah.invalid")
+      assertThat(errorDetails?.errorType).isEqualTo(DNS_NAME_NOT_RESOLVED)
+      assertThat(errorDetails?.hostname).isEqualTo("blah.invalid")
     }
   }
 

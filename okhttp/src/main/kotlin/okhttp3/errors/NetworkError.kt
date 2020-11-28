@@ -18,5 +18,7 @@ package okhttp3.errors
 import java.io.IOException
 
 class NetworkError(val details: NetworkErrorLogging): IOException() {
+  constructor(errorType: ErrorType, vararg errorDetails: Pair<String, Any?>): this(NetworkErrorLogging(errorType, mapOf(*errorDetails)))
+
   override fun fillInStackTrace(): Throwable = this
 }
