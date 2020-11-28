@@ -15,20 +15,8 @@
  */
 package okhttp3.errors
 
-import okhttp3.errors.ErrorType.Companion.DNS_FAILED
-import okhttp3.errors.ErrorType.Companion.DNS_NAME_NOT_RESOLVED
-import java.net.UnknownHostException
+import java.io.IOException
 
-class DnsFailedException(
-  message: String? = null,
-  cause: Exception? = null,
-  val targetHostname: String? = null
-) : UnknownHostException(message ?: cause?.message), TypedException {
-  init {
-    initCause(cause)
-  }
-
-  override val primaryErrorType = DNS_FAILED
-  override val errorDetails: Map<String, Any>
-    get() = if (targetHostname == null) mapOf() else mapOf("hostname" to targetHostname)
+class NetworkError(val details: NetworkErrorLogging): IOException() {
+  override fun fillInStackTrace(): Throwable = this
 }

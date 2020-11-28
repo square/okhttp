@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Square, Inc.
+ * Copyright (C) 2020 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,7 @@
  */
 package okhttp3.errors
 
-interface TypedException {
-  val primaryErrorType: ErrorType?
-
-  open val errorTypes: Set<ErrorType>
-    get() = setOfNotNull(primaryErrorType)
-
-  open val errorDetails: Map<String, Any>
-    get() = mapOf()
-}
+data class NetworkErrorLogging(
+  val errorType: ErrorType,
+  val errorDetails: Map<String, Any?> = mapOf()
+)

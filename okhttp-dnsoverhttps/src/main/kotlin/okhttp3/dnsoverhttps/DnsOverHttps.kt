@@ -33,8 +33,10 @@ import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
-import okhttp3.errors.DnsFailedException
-import okhttp3.errors.DnsNameNotResolvedException
+import okhttp3.errors.ErrorType
+import okhttp3.errors.ErrorType.Companion.DNS_FAILED
+import okhttp3.errors.ErrorType.Companion.DNS_NAME_NOT_RESOLVED
+import okhttp3.errors.withNetworkErrorLogging
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
 
@@ -68,11 +70,11 @@ class DnsOverHttps internal constructor(
       val privateHost = isPrivateHost(hostname)
 
       if (privateHost && !resolvePrivateAddresses) {
-        throw DnsFailedException(message = "private hosts not resolved", targetHostname = hostname)
+        throw UnknownHostException("private hosts not resolved").withNetworkErrorLogging(errorType = DNS_FAILED, "targetHostname" to hostname)
       }
 
       if (!privateHost && !resolvePublicAddresses) {
-        throw DnsFailedException("public hosts not resolved", targetHostname = hostname)
+        throw UnknownHostException("public hosts not resolved").withNetworkErrorLogging(errorType = DNS_FAILED, "targetHostname" to hostname)
       }
     }
 
@@ -166,16 +168,16 @@ class DnsOverHttps internal constructor(
   @Throws(UnknownHostException::class)
   private fun throwBestFailure(hostname: String, failures: List<Exception>): List<InetAddress> {
     if (failures.isEmpty()) {
-      throw DnsFailedException(targetHostname = hostname)
+      throw UnknownHostException(hostname).withNetworkErrorLogging(errorType = DNS_FAILED, "targetHostname" to hostname)
     }
 
     val failure = failures[0]
 
     if (failure is UnknownHostException) {
-      throw DnsNameNotResolvedException(cause = failure, host = hostname)
+      throw failure.withNetworkErrorLogging(errorType = DNS_NAME_NOT_RESOLVED, "targetHostname" to hostname)
     }
 
-    val unknownHostException = DnsNameNotResolvedException(cause = failure, host = hostname)
+    val unknownHostException = UnknownHostException(hostname).withNetworkErrorLogging(errorType = DNS_NAME_NOT_RESOLVED, "targetHostname" to hostname)
     unknownHostException.initCause(failure)
 
     for (i in 1 until failures.size) {

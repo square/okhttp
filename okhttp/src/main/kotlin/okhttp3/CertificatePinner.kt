@@ -15,7 +15,8 @@
  */
 package okhttp3
 
-import okhttp3.errors.CertPinnedKeyNotInCertChainException
+import okhttp3.errors.ErrorType.Companion.TLS_CERT_PINNED_KEY_NOT_IN_CERT_CHAIN
+import okhttp3.errors.withNetworkErrorLogging
 import java.security.cert.Certificate
 import java.security.cert.X509Certificate
 import javax.net.ssl.SSLPeerUnverifiedException
@@ -198,9 +199,8 @@ class CertificatePinner internal constructor(
         append(pin)
       }
     }
-    throw CertPinnedKeyNotInCertChainException(
-      message, hostname = hostname, matchingPins = pins, peerCertificates = peerCertificates
-    )
+    throw SSLPeerUnverifiedException(message).withNetworkErrorLogging(TLS_CERT_PINNED_KEY_NOT_IN_CERT_CHAIN,
+      "hostname" to hostname, "matchingPins" to pins, "peerCertificates" to peerCertificates)
   }
 
   @Deprecated(
