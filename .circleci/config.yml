@@ -253,6 +253,30 @@ jobs:
       - runtests:
           platform: corretto
 
+  testgraal:
+    docker:
+      - image: circleci/openjdk:11.0.8-jdk-buster
+
+    environment:
+      JVM_OPTS: -Xmx1g
+      TERM: dumb
+
+    steps:
+      - checkout
+
+      - restore_cache:
+          keys:
+            # restore compilation and wrapper from master build
+            - v4-master-compile
+
+      - run:
+          name: Native Image
+          command: ./gradlew native-image-test:nativeImage
+
+      - run:
+          name: Native Image Tests
+          command: ./native-image-tests/build/graal/ConsoleLauncher
+
 workflows:
   version: 2
   commit:
@@ -282,6 +306,11 @@ workflows:
               ignore:
                 - gh-pages
       - testjdk15:
+          filters:
+            branches:
+              ignore:
+                - gh-pages
+      - testgraal:
           filters:
             branches:
               ignore:
@@ -322,5 +351,8 @@ workflows:
           requires:
             - compile
       - testconscrypt:
+          requires:
+            - compile
+      - testgraal:
           requires:
             - compile
