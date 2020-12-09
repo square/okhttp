@@ -107,6 +107,18 @@ implementation("com.squareup.okhttp3:okhttp:4.9.0")
 
 Snapshot builds are [available][snap]. [R8 and ProGuard][r8_proguard] rules are available.
 
+Also, we have a [bill of materials (BOM)][bom] available to help you keep OkHttp artifacts up to date and be sure about versions compatibility.
+
+```kotlin
+    dependencies {
+       // define a BOM and its version
+       implementation(platform("com.squareup.okhttp3:okhttp-bom:4.9.0"))
+       
+       // define any required OkHttp artifacts without verion
+       implementation("com.squareup.okhttp3:okhttp")
+       implementation("com.squareup.okhttp3:logging-interceptor")
+    }
+```
 
 MockWebServer
 -------------
@@ -150,7 +162,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ```
-
+ [bom]: https://docs.gradle.org/6.2/userguide/platforms.html#sub:bom_import
  [changelog]: http://square.github.io/okhttp/changelog/
  [conscrypt]: https://github.com/google/conscrypt/
  [get_example]: https://raw.github.com/square/okhttp/master/samples/guide/src/main/java/okhttp3/guide/GetExample.java
