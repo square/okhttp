@@ -30,6 +30,9 @@ import okhttp3.internal.platform.Platform
 import okhttp3.internal.toImmutableList
 import okhttp3.tls.internal.TlsUtil.newKeyManager
 import okhttp3.tls.internal.TlsUtil.newTrustManager
+import java.net.Socket
+import java.security.Principal
+import java.security.PrivateKey
 
 /**
  * Certificates to identify which peers to trust and also to earn the trust of those peers in kind.
@@ -100,6 +103,7 @@ class HandshakeCertificates private constructor(
     private var intermediates: Array<X509Certificate>? = null
     private val trustedCertificates = mutableListOf<X509Certificate>()
     private val insecureHosts = mutableListOf<String>()
+    private val clientKeys = mutableMapOf<String, HeldCertificate>()
 
     /**
      * Configure the certificate chain to use when being authenticated. The first certificate is
@@ -172,9 +176,44 @@ class HandshakeCertificates private constructor(
 
     fun build(): HandshakeCertificates {
       val immutableInsecureHosts = insecureHosts.toImmutableList()
-      val keyManager = newKeyManager(null, heldCertificate, *(intermediates ?: emptyArray()))
+      val keyManager = if (clientKeys.isEmpty()) {
+        newKeyManager(null, heldCertificate, *(intermediates ?: emptyArray()))
+      } else {
+        // TODO both key managers?
+        object : X509KeyManager {
+          override fun getClientAliases(keyType: String?, issuers: Array<Principal>): Array<String> {
+            return clientKeys.keys.toTypedArray()
+          }
+
+          override fun chooseClientAlias(keyType: Array<out String>?, issuers: Array<out Principal>?, socket: Socket?): String {
+            // TODO choose
+            return clientKeys.keys.first()
+          }
+
+          override fun getServerAliases(keyType: String?, issuers: Array<Principal>): Array<String> {
+            return arrayOf()
+          }
+
+          override fun chooseServerAlias(keyType: String?, issuers: Array<Principal>, socket: Socket): String {
+            return ""
+          }
+
+          override fun getCertificateChain(alias: String?): Array<X509Certificate> {
+            return arrayOf(clientKeys.values.first().certificate)
+          }
+
+          override fun getPrivateKey(alias: String?): PrivateKey {
+            return clientKeys.values.first().keyPair.private
+          }
+        }
+      }
       val trustManager = newTrustManager(null, trustedCertificates, immutableInsecureHosts)
       return HandshakeCertificates(keyManager, trustManager)
+    }
+
+    // TODO support wildcard patterns?
+    fun addClientAuthCertificate(hostName: String, heldCertificate: HeldCertificate) = apply {
+      clientKeys[hostName] = heldCertificate
     }
   }
 }
