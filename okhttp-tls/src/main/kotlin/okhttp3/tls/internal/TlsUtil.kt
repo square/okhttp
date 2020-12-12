@@ -33,17 +33,24 @@ import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 object TlsUtil {
   val password = "password".toCharArray()
 
-  private val localhost: HandshakeCertificates by lazy {
+  private val localhostCerts by lazy {
     // Generate a self-signed cert for the server to serve and the client to trust.
-    val heldCertificate = HeldCertificate.Builder()
-        .commonName("localhost")
-        .addSubjectAlternativeName(InetAddress.getByName("localhost").canonicalHostName)
-        .build()
+    HeldCertificate.Builder()
+      .commonName("localhost")
+      .addSubjectAlternativeName(InetAddress.getByName("localhost").canonicalHostName)
+      .build()
+  }
+
+  private val localhost: HandshakeCertificates by lazy {
     return@lazy HandshakeCertificates.Builder()
-        .heldCertificate(heldCertificate)
-        .addTrustedCertificate(heldCertificate.certificate)
+        .heldCertificate(localhostCerts)
+        .addTrustedCertificate(localhostCerts.certificate)
         .build()
   }
+
+  /** Returns an SSL client for this host's localhost address. */
+  @JvmStatic
+  fun localhostCerts(): HeldCertificate = localhostCerts
 
   /** Returns an SSL client for this host's localhost address. */
   @JvmStatic
