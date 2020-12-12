@@ -19,8 +19,9 @@ import java.io.IOException
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.tls.HandshakeCertificates
+import okhttp3.tls.HeldCertificate
 import okhttp3.tls.decodeCertificatePem
-import okhttp3.tls.internal.TlsUtil
+import java.net.InetAddress
 import java.net.Socket
 import java.security.Principal
 import java.security.PrivateKey
@@ -33,7 +34,10 @@ class ClientAuth {
     .url("https://server.cryptomix.com/secure/")
     .build()
 
-  val localhost = TlsUtil.localhostCerts()
+  val localhost = HeldCertificate.Builder()
+      .commonName("localhost")
+      .addSubjectAlternativeName(InetAddress.getByName("localhost").canonicalHostName)
+      .build()
 
   fun run() {
     println("Sending request using platform keys and certificates")
