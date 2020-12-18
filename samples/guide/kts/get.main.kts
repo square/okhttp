@@ -1,6 +1,6 @@
 #!/usr/bin/env -S kotlinc-jvm -nowarn -script
 
-@file:Repository("https://jcenter.bintray.com")
+@file:Repository("https://repo1.maven.org/maven2/")
 @file:DependsOn("com.squareup.okhttp3:okhttp:4.9.0")
 @file:CompilerOptions("-jvm-target", "1.8")
 
@@ -13,6 +13,8 @@ val request = Request.Builder()
    .url("https://raw.github.com/square/okhttp/master/README.md")
    .build()
 
-val body = client.newCall(request).execute().use { response -> response.body!!.string() }
+val body = client.newCall(request).execute().use {
+  it.body!!.string()
+}
 
 println(body)

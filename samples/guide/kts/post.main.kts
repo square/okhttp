@@ -1,6 +1,6 @@
 #!/usr/bin/env -S kotlinc-jvm -nowarn -script
 
-@file:Repository("https://jcenter.bintray.com")
+@file:Repository("https://repo1.maven.org/maven2/")
 @file:DependsOn("com.squareup.okhttp3:okhttp:4.9.0")
 @file:CompilerOptions("-jvm-target", "1.8")
 
@@ -20,6 +20,6 @@ val request: Request = Request.Builder()
   .post(body)
   .build()
 
-val responseBody = client.newCall(request).execute().use { response -> response.body?.string() }
-
-println(responseBody)
+client.newCall(request).execute().use {
+  println(it.body?.string())
+}
