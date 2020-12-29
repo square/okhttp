@@ -1,4 +1,4 @@
-#!/usr/bin/env -S kotlinc-jvm -nowarn -script
+#!/usr/bin/env kotlin
 
 @file:Repository("https://repo1.maven.org/maven2/")
 @file:DependsOn("com.squareup.okhttp3:okhttp:4.9.0")
