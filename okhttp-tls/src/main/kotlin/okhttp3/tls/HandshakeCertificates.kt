@@ -30,6 +30,7 @@ import okhttp3.internal.platform.Platform
 import okhttp3.internal.toImmutableList
 import okhttp3.tls.internal.TlsUtil.newKeyManager
 import okhttp3.tls.internal.TlsUtil.newTrustManager
+import java.security.KeyStoreException
 
 /**
  * Certificates to identify which peers to trust and also to earn the trust of those peers in kind.
@@ -172,6 +173,12 @@ class HandshakeCertificates private constructor(
 
     fun build(): HandshakeCertificates {
       val immutableInsecureHosts = insecureHosts.toImmutableList()
+
+      val heldCertificate = heldCertificate
+      if (heldCertificate != null && heldCertificate.keyPair.private.format == null) {
+        throw KeyStoreException("unable to support unencodable private key")
+      }
+
       val keyManager = newKeyManager(null, heldCertificate, *(intermediates ?: emptyArray()))
       val trustManager = newTrustManager(null, trustedCertificates, immutableInsecureHosts)
       return HandshakeCertificates(keyManager, trustManager)
