@@ -47,7 +47,7 @@ class CacheCorruptionTest(
   private lateinit var client: OkHttpClient
   private lateinit var cache: Cache
   private val NULL_HOSTNAME_VERIFIER =
-    HostnameVerifier { name: String?, session: SSLSession? -> true }
+    HostnameVerifier { _: String?, _: SSLSession? -> true }
   private val cookieManager = CookieManager()
 
   @BeforeEach fun setUp() {

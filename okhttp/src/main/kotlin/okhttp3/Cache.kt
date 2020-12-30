@@ -27,6 +27,7 @@ import okhttp3.internal.http.HttpMethod
 import okhttp3.internal.http.StatusLine
 import okhttp3.internal.io.FileSystem
 import okhttp3.internal.platform.Platform
+import okhttp3.internal.platform.Platform.Companion.WARN
 import okhttp3.internal.toLongOrDefault
 import okio.Buffer
 import okio.BufferedSink
@@ -501,7 +502,11 @@ class Cache internal constructor(
       rawSource.use {
         val source = rawSource.buffer()
         val urlLine = source.readUtf8LineStrict()
-        url = urlLine.toHttpUrlOrNull() ?: throw IOException("Cache Failure for $urlLine")
+        // Choice here is between failing with a correct RuntimeException
+        // or mostly silently with an IOException
+        url = urlLine.toHttpUrlOrNull() ?: throw IOException("Cache Failure for $urlLine").also {
+          Platform.get().log("cache corruption", WARN, it)
+        }
         requestMethod = source.readUtf8LineStrict()
         val varyHeadersBuilder = Headers.Builder()
         val varyRequestHeaderLineCount = readInt(source)
