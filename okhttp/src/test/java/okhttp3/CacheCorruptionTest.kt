@@ -103,7 +103,7 @@ class CacheCorruptionTest(
   @Test fun corruptedUrl() {
     val response = testCorruptingCache {
       corruptMetadata {
-        // string http scheme
+        // strip https scheme
         it.substring(5)
       }
     }
