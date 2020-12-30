@@ -32,7 +32,8 @@ import java.net.URISyntaxException
 import java.net.URL
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets.UTF_8
-import java.util.*
+import java.util.Collections
+import java.util.LinkedHashSet
 
 /**
  * A uniform resource locator (URL) with a scheme of either `http` or `https`. Use this class to
