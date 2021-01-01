@@ -198,6 +198,8 @@ class DiskLruCache @OptIn(ExperimentalFilesystem::class) constructor(
     this.journalFile = directory / JOURNAL_FILE
     this.journalFileTmp = directory / JOURNAL_FILE_TEMP
     this.journalFileBackup = directory / JOURNAL_FILE_BACKUP
+
+    fileSystem.createDirectories(directory)
   }
 
   @Synchronized @Throws(IOException::class)
@@ -218,6 +220,7 @@ class DiskLruCache @OptIn(ExperimentalFilesystem::class) constructor(
       }
     }
 
+    // TODO move into API?
     civilizedFileSystem = fileSystem.isCivilized(journalFileBackup)
 
     // Prefer to pick up where we left off.
@@ -228,6 +231,7 @@ class DiskLruCache @OptIn(ExperimentalFilesystem::class) constructor(
         initialized = true
         return
       } catch (journalIsCorrupt: IOException) {
+        println(journalIsCorrupt)
         Platform.get().log(
             "DiskLruCache $directory is corrupt: ${journalIsCorrupt.message}, removing",
             WARN,
@@ -348,7 +352,9 @@ class DiskLruCache @OptIn(ExperimentalFilesystem::class) constructor(
    */
   @Throws(IOException::class)
   private fun processJournal() {
-    fileSystem.delete(journalFileTmp)
+    if (fileSystem.exists(journalFileTmp)) {
+      fileSystem.delete(journalFileTmp)
+    }
     val i = lruEntries.values.iterator()
     while (i.hasNext()) {
       val entry = i.next()

@@ -15,16 +15,6 @@
  */
 package okhttp3
 
-import java.io.Closeable
-import java.io.File
-import java.io.Flushable
-import java.io.IOException
-import java.security.cert.Certificate
-import java.security.cert.CertificateEncodingException
-import java.security.cert.CertificateException
-import java.security.cert.CertificateFactory
-import java.util.NoSuchElementException
-import java.util.TreeSet
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.internal.EMPTY_HEADERS
 import okhttp3.internal.cache.CacheRequest
@@ -36,10 +26,32 @@ import okhttp3.internal.http.HttpMethod
 import okhttp3.internal.http.StatusLine
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.toLongOrDefault
-import okio.*
+import okio.Buffer
+import okio.BufferedSink
+import okio.BufferedSource
 import okio.ByteString.Companion.decodeBase64
 import okio.ByteString.Companion.encodeUtf8
 import okio.ByteString.Companion.toByteString
+import okio.ExperimentalFilesystem
+import okio.Filesystem
+import okio.ForwardingSink
+import okio.ForwardingSource
+import okio.Path
+import okio.Sink
+import okio.Source
+import okio.buffer
+import okio.toFile
+import okio.toOkioPath
+import java.io.Closeable
+import java.io.File
+import java.io.Flushable
+import java.io.IOException
+import java.security.cert.Certificate
+import java.security.cert.CertificateEncodingException
+import java.security.cert.CertificateException
+import java.security.cert.CertificateFactory
+import java.util.NoSuchElementException
+import java.util.TreeSet
 
 /**
  * Caches HTTP and HTTPS responses to the filesystem so they may be reused, saving time and
@@ -138,12 +150,12 @@ internal constructor(
   fileSystem: Filesystem
 ) : Closeable, Flushable {
   internal val cache = DiskLruCache(
-      fileSystem = fileSystem,
-      directory = directory,
-      appVersion = VERSION,
-      valueCount = ENTRY_COUNT,
-      maxSize = maxSize,
-      taskRunner = TaskRunner.INSTANCE
+    fileSystem = fileSystem,
+    directory = directory,
+    appVersion = VERSION,
+    valueCount = ENTRY_COUNT,
+    maxSize = maxSize,
+    taskRunner = TaskRunner.INSTANCE
   )
 
   // read and write statistics, all guarded by 'this'.
@@ -158,7 +170,9 @@ internal constructor(
 
   /** Create a cache of at most [maxSize] bytes in [directory]. */
   @OptIn(ExperimentalFilesystem::class)
-  constructor(directory: File, maxSize: Long) : this(directory.toOkioPath(), maxSize, Filesystem.SYSTEM)
+  constructor(directory: File, maxSize: Long) : this(
+    directory.toOkioPath(), maxSize, Filesystem.SYSTEM
+  )
 
   internal fun get(request: Request): Response? {
     val key = key(request.url)
@@ -352,11 +366,15 @@ internal constructor(
   @get:JvmName("directory") val directory: File
     get() = cache.directory.toFile()
 
+  @get:JvmName("directoryPath") val directoryPath: Path
+    get() = cache.directory
+
   @JvmName("-deprecated_directory")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "directory"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "directory"),
+    level = DeprecationLevel.ERROR
+  )
   fun directory(): File = cache.directory.toFile()
 
   @Synchronized internal fun trackResponse(cacheStrategy: CacheStrategy) {
@@ -557,27 +575,27 @@ internal constructor(
         sink.writeDecimalLong(varyHeaders.size.toLong()).writeByte('\n'.toInt())
         for (i in 0 until varyHeaders.size) {
           sink.writeUtf8(varyHeaders.name(i))
-              .writeUtf8(": ")
-              .writeUtf8(varyHeaders.value(i))
-              .writeByte('\n'.toInt())
+            .writeUtf8(": ")
+            .writeUtf8(varyHeaders.value(i))
+            .writeByte('\n'.toInt())
         }
 
         sink.writeUtf8(StatusLine(protocol, code, message).toString()).writeByte('\n'.toInt())
         sink.writeDecimalLong((responseHeaders.size + 2).toLong()).writeByte('\n'.toInt())
         for (i in 0 until responseHeaders.size) {
           sink.writeUtf8(responseHeaders.name(i))
-              .writeUtf8(": ")
-              .writeUtf8(responseHeaders.value(i))
-              .writeByte('\n'.toInt())
+            .writeUtf8(": ")
+            .writeUtf8(responseHeaders.value(i))
+            .writeByte('\n'.toInt())
         }
         sink.writeUtf8(SENT_MILLIS)
-            .writeUtf8(": ")
-            .writeDecimalLong(sentRequestMillis)
-            .writeByte('\n'.toInt())
+          .writeUtf8(": ")
+          .writeDecimalLong(sentRequestMillis)
+          .writeByte('\n'.toInt())
         sink.writeUtf8(RECEIVED_MILLIS)
-            .writeUtf8(": ")
-            .writeDecimalLong(receivedResponseMillis)
-            .writeByte('\n'.toInt())
+          .writeUtf8(": ")
+          .writeDecimalLong(receivedResponseMillis)
+          .writeByte('\n'.toInt())
 
         if (isHttps) {
           sink.writeByte('\n'.toInt())
@@ -625,29 +643,29 @@ internal constructor(
 
     fun matches(request: Request, response: Response): Boolean {
       return url == request.url.toString() &&
-          requestMethod == request.method &&
-          varyMatches(response, varyHeaders, request)
+        requestMethod == request.method &&
+        varyMatches(response, varyHeaders, request)
     }
 
     fun response(snapshot: DiskLruCache.Snapshot): Response {
       val contentType = responseHeaders["Content-Type"]
       val contentLength = responseHeaders["Content-Length"]
       val cacheRequest = Request.Builder()
-          .url(url)
-          .method(requestMethod, null)
-          .headers(varyHeaders)
-          .build()
+        .url(url)
+        .method(requestMethod, null)
+        .headers(varyHeaders)
+        .build()
       return Response.Builder()
-          .request(cacheRequest)
-          .protocol(protocol)
-          .code(code)
-          .message(message)
-          .headers(responseHeaders)
-          .body(CacheResponseBody(snapshot, contentType, contentLength))
-          .handshake(handshake)
-          .sentRequestAtMillis(sentRequestMillis)
-          .receivedResponseAtMillis(receivedResponseMillis)
-          .build()
+        .request(cacheRequest)
+        .protocol(protocol)
+        .code(code)
+        .message(message)
+        .headers(responseHeaders)
+        .body(CacheResponseBody(snapshot, contentType, contentLength))
+        .handshake(handshake)
+        .sentRequestAtMillis(sentRequestMillis)
+        .receivedResponseAtMillis(receivedResponseMillis)
+        .build()
     }
 
     companion object {
