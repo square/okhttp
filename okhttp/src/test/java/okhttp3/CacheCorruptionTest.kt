@@ -15,7 +15,6 @@
  */
 package okhttp3
 
-import java.io.File
 import java.net.CookieManager
 import java.net.ResponseCache
 import java.text.DateFormat
@@ -29,19 +28,24 @@ import javax.net.ssl.SSLSession
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.internal.buildCache
-import okhttp3.internal.io.InMemoryFileSystem
+import okhttp3.okio.FakeFilesystem
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.internal.TlsUtil.localhost
+import okio.ExperimentalFilesystem
+import okio.Path.Companion.toPath
+import okio.buffer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
+@OptIn(ExperimentalFilesystem::class)
 class CacheCorruptionTest(
   var server: MockWebServer
 ) {
-  @JvmField @RegisterExtension var fileSystem = InMemoryFileSystem()
+  @OptIn(ExperimentalFilesystem::class)
+  var fileSystem = FakeFilesystem()
   @JvmField @RegisterExtension val clientTestRule = OkHttpClientTestRule()
   @JvmField @RegisterExtension val platform = PlatformRule()
 
@@ -56,7 +60,7 @@ class CacheCorruptionTest(
     platform.assumeNotOpenJSSE()
     platform.assumeNotBouncyCastle()
     server.protocolNegotiationEnabled = false
-    cache = buildCache(File("/cache/"), Int.MAX_VALUE.toLong(), fileSystem)
+    cache = buildCache("/cache/".toPath(), Int.MAX_VALUE.toLong(), fileSystem)
     client = clientTestRule.newClientBuilder()
       .cache(cache)
       .cookieJar(JavaNetCookieJar(cookieManager))
@@ -101,13 +105,11 @@ class CacheCorruptionTest(
   }
 
   private fun corruptMetadata(corruptor: (String) -> String) {
-    val metadataFile = fileSystem.files.keys.find { it.name.endsWith(".0") }
-    val metadataBuffer = fileSystem.files[metadataFile]
+    val metadataFile = fileSystem.allPaths.find { it.name.endsWith(".0") }!!
 
-    val contents = metadataBuffer!!.peek().readUtf8()
+    val contents = fileSystem.source(metadataFile).buffer().readUtf8()
 
-    metadataBuffer.clear()
-    metadataBuffer.writeUtf8(corruptor(contents))
+    fileSystem.sink(metadataFile).buffer().writeUtf8(corruptor(contents))
   }
 
   private fun testCorruptingCache(corruptor: () -> Unit): Response {

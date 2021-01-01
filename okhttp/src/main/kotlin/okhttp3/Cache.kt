@@ -34,20 +34,12 @@ import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.http.HttpMethod
 import okhttp3.internal.http.StatusLine
-import okhttp3.internal.io.FileSystem
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.toLongOrDefault
-import okio.Buffer
-import okio.BufferedSink
-import okio.BufferedSource
+import okio.*
 import okio.ByteString.Companion.decodeBase64
 import okio.ByteString.Companion.encodeUtf8
 import okio.ByteString.Companion.toByteString
-import okio.ForwardingSink
-import okio.ForwardingSource
-import okio.Sink
-import okio.Source
-import okio.buffer
 
 /**
  * Caches HTTP and HTTPS responses to the filesystem so they may be reused, saving time and
@@ -138,10 +130,12 @@ import okio.buffer
  *
  * [rfc_7234]: http://tools.ietf.org/html/rfc7234
  */
-class Cache internal constructor(
-  directory: File,
+@OptIn(ExperimentalFilesystem::class)
+class Cache
+internal constructor(
+  directory: Path,
   maxSize: Long,
-  fileSystem: FileSystem
+  fileSystem: Filesystem
 ) : Closeable, Flushable {
   internal val cache = DiskLruCache(
       fileSystem = fileSystem,
@@ -163,7 +157,8 @@ class Cache internal constructor(
     get() = cache.isClosed()
 
   /** Create a cache of at most [maxSize] bytes in [directory]. */
-  constructor(directory: File, maxSize: Long) : this(directory, maxSize, FileSystem.SYSTEM)
+  @OptIn(ExperimentalFilesystem::class)
+  constructor(directory: File, maxSize: Long) : this(directory.toOkioPath(), maxSize, Filesystem.SYSTEM)
 
   internal fun get(request: Request): Response? {
     val key = key(request.url)
@@ -355,14 +350,14 @@ class Cache internal constructor(
   }
 
   @get:JvmName("directory") val directory: File
-    get() = cache.directory
+    get() = cache.directory.toFile()
 
   @JvmName("-deprecated_directory")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "directory"),
       level = DeprecationLevel.ERROR)
-  fun directory(): File = cache.directory
+  fun directory(): File = cache.directory.toFile()
 
   @Synchronized internal fun trackResponse(cacheStrategy: CacheStrategy) {
     requestCount++

@@ -20,7 +20,6 @@ import okhttp3.internal.cache.DiskLruCache.Editor
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.Task
 import okhttp3.internal.concurrent.TaskRunner
-import okhttp3.internal.io.FileSystem
 import okhttp3.internal.isCivilized
 import okhttp3.internal.okHttpName
 import okhttp3.internal.platform.Platform
@@ -74,11 +73,12 @@ import java.util.*
  * @param valueCount the number of values per cache entry. Must be positive.
  * @param maxSize the maximum number of bytes this cache should use to store.
  */
-class DiskLruCache(
-  internal val fileSystem: FileSystem,
+@ExperimentalFilesystem
+class DiskLruCache @OptIn(ExperimentalFilesystem::class) constructor(
+  internal val fileSystem: Filesystem,
 
   /** Returns the directory where this cache stores its data. */
-  val directory: File,
+  val directory: Path,
 
   private val appVersion: Int,
 
@@ -139,9 +139,9 @@ class DiskLruCache(
    * compaction; that file should be deleted if it exists when the cache is opened.
    */
 
-  private val journalFile: File
-  private val journalFileTmp: File
-  private val journalFileBackup: File
+  private val journalFile: Path
+  private val journalFileTmp: Path
+  private val journalFileBackup: Path
   private var size: Long = 0L
   private var journalWriter: BufferedSink? = null
   internal val lruEntries = LinkedHashMap<String, Entry>(0, 0.75f, true)
@@ -195,9 +195,9 @@ class DiskLruCache(
     require(maxSize > 0L) { "maxSize <= 0" }
     require(valueCount > 0) { "valueCount <= 0" }
 
-    this.journalFile = File(directory, JOURNAL_FILE)
-    this.journalFileTmp = File(directory, JOURNAL_FILE_TEMP)
-    this.journalFileBackup = File(directory, JOURNAL_FILE_BACKUP)
+    this.journalFile = directory / JOURNAL_FILE
+    this.journalFileTmp = directory / JOURNAL_FILE_TEMP
+    this.journalFileBackup = directory / JOURNAL_FILE_BACKUP
   }
 
   @Synchronized @Throws(IOException::class)
@@ -214,7 +214,7 @@ class DiskLruCache(
       if (fileSystem.exists(journalFile)) {
         fileSystem.delete(journalFileBackup)
       } else {
-        fileSystem.rename(journalFileBackup, journalFile)
+        fileSystem.atomicMove(journalFileBackup, journalFile)
       }
     }
 
@@ -397,9 +397,9 @@ class DiskLruCache(
     }
 
     if (fileSystem.exists(journalFile)) {
-      fileSystem.rename(journalFile, journalFileBackup)
+      fileSystem.atomicMove(journalFile, journalFileBackup)
     }
-    fileSystem.rename(journalFileTmp, journalFile)
+    fileSystem.atomicMove(journalFileTmp, journalFile)
     fileSystem.delete(journalFileBackup)
 
     journalWriter = newJournalWriter()
@@ -519,9 +519,10 @@ class DiskLruCache(
       if (success && !entry.zombie) {
         if (fileSystem.exists(dirty)) {
           val clean = entry.cleanFiles[i]
-          fileSystem.rename(dirty, clean)
+          fileSystem.atomicMove(dirty, clean)
           val oldLength = entry.lengths[i]
-          val newLength = fileSystem.size(clean)
+          // TODO check null behaviour
+          val newLength = fileSystem.metadata(clean).size ?: 0
           entry.lengths[i] = newLength
           size = size - oldLength + newLength
         }
@@ -697,7 +698,7 @@ class DiskLruCache(
   @Throws(IOException::class)
   fun delete() {
     close()
-    fileSystem.deleteContents(directory)
+    fileSystem.deleteRecursively(directory)
   }
 
   /**
@@ -916,8 +917,8 @@ class DiskLruCache(
 
     /** Lengths of this entry's files. */
     internal val lengths: LongArray = LongArray(valueCount)
-    internal val cleanFiles = mutableListOf<File>()
-    internal val dirtyFiles = mutableListOf<File>()
+    internal val cleanFiles = mutableListOf<Path>()
+    internal val dirtyFiles = mutableListOf<Path>()
 
     /** True if this entry has ever been published. */
     internal var readable: Boolean = false
@@ -946,9 +947,9 @@ class DiskLruCache(
       val truncateTo = fileBuilder.length
       for (i in 0 until valueCount) {
         fileBuilder.append(i)
-        cleanFiles += File(directory, fileBuilder.toString())
+        cleanFiles += directory / fileBuilder.toString()
         fileBuilder.append(".tmp")
-        dirtyFiles += File(directory, fileBuilder.toString())
+        dirtyFiles += directory / fileBuilder.toString()
         fileBuilder.setLength(truncateTo)
       }
     }

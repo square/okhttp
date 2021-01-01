@@ -21,10 +21,13 @@ import okhttp3.Response
 import okhttp3.internal.connection.Exchange
 import okhttp3.internal.connection.RealCall
 import okhttp3.internal.connection.RealConnection
-import okhttp3.internal.io.FileSystem
+import okio.ExperimentalFilesystem
+import okio.Filesystem
+import okio.Path
 import java.io.File
 
-fun buildCache(file: File, maxSize: Long, fileSystem: FileSystem): Cache {
+@OptIn(ExperimentalFilesystem::class)
+fun buildCache(file: Path, maxSize: Long, fileSystem: Filesystem): Cache {
   return Cache(file, maxSize, fileSystem)
 }
 

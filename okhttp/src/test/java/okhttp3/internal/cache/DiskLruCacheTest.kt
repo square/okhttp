@@ -20,10 +20,9 @@ import okhttp3.TestUtil
 import okhttp3.internal.cache.DiskLruCache.Editor
 import okhttp3.internal.cache.DiskLruCache.Snapshot
 import okhttp3.internal.concurrent.TaskFaker
-import okhttp3.internal.io.FaultyFileSystem
-import okhttp3.internal.io.FileSystem
-import okhttp3.internal.io.InMemoryFileSystem
-import okhttp3.internal.io.WindowsFileSystem
+import okhttp3.okio.FakeFilesystem
+import okio.ExperimentalFilesystem
+import okio.Filesystem
 import okio.Source
 import okio.buffer
 import org.assertj.core.api.Assertions.assertThat
@@ -41,18 +40,20 @@ import java.io.IOException
 import java.util.ArrayDeque
 import java.util.NoSuchElementException
 
-class FileSystemParamProvider: SimpleProvider() {
+@OptIn(ExperimentalFilesystem::class)
+class FilesystemParamProvider: SimpleProvider() {
   override fun arguments() = listOf(
-    FileSystem.SYSTEM to TestUtil.windows,
-    WindowsFileSystem(InMemoryFileSystem()) to true,
-    InMemoryFileSystem() to false
+    Filesystem.SYSTEM_TEMPORARY_DIRECTORY to TestUtil.windows,
+    FakeFilesystem(windowsLimitations = true) to true,
+    FakeFilesystem() to false
   )
 }
 
 @Timeout(60)
 @Tag("Slow")
+@OptIn(ExperimentalFilesystem::class)
 class DiskLruCacheTest {
-  private lateinit var fileSystem: FaultyFileSystem
+  private lateinit var filesystem: Filesystem
   private var windows: Boolean = false
   @TempDir lateinit var cacheDir: File
   private val appVersion = 100
@@ -68,16 +69,16 @@ class DiskLruCacheTest {
   }
 
   private fun createNewCacheWithSize(maxSize: Int) {
-    cache = DiskLruCache(fileSystem, cacheDir, appVersion, 2, maxSize.toLong(), taskRunner)
+    cache = DiskLruCache(Filesystem, cacheDir, appVersion, 2, maxSize.toLong(), taskRunner)
     synchronized(cache) { cache.initialize() }
     toClose.add(cache)
   }
 
-  fun setUp(baseFileSystem: FileSystem, windows: Boolean) {
-    this.fileSystem = FaultyFileSystem(baseFileSystem)
+  fun setUp(baseFilesystem: Filesystem, windows: Boolean) {
+    this.filesystem = FaultyFilesystem(baseFilesystem)
     this.windows = windows
 
-    fileSystem.deleteContents(cacheDir)
+    Filesystem.deleteContents(cacheDir)
     journalFile = File(cacheDir, DiskLruCache.JOURNAL_FILE)
     journalBkpFile = File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP)
     createNewCache()
@@ -90,16 +91,16 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun emptyCache(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun emptyCache(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     cache.close()
     assertJournalEquals()
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun recoverFromInitializationFailure(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun recoverFromInitializationFailure(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     // Add an uncommitted entry. This will get detected on initialization, and the cache will
     // attempt to delete the file. Do not explicitly close the cache here so the entry is left as
@@ -109,10 +110,10 @@ class DiskLruCacheTest {
       it.writeUtf8("Hello")
     }
 
-    // Simulate a severe filesystem failure on the first initialization.
-    fileSystem.setFaultyDelete(File(cacheDir, "k1.0.tmp"), true)
-    fileSystem.setFaultyDelete(cacheDir, true)
-    cache = DiskLruCache(fileSystem, cacheDir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner)
+    // Simulate a severe Filesystem failure on the first initialization.
+    Filesystem.setFaultyDelete(File(cacheDir, "k1.0.tmp"), true)
+    Filesystem.setFaultyDelete(cacheDir, true)
+    cache = DiskLruCache(Filesystem, cacheDir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner)
     toClose.add(cache)
     try {
       cache["k1"]
@@ -121,15 +122,15 @@ class DiskLruCacheTest {
     }
 
     // Now let it operate normally.
-    fileSystem.setFaultyDelete(File(cacheDir, "k1.0.tmp"), false)
-    fileSystem.setFaultyDelete(cacheDir, false)
+    Filesystem.setFaultyDelete(File(cacheDir, "k1.0.tmp"), false)
+    Filesystem.setFaultyDelete(cacheDir, false)
     val snapshot = cache["k1"]
     assertThat(snapshot).isNull()
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun validateKey(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun validateKey(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     var key: String? = null
     try {
@@ -191,8 +192,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun writeAndReadEntry(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun writeAndReadEntry(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     val creator = cache.edit("k1")!!
     creator.setString(0, "ABC")
@@ -206,8 +207,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun readAndWriteEntryAcrossCacheOpenAndClose(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun readAndWriteEntryAcrossCacheOpenAndClose(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     val creator = cache.edit("k1")!!
     creator.setString(0, "A")
@@ -222,8 +223,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun readAndWriteEntryWithoutProperClose(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun readAndWriteEntryWithoutProperClose(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     val creator = cache.edit("k1")!!
     creator.setString(0, "A")
@@ -239,8 +240,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun journalWithEditAndPublish(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun journalWithEditAndPublish(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     val creator = cache.edit("k1")!!
     assertJournalEquals("DIRTY k1") // DIRTY must always be flushed.
@@ -252,8 +253,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun revertedNewFileIsRemoveInJournal(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun revertedNewFileIsRemoveInJournal(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     val creator = cache.edit("k1")!!
     assertJournalEquals("DIRTY k1") // DIRTY must always be flushed.
@@ -266,8 +267,8 @@ class DiskLruCacheTest {
 
   /** On Windows we have to wait until the edit is committed before we can delete its files. */
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun `unterminated edit is reverted on cache close`(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun `unterminated edit is reverted on cache close`(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     val editor = cache.edit("k1")!!
     editor.setString(0, "AB")
@@ -280,8 +281,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun journalDoesNotIncludeReadOfYetUnpublishedValue(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun journalDoesNotIncludeReadOfYetUnpublishedValue(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     val creator = cache.edit("k1")!!
     assertThat(cache["k1"]).isNull()
@@ -293,8 +294,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun journalWithEditAndPublishAndRead(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun journalWithEditAndPublishAndRead(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     val k1Creator = cache.edit("k1")!!
     k1Creator.setString(0, "AB")
@@ -311,8 +312,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun cannotOperateOnEditAfterPublish(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun cannotOperateOnEditAfterPublish(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     val editor = cache.edit("k1")!!
     editor.setString(0, "A")
@@ -322,8 +323,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun cannotOperateOnEditAfterRevert(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun cannotOperateOnEditAfterRevert(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     val editor = cache.edit("k1")!!
     editor.setString(0, "A")
@@ -333,8 +334,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun explicitRemoveAppliedToDiskImmediately(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun explicitRemoveAppliedToDiskImmediately(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     val editor = cache.edit("k1")!!
     editor.setString(0, "ABC")
@@ -343,12 +344,12 @@ class DiskLruCacheTest {
     val k1 = getCleanFile("k1", 0)
     assertThat(readFile(k1)).isEqualTo("ABC")
     cache.remove("k1")
-    assertThat(fileSystem.exists(k1)).isFalse()
+    assertThat(Filesystem.exists(k1)).isFalse()
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun removePreventsActiveEditFromStoringAValue(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun removePreventsActiveEditFromStoringAValue(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     set("a", "a", "a")
     val a = cache.edit("a")!!
@@ -364,8 +365,8 @@ class DiskLruCacheTest {
    * the same key can see different data.
    */
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun readAndWriteOverlapsMaintainConsistency(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun readAndWriteOverlapsMaintainConsistency(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     Assumptions.assumeFalse(windows) // Can't edit while a read is in progress.
 
@@ -396,8 +397,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun openWithDirtyKeyDeletesAllFilesForThatKey(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun openWithDirtyKeyDeletesAllFilesForThatKey(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     cache.close()
     val cleanFile0 = getCleanFile("k1", 0)
@@ -410,16 +411,16 @@ class DiskLruCacheTest {
     writeFile(dirtyFile1, "D")
     createJournal("CLEAN k1 1 1", "DIRTY k1")
     createNewCache()
-    assertThat(fileSystem.exists(cleanFile0)).isFalse()
-    assertThat(fileSystem.exists(cleanFile1)).isFalse()
-    assertThat(fileSystem.exists(dirtyFile0)).isFalse()
-    assertThat(fileSystem.exists(dirtyFile1)).isFalse()
+    assertThat(Filesystem.exists(cleanFile0)).isFalse()
+    assertThat(Filesystem.exists(cleanFile1)).isFalse()
+    assertThat(Filesystem.exists(dirtyFile0)).isFalse()
+    assertThat(Filesystem.exists(dirtyFile1)).isFalse()
     assertThat(cache["k1"]).isNull()
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun openWithInvalidVersionClearsDirectory(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun openWithInvalidVersionClearsDirectory(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     cache.close()
     generateSomeGarbageFiles()
@@ -429,8 +430,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun openWithInvalidAppVersionClearsDirectory(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun openWithInvalidAppVersionClearsDirectory(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     cache.close()
     generateSomeGarbageFiles()
@@ -440,8 +441,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun openWithInvalidValueCountClearsDirectory(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun openWithInvalidValueCountClearsDirectory(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     cache.close()
     generateSomeGarbageFiles()
@@ -451,8 +452,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun openWithInvalidBlankLineClearsDirectory(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun openWithInvalidBlankLineClearsDirectory(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     cache.close()
     generateSomeGarbageFiles()
@@ -462,8 +463,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun openWithInvalidJournalLineClearsDirectory(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun openWithInvalidJournalLineClearsDirectory(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     cache.close()
     generateSomeGarbageFiles()
@@ -474,8 +475,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun openWithInvalidFileSizeClearsDirectory(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun openWithInvalidFileSizeClearsDirectory(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     cache.close()
     generateSomeGarbageFiles()
@@ -486,13 +487,13 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun openWithTruncatedLineDiscardsThatLine(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun openWithTruncatedLineDiscardsThatLine(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     cache.close()
     writeFile(getCleanFile("k1", 0), "A")
     writeFile(getCleanFile("k1", 1), "B")
-    fileSystem.sink(journalFile).buffer().use {
+    Filesystem.sink(journalFile).buffer().use {
       it.writeUtf8(
         """
           |${DiskLruCache.MAGIC}
@@ -514,8 +515,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun openWithTooManyFileSizesClearsDirectory(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun openWithTooManyFileSizesClearsDirectory(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     cache.close()
     generateSomeGarbageFiles()
@@ -526,8 +527,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun keyWithSpaceNotPermitted(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun keyWithSpaceNotPermitted(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     try {
       cache.edit("my key")
@@ -537,8 +538,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun keyWithNewlineNotPermitted(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun keyWithNewlineNotPermitted(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     try {
       cache.edit("my\nkey")
@@ -548,8 +549,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun keyWithCarriageReturnNotPermitted(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun keyWithCarriageReturnNotPermitted(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     try {
       cache.edit("my\rkey")
@@ -559,8 +560,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun createNewEntryWithTooFewValuesFails(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun createNewEntryWithTooFewValuesFails(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     val creator = cache.edit("k1")!!
     creator.setString(1, "A")
@@ -569,10 +570,10 @@ class DiskLruCacheTest {
       fail("")
     } catch (_: IllegalStateException) {
     }
-    assertThat(fileSystem.exists(getCleanFile("k1", 0))).isFalse()
-    assertThat(fileSystem.exists(getCleanFile("k1", 1))).isFalse()
-    assertThat(fileSystem.exists(getDirtyFile("k1", 0))).isFalse()
-    assertThat(fileSystem.exists(getDirtyFile("k1", 1))).isFalse()
+    assertThat(Filesystem.exists(getCleanFile("k1", 0))).isFalse()
+    assertThat(Filesystem.exists(getCleanFile("k1", 1))).isFalse()
+    assertThat(Filesystem.exists(getDirtyFile("k1", 0))).isFalse()
+    assertThat(Filesystem.exists(getDirtyFile("k1", 1))).isFalse()
     assertThat(cache["k1"]).isNull()
     val creator2 = cache.edit("k1")!!
     creator2.setString(0, "B")
@@ -581,22 +582,22 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun revertWithTooFewValues(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun revertWithTooFewValues(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     val creator = cache.edit("k1")!!
     creator.setString(1, "A")
     creator.abort()
-    assertThat(fileSystem.exists(getCleanFile("k1", 0))).isFalse()
-    assertThat(fileSystem.exists(getCleanFile("k1", 1))).isFalse()
-    assertThat(fileSystem.exists(getDirtyFile("k1", 0))).isFalse()
-    assertThat(fileSystem.exists(getDirtyFile("k1", 1))).isFalse()
+    assertThat(Filesystem.exists(getCleanFile("k1", 0))).isFalse()
+    assertThat(Filesystem.exists(getCleanFile("k1", 1))).isFalse()
+    assertThat(Filesystem.exists(getDirtyFile("k1", 0))).isFalse()
+    assertThat(Filesystem.exists(getDirtyFile("k1", 1))).isFalse()
     assertThat(cache["k1"]).isNull()
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun updateExistingEntryWithTooFewValuesReusesPreviousValues(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun updateExistingEntryWithTooFewValuesReusesPreviousValues(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     val creator = cache.edit("k1")!!
     creator.setString(0, "A")
@@ -612,8 +613,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun growMaxSize(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun growMaxSize(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     cache.close()
     createNewCacheWithSize(10)
@@ -625,8 +626,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun shrinkMaxSizeEvicts(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun shrinkMaxSizeEvicts(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     cache.close()
     createNewCacheWithSize(20)
@@ -638,8 +639,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun evictOnInsert(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun evictOnInsert(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     cache.close()
     createNewCacheWithSize(10)
@@ -676,8 +677,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun evictOnUpdate(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun evictOnUpdate(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     cache.close()
     createNewCacheWithSize(10)
@@ -696,8 +697,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun evictionHonorsLruFromCurrentSession(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun evictionHonorsLruFromCurrentSession(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     cache.close()
     createNewCacheWithSize(10)
@@ -723,8 +724,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun evictionHonorsLruFromPreviousSession(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun evictionHonorsLruFromPreviousSession(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     set("a", "a", "a")
     set("b", "b", "b")
@@ -749,8 +750,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun cacheSingleEntryOfSizeGreaterThanMaxSize(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun cacheSingleEntryOfSizeGreaterThanMaxSize(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     cache.close()
     createNewCacheWithSize(10)
@@ -760,8 +761,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun cacheSingleValueOfSizeGreaterThanMaxSize(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun cacheSingleValueOfSizeGreaterThanMaxSize(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     cache.close()
     createNewCacheWithSize(10)
@@ -771,37 +772,37 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun constructorDoesNotAllowZeroCacheSize(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun constructorDoesNotAllowZeroCacheSize(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     try {
-      DiskLruCache(fileSystem, cacheDir, appVersion, 2, 0, taskRunner)
+      DiskLruCache(Filesystem, cacheDir, appVersion, 2, 0, taskRunner)
       fail("")
     } catch (_: IllegalArgumentException) {
     }
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun constructorDoesNotAllowZeroValuesPerEntry(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun constructorDoesNotAllowZeroValuesPerEntry(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     try {
-      DiskLruCache(fileSystem, cacheDir, appVersion, 0, 10, taskRunner)
+      DiskLruCache(Filesystem, cacheDir, appVersion, 0, 10, taskRunner)
       fail("")
     } catch (_: IllegalArgumentException) {
     }
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun removeAbsentElement(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun removeAbsentElement(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     cache.remove("a")
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun readingTheSameStreamMultipleTimes(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun readingTheSameStreamMultipleTimes(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     set("a", "a", "b")
     val snapshot = cache["a"]!!
@@ -810,8 +811,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun rebuildJournalOnRepeatedReads(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun rebuildJournalOnRepeatedReads(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     set("a", "a", "a")
     set("b", "b", "b")
@@ -822,8 +823,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun rebuildJournalOnRepeatedEdits(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun rebuildJournalOnRepeatedEdits(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     while (taskFaker.isIdle()) {
       set("a", "a", "a")
@@ -838,8 +839,8 @@ class DiskLruCacheTest {
 
   /** @see [Issue 28](https://github.com/JakeWharton/DiskLruCache/issues/28) */
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun rebuildJournalOnRepeatedReadsWithOpenAndClose(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun rebuildJournalOnRepeatedReadsWithOpenAndClose(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     set("a", "a", "a")
     set("b", "b", "b")
@@ -853,8 +854,8 @@ class DiskLruCacheTest {
 
   /** @see [Issue 28](https://github.com/JakeWharton/DiskLruCache/issues/28) */
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun rebuildJournalOnRepeatedEditsWithOpenAndClose(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun rebuildJournalOnRepeatedEditsWithOpenAndClose(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     while (taskFaker.isIdle()) {
       set("a", "a", "a")
@@ -865,8 +866,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun rebuildJournalFailurePreventsEditors(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun rebuildJournalFailurePreventsEditors(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     while (taskFaker.isIdle()) {
       set("a", "a", "a")
@@ -874,7 +875,7 @@ class DiskLruCacheTest {
     }
 
     // Cause the rebuild action to fail.
-    fileSystem.setFaultyRename(File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), true)
+    Filesystem.setFaultyRename(File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), true)
     taskFaker.runNextTask()
 
     // Don't allow edits under any circumstances.
@@ -886,8 +887,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun rebuildJournalFailureIsRetried(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun rebuildJournalFailureIsRetried(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     while (taskFaker.isIdle()) {
       set("a", "a", "a")
@@ -895,7 +896,7 @@ class DiskLruCacheTest {
     }
 
     // Cause the rebuild action to fail.
-    fileSystem.setFaultyRename(File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), true)
+    Filesystem.setFaultyRename(File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), true)
     taskFaker.runNextTask()
 
     // The rebuild is retried on cache hits and on cache edits.
@@ -909,14 +910,14 @@ class DiskLruCacheTest {
     assertThat(taskFaker.isIdle()).isFalse()
 
     // Let the rebuild complete successfully.
-    fileSystem.setFaultyRename(File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), false)
+    Filesystem.setFaultyRename(File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), false)
     taskFaker.runNextTask()
     assertJournalEquals("CLEAN a 1 1", "CLEAN b 1 1")
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun rebuildJournalFailureWithInFlightEditors(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun rebuildJournalFailureWithInFlightEditors(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     while (taskFaker.isIdle()) {
       set("a", "a", "a")
@@ -927,7 +928,7 @@ class DiskLruCacheTest {
     cache.edit("e") // Grab an editor, but don't do anything with it.
 
     // Cause the rebuild action to fail.
-    fileSystem.setFaultyRename(File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), true)
+    Filesystem.setFaultyRename(File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), true)
     taskFaker.runNextTask()
 
     // In-flight editors can commit and have their values retained.
@@ -938,14 +939,14 @@ class DiskLruCacheTest {
     abortEditor.abort()
 
     // Let the rebuild complete successfully.
-    fileSystem.setFaultyRename(File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), false)
+    Filesystem.setFaultyRename(File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), false)
     taskFaker.runNextTask()
     assertJournalEquals("CLEAN a 1 1", "CLEAN b 1 1", "DIRTY e", "CLEAN c 1 1")
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun rebuildJournalFailureWithEditorsInFlightThenClose(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun rebuildJournalFailureWithEditorsInFlightThenClose(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     while (taskFaker.isIdle()) {
       set("a", "a", "a")
@@ -956,7 +957,7 @@ class DiskLruCacheTest {
     cache.edit("e") // Grab an editor, but don't do anything with it.
 
     // Cause the rebuild action to fail.
-    fileSystem.setFaultyRename(File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), true)
+    Filesystem.setFaultyRename(File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), true)
     taskFaker.runNextTask()
     commitEditor.setString(0, "c")
     commitEditor.setString(1, "c")
@@ -976,8 +977,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun rebuildJournalFailureAllowsRemovals(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun rebuildJournalFailureAllowsRemovals(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     while (taskFaker.isIdle()) {
       set("a", "a", "a")
@@ -985,20 +986,20 @@ class DiskLruCacheTest {
     }
 
     // Cause the rebuild action to fail.
-    fileSystem.setFaultyRename(File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), true)
+    Filesystem.setFaultyRename(File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), true)
     taskFaker.runNextTask()
     assertThat(cache.remove("a")).isTrue()
     assertAbsent("a")
 
     // Let the rebuild complete successfully.
-    fileSystem.setFaultyRename(File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), false)
+    Filesystem.setFaultyRename(File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), false)
     taskFaker.runNextTask()
     assertJournalEquals("CLEAN b 1 1")
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun rebuildJournalFailureWithRemovalThenClose(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun rebuildJournalFailureWithRemovalThenClose(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     while (taskFaker.isIdle()) {
       set("a", "a", "a")
@@ -1006,7 +1007,7 @@ class DiskLruCacheTest {
     }
 
     // Cause the rebuild action to fail.
-    fileSystem.setFaultyRename(File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), true)
+    Filesystem.setFaultyRename(File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), true)
     taskFaker.runNextTask()
     assertThat(cache.remove("a")).isTrue()
     assertAbsent("a")
@@ -1022,8 +1023,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun rebuildJournalFailureAllowsEvictAll(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun rebuildJournalFailureAllowsEvictAll(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     while (taskFaker.isIdle()) {
       set("a", "a", "a")
@@ -1031,7 +1032,7 @@ class DiskLruCacheTest {
     }
 
     // Cause the rebuild action to fail.
-    fileSystem.setFaultyRename(File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), true)
+    Filesystem.setFaultyRename(File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), true)
     taskFaker.runNextTask()
     cache.evictAll()
     assertThat(cache.size()).isEqualTo(0)
@@ -1050,8 +1051,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun rebuildJournalFailureWithCacheTrim(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun rebuildJournalFailureWithCacheTrim(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     while (taskFaker.isIdle()) {
       set("a", "aa", "aa")
@@ -1059,7 +1060,7 @@ class DiskLruCacheTest {
     }
 
     // Cause the rebuild action to fail.
-    fileSystem.setFaultyRename(
+    Filesystem.setFaultyRename(
       File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), true
     )
     taskFaker.runNextTask()
@@ -1072,27 +1073,27 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun restoreBackupFile(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun restoreBackupFile(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     val creator = cache.edit("k1")!!
     creator.setString(0, "ABC")
     creator.setString(1, "DE")
     creator.commit()
     cache.close()
-    fileSystem.rename(journalFile, journalBkpFile)
-    assertThat(fileSystem.exists(journalFile)).isFalse()
+    Filesystem.rename(journalFile, journalBkpFile)
+    assertThat(Filesystem.exists(journalFile)).isFalse()
     createNewCache()
     val snapshot = cache["k1"]!!
     snapshot.assertValue(0, "ABC")
     snapshot.assertValue(1, "DE")
-    assertThat(fileSystem.exists(journalBkpFile)).isFalse()
-    assertThat(fileSystem.exists(journalFile)).isTrue()
+    assertThat(Filesystem.exists(journalBkpFile)).isFalse()
+    assertThat(Filesystem.exists(journalFile)).isTrue()
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun journalFileIsPreferredOverBackupFile(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun journalFileIsPreferredOverBackupFile(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     var creator = cache.edit("k1")!!
     creator.setString(0, "ABC")
@@ -1105,8 +1106,8 @@ class DiskLruCacheTest {
     creator.setString(1, "GH")
     creator.commit()
     cache.close()
-    assertThat(fileSystem.exists(journalFile)).isTrue()
-    assertThat(fileSystem.exists(journalBkpFile)).isTrue()
+    assertThat(Filesystem.exists(journalFile)).isTrue()
+    assertThat(Filesystem.exists(journalBkpFile)).isTrue()
     createNewCache()
     val snapshotA = cache["k1"]!!
     snapshotA.assertValue(0, "ABC")
@@ -1114,36 +1115,36 @@ class DiskLruCacheTest {
     val snapshotB = cache["k2"]!!
     snapshotB.assertValue(0, "F")
     snapshotB.assertValue(1, "GH")
-    assertThat(fileSystem.exists(journalBkpFile)).isFalse()
-    assertThat(fileSystem.exists(journalFile)).isTrue()
+    assertThat(Filesystem.exists(journalBkpFile)).isFalse()
+    assertThat(Filesystem.exists(journalFile)).isTrue()
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun openCreatesDirectoryIfNecessary(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun openCreatesDirectoryIfNecessary(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     cache.close()
     val dir = File(cacheDir, "testOpenCreatesDirectoryIfNecessary").also { it.mkdirs() }
-    cache = DiskLruCache(fileSystem, dir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner)
+    cache = DiskLruCache(Filesystem, dir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner)
     set("a", "a", "a")
-    assertThat(fileSystem.exists(File(dir, "a.0"))).isTrue()
-    assertThat(fileSystem.exists(File(dir, "a.1"))).isTrue()
-    assertThat(fileSystem.exists(File(dir, "journal"))).isTrue()
+    assertThat(Filesystem.exists(File(dir, "a.0"))).isTrue()
+    assertThat(Filesystem.exists(File(dir, "a.1"))).isTrue()
+    assertThat(Filesystem.exists(File(dir, "journal"))).isTrue()
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun fileDeletedExternally(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun fileDeletedExternally(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     set("a", "a", "a")
-    fileSystem.delete(getCleanFile("a", 1))
+    Filesystem.delete(getCleanFile("a", 1))
     assertThat(cache["a"]).isNull()
     assertThat(cache.size()).isEqualTo(0)
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun editSameVersion(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun editSameVersion(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     set("a", "a", "a")
     val snapshot = cache["a"]!!
@@ -1155,8 +1156,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun editSnapshotAfterChangeAborted(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun editSnapshotAfterChangeAborted(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     set("a", "a", "a")
     val snapshot = cache["a"]!!
@@ -1171,8 +1172,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun editSnapshotAfterChangeCommitted(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun editSnapshotAfterChangeCommitted(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     set("a", "a", "a")
     val snapshot = cache["a"]!!
@@ -1184,8 +1185,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun editSinceEvicted(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun editSinceEvicted(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     cache.close()
     createNewCacheWithSize(10)
@@ -1198,8 +1199,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun editSinceEvictedAndRecreated(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun editSinceEvictedAndRecreated(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     cache.close()
     createNewCacheWithSize(10)
@@ -1215,33 +1216,33 @@ class DiskLruCacheTest {
 
   /** @see [Issue 2](https://github.com/JakeWharton/DiskLruCache/issues/2) */
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun aggressiveClearingHandlesWrite(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun aggressiveClearingHandlesWrite(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     Assumptions.assumeFalse(windows) // Can't deleteContents while the journal is open.
 
-    fileSystem.deleteContents(cacheDir)
+    Filesystem.deleteContents(cacheDir)
     set("a", "a", "a")
     assertValue("a", "a", "a")
   }
 
   /** @see [Issue 2](https://github.com/JakeWharton/DiskLruCache/issues/2) */
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun aggressiveClearingHandlesEdit(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun aggressiveClearingHandlesEdit(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     Assumptions.assumeFalse(windows) // Can't deleteContents while the journal is open.
 
     set("a", "a", "a")
     val a = cache.edit("a")!!
-    fileSystem.deleteContents(cacheDir)
+    Filesystem.deleteContents(cacheDir)
     a.setString(1, "a2")
     a.commit()
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun removeHandlesMissingFile(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun removeHandlesMissingFile(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     set("a", "a", "a")
     getCleanFile("a", 0).delete()
@@ -1250,8 +1251,8 @@ class DiskLruCacheTest {
 
   /** @see [Issue 2](https://github.com/JakeWharton/DiskLruCache/issues/2) */
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun aggressiveClearingHandlesPartialEdit(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun aggressiveClearingHandlesPartialEdit(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     Assumptions.assumeFalse(windows) // Can't deleteContents while the journal is open.
 
@@ -1259,7 +1260,7 @@ class DiskLruCacheTest {
     set("b", "b", "b")
     val a = cache.edit("a")!!
     a.setString(0, "a1")
-    fileSystem.deleteContents(cacheDir)
+    Filesystem.deleteContents(cacheDir)
     a.setString(1, "a2")
     a.commit()
     assertThat(cache["a"]).isNull()
@@ -1267,12 +1268,12 @@ class DiskLruCacheTest {
 
   /** @see [Issue 2](https://github.com/JakeWharton/DiskLruCache/issues/2) */
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun aggressiveClearingHandlesRead(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun aggressiveClearingHandlesRead(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     Assumptions.assumeFalse(windows) // Can't deleteContents while the journal is open.
 
-    fileSystem.deleteContents(cacheDir)
+    Filesystem.deleteContents(cacheDir)
     assertThat(cache["a"]).isNull()
   }
 
@@ -1281,8 +1282,8 @@ class DiskLruCacheTest {
    * being edited required deletion for the operation to complete.
    */
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun trimToSizeWithActiveEdit(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun trimToSizeWithActiveEdit(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     val expectedByteCount = if (windows) 10L else 0L
     val afterRemoveFileContents = if (windows) "a1234" else null
@@ -1304,8 +1305,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun evictAll(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun evictAll(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     set("a", "a", "a")
     set("b", "b", "b")
@@ -1316,8 +1317,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun evictAllWithPartialCreate(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun evictAllWithPartialCreate(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     val a = cache.edit("a")!!
     a.setString(0, "a1")
@@ -1329,8 +1330,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun evictAllWithPartialEditDoesNotStoreAValue(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun evictAllWithPartialEditDoesNotStoreAValue(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     val expectedByteCount = if (windows) 2L else 0L
 
@@ -1345,8 +1346,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun evictAllDoesntInterruptPartialRead(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun evictAllDoesntInterruptPartialRead(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     val expectedByteCount = if (windows) 2L else 0L
     val afterRemoveFileContents = if (windows) "a" else null
@@ -1364,8 +1365,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun editSnapshotAfterEvictAllReturnsNullDueToStaleValue(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun editSnapshotAfterEvictAllReturnsNullDueToStaleValue(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     val expectedByteCount = if (windows) 2L else 0L
     val afterRemoveFileContents = if (windows) "a" else null
@@ -1382,8 +1383,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun iterator(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun iterator(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     set("a", "a1", "a2")
     set("b", "b1", "b2")
@@ -1416,8 +1417,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun iteratorElementsAddedDuringIterationAreOmitted(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun iteratorElementsAddedDuringIterationAreOmitted(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     set("a", "a1", "a2")
     set("b", "b1", "b2")
@@ -1433,8 +1434,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun iteratorElementsUpdatedDuringIterationAreUpdated(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun iteratorElementsUpdatedDuringIterationAreUpdated(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     set("a", "a1", "a2")
     set("b", "b1", "b2")
@@ -1451,8 +1452,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun iteratorElementsRemovedDuringIterationAreOmitted(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun iteratorElementsRemovedDuringIterationAreOmitted(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     set("a", "a1", "a2")
     set("b", "b1", "b2")
@@ -1465,8 +1466,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun iteratorRemove(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun iteratorRemove(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     set("a", "a1", "a2")
     val iterator = cache.snapshots()
@@ -1477,8 +1478,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun iteratorRemoveBeforeNext(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun iteratorRemoveBeforeNext(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     set("a", "a1", "a2")
     val iterator = cache.snapshots()
@@ -1490,8 +1491,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun iteratorRemoveOncePerCallToNext(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun iteratorRemoveOncePerCallToNext(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     set("a", "a1", "a2")
     val iterator = cache.snapshots()
@@ -1506,8 +1507,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun cacheClosedTruncatesIterator(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun cacheClosedTruncatesIterator(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     set("a", "a1", "a2")
     val iterator = cache.snapshots()
@@ -1516,11 +1517,11 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun isClosed_uninitializedCache(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun isClosed_uninitializedCache(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     // Create an uninitialized cache.
-    cache = DiskLruCache(fileSystem, cacheDir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner)
+    cache = DiskLruCache(Filesystem, cacheDir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner)
     toClose.add(cache)
     assertThat(cache.isClosed()).isFalse()
     cache.close()
@@ -1528,23 +1529,23 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun journalWriteFailsDuringEdit(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun journalWriteFailsDuringEdit(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     set("a", "a", "a")
     set("b", "b", "b")
 
     // We can't begin the edit if writing 'DIRTY' fails.
-    fileSystem.setFaultyWrite(journalFile, true)
+    Filesystem.setFaultyWrite(journalFile, true)
     assertThat(cache.edit("c")).isNull()
 
     // Once the journal has a failure, subsequent writes aren't permitted.
-    fileSystem.setFaultyWrite(journalFile, false)
+    Filesystem.setFaultyWrite(journalFile, false)
     assertThat(cache.edit("d")).isNull()
 
     // Confirm that the fault didn't corrupt entries stored before the fault was introduced.
     cache.close()
-    cache = DiskLruCache(fileSystem, cacheDir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner)
+    cache = DiskLruCache(Filesystem, cacheDir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner)
     assertValue("a", "a", "a")
     assertValue("b", "b", "b")
     assertAbsent("c")
@@ -1556,8 +1557,8 @@ class DiskLruCacheTest {
    * https://github.com/square/okhttp/issues/1211
    */
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun journalWriteFailsDuringEditorCommit(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun journalWriteFailsDuringEditorCommit(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     set("a", "a", "a")
     set("b", "b", "b")
@@ -1566,16 +1567,16 @@ class DiskLruCacheTest {
     val editor = cache.edit("c")!!
     editor.setString(0, "c")
     editor.setString(1, "c")
-    fileSystem.setFaultyWrite(journalFile, true)
+    Filesystem.setFaultyWrite(journalFile, true)
     editor.commit()
 
     // Once the journal has a failure, subsequent writes aren't permitted.
-    fileSystem.setFaultyWrite(journalFile, false)
+    Filesystem.setFaultyWrite(journalFile, false)
     assertThat(cache.edit("d")).isNull()
 
     // Confirm that the fault didn't corrupt entries stored before the fault was introduced.
     cache.close()
-    cache = DiskLruCache(fileSystem, cacheDir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner)
+    cache = DiskLruCache(Filesystem, cacheDir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner)
     assertValue("a", "a", "a")
     assertValue("b", "b", "b")
     assertAbsent("c")
@@ -1583,8 +1584,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun journalWriteFailsDuringEditorAbort(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun journalWriteFailsDuringEditorAbort(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     set("a", "a", "a")
     set("b", "b", "b")
@@ -1593,16 +1594,16 @@ class DiskLruCacheTest {
     val editor = cache.edit("c")!!
     editor.setString(0, "c")
     editor.setString(1, "c")
-    fileSystem.setFaultyWrite(journalFile, true)
+    Filesystem.setFaultyWrite(journalFile, true)
     editor.abort()
 
     // Once the journal has a failure, subsequent writes aren't permitted.
-    fileSystem.setFaultyWrite(journalFile, false)
+    Filesystem.setFaultyWrite(journalFile, false)
     assertThat(cache.edit("d")).isNull()
 
     // Confirm that the fault didn't corrupt entries stored before the fault was introduced.
     cache.close()
-    cache = DiskLruCache(fileSystem, cacheDir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner)
+    cache = DiskLruCache(Filesystem, cacheDir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner)
     assertValue("a", "a", "a")
     assertValue("b", "b", "b")
     assertAbsent("c")
@@ -1610,27 +1611,27 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun journalWriteFailsDuringRemove(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun journalWriteFailsDuringRemove(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     set("a", "a", "a")
     set("b", "b", "b")
 
     // Remove, but the journal write will fail.
-    fileSystem.setFaultyWrite(journalFile, true)
+    Filesystem.setFaultyWrite(journalFile, true)
     assertThat(cache.remove("a")).isTrue()
 
     // Confirm that the entry was still removed.
-    fileSystem.setFaultyWrite(journalFile, false)
+    Filesystem.setFaultyWrite(journalFile, false)
     cache.close()
-    cache = DiskLruCache(fileSystem, cacheDir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner)
+    cache = DiskLruCache(Filesystem, cacheDir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner)
     assertAbsent("a")
     assertValue("b", "b", "b")
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun cleanupTrimFailurePreventsNewEditors(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun cleanupTrimFailurePreventsNewEditors(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     cache.maxSize = 8
     taskFaker.runNextTask()
@@ -1638,7 +1639,7 @@ class DiskLruCacheTest {
     set("b", "bb", "bbb")
 
     // Cause the cache trim job to fail.
-    fileSystem.setFaultyDelete(File(cacheDir, "a.0"), true)
+    Filesystem.setFaultyDelete(File(cacheDir, "a.0"), true)
     taskFaker.runNextTask()
 
     // Confirm that edits are prevented after a cache trim failure.
@@ -1647,12 +1648,12 @@ class DiskLruCacheTest {
     assertThat(cache.edit("c")).isNull()
 
     // Allow the test to clean up.
-    fileSystem.setFaultyDelete(File(cacheDir, "a.0"), false)
+    Filesystem.setFaultyDelete(File(cacheDir, "a.0"), false)
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun cleanupTrimFailureRetriedOnEditors(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun cleanupTrimFailureRetriedOnEditors(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     cache.maxSize = 8
     taskFaker.runNextTask()
@@ -1660,7 +1661,7 @@ class DiskLruCacheTest {
     set("b", "bb", "bbb")
 
     // Cause the cache trim job to fail.
-    fileSystem.setFaultyDelete(File(cacheDir, "a.0"), true)
+    Filesystem.setFaultyDelete(File(cacheDir, "a.0"), true)
     taskFaker.runNextTask()
 
     // An edit should now add a job to clean up if the most recent trim failed.
@@ -1668,7 +1669,7 @@ class DiskLruCacheTest {
     taskFaker.runNextTask()
 
     // Confirm a successful cache trim now allows edits.
-    fileSystem.setFaultyDelete(File(cacheDir, "a.0"), false)
+    Filesystem.setFaultyDelete(File(cacheDir, "a.0"), false)
     assertThat(cache.edit("c")).isNull()
     taskFaker.runNextTask()
     set("c", "cc", "cc")
@@ -1676,8 +1677,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun cleanupTrimFailureWithInFlightEditor(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun cleanupTrimFailureWithInFlightEditor(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     cache.maxSize = 8
     taskFaker.runNextTask()
@@ -1686,7 +1687,7 @@ class DiskLruCacheTest {
     val inFlightEditor = cache.edit("c")!!
 
     // Cause the cache trim job to fail.
-    fileSystem.setFaultyDelete(File(cacheDir, "a.0"), true)
+    Filesystem.setFaultyDelete(File(cacheDir, "a.0"), true)
     taskFaker.runNextTask()
 
     // The in-flight editor can still write after a trim failure.
@@ -1695,14 +1696,14 @@ class DiskLruCacheTest {
     inFlightEditor.commit()
 
     // Confirm the committed values are present after a successful cache trim.
-    fileSystem.setFaultyDelete(File(cacheDir, "a.0"), false)
+    Filesystem.setFaultyDelete(File(cacheDir, "a.0"), false)
     taskFaker.runNextTask()
     assertValue("c", "cc", "cc")
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun cleanupTrimFailureAllowsSnapshotReads(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun cleanupTrimFailureAllowsSnapshotReads(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     cache.maxSize = 8
     taskFaker.runNextTask()
@@ -1710,7 +1711,7 @@ class DiskLruCacheTest {
     set("b", "bb", "bbb")
 
     // Cause the cache trim job to fail.
-    fileSystem.setFaultyDelete(File(cacheDir, "a.0"), true)
+    Filesystem.setFaultyDelete(File(cacheDir, "a.0"), true)
     taskFaker.runNextTask()
 
     // Confirm we still allow snapshot reads after a trim failure.
@@ -1718,12 +1719,12 @@ class DiskLruCacheTest {
     assertValue("b", "bb", "bbb")
 
     // Allow the test to clean up.
-    fileSystem.setFaultyDelete(File(cacheDir, "a.0"), false)
+    Filesystem.setFaultyDelete(File(cacheDir, "a.0"), false)
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun cleanupTrimFailurePreventsSnapshotWrites(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun cleanupTrimFailurePreventsSnapshotWrites(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     cache.maxSize = 8
     taskFaker.runNextTask()
@@ -1731,7 +1732,7 @@ class DiskLruCacheTest {
     set("b", "bb", "bbb")
 
     // Cause the cache trim job to fail.
-    fileSystem.setFaultyDelete(File(cacheDir, "a.0"), true)
+    Filesystem.setFaultyDelete(File(cacheDir, "a.0"), true)
     taskFaker.runNextTask()
 
     // Confirm snapshot writes are prevented after a trim failure.
@@ -1743,12 +1744,12 @@ class DiskLruCacheTest {
     }
 
     // Allow the test to clean up.
-    fileSystem.setFaultyDelete(File(cacheDir, "a.0"), false)
+    Filesystem.setFaultyDelete(File(cacheDir, "a.0"), false)
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun evictAllAfterCleanupTrimFailure(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun evictAllAfterCleanupTrimFailure(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     cache.maxSize = 8
     taskFaker.runNextTask()
@@ -1756,22 +1757,22 @@ class DiskLruCacheTest {
     set("b", "bb", "bbb")
 
     // Cause the cache trim job to fail.
-    fileSystem.setFaultyDelete(File(cacheDir, "a.0"), true)
+    Filesystem.setFaultyDelete(File(cacheDir, "a.0"), true)
     taskFaker.runNextTask()
 
     // Confirm we prevent edits after a trim failure.
     assertThat(cache.edit("c")).isNull()
 
     // A successful eviction should allow new writes.
-    fileSystem.setFaultyDelete(File(cacheDir, "a.0"), false)
+    Filesystem.setFaultyDelete(File(cacheDir, "a.0"), false)
     cache.evictAll()
     set("c", "cc", "cc")
     assertValue("c", "cc", "cc")
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun manualRemovalAfterCleanupTrimFailure(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun manualRemovalAfterCleanupTrimFailure(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     cache.maxSize = 8
     taskFaker.runNextTask()
@@ -1779,22 +1780,22 @@ class DiskLruCacheTest {
     set("b", "bb", "bbb")
 
     // Cause the cache trim job to fail.
-    fileSystem.setFaultyDelete(File(cacheDir, "a.0"), true)
+    Filesystem.setFaultyDelete(File(cacheDir, "a.0"), true)
     taskFaker.runNextTask()
 
     // Confirm we prevent edits after a trim failure.
     assertThat(cache.edit("c")).isNull()
 
     // A successful removal which trims the cache should allow new writes.
-    fileSystem.setFaultyDelete(File(cacheDir, "a.0"), false)
+    Filesystem.setFaultyDelete(File(cacheDir, "a.0"), false)
     cache.remove("a")
     set("c", "cc", "cc")
     assertValue("c", "cc", "cc")
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun flushingAfterCleanupTrimFailure(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun flushingAfterCleanupTrimFailure(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     cache.maxSize = 8
     taskFaker.runNextTask()
@@ -1802,22 +1803,22 @@ class DiskLruCacheTest {
     set("b", "bb", "bbb")
 
     // Cause the cache trim job to fail.
-    fileSystem.setFaultyDelete(File(cacheDir, "a.0"), true)
+    Filesystem.setFaultyDelete(File(cacheDir, "a.0"), true)
     taskFaker.runNextTask()
 
     // Confirm we prevent edits after a trim failure.
     assertThat(cache.edit("c")).isNull()
 
     // A successful flush trims the cache and should allow new writes.
-    fileSystem.setFaultyDelete(File(cacheDir, "a.0"), false)
+    Filesystem.setFaultyDelete(File(cacheDir, "a.0"), false)
     cache.flush()
     set("c", "cc", "cc")
     assertValue("c", "cc", "cc")
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun cleanupTrimFailureWithPartialSnapshot(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun cleanupTrimFailureWithPartialSnapshot(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     cache.maxSize = 8
     taskFaker.runNextTask()
@@ -1825,7 +1826,7 @@ class DiskLruCacheTest {
     set("b", "bb", "bbb")
 
     // Cause the cache trim to fail on the second value leaving a partial snapshot.
-    fileSystem.setFaultyDelete(File(cacheDir, "a.1"), true)
+    Filesystem.setFaultyDelete(File(cacheDir, "a.1"), true)
     taskFaker.runNextTask()
 
     // Confirm the partial snapshot is not returned.
@@ -1835,14 +1836,14 @@ class DiskLruCacheTest {
     assertThat(cache.edit("a")).isNull()
 
     // Confirm the partial snapshot is not returned after a successful trim.
-    fileSystem.setFaultyDelete(File(cacheDir, "a.1"), false)
+    Filesystem.setFaultyDelete(File(cacheDir, "a.1"), false)
     taskFaker.runNextTask()
     assertThat(cache["a"]).isNull()
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun noSizeCorruptionAfterCreatorDetached(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun noSizeCorruptionAfterCreatorDetached(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     Assumptions.assumeFalse(windows) // Windows can't have two concurrent editors.
 
@@ -1863,8 +1864,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun noSizeCorruptionAfterEditorDetached(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun noSizeCorruptionAfterEditorDetached(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     Assumptions.assumeFalse(windows) // Windows can't have two concurrent editors.
 
@@ -1887,8 +1888,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun noNewSourceAfterEditorDetached(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun noNewSourceAfterEditorDetached(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     set("k1", "a", "a")
     val editor = cache.edit("k1")!!
@@ -1897,8 +1898,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun `edit discarded after editor detached`(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun `edit discarded after editor detached`(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     set("k1", "a", "a")
 
@@ -1914,8 +1915,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun `edit discarded after editor detached with concurrent write`(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun `edit discarded after editor detached with concurrent write`(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     Assumptions.assumeFalse(windows) // Windows can't have two concurrent editors.
 
@@ -1936,8 +1937,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun abortAfterDetach(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun abortAfterDetach(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     set("k1", "a", "a")
     val editor = cache.edit("k1")!!
@@ -1948,8 +1949,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun dontRemoveUnfinishedEntryWhenCreatingSnapshot(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun dontRemoveUnfinishedEntryWhenCreatingSnapshot(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     val creator = cache.edit("k1")!!
     creator.setString(0, "ABC")
@@ -1966,8 +1967,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun `Windows cannot read while writing`(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun `Windows cannot read while writing`(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     Assumptions.assumeTrue(windows)
 
@@ -1978,8 +1979,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun `Windows cannot write while reading`(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun `Windows cannot write while reading`(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     Assumptions.assumeTrue(windows)
 
@@ -1990,8 +1991,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun `can read while reading`(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun `can read while reading`(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     set("k1", "a", "a")
     cache["k1"]!!.use { snapshot1 ->
@@ -2005,8 +2006,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun `remove while reading creates zombie that is removed when read finishes`(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun `remove while reading creates zombie that is removed when read finishes`(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     val afterRemoveFileContents = if (windows) "a" else null
 
@@ -2031,8 +2032,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun `remove while writing creates zombie that is removed when write finishes`(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun `remove while writing creates zombie that is removed when write finishes`(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     val afterRemoveFileContents = if (windows) "a" else null
 
@@ -2052,8 +2053,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun `Windows cannot read zombie entry`(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun `Windows cannot read zombie entry`(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     Assumptions.assumeTrue(windows)
 
@@ -2065,8 +2066,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun `Windows cannot write zombie entry`(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun `Windows cannot write zombie entry`(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     Assumptions.assumeTrue(windows)
 
@@ -2078,8 +2079,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun `removed entry absent when iterating`(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun `removed entry absent when iterating`(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     set("k1", "a", "a")
     cache["k1"]!!.use {
@@ -2090,8 +2091,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun `close with zombie read`(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun `close with zombie read`(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     val afterRemoveFileContents = if (windows) "a" else null
 
@@ -2113,8 +2114,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun `close with zombie write`(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun `close with zombie write`(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     val afterRemoveCleanFileContents = if (windows) "a" else null
     val afterRemoveDirtyFileContents = if (windows) "" else null
@@ -2137,8 +2138,8 @@ class DiskLruCacheTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(FileSystemParamProvider::class)
-  fun `close with completed zombie write`(parameters: Pair<FileSystem, Boolean>) {
+  @ArgumentsSource(FilesystemParamProvider::class)
+  fun `close with completed zombie write`(parameters: Pair<Filesystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     val afterRemoveCleanFileContents = if (windows) "a" else null
     val afterRemoveDirtyFileContents = if (windows) "b" else null
@@ -2180,7 +2181,7 @@ class DiskLruCacheTest {
     blank: String,
     vararg bodyLines: String
   ) {
-    fileSystem.sink(journalFile).buffer().use { sink ->
+    Filesystem.sink(journalFile).buffer().use { sink ->
       sink.writeUtf8(
         """
         |$magic
@@ -2199,7 +2200,7 @@ class DiskLruCacheTest {
 
   private fun readJournalLines(): List<String> {
     val result = mutableListOf<String>()
-    fileSystem.source(journalFile).buffer().use { source ->
+    Filesystem.source(journalFile).buffer().use { source ->
       while (true) {
         val line = source.readUtf8Line() ?: break
         result.add(line)
@@ -2213,14 +2214,14 @@ class DiskLruCacheTest {
   private fun getDirtyFile(key: String, index: Int) = File(cacheDir, "$key.$index.tmp")
 
   private fun readFile(file: File): String {
-    fileSystem.source(file).buffer().use { source ->
+    Filesystem.source(file).buffer().use { source ->
       return source.readUtf8()
     }
   }
 
   private fun readFileOrNull(file: File): String? {
     try {
-      fileSystem.source(file).buffer().use {
+      Filesystem.source(file).buffer().use {
         return it.readUtf8()
       }
     } catch (_: FileNotFoundException) {
@@ -2229,7 +2230,7 @@ class DiskLruCacheTest {
   }
 
   fun writeFile(file: File, content: String) {
-    fileSystem.sink(file).buffer().use { sink ->
+    Filesystem.sink(file).buffer().use { sink ->
       sink.writeUtf8(content)
     }
   }
@@ -2247,12 +2248,12 @@ class DiskLruCacheTest {
   }
 
   private fun assertGarbageFilesAllDeleted() {
-    assertThat(fileSystem.exists(getCleanFile("g1", 0))).isFalse()
-    assertThat(fileSystem.exists(getCleanFile("g1", 1))).isFalse()
-    assertThat(fileSystem.exists(getCleanFile("g2", 0))).isFalse()
-    assertThat(fileSystem.exists(getCleanFile("g2", 1))).isFalse()
-    assertThat(fileSystem.exists(File(cacheDir, "otherFile0"))).isFalse()
-    assertThat(fileSystem.exists(File(cacheDir, "dir1"))).isFalse()
+    assertThat(Filesystem.exists(getCleanFile("g1", 0))).isFalse()
+    assertThat(Filesystem.exists(getCleanFile("g1", 1))).isFalse()
+    assertThat(Filesystem.exists(getCleanFile("g2", 0))).isFalse()
+    assertThat(Filesystem.exists(getCleanFile("g2", 1))).isFalse()
+    assertThat(Filesystem.exists(File(cacheDir, "otherFile0"))).isFalse()
+    assertThat(Filesystem.exists(File(cacheDir, "dir1"))).isFalse()
   }
 
   private operator fun set(key: String, value0: String, value1: String) {
@@ -2268,18 +2269,18 @@ class DiskLruCacheTest {
       snapshot.close()
       fail("")
     }
-    assertThat(fileSystem.exists(getCleanFile(key, 0))).isFalse()
-    assertThat(fileSystem.exists(getCleanFile(key, 1))).isFalse()
-    assertThat(fileSystem.exists(getDirtyFile(key, 0))).isFalse()
-    assertThat(fileSystem.exists(getDirtyFile(key, 1))).isFalse()
+    assertThat(Filesystem.exists(getCleanFile(key, 0))).isFalse()
+    assertThat(Filesystem.exists(getCleanFile(key, 1))).isFalse()
+    assertThat(Filesystem.exists(getDirtyFile(key, 0))).isFalse()
+    assertThat(Filesystem.exists(getDirtyFile(key, 1))).isFalse()
   }
 
   private fun assertValue(key: String, value0: String, value1: String) {
     cache[key]!!.use {
       it.assertValue(0, value0)
       it.assertValue(1, value1)
-      assertThat(fileSystem.exists(getCleanFile(key, 0))).isTrue()
-      assertThat(fileSystem.exists(getCleanFile(key, 1))).isTrue()
+      assertThat(Filesystem.exists(getCleanFile(key, 0))).isTrue()
+      assertThat(Filesystem.exists(getCleanFile(key, 1))).isTrue()
     }
   }
 
@@ -2293,8 +2294,8 @@ class DiskLruCacheTest {
   private fun sourceAsString(source: Source) = source.buffer().readUtf8()
 
   private fun copyFile(from: File, to: File) {
-    fileSystem.source(from).use { source ->
-      fileSystem.sink(to).buffer().use { sink ->
+    Filesystem.source(from).use { source ->
+      Filesystem.sink(to).buffer().use { sink ->
         sink.writeAll(source)
       }
     }

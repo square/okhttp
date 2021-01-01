@@ -38,7 +38,6 @@ import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
 import kotlin.text.Charsets.UTF_32BE
 import kotlin.text.Charsets.UTF_32LE
-import okhttp3.Call
 import okhttp3.EventListener
 import okhttp3.Headers
 import okhttp3.Headers.Companion.headersOf
@@ -49,13 +48,9 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
 import okhttp3.internal.http2.Header
-import okhttp3.internal.io.FileSystem
-import okio.Buffer
-import okio.BufferedSink
-import okio.BufferedSource
+import okio.*
 import okio.ByteString.Companion.decodeHex
-import okio.Options
-import okio.Source
+import java.lang.ArrayIndexOutOfBoundsException
 
 @JvmField
 val EMPTY_BYTE_ARRAY = ByteArray(0)
@@ -525,7 +520,8 @@ fun ServerSocket.closeQuietly() {
  *
  * @param file a file in the directory to check. This file shouldn't already exist!
  */
-fun FileSystem.isCivilized(file: File): Boolean {
+@OptIn(ExperimentalFilesystem::class)
+fun Filesystem.isCivilized(file: Path): Boolean {
   sink(file).use {
     try {
       delete(file)

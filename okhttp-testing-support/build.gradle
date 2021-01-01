@@ -7,6 +7,7 @@ dependencies {
   api deps.conscrypt
   api deps.corretto
   api deps.openjsse
+  api "org.jetbrains.kotlinx:kotlinx-datetime:0.1.1"
   api deps.hamcrest
   api deps.junit5Api
   api deps.junit5JupiterParams
