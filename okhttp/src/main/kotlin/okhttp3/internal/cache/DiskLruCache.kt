@@ -73,8 +73,8 @@ import java.util.*
  * @param valueCount the number of values per cache entry. Must be positive.
  * @param maxSize the maximum number of bytes this cache should use to store.
  */
-@ExperimentalFilesystem
-class DiskLruCache @OptIn(ExperimentalFilesystem::class) constructor(
+@OptIn(ExperimentalFilesystem::class)
+class DiskLruCache(
   internal val fileSystem: Filesystem,
 
   /** Returns the directory where this cache stores its data. */
@@ -231,7 +231,6 @@ class DiskLruCache @OptIn(ExperimentalFilesystem::class) constructor(
         initialized = true
         return
       } catch (journalIsCorrupt: IOException) {
-        println(journalIsCorrupt)
         Platform.get().log(
             "DiskLruCache $directory is corrupt: ${journalIsCorrupt.message}, removing",
             WARN,
@@ -406,7 +405,9 @@ class DiskLruCache @OptIn(ExperimentalFilesystem::class) constructor(
       fileSystem.atomicMove(journalFile, journalFileBackup)
     }
     fileSystem.atomicMove(journalFileTmp, journalFile)
-    fileSystem.delete(journalFileBackup)
+    if (fileSystem.exists(journalFileBackup)) {
+      fileSystem.delete(journalFileBackup)
+    }
 
     journalWriter = newJournalWriter()
     hasJournalErrors = false

@@ -25,6 +25,7 @@ import okhttp3.okio.FakeFilesystem
 import okio.ExperimentalFilesystem
 import okio.Filesystem
 import okio.Path
+import okio.Path.Companion.toPath
 import okio.Source
 import okio.buffer
 import org.assertj.core.api.Assertions.assertThat
@@ -33,8 +34,10 @@ import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.fail
+import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
+import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.util.ArrayDeque
@@ -43,7 +46,7 @@ import java.util.NoSuchElementException
 @OptIn(ExperimentalFilesystem::class)
 class FilesystemParamProvider: SimpleProvider() {
   override fun arguments() = listOf(
-    Filesystem.SYSTEM_TEMPORARY_DIRECTORY / "DiskLruCacheTest" to TestUtil.windows,
+    Filesystem.SYSTEM to TestUtil.windows,
     FakeFilesystem(windowsLimitations = true) to true,
     FakeFilesystem() to false
   )
@@ -55,7 +58,8 @@ class FilesystemParamProvider: SimpleProvider() {
 class DiskLruCacheTest {
   private lateinit var filesystem: FaultyFileSystem
   private var windows: Boolean = false
-  private lateinit var cacheDir: Path
+  @TempDir lateinit var cacheDirFile: File
+  lateinit var cacheDir: Path
   private val appVersion = 100
   private lateinit var journalFile: Path
   private lateinit var journalBkpFile: Path
@@ -75,10 +79,13 @@ class DiskLruCacheTest {
   }
 
   fun setUp(baseFilesystem: Filesystem, windows: Boolean) {
+    this.cacheDir = cacheDirFile.path.toPath()
     this.filesystem = FaultyFileSystem(baseFilesystem)
     this.windows = windows
 
-    filesystem.deleteRecursively(cacheDir)
+    if (filesystem.exists(cacheDir)) {
+      filesystem.deleteRecursively(cacheDir)
+    }
     journalFile = cacheDir / DiskLruCache.JOURNAL_FILE
     journalBkpFile = cacheDir / DiskLruCache.JOURNAL_FILE_BACKUP
     createNewCache()

@@ -19,10 +19,18 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import okhttp3.okio.FakeFilesystem.Element.Directory
 import okhttp3.okio.FakeFilesystem.Element.File
-import okio.*
+import okio.Buffer
+import okio.ByteString
+import okio.ExperimentalFilesystem
+import okio.FileMetadata
+import okio.Filesystem
+import okio.Path
 import okio.Path.Companion.toPath
-import kotlin.jvm.JvmField
-import kotlin.jvm.JvmName
+import okio.Sink
+import okio.Source
+import okio.Timeout
+import java.io.FileNotFoundException
+import java.io.IOException
 
 /**
  * A fully in-memory filesystem useful for testing. It includes features to support writing
@@ -139,7 +147,7 @@ class FakeFilesystem(
 
   override fun source(file: Path): Source {
     val canonicalPath = workingDirectory / file
-    val element = elements[canonicalPath] ?: throw IOException("no such file: $file")
+    val element = elements[canonicalPath] ?: throw FileNotFoundException("no such file: $file")
 
     if (element !is File) {
       throw IOException("not a file: $file")
