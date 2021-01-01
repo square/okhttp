@@ -210,9 +210,6 @@ class DiskLruCache(
     this.journalFile = directory / JOURNAL_FILE
     this.journalFileTmp = directory / JOURNAL_FILE_TEMP
     this.journalFileBackup = directory / JOURNAL_FILE_BACKUP
-
-    // TODO check where to create
-    // fileSystem.createDirectories(directory)
   }
 
   @Synchronized @Throws(IOException::class)
@@ -727,9 +724,11 @@ class DiskLruCache(
   @Throws(IOException::class)
   fun delete() {
     close()
-    fileSystem.deleteRecursively(directory)
-    // TODO check this logic
-    fileSystem.createDirectory(directory)
+    if (fileSystem.exists(directory)) {
+      fileSystem.deleteRecursively(directory)
+      // TODO check this logic
+      fileSystem.createDirectory(directory)
+    }
   }
 
   /**

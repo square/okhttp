@@ -15,7 +15,6 @@
  */
 package okhttp3;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -117,7 +116,7 @@ public final class CallTest {
       .eventListenerFactory(clientTestRule.wrap(listener))
       .build();
   private RecordingCallback callback = new RecordingCallback();
-  private Cache cache = new Cache(Path.get("/cache/"), Integer.MAX_VALUE, fileSystem);
+  private Cache cache = new Cache(Path.get("/cache"), Integer.MAX_VALUE, new LoggingFilesystem(fileSystem));
 
   public CallTest(MockWebServer server, MockWebServer server2) {
     this.server = server;
