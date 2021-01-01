@@ -17,8 +17,26 @@
 
 package okhttp3.internal
 
+import okhttp3.EventListener
+import okhttp3.Headers
+import okhttp3.Headers.Companion.headersOf
+import okhttp3.HttpUrl
+import okhttp3.OkHttp
+import okhttp3.OkHttpClient
+import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
+import okhttp3.ResponseBody.Companion.toResponseBody
+import okhttp3.internal.http2.Header
+import okio.Buffer
+import okio.BufferedSink
+import okio.BufferedSource
+import okio.ByteString.Companion.decodeHex
+import okio.ExperimentalFilesystem
+import okio.Filesystem
+import okio.Options
+import okio.Path
+import okio.Source
 import java.io.Closeable
-import java.io.File
 import java.io.IOException
 import java.io.InterruptedIOException
 import java.net.InetSocketAddress
@@ -38,19 +56,6 @@ import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
 import kotlin.text.Charsets.UTF_32BE
 import kotlin.text.Charsets.UTF_32LE
-import okhttp3.EventListener
-import okhttp3.Headers
-import okhttp3.Headers.Companion.headersOf
-import okhttp3.HttpUrl
-import okhttp3.OkHttp
-import okhttp3.OkHttpClient
-import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.Response
-import okhttp3.ResponseBody.Companion.toResponseBody
-import okhttp3.internal.http2.Header
-import okio.*
-import okio.ByteString.Companion.decodeHex
-import java.lang.ArrayIndexOutOfBoundsException
 
 @JvmField
 val EMPTY_BYTE_ARRAY = ByteArray(0)

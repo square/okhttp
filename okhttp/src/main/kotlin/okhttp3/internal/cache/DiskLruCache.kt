@@ -75,7 +75,7 @@ import java.util.*
  */
 @OptIn(ExperimentalFilesystem::class)
 class DiskLruCache(
-  internal val fileSystem: Filesystem,
+  fileSystem: Filesystem,
 
   /** Returns the directory where this cache stores its data. */
   val directory: Path,
@@ -90,6 +90,18 @@ class DiskLruCache(
   /** Used for asynchronous journal rebuilds. */
   taskRunner: TaskRunner
 ) : Closeable, Flushable {
+  internal val fileSystem: Filesystem = object : ForwardingFilesystem(fileSystem) {
+    override fun sink(file: Path): Sink {
+      file.parent?.let {
+        // TODO from okhttp3.internal.io.FileSystem
+        if (!exists(it)) {
+          createDirectories(it)
+        }
+      }
+      return super.sink(file)
+    }
+  }
+
   /** The maximum number of bytes that this cache should use to store its data. */
   @get:Synchronized @set:Synchronized var maxSize: Long = maxSize
     set(value) {
@@ -199,7 +211,8 @@ class DiskLruCache(
     this.journalFileTmp = directory / JOURNAL_FILE_TEMP
     this.journalFileBackup = directory / JOURNAL_FILE_BACKUP
 
-    fileSystem.createDirectories(directory)
+    // TODO check where to create
+    // fileSystem.createDirectories(directory)
   }
 
   @Synchronized @Throws(IOException::class)
@@ -364,8 +377,13 @@ class DiskLruCache(
       } else {
         entry.currentEditor = null
         for (t in 0 until valueCount) {
-          fileSystem.delete(entry.cleanFiles[t])
-          fileSystem.delete(entry.dirtyFiles[t])
+          // TODO safer to try to delete and then cache error
+          if (fileSystem.exists(entry.cleanFiles[t])) {
+            fileSystem.delete(entry.cleanFiles[t])
+          }
+          if (fileSystem.exists(entry.dirtyFiles[t])) {
+            fileSystem.delete(entry.dirtyFiles[t])
+          }
         }
         i.remove()
       }
@@ -534,7 +552,9 @@ class DiskLruCache(
           size = size - oldLength + newLength
         }
       } else {
-        fileSystem.delete(dirty)
+        if (fileSystem.exists(dirty)) {
+          fileSystem.delete(dirty)
+        }
       }
     }
 
@@ -621,7 +641,9 @@ class DiskLruCache(
     entry.currentEditor?.detach() // Prevent the edit from completing normally.
 
     for (i in 0 until valueCount) {
-      fileSystem.delete(entry.cleanFiles[i])
+      if (fileSystem.exists(entry.cleanFiles[i])) {
+        fileSystem.delete(entry.cleanFiles[i])
+      }
       size -= entry.lengths[i]
       entry.lengths[i] = 0
     }
@@ -706,6 +728,8 @@ class DiskLruCache(
   fun delete() {
     close()
     fileSystem.deleteRecursively(directory)
+    // TODO check this logic
+    fileSystem.createDirectory(directory)
   }
 
   /**

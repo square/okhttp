@@ -79,7 +79,8 @@ class DiskLruCacheTest {
   }
 
   fun setUp(baseFilesystem: Filesystem, windows: Boolean) {
-    this.cacheDir = cacheDirFile.path.toPath()
+    this.cacheDir =
+      if (baseFilesystem is FakeFilesystem) "/cache".toPath() else cacheDirFile.path.toPath()
     this.filesystem = FaultyFileSystem(baseFilesystem)
     this.windows = windows
 
@@ -2237,6 +2238,9 @@ class DiskLruCacheTest {
   }
 
   fun writeFile(file: Path, content: String) {
+    file.parent?.let {
+      filesystem.createDirectories(it)
+    }
     filesystem.sink(file).buffer().use { sink ->
       sink.writeUtf8(content)
     }
