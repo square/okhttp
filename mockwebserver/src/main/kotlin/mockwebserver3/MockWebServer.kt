@@ -787,6 +787,7 @@ class MockWebServer : Closeable {
         listener = response.webSocketListener!!,
         random = SecureRandom(),
         pingIntervalMillis = 0,
+        pingMaxFailures = 1,
         extensions = WebSocketExtensions.parse(response.headers),
         minimumDeflateSize = 0L // Compress all messages if compression is enabled.
     )

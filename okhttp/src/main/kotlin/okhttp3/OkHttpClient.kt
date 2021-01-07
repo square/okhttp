@@ -220,6 +220,9 @@ open class OkHttpClient internal constructor(
   /** Web socket and HTTP/2 ping interval (in milliseconds). By default pings are not sent. */
   @get:JvmName("pingIntervalMillis") val pingIntervalMillis: Int = builder.pingInterval
 
+  /** Ping max number of consecutive failure. By default is 1 failure. */
+  @get:JvmName("pingMaxFailures") val pingMaxFailures: Int = builder.pingMaxFailures
+
   /**
    * Minimum outbound web socket message size (in bytes) that will be compressed.
    * The default is 1024 bytes.
@@ -285,6 +288,7 @@ open class OkHttpClient internal constructor(
         listener = listener,
         random = Random(),
         pingIntervalMillis = pingIntervalMillis.toLong(),
+        pingMaxFailures = pingMaxFailures,
         extensions = null, // Always null for clients.
         minimumDeflateSize = minWebSocketMessageToCompress
     )
@@ -505,6 +509,7 @@ open class OkHttpClient internal constructor(
     internal var readTimeout = 10_000
     internal var writeTimeout = 10_000
     internal var pingInterval = 0
+    internal var pingMaxFailures = 1
     internal var minWebSocketMessageToCompress = RealWebSocket.DEFAULT_MINIMUM_DEFLATE_SIZE
     internal var routeDatabase: RouteDatabase? = null
 
@@ -537,6 +542,7 @@ open class OkHttpClient internal constructor(
       this.readTimeout = okHttpClient.readTimeoutMillis
       this.writeTimeout = okHttpClient.writeTimeoutMillis
       this.pingInterval = okHttpClient.pingIntervalMillis
+      this.pingMaxFailures = okHttpClient.pingMaxFailures
       this.minWebSocketMessageToCompress = okHttpClient.minWebSocketMessageToCompress
       this.routeDatabase = okHttpClient.routeDatabase
     }

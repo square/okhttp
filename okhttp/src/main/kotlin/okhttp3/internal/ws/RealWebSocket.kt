@@ -57,6 +57,7 @@ class RealWebSocket(
   internal val listener: WebSocketListener,
   private val random: Random,
   private val pingIntervalMillis: Long,
+  private val pingMaxFailures: Int,
   /**
    * For clients this is initially null, and will be assigned to the agreed-upon extensions. For
    * servers it should be the agreed-upon extensions immediately.
@@ -126,6 +127,9 @@ class RealWebSocket(
 
   /** True if we have sent a ping that is still awaiting a reply. */
   private var awaitingPong = false
+
+  /** Number of failed pings */
+  private var failedPingCount = 0
 
   init {
     require("GET" == originalRequest.method) {
@@ -550,18 +554,22 @@ class RealWebSocket(
 
   internal fun writePingFrame() {
     val writer: WebSocketWriter
-    val failedPing: Int
     synchronized(this) {
       if (failed) return
       writer = this.writer ?: return
-      failedPing = if (awaitingPong) sentPingCount else -1
+      if (awaitingPong) {
+        failedPingCount++
+      } else {
+        // reset
+        failedPingCount = 0
+      }
       sentPingCount++
       awaitingPong = true
     }
 
-    if (failedPing != -1) {
+    if (failedPingCount >= pingMaxFailures) {
       failWebSocket(SocketTimeoutException("sent ping but didn't receive pong within " +
-          "${pingIntervalMillis}ms (after ${failedPing - 1} successful ping/pongs)"), null)
+          "${pingIntervalMillis}ms (after ${sentPingCount - failedPingCount} successful ping/pongs)"), null)
       return
     }
 

@@ -426,7 +426,7 @@ public final class RealWebSocketTest {
           .protocol(Protocol.HTTP_1_1)
           .build();
       webSocket = new RealWebSocket(TaskRunner.INSTANCE, response.request(), listener, random,
-          pingIntervalMillis, WebSocketExtensions.Companion.parse(responseHeaders),
+          pingIntervalMillis, 1, WebSocketExtensions.Companion.parse(responseHeaders),
           DEFAULT_MINIMUM_DEFLATE_SIZE);
       webSocket.initReaderAndWriter(name, this);
     }
