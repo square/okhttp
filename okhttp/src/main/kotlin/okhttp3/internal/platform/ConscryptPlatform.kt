@@ -124,7 +124,7 @@ class ConscryptPlatform private constructor() : Platform() {
     fun buildIfSupported(): ConscryptPlatform? = if (isSupported) ConscryptPlatform() else null
 
     fun atLeastVersion(major: Int, minor: Int = 0, patch: Int = 0): Boolean {
-      val conscryptVersion = Conscrypt.version()
+      val conscryptVersion = Conscrypt.version() ?: return false
 
       if (conscryptVersion.major() != major) {
         return conscryptVersion.major() > major
