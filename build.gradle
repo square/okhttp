@@ -50,7 +50,7 @@ buildscript {
       'moshi': "com.squareup.moshi:moshi:${versions.moshi}",
       'moshiKotlin': "com.squareup.moshi:moshi-kotlin-codegen:${versions.moshi}",
       'okio': "com.squareup.okio:okio:${versions.okio}",
-      'okioFakeFilesystem': "com.squareup.okio:okio-fakefilesystem:${versions.okio}",
+      'okioFakeFileSystem': "com.squareup.okio:okio-fakefilesystem:${versions.okio}",
       'openjsse': "org.openjsse:openjsse:${versions.openjsse}",
       'bnd': "biz.aQute.bnd:biz.aQute.bnd.gradle:${versions.bnd}",
       'bndResolve': "biz.aQute.bnd:biz.aQute.resolve:${versions.bnd}",
