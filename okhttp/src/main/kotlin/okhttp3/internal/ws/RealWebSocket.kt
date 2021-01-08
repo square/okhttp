@@ -131,6 +131,9 @@ class RealWebSocket(
   /** Number of failed pings */
   private var failedPingCount = 0
 
+  /** Last activity */
+  private var lastActivity = 0L
+
   init {
     require("GET" == originalRequest.method) {
       "Request must be GET: ${originalRequest.method}"
@@ -268,6 +271,7 @@ class RealWebSocket(
           minimumDeflateSize = minimumDeflateSize
       )
       this.writerTask = WriterTask()
+      this.lastActivity = System.currentTimeMillis()
       if (pingIntervalMillis != 0L) {
         val pingIntervalNanos = MILLISECONDS.toNanos(pingIntervalMillis)
         taskQueue.schedule("$name ping", pingIntervalNanos) {
@@ -334,11 +338,17 @@ class RealWebSocket(
 
   @Throws(IOException::class)
   override fun onReadMessage(text: String) {
+    synchronized(this) {
+      lastActivity = System.currentTimeMillis()
+    }
     listener.onMessage(this, text)
   }
 
   @Throws(IOException::class)
   override fun onReadMessage(bytes: ByteString) {
+    synchronized(this) {
+      lastActivity = System.currentTimeMillis()
+    }
     listener.onMessage(this, bytes)
   }
 
@@ -560,8 +570,11 @@ class RealWebSocket(
       if (awaitingPong) {
         failedPingCount++
       } else {
-        // reset
         failedPingCount = 0
+        var now = System.currentTimeMillis()
+        var delta = now - lastActivity
+        /** No need to send a new ping if we have recently handled one or more messages */
+        if (delta < pingIntervalMillis) return
       }
       sentPingCount++
       awaitingPong = true
@@ -569,7 +582,7 @@ class RealWebSocket(
 
     if (failedPingCount >= pingMaxFailures) {
       failWebSocket(SocketTimeoutException("sent ping but didn't receive pong within " +
-          "${pingIntervalMillis}ms (after ${sentPingCount - failedPingCount} successful ping/pongs)"), null)
+          "${pingIntervalMillis}ms (after ${sentPingCount - failedPingCount - 1} successful ping/pongs)"), null)
       return
     }
 
