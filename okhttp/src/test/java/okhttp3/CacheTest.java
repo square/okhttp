@@ -39,7 +39,6 @@ import mockwebserver3.MockWebServer;
 import mockwebserver3.RecordedRequest;
 import okhttp3.internal.Internal;
 import okhttp3.internal.platform.Platform;
-import okhttp3.okio.FakeFilesystem;
 import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
@@ -48,6 +47,7 @@ import okio.BufferedSource;
 import okio.GzipSink;
 import okio.Okio;
 import okio.Path;
+import okio.fakefilesystem.FakeFileSystem;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -65,7 +65,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 public final class CacheTest {
   private static final HostnameVerifier NULL_HOSTNAME_VERIFIER = (name, session) -> true;
 
-  public FakeFilesystem fileSystem = new FakeFilesystem();
+  public FakeFileSystem fileSystem = new FakeFileSystem();
   @RegisterExtension public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
   @RegisterExtension public final PlatformRule platform = new PlatformRule();
 

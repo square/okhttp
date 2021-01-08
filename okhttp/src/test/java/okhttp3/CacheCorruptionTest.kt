@@ -18,12 +18,12 @@ package okhttp3
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.internal.buildCache
-import okhttp3.okio.FakeFilesystem
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.internal.TlsUtil.localhost
-import okio.ExperimentalFilesystem
+import okio.ExperimentalFileSystem
 import okio.Path.Companion.toPath
 import okio.buffer
+import okio.fakefilesystem.FakeFileSystem
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -40,12 +40,12 @@ import java.util.concurrent.TimeUnit
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSession
 
-@OptIn(ExperimentalFilesystem::class)
+@OptIn(ExperimentalFileSystem::class)
 class CacheCorruptionTest(
   var server: MockWebServer
 ) {
-  @OptIn(ExperimentalFilesystem::class)
-  var fileSystem = FakeFilesystem()
+  @OptIn(ExperimentalFileSystem::class)
+  var fileSystem = FakeFileSystem()
 
   @JvmField
   @RegisterExtension
@@ -67,8 +67,8 @@ class CacheCorruptionTest(
     platform.assumeNotOpenJSSE()
     platform.assumeNotBouncyCastle()
     server.protocolNegotiationEnabled = false
-    val loggingFilesystem = LoggingFilesystem(fileSystem)
-    cache = buildCache("/cache/".toPath(), Int.MAX_VALUE.toLong(), loggingFilesystem)
+    val loggingFileSystem = LoggingFilesystem(fileSystem)
+    cache = buildCache("/cache/".toPath(), Int.MAX_VALUE.toLong(), loggingFileSystem)
     client = clientTestRule.newClientBuilder()
       .cache(cache)
       .cookieJar(JavaNetCookieJar(cookieManager))

@@ -32,16 +32,15 @@ import okio.BufferedSource
 import okio.ByteString.Companion.decodeBase64
 import okio.ByteString.Companion.encodeUtf8
 import okio.ByteString.Companion.toByteString
-import okio.ExperimentalFilesystem
-import okio.Filesystem
+import okio.ExperimentalFileSystem
+import okio.FileSystem
 import okio.ForwardingSink
 import okio.ForwardingSource
 import okio.Path
+import okio.Path.Companion.toOkioPath
 import okio.Sink
 import okio.Source
 import okio.buffer
-import okio.toFile
-import okio.toOkioPath
 import java.io.Closeable
 import java.io.File
 import java.io.Flushable
@@ -142,12 +141,12 @@ import java.util.TreeSet
  *
  * [rfc_7234]: http://tools.ietf.org/html/rfc7234
  */
-@OptIn(ExperimentalFilesystem::class)
+@OptIn(ExperimentalFileSystem::class)
 class Cache
 internal constructor(
   directory: Path,
   maxSize: Long,
-  fileSystem: Filesystem
+  fileSystem: FileSystem
 ) : Closeable, Flushable {
   internal val cache = DiskLruCache(
     fileSystem = fileSystem,
@@ -169,9 +168,9 @@ internal constructor(
     get() = cache.isClosed()
 
   /** Create a cache of at most [maxSize] bytes in [directory]. */
-  @OptIn(ExperimentalFilesystem::class)
+  @OptIn(ExperimentalFileSystem::class)
   constructor(directory: File, maxSize: Long) : this(
-    directory.toOkioPath(), maxSize, Filesystem.SYSTEM
+    directory.toOkioPath(), maxSize, FileSystem.SYSTEM
   )
 
   internal fun get(request: Request): Response? {

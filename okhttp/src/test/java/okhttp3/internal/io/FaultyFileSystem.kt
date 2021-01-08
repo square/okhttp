@@ -15,16 +15,16 @@
  */
 package okhttp3.internal.io
 
-import okio.ExperimentalFilesystem
-import okio.Filesystem
-import okio.ForwardingFilesystem
+import okio.ExperimentalFileSystem
+import okio.FileSystem
+import okio.ForwardingFileSystem
 import okio.Path
 import okio.Sink
 import java.io.IOException
 import java.util.LinkedHashSet
 
-@OptIn(ExperimentalFilesystem::class)
-class FaultyFileSystem constructor(delegate: Filesystem?) : ForwardingFilesystem(delegate!!) {
+@OptIn(ExperimentalFileSystem::class)
+class FaultyFileSystem constructor(delegate: FileSystem?) : ForwardingFileSystem(delegate!!) {
   private val writeFaults: MutableSet<Path> = LinkedHashSet()
   private val deleteFaults: MutableSet<Path> = LinkedHashSet()
   private val renameFaults: MutableSet<Path> = LinkedHashSet()

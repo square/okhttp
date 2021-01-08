@@ -31,8 +31,8 @@ import okio.Buffer
 import okio.BufferedSink
 import okio.BufferedSource
 import okio.ByteString.Companion.decodeHex
-import okio.ExperimentalFilesystem
-import okio.Filesystem
+import okio.ExperimentalFileSystem
+import okio.FileSystem
 import okio.Options
 import okio.Path
 import okio.Source
@@ -525,8 +525,8 @@ fun ServerSocket.closeQuietly() {
  *
  * @param file a file in the directory to check. This file shouldn't already exist!
  */
-@OptIn(ExperimentalFilesystem::class)
-fun Filesystem.isCivilized(file: Path): Boolean {
+@OptIn(ExperimentalFileSystem::class)
+fun FileSystem.isCivilized(file: Path): Boolean {
   sink(file).use {
     try {
       delete(file)

@@ -68,7 +68,6 @@ import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.RecordingProxySelector;
-import okhttp3.okio.FakeFilesystem;
 import okhttp3.testing.Flaky;
 import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
@@ -80,6 +79,7 @@ import okio.ForwardingSource;
 import okio.GzipSink;
 import okio.Okio;
 import okio.Path;
+import okio.fakefilesystem.FakeFileSystem;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -104,7 +104,7 @@ import static org.junit.jupiter.api.Assumptions.assumeFalse;
 @Timeout(30)
 public final class CallTest {
   @RegisterExtension final PlatformRule platform = new PlatformRule();
-  final FakeFilesystem fileSystem = new FakeFilesystem();
+  final FakeFileSystem fileSystem = new FakeFileSystem();
   @RegisterExtension final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
   @RegisterExtension final TestLogHandler testLogHandler = new TestLogHandler(OkHttpClient.class);
 

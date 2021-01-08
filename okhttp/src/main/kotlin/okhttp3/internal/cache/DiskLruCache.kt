@@ -25,7 +25,9 @@ import okhttp3.internal.okHttpName
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.WARN
 import okio.*
+import okio.FileNotFoundException
 import java.io.*
+import java.io.Closeable
 import java.io.EOFException
 import java.io.IOException
 import java.util.*
@@ -73,9 +75,9 @@ import java.util.*
  * @param valueCount the number of values per cache entry. Must be positive.
  * @param maxSize the maximum number of bytes this cache should use to store.
  */
-@OptIn(ExperimentalFilesystem::class)
+@OptIn(ExperimentalFileSystem::class)
 class DiskLruCache(
-  fileSystem: Filesystem,
+  fileSystem: FileSystem,
 
   /** Returns the directory where this cache stores its data. */
   val directory: Path,
@@ -90,7 +92,7 @@ class DiskLruCache(
   /** Used for asynchronous journal rebuilds. */
   taskRunner: TaskRunner
 ) : Closeable, Flushable {
-  internal val fileSystem: Filesystem = object : ForwardingFilesystem(fileSystem) {
+  internal val fileSystem: FileSystem = object : ForwardingFileSystem(fileSystem) {
     override fun sink(file: Path): Sink {
       file.parent?.let {
         // TODO from okhttp3.internal.io.FileSystem

@@ -15,15 +15,15 @@
  */
 package okhttp3
 
-import okio.ExperimentalFilesystem
-import okio.Filesystem
-import okio.ForwardingFilesystem
+import okio.ExperimentalFileSystem
+import okio.FileSystem
+import okio.ForwardingFileSystem
 import okio.Path
 import okio.Sink
 import okio.Source
 
-@OptIn(ExperimentalFilesystem::class)
-class LoggingFilesystem(fileSystem: Filesystem) : ForwardingFilesystem(fileSystem) {
+@OptIn(ExperimentalFileSystem::class)
+class LoggingFilesystem(fileSystem: FileSystem) : ForwardingFileSystem(fileSystem) {
   fun log(line: String) {
     println(line)
   }
