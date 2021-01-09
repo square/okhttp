@@ -56,9 +56,9 @@ class FaultyFileSystem constructor(delegate: FileSystem?) : ForwardingFileSystem
   }
 
   @Throws(IOException::class)
-  override fun atomicMove(source: Path, to: Path) {
-    if (renameFaults.contains(source) || renameFaults.contains(to)) throw IOException("boom!")
-    super.atomicMove(source, to)
+  override fun atomicMove(source: Path, target: Path) {
+    if (renameFaults.contains(source) || renameFaults.contains(target)) throw IOException("boom!")
+    super.atomicMove(source, target)
   }
 
   @Throws(IOException::class)
