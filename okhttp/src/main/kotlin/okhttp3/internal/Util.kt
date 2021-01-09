@@ -564,10 +564,9 @@ fun FileSystem.deleteContents(directory: Path) {
     try {
       if (metadata(file).isDirectory) {
         deleteContents(file)
-        delete(file)
-      } else {
-        delete(file)
       }
+
+      delete(file)
     } catch (ioe: IOException) {
       if (exception == null) {
         exception = ioe
