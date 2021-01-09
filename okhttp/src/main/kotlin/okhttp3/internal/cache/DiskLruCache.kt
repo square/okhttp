@@ -20,6 +20,8 @@ import okhttp3.internal.cache.DiskLruCache.Editor
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.Task
 import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.deleteContents
+import okhttp3.internal.deleteIfExists
 import okhttp3.internal.isCivilized
 import okhttp3.internal.okHttpName
 import okhttp3.internal.platform.Platform
@@ -370,10 +372,7 @@ class DiskLruCache(
    */
   @Throws(IOException::class)
   private fun processJournal() {
-    // TODO use deleteIfExists
-    if (fileSystem.exists(journalFileTmp)) {
-      fileSystem.delete(journalFileTmp)
-    }
+    fileSystem.deleteIfExists(journalFileTmp)
     val i = lruEntries.values.iterator()
     while (i.hasNext()) {
       val entry = i.next()
@@ -384,13 +383,8 @@ class DiskLruCache(
       } else {
         entry.currentEditor = null
         for (t in 0 until valueCount) {
-          // TODO use deleteIfExists
-          if (fileSystem.exists(entry.cleanFiles[t])) {
-            fileSystem.delete(entry.cleanFiles[t])
-          }
-          if (fileSystem.exists(entry.dirtyFiles[t])) {
-            fileSystem.delete(entry.dirtyFiles[t])
-          }
+          fileSystem.deleteIfExists(entry.cleanFiles[t])
+          fileSystem.deleteIfExists(entry.dirtyFiles[t])
         }
         i.remove()
       }
@@ -430,10 +424,7 @@ class DiskLruCache(
       fileSystem.atomicMove(journalFile, journalFileBackup)
     }
     fileSystem.atomicMove(journalFileTmp, journalFile)
-    // TODO use deleteIfExists
-    if (fileSystem.exists(journalFileBackup)) {
-      fileSystem.delete(journalFileBackup)
-    }
+    fileSystem.deleteIfExists(journalFileBackup)
 
     journalWriter = newJournalWriter()
     hasJournalErrors = false
@@ -560,10 +551,7 @@ class DiskLruCache(
           size = size - oldLength + newLength
         }
       } else {
-        // TODO use deleteIfExists
-        if (fileSystem.exists(dirty)) {
-          fileSystem.delete(dirty)
-        }
+        fileSystem.deleteIfExists(dirty)
       }
     }
 
@@ -650,10 +638,7 @@ class DiskLruCache(
     entry.currentEditor?.detach() // Prevent the edit from completing normally.
 
     for (i in 0 until valueCount) {
-      // TODO use deleteIfExists
-      if (fileSystem.exists(entry.cleanFiles[i])) {
-        fileSystem.delete(entry.cleanFiles[i])
-      }
+      fileSystem.deleteIfExists(entry.cleanFiles[i])
       size -= entry.lengths[i]
       entry.lengths[i] = 0
     }
@@ -737,35 +722,7 @@ class DiskLruCache(
   @Throws(IOException::class)
   fun delete() {
     close()
-    deleteContents(directory)
-  }
-
-  // Tolerant delete, try to clear as many files as possible
-  // even after a failure.
-  private fun deleteContents(directory: Path) {
-    var exception: IOException? = null
-    val files = try {
-      fileSystem.list(directory)
-    } catch (fnfe: java.io.FileNotFoundException) {
-      return
-    }
-    for (file in files) {
-      try {
-        if (fileSystem.metadata(file).isDirectory) {
-          deleteContents(file)
-          fileSystem.delete(file)
-        } else {
-          fileSystem.delete(file)
-        }
-      } catch (ioe: IOException) {
-        if (exception == null) {
-          exception = ioe
-        }
-      }
-    }
-    if (exception != null) {
-      throw exception
-    }
+    fileSystem.deleteContents(directory)
   }
 
   /**

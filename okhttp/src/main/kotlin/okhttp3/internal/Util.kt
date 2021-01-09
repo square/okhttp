@@ -37,6 +37,7 @@ import okio.Options
 import okio.Path
 import okio.Source
 import java.io.Closeable
+import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InterruptedIOException
 import java.net.InetSocketAddress
@@ -536,6 +537,46 @@ fun FileSystem.isCivilized(file: Path): Boolean {
   }
   delete(file)
   return false
+}
+
+/** Delete file we expect but don't require to exist. */
+@OptIn(ExperimentalFileSystem::class)
+fun FileSystem.deleteIfExists(path: Path) {
+  try {
+    delete(path)
+  } catch (fnfe: FileNotFoundException) {
+    return
+  }
+}
+
+/**
+ * Tolerant delete, try to clear as many files as possible even after a failure.
+ */
+@OptIn(ExperimentalFileSystem::class)
+fun FileSystem.deleteContents(directory: Path) {
+  var exception: IOException? = null
+  val files = try {
+    list(directory)
+  } catch (fnfe: FileNotFoundException) {
+    return
+  }
+  for (file in files) {
+    try {
+      if (metadata(file).isDirectory) {
+        deleteContents(file)
+        delete(file)
+      } else {
+        delete(file)
+      }
+    } catch (ioe: IOException) {
+      if (exception == null) {
+        exception = ioe
+      }
+    }
+  }
+  if (exception != null) {
+    throw exception
+  }
 }
 
 fun Long.toHexString(): String = java.lang.Long.toHexString(this)
