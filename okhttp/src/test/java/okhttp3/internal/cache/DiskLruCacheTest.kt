@@ -46,8 +46,8 @@ import java.util.NoSuchElementException
 @OptIn(ExperimentalFileSystem::class)
 class FilesystemParamProvider: SimpleProvider() {
   override fun arguments() = listOf(
-    FileSystem.SYSTEM to TestUtil.windows,
-    FakeFileSystem(windowsLimitations = true) to true,
+    // FileSystem.SYSTEM to TestUtil.windows,
+    // FakeFileSystem(windowsLimitations = true) to true,
     FakeFileSystem() to false
   )
 }
@@ -501,8 +501,8 @@ class DiskLruCacheTest {
     cache.close()
     writeFile(getCleanFile("k1", 0), "A")
     writeFile(getCleanFile("k1", 1), "B")
-    filesystem.sink(journalFile).buffer().use {
-      it.writeUtf8(
+    filesystem.write(journalFile) {
+      writeUtf8(
         """
           |${DiskLruCache.MAGIC}
           |${DiskLruCache.VERSION_1}
@@ -2189,8 +2189,8 @@ class DiskLruCacheTest {
     blank: String,
     vararg bodyLines: String
   ) {
-    filesystem.sink(journalFile).buffer().use { sink ->
-      sink.writeUtf8(
+    filesystem.write(journalFile) {
+      writeUtf8(
         """
         |$magic
         |$version
@@ -2200,17 +2200,17 @@ class DiskLruCacheTest {
         |""".trimMargin()
       )
       for (line in bodyLines) {
-        sink.writeUtf8(line)
-        sink.writeUtf8("\n")
+        writeUtf8(line)
+        writeUtf8("\n")
       }
     }
   }
 
   private fun readJournalLines(): List<String> {
     val result = mutableListOf<String>()
-    filesystem.source(journalFile).buffer().use { source ->
+    filesystem.read(journalFile) {
       while (true) {
-        val line = source.readUtf8Line() ?: break
+        val line = readUtf8Line() ?: break
         result.add(line)
       }
     }
@@ -2222,18 +2222,18 @@ class DiskLruCacheTest {
   private fun getDirtyFile(key: String, index: Int) = cacheDir / "$key.$index.tmp"
 
   private fun readFile(file: Path): String {
-    filesystem.source(file).buffer().use { source ->
-      return source.readUtf8()
+    return filesystem.read(file) {
+      readUtf8()
     }
   }
 
   private fun readFileOrNull(file: Path): String? {
-    try {
-      filesystem.source(file).buffer().use {
-        return it.readUtf8()
+    return try {
+      filesystem.read(file) {
+        readUtf8()
       }
     } catch (_: FileNotFoundException) {
-      return null
+      null
     }
   }
 
@@ -2241,8 +2241,8 @@ class DiskLruCacheTest {
     file.parent?.let {
       filesystem.createDirectories(it)
     }
-    filesystem.sink(file).buffer().use { sink ->
-      sink.writeUtf8(content)
+    filesystem.write(file) {
+      writeUtf8(content)
     }
   }
 

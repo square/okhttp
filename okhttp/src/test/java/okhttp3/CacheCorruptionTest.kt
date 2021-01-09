@@ -121,12 +121,12 @@ class CacheCorruptionTest(
     }
 
     if (metadataFile != null) {
-      val contents = fileSystem.source(metadataFile).buffer().use {
-        it.readUtf8()
+      val contents = fileSystem.read(metadataFile) {
+        readUtf8()
       }
 
-      fileSystem.sink(metadataFile).buffer().use {
-        it.writeUtf8(corruptor(contents))
+      fileSystem.write(metadataFile) {
+        writeUtf8(corruptor(contents))
       }
     }
   }

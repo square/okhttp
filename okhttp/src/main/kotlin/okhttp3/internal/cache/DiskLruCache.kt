@@ -265,12 +265,12 @@ class DiskLruCache(
 
   @Throws(IOException::class)
   private fun readJournal() {
-    fileSystem.source(journalFile).buffer().use { source ->
-      val magic = source.readUtf8LineStrict()
-      val version = source.readUtf8LineStrict()
-      val appVersionString = source.readUtf8LineStrict()
-      val valueCountString = source.readUtf8LineStrict()
-      val blank = source.readUtf8LineStrict()
+    fileSystem.read(journalFile) {
+      val magic = readUtf8LineStrict()
+      val version = readUtf8LineStrict()
+      val appVersionString = readUtf8LineStrict()
+      val valueCountString = readUtf8LineStrict()
+      val blank = readUtf8LineStrict()
 
       if (MAGIC != magic ||
           VERSION_1 != version ||
@@ -284,7 +284,7 @@ class DiskLruCache(
       var lineCount = 0
       while (true) {
         try {
-          readJournalLine(source.readUtf8LineStrict())
+          readJournalLine(readUtf8LineStrict())
           lineCount++
         } catch (_: EOFException) {
           break // End of journal.
@@ -294,7 +294,7 @@ class DiskLruCache(
       redundantOpCount = lineCount - lruEntries.size
 
       // If we ended on a truncated line, rebuild the journal before appending to it.
-      if (!source.exhausted()) {
+      if (!exhausted()) {
         rebuildJournal()
       } else {
         journalWriter = newJournalWriter()
@@ -397,23 +397,23 @@ class DiskLruCache(
   internal fun rebuildJournal() {
     journalWriter?.close()
 
-    fileSystem.sink(journalFileTmp).buffer().use { sink ->
-      sink.writeUtf8(MAGIC).writeByte('\n'.toInt())
-      sink.writeUtf8(VERSION_1).writeByte('\n'.toInt())
-      sink.writeDecimalLong(appVersion.toLong()).writeByte('\n'.toInt())
-      sink.writeDecimalLong(valueCount.toLong()).writeByte('\n'.toInt())
-      sink.writeByte('\n'.toInt())
+    fileSystem.write(journalFileTmp) {
+      writeUtf8(MAGIC).writeByte('\n'.toInt())
+      writeUtf8(VERSION_1).writeByte('\n'.toInt())
+      writeDecimalLong(appVersion.toLong()).writeByte('\n'.toInt())
+      writeDecimalLong(valueCount.toLong()).writeByte('\n'.toInt())
+      writeByte('\n'.toInt())
 
       for (entry in lruEntries.values) {
         if (entry.currentEditor != null) {
-          sink.writeUtf8(DIRTY).writeByte(' '.toInt())
-          sink.writeUtf8(entry.key)
-          sink.writeByte('\n'.toInt())
+          writeUtf8(DIRTY).writeByte(' '.toInt())
+          writeUtf8(entry.key)
+          writeByte('\n'.toInt())
         } else {
-          sink.writeUtf8(CLEAN).writeByte(' '.toInt())
-          sink.writeUtf8(entry.key)
-          entry.writeLengths(sink)
-          sink.writeByte('\n'.toInt())
+          writeUtf8(CLEAN).writeByte(' '.toInt())
+          writeUtf8(entry.key)
+          entry.writeLengths(this)
+          writeByte('\n'.toInt())
         }
       }
     }

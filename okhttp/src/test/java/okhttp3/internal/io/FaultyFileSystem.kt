@@ -15,11 +15,13 @@
  */
 package okhttp3.internal.io
 
+import okio.Buffer
 import okio.ExperimentalFileSystem
 import okio.FileSystem
 import okio.ForwardingFileSystem
 import okio.Path
 import okio.Sink
+import okio.Timeout
 import java.io.IOException
 import java.util.LinkedHashSet
 
@@ -72,8 +74,20 @@ class FaultyFileSystem constructor(delegate: FileSystem?) : ForwardingFileSystem
   }
 
   override fun sink(file: Path): Sink {
-    if (deleteFaults.contains(file)) throw IOException("boom!")
+    return if (writeFaults.contains(file)) {
+      object : Sink {
+        override fun close() {}
 
-    return super.sink(file)
+        override fun flush() {}
+
+        override fun timeout() = Timeout.NONE
+
+        override fun write(source: Buffer, byteCount: Long) {
+          throw IOException("boom!")
+        }
+      }
+    } else {
+      super.sink(file)
+    }
   }
 }

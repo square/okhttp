@@ -2062,6 +2062,7 @@ public final class CacheTest {
         + "2\n"
         + "\n"
         + "CLEAN " + urlKey + " " + entryMetadata.length() + " " + entryBody.length() + "\n";
+    fileSystem.createDirectory(cache.directoryPath());
     writeFile(cache.directoryPath(), urlKey + ".0", entryMetadata);
     writeFile(cache.directoryPath(), urlKey + ".1", entryBody);
     writeFile(cache.directoryPath(), "journal", journalBody);
@@ -2111,6 +2112,7 @@ public final class CacheTest {
         + "\n"
         + "DIRTY " + urlKey + "\n"
         + "CLEAN " + urlKey + " " + entryMetadata.length() + " " + entryBody.length() + "\n";
+    fileSystem.createDirectory(cache.directoryPath());
     writeFile(cache.directoryPath(), urlKey + ".0", entryMetadata);
     writeFile(cache.directoryPath(), urlKey + ".1", entryBody);
     writeFile(cache.directoryPath(), "journal", journalBody);
@@ -2161,6 +2163,7 @@ public final class CacheTest {
         + "\n"
         + "DIRTY " + urlKey + "\n"
         + "CLEAN " + urlKey + " " + entryMetadata.length() + " " + entryBody.length() + "\n";
+    fileSystem.createDirectory(cache.directoryPath());
     writeFile(cache.directoryPath(), urlKey + ".0", entryMetadata);
     writeFile(cache.directoryPath(), urlKey + ".1", entryBody);
     writeFile(cache.directoryPath(), "journal", journalBody);
@@ -2198,6 +2201,7 @@ public final class CacheTest {
         + "\n"
         + "DIRTY " + urlKey + "\n"
         + "CLEAN " + urlKey + " " + entryMetadata.length() + " " + entryBody.length() + "\n";
+    fileSystem.createDirectory(cache.directoryPath());
     writeFile(cache.directoryPath(), urlKey + ".0", entryMetadata);
     writeFile(cache.directoryPath(), urlKey + ".1", entryBody);
     writeFile(cache.directoryPath(), "journal", journalBody);
