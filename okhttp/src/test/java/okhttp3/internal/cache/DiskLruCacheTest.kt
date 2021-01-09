@@ -16,7 +16,6 @@
 package okhttp3.internal.cache
 
 import okhttp3.SimpleProvider
-import okhttp3.TestUtil
 import okhttp3.internal.cache.DiskLruCache.Editor
 import okhttp3.internal.cache.DiskLruCache.Snapshot
 import okhttp3.internal.concurrent.TaskFaker

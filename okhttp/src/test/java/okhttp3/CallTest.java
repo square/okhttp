@@ -129,7 +129,8 @@ public final class CallTest {
   }
 
   @AfterEach public void tearDown() throws Exception {
-    cache.delete();
+    cache.close();
+    fileSystem.checkNoOpenFiles();
   }
 
   @Test public void get() throws Exception {

@@ -24,13 +24,21 @@ import okhttp3.internal.isCivilized
 import okhttp3.internal.okHttpName
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.WARN
-import okio.*
+import okio.BufferedSink
+import okio.ExperimentalFileSystem
 import okio.FileNotFoundException
-import java.io.*
+import okio.FileSystem
+import okio.ForwardingFileSystem
+import okio.ForwardingSource
+import okio.Path
+import okio.Sink
+import okio.Source
+import okio.blackholeSink
+import okio.buffer
 import java.io.Closeable
 import java.io.EOFException
+import java.io.Flushable
 import java.io.IOException
-import java.util.*
 
 /**
  * A cache that uses a bounded amount of space on a filesystem. Each cache entry has a string key
@@ -232,7 +240,6 @@ class DiskLruCache(
       }
     }
 
-    // TODO move into API?
     civilizedFileSystem = fileSystem.isCivilized(journalFileBackup)
 
     // Prefer to pick up where we left off.
@@ -363,6 +370,7 @@ class DiskLruCache(
    */
   @Throws(IOException::class)
   private fun processJournal() {
+    // TODO use deleteIfExists
     if (fileSystem.exists(journalFileTmp)) {
       fileSystem.delete(journalFileTmp)
     }
@@ -376,7 +384,7 @@ class DiskLruCache(
       } else {
         entry.currentEditor = null
         for (t in 0 until valueCount) {
-          // TODO safer to try to delete and then cache error
+          // TODO use deleteIfExists
           if (fileSystem.exists(entry.cleanFiles[t])) {
             fileSystem.delete(entry.cleanFiles[t])
           }
@@ -422,6 +430,7 @@ class DiskLruCache(
       fileSystem.atomicMove(journalFile, journalFileBackup)
     }
     fileSystem.atomicMove(journalFileTmp, journalFile)
+    // TODO use deleteIfExists
     if (fileSystem.exists(journalFileBackup)) {
       fileSystem.delete(journalFileBackup)
     }
@@ -551,6 +560,7 @@ class DiskLruCache(
           size = size - oldLength + newLength
         }
       } else {
+        // TODO use deleteIfExists
         if (fileSystem.exists(dirty)) {
           fileSystem.delete(dirty)
         }
@@ -640,6 +650,7 @@ class DiskLruCache(
     entry.currentEditor?.detach() // Prevent the edit from completing normally.
 
     for (i in 0 until valueCount) {
+      // TODO use deleteIfExists
       if (fileSystem.exists(entry.cleanFiles[i])) {
         fileSystem.delete(entry.cleanFiles[i])
       }
