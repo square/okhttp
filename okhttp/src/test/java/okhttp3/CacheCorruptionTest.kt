@@ -39,6 +39,28 @@ import java.util.TimeZone
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSession
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
+import okhttp3.internal.buildCache
+import okhttp3.internal.io.InMemoryFileSystem
+import okhttp3.testing.PlatformRule
+import okhttp3.tls.internal.TlsUtil.localhost
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
+import java.io.File
+import java.net.CookieManager
+import java.net.ResponseCache
+import java.text.DateFormat
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
+import java.util.concurrent.TimeUnit
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.SSLSession
 
 @OptIn(ExperimentalFileSystem::class)
 class CacheCorruptionTest(
@@ -59,7 +81,7 @@ class CacheCorruptionTest(
   private lateinit var client: OkHttpClient
   private lateinit var cache: Cache
   private val NULL_HOSTNAME_VERIFIER =
-    HostnameVerifier { name: String?, session: SSLSession? -> true }
+    HostnameVerifier { _: String?, _: SSLSession? -> true }
   private val cookieManager = CookieManager()
 
   @BeforeEach
@@ -106,6 +128,20 @@ class CacheCorruptionTest(
       corruptMetadata {
         // truncate metadata to 1/4 of length
         it.substring(0, it.length / 4)
+      }
+    }
+
+    assertThat(response.body!!.string()).isEqualTo("ABC.2") // not cached
+    assertThat(cache.requestCount()).isEqualTo(2)
+    assertThat(cache.networkCount()).isEqualTo(2)
+    assertThat(cache.hitCount()).isEqualTo(0)
+  }
+
+  @Test fun corruptedUrl() {
+    val response = testCorruptingCache {
+      corruptMetadata {
+        // strip https scheme
+        it.substring(5)
       }
     }
 
