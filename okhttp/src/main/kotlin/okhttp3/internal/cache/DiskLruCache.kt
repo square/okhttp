@@ -422,9 +422,11 @@ class DiskLruCache(
 
     if (fileSystem.exists(journalFile)) {
       fileSystem.atomicMove(journalFile, journalFileBackup)
+      fileSystem.atomicMove(journalFileTmp, journalFile)
+      fileSystem.deleteIfExists(journalFileBackup)
+    } else {
+      fileSystem.atomicMove(journalFileTmp, journalFile)
     }
-    fileSystem.atomicMove(journalFileTmp, journalFile)
-    fileSystem.deleteIfExists(journalFileBackup)
 
     journalWriter = newJournalWriter()
     hasJournalErrors = false
