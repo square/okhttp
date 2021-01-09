@@ -116,9 +116,6 @@ allprojects {
     maven {
       url 'https://dl.bintray.com/kotlin/dokka'
     }
-    maven {
-      url 'https://kotlin.bintray.com/kotlinx/'
-    }
     google()
   }
 
@@ -368,7 +365,7 @@ def alpnBootVersion() {
   return alpnBootVersionForPatchVersion(javaVersion, patchVersion)
 }
 
-def alpnBootVersionForPatchVersion(String javaVersion, int patchVersion) {
+static def alpnBootVersionForPatchVersion(String javaVersion, int patchVersion) {
   // https://www.eclipse.org/jetty/documentation/current/alpn-chapter.html#alpn-versions
   switch (patchVersion) {
     case 0..24:
