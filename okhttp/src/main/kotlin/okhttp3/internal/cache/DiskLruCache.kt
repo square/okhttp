@@ -737,10 +737,27 @@ class DiskLruCache(
   @Throws(IOException::class)
   fun delete() {
     close()
-    if (fileSystem.exists(directory)) {
-      fileSystem.deleteRecursively(directory)
-      // TODO check this logic
-      fileSystem.createDirectory(directory)
+    deleteContents(directory)
+  }
+
+  private fun deleteContents(directory: Path) {
+    var exception: IOException? = null
+    val files = fileSystem.list(directory)
+    for (file in files) {
+      try {
+        if (fileSystem.metadata(file).isDirectory) {
+          deleteContents(file)
+        } else {
+          fileSystem.delete(file)
+        }
+      } catch (ioe: IOException) {
+        if (exception == null) {
+          exception = ioe
+        }
+      }
+    }
+    if (exception != null) {
+      throw exception
     }
   }
 

@@ -19,9 +19,9 @@ import okio.Buffer
 import okio.ExperimentalFileSystem
 import okio.FileSystem
 import okio.ForwardingFileSystem
+import okio.ForwardingSink
 import okio.Path
 import okio.Sink
-import okio.Timeout
 import java.io.IOException
 import java.util.LinkedHashSet
 
@@ -74,20 +74,16 @@ class FaultyFileSystem constructor(delegate: FileSystem?) : ForwardingFileSystem
   }
 
   override fun sink(file: Path): Sink {
-    return if (writeFaults.contains(file)) {
-      object : Sink {
-        override fun close() {}
+    val sink = super.sink(file)
 
-        override fun flush() {}
-
-        override fun timeout() = Timeout.NONE
-
+    return object : ForwardingSink(sink) {
         override fun write(source: Buffer, byteCount: Long) {
-          throw IOException("boom!")
+          if (writeFaults.contains(file)) {
+            throw IOException("boom!")
+          } else {
+            super.write(source, byteCount)
+          }
         }
       }
-    } else {
-      super.sink(file)
-    }
   }
 }
