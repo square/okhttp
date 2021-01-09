@@ -740,13 +740,20 @@ class DiskLruCache(
     deleteContents(directory)
   }
 
+  // Tolerant delete, try to clear as many files as possible
+  // even after a failure.
   private fun deleteContents(directory: Path) {
     var exception: IOException? = null
-    val files = fileSystem.list(directory)
+    val files = try {
+      fileSystem.list(directory)
+    } catch (fnfe: java.io.FileNotFoundException) {
+      return
+    }
     for (file in files) {
       try {
         if (fileSystem.metadata(file).isDirectory) {
           deleteContents(file)
+          fileSystem.delete(file)
         } else {
           fileSystem.delete(file)
         }
