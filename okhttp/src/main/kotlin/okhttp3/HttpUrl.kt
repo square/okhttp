@@ -1257,8 +1257,9 @@ class HttpUrl internal constructor(
       } else if (base != null) {
         this.scheme = base.scheme
       } else {
+        val truncated = if (input.length > 6) input.take(6) + "..." else input
         throw IllegalArgumentException(
-            "Expected URL scheme 'http' or 'https' but no scheme was found for $input")
+            "Expected URL scheme 'http' or 'https' but no scheme was found for $truncated")
       }
 
       // Authority.

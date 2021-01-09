@@ -137,7 +137,7 @@ public class HttpUrlTest {
 
     assertInvalid("image640://480.png", "Expected URL scheme 'http' or 'https' but was 'image640'");
     assertInvalid("httpp://host/", "Expected URL scheme 'http' or 'https' but was 'httpp'");
-    assertInvalid("0ttp://host/", "Expected URL scheme 'http' or 'https' but no scheme was found for 0ttp://host/");
+    assertInvalid("0ttp://host/", "Expected URL scheme 'http' or 'https' but no scheme was found for 0ttp:/...");
     assertInvalid("ht+tp://host/", "Expected URL scheme 'http' or 'https' but was 'ht+tp'");
     assertInvalid("ht.tp://host/", "Expected URL scheme 'http' or 'https' but was 'ht.tp'");
     assertInvalid("ht-tp://host/", "Expected URL scheme 'http' or 'https' but was 'ht-tp'");
@@ -151,7 +151,7 @@ public class HttpUrlTest {
     assertInvalid("/path", "Expected URL scheme 'http' or 'https' but no scheme was found for /path");
     assertInvalid("path", "Expected URL scheme 'http' or 'https' but no scheme was found for path");
     assertInvalid("?query", "Expected URL scheme 'http' or 'https' but no scheme was found for ?query");
-    assertInvalid("#fragment", "Expected URL scheme 'http' or 'https' but no scheme was found for #fragment");
+    assertInvalid("#fragment", "Expected URL scheme 'http' or 'https' but no scheme was found for #fragm...");
   }
 
   @Test

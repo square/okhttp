@@ -505,7 +505,7 @@ class Cache internal constructor(
         val urlLine = source.readUtf8LineStrict()
         // Choice here is between failing with a correct RuntimeException
         // or mostly silently with an IOException
-        url = urlLine.toHttpUrlOrNull() ?: throw IOException("Cache Failure for $urlLine").also {
+        url = urlLine.toHttpUrlOrNull() ?: throw IOException("Cache corruption for $urlLine").also {
           Platform.get().log("cache corruption", WARN, it)
         }
         requestMethod = source.readUtf8LineStrict()
