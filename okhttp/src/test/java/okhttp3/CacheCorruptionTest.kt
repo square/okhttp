@@ -18,6 +18,7 @@ package okhttp3
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.internal.buildCache
+import okhttp3.okio.LoggingFilesystem
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.internal.TlsUtil.localhost
 import okio.ExperimentalFileSystem

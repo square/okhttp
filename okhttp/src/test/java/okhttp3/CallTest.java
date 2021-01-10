@@ -68,6 +68,7 @@ import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.RecordingProxySelector;
+import okhttp3.okio.LoggingFilesystem;
 import okhttp3.testing.Flaky;
 import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
