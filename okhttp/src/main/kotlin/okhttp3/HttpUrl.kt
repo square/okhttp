@@ -1564,7 +1564,7 @@ class HttpUrl internal constructor(
     internal const val QUERY_COMPONENT_REENCODE_SET = " \"'<>#&="
     internal const val QUERY_COMPONENT_ENCODE_SET = " !\"#$&'(),/:;<=>?@[]\\^`{|}~"
     internal const val QUERY_COMPONENT_ENCODE_SET_URI = "\\^`{|}"
-    internal const val FORM_ENCODE_SET = " \"':;<=>@[]^`{}|/\\?#&!$(),~"
+    internal const val FORM_ENCODE_SET = " !\"#$&'()+,/:;<=>?@[\\]^`{|}~"
     internal const val FRAGMENT_ENCODE_SET = ""
     internal const val FRAGMENT_ENCODE_SET_URI = " \"#<>\\^`{|}"
 
@@ -1831,6 +1831,10 @@ class HttpUrl internal constructor(
         if (alreadyEncoded && (codePoint == '\t'.toInt() || codePoint == '\n'.toInt() ||
                 codePoint == '\u000c'.toInt() || codePoint == '\r'.toInt())) {
           // Skip this character.
+        } else if (codePoint == ' '.toInt() && encodeSet == FORM_ENCODE_SET) {
+          // Encode ' ' as '+'
+          // @see -> https://www.w3.org/TR/2014/REC-html5-20141028/single-page.html#url-encoded-form-data
+          writeUtf8("+")
         } else if (codePoint == '+'.toInt() && plusIsSpace) {
           // Encode '+' as '%2B' since we permit ' ' to be encoded as either '+' or '%20'.
           writeUtf8(if (alreadyEncoded) "+" else "%2B")
