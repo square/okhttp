@@ -27,7 +27,7 @@ dependencies {
   implementation deps.junit5Api
   implementation deps.junit5JupiterParams
 
-  implementation("org.graalvm.nativeimage:svm:20.3.0") {
+  implementation("org.graalvm.nativeimage:svm:21.0.0") {
     // https://youtrack.jetbrains.com/issue/KT-29513
     exclude group: "org.graalvm.nativeimage"
     exclude group: "org.graalvm.truffle"
@@ -59,7 +59,7 @@ if (!isIDE) {
 graal {
   mainClass "okhttp3.RunTestsKt"
   outputName "ConsoleLauncher"
-  graalVersion "20.3.0"
+  graalVersion "21.0.0"
   javaVersion "11"
 
   option "--no-fallback"
