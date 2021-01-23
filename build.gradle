@@ -14,7 +14,7 @@ buildscript {
       'jsoup': '1.13.1',
       'junit': '4.13',
       'junit5': '5.7.0',
-      'kotlin': '1.4.20',
+      'kotlin': '1.4.21',
       'moshi': '1.11.0',
       'okio': '2.9.0',
       'ktlint': '0.38.0',
@@ -58,7 +58,7 @@ buildscript {
   ]
 
   dependencies {
-    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.20"
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.21"
     classpath "org.jetbrains.dokka:dokka-gradle-plugin:0.10.1"
     classpath "com.android.tools.build:gradle:4.0.2"
     classpath deps.bnd
