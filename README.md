@@ -14,7 +14,7 @@ OkHttp is an HTTP client that’s efficient by default:
  * Response caching avoids the network completely for repeat requests.
 
 OkHttp perseveres when the network is troublesome: it will silently recover from common connection
-problems. If your service has multiple IP addresses OkHttp will attempt alternate addresses if the
+problems. If your service has multiple IP addresses, OkHttp will attempt alternate addresses if the
 first connect fails. This is necessary for IPv4+IPv6 and services hosted in redundant data
 centers. OkHttp supports modern TLS features (TLS 1.3, ALPN, certificate pinning). It can be
 configured to fall back for broad connectivity.
@@ -72,7 +72,7 @@ Further examples are on the [OkHttp Recipes page][recipes].
 Requirements
 ------------
 
-OkHttp works on Android 5.0+ (API level 21+) and on Java 8+.
+OkHttp works on Android 5.0+ (API level 21+) and Java 8+.
 
 OkHttp depends on [Okio][okio] for high-performance I/O and the [Kotlin standard library][kotlin]. Both are small libraries with strong backward-compatibility.
 
@@ -90,7 +90,7 @@ Security.insertProviderAt(Conscrypt.newProvider(), 1);
 ```
 
 The OkHttp 3.12.x branch supports Android 2.3+ (API level 9+) and Java 7+. These platforms lack
-support for TLS 1.2 and should not be used. But because upgrading is difficult we will backport
+support for TLS 1.2 and should not be used. But because upgrading is difficult, we will backport
 critical fixes to the [3.12.x branch][okhttp_312x] through December 31, 2021.
 
 
@@ -107,7 +107,7 @@ implementation("com.squareup.okhttp3:okhttp:4.9.0")
 
 Snapshot builds are [available][snap]. [R8 and ProGuard][r8_proguard] rules are available.
 
-Also, we have a [bill of materials (BOM)][bom] available to help you keep OkHttp artifacts up to date and be sure about versions compatibility.
+Also, we have a [bill of materials (BOM)][bom] available to help you keep OkHttp artifacts up to date and be sure about version compatibility.
 
 ```kotlin
     dependencies {
@@ -134,12 +134,12 @@ testImplementation("com.squareup.okhttp3:mockwebserver:4.9.0")
 GraalVM Native Image
 --------------------
 
-Building your own native images with Graal https://www.graalvm.org/ should work automatically.
+Building your native images with Graal https://www.graalvm.org/ should work automatically.
 Please report any bugs or workarounds you find.
 
-See okcurl module for an example build.
+See the okcurl module for an example build.
 
-```
+```shell
 $ ./gradlew okcurl:nativeImage
 $ ./okcurl/build/graal/okcurl https://httpbin.org/get
 ```
@@ -162,6 +162,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ```
+
  [bom]: https://docs.gradle.org/6.2/userguide/platforms.html#sub:bom_import
  [changelog]: http://square.github.io/okhttp/changelog/
  [conscrypt]: https://github.com/google/conscrypt/
