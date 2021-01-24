@@ -1831,9 +1831,8 @@ class HttpUrl internal constructor(
         if (alreadyEncoded && (codePoint == '\t'.toInt() || codePoint == '\n'.toInt() ||
                 codePoint == '\u000c'.toInt() || codePoint == '\r'.toInt())) {
           // Skip this character.
-        } else if (codePoint == ' '.toInt() && encodeSet == FORM_ENCODE_SET) {
-          // Encode ' ' as '+'
-          // @see -> https://www.w3.org/TR/2014/REC-html5-20141028/single-page.html#url-encoded-form-data
+        } else if (codePoint == ' '.toInt() && encodeSet === FORM_ENCODE_SET) {
+          // Encode ' ' as '+'.
           writeUtf8("+")
         } else if (codePoint == '+'.toInt() && plusIsSpace) {
           // Encode '+' as '%2B' since we permit ' ' to be encoded as either '+' or '%20'.
