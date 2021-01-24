@@ -33,16 +33,16 @@ public final class FormBodyTest {
 
     assertThat(body.size()).isEqualTo(3);
 
-    assertThat(body.encodedName(0)).isEqualTo("a%2B%3D%26%20b");
-    assertThat(body.encodedName(1)).isEqualTo("space%2C%20the");
+    assertThat(body.encodedName(0)).isEqualTo("a%2B%3D%26+b");
+    assertThat(body.encodedName(1)).isEqualTo("space%2C+the");
     assertThat(body.encodedName(2)).isEqualTo("%2525");
 
     assertThat(body.name(0)).isEqualTo("a+=& b");
     assertThat(body.name(1)).isEqualTo("space, the");
     assertThat(body.name(2)).isEqualTo("%25");
 
-    assertThat(body.encodedValue(0)).isEqualTo("c%2B%3D%26%20d");
-    assertThat(body.encodedValue(1)).isEqualTo("final%20frontier");
+    assertThat(body.encodedValue(0)).isEqualTo("c%2B%3D%26+d");
+    assertThat(body.encodedValue(1)).isEqualTo("final+frontier");
     assertThat(body.encodedValue(2)).isEqualTo("%2525");
 
     assertThat(body.value(0)).isEqualTo("c+=& d");
@@ -52,7 +52,7 @@ public final class FormBodyTest {
     assertThat(body.contentType().toString()).isEqualTo(
         "application/x-www-form-urlencoded");
 
-    String expected = "a%2B%3D%26%20b=c%2B%3D%26%20d&space%2C%20the=final%20frontier&%2525=%2525";
+    String expected = "a%2B%3D%26+b=c%2B%3D%26+d&space%2C+the=final+frontier&%2525=%2525";
     assertThat(body.contentLength()).isEqualTo(expected.length());
 
     Buffer out = new Buffer();
@@ -67,7 +67,7 @@ public final class FormBodyTest {
         .addEncoded("%25", "%25")
         .build();
 
-    String expected = "a+%3D%26%20b=c+%3D%26%20d&e+%3D%26%20f=g+%3D%26%20h&%25=%25";
+    String expected = "a+%3D%26+b=c+%3D%26+d&e+%3D%26+f=g+%3D%26+h&%25=%25";
     Buffer out = new Buffer();
     body.writeTo(out);
     assertThat(out.readUtf8()).isEqualTo(expected);
@@ -149,7 +149,7 @@ public final class FormBodyTest {
     assertThat(formEncode(30)).isEqualTo("%1E");
     assertThat(formEncode(31)).isEqualTo("%1F");
     // Browsers use '+' for space.
-    assertThat(formEncode(32)).isEqualTo("%20");
+    assertThat(formEncode(32)).isEqualTo("+");
     assertThat(formEncode(33)).isEqualTo("%21");
     assertThat(formEncode(34)).isEqualTo("%22");
     assertThat(formEncode(35)).isEqualTo("%23");
