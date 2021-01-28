@@ -110,14 +110,6 @@ allprojects {
   project.ext.artifactId = rootProject.ext.publishedArtifactId(project)
   version = '4.10.0-SNAPSHOT'
 
-  repositories {
-    mavenCentral()
-    maven {
-      url 'https://dl.bintray.com/kotlin/dokka'
-    }
-    google()
-  }
-
   task downloadDependencies() {
     description 'Download all dependencies to the Gradle cache'
     doLast {
@@ -164,6 +156,7 @@ subprojects { project ->
   java {
     toolchain {
       languageVersion = JavaLanguageVersion.of(11)
+      vendor = JvmVendorSpec.ADOPTOPENJDK
     }
   }
 
@@ -214,6 +207,7 @@ subprojects { project ->
 
     javaLauncher = javaToolchains.launcherFor {
       languageVersion = JavaLanguageVersion.of(testJavaVersion)
+      vendor = JvmVendorSpec.ADOPTOPENJDK
     }
 
     maxParallelForks Runtime.runtime.availableProcessors() * 2
