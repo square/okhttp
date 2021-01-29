@@ -10,8 +10,8 @@ dependencies {
   testImplementation project(':okhttp-testing-support')
   testImplementation project(':okhttp-tls')
   testRuntimeOnly project(':mockwebserver-junit5')
-  testImplementation deps.junit
-  testImplementation deps.assertj
+  testImplementation Dependencies.junit
+  testImplementation Dependencies.assertj
 }
 
 afterEvaluate { project ->

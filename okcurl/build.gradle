@@ -30,15 +30,15 @@ task copyResourcesTemplates(type: Copy) {
 dependencies {
   api project(':okhttp')
   api project(':okhttp-logging-interceptor')
-  implementation deps.picocli
-  implementation deps.guava
+  implementation Dependencies.picocli
+  implementation Dependencies.guava
 
   implementation 'info.picocli:picocli-codegen:4.5.2'
   annotationProcessor 'info.picocli:picocli-codegen:4.5.2'
 
   testImplementation project(':okhttp-testing-support')
-  testImplementation deps.junit5Api
-  testImplementation deps.assertj
+  testImplementation Dependencies.junit5Api
+  testImplementation Dependencies.assertj
 }
 
 shadowJar {

@@ -1,67 +1,9 @@
 buildscript {
-  ext.versions = [
-      'animalSniffer': '1.19',
-      'assertj': '3.15.0',
-      'bouncycastle': '1.67',
-      'brotli': '0.1.2',
-      'checkstyle': '8.28',
-      'conscrypt': '2.5.1',
-      'corretto': '1.3.1',
-      'findbugs': '3.0.2',
-      'guava': '28.2-jre',
-      'java': '1.8',
-      'jnrUnixsocket': '0.28',
-      'jsoup': '1.13.1',
-      'junit': '4.13',
-      'junit5': '5.7.0',
-      'kotlin': '1.4.21',
-      'moshi': '1.11.0',
-      'okio': '2.9.0',
-      'ktlint': '0.38.0',
-      'picocli': '4.5.1',
-      'openjsse': '1.1.0',
-      'bnd': '5.1.2',
-      'equinox': '3.16.0'
-  ]
-
-  ext.deps = [
-      'picocli': "info.picocli:picocli:${versions.picocli}",
-      'android': "org.robolectric:android-all:11-robolectric-6757853",
-      'animalSniffer': "org.codehaus.mojo:animal-sniffer-annotations:${versions.animalSniffer}",
-      'assertj': "org.assertj:assertj-core:${versions.assertj}",
-      'bouncycastle': "org.bouncycastle:bcprov-jdk15to18:${versions.bouncycastle}",
-      'bouncycastlepkix': "org.bouncycastle:bcpkix-jdk15to18:${versions.bouncycastle}",
-      'bouncycastletls': "org.bouncycastle:bctls-jdk15to18:${versions.bouncycastle}",
-      'brotli': "org.brotli:dec:${versions.brotli}",
-      'conscrypt': "org.conscrypt:conscrypt-openjdk-uber:${versions.conscrypt}",
-      'corretto': "software.amazon.cryptools:AmazonCorrettoCryptoProvider:${versions.corretto}:linux-x86_64",
-      'guava': "com.google.guava:guava:${versions.guava}",
-      'hamcrest': 'org.hamcrest:hamcrest-library:2.1',
-      'jnrUnixsocket': "com.github.jnr:jnr-unixsocket:${versions.jnrUnixsocket}",
-      'jsoup': "org.jsoup:jsoup:${versions.jsoup}",
-      'jsr305': "com.google.code.findbugs:jsr305:${versions.findbugs}",
-      'junit': "junit:junit:${versions.junit}",
-      'junit5Api': "org.junit.jupiter:junit-jupiter-api:${versions.junit5}",
-      'junit5JupiterEngine': "org.junit.jupiter:junit-jupiter-engine:${versions.junit5}",
-      'junit5JupiterParams': "org.junit.jupiter:junit-jupiter-params:${versions.junit5}",
-      'junit5VintageEngine': "org.junit.vintage:junit-vintage-engine:${versions.junit5}",
-      'junitPlatformConsole': "org.junit.platform:junit-platform-console:1.7.0",
-      'kotlinStdlib': "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin}",
-      'moshi': "com.squareup.moshi:moshi:${versions.moshi}",
-      'moshiKotlin': "com.squareup.moshi:moshi-kotlin-codegen:${versions.moshi}",
-      'okio': "com.squareup.okio:okio:${versions.okio}",
-      'openjsse': "org.openjsse:openjsse:${versions.openjsse}",
-      'bnd': "biz.aQute.bnd:biz.aQute.bnd.gradle:${versions.bnd}",
-      'bndResolve': "biz.aQute.bnd:biz.aQute.resolve:${versions.bnd}",
-      'equinox': "org.eclipse.platform:org.eclipse.osgi:${versions.equinox}",
-      'kotlinStdlibOsgi': "org.jetbrains.kotlin:kotlin-osgi-bundle:${versions.kotlin}"
-  ]
-
   dependencies {
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.21"
     classpath "org.jetbrains.dokka:dokka-gradle-plugin:0.10.1"
     classpath "com.android.tools.build:gradle:4.0.2"
-    classpath deps.bnd
+    classpath Dependencies.bnd
   }
 
   repositories {
@@ -131,7 +73,7 @@ ext.applyOsgi = { project ->
 
   project.dependencies {
     // The OSGi kotlin-stdlib lets bnd infer bundle versions.
-    osgiApi deps.kotlinStdlibOsgi
+    osgiApi Dependencies.kotlinStdlibOsgi
   }
 }
 
@@ -165,14 +107,14 @@ subprojects { project ->
     checkstyleConfig
   }
   dependencies {
-    checkstyleConfig dependencies.create("com.puppycrawl.tools:checkstyle:${versions.checkstyle}") {
+    checkstyleConfig dependencies.create("com.puppycrawl.tools:checkstyle:${Versions.checkstyle}") {
       transitive = false
     }
   }
   afterEvaluate {
     checkstyle {
       config = resources.text.fromArchiveEntry(configurations.checkstyleConfig, 'google_checks.xml')
-      toolVersion "${versions.checkstyle}"
+      toolVersion "${Versions.checkstyle}"
       sourceSets = [project.sourceSets.main]
     }
   }
@@ -197,8 +139,8 @@ subprojects { project ->
   def testJavaVersion = Integer.getInteger("test.java.version", 11)
 
   dependencies {
-    testRuntimeOnly(deps.junit5JupiterEngine)
-    testRuntimeOnly(deps.junit5VintageEngine)
+    testRuntimeOnly(Dependencies.junit5JupiterEngine)
+    testRuntimeOnly(Dependencies.junit5VintageEngine)
   }
 
   test {
@@ -235,7 +177,7 @@ subprojects { project ->
     }
   } else if (platform == "openjsse") {
     dependencies {
-      testRuntime deps.openjsse
+      testRuntime Dependencies.openjsse
     }
   }
 

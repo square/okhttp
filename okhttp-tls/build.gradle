@@ -11,15 +11,15 @@ jar {
 }
 
 dependencies {
-  api deps.okio
+  api Dependencies.okio
   implementation project(':okhttp')
-  compileOnly deps.jsr305
-  compileOnly deps.animalSniffer
+  compileOnly Dependencies.jsr305
+  compileOnly Dependencies.animalSniffer
 
   testImplementation project(':okhttp-testing-support')
   testImplementation project(':mockwebserver-junit5')
-  testImplementation deps.junit
-  testImplementation deps.assertj
+  testImplementation Dependencies.junit
+  testImplementation Dependencies.assertj
 }
 
 afterEvaluate { project ->
