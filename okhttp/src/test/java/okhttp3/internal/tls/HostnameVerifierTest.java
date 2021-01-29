@@ -637,6 +637,9 @@ public final class HostnameVerifierTest {
   }
 
   @Test public void specialKInExternalCert() throws Exception {
+    // OpenJDK related test.
+    platform.assumeNotConscrypt();
+
     // $ cat ./cert.cnf
     // [req]
     // distinguished_name=distinguished_name
