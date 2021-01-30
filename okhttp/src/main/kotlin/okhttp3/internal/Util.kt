@@ -499,6 +499,11 @@ fun Socket.closeQuietly() {
   } catch (e: AssertionError) {
     throw e
   } catch (rethrown: RuntimeException) {
+    if (rethrown.message == "bio == null") {
+      // Conscrypt in Android 10 and 11 may throw closing an SSLSocket. This is safe to ignore.
+      // https://issuetracker.google.com/issues/177450597
+      return
+    }
     throw rethrown
   } catch (_: Exception) {
   }
