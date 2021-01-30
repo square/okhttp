@@ -21,7 +21,7 @@
     
     
       
-        <title>OkHttpClient - OkHttp - OkHttp</title>
+        <title>Index - OkHttp</title>
       
     
     
@@ -93,7 +93,7 @@
           </span>
           <span class="md-header-nav__topic md-ellipsis">
             
-              OkHttpClient - OkHttp
+              Index
             
           </span>
         </div>
@@ -457,7 +457,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../../mockwebserver/okhttp3.mockwebserver/" title="mockwebserver" class="md-nav__link">
+    <a href="../../../mockwebserver/okhttp3.mockwebserver/index.md" title="mockwebserver" class="md-nav__link">
       mockwebserver
     </a>
   </li>
@@ -739,8 +739,16 @@ public final OkHttpClient client = new OkHttpClient.Builder()
 <h2 id="customize-your-client-with-newbuilder">Customize Your Client With newBuilder()<a class="headerlink" href="#customize-your-client-with-newbuilder" title="Permanent link">&para;</a></h2>
 <p>You can customize a shared OkHttpClient instance with <a href="new-builder/">newBuilder</a>. This builds a client that
 shares the same connection pool, thread pools, and configuration. Use the builder methods to
-configure the derived client for a specific purpose.</p>
-<p>This example shows a call with a short 500 millisecond timeout:</p>
+add configuration to the derived client for a specific purpose.</p>
+<p>This example shows the single instance with default configurations.</p>
+<div class="highlight"><pre><span></span><code>public final OkHttpClient client = new OkHttpClient.Builder()
+    .readTimeout(1000, TimeUnit.MILLISECONDS)
+    .writeTimeout(1000, TimeUnit.MILLISECONDS)
+    .build();
+</code></pre></div>
+
+<p>This example shows a call with a short 500 millisecond read timeout and a 1000 millisecond
+write timeout. Original configuration is kept, but can be overriden.</p>
 <div class="highlight"><pre><span></span><code>OkHttpClient eagerClient = client.newBuilder()
     .readTimeout(500, TimeUnit.MILLISECONDS)
     .build();
@@ -952,8 +960,6 @@ remain idle.</p>
 </tr>
 </tbody>
 </table>
-                
-                  
                 
               
               

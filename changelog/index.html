@@ -457,7 +457,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../4.x/mockwebserver/okhttp3.mockwebserver/" title="mockwebserver" class="md-nav__link">
+    <a href="../4.x/mockwebserver/okhttp3.mockwebserver/index.md" title="mockwebserver" class="md-nav__link">
       mockwebserver
     </a>
   </li>
@@ -623,8 +623,22 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#version-4100-rc1" class="md-nav__link">
-    Version 4.10.0-RC1
+  <a href="#version-500-alpha2" class="md-nav__link">
+    Version 5.0.0-alpha.2
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-500-alpha1" class="md-nav__link">
+    Version 5.0.0-alpha.1
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-491" class="md-nav__link">
+    Version 4.9.1
   </a>
   
 </li>
@@ -854,8 +868,22 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#version-4100-rc1" class="md-nav__link">
-    Version 4.10.0-RC1
+  <a href="#version-500-alpha2" class="md-nav__link">
+    Version 5.0.0-alpha.2
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-500-alpha1" class="md-nav__link">
+    Version 5.0.0-alpha.1
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-491" class="md-nav__link">
+    Version 4.9.1
   </a>
   
 </li>
@@ -1045,9 +1073,65 @@
                 
                 
                 <h1 id="change-log">Change Log<a class="headerlink" href="#change-log" title="Permanent link">&para;</a></h1>
-<h2 id="version-4100-rc1">Version 4.10.0-RC1<a class="headerlink" href="#version-4100-rc1" title="Permanent link">&para;</a></h2>
-<p><em>2020-10-06</em></p>
-<p><strong>This release candidate adds support for <a href="https://www.graalvm.org/">GraalVM</a>.</strong></p>
+<h2 id="version-500-alpha2">Version 5.0.0-alpha.2<a class="headerlink" href="#version-500-alpha2" title="Permanent link">&para;</a></h2>
+<p><em>2021-01-30</em></p>
+<p><strong>In this release MockWebServer has a new Maven coordinate and package name.</strong> A longstanding 
+problem with MockWebServer has been its API dependency on JUnit 4. We&rsquo;ve reorganized things to
+remove that dependency while preserving backwards compatibility.</p>
+<table>
+<thead>
+<tr>
+<th align="left">Maven Coordinate</th>
+<th align="left">Package Name</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left">com.squareup.okhttp3:mockwebserver3:5.0.0-alpha.2</td>
+<td align="left">mockwebserver3</td>
+<td align="left">Core module. No JUnit dependency!</td>
+</tr>
+<tr>
+<td align="left">com.squareup.okhttp3:mockwebserver3-junit4:5.0.0-alpha.2</td>
+<td align="left">mockwebserver3.junit4</td>
+<td align="left">Optional JUnit 4 integration.</td>
+</tr>
+<tr>
+<td align="left">com.squareup.okhttp3:mockwebserver3-junit5:5.0.0-alpha.2</td>
+<td align="left">mockwebserver3.junit5</td>
+<td align="left">Optional JUnit 5 integration.</td>
+</tr>
+<tr>
+<td align="left">com.squareup.okhttp3:mockwebserver:5.0.0-alpha.2</td>
+<td align="left">okhttp3.mockwebserver</td>
+<td align="left">Obsolete. Depends on JUnit 4.</td>
+</tr>
+</tbody>
+</table>
+<p>The new APIs use <code>mockwebserver3</code> in both the Maven coordinate and package name. This new API is
+<strong>not stable</strong> and will likely change before the final 5.0.0 release.  </p>
+<p>If you have code that subclasses <code>okhttp3.mockwebserver.QueueDispatcher</code>, this update is not source
+or binary compatible. Migrating to the new <code>mockwebserver3</code> package will fix this problem.</p>
+<ul>
+<li>New: DNS over HTTPS is now a stable feature of OkHttp. We introduced this as an experimental 
+    module in 2018. We are confident in its stable API and solid implementation.</li>
+<li>Fix: Work around a crash in Android 10 and 11 that may be triggered when two threads 
+    concurrently close an SSL socket. This would have appeared in crash logs as
+    <code>NullPointerException: bio == null</code>.</li>
+<li>Fix: Use plus <code>+</code> instead of <code>%20</code> to encode space characters in <code>FormBody</code>. This was a
+    longstanding bug in OkHttp. The fix makes OkHttp consistent with major web browsers.</li>
+<li>Fix: Don&rsquo;t crash if Conscrypt returns a null version.</li>
+<li>Fix: Include the public suffix data as a resource in GraalVM native images.</li>
+<li>Fix: Fail fast when the cache is corrupted.</li>
+<li>Fix: Fail fast when a private key cannot be encoded.</li>
+<li>Fix: Fail fast when attempting to verify a non-ASCII hostname.</li>
+<li>Upgrade: <a href="https://www.graalvm.org/release-notes/21_0/">GraalVM 21</a>.</li>
+<li>Upgrade: <a href="https://github.com/JetBrains/kotlin/releases/tag/v1.4.20">Kotlin 1.4.20</a>.</li>
+</ul>
+<h2 id="version-500-alpha1">Version 5.0.0-alpha.1<a class="headerlink" href="#version-500-alpha1" title="Permanent link">&para;</a></h2>
+<p><em>2021-01-30</em></p>
+<p><strong>This release adds initial support for <a href="https://www.graalvm.org/">GraalVM</a>.</strong></p>
 <p>GraalVM is an exciting new platform and we&rsquo;re eager to adopt it. The startup time improvements over
 the JVM are particularly impressive. Try it with okcurl:</p>
 <div class="highlight"><pre><span></span><code>$ ./gradlew okcurl:nativeImage
@@ -1068,6 +1152,15 @@ and Android! Please report any issues you encounter: we&rsquo;ll fix them urgent
 </code></pre></div>
 
 </li>
+</ul>
+<p>Note that this was originally released on 2020-10-06 as 4.10.0-RC1. The only change from that
+release is the version name.</p>
+<h2 id="version-491">Version 4.9.1<a class="headerlink" href="#version-491" title="Permanent link">&para;</a></h2>
+<p><em>2021-01-30</em></p>
+<ul>
+<li>Fix: Work around a crash in Android 10 and 11 that may be triggered when two threads
+    concurrently close an SSL socket. This would have appeared in crash logs as
+    <code>NullPointerException: bio == null</code>.</li>
 </ul>
 <h2 id="version-490">Version 4.9.0<a class="headerlink" href="#version-490" title="Permanent link">&para;</a></h2>
 <p><em>2020-09-11</em></p>
@@ -1561,7 +1654,7 @@ from OkHttp 3.x. We wrote an <a href="https://square.github.io/okhttp/upgrading_
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
         
-          <a href="../4.x/mockwebserver/okhttp3.mockwebserver/" title="mockwebserver" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../4.x/okhttp-urlconnection/okhttp3/" title="urlconnection" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-footer-nav__button md-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
             </div>
@@ -1570,7 +1663,7 @@ from OkHttp 3.x. We wrote an <a href="https://square.github.io/okhttp/upgrading_
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                mockwebserver
+                urlconnection
               </div>
             </div>
           </a>
