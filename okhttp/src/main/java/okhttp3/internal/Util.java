@@ -158,6 +158,11 @@ public final class Util {
       } catch (AssertionError e) {
         if (!isAndroidGetsocknameError(e)) throw e;
       } catch (RuntimeException rethrown) {
+        if ("bio == null".equals(rethrown.getMessage())) {
+          // Conscrypt in Android 10 and 11 may throw closing an SSLSocket. This is safe to ignore.
+          // https://issuetracker.google.com/issues/177450597
+          return;
+        }
         throw rethrown;
       } catch (Exception ignored) {
       }
