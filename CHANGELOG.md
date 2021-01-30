@@ -70,6 +70,15 @@ Note that this was originally released on 2020-10-06 as 4.10.0-RC1. The only cha
 release is the version name.
 
 
+## Version 4.9.1
+
+_2021-01-30_
+
+ *  Fix: Work around a crash in Android 10 and 11 that may be triggered when two threads
+    concurrently close an SSL socket. This would have appeared in crash logs as
+    `NullPointerException: bio == null`.
+
+
 ## Version 4.9.0
 
 _2020-09-11_
