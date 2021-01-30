@@ -108,7 +108,7 @@ ext.publishedArtifactId = { project ->
 allprojects {
   group = 'com.squareup.okhttp3'
   project.ext.artifactId = rootProject.ext.publishedArtifactId(project)
-  version = '4.10.0-SNAPSHOT'
+  version = '5.0.0-alpha.2'
 
   task downloadDependencies() {
     description 'Download all dependencies to the Gradle cache'
