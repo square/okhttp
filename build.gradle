@@ -21,7 +21,6 @@ plugins {
   id "net.ltgt.errorprone" version "1.2.1"
 }
 
-
 allprojects {
   group = 'com.squareup.okhttp3'
   project.ext.artifactId = Projects.publishedArtifactId(project.name)
@@ -138,7 +137,7 @@ subprojects { project ->
 
   if (platform == "jdk8alpn") {
     // Add alpn-boot on Java 8 so we can use HTTP/2 without a stable API.
-    def alpnBootVersion = alpnBootVersion()
+    def alpnBootVersion = Alpn.alpnBootVersion()
     if (alpnBootVersion != null) {
       def alpnBootJar = configurations.detachedConfiguration(
               dependencies.create("org.mortbay.jetty.alpn:alpn-boot:$alpnBootVersion")).singleFile
