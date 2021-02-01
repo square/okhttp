@@ -217,6 +217,14 @@ _2019-02-04_
  *  New: Fail fast if a `SSLSocketFactory` is used as a `SocketFactory`.
  *  New: Log the TLS handshake in `LoggingEventListener`.
 
+## Version 3.12.13
+
+_2021-01-30_
+
+ *  Fix: Work around a crash in Android 10 and 11 that may be triggered when two threads
+    concurrently close an SSL socket. This would have appeared in crash logs as
+    `NullPointerException: bio == null`.
+
 
 ## Version 3.12.12
 

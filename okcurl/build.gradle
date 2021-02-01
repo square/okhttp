@@ -48,7 +48,7 @@ shadowJar {
 graal {
   mainClass "okhttp3.curl.Main"
   outputName "okcurl"
-  graalVersion "20.3.0"
+  graalVersion "21.0.0"
   javaVersion "11"
 
   option "--no-fallback"

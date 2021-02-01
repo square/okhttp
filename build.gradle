@@ -14,7 +14,7 @@ buildscript {
       'jsoup': '1.13.1',
       'junit': '4.13',
       'junit5': '5.7.0',
-      'kotlin': '1.4.20',
+      'kotlin': '1.4.21',
       'moshi': '1.11.0',
       'okio': '3.0.0-alpha.1',
       'ktlint': '0.38.0',
@@ -109,7 +109,7 @@ ext.publishedArtifactId = { project ->
 allprojects {
   group = 'com.squareup.okhttp3'
   project.ext.artifactId = rootProject.ext.publishedArtifactId(project)
-  version = '4.10.0-SNAPSHOT'
+  version = '5.0.0-SNAPSHOT'
 
   repositories {
     mavenCentral()
@@ -164,6 +164,7 @@ subprojects { project ->
   java {
     toolchain {
       languageVersion = JavaLanguageVersion.of(11)
+      vendor = JvmVendorSpec.ADOPTOPENJDK
     }
   }
 
@@ -214,6 +215,7 @@ subprojects { project ->
 
     javaLauncher = javaToolchains.launcherFor {
       languageVersion = JavaLanguageVersion.of(testJavaVersion)
+      vendor = JvmVendorSpec.ADOPTOPENJDK
     }
 
     maxParallelForks Runtime.runtime.availableProcessors() * 2
