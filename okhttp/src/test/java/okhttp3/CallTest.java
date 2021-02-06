@@ -3005,11 +3005,12 @@ public final class CallTest {
       assertThat(response.body().string()).isNotBlank();
     }
 
-    long connectCount = listener.getEventSequence().stream()
-        .filter((event) -> event instanceof ConnectStart)
-        .count();
-    long expected = platform.isJdk8() ? 2 : 1;
-    assertThat(connectCount).isEqualTo(expected);
+    if (!platform.isJdk8()) {
+      long connectCount = listener.getEventSequence().stream()
+              .filter((event) -> event instanceof ConnectStart)
+              .count();
+      assertThat(connectCount).isEqualTo(1);
+    }
   }
 
   /** Test which headers are sent unencrypted to the HTTP proxy. */

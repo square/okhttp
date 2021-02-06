@@ -211,7 +211,6 @@ public final class ClientAuthTest {
       fail();
     } catch (SSLHandshakeException expected) {
     } catch (SSLException expected) {
-      assertThat(PlatformVersion.INSTANCE.getMajorVersion()).isGreaterThanOrEqualTo(11);
     } catch (SocketException expected) {
       assertThat(getPlatformSystemProperty()).isIn(PlatformRule.JDK9_PROPERTY,
           PlatformRule.CONSCRYPT_PROPERTY);
@@ -266,7 +265,6 @@ public final class ClientAuthTest {
     } catch (SSLHandshakeException expected) {
     } catch (SSLException expected) {
       // javax.net.ssl.SSLException: readRecord
-      assertThat(PlatformVersion.INSTANCE.getMajorVersion()).isGreaterThanOrEqualTo(11);
     } catch (SocketException expected) {
       assertThat(getPlatformSystemProperty()).isIn(PlatformRule.JDK9_PROPERTY,
           PlatformRule.CONSCRYPT_PROPERTY);
