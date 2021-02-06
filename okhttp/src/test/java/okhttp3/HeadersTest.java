@@ -25,7 +25,6 @@ import okhttp3.internal.Util;
 import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http2.Header;
 import okhttp3.internal.http2.Http2ExchangeCodec;
-import org.junit.Ignore;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -381,6 +380,37 @@ public final class HeadersTest {
     }
   }
 
+  @Test public void sensitiveHeadersNotIncludedInExceptions() {
+    try {
+      new Headers.Builder().add("Authorization", "valué1");
+      fail("Should have complained about invalid name");
+    } catch (IllegalArgumentException expected) {
+      assertThat(expected.getMessage()).isEqualTo(
+          "Unexpected char 0xe9 at 4 in Authorization value");
+    }
+    try {
+      new Headers.Builder().add("Cookie", "valué1");
+      fail("Should have complained about invalid name");
+    } catch (IllegalArgumentException expected) {
+      assertThat(expected.getMessage()).isEqualTo(
+          "Unexpected char 0xe9 at 4 in Cookie value");
+    }
+    try {
+      new Headers.Builder().add("Proxy-Authorization", "valué1");
+      fail("Should have complained about invalid name");
+    } catch (IllegalArgumentException expected) {
+      assertThat(expected.getMessage()).isEqualTo(
+          "Unexpected char 0xe9 at 4 in Proxy-Authorization value");
+    }
+    try {
+      new Headers.Builder().add("Set-Cookie", "valué1");
+      fail("Should have complained about invalid name");
+    } catch (IllegalArgumentException expected) {
+      assertThat(expected.getMessage()).isEqualTo(
+          "Unexpected char 0xe9 at 4 in Set-Cookie value");
+    }
+  }
+
   @Test public void headersEquals() {
     Headers headers1 = new Headers.Builder()
         .add("Connection", "close")
@@ -413,6 +443,24 @@ public final class HeadersTest {
         .add("B", "bb")
         .build();
     assertThat(headers.toString()).isEqualTo("A: a\nB: bb\n");
+  }
+
+  @Test public void headersToStringRedactsSensitiveHeaders() {
+    Headers headers = new Headers.Builder()
+        .add("content-length", "99")
+        .add("authorization", "peanutbutter")
+        .add("proxy-authorization", "chocolate")
+        .add("cookie", "drink=coffee")
+        .add("set-cookie", "accessory=sugar")
+        .add("user-agent", "OkHttp")
+        .build();
+    assertThat(headers.toString()).isEqualTo(""
+        + "content-length: 99\n"
+        + "authorization: ██\n"
+        + "proxy-authorization: ██\n"
+        + "cookie: ██\n"
+        + "set-cookie: ██\n"
+        + "user-agent: OkHttp\n");
   }
 
   @Test public void headersAddAll() {
