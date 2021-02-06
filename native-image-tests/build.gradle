@@ -5,11 +5,11 @@ plugins {
 }
 
 dependencies {
-  implementation deps.assertj
-  implementation deps.junit5Api
-  implementation deps.junit5JupiterEngine
-  implementation deps.junitPlatformConsole
-  implementation deps.okioFakeFileSystem
+  implementation Dependencies.assertj
+  implementation Dependencies.junit5Api
+  implementation Dependencies.junit5JupiterEngine
+  implementation Dependencies.junitPlatformConsole
+  implementation Dependencies.okioFakeFileSystem
 
   implementation project(':okhttp')
   implementation project(':okhttp-brotli')
@@ -18,15 +18,15 @@ dependencies {
   implementation project(':okhttp-sse')
   implementation project(':okhttp-testing-support')
   implementation project(':okhttp-tls')
-  implementation deps.assertj
+  implementation Dependencies.assertj
   implementation project(':mockwebserver')
   implementation project(':mockwebserver-deprecated')
   implementation project(':okhttp-urlconnection')
   implementation project(':mockwebserver-junit4')
   implementation project(':mockwebserver-junit5')
-  implementation deps.bndResolve
-  implementation deps.junit5Api
-  implementation deps.junit5JupiterParams
+  implementation Dependencies.bndResolve
+  implementation Dependencies.junit5Api
+  implementation Dependencies.junit5JupiterParams
 
   implementation("org.graalvm.nativeimage:svm:21.0.0") {
     // https://youtrack.jetbrains.com/issue/KT-29513
@@ -36,7 +36,7 @@ dependencies {
     exclude group: "org.graalvm.compiler"
   }
 
-  compileOnly deps.jsr305
+  compileOnly Dependencies.jsr305
 }
 
 animalsniffer {

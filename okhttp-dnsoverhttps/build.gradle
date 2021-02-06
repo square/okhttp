@@ -11,14 +11,14 @@ jar {
 
 dependencies {
   api project(':okhttp')
-  compileOnly deps.jsr305
+  compileOnly Dependencies.jsr305
 
   testImplementation project(':okhttp-testing-support')
   testImplementation project(':mockwebserver-deprecated')
   testImplementation project(':mockwebserver-junit5')
-  testImplementation deps.conscrypt
-  testImplementation deps.junit
-  testImplementation deps.assertj
+  testImplementation Dependencies.conscrypt
+  testImplementation Dependencies.junit
+  testImplementation Dependencies.assertj
 }
 
 afterEvaluate { project ->
