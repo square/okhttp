@@ -1,6 +1,6 @@
 buildscript {
   dependencies {
-    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.21"
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.30"
     classpath "org.jetbrains.dokka:dokka-gradle-plugin:0.10.1"
     classpath "com.android.tools.build:gradle:4.0.2"
     classpath Dependencies.bnd
@@ -24,7 +24,7 @@ plugins {
 allprojects {
   group = 'com.squareup.okhttp3'
   project.ext.artifactId = Projects.publishedArtifactId(project.name)
-  version = '4.10.0-SNAPSHOT'
+  version = '5.0.0-SNAPSHOT'
 
   task downloadDependencies() {
     description 'Download all dependencies to the Gradle cache'
