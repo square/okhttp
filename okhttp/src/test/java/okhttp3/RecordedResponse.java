@@ -58,7 +58,7 @@ public final class RecordedResponse {
   }
 
   public RecordedResponse assertCode(int expectedCode) {
-    assertThat(response.code()).isEqualTo(expectedCode);
+    assertThat(response == null ? null : response.code()).isEqualTo(expectedCode);
     return this;
   }
 

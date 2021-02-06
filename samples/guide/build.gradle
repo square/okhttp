@@ -5,9 +5,9 @@ dependencies {
   implementation project(':mockwebserver-deprecated')
   implementation project(':okhttp-testing-support')
   implementation project(':okhttp-tls')
-  implementation deps.animalSniffer
-  implementation deps.moshi
-  kapt deps.moshiKotlin
+  implementation Dependencies.animalSniffer
+  implementation Dependencies.moshi
+  kapt Dependencies.moshiKotlin
 }
 
 java {

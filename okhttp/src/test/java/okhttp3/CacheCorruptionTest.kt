@@ -15,7 +15,20 @@
  */
 package okhttp3
 
-import java.io.File
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
+import okhttp3.internal.buildCache
+import okhttp3.okio.LoggingFilesystem
+import okhttp3.testing.PlatformRule
+import okhttp3.tls.internal.TlsUtil.localhost
+import okio.ExperimentalFileSystem
+import okio.Path.Companion.toPath
+import okio.fakefilesystem.FakeFileSystem
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import java.net.CookieManager
 import java.net.ResponseCache
 import java.text.DateFormat
@@ -26,51 +39,52 @@ import java.util.TimeZone
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSession
-import mockwebserver3.MockResponse
-import mockwebserver3.MockWebServer
-import okhttp3.internal.buildCache
-import okhttp3.internal.io.InMemoryFileSystem
-import okhttp3.testing.PlatformRule
-import okhttp3.tls.internal.TlsUtil.localhost
-import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.RegisterExtension
 
+@OptIn(ExperimentalFileSystem::class)
 class CacheCorruptionTest(
   var server: MockWebServer
 ) {
-  @JvmField @RegisterExtension var fileSystem = InMemoryFileSystem()
-  @JvmField @RegisterExtension val clientTestRule = OkHttpClientTestRule()
-  @JvmField @RegisterExtension val platform = PlatformRule()
+  @OptIn(ExperimentalFileSystem::class)
+  var fileSystem = FakeFileSystem()
+
+  @JvmField
+  @RegisterExtension
+  val clientTestRule = OkHttpClientTestRule()
+
+  @JvmField
+  @RegisterExtension
+  val platform = PlatformRule()
 
   private val handshakeCertificates = localhost()
   private lateinit var client: OkHttpClient
   private lateinit var cache: Cache
   private val NULL_HOSTNAME_VERIFIER =
-    HostnameVerifier { name: String?, session: SSLSession? -> true }
+    HostnameVerifier { _: String?, _: SSLSession? -> true }
   private val cookieManager = CookieManager()
 
-  @BeforeEach fun setUp() {
+  @BeforeEach
+  fun setUp() {
     platform.assumeNotOpenJSSE()
     platform.assumeNotBouncyCastle()
     server.protocolNegotiationEnabled = false
-    cache = buildCache(File("/cache/"), Int.MAX_VALUE.toLong(), fileSystem)
+    val loggingFileSystem = LoggingFilesystem(fileSystem)
+    cache = buildCache("/cache/".toPath(), Int.MAX_VALUE.toLong(), loggingFileSystem)
     client = clientTestRule.newClientBuilder()
       .cache(cache)
       .cookieJar(JavaNetCookieJar(cookieManager))
       .build()
   }
 
-  @AfterEach fun tearDown() {
+  @AfterEach
+  fun tearDown() {
     ResponseCache.setDefault(null)
     if (this::cache.isInitialized) {
       cache.delete()
     }
   }
 
-  @Test fun corruptedCipher() {
+  @Test
+  fun corruptedCipher() {
     val response = testCorruptingCache {
       corruptMetadata {
         // mess with cipher suite
@@ -86,7 +100,8 @@ class CacheCorruptionTest(
     assertThat(response.handshake?.cipherSuite?.javaName).startsWith("SLT_")
   }
 
-  @Test fun truncatedMetadataEntry() {
+  @Test
+  fun truncatedMetadataEntry() {
     val response = testCorruptingCache {
       corruptMetadata {
         // truncate metadata to 1/4 of length
@@ -100,31 +115,56 @@ class CacheCorruptionTest(
     assertThat(cache.hitCount()).isEqualTo(0)
   }
 
+  @Test fun corruptedUrl() {
+    val response = testCorruptingCache {
+      corruptMetadata {
+        // strip https scheme
+        it.substring(5)
+      }
+    }
+
+    assertThat(response.body!!.string()).isEqualTo("ABC.2") // not cached
+    assertThat(cache.requestCount()).isEqualTo(2)
+    assertThat(cache.networkCount()).isEqualTo(2)
+    assertThat(cache.hitCount()).isEqualTo(0)
+  }
+
   private fun corruptMetadata(corruptor: (String) -> String) {
-    val metadataFile = fileSystem.files.keys.find { it.name.endsWith(".0") }
-    val metadataBuffer = fileSystem.files[metadataFile]
+    val metadataFile = fileSystem.allPaths.find {
+      it.name.endsWith(".0")
+    }
 
-    val contents = metadataBuffer!!.peek().readUtf8()
+    if (metadataFile != null) {
+      val contents = fileSystem.read(metadataFile) {
+        readUtf8()
+      }
 
-    metadataBuffer.clear()
-    metadataBuffer.writeUtf8(corruptor(contents))
+      fileSystem.write(metadataFile) {
+        writeUtf8(corruptor(contents))
+      }
+    }
   }
 
   private fun testCorruptingCache(corruptor: () -> Unit): Response {
     server.useHttps(handshakeCertificates.sslSocketFactory(), false)
-    server.enqueue(MockResponse()
+    server.enqueue(
+      MockResponse()
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
-        .setBody("ABC.1"))
-    server.enqueue(MockResponse()
-      .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
-      .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
-      .setBody("ABC.2"))
+        .setBody("ABC.1")
+    )
+    server.enqueue(
+      MockResponse()
+        .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
+        .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
+        .setBody("ABC.2")
+    )
     client = client.newBuilder()
-        .sslSocketFactory(
-          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager)
-        .hostnameVerifier(NULL_HOSTNAME_VERIFIER)
-        .build()
+      .sslSocketFactory(
+        handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
+      )
+      .hostnameVerifier(NULL_HOSTNAME_VERIFIER)
+      .build()
     val request: Request = Request.Builder().url(server.url("/")).build()
     val response1: Response = client.newCall(request).execute()
     val bodySource = response1.body!!.source()

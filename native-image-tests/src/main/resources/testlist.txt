@@ -2,6 +2,7 @@ okhttp3.AddressTest
 okhttp3.CacheControlTest
 okhttp3.CacheCorruptionTest
 okhttp3.CacheTest
+okhttp3.CallHandshakeTest
 okhttp3.CallKotlinTest
 okhttp3.CallTest
 okhttp3.CertificateChainCleanerTest
@@ -19,10 +20,14 @@ okhttp3.FormBodyTest
 okhttp3.HandshakeTest
 okhttp3.HeadersKotlinTest
 okhttp3.HeadersTest
+okhttp3.HttpUrlGetTest
+okhttp3.HttpUrlTest
 okhttp3.InsecureForHostTest
 okhttp3.InterceptorTest
 okhttp3.KotlinDeprecationErrorTest
 okhttp3.KotlinSourceModernTest
+okhttp3.MediaTypeGetTest
+okhttp3.MediaTypeTest
 okhttp3.MultipartBodyTest
 okhttp3.MultipartReaderTest
 okhttp3.OkHttpClientTest
@@ -36,9 +41,11 @@ okhttp3.SampleTest
 okhttp3.ServerTruncatesRequestTest
 okhttp3.SocksProxyTest
 okhttp3.URLConnectionTest
+okhttp3.WebPlatformUrlTest
 okhttp3.brotli.BrotliInterceptorJavaApiTest
 okhttp3.brotli.BrotliInterceptorTest
 okhttp3.dnsoverhttps.DnsOverHttpsTest
+okhttp3.dnsoverhttps.DnsRecordCodecTest
 okhttp3.internal.UtilTest
 okhttp3.internal.authenticator.JavaNetAuthenticatorTest
 okhttp3.internal.cache.DiskLruCacheTest
@@ -61,6 +68,7 @@ okhttp3.internal.http2.Http2ConnectionTest
 okhttp3.internal.http2.Http2Test
 okhttp3.internal.http2.HttpOverHttp2Test
 okhttp3.internal.http2.HuffmanTest
+okhttp3.internal.http2.SettingsTest
 okhttp3.internal.io.FileSystemTest
 okhttp3.internal.publicsuffix.PublicSuffixDatabaseTest
 okhttp3.internal.tls.CertificatePinnerChainValidationTest
@@ -76,3 +84,4 @@ okhttp3.logging.HttpLoggingInterceptorTest
 okhttp3.logging.IsProbablyUtf8Test
 okhttp3.logging.LoggingEventListenerTest
 okhttp3.sse.internal.EventSourceHttpTest
+okhttp3.sse.internal.ServerSentEventIteratorTest

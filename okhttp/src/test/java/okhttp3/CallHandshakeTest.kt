@@ -79,6 +79,9 @@ class CallHandshakeTest {
 
   @Test
   fun testDefaultHandshakeCipherSuiteOrderingTls12Restricted() {
+    // We are avoiding making guarantees on ordering of secondary Platforms.
+    platform.assumeNotConscrypt()
+
     val client = makeClient(ConnectionSpec.RESTRICTED_TLS, TlsVersion.TLS_1_2)
 
     val handshake = makeRequest(client)
@@ -98,6 +101,9 @@ class CallHandshakeTest {
 
   @Test
   fun testDefaultHandshakeCipherSuiteOrderingTls12Modern() {
+    // We are avoiding making guarantees on ordering of secondary Platforms.
+    platform.assumeNotConscrypt()
+
     val client = makeClient(ConnectionSpec.MODERN_TLS, TlsVersion.TLS_1_2)
 
     val handshake = makeRequest(client)
@@ -152,6 +158,9 @@ class CallHandshakeTest {
 
   @Test
   fun testHandshakeCipherSuiteOrderingWhenReversed() {
+    // We are avoiding making guarantees on ordering of secondary Platforms.
+    platform.assumeNotConscrypt()
+
     val client = makeClient(ConnectionSpec.RESTRICTED_TLS, TlsVersion.TLS_1_2,
       defaultEnabledCipherSuites.asReversed())
 
@@ -193,6 +202,8 @@ class CallHandshakeTest {
   @Test
   fun effectiveOrderInRestrictedJdk11() {
     platform.assumeJdkVersion(11)
+    // We are avoiding making guarantees on ordering of secondary Platforms.
+    platform.assumeNotConscrypt()
 
     val platform = Platform.get()
     val platformDefaultCipherSuites =

@@ -15,14 +15,14 @@ jar {
 
 dependencies {
   api mainProj
-  compileOnly deps.jsr305
-  compileOnly deps.animalSniffer
+  compileOnly Dependencies.jsr305
+  compileOnly Dependencies.animalSniffer
 
   testImplementation project(':okhttp-testing-support')
   testImplementation project(':okhttp-tls')
   testImplementation project(':mockwebserver-deprecated')
-  testImplementation deps.junit
-  testImplementation deps.assertj
+  testImplementation Dependencies.junit
+  testImplementation Dependencies.assertj
 }
 
 afterEvaluate { project ->

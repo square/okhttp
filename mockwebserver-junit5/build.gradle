@@ -11,11 +11,11 @@ test {
 
 dependencies {
   api project(':mockwebserver')
-  api deps.junit5Api
-  compileOnly deps.animalSniffer
+  api Dependencies.junit5Api
+  compileOnly Dependencies.animalSniffer
 
-  testRuntimeOnly deps.junit5JupiterEngine
-  testImplementation deps.assertj
+  testRuntimeOnly Dependencies.junit5JupiterEngine
+  testImplementation Dependencies.assertj
   testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:1.4.10")
 }
 

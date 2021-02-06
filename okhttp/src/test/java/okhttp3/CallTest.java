@@ -15,7 +15,6 @@
  */
 package okhttp3;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -69,7 +68,7 @@ import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.RecordingProxySelector;
-import okhttp3.internal.io.InMemoryFileSystem;
+import okhttp3.okio.LoggingFilesystem;
 import okhttp3.testing.Flaky;
 import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
@@ -80,6 +79,8 @@ import okio.BufferedSource;
 import okio.ForwardingSource;
 import okio.GzipSink;
 import okio.Okio;
+import okio.Path;
+import okio.fakefilesystem.FakeFileSystem;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -104,7 +105,7 @@ import static org.junit.jupiter.api.Assumptions.assumeFalse;
 @Timeout(30)
 public final class CallTest {
   @RegisterExtension final PlatformRule platform = new PlatformRule();
-  @RegisterExtension final InMemoryFileSystem fileSystem = new InMemoryFileSystem();
+  final FakeFileSystem fileSystem = new FakeFileSystem();
   @RegisterExtension final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
   @RegisterExtension final TestLogHandler testLogHandler = new TestLogHandler(OkHttpClient.class);
 
@@ -116,7 +117,7 @@ public final class CallTest {
       .eventListenerFactory(clientTestRule.wrap(listener))
       .build();
   private RecordingCallback callback = new RecordingCallback();
-  private Cache cache = new Cache(new File("/cache/"), Integer.MAX_VALUE, fileSystem);
+  private Cache cache = new Cache(Path.get("/cache"), Integer.MAX_VALUE, new LoggingFilesystem(fileSystem));
 
   public CallTest(MockWebServer server, MockWebServer server2) {
     this.server = server;
@@ -129,7 +130,8 @@ public final class CallTest {
   }
 
   @AfterEach public void tearDown() throws Exception {
-    cache.delete();
+    cache.close();
+    fileSystem.checkNoOpenFiles();
   }
 
   @Test public void get() throws Exception {
@@ -3005,11 +3007,12 @@ public final class CallTest {
       assertThat(response.body().string()).isNotBlank();
     }
 
-    long connectCount = listener.getEventSequence().stream()
-        .filter((event) -> event instanceof ConnectStart)
-        .count();
-    long expected = platform.isJdk8() ? 2 : 1;
-    assertThat(connectCount).isEqualTo(expected);
+    if (!platform.isJdk8()) {
+      long connectCount = listener.getEventSequence().stream()
+              .filter((event) -> event instanceof ConnectStart)
+              .count();
+      assertThat(connectCount).isEqualTo(1);
+    }
   }
 
   /** Test which headers are sent unencrypted to the HTTP proxy. */

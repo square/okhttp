@@ -1,11 +1,48 @@
 Change Log
 ==========
 
-## Version 4.10.0-RC1
+## Version 5.0.0-alpha.2
 
-_2020-10-06_
+_2021-01-30_
 
-**This release candidate adds support for [GraalVM][graalvm].**
+**In this release MockWebServer has a new Maven coordinate and package name.** A longstanding 
+problem with MockWebServer has been its API dependency on JUnit 4. We've reorganized things to
+remove that dependency while preserving backwards compatibility.
+
+| Maven Coordinate                                         | Package Name          | Description                       |
+| :------------------------------------------------------- | :-------------------- | :-------------------------------- |
+| com.squareup.okhttp3:mockwebserver3:5.0.0-alpha.2        | mockwebserver3        | Core module. No JUnit dependency! |
+| com.squareup.okhttp3:mockwebserver3-junit4:5.0.0-alpha.2 | mockwebserver3.junit4 | Optional JUnit 4 integration.     |
+| com.squareup.okhttp3:mockwebserver3-junit5:5.0.0-alpha.2 | mockwebserver3.junit5 | Optional JUnit 5 integration.     |
+| com.squareup.okhttp3:mockwebserver:5.0.0-alpha.2         | okhttp3.mockwebserver | Obsolete. Depends on JUnit 4.     |
+
+The new APIs use `mockwebserver3` in both the Maven coordinate and package name. This new API is
+**not stable** and will likely change before the final 5.0.0 release.  
+
+If you have code that subclasses `okhttp3.mockwebserver.QueueDispatcher`, this update is not source
+or binary compatible. Migrating to the new `mockwebserver3` package will fix this problem.
+
+ *  New: DNS over HTTPS is now a stable feature of OkHttp. We introduced this as an experimental 
+    module in 2018. We are confident in its stable API and solid implementation.
+ *  Fix: Work around a crash in Android 10 and 11 that may be triggered when two threads 
+    concurrently close an SSL socket. This would have appeared in crash logs as
+    `NullPointerException: bio == null`.
+ *  Fix: Use plus `+` instead of `%20` to encode space characters in `FormBody`. This was a
+    longstanding bug in OkHttp. The fix makes OkHttp consistent with major web browsers.
+ *  Fix: Don't crash if Conscrypt returns a null version.
+ *  Fix: Include the public suffix data as a resource in GraalVM native images.
+ *  Fix: Fail fast when the cache is corrupted.
+ *  Fix: Fail fast when a private key cannot be encoded.
+ *  Fix: Fail fast when attempting to verify a non-ASCII hostname.
+ *  Upgrade: [GraalVM 21][graalvm_21].
+ *  Upgrade: [Kotlin 1.4.20][kotlin_1_4_20].
+
+
+## Version 5.0.0-alpha.1
+
+_2021-01-30_
+
+**This release adds initial support for [GraalVM][graalvm].**
 
 GraalVM is an exciting new platform and we're eager to adopt it. The startup time improvements over
 the JVM are particularly impressive. Try it with okcurl:
@@ -29,6 +66,17 @@ and Android! Please report any issues you encounter: we'll fix them urgently.
     implementation("com.squareup.okio:okio:2.9.0")
     ```
 
+Note that this was originally released on 2020-10-06 as 4.10.0-RC1. The only change from that
+release is the version name.
+
+
+## Version 4.9.1
+
+_2021-01-30_
+
+ *  Fix: Work around a crash in Android 10 and 11 that may be triggered when two threads
+    concurrently close an SSL socket. This would have appeared in crash logs as
+    `NullPointerException: bio == null`.
 
 
 ## Version 4.9.0
@@ -525,10 +573,12 @@ _2019-06-03_
  [dev_server]: https://github.com/square/okhttp/blob/482f88300f78c3419b04379fc26c3683c10d6a9d/samples/guide/src/main/java/okhttp3/recipes/kt/DevServer.kt
  [fun_interface]: https://kotlinlang.org/docs/reference/fun-interfaces.html
  [graalvm]: https://www.graalvm.org/
+ [graalvm_21]: https://www.graalvm.org/release-notes/21_0/
  [iana_websocket]: https://www.iana.org/assignments/websocket/websocket.txt
  [jetty_8_252]: https://webtide.com/jetty-alpn-java-8u252/
  [kotlin_1_3_71]: https://github.com/JetBrains/kotlin/releases/tag/v1.3.71
  [kotlin_1_4_10]: https://github.com/JetBrains/kotlin/releases/tag/v1.4.10
+ [kotlin_1_4_20]: https://github.com/JetBrains/kotlin/releases/tag/v1.4.20
  [legacy_interceptor]: https://gist.github.com/swankjesse/80135f4e03629527e723ab3bcf64be0b
  [okhttp4_blog_post]: https://cashapp.github.io/2019-06-26/okhttp-4-goes-kotlin
  [okio_2_6_0]: https://square.github.io/okio/changelog/#version-260

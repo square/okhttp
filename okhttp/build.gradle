@@ -49,17 +49,17 @@ task copyOsgiTestDeployment(type: Copy) {
 tasks.test.dependsOn(copyOsgiTestDeployment)
 
 dependencies {
-  api deps.okio
-  api deps.kotlinStdlib
+  api Dependencies.okio
+  api Dependencies.kotlinStdlib
 
   // These compileOnly dependencies must also be listed in the OSGi configuration above.
-  compileOnly deps.android
-  compileOnly deps.bouncycastle
-  compileOnly deps.bouncycastletls
-  compileOnly deps.conscrypt
-  compileOnly deps.openjsse
-  compileOnly deps.jsr305
-  compileOnly deps.animalSniffer
+  compileOnly Dependencies.android
+  compileOnly Dependencies.bouncycastle
+  compileOnly Dependencies.bouncycastletls
+  compileOnly Dependencies.conscrypt
+  compileOnly Dependencies.openjsse
+  compileOnly Dependencies.jsr305
+  compileOnly Dependencies.animalSniffer
 
   // graal build support
   compileOnly("org.graalvm.nativeimage:svm:20.2.0") {
@@ -82,16 +82,17 @@ dependencies {
   testImplementation project(':okhttp-brotli')
   testImplementation project(':okhttp-dnsoverhttps')
   testImplementation project(':okhttp-sse')
-  testImplementation deps.conscrypt
-  testImplementation deps.junit
-  testImplementation deps.junit5Api
-  testImplementation deps.junit5JupiterParams
-  testImplementation deps.assertj
-  testImplementation deps.openjsse
-  testImplementation deps.bndResolve
-  osgiTestDeploy deps.equinox
-  osgiTestDeploy deps.kotlinStdlibOsgi
-  testCompileOnly deps.jsr305
+  testImplementation Dependencies.okioFakeFileSystem
+  testImplementation Dependencies.conscrypt
+  testImplementation Dependencies.junit
+  testImplementation Dependencies.junit5Api
+  testImplementation Dependencies.junit5JupiterParams
+  testImplementation Dependencies.assertj
+  testImplementation Dependencies.openjsse
+  testImplementation Dependencies.bndResolve
+  osgiTestDeploy Dependencies.equinox
+  osgiTestDeploy Dependencies.kotlinStdlibOsgi
+  testCompileOnly Dependencies.jsr305
 }
 
 afterEvaluate { project ->

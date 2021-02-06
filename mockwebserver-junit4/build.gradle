@@ -6,9 +6,9 @@ jar {
 
 dependencies {
   api project(':mockwebserver')
-  api deps.junit
+  api Dependencies.junit
 
-  testImplementation deps.assertj
+  testImplementation Dependencies.assertj
 }
 
 afterEvaluate { project ->

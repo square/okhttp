@@ -9,11 +9,11 @@ jar {
 dependencies {
   api project(':okhttp')
   api project(':mockwebserver')
-  api deps.junit
+  api Dependencies.junit
 
   testImplementation project(':okhttp-testing-support')
   testImplementation project(':okhttp-tls')
-  testImplementation deps.assertj
+  testImplementation Dependencies.assertj
 }
 
 afterEvaluate { project ->
