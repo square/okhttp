@@ -82,6 +82,7 @@ dependencies {
   testImplementation project(':okhttp-brotli')
   testImplementation project(':okhttp-dnsoverhttps')
   testImplementation project(':okhttp-sse')
+  testImplementation Dependencies.okioFakeFileSystem
   testImplementation Dependencies.conscrypt
   testImplementation Dependencies.junit
   testImplementation Dependencies.junit5Api

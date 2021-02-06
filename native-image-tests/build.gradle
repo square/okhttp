@@ -9,6 +9,7 @@ dependencies {
   implementation Dependencies.junit5Api
   implementation Dependencies.junit5JupiterEngine
   implementation Dependencies.junitPlatformConsole
+  implementation Dependencies.okioFakeFileSystem
 
   implementation project(':okhttp')
   implementation project(':okhttp-brotli')

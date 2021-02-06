@@ -26,6 +26,13 @@ allprojects {
   project.ext.artifactId = Projects.publishedArtifactId(project.name)
   version = '5.0.0-SNAPSHOT'
 
+  repositories {
+    mavenCentral()
+    maven { url 'https://dl.bintray.com/kotlin/dokka' }
+    maven { url 'https://kotlin.bintray.com/kotlinx/' }
+    google()
+  }
+
   task downloadDependencies() {
     description 'Download all dependencies to the Gradle cache'
     doLast {
