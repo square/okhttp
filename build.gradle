@@ -16,7 +16,7 @@ buildscript {
       'junit5': '5.7.0',
       'kotlin': '1.4.30',
       'moshi': '1.11.0',
-      'okio': '2.9.0',
+      'okio': '3.0.0-alpha.1',
       'ktlint': '0.38.0',
       'picocli': '4.5.1',
       'openjsse': '1.1.0',
@@ -50,6 +50,7 @@ buildscript {
       'moshi': "com.squareup.moshi:moshi:${versions.moshi}",
       'moshiKotlin': "com.squareup.moshi:moshi-kotlin-codegen:${versions.moshi}",
       'okio': "com.squareup.okio:okio:${versions.okio}",
+      'okioFakeFileSystem': "com.squareup.okio:okio-fakefilesystem:${versions.okio}",
       'openjsse': "org.openjsse:openjsse:${versions.openjsse}",
       'bnd': "biz.aQute.bnd:biz.aQute.bnd.gradle:${versions.bnd}",
       'bndResolve': "biz.aQute.bnd:biz.aQute.resolve:${versions.bnd}",
@@ -109,6 +110,13 @@ allprojects {
   group = 'com.squareup.okhttp3'
   project.ext.artifactId = rootProject.ext.publishedArtifactId(project)
   version = '5.0.0-SNAPSHOT'
+
+  repositories {
+    mavenCentral()
+    maven { url 'https://dl.bintray.com/kotlin/dokka' }
+    maven { url 'https://kotlin.bintray.com/kotlinx/' }
+    google()
+  }
 
   task downloadDependencies() {
     description 'Download all dependencies to the Gradle cache'
@@ -358,7 +366,7 @@ def alpnBootVersion() {
   return alpnBootVersionForPatchVersion(javaVersion, patchVersion)
 }
 
-def alpnBootVersionForPatchVersion(String javaVersion, int patchVersion) {
+static def alpnBootVersionForPatchVersion(String javaVersion, int patchVersion) {
   // https://www.eclipse.org/jetty/documentation/current/alpn-chapter.html#alpn-versions
   switch (patchVersion) {
     case 0..24:

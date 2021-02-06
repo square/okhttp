@@ -20,16 +20,27 @@ import okhttp3.internal.cache.DiskLruCache.Editor
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.Task
 import okhttp3.internal.concurrent.TaskRunner
-import okhttp3.internal.io.FileSystem
+import okhttp3.internal.deleteContents
+import okhttp3.internal.deleteIfExists
 import okhttp3.internal.isCivilized
 import okhttp3.internal.okHttpName
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.WARN
-import okio.*
-import java.io.*
+import okio.BufferedSink
+import okio.ExperimentalFileSystem
+import okio.FileNotFoundException
+import okio.FileSystem
+import okio.ForwardingFileSystem
+import okio.ForwardingSource
+import okio.Path
+import okio.Sink
+import okio.Source
+import okio.blackholeSink
+import okio.buffer
+import java.io.Closeable
 import java.io.EOFException
+import java.io.Flushable
 import java.io.IOException
-import java.util.*
 
 /**
  * A cache that uses a bounded amount of space on a filesystem. Each cache entry has a string key
@@ -74,11 +85,12 @@ import java.util.*
  * @param valueCount the number of values per cache entry. Must be positive.
  * @param maxSize the maximum number of bytes this cache should use to store.
  */
+@OptIn(ExperimentalFileSystem::class)
 class DiskLruCache(
-  internal val fileSystem: FileSystem,
+  fileSystem: FileSystem,
 
   /** Returns the directory where this cache stores its data. */
-  val directory: File,
+  val directory: Path,
 
   private val appVersion: Int,
 
@@ -90,6 +102,18 @@ class DiskLruCache(
   /** Used for asynchronous journal rebuilds. */
   taskRunner: TaskRunner
 ) : Closeable, Flushable {
+  internal val fileSystem: FileSystem = object : ForwardingFileSystem(fileSystem) {
+    override fun sink(file: Path): Sink {
+      file.parent?.let {
+        // TODO from okhttp3.internal.io.FileSystem
+        if (!exists(it)) {
+          createDirectories(it)
+        }
+      }
+      return super.sink(file)
+    }
+  }
+
   /** The maximum number of bytes that this cache should use to store its data. */
   @get:Synchronized @set:Synchronized var maxSize: Long = maxSize
     set(value) {
@@ -139,9 +163,9 @@ class DiskLruCache(
    * compaction; that file should be deleted if it exists when the cache is opened.
    */
 
-  private val journalFile: File
-  private val journalFileTmp: File
-  private val journalFileBackup: File
+  private val journalFile: Path
+  private val journalFileTmp: Path
+  private val journalFileBackup: Path
   private var size: Long = 0L
   private var journalWriter: BufferedSink? = null
   internal val lruEntries = LinkedHashMap<String, Entry>(0, 0.75f, true)
@@ -195,9 +219,9 @@ class DiskLruCache(
     require(maxSize > 0L) { "maxSize <= 0" }
     require(valueCount > 0) { "valueCount <= 0" }
 
-    this.journalFile = File(directory, JOURNAL_FILE)
-    this.journalFileTmp = File(directory, JOURNAL_FILE_TEMP)
-    this.journalFileBackup = File(directory, JOURNAL_FILE_BACKUP)
+    this.journalFile = directory / JOURNAL_FILE
+    this.journalFileTmp = directory / JOURNAL_FILE_TEMP
+    this.journalFileBackup = directory / JOURNAL_FILE_BACKUP
   }
 
   @Synchronized @Throws(IOException::class)
@@ -214,7 +238,7 @@ class DiskLruCache(
       if (fileSystem.exists(journalFile)) {
         fileSystem.delete(journalFileBackup)
       } else {
-        fileSystem.rename(journalFileBackup, journalFile)
+        fileSystem.atomicMove(journalFileBackup, journalFile)
       }
     }
 
@@ -250,12 +274,12 @@ class DiskLruCache(
 
   @Throws(IOException::class)
   private fun readJournal() {
-    fileSystem.source(journalFile).buffer().use { source ->
-      val magic = source.readUtf8LineStrict()
-      val version = source.readUtf8LineStrict()
-      val appVersionString = source.readUtf8LineStrict()
-      val valueCountString = source.readUtf8LineStrict()
-      val blank = source.readUtf8LineStrict()
+    fileSystem.read(journalFile) {
+      val magic = readUtf8LineStrict()
+      val version = readUtf8LineStrict()
+      val appVersionString = readUtf8LineStrict()
+      val valueCountString = readUtf8LineStrict()
+      val blank = readUtf8LineStrict()
 
       if (MAGIC != magic ||
           VERSION_1 != version ||
@@ -269,7 +293,7 @@ class DiskLruCache(
       var lineCount = 0
       while (true) {
         try {
-          readJournalLine(source.readUtf8LineStrict())
+          readJournalLine(readUtf8LineStrict())
           lineCount++
         } catch (_: EOFException) {
           break // End of journal.
@@ -279,7 +303,7 @@ class DiskLruCache(
       redundantOpCount = lineCount - lruEntries.size
 
       // If we ended on a truncated line, rebuild the journal before appending to it.
-      if (!source.exhausted()) {
+      if (!exhausted()) {
         rebuildJournal()
       } else {
         journalWriter = newJournalWriter()
@@ -348,7 +372,7 @@ class DiskLruCache(
    */
   @Throws(IOException::class)
   private fun processJournal() {
-    fileSystem.delete(journalFileTmp)
+    fileSystem.deleteIfExists(journalFileTmp)
     val i = lruEntries.values.iterator()
     while (i.hasNext()) {
       val entry = i.next()
@@ -359,8 +383,8 @@ class DiskLruCache(
       } else {
         entry.currentEditor = null
         for (t in 0 until valueCount) {
-          fileSystem.delete(entry.cleanFiles[t])
-          fileSystem.delete(entry.dirtyFiles[t])
+          fileSystem.deleteIfExists(entry.cleanFiles[t])
+          fileSystem.deleteIfExists(entry.dirtyFiles[t])
         }
         i.remove()
       }
@@ -375,32 +399,34 @@ class DiskLruCache(
   internal fun rebuildJournal() {
     journalWriter?.close()
 
-    fileSystem.sink(journalFileTmp).buffer().use { sink ->
-      sink.writeUtf8(MAGIC).writeByte('\n'.toInt())
-      sink.writeUtf8(VERSION_1).writeByte('\n'.toInt())
-      sink.writeDecimalLong(appVersion.toLong()).writeByte('\n'.toInt())
-      sink.writeDecimalLong(valueCount.toLong()).writeByte('\n'.toInt())
-      sink.writeByte('\n'.toInt())
+    fileSystem.write(journalFileTmp) {
+      writeUtf8(MAGIC).writeByte('\n'.toInt())
+      writeUtf8(VERSION_1).writeByte('\n'.toInt())
+      writeDecimalLong(appVersion.toLong()).writeByte('\n'.toInt())
+      writeDecimalLong(valueCount.toLong()).writeByte('\n'.toInt())
+      writeByte('\n'.toInt())
 
       for (entry in lruEntries.values) {
         if (entry.currentEditor != null) {
-          sink.writeUtf8(DIRTY).writeByte(' '.toInt())
-          sink.writeUtf8(entry.key)
-          sink.writeByte('\n'.toInt())
+          writeUtf8(DIRTY).writeByte(' '.toInt())
+          writeUtf8(entry.key)
+          writeByte('\n'.toInt())
         } else {
-          sink.writeUtf8(CLEAN).writeByte(' '.toInt())
-          sink.writeUtf8(entry.key)
-          entry.writeLengths(sink)
-          sink.writeByte('\n'.toInt())
+          writeUtf8(CLEAN).writeByte(' '.toInt())
+          writeUtf8(entry.key)
+          entry.writeLengths(this)
+          writeByte('\n'.toInt())
         }
       }
     }
 
     if (fileSystem.exists(journalFile)) {
-      fileSystem.rename(journalFile, journalFileBackup)
+      fileSystem.atomicMove(journalFile, journalFileBackup)
+      fileSystem.atomicMove(journalFileTmp, journalFile)
+      fileSystem.deleteIfExists(journalFileBackup)
+    } else {
+      fileSystem.atomicMove(journalFileTmp, journalFile)
     }
-    fileSystem.rename(journalFileTmp, journalFile)
-    fileSystem.delete(journalFileBackup)
 
     journalWriter = newJournalWriter()
     hasJournalErrors = false
@@ -519,14 +545,15 @@ class DiskLruCache(
       if (success && !entry.zombie) {
         if (fileSystem.exists(dirty)) {
           val clean = entry.cleanFiles[i]
-          fileSystem.rename(dirty, clean)
+          fileSystem.atomicMove(dirty, clean)
           val oldLength = entry.lengths[i]
-          val newLength = fileSystem.size(clean)
+          // TODO check null behaviour
+          val newLength = fileSystem.metadata(clean).size ?: 0
           entry.lengths[i] = newLength
           size = size - oldLength + newLength
         }
       } else {
-        fileSystem.delete(dirty)
+        fileSystem.deleteIfExists(dirty)
       }
     }
 
@@ -613,7 +640,7 @@ class DiskLruCache(
     entry.currentEditor?.detach() // Prevent the edit from completing normally.
 
     for (i in 0 until valueCount) {
-      fileSystem.delete(entry.cleanFiles[i])
+      fileSystem.deleteIfExists(entry.cleanFiles[i])
       size -= entry.lengths[i]
       entry.lengths[i] = 0
     }
@@ -916,8 +943,8 @@ class DiskLruCache(
 
     /** Lengths of this entry's files. */
     internal val lengths: LongArray = LongArray(valueCount)
-    internal val cleanFiles = mutableListOf<File>()
-    internal val dirtyFiles = mutableListOf<File>()
+    internal val cleanFiles = mutableListOf<Path>()
+    internal val dirtyFiles = mutableListOf<Path>()
 
     /** True if this entry has ever been published. */
     internal var readable: Boolean = false
@@ -946,9 +973,9 @@ class DiskLruCache(
       val truncateTo = fileBuilder.length
       for (i in 0 until valueCount) {
         fileBuilder.append(i)
-        cleanFiles += File(directory, fileBuilder.toString())
+        cleanFiles += directory / fileBuilder.toString()
         fileBuilder.append(".tmp")
-        dirtyFiles += File(directory, fileBuilder.toString())
+        dirtyFiles += directory / fileBuilder.toString()
         fileBuilder.setLength(truncateTo)
       }
     }
