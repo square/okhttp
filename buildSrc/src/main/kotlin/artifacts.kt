@@ -24,16 +24,14 @@ object Projects {
       "mockwebserver-junit4" -> "mockwebserver3-junit4"
       "mockwebserver-junit5" -> "mockwebserver3-junit5"
       "mockwebserver-deprecated" -> "mockwebserver"
-      in listOf(
-        "okcurl",
-        "okhttp",
-        "okhttp-bom",
-        "okhttp-brotli",
-        "okhttp-dnsoverhttps",
-        "okhttp-sse",
-        "okhttp-tls",
-        "okhttp-urlconnection"
-      ) -> projectName
+      "okcurl",
+      "okhttp",
+      "okhttp-bom",
+      "okhttp-brotli",
+      "okhttp-dnsoverhttps",
+      "okhttp-sse",
+      "okhttp-tls",
+      "okhttp-urlconnection" -> projectName
       else -> null
     }
   }
