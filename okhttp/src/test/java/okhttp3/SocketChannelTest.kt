@@ -17,6 +17,7 @@ package okhttp3
 
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.internal.TlsUtil
 import org.assertj.core.api.Assertions.assertThat
@@ -38,6 +39,7 @@ import java.util.stream.Stream
 import javax.net.SocketFactory
 
 @Timeout(4)
+@Flaky
 class SocketChannelTest(
   val server: MockWebServer
 ) {
@@ -76,6 +78,7 @@ class SocketChannelTest(
   @MethodSource("connectionTypes")
   fun testConnection(protocolParam : Protocol, tlsParam: TlsVersion, channelParam: SocketMode, tlsExtensions: TlsExtensionMode) {
     if (channelParam == SocketMode.CHANNEL && protocolParam == Protocol.HTTP_2 && tlsExtensions == TlsExtensionMode.STANDARD) {
+      // https://github.com/square/okhttp/pull/6554
       assumeFalse(true, "failing for channel and h2")
     }
 
