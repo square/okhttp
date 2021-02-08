@@ -927,6 +927,39 @@ public final class HttpLoggingInterceptorTest {
             .assertNoMoreLogs();
   }
 
+  @Test public void headersCanBePrintedInOneLine() throws IOException {
+    setLevel(Level.BODY);
+    networkInterceptor.setHeadersInOneLine(true);
+    applicationInterceptor.setHeadersInOneLine(true);
+
+    server.enqueue(new MockResponse()
+            // It's invalid to return this if not requested, but the server might anyway
+            .setHeader("Content-Encoding", "br")
+            .setHeader("Content-Type", PLAIN)
+            .setBody(new Buffer().write(ByteString.decodeBase64(
+                    "iwmASGVsbG8sIEhlbGxvLCBIZWxsbwoD"))));
+    Response response = client.newCall(request().build()).execute();
+    response.body().close();
+
+    networkLogs
+            .assertLogEqual("--> GET " + url + " http/1.1")
+            .assertLogMatch("Host: \"" + host + "\"; Connection: \"Keep-Alive\"; Accept-Encoding: \"gzip\"; User-Agent: \"okhttp/.+\"")
+            .assertLogEqual("--> END GET")
+            .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
+            .assertLogMatch("Content-Encoding: \"br\"; Content-Type: \"text/plain; charset=utf-8\"; Content-Length: \"\\d+\"")
+            .assertLogEqual("<-- END HTTP (encoded body omitted)")
+            .assertNoMoreLogs();
+
+    applicationLogs
+            .assertLogEqual("--> GET " + url)
+            .assertLogEqual("")
+            .assertLogEqual("--> END GET")
+            .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
+            .assertLogMatch("Content-Encoding: \"br\"; Content-Type: \"text/plain; charset=utf-8\"; Content-Length: \"\\d+\"")
+            .assertLogEqual("<-- END HTTP (encoded body omitted)")
+            .assertNoMoreLogs();
+  }
+
   private Request.Builder request() {
     return new Request.Builder().url(url);
   }

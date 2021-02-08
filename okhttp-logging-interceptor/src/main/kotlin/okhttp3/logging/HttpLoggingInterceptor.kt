@@ -41,6 +41,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
   private val logger: Logger = Logger.DEFAULT
 ) : Interceptor {
 
+  @Volatile private var headersInOneLine = false
   @Volatile private var headersToRedact = emptySet<String>()
 
   @set:JvmName("level")
@@ -138,6 +139,10 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
     this.level = level
   }
 
+  fun setHeadersInOneLine(headersInOneLine: Boolean) = apply {
+    this.headersInOneLine = headersInOneLine
+  }
+
   @JvmName("-deprecated_level")
   @Deprecated(
       message = "moved to var",
@@ -170,24 +175,40 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
 
     if (logHeaders) {
       val headers = request.headers
+      val headersAccumulator = arrayListOf<String>()
 
       if (requestBody != null) {
         // Request body headers are only present when installed as a network interceptor. When not
         // already present, force them to be included (if available) so their values are known.
         requestBody.contentType()?.let {
           if (headers["Content-Type"] == null) {
-            logger.log("Content-Type: $it")
+            if (headersInOneLine) {
+              headersAccumulator.add("Content-Type: \"$it\"")
+            } else {
+              logger.log("Content-Type: $it")
+            }
           }
         }
         if (requestBody.contentLength() != -1L) {
           if (headers["Content-Length"] == null) {
-            logger.log("Content-Length: ${requestBody.contentLength()}")
+            if (headersInOneLine) {
+              headersAccumulator.add("Content-Length: \"${requestBody.contentLength()}\"")
+            } else {
+              logger.log("Content-Length: ${requestBody.contentLength()}")
+            }
           }
         }
       }
 
       for (i in 0 until headers.size) {
-        logHeader(headers, i)
+        if (headersInOneLine) {
+          headersAccumulator.add(logHeader(headers, i, headersInOneLine))
+        } else {
+          logger.log(logHeader(headers, i, headersInOneLine))
+        }
+      }
+      if (headersInOneLine) {
+        logger.log(headersAccumulator.joinToString(separator = "; "))
       }
 
       if (!logBody || requestBody == null) {
@@ -235,8 +256,17 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
 
     if (logHeaders) {
       val headers = response.headers
+      val headersAccumulator = arrayListOf<String>()
+
       for (i in 0 until headers.size) {
-        logHeader(headers, i)
+        if (headersInOneLine) {
+          headersAccumulator.add(logHeader(headers, i, headersInOneLine))
+        } else {
+          logger.log(logHeader(headers, i, headersInOneLine))
+        }
+      }
+      if (headersInOneLine) {
+        logger.log(headersAccumulator.joinToString(separator = "; "))
       }
 
       if (!logBody || !response.promisesBody()) {
@@ -282,9 +312,12 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
     return response
   }
 
-  private fun logHeader(headers: Headers, i: Int) {
+  private fun logHeader(headers: Headers, i: Int, headersInOneLine: Boolean): String {
     val value = if (headers.name(i) in headersToRedact) "██" else headers.value(i)
-    logger.log(headers.name(i) + ": " + value)
+    if (headersInOneLine) {
+      return headers.name(i) + ": \"" + value + "\""
+    }
+    return headers.name(i) + ": " + value;
   }
 
   private fun bodyHasUnknownEncoding(headers: Headers): Boolean {
