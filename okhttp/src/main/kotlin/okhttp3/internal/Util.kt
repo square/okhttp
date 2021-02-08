@@ -17,25 +17,6 @@
 
 package okhttp3.internal
 
-import okhttp3.EventListener
-import okhttp3.Headers
-import okhttp3.Headers.Companion.headersOf
-import okhttp3.HttpUrl
-import okhttp3.OkHttp
-import okhttp3.OkHttpClient
-import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.Response
-import okhttp3.ResponseBody.Companion.toResponseBody
-import okhttp3.internal.http2.Header
-import okio.Buffer
-import okio.BufferedSink
-import okio.BufferedSource
-import okio.ByteString.Companion.decodeHex
-import okio.ExperimentalFileSystem
-import okio.FileSystem
-import okio.Options
-import okio.Path
-import okio.Source
 import java.io.Closeable
 import java.io.FileNotFoundException
 import java.io.IOException
@@ -57,6 +38,25 @@ import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
 import kotlin.text.Charsets.UTF_32BE
 import kotlin.text.Charsets.UTF_32LE
+import okhttp3.EventListener
+import okhttp3.Headers
+import okhttp3.Headers.Companion.headersOf
+import okhttp3.HttpUrl
+import okhttp3.OkHttp
+import okhttp3.OkHttpClient
+import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
+import okhttp3.ResponseBody.Companion.toResponseBody
+import okhttp3.internal.http2.Header
+import okio.Buffer
+import okio.BufferedSink
+import okio.BufferedSource
+import okio.ByteString.Companion.decodeHex
+import okio.ExperimentalFileSystem
+import okio.FileSystem
+import okio.Options
+import okio.Path
+import okio.Source
 
 @JvmField
 val EMPTY_BYTE_ARRAY = ByteArray(0)
@@ -247,6 +247,14 @@ fun String.indexOfControlOrNonAscii(): Int {
 /** Returns true if this string is not a host name and might be an IP address. */
 fun String.canParseAsIpAddress(): Boolean {
   return VERIFY_AS_IP_ADDRESS.matches(this)
+}
+
+/** Returns true if we should void putting this this header in an exception or toString(). */
+fun isSensitiveHeader(name: String): Boolean {
+  return name.equals("Authorization", ignoreCase = true) ||
+      name.equals("Cookie", ignoreCase = true) ||
+      name.equals("Proxy-Authorization", ignoreCase = true) ||
+      name.equals("Set-Cookie", ignoreCase = true)
 }
 
 /** Returns a [Locale.US] formatted [String]. */
