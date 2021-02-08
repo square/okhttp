@@ -38,7 +38,6 @@ import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
 import kotlin.text.Charsets.UTF_32BE
 import kotlin.text.Charsets.UTF_32LE
-import okhttp3.Call
 import okhttp3.EventListener
 import okhttp3.Headers
 import okhttp3.Headers.Companion.headersOf
@@ -246,6 +245,14 @@ fun String.indexOfControlOrNonAscii(): Int {
 /** Returns true if this string is not a host name and might be an IP address. */
 fun String.canParseAsIpAddress(): Boolean {
   return VERIFY_AS_IP_ADDRESS.matches(this)
+}
+
+/** Returns true if we should void putting this this header in an exception or toString(). */
+fun isSensitiveHeader(name: String): Boolean {
+  return name.equals("Authorization", ignoreCase = true) ||
+      name.equals("Cookie", ignoreCase = true) ||
+      name.equals("Proxy-Authorization", ignoreCase = true) ||
+      name.equals("Set-Cookie", ignoreCase = true)
 }
 
 /** Returns a [Locale.US] formatted [String]. */
