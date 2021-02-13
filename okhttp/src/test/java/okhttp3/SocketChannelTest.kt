@@ -29,23 +29,31 @@ import okhttp3.internal.platform.ConscryptPlatform
 import okhttp3.internal.platform.Platform
 import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule
-import okhttp3.tls.internal.TlsUtil
+import okhttp3.tls.HandshakeCertificates
+import okhttp3.tls.HeldCertificate
 import org.assertj.core.api.Assertions.assertThat
 import org.conscrypt.Conscrypt
 import org.junit.After
 import org.junit.jupiter.api.Assumptions.assumeFalse
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import java.io.IOException
+import java.net.InetAddress
 import java.security.Security
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit.SECONDS
-import java.util.concurrent.TimeoutException
+import javax.net.ssl.SNIHostName
+import javax.net.ssl.SNIMatcher
+import javax.net.ssl.SNIServerName
+import javax.net.ssl.SSLSocket
+import javax.net.ssl.StandardConstants
 
+@Suppress("UsePropertyAccessSyntax")
 @Timeout(6)
-@Flaky
+@Tag("slow")
 class SocketChannelTest(
   val server: MockWebServer
 ) {
@@ -61,7 +69,20 @@ class SocketChannelTest(
     platform.resetPlatform()
   }
 
-  private val handshakeCertificates = TlsUtil.localhost()
+  // https://tools.ietf.org/html/rfc6066#page-6 specifies a FQDN is required.
+  val hostname = "local.host"
+  private val handshakeCertificates = run {
+    // Generate a self-signed cert for the server to serve and the client to trust.
+    val heldCertificate = HeldCertificate.Builder()
+      .commonName(hostname)
+      .addSubjectAlternativeName(hostname)
+      .build()
+    HandshakeCertificates.Builder()
+      .heldCertificate(heldCertificate)
+      .addTrustedCertificate(heldCertificate.certificate)
+      .build()
+  }
+  private var acceptedHostName: String? = null
 
   @ParameterizedTest
   @MethodSource("connectionTypes")
@@ -81,6 +102,11 @@ class SocketChannelTest(
     }
 
     val client = clientTestRule.newClientBuilder()
+      .dns(object : Dns {
+        override fun lookup(hostname: String): List<InetAddress> {
+          return listOf(InetAddress.getByName("localhost"))
+        }
+      })
       .callTimeout(4, SECONDS)
       .writeTimeout(2, SECONDS)
       .readTimeout(2, SECONDS)
@@ -99,8 +125,10 @@ class SocketChannelTest(
             )
           )
 
+          val sslSocketFactory = handshakeCertificates.sslSocketFactory()
+
           sslSocketFactory(
-            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
+            sslSocketFactory, handshakeCertificates.trustManager
           )
 
           when (socketMode.protocol) {
@@ -109,7 +137,21 @@ class SocketChannelTest(
             else -> TODO()
           }
 
-          server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+          val serverSslSocketFactory = object: DelegatingSSLSocketFactory(sslSocketFactory) {
+            override fun configureSocket(sslSocket: SSLSocket): SSLSocket {
+              return sslSocket.apply {
+                sslParameters = sslParameters.apply {
+                  sniMatchers = listOf(object : SNIMatcher(StandardConstants.SNI_HOST_NAME) {
+                    override fun matches(serverName: SNIServerName): Boolean {
+                      acceptedHostName = (serverName as SNIHostName).asciiName
+                      return true
+                    }
+                  })
+                }
+              }
+            }
+          }
+          server.useHttps(serverSslSocketFactory, false)
         } else if (socketMode == Channel) {
           socketFactory(ChannelSocketFactory())
         }
@@ -118,8 +160,14 @@ class SocketChannelTest(
 
     server.enqueue(MockResponse().setBody("abc"))
 
+    @Suppress("HttpUrlsUsage") val url =
+      if (socketMode is TlsInstance)
+        "https://$hostname:${server.port}/get"
+      else
+        "http://$hostname:${server.port}/get"
+
     val request = Request.Builder()
-      .url(server.url("/"))
+      .url(url)
       .build()
 
     val promise = CompletableFuture<Response>()
@@ -135,17 +183,16 @@ class SocketChannelTest(
       }
     })
 
-    val response = try {
-      promise.get(1, SECONDS)
-      // TODO print stack traces
-    } catch (te: TimeoutException) {
-      promise.get(4, SECONDS)
-    }
+    val response = promise.get(4, SECONDS)
+
+    assertThat(response).isNotNull()
 
     assertThat(response.body!!.string()).isNotBlank()
 
     if (socketMode is TlsInstance) {
       assertThat(response.handshake!!.tlsVersion).isEqualTo(socketMode.tlsVersion)
+
+      assertThat(acceptedHostName).isEqualTo(hostname)
 
       if (socketMode.tlsExtensionMode == STANDARD) {
         assertThat(response.protocol).isEqualTo(socketMode.protocol)
@@ -160,7 +207,7 @@ class SocketChannelTest(
     fun connectionTypes(): List<SocketMode> =
       listOf(CONSCRYPT, JSSE).flatMap { provider ->
         listOf(HTTP_1_1, HTTP_2).flatMap { protocol ->
-          listOf(TLS_1_2, TLS_1_3).flatMap { tlsVersion ->
+          listOf(TLS_1_3, TLS_1_2).flatMap { tlsVersion ->
             listOf(Channel, Standard).flatMap { socketMode ->
               listOf(DISABLED, TlsExtensionMode.STANDARD).map { tlsExtensionMode ->
                 TlsInstance(provider, protocol, tlsVersion, socketMode, tlsExtensionMode)
