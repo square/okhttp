@@ -53,12 +53,14 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
   var recordFrames = false
   var recordSslDebug = false
 
+  private val sslExcludeFilter = "^(?:Inaccessible trust store|trustStore is|Reload the trust store|Reload trust certs|Reloaded|adding as trusted certificates|Ignore disabled cipher suite|Ignore unsupported cipher suite).*".toRegex()
+
   private val testLogHandler = object : Handler() {
     override fun publish(record: LogRecord) {
       val recorded = when (record.loggerName) {
         TaskRunner::class.java.name -> recordTaskRunner
         Http2::class.java.name -> recordFrames
-        "javax.net.ssl" -> recordSslDebug
+        "javax.net.ssl" -> recordSslDebug && !sslExcludeFilter.matches(record.message)
         else -> false
       }
 
