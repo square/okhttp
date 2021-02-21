@@ -1,0 +1,1463 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="An HTTP & HTTP/2 client for Android and Java applications">
+      
+      
+      
+        <meta name="author" content="Square, Inc.">
+      
+      
+        <link rel="canonical" href="https://square.github.com/okhttp/features/events/">
+      
+      <link rel="shortcut icon" href="../../images/icon-square.png">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-6.2.8">
+    
+    
+      
+        <title>Events - OkHttp</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.cb6bc1d0.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.39b8e14a.min.css">
+        
+          
+          
+          <meta name="theme-color" content="#009485">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>body,input{font-family:"Roboto",-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono",SFMono-Regular,Consolas,Menlo,monospace}</style>
+      
+    
+    
+    
+      <link rel="stylesheet" href="../../css/app.css">
+    
+    
+      
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="white">
+      
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#events" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid" aria-label="Header">
+    <a href="https://square.github.com/okhttp/" title="OkHttp" class="md-header-nav__button md-logo" aria-label="OkHttp">
+      
+  <img src="../../images/icon-square.png" alt="logo">
+
+    </a>
+    <label class="md-header-nav__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header-nav__title" data-md-component="header-title">
+      <div class="md-header-nav__ellipsis">
+        <div class="md-header-nav__topic">
+          <span class="md-ellipsis">
+            OkHttp
+          </span>
+        </div>
+        <div class="md-header-nav__topic">
+          <span class="md-ellipsis">
+            
+              Events
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <label class="md-header-nav__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0116 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 019.5 16 6.5 6.5 0 013 9.5 6.5 6.5 0 019.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" data-md-state="active" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0116 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 019.5 16 6.5 6.5 0 013 9.5 6.5 6.5 0 019.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <button type="reset" class="md-search__icon md-icon" aria-label="Clear" data-md-component="search-reset" tabindex="-1">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header-nav__source">
+        
+<a href="https://github.com/square/okhttp" title="Go to repository" class="md-source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 00-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 01-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 000 40.81l195.61 195.6a28.86 28.86 0 0040.8 0l194.69-194.69a28.86 28.86 0 000-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    OkHttp
+  </div>
+</a>
+      </div>
+    
+  </nav>
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-tabs__inner md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        Overview
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../caching/" class="md-tabs__link md-tabs__link--active">
+        Features
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../../recipes/" class="md-tabs__link">
+      Recipes
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../security/security/" class="md-tabs__link">
+        Security
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../../works_with_okhttp/" class="md-tabs__link">
+      Works with OkHttp
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../4.x/upgrading_to_okhttp_4/" class="md-tabs__link">
+        4.x API
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://square.github.io/okhttp/3.x/okhttp/" class="md-tabs__link">
+        3.12.x API
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../changelogs/changelog/" class="md-tabs__link">
+        Change Logs
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../contribute/contributing/" class="md-tabs__link">
+        Contributing
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="https://square.github.com/okhttp/" title="OkHttp" class="md-nav__button md-logo" aria-label="OkHttp">
+      
+  <img src="../../images/icon-square.png" alt="logo">
+
+    </a>
+    OkHttp
+  </label>
+  
+    <div class="md-nav__source">
+      
+<a href="https://github.com/square/okhttp" title="Go to repository" class="md-source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 00-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 01-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 000 40.81l195.61 195.6a28.86 28.86 0 0040.8 0l194.69-194.69a28.86 28.86 0 000-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    OkHttp
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="nav-1" type="checkbox" id="nav-1" >
+      
+      <label class="md-nav__link" for="nav-1">
+        Overview
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Overview" data-md-level="1">
+        <label class="md-nav__title" for="nav-1">
+          <span class="md-nav__icon md-icon"></span>
+          Overview
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        Introduction
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://stackoverflow.com/questions/tagged/okhttp?sort=active" class="md-nav__link">
+        Stack Overflow ⏏
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2" checked>
+      
+      <label class="md-nav__link" for="nav-2">
+        Features
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Features" data-md-level="1">
+        <label class="md-nav__title" for="nav-2">
+          <span class="md-nav__icon md-icon"></span>
+          Features
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../caching/" class="md-nav__link">
+        Caching
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../calls/" class="md-nav__link">
+        Calls
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concurrency/" class="md-nav__link">
+        Concurrency
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../connections/" class="md-nav__link">
+        Connections
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../debug_logging/" class="md-nav__link">
+        Debug Logging
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Events
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Events
+      </a>
+      
+        
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#eventlistener" class="md-nav__link">
+    EventListener
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#eventlistenerfactory" class="md-nav__link">
+    EventListener.Factory
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#events-with-failures" class="md-nav__link">
+    Events with Failures
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#events-with-retries-and-follow-ups" class="md-nav__link">
+    Events with Retries and Follow-Ups
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#availability" class="md-nav__link">
+    Availability
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../https/" class="md-nav__link">
+        HTTPS
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../interceptors/" class="md-nav__link">
+        Interceptors
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../r8_proguard/" class="md-nav__link">
+        R8 / ProGuard
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../recipes/" class="md-nav__link">
+        Recipes
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4" >
+      
+      <label class="md-nav__link" for="nav-4">
+        Security
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Security" data-md-level="1">
+        <label class="md-nav__title" for="nav-4">
+          <span class="md-nav__icon md-icon"></span>
+          Security
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/security/" class="md-nav__link">
+        Security Policy
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/security_providers/" class="md-nav__link">
+        Security Providers
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../works_with_okhttp/" class="md-nav__link">
+        Works with OkHttp
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6" >
+      
+      <label class="md-nav__link" for="nav-6">
+        4.x API
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="4.x API" data-md-level="1">
+        <label class="md-nav__title" for="nav-6">
+          <span class="md-nav__icon md-icon"></span>
+          4.x API
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4.x/upgrading_to_okhttp_4/" class="md-nav__link">
+        Upgrading to OkHttp 4
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4.x/okhttp/okhttp3/" class="md-nav__link">
+        okhttp
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4.x/okhttp-brotli/okhttp3.brotli/" class="md-nav__link">
+        brotli
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4.x/okhttp-dnsoverhttps/okhttp3.dnsoverhttps/" class="md-nav__link">
+        dnsoverhttps
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4.x/okhttp-logging-interceptor/okhttp3.logging/" class="md-nav__link">
+        logging-interceptor
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4.x/okhttp-sse/okhttp3.sse/" class="md-nav__link">
+        sse
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4.x/okhttp-tls/okhttp3.tls/" class="md-nav__link">
+        tls
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4.x/okhttp-urlconnection/okhttp3/" class="md-nav__link">
+        urlconnection
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4.x/mockwebserver/okhttp3.mockwebserver/" class="md-nav__link">
+        mockwebserver
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="nav-7" type="checkbox" id="nav-7" >
+      
+      <label class="md-nav__link" for="nav-7">
+        3.12.x API
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="3.12.x API" data-md-level="1">
+        <label class="md-nav__title" for="nav-7">
+          <span class="md-nav__icon md-icon"></span>
+          3.12.x API
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://square.github.io/okhttp/3.x/okhttp/" class="md-nav__link">
+        okhttp ⏏
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://square.github.io/okhttp/3.x/okhttp-dnsoverhttps/" class="md-nav__link">
+        dnsoverhttps ⏏
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://square.github.io/okhttp/3.x/logging-interceptor/" class="md-nav__link">
+        logging-interceptor ⏏
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://square.github.io/okhttp/3.x/okhttp-sse/" class="md-nav__link">
+        sse ⏏
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://square.github.io/okhttp/3.x/okhttp-tls/" class="md-nav__link">
+        tls ⏏
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://square.github.io/okhttp/3.x/okhttp-urlconnection/" class="md-nav__link">
+        urlconnection ⏏
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://square.github.io/okhttp/3.x/mockwebserver/" class="md-nav__link">
+        mockwebserver ⏏
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="nav-8" type="checkbox" id="nav-8" >
+      
+      <label class="md-nav__link" for="nav-8">
+        Change Logs
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Change Logs" data-md-level="1">
+        <label class="md-nav__title" for="nav-8">
+          <span class="md-nav__icon md-icon"></span>
+          Change Logs
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelogs/changelog/" class="md-nav__link">
+        Latest
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelogs/changelog_3x/" class="md-nav__link">
+        Version 3.x
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelogs/changelog_2x/" class="md-nav__link">
+        Version 2.x
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelogs/changelog_1x/" class="md-nav__link">
+        Version 1.x
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelogs/tls_configuration_history/" class="md-nav__link">
+        TLS History
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="nav-9" type="checkbox" id="nav-9" >
+      
+      <label class="md-nav__link" for="nav-9">
+        Contributing
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Contributing" data-md-level="1">
+        <label class="md-nav__title" for="nav-9">
+          <span class="md-nav__icon md-icon"></span>
+          Contributing
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contribute/contributing/" class="md-nav__link">
+        Contribute
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contribute/code_of_conduct/" class="md-nav__link">
+        Code of Conduct
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#eventlistener" class="md-nav__link">
+    EventListener
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#eventlistenerfactory" class="md-nav__link">
+    EventListener.Factory
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#events-with-failures" class="md-nav__link">
+    Events with Failures
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#events-with-retries-and-follow-ups" class="md-nav__link">
+    Events with Retries and Follow-Ups
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#availability" class="md-nav__link">
+    Availability
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                
+                <h1 id="events">Events<a class="headerlink" href="#events" title="Permanent link">&para;</a></h1>
+<p>Events allow you to capture metrics on your application’s HTTP calls. Use events to monitor:</p>
+<ul>
+<li>The size and frequency of the HTTP calls your application makes. If you’re making too many calls, or your calls are too large, you should know about it!</li>
+<li>The performance of these calls on the underlying network. If the network’s performance isn’t sufficient, you need to either improve the network or use less of it.</li>
+</ul>
+<h3 id="eventlistener">EventListener<a class="headerlink" href="#eventlistener" title="Permanent link">&para;</a></h3>
+<p>Subclass <a href="https://square.github.io/okhttp/3.x/okhttp/okhttp3/EventListener.html">EventListener</a> and override methods for the events you are interested in. In a successful HTTP call with no redirects or retries the sequence of events is described by this flow.</p>
+<p><img alt="Events Diagram" src="images/events@2x.png" /></p>
+<p>Here’s a <a href="https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/PrintEventsNonConcurrent.java">sample event listener</a> that prints each event with a timestamp.</p>
+<div class="highlight"><pre><span></span><code><span class="kd">class</span> <span class="nc">PrintingEventListener</span> <span class="kd">extends</span> <span class="n">EventListener</span> <span class="p">{</span>
+  <span class="kd">private</span> <span class="kt">long</span> <span class="n">callStartNanos</span><span class="p">;</span>
+
+  <span class="kd">private</span> <span class="kt">void</span> <span class="nf">printEvent</span><span class="p">(</span><span class="n">String</span> <span class="n">name</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kt">long</span> <span class="n">nowNanos</span> <span class="o">=</span> <span class="n">System</span><span class="p">.</span><span class="na">nanoTime</span><span class="p">();</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">name</span><span class="p">.</span><span class="na">equals</span><span class="p">(</span><span class="s">&quot;callStart&quot;</span><span class="p">))</span> <span class="p">{</span>
+      <span class="n">callStartNanos</span> <span class="o">=</span> <span class="n">nowNanos</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="kt">long</span> <span class="n">elapsedNanos</span> <span class="o">=</span> <span class="n">nowNanos</span> <span class="o">-</span> <span class="n">callStartNanos</span><span class="p">;</span>
+    <span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">printf</span><span class="p">(</span><span class="s">&quot;%.3f %s%n&quot;</span><span class="p">,</span> <span class="n">elapsedNanos</span> <span class="o">/</span> <span class="mi">1000000000</span><span class="n">d</span><span class="p">,</span> <span class="n">name</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="nd">@Override</span> <span class="kd">public</span> <span class="kt">void</span> <span class="nf">callStart</span><span class="p">(</span><span class="n">Call</span> <span class="n">call</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">printEvent</span><span class="p">(</span><span class="s">&quot;callStart&quot;</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="nd">@Override</span> <span class="kd">public</span> <span class="kt">void</span> <span class="nf">callEnd</span><span class="p">(</span><span class="n">Call</span> <span class="n">call</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">printEvent</span><span class="p">(</span><span class="s">&quot;callEnd&quot;</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="nd">@Override</span> <span class="kd">public</span> <span class="kt">void</span> <span class="nf">dnsStart</span><span class="p">(</span><span class="n">Call</span> <span class="n">call</span><span class="p">,</span> <span class="n">String</span> <span class="n">domainName</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">printEvent</span><span class="p">(</span><span class="s">&quot;dnsStart&quot;</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="nd">@Override</span> <span class="kd">public</span> <span class="kt">void</span> <span class="nf">dnsEnd</span><span class="p">(</span><span class="n">Call</span> <span class="n">call</span><span class="p">,</span> <span class="n">String</span> <span class="n">domainName</span><span class="p">,</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">InetAddress</span><span class="o">&gt;</span> <span class="n">inetAddressList</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">printEvent</span><span class="p">(</span><span class="s">&quot;dnsEnd&quot;</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>We make a couple calls:</p>
+<div class="highlight"><pre><span></span><code><span class="n">Request</span> <span class="n">request</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Request</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
+    <span class="p">.</span><span class="na">url</span><span class="p">(</span><span class="s">&quot;https://publicobject.com/helloworld.txt&quot;</span><span class="p">)</span>
+    <span class="p">.</span><span class="na">build</span><span class="p">();</span>
+
+<span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">&quot;REQUEST 1 (new connection)&quot;</span><span class="p">);</span>
+<span class="k">try</span> <span class="p">(</span><span class="n">Response</span> <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="p">.</span><span class="na">newCall</span><span class="p">(</span><span class="n">request</span><span class="p">).</span><span class="na">execute</span><span class="p">())</span> <span class="p">{</span>
+  <span class="c1">// Consume and discard the response body.</span>
+  <span class="n">response</span><span class="p">.</span><span class="na">body</span><span class="p">().</span><span class="na">source</span><span class="p">().</span><span class="na">readByteString</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">&quot;REQUEST 2 (pooled connection)&quot;</span><span class="p">);</span>
+<span class="k">try</span> <span class="p">(</span><span class="n">Response</span> <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="p">.</span><span class="na">newCall</span><span class="p">(</span><span class="n">request</span><span class="p">).</span><span class="na">execute</span><span class="p">())</span> <span class="p">{</span>
+  <span class="c1">// Consume and discard the response body.</span>
+  <span class="n">response</span><span class="p">.</span><span class="na">body</span><span class="p">().</span><span class="na">source</span><span class="p">().</span><span class="na">readByteString</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>And the listener prints the corresponding events:</p>
+<div class="highlight"><pre><span></span><code>REQUEST 1 (new connection)
+0.000 callStart
+0.010 dnsStart
+0.017 dnsEnd
+0.025 connectStart
+0.117 secureConnectStart
+0.586 secureConnectEnd
+0.586 connectEnd
+0.587 connectionAcquired
+0.588 requestHeadersStart
+0.590 requestHeadersEnd
+0.591 responseHeadersStart
+0.675 responseHeadersEnd
+0.676 responseBodyStart
+0.679 responseBodyEnd
+0.679 connectionReleased
+0.680 callEnd
+REQUEST 2 (pooled connection)
+0.000 callStart
+0.001 connectionAcquired
+0.001 requestHeadersStart
+0.001 requestHeadersEnd
+0.002 responseHeadersStart
+0.082 responseHeadersEnd
+0.082 responseBodyStart
+0.082 responseBodyEnd
+0.083 connectionReleased
+0.083 callEnd
+</code></pre></div>
+
+<p>Notice how no connect events are fired for the second call. It reused the connection from the first request for dramatically better performance.</p>
+<h3 id="eventlistenerfactory">EventListener.Factory<a class="headerlink" href="#eventlistenerfactory" title="Permanent link">&para;</a></h3>
+<p>In the preceding example we used a field, <code>callStartNanos</code>, to track the elapsed time of each event. This is handy, but it won’t work if multiple calls are executing concurrently. To accommodate this, use a <code>Factory</code> to create a new <code>EventListener</code> instance for each <code>Call</code>. This allows each listener to keep call-specific state.</p>
+<p>This <a href="https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/PrintEvents.java">sample factory</a> creates a unique ID for each call and uses that ID to differentiate calls in log messages.</p>
+<div class="highlight"><pre><span></span><code><span class="kd">class</span> <span class="nc">PrintingEventListener</span> <span class="kd">extends</span> <span class="n">EventListener</span> <span class="p">{</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">Factory</span> <span class="n">FACTORY</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Factory</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">final</span> <span class="n">AtomicLong</span> <span class="n">nextCallId</span> <span class="o">=</span> <span class="k">new</span> <span class="n">AtomicLong</span><span class="p">(</span><span class="mi">1L</span><span class="p">);</span>
+
+    <span class="nd">@Override</span> <span class="kd">public</span> <span class="n">EventListener</span> <span class="nf">create</span><span class="p">(</span><span class="n">Call</span> <span class="n">call</span><span class="p">)</span> <span class="p">{</span>
+      <span class="kt">long</span> <span class="n">callId</span> <span class="o">=</span> <span class="n">nextCallId</span><span class="p">.</span><span class="na">getAndIncrement</span><span class="p">();</span>
+      <span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">printf</span><span class="p">(</span><span class="s">&quot;%04d %s%n&quot;</span><span class="p">,</span> <span class="n">callId</span><span class="p">,</span> <span class="n">call</span><span class="p">.</span><span class="na">request</span><span class="p">().</span><span class="na">url</span><span class="p">());</span>
+      <span class="k">return</span> <span class="k">new</span> <span class="n">PrintingEventListener</span><span class="p">(</span><span class="n">callId</span><span class="p">,</span> <span class="n">System</span><span class="p">.</span><span class="na">nanoTime</span><span class="p">());</span>
+    <span class="p">}</span>
+  <span class="p">};</span>
+
+  <span class="kd">final</span> <span class="kt">long</span> <span class="n">callId</span><span class="p">;</span>
+  <span class="kd">final</span> <span class="kt">long</span> <span class="n">callStartNanos</span><span class="p">;</span>
+
+  <span class="kd">public</span> <span class="nf">PrintingEventListener</span><span class="p">(</span><span class="kt">long</span> <span class="n">callId</span><span class="p">,</span> <span class="kt">long</span> <span class="n">callStartNanos</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="na">callId</span> <span class="o">=</span> <span class="n">callId</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="na">callStartNanos</span> <span class="o">=</span> <span class="n">callStartNanos</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="kd">private</span> <span class="kt">void</span> <span class="nf">printEvent</span><span class="p">(</span><span class="n">String</span> <span class="n">name</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kt">long</span> <span class="n">elapsedNanos</span> <span class="o">=</span> <span class="n">System</span><span class="p">.</span><span class="na">nanoTime</span><span class="p">()</span> <span class="o">-</span> <span class="n">callStartNanos</span><span class="p">;</span>
+    <span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">printf</span><span class="p">(</span><span class="s">&quot;%04d %.3f %s%n&quot;</span><span class="p">,</span> <span class="n">callId</span><span class="p">,</span> <span class="n">elapsedNanos</span> <span class="o">/</span> <span class="mi">1000000000</span><span class="n">d</span><span class="p">,</span> <span class="n">name</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="nd">@Override</span> <span class="kd">public</span> <span class="kt">void</span> <span class="nf">callStart</span><span class="p">(</span><span class="n">Call</span> <span class="n">call</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">printEvent</span><span class="p">(</span><span class="s">&quot;callStart&quot;</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="nd">@Override</span> <span class="kd">public</span> <span class="kt">void</span> <span class="nf">callEnd</span><span class="p">(</span><span class="n">Call</span> <span class="n">call</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">printEvent</span><span class="p">(</span><span class="s">&quot;callEnd&quot;</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>We can use this listener to race a pair of concurrent HTTP requests:</p>
+<div class="highlight"><pre><span></span><code><span class="n">Request</span> <span class="n">washingtonPostRequest</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Request</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
+    <span class="p">.</span><span class="na">url</span><span class="p">(</span><span class="s">&quot;https://www.washingtonpost.com/&quot;</span><span class="p">)</span>
+    <span class="p">.</span><span class="na">build</span><span class="p">();</span>
+<span class="n">client</span><span class="p">.</span><span class="na">newCall</span><span class="p">(</span><span class="n">washingtonPostRequest</span><span class="p">).</span><span class="na">enqueue</span><span class="p">(</span><span class="k">new</span> <span class="n">Callback</span><span class="p">()</span> <span class="p">{</span>
+  <span class="p">...</span>
+<span class="p">});</span>
+
+<span class="n">Request</span> <span class="n">newYorkTimesRequest</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Request</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
+    <span class="p">.</span><span class="na">url</span><span class="p">(</span><span class="s">&quot;https://www.nytimes.com/&quot;</span><span class="p">)</span>
+    <span class="p">.</span><span class="na">build</span><span class="p">();</span>
+<span class="n">client</span><span class="p">.</span><span class="na">newCall</span><span class="p">(</span><span class="n">newYorkTimesRequest</span><span class="p">).</span><span class="na">enqueue</span><span class="p">(</span><span class="k">new</span> <span class="n">Callback</span><span class="p">()</span> <span class="p">{</span>
+  <span class="p">...</span>
+<span class="p">});</span>
+</code></pre></div>
+
+<p>Running this race over home WiFi shows the Times (<code>0002</code>) completes just slightly sooner than the Post (<code>0001</code>):</p>
+<div class="highlight"><pre><span></span><code>0001 https://www.washingtonpost.com/
+0001 0.000 callStart
+0002 https://www.nytimes.com/
+0002 0.000 callStart
+0002 0.010 dnsStart
+0001 0.013 dnsStart
+0001 0.022 dnsEnd
+0002 0.019 dnsEnd
+0001 0.028 connectStart
+0002 0.025 connectStart
+0002 0.072 secureConnectStart
+0001 0.075 secureConnectStart
+0001 0.386 secureConnectEnd
+0002 0.390 secureConnectEnd
+0002 0.400 connectEnd
+0001 0.403 connectEnd
+0002 0.401 connectionAcquired
+0001 0.404 connectionAcquired
+0001 0.406 requestHeadersStart
+0002 0.403 requestHeadersStart
+0001 0.414 requestHeadersEnd
+0002 0.411 requestHeadersEnd
+0002 0.412 responseHeadersStart
+0001 0.415 responseHeadersStart
+0002 0.474 responseHeadersEnd
+0002 0.475 responseBodyStart
+0001 0.554 responseHeadersEnd
+0001 0.555 responseBodyStart
+0002 0.554 responseBodyEnd
+0002 0.554 connectionReleased
+0002 0.554 callEnd
+0001 0.624 responseBodyEnd
+0001 0.624 connectionReleased
+0001 0.624 callEnd
+</code></pre></div>
+
+<p>The <code>EventListener.Factory</code> also makes it possible to limit metrics to a subset of calls. This one captures metrics on a random 10%:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">class</span> <span class="nc">MetricsEventListener</span> <span class="kd">extends</span> <span class="n">EventListener</span> <span class="p">{</span>
+  <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">Factory</span> <span class="n">FACTORY</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Factory</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nd">@Override</span> <span class="kd">public</span> <span class="n">EventListener</span> <span class="nf">create</span><span class="p">(</span><span class="n">Call</span> <span class="n">call</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">Math</span><span class="p">.</span><span class="na">random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mf">0.10</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="k">new</span> <span class="n">MetricsEventListener</span><span class="p">(</span><span class="n">call</span><span class="p">);</span>
+      <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="n">EventListener</span><span class="p">.</span><span class="na">NONE</span><span class="p">;</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">};</span>
+
+  <span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h3 id="events-with-failures">Events with Failures<a class="headerlink" href="#events-with-failures" title="Permanent link">&para;</a></h3>
+<p>When an operation fails, a failure method is called. This is <code>connectFailed()</code> for failures while building a connection to the server, and <code>callFailed()</code> when the HTTP call fails permanently. When a failure happens it is possible that a <code>start</code> event won’t have a corresponding <code>end</code> event.</p>
+<p><img alt="Events Diagram" src="images/events_with_failures@2x.png" /></p>
+<h3 id="events-with-retries-and-follow-ups">Events with Retries and Follow-Ups<a class="headerlink" href="#events-with-retries-and-follow-ups" title="Permanent link">&para;</a></h3>
+<p>OkHttp is resilient and can automatically recover from some connectivity failures. In this case, the <code>connectFailed()</code> event is not terminal and not followed by <code>callFailed()</code>. Event listeners will receive multiple events of the same type when retries are attempted.</p>
+<p>A single HTTP call may require follow-up requests to be made to handle authentication challenges, redirects, and HTTP-layer timeouts. In such cases multiple connections, requests, and responses may be attempted. Follow-ups are another reason a single call may trigger multiple events of the same type.</p>
+<p><img alt="Events Diagram" src="images/events_with_failures_and_retries@2x.png" /></p>
+<h3 id="availability">Availability<a class="headerlink" href="#availability" title="Permanent link">&para;</a></h3>
+<p>Events is available as a public API in OkHttp 3.11. Future releases may introduce new event types; you will need to override the corresponding methods to handle them.</p>
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
+        
+          <a href="../debug_logging/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+            </div>
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Debug Logging
+              </div>
+            </div>
+          </a>
+        
+        
+          <a href="../https/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                HTTPS
+              </div>
+            </div>
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            Copyright &copy; 2019 Square, Inc.
+          </div>
+        
+        Made with
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+          Material for MkDocs
+        </a>
+      </div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="../../assets/javascripts/vendor.18f0862e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.994580cf.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script>
+      
+      <script>
+        app = initialize({
+          base: "../..",
+          features: ['navigation.tabs'],
+          search: Object.assign({
+            worker: "../../assets/javascripts/worker/search.9c0e82ba.min.js"
+          }, typeof search !== "undefined" && search)
+        })
+      </script>
+      
+    
+  </body>
+</html>

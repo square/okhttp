@@ -1,0 +1,1419 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="An HTTP & HTTP/2 client for Android and Java applications">
+      
+      
+      
+        <meta name="author" content="Square, Inc.">
+      
+      
+        <link rel="canonical" href="https://square.github.com/okhttp/features/interceptors/">
+      
+      <link rel="shortcut icon" href="../../images/icon-square.png">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-6.2.8">
+    
+    
+      
+        <title>Interceptors - OkHttp</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.cb6bc1d0.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.39b8e14a.min.css">
+        
+          
+          
+          <meta name="theme-color" content="#009485">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>body,input{font-family:"Roboto",-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono",SFMono-Regular,Consolas,Menlo,monospace}</style>
+      
+    
+    
+    
+      <link rel="stylesheet" href="../../css/app.css">
+    
+    
+      
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="white">
+      
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#interceptors" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid" aria-label="Header">
+    <a href="https://square.github.com/okhttp/" title="OkHttp" class="md-header-nav__button md-logo" aria-label="OkHttp">
+      
+  <img src="../../images/icon-square.png" alt="logo">
+
+    </a>
+    <label class="md-header-nav__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header-nav__title" data-md-component="header-title">
+      <div class="md-header-nav__ellipsis">
+        <div class="md-header-nav__topic">
+          <span class="md-ellipsis">
+            OkHttp
+          </span>
+        </div>
+        <div class="md-header-nav__topic">
+          <span class="md-ellipsis">
+            
+              Interceptors
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <label class="md-header-nav__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0116 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 019.5 16 6.5 6.5 0 013 9.5 6.5 6.5 0 019.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" data-md-state="active" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0116 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 019.5 16 6.5 6.5 0 013 9.5 6.5 6.5 0 019.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <button type="reset" class="md-search__icon md-icon" aria-label="Clear" data-md-component="search-reset" tabindex="-1">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header-nav__source">
+        
+<a href="https://github.com/square/okhttp" title="Go to repository" class="md-source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 00-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 01-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 000 40.81l195.61 195.6a28.86 28.86 0 0040.8 0l194.69-194.69a28.86 28.86 0 000-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    OkHttp
+  </div>
+</a>
+      </div>
+    
+  </nav>
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-tabs__inner md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        Overview
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../caching/" class="md-tabs__link md-tabs__link--active">
+        Features
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../../recipes/" class="md-tabs__link">
+      Recipes
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../security/security/" class="md-tabs__link">
+        Security
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../../works_with_okhttp/" class="md-tabs__link">
+      Works with OkHttp
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../4.x/upgrading_to_okhttp_4/" class="md-tabs__link">
+        4.x API
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://square.github.io/okhttp/3.x/okhttp/" class="md-tabs__link">
+        3.12.x API
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../changelogs/changelog/" class="md-tabs__link">
+        Change Logs
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../contribute/contributing/" class="md-tabs__link">
+        Contributing
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="https://square.github.com/okhttp/" title="OkHttp" class="md-nav__button md-logo" aria-label="OkHttp">
+      
+  <img src="../../images/icon-square.png" alt="logo">
+
+    </a>
+    OkHttp
+  </label>
+  
+    <div class="md-nav__source">
+      
+<a href="https://github.com/square/okhttp" title="Go to repository" class="md-source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 00-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 01-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 000 40.81l195.61 195.6a28.86 28.86 0 0040.8 0l194.69-194.69a28.86 28.86 0 000-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    OkHttp
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="nav-1" type="checkbox" id="nav-1" >
+      
+      <label class="md-nav__link" for="nav-1">
+        Overview
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Overview" data-md-level="1">
+        <label class="md-nav__title" for="nav-1">
+          <span class="md-nav__icon md-icon"></span>
+          Overview
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        Introduction
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://stackoverflow.com/questions/tagged/okhttp?sort=active" class="md-nav__link">
+        Stack Overflow ⏏
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2" checked>
+      
+      <label class="md-nav__link" for="nav-2">
+        Features
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Features" data-md-level="1">
+        <label class="md-nav__title" for="nav-2">
+          <span class="md-nav__icon md-icon"></span>
+          Features
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../caching/" class="md-nav__link">
+        Caching
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../calls/" class="md-nav__link">
+        Calls
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concurrency/" class="md-nav__link">
+        Concurrency
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../connections/" class="md-nav__link">
+        Connections
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../debug_logging/" class="md-nav__link">
+        Debug Logging
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../events/" class="md-nav__link">
+        Events
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../https/" class="md-nav__link">
+        HTTPS
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Interceptors
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Interceptors
+      </a>
+      
+        
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#application-interceptors" class="md-nav__link">
+    Application Interceptors
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#network-interceptors" class="md-nav__link">
+    Network Interceptors
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#choosing-between-application-and-network-interceptors" class="md-nav__link">
+    Choosing between application and network interceptors
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rewriting-requests" class="md-nav__link">
+    Rewriting Requests
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rewriting-responses" class="md-nav__link">
+    Rewriting Responses
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../r8_proguard/" class="md-nav__link">
+        R8 / ProGuard
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../recipes/" class="md-nav__link">
+        Recipes
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4" >
+      
+      <label class="md-nav__link" for="nav-4">
+        Security
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Security" data-md-level="1">
+        <label class="md-nav__title" for="nav-4">
+          <span class="md-nav__icon md-icon"></span>
+          Security
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/security/" class="md-nav__link">
+        Security Policy
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/security_providers/" class="md-nav__link">
+        Security Providers
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../works_with_okhttp/" class="md-nav__link">
+        Works with OkHttp
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6" >
+      
+      <label class="md-nav__link" for="nav-6">
+        4.x API
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="4.x API" data-md-level="1">
+        <label class="md-nav__title" for="nav-6">
+          <span class="md-nav__icon md-icon"></span>
+          4.x API
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4.x/upgrading_to_okhttp_4/" class="md-nav__link">
+        Upgrading to OkHttp 4
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4.x/okhttp/okhttp3/" class="md-nav__link">
+        okhttp
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4.x/okhttp-brotli/okhttp3.brotli/" class="md-nav__link">
+        brotli
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4.x/okhttp-dnsoverhttps/okhttp3.dnsoverhttps/" class="md-nav__link">
+        dnsoverhttps
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4.x/okhttp-logging-interceptor/okhttp3.logging/" class="md-nav__link">
+        logging-interceptor
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4.x/okhttp-sse/okhttp3.sse/" class="md-nav__link">
+        sse
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4.x/okhttp-tls/okhttp3.tls/" class="md-nav__link">
+        tls
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4.x/okhttp-urlconnection/okhttp3/" class="md-nav__link">
+        urlconnection
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4.x/mockwebserver/okhttp3.mockwebserver/" class="md-nav__link">
+        mockwebserver
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="nav-7" type="checkbox" id="nav-7" >
+      
+      <label class="md-nav__link" for="nav-7">
+        3.12.x API
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="3.12.x API" data-md-level="1">
+        <label class="md-nav__title" for="nav-7">
+          <span class="md-nav__icon md-icon"></span>
+          3.12.x API
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://square.github.io/okhttp/3.x/okhttp/" class="md-nav__link">
+        okhttp ⏏
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://square.github.io/okhttp/3.x/okhttp-dnsoverhttps/" class="md-nav__link">
+        dnsoverhttps ⏏
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://square.github.io/okhttp/3.x/logging-interceptor/" class="md-nav__link">
+        logging-interceptor ⏏
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://square.github.io/okhttp/3.x/okhttp-sse/" class="md-nav__link">
+        sse ⏏
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://square.github.io/okhttp/3.x/okhttp-tls/" class="md-nav__link">
+        tls ⏏
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://square.github.io/okhttp/3.x/okhttp-urlconnection/" class="md-nav__link">
+        urlconnection ⏏
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://square.github.io/okhttp/3.x/mockwebserver/" class="md-nav__link">
+        mockwebserver ⏏
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="nav-8" type="checkbox" id="nav-8" >
+      
+      <label class="md-nav__link" for="nav-8">
+        Change Logs
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Change Logs" data-md-level="1">
+        <label class="md-nav__title" for="nav-8">
+          <span class="md-nav__icon md-icon"></span>
+          Change Logs
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelogs/changelog/" class="md-nav__link">
+        Latest
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelogs/changelog_3x/" class="md-nav__link">
+        Version 3.x
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelogs/changelog_2x/" class="md-nav__link">
+        Version 2.x
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelogs/changelog_1x/" class="md-nav__link">
+        Version 1.x
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelogs/tls_configuration_history/" class="md-nav__link">
+        TLS History
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="nav-9" type="checkbox" id="nav-9" >
+      
+      <label class="md-nav__link" for="nav-9">
+        Contributing
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Contributing" data-md-level="1">
+        <label class="md-nav__title" for="nav-9">
+          <span class="md-nav__icon md-icon"></span>
+          Contributing
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contribute/contributing/" class="md-nav__link">
+        Contribute
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contribute/code_of_conduct/" class="md-nav__link">
+        Code of Conduct
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#application-interceptors" class="md-nav__link">
+    Application Interceptors
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#network-interceptors" class="md-nav__link">
+    Network Interceptors
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#choosing-between-application-and-network-interceptors" class="md-nav__link">
+    Choosing between application and network interceptors
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rewriting-requests" class="md-nav__link">
+    Rewriting Requests
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rewriting-responses" class="md-nav__link">
+    Rewriting Responses
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                
+                <h1 id="interceptors">Interceptors<a class="headerlink" href="#interceptors" title="Permanent link">&para;</a></h1>
+<p>Interceptors are a powerful mechanism that can monitor, rewrite, and retry calls. Here&rsquo;s a simple interceptor that logs the outgoing request and the incoming response.</p>
+<div class="highlight"><pre><span></span><code><span class="kd">class</span> <span class="nc">LoggingInterceptor</span> <span class="kd">implements</span> <span class="n">Interceptor</span> <span class="p">{</span>
+  <span class="nd">@Override</span> <span class="kd">public</span> <span class="n">Response</span> <span class="nf">intercept</span><span class="p">(</span><span class="n">Interceptor</span><span class="p">.</span><span class="na">Chain</span> <span class="n">chain</span><span class="p">)</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="p">{</span>
+    <span class="n">Request</span> <span class="n">request</span> <span class="o">=</span> <span class="n">chain</span><span class="p">.</span><span class="na">request</span><span class="p">();</span>
+
+    <span class="kt">long</span> <span class="n">t1</span> <span class="o">=</span> <span class="n">System</span><span class="p">.</span><span class="na">nanoTime</span><span class="p">();</span>
+    <span class="n">logger</span><span class="p">.</span><span class="na">info</span><span class="p">(</span><span class="n">String</span><span class="p">.</span><span class="na">format</span><span class="p">(</span><span class="s">&quot;Sending request %s on %s%n%s&quot;</span><span class="p">,</span>
+        <span class="n">request</span><span class="p">.</span><span class="na">url</span><span class="p">(),</span> <span class="n">chain</span><span class="p">.</span><span class="na">connection</span><span class="p">(),</span> <span class="n">request</span><span class="p">.</span><span class="na">headers</span><span class="p">()));</span>
+
+    <span class="n">Response</span> <span class="n">response</span> <span class="o">=</span> <span class="n">chain</span><span class="p">.</span><span class="na">proceed</span><span class="p">(</span><span class="n">request</span><span class="p">);</span>
+
+    <span class="kt">long</span> <span class="n">t2</span> <span class="o">=</span> <span class="n">System</span><span class="p">.</span><span class="na">nanoTime</span><span class="p">();</span>
+    <span class="n">logger</span><span class="p">.</span><span class="na">info</span><span class="p">(</span><span class="n">String</span><span class="p">.</span><span class="na">format</span><span class="p">(</span><span class="s">&quot;Received response for %s in %.1fms%n%s&quot;</span><span class="p">,</span>
+        <span class="n">response</span><span class="p">.</span><span class="na">request</span><span class="p">().</span><span class="na">url</span><span class="p">(),</span> <span class="p">(</span><span class="n">t2</span> <span class="o">-</span> <span class="n">t1</span><span class="p">)</span> <span class="o">/</span> <span class="mf">1e6d</span><span class="p">,</span> <span class="n">response</span><span class="p">.</span><span class="na">headers</span><span class="p">()));</span>
+
+    <span class="k">return</span> <span class="n">response</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>A call to <code>chain.proceed(request)</code> is a critical part of each interceptor’s implementation. This simple-looking method is where all the HTTP work happens, producing a response to satisfy the request. If <code>chain.proceed(request)</code> is being called more than once previous response bodies must be closed.</p>
+<p>Interceptors can be chained. Suppose you have both a compressing interceptor and a checksumming interceptor: you&rsquo;ll need to decide whether data is compressed and then checksummed, or checksummed and then compressed. OkHttp uses lists to track interceptors, and interceptors are called in order.</p>
+<p><img alt="Interceptors Diagram" src="images/interceptors@2x.png" /></p>
+<h3 id="application-interceptors">Application Interceptors<a class="headerlink" href="#application-interceptors" title="Permanent link">&para;</a></h3>
+<p>Interceptors are registered as either <em>application</em> or <em>network</em> interceptors. We&rsquo;ll use the <code>LoggingInterceptor</code> defined above to show the difference.</p>
+<p>Register an <em>application</em> interceptor by calling <code>addInterceptor()</code> on <code>OkHttpClient.Builder</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="n">OkHttpClient</span> <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OkHttpClient</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
+    <span class="p">.</span><span class="na">addInterceptor</span><span class="p">(</span><span class="k">new</span> <span class="n">LoggingInterceptor</span><span class="p">())</span>
+    <span class="p">.</span><span class="na">build</span><span class="p">();</span>
+
+<span class="n">Request</span> <span class="n">request</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Request</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
+    <span class="p">.</span><span class="na">url</span><span class="p">(</span><span class="s">&quot;http://www.publicobject.com/helloworld.txt&quot;</span><span class="p">)</span>
+    <span class="p">.</span><span class="na">header</span><span class="p">(</span><span class="s">&quot;User-Agent&quot;</span><span class="p">,</span> <span class="s">&quot;OkHttp Example&quot;</span><span class="p">)</span>
+    <span class="p">.</span><span class="na">build</span><span class="p">();</span>
+
+<span class="n">Response</span> <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="p">.</span><span class="na">newCall</span><span class="p">(</span><span class="n">request</span><span class="p">).</span><span class="na">execute</span><span class="p">();</span>
+<span class="n">response</span><span class="p">.</span><span class="na">body</span><span class="p">().</span><span class="na">close</span><span class="p">();</span>
+</code></pre></div>
+
+<p>The URL <code>http://www.publicobject.com/helloworld.txt</code> redirects to <code>https://publicobject.com/helloworld.txt</code>, and OkHttp follows this redirect automatically. Our application interceptor is called <strong>once</strong> and the response returned from <code>chain.proceed()</code> has the redirected response:</p>
+<div class="highlight"><pre><span></span><code>INFO: Sending request http://www.publicobject.com/helloworld.txt on null
+User-Agent: OkHttp Example
+
+INFO: Received response for https://publicobject.com/helloworld.txt in 1179.7ms
+Server: nginx/1.4.6 (Ubuntu)
+Content-Type: text/plain
+Content-Length: 1759
+Connection: keep-alive
+</code></pre></div>
+
+<p>We can see that we were redirected because <code>response.request().url()</code> is different from <code>request.url()</code>. The two log statements log two different URLs.</p>
+<h3 id="network-interceptors">Network Interceptors<a class="headerlink" href="#network-interceptors" title="Permanent link">&para;</a></h3>
+<p>Registering a network interceptor is quite similar. Call <code>addNetworkInterceptor()</code> instead of <code>addInterceptor()</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="n">OkHttpClient</span> <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OkHttpClient</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
+    <span class="p">.</span><span class="na">addNetworkInterceptor</span><span class="p">(</span><span class="k">new</span> <span class="n">LoggingInterceptor</span><span class="p">())</span>
+    <span class="p">.</span><span class="na">build</span><span class="p">();</span>
+
+<span class="n">Request</span> <span class="n">request</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Request</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
+    <span class="p">.</span><span class="na">url</span><span class="p">(</span><span class="s">&quot;http://www.publicobject.com/helloworld.txt&quot;</span><span class="p">)</span>
+    <span class="p">.</span><span class="na">header</span><span class="p">(</span><span class="s">&quot;User-Agent&quot;</span><span class="p">,</span> <span class="s">&quot;OkHttp Example&quot;</span><span class="p">)</span>
+    <span class="p">.</span><span class="na">build</span><span class="p">();</span>
+
+<span class="n">Response</span> <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="p">.</span><span class="na">newCall</span><span class="p">(</span><span class="n">request</span><span class="p">).</span><span class="na">execute</span><span class="p">();</span>
+<span class="n">response</span><span class="p">.</span><span class="na">body</span><span class="p">().</span><span class="na">close</span><span class="p">();</span>
+</code></pre></div>
+
+<p>When we run this code, the interceptor runs twice. Once for the initial request to <code>http://www.publicobject.com/helloworld.txt</code>, and another for the redirect to <code>https://publicobject.com/helloworld.txt</code>.</p>
+<div class="highlight"><pre><span></span><code>INFO: Sending request http://www.publicobject.com/helloworld.txt on Connection{www.publicobject.com:80, proxy=DIRECT hostAddress=54.187.32.157 cipherSuite=none protocol=http/1.1}
+User-Agent: OkHttp Example
+Host: www.publicobject.com
+Connection: Keep-Alive
+Accept-Encoding: gzip
+
+INFO: Received response for http://www.publicobject.com/helloworld.txt in 115.6ms
+Server: nginx/1.4.6 (Ubuntu)
+Content-Type: text/html
+Content-Length: 193
+Connection: keep-alive
+Location: https://publicobject.com/helloworld.txt
+
+INFO: Sending request https://publicobject.com/helloworld.txt on Connection{publicobject.com:443, proxy=DIRECT hostAddress=54.187.32.157 cipherSuite=TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA protocol=http/1.1}
+User-Agent: OkHttp Example
+Host: publicobject.com
+Connection: Keep-Alive
+Accept-Encoding: gzip
+
+INFO: Received response for https://publicobject.com/helloworld.txt in 80.9ms
+Server: nginx/1.4.6 (Ubuntu)
+Content-Type: text/plain
+Content-Length: 1759
+Connection: keep-alive
+</code></pre></div>
+
+<p>The network requests also contain more data, such as the <code>Accept-Encoding: gzip</code> header added by OkHttp to advertise support for response compression. The network interceptor&rsquo;s <code>Chain</code> has a non-null <code>Connection</code> that can be used to interrogate the IP address and TLS configuration that were used to connect to the webserver.</p>
+<h3 id="choosing-between-application-and-network-interceptors">Choosing between application and network interceptors<a class="headerlink" href="#choosing-between-application-and-network-interceptors" title="Permanent link">&para;</a></h3>
+<p>Each interceptor chain has relative merits.</p>
+<p><strong>Application interceptors</strong></p>
+<ul>
+<li>Don&rsquo;t need to worry about intermediate responses like redirects and retries.</li>
+<li>Are always invoked once, even if the HTTP response is served from the cache.</li>
+<li>Observe the application&rsquo;s original intent. Unconcerned with OkHttp-injected headers like <code>If-None-Match</code>.</li>
+<li>Permitted to short-circuit and not call <code>Chain.proceed()</code>.</li>
+<li>Permitted to retry and make multiple calls to <code>Chain.proceed()</code>.</li>
+<li>Can adjust Call timeouts using withConnectTimeout, withReadTimeout, withWriteTimeout.</li>
+</ul>
+<p><strong>Network Interceptors</strong></p>
+<ul>
+<li>Able to operate on intermediate responses like redirects and retries.</li>
+<li>Not invoked for cached responses that short-circuit the network.</li>
+<li>Observe the data just as it will be transmitted over the network.</li>
+<li>Access to the <code>Connection</code> that carries the request.</li>
+</ul>
+<h3 id="rewriting-requests">Rewriting Requests<a class="headerlink" href="#rewriting-requests" title="Permanent link">&para;</a></h3>
+<p>Interceptors can add, remove, or replace request headers. They can also transform the body of those requests that have one. For example, you can use an application interceptor to add request body compression if you&rsquo;re connecting to a webserver known to support it.</p>
+<div class="highlight"><pre><span></span><code><span class="cm">/** This interceptor compresses the HTTP request body. Many webservers can&#39;t handle this! */</span>
+<span class="kd">final</span> <span class="kd">class</span> <span class="nc">GzipRequestInterceptor</span> <span class="kd">implements</span> <span class="n">Interceptor</span> <span class="p">{</span>
+  <span class="nd">@Override</span> <span class="kd">public</span> <span class="n">Response</span> <span class="nf">intercept</span><span class="p">(</span><span class="n">Interceptor</span><span class="p">.</span><span class="na">Chain</span> <span class="n">chain</span><span class="p">)</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="p">{</span>
+    <span class="n">Request</span> <span class="n">originalRequest</span> <span class="o">=</span> <span class="n">chain</span><span class="p">.</span><span class="na">request</span><span class="p">();</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">originalRequest</span><span class="p">.</span><span class="na">body</span><span class="p">()</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">||</span> <span class="n">originalRequest</span><span class="p">.</span><span class="na">header</span><span class="p">(</span><span class="s">&quot;Content-Encoding&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="n">chain</span><span class="p">.</span><span class="na">proceed</span><span class="p">(</span><span class="n">originalRequest</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="n">Request</span> <span class="n">compressedRequest</span> <span class="o">=</span> <span class="n">originalRequest</span><span class="p">.</span><span class="na">newBuilder</span><span class="p">()</span>
+        <span class="p">.</span><span class="na">header</span><span class="p">(</span><span class="s">&quot;Content-Encoding&quot;</span><span class="p">,</span> <span class="s">&quot;gzip&quot;</span><span class="p">)</span>
+        <span class="p">.</span><span class="na">method</span><span class="p">(</span><span class="n">originalRequest</span><span class="p">.</span><span class="na">method</span><span class="p">(),</span> <span class="n">gzip</span><span class="p">(</span><span class="n">originalRequest</span><span class="p">.</span><span class="na">body</span><span class="p">()))</span>
+        <span class="p">.</span><span class="na">build</span><span class="p">();</span>
+    <span class="k">return</span> <span class="n">chain</span><span class="p">.</span><span class="na">proceed</span><span class="p">(</span><span class="n">compressedRequest</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="kd">private</span> <span class="n">RequestBody</span> <span class="nf">gzip</span><span class="p">(</span><span class="kd">final</span> <span class="n">RequestBody</span> <span class="n">body</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="k">new</span> <span class="n">RequestBody</span><span class="p">()</span> <span class="p">{</span>
+      <span class="nd">@Override</span> <span class="kd">public</span> <span class="n">MediaType</span> <span class="nf">contentType</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="n">body</span><span class="p">.</span><span class="na">contentType</span><span class="p">();</span>
+      <span class="p">}</span>
+
+      <span class="nd">@Override</span> <span class="kd">public</span> <span class="kt">long</span> <span class="nf">contentLength</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span> <span class="c1">// We don&#39;t know the compressed length in advance!</span>
+      <span class="p">}</span>
+
+      <span class="nd">@Override</span> <span class="kd">public</span> <span class="kt">void</span> <span class="nf">writeTo</span><span class="p">(</span><span class="n">BufferedSink</span> <span class="n">sink</span><span class="p">)</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="p">{</span>
+        <span class="n">BufferedSink</span> <span class="n">gzipSink</span> <span class="o">=</span> <span class="n">Okio</span><span class="p">.</span><span class="na">buffer</span><span class="p">(</span><span class="k">new</span> <span class="n">GzipSink</span><span class="p">(</span><span class="n">sink</span><span class="p">));</span>
+        <span class="n">body</span><span class="p">.</span><span class="na">writeTo</span><span class="p">(</span><span class="n">gzipSink</span><span class="p">);</span>
+        <span class="n">gzipSink</span><span class="p">.</span><span class="na">close</span><span class="p">();</span>
+      <span class="p">}</span>
+    <span class="p">};</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h3 id="rewriting-responses">Rewriting Responses<a class="headerlink" href="#rewriting-responses" title="Permanent link">&para;</a></h3>
+<p>Symmetrically, interceptors can rewrite response headers and transform the response body. This is generally more dangerous than rewriting request headers because it may violate the webserver&rsquo;s expectations!</p>
+<p>If you&rsquo;re in a tricky situation and prepared to deal with the consequences, rewriting response headers is a powerful way to work around problems. For example, you can fix a server&rsquo;s misconfigured <code>Cache-Control</code> response header to enable better response caching:</p>
+<div class="highlight"><pre><span></span><code><span class="cm">/** Dangerous interceptor that rewrites the server&#39;s cache-control header. */</span>
+<span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">Interceptor</span> <span class="n">REWRITE_CACHE_CONTROL_INTERCEPTOR</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Interceptor</span><span class="p">()</span> <span class="p">{</span>
+  <span class="nd">@Override</span> <span class="kd">public</span> <span class="n">Response</span> <span class="nf">intercept</span><span class="p">(</span><span class="n">Interceptor</span><span class="p">.</span><span class="na">Chain</span> <span class="n">chain</span><span class="p">)</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="p">{</span>
+    <span class="n">Response</span> <span class="n">originalResponse</span> <span class="o">=</span> <span class="n">chain</span><span class="p">.</span><span class="na">proceed</span><span class="p">(</span><span class="n">chain</span><span class="p">.</span><span class="na">request</span><span class="p">());</span>
+    <span class="k">return</span> <span class="n">originalResponse</span><span class="p">.</span><span class="na">newBuilder</span><span class="p">()</span>
+        <span class="p">.</span><span class="na">header</span><span class="p">(</span><span class="s">&quot;Cache-Control&quot;</span><span class="p">,</span> <span class="s">&quot;max-age=60&quot;</span><span class="p">)</span>
+        <span class="p">.</span><span class="na">build</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">};</span>
+</code></pre></div>
+
+<p>Typically this approach works best when it complements a corresponding fix on the webserver!</p>
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
+        
+          <a href="../https/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+            </div>
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                HTTPS
+              </div>
+            </div>
+          </a>
+        
+        
+          <a href="../r8_proguard/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                R8 / ProGuard
+              </div>
+            </div>
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            Copyright &copy; 2019 Square, Inc.
+          </div>
+        
+        Made with
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+          Material for MkDocs
+        </a>
+      </div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="../../assets/javascripts/vendor.18f0862e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.994580cf.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script>
+      
+      <script>
+        app = initialize({
+          base: "../..",
+          features: ['navigation.tabs'],
+          search: Object.assign({
+            worker: "../../assets/javascripts/worker/search.9c0e82ba.min.js"
+          }, typeof search !== "undefined" && search)
+        })
+      </script>
+      
+    
+  </body>
+</html>

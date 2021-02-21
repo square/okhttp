@@ -1,0 +1,1848 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="An HTTP & HTTP/2 client for Android and Java applications">
+      
+      
+      
+        <meta name="author" content="Square, Inc.">
+      
+      
+        <link rel="canonical" href="https://square.github.com/okhttp/changelogs/tls_configuration_history/">
+      
+      <link rel="shortcut icon" href="../../images/icon-square.png">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-6.2.8">
+    
+    
+      
+        <title>TLS History - OkHttp</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.cb6bc1d0.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.39b8e14a.min.css">
+        
+          
+          
+          <meta name="theme-color" content="#009485">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>body,input{font-family:"Roboto",-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono",SFMono-Regular,Consolas,Menlo,monospace}</style>
+      
+    
+    
+    
+      <link rel="stylesheet" href="../../css/app.css">
+    
+    
+      
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="white">
+      
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#tls-configuration-history" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid" aria-label="Header">
+    <a href="https://square.github.com/okhttp/" title="OkHttp" class="md-header-nav__button md-logo" aria-label="OkHttp">
+      
+  <img src="../../images/icon-square.png" alt="logo">
+
+    </a>
+    <label class="md-header-nav__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header-nav__title" data-md-component="header-title">
+      <div class="md-header-nav__ellipsis">
+        <div class="md-header-nav__topic">
+          <span class="md-ellipsis">
+            OkHttp
+          </span>
+        </div>
+        <div class="md-header-nav__topic">
+          <span class="md-ellipsis">
+            
+              TLS History
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <label class="md-header-nav__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0116 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 019.5 16 6.5 6.5 0 013 9.5 6.5 6.5 0 019.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" data-md-state="active" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0116 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 019.5 16 6.5 6.5 0 013 9.5 6.5 6.5 0 019.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <button type="reset" class="md-search__icon md-icon" aria-label="Clear" data-md-component="search-reset" tabindex="-1">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header-nav__source">
+        
+<a href="https://github.com/square/okhttp" title="Go to repository" class="md-source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 00-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 01-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 000 40.81l195.61 195.6a28.86 28.86 0 0040.8 0l194.69-194.69a28.86 28.86 0 000-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    OkHttp
+  </div>
+</a>
+      </div>
+    
+  </nav>
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-tabs__inner md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        Overview
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../features/caching/" class="md-tabs__link">
+        Features
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../../recipes/" class="md-tabs__link">
+      Recipes
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../security/security/" class="md-tabs__link">
+        Security
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../../works_with_okhttp/" class="md-tabs__link">
+      Works with OkHttp
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../4.x/upgrading_to_okhttp_4/" class="md-tabs__link">
+        4.x API
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://square.github.io/okhttp/3.x/okhttp/" class="md-tabs__link">
+        3.12.x API
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../changelog/" class="md-tabs__link md-tabs__link--active">
+        Change Logs
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../contribute/contributing/" class="md-tabs__link">
+        Contributing
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="https://square.github.com/okhttp/" title="OkHttp" class="md-nav__button md-logo" aria-label="OkHttp">
+      
+  <img src="../../images/icon-square.png" alt="logo">
+
+    </a>
+    OkHttp
+  </label>
+  
+    <div class="md-nav__source">
+      
+<a href="https://github.com/square/okhttp" title="Go to repository" class="md-source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 00-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 01-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 000 40.81l195.61 195.6a28.86 28.86 0 0040.8 0l194.69-194.69a28.86 28.86 0 000-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    OkHttp
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="nav-1" type="checkbox" id="nav-1" >
+      
+      <label class="md-nav__link" for="nav-1">
+        Overview
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Overview" data-md-level="1">
+        <label class="md-nav__title" for="nav-1">
+          <span class="md-nav__icon md-icon"></span>
+          Overview
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        Introduction
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://stackoverflow.com/questions/tagged/okhttp?sort=active" class="md-nav__link">
+        Stack Overflow ⏏
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2" >
+      
+      <label class="md-nav__link" for="nav-2">
+        Features
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Features" data-md-level="1">
+        <label class="md-nav__title" for="nav-2">
+          <span class="md-nav__icon md-icon"></span>
+          Features
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/caching/" class="md-nav__link">
+        Caching
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/calls/" class="md-nav__link">
+        Calls
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/concurrency/" class="md-nav__link">
+        Concurrency
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/connections/" class="md-nav__link">
+        Connections
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/debug_logging/" class="md-nav__link">
+        Debug Logging
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/events/" class="md-nav__link">
+        Events
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/https/" class="md-nav__link">
+        HTTPS
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/interceptors/" class="md-nav__link">
+        Interceptors
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/r8_proguard/" class="md-nav__link">
+        R8 / ProGuard
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../recipes/" class="md-nav__link">
+        Recipes
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4" >
+      
+      <label class="md-nav__link" for="nav-4">
+        Security
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Security" data-md-level="1">
+        <label class="md-nav__title" for="nav-4">
+          <span class="md-nav__icon md-icon"></span>
+          Security
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/security/" class="md-nav__link">
+        Security Policy
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/security_providers/" class="md-nav__link">
+        Security Providers
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../works_with_okhttp/" class="md-nav__link">
+        Works with OkHttp
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6" >
+      
+      <label class="md-nav__link" for="nav-6">
+        4.x API
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="4.x API" data-md-level="1">
+        <label class="md-nav__title" for="nav-6">
+          <span class="md-nav__icon md-icon"></span>
+          4.x API
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4.x/upgrading_to_okhttp_4/" class="md-nav__link">
+        Upgrading to OkHttp 4
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4.x/okhttp/okhttp3/" class="md-nav__link">
+        okhttp
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4.x/okhttp-brotli/okhttp3.brotli/" class="md-nav__link">
+        brotli
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4.x/okhttp-dnsoverhttps/okhttp3.dnsoverhttps/" class="md-nav__link">
+        dnsoverhttps
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4.x/okhttp-logging-interceptor/okhttp3.logging/" class="md-nav__link">
+        logging-interceptor
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4.x/okhttp-sse/okhttp3.sse/" class="md-nav__link">
+        sse
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4.x/okhttp-tls/okhttp3.tls/" class="md-nav__link">
+        tls
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4.x/okhttp-urlconnection/okhttp3/" class="md-nav__link">
+        urlconnection
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4.x/mockwebserver/okhttp3.mockwebserver/" class="md-nav__link">
+        mockwebserver
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="nav-7" type="checkbox" id="nav-7" >
+      
+      <label class="md-nav__link" for="nav-7">
+        3.12.x API
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="3.12.x API" data-md-level="1">
+        <label class="md-nav__title" for="nav-7">
+          <span class="md-nav__icon md-icon"></span>
+          3.12.x API
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://square.github.io/okhttp/3.x/okhttp/" class="md-nav__link">
+        okhttp ⏏
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://square.github.io/okhttp/3.x/okhttp-dnsoverhttps/" class="md-nav__link">
+        dnsoverhttps ⏏
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://square.github.io/okhttp/3.x/logging-interceptor/" class="md-nav__link">
+        logging-interceptor ⏏
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://square.github.io/okhttp/3.x/okhttp-sse/" class="md-nav__link">
+        sse ⏏
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://square.github.io/okhttp/3.x/okhttp-tls/" class="md-nav__link">
+        tls ⏏
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://square.github.io/okhttp/3.x/okhttp-urlconnection/" class="md-nav__link">
+        urlconnection ⏏
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://square.github.io/okhttp/3.x/mockwebserver/" class="md-nav__link">
+        mockwebserver ⏏
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="nav-8" type="checkbox" id="nav-8" checked>
+      
+      <label class="md-nav__link" for="nav-8">
+        Change Logs
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Change Logs" data-md-level="1">
+        <label class="md-nav__title" for="nav-8">
+          <span class="md-nav__icon md-icon"></span>
+          Change Logs
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../changelog/" class="md-nav__link">
+        Latest
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../changelog_3x/" class="md-nav__link">
+        Version 3.x
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../changelog_2x/" class="md-nav__link">
+        Version 2.x
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../changelog_1x/" class="md-nav__link">
+        Version 1.x
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          TLS History
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        TLS History
+      </a>
+      
+        
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#okhttp-314" class="md-nav__link">
+    OkHttp 3.14
+  </a>
+  
+    <nav class="md-nav" aria-label="OkHttp 3.14">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#restricted_tls-cipher-suites" class="md-nav__link">
+    RESTRICTED_TLS cipher suites
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modern_tls-compatible_tls-cipher-suites" class="md-nav__link">
+    MODERN_TLS / COMPATIBLE_TLS cipher suites
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#okhttp-313" class="md-nav__link">
+    OkHttp 3.13
+  </a>
+  
+    <nav class="md-nav" aria-label="OkHttp 3.13">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#restricted_tls-versions" class="md-nav__link">
+    RESTRICTED_TLS versions
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modern_tls-versions" class="md-nav__link">
+    MODERN_TLS versions
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compatible_tls-versions" class="md-nav__link">
+    COMPATIBLE_TLS versions
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#okhttp-312" class="md-nav__link">
+    OkHttp 3.12
+  </a>
+  
+    <nav class="md-nav" aria-label="OkHttp 3.12">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#restricted_tls-cipher-suites_1" class="md-nav__link">
+    RESTRICTED_TLS cipher suites
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modern_tls-compatible_tls-cipher-suites_1" class="md-nav__link">
+    MODERN_TLS / COMPATIBLE_TLS cipher suites
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#restricted_tls-versions_1" class="md-nav__link">
+    RESTRICTED_TLS versions
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modern_tls-versions_1" class="md-nav__link">
+    MODERN_TLS versions
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compatible_tls-versions_1" class="md-nav__link">
+    COMPATIBLE_TLS versions
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#okhttp-311" class="md-nav__link">
+    OkHttp 3.11
+  </a>
+  
+    <nav class="md-nav" aria-label="OkHttp 3.11">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#restricted_tls-cipher-suites_2" class="md-nav__link">
+    RESTRICTED_TLS cipher suites
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#restricted_tls-versions_2" class="md-nav__link">
+    RESTRICTED_TLS versions
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#okhttp-310" class="md-nav__link">
+    OkHttp 3.10
+  </a>
+  
+    <nav class="md-nav" aria-label="OkHttp 3.10">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#modern_tls-compatible_tls-cipher-suites_2" class="md-nav__link">
+    MODERN_TLS / COMPATIBLE_TLS cipher suites
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#okhttp-35" class="md-nav__link">
+    OkHttp 3.5
+  </a>
+  
+    <nav class="md-nav" aria-label="OkHttp 3.5">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#modern_tls-compatible_tls-cipher-suites_3" class="md-nav__link">
+    MODERN_TLS / COMPATIBLE_TLS cipher suites
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#okhttp-30" class="md-nav__link">
+    OkHttp 3.0
+  </a>
+  
+    <nav class="md-nav" aria-label="OkHttp 3.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#modern_tls-compatible_tls-cipher-suites_4" class="md-nav__link">
+    MODERN_TLS / COMPATIBLE_TLS cipher suites
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modern_tls-versions_2" class="md-nav__link">
+    MODERN_TLS versions
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compatible_tls-versions_2" class="md-nav__link">
+    COMPATIBLE_TLS versions
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1-tlsv13-only" class="md-nav__link">
+    ¹ TLSv1.3 Only
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-http2-cipher-suite-denylist" class="md-nav__link">
+    ² HTTP/2 Cipher Suite Denylist
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="nav-9" type="checkbox" id="nav-9" >
+      
+      <label class="md-nav__link" for="nav-9">
+        Contributing
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Contributing" data-md-level="1">
+        <label class="md-nav__title" for="nav-9">
+          <span class="md-nav__icon md-icon"></span>
+          Contributing
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contribute/contributing/" class="md-nav__link">
+        Contribute
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contribute/code_of_conduct/" class="md-nav__link">
+        Code of Conduct
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#okhttp-314" class="md-nav__link">
+    OkHttp 3.14
+  </a>
+  
+    <nav class="md-nav" aria-label="OkHttp 3.14">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#restricted_tls-cipher-suites" class="md-nav__link">
+    RESTRICTED_TLS cipher suites
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modern_tls-compatible_tls-cipher-suites" class="md-nav__link">
+    MODERN_TLS / COMPATIBLE_TLS cipher suites
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#okhttp-313" class="md-nav__link">
+    OkHttp 3.13
+  </a>
+  
+    <nav class="md-nav" aria-label="OkHttp 3.13">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#restricted_tls-versions" class="md-nav__link">
+    RESTRICTED_TLS versions
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modern_tls-versions" class="md-nav__link">
+    MODERN_TLS versions
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compatible_tls-versions" class="md-nav__link">
+    COMPATIBLE_TLS versions
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#okhttp-312" class="md-nav__link">
+    OkHttp 3.12
+  </a>
+  
+    <nav class="md-nav" aria-label="OkHttp 3.12">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#restricted_tls-cipher-suites_1" class="md-nav__link">
+    RESTRICTED_TLS cipher suites
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modern_tls-compatible_tls-cipher-suites_1" class="md-nav__link">
+    MODERN_TLS / COMPATIBLE_TLS cipher suites
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#restricted_tls-versions_1" class="md-nav__link">
+    RESTRICTED_TLS versions
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modern_tls-versions_1" class="md-nav__link">
+    MODERN_TLS versions
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compatible_tls-versions_1" class="md-nav__link">
+    COMPATIBLE_TLS versions
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#okhttp-311" class="md-nav__link">
+    OkHttp 3.11
+  </a>
+  
+    <nav class="md-nav" aria-label="OkHttp 3.11">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#restricted_tls-cipher-suites_2" class="md-nav__link">
+    RESTRICTED_TLS cipher suites
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#restricted_tls-versions_2" class="md-nav__link">
+    RESTRICTED_TLS versions
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#okhttp-310" class="md-nav__link">
+    OkHttp 3.10
+  </a>
+  
+    <nav class="md-nav" aria-label="OkHttp 3.10">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#modern_tls-compatible_tls-cipher-suites_2" class="md-nav__link">
+    MODERN_TLS / COMPATIBLE_TLS cipher suites
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#okhttp-35" class="md-nav__link">
+    OkHttp 3.5
+  </a>
+  
+    <nav class="md-nav" aria-label="OkHttp 3.5">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#modern_tls-compatible_tls-cipher-suites_3" class="md-nav__link">
+    MODERN_TLS / COMPATIBLE_TLS cipher suites
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#okhttp-30" class="md-nav__link">
+    OkHttp 3.0
+  </a>
+  
+    <nav class="md-nav" aria-label="OkHttp 3.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#modern_tls-compatible_tls-cipher-suites_4" class="md-nav__link">
+    MODERN_TLS / COMPATIBLE_TLS cipher suites
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modern_tls-versions_2" class="md-nav__link">
+    MODERN_TLS versions
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compatible_tls-versions_2" class="md-nav__link">
+    COMPATIBLE_TLS versions
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1-tlsv13-only" class="md-nav__link">
+    ¹ TLSv1.3 Only
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-http2-cipher-suite-denylist" class="md-nav__link">
+    ² HTTP/2 Cipher Suite Denylist
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                
+                <h1 id="tls-configuration-history">TLS Configuration History<a class="headerlink" href="#tls-configuration-history" title="Permanent link">&para;</a></h1>
+<p>OkHttp tracks the dynamic TLS ecosystem to balance connectivity and security. This page is a log of
+changes we&rsquo;ve made over time to OkHttp&rsquo;s default TLS options.</p>
+<h2 id="okhttp-314"><a href="https://square.github.io/okhttp/changelog_3x/#version-310">OkHttp 3.14</a><a class="headerlink" href="#okhttp-314" title="Permanent link">&para;</a></h2>
+<p><em>2019-03-14</em></p>
+<p>Remove 2 TLSv1.3 cipher suites that are neither available on OkHttp’s host platforms nor enabled in releases of Chrome and Firefox.</p>
+<h5 id="restricted_tls-cipher-suites">RESTRICTED_TLS cipher suites<a class="headerlink" href="#restricted_tls-cipher-suites" title="Permanent link">&para;</a></h5>
+<ul>
+<li>TLS_AES_128_GCM_SHA256<a href="#tlsv13_only">¹</a></li>
+<li>TLS_AES_256_GCM_SHA384<a href="#tlsv13_only">¹</a></li>
+<li>TLS_CHACHA20_POLY1305_SHA256<a href="#tlsv13_only">¹</a></li>
+<li>TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256</li>
+<li>TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256</li>
+<li>TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384</li>
+<li>TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384</li>
+<li>TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256</li>
+<li>TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256</li>
+<li><strong>REMOVED:</strong> <del>TLS_AES_128_CCM_SHA256<a href="#tlsv13_only">¹</a></del></li>
+<li><strong>REMOVED:</strong> <del>TLS_AES_128_CCM_8_SHA256<a href="#tlsv13_only">¹</a></del></li>
+</ul>
+<h5 id="modern_tls-compatible_tls-cipher-suites">MODERN_TLS / COMPATIBLE_TLS cipher suites<a class="headerlink" href="#modern_tls-compatible_tls-cipher-suites" title="Permanent link">&para;</a></h5>
+<ul>
+<li>TLS_AES_128_GCM_SHA256<a href="#tlsv13_only">¹</a></li>
+<li>TLS_AES_256_GCM_SHA384<a href="#tlsv13_only">¹</a></li>
+<li>TLS_CHACHA20_POLY1305_SHA256<a href="#tlsv13_only">¹</a></li>
+<li>TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256</li>
+<li>TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256</li>
+<li>TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384</li>
+<li>TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384</li>
+<li>TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256</li>
+<li>TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256</li>
+<li>TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA<a href="#http2_naughty">²</a></li>
+<li>TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA<a href="#http2_naughty">²</a></li>
+<li>TLS_RSA_WITH_AES_128_GCM_SHA256<a href="#http2_naughty">²</a></li>
+<li>TLS_RSA_WITH_AES_256_GCM_SHA384<a href="#http2_naughty">²</a></li>
+<li>TLS_RSA_WITH_AES_128_CBC_SHA<a href="#http2_naughty">²</a></li>
+<li>TLS_RSA_WITH_AES_256_CBC_SHA<a href="#http2_naughty">²</a></li>
+<li>TLS_RSA_WITH_3DES_EDE_CBC_SHA<a href="#http2_naughty">²</a></li>
+<li><strong>REMOVED:</strong> <del>TLS_AES_128_CCM_SHA256<a href="#tlsv13_only">¹</a></del></li>
+<li><strong>REMOVED:</strong> <del>TLS_AES_128_CCM_8_SHA256<a href="#tlsv13_only">¹</a></del></li>
+</ul>
+<h2 id="okhttp-313"><a href="https://square.github.io/okhttp/changelog_3x/#version-340">OkHttp 3.13</a><a class="headerlink" href="#okhttp-313" title="Permanent link">&para;</a></h2>
+<p><em>2019-02-04</em></p>
+<p>Remove TLSv1.1 and TLSv1 from MODERN_TLS. Change COMPATIBLE_TLS to support all TLS versions.</p>
+<h5 id="restricted_tls-versions">RESTRICTED_TLS versions<a class="headerlink" href="#restricted_tls-versions" title="Permanent link">&para;</a></h5>
+<ul>
+<li>TLSv1.3</li>
+<li>TLSv1.2</li>
+</ul>
+<h5 id="modern_tls-versions">MODERN_TLS versions<a class="headerlink" href="#modern_tls-versions" title="Permanent link">&para;</a></h5>
+<ul>
+<li>TLSv1.3</li>
+<li>TLSv1.2</li>
+<li><strong>REMOVED:</strong> <del>TLSv1.1</del></li>
+<li><strong>REMOVED:</strong> <del>TLSv1</del></li>
+</ul>
+<h5 id="compatible_tls-versions">COMPATIBLE_TLS versions<a class="headerlink" href="#compatible_tls-versions" title="Permanent link">&para;</a></h5>
+<ul>
+<li><strong>NEW:</strong> TLSv1.3</li>
+<li><strong>NEW:</strong> TLSv1.2</li>
+<li><strong>NEW:</strong> TLSv1.1</li>
+<li>TLSv1</li>
+</ul>
+<h2 id="okhttp-312"><a href="https://square.github.io/okhttp/changelog_3x/#version-330">OkHttp 3.12</a><a class="headerlink" href="#okhttp-312" title="Permanent link">&para;</a></h2>
+<p><em>2018-11-16</em></p>
+<p>Added support for TLSv1.3.</p>
+<h5 id="restricted_tls-cipher-suites_1">RESTRICTED_TLS cipher suites<a class="headerlink" href="#restricted_tls-cipher-suites_1" title="Permanent link">&para;</a></h5>
+<ul>
+<li><strong>NEW:</strong> TLS_AES_128_GCM_SHA256<a href="#tlsv13_only">¹</a></li>
+<li><strong>NEW:</strong> TLS_AES_256_GCM_SHA384<a href="#tlsv13_only">¹</a></li>
+<li><strong>NEW:</strong> TLS_CHACHA20_POLY1305_SHA256<a href="#tlsv13_only">¹</a></li>
+<li><strong>NEW:</strong> TLS_AES_128_CCM_SHA256<a href="#tlsv13_only">¹</a></li>
+<li><strong>NEW:</strong> TLS_AES_128_CCM_8_SHA256<a href="#tlsv13_only">¹</a></li>
+<li>TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256</li>
+<li>TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256</li>
+<li>TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384</li>
+<li>TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384</li>
+<li>TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256</li>
+<li>TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256</li>
+</ul>
+<h5 id="modern_tls-compatible_tls-cipher-suites_1">MODERN_TLS / COMPATIBLE_TLS cipher suites<a class="headerlink" href="#modern_tls-compatible_tls-cipher-suites_1" title="Permanent link">&para;</a></h5>
+<ul>
+<li><strong>NEW:</strong> TLS_AES_128_GCM_SHA256<a href="#tlsv13_only">¹</a></li>
+<li><strong>NEW:</strong> TLS_AES_256_GCM_SHA384<a href="#tlsv13_only">¹</a></li>
+<li><strong>NEW:</strong> TLS_CHACHA20_POLY1305_SHA256<a href="#tlsv13_only">¹</a></li>
+<li><strong>NEW:</strong> TLS_AES_128_CCM_SHA256<a href="#tlsv13_only">¹</a></li>
+<li><strong>NEW:</strong> TLS_AES_128_CCM_8_SHA256<a href="#tlsv13_only">¹</a></li>
+<li>TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256</li>
+<li>TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256</li>
+<li>TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384</li>
+<li>TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384</li>
+<li>TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256</li>
+<li>TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256</li>
+<li>TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA<a href="#http2_naughty">²</a></li>
+<li>TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA<a href="#http2_naughty">²</a></li>
+<li>TLS_RSA_WITH_AES_128_GCM_SHA256<a href="#http2_naughty">²</a></li>
+<li>TLS_RSA_WITH_AES_256_GCM_SHA384<a href="#http2_naughty">²</a></li>
+<li>TLS_RSA_WITH_AES_128_CBC_SHA<a href="#http2_naughty">²</a></li>
+<li>TLS_RSA_WITH_AES_256_CBC_SHA<a href="#http2_naughty">²</a></li>
+<li>TLS_RSA_WITH_3DES_EDE_CBC_SHA<a href="#http2_naughty">²</a></li>
+</ul>
+<h5 id="restricted_tls-versions_1">RESTRICTED_TLS versions<a class="headerlink" href="#restricted_tls-versions_1" title="Permanent link">&para;</a></h5>
+<ul>
+<li><strong>NEW:</strong> TLSv1.3</li>
+<li>TLSv1.2</li>
+</ul>
+<h5 id="modern_tls-versions_1">MODERN_TLS versions<a class="headerlink" href="#modern_tls-versions_1" title="Permanent link">&para;</a></h5>
+<ul>
+<li><strong>NEW:</strong> TLSv1.3</li>
+<li>TLSv1.2</li>
+<li>TLSv1.1</li>
+<li>TLSv1</li>
+</ul>
+<h5 id="compatible_tls-versions_1">COMPATIBLE_TLS versions<a class="headerlink" href="#compatible_tls-versions_1" title="Permanent link">&para;</a></h5>
+<ul>
+<li>TLSv1</li>
+</ul>
+<h2 id="okhttp-311"><a href="https://square.github.io/okhttp/changelog_3x/#version-320">OkHttp 3.11</a><a class="headerlink" href="#okhttp-311" title="Permanent link">&para;</a></h2>
+<p><em>2018-07-12</em></p>
+<p>Added a new extra strict RESTRICTED_TLS configuration inspired by <a href="https://cloud.google.com/load-balancing/docs/ssl-policies-concepts">Google Cloud’s similar policy</a>. It is appropriate when both the host platform
+(JVM/Conscrypt/Android) and target webserver are current.</p>
+<h5 id="restricted_tls-cipher-suites_2">RESTRICTED_TLS cipher suites<a class="headerlink" href="#restricted_tls-cipher-suites_2" title="Permanent link">&para;</a></h5>
+<ul>
+<li>TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256</li>
+<li>TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256</li>
+<li>TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384</li>
+<li>TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384</li>
+<li>TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256</li>
+<li>TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256</li>
+</ul>
+<h5 id="restricted_tls-versions_2">RESTRICTED_TLS versions<a class="headerlink" href="#restricted_tls-versions_2" title="Permanent link">&para;</a></h5>
+<ul>
+<li>TLSv1.2</li>
+</ul>
+<h2 id="okhttp-310"><a href="https://square.github.io/okhttp/changelog_3x/#version-310">OkHttp 3.10</a><a class="headerlink" href="#okhttp-310" title="Permanent link">&para;</a></h2>
+<p><em>2018-02-24</em></p>
+<p>Remove two rarely-used cipher suites from the default set. This tracks a <a href="https://developers.google.com/web/updates/2016/12/chrome-56-deprecations#remove_cbc-mode_ecdsa_ciphers_in_tls">Chromium change</a> to remove these cipher suites because they are fragile and rarely-used.</p>
+<h5 id="modern_tls-compatible_tls-cipher-suites_2">MODERN_TLS / COMPATIBLE_TLS cipher suites<a class="headerlink" href="#modern_tls-compatible_tls-cipher-suites_2" title="Permanent link">&para;</a></h5>
+<ul>
+<li>TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256</li>
+<li>TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256</li>
+<li>TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384</li>
+<li>TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384</li>
+<li>TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256</li>
+<li>TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256</li>
+<li>TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA<a href="#http2_naughty">²</a></li>
+<li>TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA<a href="#http2_naughty">²</a></li>
+<li>TLS_RSA_WITH_AES_128_GCM_SHA256<a href="#http2_naughty">²</a></li>
+<li>TLS_RSA_WITH_AES_256_GCM_SHA384<a href="#http2_naughty">²</a></li>
+<li>TLS_RSA_WITH_AES_128_CBC_SHA<a href="#http2_naughty">²</a></li>
+<li>TLS_RSA_WITH_AES_256_CBC_SHA<a href="#http2_naughty">²</a></li>
+<li>TLS_RSA_WITH_3DES_EDE_CBC_SHA<a href="#http2_naughty">²</a></li>
+<li><strong>REMOVED:</strong> <del>TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA</del></li>
+<li><strong>REMOVED:</strong> <del>TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA</del></li>
+</ul>
+<h2 id="okhttp-35"><a href="https://square.github.io/okhttp/changelog_3x/#version-350">OkHttp 3.5</a><a class="headerlink" href="#okhttp-35" title="Permanent link">&para;</a></h2>
+<p><em>2016-11-30</em></p>
+<p>Remove three old cipher suites and add five new ones. This tracks changes in what&rsquo;s available on
+Android and Java, and also what cipher suites recent releases of Chrome and Firefox support by
+default.</p>
+<h5 id="modern_tls-compatible_tls-cipher-suites_3">MODERN_TLS / COMPATIBLE_TLS cipher suites<a class="headerlink" href="#modern_tls-compatible_tls-cipher-suites_3" title="Permanent link">&para;</a></h5>
+<ul>
+<li>TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256</li>
+<li>TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256</li>
+<li><strong>NEW:</strong> TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384</li>
+<li><strong>NEW:</strong> TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384</li>
+<li><strong>NEW:</strong> TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256</li>
+<li><strong>NEW:</strong> TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256</li>
+<li>TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA<a href="#http2_naughty">²</a></li>
+<li>TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA<a href="#http2_naughty">²</a></li>
+<li>TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA<a href="#http2_naughty">²</a></li>
+<li>TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA<a href="#http2_naughty">²</a></li>
+<li>TLS_RSA_WITH_AES_128_GCM_SHA256<a href="#http2_naughty">²</a></li>
+<li><strong>NEW:</strong> TLS_RSA_WITH_AES_256_GCM_SHA384<a href="#http2_naughty">²</a></li>
+<li>TLS_RSA_WITH_AES_128_CBC_SHA<a href="#http2_naughty">²</a></li>
+<li>TLS_RSA_WITH_AES_256_CBC_SHA<a href="#http2_naughty">²</a></li>
+<li>TLS_RSA_WITH_3DES_EDE_CBC_SHA<a href="#http2_naughty">²</a></li>
+<li><strong>REMOVED:</strong> <del>TLS_DHE_RSA_WITH_AES_128_CBC_SHA</del></li>
+<li><strong>REMOVED:</strong> <del>TLS_DHE_RSA_WITH_AES_128_GCM_SHA256</del></li>
+<li><strong>REMOVED:</strong> <del>TLS_DHE_RSA_WITH_AES_256_CBC_SHA</del></li>
+</ul>
+<h2 id="okhttp-30"><a href="https://square.github.io/okhttp/changelog_3x/#version-300">OkHttp 3.0</a><a class="headerlink" href="#okhttp-30" title="Permanent link">&para;</a></h2>
+<p><em>2016-01-13</em></p>
+<h5 id="modern_tls-compatible_tls-cipher-suites_4">MODERN_TLS / COMPATIBLE_TLS cipher suites<a class="headerlink" href="#modern_tls-compatible_tls-cipher-suites_4" title="Permanent link">&para;</a></h5>
+<ul>
+<li>TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256</li>
+<li>TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256</li>
+<li>TLS_DHE_RSA_WITH_AES_128_GCM_SHA256</li>
+<li>TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA<a href="#http2_naughty">²</a></li>
+<li>TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA<a href="#http2_naughty">²</a></li>
+<li>TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA<a href="#http2_naughty">²</a></li>
+<li>TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA<a href="#http2_naughty">²</a></li>
+<li>TLS_DHE_RSA_WITH_AES_128_CBC_SHA<a href="#http2_naughty">²</a></li>
+<li>TLS_DHE_RSA_WITH_AES_256_CBC_SHA<a href="#http2_naughty">²</a></li>
+<li>TLS_RSA_WITH_AES_128_GCM_SHA256<a href="#http2_naughty">²</a></li>
+<li>TLS_RSA_WITH_AES_128_CBC_SHA<a href="#http2_naughty">²</a></li>
+<li>TLS_RSA_WITH_AES_256_CBC_SHA<a href="#http2_naughty">²</a></li>
+<li>TLS_RSA_WITH_3DES_EDE_CBC_SHA<a href="#http2_naughty">²</a></li>
+</ul>
+<h5 id="modern_tls-versions_2">MODERN_TLS versions<a class="headerlink" href="#modern_tls-versions_2" title="Permanent link">&para;</a></h5>
+<ul>
+<li>TLSv1.2</li>
+<li>TLSv1.1</li>
+<li>TLSv1</li>
+</ul>
+<h5 id="compatible_tls-versions_2">COMPATIBLE_TLS versions<a class="headerlink" href="#compatible_tls-versions_2" title="Permanent link">&para;</a></h5>
+<ul>
+<li>TLSv1</li>
+</ul>
+<hr />
+<p><a name="tlsv13_only"></a></p>
+<h4 id="1-tlsv13-only">¹ TLSv1.3 Only<a class="headerlink" href="#1-tlsv13-only" title="Permanent link">&para;</a></h4>
+<p>Cipher suites that are only available with TLSv1.3.</p>
+<p><a name="http2_naughty"></a></p>
+<h4 id="2-http2-cipher-suite-denylist">² HTTP/2 Cipher Suite Denylist<a class="headerlink" href="#2-http2-cipher-suite-denylist" title="Permanent link">&para;</a></h4>
+<p>Cipher suites that are <a href="https://tools.ietf.org/html/rfc7540#appendix-A">discouraged for use</a> with HTTP/2. OkHttp includes them because better suites are not commonly available. For example, none of the better cipher suites listed above shipped with Android 4.4 or Java 7.</p>
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
+        
+          <a href="../changelog_1x/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+            </div>
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Version 1.x
+              </div>
+            </div>
+          </a>
+        
+        
+          <a href="../../contribute/contributing/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Contribute
+              </div>
+            </div>
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            Copyright &copy; 2019 Square, Inc.
+          </div>
+        
+        Made with
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+          Material for MkDocs
+        </a>
+      </div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="../../assets/javascripts/vendor.18f0862e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.994580cf.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script>
+      
+      <script>
+        app = initialize({
+          base: "../..",
+          features: ['navigation.tabs'],
+          search: Object.assign({
+            worker: "../../assets/javascripts/worker/search.9c0e82ba.min.js"
+          }, typeof search !== "undefined" && search)
+        })
+      </script>
+      
+    
+  </body>
+</html>

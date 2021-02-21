@@ -1,0 +1,2112 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="An HTTP & HTTP/2 client for Android and Java applications">
+      
+      
+      
+        <meta name="author" content="Square, Inc.">
+      
+      
+        <link rel="canonical" href="https://square.github.com/okhttp/changelogs/changelog_2x/">
+      
+      <link rel="shortcut icon" href="../../images/icon-square.png">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-6.2.8">
+    
+    
+      
+        <title>Version 2.x - OkHttp</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.cb6bc1d0.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.39b8e14a.min.css">
+        
+          
+          
+          <meta name="theme-color" content="#009485">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>body,input{font-family:"Roboto",-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono",SFMono-Regular,Consolas,Menlo,monospace}</style>
+      
+    
+    
+    
+      <link rel="stylesheet" href="../../css/app.css">
+    
+    
+      
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="white">
+      
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#okhttp-2x-change-log" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid" aria-label="Header">
+    <a href="https://square.github.com/okhttp/" title="OkHttp" class="md-header-nav__button md-logo" aria-label="OkHttp">
+      
+  <img src="../../images/icon-square.png" alt="logo">
+
+    </a>
+    <label class="md-header-nav__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header-nav__title" data-md-component="header-title">
+      <div class="md-header-nav__ellipsis">
+        <div class="md-header-nav__topic">
+          <span class="md-ellipsis">
+            OkHttp
+          </span>
+        </div>
+        <div class="md-header-nav__topic">
+          <span class="md-ellipsis">
+            
+              Version 2.x
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <label class="md-header-nav__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0116 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 019.5 16 6.5 6.5 0 013 9.5 6.5 6.5 0 019.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" data-md-state="active" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0116 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 019.5 16 6.5 6.5 0 013 9.5 6.5 6.5 0 019.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <button type="reset" class="md-search__icon md-icon" aria-label="Clear" data-md-component="search-reset" tabindex="-1">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header-nav__source">
+        
+<a href="https://github.com/square/okhttp" title="Go to repository" class="md-source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 00-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 01-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 000 40.81l195.61 195.6a28.86 28.86 0 0040.8 0l194.69-194.69a28.86 28.86 0 000-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    OkHttp
+  </div>
+</a>
+      </div>
+    
+  </nav>
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-tabs__inner md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        Overview
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../features/caching/" class="md-tabs__link">
+        Features
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../../recipes/" class="md-tabs__link">
+      Recipes
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../security/security/" class="md-tabs__link">
+        Security
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../../works_with_okhttp/" class="md-tabs__link">
+      Works with OkHttp
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../4.x/upgrading_to_okhttp_4/" class="md-tabs__link">
+        4.x API
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://square.github.io/okhttp/3.x/okhttp/" class="md-tabs__link">
+        3.12.x API
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../changelog/" class="md-tabs__link md-tabs__link--active">
+        Change Logs
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../contribute/contributing/" class="md-tabs__link">
+        Contributing
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="https://square.github.com/okhttp/" title="OkHttp" class="md-nav__button md-logo" aria-label="OkHttp">
+      
+  <img src="../../images/icon-square.png" alt="logo">
+
+    </a>
+    OkHttp
+  </label>
+  
+    <div class="md-nav__source">
+      
+<a href="https://github.com/square/okhttp" title="Go to repository" class="md-source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 00-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 01-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 000 40.81l195.61 195.6a28.86 28.86 0 0040.8 0l194.69-194.69a28.86 28.86 0 000-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    OkHttp
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="nav-1" type="checkbox" id="nav-1" >
+      
+      <label class="md-nav__link" for="nav-1">
+        Overview
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Overview" data-md-level="1">
+        <label class="md-nav__title" for="nav-1">
+          <span class="md-nav__icon md-icon"></span>
+          Overview
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        Introduction
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://stackoverflow.com/questions/tagged/okhttp?sort=active" class="md-nav__link">
+        Stack Overflow ⏏
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2" >
+      
+      <label class="md-nav__link" for="nav-2">
+        Features
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Features" data-md-level="1">
+        <label class="md-nav__title" for="nav-2">
+          <span class="md-nav__icon md-icon"></span>
+          Features
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/caching/" class="md-nav__link">
+        Caching
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/calls/" class="md-nav__link">
+        Calls
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/concurrency/" class="md-nav__link">
+        Concurrency
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/connections/" class="md-nav__link">
+        Connections
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/debug_logging/" class="md-nav__link">
+        Debug Logging
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/events/" class="md-nav__link">
+        Events
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/https/" class="md-nav__link">
+        HTTPS
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/interceptors/" class="md-nav__link">
+        Interceptors
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/r8_proguard/" class="md-nav__link">
+        R8 / ProGuard
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../recipes/" class="md-nav__link">
+        Recipes
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4" >
+      
+      <label class="md-nav__link" for="nav-4">
+        Security
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Security" data-md-level="1">
+        <label class="md-nav__title" for="nav-4">
+          <span class="md-nav__icon md-icon"></span>
+          Security
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/security/" class="md-nav__link">
+        Security Policy
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../security/security_providers/" class="md-nav__link">
+        Security Providers
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../works_with_okhttp/" class="md-nav__link">
+        Works with OkHttp
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6" >
+      
+      <label class="md-nav__link" for="nav-6">
+        4.x API
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="4.x API" data-md-level="1">
+        <label class="md-nav__title" for="nav-6">
+          <span class="md-nav__icon md-icon"></span>
+          4.x API
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4.x/upgrading_to_okhttp_4/" class="md-nav__link">
+        Upgrading to OkHttp 4
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4.x/okhttp/okhttp3/" class="md-nav__link">
+        okhttp
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4.x/okhttp-brotli/okhttp3.brotli/" class="md-nav__link">
+        brotli
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4.x/okhttp-dnsoverhttps/okhttp3.dnsoverhttps/" class="md-nav__link">
+        dnsoverhttps
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4.x/okhttp-logging-interceptor/okhttp3.logging/" class="md-nav__link">
+        logging-interceptor
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4.x/okhttp-sse/okhttp3.sse/" class="md-nav__link">
+        sse
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4.x/okhttp-tls/okhttp3.tls/" class="md-nav__link">
+        tls
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4.x/okhttp-urlconnection/okhttp3/" class="md-nav__link">
+        urlconnection
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4.x/mockwebserver/okhttp3.mockwebserver/" class="md-nav__link">
+        mockwebserver
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="nav-7" type="checkbox" id="nav-7" >
+      
+      <label class="md-nav__link" for="nav-7">
+        3.12.x API
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="3.12.x API" data-md-level="1">
+        <label class="md-nav__title" for="nav-7">
+          <span class="md-nav__icon md-icon"></span>
+          3.12.x API
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://square.github.io/okhttp/3.x/okhttp/" class="md-nav__link">
+        okhttp ⏏
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://square.github.io/okhttp/3.x/okhttp-dnsoverhttps/" class="md-nav__link">
+        dnsoverhttps ⏏
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://square.github.io/okhttp/3.x/logging-interceptor/" class="md-nav__link">
+        logging-interceptor ⏏
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://square.github.io/okhttp/3.x/okhttp-sse/" class="md-nav__link">
+        sse ⏏
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://square.github.io/okhttp/3.x/okhttp-tls/" class="md-nav__link">
+        tls ⏏
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://square.github.io/okhttp/3.x/okhttp-urlconnection/" class="md-nav__link">
+        urlconnection ⏏
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://square.github.io/okhttp/3.x/mockwebserver/" class="md-nav__link">
+        mockwebserver ⏏
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="nav-8" type="checkbox" id="nav-8" checked>
+      
+      <label class="md-nav__link" for="nav-8">
+        Change Logs
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Change Logs" data-md-level="1">
+        <label class="md-nav__title" for="nav-8">
+          <span class="md-nav__icon md-icon"></span>
+          Change Logs
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../changelog/" class="md-nav__link">
+        Latest
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../changelog_3x/" class="md-nav__link">
+        Version 3.x
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Version 2.x
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Version 2.x
+      </a>
+      
+        
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#version-275" class="md-nav__link">
+    Version 2.7.5
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-274" class="md-nav__link">
+    Version 2.7.4
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-273" class="md-nav__link">
+    Version 2.7.3
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-272" class="md-nav__link">
+    Version 2.7.2
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-271" class="md-nav__link">
+    Version 2.7.1
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-270" class="md-nav__link">
+    Version 2.7.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-260" class="md-nav__link">
+    Version 2.6.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-250" class="md-nav__link">
+    Version 2.5.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-240" class="md-nav__link">
+    Version 2.4.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-240-rc1" class="md-nav__link">
+    Version 2.4.0-RC1
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-230" class="md-nav__link">
+    Version 2.3.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-220" class="md-nav__link">
+    Version 2.2.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-210" class="md-nav__link">
+    Version 2.1.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-210-rc1" class="md-nav__link">
+    Version 2.1.0-RC1
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-200" class="md-nav__link">
+    Version 2.0.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-200-rc2" class="md-nav__link">
+    Version 2.0.0-RC2
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-200-rc1" class="md-nav__link">
+    Version 2.0.0-RC1
+  </a>
+  
+    <nav class="md-nav" aria-label="Version 2.0.0-RC1">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#api-changes" class="md-nav__link">
+    API Changes
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#implementation-changes" class="md-nav__link">
+    Implementation changes
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-1x" class="md-nav__link">
+    Version 1.x
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../changelog_1x/" class="md-nav__link">
+        Version 1.x
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tls_configuration_history/" class="md-nav__link">
+        TLS History
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="nav-9" type="checkbox" id="nav-9" >
+      
+      <label class="md-nav__link" for="nav-9">
+        Contributing
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Contributing" data-md-level="1">
+        <label class="md-nav__title" for="nav-9">
+          <span class="md-nav__icon md-icon"></span>
+          Contributing
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contribute/contributing/" class="md-nav__link">
+        Contribute
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contribute/code_of_conduct/" class="md-nav__link">
+        Code of Conduct
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#version-275" class="md-nav__link">
+    Version 2.7.5
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-274" class="md-nav__link">
+    Version 2.7.4
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-273" class="md-nav__link">
+    Version 2.7.3
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-272" class="md-nav__link">
+    Version 2.7.2
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-271" class="md-nav__link">
+    Version 2.7.1
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-270" class="md-nav__link">
+    Version 2.7.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-260" class="md-nav__link">
+    Version 2.6.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-250" class="md-nav__link">
+    Version 2.5.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-240" class="md-nav__link">
+    Version 2.4.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-240-rc1" class="md-nav__link">
+    Version 2.4.0-RC1
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-230" class="md-nav__link">
+    Version 2.3.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-220" class="md-nav__link">
+    Version 2.2.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-210" class="md-nav__link">
+    Version 2.1.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-210-rc1" class="md-nav__link">
+    Version 2.1.0-RC1
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-200" class="md-nav__link">
+    Version 2.0.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-200-rc2" class="md-nav__link">
+    Version 2.0.0-RC2
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-200-rc1" class="md-nav__link">
+    Version 2.0.0-RC1
+  </a>
+  
+    <nav class="md-nav" aria-label="Version 2.0.0-RC1">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#api-changes" class="md-nav__link">
+    API Changes
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#implementation-changes" class="md-nav__link">
+    Implementation changes
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-1x" class="md-nav__link">
+    Version 1.x
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                
+                <h1 id="okhttp-2x-change-log">OkHttp 2.x Change Log<a class="headerlink" href="#okhttp-2x-change-log" title="Permanent link">&para;</a></h1>
+<h2 id="version-275">Version 2.7.5<a class="headerlink" href="#version-275" title="Permanent link">&para;</a></h2>
+<p><em>2016-02-25</em></p>
+<ul>
+<li>Fix: Change the certificate pinner to always build full chains. This
+    prevents a potential crash when using certificate pinning with the Google
+    Play Services security provider.</li>
+</ul>
+<h2 id="version-274">Version 2.7.4<a class="headerlink" href="#version-274" title="Permanent link">&para;</a></h2>
+<p><em>2016-02-07</em></p>
+<ul>
+<li>Fix: Don&rsquo;t crash when finding the trust manager if the Play Services (GMS)
+    security provider is installed.</li>
+<li>Fix: The previous release introduced a performance regression on Android,
+    caused by looking up CA certificates. This is now fixed.</li>
+</ul>
+<h2 id="version-273">Version 2.7.3<a class="headerlink" href="#version-273" title="Permanent link">&para;</a></h2>
+<p><em>2016-02-06</em></p>
+<ul>
+<li>Fix: Permit the trusted CA root to be pinned by <code>CertificatePinner</code>.</li>
+</ul>
+<h2 id="version-272">Version 2.7.2<a class="headerlink" href="#version-272" title="Permanent link">&para;</a></h2>
+<p><em>2016-01-07</em></p>
+<ul>
+<li>Fix: Don&rsquo;t eagerly release stream allocations on cache hits. We might still
+    need them to handle redirects.</li>
+</ul>
+<h2 id="version-271">Version 2.7.1<a class="headerlink" href="#version-271" title="Permanent link">&para;</a></h2>
+<p><em>2016-01-01</em></p>
+<ul>
+<li>Fix: Don&rsquo;t do a health check on newly-created connections. This is
+    unnecessary work that could put the client in an inconsistent state if the
+    health check fails.</li>
+</ul>
+<h2 id="version-270">Version 2.7.0<a class="headerlink" href="#version-270" title="Permanent link">&para;</a></h2>
+<p><em>2015-12-13</em></p>
+<ul>
+<li><strong>Rewritten connection management.</strong> Previously OkHttp&rsquo;s connection pool
+    managed both idle and active connections for HTTP/2, but only idle
+    connections for HTTP/1.x. With this update the connection pool manages both
+    idle and active connections for everything. OkHttp now detects and warns on
+    connections that were allocated but never released, and will enforce HTTP/2
+    stream limits. This update also fixes <code>Call.cancel()</code> to not do I/O on the
+    calling thread.</li>
+<li>Fix: Don&rsquo;t log gzipped data in the logging interceptor.</li>
+<li>Fix: Don&rsquo;t resolve DNS addresses when connecting through a SOCKS proxy.</li>
+<li>Fix: Drop the synthetic <code>OkHttp-Selected-Protocol</code> response header.</li>
+<li>Fix: Support 204 and 205 &lsquo;No Content&rsquo; replies in the logging interceptor.</li>
+<li>New: Add <code>Call.isExecuted()</code>.</li>
+</ul>
+<h2 id="version-260">Version 2.6.0<a class="headerlink" href="#version-260" title="Permanent link">&para;</a></h2>
+<p><em>2015-11-22</em></p>
+<ul>
+<li>
+<p><strong>New Logging Interceptor.</strong> The <code>logging-interceptor</code> subproject offers
+    simple request and response logging. It may be configured to log headers and
+    bodies for debugging. It requires this Maven dependency:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">&lt;dependency&gt;</span>
+  <span class="nt">&lt;groupId&gt;</span>com.squareup.okhttp<span class="nt">&lt;/groupId&gt;</span>
+  <span class="nt">&lt;artifactId&gt;</span>logging-interceptor<span class="nt">&lt;/artifactId&gt;</span>
+  <span class="nt">&lt;version&gt;</span>2.6.0<span class="nt">&lt;/version&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+</code></pre></div>
+
+<p>Configure basic logging like this:</p>
+<div class="highlight"><pre><span></span><code><span class="n">HttpLoggingInterceptor</span> <span class="n">loggingInterceptor</span> <span class="o">=</span> <span class="k">new</span> <span class="n">HttpLoggingInterceptor</span><span class="p">();</span>
+<span class="n">loggingInterceptor</span><span class="p">.</span><span class="na">setLevel</span><span class="p">(</span><span class="n">HttpLoggingInterceptor</span><span class="p">.</span><span class="na">Level</span><span class="p">.</span><span class="na">BASIC</span><span class="p">);</span>
+<span class="n">client</span><span class="p">.</span><span class="na">networkInterceptors</span><span class="p">().</span><span class="na">add</span><span class="p">(</span><span class="n">loggingInterceptor</span><span class="p">);</span>
+</code></pre></div>
+
+<p><strong>Warning:</strong> Avoid <code>Level.HEADERS</code> and <code>Level.BODY</code> in production because
+they could leak passwords and other authentication credentials to insecure
+logs.</p>
+</li>
+<li>
+<p><strong>WebSocket API now uses <code>RequestBody</code> and <code>ResponseBody</code> for messages.</strong>
+    This is a backwards-incompatible API change.</p>
+</li>
+<li>
+<p><strong>The DNS service is now pluggable.</strong> In some situations this may be useful
+    to manually prioritize specific IP addresses.</p>
+</li>
+<li>
+<p>Fix: Don&rsquo;t throw when converting an <code>HttpUrl</code> to a <code>java.net.URI</code>.
+    Previously URLs with special characters like <code>|</code> and <code>[</code> would break when
+    subjected to URI’s overly-strict validation.</p>
+</li>
+<li>Fix: Don&rsquo;t re-encode <code>+</code> as <code>%20</code> in encoded URL query strings. OkHttp
+    prefers <code>%20</code> when doing its own encoding, but will retain <code>+</code> when that is
+    provided.</li>
+<li>Fix: Enforce that callers call <code>WebSocket.close()</code> on IO errors. Error
+    handling in WebSockets is significantly improved.</li>
+<li>Fix: Don&rsquo;t use SPDY/3 style header concatenation for HTTP/2 request headers.
+    This could have corrupted requests where multiple headers had the same name,
+    as in cookies.</li>
+<li>Fix: Reject bad characters in the URL hostname. Previously characters like
+    <code>\0</code> would cause a late crash when building the request.</li>
+<li>Fix: Allow interceptors to change the request method.</li>
+<li>Fix: Don’t use the request&rsquo;s <code>User-Agent</code> or <code>Proxy-Authorization</code> when
+    connecting to an HTTPS server via an HTTP tunnel. The <code>Proxy-Authorization</code>
+    header was being leaked to the origin server.</li>
+<li>Fix: Digits may be used in a URL scheme.</li>
+<li>Fix: Improve connection timeout recovery.</li>
+<li>Fix: Recover from <code>getsockname</code> crashes impacting Android releases prior to
+    4.2.2.</li>
+<li>Fix: Drop partial support for HTTP/1.0. Previously OkHttp would send
+    <code>HTTP/1.0</code> on connections after seeing a response with <code>HTTP/1.0</code>. The fixed
+    behavior is consistent with Firefox and Chrome.</li>
+<li>Fix: Allow a body in <code>OPTIONS</code> requests.</li>
+<li>Fix: Don&rsquo;t percent-encode non-ASCII characters in URL fragments.</li>
+<li>Fix: Handle null fragments.</li>
+<li>Fix: Don’t crash on interceptors that throw <code>IOException</code> before a
+    connection is attempted.</li>
+<li>New: Support <a href="https://tools.ietf.org/html/rfc4918">WebDAV</a> HTTP methods.</li>
+<li>New: Buffer WebSocket frames for better performance.</li>
+<li>New: Drop support for <code>TLS_DHE_DSS_WITH_AES_128_CBC_SHA</code>, our only remaining
+    DSS cipher suite. This is consistent with Firefox and Chrome which have also
+    dropped these cipher suite.</li>
+</ul>
+<h2 id="version-250">Version 2.5.0<a class="headerlink" href="#version-250" title="Permanent link">&para;</a></h2>
+<p><em>2015-08-25</em></p>
+<ul>
+<li>
+<p><strong>Timeouts now default to 10 seconds.</strong> Previously we defaulted to never
+    timing out, and that was a lousy policy. If establishing a connection,
+    reading the next byte from a connection, or writing the next byte to a
+    connection takes more than 10 seconds to complete, you’ll need to adjust
+    the timeouts manually.</p>
+</li>
+<li>
+<p><strong>OkHttp now rejects request headers that contain invalid characters.</strong> This
+    includes potential security problems (newline characters) as well as simple
+    non-ASCII characters (including international characters and emoji).</p>
+</li>
+<li>
+<p><strong>Call canceling is more reliable.</strong>  We had a bug where a socket being
+     connected wasn&rsquo;t being closed when the application used <code>Call.cancel()</code>.</p>
+</li>
+<li>
+<p><strong>Changing a HttpUrl’s scheme now tracks the default port.</strong> We had a bug
+    where changing a URL from <code>http</code> to <code>https</code> would leave it on port 80.</p>
+</li>
+<li>
+<p><strong>Okio has been updated to 1.6.0.</strong>
+     <div class="highlight"><pre><span></span><code><span class="nt">&lt;dependency&gt;</span>
+  <span class="nt">&lt;groupId&gt;</span>com.squareup.okio<span class="nt">&lt;/groupId&gt;</span>
+  <span class="nt">&lt;artifactId&gt;</span>okio<span class="nt">&lt;/artifactId&gt;</span>
+  <span class="nt">&lt;version&gt;</span>1.6.0<span class="nt">&lt;/version&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+</code></pre></div></p>
+</li>
+<li>
+<p>New: <code>Cache.initialize()</code>. Call this on a background thread to eagerly
+    initialize the response cache.</p>
+</li>
+<li>New: Fold <code>MockWebServerRule</code> into <code>MockWebServer</code>. This makes it easier to
+    write JUnit tests with <code>MockWebServer</code>. The <code>MockWebServer</code> library now
+    depends on JUnit, though it continues to work with all testing frameworks.</li>
+<li>Fix: <code>FormEncodingBuilder</code> is now consistent with browsers in which
+    characters it escapes. Previously we weren’t percent-encoding commas,
+    parens, and other characters.</li>
+<li>Fix: Relax <code>FormEncodingBuilder</code> to support building empty forms.</li>
+<li>Fix: Timeouts throw <code>SocketTimeoutException</code>, not <code>InterruptedIOException</code>.</li>
+<li>Fix: Change <code>MockWebServer</code> to use the same logic as OkHttp when determining
+    whether an HTTP request permits a body.</li>
+<li>Fix: <code>HttpUrl</code> now uses the canonical form for IPv6 addresses.</li>
+<li>Fix: Use <code>HttpUrl</code> internally.</li>
+<li>Fix: Recover from Android 4.2.2 EBADF crashes.</li>
+<li>Fix: Don&rsquo;t crash with an <code>IllegalStateException</code> if an HTTP/2 or SPDY
+    write fails, leaving the connection in an inconsistent state.</li>
+<li>Fix: Make sure the default user agent is ASCII.</li>
+</ul>
+<h2 id="version-240">Version 2.4.0<a class="headerlink" href="#version-240" title="Permanent link">&para;</a></h2>
+<p><em>2015-05-22</em></p>
+<ul>
+<li>
+<p><strong>Forbid response bodies on HTTP 204 and 205 responses.</strong> Webservers that
+    return such malformed responses will now trigger a <code>ProtocolException</code> in
+    the client.</p>
+</li>
+<li>
+<p><strong>WebSocketListener has incompatible changes.</strong> The <code>onOpen()</code> method is now
+    called on the reader thread, so implementations must return before further
+    websocket messages will be delivered. The <code>onFailure()</code> method now includes
+    an HTTP response if one was returned.</p>
+</li>
+</ul>
+<h2 id="version-240-rc1">Version 2.4.0-RC1<a class="headerlink" href="#version-240-rc1" title="Permanent link">&para;</a></h2>
+<p><em>2015-05-16</em></p>
+<ul>
+<li>
+<p><strong>New HttpUrl API.</strong> It&rsquo;s like <code>java.net.URL</code> but good. Note that
+    <code>Request.Builder.url()</code> now throws <code>IllegalArgumentException</code> on malformed
+    URLs. (Previous releases would throw a <code>MalformedURLException</code> when calling
+    a malformed URL.)</p>
+</li>
+<li>
+<p><strong>We&rsquo;ve improved connect failure recovery.</strong> We now differentiate between
+    setup, connecting, and connected and implement appropriate recovery rules
+    for each. This changes <code>Address</code> to no longer use <code>ConnectionSpec</code>. (This is
+    an incompatible API change).</p>
+</li>
+<li>
+<p><strong><code>FormEncodingBuilder</code> now uses <code>%20</code> instead of <code>+</code> for encoded spaces.</strong>
+    Both are permitted-by-spec, but <code>%20</code> requires fewer special cases.</p>
+</li>
+<li>
+<p><strong>Okio has been updated to 1.4.0.</strong>
+     <div class="highlight"><pre><span></span><code><span class="nt">&lt;dependency&gt;</span>
+  <span class="nt">&lt;groupId&gt;</span>com.squareup.okio<span class="nt">&lt;/groupId&gt;</span>
+  <span class="nt">&lt;artifactId&gt;</span>okio<span class="nt">&lt;/artifactId&gt;</span>
+  <span class="nt">&lt;version&gt;</span>1.4.0<span class="nt">&lt;/version&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong><code>Request.Builder</code> no longer accepts null if a request body is required.</strong>
+    Passing null will now fail for request methods that require a body. Instead
+    use an empty body such as this one:</p>
+<div class="highlight"><pre><span></span><code>    <span class="n">RequestBody</span><span class="p">.</span><span class="na">create</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span> <span class="k">new</span> <span class="kt">byte</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span><span class="p">);</span>
+</code></pre></div>
+
+</li>
+<li>
+<p><strong><code>CertificatePinner</code> now supports wildcard hostnames.</strong> As always with
+   certificate pinning, you must be very careful to avoid <a href="https://noncombatant.org/2015/05/01/about-http-public-key-pinning/">bricking</a>
+   your app. You&rsquo;ll need to pin both the top-level domain and the <code>*.</code> domain
+   for full coverage.</p>
+<div class="highlight"><pre><span></span><code> <span class="n">client</span><span class="p">.</span><span class="na">setCertificatePinner</span><span class="p">(</span><span class="k">new</span> <span class="n">CertificatePinner</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
+     <span class="p">.</span><span class="na">add</span><span class="p">(</span><span class="s">&quot;publicobject.com&quot;</span><span class="p">,</span>   <span class="s">&quot;sha1/DmxUShsZuNiqPQsX2Oi9uv2sCnw=&quot;</span><span class="p">)</span>
+     <span class="p">.</span><span class="na">add</span><span class="p">(</span><span class="s">&quot;*.publicobject.com&quot;</span><span class="p">,</span> <span class="s">&quot;sha1/DmxUShsZuNiqPQsX2Oi9uv2sCnw=&quot;</span><span class="p">)</span>
+     <span class="p">.</span><span class="na">add</span><span class="p">(</span><span class="s">&quot;publicobject.com&quot;</span><span class="p">,</span>   <span class="s">&quot;sha1/SXxoaOSEzPC6BgGmxAt/EAcsajw=&quot;</span><span class="p">)</span>
+     <span class="p">.</span><span class="na">add</span><span class="p">(</span><span class="s">&quot;*.publicobject.com&quot;</span><span class="p">,</span> <span class="s">&quot;sha1/SXxoaOSEzPC6BgGmxAt/EAcsajw=&quot;</span><span class="p">)</span>
+     <span class="p">.</span><span class="na">add</span><span class="p">(</span><span class="s">&quot;publicobject.com&quot;</span><span class="p">,</span>   <span class="s">&quot;sha1/blhOM3W9V/bVQhsWAcLYwPU6n24=&quot;</span><span class="p">)</span>
+     <span class="p">.</span><span class="na">add</span><span class="p">(</span><span class="s">&quot;*.publicobject.com&quot;</span><span class="p">,</span> <span class="s">&quot;sha1/blhOM3W9V/bVQhsWAcLYwPU6n24=&quot;</span><span class="p">)</span>
+     <span class="p">.</span><span class="na">add</span><span class="p">(</span><span class="s">&quot;publicobject.com&quot;</span><span class="p">,</span>   <span class="s">&quot;sha1/T5x9IXmcrQ7YuQxXnxoCmeeQ84c=&quot;</span><span class="p">)</span>
+     <span class="p">.</span><span class="na">add</span><span class="p">(</span><span class="s">&quot;*.publicobject.com&quot;</span><span class="p">,</span> <span class="s">&quot;sha1/T5x9IXmcrQ7YuQxXnxoCmeeQ84c=&quot;</span><span class="p">)</span>
+     <span class="p">.</span><span class="na">build</span><span class="p">());</span>
+</code></pre></div>
+
+</li>
+<li>
+<p><strong>Interceptors lists are now deep-copied by <code>OkHttpClient.clone()</code>.</strong>
+    Previously clones shared interceptors, which made it difficult to customize
+    the interceptors on a request-by-request basis.</p>
+</li>
+<li>
+<p>New: <code>Headers.toMultimap()</code>.</p>
+</li>
+<li>New: <code>RequestBody.create(MediaType, ByteString)</code>.</li>
+<li>New: <code>ConnectionSpec.isCompatible(SSLSocket)</code>.</li>
+<li>New: <code>Dispatcher.getQueuedCallCount()</code> and
+    <code>Dispatcher.getRunningCallCount()</code>. These can be useful in diagnostics.</li>
+<li>Fix: OkHttp no longer shares timeouts between pooled connections. This was
+    causing some applications to crash when connections were reused.</li>
+<li>Fix: <code>OkApacheClient</code> now allows an empty <code>PUT</code> and <code>POST</code>.</li>
+<li>Fix: Websockets no longer rebuffer socket streams.</li>
+<li>Fix: Websockets are now better at handling close frames.</li>
+<li>Fix: Content type matching is now case insensitive.</li>
+<li>Fix: <code>Vary</code> headers are not lost with <code>android.net.http.HttpResponseCache</code>.</li>
+<li>Fix: HTTP/2 wasn&rsquo;t enforcing stream timeouts when writing the underlying
+    connection. Now it is.</li>
+<li>Fix: Never return null on <code>call.proceed()</code>. This was a bug in call
+    cancelation.</li>
+<li>Fix: When a network interceptor mutates a request, that change is now
+    reflected in <code>Response.networkResponse()</code>.</li>
+<li>Fix: Badly-behaving caches now throw a checked exception instead of a
+    <code>NullPointerException</code>.</li>
+<li>Fix: Better handling of uncaught exceptions in MockWebServer with HTTP/2.</li>
+</ul>
+<h2 id="version-230">Version 2.3.0<a class="headerlink" href="#version-230" title="Permanent link">&para;</a></h2>
+<p><em>2015-03-16</em></p>
+<ul>
+<li>
+<p><strong>HTTP/2 support.</strong> We&rsquo;ve done interop testing and haven&rsquo;t seen any
+    problems. HTTP/2 support has been a big effort and we&rsquo;re particularly
+    thankful to Adrian Cole who has helped us to reach this milestone.</p>
+</li>
+<li>
+<p><strong>RC4 cipher suites are no longer supported by default.</strong> To connect to
+    old, obsolete servers relying on these cipher suites, you must create a
+    custom <code>ConnectionSpec</code>.</p>
+</li>
+<li>
+<p><strong>Beta WebSockets support.</strong>. The <code>okhttp-ws</code> subproject offers a new
+    websockets client. Please try it out! When it&rsquo;s ready we intend to include
+    it with the core OkHttp library.</p>
+</li>
+<li>
+<p><strong>Okio updated to 1.3.0.</strong></p>
+<div class="highlight"><pre><span></span><code><span class="nt">&lt;dependency&gt;</span>
+  <span class="nt">&lt;groupId&gt;</span>com.squareup.okio<span class="nt">&lt;/groupId&gt;</span>
+  <span class="nt">&lt;artifactId&gt;</span>okio<span class="nt">&lt;/artifactId&gt;</span>
+  <span class="nt">&lt;version&gt;</span>1.3.0<span class="nt">&lt;/version&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+</code></pre></div>
+
+</li>
+<li>
+<p><strong>Fix: improve parallelism of async requests.</strong> OkHttp&rsquo;s Dispatcher had a
+    misconfigured <code>ExecutorService</code> that limited the number of worker threads.
+    If you&rsquo;re using <code>Call.enqueue()</code> this update should significantly improve
+    request concurrency.</p>
+</li>
+<li>
+<p><strong>Fix: Lazily initialize the response cache.</strong> This avoids strict mode
+    warnings when initializing OkHttp on Android‘s main thread.</p>
+</li>
+<li>
+<p><strong>Fix: Disable ALPN on Android 4.4.</strong> That release of the feature was
+    unstable and prone to native crashes in the underlying OpenSSL code.</p>
+</li>
+<li>Fix: Don&rsquo;t send both <code>If-None-Match</code> and <code>If-Modified-Since</code> cache headers
+    when both are applicable.</li>
+<li>Fix: Fail early when a port is out of range.</li>
+<li>Fix: Offer <code>Content-Length</code> headers for multipart request bodies.</li>
+<li>Fix: Throw <code>UnknownServiceException</code> if a cleartext connection is attempted
+    when explicitly forbidden.</li>
+<li>Fix: Throw a <code>SSLPeerUnverifiedException</code> when host verification fails.</li>
+<li>Fix: MockWebServer explicitly closes sockets. (On some Android releases,
+    closing the input stream and output stream of a socket is not sufficient.</li>
+<li>Fix: Buffer outgoing HTTP/2 frames to limit how many outgoing frames are
+    created.</li>
+<li>Fix: Avoid crashing when cache writing fails due to a full disk.</li>
+<li>Fix: Improve caching of private responses.</li>
+<li>Fix: Update cache-by-default response codes.</li>
+<li>Fix: Reused <code>Request.Builder</code> instances no longer hold stale URL fields.</li>
+<li>New: ConnectionSpec can now be configured to use the SSL socket&rsquo;s default
+    cipher suites. To use, set the cipher suites to <code>null</code>.</li>
+<li>New: Support <code>DELETE</code> with a request body.</li>
+<li>New: <code>Headers.of(Map)</code> creates headers from a Map.</li>
+</ul>
+<h2 id="version-220">Version 2.2.0<a class="headerlink" href="#version-220" title="Permanent link">&para;</a></h2>
+<p><em>2014-12-30</em></p>
+<ul>
+<li>
+<p><strong><code>RequestBody.contentLength()</code> now throws <code>IOException</code>.</strong>
+    This is a source-incompatible change. If you have code that calls
+    <code>RequestBody.contentLength()</code>, your compile will break with this
+    update. The change is binary-compatible, however: code compiled
+    for OkHttp 2.0 and 2.1 will continue to work with this update.</p>
+</li>
+<li>
+<p><strong><code>COMPATIBLE_TLS</code> no longer supports SSLv3.</strong> In response to the
+    <a href="https://googleonlinesecurity.blogspot.ca/2014/10/this-poodle-bites-exploiting-ssl-30.html">POODLE</a>
+    vulnerability, OkHttp no longer offers SSLv3 when negotiation an
+    HTTPS connection. If you continue to need to connect to webservers
+    running SSLv3, you must manually configure your own <code>ConnectionSpec</code>.</p>
+</li>
+<li>
+<p><strong>OkHttp now offers interceptors.</strong> Interceptors are a powerful mechanism
+    that can monitor, rewrite, and retry calls. The <a href="https://square.github.io/okhttp/interceptors/">interceptors doc</a> is a full
+    introduction to this new API.</p>
+</li>
+<li>
+<p>New: APIs to iterate and selectively clear the response cache.</p>
+</li>
+<li>New: Support for SOCKS proxies.</li>
+<li>New: Support for <code>TLS_FALLBACK_SCSV</code>.</li>
+<li>New: Update HTTP/2 support to <code>h2-16</code> and <code>hpack-10</code>.</li>
+<li>New: APIs to prevent retrying non-idempotent requests.</li>
+<li>Fix: Drop NPN support. Going forward we support ALPN only.</li>
+<li>Fix: The hostname verifier is now strict. This is consistent with the hostname
+    verifier in modern browsers.</li>
+<li>Fix: Improve <code>CONNECT</code> handling for misbehaving HTTP proxies.</li>
+<li>Fix: Don&rsquo;t retry requests that failed due to timeouts.</li>
+<li>Fix: Cache 302s and 308s that include appropriate response headers.</li>
+<li>Fix: Improve pooling of connections that use proxy selectors.</li>
+<li>Fix: Don&rsquo;t leak connections when using ALPN on the desktop.</li>
+<li>Fix: Update Jetty ALPN to <code>7.1.2.v20141202</code> (Java 7) and <code>8.1.2.v20141202</code> (Java 8).
+    This fixes a bug in resumed TLS sessions where the wrong protocol could be
+    selected.</li>
+<li>Fix: Don&rsquo;t crash in SPDY and HTTP/2 when disconnecting before connecting.</li>
+<li>Fix: Avoid a reverse DNS-lookup for a numeric proxy address</li>
+<li>Fix: Resurrect http/2 frame logging.</li>
+<li>Fix: Limit to 20 authorization attempts.</li>
+</ul>
+<h2 id="version-210">Version 2.1.0<a class="headerlink" href="#version-210" title="Permanent link">&para;</a></h2>
+<p><em>2014-11-11</em></p>
+<ul>
+<li>New: Typesafe APIs for interacting with cipher suites and TLS versions.</li>
+<li>Fix: Don&rsquo;t crash when mixing authorization challenges with upload retries.</li>
+</ul>
+<h2 id="version-210-rc1">Version 2.1.0-RC1<a class="headerlink" href="#version-210-rc1" title="Permanent link">&para;</a></h2>
+<p><em>2014-11-04</em></p>
+<ul>
+<li>
+<p><strong>OkHttp now caches private responses</strong>. We&rsquo;ve changed from a shared cache
+    to a private cache, and will now store responses that use an <code>Authorization</code>
+    header. This means OkHttp&rsquo;s cache shouldn&rsquo;t be used on middleboxes that sit
+    between user agents and the origin server.</p>
+</li>
+<li>
+<p><strong>TLS configuration updated.</strong> OkHttp now explicitly enables TLSv1.2,
+    TLSv1.1 and TLSv1.0 where they are supported. It will continue to perform
+    only one fallback, to SSLv3. Applications can now configure this with the
+    <code>ConnectionSpec</code> class.</p>
+<p>To disable TLS fallback:</p>
+<div class="highlight"><pre><span></span><code><span class="n">client</span><span class="p">.</span><span class="na">setConnectionSpecs</span><span class="p">(</span><span class="n">Arrays</span><span class="p">.</span><span class="na">asList</span><span class="p">(</span>
+    <span class="n">ConnectionSpec</span><span class="p">.</span><span class="na">MODERN_TLS</span><span class="p">,</span> <span class="n">ConnectionSpec</span><span class="p">.</span><span class="na">CLEARTEXT</span><span class="p">));</span>
+</code></pre></div>
+
+<p>To disable cleartext connections, permitting <code>https</code> URLs only:</p>
+<div class="highlight"><pre><span></span><code><span class="n">client</span><span class="p">.</span><span class="na">setConnectionSpecs</span><span class="p">(</span><span class="n">Arrays</span><span class="p">.</span><span class="na">asList</span><span class="p">(</span>
+    <span class="n">ConnectionSpec</span><span class="p">.</span><span class="na">MODERN_TLS</span><span class="p">,</span> <span class="n">ConnectionSpec</span><span class="p">.</span><span class="na">COMPATIBLE_TLS</span><span class="p">));</span>
+</code></pre></div>
+
+</li>
+<li>
+<p><strong>New cipher suites.</strong> Please confirm that your webservers are reachable
+    with this limited set of cipher suites.</p>
+<div class="highlight"><pre><span></span><code>                                         Android
+Name                                     Version
+
+TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256  5.0
+TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256    5.0
+TLS_DHE_RSA_WITH_AES_128_GCM_SHA256      5.0
+TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA     4.0
+TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA     4.0
+TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA       4.0
+TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA       4.0
+TLS_ECDHE_ECDSA_WITH_RC4_128_SHA         4.0
+TLS_ECDHE_RSA_WITH_RC4_128_SHA           4.0
+TLS_DHE_RSA_WITH_AES_128_CBC_SHA         2.3
+TLS_DHE_DSS_WITH_AES_128_CBC_SHA         2.3
+TLS_DHE_RSA_WITH_AES_256_CBC_SHA         2.3
+TLS_RSA_WITH_AES_128_GCM_SHA256          5.0
+TLS_RSA_WITH_AES_128_CBC_SHA             2.3
+TLS_RSA_WITH_AES_256_CBC_SHA             2.3
+SSL_RSA_WITH_3DES_EDE_CBC_SHA            2.3  (Deprecated in 5.0)
+SSL_RSA_WITH_RC4_128_SHA                 2.3
+SSL_RSA_WITH_RC4_128_MD5                 2.3  (Deprecated in 5.0)
+</code></pre></div>
+
+</li>
+<li>
+<p><strong>Okio updated to 1.0.1.</strong></p>
+<div class="highlight"><pre><span></span><code><span class="nt">&lt;dependency&gt;</span>
+  <span class="nt">&lt;groupId&gt;</span>com.squareup.okio<span class="nt">&lt;/groupId&gt;</span>
+  <span class="nt">&lt;artifactId&gt;</span>okio<span class="nt">&lt;/artifactId&gt;</span>
+  <span class="nt">&lt;version&gt;</span>1.0.1<span class="nt">&lt;/version&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+</code></pre></div>
+
+</li>
+<li>
+<p><strong>New APIs to permit easy certificate pinning.</strong> Be warned, certificate
+    pinning is dangerous and could prevent your application from trusting your
+    server!</p>
+</li>
+<li>
+<p><strong>Cache improvements.</strong> This release fixes some severe cache problems
+    including a bug where the cache could be corrupted upon certain access
+    patterns. We also fixed a bug where the cache was being cleared due to a
+    corrupted journal. We&rsquo;ve added APIs to configure a request&rsquo;s <code>Cache-Control</code>
+    headers, and to manually clear the cache.</p>
+</li>
+<li>
+<p><strong>Request cancellation fixes.</strong> This update fixes a bug where synchronous
+    requests couldn&rsquo;t be canceled by tag. This update avoids crashing when
+    <code>onResponse()</code> throws an <code>IOException</code>. That failure will now be logged
+    instead of notifying the thread&rsquo;s uncaught exception handler. We&rsquo;ve added a
+    new API, <code>Call.isCanceled()</code> to check if a call has been canceled.</p>
+</li>
+<li>
+<p>New: Update <code>MultipartBuilder</code> to support content length.</p>
+</li>
+<li>New: Make it possible to mock <code>OkHttpClient</code> and <code>Call</code>.</li>
+<li>New: Update to h2-14 and hpack-9.</li>
+<li>New: OkHttp includes a user-agent by default, like <code>okhttp/2.1.0-RC1</code>.</li>
+<li>Fix: Handle response code <code>308 Permanent Redirect</code>.</li>
+<li>Fix: Don&rsquo;t skip the callback if a call is canceled.</li>
+<li>Fix: Permit hostnames with underscores.</li>
+<li>Fix: Permit overriding the content-type in <code>OkApacheClient</code>.</li>
+<li>Fix: Use the socket factory for direct connections.</li>
+<li>Fix: Honor <code>OkUrlFactory</code> APIs that disable redirects.</li>
+<li>Fix: Don&rsquo;t crash on concurrent modification of <code>SPDY</code> SPDY settings.</li>
+</ul>
+<h2 id="version-200">Version 2.0.0<a class="headerlink" href="#version-200" title="Permanent link">&para;</a></h2>
+<p>This release commits to a stable 2.0 API. Read the 2.0.0-RC1 changes for advice
+on upgrading from 1.x to 2.x.</p>
+<p><em>2014-06-21</em></p>
+<ul>
+<li><strong>API Change</strong>: Use <code>IOException</code> in <code>Callback.onFailure()</code>. This is
+    a source-incompatible change, and is different from OkHttp 2.0.0-RC2 which
+    used <code>Throwable</code>.</li>
+<li>Fix: Fixed a caching bug where we weren&rsquo;t storing rewritten request headers
+    like <code>Accept-Encoding</code>.</li>
+<li>Fix: Fixed bugs in handling the SPDY window size. This was stalling certain
+    large downloads</li>
+<li>Update the language level to Java 7. (OkHttp requires Android 2.3+ or Java 7+.)</li>
+</ul>
+<h2 id="version-200-rc2">Version 2.0.0-RC2<a class="headerlink" href="#version-200-rc2" title="Permanent link">&para;</a></h2>
+<p><em>2014-06-11</em></p>
+<p>This update fixes problems in 2.0.0-RC1. Read the 2.0.0-RC1 changes for
+advice on upgrading from 1.x to 2.x.</p>
+<ul>
+<li>Fix: Don&rsquo;t leak connections! There was a regression in 2.0.0-RC1 where
+    connections were neither closed nor pooled.</li>
+<li>Fix: Revert builder-style return types from OkHttpClient&rsquo;s timeout methods
+    for binary compatibility with OkHttp 1.x.</li>
+<li>Fix: Don&rsquo;t skip client stream 1 on SPDY/3.1. This fixes SPDY connectivity to
+    <code>https://google.com</code>, which doesn&rsquo;t follow the SPDY/3.1 spec!</li>
+<li>Fix: Always configure NPN headers. This fixes connectivity to
+    <code>https://facebook.com</code> when SPDY and HTTP/2 are both disabled. Otherwise an
+    unexpected NPN response is received and OkHttp crashes.</li>
+<li>Fix: Write continuation frames when HPACK data is larger than 16383 bytes.</li>
+<li>Fix: Don&rsquo;t drop uncaught exceptions thrown in async calls.</li>
+<li>Fix: Throw an exception eagerly when a request body is not legal. Previously
+    we ignored the problem at request-building time, only to crash later with a
+    <code>NullPointerException</code>.</li>
+<li>Fix: Include a backwards-compatible <code>OkHttp-Response-Source</code> header with
+    <code>OkUrlFactory</code>responses.</li>
+<li>Fix: Don&rsquo;t include a default User-Agent header in requests made with the Call
+    API. Requests made with OkUrlFactory will continue to have a default user
+    agent.</li>
+<li>
+<p>New: Guava-like API to create headers:</p>
+<div class="highlight"><pre><span></span><code><span class="n">Headers</span> <span class="n">headers</span> <span class="o">=</span> <span class="n">Headers</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="n">name1</span><span class="p">,</span> <span class="n">value1</span><span class="p">,</span> <span class="n">name2</span><span class="p">,</span> <span class="n">value2</span><span class="p">,</span> <span class="p">...).</span>
+</code></pre></div>
+
+</li>
+<li>
+<p>New: Make the content-type header optional for request bodies.</p>
+</li>
+<li>New: <code>Response.isSuccessful()</code> is a convenient API to check response codes.</li>
+<li>New: The response body can now be read outside of the callback. Response
+    bodies must always be closed, otherwise they will leak connections!</li>
+<li>New: APIs to create multipart request bodies (<code>MultipartBuilder</code>) and form
+    encoding bodies (<code>FormEncodingBuilder</code>).</li>
+</ul>
+<h2 id="version-200-rc1">Version 2.0.0-RC1<a class="headerlink" href="#version-200-rc1" title="Permanent link">&para;</a></h2>
+<p><em>2014-05-23</em></p>
+<p>OkHttp 2 is designed around a new API that is true to HTTP, with classes for
+requests, responses, headers, and calls. It uses modern Java patterns like
+immutability and chained builders. The API now offers asynchronous callbacks
+in addition to synchronous blocking calls.</p>
+<h4 id="api-changes">API Changes<a class="headerlink" href="#api-changes" title="Permanent link">&para;</a></h4>
+<ul>
+<li>
+<p><strong>New Request and Response types,</strong> each with their own builder. There&rsquo;s also
+    a <code>RequestBody</code> class to write the request body to the network and a
+    <code>ResponseBody</code> to read the response body from the network. The standalone
+    <code>Headers</code> class offers full access to the HTTP headers.</p>
+</li>
+<li>
+<p><strong>Okio dependency added.</strong> OkHttp now depends on
+    <a href="https://github.com/square/okio">Okio</a>, an I/O library that makes it easier
+    to access, store and process data. Using this library internally makes OkHttp
+    faster while consuming less memory. You can write a <code>RequestBody</code> as an Okio
+    <code>BufferedSink</code> and a <code>ResponseBody</code> as an Okio <code>BufferedSource</code>. Standard
+    <code>InputStream</code> and <code>OutputStream</code> access is also available.</p>
+</li>
+<li>
+<p><strong>New Call and Callback types</strong> execute requests and receive their
+    responses. Both types of calls can be canceled via the <code>Call</code> or the
+    <code>OkHttpClient</code>.</p>
+</li>
+<li>
+<p><strong>URLConnection support has moved to the okhttp-urlconnection module.</strong>
+    If you&rsquo;re upgrading from 1.x, this change will impact you. You will need to
+    add the <code>okhttp-urlconnection</code> module to your project and use the
+    <code>OkUrlFactory</code> to create new instances of <code>HttpURLConnection</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// OkHttp 1.x:</span>
+<span class="n">HttpURLConnection</span> <span class="n">connection</span> <span class="o">=</span> <span class="n">client</span><span class="p">.</span><span class="na">open</span><span class="p">(</span><span class="n">url</span><span class="p">);</span>
+
+<span class="c1">// OkHttp 2.x:</span>
+<span class="n">HttpURLConnection</span> <span class="n">connection</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OkUrlFactory</span><span class="p">(</span><span class="n">client</span><span class="p">).</span><span class="na">open</span><span class="p">(</span><span class="n">url</span><span class="p">);</span>
+</code></pre></div>
+
+</li>
+<li>
+<p><strong>Custom caches are no longer supported.</strong> In OkHttp 1.x it was possible to
+    define your own response cache with the <code>java.net.ResponseCache</code> and OkHttp&rsquo;s
+    <code>OkResponseCache</code> interfaces. Both of these APIs have been dropped. In
+    OkHttp 2 the built-in disk cache is the only supported response cache.</p>
+</li>
+<li>
+<p><strong>HttpResponseCache has been renamed to Cache.</strong> Install it with
+    <code>OkHttpClient.setCache(...)</code> instead of <code>OkHttpClient.setResponseCache(...)</code>.</p>
+</li>
+<li>
+<p><strong>OkAuthenticator has been replaced with Authenticator.</strong> This new
+    authenticator has access to the full incoming response and can respond with
+    whichever followup request is appropriate. The <code>Challenge</code> class is now a
+    top-level class and <code>Credential</code> is replaced with a utility class called
+    <code>Credentials</code>.</p>
+</li>
+<li>
+<p><strong>OkHttpClient.getFollowProtocolRedirects() renamed to
+    getFollowSslRedirects()</strong>. We reserve the word <em>protocol</em> for the HTTP
+    version being used (HTTP/1.1, HTTP/2). The old name of this method was
+    misleading; it was always used to configure redirects between <code>https://</code> and
+    <code>http://</code> schemes.</p>
+</li>
+<li>
+<p><strong>RouteDatabase is no longer public API.</strong> OkHttp continues to track which
+    routes have failed but this is no exposed in the API.</p>
+</li>
+<li>
+<p><strong>ResponseSource is gone.</strong> This enum exposed whether a response came from
+    the cache, network, or both. OkHttp 2 offers more detail with raw access to
+    the cache and network responses in the new <code>Response</code> class.</p>
+</li>
+<li>
+<p><strong>TunnelRequest is gone.</strong> It specified how to connect to an HTTP proxy.
+    OkHttp 2 uses the new <code>Request</code> class for this.</p>
+</li>
+<li>
+<p><strong>Dispatcher</strong> is a new class that manages the queue of asynchronous calls. It
+    implements limits on total in-flight calls and in-flight calls per host.</p>
+</li>
+</ul>
+<h4 id="implementation-changes">Implementation changes<a class="headerlink" href="#implementation-changes" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Support Android <code>TrafficStats</code> socket tagging.</li>
+<li>Drop authentication headers on redirect.</li>
+<li>Added support for compressed data frames.</li>
+<li>Process push promise callbacks in order.</li>
+<li>Update to http/2 draft 12.</li>
+<li>Update to HPACK draft 07.</li>
+<li>Add ALPN support. Maven will use ALPN on OpenJDK 8.</li>
+<li>Update NPN dependency to target <code>jdk7u60-b13</code> and <code>Oracle jdk7u55-b13</code>.</li>
+<li>Ensure SPDY variants support zero-length DELETE and POST.</li>
+<li>Prevent leaking a cache item&rsquo;s InputStreams when metadata read fails.</li>
+<li>Use a string to identify TLS versions in routes.</li>
+<li>Add frame logger for HTTP/2.</li>
+<li>Replacing <code>httpMinorVersion</code> with <code>Protocol</code>. Expose HTTP/1.0 as a potential protocol.</li>
+<li>Use <code>Protocol</code> to describe framing.</li>
+<li>Implement write timeouts for HTTP/1.1 streams.</li>
+<li>Avoid use of SPDY stream ID 1, as that&rsquo;s typically used for UPGRADE.</li>
+<li>Support OAuth in <code>Authenticator</code>.</li>
+<li>Permit a dangling semicolon in media type parsing.</li>
+</ul>
+<h2 id="version-1x">Version 1.x<a class="headerlink" href="#version-1x" title="Permanent link">&para;</a></h2>
+<p><a href="../changelog_1x/">Change log</a></p>
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
+        
+          <a href="../changelog_3x/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+            </div>
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Version 3.x
+              </div>
+            </div>
+          </a>
+        
+        
+          <a href="../changelog_1x/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Version 1.x
+              </div>
+            </div>
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            Copyright &copy; 2019 Square, Inc.
+          </div>
+        
+        Made with
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+          Material for MkDocs
+        </a>
+      </div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="../../assets/javascripts/vendor.18f0862e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.994580cf.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script>
+      
+      <script>
+        app = initialize({
+          base: "../..",
+          features: ['navigation.tabs'],
+          search: Object.assign({
+            worker: "../../assets/javascripts/worker/search.9c0e82ba.min.js"
+          }, typeof search !== "undefined" && search)
+        })
+      </script>
+      
+    
+  </body>
+</html>
