@@ -68,6 +68,7 @@ plugins:
         'changelog_3x.md': 'changelogs/changelog_3x.md'
         'changelog_2x.md': 'changelogs/changelog_2x.md'
         'changelog_1x.md': 'changelogs/changelog_1x.md'
+        'tls_configuration_history.md': 'changelogs/tls_configuration_history.md'
         # Redirect all contributing pages to contribute/*
         'contributing.md': 'contribute/contributing.md'
         'code_of_conduct.md': 'contribute/code_of_conduct.md'
