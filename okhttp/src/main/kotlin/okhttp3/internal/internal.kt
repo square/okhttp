@@ -27,6 +27,9 @@ import okhttp3.Cookie
 import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.Request
+import okhttp3.internal.okio.ResourceFileSystem
+import okio.ExperimentalFileSystem
+import okio.Path.Companion.toPath
 
 fun parseCookie(currentTimeMillis: Long, url: HttpUrl, setCookie: String): Cookie? =
     Cookie.parse(currentTimeMillis, url, setCookie)
@@ -52,3 +55,6 @@ fun ConnectionSpec.effectiveCipherSuites(socketEnabledCipherSuites: Array<String
     socketEnabledCipherSuites
   }
 }
+
+@OptIn(ExperimentalFileSystem::class)
+val OkHttpResources = ResourceFileSystem(paths = listOf("/okhttp3/internal".toPath()))

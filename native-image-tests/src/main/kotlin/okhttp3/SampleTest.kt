@@ -18,6 +18,7 @@ package okhttp3
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
+import okio.ExperimentalFileSystem
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -52,11 +53,13 @@ class SampleTest {
     }
   }
 
+  @OptIn(ExperimentalFileSystem::class)
   @Test
   fun testPublicSuffixes() {
-    PublicSuffixDatabase::class.java.getResourceAsStream(PublicSuffixDatabase.PUBLIC_SUFFIX_RESOURCE).use {
-      assertThat(it.available()).isGreaterThan(30000)
-    }
+    val okHttpResources = PublicSuffixDatabase.OkHttpResources
+    assertThat(
+      okHttpResources.metadataOrNull(PublicSuffixDatabase.PUBLIC_SUFFIX_RESOURCE)?.size
+    ).isGreaterThan(30000)
   }
 
   @ParameterizedTest

@@ -36,12 +36,15 @@ import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.curl.Main.Companion.NAME
+import okhttp3.internal.OkHttpResources
 import okhttp3.internal.format
 import okhttp3.internal.http.StatusLine
 import okhttp3.internal.http2.Http2
 import okhttp3.internal.platform.Platform
 import okhttp3.logging.HttpLoggingInterceptor
 import okhttp3.logging.LoggingEventListener
+import okio.ExperimentalFileSystem
+import okio.Path.Companion.toPath
 import okio.sink
 import picocli.CommandLine
 import picocli.CommandLine.Command
@@ -245,12 +248,11 @@ class Main : Runnable {
       exitProcess(CommandLine(Main()).execute(*args))
     }
 
+    @OptIn(ExperimentalFileSystem::class)
     private fun versionString(): String? {
-      val prop = Properties()
-      Main::class.java.getResourceAsStream("/okcurl-version.properties").use {
-        prop.load(it)
+      return OkHttpResources.read("/okhttp3/internal/okcurl-version.properties".toPath()) {
+        Properties().apply { load(inputStream()) }.getProperty("version", "dev")
       }
-      return prop.getProperty("version", "dev")
     }
 
     private fun createInsecureTrustManager(): X509TrustManager = object : X509TrustManager {

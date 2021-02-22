@@ -16,15 +16,15 @@
 package okhttp3.internal.publicsuffix;
 
 import java.io.IOException;
-import java.io.InputStream;
+import okhttp3.internal.Internal;
 import okio.Buffer;
 import okio.BufferedSource;
 import okio.GzipSource;
 import okio.Okio;
+import okio.Source;
 import org.junit.jupiter.api.Test;
 
 import static okhttp3.internal.HostnamesKt.toCanonicalHost;
-import static okhttp3.internal.publicsuffix.PublicSuffixDatabase.PUBLIC_SUFFIX_RESOURCE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -107,9 +107,9 @@ public final class PublicSuffixDatabaseTest {
   }
 
   @Test public void allPublicSuffixes() throws IOException {
-    InputStream resource = PublicSuffixDatabaseTest.class
-        .getResourceAsStream(PUBLIC_SUFFIX_RESOURCE);
-    BufferedSource source = Okio.buffer(new GzipSource(Okio.source(resource)));
+    Source resource = Internal.getOkHttpResources().source(PublicSuffixDatabase.Companion
+        .getPUBLIC_SUFFIX_RESOURCE());
+    BufferedSource source = Okio.buffer(new GzipSource(resource));
     int length = source.readInt();
     Buffer buffer = new Buffer();
     buffer.write(source, length);
@@ -129,9 +129,9 @@ public final class PublicSuffixDatabaseTest {
   }
 
   @Test public void publicSuffixExceptions() throws IOException {
-    InputStream resource = PublicSuffixDatabaseTest.class
-        .getResourceAsStream(PUBLIC_SUFFIX_RESOURCE);
-    BufferedSource source = Okio.buffer(new GzipSource(Okio.source(resource)));
+    Source resource = Internal.getOkHttpResources().source(PublicSuffixDatabase.Companion
+        .getPUBLIC_SUFFIX_RESOURCE());
+    BufferedSource source = Okio.buffer(new GzipSource(resource));
     int length = source.readInt();
     source.skip(length);
 

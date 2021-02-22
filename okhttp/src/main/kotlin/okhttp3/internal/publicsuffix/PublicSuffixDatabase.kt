@@ -15,23 +15,26 @@
  */
 package okhttp3.internal.publicsuffix
 
+import okhttp3.internal.and
+import okhttp3.internal.okio.ResourceFileSystem
+import okhttp3.internal.platform.Platform
+import okio.ExperimentalFileSystem
+import okio.GzipSource
+import okio.Path.Companion.toPath
+import okio.buffer
 import java.io.IOException
 import java.io.InterruptedIOException
 import java.net.IDN
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
-import okhttp3.internal.and
-import okhttp3.internal.platform.Platform
-import okio.GzipSource
-import okio.buffer
-import okio.source
 
 /**
  * A database of public suffixes provided by [publicsuffix.org][publicsuffix_org].
  *
  * [publicsuffix_org]: https://publicsuffix.org/
  */
+@OptIn(ExperimentalFileSystem::class)
 class PublicSuffixDatabase {
 
   /** True after we've attempted to read the list for the first time. */
@@ -206,10 +209,9 @@ class PublicSuffixDatabase {
     var publicSuffixListBytes: ByteArray?
     var publicSuffixExceptionListBytes: ByteArray?
 
-    val resource =
-        PublicSuffixDatabase::class.java.getResourceAsStream(PUBLIC_SUFFIX_RESOURCE) ?: return
+    val resource = PublicSuffixDatabase.OkHttpResources.source(PUBLIC_SUFFIX_RESOURCE)
 
-    GzipSource(resource.source()).buffer().use { bufferedSource ->
+    GzipSource(resource).buffer().use { bufferedSource ->
       val totalBytes = bufferedSource.readInt()
       publicSuffixListBytes = bufferedSource.readByteArray(totalBytes.toLong())
 
@@ -237,7 +239,7 @@ class PublicSuffixDatabase {
   }
 
   companion object {
-    const val PUBLIC_SUFFIX_RESOURCE = "publicsuffixes.gz"
+    val PUBLIC_SUFFIX_RESOURCE = "/okhttp3/internal/publicsuffixes/publicsuffixes.gz".toPath()
 
     private val WILDCARD_LABEL = byteArrayOf('*'.toByte())
     private val PREVAILING_RULE = listOf("*")

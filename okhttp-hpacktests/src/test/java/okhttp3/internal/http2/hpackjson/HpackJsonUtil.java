@@ -25,7 +25,10 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import okhttp3.internal.okio.ResourceFileSystem;
+import okio.FileSystem;
 import okio.Okio;
+import okio.Path;
 
 import static java.util.Arrays.asList;
 import static okhttp3.internal.http2.hpackjson.Story.MISSING;
@@ -37,10 +40,17 @@ public final class HpackJsonUtil {
   /** Earliest draft that is code-compatible with latest. */
   private static final int BASE_DRAFT = 9;
 
+  private static final ResourceFileSystem HPACK_RESOURCES = new ResourceFileSystem(asList(
+      Path.get("/hpack-test-case")
+  ));
   private static final String STORY_RESOURCE_FORMAT = "/hpack-test-case/%s/story_%02d.json";
 
   private static final Moshi MOSHI = new Moshi.Builder().build();
   private static final JsonAdapter<Story> STORY_JSON_ADAPTER = MOSHI.adapter(Story.class);
+
+  private static Story readStory(Path jsonResource) throws IOException {
+    return STORY_JSON_ADAPTER.fromJson(Okio.buffer(HPACK_RESOURCES.source(jsonResource)));
+  }
 
   private static Story readStory(InputStream jsonResource) throws IOException {
     return STORY_JSON_ADAPTER.fromJson(Okio.buffer(Okio.source(jsonResource)));
@@ -80,9 +90,9 @@ public final class HpackJsonUtil {
     List<Story> result = new ArrayList<>();
     int i = 0;
     while (true) { // break after last test.
-      String storyResourceName = String.format(STORY_RESOURCE_FORMAT, testFolderName, i);
-      InputStream storyInputStream = HpackJsonUtil.class.getResourceAsStream(storyResourceName);
-      if (storyInputStream == null) {
+      Path storyResourceName = Path.get(String.format(STORY_RESOURCE_FORMAT, testFolderName, i));
+      InputStream storyInputStream = HpackJsonUtil.HPACK_RESOURCES.getResourceAsStream(storyResourceName);
+      if (!HpackJsonUtil.HPACK_RESOURCES.exists(storyResourceName)) {
         break;
       }
       try {
