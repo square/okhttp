@@ -70,7 +70,7 @@ class Exchange(
   }
 
   @Throws(IOException::class)
-  fun createRequestBody(request: Request, duplex: Boolean): Sink {
+  fun createRequestBody(request: Request, duplex: Boolean): RequestBodySink {
     this.isDuplex = duplex
     val contentLength = request.body!!.contentLength()
     eventListener.requestBodyStart(call)
@@ -203,7 +203,7 @@ class Exchange(
   }
 
   /** A request body that fires events when it completes. */
-  private inner class RequestBodySink(
+  inner class RequestBodySink(
     delegate: Sink,
     /** The exact number of bytes to be written, or -1L if that is unknown. */
     private val contentLength: Long
@@ -211,6 +211,10 @@ class Exchange(
     private var completed = false
     private var bytesReceived = 0L
     private var closed = false
+
+    fun inProgress(): Boolean {
+      return !completed && bytesReceived > 0
+    }
 
     @Throws(IOException::class)
     override fun write(source: Buffer, byteCount: Long) {

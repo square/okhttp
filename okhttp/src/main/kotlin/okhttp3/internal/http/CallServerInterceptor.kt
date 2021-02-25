@@ -37,6 +37,7 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
     var invokeStartEvent = true
     var responseBuilder: Response.Builder? = null
     var sendRequestException: IOException? = null
+    var requestInProgress = false
     try {
       exchange.writeRequestHeaders(request)
 
@@ -58,9 +59,15 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
             requestBody.writeTo(bufferedRequestBody)
           } else {
             // Write the request body if the "Expect: 100-continue" expectation was met.
-            val bufferedRequestBody = exchange.createRequestBody(request, false).buffer()
-            requestBody.writeTo(bufferedRequestBody)
-            bufferedRequestBody.close()
+            val requestBodySink = exchange.createRequestBody(request, false)
+            val bufferedRequestBody = requestBodySink.buffer()
+            try {
+              requestBody.writeTo(bufferedRequestBody)
+              bufferedRequestBody.close()
+            } finally {
+              requestInProgress = requestBodySink.inProgress();
+              // TODO move bufferedRequestBody.close() here?
+            }
           }
         } else {
           exchange.noRequestBody()
@@ -82,7 +89,7 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
       if (e is ConnectionShutdownException) {
         throw e // No request was sent so there's no response to read.
       }
-      if (!exchange.hasFailure) {
+      if (!exchange.hasFailure && !requestInProgress) {
         throw e // Don't attempt to read the response; we failed to send the request.
       }
       sendRequestException = e

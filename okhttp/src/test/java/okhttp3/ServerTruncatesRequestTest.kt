@@ -229,6 +229,52 @@ class ServerTruncatesRequestTest(
     }
   }
 
+  @Test fun readResponseWhenPartialRequest() {
+    val mockResponse = MockResponse()
+      .setChunkedBody("abc",1)
+      .addHeader("caboose", "xyz")
+      .setSocketPolicy(SocketPolicy.DO_NOT_READ_REQUEST_BODY)
+
+    server.enqueue(mockResponse)
+
+    val requestBody = object : RequestBody() {
+      override fun contentType(): MediaType? = null
+
+      override fun writeTo(sink: BufferedSink) {
+        val buffer = ByteArray(4096)
+        do {
+          sink.write(buffer).flush()
+          Thread.yield()
+        } while (server.requestCount == 0) // keep writing until we are sure that the request has propagated
+        throw IOException("boom")
+      }
+    }
+
+    val call = client.newCall(
+      Request.Builder()
+        .url(server.url("/"))
+        .post(requestBody)
+        .build()
+    )
+    call.execute().use { response ->
+      assertThat(response.body!!.string()).isEqualTo("abc")
+      assertThat(response.header("caboose")).isEqualTo("xyz")
+    }
+
+    assertThat(server.requestCount).isEqualTo(1)
+
+    // Confirm that the connection pool was not corrupted by making another call.
+    server.enqueue(mockResponse)
+    val callB = client.newCall(
+      Request.Builder()
+        .url(server.url("/"))
+        .build()
+    )
+    callB.execute().use { response ->
+      assertThat(response.body!!.string()).isEqualTo("abc")
+    }
+  }
+
   private fun makeSimpleCall() {
     server.enqueue(MockResponse().setBody("healthy"))
     val callB = client.newCall(
