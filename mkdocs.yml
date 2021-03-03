@@ -11,8 +11,8 @@ copyright: 'Copyright &copy; 2019 Square, Inc.'
 
 theme:
   name: 'material'
-  favicon: images/icon-square.png
-  logo: images/icon-square.png
+  favicon: assets/images/icon-square.png
+  logo: assets/images/icon-square.png
   palette:
     primary: 'teal'
     accent: 'white'
@@ -21,7 +21,7 @@ theme:
   - navigation.tabs
 
 extra_css:
-  - 'css/app.css'
+  - 'assets/css/app.css'
 
 markdown_extensions:
   - smarty
@@ -37,6 +37,9 @@ markdown_extensions:
   - pymdownx.emoji:
       emoji_index: !!python/name:materialx.emoji.twemoji
       emoji_generator: !!python/name:materialx.emoji.to_svg
+      options:
+        custom_icons:
+        - docs/assets/.icons
   - pymdownx.inlinehilite
   - pymdownx.magiclink
   - pymdownx.smartsymbols
