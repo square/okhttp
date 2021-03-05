@@ -15,32 +15,95 @@
  */
 package okhttp3
 
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
 import okhttp3.TestUtil.assumeNetwork
 import okhttp3.internal.platform.ConscryptPlatform
 import okhttp3.internal.platform.Platform
 import okhttp3.testing.PlatformRule
+import okhttp3.tls.internal.TlsUtil
+import okio.ByteString.Companion.toByteString
 import org.assertj.core.api.Assertions.assertThat
 import org.conscrypt.Conscrypt
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
+import java.net.InetSocketAddress
+import java.net.Proxy
+import javax.net.ssl.SSLSocket
 
 class ConscryptTest {
   @JvmField @RegisterExtension val platform = PlatformRule.conscrypt()
   @JvmField @RegisterExtension val clientTestRule = OkHttpClientTestRule()
 
-  private val client = clientTestRule.newClient()
+  private var client = clientTestRule.newClient()
 
-  @BeforeEach fun setUp() {
+  private val handshakeCertificates = TlsUtil.localhost()
+
+  private lateinit var server: MockWebServer
+
+  @BeforeEach @Throws(Exception::class) fun setUp(server: MockWebServer) {
     platform.assumeConscrypt()
+    this.server = server
+  }
+
+  private fun enableTls() {
+    client = client.newBuilder()
+      .sslSocketFactory(
+        handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager)
+      .build()
+    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
   }
 
   @Test
   fun testTrustManager() {
     assertThat(Conscrypt.isConscrypt(Platform.get().platformTrustManager())).isTrue()
+  }
+
+  @ParameterizedTest(name = "{displayName}({arguments})")
+  @ValueSource(strings = ["TLSv1.2", "TLSv1.3"])
+  fun testSessionReuse(tlsVersion: String) {
+    val sessionIds = mutableListOf<String>()
+
+    enableTls()
+
+    val spec = ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
+      .tlsVersions(TlsVersion.forJavaName(tlsVersion))
+      .build()
+    client = client.newBuilder().connectionSpecs(listOf(spec)).eventListenerFactory(clientTestRule.wrap(object : EventListener() {
+      override fun connectionAcquired(call: Call, connection: Connection) {
+        val sslSocket = connection.socket() as SSLSocket
+
+        sessionIds.add(sslSocket.session.id.toByteString().hex())
+      }
+    })).build()
+
+    server.enqueue(MockResponse().setBody("abc1"))
+    server.enqueue(MockResponse().setBody("abc2"))
+
+    val request = Request.Builder().url(server.url("/")).build()
+
+    client.newCall(request).execute().use { response ->
+      assertEquals(200, response.code)
+    }
+
+    client.connectionPool.evictAll()
+    assertEquals(0, client.connectionPool.connectionCount())
+
+    client.newCall(request).execute().use { response ->
+      assertEquals(200, response.code)
+    }
+
+    assertEquals(2, sessionIds.size)
+    assertEquals(sessionIds[0], sessionIds[1])
+    assertThat(sessionIds[0]).isNotBlank()
   }
 
   @Test
