@@ -148,6 +148,7 @@ public class HttpUrlTest {
   @Test
   public void parseNoScheme() throws Exception {
     assertInvalid("//host", "Expected URL scheme 'http' or 'https' but no scheme was found for //host");
+    assertInvalid("://host", "Expected URL scheme 'http' or 'https' but no scheme was found for ://hos...");
     assertInvalid("/path", "Expected URL scheme 'http' or 'https' but no scheme was found for /path");
     assertInvalid("path", "Expected URL scheme 'http' or 'https' but no scheme was found for path");
     assertInvalid("?query", "Expected URL scheme 'http' or 'https' but no scheme was found for ?query");
