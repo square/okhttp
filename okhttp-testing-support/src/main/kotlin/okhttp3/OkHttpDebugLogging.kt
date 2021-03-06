@@ -15,15 +15,16 @@
  */
 package okhttp3
 
+import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.http2.Http2
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.logging.ConsoleHandler
+import java.util.logging.Handler
 import java.util.logging.Level
 import java.util.logging.LogRecord
 import java.util.logging.Logger
 import java.util.logging.SimpleFormatter
 import kotlin.reflect.KClass
-import okhttp3.internal.concurrent.TaskRunner
-import okhttp3.internal.http2.Http2
 
 object OkHttpDebugLogging {
   // Keep references to loggers to prevent their configuration from being GC'd.
@@ -33,16 +34,18 @@ object OkHttpDebugLogging {
 
   fun enableTaskRunner() = enable(TaskRunner::class)
 
-  fun enable(loggerClass: String) {
+  fun logHandler() = ConsoleHandler().apply {
+    level = Level.FINE
+    formatter = object : SimpleFormatter() {
+      override fun format(record: LogRecord) =
+        String.format("[%1\$tF %1\$tT] %2\$s %n", record.millis, record.message)
+    }
+  }
+
+  fun enable(loggerClass: String, handler: Handler = logHandler()) {
     val logger = Logger.getLogger(loggerClass)
     if (configuredLoggers.add(logger)) {
-      logger.addHandler(ConsoleHandler().apply {
-        level = Level.FINE
-        formatter = object : SimpleFormatter() {
-          override fun format(record: LogRecord) =
-            String.format("[%1\$tF %1\$tT] %2\$s %n", record.millis, record.message)
-        }
-      })
+      logger.addHandler(handler)
       logger.level = Level.FINEST
     }
   }
