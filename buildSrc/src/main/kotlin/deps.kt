@@ -72,6 +72,6 @@ object Dependencies {
   const val picocli = "info.picocli:picocli:${Versions.picocli}"
 
   object Kotlin {
-    const val version = "1.4.30"
+    const val version = "1.5.0-M1"
   }
 }
