@@ -35,6 +35,9 @@ object JsseDebugLogging {
         message.startsWith("Consuming ") -> Type.Handshake
         message.startsWith("Produced ") -> Type.Handshake
         message.startsWith("Negotiated ") -> Type.Handshake
+        message.startsWith("Found resumable session") -> Type.Handshake
+        message.startsWith("Resuming session") -> Type.Handshake
+        message.startsWith("Using PSK to derive early secret") -> Type.Handshake
         else -> Type.Unknown
       }
 
