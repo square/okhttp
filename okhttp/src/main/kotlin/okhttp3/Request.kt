@@ -27,11 +27,11 @@ import okhttp3.internal.toImmutableMap
  */
 class Request
 internal constructor(
-  @get:JvmName("url") val url: HttpUrl,
-  @get:JvmName("method") val method: String,
-  @get:JvmName("headers") val headers: Headers,
-  @get:JvmName("body") val body: RequestBody?,
-  internal val tags: Map<Class<*>, Any>
+    @get:JvmName("url") val url: HttpUrl,
+    @get:JvmName("method") val method: String,
+    @get:JvmName("headers") val headers: Headers,
+    @get:JvmName("body") val body: RequestBody?,
+    internal val tags: Map<Class<*>, Any>
 ) {
 
   private var lazyCacheControl: CacheControl? = null
@@ -237,8 +237,7 @@ internal constructor(
 
     open fun post(body: RequestBody) = method("POST", body)
 
-    @JvmOverloads
-    open fun delete(body: RequestBody? = EMPTY_REQUEST) = method("DELETE", body)
+    @JvmOverloads open fun delete(body: RequestBody? = EMPTY_REQUEST) = method("DELETE", body)
 
     open fun put(body: RequestBody) = method("PUT", body)
 

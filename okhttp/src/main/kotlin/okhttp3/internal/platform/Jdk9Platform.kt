@@ -25,9 +25,9 @@ import okhttp3.internal.SuppressSignatureCheck
 open class Jdk9Platform : Platform() {
   @SuppressSignatureCheck
   override fun configureTlsExtensions(
-    sslSocket: SSLSocket,
-    hostname: String?,
-    protocols: List<@JvmSuppressWildcards Protocol>
+      sslSocket: SSLSocket,
+      hostname: String?,
+      protocols: List<@JvmSuppressWildcards Protocol>
   ) {
     val sslParameters = sslSocket.sslParameters
 

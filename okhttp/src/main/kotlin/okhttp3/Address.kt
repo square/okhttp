@@ -32,39 +32,39 @@ import okhttp3.internal.toImmutableList
  * HTTP requests that share the same [Address] may also share the same [Connection].
  */
 class Address(
-  uriHost: String,
-  uriPort: Int,
-  /** Returns the service that will be used to resolve IP addresses for hostnames. */
-  @get:JvmName("dns") val dns: Dns,
+    uriHost: String,
+    uriPort: Int,
+    /** Returns the service that will be used to resolve IP addresses for hostnames. */
+    @get:JvmName("dns") val dns: Dns,
 
-  /** Returns the socket factory for new connections. */
-  @get:JvmName("socketFactory") val socketFactory: SocketFactory,
+    /** Returns the socket factory for new connections. */
+    @get:JvmName("socketFactory") val socketFactory: SocketFactory,
 
-  /** Returns the SSL socket factory, or null if this is not an HTTPS address. */
-  @get:JvmName("sslSocketFactory") val sslSocketFactory: SSLSocketFactory?,
+    /** Returns the SSL socket factory, or null if this is not an HTTPS address. */
+    @get:JvmName("sslSocketFactory") val sslSocketFactory: SSLSocketFactory?,
 
-  /** Returns the hostname verifier, or null if this is not an HTTPS address. */
-  @get:JvmName("hostnameVerifier") val hostnameVerifier: HostnameVerifier?,
+    /** Returns the hostname verifier, or null if this is not an HTTPS address. */
+    @get:JvmName("hostnameVerifier") val hostnameVerifier: HostnameVerifier?,
 
-  /** Returns this address's certificate pinner, or null if this is not an HTTPS address. */
-  @get:JvmName("certificatePinner") val certificatePinner: CertificatePinner?,
+    /** Returns this address's certificate pinner, or null if this is not an HTTPS address. */
+    @get:JvmName("certificatePinner") val certificatePinner: CertificatePinner?,
 
-  /** Returns the client's proxy authenticator. */
-  @get:JvmName("proxyAuthenticator") val proxyAuthenticator: Authenticator,
+    /** Returns the client's proxy authenticator. */
+    @get:JvmName("proxyAuthenticator") val proxyAuthenticator: Authenticator,
 
-  /**
-   * Returns this address's explicitly-specified HTTP proxy, or null to delegate to the
-   * {@linkplain #proxySelector proxy selector}.
-   */
-  @get:JvmName("proxy") val proxy: Proxy?,
-  protocols: List<Protocol>,
-  connectionSpecs: List<ConnectionSpec>,
+    /**
+     * Returns this address's explicitly-specified HTTP proxy, or null to delegate to the
+     * {@linkplain #proxySelector proxy selector}.
+     */
+    @get:JvmName("proxy") val proxy: Proxy?,
+    protocols: List<Protocol>,
+    connectionSpecs: List<ConnectionSpec>,
 
-  /**
-   * Returns this address's proxy selector. Only used if the proxy is null. If none of this
-   * selector's proxies are reachable, a direct connection will be attempted.
-   */
-  @get:JvmName("proxySelector") val proxySelector: ProxySelector
+    /**
+     * Returns this address's proxy selector. Only used if the proxy is null. If none of this
+     * selector's proxies are reachable, a direct connection will be attempted.
+     */
+    @get:JvmName("proxySelector") val proxySelector: ProxySelector
 ) {
   /**
    * Returns a URL with the hostname and port of the origin server. The path, query, and fragment of
@@ -82,8 +82,7 @@ class Address(
    * The protocols the client supports. This method always returns a non-null list that contains
    * minimally [Protocol.HTTP_1_1].
    */
-  @get:JvmName("protocols")
-  val protocols: List<Protocol> = protocols.toImmutableList()
+  @get:JvmName("protocols") val protocols: List<Protocol> = protocols.toImmutableList()
 
   @get:JvmName("connectionSpecs")
   val connectionSpecs: List<ConnectionSpec> = connectionSpecs.toImmutableList()

@@ -39,37 +39,37 @@ import okio.Timeout
  */
 class Relay
 private constructor(
-  /**
-   * Read/write persistence of the upstream source and its metadata. Its layout is as follows:
-   *
-   * * 16 bytes: either `OkHttp cache v1\n` if the persisted file is complete. This is another
-   * ```
-   *    sequence of bytes if the file is incomplete and should not be used.
-   * ```
-   * * 8 bytes: *n*: upstream data size
-   * * 8 bytes: *m*: metadata size
-   * * *n* bytes: upstream data
-   * * *m* bytes: metadata
-   *
-   * This is closed and assigned to null when the last source is closed and no further sources are
-   * permitted.
-   */
-  var file: RandomAccessFile?,
+    /**
+     * Read/write persistence of the upstream source and its metadata. Its layout is as follows:
+     *
+     * * 16 bytes: either `OkHttp cache v1\n` if the persisted file is complete. This is another
+     * ```
+     *    sequence of bytes if the file is incomplete and should not be used.
+     * ```
+     * * 8 bytes: *n*: upstream data size
+     * * 8 bytes: *m*: metadata size
+     * * *n* bytes: upstream data
+     * * *m* bytes: metadata
+     *
+     * This is closed and assigned to null when the last source is closed and no further sources are
+     * permitted.
+     */
+    var file: RandomAccessFile?,
 
-  /**
-   * Null once the file has a complete copy of the upstream bytes. Only the [upstreamReader]
-   * thread may access this source.
-   */
-  var upstream: Source?,
+    /**
+     * Null once the file has a complete copy of the upstream bytes. Only the [upstreamReader]
+     * thread may access this source.
+     */
+    var upstream: Source?,
 
-  /** The number of bytes consumed from [upstream]. Guarded by this. */
-  var upstreamPos: Long,
+    /** The number of bytes consumed from [upstream]. Guarded by this. */
+    var upstreamPos: Long,
 
-  /** User-supplied additional data persisted with the source data. */
-  private val metadata: ByteString,
+    /** User-supplied additional data persisted with the source data. */
+    private val metadata: ByteString,
 
-  /** The maximum size of [buffer]. */
-  val bufferMaxSize: Long
+    /** The maximum size of [buffer]. */
+    val bufferMaxSize: Long
 ) {
   /** The thread that currently has access to upstream. Possibly null. Guarded by this. */
   var upstreamReader: Thread? = null
@@ -298,10 +298,8 @@ private constructor(
     private const val SOURCE_UPSTREAM = 1
     private const val SOURCE_FILE = 2
 
-    @JvmField
-    val PREFIX_CLEAN = "OkHttp cache v1\n".encodeUtf8()
-    @JvmField
-    val PREFIX_DIRTY = "OkHttp DIRTY :(\n".encodeUtf8()
+    @JvmField val PREFIX_CLEAN = "OkHttp cache v1\n".encodeUtf8()
+    @JvmField val PREFIX_DIRTY = "OkHttp DIRTY :(\n".encodeUtf8()
     private const val FILE_HEADER_SIZE = 32L
 
     /**

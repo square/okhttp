@@ -120,20 +120,17 @@ fun interface Authenticator {
    * available. It may also not be provided when an authenticator is re-used manually in an
    * application interceptor, such as when implementing client-specific retries.
    */
-  @Throws(IOException::class)
-  fun authenticate(route: Route?, response: Response): Request?
+  @Throws(IOException::class) fun authenticate(route: Route?, response: Response): Request?
 
   companion object {
     /** An authenticator that knows no credentials and makes no attempt to authenticate. */
-    @JvmField
-    val NONE: Authenticator = AuthenticatorNone()
+    @JvmField val NONE: Authenticator = AuthenticatorNone()
 
     private class AuthenticatorNone : Authenticator {
       override fun authenticate(route: Route?, response: Response): Request? = null
     }
 
     /** An authenticator that uses the java.net.Authenticator global authenticator. */
-    @JvmField
-    val JAVA_NET_AUTHENTICATOR: Authenticator = JavaNetAuthenticator()
+    @JvmField val JAVA_NET_AUTHENTICATOR: Authenticator = JavaNetAuthenticator()
   }
 }

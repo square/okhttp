@@ -38,10 +38,10 @@ import okio.buffer
  * on [ExchangeCodec], which handles the actual I/O.
  */
 class Exchange(
-  internal val call: RealCall,
-  internal val eventListener: EventListener,
-  internal val finder: ExchangeFinder,
-  private val codec: ExchangeCodec
+    internal val call: RealCall,
+    internal val eventListener: EventListener,
+    internal val finder: ExchangeFinder,
+    private val codec: ExchangeCodec
 ) {
   /** True if the request body need not complete before the response body starts. */
   internal var isDuplex: Boolean = false
@@ -136,8 +136,7 @@ class Exchange(
     }
   }
 
-  @Throws(IOException::class)
-  fun trailers(): Headers = codec.trailers()
+  @Throws(IOException::class) fun trailers(): Headers = codec.trailers()
 
   @Throws(SocketException::class)
   fun newWebSocketStreams(): RealWebSocket.Streams {
@@ -173,10 +172,10 @@ class Exchange(
   }
 
   fun <E : IOException?> bodyComplete(
-    bytesRead: Long,
-    responseDone: Boolean,
-    requestDone: Boolean,
-    e: E
+      bytesRead: Long,
+      responseDone: Boolean,
+      requestDone: Boolean,
+      e: E
   ): E {
     if (e != null) {
       trackFailure(e)
@@ -204,9 +203,9 @@ class Exchange(
 
   /** A request body that fires events when it completes. */
   private inner class RequestBodySink(
-    delegate: Sink,
-    /** The exact number of bytes to be written, or -1L if that is unknown. */
-    private val contentLength: Long
+      delegate: Sink,
+      /** The exact number of bytes to be written, or -1L if that is unknown. */
+      private val contentLength: Long
   ) : ForwardingSink(delegate) {
     private var completed = false
     private var bytesReceived = 0L
@@ -261,7 +260,7 @@ class Exchange(
 
   /** A response body that fires events when it completes. */
   internal inner class ResponseBodySource(delegate: Source, private val contentLength: Long) :
-    ForwardingSource(delegate) {
+      ForwardingSource(delegate) {
     private var bytesReceived = 0L
     private var invokeStartEvent = true
     private var completed = false

@@ -101,11 +101,10 @@ open class Platform {
 
   /** Configure TLS extensions on `sslSocket` for `route`. */
   open fun configureTlsExtensions(
-    sslSocket: SSLSocket,
-    hostname: String?,
-    protocols: List<@JvmSuppressWildcards Protocol>
-  ) {
-  }
+      sslSocket: SSLSocket,
+      hostname: String?,
+      protocols: List<@JvmSuppressWildcards Protocol>
+  ) {}
 
   /** Called after the TLS handshake to release resources allocated by [configureTlsExtensions]. */
   open fun afterHandshake(sslSocket: SSLSocket) {}
@@ -166,16 +165,14 @@ open class Platform {
   override fun toString(): String = javaClass.simpleName
 
   companion object {
-    @Volatile
-    private var platform = findPlatform()
+    @Volatile private var platform = findPlatform()
 
     const val INFO = 4
     const val WARN = 5
 
     private val logger = Logger.getLogger(OkHttpClient::class.java.name)
 
-    @JvmStatic
-    fun get(): Platform = platform
+    @JvmStatic fun get(): Platform = platform
 
     fun resetForTests(platform: Platform = findPlatform()) {
       this.platform = platform

@@ -50,9 +50,9 @@ class Android10SocketAdapter : SocketAdapter {
 
   @SuppressLint("NewApi")
   override fun configureTlsExtensions(
-    sslSocket: SSLSocket,
-    hostname: String?,
-    protocols: List<Protocol>
+      sslSocket: SSLSocket,
+      hostname: String?,
+      protocols: List<Protocol>
   ) {
     try {
       SSLSockets.setUseSessionTickets(sslSocket, true)

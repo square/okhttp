@@ -28,9 +28,9 @@ import okhttp3.internal.readFieldOrNull
  * optimistically via [buildIfSupported]. But it also doesn't assume a compile time API.
  */
 class StandardAndroidSocketAdapter(
-  sslSocketClass: Class<in SSLSocket>,
-  private val sslSocketFactoryClass: Class<in SSLSocketFactory>,
-  private val paramClass: Class<*>
+    sslSocketClass: Class<in SSLSocket>,
+    private val sslSocketFactoryClass: Class<in SSLSocketFactory>,
+    private val paramClass: Class<*>
 ) : AndroidSocketAdapter(sslSocketClass) {
 
   override fun matchesSocketFactory(sslSocketFactory: SSLSocketFactory): Boolean =
@@ -50,11 +50,11 @@ class StandardAndroidSocketAdapter(
             "x509TrustManager",
         )
     return x509TrustManager
-      ?: readFieldOrNull(
-          context,
-          X509TrustManager::class.java,
-          "trustManager",
-      )
+        ?: readFieldOrNull(
+            context,
+            X509TrustManager::class.java,
+            "trustManager",
+        )
   }
 
   companion object {

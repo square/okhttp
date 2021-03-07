@@ -148,7 +148,7 @@ import okio.buffer
  */
 @OptIn(ExperimentalFileSystem::class)
 class Cache internal constructor(directory: Path, maxSize: Long, fileSystem: FileSystem) :
-  Closeable, Flushable {
+    Closeable, Flushable {
   internal val cache =
       DiskLruCache(
           fileSystem = fileSystem,
@@ -172,8 +172,8 @@ class Cache internal constructor(directory: Path, maxSize: Long, fileSystem: Fil
   /** Create a cache of at most [maxSize] bytes in [directory]. */
   @OptIn(ExperimentalFileSystem::class)
   constructor(
-    directory: File,
-    maxSize: Long
+      directory: File,
+      maxSize: Long
   ) : this(
       directory.toOkioPath(),
       maxSize,
@@ -262,8 +262,7 @@ class Cache internal constructor(directory: Path, maxSize: Long, fileSystem: Fil
     // Give up because the cache cannot be written.
     try {
       editor?.abort()
-    } catch (_: IOException) {
-    }
+    } catch (_: IOException) {}
   }
 
   /**
@@ -351,14 +350,11 @@ class Cache internal constructor(directory: Path, maxSize: Long, fileSystem: Fil
     }
   }
 
-  @Synchronized
-  fun writeAbortCount(): Int = writeAbortCount
+  @Synchronized fun writeAbortCount(): Int = writeAbortCount
 
-  @Synchronized
-  fun writeSuccessCount(): Int = writeSuccessCount
+  @Synchronized fun writeSuccessCount(): Int = writeSuccessCount
 
-  @Throws(IOException::class)
-  fun size(): Long = cache.size()
+  @Throws(IOException::class) fun size(): Long = cache.size()
 
   /** Max size of the cache (in bytes). */
   fun maxSize(): Long = cache.maxSize
@@ -407,14 +403,11 @@ class Cache internal constructor(directory: Path, maxSize: Long, fileSystem: Fil
     hitCount++
   }
 
-  @Synchronized
-  fun networkCount(): Int = networkCount
+  @Synchronized fun networkCount(): Int = networkCount
 
-  @Synchronized
-  fun hitCount(): Int = hitCount
+  @Synchronized fun hitCount(): Int = hitCount
 
-  @Synchronized
-  fun requestCount(): Int = requestCount
+  @Synchronized fun requestCount(): Int = requestCount
 
   private inner class RealCacheRequest(private val editor: DiskLruCache.Editor) : CacheRequest {
     private val cacheOut: Sink = editor.newSink(ENTRY_BODY)
@@ -446,8 +439,7 @@ class Cache internal constructor(directory: Path, maxSize: Long, fileSystem: Fil
       cacheOut.closeQuietly()
       try {
         editor.abort()
-      } catch (_: IOException) {
-      }
+      } catch (_: IOException) {}
     }
 
     override fun body(): Sink = body
@@ -528,9 +520,9 @@ class Cache internal constructor(directory: Path, maxSize: Long, fileSystem: Fil
         // or mostly silently with an IOException
         url =
             urlLine.toHttpUrlOrNull()
-              ?: throw IOException("Cache corruption for $urlLine").also {
-                Platform.get().log("cache corruption", WARN, it)
-              }
+                ?: throw IOException("Cache corruption for $urlLine").also {
+                  Platform.get().log("cache corruption", WARN, it)
+                }
         requestMethod = source.readUtf8LineStrict()
         val varyHeadersBuilder = Headers.Builder()
         val varyRequestHeaderLineCount = readInt(source)
@@ -699,9 +691,9 @@ class Cache internal constructor(directory: Path, maxSize: Long, fileSystem: Fil
   }
 
   private class CacheResponseBody(
-    val snapshot: DiskLruCache.Snapshot,
-    private val contentType: String?,
-    private val contentLength: String?
+      val snapshot: DiskLruCache.Snapshot,
+      private val contentType: String?,
+      private val contentLength: String?
   ) : ResponseBody() {
     private val bodySource: BufferedSource
 
@@ -709,12 +701,12 @@ class Cache internal constructor(directory: Path, maxSize: Long, fileSystem: Fil
       val source = snapshot.getSource(ENTRY_BODY)
       bodySource =
           object : ForwardingSource(source) {
-            @Throws(IOException::class)
-            override fun close() {
-              snapshot.close()
-              super.close()
-            }
-          }
+                @Throws(IOException::class)
+                override fun close() {
+                  snapshot.close()
+                  super.close()
+                }
+              }
               .buffer()
     }
 
@@ -731,8 +723,7 @@ class Cache internal constructor(directory: Path, maxSize: Long, fileSystem: Fil
     private const val ENTRY_BODY = 1
     private const val ENTRY_COUNT = 2
 
-    @JvmStatic
-    fun key(url: HttpUrl): String = url.toString().encodeUtf8().md5().hex()
+    @JvmStatic fun key(url: HttpUrl): String = url.toString().encodeUtf8().md5().hex()
 
     @Throws(IOException::class)
     internal fun readInt(source: BufferedSource): Int {
@@ -753,9 +744,9 @@ class Cache internal constructor(directory: Path, maxSize: Long, fileSystem: Fil
      * [newRequest].
      */
     fun varyMatches(
-      cachedResponse: Response,
-      cachedRequest: Headers,
-      newRequest: Request
+        cachedResponse: Response,
+        cachedRequest: Headers,
+        newRequest: Request
     ): Boolean {
       return cachedResponse.headers.varyFields().none {
         cachedRequest.values(it) != newRequest.headers(it)

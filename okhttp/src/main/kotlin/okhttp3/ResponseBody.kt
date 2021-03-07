@@ -119,8 +119,7 @@ abstract class ResponseBody : Closeable {
    * trigger an [OutOfMemoryError]. Prefer to stream the response body if this is a possibility for
    * your response.
    */
-  @Throws(IOException::class)
-  fun bytes() = consumeSource(BufferedSource::readByteArray) { it.size }
+  @Throws(IOException::class) fun bytes() = consumeSource(BufferedSource::readByteArray) { it.size }
 
   /**
    * Returns the response as a [ByteString].
@@ -133,8 +132,8 @@ abstract class ResponseBody : Closeable {
   fun byteString() = consumeSource(BufferedSource::readByteString) { it.size }
 
   private inline fun <T : Any> consumeSource(
-    consumer: (BufferedSource) -> T,
-    sizeMapper: (T) -> Int
+      consumer: (BufferedSource) -> T,
+      sizeMapper: (T) -> Int
   ): T {
     val contentLength = contentLength()
     if (contentLength > Int.MAX_VALUE) {
@@ -188,7 +187,7 @@ abstract class ResponseBody : Closeable {
   override fun close() = source().closeQuietly()
 
   internal class BomAwareReader(private val source: BufferedSource, private val charset: Charset) :
-    Reader() {
+      Reader() {
 
     private var closed: Boolean = false
     private var delegate: Reader? = null
@@ -199,11 +198,11 @@ abstract class ResponseBody : Closeable {
 
       val finalDelegate =
           delegate
-            ?: InputStreamReader(
-                source.inputStream(),
-                source.readBomAsCharset(charset),
-            )
-                .also { delegate = it }
+              ?: InputStreamReader(
+                      source.inputStream(),
+                      source.readBomAsCharset(charset),
+                  )
+                  .also { delegate = it }
       return finalDelegate.read(cbuf, off, len)
     }
 
@@ -255,8 +254,8 @@ abstract class ResponseBody : Closeable {
     @JvmStatic
     @JvmName("create")
     fun BufferedSource.asResponseBody(
-      contentType: MediaType? = null,
-      contentLength: Long = -1L
+        contentType: MediaType? = null,
+        contentLength: Long = -1L
     ): ResponseBody =
         object : ResponseBody() {
           override fun contentType() = contentType
@@ -270,10 +269,10 @@ abstract class ResponseBody : Closeable {
     @Deprecated(
         message = "Moved to extension function. Put the 'content' argument first to fix Java",
         replaceWith =
-        ReplaceWith(
-            expression = "content.toResponseBody(contentType)",
-            imports = ["okhttp3.ResponseBody.Companion.toResponseBody"],
-        ),
+            ReplaceWith(
+                expression = "content.toResponseBody(contentType)",
+                imports = ["okhttp3.ResponseBody.Companion.toResponseBody"],
+            ),
         level = DeprecationLevel.WARNING,
     )
     fun create(contentType: MediaType?, content: String) = content.toResponseBody(contentType)
@@ -282,10 +281,10 @@ abstract class ResponseBody : Closeable {
     @Deprecated(
         message = "Moved to extension function. Put the 'content' argument first to fix Java",
         replaceWith =
-        ReplaceWith(
-            expression = "content.toResponseBody(contentType)",
-            imports = ["okhttp3.ResponseBody.Companion.toResponseBody"],
-        ),
+            ReplaceWith(
+                expression = "content.toResponseBody(contentType)",
+                imports = ["okhttp3.ResponseBody.Companion.toResponseBody"],
+            ),
         level = DeprecationLevel.WARNING,
     )
     fun create(contentType: MediaType?, content: ByteArray) = content.toResponseBody(contentType)
@@ -294,10 +293,10 @@ abstract class ResponseBody : Closeable {
     @Deprecated(
         message = "Moved to extension function. Put the 'content' argument first to fix Java",
         replaceWith =
-        ReplaceWith(
-            expression = "content.toResponseBody(contentType)",
-            imports = ["okhttp3.ResponseBody.Companion.toResponseBody"],
-        ),
+            ReplaceWith(
+                expression = "content.toResponseBody(contentType)",
+                imports = ["okhttp3.ResponseBody.Companion.toResponseBody"],
+            ),
         level = DeprecationLevel.WARNING,
     )
     fun create(contentType: MediaType?, content: ByteString) = content.toResponseBody(contentType)
@@ -306,10 +305,10 @@ abstract class ResponseBody : Closeable {
     @Deprecated(
         message = "Moved to extension function. Put the 'content' argument first to fix Java",
         replaceWith =
-        ReplaceWith(
-            expression = "content.asResponseBody(contentType, contentLength)",
-            imports = ["okhttp3.ResponseBody.Companion.asResponseBody"],
-        ),
+            ReplaceWith(
+                expression = "content.asResponseBody(contentType, contentLength)",
+                imports = ["okhttp3.ResponseBody.Companion.asResponseBody"],
+            ),
         level = DeprecationLevel.WARNING,
     )
     fun create(contentType: MediaType?, contentLength: Long, content: BufferedSource) =

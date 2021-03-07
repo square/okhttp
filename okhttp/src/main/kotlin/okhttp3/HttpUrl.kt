@@ -287,83 +287,83 @@ import okio.Buffer
  */
 class HttpUrl
 internal constructor(
-  /** Either "http" or "https". */
-  @get:JvmName("scheme") val scheme: String,
+    /** Either "http" or "https". */
+    @get:JvmName("scheme") val scheme: String,
 
-  /**
-   * The decoded username, or an empty string if none is present.
-   *
-   * | URL | `username()` | | :------------------------------- | :----------- | | `http://host/` |
-   * `""` | | `http://username@host/` | `"username"` | | `http://username:password@host/` |
-   * `"username"` | | `http://a%20b:c%20d@host/` | `"a b"` |
-   */
-  @get:JvmName("username") val username: String,
+    /**
+     * The decoded username, or an empty string if none is present.
+     *
+     * | URL | `username()` | | :------------------------------- | :----------- | | `http://host/` |
+     * `""` | | `http://username@host/` | `"username"` | | `http://username:password@host/` |
+     * `"username"` | | `http://a%20b:c%20d@host/` | `"a b"` |
+     */
+    @get:JvmName("username") val username: String,
 
-  /**
-   * Returns the decoded password, or an empty string if none is present.
-   *
-   * | URL | `password()` | | :------------------------------- | :----------- | | `http://host/` |
-   * `""` | | `http://username@host/` | `""` | | `http://username:password@host/` | `"password"` |
-   * | `http://a%20b:c%20d@host/` | `"c d"` |
-   */
-  @get:JvmName("password") val password: String,
+    /**
+     * Returns the decoded password, or an empty string if none is present.
+     *
+     * | URL | `password()` | | :------------------------------- | :----------- | | `http://host/` |
+     * `""` | | `http://username@host/` | `""` | | `http://username:password@host/` | `"password"` |
+     * | `http://a%20b:c%20d@host/` | `"c d"` |
+     */
+    @get:JvmName("password") val password: String,
 
-  /**
-   * The host address suitable for use with [InetAddress.getAllByName]. May be:
-   *
-   * * A regular host name, like `android.com`.
-   *
-   * * An IPv4 address, like `127.0.0.1`.
-   *
-   * * An IPv6 address, like `::1`. Note that there are no square braces.
-   *
-   * * An encoded IDN, like `xn--n3h.net`.
-   *
-   * | URL | `host()` | | :-------------------- | :-------------- | | `http://android.com/` |
-   * `"android.com"` | | `http://127.0.0.1/` | `"127.0.0.1"` | | `http://[::1]/` | `"::1"` | |
-   * `http://xn--n3h.net/` | `"xn--n3h.net"` |
-   */
-  @get:JvmName("host") val host: String,
+    /**
+     * The host address suitable for use with [InetAddress.getAllByName]. May be:
+     *
+     * * A regular host name, like `android.com`.
+     *
+     * * An IPv4 address, like `127.0.0.1`.
+     *
+     * * An IPv6 address, like `::1`. Note that there are no square braces.
+     *
+     * * An encoded IDN, like `xn--n3h.net`.
+     *
+     * | URL | `host()` | | :-------------------- | :-------------- | | `http://android.com/` |
+     * `"android.com"` | | `http://127.0.0.1/` | `"127.0.0.1"` | | `http://[::1]/` | `"::1"` | |
+     * `http://xn--n3h.net/` | `"xn--n3h.net"` |
+     */
+    @get:JvmName("host") val host: String,
 
-  /**
-   * The explicitly-specified port if one was provided, or the default port for this URL's scheme.
-   * For example, this returns 8443 for `https://square.com:8443/` and 443 for
-   * `https://square.com/`. The result is in `[1..65535]`.
-   *
-   * | URL | `port()` | | :------------------ | :------- | | `http://host/` | `80` | |
-   * `http://host:8000/` | `8000` | | `https://host/` | `443` |
-   */
-  @get:JvmName("port") val port: Int,
+    /**
+     * The explicitly-specified port if one was provided, or the default port for this URL's scheme.
+     * For example, this returns 8443 for `https://square.com:8443/` and 443 for
+     * `https://square.com/`. The result is in `[1..65535]`.
+     *
+     * | URL | `port()` | | :------------------ | :------- | | `http://host/` | `80` | |
+     * `http://host:8000/` | `8000` | | `https://host/` | `443` |
+     */
+    @get:JvmName("port") val port: Int,
 
-  /**
-   * A list of path segments like `["a", "b", "c"]` for the URL `http://host/a/b/c`. This list is
-   * never empty though it may contain a single empty string.
-   *
-   * | URL | `pathSegments()` | | :----------------------- | :------------------ | |
-   * `http://host/` | `[""]` | | `http://host/a/b/c"` | `["a", "b", "c"]` | |
-   * `http://host/a/b%20c/d"` | `["a", "b c", "d"]` |
-   */
-  @get:JvmName("pathSegments") val pathSegments: List<String>,
+    /**
+     * A list of path segments like `["a", "b", "c"]` for the URL `http://host/a/b/c`. This list is
+     * never empty though it may contain a single empty string.
+     *
+     * | URL | `pathSegments()` | | :----------------------- | :------------------ | |
+     * `http://host/` | `[""]` | | `http://host/a/b/c"` | `["a", "b", "c"]` | |
+     * `http://host/a/b%20c/d"` | `["a", "b c", "d"]` |
+     */
+    @get:JvmName("pathSegments") val pathSegments: List<String>,
 
-  /**
-   * Alternating, decoded query names and values, or null for no query. Names may be empty or
-   * non-empty, but never null. Values are null if the name has no corresponding '=' separator, or
-   * empty, or non-empty.
-   */
-  private val queryNamesAndValues: List<String?>?,
+    /**
+     * Alternating, decoded query names and values, or null for no query. Names may be empty or
+     * non-empty, but never null. Values are null if the name has no corresponding '=' separator, or
+     * empty, or non-empty.
+     */
+    private val queryNamesAndValues: List<String?>?,
 
-  /**
-   * This URL's fragment, like `"abc"` for `http://host/#abc`. This is null if the URL has no
-   * fragment.
-   *
-   * | URL | `fragment()` | | :--------------------- | :----------- | | `http://host/` | null | |
-   * `http://host/#` | `""` | | `http://host/#abc` | `"abc"` | | `http://host/#abc|def` |
-   * `"abc|def"` |
-   */
-  @get:JvmName("fragment") val fragment: String?,
+    /**
+     * This URL's fragment, like `"abc"` for `http://host/#abc`. This is null if the URL has no
+     * fragment.
+     *
+     * | URL | `fragment()` | | :--------------------- | :----------- | | `http://host/` | null | |
+     * `http://host/#` | `""` | | `http://host/#abc` | `"abc"` | | `http://host/#abc|def` |
+     * `"abc|def"` |
+     */
+    @get:JvmName("fragment") val fragment: String?,
 
-  /** Canonical URL. */
-  private val url: String
+    /** Canonical URL. */
+    private val url: String
 ) {
   val isHttps: Boolean = scheme == "https"
 
@@ -928,9 +928,9 @@ internal constructor(
     fun host(host: String) = apply {
       val encoded =
           host.percentDecode().toCanonicalHost()
-            ?: throw IllegalArgumentException(
-                "unexpected host: $host",
-            )
+              ?: throw IllegalArgumentException(
+                  "unexpected host: $host",
+              )
       this.host = encoded
     }
 
@@ -1178,11 +1178,11 @@ internal constructor(
           port = effectivePort(),
           pathSegments = encodedPathSegments.map { it.percentDecode() },
           queryNamesAndValues =
-          encodedQueryNamesAndValues?.map {
-            it?.percentDecode(
-                plusIsSpace = true,
-            )
-          },
+              encodedQueryNamesAndValues?.map {
+                it?.percentDecode(
+                    plusIsSpace = true,
+                )
+              },
           fragment = encodedFragment?.percentDecode(),
           url = toString(),
       )
@@ -1256,11 +1256,11 @@ internal constructor(
             pos += "http:".length
           }
           else ->
-            throw IllegalArgumentException(
-                "Expected URL scheme 'http' or 'https' but was '" +
-                    input.substring(0, schemeDelimiterOffset) +
-                    "'",
-            )
+              throw IllegalArgumentException(
+                  "Expected URL scheme 'http' or 'https' but was '" +
+                      input.substring(0, schemeDelimiterOffset) +
+                      "'",
+              )
         }
       } else if (base != null) {
         this.scheme = base.scheme
@@ -1442,11 +1442,11 @@ internal constructor(
 
     /** Adds a path segment. If the input is ".." or equivalent, this pops a path segment. */
     private fun push(
-      input: String,
-      pos: Int,
-      limit: Int,
-      addTrailingSlash: Boolean,
-      alreadyEncoded: Boolean
+        input: String,
+        pos: Int,
+        limit: Int,
+        addTrailingSlash: Boolean,
+        alreadyEncoded: Boolean
     ) {
       val segment =
           input.canonicalize(
@@ -1659,9 +1659,7 @@ internal constructor(
      *
      * @throws IllegalArgumentException If this is not a well-formed HTTP or HTTPS URL.
      */
-    @JvmStatic
-    @JvmName("get")
-    fun String.toHttpUrl(): HttpUrl = Builder().parse(null, this).build()
+    @JvmStatic @JvmName("get") fun String.toHttpUrl(): HttpUrl = Builder().parse(null, this).build()
 
     /**
      * Returns a new `HttpUrl` representing `url` if it is a well-formed HTTP or HTTPS URL, or null
@@ -1681,22 +1679,18 @@ internal constructor(
      * Returns an [HttpUrl] for this if its protocol is `http` or `https`, or null if it has any
      * other protocol.
      */
-    @JvmStatic
-    @JvmName("get")
-    fun URL.toHttpUrlOrNull(): HttpUrl? = toString().toHttpUrlOrNull()
+    @JvmStatic @JvmName("get") fun URL.toHttpUrlOrNull(): HttpUrl? = toString().toHttpUrlOrNull()
 
-    @JvmStatic
-    @JvmName("get")
-    fun URI.toHttpUrlOrNull(): HttpUrl? = toString().toHttpUrlOrNull()
+    @JvmStatic @JvmName("get") fun URI.toHttpUrlOrNull(): HttpUrl? = toString().toHttpUrlOrNull()
 
     @JvmName("-deprecated_get")
     @Deprecated(
         message = "moved to extension function",
         replaceWith =
-        ReplaceWith(
-            expression = "url.toHttpUrl()",
-            imports = ["okhttp3.HttpUrl.Companion.toHttpUrl"],
-        ),
+            ReplaceWith(
+                expression = "url.toHttpUrl()",
+                imports = ["okhttp3.HttpUrl.Companion.toHttpUrl"],
+            ),
         level = DeprecationLevel.ERROR,
     )
     fun get(url: String): HttpUrl = url.toHttpUrl()
@@ -1705,10 +1699,10 @@ internal constructor(
     @Deprecated(
         message = "moved to extension function",
         replaceWith =
-        ReplaceWith(
-            expression = "url.toHttpUrlOrNull()",
-            imports = ["okhttp3.HttpUrl.Companion.toHttpUrlOrNull"],
-        ),
+            ReplaceWith(
+                expression = "url.toHttpUrlOrNull()",
+                imports = ["okhttp3.HttpUrl.Companion.toHttpUrlOrNull"],
+            ),
         level = DeprecationLevel.ERROR,
     )
     fun parse(url: String): HttpUrl? = url.toHttpUrlOrNull()
@@ -1717,10 +1711,10 @@ internal constructor(
     @Deprecated(
         message = "moved to extension function",
         replaceWith =
-        ReplaceWith(
-            expression = "url.toHttpUrlOrNull()",
-            imports = ["okhttp3.HttpUrl.Companion.toHttpUrlOrNull"],
-        ),
+            ReplaceWith(
+                expression = "url.toHttpUrlOrNull()",
+                imports = ["okhttp3.HttpUrl.Companion.toHttpUrlOrNull"],
+            ),
         level = DeprecationLevel.ERROR,
     )
     fun get(url: URL): HttpUrl? = url.toHttpUrlOrNull()
@@ -1729,18 +1723,18 @@ internal constructor(
     @Deprecated(
         message = "moved to extension function",
         replaceWith =
-        ReplaceWith(
-            expression = "uri.toHttpUrlOrNull()",
-            imports = ["okhttp3.HttpUrl.Companion.toHttpUrlOrNull"],
-        ),
+            ReplaceWith(
+                expression = "uri.toHttpUrlOrNull()",
+                imports = ["okhttp3.HttpUrl.Companion.toHttpUrlOrNull"],
+            ),
         level = DeprecationLevel.ERROR,
     )
     fun get(uri: URI): HttpUrl? = uri.toHttpUrlOrNull()
 
     internal fun String.percentDecode(
-      pos: Int = 0,
-      limit: Int = length,
-      plusIsSpace: Boolean = false
+        pos: Int = 0,
+        limit: Int = length,
+        plusIsSpace: Boolean = false
     ): String {
       for (i in pos until limit) {
         val c = this[i]
@@ -1758,10 +1752,10 @@ internal constructor(
     }
 
     private fun Buffer.writePercentDecoded(
-      encoded: String,
-      pos: Int,
-      limit: Int,
-      plusIsSpace: Boolean
+        encoded: String,
+        pos: Int,
+        limit: Int,
+        plusIsSpace: Boolean
     ) {
       var codePoint: Int
       var i = pos
@@ -1814,26 +1808,26 @@ internal constructor(
      * @param charset which charset to use, null equals UTF-8.
      */
     internal fun String.canonicalize(
-      pos: Int = 0,
-      limit: Int = length,
-      encodeSet: String,
-      alreadyEncoded: Boolean = false,
-      strict: Boolean = false,
-      plusIsSpace: Boolean = false,
-      unicodeAllowed: Boolean = false,
-      charset: Charset? = null
+        pos: Int = 0,
+        limit: Int = length,
+        encodeSet: String,
+        alreadyEncoded: Boolean = false,
+        strict: Boolean = false,
+        plusIsSpace: Boolean = false,
+        unicodeAllowed: Boolean = false,
+        charset: Charset? = null
     ): String {
       var codePoint: Int
       var i = pos
       while (i < limit) {
         codePoint = codePointAt(i)
         if (codePoint < 0x20 ||
-          codePoint == 0x7f ||
-          codePoint >= 0x80 && !unicodeAllowed ||
-          codePoint.toChar() in encodeSet ||
-          codePoint == '%'.toInt() &&
-          (!alreadyEncoded || strict && !isPercentEncoded(i, limit)) ||
-          codePoint == '+'.toInt() && plusIsSpace) {
+            codePoint == 0x7f ||
+            codePoint >= 0x80 && !unicodeAllowed ||
+            codePoint.toChar() in encodeSet ||
+            codePoint == '%'.toInt() &&
+                (!alreadyEncoded || strict && !isPercentEncoded(i, limit)) ||
+            codePoint == '+'.toInt() && plusIsSpace) {
           // Slow path: the character at i requires encoding!
           val out = Buffer()
           out.writeUtf8(this, pos, i)
@@ -1858,15 +1852,15 @@ internal constructor(
     }
 
     private fun Buffer.writeCanonicalized(
-      input: String,
-      pos: Int,
-      limit: Int,
-      encodeSet: String,
-      alreadyEncoded: Boolean,
-      strict: Boolean,
-      plusIsSpace: Boolean,
-      unicodeAllowed: Boolean,
-      charset: Charset?
+        input: String,
+        pos: Int,
+        limit: Int,
+        encodeSet: String,
+        alreadyEncoded: Boolean,
+        strict: Boolean,
+        plusIsSpace: Boolean,
+        unicodeAllowed: Boolean,
+        charset: Charset?
     ) {
       var encodedCharBuffer: Buffer? = null // Lazily allocated.
       var codePoint: Int
@@ -1874,10 +1868,10 @@ internal constructor(
       while (i < limit) {
         codePoint = input.codePointAt(i)
         if (alreadyEncoded &&
-          (codePoint == '\t'.toInt() ||
-              codePoint == '\n'.toInt() ||
-              codePoint == '\u000c'.toInt() ||
-              codePoint == '\r'.toInt())) {
+            (codePoint == '\t'.toInt() ||
+                codePoint == '\n'.toInt() ||
+                codePoint == '\u000c'.toInt() ||
+                codePoint == '\r'.toInt())) {
           // Skip this character.
         } else if (codePoint == ' '.toInt() && encodeSet === FORM_ENCODE_SET) {
           // Encode ' ' as '+'.
@@ -1886,11 +1880,11 @@ internal constructor(
           // Encode '+' as '%2B' since we permit ' ' to be encoded as either '+' or '%20'.
           writeUtf8(if (alreadyEncoded) "+" else "%2B")
         } else if (codePoint < 0x20 ||
-          codePoint == 0x7f ||
-          codePoint >= 0x80 && !unicodeAllowed ||
-          codePoint.toChar() in encodeSet ||
-          codePoint == '%'.toInt() &&
-          (!alreadyEncoded || strict && !input.isPercentEncoded(i, limit))) {
+            codePoint == 0x7f ||
+            codePoint >= 0x80 && !unicodeAllowed ||
+            codePoint.toChar() in encodeSet ||
+            codePoint == '%'.toInt() &&
+                (!alreadyEncoded || strict && !input.isPercentEncoded(i, limit))) {
           // Percent encode this character.
           if (encodedCharBuffer == null) {
             encodedCharBuffer = Buffer()

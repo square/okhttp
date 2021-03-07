@@ -34,25 +34,25 @@ import okhttp3.internal.connection.RealCall
  * a network interceptor and [exchange] must be non-null.
  */
 class RealInterceptorChain(
-  internal val call: RealCall,
-  private val interceptors: List<Interceptor>,
-  private val index: Int,
-  internal val exchange: Exchange?,
-  internal val request: Request,
-  internal val connectTimeoutMillis: Int,
-  internal val readTimeoutMillis: Int,
-  internal val writeTimeoutMillis: Int
+    internal val call: RealCall,
+    private val interceptors: List<Interceptor>,
+    private val index: Int,
+    internal val exchange: Exchange?,
+    internal val request: Request,
+    internal val connectTimeoutMillis: Int,
+    internal val readTimeoutMillis: Int,
+    internal val writeTimeoutMillis: Int
 ) : Interceptor.Chain {
 
   private var calls: Int = 0
 
   internal fun copy(
-    index: Int = this.index,
-    exchange: Exchange? = this.exchange,
-    request: Request = this.request,
-    connectTimeoutMillis: Int = this.connectTimeoutMillis,
-    readTimeoutMillis: Int = this.readTimeoutMillis,
-    writeTimeoutMillis: Int = this.writeTimeoutMillis
+      index: Int = this.index,
+      exchange: Exchange? = this.exchange,
+      request: Request = this.request,
+      connectTimeoutMillis: Int = this.connectTimeoutMillis,
+      readTimeoutMillis: Int = this.readTimeoutMillis,
+      writeTimeoutMillis: Int = this.writeTimeoutMillis
   ) =
       RealInterceptorChain(
           call,
@@ -117,9 +117,9 @@ class RealInterceptorChain(
     @Suppress("USELESS_ELVIS")
     val response =
         interceptor.intercept(next)
-          ?: throw NullPointerException(
-              "interceptor $interceptor returned null",
-          )
+            ?: throw NullPointerException(
+                "interceptor $interceptor returned null",
+            )
 
     if (exchange != null) {
       check(index + 1 >= interceptors.size || next.calls == 1) {

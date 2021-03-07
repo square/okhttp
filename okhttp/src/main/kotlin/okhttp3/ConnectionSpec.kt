@@ -46,10 +46,10 @@ import okhttp3.internal.intersect
  */
 class ConnectionSpec
 internal constructor(
-  @get:JvmName("isTls") val isTls: Boolean,
-  @get:JvmName("supportsTlsExtensions") val supportsTlsExtensions: Boolean,
-  internal val cipherSuitesAsString: Array<String>?,
-  private val tlsVersionsAsString: Array<String>?
+    @get:JvmName("isTls") val isTls: Boolean,
+    @get:JvmName("supportsTlsExtensions") val supportsTlsExtensions: Boolean,
+    internal val cipherSuitesAsString: Array<String>?,
+    private val tlsVersionsAsString: Array<String>?
 ) {
 
   /**
@@ -161,14 +161,15 @@ internal constructor(
     }
 
     if (tlsVersionsAsString != null &&
-      !tlsVersionsAsString.hasIntersection(socket.enabledProtocols, naturalOrder())) {
+        !tlsVersionsAsString.hasIntersection(socket.enabledProtocols, naturalOrder())) {
       return false
     }
 
     if (cipherSuitesAsString != null &&
-      !cipherSuitesAsString.hasIntersection(
-          socket.enabledCipherSuites, CipherSuite.ORDER_BY_NAME,
-      )) {
+        !cipherSuitesAsString.hasIntersection(
+            socket.enabledCipherSuites,
+            CipherSuite.ORDER_BY_NAME,
+        )) {
       return false
     }
 
@@ -361,13 +362,15 @@ internal constructor(
         Builder(true)
             .cipherSuites(*APPROVED_CIPHER_SUITES)
             .tlsVersions(
-                TlsVersion.TLS_1_3, TlsVersion.TLS_1_2, TlsVersion.TLS_1_1, TlsVersion.TLS_1_0,
+                TlsVersion.TLS_1_3,
+                TlsVersion.TLS_1_2,
+                TlsVersion.TLS_1_1,
+                TlsVersion.TLS_1_0,
             )
             .supportsTlsExtensions(true)
             .build()
 
     /** Unencrypted, unauthenticated connections for `http:` URLs. */
-    @JvmField
-    val CLEARTEXT = Builder(false).build()
+    @JvmField val CLEARTEXT = Builder(false).build()
   }
 }

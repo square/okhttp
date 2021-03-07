@@ -58,17 +58,13 @@ import okio.Options
 import okio.Path
 import okio.Source
 
-@JvmField
-val EMPTY_BYTE_ARRAY = ByteArray(0)
+@JvmField val EMPTY_BYTE_ARRAY = ByteArray(0)
 
-@JvmField
-val EMPTY_HEADERS = headersOf()
+@JvmField val EMPTY_HEADERS = headersOf()
 
-@JvmField
-val EMPTY_RESPONSE = EMPTY_BYTE_ARRAY.toResponseBody()
+@JvmField val EMPTY_RESPONSE = EMPTY_BYTE_ARRAY.toResponseBody()
 
-@JvmField
-val EMPTY_REQUEST = EMPTY_BYTE_ARRAY.toRequestBody()
+@JvmField val EMPTY_REQUEST = EMPTY_BYTE_ARRAY.toRequestBody()
 
 /** Byte order marks. */
 private val UNICODE_BOMS =
@@ -81,8 +77,7 @@ private val UNICODE_BOMS =
     )
 
 /** GMT and UTC are equivalent for our purposes. */
-@JvmField
-val UTC = TimeZone.getTimeZone("GMT")!!
+@JvmField val UTC = TimeZone.getTimeZone("GMT")!!
 
 /**
  * Quick and dirty pattern to differentiate IP addresses from hostnames. This is an approximation of
@@ -110,8 +105,8 @@ fun threadFactory(name: String, daemon: Boolean): ThreadFactory = ThreadFactory 
  * elements are in the same order as in this.
  */
 fun Array<String>.intersect(
-  other: Array<String>,
-  comparator: Comparator<in String>
+    other: Array<String>,
+    comparator: Comparator<in String>
 ): Array<String> {
   val result = mutableListOf<String>()
   for (a in this) {
@@ -132,8 +127,8 @@ fun Array<String>.intersect(
  * memory cost of hashing.
  */
 fun Array<String>.hasIntersection(
-  other: Array<String>?,
-  comparator: Comparator<in String>
+    other: Array<String>?,
+    comparator: Comparator<in String>
 ): Boolean {
   if (isEmpty() || other == null || other.isEmpty()) {
     return false
@@ -399,8 +394,7 @@ fun Socket.isHealthy(source: BufferedSource): Boolean {
 inline fun ignoreIoExceptions(block: () -> Unit) {
   try {
     block()
-  } catch (_: IOException) {
-  }
+  } catch (_: IOException) {}
 }
 
 inline fun threadName(name: String, block: () -> Unit) {
@@ -493,8 +487,7 @@ fun Closeable.closeQuietly() {
     close()
   } catch (rethrown: RuntimeException) {
     throw rethrown
-  } catch (_: Exception) {
-  }
+  } catch (_: Exception) {}
 }
 
 /** Closes this, ignoring any checked exceptions. */
@@ -510,8 +503,7 @@ fun Socket.closeQuietly() {
       return
     }
     throw rethrown
-  } catch (_: Exception) {
-  }
+  } catch (_: Exception) {}
 }
 
 /** Closes this, ignoring any checked exceptions. */
@@ -520,8 +512,7 @@ fun ServerSocket.closeQuietly() {
     close()
   } catch (rethrown: RuntimeException) {
     throw rethrown
-  } catch (_: Exception) {
-  }
+  } catch (_: Exception) {}
 }
 
 /**
@@ -541,8 +532,7 @@ fun FileSystem.isCivilized(file: Path): Boolean {
     try {
       delete(file)
       return true
-    } catch (_: IOException) {
-    }
+    } catch (_: IOException) {}
   }
   delete(file)
   return false
@@ -607,8 +597,7 @@ fun <T> readFieldOrNull(instance: Any, fieldType: Class<T>, fieldName: String): 
       field.isAccessible = true
       val value = field.get(instance)
       return if (!fieldType.isInstance(value)) null else fieldType.cast(value)
-    } catch (_: NoSuchFieldException) {
-    }
+    } catch (_: NoSuchFieldException) {}
 
     c = c.superclass
   }
@@ -627,8 +616,7 @@ internal fun <E> MutableList<E>.addIfAbsent(element: E) {
   if (!contains(element)) add(element)
 }
 
-@JvmField
-val assertionsEnabled = OkHttpClient::class.java.desiredAssertionStatus()
+@JvmField val assertionsEnabled = OkHttpClient::class.java.desiredAssertionStatus()
 
 /**
  * Returns the string "OkHttp" unless the library has been shaded for inclusion in another library,

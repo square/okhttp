@@ -37,9 +37,9 @@ class BouncyCastleSocketAdapter : SocketAdapter {
   }
 
   override fun configureTlsExtensions(
-    sslSocket: SSLSocket,
-    hostname: String?,
-    protocols: List<Protocol>
+      sslSocket: SSLSocket,
+      hostname: String?,
+      protocols: List<Protocol>
   ) {
     // No TLS extensions if the socket class is custom.
     if (matchesSocket(sslSocket)) {

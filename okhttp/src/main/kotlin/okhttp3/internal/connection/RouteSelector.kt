@@ -34,10 +34,10 @@ import okhttp3.internal.toImmutableList
  * IP address, and TLS mode. Connections may also be recycled.
  */
 class RouteSelector(
-  private val address: Address,
-  private val routeDatabase: RouteDatabase,
-  private val call: Call,
-  private val eventListener: EventListener
+    private val address: Address,
+    private val routeDatabase: RouteDatabase,
+    private val call: Call,
+    private val eventListener: EventListener
 ) {
   /* State for negotiating the next proxy to use. */
   private var proxies = emptyList<Proxy>()

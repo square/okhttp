@@ -92,18 +92,18 @@ import okio.buffer
  */
 @OptIn(ExperimentalFileSystem::class)
 class DiskLruCache(
-  fileSystem: FileSystem,
+    fileSystem: FileSystem,
 
-  /** Returns the directory where this cache stores its data. */
-  val directory: Path,
-  private val appVersion: Int,
-  internal val valueCount: Int,
+    /** Returns the directory where this cache stores its data. */
+    val directory: Path,
+    private val appVersion: Int,
+    internal val valueCount: Int,
 
-  /** Returns the maximum number of bytes that this cache should use to store its data. */
-  maxSize: Long,
+    /** Returns the maximum number of bytes that this cache should use to store its data. */
+    maxSize: Long,
 
-  /** Used for asynchronous journal rebuilds. */
-  taskRunner: TaskRunner
+    /** Used for asynchronous journal rebuilds. */
+    taskRunner: TaskRunner
 ) : Closeable, Flushable {
   internal val fileSystem: FileSystem =
       object : ForwardingFileSystem(fileSystem) {
@@ -292,10 +292,10 @@ class DiskLruCache(
       val blank = readUtf8LineStrict()
 
       if (MAGIC != magic ||
-        VERSION_1 != version ||
-        appVersion.toString() != appVersionString ||
-        valueCount.toString() != valueCountString ||
-        blank.isNotEmpty()) {
+          VERSION_1 != version ||
+          appVersion.toString() != appVersionString ||
+          valueCount.toString() != valueCountString ||
+          blank.isNotEmpty()) {
         throw IOException(
             "unexpected journal header: [$magic, $version, $valueCountString, $blank]",
         )
@@ -476,7 +476,7 @@ class DiskLruCache(
     validateKey(key)
     var entry: Entry? = lruEntries[key]
     if (expectedSequenceNumber != ANY_SEQUENCE_NUMBER &&
-      (entry == null || entry.sequenceNumber != expectedSequenceNumber)) {
+        (entry == null || entry.sequenceNumber != expectedSequenceNumber)) {
       return null // Snapshot is stale.
     }
 
@@ -684,8 +684,7 @@ class DiskLruCache(
     journalWriter!!.flush()
   }
 
-  @Synchronized
-  fun isClosed(): Boolean = closed
+  @Synchronized fun isClosed(): Boolean = closed
 
   /** Closes this cache. Stored values will remain on the filesystem. */
   @Synchronized
@@ -825,10 +824,10 @@ class DiskLruCache(
   /** A snapshot of the values for an entry. */
   inner class Snapshot
   internal constructor(
-    private val key: String,
-    private val sequenceNumber: Long,
-    private val sources: List<Source>,
-    private val lengths: LongArray
+      private val key: String,
+      private val sequenceNumber: Long,
+      private val sources: List<Source>,
+      private val lengths: LongArray
   ) : Closeable {
     fun key(): String = key
 
@@ -836,8 +835,7 @@ class DiskLruCache(
      * Returns an editor for this snapshot's entry, or null if either the entry has changed since
      * this snapshot was created or if another edit is in progress.
      */
-    @Throws(IOException::class)
-    fun edit(): Editor? = this@DiskLruCache.edit(key, sequenceNumber)
+    @Throws(IOException::class) fun edit(): Editor? = this@DiskLruCache.edit(key, sequenceNumber)
 
     /** Returns the unbuffered stream with the value for [index]. */
     fun getSource(index: Int): Source = sources[index]
@@ -1043,8 +1041,7 @@ class DiskLruCache(
         // size.)
         try {
           removeEntry(this)
-        } catch (_: IOException) {
-        }
+        } catch (_: IOException) {}
         return null
       }
     }
@@ -1073,27 +1070,16 @@ class DiskLruCache(
   }
 
   companion object {
-    @JvmField
-    val JOURNAL_FILE = "journal"
-    @JvmField
-    val JOURNAL_FILE_TEMP = "journal.tmp"
-    @JvmField
-    val JOURNAL_FILE_BACKUP = "journal.bkp"
-    @JvmField
-    val MAGIC = "libcore.io.DiskLruCache"
-    @JvmField
-    val VERSION_1 = "1"
-    @JvmField
-    val ANY_SEQUENCE_NUMBER: Long = -1
-    @JvmField
-    val LEGAL_KEY_PATTERN = "[a-z0-9_-]{1,120}".toRegex()
-    @JvmField
-    val CLEAN = "CLEAN"
-    @JvmField
-    val DIRTY = "DIRTY"
-    @JvmField
-    val REMOVE = "REMOVE"
-    @JvmField
-    val READ = "READ"
+    @JvmField val JOURNAL_FILE = "journal"
+    @JvmField val JOURNAL_FILE_TEMP = "journal.tmp"
+    @JvmField val JOURNAL_FILE_BACKUP = "journal.bkp"
+    @JvmField val MAGIC = "libcore.io.DiskLruCache"
+    @JvmField val VERSION_1 = "1"
+    @JvmField val ANY_SEQUENCE_NUMBER: Long = -1
+    @JvmField val LEGAL_KEY_PATTERN = "[a-z0-9_-]{1,120}".toRegex()
+    @JvmField val CLEAN = "CLEAN"
+    @JvmField val DIRTY = "DIRTY"
+    @JvmField val REMOVE = "REMOVE"
+    @JvmField val READ = "READ"
   }
 }

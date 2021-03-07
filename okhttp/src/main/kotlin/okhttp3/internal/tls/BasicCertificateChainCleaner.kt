@@ -34,7 +34,7 @@ import javax.net.ssl.SSLPeerUnverifiedException
  * [Conscrypt]: https://conscrypt.org/
  */
 class BasicCertificateChainCleaner(private val trustRootIndex: TrustRootIndex) :
-  CertificateChainCleaner() {
+    CertificateChainCleaner() {
 
   /**
    * Returns a cleaned chain for [chain].

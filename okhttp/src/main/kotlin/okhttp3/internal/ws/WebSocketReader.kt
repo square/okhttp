@@ -52,11 +52,11 @@ import okio.ByteString
  * [rfc_6455]: http://tools.ietf.org/html/rfc6455
  */
 class WebSocketReader(
-  private val isClient: Boolean,
-  val source: BufferedSource,
-  private val frameCallback: FrameCallback,
-  private val perMessageDeflate: Boolean,
-  private val noContextTakeover: Boolean
+    private val isClient: Boolean,
+    val source: BufferedSource,
+    private val frameCallback: FrameCallback,
+    private val perMessageDeflate: Boolean,
+    private val noContextTakeover: Boolean
 ) : Closeable {
   private var closed = false
 
@@ -78,11 +78,9 @@ class WebSocketReader(
   private val maskCursor: Buffer.UnsafeCursor? = if (isClient) null else Buffer.UnsafeCursor()
 
   interface FrameCallback {
-    @Throws(IOException::class)
-    fun onReadMessage(text: String)
+    @Throws(IOException::class) fun onReadMessage(text: String)
 
-    @Throws(IOException::class)
-    fun onReadMessage(bytes: ByteString)
+    @Throws(IOException::class) fun onReadMessage(bytes: ByteString)
 
     fun onReadPing(payload: ByteString)
     fun onReadPong(payload: ByteString)
@@ -244,7 +242,7 @@ class WebSocketReader(
     if (readingCompressedMessage) {
       val messageInflater =
           this.messageInflater
-            ?: MessageInflater(noContextTakeover).also { this.messageInflater = it }
+              ?: MessageInflater(noContextTakeover).also { this.messageInflater = it }
       messageInflater.inflate(messageFrameBuffer)
     }
 

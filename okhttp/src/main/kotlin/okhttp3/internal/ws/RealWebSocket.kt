@@ -51,21 +51,21 @@ import okio.ByteString.Companion.encodeUtf8
 import okio.ByteString.Companion.toByteString
 
 class RealWebSocket(
-  taskRunner: TaskRunner,
-  /** The application's original request unadulterated by web socket headers. */
-  private val originalRequest: Request,
-  internal val listener: WebSocketListener,
-  private val random: Random,
-  private val pingIntervalMillis: Long,
-  /**
-   * For clients this is initially null, and will be assigned to the agreed-upon extensions. For
-   * servers it should be the agreed-upon extensions immediately.
-   */
-  private var extensions: WebSocketExtensions?,
-  /**
-   * If compression is negotiated, outbound messages of this size and larger will be compressed.
-   */
-  private var minimumDeflateSize: Long
+    taskRunner: TaskRunner,
+    /** The application's original request unadulterated by web socket headers. */
+    private val originalRequest: Request,
+    internal val listener: WebSocketListener,
+    private val random: Random,
+    private val pingIntervalMillis: Long,
+    /**
+     * For clients this is initially null, and will be assigned to the agreed-upon extensions. For
+     * servers it should be the agreed-upon extensions immediately.
+     */
+    private var extensions: WebSocketExtensions?,
+    /**
+     * If compression is negotiated, outbound messages of this size and larger will be compressed.
+     */
+    private var minimumDeflateSize: Long
 ) : WebSocket, WebSocketReader.FrameCallback {
   private val key: String
 
@@ -137,8 +137,7 @@ class RealWebSocket(
 
   override fun request(): Request = originalRequest
 
-  @Synchronized
-  override fun queueSize(): Long = queueSize
+  @Synchronized override fun queueSize(): Long = queueSize
 
   override fun cancel() {
     call!!.cancel()
@@ -336,14 +335,11 @@ class RealWebSocket(
     taskQueue.idleLatch().await(10, TimeUnit.SECONDS)
   }
 
-  @Synchronized
-  fun sentPingCount(): Int = sentPingCount
+  @Synchronized fun sentPingCount(): Int = sentPingCount
 
-  @Synchronized
-  fun receivedPingCount(): Int = receivedPingCount
+  @Synchronized fun receivedPingCount(): Int = receivedPingCount
 
-  @Synchronized
-  fun receivedPongCount(): Int = receivedPongCount
+  @Synchronized fun receivedPongCount(): Int = receivedPongCount
 
   @Throws(IOException::class)
   override fun onReadMessage(text: String) {
@@ -623,7 +619,7 @@ class RealWebSocket(
   internal class Close(val code: Int, val reason: ByteString?, val cancelAfterCloseMillis: Long)
 
   abstract class Streams(val client: Boolean, val source: BufferedSource, val sink: BufferedSink) :
-    Closeable
+      Closeable
 
   private inner class WriterTask : Task("$name writer") {
     override fun runOnce(): Long {

@@ -22,9 +22,9 @@ import okhttp3.Response
 
 /** An HTTP response status line like "HTTP/1.1 200 OK". */
 class StatusLine(
-  @JvmField val protocol: Protocol,
-  @JvmField val code: Int,
-  @JvmField val message: String
+    @JvmField val protocol: Protocol,
+    @JvmField val code: Int,
+    @JvmField val message: String
 ) {
 
   override fun toString(): String {

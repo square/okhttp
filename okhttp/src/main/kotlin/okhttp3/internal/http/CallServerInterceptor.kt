@@ -132,7 +132,7 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
             response.newBuilder().body(exchange.openResponseBody(response)).build()
           }
       if ("close".equals(response.request.header("Connection"), ignoreCase = true) ||
-        "close".equals(response.header("Connection"), ignoreCase = true)) {
+          "close".equals(response.header("Connection"), ignoreCase = true)) {
         exchange.noNewExchangesOnConnection()
       }
       if ((code == 204 || code == 205) && response.body?.contentLength() ?: -1L > 0L) {

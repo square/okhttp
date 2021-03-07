@@ -27,42 +27,42 @@ import okhttp3.internal.toNonNegativeInt
  */
 class CacheControl
 private constructor(
-  /**
-   * In a response, this field's name "no-cache" is misleading. It doesn't prevent us from caching
-   * the response; it only means we have to validate the response with the origin server before
-   * returning it. We can do this with a conditional GET.
-   *
-   * In a request, it means do not use a cache to satisfy the request.
-   */
-  @get:JvmName("noCache") val noCache: Boolean,
+    /**
+     * In a response, this field's name "no-cache" is misleading. It doesn't prevent us from caching
+     * the response; it only means we have to validate the response with the origin server before
+     * returning it. We can do this with a conditional GET.
+     *
+     * In a request, it means do not use a cache to satisfy the request.
+     */
+    @get:JvmName("noCache") val noCache: Boolean,
 
-  /** If true, this response should not be cached. */
-  @get:JvmName("noStore") val noStore: Boolean,
+    /** If true, this response should not be cached. */
+    @get:JvmName("noStore") val noStore: Boolean,
 
-  /** The duration past the response's served date that it can be served without validation. */
-  @get:JvmName("maxAgeSeconds") val maxAgeSeconds: Int,
+    /** The duration past the response's served date that it can be served without validation. */
+    @get:JvmName("maxAgeSeconds") val maxAgeSeconds: Int,
 
-  /**
-   * The "s-maxage" directive is the max age for shared caches. Not to be confused with "max-age"
-   * for non-shared caches, As in Firefox and Chrome, this directive is not honored by this cache.
-   */
-  @get:JvmName("sMaxAgeSeconds") val sMaxAgeSeconds: Int,
-  val isPrivate: Boolean,
-  val isPublic: Boolean,
-  @get:JvmName("mustRevalidate") val mustRevalidate: Boolean,
-  @get:JvmName("maxStaleSeconds") val maxStaleSeconds: Int,
-  @get:JvmName("minFreshSeconds") val minFreshSeconds: Int,
+    /**
+     * The "s-maxage" directive is the max age for shared caches. Not to be confused with "max-age"
+     * for non-shared caches, As in Firefox and Chrome, this directive is not honored by this cache.
+     */
+    @get:JvmName("sMaxAgeSeconds") val sMaxAgeSeconds: Int,
+    val isPrivate: Boolean,
+    val isPublic: Boolean,
+    @get:JvmName("mustRevalidate") val mustRevalidate: Boolean,
+    @get:JvmName("maxStaleSeconds") val maxStaleSeconds: Int,
+    @get:JvmName("minFreshSeconds") val minFreshSeconds: Int,
 
-  /**
-   * This field's name "only-if-cached" is misleading. It actually means "do not use the network".
-   * It is set by a client who only wants to make a request if it can be fully satisfied by the
-   * cache. Cached responses that would require validation (ie. conditional gets) are not
-   * permitted if this header is set.
-   */
-  @get:JvmName("onlyIfCached") val onlyIfCached: Boolean,
-  @get:JvmName("noTransform") val noTransform: Boolean,
-  @get:JvmName("immutable") val immutable: Boolean,
-  private var headerValue: String?
+    /**
+     * This field's name "only-if-cached" is misleading. It actually means "do not use the network".
+     * It is set by a client who only wants to make a request if it can be fully satisfied by the
+     * cache. Cached responses that would require validation (ie. conditional gets) are not
+     * permitted if this header is set.
+     */
+    @get:JvmName("onlyIfCached") val onlyIfCached: Boolean,
+    @get:JvmName("noTransform") val noTransform: Boolean,
+    @get:JvmName("immutable") val immutable: Boolean,
+    private var headerValue: String?
 ) {
   @JvmName("-deprecated_noCache")
   @Deprecated(
@@ -274,8 +274,7 @@ private constructor(
      * Cache control request directives that require network validation of responses. Note that such
      * requests may be assisted by the cache via conditional GET requests.
      */
-    @JvmField
-    val FORCE_NETWORK = Builder().noCache().build()
+    @JvmField val FORCE_NETWORK = Builder().noCache().build()
 
     /**
      * Cache control request directives that uses the cache only, even if the cached response is

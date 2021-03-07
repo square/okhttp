@@ -41,7 +41,7 @@ fun String.toCanonicalHost(): String? {
         } else {
           decodeIpv6(host, 0, host.length)
         })
-          ?: return null
+            ?: return null
     val address = inetAddress.address
     if (address.size == 16) return inet6AddressToAscii(address)
     if (address.size == 4) return inetAddress.hostAddress // An IPv4-mapped IPv6 address.
@@ -152,11 +152,11 @@ private fun decodeIpv6(input: String, pos: Int, limit: Int): InetAddress? {
 
 /** Decodes an IPv4 address suffix of an IPv6 address, like 1111::5555:6666:192.168.0.1. */
 private fun decodeIpv4Suffix(
-  input: String,
-  pos: Int,
-  limit: Int,
-  address: ByteArray,
-  addressOffset: Int
+    input: String,
+    pos: Int,
+    limit: Int,
+    address: ByteArray,
+    addressOffset: Int
 ): Boolean {
   var b = addressOffset
 

@@ -27,16 +27,15 @@ import java.util.Locale.US
  * [rfc_7235]: https://tools.ietf.org/html/rfc7235
  */
 class Challenge(
-  /** Returns the authentication scheme, like `Basic`. */
-  @get:JvmName("scheme") val scheme: String,
-  authParams: Map<String?, String>
+    /** Returns the authentication scheme, like `Basic`. */
+    @get:JvmName("scheme") val scheme: String,
+    authParams: Map<String?, String>
 ) {
   /**
    * Returns the auth params, including [realm] and [charset] if present, but as strings. The map's
    * keys are lowercase and should be treated case-insensitively.
    */
-  @get:JvmName("authParams")
-  val authParams: Map<String?, String>
+  @get:JvmName("authParams") val authParams: Map<String?, String>
 
   /** Returns the protection space. */
   @get:JvmName("realm")
@@ -51,8 +50,7 @@ class Challenge(
       if (charset != null) {
         try {
           return Charset.forName(charset)
-        } catch (ignore: Exception) {
-        }
+        } catch (ignore: Exception) {}
       }
       return ISO_8859_1
     }

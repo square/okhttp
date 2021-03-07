@@ -202,7 +202,7 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
           @Throws(IOException::class)
           override fun close() {
             if (!cacheRequestClosed &&
-              !discard(ExchangeCodec.DISCARD_STREAM_TIMEOUT_MILLIS, MILLISECONDS)) {
+                !discard(ExchangeCodec.DISCARD_STREAM_TIMEOUT_MILLIS, MILLISECONDS)) {
               cacheRequestClosed = true
               cacheRequest.abort()
             }
@@ -240,8 +240,8 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
           continue
         }
         if (isContentSpecificHeader(fieldName) ||
-          !isEndToEnd(fieldName) ||
-          networkHeaders[fieldName] == null) {
+            !isEndToEnd(fieldName) ||
+            networkHeaders[fieldName] == null) {
           result.addLenient(fieldName, value)
         }
       }

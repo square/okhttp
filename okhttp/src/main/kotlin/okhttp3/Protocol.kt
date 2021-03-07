@@ -48,8 +48,7 @@ enum class Protocol(private val protocol: String) {
    *
    * Current versions of OkHttp do not support this protocol.
    */
-  @Deprecated("OkHttp has dropped support for SPDY. Prefer {@link #HTTP_2}.")
-  SPDY_3("spdy/3.1"),
+  @Deprecated("OkHttp has dropped support for SPDY. Prefer {@link #HTTP_2}.") SPDY_3("spdy/3.1"),
 
   /**
    * The IETF's binary-framed protocol that includes header compression, multiplexing multiple

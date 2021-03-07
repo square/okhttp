@@ -30,15 +30,15 @@ import java.net.Proxy
  * Each route is a specific selection of these options.
  */
 class Route(
-  @get:JvmName("address") val address: Address,
-  /**
-   * Returns the [Proxy] of this route.
-   *
-   * **Warning:** This may disagree with [Address.proxy] when it is null. When the address's proxy
-   * is null, the proxy selector is used.
-   */
-  @get:JvmName("proxy") val proxy: Proxy,
-  @get:JvmName("socketAddress") val socketAddress: InetSocketAddress
+    @get:JvmName("address") val address: Address,
+    /**
+     * Returns the [Proxy] of this route.
+     *
+     * **Warning:** This may disagree with [Address.proxy] when it is null. When the address's proxy
+     * is null, the proxy selector is used.
+     */
+    @get:JvmName("proxy") val proxy: Proxy,
+    @get:JvmName("socketAddress") val socketAddress: InetSocketAddress
 ) {
 
   @JvmName("-deprecated_address")

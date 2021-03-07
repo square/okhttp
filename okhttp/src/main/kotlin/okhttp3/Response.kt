@@ -39,81 +39,81 @@ import okio.Buffer
  */
 class Response
 internal constructor(
-  /**
-   * The wire-level request that initiated this HTTP response. This is not necessarily the same
-   * request issued by the application:
-   *
-   * * It may be transformed by the HTTP client. For example, the client may copy headers like
-   * `Content-Length` from the request body.
-   * * It may be the request generated in response to an HTTP redirect or authentication
-   * challenge. In this case the request URL may be different than the initial request URL.
-   */
-  @get:JvmName("request") val request: Request,
+    /**
+     * The wire-level request that initiated this HTTP response. This is not necessarily the same
+     * request issued by the application:
+     *
+     * * It may be transformed by the HTTP client. For example, the client may copy headers like
+     * `Content-Length` from the request body.
+     * * It may be the request generated in response to an HTTP redirect or authentication
+     * challenge. In this case the request URL may be different than the initial request URL.
+     */
+    @get:JvmName("request") val request: Request,
 
-  /** Returns the HTTP protocol, such as [Protocol.HTTP_1_1] or [Protocol.HTTP_1_0]. */
-  @get:JvmName("protocol") val protocol: Protocol,
+    /** Returns the HTTP protocol, such as [Protocol.HTTP_1_1] or [Protocol.HTTP_1_0]. */
+    @get:JvmName("protocol") val protocol: Protocol,
 
-  /** Returns the HTTP status message. */
-  @get:JvmName("message") val message: String,
+    /** Returns the HTTP status message. */
+    @get:JvmName("message") val message: String,
 
-  /** Returns the HTTP status code. */
-  @get:JvmName("code") val code: Int,
+    /** Returns the HTTP status code. */
+    @get:JvmName("code") val code: Int,
 
-  /**
-   * Returns the TLS handshake of the connection that carried this response, or null if the
-   * response was received without TLS.
-   */
-  @get:JvmName("handshake") val handshake: Handshake?,
+    /**
+     * Returns the TLS handshake of the connection that carried this response, or null if the
+     * response was received without TLS.
+     */
+    @get:JvmName("handshake") val handshake: Handshake?,
 
-  /** Returns the HTTP headers. */
-  @get:JvmName("headers") val headers: Headers,
+    /** Returns the HTTP headers. */
+    @get:JvmName("headers") val headers: Headers,
 
-  /**
-   * Returns a non-null value if this response was passed to [Callback.onResponse] or returned
-   * from [Call.execute]. Response bodies must be [closed] [ResponseBody] and may be consumed only
-   * once.
-   *
-   * This always returns null on responses returned from [cacheResponse], [networkResponse], and
-   * [priorResponse].
-   */
-  @get:JvmName("body") val body: ResponseBody?,
+    /**
+     * Returns a non-null value if this response was passed to [Callback.onResponse] or returned
+     * from [Call.execute]. Response bodies must be [closed] [ResponseBody] and may be consumed only
+     * once.
+     *
+     * This always returns null on responses returned from [cacheResponse], [networkResponse], and
+     * [priorResponse].
+     */
+    @get:JvmName("body") val body: ResponseBody?,
 
-  /**
-   * Returns the raw response received from the network. Will be null if this response didn't use
-   * the network, such as when the response is fully cached. The body of the returned response
-   * should not be read.
-   */
-  @get:JvmName("networkResponse") val networkResponse: Response?,
+    /**
+     * Returns the raw response received from the network. Will be null if this response didn't use
+     * the network, such as when the response is fully cached. The body of the returned response
+     * should not be read.
+     */
+    @get:JvmName("networkResponse") val networkResponse: Response?,
 
-  /**
-   * Returns the raw response received from the cache. Will be null if this response didn't use
-   * the cache. For conditional get requests the cache response and network response may both be
-   * non-null. The body of the returned response should not be read.
-   */
-  @get:JvmName("cacheResponse") val cacheResponse: Response?,
+    /**
+     * Returns the raw response received from the cache. Will be null if this response didn't use
+     * the cache. For conditional get requests the cache response and network response may both be
+     * non-null. The body of the returned response should not be read.
+     */
+    @get:JvmName("cacheResponse") val cacheResponse: Response?,
 
-  /**
-   * Returns the response for the HTTP redirect or authorization challenge that triggered this
-   * response, or null if this response wasn't triggered by an automatic retry. The body of the
-   * returned response should not be read because it has already been consumed by the redirecting
-   * client.
-   */
-  @get:JvmName("priorResponse") val priorResponse: Response?,
+    /**
+     * Returns the response for the HTTP redirect or authorization challenge that triggered this
+     * response, or null if this response wasn't triggered by an automatic retry. The body of the
+     * returned response should not be read because it has already been consumed by the redirecting
+     * client.
+     */
+    @get:JvmName("priorResponse") val priorResponse: Response?,
 
-  /**
-   * Returns a [timestamp] [System.currentTimeMillis] taken immediately before OkHttp transmitted
-   * the initiating request over the network. If this response is being served from the cache then
-   * this is the timestamp of the original request.
-   */
-  @get:JvmName("sentRequestAtMillis") val sentRequestAtMillis: Long,
+    /**
+     * Returns a [timestamp] [System.currentTimeMillis] taken immediately before OkHttp transmitted
+     * the initiating request over the network. If this response is being served from the cache then
+     * this is the timestamp of the original request.
+     */
+    @get:JvmName("sentRequestAtMillis") val sentRequestAtMillis: Long,
 
-  /**
-   * Returns a [timestamp] [System.currentTimeMillis] taken immediately after OkHttp received this
-   * response's headers from the network. If this response is being served from the cache then
-   * this is the timestamp of the original response.
-   */
-  @get:JvmName("receivedResponseAtMillis") val receivedResponseAtMillis: Long,
-  @get:JvmName("exchange") internal val exchange: Exchange?
+    /**
+     * Returns a [timestamp] [System.currentTimeMillis] taken immediately after OkHttp received this
+     * response's headers from the network. If this response is being served from the cache then
+     * this is the timestamp of the original response.
+     */
+    @get:JvmName("receivedResponseAtMillis") val receivedResponseAtMillis: Long,
+    @get:JvmName("exchange") internal val exchange: Exchange?
 ) : Closeable {
 
   private var lazyCacheControl: CacheControl? = null
@@ -218,15 +218,15 @@ internal constructor(
   /** Returns true if this response redirects to another resource. */
   val isRedirect: Boolean
     get() =
-      when (code) {
-        HTTP_PERM_REDIRECT,
-        HTTP_TEMP_REDIRECT,
-        HTTP_MULT_CHOICE,
-        HTTP_MOVED_PERM,
-        HTTP_MOVED_TEMP,
-        HTTP_SEE_OTHER -> true
-        else -> false
-      }
+        when (code) {
+          HTTP_PERM_REDIRECT,
+          HTTP_TEMP_REDIRECT,
+          HTTP_MULT_CHOICE,
+          HTTP_MOVED_PERM,
+          HTTP_MOVED_TEMP,
+          HTTP_SEE_OTHER -> true
+          else -> false
+        }
 
   @JvmName("-deprecated_networkResponse")
   @Deprecated(

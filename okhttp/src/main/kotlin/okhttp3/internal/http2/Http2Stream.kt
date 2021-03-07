@@ -37,11 +37,11 @@ import okio.Timeout
 @Suppress("NAME_SHADOWING")
 class Http2Stream
 internal constructor(
-  val id: Int,
-  val connection: Http2Connection,
-  outFinished: Boolean,
-  inFinished: Boolean,
-  headers: Headers?
+    val id: Int,
+    val connection: Http2Connection,
+    outFinished: Boolean,
+    inFinished: Boolean,
+    headers: Headers?
 ) {
   // Internal state is guarded by this. No long-running or potentially blocking operations are
   // performed while the lock is held.
@@ -87,8 +87,7 @@ internal constructor(
    * If there are multiple reasons to abnormally close this stream (such as both peers closing it
    * near-simultaneously) then this is the first reason known to this peer.
    */
-  @get:Synchronized
-  internal var errorCode: ErrorCode? = null
+  @get:Synchronized internal var errorCode: ErrorCode? = null
 
   /** The exception that explains [errorCode]. Null if no exception was provided. */
   internal var errorException: IOException? = null
@@ -118,8 +117,8 @@ internal constructor(
         return false
       }
       if ((source.finished || source.closed) &&
-        (sink.finished || sink.closed) &&
-        hasResponseHeaders) {
+          (sink.finished || sink.closed) &&
+          hasResponseHeaders) {
         return false
       }
       return true
@@ -326,14 +325,14 @@ internal constructor(
    */
   inner class FramingSource
   internal constructor(
-    /** Maximum number of bytes to buffer before reporting a flow control error. */
-    private val maxByteCount: Long,
+      /** Maximum number of bytes to buffer before reporting a flow control error. */
+      private val maxByteCount: Long,
 
-    /**
-     * True if either side has cleanly shut down this stream. We will receive no more bytes beyond
-     * those already in the buffer.
-     */
-    internal var finished: Boolean
+      /**
+       * True if either side has cleanly shut down this stream. We will receive no more bytes beyond
+       * those already in the buffer.
+       */
+      internal var finished: Boolean
   ) : Source {
     /** Buffer to receive data from the network into. Only accessed by the reader thread. */
     val receiveBuffer = Buffer()
@@ -378,7 +377,7 @@ internal constructor(
 
               val unacknowledgedBytesRead = readBytesTotal - readBytesAcknowledged
               if (errorExceptionToDeliver == null &&
-                unacknowledgedBytesRead >= connection.okHttpSettings.initialWindowSize / 2) {
+                  unacknowledgedBytesRead >= connection.okHttpSettings.initialWindowSize / 2) {
                 // Flow control: notify the peer that we're ready for more data! Only send a
                 // WINDOW_UPDATE if the stream isn't in error.
                 connection.writeWindowUpdateLater(id, unacknowledgedBytesRead)
@@ -522,8 +521,8 @@ internal constructor(
 
   /** A sink that writes outgoing data frames of a stream. This class is not thread safe. */
   internal inner class FramingSink(
-    /** True if either side has cleanly shut down this stream. We shall send no more bytes. */
-    var finished: Boolean = false
+      /** True if either side has cleanly shut down this stream. We shall send no more bytes. */
+      var finished: Boolean = false
   ) : Sink {
 
     /**
@@ -559,9 +558,9 @@ internal constructor(
         writeTimeout.enter()
         try {
           while (writeBytesTotal >= writeBytesMaximum &&
-            !finished &&
-            !closed &&
-            errorCode == null) {
+              !finished &&
+              !closed &&
+              errorCode == null) {
             waitForIo() // Wait until we receive a WINDOW_UPDATE for this stream.
           }
         } finally {

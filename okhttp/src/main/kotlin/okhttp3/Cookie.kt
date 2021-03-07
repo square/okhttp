@@ -43,59 +43,59 @@ import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 @Suppress("NAME_SHADOWING")
 class Cookie
 private constructor(
-  /** Returns a non-empty string with this cookie's name. */
-  @get:JvmName("name") val name: String,
+    /** Returns a non-empty string with this cookie's name. */
+    @get:JvmName("name") val name: String,
 
-  /** Returns a possibly-empty string with this cookie's value. */
-  @get:JvmName("value") val value: String,
+    /** Returns a possibly-empty string with this cookie's value. */
+    @get:JvmName("value") val value: String,
 
-  /**
-   * Returns the time that this cookie expires, in the same format as [System.currentTimeMillis].
-   * This is December 31, 9999 if the cookie is [persistent], in which case it will expire at the
-   * end of the current session.
-   *
-   * This may return a value less than the current time, in which case the cookie is already
-   * expired. Webservers may return expired cookies as a mechanism to delete previously set
-   * cookies that may or may not themselves be expired.
-   */
-  @get:JvmName("expiresAt") val expiresAt: Long,
+    /**
+     * Returns the time that this cookie expires, in the same format as [System.currentTimeMillis].
+     * This is December 31, 9999 if the cookie is [persistent], in which case it will expire at the
+     * end of the current session.
+     *
+     * This may return a value less than the current time, in which case the cookie is already
+     * expired. Webservers may return expired cookies as a mechanism to delete previously set
+     * cookies that may or may not themselves be expired.
+     */
+    @get:JvmName("expiresAt") val expiresAt: Long,
 
-  /**
-   * Returns the cookie's domain. If [hostOnly] returns true this is the only domain that matches
-   * this cookie; otherwise it matches this domain and all subdomains.
-   */
-  @get:JvmName("domain") val domain: String,
+    /**
+     * Returns the cookie's domain. If [hostOnly] returns true this is the only domain that matches
+     * this cookie; otherwise it matches this domain and all subdomains.
+     */
+    @get:JvmName("domain") val domain: String,
 
-  /**
-   * Returns this cookie's path. This cookie matches URLs prefixed with path segments that match
-   * this path's segments. For example, if this path is `/foo` this cookie matches requests to
-   * `/foo` and `/foo/bar`, but not `/` or `/football`.
-   */
-  @get:JvmName("path") val path: String,
+    /**
+     * Returns this cookie's path. This cookie matches URLs prefixed with path segments that match
+     * this path's segments. For example, if this path is `/foo` this cookie matches requests to
+     * `/foo` and `/foo/bar`, but not `/` or `/football`.
+     */
+    @get:JvmName("path") val path: String,
 
-  /** Returns true if this cookie should be limited to only HTTPS requests. */
-  @get:JvmName("secure") val secure: Boolean,
+    /** Returns true if this cookie should be limited to only HTTPS requests. */
+    @get:JvmName("secure") val secure: Boolean,
 
-  /**
-   * Returns true if this cookie should be limited to only HTTP APIs. In web browsers this
-   * prevents the cookie from being accessible to scripts.
-   */
-  @get:JvmName("httpOnly") val httpOnly: Boolean,
+    /**
+     * Returns true if this cookie should be limited to only HTTP APIs. In web browsers this
+     * prevents the cookie from being accessible to scripts.
+     */
+    @get:JvmName("httpOnly") val httpOnly: Boolean,
 
-  /** Returns true if this cookie does not expire at the end of the current session. */
-  @get:JvmName("persistent")
-  val persistent: Boolean, // True if 'expires' or 'max-age' is present.
+    /** Returns true if this cookie does not expire at the end of the current session. */
+    @get:JvmName("persistent")
+    val persistent: Boolean, // True if 'expires' or 'max-age' is present.
 
-  /**
-   * Returns true if this cookie's domain should be interpreted as a single host name, or false if
-   * it should be interpreted as a pattern. This flag will be false if its `Set-Cookie` header
-   * included a `domain` attribute.
-   *
-   * For example, suppose the cookie's domain is `example.com`. If this flag is true it matches
-   * **only** `example.com`. If this flag is false it matches `example.com` and all subdomains
-   * including `api.example.com`, `www.example.com`, and `beta.api.example.com`.
-   */
-  @get:JvmName("hostOnly") val hostOnly: Boolean // True unless 'domain' is present.
+    /**
+     * Returns true if this cookie's domain should be interpreted as a single host name, or false if
+     * it should be interpreted as a pattern. This flag will be false if its `Set-Cookie` header
+     * included a `domain` attribute.
+     *
+     * For example, suppose the cookie's domain is `example.com`. If this flag is true it matches
+     * **only** `example.com`. If this flag is false it matches `example.com` and all subdomains
+     * including `api.example.com`, `www.example.com`, and `beta.api.example.com`.
+     */
+    @get:JvmName("hostOnly") val hostOnly: Boolean // True unless 'domain' is present.
 ) {
 
   /**
@@ -480,7 +480,7 @@ private constructor(
 
       // If the domain is a suffix of the url host, it must not be a public suffix.
       if (urlHost.length != domain.length &&
-        PublicSuffixDatabase.get().getEffectiveTldPlusOne(domain) == null) {
+          PublicSuffixDatabase.get().getEffectiveTldPlusOne(domain) == null) {
         return null
       }
 

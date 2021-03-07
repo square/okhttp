@@ -113,11 +113,10 @@ abstract class EventListener {
    * This method is invoked after [dnsStart].
    */
   open fun dnsEnd(
-    call: Call,
-    domainName: String,
-    inetAddressList: List<@JvmSuppressWildcards InetAddress>
-  ) {
-  }
+      call: Call,
+      domainName: String,
+      inetAddressList: List<@JvmSuppressWildcards InetAddress>
+  ) {}
 
   /**
    * Invoked just prior to initiating a socket connection.
@@ -157,12 +156,11 @@ abstract class EventListener {
    * invoked after [connectStart].
    */
   open fun connectEnd(
-    call: Call,
-    inetSocketAddress: InetSocketAddress,
-    proxy: Proxy,
-    protocol: Protocol?
-  ) {
-  }
+      call: Call,
+      inetSocketAddress: InetSocketAddress,
+      proxy: Proxy,
+      protocol: Protocol?
+  ) {}
 
   /**
    * Invoked when a connection attempt fails. This failure is not terminal if further routes are
@@ -172,13 +170,12 @@ abstract class EventListener {
    * invoked after [connectStart].
    */
   open fun connectFailed(
-    call: Call,
-    inetSocketAddress: InetSocketAddress,
-    proxy: Proxy,
-    protocol: Protocol?,
-    ioe: IOException
-  ) {
-  }
+      call: Call,
+      inetSocketAddress: InetSocketAddress,
+      proxy: Proxy,
+      protocol: Protocol?,
+      ioe: IOException
+  ) {}
 
   /**
    * Invoked after a connection has been acquired for the `call`.
@@ -393,7 +390,6 @@ abstract class EventListener {
   }
 
   companion object {
-    @JvmField
-    val NONE: EventListener = object : EventListener() {}
+    @JvmField val NONE: EventListener = object : EventListener() {}
   }
 }

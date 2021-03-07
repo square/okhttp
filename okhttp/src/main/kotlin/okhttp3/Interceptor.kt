@@ -58,8 +58,7 @@ import java.util.concurrent.TimeUnit
  * ```
  */
 fun interface Interceptor {
-  @Throws(IOException::class)
-  fun intercept(chain: Chain): Response
+  @Throws(IOException::class) fun intercept(chain: Chain): Response
 
   companion object {
     /**
@@ -74,15 +73,14 @@ fun interface Interceptor {
      */
     inline operator fun invoke(crossinline block: (chain: Chain) -> Response): Interceptor =
         Interceptor {
-          block(it)
-        }
+      block(it)
+    }
   }
 
   interface Chain {
     fun request(): Request
 
-    @Throws(IOException::class)
-    fun proceed(request: Request): Response
+    @Throws(IOException::class) fun proceed(request: Request): Response
 
     /**
      * Returns the connection the request will be executed on. This is only available in the chains

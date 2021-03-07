@@ -71,8 +71,7 @@ interface PushObserver {
   fun onReset(streamId: Int, errorCode: ErrorCode)
 
   companion object {
-    @JvmField
-    val CANCEL: PushObserver = PushObserverCancel()
+    @JvmField val CANCEL: PushObserver = PushObserverCancel()
 
     private class PushObserverCancel : PushObserver {
 
@@ -86,10 +85,10 @@ interface PushObserver {
 
       @Throws(IOException::class)
       override fun onData(
-        streamId: Int,
-        source: BufferedSource,
-        byteCount: Int,
-        last: Boolean
+          streamId: Int,
+          source: BufferedSource,
+          byteCount: Int,
+          last: Boolean
       ): Boolean {
         source.skip(byteCount.toLong())
         return true

@@ -80,9 +80,7 @@ class Dispatcher constructor() {
    * This means that if you are doing synchronous calls the network layer will not truly be idle
    * until every returned [Response] has been closed.
    */
-  @set:Synchronized
-  @get:Synchronized
-  var idleCallback: Runnable? = null
+  @set:Synchronized @get:Synchronized var idleCallback: Runnable? = null
 
   private var executorServiceOrNull: ExecutorService? = null
 
@@ -237,11 +235,9 @@ class Dispatcher constructor() {
     return Collections.unmodifiableList(runningSyncCalls + runningAsyncCalls.map { it.call })
   }
 
-  @Synchronized
-  fun queuedCallsCount(): Int = readyAsyncCalls.size
+  @Synchronized fun queuedCallsCount(): Int = readyAsyncCalls.size
 
-  @Synchronized
-  fun runningCallsCount(): Int = runningAsyncCalls.size + runningSyncCalls.size
+  @Synchronized fun runningCallsCount(): Int = runningAsyncCalls.size + runningSyncCalls.size
 
   @JvmName("-deprecated_executorService")
   @Deprecated(

@@ -49,6 +49,5 @@ class MessageInflater(private val noContextTakeover: Boolean) : Closeable {
     } while (inflater.bytesRead < totalBytesToRead)
   }
 
-  @Throws(IOException::class)
-  override fun close() = inflaterSource.close()
+  @Throws(IOException::class) override fun close() = inflaterSource.close()
 }

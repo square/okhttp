@@ -54,8 +54,7 @@ interface Call : Cloneable {
    * ```
    * when the call has already been executed.
    */
-  @Throws(IOException::class)
-  fun execute(): Response
+  @Throws(IOException::class) fun execute(): Response
 
   /**
    * Schedules the request to be executed at some point in the future.

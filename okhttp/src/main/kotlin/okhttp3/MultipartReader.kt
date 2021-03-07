@@ -57,7 +57,7 @@ import okio.buffer
 class MultipartReader
 @Throws(IOException::class)
 constructor(private val source: BufferedSource, @get:JvmName("boundary") val boundary: String) :
-  Closeable {
+    Closeable {
   /** This delimiter typically precedes the first part. */
   private val dashDashBoundary = Buffer().writeUtf8("--").writeUtf8(boundary).readByteString()
 
@@ -77,11 +77,11 @@ constructor(private val source: BufferedSource, @get:JvmName("boundary") val bou
 
   @Throws(IOException::class)
   constructor(
-    response: ResponseBody
+      response: ResponseBody
   ) : this(
       source = response.source(),
       boundary = response.contentType()?.parameter("boundary")
-        ?: throw ProtocolException("expected the Content-Type to have a boundary parameter"),
+              ?: throw ProtocolException("expected the Content-Type to have a boundary parameter"),
   )
 
   @Throws(IOException::class)
@@ -187,8 +187,8 @@ constructor(private val source: BufferedSource, @get:JvmName("boundary") val bou
 
   /** A single part in a multipart body. */
   class Part(
-    @get:JvmName("headers") val headers: Headers,
-    @get:JvmName("body") val body: BufferedSource
+      @get:JvmName("headers") val headers: Headers,
+      @get:JvmName("body") val body: BufferedSource
   ) : Closeable by body
 
   internal companion object {
@@ -201,6 +201,6 @@ constructor(private val source: BufferedSource, @get:JvmName("boundary") val bou
             // parts.
             "\t".encodeUtf8(), //    3.  "\t"    Optional whitespace. Only used if there are more
             // parts.
-        )
+            )
   }
 }

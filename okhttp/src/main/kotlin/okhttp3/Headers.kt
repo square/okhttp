@@ -49,7 +49,7 @@ import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
  */
 @Suppress("NAME_SHADOWING")
 class Headers private constructor(private val namesAndValues: Array<String>) :
-  Iterable<Pair<String, String>> {
+    Iterable<Pair<String, String>> {
   /** Returns the last value corresponding to the specified field, or null. */
   operator fun get(name: String): String? = get(namesAndValues, name)
 

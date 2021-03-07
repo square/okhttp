@@ -57,10 +57,10 @@ import okhttp3.internal.http2.StreamResetException
  * executing [call].
  */
 class ExchangeFinder(
-  private val connectionPool: RealConnectionPool,
-  internal val address: Address,
-  private val call: RealCall,
-  private val eventListener: EventListener
+    private val connectionPool: RealConnectionPool,
+    internal val address: Address,
+    private val call: RealCall,
+    private val eventListener: EventListener
 ) {
   private var routeSelection: RouteSelector.Selection? = null
   private var routeSelector: RouteSelector? = null
@@ -96,12 +96,12 @@ class ExchangeFinder(
    */
   @Throws(IOException::class)
   private fun findHealthyConnection(
-    connectTimeout: Int,
-    readTimeout: Int,
-    writeTimeout: Int,
-    pingIntervalMillis: Int,
-    connectionRetryEnabled: Boolean,
-    doExtensiveHealthChecks: Boolean
+      connectTimeout: Int,
+      readTimeout: Int,
+      writeTimeout: Int,
+      pingIntervalMillis: Int,
+      connectionRetryEnabled: Boolean,
+      doExtensiveHealthChecks: Boolean
   ): RealConnection {
     while (true) {
       val candidate =
@@ -143,11 +143,11 @@ class ExchangeFinder(
    */
   @Throws(IOException::class)
   private fun findConnection(
-    connectTimeout: Int,
-    readTimeout: Int,
-    writeTimeout: Int,
-    pingIntervalMillis: Int,
-    connectionRetryEnabled: Boolean
+      connectTimeout: Int,
+      readTimeout: Int,
+      writeTimeout: Int,
+      pingIntervalMillis: Int,
+      connectionRetryEnabled: Boolean
   ): RealConnection {
     if (call.isCanceled()) throw IOException("Canceled")
 

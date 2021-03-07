@@ -37,9 +37,9 @@ class DeferredSocketAdapter(private val socketAdapterFactory: Factory) : SocketA
       socketAdapterFactory.matchesSocket(sslSocket)
 
   override fun configureTlsExtensions(
-    sslSocket: SSLSocket,
-    hostname: String?,
-    protocols: List<Protocol>
+      sslSocket: SSLSocket,
+      hostname: String?,
+      protocols: List<Protocol>
   ) {
     getDelegate(sslSocket)?.configureTlsExtensions(sslSocket, hostname, protocols)
   }

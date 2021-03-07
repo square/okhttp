@@ -34,12 +34,10 @@ abstract class RequestBody {
    * Returns the number of bytes that will be written to sink in a call to [writeTo], or -1 if that
    * count is unknown.
    */
-  @Throws(IOException::class)
-  open fun contentLength(): Long = -1L
+  @Throws(IOException::class) open fun contentLength(): Long = -1L
 
   /** Writes the content of this request to [sink]. */
-  @Throws(IOException::class)
-  abstract fun writeTo(sink: BufferedSink)
+  @Throws(IOException::class) abstract fun writeTo(sink: BufferedSink)
 
   /**
    * A duplex request body is special in how it is **transmitted** on the network and in the **API
@@ -139,9 +137,9 @@ abstract class RequestBody {
     @JvmStatic
     @JvmName("create")
     fun ByteArray.toRequestBody(
-      contentType: MediaType? = null,
-      offset: Int = 0,
-      byteCount: Int = size
+        contentType: MediaType? = null,
+        offset: Int = 0,
+        byteCount: Int = size
     ): RequestBody {
       checkOffsetAndCount(size.toLong(), offset.toLong(), byteCount.toLong())
       return object : RequestBody() {
@@ -174,10 +172,10 @@ abstract class RequestBody {
     @Deprecated(
         message = "Moved to extension function. Put the 'content' argument first to fix Java",
         replaceWith =
-        ReplaceWith(
-            expression = "content.toRequestBody(contentType)",
-            imports = ["okhttp3.RequestBody.Companion.toRequestBody"],
-        ),
+            ReplaceWith(
+                expression = "content.toRequestBody(contentType)",
+                imports = ["okhttp3.RequestBody.Companion.toRequestBody"],
+            ),
         level = DeprecationLevel.WARNING,
     )
     fun create(contentType: MediaType?, content: String) = content.toRequestBody(contentType)
@@ -186,10 +184,10 @@ abstract class RequestBody {
     @Deprecated(
         message = "Moved to extension function. Put the 'content' argument first to fix Java",
         replaceWith =
-        ReplaceWith(
-            expression = "content.toRequestBody(contentType)",
-            imports = ["okhttp3.RequestBody.Companion.toRequestBody"],
-        ),
+            ReplaceWith(
+                expression = "content.toRequestBody(contentType)",
+                imports = ["okhttp3.RequestBody.Companion.toRequestBody"],
+            ),
         level = DeprecationLevel.WARNING,
     )
     fun create(contentType: MediaType?, content: ByteString): RequestBody =
@@ -200,27 +198,27 @@ abstract class RequestBody {
     @Deprecated(
         message = "Moved to extension function. Put the 'content' argument first to fix Java",
         replaceWith =
-        ReplaceWith(
-            expression = "content.toRequestBody(contentType, offset, byteCount)",
-            imports = ["okhttp3.RequestBody.Companion.toRequestBody"],
-        ),
+            ReplaceWith(
+                expression = "content.toRequestBody(contentType, offset, byteCount)",
+                imports = ["okhttp3.RequestBody.Companion.toRequestBody"],
+            ),
         level = DeprecationLevel.WARNING,
     )
     fun create(
-      contentType: MediaType?,
-      content: ByteArray,
-      offset: Int = 0,
-      byteCount: Int = content.size
+        contentType: MediaType?,
+        content: ByteArray,
+        offset: Int = 0,
+        byteCount: Int = content.size
     ) = content.toRequestBody(contentType, offset, byteCount)
 
     @JvmStatic
     @Deprecated(
         message = "Moved to extension function. Put the 'file' argument first to fix Java",
         replaceWith =
-        ReplaceWith(
-            expression = "file.asRequestBody(contentType)",
-            imports = ["okhttp3.RequestBody.Companion.asRequestBody"],
-        ),
+            ReplaceWith(
+                expression = "file.asRequestBody(contentType)",
+                imports = ["okhttp3.RequestBody.Companion.asRequestBody"],
+            ),
         level = DeprecationLevel.WARNING,
     )
     fun create(contentType: MediaType?, file: File) = file.asRequestBody(contentType)

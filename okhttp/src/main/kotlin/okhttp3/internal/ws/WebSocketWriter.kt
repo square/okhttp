@@ -42,12 +42,12 @@ import okio.ByteString
  * [rfc_6455]: http://tools.ietf.org/html/rfc6455
  */
 class WebSocketWriter(
-  private val isClient: Boolean,
-  val sink: BufferedSink,
-  val random: Random,
-  private val perMessageDeflate: Boolean,
-  private val noContextTakeover: Boolean,
-  private val minimumDeflateSize: Long
+    private val isClient: Boolean,
+    val sink: BufferedSink,
+    val random: Random,
+    private val perMessageDeflate: Boolean,
+    private val noContextTakeover: Boolean,
+    private val minimumDeflateSize: Long
 ) : Closeable {
   /** This holds outbound data for compression and masking. */
   private val messageBuffer = Buffer()
@@ -156,7 +156,7 @@ class WebSocketWriter(
     if (perMessageDeflate && data.size >= minimumDeflateSize) {
       val messageDeflater =
           this.messageDeflater
-            ?: MessageDeflater(noContextTakeover).also { this.messageDeflater = it }
+              ?: MessageDeflater(noContextTakeover).also { this.messageDeflater = it }
       messageDeflater.deflate(messageBuffer)
       b0 = b0 or B0_FLAG_RSV1
     }

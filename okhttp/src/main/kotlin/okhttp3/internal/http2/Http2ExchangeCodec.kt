@@ -48,13 +48,12 @@ import okio.Source
 
 /** Encode requests and responses using HTTP/2 frames. */
 class Http2ExchangeCodec(
-  client: OkHttpClient,
-  override val connection: RealConnection,
-  private val chain: RealInterceptorChain,
-  private val http2Connection: Http2Connection
+    client: OkHttpClient,
+    override val connection: RealConnection,
+    private val chain: RealInterceptorChain,
+    private val http2Connection: Http2Connection
 ) : ExchangeCodec {
-  @Volatile
-  private var stream: Http2Stream? = null
+  @Volatile private var stream: Http2Stream? = null
 
   private val protocol: Protocol =
       if (Protocol.H2_PRIOR_KNOWLEDGE in client.protocols) {
@@ -63,8 +62,7 @@ class Http2ExchangeCodec(
         Protocol.HTTP_2
       }
 
-  @Volatile
-  private var canceled = false
+  @Volatile private var canceled = false
 
   override fun createRequestBody(request: Request, contentLength: Long): Sink {
     return stream!!.getSink()
@@ -178,7 +176,7 @@ class Http2ExchangeCodec(
         // header names must be lowercase.
         val name = headers.name(i).toLowerCase(Locale.US)
         if (name !in HTTP_2_SKIPPED_REQUEST_HEADERS ||
-          name == TE && headers.value(i) == "trailers") {
+            name == TE && headers.value(i) == "trailers") {
           result.add(Header(name, headers.value(i)))
         }
       }

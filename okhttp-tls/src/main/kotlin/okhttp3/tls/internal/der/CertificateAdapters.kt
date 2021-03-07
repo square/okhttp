@@ -88,7 +88,8 @@ internal object CertificateAdapters {
           time,
           time,
           decompose = { listOf(it.notBefore, it.notAfter) },
-          construct = { Validity(notBefore = it[0] as Long, notAfter = it[1] as Long) })
+          construct = { Validity(notBefore = it[0] as Long, notAfter = it[1] as Long) },
+      )
 
   /** The type of the parameters depends on the algorithm that precedes it. */
   private val algorithmParameters: DerAdapter<Any?> =
@@ -119,7 +120,8 @@ internal object CertificateAdapters {
           Adapters.OBJECT_IDENTIFIER.asTypeHint(),
           algorithmParameters,
           decompose = { listOf(it.algorithm, it.parameters) },
-          construct = { AlgorithmIdentifier(algorithm = it[0] as String, parameters = it[1]) })
+          construct = { AlgorithmIdentifier(algorithm = it[0] as String, parameters = it[1]) },
+      )
 
   /**
    * ```
@@ -137,7 +139,8 @@ internal object CertificateAdapters {
           decompose = { listOf(it.ca, it.maxIntermediateCas) },
           construct = {
             BasicConstraints(ca = it[0] as Boolean, maxIntermediateCas = it[1] as Long?)
-          })
+          },
+      )
 
   /**
    * Note that only a subset of available choices are implemented.
@@ -188,7 +191,8 @@ internal object CertificateAdapters {
           .withExplicitBox(
               tagClass = Adapters.OCTET_STRING.tagClass,
               tag = Adapters.OCTET_STRING.tag,
-              forceConstructed = false)
+              forceConstructed = false,
+          )
 
   /**
    * ```
@@ -211,7 +215,8 @@ internal object CertificateAdapters {
           decompose = { listOf(it.id, it.critical, it.value) },
           construct = {
             Extension(id = it[0] as String, critical = it[1] as Boolean, value = it[2])
-          })
+          },
+      )
 
   /**
    * ```
@@ -232,9 +237,11 @@ internal object CertificateAdapters {
           Adapters.any(
               String::class to Adapters.UTF8_STRING,
               Nothing::class to Adapters.PRINTABLE_STRING,
-              AnyValue::class to Adapters.ANY_VALUE),
+              AnyValue::class to Adapters.ANY_VALUE,
+          ),
           decompose = { listOf(it.type, it.value) },
-          construct = { AttributeTypeAndValue(type = it[0] as String, value = it[1]) })
+          construct = { AttributeTypeAndValue(type = it[0] as String, value = it[1]) },
+      )
 
   /**
    * ```
@@ -272,8 +279,11 @@ internal object CertificateAdapters {
           decompose = { listOf(it.algorithm, it.subjectPublicKey) },
           construct = {
             SubjectPublicKeyInfo(
-                algorithm = it[0] as AlgorithmIdentifier, subjectPublicKey = it[1] as BitString)
-          })
+                algorithm = it[0] as AlgorithmIdentifier,
+                subjectPublicKey = it[1] as BitString,
+            )
+          },
+      )
 
   /**
    * ```
@@ -315,7 +325,8 @@ internal object CertificateAdapters {
                 it.subjectPublicKeyInfo,
                 it.issuerUniqueID,
                 it.subjectUniqueID,
-                it.extensions)
+                it.extensions,
+            )
           },
           construct = {
             TbsCertificate(
@@ -328,8 +339,10 @@ internal object CertificateAdapters {
                 subjectPublicKeyInfo = it[6] as SubjectPublicKeyInfo,
                 issuerUniqueID = it[7] as BitString?,
                 subjectUniqueID = it[8] as BitString?,
-                extensions = it[9] as List<Extension>)
-          })
+                extensions = it[9] as List<Extension>,
+            )
+          },
+      )
 
   /**
    * ```
@@ -351,8 +364,10 @@ internal object CertificateAdapters {
             Certificate(
                 tbsCertificate = it[0] as TbsCertificate,
                 signatureAlgorithm = it[1] as AlgorithmIdentifier,
-                signatureValue = it[2] as BitString)
-          })
+                signatureValue = it[2] as BitString,
+            )
+          },
+      )
 
   /**
    * ```
@@ -386,6 +401,8 @@ internal object CertificateAdapters {
             PrivateKeyInfo(
                 version = it[0] as Long,
                 algorithmIdentifier = it[1] as AlgorithmIdentifier,
-                privateKey = it[2] as ByteString)
-          })
+                privateKey = it[2] as ByteString,
+            )
+          },
+      )
 }

@@ -39,6 +39,5 @@ class RouteDatabase {
   }
 
   /** Returns true if [route] has failed recently and should be avoided. */
-  @Synchronized
-  fun shouldPostpone(route: Route): Boolean = route in failedRoutes
+  @Synchronized fun shouldPostpone(route: Route): Boolean = route in failedRoutes
 }

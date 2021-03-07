@@ -95,14 +95,16 @@ private constructor(
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "keyManager"),
-      level = DeprecationLevel.ERROR)
+      level = DeprecationLevel.ERROR,
+  )
   fun keyManager(): X509KeyManager = keyManager
 
   @JvmName("-deprecated_trustManager")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "trustManager"),
-      level = DeprecationLevel.ERROR)
+      level = DeprecationLevel.ERROR,
+  )
   fun trustManager(): X509TrustManager = trustManager
 
   fun sslSocketFactory(): SSLSocketFactory = sslContext().socketFactory

@@ -23,9 +23,9 @@ import java.lang.reflect.Method
  * 11.
  */
 internal class CloseGuard(
-  private val getMethod: Method?,
-  private val openMethod: Method?,
-  private val warnIfOpenMethod: Method?
+    private val getMethod: Method?,
+    private val openMethod: Method?,
+    private val warnIfOpenMethod: Method?
 ) {
 
   fun createAndOpen(closer: String): Any? {
@@ -34,8 +34,7 @@ internal class CloseGuard(
         val closeGuardInstance = getMethod.invoke(null)
         openMethod!!.invoke(closeGuardInstance, closer)
         return closeGuardInstance
-      } catch (_: Exception) {
-      }
+      } catch (_: Exception) {}
     }
     return null
   }
@@ -46,8 +45,7 @@ internal class CloseGuard(
       try {
         warnIfOpenMethod!!.invoke(closeGuardInstance)
         reported = true
-      } catch (_: Exception) {
-      }
+      } catch (_: Exception) {}
     }
     return reported
   }

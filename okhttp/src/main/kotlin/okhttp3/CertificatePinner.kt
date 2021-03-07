@@ -134,8 +134,8 @@ import okio.ByteString.Companion.toByteString
 @Suppress("NAME_SHADOWING")
 class CertificatePinner
 internal constructor(
-  val pins: Set<Pin>,
-  internal val certificateChainCleaner: CertificateChainCleaner? = null
+    val pins: Set<Pin>,
+    internal val certificateChainCleaner: CertificateChainCleaner? = null
 ) {
   /**
    * Confirms that at least one of the certificates pinned for `hostname` is in `peerCertificates`.
@@ -220,7 +220,7 @@ internal constructor(
 
   /** Returns a certificate pinner that uses `certificateChainCleaner`. */
   internal fun withCertificateChainCleaner(
-    certificateChainCleaner: CertificateChainCleaner
+      certificateChainCleaner: CertificateChainCleaner
   ): CertificatePinner {
     return if (this.certificateChainCleaner == certificateChainCleaner) {
       this
@@ -268,13 +268,13 @@ internal constructor(
           this.hashAlgorithm = "sha1"
           this.hash =
               pin.substring("sha1/".length).decodeBase64()
-                ?: throw IllegalArgumentException("Invalid pin hash: $pin")
+                  ?: throw IllegalArgumentException("Invalid pin hash: $pin")
         }
         pin.startsWith("sha256/") -> {
           this.hashAlgorithm = "sha256"
           this.hash =
               pin.substring("sha256/".length).decodeBase64()
-                ?: throw IllegalArgumentException("Invalid pin hash: $pin")
+                  ?: throw IllegalArgumentException("Invalid pin hash: $pin")
         }
         else -> throw IllegalArgumentException("pins must start with 'sha256/' or 'sha1/': $pin")
       }
@@ -352,11 +352,9 @@ internal constructor(
   }
 
   companion object {
-    @JvmField
-    val DEFAULT = Builder().build()
+    @JvmField val DEFAULT = Builder().build()
 
-    @JvmStatic
-    fun X509Certificate.sha1Hash(): ByteString = publicKey.encoded.toByteString().sha1()
+    @JvmStatic fun X509Certificate.sha1Hash(): ByteString = publicKey.encoded.toByteString().sha1()
 
     @JvmStatic
     fun X509Certificate.sha256Hash(): ByteString = publicKey.encoded.toByteString().sha256()

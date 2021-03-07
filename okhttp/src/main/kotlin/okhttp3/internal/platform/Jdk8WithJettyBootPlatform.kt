@@ -24,16 +24,16 @@ import okhttp3.Protocol
 
 /** OpenJDK 8 with `org.mortbay.jetty.alpn:alpn-boot` in the boot class path. */
 class Jdk8WithJettyBootPlatform(
-  private val putMethod: Method,
-  private val getMethod: Method,
-  private val removeMethod: Method,
-  private val clientProviderClass: Class<*>,
-  private val serverProviderClass: Class<*>
+    private val putMethod: Method,
+    private val getMethod: Method,
+    private val removeMethod: Method,
+    private val clientProviderClass: Class<*>,
+    private val serverProviderClass: Class<*>
 ) : Platform() {
   override fun configureTlsExtensions(
-    sslSocket: SSLSocket,
-    hostname: String?,
-    protocols: List<Protocol>
+      sslSocket: SSLSocket,
+      hostname: String?,
+      protocols: List<Protocol>
   ) {
     val names = alpnProtocolNames(protocols)
 
@@ -82,8 +82,8 @@ class Jdk8WithJettyBootPlatform(
    * dependency on those interfaces.
    */
   private class AlpnProvider(
-    /** This peer's supported protocols. */
-    private val protocols: List<String>
+      /** This peer's supported protocols. */
+      private val protocols: List<String>
   ) : InvocationHandler {
     /** Set when remote peer notifies ALPN is unsupported. */
     var unsupported: Boolean = false
@@ -104,9 +104,9 @@ class Jdk8WithJettyBootPlatform(
       } else if (methodName == "protocols" && callArgs.isEmpty()) {
         return protocols // Client advertises these protocols.
       } else if ((methodName == "selectProtocol" || methodName == "select") &&
-        String::class.java == returnType &&
-        callArgs.size == 1 &&
-        callArgs[0] is List<*>) {
+          String::class.java == returnType &&
+          callArgs.size == 1 &&
+          callArgs[0] is List<*>) {
         val peerProtocols = callArgs[0] as List<*>
         // Pick the first known protocol the peer advertises.
         for (i in 0..peerProtocols.size) {
@@ -119,7 +119,7 @@ class Jdk8WithJettyBootPlatform(
         selected = protocols[0] // On no intersection, try peer's first protocol.
         return selected
       } else if ((methodName == "protocolSelected" || methodName == "selected") &&
-        callArgs.size == 1) {
+          callArgs.size == 1) {
         this.selected = callArgs[0] as String // Server selected this protocol.
         return null
       } else {
@@ -156,9 +156,7 @@ class Jdk8WithJettyBootPlatform(
             clientProviderClass,
             serverProviderClass,
         )
-      } catch (_: ClassNotFoundException) {
-      } catch (_: NoSuchMethodException) {
-      }
+      } catch (_: ClassNotFoundException) {} catch (_: NoSuchMethodException) {}
 
       return null
     }

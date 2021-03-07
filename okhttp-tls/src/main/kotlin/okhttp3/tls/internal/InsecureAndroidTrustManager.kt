@@ -33,7 +33,8 @@ internal class InsecureAndroidTrustManager(
             "checkServerTrusted",
             Array<X509Certificate>::class.java,
             String::class.java,
-            String::class.java)
+            String::class.java,
+        )
       } catch (_: NoSuchMethodException) {
         null
       }

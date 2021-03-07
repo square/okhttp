@@ -56,9 +56,9 @@ import okio.Timeout
  * peer. Hence, we expect all frames to have a max length of [Http2.INITIAL_MAX_FRAME_SIZE].
  */
 class Http2Reader(
-  /** Creates a frame reader with max header table size of 4096. */
-  private val source: BufferedSource,
-  private val client: Boolean
+    /** Creates a frame reader with max header table size of 4096. */
+    private val source: BufferedSource,
+    private val client: Boolean
 ) : Closeable {
   private val continuation: ContinuationSource = ContinuationSource(this.source)
   private val hpackReader: Hpack.Reader =
@@ -205,9 +205,9 @@ class Http2Reader(
     val errorCodeInt = source.readInt()
     val errorCode =
         ErrorCode.fromHttp2(errorCodeInt)
-          ?: throw IOException(
-              "TYPE_RST_STREAM unexpected error code: $errorCodeInt",
-          )
+            ?: throw IOException(
+                "TYPE_RST_STREAM unexpected error code: $errorCodeInt",
+            )
     handler.rstStream(streamId, errorCode)
   }
 
@@ -228,8 +228,7 @@ class Http2Reader(
 
       when (id) {
         // SETTINGS_HEADER_TABLE_SIZE
-        1 -> {
-        }
+        1 -> {}
 
         // SETTINGS_ENABLE_PUSH
         2 -> {
@@ -261,8 +260,7 @@ class Http2Reader(
         }
 
         // Must ignore setting with unknown id.
-        else -> {
-        }
+        else -> {}
       }
       settings[id] = value
     }
@@ -300,9 +298,9 @@ class Http2Reader(
     val opaqueDataLength = length - 8
     val errorCode =
         ErrorCode.fromHttp2(errorCodeInt)
-          ?: throw IOException(
-              "TYPE_GOAWAY unexpected error code: $errorCodeInt",
-          )
+            ?: throw IOException(
+                "TYPE_GOAWAY unexpected error code: $errorCodeInt",
+            )
     var debugData = ByteString.EMPTY
     if (opaqueDataLength > 0) { // Must read debug data in order to not corrupt the connection.
       debugData = source.readByteString(opaqueDataLength.toLong())
@@ -354,9 +352,7 @@ class Http2Reader(
 
     override fun timeout(): Timeout = source.timeout()
 
-    @Throws(IOException::class)
-    override fun close() {
-    }
+    @Throws(IOException::class) override fun close() {}
 
     @Throws(IOException::class)
     private fun readContinuationHeader() {
@@ -386,10 +382,10 @@ class Http2Reader(
      * @param associatedStreamId the stream that triggered the sender to create this stream.
      */
     fun headers(
-      inFinished: Boolean,
-      streamId: Int,
-      associatedStreamId: Int,
-      headerBlock: List<Header>
+        inFinished: Boolean,
+        streamId: Int,
+        associatedStreamId: Int,
+        headerBlock: List<Header>
     )
 
     fun rstStream(streamId: Int, errorCode: ErrorCode)
@@ -477,12 +473,12 @@ class Http2Reader(
      * @param maxAge time in seconds that this alternative is considered fresh.
      */
     fun alternateService(
-      streamId: Int,
-      origin: String,
-      protocol: ByteString,
-      host: String,
-      port: Int,
-      maxAge: Long
+        streamId: Int,
+        origin: String,
+        protocol: ByteString,
+        host: String,
+        port: Int,
+        maxAge: Long
     )
   }
 

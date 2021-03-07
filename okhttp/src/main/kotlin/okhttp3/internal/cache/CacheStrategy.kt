@@ -44,16 +44,16 @@ import okhttp3.internal.toNonNegativeInt
  */
 class CacheStrategy
 internal constructor(
-  /** The request to send on the network, or null if this call doesn't use the network. */
-  val networkRequest: Request?,
-  /** The cached response to return or validate; or null if this call doesn't use a cache. */
-  val cacheResponse: Response?
+    /** The request to send on the network, or null if this call doesn't use the network. */
+    val networkRequest: Request?,
+    /** The cached response to return or validate; or null if this call doesn't use a cache. */
+    val cacheResponse: Response?
 ) {
 
   class Factory(
-    private val nowMillis: Long,
-    internal val request: Request,
-    private val cacheResponse: Response?
+      private val nowMillis: Long,
+      internal val request: Request,
+      private val cacheResponse: Response?
   ) {
     /** The server's time when the cached response was served, if known. */
     private var servedDate: Date? = null
@@ -308,9 +308,9 @@ internal constructor(
           // http://tools.ietf.org/html/rfc7234#section-3
           // s-maxage is not checked because OkHttp is a private cache that should ignore s-maxage.
           if (response.header("Expires") == null &&
-            response.cacheControl.maxAgeSeconds == -1 &&
-            !response.cacheControl.isPublic &&
-            !response.cacheControl.isPrivate) {
+              response.cacheControl.maxAgeSeconds == -1 &&
+              !response.cacheControl.isPublic &&
+              !response.cacheControl.isPrivate) {
             return false
           }
         }

@@ -31,11 +31,11 @@ import okhttp3.internal.okHttpName
 import okhttp3.internal.platform.Platform
 
 class RealConnectionPool(
-  taskRunner: TaskRunner,
-  /** The maximum number of idle connections for each address. */
-  private val maxIdleConnections: Int,
-  keepAliveDuration: Long,
-  timeUnit: TimeUnit
+    taskRunner: TaskRunner,
+    /** The maximum number of idle connections for each address. */
+    private val maxIdleConnections: Int,
+    keepAliveDuration: Long,
+    timeUnit: TimeUnit
 ) {
   private val keepAliveDurationNs: Long = timeUnit.toNanos(keepAliveDuration)
 
@@ -74,10 +74,10 @@ class RealConnectionPool(
    * and `square.ca`.
    */
   fun callAcquirePooledConnection(
-    address: Address,
-    call: RealCall,
-    routes: List<Route>?,
-    requireMultiplexed: Boolean
+      address: Address,
+      call: RealCall,
+      routes: List<Route>?,
+      requireMultiplexed: Boolean
   ): Boolean {
     for (connection in connections) {
       synchronized(connection) {

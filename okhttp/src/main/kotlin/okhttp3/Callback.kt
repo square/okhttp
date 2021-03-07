@@ -35,6 +35,5 @@ interface Callback {
    * necessarily indicate application-layer success: `response` may still indicate an unhappy HTTP
    * response code like 404 or 500.
    */
-  @Throws(IOException::class)
-  fun onResponse(call: Call, response: Response)
+  @Throws(IOException::class) fun onResponse(call: Call, response: Response)
 }

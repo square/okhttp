@@ -32,9 +32,9 @@ import okio.ByteString.Companion.encodeUtf8
 @Suppress("NAME_SHADOWING")
 class MultipartBody
 internal constructor(
-  private val boundaryByteString: ByteString,
-  @get:JvmName("type") val type: MediaType,
-  @get:JvmName("parts") val parts: List<Part>
+    private val boundaryByteString: ByteString,
+    @get:JvmName("type") val type: MediaType,
+    @get:JvmName("parts") val parts: List<Part>
 ) : RequestBody() {
   private val contentType: MediaType = "$type; boundary=$boundary".toMediaType()
   private var contentLength = -1L
@@ -172,8 +172,8 @@ internal constructor(
 
   class Part
   private constructor(
-    @get:JvmName("headers") val headers: Headers?,
-    @get:JvmName("body") val body: RequestBody
+      @get:JvmName("headers") val headers: Headers?,
+      @get:JvmName("body") val body: RequestBody
   ) {
 
     @JvmName("-deprecated_headers")
@@ -193,8 +193,7 @@ internal constructor(
     fun body(): RequestBody = body
 
     companion object {
-      @JvmStatic
-      fun create(body: RequestBody): Part = create(null, body)
+      @JvmStatic fun create(body: RequestBody): Part = create(null, body)
 
       @JvmStatic
       fun create(headers: Headers?, body: RequestBody): Part {
@@ -275,39 +274,34 @@ internal constructor(
      * and need to be bundled in a particular order. Any "multipart" subtypes that an implementation
      * does not recognize must be treated as being of subtype "mixed".
      */
-    @JvmField
-    val MIXED = "multipart/mixed".toMediaType()
+    @JvmField val MIXED = "multipart/mixed".toMediaType()
 
     /**
      * The "multipart/alternative" type is syntactically identical to "multipart/mixed", but the
      * semantics are different. In particular, each of the body parts is an "alternative" version of
      * the same information.
      */
-    @JvmField
-    val ALTERNATIVE = "multipart/alternative".toMediaType()
+    @JvmField val ALTERNATIVE = "multipart/alternative".toMediaType()
 
     /**
      * This type is syntactically identical to "multipart/mixed", but the semantics are different.
      * In particular, in a digest, the default `Content-Type` value for a body part is changed from
      * "text/plain" to "message/rfc822".
      */
-    @JvmField
-    val DIGEST = "multipart/digest".toMediaType()
+    @JvmField val DIGEST = "multipart/digest".toMediaType()
 
     /**
      * This type is syntactically identical to "multipart/mixed", but the semantics are different.
      * In particular, in a parallel entity, the order of body parts is not significant.
      */
-    @JvmField
-    val PARALLEL = "multipart/parallel".toMediaType()
+    @JvmField val PARALLEL = "multipart/parallel".toMediaType()
 
     /**
      * The media-type multipart/form-data follows the rules of all multipart MIME data streams as
      * outlined in RFC 2046. In forms, there are a series of fields to be supplied by the user who
      * fills out the form. Each field has a name. Within a given form, the names are unique.
      */
-    @JvmField
-    val FORM = "multipart/form-data".toMediaType()
+    @JvmField val FORM = "multipart/form-data".toMediaType()
 
     private val COLONSPACE = byteArrayOf(':'.toByte(), ' '.toByte())
     private val CRLF = byteArrayOf('\r'.toByte(), '\n'.toByte())

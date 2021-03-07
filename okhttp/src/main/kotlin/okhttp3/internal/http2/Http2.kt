@@ -19,8 +19,7 @@ import okhttp3.internal.format
 import okio.ByteString.Companion.encodeUtf8
 
 object Http2 {
-  @JvmField
-  val CONNECTION_PREFACE = "PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n".encodeUtf8()
+  @JvmField val CONNECTION_PREFACE = "PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n".encodeUtf8()
 
   /** The initial max frame size, applied independently writing to, or reading from the peer. */
   const val INITIAL_MAX_FRAME_SIZE = 0x4000 // 16384

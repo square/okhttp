@@ -56,9 +56,9 @@ class BouncyCastlePlatform private constructor() : Platform() {
       )
 
   override fun configureTlsExtensions(
-    sslSocket: SSLSocket,
-    hostname: String?,
-    protocols: List<@JvmSuppressWildcards Protocol>
+      sslSocket: SSLSocket,
+      hostname: String?,
+      protocols: List<@JvmSuppressWildcards Protocol>
   ) {
     if (sslSocket is BCSSLSocket) {
       val sslParameters = sslSocket.parameters

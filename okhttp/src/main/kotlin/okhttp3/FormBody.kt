@@ -26,7 +26,7 @@ import okio.Buffer
 import okio.BufferedSink
 
 class FormBody internal constructor(encodedNames: List<String>, encodedValues: List<String>) :
-  RequestBody() {
+    RequestBody() {
   private val encodedNames: List<String> = encodedNames.toImmutableList()
   private val encodedValues: List<String> = encodedValues.toImmutableList()
 

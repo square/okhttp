@@ -173,11 +173,9 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
   }
 
   /** Returns the number of [open streams] [Http2Stream.isOpen] on this connection. */
-  @Synchronized
-  fun openStreamCount(): Int = streams.size
+  @Synchronized fun openStreamCount(): Int = streams.size
 
-  @Synchronized
-  fun getStream(id: Int): Http2Stream? = streams[id]
+  @Synchronized fun getStream(id: Int): Http2Stream? = streams[id]
 
   @Synchronized
   internal fun removeStream(streamId: Int): Http2Stream? {
@@ -229,9 +227,9 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
 
   @Throws(IOException::class)
   private fun newStream(
-    associatedStreamId: Int,
-    requestHeaders: List<Header>,
-    out: Boolean
+      associatedStreamId: Int,
+      requestHeaders: List<Header>,
+      out: Boolean
   ): Http2Stream {
     val outFinished = !out
     val inFinished = false
@@ -525,9 +523,9 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
   }
 
   class Builder(
-    /** True if this peer initiated the connection; false if this peer accepted the connection. */
-    internal var client: Boolean,
-    internal val taskRunner: TaskRunner
+      /** True if this peer initiated the connection; false if this peer accepted the connection. */
+      internal var client: Boolean,
+      internal val taskRunner: TaskRunner
   ) {
     internal lateinit var socket: Socket
     internal lateinit var connectionName: String
@@ -540,10 +538,10 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     @Throws(IOException::class)
     @JvmOverloads
     fun socket(
-      socket: Socket,
-      peerName: String = socket.peerName(),
-      source: BufferedSource = socket.source().buffer(),
-      sink: BufferedSink = socket.sink().buffer()
+        socket: Socket,
+        peerName: String = socket.peerName(),
+        source: BufferedSource = socket.source().buffer(),
+        sink: BufferedSink = socket.sink().buffer()
     ) = apply {
       this.socket = socket
       this.connectionName =
@@ -573,15 +571,14 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
    * async task to do so.
    */
   inner class ReaderRunnable internal constructor(internal val reader: Http2Reader) :
-    Http2Reader.Handler, () -> Unit {
+      Http2Reader.Handler, () -> Unit {
     override fun invoke() {
       var connectionErrorCode = ErrorCode.INTERNAL_ERROR
       var streamErrorCode = ErrorCode.INTERNAL_ERROR
       var errorException: IOException? = null
       try {
         reader.readConnectionPreface(this)
-        while (reader.nextFrame(false, this)) {
-        }
+        while (reader.nextFrame(false, this)) {}
         connectionErrorCode = ErrorCode.NO_ERROR
         streamErrorCode = ErrorCode.CANCEL
       } catch (e: IOException) {
@@ -614,10 +611,10 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     }
 
     override fun headers(
-      inFinished: Boolean,
-      streamId: Int,
-      associatedStreamId: Int,
-      headerBlock: List<Header>
+        inFinished: Boolean,
+        streamId: Int,
+        associatedStreamId: Int,
+        headerBlock: List<Header>
     ) {
       if (pushedStream(streamId)) {
         pushHeadersLater(streamId, headerBlock, inFinished)
@@ -805,12 +802,12 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     }
 
     override fun alternateService(
-      streamId: Int,
-      origin: String,
-      protocol: ByteString,
-      host: String,
-      port: Int,
-      maxAge: Long
+        streamId: Int,
+        origin: String,
+        protocol: ByteString,
+        host: String,
+        port: Int,
+        maxAge: Long
     ) {
       // TODO: register alternate service.
     }
@@ -856,10 +853,10 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
    */
   @Throws(IOException::class)
   internal fun pushDataLater(
-    streamId: Int,
-    source: BufferedSource,
-    byteCount: Int,
-    inFinished: Boolean
+      streamId: Int,
+      source: BufferedSource,
+      byteCount: Int,
+      inFinished: Boolean
   ) {
     val buffer = Buffer()
     source.require(byteCount.toLong()) // Eagerly read the frame before firing client thread.
@@ -891,8 +888,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
      *
      * Multiple calls to this method may be made concurrently.
      */
-    @Throws(IOException::class)
-    abstract fun onStream(stream: Http2Stream)
+    @Throws(IOException::class) abstract fun onStream(stream: Http2Stream)
 
     /**
      * Notification that the connection's peer's settings may have changed to [settings].

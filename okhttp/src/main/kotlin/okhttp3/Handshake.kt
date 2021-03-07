@@ -33,20 +33,20 @@ import okhttp3.internal.toImmutableList
  */
 class Handshake
 internal constructor(
-  /**
-   * Returns the TLS version used for this connection. This value wasn't tracked prior to OkHttp
-   * 3.0. For responses cached by preceding versions this returns [TlsVersion.SSL_3_0].
-   */
-  @get:JvmName("tlsVersion") val tlsVersion: TlsVersion,
+    /**
+     * Returns the TLS version used for this connection. This value wasn't tracked prior to OkHttp
+     * 3.0. For responses cached by preceding versions this returns [TlsVersion.SSL_3_0].
+     */
+    @get:JvmName("tlsVersion") val tlsVersion: TlsVersion,
 
-  /** Returns the cipher suite used for the connection. */
-  @get:JvmName("cipherSuite") val cipherSuite: CipherSuite,
+    /** Returns the cipher suite used for the connection. */
+    @get:JvmName("cipherSuite") val cipherSuite: CipherSuite,
 
-  /** Returns a possibly-empty list of certificates that identify this peer. */
-  @get:JvmName("localCertificates") val localCertificates: List<Certificate>,
+    /** Returns a possibly-empty list of certificates that identify this peer. */
+    @get:JvmName("localCertificates") val localCertificates: List<Certificate>,
 
     // Delayed provider of peerCertificates, to allow lazy cleaning.
-  peerCertificatesFn: () -> List<Certificate>
+    peerCertificatesFn: () -> List<Certificate>
 ) {
   /** Returns a possibly-empty list of certificates that identify the remote peer. */
   @get:JvmName("peerCertificates")
@@ -144,10 +144,10 @@ internal constructor(
 
   private val Certificate.name: String
     get() =
-      when (this) {
-        is X509Certificate -> subjectDN.toString()
-        else -> type
-      }
+        when (this) {
+          is X509Certificate -> subjectDN.toString()
+          else -> type
+        }
 
   companion object {
     @Throws(IOException::class)
@@ -200,10 +200,10 @@ internal constructor(
 
     @JvmStatic
     fun get(
-      tlsVersion: TlsVersion,
-      cipherSuite: CipherSuite,
-      peerCertificates: List<Certificate>,
-      localCertificates: List<Certificate>
+        tlsVersion: TlsVersion,
+        cipherSuite: CipherSuite,
+        peerCertificates: List<Certificate>,
+        localCertificates: List<Certificate>
     ): Handshake {
       val peerCertificatesCopy = peerCertificates.toImmutableList()
       return Handshake(tlsVersion, cipherSuite, localCertificates.toImmutableList()) {

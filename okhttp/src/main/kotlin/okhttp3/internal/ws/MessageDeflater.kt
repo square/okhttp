@@ -54,8 +54,7 @@ class MessageDeflater(private val noContextTakeover: Boolean) : Closeable {
     buffer.write(deflatedBytes, deflatedBytes.size)
   }
 
-  @Throws(IOException::class)
-  override fun close() = deflaterSink.close()
+  @Throws(IOException::class) override fun close() = deflaterSink.close()
 
   private fun Buffer.endsWith(suffix: ByteString) = rangeEquals(size - suffix.size, suffix)
 }

@@ -133,17 +133,17 @@ class HeldCertificate(
 
   @JvmName("-deprecated_certificate")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "certificate"),
-    level = DeprecationLevel.ERROR
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "certificate"),
+      level = DeprecationLevel.ERROR,
   )
   fun certificate(): X509Certificate = certificate
 
   @JvmName("-deprecated_keyPair")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "keyPair"),
-    level = DeprecationLevel.ERROR
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "keyPair"),
+      level = DeprecationLevel.ERROR,
   )
   fun keyPair(): KeyPair = keyPair
 
@@ -328,7 +328,7 @@ class HeldCertificate(
       // Subject keys & identity.
       val subjectKeyPair = keyPair ?: generateKeyPair()
       val subjectPublicKeyInfo = CertificateAdapters.subjectPublicKeyInfo.fromDer(
-        subjectKeyPair.public.encoded.toByteString()
+          subjectKeyPair.public.encoded.toByteString(),
       )
       val subject: List<List<AttributeTypeAndValue>> = subject()
 
@@ -338,7 +338,7 @@ class HeldCertificate(
       if (signedBy != null) {
         issuerKeyPair = signedBy!!.keyPair
         issuer = CertificateAdapters.rdnSequence.fromDer(
-          signedBy!!.certificate.subjectX500Principal.encoded.toByteString()
+            signedBy!!.certificate.subjectX500Principal.encoded.toByteString(),
         )
       } else {
         issuerKeyPair = subjectKeyPair
@@ -348,16 +348,16 @@ class HeldCertificate(
 
       // Subset of certificate data that's covered by the signature.
       val tbsCertificate = TbsCertificate(
-        version = 2L, // v3.
-        serialNumber = serialNumber ?: BigInteger.ONE,
-        signature = signatureAlgorithm,
-        issuer = issuer,
-        validity = validity(),
-        subject = subject,
-        subjectPublicKeyInfo = subjectPublicKeyInfo,
-        issuerUniqueID = null,
-        subjectUniqueID = null,
-        extensions = extensions()
+          version = 2L, // v3.
+          serialNumber = serialNumber ?: BigInteger.ONE,
+          signature = signatureAlgorithm,
+          issuer = issuer,
+          validity = validity(),
+          subject = subject,
+          subjectPublicKeyInfo = subjectPublicKeyInfo,
+          issuerUniqueID = null,
+          subjectUniqueID = null,
+          extensions = extensions(),
       )
 
       // Signature.
@@ -369,12 +369,12 @@ class HeldCertificate(
 
       // Complete signed certificate.
       val certificate = Certificate(
-        tbsCertificate = tbsCertificate,
-        signatureAlgorithm = signatureAlgorithm,
-        signatureValue = BitString(
-          byteString = signature,
-          unusedBitsCount = 0
-        )
+          tbsCertificate = tbsCertificate,
+          signatureAlgorithm = signatureAlgorithm,
+          signatureValue = BitString(
+              byteString = signature,
+              unusedBitsCount = 0,
+          ),
       )
 
       return HeldCertificate(subjectKeyPair, certificate.toX509Certificate())
@@ -385,18 +385,18 @@ class HeldCertificate(
 
       if (organizationalUnit != null) {
         result += listOf(
-          AttributeTypeAndValue(
-            type = organizationalUnitName,
-            value = organizationalUnit
-          )
+            AttributeTypeAndValue(
+                type = organizationalUnitName,
+                value = organizationalUnit,
+            ),
         )
       }
 
       result += listOf(
-        AttributeTypeAndValue(
-          type = ObjectIdentifiers.commonName,
-          value = commonName ?: UUID.randomUUID().toString()
-        )
+          AttributeTypeAndValue(
+              type = ObjectIdentifiers.commonName,
+              value = commonName ?: UUID.randomUUID().toString(),
+          ),
       )
 
       return result
@@ -406,8 +406,8 @@ class HeldCertificate(
       val notBefore = if (notBefore != -1L) notBefore else System.currentTimeMillis()
       val notAfter = if (notAfter != -1L) notAfter else notBefore + DEFAULT_DURATION_MILLIS
       return Validity(
-        notBefore = notBefore,
-        notAfter = notAfter
+          notBefore = notBefore,
+          notAfter = notAfter,
       )
     }
 
@@ -416,12 +416,12 @@ class HeldCertificate(
 
       if (maxIntermediateCas != -1) {
         result += Extension(
-          id = basicConstraints,
-          critical = true,
-          value = BasicConstraints(
-            ca = true,
-            maxIntermediateCas = maxIntermediateCas.toLong()
-          )
+            id = basicConstraints,
+            critical = true,
+            value = BasicConstraints(
+                ca = true,
+                maxIntermediateCas = maxIntermediateCas.toLong(),
+            ),
         )
       }
 
@@ -437,9 +437,9 @@ class HeldCertificate(
           }
         }
         result += Extension(
-          id = subjectAlternativeName,
-          critical = true,
-          value = extensionValue
+            id = subjectAlternativeName,
+            critical = true,
+            value = extensionValue,
         )
       }
 
@@ -449,12 +449,12 @@ class HeldCertificate(
     private fun signatureAlgorithm(signedByKeyPair: KeyPair): AlgorithmIdentifier {
       return when (signedByKeyPair.private) {
         is RSAPrivateKey -> AlgorithmIdentifier(
-          algorithm = sha256WithRSAEncryption,
-          parameters = null
+            algorithm = sha256WithRSAEncryption,
+            parameters = null,
         )
         else -> AlgorithmIdentifier(
-          algorithm = sha256withEcdsa,
-          parameters = ByteString.EMPTY
+            algorithm = sha256withEcdsa,
+            parameters = ByteString.EMPTY,
         )
       }
     }

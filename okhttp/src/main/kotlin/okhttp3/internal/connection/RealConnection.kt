@@ -86,7 +86,7 @@ import okio.source
  * ```
  */
 class RealConnection(val connectionPool: RealConnectionPool, private val route: Route) :
-  Http2Connection.Listener(), Connection {
+    Http2Connection.Listener(), Connection {
 
   // These properties are initialized by connect() and never reassigned.
 
@@ -168,13 +168,13 @@ class RealConnection(val connectionPool: RealConnectionPool, private val route: 
   }
 
   fun connect(
-    connectTimeout: Int,
-    readTimeout: Int,
-    writeTimeout: Int,
-    pingIntervalMillis: Int,
-    connectionRetryEnabled: Boolean,
-    call: Call,
-    eventListener: EventListener
+      connectTimeout: Int,
+      readTimeout: Int,
+      writeTimeout: Int,
+      pingIntervalMillis: Int,
+      connectionRetryEnabled: Boolean,
+      call: Call,
+      eventListener: EventListener
   ) {
     check(protocol == null) { "already connected" }
 
@@ -265,11 +265,11 @@ class RealConnection(val connectionPool: RealConnectionPool, private val route: 
    */
   @Throws(IOException::class)
   private fun connectTunnel(
-    connectTimeout: Int,
-    readTimeout: Int,
-    writeTimeout: Int,
-    call: Call,
-    eventListener: EventListener
+      connectTimeout: Int,
+      readTimeout: Int,
+      writeTimeout: Int,
+      call: Call,
+      eventListener: EventListener
   ) {
     var tunnelRequest: Request = createTunnelRequest()
     val url = tunnelRequest.url
@@ -277,7 +277,7 @@ class RealConnection(val connectionPool: RealConnectionPool, private val route: 
       connectSocket(connectTimeout, readTimeout, call, eventListener)
       tunnelRequest =
           createTunnel(readTimeout, writeTimeout, tunnelRequest, url)
-            ?: break // Tunnel successfully created.
+              ?: break // Tunnel successfully created.
 
       // The proxy decided to close the connection after an auth challenge. We need to create a new
       // connection, but this time with the auth credentials.
@@ -292,10 +292,10 @@ class RealConnection(val connectionPool: RealConnectionPool, private val route: 
   /** Does all the work necessary to build a full HTTP or HTTPS connection on a raw socket. */
   @Throws(IOException::class)
   private fun connectSocket(
-    connectTimeout: Int,
-    readTimeout: Int,
-    call: Call,
-    eventListener: EventListener
+      connectTimeout: Int,
+      readTimeout: Int,
+      call: Call,
+      eventListener: EventListener
   ) {
     val proxy = route.proxy
     val address = route.address
@@ -331,10 +331,10 @@ class RealConnection(val connectionPool: RealConnectionPool, private val route: 
 
   @Throws(IOException::class)
   private fun establishProtocol(
-    connectionSpecSelector: ConnectionSpecSelector,
-    pingIntervalMillis: Int,
-    call: Call,
-    eventListener: EventListener
+      connectionSpecSelector: ConnectionSpecSelector,
+      pingIntervalMillis: Int,
+      call: Call,
+      eventListener: EventListener
   ) {
     if (route.address.sslSocketFactory == null) {
       if (Protocol.H2_PRIOR_KNOWLEDGE in route.address.protocols) {
@@ -471,10 +471,10 @@ class RealConnection(val connectionPool: RealConnectionPool, private val route: 
    */
   @Throws(IOException::class)
   private fun createTunnel(
-    readTimeout: Int,
-    writeTimeout: Int,
-    tunnelRequest: Request,
-    url: HttpUrl
+      readTimeout: Int,
+      writeTimeout: Int,
+      tunnelRequest: Request,
+      url: HttpUrl
   ): Request? {
     var nextRequest = tunnelRequest
     // Make an SSL Tunnel on the first message pair of each SSL + proxy connection.
@@ -504,7 +504,7 @@ class RealConnection(val connectionPool: RealConnectionPool, private val route: 
         HTTP_PROXY_AUTH -> {
           nextRequest =
               route.address.proxyAuthenticator.authenticate(route, response)
-                ?: throw IOException("Failed to authenticate with proxy")
+                  ?: throw IOException("Failed to authenticate with proxy")
 
           if ("close".equals(response.header("Connection"), ignoreCase = true)) {
             return nextRequest
@@ -688,9 +688,9 @@ class RealConnection(val connectionPool: RealConnectionPool, private val route: 
     val socket = this.socket!!
     val source = this.source!!
     if (rawSocket.isClosed ||
-      socket.isClosed ||
-      socket.isInputShutdown ||
-      socket.isOutputShutdown) {
+        socket.isClosed ||
+        socket.isInputShutdown ||
+        socket.isOutputShutdown) {
       return false
     }
 
@@ -790,10 +790,10 @@ class RealConnection(val connectionPool: RealConnectionPool, private val route: 
     const val IDLE_CONNECTION_HEALTHY_NS = 10_000_000_000 // 10 seconds.
 
     fun newTestConnection(
-      connectionPool: RealConnectionPool,
-      route: Route,
-      socket: Socket,
-      idleAtNs: Long
+        connectionPool: RealConnectionPool,
+        route: Route,
+        socket: Socket,
+        idleAtNs: Long
     ): RealConnection {
       val result = RealConnection(connectionPool, route)
       result.socket = socket

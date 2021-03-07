@@ -129,13 +129,11 @@ import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
  * remain idle.
  */
 open class OkHttpClient internal constructor(builder: Builder) :
-  Cloneable, Call.Factory, WebSocket.Factory {
+    Cloneable, Call.Factory, WebSocket.Factory {
 
-  @get:JvmName("dispatcher")
-  val dispatcher: Dispatcher = builder.dispatcher
+  @get:JvmName("dispatcher") val dispatcher: Dispatcher = builder.dispatcher
 
-  @get:JvmName("connectionPool")
-  val connectionPool: ConnectionPool = builder.connectionPool
+  @get:JvmName("connectionPool") val connectionPool: ConnectionPool = builder.connectionPool
 
   /**
    * Returns an immutable list of interceptors that observe the full span of each call: from before
@@ -159,26 +157,19 @@ open class OkHttpClient internal constructor(builder: Builder) :
   @get:JvmName("retryOnConnectionFailure")
   val retryOnConnectionFailure: Boolean = builder.retryOnConnectionFailure
 
-  @get:JvmName("authenticator")
-  val authenticator: Authenticator = builder.authenticator
+  @get:JvmName("authenticator") val authenticator: Authenticator = builder.authenticator
 
-  @get:JvmName("followRedirects")
-  val followRedirects: Boolean = builder.followRedirects
+  @get:JvmName("followRedirects") val followRedirects: Boolean = builder.followRedirects
 
-  @get:JvmName("followSslRedirects")
-  val followSslRedirects: Boolean = builder.followSslRedirects
+  @get:JvmName("followSslRedirects") val followSslRedirects: Boolean = builder.followSslRedirects
 
-  @get:JvmName("cookieJar")
-  val cookieJar: CookieJar = builder.cookieJar
+  @get:JvmName("cookieJar") val cookieJar: CookieJar = builder.cookieJar
 
-  @get:JvmName("cache")
-  val cache: Cache? = builder.cache
+  @get:JvmName("cache") val cache: Cache? = builder.cache
 
-  @get:JvmName("dns")
-  val dns: Dns = builder.dns
+  @get:JvmName("dns") val dns: Dns = builder.dns
 
-  @get:JvmName("proxy")
-  val proxy: Proxy? = builder.proxy
+  @get:JvmName("proxy") val proxy: Proxy? = builder.proxy
 
   @get:JvmName("proxySelector")
   val proxySelector: ProxySelector =
@@ -191,8 +182,7 @@ open class OkHttpClient internal constructor(builder: Builder) :
   @get:JvmName("proxyAuthenticator")
   val proxyAuthenticator: Authenticator = builder.proxyAuthenticator
 
-  @get:JvmName("socketFactory")
-  val socketFactory: SocketFactory = builder.socketFactory
+  @get:JvmName("socketFactory") val socketFactory: SocketFactory = builder.socketFactory
 
   private val sslSocketFactoryOrNull: SSLSocketFactory?
 
@@ -200,46 +190,36 @@ open class OkHttpClient internal constructor(builder: Builder) :
   val sslSocketFactory: SSLSocketFactory
     get() = sslSocketFactoryOrNull ?: throw IllegalStateException("CLEARTEXT-only client")
 
-  @get:JvmName("x509TrustManager")
-  val x509TrustManager: X509TrustManager?
+  @get:JvmName("x509TrustManager") val x509TrustManager: X509TrustManager?
 
   @get:JvmName("connectionSpecs")
   val connectionSpecs: List<ConnectionSpec> = builder.connectionSpecs
 
-  @get:JvmName("protocols")
-  val protocols: List<Protocol> = builder.protocols
+  @get:JvmName("protocols") val protocols: List<Protocol> = builder.protocols
 
-  @get:JvmName("hostnameVerifier")
-  val hostnameVerifier: HostnameVerifier = builder.hostnameVerifier
+  @get:JvmName("hostnameVerifier") val hostnameVerifier: HostnameVerifier = builder.hostnameVerifier
 
-  @get:JvmName("certificatePinner")
-  val certificatePinner: CertificatePinner
+  @get:JvmName("certificatePinner") val certificatePinner: CertificatePinner
 
-  @get:JvmName("certificateChainCleaner")
-  val certificateChainCleaner: CertificateChainCleaner?
+  @get:JvmName("certificateChainCleaner") val certificateChainCleaner: CertificateChainCleaner?
 
   /**
    * Default call timeout (in milliseconds). By default there is no timeout for complete calls, but
    * there is for the connect, write, and read actions within a call.
    */
-  @get:JvmName("callTimeoutMillis")
-  val callTimeoutMillis: Int = builder.callTimeout
+  @get:JvmName("callTimeoutMillis") val callTimeoutMillis: Int = builder.callTimeout
 
   /** Default connect timeout (in milliseconds). The default is 10 seconds. */
-  @get:JvmName("connectTimeoutMillis")
-  val connectTimeoutMillis: Int = builder.connectTimeout
+  @get:JvmName("connectTimeoutMillis") val connectTimeoutMillis: Int = builder.connectTimeout
 
   /** Default read timeout (in milliseconds). The default is 10 seconds. */
-  @get:JvmName("readTimeoutMillis")
-  val readTimeoutMillis: Int = builder.readTimeout
+  @get:JvmName("readTimeoutMillis") val readTimeoutMillis: Int = builder.readTimeout
 
   /** Default write timeout (in milliseconds). The default is 10 seconds. */
-  @get:JvmName("writeTimeoutMillis")
-  val writeTimeoutMillis: Int = builder.writeTimeout
+  @get:JvmName("writeTimeoutMillis") val writeTimeoutMillis: Int = builder.writeTimeout
 
   /** Web socket and HTTP/2 ping interval (in milliseconds). By default pings are not sent. */
-  @get:JvmName("pingIntervalMillis")
-  val pingIntervalMillis: Int = builder.pingInterval
+  @get:JvmName("pingIntervalMillis") val pingIntervalMillis: Int = builder.pingInterval
 
   /**
    * Minimum outbound web socket message size (in bytes) that will be compressed. The default is
@@ -795,10 +775,10 @@ open class OkHttpClient internal constructor(builder: Builder) :
       this.sslSocketFactoryOrNull = sslSocketFactory
       this.x509TrustManagerOrNull =
           Platform.get().trustManager(sslSocketFactory)
-            ?: throw IllegalStateException(
-                "Unable to extract the trust manager on ${Platform.get()}, " +
-                    "sslSocketFactory is ${sslSocketFactory.javaClass}",
-            )
+              ?: throw IllegalStateException(
+                  "Unable to extract the trust manager on ${Platform.get()}, " +
+                      "sslSocketFactory is ${sslSocketFactory.javaClass}",
+              )
 
       this.certificateChainCleaner =
           Platform.get().buildCertificateChainCleaner(x509TrustManagerOrNull!!)
@@ -851,15 +831,15 @@ open class OkHttpClient internal constructor(builder: Builder) :
      */
     fun sslSocketFactory(sslSocketFactory: SSLSocketFactory, trustManager: X509TrustManager) =
         apply {
-          if (sslSocketFactory != this.sslSocketFactoryOrNull ||
-            trustManager != this.x509TrustManagerOrNull) {
-            this.routeDatabase = null
-          }
+      if (sslSocketFactory != this.sslSocketFactoryOrNull ||
+          trustManager != this.x509TrustManagerOrNull) {
+        this.routeDatabase = null
+      }
 
-          this.sslSocketFactoryOrNull = sslSocketFactory
-          this.certificateChainCleaner = CertificateChainCleaner.get(trustManager)
-          this.x509TrustManagerOrNull = trustManager
-        }
+      this.sslSocketFactoryOrNull = sslSocketFactory
+      this.certificateChainCleaner = CertificateChainCleaner.get(trustManager)
+      this.x509TrustManagerOrNull = trustManager
+    }
 
     fun connectionSpecs(connectionSpecs: List<ConnectionSpec>) = apply {
       if (connectionSpecs != this.connectionSpecs) {

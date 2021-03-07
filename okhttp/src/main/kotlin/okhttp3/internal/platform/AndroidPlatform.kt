@@ -76,9 +76,9 @@ class AndroidPlatform : Platform() {
           ?.trustManager(sslSocketFactory)
 
   override fun configureTlsExtensions(
-    sslSocket: SSLSocket,
-    hostname: String?,
-    protocols: List<@JvmSuppressWildcards Protocol>
+      sslSocket: SSLSocket,
+      hostname: String?,
+      protocols: List<@JvmSuppressWildcards Protocol>
   ) {
     // No TLS extensions if the socket class is custom.
     socketAdapters
@@ -103,17 +103,17 @@ class AndroidPlatform : Platform() {
   override fun isCleartextTrafficPermitted(hostname: String): Boolean =
       when {
         Build.VERSION.SDK_INT >= 24 ->
-          NetworkSecurityPolicy.getInstance().isCleartextTrafficPermitted(hostname)
+            NetworkSecurityPolicy.getInstance().isCleartextTrafficPermitted(hostname)
         Build.VERSION.SDK_INT >= 23 ->
-          NetworkSecurityPolicy.getInstance().isCleartextTrafficPermitted
+            NetworkSecurityPolicy.getInstance().isCleartextTrafficPermitted
         else -> true
       }
 
   override fun buildCertificateChainCleaner(
-    trustManager: X509TrustManager
+      trustManager: X509TrustManager
   ): CertificateChainCleaner =
       AndroidCertificateChainCleaner.buildIfSupported(trustManager)
-        ?: super.buildCertificateChainCleaner(trustManager)
+          ?: super.buildCertificateChainCleaner(trustManager)
 
   override fun buildTrustRootIndex(trustManager: X509TrustManager): TrustRootIndex =
       try {
@@ -138,8 +138,8 @@ class AndroidPlatform : Platform() {
    * trusted CA certificates.
    */
   internal data class CustomTrustRootIndex(
-    private val trustManager: X509TrustManager,
-    private val findByIssuerAndSignatureMethod: Method
+      private val trustManager: X509TrustManager,
+      private val findByIssuerAndSignatureMethod: Method
   ) : TrustRootIndex {
     override fun findByIssuerAndSignature(cert: X509Certificate): X509Certificate? {
       return try {

@@ -58,10 +58,10 @@ import okio.AsyncTimeout
  * canceling may break the entire connection.
  */
 class RealCall(
-  val client: OkHttpClient,
-  /** The application's original request unadulterated by redirects or auth headers. */
-  val originalRequest: Request,
-  val forWebSocket: Boolean
+    val client: OkHttpClient,
+    /** The application's original request unadulterated by redirects or auth headers. */
+    val originalRequest: Request,
+    val forWebSocket: Boolean
 ) : Call {
   private val connectionPool: RealConnectionPool = client.connectionPool.delegate
 
@@ -69,10 +69,10 @@ class RealCall(
 
   private val timeout =
       object : AsyncTimeout() {
-        override fun timedOut() {
-          cancel()
-        }
-      }
+            override fun timedOut() {
+              cancel()
+            }
+          }
           .apply { timeout(client.callTimeoutMillis.toLong(), MILLISECONDS) }
 
   private val executed = AtomicBoolean()
@@ -112,12 +112,9 @@ class RealCall(
   // These properties are accessed by canceling threads. Any thread can cancel a call, and once it's
   // canceled it's canceled forever.
 
-  @Volatile
-  private var canceled = false
-  @Volatile
-  private var exchange: Exchange? = null
-  @Volatile
-  var connectionToCancel: RealConnection? = null
+  @Volatile private var canceled = false
+  @Volatile private var exchange: Exchange? = null
+  @Volatile var connectionToCancel: RealConnection? = null
 
   override fun timeout() = timeout
 
@@ -287,10 +284,10 @@ class RealCall(
    * that additional context. Otherwise [e] is returned as-is.
    */
   internal fun <E : IOException?> messageDone(
-    exchange: Exchange,
-    requestDone: Boolean,
-    responseDone: Boolean,
-    e: E
+      exchange: Exchange,
+      requestDone: Boolean,
+      responseDone: Boolean,
+      e: E
   ): E {
     if (exchange != this.exchange) return e // This exchange was detached violently!
 
@@ -546,11 +543,11 @@ class RealCall(
   }
 
   internal class CallReference(
-    referent: RealCall,
-    /**
-     * Captures the stack trace at the time the Call is executed or enqueued. This is helpful for
-     * identifying the origin of connection leaks.
-     */
-    val callStackTrace: Any?
+      referent: RealCall,
+      /**
+       * Captures the stack trace at the time the Call is executed or enqueued. This is helpful for
+       * identifying the origin of connection leaks.
+       */
+      val callStackTrace: Any?
   ) : WeakReference<RealCall>(referent)
 }

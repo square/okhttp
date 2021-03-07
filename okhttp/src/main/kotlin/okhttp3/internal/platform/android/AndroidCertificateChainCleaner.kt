@@ -31,8 +31,8 @@ import okhttp3.internal.tls.CertificateChainCleaner
  * param.
  */
 internal class AndroidCertificateChainCleaner(
-  private val trustManager: X509TrustManager,
-  private val x509TrustManagerExtensions: X509TrustManagerExtensions
+    private val trustManager: X509TrustManager,
+    private val x509TrustManagerExtensions: X509TrustManagerExtensions
 ) : CertificateChainCleaner() {
   @Suppress("UNCHECKED_CAST")
   @Throws(SSLPeerUnverifiedException::class)

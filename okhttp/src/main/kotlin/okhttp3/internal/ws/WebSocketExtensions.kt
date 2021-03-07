@@ -59,26 +59,26 @@ import okhttp3.internal.trimSubstring
  * [rfc_7692]: https://tools.ietf.org/html/rfc7692#section-7.1
  */
 data class WebSocketExtensions(
-  /** True if the agreed upon extensions includes the permessage-deflate extension. */
-  @JvmField val perMessageDeflate: Boolean = false,
+    /** True if the agreed upon extensions includes the permessage-deflate extension. */
+    @JvmField val perMessageDeflate: Boolean = false,
 
-  /** Should be a value in [8..15]. Only 15 is acceptable by OkHttp as Java APIs are limited. */
-  @JvmField val clientMaxWindowBits: Int? = null,
+    /** Should be a value in [8..15]. Only 15 is acceptable by OkHttp as Java APIs are limited. */
+    @JvmField val clientMaxWindowBits: Int? = null,
 
-  /** True if the agreed upon extension parameters includes "client_no_context_takeover". */
-  @JvmField val clientNoContextTakeover: Boolean = false,
+    /** True if the agreed upon extension parameters includes "client_no_context_takeover". */
+    @JvmField val clientNoContextTakeover: Boolean = false,
 
-  /** Should be a value in [8..15]. Any value in that range is acceptable by OkHttp. */
-  @JvmField val serverMaxWindowBits: Int? = null,
+    /** Should be a value in [8..15]. Any value in that range is acceptable by OkHttp. */
+    @JvmField val serverMaxWindowBits: Int? = null,
 
-  /** True if the agreed upon extension parameters includes "server_no_context_takeover". */
-  @JvmField val serverNoContextTakeover: Boolean = false,
+    /** True if the agreed upon extension parameters includes "server_no_context_takeover". */
+    @JvmField val serverNoContextTakeover: Boolean = false,
 
-  /**
-   * True if the agreed upon extensions or parameters contained values unrecognized by OkHttp.
-   * Typically this indicates that the client will need to close the web socket with code 1010.
-   */
-  @JvmField val unknownValues: Boolean = false
+    /**
+     * True if the agreed upon extensions or parameters contained values unrecognized by OkHttp.
+     * Typically this indicates that the client will need to close the web socket with code 1010.
+     */
+    @JvmField val unknownValues: Boolean = false
 ) {
 
   fun noContextTakeover(clientOriginated: Boolean): Boolean {

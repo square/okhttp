@@ -29,11 +29,11 @@ import okhttp3.internal.platform.android.AndroidLog.androidLog
 
 private val LogRecord.androidLevel: Int
   get() =
-    when {
-      level.intValue() > Level.INFO.intValue() -> Log.WARN
-      level.intValue() == Level.INFO.intValue() -> Log.INFO
-      else -> Log.DEBUG
-    }
+      when {
+        level.intValue() > Level.INFO.intValue() -> Log.WARN
+        level.intValue() == Level.INFO.intValue() -> Log.INFO
+        else -> Log.DEBUG
+      }
 
 object AndroidLogHandler : Handler() {
   override fun publish(record: LogRecord) {

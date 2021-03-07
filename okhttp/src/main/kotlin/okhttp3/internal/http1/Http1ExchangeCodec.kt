@@ -66,12 +66,12 @@ import okio.Timeout
  * [newFixedLengthSource] and may skip reading and closing that source.
  */
 class Http1ExchangeCodec(
-  /** The client that configures this stream. May be null for HTTPS proxy tunnels. */
-  private val client: OkHttpClient?,
-  /** The connection that carries this stream. */
-  override val connection: RealConnection,
-  private val source: BufferedSource,
-  private val sink: BufferedSink
+    /** The client that configures this stream. May be null for HTTPS proxy tunnels. */
+    private val client: OkHttpClient?,
+    /** The connection that carries this stream. */
+    override val connection: RealConnection,
+    private val source: BufferedSource,
+    private val sink: BufferedSink
 ) : ExchangeCodec {
   private var state = STATE_IDLE
   private val headersReader = HeadersReader(source)
@@ -95,15 +95,15 @@ class Http1ExchangeCodec(
   override fun createRequestBody(request: Request, contentLength: Long): Sink {
     return when {
       request.body != null && request.body.isDuplex() ->
-        throw ProtocolException(
-            "Duplex connections are not supported for HTTP/1",
-        )
+          throw ProtocolException(
+              "Duplex connections are not supported for HTTP/1",
+          )
       request.isChunked -> newChunkedSink() // Stream a request body of unknown length.
       contentLength != -1L -> newKnownLengthSink() // Stream a request body of a known length.
       else -> // Stream a request body of a known length.
-        throw IllegalStateException(
-            "Cannot stream a request body without chunked encoding or a known content length!",
-        )
+      throw IllegalStateException(
+              "Cannot stream a request body without chunked encoding or a known content length!",
+          )
     }
   }
 
@@ -390,7 +390,7 @@ class Http1ExchangeCodec(
       if (closed) return
 
       if (bytesRemaining != 0L &&
-        !discard(ExchangeCodec.DISCARD_STREAM_TIMEOUT_MILLIS, MILLISECONDS)) {
+          !discard(ExchangeCodec.DISCARD_STREAM_TIMEOUT_MILLIS, MILLISECONDS)) {
         connection.noNewExchanges() // Unread bytes remain on the stream.
         responseBodyComplete()
       }

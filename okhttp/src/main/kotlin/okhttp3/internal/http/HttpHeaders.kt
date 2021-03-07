@@ -127,7 +127,7 @@ private fun Buffer.readChallengeHeader(result: MutableList<Challenge>) {
             startsWith('"'.toByte()) -> readQuotedString()
             else -> readToken()
           }
-            ?: return // Expected a value.
+              ?: return // Expected a value.
 
       val replaced = parameters.put(peek, parameterValue)
       peek = null
@@ -223,15 +223,15 @@ fun Response.promisesBody(): Boolean {
 
   val responseCode = code
   if ((responseCode < HTTP_CONTINUE || responseCode >= 200) &&
-    responseCode != HTTP_NO_CONTENT &&
-    responseCode != HTTP_NOT_MODIFIED) {
+      responseCode != HTTP_NO_CONTENT &&
+      responseCode != HTTP_NOT_MODIFIED) {
     return true
   }
 
   // If the Content-Length or Transfer-Encoding headers disagree with the response code, the
   // response is malformed. For best compatibility, we honor the headers.
   if (headersContentLength() != -1L ||
-    "chunked".equals(header("Transfer-Encoding"), ignoreCase = true)) {
+      "chunked".equals(header("Transfer-Encoding"), ignoreCase = true)) {
     return true
   }
 

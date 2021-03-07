@@ -327,7 +327,8 @@ internal class DerReader(source: Source) {
             tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
             tag = DerHeader.TAG_END_OF_CONTENTS,
             constructed = false,
-            length = -1L)
+            length = -1L,
+        )
   }
 
   /** A source that keeps track of how many bytes it's consumed. */

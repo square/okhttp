@@ -27,19 +27,19 @@ import java.util.regex.Pattern
  */
 class MediaType
 private constructor(
-  private val mediaType: String,
+    private val mediaType: String,
 
-  /**
-   * Returns the high-level media type, such as "text", "image", "audio", "video", or
-   * "application".
-   */
-  @get:JvmName("type") val type: String,
+    /**
+     * Returns the high-level media type, such as "text", "image", "audio", "video", or
+     * "application".
+     */
+    @get:JvmName("type") val type: String,
 
-  /** Returns a specific media subtype, such as "plain" or "png", "mpeg", "mp4" or "xml". */
-  @get:JvmName("subtype") val subtype: String,
+    /** Returns a specific media subtype, such as "plain" or "png", "mpeg", "mp4" or "xml". */
+    @get:JvmName("subtype") val subtype: String,
 
-  /** Alternating parameter names with their values, like `["charset", "utf-8"]`. */
-  private val parameterNamesAndValues: Array<String>
+    /** Alternating parameter names with their values, like `["charset", "utf-8"]`. */
+    private val parameterNamesAndValues: Array<String>
 ) {
 
   /**
@@ -168,10 +168,10 @@ private constructor(
     @Deprecated(
         message = "moved to extension function",
         replaceWith =
-        ReplaceWith(
-            expression = "mediaType.toMediaType()",
-            imports = ["okhttp3.MediaType.Companion.toMediaType"],
-        ),
+            ReplaceWith(
+                expression = "mediaType.toMediaType()",
+                imports = ["okhttp3.MediaType.Companion.toMediaType"],
+            ),
         level = DeprecationLevel.ERROR,
     )
     fun get(mediaType: String): MediaType = mediaType.toMediaType()
@@ -180,10 +180,10 @@ private constructor(
     @Deprecated(
         message = "moved to extension function",
         replaceWith =
-        ReplaceWith(
-            expression = "mediaType.toMediaTypeOrNull()",
-            imports = ["okhttp3.MediaType.Companion.toMediaTypeOrNull"],
-        ),
+            ReplaceWith(
+                expression = "mediaType.toMediaTypeOrNull()",
+                imports = ["okhttp3.MediaType.Companion.toMediaTypeOrNull"],
+            ),
         level = DeprecationLevel.ERROR,
     )
     fun parse(mediaType: String): MediaType? = mediaType.toMediaTypeOrNull()

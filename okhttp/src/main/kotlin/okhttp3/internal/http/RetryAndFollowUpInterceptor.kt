@@ -143,10 +143,10 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
    * recovered if the body is buffered or if the failure occurred before the request has been sent.
    */
   private fun recover(
-    e: IOException,
-    call: RealCall,
-    userRequest: Request,
-    requestSendStarted: Boolean
+      e: IOException,
+      call: RealCall,
+      userRequest: Request,
+      requestSendStarted: Boolean
   ): Boolean {
     // The application layer has forbidden retries.
     if (!client.retryOnConnectionFailure) return false
@@ -308,8 +308,8 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
               responseCode == HTTP_PERM_REDIRECT ||
               responseCode == HTTP_TEMP_REDIRECT
       if (HttpMethod.redirectsToGet(method) &&
-        responseCode != HTTP_PERM_REDIRECT &&
-        responseCode != HTTP_TEMP_REDIRECT) {
+          responseCode != HTTP_PERM_REDIRECT &&
+          responseCode != HTTP_TEMP_REDIRECT) {
         requestBuilder.method("GET", null)
       } else {
         val requestBody = if (maintainBody) userResponse.request.body else null

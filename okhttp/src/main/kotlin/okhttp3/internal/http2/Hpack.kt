@@ -126,23 +126,20 @@ object Hpack {
   class Reader
   @JvmOverloads
   constructor(
-    source: Source,
-    private val headerTableSizeSetting: Int,
-    private var maxDynamicTableByteCount: Int = headerTableSizeSetting
+      source: Source,
+      private val headerTableSizeSetting: Int,
+      private var maxDynamicTableByteCount: Int = headerTableSizeSetting
   ) {
     private val headerList = mutableListOf<Header>()
     private val source: BufferedSource = source.buffer()
 
     // Visible for testing.
-    @JvmField
-    var dynamicTable = arrayOfNulls<Header>(8)
+    @JvmField var dynamicTable = arrayOfNulls<Header>(8)
 
     // Array is populated back to front, so new entries always have lowest index.
     private var nextHeaderIndex = dynamicTable.size - 1
-    @JvmField
-    var headerCount = 0
-    @JvmField
-    var dynamicTableByteCount = 0
+    @JvmField var headerCount = 0
+    @JvmField var dynamicTableByteCount = 0
 
     fun getAndResetHeaderList(): List<Header> {
       val result = headerList.toList()
@@ -404,9 +401,9 @@ object Hpack {
   class Writer
   @JvmOverloads
   constructor(
-    @JvmField var headerTableSizeSetting: Int = SETTINGS_HEADER_TABLE_SIZE,
-    private val useCompression: Boolean = true,
-    private val out: Buffer
+      @JvmField var headerTableSizeSetting: Int = SETTINGS_HEADER_TABLE_SIZE,
+      private val useCompression: Boolean = true,
+      private val out: Buffer
   ) {
     /**
      * In the scenario where the dynamic table size changes multiple times between transmission of
@@ -414,19 +411,15 @@ object Hpack {
      */
     private var smallestHeaderTableSizeSetting = Integer.MAX_VALUE
     private var emitDynamicTableSizeUpdate: Boolean = false
-    @JvmField
-    var maxDynamicTableByteCount: Int = headerTableSizeSetting
+    @JvmField var maxDynamicTableByteCount: Int = headerTableSizeSetting
 
     // Visible for testing.
-    @JvmField
-    var dynamicTable = arrayOfNulls<Header>(8)
+    @JvmField var dynamicTable = arrayOfNulls<Header>(8)
 
     // Array is populated back to front, so new entries always have lowest index.
     private var nextHeaderIndex = dynamicTable.size - 1
-    @JvmField
-    var headerCount = 0
-    @JvmField
-    var dynamicTableByteCount = 0
+    @JvmField var headerCount = 0
+    @JvmField var dynamicTableByteCount = 0
 
     private fun clearDynamicTable() {
       dynamicTable.fill(null)

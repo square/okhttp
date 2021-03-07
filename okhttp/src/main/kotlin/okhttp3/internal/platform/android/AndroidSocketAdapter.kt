@@ -42,9 +42,9 @@ open class AndroidSocketAdapter(private val sslSocketClass: Class<in SSLSocket>)
   override fun matchesSocket(sslSocket: SSLSocket): Boolean = sslSocketClass.isInstance(sslSocket)
 
   override fun configureTlsExtensions(
-    sslSocket: SSLSocket,
-    hostname: String?,
-    protocols: List<Protocol>
+      sslSocket: SSLSocket,
+      hostname: String?,
+      protocols: List<Protocol>
   ) {
     // No TLS extensions if the socket class is custom.
     if (matchesSocket(sslSocket)) {

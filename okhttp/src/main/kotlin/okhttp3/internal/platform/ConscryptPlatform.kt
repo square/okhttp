@@ -63,9 +63,9 @@ class ConscryptPlatform private constructor() : Platform() {
     }
 
     override fun verify(
-      certs: Array<out X509Certificate>?,
-      hostname: String?,
-      session: SSLSession?
+        certs: Array<out X509Certificate>?,
+        hostname: String?,
+        session: SSLSession?
     ): Boolean {
       return true
     }
@@ -74,9 +74,9 @@ class ConscryptPlatform private constructor() : Platform() {
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? = null
 
   override fun configureTlsExtensions(
-    sslSocket: SSLSocket,
-    hostname: String?,
-    protocols: List<@JvmSuppressWildcards Protocol>
+      sslSocket: SSLSocket,
+      hostname: String?,
+      protocols: List<@JvmSuppressWildcards Protocol>
   ) {
     if (Conscrypt.isConscrypt(sslSocket)) {
       // Enable session tickets.
