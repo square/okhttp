@@ -19,6 +19,7 @@ import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.TestUtil.assumeNetwork
 import okhttp3.internal.platform.OpenJSSEPlatform
+import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.internal.TlsUtil
 import okio.ByteString.Companion.toByteString
@@ -132,6 +133,7 @@ class JSSETest(
 
   @ParameterizedTest(name = "{displayName}({arguments})")
   @ValueSource(strings = ["TLSv1.2", "TLSv1.3"])
+  @Flaky
   fun testSessionReuse(tlsVersion: String) {
     val sessionIds = mutableListOf<String>()
 
@@ -144,7 +146,9 @@ class JSSETest(
 
     var reuseSession = false
 
-    val sslSocketFactory = object : DelegatingSSLSocketFactory(handshakeCertificates.sslSocketFactory()) {
+    val sslContext = handshakeCertificates.sslContext()
+    val systemSslSocketFactory = sslContext.socketFactory
+    val sslSocketFactory = object : DelegatingSSLSocketFactory(systemSslSocketFactory) {
       override fun configureSocket(sslSocket: SSLSocket): SSLSocket {
         return sslSocket.apply {
           if (reuseSession) {
@@ -178,7 +182,10 @@ class JSSETest(
     client.connectionPool.evictAll()
     assertEquals(0, client.connectionPool.connectionCount())
 
-    // Force reuse
+    // Force reuse. This appears flaky even though sessions are reused.
+    // No new session is allowed and no existing session can be resumed
+    // javax.net.ssl.SSLHandshakeException: No new session is allowed and no existing
+    // session can be resumed
     reuseSession = true
 
     client.newCall(request).execute().use { response ->
@@ -186,10 +193,15 @@ class JSSETest(
     }
 
     assertEquals(2, sessionIds.size)
+    val directSessionIds =
+      sslContext.clientSessionContext.ids.toList().map { it.toByteString().hex() }
     if (tlsVersion == TlsVersion.TLS_1_3) {
       // We can't rely on the same session id with TLSv1.3 ids.
-      // With TLSv1.2 it is really JDK specific.
       assertNotEquals(sessionIds[0], sessionIds[1])
+    } else {
+      // With TLSv1.2 it is really JDK specific.
+      assertEquals(sessionIds[0], sessionIds[1])
+      assertThat(directSessionIds).contains(sessionIds[0], sessionIds[1])
     }
     assertThat(sessionIds[0]).isNotBlank()
   }

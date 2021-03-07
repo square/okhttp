@@ -79,7 +79,9 @@ class ConscryptTest {
 
     var reuseSession = false
 
-    val sslSocketFactory = object : DelegatingSSLSocketFactory(handshakeCertificates.sslSocketFactory()) {
+    val sslContext = handshakeCertificates.sslContext()
+    val systemSslSocketFactory = sslContext.socketFactory
+    val sslSocketFactory = object : DelegatingSSLSocketFactory(systemSslSocketFactory) {
       override fun configureSocket(sslSocket: SSLSocket): SSLSocket {
         return sslSocket.apply {
           if (reuseSession) {
@@ -120,12 +122,19 @@ class ConscryptTest {
     }
 
     assertEquals(2, sessionIds.size)
+    val directSessionIds =
+      sslContext.clientSessionContext.ids.toList().map { it.toByteString().hex() }
     if (tlsVersion == TlsVersion.TLS_1_3) {
       assertThat(sessionIds[0]).isBlank()
       assertThat(sessionIds[1]).isBlank()
+
+      // https://github.com/google/conscrypt/issues/985
+      // assertThat(directSessionIds).containsExactlyInAnyOrder(sessionIds[0], sessionIds[1])
     } else {
       assertThat(sessionIds[0]).isNotBlank()
       assertThat(sessionIds[1]).isNotBlank()
+
+      assertThat(directSessionIds).containsExactlyInAnyOrder(sessionIds[1])
     }
   }
 
