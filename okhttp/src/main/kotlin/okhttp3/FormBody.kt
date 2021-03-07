@@ -15,6 +15,8 @@
  */
 package okhttp3
 
+import java.io.IOException
+import java.nio.charset.Charset
 import okhttp3.HttpUrl.Companion.FORM_ENCODE_SET
 import okhttp3.HttpUrl.Companion.canonicalize
 import okhttp3.HttpUrl.Companion.percentDecode
@@ -22,8 +24,6 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.internal.toImmutableList
 import okio.Buffer
 import okio.BufferedSink
-import java.io.IOException
-import java.nio.charset.Charset
 
 class FormBody internal constructor(
   encodedNames: List<String>,
@@ -38,10 +38,9 @@ class FormBody internal constructor(
 
   @JvmName("-deprecated_size")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "size"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "size"),
+      level = DeprecationLevel.ERROR)
   fun size(): Int = size
 
   fun encodedName(index: Int) = encodedNames[index]
@@ -92,29 +91,29 @@ class FormBody internal constructor(
 
     fun add(name: String, value: String) = apply {
       names += name.canonicalize(
-        encodeSet = FORM_ENCODE_SET,
-        plusIsSpace = false, // plus is encoded as `%2B`, space is encoded as plus.
-        charset = charset
+          encodeSet = FORM_ENCODE_SET,
+          plusIsSpace = false, // plus is encoded as `%2B`, space is encoded as plus.
+          charset = charset
       )
       values += value.canonicalize(
-        encodeSet = FORM_ENCODE_SET,
-        plusIsSpace = false, // plus is encoded as `%2B`, space is encoded as plus.
-        charset = charset
+          encodeSet = FORM_ENCODE_SET,
+          plusIsSpace = false, // plus is encoded as `%2B`, space is encoded as plus.
+          charset = charset
       )
     }
 
     fun addEncoded(name: String, value: String) = apply {
       names += name.canonicalize(
-        encodeSet = FORM_ENCODE_SET,
-        alreadyEncoded = true,
-        plusIsSpace = true,
-        charset = charset
+          encodeSet = FORM_ENCODE_SET,
+          alreadyEncoded = true,
+          plusIsSpace = true,
+          charset = charset
       )
       values += value.canonicalize(
-        encodeSet = FORM_ENCODE_SET,
-        alreadyEncoded = true,
-        plusIsSpace = true,
-        charset = charset
+          encodeSet = FORM_ENCODE_SET,
+          alreadyEncoded = true,
+          plusIsSpace = true,
+          charset = charset
       )
     }
 

@@ -80,10 +80,9 @@ class MockWebServer : ExternalResource(), Closeable {
 
   @JvmName("-deprecated_port")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "port"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "port"),
+      level = DeprecationLevel.ERROR)
   fun getPort(): Int = port
 
   fun toProxyAddress(): Proxy {
@@ -93,12 +92,11 @@ class MockWebServer : ExternalResource(), Closeable {
 
   @JvmName("-deprecated_serverSocketFactory")
   @Deprecated(
-    message = "moved to var",
-    replaceWith = ReplaceWith(
-      expression = "run { this.serverSocketFactory = serverSocketFactory }"
-    ),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to var",
+      replaceWith = ReplaceWith(
+          expression = "run { this.serverSocketFactory = serverSocketFactory }"
+      ),
+      level = DeprecationLevel.ERROR)
   fun setServerSocketFactory(serverSocketFactory: ServerSocketFactory) {
     delegate.serverSocketFactory = serverSocketFactory
   }
@@ -110,44 +108,40 @@ class MockWebServer : ExternalResource(), Closeable {
 
   @JvmName("-deprecated_bodyLimit")
   @Deprecated(
-    message = "moved to var",
-    replaceWith = ReplaceWith(
-      expression = "run { this.bodyLimit = bodyLimit }"
-    ),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to var",
+      replaceWith = ReplaceWith(
+          expression = "run { this.bodyLimit = bodyLimit }"
+      ),
+      level = DeprecationLevel.ERROR)
   fun setBodyLimit(bodyLimit: Long) {
     delegate.bodyLimit = bodyLimit
   }
 
   @JvmName("-deprecated_protocolNegotiationEnabled")
   @Deprecated(
-    message = "moved to var",
-    replaceWith = ReplaceWith(
-      expression = "run { this.protocolNegotiationEnabled = protocolNegotiationEnabled }"
-    ),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to var",
+      replaceWith = ReplaceWith(
+          expression = "run { this.protocolNegotiationEnabled = protocolNegotiationEnabled }"
+      ),
+      level = DeprecationLevel.ERROR)
   fun setProtocolNegotiationEnabled(protocolNegotiationEnabled: Boolean) {
     delegate.protocolNegotiationEnabled = protocolNegotiationEnabled
   }
 
   @JvmName("-deprecated_protocols")
   @Deprecated(
-    message = "moved to var",
-    replaceWith = ReplaceWith(expression = "run { this.protocols = protocols }"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to var",
+      replaceWith = ReplaceWith(expression = "run { this.protocols = protocols }"),
+      level = DeprecationLevel.ERROR)
   fun setProtocols(protocols: List<Protocol>) {
     delegate.protocols = protocols
   }
 
   @JvmName("-deprecated_protocols")
   @Deprecated(
-    message = "moved to var",
-    replaceWith = ReplaceWith(expression = "protocols"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to var",
+      replaceWith = ReplaceWith(expression = "protocols"),
+      level = DeprecationLevel.ERROR)
   fun protocols(): List<Protocol> = delegate.protocols
 
   fun useHttps(sslSocketFactory: SSLSocketFactory, tunnelProxy: Boolean) {
@@ -178,10 +172,9 @@ class MockWebServer : ExternalResource(), Closeable {
 
   @JvmName("-deprecated_requestCount")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "requestCount"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "requestCount"),
+      level = DeprecationLevel.ERROR)
   fun getRequestCount(): Int = delegate.requestCount
 
   fun enqueue(response: MockResponse) {

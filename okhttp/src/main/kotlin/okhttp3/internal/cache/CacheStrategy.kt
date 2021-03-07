@@ -15,11 +15,6 @@
  */
 package okhttp3.internal.cache
 
-import okhttp3.Request
-import okhttp3.Response
-import okhttp3.internal.http.StatusLine
-import okhttp3.internal.http.toHttpDateOrNull
-import okhttp3.internal.toNonNegativeInt
 import java.net.HttpURLConnection.HTTP_BAD_METHOD
 import java.net.HttpURLConnection.HTTP_GONE
 import java.net.HttpURLConnection.HTTP_MOVED_PERM
@@ -33,6 +28,11 @@ import java.net.HttpURLConnection.HTTP_OK
 import java.net.HttpURLConnection.HTTP_REQ_TOO_LONG
 import java.util.Date
 import java.util.concurrent.TimeUnit.SECONDS
+import okhttp3.Request
+import okhttp3.Response
+import okhttp3.internal.http.StatusLine
+import okhttp3.internal.http.toHttpDateOrNull
+import okhttp3.internal.toNonNegativeInt
 
 /**
  * Given a request and cached response, this figures out whether to use the network, the cache, or
@@ -219,8 +219,8 @@ class CacheStrategy internal constructor(
       conditionalRequestHeaders.addLenient(conditionName, conditionValue!!)
 
       val conditionalRequest = request.newBuilder()
-        .headers(conditionalRequestHeaders.build())
-        .build()
+          .headers(conditionalRequestHeaders.build())
+          .build()
       return CacheStrategy(conditionalRequest, cacheResponse)
     }
 
@@ -282,7 +282,7 @@ class CacheStrategy internal constructor(
      * response cache won't be used.
      */
     private fun hasConditions(request: Request): Boolean =
-      request.header("If-Modified-Since") != null || request.header("If-None-Match") != null
+        request.header("If-Modified-Since") != null || request.header("If-None-Match") != null
   }
 
   companion object {
@@ -311,10 +311,9 @@ class CacheStrategy internal constructor(
           // http://tools.ietf.org/html/rfc7234#section-3
           // s-maxage is not checked because OkHttp is a private cache that should ignore s-maxage.
           if (response.header("Expires") == null &&
-            response.cacheControl.maxAgeSeconds == -1 &&
-            !response.cacheControl.isPublic &&
-            !response.cacheControl.isPrivate
-          ) {
+              response.cacheControl.maxAgeSeconds == -1 &&
+              !response.cacheControl.isPublic &&
+              !response.cacheControl.isPrivate) {
             return false
           }
         }

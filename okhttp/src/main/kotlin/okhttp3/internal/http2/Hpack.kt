@@ -15,6 +15,10 @@
  */
 package okhttp3.internal.http2
 
+import java.io.IOException
+import java.util.Arrays
+import java.util.Collections
+import java.util.LinkedHashMap
 import okhttp3.internal.and
 import okhttp3.internal.http2.Header.Companion.RESPONSE_STATUS
 import okhttp3.internal.http2.Header.Companion.TARGET_AUTHORITY
@@ -26,10 +30,6 @@ import okio.BufferedSource
 import okio.ByteString
 import okio.Source
 import okio.buffer
-import java.io.IOException
-import java.util.Arrays
-import java.util.Collections
-import java.util.LinkedHashMap
 
 /**
  * Read and write HPACK v10.
@@ -56,67 +56,67 @@ object Hpack {
   private const val SETTINGS_HEADER_TABLE_SIZE_LIMIT = 16_384
 
   val STATIC_HEADER_TABLE = arrayOf(
-    Header(TARGET_AUTHORITY, ""),
-    Header(TARGET_METHOD, "GET"),
-    Header(TARGET_METHOD, "POST"),
-    Header(TARGET_PATH, "/"),
-    Header(TARGET_PATH, "/index.html"),
-    Header(TARGET_SCHEME, "http"),
-    Header(TARGET_SCHEME, "https"),
-    Header(RESPONSE_STATUS, "200"),
-    Header(RESPONSE_STATUS, "204"),
-    Header(RESPONSE_STATUS, "206"),
-    Header(RESPONSE_STATUS, "304"),
-    Header(RESPONSE_STATUS, "400"),
-    Header(RESPONSE_STATUS, "404"),
-    Header(RESPONSE_STATUS, "500"),
-    Header("accept-charset", ""),
-    Header("accept-encoding", "gzip, deflate"),
-    Header("accept-language", ""),
-    Header("accept-ranges", ""),
-    Header("accept", ""),
-    Header("access-control-allow-origin", ""),
-    Header("age", ""),
-    Header("allow", ""),
-    Header("authorization", ""),
-    Header("cache-control", ""),
-    Header("content-disposition", ""),
-    Header("content-encoding", ""),
-    Header("content-language", ""),
-    Header("content-length", ""),
-    Header("content-location", ""),
-    Header("content-range", ""),
-    Header("content-type", ""),
-    Header("cookie", ""),
-    Header("date", ""),
-    Header("etag", ""),
-    Header("expect", ""),
-    Header("expires", ""),
-    Header("from", ""),
-    Header("host", ""),
-    Header("if-match", ""),
-    Header("if-modified-since", ""),
-    Header("if-none-match", ""),
-    Header("if-range", ""),
-    Header("if-unmodified-since", ""),
-    Header("last-modified", ""),
-    Header("link", ""),
-    Header("location", ""),
-    Header("max-forwards", ""),
-    Header("proxy-authenticate", ""),
-    Header("proxy-authorization", ""),
-    Header("range", ""),
-    Header("referer", ""),
-    Header("refresh", ""),
-    Header("retry-after", ""),
-    Header("server", ""),
-    Header("set-cookie", ""),
-    Header("strict-transport-security", ""),
-    Header("transfer-encoding", ""),
-    Header("user-agent", ""),
-    Header("vary", ""),
-    Header("via", ""),
-    Header("www-authenticate", "")
+      Header(TARGET_AUTHORITY, ""),
+      Header(TARGET_METHOD, "GET"),
+      Header(TARGET_METHOD, "POST"),
+      Header(TARGET_PATH, "/"),
+      Header(TARGET_PATH, "/index.html"),
+      Header(TARGET_SCHEME, "http"),
+      Header(TARGET_SCHEME, "https"),
+      Header(RESPONSE_STATUS, "200"),
+      Header(RESPONSE_STATUS, "204"),
+      Header(RESPONSE_STATUS, "206"),
+      Header(RESPONSE_STATUS, "304"),
+      Header(RESPONSE_STATUS, "400"),
+      Header(RESPONSE_STATUS, "404"),
+      Header(RESPONSE_STATUS, "500"),
+      Header("accept-charset", ""),
+      Header("accept-encoding", "gzip, deflate"),
+      Header("accept-language", ""),
+      Header("accept-ranges", ""),
+      Header("accept", ""),
+      Header("access-control-allow-origin", ""),
+      Header("age", ""),
+      Header("allow", ""),
+      Header("authorization", ""),
+      Header("cache-control", ""),
+      Header("content-disposition", ""),
+      Header("content-encoding", ""),
+      Header("content-language", ""),
+      Header("content-length", ""),
+      Header("content-location", ""),
+      Header("content-range", ""),
+      Header("content-type", ""),
+      Header("cookie", ""),
+      Header("date", ""),
+      Header("etag", ""),
+      Header("expect", ""),
+      Header("expires", ""),
+      Header("from", ""),
+      Header("host", ""),
+      Header("if-match", ""),
+      Header("if-modified-since", ""),
+      Header("if-none-match", ""),
+      Header("if-range", ""),
+      Header("if-unmodified-since", ""),
+      Header("last-modified", ""),
+      Header("link", ""),
+      Header("location", ""),
+      Header("max-forwards", ""),
+      Header("proxy-authenticate", ""),
+      Header("proxy-authorization", ""),
+      Header("range", ""),
+      Header("referer", ""),
+      Header("refresh", ""),
+      Header("retry-after", ""),
+      Header("server", ""),
+      Header("set-cookie", ""),
+      Header("strict-transport-security", ""),
+      Header("transfer-encoding", ""),
+      Header("user-agent", ""),
+      Header("vary", ""),
+      Header("via", ""),
+      Header("www-authenticate", "")
   )
 
   val NAME_TO_FIRST_INDEX = nameToFirstIndex()
@@ -177,10 +177,8 @@ object Hpack {
           entriesToEvict++
           j--
         }
-        System.arraycopy(
-          dynamicTable, nextHeaderIndex + 1, dynamicTable,
-          nextHeaderIndex + 1 + entriesToEvict, headerCount
-        )
+        System.arraycopy(dynamicTable, nextHeaderIndex + 1, dynamicTable,
+            nextHeaderIndex + 1 + entriesToEvict, headerCount)
         nextHeaderIndex += entriesToEvict
       }
       return entriesToEvict
@@ -432,10 +430,8 @@ object Hpack {
           entriesToEvict++
           j--
         }
-        System.arraycopy(
-          dynamicTable, nextHeaderIndex + 1, dynamicTable,
-          nextHeaderIndex + 1 + entriesToEvict, headerCount
-        )
+        System.arraycopy(dynamicTable, nextHeaderIndex + 1, dynamicTable,
+            nextHeaderIndex + 1 + entriesToEvict, headerCount)
         Arrays.fill(dynamicTable, nextHeaderIndex + 1, nextHeaderIndex + 1 + entriesToEvict, null)
         nextHeaderIndex += entriesToEvict
       }
@@ -589,7 +585,7 @@ object Hpack {
 
       if (effectiveHeaderTableSize < maxDynamicTableByteCount) {
         smallestHeaderTableSizeSetting =
-          minOf(smallestHeaderTableSizeSetting, effectiveHeaderTableSize)
+            minOf(smallestHeaderTableSizeSetting, effectiveHeaderTableSize)
       }
       emitDynamicTableSizeUpdate = true
       maxDynamicTableByteCount = effectiveHeaderTableSize

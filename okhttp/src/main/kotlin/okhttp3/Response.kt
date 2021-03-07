@@ -15,12 +15,6 @@
  */
 package okhttp3
 
-import okhttp3.ResponseBody.Companion.asResponseBody
-import okhttp3.internal.connection.Exchange
-import okhttp3.internal.http.StatusLine.Companion.HTTP_PERM_REDIRECT
-import okhttp3.internal.http.StatusLine.Companion.HTTP_TEMP_REDIRECT
-import okhttp3.internal.http.parseChallenges
-import okio.Buffer
 import java.io.Closeable
 import java.io.IOException
 import java.net.HttpURLConnection.HTTP_MOVED_PERM
@@ -29,6 +23,12 @@ import java.net.HttpURLConnection.HTTP_MULT_CHOICE
 import java.net.HttpURLConnection.HTTP_PROXY_AUTH
 import java.net.HttpURLConnection.HTTP_SEE_OTHER
 import java.net.HttpURLConnection.HTTP_UNAUTHORIZED
+import okhttp3.ResponseBody.Companion.asResponseBody
+import okhttp3.internal.connection.Exchange
+import okhttp3.internal.http.StatusLine.Companion.HTTP_PERM_REDIRECT
+import okhttp3.internal.http.StatusLine.Companion.HTTP_TEMP_REDIRECT
+import okhttp3.internal.http.parseChallenges
+import okio.Buffer
 
 /**
  * An HTTP response. Instances of this class are not immutable: the response body is a one-shot
@@ -120,26 +120,23 @@ class Response internal constructor(
 
   @JvmName("-deprecated_request")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "request"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "request"),
+      level = DeprecationLevel.ERROR)
   fun request(): Request = request
 
   @JvmName("-deprecated_protocol")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "protocol"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "protocol"),
+      level = DeprecationLevel.ERROR)
   fun protocol(): Protocol = protocol
 
   @JvmName("-deprecated_code")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "code"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "code"),
+      level = DeprecationLevel.ERROR)
   fun code(): Int = code
 
   /**
@@ -151,18 +148,16 @@ class Response internal constructor(
 
   @JvmName("-deprecated_message")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "message"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "message"),
+      level = DeprecationLevel.ERROR)
   fun message(): String = message
 
   @JvmName("-deprecated_handshake")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "handshake"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "handshake"),
+      level = DeprecationLevel.ERROR)
   fun handshake(): Handshake? = handshake
 
   fun headers(name: String): List<String> = headers.values(name)
@@ -172,10 +167,9 @@ class Response internal constructor(
 
   @JvmName("-deprecated_headers")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "headers"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "headers"),
+      level = DeprecationLevel.ERROR)
   fun headers(): Headers = headers
 
   /**
@@ -207,10 +201,9 @@ class Response internal constructor(
 
   @JvmName("-deprecated_body")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "body"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "body"),
+      level = DeprecationLevel.ERROR)
   fun body(): ResponseBody? = body
 
   fun newBuilder(): Builder = Builder(this)
@@ -224,26 +217,23 @@ class Response internal constructor(
 
   @JvmName("-deprecated_networkResponse")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "networkResponse"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "networkResponse"),
+      level = DeprecationLevel.ERROR)
   fun networkResponse(): Response? = networkResponse
 
   @JvmName("-deprecated_cacheResponse")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "cacheResponse"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "cacheResponse"),
+      level = DeprecationLevel.ERROR)
   fun cacheResponse(): Response? = cacheResponse
 
   @JvmName("-deprecated_priorResponse")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "priorResponse"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "priorResponse"),
+      level = DeprecationLevel.ERROR)
   fun priorResponse(): Response? = priorResponse
 
   /**
@@ -259,11 +249,11 @@ class Response internal constructor(
    */
   fun challenges(): List<Challenge> {
     return headers.parseChallenges(
-      when (code) {
-        HTTP_UNAUTHORIZED -> "WWW-Authenticate"
-        HTTP_PROXY_AUTH -> "Proxy-Authenticate"
-        else -> return emptyList()
-      }
+        when (code) {
+          HTTP_UNAUTHORIZED -> "WWW-Authenticate"
+          HTTP_PROXY_AUTH -> "Proxy-Authenticate"
+          else -> return emptyList()
+        }
     )
   }
 
@@ -283,26 +273,23 @@ class Response internal constructor(
 
   @JvmName("-deprecated_cacheControl")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "cacheControl"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "cacheControl"),
+      level = DeprecationLevel.ERROR)
   fun cacheControl(): CacheControl = cacheControl
 
   @JvmName("-deprecated_sentRequestAtMillis")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "sentRequestAtMillis"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "sentRequestAtMillis"),
+      level = DeprecationLevel.ERROR)
   fun sentRequestAtMillis(): Long = sentRequestAtMillis
 
   @JvmName("-deprecated_receivedResponseAtMillis")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "receivedResponseAtMillis"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "receivedResponseAtMillis"),
+      level = DeprecationLevel.ERROR)
   fun receivedResponseAtMillis(): Long = receivedResponseAtMillis
 
   /**
@@ -316,7 +303,7 @@ class Response internal constructor(
   }
 
   override fun toString() =
-    "Response{protocol=$protocol, code=$code, message=$message, url=${request.url}}"
+      "Response{protocol=$protocol, code=$code, message=$message, url=${request.url}}"
 
   open class Builder {
     internal var request: Request? = null
@@ -448,19 +435,19 @@ class Response internal constructor(
     open fun build(): Response {
       check(code >= 0) { "code < 0: $code" }
       return Response(
-        checkNotNull(request) { "request == null" },
-        checkNotNull(protocol) { "protocol == null" },
-        checkNotNull(message) { "message == null" },
-        code,
-        handshake,
-        headers.build(),
-        body,
-        networkResponse,
-        cacheResponse,
-        priorResponse,
-        sentRequestAtMillis,
-        receivedResponseAtMillis,
-        exchange
+          checkNotNull(request) { "request == null" },
+          checkNotNull(protocol) { "protocol == null" },
+          checkNotNull(message) { "message == null" },
+          code,
+          handshake,
+          headers.build(),
+          body,
+          networkResponse,
+          cacheResponse,
+          priorResponse,
+          sentRequestAtMillis,
+          receivedResponseAtMillis,
+          exchange
       )
     }
   }

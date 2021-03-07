@@ -15,9 +15,6 @@
  */
 package okhttp3.internal.platform
 
-import okhttp3.Protocol
-import org.conscrypt.Conscrypt
-import org.conscrypt.ConscryptHostnameVerifier
 import java.security.KeyStore
 import java.security.Provider
 import java.security.cert.X509Certificate
@@ -28,6 +25,9 @@ import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManager
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
+import okhttp3.Protocol
+import org.conscrypt.Conscrypt
+import org.conscrypt.ConscryptHostnameVerifier
 
 /**
  * Platform using Conscrypt (conscrypt.org) if installed as the first Security Provider.
@@ -40,8 +40,8 @@ class ConscryptPlatform private constructor() : Platform() {
   // See release notes https://groups.google.com/forum/#!forum/conscrypt
   // for version differences
   override fun newSSLContext(): SSLContext =
-    // supports TLSv1.3 by default (version api is >= 1.4.0)
-    SSLContext.getInstance("TLS", provider)
+      // supports TLSv1.3 by default (version api is >= 1.4.0)
+      SSLContext.getInstance("TLS", provider)
 
   override fun platformTrustManager(): X509TrustManager {
     val trustManagers = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm()).apply {
@@ -93,11 +93,11 @@ class ConscryptPlatform private constructor() : Platform() {
   }
 
   override fun getSelectedProtocol(sslSocket: SSLSocket): String? =
-    if (Conscrypt.isConscrypt(sslSocket)) {
-      Conscrypt.getApplicationProtocol(sslSocket)
-    } else {
-      super.getSelectedProtocol(sslSocket)
-    }
+      if (Conscrypt.isConscrypt(sslSocket)) {
+        Conscrypt.getApplicationProtocol(sslSocket)
+      } else {
+        super.getSelectedProtocol(sslSocket)
+      }
 
   override fun newSslSocketFactory(trustManager: X509TrustManager): SSLSocketFactory {
     return newSSLContext().apply {

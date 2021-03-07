@@ -15,12 +15,12 @@
  */
 package okhttp3.internal.http
 
+import java.util.Date
+import java.util.TimeZone
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.util.Date
-import java.util.TimeZone
 
 class HttpDateTest {
 
@@ -79,12 +79,12 @@ class HttpDateTest {
 
     // RFC 850, obsoleted by RFC 1036 with any TZ.
     assertThat("Thursday, 01-Jan-1970 00:00:00 GMT-01:00".toHttpDateOrNull()!!.time)
-      .isEqualTo(3600000L)
+        .isEqualTo(3600000L)
     assertThat("Thursday, 01-Jan-1970 00:00:00 PST".toHttpDateOrNull()!!.time)
-      .isEqualTo(28800000L)
+        .isEqualTo(28800000L)
     // Ignore trailing junk
     assertThat("Thursday, 01-Jan-1970 00:00:00 PST JUNK".toHttpDateOrNull()!!.time)
-      .isEqualTo(28800000L)
+        .isEqualTo(28800000L)
 
     // ANSI C's asctime() format
     // This format ignores the timezone entirely even if it is present and uses GMT.

@@ -15,10 +15,10 @@
  */
 package okhttp3.internal.ws
 
+import java.io.IOException
 import okhttp3.Headers
 import okhttp3.internal.delimiterOffset
 import okhttp3.internal.trimSubstring
-import java.io.IOException
 
 /**
  * Models the contents of a `Sec-WebSocket-Extensions` response header. OkHttp honors one extension
@@ -169,12 +169,12 @@ data class WebSocketExtensions(
       }
 
       return WebSocketExtensions(
-        perMessageDeflate = compressionEnabled,
-        clientMaxWindowBits = clientMaxWindowBits,
-        clientNoContextTakeover = clientNoContextTakeover,
-        serverMaxWindowBits = serverMaxWindowBits,
-        serverNoContextTakeover = serverNoContextTakeover,
-        unknownValues = unexpectedValues
+          perMessageDeflate = compressionEnabled,
+          clientMaxWindowBits = clientMaxWindowBits,
+          clientNoContextTakeover = clientNoContextTakeover,
+          serverMaxWindowBits = serverMaxWindowBits,
+          serverNoContextTakeover = serverNoContextTakeover,
+          unknownValues = unexpectedValues
       )
     }
   }

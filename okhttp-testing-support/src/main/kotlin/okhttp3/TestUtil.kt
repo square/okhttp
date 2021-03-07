@@ -15,15 +15,15 @@
  */
 package okhttp3
 
-import okhttp3.internal.http2.Header
-import okio.Buffer
-import org.junit.jupiter.api.Assumptions.assumeFalse
-import org.junit.jupiter.api.Assumptions.assumeTrue
 import java.io.File
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.UnknownHostException
 import java.util.Arrays
+import okhttp3.internal.http2.Header
+import okio.Buffer
+import org.junit.jupiter.api.Assumptions.assumeFalse
+import org.junit.jupiter.api.Assumptions.assumeTrue
 
 object TestUtil {
   @JvmField

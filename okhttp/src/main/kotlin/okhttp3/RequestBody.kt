@@ -15,15 +15,15 @@
  */
 package okhttp3
 
+import java.io.File
+import java.io.IOException
+import java.nio.charset.Charset
+import kotlin.text.Charsets.UTF_8
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.internal.checkOffsetAndCount
 import okio.BufferedSink
 import okio.ByteString
 import okio.source
-import java.io.File
-import java.io.IOException
-import java.nio.charset.Charset
-import kotlin.text.Charsets.UTF_8
 
 abstract class RequestBody {
 
@@ -171,24 +171,22 @@ abstract class RequestBody {
 
     @JvmStatic
     @Deprecated(
-      message = "Moved to extension function. Put the 'content' argument first to fix Java",
-      replaceWith = ReplaceWith(
-        expression = "content.toRequestBody(contentType)",
-        imports = ["okhttp3.RequestBody.Companion.toRequestBody"]
-      ),
-      level = DeprecationLevel.WARNING
-    )
+        message = "Moved to extension function. Put the 'content' argument first to fix Java",
+        replaceWith = ReplaceWith(
+            expression = "content.toRequestBody(contentType)",
+            imports = ["okhttp3.RequestBody.Companion.toRequestBody"]
+        ),
+        level = DeprecationLevel.WARNING)
     fun create(contentType: MediaType?, content: String) = content.toRequestBody(contentType)
 
     @JvmStatic
     @Deprecated(
-      message = "Moved to extension function. Put the 'content' argument first to fix Java",
-      replaceWith = ReplaceWith(
-        expression = "content.toRequestBody(contentType)",
-        imports = ["okhttp3.RequestBody.Companion.toRequestBody"]
-      ),
-      level = DeprecationLevel.WARNING
-    )
+        message = "Moved to extension function. Put the 'content' argument first to fix Java",
+        replaceWith = ReplaceWith(
+            expression = "content.toRequestBody(contentType)",
+            imports = ["okhttp3.RequestBody.Companion.toRequestBody"]
+        ),
+        level = DeprecationLevel.WARNING)
     fun create(
       contentType: MediaType?,
       content: ByteString
@@ -197,13 +195,12 @@ abstract class RequestBody {
     @JvmOverloads
     @JvmStatic
     @Deprecated(
-      message = "Moved to extension function. Put the 'content' argument first to fix Java",
-      replaceWith = ReplaceWith(
-        expression = "content.toRequestBody(contentType, offset, byteCount)",
-        imports = ["okhttp3.RequestBody.Companion.toRequestBody"]
-      ),
-      level = DeprecationLevel.WARNING
-    )
+        message = "Moved to extension function. Put the 'content' argument first to fix Java",
+        replaceWith = ReplaceWith(
+            expression = "content.toRequestBody(contentType, offset, byteCount)",
+            imports = ["okhttp3.RequestBody.Companion.toRequestBody"]
+        ),
+        level = DeprecationLevel.WARNING)
     fun create(
       contentType: MediaType?,
       content: ByteArray,
@@ -213,13 +210,12 @@ abstract class RequestBody {
 
     @JvmStatic
     @Deprecated(
-      message = "Moved to extension function. Put the 'file' argument first to fix Java",
-      replaceWith = ReplaceWith(
-        expression = "file.asRequestBody(contentType)",
-        imports = ["okhttp3.RequestBody.Companion.asRequestBody"]
-      ),
-      level = DeprecationLevel.WARNING
-    )
+        message = "Moved to extension function. Put the 'file' argument first to fix Java",
+        replaceWith = ReplaceWith(
+            expression = "file.asRequestBody(contentType)",
+            imports = ["okhttp3.RequestBody.Companion.asRequestBody"]
+        ),
+        level = DeprecationLevel.WARNING)
     fun create(contentType: MediaType?, file: File) = file.asRequestBody(contentType)
   }
 }

@@ -15,8 +15,6 @@
  */
 package okhttp3.tls.internal.der
 
-import okio.Buffer
-import okio.ByteString
 import java.math.BigInteger
 import java.security.GeneralSecurityException
 import java.security.PublicKey
@@ -24,6 +22,8 @@ import java.security.Signature
 import java.security.SignatureException
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
+import okio.Buffer
+import okio.ByteString
 
 internal data class Certificate(
   val tbsCertificate: TbsCertificate,
@@ -33,17 +33,17 @@ internal data class Certificate(
   val commonName: Any?
     get() {
       return tbsCertificate.subject
-        .flatten()
-        .firstOrNull { it.type == ObjectIdentifiers.commonName }
-        ?.value
+          .flatten()
+          .firstOrNull { it.type == ObjectIdentifiers.commonName }
+          ?.value
     }
 
   val organizationalUnitName: Any?
     get() {
       return tbsCertificate.subject
-        .flatten()
-        .firstOrNull { it.type == ObjectIdentifiers.organizationalUnitName }
-        ?.value
+          .flatten()
+          .firstOrNull { it.type == ObjectIdentifiers.organizationalUnitName }
+          ?.value
     }
 
   val subjectAlternativeNames: Extension?

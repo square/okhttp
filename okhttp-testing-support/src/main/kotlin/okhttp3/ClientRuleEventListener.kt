@@ -25,7 +25,7 @@ class ClientRuleEventListener(
   val delegate: EventListener = NONE,
   var logger: (String) -> Unit
 ) : EventListener(),
-  EventListener.Factory {
+    EventListener.Factory {
   private var startNs: Long? = null
 
   override fun create(call: Call): EventListener = this

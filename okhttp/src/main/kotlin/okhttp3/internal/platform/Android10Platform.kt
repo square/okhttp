@@ -18,6 +18,9 @@ package okhttp3.internal.platform
 import android.annotation.SuppressLint
 import android.os.Build
 import android.security.NetworkSecurityPolicy
+import javax.net.ssl.SSLSocket
+import javax.net.ssl.SSLSocketFactory
+import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol
 import okhttp3.internal.SuppressSignatureCheck
 import okhttp3.internal.platform.android.Android10SocketAdapter
@@ -27,41 +30,38 @@ import okhttp3.internal.platform.android.BouncyCastleSocketAdapter
 import okhttp3.internal.platform.android.ConscryptSocketAdapter
 import okhttp3.internal.platform.android.DeferredSocketAdapter
 import okhttp3.internal.tls.CertificateChainCleaner
-import javax.net.ssl.SSLSocket
-import javax.net.ssl.SSLSocketFactory
-import javax.net.ssl.X509TrustManager
 
 /** Android 29+. */
 @SuppressSignatureCheck
 class Android10Platform : Platform() {
   private val socketAdapters = listOfNotNull(
-    Android10SocketAdapter.buildIfSupported(),
-    DeferredSocketAdapter(AndroidSocketAdapter.playProviderFactory),
-    // Delay and Defer any initialisation of Conscrypt and BouncyCastle
-    DeferredSocketAdapter(ConscryptSocketAdapter.factory),
-    DeferredSocketAdapter(BouncyCastleSocketAdapter.factory)
+      Android10SocketAdapter.buildIfSupported(),
+      DeferredSocketAdapter(AndroidSocketAdapter.playProviderFactory),
+      // Delay and Defer any initialisation of Conscrypt and BouncyCastle
+      DeferredSocketAdapter(ConscryptSocketAdapter.factory),
+      DeferredSocketAdapter(BouncyCastleSocketAdapter.factory)
   ).filter { it.isSupported() }
 
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? =
-    socketAdapters.find { it.matchesSocketFactory(sslSocketFactory) }
-      ?.trustManager(sslSocketFactory)
+      socketAdapters.find { it.matchesSocketFactory(sslSocketFactory) }
+          ?.trustManager(sslSocketFactory)
 
   override fun configureTlsExtensions(sslSocket: SSLSocket, hostname: String?, protocols: List<Protocol>) {
     // No TLS extensions if the socket class is custom.
     socketAdapters.find { it.matchesSocket(sslSocket) }
-      ?.configureTlsExtensions(sslSocket, hostname, protocols)
+        ?.configureTlsExtensions(sslSocket, hostname, protocols)
   }
 
   override fun getSelectedProtocol(sslSocket: SSLSocket) =
-    // No TLS extensions if the socket class is custom.
-    socketAdapters.find { it.matchesSocket(sslSocket) }?.getSelectedProtocol(sslSocket)
+      // No TLS extensions if the socket class is custom.
+      socketAdapters.find { it.matchesSocket(sslSocket) }?.getSelectedProtocol(sslSocket)
 
   @SuppressLint("NewApi")
   override fun isCleartextTrafficPermitted(hostname: String): Boolean =
-    NetworkSecurityPolicy.getInstance().isCleartextTrafficPermitted(hostname)
+      NetworkSecurityPolicy.getInstance().isCleartextTrafficPermitted(hostname)
 
   override fun buildCertificateChainCleaner(trustManager: X509TrustManager): CertificateChainCleaner =
-    AndroidCertificateChainCleaner.buildIfSupported(trustManager) ?: super.buildCertificateChainCleaner(trustManager)
+      AndroidCertificateChainCleaner.buildIfSupported(trustManager) ?: super.buildCertificateChainCleaner(trustManager)
 
   companion object {
     val isSupported: Boolean = isAndroid && Build.VERSION.SDK_INT >= 29

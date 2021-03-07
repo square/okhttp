@@ -16,15 +16,6 @@
  */
 package okhttp3.internal.platform
 
-import okhttp3.OkHttpClient
-import okhttp3.Protocol
-import okhttp3.internal.platform.android.AndroidLog
-import okhttp3.internal.readFieldOrNull
-import okhttp3.internal.tls.BasicCertificateChainCleaner
-import okhttp3.internal.tls.BasicTrustRootIndex
-import okhttp3.internal.tls.CertificateChainCleaner
-import okhttp3.internal.tls.TrustRootIndex
-import okio.Buffer
 import java.io.IOException
 import java.net.InetSocketAddress
 import java.net.Socket
@@ -39,6 +30,15 @@ import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManager
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
+import okhttp3.OkHttpClient
+import okhttp3.Protocol
+import okhttp3.internal.platform.android.AndroidLog
+import okhttp3.internal.readFieldOrNull
+import okhttp3.internal.tls.BasicCertificateChainCleaner
+import okhttp3.internal.tls.BasicTrustRootIndex
+import okhttp3.internal.tls.CertificateChainCleaner
+import okhttp3.internal.tls.TrustRootIndex
+import okio.Buffer
 
 /**
  * Access to platform-specific features.
@@ -76,8 +76,7 @@ open class Platform {
 
   open fun platformTrustManager(): X509TrustManager {
     val factory = TrustManagerFactory.getInstance(
-      TrustManagerFactory.getDefaultAlgorithm()
-    )
+        TrustManagerFactory.getDefaultAlgorithm())
     factory.init(null as KeyStore?)
     val trustManagers = factory.trustManagers!!
     check(trustManagers.size == 1 && trustManagers[0] is X509TrustManager) {
@@ -144,16 +143,16 @@ open class Platform {
     var logMessage = message
     if (stackTrace == null) {
       logMessage += " To see where this was allocated, set the OkHttpClient logger level to " +
-        "FINE: Logger.getLogger(OkHttpClient.class.getName()).setLevel(Level.FINE);"
+          "FINE: Logger.getLogger(OkHttpClient.class.getName()).setLevel(Level.FINE);"
     }
     log(logMessage, WARN, stackTrace as Throwable?)
   }
 
   open fun buildCertificateChainCleaner(trustManager: X509TrustManager): CertificateChainCleaner =
-    BasicCertificateChainCleaner(buildTrustRootIndex(trustManager))
+      BasicCertificateChainCleaner(buildTrustRootIndex(trustManager))
 
   open fun buildTrustRootIndex(trustManager: X509TrustManager): TrustRootIndex =
-    BasicTrustRootIndex(*trustManager.acceptedIssuers)
+      BasicTrustRootIndex(*trustManager.acceptedIssuers)
 
   open fun newSslSocketFactory(trustManager: X509TrustManager): SSLSocketFactory {
     try {
@@ -183,12 +182,12 @@ open class Platform {
     }
 
     fun alpnProtocolNames(protocols: List<Protocol>) =
-      protocols.filter { it != Protocol.HTTP_1_0 }.map { it.toString() }
+        protocols.filter { it != Protocol.HTTP_1_0 }.map { it.toString() }
 
     // This explicit check avoids activating in Android Studio with Android specific classes
     // available when running plugins inside the IDE.
     val isAndroid: Boolean
-      get() = "Dalvik" == System.getProperty("java.vm.name")
+        get() = "Dalvik" == System.getProperty("java.vm.name")
 
     private val isConscryptPreferred: Boolean
       get() {

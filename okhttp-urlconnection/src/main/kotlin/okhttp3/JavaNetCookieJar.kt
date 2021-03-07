@@ -15,15 +15,15 @@
  */
 package okhttp3
 
+import java.io.IOException
+import java.net.CookieHandler
+import java.net.HttpCookie
+import java.util.Collections
 import okhttp3.internal.cookieToString
 import okhttp3.internal.delimiterOffset
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.WARN
 import okhttp3.internal.trimSubstring
-import java.io.IOException
-import java.net.CookieHandler
-import java.net.HttpCookie
-import java.util.Collections
 
 /** A cookie jar that delegates to a [java.net.CookieHandler]. */
 class JavaNetCookieJar(private val cookieHandler: CookieHandler) : CookieJar {
@@ -53,8 +53,7 @@ class JavaNetCookieJar(private val cookieHandler: CookieHandler) : CookieJar {
     var cookies: MutableList<Cookie>? = null
     for ((key, value) in cookieHeaders) {
       if (("Cookie".equals(key, ignoreCase = true) || "Cookie2".equals(key, ignoreCase = true)) &&
-        value.isNotEmpty()
-      ) {
+          value.isNotEmpty()) {
         for (header in value) {
           if (cookies == null) cookies = mutableListOf()
           cookies.addAll(decodeHeaderAsJavaNetCookies(url, header))
@@ -99,13 +98,11 @@ class JavaNetCookieJar(private val cookieHandler: CookieHandler) : CookieJar {
         value = value.substring(1, value.length - 1)
       }
 
-      result.add(
-        Cookie.Builder()
+      result.add(Cookie.Builder()
           .name(name)
           .value(value)
           .domain(url.host)
-          .build()
-      )
+          .build())
       pos = pairEnd + 1
     }
     return result

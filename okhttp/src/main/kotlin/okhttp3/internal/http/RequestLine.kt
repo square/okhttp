@@ -15,10 +15,10 @@
  */
 package okhttp3.internal.http
 
-import okhttp3.HttpUrl
-import okhttp3.Request
 import java.net.HttpURLConnection
 import java.net.Proxy
+import okhttp3.HttpUrl
+import okhttp3.Request
 
 object RequestLine {
 

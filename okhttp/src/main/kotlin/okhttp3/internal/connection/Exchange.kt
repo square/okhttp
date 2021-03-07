@@ -15,6 +15,9 @@
  */
 package okhttp3.internal.connection
 
+import java.io.IOException
+import java.net.ProtocolException
+import java.net.SocketException
 import okhttp3.EventListener
 import okhttp3.Headers
 import okhttp3.Request
@@ -29,9 +32,6 @@ import okio.ForwardingSource
 import okio.Sink
 import okio.Source
 import okio.buffer
-import java.io.IOException
-import java.net.ProtocolException
-import java.net.SocketException
 
 /**
  * Transmits a single HTTP request and a response pair. This layers connection management and events
@@ -217,8 +217,7 @@ class Exchange(
       check(!closed) { "closed" }
       if (contentLength != -1L && bytesReceived + byteCount > contentLength) {
         throw ProtocolException(
-          "expected $contentLength bytes but received ${bytesReceived + byteCount}"
-        )
+            "expected $contentLength bytes but received ${bytesReceived + byteCount}")
       }
       try {
         super.write(source, byteCount)

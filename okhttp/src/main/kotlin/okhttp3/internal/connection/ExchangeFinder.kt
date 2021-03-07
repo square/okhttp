@@ -15,6 +15,8 @@
  */
 package okhttp3.internal.connection
 
+import java.io.IOException
+import java.net.Socket
 import okhttp3.Address
 import okhttp3.EventListener
 import okhttp3.HttpUrl
@@ -27,8 +29,6 @@ import okhttp3.internal.http.RealInterceptorChain
 import okhttp3.internal.http2.ConnectionShutdownException
 import okhttp3.internal.http2.ErrorCode
 import okhttp3.internal.http2.StreamResetException
-import java.io.IOException
-import java.net.Socket
 
 /**
  * Attempts to find the connections for an exchange and any retries that follow. This uses the
@@ -72,12 +72,12 @@ class ExchangeFinder(
   ): ExchangeCodec {
     try {
       val resultConnection = findHealthyConnection(
-        connectTimeout = chain.connectTimeoutMillis,
-        readTimeout = chain.readTimeoutMillis,
-        writeTimeout = chain.writeTimeoutMillis,
-        pingIntervalMillis = client.pingIntervalMillis,
-        connectionRetryEnabled = client.retryOnConnectionFailure,
-        doExtensiveHealthChecks = chain.request.method != "GET"
+          connectTimeout = chain.connectTimeoutMillis,
+          readTimeout = chain.readTimeoutMillis,
+          writeTimeout = chain.writeTimeoutMillis,
+          pingIntervalMillis = client.pingIntervalMillis,
+          connectionRetryEnabled = client.retryOnConnectionFailure,
+          doExtensiveHealthChecks = chain.request.method != "GET"
       )
       return resultConnection.newCodec(client, chain)
     } catch (e: RouteException) {
@@ -104,11 +104,11 @@ class ExchangeFinder(
   ): RealConnection {
     while (true) {
       val candidate = findConnection(
-        connectTimeout = connectTimeout,
-        readTimeout = readTimeout,
-        writeTimeout = writeTimeout,
-        pingIntervalMillis = pingIntervalMillis,
-        connectionRetryEnabled = connectionRetryEnabled
+          connectTimeout = connectTimeout,
+          readTimeout = readTimeout,
+          writeTimeout = writeTimeout,
+          pingIntervalMillis = pingIntervalMillis,
+          connectionRetryEnabled = connectionRetryEnabled
       )
 
       // Confirm that the connection is good.
@@ -224,13 +224,13 @@ class ExchangeFinder(
     call.connectionToCancel = newConnection
     try {
       newConnection.connect(
-        connectTimeout,
-        readTimeout,
-        writeTimeout,
-        pingIntervalMillis,
-        connectionRetryEnabled,
-        call,
-        eventListener
+          connectTimeout,
+          readTimeout,
+          writeTimeout,
+          pingIntervalMillis,
+          connectionRetryEnabled,
+          call,
+          eventListener
       )
     } finally {
       call.connectionToCancel = null

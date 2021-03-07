@@ -15,11 +15,11 @@
  */
 package okhttp3.internal.platform
 
-import okhttp3.Protocol
-import okhttp3.internal.SuppressSignatureCheck
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
+import okhttp3.Protocol
+import okhttp3.internal.SuppressSignatureCheck
 
 /** OpenJDK 9+. */
 open class Jdk9Platform : Platform() {
@@ -59,8 +59,7 @@ open class Jdk9Platform : Platform() {
     // sun.security.ssl.SSLSocketFactoryImpl accessible:  module java.base does not export
     // sun.security.ssl to unnamed module @xxx
     throw UnsupportedOperationException(
-      "clientBuilder.sslSocketFactory(SSLSocketFactory) not supported on JDK 8 (>= 252) or JDK 9+"
-    )
+        "clientBuilder.sslSocketFactory(SSLSocketFactory) not supported on JDK 8 (>= 252) or JDK 9+")
   }
 
   companion object {

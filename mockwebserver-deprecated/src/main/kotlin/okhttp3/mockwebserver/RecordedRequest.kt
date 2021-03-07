@@ -42,10 +42,9 @@ class RecordedRequest {
 
   @get:JvmName("-deprecated_utf8Body")
   @Deprecated(
-    message = "Use body.readUtf8()",
-    replaceWith = ReplaceWith("body.readUtf8()"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "Use body.readUtf8()",
+      replaceWith = ReplaceWith("body.readUtf8()"),
+      level = DeprecationLevel.ERROR)
   val utf8Body: String
     get() = body.readUtf8()
 
@@ -89,7 +88,7 @@ class RecordedRequest {
     socket: Socket,
     failure: IOException? = null
   ) {
-    this.requestLine = requestLine
+    this.requestLine = requestLine;
     this.headers = headers
     this.chunkSizes = chunkSizes
     this.bodySize = bodySize
@@ -140,10 +139,9 @@ class RecordedRequest {
   }
 
   @Deprecated(
-    message = "Use body.readUtf8()",
-    replaceWith = ReplaceWith("body.readUtf8()"),
-    level = DeprecationLevel.WARNING
-  )
+      message = "Use body.readUtf8()",
+      replaceWith = ReplaceWith("body.readUtf8()"),
+      level = DeprecationLevel.WARNING)
   fun getUtf8Body(): String = body.readUtf8()
 
   fun getHeader(name: String): String? = headers.values(name).firstOrNull()

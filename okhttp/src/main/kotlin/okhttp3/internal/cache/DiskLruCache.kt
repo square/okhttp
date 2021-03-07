@@ -253,10 +253,9 @@ class DiskLruCache(
         return
       } catch (journalIsCorrupt: IOException) {
         Platform.get().log(
-          "DiskLruCache $directory is corrupt: ${journalIsCorrupt.message}, removing",
-          WARN,
-          journalIsCorrupt
-        )
+            "DiskLruCache $directory is corrupt: ${journalIsCorrupt.message}, removing",
+            WARN,
+            journalIsCorrupt)
       }
 
       // The cache is corrupted, attempt to delete the contents of the directory. This can throw and
@@ -283,14 +282,12 @@ class DiskLruCache(
       val blank = readUtf8LineStrict()
 
       if (MAGIC != magic ||
-        VERSION_1 != version ||
-        appVersion.toString() != appVersionString ||
-        valueCount.toString() != valueCountString ||
-        blank.isNotEmpty()
-      ) {
+          VERSION_1 != version ||
+          appVersion.toString() != appVersionString ||
+          valueCount.toString() != valueCountString ||
+          blank.isNotEmpty()) {
         throw IOException(
-          "unexpected journal header: [$magic, $version, $valueCountString, $blank]"
-        )
+            "unexpected journal header: [$magic, $version, $valueCountString, $blank]")
       }
 
       var lineCount = 0
@@ -351,7 +348,7 @@ class DiskLruCache(
     when {
       secondSpace != -1 && firstSpace == CLEAN.length && line.startsWith(CLEAN) -> {
         val parts = line.substring(secondSpace + 1)
-          .split(' ')
+            .split(' ')
         entry.readable = true
         entry.currentEditor = null
         entry.setLengths(parts)
@@ -451,9 +448,9 @@ class DiskLruCache(
 
     redundantOpCount++
     journalWriter!!.writeUtf8(READ)
-      .writeByte(' '.toInt())
-      .writeUtf8(key)
-      .writeByte('\n'.toInt())
+        .writeByte(' '.toInt())
+        .writeUtf8(key)
+        .writeByte('\n'.toInt())
     if (journalRebuildRequired()) {
       cleanupQueue.schedule(cleanupTask)
     }
@@ -471,8 +468,7 @@ class DiskLruCache(
     validateKey(key)
     var entry: Entry? = lruEntries[key]
     if (expectedSequenceNumber != ANY_SEQUENCE_NUMBER &&
-      (entry == null || entry.sequenceNumber != expectedSequenceNumber)
-    ) {
+        (entry == null || entry.sequenceNumber != expectedSequenceNumber)) {
       return null // Snapshot is stale.
     }
 
@@ -497,9 +493,9 @@ class DiskLruCache(
     // Flush the journal before creating files to prevent file leaks.
     val journalWriter = this.journalWriter!!
     journalWriter.writeUtf8(DIRTY)
-      .writeByte(' '.toInt())
-      .writeUtf8(key)
-      .writeByte('\n'.toInt())
+        .writeByte(' '.toInt())
+        .writeUtf8(key)
+        .writeByte('\n'.toInt())
     journalWriter.flush()
 
     if (hasJournalErrors) {
@@ -599,7 +595,7 @@ class DiskLruCache(
   private fun journalRebuildRequired(): Boolean {
     val redundantOpCompactThreshold = 2000
     return redundantOpCount >= redundantOpCompactThreshold &&
-      redundantOpCount >= lruEntries.size
+        redundantOpCount >= lruEntries.size
   }
 
   /**

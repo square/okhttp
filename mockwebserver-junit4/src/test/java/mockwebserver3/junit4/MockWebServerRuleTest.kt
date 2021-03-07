@@ -15,27 +15,26 @@
  */
 package mockwebserver3.junit4
 
+import java.net.ConnectException
+import java.util.concurrent.atomic.AtomicBoolean
+import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.Assert
 import org.junit.Assert.fail
 import org.junit.Test
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
-import java.net.ConnectException
-import java.util.concurrent.atomic.AtomicBoolean
 
 class MockWebServerRuleTest {
   @Test fun statementStartsAndStops() {
     val rule = MockWebServerRule()
     val called = AtomicBoolean()
-    val statement: Statement = rule.apply(
-      object : Statement() {
-        @Throws(Throwable::class) override fun evaluate() {
-          called.set(true)
-          rule.server.url("/").toUrl().openConnection().connect()
-        }
-      },
-      Description.EMPTY
-    )
+    val statement: Statement = rule.apply(object : Statement() {
+      @Throws(Throwable::class) override fun evaluate() {
+        called.set(true)
+        rule.server.url("/").toUrl().openConnection().connect()
+      }
+    }, Description.EMPTY)
     statement.evaluate()
     assertThat(called.get()).isTrue
     try {

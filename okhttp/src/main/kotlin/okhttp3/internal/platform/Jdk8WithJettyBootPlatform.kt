@@ -15,12 +15,12 @@
  */
 package okhttp3.internal.platform
 
-import okhttp3.Protocol
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
 import javax.net.ssl.SSLSocket
+import okhttp3.Protocol
 
 /** OpenJDK 8 with `org.mortbay.jetty.alpn:alpn-boot` in the boot class path. */
 class Jdk8WithJettyBootPlatform(
@@ -38,10 +38,8 @@ class Jdk8WithJettyBootPlatform(
     val names = alpnProtocolNames(protocols)
 
     try {
-      val alpnProvider = Proxy.newProxyInstance(
-        Platform::class.java.classLoader,
-        arrayOf(clientProviderClass, serverProviderClass), AlpnProvider(names)
-      )
+      val alpnProvider = Proxy.newProxyInstance(Platform::class.java.classLoader,
+          arrayOf(clientProviderClass, serverProviderClass), AlpnProvider(names))
       putMethod.invoke(null, sslSocket, alpnProvider)
     } catch (e: InvocationTargetException) {
       throw AssertionError("failed to set ALPN", e)
@@ -101,8 +99,7 @@ class Jdk8WithJettyBootPlatform(
       } else if (methodName == "protocols" && callArgs.isEmpty()) {
         return protocols // Client advertises these protocols.
       } else if ((methodName == "selectProtocol" || methodName == "select") &&
-        String::class.java == returnType && callArgs.size == 1 && callArgs[0] is List<*>
-      ) {
+          String::class.java == returnType && callArgs.size == 1 && callArgs[0] is List<*>) {
         val peerProtocols = callArgs[0] as List<*>
         // Pick the first known protocol the peer advertises.
         for (i in 0..peerProtocols.size) {
@@ -145,8 +142,7 @@ class Jdk8WithJettyBootPlatform(
         val getMethod = alpnClass.getMethod("get", SSLSocket::class.java)
         val removeMethod = alpnClass.getMethod("remove", SSLSocket::class.java)
         return Jdk8WithJettyBootPlatform(
-          putMethod, getMethod, removeMethod, clientProviderClass, serverProviderClass
-        )
+            putMethod, getMethod, removeMethod, clientProviderClass, serverProviderClass)
       } catch (_: ClassNotFoundException) {
       } catch (_: NoSuchMethodException) {
       }

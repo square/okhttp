@@ -16,10 +16,10 @@
  */
 package okhttp3.internal.connection
 
+import java.io.IOException
 import okhttp3.Interceptor
 import okhttp3.Response
 import okhttp3.internal.http.RealInterceptorChain
-import java.io.IOException
 
 /**
  * Opens a connection to the target server and proceeds to the next interceptor. The network might

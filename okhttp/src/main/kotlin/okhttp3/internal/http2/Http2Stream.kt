@@ -68,11 +68,11 @@ class Http2Stream internal constructor(
   private var hasResponseHeaders: Boolean = false
 
   internal val source = FramingSource(
-    maxByteCount = connection.okHttpSettings.initialWindowSize.toLong(),
-    finished = inFinished
+      maxByteCount = connection.okHttpSettings.initialWindowSize.toLong(),
+      finished = inFinished
   )
   internal val sink = FramingSink(
-    finished = outFinished
+      finished = outFinished
   )
   internal val readTimeout = StreamTimeout()
   internal val writeTimeout = StreamTimeout()
@@ -113,9 +113,8 @@ class Http2Stream internal constructor(
         return false
       }
       if ((source.finished || source.closed) &&
-        (sink.finished || sink.closed) &&
-        hasResponseHeaders
-      ) {
+          (sink.finished || sink.closed) &&
+          hasResponseHeaders) {
         return false
       }
       return true
@@ -365,8 +364,7 @@ class Http2Stream internal constructor(
 
               val unacknowledgedBytesRead = readBytesTotal - readBytesAcknowledged
               if (errorExceptionToDeliver == null &&
-                unacknowledgedBytesRead >= connection.okHttpSettings.initialWindowSize / 2
-              ) {
+                  unacknowledgedBytesRead >= connection.okHttpSettings.initialWindowSize / 2) {
                 // Flow control: notify the peer that we're ready for more data! Only send a
                 // WINDOW_UPDATE if the stream isn't in error.
                 connection.writeWindowUpdateLater(id, unacknowledgedBytesRead)
@@ -547,10 +545,9 @@ class Http2Stream internal constructor(
         writeTimeout.enter()
         try {
           while (writeBytesTotal >= writeBytesMaximum &&
-            !finished &&
-            !closed &&
-            errorCode == null
-          ) {
+              !finished &&
+              !closed &&
+              errorCode == null) {
             waitForIo() // Wait until we receive a WINDOW_UPDATE for this stream.
           }
         } finally {

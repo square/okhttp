@@ -15,14 +15,14 @@
  */
 package okhttp3.tls.internal.der
 
+import java.math.BigInteger
+import java.net.ProtocolException
 import okio.Buffer
 import okio.BufferedSource
 import okio.ByteString
 import okio.ForwardingSource
 import okio.Source
 import okio.buffer
-import java.math.BigInteger
-import java.net.ProtocolException
 
 /**
  * Streaming decoder of data encoded following Abstract Syntax Notation One (ASN.1). There are
@@ -321,10 +321,10 @@ internal class DerReader(source: Source) {
      * value.
      */
     private val END_OF_DATA = DerHeader(
-      tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
-      tag = DerHeader.TAG_END_OF_CONTENTS,
-      constructed = false,
-      length = -1L
+        tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
+        tag = DerHeader.TAG_END_OF_CONTENTS,
+        constructed = false,
+        length = -1L
     )
   }
 

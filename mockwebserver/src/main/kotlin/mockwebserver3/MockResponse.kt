@@ -15,13 +15,13 @@
  */
 package mockwebserver3
 
-import mockwebserver3.internal.duplex.DuplexResponseBody
+import java.util.concurrent.TimeUnit
 import okhttp3.Headers
 import okhttp3.WebSocketListener
 import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.http2.Settings
+import mockwebserver3.internal.duplex.DuplexResponseBody
 import okio.Buffer
-import java.util.concurrent.TimeUnit
 
 /** A scripted response to be replayed by the mock web server. */
 class MockResponse : Cloneable {
@@ -101,10 +101,9 @@ class MockResponse : Cloneable {
 
   @JvmName("-deprecated_getStatus")
   @Deprecated(
-    message = "moved to var",
-    replaceWith = ReplaceWith(expression = "status"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to var",
+      replaceWith = ReplaceWith(expression = "status"),
+      level = DeprecationLevel.ERROR)
   fun getStatus(): String = status
 
   /**
@@ -219,10 +218,9 @@ class MockResponse : Cloneable {
 
   @JvmName("-deprecated_getHeaders")
   @Deprecated(
-    message = "moved to var",
-    replaceWith = ReplaceWith(expression = "headers"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to var",
+      replaceWith = ReplaceWith(expression = "headers"),
+      level = DeprecationLevel.ERROR)
   fun getHeaders(): Headers = headers
 
   /**
@@ -236,10 +234,9 @@ class MockResponse : Cloneable {
 
   @JvmName("-deprecated_getTrailers")
   @Deprecated(
-    message = "moved to var",
-    replaceWith = ReplaceWith(expression = "trailers"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to var",
+      replaceWith = ReplaceWith(expression = "trailers"),
+      level = DeprecationLevel.ERROR)
   fun getTrailers(): Headers = trailers
 
   /**
@@ -253,10 +250,9 @@ class MockResponse : Cloneable {
 
   @JvmName("-deprecated_getSocketPolicy")
   @Deprecated(
-    message = "moved to var",
-    replaceWith = ReplaceWith(expression = "socketPolicy"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to var",
+      replaceWith = ReplaceWith(expression = "socketPolicy"),
+      level = DeprecationLevel.ERROR)
   fun getSocketPolicy() = socketPolicy
 
   /**
@@ -272,10 +268,9 @@ class MockResponse : Cloneable {
 
   @JvmName("-deprecated_getHttp2ErrorCode")
   @Deprecated(
-    message = "moved to var",
-    replaceWith = ReplaceWith(expression = "http2ErrorCode"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to var",
+      replaceWith = ReplaceWith(expression = "http2ErrorCode"),
+      level = DeprecationLevel.ERROR)
   fun getHttp2ErrorCode() = http2ErrorCode
 
   /**

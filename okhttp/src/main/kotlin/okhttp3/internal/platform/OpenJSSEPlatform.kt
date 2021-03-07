@@ -15,7 +15,6 @@
  */
 package okhttp3.internal.platform
 
-import okhttp3.Protocol
 import java.security.KeyStore
 import java.security.Provider
 import javax.net.ssl.SSLContext
@@ -23,6 +22,7 @@ import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
+import okhttp3.Protocol
 
 /**
  * Platform using OpenJSSE (https://github.com/openjsse/openjsse) if installed as the first
@@ -37,12 +37,11 @@ class OpenJSSEPlatform private constructor() : Platform() {
   // and because it's a common pattern for VMs to have differences between supported and
   // defaulted versions for TLS based on what is requested.
   override fun newSSLContext(): SSLContext =
-    SSLContext.getInstance("TLSv1.3", provider)
+      SSLContext.getInstance("TLSv1.3", provider)
 
   override fun platformTrustManager(): X509TrustManager {
     val factory = TrustManagerFactory.getInstance(
-      TrustManagerFactory.getDefaultAlgorithm(), provider
-    )
+        TrustManagerFactory.getDefaultAlgorithm(), provider)
     factory.init(null as KeyStore?)
     val trustManagers = factory.trustManagers!!
     check(trustManagers.size == 1 && trustManagers[0] is X509TrustManager) {
@@ -52,9 +51,8 @@ class OpenJSSEPlatform private constructor() : Platform() {
   }
 
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? =
-    throw UnsupportedOperationException(
-      "clientBuilder.sslSocketFactory(SSLSocketFactory) not supported with OpenJSSE"
-    )
+      throw UnsupportedOperationException(
+          "clientBuilder.sslSocketFactory(SSLSocketFactory) not supported with OpenJSSE")
 
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
@@ -77,15 +75,15 @@ class OpenJSSEPlatform private constructor() : Platform() {
   }
 
   override fun getSelectedProtocol(sslSocket: SSLSocket): String? =
-    if (sslSocket is org.openjsse.javax.net.ssl.SSLSocket) {
-      when (val protocol = sslSocket.applicationProtocol) {
-        // Handles both un-configured and none selected.
-        null, "" -> null
-        else -> protocol
+      if (sslSocket is org.openjsse.javax.net.ssl.SSLSocket) {
+        when (val protocol = sslSocket.applicationProtocol) {
+          // Handles both un-configured and none selected.
+          null, "" -> null
+          else -> protocol
+        }
+      } else {
+        super.getSelectedProtocol(sslSocket)
       }
-    } else {
-      super.getSelectedProtocol(sslSocket)
-    }
 
   companion object {
     val isSupported: Boolean = try {

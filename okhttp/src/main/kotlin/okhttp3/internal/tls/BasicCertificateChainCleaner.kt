@@ -89,8 +89,7 @@ class BasicCertificateChainCleaner(
 
       // The last link isn't trusted. Fail.
       throw SSLPeerUnverifiedException(
-        "Failed to find a trusted cert that signed $toVerify"
-      )
+          "Failed to find a trusted cert that signed $toVerify")
     }
 
     throw SSLPeerUnverifiedException("Certificate chain too long: $result")

@@ -15,13 +15,13 @@
  */
 package okhttp3
 
+import java.io.IOException
 import okhttp3.Interceptor.Chain
 import okio.Buffer
 import okio.BufferedSink
 import okio.ForwardingSink
 import okio.Sink
 import okio.buffer
-import java.io.IOException
 
 /** Rewrites the request body sent to the server to be all uppercase.  */
 class UppercaseRequestInterceptor : Interceptor {
@@ -39,8 +39,8 @@ class UppercaseRequestInterceptor : Interceptor {
       }
     }
     return request.newBuilder()
-      .method(request.method, uppercaseBody)
-      .build()
+        .method(request.method, uppercaseBody)
+        .build()
   }
 
   private fun uppercaseSink(sink: Sink): Sink {
@@ -52,9 +52,8 @@ class UppercaseRequestInterceptor : Interceptor {
       ) {
         val bytes = source.readByteString(byteCount)
         delegate.write(
-          Buffer()
-            .write(bytes.toAsciiUppercase()),
-          byteCount
+            Buffer()
+                .write(bytes.toAsciiUppercase()), byteCount
         )
       }
     }

@@ -15,6 +15,10 @@
  */
 package okhttp3.internal.http2
 
+import java.io.Closeable
+import java.io.IOException
+import java.util.logging.Level.FINE
+import java.util.logging.Logger
 import okhttp3.internal.format
 import okhttp3.internal.http2.Http2.CONNECTION_PREFACE
 import okhttp3.internal.http2.Http2.FLAG_ACK
@@ -35,10 +39,6 @@ import okhttp3.internal.http2.Http2.frameLog
 import okhttp3.internal.writeMedium
 import okio.Buffer
 import okio.BufferedSink
-import java.io.Closeable
-import java.io.IOException
-import java.util.logging.Level.FINE
-import java.util.logging.Logger
 
 /** Writes HTTP/2 transport frames. */
 @Suppress("NAME_SHADOWING")
@@ -71,10 +71,10 @@ class Http2Writer(
       hpackWriter.resizeHeaderTable(peerSettings.headerTableSize)
     }
     frameHeader(
-      streamId = 0,
-      length = 0,
-      type = TYPE_SETTINGS,
-      flags = FLAG_ACK
+        streamId = 0,
+        length = 0,
+        type = TYPE_SETTINGS,
+        flags = FLAG_ACK
     )
     sink.flush()
   }
@@ -103,10 +103,10 @@ class Http2Writer(
     val byteCount = hpackBuffer.size
     val length = minOf(maxFrameSize - 4L, byteCount).toInt()
     frameHeader(
-      streamId = streamId,
-      length = length + 4,
-      type = TYPE_PUSH_PROMISE,
-      flags = if (byteCount == length.toLong()) FLAG_END_HEADERS else 0
+        streamId = streamId,
+        length = length + 4,
+        type = TYPE_PUSH_PROMISE,
+        flags = if (byteCount == length.toLong()) FLAG_END_HEADERS else 0
     )
     sink.writeInt(promisedStreamId and 0x7fffffff)
     sink.write(hpackBuffer, length.toLong())
@@ -126,10 +126,10 @@ class Http2Writer(
     require(errorCode.httpCode != -1)
 
     frameHeader(
-      streamId = streamId,
-      length = 4,
-      type = TYPE_RST_STREAM,
-      flags = FLAG_NONE
+        streamId = streamId,
+        length = 4,
+        type = TYPE_RST_STREAM,
+        flags = FLAG_NONE
     )
     sink.writeInt(errorCode.httpCode)
     sink.flush()
@@ -156,10 +156,10 @@ class Http2Writer(
   @Throws(IOException::class)
   fun dataFrame(streamId: Int, flags: Int, buffer: Buffer?, byteCount: Int) {
     frameHeader(
-      streamId = streamId,
-      length = byteCount,
-      type = TYPE_DATA,
-      flags = flags
+        streamId = streamId,
+        length = byteCount,
+        type = TYPE_DATA,
+        flags = flags
     )
     if (byteCount > 0) {
       sink.write(buffer!!, byteCount.toLong())
@@ -171,10 +171,10 @@ class Http2Writer(
   fun settings(settings: Settings) {
     if (closed) throw IOException("closed")
     frameHeader(
-      streamId = 0,
-      length = settings.size() * 6,
-      type = TYPE_SETTINGS,
-      flags = FLAG_NONE
+        streamId = 0,
+        length = settings.size() * 6,
+        type = TYPE_SETTINGS,
+        flags = FLAG_NONE
     )
     for (i in 0 until Settings.COUNT) {
       if (!settings.isSet(i)) continue
@@ -197,10 +197,10 @@ class Http2Writer(
   fun ping(ack: Boolean, payload1: Int, payload2: Int) {
     if (closed) throw IOException("closed")
     frameHeader(
-      streamId = 0,
-      length = 8,
-      type = TYPE_PING,
-      flags = if (ack) FLAG_ACK else FLAG_NONE
+        streamId = 0,
+        length = 8,
+        type = TYPE_PING,
+        flags = if (ack) FLAG_ACK else FLAG_NONE
     )
     sink.writeInt(payload1)
     sink.writeInt(payload2)
@@ -220,10 +220,10 @@ class Http2Writer(
     if (closed) throw IOException("closed")
     require(errorCode.httpCode != -1) { "errorCode.httpCode == -1" }
     frameHeader(
-      streamId = 0,
-      length = 8 + debugData.size,
-      type = TYPE_GOAWAY,
-      flags = FLAG_NONE
+        streamId = 0,
+        length = 8 + debugData.size,
+        type = TYPE_GOAWAY,
+        flags = FLAG_NONE
     )
     sink.writeInt(lastGoodStreamId)
     sink.writeInt(errorCode.httpCode)
@@ -244,10 +244,10 @@ class Http2Writer(
       "windowSizeIncrement == 0 || windowSizeIncrement > 0x7fffffffL: $windowSizeIncrement"
     }
     frameHeader(
-      streamId = streamId,
-      length = 4,
-      type = TYPE_WINDOW_UPDATE,
-      flags = FLAG_NONE
+        streamId = streamId,
+        length = 4,
+        type = TYPE_WINDOW_UPDATE,
+        flags = FLAG_NONE
     )
     sink.writeInt(windowSizeIncrement.toInt())
     sink.flush()
@@ -277,10 +277,10 @@ class Http2Writer(
       val length = minOf(maxFrameSize.toLong(), byteCount)
       byteCount -= length
       frameHeader(
-        streamId = streamId,
-        length = length.toInt(),
-        type = TYPE_CONTINUATION,
-        flags = if (byteCount == 0L) FLAG_END_HEADERS else 0
+          streamId = streamId,
+          length = length.toInt(),
+          type = TYPE_CONTINUATION,
+          flags = if (byteCount == 0L) FLAG_END_HEADERS else 0
       )
       sink.write(hpackBuffer, length)
     }
@@ -300,10 +300,10 @@ class Http2Writer(
     var flags = if (byteCount == length) FLAG_END_HEADERS else 0
     if (outFinished) flags = flags or FLAG_END_STREAM
     frameHeader(
-      streamId = streamId,
-      length = length.toInt(),
-      type = TYPE_HEADERS,
-      flags = flags
+        streamId = streamId,
+        length = length.toInt(),
+        type = TYPE_HEADERS,
+        flags = flags
     )
     sink.write(hpackBuffer, length)
 

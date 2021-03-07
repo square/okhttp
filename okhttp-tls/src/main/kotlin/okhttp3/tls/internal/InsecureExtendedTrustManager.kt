@@ -15,13 +15,13 @@
  */
 package okhttp3.tls.internal
 
-import okhttp3.internal.peerName
-import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 import java.net.Socket
 import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
 import javax.net.ssl.SSLEngine
 import javax.net.ssl.X509ExtendedTrustManager
+import okhttp3.internal.peerName
+import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 
 /**
  * This extends [X509ExtendedTrustManager] to disable verification for a set of hosts.

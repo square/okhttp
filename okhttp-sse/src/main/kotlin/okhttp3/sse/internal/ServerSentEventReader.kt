@@ -15,12 +15,12 @@
  */
 package okhttp3.sse.internal
 
+import java.io.IOException
 import okhttp3.internal.toLongOrDefault
 import okio.Buffer
 import okio.BufferedSource
 import okio.ByteString.Companion.encodeUtf8
 import okio.Options
-import java.io.IOException
 
 class ServerSentEventReader(
   private val source: BufferedSource,
@@ -111,33 +111,33 @@ class ServerSentEventReader(
 
   companion object {
     val options = Options.of(
-      /*  0 */ "\r\n".encodeUtf8(),
-      /*  1 */ "\r".encodeUtf8(),
-      /*  2 */ "\n".encodeUtf8(),
+        /*  0 */ "\r\n".encodeUtf8(),
+        /*  1 */ "\r".encodeUtf8(),
+        /*  2 */ "\n".encodeUtf8(),
 
-      /*  3 */ "data: ".encodeUtf8(),
-      /*  4 */ "data:".encodeUtf8(),
+        /*  3 */ "data: ".encodeUtf8(),
+        /*  4 */ "data:".encodeUtf8(),
 
-      /*  5 */ "data\r\n".encodeUtf8(),
-      /*  6 */ "data\r".encodeUtf8(),
-      /*  7 */ "data\n".encodeUtf8(),
+        /*  5 */ "data\r\n".encodeUtf8(),
+        /*  6 */ "data\r".encodeUtf8(),
+        /*  7 */ "data\n".encodeUtf8(),
 
-      /*  8 */ "id: ".encodeUtf8(),
-      /*  9 */ "id:".encodeUtf8(),
+        /*  8 */ "id: ".encodeUtf8(),
+        /*  9 */ "id:".encodeUtf8(),
 
-      /* 10 */ "id\r\n".encodeUtf8(),
-      /* 11 */ "id\r".encodeUtf8(),
-      /* 12 */ "id\n".encodeUtf8(),
+        /* 10 */ "id\r\n".encodeUtf8(),
+        /* 11 */ "id\r".encodeUtf8(),
+        /* 12 */ "id\n".encodeUtf8(),
 
-      /* 13 */ "event: ".encodeUtf8(),
-      /* 14 */ "event:".encodeUtf8(),
+        /* 13 */ "event: ".encodeUtf8(),
+        /* 14 */ "event:".encodeUtf8(),
 
-      /* 15 */ "event\r\n".encodeUtf8(),
-      /* 16 */ "event\r".encodeUtf8(),
-      /* 17 */ "event\n".encodeUtf8(),
+        /* 15 */ "event\r\n".encodeUtf8(),
+        /* 16 */ "event\r".encodeUtf8(),
+        /* 17 */ "event\n".encodeUtf8(),
 
-      /* 18 */ "retry: ".encodeUtf8(),
-      /* 19 */ "retry:".encodeUtf8()
+        /* 18 */ "retry: ".encodeUtf8(),
+        /* 19 */ "retry:".encodeUtf8()
     )
 
     private val CRLF = "\r\n".encodeUtf8()

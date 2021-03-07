@@ -15,6 +15,23 @@
  */
 package okhttp3.tls
 
+import java.math.BigInteger
+import java.net.InetAddress
+import java.security.GeneralSecurityException
+import java.security.KeyFactory
+import java.security.KeyPair
+import java.security.KeyPairGenerator
+import java.security.PrivateKey
+import java.security.PublicKey
+import java.security.SecureRandom
+import java.security.Signature
+import java.security.cert.X509Certificate
+import java.security.interfaces.ECPublicKey
+import java.security.interfaces.RSAPrivateKey
+import java.security.interfaces.RSAPublicKey
+import java.security.spec.PKCS8EncodedKeySpec
+import java.util.UUID
+import java.util.concurrent.TimeUnit
 import okhttp3.internal.canParseAsIpAddress
 import okhttp3.tls.internal.der.AlgorithmIdentifier
 import okhttp3.tls.internal.der.AttributeTypeAndValue
@@ -36,23 +53,6 @@ import okhttp3.tls.internal.der.Validity
 import okio.ByteString
 import okio.ByteString.Companion.decodeBase64
 import okio.ByteString.Companion.toByteString
-import java.math.BigInteger
-import java.net.InetAddress
-import java.security.GeneralSecurityException
-import java.security.KeyFactory
-import java.security.KeyPair
-import java.security.KeyPairGenerator
-import java.security.PrivateKey
-import java.security.PublicKey
-import java.security.SecureRandom
-import java.security.Signature
-import java.security.cert.X509Certificate
-import java.security.interfaces.ECPublicKey
-import java.security.interfaces.RSAPrivateKey
-import java.security.interfaces.RSAPublicKey
-import java.security.spec.PKCS8EncodedKeySpec
-import java.util.UUID
-import java.util.concurrent.TimeUnit
 
 /**
  * A certificate and its private key. These are some properties of certificates that are used with
@@ -133,18 +133,16 @@ class HeldCertificate(
 
   @JvmName("-deprecated_certificate")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "certificate"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "certificate"),
+      level = DeprecationLevel.ERROR)
   fun certificate(): X509Certificate = certificate
 
   @JvmName("-deprecated_keyPair")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "keyPair"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "keyPair"),
+      level = DeprecationLevel.ERROR)
   fun keyPair(): KeyPair = keyPair
 
   /**
@@ -328,7 +326,7 @@ class HeldCertificate(
       // Subject keys & identity.
       val subjectKeyPair = keyPair ?: generateKeyPair()
       val subjectPublicKeyInfo = CertificateAdapters.subjectPublicKeyInfo.fromDer(
-        subjectKeyPair.public.encoded.toByteString()
+          subjectKeyPair.public.encoded.toByteString()
       )
       val subject: List<List<AttributeTypeAndValue>> = subject()
 
@@ -338,7 +336,7 @@ class HeldCertificate(
       if (signedBy != null) {
         issuerKeyPair = signedBy!!.keyPair
         issuer = CertificateAdapters.rdnSequence.fromDer(
-          signedBy!!.certificate.subjectX500Principal.encoded.toByteString()
+            signedBy!!.certificate.subjectX500Principal.encoded.toByteString()
         )
       } else {
         issuerKeyPair = subjectKeyPair
@@ -348,16 +346,16 @@ class HeldCertificate(
 
       // Subset of certificate data that's covered by the signature.
       val tbsCertificate = TbsCertificate(
-        version = 2L, // v3.
-        serialNumber = serialNumber ?: BigInteger.ONE,
-        signature = signatureAlgorithm,
-        issuer = issuer,
-        validity = validity(),
-        subject = subject,
-        subjectPublicKeyInfo = subjectPublicKeyInfo,
-        issuerUniqueID = null,
-        subjectUniqueID = null,
-        extensions = extensions()
+          version = 2L, // v3.
+          serialNumber = serialNumber ?: BigInteger.ONE,
+          signature = signatureAlgorithm,
+          issuer = issuer,
+          validity = validity(),
+          subject = subject,
+          subjectPublicKeyInfo = subjectPublicKeyInfo,
+          issuerUniqueID = null,
+          subjectUniqueID = null,
+          extensions = extensions()
       )
 
       // Signature.
@@ -369,12 +367,12 @@ class HeldCertificate(
 
       // Complete signed certificate.
       val certificate = Certificate(
-        tbsCertificate = tbsCertificate,
-        signatureAlgorithm = signatureAlgorithm,
-        signatureValue = BitString(
-          byteString = signature,
-          unusedBitsCount = 0
-        )
+          tbsCertificate = tbsCertificate,
+          signatureAlgorithm = signatureAlgorithm,
+          signatureValue = BitString(
+              byteString = signature,
+              unusedBitsCount = 0
+          )
       )
 
       return HeldCertificate(subjectKeyPair, certificate.toX509Certificate())
@@ -384,20 +382,16 @@ class HeldCertificate(
       val result = mutableListOf<List<AttributeTypeAndValue>>()
 
       if (organizationalUnit != null) {
-        result += listOf(
-          AttributeTypeAndValue(
+        result += listOf(AttributeTypeAndValue(
             type = organizationalUnitName,
             value = organizationalUnit
-          )
-        )
+        ))
       }
 
-      result += listOf(
-        AttributeTypeAndValue(
+      result += listOf(AttributeTypeAndValue(
           type = ObjectIdentifiers.commonName,
           value = commonName ?: UUID.randomUUID().toString()
-        )
-      )
+      ))
 
       return result
     }
@@ -406,8 +400,8 @@ class HeldCertificate(
       val notBefore = if (notBefore != -1L) notBefore else System.currentTimeMillis()
       val notAfter = if (notAfter != -1L) notAfter else notBefore + DEFAULT_DURATION_MILLIS
       return Validity(
-        notBefore = notBefore,
-        notAfter = notAfter
+          notBefore = notBefore,
+          notAfter = notAfter
       )
     }
 
@@ -416,12 +410,12 @@ class HeldCertificate(
 
       if (maxIntermediateCas != -1) {
         result += Extension(
-          id = basicConstraints,
-          critical = true,
-          value = BasicConstraints(
-            ca = true,
-            maxIntermediateCas = maxIntermediateCas.toLong()
-          )
+            id = basicConstraints,
+            critical = true,
+            value = BasicConstraints(
+                ca = true,
+                maxIntermediateCas = maxIntermediateCas.toLong()
+            )
         )
       }
 
@@ -437,9 +431,9 @@ class HeldCertificate(
           }
         }
         result += Extension(
-          id = subjectAlternativeName,
-          critical = true,
-          value = extensionValue
+            id = subjectAlternativeName,
+            critical = true,
+            value = extensionValue
         )
       }
 
@@ -449,12 +443,12 @@ class HeldCertificate(
     private fun signatureAlgorithm(signedByKeyPair: KeyPair): AlgorithmIdentifier {
       return when (signedByKeyPair.private) {
         is RSAPrivateKey -> AlgorithmIdentifier(
-          algorithm = sha256WithRSAEncryption,
-          parameters = null
+            algorithm = sha256WithRSAEncryption,
+            parameters = null
         )
         else -> AlgorithmIdentifier(
-          algorithm = sha256withEcdsa,
-          parameters = ByteString.EMPTY
+            algorithm = sha256withEcdsa,
+            parameters = ByteString.EMPTY
         )
       }
     }
@@ -535,7 +529,7 @@ class HeldCertificate(
       val certificate = certificatePem.decodeCertificatePem()
 
       val pkcs8Bytes = pkcs8Base64Text.decodeBase64()
-        ?: throw IllegalArgumentException("failed to decode private key")
+          ?: throw IllegalArgumentException("failed to decode private key")
 
       // The private key doesn't tell us its type but it's okay because the certificate knows!
       val keyType = when (certificate.publicKey) {

@@ -15,13 +15,13 @@
  */
 package okhttp3.internal.http
 
+import java.io.IOException
+import java.net.ProtocolException
 import okhttp3.Interceptor
 import okhttp3.Response
 import okhttp3.internal.EMPTY_RESPONSE
 import okhttp3.internal.http2.ConnectionShutdownException
 import okio.buffer
-import java.io.IOException
-import java.net.ProtocolException
 
 /** This is the last interceptor in the chain. It makes a network call to the server. */
 class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
@@ -97,11 +97,11 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
         }
       }
       var response = responseBuilder
-        .request(request)
-        .handshake(exchange.connection.handshake())
-        .sentRequestAtMillis(sentRequestMillis)
-        .receivedResponseAtMillis(System.currentTimeMillis())
-        .build()
+          .request(request)
+          .handshake(exchange.connection.handshake())
+          .sentRequestAtMillis(sentRequestMillis)
+          .receivedResponseAtMillis(System.currentTimeMillis())
+          .build()
       var code = response.code
       if (code == 100) {
         // Server sent a 100-continue even though we did not request one. Try again to read the
@@ -111,11 +111,11 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
           exchange.responseHeadersStart()
         }
         response = responseBuilder
-          .request(request)
-          .handshake(exchange.connection.handshake())
-          .sentRequestAtMillis(sentRequestMillis)
-          .receivedResponseAtMillis(System.currentTimeMillis())
-          .build()
+            .request(request)
+            .handshake(exchange.connection.handshake())
+            .sentRequestAtMillis(sentRequestMillis)
+            .receivedResponseAtMillis(System.currentTimeMillis())
+            .build()
         code = response.code
       }
 
@@ -124,22 +124,20 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
       response = if (forWebSocket && code == 101) {
         // Connection is upgrading, but we need to ensure interceptors see a non-null response body.
         response.newBuilder()
-          .body(EMPTY_RESPONSE)
-          .build()
+            .body(EMPTY_RESPONSE)
+            .build()
       } else {
         response.newBuilder()
-          .body(exchange.openResponseBody(response))
-          .build()
+            .body(exchange.openResponseBody(response))
+            .build()
       }
       if ("close".equals(response.request.header("Connection"), ignoreCase = true) ||
-        "close".equals(response.header("Connection"), ignoreCase = true)
-      ) {
+          "close".equals(response.header("Connection"), ignoreCase = true)) {
         exchange.noNewExchangesOnConnection()
       }
       if ((code == 204 || code == 205) && response.body?.contentLength() ?: -1L > 0L) {
         throw ProtocolException(
-          "HTTP $code had non-zero Content-Length: ${response.body?.contentLength()}"
-        )
+            "HTTP $code had non-zero Content-Length: ${response.body?.contentLength()}")
       }
       return response
     } catch (e: IOException) {

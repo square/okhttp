@@ -16,14 +16,14 @@
 package okhttp3.internal.platform.android
 
 import android.net.http.X509TrustManagerExtensions
-import okhttp3.internal.SuppressSignatureCheck
-import okhttp3.internal.tls.CertificateChainCleaner
 import java.lang.IllegalArgumentException
 import java.security.cert.Certificate
 import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.X509TrustManager
+import okhttp3.internal.SuppressSignatureCheck
+import okhttp3.internal.tls.CertificateChainCleaner
 
 /**
  * Android implementation of CertificateChainCleaner using direct Android API calls.
@@ -48,8 +48,8 @@ internal class AndroidCertificateChainCleaner(
   }
 
   override fun equals(other: Any?): Boolean =
-    other is AndroidCertificateChainCleaner &&
-      other.trustManager === this.trustManager
+      other is AndroidCertificateChainCleaner &&
+          other.trustManager === this.trustManager
 
   override fun hashCode(): Int = System.identityHashCode(trustManager)
 

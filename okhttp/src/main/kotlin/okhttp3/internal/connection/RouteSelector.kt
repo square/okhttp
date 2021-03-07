@@ -15,6 +15,12 @@
  */
 package okhttp3.internal.connection
 
+import java.io.IOException
+import java.net.InetSocketAddress
+import java.net.Proxy
+import java.net.SocketException
+import java.net.UnknownHostException
+import java.util.NoSuchElementException
 import okhttp3.Address
 import okhttp3.Call
 import okhttp3.EventListener
@@ -22,12 +28,6 @@ import okhttp3.HttpUrl
 import okhttp3.Route
 import okhttp3.internal.immutableListOf
 import okhttp3.internal.toImmutableList
-import java.io.IOException
-import java.net.InetSocketAddress
-import java.net.Proxy
-import java.net.SocketException
-import java.net.UnknownHostException
-import java.util.NoSuchElementException
 
 /**
  * Selects routes to connect to an origin server. Each connection requires a choice of proxy server,
@@ -123,8 +123,7 @@ class RouteSelector(
   private fun nextProxy(): Proxy {
     if (!hasNextProxy()) {
       throw SocketException(
-        "No route to ${address.url.host}; exhausted proxy configurations: $proxies"
-      )
+          "No route to ${address.url.host}; exhausted proxy configurations: $proxies")
     }
     val result = proxies[nextProxyIndex++]
     resetNextInetSocketAddress(result)

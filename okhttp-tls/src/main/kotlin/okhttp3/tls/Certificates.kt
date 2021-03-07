@@ -18,12 +18,12 @@
 
 package okhttp3.tls
 
-import okio.Buffer
-import okio.ByteString
-import okio.ByteString.Companion.toByteString
 import java.security.GeneralSecurityException
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
+import okio.Buffer
+import okio.ByteString
+import okio.ByteString.Companion.toByteString
 
 /**
  * Decodes a multiline string that contains a [certificate][certificatePem] which is
@@ -46,9 +46,8 @@ fun String.decodeCertificatePem(): X509Certificate {
   try {
     val certificateFactory = CertificateFactory.getInstance("X.509")
     val certificates = certificateFactory
-      .generateCertificates(
-        Buffer().writeUtf8(this).inputStream()
-      )
+        .generateCertificates(
+            Buffer().writeUtf8(this).inputStream())
 
     return certificates.single() as X509Certificate
   } catch (nsee: NoSuchElementException) {

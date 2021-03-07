@@ -15,13 +15,13 @@
  */
 package okhttp3.internal.platform.android
 
-import okhttp3.Protocol
-import okhttp3.internal.platform.AndroidPlatform
-import okhttp3.internal.platform.Platform
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.nio.charset.StandardCharsets
 import javax.net.ssl.SSLSocket
+import okhttp3.Protocol
+import okhttp3.internal.platform.AndroidPlatform
+import okhttp3.internal.platform.Platform
 
 /**
  * Modern reflection based SocketAdapter for Conscrypt class SSLSockets.
@@ -60,8 +60,8 @@ open class AndroidSocketAdapter(private val sslSocketClass: Class<in SSLSocket>)
 
         // Enable ALPN.
         setAlpnProtocols.invoke(
-          sslSocket,
-          Platform.concatLengthPrefixed(protocols)
+            sslSocket,
+            Platform.concatLengthPrefixed(protocols)
         )
       } catch (e: IllegalAccessException) {
         throw AssertionError(e)
@@ -110,7 +110,7 @@ open class AndroidSocketAdapter(private val sslSocketClass: Class<in SSLSocket>)
 
         if (possibleClass == null) {
           throw AssertionError(
-            "No OpenSSLSocketImpl superclass of socket of type $actualSSLSocketClass"
+              "No OpenSSLSocketImpl superclass of socket of type $actualSSLSocketClass"
           )
         }
       }

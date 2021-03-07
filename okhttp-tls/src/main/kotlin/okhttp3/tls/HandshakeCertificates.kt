@@ -15,12 +15,6 @@
  */
 package okhttp3.tls
 
-import okhttp3.CertificatePinner
-import okhttp3.internal.platform.Platform
-import okhttp3.internal.toImmutableList
-import okhttp3.tls.internal.TlsUtil.newKeyManager
-import okhttp3.tls.internal.TlsUtil.newTrustManager
-import java.security.KeyStoreException
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
 import java.util.Collections
@@ -31,6 +25,12 @@ import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509KeyManager
 import javax.net.ssl.X509TrustManager
+import okhttp3.CertificatePinner
+import okhttp3.internal.platform.Platform
+import okhttp3.internal.toImmutableList
+import okhttp3.tls.internal.TlsUtil.newKeyManager
+import okhttp3.tls.internal.TlsUtil.newTrustManager
+import java.security.KeyStoreException
 
 /**
  * Certificates to identify which peers to trust and also to earn the trust of those peers in kind.
@@ -76,18 +76,16 @@ class HandshakeCertificates private constructor(
 
   @JvmName("-deprecated_keyManager")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "keyManager"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "keyManager"),
+      level = DeprecationLevel.ERROR)
   fun keyManager(): X509KeyManager = keyManager
 
   @JvmName("-deprecated_trustManager")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "trustManager"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "trustManager"),
+      level = DeprecationLevel.ERROR)
   fun trustManager(): X509TrustManager = trustManager
 
   fun sslSocketFactory(): SSLSocketFactory = sslContext().socketFactory

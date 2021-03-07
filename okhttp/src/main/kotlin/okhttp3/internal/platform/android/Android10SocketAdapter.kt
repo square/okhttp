@@ -18,13 +18,13 @@ package okhttp3.internal.platform.android
 import android.annotation.SuppressLint
 import android.net.ssl.SSLSockets
 import android.os.Build
+import java.io.IOException
+import java.lang.IllegalArgumentException
+import javax.net.ssl.SSLSocket
 import okhttp3.Protocol
 import okhttp3.internal.SuppressSignatureCheck
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.isAndroid
-import java.io.IOException
-import java.lang.IllegalArgumentException
-import javax.net.ssl.SSLSocket
 
 /**
  * Simple non-reflection SocketAdapter for Android Q+.
@@ -40,10 +40,10 @@ class Android10SocketAdapter : SocketAdapter {
 
   @SuppressLint("NewApi")
   override fun getSelectedProtocol(sslSocket: SSLSocket): String? =
-    when (val protocol = sslSocket.applicationProtocol) {
-      null, "" -> null
-      else -> protocol
-    }
+      when (val protocol = sslSocket.applicationProtocol) {
+        null, "" -> null
+        else -> protocol
+      }
 
   @SuppressLint("NewApi")
   override fun configureTlsExtensions(
@@ -69,7 +69,7 @@ class Android10SocketAdapter : SocketAdapter {
   @SuppressSignatureCheck
   companion object {
     fun buildIfSupported(): SocketAdapter? =
-      if (isSupported()) Android10SocketAdapter() else null
+        if (isSupported()) Android10SocketAdapter() else null
 
     fun isSupported() = isAndroid && Build.VERSION.SDK_INT >= 29
   }
