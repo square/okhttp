@@ -15,8 +15,8 @@
  */
 package okhttp3.logging.internal
 
-import java.io.EOFException
 import okio.Buffer
+import java.io.EOFException
 
 /**
  * Returns true if the body in question probably contains human readable text. Uses a small

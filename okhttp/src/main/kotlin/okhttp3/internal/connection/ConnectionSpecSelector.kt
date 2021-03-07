@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.connection
 
+import okhttp3.ConnectionSpec
 import java.io.IOException
 import java.io.InterruptedIOException
 import java.net.ProtocolException
@@ -24,7 +25,6 @@ import javax.net.ssl.SSLException
 import javax.net.ssl.SSLHandshakeException
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocket
-import okhttp3.ConnectionSpec
 
 /**
  * Handles the connection spec fallback strategy: When a secure socket connection fails due to a
@@ -60,9 +60,11 @@ internal class ConnectionSpecSelector(
       // This may be the first time a connection has been attempted and the socket does not support
       // any the required protocols, or it may be a retry (but this socket supports fewer protocols
       // than was suggested by a prior socket).
-      throw UnknownServiceException("Unable to find acceptable protocols. isFallback=$isFallback," +
+      throw UnknownServiceException(
+        "Unable to find acceptable protocols. isFallback=$isFallback," +
           " modes=$connectionSpecs," +
-          " supported protocols=${sslSocket.enabledProtocols!!.contentToString()}")
+          " supported protocols=${sslSocket.enabledProtocols!!.contentToString()}"
+      )
     }
 
     isFallbackPossible = isFallbackPossible(sslSocket)

@@ -15,11 +15,11 @@
  */
 package okhttp3.internal.ws
 
+import okio.Buffer
+import okio.InflaterSource
 import java.io.Closeable
 import java.io.IOException
 import java.util.zip.Inflater
-import okio.Buffer
-import okio.InflaterSource
 
 private const val OCTETS_TO_ADD_BEFORE_INFLATION = 0x0000ffff
 

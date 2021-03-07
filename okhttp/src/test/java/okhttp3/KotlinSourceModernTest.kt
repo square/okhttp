@@ -15,37 +15,6 @@
  */
 package okhttp3
 
-import java.io.File
-import java.io.IOException
-import java.math.BigInteger
-import java.net.CookieHandler
-import java.net.InetAddress
-import java.net.InetSocketAddress
-import java.net.Proxy
-import java.net.ProxySelector
-import java.net.Socket
-import java.net.URI
-import java.net.URL
-import java.nio.charset.Charset
-import java.security.KeyPair
-import java.security.KeyPairGenerator
-import java.security.Principal
-import java.security.cert.Certificate
-import java.security.cert.X509Certificate
-import java.time.Duration
-import java.time.Instant
-import java.util.Date
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
-import javax.net.ServerSocketFactory
-import javax.net.SocketFactory
-import javax.net.ssl.HostnameVerifier
-import javax.net.ssl.SSLContext
-import javax.net.ssl.SSLSocket
-import javax.net.ssl.SSLSocketFactory
-import javax.net.ssl.X509KeyManager
-import javax.net.ssl.X509TrustManager
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.PushPromise
@@ -80,20 +49,51 @@ import org.junit.jupiter.api.Assumptions.assumeFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
+import java.io.File
+import java.io.IOException
+import java.math.BigInteger
+import java.net.CookieHandler
+import java.net.InetAddress
+import java.net.InetSocketAddress
+import java.net.Proxy
+import java.net.ProxySelector
+import java.net.Socket
+import java.net.URI
+import java.net.URL
+import java.nio.charset.Charset
+import java.security.KeyPair
+import java.security.KeyPairGenerator
+import java.security.Principal
+import java.security.cert.Certificate
+import java.security.cert.X509Certificate
+import java.time.Duration
+import java.time.Instant
+import java.util.Date
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import javax.net.ServerSocketFactory
+import javax.net.SocketFactory
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLSocket
+import javax.net.ssl.SSLSocketFactory
+import javax.net.ssl.X509KeyManager
+import javax.net.ssl.X509TrustManager
 
 /**
  * Access every type, function, and property from Kotlin to defend against unexpected regressions in
  * modern 4.0.x kotlin source-compatibility.
  */
 @Suppress(
-    "ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE",
-    "UNUSED_ANONYMOUS_PARAMETER",
-    "UNUSED_VALUE",
-    "UNUSED_VARIABLE",
-    "VARIABLE_WITH_REDUNDANT_INITIALIZER",
-    "RedundantLambdaArrow",
-    "RedundantExplicitType",
-    "IMPLICIT_NOTHING_AS_TYPE_PARAMETER"
+  "ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE",
+  "UNUSED_ANONYMOUS_PARAMETER",
+  "UNUSED_VALUE",
+  "UNUSED_VARIABLE",
+  "VARIABLE_WITH_REDUNDANT_INITIALIZER",
+  "RedundantLambdaArrow",
+  "RedundantExplicitType",
+  "IMPLICIT_NOTHING_AS_TYPE_PARAMETER"
 )
 @Disabled
 class KotlinSourceModernTest {
@@ -253,7 +253,8 @@ class KotlinSourceModernTest {
     val cipherSuites: List<CipherSuite>? = connectionSpec.cipherSuites
     val supportsTlsExtensions: Boolean = connectionSpec.supportsTlsExtensions
     val compatible: Boolean = connectionSpec.isCompatible(
-        localhost().sslSocketFactory().createSocket() as SSLSocket)
+      localhost().sslSocketFactory().createSocket() as SSLSocket
+    )
   }
 
   @Test
@@ -433,13 +434,13 @@ class KotlinSourceModernTest {
   @Test
   fun handshake() {
     var handshake: Handshake =
-        (localhost().sslSocketFactory().createSocket() as SSLSocket).session.handshake()
+      (localhost().sslSocketFactory().createSocket() as SSLSocket).session.handshake()
     val listOfCertificates: List<Certificate> = listOf()
     handshake = Handshake.get(
-        TlsVersion.TLS_1_3,
-        CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-        listOfCertificates,
-        listOfCertificates
+      TlsVersion.TLS_1_3,
+      CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+      listOfCertificates,
+      listOfCertificates
     )
     val tlsVersion: TlsVersion = handshake.tlsVersion
     val cipherSuite: CipherSuite = handshake.cipherSuite
@@ -836,9 +837,10 @@ class KotlinSourceModernTest {
     val pingIntervalMillis: Int = client.pingIntervalMillis
     val call: Call = client.newCall(Request.Builder().build())
     val webSocket: WebSocket = client.newWebSocket(
-        Request.Builder().build(),
-        object : WebSocketListener() {
-        })
+      Request.Builder().build(),
+      object : WebSocketListener() {
+      }
+    )
     val newBuilder: OkHttpClient.Builder = client.newBuilder()
   }
 
@@ -927,7 +929,8 @@ class KotlinSourceModernTest {
     }
     queueDispatcher = QueueDispatcher()
     var mockResponse: MockResponse = queueDispatcher.dispatch(
-        RecordedRequest("", headersOf(), listOf(), 0L, Buffer(), 0, Socket()))
+      RecordedRequest("", headersOf(), listOf(), 0L, Buffer(), 0, Socket())
+    )
     mockResponse = queueDispatcher.peek()
     queueDispatcher.enqueueResponse(MockResponse())
     queueDispatcher.shutdown()
@@ -938,7 +941,8 @@ class KotlinSourceModernTest {
   @Test
   fun recordedRequest() {
     var recordedRequest: RecordedRequest = RecordedRequest(
-        "", headersOf(), listOf(), 0L, Buffer(), 0, Socket())
+      "", headersOf(), listOf(), 0L, Buffer(), 0, Socket()
+    )
     recordedRequest = RecordedRequest("", headersOf(), listOf(), 0L, Buffer(), 0, Socket())
     var requestUrl: HttpUrl? = recordedRequest.requestUrl
     var requestLine: String = recordedRequest.requestLine
@@ -1053,11 +1057,13 @@ class KotlinSourceModernTest {
     builder = builder.protocol(Protocol.HTTP_2)
     builder = builder.code(0)
     builder = builder.message("")
-    builder = builder.handshake(Handshake.get(
+    builder = builder.handshake(
+      Handshake.get(
         TlsVersion.TLS_1_3,
         CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
         listOf(),
-        listOf())
+        listOf()
+      )
     )
     builder = builder.handshake(null)
     builder = builder.header("", "")
@@ -1148,18 +1154,18 @@ class KotlinSourceModernTest {
 
   private fun newAddress(): Address {
     return Address(
-        "",
-        0,
-        Dns.SYSTEM,
-        SocketFactory.getDefault(),
-        localhost().sslSocketFactory(),
-        OkHostnameVerifier,
-        CertificatePinner.DEFAULT,
-        Authenticator.NONE,
-        Proxy.NO_PROXY,
-        listOf(Protocol.HTTP_1_1),
-        listOf(ConnectionSpec.MODERN_TLS),
-        NullProxySelector
+      "",
+      0,
+      Dns.SYSTEM,
+      SocketFactory.getDefault(),
+      localhost().sslSocketFactory(),
+      OkHostnameVerifier,
+      CertificatePinner.DEFAULT,
+      Authenticator.NONE,
+      Proxy.NO_PROXY,
+      listOf(Protocol.HTTP_1_1),
+      listOf(ConnectionSpec.MODERN_TLS),
+      NullProxySelector
     )
   }
 

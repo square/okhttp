@@ -17,9 +17,9 @@ package okhttp3.recipes.kt
 
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
-import java.io.IOException
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.io.IOException
 
 class ParseResponseWithMoshi {
   private val client = OkHttpClient()
@@ -28,8 +28,8 @@ class ParseResponseWithMoshi {
 
   fun run() {
     val request = Request.Builder()
-        .url("https://api.github.com/gists/c2a7c39532239ff261be")
-        .build()
+      .url("https://api.github.com/gists/c2a7c39532239ff261be")
+      .build()
     client.newCall(request).execute().use { response ->
       if (!response.isSuccessful) throw IOException("Unexpected code $response")
 

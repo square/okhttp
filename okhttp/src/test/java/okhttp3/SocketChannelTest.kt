@@ -27,7 +27,6 @@ import okhttp3.TlsVersion.TLS_1_2
 import okhttp3.TlsVersion.TLS_1_3
 import okhttp3.internal.platform.ConscryptPlatform
 import okhttp3.internal.platform.Platform
-import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
@@ -137,7 +136,7 @@ class SocketChannelTest(
             else -> TODO()
           }
 
-          val serverSslSocketFactory = object: DelegatingSSLSocketFactory(sslSocketFactory) {
+          val serverSslSocketFactory = object : DelegatingSSLSocketFactory(sslSocketFactory) {
             override fun configureSocket(sslSocket: SSLSocket): SSLSocket {
               return sslSocket.apply {
                 sslParameters = sslParameters.apply {

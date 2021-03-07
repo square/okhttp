@@ -15,6 +15,11 @@
  */
 package okhttp3
 
+import okhttp3.internal.assertThreadDoesntHoldLock
+import okhttp3.internal.connection.RealCall
+import okhttp3.internal.connection.RealCall.AsyncCall
+import okhttp3.internal.okHttpName
+import okhttp3.internal.threadFactory
 import java.util.ArrayDeque
 import java.util.Collections
 import java.util.Deque
@@ -22,11 +27,6 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.SynchronousQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
-import okhttp3.internal.assertThreadDoesntHoldLock
-import okhttp3.internal.connection.RealCall
-import okhttp3.internal.connection.RealCall.AsyncCall
-import okhttp3.internal.okHttpName
-import okhttp3.internal.threadFactory
 
 /**
  * Policy on when async requests are executed.
@@ -92,8 +92,10 @@ class Dispatcher constructor() {
   @get:JvmName("executorService") val executorService: ExecutorService
     get() {
       if (executorServiceOrNull == null) {
-        executorServiceOrNull = ThreadPoolExecutor(0, Int.MAX_VALUE, 60, TimeUnit.SECONDS,
-            SynchronousQueue(), threadFactory("$okHttpName Dispatcher", false))
+        executorServiceOrNull = ThreadPoolExecutor(
+          0, Int.MAX_VALUE, 60, TimeUnit.SECONDS,
+          SynchronousQueue(), threadFactory("$okHttpName Dispatcher", false)
+        )
       }
       return executorServiceOrNull!!
     }
@@ -233,8 +235,9 @@ class Dispatcher constructor() {
 
   @JvmName("-deprecated_executorService")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "executorService"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "executorService"),
+    level = DeprecationLevel.ERROR
+  )
   fun executorService(): ExecutorService = executorService
 }

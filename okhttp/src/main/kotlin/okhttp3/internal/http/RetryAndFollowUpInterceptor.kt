@@ -15,6 +15,20 @@
  */
 package okhttp3.internal.http
 
+import okhttp3.Interceptor
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
+import okhttp3.internal.canReuseConnectionFor
+import okhttp3.internal.closeQuietly
+import okhttp3.internal.connection.Exchange
+import okhttp3.internal.connection.RealCall
+import okhttp3.internal.connection.RouteException
+import okhttp3.internal.http.StatusLine.Companion.HTTP_MISDIRECTED_REQUEST
+import okhttp3.internal.http.StatusLine.Companion.HTTP_PERM_REDIRECT
+import okhttp3.internal.http.StatusLine.Companion.HTTP_TEMP_REDIRECT
+import okhttp3.internal.http2.ConnectionShutdownException
+import okhttp3.internal.withSuppressed
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InterruptedIOException
@@ -32,20 +46,6 @@ import java.net.SocketTimeoutException
 import java.security.cert.CertificateException
 import javax.net.ssl.SSLHandshakeException
 import javax.net.ssl.SSLPeerUnverifiedException
-import okhttp3.Interceptor
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Response
-import okhttp3.internal.canReuseConnectionFor
-import okhttp3.internal.closeQuietly
-import okhttp3.internal.connection.Exchange
-import okhttp3.internal.connection.RealCall
-import okhttp3.internal.connection.RouteException
-import okhttp3.internal.http.StatusLine.Companion.HTTP_MISDIRECTED_REQUEST
-import okhttp3.internal.http.StatusLine.Companion.HTTP_PERM_REDIRECT
-import okhttp3.internal.http.StatusLine.Companion.HTTP_TEMP_REDIRECT
-import okhttp3.internal.http2.ConnectionShutdownException
-import okhttp3.internal.withSuppressed
 
 /**
  * This interceptor recovers from failures and follows redirects as necessary. It may throw an
@@ -98,10 +98,12 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
         // Attach the prior response if it exists. Such responses never have a body.
         if (priorResponse != null) {
           response = response.newBuilder()
-              .priorResponse(priorResponse.newBuilder()
-                  .body(null)
-                  .build())
-              .build()
+            .priorResponse(
+              priorResponse.newBuilder()
+                .body(null)
+                .build()
+            )
+            .build()
         }
 
         val exchange = call.interceptorScopedExchange
@@ -166,7 +168,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
   private fun requestIsOneShot(e: IOException, userRequest: Request): Boolean {
     val requestBody = userRequest.body
     return (requestBody != null && requestBody.isOneShot()) ||
-        e is FileNotFoundException
+      e is FileNotFoundException
   }
 
   private fun isRecoverable(e: IOException, requestSendStarted: Boolean): Boolean {
@@ -305,8 +307,8 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
     if (HttpMethod.permitsRequestBody(method)) {
       val responseCode = userResponse.code
       val maintainBody = HttpMethod.redirectsWithBody(method) ||
-          responseCode == HTTP_PERM_REDIRECT ||
-          responseCode == HTTP_TEMP_REDIRECT
+        responseCode == HTTP_PERM_REDIRECT ||
+        responseCode == HTTP_TEMP_REDIRECT
       if (HttpMethod.redirectsToGet(method) && responseCode != HTTP_PERM_REDIRECT && responseCode != HTTP_TEMP_REDIRECT) {
         requestBuilder.method("GET", null)
       } else {

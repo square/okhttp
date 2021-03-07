@@ -71,6 +71,7 @@ subprojects { project ->
   apply plugin: 'ru.vyarus.animalsniffer'
   apply plugin: 'org.jetbrains.dokka'
   apply plugin: 'biz.aQute.bnd.builder'
+  apply plugin: "com.diffplug.spotless"
 
   tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
@@ -80,6 +81,15 @@ subprojects { project ->
     toolchain {
       languageVersion = JavaLanguageVersion.of(11)
       vendor = JvmVendorSpec.ADOPTOPENJDK
+    }
+  }
+
+  spotless {
+    kotlin {
+      target("**/*.kt")
+      ktlint(Versions.ktlint).userData([indent_size: '2'])
+      trimTrailingWhitespace()
+      endWithNewline()
     }
   }
 

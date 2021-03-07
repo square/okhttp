@@ -57,7 +57,7 @@ class AllMainsTest {
   @ArgumentsSource(MainTestProvider::class)
   fun runMain(className: String) {
     val mainMethod = Class.forName(className)
-        .methods.find { it.name == "main" }
+      .methods.find { it.name == "main" }
     try {
       if (mainMethod != null) {
         if (mainMethod.parameters.isEmpty()) {

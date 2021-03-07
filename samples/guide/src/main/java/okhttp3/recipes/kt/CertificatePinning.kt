@@ -15,23 +15,24 @@
  */
 package okhttp3.recipes.kt
 
-import java.io.IOException
 import okhttp3.CertificatePinner
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.io.IOException
 
 class CertificatePinning {
   private val client = OkHttpClient.Builder()
-      .certificatePinner(
-          CertificatePinner.Builder()
-              .add("publicobject.com", "sha256/Vjs8r4z+80wjNcr1YKepWQboSIRi63WsWXhIMN+eWys=")
-              .build())
-      .build()
+    .certificatePinner(
+      CertificatePinner.Builder()
+        .add("publicobject.com", "sha256/Vjs8r4z+80wjNcr1YKepWQboSIRi63WsWXhIMN+eWys=")
+        .build()
+    )
+    .build()
 
   fun run() {
     val request = Request.Builder()
-        .url("https://publicobject.com/robots.txt")
-        .build()
+      .url("https://publicobject.com/robots.txt")
+      .build()
 
     client.newCall(request).execute().use { response ->
       if (!response.isSuccessful) throw IOException("Unexpected code $response")

@@ -15,11 +15,6 @@
  */
 package okhttp3.internal.authenticator
 
-import java.net.Authenticator
-import java.net.InetAddress
-import java.net.InetSocketAddress
-import java.net.Proxy
-import javax.net.SocketFactory
 import junit.framework.TestCase.assertNull
 import okhttp3.Address
 import okhttp3.CertificatePinner
@@ -38,6 +33,11 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.net.Authenticator
+import java.net.InetAddress
+import java.net.InetSocketAddress
+import java.net.Proxy
+import javax.net.SocketFactory
 
 // Most tests from URLConnectionTest
 class JavaNetAuthenticatorTest {
@@ -62,43 +62,45 @@ class JavaNetAuthenticatorTest {
     fakeDns["server"] = listOf(InetAddress.getLocalHost())
 
     val address = Address(
-        "server", 443, fakeDns, SocketFactory.getDefault(), TlsUtil.localhost()
-        .sslSocketFactory(), OkHostnameVerifier, CertificatePinner.DEFAULT,
-        okhttp3.Authenticator.NONE, Proxy.NO_PROXY, listOf(HTTP_1_1),
-        listOf(ConnectionSpec.MODERN_TLS), NullProxySelector
+      "server", 443, fakeDns, SocketFactory.getDefault(),
+      TlsUtil.localhost()
+        .sslSocketFactory(),
+      OkHostnameVerifier, CertificatePinner.DEFAULT,
+      okhttp3.Authenticator.NONE, Proxy.NO_PROXY, listOf(HTTP_1_1),
+      listOf(ConnectionSpec.MODERN_TLS), NullProxySelector
     )
     val route = Route(address, Proxy.NO_PROXY, InetSocketAddress.createUnresolved("server", 443))
 
     val request = Request.Builder()
-        .url("https://server/robots.txt")
-        .build()
+      .url("https://server/robots.txt")
+      .build()
     val response = Response.Builder()
-        .request(request)
-        .code(401)
-        .header("WWW-Authenticate", "Basic realm=\"User Visible Realm\"")
-        .protocol(HTTP_2)
-        .message("Unauthorized")
-        .build()
+      .request(request)
+      .code(401)
+      .header("WWW-Authenticate", "Basic realm=\"User Visible Realm\"")
+      .protocol(HTTP_2)
+      .message("Unauthorized")
+      .build()
     val authRequest = authenticator.authenticate(route, response)
 
     assertEquals(
-        "Basic ${RecordingAuthenticator.BASE_64_CREDENTIALS}", authRequest!!.header("Authorization")
+      "Basic ${RecordingAuthenticator.BASE_64_CREDENTIALS}", authRequest!!.header("Authorization")
     )
   }
 
   @Test
   fun noSupportForNonBasicAuth() {
     val request = Request.Builder()
-        .url("https://server/robots.txt")
-        .build()
+      .url("https://server/robots.txt")
+      .build()
 
     val response = Response.Builder()
-        .request(request)
-        .code(401)
-        .header("WWW-Authenticate", "UnsupportedScheme realm=\"User Visible Realm\"")
-        .protocol(HTTP_2)
-        .message("Unauthorized")
-        .build()
+      .request(request)
+      .code(401)
+      .header("WWW-Authenticate", "UnsupportedScheme realm=\"User Visible Realm\"")
+      .protocol(HTTP_2)
+      .message("Unauthorized")
+      .build()
 
     val authRequest = authenticator.authenticate(null, response)
     assertNull(authRequest)

@@ -15,15 +15,15 @@
  */
 package okhttp3
 
-import java.security.cert.Certificate
-import java.security.cert.X509Certificate
-import javax.net.ssl.SSLPeerUnverifiedException
 import okhttp3.internal.filterList
 import okhttp3.internal.tls.CertificateChainCleaner
 import okhttp3.internal.toCanonicalHost
 import okio.ByteString
 import okio.ByteString.Companion.decodeBase64
 import okio.ByteString.Companion.toByteString
+import java.security.cert.Certificate
+import java.security.cert.X509Certificate
+import javax.net.ssl.SSLPeerUnverifiedException
 
 /**
  * Constrains which certificates are trusted. Pinning certificates defends against attacks on
@@ -149,7 +149,7 @@ class CertificatePinner internal constructor(
   fun check(hostname: String, peerCertificates: List<Certificate>) {
     return check(hostname) {
       (certificateChainCleaner?.clean(peerCertificates, hostname) ?: peerCertificates)
-          .map { it as X509Certificate }
+        .map { it as X509Certificate }
     }
   }
 
@@ -201,8 +201,8 @@ class CertificatePinner internal constructor(
   }
 
   @Deprecated(
-      "replaced with {@link #check(String, List)}.",
-      ReplaceWith("check(hostname, peerCertificates.toList())")
+    "replaced with {@link #check(String, List)}.",
+    ReplaceWith("check(hostname, peerCertificates.toList())")
   )
   @Throws(SSLPeerUnverifiedException::class)
   fun check(hostname: String, vararg peerCertificates: Certificate) {
@@ -228,8 +228,8 @@ class CertificatePinner internal constructor(
 
   override fun equals(other: Any?): Boolean {
     return other is CertificatePinner &&
-        other.pins == pins &&
-        other.certificateChainCleaner == certificateChainCleaner
+      other.pins == pins &&
+      other.certificateChainCleaner == certificateChainCleaner
   }
 
   override fun hashCode(): Int {
@@ -251,9 +251,11 @@ class CertificatePinner internal constructor(
     val hash: ByteString
 
     init {
-      require((pattern.startsWith("*.") && pattern.indexOf("*", 1) == -1) ||
+      require(
+        (pattern.startsWith("*.") && pattern.indexOf("*", 1) == -1) ||
           (pattern.startsWith("**.") && pattern.indexOf("*", 2) == -1) ||
-          pattern.indexOf("*") == -1) {
+          pattern.indexOf("*") == -1
+      ) {
         "Unexpected pattern: $pattern"
       }
 
@@ -280,25 +282,25 @@ class CertificatePinner internal constructor(
           val suffixLength = pattern.length - 3
           val prefixLength = hostname.length - suffixLength
           hostname.regionMatches(hostname.length - suffixLength, pattern, 3, suffixLength) &&
-              (prefixLength == 0 || hostname[prefixLength - 1] == '.')
+            (prefixLength == 0 || hostname[prefixLength - 1] == '.')
         }
         pattern.startsWith("*.") -> {
           // With * there must be a prefix so include the dot in regionMatches().
           val suffixLength = pattern.length - 1
           val prefixLength = hostname.length - suffixLength
           hostname.regionMatches(hostname.length - suffixLength, pattern, 1, suffixLength) &&
-              hostname.lastIndexOf('.', prefixLength - 1) == -1
+            hostname.lastIndexOf('.', prefixLength - 1) == -1
         }
         else -> hostname == pattern
       }
     }
 
     fun matchesCertificate(certificate: X509Certificate): Boolean {
-        return when (hashAlgorithm) {
-          "sha256" -> hash == certificate.sha256Hash()
-          "sha1" -> hash == certificate.sha1Hash()
-          else -> false
-        }
+      return when (hashAlgorithm) {
+        "sha256" -> hash == certificate.sha256Hash()
+        "sha1" -> hash == certificate.sha1Hash()
+        else -> false
+      }
     }
 
     override fun toString(): String = "$hashAlgorithm/${hash.base64()}"

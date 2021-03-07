@@ -15,14 +15,6 @@
  */
 package okhttp3.internal.ws
 
-import java.io.Closeable
-import java.io.IOException
-import java.net.ProtocolException
-import java.net.SocketTimeoutException
-import java.util.ArrayDeque
-import java.util.Random
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeUnit.MILLISECONDS
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.EventListener
@@ -49,6 +41,14 @@ import okio.BufferedSource
 import okio.ByteString
 import okio.ByteString.Companion.encodeUtf8
 import okio.ByteString.Companion.toByteString
+import java.io.Closeable
+import java.io.IOException
+import java.net.ProtocolException
+import java.net.SocketTimeoutException
+import java.util.ArrayDeque
+import java.util.Random
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeUnit.MILLISECONDS
 
 class RealWebSocket(
   taskRunner: TaskRunner,
@@ -145,22 +145,26 @@ class RealWebSocket(
 
   fun connect(client: OkHttpClient) {
     if (originalRequest.header("Sec-WebSocket-Extensions") != null) {
-      failWebSocket(ProtocolException(
-          "Request header not permitted: 'Sec-WebSocket-Extensions'"), null)
+      failWebSocket(
+        ProtocolException(
+          "Request header not permitted: 'Sec-WebSocket-Extensions'"
+        ),
+        null
+      )
       return
     }
 
     val webSocketClient = client.newBuilder()
-        .eventListener(EventListener.NONE)
-        .protocols(ONLY_HTTP1)
-        .build()
+      .eventListener(EventListener.NONE)
+      .protocols(ONLY_HTTP1)
+      .build()
     val request = originalRequest.newBuilder()
-        .header("Upgrade", "websocket")
-        .header("Connection", "Upgrade")
-        .header("Sec-WebSocket-Key", key)
-        .header("Sec-WebSocket-Version", "13")
-        .header("Sec-WebSocket-Extensions", "permessage-deflate")
-        .build()
+      .header("Upgrade", "websocket")
+      .header("Connection", "Upgrade")
+      .header("Sec-WebSocket-Key", key)
+      .header("Sec-WebSocket-Version", "13")
+      .header("Sec-WebSocket-Extensions", "permessage-deflate")
+      .build()
     call = RealCall(webSocketClient, request, forWebSocket = true)
     call!!.enqueue(object : Callback {
       override fun onResponse(call: Call, response: Response) {
@@ -222,26 +226,30 @@ class RealWebSocket(
   internal fun checkUpgradeSuccess(response: Response, exchange: Exchange?) {
     if (response.code != 101) {
       throw ProtocolException(
-          "Expected HTTP 101 response but was '${response.code} ${response.message}'")
+        "Expected HTTP 101 response but was '${response.code} ${response.message}'"
+      )
     }
 
     val headerConnection = response.header("Connection")
     if (!"Upgrade".equals(headerConnection, ignoreCase = true)) {
       throw ProtocolException(
-          "Expected 'Connection' header value 'Upgrade' but was '$headerConnection'")
+        "Expected 'Connection' header value 'Upgrade' but was '$headerConnection'"
+      )
     }
 
     val headerUpgrade = response.header("Upgrade")
     if (!"websocket".equals(headerUpgrade, ignoreCase = true)) {
       throw ProtocolException(
-          "Expected 'Upgrade' header value 'websocket' but was '$headerUpgrade'")
+        "Expected 'Upgrade' header value 'websocket' but was '$headerUpgrade'"
+      )
     }
 
     val headerAccept = response.header("Sec-WebSocket-Accept")
     val acceptExpected = (key + WebSocketProtocol.ACCEPT_MAGIC).encodeUtf8().sha1().base64()
     if (acceptExpected != headerAccept) {
       throw ProtocolException(
-          "Expected 'Sec-WebSocket-Accept' header value '$acceptExpected' but was '$headerAccept'")
+        "Expected 'Sec-WebSocket-Accept' header value '$acceptExpected' but was '$headerAccept'"
+      )
     }
 
     if (exchange == null) {
@@ -256,12 +264,12 @@ class RealWebSocket(
       this.name = name
       this.streams = streams
       this.writer = WebSocketWriter(
-          isClient = streams.client,
-          sink = streams.sink,
-          random = random,
-          perMessageDeflate = extensions.perMessageDeflate,
-          noContextTakeover = extensions.noContextTakeover(streams.client),
-          minimumDeflateSize = minimumDeflateSize
+        isClient = streams.client,
+        sink = streams.sink,
+        random = random,
+        perMessageDeflate = extensions.perMessageDeflate,
+        noContextTakeover = extensions.noContextTakeover(streams.client),
+        minimumDeflateSize = minimumDeflateSize
       )
       this.writerTask = WriterTask()
       if (pingIntervalMillis != 0L) {
@@ -277,11 +285,11 @@ class RealWebSocket(
     }
 
     reader = WebSocketReader(
-        isClient = streams.client,
-        source = streams.source,
-        frameCallback = this,
-        perMessageDeflate = extensions.perMessageDeflate,
-        noContextTakeover = extensions.noContextTakeover(!streams.client)
+      isClient = streams.client,
+      source = streams.source,
+      frameCallback = this,
+      perMessageDeflate = extensions.perMessageDeflate,
+      noContextTakeover = extensions.noContextTakeover(!streams.client)
     )
   }
 
@@ -560,8 +568,13 @@ class RealWebSocket(
     }
 
     if (failedPing != -1) {
-      failWebSocket(SocketTimeoutException("sent ping but didn't receive pong within " +
-          "${pingIntervalMillis}ms (after ${failedPing - 1} successful ping/pongs)"), null)
+      failWebSocket(
+        SocketTimeoutException(
+          "sent ping but didn't receive pong within " +
+            "${pingIntervalMillis}ms (after ${failedPing - 1} successful ping/pongs)"
+        ),
+        null
+      )
       return
     }
 

@@ -17,6 +17,25 @@
 
 package okhttp3.internal
 
+import okhttp3.EventListener
+import okhttp3.Headers
+import okhttp3.Headers.Companion.headersOf
+import okhttp3.HttpUrl
+import okhttp3.OkHttp
+import okhttp3.OkHttpClient
+import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
+import okhttp3.ResponseBody.Companion.toResponseBody
+import okhttp3.internal.http2.Header
+import okio.Buffer
+import okio.BufferedSink
+import okio.BufferedSource
+import okio.ByteString.Companion.decodeHex
+import okio.ExperimentalFileSystem
+import okio.FileSystem
+import okio.Options
+import okio.Path
+import okio.Source
 import java.io.Closeable
 import java.io.FileNotFoundException
 import java.io.IOException
@@ -38,25 +57,6 @@ import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
 import kotlin.text.Charsets.UTF_32BE
 import kotlin.text.Charsets.UTF_32LE
-import okhttp3.EventListener
-import okhttp3.Headers
-import okhttp3.Headers.Companion.headersOf
-import okhttp3.HttpUrl
-import okhttp3.OkHttp
-import okhttp3.OkHttpClient
-import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.Response
-import okhttp3.ResponseBody.Companion.toResponseBody
-import okhttp3.internal.http2.Header
-import okio.Buffer
-import okio.BufferedSink
-import okio.BufferedSource
-import okio.ByteString.Companion.decodeHex
-import okio.ExperimentalFileSystem
-import okio.FileSystem
-import okio.Options
-import okio.Path
-import okio.Source
 
 @JvmField
 val EMPTY_BYTE_ARRAY = ByteArray(0)
@@ -70,11 +70,11 @@ val EMPTY_REQUEST = EMPTY_BYTE_ARRAY.toRequestBody()
 
 /** Byte order marks. */
 private val UNICODE_BOMS = Options.of(
-    "efbbbf".decodeHex(), // UTF-8
-    "feff".decodeHex(), // UTF-16BE
-    "fffe".decodeHex(), // UTF-16LE
-    "0000ffff".decodeHex(), // UTF-32BE
-    "ffff0000".decodeHex() // UTF-32LE
+  "efbbbf".decodeHex(), // UTF-8
+  "feff".decodeHex(), // UTF-16BE
+  "fffe".decodeHex(), // UTF-16LE
+  "0000ffff".decodeHex(), // UTF-32BE
+  "ffff0000".decodeHex() // UTF-32LE
 )
 
 /** GMT and UTC are equivalent for our purposes. */
@@ -92,7 +92,7 @@ val UTC = TimeZone.getTimeZone("GMT")!!
  * verification).
  */
 private val VERIFY_AS_IP_ADDRESS =
-    "([0-9a-fA-F]*:[0-9a-fA-F:.]*)|([\\d.]+)".toRegex()
+  "([0-9a-fA-F]*:[0-9a-fA-F:.]*)|([\\d.]+)".toRegex()
 
 fun checkOffsetAndCount(arrayLength: Long, offset: Long, count: Long) {
   if (offset or count < 0L || offset > arrayLength || arrayLength - offset < count) {
@@ -166,7 +166,7 @@ fun HttpUrl.toHostHeader(includeDefaultPort: Boolean = false): String {
 }
 
 fun Array<String>.indexOf(value: String, comparator: Comparator<String>): Int =
-    indexOfFirst { comparator.compare(it, value) == 0 }
+  indexOfFirst { comparator.compare(it, value) == 0 }
 
 @Suppress("UNCHECKED_CAST")
 fun Array<String>.concat(value: String): Array<String> {
@@ -252,9 +252,9 @@ fun String.canParseAsIpAddress(): Boolean {
 /** Returns true if we should void putting this this header in an exception or toString(). */
 fun isSensitiveHeader(name: String): Boolean {
   return name.equals("Authorization", ignoreCase = true) ||
-      name.equals("Cookie", ignoreCase = true) ||
-      name.equals("Proxy-Authorization", ignoreCase = true) ||
-      name.equals("Set-Cookie", ignoreCase = true)
+    name.equals("Cookie", ignoreCase = true) ||
+    name.equals("Proxy-Authorization", ignoreCase = true) ||
+    name.equals("Set-Cookie", ignoreCase = true)
 }
 
 /** Returns a [Locale.US] formatted [String]. */
@@ -305,8 +305,8 @@ fun Headers.toHeaderList(): List<Header> = (0 until size).map {
 
 /** Returns true if an HTTP request for this URL and [other] can reuse a connection. */
 fun HttpUrl.canReuseConnectionFor(other: HttpUrl): Boolean = host == other.host &&
-    port == other.port &&
-    scheme == other.scheme
+  port == other.port &&
+  scheme == other.scheme
 
 fun EventListener.asFactory() = EventListener.Factory { this }
 
@@ -323,9 +323,11 @@ fun BufferedSink.writeMedium(medium: Int) {
 
 @Throws(IOException::class)
 fun BufferedSource.readMedium(): Int {
-  return (readByte() and 0xff shl 16
+  return (
+    readByte() and 0xff shl 16
       or (readByte() and 0xff shl 8)
-      or (readByte() and 0xff))
+      or (readByte() and 0xff)
+    )
 }
 
 /**
@@ -643,7 +645,7 @@ val assertionsEnabled = OkHttpClient::class.java.desiredAssertionStatus()
  */
 @JvmField
 internal val okHttpName =
-    OkHttpClient::class.java.name.removePrefix("okhttp3.").removeSuffix("Client")
+  OkHttpClient::class.java.name.removePrefix("okhttp3.").removeSuffix("Client")
 
 @Suppress("NOTHING_TO_INLINE")
 inline fun Any.assertThreadHoldsLock() {

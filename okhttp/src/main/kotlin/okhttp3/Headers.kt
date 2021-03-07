@@ -17,6 +17,12 @@
 
 package okhttp3
 
+import okhttp3.Headers.Builder
+import okhttp3.internal.format
+import okhttp3.internal.http.toHttpDateOrNull
+import okhttp3.internal.http.toHttpDateString
+import okhttp3.internal.isSensitiveHeader
+import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 import java.time.Instant
 import java.util.ArrayList
 import java.util.Collections
@@ -24,12 +30,6 @@ import java.util.Date
 import java.util.Locale
 import java.util.TreeMap
 import java.util.TreeSet
-import okhttp3.Headers.Builder
-import okhttp3.internal.format
-import okhttp3.internal.http.toHttpDateOrNull
-import okhttp3.internal.http.toHttpDateString
-import okhttp3.internal.isSensitiveHeader
-import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 
 /**
  * The header fields of a single HTTP message. Values are uninterpreted strings; use `Request` and
@@ -76,9 +76,10 @@ class Headers private constructor(
 
   @JvmName("-deprecated_size")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "size"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "size"),
+    level = DeprecationLevel.ERROR
+  )
   fun size(): Int = size
 
   /** Returns the field at `position`. */
@@ -398,9 +399,10 @@ class Headers private constructor(
 
     @JvmName("-deprecated_of")
     @Deprecated(
-        message = "function name changed",
-        replaceWith = ReplaceWith(expression = "headersOf(*namesAndValues)"),
-        level = DeprecationLevel.ERROR)
+      message = "function name changed",
+      replaceWith = ReplaceWith(expression = "headersOf(*namesAndValues)"),
+      level = DeprecationLevel.ERROR
+    )
     fun of(vararg namesAndValues: String): Headers {
       return headersOf(*namesAndValues)
     }
@@ -427,9 +429,10 @@ class Headers private constructor(
 
     @JvmName("-deprecated_of")
     @Deprecated(
-        message = "function moved to extension",
-        replaceWith = ReplaceWith(expression = "headers.toHeaders()"),
-        level = DeprecationLevel.ERROR)
+      message = "function moved to extension",
+      replaceWith = ReplaceWith(expression = "headers.toHeaders()"),
+      level = DeprecationLevel.ERROR
+    )
     fun of(headers: Map<String, String>): Headers {
       return headers.toHeaders()
     }
@@ -449,7 +452,7 @@ class Headers private constructor(
         val c = value[i]
         require(c == '\t' || c in '\u0020'..'\u007e') {
           format("Unexpected char %#04x at %d in %s value", c.toInt(), i, name) +
-              (if (isSensitiveHeader(name)) "" else ": $value")
+            (if (isSensitiveHeader(name)) "" else ": $value")
         }
       }
     }

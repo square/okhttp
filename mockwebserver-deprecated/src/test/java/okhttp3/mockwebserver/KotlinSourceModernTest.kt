@@ -38,14 +38,14 @@ import javax.net.ssl.SSLSocketFactory
  * modern 4.0.x kotlin source-compatibility.
  */
 @Suppress(
-    "ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE",
-    "UNUSED_ANONYMOUS_PARAMETER",
-    "UNUSED_VALUE",
-    "UNUSED_VARIABLE",
-    "VARIABLE_WITH_REDUNDANT_INITIALIZER",
-    "RedundantLambdaArrow",
-    "RedundantExplicitType",
-    "IMPLICIT_NOTHING_AS_TYPE_PARAMETER"
+  "ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE",
+  "UNUSED_ANONYMOUS_PARAMETER",
+  "UNUSED_VALUE",
+  "UNUSED_VARIABLE",
+  "VARIABLE_WITH_REDUNDANT_INITIALIZER",
+  "RedundantLambdaArrow",
+  "RedundantExplicitType",
+  "IMPLICIT_NOTHING_AS_TYPE_PARAMETER"
 )
 class KotlinSourceModernTest {
   @Test @Ignore
@@ -147,7 +147,8 @@ class KotlinSourceModernTest {
   fun queueDispatcher() {
     val queueDispatcher: QueueDispatcher = QueueDispatcher()
     var mockResponse: MockResponse = queueDispatcher.dispatch(
-        RecordedRequest("", headersOf(), listOf(), 0L, Buffer(), 0, Socket()))
+      RecordedRequest("", headersOf(), listOf(), 0L, Buffer(), 0, Socket())
+    )
     mockResponse = queueDispatcher.peek()
     queueDispatcher.enqueueResponse(MockResponse())
     queueDispatcher.shutdown()
@@ -158,7 +159,8 @@ class KotlinSourceModernTest {
   @Test @Ignore
   fun recordedRequest() {
     var recordedRequest: RecordedRequest = RecordedRequest(
-        "", headersOf(), listOf(), 0L, Buffer(), 0, Socket())
+      "", headersOf(), listOf(), 0L, Buffer(), 0, Socket()
+    )
     recordedRequest = RecordedRequest("", headersOf(), listOf(), 0L, Buffer(), 0, Socket())
     var requestUrl: HttpUrl? = recordedRequest.requestUrl
     var requestLine: String = recordedRequest.requestLine

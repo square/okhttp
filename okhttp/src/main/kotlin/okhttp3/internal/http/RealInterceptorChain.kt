@@ -15,8 +15,6 @@
  */
 package okhttp3.internal.http
 
-import java.io.IOException
-import java.util.concurrent.TimeUnit
 import okhttp3.Call
 import okhttp3.Connection
 import okhttp3.Interceptor
@@ -25,6 +23,8 @@ import okhttp3.Response
 import okhttp3.internal.checkDuration
 import okhttp3.internal.connection.Exchange
 import okhttp3.internal.connection.RealCall
+import java.io.IOException
+import java.util.concurrent.TimeUnit
 
 /**
  * A concrete interceptor chain that carries the entire interceptor chain: all application
@@ -53,8 +53,10 @@ class RealInterceptorChain(
     connectTimeoutMillis: Int = this.connectTimeoutMillis,
     readTimeoutMillis: Int = this.readTimeoutMillis,
     writeTimeoutMillis: Int = this.writeTimeoutMillis
-  ) = RealInterceptorChain(call, interceptors, index, exchange, request, connectTimeoutMillis,
-      readTimeoutMillis, writeTimeoutMillis)
+  ) = RealInterceptorChain(
+    call, interceptors, index, exchange, request, connectTimeoutMillis,
+    readTimeoutMillis, writeTimeoutMillis
+  )
 
   override fun connection(): Connection? = exchange?.connection
 
@@ -107,7 +109,8 @@ class RealInterceptorChain(
 
     @Suppress("USELESS_ELVIS")
     val response = interceptor.intercept(next) ?: throw NullPointerException(
-        "interceptor $interceptor returned null")
+      "interceptor $interceptor returned null"
+    )
 
     if (exchange != null) {
       check(index + 1 >= interceptors.size || next.calls == 1) {

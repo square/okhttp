@@ -44,7 +44,7 @@ import java.util.ArrayDeque
 import java.util.NoSuchElementException
 
 @OptIn(ExperimentalFileSystem::class)
-class FilesystemParamProvider: SimpleProvider() {
+class FilesystemParamProvider : SimpleProvider() {
   override fun arguments() = listOf(
     FakeFileSystem() to false,
     FileSystem.SYSTEM to TestUtil.windows,
@@ -177,8 +177,10 @@ class DiskLruCacheTest {
       assertThat(iae.message).isEqualTo("keys must match regex [a-z0-9_-]{1,120}: \"$key\"")
     }
     try {
-      key = ("this_is_way_too_long_this_is_way_too_long_this_is_way_too_long_" +
-          "this_is_way_too_long_this_is_way_too_long_this_is_way_too_long")
+      key = (
+        "this_is_way_too_long_this_is_way_too_long_this_is_way_too_long_" +
+          "this_is_way_too_long_this_is_way_too_long_this_is_way_too_long"
+        )
       cache.edit(key)
       fail("Expecting an IllegalArgumentException as the key was too long.")
     } catch (iae: IllegalArgumentException) {
@@ -188,8 +190,10 @@ class DiskLruCacheTest {
     // Test valid cases.
 
     // Exactly 120.
-    key = ("0123456789012345678901234567890123456789012345678901234567890123456789" +
-        "01234567890123456789012345678901234567890123456789")
+    key = (
+      "0123456789012345678901234567890123456789012345678901234567890123456789" +
+        "01234567890123456789012345678901234567890123456789"
+      )
     cache.edit(key)!!.abort()
     // Contains all valid characters.
     key = "abcdefghijklmnopqrstuvwxyz_0123456789"

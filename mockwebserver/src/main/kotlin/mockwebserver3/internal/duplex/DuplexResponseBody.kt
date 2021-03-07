@@ -15,9 +15,9 @@
  */
 package mockwebserver3.internal.duplex
 
-import java.io.IOException
-import okhttp3.internal.http2.Http2Stream
 import mockwebserver3.RecordedRequest
+import okhttp3.internal.http2.Http2Stream
+import java.io.IOException
 
 interface DuplexResponseBody {
   @Throws(IOException::class)

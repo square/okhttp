@@ -15,16 +15,6 @@
  */
 package okhttp3.recipes.kt
 
-import java.io.File
-import java.io.IOException
-import java.lang.ProcessBuilder.Redirect
-import java.util.logging.Handler
-import java.util.logging.Level
-import java.util.logging.LogRecord
-import java.util.logging.Logger
-import javax.crypto.SecretKey
-import javax.net.ssl.SSLSession
-import javax.net.ssl.SSLSocket
 import okhttp3.Call
 import okhttp3.Connection
 import okhttp3.ConnectionSpec
@@ -40,6 +30,16 @@ import okhttp3.recipes.kt.WireSharkListenerFactory.WireSharkKeyLoggerListener.La
 import okhttp3.recipes.kt.WireSharkListenerFactory.WireSharkKeyLoggerListener.Launch.CommandLine
 import okhttp3.recipes.kt.WireSharkListenerFactory.WireSharkKeyLoggerListener.Launch.Gui
 import okio.ByteString.Companion.toByteString
+import java.io.File
+import java.io.IOException
+import java.lang.ProcessBuilder.Redirect
+import java.util.logging.Handler
+import java.util.logging.Level
+import java.util.logging.LogRecord
+import java.util.logging.Logger
+import javax.crypto.SecretKey
+import javax.net.ssl.SSLSession
+import javax.net.ssl.SSLSocket
 
 /**
  * Logs SSL keys to a log file, allowing Wireshark to decode traffic and be examined with http2
@@ -88,22 +88,24 @@ class WireSharkListenerFactory(
       }
       CommandLine -> {
         return ProcessBuilder(
-            "tshark", "-l", "-V", "-o", "tls.keylog_file:$logFile", "-Y", "http2", "-O", "http2,tls")
-            .redirectInput(File("/dev/null"))
-            .redirectOutput(Redirect.INHERIT)
-            .redirectError(Redirect.INHERIT)
-            .start()
+          "tshark", "-l", "-V", "-o", "tls.keylog_file:$logFile", "-Y", "http2", "-O", "http2,tls"
+        )
+          .redirectInput(File("/dev/null"))
+          .redirectOutput(Redirect.INHERIT)
+          .redirectError(Redirect.INHERIT)
+          .start()
       }
       Gui -> {
         return ProcessBuilder(
-            "nohup", "wireshark", "-o", "tls.keylog_file:$logFile", "-S", "-l", "-Y", "http2", "-k")
-            .redirectInput(File("/dev/null"))
-            .redirectOutput(File("/dev/null"))
-            .redirectError(Redirect.INHERIT)
-            .start().also {
-              // Give it time to start collecting
-              Thread.sleep(2000)
-            }
+          "nohup", "wireshark", "-o", "tls.keylog_file:$logFile", "-S", "-l", "-Y", "http2", "-k"
+        )
+          .redirectInput(File("/dev/null"))
+          .redirectOutput(File("/dev/null"))
+          .redirectError(Redirect.INHERIT)
+          .start().also {
+            // Give it time to start collecting
+            Thread.sleep(2000)
+          }
       }
     }
 
@@ -205,7 +207,7 @@ class WireSharkListenerFactory(
         val session = sslSocket.session
 
         val masterSecretHex = session.masterSecret?.encoded?.toByteString()
-            ?.hex()
+          ?.hex()
 
         if (masterSecretHex != null) {
           val keyLog = "CLIENT_RANDOM $random $masterSecretHex"
@@ -230,10 +232,10 @@ class WireSharkListenerFactory(
 
     private val SSLSession.masterSecret: SecretKey?
       get() = javaClass.getDeclaredField("masterSecret")
-          .apply {
-            isAccessible = true
-          }
-          .get(this) as? SecretKey
+        .apply {
+          isAccessible = true
+        }
+        .get(this) as? SecretKey
 
     val randomRegex = "\"random\"\\s+:\\s+\"([^\"]+)\"".toRegex()
 
@@ -241,10 +243,10 @@ class WireSharkListenerFactory(
       // Enable JUL logging for SSL events, must be activated early or via -D option.
       System.setProperty("javax.net.debug", "")
       logger = Logger.getLogger("javax.net.ssl")
-          .apply {
-            level = Level.FINEST
-            useParentHandlers = false
-          }
+        .apply {
+          level = Level.FINEST
+          useParentHandlers = false
+        }
     }
   }
 }
@@ -253,30 +255,31 @@ class WireSharkListenerFactory(
 class WiresharkExample(tlsVersions: List<TlsVersion>, private val launch: Launch? = null) {
   private val connectionSpec =
     ConnectionSpec.Builder(ConnectionSpec.RESTRICTED_TLS)
-        .tlsVersions(*tlsVersions.toTypedArray())
-        .build()
+      .tlsVersions(*tlsVersions.toTypedArray())
+      .build()
 
   private val eventListenerFactory = WireSharkListenerFactory(
-      logFile = File("/tmp/key.log"), tlsVersions = tlsVersions, launch = launch)
+    logFile = File("/tmp/key.log"), tlsVersions = tlsVersions, launch = launch
+  )
 
   val client = OkHttpClient.Builder()
-      .connectionSpecs(listOf(connectionSpec))
-      .eventListenerFactory(eventListenerFactory)
-      .build()
+    .connectionSpecs(listOf(connectionSpec))
+    .eventListenerFactory(eventListenerFactory)
+    .build()
 
   fun run() {
     // Launch wireshark in the background
     val process = eventListenerFactory.launchWireShark()
 
     val fbRequest = Request.Builder()
-        .url("https://graph.facebook.com/robots.txt?s=fb")
-        .build()
+      .url("https://graph.facebook.com/robots.txt?s=fb")
+      .build()
     val twitterRequest = Request.Builder()
-        .url("https://api.twitter.com/robots.txt?s=tw")
-        .build()
+      .url("https://api.twitter.com/robots.txt?s=tw")
+      .build()
     val googleRequest = Request.Builder()
-        .url("https://www.google.com/robots.txt?s=g")
-        .build()
+      .url("https://www.google.com/robots.txt?s=g")
+      .build()
 
     try {
       for (i in 1..2) {
@@ -305,16 +308,16 @@ class WiresharkExample(tlsVersions: List<TlsVersion>, private val launch: Launch
       }
 
       client.newCall(request)
-          .execute()
-          .use {
-            val firstLine = it.body!!.string()
-                .lines()
-                .first()
-            if (this.launch != CommandLine) {
-              println("${it.code} ${it.request.url.host} $firstLine")
-            }
-            Unit
+        .execute()
+        .use {
+          val firstLine = it.body!!.string()
+            .lines()
+            .first()
+          if (this.launch != CommandLine) {
+            println("${it.code} ${it.request.url.host} $firstLine")
           }
+          Unit
+        }
     } catch (e: IOException) {
       System.err.println(e)
     }

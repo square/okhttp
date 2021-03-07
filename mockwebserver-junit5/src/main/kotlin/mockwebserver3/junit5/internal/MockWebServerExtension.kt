@@ -15,9 +15,6 @@
  */
 package mockwebserver3.junit5.internal
 
-import java.io.IOException
-import java.util.logging.Level
-import java.util.logging.Logger
 import mockwebserver3.MockWebServer
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 import org.junit.jupiter.api.extension.AfterAllCallback
@@ -27,10 +24,13 @@ import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.ParameterContext
 import org.junit.jupiter.api.extension.ParameterResolver
+import java.io.IOException
+import java.util.logging.Level
+import java.util.logging.Logger
 
 /** Runs MockWebServer for the duration of a single test method. */
-class MockWebServerExtension
-  : BeforeAllCallback, BeforeEachCallback, AfterAllCallback, AfterEachCallback, ParameterResolver {
+class MockWebServerExtension :
+  BeforeAllCallback, BeforeEachCallback, AfterAllCallback, AfterEachCallback, ParameterResolver {
   private val ExtensionContext.resource: Resource
     get() {
       val store = getStore(namespace)

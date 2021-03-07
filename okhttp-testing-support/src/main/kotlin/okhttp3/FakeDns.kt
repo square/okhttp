@@ -15,9 +15,9 @@
  */
 package okhttp3
 
+import org.assertj.core.api.Assertions.assertThat
 import java.net.InetAddress
 import java.net.UnknownHostException
-import org.assertj.core.api.Assertions.assertThat
 
 class FakeDns : Dns {
   private val hostAddresses: MutableMap<String, List<InetAddress>> = mutableMapOf()
@@ -66,12 +66,12 @@ class FakeDns : Dns {
           throw AssertionError("too many addresses allocated")
         }
         result.add(
-            InetAddress.getByAddress(
-                byteArrayOf(
-                    255.toByte(), 0.toByte(), 0.toByte(),
-                    nextAddress++.toByte()
-                )
+          InetAddress.getByAddress(
+            byteArrayOf(
+              255.toByte(), 0.toByte(), 0.toByte(),
+              nextAddress++.toByte()
             )
+          )
         )
       }
       result

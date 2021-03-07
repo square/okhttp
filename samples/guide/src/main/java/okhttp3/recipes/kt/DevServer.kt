@@ -15,14 +15,14 @@
  */
 package okhttp3.recipes.kt
 
-import java.io.IOException
-import java.net.HttpURLConnection.HTTP_MOVED_TEMP
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.internal.TlsUtil
+import java.io.IOException
+import java.net.HttpURLConnection.HTTP_MOVED_TEMP
 
 class DevServer {
   val handshakeCertificates = TlsUtil.localhost()
@@ -30,25 +30,27 @@ class DevServer {
   val server = MockWebServer().apply {
     useHttps(handshakeCertificates.sslSocketFactory(), false)
 
-    enqueue(MockResponse()
+    enqueue(
+      MockResponse()
         .setResponseCode(HTTP_MOVED_TEMP)
-        .setHeader("Location", "https://www.google.com/robots.txt"))
+        .setHeader("Location", "https://www.google.com/robots.txt")
+    )
   }
 
   val clientCertificates = HandshakeCertificates.Builder()
-      .addPlatformTrustedCertificates()
-      .addInsecureHost(server.hostName)
-      .build()
+    .addPlatformTrustedCertificates()
+    .addInsecureHost(server.hostName)
+    .build()
 
   val client = OkHttpClient.Builder()
-      .sslSocketFactory(clientCertificates.sslSocketFactory(), clientCertificates.trustManager)
-      .build()
+    .sslSocketFactory(clientCertificates.sslSocketFactory(), clientCertificates.trustManager)
+    .build()
 
   fun run() {
     try {
       val request = Request.Builder()
-          .url(server.url("/"))
-          .build()
+        .url(server.url("/"))
+        .build()
 
       client.newCall(request).execute().use { response ->
         if (!response.isSuccessful) throw IOException("Unexpected code $response")

@@ -16,11 +16,11 @@
  */
 package okhttp3.internal.tls
 
+import okhttp3.internal.platform.Platform
 import java.security.cert.Certificate
 import java.security.cert.X509Certificate
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.X509TrustManager
-import okhttp3.internal.platform.Platform
 
 /**
  * Computes the effective certificate chain from the raw array returned by Java's built in TLS APIs.

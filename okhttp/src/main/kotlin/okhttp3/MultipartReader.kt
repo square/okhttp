@@ -15,9 +15,6 @@
  */
 package okhttp3
 
-import java.io.Closeable
-import java.io.IOException
-import java.net.ProtocolException
 import okhttp3.internal.http1.HeadersReader
 import okio.Buffer
 import okio.BufferedSource
@@ -26,6 +23,9 @@ import okio.Options
 import okio.Source
 import okio.Timeout
 import okio.buffer
+import java.io.Closeable
+import java.io.IOException
+import java.net.ProtocolException
 
 /**
  * Reads a stream of [RFC 2046][rfc_2046] multipart body parts. Callers read parts one-at-a-time
@@ -60,18 +60,18 @@ class MultipartReader @Throws(IOException::class) constructor(
 ) : Closeable {
   /** This delimiter typically precedes the first part. */
   private val dashDashBoundary = Buffer()
-      .writeUtf8("--")
-      .writeUtf8(boundary)
-      .readByteString()
+    .writeUtf8("--")
+    .writeUtf8(boundary)
+    .readByteString()
 
   /**
    * This delimiter typically precedes all subsequent parts. It may also precede the first part
    * if the body contains a preamble.
    */
   private val crlfDashDashBoundary = Buffer()
-      .writeUtf8("\r\n--")
-      .writeUtf8(boundary)
-      .readByteString()
+    .writeUtf8("\r\n--")
+    .writeUtf8(boundary)
+    .readByteString()
 
   private var partCount = 0
   private var closed = false
@@ -82,9 +82,9 @@ class MultipartReader @Throws(IOException::class) constructor(
 
   @Throws(IOException::class)
   constructor(response: ResponseBody) : this(
-      source = response.source(),
-      boundary = response.contentType()?.parameter("boundary")
-          ?: throw ProtocolException("expected the Content-Type to have a boundary parameter")
+    source = response.source(),
+    boundary = response.contentType()?.parameter("boundary")
+      ?: throw ProtocolException("expected the Content-Type to have a boundary parameter")
   )
 
   @Throws(IOException::class)
@@ -200,10 +200,10 @@ class MultipartReader @Throws(IOException::class) constructor(
   internal companion object {
     /** These options follow the boundary. */
     val afterBoundaryOptions = Options.of(
-        "\r\n".encodeUtf8(), // 0.  "\r\n"  More parts.
-        "--".encodeUtf8(), //   1.  "--"    No more parts.
-        " ".encodeUtf8(), //    2.  " "     Optional whitespace. Only used if there are more parts.
-        "\t".encodeUtf8() //    3.  "\t"    Optional whitespace. Only used if there are more parts.
+      "\r\n".encodeUtf8(), // 0.  "\r\n"  More parts.
+      "--".encodeUtf8(), //   1.  "--"    No more parts.
+      " ".encodeUtf8(), //    2.  " "     Optional whitespace. Only used if there are more parts.
+      "\t".encodeUtf8() //    3.  "\t"    Optional whitespace. Only used if there are more parts.
     )
   }
 }

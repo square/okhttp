@@ -15,9 +15,9 @@
  */
 package okhttp3
 
-import java.util.concurrent.TimeUnit
 import okhttp3.internal.indexOfNonWhitespace
 import okhttp3.internal.toNonNegativeInt
+import java.util.concurrent.TimeUnit
 
 /**
  * A Cache-Control header with cache directives from a server or client. These directives set policy
@@ -72,72 +72,82 @@ class CacheControl private constructor(
 ) {
   @JvmName("-deprecated_noCache")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "noCache"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "noCache"),
+    level = DeprecationLevel.ERROR
+  )
   fun noCache() = noCache
 
   @JvmName("-deprecated_noStore")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "noStore"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "noStore"),
+    level = DeprecationLevel.ERROR
+  )
   fun noStore() = noStore
 
   @JvmName("-deprecated_maxAgeSeconds")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "maxAgeSeconds"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "maxAgeSeconds"),
+    level = DeprecationLevel.ERROR
+  )
   fun maxAgeSeconds() = maxAgeSeconds
 
   @JvmName("-deprecated_sMaxAgeSeconds")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "sMaxAgeSeconds"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "sMaxAgeSeconds"),
+    level = DeprecationLevel.ERROR
+  )
   fun sMaxAgeSeconds() = sMaxAgeSeconds
 
   @JvmName("-deprecated_mustRevalidate")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "mustRevalidate"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "mustRevalidate"),
+    level = DeprecationLevel.ERROR
+  )
   fun mustRevalidate() = mustRevalidate
 
   @JvmName("-deprecated_maxStaleSeconds")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "maxStaleSeconds"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "maxStaleSeconds"),
+    level = DeprecationLevel.ERROR
+  )
   fun maxStaleSeconds() = maxStaleSeconds
 
   @JvmName("-deprecated_minFreshSeconds")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "minFreshSeconds"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "minFreshSeconds"),
+    level = DeprecationLevel.ERROR
+  )
   fun minFreshSeconds() = minFreshSeconds
 
   @JvmName("-deprecated_onlyIfCached")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "onlyIfCached"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "onlyIfCached"),
+    level = DeprecationLevel.ERROR
+  )
   fun onlyIfCached() = onlyIfCached
 
   @JvmName("-deprecated_noTransform")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "noTransform"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "noTransform"),
+    level = DeprecationLevel.ERROR
+  )
   fun noTransform() = noTransform
 
   @JvmName("-deprecated_immutable")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "immutable"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "immutable"),
+    level = DeprecationLevel.ERROR
+  )
   fun immutable() = immutable
 
   override fun toString(): String {
@@ -250,8 +260,10 @@ class CacheControl private constructor(
     }
 
     fun build(): CacheControl {
-      return CacheControl(noCache, noStore, maxAgeSeconds, -1, false, false, false, maxStaleSeconds,
-          minFreshSeconds, onlyIfCached, noTransform, immutable, null)
+      return CacheControl(
+        noCache, noStore, maxAgeSeconds, -1, false, false, false, maxStaleSeconds,
+        minFreshSeconds, onlyIfCached, noTransform, immutable, null
+      )
     }
   }
 
@@ -262,8 +274,8 @@ class CacheControl private constructor(
      */
     @JvmField
     val FORCE_NETWORK = Builder()
-        .noCache()
-        .build()
+      .noCache()
+      .build()
 
     /**
      * Cache control request directives that uses the cache only, even if the cached response is
@@ -272,9 +284,9 @@ class CacheControl private constructor(
      */
     @JvmField
     val FORCE_CACHE = Builder()
-        .onlyIfCached()
-        .maxStale(Integer.MAX_VALUE, TimeUnit.SECONDS)
-        .build()
+      .onlyIfCached()
+      .maxStale(Integer.MAX_VALUE, TimeUnit.SECONDS)
+      .build()
 
     /**
      * Returns the cache directives of [headers]. This honors both Cache-Control and Pragma headers
@@ -394,9 +406,11 @@ class CacheControl private constructor(
         headerValue = null
       }
 
-      return CacheControl(noCache, noStore, maxAgeSeconds, sMaxAgeSeconds, isPrivate, isPublic,
-          mustRevalidate, maxStaleSeconds, minFreshSeconds, onlyIfCached, noTransform, immutable,
-          headerValue)
+      return CacheControl(
+        noCache, noStore, maxAgeSeconds, sMaxAgeSeconds, isPrivate, isPublic,
+        mustRevalidate, maxStaleSeconds, minFreshSeconds, onlyIfCached, noTransform, immutable,
+        headerValue
+      )
     }
 
     /**

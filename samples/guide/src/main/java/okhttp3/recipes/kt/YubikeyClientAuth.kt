@@ -15,6 +15,10 @@
  */
 package okhttp3.recipes.kt
 
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.internal.SuppressSignatureCheck
+import okhttp3.internal.platform.Platform
 import java.io.IOException
 import java.security.KeyStore
 import java.security.SecureRandom
@@ -28,10 +32,6 @@ import javax.security.auth.callback.Callback
 import javax.security.auth.callback.CallbackHandler
 import javax.security.auth.callback.PasswordCallback
 import javax.security.auth.callback.UnsupportedCallbackException
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.internal.SuppressSignatureCheck
-import okhttp3.internal.platform.Platform
 
 /**
  * Example of using a hardware key to perform client auth.
@@ -62,10 +62,10 @@ class YubikeyClientAuth() {
     val callbackHandler = ConsoleCallbackHandler
 
     val builderList: List<KeyStore.Builder> = Arrays.asList(
-        KeyStore.Builder.newInstance("PKCS11", null, KeyStore.CallbackHandlerProtection(callbackHandler))
+      KeyStore.Builder.newInstance("PKCS11", null, KeyStore.CallbackHandlerProtection(callbackHandler))
 
-        // Example if you want to combine multiple keystore types
-        // KeyStore.Builder.newInstance("PKCS12", null, File("keystore.p12"), PasswordProtection("rosebud".toCharArray()))
+      // Example if you want to combine multiple keystore types
+      // KeyStore.Builder.newInstance("PKCS12", null, File("keystore.p12"), PasswordProtection("rosebud".toCharArray()))
     )
 
     val keyManagerFactory = KeyManagerFactory.getInstance("NewSunX509")
@@ -78,13 +78,13 @@ class YubikeyClientAuth() {
     sslContext.init(arrayOf(keyManager), arrayOf(trustManager), SecureRandom())
 
     val client = OkHttpClient.Builder()
-        .sslSocketFactory(sslContext.socketFactory, trustManager)
-        .build()
+      .sslSocketFactory(sslContext.socketFactory, trustManager)
+      .build()
 
     // An example test URL that returns client certificate details.
     val request = Request.Builder()
-        .url("https://prod.idrix.eu/secure/")
-        .build()
+      .url("https://prod.idrix.eu/secure/")
+      .build()
 
     client.newCall(request).execute().use { response ->
       if (!response.isSuccessful) throw IOException("Unexpected code $response")

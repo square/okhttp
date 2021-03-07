@@ -5,14 +5,14 @@ include(":mockwebserver-deprecated")
 include(":mockwebserver-junit4")
 include(":mockwebserver-junit5")
 
-if (System.getProperties().containsKey("android.injected.invoked.from.ide") ||
-        System.getenv("ANDROID_SDK_ROOT") != null) {
-  // Currently incompatible with Intellij, use with Android Studio and from CLI with explicit flag
-  include(":android-test")
-  include(":regression-test")
-}
-
-include(":native-image-tests")
+// if (System.getProperties().containsKey("android.injected.invoked.from.ide") ||
+//         System.getenv("ANDROID_SDK_ROOT") != null) {
+//   // Currently incompatible with Intellij, use with Android Studio and from CLI with explicit flag
+//   include(":android-test")
+//   include(":regression-test")
+// }
+//
+// include(":native-image-tests")
 
 include(":okcurl")
 include(":okhttp")

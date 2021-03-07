@@ -15,14 +15,14 @@
  */
 package okhttp3
 
+import okhttp3.internal.immutableListOf
+import okhttp3.internal.toImmutableList
 import java.io.IOException
 import java.security.Principal
 import java.security.cert.Certificate
 import java.security.cert.X509Certificate
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSession
-import okhttp3.internal.immutableListOf
-import okhttp3.internal.toImmutableList
 
 /**
  * A record of a TLS handshake. For HTTPS clients, the client is *local* and the remote server is
@@ -58,23 +58,26 @@ class Handshake internal constructor(
 
   @JvmName("-deprecated_tlsVersion")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "tlsVersion"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "tlsVersion"),
+    level = DeprecationLevel.ERROR
+  )
   fun tlsVersion() = tlsVersion
 
   @JvmName("-deprecated_cipherSuite")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "cipherSuite"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "cipherSuite"),
+    level = DeprecationLevel.ERROR
+  )
   fun cipherSuite() = cipherSuite
 
   @JvmName("-deprecated_peerCertificates")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "peerCertificates"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "peerCertificates"),
+    level = DeprecationLevel.ERROR
+  )
   fun peerCertificates() = peerCertificates
 
   /** Returns the remote peer's principle, or null if that peer is anonymous. */
@@ -84,16 +87,18 @@ class Handshake internal constructor(
 
   @JvmName("-deprecated_peerPrincipal")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "peerPrincipal"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "peerPrincipal"),
+    level = DeprecationLevel.ERROR
+  )
   fun peerPrincipal() = peerPrincipal
 
   @JvmName("-deprecated_localCertificates")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "localCertificates"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "localCertificates"),
+    level = DeprecationLevel.ERROR
+  )
   fun localCertificates() = localCertificates
 
   /** Returns the local principle, or null if this peer is anonymous. */
@@ -103,17 +108,18 @@ class Handshake internal constructor(
 
   @JvmName("-deprecated_localPrincipal")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "localPrincipal"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "localPrincipal"),
+    level = DeprecationLevel.ERROR
+  )
   fun localPrincipal() = localPrincipal
 
   override fun equals(other: Any?): Boolean {
     return other is Handshake &&
-        other.tlsVersion == tlsVersion &&
-        other.cipherSuite == cipherSuite &&
-        other.peerCertificates == peerCertificates &&
-        other.localCertificates == localCertificates
+      other.tlsVersion == tlsVersion &&
+      other.cipherSuite == cipherSuite &&
+      other.peerCertificates == peerCertificates &&
+      other.localCertificates == localCertificates
   }
 
   override fun hashCode(): Int {
@@ -128,10 +134,10 @@ class Handshake internal constructor(
   override fun toString(): String {
     val peerCertificatesString = peerCertificates.map { it.name }.toString()
     return "Handshake{" +
-        "tlsVersion=$tlsVersion " +
-        "cipherSuite=$cipherSuite " +
-        "peerCertificates=$peerCertificatesString " +
-        "localCertificates=${localCertificates.map { it.name }}}"
+      "tlsVersion=$tlsVersion " +
+      "cipherSuite=$cipherSuite " +
+      "peerCertificates=$peerCertificatesString " +
+      "localCertificates=${localCertificates.map { it.name }}}"
   }
 
   private val Certificate.name: String
@@ -163,8 +169,10 @@ class Handshake internal constructor(
         listOf()
       }
 
-      return Handshake(tlsVersion, cipherSuite,
-          localCertificates.toImmutableList()) { peerCertificatesCopy }
+      return Handshake(
+        tlsVersion, cipherSuite,
+        localCertificates.toImmutableList()
+      ) { peerCertificatesCopy }
     }
 
     private fun Array<out Certificate>?.toImmutableList(): List<Certificate> {
@@ -178,9 +186,10 @@ class Handshake internal constructor(
     @Throws(IOException::class)
     @JvmName("-deprecated_get")
     @Deprecated(
-        message = "moved to extension function",
-        replaceWith = ReplaceWith(expression = "sslSession.handshake()"),
-        level = DeprecationLevel.ERROR)
+      message = "moved to extension function",
+      replaceWith = ReplaceWith(expression = "sslSession.handshake()"),
+      level = DeprecationLevel.ERROR
+    )
     fun get(sslSession: SSLSession) = sslSession.handshake()
 
     @JvmStatic
