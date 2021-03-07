@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import java.io.Closeable
 import java.util.logging.Handler
 import java.util.logging.LogRecord
 
@@ -63,9 +64,9 @@ object JsseDebugLogging {
     }
   }
 
-  fun enableJsseDebugLogging(debugHandler: (JsseDebugMessage) -> Unit = this::quietDebug) {
+  fun enableJsseDebugLogging(debugHandler: (JsseDebugMessage) -> Unit = this::quietDebug): Closeable {
     System.setProperty("javax.net.debug", "")
-    OkHttpDebugLogging.enable("javax.net.ssl", object : Handler() {
+    return OkHttpDebugLogging.enable("javax.net.ssl", object : Handler() {
       override fun publish(record: LogRecord) {
         val param = record.parameters?.firstOrNull() as? String
         debugHandler(JsseDebugMessage(record.message, param))

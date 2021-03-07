@@ -17,6 +17,7 @@ package okhttp3
 
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.http2.Http2
+import java.io.Closeable
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.logging.ConsoleHandler
 import java.util.logging.Handler
@@ -42,11 +43,14 @@ object OkHttpDebugLogging {
     }
   }
 
-  fun enable(loggerClass: String, handler: Handler = logHandler()) {
+  fun enable(loggerClass: String, handler: Handler = logHandler()): Closeable {
     val logger = Logger.getLogger(loggerClass)
     if (configuredLoggers.add(logger)) {
       logger.addHandler(handler)
       logger.level = Level.FINEST
+    }
+    return Closeable {
+      logger.removeHandler(handler)
     }
   }
 
