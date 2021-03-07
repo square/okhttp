@@ -15,6 +15,12 @@
  */
 package okhttp3.dnsoverhttps
 
+import java.io.IOException
+import java.net.HttpURLConnection
+import java.net.InetAddress
+import java.net.UnknownHostException
+import java.util.ArrayList
+import java.util.concurrent.CountDownLatch
 import okhttp3.CacheControl
 import okhttp3.Call
 import okhttp3.Callback
@@ -29,30 +35,24 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
-import java.io.IOException
-import java.net.HttpURLConnection
-import java.net.InetAddress
-import java.net.UnknownHostException
-import java.util.ArrayList
-import java.util.concurrent.CountDownLatch
 
 /**
- * [DNS over HTTPS implementation][doh_spec].
+ * [DNS over HTTPS implementation] [doh_spec].
  *
- * > A DNS API client encodes a single DNS query into an HTTP request
- * > using either the HTTP GET or POST method and the other requirements
- * > of this section.  The DNS API server defines the URI used by the
- * > request through the use of a URI Template.
+ * > A DNS API client encodes a single DNS query into an HTTP request > using either the HTTP GET or
+ * POST method and the other requirements > of this section. The DNS API server defines the URI used
+ * by the > request through the use of a URI Template.
  *
  * [doh_spec]: https://tools.ietf.org/html/draft-ietf-doh-dns-over-https-13
  */
-class DnsOverHttps internal constructor(
-  @get:JvmName("client") val client: OkHttpClient,
-  @get:JvmName("url") val url: HttpUrl,
-  @get:JvmName("includeIPv6") val includeIPv6: Boolean,
-  @get:JvmName("post") val post: Boolean,
-  @get:JvmName("resolvePrivateAddresses") val resolvePrivateAddresses: Boolean,
-  @get:JvmName("resolvePublicAddresses") val resolvePublicAddresses: Boolean
+class DnsOverHttps
+internal constructor(
+    @get:JvmName("client") val client: OkHttpClient,
+    @get:JvmName("url") val url: HttpUrl,
+    @get:JvmName("includeIPv6") val includeIPv6: Boolean,
+    @get:JvmName("post") val post: Boolean,
+    @get:JvmName("resolvePrivateAddresses") val resolvePrivateAddresses: Boolean,
+    @get:JvmName("resolvePublicAddresses") val resolvePublicAddresses: Boolean
 ) : Dns {
   @Throws(UnknownHostException::class)
   override fun lookup(hostname: String): List<InetAddress> {
@@ -93,44 +93,40 @@ class DnsOverHttps internal constructor(
   }
 
   private fun buildRequest(
-    hostname: String,
-    networkRequests: MutableList<Call>,
-    results: MutableList<InetAddress>,
-    failures: MutableList<Exception>,
-    type: Int
+      hostname: String,
+      networkRequests: MutableList<Call>,
+      results: MutableList<InetAddress>,
+      failures: MutableList<Exception>,
+      type: Int
   ) {
     val request = buildRequest(hostname, type)
     val response = getCacheOnlyResponse(request)
 
-    response?.let { processResponse(it, hostname, results, failures) } ?: networkRequests.add(
-      client.newCall(request)
-    )
+    response?.let { processResponse(it, hostname, results, failures) }
+        ?: networkRequests.add(client.newCall(request))
   }
 
   private fun executeRequests(
-    hostname: String,
-    networkRequests: List<Call>,
-    responses: MutableList<InetAddress>,
-    failures: MutableList<Exception>
+      hostname: String,
+      networkRequests: List<Call>,
+      responses: MutableList<InetAddress>,
+      failures: MutableList<Exception>
   ) {
     val latch = CountDownLatch(networkRequests.size)
 
     for (call in networkRequests) {
       call.enqueue(
-        object : Callback {
-          override fun onFailure(call: Call, e: IOException) {
-            synchronized(failures) {
-              failures.add(e)
+          object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+              synchronized(failures) { failures.add(e) }
+              latch.countDown()
             }
-            latch.countDown()
-          }
 
-          override fun onResponse(call: Call, response: Response) {
-            processResponse(response, hostname, responses, failures)
-            latch.countDown()
-          }
-        }
-      )
+            override fun onResponse(call: Call, response: Response) {
+              processResponse(response, hostname, responses, failures)
+              latch.countDown()
+            }
+          })
     }
 
     try {
@@ -141,20 +137,16 @@ class DnsOverHttps internal constructor(
   }
 
   private fun processResponse(
-    response: Response,
-    hostname: String,
-    results: MutableList<InetAddress>,
-    failures: MutableList<Exception>
+      response: Response,
+      hostname: String,
+      results: MutableList<InetAddress>,
+      failures: MutableList<Exception>
   ) {
     try {
       val addresses = readResponse(hostname, response)
-      synchronized(results) {
-        results.addAll(addresses)
-      }
+      synchronized(results) { results.addAll(addresses) }
     } catch (e: Exception) {
-      synchronized(failures) {
-        failures.add(e)
-      }
+      synchronized(failures) { failures.add(e) }
     }
   }
 
@@ -185,9 +177,7 @@ class DnsOverHttps internal constructor(
       try {
         // Use the cache without hitting the network first
         // 504 code indicates that the Cache is stale
-        val preferCache = CacheControl.Builder()
-          .onlyIfCached()
-          .build()
+        val preferCache = CacheControl.Builder().onlyIfCached().build()
         val cacheRequest = request.newBuilder().cacheControl(preferCache).build()
 
         val cacheResponse = client.newCall(cacheRequest).execute()
@@ -219,8 +209,7 @@ class DnsOverHttps internal constructor(
 
       if (body!!.contentLength() > MAX_RESPONSE_SIZE) {
         throw IOException(
-          "response size exceeds limit ($MAX_RESPONSE_SIZE bytes): ${body.contentLength()} bytes"
-        )
+            "response size exceeds limit ($MAX_RESPONSE_SIZE bytes): ${body.contentLength()} bytes")
       }
 
       val responseBytes = body.source().readByteString()
@@ -230,18 +219,21 @@ class DnsOverHttps internal constructor(
   }
 
   private fun buildRequest(hostname: String, type: Int): Request =
-    Request.Builder().header("Accept", DNS_MESSAGE.toString()).apply {
-      val query = DnsRecordCodec.encodeQuery(hostname, type)
+      Request.Builder()
+          .header("Accept", DNS_MESSAGE.toString())
+          .apply {
+            val query = DnsRecordCodec.encodeQuery(hostname, type)
 
-      if (post) {
-        url(url).post(query.toRequestBody(DNS_MESSAGE))
-      } else {
-        val encoded = query.base64Url().replace("=", "")
-        val requestUrl = url.newBuilder().addQueryParameter("dns", encoded).build()
+            if (post) {
+              url(url).post(query.toRequestBody(DNS_MESSAGE))
+            } else {
+              val encoded = query.base64Url().replace("=", "")
+              val requestUrl = url.newBuilder().addQueryParameter("dns", encoded).build()
 
-        url(requestUrl)
-      }
-    }.build()
+              url(requestUrl)
+            }
+          }
+          .build()
 
   class Builder {
     internal var client: OkHttpClient? = null
@@ -256,30 +248,21 @@ class DnsOverHttps internal constructor(
     fun build(): DnsOverHttps {
       val client = this.client ?: throw NullPointerException("client not set")
       return DnsOverHttps(
-        client.newBuilder().dns(buildBootstrapClient(this)).build(),
-        checkNotNull(url) { "url not set" },
-        includeIPv6,
-        post,
-        resolvePrivateAddresses,
-        resolvePublicAddresses
-      )
+          client.newBuilder().dns(buildBootstrapClient(this)).build(),
+          checkNotNull(url) { "url not set" },
+          includeIPv6,
+          post,
+          resolvePrivateAddresses,
+          resolvePublicAddresses)
     }
 
-    fun client(client: OkHttpClient) = apply {
-      this.client = client
-    }
+    fun client(client: OkHttpClient) = apply { this.client = client }
 
-    fun url(url: HttpUrl) = apply {
-      this.url = url
-    }
+    fun url(url: HttpUrl) = apply { this.url = url }
 
-    fun includeIPv6(includeIPv6: Boolean) = apply {
-      this.includeIPv6 = includeIPv6
-    }
+    fun includeIPv6(includeIPv6: Boolean) = apply { this.includeIPv6 = includeIPv6 }
 
-    fun post(post: Boolean) = apply {
-      this.post = post
-    }
+    fun post(post: Boolean) = apply { this.post = post }
 
     fun resolvePrivateAddresses(resolvePrivateAddresses: Boolean) = apply {
       this.resolvePrivateAddresses = resolvePrivateAddresses
@@ -294,11 +277,9 @@ class DnsOverHttps internal constructor(
     }
 
     fun bootstrapDnsHosts(vararg bootstrapDnsHosts: InetAddress): Builder =
-      bootstrapDnsHosts(bootstrapDnsHosts.toList())
+        bootstrapDnsHosts(bootstrapDnsHosts.toList())
 
-    fun systemDns(systemDns: Dns) = apply {
-      this.systemDns = systemDns
-    }
+    fun systemDns(systemDns: Dns) = apply { this.systemDns = systemDns }
   }
 
   companion object {

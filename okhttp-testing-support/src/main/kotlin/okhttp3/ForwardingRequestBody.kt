@@ -15,8 +15,8 @@
  */
 package okhttp3
 
-import okio.BufferedSink
 import java.io.IOException
+import okio.BufferedSink
 
 open class ForwardingRequestBody(delegate: RequestBody?) : RequestBody() {
   private val delegate: RequestBody
@@ -28,7 +28,8 @@ open class ForwardingRequestBody(delegate: RequestBody?) : RequestBody() {
     return delegate.contentType()
   }
 
-  @Throws(IOException::class) override fun contentLength(): Long {
+  @Throws(IOException::class)
+  override fun contentLength(): Long {
     return delegate.contentLength()
   }
 

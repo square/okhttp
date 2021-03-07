@@ -23,8 +23,8 @@ import java.net.Socket
  * HTTP request/response exchanges. Connections may be direct to the origin server or via a proxy.
  *
  * Typically instances of this class are created, connected and exercised automatically by the HTTP
- * client. Applications may use this class to monitor HTTP connections as members of a
- * [connection pool][ConnectionPool].
+ * client. Applications may use this class to monitor HTTP connections as members of a [connection
+ * pool] [ConnectionPool].
  *
  * Do not confuse this class with the misnamed `HttpURLConnection`, which isn't so much a connection
  * as a single request/response exchange.
@@ -34,12 +34,14 @@ import java.net.Socket
  * There are trade-offs when selecting which options to include when negotiating a secure connection
  * to a remote host. Newer TLS options are quite useful:
  *
- *  * Server Name Indication (SNI) enables one IP address to negotiate secure connections for
+ * * Server Name Indication (SNI) enables one IP address to negotiate secure connections for
+ * ```
  *    multiple domain names.
- *
- *  * Application Layer Protocol Negotiation (ALPN) enables the HTTPS port (443) to be used to
+ * ```
+ * * Application Layer Protocol Negotiation (ALPN) enables the HTTPS port (443) to be used to
+ * ```
  *    negotiate HTTP/2.
- *
+ * ```
  * Unfortunately, older HTTPS servers refuse to connect when such options are presented. Rather than
  * avoiding these options entirely, this class allows a connection to be attempted with modern
  * options and then retried without them should the attempt fail.
@@ -71,9 +73,9 @@ interface Connection {
   fun route(): Route
 
   /**
-   * Returns the socket that this connection is using. Returns an
-   * [SSL socket][javax.net.ssl.SSLSocket] if this connection is HTTPS. If this is an HTTP/2
-   * connection the socket may be shared by multiple concurrent calls.
+   * Returns the socket that this connection is using. Returns an [SSL socket]
+   * [javax.net.ssl.SSLSocket] if this connection is HTTPS. If this is an HTTP/2 connection the
+   * socket may be shared by multiple concurrent calls.
    */
   fun socket(): Socket
 
@@ -84,8 +86,8 @@ interface Connection {
   fun handshake(): Handshake?
 
   /**
-   * Returns the protocol negotiated by this connection, or [Protocol.HTTP_1_1] if no protocol
-   * has been negotiated. This method returns [Protocol.HTTP_1_1] even if the remote peer is using
+   * Returns the protocol negotiated by this connection, or [Protocol.HTTP_1_1] if no protocol has
+   * been negotiated. This method returns [Protocol.HTTP_1_1] even if the remote peer is using
    * [Protocol.HTTP_1_0].
    */
   fun protocol(): Protocol

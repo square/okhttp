@@ -15,12 +15,6 @@
  */
 package okhttp3
 
-import okhttp3.ResponseBody.Companion.asResponseBody
-import okhttp3.internal.connection.Exchange
-import okhttp3.internal.http.StatusLine.Companion.HTTP_PERM_REDIRECT
-import okhttp3.internal.http.StatusLine.Companion.HTTP_TEMP_REDIRECT
-import okhttp3.internal.http.parseChallenges
-import okio.Buffer
 import java.io.Closeable
 import java.io.IOException
 import java.net.HttpURLConnection.HTTP_MOVED_PERM
@@ -29,23 +23,30 @@ import java.net.HttpURLConnection.HTTP_MULT_CHOICE
 import java.net.HttpURLConnection.HTTP_PROXY_AUTH
 import java.net.HttpURLConnection.HTTP_SEE_OTHER
 import java.net.HttpURLConnection.HTTP_UNAUTHORIZED
+import okhttp3.ResponseBody.Companion.asResponseBody
+import okhttp3.internal.connection.Exchange
+import okhttp3.internal.http.StatusLine.Companion.HTTP_PERM_REDIRECT
+import okhttp3.internal.http.StatusLine.Companion.HTTP_TEMP_REDIRECT
+import okhttp3.internal.http.parseChallenges
+import okio.Buffer
 
 /**
  * An HTTP response. Instances of this class are not immutable: the response body is a one-shot
  * value that may be consumed only once and then closed. All other properties are immutable.
  *
- * This class implements [Closeable]. Closing it simply closes its response body. See
- * [ResponseBody] for an explanation and examples.
+ * This class implements [Closeable]. Closing it simply closes its response body. See [ResponseBody]
+ * for an explanation and examples.
  */
-class Response internal constructor(
+class Response
+internal constructor(
   /**
    * The wire-level request that initiated this HTTP response. This is not necessarily the same
    * request issued by the application:
    *
    * * It may be transformed by the HTTP client. For example, the client may copy headers like
-   *   `Content-Length` from the request body.
+   * `Content-Length` from the request body.
    * * It may be the request generated in response to an HTTP redirect or authentication
-   *   challenge. In this case the request URL may be different than the initial request URL.
+   * challenge. In this case the request URL may be different than the initial request URL.
    */
   @get:JvmName("request") val request: Request,
 
@@ -69,11 +70,11 @@ class Response internal constructor(
 
   /**
    * Returns a non-null value if this response was passed to [Callback.onResponse] or returned
-   * from [Call.execute]. Response bodies must be [closed][ResponseBody] and may
-   * be consumed only once.
+   * from [Call.execute]. Response bodies must be [closed] [ResponseBody] and may be consumed only
+   * once.
    *
-   * This always returns null on responses returned from [cacheResponse], [networkResponse],
-   * and [priorResponse].
+   * This always returns null on responses returned from [cacheResponse], [networkResponse], and
+   * [priorResponse].
    */
   @get:JvmName("body") val body: ResponseBody?,
 
@@ -100,19 +101,18 @@ class Response internal constructor(
   @get:JvmName("priorResponse") val priorResponse: Response?,
 
   /**
-   * Returns a [timestamp][System.currentTimeMillis] taken immediately before OkHttp
-   * transmitted the initiating request over the network. If this response is being served from the
-   * cache then this is the timestamp of the original request.
+   * Returns a [timestamp] [System.currentTimeMillis] taken immediately before OkHttp transmitted
+   * the initiating request over the network. If this response is being served from the cache then
+   * this is the timestamp of the original request.
    */
   @get:JvmName("sentRequestAtMillis") val sentRequestAtMillis: Long,
 
   /**
-   * Returns a [timestamp][System.currentTimeMillis] taken immediately after OkHttp
-   * received this response's headers from the network. If this response is being served from the
-   * cache then this is the timestamp of the original response.
+   * Returns a [timestamp] [System.currentTimeMillis] taken immediately after OkHttp received this
+   * response's headers from the network. If this response is being served from the cache then
+   * this is the timestamp of the original response.
    */
   @get:JvmName("receivedResponseAtMillis") val receivedResponseAtMillis: Long,
-
   @get:JvmName("exchange") internal val exchange: Exchange?
 ) : Closeable {
 
@@ -120,25 +120,25 @@ class Response internal constructor(
 
   @JvmName("-deprecated_request")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "request"),
-    level = DeprecationLevel.ERROR
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "request"),
+      level = DeprecationLevel.ERROR,
   )
   fun request(): Request = request
 
   @JvmName("-deprecated_protocol")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "protocol"),
-    level = DeprecationLevel.ERROR
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "protocol"),
+      level = DeprecationLevel.ERROR,
   )
   fun protocol(): Protocol = protocol
 
   @JvmName("-deprecated_code")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "code"),
-    level = DeprecationLevel.ERROR
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "code"),
+      level = DeprecationLevel.ERROR,
   )
   fun code(): Int = code
 
@@ -151,17 +151,17 @@ class Response internal constructor(
 
   @JvmName("-deprecated_message")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "message"),
-    level = DeprecationLevel.ERROR
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "message"),
+      level = DeprecationLevel.ERROR,
   )
   fun message(): String = message
 
   @JvmName("-deprecated_handshake")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "handshake"),
-    level = DeprecationLevel.ERROR
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "handshake"),
+      level = DeprecationLevel.ERROR,
   )
   fun handshake(): Handshake? = handshake
 
@@ -172,9 +172,9 @@ class Response internal constructor(
 
   @JvmName("-deprecated_headers")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "headers"),
-    level = DeprecationLevel.ERROR
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "headers"),
+      level = DeprecationLevel.ERROR,
   )
   fun headers(): Headers = headers
 
@@ -186,15 +186,15 @@ class Response internal constructor(
   fun trailers(): Headers = checkNotNull(exchange) { "trailers not available" }.trailers()
 
   /**
-   * Peeks up to [byteCount] bytes from the response body and returns them as a new response
-   * body. If fewer than [byteCount] bytes are in the response body, the full response body is
-   * returned. If more than [byteCount] bytes are in the response body, the returned value
-   * will be truncated to [byteCount] bytes.
+   * Peeks up to [byteCount] bytes from the response body and returns them as a new response body.
+   * If fewer than [byteCount] bytes are in the response body, the full response body is returned.
+   * If more than [byteCount] bytes are in the response body, the returned value will be truncated
+   * to [byteCount] bytes.
    *
    * It is an error to call this method after the body has been consumed.
    *
-   * **Warning:** this method loads the requested bytes into memory. Most applications should set
-   * a modest limit on `byteCount`, such as 1 MiB.
+   * **Warning:** this method loads the requested bytes into memory. Most applications should set a
+   * modest limit on `byteCount`, such as 1 MiB.
    */
   @Throws(IOException::class)
   fun peekBody(byteCount: Long): ResponseBody {
@@ -207,9 +207,9 @@ class Response internal constructor(
 
   @JvmName("-deprecated_body")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "body"),
-    level = DeprecationLevel.ERROR
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "body"),
+      level = DeprecationLevel.ERROR,
   )
   fun body(): ResponseBody? = body
 
@@ -217,32 +217,38 @@ class Response internal constructor(
 
   /** Returns true if this response redirects to another resource. */
   val isRedirect: Boolean
-    get() = when (code) {
-      HTTP_PERM_REDIRECT, HTTP_TEMP_REDIRECT, HTTP_MULT_CHOICE, HTTP_MOVED_PERM, HTTP_MOVED_TEMP, HTTP_SEE_OTHER -> true
-      else -> false
-    }
+    get() =
+      when (code) {
+        HTTP_PERM_REDIRECT,
+        HTTP_TEMP_REDIRECT,
+        HTTP_MULT_CHOICE,
+        HTTP_MOVED_PERM,
+        HTTP_MOVED_TEMP,
+        HTTP_SEE_OTHER -> true
+        else -> false
+      }
 
   @JvmName("-deprecated_networkResponse")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "networkResponse"),
-    level = DeprecationLevel.ERROR
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "networkResponse"),
+      level = DeprecationLevel.ERROR,
   )
   fun networkResponse(): Response? = networkResponse
 
   @JvmName("-deprecated_cacheResponse")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "cacheResponse"),
-    level = DeprecationLevel.ERROR
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "cacheResponse"),
+      level = DeprecationLevel.ERROR,
   )
   fun cacheResponse(): Response? = cacheResponse
 
   @JvmName("-deprecated_priorResponse")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "priorResponse"),
-    level = DeprecationLevel.ERROR
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "priorResponse"),
+      level = DeprecationLevel.ERROR,
   )
   fun priorResponse(): Response? = priorResponse
 
@@ -252,18 +258,18 @@ class Response internal constructor(
    * response code is 407 proxy unauthorized, this returns the "Proxy-Authenticate" challenges.
    * Otherwise this returns an empty list of challenges.
    *
-   * If a challenge uses the `token68` variant instead of auth params, there is exactly one
-   * auth param in the challenge at key null. Invalid headers and challenges are ignored.
-   * No semantic validation is done, for example that `Basic` auth must have a `realm`
-   * auth param, this is up to the caller that interprets these challenges.
+   * If a challenge uses the `token68` variant instead of auth params, there is exactly one auth
+   * param in the challenge at key null. Invalid headers and challenges are ignored. No semantic
+   * validation is done, for example that `Basic` auth must have a `realm` auth param, this is up to
+   * the caller that interprets these challenges.
    */
   fun challenges(): List<Challenge> {
     return headers.parseChallenges(
-      when (code) {
-        HTTP_UNAUTHORIZED -> "WWW-Authenticate"
-        HTTP_PROXY_AUTH -> "Proxy-Authenticate"
-        else -> return emptyList()
-      }
+        when (code) {
+          HTTP_UNAUTHORIZED -> "WWW-Authenticate"
+          HTTP_PROXY_AUTH -> "Proxy-Authenticate"
+          else -> return emptyList()
+        },
     )
   }
 
@@ -271,7 +277,8 @@ class Response internal constructor(
    * Returns the cache control directives for this response. This is never null, even if this
    * response contains no `Cache-Control` header.
    */
-  @get:JvmName("cacheControl") val cacheControl: CacheControl
+  @get:JvmName("cacheControl")
+  val cacheControl: CacheControl
     get() {
       var result = lazyCacheControl
       if (result == null) {
@@ -283,40 +290,40 @@ class Response internal constructor(
 
   @JvmName("-deprecated_cacheControl")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "cacheControl"),
-    level = DeprecationLevel.ERROR
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "cacheControl"),
+      level = DeprecationLevel.ERROR,
   )
   fun cacheControl(): CacheControl = cacheControl
 
   @JvmName("-deprecated_sentRequestAtMillis")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "sentRequestAtMillis"),
-    level = DeprecationLevel.ERROR
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "sentRequestAtMillis"),
+      level = DeprecationLevel.ERROR,
   )
   fun sentRequestAtMillis(): Long = sentRequestAtMillis
 
   @JvmName("-deprecated_receivedResponseAtMillis")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "receivedResponseAtMillis"),
-    level = DeprecationLevel.ERROR
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "receivedResponseAtMillis"),
+      level = DeprecationLevel.ERROR,
   )
   fun receivedResponseAtMillis(): Long = receivedResponseAtMillis
 
   /**
    * Closes the response body. Equivalent to `body().close()`.
    *
-   * It is an error to close a response that is not eligible for a body. This includes the
-   * responses returned from [cacheResponse], [networkResponse], and [priorResponse].
+   * It is an error to close a response that is not eligible for a body. This includes the responses
+   * returned from [cacheResponse], [networkResponse], and [priorResponse].
    */
   override fun close() {
     checkNotNull(body) { "response is not eligible for a body and must not be closed" }.close()
   }
 
   override fun toString() =
-    "Response{protocol=$protocol, code=$code, message=$message, url=${request.url}}"
+      "Response{protocol=$protocol, code=$code, message=$message, url=${request.url}}"
 
   open class Builder {
     internal var request: Request? = null
@@ -353,55 +360,35 @@ class Response internal constructor(
       this.exchange = response.exchange
     }
 
-    open fun request(request: Request) = apply {
-      this.request = request
-    }
+    open fun request(request: Request) = apply { this.request = request }
 
-    open fun protocol(protocol: Protocol) = apply {
-      this.protocol = protocol
-    }
+    open fun protocol(protocol: Protocol) = apply { this.protocol = protocol }
 
-    open fun code(code: Int) = apply {
-      this.code = code
-    }
+    open fun code(code: Int) = apply { this.code = code }
 
-    open fun message(message: String) = apply {
-      this.message = message
-    }
+    open fun message(message: String) = apply { this.message = message }
 
-    open fun handshake(handshake: Handshake?) = apply {
-      this.handshake = handshake
-    }
+    open fun handshake(handshake: Handshake?) = apply { this.handshake = handshake }
 
     /**
-     * Sets the header named [name] to [value]. If this request already has any headers
-     * with that name, they are all replaced.
+     * Sets the header named [name] to [value]. If this request already has any headers with that
+     * name, they are all replaced.
      */
-    open fun header(name: String, value: String) = apply {
-      headers[name] = value
-    }
+    open fun header(name: String, value: String) = apply { headers[name] = value }
 
     /**
-     * Adds a header with [name] to [value]. Prefer this method for multiply-valued
-     * headers like "Set-Cookie".
+     * Adds a header with [name] to [value]. Prefer this method for multiply-valued headers like
+     * "Set-Cookie".
      */
-    open fun addHeader(name: String, value: String) = apply {
-      headers.add(name, value)
-    }
+    open fun addHeader(name: String, value: String) = apply { headers.add(name, value) }
 
     /** Removes all headers named [name] on this builder. */
-    open fun removeHeader(name: String) = apply {
-      headers.removeAll(name)
-    }
+    open fun removeHeader(name: String) = apply { headers.removeAll(name) }
 
     /** Removes all headers on this builder and adds [headers]. */
-    open fun headers(headers: Headers) = apply {
-      this.headers = headers.newBuilder()
-    }
+    open fun headers(headers: Headers) = apply { this.headers = headers.newBuilder() }
 
-    open fun body(body: ResponseBody?) = apply {
-      this.body = body
-    }
+    open fun body(body: ResponseBody?) = apply { this.body = body }
 
     open fun networkResponse(networkResponse: Response?) = apply {
       checkSupportResponse("networkResponse", networkResponse)
@@ -428,9 +415,7 @@ class Response internal constructor(
     }
 
     private fun checkPriorResponse(response: Response?) {
-      response?.apply {
-        require(body == null) { "priorResponse.body != null" }
-      }
+      response?.apply { require(body == null) { "priorResponse.body != null" } }
     }
 
     open fun sentRequestAtMillis(sentRequestAtMillis: Long) = apply {
@@ -448,19 +433,19 @@ class Response internal constructor(
     open fun build(): Response {
       check(code >= 0) { "code < 0: $code" }
       return Response(
-        checkNotNull(request) { "request == null" },
-        checkNotNull(protocol) { "protocol == null" },
-        checkNotNull(message) { "message == null" },
-        code,
-        handshake,
-        headers.build(),
-        body,
-        networkResponse,
-        cacheResponse,
-        priorResponse,
-        sentRequestAtMillis,
-        receivedResponseAtMillis,
-        exchange
+          checkNotNull(request) { "request == null" },
+          checkNotNull(protocol) { "protocol == null" },
+          checkNotNull(message) { "message == null" },
+          code,
+          handshake,
+          headers.build(),
+          body,
+          networkResponse,
+          cacheResponse,
+          priorResponse,
+          sentRequestAtMillis,
+          receivedResponseAtMillis,
+          exchange,
       )
     }
   }

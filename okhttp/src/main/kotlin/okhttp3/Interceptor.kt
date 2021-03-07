@@ -29,14 +29,15 @@ import java.util.concurrent.TimeUnit
  *
  * Other exception types cancel the current call:
  *
- *  * For synchronous calls made with [Call.execute], the exception is propagated to the caller.
+ * * For synchronous calls made with [Call.execute], the exception is propagated to the caller.
  *
- *  * For asynchronous calls made with [Call.enqueue], an [IOException] is propagated to the caller
+ * * For asynchronous calls made with [Call.enqueue], an [IOException] is propagated to the caller
+ * ```
  *    indicating that the call was canceled. The interceptor's exception is delivered to the current
  *    thread's [uncaught exception handler][Thread.UncaughtExceptionHandler]. By default this
  *    crashes the application on Android and prints a stacktrace on the JVM. (Crash reporting
  *    libraries may customize this behavior.)
- *
+ * ```
  * A good way to signal a failure is with a synthetic HTTP response:
  *
  * ```
@@ -72,7 +73,9 @@ fun interface Interceptor {
      * ```
      */
     inline operator fun invoke(crossinline block: (chain: Chain) -> Response): Interceptor =
-      Interceptor { block(it) }
+        Interceptor {
+          block(it)
+        }
   }
 
   interface Chain {

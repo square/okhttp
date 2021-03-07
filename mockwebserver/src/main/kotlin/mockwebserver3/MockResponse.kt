@@ -15,19 +15,18 @@
  */
 package mockwebserver3
 
+import java.util.concurrent.TimeUnit
 import mockwebserver3.internal.duplex.DuplexResponseBody
 import okhttp3.Headers
 import okhttp3.WebSocketListener
 import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.http2.Settings
 import okio.Buffer
-import java.util.concurrent.TimeUnit
 
 /** A scripted response to be replayed by the mock web server. */
 class MockResponse : Cloneable {
   /** Returns the HTTP response line, such as "HTTP/1.1 200 OK". */
-  @set:JvmName("status")
-  var status: String = ""
+  @set:JvmName("status") var status: String = ""
 
   private var headersBuilder = Headers.Builder()
   private var trailersBuilder = Headers.Builder()
@@ -54,17 +53,14 @@ class MockResponse : Cloneable {
   private var throttlePeriodAmount = 1L
   private var throttlePeriodUnit = TimeUnit.SECONDS
 
-  @set:JvmName("socketPolicy")
-  var socketPolicy = SocketPolicy.KEEP_OPEN
+  @set:JvmName("socketPolicy") var socketPolicy = SocketPolicy.KEEP_OPEN
 
   /**
-   * Sets the [HTTP/2 error code](https://tools.ietf.org/html/rfc7540#section-7) to be
-   * returned when resetting the stream.
-   * This is only valid with [SocketPolicy.RESET_STREAM_AT_START] and
+   * Sets the [HTTP/2 error code](https://tools.ietf.org/html/rfc7540#section-7) to be returned when
+   * resetting the stream. This is only valid with [SocketPolicy.RESET_STREAM_AT_START] and
    * [SocketPolicy.DO_NOT_READ_REQUEST_BODY].
    */
-  @set:JvmName("http2ErrorCode")
-  var http2ErrorCode = -1
+  @set:JvmName("http2ErrorCode") var http2ErrorCode = -1
 
   private var bodyDelayAmount = 0L
   private var bodyDelayUnit = TimeUnit.MILLISECONDS
@@ -101,10 +97,9 @@ class MockResponse : Cloneable {
 
   @JvmName("-deprecated_getStatus")
   @Deprecated(
-    message = "moved to var",
-    replaceWith = ReplaceWith(expression = "status"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to var",
+      replaceWith = ReplaceWith(expression = "status"),
+      level = DeprecationLevel.ERROR)
   fun getStatus(): String = status
 
   /**
@@ -114,19 +109,18 @@ class MockResponse : Cloneable {
    * un-deprecated because Java callers can't chain when assigning Kotlin vals. (The getter remains
    * deprecated).
    */
-  fun setStatus(status: String) = apply {
-    this.status = status
-  }
+  fun setStatus(status: String) = apply { this.status = status }
 
   fun setResponseCode(code: Int): MockResponse {
-    val reason = when (code) {
-      in 100..199 -> "Informational"
-      in 200..299 -> "OK"
-      in 300..399 -> "Redirection"
-      in 400..499 -> "Client Error"
-      in 500..599 -> "Server Error"
-      else -> "Mock Response"
-    }
+    val reason =
+        when (code) {
+          in 100..199 -> "Informational"
+          in 200..299 -> "OK"
+          in 300..399 -> "Redirection"
+          in 400..499 -> "Client Error"
+          in 500..599 -> "Server Error"
+          else -> "Mock Response"
+        }
     return apply { status = "HTTP/1.1 $code $reason" }
   }
 
@@ -134,47 +128,36 @@ class MockResponse : Cloneable {
    * Removes all HTTP headers including any "Content-Length" and "Transfer-encoding" headers that
    * were added by default.
    */
-  fun clearHeaders() = apply {
-    headersBuilder = Headers.Builder()
-  }
+  fun clearHeaders() = apply { headersBuilder = Headers.Builder() }
 
   /**
-   * Adds [header] as an HTTP header. For well-formed HTTP [header] should contain a
-   * name followed by a colon and a value.
+   * Adds [header] as an HTTP header. For well-formed HTTP [header] should contain a name followed
+   * by a colon and a value.
    */
-  fun addHeader(header: String) = apply {
-    headersBuilder.add(header)
-  }
+  fun addHeader(header: String) = apply { headersBuilder.add(header) }
 
   /**
    * Adds a new header with the name and value. This may be used to add multiple headers with the
    * same name.
    */
-  fun addHeader(name: String, value: Any) = apply {
-    headersBuilder.add(name, value.toString())
-  }
+  fun addHeader(name: String, value: Any) = apply { headersBuilder.add(name, value.toString()) }
 
   /**
    * Adds a new header with the name and value. This may be used to add multiple headers with the
-   * same name. Unlike [addHeader] this does not validate the name and
-   * value.
+   * same name. Unlike [addHeader] this does not validate the name and value.
    */
   fun addHeaderLenient(name: String, value: Any) = apply {
     addHeaderLenient(headersBuilder, name, value.toString())
   }
 
-  /**
-   * Removes all headers named [name], then adds a new header with the name and value.
-   */
+  /** Removes all headers named [name], then adds a new header with the name and value. */
   fun setHeader(name: String, value: Any) = apply {
     removeHeader(name)
     addHeader(name, value)
   }
 
   /** Removes all headers named [name]. */
-  fun removeHeader(name: String) = apply {
-    headersBuilder.removeAll(name)
-  }
+  fun removeHeader(name: String) = apply { headersBuilder.removeAll(name) }
 
   /** Returns a copy of the raw HTTP payload. */
   fun getBody(): Buffer? = body?.clone()
@@ -191,9 +174,7 @@ class MockResponse : Cloneable {
     this.duplexResponseBody = duplexResponseBody
   }
 
-  /**
-   * Sets the response body to [body], chunked every [maxChunkSize] bytes.
-   */
+  /** Sets the response body to [body], chunked every [maxChunkSize] bytes. */
   fun setChunkedBody(body: Buffer, maxChunkSize: Int) = apply {
     removeHeader("Content-Length")
     headersBuilder.add(CHUNKED_BODY_HEADER)
@@ -211,18 +192,17 @@ class MockResponse : Cloneable {
   }
 
   /**
-   * Sets the response body to the UTF-8 encoded bytes of [body],
-   * chunked every [maxChunkSize] bytes.
+   * Sets the response body to the UTF-8 encoded bytes of [body], chunked every [maxChunkSize]
+   * bytes.
    */
   fun setChunkedBody(body: String, maxChunkSize: Int): MockResponse =
-    setChunkedBody(Buffer().writeUtf8(body), maxChunkSize)
+      setChunkedBody(Buffer().writeUtf8(body), maxChunkSize)
 
   @JvmName("-deprecated_getHeaders")
   @Deprecated(
-    message = "moved to var",
-    replaceWith = ReplaceWith(expression = "headers"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to var",
+      replaceWith = ReplaceWith(expression = "headers"),
+      level = DeprecationLevel.ERROR)
   fun getHeaders(): Headers = headers
 
   /**
@@ -236,10 +216,9 @@ class MockResponse : Cloneable {
 
   @JvmName("-deprecated_getTrailers")
   @Deprecated(
-    message = "moved to var",
-    replaceWith = ReplaceWith(expression = "trailers"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to var",
+      replaceWith = ReplaceWith(expression = "trailers"),
+      level = DeprecationLevel.ERROR)
   fun getTrailers(): Headers = trailers
 
   /**
@@ -253,10 +232,9 @@ class MockResponse : Cloneable {
 
   @JvmName("-deprecated_getSocketPolicy")
   @Deprecated(
-    message = "moved to var",
-    replaceWith = ReplaceWith(expression = "socketPolicy"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to var",
+      replaceWith = ReplaceWith(expression = "socketPolicy"),
+      level = DeprecationLevel.ERROR)
   fun getSocketPolicy() = socketPolicy
 
   /**
@@ -266,16 +244,13 @@ class MockResponse : Cloneable {
    * un-deprecated because Java callers can't chain when assigning Kotlin vals. (The getter remains
    * deprecated).
    */
-  fun setSocketPolicy(socketPolicy: SocketPolicy) = apply {
-    this.socketPolicy = socketPolicy
-  }
+  fun setSocketPolicy(socketPolicy: SocketPolicy) = apply { this.socketPolicy = socketPolicy }
 
   @JvmName("-deprecated_getHttp2ErrorCode")
   @Deprecated(
-    message = "moved to var",
-    replaceWith = ReplaceWith(expression = "http2ErrorCode"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to var",
+      replaceWith = ReplaceWith(expression = "http2ErrorCode"),
+      level = DeprecationLevel.ERROR)
   fun getHttp2ErrorCode() = http2ErrorCode
 
   /**
@@ -285,9 +260,7 @@ class MockResponse : Cloneable {
    * un-deprecated because Java callers can't chain when assigning Kotlin vals. (The getter remains
    * deprecated).
    */
-  fun setHttp2ErrorCode(http2ErrorCode: Int) = apply {
-    this.http2ErrorCode = http2ErrorCode
-  }
+  fun setHttp2ErrorCode(http2ErrorCode: Int) = apply { this.http2ErrorCode = http2ErrorCode }
 
   /**
    * Throttles the request reader and response writer to sleep for the given period after each
@@ -300,47 +273,41 @@ class MockResponse : Cloneable {
   }
 
   fun getThrottlePeriod(unit: TimeUnit): Long =
-    unit.convert(throttlePeriodAmount, throttlePeriodUnit)
+      unit.convert(throttlePeriodAmount, throttlePeriodUnit)
 
   /**
-   * Set the delayed time of the response body to [delay]. This applies to the response body
-   * only; response headers are not affected.
+   * Set the delayed time of the response body to [delay]. This applies to the response body only;
+   * response headers are not affected.
    */
   fun setBodyDelay(delay: Long, unit: TimeUnit) = apply {
     bodyDelayAmount = delay
     bodyDelayUnit = unit
   }
 
-  fun getBodyDelay(unit: TimeUnit): Long =
-    unit.convert(bodyDelayAmount, bodyDelayUnit)
+  fun getBodyDelay(unit: TimeUnit): Long = unit.convert(bodyDelayAmount, bodyDelayUnit)
 
   fun setHeadersDelay(delay: Long, unit: TimeUnit) = apply {
     headersDelayAmount = delay
     headersDelayUnit = unit
   }
 
-  fun getHeadersDelay(unit: TimeUnit): Long =
-    unit.convert(headersDelayAmount, headersDelayUnit)
+  fun getHeadersDelay(unit: TimeUnit): Long = unit.convert(headersDelayAmount, headersDelayUnit)
 
   /**
-   * When [protocols][MockWebServer.protocols] include [HTTP_2][okhttp3.Protocol], this attaches a
+   * When [protocols] [MockWebServer.protocols] include [HTTP_2] [okhttp3.Protocol], this attaches a
    * pushed stream to this response.
    */
-  fun withPush(promise: PushPromise) = apply {
-    promises.add(promise)
-  }
+  fun withPush(promise: PushPromise) = apply { promises.add(promise) }
 
   /**
-   * When [protocols][MockWebServer.protocols] include [HTTP_2][okhttp3.Protocol], this pushes
+   * When [protocols] [MockWebServer.protocols] include [HTTP_2] [okhttp3.Protocol], this pushes
    * [settings] before writing the response.
    */
-  fun withSettings(settings: Settings) = apply {
-    this.settings = settings
-  }
+  fun withSettings(settings: Settings) = apply { this.settings = settings }
 
   /**
-   * Attempts to perform a web socket upgrade on the connection.
-   * This will overwrite any previously set status or body.
+   * Attempts to perform a web socket upgrade on the connection. This will overwrite any previously
+   * set status or body.
    */
   fun withWebSocketUpgrade(listener: WebSocketListener) = apply {
     status = "HTTP/1.1 101 Switching Protocols"

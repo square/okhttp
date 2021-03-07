@@ -15,6 +15,11 @@
  */
 package okhttp3.internal.cache
 
+import java.io.File
+import java.io.FileNotFoundException
+import java.io.IOException
+import java.util.ArrayDeque
+import java.util.NoSuchElementException
 import okhttp3.SimpleProvider
 import okhttp3.TestUtil
 import okhttp3.internal.cache.DiskLruCache.Editor
@@ -37,19 +42,14 @@ import org.junit.jupiter.api.fail
 import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
-import java.io.File
-import java.io.FileNotFoundException
-import java.io.IOException
-import java.util.ArrayDeque
-import java.util.NoSuchElementException
 
 @OptIn(ExperimentalFileSystem::class)
 class FilesystemParamProvider : SimpleProvider() {
-  override fun arguments() = listOf(
-    FakeFileSystem() to false,
-    FileSystem.SYSTEM to TestUtil.windows,
-    FakeFileSystem(windowsLimitations = true) to true
-  )
+  override fun arguments() =
+      listOf(
+          FakeFileSystem() to false,
+          FileSystem.SYSTEM to TestUtil.windows,
+          FakeFileSystem(windowsLimitations = true) to true)
 }
 
 @Timeout(60)
@@ -80,7 +80,7 @@ class DiskLruCacheTest {
 
   fun setUp(baseFilesystem: FileSystem, windows: Boolean) {
     this.cacheDir =
-      if (baseFilesystem is FakeFileSystem) "/cache".toPath() else cacheDirFile.path.toPath()
+        if (baseFilesystem is FakeFileSystem) "/cache".toPath() else cacheDirFile.path.toPath()
     this.filesystem = FaultyFileSystem(baseFilesystem)
     this.windows = windows
 
@@ -92,7 +92,8 @@ class DiskLruCacheTest {
     createNewCache()
   }
 
-  @AfterEach fun tearDown() {
+  @AfterEach
+  fun tearDown() {
     while (!toClose.isEmpty()) {
       toClose.pop().close()
     }
@@ -114,9 +115,7 @@ class DiskLruCacheTest {
     // attempt to delete the file. Do not explicitly close the cache here so the entry is left as
     // incomplete.
     val creator = cache.edit("k1")!!
-    creator.newSink(0).buffer().use {
-      it.writeUtf8("Hello")
-    }
+    creator.newSink(0).buffer().use { it.writeUtf8("Hello") }
 
     // Simulate a severe Filesystem failure on the first initialization.
     filesystem.setFaultyDelete(cacheDir / "k1.0.tmp", true)
@@ -126,8 +125,7 @@ class DiskLruCacheTest {
     try {
       cache["k1"]
       fail("")
-    } catch (_: IOException) {
-    }
+    } catch (_: IOException) {}
 
     // Now let it operate normally.
     filesystem.setFaultyDelete(cacheDir / "k1.0.tmp", false)
@@ -177,10 +175,9 @@ class DiskLruCacheTest {
       assertThat(iae.message).isEqualTo("keys must match regex [a-z0-9_-]{1,120}: \"$key\"")
     }
     try {
-      key = (
-        "this_is_way_too_long_this_is_way_too_long_this_is_way_too_long_" +
-          "this_is_way_too_long_this_is_way_too_long_this_is_way_too_long"
-        )
+      key =
+          ("this_is_way_too_long_this_is_way_too_long_this_is_way_too_long_" +
+              "this_is_way_too_long_this_is_way_too_long_this_is_way_too_long")
       cache.edit(key)
       fail("Expecting an IllegalArgumentException as the key was too long.")
     } catch (iae: IllegalArgumentException) {
@@ -190,10 +187,9 @@ class DiskLruCacheTest {
     // Test valid cases.
 
     // Exactly 120.
-    key = (
-      "0123456789012345678901234567890123456789012345678901234567890123456789" +
-        "01234567890123456789012345678901234567890123456789"
-      )
+    key =
+        ("0123456789012345678901234567890123456789012345678901234567890123456789" +
+            "01234567890123456789012345678901234567890123456789")
     cache.edit(key)!!.abort()
     // Contains all valid characters.
     key = "abcdefghijklmnopqrstuvwxyz_0123456789"
@@ -507,14 +503,14 @@ class DiskLruCacheTest {
     writeFile(getCleanFile("k1", 1), "B")
     filesystem.write(journalFile) {
       writeUtf8(
-        """
+          """
           |${DiskLruCache.MAGIC}
           |${DiskLruCache.VERSION_1}
           |100
           |2
           |
           |CLEAN k1 1 1""".trimMargin() // no trailing newline
-      )
+          )
     }
     createNewCache()
     assertThat(cache["k1"]).isNull()
@@ -545,8 +541,7 @@ class DiskLruCacheTest {
     try {
       cache.edit("my key")
       fail("")
-    } catch (_: IllegalArgumentException) {
-    }
+    } catch (_: IllegalArgumentException) {}
   }
 
   @ParameterizedTest
@@ -556,8 +551,7 @@ class DiskLruCacheTest {
     try {
       cache.edit("my\nkey")
       fail("")
-    } catch (_: IllegalArgumentException) {
-    }
+    } catch (_: IllegalArgumentException) {}
   }
 
   @ParameterizedTest
@@ -567,8 +561,7 @@ class DiskLruCacheTest {
     try {
       cache.edit("my\rkey")
       fail("")
-    } catch (_: IllegalArgumentException) {
-    }
+    } catch (_: IllegalArgumentException) {}
   }
 
   @ParameterizedTest
@@ -580,8 +573,7 @@ class DiskLruCacheTest {
     try {
       creator.commit()
       fail("")
-    } catch (_: IllegalStateException) {
-    }
+    } catch (_: IllegalStateException) {}
     assertThat(filesystem.exists(getCleanFile("k1", 0))).isFalse()
     assertThat(filesystem.exists(getCleanFile("k1", 1))).isFalse()
     assertThat(filesystem.exists(getDirtyFile("k1", 0))).isFalse()
@@ -609,7 +601,9 @@ class DiskLruCacheTest {
 
   @ParameterizedTest
   @ArgumentsSource(FilesystemParamProvider::class)
-  fun updateExistingEntryWithTooFewValuesReusesPreviousValues(parameters: Pair<FileSystem, Boolean>) {
+  fun updateExistingEntryWithTooFewValuesReusesPreviousValues(
+      parameters: Pair<FileSystem, Boolean>
+  ) {
     setUp(parameters.first, parameters.second)
     val creator = cache.edit("k1")!!
     creator.setString(0, "A")
@@ -790,8 +784,7 @@ class DiskLruCacheTest {
     try {
       DiskLruCache(filesystem, cacheDir, appVersion, 2, 0, taskRunner)
       fail("")
-    } catch (_: IllegalArgumentException) {
-    }
+    } catch (_: IllegalArgumentException) {}
   }
 
   @ParameterizedTest
@@ -801,8 +794,7 @@ class DiskLruCacheTest {
     try {
       DiskLruCache(filesystem, cacheDir, appVersion, 0, 10, taskRunner)
       fail("")
-    } catch (_: IllegalArgumentException) {
-    }
+    } catch (_: IllegalArgumentException) {}
   }
 
   @ParameterizedTest
@@ -893,9 +885,7 @@ class DiskLruCacheTest {
     // Don't allow edits under any circumstances.
     assertThat(cache.edit("a")).isNull()
     assertThat(cache.edit("c")).isNull()
-    cache["a"]!!.use {
-      assertThat(it.edit()).isNull()
-    }
+    cache["a"]!!.use { assertThat(it.edit()).isNull() }
   }
 
   @ParameterizedTest
@@ -1072,10 +1062,7 @@ class DiskLruCacheTest {
     }
 
     // Cause the rebuild action to fail.
-    filesystem.setFaultyRename(
-      cacheDir / DiskLruCache.JOURNAL_FILE_BACKUP,
-      true
-    )
+    filesystem.setFaultyRename(cacheDir / DiskLruCache.JOURNAL_FILE_BACKUP, true)
     taskFaker.runNextTask()
 
     // Trigger a job to trim the cache.
@@ -1137,7 +1124,8 @@ class DiskLruCacheTest {
   fun openCreatesDirectoryIfNecessary(parameters: Pair<FileSystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     cache.close()
-    val dir = (cacheDir / "testOpenCreatesDirectoryIfNecessary").also { filesystem.createDirectories(it) }
+    val dir =
+        (cacheDir / "testOpenCreatesDirectoryIfNecessary").also { filesystem.createDirectories(it) }
     cache = DiskLruCache(filesystem, dir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner)
     set("a", "a", "a")
     assertThat(filesystem.exists(dir / "a.0")).isTrue()
@@ -1291,8 +1279,8 @@ class DiskLruCacheTest {
   }
 
   /**
-   * We had a long-lived bug where [DiskLruCache.trimToSize] could infinite loop if entries
-   * being edited required deletion for the operation to complete.
+   * We had a long-lived bug where [DiskLruCache.trimToSize] could infinite loop if entries being
+   * edited required deletion for the operation to complete.
    */
   @ParameterizedTest
   @ArgumentsSource(FilesystemParamProvider::class)
@@ -1425,8 +1413,7 @@ class DiskLruCacheTest {
     try {
       iterator.next()
       fail("")
-    } catch (_: NoSuchElementException) {
-    }
+    } catch (_: NoSuchElementException) {}
   }
 
   @ParameterizedTest
@@ -1436,13 +1423,9 @@ class DiskLruCacheTest {
     set("a", "a1", "a2")
     set("b", "b1", "b2")
     val iterator = cache.snapshots()
-    iterator.next().use { a ->
-      assertThat(a.key()).isEqualTo("a")
-    }
+    iterator.next().use { a -> assertThat(a.key()).isEqualTo("a") }
     set("c", "c1", "c2")
-    iterator.next().use { b ->
-      assertThat(b.key()).isEqualTo("b")
-    }
+    iterator.next().use { b -> assertThat(b.key()).isEqualTo("b") }
     assertThat(iterator.hasNext()).isFalse()
   }
 
@@ -1453,9 +1436,7 @@ class DiskLruCacheTest {
     set("a", "a1", "a2")
     set("b", "b1", "b2")
     val iterator = cache.snapshots()
-    iterator.next().use {
-      assertThat(it.key()).isEqualTo("a")
-    }
+    iterator.next().use { assertThat(it.key()).isEqualTo("a") }
     set("b", "b3", "b4")
     iterator.next().use {
       assertThat(it.key()).isEqualTo("b")
@@ -1472,9 +1453,7 @@ class DiskLruCacheTest {
     set("b", "b1", "b2")
     val iterator = cache.snapshots()
     cache.remove("b")
-    iterator.next().use {
-      assertThat(it.key()).isEqualTo("a")
-    }
+    iterator.next().use { assertThat(it.key()).isEqualTo("a") }
     assertThat(iterator.hasNext()).isFalse()
   }
 
@@ -1499,8 +1478,7 @@ class DiskLruCacheTest {
     try {
       iterator.remove()
       fail("")
-    } catch (_: IllegalStateException) {
-    }
+    } catch (_: IllegalStateException) {}
   }
 
   @ParameterizedTest
@@ -1509,14 +1487,11 @@ class DiskLruCacheTest {
     setUp(parameters.first, parameters.second)
     set("a", "a1", "a2")
     val iterator = cache.snapshots()
-    iterator.next().use {
-      iterator.remove()
-    }
+    iterator.next().use { iterator.remove() }
     try {
       iterator.remove()
       fail("")
-    } catch (_: IllegalStateException) {
-    }
+    } catch (_: IllegalStateException) {}
   }
 
   @ParameterizedTest
@@ -1749,12 +1724,8 @@ class DiskLruCacheTest {
     taskFaker.runNextTask()
 
     // Confirm snapshot writes are prevented after a trim failure.
-    cache["a"]!!.use {
-      assertThat(it.edit()).isNull()
-    }
-    cache["b"]!!.use {
-      assertThat(it.edit()).isNull()
-    }
+    cache["a"]!!.use { assertThat(it.edit()).isNull() }
+    cache["b"]!!.use { assertThat(it.edit()).isNull() }
 
     // Allow the test to clean up.
     filesystem.setFaultyDelete(cacheDir / "a.0", false)
@@ -1929,7 +1900,9 @@ class DiskLruCacheTest {
 
   @ParameterizedTest
   @ArgumentsSource(FilesystemParamProvider::class)
-  fun `edit discarded after editor detached with concurrent write`(parameters: Pair<FileSystem, Boolean>) {
+  fun `edit discarded after editor detached with concurrent write`(
+      parameters: Pair<FileSystem, Boolean>
+  ) {
     setUp(parameters.first, parameters.second)
     Assumptions.assumeFalse(windows) // Windows can't have two concurrent editors.
 
@@ -1974,9 +1947,9 @@ class DiskLruCacheTest {
     assertThat(snapshotWhileEditing.hasNext()).isFalse() // entry still is being created/edited
     creator.commit()
     val snapshotAfterCommit = cache.snapshots()
-    assertThat(snapshotAfterCommit.hasNext()).withFailMessage(
-      "Entry has been removed during creation."
-    ).isTrue()
+    assertThat(snapshotAfterCommit.hasNext())
+        .withFailMessage("Entry has been removed during creation.")
+        .isTrue()
   }
 
   @ParameterizedTest
@@ -2020,7 +1993,9 @@ class DiskLruCacheTest {
 
   @ParameterizedTest
   @ArgumentsSource(FilesystemParamProvider::class)
-  fun `remove while reading creates zombie that is removed when read finishes`(parameters: Pair<FileSystem, Boolean>) {
+  fun `remove while reading creates zombie that is removed when read finishes`(
+      parameters: Pair<FileSystem, Boolean>
+  ) {
     setUp(parameters.first, parameters.second)
     val afterRemoveFileContents = if (windows) "a" else null
 
@@ -2046,7 +2021,9 @@ class DiskLruCacheTest {
 
   @ParameterizedTest
   @ArgumentsSource(FilesystemParamProvider::class)
-  fun `remove while writing creates zombie that is removed when write finishes`(parameters: Pair<FileSystem, Boolean>) {
+  fun `remove while writing creates zombie that is removed when write finishes`(
+      parameters: Pair<FileSystem, Boolean>
+  ) {
     setUp(parameters.first, parameters.second)
     val afterRemoveFileContents = if (windows) "a" else null
 
@@ -2174,40 +2151,32 @@ class DiskLruCacheTest {
   }
 
   private fun assertJournalEquals(vararg expectedBodyLines: String) {
-    assertThat(readJournalLines()).isEqualTo(
-      listOf(DiskLruCache.MAGIC, DiskLruCache.VERSION_1, "100", "2", "") + expectedBodyLines
-    )
+    assertThat(readJournalLines())
+        .isEqualTo(
+            listOf(DiskLruCache.MAGIC, DiskLruCache.VERSION_1, "100", "2", "") + expectedBodyLines)
   }
 
   private fun createJournal(vararg bodyLines: String) {
-    createJournalWithHeader(
-      DiskLruCache.MAGIC,
-      DiskLruCache.VERSION_1,
-      "100",
-      "2",
-      "",
-      *bodyLines
-    )
+    createJournalWithHeader(DiskLruCache.MAGIC, DiskLruCache.VERSION_1, "100", "2", "", *bodyLines)
   }
 
   private fun createJournalWithHeader(
-    magic: String,
-    version: String,
-    appVersion: String,
-    valueCount: String,
-    blank: String,
-    vararg bodyLines: String
+      magic: String,
+      version: String,
+      appVersion: String,
+      valueCount: String,
+      blank: String,
+      vararg bodyLines: String
   ) {
     filesystem.write(journalFile) {
       writeUtf8(
-        """
+          """
         |$magic
         |$version
         |$appVersion
         |$valueCount
         |$blank
-        |""".trimMargin()
-      )
+        |""".trimMargin())
       for (line in bodyLines) {
         writeUtf8(line)
         writeUtf8("\n")
@@ -2231,28 +2200,20 @@ class DiskLruCacheTest {
   private fun getDirtyFile(key: String, index: Int) = cacheDir / "$key.$index.tmp"
 
   private fun readFile(file: Path): String {
-    return filesystem.read(file) {
-      readUtf8()
-    }
+    return filesystem.read(file) { readUtf8() }
   }
 
   private fun readFileOrNull(file: Path): String? {
     return try {
-      filesystem.read(file) {
-        readUtf8()
-      }
+      filesystem.read(file) { readUtf8() }
     } catch (_: FileNotFoundException) {
       null
     }
   }
 
   fun writeFile(file: Path, content: String) {
-    file.parent?.let {
-      filesystem.createDirectories(it)
-    }
-    filesystem.write(file) {
-      writeUtf8(content)
-    }
+    file.parent?.let { filesystem.createDirectories(it) }
+    filesystem.write(file) { writeUtf8(content) }
   }
 
   private fun generateSomeGarbageFiles() {
@@ -2317,33 +2278,26 @@ class DiskLruCacheTest {
     try {
       setString(0, "A")
       fail("")
-    } catch (_: IllegalStateException) {
-    }
+    } catch (_: IllegalStateException) {}
     try {
       newSource(0)
       fail("")
-    } catch (_: IllegalStateException) {
-    }
+    } catch (_: IllegalStateException) {}
     try {
       newSink(0)
       fail("")
-    } catch (_: IllegalStateException) {
-    }
+    } catch (_: IllegalStateException) {}
     try {
       commit()
       fail("")
-    } catch (_: IllegalStateException) {
-    }
+    } catch (_: IllegalStateException) {}
     try {
       abort()
       fail("")
-    } catch (_: IllegalStateException) {
-    }
+    } catch (_: IllegalStateException) {}
   }
 
   private fun Editor.setString(index: Int, value: String) {
-    newSink(index).buffer().use { writer ->
-      writer.writeUtf8(value)
-    }
+    newSink(index).buffer().use { writer -> writer.writeUtf8(value) }
   }
 }

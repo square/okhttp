@@ -15,6 +15,9 @@
  */
 package okhttp3.internal.cache2
 
+import java.io.File
+import java.io.IOException
+import java.io.RandomAccessFile
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.notifyAll
 import okio.Buffer
@@ -22,14 +25,11 @@ import okio.ByteString
 import okio.ByteString.Companion.encodeUtf8
 import okio.Source
 import okio.Timeout
-import java.io.File
-import java.io.IOException
-import java.io.RandomAccessFile
 
 /**
  * Replicates a single upstream source into multiple downstream sources. Each downstream source
- * returns the same bytes as the upstream source. Downstream sources may read data either as it
- * is returned by upstream, or after the upstream source has been exhausted.
+ * returns the same bytes as the upstream source. Downstream sources may read data either as it is
+ * returned by upstream, or after the upstream source has been exhausted.
  *
  * As bytes are returned from upstream they are written to a local file. Downstream sources read
  * from this file as necessary.
@@ -37,25 +37,28 @@ import java.io.RandomAccessFile
  * This class also keeps a small buffer of bytes recently read from upstream. This is intended to
  * save a small amount of file I/O and data copying.
  */
-class Relay private constructor(
+class Relay
+private constructor(
   /**
    * Read/write persistence of the upstream source and its metadata. Its layout is as follows:
    *
-   *  * 16 bytes: either `OkHttp cache v1\n` if the persisted file is complete. This is another
+   * * 16 bytes: either `OkHttp cache v1\n` if the persisted file is complete. This is another
+   * ```
    *    sequence of bytes if the file is incomplete and should not be used.
-   *  * 8 bytes: *n*: upstream data size
-   *  * 8 bytes: *m*: metadata size
-   *  * *n* bytes: upstream data
-   *  * *m* bytes: metadata
+   * ```
+   * * 8 bytes: *n*: upstream data size
+   * * 8 bytes: *m*: metadata size
+   * * *n* bytes: upstream data
+   * * *m* bytes: metadata
    *
-   * This is closed and assigned to null when the last source is closed and no further sources
-   * are permitted.
+   * This is closed and assigned to null when the last source is closed and no further sources are
+   * permitted.
    */
   var file: RandomAccessFile?,
 
   /**
-   * Null once the file has a complete copy of the upstream bytes. Only the [upstreamReader] thread
-   * may access this source.
+   * Null once the file has a complete copy of the upstream bytes. Only the [upstreamReader]
+   * thread may access this source.
    */
   var upstream: Source?,
 
@@ -93,17 +96,14 @@ class Relay private constructor(
     get() = file == null
 
   @Throws(IOException::class)
-  private fun writeHeader(
-    prefix: ByteString,
-    upstreamSize: Long,
-    metadataSize: Long
-  ) {
-    val header = Buffer().apply {
-      write(prefix)
-      writeLong(upstreamSize)
-      writeLong(metadataSize)
-      require(size == FILE_HEADER_SIZE)
-    }
+  private fun writeHeader(prefix: ByteString, upstreamSize: Long, metadataSize: Long) {
+    val header =
+        Buffer().apply {
+          write(prefix)
+          writeLong(upstreamSize)
+          writeLong(metadataSize)
+          require(size == FILE_HEADER_SIZE)
+        }
 
     val fileOperator = FileOperator(file!!.channel)
     fileOperator.write(0, header, FILE_HEADER_SIZE)
@@ -129,9 +129,7 @@ class Relay private constructor(
     file!!.channel.force(false)
 
     // This file is complete.
-    synchronized(this@Relay) {
-      complete = true
-    }
+    synchronized(this@Relay) { complete = true }
 
     upstream?.closeQuietly()
     upstream = null
@@ -180,46 +178,47 @@ class Relay private constructor(
      * In this case the bytes are immediately copied into [sink] and the number of bytes copied is
      * returned.
      *
-     * If upstream would be selected but another thread is already reading upstream this will
-     * block until that read completes. It is possible to time out while waiting for that.
+     * If upstream would be selected but another thread is already reading upstream this will block
+     * until that read completes. It is possible to time out while waiting for that.
      */
     @Throws(IOException::class)
     override fun read(sink: Buffer, byteCount: Long): Long {
       check(fileOperator != null)
 
-      val source: Int = synchronized(this@Relay) {
-        // We need new data from upstream.
-        while (true) {
-          val upstreamPos = this@Relay.upstreamPos
-          if (sourcePos != upstreamPos) break
+      val source: Int =
+          synchronized(this@Relay) {
+            // We need new data from upstream.
+            while (true) {
+              val upstreamPos = this@Relay.upstreamPos
+              if (sourcePos != upstreamPos) break
 
-          // No more data upstream. We're done.
-          if (complete) return -1L
+              // No more data upstream. We're done.
+              if (complete) return -1L
 
-          // Another thread is already reading. Wait for that.
-          if (upstreamReader != null) {
-            timeout.waitUntilNotified(this@Relay)
-            continue
+              // Another thread is already reading. Wait for that.
+              if (upstreamReader != null) {
+                timeout.waitUntilNotified(this@Relay)
+                continue
+              }
+
+              // We will do the read.
+              upstreamReader = Thread.currentThread()
+              return@synchronized SOURCE_UPSTREAM
+            }
+
+            val bufferPos = upstreamPos - buffer.size
+
+            // Bytes of the read precede the buffer. Read from the file.
+            if (sourcePos < bufferPos) {
+              return@synchronized SOURCE_FILE
+            }
+
+            // The buffer has the data we need. Read from there and return immediately.
+            val bytesToRead = minOf(byteCount, upstreamPos - sourcePos)
+            buffer.copyTo(sink, sourcePos - bufferPos, bytesToRead)
+            sourcePos += bytesToRead
+            return bytesToRead
           }
-
-          // We will do the read.
-          upstreamReader = Thread.currentThread()
-          return@synchronized SOURCE_UPSTREAM
-        }
-
-        val bufferPos = upstreamPos - buffer.size
-
-        // Bytes of the read precede the buffer. Read from the file.
-        if (sourcePos < bufferPos) {
-          return@synchronized SOURCE_FILE
-        }
-
-        // The buffer has the data we need. Read from there and return immediately.
-        val bytesToRead = minOf(byteCount, upstreamPos - sourcePos)
-        buffer.copyTo(sink, sourcePos - bufferPos, bytesToRead)
-        sourcePos += bytesToRead
-        return bytesToRead
-      }
 
       // Read from the file.
       if (source == SOURCE_FILE) {
@@ -247,9 +246,9 @@ class Relay private constructor(
 
         // Append the upstream bytes to the file.
         fileOperator!!.write(
-          FILE_HEADER_SIZE + upstreamPos,
-          upstreamBuffer.clone(),
-          upstreamBytesRead
+            FILE_HEADER_SIZE + upstreamPos,
+            upstreamBuffer.clone(),
+            upstreamBytesRead,
         )
 
         synchronized(this@Relay) {
@@ -299,8 +298,10 @@ class Relay private constructor(
     private const val SOURCE_UPSTREAM = 1
     private const val SOURCE_FILE = 2
 
-    @JvmField val PREFIX_CLEAN = "OkHttp cache v1\n".encodeUtf8()
-    @JvmField val PREFIX_DIRTY = "OkHttp DIRTY :(\n".encodeUtf8()
+    @JvmField
+    val PREFIX_CLEAN = "OkHttp cache v1\n".encodeUtf8()
+    @JvmField
+    val PREFIX_DIRTY = "OkHttp DIRTY :(\n".encodeUtf8()
     private const val FILE_HEADER_SIZE = 32L
 
     /**
@@ -311,12 +312,7 @@ class Relay private constructor(
      * close that when they're done. Otherwise a handle to [file] will be leaked.
      */
     @Throws(IOException::class)
-    fun edit(
-      file: File,
-      upstream: Source,
-      metadata: ByteString,
-      bufferMaxSize: Long
-    ): Relay {
+    fun edit(file: File, upstream: Source, metadata: ByteString, bufferMaxSize: Long): Relay {
       val randomAccessFile = RandomAccessFile(file, "rw")
       val result = Relay(randomAccessFile, upstream, 0L, metadata, bufferMaxSize)
 

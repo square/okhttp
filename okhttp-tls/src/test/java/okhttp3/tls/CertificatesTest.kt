@@ -19,9 +19,10 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class CertificatesTest {
-  @Test fun testRoundtrip() {
+  @Test
+  fun testRoundtrip() {
     val certificateString =
-      """
+        """
       -----BEGIN CERTIFICATE-----
       MIIBmjCCAQOgAwIBAgIBATANBgkqhkiG9w0BAQsFADATMREwDwYDVQQDEwhjYXNo
       LmFwcDAeFw03MDAxMDEwMDAwMDBaFw03MDAxMDEwMDAwMDFaMBMxETAPBgNVBAMT

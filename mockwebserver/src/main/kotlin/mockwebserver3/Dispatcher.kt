@@ -18,11 +18,10 @@ package mockwebserver3
 /** Handler for mock server requests. */
 abstract class Dispatcher {
   /**
-   * Returns a response to satisfy `request`. This method may block (for instance, to wait on
-   * a CountdownLatch).
+   * Returns a response to satisfy `request`. This method may block (for instance, to wait on a
+   * CountdownLatch).
    */
-  @Throws(InterruptedException::class)
-  abstract fun dispatch(request: RecordedRequest): MockResponse
+  @Throws(InterruptedException::class) abstract fun dispatch(request: RecordedRequest): MockResponse
 
   /**
    * Returns an early guess of the next response, used for policy on how an incoming request should

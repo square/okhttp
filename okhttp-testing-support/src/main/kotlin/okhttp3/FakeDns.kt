@@ -15,34 +15,29 @@
  */
 package okhttp3
 
-import org.assertj.core.api.Assertions.assertThat
 import java.net.InetAddress
 import java.net.UnknownHostException
+import org.assertj.core.api.Assertions.assertThat
 
 class FakeDns : Dns {
   private val hostAddresses: MutableMap<String, List<InetAddress>> = mutableMapOf()
   private val requestedHosts: MutableList<String> = mutableListOf()
   private var nextAddress = 100
 
-  /** Sets the results for `hostname`.  */
-  operator fun set(
-    hostname: String,
-    addresses: List<InetAddress>
-  ): FakeDns {
+  /** Sets the results for `hostname`. */
+  operator fun set(hostname: String, addresses: List<InetAddress>): FakeDns {
     hostAddresses[hostname] = addresses
     return this
   }
 
-  /** Clears the results for `hostname`.  */
+  /** Clears the results for `hostname`. */
   fun clear(hostname: String): FakeDns {
     hostAddresses.remove(hostname)
     return this
   }
 
-  @Throws(UnknownHostException::class) fun lookup(
-    hostname: String,
-    index: Int
-  ): InetAddress {
+  @Throws(UnknownHostException::class)
+  fun lookup(hostname: String, index: Int): InetAddress {
     return hostAddresses[hostname]!!.get(index)
   }
 
@@ -57,7 +52,7 @@ class FakeDns : Dns {
     requestedHosts.clear()
   }
 
-  /** Allocates and returns `count` fake addresses like [255.0.0.100, 255.0.0.101].  */
+  /** Allocates and returns `count` fake addresses like [255.0.0.100, 255.0.0.101]. */
   fun allocate(count: Int): List<InetAddress> {
     return try {
       val result: MutableList<InetAddress> = mutableListOf()
@@ -66,15 +61,8 @@ class FakeDns : Dns {
           throw AssertionError("too many addresses allocated")
         }
         result.add(
-          InetAddress.getByAddress(
-            byteArrayOf(
-              255.toByte(),
-              0.toByte(),
-              0.toByte(),
-              nextAddress++.toByte()
-            )
-          )
-        )
+            InetAddress.getByAddress(
+                byteArrayOf(255.toByte(), 0.toByte(), 0.toByte(), nextAddress++.toByte())))
       }
       result
     } catch (e: UnknownHostException) {

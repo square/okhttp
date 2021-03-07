@@ -22,9 +22,7 @@ internal fun Dispatcher.wrap(): mockwebserver3.Dispatcher {
 
   val delegate = this
   return object : mockwebserver3.Dispatcher() {
-    override fun dispatch(
-      request: mockwebserver3.RecordedRequest
-    ): mockwebserver3.MockResponse {
+    override fun dispatch(request: mockwebserver3.RecordedRequest): mockwebserver3.MockResponse {
       return delegate.dispatch(request.unwrap()).wrap()
     }
 
@@ -66,27 +64,22 @@ internal fun MockResponse.wrap(): mockwebserver3.MockResponse {
 
 private fun PushPromise.wrap(): mockwebserver3.PushPromise {
   return mockwebserver3.PushPromise(
-    method = method,
-    path = path,
-    headers = headers,
-    response = response.wrap()
-  )
+      method = method, path = path, headers = headers, response = response.wrap())
 }
 
 internal fun mockwebserver3.RecordedRequest.unwrap(): RecordedRequest {
   return RecordedRequest(
-    requestLine = requestLine,
-    headers = headers,
-    chunkSizes = chunkSizes,
-    bodySize = bodySize,
-    body = body,
-    sequenceNumber = sequenceNumber,
-    failure = failure,
-    method = method,
-    path = path,
-    handshake = handshake,
-    requestUrl = requestUrl
-  )
+      requestLine = requestLine,
+      headers = headers,
+      chunkSizes = chunkSizes,
+      bodySize = bodySize,
+      body = body,
+      sequenceNumber = sequenceNumber,
+      failure = failure,
+      method = method,
+      path = path,
+      handshake = handshake,
+      requestUrl = requestUrl)
 }
 
 private fun SocketPolicy.wrap(): mockwebserver3.SocketPolicy {

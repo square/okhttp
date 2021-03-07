@@ -19,41 +19,37 @@ import okhttp3.Headers
 
 /** An HTTP request initiated by the server. */
 class PushPromise(
-  @get:JvmName("method") val method: String,
-  @get:JvmName("path") val path: String,
-  @get:JvmName("headers") val headers: Headers,
-  @get:JvmName("response") val response: MockResponse
+    @get:JvmName("method") val method: String,
+    @get:JvmName("path") val path: String,
+    @get:JvmName("headers") val headers: Headers,
+    @get:JvmName("response") val response: MockResponse
 ) {
 
   @JvmName("-deprecated_method")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "method"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "method"),
+      level = DeprecationLevel.ERROR)
   fun method() = method
 
   @JvmName("-deprecated_path")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "path"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "path"),
+      level = DeprecationLevel.ERROR)
   fun path() = path
 
   @JvmName("-deprecated_headers")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "headers"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "headers"),
+      level = DeprecationLevel.ERROR)
   fun headers() = headers
 
   @JvmName("-deprecated_response")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "response"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "response"),
+      level = DeprecationLevel.ERROR)
   fun response() = response
 }

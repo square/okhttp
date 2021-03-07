@@ -15,6 +15,9 @@
  */
 package okhttp3.internal.ws
 
+import java.io.Closeable
+import java.io.IOException
+import java.util.Random
 import okhttp3.internal.ws.WebSocketProtocol.B0_FLAG_FIN
 import okhttp3.internal.ws.WebSocketProtocol.B0_FLAG_RSV1
 import okhttp3.internal.ws.WebSocketProtocol.B1_FLAG_MASK
@@ -30,12 +33,9 @@ import okhttp3.internal.ws.WebSocketProtocol.validateCloseCode
 import okio.Buffer
 import okio.BufferedSink
 import okio.ByteString
-import java.io.Closeable
-import java.io.IOException
-import java.util.Random
 
 /**
- * An [RFC 6455][rfc_6455]-compatible WebSocket frame writer.
+ * An [RFC 6455] [rfc_6455]-compatible WebSocket frame writer.
  *
  * This class is not thread safe.
  *
@@ -79,8 +79,11 @@ class WebSocketWriter(
    * Send a close frame with optional code and reason.
    *
    * @param code Status code as defined by
+   * ```
    *     [Section 7.4 of RFC 6455](http://tools.ietf.org/html/rfc6455#section-7.4) or `0`.
-   * @param reason Reason for shutting down or `null`.
+   * @param reason
+   * ```
+   * Reason for shutting down or `null`.
    */
   @Throws(IOException::class)
   fun writeClose(code: Int, reason: ByteString?) {
@@ -89,13 +92,14 @@ class WebSocketWriter(
       if (code != 0) {
         validateCloseCode(code)
       }
-      payload = Buffer().run {
-        writeShort(code)
-        if (reason != null) {
-          write(reason)
-        }
-        readByteString()
-      }
+      payload =
+          Buffer().run {
+            writeShort(code)
+            if (reason != null) {
+              write(reason)
+            }
+            readByteString()
+          }
     }
 
     try {
@@ -150,8 +154,9 @@ class WebSocketWriter(
 
     var b0 = formatOpcode or B0_FLAG_FIN
     if (perMessageDeflate && data.size >= minimumDeflateSize) {
-      val messageDeflater = this.messageDeflater
-        ?: MessageDeflater(noContextTakeover).also { this.messageDeflater = it }
+      val messageDeflater =
+          this.messageDeflater
+            ?: MessageDeflater(noContextTakeover).also { this.messageDeflater = it }
       messageDeflater.deflate(messageBuffer)
       b0 = b0 or B0_FLAG_RSV1
     }

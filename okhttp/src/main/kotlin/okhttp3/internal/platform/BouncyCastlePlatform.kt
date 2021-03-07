@@ -15,9 +15,6 @@
  */
 package okhttp3.internal.platform
 
-import okhttp3.Protocol
-import org.bouncycastle.jsse.BCSSLSocket
-import org.bouncycastle.jsse.provider.BouncyCastleJsseProvider
 import java.security.KeyStore
 import java.security.Provider
 import javax.net.ssl.SSLContext
@@ -25,6 +22,9 @@ import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
+import okhttp3.Protocol
+import org.bouncycastle.jsse.BCSSLSocket
+import org.bouncycastle.jsse.provider.BouncyCastleJsseProvider
 
 /**
  * Platform using BouncyCastle if installed as the first Security Provider.
@@ -34,14 +34,14 @@ import javax.net.ssl.X509TrustManager
 class BouncyCastlePlatform private constructor() : Platform() {
   private val provider: Provider = BouncyCastleJsseProvider()
 
-  override fun newSSLContext(): SSLContext =
-    SSLContext.getInstance("TLS", provider)
+  override fun newSSLContext(): SSLContext = SSLContext.getInstance("TLS", provider)
 
   override fun platformTrustManager(): X509TrustManager {
-    val factory = TrustManagerFactory.getInstance(
-      "PKIX",
-      BouncyCastleJsseProvider.PROVIDER_NAME
-    )
+    val factory =
+        TrustManagerFactory.getInstance(
+            "PKIX",
+            BouncyCastleJsseProvider.PROVIDER_NAME,
+        )
     factory.init(null as KeyStore?)
     val trustManagers = factory.trustManagers!!
     check(trustManagers.size == 1 && trustManagers[0] is X509TrustManager) {
@@ -51,9 +51,9 @@ class BouncyCastlePlatform private constructor() : Platform() {
   }
 
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? =
-    throw UnsupportedOperationException(
-      "clientBuilder.sslSocketFactory(SSLSocketFactory) not supported with BouncyCastle"
-    )
+      throw UnsupportedOperationException(
+          "clientBuilder.sslSocketFactory(SSLSocketFactory) not supported with BouncyCastle",
+      )
 
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
@@ -74,26 +74,33 @@ class BouncyCastlePlatform private constructor() : Platform() {
   }
 
   override fun getSelectedProtocol(sslSocket: SSLSocket): String? =
-    if (sslSocket is BCSSLSocket) {
-      when (val protocol = (sslSocket as BCSSLSocket).applicationProtocol) {
-        // Handles both un-configured and none selected.
-        null, "" -> null
-        else -> protocol
+      if (sslSocket is BCSSLSocket) {
+        when (val protocol = (sslSocket as BCSSLSocket).applicationProtocol) {
+          // Handles both un-configured and none selected.
+          null,
+          "" -> null
+          else -> protocol
+        }
+      } else {
+        super.getSelectedProtocol(sslSocket)
       }
-    } else {
-      super.getSelectedProtocol(sslSocket)
-    }
 
   companion object {
-    val isSupported: Boolean = try {
-      // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
-      Class.forName("org.bouncycastle.jsse.provider.BouncyCastleJsseProvider", false, javaClass.classLoader)
+    val isSupported: Boolean =
+        try {
+          // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
+          Class.forName(
+              "org.bouncycastle.jsse.provider.BouncyCastleJsseProvider",
+              false,
+              javaClass.classLoader,
+          )
 
-      true
-    } catch (_: ClassNotFoundException) {
-      false
-    }
+          true
+        } catch (_: ClassNotFoundException) {
+          false
+        }
 
-    fun buildIfSupported(): BouncyCastlePlatform? = if (isSupported) BouncyCastlePlatform() else null
+    fun buildIfSupported(): BouncyCastlePlatform? =
+        if (isSupported) BouncyCastlePlatform() else null
   }
 }

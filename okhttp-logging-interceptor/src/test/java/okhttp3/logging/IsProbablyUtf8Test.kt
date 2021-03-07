@@ -21,7 +21,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class IsProbablyUtf8Test {
-  @Test fun isProbablyUtf8() {
+  @Test
+  fun isProbablyUtf8() {
     assertThat(Buffer().isProbablyUtf8()).isTrue()
     assertThat(Buffer().writeUtf8("abc").isProbablyUtf8()).isTrue()
     assertThat(Buffer().writeUtf8("new\r\nlines").isProbablyUtf8()).isTrue()

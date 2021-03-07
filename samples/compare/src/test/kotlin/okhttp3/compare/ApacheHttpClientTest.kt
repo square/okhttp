@@ -34,15 +34,14 @@ import org.junit.jupiter.api.Test
 class ApacheHttpClientTest {
   private val httpClient = HttpClients.createDefault()
 
-  @AfterEach fun tearDown() {
+  @AfterEach
+  fun tearDown() {
     httpClient.close()
   }
 
-  @Test fun get(server: MockWebServer) {
-    server.enqueue(
-      MockResponse()
-        .setBody("hello, Apache HttpClient 5.x")
-    )
+  @Test
+  fun get(server: MockWebServer) {
+    server.enqueue(MockResponse().setBody("hello, Apache HttpClient 5.x"))
 
     val request = HttpGet(server.url("/").toUri())
     request.addHeader("Accept", "text/plain")

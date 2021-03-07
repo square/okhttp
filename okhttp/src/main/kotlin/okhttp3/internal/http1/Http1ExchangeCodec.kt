@@ -15,6 +15,10 @@
  */
 package okhttp3.internal.http1
 
+import java.io.EOFException
+import java.io.IOException
+import java.net.ProtocolException
+import java.util.concurrent.TimeUnit.MILLISECONDS
 import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
@@ -39,27 +43,27 @@ import okio.ForwardingTimeout
 import okio.Sink
 import okio.Source
 import okio.Timeout
-import java.io.EOFException
-import java.io.IOException
-import java.net.ProtocolException
-import java.util.concurrent.TimeUnit.MILLISECONDS
 
 /**
  * A socket connection that can be used to send HTTP/1.1 messages. This class strictly enforces the
  * following lifecycle:
  *
- *  1. [Send request headers][writeRequest].
- *  2. Open a sink to write the request body. Either [known][newKnownLengthSink] or
+ * 1. [Send request headers] [writeRequest].
+ * 2. Open a sink to write the request body. Either [known] [newKnownLengthSink] or
+ * ```
  *     [chunked][newChunkedSink].
- *  3. Write to and then close that sink.
- *  4. [Read response headers][readResponseHeaders].
- *  5. Open a source to read the response body. Either [fixed-length][newFixedLengthSource],
+ * ```
+ * 3. Write to and then close that sink.
+ * 4. [Read response headers] [readResponseHeaders].
+ * 5. Open a source to read the response body. Either [fixed-length] [newFixedLengthSource],
+ * ```
  *     [chunked][newChunkedSource] or [unknown][newUnknownLengthSource].
- *  6. Read from and close that source.
+ * ```
+ * 6. Read from and close that source.
  *
  * Exchanges that do not have a request body may skip creating and closing the request body.
- * Exchanges that do not have a response body can call
- * [newFixedLengthSource(0)][newFixedLengthSource] and may skip reading and closing that source.
+ * Exchanges that do not have a response body can call [newFixedLengthSource(0)]
+ * [newFixedLengthSource] and may skip reading and closing that source.
  */
 class Http1ExchangeCodec(
   /** The client that configures this stream. May be null for HTTPS proxy tunnels. */
@@ -90,14 +94,15 @@ class Http1ExchangeCodec(
 
   override fun createRequestBody(request: Request, contentLength: Long): Sink {
     return when {
-      request.body != null && request.body.isDuplex() -> throw ProtocolException(
-        "Duplex connections are not supported for HTTP/1"
-      )
+      request.body != null && request.body.isDuplex() ->
+        throw ProtocolException(
+            "Duplex connections are not supported for HTTP/1",
+        )
       request.isChunked -> newChunkedSink() // Stream a request body of unknown length.
       contentLength != -1L -> newKnownLengthSink() // Stream a request body of a known length.
       else -> // Stream a request body of a known length.
         throw IllegalStateException(
-          "Cannot stream a request body without chunked encoding or a known content length!"
+            "Cannot stream a request body without chunked encoding or a known content length!",
         )
     }
   }
@@ -162,10 +167,7 @@ class Http1ExchangeCodec(
     check(state == STATE_IDLE) { "state: $state" }
     sink.writeUtf8(requestLine).writeUtf8("\r\n")
     for (i in 0 until headers.size) {
-      sink.writeUtf8(headers.name(i))
-        .writeUtf8(": ")
-        .writeUtf8(headers.value(i))
-        .writeUtf8("\r\n")
+      sink.writeUtf8(headers.name(i)).writeUtf8(": ").writeUtf8(headers.value(i)).writeUtf8("\r\n")
     }
     sink.writeUtf8("\r\n")
     state = STATE_OPEN_REQUEST_BODY
@@ -173,21 +175,20 @@ class Http1ExchangeCodec(
 
   override fun readResponseHeaders(expectContinue: Boolean): Response.Builder? {
     check(
-      state == STATE_OPEN_REQUEST_BODY ||
-        state == STATE_WRITING_REQUEST_BODY ||
-        state == STATE_READ_RESPONSE_HEADERS
-    ) {
-      "state: $state"
-    }
+        state == STATE_OPEN_REQUEST_BODY ||
+            state == STATE_WRITING_REQUEST_BODY ||
+            state == STATE_READ_RESPONSE_HEADERS,
+    ) { "state: $state" }
 
     try {
       val statusLine = StatusLine.parse(headersReader.readLine())
 
-      val responseBuilder = Response.Builder()
-        .protocol(statusLine.protocol)
-        .code(statusLine.code)
-        .message(statusLine.message)
-        .headers(headersReader.readHeaders())
+      val responseBuilder =
+          Response.Builder()
+              .protocol(statusLine.protocol)
+              .code(statusLine.code)
+              .message(statusLine.message)
+              .headers(headersReader.readHeaders())
 
       return when {
         expectContinue && statusLine.code == HTTP_CONTINUE -> {
@@ -241,8 +242,8 @@ class Http1ExchangeCodec(
   }
 
   /**
-   * Sets the delegate of `timeout` to [Timeout.NONE] and resets its underlying timeout
-   * to the default configuration. Use this to avoid unexpected sharing of timeouts between pooled
+   * Sets the delegate of `timeout` to [Timeout.NONE] and resets its underlying timeout to the
+   * default configuration. Use this to avoid unexpected sharing of timeouts between pooled
    * connections.
    */
   private fun detachTimeout(timeout: ForwardingTimeout) {
@@ -357,8 +358,7 @@ class Http1ExchangeCodec(
   }
 
   /** An HTTP body with a fixed length specified in advance. */
-  private inner class FixedLengthSource(private var bytesRemaining: Long) :
-    AbstractSource() {
+  private inner class FixedLengthSource(private var bytesRemaining: Long) : AbstractSource() {
 
     init {
       if (bytesRemaining == 0L) {
@@ -390,8 +390,7 @@ class Http1ExchangeCodec(
       if (closed) return
 
       if (bytesRemaining != 0L &&
-        !discard(ExchangeCodec.DISCARD_STREAM_TIMEOUT_MILLIS, MILLISECONDS)
-      ) {
+        !discard(ExchangeCodec.DISCARD_STREAM_TIMEOUT_MILLIS, MILLISECONDS)) {
         connection.noNewExchanges() // Unread bytes remain on the stream.
         responseBodyComplete()
       }
@@ -401,8 +400,7 @@ class Http1ExchangeCodec(
   }
 
   /** An HTTP body with alternating chunk sizes and chunk bodies. */
-  private inner class ChunkedSource(private val url: HttpUrl) :
-    AbstractSource() {
+  private inner class ChunkedSource(private val url: HttpUrl) : AbstractSource() {
     private var bytesRemainingInChunk = NO_CHUNK_YET
     private var hasMoreChunks = true
 
@@ -437,8 +435,8 @@ class Http1ExchangeCodec(
         val extensions = source.readUtf8LineStrict().trim()
         if (bytesRemainingInChunk < 0L || extensions.isNotEmpty() && !extensions.startsWith(";")) {
           throw ProtocolException(
-            "expected chunk size and optional extensions" +
-              " but was \"$bytesRemainingInChunk$extensions\""
+              "expected chunk size and optional extensions" +
+                  " but was \"$bytesRemainingInChunk$extensions\"",
           )
         }
       } catch (e: NumberFormatException) {
@@ -455,9 +453,7 @@ class Http1ExchangeCodec(
 
     override fun close() {
       if (closed) return
-      if (hasMoreChunks &&
-        !discard(ExchangeCodec.DISCARD_STREAM_TIMEOUT_MILLIS, MILLISECONDS)
-      ) {
+      if (hasMoreChunks && !discard(ExchangeCodec.DISCARD_STREAM_TIMEOUT_MILLIS, MILLISECONDS)) {
         connection.noNewExchanges() // Unread bytes remain on the stream.
         responseBodyComplete()
       }

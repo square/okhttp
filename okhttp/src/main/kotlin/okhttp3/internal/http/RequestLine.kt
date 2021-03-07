@@ -15,17 +15,16 @@
  */
 package okhttp3.internal.http
 
-import okhttp3.HttpUrl
-import okhttp3.Request
 import java.net.HttpURLConnection
 import java.net.Proxy
+import okhttp3.HttpUrl
+import okhttp3.Request
 
 object RequestLine {
 
   /**
    * Returns the request status line, like "GET / HTTP/1.1". This is exposed to the application by
-   * [HttpURLConnection.getHeaderFields], so it needs to be set even if the transport is
-   * HTTP/2.
+   * [HttpURLConnection.getHeaderFields], so it needs to be set even if the transport is HTTP/2.
    */
   fun get(request: Request, proxyType: Proxy.Type) = buildString {
     append(request.method)

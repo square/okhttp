@@ -15,16 +15,14 @@
  */
 package okhttp3.internal.cache
 
+import java.io.IOException
 import okio.Buffer
 import okio.ForwardingSink
 import okio.Sink
-import java.io.IOException
 
 /** A sink that never throws IOExceptions, even if the underlying sink does. */
-internal open class FaultHidingSink(
-  delegate: Sink,
-  val onException: (IOException) -> Unit
-) : ForwardingSink(delegate) {
+internal open class FaultHidingSink(delegate: Sink, val onException: (IOException) -> Unit) :
+  ForwardingSink(delegate) {
   private var hasErrors = false
 
   override fun write(source: Buffer, byteCount: Long) {

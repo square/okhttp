@@ -16,6 +16,10 @@
  */
 package okhttp3.internal.cache
 
+import java.io.IOException
+import java.net.HttpURLConnection.HTTP_GATEWAY_TIMEOUT
+import java.net.HttpURLConnection.HTTP_NOT_MODIFIED
+import java.util.concurrent.TimeUnit.MILLISECONDS
 import okhttp3.Cache
 import okhttp3.EventListener
 import okhttp3.Headers
@@ -33,10 +37,6 @@ import okhttp3.internal.http.promisesBody
 import okio.Buffer
 import okio.Source
 import okio.buffer
-import java.io.IOException
-import java.net.HttpURLConnection.HTTP_GATEWAY_TIMEOUT
-import java.net.HttpURLConnection.HTTP_NOT_MODIFIED
-import java.util.concurrent.TimeUnit.MILLISECONDS
 
 /** Serves requests from the cache and writes responses to the cache. */
 class CacheInterceptor(internal val cache: Cache?) : Interceptor {
@@ -63,25 +63,22 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
     // If we're forbidden from using the network and the cache is insufficient, fail.
     if (networkRequest == null && cacheResponse == null) {
       return Response.Builder()
-        .request(chain.request())
-        .protocol(Protocol.HTTP_1_1)
-        .code(HTTP_GATEWAY_TIMEOUT)
-        .message("Unsatisfiable Request (only-if-cached)")
-        .body(EMPTY_RESPONSE)
-        .sentRequestAtMillis(-1L)
-        .receivedResponseAtMillis(System.currentTimeMillis())
-        .build().also {
-          listener.satisfactionFailure(call, it)
-        }
+          .request(chain.request())
+          .protocol(Protocol.HTTP_1_1)
+          .code(HTTP_GATEWAY_TIMEOUT)
+          .message("Unsatisfiable Request (only-if-cached)")
+          .body(EMPTY_RESPONSE)
+          .sentRequestAtMillis(-1L)
+          .receivedResponseAtMillis(System.currentTimeMillis())
+          .build()
+          .also { listener.satisfactionFailure(call, it) }
     }
 
     // If we don't need the network, we're done.
     if (networkRequest == null) {
-      return cacheResponse!!.newBuilder()
-        .cacheResponse(stripBody(cacheResponse))
-        .build().also {
-          listener.cacheHit(call, it)
-        }
+      return cacheResponse!!.newBuilder().cacheResponse(stripBody(cacheResponse)).build().also {
+        listener.cacheHit(call, it)
+      }
     }
 
     if (cacheResponse != null) {
@@ -103,13 +100,15 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
     // If we have a cache response too, then we're doing a conditional get.
     if (cacheResponse != null) {
       if (networkResponse?.code == HTTP_NOT_MODIFIED) {
-        val response = cacheResponse.newBuilder()
-          .headers(combine(cacheResponse.headers, networkResponse.headers))
-          .sentRequestAtMillis(networkResponse.sentRequestAtMillis)
-          .receivedResponseAtMillis(networkResponse.receivedResponseAtMillis)
-          .cacheResponse(stripBody(cacheResponse))
-          .networkResponse(stripBody(networkResponse))
-          .build()
+        val response =
+            cacheResponse
+                .newBuilder()
+                .headers(combine(cacheResponse.headers, networkResponse.headers))
+                .sentRequestAtMillis(networkResponse.sentRequestAtMillis)
+                .receivedResponseAtMillis(networkResponse.receivedResponseAtMillis)
+                .cacheResponse(stripBody(cacheResponse))
+                .networkResponse(stripBody(networkResponse))
+                .build()
 
         networkResponse.body!!.close()
 
@@ -117,18 +116,18 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
         // Content-Encoding header (as performed by initContentStream()).
         cache!!.trackConditionalCacheHit()
         cache.update(cacheResponse, response)
-        return response.also {
-          listener.cacheHit(call, it)
-        }
+        return response.also { listener.cacheHit(call, it) }
       } else {
         cacheResponse.body?.closeQuietly()
       }
     }
 
-    val response = networkResponse!!.newBuilder()
-      .cacheResponse(stripBody(cacheResponse))
-      .networkResponse(stripBody(networkResponse))
-      .build()
+    val response =
+        networkResponse!!
+            .newBuilder()
+            .cacheResponse(stripBody(cacheResponse))
+            .networkResponse(stripBody(networkResponse))
+            .build()
 
     if (cache != null) {
       if (response.promisesBody() && CacheStrategy.isCacheable(response, networkRequest)) {
@@ -168,54 +167,55 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
     val source = response.body!!.source()
     val cacheBody = cacheBodyUnbuffered.buffer()
 
-    val cacheWritingSource = object : Source {
-      private var cacheRequestClosed = false
+    val cacheWritingSource =
+        object : Source {
+          private var cacheRequestClosed = false
 
-      @Throws(IOException::class)
-      override fun read(sink: Buffer, byteCount: Long): Long {
-        val bytesRead: Long
-        try {
-          bytesRead = source.read(sink, byteCount)
-        } catch (e: IOException) {
-          if (!cacheRequestClosed) {
-            cacheRequestClosed = true
-            cacheRequest.abort() // Failed to write a complete cache response.
+          @Throws(IOException::class)
+          override fun read(sink: Buffer, byteCount: Long): Long {
+            val bytesRead: Long
+            try {
+              bytesRead = source.read(sink, byteCount)
+            } catch (e: IOException) {
+              if (!cacheRequestClosed) {
+                cacheRequestClosed = true
+                cacheRequest.abort() // Failed to write a complete cache response.
+              }
+              throw e
+            }
+
+            if (bytesRead == -1L) {
+              if (!cacheRequestClosed) {
+                cacheRequestClosed = true
+                cacheBody.close() // The cache response is complete!
+              }
+              return -1
+            }
+
+            sink.copyTo(cacheBody.buffer, sink.size - bytesRead, bytesRead)
+            cacheBody.emitCompleteSegments()
+            return bytesRead
           }
-          throw e
-        }
 
-        if (bytesRead == -1L) {
-          if (!cacheRequestClosed) {
-            cacheRequestClosed = true
-            cacheBody.close() // The cache response is complete!
+          override fun timeout() = source.timeout()
+
+          @Throws(IOException::class)
+          override fun close() {
+            if (!cacheRequestClosed &&
+              !discard(ExchangeCodec.DISCARD_STREAM_TIMEOUT_MILLIS, MILLISECONDS)) {
+              cacheRequestClosed = true
+              cacheRequest.abort()
+            }
+            source.close()
           }
-          return -1
         }
-
-        sink.copyTo(cacheBody.buffer, sink.size - bytesRead, bytesRead)
-        cacheBody.emitCompleteSegments()
-        return bytesRead
-      }
-
-      override fun timeout() = source.timeout()
-
-      @Throws(IOException::class)
-      override fun close() {
-        if (!cacheRequestClosed &&
-          !discard(ExchangeCodec.DISCARD_STREAM_TIMEOUT_MILLIS, MILLISECONDS)
-        ) {
-          cacheRequestClosed = true
-          cacheRequest.abort()
-        }
-        source.close()
-      }
-    }
 
     val contentType = response.header("Content-Type")
     val contentLength = response.body.contentLength()
-    return response.newBuilder()
-      .body(RealResponseBody(contentType, contentLength, cacheWritingSource.buffer()))
-      .build()
+    return response
+        .newBuilder()
+        .body(RealResponseBody(contentType, contentLength, cacheWritingSource.buffer()))
+        .build()
   }
 
   companion object {
@@ -241,8 +241,7 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
         }
         if (isContentSpecificHeader(fieldName) ||
           !isEndToEnd(fieldName) ||
-          networkHeaders[fieldName] == null
-        ) {
+          networkHeaders[fieldName] == null) {
           result.addLenient(fieldName, value)
         }
       }
@@ -257,29 +256,26 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
       return result.build()
     }
 
-    /**
-     * Returns true if [fieldName] is an end-to-end HTTP header, as defined by RFC 2616,
-     * 13.5.1.
-     */
+    /** Returns true if [fieldName] is an end-to-end HTTP header, as defined by RFC 2616, 13.5.1. */
     private fun isEndToEnd(fieldName: String): Boolean {
       return !"Connection".equals(fieldName, ignoreCase = true) &&
-        !"Keep-Alive".equals(fieldName, ignoreCase = true) &&
-        !"Proxy-Authenticate".equals(fieldName, ignoreCase = true) &&
-        !"Proxy-Authorization".equals(fieldName, ignoreCase = true) &&
-        !"TE".equals(fieldName, ignoreCase = true) &&
-        !"Trailers".equals(fieldName, ignoreCase = true) &&
-        !"Transfer-Encoding".equals(fieldName, ignoreCase = true) &&
-        !"Upgrade".equals(fieldName, ignoreCase = true)
+          !"Keep-Alive".equals(fieldName, ignoreCase = true) &&
+          !"Proxy-Authenticate".equals(fieldName, ignoreCase = true) &&
+          !"Proxy-Authorization".equals(fieldName, ignoreCase = true) &&
+          !"TE".equals(fieldName, ignoreCase = true) &&
+          !"Trailers".equals(fieldName, ignoreCase = true) &&
+          !"Transfer-Encoding".equals(fieldName, ignoreCase = true) &&
+          !"Upgrade".equals(fieldName, ignoreCase = true)
     }
 
     /**
-     * Returns true if [fieldName] is content specific and therefore should always be used
-     * from cached headers.
+     * Returns true if [fieldName] is content specific and therefore should always be used from
+     * cached headers.
      */
     private fun isContentSpecificHeader(fieldName: String): Boolean {
       return "Content-Length".equals(fieldName, ignoreCase = true) ||
-        "Content-Encoding".equals(fieldName, ignoreCase = true) ||
-        "Content-Type".equals(fieldName, ignoreCase = true)
+          "Content-Encoding".equals(fieldName, ignoreCase = true) ||
+          "Content-Type".equals(fieldName, ignoreCase = true)
     }
   }
 }

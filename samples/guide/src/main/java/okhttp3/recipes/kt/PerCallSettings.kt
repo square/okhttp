@@ -15,23 +15,22 @@
  */
 package okhttp3.recipes.kt
 
-import okhttp3.OkHttpClient
-import okhttp3.Request
 import java.io.IOException
 import java.util.concurrent.TimeUnit
+import okhttp3.OkHttpClient
+import okhttp3.Request
 
 class PerCallSettings {
   private val client = OkHttpClient()
 
   fun run() {
-    val request = Request.Builder()
-      .url("http://httpbin.org/delay/1") // This URL is served with a 1 second delay.
-      .build()
+    val request =
+        Request.Builder()
+            .url("http://httpbin.org/delay/1") // This URL is served with a 1 second delay.
+            .build()
 
     // Copy to customize OkHttp for this request.
-    val client1 = client.newBuilder()
-      .readTimeout(500, TimeUnit.MILLISECONDS)
-      .build()
+    val client1 = client.newBuilder().readTimeout(500, TimeUnit.MILLISECONDS).build()
     try {
       client1.newCall(request).execute().use { response ->
         println("Response 1 succeeded: $response")
@@ -41,9 +40,7 @@ class PerCallSettings {
     }
 
     // Copy to customize OkHttp for this request.
-    val client2 = client.newBuilder()
-      .readTimeout(3000, TimeUnit.MILLISECONDS)
-      .build()
+    val client2 = client.newBuilder().readTimeout(3000, TimeUnit.MILLISECONDS).build()
     try {
       client2.newCall(request).execute().use { response ->
         println("Response 2 succeeded: $response")

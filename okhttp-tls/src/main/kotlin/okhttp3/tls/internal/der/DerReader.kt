@@ -15,27 +15,27 @@
  */
 package okhttp3.tls.internal.der
 
+import java.math.BigInteger
+import java.net.ProtocolException
 import okio.Buffer
 import okio.BufferedSource
 import okio.ByteString
 import okio.ForwardingSource
 import okio.Source
 import okio.buffer
-import java.math.BigInteger
-import java.net.ProtocolException
 
 /**
  * Streaming decoder of data encoded following Abstract Syntax Notation One (ASN.1). There are
  * multiple variants of ASN.1, including:
  *
- *  * DER: Distinguished Encoding Rules. This further constrains ASN.1 for deterministic encoding.
- *  * BER: Basic Encoding Rules.
+ * * DER: Distinguished Encoding Rules. This further constrains ASN.1 for deterministic encoding.
+ * * BER: Basic Encoding Rules.
  *
- * This class was implemented according to the [X.690 spec][[x690]], and under the advice of
- * [Lets Encrypt's ASN.1 and DER][asn1_and_der] guide.
+ * This class was implemented according to the [X.690 spec][ [x690]], and under the advice of [Lets
+ * Encrypt's ASN.1 and DER] [asn1_and_der] guide.
  *
- * [x690]: https://www.itu.int/rec/T-REC-X.690
- * [asn1_and_der]: https://letsencrypt.org/docs/a-warm-welcome-to-asn1-and-der/
+ * [x690]: https://www.itu.int/rec/T-REC-X.690 [asn1_and_der]:
+ * https://letsencrypt.org/docs/a-warm-welcome-to-asn1-and-der/
  */
 internal class DerReader(source: Source) {
   private val countingSource: CountingSource = CountingSource(source)
@@ -52,8 +52,8 @@ internal class DerReader(source: Source) {
   private val typeHintStack = mutableListOf<Any?>()
 
   /**
-   * The type hint for the current object. Used to pick adapters based on other fields, such as
-   * in extensions which have different types depending on their extension ID.
+   * The type hint for the current object. Used to pick adapters based on other fields, such as in
+   * extensions which have different types depending on their extension ID.
    */
   var typeHint: Any?
     get() = typeHintStack.lastOrNull()
@@ -78,9 +78,9 @@ internal class DerReader(source: Source) {
    *
    * This returns null if:
    *
-   *  * The stream is exhausted.
-   *  * We've read all of the bytes of an object whose length is known.
-   *  * We've reached the [DerHeader.TAG_END_OF_CONTENTS] of an object whose length is unknown.
+   * * The stream is exhausted.
+   * * We've read all of the bytes of an object whose length is known.
+   * * We've reached the [DerHeader.TAG_END_OF_CONTENTS] of an object whose length is unknown.
    */
   fun peekHeader(): DerHeader? {
     var result = peekedHeader
@@ -113,43 +113,45 @@ internal class DerReader(source: Source) {
     val tagClass = tagAndClass and 0b1100_0000
     val constructed = (tagAndClass and 0b0010_0000) == 0b0010_0000
     val tag0 = tagAndClass and 0b0001_1111
-    val tag = when (tag0) {
-      0b0001_1111 -> readVariableLengthLong()
-      else -> tag0.toLong()
-    }
+    val tag =
+        when (tag0) {
+          0b0001_1111 -> readVariableLengthLong()
+          else -> tag0.toLong()
+        }
 
     // Read the length.
     val length0 = source.readByte().toInt() and 0xff
-    val length = when {
-      length0 == 0b1000_0000 -> {
-        throw ProtocolException("indefinite length not permitted for DER")
-      }
-      (length0 and 0b1000_0000) == 0b1000_0000 -> {
-        // Length specified over multiple bytes.
-        val lengthBytes = length0 and 0b0111_1111
-        if (lengthBytes > 8) {
-          throw ProtocolException("length encoded with more than 8 bytes is not supported")
+    val length =
+        when {
+          length0 == 0b1000_0000 -> {
+            throw ProtocolException("indefinite length not permitted for DER")
+          }
+          (length0 and 0b1000_0000) == 0b1000_0000 -> {
+            // Length specified over multiple bytes.
+            val lengthBytes = length0 and 0b0111_1111
+            if (lengthBytes > 8) {
+              throw ProtocolException("length encoded with more than 8 bytes is not supported")
+            }
+
+            var lengthBits = source.readByte().toLong() and 0xff
+            if (lengthBits == 0L || lengthBytes == 1 && lengthBits and 0b1000_0000 == 0L) {
+              throw ProtocolException("invalid encoding for length")
+            }
+
+            for (i in 1 until lengthBytes) {
+              lengthBits = lengthBits shl 8
+              lengthBits += source.readByte().toInt() and 0xff
+            }
+
+            if (lengthBits < 0) throw ProtocolException("length > Long.MAX_VALUE")
+
+            lengthBits
+          }
+          else -> {
+            // Length is 127 or fewer bytes.
+            (length0 and 0b0111_1111).toLong()
+          }
         }
-
-        var lengthBits = source.readByte().toLong() and 0xff
-        if (lengthBits == 0L || lengthBytes == 1 && lengthBits and 0b1000_0000 == 0L) {
-          throw ProtocolException("invalid encoding for length")
-        }
-
-        for (i in 1 until lengthBytes) {
-          lengthBits = lengthBits shl 8
-          lengthBits += source.readByte().toInt() and 0xff
-        }
-
-        if (lengthBits < 0) throw ProtocolException("length > Long.MAX_VALUE")
-
-        lengthBits
-      }
-      else -> {
-        // Length is 127 or fewer bytes.
-        (length0 and 0b0111_1111).toLong()
-      }
-    }
 
     // Note that this may be be an encoded "end of data" header.
     return DerHeader(tagClass, tag, constructed, length)
@@ -320,12 +322,12 @@ internal class DerReader(source: Source) {
      * show up in ASN.1 streams to also indicate the end of SEQUENCE, SET or other constructed
      * value.
      */
-    private val END_OF_DATA = DerHeader(
-      tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
-      tag = DerHeader.TAG_END_OF_CONTENTS,
-      constructed = false,
-      length = -1L
-    )
+    private val END_OF_DATA =
+        DerHeader(
+            tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
+            tag = DerHeader.TAG_END_OF_CONTENTS,
+            constructed = false,
+            length = -1L)
   }
 
   /** A source that keeps track of how many bytes it's consumed. */

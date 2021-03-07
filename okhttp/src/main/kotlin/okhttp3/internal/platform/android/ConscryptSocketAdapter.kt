@@ -15,11 +15,11 @@
  */
 package okhttp3.internal.platform.android
 
+import javax.net.ssl.SSLSocket
 import okhttp3.Protocol
 import okhttp3.internal.platform.ConscryptPlatform
 import okhttp3.internal.platform.Platform
 import org.conscrypt.Conscrypt
-import javax.net.ssl.SSLSocket
 
 /**
  * Simple non-reflection SocketAdapter for Conscrypt when included as an application dependency
@@ -31,10 +31,10 @@ class ConscryptSocketAdapter : SocketAdapter {
   override fun isSupported(): Boolean = ConscryptPlatform.isSupported
 
   override fun getSelectedProtocol(sslSocket: SSLSocket): String? =
-    when {
-      matchesSocket(sslSocket) -> Conscrypt.getApplicationProtocol(sslSocket)
-      else -> null // No TLS extensions if the socket class is custom.
-    }
+      when {
+        matchesSocket(sslSocket) -> Conscrypt.getApplicationProtocol(sslSocket)
+        else -> null // No TLS extensions if the socket class is custom.
+      }
 
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
@@ -53,11 +53,13 @@ class ConscryptSocketAdapter : SocketAdapter {
   }
 
   companion object {
-    val factory = object : DeferredSocketAdapter.Factory {
-      override fun matchesSocket(sslSocket: SSLSocket): Boolean {
-        return ConscryptPlatform.isSupported && Conscrypt.isConscrypt(sslSocket)
-      }
-      override fun create(sslSocket: SSLSocket): SocketAdapter = ConscryptSocketAdapter()
-    }
+    val factory =
+        object : DeferredSocketAdapter.Factory {
+          override fun matchesSocket(sslSocket: SSLSocket): Boolean {
+            return ConscryptPlatform.isSupported && Conscrypt.isConscrypt(sslSocket)
+          }
+
+          override fun create(sslSocket: SSLSocket): SocketAdapter = ConscryptSocketAdapter()
+        }
   }
 }

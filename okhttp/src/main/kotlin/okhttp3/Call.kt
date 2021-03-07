@@ -15,8 +15,8 @@
  */
 package okhttp3
 
-import okio.Timeout
 import java.io.IOException
+import okio.Timeout
 
 /**
  * A call is a request that has been prepared for execution. A call can be canceled. As this object
@@ -40,16 +40,19 @@ interface Call : Cloneable {
    * ```
    *
    * The caller may read the response body with the response's [Response.body] method. To avoid
-   * leaking resources callers must [close the response body][ResponseBody] or the response.
+   * leaking resources callers must [close the response body] [ResponseBody] or the response.
    *
    * Note that transport-layer success (receiving a HTTP response code, headers and body) does not
    * necessarily indicate application-layer success: `response` may still indicate an unhappy HTTP
    * response code like 404 or 500.
    *
    * @throws IOException if the request could not be executed due to cancellation, a connectivity
+   * ```
    *     problem or timeout. Because networks can fail during an exchange, it is possible that the
    *     remote server accepted the request before the failure.
-   * @throws IllegalStateException when the call has already been executed.
+   * @throws IllegalStateException
+   * ```
+   * when the call has already been executed.
    */
   @Throws(IOException::class)
   fun execute(): Response
@@ -57,7 +60,7 @@ interface Call : Cloneable {
   /**
    * Schedules the request to be executed at some point in the future.
    *
-   * The [dispatcher][OkHttpClient.dispatcher] defines when the request will run: usually
+   * The [dispatcher] [OkHttpClient.dispatcher] defines when the request will run: usually
    * immediately unless there are several other requests currently being executed.
    *
    * This client will later call back `responseCallback` with either an HTTP response or a failure
@@ -71,8 +74,8 @@ interface Call : Cloneable {
   fun cancel()
 
   /**
-   * Returns true if this call has been either [executed][execute] or [enqueued][enqueue]. It is an
-   * error to execute a call more than once.
+   * Returns true if this call has been either [executed] [execute] or [enqueued] [enqueue]. It is
+   * an error to execute a call more than once.
    */
   fun isExecuted(): Boolean
 

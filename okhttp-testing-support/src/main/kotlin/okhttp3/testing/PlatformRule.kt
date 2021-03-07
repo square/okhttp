@@ -18,6 +18,8 @@ package okhttp3.testing
 import android.os.Build
 import com.amazon.corretto.crypto.provider.AmazonCorrettoCryptoProvider
 import com.amazon.corretto.crypto.provider.SelfTestStatus
+import java.lang.reflect.Method
+import java.security.Security
 import okhttp3.TestUtil
 import okhttp3.internal.platform.ConscryptPlatform
 import okhttp3.internal.platform.Jdk8WithJettyBootPlatform
@@ -43,20 +45,18 @@ import org.junit.jupiter.api.extension.InvocationInterceptor
 import org.junit.jupiter.api.extension.ReflectiveInvocationContext
 import org.openjsse.net.ssl.OpenJSSE
 import org.opentest4j.TestAbortedException
-import java.lang.reflect.Method
-import java.security.Security
 
 /**
- * Marks a test as Platform aware, before the test runs a consistent Platform will be
- * established e.g. SecurityProvider for Conscrypt installed.
+ * Marks a test as Platform aware, before the test runs a consistent Platform will be established
+ * e.g. SecurityProvider for Conscrypt installed.
  *
  * Also allows a test file to state general platform assumptions, or for individual test.
  */
 @Suppress("unused", "MemberVisibilityCanBePrivate")
-open class PlatformRule @JvmOverloads constructor(
-  val requiredPlatformName: String? = null,
-  val platform: Platform? = null
-) : BeforeEachCallback, AfterEachCallback, InvocationInterceptor {
+open class PlatformRule
+@JvmOverloads
+constructor(val requiredPlatformName: String? = null, val platform: Platform? = null) :
+    BeforeEachCallback, AfterEachCallback, InvocationInterceptor {
   private val versionChecks = mutableListOf<Pair<Matcher<out Any>, Matcher<out Any>>>()
 
   override fun beforeEach(context: ExtensionContext) {
@@ -68,9 +68,9 @@ open class PlatformRule @JvmOverloads constructor(
   }
 
   override fun interceptTestMethod(
-    invocation: InvocationInterceptor.Invocation<Void>,
-    invocationContext: ReflectiveInvocationContext<Method>,
-    extensionContext: ExtensionContext
+      invocation: InvocationInterceptor.Invocation<Void>,
+      invocationContext: ReflectiveInvocationContext<Method>,
+      extensionContext: ExtensionContext
   ) {
     var failed = false
     try {
@@ -135,21 +135,22 @@ open class PlatformRule @JvmOverloads constructor(
   }
 
   private fun expectFailure(
-    versionMatcher: Matcher<out Any>,
-    failureMatcher: Matcher<out Any> = anything()
+      versionMatcher: Matcher<out Any>,
+      failureMatcher: Matcher<out Any> = anything()
   ) {
     versionChecks.add(Pair(versionMatcher, failureMatcher))
   }
 
-  fun platformMatches(platform: String): Matcher<Any> = object : BaseMatcher<Any>() {
-    override fun describeTo(description: Description) {
-      description.appendText(platform)
-    }
+  fun platformMatches(platform: String): Matcher<Any> =
+      object : BaseMatcher<Any>() {
+        override fun describeTo(description: Description) {
+          description.appendText(platform)
+        }
 
-    override fun matches(item: Any?): Boolean {
-      return getPlatformSystemProperty() == platform
-    }
-  }
+        override fun matches(item: Any?): Boolean {
+          return getPlatformSystemProperty() == platform
+        }
+      }
 
   fun fromMajor(version: Int): Matcher<PlatformVersion> {
     return object : TypeSafeMatcher<PlatformVersion>() {
@@ -339,9 +340,7 @@ open class PlatformRule @JvmOverloads constructor(
             System.err.println("Warning: Conscrypt not available")
           }
 
-          val provider = Conscrypt.newProviderBuilder()
-            .provideTrustManager(true)
-            .build()
+          val provider = Conscrypt.newProviderBuilder().provideTrustManager(true).build()
           Security.insertProviderAt(provider, 1)
         }
       } else if (platformSystemProperty == JDK8_ALPN_PROPERTY) {
@@ -352,7 +351,8 @@ open class PlatformRule @JvmOverloads constructor(
         if (isAlpnBootEnabled()) {
           System.err.println("Warning: ALPN Boot enabled unintentionally")
         }
-      } else if (platformSystemProperty == OPENJSSE_PROPERTY && Security.getProviders()[0].name != "OpenJSSE") {
+      } else if (platformSystemProperty == OPENJSSE_PROPERTY &&
+          Security.getProviders()[0].name != "OpenJSSE") {
         if (!OpenJSSEPlatform.isSupported) {
           System.err.println("Warning: OpenJSSE not available")
         }
@@ -362,7 +362,8 @@ open class PlatformRule @JvmOverloads constructor(
         }
 
         Security.insertProviderAt(OpenJSSE(), 1)
-      } else if (platformSystemProperty == BOUNCYCASTLE_PROPERTY && Security.getProviders()[0].name != "BC") {
+      } else if (platformSystemProperty == BOUNCYCASTLE_PROPERTY &&
+          Security.getProviders()[0].name != "BC") {
         Security.insertProviderAt(BouncyCastleProvider(), 1)
         Security.insertProviderAt(BouncyCastleJsseProvider(), 2)
       } else if (platformSystemProperty == CORRETTO_PROPERTY) {
@@ -381,58 +382,55 @@ open class PlatformRule @JvmOverloads constructor(
       var property: String? = System.getProperty(PROPERTY_NAME)
 
       if (property == null) {
-        property = when (Platform.get()) {
-          is ConscryptPlatform -> CONSCRYPT_PROPERTY
-          is OpenJSSEPlatform -> OPENJSSE_PROPERTY
-          is Jdk8WithJettyBootPlatform -> CONSCRYPT_PROPERTY
-          is Jdk9Platform -> {
-            if (isCorrettoInstalled) CORRETTO_PROPERTY else JDK9_PROPERTY
-          }
-          else -> JDK8_PROPERTY
-        }
+        property =
+            when (Platform.get()) {
+              is ConscryptPlatform -> CONSCRYPT_PROPERTY
+              is OpenJSSEPlatform -> OPENJSSE_PROPERTY
+              is Jdk8WithJettyBootPlatform -> CONSCRYPT_PROPERTY
+              is Jdk9Platform -> {
+                if (isCorrettoInstalled) CORRETTO_PROPERTY else JDK9_PROPERTY
+              }
+              else -> JDK8_PROPERTY
+            }
       }
 
       return property
     }
 
-    @JvmStatic
-    fun conscrypt() = PlatformRule(CONSCRYPT_PROPERTY)
+    @JvmStatic fun conscrypt() = PlatformRule(CONSCRYPT_PROPERTY)
+
+    @JvmStatic fun openjsse() = PlatformRule(OPENJSSE_PROPERTY)
+
+    @JvmStatic fun jdk9() = PlatformRule(JDK9_PROPERTY)
+
+    @JvmStatic fun jdk8() = PlatformRule(JDK8_PROPERTY)
+
+    @JvmStatic fun jdk8alpn() = PlatformRule(JDK8_ALPN_PROPERTY)
+
+    @JvmStatic fun bouncycastle() = PlatformRule(BOUNCYCASTLE_PROPERTY)
 
     @JvmStatic
-    fun openjsse() = PlatformRule(OPENJSSE_PROPERTY)
+    fun isAlpnBootEnabled(): Boolean =
+        try {
+          Class.forName("org.eclipse.jetty.alpn.ALPN", true, null)
+          true
+        } catch (cnfe: ClassNotFoundException) {
+          false
+        }
 
-    @JvmStatic
-    fun jdk9() = PlatformRule(JDK9_PROPERTY)
+    val isCorrettoSupported: Boolean =
+        try {
+          // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
+          Class.forName("com.amazon.corretto.crypto.provider.AmazonCorrettoCryptoProvider")
 
-    @JvmStatic
-    fun jdk8() = PlatformRule(JDK8_PROPERTY)
-
-    @JvmStatic
-    fun jdk8alpn() = PlatformRule(JDK8_ALPN_PROPERTY)
-
-    @JvmStatic
-    fun bouncycastle() = PlatformRule(BOUNCYCASTLE_PROPERTY)
-
-    @JvmStatic
-    fun isAlpnBootEnabled(): Boolean = try {
-      Class.forName("org.eclipse.jetty.alpn.ALPN", true, null)
-      true
-    } catch (cnfe: ClassNotFoundException) {
-      false
-    }
-
-    val isCorrettoSupported: Boolean = try {
-      // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
-      Class.forName("com.amazon.corretto.crypto.provider.AmazonCorrettoCryptoProvider")
-
-      AmazonCorrettoCryptoProvider.INSTANCE.loadingError == null &&
-        AmazonCorrettoCryptoProvider.INSTANCE.runSelfTests() == SelfTestStatus.PASSED
-    } catch (e: ClassNotFoundException) {
-      false
-    }
+          AmazonCorrettoCryptoProvider.INSTANCE.loadingError == null &&
+              AmazonCorrettoCryptoProvider.INSTANCE.runSelfTests() == SelfTestStatus.PASSED
+        } catch (e: ClassNotFoundException) {
+          false
+        }
 
     val isCorrettoInstalled: Boolean =
-      isCorrettoSupported && Security.getProviders()
-        .first().name == AmazonCorrettoCryptoProvider.PROVIDER_NAME
+        isCorrettoSupported &&
+            Security.getProviders().first().name == AmazonCorrettoCryptoProvider.PROVIDER_NAME
   }
 }

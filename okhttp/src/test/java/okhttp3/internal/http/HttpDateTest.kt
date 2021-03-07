@@ -15,12 +15,12 @@
  */
 package okhttp3.internal.http
 
+import java.util.Date
+import java.util.TimeZone
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.util.Date
-import java.util.TimeZone
 
 class HttpDateTest {
 
@@ -40,7 +40,8 @@ class HttpDateTest {
     TimeZone.setDefault(originalDefault)
   }
 
-  @Test @Throws(Exception::class)
+  @Test
+  @Throws(Exception::class)
   fun parseStandardFormats() {
     // RFC 822, updated by RFC 1123 with GMT.
     assertThat("Thu, 01 Jan 1970 00:00:00 GMT".toHttpDateOrNull()!!.time).isEqualTo(0L)
@@ -55,13 +56,15 @@ class HttpDateTest {
     assertThat("Fri Jun 6 12:30:30 2014".toHttpDateOrNull()!!.time).isEqualTo(1402057830000L)
   }
 
-  @Test @Throws(Exception::class)
+  @Test
+  @Throws(Exception::class)
   fun format() {
     assertThat(Date(0L).toHttpDateString()).isEqualTo("Thu, 01 Jan 1970 00:00:00 GMT")
     assertThat(Date(1402057830000L).toHttpDateString()).isEqualTo("Fri, 06 Jun 2014 12:30:30 GMT")
   }
 
-  @Test @Throws(Exception::class)
+  @Test
+  @Throws(Exception::class)
   fun parseNonStandardStrings() {
     // RFC 822, updated by RFC 1123 with any TZ
     assertThat("Thu, 01 Jan 1970 00:00:00 GMT-01:00".toHttpDateOrNull()!!.time).isEqualTo(3600000L)
@@ -79,12 +82,11 @@ class HttpDateTest {
 
     // RFC 850, obsoleted by RFC 1036 with any TZ.
     assertThat("Thursday, 01-Jan-1970 00:00:00 GMT-01:00".toHttpDateOrNull()!!.time)
-      .isEqualTo(3600000L)
-    assertThat("Thursday, 01-Jan-1970 00:00:00 PST".toHttpDateOrNull()!!.time)
-      .isEqualTo(28800000L)
+        .isEqualTo(3600000L)
+    assertThat("Thursday, 01-Jan-1970 00:00:00 PST".toHttpDateOrNull()!!.time).isEqualTo(28800000L)
     // Ignore trailing junk
     assertThat("Thursday, 01-Jan-1970 00:00:00 PST JUNK".toHttpDateOrNull()!!.time)
-      .isEqualTo(28800000L)
+        .isEqualTo(28800000L)
 
     // ANSI C's asctime() format
     // This format ignores the timezone entirely even if it is present and uses GMT.

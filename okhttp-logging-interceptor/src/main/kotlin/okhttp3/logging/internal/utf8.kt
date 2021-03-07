@@ -15,13 +15,12 @@
  */
 package okhttp3.logging.internal
 
-import okio.Buffer
 import java.io.EOFException
+import okio.Buffer
 
 /**
- * Returns true if the body in question probably contains human readable text. Uses a small
- * sample of code points to detect unicode control characters commonly used in binary file
- * signatures.
+ * Returns true if the body in question probably contains human readable text. Uses a small sample
+ * of code points to detect unicode control characters commonly used in binary file signatures.
  */
 fun Buffer.isProbablyUtf8(): Boolean {
   try {

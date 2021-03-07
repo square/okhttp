@@ -35,52 +35,43 @@ import org.junit.jupiter.api.fail
 
 @Timeout(30)
 @Tag("Slowish")
-class ServerTruncatesRequestTest(
-  val server: MockWebServer
-) {
+class ServerTruncatesRequestTest(val server: MockWebServer) {
   @RegisterExtension @JvmField val platform = PlatformRule()
   @RegisterExtension @JvmField var clientTestRule = OkHttpClientTestRule()
 
   private val listener = RecordingEventListener()
   private val handshakeCertificates = localhost()
 
-  private var client = clientTestRule.newClientBuilder()
-    .eventListenerFactory(clientTestRule.wrap(listener))
-    .build()
+  private var client =
+      clientTestRule.newClientBuilder().eventListenerFactory(clientTestRule.wrap(listener)).build()
 
-  @BeforeEach fun setUp() {
+  @BeforeEach
+  fun setUp() {
     platform.assumeNotOpenJSSE()
     platform.assumeHttp2Support()
     platform.assumeNotBouncyCastle()
   }
 
-  @Test fun serverTruncatesRequestOnLongPostHttp1() {
+  @Test
+  fun serverTruncatesRequestOnLongPostHttp1() {
     serverTruncatesRequestOnLongPost(https = false)
   }
 
-  @Test fun serverTruncatesRequestOnLongPostHttp2() {
+  @Test
+  fun serverTruncatesRequestOnLongPostHttp2() {
     enableProtocol(Protocol.HTTP_2)
     serverTruncatesRequestOnLongPost(https = true)
   }
 
   private fun serverTruncatesRequestOnLongPost(https: Boolean) {
     server.enqueue(
-      MockResponse()
-        .setSocketPolicy(SocketPolicy.DO_NOT_READ_REQUEST_BODY)
-        .setBody("abc")
-        .apply { this.http2ErrorCode = ErrorCode.NO_ERROR.httpCode }
-    )
+        MockResponse().setSocketPolicy(SocketPolicy.DO_NOT_READ_REQUEST_BODY).setBody("abc").apply {
+          this.http2ErrorCode = ErrorCode.NO_ERROR.httpCode
+        })
 
-    val call = client.newCall(
-      Request.Builder()
-        .url(server.url("/"))
-        .post(SlowRequestBody)
-        .build()
-    )
+    val call = client.newCall(Request.Builder().url(server.url("/")).post(SlowRequestBody).build())
 
-    call.execute().use { response ->
-      assertThat(response.body!!.string()).isEqualTo("abc")
-    }
+    call.execute().use { response -> assertThat(response.body!!.string()).isEqualTo("abc") }
 
     val expectedEvents = mutableListOf<String>()
     // Start out with standard events...
@@ -117,24 +108,18 @@ class ServerTruncatesRequestTest(
    * If the server returns a full response, it doesn't really matter if the HTTP/2 stream is reset.
    * Attempts to write the request body fails fast.
    */
-  @Test fun serverTruncatesRequestHttp2OnDuplexRequest() {
+  @Test
+  fun serverTruncatesRequestHttp2OnDuplexRequest() {
     enableProtocol(Protocol.HTTP_2)
 
     server.enqueue(
-      MockResponse()
-        .setSocketPolicy(SocketPolicy.DO_NOT_READ_REQUEST_BODY)
-        .setBody("abc")
-        .apply { this.http2ErrorCode = ErrorCode.NO_ERROR.httpCode }
-    )
+        MockResponse().setSocketPolicy(SocketPolicy.DO_NOT_READ_REQUEST_BODY).setBody("abc").apply {
+          this.http2ErrorCode = ErrorCode.NO_ERROR.httpCode
+        })
 
     val requestBody = AsyncRequestBody()
 
-    val call = client.newCall(
-      Request.Builder()
-        .url(server.url("/"))
-        .post(requestBody)
-        .build()
-    )
+    val call = client.newCall(Request.Builder().url(server.url("/")).post(requestBody).build())
 
     call.execute().use { response ->
       assertThat(response.body!!.string()).isEqualTo("abc")
@@ -142,35 +127,34 @@ class ServerTruncatesRequestTest(
       try {
         SlowRequestBody.writeTo(requestBodyOut)
         fail("")
-      } catch (expected: IOException) {
-      }
+      } catch (expected: IOException) {}
       try {
         requestBodyOut.close()
         fail("")
-      } catch (expected: IOException) {
-      }
+      } catch (expected: IOException) {}
     }
 
     // Confirm that the connection pool was not corrupted by making another call.
     makeSimpleCall()
   }
 
-  @Test fun serverTruncatesRequestButTrailersCanStillBeReadHttp1() {
+  @Test
+  fun serverTruncatesRequestButTrailersCanStillBeReadHttp1() {
     serverTruncatesRequestButTrailersCanStillBeRead(http2 = false)
   }
 
-  @Test fun serverTruncatesRequestButTrailersCanStillBeReadHttp2() {
+  @Test
+  fun serverTruncatesRequestButTrailersCanStillBeReadHttp2() {
     enableProtocol(Protocol.HTTP_2)
     serverTruncatesRequestButTrailersCanStillBeRead(http2 = true)
   }
 
   private fun serverTruncatesRequestButTrailersCanStillBeRead(http2: Boolean) {
-    val mockResponse = MockResponse()
-      .setSocketPolicy(SocketPolicy.DO_NOT_READ_REQUEST_BODY)
-      .apply {
-        this.trailers = headersOf("caboose", "xyz")
-        this.http2ErrorCode = ErrorCode.NO_ERROR.httpCode
-      }
+    val mockResponse =
+        MockResponse().setSocketPolicy(SocketPolicy.DO_NOT_READ_REQUEST_BODY).apply {
+          this.trailers = headersOf("caboose", "xyz")
+          this.http2ErrorCode = ErrorCode.NO_ERROR.httpCode
+        }
 
     // Trailers always work for HTTP/2, but only for chunked bodies in HTTP/1.
     if (http2) {
@@ -181,12 +165,7 @@ class ServerTruncatesRequestTest(
 
     server.enqueue(mockResponse)
 
-    val call = client.newCall(
-      Request.Builder()
-        .url(server.url("/"))
-        .post(SlowRequestBody)
-        .build()
-    )
+    val call = client.newCall(Request.Builder().url(server.url("/")).post(SlowRequestBody).build())
 
     call.execute().use { response ->
       assertThat(response.body!!.string()).isEqualTo("abc")
@@ -194,23 +173,20 @@ class ServerTruncatesRequestTest(
     }
   }
 
-  @Test fun noAttemptToReadResponseIfLoadingRequestBodyIsSourceOfFailure() {
+  @Test
+  fun noAttemptToReadResponseIfLoadingRequestBodyIsSourceOfFailure() {
     server.enqueue(MockResponse().setBody("abc"))
 
-    val requestBody = object : RequestBody() {
-      override fun contentType(): MediaType? = null
+    val requestBody =
+        object : RequestBody() {
+          override fun contentType(): MediaType? = null
 
-      override fun writeTo(sink: BufferedSink) {
-        throw IOException("boom") // Despite this exception, 'sink' is healthy.
-      }
-    }
+          override fun writeTo(sink: BufferedSink) {
+            throw IOException("boom") // Despite this exception, 'sink' is healthy.
+          }
+        }
 
-    val callA = client.newCall(
-      Request.Builder()
-        .url(server.url("/"))
-        .post(requestBody)
-        .build()
-    )
+    val callA = client.newCall(Request.Builder().url(server.url("/")).post(requestBody).build())
 
     try {
       callA.execute()
@@ -223,44 +199,30 @@ class ServerTruncatesRequestTest(
 
     // Confirm that the connection pool was not corrupted by making another call. This doesn't use
     // makeSimpleCall() because it uses the MockResponse enqueued above.
-    val callB = client.newCall(
-      Request.Builder()
-        .url(server.url("/"))
-        .build()
-    )
-    callB.execute().use { response ->
-      assertThat(response.body!!.string()).isEqualTo("abc")
-    }
+    val callB = client.newCall(Request.Builder().url(server.url("/")).build())
+    callB.execute().use { response -> assertThat(response.body!!.string()).isEqualTo("abc") }
   }
 
   private fun makeSimpleCall() {
     server.enqueue(MockResponse().setBody("healthy"))
-    val callB = client.newCall(
-      Request.Builder()
-        .url(server.url("/"))
-        .build()
-    )
-    callB.execute().use { response ->
-      assertThat(response.body!!.string()).isEqualTo("healthy")
-    }
+    val callB = client.newCall(Request.Builder().url(server.url("/")).build())
+    callB.execute().use { response -> assertThat(response.body!!.string()).isEqualTo("healthy") }
   }
 
   private fun enableProtocol(protocol: Protocol) {
     enableTls()
-    client = client.newBuilder()
-      .protocols(listOf(protocol, Protocol.HTTP_1_1))
-      .build()
+    client = client.newBuilder().protocols(listOf(protocol, Protocol.HTTP_1_1)).build()
     server.protocols = client.protocols
   }
 
   private fun enableTls() {
-    client = client.newBuilder()
-      .sslSocketFactory(
-        handshakeCertificates.sslSocketFactory(),
-        handshakeCertificates.trustManager
-      )
-      .hostnameVerifier(RecordingHostnameVerifier())
-      .build()
+    client =
+        client
+            .newBuilder()
+            .sslSocketFactory(
+                handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager)
+            .hostnameVerifier(RecordingHostnameVerifier())
+            .build()
     server.useHttps(handshakeCertificates.sslSocketFactory(), false)
   }
 

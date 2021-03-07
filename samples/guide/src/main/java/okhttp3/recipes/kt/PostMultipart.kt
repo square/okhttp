@@ -15,34 +15,35 @@
  */
 package okhttp3.recipes.kt
 
+import java.io.File
+import java.io.IOException
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.asRequestBody
-import java.io.File
-import java.io.IOException
 
 class PostMultipart {
   private val client = OkHttpClient()
 
   fun run() {
     // Use the imgur image upload API as documented at https://api.imgur.com/endpoints/image
-    val requestBody = MultipartBody.Builder()
-      .setType(MultipartBody.FORM)
-      .addFormDataPart("title", "Square Logo")
-      .addFormDataPart(
-        "image",
-        "logo-square.png",
-        File("docs/images/logo-square.png").asRequestBody(MEDIA_TYPE_PNG)
-      )
-      .build()
+    val requestBody =
+        MultipartBody.Builder()
+            .setType(MultipartBody.FORM)
+            .addFormDataPart("title", "Square Logo")
+            .addFormDataPart(
+                "image",
+                "logo-square.png",
+                File("docs/images/logo-square.png").asRequestBody(MEDIA_TYPE_PNG))
+            .build()
 
-    val request = Request.Builder()
-      .header("Authorization", "Client-ID $IMGUR_CLIENT_ID")
-      .url("https://api.imgur.com/3/image")
-      .post(requestBody)
-      .build()
+    val request =
+        Request.Builder()
+            .header("Authorization", "Client-ID $IMGUR_CLIENT_ID")
+            .url("https://api.imgur.com/3/image")
+            .post(requestBody)
+            .build()
 
     client.newCall(request).execute().use { response ->
       if (!response.isSuccessful) throw IOException("Unexpected code $response")

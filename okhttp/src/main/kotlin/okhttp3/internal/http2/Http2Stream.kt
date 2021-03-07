@@ -15,6 +15,11 @@
  */
 package okhttp3.internal.http2
 
+import java.io.EOFException
+import java.io.IOException
+import java.io.InterruptedIOException
+import java.net.SocketTimeoutException
+import java.util.ArrayDeque
 import okhttp3.Headers
 import okhttp3.internal.EMPTY_HEADERS
 import okhttp3.internal.assertThreadDoesntHoldLock
@@ -27,15 +32,11 @@ import okio.BufferedSource
 import okio.Sink
 import okio.Source
 import okio.Timeout
-import java.io.EOFException
-import java.io.IOException
-import java.io.InterruptedIOException
-import java.net.SocketTimeoutException
-import java.util.ArrayDeque
 
 /** A logical bidirectional stream. */
 @Suppress("NAME_SHADOWING")
-class Http2Stream internal constructor(
+class Http2Stream
+internal constructor(
   val id: Int,
   val connection: Http2Connection,
   outFinished: Boolean,
@@ -61,19 +62,21 @@ class Http2Stream internal constructor(
   var writeBytesMaximum: Long = connection.peerSettings.initialWindowSize.toLong()
     internal set
 
-  /** Received headers yet to be [taken][takeHeaders]. */
+  /** Received headers yet to be [taken] [takeHeaders]. */
   private val headersQueue = ArrayDeque<Headers>()
 
   /** True if response headers have been sent or received. */
   private var hasResponseHeaders: Boolean = false
 
-  internal val source = FramingSource(
-    maxByteCount = connection.okHttpSettings.initialWindowSize.toLong(),
-    finished = inFinished
-  )
-  internal val sink = FramingSink(
-    finished = outFinished
-  )
+  internal val source =
+      FramingSource(
+          maxByteCount = connection.okHttpSettings.initialWindowSize.toLong(),
+          finished = inFinished,
+      )
+  internal val sink =
+      FramingSink(
+          finished = outFinished,
+      )
   internal val readTimeout = StreamTimeout()
   internal val writeTimeout = StreamTimeout()
 
@@ -84,7 +87,8 @@ class Http2Stream internal constructor(
    * If there are multiple reasons to abnormally close this stream (such as both peers closing it
    * near-simultaneously) then this is the first reason known to this peer.
    */
-  @get:Synchronized internal var errorCode: ErrorCode? = null
+  @get:Synchronized
+  internal var errorCode: ErrorCode? = null
 
   /** The exception that explains [errorCode]. Null if no exception was provided. */
   internal var errorException: IOException? = null
@@ -101,21 +105,21 @@ class Http2Stream internal constructor(
   /**
    * Returns true if this stream is open. A stream is open until either:
    *
-   *  * A `SYN_RESET` frame abnormally terminates the stream.
-   *  * Both input and output streams have transmitted all data and headers.
+   * * A `SYN_RESET` frame abnormally terminates the stream.
+   * * Both input and output streams have transmitted all data and headers.
    *
-   * Note that the input stream may continue to yield data even after a stream reports itself as
-   * not open. This is because input data is buffered.
+   * Note that the input stream may continue to yield data even after a stream reports itself as not
+   * open. This is because input data is buffered.
    */
   val isOpen: Boolean
-    @Synchronized get() {
+    @Synchronized
+    get() {
       if (errorCode != null) {
         return false
       }
       if ((source.finished || source.closed) &&
         (sink.finished || sink.closed) &&
-        hasResponseHeaders
-      ) {
+        hasResponseHeaders) {
         return false
       }
       return true
@@ -133,7 +137,8 @@ class Http2Stream internal constructor(
    * have been received. If the returned list contains multiple blocks of headers the blocks will be
    * delimited by 'null'.
    */
-  @Synchronized @Throws(IOException::class)
+  @Synchronized
+  @Throws(IOException::class)
   fun takeHeaders(): Headers {
     readTimeout.enter()
     try {
@@ -153,7 +158,8 @@ class Http2Stream internal constructor(
    * Returns the trailers. It is only safe to call this once the source stream has been completely
    * exhausted.
    */
-  @Synchronized @Throws(IOException::class)
+  @Synchronized
+  @Throws(IOException::class)
   fun trailers(): Headers {
     if (source.finished && source.receiveBuffer.exhausted() && source.readBuffer.exhausted()) {
       return source.trailers ?: EMPTY_HEADERS
@@ -168,9 +174,14 @@ class Http2Stream internal constructor(
    * Sends a reply to an incoming stream.
    *
    * @param outFinished true to eagerly finish the output stream to send data to the remote peer.
+   * ```
    *     Corresponds to `FLAG_FIN`.
-   * @param flushHeaders true to force flush the response headers. This should be true unless the
+   * @param flushHeaders
+   * ```
+   * true to force flush the response headers. This should be true unless the
+   * ```
    *     response body exists and will be written immediately.
+   * ```
    */
   @Throws(IOException::class)
   fun writeHeaders(responseHeaders: List<Header>, outFinished: Boolean, flushHeaders: Boolean) {
@@ -218,13 +229,13 @@ class Http2Stream internal constructor(
    * Returns a sink that can be used to write data to the peer.
    *
    * @throws IllegalStateException if this stream was initiated by the peer and a [writeHeaders] has
+   * ```
    *     not yet been sent.
+   * ```
    */
   fun getSink(): Sink {
     synchronized(this) {
-      check(hasResponseHeaders || isLocallyInitiated) {
-        "reply before requesting the sink"
-      }
+      check(hasResponseHeaders || isLocallyInitiated) { "reply before requesting the sink" }
     }
     return sink
   }
@@ -300,7 +311,8 @@ class Http2Stream internal constructor(
     }
   }
 
-  @Synchronized fun receiveRstStream(errorCode: ErrorCode) {
+  @Synchronized
+  fun receiveRstStream(errorCode: ErrorCode) {
     if (this.errorCode == null) {
       this.errorCode = errorCode
       notifyAll()
@@ -312,7 +324,8 @@ class Http2Stream internal constructor(
    * synchronization to safely receive incoming data frames, it is not intended for use by multiple
    * readers.
    */
-  inner class FramingSource internal constructor(
+  inner class FramingSource
+  internal constructor(
     /** Maximum number of bytes to buffer before reporting a flow control error. */
     private val maxByteCount: Long,
 
@@ -365,8 +378,7 @@ class Http2Stream internal constructor(
 
               val unacknowledgedBytesRead = readBytesTotal - readBytesAcknowledged
               if (errorExceptionToDeliver == null &&
-                unacknowledgedBytesRead >= connection.okHttpSettings.initialWindowSize / 2
-              ) {
+                unacknowledgedBytesRead >= connection.okHttpSettings.initialWindowSize / 2) {
                 // Flow control: notify the peer that we're ready for more data! Only send a
                 // WINDOW_UPDATE if the stream isn't in error.
                 connection.writeWindowUpdateLater(id, unacknowledgedBytesRead)
@@ -549,8 +561,7 @@ class Http2Stream internal constructor(
           while (writeBytesTotal >= writeBytesMaximum &&
             !finished &&
             !closed &&
-            errorCode == null
-          ) {
+            errorCode == null) {
             waitForIo() // Wait until we receive a WINDOW_UPDATE for this stream.
           }
         } finally {
@@ -575,9 +586,7 @@ class Http2Stream internal constructor(
     override fun flush() {
       this@Http2Stream.assertThreadDoesntHoldLock()
 
-      synchronized(this@Http2Stream) {
-        checkOutNotClosed()
-      }
+      synchronized(this@Http2Stream) { checkOutNotClosed() }
       // TODO(jwilson): flush the connection?!
       while (sendBuffer.size > 0L) {
         emitFrame(false)
@@ -609,21 +618,17 @@ class Http2Stream internal constructor(
             }
             connection.writeHeaders(id, outFinished, trailers!!.toHeaderList())
           }
-
           hasData -> {
             while (sendBuffer.size > 0L) {
               emitFrame(true)
             }
           }
-
           outFinished -> {
             connection.writeData(id, true, null, 0L)
           }
         }
       }
-      synchronized(this@Http2Stream) {
-        closed = true
-      }
+      synchronized(this@Http2Stream) { closed = true }
       connection.flush()
       cancelStreamIfNecessary()
     }

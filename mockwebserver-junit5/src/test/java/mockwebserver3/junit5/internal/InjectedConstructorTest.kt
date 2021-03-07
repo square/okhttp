@@ -19,9 +19,7 @@ import mockwebserver3.MockWebServer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-class InjectedConstructorTest(
-  private val server: MockWebServer
-) {
+class InjectedConstructorTest(private val server: MockWebServer) {
   @Test
   fun testOne() {
     assertThat(server.started).isTrue()

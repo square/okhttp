@@ -15,6 +15,8 @@
  */
 package okhttp3
 
+import java.io.IOException
+import java.nio.charset.Charset
 import okhttp3.HttpUrl.Companion.FORM_ENCODE_SET
 import okhttp3.HttpUrl.Companion.canonicalize
 import okhttp3.HttpUrl.Companion.percentDecode
@@ -22,25 +24,22 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.internal.toImmutableList
 import okio.Buffer
 import okio.BufferedSink
-import java.io.IOException
-import java.nio.charset.Charset
 
-class FormBody internal constructor(
-  encodedNames: List<String>,
-  encodedValues: List<String>
-) : RequestBody() {
+class FormBody internal constructor(encodedNames: List<String>, encodedValues: List<String>) :
+  RequestBody() {
   private val encodedNames: List<String> = encodedNames.toImmutableList()
   private val encodedValues: List<String> = encodedValues.toImmutableList()
 
   /** The number of key-value pairs in this form-encoded body. */
-  @get:JvmName("size") val size: Int
+  @get:JvmName("size")
+  val size: Int
     get() = encodedNames.size
 
   @JvmName("-deprecated_size")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "size"),
-    level = DeprecationLevel.ERROR
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "size"),
+      level = DeprecationLevel.ERROR,
   )
   fun size(): Int = size
 
@@ -62,10 +61,10 @@ class FormBody internal constructor(
   }
 
   /**
-   * Either writes this request to [sink] or measures its content length. We have one method
-   * do double-duty to make sure the counting and content are consistent, particularly when it comes
-   * to awkward operations like measuring the encoded length of header strings, or the
-   * length-in-digits of an encoded integer.
+   * Either writes this request to [sink] or measures its content length. We have one method do
+   * double-duty to make sure the counting and content are consistent, particularly when it comes to
+   * awkward operations like measuring the encoded length of header strings, or the length-in-digits
+   * of an encoded integer.
    */
   private fun writeOrCountBytes(sink: BufferedSink?, countBytes: Boolean): Long {
     var byteCount = 0L
@@ -91,31 +90,35 @@ class FormBody internal constructor(
     private val values = mutableListOf<String>()
 
     fun add(name: String, value: String) = apply {
-      names += name.canonicalize(
-        encodeSet = FORM_ENCODE_SET,
-        plusIsSpace = false, // plus is encoded as `%2B`, space is encoded as plus.
-        charset = charset
-      )
-      values += value.canonicalize(
-        encodeSet = FORM_ENCODE_SET,
-        plusIsSpace = false, // plus is encoded as `%2B`, space is encoded as plus.
-        charset = charset
-      )
+      names +=
+          name.canonicalize(
+              encodeSet = FORM_ENCODE_SET,
+              plusIsSpace = false, // plus is encoded as `%2B`, space is encoded as plus.
+              charset = charset,
+          )
+      values +=
+          value.canonicalize(
+              encodeSet = FORM_ENCODE_SET,
+              plusIsSpace = false, // plus is encoded as `%2B`, space is encoded as plus.
+              charset = charset,
+          )
     }
 
     fun addEncoded(name: String, value: String) = apply {
-      names += name.canonicalize(
-        encodeSet = FORM_ENCODE_SET,
-        alreadyEncoded = true,
-        plusIsSpace = true,
-        charset = charset
-      )
-      values += value.canonicalize(
-        encodeSet = FORM_ENCODE_SET,
-        alreadyEncoded = true,
-        plusIsSpace = true,
-        charset = charset
-      )
+      names +=
+          name.canonicalize(
+              encodeSet = FORM_ENCODE_SET,
+              alreadyEncoded = true,
+              plusIsSpace = true,
+              charset = charset,
+          )
+      values +=
+          value.canonicalize(
+              encodeSet = FORM_ENCODE_SET,
+              alreadyEncoded = true,
+              plusIsSpace = true,
+              charset = charset,
+          )
     }
 
     fun build(): FormBody = FormBody(names, values)

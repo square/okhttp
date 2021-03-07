@@ -15,8 +15,6 @@
  */
 package okhttp3.tls.internal.der
 
-import okio.Buffer
-import okio.ByteString
 import java.math.BigInteger
 import java.security.GeneralSecurityException
 import java.security.PublicKey
@@ -24,26 +22,30 @@ import java.security.Signature
 import java.security.SignatureException
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
+import okio.Buffer
+import okio.ByteString
 
 internal data class Certificate(
-  val tbsCertificate: TbsCertificate,
-  val signatureAlgorithm: AlgorithmIdentifier,
-  val signatureValue: BitString
+    val tbsCertificate: TbsCertificate,
+    val signatureAlgorithm: AlgorithmIdentifier,
+    val signatureValue: BitString
 ) {
   val commonName: Any?
     get() {
-      return tbsCertificate.subject
-        .flatten()
-        .firstOrNull { it.type == ObjectIdentifiers.commonName }
-        ?.value
+      return tbsCertificate
+          .subject
+          .flatten()
+          .firstOrNull { it.type == ObjectIdentifiers.commonName }
+          ?.value
     }
 
   val organizationalUnitName: Any?
     get() {
-      return tbsCertificate.subject
-        .flatten()
-        .firstOrNull { it.type == ObjectIdentifiers.organizationalUnitName }
-        ?.value
+      return tbsCertificate
+          .subject
+          .flatten()
+          .firstOrNull { it.type == ObjectIdentifiers.organizationalUnitName }
+          ?.value
     }
 
   val subjectAlternativeNames: Extension?
@@ -55,9 +57,7 @@ internal data class Certificate(
 
   val basicConstraints: Extension
     get() {
-      return tbsCertificate.extensions.first {
-        it.id == ObjectIdentifiers.basicConstraints
-      }
+      return tbsCertificate.extensions.first { it.id == ObjectIdentifiers.basicConstraints }
     }
 
   /** Returns true if the certificate was signed by [issuer]. */
@@ -89,17 +89,17 @@ internal data class Certificate(
 }
 
 internal data class TbsCertificate(
-  /** This is a integer enum. Use 0L for v1, 1L for v2, and 2L for v3. */
-  val version: Long,
-  val serialNumber: BigInteger,
-  val signature: AlgorithmIdentifier,
-  val issuer: List<List<AttributeTypeAndValue>>,
-  val validity: Validity,
-  val subject: List<List<AttributeTypeAndValue>>,
-  val subjectPublicKeyInfo: SubjectPublicKeyInfo,
-  val issuerUniqueID: BitString?,
-  val subjectUniqueID: BitString?,
-  val extensions: List<Extension>
+    /** This is a integer enum. Use 0L for v1, 1L for v2, and 2L for v3. */
+    val version: Long,
+    val serialNumber: BigInteger,
+    val signature: AlgorithmIdentifier,
+    val issuer: List<List<AttributeTypeAndValue>>,
+    val validity: Validity,
+    val subject: List<List<AttributeTypeAndValue>>,
+    val subjectPublicKeyInfo: SubjectPublicKeyInfo,
+    val issuerUniqueID: BitString?,
+    val subjectUniqueID: BitString?,
+    val extensions: List<Extension>
 ) {
   /**
    * Returns the standard name of this certificate's signature algorithm as specified by
@@ -132,22 +132,19 @@ internal data class TbsCertificate(
 }
 
 internal data class AlgorithmIdentifier(
-  /** An OID string like "1.2.840.113549.1.1.11" for sha256WithRSAEncryption. */
-  val algorithm: String,
-  /** Parameters of a type implied by [algorithm]. */
-  val parameters: Any?
+    /** An OID string like "1.2.840.113549.1.1.11" for sha256WithRSAEncryption. */
+    val algorithm: String,
+    /** Parameters of a type implied by [algorithm]. */
+    val parameters: Any?
 )
 
 internal data class AttributeTypeAndValue(
-  /** An OID string like "2.5.4.11" for organizationalUnitName. */
-  val type: String,
-  val value: Any?
+    /** An OID string like "2.5.4.11" for organizationalUnitName. */
+    val type: String,
+    val value: Any?
 )
 
-internal data class Validity(
-  val notBefore: Long,
-  val notAfter: Long
-) {
+internal data class Validity(val notBefore: Long, val notAfter: Long) {
   // Avoid Long.hashCode(long) which isn't available on Android 5.
   override fun hashCode(): Int {
     var result = 0
@@ -158,28 +155,24 @@ internal data class Validity(
 }
 
 internal data class SubjectPublicKeyInfo(
-  val algorithm: AlgorithmIdentifier,
-  val subjectPublicKey: BitString
+    val algorithm: AlgorithmIdentifier,
+    val subjectPublicKey: BitString
 )
 
-internal data class Extension(
-  val id: String,
-  val critical: Boolean,
-  val value: Any?
-)
+internal data class Extension(val id: String, val critical: Boolean, val value: Any?)
 
 internal data class BasicConstraints(
-  /** True if this certificate can be used as a Certificate Authority (CA). */
-  val ca: Boolean,
-  /** The maximum number of intermediate CAs between this and leaf certificates. */
-  val maxIntermediateCas: Long?
+    /** True if this certificate can be used as a Certificate Authority (CA). */
+    val ca: Boolean,
+    /** The maximum number of intermediate CAs between this and leaf certificates. */
+    val maxIntermediateCas: Long?
 )
 
 /** A private key. Note that this class doesn't support attributes or an embedded public key. */
 internal data class PrivateKeyInfo(
-  val version: Long, // v1(0), v2(1)
-  val algorithmIdentifier: AlgorithmIdentifier, // v1(0), v2(1)
-  val privateKey: ByteString
+    val version: Long, // v1(0), v2(1)
+    val algorithmIdentifier: AlgorithmIdentifier, // v1(0), v2(1)
+    val privateKey: ByteString
 ) {
   // Avoid Long.hashCode(long) which isn't available on Android 5.
   override fun hashCode(): Int {

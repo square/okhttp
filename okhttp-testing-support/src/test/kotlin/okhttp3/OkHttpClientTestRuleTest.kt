@@ -25,19 +25,23 @@ import org.junit.jupiter.api.fail
 class OkHttpClientTestRuleTest {
   lateinit var extensionContext: ExtensionContext
 
-  @RegisterExtension @JvmField val beforeEachCallback = BeforeEachCallback { context ->
+  @RegisterExtension
+  @JvmField
+  val beforeEachCallback = BeforeEachCallback { context ->
     this@OkHttpClientTestRuleTest.extensionContext = context
   }
 
-  @Test fun uncaughtException() {
+  @Test
+  fun uncaughtException() {
     val testRule = OkHttpClientTestRule()
     testRule.beforeEach(extensionContext)
 
-    val thread = object : Thread() {
-      override fun run() {
-        throw RuntimeException("boom!")
-      }
-    }
+    val thread =
+        object : Thread() {
+          override fun run() {
+            throw RuntimeException("boom!")
+          }
+        }
     thread.start()
     thread.join()
 

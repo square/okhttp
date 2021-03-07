@@ -15,6 +15,9 @@
  */
 package okhttp3
 
+import java.io.Closeable
+import java.io.IOException
+import java.net.ProtocolException
 import okhttp3.internal.http1.HeadersReader
 import okio.Buffer
 import okio.BufferedSource
@@ -23,12 +26,9 @@ import okio.Options
 import okio.Source
 import okio.Timeout
 import okio.buffer
-import java.io.Closeable
-import java.io.IOException
-import java.net.ProtocolException
 
 /**
- * Reads a stream of [RFC 2046][rfc_2046] multipart body parts. Callers read parts one-at-a-time
+ * Reads a stream of [RFC 2046] [rfc_2046] multipart body parts. Callers read parts one-at-a-time
  * until [nextPart] returns null. After calling [nextPart] any preceding parts should not be read.
  *
  * Typical use loops over the parts in sequence:
@@ -54,24 +54,19 @@ import java.net.ProtocolException
  *
  * [rfc_2046]: http://www.ietf.org/rfc/rfc2046.txt
  */
-class MultipartReader @Throws(IOException::class) constructor(
-  private val source: BufferedSource,
-  @get:JvmName("boundary") val boundary: String
-) : Closeable {
+class MultipartReader
+@Throws(IOException::class)
+constructor(private val source: BufferedSource, @get:JvmName("boundary") val boundary: String) :
+  Closeable {
   /** This delimiter typically precedes the first part. */
-  private val dashDashBoundary = Buffer()
-    .writeUtf8("--")
-    .writeUtf8(boundary)
-    .readByteString()
+  private val dashDashBoundary = Buffer().writeUtf8("--").writeUtf8(boundary).readByteString()
 
   /**
-   * This delimiter typically precedes all subsequent parts. It may also precede the first part
-   * if the body contains a preamble.
+   * This delimiter typically precedes all subsequent parts. It may also precede the first part if
+   * the body contains a preamble.
    */
-  private val crlfDashDashBoundary = Buffer()
-    .writeUtf8("\r\n--")
-    .writeUtf8(boundary)
-    .readByteString()
+  private val crlfDashDashBoundary =
+      Buffer().writeUtf8("\r\n--").writeUtf8(boundary).readByteString()
 
   private var partCount = 0
   private var closed = false
@@ -81,10 +76,12 @@ class MultipartReader @Throws(IOException::class) constructor(
   private var currentPart: PartSource? = null
 
   @Throws(IOException::class)
-  constructor(response: ResponseBody) : this(
-    source = response.source(),
-    boundary = response.contentType()?.parameter("boundary")
-      ?: throw ProtocolException("expected the Content-Type to have a boundary parameter")
+  constructor(
+    response: ResponseBody
+  ) : this(
+      source = response.source(),
+      boundary = response.contentType()?.parameter("boundary")
+        ?: throw ProtocolException("expected the Content-Type to have a boundary parameter"),
   )
 
   @Throws(IOException::class)
@@ -109,14 +106,13 @@ class MultipartReader @Throws(IOException::class) constructor(
 
     // Read either \r\n or --\r\n to determine if there is another part.
     var whitespace = false
-    afterBoundaryLoop@while (true) {
+    afterBoundaryLoop@ while (true) {
       when (source.select(afterBoundaryOptions)) {
         0 -> {
           // "\r\n": We've found a new part.
           partCount++
           break@afterBoundaryLoop
         }
-
         1 -> {
           // "--": No more parts.
           if (whitespace) throw ProtocolException("unexpected characters after boundary")
@@ -124,13 +120,11 @@ class MultipartReader @Throws(IOException::class) constructor(
           noMoreParts = true
           return null
         }
-
         2, 3 -> {
           // " " or "\t" Ignore whitespace and keep looking.
           whitespace = true
           continue@afterBoundaryLoop
         }
-
         -1 -> throw ProtocolException("unexpected characters after boundary")
       }
     }
@@ -199,11 +193,14 @@ class MultipartReader @Throws(IOException::class) constructor(
 
   internal companion object {
     /** These options follow the boundary. */
-    val afterBoundaryOptions = Options.of(
-      "\r\n".encodeUtf8(), // 0.  "\r\n"  More parts.
-      "--".encodeUtf8(), //   1.  "--"    No more parts.
-      " ".encodeUtf8(), //    2.  " "     Optional whitespace. Only used if there are more parts.
-      "\t".encodeUtf8() //    3.  "\t"    Optional whitespace. Only used if there are more parts.
-    )
+    val afterBoundaryOptions =
+        Options.of(
+            "\r\n".encodeUtf8(), // 0.  "\r\n"  More parts.
+            "--".encodeUtf8(), //   1.  "--"    No more parts.
+            " ".encodeUtf8(), //    2.  " "     Optional whitespace. Only used if there are more
+            // parts.
+            "\t".encodeUtf8(), //    3.  "\t"    Optional whitespace. Only used if there are more
+            // parts.
+        )
   }
 }

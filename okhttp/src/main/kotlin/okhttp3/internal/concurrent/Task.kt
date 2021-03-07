@@ -18,8 +18,7 @@ package okhttp3.internal.concurrent
 /**
  * A unit of work that can be executed one or more times.
  *
- * Recurrence
- * ----------
+ * Recurrence ----------
  *
  * Tasks control their recurrence schedule. The [runOnce] function returns -1L to signify that the
  * task should not be executed again. Otherwise it returns a delay until the next execution.
@@ -28,8 +27,7 @@ package okhttp3.internal.concurrent
  * earliest one wins. This applies to both executions scheduled with [TaskRunner.Queue.schedule] and
  * those implied by the returned execution delay.
  *
- * Cancellation
- * ------------
+ * Cancellation ------------
  *
  * Tasks may be canceled while they are waiting to be executed, or while they are executing.
  *
@@ -40,16 +38,12 @@ package okhttp3.internal.concurrent
  * Tasks may opt-out of cancellation with `cancelable = false`. Such tasks will recur until they
  * decide not to by returning -1L.
  *
- * Task Queues
- * -----------
+ * Task Queues -----------
  *
  * Tasks are bound to the [TaskQueue] they are scheduled in. Each queue is sequential and the tasks
  * within it never execute concurrently. It is an error to use a task in multiple queues.
  */
-abstract class Task(
-  val name: String,
-  val cancelable: Boolean = true
-) {
+abstract class Task(val name: String, val cancelable: Boolean = true) {
   // Guarded by the TaskRunner.
   internal var queue: TaskQueue? = null
 

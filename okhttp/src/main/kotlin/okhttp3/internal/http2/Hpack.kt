@@ -15,6 +15,10 @@
  */
 package okhttp3.internal.http2
 
+import java.io.IOException
+import java.util.Arrays
+import java.util.Collections
+import java.util.LinkedHashMap
 import okhttp3.internal.and
 import okhttp3.internal.http2.Header.Companion.RESPONSE_STATUS
 import okhttp3.internal.http2.Header.Companion.TARGET_AUTHORITY
@@ -26,10 +30,6 @@ import okio.BufferedSource
 import okio.ByteString
 import okio.Source
 import okio.buffer
-import java.io.IOException
-import java.util.Arrays
-import java.util.Collections
-import java.util.LinkedHashMap
 
 /**
  * Read and write HPACK v10.
@@ -50,79 +50,82 @@ object Hpack {
   private const val SETTINGS_HEADER_TABLE_SIZE = 4_096
 
   /**
-   * The decoder has ultimate control of the maximum size of the dynamic table but we can choose
-   * to use less. We'll put a cap at 16K. This is arbitrary but should be enough for most purposes.
+   * The decoder has ultimate control of the maximum size of the dynamic table but we can choose to
+   * use less. We'll put a cap at 16K. This is arbitrary but should be enough for most purposes.
    */
   private const val SETTINGS_HEADER_TABLE_SIZE_LIMIT = 16_384
 
-  val STATIC_HEADER_TABLE = arrayOf(
-    Header(TARGET_AUTHORITY, ""),
-    Header(TARGET_METHOD, "GET"),
-    Header(TARGET_METHOD, "POST"),
-    Header(TARGET_PATH, "/"),
-    Header(TARGET_PATH, "/index.html"),
-    Header(TARGET_SCHEME, "http"),
-    Header(TARGET_SCHEME, "https"),
-    Header(RESPONSE_STATUS, "200"),
-    Header(RESPONSE_STATUS, "204"),
-    Header(RESPONSE_STATUS, "206"),
-    Header(RESPONSE_STATUS, "304"),
-    Header(RESPONSE_STATUS, "400"),
-    Header(RESPONSE_STATUS, "404"),
-    Header(RESPONSE_STATUS, "500"),
-    Header("accept-charset", ""),
-    Header("accept-encoding", "gzip, deflate"),
-    Header("accept-language", ""),
-    Header("accept-ranges", ""),
-    Header("accept", ""),
-    Header("access-control-allow-origin", ""),
-    Header("age", ""),
-    Header("allow", ""),
-    Header("authorization", ""),
-    Header("cache-control", ""),
-    Header("content-disposition", ""),
-    Header("content-encoding", ""),
-    Header("content-language", ""),
-    Header("content-length", ""),
-    Header("content-location", ""),
-    Header("content-range", ""),
-    Header("content-type", ""),
-    Header("cookie", ""),
-    Header("date", ""),
-    Header("etag", ""),
-    Header("expect", ""),
-    Header("expires", ""),
-    Header("from", ""),
-    Header("host", ""),
-    Header("if-match", ""),
-    Header("if-modified-since", ""),
-    Header("if-none-match", ""),
-    Header("if-range", ""),
-    Header("if-unmodified-since", ""),
-    Header("last-modified", ""),
-    Header("link", ""),
-    Header("location", ""),
-    Header("max-forwards", ""),
-    Header("proxy-authenticate", ""),
-    Header("proxy-authorization", ""),
-    Header("range", ""),
-    Header("referer", ""),
-    Header("refresh", ""),
-    Header("retry-after", ""),
-    Header("server", ""),
-    Header("set-cookie", ""),
-    Header("strict-transport-security", ""),
-    Header("transfer-encoding", ""),
-    Header("user-agent", ""),
-    Header("vary", ""),
-    Header("via", ""),
-    Header("www-authenticate", "")
-  )
+  val STATIC_HEADER_TABLE =
+      arrayOf(
+          Header(TARGET_AUTHORITY, ""),
+          Header(TARGET_METHOD, "GET"),
+          Header(TARGET_METHOD, "POST"),
+          Header(TARGET_PATH, "/"),
+          Header(TARGET_PATH, "/index.html"),
+          Header(TARGET_SCHEME, "http"),
+          Header(TARGET_SCHEME, "https"),
+          Header(RESPONSE_STATUS, "200"),
+          Header(RESPONSE_STATUS, "204"),
+          Header(RESPONSE_STATUS, "206"),
+          Header(RESPONSE_STATUS, "304"),
+          Header(RESPONSE_STATUS, "400"),
+          Header(RESPONSE_STATUS, "404"),
+          Header(RESPONSE_STATUS, "500"),
+          Header("accept-charset", ""),
+          Header("accept-encoding", "gzip, deflate"),
+          Header("accept-language", ""),
+          Header("accept-ranges", ""),
+          Header("accept", ""),
+          Header("access-control-allow-origin", ""),
+          Header("age", ""),
+          Header("allow", ""),
+          Header("authorization", ""),
+          Header("cache-control", ""),
+          Header("content-disposition", ""),
+          Header("content-encoding", ""),
+          Header("content-language", ""),
+          Header("content-length", ""),
+          Header("content-location", ""),
+          Header("content-range", ""),
+          Header("content-type", ""),
+          Header("cookie", ""),
+          Header("date", ""),
+          Header("etag", ""),
+          Header("expect", ""),
+          Header("expires", ""),
+          Header("from", ""),
+          Header("host", ""),
+          Header("if-match", ""),
+          Header("if-modified-since", ""),
+          Header("if-none-match", ""),
+          Header("if-range", ""),
+          Header("if-unmodified-since", ""),
+          Header("last-modified", ""),
+          Header("link", ""),
+          Header("location", ""),
+          Header("max-forwards", ""),
+          Header("proxy-authenticate", ""),
+          Header("proxy-authorization", ""),
+          Header("range", ""),
+          Header("referer", ""),
+          Header("refresh", ""),
+          Header("retry-after", ""),
+          Header("server", ""),
+          Header("set-cookie", ""),
+          Header("strict-transport-security", ""),
+          Header("transfer-encoding", ""),
+          Header("user-agent", ""),
+          Header("vary", ""),
+          Header("via", ""),
+          Header("www-authenticate", ""),
+      )
 
   val NAME_TO_FIRST_INDEX = nameToFirstIndex()
 
   // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-12#section-3.1
-  class Reader @JvmOverloads constructor(
+  class Reader
+  @JvmOverloads
+  constructor(
     source: Source,
     private val headerTableSizeSetting: Int,
     private var maxDynamicTableByteCount: Int = headerTableSizeSetting
@@ -131,11 +134,15 @@ object Hpack {
     private val source: BufferedSource = source.buffer()
 
     // Visible for testing.
-    @JvmField var dynamicTable = arrayOfNulls<Header>(8)
+    @JvmField
+    var dynamicTable = arrayOfNulls<Header>(8)
+
     // Array is populated back to front, so new entries always have lowest index.
     private var nextHeaderIndex = dynamicTable.size - 1
-    @JvmField var headerCount = 0
-    @JvmField var dynamicTableByteCount = 0
+    @JvmField
+    var headerCount = 0
+    @JvmField
+    var dynamicTableByteCount = 0
 
     fun getAndResetHeaderList(): List<Header> {
       val result = headerList.toList()
@@ -178,11 +185,11 @@ object Hpack {
           j--
         }
         System.arraycopy(
-          dynamicTable,
-          nextHeaderIndex + 1,
-          dynamicTable,
-          nextHeaderIndex + 1 + entriesToEvict,
-          headerCount
+            dynamicTable,
+            nextHeaderIndex + 1,
+            dynamicTable,
+            nextHeaderIndex + 1 + entriesToEvict,
+            headerCount,
         )
         nextHeaderIndex += entriesToEvict
       }
@@ -394,7 +401,9 @@ object Hpack {
     return Collections.unmodifiableMap(result)
   }
 
-  class Writer @JvmOverloads constructor(
+  class Writer
+  @JvmOverloads
+  constructor(
     @JvmField var headerTableSizeSetting: Int = SETTINGS_HEADER_TABLE_SIZE,
     private val useCompression: Boolean = true,
     private val out: Buffer
@@ -405,14 +414,19 @@ object Hpack {
      */
     private var smallestHeaderTableSizeSetting = Integer.MAX_VALUE
     private var emitDynamicTableSizeUpdate: Boolean = false
-    @JvmField var maxDynamicTableByteCount: Int = headerTableSizeSetting
+    @JvmField
+    var maxDynamicTableByteCount: Int = headerTableSizeSetting
 
     // Visible for testing.
-    @JvmField var dynamicTable = arrayOfNulls<Header>(8)
+    @JvmField
+    var dynamicTable = arrayOfNulls<Header>(8)
+
     // Array is populated back to front, so new entries always have lowest index.
     private var nextHeaderIndex = dynamicTable.size - 1
-    @JvmField var headerCount = 0
-    @JvmField var dynamicTableByteCount = 0
+    @JvmField
+    var headerCount = 0
+    @JvmField
+    var dynamicTableByteCount = 0
 
     private fun clearDynamicTable() {
       dynamicTable.fill(null)
@@ -436,11 +450,11 @@ object Hpack {
           j--
         }
         System.arraycopy(
-          dynamicTable,
-          nextHeaderIndex + 1,
-          dynamicTable,
-          nextHeaderIndex + 1 + entriesToEvict,
-          headerCount
+            dynamicTable,
+            nextHeaderIndex + 1,
+            dynamicTable,
+            nextHeaderIndex + 1 + entriesToEvict,
+            headerCount,
         )
         Arrays.fill(dynamicTable, nextHeaderIndex + 1, nextHeaderIndex + 1 + entriesToEvict, null)
         nextHeaderIndex += entriesToEvict
@@ -536,7 +550,8 @@ object Hpack {
             insertIntoDynamicTable(header)
           }
           name.startsWith(Header.PSEUDO_PREFIX) && TARGET_AUTHORITY != name -> {
-            // Follow Chromes lead - only include the :authority pseudo header, but exclude all other
+            // Follow Chromes lead - only include the :authority pseudo header, but exclude all
+            // other
             // pseudo headers. Literal Header Field without Indexing - Indexed Name.
             writeInt(headerNameIndex, PREFIX_4_BITS, 0)
             writeByteString(value)
@@ -595,7 +610,7 @@ object Hpack {
 
       if (effectiveHeaderTableSize < maxDynamicTableByteCount) {
         smallestHeaderTableSizeSetting =
-          minOf(smallestHeaderTableSizeSetting, effectiveHeaderTableSize)
+            minOf(smallestHeaderTableSizeSetting, effectiveHeaderTableSize)
       }
       emitDynamicTableSizeUpdate = true
       maxDynamicTableByteCount = effectiveHeaderTableSize
@@ -614,8 +629,7 @@ object Hpack {
   }
 
   /**
-   * An HTTP/2 response cannot contain uppercase header characters and must be treated as
-   * malformed.
+   * An HTTP/2 response cannot contain uppercase header characters and must be treated as malformed.
    */
   @Throws(IOException::class)
   fun checkLowercase(name: ByteString): ByteString {

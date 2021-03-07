@@ -15,10 +15,10 @@
  */
 package okhttp3.internal.concurrent
 
-import okhttp3.internal.assertThreadDoesntHoldLock
-import okhttp3.internal.okHttpName
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.RejectedExecutionException
+import okhttp3.internal.assertThreadDoesntHoldLock
+import okhttp3.internal.okHttpName
 
 /**
  * A set of tasks that are executed in sequential order.
@@ -26,10 +26,8 @@ import java.util.concurrent.RejectedExecutionException
  * Work within queues is not concurrent. This is equivalent to each queue having a dedicated thread
  * for its work; in practice a set of queues may share a set of threads to save resources.
  */
-class TaskQueue internal constructor(
-  internal val taskRunner: TaskRunner,
-  internal val name: String
-) {
+class TaskQueue
+internal constructor(internal val taskRunner: TaskRunner, internal val name: String) {
   internal var shutdown = false
 
   /** This queue's currently-executing task, or null if none is currently executing. */
@@ -76,16 +74,12 @@ class TaskQueue internal constructor(
   }
 
   /** Overload of [schedule] that uses a lambda for a repeating task. */
-  inline fun schedule(
-    name: String,
-    delayNanos: Long = 0L,
-    crossinline block: () -> Long
-  ) {
+  inline fun schedule(name: String, delayNanos: Long = 0L, crossinline block: () -> Long) {
     schedule(
-      object : Task(name) {
-        override fun runOnce() = block()
-      },
-      delayNanos
+        object : Task(name) {
+          override fun runOnce() = block()
+        },
+        delayNanos,
     )
   }
 
@@ -97,13 +91,13 @@ class TaskQueue internal constructor(
     crossinline block: () -> Unit
   ) {
     schedule(
-      object : Task(name, cancelable) {
-        override fun runOnce(): Long {
-          block()
-          return -1L
-        }
-      },
-      delayNanos
+        object : Task(name, cancelable) {
+          override fun runOnce(): Long {
+            block()
+            return -1L
+          }
+        },
+        delayNanos,
     )
   }
 

@@ -15,19 +15,18 @@
  */
 package okhttp3
 
-import okhttp3.internal.http2.Header
-import okio.Buffer
-import org.junit.jupiter.api.Assumptions.assumeFalse
-import org.junit.jupiter.api.Assumptions.assumeTrue
 import java.io.File
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.UnknownHostException
 import java.util.Arrays
+import okhttp3.internal.http2.Header
+import okio.Buffer
+import org.junit.jupiter.api.Assumptions.assumeFalse
+import org.junit.jupiter.api.Assumptions.assumeTrue
 
 object TestUtil {
-  @JvmField
-  val UNREACHABLE_ADDRESS = InetSocketAddress("198.51.100.1", 8080)
+  @JvmField val UNREACHABLE_ADDRESS = InetSocketAddress("198.51.100.1", 8080)
 
   /** See `org.graalvm.nativeimage.ImageInfo`. */
   @JvmStatic val isGraalVmImage = System.getProperty("org.graalvm.nativeimage.imagecode") != null
@@ -38,10 +37,7 @@ object TestUtil {
   }
 
   @JvmStatic
-  fun repeat(
-    c: Char,
-    count: Int
-  ): String {
+  fun repeat(c: Char, count: Int): String {
     val array = CharArray(count)
     Arrays.fill(array, c)
     return String(array)

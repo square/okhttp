@@ -16,10 +16,10 @@
 package okhttp3
 
 import com.oracle.svm.core.annotate.AutomaticFeature
+import java.io.File
 import org.graalvm.nativeimage.hosted.Feature
 import org.graalvm.nativeimage.hosted.RuntimeClassInitialization
 import org.graalvm.nativeimage.hosted.RuntimeReflection
-import java.io.File
 
 @AutomaticFeature
 class TestRegistration : Feature {
@@ -51,17 +51,13 @@ class TestRegistration : Feature {
     registerStandardClass(access, "org.junit.jupiter.params.ParameterizedTestExtension")
     registerStandardClass(access, "org.junit.platform.console.tasks.TreePrintingListener")
     registerStandardClass(
-      access,
-      "org.junit.jupiter.engine.extension.TimeoutExtension\$ExecutorResource"
-    )
+        access, "org.junit.jupiter.engine.extension.TimeoutExtension\$ExecutorResource")
   }
 
   private fun registerStandardClass(access: Feature.BeforeAnalysisAccess, name: String) {
     val listener = access.findClassByName(name)
     RuntimeReflection.register(listener)
-    listener.declaredConstructors.forEach {
-      RuntimeReflection.register(it)
-    }
+    listener.declaredConstructors.forEach { RuntimeReflection.register(it) }
   }
 
   private fun registerKnownTests(access: Feature.BeforeAnalysisAccess) {
@@ -86,17 +82,9 @@ class TestRegistration : Feature {
   private fun registerTest(access: Feature.BeforeAnalysisAccess, java: Class<*>) {
     access.registerAsUsed(java)
     RuntimeReflection.register(java)
-    java.constructors.forEach {
-      RuntimeReflection.register(it)
-    }
-    java.declaredMethods.forEach {
-      RuntimeReflection.register(it)
-    }
-    java.declaredFields.forEach {
-      RuntimeReflection.register(it)
-    }
-    java.methods.forEach {
-      RuntimeReflection.register(it)
-    }
+    java.constructors.forEach { RuntimeReflection.register(it) }
+    java.declaredMethods.forEach { RuntimeReflection.register(it) }
+    java.declaredFields.forEach { RuntimeReflection.register(it) }
+    java.methods.forEach { RuntimeReflection.register(it) }
   }
 }

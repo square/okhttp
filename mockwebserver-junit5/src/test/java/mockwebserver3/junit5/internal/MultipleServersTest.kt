@@ -19,9 +19,7 @@ import mockwebserver3.MockWebServer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-class MultipleServersTest(
-  private val serverA: MockWebServer
-) {
+class MultipleServersTest(private val serverA: MockWebServer) {
   @Test
   fun test(serverB: MockWebServer) {
     assertThat(serverA).isNotSameAs(serverB)

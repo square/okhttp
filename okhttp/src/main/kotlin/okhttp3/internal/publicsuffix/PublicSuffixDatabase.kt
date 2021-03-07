@@ -15,20 +15,20 @@
  */
 package okhttp3.internal.publicsuffix
 
-import okhttp3.internal.and
-import okhttp3.internal.platform.Platform
-import okio.GzipSource
-import okio.buffer
-import okio.source
 import java.io.IOException
 import java.io.InterruptedIOException
 import java.net.IDN
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
+import okhttp3.internal.and
+import okhttp3.internal.platform.Platform
+import okio.GzipSource
+import okio.buffer
+import okio.source
 
 /**
- * A database of public suffixes provided by [publicsuffix.org][publicsuffix_org].
+ * A database of public suffixes provided by [publicsuffix.org] [publicsuffix_org].
  *
  * [publicsuffix_org]: https://publicsuffix.org/
  */
@@ -62,7 +62,9 @@ class PublicSuffixDatabase {
    * ```
    *
    * @param domain A canonicalized domain. An International Domain Name (IDN) should be punycode
+   * ```
    *     encoded.
+   * ```
    */
   fun getEffectiveTldPlusOne(domain: String): String? {
     // We use UTF-8 in the list so we need to convert to Unicode.
@@ -74,13 +76,14 @@ class PublicSuffixDatabase {
       return null // The domain is a public suffix.
     }
 
-    val firstLabelOffset = if (rule[0][0] == EXCEPTION_MARKER) {
-      // Exception rules hold the effective TLD plus one.
-      domainLabels.size - rule.size
-    } else {
-      // Otherwise the rule is for a public suffix, so we must take one more label.
-      domainLabels.size - (rule.size + 1)
-    }
+    val firstLabelOffset =
+        if (rule[0][0] == EXCEPTION_MARKER) {
+          // Exception rules hold the effective TLD plus one.
+          domainLabels.size - rule.size
+        } else {
+          // Otherwise the rule is for a public suffix, so we must take one more label.
+          domainLabels.size - (rule.size + 1)
+        }
 
     return splitDomain(domain).asSequence().drop(firstLabelOffset).joinToString(".")
   }
@@ -147,10 +150,11 @@ class PublicSuffixDatabase {
     var exception: String? = null
     if (wildcardMatch != null) {
       for (labelIndex in 0 until domainLabelsUtf8Bytes.size - 1) {
-        val rule = publicSuffixExceptionListBytes.binarySearch(
-          domainLabelsUtf8Bytes,
-          labelIndex
-        )
+        val rule =
+            publicSuffixExceptionListBytes.binarySearch(
+                domainLabelsUtf8Bytes,
+                labelIndex,
+            )
         if (rule != null) {
           exception = rule
           break
@@ -209,7 +213,7 @@ class PublicSuffixDatabase {
     var publicSuffixExceptionListBytes: ByteArray?
 
     val resource =
-      PublicSuffixDatabase::class.java.getResourceAsStream(PUBLIC_SUFFIX_RESOURCE) ?: return
+        PublicSuffixDatabase::class.java.getResourceAsStream(PUBLIC_SUFFIX_RESOURCE) ?: return
 
     GzipSource(resource.source()).buffer().use { bufferedSource ->
       val totalBytes = bufferedSource.readInt()
@@ -228,10 +232,7 @@ class PublicSuffixDatabase {
   }
 
   /** Visible for testing. */
-  fun setListBytes(
-    publicSuffixListBytes: ByteArray,
-    publicSuffixExceptionListBytes: ByteArray
-  ) {
+  fun setListBytes(publicSuffixListBytes: ByteArray, publicSuffixExceptionListBytes: ByteArray) {
     this.publicSuffixListBytes = publicSuffixListBytes
     this.publicSuffixExceptionListBytes = publicSuffixExceptionListBytes
     listRead.set(true)
@@ -252,10 +253,7 @@ class PublicSuffixDatabase {
       return instance
     }
 
-    private fun ByteArray.binarySearch(
-      labels: Array<ByteArray>,
-      labelIndex: Int
-    ): String? {
+    private fun ByteArray.binarySearch(labels: Array<ByteArray>, labelIndex: Int): String? {
       var low = 0
       var high = size
       var match: String? = null

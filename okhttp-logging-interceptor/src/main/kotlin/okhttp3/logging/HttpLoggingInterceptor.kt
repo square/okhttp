@@ -15,6 +15,11 @@
  */
 package okhttp3.logging
 
+import java.io.IOException
+import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets.UTF_8
+import java.util.TreeSet
+import java.util.concurrent.TimeUnit
 import okhttp3.Headers
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -24,27 +29,21 @@ import okhttp3.internal.platform.Platform
 import okhttp3.logging.internal.isProbablyUtf8
 import okio.Buffer
 import okio.GzipSource
-import java.io.IOException
-import java.nio.charset.Charset
-import java.nio.charset.StandardCharsets.UTF_8
-import java.util.TreeSet
-import java.util.concurrent.TimeUnit
 
 /**
  * An OkHttp interceptor which logs request and response information. Can be applied as an
- * [application interceptor][OkHttpClient.interceptors] or as a [OkHttpClient.networkInterceptors].
+ * [application interceptor] [OkHttpClient.interceptors] or as a [OkHttpClient.networkInterceptors].
  *
- * The format of the logs created by this class should not be considered stable and may
- * change slightly between releases. If you need a stable logging format, use your own interceptor.
+ * The format of the logs created by this class should not be considered stable and may change
+ * slightly between releases. If you need a stable logging format, use your own interceptor.
  */
-class HttpLoggingInterceptor @JvmOverloads constructor(
-  private val logger: Logger = Logger.DEFAULT
-) : Interceptor {
+class HttpLoggingInterceptor
+@JvmOverloads
+constructor(private val logger: Logger = Logger.DEFAULT) : Interceptor {
 
   @Volatile private var headersToRedact = emptySet<String>()
 
-  @set:JvmName("level")
-  @Volatile var level = Level.NONE
+  @set:JvmName("level") @Volatile var level = Level.NONE
 
   enum class Level {
     /** No logs. */
@@ -110,8 +109,8 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
 
     companion object {
       /** A [Logger] defaults output appropriate for the current platform. */
-      @JvmField
-      val DEFAULT: Logger = DefaultLogger()
+      @JvmField val DEFAULT: Logger = DefaultLogger()
+
       private class DefaultLogger : Logger {
         override fun log(message: String) {
           Platform.get().log(message)
@@ -134,16 +133,13 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
    * un-deprecated because Java callers can't chain when assigning Kotlin vals. (The getter remains
    * deprecated).
    */
-  fun setLevel(level: Level) = apply {
-    this.level = level
-  }
+  fun setLevel(level: Level) = apply { this.level = level }
 
   @JvmName("-deprecated_level")
   @Deprecated(
-    message = "moved to var",
-    replaceWith = ReplaceWith(expression = "level"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to var",
+      replaceWith = ReplaceWith(expression = "level"),
+      level = DeprecationLevel.ERROR)
   fun getLevel(): Level = level
 
   @Throws(IOException::class)
@@ -162,7 +158,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
 
     val connection = chain.connection()
     var requestStartMessage =
-      ("--> ${request.method} ${request.url}${if (connection != null) " " + connection.protocol() else ""}")
+        ("--> ${request.method} ${request.url}${if (connection != null) " " + connection.protocol() else ""}")
     if (!logHeaders && requestBody != null) {
       requestStartMessage += " (${requestBody.contentLength()}-byte body)"
     }
@@ -211,8 +207,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
           logger.log("--> END ${request.method} (${requestBody.contentLength()}-byte body)")
         } else {
           logger.log(
-            "--> END ${request.method} (binary ${requestBody.contentLength()}-byte body omitted)"
-          )
+              "--> END ${request.method} (binary ${requestBody.contentLength()}-byte body omitted)")
         }
       }
     }
@@ -232,8 +227,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
     val contentLength = responseBody.contentLength()
     val bodySize = if (contentLength != -1L) "$contentLength-byte" else "unknown-length"
     logger.log(
-      "<-- ${response.code}${if (response.message.isEmpty()) "" else ' ' + response.message} ${response.request.url} (${tookMs}ms${if (!logHeaders) ", $bodySize body" else ""})"
-    )
+        "<-- ${response.code}${if (response.message.isEmpty()) "" else ' ' + response.message} ${response.request.url} (${tookMs}ms${if (!logHeaders) ", $bodySize body" else ""})")
 
     if (logHeaders) {
       val headers = response.headers
@@ -292,6 +286,6 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
   private fun bodyHasUnknownEncoding(headers: Headers): Boolean {
     val contentEncoding = headers["Content-Encoding"] ?: return false
     return !contentEncoding.equals("identity", ignoreCase = true) &&
-      !contentEncoding.equals("gzip", ignoreCase = true)
+        !contentEncoding.equals("gzip", ignoreCase = true)
   }
 }

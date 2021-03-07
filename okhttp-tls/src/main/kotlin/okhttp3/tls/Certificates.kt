@@ -18,16 +18,16 @@
 
 package okhttp3.tls
 
-import okio.Buffer
-import okio.ByteString
-import okio.ByteString.Companion.toByteString
 import java.security.GeneralSecurityException
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
+import okio.Buffer
+import okio.ByteString
+import okio.ByteString.Companion.toByteString
 
 /**
- * Decodes a multiline string that contains a [certificate][certificatePem] which is
- * [PEM-encoded][rfc_7468]. A typical input string looks like this:
+ * Decodes a multiline string that contains a [certificate] [certificatePem] which is [PEM-encoded]
+ * [rfc_7468]. A typical input string looks like this:
  *
  * ```
  * -----BEGIN CERTIFICATE-----
@@ -45,10 +45,8 @@ import java.security.cert.X509Certificate
 fun String.decodeCertificatePem(): X509Certificate {
   try {
     val certificateFactory = CertificateFactory.getInstance("X.509")
-    val certificates = certificateFactory
-      .generateCertificates(
-        Buffer().writeUtf8(this).inputStream()
-      )
+    val certificates =
+        certificateFactory.generateCertificates(Buffer().writeUtf8(this).inputStream())
 
     return certificates.single() as X509Certificate
   } catch (nsee: NoSuchElementException) {
@@ -61,7 +59,7 @@ fun String.decodeCertificatePem(): X509Certificate {
 }
 
 /**
- * Returns the certificate encoded in [PEM format][rfc_7468].
+ * Returns the certificate encoded in [PEM format] [rfc_7468].
  *
  * [rfc_7468]: https://tools.ietf.org/html/rfc7468
  */

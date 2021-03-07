@@ -22,7 +22,8 @@ import java.util.concurrent.LinkedBlockingQueue
 import java.util.logging.Logger
 
 /**
- * Default dispatcher that processes a script of responses. Populate the script by calling [enqueueResponse].
+ * Default dispatcher that processes a script of responses. Populate the script by calling
+ * [enqueueResponse].
  */
 open class QueueDispatcher : Dispatcher() {
   protected val responseQueue: BlockingQueue<MockResponse> = LinkedBlockingQueue()
@@ -64,11 +65,12 @@ open class QueueDispatcher : Dispatcher() {
   }
 
   open fun setFailFast(failFast: Boolean) {
-    val failFastResponse = if (failFast) {
-      MockResponse().setResponseCode(HttpURLConnection.HTTP_NOT_FOUND)
-    } else {
-      null
-    }
+    val failFastResponse =
+        if (failFast) {
+          MockResponse().setResponseCode(HttpURLConnection.HTTP_NOT_FOUND)
+        } else {
+          null
+        }
     setFailFast(failFastResponse)
   }
 
@@ -78,12 +80,11 @@ open class QueueDispatcher : Dispatcher() {
 
   companion object {
     /**
-     * Enqueued on shutdown to release threads waiting on [dispatch]. Note that this response
-     * isn't transmitted because the connection is closed before this response is returned.
+     * Enqueued on shutdown to release threads waiting on [dispatch]. Note that this response isn't
+     * transmitted because the connection is closed before this response is returned.
      */
-    private val DEAD_LETTER = MockResponse().apply {
-      this.status = "HTTP/1.1 $HTTP_UNAVAILABLE shutting down"
-    }
+    private val DEAD_LETTER =
+        MockResponse().apply { this.status = "HTTP/1.1 $HTTP_UNAVAILABLE shutting down" }
 
     private val logger = Logger.getLogger(QueueDispatcher::class.java.name)
   }

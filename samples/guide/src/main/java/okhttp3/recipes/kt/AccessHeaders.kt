@@ -15,20 +15,21 @@
  */
 package okhttp3.recipes.kt
 
+import java.io.IOException
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import java.io.IOException
 
 class AccessHeaders {
   private val client = OkHttpClient()
 
   fun run() {
-    val request = Request.Builder()
-      .url("https://api.github.com/repos/square/okhttp/issues")
-      .header("User-Agent", "OkHttp Headers.java")
-      .addHeader("Accept", "application/json; q=0.5")
-      .addHeader("Accept", "application/vnd.github.v3+json")
-      .build()
+    val request =
+        Request.Builder()
+            .url("https://api.github.com/repos/square/okhttp/issues")
+            .header("User-Agent", "OkHttp Headers.java")
+            .addHeader("Accept", "application/json; q=0.5")
+            .addHeader("Accept", "application/vnd.github.v3+json")
+            .build()
 
     client.newCall(request).execute().use { response ->
       if (!response.isSuccessful) throw IOException("Unexpected code $response")

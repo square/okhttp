@@ -15,10 +15,6 @@
  */
 package okhttp3.tls.internal
 
-import okhttp3.internal.platform.Platform
-import okhttp3.tls.HandshakeCertificates
-import okhttp3.tls.HeldCertificate
-import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 import java.io.InputStream
 import java.net.InetAddress
 import java.security.KeyStore
@@ -29,32 +25,37 @@ import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509ExtendedTrustManager
 import javax.net.ssl.X509KeyManager
 import javax.net.ssl.X509TrustManager
+import okhttp3.internal.platform.Platform
+import okhttp3.tls.HandshakeCertificates
+import okhttp3.tls.HeldCertificate
+import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 
 object TlsUtil {
   val password = "password".toCharArray()
 
   private val localhost: HandshakeCertificates by lazy {
     // Generate a self-signed cert for the server to serve and the client to trust.
-    val heldCertificate = HeldCertificate.Builder()
-      .commonName("localhost")
-      .addSubjectAlternativeName(InetAddress.getByName("localhost").canonicalHostName)
-      .build()
+    val heldCertificate =
+        HeldCertificate.Builder()
+            .commonName("localhost")
+            .addSubjectAlternativeName(InetAddress.getByName("localhost").canonicalHostName)
+            .build()
     return@lazy HandshakeCertificates.Builder()
-      .heldCertificate(heldCertificate)
-      .addTrustedCertificate(heldCertificate.certificate)
-      .build()
+        .heldCertificate(heldCertificate)
+        .addTrustedCertificate(heldCertificate.certificate)
+        .build()
   }
 
   /** Returns an SSL client for this host's localhost address. */
-  @JvmStatic
-  fun localhost(): HandshakeCertificates = localhost
+  @JvmStatic fun localhost(): HandshakeCertificates = localhost
 
   /** Returns a trust manager that trusts `trustedCertificates`. */
-  @JvmStatic @IgnoreJRERequirement
+  @JvmStatic
+  @IgnoreJRERequirement
   fun newTrustManager(
-    keyStoreType: String?,
-    trustedCertificates: List<X509Certificate>,
-    insecureHosts: List<String>
+      keyStoreType: String?,
+      trustedCertificates: List<X509Certificate>,
+      insecureHosts: List<String>
   ): X509TrustManager {
     val trustStore = newEmptyKeyStore(keyStoreType)
     for (i in trustedCertificates.indices) {
@@ -83,9 +84,9 @@ object TlsUtil {
    */
   @JvmStatic
   fun newKeyManager(
-    keyStoreType: String?,
-    heldCertificate: HeldCertificate?,
-    vararg intermediates: X509Certificate
+      keyStoreType: String?,
+      heldCertificate: HeldCertificate?,
+      vararg intermediates: X509Certificate
   ): X509KeyManager {
     val keyStore = newEmptyKeyStore(keyStoreType)
     if (heldCertificate != null) {

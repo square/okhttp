@@ -32,20 +32,15 @@ import org.junit.jupiter.api.extension.RegisterExtension
 class OkHttpClientTest {
   @JvmField @RegisterExtension val platform = PlatformRule()
 
-  @Test fun get(server: MockWebServer) {
+  @Test
+  fun get(server: MockWebServer) {
     platform.assumeNotBouncyCastle()
 
-    server.enqueue(
-      MockResponse()
-        .setBody("hello, OkHttp")
-    )
+    server.enqueue(MockResponse().setBody("hello, OkHttp"))
 
     val client = OkHttpClient()
 
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .header("Accept", "text/plain")
-      .build()
+    val request = Request.Builder().url(server.url("/")).header("Accept", "text/plain").build()
     val response = client.newCall(request).execute()
     assertThat(response.code).isEqualTo(200)
     assertThat(response.body!!.string()).isEqualTo("hello, OkHttp")

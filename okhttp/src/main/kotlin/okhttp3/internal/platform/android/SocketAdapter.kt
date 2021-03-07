@@ -15,10 +15,10 @@
  */
 package okhttp3.internal.platform.android
 
-import okhttp3.Protocol
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
+import okhttp3.Protocol
 
 interface SocketAdapter {
   fun isSupported(): Boolean
@@ -26,11 +26,7 @@ interface SocketAdapter {
   fun matchesSocket(sslSocket: SSLSocket): Boolean
   fun matchesSocketFactory(sslSocketFactory: SSLSocketFactory): Boolean = false
 
-  fun configureTlsExtensions(
-    sslSocket: SSLSocket,
-    hostname: String?,
-    protocols: List<Protocol>
-  )
+  fun configureTlsExtensions(sslSocket: SSLSocket, hostname: String?, protocols: List<Protocol>)
 
   fun getSelectedProtocol(sslSocket: SSLSocket): String?
 }

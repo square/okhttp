@@ -15,7 +15,6 @@
  */
 package okhttp3.internal.connection
 
-import okhttp3.ConnectionSpec
 import java.io.IOException
 import java.io.InterruptedIOException
 import java.net.ProtocolException
@@ -25,15 +24,14 @@ import javax.net.ssl.SSLException
 import javax.net.ssl.SSLHandshakeException
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocket
+import okhttp3.ConnectionSpec
 
 /**
  * Handles the connection spec fallback strategy: When a secure socket connection fails due to a
  * handshake / protocol problem the connection may be retried with different protocols. Instances
  * are stateful and should be created and used for a single connection attempt.
  */
-internal class ConnectionSpecSelector(
-  private val connectionSpecs: List<ConnectionSpec>
-) {
+internal class ConnectionSpecSelector(private val connectionSpecs: List<ConnectionSpec>) {
   private var nextModeIndex: Int = 0
   private var isFallbackPossible: Boolean = false
   private var isFallback: Boolean = false
@@ -61,9 +59,9 @@ internal class ConnectionSpecSelector(
       // any the required protocols, or it may be a retry (but this socket supports fewer protocols
       // than was suggested by a prior socket).
       throw UnknownServiceException(
-        "Unable to find acceptable protocols. isFallback=$isFallback," +
-          " modes=$connectionSpecs," +
-          " supported protocols=${sslSocket.enabledProtocols!!.contentToString()}"
+          "Unable to find acceptable protocols. isFallback=$isFallback," +
+              " modes=$connectionSpecs," +
+              " supported protocols=${sslSocket.enabledProtocols!!.contentToString()}",
       )
     }
 
@@ -75,8 +73,8 @@ internal class ConnectionSpecSelector(
   }
 
   /**
-   * Reports a failure to complete a connection. Determines the next [ConnectionSpec] to try,
-   * if any.
+   * Reports a failure to complete a connection. Determines the next [ConnectionSpec] to try, if
+   * any.
    *
    * @return true if the connection should be retried using [configureSecureSocket].
    */
@@ -103,7 +101,6 @@ internal class ConnectionSpecSelector(
 
       // Retry for all other SSL failures.
       e is SSLException -> true
-
       else -> false
     }
   }

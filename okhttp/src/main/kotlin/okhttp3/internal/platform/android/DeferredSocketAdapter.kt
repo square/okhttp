@@ -15,16 +15,16 @@
  */
 package okhttp3.internal.platform.android
 
-import okhttp3.Protocol
 import javax.net.ssl.SSLSocket
+import okhttp3.Protocol
 
 /**
- * Deferred implementation of SocketAdapter that works by observing the socket
- * and initializing on first use.
+ * Deferred implementation of SocketAdapter that works by observing the socket and initializing on
+ * first use.
  *
- * We use this because eager classpath checks cause confusion and excessive logging in Android,
- * and we can't rely on classnames after proguard, so are probably best served by falling through
- * to a situation of trying our least likely noisiest options.
+ * We use this because eager classpath checks cause confusion and excessive logging in Android, and
+ * we can't rely on classnames after proguard, so are probably best served by falling through to a
+ * situation of trying our least likely noisiest options.
  */
 class DeferredSocketAdapter(private val socketAdapterFactory: Factory) : SocketAdapter {
   private var delegate: SocketAdapter? = null
@@ -34,7 +34,7 @@ class DeferredSocketAdapter(private val socketAdapterFactory: Factory) : SocketA
   }
 
   override fun matchesSocket(sslSocket: SSLSocket): Boolean =
-    socketAdapterFactory.matchesSocket(sslSocket)
+      socketAdapterFactory.matchesSocket(sslSocket)
 
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
@@ -48,7 +48,8 @@ class DeferredSocketAdapter(private val socketAdapterFactory: Factory) : SocketA
     return getDelegate(sslSocket)?.getSelectedProtocol(sslSocket)
   }
 
-  @Synchronized private fun getDelegate(sslSocket: SSLSocket): SocketAdapter? {
+  @Synchronized
+  private fun getDelegate(sslSocket: SSLSocket): SocketAdapter? {
     if (this.delegate == null && socketAdapterFactory.matchesSocket(sslSocket)) {
       this.delegate = socketAdapterFactory.create(sslSocket)
     }

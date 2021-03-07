@@ -15,11 +15,6 @@
  */
 package okhttp3.tls
 
-import okhttp3.CertificatePinner
-import okhttp3.internal.platform.Platform
-import okhttp3.internal.toImmutableList
-import okhttp3.tls.internal.TlsUtil.newKeyManager
-import okhttp3.tls.internal.TlsUtil.newTrustManager
 import java.security.KeyStoreException
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
@@ -31,6 +26,11 @@ import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509KeyManager
 import javax.net.ssl.X509TrustManager
+import okhttp3.CertificatePinner
+import okhttp3.internal.platform.Platform
+import okhttp3.internal.toImmutableList
+import okhttp3.tls.internal.TlsUtil.newKeyManager
+import okhttp3.tls.internal.TlsUtil.newTrustManager
 
 /**
  * Certificates to identify which peers to trust and also to earn the trust of those peers in kind.
@@ -43,16 +43,25 @@ import javax.net.ssl.X509TrustManager
  *
  * To perform server authentication:
  *
- *  * The server's handshake certificates must have a [held certificate][HeldCertificate] (a
- *    certificate and its private key). The certificate's subject alternative names must match the
+ * * The server's handshake certificates must have a [held certificate]
+ * [HeldCertificate](a
+ * ```
+ *    certificate and its private key). The certificate's subject
+ * alternative names must match the
+ * ```
  *    server's hostname. The server must also have is a (possibly-empty) chain of intermediate
  *    certificates to establish trust from a root certificate to the server's certificate. The root
  *    certificate is not included in this chain.
- *  * The client's handshake certificates must include a set of trusted root certificates. They will
+ * ```
+ * ```
+ * * The client's handshake certificates must include a set of trusted root certificates. They will
+ * ```
+ * ```
  *    be used to authenticate the server's certificate chain. Typically this is a set of well-known
  *    root certificates that is distributed with the HTTP client or its platform. It may be
  *    augmented by certificates private to an organization or service.
- *
+ * ```
+ * ```
  * ### Client Authentication
  *
  * This is authentication of the client by the server during the TLS handshake. Client
@@ -60,34 +69,40 @@ import javax.net.ssl.X509TrustManager
  *
  * To perform client authentication:
  *
- *  * The client's handshake certificates must have a [held certificate][HeldCertificate] (a
+ * * The client's handshake certificates must have a [held certificate] [HeldCertificate](a
+ * ```
+ * ```
  *    certificate and its private key). The client must also have a (possibly-empty) chain of
  *    intermediate certificates to establish trust from a root certificate to the client's
  *    certificate. The root certificate is not included in this chain.
- *  * The server's handshake certificates must include a set of trusted root certificates. They
+ * ```
+ * ```
+ * * The server's handshake certificates must include a set of trusted root certificates. They
+ * ```
+ * ```
  *    will be used to authenticate the client's certificate chain. Typically this is not the same
  *    set of root certificates used in server authentication. Instead it will be a small set of
  *    roots private to an organization or service.
+ * ```
  */
-class HandshakeCertificates private constructor(
-  @get:JvmName("keyManager") val keyManager: X509KeyManager,
-  @get:JvmName("trustManager") val trustManager: X509TrustManager
+class HandshakeCertificates
+private constructor(
+    @get:JvmName("keyManager") val keyManager: X509KeyManager,
+    @get:JvmName("trustManager") val trustManager: X509TrustManager
 ) {
 
   @JvmName("-deprecated_keyManager")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "keyManager"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "keyManager"),
+      level = DeprecationLevel.ERROR)
   fun keyManager(): X509KeyManager = keyManager
 
   @JvmName("-deprecated_trustManager")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "trustManager"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "trustManager"),
+      level = DeprecationLevel.ERROR)
   fun trustManager(): X509TrustManager = trustManager
 
   fun sslSocketFactory(): SSLSocketFactory = sslContext().socketFactory
@@ -105,25 +120,23 @@ class HandshakeCertificates private constructor(
     private val insecureHosts = mutableListOf<String>()
 
     /**
-     * Configure the certificate chain to use when being authenticated. The first certificate is
-     * the held certificate, further certificates are included in the handshake so the peer can
-     * build a trusted path to a trusted root certificate.
+     * Configure the certificate chain to use when being authenticated. The first certificate is the
+     * held certificate, further certificates are included in the handshake so the peer can build a
+     * trusted path to a trusted root certificate.
      *
      * The chain should include all intermediate certificates but does not need the root certificate
      * that we expect to be known by the remote peer. The peer already has that certificate so
      * transmitting it is unnecessary.
      */
-    fun heldCertificate(
-      heldCertificate: HeldCertificate,
-      vararg intermediates: X509Certificate
-    ) = apply {
+    fun heldCertificate(heldCertificate: HeldCertificate, vararg intermediates: X509Certificate) =
+        apply {
       this.heldCertificate = heldCertificate
       this.intermediates = arrayOf(*intermediates) // Defensive copy.
     }
 
     /**
-     * Add a trusted root certificate to use when authenticating a peer. Peers must provide
-     * a chain of certificates whose root is one of these.
+     * Add a trusted root certificate to use when authenticating a peer. Peers must provide a chain
+     * of certificates whose root is one of these.
      */
     fun addTrustedCertificate(certificate: X509Certificate) = apply {
       this.trustedCertificates += certificate
@@ -139,7 +152,7 @@ class HandshakeCertificates private constructor(
      *
      * If the host platform is compromised or misconfigured this may contain untrustworthy root
      * certificates. Applications that connect to a known set of servers may be able to mitigate
-     * this problem with [certificate pinning][CertificatePinner].
+     * this problem with [certificate pinning] [CertificatePinner].
      */
     fun addPlatformTrustedCertificates() = apply {
       val platformTrustManager = Platform.get().platformTrustManager()
@@ -164,14 +177,12 @@ class HandshakeCertificates private constructor(
      * gaps. For example, an insecure TLS connection is capable of negotiating HTTP/2 with ALPN and
      * it also has a regular-looking handshake.
      *
-     * **This feature is not supported on Android API levels less than 24.** Prior releases lacked
-     * a mechanism to trust some hosts and not others.
+     * **This feature is not supported on Android API levels less than 24.** Prior releases lacked a
+     * mechanism to trust some hosts and not others.
      *
      * @param hostname the exact hostname from the URL for insecure connections.
      */
-    fun addInsecureHost(hostname: String) = apply {
-      insecureHosts += hostname
-    }
+    fun addInsecureHost(hostname: String) = apply { insecureHosts += hostname }
 
     fun build(): HandshakeCertificates {
       val immutableInsecureHosts = insecureHosts.toImmutableList()

@@ -15,8 +15,8 @@
  */
 package okhttp3
 
-import okhttp3.internal.authenticator.JavaNetAuthenticator
 import java.io.IOException
+import okhttp3.internal.authenticator.JavaNetAuthenticator
 
 /**
  * Performs either **preemptive** authentication before connecting to a proxy server, or
@@ -25,18 +25,18 @@ import java.io.IOException
  *
  * ## Preemptive Authentication
  *
- * To make HTTPS calls using an HTTP proxy server OkHttp must first negotiate a connection with
- * the proxy. This proxy connection is called a "TLS Tunnel" and is specified by
- * [RFC 2817][1]. The HTTP CONNECT request that creates this tunnel connection is special: it
- * does not participate in any [interceptors][Interceptor] or [event listeners][EventListener]. It
- * doesn't include the motivating request's HTTP headers or even its full URL; only the target
- * server's hostname is sent to the proxy.
+ * To make HTTPS calls using an HTTP proxy server OkHttp must first negotiate a connection with the
+ * proxy. This proxy connection is called a "TLS Tunnel" and is specified by [RFC 2817][1]. The HTTP
+ * CONNECT request that creates this tunnel connection is special: it does not participate in any
+ * [interceptors] [Interceptor] or [event listeners] [EventListener]. It doesn't include the
+ * motivating request's HTTP headers or even its full URL; only the target server's hostname is sent
+ * to the proxy.
  *
  * Prior to sending any CONNECT request OkHttp always calls the proxy authenticator so that it may
  * prepare preemptive authentication. OkHttp will call [authenticate] with a fake `HTTP/1.1 407
  * Proxy Authentication Required` response that has a `Proxy-Authenticate: OkHttp-Preemptive`
- * challenge. The proxy authenticator may return either an authenticated request, or null to
- * connect without authentication.
+ * challenge. The proxy authenticator may return either an authenticated request, or null to connect
+ * without authentication.
  *
  * ```
  * for (Challenge challenge : response.challenges()) {
@@ -56,12 +56,11 @@ import java.io.IOException
  * header, or they may decline the challenge by returning null. In this case the unauthenticated
  * response will be returned to the caller that triggered it.
  *
- * Implementations should check if the initial request already included an attempt to
- * authenticate. If so it is likely that further attempts will not be useful and the authenticator
- * should give up.
+ * Implementations should check if the initial request already included an attempt to authenticate.
+ * If so it is likely that further attempts will not be useful and the authenticator should give up.
  *
- * When reactive authentication is requested by an origin web server, the response code is 401
- * and the implementation should respond with a new request that sets the "Authorization" header.
+ * When reactive authentication is requested by an origin web server, the response code is 401 and
+ * the implementation should respond with a new request that sets the "Authorization" header.
  *
  * ```
  * if (response.request().header("Authorization") != null) {
@@ -91,14 +90,14 @@ import java.io.IOException
  * The proxy authenticator may implement preemptive authentication, reactive authentication, or
  * both.
  *
- * Applications may configure OkHttp with an authenticator for origin servers, or proxy servers,
- * or both.
+ * Applications may configure OkHttp with an authenticator for origin servers, or proxy servers, or
+ * both.
  *
  * ## Authentication Retries
  *
- * If your authentication may be flaky and requires retries you should apply some policy
- * to limit the retries by the class of errors and number of attempts.  To get the number of
- * attempts to the current point use this function.
+ * If your authentication may be flaky and requires retries you should apply some policy to limit
+ * the retries by the class of errors and number of attempts. To get the number of attempts to the
+ * current point use this function.
  *
  * ```
  * private int responseCount(Response response) {
@@ -128,6 +127,7 @@ fun interface Authenticator {
     /** An authenticator that knows no credentials and makes no attempt to authenticate. */
     @JvmField
     val NONE: Authenticator = AuthenticatorNone()
+
     private class AuthenticatorNone : Authenticator {
       override fun authenticate(route: Route?, response: Response): Request? = null
     }

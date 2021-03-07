@@ -15,6 +15,17 @@
  */
 package okhttp3.internal.connection
 
+import java.io.IOException
+import java.io.InterruptedIOException
+import java.lang.ref.WeakReference
+import java.net.Socket
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.RejectedExecutionException
+import java.util.concurrent.TimeUnit.MILLISECONDS
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.SSLSocketFactory
 import okhttp3.Address
 import okhttp3.Call
 import okhttp3.Callback
@@ -36,23 +47,12 @@ import okhttp3.internal.http.RetryAndFollowUpInterceptor
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.threadName
 import okio.AsyncTimeout
-import java.io.IOException
-import java.io.InterruptedIOException
-import java.lang.ref.WeakReference
-import java.net.Socket
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.RejectedExecutionException
-import java.util.concurrent.TimeUnit.MILLISECONDS
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
-import javax.net.ssl.HostnameVerifier
-import javax.net.ssl.SSLSocketFactory
 
 /**
  * Bridge between OkHttp's application and network layers. This class exposes high-level application
  * layer primitives: connections, requests, responses, and streams.
  *
- * This class supports [asynchronous canceling][cancel]. This is intended to have the smallest
+ * This class supports [asynchronous canceling] [cancel]. This is intended to have the smallest
  * blast radius possible. If an HTTP/2 stream is active, canceling will cancel that stream but not
  * the other streams sharing its connection. But if the TLS handshake is still in progress then
  * canceling may break the entire connection.
@@ -67,13 +67,13 @@ class RealCall(
 
   internal val eventListener: EventListener = client.eventListenerFactory.create(this)
 
-  private val timeout = object : AsyncTimeout() {
-    override fun timedOut() {
-      cancel()
-    }
-  }.apply {
-    timeout(client.callTimeoutMillis.toLong(), MILLISECONDS)
-  }
+  private val timeout =
+      object : AsyncTimeout() {
+        override fun timedOut() {
+          cancel()
+        }
+      }
+          .apply { timeout(client.callTimeoutMillis.toLong(), MILLISECONDS) }
 
   private val executed = AtomicBoolean()
 
@@ -112,9 +112,12 @@ class RealCall(
   // These properties are accessed by canceling threads. Any thread can cancel a call, and once it's
   // canceled it's canceled forever.
 
-  @Volatile private var canceled = false
-  @Volatile private var exchange: Exchange? = null
-  @Volatile var connectionToCancel: RealConnection? = null
+  @Volatile
+  private var canceled = false
+  @Volatile
+  private var exchange: Exchange? = null
+  @Volatile
+  var connectionToCancel: RealConnection? = null
 
   override fun timeout() = timeout
 
@@ -185,16 +188,17 @@ class RealCall(
     }
     interceptors += CallServerInterceptor(forWebSocket)
 
-    val chain = RealInterceptorChain(
-      call = this,
-      interceptors = interceptors,
-      index = 0,
-      exchange = null,
-      request = originalRequest,
-      connectTimeoutMillis = client.connectTimeoutMillis,
-      readTimeoutMillis = client.readTimeoutMillis,
-      writeTimeoutMillis = client.writeTimeoutMillis
-    )
+    val chain =
+        RealInterceptorChain(
+            call = this,
+            interceptors = interceptors,
+            index = 0,
+            exchange = null,
+            request = originalRequest,
+            connectTimeoutMillis = client.connectTimeoutMillis,
+            readTimeoutMillis = client.readTimeoutMillis,
+            writeTimeoutMillis = client.writeTimeoutMillis,
+        )
 
     var calledNoMoreExchanges = false
     try {
@@ -228,18 +232,19 @@ class RealCall(
     synchronized(this) {
       check(!responseBodyOpen) {
         "cannot make a new request because the previous response is still open: " +
-          "please call response.close()"
+            "please call response.close()"
       }
       check(!requestBodyOpen)
     }
 
     if (newExchangeFinder) {
-      this.exchangeFinder = ExchangeFinder(
-        connectionPool,
-        createAddress(request.url),
-        this,
-        eventListener
-      )
+      this.exchangeFinder =
+          ExchangeFinder(
+              connectionPool,
+              createAddress(request.url),
+              this,
+              eventListener,
+          )
     }
   }
 
@@ -346,9 +351,10 @@ class RealCall(
     val connection = this.connection
     if (connection != null) {
       connection.assertThreadDoesntHoldLock()
-      val socket = synchronized(connection) {
-        releaseConnectionNoEvents() // Sets this.connection to null.
-      }
+      val socket =
+          synchronized(connection) {
+            releaseConnectionNoEvents() // Sets this.connection to null.
+          }
       if (this.connection == null) {
         socket?.closeQuietly()
         eventListener.connectionReleased(this, connection)
@@ -413,12 +419,12 @@ class RealCall(
 
   /**
    * @param closeExchange true if the current exchange should be closed because it will not be used.
+   * ```
    *     This is usually due to either an exception or a retry.
+   * ```
    */
   internal fun exitNetworkInterceptorExchange(closeExchange: Boolean) {
-    synchronized(this) {
-      check(expectMoreExchanges) { "released" }
-    }
+    synchronized(this) { check(expectMoreExchanges) { "released" } }
 
     if (closeExchange) {
       exchange?.detachWithViolence()
@@ -438,18 +444,18 @@ class RealCall(
     }
 
     return Address(
-      uriHost = url.host,
-      uriPort = url.port,
-      dns = client.dns,
-      socketFactory = client.socketFactory,
-      sslSocketFactory = sslSocketFactory,
-      hostnameVerifier = hostnameVerifier,
-      certificatePinner = certificatePinner,
-      proxyAuthenticator = client.proxyAuthenticator,
-      proxy = client.proxy,
-      protocols = client.protocols,
-      connectionSpecs = client.connectionSpecs,
-      proxySelector = client.proxySelector
+        uriHost = url.host,
+        uriPort = url.port,
+        dns = client.dns,
+        socketFactory = client.socketFactory,
+        sslSocketFactory = sslSocketFactory,
+        hostnameVerifier = hostnameVerifier,
+        certificatePinner = certificatePinner,
+        proxyAuthenticator = client.proxyAuthenticator,
+        proxy = client.proxy,
+        protocols = client.protocols,
+        connectionSpecs = client.connectionSpecs,
+        proxySelector = client.proxySelector,
     )
   }
 
@@ -460,19 +466,17 @@ class RealCall(
    * sensitive information.
    */
   private fun toLoggableString(): String {
-    return (
-      (if (isCanceled()) "canceled " else "") +
+    return ((if (isCanceled()) "canceled " else "") +
         (if (forWebSocket) "web socket" else "call") +
-        " to " + redactedUrl()
-      )
+        " to " +
+        redactedUrl())
   }
 
   internal fun redactedUrl(): String = originalRequest.url.redact()
 
-  inner class AsyncCall(
-    private val responseCallback: Callback
-  ) : Runnable {
-    @Volatile var callsPerHost = AtomicInteger(0)
+  inner class AsyncCall(private val responseCallback: Callback) : Runnable {
+    @Volatile
+    var callsPerHost = AtomicInteger(0)
       private set
 
     fun reuseCallsPerHostFrom(other: AsyncCall) {
@@ -489,8 +493,8 @@ class RealCall(
       get() = this@RealCall
 
     /**
-     * Attempt to enqueue this async call on [executorService]. This will attempt to clean up
-     * if the executor has been shut down by reporting the call as failed.
+     * Attempt to enqueue this async call on [executorService]. This will attempt to clean up if the
+     * executor has been shut down by reporting the call as failed.
      */
     fun executeOn(executorService: ExecutorService) {
       client.dispatcher.assertThreadDoesntHoldLock()

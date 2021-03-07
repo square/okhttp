@@ -16,6 +16,8 @@
  */
 package okhttp3.internal.connection
 
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.TimeUnit
 import okhttp3.Address
 import okhttp3.ConnectionPool
 import okhttp3.Route
@@ -27,8 +29,6 @@ import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.connection.RealCall.CallReference
 import okhttp3.internal.okHttpName
 import okhttp3.internal.platform.Platform
-import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.TimeUnit
 
 class RealConnectionPool(
   taskRunner: TaskRunner,
@@ -40,9 +40,10 @@ class RealConnectionPool(
   private val keepAliveDurationNs: Long = timeUnit.toNanos(keepAliveDuration)
 
   private val cleanupQueue: TaskQueue = taskRunner.newQueue()
-  private val cleanupTask = object : Task("$okHttpName ConnectionPool") {
-    override fun runOnce() = cleanup(System.nanoTime())
-  }
+  private val cleanupTask =
+      object : Task("$okHttpName ConnectionPool") {
+        override fun runOnce() = cleanup(System.nanoTime())
+      }
 
   /**
    * Holding the lock of the connection being added or removed when mutating this, and check its
@@ -57,9 +58,7 @@ class RealConnectionPool(
   }
 
   fun idleConnectionCount(): Int {
-    return connections.count {
-      synchronized(it) { it.calls.isEmpty() }
-    }
+    return connections.count { synchronized(it) { it.calls.isEmpty() } }
   }
 
   fun connectionCount(): Int {
@@ -120,15 +119,16 @@ class RealConnectionPool(
     val i = connections.iterator()
     while (i.hasNext()) {
       val connection = i.next()
-      val socketToClose = synchronized(connection) {
-        if (connection.calls.isEmpty()) {
-          i.remove()
-          connection.noNewExchanges = true
-          return@synchronized connection.socket()
-        } else {
-          return@synchronized null
-        }
-      }
+      val socketToClose =
+          synchronized(connection) {
+            if (connection.calls.isEmpty()) {
+              i.remove()
+              connection.noNewExchanges = true
+              return@synchronized connection.socket()
+            } else {
+              return@synchronized null
+            }
+          }
       socketToClose?.closeQuietly()
     }
 
@@ -170,8 +170,8 @@ class RealConnectionPool(
     }
 
     when {
-      longestIdleDurationNs >= this.keepAliveDurationNs
-        || idleConnectionCount > this.maxIdleConnections -> {
+      longestIdleDurationNs >= this.keepAliveDurationNs ||
+          idleConnectionCount > this.maxIdleConnections -> {
         // We've chosen a connection to evict. Confirm it's still okay to be evict, then close it.
         val connection = longestIdleConnection!!
         synchronized(connection) {
@@ -187,18 +187,15 @@ class RealConnectionPool(
         // Clean up again immediately.
         return 0L
       }
-
       idleConnectionCount > 0 -> {
         // A connection will be ready to evict soon.
         return keepAliveDurationNs - longestIdleDurationNs
       }
-
       inUseConnectionCount > 0 -> {
         // All connections are in use. It'll be at least the keep alive duration 'til we run
         // again.
         return keepAliveDurationNs
       }
-
       else -> {
         // No connections, idle or in use.
         return -1
@@ -226,8 +223,9 @@ class RealConnectionPool(
 
       // We've discovered a leaked call. This is an application bug.
       val callReference = reference as CallReference
-      val message = "A connection to ${connection.route().address.url} was leaked. " +
-        "Did you forget to close a response body?"
+      val message =
+          "A connection to ${connection.route().address.url} was leaked. " +
+              "Did you forget to close a response body?"
       Platform.get().logCloseableLeak(message, callReference.callStackTrace)
 
       references.removeAt(i)

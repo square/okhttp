@@ -15,6 +15,16 @@
  */
 package okhttp3
 
+import java.io.Closeable
+import java.io.File
+import java.io.Flushable
+import java.io.IOException
+import java.security.cert.Certificate
+import java.security.cert.CertificateEncodingException
+import java.security.cert.CertificateException
+import java.security.cert.CertificateFactory
+import java.util.NoSuchElementException
+import java.util.TreeSet
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.internal.EMPTY_HEADERS
@@ -43,16 +53,6 @@ import okio.Path.Companion.toOkioPath
 import okio.Sink
 import okio.Source
 import okio.buffer
-import java.io.Closeable
-import java.io.File
-import java.io.Flushable
-import java.io.IOException
-import java.security.cert.Certificate
-import java.security.cert.CertificateEncodingException
-import java.security.cert.CertificateException
-import java.security.cert.CertificateFactory
-import java.util.NoSuchElementException
-import java.util.TreeSet
 
 /**
  * Caches HTTP and HTTPS responses to the filesystem so they may be reused, saving time and
@@ -62,19 +62,22 @@ import java.util.TreeSet
  *
  * To measure cache effectiveness, this class tracks three statistics:
  *
- *  * **[Request Count:][requestCount]** the number of HTTP requests issued since this cache was
+ * * **[Request Count:] [requestCount]** the number of HTTP requests issued since this cache was
+ * ```
  *    created.
- *  * **[Network Count:][networkCount]** the number of those requests that required network use.
- *  * **[Hit Count:][hitCount]** the number of those requests whose responses were served by the
+ * ```
+ * * **[Network Count:] [networkCount]** the number of those requests that required network use.
+ * * **[Hit Count:] [hitCount]** the number of those requests whose responses were served by the
+ * ```
  *    cache.
- *
+ * ```
  * Sometimes a request will result in a conditional cache hit. If the cache contains a stale copy of
- * the response, the client will issue a conditional `GET`. The server will then send either
- * the updated response if it has changed, or a short 'not modified' response if the client's copy
- * is still valid. Such responses increment both the network count and hit count.
+ * the response, the client will issue a conditional `GET`. The server will then send either the
+ * updated response if it has changed, or a short 'not modified' response if the client's copy is
+ * still valid. Such responses increment both the network count and hit count.
  *
  * The best way to improve the cache hit rate is by configuring the web server to return cacheable
- * responses. Although this client honors all [HTTP/1.1 (RFC 7234)][rfc_7234] cache headers, it
+ * responses. Although this client honors all [HTTP/1.1 (RFC 7234)] [rfc_7234] cache headers, it
  * doesn't cache partial responses.
  *
  * ## Force a Network Response
@@ -144,20 +147,17 @@ import java.util.TreeSet
  * [rfc_7234]: http://tools.ietf.org/html/rfc7234
  */
 @OptIn(ExperimentalFileSystem::class)
-class Cache
-internal constructor(
-  directory: Path,
-  maxSize: Long,
-  fileSystem: FileSystem
-) : Closeable, Flushable {
-  internal val cache = DiskLruCache(
-    fileSystem = fileSystem,
-    directory = directory,
-    appVersion = VERSION,
-    valueCount = ENTRY_COUNT,
-    maxSize = maxSize,
-    taskRunner = TaskRunner.INSTANCE
-  )
+class Cache internal constructor(directory: Path, maxSize: Long, fileSystem: FileSystem) :
+  Closeable, Flushable {
+  internal val cache =
+      DiskLruCache(
+          fileSystem = fileSystem,
+          directory = directory,
+          appVersion = VERSION,
+          valueCount = ENTRY_COUNT,
+          maxSize = maxSize,
+          taskRunner = TaskRunner.INSTANCE,
+      )
 
   // read and write statistics, all guarded by 'this'.
   internal var writeSuccessCount = 0
@@ -171,26 +171,31 @@ internal constructor(
 
   /** Create a cache of at most [maxSize] bytes in [directory]. */
   @OptIn(ExperimentalFileSystem::class)
-  constructor(directory: File, maxSize: Long) : this(
-    directory.toOkioPath(),
-    maxSize,
-    FileSystem.SYSTEM
+  constructor(
+    directory: File,
+    maxSize: Long
+  ) : this(
+      directory.toOkioPath(),
+      maxSize,
+      FileSystem.SYSTEM,
   )
 
   internal fun get(request: Request): Response? {
     val key = key(request.url)
-    val snapshot: DiskLruCache.Snapshot = try {
-      cache[key] ?: return null
-    } catch (_: IOException) {
-      return null // Give up because the cache cannot be read.
-    }
+    val snapshot: DiskLruCache.Snapshot =
+        try {
+          cache[key] ?: return null
+        } catch (_: IOException) {
+          return null // Give up because the cache cannot be read.
+        }
 
-    val entry: Entry = try {
-      Entry(snapshot.getSource(ENTRY_METADATA))
-    } catch (_: IOException) {
-      snapshot.closeQuietly()
-      return null
-    }
+    val entry: Entry =
+        try {
+          Entry(snapshot.getSource(ENTRY_METADATA))
+        } catch (_: IOException) {
+          snapshot.closeQuietly()
+          return null
+        }
 
     val response = entry.response(snapshot)
     if (!entry.matches(request, response)) {
@@ -346,9 +351,11 @@ internal constructor(
     }
   }
 
-  @Synchronized fun writeAbortCount(): Int = writeAbortCount
+  @Synchronized
+  fun writeAbortCount(): Int = writeAbortCount
 
-  @Synchronized fun writeSuccessCount(): Int = writeSuccessCount
+  @Synchronized
+  fun writeSuccessCount(): Int = writeSuccessCount
 
   @Throws(IOException::class)
   fun size(): Long = cache.size()
@@ -366,21 +373,24 @@ internal constructor(
     cache.close()
   }
 
-  @get:JvmName("directory") val directory: File
+  @get:JvmName("directory")
+  val directory: File
     get() = cache.directory.toFile()
 
-  @get:JvmName("directoryPath") val directoryPath: Path
+  @get:JvmName("directoryPath")
+  val directoryPath: Path
     get() = cache.directory
 
   @JvmName("-deprecated_directory")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "directory"),
-    level = DeprecationLevel.ERROR
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "directory"),
+      level = DeprecationLevel.ERROR,
   )
   fun directory(): File = cache.directory.toFile()
 
-  @Synchronized internal fun trackResponse(cacheStrategy: CacheStrategy) {
+  @Synchronized
+  internal fun trackResponse(cacheStrategy: CacheStrategy) {
     requestCount++
 
     if (cacheStrategy.networkRequest != null) {
@@ -392,36 +402,39 @@ internal constructor(
     }
   }
 
-  @Synchronized internal fun trackConditionalCacheHit() {
+  @Synchronized
+  internal fun trackConditionalCacheHit() {
     hitCount++
   }
 
-  @Synchronized fun networkCount(): Int = networkCount
+  @Synchronized
+  fun networkCount(): Int = networkCount
 
-  @Synchronized fun hitCount(): Int = hitCount
+  @Synchronized
+  fun hitCount(): Int = hitCount
 
-  @Synchronized fun requestCount(): Int = requestCount
+  @Synchronized
+  fun requestCount(): Int = requestCount
 
-  private inner class RealCacheRequest(
-    private val editor: DiskLruCache.Editor
-  ) : CacheRequest {
+  private inner class RealCacheRequest(private val editor: DiskLruCache.Editor) : CacheRequest {
     private val cacheOut: Sink = editor.newSink(ENTRY_BODY)
     private val body: Sink
     var done = false
 
     init {
-      this.body = object : ForwardingSink(cacheOut) {
-        @Throws(IOException::class)
-        override fun close() {
-          synchronized(this@Cache) {
-            if (done) return
-            done = true
-            writeSuccessCount++
+      this.body =
+          object : ForwardingSink(cacheOut) {
+            @Throws(IOException::class)
+            override fun close() {
+              synchronized(this@Cache) {
+                if (done) return
+                done = true
+                writeSuccessCount++
+              }
+              super.close()
+              editor.commit()
+            }
           }
-          super.close()
-          editor.commit()
-        }
-      }
     }
 
     override fun abort() {
@@ -452,7 +465,8 @@ internal constructor(
     private val sentRequestMillis: Long
     private val receivedResponseMillis: Long
 
-    private val isHttps: Boolean get() = url.scheme == "https"
+    private val isHttps: Boolean
+      get() = url.scheme == "https"
 
     /**
      * Reads an entry from an input stream. A typical entry looks like this:
@@ -505,15 +519,18 @@ internal constructor(
      * each on their own line. A length of -1 is used to encode a null array. The last line is
      * optional. If present, it contains the TLS version.
      */
-    @Throws(IOException::class) constructor(rawSource: Source) {
+    @Throws(IOException::class)
+    constructor(rawSource: Source) {
       rawSource.use {
         val source = rawSource.buffer()
         val urlLine = source.readUtf8LineStrict()
         // Choice here is between failing with a correct RuntimeException
         // or mostly silently with an IOException
-        url = urlLine.toHttpUrlOrNull() ?: throw IOException("Cache corruption for $urlLine").also {
-          Platform.get().log("cache corruption", WARN, it)
-        }
+        url =
+            urlLine.toHttpUrlOrNull()
+              ?: throw IOException("Cache corruption for $urlLine").also {
+                Platform.get().log("cache corruption", WARN, it)
+              }
         requestMethod = source.readUtf8LineStrict()
         val varyHeadersBuilder = Headers.Builder()
         val varyRequestHeaderLineCount = readInt(source)
@@ -548,11 +565,12 @@ internal constructor(
           val cipherSuite = CipherSuite.forJavaName(cipherSuiteString)
           val peerCertificates = readCertificateList(source)
           val localCertificates = readCertificateList(source)
-          val tlsVersion = if (!source.exhausted()) {
-            TlsVersion.forJavaName(source.readUtf8LineStrict())
-          } else {
-            TlsVersion.SSL_3_0
-          }
+          val tlsVersion =
+              if (!source.exhausted()) {
+                TlsVersion.forJavaName(source.readUtf8LineStrict())
+              } else {
+                TlsVersion.SSL_3_0
+              }
           handshake = Handshake.get(tlsVersion, cipherSuite, peerCertificates, localCertificates)
         } else {
           handshake = null
@@ -581,27 +599,27 @@ internal constructor(
         sink.writeDecimalLong(varyHeaders.size.toLong()).writeByte('\n'.toInt())
         for (i in 0 until varyHeaders.size) {
           sink.writeUtf8(varyHeaders.name(i))
-            .writeUtf8(": ")
-            .writeUtf8(varyHeaders.value(i))
-            .writeByte('\n'.toInt())
+              .writeUtf8(": ")
+              .writeUtf8(varyHeaders.value(i))
+              .writeByte('\n'.toInt())
         }
 
         sink.writeUtf8(StatusLine(protocol, code, message).toString()).writeByte('\n'.toInt())
         sink.writeDecimalLong((responseHeaders.size + 2).toLong()).writeByte('\n'.toInt())
         for (i in 0 until responseHeaders.size) {
           sink.writeUtf8(responseHeaders.name(i))
-            .writeUtf8(": ")
-            .writeUtf8(responseHeaders.value(i))
-            .writeByte('\n'.toInt())
+              .writeUtf8(": ")
+              .writeUtf8(responseHeaders.value(i))
+              .writeByte('\n'.toInt())
         }
         sink.writeUtf8(SENT_MILLIS)
-          .writeUtf8(": ")
-          .writeDecimalLong(sentRequestMillis)
-          .writeByte('\n'.toInt())
+            .writeUtf8(": ")
+            .writeDecimalLong(sentRequestMillis)
+            .writeByte('\n'.toInt())
         sink.writeUtf8(RECEIVED_MILLIS)
-          .writeUtf8(": ")
-          .writeDecimalLong(receivedResponseMillis)
-          .writeByte('\n'.toInt())
+            .writeUtf8(": ")
+            .writeDecimalLong(receivedResponseMillis)
+            .writeByte('\n'.toInt())
 
         if (isHttps) {
           sink.writeByte('\n'.toInt())
@@ -649,29 +667,26 @@ internal constructor(
 
     fun matches(request: Request, response: Response): Boolean {
       return url == request.url &&
-        requestMethod == request.method &&
-        varyMatches(response, varyHeaders, request)
+          requestMethod == request.method &&
+          varyMatches(response, varyHeaders, request)
     }
 
     fun response(snapshot: DiskLruCache.Snapshot): Response {
       val contentType = responseHeaders["Content-Type"]
       val contentLength = responseHeaders["Content-Length"]
-      val cacheRequest = Request.Builder()
-        .url(url)
-        .method(requestMethod, null)
-        .headers(varyHeaders)
-        .build()
+      val cacheRequest =
+          Request.Builder().url(url).method(requestMethod, null).headers(varyHeaders).build()
       return Response.Builder()
-        .request(cacheRequest)
-        .protocol(protocol)
-        .code(code)
-        .message(message)
-        .headers(responseHeaders)
-        .body(CacheResponseBody(snapshot, contentType, contentLength))
-        .handshake(handshake)
-        .sentRequestAtMillis(sentRequestMillis)
-        .receivedResponseAtMillis(receivedResponseMillis)
-        .build()
+          .request(cacheRequest)
+          .protocol(protocol)
+          .code(code)
+          .message(message)
+          .headers(responseHeaders)
+          .body(CacheResponseBody(snapshot, contentType, contentLength))
+          .handshake(handshake)
+          .sentRequestAtMillis(sentRequestMillis)
+          .receivedResponseAtMillis(receivedResponseMillis)
+          .build()
     }
 
     companion object {
@@ -692,13 +707,15 @@ internal constructor(
 
     init {
       val source = snapshot.getSource(ENTRY_BODY)
-      bodySource = object : ForwardingSource(source) {
-        @Throws(IOException::class)
-        override fun close() {
-          snapshot.close()
-          super.close()
-        }
-      }.buffer()
+      bodySource =
+          object : ForwardingSource(source) {
+            @Throws(IOException::class)
+            override fun close() {
+              snapshot.close()
+              super.close()
+            }
+          }
+              .buffer()
     }
 
     override fun contentType(): MediaType? = contentType?.toMediaTypeOrNull()

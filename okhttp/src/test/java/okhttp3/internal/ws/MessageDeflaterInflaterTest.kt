@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.ws
 
+import java.io.EOFException
 import okhttp3.TestUtil.fragmentBuffer
 import okio.Buffer
 import okio.ByteString
@@ -23,22 +24,24 @@ import okio.ByteString.Companion.encodeUtf8
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
-import java.io.EOFException
 
 internal class MessageDeflaterInflaterTest {
-  @Test fun `inflate golden value`() {
+  @Test
+  fun `inflate golden value`() {
     val inflater = MessageInflater(false)
     val message = "f248cdc9c957c8cc4bcb492cc9cccf530400".decodeHex()
     assertThat(inflater.inflate(message)).isEqualTo("Hello inflation!".encodeUtf8())
   }
 
-  @Test fun `deflate golden value`() {
+  @Test
+  fun `deflate golden value`() {
     val deflater = MessageDeflater(false)
     val deflated = deflater.deflate("Hello deflate!".encodeUtf8())
     assertThat(deflated.hex()).isEqualTo("f248cdc9c95748494dcb492c49550400")
   }
 
-  @Test fun `inflate deflate`() {
+  @Test
+  fun `inflate deflate`() {
     val deflater = MessageDeflater(false)
     val inflater = MessageInflater(false)
 
@@ -51,7 +54,8 @@ internal class MessageDeflaterInflaterTest {
     assertThat(inflated).isEqualTo(goldenValue)
   }
 
-  @Test fun `inflate deflate empty message`() {
+  @Test
+  fun `inflate deflate empty message`() {
     val deflater = MessageDeflater(false)
     val inflater = MessageInflater(false)
 
@@ -64,7 +68,8 @@ internal class MessageDeflaterInflaterTest {
     assertThat(inflated).isEqualTo(goldenValue)
   }
 
-  @Test fun `inflate deflate with context takeover`() {
+  @Test
+  fun `inflate deflate with context takeover`() {
     val deflater = MessageDeflater(false)
     val inflater = MessageInflater(false)
 
@@ -79,7 +84,8 @@ internal class MessageDeflaterInflaterTest {
     assertThat(deflatedValue2.size).isLessThan(deflatedValue1.size)
   }
 
-  @Test fun `inflate deflate with no context takeover`() {
+  @Test
+  fun `inflate deflate with no context takeover`() {
     val deflater = MessageDeflater(true)
     val inflater = MessageInflater(true)
 
@@ -94,18 +100,19 @@ internal class MessageDeflaterInflaterTest {
     assertThat(deflatedValue2).isEqualTo(deflatedValue1)
   }
 
-  @Test fun `deflate after close`() {
+  @Test
+  fun `deflate after close`() {
     val deflater = MessageDeflater(true)
     deflater.close()
 
     try {
       deflater.deflate("Hello deflate!".encodeUtf8())
       fail()
-    } catch (expected: Exception) {
-    }
+    } catch (expected: Exception) {}
   }
 
-  @Test fun `inflate after close`() {
+  @Test
+  fun `inflate after close`() {
     val inflater = MessageInflater(false)
 
     inflater.close()
@@ -113,15 +120,15 @@ internal class MessageDeflaterInflaterTest {
     try {
       inflater.inflate("f240e30300".decodeHex())
       fail()
-    } catch (expected: Exception) {
-    }
+    } catch (expected: Exception) {}
   }
 
   /**
    * Test for an [EOFException] caused by mishandling of fragmented buffers in web socket
    * compression. https://github.com/square/okhttp/issues/5965
    */
-  @Test fun `inflate golden value in buffer that has been fragmented`() {
+  @Test
+  fun `inflate golden value in buffer that has been fragmented`() {
     val inflater = MessageInflater(false)
     val buffer = fragmentBuffer(Buffer().write("f248cdc9c957c8cc4bcb492cc9cccf530400".decodeHex()))
     inflater.inflate(buffer)

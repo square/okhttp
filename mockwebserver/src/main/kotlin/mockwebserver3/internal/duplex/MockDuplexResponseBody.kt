@@ -15,6 +15,11 @@
  */
 package mockwebserver3.internal.duplex
 
+import java.io.IOException
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.FutureTask
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.TimeUnit
 import mockwebserver3.RecordedRequest
 import okhttp3.internal.http2.ErrorCode
 import okhttp3.internal.http2.Http2Stream
@@ -22,11 +27,6 @@ import okio.BufferedSink
 import okio.BufferedSource
 import okio.buffer
 import okio.utf8Size
-import java.io.IOException
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.FutureTask
-import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.TimeUnit
 
 private typealias Action = (RecordedRequest, BufferedSource, BufferedSink, Http2Stream) -> Unit
 
@@ -39,16 +39,18 @@ class MockDuplexResponseBody : DuplexResponseBody {
   private val results = LinkedBlockingQueue<FutureTask<Void>>()
 
   fun receiveRequest(expected: String) = apply {
-    actions += { _, requestBody, _, _ ->
-      val actual = requestBody.readUtf8(expected.utf8Size())
-      if (actual != expected) throw AssertionError("$actual != $expected")
-    }
+    actions +=
+        { _, requestBody, _, _ ->
+          val actual = requestBody.readUtf8(expected.utf8Size())
+          if (actual != expected) throw AssertionError("$actual != $expected")
+        }
   }
 
   fun exhaustRequest() = apply {
-    actions += { _, requestBody, _, _ ->
-      if (!requestBody.exhausted()) throw AssertionError("expected exhausted")
-    }
+    actions +=
+        { _, requestBody, _, _ ->
+          if (!requestBody.exhausted()) throw AssertionError("expected exhausted")
+        }
   }
 
   fun cancelStream(errorCode: ErrorCode) = apply {
@@ -56,29 +58,26 @@ class MockDuplexResponseBody : DuplexResponseBody {
   }
 
   fun requestIOException() = apply {
-    actions += { _, requestBody, _, _ ->
-      try {
-        requestBody.exhausted()
-        throw AssertionError("expected IOException")
-      } catch (expected: IOException) {
-      }
-    }
+    actions +=
+        { _, requestBody, _, _ ->
+          try {
+            requestBody.exhausted()
+            throw AssertionError("expected IOException")
+          } catch (expected: IOException) {}
+        }
   }
 
-  @JvmOverloads fun sendResponse(
-    s: String,
-    responseSent: CountDownLatch = CountDownLatch(0)
-  ) = apply {
-    actions += { _, _, responseBody, _ ->
-      responseBody.writeUtf8(s)
-      responseBody.flush()
-      responseSent.countDown()
-    }
+  @JvmOverloads
+  fun sendResponse(s: String, responseSent: CountDownLatch = CountDownLatch(0)) = apply {
+    actions +=
+        { _, _, responseBody, _ ->
+          responseBody.writeUtf8(s)
+          responseBody.flush()
+          responseSent.countDown()
+        }
   }
 
-  fun exhaustResponse() = apply {
-    actions += { _, _, responseBody, _ -> responseBody.close() }
-  }
+  fun exhaustResponse() = apply { actions += { _, _, responseBody, _ -> responseBody.close() } }
 
   fun sleep(duration: Long, unit: TimeUnit) = apply {
     actions += { _, _, _, _ -> Thread.sleep(unit.toMillis(duration)) }
@@ -92,8 +91,8 @@ class MockDuplexResponseBody : DuplexResponseBody {
 
   /** Returns a task that processes both request and response from [http2Stream]. */
   private fun serviceStreamTask(
-    request: RecordedRequest,
-    http2Stream: Http2Stream
+      request: RecordedRequest,
+      http2Stream: Http2Stream
   ): FutureTask<Void> {
     return FutureTask<Void> {
       http2Stream.getSource().buffer().use { requestBody ->
@@ -110,8 +109,8 @@ class MockDuplexResponseBody : DuplexResponseBody {
 
   /** Returns once the duplex conversation completes successfully. */
   fun awaitSuccess() {
-    val futureTask = results.poll(5, TimeUnit.SECONDS)
-      ?: throw AssertionError("no onRequest call received")
+    val futureTask =
+        results.poll(5, TimeUnit.SECONDS) ?: throw AssertionError("no onRequest call received")
     futureTask.get(5, TimeUnit.SECONDS)
   }
 }

@@ -18,9 +18,7 @@ package okhttp3.tls.internal.der
 import okio.Buffer
 import okio.ByteString
 
-/**
- * Encode and decode a model object like a [Long] or [Certificate] as DER bytes.
- */
+/** Encode and decode a model object like a [Long] or [Certificate] as DER bytes. */
 internal interface DerAdapter<T> {
   /** Returns true if this adapter can read [header] in a choice. */
   fun matches(header: DerHeader): Boolean
@@ -60,8 +58,8 @@ internal interface DerAdapter<T> {
   }
 
   /**
-   * Returns an adapter that expects this value wrapped by another value. Typically this occurs
-   * when a value has both a context or application tag and a universal tag.
+   * Returns an adapter that expects this value wrapped by another value. Typically this occurs when
+   * a value has both a context or application tag and a universal tag.
    *
    * Use this for EXPLICIT tag types:
    *
@@ -70,64 +68,59 @@ internal interface DerAdapter<T> {
    * ```
    *
    * @param forceConstructed non-null to set the constructed bit to the specified value, even if the
+   * ```
    *     writing process sets something else. This is used to encode SEQUENCES in values that are
    *     declared to have non-constructed values, like OCTET STRING values.
+   * ```
    */
   @Suppress("UNCHECKED_CAST") // read() produces a single element of the expected type.
   fun withExplicitBox(
-    tagClass: Int = DerHeader.TAG_CLASS_CONTEXT_SPECIFIC,
-    tag: Long,
-    forceConstructed: Boolean? = null
+      tagClass: Int = DerHeader.TAG_CLASS_CONTEXT_SPECIFIC,
+      tag: Long,
+      forceConstructed: Boolean? = null
   ): BasicDerAdapter<T> {
-    val codec = object : BasicDerAdapter.Codec<T> {
-      override fun decode(reader: DerReader) = fromDer(reader)
-      override fun encode(writer: DerWriter, value: T) {
-        toDer(writer, value)
-        if (forceConstructed != null) {
-          writer.constructed = forceConstructed
+    val codec =
+        object : BasicDerAdapter.Codec<T> {
+          override fun decode(reader: DerReader) = fromDer(reader)
+          override fun encode(writer: DerWriter, value: T) {
+            toDer(writer, value)
+            if (forceConstructed != null) {
+              writer.constructed = forceConstructed
+            }
+          }
         }
-      }
-    }
 
-    return BasicDerAdapter(
-      name = "EXPLICIT",
-      tagClass = tagClass,
-      tag = tag,
-      codec = codec
-    )
+    return BasicDerAdapter(name = "EXPLICIT", tagClass = tagClass, tag = tag, codec = codec)
   }
 
   /** Returns an adapter that returns a list of values of this type. */
   fun asSequenceOf(
-    name: String = "SEQUENCE OF",
-    tagClass: Int = DerHeader.TAG_CLASS_UNIVERSAL,
-    tag: Long = 16L
+      name: String = "SEQUENCE OF",
+      tagClass: Int = DerHeader.TAG_CLASS_UNIVERSAL,
+      tag: Long = 16L
   ): BasicDerAdapter<List<T>> {
-    val codec = object : BasicDerAdapter.Codec<List<T>> {
-      override fun encode(writer: DerWriter, value: List<T>) {
-        for (v in value) {
-          toDer(writer, v)
-        }
-      }
+    val codec =
+        object : BasicDerAdapter.Codec<List<T>> {
+          override fun encode(writer: DerWriter, value: List<T>) {
+            for (v in value) {
+              toDer(writer, v)
+            }
+          }
 
-      override fun decode(reader: DerReader): List<T> {
-        val result = mutableListOf<T>()
-        while (reader.hasNext()) {
-          result += fromDer(reader)
+          override fun decode(reader: DerReader): List<T> {
+            val result = mutableListOf<T>()
+            while (reader.hasNext()) {
+              result += fromDer(reader)
+            }
+            return result
+          }
         }
-        return result
-      }
-    }
 
     return BasicDerAdapter(name, tagClass, tag, codec)
   }
 
   /** Returns an adapter that returns a set of values of this type. */
   fun asSetOf(): BasicDerAdapter<List<T>> {
-    return asSequenceOf(
-      name = "SET OF",
-      tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
-      tag = 17L
-    )
+    return asSequenceOf(name = "SET OF", tagClass = DerHeader.TAG_CLASS_UNIVERSAL, tag = 17L)
   }
 }

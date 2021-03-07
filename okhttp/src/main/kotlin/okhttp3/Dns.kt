@@ -15,13 +15,13 @@
  */
 package okhttp3
 
-import okhttp3.Dns.Companion.SYSTEM
 import java.net.InetAddress
 import java.net.UnknownHostException
+import okhttp3.Dns.Companion.SYSTEM
 
 /**
  * A domain name service that resolves IP addresses for host names. Most applications will use the
- * [system DNS service][SYSTEM], which is the default. Some applications may provide their own
+ * [system DNS service] [SYSTEM], which is the default. Some applications may provide their own
  * implementation to use a different DNS server, to prefer IPv6 addresses, to prefer IPv4 addresses,
  * or to force a specific known IP address.
  *
@@ -38,11 +38,12 @@ interface Dns {
 
   companion object {
     /**
-     * A DNS that uses [InetAddress.getAllByName] to ask the underlying operating system to
-     * lookup IP addresses. Most custom [Dns] implementations should delegate to this instance.
+     * A DNS that uses [InetAddress.getAllByName] to ask the underlying operating system to lookup
+     * IP addresses. Most custom [Dns] implementations should delegate to this instance.
      */
     @JvmField
     val SYSTEM: Dns = DnsSystem()
+
     private class DnsSystem : Dns {
       override fun lookup(hostname: String): List<InetAddress> {
         try {

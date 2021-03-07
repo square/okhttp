@@ -15,6 +15,12 @@
  */
 package okhttp3.mockwebserver
 
+import java.net.InetAddress
+import java.net.Proxy
+import java.net.Socket
+import java.util.concurrent.TimeUnit
+import javax.net.ServerSocketFactory
+import javax.net.ssl.SSLSocketFactory
 import okhttp3.Handshake
 import okhttp3.Headers
 import okhttp3.Headers.Companion.headersOf
@@ -26,38 +32,34 @@ import okhttp3.internal.http2.Settings
 import okio.Buffer
 import org.junit.Ignore
 import org.junit.Test
-import java.net.InetAddress
-import java.net.Proxy
-import java.net.Socket
-import java.util.concurrent.TimeUnit
-import javax.net.ServerSocketFactory
-import javax.net.ssl.SSLSocketFactory
 
 /**
  * Access every type, function, and property from Kotlin to defend against unexpected regressions in
  * modern 4.0.x kotlin source-compatibility.
  */
 @Suppress(
-  "ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE",
-  "UNUSED_ANONYMOUS_PARAMETER",
-  "UNUSED_VALUE",
-  "UNUSED_VARIABLE",
-  "VARIABLE_WITH_REDUNDANT_INITIALIZER",
-  "RedundantLambdaArrow",
-  "RedundantExplicitType",
-  "IMPLICIT_NOTHING_AS_TYPE_PARAMETER"
-)
+    "ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE",
+    "UNUSED_ANONYMOUS_PARAMETER",
+    "UNUSED_VALUE",
+    "UNUSED_VARIABLE",
+    "VARIABLE_WITH_REDUNDANT_INITIALIZER",
+    "RedundantLambdaArrow",
+    "RedundantExplicitType",
+    "IMPLICIT_NOTHING_AS_TYPE_PARAMETER")
 class KotlinSourceModernTest {
-  @Test @Ignore
+  @Test
+  @Ignore
   fun dispatcherFromMockWebServer() {
-    val dispatcher = object : Dispatcher() {
-      override fun dispatch(request: RecordedRequest): MockResponse = TODO()
-      override fun peek(): MockResponse = TODO()
-      override fun shutdown() = TODO()
-    }
+    val dispatcher =
+        object : Dispatcher() {
+          override fun dispatch(request: RecordedRequest): MockResponse = TODO()
+          override fun peek(): MockResponse = TODO()
+          override fun shutdown() = TODO()
+        }
   }
 
-  @Test @Ignore
+  @Test
+  @Ignore
   fun mockResponse() {
     var mockResponse: MockResponse = MockResponse()
     var status: String = mockResponse.status
@@ -96,15 +98,13 @@ class KotlinSourceModernTest {
     mockResponse = mockResponse.withSettings(Settings())
     var settings: Settings = mockResponse.settings
     settings = mockResponse.settings
-    mockResponse = mockResponse.withWebSocketUpgrade(
-      object : WebSocketListener() {
-      }
-    )
+    mockResponse = mockResponse.withWebSocketUpgrade(object : WebSocketListener() {})
     var webSocketListener: WebSocketListener? = mockResponse.webSocketListener
     webSocketListener = mockResponse.webSocketListener
   }
 
-  @Test @Ignore
+  @Test
+  @Ignore
   fun mockWebServer() {
     val mockWebServer: MockWebServer = MockWebServer()
     var port: Int = mockWebServer.port
@@ -136,7 +136,8 @@ class KotlinSourceModernTest {
     mockWebServer.close()
   }
 
-  @Test @Ignore
+  @Test
+  @Ignore
   fun pushPromise() {
     val pushPromise: PushPromise = PushPromise("", "", headersOf(), MockResponse())
     val method: String = pushPromise.method
@@ -145,12 +146,13 @@ class KotlinSourceModernTest {
     val response: MockResponse = pushPromise.response
   }
 
-  @Test @Ignore
+  @Test
+  @Ignore
   fun queueDispatcher() {
     val queueDispatcher: QueueDispatcher = QueueDispatcher()
-    var mockResponse: MockResponse = queueDispatcher.dispatch(
-      RecordedRequest("", headersOf(), listOf(), 0L, Buffer(), 0, Socket())
-    )
+    var mockResponse: MockResponse =
+        queueDispatcher.dispatch(
+            RecordedRequest("", headersOf(), listOf(), 0L, Buffer(), 0, Socket()))
     mockResponse = queueDispatcher.peek()
     queueDispatcher.enqueueResponse(MockResponse())
     queueDispatcher.shutdown()
@@ -158,17 +160,11 @@ class KotlinSourceModernTest {
     queueDispatcher.setFailFast(MockResponse())
   }
 
-  @Test @Ignore
+  @Test
+  @Ignore
   fun recordedRequest() {
-    var recordedRequest: RecordedRequest = RecordedRequest(
-      "",
-      headersOf(),
-      listOf(),
-      0L,
-      Buffer(),
-      0,
-      Socket()
-    )
+    var recordedRequest: RecordedRequest =
+        RecordedRequest("", headersOf(), listOf(), 0L, Buffer(), 0, Socket())
     recordedRequest = RecordedRequest("", headersOf(), listOf(), 0L, Buffer(), 0, Socket())
     var requestUrl: HttpUrl? = recordedRequest.requestUrl
     var requestLine: String = recordedRequest.requestLine
@@ -185,7 +181,8 @@ class KotlinSourceModernTest {
     var handshake: Handshake? = recordedRequest.handshake
   }
 
-  @Test @Ignore
+  @Test
+  @Ignore
   fun socketPolicy() {
     val socketPolicy: SocketPolicy = SocketPolicy.KEEP_OPEN
   }

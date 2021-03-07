@@ -28,14 +28,13 @@ import javax.net.ssl.SSLPeerUnverifiedException
  * prefer other mechanisms where they exist, such as with
  * [okhttp3.internal.platform.AndroidPlatform.AndroidCertificateChainCleaner].
  *
- * This class includes code from [Conscrypt's][Conscrypt] [TrustManagerImpl] and
+ * This class includes code from [Conscrypt's] [Conscrypt] [TrustManagerImpl] and
  * [TrustedCertificateIndex].
  *
  * [Conscrypt]: https://conscrypt.org/
  */
-class BasicCertificateChainCleaner(
-  private val trustRootIndex: TrustRootIndex
-) : CertificateChainCleaner() {
+class BasicCertificateChainCleaner(private val trustRootIndex: TrustRootIndex) :
+  CertificateChainCleaner() {
 
   /**
    * Returns a cleaned chain for [chain].
@@ -51,8 +50,7 @@ class BasicCertificateChainCleaner(
     result.add(queue.removeFirst())
     var foundTrustedCertificate = false
 
-    followIssuerChain@
-    for (c in 0 until MAX_SIGNERS) {
+    followIssuerChain@ for (c in 0 until MAX_SIGNERS) {
       val toVerify = result[result.size - 1] as X509Certificate
 
       // If this cert has been signed by a trusted cert, use that. Add the trusted certificate to
@@ -89,7 +87,7 @@ class BasicCertificateChainCleaner(
 
       // The last link isn't trusted. Fail.
       throw SSLPeerUnverifiedException(
-        "Failed to find a trusted cert that signed $toVerify"
+          "Failed to find a trusted cert that signed $toVerify",
       )
     }
 

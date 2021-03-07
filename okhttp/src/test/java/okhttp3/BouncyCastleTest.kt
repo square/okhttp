@@ -23,9 +23,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
-class BouncyCastleTest(
-  val server: MockWebServer
-) {
+class BouncyCastleTest(val server: MockWebServer) {
   @JvmField @RegisterExtension var platform = PlatformRule()
   @JvmField @RegisterExtension val clientTestRule = OkHttpClientTestRule()
   var client = clientTestRule.newClient()

@@ -15,6 +15,11 @@
  */
 package okhttp3.internal.http2
 
+import java.io.Closeable
+import java.io.EOFException
+import java.io.IOException
+import java.util.logging.Level.FINE
+import java.util.logging.Logger
 import okhttp3.internal.and
 import okhttp3.internal.format
 import okhttp3.internal.http2.Http2.CONNECTION_PREFACE
@@ -43,16 +48,11 @@ import okio.BufferedSource
 import okio.ByteString
 import okio.Source
 import okio.Timeout
-import java.io.Closeable
-import java.io.EOFException
-import java.io.IOException
-import java.util.logging.Level.FINE
-import java.util.logging.Logger
 
 /**
  * Reads HTTP/2 transport frames.
  *
- * This implementation assumes we do not send an increased [frame][Settings.getMaxFrameSize] to the
+ * This implementation assumes we do not send an increased [frame] [Settings.getMaxFrameSize] to the
  * peer. Hence, we expect all frames to have a max length of [Http2.INITIAL_MAX_FRAME_SIZE].
  */
 class Http2Reader(
@@ -61,10 +61,11 @@ class Http2Reader(
   private val client: Boolean
 ) : Closeable {
   private val continuation: ContinuationSource = ContinuationSource(this.source)
-  private val hpackReader: Hpack.Reader = Hpack.Reader(
-    source = continuation,
-    headerTableSizeSetting = 4096
-  )
+  private val hpackReader: Hpack.Reader =
+      Hpack.Reader(
+          source = continuation,
+          headerTableSizeSetting = 4096,
+      )
 
   @Throws(IOException::class)
   fun readConnectionPreface(handler: Handler) {
@@ -202,9 +203,11 @@ class Http2Reader(
     if (length != 4) throw IOException("TYPE_RST_STREAM length: $length != 4")
     if (streamId == 0) throw IOException("TYPE_RST_STREAM streamId == 0")
     val errorCodeInt = source.readInt()
-    val errorCode = ErrorCode.fromHttp2(errorCodeInt) ?: throw IOException(
-      "TYPE_RST_STREAM unexpected error code: $errorCodeInt"
-    )
+    val errorCode =
+        ErrorCode.fromHttp2(errorCodeInt)
+          ?: throw IOException(
+              "TYPE_RST_STREAM unexpected error code: $errorCodeInt",
+          )
     handler.rstStream(streamId, errorCode)
   }
 
@@ -295,9 +298,11 @@ class Http2Reader(
     val lastStreamId = source.readInt()
     val errorCodeInt = source.readInt()
     val opaqueDataLength = length - 8
-    val errorCode = ErrorCode.fromHttp2(errorCodeInt) ?: throw IOException(
-      "TYPE_GOAWAY unexpected error code: $errorCodeInt"
-    )
+    val errorCode =
+        ErrorCode.fromHttp2(errorCodeInt)
+          ?: throw IOException(
+              "TYPE_GOAWAY unexpected error code: $errorCodeInt",
+          )
     var debugData = ByteString.EMPTY
     if (opaqueDataLength > 0) { // Must read debug data in order to not corrupt the connection.
       debugData = source.readByteString(opaqueDataLength.toLong())
@@ -322,9 +327,7 @@ class Http2Reader(
    * Decompression of the header block occurs above the framing layer. This class lazily reads
    * continuation frames as they are needed by [Hpack.Reader.readHeaders].
    */
-  internal class ContinuationSource(
-    private val source: BufferedSource
-  ) : Source {
+  internal class ContinuationSource(private val source: BufferedSource) : Source {
 
     var length: Int = 0
     var flags: Int = 0
@@ -397,39 +400,31 @@ class Http2Reader(
     fun ackSettings()
 
     /**
-     * Read a connection-level ping from the peer. `ack` indicates this is a reply. The data
-     * in `payload1` and `payload2` opaque binary, and there are no rules on the content.
+     * Read a connection-level ping from the peer. `ack` indicates this is a reply. The data in
+     * `payload1` and `payload2` opaque binary, and there are no rules on the content.
      */
-    fun ping(
-      ack: Boolean,
-      payload1: Int,
-      payload2: Int
-    )
+    fun ping(ack: Boolean, payload1: Int, payload2: Int)
 
     /**
-     * The peer tells us to stop creating streams. It is safe to replay streams with
-     * `ID > lastGoodStreamId` on a new connection.  In- flight streams with
-     * `ID <= lastGoodStreamId` can only be replayed on a new connection if they are idempotent.
+     * The peer tells us to stop creating streams. It is safe to replay streams with `ID >
+     * lastGoodStreamId` on a new connection. In- flight streams with `ID <= lastGoodStreamId` can
+     * only be replayed on a new connection if they are idempotent.
      *
      * @param lastGoodStreamId the last stream ID the peer processed before sending this message. If
+     * ```
      *     [lastGoodStreamId] is zero, the peer processed no frames.
-     * @param errorCode reason for closing the connection.
+     * @param errorCode
+     * ```
+     * reason for closing the connection.
      * @param debugData only valid for HTTP/2; opaque debug data to send.
      */
-    fun goAway(
-      lastGoodStreamId: Int,
-      errorCode: ErrorCode,
-      debugData: ByteString
-    )
+    fun goAway(lastGoodStreamId: Int, errorCode: ErrorCode, debugData: ByteString)
 
     /**
      * Notifies that an additional `windowSizeIncrement` bytes can be sent on `streamId`, or the
      * connection if `streamId` is zero.
      */
-    fun windowUpdate(
-      streamId: Int,
-      windowSizeIncrement: Long
-    )
+    fun windowUpdate(streamId: Int, windowSizeIncrement: Long)
 
     /**
      * Called when reading a headers or priority frame. This may be used to change the stream's
@@ -440,12 +435,7 @@ class Http2Reader(
      * @param weight relative proportion of priority in `[1..256]`.
      * @param exclusive inserts this stream ID as the sole child of `streamDependency`.
      */
-    fun priority(
-      streamId: Int,
-      streamDependency: Int,
-      weight: Int,
-      exclusive: Boolean
-    )
+    fun priority(streamId: Int, streamDependency: Int, weight: Int, exclusive: Boolean)
 
     /**
      * HTTP/2 only. Receive a push promise header block.
@@ -454,32 +444,34 @@ class Http2Reader(
      * `promisedStreamId` to which response frames will be delivered. Push promise frames are sent
      * as a part of the response to `streamId`.
      *
-     * @param streamId client-initiated stream ID.  Must be an odd number.
-     * @param promisedStreamId server-initiated stream ID.  Must be an even number.
+     * @param streamId client-initiated stream ID. Must be an odd number.
+     * @param promisedStreamId server-initiated stream ID. Must be an even number.
      * @param requestHeaders minimally includes `:method`, `:scheme`, `:authority`, and `:path`.
      */
     @Throws(IOException::class)
-    fun pushPromise(
-      streamId: Int,
-      promisedStreamId: Int,
-      requestHeaders: List<Header>
-    )
+    fun pushPromise(streamId: Int, promisedStreamId: Int, requestHeaders: List<Header>)
 
     /**
      * HTTP/2 only. Expresses that resources for the connection or a client- initiated stream are
      * available from a different network location or protocol configuration.
      *
-     * See [alt-svc][alt_svc].
+     * See [alt-svc] [alt_svc].
      *
      * [alt_svc]: http://tools.ietf.org/html/draft-ietf-httpbis-alt-svc-01
      *
      * @param streamId when a client-initiated stream ID (odd number), the origin of this alternate
+     * ```
      *     service is the origin of the stream. When zero, the origin is specified in the `origin`
      *     parameter.
-     * @param origin when present, the [origin](http://tools.ietf.org/html/rfc6454) is typically
+     * @param origin
+     * ```
+     * when present, the [origin](http://tools.ietf.org/html/rfc6454) is typically
+     * ```
      *     represented as a combination of scheme, host and port. When empty, the origin is that of
      *     the `streamId`.
-     * @param protocol an ALPN protocol, such as `h2`.
+     * @param protocol
+     * ```
+     * an ALPN protocol, such as `h2`.
      * @param host an IP address or hostname.
      * @param port the IP port associated with the service.
      * @param maxAge time in seconds that this alternative is considered fresh.

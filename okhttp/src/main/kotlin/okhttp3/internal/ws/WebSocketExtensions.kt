@@ -15,10 +15,10 @@
  */
 package okhttp3.internal.ws
 
+import java.io.IOException
 import okhttp3.Headers
 import okhttp3.internal.delimiterOffset
 import okhttp3.internal.trimSubstring
-import java.io.IOException
 
 /**
  * Models the contents of a `Sec-WebSocket-Extensions` response header. OkHttp honors one extension
@@ -48,11 +48,13 @@ import java.io.IOException
  * `client_max_window_bits` and [java.util.zip.Inflater] is hardcoded to use 15 bits (32 KiB) for
  * `server_max_window_bits`. This harms our ability to support these parameters:
  *
- *  * If `client_max_window_bits` is less than 15, OkHttp must close the web socket with code 1010.
+ * * If `client_max_window_bits` is less than 15, OkHttp must close the web socket with code 1010.
+ * ```
  *    Otherwise it would compress values in a way that servers could not decompress.
- *  * If `server_max_window_bits` is less than 15, OkHttp will waste memory on an oversized buffer.
+ * ```
+ * * If `server_max_window_bits` is less than 15, OkHttp will waste memory on an oversized buffer.
  *
- * See [RFC 7692, 7.1][rfc_7692] for details on negotiation process.
+ * See [RFC 7692, 7.1] [rfc_7692] for details on negotiation process.
  *
  * [rfc_7692]: https://tools.ietf.org/html/rfc7692#section-7.1
  */
@@ -127,11 +129,12 @@ data class WebSocketExtensions(
                 val parameterEnd = header.delimiterOffset(';', pos, extensionEnd)
                 val equals = header.delimiterOffset('=', pos, parameterEnd)
                 val name = header.trimSubstring(pos, equals)
-                val value = if (equals < parameterEnd) {
-                  header.trimSubstring(equals + 1, parameterEnd).removeSurrounding("\"")
-                } else {
-                  null
-                }
+                val value =
+                    if (equals < parameterEnd) {
+                      header.trimSubstring(equals + 1, parameterEnd).removeSurrounding("\"")
+                    } else {
+                      null
+                    }
                 pos = parameterEnd + 1
                 when {
                   name.equals("client_max_window_bits", ignoreCase = true) -> {
@@ -160,7 +163,6 @@ data class WebSocketExtensions(
                 }
               }
             }
-
             else -> {
               unexpectedValues = true // Unexpected extension.
             }
@@ -169,12 +171,12 @@ data class WebSocketExtensions(
       }
 
       return WebSocketExtensions(
-        perMessageDeflate = compressionEnabled,
-        clientMaxWindowBits = clientMaxWindowBits,
-        clientNoContextTakeover = clientNoContextTakeover,
-        serverMaxWindowBits = serverMaxWindowBits,
-        serverNoContextTakeover = serverNoContextTakeover,
-        unknownValues = unexpectedValues
+          perMessageDeflate = compressionEnabled,
+          clientMaxWindowBits = clientMaxWindowBits,
+          clientNoContextTakeover = clientNoContextTakeover,
+          serverMaxWindowBits = serverMaxWindowBits,
+          serverNoContextTakeover = serverNoContextTakeover,
+          unknownValues = unexpectedValues,
       )
     }
   }

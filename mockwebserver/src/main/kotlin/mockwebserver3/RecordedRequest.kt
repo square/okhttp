@@ -16,6 +16,10 @@
 
 package mockwebserver3
 
+import java.io.IOException
+import java.net.Inet6Address
+import java.net.Socket
+import javax.net.ssl.SSLSocket
 import okhttp3.Handshake
 import okhttp3.Handshake.Companion.handshake
 import okhttp3.Headers
@@ -23,42 +27,40 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.TlsVersion
 import okio.Buffer
-import java.io.IOException
-import java.net.Inet6Address
-import java.net.Socket
-import javax.net.ssl.SSLSocket
 
 /** An HTTP request that came into the mock web server. */
-class RecordedRequest @JvmOverloads constructor(
-  val requestLine: String,
+class RecordedRequest
+@JvmOverloads
+constructor(
+    val requestLine: String,
 
-  /** All headers. */
-  val headers: Headers,
+    /** All headers. */
+    val headers: Headers,
 
-  /**
-   * The sizes of the chunks of this request's body, or an empty list if the request's body
-   * was empty or unchunked.
-   */
-  val chunkSizes: List<Int>,
+    /**
+     * The sizes of the chunks of this request's body, or an empty list if the request's body was
+     * empty or unchunked.
+     */
+    val chunkSizes: List<Int>,
 
-  /** The total size of the body of this POST request (before truncation).*/
-  val bodySize: Long,
+    /** The total size of the body of this POST request (before truncation). */
+    val bodySize: Long,
 
-  /** The body of this POST request. This may be truncated. */
-  val body: Buffer,
+    /** The body of this POST request. This may be truncated. */
+    val body: Buffer,
 
-  /**
-   * The index of this request on its HTTP connection. Since a single HTTP connection may serve
-   * multiple requests, each request is assigned its own sequence number.
-   */
-  val sequenceNumber: Int,
-  socket: Socket,
+    /**
+     * The index of this request on its HTTP connection. Since a single HTTP connection may serve
+     * multiple requests, each request is assigned its own sequence number.
+     */
+    val sequenceNumber: Int,
+    socket: Socket,
 
-  /**
-   * The failure MockWebServer recorded when attempting to decode this request. If, for example,
-   * the inbound request was truncated, this exception will be non-null.
-   */
-  val failure: IOException? = null
+    /**
+     * The failure MockWebServer recorded when attempting to decode this request. If, for example,
+     * the inbound request was truncated, this exception will be non-null.
+     */
+    val failure: IOException? = null
 ) {
   val method: String?
   val path: String?
@@ -72,10 +74,9 @@ class RecordedRequest @JvmOverloads constructor(
 
   @get:JvmName("-deprecated_utf8Body")
   @Deprecated(
-    message = "Use body.readUtf8()",
-    replaceWith = ReplaceWith("body.readUtf8()"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "Use body.readUtf8()",
+      replaceWith = ReplaceWith("body.readUtf8()"),
+      level = DeprecationLevel.ERROR)
   val utf8Body: String
     get() = body.readUtf8()
 
@@ -127,10 +128,9 @@ class RecordedRequest @JvmOverloads constructor(
   }
 
   @Deprecated(
-    message = "Use body.readUtf8()",
-    replaceWith = ReplaceWith("body.readUtf8()"),
-    level = DeprecationLevel.WARNING
-  )
+      message = "Use body.readUtf8()",
+      replaceWith = ReplaceWith("body.readUtf8()"),
+      level = DeprecationLevel.WARNING)
   fun getUtf8Body(): String = body.readUtf8()
 
   /** Returns the first header named [name], or null if no such header exists. */

@@ -15,12 +15,12 @@
  */
 package okhttp3
 
+import java.io.OutputStream
+import java.io.PrintStream
 import org.junit.platform.engine.TestExecutionResult
 import org.junit.platform.launcher.TestExecutionListener
 import org.junit.platform.launcher.TestIdentifier
 import org.junit.platform.launcher.TestPlan
-import java.io.OutputStream
-import java.io.PrintStream
 
 object DotListener : TestExecutionListener {
   private var originalSystemErr: PrintStream? = null
@@ -39,8 +39,8 @@ object DotListener : TestExecutionListener {
   }
 
   override fun executionFinished(
-    testIdentifier: TestIdentifier,
-    testExecutionResult: TestExecutionResult
+      testIdentifier: TestIdentifier,
+      testExecutionResult: TestExecutionResult
   ) {
     if (!testIdentifier.isContainer) {
       when (testExecutionResult.status!!) {
@@ -64,11 +64,7 @@ object DotListener : TestExecutionListener {
   }
 
   fun uninstall() {
-    originalSystemOut.let {
-      System.setOut(it)
-    }
-    originalSystemErr.let {
-      System.setErr(it)
-    }
+    originalSystemOut.let { System.setOut(it) }
+    originalSystemErr.let { System.setErr(it) }
   }
 }

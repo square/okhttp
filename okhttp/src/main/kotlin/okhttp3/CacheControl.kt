@@ -15,9 +15,9 @@
  */
 package okhttp3
 
+import java.util.concurrent.TimeUnit
 import okhttp3.internal.indexOfNonWhitespace
 import okhttp3.internal.toNonNegativeInt
-import java.util.concurrent.TimeUnit
 
 /**
  * A Cache-Control header with cache directives from a server or client. These directives set policy
@@ -25,7 +25,8 @@ import java.util.concurrent.TimeUnit
  *
  * See [RFC 7234, 5.2](https://tools.ietf.org/html/rfc7234#section-5.2).
  */
-class CacheControl private constructor(
+class CacheControl
+private constructor(
   /**
    * In a response, this field's name "no-cache" is misleading. It doesn't prevent us from caching
    * the response; it only means we have to validate the response with the origin server before
@@ -46,129 +47,123 @@ class CacheControl private constructor(
    * for non-shared caches, As in Firefox and Chrome, this directive is not honored by this cache.
    */
   @get:JvmName("sMaxAgeSeconds") val sMaxAgeSeconds: Int,
-
   val isPrivate: Boolean,
   val isPublic: Boolean,
-
   @get:JvmName("mustRevalidate") val mustRevalidate: Boolean,
-
   @get:JvmName("maxStaleSeconds") val maxStaleSeconds: Int,
-
   @get:JvmName("minFreshSeconds") val minFreshSeconds: Int,
 
   /**
    * This field's name "only-if-cached" is misleading. It actually means "do not use the network".
    * It is set by a client who only wants to make a request if it can be fully satisfied by the
-   * cache. Cached responses that would require validation (ie. conditional gets) are not permitted
-   * if this header is set.
+   * cache. Cached responses that would require validation (ie. conditional gets) are not
+   * permitted if this header is set.
    */
   @get:JvmName("onlyIfCached") val onlyIfCached: Boolean,
-
   @get:JvmName("noTransform") val noTransform: Boolean,
-
   @get:JvmName("immutable") val immutable: Boolean,
-
   private var headerValue: String?
 ) {
   @JvmName("-deprecated_noCache")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "noCache"),
-    level = DeprecationLevel.ERROR
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "noCache"),
+      level = DeprecationLevel.ERROR,
   )
   fun noCache() = noCache
 
   @JvmName("-deprecated_noStore")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "noStore"),
-    level = DeprecationLevel.ERROR
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "noStore"),
+      level = DeprecationLevel.ERROR,
   )
   fun noStore() = noStore
 
   @JvmName("-deprecated_maxAgeSeconds")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "maxAgeSeconds"),
-    level = DeprecationLevel.ERROR
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "maxAgeSeconds"),
+      level = DeprecationLevel.ERROR,
   )
   fun maxAgeSeconds() = maxAgeSeconds
 
   @JvmName("-deprecated_sMaxAgeSeconds")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "sMaxAgeSeconds"),
-    level = DeprecationLevel.ERROR
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "sMaxAgeSeconds"),
+      level = DeprecationLevel.ERROR,
   )
   fun sMaxAgeSeconds() = sMaxAgeSeconds
 
   @JvmName("-deprecated_mustRevalidate")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "mustRevalidate"),
-    level = DeprecationLevel.ERROR
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "mustRevalidate"),
+      level = DeprecationLevel.ERROR,
   )
   fun mustRevalidate() = mustRevalidate
 
   @JvmName("-deprecated_maxStaleSeconds")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "maxStaleSeconds"),
-    level = DeprecationLevel.ERROR
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "maxStaleSeconds"),
+      level = DeprecationLevel.ERROR,
   )
   fun maxStaleSeconds() = maxStaleSeconds
 
   @JvmName("-deprecated_minFreshSeconds")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "minFreshSeconds"),
-    level = DeprecationLevel.ERROR
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "minFreshSeconds"),
+      level = DeprecationLevel.ERROR,
   )
   fun minFreshSeconds() = minFreshSeconds
 
   @JvmName("-deprecated_onlyIfCached")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "onlyIfCached"),
-    level = DeprecationLevel.ERROR
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "onlyIfCached"),
+      level = DeprecationLevel.ERROR,
   )
   fun onlyIfCached() = onlyIfCached
 
   @JvmName("-deprecated_noTransform")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "noTransform"),
-    level = DeprecationLevel.ERROR
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "noTransform"),
+      level = DeprecationLevel.ERROR,
   )
   fun noTransform() = noTransform
 
   @JvmName("-deprecated_immutable")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "immutable"),
-    level = DeprecationLevel.ERROR
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "immutable"),
+      level = DeprecationLevel.ERROR,
   )
   fun immutable() = immutable
 
   override fun toString(): String {
     var result = headerValue
     if (result == null) {
-      result = buildString {
-        if (noCache) append("no-cache, ")
-        if (noStore) append("no-store, ")
-        if (maxAgeSeconds != -1) append("max-age=").append(maxAgeSeconds).append(", ")
-        if (sMaxAgeSeconds != -1) append("s-maxage=").append(sMaxAgeSeconds).append(", ")
-        if (isPrivate) append("private, ")
-        if (isPublic) append("public, ")
-        if (mustRevalidate) append("must-revalidate, ")
-        if (maxStaleSeconds != -1) append("max-stale=").append(maxStaleSeconds).append(", ")
-        if (minFreshSeconds != -1) append("min-fresh=").append(minFreshSeconds).append(", ")
-        if (onlyIfCached) append("only-if-cached, ")
-        if (noTransform) append("no-transform, ")
-        if (immutable) append("immutable, ")
-        if (length == 0) return "" // isEmpty() is problematic with Kotlin 1.4 and JDK 15
-        delete(length - 2, length)
-      }
+      result =
+          buildString {
+            if (noCache) append("no-cache, ")
+            if (noStore) append("no-store, ")
+            if (maxAgeSeconds != -1) append("max-age=").append(maxAgeSeconds).append(", ")
+            if (sMaxAgeSeconds != -1) append("s-maxage=").append(sMaxAgeSeconds).append(", ")
+            if (isPrivate) append("private, ")
+            if (isPublic) append("public, ")
+            if (mustRevalidate) append("must-revalidate, ")
+            if (maxStaleSeconds != -1) append("max-stale=").append(maxStaleSeconds).append(", ")
+            if (minFreshSeconds != -1) append("min-fresh=").append(minFreshSeconds).append(", ")
+            if (onlyIfCached) append("only-if-cached, ")
+            if (noTransform) append("no-transform, ")
+            if (immutable) append("immutable, ")
+            if (length == 0) return "" // isEmpty() is problematic with Kotlin 1.4 and JDK 15
+            delete(length - 2, length)
+          }
       headerValue = result
     }
     return result
@@ -186,21 +181,19 @@ class CacheControl private constructor(
     private var immutable: Boolean = false
 
     /** Don't accept an unvalidated cached response. */
-    fun noCache() = apply {
-      this.noCache = true
-    }
+    fun noCache() = apply { this.noCache = true }
 
     /** Don't store the server's response in any cache. */
-    fun noStore() = apply {
-      this.noStore = true
-    }
+    fun noStore() = apply { this.noStore = true }
 
     /**
      * Sets the maximum age of a cached response. If the cache response's age exceeds [maxAge], it
      * will not be used and a network request will be made.
      *
      * @param maxAge a non-negative integer. This is stored and transmitted with [TimeUnit.SECONDS]
+     * ```
      *     precision; finer precision will be lost.
+     * ```
      */
     fun maxAge(maxAge: Int, timeUnit: TimeUnit) = apply {
       require(maxAge >= 0) { "maxAge < 0: $maxAge" }
@@ -213,7 +206,9 @@ class CacheControl private constructor(
      * unspecified, stale cache responses will not be used.
      *
      * @param maxStale a non-negative integer. This is stored and transmitted with
+     * ```
      *     [TimeUnit.SECONDS] precision; finer precision will be lost.
+     * ```
      */
     fun maxStale(maxStale: Int, timeUnit: TimeUnit) = apply {
       require(maxStale >= 0) { "maxStale < 0: $maxStale" }
@@ -227,7 +222,9 @@ class CacheControl private constructor(
      * a network request will be made.
      *
      * @param minFresh a non-negative integer. This is stored and transmitted with
+     * ```
      *     [TimeUnit.SECONDS] precision; finer precision will be lost.
+     * ```
      */
     fun minFresh(minFresh: Int, timeUnit: TimeUnit) = apply {
       require(minFresh >= 0) { "minFresh < 0: $minFresh" }
@@ -239,18 +236,12 @@ class CacheControl private constructor(
      * Only accept the response if it is in the cache. If the response isn't cached, a `504
      * Unsatisfiable Request` response will be returned.
      */
-    fun onlyIfCached() = apply {
-      this.onlyIfCached = true
-    }
+    fun onlyIfCached() = apply { this.onlyIfCached = true }
 
     /** Don't accept a transformed response. */
-    fun noTransform() = apply {
-      this.noTransform = true
-    }
+    fun noTransform() = apply { this.noTransform = true }
 
-    fun immutable() = apply {
-      this.immutable = true
-    }
+    fun immutable() = apply { this.immutable = true }
 
     private fun Long.clampToInt(): Int {
       return when {
@@ -261,8 +252,19 @@ class CacheControl private constructor(
 
     fun build(): CacheControl {
       return CacheControl(
-        noCache, noStore, maxAgeSeconds, -1, false, false, false, maxStaleSeconds,
-        minFreshSeconds, onlyIfCached, noTransform, immutable, null
+          noCache,
+          noStore,
+          maxAgeSeconds,
+          -1,
+          false,
+          false,
+          false,
+          maxStaleSeconds,
+          minFreshSeconds,
+          onlyIfCached,
+          noTransform,
+          immutable,
+          null,
       )
     }
   }
@@ -273,9 +275,7 @@ class CacheControl private constructor(
      * requests may be assisted by the cache via conditional GET requests.
      */
     @JvmField
-    val FORCE_NETWORK = Builder()
-      .noCache()
-      .build()
+    val FORCE_NETWORK = Builder().noCache().build()
 
     /**
      * Cache control request directives that uses the cache only, even if the cached response is
@@ -283,10 +283,7 @@ class CacheControl private constructor(
      * will fail with a `504 Unsatisfiable Request`.
      */
     @JvmField
-    val FORCE_CACHE = Builder()
-      .onlyIfCached()
-      .maxStale(Integer.MAX_VALUE, TimeUnit.SECONDS)
-      .build()
+    val FORCE_CACHE = Builder().onlyIfCached().maxStale(Integer.MAX_VALUE, TimeUnit.SECONDS).build()
 
     /**
      * Returns the cache directives of [headers]. This honors both Cache-Control and Pragma headers
@@ -407,15 +404,25 @@ class CacheControl private constructor(
       }
 
       return CacheControl(
-        noCache, noStore, maxAgeSeconds, sMaxAgeSeconds, isPrivate, isPublic,
-        mustRevalidate, maxStaleSeconds, minFreshSeconds, onlyIfCached, noTransform, immutable,
-        headerValue
+          noCache,
+          noStore,
+          maxAgeSeconds,
+          sMaxAgeSeconds,
+          isPrivate,
+          isPublic,
+          mustRevalidate,
+          maxStaleSeconds,
+          minFreshSeconds,
+          onlyIfCached,
+          noTransform,
+          immutable,
+          headerValue,
       )
     }
 
     /**
-     * Returns the next index in this at or after [startIndex] that is a character from
-     * [characters]. Returns the input length if none of the requested characters can be found.
+     * Returns the next index in this at or after [startIndex] that is a character from [characters]
+     * . Returns the input length if none of the requested characters can be found.
      */
     private fun String.indexOfElement(characters: String, startIndex: Int = 0): Int {
       for (i in startIndex until length) {

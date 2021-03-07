@@ -15,26 +15,26 @@
  */
 package okhttp3.recipes.kt
 
+import java.util.concurrent.TimeUnit
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import java.util.concurrent.TimeUnit
 
 class ConfigureTimeouts {
-  private val client: OkHttpClient = OkHttpClient.Builder()
-    .connectTimeout(5, TimeUnit.SECONDS)
-    .writeTimeout(5, TimeUnit.SECONDS)
-    .readTimeout(5, TimeUnit.SECONDS)
-    .callTimeout(10, TimeUnit.SECONDS)
-    .build()
+  private val client: OkHttpClient =
+      OkHttpClient.Builder()
+          .connectTimeout(5, TimeUnit.SECONDS)
+          .writeTimeout(5, TimeUnit.SECONDS)
+          .readTimeout(5, TimeUnit.SECONDS)
+          .callTimeout(10, TimeUnit.SECONDS)
+          .build()
 
   fun run() {
-    val request = Request.Builder()
-      .url("http://httpbin.org/delay/2") // This URL is served with a 2 second delay.
-      .build()
+    val request =
+        Request.Builder()
+            .url("http://httpbin.org/delay/2") // This URL is served with a 2 second delay.
+            .build()
 
-    client.newCall(request).execute().use { response ->
-      println("Response completed: $response")
-    }
+    client.newCall(request).execute().use { response -> println("Response completed: $response") }
   }
 }
 

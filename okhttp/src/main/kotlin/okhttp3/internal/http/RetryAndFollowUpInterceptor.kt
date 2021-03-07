@@ -15,20 +15,6 @@
  */
 package okhttp3.internal.http
 
-import okhttp3.Interceptor
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Response
-import okhttp3.internal.canReuseConnectionFor
-import okhttp3.internal.closeQuietly
-import okhttp3.internal.connection.Exchange
-import okhttp3.internal.connection.RealCall
-import okhttp3.internal.connection.RouteException
-import okhttp3.internal.http.StatusLine.Companion.HTTP_MISDIRECTED_REQUEST
-import okhttp3.internal.http.StatusLine.Companion.HTTP_PERM_REDIRECT
-import okhttp3.internal.http.StatusLine.Companion.HTTP_TEMP_REDIRECT
-import okhttp3.internal.http2.ConnectionShutdownException
-import okhttp3.internal.withSuppressed
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InterruptedIOException
@@ -46,6 +32,20 @@ import java.net.SocketTimeoutException
 import java.security.cert.CertificateException
 import javax.net.ssl.SSLHandshakeException
 import javax.net.ssl.SSLPeerUnverifiedException
+import okhttp3.Interceptor
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
+import okhttp3.internal.canReuseConnectionFor
+import okhttp3.internal.closeQuietly
+import okhttp3.internal.connection.Exchange
+import okhttp3.internal.connection.RealCall
+import okhttp3.internal.connection.RouteException
+import okhttp3.internal.http.StatusLine.Companion.HTTP_MISDIRECTED_REQUEST
+import okhttp3.internal.http.StatusLine.Companion.HTTP_PERM_REDIRECT
+import okhttp3.internal.http.StatusLine.Companion.HTTP_TEMP_REDIRECT
+import okhttp3.internal.http2.ConnectionShutdownException
+import okhttp3.internal.withSuppressed
 
 /**
  * This interceptor recovers from failures and follows redirects as necessary. It may throw an
@@ -97,13 +97,13 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
 
         // Attach the prior response if it exists. Such responses never have a body.
         if (priorResponse != null) {
-          response = response.newBuilder()
-            .priorResponse(
-              priorResponse.newBuilder()
-                .body(null)
-                .build()
-            )
-            .build()
+          response =
+              response
+                  .newBuilder()
+                  .priorResponse(
+                      priorResponse.newBuilder().body(null).build(),
+                  )
+                  .build()
         }
 
         val exchange = call.interceptorScopedExchange
@@ -138,10 +138,9 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
   }
 
   /**
-   * Report and attempt to recover from a failure to communicate with a server. Returns true if
-   * `e` is recoverable, or false if the failure is permanent. Requests with a body can only
-   * be recovered if the body is buffered or if the failure occurred before the request has been
-   * sent.
+   * Report and attempt to recover from a failure to communicate with a server. Returns true if `e`
+   * is recoverable, or false if the failure is permanent. Requests with a body can only be
+   * recovered if the body is buffered or if the failure occurred before the request has been sent.
    */
   private fun recover(
     e: IOException,
@@ -167,8 +166,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
 
   private fun requestIsOneShot(e: IOException, userRequest: Request): Boolean {
     val requestBody = userRequest.body
-    return (requestBody != null && requestBody.isOneShot()) ||
-      e is FileNotFoundException
+    return (requestBody != null && requestBody.isOneShot()) || e is FileNotFoundException
   }
 
   private fun isRecoverable(e: IOException, requestSendStarted: Boolean): Boolean {
@@ -203,9 +201,9 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
   }
 
   /**
-   * Figures out the HTTP request to make in response to receiving [userResponse]. This will
-   * either add authentication headers, follow redirects or handle a client request timeout. If a
-   * follow-up is either unnecessary or not applicable, this returns null.
+   * Figures out the HTTP request to make in response to receiving [userResponse]. This will either
+   * add authentication headers, follow redirects or handle a client request timeout. If a follow-up
+   * is either unnecessary or not applicable, this returns null.
    */
   @Throws(IOException::class)
   private fun followUpRequest(userResponse: Response, exchange: Exchange?): Request? {
@@ -221,13 +219,15 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
         }
         return client.proxyAuthenticator.authenticate(route, userResponse)
       }
-
       HTTP_UNAUTHORIZED -> return client.authenticator.authenticate(route, userResponse)
-
-      HTTP_PERM_REDIRECT, HTTP_TEMP_REDIRECT, HTTP_MULT_CHOICE, HTTP_MOVED_PERM, HTTP_MOVED_TEMP, HTTP_SEE_OTHER -> {
+      HTTP_PERM_REDIRECT,
+      HTTP_TEMP_REDIRECT,
+      HTTP_MULT_CHOICE,
+      HTTP_MOVED_PERM,
+      HTTP_MOVED_TEMP,
+      HTTP_SEE_OTHER -> {
         return buildRedirectRequest(userResponse, method)
       }
-
       HTTP_CLIENT_TIMEOUT -> {
         // 408's are rare in practice, but some servers like HAProxy use this response code. The
         // spec says that we may repeat the request without modifications. Modern browsers also
@@ -253,7 +253,6 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
 
         return userResponse.request
       }
-
       HTTP_UNAVAILABLE -> {
         val priorResponse = userResponse.priorResponse
         if (priorResponse != null && priorResponse.code == HTTP_UNAVAILABLE) {
@@ -268,7 +267,6 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
 
         return null
       }
-
       HTTP_MISDIRECTED_REQUEST -> {
         // OkHttp can coalesce HTTP/2 connections even if the domain names are different. See
         // RealConnection.isEligible(). If we attempted this and the server returned HTTP 421, then
@@ -285,7 +283,6 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
         exchange.connection.noCoalescedConnections()
         return userResponse.request
       }
-
       else -> return null
     }
   }
@@ -306,10 +303,13 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
     val requestBuilder = userResponse.request.newBuilder()
     if (HttpMethod.permitsRequestBody(method)) {
       val responseCode = userResponse.code
-      val maintainBody = HttpMethod.redirectsWithBody(method) ||
-        responseCode == HTTP_PERM_REDIRECT ||
-        responseCode == HTTP_TEMP_REDIRECT
-      if (HttpMethod.redirectsToGet(method) && responseCode != HTTP_PERM_REDIRECT && responseCode != HTTP_TEMP_REDIRECT) {
+      val maintainBody =
+          HttpMethod.redirectsWithBody(method) ||
+              responseCode == HTTP_PERM_REDIRECT ||
+              responseCode == HTTP_TEMP_REDIRECT
+      if (HttpMethod.redirectsToGet(method) &&
+        responseCode != HTTP_PERM_REDIRECT &&
+        responseCode != HTTP_TEMP_REDIRECT) {
         requestBuilder.method("GET", null)
       } else {
         val requestBody = if (maintainBody) userResponse.request.body else null
@@ -345,8 +345,8 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
 
   companion object {
     /**
-     * How many redirects and auth challenges should we attempt? Chrome follows 21 redirects; Firefox,
-     * curl, and wget follow 20; Safari follows 16; and HTTP/1.0 recommends 5.
+     * How many redirects and auth challenges should we attempt? Chrome follows 21 redirects;
+     * Firefox, curl, and wget follow 20; Safari follows 16; and HTTP/1.0 recommends 5.
      */
     private const val MAX_FOLLOW_UPS = 20
   }

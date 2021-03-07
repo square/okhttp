@@ -16,15 +16,6 @@
  */
 package okhttp3.internal.platform
 
-import okhttp3.OkHttpClient
-import okhttp3.Protocol
-import okhttp3.internal.platform.android.AndroidLog
-import okhttp3.internal.readFieldOrNull
-import okhttp3.internal.tls.BasicCertificateChainCleaner
-import okhttp3.internal.tls.BasicTrustRootIndex
-import okhttp3.internal.tls.CertificateChainCleaner
-import okhttp3.internal.tls.TrustRootIndex
-import okio.Buffer
 import java.io.IOException
 import java.net.InetSocketAddress
 import java.net.Socket
@@ -39,14 +30,22 @@ import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManager
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
+import okhttp3.OkHttpClient
+import okhttp3.Protocol
+import okhttp3.internal.platform.android.AndroidLog
+import okhttp3.internal.readFieldOrNull
+import okhttp3.internal.tls.BasicCertificateChainCleaner
+import okhttp3.internal.tls.BasicTrustRootIndex
+import okhttp3.internal.tls.CertificateChainCleaner
+import okhttp3.internal.tls.TrustRootIndex
+import okio.Buffer
 
 /**
  * Access to platform-specific features.
  *
  * ### Session Tickets
  *
- * Supported on Android 2.3+.
- * Supported on JDK 8+ via Conscrypt.
+ * Supported on Android 2.3+. Supported on JDK 8+ via Conscrypt.
  *
  * ### ALPN (Application Layer Protocol Negotiation)
  *
@@ -58,8 +57,8 @@ import javax.net.ssl.X509TrustManager
  *
  * ### Trust Manager Extraction
  *
- * Supported on Android 2.3+ and OpenJDK 7+. There are no public APIs to recover the trust
- * manager that was used to create an [SSLSocketFactory].
+ * Supported on Android 2.3+ and OpenJDK 7+. There are no public APIs to recover the trust manager
+ * that was used to create an [SSLSocketFactory].
  *
  * Not supported by choice on JDK9+ due to access checks.
  *
@@ -75,9 +74,10 @@ open class Platform {
   open fun newSSLContext(): SSLContext = SSLContext.getInstance("TLS")
 
   open fun platformTrustManager(): X509TrustManager {
-    val factory = TrustManagerFactory.getInstance(
-      TrustManagerFactory.getDefaultAlgorithm()
-    )
+    val factory =
+        TrustManagerFactory.getInstance(
+            TrustManagerFactory.getDefaultAlgorithm(),
+        )
     factory.init(null as KeyStore?)
     val trustManagers = factory.trustManagers!!
     check(trustManagers.size == 1 && trustManagers[0] is X509TrustManager) {
@@ -99,9 +99,7 @@ open class Platform {
     }
   }
 
-  /**
-   * Configure TLS extensions on `sslSocket` for `route`.
-   */
+  /** Configure TLS extensions on `sslSocket` for `route`. */
   open fun configureTlsExtensions(
     sslSocket: SSLSocket,
     hostname: String?,
@@ -110,8 +108,7 @@ open class Platform {
   }
 
   /** Called after the TLS handshake to release resources allocated by [configureTlsExtensions]. */
-  open fun afterHandshake(sslSocket: SSLSocket) {
-  }
+  open fun afterHandshake(sslSocket: SSLSocket) {}
 
   /** Returns the negotiated protocol, or null if no protocol was negotiated. */
   open fun getSelectedProtocol(sslSocket: SSLSocket): String? = null
@@ -143,23 +140,24 @@ open class Platform {
   open fun logCloseableLeak(message: String, stackTrace: Any?) {
     var logMessage = message
     if (stackTrace == null) {
-      logMessage += " To see where this was allocated, set the OkHttpClient logger level to " +
-        "FINE: Logger.getLogger(OkHttpClient.class.getName()).setLevel(Level.FINE);"
+      logMessage +=
+          " To see where this was allocated, set the OkHttpClient logger level to " +
+              "FINE: Logger.getLogger(OkHttpClient.class.getName()).setLevel(Level.FINE);"
     }
     log(logMessage, WARN, stackTrace as Throwable?)
   }
 
   open fun buildCertificateChainCleaner(trustManager: X509TrustManager): CertificateChainCleaner =
-    BasicCertificateChainCleaner(buildTrustRootIndex(trustManager))
+      BasicCertificateChainCleaner(buildTrustRootIndex(trustManager))
 
   open fun buildTrustRootIndex(trustManager: X509TrustManager): TrustRootIndex =
-    BasicTrustRootIndex(*trustManager.acceptedIssuers)
+      BasicTrustRootIndex(*trustManager.acceptedIssuers)
 
   open fun newSslSocketFactory(trustManager: X509TrustManager): SSLSocketFactory {
     try {
-      return newSSLContext().apply {
-        init(null, arrayOf<TrustManager>(trustManager), null)
-      }.socketFactory
+      return newSSLContext()
+          .apply { init(null, arrayOf<TrustManager>(trustManager), null) }
+          .socketFactory
     } catch (e: GeneralSecurityException) {
       throw AssertionError("No System TLS: $e", e) // The system has no TLS. Just give up.
     }
@@ -168,7 +166,8 @@ open class Platform {
   override fun toString(): String = javaClass.simpleName
 
   companion object {
-    @Volatile private var platform = findPlatform()
+    @Volatile
+    private var platform = findPlatform()
 
     const val INFO = 4
     const val WARN = 5
@@ -183,7 +182,7 @@ open class Platform {
     }
 
     fun alpnProtocolNames(protocols: List<Protocol>) =
-      protocols.filter { it != Protocol.HTTP_1_0 }.map { it.toString() }
+        protocols.filter { it != Protocol.HTTP_1_0 }.map { it.toString() }
 
     // This explicit check avoids activating in Android Studio with Android specific classes
     // available when running plugins inside the IDE.
@@ -209,11 +208,12 @@ open class Platform {
       }
 
     /** Attempt to match the host runtime to a capable Platform implementation. */
-    private fun findPlatform(): Platform = if (isAndroid) {
-      findAndroidPlatform()
-    } else {
-      findJvmPlatform()
-    }
+    private fun findPlatform(): Platform =
+        if (isAndroid) {
+          findAndroidPlatform()
+        } else {
+          findJvmPlatform()
+        }
 
     private fun findAndroidPlatform(): Platform {
       AndroidLog.enable()

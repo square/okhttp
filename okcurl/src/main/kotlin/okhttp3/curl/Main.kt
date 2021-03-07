@@ -15,6 +15,21 @@
  */
 package okhttp3.curl
 
+import java.io.IOException
+import java.lang.IllegalArgumentException
+import java.security.cert.X509Certificate
+import java.util.Properties
+import java.util.concurrent.TimeUnit.SECONDS
+import java.util.logging.ConsoleHandler
+import java.util.logging.Level
+import java.util.logging.LogRecord
+import java.util.logging.Logger
+import java.util.logging.SimpleFormatter
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.SSLSocketFactory
+import javax.net.ssl.TrustManager
+import javax.net.ssl.X509TrustManager
+import kotlin.system.exitProcess
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
@@ -34,34 +49,17 @@ import picocli.CommandLine.Command
 import picocli.CommandLine.IVersionProvider
 import picocli.CommandLine.Option
 import picocli.CommandLine.Parameters
-import java.io.IOException
-import java.lang.IllegalArgumentException
-import java.security.cert.X509Certificate
-import java.util.Properties
-import java.util.concurrent.TimeUnit.SECONDS
-import java.util.logging.ConsoleHandler
-import java.util.logging.Level
-import java.util.logging.LogRecord
-import java.util.logging.Logger
-import java.util.logging.SimpleFormatter
-import javax.net.ssl.HostnameVerifier
-import javax.net.ssl.SSLSocketFactory
-import javax.net.ssl.TrustManager
-import javax.net.ssl.X509TrustManager
-import kotlin.system.exitProcess
 
 @Command(
-  name = NAME,
-  description = ["A curl for the next-generation web."],
-  mixinStandardHelpOptions = true,
-  versionProvider = Main.VersionProvider::class
-)
+    name = NAME,
+    description = ["A curl for the next-generation web."],
+    mixinStandardHelpOptions = true,
+    versionProvider = Main.VersionProvider::class)
 class Main : Runnable {
   @Option(names = ["-X", "--request"], description = ["Specify request command to use"])
   var method: String? = null
 
-  @Option(names = ["-d", "--data"], description = ["HTTP POST data"])
-  var data: String? = null
+  @Option(names = ["-d", "--data"], description = ["HTTP POST data"]) var data: String? = null
 
   @Option(names = ["-H", "--header"], description = ["Custom header to pass to server"])
   var headers: MutableList<String>? = null
@@ -70,27 +68,24 @@ class Main : Runnable {
   var userAgent = NAME + "/" + versionString()
 
   @Option(
-    names = ["--connect-timeout"],
-    description = ["Maximum time allowed for connection (seconds)"]
-  )
+      names = ["--connect-timeout"],
+      description = ["Maximum time allowed for connection (seconds)"])
   var connectTimeout = DEFAULT_TIMEOUT
 
   @Option(
-    names = ["--read-timeout"],
-    description = ["Maximum time allowed for reading data (seconds)"]
-  )
+      names = ["--read-timeout"], description = ["Maximum time allowed for reading data (seconds)"])
   var readTimeout = DEFAULT_TIMEOUT
 
   @Option(
-    names = ["--call-timeout"],
-    description = ["Maximum time allowed for the entire call (seconds)"]
-  )
+      names = ["--call-timeout"],
+      description = ["Maximum time allowed for the entire call (seconds)"])
   var callTimeout = DEFAULT_TIMEOUT
 
   @Option(names = ["-L", "--location"], description = ["Follow redirects"])
   var followRedirects: Boolean = false
 
-  @Option(names = ["-k", "--insecure"], description = ["Allow connections to SSL sites without certs"])
+  @Option(
+      names = ["-k", "--insecure"], description = ["Allow connections to SSL sites without certs"])
   var allowInsecure: Boolean = false
 
   @Option(names = ["-i", "--include"], description = ["Include protocol headers in the output"])
@@ -99,20 +94,16 @@ class Main : Runnable {
   @Option(names = ["--frames"], description = ["Log HTTP/2 frames to STDERR"])
   var showHttp2Frames: Boolean = false
 
-  @Option(names = ["-e", "--referer"], description = ["Referer URL"])
-  var referer: String? = null
+  @Option(names = ["-e", "--referer"], description = ["Referer URL"]) var referer: String? = null
 
   @Option(names = ["-v", "--verbose"], description = ["Makes $NAME verbose during the operation"])
   var verbose: Boolean = false
 
-  @Option(names = ["--ssldebug"], description = ["Output SSL Debug"])
-  var sslDebug: Boolean = false
+  @Option(names = ["--ssldebug"], description = ["Output SSL Debug"]) var sslDebug: Boolean = false
 
-  @Option(names = ["--completionScript"], hidden = true)
-  var completionScript: Boolean = false
+  @Option(names = ["--completionScript"], hidden = true) var completionScript: Boolean = false
 
-  @Parameters(paramLabel = "url", description = ["Remote resource URL"])
-  var url: String? = null
+  @Parameters(paramLabel = "url", description = ["Remote resource URL"]) var url: String? = null
 
   private lateinit var client: OkHttpClient
 
@@ -194,33 +185,31 @@ class Main : Runnable {
 
     request.url(url)
 
-    data?.let {
-      request.method(requestMethod, it.toRequestBody(mediaType()))
-    }
+    data?.let { request.method(requestMethod, it.toRequestBody(mediaType())) }
 
     for (header in headers.orEmpty()) {
       val parts = header.split(':', limit = 2)
       request.header(parts[0], parts[1])
     }
-    referer?.let {
-      request.header("Referer", it)
-    }
+    referer?.let { request.header("Referer", it) }
     request.header("User-Agent", userAgent)
 
     return request.build()
   }
 
   private fun mediaType(): MediaType? {
-    val mimeType = headers?.let {
-      for (header in it) {
-        val parts = header.split(':', limit = 2)
-        if ("Content-Type".equals(parts[0], ignoreCase = true)) {
-          it.remove(header)
-          return@let parts[1].trim()
+    val mimeType =
+        headers?.let {
+          for (header in it) {
+            val parts = header.split(':', limit = 2)
+            if ("Content-Type".equals(parts[0], ignoreCase = true)) {
+              it.remove(header)
+              return@let parts[1].trim()
+            }
+          }
+          return@let null
         }
-      }
-      return@let null
-    } ?: "application/x-www-form-urlencoded"
+            ?: "application/x-www-form-urlencoded"
 
     return mimeType.toMediaTypeOrNull()
   }
@@ -233,10 +222,9 @@ class Main : Runnable {
   class VersionProvider : IVersionProvider {
     override fun getVersion(): Array<String> {
       return arrayOf(
-        "$NAME ${versionString()}",
-        "Protocols: ${Protocol.values().joinToString(", ")}",
-        "Platform: ${Platform.get()::class.java.simpleName}"
-      )
+          "$NAME ${versionString()}",
+          "Protocols: ${Protocol.values().joinToString(", ")}",
+          "Platform: ${Platform.get()::class.java.simpleName}")
     }
   }
 
@@ -257,63 +245,66 @@ class Main : Runnable {
 
     private fun versionString(): String? {
       val prop = Properties()
-      Main::class.java.getResourceAsStream("/okcurl-version.properties").use {
-        prop.load(it)
-      }
+      Main::class.java.getResourceAsStream("/okcurl-version.properties").use { prop.load(it) }
       return prop.getProperty("version", "dev")
     }
 
-    private fun createInsecureTrustManager(): X509TrustManager = object : X509TrustManager {
-      override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {}
+    private fun createInsecureTrustManager(): X509TrustManager =
+        object : X509TrustManager {
+          override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {}
 
-      override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {}
+          override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {}
 
-      override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
-    }
+          override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
+        }
 
     private fun createInsecureSslSocketFactory(trustManager: TrustManager): SSLSocketFactory =
-      Platform.get().newSSLContext().apply {
-        init(null, arrayOf(trustManager), null)
-      }.socketFactory
+        Platform.get()
+            .newSSLContext()
+            .apply { init(null, arrayOf(trustManager), null) }
+            .socketFactory
 
-    private fun createInsecureHostnameVerifier(): HostnameVerifier =
-      HostnameVerifier { _, _ -> true }
+    private fun createInsecureHostnameVerifier(): HostnameVerifier = HostnameVerifier { _, _ ->
+      true
+    }
 
     private fun enableHttp2FrameLogging() {
-      frameLogger = Logger.getLogger(Http2::class.java.name).apply {
-        level = Level.FINE
-        addHandler(
-          ConsoleHandler().apply {
+      frameLogger =
+          Logger.getLogger(Http2::class.java.name).apply {
             level = Level.FINE
-            formatter = object : SimpleFormatter() {
-              override fun format(record: LogRecord): String {
-                return format("%s%n", record.message)
-              }
-            }
+            addHandler(
+                ConsoleHandler().apply {
+                  level = Level.FINE
+                  formatter =
+                      object : SimpleFormatter() {
+                        override fun format(record: LogRecord): String {
+                          return format("%s%n", record.message)
+                        }
+                      }
+                })
           }
-        )
-      }
     }
 
     private fun enableSslDebugging() {
-      sslLogger = Logger.getLogger("javax.net.ssl").apply {
-        level = Level.FINE
-        addHandler(
-          ConsoleHandler().apply {
+      sslLogger =
+          Logger.getLogger("javax.net.ssl").apply {
             level = Level.FINE
-            formatter = object : SimpleFormatter() {
-              override fun format(record: LogRecord): String {
-                val parameters = record.parameters
-                if (parameters != null) {
-                  return format("%s%n%s%n", record.message, record.parameters.first())
-                } else {
-                  return format("%s%n", record.message)
-                }
-              }
-            }
+            addHandler(
+                ConsoleHandler().apply {
+                  level = Level.FINE
+                  formatter =
+                      object : SimpleFormatter() {
+                        override fun format(record: LogRecord): String {
+                          val parameters = record.parameters
+                          if (parameters != null) {
+                            return format("%s%n%s%n", record.message, record.parameters.first())
+                          } else {
+                            return format("%s%n", record.message)
+                          }
+                        }
+                      }
+                })
           }
-        )
-      }
     }
   }
 }

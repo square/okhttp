@@ -15,6 +15,11 @@
  */
 package okhttp3.internal.http2
 
+import java.io.IOException
+import java.net.ProtocolException
+import java.util.ArrayList
+import java.util.Locale
+import java.util.concurrent.TimeUnit
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
@@ -40,11 +45,6 @@ import okhttp3.internal.http2.Header.Companion.TARGET_SCHEME_UTF8
 import okhttp3.internal.immutableListOf
 import okio.Sink
 import okio.Source
-import java.io.IOException
-import java.net.ProtocolException
-import java.util.ArrayList
-import java.util.Locale
-import java.util.concurrent.TimeUnit
 
 /** Encode requests and responses using HTTP/2 frames. */
 class Http2ExchangeCodec(
@@ -53,13 +53,15 @@ class Http2ExchangeCodec(
   private val chain: RealInterceptorChain,
   private val http2Connection: Http2Connection
 ) : ExchangeCodec {
-  @Volatile private var stream: Http2Stream? = null
+  @Volatile
+  private var stream: Http2Stream? = null
 
-  private val protocol: Protocol = if (Protocol.H2_PRIOR_KNOWLEDGE in client.protocols) {
-    Protocol.H2_PRIOR_KNOWLEDGE
-  } else {
-    Protocol.HTTP_2
-  }
+  private val protocol: Protocol =
+      if (Protocol.H2_PRIOR_KNOWLEDGE in client.protocols) {
+        Protocol.H2_PRIOR_KNOWLEDGE
+      } else {
+        Protocol.HTTP_2
+      }
 
   @Volatile
   private var canceled = false
@@ -134,30 +136,32 @@ class Http2ExchangeCodec(
     private const val UPGRADE = "upgrade"
 
     /** See http://tools.ietf.org/html/draft-ietf-httpbis-http2-09#section-8.1.3. */
-    private val HTTP_2_SKIPPED_REQUEST_HEADERS = immutableListOf(
-      CONNECTION,
-      HOST,
-      KEEP_ALIVE,
-      PROXY_CONNECTION,
-      TE,
-      TRANSFER_ENCODING,
-      ENCODING,
-      UPGRADE,
-      TARGET_METHOD_UTF8,
-      TARGET_PATH_UTF8,
-      TARGET_SCHEME_UTF8,
-      TARGET_AUTHORITY_UTF8
-    )
-    private val HTTP_2_SKIPPED_RESPONSE_HEADERS = immutableListOf(
-      CONNECTION,
-      HOST,
-      KEEP_ALIVE,
-      PROXY_CONNECTION,
-      TE,
-      TRANSFER_ENCODING,
-      ENCODING,
-      UPGRADE
-    )
+    private val HTTP_2_SKIPPED_REQUEST_HEADERS =
+        immutableListOf(
+            CONNECTION,
+            HOST,
+            KEEP_ALIVE,
+            PROXY_CONNECTION,
+            TE,
+            TRANSFER_ENCODING,
+            ENCODING,
+            UPGRADE,
+            TARGET_METHOD_UTF8,
+            TARGET_PATH_UTF8,
+            TARGET_SCHEME_UTF8,
+            TARGET_AUTHORITY_UTF8,
+        )
+    private val HTTP_2_SKIPPED_RESPONSE_HEADERS =
+        immutableListOf(
+            CONNECTION,
+            HOST,
+            KEEP_ALIVE,
+            PROXY_CONNECTION,
+            TE,
+            TRANSFER_ENCODING,
+            ENCODING,
+            UPGRADE,
+        )
 
     fun http2HeadersList(request: Request): List<Header> {
       val headers = request.headers
@@ -174,8 +178,7 @@ class Http2ExchangeCodec(
         // header names must be lowercase.
         val name = headers.name(i).toLowerCase(Locale.US)
         if (name !in HTTP_2_SKIPPED_REQUEST_HEADERS ||
-          name == TE && headers.value(i) == "trailers"
-        ) {
+          name == TE && headers.value(i) == "trailers") {
           result.add(Header(name, headers.value(i)))
         }
       }
@@ -198,10 +201,10 @@ class Http2ExchangeCodec(
       if (statusLine == null) throw ProtocolException("Expected ':status' header not present")
 
       return Response.Builder()
-        .protocol(protocol)
-        .code(statusLine.code)
-        .message(statusLine.message)
-        .headers(headersBuilder.build())
+          .protocol(protocol)
+          .code(statusLine.code)
+          .message(statusLine.message)
+          .headers(headersBuilder.build())
     }
   }
 }

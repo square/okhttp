@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import java.net.InetAddress
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.TestUtil.assumeNetwork
@@ -32,11 +33,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.openjsse.sun.security.ssl.SSLSocketFactoryImpl
 import org.openjsse.sun.security.ssl.SSLSocketImpl
-import java.net.InetAddress
 
-class OpenJSSETest(
-  val server: MockWebServer
-) {
+class OpenJSSETest(val server: MockWebServer) {
   @JvmField @RegisterExtension var platform = PlatformRule()
   @JvmField @RegisterExtension val clientTestRule = OkHttpClientTestRule()
 
@@ -96,21 +94,23 @@ class OpenJSSETest(
   private fun enableTls() {
     // Generate a self-signed cert for the server to serve and the client to trust.
     // can't use TlsUtil.localhost with a non OpenJSSE trust manager
-    val heldCertificate = HeldCertificate.Builder()
-      .commonName("localhost")
-      .addSubjectAlternativeName(InetAddress.getByName("localhost").canonicalHostName)
-      .build()
-    val handshakeCertificates = HandshakeCertificates.Builder()
-      .heldCertificate(heldCertificate)
-      .addTrustedCertificate(heldCertificate.certificate)
-      .build()
+    val heldCertificate =
+        HeldCertificate.Builder()
+            .commonName("localhost")
+            .addSubjectAlternativeName(InetAddress.getByName("localhost").canonicalHostName)
+            .build()
+    val handshakeCertificates =
+        HandshakeCertificates.Builder()
+            .heldCertificate(heldCertificate)
+            .addTrustedCertificate(heldCertificate.certificate)
+            .build()
 
-    client = client.newBuilder()
-      .sslSocketFactory(
-        handshakeCertificates.sslSocketFactory(),
-        handshakeCertificates.trustManager
-      )
-      .build()
+    client =
+        client
+            .newBuilder()
+            .sslSocketFactory(
+                handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager)
+            .build()
     server.useHttps(handshakeCertificates.sslSocketFactory(), false)
   }
 }

@@ -27,15 +27,18 @@ class RouteDatabase {
   private val failedRoutes = mutableSetOf<Route>()
 
   /** Records a failure connecting to [failedRoute]. */
-  @Synchronized fun failed(failedRoute: Route) {
+  @Synchronized
+  fun failed(failedRoute: Route) {
     failedRoutes.add(failedRoute)
   }
 
   /** Records success connecting to [route]. */
-  @Synchronized fun connected(route: Route) {
+  @Synchronized
+  fun connected(route: Route) {
     failedRoutes.remove(route)
   }
 
   /** Returns true if [route] has failed recently and should be avoided. */
-  @Synchronized fun shouldPostpone(route: Route): Boolean = route in failedRoutes
+  @Synchronized
+  fun shouldPostpone(route: Route): Boolean = route in failedRoutes
 }

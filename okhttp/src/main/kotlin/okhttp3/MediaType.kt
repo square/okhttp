@@ -20,22 +20,22 @@ import java.util.Locale
 import java.util.regex.Pattern
 
 /**
- * An [RFC 2045][rfc_2045] Media Type, appropriate to describe the content type of an HTTP request
+ * An [RFC 2045] [rfc_2045] Media Type, appropriate to describe the content type of an HTTP request
  * or response body.
  *
  * [rfc_2045]: http://tools.ietf.org/html/rfc2045
  */
-class MediaType private constructor(
+class MediaType
+private constructor(
   private val mediaType: String,
 
   /**
-   * Returns the high-level media type, such as "text", "image", "audio", "video", or "application".
+   * Returns the high-level media type, such as "text", "image", "audio", "video", or
+   * "application".
    */
   @get:JvmName("type") val type: String,
 
-  /**
-   * Returns a specific media subtype, such as "plain" or "png", "mpeg", "mp4" or "xml".
-   */
+  /** Returns a specific media subtype, such as "plain" or "png", "mpeg", "mp4" or "xml". */
   @get:JvmName("subtype") val subtype: String,
 
   /** Alternating parameter names with their values, like `["charset", "utf-8"]`. */
@@ -71,17 +71,17 @@ class MediaType private constructor(
 
   @JvmName("-deprecated_type")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "type"),
-    level = DeprecationLevel.ERROR
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "type"),
+      level = DeprecationLevel.ERROR,
   )
   fun type() = type
 
   @JvmName("-deprecated_subtype")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "subtype"),
-    level = DeprecationLevel.ERROR
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "subtype"),
+      level = DeprecationLevel.ERROR,
   )
   fun subtype() = subtype
 
@@ -130,17 +130,20 @@ class MediaType private constructor(
         }
 
         val token = parameter.group(2)
-        val value = when {
-          token == null -> {
-            // Value is "double-quoted". That's valid and our regex group already strips the quotes.
-            parameter.group(3)
-          }
-          token.startsWith("'") && token.endsWith("'") && token.length > 2 -> {
-            // If the token is 'single-quoted' it's invalid! But we're lenient and strip the quotes.
-            token.substring(1, token.length - 1)
-          }
-          else -> token
-        }
+        val value =
+            when {
+              token == null -> {
+                // Value is "double-quoted". That's valid and our regex group already strips the
+                // quotes.
+                parameter.group(3)
+              }
+              token.startsWith("'") && token.endsWith("'") && token.length > 2 -> {
+                // If the token is 'single-quoted' it's invalid! But we're lenient and strip the
+                // quotes.
+                token.substring(1, token.length - 1)
+              }
+              else -> token
+            }
 
         parameterNamesAndValues += name
         parameterNamesAndValues += value
@@ -163,23 +166,25 @@ class MediaType private constructor(
 
     @JvmName("-deprecated_get")
     @Deprecated(
-      message = "moved to extension function",
-      replaceWith = ReplaceWith(
-        expression = "mediaType.toMediaType()",
-        imports = ["okhttp3.MediaType.Companion.toMediaType"]
-      ),
-      level = DeprecationLevel.ERROR
+        message = "moved to extension function",
+        replaceWith =
+        ReplaceWith(
+            expression = "mediaType.toMediaType()",
+            imports = ["okhttp3.MediaType.Companion.toMediaType"],
+        ),
+        level = DeprecationLevel.ERROR,
     )
     fun get(mediaType: String): MediaType = mediaType.toMediaType()
 
     @JvmName("-deprecated_parse")
     @Deprecated(
-      message = "moved to extension function",
-      replaceWith = ReplaceWith(
-        expression = "mediaType.toMediaTypeOrNull()",
-        imports = ["okhttp3.MediaType.Companion.toMediaTypeOrNull"]
-      ),
-      level = DeprecationLevel.ERROR
+        message = "moved to extension function",
+        replaceWith =
+        ReplaceWith(
+            expression = "mediaType.toMediaTypeOrNull()",
+            imports = ["okhttp3.MediaType.Companion.toMediaTypeOrNull"],
+        ),
+        level = DeprecationLevel.ERROR,
     )
     fun parse(mediaType: String): MediaType? = mediaType.toMediaTypeOrNull()
   }

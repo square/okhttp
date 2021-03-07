@@ -19,9 +19,7 @@ import okhttp3.internal.platform.Platform
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
-/**
- * Sanity test for checking which environment and IDE is picking up.
- */
+/** Sanity test for checking which environment and IDE is picking up. */
 class PlatformRuleTest {
   @RegisterExtension @JvmField val platform = PlatformRule()
 
@@ -31,9 +29,7 @@ class PlatformRuleTest {
     println(Platform.get().javaClass.simpleName)
   }
 
-  @Test
-  fun testGreenCase() {
-  }
+  @Test fun testGreenCase() {}
 
   @Test
   fun testGreenCaseFailingOnLater() {

@@ -15,11 +15,6 @@
  */
 package okhttp3
 
-import okhttp3.internal.assertThreadDoesntHoldLock
-import okhttp3.internal.connection.RealCall
-import okhttp3.internal.connection.RealCall.AsyncCall
-import okhttp3.internal.okHttpName
-import okhttp3.internal.threadFactory
 import java.util.ArrayDeque
 import java.util.Collections
 import java.util.Deque
@@ -27,12 +22,17 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.SynchronousQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
+import okhttp3.internal.assertThreadDoesntHoldLock
+import okhttp3.internal.connection.RealCall
+import okhttp3.internal.connection.RealCall.AsyncCall
+import okhttp3.internal.okHttpName
+import okhttp3.internal.threadFactory
 
 /**
  * Policy on when async requests are executed.
  *
  * Each dispatcher uses an [ExecutorService] to run calls internally. If you supply your own
- * executor, it should be able to run [the configured maximum][maxRequests] number of calls
+ * executor, it should be able to run [the configured maximum] [maxRequests] number of calls
  * concurrently.
  */
 class Dispatcher constructor() {
@@ -43,12 +43,11 @@ class Dispatcher constructor() {
    * If more than [maxRequests] requests are in flight when this is invoked, those requests will
    * remain in flight.
    */
-  @get:Synchronized var maxRequests = 64
+  @get:Synchronized
+  var maxRequests = 64
     set(maxRequests) {
       require(maxRequests >= 1) { "max < 1: $maxRequests" }
-      synchronized(this) {
-        field = maxRequests
-      }
+      synchronized(this) { field = maxRequests }
       promoteAndExecute()
     }
 
@@ -62,12 +61,11 @@ class Dispatcher constructor() {
    *
    * WebSocket connections to hosts **do not** count against this limit.
    */
-  @get:Synchronized var maxRequestsPerHost = 5
+  @get:Synchronized
+  var maxRequestsPerHost = 5
     set(maxRequestsPerHost) {
       require(maxRequestsPerHost >= 1) { "max < 1: $maxRequestsPerHost" }
-      synchronized(this) {
-        field = maxRequestsPerHost
-      }
+      synchronized(this) { field = maxRequestsPerHost }
       promoteAndExecute()
     }
 
@@ -75,10 +73,10 @@ class Dispatcher constructor() {
    * A callback to be invoked each time the dispatcher becomes idle (when the number of running
    * calls returns to zero).
    *
-   * Note: The time at which a [call][Call] is considered idle is different depending on whether it
-   * was run [asynchronously][Call.enqueue] or [synchronously][Call.execute]. Asynchronous calls
-   * become idle after the [onResponse][Callback.onResponse] or [onFailure][Callback.onFailure]
-   * callback has returned. Synchronous calls become idle once [execute()][Call.execute] returns.
+   * Note: The time at which a [call] [Call] is considered idle is different depending on whether it
+   * was run [asynchronously] [Call.enqueue] or [synchronously] [Call.execute]. Asynchronous calls
+   * become idle after the [onResponse] [Callback.onResponse] or [onFailure] [Callback.onFailure]
+   * callback has returned. Synchronous calls become idle once [execute()] [Call.execute] returns.
    * This means that if you are doing synchronous calls the network layer will not truly be idle
    * until every returned [Response] has been closed.
    */
@@ -89,17 +87,19 @@ class Dispatcher constructor() {
   private var executorServiceOrNull: ExecutorService? = null
 
   @get:Synchronized
-  @get:JvmName("executorService") val executorService: ExecutorService
+  @get:JvmName("executorService")
+  val executorService: ExecutorService
     get() {
       if (executorServiceOrNull == null) {
-        executorServiceOrNull = ThreadPoolExecutor(
-          0,
-          Int.MAX_VALUE,
-          60,
-          TimeUnit.SECONDS,
-          SynchronousQueue(),
-          threadFactory("$okHttpName Dispatcher", false)
-        )
+        executorServiceOrNull =
+            ThreadPoolExecutor(
+                0,
+                Int.MAX_VALUE,
+                60,
+                TimeUnit.SECONDS,
+                SynchronousQueue(),
+                threadFactory("$okHttpName Dispatcher", false),
+            )
       }
       return executorServiceOrNull!!
     }
@@ -142,10 +142,11 @@ class Dispatcher constructor() {
   }
 
   /**
-   * Cancel all calls currently enqueued or executing. Includes calls executed both
-   * [synchronously][Call.execute] and [asynchronously][Call.enqueue].
+   * Cancel all calls currently enqueued or executing. Includes calls executed both [synchronously]
+   * [Call.execute] and [asynchronously] [Call.enqueue].
    */
-  @Synchronized fun cancelAll() {
+  @Synchronized
+  fun cancelAll() {
     for (call in readyAsyncCalls) {
       call.call.cancel()
     }
@@ -159,8 +160,8 @@ class Dispatcher constructor() {
 
   /**
    * Promotes eligible calls from [readyAsyncCalls] to [runningAsyncCalls] and runs them on the
-   * executor service. Must not be called with synchronization because executing calls can call
-   * into user code.
+   * executor service. Must not be called with synchronization because executing calls can call into
+   * user code.
    *
    * @return true if the dispatcher is currently running calls.
    */
@@ -194,7 +195,8 @@ class Dispatcher constructor() {
   }
 
   /** Used by [Call.execute] to signal it is in-flight. */
-  @Synchronized internal fun executed(call: RealCall) {
+  @Synchronized
+  internal fun executed(call: RealCall) {
     runningSyncCalls.add(call)
   }
 
@@ -224,24 +226,28 @@ class Dispatcher constructor() {
   }
 
   /** Returns a snapshot of the calls currently awaiting execution. */
-  @Synchronized fun queuedCalls(): List<Call> {
+  @Synchronized
+  fun queuedCalls(): List<Call> {
     return Collections.unmodifiableList(readyAsyncCalls.map { it.call })
   }
 
   /** Returns a snapshot of the calls currently being executed. */
-  @Synchronized fun runningCalls(): List<Call> {
+  @Synchronized
+  fun runningCalls(): List<Call> {
     return Collections.unmodifiableList(runningSyncCalls + runningAsyncCalls.map { it.call })
   }
 
-  @Synchronized fun queuedCallsCount(): Int = readyAsyncCalls.size
+  @Synchronized
+  fun queuedCallsCount(): Int = readyAsyncCalls.size
 
-  @Synchronized fun runningCallsCount(): Int = runningAsyncCalls.size + runningSyncCalls.size
+  @Synchronized
+  fun runningCallsCount(): Int = runningAsyncCalls.size + runningSyncCalls.size
 
   @JvmName("-deprecated_executorService")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "executorService"),
-    level = DeprecationLevel.ERROR
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "executorService"),
+      level = DeprecationLevel.ERROR,
   )
   fun executorService(): ExecutorService = executorService
 }

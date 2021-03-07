@@ -15,21 +15,23 @@
  */
 package okhttp3
 
+import java.time.Instant
+import java.util.Date
 import okhttp3.Headers.Companion.headersOf
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import java.time.Instant
-import java.util.Date
 
 class HeadersKotlinTest {
-  @Test fun getOperator() {
+  @Test
+  fun getOperator() {
     val headers = headersOf("a", "b", "c", "d")
     assertThat(headers["a"]).isEqualTo("b")
     assertThat(headers["c"]).isEqualTo("d")
     assertThat(headers["e"]).isNull()
   }
 
-  @Test fun iteratorOperator() {
+  @Test
+  fun iteratorOperator() {
     val headers = headersOf("a", "b", "c", "d")
 
     val pairs = mutableListOf<Pair<String, String>>()
@@ -40,7 +42,8 @@ class HeadersKotlinTest {
     assertThat(pairs).containsExactly("a" to "b", "c" to "d")
   }
 
-  @Test fun builderGetOperator() {
+  @Test
+  fun builderGetOperator() {
     val builder = Headers.Builder()
     builder.add("a", "b")
     builder.add("c", "d")
@@ -49,7 +52,8 @@ class HeadersKotlinTest {
     assertThat(builder["e"]).isNull()
   }
 
-  @Test fun builderSetOperator() {
+  @Test
+  fun builderSetOperator() {
     val builder = Headers.Builder()
     builder["a"] = "b"
     builder["c"] = "d"

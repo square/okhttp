@@ -15,16 +15,16 @@
  */
 package okhttp3.compare
 
+import java.net.http.HttpClient
+import java.net.http.HttpClient.Redirect.NORMAL
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse.BodyHandlers
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.testing.PlatformRule
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
-import java.net.http.HttpClient
-import java.net.http.HttpClient.Redirect.NORMAL
-import java.net.http.HttpRequest
-import java.net.http.HttpResponse.BodyHandlers
 
 /**
  * Java HTTP Client.
@@ -36,22 +36,17 @@ import java.net.http.HttpResponse.BodyHandlers
 class JavaHttpClientTest {
   @JvmField @RegisterExtension val platform = PlatformRule()
 
-  @Test fun get(server: MockWebServer) {
+  @Test
+  fun get(server: MockWebServer) {
     // Not available
     platform.expectFailureOnJdkVersion(8)
 
-    val httpClient = HttpClient.newBuilder()
-      .followRedirects(NORMAL)
-      .build()
+    val httpClient = HttpClient.newBuilder().followRedirects(NORMAL).build()
 
-    server.enqueue(
-      MockResponse()
-        .setBody("hello, Java HTTP Client")
-    )
+    server.enqueue(MockResponse().setBody("hello, Java HTTP Client"))
 
-    val request = HttpRequest.newBuilder(server.url("/").toUri())
-      .header("Accept", "text/plain")
-      .build()
+    val request =
+        HttpRequest.newBuilder(server.url("/").toUri()).header("Accept", "text/plain").build()
 
     val response = httpClient.send(request, BodyHandlers.ofString())
     assertThat(response.statusCode()).isEqualTo(200)

@@ -15,10 +15,10 @@
  */
 package okhttp3.internal.http
 
-import okhttp3.Protocol
-import okhttp3.Response
 import java.io.IOException
 import java.net.ProtocolException
+import okhttp3.Protocol
+import okhttp3.Response
 
 /** An HTTP response status line like "HTTP/1.1 200 OK". */
 class StatusLine(
@@ -43,6 +43,7 @@ class StatusLine(
     /** Numeric status code, 307: Temporary Redirect. */
     const val HTTP_TEMP_REDIRECT = 307
     const val HTTP_PERM_REDIRECT = 308
+
     /** RFC 7540, Section 9.1.2. Retry these if the exchange used connection coalescing. */
     const val HTTP_MISDIRECTED_REQUEST = 421
     const val HTTP_CONTINUE = 100
@@ -65,13 +66,14 @@ class StatusLine(
         }
         val httpMinorVersion = statusLine[7] - '0'
         codeStart = 9
-        protocol = if (httpMinorVersion == 0) {
-          Protocol.HTTP_1_0
-        } else if (httpMinorVersion == 1) {
-          Protocol.HTTP_1_1
-        } else {
-          throw ProtocolException("Unexpected status line: $statusLine")
-        }
+        protocol =
+            if (httpMinorVersion == 0) {
+              Protocol.HTTP_1_0
+            } else if (httpMinorVersion == 1) {
+              Protocol.HTTP_1_1
+            } else {
+              throw ProtocolException("Unexpected status line: $statusLine")
+            }
       } else if (statusLine.startsWith("ICY ")) {
         // Shoutcast uses ICY instead of "HTTP/1.0".
         protocol = Protocol.HTTP_1_0
@@ -84,11 +86,12 @@ class StatusLine(
       if (statusLine.length < codeStart + 3) {
         throw ProtocolException("Unexpected status line: $statusLine")
       }
-      val code = try {
-        Integer.parseInt(statusLine.substring(codeStart, codeStart + 3))
-      } catch (_: NumberFormatException) {
-        throw ProtocolException("Unexpected status line: $statusLine")
-      }
+      val code =
+          try {
+            Integer.parseInt(statusLine.substring(codeStart, codeStart + 3))
+          } catch (_: NumberFormatException) {
+            throw ProtocolException("Unexpected status line: $statusLine")
+          }
 
       // Parse an optional response message like "OK" or "Not Modified". If it
       // exists, it is separated from the response code by a space.

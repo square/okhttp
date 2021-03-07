@@ -15,15 +15,15 @@
  */
 package okhttp3.internal.concurrent
 
+import java.lang.Thread.UncaughtExceptionHandler
+import java.util.concurrent.LinkedBlockingDeque
+import java.util.concurrent.ThreadFactory
+import java.util.concurrent.TimeUnit
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.data.Offset
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
-import java.lang.Thread.UncaughtExceptionHandler
-import java.util.concurrent.LinkedBlockingDeque
-import java.util.concurrent.ThreadFactory
-import java.util.concurrent.TimeUnit
 
 /**
  * Integration test to confirm that [TaskRunner] works with a real backend. Business logic is all
@@ -51,11 +51,13 @@ class TaskRunnerRealBackendTest {
   private val taskRunner = TaskRunner(backend)
   private val queue = taskRunner.newQueue()
 
-  @AfterEach fun tearDown() {
+  @AfterEach
+  fun tearDown() {
     backend.shutdown()
   }
 
-  @Test fun test() {
+  @Test
+  fun test() {
     val t1 = System.nanoTime() / 1e6
 
     val delays = mutableListOf(TimeUnit.MILLISECONDS.toNanos(1000), -1L)
@@ -73,7 +75,8 @@ class TaskRunnerRealBackendTest {
     assertThat(t3).isCloseTo(1750.0, Offset.offset(250.0))
   }
 
-  @Test fun taskFailsWithUncheckedException() {
+  @Test
+  fun taskFailsWithUncheckedException() {
     queue.schedule("task", TimeUnit.MILLISECONDS.toNanos(100)) {
       log.put("failing task running")
       throw RuntimeException("boom!")
@@ -92,7 +95,8 @@ class TaskRunnerRealBackendTest {
     assertThat(log).isEmpty()
   }
 
-  @Test fun idleLatchAfterShutdown() {
+  @Test
+  fun idleLatchAfterShutdown() {
     queue.schedule("task") {
       Thread.sleep(250)
       backend.shutdown()

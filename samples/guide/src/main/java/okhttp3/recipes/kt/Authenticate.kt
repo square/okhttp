@@ -15,39 +15,35 @@
  */
 package okhttp3.recipes.kt
 
+import java.io.IOException
 import okhttp3.Authenticator
 import okhttp3.Credentials
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.Route
-import java.io.IOException
 
 class Authenticate {
-  private val client = OkHttpClient.Builder()
-    .authenticator(
-      object : Authenticator {
-        @Throws(IOException::class)
-        override fun authenticate(route: Route?, response: Response): Request? {
-          if (response.request.header("Authorization") != null) {
-            return null // Give up, we've already attempted to authenticate.
-          }
+  private val client =
+      OkHttpClient.Builder()
+          .authenticator(
+              object : Authenticator {
+                @Throws(IOException::class)
+                override fun authenticate(route: Route?, response: Response): Request? {
+                  if (response.request.header("Authorization") != null) {
+                    return null // Give up, we've already attempted to authenticate.
+                  }
 
-          println("Authenticating for response: $response")
-          println("Challenges: ${response.challenges()}")
-          val credential = Credentials.basic("jesse", "password1")
-          return response.request.newBuilder()
-            .header("Authorization", credential)
-            .build()
-        }
-      }
-    )
-    .build()
+                  println("Authenticating for response: $response")
+                  println("Challenges: ${response.challenges()}")
+                  val credential = Credentials.basic("jesse", "password1")
+                  return response.request.newBuilder().header("Authorization", credential).build()
+                }
+              })
+          .build()
 
   fun run() {
-    val request = Request.Builder()
-      .url("http://publicobject.com/secrets/hellosecret.txt")
-      .build()
+    val request = Request.Builder().url("http://publicobject.com/secrets/hellosecret.txt").build()
 
     client.newCall(request).execute().use { response ->
       if (!response.isSuccessful) throw IOException("Unexpected code $response")

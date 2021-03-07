@@ -22,8 +22,8 @@ interface EventSource {
   fun request(): Request
 
   /**
-   * Immediately and violently release resources held by this event source. This does nothing if
-   * the event source has already been closed or canceled.
+   * Immediately and violently release resources held by this event source. This does nothing if the
+   * event source has already been closed or canceled.
    */
   fun cancel()
 

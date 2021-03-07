@@ -34,7 +34,8 @@ class ConscryptTest {
 
   private val client = clientTestRule.newClient()
 
-  @BeforeEach fun setUp() {
+  @BeforeEach
+  fun setUp() {
     platform.assumeConscrypt()
   }
 
@@ -67,7 +68,7 @@ class ConscryptTest {
       assertThat(it.protocol).isEqualTo(Protocol.HTTP_2)
       if (it.handshake!!.tlsVersion != TlsVersion.TLS_1_3) {
         System.err.println("Flaky TLSv1.3 with google")
-//    assertThat(it.handshake()!!.tlsVersion).isEqualTo(TlsVersion.TLS_1_3)
+        //    assertThat(it.handshake()!!.tlsVersion).isEqualTo(TlsVersion.TLS_1_3)
       }
     }
   }
@@ -86,7 +87,8 @@ class ConscryptTest {
     assertTrue(ConscryptPlatform.atLeastVersion(version.major()))
     assertTrue(ConscryptPlatform.atLeastVersion(version.major(), version.minor()))
     assertTrue(ConscryptPlatform.atLeastVersion(version.major(), version.minor(), version.patch()))
-    assertFalse(ConscryptPlatform.atLeastVersion(version.major(), version.minor(), version.patch() + 1))
+    assertFalse(
+        ConscryptPlatform.atLeastVersion(version.major(), version.minor(), version.patch() + 1))
     assertFalse(ConscryptPlatform.atLeastVersion(version.major(), version.minor() + 1))
     assertFalse(ConscryptPlatform.atLeastVersion(version.major() + 1))
   }

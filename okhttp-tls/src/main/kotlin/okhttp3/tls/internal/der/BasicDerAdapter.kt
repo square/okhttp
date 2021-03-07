@@ -24,25 +24,25 @@ import java.net.ProtocolException
  * Types like ANY and CHOICE that don't have a consistent tag cannot use this.
  */
 internal data class BasicDerAdapter<T>(
-  private val name: String,
+    private val name: String,
 
-  /** The tag class this adapter expects, or -1 to match any tag class. */
-  val tagClass: Int,
+    /** The tag class this adapter expects, or -1 to match any tag class. */
+    val tagClass: Int,
 
-  /** The tag this adapter expects, or -1 to match any tag. */
-  val tag: Long,
+    /** The tag this adapter expects, or -1 to match any tag. */
+    val tag: Long,
 
-  /** Encode and decode the value once tags are handled. */
-  private val codec: Codec<T>,
+    /** Encode and decode the value once tags are handled. */
+    private val codec: Codec<T>,
 
-  /** True if the default value should be used if this value is absent during decoding. */
-  val isOptional: Boolean = false,
+    /** True if the default value should be used if this value is absent during decoding. */
+    val isOptional: Boolean = false,
 
-  /** The value to return if this value is absent. Undefined unless this is optional. */
-  val defaultValue: T? = null,
+    /** The value to return if this value is absent. Undefined unless this is optional. */
+    val defaultValue: T? = null,
 
-  /** True to set the encoded or decoded value as the type hint for the current SEQUENCE. */
-  private val typeHint: Boolean = false
+    /** True to set the encoded or decoded value as the type hint for the current SEQUENCE. */
+    private val typeHint: Boolean = false
 ) : DerAdapter<T> {
 
   init {
@@ -59,9 +59,7 @@ internal data class BasicDerAdapter<T>(
       throw ProtocolException("expected $this but was $peekedHeader at $reader")
     }
 
-    val result = reader.read(name) {
-      codec.decode(reader)
-    }
+    val result = reader.read(name) { codec.decode(reader) }
 
     if (typeHint) {
       reader.typeHint = result
@@ -80,9 +78,7 @@ internal data class BasicDerAdapter<T>(
       return
     }
 
-    writer.write(name, tagClass, tag) {
-      codec.encode(writer, value)
-    }
+    writer.write(name, tagClass, tag) { codec.encode(writer, value) }
   }
 
   /**
@@ -106,10 +102,8 @@ internal data class BasicDerAdapter<T>(
    * }
    * ```
    */
-  fun withTag(
-    tagClass: Int = DerHeader.TAG_CLASS_CONTEXT_SPECIFIC,
-    tag: Long
-  ) = copy(tagClass = tagClass, tag = tag)
+  fun withTag(tagClass: Int = DerHeader.TAG_CLASS_CONTEXT_SPECIFIC, tag: Long) =
+      copy(tagClass = tagClass, tag = tag)
 
   /** Returns a copy of this adapter that doesn't encode values equal to [defaultValue]. */
   fun optional(defaultValue: T? = null) = copy(isOptional = true, defaultValue = defaultValue)

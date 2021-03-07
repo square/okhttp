@@ -15,17 +15,14 @@
  */
 package okhttp3.sse.internal
 
+import java.io.IOException
 import okhttp3.internal.toLongOrDefault
 import okio.Buffer
 import okio.BufferedSource
 import okio.ByteString.Companion.encodeUtf8
 import okio.Options
-import java.io.IOException
 
-class ServerSentEventReader(
-  private val source: BufferedSource,
-  private val callback: Callback
-) {
+class ServerSentEventReader(private val source: BufferedSource, private val callback: Callback) {
   private var lastId: String? = null
 
   interface Callback {
@@ -34,7 +31,7 @@ class ServerSentEventReader(
   }
 
   /**
-   * Process the next event. This will result in a single call to [Callback.onEvent] *unless* the
+   * Process the next event. This will result in a single call to [Callback.onEvent]*unless* the
    * data section was empty. Any number of calls to [Callback.onRetryChange] may occur while
    * processing an event.
    *
@@ -52,38 +49,30 @@ class ServerSentEventReader(
           completeEvent(id, type, data)
           return true
         }
-
         in 3..4 -> {
           source.readData(data)
         }
-
         in 5..7 -> {
           data.writeByte('\n'.toInt()) // 'data' on a line of its own.
         }
-
         in 8..9 -> {
           id = source.readUtf8LineStrict().takeIf { it.isNotEmpty() }
         }
-
         in 10..12 -> {
           id = null // 'id' on a line of its own.
         }
-
         in 13..14 -> {
           type = source.readUtf8LineStrict().takeIf { it.isNotEmpty() }
         }
-
         in 15..17 -> {
           type = null // 'event' on a line of its own
         }
-
         in 18..19 -> {
           val retryMs = source.readRetryMs()
           if (retryMs != -1L) {
             callback.onRetryChange(retryMs)
           }
         }
-
         -1 -> {
           val lineEnd = source.indexOfElement(CRLF)
           if (lineEnd != -1L) {
@@ -94,7 +83,6 @@ class ServerSentEventReader(
             return false // No more newlines.
           }
         }
-
         else -> throw AssertionError()
       }
     }
@@ -110,35 +98,35 @@ class ServerSentEventReader(
   }
 
   companion object {
-    val options = Options.of(
-      /*  0 */ "\r\n".encodeUtf8(),
-      /*  1 */ "\r".encodeUtf8(),
-      /*  2 */ "\n".encodeUtf8(),
+    val options =
+        Options.of(
+            /*  0 */ "\r\n".encodeUtf8(),
+            /*  1 */ "\r".encodeUtf8(),
+            /*  2 */ "\n".encodeUtf8(),
 
-      /*  3 */ "data: ".encodeUtf8(),
-      /*  4 */ "data:".encodeUtf8(),
+            /*  3 */ "data: ".encodeUtf8(),
+            /*  4 */ "data:".encodeUtf8(),
 
-      /*  5 */ "data\r\n".encodeUtf8(),
-      /*  6 */ "data\r".encodeUtf8(),
-      /*  7 */ "data\n".encodeUtf8(),
+            /*  5 */ "data\r\n".encodeUtf8(),
+            /*  6 */ "data\r".encodeUtf8(),
+            /*  7 */ "data\n".encodeUtf8(),
 
-      /*  8 */ "id: ".encodeUtf8(),
-      /*  9 */ "id:".encodeUtf8(),
+            /*  8 */ "id: ".encodeUtf8(),
+            /*  9 */ "id:".encodeUtf8(),
 
-      /* 10 */ "id\r\n".encodeUtf8(),
-      /* 11 */ "id\r".encodeUtf8(),
-      /* 12 */ "id\n".encodeUtf8(),
+            /* 10 */ "id\r\n".encodeUtf8(),
+            /* 11 */ "id\r".encodeUtf8(),
+            /* 12 */ "id\n".encodeUtf8(),
 
-      /* 13 */ "event: ".encodeUtf8(),
-      /* 14 */ "event:".encodeUtf8(),
+            /* 13 */ "event: ".encodeUtf8(),
+            /* 14 */ "event:".encodeUtf8(),
 
-      /* 15 */ "event\r\n".encodeUtf8(),
-      /* 16 */ "event\r".encodeUtf8(),
-      /* 17 */ "event\n".encodeUtf8(),
+            /* 15 */ "event\r\n".encodeUtf8(),
+            /* 16 */ "event\r".encodeUtf8(),
+            /* 17 */ "event\n".encodeUtf8(),
 
-      /* 18 */ "retry: ".encodeUtf8(),
-      /* 19 */ "retry:".encodeUtf8()
-    )
+            /* 18 */ "retry: ".encodeUtf8(),
+            /* 19 */ "retry:".encodeUtf8())
 
     private val CRLF = "\r\n".encodeUtf8()
 

@@ -15,15 +15,13 @@
  */
 package okhttp3.internal.platform.android
 
+import javax.net.ssl.SSLSocket
 import okhttp3.Protocol
 import okhttp3.internal.platform.BouncyCastlePlatform
 import okhttp3.internal.platform.Platform
 import org.bouncycastle.jsse.BCSSLSocket
-import javax.net.ssl.SSLSocket
 
-/**
- * Simple non-reflection SocketAdapter for BouncyCastle.
- */
+/** Simple non-reflection SocketAdapter for BouncyCastle. */
 class BouncyCastleSocketAdapter : SocketAdapter {
   override fun matchesSocket(sslSocket: SSLSocket): Boolean = sslSocket is BCSSLSocket
 
@@ -57,11 +55,13 @@ class BouncyCastleSocketAdapter : SocketAdapter {
   }
 
   companion object {
-    val factory = object : DeferredSocketAdapter.Factory {
-      override fun matchesSocket(sslSocket: SSLSocket): Boolean {
-        return BouncyCastlePlatform.isSupported && sslSocket is BCSSLSocket
-      }
-      override fun create(sslSocket: SSLSocket): SocketAdapter = BouncyCastleSocketAdapter()
-    }
+    val factory =
+        object : DeferredSocketAdapter.Factory {
+          override fun matchesSocket(sslSocket: SSLSocket): Boolean {
+            return BouncyCastlePlatform.isSupported && sslSocket is BCSSLSocket
+          }
+
+          override fun create(sslSocket: SSLSocket): SocketAdapter = BouncyCastleSocketAdapter()
+        }
   }
 }

@@ -15,18 +15,19 @@
  */
 package okhttp3.internal
 
+import java.net.InetAddress
+import java.net.ServerSocket
+import java.net.Socket
+import java.util.LinkedHashMap
 import okio.buffer
 import okio.source
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
-import java.net.InetAddress
-import java.net.ServerSocket
-import java.net.Socket
-import java.util.LinkedHashMap
 
 class UtilTest {
-  @Test fun immutableMap() {
+  @Test
+  fun immutableMap() {
     val map = LinkedHashMap<String, String>()
     map["a"] = "A"
     val immutableCopy = map.toImmutableMap()
@@ -36,11 +37,11 @@ class UtilTest {
     try {
       (immutableCopy as MutableMap).clear()
       fail()
-    } catch (_: UnsupportedOperationException) {
-    }
+    } catch (_: UnsupportedOperationException) {}
   }
 
-  @Test fun socketIsHealthy() {
+  @Test
+  fun socketIsHealthy() {
     val localhost = InetAddress.getLoopbackAddress()
     val serverSocket = ServerSocket(0, 1, localhost)
 

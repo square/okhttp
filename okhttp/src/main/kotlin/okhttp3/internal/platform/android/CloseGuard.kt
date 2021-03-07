@@ -18,9 +18,9 @@ package okhttp3.internal.platform.android
 import java.lang.reflect.Method
 
 /**
- * Provides access to the internal dalvik.system.CloseGuard class. Android uses this in
- * combination with android.os.StrictMode to report on leaked java.io.Closeable's. Available since
- * Android API 11.
+ * Provides access to the internal dalvik.system.CloseGuard class. Android uses this in combination
+ * with android.os.StrictMode to report on leaked java.io.Closeable's. Available since Android API
+ * 11.
  */
 internal class CloseGuard(
   private val getMethod: Method?,

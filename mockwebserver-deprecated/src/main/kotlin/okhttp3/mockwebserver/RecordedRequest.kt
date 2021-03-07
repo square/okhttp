@@ -15,6 +15,10 @@
  */
 package okhttp3.mockwebserver
 
+import java.io.IOException
+import java.net.Inet6Address
+import java.net.Socket
+import javax.net.ssl.SSLSocket
 import okhttp3.Handshake
 import okhttp3.Handshake.Companion.handshake
 import okhttp3.Headers
@@ -22,10 +26,6 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.TlsVersion
 import okio.Buffer
-import java.io.IOException
-import java.net.Inet6Address
-import java.net.Socket
-import javax.net.ssl.SSLSocket
 
 class RecordedRequest {
   val requestLine: String
@@ -42,10 +42,9 @@ class RecordedRequest {
 
   @get:JvmName("-deprecated_utf8Body")
   @Deprecated(
-    message = "Use body.readUtf8()",
-    replaceWith = ReplaceWith("body.readUtf8()"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "Use body.readUtf8()",
+      replaceWith = ReplaceWith("body.readUtf8()"),
+      level = DeprecationLevel.ERROR)
   val utf8Body: String
     get() = body.readUtf8()
 
@@ -53,17 +52,17 @@ class RecordedRequest {
     get() = handshake?.tlsVersion
 
   internal constructor(
-    requestLine: String,
-    headers: Headers,
-    chunkSizes: List<Int>,
-    bodySize: Long,
-    body: Buffer,
-    sequenceNumber: Int,
-    failure: IOException?,
-    method: String?,
-    path: String?,
-    handshake: Handshake?,
-    requestUrl: HttpUrl?
+      requestLine: String,
+      headers: Headers,
+      chunkSizes: List<Int>,
+      bodySize: Long,
+      body: Buffer,
+      sequenceNumber: Int,
+      failure: IOException?,
+      method: String?,
+      path: String?,
+      handshake: Handshake?,
+      requestUrl: HttpUrl?
   ) {
     this.requestLine = requestLine
     this.headers = headers
@@ -80,14 +79,14 @@ class RecordedRequest {
 
   @JvmOverloads
   constructor(
-    requestLine: String,
-    headers: Headers,
-    chunkSizes: List<Int>,
-    bodySize: Long,
-    body: Buffer,
-    sequenceNumber: Int,
-    socket: Socket,
-    failure: IOException? = null
+      requestLine: String,
+      headers: Headers,
+      chunkSizes: List<Int>,
+      bodySize: Long,
+      body: Buffer,
+      sequenceNumber: Int,
+      socket: Socket,
+      failure: IOException? = null
   ) {
     this.requestLine = requestLine
     this.headers = headers
@@ -140,10 +139,9 @@ class RecordedRequest {
   }
 
   @Deprecated(
-    message = "Use body.readUtf8()",
-    replaceWith = ReplaceWith("body.readUtf8()"),
-    level = DeprecationLevel.WARNING
-  )
+      message = "Use body.readUtf8()",
+      replaceWith = ReplaceWith("body.readUtf8()"),
+      level = DeprecationLevel.WARNING)
   fun getUtf8Body(): String = body.readUtf8()
 
   fun getHeader(name: String): String? = headers.values(name).firstOrNull()

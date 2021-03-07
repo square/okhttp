@@ -34,10 +34,5 @@ class FakeProxySelector : ProxySelector() {
     return if (uri.scheme == "http" || uri.scheme == "https") proxies else listOf(Proxy.NO_PROXY)
   }
 
-  override fun connectFailed(
-    uri: URI,
-    sa: SocketAddress,
-    ioe: IOException
-  ) {
-  }
+  override fun connectFailed(uri: URI, sa: SocketAddress, ioe: IOException) {}
 }

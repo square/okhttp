@@ -54,15 +54,12 @@ class SampleTest {
 
   @Test
   fun testPublicSuffixes() {
-    PublicSuffixDatabase::class.java.getResourceAsStream(PublicSuffixDatabase.PUBLIC_SUFFIX_RESOURCE).use {
-      assertThat(it.available()).isGreaterThan(30000)
-    }
+    PublicSuffixDatabase::class.java.getResourceAsStream(
+            PublicSuffixDatabase.PUBLIC_SUFFIX_RESOURCE)
+        .use { assertThat(it.available()).isGreaterThan(30000) }
   }
 
-  @ParameterizedTest
-  @ArgumentsSource(SampleTestProvider::class)
-  fun testParams(mode: String) {
-  }
+  @ParameterizedTest @ArgumentsSource(SampleTestProvider::class) fun testParams(mode: String) {}
 }
 
 class SampleTestProvider : SimpleProvider() {

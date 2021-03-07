@@ -15,6 +15,10 @@
  */
 package okhttp3.internal.ws
 
+import java.io.Closeable
+import java.io.IOException
+import java.net.ProtocolException
+import java.util.concurrent.TimeUnit
 import okhttp3.internal.and
 import okhttp3.internal.toHexString
 import okhttp3.internal.ws.WebSocketProtocol.B0_FLAG_FIN
@@ -39,13 +43,9 @@ import okhttp3.internal.ws.WebSocketProtocol.toggleMask
 import okio.Buffer
 import okio.BufferedSource
 import okio.ByteString
-import java.io.Closeable
-import java.io.IOException
-import java.net.ProtocolException
-import java.util.concurrent.TimeUnit
 
 /**
- * An [RFC 6455][rfc_6455]-compatible WebSocket frame reader.
+ * An [RFC 6455] [rfc_6455]-compatible WebSocket frame reader.
  *
  * This class is not thread safe.
  *
@@ -92,10 +92,12 @@ class WebSocketReader(
   /**
    * Process the next protocol frame.
    *
-   *  * If it is a control frame this will result in a single call to [FrameCallback].
-   *  * If it is a message frame this will result in a single call to [FrameCallback.onReadMessage].
+   * * If it is a control frame this will result in a single call to [FrameCallback].
+   * * If it is a message frame this will result in a single call to [FrameCallback.onReadMessage].
+   * ```
    *    If the message spans multiple frames, each interleaved control frame will result in a
    *    corresponding call to [FrameCallback].
+   * ```
    */
   @Throws(IOException::class)
   fun processNextFrame() {
@@ -133,12 +135,13 @@ class WebSocketReader(
     val reservedFlag1 = b0 and B0_FLAG_RSV1 != 0
     when (opcode) {
       OPCODE_TEXT, OPCODE_BINARY -> {
-        readingCompressedMessage = if (reservedFlag1) {
-          if (!perMessageDeflate) throw ProtocolException("Unexpected rsv1 flag")
-          true
-        } else {
-          false
-        }
+        readingCompressedMessage =
+            if (reservedFlag1) {
+              if (!perMessageDeflate) throw ProtocolException("Unexpected rsv1 flag")
+              true
+            } else {
+              false
+            }
       }
       else -> {
         if (reservedFlag1) throw ProtocolException("Unexpected rsv1 flag")
@@ -157,11 +160,11 @@ class WebSocketReader(
     if (isMasked == isClient) {
       // Masked payloads must be read on the server. Unmasked payloads must be read on the client.
       throw ProtocolException(
-        if (isClient) {
-          "Server-sent frames must not be masked."
-        } else {
-          "Client-sent frames must be masked."
-        }
+          if (isClient) {
+            "Server-sent frames must not be masked."
+          } else {
+            "Client-sent frames must be masked."
+          },
       )
     }
 
@@ -173,7 +176,7 @@ class WebSocketReader(
       frameLength = source.readLong()
       if (frameLength < 0L) {
         throw ProtocolException(
-          "Frame length 0x${frameLength.toHexString()} > 0x7FFFFFFFFFFFFFFF"
+            "Frame length 0x${frameLength.toHexString()} > 0x7FFFFFFFFFFFFFFF",
         )
       }
     }
@@ -239,8 +242,9 @@ class WebSocketReader(
     readMessage()
 
     if (readingCompressedMessage) {
-      val messageInflater = this.messageInflater
-        ?: MessageInflater(noContextTakeover).also { this.messageInflater = it }
+      val messageInflater =
+          this.messageInflater
+            ?: MessageInflater(noContextTakeover).also { this.messageInflater = it }
       messageInflater.inflate(messageFrameBuffer)
     }
 

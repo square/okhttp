@@ -33,22 +33,21 @@ import org.junit.jupiter.api.Test
 class JettyHttpClientTest {
   private val client = HttpClient()
 
-  @BeforeEach fun setUp() {
+  @BeforeEach
+  fun setUp() {
     client.start()
   }
 
-  @AfterEach fun tearDown() {
+  @AfterEach
+  fun tearDown() {
     client.stop()
   }
 
-  @Test fun get(server: MockWebServer) {
-    server.enqueue(
-      MockResponse()
-        .setBody("hello, Jetty HTTP Client")
-    )
+  @Test
+  fun get(server: MockWebServer) {
+    server.enqueue(MockResponse().setBody("hello, Jetty HTTP Client"))
 
-    val request = client.newRequest(server.url("/").toUri())
-      .header("Accept", "text/plain")
+    val request = client.newRequest(server.url("/").toUri()).header("Accept", "text/plain")
     val response = request.send()
     assertThat(response.status).isEqualTo(200)
     assertThat(response.contentAsString).isEqualTo("hello, Jetty HTTP Client")

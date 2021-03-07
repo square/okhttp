@@ -15,11 +15,6 @@
  */
 package okhttp3.internal.cache
 
-import okhttp3.Request
-import okhttp3.Response
-import okhttp3.internal.http.StatusLine
-import okhttp3.internal.http.toHttpDateOrNull
-import okhttp3.internal.toNonNegativeInt
 import java.net.HttpURLConnection.HTTP_BAD_METHOD
 import java.net.HttpURLConnection.HTTP_GONE
 import java.net.HttpURLConnection.HTTP_MOVED_PERM
@@ -33,6 +28,11 @@ import java.net.HttpURLConnection.HTTP_OK
 import java.net.HttpURLConnection.HTTP_REQ_TOO_LONG
 import java.util.Date
 import java.util.concurrent.TimeUnit.SECONDS
+import okhttp3.Request
+import okhttp3.Response
+import okhttp3.internal.http.StatusLine
+import okhttp3.internal.http.toHttpDateOrNull
+import okhttp3.internal.toNonNegativeInt
 
 /**
  * Given a request and cached response, this figures out whether to use the network, the cache, or
@@ -42,7 +42,8 @@ import java.util.concurrent.TimeUnit.SECONDS
  * for conditional GETs) or warnings to the cached response (if the cached data is potentially
  * stale).
  */
-class CacheStrategy internal constructor(
+class CacheStrategy
+internal constructor(
   /** The request to send on the network, or null if this call doesn't use the network. */
   val networkRequest: Request?,
   /** The cached response to return or validate; or null if this call doesn't use a cache. */
@@ -201,26 +202,22 @@ class CacheStrategy internal constructor(
           conditionName = "If-None-Match"
           conditionValue = etag
         }
-
         lastModified != null -> {
           conditionName = "If-Modified-Since"
           conditionValue = lastModifiedString
         }
-
         servedDate != null -> {
           conditionName = "If-Modified-Since"
           conditionValue = servedDateString
         }
-
         else -> return CacheStrategy(request, null) // No condition! Make a regular request.
       }
 
       val conditionalRequestHeaders = request.headers.newBuilder()
       conditionalRequestHeaders.addLenient(conditionName, conditionValue!!)
 
-      val conditionalRequest = request.newBuilder()
-        .headers(conditionalRequestHeaders.build())
-        .build()
+      val conditionalRequest =
+          request.newBuilder().headers(conditionalRequestHeaders.build()).build()
       return CacheStrategy(conditionalRequest, cacheResponse)
     }
 
@@ -259,17 +256,19 @@ class CacheStrategy internal constructor(
      */
     private fun cacheResponseAge(): Long {
       val servedDate = this.servedDate
-      val apparentReceivedAge = if (servedDate != null) {
-        maxOf(0, receivedResponseMillis - servedDate.time)
-      } else {
-        0
-      }
+      val apparentReceivedAge =
+          if (servedDate != null) {
+            maxOf(0, receivedResponseMillis - servedDate.time)
+          } else {
+            0
+          }
 
-      val receivedAge = if (ageSeconds != -1) {
-        maxOf(apparentReceivedAge, SECONDS.toMillis(ageSeconds.toLong()))
-      } else {
-        apparentReceivedAge
-      }
+      val receivedAge =
+          if (ageSeconds != -1) {
+            maxOf(apparentReceivedAge, SECONDS.toMillis(ageSeconds.toLong()))
+          } else {
+            apparentReceivedAge
+          }
 
       val responseDuration = receivedResponseMillis - sentRequestMillis
       val residentDuration = nowMillis - receivedResponseMillis
@@ -282,7 +281,7 @@ class CacheStrategy internal constructor(
      * response cache won't be used.
      */
     private fun hasConditions(request: Request): Boolean =
-      request.header("If-Modified-Since") != null || request.header("If-None-Match") != null
+        request.header("If-Modified-Since") != null || request.header("If-None-Match") != null
   }
 
   companion object {
@@ -304,21 +303,17 @@ class CacheStrategy internal constructor(
         StatusLine.HTTP_PERM_REDIRECT -> {
           // These codes can be cached unless headers forbid it.
         }
-
-        HTTP_MOVED_TEMP,
-        StatusLine.HTTP_TEMP_REDIRECT -> {
+        HTTP_MOVED_TEMP, StatusLine.HTTP_TEMP_REDIRECT -> {
           // These codes can only be cached with the right response headers.
           // http://tools.ietf.org/html/rfc7234#section-3
           // s-maxage is not checked because OkHttp is a private cache that should ignore s-maxage.
           if (response.header("Expires") == null &&
             response.cacheControl.maxAgeSeconds == -1 &&
             !response.cacheControl.isPublic &&
-            !response.cacheControl.isPrivate
-          ) {
+            !response.cacheControl.isPrivate) {
             return false
           }
         }
-
         else -> {
           // All other codes cannot be cached.
           return false

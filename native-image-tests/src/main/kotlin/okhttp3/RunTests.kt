@@ -15,6 +15,9 @@
  */
 package okhttp3
 
+import java.io.File
+import java.io.PrintWriter
+import kotlin.system.exitProcess
 import org.junit.jupiter.engine.JupiterTestEngine
 import org.junit.platform.console.options.Theme
 import org.junit.platform.engine.DiscoverySelector
@@ -30,13 +33,10 @@ import org.junit.platform.launcher.core.LauncherConfig
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder
 import org.junit.platform.launcher.core.LauncherFactory
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener
-import java.io.File
-import java.io.PrintWriter
-import kotlin.system.exitProcess
 
 /**
- * Graal main method to run tests with minimal reflection and automatic settings.
- * Uses the test list in native-image-tests/src/main/resources/testlist.txt.
+ * Graal main method to run tests with minimal reflection and automatic settings. Uses the test list
+ * in native-image-tests/src/main/resources/testlist.txt.
  */
 fun main(vararg args: String) {
   System.setProperty("junit.jupiter.extensions.autodetection.enabled", "true")
@@ -49,13 +49,14 @@ fun main(vararg args: String) {
 
   val jupiterTestEngine = buildTestEngine()
 
-  val config = LauncherConfig.builder()
-    .enableTestExecutionListenerAutoRegistration(false)
-    .enableTestEngineAutoRegistration(false)
-    .enablePostDiscoveryFilterAutoRegistration(false)
-    .addTestEngines(jupiterTestEngine)
-    .addTestExecutionListeners(DotListener, summaryListener, treeListener)
-    .build()
+  val config =
+      LauncherConfig.builder()
+          .enableTestExecutionListenerAutoRegistration(false)
+          .enableTestEngineAutoRegistration(false)
+          .enablePostDiscoveryFilterAutoRegistration(false)
+          .addTestEngines(jupiterTestEngine)
+          .addTestExecutionListeners(DotListener, summaryListener, treeListener)
+          .build()
   val launcher: Launcher = LauncherFactory.create(config)
 
   val request: LauncherDiscoveryRequest = buildRequest(selectors)
@@ -74,44 +75,41 @@ fun main(vararg args: String) {
   exitProcess(if (summary.testsFailedCount != 0L) -1 else 0)
 }
 
-/**
- * Builds the Junit Test Engine for the native image.
- */
+/** Builds the Junit Test Engine for the native image. */
 fun buildTestEngine(): TestEngine = JupiterTestEngine()
 
 /**
- * Returns a fixed set of test classes from testlist.txt, skipping any not found in the
- * current classpath.  The IDE runs with less classes to avoid conflicting module ownership.
+ * Returns a fixed set of test classes from testlist.txt, skipping any not found in the current
+ * classpath. The IDE runs with less classes to avoid conflicting module ownership.
  */
 fun testSelectors(inputFile: File? = null): List<DiscoverySelector> {
   val sampleTestClass = SampleTest::class.java
 
   val lines =
-    inputFile?.readLines() ?: sampleTestClass.getResource("/testlist.txt").readText().lines()
+      inputFile?.readLines() ?: sampleTestClass.getResource("/testlist.txt").readText().lines()
 
-  val flatClassnameList = lines
-    .filter { it.isNotBlank() }
+  val flatClassnameList = lines.filter { it.isNotBlank() }
 
-  return flatClassnameList
-    .mapNotNull {
-      try {
-        selectClass(Class.forName(it, false, sampleTestClass.classLoader))
-      } catch (cnfe: ClassNotFoundException) {
-        println("Missing test class: $cnfe")
-        null
-      }
+  return flatClassnameList.mapNotNull {
+    try {
+      selectClass(Class.forName(it, false, sampleTestClass.classLoader))
+    } catch (cnfe: ClassNotFoundException) {
+      println("Missing test class: $cnfe")
+      null
     }
+  }
 }
 
 /**
  * Builds a Junit Test Plan request for a fixed set of classes, or potentially a recursive package.
  */
 fun buildRequest(selectors: List<DiscoverySelector>): LauncherDiscoveryRequest {
-  val request: LauncherDiscoveryRequest = LauncherDiscoveryRequestBuilder.request()
-    // TODO replace junit.jupiter.extensions.autodetection.enabled with API approach.
-//    .enableImplicitConfigurationParameters(false)
-    .selectors(selectors)
-    .build()
+  val request: LauncherDiscoveryRequest =
+      LauncherDiscoveryRequestBuilder.request()
+          // TODO replace junit.jupiter.extensions.autodetection.enabled with API approach.
+          //    .enableImplicitConfigurationParameters(false)
+          .selectors(selectors)
+          .build()
   return request
 }
 
@@ -136,11 +134,10 @@ fun findTests(selectors: List<DiscoverySelector>): List<TestDescriptor> {
  * https://github.com/junit-team/junit5/issues/2469
  */
 fun treeListener(): TestExecutionListener {
-  return Class.forName(
-    "org.junit.platform.console.tasks.TreePrintingListener"
-  ).declaredConstructors.first()
-    .apply {
-      isAccessible = true
-    }
-    .newInstance(PrintWriter(System.out), false, Theme.UNICODE) as TestExecutionListener
+  return Class.forName("org.junit.platform.console.tasks.TreePrintingListener")
+      .declaredConstructors
+      .first()
+      .apply { isAccessible = true }
+      .newInstance(PrintWriter(System.out), false, Theme.UNICODE) as
+      TestExecutionListener
 }

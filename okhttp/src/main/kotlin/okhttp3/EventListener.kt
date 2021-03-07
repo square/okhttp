@@ -31,7 +31,8 @@ import java.net.Proxy
  *
  * Events are typically nested with this structure:
  *
- *  * call ([callStart], [callEnd], [callFailed])
+ * * call ( [callStart], [callEnd], [callFailed])
+ * ```
  *    * proxy selection ([proxySelectStart], [proxySelectEnd])
  *    * dns ([dnsStart], [dnsEnd])
  *    * connect ([connectStart], [connectEnd], [connectFailed])
@@ -43,10 +44,10 @@ import java.net.Proxy
  *      * response ([responseFailed])
  *        * headers ([responseHeadersStart], [responseHeadersEnd])
  *        * body ([responseBodyStart], [responseBodyEnd])
- *
+ * ```
  * This nesting is typical but not strict. For example, when calls use "Expect: continue" the
- * request body start and end events occur within the response header events. Similarly,
- * [duplex calls][RequestBody.isDuplex] interleave the request and response bodies.
+ * request body start and end events occur within the response header events. Similarly, [duplex
+ * calls] [RequestBody.isDuplex] interleave the request and response bodies.
  *
  * Since connections may be reused, the proxy selection, DNS, and connect events may not be present
  * for a call. In future releases of OkHttp these events may also occur concurrently to permit
@@ -64,32 +65,25 @@ abstract class EventListener {
    * limits, this call may be executed well before processing the request is able to begin.
    *
    * This will be invoked only once for a single [Call]. Retries of different routes or redirects
-   * will be handled within the boundaries of a single [callStart] and [callEnd]/[callFailed] pair.
+   * will be handled within the boundaries of a single [callStart] and [callEnd]/ [callFailed] pair.
    */
-  open fun callStart(
-    call: Call
-  ) {
-  }
+  open fun callStart(call: Call) {}
 
   /**
    * Invoked prior to a proxy selection.
    *
-   * This will be invoked for route selection regardless of whether the client
-   * is configured with a single proxy, a proxy selector, or neither.
+   * This will be invoked for route selection regardless of whether the client is configured with a
+   * single proxy, a proxy selector, or neither.
    *
    * @param url a URL with only the scheme, hostname, and port specified.
    */
-  open fun proxySelectStart(
-    call: Call,
-    url: HttpUrl
-  ) {
-  }
+  open fun proxySelectStart(call: Call, url: HttpUrl) {}
 
   /**
    * Invoked after proxy selection.
    *
-   * Note that the list of proxies is never null, but it may be a list containing
-   * only [Proxy.NO_PROXY]. This comes up in several situations:
+   * Note that the list of proxies is never null, but it may be a list containing only
+   * [Proxy.NO_PROXY]. This comes up in several situations:
    *
    * * If neither a proxy nor proxy selector is configured.
    * * If the proxy is configured explicitly as [Proxy.NO_PROXY].
@@ -100,12 +94,7 @@ abstract class EventListener {
    *
    * @param url a URL with only the scheme, hostname, and port specified.
    */
-  open fun proxySelectEnd(
-    call: Call,
-    url: HttpUrl,
-    proxies: List<@JvmSuppressWildcards Proxy>
-  ) {
-  }
+  open fun proxySelectEnd(call: Call, url: HttpUrl, proxies: List<@JvmSuppressWildcards Proxy>) {}
 
   /**
    * Invoked just prior to a DNS lookup. See [Dns.lookup].
@@ -116,11 +105,7 @@ abstract class EventListener {
    * If the [Call] is able to reuse an existing pooled connection, this method will not be invoked.
    * See [ConnectionPool].
    */
-  open fun dnsStart(
-    call: Call,
-    domainName: String
-  ) {
-  }
+  open fun dnsStart(call: Call, domainName: String) {}
 
   /**
    * Invoked immediately after a DNS lookup.
@@ -142,40 +127,28 @@ abstract class EventListener {
    * This can be invoked more than 1 time for a single [Call]. For example, if the response to the
    * [Call.request] is a redirect to a different address, or a connection is retried.
    */
-  open fun connectStart(
-    call: Call,
-    inetSocketAddress: InetSocketAddress,
-    proxy: Proxy
-  ) {
-  }
+  open fun connectStart(call: Call, inetSocketAddress: InetSocketAddress, proxy: Proxy) {}
 
   /**
    * Invoked just prior to initiating a TLS connection.
    *
    * This method is invoked if the following conditions are met:
    *
-   *  * The [Call.request] requires TLS.
+   * * The [Call.request] requires TLS.
    *
-   *  * No existing connection from the [ConnectionPool] can be reused.
+   * * No existing connection from the [ConnectionPool] can be reused.
    *
    * This can be invoked more than 1 time for a single [Call]. For example, if the response to the
    * [Call.request] is a redirect to a different address, or a connection is retried.
    */
-  open fun secureConnectStart(
-    call: Call
-  ) {
-  }
+  open fun secureConnectStart(call: Call) {}
 
   /**
    * Invoked immediately after a TLS connection was attempted.
    *
    * This method is invoked after [secureConnectStart].
    */
-  open fun secureConnectEnd(
-    call: Call,
-    handshake: Handshake?
-  ) {
-  }
+  open fun secureConnectEnd(call: Call, handshake: Handshake?) {}
 
   /**
    * Invoked immediately after a socket connection was attempted.
@@ -210,14 +183,10 @@ abstract class EventListener {
   /**
    * Invoked after a connection has been acquired for the `call`.
    *
-   * This can be invoked more than 1 time for a single [Call]. For example, if the response
-   * to the [Call.request] is a redirect to a different address.
+   * This can be invoked more than 1 time for a single [Call]. For example, if the response to the
+   * [Call.request] is a redirect to a different address.
    */
-  open fun connectionAcquired(
-    call: Call,
-    connection: Connection
-  ) {
-  }
+  open fun connectionAcquired(call: Call, connection: Connection) {}
 
   /**
    * Invoked after a connection has been released for the `call`.
@@ -227,11 +196,7 @@ abstract class EventListener {
    * This can be invoked more than 1 time for a single [Call]. For example, if the response to the
    * [Call.request] is a redirect to a different address.
    */
-  open fun connectionReleased(
-    call: Call,
-    connection: Connection
-  ) {
-  }
+  open fun connectionReleased(call: Call, connection: Connection) {}
 
   /**
    * Invoked just prior to sending request headers.
@@ -241,10 +206,7 @@ abstract class EventListener {
    * This can be invoked more than 1 time for a single [Call]. For example, if the response to the
    * [Call.request] is a redirect to a different address.
    */
-  open fun requestHeadersStart(
-    call: Call
-  ) {
-  }
+  open fun requestHeadersStart(call: Call) {}
 
   /**
    * Invoked immediately after sending request headers.
@@ -252,13 +214,14 @@ abstract class EventListener {
    * This method is always invoked after [requestHeadersStart].
    *
    * @param request the request sent over the network. It is an error to access the body of this
+   * ```
    *     request.
+   * ```
    */
-  open fun requestHeadersEnd(call: Call, request: Request) {
-  }
+  open fun requestHeadersEnd(call: Call, request: Request) {}
 
   /**
-   * Invoked just prior to sending a request body.  Will only be invoked for request allowing and
+   * Invoked just prior to sending a request body. Will only be invoked for request allowing and
    * having a request body to send.
    *
    * The connection is implicit, and will generally relate to the last [connectionAcquired] event.
@@ -266,21 +229,14 @@ abstract class EventListener {
    * This can be invoked more than 1 time for a single [Call]. For example, if the response to the
    * [Call.request] is a redirect to a different address.
    */
-  open fun requestBodyStart(
-    call: Call
-  ) {
-  }
+  open fun requestBodyStart(call: Call) {}
 
   /**
    * Invoked immediately after sending a request body.
    *
    * This method is always invoked after [requestBodyStart].
    */
-  open fun requestBodyEnd(
-    call: Call,
-    byteCount: Long
-  ) {
-  }
+  open fun requestBodyEnd(call: Call, byteCount: Long) {}
 
   /**
    * Invoked when a request fails to be written.
@@ -288,11 +244,7 @@ abstract class EventListener {
    * This method is invoked after [requestHeadersStart] or [requestBodyStart]. Note that request
    * failures do not necessarily fail the entire call.
    */
-  open fun requestFailed(
-    call: Call,
-    ioe: IOException
-  ) {
-  }
+  open fun requestFailed(call: Call, ioe: IOException) {}
 
   /**
    * Invoked when response headers are first returned from the server.
@@ -305,10 +257,7 @@ abstract class EventListener {
    * Prior to OkHttp 4.3 this was incorrectly invoked when the client was ready to read headers.
    * This was misleading for tracing because it was too early.
    */
-  open fun responseHeadersStart(
-    call: Call
-  ) {
-  }
+  open fun responseHeadersStart(call: Call) {}
 
   /**
    * Invoked immediately after receiving response headers.
@@ -316,13 +265,11 @@ abstract class EventListener {
    * This method is always invoked after [responseHeadersStart].
    *
    * @param response the response received over the network. It is an error to access the body of
+   * ```
    *     this response.
+   * ```
    */
-  open fun responseHeadersEnd(
-    call: Call,
-    response: Response
-  ) {
-  }
+  open fun responseHeadersEnd(call: Call, response: Response) {}
 
   /**
    * Invoked when data from the response body is first available to the application.
@@ -341,10 +288,7 @@ abstract class EventListener {
    * Prior to OkHttp 4.3 this was incorrectly invoked when the client was ready to read the response
    * body. This was misleading for tracing because it was too early.
    */
-  open fun responseBodyStart(
-    call: Call
-  ) {
-  }
+  open fun responseBodyStart(call: Call) {}
 
   /**
    * Invoked immediately after receiving a response body and completing reading it.
@@ -358,48 +302,33 @@ abstract class EventListener {
    *
    * This method is always invoked after [responseBodyStart].
    */
-  open fun responseBodyEnd(
-    call: Call,
-    byteCount: Long
-  ) {
-  }
+  open fun responseBodyEnd(call: Call, byteCount: Long) {}
 
   /**
    * Invoked when a response fails to be read.
    *
    * Note that response failures do not necessarily fail the entire call.
    *
-   * Starting with OkHttp 4.3 this may be invoked without a prior call to [responseHeadersStart]
-   * or [responseBodyStart]. In earlier releases this method was documented to only be invoked after
+   * Starting with OkHttp 4.3 this may be invoked without a prior call to [responseHeadersStart] or
+   * [responseBodyStart]. In earlier releases this method was documented to only be invoked after
    * one of those methods.
    */
-  open fun responseFailed(
-    call: Call,
-    ioe: IOException
-  ) {
-  }
+  open fun responseFailed(call: Call, ioe: IOException) {}
 
   /**
-   * Invoked immediately after a call has completely ended.  This includes delayed consumption
-   * of response body by the caller.
+   * Invoked immediately after a call has completely ended. This includes delayed consumption of
+   * response body by the caller.
    *
    * This method is always invoked after [callStart].
    */
-  open fun callEnd(
-    call: Call
-  ) {
-  }
+  open fun callEnd(call: Call) {}
 
   /**
    * Invoked when a call fails permanently.
    *
    * This method is always invoked after [callStart].
    */
-  open fun callFailed(
-    call: Call,
-    ioe: IOException
-  ) {
-  }
+  open fun callFailed(call: Call, ioe: IOException) {}
 
   /**
    * Invoked when a call is canceled.
@@ -417,45 +346,38 @@ abstract class EventListener {
    * This is invoked at most once, even if [Call.cancel] is invoked multiple times. It may be
    * invoked at any point in a call's life, including before [callStart] and after [callEnd].
    */
-  open fun canceled(
-    call: Call
-  ) {
-  }
+  open fun canceled(call: Call) {}
 
   /**
-   * Invoked when a call fails due to cache rules.
-   * For example, we're forbidden from using the network and the cache is insufficient
+   * Invoked when a call fails due to cache rules. For example, we're forbidden from using the
+   * network and the cache is insufficient
    */
-  open fun satisfactionFailure(call: Call, response: Response) {
-  }
+  open fun satisfactionFailure(call: Call, response: Response) {}
 
   /**
-   * Invoked when a result is served from the cache. The Response provided is the top level
-   * Response and normal event sequences will not be received.
+   * Invoked when a result is served from the cache. The Response provided is the top level Response
+   * and normal event sequences will not be received.
    *
    * This event will only be received when a Cache is configured for the client.
    */
-  open fun cacheHit(call: Call, response: Response) {
-  }
+  open fun cacheHit(call: Call, response: Response) {}
 
   /**
-   * Invoked when a response will be served from the network. The Response will be
-   * available from normal event sequences.
+   * Invoked when a response will be served from the network. The Response will be available from
+   * normal event sequences.
    *
    * This event will only be received when a Cache is configured for the client.
    */
-  open fun cacheMiss(call: Call) {
-  }
+  open fun cacheMiss(call: Call) {}
 
   /**
-   * Invoked when a response will be served from the cache or network based on validating the
-   * cached Response freshness. Will be followed by cacheHit or cacheMiss after the network
-   * Response is available.
+   * Invoked when a response will be served from the cache or network based on validating the cached
+   * Response freshness. Will be followed by cacheHit or cacheMiss after the network Response is
+   * available.
    *
    * This event will only be received when a Cache is configured for the client.
    */
-  open fun cacheConditionalHit(call: Call, cachedResponse: Response) {
-  }
+  open fun cacheConditionalHit(call: Call, cachedResponse: Response) {}
 
   fun interface Factory {
     /**
@@ -472,7 +394,6 @@ abstract class EventListener {
 
   companion object {
     @JvmField
-    val NONE: EventListener = object : EventListener() {
-    }
+    val NONE: EventListener = object : EventListener() {}
   }
 }

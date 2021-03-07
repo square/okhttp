@@ -22,11 +22,11 @@ import okio.ByteString
  * to resolve a concrete type.
  */
 internal data class AnyValue(
-  var tagClass: Int,
-  var tag: Long,
-  var constructed: Boolean = false,
-  var length: Long = -1L,
-  val bytes: ByteString
+    var tagClass: Int,
+    var tag: Long,
+    var constructed: Boolean = false,
+    var length: Long = -1L,
+    val bytes: ByteString
 ) {
   // Avoid Long.hashCode(long) which isn't available on Android 5.
   override fun hashCode(): Int {

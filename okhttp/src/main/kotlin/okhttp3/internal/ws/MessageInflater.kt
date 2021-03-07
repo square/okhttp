@@ -15,17 +15,15 @@
  */
 package okhttp3.internal.ws
 
-import okio.Buffer
-import okio.InflaterSource
 import java.io.Closeable
 import java.io.IOException
 import java.util.zip.Inflater
+import okio.Buffer
+import okio.InflaterSource
 
 private const val OCTETS_TO_ADD_BEFORE_INFLATION = 0x0000ffff
 
-class MessageInflater(
-  private val noContextTakeover: Boolean
-) : Closeable {
+class MessageInflater(private val noContextTakeover: Boolean) : Closeable {
   private val deflatedBytes = Buffer()
   private val inflater = Inflater(true /* omit zlib header */)
   private val inflaterSource = InflaterSource(deflatedBytes, inflater)

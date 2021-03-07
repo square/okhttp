@@ -15,12 +15,12 @@
  */
 package okhttp3.internal.concurrent
 
+import java.util.concurrent.RejectedExecutionException
 import okhttp3.TestLogHandler
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.fail
-import java.util.concurrent.RejectedExecutionException
 
 class TaskRunnerTest {
   @RegisterExtension @JvmField val testLogHandler = TestLogHandler(TaskRunner::class.java)
@@ -32,10 +32,9 @@ class TaskRunnerTest {
   private val blueQueue = taskRunner.newQueue()
   private val greenQueue = taskRunner.newQueue()
 
-  @Test fun executeDelayed() {
-    redQueue.execute("task", 100.µs) {
-      log += "run@${taskFaker.nanoTime}"
-    }
+  @Test
+  fun executeDelayed() {
+    redQueue.execute("task", 100.µs) { log += "run@${taskFaker.nanoTime}" }
 
     taskFaker.advanceUntil(0.µs)
     assertThat(log).containsExactly()
@@ -48,14 +47,15 @@ class TaskRunnerTest {
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 scheduled after 100 µs: task",
-      "FINE: Q10000 starting              : task",
-      "FINE: Q10000 finished run in   0 µs: task"
-    )
+    assertThat(testLogHandler.takeAll())
+        .containsExactly(
+            "FINE: Q10000 scheduled after 100 µs: task",
+            "FINE: Q10000 starting              : task",
+            "FINE: Q10000 finished run in   0 µs: task")
   }
 
-  @Test fun executeRepeated() {
+  @Test
+  fun executeRepeated() {
     val delays = mutableListOf(50.µs, 150.µs, -1L)
     redQueue.schedule("task", 100.µs) {
       log += "run@${taskFaker.nanoTime}"
@@ -79,32 +79,34 @@ class TaskRunnerTest {
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 scheduled after 100 µs: task",
-      "FINE: Q10000 starting              : task",
-      "FINE: Q10000 run again after  50 µs: task",
-      "FINE: Q10000 finished run in   0 µs: task",
-      "FINE: Q10000 starting              : task",
-      "FINE: Q10000 run again after 150 µs: task",
-      "FINE: Q10000 finished run in   0 µs: task",
-      "FINE: Q10000 starting              : task",
-      "FINE: Q10000 finished run in   0 µs: task"
-    )
+    assertThat(testLogHandler.takeAll())
+        .containsExactly(
+            "FINE: Q10000 scheduled after 100 µs: task",
+            "FINE: Q10000 starting              : task",
+            "FINE: Q10000 run again after  50 µs: task",
+            "FINE: Q10000 finished run in   0 µs: task",
+            "FINE: Q10000 starting              : task",
+            "FINE: Q10000 run again after 150 µs: task",
+            "FINE: Q10000 finished run in   0 µs: task",
+            "FINE: Q10000 starting              : task",
+            "FINE: Q10000 finished run in   0 µs: task")
   }
 
   /** Repeat with a delay of 200 but schedule with a delay of 50. The schedule wins. */
-  @Test fun executeScheduledEarlierReplacesRepeatedLater() {
-    val task = object : Task("task") {
-      val schedules = mutableListOf(50.µs)
-      val delays = mutableListOf(200.µs, -1)
-      override fun runOnce(): Long {
-        log += "run@${taskFaker.nanoTime}"
-        if (schedules.isNotEmpty()) {
-          redQueue.schedule(this, schedules.removeAt(0))
+  @Test
+  fun executeScheduledEarlierReplacesRepeatedLater() {
+    val task =
+        object : Task("task") {
+          val schedules = mutableListOf(50.µs)
+          val delays = mutableListOf(200.µs, -1)
+          override fun runOnce(): Long {
+            log += "run@${taskFaker.nanoTime}"
+            if (schedules.isNotEmpty()) {
+              redQueue.schedule(this, schedules.removeAt(0))
+            }
+            return delays.removeAt(0)
+          }
         }
-        return delays.removeAt(0)
-      }
-    }
     redQueue.schedule(task, 100.µs)
 
     taskFaker.advanceUntil(0.µs)
@@ -118,30 +120,32 @@ class TaskRunnerTest {
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 scheduled after 100 µs: task",
-      "FINE: Q10000 starting              : task",
-      "FINE: Q10000 scheduled after  50 µs: task",
-      "FINE: Q10000 already scheduled     : task",
-      "FINE: Q10000 finished run in   0 µs: task",
-      "FINE: Q10000 starting              : task",
-      "FINE: Q10000 finished run in   0 µs: task"
-    )
+    assertThat(testLogHandler.takeAll())
+        .containsExactly(
+            "FINE: Q10000 scheduled after 100 µs: task",
+            "FINE: Q10000 starting              : task",
+            "FINE: Q10000 scheduled after  50 µs: task",
+            "FINE: Q10000 already scheduled     : task",
+            "FINE: Q10000 finished run in   0 µs: task",
+            "FINE: Q10000 starting              : task",
+            "FINE: Q10000 finished run in   0 µs: task")
   }
 
   /** Schedule with a delay of 200 but repeat with a delay of 50. The repeat wins. */
-  @Test fun executeRepeatedEarlierReplacesScheduledLater() {
-    val task = object : Task("task") {
-      val schedules = mutableListOf(200.µs)
-      val delays = mutableListOf(50.µs, -1L)
-      override fun runOnce(): Long {
-        log += "run@${taskFaker.nanoTime}"
-        if (schedules.isNotEmpty()) {
-          redQueue.schedule(this, schedules.removeAt(0))
+  @Test
+  fun executeRepeatedEarlierReplacesScheduledLater() {
+    val task =
+        object : Task("task") {
+          val schedules = mutableListOf(200.µs)
+          val delays = mutableListOf(50.µs, -1L)
+          override fun runOnce(): Long {
+            log += "run@${taskFaker.nanoTime}"
+            if (schedules.isNotEmpty()) {
+              redQueue.schedule(this, schedules.removeAt(0))
+            }
+            return delays.removeAt(0)
+          }
         }
-        return delays.removeAt(0)
-      }
-    }
     redQueue.schedule(task, 100.µs)
 
     taskFaker.advanceUntil(0.µs)
@@ -155,21 +159,20 @@ class TaskRunnerTest {
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 scheduled after 100 µs: task",
-      "FINE: Q10000 starting              : task",
-      "FINE: Q10000 scheduled after 200 µs: task",
-      "FINE: Q10000 run again after  50 µs: task",
-      "FINE: Q10000 finished run in   0 µs: task",
-      "FINE: Q10000 starting              : task",
-      "FINE: Q10000 finished run in   0 µs: task"
-    )
+    assertThat(testLogHandler.takeAll())
+        .containsExactly(
+            "FINE: Q10000 scheduled after 100 µs: task",
+            "FINE: Q10000 starting              : task",
+            "FINE: Q10000 scheduled after 200 µs: task",
+            "FINE: Q10000 run again after  50 µs: task",
+            "FINE: Q10000 finished run in   0 µs: task",
+            "FINE: Q10000 starting              : task",
+            "FINE: Q10000 finished run in   0 µs: task")
   }
 
-  @Test fun cancelReturnsTruePreventsNextExecution() {
-    redQueue.execute("task", 100.µs) {
-      log += "run@${taskFaker.nanoTime}"
-    }
+  @Test
+  fun cancelReturnsTruePreventsNextExecution() {
+    redQueue.execute("task", 100.µs) { log += "run@${taskFaker.nanoTime}" }
 
     taskFaker.advanceUntil(0.µs)
     assertThat(log).isEmpty()
@@ -181,22 +184,22 @@ class TaskRunnerTest {
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 scheduled after 100 µs: task",
-      "FINE: Q10000 canceled              : task"
-    )
+    assertThat(testLogHandler.takeAll())
+        .containsExactly(
+            "FINE: Q10000 scheduled after 100 µs: task",
+            "FINE: Q10000 canceled              : task")
   }
 
-  @Test fun cancelReturnsFalseDoesNotCancel() {
+  @Test
+  fun cancelReturnsFalseDoesNotCancel() {
     redQueue.schedule(
-      object : Task("task", cancelable = false) {
-        override fun runOnce(): Long {
-          log += "run@${taskFaker.nanoTime}"
-          return -1L
-        }
-      },
-      100.µs
-    )
+        object : Task("task", cancelable = false) {
+          override fun runOnce(): Long {
+            log += "run@${taskFaker.nanoTime}"
+            return -1L
+          }
+        },
+        100.µs)
 
     taskFaker.advanceUntil(0.µs)
     assertThat(log).isEmpty()
@@ -211,14 +214,15 @@ class TaskRunnerTest {
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 scheduled after 100 µs: task",
-      "FINE: Q10000 starting              : task",
-      "FINE: Q10000 finished run in   0 µs: task"
-    )
+    assertThat(testLogHandler.takeAll())
+        .containsExactly(
+            "FINE: Q10000 scheduled after 100 µs: task",
+            "FINE: Q10000 starting              : task",
+            "FINE: Q10000 finished run in   0 µs: task")
   }
 
-  @Test fun cancelWhileExecutingPreventsRepeat() {
+  @Test
+  fun cancelWhileExecutingPreventsRepeat() {
     redQueue.schedule("task", 100.µs) {
       log += "run@${taskFaker.nanoTime}"
       redQueue.cancelAll()
@@ -233,14 +237,15 @@ class TaskRunnerTest {
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 scheduled after 100 µs: task",
-      "FINE: Q10000 starting              : task",
-      "FINE: Q10000 finished run in   0 µs: task"
-    )
+    assertThat(testLogHandler.takeAll())
+        .containsExactly(
+            "FINE: Q10000 scheduled after 100 µs: task",
+            "FINE: Q10000 starting              : task",
+            "FINE: Q10000 finished run in   0 µs: task")
   }
 
-  @Test fun cancelWhileExecutingDoesNothingIfTaskDoesNotRepeat() {
+  @Test
+  fun cancelWhileExecutingDoesNothingIfTaskDoesNotRepeat() {
     redQueue.execute("task", 100.µs) {
       log += "run@${taskFaker.nanoTime}"
       redQueue.cancelAll()
@@ -254,25 +259,25 @@ class TaskRunnerTest {
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 scheduled after 100 µs: task",
-      "FINE: Q10000 starting              : task",
-      "FINE: Q10000 finished run in   0 µs: task"
-    )
+    assertThat(testLogHandler.takeAll())
+        .containsExactly(
+            "FINE: Q10000 scheduled after 100 µs: task",
+            "FINE: Q10000 starting              : task",
+            "FINE: Q10000 finished run in   0 µs: task")
   }
 
-  @Test fun cancelWhileExecutingDoesNotStopUncancelableTask() {
+  @Test
+  fun cancelWhileExecutingDoesNotStopUncancelableTask() {
     redQueue.schedule(
-      object : Task("task", cancelable = false) {
-        val delays = mutableListOf(50.µs, -1L)
-        override fun runOnce(): Long {
-          log += "run@${taskFaker.nanoTime}"
-          redQueue.cancelAll()
-          return delays.removeAt(0)
-        }
-      },
-      100.µs
-    )
+        object : Task("task", cancelable = false) {
+          val delays = mutableListOf(50.µs, -1L)
+          override fun runOnce(): Long {
+            log += "run@${taskFaker.nanoTime}"
+            redQueue.cancelAll()
+            return delays.removeAt(0)
+          }
+        },
+        100.µs)
 
     taskFaker.advanceUntil(0.µs)
     assertThat(log).isEmpty()
@@ -285,20 +290,19 @@ class TaskRunnerTest {
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 scheduled after 100 µs: task",
-      "FINE: Q10000 starting              : task",
-      "FINE: Q10000 run again after  50 µs: task",
-      "FINE: Q10000 finished run in   0 µs: task",
-      "FINE: Q10000 starting              : task",
-      "FINE: Q10000 finished run in   0 µs: task"
-    )
+    assertThat(testLogHandler.takeAll())
+        .containsExactly(
+            "FINE: Q10000 scheduled after 100 µs: task",
+            "FINE: Q10000 starting              : task",
+            "FINE: Q10000 run again after  50 µs: task",
+            "FINE: Q10000 finished run in   0 µs: task",
+            "FINE: Q10000 starting              : task",
+            "FINE: Q10000 finished run in   0 µs: task")
   }
 
-  @Test fun interruptingCoordinatorAttemptsToCancelsAndSucceeds() {
-    redQueue.execute("task", 100.µs) {
-      log += "run@${taskFaker.nanoTime}"
-    }
+  @Test
+  fun interruptingCoordinatorAttemptsToCancelsAndSucceeds() {
+    redQueue.execute("task", 100.µs) { log += "run@${taskFaker.nanoTime}" }
 
     taskFaker.advanceUntil(0.µs)
     assertThat(log).isEmpty()
@@ -310,22 +314,22 @@ class TaskRunnerTest {
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 scheduled after 100 µs: task",
-      "FINE: Q10000 canceled              : task"
-    )
+    assertThat(testLogHandler.takeAll())
+        .containsExactly(
+            "FINE: Q10000 scheduled after 100 µs: task",
+            "FINE: Q10000 canceled              : task")
   }
 
-  @Test fun interruptingCoordinatorAttemptsToCancelsAndFails() {
+  @Test
+  fun interruptingCoordinatorAttemptsToCancelsAndFails() {
     redQueue.schedule(
-      object : Task("task", cancelable = false) {
-        override fun runOnce(): Long {
-          log += "run@${taskFaker.nanoTime}"
-          return -1L
-        }
-      },
-      100.µs
-    )
+        object : Task("task", cancelable = false) {
+          override fun runOnce(): Long {
+            log += "run@${taskFaker.nanoTime}"
+            return -1L
+          }
+        },
+        100.µs)
 
     taskFaker.advanceUntil(0.µs)
     assertThat(log).isEmpty()
@@ -340,15 +344,16 @@ class TaskRunnerTest {
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 scheduled after 100 µs: task",
-      "FINE: Q10000 starting              : task",
-      "FINE: Q10000 finished run in   0 µs: task"
-    )
+    assertThat(testLogHandler.takeAll())
+        .containsExactly(
+            "FINE: Q10000 scheduled after 100 µs: task",
+            "FINE: Q10000 starting              : task",
+            "FINE: Q10000 finished run in   0 µs: task")
   }
 
   /** Inspect how many runnables have been enqueued. If none then we're truly sequential. */
-  @Test fun singleQueueIsSerial() {
+  @Test
+  fun singleQueueIsSerial() {
     redQueue.execute("task one", 100.µs) {
       log += "one:run@${taskFaker.nanoTime} parallel=${taskFaker.isParallel}"
     }
@@ -365,29 +370,30 @@ class TaskRunnerTest {
     assertThat(log).isEmpty()
 
     taskFaker.advanceUntil(100.µs)
-    assertThat(log).containsExactly(
-      "one:run@100000 parallel=false",
-      "two:run@100000 parallel=false",
-      "three:run@100000 parallel=false"
-    )
+    assertThat(log)
+        .containsExactly(
+            "one:run@100000 parallel=false",
+            "two:run@100000 parallel=false",
+            "three:run@100000 parallel=false")
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 scheduled after 100 µs: task one",
-      "FINE: Q10000 scheduled after 100 µs: task two",
-      "FINE: Q10000 scheduled after 100 µs: task three",
-      "FINE: Q10000 starting              : task one",
-      "FINE: Q10000 finished run in   0 µs: task one",
-      "FINE: Q10000 starting              : task two",
-      "FINE: Q10000 finished run in   0 µs: task two",
-      "FINE: Q10000 starting              : task three",
-      "FINE: Q10000 finished run in   0 µs: task three"
-    )
+    assertThat(testLogHandler.takeAll())
+        .containsExactly(
+            "FINE: Q10000 scheduled after 100 µs: task one",
+            "FINE: Q10000 scheduled after 100 µs: task two",
+            "FINE: Q10000 scheduled after 100 µs: task three",
+            "FINE: Q10000 starting              : task one",
+            "FINE: Q10000 finished run in   0 µs: task one",
+            "FINE: Q10000 starting              : task two",
+            "FINE: Q10000 finished run in   0 µs: task two",
+            "FINE: Q10000 starting              : task three",
+            "FINE: Q10000 finished run in   0 µs: task three")
   }
 
   /** Inspect how many runnables have been enqueued. If non-zero then we're truly parallel. */
-  @Test fun differentQueuesAreParallel() {
+  @Test
+  fun differentQueuesAreParallel() {
     redQueue.execute("task one", 100.µs) {
       log += "one:run@${taskFaker.nanoTime} parallel=${taskFaker.isParallel}"
     }
@@ -404,29 +410,30 @@ class TaskRunnerTest {
     assertThat(log).isEmpty()
 
     taskFaker.advanceUntil(100.µs)
-    assertThat(log).containsExactly(
-      "one:run@100000 parallel=true",
-      "two:run@100000 parallel=true",
-      "three:run@100000 parallel=true"
-    )
+    assertThat(log)
+        .containsExactly(
+            "one:run@100000 parallel=true",
+            "two:run@100000 parallel=true",
+            "three:run@100000 parallel=true")
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 scheduled after 100 µs: task one",
-      "FINE: Q10001 scheduled after 100 µs: task two",
-      "FINE: Q10002 scheduled after 100 µs: task three",
-      "FINE: Q10000 starting              : task one",
-      "FINE: Q10000 finished run in   0 µs: task one",
-      "FINE: Q10001 starting              : task two",
-      "FINE: Q10001 finished run in   0 µs: task two",
-      "FINE: Q10002 starting              : task three",
-      "FINE: Q10002 finished run in   0 µs: task three"
-    )
+    assertThat(testLogHandler.takeAll())
+        .containsExactly(
+            "FINE: Q10000 scheduled after 100 µs: task one",
+            "FINE: Q10001 scheduled after 100 µs: task two",
+            "FINE: Q10002 scheduled after 100 µs: task three",
+            "FINE: Q10000 starting              : task one",
+            "FINE: Q10000 finished run in   0 µs: task one",
+            "FINE: Q10001 starting              : task two",
+            "FINE: Q10001 finished run in   0 µs: task two",
+            "FINE: Q10002 starting              : task three",
+            "FINE: Q10002 finished run in   0 µs: task three")
   }
 
   /** Test the introspection method [TaskQueue.scheduledTasks]. */
-  @Test fun scheduledTasks() {
+  @Test
+  fun scheduledTasks() {
     redQueue.execute("task one", 100.µs) {
       // Do nothing.
     }
@@ -437,64 +444,58 @@ class TaskRunnerTest {
 
     assertThat(redQueue.scheduledTasks.toString()).isEqualTo("[task one, task two]")
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 scheduled after 100 µs: task one",
-      "FINE: Q10000 scheduled after 200 µs: task two"
-    )
+    assertThat(testLogHandler.takeAll())
+        .containsExactly(
+            "FINE: Q10000 scheduled after 100 µs: task one",
+            "FINE: Q10000 scheduled after 200 µs: task two")
   }
 
   /**
    * We don't track the active task in scheduled tasks. This behavior might be a mistake, but it's
    * cumbersome to implement properly because the active task might be a cancel.
    */
-  @Test fun scheduledTasksDoesNotIncludeRunningTask() {
-    val task = object : Task("task one") {
-      val schedules = mutableListOf(200.µs)
-      override fun runOnce(): Long {
-        if (schedules.isNotEmpty()) {
-          redQueue.schedule(this, schedules.removeAt(0)) // Add it at the end also.
+  @Test
+  fun scheduledTasksDoesNotIncludeRunningTask() {
+    val task =
+        object : Task("task one") {
+          val schedules = mutableListOf(200.µs)
+          override fun runOnce(): Long {
+            if (schedules.isNotEmpty()) {
+              redQueue.schedule(this, schedules.removeAt(0)) // Add it at the end also.
+            }
+            log += "scheduledTasks=${redQueue.scheduledTasks}"
+            return -1L
+          }
         }
-        log += "scheduledTasks=${redQueue.scheduledTasks}"
-        return -1L
-      }
-    }
     redQueue.schedule(task, 100.µs)
 
-    redQueue.execute("task two", 200.µs) {
-      log += "scheduledTasks=${redQueue.scheduledTasks}"
-    }
+    redQueue.execute("task two", 200.µs) { log += "scheduledTasks=${redQueue.scheduledTasks}" }
 
     taskFaker.advanceUntil(100.µs)
-    assertThat(log).containsExactly(
-      "scheduledTasks=[task two, task one]"
-    )
+    assertThat(log).containsExactly("scheduledTasks=[task two, task one]")
 
     taskFaker.advanceUntil(200.µs)
-    assertThat(log).containsExactly(
-      "scheduledTasks=[task two, task one]",
-      "scheduledTasks=[task one]"
-    )
+    assertThat(log)
+        .containsExactly("scheduledTasks=[task two, task one]", "scheduledTasks=[task one]")
 
     taskFaker.advanceUntil(300.µs)
-    assertThat(log).containsExactly(
-      "scheduledTasks=[task two, task one]",
-      "scheduledTasks=[task one]",
-      "scheduledTasks=[]"
-    )
+    assertThat(log)
+        .containsExactly(
+            "scheduledTasks=[task two, task one]", "scheduledTasks=[task one]", "scheduledTasks=[]")
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 scheduled after 100 µs: task one",
-      "FINE: Q10000 scheduled after 200 µs: task two",
-      "FINE: Q10000 starting              : task one",
-      "FINE: Q10000 scheduled after 200 µs: task one",
-      "FINE: Q10000 finished run in   0 µs: task one",
-      "FINE: Q10000 starting              : task two",
-      "FINE: Q10000 finished run in   0 µs: task two",
-      "FINE: Q10000 starting              : task one",
-      "FINE: Q10000 finished run in   0 µs: task one"
-    )
+    assertThat(testLogHandler.takeAll())
+        .containsExactly(
+            "FINE: Q10000 scheduled after 100 µs: task one",
+            "FINE: Q10000 scheduled after 200 µs: task two",
+            "FINE: Q10000 starting              : task one",
+            "FINE: Q10000 scheduled after 200 µs: task one",
+            "FINE: Q10000 finished run in   0 µs: task one",
+            "FINE: Q10000 starting              : task two",
+            "FINE: Q10000 finished run in   0 µs: task two",
+            "FINE: Q10000 starting              : task one",
+            "FINE: Q10000 finished run in   0 µs: task one")
   }
 
   /**
@@ -502,7 +503,8 @@ class TaskRunnerTest {
    * up when they're no longer needed and that's annoying. Instead the task runner only tracks which
    * queues have work scheduled.
    */
-  @Test fun activeQueuesContainsOnlyQueuesWithScheduledTasks() {
+  @Test
+  fun activeQueuesContainsOnlyQueuesWithScheduledTasks() {
     redQueue.execute("task one", 100.µs) {
       // Do nothing.
     }
@@ -522,37 +524,35 @@ class TaskRunnerTest {
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 scheduled after 100 µs: task one",
-      "FINE: Q10001 scheduled after 200 µs: task two",
-      "FINE: Q10000 starting              : task one",
-      "FINE: Q10000 finished run in   0 µs: task one",
-      "FINE: Q10001 starting              : task two",
-      "FINE: Q10001 finished run in   0 µs: task two"
-    )
+    assertThat(testLogHandler.takeAll())
+        .containsExactly(
+            "FINE: Q10000 scheduled after 100 µs: task one",
+            "FINE: Q10001 scheduled after 200 µs: task two",
+            "FINE: Q10000 starting              : task one",
+            "FINE: Q10000 finished run in   0 µs: task one",
+            "FINE: Q10001 starting              : task two",
+            "FINE: Q10001 finished run in   0 µs: task two")
   }
 
-  @Test fun taskNameIsUsedForThreadNameWhenRunning() {
-    redQueue.execute("lucky task") {
-      log += "run threadName:${Thread.currentThread().name}"
-    }
+  @Test
+  fun taskNameIsUsedForThreadNameWhenRunning() {
+    redQueue.execute("lucky task") { log += "run threadName:${Thread.currentThread().name}" }
 
     taskFaker.advanceUntil(0.µs)
     assertThat(log).containsExactly("run threadName:lucky task")
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 scheduled after   0 µs: lucky task",
-      "FINE: Q10000 starting              : lucky task",
-      "FINE: Q10000 finished run in   0 µs: lucky task"
-    )
+    assertThat(testLogHandler.takeAll())
+        .containsExactly(
+            "FINE: Q10000 scheduled after   0 µs: lucky task",
+            "FINE: Q10000 starting              : lucky task",
+            "FINE: Q10000 finished run in   0 µs: lucky task")
   }
 
-  @Test fun shutdownSuccessfullyCancelsScheduledTasks() {
-    redQueue.execute("task", 100.µs) {
-      log += "run@${taskFaker.nanoTime}"
-    }
+  @Test
+  fun shutdownSuccessfullyCancelsScheduledTasks() {
+    redQueue.execute("task", 100.µs) { log += "run@${taskFaker.nanoTime}" }
 
     taskFaker.advanceUntil(0.µs)
     assertThat(log).isEmpty()
@@ -564,22 +564,22 @@ class TaskRunnerTest {
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 scheduled after 100 µs: task",
-      "FINE: Q10000 canceled              : task"
-    )
+    assertThat(testLogHandler.takeAll())
+        .containsExactly(
+            "FINE: Q10000 scheduled after 100 µs: task",
+            "FINE: Q10000 canceled              : task")
   }
 
-  @Test fun shutdownFailsToCancelsScheduledTasks() {
+  @Test
+  fun shutdownFailsToCancelsScheduledTasks() {
     redQueue.schedule(
-      object : Task("task", false) {
-        override fun runOnce(): Long {
-          log += "run@${taskFaker.nanoTime}"
-          return 50.µs
-        }
-      },
-      100.µs
-    )
+        object : Task("task", false) {
+          override fun runOnce(): Long {
+            log += "run@${taskFaker.nanoTime}"
+            return 50.µs
+          }
+        },
+        100.µs)
 
     taskFaker.advanceUntil(0.µs)
     assertThat(log).isEmpty()
@@ -594,14 +594,15 @@ class TaskRunnerTest {
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 scheduled after 100 µs: task",
-      "FINE: Q10000 starting              : task",
-      "FINE: Q10000 finished run in   0 µs: task"
-    )
+    assertThat(testLogHandler.takeAll())
+        .containsExactly(
+            "FINE: Q10000 scheduled after 100 µs: task",
+            "FINE: Q10000 starting              : task",
+            "FINE: Q10000 finished run in   0 µs: task")
   }
 
-  @Test fun scheduleDiscardsTaskWhenShutdown() {
+  @Test
+  fun scheduleDiscardsTaskWhenShutdown() {
     redQueue.shutdown()
 
     redQueue.execute("task", 100.µs) {
@@ -610,38 +611,34 @@ class TaskRunnerTest {
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 schedule canceled (queue is shutdown): task"
-    )
+    assertThat(testLogHandler.takeAll())
+        .containsExactly("FINE: Q10000 schedule canceled (queue is shutdown): task")
   }
 
-  @Test fun scheduleThrowsWhenShutdown() {
+  @Test
+  fun scheduleThrowsWhenShutdown() {
     redQueue.shutdown()
 
     try {
       redQueue.schedule(
-        object : Task("task", cancelable = false) {
-          override fun runOnce(): Long {
-            return -1L
-          }
-        },
-        100.µs
-      )
+          object : Task("task", cancelable = false) {
+            override fun runOnce(): Long {
+              return -1L
+            }
+          },
+          100.µs)
       fail("")
-    } catch (_: RejectedExecutionException) {
-    }
+    } catch (_: RejectedExecutionException) {}
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
-      "FINE: Q10000 schedule failed (queue is shutdown): task"
-    )
+    assertThat(testLogHandler.takeAll())
+        .containsExactly("FINE: Q10000 schedule failed (queue is shutdown): task")
   }
 
-  @Test fun idleLatch() {
-    redQueue.execute("task") {
-      log += "run@${taskFaker.nanoTime}"
-    }
+  @Test
+  fun idleLatch() {
+    redQueue.execute("task") { log += "run@${taskFaker.nanoTime}" }
 
     val idleLatch = redQueue.idleLatch()
     assertThat(idleLatch.count).isEqualTo(1)
@@ -652,10 +649,9 @@ class TaskRunnerTest {
     assertThat(idleLatch.count).isEqualTo(0)
   }
 
-  @Test fun multipleCallsToIdleLatchReturnSameInstance() {
-    redQueue.execute("task") {
-      log += "run@${taskFaker.nanoTime}"
-    }
+  @Test
+  fun multipleCallsToIdleLatchReturnSameInstance() {
+    redQueue.execute("task") { log += "run@${taskFaker.nanoTime}" }
 
     val idleLatch1 = redQueue.idleLatch()
     val idleLatch2 = redQueue.idleLatch()

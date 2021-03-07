@@ -17,7 +17,7 @@ package okhttp3.internal.http2
 
 /**
  * Settings describe characteristics of the sending peer, which are used by the receiving peer.
- * Settings are [connection][Http2Connection] scoped.
+ * Settings are [connection] [Http2Connection] scoped.
  */
 class Settings {
 
@@ -90,8 +90,8 @@ class Settings {
   }
 
   /**
-   * Writes `other` into this. If any setting is populated by this and `other`, the
-   * value and flags from `other` will be kept.
+   * Writes `other` into this. If any setting is populated by this and `other`, the value and flags
+   * from `other` will be kept.
    */
   fun merge(other: Settings) {
     for (i in 0 until COUNT) {
@@ -109,14 +109,19 @@ class Settings {
 
     /** HTTP/2: Size in bytes of the table used to decode the sender's header blocks. */
     const val HEADER_TABLE_SIZE = 1
+
     /** HTTP/2: The peer must not send a PUSH_PROMISE frame when this is 0. */
     const val ENABLE_PUSH = 2
+
     /** Sender's maximum number of concurrent streams. */
     const val MAX_CONCURRENT_STREAMS = 4
+
     /** HTTP/2: Size in bytes of the largest frame payload the sender will accept. */
     const val MAX_FRAME_SIZE = 5
+
     /** HTTP/2: Advisory only. Size in bytes of the largest header list the sender will accept. */
     const val MAX_HEADER_LIST_SIZE = 6
+
     /** Window size in bytes. */
     const val INITIAL_WINDOW_SIZE = 7
 

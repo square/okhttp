@@ -22,12 +22,10 @@ import java.net.Proxy
  * The concrete route used by a connection to reach an abstract origin server. When creating a
  * connection the client has many options:
  *
- *  * **HTTP proxy:** a proxy server may be explicitly configured for the client.
- * Otherwise the [proxy selector][java.net.ProxySelector] is used. It may return
- * multiple proxies to attempt.
- *  * **IP address:** whether connecting directly to an origin server or a proxy,
- * opening a socket requires an IP address. The DNS server may return multiple IP addresses
- * to attempt.
+ * * **HTTP proxy:** a proxy server may be explicitly configured for the client. Otherwise the
+ * [proxy selector] [java.net.ProxySelector] is used. It may return multiple proxies to attempt.
+ * * **IP address:** whether connecting directly to an origin server or a proxy, opening a socket
+ * requires an IP address. The DNS server may return multiple IP addresses to attempt.
  *
  * Each route is a specific selection of these options.
  */
@@ -36,8 +34,8 @@ class Route(
   /**
    * Returns the [Proxy] of this route.
    *
-   * **Warning:** This may disagree with [Address.proxy] when it is null. When
-   * the address's proxy is null, the proxy selector is used.
+   * **Warning:** This may disagree with [Address.proxy] when it is null. When the address's proxy
+   * is null, the proxy selector is used.
    */
   @get:JvmName("proxy") val proxy: Proxy,
   @get:JvmName("socketAddress") val socketAddress: InetSocketAddress
@@ -45,31 +43,31 @@ class Route(
 
   @JvmName("-deprecated_address")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "address"),
-    level = DeprecationLevel.ERROR
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "address"),
+      level = DeprecationLevel.ERROR,
   )
   fun address(): Address = address
 
   @JvmName("-deprecated_proxy")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "proxy"),
-    level = DeprecationLevel.ERROR
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "proxy"),
+      level = DeprecationLevel.ERROR,
   )
   fun proxy(): Proxy = proxy
 
   @JvmName("-deprecated_socketAddress")
   @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "socketAddress"),
-    level = DeprecationLevel.ERROR
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "socketAddress"),
+      level = DeprecationLevel.ERROR,
   )
   fun socketAddress(): InetSocketAddress = socketAddress
 
   /**
-   * Returns true if this route tunnels HTTPS through an HTTP proxy.
-   * See [RFC 2817, Section 5.2][rfc_2817].
+   * Returns true if this route tunnels HTTPS through an HTTP proxy. See [RFC 2817, Section 5.2]
+   * [rfc_2817].
    *
    * [rfc_2817]: http://www.ietf.org/rfc/rfc2817.txt
    */
@@ -77,9 +75,9 @@ class Route(
 
   override fun equals(other: Any?): Boolean {
     return other is Route &&
-      other.address == address &&
-      other.proxy == proxy &&
-      other.socketAddress == socketAddress
+        other.address == address &&
+        other.proxy == proxy &&
+        other.socketAddress == socketAddress
   }
 
   override fun hashCode(): Int {

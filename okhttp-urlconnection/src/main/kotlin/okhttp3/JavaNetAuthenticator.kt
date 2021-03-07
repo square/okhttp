@@ -15,16 +15,17 @@
  */
 package okhttp3
 
-import okhttp3.Authenticator.Companion.JAVA_NET_AUTHENTICATOR
 import java.io.IOException
 import java.net.Authenticator
+import okhttp3.Authenticator.Companion.JAVA_NET_AUTHENTICATOR
 
 /**
  * Adapts [Authenticator] to [okhttp3.Authenticator]. Configure OkHttp to use [Authenticator] with
- * [okhttp3.OkHttpClient.Builder.authenticator] or [okhttp3.OkHttpClient.Builder.proxyAuthenticator].
+ * [okhttp3.OkHttpClient.Builder.authenticator] or [okhttp3.OkHttpClient.Builder.proxyAuthenticator]
+ * .
  */
 class JavaNetAuthenticator : okhttp3.Authenticator {
   @Throws(IOException::class)
   override fun authenticate(route: Route?, response: Response): Request? =
-    JAVA_NET_AUTHENTICATOR.authenticate(route, response)
+      JAVA_NET_AUTHENTICATOR.authenticate(route, response)
 }

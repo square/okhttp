@@ -15,10 +15,10 @@
  */
 package okhttp3.tls.internal.der
 
+import java.math.BigInteger
 import okio.Buffer
 import okio.BufferedSink
 import okio.ByteString
-import java.math.BigInteger
 
 internal class DerWriter(sink: BufferedSink) {
   /** A stack of buffers that will be concatenated once we know the length of each. */
@@ -28,8 +28,8 @@ internal class DerWriter(sink: BufferedSink) {
   private val typeHintStack = mutableListOf<Any?>()
 
   /**
-   * The type hint for the current object. Used to pick adapters based on other fields, such as
-   * in extensions which have different types depending on their extension ID.
+   * The type hint for the current object. Used to pick adapters based on other fields, such as in
+   * extensions which have different types depending on their extension ID.
    */
   var typeHint: Any?
     get() = typeHintStack.lastOrNull()
@@ -118,11 +118,12 @@ internal class DerWriter(sink: BufferedSink) {
   fun writeLong(v: Long) {
     val sink = sink()
 
-    val lengthBitCount: Int = if (v < 0L) {
-      65 - java.lang.Long.numberOfLeadingZeros(v xor -1L)
-    } else {
-      65 - java.lang.Long.numberOfLeadingZeros(v)
-    }
+    val lengthBitCount: Int =
+        if (v < 0L) {
+          65 - java.lang.Long.numberOfLeadingZeros(v xor -1L)
+        } else {
+          65 - java.lang.Long.numberOfLeadingZeros(v)
+        }
 
     val lengthByteCount = (lengthBitCount + 7) / 8
     for (shift in (lengthByteCount - 1) * 8 downTo 0 step 8) {
@@ -160,9 +161,7 @@ internal class DerWriter(sink: BufferedSink) {
 
   fun writeRelativeObjectIdentifier(s: String) {
     // Add a leading dot so each subidentifier has a dot prefix.
-    val utf8 = Buffer()
-      .writeByte('.'.toByte().toInt())
-      .writeUtf8(s)
+    val utf8 = Buffer().writeByte('.'.toByte().toInt()).writeUtf8(s)
 
     while (!utf8.exhausted()) {
       require(utf8.readByte() == '.'.toByte())

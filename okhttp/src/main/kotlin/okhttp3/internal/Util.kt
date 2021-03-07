@@ -17,25 +17,6 @@
 
 package okhttp3.internal
 
-import okhttp3.EventListener
-import okhttp3.Headers
-import okhttp3.Headers.Companion.headersOf
-import okhttp3.HttpUrl
-import okhttp3.OkHttp
-import okhttp3.OkHttpClient
-import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.Response
-import okhttp3.ResponseBody.Companion.toResponseBody
-import okhttp3.internal.http2.Header
-import okio.Buffer
-import okio.BufferedSink
-import okio.BufferedSource
-import okio.ByteString.Companion.decodeHex
-import okio.ExperimentalFileSystem
-import okio.FileSystem
-import okio.Options
-import okio.Path
-import okio.Source
 import java.io.Closeable
 import java.io.FileNotFoundException
 import java.io.IOException
@@ -57,42 +38,62 @@ import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
 import kotlin.text.Charsets.UTF_32BE
 import kotlin.text.Charsets.UTF_32LE
+import okhttp3.EventListener
+import okhttp3.Headers
+import okhttp3.Headers.Companion.headersOf
+import okhttp3.HttpUrl
+import okhttp3.OkHttp
+import okhttp3.OkHttpClient
+import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
+import okhttp3.ResponseBody.Companion.toResponseBody
+import okhttp3.internal.http2.Header
+import okio.Buffer
+import okio.BufferedSink
+import okio.BufferedSource
+import okio.ByteString.Companion.decodeHex
+import okio.ExperimentalFileSystem
+import okio.FileSystem
+import okio.Options
+import okio.Path
+import okio.Source
 
 @JvmField
 val EMPTY_BYTE_ARRAY = ByteArray(0)
+
 @JvmField
 val EMPTY_HEADERS = headersOf()
 
 @JvmField
 val EMPTY_RESPONSE = EMPTY_BYTE_ARRAY.toResponseBody()
+
 @JvmField
 val EMPTY_REQUEST = EMPTY_BYTE_ARRAY.toRequestBody()
 
 /** Byte order marks. */
-private val UNICODE_BOMS = Options.of(
-  "efbbbf".decodeHex(), // UTF-8
-  "feff".decodeHex(), // UTF-16BE
-  "fffe".decodeHex(), // UTF-16LE
-  "0000ffff".decodeHex(), // UTF-32BE
-  "ffff0000".decodeHex() // UTF-32LE
-)
+private val UNICODE_BOMS =
+    Options.of(
+        "efbbbf".decodeHex(), // UTF-8
+        "feff".decodeHex(), // UTF-16BE
+        "fffe".decodeHex(), // UTF-16LE
+        "0000ffff".decodeHex(), // UTF-32BE
+        "ffff0000".decodeHex(), // UTF-32LE
+    )
 
 /** GMT and UTC are equivalent for our purposes. */
 @JvmField
 val UTC = TimeZone.getTimeZone("GMT")!!
 
 /**
- * Quick and dirty pattern to differentiate IP addresses from hostnames. This is an approximation
- * of Android's private InetAddress#isNumeric API.
+ * Quick and dirty pattern to differentiate IP addresses from hostnames. This is an approximation of
+ * Android's private InetAddress#isNumeric API.
  *
- * This matches IPv6 addresses as a hex string containing at least one colon, and possibly
- * including dots after the first colon. It matches IPv4 addresses as strings containing only
- * decimal digits and dots. This pattern matches strings like "a:.23" and "54" that are neither IP
- * addresses nor hostnames; they will be verified as IP addresses (which is a more strict
- * verification).
+ * This matches IPv6 addresses as a hex string containing at least one colon, and possibly including
+ * dots after the first colon. It matches IPv4 addresses as strings containing only decimal digits
+ * and dots. This pattern matches strings like "a:.23" and "54" that are neither IP addresses nor
+ * hostnames; they will be verified as IP addresses (which is a more strict verification).
  */
-private val VERIFY_AS_IP_ADDRESS =
-  "([0-9a-fA-F]*:[0-9a-fA-F:.]*)|([\\d.]+)".toRegex()
+private val VERIFY_AS_IP_ADDRESS = "([0-9a-fA-F]*:[0-9a-fA-F:.]*)|([\\d.]+)".toRegex()
 
 fun checkOffsetAndCount(arrayLength: Long, offset: Long, count: Long) {
   if (offset or count < 0L || offset > arrayLength || arrayLength - offset < count) {
@@ -100,13 +101,8 @@ fun checkOffsetAndCount(arrayLength: Long, offset: Long, count: Long) {
   }
 }
 
-fun threadFactory(
-  name: String,
-  daemon: Boolean
-): ThreadFactory = ThreadFactory { runnable ->
-  Thread(runnable, name).apply {
-    isDaemon = daemon
-  }
+fun threadFactory(name: String, daemon: Boolean): ThreadFactory = ThreadFactory { runnable ->
+  Thread(runnable, name).apply { isDaemon = daemon }
 }
 
 /**
@@ -153,11 +149,12 @@ fun Array<String>.hasIntersection(
 }
 
 fun HttpUrl.toHostHeader(includeDefaultPort: Boolean = false): String {
-  val host = if (":" in host) {
-    "[$host]"
-  } else {
-    host
-  }
+  val host =
+      if (":" in host) {
+        "[$host]"
+      } else {
+        host
+      }
   return if (includeDefaultPort || port != HttpUrl.defaultPort(scheme)) {
     "$host:$port"
   } else {
@@ -165,8 +162,9 @@ fun HttpUrl.toHostHeader(includeDefaultPort: Boolean = false): String {
   }
 }
 
-fun Array<String>.indexOf(value: String, comparator: Comparator<String>): Int =
-  indexOfFirst { comparator.compare(it, value) == 0 }
+fun Array<String>.indexOf(value: String, comparator: Comparator<String>): Int = indexOfFirst {
+  comparator.compare(it, value) == 0
+}
 
 @Suppress("UNCHECKED_CAST")
 fun Array<String>.concat(value: String): Array<String> {
@@ -175,9 +173,7 @@ fun Array<String>.concat(value: String): Array<String> {
   return result as Array<String>
 }
 
-/**
- * Increments [startIndex] until this string is not ASCII whitespace. Stops at [endIndex].
- */
+/** Increments [startIndex] until this string is not ASCII whitespace. Stops at [endIndex]. */
 fun String.indexOfFirstNonAsciiWhitespace(startIndex: Int = 0, endIndex: Int = length): Int {
   for (i in startIndex until endIndex) {
     when (this[i]) {
@@ -209,8 +205,8 @@ fun String.trimSubstring(startIndex: Int = 0, endIndex: Int = length): String {
 }
 
 /**
- * Returns the index of the first character in this string that contains a character in
- * [delimiters]. Returns endIndex if there is no such character.
+ * Returns the index of the first character in this string that contains a character in [delimiters]
+ * . Returns endIndex if there is no such character.
  */
 fun String.delimiterOffset(delimiters: String, startIndex: Int = 0, endIndex: Int = length): Int {
   for (i in startIndex until endIndex) {
@@ -252,9 +248,9 @@ fun String.canParseAsIpAddress(): Boolean {
 /** Returns true if we should void putting this this header in an exception or toString(). */
 fun isSensitiveHeader(name: String): Boolean {
   return name.equals("Authorization", ignoreCase = true) ||
-    name.equals("Cookie", ignoreCase = true) ||
-    name.equals("Proxy-Authorization", ignoreCase = true) ||
-    name.equals("Set-Cookie", ignoreCase = true)
+      name.equals("Cookie", ignoreCase = true) ||
+      name.equals("Proxy-Authorization", ignoreCase = true) ||
+      name.equals("Set-Cookie", ignoreCase = true)
 }
 
 /** Returns a [Locale.US] formatted [String]. */
@@ -284,12 +280,13 @@ fun checkDuration(name: String, duration: Long, unit: TimeUnit?): Int {
   return millis.toInt()
 }
 
-fun Char.parseHexDigit(): Int = when (this) {
-  in '0'..'9' -> this - '0'
-  in 'a'..'f' -> this - 'a' + 10
-  in 'A'..'F' -> this - 'A' + 10
-  else -> -1
-}
+fun Char.parseHexDigit(): Int =
+    when (this) {
+      in '0'..'9' -> this - '0'
+      in 'a'..'f' -> this - 'a' + 10
+      in 'A'..'F' -> this - 'A' + 10
+      else -> -1
+    }
 
 fun List<Header>.toHeaders(): Headers {
   val builder = Headers.Builder()
@@ -299,19 +296,18 @@ fun List<Header>.toHeaders(): Headers {
   return builder.build()
 }
 
-fun Headers.toHeaderList(): List<Header> = (0 until size).map {
-  Header(name(it), value(it))
-}
+fun Headers.toHeaderList(): List<Header> = (0 until size).map { Header(name(it), value(it)) }
 
 /** Returns true if an HTTP request for this URL and [other] can reuse a connection. */
-fun HttpUrl.canReuseConnectionFor(other: HttpUrl): Boolean = host == other.host &&
-  port == other.port &&
-  scheme == other.scheme
+fun HttpUrl.canReuseConnectionFor(other: HttpUrl): Boolean =
+    host == other.host && port == other.port && scheme == other.scheme
 
 fun EventListener.asFactory() = EventListener.Factory { this }
 
 infix fun Byte.and(mask: Int): Int = toInt() and mask
+
 infix fun Short.and(mask: Int): Int = toInt() and mask
+
 infix fun Int.and(mask: Long): Long = toLong() and mask
 
 @Throws(IOException::class)
@@ -323,11 +319,7 @@ fun BufferedSink.writeMedium(medium: Int) {
 
 @Throws(IOException::class)
 fun BufferedSource.readMedium(): Int {
-  return (
-    readByte() and 0xff shl 16
-      or (readByte() and 0xff shl 8)
-      or (readByte() and 0xff)
-    )
+  return (readByte() and 0xff shl 16 or (readByte() and 0xff shl 8) or (readByte() and 0xff))
 }
 
 /**
@@ -337,11 +329,12 @@ fun BufferedSource.readMedium(): Int {
 @Throws(IOException::class)
 fun Source.skipAll(duration: Int, timeUnit: TimeUnit): Boolean {
   val nowNs = System.nanoTime()
-  val originalDurationNs = if (timeout().hasDeadline()) {
-    timeout().deadlineNanoTime() - nowNs
-  } else {
-    Long.MAX_VALUE
-  }
+  val originalDurationNs =
+      if (timeout().hasDeadline()) {
+        timeout().deadlineNanoTime() - nowNs
+      } else {
+        Long.MAX_VALUE
+      }
   timeout().deadlineNanoTime(nowNs + minOf(originalDurationNs, timeUnit.toNanos(duration.toLong())))
   return try {
     val skipBuffer = Buffer()
@@ -365,11 +358,12 @@ fun Source.skipAll(duration: Int, timeUnit: TimeUnit): Boolean {
  * source is helpful, such as when doing so completes a cache body or frees a socket connection for
  * reuse.
  */
-fun Source.discard(timeout: Int, timeUnit: TimeUnit): Boolean = try {
-  this.skipAll(timeout, timeUnit)
-} catch (_: IOException) {
-  false
-}
+fun Source.discard(timeout: Int, timeUnit: TimeUnit): Boolean =
+    try {
+      this.skipAll(timeout, timeUnit)
+    } catch (_: IOException) {
+      false
+    }
 
 fun Socket.peerName(): String {
   val address = remoteSocketAddress
@@ -520,7 +514,7 @@ fun Socket.closeQuietly() {
   }
 }
 
-/** Closes this, ignoring any checked exceptions.  */
+/** Closes this, ignoring any checked exceptions. */
 fun ServerSocket.closeQuietly() {
   try {
     close()
@@ -564,17 +558,16 @@ fun FileSystem.deleteIfExists(path: Path) {
   }
 }
 
-/**
- * Tolerant delete, try to clear as many files as possible even after a failure.
- */
+/** Tolerant delete, try to clear as many files as possible even after a failure. */
 @OptIn(ExperimentalFileSystem::class)
 fun FileSystem.deleteContents(directory: Path) {
   var exception: IOException? = null
-  val files = try {
-    list(directory)
-  } catch (fnfe: FileNotFoundException) {
-    return
-  }
+  val files =
+      try {
+        list(directory)
+      } catch (fnfe: FileNotFoundException) {
+        return
+      }
   for (file in files) {
     try {
       if (metadata(file).isDirectory) {
@@ -645,7 +638,7 @@ val assertionsEnabled = OkHttpClient::class.java.desiredAssertionStatus()
  */
 @JvmField
 internal val okHttpName =
-  OkHttpClient::class.java.name.removePrefix("okhttp3.").removeSuffix("Client")
+    OkHttpClient::class.java.name.removePrefix("okhttp3.").removeSuffix("Client")
 
 @Suppress("NOTHING_TO_INLINE")
 inline fun Any.assertThreadHoldsLock() {

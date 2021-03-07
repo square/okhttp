@@ -15,6 +15,11 @@
  */
 package okhttp3.logging
 
+import java.io.IOException
+import java.net.InetAddress
+import java.net.InetSocketAddress
+import java.net.Proxy
+import java.util.concurrent.TimeUnit
 import okhttp3.Call
 import okhttp3.Connection
 import okhttp3.EventListener
@@ -24,22 +29,16 @@ import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
-import java.io.IOException
-import java.net.InetAddress
-import java.net.InetSocketAddress
-import java.net.Proxy
-import java.util.concurrent.TimeUnit
 
 /**
- * An OkHttp EventListener, which logs call events. Can be applied as an
- * [event listener factory][OkHttpClient.eventListenerFactory].
+ * An OkHttp EventListener, which logs call events. Can be applied as an [event listener factory]
+ * [OkHttpClient.eventListenerFactory].
  *
  * The format of the logs created by this class should not be considered stable and may change
  * slightly between releases. If you need a stable logging format, use your own event listener.
  */
-class LoggingEventListener private constructor(
-  private val logger: HttpLoggingInterceptor.Logger
-) : EventListener() {
+class LoggingEventListener private constructor(private val logger: HttpLoggingInterceptor.Logger) :
+    EventListener() {
   private var startNs: Long = 0
 
   override fun callStart(call: Call) {
@@ -77,20 +76,20 @@ class LoggingEventListener private constructor(
   }
 
   override fun connectEnd(
-    call: Call,
-    inetSocketAddress: InetSocketAddress,
-    proxy: Proxy,
-    protocol: Protocol?
+      call: Call,
+      inetSocketAddress: InetSocketAddress,
+      proxy: Proxy,
+      protocol: Protocol?
   ) {
     logWithTime("connectEnd: $protocol")
   }
 
   override fun connectFailed(
-    call: Call,
-    inetSocketAddress: InetSocketAddress,
-    proxy: Proxy,
-    protocol: Protocol?,
-    ioe: IOException
+      call: Call,
+      inetSocketAddress: InetSocketAddress,
+      proxy: Proxy,
+      protocol: Protocol?,
+      ioe: IOException
   ) {
     logWithTime("connectFailed: $protocol $ioe")
   }
@@ -176,8 +175,10 @@ class LoggingEventListener private constructor(
     logger.log("[$timeMs ms] $message")
   }
 
-  open class Factory @JvmOverloads constructor(
-    private val logger: HttpLoggingInterceptor.Logger = HttpLoggingInterceptor.Logger.DEFAULT
+  open class Factory
+  @JvmOverloads
+  constructor(
+      private val logger: HttpLoggingInterceptor.Logger = HttpLoggingInterceptor.Logger.DEFAULT
   ) : EventListener.Factory {
     override fun create(call: Call): EventListener = LoggingEventListener(logger)
   }

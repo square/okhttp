@@ -15,9 +15,6 @@
  */
 package okhttp3.internal.platform
 
-import okhttp3.Protocol
-import org.conscrypt.Conscrypt
-import org.conscrypt.ConscryptHostnameVerifier
 import java.security.KeyStore
 import java.security.Provider
 import java.security.cert.X509Certificate
@@ -28,6 +25,9 @@ import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManager
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
+import okhttp3.Protocol
+import org.conscrypt.Conscrypt
+import org.conscrypt.ConscryptHostnameVerifier
 
 /**
  * Platform using Conscrypt (conscrypt.org) if installed as the first Security Provider.
@@ -40,13 +40,14 @@ class ConscryptPlatform private constructor() : Platform() {
   // See release notes https://groups.google.com/forum/#!forum/conscrypt
   // for version differences
   override fun newSSLContext(): SSLContext =
-    // supports TLSv1.3 by default (version api is >= 1.4.0)
-    SSLContext.getInstance("TLS", provider)
+      // supports TLSv1.3 by default (version api is >= 1.4.0)
+      SSLContext.getInstance("TLS", provider)
 
   override fun platformTrustManager(): X509TrustManager {
-    val trustManagers = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm()).apply {
-      init(null as KeyStore?)
-    }.trustManagers!!
+    val trustManagers =
+        TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
+            .apply { init(null as KeyStore?) }
+            .trustManagers!!
     check(trustManagers.size == 1 && trustManagers[0] is X509TrustManager) {
       "Unexpected default trust managers: ${trustManagers.contentToString()}"
     }
@@ -57,10 +58,7 @@ class ConscryptPlatform private constructor() : Platform() {
   }
 
   internal object DisabledHostnameVerifier : ConscryptHostnameVerifier {
-    fun verify(
-      hostname: String?,
-      session: SSLSession?
-    ): Boolean {
+    fun verify(hostname: String?, session: SSLSession?): Boolean {
       return true
     }
 
@@ -93,33 +91,34 @@ class ConscryptPlatform private constructor() : Platform() {
   }
 
   override fun getSelectedProtocol(sslSocket: SSLSocket): String? =
-    if (Conscrypt.isConscrypt(sslSocket)) {
-      Conscrypt.getApplicationProtocol(sslSocket)
-    } else {
-      super.getSelectedProtocol(sslSocket)
-    }
+      if (Conscrypt.isConscrypt(sslSocket)) {
+        Conscrypt.getApplicationProtocol(sslSocket)
+      } else {
+        super.getSelectedProtocol(sslSocket)
+      }
 
   override fun newSslSocketFactory(trustManager: X509TrustManager): SSLSocketFactory {
-    return newSSLContext().apply {
-      init(null, arrayOf<TrustManager>(trustManager), null)
-    }.socketFactory
+    return newSSLContext()
+        .apply { init(null, arrayOf<TrustManager>(trustManager), null) }
+        .socketFactory
   }
 
   companion object {
-    val isSupported: Boolean = try {
-      // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
-      Class.forName("org.conscrypt.Conscrypt\$Version", false, javaClass.classLoader)
+    val isSupported: Boolean =
+        try {
+          // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
+          Class.forName("org.conscrypt.Conscrypt\$Version", false, javaClass.classLoader)
 
-      when {
-        // Bump this version if we ever have a binary incompatibility
-        Conscrypt.isAvailable() && atLeastVersion(2, 1, 0) -> true
-        else -> false
-      }
-    } catch (e: NoClassDefFoundError) {
-      false
-    } catch (e: ClassNotFoundException) {
-      false
-    }
+          when {
+            // Bump this version if we ever have a binary incompatibility
+            Conscrypt.isAvailable() && atLeastVersion(2, 1, 0) -> true
+            else -> false
+          }
+        } catch (e: NoClassDefFoundError) {
+          false
+        } catch (e: ClassNotFoundException) {
+          false
+        }
 
     fun buildIfSupported(): ConscryptPlatform? = if (isSupported) ConscryptPlatform() else null
 

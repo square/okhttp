@@ -15,6 +15,8 @@
  */
 package okhttp3.internal.connection
 
+import java.io.IOException
+import java.net.Socket
 import okhttp3.Address
 import okhttp3.EventListener
 import okhttp3.HttpUrl
@@ -27,24 +29,25 @@ import okhttp3.internal.http.RealInterceptorChain
 import okhttp3.internal.http2.ConnectionShutdownException
 import okhttp3.internal.http2.ErrorCode
 import okhttp3.internal.http2.StreamResetException
-import java.io.IOException
-import java.net.Socket
 
 /**
  * Attempts to find the connections for an exchange and any retries that follow. This uses the
  * following strategies:
  *
- *  1. If the current call already has a connection that can satisfy the request it is used. Using
+ * 1. If the current call already has a connection that can satisfy the request it is used. Using
+ * ```
  *     the same connection for an initial exchange and its follow-ups may improve locality.
- *
- *  2. If there is a connection in the pool that can satisfy the request it is used. Note that it is
+ * ```
+ * 2. If there is a connection in the pool that can satisfy the request it is used. Note that it is
+ * ```
  *     possible for shared exchanges to make requests to different host names! See
  *     [RealConnection.isEligible] for details.
- *
- *  3. If there's no existing connection, make a list of routes (which may require blocking DNS
+ * ```
+ * 3. If there's no existing connection, make a list of routes (which may require blocking DNS
+ * ```
  *     lookups) and attempt a new connection them. When failures occur, retries iterate the list of
  *     available routes.
- *
+ * ```
  * If the pool gains an eligible connection while DNS, TCP, or TLS work is in flight, this finder
  * will prefer pooled connections. Only pooled HTTP/2 connections are used for such de-duplication.
  *
@@ -66,19 +69,17 @@ class ExchangeFinder(
   private var otherFailureCount = 0
   private var nextRouteToTry: Route? = null
 
-  fun find(
-    client: OkHttpClient,
-    chain: RealInterceptorChain
-  ): ExchangeCodec {
+  fun find(client: OkHttpClient, chain: RealInterceptorChain): ExchangeCodec {
     try {
-      val resultConnection = findHealthyConnection(
-        connectTimeout = chain.connectTimeoutMillis,
-        readTimeout = chain.readTimeoutMillis,
-        writeTimeout = chain.writeTimeoutMillis,
-        pingIntervalMillis = client.pingIntervalMillis,
-        connectionRetryEnabled = client.retryOnConnectionFailure,
-        doExtensiveHealthChecks = chain.request.method != "GET"
-      )
+      val resultConnection =
+          findHealthyConnection(
+              connectTimeout = chain.connectTimeoutMillis,
+              readTimeout = chain.readTimeoutMillis,
+              writeTimeout = chain.writeTimeoutMillis,
+              pingIntervalMillis = client.pingIntervalMillis,
+              connectionRetryEnabled = client.retryOnConnectionFailure,
+              doExtensiveHealthChecks = chain.request.method != "GET",
+          )
       return resultConnection.newCodec(client, chain)
     } catch (e: RouteException) {
       trackFailure(e.lastConnectException)
@@ -103,13 +104,14 @@ class ExchangeFinder(
     doExtensiveHealthChecks: Boolean
   ): RealConnection {
     while (true) {
-      val candidate = findConnection(
-        connectTimeout = connectTimeout,
-        readTimeout = readTimeout,
-        writeTimeout = writeTimeout,
-        pingIntervalMillis = pingIntervalMillis,
-        connectionRetryEnabled = connectionRetryEnabled
-      )
+      val candidate =
+          findConnection(
+              connectTimeout = connectTimeout,
+              readTimeout = readTimeout,
+              writeTimeout = writeTimeout,
+              pingIntervalMillis = pingIntervalMillis,
+              connectionRetryEnabled = connectionRetryEnabled,
+          )
 
       // Confirm that the connection is good.
       if (candidate.isHealthy(doExtensiveHealthChecks)) {
@@ -224,13 +226,13 @@ class ExchangeFinder(
     call.connectionToCancel = newConnection
     try {
       newConnection.connect(
-        connectTimeout,
-        readTimeout,
-        writeTimeout,
-        pingIntervalMillis,
-        connectionRetryEnabled,
-        call,
-        eventListener
+          connectTimeout,
+          readTimeout,
+          writeTimeout,
+          pingIntervalMillis,
+          connectionRetryEnabled,
+          call,
+          eventListener,
       )
     } finally {
       call.connectionToCancel = null
@@ -268,8 +270,8 @@ class ExchangeFinder(
   }
 
   /**
-   * Returns true if the current route has a failure that retrying could fix, and that there's
-   * a route to retry on.
+   * Returns true if the current route has a failure that retrying could fix, and that there's a
+   * route to retry on.
    */
   fun retryAfterFailure(): Boolean {
     if (refusedStreamCount == 0 && connectionShutdownCount == 0 && otherFailureCount == 0) {

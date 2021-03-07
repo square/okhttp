@@ -18,26 +18,25 @@ package okhttp3
 import java.io.IOException
 
 /**
- * Protocols that OkHttp implements for [ALPN][ietf_alpn] selection.
+ * Protocols that OkHttp implements for [ALPN] [ietf_alpn] selection.
  *
  * ## Protocol vs Scheme
  *
- * Despite its name, [java.net.URL.getProtocol] returns the [scheme][java.net.URI.getScheme] (http,
- * https, etc.) of the URL, not the protocol (http/1.1, spdy/3.1, etc.). OkHttp uses the word
- * *protocol* to identify how HTTP messages are framed.
+ * Despite its name, [java.net.URL.getProtocol] returns the [scheme]
+ * [java.net.URI.getScheme](http,
+ * https, etc.) of the URL, not the protocol (http/1.1, spdy/3.1,
+ * etc.). OkHttp uses the word *protocol* to identify how HTTP messages are framed.
  *
  * [ietf_alpn]: http://tools.ietf.org/html/draft-ietf-tls-applayerprotoneg
  */
 enum class Protocol(private val protocol: String) {
-  /**
-   * An obsolete plaintext framing that does not use persistent sockets by default.
-   */
+  /** An obsolete plaintext framing that does not use persistent sockets by default. */
   HTTP_1_0("http/1.0"),
 
   /**
    * A plaintext framing that includes persistent connections.
    *
-   * This version of OkHttp implements [RFC 7230][rfc_7230], and tracks revisions to that spec.
+   * This version of OkHttp implements [RFC 7230] [rfc_7230], and tracks revisions to that spec.
    *
    * [rfc_7230]: https://tools.ietf.org/html/rfc7230
    */
@@ -57,9 +56,8 @@ enum class Protocol(private val protocol: String) {
    * requests on the same socket, and server-push. HTTP/1.1 semantics are layered on HTTP/2.
    *
    * HTTP/2 requires deployments of HTTP/2 that use TLS 1.2 support
-   * [CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256], present in Java 8+ and Android 5+.
-   * Servers that enforce this may send an exception message including the string
-   * `INADEQUATE_SECURITY`.
+   * [CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256], present in Java 8+ and Android 5+. Servers
+   * that enforce this may send an exception message including the string `INADEQUATE_SECURITY`.
    */
   HTTP_2("h2"),
 
@@ -67,7 +65,7 @@ enum class Protocol(private val protocol: String) {
    * Cleartext HTTP/2 with no "upgrade" round trip. This option requires the client to have prior
    * knowledge that the server supports cleartext HTTP/2.
    *
-   * See also [Starting HTTP/2 with Prior Knowledge][rfc_7540_34].
+   * See also [Starting HTTP/2 with Prior Knowledge] [rfc_7540_34].
    *
    * [rfc_7540_34]: https://tools.ietf.org/html/rfc7540.section-3.4
    */
@@ -87,7 +85,7 @@ enum class Protocol(private val protocol: String) {
    * Returns the string used to identify this protocol for ALPN, like "http/1.1", "spdy/3.1" or
    * "h2".
    *
-   * See also [IANA tls-extensiontype-values][iana].
+   * See also [IANA tls-extensiontype-values] [iana].
    *
    * [iana]: https://www.iana.org/assignments/tls-extensiontype-values
    */

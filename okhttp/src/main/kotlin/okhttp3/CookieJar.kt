@@ -24,8 +24,8 @@ package okhttp3
  *
  * As persistence, implementations of this interface must also provide storage of cookies. Simple
  * implementations may store cookies in memory; sophisticated ones may use the file system or
- * database to hold accepted cookies. The [cookie storage model][rfc_6265_53] specifies policies for
- * updating and expiring cookies.
+ * database to hold accepted cookies. The [cookie storage model] [rfc_6265_53] specifies policies
+ * for updating and expiring cookies.
  *
  * [rfc_6265_53]: https://tools.ietf.org/html/rfc6265#section-5.3
  */
@@ -40,11 +40,11 @@ interface CookieJar {
   fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>)
 
   /**
-   * Load cookies from the jar for an HTTP request to [url]. This method returns a possibly
-   * empty list of cookies for the network request.
+   * Load cookies from the jar for an HTTP request to [url]. This method returns a possibly empty
+   * list of cookies for the network request.
    *
    * Simple implementations will return the accepted cookies that have not yet expired and that
-   * [match][Cookie.matches] [url].
+   * [match] [Cookie.matches] [url].
    */
   fun loadForRequest(url: HttpUrl): List<Cookie>
 
@@ -52,9 +52,9 @@ interface CookieJar {
     /** A cookie jar that never accepts any cookies. */
     @JvmField
     val NO_COOKIES: CookieJar = NoCookies()
+
     private class NoCookies : CookieJar {
-      override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
-      }
+      override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {}
 
       override fun loadForRequest(url: HttpUrl): List<Cookie> {
         return emptyList()

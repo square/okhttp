@@ -15,16 +15,15 @@
  */
 package okhttp3.mockwebserver
 
+import java.util.concurrent.TimeUnit
 import okhttp3.Headers
 import okhttp3.WebSocketListener
 import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.http2.Settings
 import okio.Buffer
-import java.util.concurrent.TimeUnit
 
 class MockResponse : Cloneable {
-  @set:JvmName("status")
-  var status: String = ""
+  @set:JvmName("status") var status: String = ""
 
   private var headersBuilder = Headers.Builder()
   private var trailersBuilder = Headers.Builder()
@@ -50,11 +49,9 @@ class MockResponse : Cloneable {
   private var throttlePeriodAmount = 1L
   private var throttlePeriodUnit = TimeUnit.SECONDS
 
-  @set:JvmName("socketPolicy")
-  var socketPolicy = SocketPolicy.KEEP_OPEN
+  @set:JvmName("socketPolicy") var socketPolicy = SocketPolicy.KEEP_OPEN
 
-  @set:JvmName("http2ErrorCode")
-  var http2ErrorCode = -1
+  @set:JvmName("http2ErrorCode") var http2ErrorCode = -1
 
   private var bodyDelayAmount = 0L
   private var bodyDelayUnit = TimeUnit.MILLISECONDS
@@ -85,39 +82,31 @@ class MockResponse : Cloneable {
 
   @JvmName("-deprecated_getStatus")
   @Deprecated(
-    message = "moved to var",
-    replaceWith = ReplaceWith(expression = "status"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to var",
+      replaceWith = ReplaceWith(expression = "status"),
+      level = DeprecationLevel.ERROR)
   fun getStatus(): String = status
 
-  fun setStatus(status: String) = apply {
-    this.status = status
-  }
+  fun setStatus(status: String) = apply { this.status = status }
 
   fun setResponseCode(code: Int): MockResponse {
-    val reason = when (code) {
-      in 100..199 -> "Informational"
-      in 200..299 -> "OK"
-      in 300..399 -> "Redirection"
-      in 400..499 -> "Client Error"
-      in 500..599 -> "Server Error"
-      else -> "Mock Response"
-    }
+    val reason =
+        when (code) {
+          in 100..199 -> "Informational"
+          in 200..299 -> "OK"
+          in 300..399 -> "Redirection"
+          in 400..499 -> "Client Error"
+          in 500..599 -> "Server Error"
+          else -> "Mock Response"
+        }
     return apply { status = "HTTP/1.1 $code $reason" }
   }
 
-  fun clearHeaders() = apply {
-    headersBuilder = Headers.Builder()
-  }
+  fun clearHeaders() = apply { headersBuilder = Headers.Builder() }
 
-  fun addHeader(header: String) = apply {
-    headersBuilder.add(header)
-  }
+  fun addHeader(header: String) = apply { headersBuilder.add(header) }
 
-  fun addHeader(name: String, value: Any) = apply {
-    headersBuilder.add(name, value.toString())
-  }
+  fun addHeader(name: String, value: Any) = apply { headersBuilder.add(name, value.toString()) }
 
   fun addHeaderLenient(name: String, value: Any) = apply {
     addHeaderLenient(headersBuilder, name, value.toString())
@@ -128,9 +117,7 @@ class MockResponse : Cloneable {
     addHeader(name, value)
   }
 
-  fun removeHeader(name: String) = apply {
-    headersBuilder.removeAll(name)
-  }
+  fun removeHeader(name: String) = apply { headersBuilder.removeAll(name) }
 
   fun getBody(): Buffer? = body?.clone()
 
@@ -158,51 +145,43 @@ class MockResponse : Cloneable {
   }
 
   fun setChunkedBody(body: String, maxChunkSize: Int): MockResponse =
-    setChunkedBody(Buffer().writeUtf8(body), maxChunkSize)
+      setChunkedBody(Buffer().writeUtf8(body), maxChunkSize)
 
   @JvmName("-deprecated_getHeaders")
   @Deprecated(
-    message = "moved to var",
-    replaceWith = ReplaceWith(expression = "headers"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to var",
+      replaceWith = ReplaceWith(expression = "headers"),
+      level = DeprecationLevel.ERROR)
   fun getHeaders(): Headers = headers
 
   fun setHeaders(headers: Headers) = apply { this.headers = headers }
 
   @JvmName("-deprecated_getTrailers")
   @Deprecated(
-    message = "moved to var",
-    replaceWith = ReplaceWith(expression = "trailers"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to var",
+      replaceWith = ReplaceWith(expression = "trailers"),
+      level = DeprecationLevel.ERROR)
   fun getTrailers(): Headers = trailers
 
   fun setTrailers(trailers: Headers) = apply { this.trailers = trailers }
 
   @JvmName("-deprecated_getSocketPolicy")
   @Deprecated(
-    message = "moved to var",
-    replaceWith = ReplaceWith(expression = "socketPolicy"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to var",
+      replaceWith = ReplaceWith(expression = "socketPolicy"),
+      level = DeprecationLevel.ERROR)
   fun getSocketPolicy() = socketPolicy
 
-  fun setSocketPolicy(socketPolicy: SocketPolicy) = apply {
-    this.socketPolicy = socketPolicy
-  }
+  fun setSocketPolicy(socketPolicy: SocketPolicy) = apply { this.socketPolicy = socketPolicy }
 
   @JvmName("-deprecated_getHttp2ErrorCode")
   @Deprecated(
-    message = "moved to var",
-    replaceWith = ReplaceWith(expression = "http2ErrorCode"),
-    level = DeprecationLevel.ERROR
-  )
+      message = "moved to var",
+      replaceWith = ReplaceWith(expression = "http2ErrorCode"),
+      level = DeprecationLevel.ERROR)
   fun getHttp2ErrorCode() = http2ErrorCode
 
-  fun setHttp2ErrorCode(http2ErrorCode: Int) = apply {
-    this.http2ErrorCode = http2ErrorCode
-  }
+  fun setHttp2ErrorCode(http2ErrorCode: Int) = apply { this.http2ErrorCode = http2ErrorCode }
 
   fun throttleBody(bytesPerPeriod: Long, period: Long, unit: TimeUnit) = apply {
     throttleBytesPerPeriod = bytesPerPeriod
@@ -211,31 +190,25 @@ class MockResponse : Cloneable {
   }
 
   fun getThrottlePeriod(unit: TimeUnit): Long =
-    unit.convert(throttlePeriodAmount, throttlePeriodUnit)
+      unit.convert(throttlePeriodAmount, throttlePeriodUnit)
 
   fun setBodyDelay(delay: Long, unit: TimeUnit) = apply {
     bodyDelayAmount = delay
     bodyDelayUnit = unit
   }
 
-  fun getBodyDelay(unit: TimeUnit): Long =
-    unit.convert(bodyDelayAmount, bodyDelayUnit)
+  fun getBodyDelay(unit: TimeUnit): Long = unit.convert(bodyDelayAmount, bodyDelayUnit)
 
   fun setHeadersDelay(delay: Long, unit: TimeUnit) = apply {
     headersDelayAmount = delay
     headersDelayUnit = unit
   }
 
-  fun getHeadersDelay(unit: TimeUnit): Long =
-    unit.convert(headersDelayAmount, headersDelayUnit)
+  fun getHeadersDelay(unit: TimeUnit): Long = unit.convert(headersDelayAmount, headersDelayUnit)
 
-  fun withPush(promise: PushPromise) = apply {
-    promises.add(promise)
-  }
+  fun withPush(promise: PushPromise) = apply { promises.add(promise) }
 
-  fun withSettings(settings: Settings) = apply {
-    this.settings = settings
-  }
+  fun withSettings(settings: Settings) = apply { this.settings = settings }
 
   fun withWebSocketUpgrade(listener: WebSocketListener) = apply {
     status = "HTTP/1.1 101 Switching Protocols"
