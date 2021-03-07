@@ -15,24 +15,22 @@
  */
 package okhttp3
 
-import java.net.InetAddress
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.TestUtil.assumeNetwork
 import okhttp3.internal.platform.OpenJSSEPlatform
 import okhttp3.testing.PlatformRule
-import okhttp3.tls.HandshakeCertificates
-import okhttp3.tls.HeldCertificate
+import okhttp3.tls.internal.TlsUtil
+import okio.ByteString.Companion.toByteString
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
-import okio.ByteString.Companion.toByteString
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
-import java.security.cert.X509Certificate
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 
@@ -42,16 +40,15 @@ class JSSETest(
   @JvmField @RegisterExtension var platform = PlatformRule()
   @JvmField @RegisterExtension val clientTestRule = OkHttpClientTestRule()
 
+  private val handshakeCertificates = TlsUtil.localhost()
+
   var client = clientTestRule.newClient()
 
   @BeforeEach
   fun setUp() {
-    // TODO Don't check in
-    // Default after JDK 14
-    System.setProperty("jdk.tls.client.enableSessionTicketExtension", "true")
-    System.setProperty("jdk.tls.server.enableSessionTicketExtension", "true")
-    // https://bugs.openjdk.java.net/browse/JDK-8214037
-    // System.setProperty("jdk.tls.useExtendedMasterSecret", "false")
+    // Default after JDK 14, but we are avoiding tests that assume special setup.
+    // System.setProperty("jdk.tls.client.enableSessionTicketExtension", "true")
+    // System.setProperty("jdk.tls.server.enableSessionTicketExtension", "true")
 
     platform.assumeJdk9()
   }
@@ -91,6 +88,7 @@ class JSSETest(
   }
 
   @Test
+  @Disabled
   fun testFacebook() {
     val sessionIds = mutableListOf<String>()
 
@@ -122,7 +120,7 @@ class JSSETest(
     }
 
     assertEquals(2, sessionIds.size)
-    assertEquals(sessionIds[0], sessionIds[1])
+    assertNotEquals(sessionIds[0], sessionIds[1])
     assertThat(sessionIds[0]).isNotBlank()
   }
 
@@ -139,9 +137,23 @@ class JSSETest(
 
     enableTls()
 
+    val tlsVersion = TlsVersion.forJavaName(tlsVersion)
     val spec = ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
-      .tlsVersions(TlsVersion.forJavaName(tlsVersion))
+      .tlsVersions(tlsVersion)
       .build()
+
+    var reuseSession = false
+
+    val sslSocketFactory = object : DelegatingSSLSocketFactory(handshakeCertificates.sslSocketFactory()) {
+      override fun configureSocket(sslSocket: SSLSocket): SSLSocket {
+        return sslSocket.apply {
+          if (reuseSession) {
+            this.enableSessionCreation = false
+          }
+        }
+      }
+    }
+
     client = client.newBuilder()
       .connectionSpecs(listOf(spec))
       .eventListenerFactory(clientTestRule.wrap(object : EventListener() {
@@ -151,6 +163,7 @@ class JSSETest(
           sessionIds.add(sslSocket.session.id.toByteString().hex())
         }
       }))
+      .sslSocketFactory(sslSocketFactory, handshakeCertificates.trustManager)
       .build()
 
     server.enqueue(MockResponse().setBody("abc1"))
@@ -165,27 +178,23 @@ class JSSETest(
     client.connectionPool.evictAll()
     assertEquals(0, client.connectionPool.connectionCount())
 
+    // Force reuse
+    reuseSession = true
+
     client.newCall(request).execute().use { response ->
       assertEquals(200, response.code)
     }
 
     assertEquals(2, sessionIds.size)
-    assertEquals(sessionIds[0], sessionIds[1])
+    if (tlsVersion == TlsVersion.TLS_1_3) {
+      // We can't rely on the same session id with TLSv1.3 ids.
+      // With TLSv1.2 it is really JDK specific.
+      assertNotEquals(sessionIds[0], sessionIds[1])
+    }
     assertThat(sessionIds[0]).isNotBlank()
   }
 
   private fun enableTls() {
-    // Generate a self-signed cert for the server to serve and the client to trust.
-    // can't use TlsUtil.localhost with a non OpenJSSE trust manager
-    val heldCertificate = HeldCertificate.Builder()
-      .commonName("localhost")
-      .addSubjectAlternativeName(InetAddress.getByName("localhost").canonicalHostName)
-      .build()
-    val handshakeCertificates = HandshakeCertificates.Builder()
-      .heldCertificate(heldCertificate)
-      .addTrustedCertificate(heldCertificate.certificate)
-      .build()
-
     client = client.newBuilder()
       .sslSocketFactory(
         handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager

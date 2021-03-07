@@ -25,9 +25,9 @@ import okhttp3.tls.internal.TlsUtil
 import okio.ByteString.Companion.toByteString
 import org.assertj.core.api.Assertions.assertThat
 import org.conscrypt.Conscrypt
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
@@ -35,8 +35,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
-import java.net.InetSocketAddress
-import java.net.Proxy
 import javax.net.ssl.SSLSocket
 
 class ConscryptTest {
@@ -57,7 +55,8 @@ class ConscryptTest {
   private fun enableTls() {
     client = client.newBuilder()
       .sslSocketFactory(
-        handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager)
+        handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
+      )
       .build()
     server.useHttps(handshakeCertificates.sslSocketFactory(), false)
   }
@@ -74,16 +73,33 @@ class ConscryptTest {
 
     enableTls()
 
+    val tlsVersion = TlsVersion.forJavaName(tlsVersion)
     val spec = ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
-      .tlsVersions(TlsVersion.forJavaName(tlsVersion))
+      .tlsVersions(tlsVersion)
       .build()
-    client = client.newBuilder().connectionSpecs(listOf(spec)).eventListenerFactory(clientTestRule.wrap(object : EventListener() {
-      override fun connectionAcquired(call: Call, connection: Connection) {
-        val sslSocket = connection.socket() as SSLSocket
 
-        sessionIds.add(sslSocket.session.id.toByteString().hex())
+    var reuseSession = false
+
+    val sslSocketFactory = object : DelegatingSSLSocketFactory(handshakeCertificates.sslSocketFactory()) {
+      override fun configureSocket(sslSocket: SSLSocket): SSLSocket {
+        return sslSocket.apply {
+          if (reuseSession) {
+            this.enableSessionCreation = false
+          }
+        }
       }
-    })).build()
+    }
+
+    client = client.newBuilder().connectionSpecs(listOf(spec))
+      .eventListenerFactory(clientTestRule.wrap(object : EventListener() {
+        override fun connectionAcquired(call: Call, connection: Connection) {
+          val sslSocket = connection.socket() as SSLSocket
+
+          sessionIds.add(sslSocket.session.id.toByteString().hex())
+        }
+      }))
+      .sslSocketFactory(sslSocketFactory, handshakeCertificates.trustManager)
+      .build()
 
     server.enqueue(MockResponse().setBody("abc1"))
     server.enqueue(MockResponse().setBody("abc2"))
@@ -97,13 +113,21 @@ class ConscryptTest {
     client.connectionPool.evictAll()
     assertEquals(0, client.connectionPool.connectionCount())
 
+    // Force reuse
+    reuseSession = true
+
     client.newCall(request).execute().use { response ->
       assertEquals(200, response.code)
     }
 
     assertEquals(2, sessionIds.size)
-    assertEquals(sessionIds[0], sessionIds[1])
-    assertThat(sessionIds[0]).isNotBlank()
+    if (tlsVersion == TlsVersion.TLS_1_3) {
+      assertThat(sessionIds[0]).isBlank()
+      assertThat(sessionIds[1]).isBlank()
+    } else {
+      assertThat(sessionIds[0]).isNotBlank()
+      assertThat(sessionIds[1]).isNotBlank()
+    }
   }
 
   @Test
@@ -149,7 +173,9 @@ class ConscryptTest {
     assertTrue(ConscryptPlatform.atLeastVersion(version.major()))
     assertTrue(ConscryptPlatform.atLeastVersion(version.major(), version.minor()))
     assertTrue(ConscryptPlatform.atLeastVersion(version.major(), version.minor(), version.patch()))
-    assertFalse(ConscryptPlatform.atLeastVersion(version.major(), version.minor(), version.patch() + 1))
+    assertFalse(
+      ConscryptPlatform.atLeastVersion(version.major(), version.minor(), version.patch() + 1)
+    )
     assertFalse(ConscryptPlatform.atLeastVersion(version.major(), version.minor() + 1))
     assertFalse(ConscryptPlatform.atLeastVersion(version.major() + 1))
   }
