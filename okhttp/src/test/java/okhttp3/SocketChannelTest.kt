@@ -27,7 +27,6 @@ import okhttp3.TlsVersion.TLS_1_2
 import okhttp3.TlsVersion.TLS_1_3
 import okhttp3.internal.platform.ConscryptPlatform
 import okhttp3.internal.platform.Platform
-import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
@@ -102,11 +101,13 @@ class SocketChannelTest(
     }
 
     val client = clientTestRule.newClientBuilder()
-      .dns(object : Dns {
-        override fun lookup(hostname: String): List<InetAddress> {
-          return listOf(InetAddress.getByName("localhost"))
+      .dns(
+        object : Dns {
+          override fun lookup(hostname: String): List<InetAddress> {
+            return listOf(InetAddress.getByName("localhost"))
+          }
         }
-      })
+      )
       .callTimeout(4, SECONDS)
       .writeTimeout(2, SECONDS)
       .readTimeout(2, SECONDS)
@@ -128,7 +129,8 @@ class SocketChannelTest(
           val sslSocketFactory = handshakeCertificates.sslSocketFactory()
 
           sslSocketFactory(
-            sslSocketFactory, handshakeCertificates.trustManager
+            sslSocketFactory,
+            handshakeCertificates.trustManager
           )
 
           when (socketMode.protocol) {
@@ -137,16 +139,18 @@ class SocketChannelTest(
             else -> TODO()
           }
 
-          val serverSslSocketFactory = object: DelegatingSSLSocketFactory(sslSocketFactory) {
+          val serverSslSocketFactory = object : DelegatingSSLSocketFactory(sslSocketFactory) {
             override fun configureSocket(sslSocket: SSLSocket): SSLSocket {
               return sslSocket.apply {
                 sslParameters = sslParameters.apply {
-                  sniMatchers = listOf(object : SNIMatcher(StandardConstants.SNI_HOST_NAME) {
-                    override fun matches(serverName: SNIServerName): Boolean {
-                      acceptedHostName = (serverName as SNIHostName).asciiName
-                      return true
+                  sniMatchers = listOf(
+                    object : SNIMatcher(StandardConstants.SNI_HOST_NAME) {
+                      override fun matches(serverName: SNIServerName): Boolean {
+                        acceptedHostName = (serverName as SNIHostName).asciiName
+                        return true
+                      }
                     }
-                  })
+                  )
                 }
               }
             }
@@ -173,15 +177,17 @@ class SocketChannelTest(
     val promise = CompletableFuture<Response>()
 
     val call = client.newCall(request)
-    call.enqueue(object : Callback {
-      override fun onFailure(call: Call, e: IOException) {
-        promise.completeExceptionally(e)
-      }
+    call.enqueue(
+      object : Callback {
+        override fun onFailure(call: Call, e: IOException) {
+          promise.completeExceptionally(e)
+        }
 
-      override fun onResponse(call: Call, response: Response) {
-        promise.complete(response)
+        override fun onResponse(call: Call, response: Response) {
+          promise.complete(response)
+        }
       }
-    })
+    )
 
     val response = promise.get(4, SECONDS)
 

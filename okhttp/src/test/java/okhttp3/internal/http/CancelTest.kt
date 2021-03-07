@@ -119,22 +119,25 @@ class CancelTest {
     server.start()
 
     client = clientTestRule.newClientBuilder()
-        .socketFactory(object : DelegatingSocketFactory(SocketFactory.getDefault()) {
+      .socketFactory(
+        object : DelegatingSocketFactory(SocketFactory.getDefault()) {
           @Throws(IOException::class)
           override fun configureSocket(socket: Socket): Socket {
             socket.sendBufferSize = SOCKET_BUFFER_SIZE
             socket.receiveBufferSize = SOCKET_BUFFER_SIZE
             return socket
           }
-        })
-        .sslSocketFactory(
-          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
-        )
-        .eventListener(listener)
-        .apply {
-          if (connectionType == HTTPS) { protocols(listOf(HTTP_1_1)) }
         }
-        .build()
+      )
+      .sslSocketFactory(
+        handshakeCertificates.sslSocketFactory(),
+        handshakeCertificates.trustManager
+      )
+      .eventListener(listener)
+      .apply {
+        if (connectionType == HTTPS) { protocols(listOf(HTTP_1_1)) }
+      }
+      .build()
     threadToCancel = Thread.currentThread()
   }
 
@@ -146,22 +149,24 @@ class CancelTest {
     val call = client.newCall(
       Request.Builder()
         .url(server.url("/"))
-        .post(object : RequestBody() {
-          override fun contentType(): MediaType? {
-            return null
-          }
-
-          @Throws(
-            IOException::class
-          ) override fun writeTo(sink: BufferedSink) {
-            for (i in 0..9) {
-              sink.writeByte(0)
-              sink.flush()
-              sleep(100)
+        .post(
+          object : RequestBody() {
+            override fun contentType(): MediaType? {
+              return null
             }
-            fail("Expected connection to be closed")
+
+            @Throws(
+              IOException::class
+            ) override fun writeTo(sink: BufferedSink) {
+              for (i in 0..9) {
+                sink.writeByte(0)
+                sink.flush()
+                sleep(100)
+              }
+              fail("Expected connection to be closed")
+            }
           }
-        })
+        )
         .build()
     )
     cancelLater(call, 500)
@@ -219,10 +224,12 @@ class CancelTest {
         )
         .throttleBody(64 * 1024, 125, MILLISECONDS)
     ) // 500 Kbps
-    server.enqueue(MockResponse().apply {
-      setResponseCode(200)
-      setBody(".")
-    })
+    server.enqueue(
+      MockResponse().apply {
+        setResponseCode(200)
+        setBody(".")
+      }
+    )
 
     val call = client.newCall(Request.Builder().url(server.url("/")).build())
     val response = call.execute()
@@ -271,14 +278,14 @@ class CancelTest {
 
   private fun isConnectionEvent(it: CallEvent?) =
     it is CallStart ||
-        it is CallEnd ||
-        it is ConnectStart ||
-        it is ConnectEnd ||
-        it is ConnectionAcquired ||
-        it is ConnectionReleased ||
-        it is Canceled ||
-        it is RequestFailed ||
-        it is ResponseFailed
+      it is CallEnd ||
+      it is ConnectStart ||
+      it is ConnectEnd ||
+      it is ConnectionAcquired ||
+      it is ConnectionReleased ||
+      it is Canceled ||
+      it is RequestFailed ||
+      it is ResponseFailed
 
   private fun sleep(delayMillis: Int) {
     try {
@@ -292,14 +299,16 @@ class CancelTest {
     call: Call,
     delayMillis: Int
   ) {
-    Thread(Runnable {
-      sleep(delayMillis)
-      if (cancelMode == CANCEL) {
-        call.cancel()
-      } else {
-        threadToCancel!!.interrupt()
+    Thread(
+      Runnable {
+        sleep(delayMillis)
+        if (cancelMode == CANCEL) {
+          call.cancel()
+        } else {
+          threadToCancel!!.interrupt()
+        }
       }
-    }).apply { start() }
+    ).apply { start() }
   }
 
   companion object {
@@ -308,8 +317,13 @@ class CancelTest {
   }
 }
 
-class CancelModelParamProvider: SimpleProvider() {
-  override fun arguments() = CancelTest.CancelMode.values().flatMap { c -> CancelTest.ConnectionType.values().map { x -> Pair(
-    c, x
-  ) } }
+class CancelModelParamProvider : SimpleProvider() {
+  override fun arguments() = CancelTest.CancelMode.values().flatMap { c ->
+    CancelTest.ConnectionType.values().map { x ->
+      Pair(
+        c,
+        x
+      )
+    }
+  }
 }

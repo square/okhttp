@@ -28,8 +28,12 @@ internal class InsecureAndroidTrustManager(
   private val insecureHosts: List<String>
 ) : X509TrustManager {
   private val checkServerTrustedMethod: Method? = try {
-    delegate::class.java.getMethod("checkServerTrusted",
-        Array<X509Certificate>::class.java, String::class.java, String::class.java)
+    delegate::class.java.getMethod(
+      "checkServerTrusted",
+      Array<X509Certificate>::class.java,
+      String::class.java,
+      String::class.java
+    )
   } catch (_: NoSuchMethodException) {
     null
   }
@@ -44,7 +48,7 @@ internal class InsecureAndroidTrustManager(
     if (host in insecureHosts) return listOf()
     try {
       val method = checkServerTrustedMethod
-          ?: throw CertificateException("Failed to call checkServerTrusted")
+        ?: throw CertificateException("Failed to call checkServerTrusted")
       return method.invoke(delegate, chain, authType, host) as List<Certificate>
     } catch (e: InvocationTargetException) {
       throw e.targetException

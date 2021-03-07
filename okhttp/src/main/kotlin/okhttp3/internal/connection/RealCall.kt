@@ -15,17 +15,6 @@
  */
 package okhttp3.internal.connection
 
-import java.io.IOException
-import java.io.InterruptedIOException
-import java.lang.ref.WeakReference
-import java.net.Socket
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.RejectedExecutionException
-import java.util.concurrent.TimeUnit.MILLISECONDS
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
-import javax.net.ssl.HostnameVerifier
-import javax.net.ssl.SSLSocketFactory
 import okhttp3.Address
 import okhttp3.Call
 import okhttp3.Callback
@@ -47,6 +36,17 @@ import okhttp3.internal.http.RetryAndFollowUpInterceptor
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.threadName
 import okio.AsyncTimeout
+import java.io.IOException
+import java.io.InterruptedIOException
+import java.lang.ref.WeakReference
+import java.net.Socket
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.RejectedExecutionException
+import java.util.concurrent.TimeUnit.MILLISECONDS
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.SSLSocketFactory
 
 /**
  * Bridge between OkHttp's application and network layers. This class exposes high-level application
@@ -186,14 +186,14 @@ class RealCall(
     interceptors += CallServerInterceptor(forWebSocket)
 
     val chain = RealInterceptorChain(
-        call = this,
-        interceptors = interceptors,
-        index = 0,
-        exchange = null,
-        request = originalRequest,
-        connectTimeoutMillis = client.connectTimeoutMillis,
-        readTimeoutMillis = client.readTimeoutMillis,
-        writeTimeoutMillis = client.writeTimeoutMillis
+      call = this,
+      interceptors = interceptors,
+      index = 0,
+      exchange = null,
+      request = originalRequest,
+      connectTimeoutMillis = client.connectTimeoutMillis,
+      readTimeoutMillis = client.readTimeoutMillis,
+      writeTimeoutMillis = client.writeTimeoutMillis
     )
 
     var calledNoMoreExchanges = false
@@ -228,17 +228,17 @@ class RealCall(
     synchronized(this) {
       check(!responseBodyOpen) {
         "cannot make a new request because the previous response is still open: " +
-            "please call response.close()"
+          "please call response.close()"
       }
       check(!requestBodyOpen)
     }
 
     if (newExchangeFinder) {
       this.exchangeFinder = ExchangeFinder(
-          connectionPool,
-          createAddress(request.url),
-          this,
-          eventListener
+        connectionPool,
+        createAddress(request.url),
+        this,
+        eventListener
       )
     }
   }
@@ -438,18 +438,18 @@ class RealCall(
     }
 
     return Address(
-        uriHost = url.host,
-        uriPort = url.port,
-        dns = client.dns,
-        socketFactory = client.socketFactory,
-        sslSocketFactory = sslSocketFactory,
-        hostnameVerifier = hostnameVerifier,
-        certificatePinner = certificatePinner,
-        proxyAuthenticator = client.proxyAuthenticator,
-        proxy = client.proxy,
-        protocols = client.protocols,
-        connectionSpecs = client.connectionSpecs,
-        proxySelector = client.proxySelector
+      uriHost = url.host,
+      uriPort = url.port,
+      dns = client.dns,
+      socketFactory = client.socketFactory,
+      sslSocketFactory = sslSocketFactory,
+      hostnameVerifier = hostnameVerifier,
+      certificatePinner = certificatePinner,
+      proxyAuthenticator = client.proxyAuthenticator,
+      proxy = client.proxy,
+      protocols = client.protocols,
+      connectionSpecs = client.connectionSpecs,
+      proxySelector = client.proxySelector
     )
   }
 
@@ -460,9 +460,11 @@ class RealCall(
    * sensitive information.
    */
   private fun toLoggableString(): String {
-    return ((if (isCanceled()) "canceled " else "") +
+    return (
+      (if (isCanceled()) "canceled " else "") +
         (if (forWebSocket) "web socket" else "call") +
-        " to " + redactedUrl())
+        " to " + redactedUrl()
+      )
   }
 
   internal fun redactedUrl(): String = originalRequest.url.redact()
@@ -481,10 +483,10 @@ class RealCall(
       get() = originalRequest.url.host
 
     val request: Request
-        get() = originalRequest
+      get() = originalRequest
 
     val call: RealCall
-        get() = this@RealCall
+      get() = this@RealCall
 
     /**
      * Attempt to enqueue this async call on [executorService]. This will attempt to clean up

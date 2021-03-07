@@ -15,20 +15,6 @@
  */
 package okhttp3.curl
 
-import java.io.IOException
-import java.security.cert.X509Certificate
-import java.util.Properties
-import java.util.concurrent.TimeUnit.SECONDS
-import java.util.logging.ConsoleHandler
-import java.util.logging.Level
-import java.util.logging.LogRecord
-import java.util.logging.Logger
-import java.util.logging.SimpleFormatter
-import javax.net.ssl.HostnameVerifier
-import javax.net.ssl.SSLSocketFactory
-import javax.net.ssl.TrustManager
-import javax.net.ssl.X509TrustManager
-import kotlin.system.exitProcess
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
@@ -48,10 +34,28 @@ import picocli.CommandLine.Command
 import picocli.CommandLine.IVersionProvider
 import picocli.CommandLine.Option
 import picocli.CommandLine.Parameters
+import java.io.IOException
 import java.lang.IllegalArgumentException
+import java.security.cert.X509Certificate
+import java.util.Properties
+import java.util.concurrent.TimeUnit.SECONDS
+import java.util.logging.ConsoleHandler
+import java.util.logging.Level
+import java.util.logging.LogRecord
+import java.util.logging.Logger
+import java.util.logging.SimpleFormatter
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.SSLSocketFactory
+import javax.net.ssl.TrustManager
+import javax.net.ssl.X509TrustManager
+import kotlin.system.exitProcess
 
-@Command(name = NAME, description = ["A curl for the next-generation web."],
-    mixinStandardHelpOptions = true, versionProvider = Main.VersionProvider::class)
+@Command(
+  name = NAME,
+  description = ["A curl for the next-generation web."],
+  mixinStandardHelpOptions = true,
+  versionProvider = Main.VersionProvider::class
+)
 class Main : Runnable {
   @Option(names = ["-X", "--request"], description = ["Specify request command to use"])
   var method: String? = null
@@ -65,16 +69,22 @@ class Main : Runnable {
   @Option(names = ["-A", "--user-agent"], description = ["User-Agent to send to server"])
   var userAgent = NAME + "/" + versionString()
 
-  @Option(names = ["--connect-timeout"],
-      description = ["Maximum time allowed for connection (seconds)"])
+  @Option(
+    names = ["--connect-timeout"],
+    description = ["Maximum time allowed for connection (seconds)"]
+  )
   var connectTimeout = DEFAULT_TIMEOUT
 
-  @Option(names = ["--read-timeout"],
-      description = ["Maximum time allowed for reading data (seconds)"])
+  @Option(
+    names = ["--read-timeout"],
+    description = ["Maximum time allowed for reading data (seconds)"]
+  )
   var readTimeout = DEFAULT_TIMEOUT
 
-  @Option(names = ["--call-timeout"],
-      description = ["Maximum time allowed for the entire call (seconds)"])
+  @Option(
+    names = ["--call-timeout"],
+    description = ["Maximum time allowed for the entire call (seconds)"]
+  )
   var callTimeout = DEFAULT_TIMEOUT
 
   @Option(names = ["-L", "--location"], description = ["Follow redirects"])
@@ -223,9 +233,9 @@ class Main : Runnable {
   class VersionProvider : IVersionProvider {
     override fun getVersion(): Array<String> {
       return arrayOf(
-          "$NAME ${versionString()}",
-          "Protocols: ${Protocol.values().joinToString(", ")}",
-          "Platform: ${Platform.get()::class.java.simpleName}"
+        "$NAME ${versionString()}",
+        "Protocols: ${Protocol.values().joinToString(", ")}",
+        "Platform: ${Platform.get()::class.java.simpleName}"
       )
     }
   }
@@ -262,43 +272,47 @@ class Main : Runnable {
     }
 
     private fun createInsecureSslSocketFactory(trustManager: TrustManager): SSLSocketFactory =
-        Platform.get().newSSLContext().apply {
-          init(null, arrayOf(trustManager), null)
-        }.socketFactory
+      Platform.get().newSSLContext().apply {
+        init(null, arrayOf(trustManager), null)
+      }.socketFactory
 
     private fun createInsecureHostnameVerifier(): HostnameVerifier =
-        HostnameVerifier { _, _ -> true }
+      HostnameVerifier { _, _ -> true }
 
     private fun enableHttp2FrameLogging() {
       frameLogger = Logger.getLogger(Http2::class.java.name).apply {
         level = Level.FINE
-        addHandler(ConsoleHandler().apply {
-          level = Level.FINE
-          formatter = object : SimpleFormatter() {
-            override fun format(record: LogRecord): String {
-              return format("%s%n", record.message)
+        addHandler(
+          ConsoleHandler().apply {
+            level = Level.FINE
+            formatter = object : SimpleFormatter() {
+              override fun format(record: LogRecord): String {
+                return format("%s%n", record.message)
+              }
             }
           }
-        })
+        )
       }
     }
 
     private fun enableSslDebugging() {
       sslLogger = Logger.getLogger("javax.net.ssl").apply {
         level = Level.FINE
-        addHandler(ConsoleHandler().apply {
-          level = Level.FINE
-          formatter = object : SimpleFormatter() {
-            override fun format(record: LogRecord): String {
-              val parameters = record.parameters
-              if (parameters != null) {
-                return format("%s%n%s%n", record.message, record.parameters.first())
-              } else {
-                return format("%s%n", record.message)
+        addHandler(
+          ConsoleHandler().apply {
+            level = Level.FINE
+            formatter = object : SimpleFormatter() {
+              override fun format(record: LogRecord): String {
+                val parameters = record.parameters
+                if (parameters != null) {
+                  return format("%s%n%s%n", record.message, record.parameters.first())
+                } else {
+                  return format("%s%n", record.message)
+                }
               }
             }
           }
-        })
+        )
       }
     }
   }

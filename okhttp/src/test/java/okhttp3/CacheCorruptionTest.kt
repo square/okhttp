@@ -161,7 +161,8 @@ class CacheCorruptionTest(
     )
     client = client.newBuilder()
       .sslSocketFactory(
-        handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
+        handshakeCertificates.sslSocketFactory(),
+        handshakeCertificates.trustManager
       )
       .hostnameVerifier(NULL_HOSTNAME_VERIFIER)
       .build()

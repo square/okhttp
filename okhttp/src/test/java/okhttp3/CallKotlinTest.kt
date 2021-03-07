@@ -15,10 +15,6 @@
  */
 package okhttp3
 
-import java.io.IOException
-import java.net.Proxy
-import java.security.cert.X509Certificate
-import java.time.Duration
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy
@@ -39,6 +35,10 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.fail
+import java.io.IOException
+import java.net.Proxy
+import java.security.cert.X509Certificate
+import java.time.Duration
 
 @Timeout(30)
 class CallKotlinTest(
@@ -64,8 +64,8 @@ class CallKotlinTest(
     server.enqueue(MockResponse().setBody("def"))
 
     val request = Request.Builder()
-        .url(server.url("/"))
-        .build()
+      .url(server.url("/"))
+      .build()
 
     val call = client.newCall(request)
     val response1 = call.execute()
@@ -90,16 +90,20 @@ class CallKotlinTest(
 
     response.use {
       assertEquals(200, response.code)
-      assertEquals("CN=localhost",
-          (response.handshake!!.peerCertificates.single() as X509Certificate).subjectDN.name)
+      assertEquals(
+        "CN=localhost",
+        (response.handshake!!.peerCertificates.single() as X509Certificate).subjectDN.name
+      )
     }
   }
 
   private fun enableTls() {
     client = client.newBuilder()
-        .sslSocketFactory(
-            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager)
-        .build()
+      .sslSocketFactory(
+        handshakeCertificates.sslSocketFactory(),
+        handshakeCertificates.trustManager
+      )
+      .build()
     server.useHttps(handshakeCertificates.sslSocketFactory(), false)
   }
 
@@ -128,38 +132,44 @@ class CallKotlinTest(
       }
     }
 
-    server.enqueue(MockResponse().apply {
-      setResponseCode(201)
-    })
-    server.enqueue(MockResponse().apply {
-      setResponseCode(204)
-    })
-    server.enqueue(MockResponse().apply {
-      setResponseCode(204)
-    })
+    server.enqueue(
+      MockResponse().apply {
+        setResponseCode(201)
+      }
+    )
+    server.enqueue(
+      MockResponse().apply {
+        setResponseCode(204)
+      }
+    )
+    server.enqueue(
+      MockResponse().apply {
+        setResponseCode(204)
+      }
+    )
 
     val endpointUrl = server.url("/endpoint")
 
     var request = Request.Builder()
-        .url(endpointUrl)
-        .header("Content-Type", "application/xml")
-        .put(ValidRequestBody())
-        .build()
+      .url(endpointUrl)
+      .header("Content-Type", "application/xml")
+      .put(ValidRequestBody())
+      .build()
     // 201
     client.newCall(request).execute()
 
     request = Request.Builder()
-        .url(endpointUrl)
-        .head()
-        .build()
+      .url(endpointUrl)
+      .head()
+      .build()
     // 204
     client.newCall(request).execute()
 
     request = Request.Builder()
-        .url(endpointUrl)
-        .header("Content-Type", "application/xml")
-        .put(ErringRequestBody())
-        .build()
+      .url(endpointUrl)
+      .header("Content-Type", "application/xml")
+      .put(ErringRequestBody())
+      .build()
     try {
       client.newCall(request).execute()
       fail("test should always throw exception")
@@ -168,9 +178,9 @@ class CallKotlinTest(
     }
 
     request = Request.Builder()
-        .url(endpointUrl)
-        .head()
-        .build()
+      .url(endpointUrl)
+      .head()
+      .build()
 
     client.newCall(request).execute()
 
@@ -192,19 +202,23 @@ class CallKotlinTest(
     // Capture the connection so that we can later make it stale.
     var connection: RealConnection? = null
     client = client.newBuilder()
-        .addNetworkInterceptor(Interceptor { chain ->
+      .addNetworkInterceptor(
+        Interceptor { chain ->
           connection = chain.connection() as RealConnection
           chain.proceed(chain.request())
-        })
-        .build()
+        }
+      )
+      .build()
 
-    server.enqueue(MockResponse().setBody("a")
-        .setSocketPolicy(SocketPolicy.SHUTDOWN_OUTPUT_AT_END))
+    server.enqueue(
+      MockResponse().setBody("a")
+        .setSocketPolicy(SocketPolicy.SHUTDOWN_OUTPUT_AT_END)
+    )
     server.enqueue(MockResponse().setBody("b"))
 
     val requestA = Request.Builder()
-        .url(server.url("/"))
-        .build()
+      .url(server.url("/"))
+      .build()
     val responseA = client.newCall(requestA).execute()
 
     assertThat(responseA.body!!.string()).isEqualTo("a")
@@ -215,9 +229,9 @@ class CallKotlinTest(
     Thread.sleep(250)
 
     val requestB = Request.Builder()
-        .url(server.url("/"))
-        .post("b".toRequestBody("text/plain".toMediaType()))
-        .build()
+      .url(server.url("/"))
+      .post("b".toRequestBody("text/plain".toMediaType()))
+      .build()
     val responseB = client.newCall(requestB).execute()
     assertThat(responseB.body!!.string()).isEqualTo("b")
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
@@ -231,10 +245,10 @@ class CallKotlinTest(
     server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))
 
     client = client.newBuilder()
-        .proxySelector(proxySelector)
-        .readTimeout(Duration.ofMillis(100))
-        .connectTimeout(Duration.ofMillis(100))
-        .build()
+      .proxySelector(proxySelector)
+      .readTimeout(Duration.ofMillis(100))
+      .connectTimeout(Duration.ofMillis(100))
+      .build()
 
     val request = Request.Builder().url(server.url("/")).build()
     try {

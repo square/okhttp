@@ -340,8 +340,8 @@ open class PlatformRule @JvmOverloads constructor(
           }
 
           val provider = Conscrypt.newProviderBuilder()
-              .provideTrustManager(true)
-              .build()
+            .provideTrustManager(true)
+            .build()
           Security.insertProviderAt(provider, 1)
         }
       } else if (platformSystemProperty == JDK8_ALPN_PROPERTY) {
@@ -426,13 +426,13 @@ open class PlatformRule @JvmOverloads constructor(
       Class.forName("com.amazon.corretto.crypto.provider.AmazonCorrettoCryptoProvider")
 
       AmazonCorrettoCryptoProvider.INSTANCE.loadingError == null &&
-          AmazonCorrettoCryptoProvider.INSTANCE.runSelfTests() == SelfTestStatus.PASSED
+        AmazonCorrettoCryptoProvider.INSTANCE.runSelfTests() == SelfTestStatus.PASSED
     } catch (e: ClassNotFoundException) {
       false
     }
 
     val isCorrettoInstalled: Boolean =
       isCorrettoSupported && Security.getProviders()
-          .first().name == AmazonCorrettoCryptoProvider.PROVIDER_NAME
+        .first().name == AmazonCorrettoCryptoProvider.PROVIDER_NAME
   }
 }

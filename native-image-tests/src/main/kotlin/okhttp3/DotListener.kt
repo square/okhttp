@@ -22,7 +22,7 @@ import org.junit.platform.launcher.TestPlan
 import java.io.OutputStream
 import java.io.PrintStream
 
-object DotListener: TestExecutionListener {
+object DotListener : TestExecutionListener {
   private var originalSystemErr: PrintStream? = null
   private var originalSystemOut: PrintStream? = null
   private var testCount = 0
@@ -59,8 +59,8 @@ object DotListener: TestExecutionListener {
     originalSystemOut = System.out
     originalSystemErr = System.err
 
-    System.setOut(object: PrintStream(OutputStream.nullOutputStream()) {})
-    System.setErr(object: PrintStream(OutputStream.nullOutputStream()) {})
+    System.setOut(object : PrintStream(OutputStream.nullOutputStream()) {})
+    System.setErr(object : PrintStream(OutputStream.nullOutputStream()) {})
   }
 
   fun uninstall() {

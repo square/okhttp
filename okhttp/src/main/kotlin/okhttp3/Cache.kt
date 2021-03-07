@@ -172,7 +172,9 @@ internal constructor(
   /** Create a cache of at most [maxSize] bytes in [directory]. */
   @OptIn(ExperimentalFileSystem::class)
   constructor(directory: File, maxSize: Long) : this(
-    directory.toOkioPath(), maxSize, FileSystem.SYSTEM
+    directory.toOkioPath(),
+    maxSize,
+    FileSystem.SYSTEM
   )
 
   internal fun get(request: Request): Response? {

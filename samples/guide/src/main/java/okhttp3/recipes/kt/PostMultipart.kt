@@ -32,7 +32,8 @@ class PostMultipart {
       .setType(MultipartBody.FORM)
       .addFormDataPart("title", "Square Logo")
       .addFormDataPart(
-        "image", "logo-square.png",
+        "image",
+        "logo-square.png",
         File("docs/images/logo-square.png").asRequestBody(MEDIA_TYPE_PNG)
       )
       .build()

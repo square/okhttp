@@ -25,7 +25,8 @@ class PostString {
   private val client = OkHttpClient()
 
   fun run() {
-    val postBody = """
+    val postBody =
+      """
         |Releases
         |--------
         |

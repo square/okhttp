@@ -15,9 +15,9 @@
  */
 package okhttp3
 
+import okio.ByteString.Companion.encode
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets.ISO_8859_1
-import okio.ByteString.Companion.encode
 
 /** Factory for HTTP authorization credentials. */
 object Credentials {

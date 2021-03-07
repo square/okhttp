@@ -85,9 +85,10 @@ class MockResponse : Cloneable {
 
   @JvmName("-deprecated_getStatus")
   @Deprecated(
-      message = "moved to var",
-      replaceWith = ReplaceWith(expression = "status"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to var",
+    replaceWith = ReplaceWith(expression = "status"),
+    level = DeprecationLevel.ERROR
+  )
   fun getStatus(): String = status
 
   fun setStatus(status: String) = apply {
@@ -161,27 +162,30 @@ class MockResponse : Cloneable {
 
   @JvmName("-deprecated_getHeaders")
   @Deprecated(
-      message = "moved to var",
-      replaceWith = ReplaceWith(expression = "headers"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to var",
+    replaceWith = ReplaceWith(expression = "headers"),
+    level = DeprecationLevel.ERROR
+  )
   fun getHeaders(): Headers = headers
 
   fun setHeaders(headers: Headers) = apply { this.headers = headers }
 
   @JvmName("-deprecated_getTrailers")
   @Deprecated(
-      message = "moved to var",
-      replaceWith = ReplaceWith(expression = "trailers"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to var",
+    replaceWith = ReplaceWith(expression = "trailers"),
+    level = DeprecationLevel.ERROR
+  )
   fun getTrailers(): Headers = trailers
 
   fun setTrailers(trailers: Headers) = apply { this.trailers = trailers }
 
   @JvmName("-deprecated_getSocketPolicy")
   @Deprecated(
-      message = "moved to var",
-      replaceWith = ReplaceWith(expression = "socketPolicy"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to var",
+    replaceWith = ReplaceWith(expression = "socketPolicy"),
+    level = DeprecationLevel.ERROR
+  )
   fun getSocketPolicy() = socketPolicy
 
   fun setSocketPolicy(socketPolicy: SocketPolicy) = apply {
@@ -190,9 +194,10 @@ class MockResponse : Cloneable {
 
   @JvmName("-deprecated_getHttp2ErrorCode")
   @Deprecated(
-      message = "moved to var",
-      replaceWith = ReplaceWith(expression = "http2ErrorCode"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to var",
+    replaceWith = ReplaceWith(expression = "http2ErrorCode"),
+    level = DeprecationLevel.ERROR
+  )
   fun getHttp2ErrorCode() = http2ErrorCode
 
   fun setHttp2ErrorCode(http2ErrorCode: Int) = apply {

@@ -46,7 +46,7 @@ class BasicTrustRootIndex(vararg caCerts: X509Certificate) : TrustRootIndex {
 
   override fun equals(other: Any?): Boolean {
     return other === this ||
-        (other is BasicTrustRootIndex && other.subjectToCaCerts == subjectToCaCerts)
+      (other is BasicTrustRootIndex && other.subjectToCaCerts == subjectToCaCerts)
   }
 
   override fun hashCode(): Int {

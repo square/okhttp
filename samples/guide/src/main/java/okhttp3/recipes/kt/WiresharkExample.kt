@@ -259,7 +259,9 @@ class WiresharkExample(tlsVersions: List<TlsVersion>, private val launch: Launch
       .build()
 
   private val eventListenerFactory = WireSharkListenerFactory(
-    logFile = File("/tmp/key.log"), tlsVersions = tlsVersions, launch = launch
+    logFile = File("/tmp/key.log"),
+    tlsVersions = tlsVersions,
+    launch = launch
   )
 
   val client = OkHttpClient.Builder()

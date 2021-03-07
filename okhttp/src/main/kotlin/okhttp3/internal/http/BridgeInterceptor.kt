@@ -16,7 +16,6 @@
  */
 package okhttp3.internal.http
 
-import java.io.IOException
 import okhttp3.Cookie
 import okhttp3.CookieJar
 import okhttp3.Interceptor
@@ -25,6 +24,7 @@ import okhttp3.internal.toHostHeader
 import okhttp3.internal.userAgent
 import okio.GzipSource
 import okio.buffer
+import java.io.IOException
 
 /**
  * Bridges from application code to network code. First it builds a network request from a user
@@ -85,18 +85,19 @@ class BridgeInterceptor(private val cookieJar: CookieJar) : Interceptor {
     cookieJar.receiveHeaders(userRequest.url, networkResponse.headers)
 
     val responseBuilder = networkResponse.newBuilder()
-        .request(userRequest)
+      .request(userRequest)
 
     if (transparentGzip &&
-        "gzip".equals(networkResponse.header("Content-Encoding"), ignoreCase = true) &&
-        networkResponse.promisesBody()) {
+      "gzip".equals(networkResponse.header("Content-Encoding"), ignoreCase = true) &&
+      networkResponse.promisesBody()
+    ) {
       val responseBody = networkResponse.body
       if (responseBody != null) {
         val gzipSource = GzipSource(responseBody.source())
         val strippedHeaders = networkResponse.headers.newBuilder()
-            .removeAll("Content-Encoding")
-            .removeAll("Content-Length")
-            .build()
+          .removeAll("Content-Encoding")
+          .removeAll("Content-Length")
+          .build()
         responseBuilder.headers(strippedHeaders)
         val contentType = networkResponse.header("Content-Type")
         responseBuilder.body(RealResponseBody(contentType, -1L, gzipSource.buffer()))

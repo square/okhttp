@@ -15,9 +15,6 @@
  */
 package okhttp3.internal.ws
 
-import java.io.Closeable
-import java.io.IOException
-import java.util.Random
 import okhttp3.internal.ws.WebSocketProtocol.B0_FLAG_FIN
 import okhttp3.internal.ws.WebSocketProtocol.B0_FLAG_RSV1
 import okhttp3.internal.ws.WebSocketProtocol.B1_FLAG_MASK
@@ -33,6 +30,9 @@ import okhttp3.internal.ws.WebSocketProtocol.validateCloseCode
 import okio.Buffer
 import okio.BufferedSink
 import okio.ByteString
+import java.io.Closeable
+import java.io.IOException
+import java.util.Random
 
 /**
  * An [RFC 6455][rfc_6455]-compatible WebSocket frame writer.
@@ -151,7 +151,7 @@ class WebSocketWriter(
     var b0 = formatOpcode or B0_FLAG_FIN
     if (perMessageDeflate && data.size >= minimumDeflateSize) {
       val messageDeflater = this.messageDeflater
-          ?: MessageDeflater(noContextTakeover).also { this.messageDeflater = it }
+        ?: MessageDeflater(noContextTakeover).also { this.messageDeflater = it }
       messageDeflater.deflate(messageBuffer)
       b0 = b0 or B0_FLAG_RSV1
     }

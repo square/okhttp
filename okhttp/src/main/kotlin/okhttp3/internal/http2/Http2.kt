@@ -47,8 +47,8 @@ object Http2 {
 
   /** Lookup table for valid frame types. */
   private val FRAME_NAMES = arrayOf(
-      "DATA", "HEADERS", "PRIORITY", "RST_STREAM", "SETTINGS", "PUSH_PROMISE", "PING", "GOAWAY",
-      "WINDOW_UPDATE", "CONTINUATION"
+    "DATA", "HEADERS", "PRIORITY", "RST_STREAM", "SETTINGS", "PUSH_PROMISE", "PING", "GOAWAY",
+    "WINDOW_UPDATE", "CONTINUATION"
   )
 
   /**
@@ -80,7 +80,7 @@ object Http2 {
       for (prefixFlag in prefixFlags) {
         FLAGS[prefixFlag or frameFlag] = FLAGS[prefixFlag] + '|'.toString() + FLAGS[frameFlag]
         FLAGS[prefixFlag or frameFlag or FLAG_PADDED] =
-            FLAGS[prefixFlag] + '|'.toString() + FLAGS[frameFlag] + "|PADDED"
+          FLAGS[prefixFlag] + '|'.toString() + FLAGS[frameFlag] + "|PADDED"
       }
     }
 
@@ -115,8 +115,14 @@ object Http2 {
     val formattedType = formattedType(type)
     val formattedFlags = formatFlags(type, flags)
     val direction = if (inbound) "<<" else ">>"
-    return format("%s 0x%08x %5d %-13s %s",
-        direction, streamId, length, formattedType, formattedFlags)
+    return format(
+      "%s 0x%08x %5d %-13s %s",
+      direction,
+      streamId,
+      length,
+      formattedType,
+      formattedFlags
+    )
   }
 
   internal fun formattedType(type: Int) =

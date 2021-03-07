@@ -15,10 +15,11 @@
  */
 package okhttp3
 
-import java.net.InetAddress
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.TestUtil.assumeNetwork
+import okhttp3.internal.connection
+import okhttp3.internal.exchange
 import okhttp3.internal.platform.OpenJSSEPlatform
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
@@ -31,8 +32,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.openjsse.sun.security.ssl.SSLSocketFactoryImpl
 import org.openjsse.sun.security.ssl.SSLSocketImpl
-import okhttp3.internal.exchange
-import okhttp3.internal.connection
+import java.net.InetAddress
 
 class OpenJSSETest(
   val server: MockWebServer
@@ -97,18 +97,20 @@ class OpenJSSETest(
     // Generate a self-signed cert for the server to serve and the client to trust.
     // can't use TlsUtil.localhost with a non OpenJSSE trust manager
     val heldCertificate = HeldCertificate.Builder()
-        .commonName("localhost")
-        .addSubjectAlternativeName(InetAddress.getByName("localhost").canonicalHostName)
-        .build()
+      .commonName("localhost")
+      .addSubjectAlternativeName(InetAddress.getByName("localhost").canonicalHostName)
+      .build()
     val handshakeCertificates = HandshakeCertificates.Builder()
-        .heldCertificate(heldCertificate)
-        .addTrustedCertificate(heldCertificate.certificate)
-        .build()
+      .heldCertificate(heldCertificate)
+      .addTrustedCertificate(heldCertificate.certificate)
+      .build()
 
     client = client.newBuilder()
-        .sslSocketFactory(
-            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager)
-        .build()
+      .sslSocketFactory(
+        handshakeCertificates.sslSocketFactory(),
+        handshakeCertificates.trustManager
+      )
+      .build()
     server.useHttps(handshakeCertificates.sslSocketFactory(), false)
   }
 }

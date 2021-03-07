@@ -30,7 +30,8 @@ import java.net.ProtocolException
 @Tag("Slowish")
 class MultipartReaderTest {
   @Test fun `parse multipart`() {
-    val multipart = """
+    val multipart =
+      """
         |--simple boundary
         |Content-Type: text/plain; charset=utf-8
         |Content-ID: abc
@@ -57,8 +58,10 @@ class MultipartReaderTest {
     val partAbc = parts.nextPart()!!
     assertThat(partAbc.headers).isEqualTo(
       headersOf(
-        "Content-Type", "text/plain; charset=utf-8",
-        "Content-ID", "abc"
+        "Content-Type",
+        "text/plain; charset=utf-8",
+        "Content-ID",
+        "abc"
       )
     )
     assertThat(partAbc.body.readUtf8()).isEqualTo("abcd\r\nefgh")
@@ -66,8 +69,10 @@ class MultipartReaderTest {
     val partIjk = parts.nextPart()!!
     assertThat(partIjk.headers).isEqualTo(
       headersOf(
-        "Content-Type", "text/plain; charset=utf-8",
-        "Content-ID", "ijk"
+        "Content-Type",
+        "text/plain; charset=utf-8",
+        "Content-ID",
+        "ijk"
       )
     )
     assertThat(partIjk.body.readUtf8()).isEqualTo("ijkl\r\nmnop\r\n")
@@ -76,7 +81,8 @@ class MultipartReaderTest {
   }
 
   @Test fun `parse from response body`() {
-    val multipart = """
+    val multipart =
+      """
         |--simple boundary
         |
         |abcd
@@ -98,7 +104,8 @@ class MultipartReaderTest {
   }
 
   @Test fun `truncated multipart`() {
-    val multipart = """
+    val multipart =
+      """
         |--simple boundary
         |
         |abcd
@@ -126,7 +133,8 @@ class MultipartReaderTest {
   }
 
   @Test fun `malformed headers`() {
-    val multipart = """
+    val multipart =
+      """
         |--simple boundary
         |abcd
         |""".trimMargin()
@@ -145,7 +153,8 @@ class MultipartReaderTest {
   }
 
   @Test fun `lf instead of crlf boundary is not honored`() {
-    val multipart = """
+    val multipart =
+      """
         |--simple boundary
         |
         |abcd
@@ -169,7 +178,8 @@ class MultipartReaderTest {
   }
 
   @Test fun `partial boundary is not honored`() {
-    val multipart = """
+    val multipart =
+      """
         |--simple boundary
         |
         |abcd
@@ -192,7 +202,8 @@ class MultipartReaderTest {
   }
 
   @Test fun `do not need to read entire part`() {
-    val multipart = """
+    val multipart =
+      """
         |--simple boundary
         |
         |abcd
@@ -218,7 +229,8 @@ class MultipartReaderTest {
   }
 
   @Test fun `cannot read part after calling nextPart`() {
-    val multipart = """
+    val multipart =
+      """
         |--simple boundary
         |
         |abcd
@@ -251,7 +263,8 @@ class MultipartReaderTest {
   }
 
   @Test fun `cannot read part after calling close`() {
-    val multipart = """
+    val multipart =
+      """
         |--simple boundary
         |
         |abcd
@@ -292,7 +305,8 @@ class MultipartReaderTest {
   }
 
   @Test fun `zero parts`() {
-    val multipart = """
+    val multipart =
+      """
         |--simple boundary--
         """.trimMargin()
         .replace("\n", "\r\n")
@@ -311,7 +325,8 @@ class MultipartReaderTest {
   }
 
   @Test fun `skip preamble`() {
-    val multipart = """
+    val multipart =
+      """
         |this is the preamble! it is invisible to application code
         |
         |--simple boundary
@@ -334,7 +349,8 @@ class MultipartReaderTest {
   }
 
   @Test fun `skip epilogue`() {
-    val multipart = """
+    val multipart =
+      """
         |--simple boundary
         |
         |abcd
@@ -356,7 +372,8 @@ class MultipartReaderTest {
   }
 
   @Test fun `skip whitespace after boundary`() {
-    val multipart = """
+    val multipart =
+      """
         |--simple boundary
         |
         |abcd
@@ -378,7 +395,8 @@ class MultipartReaderTest {
   }
 
   @Test fun `skip whitespace after close delimiter`() {
-    val multipart = """
+    val multipart =
+      """
         |--simple boundary
         |
         |abcd
@@ -400,7 +418,8 @@ class MultipartReaderTest {
   }
 
   @Test fun `other characters after boundary`() {
-    val multipart = """
+    val multipart =
+      """
         |--simple boundary hi
         """.trimMargin()
         .replace(Regex("(?m)simple boundary$"), "simple boundary ")
@@ -420,7 +439,8 @@ class MultipartReaderTest {
   }
 
   @Test fun `whitespace before close delimiter`() {
-    val multipart = """
+    val multipart =
+      """
         |--simple boundary
         |
         |abcd
@@ -444,7 +464,8 @@ class MultipartReaderTest {
 
   /** The documentation advises that '-' is the simplest boundary possible. */
   @Test fun `dash boundary`() {
-    val multipart = """
+    val multipart =
+      """
         |---
         |Content-ID: abc
         |
@@ -474,7 +495,8 @@ class MultipartReaderTest {
   }
 
   @Test fun `no more parts is idempotent`() {
-    val multipart = """
+    val multipart =
+      """
         |--simple boundary
         |
         |abcd
@@ -511,11 +533,11 @@ class MultipartReaderTest {
   /** Confirm that [MultipartBody] and [MultipartReader] can work together. */
   @Test fun `multipart round trip`() {
     val body = MultipartBody.Builder("boundary")
-        .setType(MultipartBody.PARALLEL)
-        .addPart("Quick".toRequestBody("text/plain".toMediaType()))
-        .addFormDataPart("color", "Brown")
-        .addFormDataPart("animal", "fox.txt", "Fox".toRequestBody())
-        .build()
+      .setType(MultipartBody.PARALLEL)
+      .addPart("Quick".toRequestBody("text/plain".toMediaType()))
+      .addFormDataPart("color", "Brown")
+      .addFormDataPart("animal", "fox.txt", "Fox".toRequestBody())
+      .build()
 
     val bodyContent = Buffer()
     body.writeTo(bodyContent)
@@ -525,8 +547,10 @@ class MultipartReaderTest {
     val quickPart = reader.nextPart()!!
     assertThat(quickPart.headers).isEqualTo(
       headersOf(
-        "Content-Type", "text/plain; charset=utf-8",
-        "Content-Length", "5"
+        "Content-Type",
+        "text/plain; charset=utf-8",
+        "Content-Length",
+        "5"
       )
     )
     assertThat(quickPart.body.readUtf8()).isEqualTo("Quick")
@@ -534,8 +558,10 @@ class MultipartReaderTest {
     val brownPart = reader.nextPart()!!
     assertThat(brownPart.headers).isEqualTo(
       headersOf(
-        "Content-Disposition", "form-data; name=\"color\"",
-        "Content-Length", "5"
+        "Content-Disposition",
+        "form-data; name=\"color\"",
+        "Content-Length",
+        "5"
       )
     )
     assertThat(brownPart.body.readUtf8()).isEqualTo("Brown")
@@ -543,8 +569,10 @@ class MultipartReaderTest {
     val foxPart = reader.nextPart()!!
     assertThat(foxPart.headers).isEqualTo(
       headersOf(
-        "Content-Disposition", "form-data; name=\"animal\"; filename=\"fox.txt\"",
-        "Content-Length", "3"
+        "Content-Disposition",
+        "form-data; name=\"animal\"; filename=\"fox.txt\"",
+        "Content-Length",
+        "3"
       )
     )
     assertThat(foxPart.body.readUtf8()).isEqualTo("Fox")

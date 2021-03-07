@@ -15,10 +15,6 @@
  */
 package okhttp3.internal.ws
 
-import java.io.Closeable
-import java.io.IOException
-import java.net.ProtocolException
-import java.util.concurrent.TimeUnit
 import okhttp3.internal.and
 import okhttp3.internal.toHexString
 import okhttp3.internal.ws.WebSocketProtocol.B0_FLAG_FIN
@@ -43,6 +39,10 @@ import okhttp3.internal.ws.WebSocketProtocol.toggleMask
 import okio.Buffer
 import okio.BufferedSource
 import okio.ByteString
+import java.io.Closeable
+import java.io.IOException
+import java.net.ProtocolException
+import java.util.concurrent.TimeUnit
 
 /**
  * An [RFC 6455][rfc_6455]-compatible WebSocket frame reader.
@@ -156,11 +156,13 @@ class WebSocketReader(
     val isMasked = b1 and B1_FLAG_MASK != 0
     if (isMasked == isClient) {
       // Masked payloads must be read on the server. Unmasked payloads must be read on the client.
-      throw ProtocolException(if (isClient) {
-        "Server-sent frames must not be masked."
-      } else {
-        "Client-sent frames must be masked."
-      })
+      throw ProtocolException(
+        if (isClient) {
+          "Server-sent frames must not be masked."
+        } else {
+          "Client-sent frames must be masked."
+        }
+      )
     }
 
     // Get frame length, optionally reading from follow-up bytes if indicated by special values.
@@ -171,7 +173,8 @@ class WebSocketReader(
       frameLength = source.readLong()
       if (frameLength < 0L) {
         throw ProtocolException(
-            "Frame length 0x${frameLength.toHexString()} > 0x7FFFFFFFFFFFFFFF")
+          "Frame length 0x${frameLength.toHexString()} > 0x7FFFFFFFFFFFFFFF"
+        )
       }
     }
 
@@ -237,7 +240,7 @@ class WebSocketReader(
 
     if (readingCompressedMessage) {
       val messageInflater = this.messageInflater
-          ?: MessageInflater(noContextTakeover).also { this.messageInflater = it }
+        ?: MessageInflater(noContextTakeover).also { this.messageInflater = it }
       messageInflater.inflate(messageFrameBuffer)
     }
 

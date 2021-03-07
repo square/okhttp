@@ -15,12 +15,6 @@
  */
 package okhttp3
 
-import java.util.Calendar
-import java.util.Collections
-import java.util.Date
-import java.util.GregorianCalendar
-import java.util.Locale
-import java.util.regex.Pattern
 import okhttp3.internal.UTC
 import okhttp3.internal.canParseAsIpAddress
 import okhttp3.internal.delimiterOffset
@@ -31,6 +25,12 @@ import okhttp3.internal.publicsuffix.PublicSuffixDatabase
 import okhttp3.internal.toCanonicalHost
 import okhttp3.internal.trimSubstring
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
+import java.util.Calendar
+import java.util.Collections
+import java.util.Date
+import java.util.GregorianCalendar
+import java.util.Locale
+import java.util.regex.Pattern
 
 /**
  * An [RFC 6265](http://tools.ietf.org/html/rfc6265) Cookie.
@@ -115,15 +115,15 @@ class Cookie private constructor(
 
   override fun equals(other: Any?): Boolean {
     return other is Cookie &&
-        other.name == name &&
-        other.value == value &&
-        other.expiresAt == expiresAt &&
-        other.domain == domain &&
-        other.path == path &&
-        other.secure == secure &&
-        other.httpOnly == httpOnly &&
-        other.persistent == persistent &&
-        other.hostOnly == hostOnly
+      other.name == name &&
+      other.value == value &&
+      other.expiresAt == expiresAt &&
+      other.domain == domain &&
+      other.path == path &&
+      other.secure == secure &&
+      other.httpOnly == httpOnly &&
+      other.persistent == persistent &&
+      other.hostOnly == hostOnly
   }
 
   @IgnoreJRERequirement // As of AGP 3.4.1, D8 desugars API 24 hashCode methods.
@@ -145,65 +145,74 @@ class Cookie private constructor(
 
   @JvmName("-deprecated_name")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "name"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "name"),
+    level = DeprecationLevel.ERROR
+  )
   fun name(): String = name
 
   @JvmName("-deprecated_value")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "value"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "value"),
+    level = DeprecationLevel.ERROR
+  )
   fun value(): String = value
 
   @JvmName("-deprecated_persistent")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "persistent"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "persistent"),
+    level = DeprecationLevel.ERROR
+  )
   fun persistent(): Boolean = persistent
 
   @JvmName("-deprecated_expiresAt")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "expiresAt"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "expiresAt"),
+    level = DeprecationLevel.ERROR
+  )
   fun expiresAt(): Long = expiresAt
 
   @JvmName("-deprecated_hostOnly")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "hostOnly"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "hostOnly"),
+    level = DeprecationLevel.ERROR
+  )
   fun hostOnly(): Boolean = hostOnly
 
   @JvmName("-deprecated_domain")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "domain"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "domain"),
+    level = DeprecationLevel.ERROR
+  )
   fun domain(): String = domain
 
   @JvmName("-deprecated_path")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "path"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "path"),
+    level = DeprecationLevel.ERROR
+  )
   fun path(): String = path
 
   @JvmName("-deprecated_httpOnly")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "httpOnly"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "httpOnly"),
+    level = DeprecationLevel.ERROR
+  )
   fun httpOnly(): Boolean = httpOnly
 
   @JvmName("-deprecated_secure")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "secure"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "secure"),
+    level = DeprecationLevel.ERROR
+  )
   fun secure(): Boolean = secure
 
   /**
@@ -294,7 +303,7 @@ class Cookie private constructor(
 
     private fun domain(domain: String, hostOnly: Boolean) = apply {
       val canonicalDomain = domain.toCanonicalHost()
-          ?: throw IllegalArgumentException("unexpected domain: $domain")
+        ?: throw IllegalArgumentException("unexpected domain: $domain")
       this.domain = canonicalDomain
       this.hostOnly = hostOnly
     }
@@ -314,15 +323,16 @@ class Cookie private constructor(
 
     fun build(): Cookie {
       return Cookie(
-          name ?: throw NullPointerException("builder.name == null"),
-          value ?: throw NullPointerException("builder.value == null"),
-          expiresAt,
-          domain ?: throw NullPointerException("builder.domain == null"),
-          path,
-          secure,
-          httpOnly,
-          persistent,
-          hostOnly)
+        name ?: throw NullPointerException("builder.name == null"),
+        value ?: throw NullPointerException("builder.value == null"),
+        expiresAt,
+        domain ?: throw NullPointerException("builder.domain == null"),
+        path,
+        secure,
+        httpOnly,
+        persistent,
+        hostOnly
+      )
     }
   }
 
@@ -330,7 +340,7 @@ class Cookie private constructor(
   companion object {
     private val YEAR_PATTERN = Pattern.compile("(\\d{2,4})[^\\d]*")
     private val MONTH_PATTERN =
-        Pattern.compile("(?i)(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec).*")
+      Pattern.compile("(?i)(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec).*")
     private val DAY_OF_MONTH_PATTERN = Pattern.compile("(\\d{1,2})[^\\d]*")
     private val TIME_PATTERN = Pattern.compile("(\\d{1,2}):(\\d{1,2}):(\\d{1,2})[^\\d]*")
 
@@ -340,8 +350,8 @@ class Cookie private constructor(
       }
 
       return urlHost.endsWith(domain) &&
-          urlHost[urlHost.length - domain.length - 1] == '.' &&
-          !urlHost.canParseAsIpAddress()
+        urlHost[urlHost.length - domain.length - 1] == '.' &&
+        !urlHost.canParseAsIpAddress()
     }
 
     private fun pathMatch(url: HttpUrl, path: String): Boolean {
@@ -365,7 +375,7 @@ class Cookie private constructor(
      */
     @JvmStatic
     fun parse(url: HttpUrl, setCookie: String): Cookie? =
-        parse(System.currentTimeMillis(), url, setCookie)
+      parse(System.currentTimeMillis(), url, setCookie)
 
     internal fun parse(currentTimeMillis: Long, url: HttpUrl, setCookie: String): Cookie? {
       val cookiePairEnd = setCookie.delimiterOffset(';')
@@ -466,7 +476,8 @@ class Cookie private constructor(
 
       // If the domain is a suffix of the url host, it must not be a public suffix.
       if (urlHost.length != domain.length &&
-          PublicSuffixDatabase.get().getEffectiveTldPlusOne(domain) == null) {
+        PublicSuffixDatabase.get().getEffectiveTldPlusOne(domain) == null
+      ) {
         return null
       }
 
@@ -478,8 +489,10 @@ class Cookie private constructor(
         path = if (lastSlash != 0) encodedPath.substring(0, lastSlash) else "/"
       }
 
-      return Cookie(cookieName, cookieValue, expiresAt, domain, path, secureOnly, httpOnly,
-          persistent, hostOnly)
+      return Cookie(
+        cookieName, cookieValue, expiresAt, domain, path, secureOnly, httpOnly,
+        persistent, hostOnly
+      )
     }
 
     /** Parse a date as specified in RFC 6265, section 5.1.1. */
@@ -553,11 +566,13 @@ class Cookie private constructor(
     private fun dateCharacterOffset(input: String, pos: Int, limit: Int, invert: Boolean): Int {
       for (i in pos until limit) {
         val c = input[i].toInt()
-        val dateCharacter = (c < ' '.toInt() && c != '\t'.toInt() || c >= '\u007f'.toInt() ||
+        val dateCharacter = (
+          c < ' '.toInt() && c != '\t'.toInt() || c >= '\u007f'.toInt() ||
             c in '0'.toInt()..'9'.toInt() ||
             c in 'a'.toInt()..'z'.toInt() ||
             c in 'A'.toInt()..'Z'.toInt() ||
-            c == ':'.toInt())
+            c == ':'.toInt()
+          )
         if (dateCharacter == !invert) return i
       }
       return limit

@@ -50,8 +50,10 @@ class TestRegistration : Feature {
   private fun registerJupiterClasses(access: Feature.BeforeAnalysisAccess) {
     registerStandardClass(access, "org.junit.jupiter.params.ParameterizedTestExtension")
     registerStandardClass(access, "org.junit.platform.console.tasks.TreePrintingListener")
-    registerStandardClass(access,
-      "org.junit.jupiter.engine.extension.TimeoutExtension\$ExecutorResource")
+    registerStandardClass(
+      access,
+      "org.junit.jupiter.engine.extension.TimeoutExtension\$ExecutorResource"
+    )
   }
 
   private fun registerStandardClass(access: Feature.BeforeAnalysisAccess, name: String) {

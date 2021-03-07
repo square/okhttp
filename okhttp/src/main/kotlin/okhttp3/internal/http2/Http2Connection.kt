@@ -15,11 +15,6 @@
  */
 package okhttp3.internal.http2
 
-import java.io.Closeable
-import java.io.IOException
-import java.io.InterruptedIOException
-import java.net.Socket
-import java.util.concurrent.TimeUnit
 import okhttp3.internal.EMPTY_BYTE_ARRAY
 import okhttp3.internal.EMPTY_HEADERS
 import okhttp3.internal.assertThreadDoesntHoldLock
@@ -42,6 +37,11 @@ import okio.ByteString
 import okio.buffer
 import okio.sink
 import okio.source
+import java.io.Closeable
+import java.io.IOException
+import java.io.InterruptedIOException
+import java.net.Socket
+import java.util.concurrent.TimeUnit
 
 /**
  * A socket connection to a remote peer. A connection hosts streams which can send and receive
@@ -249,8 +249,8 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
         nextStreamId += 2
         stream = Http2Stream(streamId, this, outFinished, inFinished, null)
         flushHeaders = !out ||
-            writeBytesTotal >= writeBytesMaximum ||
-            stream.writeBytesTotal >= stream.writeBytesMaximum
+          writeBytesTotal >= writeBytesMaximum ||
+          stream.writeBytesTotal >= stream.writeBytesMaximum
         if (stream.isOpen) {
           streams[streamId] = stream
         }

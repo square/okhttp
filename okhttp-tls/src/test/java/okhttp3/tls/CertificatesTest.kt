@@ -20,7 +20,8 @@ import org.junit.jupiter.api.Test
 
 class CertificatesTest {
   @Test fun testRoundtrip() {
-    val certificateString = """
+    val certificateString =
+      """
       -----BEGIN CERTIFICATE-----
       MIIBmjCCAQOgAwIBAgIBATANBgkqhkiG9w0BAQsFADATMREwDwYDVQQDEwhjYXNo
       LmFwcDAeFw03MDAxMDEwMDAwMDBaFw03MDAxMDEwMDAwMDFaMBMxETAPBgNVBAMT
@@ -32,7 +33,7 @@ class CertificatesTest {
       8V0vxo1pHXnbBrnxhS/Z3TBerw8RyQqcaWOdp+pBXyIWmR+jHk9cHZCqQveTIBsY
       jaA9VEhgdaVhxBsT2qzUNDsXlOzGsliznDfoqETb
       -----END CERTIFICATE-----
-      
+
       """.trimIndent()
     val certificate = certificateString.decodeCertificatePem()
     assertEquals(certificateString, certificate.certificatePem())

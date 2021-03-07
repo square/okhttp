@@ -15,12 +15,12 @@
  */
 package okhttp3.internal.concurrent
 
-import java.util.concurrent.Executors
 import okhttp3.internal.assertThreadDoesntHoldLock
 import okhttp3.internal.assertThreadHoldsLock
 import okhttp3.internal.notify
 import okhttp3.internal.wait
 import org.assertj.core.api.Assertions.assertThat
+import java.util.concurrent.Executors
 
 /**
  * Runs a [TaskRunner] in a controlled environment so that everything is sequential and
@@ -60,47 +60,49 @@ class TaskFaker {
   private var executedTaskLimit = Int.MAX_VALUE
 
   /** A task runner that posts tasks to this fake. Tasks won't be executed until requested. */
-  val taskRunner: TaskRunner = TaskRunner(object : TaskRunner.Backend {
-    override fun beforeTask(taskRunner: TaskRunner) {
-      taskRunner.assertThreadHoldsLock()
+  val taskRunner: TaskRunner = TaskRunner(
+    object : TaskRunner.Backend {
+      override fun beforeTask(taskRunner: TaskRunner) {
+        taskRunner.assertThreadHoldsLock()
 
-      while (executedRunnableCount >= executedTaskLimit) {
-        coordinatorWait(taskRunner, Long.MAX_VALUE)
-      }
-    }
-
-    override fun execute(runnable: Runnable) {
-      futureRunnables.add(runnable)
-    }
-
-    override fun nanoTime() = nanoTime
-
-    override fun coordinatorNotify(taskRunner: TaskRunner) {
-      taskRunner.assertThreadHoldsLock()
-
-      waitingUntilTime = nanoTime
-    }
-
-    override fun coordinatorWait(taskRunner: TaskRunner, nanos: Long) {
-      taskRunner.assertThreadHoldsLock()
-
-      check(waitingUntilTime == Long.MAX_VALUE)
-      check(waitingThread == null)
-
-      waitingThread = Thread.currentThread()
-      waitingUntilTime = if (nanos < Long.MAX_VALUE) nanoTime + nanos else Long.MAX_VALUE
-      try {
-        if (nanoTime < waitingUntilTime) {
-          // Stall because there's no work to do.
-          taskRunner.notify()
-          taskRunner.wait()
+        while (executedRunnableCount >= executedTaskLimit) {
+          coordinatorWait(taskRunner, Long.MAX_VALUE)
         }
-      } finally {
-        waitingThread = null
-        waitingUntilTime = Long.MAX_VALUE
+      }
+
+      override fun execute(runnable: Runnable) {
+        futureRunnables.add(runnable)
+      }
+
+      override fun nanoTime() = nanoTime
+
+      override fun coordinatorNotify(taskRunner: TaskRunner) {
+        taskRunner.assertThreadHoldsLock()
+
+        waitingUntilTime = nanoTime
+      }
+
+      override fun coordinatorWait(taskRunner: TaskRunner, nanos: Long) {
+        taskRunner.assertThreadHoldsLock()
+
+        check(waitingUntilTime == Long.MAX_VALUE)
+        check(waitingThread == null)
+
+        waitingThread = Thread.currentThread()
+        waitingUntilTime = if (nanos < Long.MAX_VALUE) nanoTime + nanos else Long.MAX_VALUE
+        try {
+          if (nanoTime < waitingUntilTime) {
+// Stall because there's no work to do.
+            taskRunner.notify()
+            taskRunner.wait()
+          }
+        } finally {
+          waitingThread = null
+          waitingUntilTime = Long.MAX_VALUE
+        }
       }
     }
-  })
+  )
 
   /** Runs all tasks that are ready without advancing the simulated clock. */
   fun runTasks() {
@@ -136,16 +138,18 @@ class TaskFaker {
       val runnable = futureRunnables.removeAt(0)
       currentRunnables.add(runnable)
       if (currentRunnables.size > 1) isParallel = true
-      executorService.execute(Runnable {
-        try {
-          runnable.run()
-        } finally {
-          currentRunnables.remove(runnable)
-          synchronized(taskRunner) {
-            taskRunner.notify()
+      executorService.execute(
+        Runnable {
+          try {
+            runnable.run()
+          } finally {
+            currentRunnables.remove(runnable)
+            synchronized(taskRunner) {
+              taskRunner.notify()
+            }
           }
         }
-      })
+      )
       taskRunner.wait() // Wait for the coordinator to stall.
     }
   }
@@ -153,8 +157,8 @@ class TaskFaker {
   fun assertNoMoreTasks() {
     assertThat(futureRunnables).isEmpty()
     assertThat(waitingUntilTime)
-        .withFailMessage("tasks are scheduled to run at $waitingUntilTime")
-        .isEqualTo(Long.MAX_VALUE)
+      .withFailMessage("tasks are scheduled to run at $waitingUntilTime")
+      .isEqualTo(Long.MAX_VALUE)
   }
 
   fun interruptCoordinatorThread() {

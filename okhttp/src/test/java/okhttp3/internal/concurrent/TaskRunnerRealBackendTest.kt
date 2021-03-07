@@ -15,15 +15,15 @@
  */
 package okhttp3.internal.concurrent
 
-import java.lang.Thread.UncaughtExceptionHandler
-import java.util.concurrent.LinkedBlockingDeque
-import java.util.concurrent.ThreadFactory
-import java.util.concurrent.TimeUnit
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.data.Offset
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
+import java.lang.Thread.UncaughtExceptionHandler
+import java.util.concurrent.LinkedBlockingDeque
+import java.util.concurrent.ThreadFactory
+import java.util.concurrent.TimeUnit
 
 /**
  * Integration test to confirm that [TaskRunner] works with a real backend. Business logic is all

@@ -46,7 +46,6 @@ object OkHostnameVerifier : HostnameVerifier {
         false
       }
     }
-
   }
 
   fun verify(host: String, certificate: X509Certificate): Boolean {
@@ -100,14 +99,16 @@ object OkHostnameVerifier : HostnameVerifier {
     var pattern = pattern
     // Basic sanity checks
     if (hostname.isNullOrEmpty() ||
-        hostname.startsWith(".") ||
-        hostname.endsWith("..")) {
+      hostname.startsWith(".") ||
+      hostname.endsWith("..")
+    ) {
       // Invalid domain name
       return false
     }
     if (pattern.isNullOrEmpty() ||
-        pattern.startsWith(".") ||
-        pattern.endsWith("..")) {
+      pattern.startsWith(".") ||
+      pattern.endsWith("..")
+    ) {
       // Invalid pattern/domain name
       return false
     }
@@ -175,7 +176,8 @@ object OkHostnameVerifier : HostnameVerifier {
     // Check that asterisk did not match across domain name labels.
     val suffixStartIndexInHostname = hostname.length - suffix.length
     if (suffixStartIndexInHostname > 0 &&
-        hostname.lastIndexOf('.', suffixStartIndexInHostname - 1) != -1) {
+      hostname.lastIndexOf('.', suffixStartIndexInHostname - 1) != -1
+    ) {
       return false // Asterisk is matching across domain name labels -- not permitted.
     }
 

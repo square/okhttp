@@ -40,7 +40,8 @@ class CancelCall {
         call.cancel()
         System.out.printf("%.2f Canceled call.%n", (System.nanoTime() - startNanos) / 1e9f)
       },
-      1, TimeUnit.SECONDS
+      1,
+      TimeUnit.SECONDS
     )
 
     System.out.printf("%.2f Executing call.%n", (System.nanoTime() - startNanos) / 1e9f)
@@ -48,13 +49,15 @@ class CancelCall {
       call.execute().use { response ->
         System.out.printf(
           "%.2f Call was expected to fail, but completed: %s%n",
-          (System.nanoTime() - startNanos) / 1e9f, response
+          (System.nanoTime() - startNanos) / 1e9f,
+          response
         )
       }
     } catch (e: IOException) {
       System.out.printf(
         "%.2f Call failed as expected: %s%n",
-        (System.nanoTime() - startNanos) / 1e9f, e
+        (System.nanoTime() - startNanos) / 1e9f,
+        e
       )
     }
   }

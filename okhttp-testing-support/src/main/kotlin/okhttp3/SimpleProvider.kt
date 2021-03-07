@@ -20,7 +20,7 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.ArgumentsProvider
 import kotlin.jvm.Throws
 
-abstract class SimpleProvider: ArgumentsProvider {
+abstract class SimpleProvider : ArgumentsProvider {
   override fun provideArguments(context: ExtensionContext) =
     arguments().map { Arguments.of(it) }.stream()
 

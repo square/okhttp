@@ -16,10 +16,6 @@
 
 package mockwebserver3
 
-import java.io.IOException
-import java.net.Inet6Address
-import java.net.Socket
-import javax.net.ssl.SSLSocket
 import okhttp3.Handshake
 import okhttp3.Handshake.Companion.handshake
 import okhttp3.Headers
@@ -27,6 +23,10 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.TlsVersion
 import okio.Buffer
+import java.io.IOException
+import java.net.Inet6Address
+import java.net.Socket
+import javax.net.ssl.SSLSocket
 
 /** An HTTP request that came into the mock web server. */
 class RecordedRequest @JvmOverloads constructor(
@@ -72,9 +72,10 @@ class RecordedRequest @JvmOverloads constructor(
 
   @get:JvmName("-deprecated_utf8Body")
   @Deprecated(
-      message = "Use body.readUtf8()",
-      replaceWith = ReplaceWith("body.readUtf8()"),
-      level = DeprecationLevel.ERROR)
+    message = "Use body.readUtf8()",
+    replaceWith = ReplaceWith("body.readUtf8()"),
+    level = DeprecationLevel.ERROR
+  )
   val utf8Body: String
     get() = body.readUtf8()
 
@@ -126,9 +127,10 @@ class RecordedRequest @JvmOverloads constructor(
   }
 
   @Deprecated(
-      message = "Use body.readUtf8()",
-      replaceWith = ReplaceWith("body.readUtf8()"),
-      level = DeprecationLevel.WARNING)
+    message = "Use body.readUtf8()",
+    replaceWith = ReplaceWith("body.readUtf8()"),
+    level = DeprecationLevel.WARNING
+  )
   fun getUtf8Body(): String = body.readUtf8()
 
   /** Returns the first header named [name], or null if no such header exists. */

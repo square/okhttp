@@ -27,7 +27,8 @@ class CustomTrust {
   // https://publicobject.com (Comodo) and https://squareup.com (Entrust). But they aren't
   // sufficient to connect to most HTTPS sites including https://godaddy.com and https://visa.com.
   // Typically developers will need to get a PEM file from their organization's TLS administrator.
-  val comodoRsaCertificationAuthority = """
+  val comodoRsaCertificationAuthority =
+    """
     -----BEGIN CERTIFICATE-----
     MIIF2DCCA8CgAwIBAgIQTKr5yttjb+Af907YWwOGnTANBgkqhkiG9w0BAQwFADCB
     hTELMAkGA1UEBhMCR0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4G
@@ -62,10 +63,11 @@ class CustomTrust {
     0MC2Hb46TpSi125sC8KKfPog88Tk5c0NqMuRkrF8hey1FGlmDoLnzc7ILaZRfyHB
     NVOFBkpdn627G190
     -----END CERTIFICATE-----
-  """.trimIndent().decodeCertificatePem()
+    """.trimIndent().decodeCertificatePem()
 
   // CN=Entrust Root Certification Authority, OU="(c) 2006 Entrust, Inc.", OU=www.entrust.net/CPS is incorporated by reference, O="Entrust, Inc.", C=US
-  val entrustRootCertificateAuthority = """
+  val entrustRootCertificateAuthority =
+    """
     -----BEGIN CERTIFICATE-----
     MIIEkTCCA3mgAwIBAgIERWtQVDANBgkqhkiG9w0BAQUFADCBsDELMAkGA1UEBhMC
     VVMxFjAUBgNVBAoTDUVudHJ1c3QsIEluYy4xOTA3BgNVBAsTMHd3dy5lbnRydXN0
@@ -93,10 +95,11 @@ class CustomTrust {
     eu6FSqdQgPCnXEqULl8FmTxSQeDNtGPPAUO6nIPcj2A781q0tHuu2guQOHXvgR1m
     0vdXcDazv/wor3ElhVsT/h5/WrQ8
     -----END CERTIFICATE-----
-  """.trimIndent().decodeCertificatePem()
+    """.trimIndent().decodeCertificatePem()
 
   // CN=Let's Encrypt Authority X3, O=Let's Encrypt, C=US
-  val letsEncryptCertificateAuthority = """
+  val letsEncryptCertificateAuthority =
+    """
     -----BEGIN CERTIFICATE-----
     MIIEkjCCA3qgAwIBAgIQCgFBQgAAAVOFc2oLheynCDANBgkqhkiG9w0BAQsFADA/
     MSQwIgYDVQQKExtEaWdpdGFsIFNpZ25hdHVyZSBUcnVzdCBDby4xFzAVBgNVBAMT
@@ -124,7 +127,7 @@ class CustomTrust {
     PfZ+G6Z6h7mjem0Y+iWlkYcV4PIWL1iwBi8saCbGS5jN2p8M+X+Q7UNKEkROb3N6
     KOqkqm57TH2H3eDJAkSnh6/DNFu0Qg==
     -----END CERTIFICATE-----
-  """.trimIndent().decodeCertificatePem()
+    """.trimIndent().decodeCertificatePem()
 
   private val client: OkHttpClient
 

@@ -16,9 +16,9 @@
  */
 package okhttp3
 
-import java.util.concurrent.TimeUnit
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.connection.RealConnectionPool
+import java.util.concurrent.TimeUnit
 
 /**
  * Manages reuse of HTTP and HTTP/2 connections for reduced network latency. HTTP requests that
@@ -37,12 +37,14 @@ class ConnectionPool internal constructor(
     maxIdleConnections: Int,
     keepAliveDuration: Long,
     timeUnit: TimeUnit
-  ) : this(RealConnectionPool(
+  ) : this(
+    RealConnectionPool(
       taskRunner = TaskRunner.INSTANCE,
       maxIdleConnections = maxIdleConnections,
       keepAliveDuration = keepAliveDuration,
       timeUnit = timeUnit
-  ))
+    )
+  )
 
   constructor() : this(5, 5, TimeUnit.MINUTES)
 
