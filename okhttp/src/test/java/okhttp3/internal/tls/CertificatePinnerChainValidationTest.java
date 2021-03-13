@@ -27,6 +27,9 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
+import mockwebserver3.MockResponse;
+import mockwebserver3.MockWebServer;
+import mockwebserver3.SocketPolicy;
 import okhttp3.Call;
 import okhttp3.CertificatePinner;
 import okhttp3.OkHttpClient;
@@ -35,9 +38,6 @@ import okhttp3.RecordingHostnameVerifier;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.internal.platform.Platform;
-import mockwebserver3.MockResponse;
-import mockwebserver3.MockWebServer;
-import mockwebserver3.SocketPolicy;
 import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okhttp3.tls.HeldCertificate;
@@ -344,6 +344,148 @@ public final class CertificatePinnerChainValidationTest {
       // On OpenJDK, the handshake succeeds but the certificate pinner fails.
       String message = expected.getMessage();
       assertThat(message).startsWith("Certificate pinning failure!");
+    }
+  }
+
+  /**
+   * Not checking the CA bit created a vulnerability in old OkHttp releases. It is exploited by
+   * triggering different chains to be discovered by the TLS engine and our chain cleaner. In this
+   * attack there's several different chains.
+   *
+   * <p>The victim's gets a non-CA certificate signed by a CA, and pins the CA root and/or
+   * intermediate. This is business as usual.
+   *
+   * <pre>{@code
+   *
+   *   pinnedRoot (trusted by CertificatePinner)
+   *     -> pinnedIntermediate (trusted by CertificatePinner)
+   *       -> realVictim
+   *
+   * }</pre>
+   *
+   * <p>The attacker compromises a CA. They take the public key from an intermediate certificate
+   * signed by the compromised CA's certificate and uses it in a non-CA certificate. They ask the
+   * pinned CA above to sign it for non-certificate-authority uses:
+   *
+   * <pre>{@code
+   *
+   *   pinnedRoot (trusted by CertificatePinner)
+   *     -> pinnedIntermediate (trusted by CertificatePinner)
+   *         -> attackerSwitch
+   *
+   * }</pre>
+   *
+   * <p>The attacker serves a set of certificates that yields a too-long chain in our certificate
+   * pinner. The served certificates (incorrectly) formed a single chain to the pinner:
+   *
+   * <pre>{@code
+   *
+   *   attackerCa
+   *     -> attackerIntermediate
+   *         -> pinnedRoot (trusted by CertificatePinner)
+   *             -> pinnedIntermediate (trusted by CertificatePinner)
+   *                 -> attackerSwitch (not a CA certificate!)
+   *                     -> phonyVictim
+   *
+   * }</pre>
+   *
+   * But this chain is wrong because the attackerSwitch certificate is being used in a CA role even
+   * though it is not a CA certificate. There are pinned certificates in the chain! The correct
+   * chain is much shorter because it skips the non-CA certificate.
+   *
+   * <pre>{@code
+   *
+   *   attackerCa
+   *     -> attackerIntermediate
+   *         -> phonyVictim
+   *
+   * }</pre>
+   *
+   * Some implementations fail the TLS handshake when they see the long chain, and don't give
+   * CertificatePinner the opportunity to produce a different chain from their own. This includes
+   * the OpenJDK 11 TLS implementation, which itself fails the handshake when it encounters a non-CA
+   * certificate.
+   */
+  @Test public void signersMustHaveCaBitSet() throws Exception {
+    HeldCertificate attackerCa = new HeldCertificate.Builder()
+        .serialNumber(1L)
+        .certificateAuthority(4)
+        .commonName("attacker ca")
+        .build();
+    HeldCertificate attackerIntermediate = new HeldCertificate.Builder()
+        .serialNumber(2L)
+        .certificateAuthority(3)
+        .commonName("attacker")
+        .signedBy(attackerCa)
+        .build();
+    HeldCertificate pinnedRoot = new HeldCertificate.Builder()
+        .serialNumber(3L)
+        .certificateAuthority(2)
+        .commonName("pinned root")
+        .signedBy(attackerIntermediate)
+        .build();
+    HeldCertificate pinnedIntermediate = new HeldCertificate.Builder()
+        .serialNumber(4L)
+        .certificateAuthority(1)
+        .commonName("pinned intermediate")
+        .signedBy(pinnedRoot)
+        .build();
+    HeldCertificate attackerSwitch = new HeldCertificate.Builder()
+        .serialNumber(5L)
+        .keyPair(attackerIntermediate.keyPair()) // share keys between compromised CA and leaf!
+        .commonName("attacker")
+        .addSubjectAlternativeName("attacker.com")
+        .signedBy(pinnedIntermediate)
+        .build();
+    HeldCertificate phonyVictim = new HeldCertificate.Builder()
+        .serialNumber(6L)
+        .signedBy(attackerSwitch)
+        .addSubjectAlternativeName("victim.com")
+        .commonName("victim")
+        .build();
+
+    CertificatePinner certificatePinner = new CertificatePinner.Builder()
+        .add(server.getHostName(), CertificatePinner.pin(pinnedRoot.certificate()))
+        .build();
+    HandshakeCertificates handshakeCertificates = new HandshakeCertificates.Builder()
+        .addTrustedCertificate(pinnedRoot.certificate())
+        .addTrustedCertificate(attackerCa.certificate())
+        .build();
+    OkHttpClient client = clientTestRule.newClientBuilder()
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
+        .hostnameVerifier(new RecordingHostnameVerifier())
+        .certificatePinner(certificatePinner)
+        .build();
+
+    HandshakeCertificates serverHandshakeCertificates = new HandshakeCertificates.Builder()
+        .heldCertificate(
+            phonyVictim,
+            attackerSwitch.certificate(),
+            pinnedIntermediate.certificate(),
+            pinnedRoot.certificate(),
+            attackerIntermediate.certificate()
+        )
+        .build();
+    server.useHttps(serverHandshakeCertificates.sslSocketFactory(), false);
+
+    server.enqueue(new MockResponse());
+
+    // Make a request from client to server. It should succeed certificate checks (unfortunately the
+    // rogue CA is trusted) but it should fail certificate pinning.
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+    Call call = client.newCall(request);
+    try (Response response = call.execute()) {
+      fail("expected connection failure but got " + response);
+    } catch (SSLPeerUnverifiedException expected) {
+      // Certificate pinning fails!
+      String message = expected.getMessage();
+      assertThat(message).startsWith("Certificate pinning failure!");
+    } catch (SSLHandshakeException expected) {
+      // We didn't have the opportunity to do certificate pinning because the handshake failed.
+      assertThat(expected).hasMessageContaining("this is not a CA certificate");
     }
   }
 
