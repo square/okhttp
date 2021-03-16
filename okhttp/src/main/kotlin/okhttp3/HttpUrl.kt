@@ -192,7 +192,7 @@ import java.util.LinkedHashSet
  * names to avoid confusing characters. This includes basic case folding: transforming shouting
  * `SQUARE.COM` into cool and casual `square.com`. It also handles more exotic characters. For
  * example, the Unicode trademark sign (™) could be confused for the letters "TM" in
- * `http://ho™mail.com`. To mitigate this, the single character (™) maps to the string (tm). There
+ * `http://ho™ail.com`. To mitigate this, the single character (™) maps to the string (tm). There
  * is similar policy for all of the 1.1 million Unicode code points. Note that some code points such
  * as "\ud83c\udf69" are not mapped and cannot be used in a hostname.
  *
