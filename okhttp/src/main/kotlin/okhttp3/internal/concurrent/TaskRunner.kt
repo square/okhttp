@@ -243,6 +243,7 @@ class TaskRunner(
   }
 
   fun cancelAll() {
+    this.assertThreadHoldsLock()
     for (i in busyQueues.size - 1 downTo 0) {
       busyQueues[i].cancelAllAndDecide()
     }
