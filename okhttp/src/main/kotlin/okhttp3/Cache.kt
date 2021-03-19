@@ -450,8 +450,6 @@ internal constructor(
     private val sentRequestMillis: Long
     private val receivedResponseMillis: Long
 
-    private val isHttps: Boolean get() = url.scheme == "https"
-
     /**
      * Reads an entry from an input stream. A typical entry looks like this:
      *
@@ -537,7 +535,7 @@ internal constructor(
         receivedResponseMillis = receivedResponseMillisString?.toLong() ?: 0L
         responseHeaders = responseHeadersBuilder.build()
 
-        if (isHttps) {
+        if (url.isHttps) {
           val blank = source.readUtf8LineStrict()
           if (blank.isNotEmpty()) {
             throw IOException("expected \"\" but was \"$blank\"")
@@ -601,7 +599,7 @@ internal constructor(
           .writeDecimalLong(receivedResponseMillis)
           .writeByte('\n'.toInt())
 
-        if (isHttps) {
+        if (url.isHttps) {
           sink.writeByte('\n'.toInt())
           sink.writeUtf8(handshake!!.cipherSuite.javaName).writeByte('\n'.toInt())
           writeCertList(sink, handshake.peerCertificates)
