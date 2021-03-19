@@ -38,16 +38,16 @@ def okhttplegacyversion = "3.12.12"
 //def okhttplegacyversion = "4.9.0"
 
 dependencies {
-  implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${versions.kotlin}"
-  implementation "org.jetbrains.kotlin:kotlin-reflect:${versions.kotlin}"
+  implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${Versions.kotlin}"
+  implementation "org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}"
   implementation 'com.google.android.gms:play-services-safetynet:17.0.0'
   implementation "com.squareup.okhttp3:okhttp:${okhttplegacyversion}"
   implementation("com.squareup.okhttp3:okhttp-tls:${okhttplegacyversion}") {
     exclude group: 'org.bouncycastle'
   }
   androidTestImplementation "com.squareup.okhttp3:mockwebserver:${okhttplegacyversion}"
-  androidTestImplementation "org.bouncycastle:bcprov-jdk15to18:${versions.bouncycastle}"
-  androidTestImplementation "org.bouncycastle:bctls-jdk15to18:${versions.bouncycastle}"
+  androidTestImplementation "org.bouncycastle:bcprov-jdk15to18:${Versions.bouncycastle}"
+  androidTestImplementation "org.bouncycastle:bctls-jdk15to18:${Versions.bouncycastle}"
   androidTestImplementation 'androidx.test.ext:junit:1.1.2'
   androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
   androidTestImplementation 'org.apache.httpcomponents.client5:httpclient5:5.0'
