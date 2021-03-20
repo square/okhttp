@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public final class CacheControlTest {
   @Test public void emptyBuilderIsEmpty() throws Exception {
@@ -181,11 +181,9 @@ public final class CacheControlTest {
 
   @Test public void secondsMustBeNonNegative() throws Exception {
     CacheControl.Builder builder = new CacheControl.Builder();
-    try {
+    assertThrows(IllegalArgumentException.class, () ->{
       builder.maxAge(-1, TimeUnit.SECONDS);
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    });
   }
 
   @Test public void timePrecisionIsTruncatedToSeconds() throws Exception {
