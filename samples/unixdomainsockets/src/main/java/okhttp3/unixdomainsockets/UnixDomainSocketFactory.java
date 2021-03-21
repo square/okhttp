@@ -20,20 +20,22 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.StandardProtocolFamily;
+import java.net.UnixDomainSocketAddress;
+import java.nio.channels.SocketChannel;
 import javax.net.SocketFactory;
-import jnr.unixsocket.UnixSocketChannel;
 
 /** Impersonate TCP-style SocketFactory over UNIX domain sockets. */
 public final class UnixDomainSocketFactory extends SocketFactory {
-  private final File path;
+  private final UnixDomainSocketAddress path;
 
   public UnixDomainSocketFactory(File path) {
-    this.path = path;
+    this.path = UnixDomainSocketAddress.of(path.toPath());
   }
 
   @Override public Socket createSocket() throws IOException {
-    UnixSocketChannel channel = UnixSocketChannel.open();
-    return new TunnelingUnixSocket(path, channel);
+    SocketChannel channel = SocketChannel.open(StandardProtocolFamily.UNIX);
+    return channel.socket();
   }
 
   @Override public Socket createSocket(String host, int port) throws IOException {

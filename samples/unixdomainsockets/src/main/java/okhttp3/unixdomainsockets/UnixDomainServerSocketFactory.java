@@ -23,18 +23,19 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
+import java.net.StandardProtocolFamily;
+import java.net.UnixDomainSocketAddress;
 import java.nio.channels.ClosedChannelException;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
 import javax.net.ServerSocketFactory;
-import jnr.unixsocket.UnixServerSocketChannel;
-import jnr.unixsocket.UnixSocketAddress;
-import jnr.unixsocket.UnixSocketChannel;
 
 /** Impersonate TCP-style ServerSocketFactory over UNIX domain sockets. */
 public final class UnixDomainServerSocketFactory extends ServerSocketFactory {
-  private final File path;
+  private final UnixDomainSocketAddress address;
 
   public UnixDomainServerSocketFactory(File path) {
-    this.path = path;
+    this.address = UnixDomainSocketAddress.of(path.toPath());
   }
 
   @Override public ServerSocket createServerSocket() throws IOException {
@@ -55,7 +56,7 @@ public final class UnixDomainServerSocketFactory extends ServerSocketFactory {
   }
 
   final class UnixDomainServerSocket extends ServerSocket {
-    private UnixServerSocketChannel serverSocketChannel;
+    private ServerSocketChannel serverSocketChannel;
     private InetSocketAddress endpoint;
 
     UnixDomainServerSocket() throws IOException {
@@ -64,8 +65,7 @@ public final class UnixDomainServerSocketFactory extends ServerSocketFactory {
     @Override public void bind(SocketAddress endpoint, int backlog) throws IOException {
       this.endpoint = (InetSocketAddress) endpoint;
 
-      UnixSocketAddress address = new UnixSocketAddress(path);
-      serverSocketChannel = UnixServerSocketChannel.open();
+      serverSocketChannel = ServerSocketChannel.open(StandardProtocolFamily.UNIX);
       serverSocketChannel.configureBlocking(true);
       serverSocketChannel.socket().bind(address);
     }
@@ -80,8 +80,8 @@ public final class UnixDomainServerSocketFactory extends ServerSocketFactory {
 
     @Override public Socket accept() throws IOException {
       try {
-        UnixSocketChannel channel = serverSocketChannel.accept();
-        return new TunnelingUnixSocket(path, channel, endpoint);
+        SocketChannel channel = serverSocketChannel.accept();
+        return channel.socket();
       } catch (ClosedChannelException e) {
         SocketException exception = new SocketException();
         exception.initCause(e);

@@ -1,5 +1,11 @@
 dependencies {
   implementation project(':okhttp')
   implementation project(':mockwebserver-deprecated')
-  implementation Dependencies.jnrUnixsocket
+}
+
+java {
+  toolchain {
+    languageVersion = JavaLanguageVersion.of(16)
+    vendor = JvmVendorSpec.ADOPTOPENJDK
+  }
 }
