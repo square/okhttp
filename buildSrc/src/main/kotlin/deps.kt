@@ -18,7 +18,7 @@ object Versions {
   const val animalSniffer = "1.19"
   const val assertj = "3.15.0"
   const val bnd = "5.1.2"
-  const val bouncycastle = "1.67"
+  const val bouncycastle = "1.68"
   const val brotli = "0.1.2"
   const val checkstyle = "8.28"
   const val conscrypt = "2.5.1"
@@ -30,7 +30,7 @@ object Versions {
   const val jsoup = "1.13.1"
   const val junit = "4.13"
   const val junit5 = "5.7.0"
-  const val kotlin = "1.4.21"
+  const val kotlin = "1.4.31"
   const val ktlint = "0.38.0"
   const val moshi = "1.11.0"
   const val okio = "3.0.0-alpha.1"
@@ -72,6 +72,6 @@ object Dependencies {
   const val picocli = "info.picocli:picocli:${Versions.picocli}"
 
   object Kotlin {
-    const val version = "1.4.30"
+    const val version = "1.4.31"
   }
 }
