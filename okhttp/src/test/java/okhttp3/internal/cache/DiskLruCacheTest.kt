@@ -48,7 +48,7 @@ class FilesystemParamProvider: SimpleProvider() {
   override fun arguments() = listOf(
     FakeFileSystem() to false,
     FileSystem.SYSTEM to TestUtil.windows,
-    FakeFileSystem(windowsLimitations = true) to true
+    FakeFileSystem().apply { emulateWindows() } to true
   )
 }
 
