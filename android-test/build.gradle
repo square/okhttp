@@ -79,8 +79,8 @@ android {
 }
 
 dependencies {
-  api "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${versions.kotlin}"
-  api "org.jetbrains.kotlin:kotlin-reflect:${versions.kotlin}"
+  api "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${Versions.kotlin}"
+  api "org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}"
   implementation 'com.google.android.gms:play-services-safetynet:17.0.0'
   api project(':okhttp')
 
@@ -89,8 +89,8 @@ dependencies {
     exclude group: 'org.conscrypt', module: 'conscrypt-openjdk-uber'
     exclude group: 'software.amazon.cryptools', module: 'AmazonCorrettoCryptoProvider'
   }
-  androidTestImplementation "org.bouncycastle:bcprov-jdk15to18:${versions.bouncycastle}"
-  androidTestImplementation "org.bouncycastle:bctls-jdk15to18:${versions.bouncycastle}"
+  androidTestImplementation "org.bouncycastle:bcprov-jdk15to18:${Versions.bouncycastle}"
+  androidTestImplementation "org.bouncycastle:bctls-jdk15to18:${Versions.bouncycastle}"
   androidTestImplementation "org.conscrypt:conscrypt-android:2.5.1"
   androidTestImplementation project(':mockwebserver-junit5')
   androidTestImplementation project(':okhttp-brotli')
