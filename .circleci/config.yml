@@ -196,7 +196,7 @@ jobs:
       - runtests:
           platform: jdk9
 
-  testjdk15:
+  testjdk16:
     docker:
       - image: circleci/openjdk:11.0.8-jdk-buster
 
@@ -209,7 +209,7 @@ jobs:
 
       - runtests:
           platform: jdk9
-          testjdk: -Dtest.java.version=15
+          testjdk: -Dtest.java.version=16
 
   testconscrypt:
     docker:
@@ -281,7 +281,7 @@ workflows:
             branches:
               ignore:
                 - gh-pages
-      - testjdk15:
+      - testjdk16:
           filters:
             branches:
               ignore:
@@ -318,7 +318,7 @@ workflows:
       - testjdkwindows:
           requires:
             - compile
-      - testjdk15:
+      - testjdk16:
           requires:
             - compile
       - testconscrypt:
