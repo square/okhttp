@@ -21,7 +21,7 @@ object Versions {
   const val bouncycastle = "1.67"
   const val brotli = "0.1.2"
   const val checkstyle = "8.28"
-  const val conscrypt = "2.5.1"
+  const val conscrypt = "2.5.2"
   const val corretto = "1.3.1"
   const val equinox = "3.16.0"
   const val findbugs = "3.0.2"
