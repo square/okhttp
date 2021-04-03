@@ -43,18 +43,13 @@ animalsniffer {
   ignoreFailures = true
 }
 
-def isIDE = properties.containsKey('android.injected.invoked.from.ide') ||
-        (System.getenv("XPC_SERVICE_NAME") ?: "").contains("intellij") ||
-        System.getenv("IDEA_INITIAL_DIRECTORY") != null
-if (!isIDE) {
-  sourceSets {
-    // Not included in IDE as this confuses Intellij for obvious reasons.
-    main.java.srcDirs += project.file("../okhttp/src/test/java")
-    main.java.srcDirs += project.file("../okhttp-brotli/src/test/java")
-    main.java.srcDirs += project.file("../okhttp-dnsoverhttps/src/test/java")
-    main.java.srcDirs += project.file("../okhttp-logging-interceptor/src/test/java")
-    main.java.srcDirs += project.file("../okhttp-sse/src/test/java")
-  }
+sourceSets {
+  // Not included in IDE as this confuses Intellij for obvious reasons.
+  main.java.srcDirs += project.file("../okhttp/src/test/java")
+  main.java.srcDirs += project.file("../okhttp-brotli/src/test/java")
+  main.java.srcDirs += project.file("../okhttp-dnsoverhttps/src/test/java")
+  main.java.srcDirs += project.file("../okhttp-logging-interceptor/src/test/java")
+  main.java.srcDirs += project.file("../okhttp-sse/src/test/java")
 }
 
 graal {
