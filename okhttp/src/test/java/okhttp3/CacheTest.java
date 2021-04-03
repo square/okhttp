@@ -16,7 +16,6 @@
 
 package okhttp3;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.CookieManager;
 import java.net.HttpURLConnection;
@@ -25,6 +24,7 @@ import java.security.Principal;
 import java.security.cert.Certificate;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -44,6 +44,8 @@ import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
+import okio.FileSystem;
+import okio.ForwardingFileSystem;
 import okio.GzipSink;
 import okio.Okio;
 import okio.Path;
@@ -84,6 +86,7 @@ public final class CacheTest {
     platform.assumeNotBouncyCastle();
 
     server.setProtocolNegotiationEnabled(false);
+    fileSystem.emulateUnix();
     cache = new Cache(Path.get("/cache/"), Integer.MAX_VALUE, fileSystem);
     client = clientTestRule.newClientBuilder()
         .cache(cache)
@@ -2608,6 +2611,53 @@ public final class CacheTest {
         .addHeader("Date: " + formatDate(-15, TimeUnit.SECONDS)));
     assertThat(conditionalRequest.getHeader("If-Modified-Since")).isEqualTo(
         lastModifiedDate);
+  }
+
+  @Test
+  public void testPublicPathConstructor() throws IOException {
+    List<String> events = new ArrayList<>();
+
+    fileSystem.createDirectories(cache.directoryPath());
+
+    fileSystem.createDirectories(cache.directoryPath());
+
+    FileSystem loggingFileSystem = new ForwardingFileSystem(fileSystem) {
+      @Override
+      public Path onPathParameter(Path path, java.lang.String functionName, java.lang.String parameterName) {
+        events.add(functionName + ":" + path);
+        return path;
+      }
+
+      @Override
+      public Path onPathResult(Path path, java.lang.String functionName) {
+        events.add(functionName + ":" + path);
+        return path;
+      }
+    };
+    Path path = Path.get("/cache");
+    Cache c = new Cache(path, 100000L, loggingFileSystem);
+
+    assertThat(c.directoryPath()).isEqualTo(path);
+
+    c.size();
+
+    assertThat(events).containsExactly("metadataOrNull:/cache/journal.bkp",
+            "metadataOrNull:/cache",
+            "sink:/cache/journal.bkp",
+            "delete:/cache/journal.bkp",
+            "metadataOrNull:/cache/journal",
+            "metadataOrNull:/cache",
+            "sink:/cache/journal.tmp",
+            "metadataOrNull:/cache/journal",
+            "atomicMove:/cache/journal.tmp",
+            "atomicMove:/cache/journal",
+            "appendingSink:/cache/journal");
+
+    events.clear();
+
+    c.size();
+
+    assertThat(events).isEmpty();
   }
 
   private void assertFullyCached(MockResponse response) throws Exception {

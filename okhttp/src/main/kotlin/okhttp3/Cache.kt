@@ -144,8 +144,7 @@ import java.util.TreeSet
  * [rfc_7234]: http://tools.ietf.org/html/rfc7234
  */
 @OptIn(ExperimentalFileSystem::class)
-class Cache
-internal constructor(
+class Cache(
   directory: Path,
   maxSize: Long,
   fileSystem: FileSystem
