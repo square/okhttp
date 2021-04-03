@@ -15,13 +15,10 @@
  */
 package okhttp3
 
-import mockwebserver3.MockResponse
-import mockwebserver3.MockWebServer
 import okhttp3.TestUtil.assumeNetwork
 import okhttp3.internal.platform.ConscryptPlatform
 import okhttp3.internal.platform.Platform
 import okhttp3.testing.PlatformRule
-import okhttp3.tls.internal.TlsUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.conscrypt.Conscrypt
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -30,30 +27,15 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
-import javax.net.ssl.SSLSocket
 
 class ConscryptTest {
   @JvmField @RegisterExtension val platform = PlatformRule.conscrypt()
   @JvmField @RegisterExtension val clientTestRule = OkHttpClientTestRule()
 
-  private var client = clientTestRule.newClient()
+  private val client = clientTestRule.newClient()
 
-  private val handshakeCertificates = TlsUtil.localhost()
-
-  private lateinit var server: MockWebServer
-
-  @BeforeEach @Throws(Exception::class) fun setUp(server: MockWebServer) {
+  @BeforeEach fun setUp() {
     platform.assumeConscrypt()
-    this.server = server
-  }
-
-  private fun enableTls() {
-    client = client.newBuilder()
-      .sslSocketFactory(
-        handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
-      )
-      .build()
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
   }
 
   @Test
@@ -104,9 +86,7 @@ class ConscryptTest {
     assertTrue(ConscryptPlatform.atLeastVersion(version.major()))
     assertTrue(ConscryptPlatform.atLeastVersion(version.major(), version.minor()))
     assertTrue(ConscryptPlatform.atLeastVersion(version.major(), version.minor(), version.patch()))
-    assertFalse(
-      ConscryptPlatform.atLeastVersion(version.major(), version.minor(), version.patch() + 1)
-    )
+    assertFalse(ConscryptPlatform.atLeastVersion(version.major(), version.minor(), version.patch() + 1))
     assertFalse(ConscryptPlatform.atLeastVersion(version.major(), version.minor() + 1))
     assertFalse(ConscryptPlatform.atLeastVersion(version.major() + 1))
   }
