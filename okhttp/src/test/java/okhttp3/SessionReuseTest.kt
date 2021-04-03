@@ -24,6 +24,7 @@ import okio.ByteString.Companion.toByteString
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.params.ParameterizedTest
@@ -48,7 +49,7 @@ class SessionReuseTest(
   }
 
   @ParameterizedTest(name = "{displayName}({arguments})")
-  @ValueSource(strings = ["TLSv1.2", "TLSv1.3"])
+  @ValueSource(strings = ["TLSv1.2"])
   @Flaky
   fun testSessionReuse(tlsVersion: String) {
     val sessionIds = mutableListOf<String>()
@@ -133,8 +134,8 @@ class SessionReuseTest(
         assertNotEquals(sessionIds[0], sessionIds[1])
       } else {
         // With TLSv1.2 it is really JDK specific.
-        // assertEquals(sessionIds[0], sessionIds[1])
-        // assertThat(directSessionIds).contains(sessionIds[0], sessionIds[1])
+        assertEquals(sessionIds[0], sessionIds[1])
+        assertThat(directSessionIds).contains(sessionIds[0], sessionIds[1])
       }
       assertThat(sessionIds[0]).isNotBlank()
     }
@@ -147,5 +148,17 @@ class SessionReuseTest(
       )
       .build()
     server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+  }
+
+  companion object {
+    @BeforeAll
+    @JvmStatic
+    fun log() {
+      val logSubscription = JsseDebugLogging.enableJsseDebugLogging {
+        if (it.type == JsseDebugLogging.JsseDebugMessage.Type.Handshake) {
+          println(it)
+        }
+      }
+    }
   }
 }
