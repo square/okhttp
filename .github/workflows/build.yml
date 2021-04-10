@@ -27,3 +27,75 @@ jobs:
         env:
           ORG_GRADLE_PROJECT_SONATYPE_NEXUS_USERNAME: ${{ secrets.SONATYPE_NEXUS_USERNAME }}
           ORG_GRADLE_PROJECT_SONATYPE_NEXUS_PASSWORD: ${{ secrets.SONATYPE_NEXUS_PASSWORD }}
+
+  checkjdk11:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Configure JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+
+      - name: Run Checks
+        run: ./gradlew check
+
+  testopenjdk11:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Configure JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+
+      - name: Run Checks
+        run: ./gradlew test -Dtest.java.version=11
+
+  testopenjdk8:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Configure JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+
+      - name: Run Checks
+        run: ./gradlew test -Dtest.java.version=8
+
+  testopenjdk16:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Configure JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+
+      - name: Run Checks
+        run: ./gradlew test -Dtest.java.version=8
