@@ -98,4 +98,4 @@ jobs:
           java-version: 11
 
       - name: Run Checks
-        run: ./gradlew test -Dtest.java.version=8
+        run: ./gradlew test -Dtest.java.version=16
