@@ -27,6 +27,8 @@ import okhttp3.Cookie
 import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.Request
+import okhttp3.Response
+import okhttp3.internal.connection.RealConnection
 
 fun parseCookie(currentTimeMillis: Long, url: HttpUrl, setCookie: String): Cookie? =
     Cookie.parse(currentTimeMillis, url, setCookie)
@@ -52,3 +54,6 @@ fun ConnectionSpec.effectiveCipherSuites(socketEnabledCipherSuites: Array<String
     socketEnabledCipherSuites
   }
 }
+
+val Response.connection: RealConnection
+  get() = this.exchange!!.connection

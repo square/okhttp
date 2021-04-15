@@ -18,6 +18,7 @@ package okhttp3
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.TestUtil.assumeNetwork
+import okhttp3.internal.connection
 import okhttp3.internal.platform.OpenJSSEPlatform
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.internal.TlsUtil
@@ -70,7 +71,7 @@ class JSSETest(
       assertEquals(TlsVersion.TLS_1_3, response.handshake?.tlsVersion)
       assertEquals(Protocol.HTTP_2, response.protocol)
 
-      assertThat(response.exchange!!.connection.socket().javaClass.name).isEqualTo(
+      assertThat(response.connection.socket().javaClass.name).isEqualTo(
         "sun.security.ssl.SSLSocketImpl"
       )
     }
