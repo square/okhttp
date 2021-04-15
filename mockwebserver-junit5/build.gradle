@@ -16,7 +16,7 @@ dependencies {
 
   testRuntimeOnly Dependencies.junit5JupiterEngine
   testImplementation Dependencies.assertj
-  testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:1.4.10")
+  testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:1.4.32")
 }
 
 afterEvaluate { project ->

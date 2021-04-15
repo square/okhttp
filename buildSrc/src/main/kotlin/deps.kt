@@ -35,7 +35,7 @@ object Versions {
   const val moshi = "1.12.0"
   const val okio = "3.0.0-alpha.2"
   const val openjsse = "1.1.0"
-  const val picocli = "4.5.1"
+  const val picocli = "4.6.1"
 }
 
 object Dependencies {
@@ -61,7 +61,7 @@ object Dependencies {
   const val junit5JupiterEngine = "org.junit.jupiter:junit-jupiter-engine:${Versions.junit5}"
   const val junit5JupiterParams = "org.junit.jupiter:junit-jupiter-params:${Versions.junit5}"
   const val junit5VintageEngine = "org.junit.vintage:junit-vintage-engine:${Versions.junit5}"
-  const val junitPlatformConsole = "org.junit.platform:junit-platform-console:1.7.0"
+  const val junitPlatformConsole = "org.junit.platform:junit-platform-console:1.7.1"
   const val kotlinStdlib = "org.jetbrains.kotlin:kotlin-stdlib:${Versions.kotlin}"
   const val kotlinStdlibOsgi = "org.jetbrains.kotlin:kotlin-osgi-bundle:${Versions.kotlin}"
   const val moshi = "com.squareup.moshi:moshi:${Versions.moshi}"
