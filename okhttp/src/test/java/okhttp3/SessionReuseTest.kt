@@ -51,6 +51,11 @@ class SessionReuseTest(
   @ValueSource(strings = ["TLSv1.2", "TLSv1.3"])
   @Flaky
   fun testSessionReuse(tlsVersion: String) {
+    if (tlsVersion == TlsVersion.TLS_1_3.javaName) {
+      platform.assumeNotJdk8()
+      platform.assumeNotJdk8Alpn()
+    }
+
     val sessionIds = mutableListOf<String>()
 
     enableTls()
