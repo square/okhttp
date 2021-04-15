@@ -19,7 +19,6 @@ import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.TestUtil.assumeNetwork
 import okhttp3.internal.connection
-import okhttp3.internal.platform.OpenJSSEPlatform
 import okhttp3.testing.PlatformRule
 import okhttp3.testing.PlatformVersion
 import okhttp3.tls.internal.TlsUtil
