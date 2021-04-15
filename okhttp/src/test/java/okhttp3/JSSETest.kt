@@ -20,6 +20,7 @@ import mockwebserver3.MockWebServer
 import okhttp3.TestUtil.assumeNetwork
 import okhttp3.internal.platform.OpenJSSEPlatform
 import okhttp3.testing.PlatformRule
+import okhttp3.testing.PlatformVersion
 import okhttp3.tls.internal.TlsUtil
 import okio.ByteString.Companion.toByteString
 import org.assertj.core.api.Assertions.assertThat
@@ -67,8 +68,12 @@ class JSSETest(
 
     response.use {
       assertEquals(200, response.code)
-      assertEquals(TlsVersion.TLS_1_3, response.handshake?.tlsVersion)
-      assertEquals(Protocol.HTTP_2, response.protocol)
+      if (PlatformVersion.majorVersion > 11) {
+        assertEquals(TlsVersion.TLS_1_3, response.handshake?.tlsVersion)
+      }
+      if (PlatformVersion.majorVersion > 8) {
+        assertEquals(Protocol.HTTP_2, response.protocol)
+      }
 
       assertThat(response.exchange!!.connection.socket().javaClass.name).isEqualTo(
         "sun.security.ssl.SSLSocketImpl"
@@ -82,7 +87,17 @@ class JSSETest(
     assertThat(factory.javaClass.name).isEqualTo("sun.security.ssl.SSLSocketFactoryImpl")
     val s = factory.createSocket() as SSLSocket
 
-    assertEquals(listOf("TLSv1.3", "TLSv1.2", "TLSv1.1", "TLSv1"), s.enabledProtocols.toList())
+    when {
+      PlatformVersion.majorVersion > 11 -> {
+        assertThat(s.enabledProtocols.toList()).containsExactly("TLSv1.3", "TLSv1.2")
+      }
+      PlatformVersion.majorVersion == 8 -> {
+        assertThat(s.enabledProtocols.toList()).contains("TLSv1.2", "TLSv1.1", "TLSv1")
+      }
+      else -> {
+        assertThat(s.enabledProtocols.toList()).containsExactly("TLSv1.3", "TLSv1.2", "TLSv1.1", "TLSv1")
+      }
+    }
   }
 
   @Test
@@ -120,12 +135,6 @@ class JSSETest(
     assertEquals(2, sessionIds.size)
     assertNotEquals(sessionIds[0], sessionIds[1])
     assertThat(sessionIds[0]).isNotBlank()
-  }
-
-  @Test
-  fun testBuildIfSupported() {
-    val actual = OpenJSSEPlatform.buildIfSupported()
-    assertThat(actual).isNotNull
   }
 
   private fun enableTls() {
