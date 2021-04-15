@@ -5,7 +5,7 @@ dependencies {
   testImplementation project(':okhttp-tls')
   testImplementation project(':okhttp-testing-support')
   testImplementation 'org.apache.httpcomponents.client5:httpclient5:5.0.3'
-  testImplementation 'org.eclipse.jetty:jetty-client:9.4.27.v20200227'
+  testImplementation 'org.eclipse.jetty:jetty-client:11.0.2'
   testImplementation Dependencies.junit
   testImplementation Dependencies.assertj
 }
