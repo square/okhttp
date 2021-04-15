@@ -29,6 +29,11 @@ afterEvaluate { project ->
   }
 }
 
+animalsniffer {
+  // InsecureExtendedTrustManager (API 24+)
+  ignore = ["javax.net.ssl.X509ExtendedTrustManager"]
+}
+
 task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {
   oldClasspath = files(baselineJar(project, baselineVersion))
   newClasspath = files(jar.archivePath)
