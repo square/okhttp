@@ -44,7 +44,7 @@ jobs:
           java-version: 11
 
       - name: Run Checks
-        run: ./gradlew check
+        run: ./gradlew check -x test
 
   testopenjdk11:
     runs-on: ubuntu-latest
