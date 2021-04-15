@@ -50,7 +50,7 @@ dependencies {
   androidTestImplementation "org.bouncycastle:bctls-jdk15to18:${Versions.bouncycastle}"
   androidTestImplementation 'androidx.test.ext:junit:1.1.2'
   androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
-  androidTestImplementation 'org.apache.httpcomponents.client5:httpclient5:5.0'
-  androidTestImplementation 'com.squareup.moshi:moshi:1.11.0'
-  androidTestImplementation 'com.squareup.moshi:moshi-kotlin:1.11.0'
+  androidTestImplementation 'org.apache.httpcomponents.client5:httpclient5:5.0.3'
+  androidTestImplementation 'com.squareup.moshi:moshi:1.12.0'
+  androidTestImplementation 'com.squareup.moshi:moshi-kotlin:1.12.0'
 }

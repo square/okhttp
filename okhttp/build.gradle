@@ -62,7 +62,7 @@ dependencies {
   compileOnly Dependencies.animalSniffer
 
   // graal build support
-  compileOnly("org.graalvm.nativeimage:svm:20.2.0") {
+  compileOnly("org.graalvm.nativeimage:svm:21.0.0") {
     // Avoid kapt tripping up on a non jar dependency.
     // Only annotations are needed here.
     // https://youtrack.jetbrains.com/issue/KT-29513
