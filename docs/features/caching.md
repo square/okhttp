@@ -70,7 +70,7 @@ The cache directory must be exclusively owned by a single instance.
 Deleting the cache when it is no longer needed can be done.  However this may delete the purpose of the cache
 which is designed to persist between app restarts.
 
-```
+```kotlin
 cache.delete()
 ```
  
@@ -78,14 +78,14 @@ cache.delete()
 
 Pruning the entire Cache to clear space temporarily can be done using evictAll.
 
-```
+```kotlin
 cache.evictAll()
 ```
 
 Removing individual items can be done using the urls iterator.
 This would be typical after a user initiates a force refresh by a pull to refresh type action.
 
-```
+```java
     val urlIterator = cache.urls()
     while (urlIterator.hasNext()) {
       if (urlIterator.next().startsWith("https://www.google.com/")) {

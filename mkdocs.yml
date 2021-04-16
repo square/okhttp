@@ -11,14 +11,17 @@ copyright: 'Copyright &copy; 2019 Square, Inc.'
 
 theme:
   name: 'material'
-  favicon: images/icon-square.png
-  logo: images/icon-square.png
+  favicon: assets/images/icon-square.png
+  logo: assets/images/icon-square.png
   palette:
     primary: 'teal'
     accent: 'white'
+    scheme: 'slate'
+  features:
+  - navigation.tabs
 
 extra_css:
-  - 'css/app.css'
+  - 'assets/css/app.css'
 
 markdown_extensions:
   - smarty
@@ -31,6 +34,12 @@ markdown_extensions:
   - pymdownx.betterem:
       smart_enable: all
   - pymdownx.caret
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+      options:
+        custom_icons:
+        - docs/assets/.icons
   - pymdownx.inlinehilite
   - pymdownx.magiclink
   - pymdownx.smartsymbols
@@ -39,21 +48,55 @@ markdown_extensions:
   - pymdownx.tabbed
   - tables
 
+plugins:
+  - redirects:
+      redirect_maps:
+        # Redirect all feature pages to features/*
+        'caching.md': 'features/caching.md'
+        'calls.md': 'features/calls.md'
+        'concurrency.md': 'features/concurrency.md'
+        'connections.md': 'features/connections.md'
+        'debug_logging.md': 'features/debug_logging.md'
+        'events.md': 'features/events.md'
+        'https.md': 'features/events.md'
+        'interceptors.md': 'features/interceptors.md'
+        'r8_proguard.md': 'features/r8_proguard.md'
+        # Redirect all Security pages to security/*
+        'security.md': 'security/security.md'
+        'security_providers.md': 'security/security_providers.md'
+        # Redirect upgrading_to_okhttp_4 to 4.x/*
+        'upgrading_to_okhttp_4.md': '4.x/upgrading_to_okhttp_4.md'
+        # Redirect all changelog pages to changelog/*
+        'changelog.md': 'changelogs/changelog.md'
+        'changelog_3x.md': 'changelogs/changelog_3x.md'
+        'changelog_2x.md': 'changelogs/changelog_2x.md'
+        'changelog_1x.md': 'changelogs/changelog_1x.md'
+        'tls_configuration_history.md': 'changelogs/tls_configuration_history.md'
+        # Redirect all contributing pages to contribute/*
+        'contributing.md': 'contribute/contributing.md'
+        'code_of_conduct.md': 'contribute/code_of_conduct.md'
+
 nav:
-  - 'Overview': index.md
-  - 'Stack Overflow ⏏': https://stackoverflow.com/questions/tagged/okhttp?sort=active
-  - 'Calls': calls.md
-  - 'Caching': caching.md
-  - 'Connections': connections.md
-  - 'Events': events.md
-  - 'HTTPS': https.md
-  - 'Interceptors': interceptors.md
+  - 'Overview':
+    - 'Introduction': index.md
+    - 'Stack Overflow ⏏': https://stackoverflow.com/questions/tagged/okhttp?sort=active
+  - 'Features':
+    - 'Caching': features/caching.md
+    - 'Calls': features/calls.md
+    - 'Concurrency': features/concurrency.md
+    - 'Connections': features/connections.md
+    - 'Debug Logging': features/debug_logging.md
+    - 'Events': features/events.md
+    - 'HTTPS': features/https.md
+    - 'Interceptors': features/interceptors.md
+    - 'R8 / ProGuard': features/r8_proguard.md
   - 'Recipes': recipes.md
-  - 'Security': security.md
-  - 'Security Providers': security_providers.md
+  - 'Security':
+    - 'Security Policy': security/security.md
+    - 'Security Providers': security/security_providers.md
   - 'Works with OkHttp': works_with_okhttp.md
-  - 'Upgrading to OkHttp 4': upgrading_to_okhttp_4.md
   - '4.x API':
+    - 'Upgrading to OkHttp 4': 4.x/upgrading_to_okhttp_4.md
     - 'okhttp': 4.x/okhttp/okhttp3/index.md
     - 'brotli': 4.x/okhttp-brotli/okhttp3.brotli/index.md
     - 'dnsoverhttps': 4.x/okhttp-dnsoverhttps/okhttp3.dnsoverhttps/index.md
@@ -70,7 +113,13 @@ nav:
     - 'tls ⏏': https://square.github.io/okhttp/3.x/okhttp-tls/
     - 'urlconnection ⏏': https://square.github.io/okhttp/3.x/okhttp-urlconnection/
     - 'mockwebserver ⏏': https://square.github.io/okhttp/3.x/mockwebserver/
-  - 'Change Log': changelog.md
-  - 'Contributing': contributing.md
-  - 'Code of Conduct': code_of_conduct.md
+  - 'Change Logs':
+    - 'Latest': changelogs/changelog.md
+    - 'Version 3.x': changelogs/changelog_3x.md
+    - 'Version 2.x': changelogs/changelog_2x.md
+    - 'Version 1.x': changelogs/changelog_1x.md
+    - 'TLS History': changelogs/tls_configuration_history.md
+  - 'Contributing':
+    - 'Contribute': contribute/contributing.md
+    - 'Code of Conduct': contribute/code_of_conduct.md
 

@@ -9,7 +9,7 @@ Download a file, print its headers, and print its response body as a string.
 
 The `string()` method on response body is convenient and efficient for small documents. But if the response body is large (greater than 1 MiB), avoid `string()` because it will load the entire document into memory. In that case, prefer to process the body as a stream.
 
-=== "Kotlin"
+=== ":brands-kotlin: Kotlin"
     ```kotlin
       private val client = OkHttpClient()
       
@@ -29,7 +29,7 @@ The `string()` method on response body is convenient and efficient for small doc
         }
       }
     ```
-=== "Java"
+=== ":brands-java: Java"
     ```java
       private final OkHttpClient client = new OkHttpClient();
       
@@ -55,7 +55,7 @@ The `string()` method on response body is convenient and efficient for small doc
 
 Download a file on a worker thread, and get called back when the response is readable. The callback is made after the response headers are ready. Reading the response body may still block. OkHttp doesn't currently offer asynchronous APIs to receive a response body in parts.
 
-=== "Kotlin"
+=== ":brands-kotlin: Kotlin"
     ```kotlin
       private val client = OkHttpClient()
       
@@ -83,7 +83,7 @@ Download a file on a worker thread, and get called back when the response is rea
         })
       }
     ```
-=== "Java"
+=== ":brands-java: Java"
     ```java
       private final OkHttpClient client = new OkHttpClient();
       
@@ -123,7 +123,7 @@ When reading response a header, use `header(name)` to return the _last_ occurren
 
 To visit all headers, use the `Headers` class which supports access by index.
 
-=== "Kotlin"
+=== ":brands-kotlin: Kotlin"
     ```kotlin
       private val client = OkHttpClient()
       
@@ -145,7 +145,7 @@ To visit all headers, use the `Headers` class which supports access by index.
       }
     ```
     
-=== "Java"
+=== ":brands-java: Java"
     ```java
       private final OkHttpClient client = new OkHttpClient();
       
@@ -171,7 +171,7 @@ To visit all headers, use the `Headers` class which supports access by index.
 
 Use an HTTP POST to send a request body to a service. This example posts a markdown document to a web service that renders markdown as HTML. Because the entire request body is in memory simultaneously, avoid posting large (greater than 1 MiB) documents using this API.
 
-=== "Kotlin"
+=== ":brands-kotlin: Kotlin"
     ```kotlin
       private val client = OkHttpClient()
       
@@ -201,7 +201,7 @@ Use an HTTP POST to send a request body to a service. This example posts a markd
         val MEDIA_TYPE_MARKDOWN = "text/x-markdown; charset=utf-8".toMediaType()
       }
     ```
-=== "Java"
+=== ":brands-java: Java"
     ```java
       public static final MediaType MEDIA_TYPE_MARKDOWN
           = MediaType.parse("text/x-markdown; charset=utf-8");
@@ -234,7 +234,7 @@ Use an HTTP POST to send a request body to a service. This example posts a markd
  
 Here we `POST` a request body as a stream. The content of this request body is being generated as it's being written. This example streams directly into the [Okio](https://github.com/square/okio) buffered sink. Your programs may prefer an `OutputStream`, which you can get from `BufferedSink.outputStream()`.
 
-=== "Kotlin"
+=== ":brands-kotlin: Kotlin"
     ```kotlin
       private val client = OkHttpClient()
     
@@ -275,7 +275,7 @@ Here we `POST` a request body as a stream. The content of this request body is b
         val MEDIA_TYPE_MARKDOWN = "text/x-markdown; charset=utf-8".toMediaType()
       }
     ```
-=== "Java"
+=== ":brands-java: Java"
     ```java
       public static final MediaType MEDIA_TYPE_MARKDOWN
           = MediaType.parse("text/x-markdown; charset=utf-8");
@@ -322,7 +322,7 @@ Here we `POST` a request body as a stream. The content of this request body is b
 
 It's easy to use a file as a request body.
 
-=== "Kotlin"
+=== ":brands-kotlin: Kotlin"
     ```kotlin
       private val client = OkHttpClient()
     
@@ -345,7 +345,7 @@ It's easy to use a file as a request body.
         val MEDIA_TYPE_MARKDOWN = "text/x-markdown; charset=utf-8".toMediaType()
       }
     ```
-=== "Java"
+=== ":brands-java: Java"
     ```java
       public static final MediaType MEDIA_TYPE_MARKDOWN
           = MediaType.parse("text/x-markdown; charset=utf-8");
@@ -372,7 +372,7 @@ It's easy to use a file as a request body.
 
 Use `FormBody.Builder` to build a request body that works like an HTML `<form>` tag. Names and values will be encoded using an HTML-compatible form URL encoding.
 
-=== "Kotlin"
+=== ":brands-kotlin: Kotlin"
     ```kotlin
       private val client = OkHttpClient()
     
@@ -392,7 +392,7 @@ Use `FormBody.Builder` to build a request body that works like an HTML `<form>` 
         }
       }
     ```
-=== "Java"
+=== ":brands-java: Java"
     ```java
       private final OkHttpClient client = new OkHttpClient();
     
@@ -417,7 +417,7 @@ Use `FormBody.Builder` to build a request body that works like an HTML `<form>` 
 
 `MultipartBody.Builder` can build sophisticated request bodies compatible with HTML file upload forms. Each part of a multipart request body is itself a request body, and can define its own headers. If present, these headers should describe the part body, such as its `Content-Disposition`. The `Content-Length` and `Content-Type` headers are added automatically if they're available.
 
-=== "Kotlin"
+=== ":brands-kotlin: Kotlin"
     ```kotlin
       private val client = OkHttpClient()
     
@@ -452,7 +452,7 @@ Use `FormBody.Builder` to build a request body that works like an HTML `<form>` 
         private val MEDIA_TYPE_PNG = "image/png".toMediaType()
       }
     ```
-=== "Java"
+=== ":brands-java: Java"
     ```java
       /**
        * The imgur client ID for OkHttp recipes. If you're using imgur for anything other than running
@@ -492,7 +492,7 @@ Use `FormBody.Builder` to build a request body that works like an HTML `<form>` 
 
 Note that `ResponseBody.charStream()` uses the `Content-Type` response header to select which charset to use when decoding the response body. It defaults to `UTF-8` if no charset is specified.
 
-=== "Kotlin"
+=== ":brands-kotlin: Kotlin"
     ```kotlin
       private val client = OkHttpClient()
       private val moshi = Moshi.Builder().build()
@@ -520,7 +520,7 @@ Note that `ResponseBody.charStream()` uses the `Content-Type` response header to
       @JsonClass(generateAdapter = true)
       data class GistFile(var content: String?)
     ```
-=== "Java"
+=== ":brands-java: Java"
     ```java
       private final OkHttpClient client = new OkHttpClient();
       private final Moshi moshi = new Moshi.Builder().build();
@@ -559,7 +559,7 @@ It is an error to have multiple caches accessing the same cache directory simult
 
 Response caching uses HTTP headers for all configuration. You can add request headers like `Cache-Control: max-stale=3600` and OkHttp's cache will honor them. Your webserver configures how long responses are cached with its own response headers, like `Cache-Control: max-age=9600`. There are cache headers to force a cached response, force a network response, or force the network response to be validated with a conditional GET.
 
-=== "Kotlin"
+=== ":brands-kotlin: Kotlin"
     ```kotlin
       private val client: OkHttpClient = OkHttpClient.Builder()
           .cache(Cache(
@@ -594,7 +594,7 @@ Response caching uses HTTP headers for all configuration. You can add request he
         println("Response 2 equals Response 1? " + (response1Body == response2Body))
       }
     ```
-=== "Java"
+=== ":brands-java: Java"
     ```java
       private final OkHttpClient client;
     
@@ -642,7 +642,7 @@ To prevent a response from using the cache, use [`CacheControl.FORCE_NETWORK`](h
 
 Use `Call.cancel()` to stop an ongoing call immediately. If a thread is currently writing a request or reading a response, it will receive an `IOException`. Use this to conserve the network when a call is no longer necessary; for example when your user navigates away from an application. Both synchronous and asynchronous calls can be canceled.
 
-=== "Kotlin"
+=== ":brands-kotlin: Kotlin"
     ```kotlin
       private val executor = Executors.newScheduledThreadPool(1)
       private val client = OkHttpClient()
@@ -674,7 +674,7 @@ Use `Call.cancel()` to stop an ongoing call immediately. If a thread is currentl
         }
       }
     ```
-=== "Java"
+=== ":brands-java: Java"
     ```java
       private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
       private final OkHttpClient client = new OkHttpClient();
@@ -711,7 +711,7 @@ Use `Call.cancel()` to stop an ongoing call immediately. If a thread is currentl
 
 Use timeouts to fail a call when its peer is unreachable. Network partitions can be due to client connectivity problems, server availability problems, or anything between. OkHttp supports connect, write, read, and full call timeouts.
 
-=== "Kotlin"
+=== ":brands-kotlin: Kotlin"
     ```kotlin
       private val client: OkHttpClient = OkHttpClient.Builder()
           .connectTimeout(5, TimeUnit.SECONDS)
@@ -730,7 +730,7 @@ Use timeouts to fail a call when its peer is unreachable. Network partitions can
         }
       }
     ```
-=== "Java"
+=== ":brands-java: Java"
     ```java
       private final OkHttpClient client;
     
@@ -757,7 +757,7 @@ Use timeouts to fail a call when its peer is unreachable. Network partitions can
 
 All the HTTP client configuration lives in `OkHttpClient` including proxy settings, timeouts, and caches. When you need to change the configuration of a single call, call `OkHttpClient.newBuilder()`. This returns a builder that shares the same connection pool, dispatcher, and configuration with the original client. In the example below, we make one request with a 500 ms timeout and another with a 3000 ms timeout.
 
-=== "Kotlin"
+=== ":brands-kotlin: Kotlin"
     ```kotlin
       private val client = OkHttpClient()
     
@@ -791,7 +791,7 @@ All the HTTP client configuration lives in `OkHttpClient` including proxy settin
         }
       }
     ```
-=== "Java"
+=== ":brands-java: Java"
     ```java
       private final OkHttpClient client = new OkHttpClient();
     
@@ -828,7 +828,7 @@ OkHttp can automatically retry unauthenticated requests. When a response is `401
 
 Use `Response.challenges()` to get the schemes and realms of any authentication challenges. When fulfilling a `Basic` challenge, use `Credentials.basic(username, password)` to encode the request header.
 
-=== "Kotlin"
+=== ":brands-kotlin: Kotlin"
     ```kotlin
       private val client = OkHttpClient.Builder()
           .authenticator(object : Authenticator {
@@ -860,7 +860,7 @@ Use `Response.challenges()` to get the schemes and realms of any authentication 
         }
       }
     ```
-=== "Java"
+=== ":brands-java: Java"
     ```java
       private final OkHttpClient client;
     
