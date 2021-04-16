@@ -59,36 +59,6 @@ commands:
           path: ~/reports
 
 jobs:
-  compile:
-    docker:
-      - image: circleci/openjdk:11.0.8-jdk-buster
-
-    environment:
-      JVM_OPTS: -Xmx1g
-      TERM: dumb
-
-    steps:
-      - checkout
-
-      - run:
-          name: Compile
-          command: ./gradlew --parallel --build-cache downloadDependencies testClasses
-          environment:
-            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=3 -Xmx768m
-
-      - run:
-          name: Run tests
-          command: ./gradlew --parallel --build-cache test
-          environment:
-            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dokhttp.platform=jdk9 -Dorg.gradle.workers.max=3 -Xmx1G
-
-      - save_cache:
-          paths:
-            - ~/.gradle/caches
-            - ~/.gradle/wrapper
-          # Under normal usage, saves compiled results from master at least once a day
-          key: v4-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}-{{ epoch }}
-
   testjdk8alpn:
     docker:
       - image: circleci/openjdk:11.0.6-jdk-stretch
@@ -178,16 +148,6 @@ jobs:
 
 workflows:
   version: 2
-  commit:
-    jobs:
-      - compile:
-          filters:
-            branches:
-              only: master
-      - testjdk8alpn:
-          filters:
-            branches:
-              only: master
   nightly:
     triggers:
       - schedule:
@@ -196,16 +156,7 @@ workflows:
             branches:
               only: master
     jobs:
-      - compile
-      - testjdk8alpn:
-          requires:
-            - compile
-      - testopenjsse:
-          requires:
-            - compile
-      - testjdkwindows:
-          requires:
-            - compile
-      - testconscrypt:
-          requires:
-            - compile
+      - testjdk8alpn
+      - testopenjsse
+      - testjdkwindows
+      - testconscrypt
