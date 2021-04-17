@@ -19,11 +19,13 @@ import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule
+import okhttp3.testing.PlatformVersion
 import okhttp3.tls.internal.TlsUtil
 import okio.ByteString.Companion.toByteString
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.params.ParameterizedTest
@@ -51,6 +53,10 @@ class SessionReuseTest(
   @ValueSource(strings = ["TLSv1.2", "TLSv1.3"])
   @Flaky
   fun testSessionReuse(tlsVersion: String) {
+    if (tlsVersion == TlsVersion.TLS_1_3.javaName) {
+      assumeTrue(PlatformVersion.majorVersion != 8)
+    }
+
     val sessionIds = mutableListOf<String>()
 
     enableTls()
