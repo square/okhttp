@@ -565,7 +565,7 @@ _2019-06-03_
 
 ## Version 3.x
 
-[Change log](http://square.github.io/okhttp/changelog_3x/)
+[Change log](https://square.github.io/okhttp/changelog_3x/)
 
 
  [bom]: https://docs.gradle.org/6.2/userguide/platforms.html#sub:bom_import
