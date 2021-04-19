@@ -41,7 +41,7 @@ OkHttpClient client = new OkHttpClient.Builder()
     .build();
 
 Request request = new Request.Builder()
-    .url("https://www.publicobject.com/helloworld.txt")
+    .url("http://www.publicobject.com/helloworld.txt")
     .header("User-Agent", "OkHttp Example")
     .build();
 
@@ -52,7 +52,7 @@ response.body().close();
 The URL `http://www.publicobject.com/helloworld.txt` redirects to `https://publicobject.com/helloworld.txt`, and OkHttp follows this redirect automatically. Our application interceptor is called **once** and the response returned from `chain.proceed()` has the redirected response:
 
 ```
-INFO: Sending request https://www.publicobject.com/helloworld.txt on null
+INFO: Sending request http://www.publicobject.com/helloworld.txt on null
 User-Agent: OkHttp Example
 
 INFO: Received response for https://publicobject.com/helloworld.txt in 1179.7ms
@@ -74,7 +74,7 @@ OkHttpClient client = new OkHttpClient.Builder()
     .build();
 
 Request request = new Request.Builder()
-    .url("https://www.publicobject.com/helloworld.txt")
+    .url("http://www.publicobject.com/helloworld.txt")
     .header("User-Agent", "OkHttp Example")
     .build();
 
