@@ -583,7 +583,7 @@ in addition to synchronous blocking calls.
     getFollowSslRedirects()**. We reserve the word _protocol_ for the HTTP
     version being used (HTTP/1.1, HTTP/2). The old name of this method was
     misleading; it was always used to configure redirects between `https://` and
-    `https://` schemes.
+    `http://` schemes.
 
  *  **RouteDatabase is no longer public API.** OkHttp continues to track which
     routes have failed but this is no exposed in the API.

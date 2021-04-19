@@ -49,7 +49,7 @@ Response response = client.newCall(request).execute();
 response.body().close();
 ```
 
-The URL `https://www.publicobject.com/helloworld.txt` redirects to `https://publicobject.com/helloworld.txt`, and OkHttp follows this redirect automatically. Our application interceptor is called **once** and the response returned from `chain.proceed()` has the redirected response:
+The URL `http://www.publicobject.com/helloworld.txt` redirects to `https://publicobject.com/helloworld.txt`, and OkHttp follows this redirect automatically. Our application interceptor is called **once** and the response returned from `chain.proceed()` has the redirected response:
 
 ```
 INFO: Sending request https://www.publicobject.com/helloworld.txt on null
@@ -82,7 +82,7 @@ Response response = client.newCall(request).execute();
 response.body().close();
 ```
 
-When we run this code, the interceptor runs twice. Once for the initial request to `https://www.publicobject.com/helloworld.txt`, and another for the redirect to `https://publicobject.com/helloworld.txt`.
+When we run this code, the interceptor runs twice. Once for the initial request to `http://www.publicobject.com/helloworld.txt`, and another for the redirect to `https://publicobject.com/helloworld.txt`.
 
 ```
 INFO: Sending request https://www.publicobject.com/helloworld.txt on Connection{www.publicobject.com:80, proxy=DIRECT hostAddress=54.187.32.157 cipherSuite=none protocol=http/1.1}
