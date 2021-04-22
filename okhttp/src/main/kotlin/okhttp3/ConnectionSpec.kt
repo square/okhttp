@@ -20,6 +20,7 @@ import java.util.Objects
 import javax.net.ssl.SSLSocket
 import okhttp3.ConnectionSpec.Builder
 import okhttp3.internal.concat
+import okhttp3.internal.effectiveCipherSuites
 import okhttp3.internal.hasIntersection
 import okhttp3.internal.indexOf
 import okhttp3.internal.intersect
@@ -46,7 +47,7 @@ import okhttp3.internal.intersect
 class ConnectionSpec internal constructor(
   @get:JvmName("isTls") val isTls: Boolean,
   @get:JvmName("supportsTlsExtensions") val supportsTlsExtensions: Boolean,
-  private val cipherSuitesAsString: Array<String>?,
+  internal val cipherSuitesAsString: Array<String>?,
   private val tlsVersionsAsString: Array<String>?
 ) {
 
@@ -106,11 +107,8 @@ class ConnectionSpec internal constructor(
    * Returns a copy of this that omits cipher suites and TLS versions not enabled by [sslSocket].
    */
   private fun supportedSpec(sslSocket: SSLSocket, isFallback: Boolean): ConnectionSpec {
-    var cipherSuitesIntersection = if (cipherSuitesAsString != null) {
-      sslSocket.enabledCipherSuites.intersect(cipherSuitesAsString, CipherSuite.ORDER_BY_NAME)
-    } else {
-      sslSocket.enabledCipherSuites
-    }
+    val socketEnabledCipherSuites = sslSocket.enabledCipherSuites
+    var cipherSuitesIntersection: Array<String> = effectiveCipherSuites(socketEnabledCipherSuites)
 
     val tlsVersionsIntersection = if (tlsVersionsAsString != null) {
       sslSocket.enabledProtocols.intersect(tlsVersionsAsString, naturalOrder())

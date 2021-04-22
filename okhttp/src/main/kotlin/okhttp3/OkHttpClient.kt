@@ -77,9 +77,19 @@ import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
  *
  * You can customize a shared OkHttpClient instance with [newBuilder]. This builds a client that
  * shares the same connection pool, thread pools, and configuration. Use the builder methods to
- * configure the derived client for a specific purpose.
+ * add configuration to the derived client for a specific purpose.
  *
- * This example shows a call with a short 500 millisecond timeout:
+ * This example shows the single instance with default configurations.
+ * 
+ * ```
+ * public final OkHttpClient client = new OkHttpClient.Builder()
+ *     .readTimeout(1000, TimeUnit.MILLISECONDS)
+ *     .writeTimeout(1000, TimeUnit.MILLISECONDS)
+ *     .build();
+ * ```
+ *
+ * This example shows a call with a short 500 millisecond read timeout and a 1000 millisecond 
+ * write timeout. Original configuration is kept, but can be overriden.
  *
  * ```
  * OkHttpClient eagerClient = client.newBuilder()

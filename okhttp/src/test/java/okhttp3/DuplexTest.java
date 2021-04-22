@@ -37,6 +37,7 @@ import okio.BufferedSource;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -45,9 +46,10 @@ import static java.util.Arrays.asList;
 import static junit.framework.TestCase.assertTrue;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 @Timeout(30)
+@Tag("Slowish")
 public final class DuplexTest {
   @RegisterExtension public final PlatformRule platform = new PlatformRule();
   @RegisterExtension public OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();

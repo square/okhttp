@@ -42,22 +42,25 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
   private val clientEventsList = mutableListOf<String>()
   private var testClient: OkHttpClient? = null
   private var uncaughtException: Throwable? = null
-  private var logger: Logger? = null
   private lateinit var testName: String
   private var defaultUncaughtExceptionHandler: Thread.UncaughtExceptionHandler? = null
   private var taskQueuesWereIdle: Boolean = false
+
+  var logger: Logger? = null
 
   var recordEvents = true
   var recordTaskRunner = false
   var recordFrames = false
   var recordSslDebug = false
 
+  private val sslExcludeFilter = "^(?:Inaccessible trust store|trustStore is|Reload the trust store|Reload trust certs|Reloaded|adding as trusted certificates|Ignore disabled cipher suite|Ignore unsupported cipher suite).*".toRegex()
+
   private val testLogHandler = object : Handler() {
     override fun publish(record: LogRecord) {
       val recorded = when (record.loggerName) {
         TaskRunner::class.java.name -> recordTaskRunner
         Http2::class.java.name -> recordFrames
-        "javax.net.ssl" -> recordSslDebug
+        "javax.net.ssl" -> recordSslDebug && !sslExcludeFilter.matches(record.message)
         else -> false
       }
 

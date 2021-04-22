@@ -39,6 +39,7 @@ import okio.Okio;
 import okio.Sink;
 import okio.Source;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
@@ -60,10 +61,11 @@ import static okhttp3.internal.http2.Settings.MAX_CONCURRENT_STREAMS;
 import static okhttp3.internal.http2.Settings.MAX_FRAME_SIZE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 @Timeout(5)
+@Tag("Slow")
 public final class Http2ConnectionTest {
   private final MockHttp2Peer peer = new MockHttp2Peer();
 

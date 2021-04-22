@@ -6,7 +6,7 @@ This module integrates mockwebserver3.MockWebServer with JUnit 5.
 To use, first add this library as a test dependency:
 
 ```
-testRuntimeOnly("com.squareup.okhttp3:mockwebserver3-junit5:4.9.0")
+testRuntimeOnly("com.squareup.okhttp3:mockwebserver3-junit5:4.9.1")
 ```
 
 Then in tests annotated `@org.junit.jupiter.api.Test`, you may add a [MockWebServer] as a test

@@ -92,12 +92,12 @@ class FormBody internal constructor(
     fun add(name: String, value: String) = apply {
       names += name.canonicalize(
           encodeSet = FORM_ENCODE_SET,
-          plusIsSpace = true,
+          plusIsSpace = false, // plus is encoded as `%2B`, space is encoded as plus.
           charset = charset
       )
       values += value.canonicalize(
           encodeSet = FORM_ENCODE_SET,
-          plusIsSpace = true,
+          plusIsSpace = false, // plus is encoded as `%2B`, space is encoded as plus.
           charset = charset
       )
     }

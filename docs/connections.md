@@ -3,32 +3,32 @@ Connections
 
 Although you provide only the URL, OkHttp plans its connection to your webserver using three types: URL, Address, and Route.
 
-### [URLs](http://square.github.io/okhttp/4.x/okhttp/okhttp3/-http-url/)
+### [URLs](https://square.github.io/okhttp/4.x/okhttp/okhttp3/-http-url/)
 
 URLs (like `https://github.com/square/okhttp`) are fundamental to HTTP and the Internet. In addition to being a universal, decentralized naming scheme for everything on the web, they also specify how to access web resources.
 
 URLs are abstract:
 
- * They specify that the call may be plaintext (`http`) or encrypted (`https`), but not which cryptographic algorithms should be used. Nor do they specify how to verify the peer's certificates (the [HostnameVerifier](http://developer.android.com/reference/javax/net/ssl/HostnameVerifier.html)) or which certificates can be trusted (the [SSLSocketFactory](http://developer.android.com/reference/org/apache/http/conn/ssl/SSLSocketFactory.html)).
+ * They specify that the call may be plaintext (`http`) or encrypted (`https`), but not which cryptographic algorithms should be used. Nor do they specify how to verify the peer's certificates (the [HostnameVerifier](https://developer.android.com/reference/javax/net/ssl/HostnameVerifier.html)) or which certificates can be trusted (the [SSLSocketFactory](https://developer.android.com/reference/org/apache/http/conn/ssl/SSLSocketFactory.html)).
  * They don't specify whether a specific proxy server should be used or how to authenticate with that proxy server.
 
 They're also concrete: each URL identifies a specific path (like `/square/okhttp`) and query (like `?q=sharks&lang=en`). Each webserver hosts many URLs.
 
-### [Addresses](http://square.github.io/okhttp/4.x/okhttp/okhttp3/-address/)
+### [Addresses](https://square.github.io/okhttp/4.x/okhttp/okhttp3/-address/)
 
 Addresses specify a webserver (like `github.com`) and all of the **static** configuration necessary to connect to that server: the port number, HTTPS settings, and preferred network protocols (like HTTP/2 or SPDY).
 
-URLs that share the same address may also share the same underlying TCP socket connection. Sharing a connection has substantial performance benefits: lower latency, higher throughput (due to [TCP slow start](http://www.igvita.com/2011/10/20/faster-web-vs-tcp-slow-start/)) and conserved battery. OkHttp uses a [ConnectionPool](http://square.github.io/okhttp/4.x/okhttp/okhttp3/-connection-pool/) that automatically reuses HTTP/1.x connections and multiplexes HTTP/2 and SPDY connections.
+URLs that share the same address may also share the same underlying TCP socket connection. Sharing a connection has substantial performance benefits: lower latency, higher throughput (due to [TCP slow start](https://www.igvita.com/2011/10/20/faster-web-vs-tcp-slow-start/)) and conserved battery. OkHttp uses a [ConnectionPool](https://square.github.io/okhttp/4.x/okhttp/okhttp3/-connection-pool/) that automatically reuses HTTP/1.x connections and multiplexes HTTP/2 and SPDY connections.
 
-In OkHttp some fields of the address come from the URL (scheme, hostname, port) and the rest come from the [OkHttpClient](http://square.github.io/okhttp/4.x/okhttp/okhttp3/-ok-http-client/).
+In OkHttp some fields of the address come from the URL (scheme, hostname, port) and the rest come from the [OkHttpClient](https://square.github.io/okhttp/4.x/okhttp/okhttp3/-ok-http-client/).
 
-### [Routes](http://square.github.io/okhttp/4.x/okhttp/okhttp3/-route/)
+### [Routes](https://square.github.io/okhttp/4.x/okhttp/okhttp3/-route/)
 
-Routes supply the **dynamic** information necessary to actually connect to a webserver. This is the specific IP address to attempt (as discovered by a DNS query), the exact proxy server to use (if a [ProxySelector](http://developer.android.com/reference/java/net/ProxySelector.html) is in use), and which version of TLS to negotiate (for HTTPS connections).
+Routes supply the **dynamic** information necessary to actually connect to a webserver. This is the specific IP address to attempt (as discovered by a DNS query), the exact proxy server to use (if a [ProxySelector](https://developer.android.com/reference/java/net/ProxySelector.html) is in use), and which version of TLS to negotiate (for HTTPS connections).
 
 There may be many routes for a single address. For example, a webserver that is hosted in multiple datacenters may yield multiple IP addresses in its DNS response.
 
-### [Connections](http://square.github.io/okhttp/4.x/okhttp/okhttp3/-connection/)
+### [Connections](https://square.github.io/okhttp/4.x/okhttp/okhttp3/-connection/)
 
 When you request a URL with OkHttp, here's what it does:
 

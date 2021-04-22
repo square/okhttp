@@ -15,6 +15,34 @@
  */
 package okhttp3
 
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.internal.EMPTY_HEADERS
+import okhttp3.internal.cache.CacheRequest
+import okhttp3.internal.cache.CacheStrategy
+import okhttp3.internal.cache.DiskLruCache
+import okhttp3.internal.closeQuietly
+import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.http.HttpMethod
+import okhttp3.internal.http.StatusLine
+import okhttp3.internal.platform.Platform
+import okhttp3.internal.platform.Platform.Companion.WARN
+import okhttp3.internal.toLongOrDefault
+import okio.Buffer
+import okio.BufferedSink
+import okio.BufferedSource
+import okio.ByteString.Companion.decodeBase64
+import okio.ByteString.Companion.encodeUtf8
+import okio.ByteString.Companion.toByteString
+import okio.ExperimentalFileSystem
+import okio.FileSystem
+import okio.ForwardingSink
+import okio.ForwardingSource
+import okio.Path
+import okio.Path.Companion.toOkioPath
+import okio.Sink
+import okio.Source
+import okio.buffer
 import java.io.Closeable
 import java.io.File
 import java.io.Flushable
@@ -25,29 +53,6 @@ import java.security.cert.CertificateException
 import java.security.cert.CertificateFactory
 import java.util.NoSuchElementException
 import java.util.TreeSet
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.internal.EMPTY_HEADERS
-import okhttp3.internal.cache.CacheRequest
-import okhttp3.internal.cache.CacheStrategy
-import okhttp3.internal.cache.DiskLruCache
-import okhttp3.internal.closeQuietly
-import okhttp3.internal.concurrent.TaskRunner
-import okhttp3.internal.http.HttpMethod
-import okhttp3.internal.http.StatusLine
-import okhttp3.internal.io.FileSystem
-import okhttp3.internal.platform.Platform
-import okhttp3.internal.toLongOrDefault
-import okio.Buffer
-import okio.BufferedSink
-import okio.BufferedSource
-import okio.ByteString.Companion.decodeBase64
-import okio.ByteString.Companion.encodeUtf8
-import okio.ByteString.Companion.toByteString
-import okio.ForwardingSink
-import okio.ForwardingSource
-import okio.Sink
-import okio.Source
-import okio.buffer
 
 /**
  * Caches HTTP and HTTPS responses to the filesystem so they may be reused, saving time and
@@ -138,18 +143,19 @@ import okio.buffer
  *
  * [rfc_7234]: http://tools.ietf.org/html/rfc7234
  */
-class Cache internal constructor(
-  directory: File,
+@OptIn(ExperimentalFileSystem::class)
+class Cache(
+  directory: Path,
   maxSize: Long,
   fileSystem: FileSystem
 ) : Closeable, Flushable {
   internal val cache = DiskLruCache(
-      fileSystem = fileSystem,
-      directory = directory,
-      appVersion = VERSION,
-      valueCount = ENTRY_COUNT,
-      maxSize = maxSize,
-      taskRunner = TaskRunner.INSTANCE
+    fileSystem = fileSystem,
+    directory = directory,
+    appVersion = VERSION,
+    valueCount = ENTRY_COUNT,
+    maxSize = maxSize,
+    taskRunner = TaskRunner.INSTANCE
   )
 
   // read and write statistics, all guarded by 'this'.
@@ -163,7 +169,10 @@ class Cache internal constructor(
     get() = cache.isClosed()
 
   /** Create a cache of at most [maxSize] bytes in [directory]. */
-  constructor(directory: File, maxSize: Long) : this(directory, maxSize, FileSystem.SYSTEM)
+  @OptIn(ExperimentalFileSystem::class)
+  constructor(directory: File, maxSize: Long) : this(
+    directory.toOkioPath(), maxSize, FileSystem.SYSTEM
+  )
 
   internal fun get(request: Request): Response? {
     val key = key(request.url)
@@ -355,14 +364,18 @@ class Cache internal constructor(
   }
 
   @get:JvmName("directory") val directory: File
+    get() = cache.directory.toFile()
+
+  @get:JvmName("directoryPath") val directoryPath: Path
     get() = cache.directory
 
   @JvmName("-deprecated_directory")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "directory"),
-      level = DeprecationLevel.ERROR)
-  fun directory(): File = cache.directory
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "directory"),
+    level = DeprecationLevel.ERROR
+  )
+  fun directory(): File = cache.directory.toFile()
 
   @Synchronized internal fun trackResponse(cacheStrategy: CacheStrategy) {
     requestCount++
@@ -425,7 +438,7 @@ class Cache internal constructor(
   }
 
   private class Entry {
-    private val url: String
+    private val url: HttpUrl
     private val varyHeaders: Headers
     private val requestMethod: String
     private val protocol: Protocol
@@ -435,8 +448,6 @@ class Cache internal constructor(
     private val handshake: Handshake?
     private val sentRequestMillis: Long
     private val receivedResponseMillis: Long
-
-    private val isHttps: Boolean get() = url.startsWith("https://")
 
     /**
      * Reads an entry from an input stream. A typical entry looks like this:
@@ -490,9 +501,14 @@ class Cache internal constructor(
      * optional. If present, it contains the TLS version.
      */
     @Throws(IOException::class) constructor(rawSource: Source) {
-      try {
+      rawSource.use {
         val source = rawSource.buffer()
-        url = source.readUtf8LineStrict()
+        val urlLine = source.readUtf8LineStrict()
+        // Choice here is between failing with a correct RuntimeException
+        // or mostly silently with an IOException
+        url = urlLine.toHttpUrlOrNull() ?: throw IOException("Cache corruption for $urlLine").also {
+          Platform.get().log("cache corruption", WARN, it)
+        }
         requestMethod = source.readUtf8LineStrict()
         val varyHeadersBuilder = Headers.Builder()
         val varyRequestHeaderLineCount = readInt(source)
@@ -518,7 +534,7 @@ class Cache internal constructor(
         receivedResponseMillis = receivedResponseMillisString?.toLong() ?: 0L
         responseHeaders = responseHeadersBuilder.build()
 
-        if (isHttps) {
+        if (url.isHttps) {
           val blank = source.readUtf8LineStrict()
           if (blank.isNotEmpty()) {
             throw IOException("expected \"\" but was \"$blank\"")
@@ -536,13 +552,11 @@ class Cache internal constructor(
         } else {
           handshake = null
         }
-      } finally {
-        rawSource.close()
       }
     }
 
     constructor(response: Response) {
-      this.url = response.request.url.toString()
+      this.url = response.request.url
       this.varyHeaders = response.varyHeaders()
       this.requestMethod = response.request.method
       this.protocol = response.protocol
@@ -557,34 +571,34 @@ class Cache internal constructor(
     @Throws(IOException::class)
     fun writeTo(editor: DiskLruCache.Editor) {
       editor.newSink(ENTRY_METADATA).buffer().use { sink ->
-        sink.writeUtf8(url).writeByte('\n'.toInt())
+        sink.writeUtf8(url.toString()).writeByte('\n'.toInt())
         sink.writeUtf8(requestMethod).writeByte('\n'.toInt())
         sink.writeDecimalLong(varyHeaders.size.toLong()).writeByte('\n'.toInt())
         for (i in 0 until varyHeaders.size) {
           sink.writeUtf8(varyHeaders.name(i))
-              .writeUtf8(": ")
-              .writeUtf8(varyHeaders.value(i))
-              .writeByte('\n'.toInt())
+            .writeUtf8(": ")
+            .writeUtf8(varyHeaders.value(i))
+            .writeByte('\n'.toInt())
         }
 
         sink.writeUtf8(StatusLine(protocol, code, message).toString()).writeByte('\n'.toInt())
         sink.writeDecimalLong((responseHeaders.size + 2).toLong()).writeByte('\n'.toInt())
         for (i in 0 until responseHeaders.size) {
           sink.writeUtf8(responseHeaders.name(i))
-              .writeUtf8(": ")
-              .writeUtf8(responseHeaders.value(i))
-              .writeByte('\n'.toInt())
+            .writeUtf8(": ")
+            .writeUtf8(responseHeaders.value(i))
+            .writeByte('\n'.toInt())
         }
         sink.writeUtf8(SENT_MILLIS)
-            .writeUtf8(": ")
-            .writeDecimalLong(sentRequestMillis)
-            .writeByte('\n'.toInt())
+          .writeUtf8(": ")
+          .writeDecimalLong(sentRequestMillis)
+          .writeByte('\n'.toInt())
         sink.writeUtf8(RECEIVED_MILLIS)
-            .writeUtf8(": ")
-            .writeDecimalLong(receivedResponseMillis)
-            .writeByte('\n'.toInt())
+          .writeUtf8(": ")
+          .writeDecimalLong(receivedResponseMillis)
+          .writeByte('\n'.toInt())
 
-        if (isHttps) {
+        if (url.isHttps) {
           sink.writeByte('\n'.toInt())
           sink.writeUtf8(handshake!!.cipherSuite.javaName).writeByte('\n'.toInt())
           writeCertList(sink, handshake.peerCertificates)
@@ -618,8 +632,8 @@ class Cache internal constructor(
     private fun writeCertList(sink: BufferedSink, certificates: List<Certificate>) {
       try {
         sink.writeDecimalLong(certificates.size.toLong()).writeByte('\n'.toInt())
-        for (i in 0 until certificates.size) {
-          val bytes = certificates[i].encoded
+        for (element in certificates) {
+          val bytes = element.encoded
           val line = bytes.toByteString().base64()
           sink.writeUtf8(line).writeByte('\n'.toInt())
         }
@@ -629,30 +643,30 @@ class Cache internal constructor(
     }
 
     fun matches(request: Request, response: Response): Boolean {
-      return url == request.url.toString() &&
-          requestMethod == request.method &&
-          varyMatches(response, varyHeaders, request)
+      return url == request.url &&
+        requestMethod == request.method &&
+        varyMatches(response, varyHeaders, request)
     }
 
     fun response(snapshot: DiskLruCache.Snapshot): Response {
       val contentType = responseHeaders["Content-Type"]
       val contentLength = responseHeaders["Content-Length"]
       val cacheRequest = Request.Builder()
-          .url(url)
-          .method(requestMethod, null)
-          .headers(varyHeaders)
-          .build()
+        .url(url)
+        .method(requestMethod, null)
+        .headers(varyHeaders)
+        .build()
       return Response.Builder()
-          .request(cacheRequest)
-          .protocol(protocol)
-          .code(code)
-          .message(message)
-          .headers(responseHeaders)
-          .body(CacheResponseBody(snapshot, contentType, contentLength))
-          .handshake(handshake)
-          .sentRequestAtMillis(sentRequestMillis)
-          .receivedResponseAtMillis(receivedResponseMillis)
-          .build()
+        .request(cacheRequest)
+        .protocol(protocol)
+        .code(code)
+        .message(message)
+        .headers(responseHeaders)
+        .body(CacheResponseBody(snapshot, contentType, contentLength))
+        .handshake(handshake)
+        .sentRequestAtMillis(sentRequestMillis)
+        .receivedResponseAtMillis(receivedResponseMillis)
+        .build()
     }
 
     companion object {

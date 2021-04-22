@@ -17,6 +17,7 @@ package okhttp3.logging;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
+import mockwebserver3.junit5.internal.MockWebServerExtension;
 import okhttp3.Call;
 import okhttp3.EventListener;
 import okhttp3.HttpUrl;
@@ -33,6 +34,7 @@ import mockwebserver3.SocketPolicy;
 import okhttp3.tls.HandshakeCertificates;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static java.util.Arrays.asList;
@@ -40,8 +42,9 @@ import static okhttp3.Protocol.HTTP_1_1;
 import static okhttp3.Protocol.HTTP_2;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
+@ExtendWith(MockWebServerExtension.class)
 public final class LoggingEventListenerTest {
   private static final MediaType PLAIN = MediaType.get("text/plain");
 
@@ -98,7 +101,7 @@ public final class LoggingEventListenerTest {
         .assertLogMatch(
             "responseHeadersEnd: Response\\{protocol=http/1\\.1, code=200, message=OK, url="
                 + url
-                + "}")
+                + "\\}")
         .assertLogMatch("responseBodyStart")
         .assertLogMatch("responseBodyEnd: byteCount=6")
         .assertLogMatch("connectionReleased")
@@ -135,7 +138,7 @@ public final class LoggingEventListenerTest {
         .assertLogMatch(
             "responseHeadersEnd: Response\\{protocol=http/1\\.1, code=200, message=OK, url="
                 + url
-                + "}")
+                + "\\}")
         .assertLogMatch("responseBodyStart")
         .assertLogMatch("responseBodyEnd: byteCount=0")
         .assertLogMatch("connectionReleased")
@@ -177,12 +180,12 @@ public final class LoggingEventListenerTest {
                 + url.host()
                 + ":\\d+, proxy=DIRECT hostAddress="
                 + url.host()
-                + "/.+ cipherSuite=.+ protocol=h2}")
+                + "/.+ cipherSuite=.+ protocol=h2\\}")
         .assertLogMatch("requestHeadersStart")
         .assertLogMatch("requestHeadersEnd")
         .assertLogMatch("responseHeadersStart")
         .assertLogMatch(
-            "responseHeadersEnd: Response\\{protocol=h2, code=200, message=, url=" + url + "}")
+            "responseHeadersEnd: Response\\{protocol=h2, code=200, message=, url=" + url + "\\}")
         .assertLogMatch("responseBodyStart")
         .assertLogMatch("responseBodyEnd: byteCount=0")
         .assertLogMatch("connectionReleased")
@@ -257,10 +260,10 @@ public final class LoggingEventListenerTest {
     listener.satisfactionFailure(call, response);
 
     logRecorder
-        .assertLogMatch("cacheConditionalHit: Response\\{protocol=h2, code=200, message=, url=" + url + "}")
-        .assertLogMatch("cacheHit: Response\\{protocol=h2, code=200, message=, url=" + url + "}")
+        .assertLogMatch("cacheConditionalHit: Response\\{protocol=h2, code=200, message=, url=" + url + "\\}")
+        .assertLogMatch("cacheHit: Response\\{protocol=h2, code=200, message=, url=" + url + "\\}")
         .assertLogMatch("cacheMiss")
-        .assertLogMatch("satisfactionFailure: Response\\{protocol=h2, code=200, message=, url=" + url + "}")
+        .assertLogMatch("satisfactionFailure: Response\\{protocol=h2, code=200, message=, url=" + url + "\\}")
         .assertNoMoreLogs();
   }
 

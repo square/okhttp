@@ -17,16 +17,19 @@ package okhttp3
 
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import okhttp3.internal.publicsuffix.PublicSuffixDatabase
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ArgumentsSource
 
 class SampleTest {
   @JvmField @RegisterExtension val clientRule = OkHttpClientTestRule()
 
   @Test
-  fun failingTest() {
-    assertThat("hello").isEqualTo("goodbye")
+  fun passingTest() {
+    assertThat("hello").isEqualTo("hello")
   }
 
   @Test
@@ -48,4 +51,20 @@ class SampleTest {
       assertThat(it.code).isEqualTo(200)
     }
   }
+
+  @Test
+  fun testPublicSuffixes() {
+    PublicSuffixDatabase::class.java.getResourceAsStream(PublicSuffixDatabase.PUBLIC_SUFFIX_RESOURCE).use {
+      assertThat(it.available()).isGreaterThan(30000)
+    }
+  }
+
+  @ParameterizedTest
+  @ArgumentsSource(SampleTestProvider::class)
+  fun testParams(mode: String) {
+  }
+}
+
+class SampleTestProvider: SimpleProvider() {
+  override fun arguments() = listOf("A", "B")
 }

@@ -15,15 +15,6 @@
  */
 package okhttp3
 
-import java.net.InetAddress
-import java.net.MalformedURLException
-import java.net.URI
-import java.net.URISyntaxException
-import java.net.URL
-import java.nio.charset.Charset
-import java.nio.charset.StandardCharsets.UTF_8
-import java.util.Collections
-import java.util.LinkedHashSet
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.internal.canParseAsIpAddress
@@ -34,6 +25,15 @@ import okhttp3.internal.parseHexDigit
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
 import okhttp3.internal.toCanonicalHost
 import okio.Buffer
+import java.net.InetAddress
+import java.net.MalformedURLException
+import java.net.URI
+import java.net.URISyntaxException
+import java.net.URL
+import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets.UTF_8
+import java.util.Collections
+import java.util.LinkedHashSet
 
 /**
  * A uniform resource locator (URL) with a scheme of either `http` or `https`. Use this class to
@@ -192,7 +192,7 @@ import okio.Buffer
  * names to avoid confusing characters. This includes basic case folding: transforming shouting
  * `SQUARE.COM` into cool and casual `square.com`. It also handles more exotic characters. For
  * example, the Unicode trademark sign (™) could be confused for the letters "TM" in
- * `http://ho™mail.com`. To mitigate this, the single character (™) maps to the string (tm). There
+ * `http://ho™ail.com`. To mitigate this, the single character (™) maps to the string (tm). There
  * is similar policy for all of the 1.1 million Unicode code points. Note that some code points such
  * as "\ud83c\udf69" are not mapped and cannot be used in a hostname.
  *
@@ -1257,8 +1257,9 @@ class HttpUrl internal constructor(
       } else if (base != null) {
         this.scheme = base.scheme
       } else {
+        val truncated = if (input.length > 6) input.take(6) + "..." else input
         throw IllegalArgumentException(
-            "Expected URL scheme 'http' or 'https' but no colon was found")
+            "Expected URL scheme 'http' or 'https' but no scheme was found for $truncated")
       }
 
       // Authority.
@@ -1563,7 +1564,7 @@ class HttpUrl internal constructor(
     internal const val QUERY_COMPONENT_REENCODE_SET = " \"'<>#&="
     internal const val QUERY_COMPONENT_ENCODE_SET = " !\"#$&'(),/:;<=>?@[]\\^`{|}~"
     internal const val QUERY_COMPONENT_ENCODE_SET_URI = "\\^`{|}"
-    internal const val FORM_ENCODE_SET = " \"':;<=>@[]^`{}|/\\?#&!$(),~"
+    internal const val FORM_ENCODE_SET = " !\"#$&'()+,/:;<=>?@[\\]^`{|}~"
     internal const val FRAGMENT_ENCODE_SET = ""
     internal const val FRAGMENT_ENCODE_SET_URI = " \"#<>\\^`{|}"
 
@@ -1830,6 +1831,9 @@ class HttpUrl internal constructor(
         if (alreadyEncoded && (codePoint == '\t'.toInt() || codePoint == '\n'.toInt() ||
                 codePoint == '\u000c'.toInt() || codePoint == '\r'.toInt())) {
           // Skip this character.
+        } else if (codePoint == ' '.toInt() && encodeSet === FORM_ENCODE_SET) {
+          // Encode ' ' as '+'.
+          writeUtf8("+")
         } else if (codePoint == '+'.toInt() && plusIsSpace) {
           // Encode '+' as '%2B' since we permit ' ' to be encoded as either '+' or '%20'.
           writeUtf8(if (alreadyEncoded) "+" else "%2B")

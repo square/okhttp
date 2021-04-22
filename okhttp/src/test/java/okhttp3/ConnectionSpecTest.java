@@ -15,20 +15,23 @@
  */
 package okhttp3;
 
+import okhttp3.internal.platform.Platform;
+import okhttp3.testing.PlatformRule;
+import okhttp3.testing.PlatformVersion;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
-import okhttp3.testing.PlatformRule;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static java.util.Arrays.asList;
 import static okhttp3.internal.Internal.applyConnectionSpec;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public final class ConnectionSpecTest {
   @RegisterExtension public final PlatformRule platform = new PlatformRule();
@@ -92,8 +95,8 @@ public final class ConnectionSpecTest {
 
     SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket();
     socket.setEnabledCipherSuites(new String[] {
-        CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName(),
-        CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName(),
+        CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256.javaName(),
+        CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA.javaName(),
     });
     socket.setEnabledProtocols(new String[] {
         TlsVersion.TLS_1_2.javaName(),
@@ -106,8 +109,8 @@ public final class ConnectionSpecTest {
     assertThat(socket.getEnabledProtocols()).containsExactly(TlsVersion.TLS_1_2.javaName());
 
     assertThat(socket.getEnabledCipherSuites()).containsExactlyInAnyOrder(
-        CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName(),
-        CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName());
+        CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256.javaName(),
+        CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA.javaName());
   }
 
   @Test public void tls_defaultCiphers_withFallbackIndicator() throws Exception {
@@ -121,8 +124,8 @@ public final class ConnectionSpecTest {
 
     SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket();
     socket.setEnabledCipherSuites(new String[] {
-        CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName(),
-        CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName(),
+        CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256.javaName(),
+        CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA.javaName(),
     });
     socket.setEnabledProtocols(new String[] {
         TlsVersion.TLS_1_2.javaName(),
@@ -135,8 +138,8 @@ public final class ConnectionSpecTest {
     assertThat(socket.getEnabledProtocols()).containsExactly(TlsVersion.TLS_1_2.javaName());
 
     List<String> expectedCipherSuites = new ArrayList<>();
-    expectedCipherSuites.add(CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName());
-    expectedCipherSuites.add(CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName());
+    expectedCipherSuites.add(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256.javaName());
+    expectedCipherSuites.add(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA.javaName());
     if (asList(socket.getSupportedCipherSuites()).contains("TLS_FALLBACK_SCSV")) {
       expectedCipherSuites.add("TLS_FALLBACK_SCSV");
     }
@@ -148,15 +151,15 @@ public final class ConnectionSpecTest {
     platform.assumeNotBouncyCastle();
 
     ConnectionSpec tlsSpec = new ConnectionSpec.Builder(true)
-        .cipherSuites(CipherSuite.TLS_RSA_WITH_RC4_128_MD5)
+        .cipherSuites(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256)
         .tlsVersions(TlsVersion.TLS_1_2)
         .supportsTlsExtensions(false)
         .build();
 
     SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket();
     socket.setEnabledCipherSuites(new String[] {
-        CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName(),
-        CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName(),
+        CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256.javaName(),
+        CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA.javaName(),
     });
     socket.setEnabledProtocols(new String[] {
         TlsVersion.TLS_1_2.javaName(),
@@ -169,7 +172,7 @@ public final class ConnectionSpecTest {
     assertThat(socket.getEnabledProtocols()).containsExactly(TlsVersion.TLS_1_2.javaName());
 
     List<String> expectedCipherSuites = new ArrayList<>();
-    expectedCipherSuites.add(CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName());
+    expectedCipherSuites.add(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256.javaName());
     if (asList(socket.getSupportedCipherSuites()).contains("TLS_FALLBACK_SCSV")) {
       expectedCipherSuites.add("TLS_FALLBACK_SCSV");
     }
@@ -190,7 +193,7 @@ public final class ConnectionSpecTest {
     platform.assumeNotBouncyCastle();
 
     ConnectionSpec tlsSpec = new ConnectionSpec.Builder(true)
-        .cipherSuites(CipherSuite.TLS_RSA_WITH_RC4_128_MD5)
+        .cipherSuites(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256)
         .tlsVersions(TlsVersion.TLS_1_2)
         .supportsTlsExtensions(false)
         .build();
@@ -202,13 +205,13 @@ public final class ConnectionSpecTest {
     });
 
     socket.setEnabledCipherSuites(new String[] {
-        CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName(),
-        CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName(),
+        CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256.javaName(),
+        CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA.javaName(),
     });
     assertThat(tlsSpec.isCompatible(socket)).isTrue();
 
     socket.setEnabledCipherSuites(new String[] {
-        CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName(),
+        CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA.javaName(),
     });
     assertThat(tlsSpec.isCompatible(socket)).isFalse();
   }
@@ -224,14 +227,31 @@ public final class ConnectionSpecTest {
 
     SSLSocket sslSocket = (SSLSocket) SSLSocketFactory.getDefault().createSocket();
     sslSocket.setEnabledCipherSuites(new String[] {
-        CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName(),
-        CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName(),
+        CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256.javaName(),
+        CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA.javaName(),
     });
 
     applyConnectionSpec(tlsSpec, sslSocket, false);
-    assertThat(sslSocket.getEnabledCipherSuites()).containsExactly(
-        CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName(),
-        CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName());
+    if (platform.isAndroid()) {
+      // https://developer.android.com/reference/javax/net/ssl/SSLSocket
+      Integer sdkVersion = platform.androidSdkVersion();
+      if (sdkVersion != null && sdkVersion >= 29) {
+        assertThat(sslSocket.getEnabledCipherSuites()).containsExactly(
+            CipherSuite.TLS_AES_128_GCM_SHA256.javaName(),
+            CipherSuite.TLS_AES_256_GCM_SHA384.javaName(),
+            CipherSuite.TLS_CHACHA20_POLY1305_SHA256.javaName(),
+            CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256.javaName(),
+            CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA.javaName());
+      } else {
+        assertThat(sslSocket.getEnabledCipherSuites()).containsExactly(
+            CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256.javaName(),
+            CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA.javaName());
+      }
+    } else {
+      assertThat(sslSocket.getEnabledCipherSuites()).containsExactly(
+          CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256.javaName(),
+          CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA.javaName());
+    }
   }
 
   @Test public void allEnabledTlsVersions() throws Exception {
@@ -243,14 +263,48 @@ public final class ConnectionSpecTest {
     assertThat(tlsSpec.tlsVersions()).isNull();
 
     SSLSocket sslSocket = (SSLSocket) SSLSocketFactory.getDefault().createSocket();
-    sslSocket.setEnabledProtocols(new String[] {
-        TlsVersion.SSL_3_0.javaName(),
-        TlsVersion.TLS_1_1.javaName()
-    });
+    if (PlatformVersion.INSTANCE.getMajorVersion() > 11) {
+      sslSocket.setEnabledProtocols(new String[] {
+          TlsVersion.SSL_3_0.javaName(),
+          TlsVersion.TLS_1_1.javaName(),
+          TlsVersion.TLS_1_2.javaName(),
+          TlsVersion.TLS_1_3.javaName()
+      });
+    } else {
+      sslSocket.setEnabledProtocols(new String[] {
+          TlsVersion.SSL_3_0.javaName(),
+          TlsVersion.TLS_1_1.javaName(),
+          TlsVersion.TLS_1_2.javaName()
+      });
+    }
 
     applyConnectionSpec(tlsSpec, sslSocket, false);
-    assertThat(sslSocket.getEnabledProtocols()).containsExactly(
-        TlsVersion.SSL_3_0.javaName(), TlsVersion.TLS_1_1.javaName());
+    if (Platform.Companion.isAndroid()) {
+      Integer sdkVersion = platform.androidSdkVersion();
+      // https://developer.android.com/reference/javax/net/ssl/SSLSocket
+      if (sdkVersion != null && sdkVersion >= 29) {
+        assertThat(sslSocket.getEnabledProtocols()).containsExactly(
+            TlsVersion.TLS_1_1.javaName(), TlsVersion.TLS_1_2.javaName(),
+            TlsVersion.TLS_1_3.javaName());
+      } else if (sdkVersion != null && sdkVersion >= 26) {
+        assertThat(sslSocket.getEnabledProtocols()).containsExactly(
+            TlsVersion.TLS_1_1.javaName(), TlsVersion.TLS_1_2.javaName());
+      } else {
+        assertThat(sslSocket.getEnabledProtocols()).containsExactly(
+            TlsVersion.SSL_3_0.javaName(), TlsVersion.TLS_1_1.javaName(),
+            TlsVersion.TLS_1_2.javaName());
+      }
+    } else {
+      if (PlatformVersion.INSTANCE.getMajorVersion() > 11) {
+        assertThat(sslSocket.getEnabledProtocols()).containsExactly(
+            TlsVersion.SSL_3_0.javaName(), TlsVersion.TLS_1_1.javaName(),
+            TlsVersion.TLS_1_2.javaName(), TlsVersion.TLS_1_3.javaName());
+      } else {
+        assertThat(sslSocket.getEnabledProtocols()).containsExactly(
+            TlsVersion.SSL_3_0.javaName(), TlsVersion.TLS_1_1.javaName(),
+            TlsVersion.TLS_1_2.javaName());
+      }
+    }
   }
 
   @Test public void tls_missingTlsVersion() throws Exception {
@@ -258,14 +312,14 @@ public final class ConnectionSpecTest {
     platform.assumeNotBouncyCastle();
 
     ConnectionSpec tlsSpec = new ConnectionSpec.Builder(true)
-        .cipherSuites(CipherSuite.TLS_RSA_WITH_RC4_128_MD5)
+        .cipherSuites(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256)
         .tlsVersions(TlsVersion.TLS_1_2)
         .supportsTlsExtensions(false)
         .build();
 
     SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket();
     socket.setEnabledCipherSuites(new String[] {
-        CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName(),
+        CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256.javaName(),
     });
 
     socket.setEnabledProtocols(
@@ -310,7 +364,7 @@ public final class ConnectionSpecTest {
         .build();
     assertThat(connectionSpec.toString()).isEqualTo(
         ("ConnectionSpec(cipherSuites=[all enabled], tlsVersions=[all enabled], "
-        + "supportsTlsExtensions=true)"));
+            + "supportsTlsExtensions=true)"));
   }
 
   @Test public void simpleToString() throws Exception {
@@ -320,6 +374,6 @@ public final class ConnectionSpecTest {
         .build();
     assertThat(connectionSpec.toString()).isEqualTo(
         ("ConnectionSpec(cipherSuites=[SSL_RSA_WITH_RC4_128_MD5], tlsVersions=[TLS_1_2], "
-        + "supportsTlsExtensions=true)"));
+            + "supportsTlsExtensions=true)"));
   }
 }

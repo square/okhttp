@@ -54,9 +54,9 @@ Committer's Guides
  * [Releasing][releasing]
 
  [cla]: https://spreadsheets.google.com/spreadsheet/viewform?formkey=dDViT2xzUHAwRkI3X3k5Z0lQM091OGc6MQ&ndplr=1
- [concurrency]: http://square.github.io/okhttp/concurrency/
- [debug_logging]: http://square.github.io/okhttp/debug_logging/
- [releasing]: http://square.github.io/okhttp/releasing/
- [security]: http://square.github.io/okhttp/security/
- [works_with_okhttp]: http://square.github.io/okhttp/works_with_okhttp/
+ [concurrency]: https://square.github.io/okhttp/concurrency/
+ [debug_logging]: https://square.github.io/okhttp/debug_logging/
+ [releasing]: https://square.github.io/okhttp/releasing/
+ [security]: https://square.github.io/okhttp/security/
+ [works_with_okhttp]: https://square.github.io/okhttp/works_with_okhttp/
  [okhttp_build]: https://github.com/square/okhttp/blob/master/okhttp/build.gradle

@@ -1,66 +1,9 @@
 buildscript {
-  ext.versions = [
-      'animalSniffer': '1.19',
-      'assertj': '3.15.0',
-      'bouncycastle': '1.66',
-      'brotli': '0.1.2',
-      'checkstyle': '8.28',
-      'conscrypt': '2.5.1',
-      'corretto': '1.3.1',
-      'findbugs': '3.0.2',
-      'guava': '28.2-jre',
-      'java': '1.8',
-      'jnrUnixsocket': '0.28',
-      'jsoup': '1.13.1',
-      'junit': '4.13',
-      'junit5': '5.7.0',
-      'kotlin': '1.4.10',
-      'moshi': '1.11.0',
-      'okio': '2.9.0',
-      'ktlint': '0.38.0',
-      'picocli': '4.5.1',
-      'openjsse': '1.1.0',
-      'bnd': '5.1.2',
-      'equinox': '3.16.0'
-  ]
-
-  ext.deps = [
-      'picocli': "info.picocli:picocli:${versions.picocli}",
-      'android': "org.robolectric:android-all:11-robolectric-6757853",
-      'animalSniffer': "org.codehaus.mojo:animal-sniffer-annotations:${versions.animalSniffer}",
-      'assertj': "org.assertj:assertj-core:${versions.assertj}",
-      'bouncycastle': "org.bouncycastle:bcprov-jdk15on:${versions.bouncycastle}",
-      'bouncycastlepkix': "org.bouncycastle:bcpkix-jdk15on:${versions.bouncycastle}",
-      'bouncycastletls': "org.bouncycastle:bctls-jdk15on:${versions.bouncycastle}",
-      'brotli': "org.brotli:dec:${versions.brotli}",
-      'conscrypt': "org.conscrypt:conscrypt-openjdk-uber:${versions.conscrypt}",
-      'corretto': "software.amazon.cryptools:AmazonCorrettoCryptoProvider:${versions.corretto}:linux-x86_64",
-      'guava': "com.google.guava:guava:${versions.guava}",
-      'jnrUnixsocket': "com.github.jnr:jnr-unixsocket:${versions.jnrUnixsocket}",
-      'jsoup': "org.jsoup:jsoup:${versions.jsoup}",
-      'jsr305': "com.google.code.findbugs:jsr305:${versions.findbugs}",
-      'junit': "junit:junit:${versions.junit}",
-      'junit5Api': "org.junit.jupiter:junit-jupiter-api:${versions.junit5}",
-      'junit5JupiterEngine': "org.junit.jupiter:junit-jupiter-engine:${versions.junit5}",
-      'junit5JupiterParams': "org.junit.jupiter:junit-jupiter-params:${versions.junit5}",
-      'junit5VintageEngine': "org.junit.vintage:junit-vintage-engine:${versions.junit5}",
-      'junitPlatformConsole': "org.junit.platform:junit-platform-console:1.7.0",
-      'kotlinStdlib': "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin}",
-      'moshi': "com.squareup.moshi:moshi:${versions.moshi}",
-      'moshiKotlin': "com.squareup.moshi:moshi-kotlin-codegen:${versions.moshi}",
-      'okio': "com.squareup.okio:okio:${versions.okio}",
-      'openjsse': "org.openjsse:openjsse:${versions.openjsse}",
-      'bnd': "biz.aQute.bnd:biz.aQute.bnd.gradle:${versions.bnd}",
-      'bndResolve': "biz.aQute.bnd:biz.aQute.resolve:${versions.bnd}",
-      'equinox': "org.eclipse.platform:org.eclipse.osgi:${versions.equinox}",
-      'kotlinStdlibOsgi': "org.jetbrains.kotlin:kotlin-osgi-bundle:${versions.kotlin}"
-  ]
-
   dependencies {
-    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.10"
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.31"
     classpath "org.jetbrains.dokka:dokka-gradle-plugin:0.10.1"
-    classpath "com.android.tools.build:gradle:4.0.1"
-    classpath deps.bnd
+    classpath "com.android.tools.build:gradle:4.1.3"
+    classpath Dependencies.bnd
   }
 
   repositories {
@@ -71,49 +14,22 @@ buildscript {
 }
 
 plugins {
-  id "ru.vyarus.animalsniffer" version "1.5.1"
+  id "ru.vyarus.animalsniffer" version "1.5.3"
   id "com.github.johnrengelman.shadow" version "5.2.0"
   id "me.champeau.gradle.japicmp" version "0.2.9"
   id "com.diffplug.spotless" version "5.1.2"
   id "net.ltgt.errorprone" version "1.2.1"
 }
 
-/** Returns the artifact ID for the project, or null if it is not published. */
-ext.publishedArtifactId = { project ->
-  if (project.name == 'okhttp-logging-interceptor') {
-    return 'logging-interceptor'
-  } else if (project.name == 'mockwebserver') {
-    return 'mockwebserver3'
-  } else if (project.name == 'mockwebserver-junit4') {
-    return 'mockwebserver3-junit4'
-  } else if (project.name == 'mockwebserver-junit5') {
-    return 'mockwebserver3-junit5'
-  } else if (project.name == 'mockwebserver-deprecated') {
-    return 'mockwebserver'
-  } else if (project.name == 'okcurl'
-          || project.name == 'okhttp'
-          || project.name == 'okhttp-bom'
-          || project.name == 'okhttp-brotli'
-          || project.name == 'okhttp-dnsoverhttps'
-          || project.name == 'okhttp-sse'
-          || project.name == 'okhttp-tls'
-          || project.name == 'okhttp-urlconnection') {
-    return project.name
-  } else {
-    return null // Not published.
-  }
-}
-
 allprojects {
   group = 'com.squareup.okhttp3'
-  project.ext.artifactId = rootProject.ext.publishedArtifactId(project)
-  version = '4.10.0-SNAPSHOT'
+  project.ext.artifactId = Projects.publishedArtifactId(project.name)
+  version = '5.0.0-SNAPSHOT'
 
   repositories {
     mavenCentral()
-    maven {
-      url 'https://dl.bintray.com/kotlin/dokka'
-    }
+    maven { url 'https://dl.bintray.com/kotlin/dokka' }
+    maven { url 'https://kotlin.bintray.com/kotlinx/' }
     google()
   }
 
@@ -138,7 +54,7 @@ ext.applyOsgi = { project ->
 
   project.dependencies {
     // The OSGi kotlin-stdlib lets bnd infer bundle versions.
-    osgiApi deps.kotlinStdlibOsgi
+    osgiApi Dependencies.kotlinStdlibOsgi
   }
 }
 
@@ -146,6 +62,7 @@ ext.applyOsgi = { project ->
 subprojects { project ->
   if (project.name == 'android-test') return
   if (project.name == 'okhttp-bom') return
+  if (project.name == 'regression-test') return
 
   apply plugin: "org.jetbrains.kotlin.jvm"
   apply plugin: 'java'
@@ -155,9 +72,6 @@ subprojects { project ->
   apply plugin: 'org.jetbrains.dokka'
   apply plugin: 'biz.aQute.bnd.builder'
 
-  sourceCompatibility = JavaVersion.VERSION_1_8
-  targetCompatibility = JavaVersion.VERSION_1_8
-
   tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
   }
@@ -165,6 +79,7 @@ subprojects { project ->
   java {
     toolchain {
       languageVersion = JavaLanguageVersion.of(11)
+      vendor = JvmVendorSpec.ADOPTOPENJDK
     }
   }
 
@@ -173,14 +88,14 @@ subprojects { project ->
     checkstyleConfig
   }
   dependencies {
-    checkstyleConfig dependencies.create("com.puppycrawl.tools:checkstyle:${versions.checkstyle}") {
+    checkstyleConfig dependencies.create("com.puppycrawl.tools:checkstyle:${Versions.checkstyle}") {
       transitive = false
     }
   }
   afterEvaluate {
     checkstyle {
       config = resources.text.fromArchiveEntry(configurations.checkstyleConfig, 'google_checks.xml')
-      toolVersion "${versions.checkstyle}"
+      toolVersion "${Versions.checkstyle}"
       sourceSets = [project.sourceSets.main]
     }
   }
@@ -198,6 +113,7 @@ subprojects { project ->
   tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
     kotlinOptions {
       jvmTarget = "1.8"
+      freeCompilerArgs = ['-Xjvm-default=compatibility', '-Xopt-in=kotlin.RequiresOptIn']
     }
   }
 
@@ -205,8 +121,8 @@ subprojects { project ->
   def testJavaVersion = Integer.getInteger("test.java.version", 11)
 
   dependencies {
-    testRuntimeOnly(deps.junit5JupiterEngine)
-    testRuntimeOnly(deps.junit5VintageEngine)
+    testRuntimeOnly(Dependencies.junit5JupiterEngine)
+    testRuntimeOnly(Dependencies.junit5VintageEngine)
   }
 
   test {
@@ -215,6 +131,7 @@ subprojects { project ->
 
     javaLauncher = javaToolchains.launcherFor {
       languageVersion = JavaLanguageVersion.of(testJavaVersion)
+      vendor = JvmVendorSpec.ADOPTOPENJDK
     }
 
     maxParallelForks Runtime.runtime.availableProcessors() * 2
@@ -228,23 +145,21 @@ subprojects { project ->
 
   if (platform == "jdk8alpn") {
     // Add alpn-boot on Java 8 so we can use HTTP/2 without a stable API.
-    def alpnBootVersion = alpnBootVersion()
+    def alpnBootVersion = Alpn.alpnBootVersion()
     if (alpnBootVersion != null) {
-      dependencies {
-        testCompile "org.mortbay.jetty.alpn:alpn-boot:$alpnBootVersion"
-      }
-      def alpnBootJar = configurations.testCompile.find { it.name.startsWith("alpn-boot-") }
+      def alpnBootJar = configurations.detachedConfiguration(
+              dependencies.create("org.mortbay.jetty.alpn:alpn-boot:$alpnBootVersion")).singleFile
       test {
         jvmArgs += "-Xbootclasspath/p:${alpnBootJar}"
       }
     }
   } else if (platform == "conscrypt") {
     dependencies {
-      testRuntime "org.conscrypt:conscrypt-openjdk-uber:${versions.conscrypt}"
+      testRuntime "org.conscrypt:conscrypt-openjdk-uber:${Versions.conscrypt}"
     }
   } else if (platform == "openjsse") {
     dependencies {
-      testRuntime deps.openjsse
+      testRuntime Dependencies.openjsse
     }
   }
 
@@ -347,58 +262,6 @@ subprojects { project ->
 
 tasks.wrapper {
   distributionType = Wrapper.DistributionType.ALL
-}
-
-/**
- * Returns the alpn-boot version specific to this OpenJDK 8 JVM, or null if this is not a Java 8 VM.
- * https://github.com/xjdr/xio/blob/master/alpn-boot.gradle
- */
-def alpnBootVersion() {
-  def version = System.getProperty('alpn.boot.version')
-
-  if (version != null) {
-    return version
-  }
-
-  def javaVersion = System.getProperty("java.version")
-  def patchVersionMatcher = (javaVersion =~ /1\.8\.0_(\d+)(-.*)?/)
-  if (!patchVersionMatcher.find()) return null
-  def patchVersion = Integer.parseInt(patchVersionMatcher.group(1))
-  return alpnBootVersionForPatchVersion(javaVersion, patchVersion)
-}
-
-def alpnBootVersionForPatchVersion(String javaVersion, int patchVersion) {
-  // https://www.eclipse.org/jetty/documentation/current/alpn-chapter.html#alpn-versions
-  switch (patchVersion) {
-    case 0..24:
-      return '8.1.0.v20141016'
-    case 25..30:
-      return '8.1.2.v20141202'
-    case 31..50:
-      return '8.1.3.v20150130'
-    case 51..59:
-      return '8.1.4.v20150727'
-    case 60..64:
-      return '8.1.5.v20150921'
-    case 65..70:
-      return '8.1.6.v20151105'
-    case 71..77:
-      return '8.1.7.v20160121'
-    case 78..101:
-      return '8.1.8.v20160420'
-    case 102..111:
-      return '8.1.9.v20160720'
-    case 112..120:
-      return '8.1.10.v20161026'
-    case 121..160:
-      return '8.1.11.v20170118'
-    case 161..181:
-      return '8.1.12.v20180117'
-    case 191..242:
-      return '8.1.13.v20181017'
-    default:
-      throw new IllegalStateException("Unexpected Java version: ${javaVersion}")
-  }
 }
 
 /**

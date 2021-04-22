@@ -22,12 +22,15 @@ import java.net.UnknownHostException
 import java.util.Arrays
 import okhttp3.internal.http2.Header
 import okio.Buffer
-import org.junit.Assume.assumeFalse
-import org.junit.Assume.assumeNoException
+import org.junit.jupiter.api.Assumptions.assumeFalse
+import org.junit.jupiter.api.Assumptions.assumeTrue
 
 object TestUtil {
   @JvmField
   val UNREACHABLE_ADDRESS = InetSocketAddress("198.51.100.1", 8080)
+
+  /** See `org.graalvm.nativeimage.ImageInfo`. */
+  @JvmStatic val isGraalVmImage = System.getProperty("org.graalvm.nativeimage.imagecode") != null
 
   @JvmStatic
   fun headerEntries(vararg elements: String?): List<Header> {
@@ -93,16 +96,28 @@ object TestUtil {
     try {
       InetAddress.getByName("www.google.com")
     } catch (uhe: UnknownHostException) {
-      assumeNoException(uhe)
+      assumeTrue(false, "requires network")
     }
   }
 
   @JvmStatic
   fun assumeNotWindows() {
-    assumeFalse("This test fails on Windows.", windows)
+    assumeFalse(windows, "This test fails on Windows.")
   }
 
   @JvmStatic
   val windows: Boolean
     get() = System.getProperty("os.name", "?").startsWith("Windows")
+
+  /**
+   * Make assertions about the suppressed exceptions on this. Prefer this over making direct calls
+   * so tests pass on GraalVM, where suppressed exceptions are silently discarded.
+   *
+   * https://github.com/oracle/graal/issues/3008
+   */
+  @JvmStatic
+  fun Throwable.assertSuppressed(block: (List<@JvmSuppressWildcards Throwable>) -> Unit) {
+    if (isGraalVmImage) return
+    block(suppressed.toList())
+  }
 }

@@ -11,14 +11,15 @@ jar {
 }
 
 dependencies {
-  api deps.okio
+  api Dependencies.okio
   implementation project(':okhttp')
-  compileOnly deps.jsr305
-  compileOnly deps.animalSniffer
+  compileOnly Dependencies.jsr305
+  compileOnly Dependencies.animalSniffer
 
   testImplementation project(':okhttp-testing-support')
-  testImplementation deps.junit
-  testImplementation deps.assertj
+  testImplementation project(':mockwebserver-junit5')
+  testImplementation Dependencies.junit
+  testImplementation Dependencies.assertj
 }
 
 afterEvaluate { project ->
@@ -26,6 +27,11 @@ afterEvaluate { project ->
     outputDirectory = "$rootDir/docs/4.x"
     outputFormat = 'gfm'
   }
+}
+
+animalsniffer {
+  // InsecureExtendedTrustManager (API 24+)
+  ignore = ["javax.net.ssl.X509ExtendedTrustManager"]
 }
 
 task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {

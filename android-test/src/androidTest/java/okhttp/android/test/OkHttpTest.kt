@@ -16,12 +16,14 @@
 package okhttp.android.test
 
 import android.os.Build
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException
 import com.google.android.gms.security.ProviderInstaller
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
+import mockwebserver3.junit5.internal.MockWebServerExtension
 import okhttp3.Cache
 import okhttp3.Call
 import okhttp3.CertificatePinner
@@ -42,8 +44,6 @@ import okhttp3.internal.platform.Android10Platform
 import okhttp3.internal.platform.AndroidPlatform
 import okhttp3.internal.platform.Platform
 import okhttp3.logging.LoggingEventListener
-import okhttp3.mockwebserver.MockResponse
-import okhttp3.mockwebserver.MockWebServer
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.internal.TlsUtil.localhost
@@ -51,18 +51,20 @@ import okio.ByteString.Companion.toByteString
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.jsse.provider.BouncyCastleJsseProvider
 import org.conscrypt.Conscrypt
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
-import org.junit.Assert.fail
-import org.junit.Assume.assumeNoException
-import org.junit.Assume.assumeTrue
-import org.junit.Ignore
-import org.junit.Rule
-import org.junit.Test
-import org.junit.runner.RunWith
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.fail
+import org.junit.jupiter.api.Assumptions.assumeTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Tag
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.extension.RegisterExtension
+import org.opentest4j.TestAbortedException
 import java.io.IOException
 import java.net.InetAddress
 import java.net.UnknownHostException
@@ -86,27 +88,25 @@ import javax.net.ssl.X509TrustManager
 /**
  * Run with "./gradlew :android-test:connectedCheck" and make sure ANDROID_SDK_ROOT is set.
  */
-@RunWith(AndroidJUnit4::class)
-class OkHttpTest {
+@ExtendWith(MockWebServerExtension::class)
+@Tag("Slow")
+class OkHttpTest(val server: MockWebServer) {
   @Suppress("RedundantVisibilityModifier")
   @JvmField
-  @Rule public val platform = PlatformRule()
+  @RegisterExtension public val platform = PlatformRule()
 
   @Suppress("RedundantVisibilityModifier")
   @JvmField
-  @Rule public val clientTestRule = OkHttpClientTestRule().apply {
+  @RegisterExtension public val clientTestRule = OkHttpClientTestRule().apply {
     logger = Logger.getLogger(OkHttpTest::class.java.name)
   }
 
-  private var client = clientTestRule.newClient()
+  private var client: OkHttpClient = clientTestRule.newClient()
 
   private val moshi = Moshi.Builder()
       .add(KotlinJsonAdapterFactory())
       .build()
 
-  @JvmField
-  @Rule
-  val server = MockWebServer()
   private val handshakeCertificates = localhost()
 
   @Test
@@ -225,7 +225,7 @@ class OkHttpTest {
       try {
         ProviderInstaller.installIfNeeded(InstrumentationRegistry.getInstrumentation().targetContext)
       } catch (gpsnae: GooglePlayServicesNotAvailableException) {
-        assumeNoException("Google Play Services not available", gpsnae)
+        throw TestAbortedException("Google Play Services not available", gpsnae)
       }
 
       val clientCertificates = HandshakeCertificates.Builder()
@@ -333,6 +333,7 @@ class OkHttpTest {
   }
 
   @Test
+  @Disabled("cleartext required for additional okhttp wide tests")
   fun testHttpRequestBlocked() {
     assumeTrue(Build.VERSION.SDK_INT >= 23)
 
@@ -340,7 +341,7 @@ class OkHttpTest {
 
     try {
       client.newCall(request).execute()
-      fail("expected cleartext blocking")
+      fail<Any>("expected cleartext blocking")
     } catch (_: java.net.UnknownServiceException) {
     }
   }
@@ -359,7 +360,7 @@ class OkHttpTest {
   )
 
   @Test
-  @Ignore
+  @Disabled
   fun testSSLFeatures() {
     assumeNetwork()
 
@@ -418,7 +419,7 @@ class OkHttpTest {
 
     try {
       client.newCall(request).execute()
-      fail()
+      fail<Any>("")
     } catch (_: SSLPeerUnverifiedException) {
     }
   }
@@ -628,7 +629,7 @@ class OkHttpTest {
   }
 
   @Test
-  @Ignore("breaks conscrypt test")
+  @Disabled("breaks conscrypt test")
   fun testBouncyCastleRequest() {
     assumeNetwork()
 
@@ -673,6 +674,7 @@ class OkHttpTest {
   }
 
   @Test
+  @Disabled("TODO: currently logging okhttp3.internal.concurrent.TaskRunner, okhttp3.internal.http2.Http2")
   fun testLoggingLevels() {
     enableTls()
 
@@ -797,7 +799,7 @@ class OkHttpTest {
     try {
       InetAddress.getByName("www.google.com")
     } catch (uhe: UnknownHostException) {
-      assumeNoException(uhe)
+      throw TestAbortedException(uhe.message, uhe)
     }
   }
 

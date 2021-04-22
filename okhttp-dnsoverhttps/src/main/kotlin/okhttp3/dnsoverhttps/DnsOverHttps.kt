@@ -44,12 +44,6 @@ import okhttp3.internal.publicsuffix.PublicSuffixDatabase
  * > of this section.  The DNS API server defines the URI used by the
  * > request through the use of a URI Template.
  *
- * ### Warning: This is a non-final API.
- *
- * As of OkHttp 3.14, this feature is an unstable preview: the API is subject to change, and the
- * implementation is incomplete. We expect that OkHttp 4.6 or 4.7 will finalize this API. Until
- * then, expect API and behavior changes when you update your OkHttp dependency.**
- *
  * [doh_spec]: https://tools.ietf.org/html/draft-ietf-doh-dns-over-https-13
  */
 class DnsOverHttps internal constructor(

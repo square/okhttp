@@ -127,7 +127,7 @@ final Dispatcher dispatcher = new Dispatcher() {
         switch (request.getPath()) {
             case "/v1/login/auth/":
                 return new MockResponse().setResponseCode(200);
-            case "v1/check/version/":
+            case "/v1/check/version/":
                 return new MockResponse().setResponseCode(200).setBody("version=9");
             case "/v1/profile/info":
                 return new MockResponse().setResponseCode(200).setBody("{\\\"info\\\":{\\\"name\":\"Lucas Albuquerque\",\"age\":\"21\",\"gender\":\"male\"}}");
@@ -142,7 +142,7 @@ server.setDispatcher(dispatcher);
 ### Download
 
 ```kotlin
-testImplementation("com.squareup.okhttp3:mockwebserver:4.9.0")
+testImplementation("com.squareup.okhttp3:mockwebserver:4.9.1")
 ```
 
 ### License

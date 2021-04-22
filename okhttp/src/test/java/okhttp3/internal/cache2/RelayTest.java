@@ -30,12 +30,14 @@ import okio.Pipe;
 import okio.Source;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
+@Tag("Slowish")
 public final class RelayTest {
   @TempDir File tempDir;
   private ExecutorService executor = Executors.newCachedThreadPool();

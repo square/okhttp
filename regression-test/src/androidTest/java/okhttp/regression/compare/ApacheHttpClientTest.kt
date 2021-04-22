@@ -13,32 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp.android.test.compare;
+package okhttp.regression.compare;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import okhttp3.OkHttpClient
-import okhttp3.Protocol
-import okhttp3.Request
-import org.assertj.core.api.Assertions.assertThat
+import org.apache.hc.client5.http.classic.methods.HttpGet
+import org.apache.hc.client5.http.impl.classic.HttpClients
+import org.apache.hc.core5.http.HttpVersion
+import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * OkHttp.
+ * Apache HttpClient 5.x.
  *
- * https://square.github.io/okhttp/
+ * https://hc.apache.org/httpcomponents-client-5.0.x/index.html
  */
 @RunWith(AndroidJUnit4::class)
-class OkHttpClientTest {
-  private var client = OkHttpClient()
+class ApacheHttpClientTest {
+  private var httpClient = HttpClients.createDefault()
+
+  @After fun tearDown() {
+    httpClient.close()
+  }
 
   @Test fun get() {
-    val request = Request.Builder()
-        .url("https://google.com/robots.txt")
-        .build()
-    client.newCall(request).execute().use { response ->
-      assertThat(response.code).isEqualTo(200)
-      assertThat(response.protocol).isEqualTo(Protocol.HTTP_2)
+    val request = HttpGet("https://google.com/robots.txt")
+
+    httpClient.execute(request).use { response ->
+      assertEquals(200, response.code)
+      // TODO enable ALPN later
+      assertEquals(HttpVersion.HTTP_1_1, response.version)
     }
   }
 }

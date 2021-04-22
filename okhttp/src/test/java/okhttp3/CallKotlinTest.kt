@@ -24,6 +24,7 @@ import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.TestUtil.assertSuppressed
 import okhttp3.internal.connection.RealConnection
 import okhttp3.internal.connection.RealConnection.Companion.IDLE_CONNECTION_HEALTHY_NS
 import okhttp3.internal.http.RecordingProxySelector
@@ -191,11 +192,9 @@ class CallKotlinTest(
     // Capture the connection so that we can later make it stale.
     var connection: RealConnection? = null
     client = client.newBuilder()
-        .addNetworkInterceptor(object : Interceptor {
-          override fun intercept(chain: Interceptor.Chain): Response {
-            connection = chain.connection() as RealConnection
-            return chain.proceed(chain.request())
-          }
+        .addNetworkInterceptor(Interceptor { chain ->
+          connection = chain.connection() as RealConnection
+          chain.proceed(chain.request())
         })
         .build()
 
@@ -242,10 +241,11 @@ class CallKotlinTest(
       client.newCall(request).execute()
       fail("")
     } catch (expected: IOException) {
-      assertThat(expected.suppressed).hasSize(1)
-      val suppressed = expected.suppressed[0]
-      assertThat(suppressed).isInstanceOf(IOException::class.java)
-      assertThat(suppressed).isNotSameAs(expected)
+      expected.assertSuppressed {
+        val suppressed = it.single()
+        assertThat(suppressed).isInstanceOf(IOException::class.java)
+        assertThat(suppressed).isNotSameAs(expected)
+      }
     }
   }
 }

@@ -13,16 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.curl
+package okhttp3;
 
-import picocli.CommandLine.Model.CommandSpec.forAnnotatedObject
-import picocli.codegen.aot.graalvm.ReflectionConfigGenerator
-import java.io.File
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
 
-/**
- * Manual process to update reflect-config.json
- */
-fun main() {
-  val configFile = File("okcurl/src/main/resources/META-INF/native-image/okhttp3/okcurl/reflect-config.json")
-  configFile.writeText(ReflectionConfigGenerator.generateReflectionConfig(forAnnotatedObject(Main())))
+public class HttpUrlGetTest extends HttpUrlTest {
+  @Override
+  protected HttpUrl parse(String url) {
+    return HttpUrl.get(url);
+  }
+
+  @Override
+  protected void assertInvalid(String string, String exceptionMessage) {
+    try {
+      parse(string);
+      fail("Expected get of \"" + string + "\" to throw with: " + exceptionMessage);
+    } catch (IllegalArgumentException e) {
+      assertThat(e.getMessage()).isEqualTo(exceptionMessage);
+    }
+  }
 }

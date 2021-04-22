@@ -61,7 +61,7 @@ Download a file on a worker thread, and get called back when the response is rea
       
       fun run() {
         val request = Request.Builder()
-            .url("http://publicobject.com/helloworld.txt")
+            .url("https://publicobject.com/helloworld.txt")
             .build()
         
         client.newCall(request).enqueue(object : Callback {
@@ -89,7 +89,7 @@ Download a file on a worker thread, and get called back when the response is rea
       
       public void run() throws Exception {
         Request request = new Request.Builder()
-            .url("http://publicobject.com/helloworld.txt")
+            .url("https://publicobject.com/helloworld.txt")
             .build();
         
         client.newCall(request).enqueue(new Callback() {
@@ -115,7 +115,7 @@ Download a file on a worker thread, and get called back when the response is rea
  
 ### Accessing Headers ([.kt][AccessHeadersKotlin], [.java][AccessHeadersJava])
 
-Typically HTTP headers work like a `Map<String, String>`: each field has one value or none. But some headers permit multiple values, like Guava's [Multimap](http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/collect/Multimap.html). For example, it's legal and common for an HTTP response to supply multiple `Vary` headers. OkHttp's APIs attempt to make both cases comfortable.
+Typically HTTP headers work like a `Map<String, String>`: each field has one value or none. But some headers permit multiple values, like Guava's [Multimap](https://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/collect/Multimap.html). For example, it's legal and common for an HTTP response to supply multiple `Vary` headers. OkHttp's APIs attempt to make both cases comfortable.
 
 When writing request headers, use `header(name, value)` to set the only occurrence of `name` to `value`. If there are existing values, they will be removed before the new value is added. Use `addHeader(name, value)` to add a header without removing the headers already present.
 
@@ -570,7 +570,7 @@ Response caching uses HTTP headers for all configuration. You can add request he
     
       fun run() {
         val request = Request.Builder()
-            .url("http://publicobject.com/helloworld.txt")
+            .url("https://publicobject.com/helloworld.txt")
             .build()
     
         val response1Body = client.newCall(request).execute().use {
@@ -609,7 +609,7 @@ Response caching uses HTTP headers for all configuration. You can add request he
     
       public void run() throws Exception {
         Request request = new Request.Builder()
-            .url("http://publicobject.com/helloworld.txt")
+            .url("https://publicobject.com/helloworld.txt")
             .build();
     
         String response1Body;
@@ -636,7 +636,7 @@ Response caching uses HTTP headers for all configuration. You can add request he
       }
     ```
 
-To prevent a response from using the cache, use [`CacheControl.FORCE_NETWORK`](http://square.github.io/okhttp/4.x/okhttp/okhttp3/-cache-control/-f-o-r-c-e_-n-e-t-w-o-r-k/). To prevent it from using the network, use [`CacheControl.FORCE_CACHE`](http://square.github.io/okhttp/4.x/okhttp/okhttp3/-cache-control/-f-o-r-c-e_-c-a-c-h-e/). Be warned: if you use `FORCE_CACHE` and the response requires the network, OkHttp will return a `504 Unsatisfiable Request` response.
+To prevent a response from using the cache, use [`CacheControl.FORCE_NETWORK`](https://square.github.io/okhttp/4.x/okhttp/okhttp3/-cache-control/-f-o-r-c-e_-n-e-t-w-o-r-k/). To prevent it from using the network, use [`CacheControl.FORCE_CACHE`](https://square.github.io/okhttp/4.x/okhttp/okhttp3/-cache-control/-f-o-r-c-e_-c-a-c-h-e/). Be warned: if you use `FORCE_CACHE` and the response requires the network, OkHttp will return a `504 Unsatisfiable Request` response.
  
 ### Canceling a Call ([.kt][CancelCallKotlin], [.java][CancelCallJava])
 
@@ -649,7 +649,7 @@ Use `Call.cancel()` to stop an ongoing call immediately. If a thread is currentl
     
       fun run() {
         val request = Request.Builder()
-            .url("http://httpbin.org/delay/2") // This URL is served with a 2 second delay.
+            .url("https://httpbin.org/delay/2") // This URL is served with a 2 second delay.
             .build()
     
         val startNanos = System.nanoTime()
@@ -681,7 +681,7 @@ Use `Call.cancel()` to stop an ongoing call immediately. If a thread is currentl
     
       public void run() throws Exception {
         Request request = new Request.Builder()
-            .url("http://httpbin.org/delay/2") // This URL is served with a 2 second delay.
+            .url("https://httpbin.org/delay/2") // This URL is served with a 2 second delay.
             .build();
     
         final long startNanos = System.nanoTime();
@@ -722,7 +722,7 @@ Use timeouts to fail a call when its peer is unreachable. Network partitions can
     
       fun run() {
         val request = Request.Builder()
-            .url("http://httpbin.org/delay/2") // This URL is served with a 2 second delay.
+            .url("https://httpbin.org/delay/2") // This URL is served with a 2 second delay.
             .build()
     
         client.newCall(request).execute().use { response ->
@@ -744,7 +744,7 @@ Use timeouts to fail a call when its peer is unreachable. Network partitions can
     
       public void run() throws Exception {
         Request request = new Request.Builder()
-            .url("http://httpbin.org/delay/2") // This URL is served with a 2 second delay.
+            .url("https://httpbin.org/delay/2") // This URL is served with a 2 second delay.
             .build();
     
         try (Response response = client.newCall(request).execute()) {
@@ -763,7 +763,7 @@ All the HTTP client configuration lives in `OkHttpClient` including proxy settin
     
       fun run() {
         val request = Request.Builder()
-            .url("http://httpbin.org/delay/1") // This URL is served with a 1 second delay.
+            .url("https://httpbin.org/delay/1") // This URL is served with a 1 second delay.
             .build()
     
         // Copy to customize OkHttp for this request.
@@ -797,7 +797,7 @@ All the HTTP client configuration lives in `OkHttpClient` including proxy settin
     
       public void run() throws Exception {
         Request request = new Request.Builder()
-            .url("http://httpbin.org/delay/1") // This URL is served with a 1 second delay.
+            .url("https://httpbin.org/delay/1") // This URL is served with a 1 second delay.
             .build();
     
         // Copy to customize OkHttp for this request.
@@ -850,7 +850,7 @@ Use `Response.challenges()` to get the schemes and realms of any authentication 
     
       fun run() {
         val request = Request.Builder()
-            .url("http://publicobject.com/secrets/hellosecret.txt")
+            .url("https://publicobject.com/secrets/hellosecret.txt")
             .build()
     
         client.newCall(request).execute().use { response ->
@@ -885,7 +885,7 @@ Use `Response.challenges()` to get the schemes and realms of any authentication 
     
       public void run() throws Exception {
         Request request = new Request.Builder()
-            .url("http://publicobject.com/secrets/hellosecret.txt")
+            .url("https://publicobject.com/secrets/hellosecret.txt")
             .build();
     
         try (Response response = client.newCall(request).execute()) {

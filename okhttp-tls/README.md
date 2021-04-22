@@ -227,10 +227,10 @@ Download
 --------
 
 ```kotlin
-implementation("com.squareup.okhttp3:okhttp-tls:4.9.0")
+implementation("com.squareup.okhttp3:okhttp-tls:4.9.1")
 ```
 
- [held_certificate]: http://square.github.io/okhttp/4.x/okhttp-tls/okhttp3.tls/-held-certificate/
- [held_certificate_builder]: http://square.github.io/okhttp/4.x/okhttp-tls/okhttp3.tls/-held-certificate/-builder/
- [handshake_certificates]: http://square.github.io/okhttp/4.x/okhttp-tls/okhttp3.tls/-handshake-certificates/
- [handshake_certificates_builder]: http://square.github.io/okhttp/4.x/okhttp-tls/okhttp3.tls/-handshake-certificates/-builder/
+ [held_certificate]: https://square.github.io/okhttp/4.x/okhttp-tls/okhttp3.tls/-held-certificate/
+ [held_certificate_builder]: https://square.github.io/okhttp/4.x/okhttp-tls/okhttp3.tls/-held-certificate/-builder/
+ [handshake_certificates]: https://square.github.io/okhttp/4.x/okhttp-tls/okhttp3.tls/-handshake-certificates/
+ [handshake_certificates_builder]: https://square.github.io/okhttp/4.x/okhttp-tls/okhttp3.tls/-handshake-certificates/-builder/

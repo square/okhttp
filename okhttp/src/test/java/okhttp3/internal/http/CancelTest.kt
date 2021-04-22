@@ -37,6 +37,7 @@ import okhttp3.Protocol.HTTP_1_1
 import okhttp3.RecordingEventListener
 import okhttp3.Request
 import okhttp3.RequestBody
+import okhttp3.SimpleProvider
 import okhttp3.internal.http.CancelTest.CancelMode.CANCEL
 import okhttp3.internal.http.CancelTest.CancelMode.INTERRUPT
 import okhttp3.internal.http.CancelTest.ConnectionType.H2
@@ -48,10 +49,12 @@ import okio.Buffer
 import okio.BufferedSink
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Tag
+import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.fail
 import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.MethodSource
+import org.junit.jupiter.params.provider.ArgumentsSource
 import java.io.IOException
 import java.net.ServerSocket
 import java.net.Socket
@@ -59,6 +62,8 @@ import java.util.concurrent.TimeUnit.MILLISECONDS
 import javax.net.ServerSocketFactory
 import javax.net.SocketFactory
 
+@Timeout(30)
+@Tag("Slow")
 class CancelTest {
   @JvmField @RegisterExtension val platform = PlatformRule()
 
@@ -122,7 +127,9 @@ class CancelTest {
             return socket
           }
         })
-        .sslSocketFactory(handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager)
+        .sslSocketFactory(
+          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
+        )
         .eventListener(listener)
         .apply {
           if (connectionType == HTTPS) { protocols(listOf(HTTP_1_1)) }
@@ -132,30 +139,30 @@ class CancelTest {
   }
 
   @ParameterizedTest
-  @MethodSource("cancelModes")
+  @ArgumentsSource(CancelModelParamProvider::class)
   fun cancelWritingRequestBody(mode: Pair<CancelMode, ConnectionType>) {
     setUp(mode)
     server.enqueue(MockResponse())
     val call = client.newCall(
-        Request.Builder()
-            .url(server.url("/"))
-            .post(object : RequestBody() {
-              override fun contentType(): MediaType? {
-                return null
-              }
+      Request.Builder()
+        .url(server.url("/"))
+        .post(object : RequestBody() {
+          override fun contentType(): MediaType? {
+            return null
+          }
 
-              @Throws(
-                  IOException::class
-              ) override fun writeTo(sink: BufferedSink) {
-                for (i in 0..9) {
-                  sink.writeByte(0)
-                  sink.flush()
-                  sleep(100)
-                }
-                fail("Expected connection to be closed")
-              }
-            })
-            .build()
+          @Throws(
+            IOException::class
+          ) override fun writeTo(sink: BufferedSink) {
+            for (i in 0..9) {
+              sink.writeByte(0)
+              sink.flush()
+              sleep(100)
+            }
+            fail("Expected connection to be closed")
+          }
+        })
+        .build()
     )
     cancelLater(call, 500)
     try {
@@ -167,22 +174,22 @@ class CancelTest {
   }
 
   @ParameterizedTest
-  @MethodSource("cancelModes")
+  @ArgumentsSource(CancelModelParamProvider::class)
   fun cancelReadingResponseBody(mode: Pair<CancelMode, ConnectionType>) {
     setUp(mode)
     val responseBodySize = 8 * 1024 * 1024 // 8 MiB.
     server.enqueue(
-        MockResponse()
-            .setBody(
-                Buffer()
-                    .write(ByteArray(responseBodySize))
-            )
-            .throttleBody(64 * 1024, 125, MILLISECONDS)
+      MockResponse()
+        .setBody(
+          Buffer()
+            .write(ByteArray(responseBodySize))
+        )
+        .throttleBody(64 * 1024, 125, MILLISECONDS)
     ) // 500 Kbps
     val call = client.newCall(
-        Request.Builder()
-            .url(server.url("/"))
-            .build()
+      Request.Builder()
+        .url(server.url("/"))
+        .build()
     )
     val response = call.execute()
     cancelLater(call, 500)
@@ -200,17 +207,17 @@ class CancelTest {
   }
 
   @ParameterizedTest
-  @MethodSource("cancelModes")
+  @ArgumentsSource(CancelModelParamProvider::class)
   fun cancelAndFollowup(mode: Pair<CancelMode, ConnectionType>) {
     setUp(mode)
     val responseBodySize = 8 * 1024 * 1024 // 8 MiB.
     server.enqueue(
-        MockResponse()
-            .setBody(
-                Buffer()
-                    .write(ByteArray(responseBodySize))
-            )
-            .throttleBody(64 * 1024, 125, MILLISECONDS)
+      MockResponse()
+        .setBody(
+          Buffer()
+            .write(ByteArray(responseBodySize))
+        )
+        .throttleBody(64 * 1024, 125, MILLISECONDS)
     ) // 500 Kbps
     server.enqueue(MockResponse().apply {
       setResponseCode(200)
@@ -296,11 +303,13 @@ class CancelTest {
   }
 
   companion object {
-    @JvmStatic
-    fun cancelModes() =
-      CancelMode.values().flatMap { c -> ConnectionType.values().map { x -> Pair(c, x) } }
-
     // The size of the socket buffers in bytes.
     private const val SOCKET_BUFFER_SIZE = 256 * 1024
   }
+}
+
+class CancelModelParamProvider: SimpleProvider() {
+  override fun arguments() = CancelTest.CancelMode.values().flatMap { c -> CancelTest.ConnectionType.values().map { x -> Pair(
+    c, x
+  ) } }
 }

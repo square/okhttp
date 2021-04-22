@@ -15,15 +15,17 @@
  */
 package okhttp3
 
-import java.io.File
-import java.io.IOException
-import java.nio.charset.Charset
-import kotlin.text.Charsets.UTF_8
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.internal.checkOffsetAndCount
 import okio.BufferedSink
 import okio.ByteString
 import okio.source
+import java.io.File
+import java.io.FileDescriptor
+import java.io.FileInputStream
+import java.io.IOException
+import java.nio.charset.Charset
+import kotlin.text.Charsets.UTF_8
 
 abstract class RequestBody {
 
@@ -129,6 +131,23 @@ abstract class RequestBody {
 
         override fun writeTo(sink: BufferedSink) {
           sink.write(this@toRequestBody)
+        }
+      }
+    }
+
+    /** Returns a new request body that transmits this. */
+    @JvmStatic
+    @JvmName("create")
+    fun FileDescriptor.toRequestBody(contentType: MediaType? = null): RequestBody {
+      return object : RequestBody() {
+        override fun contentType() = contentType
+
+        override fun isOneShot(): Boolean = true
+
+        override fun writeTo(sink: BufferedSink) {
+          FileInputStream(this@toRequestBody).use {
+            sink.buffer.writeAll(it.source())
+          }
         }
       }
     }

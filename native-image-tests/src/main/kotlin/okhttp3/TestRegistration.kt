@@ -17,24 +17,47 @@ package okhttp3
 
 import com.oracle.svm.core.annotate.AutomaticFeature
 import org.graalvm.nativeimage.hosted.Feature
+import org.graalvm.nativeimage.hosted.RuntimeClassInitialization
 import org.graalvm.nativeimage.hosted.RuntimeReflection
 import java.io.File
 
 @AutomaticFeature
 class TestRegistration : Feature {
   override fun beforeAnalysis(access: Feature.BeforeAnalysisAccess) {
+    // Presumably needed for parsing the testlist.txt file.
+    RuntimeClassInitialization.initializeAtBuildTime(access.findClassByName("kotlin.text.Charsets"))
+
     registerKnownTests(access)
 
-    val listener = Class.forName("org.junit.platform.console.tasks.TreePrintingListener")
+    registerJupiterClasses(access)
+
+    registerParamProvider(access, "okhttp3.SampleTestProvider")
+    registerParamProvider(access, "okhttp3.internal.http.CancelModelParamProvider")
+    registerParamProvider(access, "okhttp3.internal.cache.FileSystemParamProvider")
+    registerParamProvider(access, "okhttp3.internal.http2.HttpOverHttp2Test\$ProtocolParamProvider")
+    registerParamProvider(access, "okhttp3.internal.io.FileSystemParamProvider")
+  }
+
+  private fun registerParamProvider(access: Feature.BeforeAnalysisAccess, provider: String) {
+    val providerClass = access.findClassByName(provider)
+    if (providerClass != null) {
+      registerTest(access, providerClass)
+    } else {
+      println("Missing $provider")
+    }
+  }
+
+  private fun registerJupiterClasses(access: Feature.BeforeAnalysisAccess) {
+    registerStandardClass(access, "org.junit.jupiter.params.ParameterizedTestExtension")
+    registerStandardClass(access, "org.junit.platform.console.tasks.TreePrintingListener")
+    registerStandardClass(access,
+      "org.junit.jupiter.engine.extension.TimeoutExtension\$ExecutorResource")
+  }
+
+  private fun registerStandardClass(access: Feature.BeforeAnalysisAccess, name: String) {
+    val listener = access.findClassByName(name)
     RuntimeReflection.register(listener)
     listener.declaredConstructors.forEach {
-      RuntimeReflection.register(it)
-    }
-
-    val timeoutResource =
-      Class.forName("org.junit.jupiter.engine.extension.TimeoutExtension\$ExecutorResource")
-    RuntimeReflection.register(timeoutResource)
-    timeoutResource.declaredConstructors.forEach {
       RuntimeReflection.register(it)
     }
   }
@@ -47,7 +70,7 @@ class TestRegistration : Feature {
 
         if (testClass != null) {
           access.registerAsUsed(testClass)
-          registerTest(testClass)
+          registerTest(access, testClass)
         }
       } catch (e: Exception) {
         // If you throw an exception here then native image building fails half way through
@@ -58,7 +81,8 @@ class TestRegistration : Feature {
     }
   }
 
-  private fun registerTest(java: Class<*>) {
+  private fun registerTest(access: Feature.BeforeAnalysisAccess, java: Class<*>) {
+    access.registerAsUsed(java)
     RuntimeReflection.register(java)
     java.constructors.forEach {
       RuntimeReflection.register(it)
@@ -67,6 +91,9 @@ class TestRegistration : Feature {
       RuntimeReflection.register(it)
     }
     java.declaredFields.forEach {
+      RuntimeReflection.register(it)
+    }
+    java.methods.forEach {
       RuntimeReflection.register(it)
     }
   }

@@ -1,6 +1,6 @@
 dependencies {
   implementation project(':okhttp')
-  implementation deps.jsoup
+  implementation Dependencies.jsoup
 }
 
 tasks.withType(JavaCompile) {
