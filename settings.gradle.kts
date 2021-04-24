@@ -5,14 +5,17 @@ include(":mockwebserver-deprecated")
 include(":mockwebserver-junit4")
 include(":mockwebserver-junit5")
 
-if (System.getProperties().containsKey("android.injected.invoked.from.ide") ||
-        System.getenv("ANDROID_SDK_ROOT") != null) {
-  // Currently incompatible with Intellij, use with Android Studio and from CLI with explicit flag
+val androidBuild: String? by settings
+val graalBuild: String? by settings
+
+if (androidBuild != null) {
   include(":android-test")
   include(":regression-test")
 }
 
-include(":native-image-tests")
+if (graalBuild != null) {
+  include(":native-image-tests")
+}
 
 include(":okcurl")
 include(":okhttp")
