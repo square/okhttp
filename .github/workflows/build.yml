@@ -18,8 +18,9 @@ jobs:
         uses: gradle/wrapper-validation-action@v1
 
       - name: Configure JDK
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v2
         with:
+          distribution: 'adopt'
           java-version: 11
 
       - name: Upload Artifacts
@@ -39,8 +40,9 @@ jobs:
         uses: gradle/wrapper-validation-action@v1
 
       - name: Configure JDK
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v2
         with:
+          distribution: 'adopt'
           java-version: 11
 
       - name: Run Checks
@@ -57,8 +59,28 @@ jobs:
         uses: gradle/wrapper-validation-action@v1
 
       - name: Configure JDK
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v2
         with:
+          distribution: 'adopt'
+          java-version: 11
+
+      - name: Run Checks
+        run: ./gradlew test -Dtest.java.version=11
+
+  testzulu11:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Configure JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'zulu'
           java-version: 11
 
       - name: Run Checks
@@ -66,6 +88,7 @@ jobs:
 
   testopenjdk8:
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
 
     steps:
       - name: Checkout
@@ -75,17 +98,17 @@ jobs:
         uses: gradle/wrapper-validation-action@v1
 
       - name: Configure JDK
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v2
         with:
+          distribution: 'adopt'
           java-version: 11
 
       - name: Run Checks
         run: ./gradlew test -Dtest.java.version=8
 
-  testopenjdk16:
+  testopenjdk8alpn:
     runs-on: ubuntu-latest
-#    TODO remove from standard PR builds
-#    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/master'
 
     steps:
       - name: Checkout
@@ -95,8 +118,109 @@ jobs:
         uses: gradle/wrapper-validation-action@v1
 
       - name: Configure JDK
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v2
         with:
+          distribution: 'adopt'
+          java-version: 11
+
+      - name: Run Checks
+        run: ./gradlew test -Dtest.java.version=8 -Dalpn.boot.version=8.1.13.v20181017
+
+  testopenjsse:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Configure JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: 11
+
+      - name: Run Checks
+        run: ./gradlew test -Dtest.java.version=8 -Dokhttp.platform=openjsse
+
+  testconscrypt:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Configure JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: 11
+
+      - name: Run Checks
+        run: ./gradlew test -Dokhttp.platform=conscrypt
+
+  testbouncycastle:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Configure JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: 11
+
+      - name: Run Checks
+        run: ./gradlew test -Dokhttp.platform=bouncycastle
+
+  testcorretto:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Configure JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: 11
+
+      - name: Run Checks
+        run: ./gradlew test -Dokhttp.platform=corretto
+
+  testopenjdk16:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Configure JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
           java-version: 11
 
       - name: Run Checks

@@ -31,10 +31,6 @@ repositories {
   }
 }
 
-def isIDE = properties.containsKey('android.injected.invoked.from.ide') ||
-        (System.getenv("XPC_SERVICE_NAME") ?: "").contains("intellij") ||
-        System.getenv("IDEA_INITIAL_DIRECTORY") != null
-
 android {
   compileOptions {
     sourceCompatibility JavaVersion.VERSION_1_8
@@ -62,18 +58,16 @@ android {
     testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     testInstrumentationRunnerArguments([
             'runnerBuilder': 'de.mannodermaus.junit5.AndroidJUnit5Builder',
-            'notPackage': 'org.bouncycastle'
+            'notPackage'   : 'org.bouncycastle'
     ])
   }
 
-  if (!isIDE) {
-    sourceSets {
-      named("androidTest") {
-        it.java.srcDirs += project.file("../okhttp-brotli/src/test/java")
-        it.java.srcDirs += project.file("../okhttp-dnsoverhttps/src/test/java")
-        it.java.srcDirs += project.file("../okhttp-logging-interceptor/src/test/java")
-        it.java.srcDirs += project.file("../okhttp-sse/src/test/java")
-      }
+  sourceSets {
+    named("androidTest") {
+      it.java.srcDirs += project.file("../okhttp-brotli/src/test/java")
+      it.java.srcDirs += project.file("../okhttp-dnsoverhttps/src/test/java")
+      it.java.srcDirs += project.file("../okhttp-logging-interceptor/src/test/java")
+      it.java.srcDirs += project.file("../okhttp-sse/src/test/java")
     }
   }
 }
