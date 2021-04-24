@@ -228,8 +228,7 @@ jobs:
 
   testwindows:
     runs-on: windows-latest
-#    TODO remove from standard PR builds
-#    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/master'
 
     steps:
       - name: Checkout
@@ -239,8 +238,9 @@ jobs:
         uses: gradle/wrapper-validation-action@v1
 
       - name: Configure JDK
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v2
         with:
+          distribution: 'adopt'
           java-version: 11
 
       - name: Test
