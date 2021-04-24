@@ -108,7 +108,7 @@ jobs:
 
   testopenjdk8alpn:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
+#    if: github.ref == 'refs/heads/master'
 
     steps:
       - name: Checkout
@@ -121,10 +121,10 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: 'adopt'
-          java-version: 11
+          java-version: 1.8.0_242
 
       - name: Run Checks
-        run: ./gradlew test -Dtest.java.version=8 -Dalpn.boot.version=8.1.13.v20181017
+        run: ./gradlew test -Dtest.java.version=8 -Dokhttp.platform=jdk8alpn -Dalpn.boot.version=8.1.13.v20181017
 
   testopenjsse:
     runs-on: ubuntu-latest
