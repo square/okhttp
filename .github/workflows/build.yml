@@ -273,7 +273,7 @@ jobs:
 
   testandroid:
     runs-on: macos-latest
-#    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/master'
 
     strategy:
       fail-fast: false
