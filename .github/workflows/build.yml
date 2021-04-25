@@ -118,6 +118,12 @@ jobs:
       - name: Validate Gradle Wrapper
         uses: gradle/wrapper-validation-action@v1
 
+      - name: Install Old JDK 8
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: 8.0.242
+
       - name: Configure JDK
         uses: actions/setup-java@v2
         with:
@@ -125,7 +131,7 @@ jobs:
           java-version: 11
 
       - name: Run Checks
-        run: ./gradlew test -Dtest.java.version=8 -Dalpn.boot.version=8.1.13.v20181017
+        run: ./gradlew test -Dtest.java.version=8 -Dokhttp.platform=jdk8alpn -Dalpn.boot.version=8.1.13.v20181017 -Dorg.gradle.java.installations.paths=/opt/hostedtoolcache/Java_Adopt_jdk/8.0.242-8.1/x64
 
   testopenjsse:
     runs-on: ubuntu-latest
