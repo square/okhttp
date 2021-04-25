@@ -69,6 +69,7 @@ jobs:
 
   testzulu11:
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
 
     steps:
       - name: Checkout
@@ -246,3 +247,26 @@ jobs:
       - name: Test
         run: |
           ./gradlew test
+
+  testgraal:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Configure JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: 11
+
+      - name: Build ConsoleLauncher
+        run: ./gradlew -PgraalBuild native-image-tests:nativeImage
+
+      - name: Run Checks
+        run: ./native-image-tests/build/graal/ConsoleLauncher
