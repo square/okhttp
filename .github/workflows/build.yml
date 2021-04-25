@@ -270,3 +270,31 @@ jobs:
 
       - name: Run Checks
         run: ./native-image-tests/build/graal/ConsoleLauncher
+
+  testandroid:
+    runs-on: macos-latest
+    if: github.ref == 'refs/heads/master'
+
+    strategy:
+      fail-fast: false
+      matrix:
+        api-level:
+          - 21
+          - 24
+          - 26
+          - 29
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Run Tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          script: ./gradlew -PandroidBuild :android-test:connectedCheck
+        env:
+          API_LEVEL: ${{ matrix.api-level }}
