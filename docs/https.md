@@ -13,7 +13,7 @@ Specific security vs. connectivity decisions are implemented by [ConnectionSpec]
  * `RESTRICTED_TLS` is a secure configuration, intended to meet stricter compliance requirements.
  * `MODERN_TLS` is a secure configuration that connects to modern HTTPS servers.
  * `COMPATIBLE_TLS` is a secure configuration that connects to secure–but not current–HTTPS servers.
- * `CLEARTEXT` is an insecure configuration that is used for `https://` URLs.
+ * `CLEARTEXT` is an insecure configuration that is used for `http://` URLs.
 
 These loosely follow the model set in [Google Cloud Policies](https://cloud.google.com/load-balancing/docs/ssl-policies-concepts). We [track changes](tls_configuration_history.md) to this policy.
 

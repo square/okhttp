@@ -85,13 +85,13 @@ response.body().close();
 When we run this code, the interceptor runs twice. Once for the initial request to `http://www.publicobject.com/helloworld.txt`, and another for the redirect to `https://publicobject.com/helloworld.txt`.
 
 ```
-INFO: Sending request https://www.publicobject.com/helloworld.txt on Connection{www.publicobject.com:80, proxy=DIRECT hostAddress=54.187.32.157 cipherSuite=none protocol=http/1.1}
+INFO: Sending request http://www.publicobject.com/helloworld.txt on Connection{www.publicobject.com:80, proxy=DIRECT hostAddress=54.187.32.157 cipherSuite=none protocol=http/1.1}
 User-Agent: OkHttp Example
 Host: www.publicobject.com
 Connection: Keep-Alive
 Accept-Encoding: gzip
 
-INFO: Received response for https://www.publicobject.com/helloworld.txt in 115.6ms
+INFO: Received response for http://www.publicobject.com/helloworld.txt in 115.6ms
 Server: nginx/1.4.6 (Ubuntu)
 Content-Type: text/html
 Content-Length: 193
