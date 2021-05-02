@@ -129,8 +129,10 @@ class CallHandshakeTest {
 
   @Test
   fun testDefaultHandshakeCipherSuiteOrderingTls13Modern() {
-    // Requires modern JVM
-    platform.expectFailureOnJdkVersion(8)
+    if (!platform.isOpenJsse()) {
+      // Requires modern JVM
+      platform.expectFailureOnJdkVersion(8)
+    }
 
     val client = makeClient(ConnectionSpec.MODERN_TLS, TlsVersion.TLS_1_3)
 
