@@ -166,6 +166,13 @@ class Response internal constructor(
 
   fun header(name: String, defaultValue: String): String = header(name) ?: defaultValue
 
+  @JvmName("-deprecated_header")
+  @Deprecated(
+    message = "functionality covered by header(String) and header(String, String)",
+    replaceWith = ReplaceWith(expression = "header(name)"),
+    level = DeprecationLevel.ERROR)
+  fun header(name: String, defaultValue: String?): String? = header(name) ?: defaultValue
+
   @JvmName("-deprecated_headers")
   @Deprecated(
       message = "moved to val",
