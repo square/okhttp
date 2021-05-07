@@ -162,8 +162,9 @@ class Response internal constructor(
 
   fun headers(name: String): List<String> = headers.values(name)
 
-  @JvmOverloads
-  fun header(name: String, defaultValue: String? = null): String? = headers[name] ?: defaultValue
+  fun header(name: String): String? = headers[name]
+
+  fun header(name: String, defaultValue: String): String = header(name) ?: defaultValue
 
   @JvmName("-deprecated_headers")
   @Deprecated(
