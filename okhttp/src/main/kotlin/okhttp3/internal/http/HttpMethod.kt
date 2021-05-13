@@ -30,7 +30,7 @@ object HttpMethod {
       method == "REPORT") // CalDAV/CardDAV (defined in WebDAV Versioning)
 
   @JvmStatic // Despite being 'internal', this method is called by popular 3rd party SDKs.
-  fun permitsRequestBody(method: String): Boolean = !(method == "GET" || method == "HEAD")
+  fun permitsRequestBody(method: String): Boolean = !(method == "GET" || method == "HEAD" || method== "OPTION")
 
   fun redirectsWithBody(method: String): Boolean =
       // (WebDAV) redirects should also maintain the request body
