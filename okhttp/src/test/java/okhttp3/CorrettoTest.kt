@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
 class CorrettoTest {
-  @JvmField @RegisterExtension val platform = PlatformRule.conscrypt()
+  @JvmField @RegisterExtension val platform = PlatformRule()
   @JvmField @RegisterExtension val clientTestRule = OkHttpClientTestRule()
 
   private val client = clientTestRule.newClient()
