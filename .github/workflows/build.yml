@@ -109,8 +109,7 @@ jobs:
 
   testopenjdk8alpn:
     runs-on: ubuntu-latest
-#    TODO revert
-#    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/master'
 
     steps:
       - name: Checkout
@@ -136,8 +135,7 @@ jobs:
 
   testopenjsse:
     runs-on: ubuntu-latest
-    # TODO revert
-#    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/master'
 
     steps:
       - name: Checkout
