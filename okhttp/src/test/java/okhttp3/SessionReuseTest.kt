@@ -107,8 +107,10 @@ class SessionReuseTest(
     // Force reuse. This appears flaky (30% of the time) even though sessions are reused.
     // javax.net.ssl.SSLHandshakeException: No new session is allowed and no existing
     // session can be resumed
-    // TODO: raise JDK bug.
-    if (!platform.isJdk9()) {
+    //
+    // Report https://bugs.java.com/bugdatabase/view_bug.do?bug_id=JDK-8264944
+    // Sessions improvement https://bugs.java.com/bugdatabase/view_bug.do?bug_id=JDK-8245576
+    if (!platform.isJdk9() && !platform.isOpenJsse() && !platform.isJdk8Alpn()) {
       reuseSession = true
     }
 

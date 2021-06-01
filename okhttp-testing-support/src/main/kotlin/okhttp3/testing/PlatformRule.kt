@@ -208,6 +208,8 @@ open class PlatformRule @JvmOverloads constructor(
 
   fun isBouncyCastle() = getPlatformSystemProperty() == BOUNCYCASTLE_PROPERTY
 
+  fun isOpenJsse() = getPlatformSystemProperty() == OPENJSSE_PROPERTY
+
   fun isGraalVMImage() = TestUtil.isGraalVmImage
 
   fun hasHttp2Support() = !isJdk8()
@@ -238,6 +240,10 @@ open class PlatformRule @JvmOverloads constructor(
 
   fun assumeBouncyCastle() {
     assumeTrue(getPlatformSystemProperty() == BOUNCYCASTLE_PROPERTY)
+  }
+
+  fun assumeOpenJsse() {
+    assumeTrue(getPlatformSystemProperty() == OPENJSSE_PROPERTY)
   }
 
   fun assumeHttp2Support() {
@@ -281,6 +287,10 @@ open class PlatformRule @JvmOverloads constructor(
     // org.bouncycastle.tls.TlsFatalAlertReceived: handshake_failure(40)
     //        at org.bouncycastle.tls.TlsProtocol.handleAlertMessage(TlsProtocol.java:241)
     assumeTrue(getPlatformSystemProperty() != BOUNCYCASTLE_PROPERTY)
+  }
+
+  fun assumeNotOpenJsse() {
+    assumeTrue(getPlatformSystemProperty() != OPENJSSE_PROPERTY)
   }
 
   fun assumeNotHttp2Support() {
