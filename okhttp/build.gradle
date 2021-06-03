@@ -38,6 +38,9 @@ compileKotlin {
   dependsOn 'copyJavaTemplates'
 }
 
+sourcesJar {
+    dependsOn 'copyJavaTemplates'
+}
 task copyJavaTemplates(type: Copy) {
   from 'src/main/java-templates'
   into "$buildDir/generated/sources/java-templates/java/main"

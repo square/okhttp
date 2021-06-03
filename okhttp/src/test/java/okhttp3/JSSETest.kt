@@ -53,6 +53,7 @@ class JSSETest(
   }
 
   @Test
+  @Disabled
   fun testTlsv13Works() {
     // https://docs.oracle.com/en/java/javase/14/security/java-secure-socket-extension-jsse-reference-guide.html
     // TODO test jdk.tls.client.enableSessionTicketExtension
