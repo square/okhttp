@@ -29,6 +29,12 @@ sourceSets {
 
 normalization {
     runtimeClasspath {
+        // - These files are generated during test execution by the test:
+        // okhttp/src/test/java/okhttp3/osgi/OsgiTest.java
+        // - The underlying index.xml file contains a timestamp property,
+        // which results in the :okhttp:test task not being up-to-date.
+        // - This normalization prevents the test task from having to
+        // re-execute despite nothing of relevance changing.
         ignore 'okhttp3/osgi/workspace/cnf/repo/index.xml.gz'
         ignore 'okhttp3/osgi/workspace/cnf/repo/index.xml.gz.sha'
     }
