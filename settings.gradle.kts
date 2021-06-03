@@ -14,6 +14,16 @@ gradleEnterprise {
   }
 }
 
+buildCache {
+  local {
+    directory = File(rootDir, "build-cache")
+    removeUnusedEntriesAfterDays = 1
+  }
+  remote<HttpBuildCache> {
+    isEnabled = false
+  }
+}
+
 include(":mockwebserver")
 include(":mockwebserver-deprecated")
 include(":mockwebserver-junit4")
