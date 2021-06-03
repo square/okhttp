@@ -27,6 +27,13 @@ sourceSets {
   main.java.srcDirs += "$buildDir/generated/sources/java-templates/java/main"
 }
 
+normalization {
+    runtimeClasspath {
+        ignore 'okhttp3/osgi/workspace/cnf/repo/index.xml.gz'
+        ignore 'okhttp3/osgi/workspace/cnf/repo/index.xml.gz.sha'
+    }
+}
+
 compileKotlin {
   dependsOn 'copyJavaTemplates'
 }

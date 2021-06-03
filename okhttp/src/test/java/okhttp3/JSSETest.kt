@@ -82,6 +82,7 @@ class JSSETest(
   }
 
   @Test
+  @Disabled
   fun testSupportedProtocols() {
     val factory = SSLSocketFactory.getDefault()
     assertThat(factory.javaClass.name).isEqualTo("sun.security.ssl.SSLSocketFactoryImpl")
