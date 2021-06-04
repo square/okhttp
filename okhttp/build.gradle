@@ -35,10 +35,10 @@ normalization {
 
            - The compressed index.xml file contains a timestamp property which
            changes with every test execution, such that running the test
-           actually changes the test classpath itself. This means that the
-           test task can't be sure that it is up-to-date. So it has to run
-           every time in order to be safe, it can't benefit from
-           incremental build acceleration.
+           actually changes the test classpath itself. This means that it
+           can't benefit from incremental build acceleration, because on every
+           execution it sees that the classpath has changed, and so to be
+           safe, it needs to re-run.
 
            - This is unfortunate, because actually it would be safe to declare
            the task as up-to-date, because these two files, which are based on
