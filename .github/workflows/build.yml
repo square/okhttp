@@ -235,7 +235,8 @@ jobs:
 
   testopenjdk17:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
+    # revert
+#    if: github.ref == 'refs/heads/master'
 
     steps:
       - name: Checkout
