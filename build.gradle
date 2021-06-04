@@ -39,6 +39,14 @@ allprojects {
       configurations.findAll { it.canBeResolved }.files
     }
   }
+
+  normalization {
+    runtimeClasspath {
+      metaInf {
+        ignoreAttribute("Bnd-LastModified")
+      }
+    }
+  }
 }
 
 ext.applyOsgi = { project ->
