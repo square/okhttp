@@ -2,8 +2,6 @@
 .project
 .settings
 .gradle
-build-cache
-tmp
 eclipsebin
 
 bin
