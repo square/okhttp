@@ -16,7 +16,6 @@ gradleEnterprise {
 
 buildCache {
   local {
-    directory = File(rootDir, "build-cache")
     removeUnusedEntriesAfterDays = 1
   }
   remote<HttpBuildCache> {
