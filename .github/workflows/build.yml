@@ -258,7 +258,7 @@ jobs:
           java-version: 11
 
       - name: Run Checks
-        run: ./gradlew test -Dtest.java.version=17
+        run: ./gradlew test -Dtest.java.version=17 -Dorg.gradle.java.installations.paths=/opt/hostedtoolcache/Java_Adopt_jdk/17.0.0-ea.29.0.202101130348/x64
 
   testwindows:
     runs-on: windows-latest
