@@ -29,12 +29,25 @@ sourceSets {
 
 normalization {
     runtimeClasspath {
-        // - These files are generated during test execution by the test:
-        // okhttp/src/test/java/okhttp3/osgi/OsgiTest.java
-        // - The underlying index.xml file contains a timestamp property,
-        // which results in the :okhttp:test task not being up-to-date.
-        // - This normalization prevents the test task from having to
-        // re-execute despite nothing of relevance changing.
+        /*
+           - The below two ignored files are generated during test execution
+           by the test: okhttp/src/test/java/okhttp3/osgi/OsgiTest.java
+
+           - The compressed index.xml file contains a timestamp property,
+           which effectively means that running the test changes the test
+           classpath itself. This meaning that the test task can't be sure
+           that it is up-to-date. So it has to run again in order to be safe.
+
+           - This is unfortunate, because actually it would be safe to declare
+           the task as up-to-date, because these two files, based on the
+           generated index.xml, are outputs, not inputs. We can be sure of
+           this because they are deleted in the @BeforeEach method of the
+           OsgiTest test class.
+
+           - To enable the benefit of incremental builds, we can ask Gradle
+           to ignore these two files when considering whether the classpath
+           has changed. That is the purpose of this normalization block.
+       */
         ignore 'okhttp3/osgi/workspace/cnf/repo/index.xml.gz'
         ignore 'okhttp3/osgi/workspace/cnf/repo/index.xml.gz.sha'
     }
