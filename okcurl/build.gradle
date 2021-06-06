@@ -20,6 +20,9 @@ sourceSets {
 processResources {
   dependsOn 'copyResourcesTemplates'
 }
+sourcesJar {
+    dependsOn 'copyResourcesTemplates'
+}
 task copyResourcesTemplates(type: Copy) {
   from 'src/main/resources-templates'
   into "$buildDir/generated/resources-templates"
