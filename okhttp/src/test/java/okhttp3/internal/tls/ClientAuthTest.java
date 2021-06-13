@@ -270,6 +270,8 @@ public final class ClientAuthTest {
           PlatformRule.CONSCRYPT_PROPERTY);
     } catch (ConnectionShutdownException expected) {
       // It didn't fail until it reached the application layer.
+    } catch (IOException expected) {
+      assertThat(expected.getMessage()).isEqualTo("exhausted all routes");
     }
   }
 
