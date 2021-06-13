@@ -69,7 +69,7 @@ jobs:
 
   testzulu11:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'zulu')
 
     steps:
       - name: Checkout
@@ -89,7 +89,7 @@ jobs:
 
   testopenjdk8:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdk8')
 
     steps:
       - name: Checkout
@@ -109,7 +109,7 @@ jobs:
 
   testopenjdk8alpn:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdk8')
 
     steps:
       - name: Checkout
@@ -135,7 +135,7 @@ jobs:
 
   testopenjsse:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'openjsse')
 
     steps:
       - name: Checkout
@@ -155,7 +155,7 @@ jobs:
 
   testconscrypt:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'conscrypt')
 
     steps:
       - name: Checkout
@@ -175,7 +175,7 @@ jobs:
 
   testbouncycastle:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'bouncycastle')
 
     steps:
       - name: Checkout
@@ -235,7 +235,7 @@ jobs:
 
   testwindows:
     runs-on: windows-latest
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'windows')
 
     steps:
       - name: Checkout
@@ -256,7 +256,7 @@ jobs:
 
   testgraal:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'graal')
 
     steps:
       - name: Checkout
@@ -279,7 +279,7 @@ jobs:
 
   testandroid:
     runs-on: macos-latest
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'android')
 
     strategy:
       fail-fast: false
