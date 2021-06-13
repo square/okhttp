@@ -32,6 +32,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
 import javax.security.auth.x500.X500Principal;
+
 import mockwebserver3.MockResponse;
 import mockwebserver3.MockWebServer;
 import mockwebserver3.junit5.internal.MockWebServerExtension;
@@ -40,6 +41,7 @@ import okhttp3.internal.http2.ConnectionShutdownException;
 import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okhttp3.tls.HeldCertificate;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -68,6 +70,16 @@ public final class ClientAuthTest {
   private HeldCertificate clientCert;
 
   private String insecureHost = null;
+
+  @BeforeAll
+  public static void init() {
+    JsseDebugLogging.INSTANCE.enableJsseDebugLogging(m -> {
+      if (m.getType() == JsseDebugLogging.JsseDebugMessage.Type.Handshake) {
+        System.out.println(m);
+      }
+      return null;
+    });
+  }
 
   @BeforeEach
   public void setUp(MockWebServer server) {
