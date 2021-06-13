@@ -39,7 +39,6 @@ import okhttp3.internal.tls.BasicTrustRootIndex
 import okhttp3.internal.tls.CertificateChainCleaner
 import okhttp3.internal.tls.TrustRootIndex
 import okio.Buffer
-import java.lang.reflect.InaccessibleObjectException
 
 /**
  * Access to platform-specific features.
@@ -96,9 +95,13 @@ open class Platform {
       readFieldOrNull(context, X509TrustManager::class.java, "trustManager")
     } catch (e: ClassNotFoundException) {
       null
-    } catch (e: InaccessibleObjectException) {
+    } catch (e: RuntimeException) {
       // Throws InaccessibleObjectException (added in JDK9) on JDK 17 due to
       // JEP 403 Strongly Encapsulate JDK Internals.
+      if (e.javaClass.name != "java.lang.reflect.InaccessibleObjectException") {
+        throw e
+      }
+
       null
     }
   }
