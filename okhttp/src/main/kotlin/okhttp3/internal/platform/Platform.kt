@@ -39,6 +39,7 @@ import okhttp3.internal.tls.BasicTrustRootIndex
 import okhttp3.internal.tls.CertificateChainCleaner
 import okhttp3.internal.tls.TrustRootIndex
 import okio.Buffer
+import java.lang.reflect.InaccessibleObjectException
 
 /**
  * Access to platform-specific features.
@@ -94,6 +95,10 @@ open class Platform {
       val context = readFieldOrNull(sslSocketFactory, sslContextClass, "context") ?: return null
       readFieldOrNull(context, X509TrustManager::class.java, "trustManager")
     } catch (e: ClassNotFoundException) {
+      null
+    } catch (e: InaccessibleObjectException) {
+      // Throws InaccessibleObjectException (added in JDK9) on JDK 17 due to
+      // JEP 403 Strongly Encapsulate JDK Internals.
       null
     }
   }
