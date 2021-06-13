@@ -35,15 +35,9 @@ import javax.security.auth.x500.X500Principal;
 import mockwebserver3.MockResponse;
 import mockwebserver3.MockWebServer;
 import mockwebserver3.junit5.internal.MockWebServerExtension;
-import okhttp3.Call;
-import okhttp3.OkHttpClient;
-import okhttp3.OkHttpClientTestRule;
-import okhttp3.RecordingEventListener;
-import okhttp3.Request;
-import okhttp3.Response;
+import okhttp3.*;
 import okhttp3.internal.http2.ConnectionShutdownException;
 import okhttp3.testing.PlatformRule;
-import okhttp3.testing.PlatformVersion;
 import okhttp3.tls.HandshakeCertificates;
 import okhttp3.tls.HeldCertificate;
 import org.junit.jupiter.api.BeforeEach;
@@ -73,6 +67,8 @@ public final class ClientAuthTest {
   private HeldCertificate clientIntermediateCa;
   private HeldCertificate clientCert;
 
+  private String insecureHost = null;
+
   @BeforeEach
   public void setUp(MockWebServer server) {
     this.server = server;
@@ -99,6 +95,7 @@ public final class ClientAuthTest {
         .serialNumber(3L)
         .commonName("Local Host")
         .addSubjectAlternativeName(server.getHostName())
+        .addSubjectAlternativeName("127.0.0.1")
         .build();
 
     clientRootCa = new HeldCertificate.Builder()
@@ -323,13 +320,54 @@ public final class ClientAuthTest {
     assertThat(recordedEventTypes).endsWith("CallFailed");
   }
 
+  @Test public void clientAuthIgnoringHost() throws Exception {
+    insecureHost = server.getHostName();
+
+    OkHttpClient client = buildClient(clientCert, clientIntermediateCa.certificate());
+
+    SSLSocketFactory socketFactory = buildServerSslSocketFactory();
+
+    server.useHttps(socketFactory, false);
+    server.requireClientAuth();
+    server.enqueue(new MockResponse().setBody("abc"));
+
+    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
+    Response response = call.execute();
+    assertThat(response.handshake().peerPrincipal()).isNull();
+    assertThat(response.body().string()).isEqualTo("abc");
+  }
+
+  @Test public void clientAuthIgnoringIpAddress() throws Exception {
+    insecureHost = "127.0.0.1";
+
+    OkHttpClient client = buildClient(clientCert, clientIntermediateCa.certificate());
+
+    SSLSocketFactory socketFactory = buildServerSslSocketFactory();
+
+    server.useHttps(socketFactory, false);
+    server.requireClientAuth();
+    server.enqueue(new MockResponse().setBody("abc"));
+
+    HttpUrl url = server.url("/").newBuilder().host("127.0.0.1").build();
+    Call call = client.newCall(new Request.Builder().url(url).build());
+    Response response = call.execute();
+    assertThat(response.handshake().peerPrincipal()).isEqualTo(
+            new X500Principal("CN=Local Host"));
+    assertThat(response.body().string()).isEqualTo("abc");
+  }
+
   private OkHttpClient buildClient(
       HeldCertificate heldCertificate, X509Certificate... intermediates) {
-    HandshakeCertificates.Builder builder = new HandshakeCertificates.Builder()
-        .addTrustedCertificate(serverRootCa.certificate());
+    HandshakeCertificates.Builder builder = new HandshakeCertificates.Builder();
 
     if (heldCertificate != null) {
       builder.heldCertificate(heldCertificate, intermediates);
+    }
+
+    if (insecureHost != null) {
+      builder.addInsecureHost(insecureHost);
+    } else {
+      builder.addTrustedCertificate(serverRootCa.certificate());
     }
 
     HandshakeCertificates handshakeCertificates = builder.build();
