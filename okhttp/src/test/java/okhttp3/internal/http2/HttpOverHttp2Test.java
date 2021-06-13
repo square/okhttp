@@ -1810,8 +1810,8 @@ public final class HttpOverHttp2Test {
     client.newCall(new Request.Builder().url(server.url("/")).build()).enqueue(callback);
     client.newCall(new Request.Builder().url(server.url("/")).build()).enqueue(callback);
 
-    assertThat(bodies.poll(2, SECONDS)).isEqualTo("DEF");
-    assertThat(bodies.poll(2, SECONDS)).isEqualTo("ABC");
+    assertThat(bodies.poll(3, SECONDS)).isEqualTo("DEF");
+    assertThat(bodies.poll(3, SECONDS)).isEqualTo("ABC");
     assertThat(server.getRequestCount()).isEqualTo(2);
   }
 
