@@ -34,7 +34,7 @@ object Versions {
   const val ktlint = "0.38.0"
   const val moshi = "1.12.0"
   const val okio = "3.0.0-alpha.6"
-  const val openjsse = "1.1.0"
+  const val openjsse = "1.1.6"
   const val picocli = "4.5.1"
 }
 
