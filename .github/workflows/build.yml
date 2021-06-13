@@ -175,8 +175,7 @@ jobs:
 
   testbouncycastle:
     runs-on: ubuntu-latest
-#    TODO  revert
-#    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/master'
 
     steps:
       - name: Checkout
