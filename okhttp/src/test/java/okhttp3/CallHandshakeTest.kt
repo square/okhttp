@@ -55,8 +55,8 @@ class CallHandshakeTest {
   private lateinit var defaultSupportedCipherSuites: List<String>
 
   val expectedModernTls12CipherSuites =
-    listOf(TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384)
-  val expectedModernTls13CipherSuites = listOf(TLS_AES_128_GCM_SHA256, TLS_AES_256_GCM_SHA384)
+    listOf(TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384)
+  val expectedModernTls13CipherSuites = listOf(TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256, TLS_AES_128_GCM_SHA256, TLS_AES_256_GCM_SHA384)
 
   @BeforeEach
   fun setup(server: MockWebServer) {
@@ -213,7 +213,7 @@ class CallHandshakeTest {
     val cipherSuites =
       ConnectionSpec.RESTRICTED_TLS.effectiveCipherSuites(platformDefaultCipherSuites)
 
-    if (cipherSuites.contains(TLS_CHACHA20_POLY1305_SHA256)) {
+    if (cipherSuites.contains(TLS_CHACHA20_POLY1305_SHA256.javaName)) {
       assertThat(cipherSuites).containsExactlyElementsOf(listOf(
         TLS_AES_256_GCM_SHA384,
         TLS_AES_128_GCM_SHA256,

@@ -35,6 +35,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.conscrypt.Conscrypt
 import org.junit.After
 import org.junit.jupiter.api.Assumptions.assumeFalse
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -61,12 +62,6 @@ class SocketChannelTest(
   @JvmField @RegisterExtension val clientTestRule = OkHttpClientTestRule().apply {
     recordFrames = true
     // recordSslDebug = true
-  }
-
-  @After
-  fun cleanPlatform() {
-    Security.removeProvider("Conscrypt")
-    platform.resetPlatform()
   }
 
   // https://tools.ietf.org/html/rfc6066#page-6 specifies a FQDN is required.
@@ -96,9 +91,8 @@ class SocketChannelTest(
       "failing for channel and h2"
     )
 
-    if (socketMode is TlsInstance && socketMode.provider == CONSCRYPT) {
-      Security.insertProviderAt(Conscrypt.newProvider(), 1)
-      Platform.resetForTests(ConscryptPlatform.buildIfSupported()!!)
+    if (socketMode is TlsInstance) {
+      assumeTrue((socketMode.provider == CONSCRYPT) == platform.isConscrypt())
     }
 
     val client = clientTestRule.newClientBuilder()
