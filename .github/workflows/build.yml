@@ -76,6 +76,8 @@ jobs:
         uses: mikepenz/action-junit-report@v2
         with:
           report_paths: '**/build/test-results/test/TEST-*.xml'
+          token: ${{ github.token }}
+          check_name: OpenJDK 11 Tests
 
   testzulu11:
     runs-on: ubuntu-latest
