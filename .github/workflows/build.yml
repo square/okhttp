@@ -72,6 +72,11 @@ jobs:
       - name: Run Checks
         run: ./gradlew test -Dtest.java.version=11
 
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v2
+        with:
+          report_paths: '**/build/test-results/test/TEST-*.xml'
+
   testzulu11:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'zulu')
@@ -92,6 +97,11 @@ jobs:
       - name: Run Checks
         run: ./gradlew test -Dtest.java.version=11
 
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v2
+        with:
+          report_paths: '**/build/test-results/test/TEST-*.xml'
+
   testopenjdk8:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdk8')
@@ -111,6 +121,11 @@ jobs:
 
       - name: Run Checks
         run: ./gradlew test -Dtest.java.version=8
+
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v2
+        with:
+          report_paths: '**/build/test-results/test/TEST-*.xml'
 
   testopenjdk8alpn:
     runs-on: ubuntu-latest
@@ -138,6 +153,11 @@ jobs:
       - name: Run Checks
         run: ./gradlew test -Dtest.java.version=8 -Dokhttp.platform=jdk8alpn -Dalpn.boot.version=8.1.13.v20181017 -Dorg.gradle.java.installations.paths=/opt/hostedtoolcache/Java_Adopt_jdk/8.0.242-8.1/x64
 
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v2
+        with:
+          report_paths: '**/build/test-results/test/TEST-*.xml'
+
   testopenjsse:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'openjsse')
@@ -157,6 +177,11 @@ jobs:
 
       - name: Run Checks
         run: ./gradlew test -Dtest.java.version=8 -Dokhttp.platform=openjsse
+
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v2
+        with:
+          report_paths: '**/build/test-results/test/TEST-*.xml'
 
   testconscrypt:
     runs-on: ubuntu-latest
@@ -178,6 +203,11 @@ jobs:
       - name: Run Checks
         run: ./gradlew test -Dokhttp.platform=conscrypt
 
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v2
+        with:
+          report_paths: '**/build/test-results/test/TEST-*.xml'
+
   testbouncycastle:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'bouncycastle')
@@ -197,6 +227,11 @@ jobs:
 
       - name: Run Checks
         run: ./gradlew test -Dokhttp.platform=bouncycastle
+
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v2
+        with:
+          report_paths: '**/build/test-results/test/TEST-*.xml'
 
   testcorretto:
     runs-on: ubuntu-latest
@@ -218,6 +253,11 @@ jobs:
       - name: Run Checks
         run: ./gradlew test -Dokhttp.platform=corretto
 
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v2
+        with:
+          report_paths: '**/build/test-results/test/TEST-*.xml'
+
   testopenjdk16:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
@@ -237,6 +277,11 @@ jobs:
 
       - name: Run Checks
         run: ./gradlew test -Dtest.java.version=16
+
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v2
+        with:
+          report_paths: '**/build/test-results/test/TEST-*.xml'
 
   testwindows:
     runs-on: windows-latest
@@ -258,6 +303,11 @@ jobs:
       - name: Test
         run: |
           ./gradlew test
+
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v2
+        with:
+          report_paths: '**/build/test-results/test/TEST-*.xml'
 
   testgraal:
     runs-on: ubuntu-latest
