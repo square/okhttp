@@ -2,6 +2,8 @@ name: build
 
 on:
   push:
+    branches:
+      - master
   pull_request:
     types: [opened, labeled, unlabeled, synchronize]
 
