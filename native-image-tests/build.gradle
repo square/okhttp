@@ -28,13 +28,7 @@ dependencies {
   implementation Dependencies.junit5Api
   implementation Dependencies.junit5JupiterParams
 
-  implementation("org.graalvm.nativeimage:svm:21.1.0") {
-    // https://youtrack.jetbrains.com/issue/KT-29513
-    exclude group: "org.graalvm.nativeimage"
-    exclude group: "org.graalvm.truffle"
-    //    exclude group= "org.graalvm.sdk"
-    exclude group: "org.graalvm.compiler"
-  }
+  implementation("org.graalvm.nativeimage:svm:21.1.0")
 
   compileOnly Dependencies.jsr305
 }
