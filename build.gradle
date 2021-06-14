@@ -163,11 +163,11 @@ subprojects { project ->
     }
   } else if (platform == "conscrypt") {
     dependencies {
-      testRuntime "org.conscrypt:conscrypt-openjdk-uber:${Versions.conscrypt}"
+      testRuntimeOnly "org.conscrypt:conscrypt-openjdk-uber:${Versions.conscrypt}"
     }
   } else if (platform == "openjsse") {
     dependencies {
-      testRuntime Dependencies.openjsse
+      testRuntimeOnly Dependencies.openjsse
     }
   }
 
