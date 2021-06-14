@@ -71,7 +71,7 @@ class OpenJSSETest(
     val factory = SSLSocketFactoryImpl()
     val s = factory.createSocket() as SSLSocketImpl
 
-    assertEquals(listOf("TLSv1.3", "TLSv1.2", "TLSv1.1", "TLSv1"), s.enabledProtocols.toList())
+    assertEquals(listOf("TLSv1.3", "TLSv1.2"), s.enabledProtocols.toList())
   }
 
   @Test
