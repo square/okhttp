@@ -267,19 +267,24 @@ open class OkHttpClient internal constructor(
   /** Prepares the [request] to be executed at some point in the future. */
   override fun newCall(request: Request): Call = RealCall(this, request, forWebSocket = false)
 
-  /** Uses [request] to connect a new web socket. */
-  override fun newWebSocket(request: Request, listener: WebSocketListener): WebSocket {
+  fun newWebSocket(request: Request, listener: WebSocketListener, pingPayloadFactory: WebSocketPingPayloadFactory?): WebSocket {
     val webSocket = RealWebSocket(
-        taskRunner = TaskRunner.INSTANCE,
-        originalRequest = request,
-        listener = listener,
-        random = Random(),
-        pingIntervalMillis = pingIntervalMillis.toLong(),
-        extensions = null, // Always null for clients.
-        minimumDeflateSize = minWebSocketMessageToCompress
+      taskRunner = TaskRunner.INSTANCE,
+      originalRequest = request,
+      listener = listener,
+      random = Random(),
+      pingIntervalMillis = pingIntervalMillis.toLong(),
+      extensions = null, // Always null for clients.
+      minimumDeflateSize = minWebSocketMessageToCompress,
+      pingPayloadFactory = pingPayloadFactory
     )
     webSocket.connect(this)
     return webSocket
+  }
+
+  /** Uses [request] to connect a new web socket. */
+  override fun newWebSocket(request: Request, listener: WebSocketListener): WebSocket {
+    return newWebSocket(request, listener, null)
   }
 
   open fun newBuilder(): Builder = Builder(this)

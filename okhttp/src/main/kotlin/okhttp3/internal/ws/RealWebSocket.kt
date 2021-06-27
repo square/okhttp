@@ -32,6 +32,7 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
+import okhttp3.WebSocketPingPayloadFactory
 import okhttp3.internal.assertThreadHoldsLock
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.Task
@@ -63,7 +64,9 @@ class RealWebSocket(
    */
   private var extensions: WebSocketExtensions?,
   /** If compression is negotiated, outbound messages of this size and larger will be compressed. */
-  private var minimumDeflateSize: Long
+  private var minimumDeflateSize: Long,
+  /** Initialize in constructor to enable sending customized ping payload. */
+  private val pingPayloadFactory: WebSocketPingPayloadFactory?
 ) : WebSocket, WebSocketReader.FrameCallback {
   private val key: String
 
@@ -351,6 +354,7 @@ class RealWebSocket(
     // This API doesn't expose pings.
     receivedPongCount++
     awaitingPong = false
+    listener.onPong(this, payload)
   }
 
   override fun onReadClose(code: Int, reason: String) {
@@ -566,7 +570,11 @@ class RealWebSocket(
     }
 
     try {
-      writer.writePing(ByteString.EMPTY)
+      if (null == pingPayloadFactory) {
+        writer.writePing(ByteString.EMPTY)
+      } else {
+        writer.writePing(pingPayloadFactory.generatePayload())
+      }
     } catch (e: IOException) {
       failWebSocket(e, null)
     }
