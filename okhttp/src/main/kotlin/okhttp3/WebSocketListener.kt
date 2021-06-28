@@ -33,6 +33,9 @@ abstract class WebSocketListener {
   open fun onMessage(webSocket: WebSocket, bytes: ByteString) {
   }
 
+  open fun onPong(webSocket: WebSocket, bytes: ByteString) {
+  }
+
   /**
    * Invoked when the remote peer has indicated that no more incoming messages will be transmitted.
    */
