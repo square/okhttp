@@ -1,6 +1,11 @@
 name: build
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    types: [opened, labeled, unlabeled, synchronize]
 
 env:
   GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.daemon=false -Dkotlin.incremental=false"
@@ -18,8 +23,9 @@ jobs:
         uses: gradle/wrapper-validation-action@v1
 
       - name: Configure JDK
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v2
         with:
+          distribution: 'adopt'
           java-version: 11
 
       - name: Upload Artifacts
@@ -27,3 +33,279 @@ jobs:
         env:
           ORG_GRADLE_PROJECT_SONATYPE_NEXUS_USERNAME: ${{ secrets.SONATYPE_NEXUS_USERNAME }}
           ORG_GRADLE_PROJECT_SONATYPE_NEXUS_PASSWORD: ${{ secrets.SONATYPE_NEXUS_PASSWORD }}
+
+  checkjdk11:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Configure JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: 11
+
+      - name: Run Checks
+        run: ./gradlew check -x test
+
+  testopenjdk11:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Configure JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: 11
+
+      - name: Run Checks
+        run: ./gradlew test -Dtest.java.version=11
+
+  testzulu11:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'zulu')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Configure JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'zulu'
+          java-version: 11
+
+      - name: Run Checks
+        run: ./gradlew test -Dtest.java.version=11
+
+  testopenjdk8:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdk8')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Configure JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: 11
+
+      - name: Run Checks
+        run: ./gradlew test -Dtest.java.version=8
+
+  testopenjdk8alpn:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdk8')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Install Old JDK 8
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: 8.0.242
+
+      - name: Configure JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: 11
+
+      - name: Run Checks
+        run: ./gradlew test -Dtest.java.version=8 -Dokhttp.platform=jdk8alpn -Dalpn.boot.version=8.1.13.v20181017 -Dorg.gradle.java.installations.paths=/opt/hostedtoolcache/Java_Adopt_jdk/8.0.242-8.1/x64
+
+  testopenjsse:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'openjsse')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Configure JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: 11
+
+      - name: Run Checks
+        run: ./gradlew test -Dtest.java.version=8 -Dokhttp.platform=openjsse
+
+  testconscrypt:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'conscrypt')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Configure JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: 11
+
+      - name: Run Checks
+        run: ./gradlew test -Dokhttp.platform=conscrypt
+
+  testbouncycastle:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'bouncycastle')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Configure JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: 11
+
+      - name: Run Checks
+        run: ./gradlew test -Dokhttp.platform=bouncycastle
+
+  testcorretto:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Configure JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: 11
+
+      - name: Run Checks
+        run: ./gradlew test -Dokhttp.platform=corretto
+
+  testopenjdk16:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Configure JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: 11
+
+      - name: Run Checks
+        run: ./gradlew test -Dtest.java.version=16
+
+  testwindows:
+    runs-on: windows-latest
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'windows')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Configure JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: 11
+
+      - name: Test
+        run: |
+          ./gradlew test
+
+  testgraal:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'graal')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Configure JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: 11
+
+      - name: Build ConsoleLauncher
+        run: ./gradlew -PgraalBuild native-image-tests:nativeImage
+
+      - name: Run Checks
+        run: ./native-image-tests/build/graal/ConsoleLauncher
+
+  testandroid:
+    runs-on: macos-latest
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'android')
+
+    strategy:
+      fail-fast: false
+      matrix:
+        api-level:
+          - 21
+          - 24
+          - 26
+          - 29
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Run Tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          script: ./gradlew -PandroidBuild :android-test:connectedCheck
+        env:
+          API_LEVEL: ${{ matrix.api-level }}
