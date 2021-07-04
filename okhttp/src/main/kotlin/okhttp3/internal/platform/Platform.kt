@@ -95,6 +95,14 @@ open class Platform {
       readFieldOrNull(context, X509TrustManager::class.java, "trustManager")
     } catch (e: ClassNotFoundException) {
       null
+    } catch (e: RuntimeException) {
+      // Throws InaccessibleObjectException (added in JDK9) on JDK 17 due to
+      // JEP 403 Strongly Encapsulate JDK Internals.
+      if (e.javaClass.name != "java.lang.reflect.InaccessibleObjectException") {
+        throw e
+      }
+
+      null
     }
   }
 
