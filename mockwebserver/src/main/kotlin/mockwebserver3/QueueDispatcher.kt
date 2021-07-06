@@ -59,6 +59,10 @@ open class QueueDispatcher : Dispatcher() {
     responseQueue.add(response)
   }
 
+  open fun clear() {
+    responseQueue.clear()
+  }
+
   override fun shutdown() {
     responseQueue.add(DEAD_LETTER)
   }
