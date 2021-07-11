@@ -32,7 +32,6 @@ import okhttp3.internal.SuppressSignatureCheck
 import okhttp3.internal.platform.android.AndroidCertificateChainCleaner
 import okhttp3.internal.platform.android.AndroidSocketAdapter
 import okhttp3.internal.platform.android.BouncyCastleSocketAdapter
-import okhttp3.internal.platform.android.CloseGuard
 import okhttp3.internal.platform.android.ConscryptSocketAdapter
 import okhttp3.internal.platform.android.DeferredSocketAdapter
 import okhttp3.internal.platform.android.StandardAndroidSocketAdapter
