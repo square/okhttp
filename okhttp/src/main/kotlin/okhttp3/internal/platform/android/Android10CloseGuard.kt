@@ -25,5 +25,7 @@ class Android10CloseGuard : CloseGuard {
       ?: throw IllegalArgumentException("Invalid closeguard $closeGuardInstance")
 
     instance.warnIfOpen()
+
+    return true // reported
   }
 }
