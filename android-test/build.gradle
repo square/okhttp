@@ -98,6 +98,7 @@ dependencies {
   androidTestImplementation 'org.apache.httpcomponents.client5:httpclient5:5.0'
   androidTestImplementation 'com.squareup.moshi:moshi:1.12.0'
   androidTestImplementation 'com.squareup.moshi:moshi-kotlin:1.12.0'
+  androidTestImplementation Dependencies.okioFakeFileSystem
 
   androidTestImplementation "androidx.test:runner:1.3.0"
   androidTestImplementation "org.junit.jupiter:junit-jupiter-api:5.7.0"
