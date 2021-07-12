@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.platform.android
 
+import okhttp3.internal.platform.CloseGuard
 import java.lang.reflect.Method
 
 /**
@@ -22,13 +23,13 @@ import java.lang.reflect.Method
  * combination with android.os.StrictMode to report on leaked java.io.Closeable's. Available since
  * Android API 11.
  */
-internal class CloseGuard(
+internal class AndroidCloseGuard(
   private val getMethod: Method?,
   private val openMethod: Method?,
   private val warnIfOpenMethod: Method?
-) {
+): CloseGuard {
 
-  fun createAndOpen(closer: String): Any? {
+  override fun createAndOpen(closer: String): Any? {
     if (getMethod != null) {
       try {
         val closeGuardInstance = getMethod.invoke(null)
@@ -40,7 +41,7 @@ internal class CloseGuard(
     return null
   }
 
-  fun warnIfOpen(closeGuardInstance: Any?): Boolean {
+  override fun warnIfOpen(closeGuardInstance: Any?): Boolean {
     var reported = false
     if (closeGuardInstance != null) {
       try {
@@ -53,7 +54,7 @@ internal class CloseGuard(
   }
 
   companion object {
-    fun get(): CloseGuard {
+    fun get(): AndroidCloseGuard {
       var getMethod: Method?
       var openMethod: Method?
       var warnIfOpenMethod: Method?
@@ -69,7 +70,7 @@ internal class CloseGuard(
         warnIfOpenMethod = null
       }
 
-      return CloseGuard(getMethod, openMethod, warnIfOpenMethod)
+      return AndroidCloseGuard(getMethod, openMethod, warnIfOpenMethod)
     }
   }
 }
