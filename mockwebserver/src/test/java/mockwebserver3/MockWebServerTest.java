@@ -257,6 +257,15 @@ public final class MockWebServerTest {
     server.url("/b").url().openConnection().getInputStream(); // Should succeed.
   }
 
+  @Test public void clearDispatcherQueue() throws Exception {
+    server.enqueue(new MockResponse().setBody("A"));
+    ((QueueDispatcher) server.getDispatcher()).clear();
+    server.enqueue(new MockResponse().setBody("B"));
+
+    InputStream in = server.url("/a").url().openConnection().getInputStream();
+    assertThat(in.read()).isEqualTo('B');
+  }
+
   /**
    * Throttle the request body by sleeping 500ms after every 3 bytes. With a 6-byte request, this
    * should yield one sleep for a total delay of 500ms.
