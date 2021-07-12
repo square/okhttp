@@ -69,7 +69,6 @@ okhttp3.internal.http2.Http2Test
 okhttp3.internal.http2.HttpOverHttp2Test
 okhttp3.internal.http2.HuffmanTest
 okhttp3.internal.http2.SettingsTest
-okhttp3.internal.io.FileSystemTest
 okhttp3.internal.publicsuffix.PublicSuffixDatabaseTest
 okhttp3.internal.tls.CertificatePinnerChainValidationTest
 okhttp3.internal.tls.ClientAuthTest

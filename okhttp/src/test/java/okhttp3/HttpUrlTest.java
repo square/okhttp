@@ -1683,6 +1683,11 @@ public class HttpUrlTest {
   public void fromJavaNetUrlUnsupportedScheme() throws Exception {
     // java.net.MalformedURLException: unknown protocol: mailto
     platform.assumeNotAndroid();
+
+    // Accessing an URL protocol that was not enabled. The URL protocol mailto is not tested and might not work as
+    // expected. It can be enabled by adding the --enable-url-protocols=mailto option to the native-image command.
+    platform.assumeNotGraalVMImage();
+
     URL javaNetUrl = new URL("mailto:user@example.com");
     assertThat(HttpUrl.get(javaNetUrl)).isNull();
   }

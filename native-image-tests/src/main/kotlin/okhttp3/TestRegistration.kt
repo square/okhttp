@@ -35,7 +35,8 @@ class TestRegistration : Feature {
     registerParamProvider(access, "okhttp3.internal.http.CancelModelParamProvider")
     registerParamProvider(access, "okhttp3.internal.cache.FileSystemParamProvider")
     registerParamProvider(access, "okhttp3.internal.http2.HttpOverHttp2Test\$ProtocolParamProvider")
-    registerParamProvider(access, "okhttp3.internal.io.FileSystemParamProvider")
+    registerParamProvider(access, "okhttp3.internal.cache.FileSystemParamProvider")
+    registerParamProvider(access, "okhttp3.WebPlatformUrlTest\$TestDataParamProvider")
   }
 
   private fun registerParamProvider(access: Feature.BeforeAnalysisAccess, provider: String) {
