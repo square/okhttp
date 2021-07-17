@@ -263,7 +263,7 @@ jobs:
           java-version: 11
 
       - name: Show Toolchains
-        run: ./gradlew javaToolchains
+        run: ./gradlew javaToolchains  -Dorg.gradle.java.installations.paths=/opt/hostedtoolcache/Java_Adopt_jdk/17.0.0-ea.29.0.202101130348/x64,/opt/hostedtoolcache/Java_Adopt_jdk/17.0.0-ea.20.0.202105070000/x64
 
       - name: Run Checks
         run: ./gradlew test -Dtest.java.version=17 -Dorg.gradle.java.installations.paths=/opt/hostedtoolcache/Java_Adopt_jdk/17.0.0-ea.29.0.202101130348/x64,/opt/hostedtoolcache/Java_Adopt_jdk/17.0.0-ea.20.0.202105070000/x64
