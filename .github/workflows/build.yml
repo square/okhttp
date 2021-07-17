@@ -269,8 +269,7 @@ jobs:
 #        run: ./gradlew --stacktrace :samples:guide:kaptKotlin -Dtest.java.version=17 -Dorg.gradle.java.installations.paths=/opt/hostedtoolcache/Java_Adopt_jdk/17.0.0-ea.20.0.202105070000/x64
 
       - name: Run Checks
-        run: ./gradlew mockwebserver:test mockwebserver-deprecated:test mockwebserver-junit4:test mockwebserver-junit5:test okcurl:test okhttp:test okhttp-brotli:test okhttp-dnsoverhttps:test okhttp-hpacktests:test okhttp-logging-interceptor:test okhttp-sse:test okhttp-testing-support:test okhttp-tls:test okhttp-urlconnection:test samples:test samples:compare:test samples:crawler:test samples:guide:test samples:simple-client:test samples:slack:test samples:static-server:test samples:unixdomainsockets:test
-  -Dtest.java.version=17
+        run: ./gradlew mockwebserver:test mockwebserver-deprecated:test mockwebserver-junit4:test mockwebserver-junit5:test okcurl:test okhttp:test okhttp-brotli:test okhttp-dnsoverhttps:test okhttp-hpacktests:test okhttp-logging-interceptor:test okhttp-sse:test okhttp-testing-support:test okhttp-tls:test okhttp-urlconnection:test samples:test samples:compare:test samples:crawler:test samples:guide:test samples:simple-client:test samples:slack:test samples:static-server:test samples:unixdomainsockets:test -Dtest.java.version=17
 
   testwindows:
     runs-on: windows-latest
