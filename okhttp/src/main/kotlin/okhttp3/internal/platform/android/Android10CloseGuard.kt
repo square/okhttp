@@ -17,13 +17,14 @@ package okhttp3.internal.platform.android
 
 import okhttp3.internal.platform.CloseGuard
 
+/**
+ * Simple public API CloseGuard wrapper for Android 10+.
+ */
 class Android10CloseGuard : CloseGuard {
   override fun createAndOpen(closer: String): Any? = android.util.CloseGuard().apply { open(closer) }
 
   override fun warnIfOpen(closeGuardInstance: Any?): Boolean {
-    val instance = closeGuardInstance as? android.util.CloseGuard
-      ?: throw IllegalArgumentException("Invalid closeguard $closeGuardInstance")
-
+    val instance = closeGuardInstance as android.util.CloseGuard
     instance.warnIfOpen()
 
     return true // reported

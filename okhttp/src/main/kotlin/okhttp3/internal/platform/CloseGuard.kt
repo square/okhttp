@@ -20,6 +20,10 @@ import android.os.Build
 import okhttp3.internal.platform.android.Android10CloseGuard
 import okhttp3.internal.platform.android.AndroidCloseGuard
 
+/**
+ * Provides access to the Android CloseGuard. Android uses this in
+ * combination with android.os.StrictMode to report on leaked java.io.Closeable's.
+ */
 interface CloseGuard {
   fun createAndOpen(closer: String): Any?
   fun warnIfOpen(closeGuardInstance: Any?): Boolean
