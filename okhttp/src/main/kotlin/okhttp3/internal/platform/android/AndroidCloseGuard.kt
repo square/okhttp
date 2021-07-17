@@ -25,9 +25,8 @@ internal class AndroidCloseGuard(
   private val getMethod: Method?,
   private val openMethod: Method?,
   private val warnIfOpenMethod: Method?
-): CloseGuard {
-
-  override fun createAndOpen(closer: String): Any? {
+) {
+  fun createAndOpen(closer: String): Any? {
     if (getMethod != null) {
       try {
         val closeGuardInstance = getMethod.invoke(null)
@@ -39,7 +38,7 @@ internal class AndroidCloseGuard(
     return null
   }
 
-  override fun warnIfOpen(closeGuardInstance: Any?): Boolean {
+  fun warnIfOpen(closeGuardInstance: Any?): Boolean {
     var reported = false
     if (closeGuardInstance != null) {
       try {

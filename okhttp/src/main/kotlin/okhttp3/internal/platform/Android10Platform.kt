@@ -18,6 +18,7 @@ package okhttp3.internal.platform
 import android.annotation.SuppressLint
 import android.os.Build
 import android.security.NetworkSecurityPolicy
+import android.util.CloseGuard
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
@@ -55,6 +56,14 @@ class Android10Platform : Platform() {
   override fun getSelectedProtocol(sslSocket: SSLSocket) =
       // No TLS extensions if the socket class is custom.
       socketAdapters.find { it.matchesSocket(sslSocket) }?.getSelectedProtocol(sslSocket)
+
+  @SuppressLint("NewApi")
+  override fun getStackTraceForCloseable(closer: String): CloseGuard = CloseGuard().apply { open(closer) }
+
+  @SuppressLint("NewApi")
+  override fun logCloseableLeak(message: String, stackTrace: Any?) {
+    (stackTrace as? CloseGuard)?.warnIfOpen()
+  }
 
   @SuppressLint("NewApi")
   override fun isCleartextTrafficPermitted(hostname: String): Boolean =
