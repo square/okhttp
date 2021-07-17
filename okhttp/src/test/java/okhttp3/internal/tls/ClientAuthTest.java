@@ -214,6 +214,8 @@ public final class ClientAuthTest {
     } catch (SocketException expected) {
       assertThat(getPlatformSystemProperty()).isIn(PlatformRule.JDK9_PROPERTY,
           PlatformRule.CONSCRYPT_PROPERTY);
+    } catch (IOException expected) {
+      assertThat(expected.getMessage()).isEqualTo("exhausted all routes");
     }
   }
 
@@ -270,6 +272,8 @@ public final class ClientAuthTest {
           PlatformRule.CONSCRYPT_PROPERTY);
     } catch (ConnectionShutdownException expected) {
       // It didn't fail until it reached the application layer.
+    } catch (IOException expected) {
+      assertThat(expected.getMessage()).isEqualTo("exhausted all routes");
     }
   }
 

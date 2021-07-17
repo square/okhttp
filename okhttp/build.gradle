@@ -27,10 +27,41 @@ sourceSets {
   main.java.srcDirs += "$buildDir/generated/sources/java-templates/java/main"
 }
 
+normalization {
+    runtimeClasspath {
+        /*
+           - The below two ignored files are generated during test execution
+           by the test: okhttp/src/test/java/okhttp3/osgi/OsgiTest.java
+
+           - The compressed index.xml file contains a timestamp property which
+           changes with every test execution, such that running the test
+           actually changes the test classpath itself. This means that it
+           can't benefit from incremental build acceleration, because on every
+           execution it sees that the classpath has changed, and so to be
+           safe, it needs to re-run.
+
+           - This is unfortunate, because actually it would be safe to declare
+           the task as up-to-date, because these two files, which are based on
+           the generated index.xml, are outputs, not inputs. We can be sure of
+           this because they are deleted in the @BeforeEach method of the
+           OsgiTest test class.
+
+           - To enable the benefit of incremental builds, we can ask Gradle
+           to ignore these two files when considering whether the classpath
+           has changed. That is the purpose of this normalization block.
+       */
+        ignore 'okhttp3/osgi/workspace/cnf/repo/index.xml.gz'
+        ignore 'okhttp3/osgi/workspace/cnf/repo/index.xml.gz.sha'
+    }
+}
+
 compileKotlin {
   dependsOn 'copyJavaTemplates'
 }
 
+sourcesJar {
+    dependsOn 'copyJavaTemplates'
+}
 task copyJavaTemplates(type: Copy) {
   from 'src/main/java-templates'
   into "$buildDir/generated/sources/java-templates/java/main"
