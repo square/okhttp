@@ -457,7 +457,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../../../mockwebserver/okhttp3.mockwebserver/" title="mockwebserver" class="md-nav__link">
+    <a href="../../../../mockwebserver/okhttp3.mockwebserver/index.md" title="mockwebserver" class="md-nav__link">
       mockwebserver
     </a>
   </li>
@@ -659,7 +659,7 @@ message buffer will be rejected and trigger a <a href="../close/">graceful shutd
 This method returns false in that case, and in any other case where this web socket is closing,
 closed, or canceled.</p>
 <p>This method returns immediately.</p>
-<p><code>abstract fun send(bytes:</code><a href="https://square.github.io/okio/2.x/okio/okio/-byte-string/index.md"><code>ByteString</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a></p>
+<p><code>abstract fun send(bytes:</code><a href="https://square.github.io/okio/2.x/okio/okio/-byte-string/index.html"><code>ByteString</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a></p>
 <p>Attempts to enqueue <code>bytes</code> to be sent as a the data of a binary (type <code>0x2</code>) message.</p>
 <p>This method returns true if the message was enqueued. Messages that would overflow the outgoing
 message buffer (16 MiB) will be rejected and trigger a <a href="../close/">graceful shutdown</a> of this web

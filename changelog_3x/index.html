@@ -457,7 +457,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../4.x/mockwebserver/okhttp3.mockwebserver/" title="mockwebserver" class="md-nav__link">
+    <a href="../4.x/mockwebserver/okhttp3.mockwebserver/index.md" title="mockwebserver" class="md-nav__link">
       mockwebserver
     </a>
   </li>
@@ -723,6 +723,13 @@
         <li class="md-nav__item">
   <a href="#version-3130" class="md-nav__link">
     Version 3.13.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-31213" class="md-nav__link">
+    Version 3.12.13
   </a>
   
 </li>
@@ -1207,6 +1214,13 @@ commitment was originally through December 31, 2020; we have since extended it.)
 <li>New: API to access headers as <code>java.time.Instant</code>.</li>
 <li>New: Fail fast if a <code>SSLSocketFactory</code> is used as a <code>SocketFactory</code>.</li>
 <li>New: Log the TLS handshake in <code>LoggingEventListener</code>.</li>
+</ul>
+<h2 id="version-31213">Version 3.12.13<a class="headerlink" href="#version-31213" title="Permanent link">&para;</a></h2>
+<p><em>2021-01-30</em></p>
+<ul>
+<li>Fix: Work around a crash in Android 10 and 11 that may be triggered when two threads
+    concurrently close an SSL socket. This would have appeared in crash logs as
+    <code>NullPointerException: bio == null</code>.</li>
 </ul>
 <h2 id="version-31212">Version 3.12.12<a class="headerlink" href="#version-31212" title="Permanent link">&para;</a></h2>
 <p><em>2020-05-17</em></p>

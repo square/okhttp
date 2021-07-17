@@ -1,4 +1,5 @@
 $dokka.format:gfm
 $dokka.linkExtension:md
-
+$dokka.location:okhttp3.logging.internal$isProbablyUtf8(okio.Buffer)okhttp3.logging.internal/okio.-buffer/is-probably-utf8.md
 okhttp3.logging
+okhttp3.logging.internal
