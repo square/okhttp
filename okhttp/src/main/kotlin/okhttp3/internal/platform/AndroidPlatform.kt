@@ -29,12 +29,8 @@ import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol
 import okhttp3.internal.SuppressSignatureCheck
+import okhttp3.internal.platform.android.*
 import okhttp3.internal.platform.android.AndroidCertificateChainCleaner
-import okhttp3.internal.platform.android.AndroidSocketAdapter
-import okhttp3.internal.platform.android.BouncyCastleSocketAdapter
-import okhttp3.internal.platform.android.ConscryptSocketAdapter
-import okhttp3.internal.platform.android.DeferredSocketAdapter
-import okhttp3.internal.platform.android.StandardAndroidSocketAdapter
 import okhttp3.internal.tls.BasicTrustRootIndex
 import okhttp3.internal.tls.CertificateChainCleaner
 import okhttp3.internal.tls.TrustRootIndex
@@ -92,7 +88,7 @@ class AndroidPlatform : Platform() {
   override fun getStackTraceForCloseable(closer: String): Any? = closeGuard.createAndOpen(closer)
 
   override fun logCloseableLeak(message: String, stackTrace: Any?) {
-    val reported = closeGuard.warnIfOpen(stackTrace)
+    val reported = closeGuard?.warnIfOpen(stackTrace) ?: false
     if (!reported) {
       // Unable to report via CloseGuard. As a last-ditch effort, send it to the logger.
       log(message, WARN)

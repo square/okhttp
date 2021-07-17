@@ -15,8 +15,6 @@
  */
 package okhttp3.internal.platform.android
 
-import okhttp3.internal.platform.CloseGuard
-
 /**
  * Simple public API CloseGuard wrapper for Android 10+.
  */

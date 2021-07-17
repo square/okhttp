@@ -15,7 +15,6 @@
  */
 package okhttp3.internal.platform.android
 
-import okhttp3.internal.platform.CloseGuard
 import java.lang.reflect.Method
 
 /**

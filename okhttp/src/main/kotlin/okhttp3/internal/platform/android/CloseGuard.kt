@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package okhttp3.internal.platform
+package okhttp3.internal.platform.android
 
 import android.os.Build
-import okhttp3.internal.platform.android.Android10CloseGuard
-import okhttp3.internal.platform.android.AndroidCloseGuard
+import okhttp3.internal.platform.Platform
 
 /**
  * Provides access to the Android CloseGuard. Android uses this in
@@ -29,12 +28,10 @@ interface CloseGuard {
   fun warnIfOpen(closeGuardInstance: Any?): Boolean
 
   companion object {
-    fun get(): CloseGuard {
-      return if (Build.VERSION.SDK_INT >= 30) {
-        Android10CloseGuard()
-      } else {
-        AndroidCloseGuard.get()
-      }
+    fun get(): CloseGuard = when {
+        !Platform.isAndroid -> throw IllegalStateException("CloseGuard is Android only")
+        Build.VERSION.SDK_INT >= 30 -> Android10CloseGuard()
+        else -> AndroidCloseGuard.get()
     }
   }
 }
