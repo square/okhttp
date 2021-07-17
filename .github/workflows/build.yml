@@ -254,13 +254,13 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: 'adopt'
-          java-version: 17-ea
+          java-version: 11
 
       - name: Configure JDK
         uses: actions/setup-java@v2
         with:
           distribution: 'adopt'
-          java-version: 11
+          java-version: 17-ea
 
       - name: Show Toolchains
         run: ./gradlew javaToolchains -Dorg.gradle.java.installations.paths=/opt/hostedtoolcache/Java_Adopt_jdk/17.0.0-ea.20.0.202105070000/x64
