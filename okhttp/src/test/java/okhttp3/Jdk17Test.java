@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import javax.net.ssl.SSLSocketFactory;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class Jdk17Test {
     @Test
@@ -15,6 +16,7 @@ public class Jdk17Test {
 
         try {
             new OkHttpClient.Builder().sslSocketFactory(factory).build();
+            fail();
         } catch (UnsupportedOperationException uoe) {
             // expected
             assertEquals("clientBuilder.sslSocketFactory(SSLSocketFactory) not supported on " +
