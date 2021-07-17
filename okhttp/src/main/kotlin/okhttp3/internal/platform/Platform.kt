@@ -39,7 +39,6 @@ import okhttp3.internal.tls.BasicTrustRootIndex
 import okhttp3.internal.tls.CertificateChainCleaner
 import okhttp3.internal.tls.TrustRootIndex
 import okio.Buffer
-import java.lang.reflect.InaccessibleObjectException
 
 /**
  * Access to platform-specific features.
