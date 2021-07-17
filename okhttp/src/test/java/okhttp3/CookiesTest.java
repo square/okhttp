@@ -170,8 +170,7 @@ public class CookiesTest {
     final HttpUrl serverUrl = urlWithIpAddress(server, "/");
 
     CookieHandler androidCookieHandler = new CookieHandler() {
-      @Override public Map<String, List<String>> get(URI uri, Map<String, List<String>> map)
-          throws IOException {
+      @Override public Map<String, List<String>> get(URI uri, Map<String, List<String>> map) {
         return Collections.singletonMap("Cookie", Collections.singletonList("$Version=\"1\"; "
             + "a=\"android\";$Path=\"/\";$Domain=\"" + serverUrl.host() + "\"; "
             + "b=\"banana\";$Path=\"/\";$Domain=\"" + serverUrl.host() + "\""));
@@ -251,7 +250,7 @@ public class CookiesTest {
     client = client.newBuilder()
         .cookieJar(new JavaNetCookieJar(new CookieManager() {
           @Override public Map<String, List<String>> get(URI uri,
-              Map<String, List<String>> requestHeaders) throws IOException {
+              Map<String, List<String>> requestHeaders) {
             Map<String, List<String>> result = new LinkedHashMap<>();
             result.put("COOKIE", Collections.singletonList("Bar=bar"));
             result.put("cooKIE2", Collections.singletonList("Baz=baz"));
@@ -320,6 +319,29 @@ public class CookiesTest {
     HttpUrl url2 = HttpUrl.get("https://www.squareup.com/");
     List<Cookie> actualCookies = cookieJar.loadForRequest(url2);
     assertThat(actualCookies).isEmpty();
+  }
+
+  @Test public void testQuoteStripping() throws Exception {
+    client = client.newBuilder()
+            .cookieJar(new JavaNetCookieJar(new CookieManager() {
+              @Override public Map<String, List<String>> get(URI uri,
+                                                             Map<String, List<String>> requestHeaders) {
+                Map<String, List<String>> result = new LinkedHashMap<>();
+                result.put("COOKIE", Collections.singletonList("Bar=\""));
+                result.put("cooKIE2", Collections.singletonList("Baz=\"baz\""));
+                return result;
+              }
+            }))
+            .build();
+
+    server.enqueue(new MockResponse());
+
+    get(server.url("/"));
+
+    RecordedRequest request = server.takeRequest();
+    assertThat(request.getHeader("Cookie")).isEqualTo("Bar=\"; Baz=baz");
+    assertThat(request.getHeader("Cookie2")).isNull();
+    assertThat(request.getHeader("Quux")).isNull();
   }
 
   private HttpUrl urlWithIpAddress(MockWebServer server, String path) throws Exception {

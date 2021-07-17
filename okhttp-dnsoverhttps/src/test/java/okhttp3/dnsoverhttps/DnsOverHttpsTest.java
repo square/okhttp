@@ -35,6 +35,9 @@ import okhttp3.Protocol;
 import okhttp3.testing.PlatformRule;
 import okio.Buffer;
 import okio.ByteString;
+import okio.FileSystem;
+import okio.Path;
+import okio.fakefilesystem.FakeFileSystem;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -53,6 +56,7 @@ public class DnsOverHttpsTest {
 
   private MockWebServer server;
   private Dns dns;
+  private FileSystem cacheFs = new FakeFileSystem();
 
   private final OkHttpClient bootstrapClient = new OkHttpClient.Builder()
       .protocols(asList(Protocol.HTTP_2, Protocol.HTTP_1_1))
@@ -167,7 +171,7 @@ public class DnsOverHttpsTest {
   // TODO how closely to follow POST rules on caching?
 
   @Test public void usesCache() throws Exception {
-    Cache cache = new Cache(new File("./target/DnsOverHttpsTest.cache"), 100 * 1024);
+    Cache cache = new Cache(Path.get("cache"), 100 * 1024, cacheFs);
     OkHttpClient cachedClient = bootstrapClient.newBuilder().cache(cache).build();
     DnsOverHttps cachedDns = buildLocalhost(cachedClient, false);
 
