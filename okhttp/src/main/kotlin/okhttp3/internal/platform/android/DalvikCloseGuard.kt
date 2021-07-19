@@ -21,54 +21,46 @@ import java.lang.reflect.Method
  * Provides access to the internal dalvik.system.CloseGuard class. Android uses this in
  * combination with android.os.StrictMode to report on leaked java.io.Closeable's.
  */
-internal class AndroidCloseGuard(
-  private val getMethod: Method?,
-  private val openMethod: Method?,
-  private val warnIfOpenMethod: Method?
+internal class DalvikCloseGuard(
+  private val getMethod: Method,
+  private val openMethod: Method,
+  private val warnIfOpenMethod: Method
 ): CloseGuard {
 
   override fun createAndOpen(closer: String): Any? {
-    if (getMethod != null) {
-      try {
+    return try {
         val closeGuardInstance = getMethod.invoke(null)
-        openMethod!!.invoke(closeGuardInstance, closer)
-        return closeGuardInstance
-      } catch (_: Exception) {
-      }
+        openMethod.invoke(closeGuardInstance, closer)
+      closeGuardInstance
+    } catch (_: Exception) {
+      null
     }
-    return null
   }
 
   override fun warnIfOpen(closeGuardInstance: Any?): Boolean {
-    var reported = false
     if (closeGuardInstance != null) {
       try {
-        warnIfOpenMethod!!.invoke(closeGuardInstance)
-        reported = true
+        warnIfOpenMethod.invoke(closeGuardInstance)
+        return true
       } catch (_: Exception) {
       }
     }
-    return reported
+
+    return false
   }
 
   companion object {
-    fun get(): AndroidCloseGuard {
-      var getMethod: Method?
-      var openMethod: Method?
-      var warnIfOpenMethod: Method?
-
-      try {
+    fun get(): CloseGuard {
+      return try {
         val closeGuardClass = Class.forName("dalvik.system.CloseGuard")
-        getMethod = closeGuardClass.getMethod("get")
-        openMethod = closeGuardClass.getMethod("open", String::class.java)
-        warnIfOpenMethod = closeGuardClass.getMethod("warnIfOpen")
-      } catch (_: Exception) {
-        getMethod = null
-        openMethod = null
-        warnIfOpenMethod = null
-      }
+        val getMethod = closeGuardClass.getMethod("get")
+        val openMethod = closeGuardClass.getMethod("open", String::class.java)
+        val warnIfOpenMethod = closeGuardClass.getMethod("warnIfOpen")
 
-      return AndroidCloseGuard(getMethod, openMethod, warnIfOpenMethod)
+        DalvikCloseGuard(getMethod, openMethod, warnIfOpenMethod)
+      } catch (_: Exception) {
+        CloseGuard.Noop
+      }
     }
   }
 }

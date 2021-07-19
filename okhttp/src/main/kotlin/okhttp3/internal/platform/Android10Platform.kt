@@ -23,10 +23,11 @@ import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol
 import okhttp3.internal.SuppressSignatureCheck
+import okhttp3.internal.platform.android.AndroidSocketAdapter
 import okhttp3.internal.platform.android.Android10SocketAdapter
 import okhttp3.internal.platform.android.AndroidCertificateChainCleaner
-import okhttp3.internal.platform.android.AndroidSocketAdapter
 import okhttp3.internal.platform.android.BouncyCastleSocketAdapter
+import okhttp3.internal.platform.android.CloseGuard
 import okhttp3.internal.platform.android.ConscryptSocketAdapter
 import okhttp3.internal.platform.android.DeferredSocketAdapter
 import okhttp3.internal.tls.CertificateChainCleaner
@@ -42,6 +43,8 @@ class Android10Platform : Platform() {
       DeferredSocketAdapter(BouncyCastleSocketAdapter.factory)
   ).filter { it.isSupported() }
 
+  private val closeGuard = CloseGuard.get()
+
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? =
       socketAdapters.find { it.matchesSocketFactory(sslSocketFactory) }
           ?.trustManager(sslSocketFactory)
@@ -55,6 +58,16 @@ class Android10Platform : Platform() {
   override fun getSelectedProtocol(sslSocket: SSLSocket) =
       // No TLS extensions if the socket class is custom.
       socketAdapters.find { it.matchesSocket(sslSocket) }?.getSelectedProtocol(sslSocket)
+
+  override fun getStackTraceForCloseable(closer: String) = closeGuard.createAndOpen(closer)
+
+  override fun logCloseableLeak(message: String, stackTrace: Any?) {
+    val reported = closeGuard.warnIfOpen(stackTrace)
+    if (!reported) {
+      // Unable to report via CloseGuard. As a last-ditch effort, send it to the logger.
+      log(message, WARN)
+    }
+  }
 
   @SuppressLint("NewApi")
   override fun isCleartextTrafficPermitted(hostname: String): Boolean =

@@ -28,10 +28,15 @@ interface CloseGuard {
   fun warnIfOpen(closeGuardInstance: Any?): Boolean
 
   companion object {
+    val Noop = object : CloseGuard {
+      override fun createAndOpen(closer: String): Any? = null
+      override fun warnIfOpen(closeGuardInstance: Any?) = false
+    }
+
     fun get(): CloseGuard = when {
-        !Platform.isAndroid -> throw IllegalStateException("CloseGuard is Android only")
-        Build.VERSION.SDK_INT >= 30 -> Android10CloseGuard()
-        else -> AndroidCloseGuard.get()
+      !Platform.isAndroid -> throw IllegalStateException("CloseGuard is Android only")
+      Build.VERSION.SDK_INT >= 30 -> Android10CloseGuard()
+      else -> DalvikCloseGuard.get()
     }
   }
 }
