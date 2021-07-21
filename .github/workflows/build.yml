@@ -284,6 +284,7 @@ jobs:
 
   testandroid:
     runs-on: macos-latest
+    timeout-minutes: 30
     if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'android')
 
     strategy:
@@ -291,8 +292,6 @@ jobs:
       matrix:
         api-level:
           - 21
-          - 24
-          - 26
           - 29
 
     steps:
