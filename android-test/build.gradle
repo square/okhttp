@@ -7,27 +7,11 @@ buildscript {
     mavenCentral()
     gradlePluginPortal()
     google()
-    jcenter {
-      content {
-        includeGroup 'de.mannodermaus.junit5'
-        includeGroup 'de.mannodermaus.gradle.plugins'
-        includeGroup 'com.github.zafarkhaja'
-      }
-    }
   }
 
   dependencies {
-    classpath "de.mannodermaus.gradle.plugins:android-junit5:1.6.2.0"
-  }
-}
-
-repositories {
-  jcenter {
-    // Required for a dependency of Android lint.
-    content {
-      includeGroup 'org.jetbrains.trove4j'
-      includeGroup 'de.mannodermaus.junit5'
-    }
+    classpath "de.mannodermaus.gradle.plugins:android-junit5:1.7.1.1"
+    classpath 'com.android.tools.build:gradle:7.1.0-alpha03'
   }
 }
 
@@ -46,11 +30,11 @@ android {
     exclude("org/bouncycastle/LICENSE")
   }
 
-  compileSdkVersion 30
+  compileSdkVersion 31
 
   defaultConfig {
     minSdkVersion 21
-    targetSdkVersion 30
+    targetSdkVersion 31
     versionCode 1
     versionName "1.0"
 
@@ -75,7 +59,7 @@ android {
 dependencies {
   api "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${Versions.kotlin}"
   api "org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}"
-  implementation 'com.google.android.gms:play-services-safetynet:17.0.0'
+  implementation 'com.google.android.gms:play-services-safetynet:17.0.1'
   api project(':okhttp')
 
   androidTestImplementation(project(':okhttp-testing-support')) {
@@ -93,15 +77,15 @@ dependencies {
   androidTestImplementation project(':okhttp-sse')
   androidTestImplementation project(':okhttp-testing-support')
   androidTestImplementation project(':okhttp-tls')
-  androidTestImplementation 'androidx.test.ext:junit:1.1.2'
-  androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+  androidTestImplementation 'androidx.test.ext:junit:1.1.3'
+  androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
   androidTestImplementation 'org.apache.httpcomponents.client5:httpclient5:5.0'
   androidTestImplementation 'com.squareup.moshi:moshi:1.12.0'
   androidTestImplementation 'com.squareup.moshi:moshi-kotlin:1.12.0'
   androidTestImplementation Dependencies.okioFakeFileSystem
 
-  androidTestImplementation "androidx.test:runner:1.3.0"
-  androidTestImplementation "org.junit.jupiter:junit-jupiter-api:5.7.0"
-  androidTestImplementation "de.mannodermaus.junit5:android-test-core:1.2.0"
-  androidTestRuntimeOnly "de.mannodermaus.junit5:android-test-runner:1.2.0"
+  androidTestImplementation "androidx.test:runner:1.4.0"
+  androidTestImplementation "org.junit.jupiter:junit-jupiter-api:5.7.1"
+  androidTestImplementation "de.mannodermaus.junit5:android-test-core:1.2.2"
+  androidTestRuntimeOnly "de.mannodermaus.junit5:android-test-runner:1.2.2"
 }
