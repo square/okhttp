@@ -312,15 +312,13 @@ jobs:
 
   testandroidregression:
     runs-on: macos-latest
-    timeout-minutes: 30
+    timeout-minutes: 10
     if: contains(github.event.pull_request.labels.*.name, 'android-regression')
 
     strategy:
       fail-fast: false
       matrix:
         api-level:
-          - 21
-          - 24
           - 29
 
     steps:
