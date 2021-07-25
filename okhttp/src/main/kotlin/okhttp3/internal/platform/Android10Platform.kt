@@ -61,16 +61,16 @@ class Android10Platform : Platform() {
     return if (Build.VERSION.SDK_INT >= 30) {
       CloseGuard().apply { open(closer) }
     } else {
-      null
+      super.getStackTraceForCloseable(closer)
     }
   }
 
   override fun logCloseableLeak(message: String, stackTrace: Any?) {
-    if (Build.VERSION.SDK_INT >= 30 && stackTrace != null) {
+    if (Build.VERSION.SDK_INT >= 30) {
       (stackTrace as CloseGuard).warnIfOpen()
     } else {
       // Unable to report via CloseGuard. As a last-ditch effort, send it to the logger.
-      log(message, WARN)
+      super.logCloseableLeak(message, stackTrace)
     }
   }
 
