@@ -34,8 +34,8 @@ android {
   }
 }
 
-//def okhttplegacyversion = "3.12.12"
-def okhttplegacyversion = "4.9.1"
+def okhttplegacyversion = "3.12.12"
+//def okhttplegacyversion = "4.9.1"
 
 dependencies {
   implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${Versions.kotlin}"

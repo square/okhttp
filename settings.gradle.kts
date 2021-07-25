@@ -11,8 +11,6 @@ val graalBuild: String? by settings
 if (androidBuild != null) {
   include(":android-test")
   include(":regression-test")
-} else {
-  include(":regression-test")
 }
 
 if (graalBuild != null) {

@@ -31,17 +31,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Let's Encrypt expiring root test.
- *
- * Read https://community.letsencrypt.org/t/mobile-client-workarounds-for-isrg-issue/137807
- * for background.
+ * Simple test adaptable to show a failure in older versions of OkHttp
+ * or Android SDKs.
  */
 @RunWith(AndroidJUnit4.class)
 public class IssueReproductionTest {
   @Test public void getFailsWithoutAdditionalCert() throws IOException {
     OkHttpClient client = new OkHttpClient();
 
-    sendRequest(client, "https://www.wikiart.org/en/popular-paintings/alltime/?json=2&page=1");
+    sendRequest(client, "https://google.com/robots.txt");
   }
 
   private void sendRequest(OkHttpClient client, String url) throws IOException {
@@ -54,7 +52,7 @@ public class IssueReproductionTest {
 
       for (Certificate c: response.handshake().peerCertificates()) {
         X509Certificate x = (X509Certificate) c;
-        System.out.println(x.getSubjectDN() + " " + x.getIssuerDN());
+        System.out.println(x.getSubjectDN());
       }
     }
   }
