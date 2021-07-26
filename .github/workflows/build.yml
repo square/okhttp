@@ -308,3 +308,30 @@ jobs:
           script: ./gradlew -PandroidBuild :android-test:connectedCheck
         env:
           API_LEVEL: ${{ matrix.api-level }}
+
+
+  testandroidregression:
+    runs-on: macos-latest
+    timeout-minutes: 10
+    if: contains(github.event.pull_request.labels.*.name, 'android-regression')
+
+    strategy:
+      fail-fast: false
+      matrix:
+        api-level:
+          - 29
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Run Tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          script: ./gradlew -PandroidBuild :regression-test:connectedCheck
+        env:
+          API_LEVEL: ${{ matrix.api-level }}
