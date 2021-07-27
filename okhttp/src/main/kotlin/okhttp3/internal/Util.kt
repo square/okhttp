@@ -431,7 +431,7 @@ fun Buffer.skipAll(b: Byte): Int {
  * Returns the index of the next non-whitespace character in this. Result is undefined if input
  * contains newline characters.
  */
-fun String.indexOfNonWhitespace(startIndex: Int = 0): Int {
+internal fun String.indexOfNonWhitespace(startIndex: Int = 0): Int {
   for (i in startIndex until length) {
     val c = this[i]
     if (c != ' ' && c != '\t') {
@@ -442,7 +442,7 @@ fun String.indexOfNonWhitespace(startIndex: Int = 0): Int {
 }
 
 /** Returns the Content-Length as reported by the response headers. */
-fun Response.headersContentLength(): Long {
+internal fun Response.headersContentLength(): Long {
   return headers["Content-Length"]?.toLongOrDefault(-1L) ?: -1L
 }
 
@@ -458,7 +458,7 @@ fun String.toLongOrDefault(defaultValue: Long): Long {
  * Returns this as a non-negative integer, or 0 if it is negative, or [Int.MAX_VALUE] if it is too
  * large, or [defaultValue] if it cannot be parsed.
  */
-fun String?.toNonNegativeInt(defaultValue: Int): Int {
+internal fun String?.toNonNegativeInt(defaultValue: Int): Int {
   try {
     val value = this?.toLong() ?: return defaultValue
     return when {
@@ -591,18 +591,18 @@ fun FileSystem.deleteContents(directory: Path) {
   }
 }
 
-fun Long.toHexString(): String = java.lang.Long.toHexString(this)
+internal fun Long.toHexString(): String = java.lang.Long.toHexString(this)
 
-fun Int.toHexString(): String = Integer.toHexString(this)
-
-@Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "NOTHING_TO_INLINE")
-inline fun Any.wait() = (this as Object).wait()
+internal fun Int.toHexString(): String = Integer.toHexString(this)
 
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "NOTHING_TO_INLINE")
-inline fun Any.notify() = (this as Object).notify()
+internal inline fun Any.wait() = (this as Object).wait()
 
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "NOTHING_TO_INLINE")
-inline fun Any.notifyAll() = (this as Object).notifyAll()
+internal inline fun Any.notify() = (this as Object).notify()
+
+@Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "NOTHING_TO_INLINE")
+internal inline fun Any.notifyAll() = (this as Object).notifyAll()
 
 fun <T> readFieldOrNull(instance: Any, fieldType: Class<T>, fieldName: String): T? {
   var c: Class<*> = instance.javaClass
@@ -646,24 +646,24 @@ internal val okHttpName =
     OkHttpClient::class.java.name.removePrefix("okhttp3.").removeSuffix("Client")
 
 @Suppress("NOTHING_TO_INLINE")
-inline fun Any.assertThreadHoldsLock() {
+internal inline fun Any.assertThreadHoldsLock() {
   if (assertionsEnabled && !Thread.holdsLock(this)) {
     throw AssertionError("Thread ${Thread.currentThread().name} MUST hold lock on $this")
   }
 }
 
 @Suppress("NOTHING_TO_INLINE")
-inline fun Any.assertThreadDoesntHoldLock() {
+internal inline fun Any.assertThreadDoesntHoldLock() {
   if (assertionsEnabled && Thread.holdsLock(this)) {
     throw AssertionError("Thread ${Thread.currentThread().name} MUST NOT hold lock on $this")
   }
 }
 
-fun Exception.withSuppressed(suppressed: List<Exception>): Throwable = apply {
+internal fun Exception.withSuppressed(suppressed: List<Exception>): Throwable = apply {
   for (e in suppressed) addSuppressed(e)
 }
 
-inline fun <T> Iterable<T>.filterList(predicate: T.() -> Boolean): List<T> {
+internal inline fun <T> Iterable<T>.filterList(predicate: T.() -> Boolean): List<T> {
   var result: List<T> = emptyList()
   for (i in this) {
     if (predicate(i)) {
