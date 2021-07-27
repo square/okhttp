@@ -247,6 +247,8 @@ class Cookie private constructor(
     }
   }
 
+  fun newBuilder(): Builder = Builder(this)
+
   /**
    * Builds a cookie. The [name], [value], and [domain] values must all be set before calling
    * [build].
@@ -261,6 +263,20 @@ class Cookie private constructor(
     private var httpOnly = false
     private var persistent = false
     private var hostOnly = false
+
+    constructor()
+
+    internal constructor(cookie: Cookie) {
+      this.name = cookie.name
+      this.value = cookie.value
+      this.expiresAt = cookie.expiresAt
+      this.domain = cookie.domain
+      this.path = cookie.path
+      this.secure = cookie.secure
+      this.httpOnly = cookie.httpOnly
+      this.persistent = cookie.persistent
+      this.hostOnly = cookie.hostOnly
+    }
 
     fun name(name: String) = apply {
       require(name.trim() == name) { "name is not trimmed" }
