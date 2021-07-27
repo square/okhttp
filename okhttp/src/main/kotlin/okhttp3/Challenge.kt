@@ -60,8 +60,8 @@ class Challenge(
   init {
     val newAuthParams = mutableMapOf<String?, String>()
     for ((key, value) in authParams) {
-        val newKey = key?.lowercase(US)
-        newAuthParams[newKey] = value
+      val newKey = key?.lowercase(US)
+      newAuthParams[newKey] = value
     }
     this.authParams = unmodifiableMap<String?, String>(newAuthParams)
   }

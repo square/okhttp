@@ -172,12 +172,12 @@ private fun decodeIpv4Suffix(
     var value = 0
     val groupOffset = i
     while (i < limit) {
-        val c = input[i]
-        if (c < '0' || c > '9') break
-        if (value == 0 && groupOffset != i) return false // Reject unnecessary leading '0's.
-        value = value * 10 + c.code - '0'.code
-        if (value > 255) return false // Value out of range.
-        i++
+      val c = input[i]
+      if (c < '0' || c > '9') break
+      if (value == 0 && groupOffset != i) return false // Reject unnecessary leading '0's.
+      value = value * 10 + c.code - '0'.code
+      if (value > 255) return false // Value out of range.
+      i++
     }
     val groupLength = i - groupOffset
     if (groupLength == 0) return false // No digits.

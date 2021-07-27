@@ -439,7 +439,7 @@ class Headers private constructor(
       for (i in name.indices) {
         val c = name[i]
         require(c in '\u0021'..'\u007e') {
-            format("Unexpected char %#04x at %d in header name: %s", c.code, i, name)
+          format("Unexpected char %#04x at %d in header name: %s", c.code, i, name)
         }
       }
     }
@@ -448,7 +448,7 @@ class Headers private constructor(
       for (i in value.indices) {
         val c = value[i]
         require(c == '\t' || c in '\u0020'..'\u007e') {
-            format("Unexpected char %#04x at %d in %s value", c.code, i, name) +
+          format("Unexpected char %#04x at %d in %s value", c.code, i, name) +
               (if (isSensitiveHeader(name)) "" else ": $value")
         }
       }

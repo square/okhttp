@@ -169,12 +169,12 @@ class Http2ExchangeCodec(
       result.add(Header(TARGET_SCHEME, request.url.scheme))
 
       for (i in 0 until headers.size) {
-          // header names must be lowercase.
-          val name = headers.name(i).lowercase(Locale.US)
-          if (name !in HTTP_2_SKIPPED_REQUEST_HEADERS ||
-                  name == TE && headers.value(i) == "trailers") {
-              result.add(Header(name, headers.value(i)))
-          }
+        // header names must be lowercase.
+        val name = headers.name(i).lowercase(Locale.US)
+        if (name !in HTTP_2_SKIPPED_REQUEST_HEADERS ||
+          name == TE && headers.value(i) == "trailers") {
+          result.add(Header(name, headers.value(i)))
+        }
       }
       return result
     }

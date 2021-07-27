@@ -404,7 +404,7 @@ class DiskLruCache(
       writeUtf8(VERSION_1).writeByte('\n'.code)
       writeDecimalLong(appVersion.toLong()).writeByte('\n'.code)
       writeDecimalLong(valueCount.toLong()).writeByte('\n'.code)
-        writeByte('\n'.code)
+      writeByte('\n'.code)
 
       for (entry in lruEntries.values) {
         if (entry.currentEditor != null) {

@@ -79,10 +79,10 @@ object OkHostnameVerifier : HostnameVerifier {
    * they can return ASCII characters that match real hostnames.
    */
   private fun String.asciiToLowercase(): String {
-      return when {
-          isAscii() -> lowercase(Locale.US) // This is an ASCII string.
-          else -> this
-      }
+    return when {
+      isAscii() -> lowercase(Locale.US) // This is an ASCII string.
+      else -> this
+    }
   }
 
   /** Returns true if the [String] is ASCII encoded (0-127). */
