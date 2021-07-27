@@ -1280,68 +1280,70 @@ class HttpUrl internal constructor(
         authority@ while (true) {
           val componentDelimiterOffset = input.delimiterOffset("@/\\?#", pos, limit)
           val c = if (componentDelimiterOffset != limit) {
-            input[componentDelimiterOffset].toInt()
+              input[componentDelimiterOffset].code
           } else {
-            -1
+              -1
           }
-          when (c) {
-            '@'.toInt() -> {
-              // User info precedes.
-              if (!hasPassword) {
-                val passwordColonOffset = input.delimiterOffset(':', pos, componentDelimiterOffset)
-                val canonicalUsername = input.canonicalize(
-                    pos = pos,
-                    limit = passwordColonOffset,
-                    encodeSet = USERNAME_ENCODE_SET,
-                    alreadyEncoded = true
-                )
-                this.encodedUsername = if (hasUsername) {
-                  this.encodedUsername + "%40" + canonicalUsername
-                } else {
-                  canonicalUsername
+            when (c) {
+                '@'.code -> {
+                    // User info precedes.
+                    if (!hasPassword) {
+                        val passwordColonOffset = input.delimiterOffset(':', pos, componentDelimiterOffset)
+                        val canonicalUsername = input.canonicalize(
+                                pos = pos,
+                                limit = passwordColonOffset,
+                                encodeSet = USERNAME_ENCODE_SET,
+                                alreadyEncoded = true
+                        )
+                        this.encodedUsername = if (hasUsername) {
+                            this.encodedUsername + "%40" + canonicalUsername
+                        } else {
+                            canonicalUsername
+                        }
+                        if (passwordColonOffset != componentDelimiterOffset) {
+                            hasPassword = true
+                            this.encodedPassword = input.canonicalize(
+                                    pos = passwordColonOffset + 1,
+                                    limit = componentDelimiterOffset,
+                                    encodeSet = PASSWORD_ENCODE_SET,
+                                    alreadyEncoded = true
+                            )
+                        }
+                        hasUsername = true
+                    } else {
+                        this.encodedPassword = this.encodedPassword + "%40" + input.canonicalize(
+                                pos = pos,
+                                limit = componentDelimiterOffset,
+                                encodeSet = PASSWORD_ENCODE_SET,
+                                alreadyEncoded = true
+                        )
+                    }
+                    pos = componentDelimiterOffset + 1
                 }
-                if (passwordColonOffset != componentDelimiterOffset) {
-                  hasPassword = true
-                  this.encodedPassword = input.canonicalize(
-                      pos = passwordColonOffset + 1,
-                      limit = componentDelimiterOffset,
-                      encodeSet = PASSWORD_ENCODE_SET,
-                      alreadyEncoded = true
-                  )
-                }
-                hasUsername = true
-              } else {
-                this.encodedPassword = this.encodedPassword + "%40" + input.canonicalize(
-                    pos = pos,
-                    limit = componentDelimiterOffset,
-                    encodeSet = PASSWORD_ENCODE_SET,
-                    alreadyEncoded = true
-                )
-              }
-              pos = componentDelimiterOffset + 1
-            }
 
-            -1, '/'.toInt(), '\\'.toInt(), '?'.toInt(), '#'.toInt() -> {
-              // Host info precedes.
-              val portColonOffset = portColonOffset(input, pos, componentDelimiterOffset)
-              if (portColonOffset + 1 < componentDelimiterOffset) {
-                host = input.percentDecode(pos = pos, limit = portColonOffset).toCanonicalHost()
-                port = parsePort(input, portColonOffset + 1, componentDelimiterOffset)
-                require(port != -1) {
-                  "Invalid URL port: \"${input.substring(portColonOffset + 1,
-                      componentDelimiterOffset)}\""
+                -1, '/'.code, '\\'.code, '?'.code, '#'.code -> {
+                    // Host info precedes.
+                    val portColonOffset = portColonOffset(input, pos, componentDelimiterOffset)
+                    if (portColonOffset + 1 < componentDelimiterOffset) {
+                        host = input.percentDecode(pos = pos, limit = portColonOffset).toCanonicalHost()
+                        port = parsePort(input, portColonOffset + 1, componentDelimiterOffset)
+                        require(port != -1) {
+                            "Invalid URL port: \"${
+                                input.substring(portColonOffset + 1,
+                                        componentDelimiterOffset)
+                            }\""
+                        }
+                    } else {
+                        host = input.percentDecode(pos = pos, limit = portColonOffset).toCanonicalHost()
+                        port = defaultPort(scheme!!)
+                    }
+                    require(host != null) {
+                        "$INVALID_HOST: \"${input.substring(pos, portColonOffset)}\""
+                    }
+                    pos = componentDelimiterOffset
+                    break@authority
                 }
-              } else {
-                host = input.percentDecode(pos = pos, limit = portColonOffset).toCanonicalHost()
-                port = defaultPort(scheme!!)
-              }
-              require(host != null) {
-                "$INVALID_HOST: \"${input.substring(pos, portColonOffset)}\""
-              }
-              pos = componentDelimiterOffset
-              break@authority
             }
-          }
         }
       } else {
         // This is a relative link. Copy over all authority components. Also maybe the path & query.
@@ -1722,7 +1724,7 @@ class HttpUrl internal constructor(
       var i = pos
       while (i < limit) {
         codePoint = encoded.codePointAt(i)
-        if (codePoint == '%'.toInt() && i + 2 < limit) {
+        if (codePoint == '%'.code && i + 2 < limit) {
           val d1 = encoded[i + 1].parseHexDigit()
           val d2 = encoded[i + 2].parseHexDigit()
           if (d1 != -1 && d2 != -1) {
@@ -1731,8 +1733,8 @@ class HttpUrl internal constructor(
             i += Character.charCount(codePoint)
             continue
           }
-        } else if (codePoint == '+'.toInt() && plusIsSpace) {
-          writeByte(' '.toInt())
+        } else if (codePoint == '+'.code && plusIsSpace) {
+            writeByte(' '.code)
           i++
           continue
         }
@@ -1783,12 +1785,12 @@ class HttpUrl internal constructor(
       while (i < limit) {
         codePoint = codePointAt(i)
         if (codePoint < 0x20 ||
-            codePoint == 0x7f ||
-            codePoint >= 0x80 && !unicodeAllowed ||
-            codePoint.toChar() in encodeSet ||
-            codePoint == '%'.toInt() &&
-            (!alreadyEncoded || strict && !isPercentEncoded(i, limit)) ||
-            codePoint == '+'.toInt() && plusIsSpace) {
+                codePoint == 0x7f ||
+                codePoint >= 0x80 && !unicodeAllowed ||
+                codePoint.toChar() in encodeSet ||
+                codePoint == '%'.code &&
+                (!alreadyEncoded || strict && !isPercentEncoded(i, limit)) ||
+                codePoint == '+'.code && plusIsSpace) {
           // Slow path: the character at i requires encoding!
           val out = Buffer()
           out.writeUtf8(this, pos, i)
@@ -1828,21 +1830,21 @@ class HttpUrl internal constructor(
       var i = pos
       while (i < limit) {
         codePoint = input.codePointAt(i)
-        if (alreadyEncoded && (codePoint == '\t'.toInt() || codePoint == '\n'.toInt() ||
-                codePoint == '\u000c'.toInt() || codePoint == '\r'.toInt())) {
+        if (alreadyEncoded && (codePoint == '\t'.code || codePoint == '\n'.code ||
+                        codePoint == '\u000c'.code || codePoint == '\r'.code)) {
           // Skip this character.
-        } else if (codePoint == ' '.toInt() && encodeSet === FORM_ENCODE_SET) {
+        } else if (codePoint == ' '.code && encodeSet === FORM_ENCODE_SET) {
           // Encode ' ' as '+'.
           writeUtf8("+")
-        } else if (codePoint == '+'.toInt() && plusIsSpace) {
+        } else if (codePoint == '+'.code && plusIsSpace) {
           // Encode '+' as '%2B' since we permit ' ' to be encoded as either '+' or '%20'.
           writeUtf8(if (alreadyEncoded) "+" else "%2B")
         } else if (codePoint < 0x20 ||
-            codePoint == 0x7f ||
-            codePoint >= 0x80 && !unicodeAllowed ||
-            codePoint.toChar() in encodeSet ||
-            codePoint == '%'.toInt() &&
-            (!alreadyEncoded || strict && !input.isPercentEncoded(i, limit))) {
+                codePoint == 0x7f ||
+                codePoint >= 0x80 && !unicodeAllowed ||
+                codePoint.toChar() in encodeSet ||
+                codePoint == '%'.code &&
+                (!alreadyEncoded || strict && !input.isPercentEncoded(i, limit))) {
           // Percent encode this character.
           if (encodedCharBuffer == null) {
             encodedCharBuffer = Buffer()
@@ -1856,9 +1858,9 @@ class HttpUrl internal constructor(
 
           while (!encodedCharBuffer.exhausted()) {
             val b = encodedCharBuffer.readByte().toInt() and 0xff
-            writeByte('%'.toInt())
-            writeByte(HEX_DIGITS[b shr 4 and 0xf].toInt())
-            writeByte(HEX_DIGITS[b and 0xf].toInt())
+              writeByte('%'.code)
+              writeByte(HEX_DIGITS[b shr 4 and 0xf].code)
+              writeByte(HEX_DIGITS[b and 0xf].code)
           }
         } else {
           // This character doesn't need encoding. Just copy it over.

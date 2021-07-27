@@ -99,54 +99,54 @@ class MediaType private constructor(
     private val TYPE_SUBTYPE = Pattern.compile("$TOKEN/$TOKEN")
     private val PARAMETER = Pattern.compile(";\\s*(?:$TOKEN=(?:$TOKEN|$QUOTED))?")
 
-    /**
-     * Returns a media type for this string.
-     *
-     * @throws IllegalArgumentException if this is not a well-formed media type.
-     */
-    @JvmStatic
-    @JvmName("get")
-    fun String.toMediaType(): MediaType {
-      val typeSubtype = TYPE_SUBTYPE.matcher(this)
-      require(typeSubtype.lookingAt()) { "No subtype found for: \"$this\"" }
-      val type = typeSubtype.group(1).toLowerCase(Locale.US)
-      val subtype = typeSubtype.group(2).toLowerCase(Locale.US)
+      /**
+       * Returns a media type for this string.
+       *
+       * @throws IllegalArgumentException if this is not a well-formed media type.
+       */
+      @JvmStatic
+      @JvmName("get")
+      fun String.toMediaType(): MediaType {
+          val typeSubtype = TYPE_SUBTYPE.matcher(this)
+          require(typeSubtype.lookingAt()) { "No subtype found for: \"$this\"" }
+          val type = typeSubtype.group(1).lowercase(Locale.US)
+          val subtype = typeSubtype.group(2).lowercase(Locale.US)
 
-      val parameterNamesAndValues = mutableListOf<String>()
-      val parameter = PARAMETER.matcher(this)
-      var s = typeSubtype.end()
-      while (s < length) {
-        parameter.region(s, length)
-        require(parameter.lookingAt()) {
-          "Parameter is not formatted correctly: \"${substring(s)}\" for: \"$this\""
-        }
+          val parameterNamesAndValues = mutableListOf<String>()
+          val parameter = PARAMETER.matcher(this)
+          var s = typeSubtype.end()
+          while (s < length) {
+              parameter.region(s, length)
+              require(parameter.lookingAt()) {
+                  "Parameter is not formatted correctly: \"${substring(s)}\" for: \"$this\""
+              }
 
-        val name = parameter.group(1)
-        if (name == null) {
-          s = parameter.end()
-          continue
-        }
+              val name = parameter.group(1)
+              if (name == null) {
+                  s = parameter.end()
+                  continue
+              }
 
-        val token = parameter.group(2)
-        val value = when {
-          token == null -> {
-            // Value is "double-quoted". That's valid and our regex group already strips the quotes.
-            parameter.group(3)
+              val token = parameter.group(2)
+              val value = when {
+                  token == null -> {
+                      // Value is "double-quoted". That's valid and our regex group already strips the quotes.
+                      parameter.group(3)
+                  }
+                  token.startsWith("'") && token.endsWith("'") && token.length > 2 -> {
+                      // If the token is 'single-quoted' it's invalid! But we're lenient and strip the quotes.
+                      token.substring(1, token.length - 1)
+                  }
+                  else -> token
+              }
+
+              parameterNamesAndValues += name
+              parameterNamesAndValues += value
+              s = parameter.end()
           }
-          token.startsWith("'") && token.endsWith("'") && token.length > 2 -> {
-            // If the token is 'single-quoted' it's invalid! But we're lenient and strip the quotes.
-            token.substring(1, token.length - 1)
-          }
-          else -> token
-        }
 
-        parameterNamesAndValues += name
-        parameterNamesAndValues += value
-        s = parameter.end()
+          return MediaType(this, type, subtype, parameterNamesAndValues.toTypedArray())
       }
-
-      return MediaType(this, type, subtype, parameterNamesAndValues.toTypedArray())
-    }
 
     /** Returns a media type for this, or null if this is not a well-formed media type. */
     @JvmStatic

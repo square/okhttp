@@ -571,39 +571,39 @@ class Cache(
     @Throws(IOException::class)
     fun writeTo(editor: DiskLruCache.Editor) {
       editor.newSink(ENTRY_METADATA).buffer().use { sink ->
-        sink.writeUtf8(url.toString()).writeByte('\n'.toInt())
-        sink.writeUtf8(requestMethod).writeByte('\n'.toInt())
-        sink.writeDecimalLong(varyHeaders.size.toLong()).writeByte('\n'.toInt())
+        sink.writeUtf8(url.toString()).writeByte('\n'.code)
+        sink.writeUtf8(requestMethod).writeByte('\n'.code)
+        sink.writeDecimalLong(varyHeaders.size.toLong()).writeByte('\n'.code)
         for (i in 0 until varyHeaders.size) {
           sink.writeUtf8(varyHeaders.name(i))
             .writeUtf8(": ")
             .writeUtf8(varyHeaders.value(i))
-            .writeByte('\n'.toInt())
+            .writeByte('\n'.code)
         }
 
-        sink.writeUtf8(StatusLine(protocol, code, message).toString()).writeByte('\n'.toInt())
-        sink.writeDecimalLong((responseHeaders.size + 2).toLong()).writeByte('\n'.toInt())
+        sink.writeUtf8(StatusLine(protocol, code, message).toString()).writeByte('\n'.code)
+        sink.writeDecimalLong((responseHeaders.size + 2).toLong()).writeByte('\n'.code)
         for (i in 0 until responseHeaders.size) {
           sink.writeUtf8(responseHeaders.name(i))
             .writeUtf8(": ")
             .writeUtf8(responseHeaders.value(i))
-            .writeByte('\n'.toInt())
+            .writeByte('\n'.code)
         }
         sink.writeUtf8(SENT_MILLIS)
           .writeUtf8(": ")
           .writeDecimalLong(sentRequestMillis)
-          .writeByte('\n'.toInt())
+          .writeByte('\n'.code)
         sink.writeUtf8(RECEIVED_MILLIS)
           .writeUtf8(": ")
           .writeDecimalLong(receivedResponseMillis)
-          .writeByte('\n'.toInt())
+          .writeByte('\n'.code)
 
         if (url.isHttps) {
-          sink.writeByte('\n'.toInt())
-          sink.writeUtf8(handshake!!.cipherSuite.javaName).writeByte('\n'.toInt())
+          sink.writeByte('\n'.code)
+          sink.writeUtf8(handshake!!.cipherSuite.javaName).writeByte('\n'.code)
           writeCertList(sink, handshake.peerCertificates)
           writeCertList(sink, handshake.localCertificates)
-          sink.writeUtf8(handshake.tlsVersion.javaName).writeByte('\n'.toInt())
+          sink.writeUtf8(handshake.tlsVersion.javaName).writeByte('\n'.code)
         }
       }
     }
@@ -631,11 +631,11 @@ class Cache(
     @Throws(IOException::class)
     private fun writeCertList(sink: BufferedSink, certificates: List<Certificate>) {
       try {
-        sink.writeDecimalLong(certificates.size.toLong()).writeByte('\n'.toInt())
+        sink.writeDecimalLong(certificates.size.toLong()).writeByte('\n'.code)
         for (element in certificates) {
           val bytes = element.encoded
           val line = bytes.toByteString().base64()
-          sink.writeUtf8(line).writeByte('\n'.toInt())
+          sink.writeUtf8(line).writeByte('\n'.code)
         }
       } catch (e: CertificateEncodingException) {
         throw IOException(e.message)

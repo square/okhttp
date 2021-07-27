@@ -284,8 +284,8 @@ class PublicSuffixDatabase {
         while (true) {
           val byte0: Int
           if (expectDot) {
-            byte0 = '.'.toInt()
-            expectDot = false
+              byte0 = '.'.code
+              expectDot = false
           } else {
             byte0 = labels[currentLabelIndex][currentLabelByteIndex] and 0xff
           }
