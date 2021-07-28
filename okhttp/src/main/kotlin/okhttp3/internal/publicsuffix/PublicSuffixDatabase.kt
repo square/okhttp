@@ -239,7 +239,7 @@ class PublicSuffixDatabase {
   companion object {
     const val PUBLIC_SUFFIX_RESOURCE = "publicsuffixes.gz"
 
-    private val WILDCARD_LABEL = byteArrayOf('*'.toByte())
+    private val WILDCARD_LABEL = byteArrayOf('*'.code.toByte())
     private val PREVAILING_RULE = listOf("*")
 
     private const val EXCEPTION_MARKER = '!'
@@ -261,14 +261,14 @@ class PublicSuffixDatabase {
         var mid = (low + high) / 2
         // Search for a '\n' that marks the start of a value. Don't go back past the start of the
         // array.
-        while (mid > -1 && this[mid] != '\n'.toByte()) {
+        while (mid > -1 && this[mid] != '\n'.code.toByte()) {
           mid--
         }
         mid++
 
         // Now look for the ending '\n'.
         var end = 1
-        while (this[mid + end] != '\n'.toByte()) {
+        while (this[mid + end] != '\n'.code.toByte()) {
           end++
         }
         val publicSuffixLength = mid + end - mid
@@ -284,7 +284,7 @@ class PublicSuffixDatabase {
         while (true) {
           val byte0: Int
           if (expectDot) {
-            byte0 = '.'.toInt()
+            byte0 = '.'.code
             expectDot = false
           } else {
             byte0 = labels[currentLabelIndex][currentLabelByteIndex] and 0xff
