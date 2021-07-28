@@ -80,7 +80,7 @@ object OkHostnameVerifier : HostnameVerifier {
    */
   private fun String.asciiToLowercase(): String {
     return when {
-      isAscii() -> toLowerCase(Locale.US) // This is an ASCII string.
+      isAscii() -> lowercase(Locale.US) // This is an ASCII string.
       else -> this
     }
   }
