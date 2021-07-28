@@ -28,7 +28,7 @@ dependencies {
   implementation Dependencies.junit5Api
   implementation Dependencies.junit5JupiterParams
 
-  implementation("org.graalvm.nativeimage:svm:21.1.0")
+  implementation("org.graalvm.nativeimage:svm:21.2.0")
 
   compileOnly Dependencies.jsr305
 }
@@ -49,7 +49,7 @@ sourceSets {
 graal {
   mainClass "okhttp3.RunTestsKt"
   outputName "ConsoleLauncher"
-  graalVersion "21.1.0"
+  graalVersion "21.2.0"
   javaVersion "11"
 
   option "--no-fallback"

@@ -30,7 +30,7 @@ object Versions {
   const val jsoup = "1.13.1"
   const val junit = "4.13"
   const val junit5 = "5.7.0"
-  const val kotlin = "1.4.32"
+  const val kotlin = "1.5.0"
   const val ktlint = "0.38.0"
   const val moshi = "1.12.0"
   const val okio = "3.0.0-alpha.8"
