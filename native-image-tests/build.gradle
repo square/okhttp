@@ -1,7 +1,7 @@
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
-  id "com.palantir.graal" version "0.7.2"
+  id "com.palantir.graal" version "0.9.0"
 }
 
 dependencies {
@@ -28,13 +28,7 @@ dependencies {
   implementation Dependencies.junit5Api
   implementation Dependencies.junit5JupiterParams
 
-  implementation("org.graalvm.nativeimage:svm:21.0.0") {
-    // https://youtrack.jetbrains.com/issue/KT-29513
-    exclude group: "org.graalvm.nativeimage"
-    exclude group: "org.graalvm.truffle"
-    //    exclude group= "org.graalvm.sdk"
-    exclude group: "org.graalvm.compiler"
-  }
+  implementation("org.graalvm.nativeimage:svm:21.2.0")
 
   compileOnly Dependencies.jsr305
 }
@@ -55,7 +49,7 @@ sourceSets {
 graal {
   mainClass "okhttp3.RunTestsKt"
   outputName "ConsoleLauncher"
-  graalVersion "21.0.0"
+  graalVersion "21.2.0"
   javaVersion "11"
 
   option "--no-fallback"

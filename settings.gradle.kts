@@ -13,9 +13,9 @@ if (androidBuild != null) {
   include(":regression-test")
 }
 
-if (graalBuild != null) {
+//if (graalBuild != null) {
   include(":native-image-tests")
-}
+//}
 
 include(":okcurl")
 include(":okhttp")
