@@ -423,6 +423,25 @@ public final class CookieTest {
     assertThat(cookie.hostOnly()).isFalse();
   }
 
+  @Test public void newBuilder() throws Exception {
+    Cookie cookie = parseCookie(0L, url, "c=d; Max-Age=1").newBuilder()
+            .name("a")
+            .value("b")
+            .domain("example.com")
+            .expiresAt(MAX_DATE)
+            .build();
+    assertThat(cookie.name()).isEqualTo("a");
+    assertThat(cookie.value()).isEqualTo("b");
+    assertThat(cookie.expiresAt()).isEqualTo(MAX_DATE);
+    assertThat(cookie.domain()).isEqualTo("example.com");
+    assertThat(cookie.path()).isEqualTo("/");
+    assertThat(cookie.secure()).isFalse();
+    assertThat(cookie.httpOnly()).isFalse();
+    // can't be unset
+    assertThat(cookie.persistent()).isTrue();
+    assertThat(cookie.hostOnly()).isFalse();
+  }
+
   @Test public void builderNameValidation() throws Exception {
     try {
       new Cookie.Builder().name(null);
