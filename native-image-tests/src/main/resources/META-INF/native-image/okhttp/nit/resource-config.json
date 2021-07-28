@@ -1,5 +1,6 @@
 {
   "resources": [
-    {"pattern": "testlist.txt"}
+    {"pattern": "testlist.txt"},
+    {"pattern": "web-platform-test-urltestdata.txt"}
   ]
 }
