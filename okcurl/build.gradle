@@ -1,5 +1,5 @@
 plugins {
-  id "com.palantir.graal" version "0.7.2"
+  id "com.palantir.graal" version "0.9.0"
 }
 
 import org.apache.tools.ant.taskdefs.condition.Os
@@ -51,7 +51,7 @@ shadowJar {
 graal {
   mainClass "okhttp3.curl.Main"
   outputName "okcurl"
-  graalVersion "21.0.0"
+  graalVersion "21.2.0"
   javaVersion "11"
 
   option "--no-fallback"
