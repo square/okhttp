@@ -126,7 +126,7 @@ subprojects { project ->
   }
 
   def platform = System.getProperty("okhttp.platform", "jdk9")
-  def testJavaVersion = Integer.getInteger("test.java.version", 11)
+  def testJavaVersion = Integer.getInteger("test.java.version", 14)
 
   dependencies {
     testRuntimeOnly(Dependencies.junit5JupiterEngine)
