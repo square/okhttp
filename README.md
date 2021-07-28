@@ -135,6 +135,7 @@ GraalVM Native Image
 --------------------
 
 Building your native images with Graal https://www.graalvm.org/ should work automatically.
+This is not currently in a final released version, so 5.0.0-alpha.2 should be used.
 Please report any bugs or workarounds you find.
 
 See the okcurl module for an example build.
