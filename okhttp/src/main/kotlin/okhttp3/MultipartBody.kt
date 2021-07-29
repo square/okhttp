@@ -113,7 +113,8 @@ class MultipartBody internal constructor(
       sink = byteCountBuffer
     }
 
-    for (part in parts) {
+    for (p in 0 until parts.size) {
+      val part = parts[p]
       val headers = part.headers
       val body = part.body
 
@@ -329,8 +330,8 @@ class MultipartBody internal constructor(
      */
     internal fun StringBuilder.appendQuotedString(key: String) {
       append('"')
-      for (ch in key) {
-        when (ch) {
+      for (i in 0 until key.length) {
+        when (val ch = key[i]) {
           '\n' -> append("%0A")
           '\r' -> append("%0D")
           '"' -> append("%22")

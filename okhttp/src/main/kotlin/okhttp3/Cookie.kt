@@ -613,8 +613,8 @@ class Cookie private constructor(
       val cookieStrings = headers.values("Set-Cookie")
       var cookies: MutableList<Cookie>? = null
 
-      for (cookieStr in cookieStrings) {
-        val cookie = parse(url, cookieStr) ?: continue
+      for (i in 0 until cookieStrings.size) {
+        val cookie = parse(url, cookieStrings[i]) ?: continue
         if (cookies == null) cookies = mutableListOf()
         cookies.add(cookie)
       }
