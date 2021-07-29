@@ -400,22 +400,22 @@ class DiskLruCache(
     journalWriter?.close()
 
     fileSystem.write(journalFileTmp) {
-      writeUtf8(MAGIC).writeByte('\n'.toInt())
-      writeUtf8(VERSION_1).writeByte('\n'.toInt())
-      writeDecimalLong(appVersion.toLong()).writeByte('\n'.toInt())
-      writeDecimalLong(valueCount.toLong()).writeByte('\n'.toInt())
-      writeByte('\n'.toInt())
+      writeUtf8(MAGIC).writeByte('\n'.code)
+      writeUtf8(VERSION_1).writeByte('\n'.code)
+      writeDecimalLong(appVersion.toLong()).writeByte('\n'.code)
+      writeDecimalLong(valueCount.toLong()).writeByte('\n'.code)
+      writeByte('\n'.code)
 
       for (entry in lruEntries.values) {
         if (entry.currentEditor != null) {
-          writeUtf8(DIRTY).writeByte(' '.toInt())
+          writeUtf8(DIRTY).writeByte(' '.code)
           writeUtf8(entry.key)
-          writeByte('\n'.toInt())
+          writeByte('\n'.code)
         } else {
-          writeUtf8(CLEAN).writeByte(' '.toInt())
+          writeUtf8(CLEAN).writeByte(' '.code)
           writeUtf8(entry.key)
           entry.writeLengths(this)
-          writeByte('\n'.toInt())
+          writeByte('\n'.code)
         }
       }
     }
@@ -448,9 +448,9 @@ class DiskLruCache(
 
     redundantOpCount++
     journalWriter!!.writeUtf8(READ)
-        .writeByte(' '.toInt())
+        .writeByte(' '.code)
         .writeUtf8(key)
-        .writeByte('\n'.toInt())
+        .writeByte('\n'.code)
     if (journalRebuildRequired()) {
       cleanupQueue.schedule(cleanupTask)
     }
@@ -493,9 +493,9 @@ class DiskLruCache(
     // Flush the journal before creating files to prevent file leaks.
     val journalWriter = this.journalWriter!!
     journalWriter.writeUtf8(DIRTY)
-        .writeByte(' '.toInt())
+        .writeByte(' '.code)
         .writeUtf8(key)
-        .writeByte('\n'.toInt())
+        .writeByte('\n'.code)
     journalWriter.flush()
 
     if (hasJournalErrors) {
@@ -567,18 +567,18 @@ class DiskLruCache(
     journalWriter!!.apply {
       if (entry.readable || success) {
         entry.readable = true
-        writeUtf8(CLEAN).writeByte(' '.toInt())
+        writeUtf8(CLEAN).writeByte(' '.code)
         writeUtf8(entry.key)
         entry.writeLengths(this)
-        writeByte('\n'.toInt())
+        writeByte('\n'.code)
         if (success) {
           entry.sequenceNumber = nextSequenceNumber++
         }
       } else {
         lruEntries.remove(entry.key)
-        writeUtf8(REMOVE).writeByte(' '.toInt())
+        writeUtf8(REMOVE).writeByte(' '.code)
         writeUtf8(entry.key)
-        writeByte('\n'.toInt())
+        writeByte('\n'.code)
       }
       flush()
     }
@@ -625,9 +625,9 @@ class DiskLruCache(
         // Mark this entry as 'DIRTY' so that if the process crashes this entry won't be used.
         journalWriter?.let {
           it.writeUtf8(DIRTY)
-          it.writeByte(' '.toInt())
+          it.writeByte(' '.code)
           it.writeUtf8(entry.key)
-          it.writeByte('\n'.toInt())
+          it.writeByte('\n'.code)
           it.flush()
         }
       }
@@ -648,9 +648,9 @@ class DiskLruCache(
     redundantOpCount++
     journalWriter?.let {
       it.writeUtf8(REMOVE)
-      it.writeByte(' '.toInt())
+      it.writeByte(' '.code)
       it.writeUtf8(entry.key)
-      it.writeByte('\n'.toInt())
+      it.writeByte('\n'.code)
     }
     lruEntries.remove(entry.key)
 
@@ -1000,7 +1000,7 @@ class DiskLruCache(
     @Throws(IOException::class)
     internal fun writeLengths(writer: BufferedSink) {
       for (length in lengths) {
-        writer.writeByte(' '.toInt()).writeDecimalLong(length)
+        writer.writeByte(' '.code).writeDecimalLong(length)
       }
     }
 

@@ -58,7 +58,7 @@ class ServerSentEventReader(
         }
 
         in 5..7 -> {
-          data.writeByte('\n'.toInt()) // 'data' on a line of its own.
+          data.writeByte('\n'.code) // 'data' on a line of its own.
         }
 
         in 8..9 -> {
@@ -144,7 +144,7 @@ class ServerSentEventReader(
 
     @Throws(IOException::class)
     private fun BufferedSource.readData(data: Buffer) {
-      data.writeByte('\n'.toInt())
+      data.writeByte('\n'.code)
       readFully(data, indexOfElement(CRLF))
       select(options) // Skip the newline bytes.
     }

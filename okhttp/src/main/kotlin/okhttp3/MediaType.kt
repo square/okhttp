@@ -109,8 +109,8 @@ class MediaType private constructor(
     fun String.toMediaType(): MediaType {
       val typeSubtype = TYPE_SUBTYPE.matcher(this)
       require(typeSubtype.lookingAt()) { "No subtype found for: \"$this\"" }
-      val type = typeSubtype.group(1).toLowerCase(Locale.US)
-      val subtype = typeSubtype.group(2).toLowerCase(Locale.US)
+      val type = typeSubtype.group(1).lowercase(Locale.US)
+      val subtype = typeSubtype.group(2).lowercase(Locale.US)
 
       val parameterNamesAndValues = mutableListOf<String>()
       val parameter = PARAMETER.matcher(this)
