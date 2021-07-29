@@ -30,6 +30,7 @@ object Versions {
   const val jsoup = "1.13.1"
   const val junit = "4.13"
   const val junit5 = "5.7.0"
+  const val junit5Android = "1.2.2"
   const val kotlin = "1.5.21"
   const val ktlint = "0.38.0"
   const val moshi = "1.12.0"
@@ -49,7 +50,9 @@ object Dependencies {
   const val bouncycastletls = "org.bouncycastle:bctls-jdk15to18:${Versions.bouncycastle}"
   const val brotli = "org.brotli:dec:${Versions.brotli}"
   const val conscrypt = "org.conscrypt:conscrypt-openjdk-uber:${Versions.conscrypt}"
-  const val corretto = "software.amazon.cryptools:AmazonCorrettoCryptoProvider:${Versions.corretto}:linux-x86_64"
+  const val conscryptAndroid = "org.conscrypt:conscrypt-android:${Versions.conscrypt}"
+  const val corretto =
+    "software.amazon.cryptools:AmazonCorrettoCryptoProvider:${Versions.corretto}:linux-x86_64"
   const val equinox = "org.eclipse.platform:org.eclipse.osgi:${Versions.equinox}"
   const val guava = "com.google.guava:guava:${Versions.guava}"
   const val hamcrest = "org.hamcrest:hamcrest-library:2.1"
@@ -61,8 +64,12 @@ object Dependencies {
   const val junit5JupiterEngine = "org.junit.jupiter:junit-jupiter-engine:${Versions.junit5}"
   const val junit5JupiterParams = "org.junit.jupiter:junit-jupiter-params:${Versions.junit5}"
   const val junit5VintageEngine = "org.junit.vintage:junit-vintage-engine:${Versions.junit5}"
+  const val junit5AndroidCore = "de.mannodermaus.junit5:android-test-core:${Versions.junit5Android}"
+  const val junit5AndroidRunner =
+    "de.mannodermaus.junit5:android-test-runner:${Versions.junit5Android}"
   const val junitPlatformConsole = "org.junit.platform:junit-platform-console:1.7.0"
   const val kotlinStdlib = "org.jetbrains.kotlin:kotlin-stdlib:${Versions.kotlin}"
+  const val kotlinReflect = "org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}"
   const val kotlinStdlibOsgi = "org.jetbrains.kotlin:kotlin-osgi-bundle:${Versions.kotlin}"
   const val moshi = "com.squareup.moshi:moshi:${Versions.moshi}"
   const val moshiCompiler = "com.squareup.moshi:moshi-kotlin-codegen:${Versions.moshi}"
@@ -70,6 +77,11 @@ object Dependencies {
   const val okioFakeFileSystem = "com.squareup.okio:okio-fakefilesystem:${Versions.okio}"
   const val openjsse = "org.openjsse:openjsse:${Versions.openjsse}"
   const val picocli = "info.picocli:picocli:${Versions.picocli}"
+  const val playServicesSafetynet = "com.google.android.gms:play-services-safetynet:17.0.1"
+  const val androidxExtJunit = "androidx.test.ext:junit:1.1.3"
+  const val androidxEspressoCore = "androidx.test.espresso:espresso-core:3.4.0"
+  const val androidxTestRunner = "androidx.test:runner:1.4.0"
+  const val httpclient5 = "org.apache.httpcomponents.client5:httpclient5:5.0"
 
   object Kotlin {
     const val version = "1.5.21"

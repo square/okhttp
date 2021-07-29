@@ -48,19 +48,18 @@ android {
 }
 
 dependencies {
-  api "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${Versions.kotlin}"
-  api "org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}"
-  implementation 'com.google.android.gms:play-services-safetynet:17.0.1'
-  api project(':okhttp')
+  implementation Dependencies.kotlinReflect
+  implementation Dependencies.playServicesSafetynet
+  implementation project(':okhttp')
 
   androidTestImplementation(project(':okhttp-testing-support')) {
     exclude group: 'org.openjsse', module: 'openjsse'
     exclude group: 'org.conscrypt', module: 'conscrypt-openjdk-uber'
     exclude group: 'software.amazon.cryptools', module: 'AmazonCorrettoCryptoProvider'
   }
-  androidTestImplementation "org.bouncycastle:bcprov-jdk15to18:${Versions.bouncycastle}"
-  androidTestImplementation "org.bouncycastle:bctls-jdk15to18:${Versions.bouncycastle}"
-  androidTestImplementation "org.conscrypt:conscrypt-android:2.5.1"
+  androidTestImplementation Dependencies.bouncycastle
+  androidTestImplementation Dependencies.bouncycastletls
+  androidTestImplementation Dependencies.conscryptAndroid
   androidTestImplementation project(':mockwebserver-junit5')
   androidTestImplementation project(':okhttp-brotli')
   androidTestImplementation project(':okhttp-dnsoverhttps')
@@ -68,15 +67,15 @@ dependencies {
   androidTestImplementation project(':okhttp-sse')
   androidTestImplementation project(':okhttp-testing-support')
   androidTestImplementation project(':okhttp-tls')
-  androidTestImplementation 'androidx.test.ext:junit:1.1.3'
-  androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
-  androidTestImplementation 'org.apache.httpcomponents.client5:httpclient5:5.0'
-  androidTestImplementation 'com.squareup.moshi:moshi:1.12.0'
-  androidTestImplementation 'com.squareup.moshi:moshi-kotlin:1.12.0'
+  androidTestImplementation Dependencies.androidxExtJunit
+  androidTestImplementation Dependencies.androidxEspressoCore
+  androidTestImplementation Dependencies.httpclient5
+  androidTestImplementation Dependencies.moshi
+  androidTestImplementation Dependencies.moshiCompiler
   androidTestImplementation Dependencies.okioFakeFileSystem
 
-  androidTestImplementation "androidx.test:runner:1.4.0"
-  androidTestImplementation "org.junit.jupiter:junit-jupiter-api:5.7.1"
-  androidTestImplementation "de.mannodermaus.junit5:android-test-core:1.2.2"
-  androidTestRuntimeOnly "de.mannodermaus.junit5:android-test-runner:1.2.2"
+  androidTestImplementation Dependencies.androidxTestRunner
+  androidTestImplementation Dependencies.junit5Api
+  androidTestImplementation Dependencies.junit5AndroidCore
+  androidTestRuntimeOnly Dependencies.junit5AndroidRunner
 }
