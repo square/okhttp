@@ -65,7 +65,7 @@ object Dependencies {
   const val kotlinStdlib = "org.jetbrains.kotlin:kotlin-stdlib:${Versions.kotlin}"
   const val kotlinStdlibOsgi = "org.jetbrains.kotlin:kotlin-osgi-bundle:${Versions.kotlin}"
   const val moshi = "com.squareup.moshi:moshi:${Versions.moshi}"
-  const val moshiKotlin = "com.squareup.moshi:moshi-kotlin-codegen:${Versions.moshi}"
+  const val moshiCompiler = "com.squareup.moshi:moshi-kotlin-codegen:${Versions.moshi}"
   const val okio = "com.squareup.okio:okio:${Versions.okio}"
   const val okioFakeFileSystem = "com.squareup.okio:okio-fakefilesystem:${Versions.okio}"
   const val openjsse = "org.openjsse:openjsse:${Versions.openjsse}"
