@@ -25,7 +25,7 @@ import java.util.logging.Logger
  * Default dispatcher that processes a script of responses. Populate the script by calling [enqueueResponse].
  */
 open class QueueDispatcher : Dispatcher() {
-  protected val responseQueue: BlockingQueue<MockResponse> = LinkedBlockingQueue()
+  private val responseQueue: BlockingQueue<MockResponse> = LinkedBlockingQueue()
   private var failFastResponse: MockResponse? = null
 
   @Throws(InterruptedException::class)

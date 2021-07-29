@@ -909,11 +909,11 @@ class MockWebServer : Closeable {
   override fun close() = shutdown()
 
   /** A buffer wrapper that drops data after [bodyLimit] bytes. */
-  private class TruncatingBuffer internal constructor(
+  private class TruncatingBuffer(
     private var remainingByteCount: Long
   ) : Sink {
-    internal val buffer = Buffer()
-    internal var receivedByteCount = 0L
+    val buffer = Buffer()
+    var receivedByteCount = 0L
 
     @Throws(IOException::class)
     override fun write(source: Buffer, byteCount: Long) {
