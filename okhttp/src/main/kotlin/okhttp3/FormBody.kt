@@ -70,7 +70,7 @@ class FormBody internal constructor(
     var byteCount = 0L
     val buffer: Buffer = if (countBytes) Buffer() else sink!!.buffer
 
-    for (i in 0 until encodedNames.size) {
+    for (i in encodedNames.indices) {
       if (i > 0) buffer.writeByte('&'.code)
       buffer.writeUtf8(encodedNames[i])
       buffer.writeByte('='.code)

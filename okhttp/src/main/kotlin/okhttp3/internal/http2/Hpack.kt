@@ -18,7 +18,6 @@ package okhttp3.internal.http2
 import java.io.IOException
 import java.util.Arrays
 import java.util.Collections
-import java.util.LinkedHashMap
 import okhttp3.internal.and
 import okhttp3.internal.http2.Header.Companion.RESPONSE_STATUS
 import okhttp3.internal.http2.Header.Companion.TARGET_AUTHORITY
@@ -477,8 +476,7 @@ object Hpack {
         writeInt(maxDynamicTableByteCount, PREFIX_5_BITS, 0x20)
       }
 
-      for (i in 0 until headerBlock.size) {
-        val header = headerBlock[i]
+      for (header in headerBlock) {
         val name = header.name.toAsciiLowercase()
         val value = header.value
         var headerIndex = -1

@@ -74,7 +74,7 @@ fun X509Certificate.certificatePem(): String {
 
 internal fun StringBuilder.encodeBase64Lines(data: ByteString) {
   val base64 = data.base64()
-  for (i in 0 until base64.length step 64) {
+  for (i in base64.indices step 64) {
     append(base64, i, minOf(i + 64, base64.length)).append('\n')
   }
 }

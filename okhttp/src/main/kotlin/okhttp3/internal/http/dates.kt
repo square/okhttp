@@ -77,7 +77,7 @@ fun String.toHttpDateOrNull(): Date? {
     return result
   }
   synchronized(BROWSER_COMPATIBLE_DATE_FORMAT_STRINGS) {
-    for (i in 0 until BROWSER_COMPATIBLE_DATE_FORMAT_STRINGS.size) {
+    for (i in BROWSER_COMPATIBLE_DATE_FORMAT_STRINGS.indices) {
       var format: DateFormat? = BROWSER_COMPATIBLE_DATE_FORMATS[i]
       if (format == null) {
         format = SimpleDateFormat(BROWSER_COMPATIBLE_DATE_FORMAT_STRINGS[i], Locale.US).apply {

@@ -18,7 +18,6 @@
 package okhttp3
 
 import java.time.Instant
-import java.util.ArrayList
 import java.util.Collections
 import java.util.Date
 import java.util.Locale
@@ -122,8 +121,8 @@ class Headers private constructor(
     // overhead for '\r\n'.
     var result = (namesAndValues.size * 2).toLong()
 
-    for (i in 0 until namesAndValues.size) {
-      result += namesAndValues[i].length.toLong()
+    for (nv in namesAndValues) {
+      result += nv.length.toLong()
     }
 
     return result

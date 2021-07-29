@@ -15,6 +15,14 @@
  */
 package okhttp3
 
+import java.net.InetAddress
+import java.net.MalformedURLException
+import java.net.URI
+import java.net.URISyntaxException
+import java.net.URL
+import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets.UTF_8
+import java.util.Collections
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.internal.canParseAsIpAddress
@@ -25,15 +33,6 @@ import okhttp3.internal.parseHexDigit
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
 import okhttp3.internal.toCanonicalHost
 import okio.Buffer
-import java.net.InetAddress
-import java.net.MalformedURLException
-import java.net.URI
-import java.net.URISyntaxException
-import java.net.URL
-import java.nio.charset.Charset
-import java.nio.charset.StandardCharsets.UTF_8
-import java.util.Collections
-import java.util.LinkedHashSet
 
 /**
  * A uniform resource locator (URL) with a scheme of either `http` or `https`. Use this class to
@@ -583,7 +582,7 @@ class HttpUrl internal constructor(
    */
   fun queryParameter(name: String): String? {
     if (queryNamesAndValues == null) return null
-    for (i in 0 until queryNamesAndValues.size step 2) {
+    for (i in queryNamesAndValues.indices step 2) {
       if (name == queryNamesAndValues[i]) {
         return queryNamesAndValues[i + 1]
       }
@@ -607,7 +606,7 @@ class HttpUrl internal constructor(
     get() {
       if (queryNamesAndValues == null) return emptySet()
       val result = LinkedHashSet<String>()
-      for (i in 0 until queryNamesAndValues.size step 2) {
+      for (i in queryNamesAndValues.indices step 2) {
         result.add(queryNamesAndValues[i]!!)
       }
       return Collections.unmodifiableSet(result)
@@ -629,7 +628,7 @@ class HttpUrl internal constructor(
   fun queryParameterValues(name: String): List<String?> {
     if (queryNamesAndValues == null) return emptyList()
     val result = mutableListOf<String?>()
-    for (i in 0 until queryNamesAndValues.size step 2) {
+    for (i in queryNamesAndValues.indices step 2) {
       if (name == queryNamesAndValues[i]) {
         result.add(queryNamesAndValues[i + 1])
       }
