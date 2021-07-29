@@ -83,10 +83,7 @@ open class Jdk9Platform : Platform() {
   companion object {
     val isAvailable: Boolean
 
-    val majorVersion = run {
-      val jdkVersion: String? = System.getProperty("java.specification.version")
-      jdkVersion?.toIntOrNull()
-    }
+    val majorVersion = System.getProperty("java.specification.version")?.toIntOrNull()
 
     init {
       isAvailable = if (majorVersion != null) {
