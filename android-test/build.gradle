@@ -2,18 +2,6 @@ apply plugin: 'com.android.library'
 apply plugin: 'org.jetbrains.kotlin.android'
 apply plugin: "de.mannodermaus.android-junit5"
 
-buildscript {
-  repositories {
-    mavenCentral()
-    gradlePluginPortal()
-    google()
-  }
-
-  dependencies {
-    classpath "de.mannodermaus.gradle.plugins:android-junit5:1.7.1.1"
-  }
-}
-
 android {
   compileOptions {
     sourceCompatibility JavaVersion.VERSION_1_8
