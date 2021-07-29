@@ -15,6 +15,8 @@
  */
 package okhttp3.internal.platform
 
+import java.security.NoSuchAlgorithmException
+import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
@@ -62,14 +64,31 @@ open class Jdk9Platform : Platform() {
         "clientBuilder.sslSocketFactory(SSLSocketFactory) not supported on JDK 8 (>= 252) or JDK 9+")
   }
 
+  override fun newSSLContext(): SSLContext {
+    return when {
+      majorVersion != null && majorVersion >= 9 ->
+        SSLContext.getInstance("TLS")
+      else ->
+        try {
+          // Based on SSLSocket.getApplicationProtocol check we should
+          // have TLSv1.3 if we request it.
+          // See https://www.oracle.com/java/technologies/javase/8u261-relnotes.html
+          SSLContext.getInstance("TLSv1.3")
+        } catch (nsae: NoSuchAlgorithmException) {
+          SSLContext.getInstance("TLS")
+        }
+    }
+  }
+
   companion object {
     val isAvailable: Boolean
 
-    init {
+    val majorVersion = run {
       val jdkVersion: String? = System.getProperty("java.specification.version")
+      jdkVersion?.toIntOrNull()
+    }
 
-      val majorVersion = jdkVersion?.toIntOrNull()
-
+    init {
       isAvailable = if (majorVersion != null) {
         majorVersion >= 9
       } else {
