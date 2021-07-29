@@ -610,7 +610,7 @@ object Hpack {
   @Throws(IOException::class)
   fun checkLowercase(name: ByteString): ByteString {
     for (i in 0 until name.size) {
-      if (name[i] in 'A'.toByte()..'Z'.toByte()) {
+      if (name[i] in 'A'.code.toByte()..'Z'.code.toByte()) {
         throw IOException("PROTOCOL_ERROR response malformed: mixed case name: ${name.utf8()}")
       }
     }

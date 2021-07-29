@@ -256,7 +256,7 @@ internal class DerReader(source: Source) {
 
   fun readObjectIdentifier(): String {
     val result = Buffer()
-    val dot = '.'.toByte().toInt()
+    val dot = '.'.code.toByte().toInt()
     when (val xy = readVariableLengthLong()) {
       in 0L until 40L -> {
         result.writeDecimalLong(0)
@@ -283,7 +283,7 @@ internal class DerReader(source: Source) {
 
   fun readRelativeObjectIdentifier(): String {
     val result = Buffer()
-    val dot = '.'.toByte().toInt()
+    val dot = '.'.code.toByte().toInt()
     while (byteCount < limit) {
       if (result.size > 0) {
         result.writeByte(dot)
