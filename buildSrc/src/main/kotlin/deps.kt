@@ -30,7 +30,7 @@ object Versions {
   const val jsoup = "1.13.1"
   const val junit = "4.13"
   const val junit5 = "5.7.0"
-  const val kotlin = "1.5.0"
+  const val kotlin = "1.5.21"
   const val ktlint = "0.38.0"
   const val moshi = "1.12.0"
   const val okio = "3.0.0-alpha.8"
@@ -65,13 +65,13 @@ object Dependencies {
   const val kotlinStdlib = "org.jetbrains.kotlin:kotlin-stdlib:${Versions.kotlin}"
   const val kotlinStdlibOsgi = "org.jetbrains.kotlin:kotlin-osgi-bundle:${Versions.kotlin}"
   const val moshi = "com.squareup.moshi:moshi:${Versions.moshi}"
-  const val moshiKotlin = "com.squareup.moshi:moshi-kotlin-codegen:${Versions.moshi}"
+  const val moshiCompiler = "com.squareup.moshi:moshi-kotlin-codegen:${Versions.moshi}"
   const val okio = "com.squareup.okio:okio:${Versions.okio}"
   const val okioFakeFileSystem = "com.squareup.okio:okio-fakefilesystem:${Versions.okio}"
   const val openjsse = "org.openjsse:openjsse:${Versions.openjsse}"
   const val picocli = "info.picocli:picocli:${Versions.picocli}"
 
   object Kotlin {
-    const val version = "1.5.0"
+    const val version = "1.5.21"
   }
 }

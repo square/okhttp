@@ -692,7 +692,7 @@ class MockWebServer : Closeable {
           break
         }
         addHeaderLenient(headers, header)
-        val lowercaseHeader = header.toLowerCase(Locale.US)
+        val lowercaseHeader = header.lowercase(Locale.US)
         if (contentLength == -1L && lowercaseHeader.startsWith("content-length:")) {
           contentLength = header.substring(15).trim().toLong()
         }

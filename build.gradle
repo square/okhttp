@@ -1,8 +1,9 @@
 buildscript {
   dependencies {
-    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.0"
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.21"
     classpath "org.jetbrains.dokka:dokka-gradle-plugin:0.10.1"
-    classpath "com.android.tools.build:gradle:4.1.3"
+    classpath "com.android.tools.build:gradle:7.0.0"
+    classpath "de.mannodermaus.gradle.plugins:android-junit5:1.7.1.1"
     classpath Dependencies.bnd
   }
 
