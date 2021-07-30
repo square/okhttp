@@ -60,6 +60,7 @@ class RecordedRequest @JvmOverloads constructor(
    */
   val failure: IOException? = null
 ) {
+  private val requestUrlFn: () -> HttpUrl?
   val method: String?
   val path: String?
 
@@ -68,7 +69,9 @@ class RecordedRequest @JvmOverloads constructor(
    * received without TLS.
    */
   val handshake: Handshake?
+
   val requestUrl: HttpUrl?
+    get() = requestUrlFn()
 
   @get:JvmName("-deprecated_utf8Body")
   @Deprecated(
@@ -103,25 +106,29 @@ class RecordedRequest @JvmOverloads constructor(
       }
       this.path = path
 
-      val scheme = if (socket is SSLSocket) "https" else "http"
+      // Eagerly get the address, but avoid potentially variable latency with DNS lookups
+      // See https://github.com/square/okhttp/issues/4836
       val inetAddress = socket.localAddress
+      this.requestUrlFn = {
+        val scheme = if (socket is SSLSocket) "https" else "http"
 
-      var hostname = inetAddress.hostName
-      if (inetAddress is Inet6Address && hostname.contains(':')) {
-        // hostname is likely some form representing the IPv6 bytes
-        // 2001:0db8:85a3:0000:0000:8a2e:0370:7334
-        // 2001:db8:85a3::8a2e:370:7334
-        // ::1
-        hostname = "[$hostname]"
+        var hostname = inetAddress.hostName
+        if (inetAddress is Inet6Address && hostname.contains(':')) {
+          // hostname is likely some form representing the IPv6 bytes
+          // 2001:0db8:85a3:0000:0000:8a2e:0370:7334
+          // 2001:db8:85a3::8a2e:370:7334
+          // ::1
+          hostname = "[$hostname]"
+        }
+
+        val localPort = socket.localPort
+        // Allow null in failure case to allow for testing bad requests
+        "$scheme://$hostname:$localPort$path".toHttpUrlOrNull()
       }
-
-      val localPort = socket.localPort
-      // Allow null in failure case to allow for testing bad requests
-      this.requestUrl = "$scheme://$hostname:$localPort$path".toHttpUrlOrNull()
     } else {
-      this.requestUrl = null
       this.method = null
       this.path = null
+      this.requestUrlFn = { null }
     }
   }
 
