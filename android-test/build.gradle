@@ -71,7 +71,7 @@ dependencies {
   androidTestImplementation Dependencies.androidxEspressoCore
   androidTestImplementation Dependencies.httpclient5
   androidTestImplementation Dependencies.moshi
-  androidTestImplementation Dependencies.moshiCompiler
+  androidTestImplementation Dependencies.moshiKotlin
   androidTestImplementation Dependencies.okioFakeFileSystem
 
   androidTestImplementation Dependencies.androidxTestRunner
