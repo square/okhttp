@@ -95,8 +95,10 @@ class JSSETest(
       PlatformVersion.majorVersion == 11 -> assertThat(s.enabledProtocols.toList()).contains(
         "TLSv1.2"
       )
+      // JDK 8 291 removed older versions
+      // See https://java.com/en/jre-jdk-cryptoroadmap.html
       PlatformVersion.majorVersion == 8 -> assertThat(s.enabledProtocols.toList()).contains(
-        "TLSv1.2", "TLSv1.1", "TLSv1"
+        "TLSv1.2"
       )
       else -> assertThat(s.enabledProtocols.toList()).containsExactly(
         "TLSv1.3", "TLSv1.2", "TLSv1.1", "TLSv1"
