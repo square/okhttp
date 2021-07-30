@@ -76,22 +76,24 @@ class TaskQueue internal constructor(
   }
 
   /** Overload of [schedule] that uses a lambda for a repeating task. */
-  inline fun schedule(
+  fun schedule(
     name: String,
     delayNanos: Long = 0L,
-    crossinline block: () -> Long
+    block: () -> Long
   ) {
     schedule(object : Task(name) {
-      override fun runOnce() = block()
+      override fun runOnce(): Long {
+        return block()
+      }
     }, delayNanos)
   }
 
   /** Executes [block] once on a task runner thread. */
-  inline fun execute(
+  fun execute(
     name: String,
     delayNanos: Long = 0L,
     cancelable: Boolean = true,
-    crossinline block: () -> Unit
+    block: () -> Unit
   ) {
     schedule(object : Task(name, cancelable) {
       override fun runOnce(): Long {
