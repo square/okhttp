@@ -2,23 +2,14 @@ apply plugin: 'com.android.library'
 apply plugin: 'org.jetbrains.kotlin.android'
 apply plugin: "de.mannodermaus.android-junit5"
 
-buildscript {
-  repositories {
-    mavenCentral()
-    gradlePluginPortal()
-    google()
-  }
-
-  dependencies {
-    classpath "de.mannodermaus.gradle.plugins:android-junit5:1.7.1.1"
-    classpath 'com.android.tools.build:gradle:7.1.0-alpha03'
-  }
-}
-
 android {
   compileOptions {
-    sourceCompatibility JavaVersion.VERSION_1_8
-    targetCompatibility JavaVersion.VERSION_1_8
+    sourceCompatibility JavaVersion.VERSION_11
+    targetCompatibility JavaVersion.VERSION_11
+  }
+
+  kotlinOptions {
+    jvmTarget = JavaVersion.VERSION_11
   }
 
   packagingOptions {

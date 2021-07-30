@@ -306,6 +306,12 @@ jobs:
       - name: Validate Gradle Wrapper
         uses: gradle/wrapper-validation-action@v1
 
+      - name: Configure JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: 11
+
       - name: Run Tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -332,6 +338,12 @@ jobs:
 
       - name: Validate Gradle Wrapper
         uses: gradle/wrapper-validation-action@v1
+
+      - name: Configure JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: 11
 
       - name: Run Tests
         uses: reactivecircus/android-emulator-runner@v2
