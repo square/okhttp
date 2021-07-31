@@ -110,7 +110,6 @@ class EnvoyMobileTest {
           responseBuilder.body(ResponseBody.create(contentType, -1, bodySource))
 
           continuation.resume(responseBuilder.build(), onCancellation = {})
-
         }
         .setOnResponseTrailers { responseTrailers ->
             println("Dropping trailers " + responseTrailers.toHeaders())
@@ -123,6 +122,9 @@ class EnvoyMobileTest {
           }
         }
         .setOnError { error ->
+          // TODO how to signal error correctly?
+          bodySource.close()
+
           continuation.resumeWithException(
             IOException(
               "${error.errorCode}: ${error.message}",
