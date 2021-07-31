@@ -165,7 +165,7 @@ subprojects { project ->
     }
   } else if (platform == "conscrypt") {
     dependencies {
-      testRuntimeOnly Dependencies.conscryptOpenJdk
+      testRuntimeOnly Dependencies.conscrypt
     }
   } else if (platform == "openjsse") {
     dependencies {
