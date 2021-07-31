@@ -40,6 +40,8 @@ dependencies {
   implementation("com.squareup.okhttp3:okhttp-tls:${okhttplegacyversion}") {
     exclude group: 'org.bouncycastle'
   }
+  implementation(files("lib/envoy-0.4.0.04282021.aar"))
+  implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.0'
   androidTestImplementation "com.squareup.okhttp3:mockwebserver:${okhttplegacyversion}"
   androidTestImplementation "org.bouncycastle:bcprov-jdk15to18:${Versions.bouncycastle}"
   androidTestImplementation "org.bouncycastle:bctls-jdk15to18:${Versions.bouncycastle}"
