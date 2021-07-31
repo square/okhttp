@@ -24,11 +24,14 @@ import org.junit.runner.RunWith
 import java.io.IOException
 import java.lang.System.currentTimeMillis
 import java.util.concurrent.Executors
+import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.*
 import okhttp3.*
 import okhttp3.Headers
 import okio.Buffer
+import okio.Okio
+import okio.Pipe
 
 /**
  * Envoy Mobile.
@@ -48,10 +51,18 @@ class EnvoyMobileTest {
       .setLogger { println(it) }
       .build()
 
-    val request = Request.Builder().url("https://api.lyft.com/ping").build()
-    val response = runBlocking {
-      makeRequest(engine, request)
+    val request = Request.Builder().url("https://quic.aiortc.org/10").build()
+    runBlocking {
+      printRequest(engine, request)
+
+      printRequest(engine, request)
+
+      printRequest(engine, request)
     }
+  }
+
+  private suspend fun printRequest(engine: Engine, request: Request) {
+    val response = makeRequest(engine, request)
 
     println(response)
     println(response.headers())
@@ -66,7 +77,9 @@ class EnvoyMobileTest {
         .protocol(if (request.isHttps) Protocol.QUIC else Protocol.HTTP_1_1)
         .sentRequestAtMillis(currentTimeMillis())
 
-      val bodyBuffer = Buffer()
+      val bodyPipe = Pipe(1024L * 1024L)
+      val bodySink = Okio.buffer(bodyPipe.sink())
+      val bodySource = Okio.buffer(bodyPipe.source())
 
       val requestHeaders = RequestHeadersBuilder(
         RequestMethod.GET,
@@ -76,7 +89,7 @@ class EnvoyMobileTest {
       ).addUpstreamHttpProtocol(if (request.isHttps) UpstreamHttpProtocol.HTTP2 else UpstreamHttpProtocol.HTTP1)
         .build()
 
-      var contentType: MediaType? = null
+      var contentType: MediaType?
 
       val streamPrototype: StreamPrototype = engine
         .streamClient()
@@ -93,14 +106,20 @@ class EnvoyMobileTest {
             .message(responseHeaders.httpStatus.toString())
             .receivedResponseAtMillis(currentTimeMillis())
             .headers(headers)
+
+          responseBuilder.body(ResponseBody.create(contentType, -1, bodySource))
+
+          continuation.resume(responseBuilder.build(), onCancellation = {})
+
+        }
+        .setOnResponseTrailers { responseTrailers ->
+            println("Dropping trailers " + responseTrailers.toHeaders())
         }
         .setOnResponseData { data, endStream ->
-          bodyBuffer.write(data)
+          bodySink.write(data)
 
           if (endStream) {
-            responseBuilder.body(ResponseBody.create(contentType, bodyBuffer.size(), bodyBuffer))
-
-            continuation.resume(responseBuilder.build(), onCancellation = {})
+            bodySink.close()
           }
         }
         .setOnError { error ->
@@ -111,7 +130,7 @@ class EnvoyMobileTest {
             )
           )
         }.setOnCancel {
-          continuation.cancel(CancellationException("undelying connection was cancelled"))
+          continuation.cancel(CancellationException("underlying connection was cancelled"))
         }
 
       val stream = streamPrototype
@@ -122,7 +141,7 @@ class EnvoyMobileTest {
     }
 }
 
-private fun ResponseHeaders.toHeaders(): Headers {
+private fun io.envoyproxy.envoymobile.Headers.toHeaders(): Headers {
   val builder = Headers.Builder()
 
   allHeaders().forEach { (key, values) ->
