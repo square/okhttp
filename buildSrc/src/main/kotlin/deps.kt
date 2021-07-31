@@ -40,10 +40,16 @@ object Versions {
 }
 
 object Dependencies {
+  const val kotlinPlugin = "org.jetbrains.kotlin:kotlin-gradle-plugin:${Versions.kotlin}"
+  const val dokkaPlugin = "org.jetbrains.dokka:dokka-gradle-plugin:0.10.1"
+  const val androidPlugin = "com.android.tools.build:gradle:7.0.0"
+  const val androidJunit5Plugin = "de.mannodermaus.gradle.plugins:android-junit5:1.7.1.1"
+  const val graalPlugin = "gradle.plugin.com.palantir.graal:gradle-graal:0.9.0"
+  const val bndPlugin = "biz.aQute.bnd:biz.aQute.bnd.gradle:${Versions.bnd}"
+
   const val android = "org.robolectric:android-all:11-robolectric-6757853"
   const val animalSniffer = "org.codehaus.mojo:animal-sniffer-annotations:${Versions.animalSniffer}"
   const val assertj = "org.assertj:assertj-core:${Versions.assertj}"
-  const val bnd = "biz.aQute.bnd:biz.aQute.bnd.gradle:${Versions.bnd}"
   const val bndResolve = "biz.aQute.bnd:biz.aQute.resolve:${Versions.bnd}"
   const val bouncycastle = "org.bouncycastle:bcprov-jdk15to18:${Versions.bouncycastle}"
   const val bouncycastlepkix = "org.bouncycastle:bcpkix-jdk15to18:${Versions.bouncycastle}"
@@ -87,8 +93,4 @@ object Dependencies {
   const val httpclient5 = "org.apache.httpcomponents.client5:httpclient5:5.0"
   const val nativeImageSvm = "org.graalvm.nativeimage:svm:21.2.0"
   const val jettyClient = "org.eclipse.jetty:jetty-client:9.4.27.v20200227"
-
-  object Kotlin {
-    const val version = "1.5.21"
-  }
 }
