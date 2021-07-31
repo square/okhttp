@@ -20,7 +20,7 @@ object Versions {
   const val bnd = "5.1.2"
   const val bouncycastle = "1.68"
   const val brotli = "0.1.2"
-  const val checkstyle = "8.28"
+  const val checkStyle = "8.28"
   const val conscrypt = "2.5.2"
   const val corretto = "1.3.1"
   const val equinox = "3.16.0"
@@ -94,4 +94,5 @@ object Dependencies {
   const val httpclient5 = "org.apache.httpcomponents.client5:httpclient5:5.0"
   const val nativeImageSvm = "org.graalvm.nativeimage:svm:21.2.0"
   const val jettyClient = "org.eclipse.jetty:jetty-client:9.4.27.v20200227"
+  const val checkStyle = "com.puppycrawl.tools:checkstyle:${Versions.checkStyle}"
 }

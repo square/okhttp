@@ -98,14 +98,14 @@ subprojects { project ->
     checkstyleConfig
   }
   dependencies {
-    checkstyleConfig dependencies.create("com.puppycrawl.tools:checkstyle:${Versions.checkstyle}") {
+    checkstyleConfig dependencies.create(Dependencies.checkStyle) {
       transitive = false
     }
   }
   afterEvaluate {
     checkstyle {
       config = resources.text.fromArchiveEntry(configurations.checkstyleConfig, 'google_checks.xml')
-      toolVersion "${Versions.checkstyle}"
+      toolVersion "${Versions.checkStyle}"
       sourceSets = [project.sourceSets.main]
     }
   }
@@ -165,7 +165,7 @@ subprojects { project ->
     }
   } else if (platform == "conscrypt") {
     dependencies {
-      testRuntimeOnly "org.conscrypt:conscrypt-openjdk-uber:${Versions.conscrypt}"
+      testRuntimeOnly Dependencies.conscryptOpenJdk
     }
   } else if (platform == "openjsse") {
     dependencies {

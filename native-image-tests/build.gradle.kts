@@ -28,7 +28,7 @@ dependencies {
   implementation(Dependencies.junit5Api)
   implementation(Dependencies.junit5JupiterParams)
 
-  implementation(nativeImageSvm)
+  implementation(Dependencies.nativeImageSvm)
 
   compileOnly(Dependencies.jsr305)
 }
