@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("BlockingMethodInNonBlockingContext")
+
 package okhttp.regression.compare
 
 import android.app.Application
@@ -22,9 +24,10 @@ import io.envoyproxy.envoymobile.*
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.IOException
+import java.lang.IllegalArgumentException
 import java.lang.System.currentTimeMillis
+import java.nio.ByteBuffer
 import java.util.concurrent.Executors
-import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.*
 import okhttp3.*
@@ -51,18 +54,25 @@ class EnvoyMobileTest {
       .setLogger { println(it) }
       .build()
 
-    val request = Request.Builder().url("https://quic.aiortc.org/10").build()
     runBlocking {
-      printRequest(engine, request)
+      val getRequest = Request.Builder().url("https://quic.aiortc.org/10").build()
 
-      printRequest(engine, request)
+      printRequest(engine, getRequest)
 
-      printRequest(engine, request)
+      printRequest(engine, getRequest)
+
+      val postRequest = Request.Builder()
+        .url("https://quic.aiortc.org/httpbin/post")
+        .post(RequestBody.create(MediaType.get("application/json"), "{}"))
+        .build()
+      printRequest(engine, postRequest)
     }
   }
 
   private suspend fun printRequest(engine: Engine, request: Request) {
-    val response = makeRequest(engine, request)
+    val response = withContext(Dispatchers.IO) {
+      makeRequest(engine, request)
+    }
 
     println(response)
     println(response.headers())
@@ -81,20 +91,12 @@ class EnvoyMobileTest {
       val bodySink = Okio.buffer(bodyPipe.sink())
       val bodySource = Okio.buffer(bodyPipe.source())
 
-      val requestHeaders = RequestHeadersBuilder(
-        RequestMethod.GET,
-        if (request.isHttps) "https" else "http",
-        request.url().host(),
-        request.url().encodedPath()
-      ).addUpstreamHttpProtocol(if (request.isHttps) UpstreamHttpProtocol.HTTP2 else UpstreamHttpProtocol.HTTP1)
-        .build()
-
       var contentType: MediaType?
 
       val streamPrototype: StreamPrototype = engine
         .streamClient()
         .newStreamPrototype()
-        .setOnResponseHeaders { responseHeaders, _ ->
+        .setOnResponseHeaders { responseHeaders, endStream ->
           val headers = responseHeaders.toHeaders()
 
           contentType = headers.get("content-type")?.let {
@@ -107,7 +109,9 @@ class EnvoyMobileTest {
             .receivedResponseAtMillis(currentTimeMillis())
             .headers(headers)
 
-          responseBuilder.body(ResponseBody.create(contentType, -1, bodySource))
+          if (!endStream) {
+            responseBuilder.body(ResponseBody.create(contentType, -1, bodySource))
+          }
 
           continuation.resume(responseBuilder.build(), onCancellation = {})
         }
@@ -131,13 +135,47 @@ class EnvoyMobileTest {
               error.cause
             )
           )
-        }.setOnCancel {
+        }
+        .setOnCancel {
           continuation.cancel(CancellationException("underlying connection was cancelled"))
         }
 
-      val stream = streamPrototype
-        .start(Executors.newSingleThreadExecutor())
-        .sendHeaders(requestHeaders, true)
+      val body = request.body()
+
+      val requestHeaders = RequestHeadersBuilder(
+        request.envoyMethod,
+        if (request.isHttps) "https" else "http",
+        request.url().host(),
+        request.url().encodedPath()
+      ).apply {
+        request.headers().toMultimap().forEach { (name, values) ->
+          values.forEach { value ->
+            add(name, value)
+          }
+        }
+      }
+
+      val stream = if (body != null) {
+        val requestBodyType = body.contentType()
+        if (requestBodyType != null) {
+          requestHeaders.add("Content-Type", requestBodyType.toString())
+        }
+
+        val stream = streamPrototype
+          .start(Executors.newSingleThreadExecutor())
+          .sendHeaders(requestHeaders.build(), endStream = false)
+
+        // TODO loop in chunks
+        val buffer = Buffer()
+        body.writeTo(buffer)
+        stream.close(ByteBuffer.wrap(buffer.readByteArray()))
+
+        stream
+      } else {
+        streamPrototype
+          .start(Executors.newSingleThreadExecutor())
+          .sendHeaders(requestHeaders.build(), endStream = true)
+      }
 
       continuation.invokeOnCancellation { stream.cancel() }
     }
@@ -154,3 +192,15 @@ private fun io.envoyproxy.envoymobile.Headers.toHeaders(): Headers {
 
   return builder.build()
 }
+
+private val Request.envoyMethod: RequestMethod
+  get() {
+    @Suppress("BlockingMethodInNonBlockingContext")
+    return when (this.method()) {
+      "GET" -> RequestMethod.GET
+      "POST" -> RequestMethod.POST
+      "PUT" -> RequestMethod.PUT
+      "DELETE" -> RequestMethod.DELETE
+      else -> throw IllegalArgumentException("Unsupported method ${method()}")
+    }
+  }
