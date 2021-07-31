@@ -1,11 +1,12 @@
 buildscript {
   dependencies {
-    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.21"
-    classpath "org.jetbrains.dokka:dokka-gradle-plugin:0.10.1"
-    classpath "com.android.tools.build:gradle:7.0.0"
-    classpath "de.mannodermaus.gradle.plugins:android-junit5:1.7.1.1"
-    classpath "gradle.plugin.com.palantir.graal:gradle-graal:0.9.0"
-    classpath Dependencies.bnd
+    classpath Dependencies.kotlinPlugin
+    classpath Dependencies.dokkaPlugin
+    classpath Dependencies.androidPlugin
+    classpath Dependencies.androidJunit5Plugin
+    classpath Dependencies.graalPlugin
+    classpath Dependencies.bndPlugin
+    classpath Dependencies.shadowPlugin
   }
 
   repositories {
@@ -17,7 +18,6 @@ buildscript {
 
 plugins {
   id "ru.vyarus.animalsniffer" version "1.5.3"
-  id "com.github.johnrengelman.shadow" version "5.2.0"
   id "me.champeau.gradle.japicmp" version "0.2.9"
   id "com.diffplug.spotless" version "5.1.2"
   id "net.ltgt.errorprone" version "1.2.1"
@@ -98,14 +98,14 @@ subprojects { project ->
     checkstyleConfig
   }
   dependencies {
-    checkstyleConfig dependencies.create("com.puppycrawl.tools:checkstyle:${Versions.checkstyle}") {
+    checkstyleConfig dependencies.create(Dependencies.checkStyle) {
       transitive = false
     }
   }
   afterEvaluate {
     checkstyle {
       config = resources.text.fromArchiveEntry(configurations.checkstyleConfig, 'google_checks.xml')
-      toolVersion "${Versions.checkstyle}"
+      toolVersion "${Versions.checkStyle}"
       sourceSets = [project.sourceSets.main]
     }
   }
@@ -165,7 +165,7 @@ subprojects { project ->
     }
   } else if (platform == "conscrypt") {
     dependencies {
-      testRuntimeOnly "org.conscrypt:conscrypt-openjdk-uber:${Versions.conscrypt}"
+      testRuntimeOnly Dependencies.conscrypt
     }
   } else if (platform == "openjsse") {
     dependencies {
