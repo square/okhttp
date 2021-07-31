@@ -4,6 +4,7 @@ buildscript {
     classpath "org.jetbrains.dokka:dokka-gradle-plugin:0.10.1"
     classpath "com.android.tools.build:gradle:7.0.0"
     classpath "de.mannodermaus.gradle.plugins:android-junit5:1.7.1.1"
+    classpath "gradle.plugin.com.palantir.graal:gradle-graal:0.9.0"
     classpath Dependencies.bnd
   }
 
