@@ -42,8 +42,8 @@ dependencies {
   implementation(Dependencies.picocli)
   implementation(Dependencies.guava)
 
-  implementation("info.picocli:picocli-codegen:4.5.2")
-  annotationProcessor("info.picocli:picocli-codegen:4.5.2")
+  implementation(Dependencies.picocliCompiler)
+  annotationProcessor(Dependencies.picocliCompiler)
 
   testImplementation(project(":okhttp-testing-support"))
   testImplementation(Dependencies.junit5Api)

@@ -71,6 +71,7 @@ object Dependencies {
   const val kotlinStdlib = "org.jetbrains.kotlin:kotlin-stdlib:${Versions.kotlin}"
   const val kotlinReflect = "org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}"
   const val kotlinStdlibOsgi = "org.jetbrains.kotlin:kotlin-osgi-bundle:${Versions.kotlin}"
+  const val kotlinJunit5 = "org.jetbrains.kotlin:kotlin-test-junit5:${Versions.kotlin}"
   const val moshi = "com.squareup.moshi:moshi:${Versions.moshi}"
   const val moshiKotlin = "com.squareup.moshi:moshi-kotlin:${Versions.moshi}"
   const val moshiCompiler = "com.squareup.moshi:moshi-kotlin-codegen:${Versions.moshi}"
@@ -78,11 +79,14 @@ object Dependencies {
   const val okioFakeFileSystem = "com.squareup.okio:okio-fakefilesystem:${Versions.okio}"
   const val openjsse = "org.openjsse:openjsse:${Versions.openjsse}"
   const val picocli = "info.picocli:picocli:${Versions.picocli}"
+  const val picocliCompiler = "info.picocli:picocli-codegen:${Versions.picocli}"
   const val playServicesSafetynet = "com.google.android.gms:play-services-safetynet:17.0.1"
   const val androidxExtJunit = "androidx.test.ext:junit:1.1.3"
   const val androidxEspressoCore = "androidx.test.espresso:espresso-core:3.4.0"
   const val androidxTestRunner = "androidx.test:runner:1.4.0"
   const val httpclient5 = "org.apache.httpcomponents.client5:httpclient5:5.0"
+  const val nativeImageSvm = "org.graalvm.nativeimage:svm:21.2.0"
+  const val jettyClient = "org.eclipse.jetty:jetty-client:9.4.27.v20200227"
 
   object Kotlin {
     const val version = "1.5.21"

@@ -4,8 +4,8 @@ dependencies {
   testRuntimeOnly(project(":mockwebserver-junit5"))
   testImplementation(project(":okhttp-tls"))
   testImplementation(project(":okhttp-testing-support"))
-  testImplementation("org.apache.httpcomponents.client5:httpclient5:5.0")
-  testImplementation("org.eclipse.jetty:jetty-client:9.4.27.v20200227")
+  testImplementation(Dependencies.httpclient5)
+  testImplementation(Dependencies.jettyClient)
   testImplementation(Dependencies.junit)
   testImplementation(Dependencies.assertj)
 }

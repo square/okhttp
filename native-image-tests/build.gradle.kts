@@ -28,7 +28,7 @@ dependencies {
   implementation(Dependencies.junit5Api)
   implementation(Dependencies.junit5JupiterParams)
 
-  implementation("org.graalvm.nativeimage:svm:21.2.0")
+  implementation(nativeImageSvm)
 
   compileOnly(Dependencies.jsr305)
 }
