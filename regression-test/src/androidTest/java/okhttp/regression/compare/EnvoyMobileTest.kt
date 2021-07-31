@@ -13,28 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:Suppress("BlockingMethodInNonBlockingContext")
 
 package okhttp.regression.compare
 
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.envoyproxy.envoymobile.*
+import io.envoyproxy.envoymobile.AndroidEngineBuilder
+import io.envoyproxy.envoymobile.Engine
+import io.envoyproxy.envoymobile.LogLevel
+import io.envoyproxy.envoymobile.Standard
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import okhttp3.*
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.io.IOException
-import java.lang.IllegalArgumentException
-import java.lang.System.currentTimeMillis
-import java.nio.ByteBuffer
-import java.util.concurrent.Executors
-import kotlin.coroutines.resumeWithException
-import kotlinx.coroutines.*
-import okhttp3.*
-import okhttp3.Headers
-import okio.Buffer
-import okio.Okio
-import okio.Pipe
 
 /**
  * Envoy Mobile.
@@ -43,164 +39,84 @@ import okio.Pipe
  */
 @RunWith(AndroidJUnit4::class)
 class EnvoyMobileTest {
-  @Test
-  fun get() {
+  private lateinit var engine: Engine
 
+  @Before
+  fun setup() {
     val application = ApplicationProvider.getApplicationContext<Application>()
 
-    val engine = AndroidEngineBuilder(application, baseConfiguration = Standard())
+    engine = AndroidEngineBuilder(application, baseConfiguration = Standard())
       .addLogLevel(LogLevel.TRACE)
       .setOnEngineRunning { println("Envoy async internal setup completed") }
       .setLogger { println(it) }
       .build()
+  }
 
+  @After
+  fun teardown() {
+    engine.terminate()
+  }
+
+  @Test
+  fun get() {
     runBlocking {
       val getRequest = Request.Builder().url("https://quic.aiortc.org/10").build()
 
-      printRequest(engine, getRequest)
+      val response = withContext(Dispatchers.IO) {
+        makeRequest(engine, getRequest)
+      }
+      printResponse(response)
 
-      printRequest(engine, getRequest)
+      val response1 = withContext(Dispatchers.IO) {
+        makeRequest(engine, getRequest)
+      }
+      printResponse(response1)
 
       val postRequest = Request.Builder()
         .url("https://quic.aiortc.org/httpbin/post")
         .post(RequestBody.create(MediaType.get("application/json"), "{}"))
         .build()
-      printRequest(engine, postRequest)
+      val response2 = withContext(Dispatchers.IO) {
+        makeRequest(engine, postRequest)
+      }
+      printResponse(response2)
     }
   }
 
-  private suspend fun printRequest(engine: Engine, request: Request) {
-    val response = withContext(Dispatchers.IO) {
-      makeRequest(engine, request)
-    }
+  @Test
+  fun getInterceptor() {
+    val client = OkHttpClient.Builder()
+      .addInterceptor(EnvoyInterceptor(engine))
+      .build()
 
+    runBlocking {
+      val getRequest = Request.Builder().url("https://quic.aiortc.org/10").build()
+
+      val response = withContext(Dispatchers.IO) {
+        client.newCall(getRequest).execute()
+      }
+      printResponse(response)
+
+      val response1 = withContext(Dispatchers.IO) {
+        client.newCall(getRequest).execute()
+      }
+      printResponse(response1)
+
+      val postRequest = Request.Builder()
+        .url("https://quic.aiortc.org/httpbin/post")
+        .post(RequestBody.create(MediaType.get("application/json"), "{}"))
+        .build()
+      val response2 = withContext(Dispatchers.IO) {
+        client.newCall(postRequest).execute()
+      }
+      printResponse(response2)
+    }
+  }
+
+  private fun printResponse(response: Response) {
     println(response)
     println(response.headers())
     println(response.body()?.contentType())
     println(response.body()?.string())
   }
-
-  private suspend fun makeRequest(engine: Engine, request: Request) =
-    suspendCancellableCoroutine<Response> { continuation ->
-      val responseBuilder = Response.Builder()
-        .request(request)
-        .protocol(if (request.isHttps) Protocol.QUIC else Protocol.HTTP_1_1)
-        .sentRequestAtMillis(currentTimeMillis())
-
-      val bodyPipe = Pipe(1024L * 1024L)
-      val bodySink = Okio.buffer(bodyPipe.sink())
-      val bodySource = Okio.buffer(bodyPipe.source())
-
-      var contentType: MediaType?
-
-      val streamPrototype: StreamPrototype = engine
-        .streamClient()
-        .newStreamPrototype()
-        .setOnResponseHeaders { responseHeaders, endStream ->
-          val headers = responseHeaders.toHeaders()
-
-          contentType = headers.get("content-type")?.let {
-            MediaType.parse(it)
-          }
-
-          responseBuilder
-            .code(responseHeaders.httpStatus ?: 0)
-            .message(responseHeaders.httpStatus.toString())
-            .receivedResponseAtMillis(currentTimeMillis())
-            .headers(headers)
-
-          if (!endStream) {
-            responseBuilder.body(ResponseBody.create(contentType, -1, bodySource))
-          }
-
-          continuation.resume(responseBuilder.build(), onCancellation = {})
-        }
-        .setOnResponseTrailers { responseTrailers ->
-            println("Dropping trailers " + responseTrailers.toHeaders())
-        }
-        .setOnResponseData { data, endStream ->
-          bodySink.write(data)
-
-          if (endStream) {
-            bodySink.close()
-          }
-        }
-        .setOnError { error ->
-          // TODO how to signal error correctly?
-          bodySource.close()
-
-          continuation.resumeWithException(
-            IOException(
-              "${error.errorCode}: ${error.message}",
-              error.cause
-            )
-          )
-        }
-        .setOnCancel {
-          continuation.cancel(CancellationException("underlying connection was cancelled"))
-        }
-
-      val body = request.body()
-
-      val requestHeaders = RequestHeadersBuilder(
-        request.envoyMethod,
-        if (request.isHttps) "https" else "http",
-        request.url().host(),
-        request.url().encodedPath()
-      ).apply {
-        request.headers().toMultimap().forEach { (name, values) ->
-          values.forEach { value ->
-            add(name, value)
-          }
-        }
-      }
-
-      val stream = if (body != null) {
-        val requestBodyType = body.contentType()
-        if (requestBodyType != null) {
-          requestHeaders.add("Content-Type", requestBodyType.toString())
-        }
-
-        val stream = streamPrototype
-          .start(Executors.newSingleThreadExecutor())
-          .sendHeaders(requestHeaders.build(), endStream = false)
-
-        // TODO loop in chunks
-        val buffer = Buffer()
-        body.writeTo(buffer)
-        stream.close(ByteBuffer.wrap(buffer.readByteArray()))
-
-        stream
-      } else {
-        streamPrototype
-          .start(Executors.newSingleThreadExecutor())
-          .sendHeaders(requestHeaders.build(), endStream = true)
-      }
-
-      continuation.invokeOnCancellation { stream.cancel() }
-    }
 }
-
-private fun io.envoyproxy.envoymobile.Headers.toHeaders(): Headers {
-  val builder = Headers.Builder()
-
-  allHeaders().forEach { (key, values) ->
-    values.forEach { value ->
-      builder.add(key, value)
-    }
-  }
-
-  return builder.build()
-}
-
-private val Request.envoyMethod: RequestMethod
-  get() {
-    @Suppress("BlockingMethodInNonBlockingContext")
-    return when (this.method()) {
-      "GET" -> RequestMethod.GET
-      "POST" -> RequestMethod.POST
-      "PUT" -> RequestMethod.PUT
-      "DELETE" -> RequestMethod.DELETE
-      else -> throw IllegalArgumentException("Unsupported method ${method()}")
-    }
-  }
