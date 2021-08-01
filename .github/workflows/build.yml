@@ -349,6 +349,6 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
-          script: ./gradlew -PandroidBuild :regression-test:connectedCheck
+          script: ./gradlew -PandroidBuild -Pandroid.experimental.androidTest.useUnifiedTestPlatform=true :regression-test:pixel2api29Check
         env:
           API_LEVEL: ${{ matrix.api-level }}

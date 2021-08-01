@@ -30,6 +30,17 @@ android {
   packagingOptions.resources.excludes += setOf(
     "META-INF/DEPENDENCIES"
   )
+
+  testOptions {
+    devices {
+      create<com.android.build.api.dsl.ManagedVirtualDevice>("pixel2api29") {
+        device = "Pixel 2"
+        apiLevel = 29
+        systemImageSource = "google"
+        abi = "x86"
+      }
+    }
+  }
 }
 
 
