@@ -3,6 +3,7 @@ import java.nio.charset.StandardCharsets
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
+  kotlin("kapt")
   id("com.palantir.graal")
   id("com.github.johnrengelman.shadow")
 }
@@ -36,14 +37,19 @@ tasks.getByName<Jar>("sourcesJar") {
   dependsOn("copyResourcesTemplates")
 }
 
+kapt {
+  arguments {
+    arg("project", "${project.group}/${project.name}")
+  }
+}
+
 dependencies {
   api(project(":okhttp"))
   api(project(":okhttp-logging-interceptor"))
   implementation(Dependencies.picocli)
   implementation(Dependencies.guava)
 
-  implementation(Dependencies.picocliCompiler)
-  annotationProcessor(Dependencies.picocliCompiler)
+  kapt(Dependencies.picocliCompiler)
 
   testImplementation(project(":okhttp-testing-support"))
   testImplementation(Dependencies.junit5Api)
