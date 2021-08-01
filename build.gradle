@@ -19,7 +19,7 @@ buildscript {
 plugins {
   id "ru.vyarus.animalsniffer" version "1.5.3"
   id "me.champeau.gradle.japicmp" version "0.2.9"
-  id "com.diffplug.spotless" version "5.1.2"
+  id "com.diffplug.spotless" version "5.14.2"
   id "net.ltgt.errorprone" version "1.2.1"
 }
 
