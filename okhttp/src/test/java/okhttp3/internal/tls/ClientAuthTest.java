@@ -43,7 +43,6 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.internal.http2.ConnectionShutdownException;
 import okhttp3.testing.PlatformRule;
-import okhttp3.testing.PlatformVersion;
 import okhttp3.tls.HandshakeCertificates;
 import okhttp3.tls.HeldCertificate;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,8 +52,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static java.util.Arrays.asList;
-import static okhttp3.testing.PlatformRule.JDK9_PROPERTY;
-import static okhttp3.testing.PlatformRule.getPlatformSystemProperty;
 import static okhttp3.tls.internal.TlsUtil.newKeyManager;
 import static okhttp3.tls.internal.TlsUtil.newTrustManager;
 import static org.assertj.core.api.Assertions.assertThat;
