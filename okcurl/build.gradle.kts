@@ -37,12 +37,6 @@ tasks.getByName<Jar>("sourcesJar") {
   dependsOn("copyResourcesTemplates")
 }
 
-kapt {
-  arguments {
-    arg("project", "${project.group}/${project.name}")
-  }
-}
-
 dependencies {
   api(project(":okhttp"))
   api(project(":okhttp-logging-interceptor"))
