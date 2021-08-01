@@ -53,6 +53,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static java.util.Arrays.asList;
+import static okhttp3.testing.PlatformRule.JDK9_PROPERTY;
 import static okhttp3.testing.PlatformRule.getPlatformSystemProperty;
 import static okhttp3.tls.internal.TlsUtil.newKeyManager;
 import static okhttp3.tls.internal.TlsUtil.newTrustManager;
@@ -210,10 +211,11 @@ public final class ClientAuthTest {
       call.execute();
       fail();
     } catch (SSLHandshakeException expected) {
+      // JDK 11+
     } catch (SSLException expected) {
+      // javax.net.ssl.SSLException: readRecord
     } catch (SocketException expected) {
-      assertThat(getPlatformSystemProperty()).isIn(PlatformRule.JDK9_PROPERTY,
-          PlatformRule.CONSCRYPT_PROPERTY);
+      // Conscrypt, JDK 8 (>= 292), JDK 9
     } catch (IOException expected) {
       assertThat(expected.getMessage()).isEqualTo("exhausted all routes");
     }
@@ -265,11 +267,11 @@ public final class ClientAuthTest {
       call.execute();
       fail();
     } catch (SSLHandshakeException expected) {
+      // JDK 11+
     } catch (SSLException expected) {
       // javax.net.ssl.SSLException: readRecord
     } catch (SocketException expected) {
-      assertThat(getPlatformSystemProperty()).isIn(PlatformRule.JDK9_PROPERTY,
-          PlatformRule.CONSCRYPT_PROPERTY);
+      // Conscrypt, JDK 8 (>= 292), JDK 9
     } catch (ConnectionShutdownException expected) {
       // It didn't fail until it reached the application layer.
     } catch (IOException expected) {
