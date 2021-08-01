@@ -247,13 +247,12 @@ class CancelTest {
 
     assertThat(events).startsWith("CallStart", "ConnectStart", "ConnectEnd", "ConnectionAcquired")
     if (cancelMode == CANCEL) {
-      // Flaky https://github.com/square/okhttp/issues/6033
-      // assertThat(events).contains("Canceled")
+       assertThat(events).contains("Canceled")
     } else {
       assertThat(events).doesNotContain("Canceled")
     }
     assertThat(events).contains("ResponseFailed")
-    assertThat(events).endsWith("ConnectionReleased")
+    assertThat(events).contains("ConnectionReleased")
 
     val call2 = client.newCall(Request.Builder().url(server.url("/")).build())
     call2.execute().use {
