@@ -73,6 +73,7 @@ jobs:
         run: ./gradlew test -Dtest.java.version=11
 
       - name: Publish Test Report
+        if: success() || failure()
         uses: mikepenz/action-junit-report@v2
         with:
           report_paths: '**/build/test-results/test/TEST-*.xml'
