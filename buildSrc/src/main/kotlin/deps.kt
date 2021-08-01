@@ -48,7 +48,7 @@ object Dependencies {
   const val conscryptAndroid = "org.conscrypt:conscrypt-android:${Versions.conscrypt}"
   const val corretto = "software.amazon.cryptools:AmazonCorrettoCryptoProvider:1.6.1:linux-x86_64"
   const val equinox = "org.eclipse.platform:org.eclipse.osgi:3.16.300"
-  const val guava = "com.google.guava:guava:28.2-jre"
+  const val guava = "com.google.guava:guava:30.1.1-jre"
   const val hamcrest = "org.hamcrest:hamcrest-library:2.2"
   const val jnrUnixsocket = "com.github.jnr:jnr-unixsocket:0.38.8"
   const val jsoup = "org.jsoup:jsoup:1.13.1"
