@@ -3,6 +3,7 @@ import java.nio.charset.StandardCharsets
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
+  kotlin("kapt")
   id("com.palantir.graal")
   id("com.github.johnrengelman.shadow")
 }
@@ -42,8 +43,7 @@ dependencies {
   implementation(Dependencies.picocli)
   implementation(Dependencies.guava)
 
-  implementation(Dependencies.picocliCompiler)
-  annotationProcessor(Dependencies.picocliCompiler)
+  kapt(Dependencies.picocliCompiler)
 
   testImplementation(project(":okhttp-testing-support"))
   testImplementation(Dependencies.junit5Api)
