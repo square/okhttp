@@ -1,3 +1,5 @@
+import com.android.build.api.dsl.ManagedVirtualDevice
+
 plugins {
   id("com.android.library")
   kotlin("android")
@@ -33,7 +35,7 @@ android {
 
   testOptions {
     devices {
-      create<com.android.build.api.dsl.ManagedVirtualDevice>("pixel2api29") {
+      create<ManagedVirtualDevice>("pixel2api29") {
         device = "Pixel 2"
         apiLevel = 29
         systemImageSource = "google"
