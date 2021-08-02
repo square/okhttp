@@ -35,11 +35,3 @@ include(":samples:simple-client")
 include(":samples:slack")
 include(":samples:static-server")
 include(":samples:unixdomainsockets")
-
-dependencyResolutionManagement {
-    repositories {
-        mavenCentral()
-        maven(url = "https://dl.bintray.com/kotlin/dokka")
-        google()
-    }
-}
