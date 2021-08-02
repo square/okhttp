@@ -456,7 +456,7 @@ public final class MockWebServerTest {
 
     HttpUrl requestUrl = request.getRequestUrl();
     assertThat(requestUrl.scheme()).isEqualTo("http");
-    assertThat(requestUrl.host()).isEqualTo(server.getHostName());
+    assertThat(requestUrl.host()).isEqualToIgnoringCase(server.getHostName());
     assertThat(requestUrl.port()).isEqualTo(server.getPort());
     assertThat(requestUrl.encodedPath()).isEqualTo("/a/deep/path");
     assertThat(requestUrl.queryParameter("key")).isEqualTo("foo bar");
