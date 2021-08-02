@@ -72,9 +72,15 @@ jobs:
       - name: Run Checks
         run: ./gradlew test -Dtest.java.version=11
 
+      - name: Publish Test Report
+        if: success() || failure()
+        uses: mikepenz/action-junit-report@v2
+        with:
+          report_paths: '**/build/test-results/test/TEST-*.xml'
+
   testzulu11:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'zulu')
+    if: contains(github.event.pull_request.labels.*.name, 'zulu')
 
     steps:
       - name: Checkout
@@ -140,7 +146,7 @@ jobs:
 
   testopenjsse:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'openjsse')
+    if: contains(github.event.pull_request.labels.*.name, 'providers')
 
     steps:
       - name: Checkout
@@ -160,7 +166,7 @@ jobs:
 
   testconscrypt:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'conscrypt')
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'providers')
 
     steps:
       - name: Checkout
@@ -180,7 +186,7 @@ jobs:
 
   testbouncycastle:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'bouncycastle')
+    if: contains(github.event.pull_request.labels.*.name, 'providers')
 
     steps:
       - name: Checkout
@@ -200,7 +206,8 @@ jobs:
 
   testcorretto:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
+    # TODO add master build after fixing all tests in CI
+    if: contains(github.event.pull_request.labels.*.name, 'providers')
 
     steps:
       - name: Checkout
@@ -240,7 +247,8 @@ jobs:
 
   testwindows:
     runs-on: windows-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'windows')
+    # TODO add master build after fixing all tests in CI
+    if: contains(github.event.pull_request.labels.*.name, 'windows')
 
     steps:
       - name: Checkout
@@ -261,8 +269,7 @@ jobs:
 
   testgraal:
     runs-on: ubuntu-latest
-    # TODO revert after fixing all tests in CI
-    # if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'graal')
+    # TODO add master build after fixing all tests in CI
     if: contains(github.event.pull_request.labels.*.name, 'graal')
 
     steps:
