@@ -156,7 +156,12 @@ class MockWebServer : Closeable {
   val hostName: String
     get() {
       before()
-      return inetSocketAddress!!.address.quickHostname()
+
+      val address = inetSocketAddress!!.address
+      return if (address.isLoopbackAddress)
+        "localhost"
+      else
+        address.quickHostname()
     }
 
   private var inetSocketAddress: InetSocketAddress? = null
