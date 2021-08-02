@@ -19,8 +19,8 @@ buildscript {
 plugins {
   id "ru.vyarus.animalsniffer" version "1.5.3"
   id "me.champeau.gradle.japicmp" version "0.2.9"
-  id "com.diffplug.spotless" version "5.1.2"
-  id "net.ltgt.errorprone" version "1.2.1"
+  id "com.diffplug.spotless" version "5.14.2"
+  id "net.ltgt.errorprone" version "2.0.2"
 }
 
 allprojects {
@@ -30,9 +30,8 @@ allprojects {
 
   repositories {
     mavenCentral()
-    maven { url 'https://dl.bintray.com/kotlin/dokka' }
-    maven { url 'https://kotlin.bintray.com/kotlinx/' }
     google()
+    maven { url 'https://dl.bintray.com/kotlin/dokka' }
   }
 
   task downloadDependencies() {
