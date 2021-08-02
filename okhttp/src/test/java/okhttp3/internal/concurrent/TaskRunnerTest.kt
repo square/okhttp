@@ -23,9 +23,10 @@ import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.fail
 
 class TaskRunnerTest {
-  @RegisterExtension @JvmField val testLogHandler = TestLogHandler(TaskRunner::class.java)
-
   private val taskFaker = TaskFaker()
+
+  @RegisterExtension @JvmField val testLogHandler = TestLogHandler(taskFaker.logger)
+
   private val taskRunner = taskFaker.taskRunner
   private val log = mutableListOf<String>()
   private val redQueue = taskRunner.newQueue()
