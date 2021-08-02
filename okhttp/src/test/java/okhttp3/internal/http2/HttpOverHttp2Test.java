@@ -22,6 +22,7 @@ import java.net.Authenticator;
 import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -1797,21 +1798,32 @@ public final class HttpOverHttp2Test {
         .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
         .setBody("DEF"));
 
+    CountDownLatch latch = new CountDownLatch(2);
+    ArrayList<IOException> errors = new ArrayList<IOException>();
+
     BlockingQueue<String> bodies = new LinkedBlockingQueue<>();
     Callback callback = new Callback() {
       @Override public void onResponse(Call call, Response response) throws IOException {
         bodies.add(response.body().string());
+        latch.countDown();
       }
 
       @Override public void onFailure(Call call, IOException e) {
-        System.out.println(e);
+        errors.add(e);
+        latch.countDown();
       }
     };
     client.newCall(new Request.Builder().url(server.url("/")).build()).enqueue(callback);
     client.newCall(new Request.Builder().url(server.url("/")).build()).enqueue(callback);
 
-    assertThat(bodies.poll(3, SECONDS)).isEqualTo("DEF");
-    assertThat(bodies.poll(3, SECONDS)).isEqualTo("ABC");
+    latch.await();
+
+    if (!errors.isEmpty()) {
+      throw errors.get(0);
+    }
+
+    assertThat(bodies.remove()).isEqualTo("DEF");
+    assertThat(bodies.remove()).isEqualTo("ABC");
     assertThat(server.getRequestCount()).isEqualTo(2);
   }
 
