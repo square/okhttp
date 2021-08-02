@@ -18,10 +18,12 @@ package okhttp3.internal.http2;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.net.Authenticator;
 import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -73,6 +75,8 @@ import okio.Buffer;
 import okio.BufferedSink;
 import okio.GzipSink;
 import okio.Okio;
+
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
@@ -1789,30 +1793,46 @@ public final class HttpOverHttp2Test {
   public void responseHeadersAfterGoaway(
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
-    // Flaky https://github.com/square/okhttp/issues/4836
     server.enqueue(new MockResponse()
-        .setHeadersDelay(1, SECONDS)
-        .setBody("ABC"));
+      .setHeadersDelay(1, SECONDS)
+      .setBody("ABC"));
     server.enqueue(new MockResponse()
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
-        .setBody("DEF"));
+      .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
+      .setBody("DEF"));
+
+    CountDownLatch latch = new CountDownLatch(2);
+    ArrayList<IOException> errors = new ArrayList<>();
 
     BlockingQueue<String> bodies = new LinkedBlockingQueue<>();
     Callback callback = new Callback() {
       @Override public void onResponse(Call call, Response response) throws IOException {
         bodies.add(response.body().string());
+        latch.countDown();
       }
 
       @Override public void onFailure(Call call, IOException e) {
-        System.out.println(e);
+        errors.add(e);
+        latch.countDown();
       }
     };
     client.newCall(new Request.Builder().url(server.url("/")).build()).enqueue(callback);
     client.newCall(new Request.Builder().url(server.url("/")).build()).enqueue(callback);
 
-    assertThat(bodies.poll(3, SECONDS)).isEqualTo("DEF");
-    assertThat(bodies.poll(3, SECONDS)).isEqualTo("ABC");
-    assertThat(server.getRequestCount()).isEqualTo(2);
+    latch.await();
+
+    assertThat(bodies.remove()).isEqualTo("DEF");
+
+    if (errors.isEmpty()) {
+      assertThat(bodies.remove()).isEqualTo("ABC");
+      assertThat(server.getRequestCount()).isEqualTo(2);
+    } else {
+      // https://github.com/square/okhttp/issues/4836
+      // As documented in SocketPolicy, this is known to be flaky.
+      IOException error = errors.get(0);
+      if (!(error instanceof StreamResetException)) {
+        throw error;
+      }
+    }
   }
 
   /**
