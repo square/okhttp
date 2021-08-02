@@ -61,6 +61,7 @@ import mockwebserver3.SocketPolicy.SHUTDOWN_SERVER_AFTER_RESPONSE
 import mockwebserver3.SocketPolicy.STALL_SOCKET_AT_START
 import mockwebserver3.SocketPolicy.UPGRADE_TO_SSL_AT_END
 import mockwebserver3.internal.duplex.DuplexResponseBody
+import mockwebserver3.internal.util.quickHostname
 import okhttp3.Headers
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.HttpUrl
@@ -155,7 +156,7 @@ class MockWebServer : Closeable {
   val hostName: String
     get() {
       before()
-      return inetSocketAddress!!.address.canonicalHostName
+      return inetSocketAddress!!.address.quickHostname()
     }
 
   private var inetSocketAddress: InetSocketAddress? = null
