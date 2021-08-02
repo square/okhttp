@@ -23,11 +23,11 @@ import java.net.InetAddress
  * assume 127.0.0.1 is localhost and square bracket encode IPv6 addresses.
  */
 fun InetAddress.quickHostname(): String {
-  if (isLoopbackAddress) {
-    return "localhost"
-  }
+//  if (isLoopbackAddress) {
+//    return "localhost"
+//  }
 
-  var hostname = hostName
+  var hostname = this.hostName
 
   if (this is Inet6Address && hostname.contains(':')) {
     // hostname is likely some form representing the IPv6 bytes
@@ -37,5 +37,5 @@ fun InetAddress.quickHostname(): String {
     hostname = "[$hostname]"
   }
 
-  return hostname
+  return hostname.lowercase()
 }
