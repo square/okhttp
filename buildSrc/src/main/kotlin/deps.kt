@@ -79,6 +79,6 @@ object Dependencies {
   const val androidxTestRunner = "androidx.test:runner:1.4.0"
   const val httpclient5 = "org.apache.httpcomponents.client5:httpclient5:5.0"
   const val nativeImageSvm = "org.graalvm.nativeimage:svm:21.2.0"
-  const val jettyClient = "org.eclipse.jetty:jetty-client:11.0.6"
+  const val jettyClient = "org.eclipse.jetty:jetty-client:9.4.27.v20200227"
   const val checkStyle = "com.puppycrawl.tools:checkstyle:${Versions.checkStyle}"
 }
