@@ -38,6 +38,7 @@ import okhttp3.RecordingHostnameVerifier;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.internal.platform.Platform;
+import okhttp3.testing.Flaky;
 import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okhttp3.tls.HeldCertificate;
@@ -102,23 +103,12 @@ public final class CertificatePinnerChainValidationTest {
 
     // The request should complete successfully.
     server.enqueue(new MockResponse()
-        .setBody("abc")
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END));
+        .setBody("abc"));
     Call call1 = client.newCall(new Request.Builder()
         .url(server.url("/"))
         .build());
     Response response1 = call1.execute();
     assertThat(response1.body().string()).isEqualTo("abc");
-
-    // Confirm that a second request also succeeds. This should detect caching problems.
-    server.enqueue(new MockResponse()
-        .setBody("def")
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END));
-    Call call2 = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
-    Response response2 = call2.execute();
-    assertThat(response2.body().string()).isEqualTo("def");
   }
 
   /** The pinner should accept an intermediate from the server's chain. */

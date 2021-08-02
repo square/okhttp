@@ -57,6 +57,10 @@ public final class TestLogHandler implements TestRule, BeforeEachCallback, After
     logger = Logger.getLogger(loggerName.getName());
   }
 
+  public TestLogHandler(Logger logger) {
+    this.logger = logger;
+  }
+
   @Override public void beforeEach(ExtensionContext context) {
     previousLevel = logger.getLevel();
     logger.addHandler(handler);
