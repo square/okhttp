@@ -13,7 +13,7 @@ env:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
+#    if: github.ref == 'refs/heads/master'
 
     steps:
       - name: Checkout
@@ -29,7 +29,7 @@ jobs:
           java-version: 11
 
       - name: Upload Artifacts
-        run: ./gradlew uploadArchives
+        run: ./gradlew publishToMavenLocal
         env:
           ORG_GRADLE_PROJECT_SONATYPE_NEXUS_USERNAME: ${{ secrets.SONATYPE_NEXUS_USERNAME }}
           ORG_GRADLE_PROJECT_SONATYPE_NEXUS_PASSWORD: ${{ secrets.SONATYPE_NEXUS_PASSWORD }}
