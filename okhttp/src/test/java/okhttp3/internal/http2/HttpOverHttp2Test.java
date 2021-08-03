@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.net.Authenticator;
 import java.net.HttpURLConnection;
+import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -35,6 +36,7 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
+import javax.net.SocketFactory;
 import javax.net.ssl.SSLException;
 import mockwebserver3.Dispatcher;
 import mockwebserver3.MockResponse;
@@ -49,6 +51,7 @@ import okhttp3.Callback;
 import okhttp3.Connection;
 import okhttp3.Cookie;
 import okhttp3.Credentials;
+import okhttp3.DelegatingSocketFactory;
 import okhttp3.EventListener;
 import okhttp3.Headers;
 import okhttp3.Interceptor;
@@ -1723,14 +1726,35 @@ public final class HttpOverHttp2Test {
         .setBody("ABC"));
     server.enqueue(new MockResponse()
         .setBody("DEF"));
+    // Enqueue an additional response that show if we burnt a good prior response.
+    server.enqueue(new MockResponse()
+      .setBody("XXX"));
 
-    Call call1 = client.newCall(new Request.Builder()
+    List<RealConnection> connections = new ArrayList<>();
+
+    OkHttpClient localClient = client.newBuilder().eventListener(new EventListener() {
+      @Override
+      public void connectionAcquired(@NotNull Call call, @NotNull Connection connection) {
+        connections.add((RealConnection) connection);
+      }
+    }).build();
+
+    Call call1 = localClient.newCall(new Request.Builder()
         .url(server.url("/"))
         .build());
     Response response1 = call1.execute();
     assertThat(response1.body().string()).isEqualTo("ABC");
 
-    Call call2 = client.newCall(new Request.Builder()
+    // Add delays for DISCONNECT_AT_END to propogate
+    RealConnection call1Connection = connections.get(0);
+    if (call1Connection.isHealthy(false)) {
+      Thread.sleep(100L);
+    }
+    if (call1Connection.isHealthy(false)) {
+      Thread.sleep(2000L);
+    }
+
+    Call call2 = localClient.newCall(new Request.Builder()
         .url(server.url("/"))
         .build());
     Response response2 = call2.execute();
