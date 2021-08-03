@@ -30,16 +30,16 @@ fun buildCache(file: Path, maxSize: Long, fileSystem: FileSystem): Cache {
   return Cache(file, maxSize, fileSystem)
 }
 
-var RealConnection.idleAtNsAccessor
+var RealConnection.idleAtNsAccessor: Long
   get() = idleAtNs
   set(value) {
     idleAtNs = value
   }
 
-val Response.exchange
+val Response.exchangeAccessor: Exchange?
   get() = this.exchange
 
-val Exchange.connection
+val Exchange.connectionAccessor: RealConnection
   get() = this.connection
 
-fun Dispatcher.finished(call: RealCall.AsyncCall) = this.finished(call)
+fun Dispatcher.finishedAccessor(call: RealCall.AsyncCall) = this.finished(call)

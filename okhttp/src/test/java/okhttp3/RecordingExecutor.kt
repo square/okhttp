@@ -19,6 +19,7 @@ import java.util.concurrent.AbstractExecutorService
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit
 import okhttp3.internal.connection.RealCall
+import okhttp3.internal.finishedAccessor
 import org.assertj.core.api.Assertions.assertThat
 
 internal class RecordingExecutor(
@@ -43,7 +44,7 @@ internal class RecordingExecutor(
       val call = i.next()
       if (call.request.url.toString() == url) {
         i.remove()
-        dispatcherTest.dispatcher.finished(call)
+        dispatcherTest.dispatcher.finishedAccessor(call)
         return
       }
     }
