@@ -290,10 +290,10 @@ class Main : Runnable {
           formatter = object : SimpleFormatter() {
             override fun format(record: LogRecord): String {
               val parameters = record.parameters
-              if (parameters != null) {
-                return format("%s%n%s%n", record.message, record.parameters.first())
+              return if (parameters != null) {
+                format("%s%n%s%n", record.message, record.parameters.first())
               } else {
-                return format("%s%n", record.message)
+                format("%s%n", record.message)
               }
             }
           }
