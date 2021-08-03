@@ -25,15 +25,10 @@ import okhttp3.TlsExtensionMode.DISABLED
 import okhttp3.TlsExtensionMode.STANDARD
 import okhttp3.TlsVersion.TLS_1_2
 import okhttp3.TlsVersion.TLS_1_3
-import okhttp3.internal.platform.ConscryptPlatform
-import okhttp3.internal.platform.Platform
-import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import org.assertj.core.api.Assertions.assertThat
-import org.conscrypt.Conscrypt
-import org.junit.After
 import org.junit.jupiter.api.Assumptions.assumeFalse
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Tag
@@ -43,7 +38,6 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import java.io.IOException
 import java.net.InetAddress
-import java.security.Security
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit.SECONDS
 import javax.net.ssl.SNIHostName

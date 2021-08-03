@@ -17,13 +17,7 @@ package okhttp3.brotli
 
 import okhttp3.Interceptor
 import okhttp3.Response
-import okhttp3.ResponseBody.Companion.asResponseBody
 import okhttp3.brotli.internal.uncompress
-import okhttp3.internal.http.promisesBody
-import okio.GzipSource
-import okio.buffer
-import okio.source
-import org.brotli.dec.BrotliInputStream
 
 /**
  * Transparent Brotli response support.

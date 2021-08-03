@@ -31,8 +31,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.openjsse.sun.security.ssl.SSLSocketFactoryImpl
 import org.openjsse.sun.security.ssl.SSLSocketImpl
-import okhttp3.internal.exchange
-import okhttp3.internal.connection
 
 class OpenJSSETest(
   val server: MockWebServer
