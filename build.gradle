@@ -50,23 +50,6 @@ allprojects {
   }
 }
 
-ext.applyOsgi = { project ->
-  project.apply plugin: 'biz.aQute.bnd.builder'
-
-  project.sourceSets {
-    osgi
-  }
-
-  project.jar { t ->
-    t.setClasspath(project.sourceSets.osgi['compileClasspath'] + project.sourceSets.main['compileClasspath'])
-  }
-
-  project.dependencies {
-    // The OSGi kotlin-stdlib lets bnd infer bundle versions.
-    osgiApi Dependencies.kotlinStdlibOsgi
-  }
-}
-
 /** Configure building for Java+Kotlin projects. */
 subprojects { project ->
   if (project.name == 'android-test') return

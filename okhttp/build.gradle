@@ -1,11 +1,8 @@
 apply plugin: 'me.champeau.gradle.japicmp'
-applyOsgi(this)
 
-jar {
-  // MANIFEST.MF, including OSGi bnd instructions.
-  // We export okhttp3.internal for our own modules use.
-  // The packages of all optional dependencies must be explicitly specified.
-  bnd '''
+Projects.applyOsgi(
+  project,
+  '''
   Export-Package: \
   okhttp3,\
   okhttp3.internal.*;okhttpinternal=true;mandatory:=okhttpinternal
@@ -21,7 +18,7 @@ jar {
   Automatic-Module-Name: okhttp3
   Bundle-SymbolicName: com.squareup.okhttp3
   '''
-}
+)
 
 sourceSets {
   main.java.srcDirs += "$buildDir/generated/sources/java-templates/java/main"
