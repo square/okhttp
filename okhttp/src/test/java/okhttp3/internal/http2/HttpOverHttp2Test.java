@@ -34,6 +34,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 import javax.net.SocketFactory;
@@ -449,6 +450,9 @@ public final class HttpOverHttp2Test {
         .setBody(new Buffer().write(new byte[Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE + 1])));
     server.enqueue(new MockResponse()
         .setBody("abc"));
+    // Enqueue an additional response that show if we burnt a good prior response.
+    server.enqueue(new MockResponse()
+      .setBody("XXX"));
 
     Call call1 = client.newCall(new Request.Builder()
         .url(server.url("/"))
@@ -1746,13 +1750,7 @@ public final class HttpOverHttp2Test {
     assertThat(response1.body().string()).isEqualTo("ABC");
 
     // Add delays for DISCONNECT_AT_END to propogate
-    RealConnection call1Connection = connections.get(0);
-    if (call1Connection.isHealthy(false)) {
-      Thread.sleep(100L);
-    }
-    if (call1Connection.isHealthy(false)) {
-      Thread.sleep(2000L);
-    }
+    waitForConnectionShutdown(connections.get(0));
 
     Call call2 = localClient.newCall(new Request.Builder()
         .url(server.url("/"))
@@ -1761,6 +1759,19 @@ public final class HttpOverHttp2Test {
     assertThat(response2.body().string()).isEqualTo("DEF");
     assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
     assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
+  }
+
+  private void waitForConnectionShutdown(RealConnection connection)
+    throws InterruptedException, TimeoutException {
+    if (connection.isHealthy(false)) {
+      Thread.sleep(100L);
+    }
+    if (connection.isHealthy(false)) {
+      Thread.sleep(2000L);
+    }
+    if (connection.isHealthy(false)) {
+      throw new TimeoutException("connection didn't shutdown within timeout");
+    }
   }
 
   /**
