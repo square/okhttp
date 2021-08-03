@@ -27,7 +27,7 @@ afterEvaluate { project ->
 }
 
 task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {
-  oldClasspath = files(baselineJar(project, baselineVersion))
+  oldClasspath = files(Projects.baselineJar(project))
   newClasspath = files(jar.archivePath)
   onlyBinaryIncompatibleModified = true
   failOnModification = true
