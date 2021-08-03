@@ -388,8 +388,8 @@ class DiskLruCacheTest {
 
     cache["k1"]!!.use { snapshot1 ->
       val inV1 = snapshot1.getSource(0).buffer()
-      assertThat(inV1.readByte()).isEqualTo('A'.toByte())
-      assertThat(inV1.readByte()).isEqualTo('A'.toByte())
+      assertThat(inV1.readByte()).isEqualTo('A'.code.toByte())
+      assertThat(inV1.readByte()).isEqualTo('A'.code.toByte())
 
       val v1Updater = cache.edit("k1")!!
       v1Updater.setString(0, "CCcc")
@@ -401,8 +401,8 @@ class DiskLruCacheTest {
         snapshot2.assertValue(1, "DDdd")
       }
 
-      assertThat(inV1.readByte()).isEqualTo('a'.toByte())
-      assertThat(inV1.readByte()).isEqualTo('a'.toByte())
+      assertThat(inV1.readByte()).isEqualTo('a'.code.toByte())
+      assertThat(inV1.readByte()).isEqualTo('a'.code.toByte())
       snapshot1.assertValue(1, "BBbb")
     }
   }
