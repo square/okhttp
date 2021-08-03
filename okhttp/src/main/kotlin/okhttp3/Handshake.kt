@@ -145,8 +145,7 @@ class Handshake internal constructor(
     @JvmStatic
     @JvmName("get")
     fun SSLSession.handshake(): Handshake {
-      val cipherSuiteString = checkNotNull(cipherSuite) { "cipherSuite == null" }
-      val cipherSuite = when (cipherSuiteString) {
+      val cipherSuite = when (val cipherSuiteString = checkNotNull(cipherSuite) { "cipherSuite == null" }) {
         "TLS_NULL_WITH_NULL_NULL", "SSL_NULL_WITH_NULL_NULL" -> {
           throw IOException("cipherSuite == $cipherSuiteString")
         }

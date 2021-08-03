@@ -119,9 +119,7 @@ class KotlinSourceModernTest {
 
   @Test
   fun authenticator() {
-    var authenticator: Authenticator = object : Authenticator {
-      override fun authenticate(route: Route?, response: Response): Request? = TODO()
-    }
+    var authenticator: Authenticator = Authenticator { route, response -> TODO() }
   }
 
   @Test
@@ -402,9 +400,7 @@ class KotlinSourceModernTest {
 
   @Test
   fun eventListenerBuilder() {
-    var builder: EventListener.Factory = object : EventListener.Factory {
-      override fun create(call: Call): EventListener = TODO()
-    }
+    var builder: EventListener.Factory = EventListener.Factory { TODO() }
   }
 
   @Test
@@ -453,7 +449,7 @@ class KotlinSourceModernTest {
   fun headers() {
     var headers: Headers = headersOf("", "")
     headers = mapOf("" to "").toHeaders()
-    val get: String? = headers.get("")
+    val get: String? = headers[""]
     val date: Date? = headers.getDate("")
     val instant: Instant? = headers.getInstant("")
     val size: Int = headers.size
@@ -479,7 +475,7 @@ class KotlinSourceModernTest {
     builder = builder.set("", Date(0L))
     builder = builder.set("", Instant.EPOCH)
     builder = builder.removeAll("")
-    val get: String? = builder.get("")
+    val get: String? = builder[""]
     val headers: Headers = builder.build()
   }
 
@@ -503,9 +499,7 @@ class KotlinSourceModernTest {
 
   @Test
   fun httpLoggingInterceptorLogger() {
-    var logger: HttpLoggingInterceptor.Logger = object : HttpLoggingInterceptor.Logger {
-      override fun log(message: String) = TODO()
-    }
+    var logger: HttpLoggingInterceptor.Logger = HttpLoggingInterceptor.Logger { TODO() }
     val default: HttpLoggingInterceptor.Logger = HttpLoggingInterceptor.Logger.DEFAULT
   }
 
@@ -580,9 +574,7 @@ class KotlinSourceModernTest {
 
   @Test
   fun interceptor() {
-    var interceptor: Interceptor = object : Interceptor {
-      override fun intercept(chain: Interceptor.Chain): Response = TODO()
-    }
+    var interceptor: Interceptor = Interceptor { TODO() }
     interceptor = Interceptor { it: Interceptor.Chain -> TODO() }
   }
 
@@ -874,19 +866,13 @@ class KotlinSourceModernTest {
     builder = builder.protocols(listOf(Protocol.HTTP_1_1))
     builder = builder.connectionSpecs(listOf(ConnectionSpec.MODERN_TLS))
     val interceptors: List<Interceptor> = builder.interceptors()
-    builder = builder.addInterceptor(object : Interceptor {
-      override fun intercept(chain: Interceptor.Chain): Response = TODO()
-    })
+    builder = builder.addInterceptor(Interceptor { TODO() })
     builder = builder.addInterceptor { it: Interceptor.Chain -> TODO() }
     val networkInterceptors: List<Interceptor> = builder.networkInterceptors()
-    builder = builder.addNetworkInterceptor(object : Interceptor {
-      override fun intercept(chain: Interceptor.Chain): Response = TODO()
-    })
+    builder = builder.addNetworkInterceptor(Interceptor { TODO() })
     builder = builder.addNetworkInterceptor { it: Interceptor.Chain -> TODO() }
     builder = builder.eventListener(EventListener.NONE)
-    builder = builder.eventListenerFactory(object : EventListener.Factory {
-      override fun create(call: Call): EventListener = TODO()
-    })
+    builder = builder.eventListenerFactory { TODO() }
     val client: OkHttpClient = builder.build()
   }
 

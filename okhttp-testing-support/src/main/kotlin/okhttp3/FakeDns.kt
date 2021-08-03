@@ -43,7 +43,7 @@ class FakeDns : Dns {
     hostname: String,
     index: Int
   ): InetAddress {
-    return hostAddresses[hostname]!!.get(index)
+    return hostAddresses[hostname]!![index]
   }
 
   @Throws(UnknownHostException::class)
