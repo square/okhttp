@@ -2,22 +2,17 @@ apply plugin: 'me.champeau.gradle.japicmp'
 
 Projects.applyOsgi(
   project,
-  '''
-  Export-Package: \
-  okhttp3,\
-  okhttp3.internal.*;okhttpinternal=true;mandatory:=okhttpinternal
-  Import-Package: \
-  android.*;resolution:=optional,\
-  com.oracle.svm.core.annotate;resolution:=optional,\
-  dalvik.system;resolution:=optional,\
-  org.conscrypt;resolution:=optional,\
-  org.bouncycastle.*;resolution:=optional,\
-  org.openjsse.*;resolution:=optional,\
-  sun.security.ssl;resolution:=optional,\
-  *
-  Automatic-Module-Name: okhttp3
-  Bundle-SymbolicName: com.squareup.okhttp3
-  '''
+  "Export-Package: okhttp3,okhttp3.internal.*;okhttpinternal=true;mandatory:=okhttpinternal",
+  "Import-Package: " +
+    "android.*;resolution:=optional," +
+    "com.oracle.svm.core.annotate;resolution:=optional," +
+    "dalvik.system;resolution:=optional," +
+    "org.conscrypt;resolution:=optional," +
+    "org.bouncycastle.*;resolution:=optional," +
+    "org.openjsse.*;resolution:=optional," +
+    "sun.security.ssl;resolution:=optional,*",
+  "Automatic-Module-Name: okhttp3",
+  "Bundle-SymbolicName: com.squareup.okhttp3"
 )
 
 sourceSets {
