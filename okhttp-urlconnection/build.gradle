@@ -4,12 +4,10 @@ def mainProj = project(':okhttp')
 
 Projects.applyOsgi(
   project,
-  """
-  Fragment-Host: com.squareup.okhttp3; bundle-version="\${range;[==,+);\${version_cleanup;${mainProj.version}}}"
-  Automatic-Module-Name: okhttp3.urlconnection
-  Bundle-SymbolicName: com.squareup.okhttp3.urlconnection
-  -removeheaders: Private-Package
-  """
+  "Fragment-Host: com.squareup.okhttp3; bundle-version=\"\${range;[==,+);\${version_cleanup;${mainProj.version}}}\"",
+  "Automatic-Module-Name: okhttp3.urlconnection",
+  "Bundle-SymbolicName: com.squareup.okhttp3.urlconnection",
+  "-removeheaders: Private-Package"
 )
 
 dependencies {
