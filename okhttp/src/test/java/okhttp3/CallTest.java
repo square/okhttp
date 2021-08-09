@@ -112,12 +112,12 @@ public final class CallTest {
   private final MockWebServer server;
   private final MockWebServer server2;
   private RecordingEventListener listener = new RecordingEventListener();
-  private HandshakeCertificates handshakeCertificates = localhost();
+  private final HandshakeCertificates handshakeCertificates = localhost();
   private OkHttpClient client = clientTestRule.newClientBuilder()
       .eventListenerFactory(clientTestRule.wrap(listener))
       .build();
-  private RecordingCallback callback = new RecordingCallback();
-  private Cache cache = new Cache(Path.get("/cache"), Integer.MAX_VALUE, new LoggingFilesystem(fileSystem));
+  private final RecordingCallback callback = new RecordingCallback();
+  private final Cache cache = new Cache(Path.get("/cache"), Integer.MAX_VALUE, new LoggingFilesystem(fileSystem));
 
   public CallTest(MockWebServer server, MockWebServer server2) {
     this.server = server;
@@ -4024,7 +4024,7 @@ public final class CallTest {
 
   private static class RecordingSSLSocketFactory extends DelegatingSSLSocketFactory {
 
-    private List<SSLSocket> socketsCreated = new ArrayList<>();
+    private final List<SSLSocket> socketsCreated = new ArrayList<>();
 
     public RecordingSSLSocketFactory(SSLSocketFactory delegate) {
       super(delegate);

@@ -10,7 +10,7 @@ import okhttp3.Response;
 public class PostExample {
   public static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
 
-  OkHttpClient client = new OkHttpClient();
+  final OkHttpClient client = new OkHttpClient();
 
   String post(String url, String json) throws IOException {
     RequestBody body = RequestBody.create(json, JSON);

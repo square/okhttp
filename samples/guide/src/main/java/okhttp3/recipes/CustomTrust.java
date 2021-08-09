@@ -29,7 +29,7 @@ public final class CustomTrust {
   // https://publicobject.com (Comodo) and https://squareup.com (Entrust). But they aren't
   // sufficient to connect to most HTTPS sites including https://godaddy.com and https://visa.com.
   // Typically developers will need to get a PEM file from their organization's TLS administrator.
-  X509Certificate comodoRsaCertificationAuthority = Certificates.decodeCertificatePem(""
+  final X509Certificate comodoRsaCertificationAuthority = Certificates.decodeCertificatePem(""
       + "-----BEGIN CERTIFICATE-----\n"
       + "MIIF2DCCA8CgAwIBAgIQTKr5yttjb+Af907YWwOGnTANBgkqhkiG9w0BAQwFADCB\n"
       + "hTELMAkGA1UEBhMCR0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4G\n"
@@ -65,7 +65,7 @@ public final class CustomTrust {
       + "NVOFBkpdn627G190\n"
       + "-----END CERTIFICATE-----\n");
 
-  X509Certificate entrustRootCertificateAuthority = Certificates.decodeCertificatePem(""
+  final X509Certificate entrustRootCertificateAuthority = Certificates.decodeCertificatePem(""
       + "-----BEGIN CERTIFICATE-----\n"
       + "MIIEkTCCA3mgAwIBAgIERWtQVDANBgkqhkiG9w0BAQUFADCBsDELMAkGA1UEBhMC\n"
       + "VVMxFjAUBgNVBAoTDUVudHJ1c3QsIEluYy4xOTA3BgNVBAsTMHd3dy5lbnRydXN0\n"
@@ -94,7 +94,7 @@ public final class CustomTrust {
       + "0vdXcDazv/wor3ElhVsT/h5/WrQ8\n"
       + "-----END CERTIFICATE-----\n");
 
-  X509Certificate letsEncryptCertificateAuthority = Certificates.decodeCertificatePem(""
+  final X509Certificate letsEncryptCertificateAuthority = Certificates.decodeCertificatePem(""
       + "-----BEGIN CERTIFICATE-----\n"
       +  "MIIEkjCCA3qgAwIBAgIQCgFBQgAAAVOFc2oLheynCDANBgkqhkiG9w0BAQsFADA/\n"
       +  "MSQwIgYDVQQKExtEaWdpdGFsIFNpZ25hdHVyZSBUcnVzdCBDby4xFzAVBgNVBAMT\n"

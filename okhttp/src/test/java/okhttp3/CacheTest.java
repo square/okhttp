@@ -67,7 +67,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 public final class CacheTest {
   private static final HostnameVerifier NULL_HOSTNAME_VERIFIER = (name, session) -> true;
 
-  public FakeFileSystem fileSystem = new FakeFileSystem();
+  public final FakeFileSystem fileSystem = new FakeFileSystem();
   @RegisterExtension public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
   @RegisterExtension public final PlatformRule platform = new PlatformRule();
 

@@ -120,7 +120,7 @@ public final class URLConnectionTest {
 
   private MockWebServer server;
   private MockWebServer server2;
-  private HandshakeCertificates handshakeCertificates = localhost();
+  private final HandshakeCertificates handshakeCertificates = localhost();
   private OkHttpClient client = clientTestRule.newClient();
   private @Nullable Cache cache;
 

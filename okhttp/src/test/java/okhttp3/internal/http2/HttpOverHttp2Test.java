@@ -2002,8 +2002,8 @@ public final class HttpOverHttp2Test {
   }
 
   class AsyncRequest implements Runnable {
-    String path;
-    CountDownLatch countDownLatch;
+    final String path;
+    final CountDownLatch countDownLatch;
 
     AsyncRequest(String path, CountDownLatch countDownLatch) {
       this.path = path;

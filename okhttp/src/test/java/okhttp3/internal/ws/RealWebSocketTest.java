@@ -51,8 +51,8 @@ public final class RealWebSocketTest {
   private final Pipe client2Server = new Pipe(8192L);
   private final Pipe server2client = new Pipe(8192L);
 
-  private TestStreams client = new TestStreams(true, server2client, client2Server);
-  private TestStreams server = new TestStreams(false, client2Server, server2client);
+  private final TestStreams client = new TestStreams(true, server2client, client2Server);
+  private final TestStreams server = new TestStreams(false, client2Server, server2client);
 
   @BeforeEach public void setUp() throws IOException {
     client.initWebSocket(random, 0);

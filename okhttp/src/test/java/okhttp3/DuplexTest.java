@@ -56,7 +56,7 @@ public final class DuplexTest {
 
   private MockWebServer server;
   private RecordingEventListener listener = new RecordingEventListener();
-  private HandshakeCertificates handshakeCertificates = localhost();
+  private final HandshakeCertificates handshakeCertificates = localhost();
   private OkHttpClient client = clientTestRule.newClientBuilder()
       .eventListenerFactory(clientTestRule.wrap(listener))
       .build();

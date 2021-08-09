@@ -56,7 +56,7 @@ public final class InterceptorTest {
 
   private MockWebServer server;
   private OkHttpClient client = clientTestRule.newClient();
-  private RecordingCallback callback = new RecordingCallback();
+  private final RecordingCallback callback = new RecordingCallback();
 
   @BeforeEach
   public void setUp(MockWebServer server) throws Exception {
