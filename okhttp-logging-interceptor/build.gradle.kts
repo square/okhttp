@@ -32,7 +32,7 @@ afterEvaluate {
   }
 }
 
-val japicmp by tasks.register<JapicmpTask>("japicmp") {
+tasks.register<JapicmpTask>("japicmp") {
   dependsOn("jar")
   oldClasspath = files(Projects.baselineJar(project))
   newClasspath = files(tasks.jar.get().archiveFile)
@@ -41,6 +41,4 @@ val japicmp by tasks.register<JapicmpTask>("japicmp") {
   txtOutputFile = file("$buildDir/reports/japi.txt")
   isIgnoreMissingClasses = true
   isIncludeSynthetic = true
-}
-
-tasks.check.dependsOn(japicmp)
+}.let(tasks.check::dependsOn)

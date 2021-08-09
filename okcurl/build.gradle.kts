@@ -1,4 +1,4 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import com.android.build.gradle.internal.tasks.factory.dependsOn
 import java.nio.charset.StandardCharsets
 import org.apache.tools.ant.taskdefs.condition.Os
 
@@ -22,19 +22,14 @@ sourceSets {
   }
 }
 
-tasks.create<Copy>("copyResourcesTemplates") {
+tasks.register<Copy>("copyResourcesTemplates") {
   from("src/main/resources-templates")
   into("$buildDir/generated/resources-templates")
   expand("projectVersion" to "${project.version}")
   filteringCharset = StandardCharsets.UTF_8.toString()
-}
-
-tasks.getByName<ProcessResources>("processResources") {
-  dependsOn("copyResourcesTemplates")
-}
-
-tasks.getByName<Jar>("sourcesJar") {
-  dependsOn("copyResourcesTemplates")
+}.let {
+  tasks.processResources.dependsOn(it)
+  tasks.sourcesJar.dependsOn(it)
 }
 
 dependencies {
@@ -50,7 +45,7 @@ dependencies {
   testImplementation(Dependencies.assertj)
 }
 
-tasks.getByName<ShadowJar>("shadowJar") {
+tasks.shadowJar {
   mergeServiceFiles()
 }
 

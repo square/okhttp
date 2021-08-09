@@ -3,6 +3,6 @@ dependencies {
   implementation(Dependencies.jsoup)
 }
 
-tasks.withType<JavaCompile> {
+tasks.compileJava {
   options.isWarnings = false
 }

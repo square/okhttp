@@ -31,7 +31,7 @@ afterEvaluate {
   }
 }
 
-val japicmp by tasks.register<JapicmpTask>("japicmp") {
+tasks.register<JapicmpTask>("japicmp") {
   dependsOn("jar")
   oldClasspath = files(Projects.baselineJar(project))
   newClasspath = files(tasks.jar.get().archiveFile)
@@ -43,6 +43,4 @@ val japicmp by tasks.register<JapicmpTask>("japicmp") {
   packageExcludes = listOf(
     "okhttp3.internal.sse"
   )
-}
-
-tasks.check.dependsOn(japicmp)
+}.let(tasks.check::dependsOn)
