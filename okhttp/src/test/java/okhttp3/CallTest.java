@@ -980,14 +980,12 @@ public final class CallTest {
     server.enqueue(new MockResponse());
 
     client = client.newBuilder()
-        .addInterceptor(new Interceptor() {
-          @Override public Response intercept(Chain chain) throws IOException {
-            try {
-              chain.proceed(chain.request());
-              throw new AssertionError();
-            } catch (IOException expected) {
-              return chain.proceed(chain.request());
-            }
+        .addInterceptor(chain -> {
+          try {
+            chain.proceed(chain.request());
+            throw new AssertionError();
+          } catch (IOException expected) {
+            return chain.proceed(chain.request());
           }
         })
         .build();
@@ -1006,17 +1004,15 @@ public final class CallTest {
         .setBody("abc"));
 
     client = clientTestRule.newClientBuilder()
-        .addInterceptor(new Interceptor() {
-          @Override public Response intercept(Chain chain) throws IOException {
-            Response response = chain.proceed(chain.request());
-            try {
-              chain.proceed(chain.request());
-              fail();
-            } catch (IllegalStateException expected) {
-              assertThat(expected).hasMessageContaining("please call response.close()");
-            }
-            return response;
+        .addInterceptor(chain -> {
+          Response response = chain.proceed(chain.request());
+          try {
+            chain.proceed(chain.request());
+            fail();
+          } catch (IllegalStateException expected) {
+            assertThat(expected).hasMessageContaining("please call response.close()");
           }
+          return response;
         })
         .build();
 

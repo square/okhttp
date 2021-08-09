@@ -206,7 +206,7 @@ class KotlinSourceModernTest {
 
   @Test
   fun challenge() {
-    var challenge = Challenge("", mapOf<String?, String>("" to ""))
+    var challenge = Challenge("", mapOf("" to ""))
     challenge = Challenge("", "")
     val scheme: String = challenge.scheme
     val authParams: Map<String?, String> = challenge.authParams

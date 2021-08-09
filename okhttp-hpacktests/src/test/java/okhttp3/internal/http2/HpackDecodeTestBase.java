@@ -44,9 +44,7 @@ public class HpackDecodeTestBase {
     List<Object> result = new ArrayList<>();
     for (String interopTestName : interopTests) {
       List<Story> stories = HpackJsonUtil.readStories(interopTestName);
-      for (Story story : stories) {
-        result.add(story);
-      }
+      result.addAll(stories);
     }
     return result;
   }

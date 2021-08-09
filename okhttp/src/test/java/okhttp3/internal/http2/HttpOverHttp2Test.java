@@ -487,7 +487,7 @@ public final class HttpOverHttp2Test {
     waitForDataFrames(Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE);
 
     assertThat(response1.body().contentLength()).isEqualTo(
-        (long) Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE);
+      Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE);
     int read = response1.body().source().read(new byte[8192]);
     assertThat(read).isEqualTo(8192);
 
@@ -1532,7 +1532,7 @@ public final class HttpOverHttp2Test {
 
     long elapsedUntilFailure = System.nanoTime() - executeAtNanos;
     assertThat((double) TimeUnit.NANOSECONDS.toMillis(elapsedUntilFailure)).isCloseTo(
-        (double) 1000, offset(250d));
+      1000, offset(250d));
 
     // Confirm a single ping was sent but not acknowledged.
     List<String> logs = testLogHandler.takeAll();
@@ -1965,13 +1965,11 @@ public final class HttpOverHttp2Test {
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
     client = client.newBuilder()
-        .addNetworkInterceptor(new Interceptor() {
-          @Override public Response intercept(Chain chain) throws IOException {
-            Request request = chain.request().newBuilder()
-                .header("Host", "privateobject.com")
-                .build();
-            return chain.proceed(request);
-          }
+        .addNetworkInterceptor(chain -> {
+          Request request = chain.request().newBuilder()
+              .header("Host", "privateobject.com")
+              .build();
+          return chain.proceed(request);
         })
         .build();
 
