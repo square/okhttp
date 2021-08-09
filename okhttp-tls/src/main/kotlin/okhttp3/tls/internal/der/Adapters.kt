@@ -83,7 +83,7 @@ internal object Adapters {
       tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
       tag = 5L,
       codec = object : BasicDerAdapter.Codec<Unit?> {
-        override fun decode(reader: DerReader) = null
+        override fun decode(reader: DerReader): Unit? = null
         override fun encode(writer: DerWriter, value: Unit?) {
         }
       }

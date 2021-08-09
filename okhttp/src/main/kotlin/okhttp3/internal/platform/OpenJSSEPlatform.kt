@@ -50,7 +50,7 @@ class OpenJSSEPlatform private constructor() : Platform() {
     return trustManagers[0] as X509TrustManager
   }
 
-  override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? =
+  override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager =
       throw UnsupportedOperationException(
           "clientBuilder.sslSocketFactory(SSLSocketFactory) not supported with OpenJSSE")
 

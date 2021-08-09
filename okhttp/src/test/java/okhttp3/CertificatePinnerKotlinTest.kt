@@ -15,7 +15,6 @@
  */
 package okhttp3
 
-import okhttp3.CertificatePinner.Builder
 import okhttp3.CertificatePinner.Companion.sha1Hash
 import okhttp3.CertificatePinner.Pin
 import okhttp3.tls.HeldCertificate
@@ -169,7 +168,7 @@ class CertificatePinnerKotlinTest {
   }
 
   @Test fun pinList() {
-    val builder = Builder()
+    val builder = CertificatePinner.Builder()
         .add("example.com", CertificatePinnerTest.certA1Sha256Pin)
         .add("www.example.com", CertificatePinnerTest.certA1Sha256Pin)
     val certificatePinner = builder.build()
