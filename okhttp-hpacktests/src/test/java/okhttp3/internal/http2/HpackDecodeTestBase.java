@@ -16,7 +16,6 @@
 package okhttp3.internal.http2;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;

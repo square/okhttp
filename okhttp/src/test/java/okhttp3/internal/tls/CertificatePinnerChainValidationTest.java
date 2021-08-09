@@ -38,7 +38,6 @@ import okhttp3.RecordingHostnameVerifier;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.internal.platform.Platform;
-import okhttp3.testing.Flaky;
 import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okhttp3.tls.HeldCertificate;
