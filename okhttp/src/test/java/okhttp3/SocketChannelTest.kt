@@ -90,11 +90,7 @@ class SocketChannelTest(
     }
 
     val client = clientTestRule.newClientBuilder()
-      .dns(object : Dns {
-        override fun lookup(hostname: String): List<InetAddress> {
-          return listOf(InetAddress.getByName("localhost"))
-        }
-      })
+      .dns { listOf(InetAddress.getByName("localhost")) }
       .callTimeout(4, SECONDS)
       .writeTimeout(2, SECONDS)
       .readTimeout(2, SECONDS)

@@ -338,9 +338,7 @@ class KotlinSourceModernTest {
 
   @Test
   fun dns() {
-    var dns: Dns = object : Dns {
-      override fun lookup(hostname: String): List<InetAddress> = TODO()
-    }
+    var dns: Dns = Dns { TODO() }
 
     val system: Dns = Dns.SYSTEM
   }
