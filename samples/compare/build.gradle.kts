@@ -10,6 +10,6 @@ dependencies {
   testImplementation(Dependencies.assertj)
 }
 
-tasks.withType<JavaCompile> {
+tasks.compileJava {
   options.isWarnings = false
 }
