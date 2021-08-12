@@ -21,3 +21,7 @@ plugins {
 repositories {
     mavenCentral()
 }
+
+dependencies {
+  implementation("biz.aQute.bnd:biz.aQute.bnd.gradle:5.3.0")
+}

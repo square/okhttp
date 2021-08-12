@@ -1,13 +1,9 @@
-applyOsgi(this)
-
-jar {
-  // MANIFEST.MF, including OSGi bnd instructions.
-  bnd '''
-  Export-Package: okhttp3.brotli
-  Automatic-Module-Name: okhttp3.brotli
-  Bundle-SymbolicName: com.squareup.okhttp3.brotli
-  '''
-}
+Projects.applyOsgi(
+  project,
+  "Export-Package: okhttp3.brotli",
+  "Automatic-Module-Name: okhttp3.brotli",
+  "Bundle-SymbolicName: com.squareup.okhttp3.brotli"
+)
 
 dependencies {
   api project(':okhttp')

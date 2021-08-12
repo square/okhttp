@@ -1,14 +1,11 @@
 apply plugin: 'me.champeau.gradle.japicmp'
-applyOsgi(this)
 
-jar {
-  // MANIFEST.MF, including OSGi bnd instructions.
-  bnd '''
-  Export-Package: okhttp3.tls
-  Automatic-Module-Name: okhttp3.tls
-  Bundle-SymbolicName: com.squareup.okhttp3.tls
-  '''
-}
+Projects.applyOsgi(
+  project,
+  "Export-Package: okhttp3.tls",
+  "Automatic-Module-Name: okhttp3.tls",
+  "Bundle-SymbolicName: com.squareup.okhttp3.tls"
+)
 
 dependencies {
   api Dependencies.okio
@@ -35,7 +32,7 @@ animalsniffer {
 }
 
 task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {
-  oldClasspath = files(baselineJar(project, baselineVersion))
+  oldClasspath = files(Projects.baselineJar(project))
   newClasspath = files(jar.archivePath)
   onlyBinaryIncompatibleModified = true
   failOnModification = true

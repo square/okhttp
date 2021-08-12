@@ -1,14 +1,11 @@
 apply plugin: 'me.champeau.gradle.japicmp'
-applyOsgi(this)
 
-jar {
-  // MANIFEST.MF, including OSGi bnd instructions.
-  bnd '''
-  Export-Package: okhttp3.logging
-  Automatic-Module-Name: okhttp3.logging
-  Bundle-SymbolicName: com.squareup.okhttp3.logging
-  '''
-}
+Projects.applyOsgi(
+  project,
+  "Export-Package: okhttp3.logging",
+  "Automatic-Module-Name: okhttp3.logging",
+  "Bundle-SymbolicName: com.squareup.okhttp3.logging"
+)
 
 dependencies {
   api project(':okhttp')
@@ -31,7 +28,7 @@ afterEvaluate { project ->
 }
 
 task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {
-  oldClasspath = files(baselineJar(project, baselineVersion))
+  oldClasspath = files(Projects.baselineJar(project))
   newClasspath = files(jar.archivePath)
   onlyBinaryIncompatibleModified = true
   failOnModification = true

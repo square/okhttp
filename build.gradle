@@ -50,23 +50,6 @@ allprojects {
   }
 }
 
-ext.applyOsgi = { project ->
-  project.apply plugin: 'biz.aQute.bnd.builder'
-
-  project.sourceSets {
-    osgi
-  }
-
-  project.jar { t ->
-    t.setClasspath(project.sourceSets.osgi['compileClasspath'] + project.sourceSets.main['compileClasspath'])
-  }
-
-  project.dependencies {
-    // The OSGi kotlin-stdlib lets bnd infer bundle versions.
-    osgiApi Dependencies.kotlinStdlibOsgi
-  }
-}
-
 /** Configure building for Java+Kotlin projects. */
 subprojects { project ->
   if (project.name == 'android-test') return
@@ -268,26 +251,6 @@ subprojects { project ->
   }
 }
 
-
 tasks.wrapper {
   distributionType = Wrapper.DistributionType.ALL
 }
-
-/**
- * Returns a .jar file for the golden version of this project.
- * https://github.com/Visistema/Groovy1/blob/ba5eb9b2f19ca0cc8927359ce414c4e1974b7016/gradle/binarycompatibility.gradle#L48
- */
-ext.baselineJar = { project, version ->
-  def group = project.group
-  def artifactId = project.ext.artifactId
-  try {
-    String jarFile = "$artifactId-${version}.jar"
-    project.group = 'virtual_group_for_japicmp' // Prevent it from resolving the current version.
-    def dependency = project.dependencies.create("$group:$artifactId:$version@jar")
-    return project.configurations.detachedConfiguration(dependency).files
-        .find { (it.name == jarFile) }
-  } finally {
-    project.group = group
-  }
-}
-ext.baselineVersion = "3.14.1"
