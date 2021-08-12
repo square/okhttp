@@ -17,7 +17,7 @@
 object Versions {
   const val bnd = "5.3.0"
   const val bouncyCastle = "1.69"
-  const val checkStyle = "8.45"
+  const val checkStyle = "8.45.1"
   const val conscrypt = "2.5.2"
   const val junit5 = "5.7.2"
   const val junit5Android = "1.2.2"
