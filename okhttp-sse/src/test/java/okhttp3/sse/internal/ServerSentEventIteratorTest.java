@@ -18,7 +18,7 @@ package okhttp3.sse.internal;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import okio.Buffer;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;

@@ -18,7 +18,7 @@ package okhttp3.internal;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import okhttp3.Authenticator;
 import okhttp3.Challenge;
 import okhttp3.Request;

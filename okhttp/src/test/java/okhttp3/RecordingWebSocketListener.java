@@ -15,7 +15,7 @@
  */
 package okhttp3;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import okio.ByteString;
 import org.jetbrains.annotations.NotNull;
 

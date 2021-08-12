@@ -16,7 +16,7 @@
 package okhttp3.sse.internal;
 
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import mockwebserver3.MockResponse;
 import mockwebserver3.MockWebServer;
 import mockwebserver3.junit5.internal.MockWebServerExtension;

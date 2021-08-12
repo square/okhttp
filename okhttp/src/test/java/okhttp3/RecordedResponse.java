@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -191,7 +191,7 @@ public final class RecordedResponse {
     return new SimpleDateFormat("HH:mm:ss.SSS").format(new Date(time));
   }
 
-  @org.jetbrains.annotations.Nullable
+  @Nullable
   public String getBody() {
     return body;
   }

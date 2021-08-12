@@ -34,7 +34,7 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import javax.net.ssl.SSLException;
 import mockwebserver3.Dispatcher;
 import mockwebserver3.MockResponse;

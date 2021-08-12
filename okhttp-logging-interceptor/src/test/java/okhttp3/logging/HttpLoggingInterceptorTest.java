@@ -20,7 +20,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import javax.net.ssl.HostnameVerifier;
 import mockwebserver3.junit5.internal.MockWebServerExtension;
 import okhttp3.HttpUrl;

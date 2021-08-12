@@ -18,7 +18,7 @@ package okhttp3.sse.internal;
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import okhttp3.Response;
 import okhttp3.internal.platform.Platform;
 import okhttp3.sse.EventSource;
