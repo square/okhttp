@@ -17,13 +17,13 @@
 object Versions {
   const val bnd = "5.3.0"
   const val bouncyCastle = "1.69"
-  const val checkStyle = "8.45"
+  const val checkStyle = "8.45.1"
   const val conscrypt = "2.5.2"
   const val junit5 = "5.7.2"
   const val junit5Android = "1.2.2"
   const val kotlin = "1.5.21"
   const val moshi = "1.12.0"
-  const val okio = "3.0.0-alpha.8"
+  const val okio = "3.0.0-alpha.9"
   const val picocli = "4.6.1"
 }
 
@@ -51,7 +51,7 @@ object Dependencies {
   const val guava = "com.google.guava:guava:30.1.1-jre"
   const val hamcrest = "org.hamcrest:hamcrest-library:2.2"
   const val jnrUnixsocket = "com.github.jnr:jnr-unixsocket:0.38.8"
-  const val jsoup = "org.jsoup:jsoup:1.13.1"
+  const val jsoup = "org.jsoup:jsoup:1.14.1"
   const val jsr305 = "com.google.code.findbugs:jsr305:3.0.2"
   const val junit = "junit:junit:4.13.2"
   const val junit5Api = "org.junit.jupiter:junit-jupiter-api:${Versions.junit5}"
