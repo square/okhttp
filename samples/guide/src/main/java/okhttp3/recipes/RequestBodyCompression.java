@@ -30,6 +30,7 @@ import okhttp3.Response;
 import okio.BufferedSink;
 import okio.GzipSink;
 import okio.Okio;
+import org.jetbrains.annotations.NotNull;
 
 public final class RequestBodyCompression {
   /**
@@ -71,6 +72,7 @@ public final class RequestBodyCompression {
 
   /** This interceptor compresses the HTTP request body. Many webservers can't handle this! */
   static class GzipRequestInterceptor implements Interceptor {
+    @NotNull
     @Override public Response intercept(Chain chain) throws IOException {
       Request originalRequest = chain.request();
       if (originalRequest.body() == null || originalRequest.header("Content-Encoding") != null) {
@@ -94,7 +96,7 @@ public final class RequestBodyCompression {
           return -1; // We don't know the compressed length in advance!
         }
 
-        @Override public void writeTo(BufferedSink sink) throws IOException {
+        @Override public void writeTo(@NotNull BufferedSink sink) throws IOException {
           BufferedSink gzipSink = Okio.buffer(new GzipSink(sink));
           body.writeTo(gzipSink);
           gzipSink.close();

@@ -26,6 +26,7 @@ import okio.BufferedSource;
 import okio.ByteString;
 import okio.GzipSink;
 import okio.Okio;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 import static java.util.Arrays.asList;
@@ -69,7 +70,7 @@ public final class Http2Test {
 
     reader.nextFrame(false, new BaseTestHandler() {
       @Override public void headers(boolean inFinished, int streamId,
-          int associatedStreamId, List<Header> headerBlock) {
+                                    int associatedStreamId, @NotNull List<Header> headerBlock) {
         assertThat(inFinished).isTrue();
         assertThat(streamId).isEqualTo(expectedStreamId);
         assertThat(associatedStreamId).isEqualTo(-1);
@@ -99,7 +100,7 @@ public final class Http2Test {
       }
 
       @Override public void headers(boolean inFinished, int streamId,
-          int associatedStreamId, List<Header> nameValueBlock) {
+                                    int associatedStreamId, @NotNull List<Header> nameValueBlock) {
         assertThat(inFinished).isFalse();
         assertThat(streamId).isEqualTo(expectedStreamId);
         assertThat(associatedStreamId).isEqualTo(-1);
@@ -134,7 +135,7 @@ public final class Http2Test {
     // Reading the above frames should result in a concatenated headerBlock.
     reader.nextFrame(false, new BaseTestHandler() {
       @Override public void headers(boolean inFinished, int streamId,
-          int associatedStreamId, List<Header> headerBlock) {
+                                    int associatedStreamId, @NotNull List<Header> headerBlock) {
         assertThat(inFinished).isFalse();
         assertThat(streamId).isEqualTo(expectedStreamId);
         assertThat(associatedStreamId).isEqualTo(-1);
@@ -167,7 +168,7 @@ public final class Http2Test {
 
     reader.nextFrame(false, new BaseTestHandler() {
       @Override
-      public void pushPromise(int streamId, int promisedStreamId, List<Header> headerBlock) {
+      public void pushPromise(int streamId, int promisedStreamId, @NotNull List<Header> headerBlock) {
         assertThat(streamId).isEqualTo(expectedStreamId);
         assertThat(promisedStreamId).isEqualTo(expectedPromisedStreamId);
         assertThat(headerBlock).isEqualTo(pushPromise);
@@ -204,7 +205,7 @@ public final class Http2Test {
     // Reading the above frames should result in a concatenated headerBlock.
     reader.nextFrame(false, new BaseTestHandler() {
       @Override
-      public void pushPromise(int streamId, int promisedStreamId, List<Header> headerBlock) {
+      public void pushPromise(int streamId, int promisedStreamId, @NotNull List<Header> headerBlock) {
         assertThat(streamId).isEqualTo(expectedStreamId);
         assertThat(promisedStreamId).isEqualTo(expectedPromisedStreamId);
         assertThat(headerBlock).isEqualTo(pushPromise);
@@ -220,7 +221,7 @@ public final class Http2Test {
     frame.writeInt(ErrorCode.PROTOCOL_ERROR.getHttpCode());
 
     reader.nextFrame(false, new BaseTestHandler() {
-      @Override public void rstStream(int streamId, ErrorCode errorCode) {
+      @Override public void rstStream(int streamId, @NotNull ErrorCode errorCode) {
         assertThat(streamId).isEqualTo(expectedStreamId);
         assertThat(errorCode).isEqualTo(ErrorCode.PROTOCOL_ERROR);
       }
@@ -240,7 +241,7 @@ public final class Http2Test {
     frame.writeInt(0);
 
     reader.nextFrame(false, new BaseTestHandler() {
-      @Override public void settings(boolean clearPrevious, Settings settings) {
+      @Override public void settings(boolean clearPrevious, @NotNull Settings settings) {
         // No clearPrevious in HTTP/2.
         assertThat(clearPrevious).isFalse();
         assertThat(settings.getHeaderTableSize()).isEqualTo(reducedTableSizeBytes);
@@ -275,7 +276,7 @@ public final class Http2Test {
 
     final AtomicInteger settingValue = new AtomicInteger();
     reader.nextFrame(false, new BaseTestHandler() {
-      @Override public void settings(boolean clearPrevious, Settings settings) {
+      @Override public void settings(boolean clearPrevious, @NotNull Settings settings) {
         settingValue.set(settings.get(7));
       }
     });
@@ -291,7 +292,7 @@ public final class Http2Test {
     frame.writeInt(1);
 
     reader.nextFrame(false, new BaseTestHandler() {
-      @Override public void settings(boolean clearPrevious, Settings settings) {
+      @Override public void settings(boolean clearPrevious, @NotNull Settings settings) {
         // no-op
       }
     });
@@ -401,8 +402,8 @@ public final class Http2Test {
     assertThat(sendDataFrame(new Buffer().write(expectedData))).isEqualTo(frame);
 
     reader.nextFrame(false, new BaseTestHandler() {
-      @Override public void data(boolean inFinished, int streamId, BufferedSource source,
-          int length) throws IOException {
+      @Override public void data(boolean inFinished, int streamId, @NotNull BufferedSource source,
+                                 int length) throws IOException {
         assertThat(inFinished).isFalse();
         assertThat(streamId).isEqualTo(expectedStreamId);
         assertThat(length).isEqualTo(Http2.INITIAL_MAX_FRAME_SIZE);
@@ -612,7 +613,7 @@ public final class Http2Test {
 
     reader.nextFrame(false, new BaseTestHandler() {
       @Override public void goAway(
-          int lastGoodStreamId, ErrorCode errorCode, ByteString debugData) {
+          int lastGoodStreamId, @NotNull ErrorCode errorCode, @NotNull ByteString debugData) {
         assertThat(lastGoodStreamId).isEqualTo(expectedStreamId);
         assertThat(errorCode).isEqualTo(expectedError);
         assertThat(debugData.size()).isEqualTo(0);
@@ -638,7 +639,7 @@ public final class Http2Test {
 
     reader.nextFrame(false, new BaseTestHandler() {
       @Override public void goAway(
-          int lastGoodStreamId, ErrorCode errorCode, ByteString debugData) {
+          int lastGoodStreamId, @NotNull ErrorCode errorCode, @NotNull ByteString debugData) {
         assertThat(lastGoodStreamId).isEqualTo(0);
         assertThat(errorCode).isEqualTo(expectedError);
         assertThat(debugData).isEqualTo(expectedData);
@@ -729,7 +730,7 @@ public final class Http2Test {
   private Http2Reader.Handler assertHeaderBlock() {
     return new BaseTestHandler() {
       @Override public void headers(boolean inFinished, int streamId,
-          int associatedStreamId, List<Header> headerBlock) {
+                                    int associatedStreamId, @NotNull List<Header> headerBlock) {
         assertThat(inFinished).isFalse();
         assertThat(streamId).isEqualTo(expectedStreamId);
         assertThat(associatedStreamId).isEqualTo(-1);
@@ -740,8 +741,8 @@ public final class Http2Test {
 
   private Http2Reader.Handler assertData() {
     return new BaseTestHandler() {
-      @Override public void data(boolean inFinished, int streamId, BufferedSource source,
-          int length) throws IOException {
+      @Override public void data(boolean inFinished, int streamId, @NotNull BufferedSource source,
+                                 int length) throws IOException {
         assertThat(inFinished).isFalse();
         assertThat(streamId).isEqualTo(expectedStreamId);
         assertThat(length).isEqualTo(1123);

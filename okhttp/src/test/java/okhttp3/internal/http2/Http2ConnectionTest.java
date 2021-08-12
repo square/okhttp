@@ -38,6 +38,7 @@ import okio.BufferedSource;
 import okio.Okio;
 import okio.Sink;
 import okio.Source;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -978,11 +979,11 @@ public final class Http2ConnectionTest {
     final CountDownLatch maxConcurrentStreamsUpdated = new CountDownLatch(1);
     final AtomicInteger maxConcurrentStreams = new AtomicInteger();
     Http2Connection.Listener listener = new Http2Connection.Listener() {
-      @Override public void onStream(Http2Stream stream) throws IOException {
+      @Override public void onStream(@NotNull Http2Stream stream) throws IOException {
         throw new AssertionError();
       }
 
-      @Override public void onSettings(Http2Connection connection, Settings settings) {
+      @Override public void onSettings(@NotNull Http2Connection connection, Settings settings) {
         maxConcurrentStreams.set(settings.getMaxConcurrentStreams());
         maxConcurrentStreamsUpdated.countDown();
       }
@@ -2013,11 +2014,11 @@ public final class Http2ConnectionTest {
 
   static final PushObserver IGNORE = new PushObserver() {
 
-    @Override public boolean onRequest(int streamId, List<Header> requestHeaders) {
+    @Override public boolean onRequest(int streamId, @NotNull List<Header> requestHeaders) {
       return false;
     }
 
-    @Override public boolean onHeaders(int streamId, List<Header> responseHeaders, boolean last) {
+    @Override public boolean onHeaders(int streamId, @NotNull List<Header> responseHeaders, boolean last) {
       return false;
     }
 
@@ -2027,7 +2028,7 @@ public final class Http2ConnectionTest {
       return false;
     }
 
-    @Override public void onReset(int streamId, ErrorCode errorCode) {
+    @Override public void onReset(int streamId, @NotNull ErrorCode errorCode) {
     }
   };
 
@@ -2041,7 +2042,7 @@ public final class Http2ConnectionTest {
       return events.remove(0);
     }
 
-    @Override public synchronized boolean onRequest(int streamId, List<Header> requestHeaders) {
+    @Override public synchronized boolean onRequest(int streamId, @NotNull List<Header> requestHeaders) {
       assertThat(streamId).isEqualTo(2);
       events.add(requestHeaders);
       notifyAll();
@@ -2049,7 +2050,7 @@ public final class Http2ConnectionTest {
     }
 
     @Override public synchronized boolean onHeaders(
-        int streamId, List<Header> responseHeaders, boolean last) {
+        int streamId, @NotNull List<Header> responseHeaders, boolean last) {
       assertThat(streamId).isEqualTo(2);
       assertThat(last).isTrue();
       events.add(responseHeaders);
@@ -2058,13 +2059,13 @@ public final class Http2ConnectionTest {
     }
 
     @Override public synchronized boolean onData(
-        int streamId, BufferedSource source, int byteCount, boolean last) {
+        int streamId, @NotNull BufferedSource source, int byteCount, boolean last) {
       events.add(new AssertionError("onData"));
       notifyAll();
       return false;
     }
 
-    @Override public synchronized void onReset(int streamId, ErrorCode errorCode) {
+    @Override public synchronized void onReset(int streamId, @NotNull ErrorCode errorCode) {
       events.add(new AssertionError("onReset"));
       notifyAll();
     }

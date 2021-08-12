@@ -25,6 +25,7 @@ import okio.BufferedSource;
 import okio.ByteString;
 import okio.ForwardingSource;
 import okio.Okio;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -93,6 +94,7 @@ public final class ResponseBodyTest {
         return 5;
       }
 
+      @NotNull
       @Override public BufferedSource source() {
         Buffer source = new Buffer().writeUtf8("hello");
         return Okio.buffer(new ForwardingSource(source) {
@@ -163,6 +165,7 @@ public final class ResponseBodyTest {
         return 5;
       }
 
+      @NotNull
       @Override public BufferedSource source() {
         ResponseBody body = body("fffe680065006c006c006f00");
         return Okio.buffer(new ForwardingSource(body.source()) {
@@ -188,6 +191,7 @@ public final class ResponseBodyTest {
         return 5;
       }
 
+      @NotNull
       @Override public BufferedSource source() {
         ResponseBody body = body("fffe680065006c006c006f00");
         return Okio.buffer(new ForwardingSource(body.source()) {
@@ -231,6 +235,7 @@ public final class ResponseBodyTest {
         return 5;
       }
 
+      @NotNull
       @Override public BufferedSource source() {
         Buffer source = new Buffer().writeUtf8("hello");
         return Okio.buffer(new ForwardingSource(source) {
@@ -270,6 +275,7 @@ public final class ResponseBodyTest {
         return 5;
       }
 
+      @NotNull
       @Override public BufferedSource source() {
         Buffer source = new Buffer().writeUtf8("hello");
         return Okio.buffer(new ForwardingSource(source) {
@@ -294,6 +300,7 @@ public final class ResponseBodyTest {
         return 10;
       }
 
+      @NotNull
       @Override public BufferedSource source() {
         return new Buffer().writeUtf8("hello");
       }
@@ -317,6 +324,7 @@ public final class ResponseBodyTest {
         return Integer.MAX_VALUE + 1L;
       }
 
+      @NotNull
       @Override public BufferedSource source() {
         throw new AssertionError();
       }
@@ -353,6 +361,7 @@ public final class ResponseBodyTest {
         return 5;
       }
 
+      @NotNull
       @Override public BufferedSource source() {
         Buffer source = new Buffer().writeUtf8("hello");
         return Okio.buffer(new ForwardingSource(source) {
@@ -377,6 +386,7 @@ public final class ResponseBodyTest {
         return 10;
       }
 
+      @NotNull
       @Override public BufferedSource source() {
         return new Buffer().writeUtf8("hello");
       }
@@ -400,6 +410,7 @@ public final class ResponseBodyTest {
         return Integer.MAX_VALUE + 1L;
       }
 
+      @NotNull
       @Override public BufferedSource source() {
         throw new AssertionError();
       }
@@ -439,6 +450,7 @@ public final class ResponseBodyTest {
         return 5;
       }
 
+      @NotNull
       @Override public BufferedSource source() {
         Buffer source = new Buffer().writeUtf8("hello");
         return Okio.buffer(new ForwardingSource(source) {
@@ -463,6 +475,7 @@ public final class ResponseBodyTest {
         return 5;
       }
 
+      @NotNull
       @Override public BufferedSource source() {
         Buffer source = new Buffer().writeUtf8("hello");
         return Okio.buffer(new ForwardingSource(source) {

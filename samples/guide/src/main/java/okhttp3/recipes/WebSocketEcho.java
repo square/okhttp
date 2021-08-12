@@ -7,6 +7,7 @@ import okhttp3.Response;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okio.ByteString;
+import org.jetbrains.annotations.NotNull;
 
 public final class WebSocketEcho extends WebSocketListener {
   private void run() {
@@ -23,27 +24,27 @@ public final class WebSocketEcho extends WebSocketListener {
     client.dispatcher().executorService().shutdown();
   }
 
-  @Override public void onOpen(WebSocket webSocket, Response response) {
+  @Override public void onOpen(WebSocket webSocket, @NotNull Response response) {
     webSocket.send("Hello...");
     webSocket.send("...World!");
     webSocket.send(ByteString.decodeHex("deadbeef"));
     webSocket.close(1000, "Goodbye, World!");
   }
 
-  @Override public void onMessage(WebSocket webSocket, String text) {
+  @Override public void onMessage(@NotNull WebSocket webSocket, @NotNull String text) {
     System.out.println("MESSAGE: " + text);
   }
 
-  @Override public void onMessage(WebSocket webSocket, ByteString bytes) {
+  @Override public void onMessage(@NotNull WebSocket webSocket, ByteString bytes) {
     System.out.println("MESSAGE: " + bytes.hex());
   }
 
-  @Override public void onClosing(WebSocket webSocket, int code, String reason) {
+  @Override public void onClosing(WebSocket webSocket, int code, @NotNull String reason) {
     webSocket.close(1000, null);
     System.out.println("CLOSE: " + code + " " + reason);
   }
 
-  @Override public void onFailure(WebSocket webSocket, Throwable t, Response response) {
+  @Override public void onFailure(@NotNull WebSocket webSocket, Throwable t, Response response) {
     t.printStackTrace();
   }
 

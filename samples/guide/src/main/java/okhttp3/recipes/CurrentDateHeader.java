@@ -22,6 +22,7 @@ import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import org.jetbrains.annotations.NotNull;
 
 public final class CurrentDateHeader {
   private final OkHttpClient client = new OkHttpClient.Builder()
@@ -39,6 +40,7 @@ public final class CurrentDateHeader {
   }
 
   static class CurrentDateInterceptor implements Interceptor {
+    @NotNull
     @Override public Response intercept(Chain chain) throws IOException {
       Request request = chain.request();
       Headers newHeaders = request.headers()

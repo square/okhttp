@@ -15,6 +15,8 @@
  */
 package okhttp3;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -29,7 +31,7 @@ public class RecordingCallback implements Callback {
 
   private final List<RecordedResponse> responses = new ArrayList<>();
 
-  @Override public synchronized void onFailure(Call call, IOException e) {
+  @Override public synchronized void onFailure(Call call, @NotNull IOException e) {
     responses.add(new RecordedResponse(call.request(), null, null, null, e));
     notifyAll();
   }

@@ -19,25 +19,26 @@ import java.io.IOException;
 import java.util.List;
 import okio.BufferedSource;
 import okio.ByteString;
+import org.jetbrains.annotations.NotNull;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
 class BaseTestHandler implements Http2Reader.Handler {
-  @Override public void data(boolean inFinished, int streamId, BufferedSource source, int length)
+  @Override public void data(boolean inFinished, int streamId, @NotNull BufferedSource source, int length)
       throws IOException {
     fail();
   }
 
   @Override public void headers(boolean inFinished, int streamId, int associatedStreamId,
-      List<Header> headerBlock) {
+                                @NotNull List<Header> headerBlock) {
     fail();
   }
 
-  @Override public void rstStream(int streamId, ErrorCode errorCode) {
+  @Override public void rstStream(int streamId, @NotNull ErrorCode errorCode) {
     fail();
   }
 
-  @Override public void settings(boolean clearPrevious, Settings settings) {
+  @Override public void settings(boolean clearPrevious, @NotNull Settings settings) {
     fail();
   }
 
@@ -49,7 +50,7 @@ class BaseTestHandler implements Http2Reader.Handler {
     fail();
   }
 
-  @Override public void goAway(int lastGoodStreamId, ErrorCode errorCode, ByteString debugData) {
+  @Override public void goAway(int lastGoodStreamId, @NotNull ErrorCode errorCode, @NotNull ByteString debugData) {
     fail();
   }
 
@@ -63,12 +64,12 @@ class BaseTestHandler implements Http2Reader.Handler {
   }
 
   @Override
-  public void pushPromise(int streamId, int associatedStreamId, List<Header> headerBlock) {
+  public void pushPromise(int streamId, int associatedStreamId, @NotNull List<Header> headerBlock) {
     fail();
   }
 
-  @Override public void alternateService(int streamId, String origin, ByteString protocol,
-      String host, int port, long maxAge) {
+  @Override public void alternateService(int streamId, @NotNull String origin, @NotNull ByteString protocol,
+                                         @NotNull String host, int port, long maxAge) {
     fail();
   }
 }

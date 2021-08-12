@@ -26,6 +26,7 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import okio.ByteString;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Runs a MockWebServer on localhost and uses it as the backend to receive an OAuth session.
@@ -76,6 +77,7 @@ public final class OAuthSessionFactory extends Dispatcher implements Closeable {
   }
 
   /** When the browser hits the redirect URL, use the provided code to ask Slack for a session. */
+  @NotNull
   @Override public MockResponse dispatch(RecordedRequest request) {
     HttpUrl requestUrl = mockWebServer.url(request.getPath());
     String code = requestUrl.queryParameter("code");

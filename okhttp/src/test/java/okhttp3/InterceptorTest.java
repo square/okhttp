@@ -41,6 +41,7 @@ import okio.GzipSink;
 import okio.Okio;
 import okio.Sink;
 import okio.Source;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -891,7 +892,7 @@ public final class InterceptorTest {
         return original.contentLength();
       }
 
-      @Override public void writeTo(BufferedSink sink) throws IOException {
+      @Override public void writeTo(@NotNull BufferedSink sink) throws IOException {
         Sink uppercase = uppercase(sink);
         BufferedSink bufferedSink = Okio.buffer(uppercase);
         original.writeTo(bufferedSink);
@@ -902,7 +903,7 @@ public final class InterceptorTest {
 
   private Sink uppercase(BufferedSink original) {
     return new ForwardingSink(original) {
-      @Override public void write(Buffer source, long byteCount) throws IOException {
+      @Override public void write(@NotNull Buffer source, long byteCount) throws IOException {
         original.writeUtf8(source.readUtf8(byteCount).toUpperCase(Locale.US));
       }
     };
@@ -915,7 +916,7 @@ public final class InterceptorTest {
 
   private static Source uppercase(Source original) {
     return new ForwardingSource(original) {
-      @Override public long read(Buffer sink, long byteCount) throws IOException {
+      @Override public long read(@NotNull Buffer sink, long byteCount) throws IOException {
         Buffer mixedCase = new Buffer();
         long count = original.read(mixedCase, byteCount);
         sink.writeUtf8(mixedCase.readUtf8().toUpperCase(Locale.US));
@@ -950,7 +951,7 @@ public final class InterceptorTest {
       super(1, 1, 0, TimeUnit.SECONDS, new SynchronousQueue<>());
     }
 
-    @Override public void execute(Runnable runnable) {
+    @Override public void execute(@NotNull Runnable runnable) {
       super.execute(() -> {
         try {
           runnable.run();

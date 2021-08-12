@@ -67,6 +67,7 @@ import org.hamcrest.CoreMatchers;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.MatcherAssert;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -149,11 +150,11 @@ public final class EventListenerTest {
 
     final CountDownLatch completionLatch = new CountDownLatch(1);
     Callback callback = new Callback() {
-      @Override public void onFailure(Call call, IOException e) {
+      @Override public void onFailure(@NotNull Call call, @NotNull IOException e) {
         completionLatch.countDown();
       }
 
-      @Override public void onResponse(Call call, Response response) {
+      @Override public void onResponse(@NotNull Call call, Response response) {
         response.close();
         completionLatch.countDown();
       }
@@ -249,10 +250,10 @@ public final class EventListenerTest {
         .url(server.url("/"))
         .build());
     call.enqueue(new Callback() {
-      @Override public void onFailure(Call call, IOException e) {
+      @Override public void onFailure(@NotNull Call call, @NotNull IOException e) {
       }
 
-      @Override public void onResponse(Call call, Response response) throws IOException {
+      @Override public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
         response.close();
       }
     });
@@ -1061,7 +1062,7 @@ public final class EventListenerTest {
       return 1024 * 1024 * 4;
     }
 
-    @Override public void writeTo(BufferedSink sink) throws IOException {
+    @Override public void writeTo(@NotNull BufferedSink sink) throws IOException {
       try {
         writeChunk(sink);
         writeChunk(sink);
@@ -1092,7 +1093,7 @@ public final class EventListenerTest {
         return 1024 * 1024 * 256;
       }
 
-      @Override public void writeTo(BufferedSink sink) throws IOException {
+      @Override public void writeTo(@NotNull BufferedSink sink) throws IOException {
         int failureCount = 0;
         for (int i = 0; i < 1024; i++) {
           try {
@@ -1274,7 +1275,7 @@ public final class EventListenerTest {
             return null;
           }
 
-          @Override public void writeTo(BufferedSink sink) throws IOException {
+          @Override public void writeTo(@NotNull BufferedSink sink) throws IOException {
             try {
               Thread.sleep(requestBodyDelay);
               sink.writeUtf8("abc");

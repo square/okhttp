@@ -37,6 +37,7 @@ import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.testing.PlatformRule;
 import okio.Buffer;
 import okio.BufferedSink;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -96,7 +97,7 @@ public final class ThreadInterruptTest {
             return null;
           }
 
-          @Override public void writeTo(BufferedSink sink) throws IOException {
+          @Override public void writeTo(@NotNull BufferedSink sink) throws IOException {
             for (int i = 0; i < 10; i++) {
               sink.writeByte(0);
               sink.flush();

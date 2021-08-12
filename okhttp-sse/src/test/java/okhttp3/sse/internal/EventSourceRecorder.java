@@ -23,6 +23,7 @@ import okhttp3.Response;
 import okhttp3.internal.platform.Platform;
 import okhttp3.sse.EventSource;
 import okhttp3.sse.EventSourceListener;
+import org.jetbrains.annotations.NotNull;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,24 +31,24 @@ import static org.assertj.core.api.Assertions.assertThat;
 public final class EventSourceRecorder extends EventSourceListener {
   private final BlockingQueue<Object> events = new LinkedBlockingDeque<>();
 
-  @Override public void onOpen(EventSource eventSource, Response response) {
+  @Override public void onOpen(@NotNull EventSource eventSource, @NotNull Response response) {
     Platform.get().log("[ES] onOpen", Platform.INFO, null);
     events.add(new Open(eventSource, response));
   }
 
-  @Override public void onEvent(EventSource eventSource, @Nullable String id, @Nullable String type,
-      String data) {
+  @Override public void onEvent(@NotNull EventSource eventSource, @Nullable String id, @Nullable String type,
+                                @NotNull String data) {
     Platform.get().log("[ES] onEvent", Platform.INFO, null);
     events.add(new Event(id, type, data));
   }
 
-  @Override public void onClosed(EventSource eventSource) {
+  @Override public void onClosed(@NotNull EventSource eventSource) {
     Platform.get().log("[ES] onClosed", Platform.INFO, null);
     events.add(new Closed());
   }
 
   @Override
-  public void onFailure(EventSource eventSource, @Nullable Throwable t, @Nullable Response response) {
+  public void onFailure(@NotNull EventSource eventSource, @Nullable Throwable t, @Nullable Response response) {
     Platform.get().log("[ES] onFailure", Platform.INFO, t);
     events.add(new Failure(t, response));
   }

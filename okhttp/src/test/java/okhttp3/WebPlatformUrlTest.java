@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import okio.BufferedSource;
 import okio.Okio;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
@@ -30,6 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /** Runs the web platform URL tests against Java URL models. */
 public final class WebPlatformUrlTest {
   public static class TestDataParamProvider extends SimpleProvider {
+    @NotNull
     @Override
     public List<Object> arguments() throws IOException {
       return new ArrayList<>(loadTests());

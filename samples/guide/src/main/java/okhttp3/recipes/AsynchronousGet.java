@@ -23,6 +23,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import org.jetbrains.annotations.NotNull;
 
 public final class AsynchronousGet {
   private final OkHttpClient client = new OkHttpClient();
@@ -33,11 +34,11 @@ public final class AsynchronousGet {
         .build();
 
     client.newCall(request).enqueue(new Callback() {
-      @Override public void onFailure(Call call, IOException e) {
+      @Override public void onFailure(@NotNull Call call, @NotNull IOException e) {
         e.printStackTrace();
       }
 
-      @Override public void onResponse(Call call, Response response) throws IOException {
+      @Override public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
         try (ResponseBody responseBody = response.body()) {
           if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
 

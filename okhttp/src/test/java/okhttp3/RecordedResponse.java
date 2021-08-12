@@ -191,6 +191,7 @@ public final class RecordedResponse {
     return new SimpleDateFormat("HH:mm:ss.SSS").format(new Date(time));
   }
 
+  @org.jetbrains.annotations.Nullable
   public String getBody() {
     return body;
   }

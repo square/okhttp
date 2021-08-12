@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import okio.ByteString;
+import org.jetbrains.annotations.NotNull;
 
 import static okhttp3.internal.Util.userAgent;
 
@@ -61,25 +62,25 @@ public final class AutobahnTester {
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicLong startNanos = new AtomicLong();
     newWebSocket("/runCase?case=" + number + "&agent=okhttp", new WebSocketListener() {
-      @Override public void onOpen(WebSocket webSocket, Response response) {
+      @Override public void onOpen(@NotNull WebSocket webSocket, @NotNull Response response) {
         System.out.println("Executing test case " + number + "/" + count);
         startNanos.set(System.nanoTime());
       }
 
-      @Override public void onMessage(final WebSocket webSocket, final ByteString bytes) {
+      @Override public void onMessage(@NotNull final WebSocket webSocket, @NotNull final ByteString bytes) {
         webSocket.send(bytes);
       }
 
-      @Override public void onMessage(final WebSocket webSocket, final String text) {
+      @Override public void onMessage(@NotNull final WebSocket webSocket, @NotNull final String text) {
         webSocket.send(text);
       }
 
-      @Override public void onClosing(WebSocket webSocket, int code, String reason) {
+      @Override public void onClosing(@NotNull WebSocket webSocket, int code, @NotNull String reason) {
         webSocket.close(1000, null);
         latch.countDown();
       }
 
-      @Override public void onFailure(WebSocket webSocket, Throwable t, Response response) {
+      @Override public void onFailure(@NotNull WebSocket webSocket, @NotNull Throwable t, Response response) {
         t.printStackTrace(System.out);
         latch.countDown();
       }
@@ -102,16 +103,16 @@ public final class AutobahnTester {
     final AtomicLong countRef = new AtomicLong();
     final AtomicReference<Throwable> failureRef = new AtomicReference<>();
     newWebSocket("/getCaseCount", new WebSocketListener() {
-      @Override public void onMessage(WebSocket webSocket, String text) {
+      @Override public void onMessage(@NotNull WebSocket webSocket, @NotNull String text) {
         countRef.set(Long.parseLong(text));
       }
 
-      @Override public void onClosing(WebSocket webSocket, int code, String reason) {
+      @Override public void onClosing(@NotNull WebSocket webSocket, int code, @NotNull String reason) {
         webSocket.close(1000, null);
         latch.countDown();
       }
 
-      @Override public void onFailure(WebSocket webSocket, Throwable t, Response response) {
+      @Override public void onFailure(@NotNull WebSocket webSocket, @NotNull Throwable t, Response response) {
         failureRef.set(t);
         latch.countDown();
       }
@@ -133,12 +134,12 @@ public final class AutobahnTester {
   private void updateReports() {
     final CountDownLatch latch = new CountDownLatch(1);
     newWebSocket("/updateReports?agent=" + userAgent, new WebSocketListener() {
-      @Override public void onClosing(WebSocket webSocket, int code, String reason) {
+      @Override public void onClosing(@NotNull WebSocket webSocket, int code, @NotNull String reason) {
         webSocket.close(1000, null);
         latch.countDown();
       }
 
-      @Override public void onFailure(WebSocket webSocket, Throwable t, Response response) {
+      @Override public void onFailure(@NotNull WebSocket webSocket, @NotNull Throwable t, Response response) {
         latch.countDown();
       }
     });

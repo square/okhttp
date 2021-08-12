@@ -24,6 +24,8 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
+
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -72,7 +74,8 @@ public final class TestLogHandler implements TestRule, BeforeEachCallback, After
     logger.removeHandler(handler);
   }
 
-  @Override public Statement apply(Statement base, Description description) {
+  @NotNull
+  @Override public Statement apply(@NotNull Statement base, @NotNull Description description) {
     return new Statement() {
       @Override public void evaluate() throws Throwable {
         beforeEach(null);

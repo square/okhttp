@@ -26,6 +26,7 @@ import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okhttp3.internal.platform.Platform;
 import okio.ByteString;
+import org.jetbrains.annotations.NotNull;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -43,7 +44,7 @@ public final class WebSocketRecorder extends WebSocketListener {
     this.delegate = delegate;
   }
 
-  @Override public void onOpen(WebSocket webSocket, Response response) {
+  @Override public void onOpen(@NotNull WebSocket webSocket, @NotNull Response response) {
     Platform.get().log("[WS " + name + "] onOpen", Platform.INFO, null);
 
     WebSocketListener delegate = this.delegate;
@@ -55,7 +56,7 @@ public final class WebSocketRecorder extends WebSocketListener {
     }
   }
 
-  @Override public void onMessage(WebSocket webSocket, ByteString bytes) {
+  @Override public void onMessage(@NotNull WebSocket webSocket, @NotNull ByteString bytes) {
     Platform.get().log("[WS " + name + "] onMessage", Platform.INFO, null);
 
     WebSocketListener delegate = this.delegate;
@@ -68,7 +69,7 @@ public final class WebSocketRecorder extends WebSocketListener {
     }
   }
 
-  @Override public void onMessage(WebSocket webSocket, String text) {
+  @Override public void onMessage(@NotNull WebSocket webSocket, @NotNull String text) {
     Platform.get().log("[WS " + name + "] onMessage", Platform.INFO, null);
 
     WebSocketListener delegate = this.delegate;
@@ -81,7 +82,7 @@ public final class WebSocketRecorder extends WebSocketListener {
     }
   }
 
-  @Override public void onClosing(WebSocket webSocket, int code, String reason) {
+  @Override public void onClosing(@NotNull WebSocket webSocket, int code, @NotNull String reason) {
     Platform.get().log("[WS " + name + "] onClosing " + code, Platform.INFO, null);
 
     WebSocketListener delegate = this.delegate;
@@ -93,7 +94,7 @@ public final class WebSocketRecorder extends WebSocketListener {
     }
   }
 
-  @Override public void onClosed(WebSocket webSocket, int code, String reason) {
+  @Override public void onClosed(@NotNull WebSocket webSocket, int code, @NotNull String reason) {
     Platform.get().log("[WS " + name + "] onClosed " + code, Platform.INFO, null);
 
     WebSocketListener delegate = this.delegate;
@@ -105,7 +106,7 @@ public final class WebSocketRecorder extends WebSocketListener {
     }
   }
 
-  @Override public void onFailure(WebSocket webSocket, Throwable t, @Nullable Response response)  {
+  @Override public void onFailure(@NotNull WebSocket webSocket, @NotNull Throwable t, @Nullable Response response)  {
     Platform.get().log("[WS " + name + "] onFailure", Platform.INFO, t);
 
     WebSocketListener delegate = this.delegate;
@@ -219,23 +220,23 @@ public final class WebSocketRecorder extends WebSocketListener {
   /** Expose this recorder as a frame callback and shim in "ping" events. */
   public WebSocketReader.FrameCallback asFrameCallback() {
     return new WebSocketReader.FrameCallback() {
-      @Override public void onReadMessage(String text) throws IOException {
+      @Override public void onReadMessage(@NotNull String text) throws IOException {
         onMessage(null, text);
       }
 
-      @Override public void onReadMessage(ByteString bytes) throws IOException {
+      @Override public void onReadMessage(@NotNull ByteString bytes) throws IOException {
         onMessage(null, bytes);
       }
 
-      @Override public void onReadPing(ByteString payload) {
+      @Override public void onReadPing(@NotNull ByteString payload) {
         events.add(new Ping(payload));
       }
 
-      @Override public void onReadPong(ByteString payload) {
+      @Override public void onReadPong(@NotNull ByteString payload) {
         events.add(new Pong(payload));
       }
 
-      @Override public void onReadClose(int code, String reason) {
+      @Override public void onReadClose(int code, @NotNull String reason) {
         onClosing(null, code, reason);
       }
     };

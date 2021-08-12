@@ -50,6 +50,7 @@ import okio.GzipSink;
 import okio.Okio;
 import okio.Path;
 import okio.fakefilesystem.FakeFileSystem;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -2620,14 +2621,16 @@ public final class CacheTest {
     fileSystem.createDirectories(cache.directoryPath());
 
     FileSystem loggingFileSystem = new ForwardingFileSystem(fileSystem) {
+      @NotNull
       @Override
-      public Path onPathParameter(Path path, java.lang.String functionName, java.lang.String parameterName) {
+      public Path onPathParameter(@NotNull Path path, @NotNull java.lang.String functionName, @NotNull java.lang.String parameterName) {
         events.add(functionName + ":" + path);
         return path;
       }
 
+      @NotNull
       @Override
-      public Path onPathResult(Path path, java.lang.String functionName) {
+      public Path onPathResult(@NotNull Path path, @NotNull java.lang.String functionName) {
         events.add(functionName + ":" + path);
         return path;
       }

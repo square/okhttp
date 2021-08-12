@@ -21,6 +21,7 @@ import okio.BufferedSource;
 import okio.Okio;
 import okio.Source;
 import okio.Timeout;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -86,11 +87,12 @@ public final class ResponseTest {
         closed = true;
       }
 
-      @Override public long read(Buffer sink, long byteCount) throws IOException {
+      @Override public long read(@NotNull Buffer sink, long byteCount) throws IOException {
         if (closed) throw new IllegalStateException();
         return data.read(sink, byteCount);
       }
 
+      @NotNull
       @Override public Timeout timeout() {
         return Timeout.NONE;
       }

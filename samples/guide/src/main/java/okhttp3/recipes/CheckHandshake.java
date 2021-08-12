@@ -24,6 +24,7 @@ import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import org.jetbrains.annotations.NotNull;
 
 public final class CheckHandshake {
   /** Rejects otherwise-trusted certificates. */
@@ -31,6 +32,7 @@ public final class CheckHandshake {
     final Set<String> blacklist = Collections.singleton(
         "sha256/afwiKY3RxoMmLkuRW1l7QsPZTJPwDS2pdDROQjXw8ig=");
 
+    @NotNull
     @Override public Response intercept(Chain chain) throws IOException {
       for (Certificate certificate : chain.connection().handshake().peerCertificates()) {
         String pin = CertificatePinner.pin(certificate);

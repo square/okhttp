@@ -48,6 +48,7 @@ import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.ByteString;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -181,7 +182,7 @@ public final class WebSocketHttpTest {
 
     final RuntimeException e = new RuntimeException();
     clientListener.setNextEventDelegate(new WebSocketListener() {
-      @Override public void onOpen(WebSocket webSocket, Response response) {
+      @Override public void onOpen(@NotNull WebSocket webSocket, @NotNull Response response) {
         throw e;
       }
     });
@@ -199,7 +200,7 @@ public final class WebSocketHttpTest {
 
     final RuntimeException e = new RuntimeException("boom");
     clientListener.setNextEventDelegate(new WebSocketListener() {
-      @Override public void onFailure(WebSocket webSocket, Throwable t, Response response) {
+      @Override public void onFailure(@NotNull WebSocket webSocket, @NotNull Throwable t, Response response) {
         throw e;
       }
     });
@@ -218,7 +219,7 @@ public final class WebSocketHttpTest {
 
     final RuntimeException e = new RuntimeException();
     clientListener.setNextEventDelegate(new WebSocketListener() {
-      @Override public void onMessage(WebSocket webSocket, String text) {
+      @Override public void onMessage(@NotNull WebSocket webSocket, @NotNull String text) {
         throw e;
       }
     });
@@ -238,7 +239,7 @@ public final class WebSocketHttpTest {
 
     final RuntimeException e = new RuntimeException();
     clientListener.setNextEventDelegate(new WebSocketListener() {
-      @Override public void onClosing(WebSocket webSocket, int code, String reason) {
+      @Override public void onClosing(@NotNull WebSocket webSocket, int code, @NotNull String reason) {
         throw e;
       }
     });
@@ -256,7 +257,7 @@ public final class WebSocketHttpTest {
     clientListener.assertOpen();
     WebSocket server = serverListener.assertOpen();
     clientListener.setNextEventDelegate(new WebSocketListener() {
-      @Override public void onClosing(WebSocket webSocket, int code, String reason) {
+      @Override public void onClosing(@NotNull WebSocket webSocket, int code, @NotNull String reason) {
         webSocket.close(1000, null);
       }
     });
@@ -558,7 +559,8 @@ public final class WebSocketHttpTest {
    */
   @Test public void readTimeoutAppliesWithinFrames() {
     webServer.setDispatcher(new Dispatcher() {
-      @Override public MockResponse dispatch(RecordedRequest request) {
+      @NotNull
+      @Override public MockResponse dispatch(@NotNull RecordedRequest request) {
         return upgradeResponse(request)
             .setBody(new Buffer().write(ByteString.decodeHex("81"))) // Truncated frame.
             .removeHeader("Content-Length")
@@ -656,7 +658,7 @@ public final class WebSocketHttpTest {
     // Stall in onOpen to prevent pongs from being sent.
     final CountDownLatch latch = new CountDownLatch(1);
     webServer.enqueue(new MockResponse().withWebSocketUpgrade(new WebSocketListener() {
-      @Override public void onOpen(WebSocket webSocket, Response response) {
+      @Override public void onOpen(@NotNull WebSocket webSocket, @NotNull Response response) {
         try {
           latch.await(); // The server can't respond to pings!
         } catch (InterruptedException e) {

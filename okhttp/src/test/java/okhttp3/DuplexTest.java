@@ -34,6 +34,7 @@ import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okio.BufferedSink;
 import okio.BufferedSource;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -302,7 +303,7 @@ public final class DuplexTest {
 
     CountDownLatch duplexResponseSent = new CountDownLatch(1);
     listener = new RecordingEventListener() {
-      @Override public void responseHeadersEnd(Call call, Response response) {
+      @Override public void responseHeadersEnd(@NotNull Call call, @NotNull Response response) {
         try {
           // Wait for the server to send the duplex response before acting on the 301 response
           // and resetting the stream.
@@ -547,7 +548,7 @@ public final class DuplexTest {
             return null;
           }
 
-          @Override public void writeTo(BufferedSink sink) throws IOException {
+          @Override public void writeTo(@NotNull BufferedSink sink) throws IOException {
             try {
               for (int i = 0; i < 10; i++) {
                 sink.writeUtf8(".");

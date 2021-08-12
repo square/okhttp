@@ -21,6 +21,7 @@ import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import org.jetbrains.annotations.NotNull;
 
 public final class LoggingInterceptors {
   private static final Logger logger = Logger.getLogger(LoggingInterceptors.class.getName());
@@ -38,6 +39,7 @@ public final class LoggingInterceptors {
   }
 
   private static class LoggingInterceptor implements Interceptor {
+    @NotNull
     @Override public Response intercept(Chain chain) throws IOException {
       long t1 = System.nanoTime();
       Request request = chain.request();

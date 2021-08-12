@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -40,8 +42,9 @@ public class CustomDispatcherTest {
   @Test public void simpleDispatch() throws Exception {
     final List<RecordedRequest> requestsMade = new ArrayList<>();
     final Dispatcher dispatcher = new Dispatcher() {
+      @NotNull
       @Override
-      public MockResponse dispatch(RecordedRequest request) {
+      public MockResponse dispatch(@NotNull RecordedRequest request) {
         requestsMade.add(request);
         return new MockResponse();
       }
@@ -62,6 +65,7 @@ public class CustomDispatcherTest {
     final String firstRequest = "/foo";
     final CountDownLatch latch = new CountDownLatch(1);
     final Dispatcher dispatcher = new Dispatcher() {
+      @NotNull
       @Override
       public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
         if (request.getPath().equals(firstRequest)) {

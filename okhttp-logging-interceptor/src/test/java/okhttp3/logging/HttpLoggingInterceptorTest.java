@@ -41,6 +41,7 @@ import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.ByteString;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -954,7 +955,7 @@ public final class HttpLoggingInterceptorTest {
           "More messages remain: " + logs.subList(index, logs.size())).isEqualTo(index);
     }
 
-    @Override public void log(String message) {
+    @Override public void log(@NotNull String message) {
       logs.add(message);
     }
   }

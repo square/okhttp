@@ -29,6 +29,7 @@ import okhttp3.DelegatingSSLSocket;
 import okhttp3.DelegatingSSLSocketFactory;
 import okio.Buffer;
 import okio.ByteString;
+import org.jetbrains.annotations.NotNull;
 
 /** Records all bytes written and read from a socket and makes them available for inspection. */
 public final class SocketRecorder {
@@ -97,7 +98,7 @@ public final class SocketRecorder {
       return b;
     }
 
-    @Override public int read(byte[] b, int off, int len) throws IOException {
+    @Override public int read(@NotNull byte[] b, int off, int len) throws IOException {
       int read = socket.getInputStream().read(b, off, len);
       if (read == -1) return -1;
       recordedSocket.bytesRead(b, off, read);
@@ -123,7 +124,7 @@ public final class SocketRecorder {
       recordedSocket.byteWritten(b);
     }
 
-    @Override public void write(byte[] b, int off, int len) throws IOException {
+    @Override public void write(@NotNull byte[] b, int off, int len) throws IOException {
       socket.getOutputStream().write(b, off, len);
       recordedSocket.bytesWritten(b, off, len);
     }

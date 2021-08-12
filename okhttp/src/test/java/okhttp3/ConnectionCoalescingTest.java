@@ -33,6 +33,7 @@ import mockwebserver3.MockWebServer;
 import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okhttp3.tls.HeldCertificate;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -181,8 +182,8 @@ public final class ConnectionCoalescingTest {
     CountDownLatch latch3 = new CountDownLatch(1);
     CountDownLatch latch4 = new CountDownLatch(1);
     EventListener listener1 = new EventListener() {
-      @Override public void connectStart(Call call, InetSocketAddress inetSocketAddress,
-          Proxy proxy) {
+      @Override public void connectStart(@NotNull Call call, @NotNull InetSocketAddress inetSocketAddress,
+                                         @NotNull Proxy proxy) {
         try {
           // Wait for request2 to guarantee we make 2 separate connections to the server.
           latch1.await();
@@ -191,15 +192,15 @@ public final class ConnectionCoalescingTest {
         }
       }
 
-      @Override public void connectionAcquired(Call call, Connection connection) {
+      @Override public void connectionAcquired(@NotNull Call call, @NotNull Connection connection) {
         // We have the connection and it's in the pool. Let request2 proceed to make a connection.
         latch2.countDown();
       }
     };
 
     EventListener request2Listener = new EventListener() {
-      @Override public void connectStart(Call call, InetSocketAddress inetSocketAddress,
-          Proxy proxy) {
+      @Override public void connectStart(@NotNull Call call, @NotNull InetSocketAddress inetSocketAddress,
+                                         @NotNull Proxy proxy) {
         // Let request1 proceed to make a connection.
         latch1.countDown();
         try {
@@ -210,7 +211,7 @@ public final class ConnectionCoalescingTest {
         }
       }
 
-      @Override public void connectionAcquired(Call call, Connection connection) {
+      @Override public void connectionAcquired(@NotNull Call call, @NotNull Connection connection) {
         // We obtained the coalesced connection. Let request1 violently destroy it.
         latch3.countDown();
         try {
@@ -234,7 +235,7 @@ public final class ConnectionCoalescingTest {
     Request request = new Request.Builder().url(sanUrl).build();
     Call call1 = client1.newCall(request);
     call1.enqueue(new Callback() {
-      @Override public void onResponse(Call call, Response response) throws IOException {
+      @Override public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
         try {
           // Wait until request2 acquires the connection before we destroy it violently.
           latch3.await();
@@ -246,7 +247,7 @@ public final class ConnectionCoalescingTest {
         latch4.countDown();
       }
 
-      @Override public void onFailure(Call call, IOException e) {
+      @Override public void onFailure(@NotNull Call call, @NotNull IOException e) {
         fail();
       }
     });
@@ -423,7 +424,7 @@ public final class ConnectionCoalescingTest {
     AtomicInteger connectCount = new AtomicInteger();
     EventListener listener = new EventListener() {
       @Override public void connectStart(
-          Call call, InetSocketAddress inetSocketAddress, Proxy proxy) {
+          @NotNull Call call, @NotNull InetSocketAddress inetSocketAddress, @NotNull Proxy proxy) {
         connectCount.getAndIncrement();
       }
     };

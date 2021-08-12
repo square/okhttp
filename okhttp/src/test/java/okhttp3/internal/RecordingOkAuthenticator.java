@@ -24,6 +24,7 @@ import okhttp3.Challenge;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.Route;
+import org.jetbrains.annotations.NotNull;
 
 public final class RecordingOkAuthenticator implements Authenticator {
   public final List<Response> responses = new ArrayList<>();
@@ -46,7 +47,7 @@ public final class RecordingOkAuthenticator implements Authenticator {
     return routes.get(0);
   }
 
-  @Override public Request authenticate(Route route, Response response) throws IOException {
+  @Override public Request authenticate(Route route, @NotNull Response response) throws IOException {
     if (route == null) throw new NullPointerException("route == null");
     if (response == null) throw new NullPointerException("response == null");
 

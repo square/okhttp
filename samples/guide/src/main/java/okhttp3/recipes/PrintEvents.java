@@ -32,6 +32,7 @@ import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import org.jetbrains.annotations.NotNull;
 
 public final class PrintEvents {
   private final OkHttpClient client = new OkHttpClient.Builder()
@@ -43,10 +44,10 @@ public final class PrintEvents {
         .url("https://www.washingtonpost.com/")
         .build();
     client.newCall(washingtonPostRequest).enqueue(new Callback() {
-      @Override public void onFailure(Call call, IOException e) {
+      @Override public void onFailure(@NotNull Call call, @NotNull IOException e) {
       }
 
-      @Override public void onResponse(Call call, Response response) throws IOException {
+      @Override public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
         try (ResponseBody body = response.body()) {
           // Consume and discard the response body.
           body.source().readByteString();
@@ -58,10 +59,10 @@ public final class PrintEvents {
         .url("https://www.nytimes.com/")
         .build();
     client.newCall(newYorkTimesRequest).enqueue(new Callback() {
-      @Override public void onFailure(Call call, IOException e) {
+      @Override public void onFailure(@NotNull Call call, @NotNull IOException e) {
       }
 
-      @Override public void onResponse(Call call, Response response) throws IOException {
+      @Override public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
         try (ResponseBody body = response.body()) {
           // Consume and discard the response body.
           body.source().readByteString();
@@ -78,6 +79,7 @@ public final class PrintEvents {
     private static final Factory FACTORY = new Factory() {
       final AtomicLong nextCallId = new AtomicLong(1L);
 
+      @NotNull
       @Override public EventListener create(Call call) {
         long callId = nextCallId.getAndIncrement();
         System.out.printf("%04d %s%n", callId, call.request().url());
@@ -98,106 +100,106 @@ public final class PrintEvents {
       System.out.printf("%04d %.3f %s%n", callId, elapsedNanos / 1000000000d, name);
     }
 
-    @Override public void proxySelectStart(Call call, HttpUrl url) {
+    @Override public void proxySelectStart(@NotNull Call call, @NotNull HttpUrl url) {
       printEvent("proxySelectStart");
     }
 
-    @Override public void proxySelectEnd(Call call, HttpUrl url, List<Proxy> proxies) {
+    @Override public void proxySelectEnd(@NotNull Call call, @NotNull HttpUrl url, @NotNull List<Proxy> proxies) {
       printEvent("proxySelectEnd");
     }
 
-    @Override public void callStart(Call call) {
+    @Override public void callStart(@NotNull Call call) {
       printEvent("callStart");
     }
 
-    @Override public void dnsStart(Call call, String domainName) {
+    @Override public void dnsStart(@NotNull Call call, @NotNull String domainName) {
       printEvent("dnsStart");
     }
 
-    @Override public void dnsEnd(Call call, String domainName, List<InetAddress> inetAddressList) {
+    @Override public void dnsEnd(@NotNull Call call, @NotNull String domainName, @NotNull List<InetAddress> inetAddressList) {
       printEvent("dnsEnd");
     }
 
     @Override public void connectStart(
-        Call call, InetSocketAddress inetSocketAddress, Proxy proxy) {
+        @NotNull Call call, @NotNull InetSocketAddress inetSocketAddress, @NotNull Proxy proxy) {
       printEvent("connectStart");
     }
 
-    @Override public void secureConnectStart(Call call) {
+    @Override public void secureConnectStart(@NotNull Call call) {
       printEvent("secureConnectStart");
     }
 
-    @Override public void secureConnectEnd(Call call, Handshake handshake) {
+    @Override public void secureConnectEnd(@NotNull Call call, Handshake handshake) {
       printEvent("secureConnectEnd");
     }
 
     @Override public void connectEnd(
-        Call call, InetSocketAddress inetSocketAddress, Proxy proxy, Protocol protocol) {
+        @NotNull Call call, @NotNull InetSocketAddress inetSocketAddress, @NotNull Proxy proxy, Protocol protocol) {
       printEvent("connectEnd");
     }
 
-    @Override public void connectFailed(Call call, InetSocketAddress inetSocketAddress, Proxy proxy,
-        Protocol protocol, IOException ioe) {
+    @Override public void connectFailed(@NotNull Call call, @NotNull InetSocketAddress inetSocketAddress, @NotNull Proxy proxy,
+                                        Protocol protocol, @NotNull IOException ioe) {
       printEvent("connectFailed");
     }
 
-    @Override public void connectionAcquired(Call call, Connection connection) {
+    @Override public void connectionAcquired(@NotNull Call call, @NotNull Connection connection) {
       printEvent("connectionAcquired");
     }
 
-    @Override public void connectionReleased(Call call, Connection connection) {
+    @Override public void connectionReleased(@NotNull Call call, @NotNull Connection connection) {
       printEvent("connectionReleased");
     }
 
-    @Override public void requestHeadersStart(Call call) {
+    @Override public void requestHeadersStart(@NotNull Call call) {
       printEvent("requestHeadersStart");
     }
 
-    @Override public void requestHeadersEnd(Call call, Request request) {
+    @Override public void requestHeadersEnd(@NotNull Call call, @NotNull Request request) {
       printEvent("requestHeadersEnd");
     }
 
-    @Override public void requestBodyStart(Call call) {
+    @Override public void requestBodyStart(@NotNull Call call) {
       printEvent("requestBodyStart");
     }
 
-    @Override public void requestBodyEnd(Call call, long byteCount) {
+    @Override public void requestBodyEnd(@NotNull Call call, long byteCount) {
       printEvent("requestBodyEnd");
     }
 
-    @Override public void requestFailed(Call call, IOException ioe) {
+    @Override public void requestFailed(@NotNull Call call, @NotNull IOException ioe) {
       printEvent("requestFailed");
     }
 
-    @Override public void responseHeadersStart(Call call) {
+    @Override public void responseHeadersStart(@NotNull Call call) {
       printEvent("responseHeadersStart");
     }
 
-    @Override public void responseHeadersEnd(Call call, Response response) {
+    @Override public void responseHeadersEnd(@NotNull Call call, @NotNull Response response) {
       printEvent("responseHeadersEnd");
     }
 
-    @Override public void responseBodyStart(Call call) {
+    @Override public void responseBodyStart(@NotNull Call call) {
       printEvent("responseBodyStart");
     }
 
-    @Override public void responseBodyEnd(Call call, long byteCount) {
+    @Override public void responseBodyEnd(@NotNull Call call, long byteCount) {
       printEvent("responseBodyEnd");
     }
 
-    @Override public void responseFailed(Call call, IOException ioe) {
+    @Override public void responseFailed(@NotNull Call call, @NotNull IOException ioe) {
       printEvent("responseFailed");
     }
 
-    @Override public void callEnd(Call call) {
+    @Override public void callEnd(@NotNull Call call) {
       printEvent("callEnd");
     }
 
-    @Override public void callFailed(Call call, IOException ioe) {
+    @Override public void callFailed(@NotNull Call call, @NotNull IOException ioe) {
       printEvent("callFailed");
     }
 
-    @Override public void canceled(Call call) {
+    @Override public void canceled(@NotNull Call call) {
       printEvent("canceled");
     }
   }

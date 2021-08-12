@@ -109,6 +109,7 @@ public final class HttpOverHttp2Test {
   private static final HandshakeCertificates handshakeCertificates = localhost();
 
   public static class ProtocolParamProvider extends SimpleProvider {
+    @NotNull
     @Override
     public List<Object> arguments() {
       return asList(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.HTTP_2);
@@ -277,7 +278,7 @@ public final class HttpOverHttp2Test {
             return MediaType.get("text/plain; charset=utf-8");
           }
 
-          @Override public void writeTo(BufferedSink sink) throws IOException {
+          @Override public void writeTo(@NotNull BufferedSink sink) throws IOException {
             sink.write(postBytes);
           }
         })
@@ -312,7 +313,7 @@ public final class HttpOverHttp2Test {
             return postBytes.length;
           }
 
-          @Override public void writeTo(BufferedSink sink) throws IOException {
+          @Override public void writeTo(@NotNull BufferedSink sink) throws IOException {
             sink.write(postBytes);
           }
         })
@@ -348,7 +349,7 @@ public final class HttpOverHttp2Test {
             return postBytes.length;
           }
 
-          @Override public void writeTo(BufferedSink sink) throws IOException {
+          @Override public void writeTo(@NotNull BufferedSink sink) throws IOException {
             sink.write(postBytes);  // push bytes into the stream's buffer
             sink.flush(); // Http2Connection.writeData subject to write window
             sink.close(); // Http2Connection.writeData empty frame
@@ -1165,8 +1166,9 @@ public final class HttpOverHttp2Test {
       this.requestCanceledLatches = requestCanceledLatches;
     }
 
+    @NotNull
     @Override
-    synchronized public MockResponse dispatch(RecordedRequest request)
+    synchronized public MockResponse dispatch(@NotNull RecordedRequest request)
         throws InterruptedException {
       // This guarantees a deterministic sequence when handling the canceled request:
       // 1. Server reads request and dequeues first response
@@ -1190,11 +1192,11 @@ public final class HttpOverHttp2Test {
         .build());
     CountDownLatch latch = new CountDownLatch(1);
     call.enqueue(new Callback() {
-      @Override public void onFailure(Call call1, IOException e) {
+      @Override public void onFailure(@NotNull Call call1, @NotNull IOException e) {
         latch.countDown();
       }
 
-      @Override public void onResponse(Call call1, Response response) {
+      @Override public void onResponse(@NotNull Call call1, @NotNull Response response) {
         fail();
       }
     });
@@ -1287,11 +1289,11 @@ public final class HttpOverHttp2Test {
         .build();
 
     Callback callback = new Callback() {
-      @Override public void onFailure(Call call, IOException e) {
+      @Override public void onFailure(@NotNull Call call, @NotNull IOException e) {
         fail();
       }
 
-      @Override public void onResponse(Call call, Response response) throws IOException {
+      @Override public void onResponse(@NotNull Call call, Response response) throws IOException {
         responses.offer(response.body().string());
       }
     };
@@ -1789,7 +1791,8 @@ public final class HttpOverHttp2Test {
         .addNetworkInterceptor(new Interceptor() {
           boolean executedCall;
 
-          @Override public Response intercept(Chain chain) throws IOException {
+          @NotNull
+          @Override public Response intercept(@NotNull Chain chain) throws IOException {
             if (!executedCall) {
               // At this point, we have a healthy HTTP/2 connection. This call will trigger the
               // server to send a GOAWAY frame, leaving the connection in a shutdown state.
@@ -1836,12 +1839,12 @@ public final class HttpOverHttp2Test {
 
     BlockingQueue<String> bodies = new LinkedBlockingQueue<>();
     Callback callback = new Callback() {
-      @Override public void onResponse(Call call, Response response) throws IOException {
+      @Override public void onResponse(@NotNull Call call, Response response) throws IOException {
         bodies.add(response.body().string());
         latch.countDown();
       }
 
-      @Override public void onFailure(Call call, IOException e) {
+      @Override public void onFailure(@NotNull Call call, @NotNull IOException e) {
         errors.add(e);
         latch.countDown();
       }
@@ -1898,7 +1901,8 @@ public final class HttpOverHttp2Test {
     server.setDispatcher(new Dispatcher() {
       int requestCount;
 
-      @Override public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
+      @NotNull
+      @Override public MockResponse dispatch(@NotNull RecordedRequest request) throws InterruptedException {
         MockResponse result = queueDispatcher.dispatch(request);
 
         requestCount++;
@@ -1918,6 +1922,7 @@ public final class HttpOverHttp2Test {
         return result;
       }
 
+      @NotNull
       @Override public MockResponse peek() {
         return queueDispatcher.peek();
       }
@@ -2027,11 +2032,11 @@ public final class HttpOverHttp2Test {
     CountDownLatch latch = new CountDownLatch(2);
 
     Callback callback = new Callback() {
-      @Override public void onResponse(Call call, Response response) {
+      @Override public void onResponse(@NotNull Call call, @NotNull Response response) {
         fail();
       }
 
-      @Override public void onFailure(Call call, IOException e) {
+      @Override public void onFailure(@NotNull Call call, @NotNull IOException e) {
         latch.countDown();
       }
     };
@@ -2039,7 +2044,7 @@ public final class HttpOverHttp2Test {
     client = client.newBuilder().eventListenerFactory(clientTestRule.wrap(new EventListener() {
       int callCount;
 
-      @Override public void connectionAcquired(Call call, Connection connection) {
+      @Override public void connectionAcquired(@NotNull Call call, @NotNull Connection connection) {
         try {
           if (callCount++ == 1) {
             server.shutdown();
@@ -2071,7 +2076,7 @@ public final class HttpOverHttp2Test {
             return MediaType.get("text/plain; charset=utf-8");
           }
 
-          @Override public void writeTo(BufferedSink sink) {
+          @Override public void writeTo(@NotNull BufferedSink sink) {
             callReference.get().cancel();
           }
         })

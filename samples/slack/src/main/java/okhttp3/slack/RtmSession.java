@@ -20,6 +20,7 @@ import java.io.IOException;
 import okhttp3.WebSocket;
 import okhttp3.Response;
 import okhttp3.WebSocketListener;
+import org.jetbrains.annotations.NotNull;
 
 /** A realtime messaging session. */
 public final class RtmSession extends WebSocketListener implements Closeable {
@@ -41,21 +42,21 @@ public final class RtmSession extends WebSocketListener implements Closeable {
 
   // TODO(jwilson): can I read the response body? Do I have to?
   //                the body from slack is a 0-byte-buffer
-  @Override public synchronized void onOpen(WebSocket webSocket, Response response) {
+  @Override public synchronized void onOpen(@NotNull WebSocket webSocket, @NotNull Response response) {
     System.out.println("onOpen: " + response);
   }
 
   // TOOD(jwilson): decode incoming messages and dispatch them somewhere.
-  @Override public void onMessage(WebSocket webSocket, String text) {
+  @Override public void onMessage(@NotNull WebSocket webSocket, @NotNull String text) {
     System.out.println("onMessage: " + text);
   }
 
-  @Override public void onClosing(WebSocket webSocket, int code, String reason) {
+  @Override public void onClosing(WebSocket webSocket, int code, @NotNull String reason) {
     webSocket.close(1000, null);
     System.out.println("onClose (" + code + "): " + reason);
   }
 
-  @Override public void onFailure(WebSocket webSocket, Throwable t, Response response) {
+  @Override public void onFailure(@NotNull WebSocket webSocket, @NotNull Throwable t, Response response) {
     // TODO(jwilson): can I read the response body? Do I have to?
     System.out.println("onFailure " + response);
   }

@@ -20,6 +20,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import javax.annotation.Nullable;
 import okio.Buffer;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -210,7 +211,7 @@ public final class ServerSentEventIteratorTest {
 
   private void consumeEvents(String source) throws IOException {
     ServerSentEventReader.Callback callback = new ServerSentEventReader.Callback() {
-      @Override public void onEvent(@Nullable String id, @Nullable String type, String data) {
+      @Override public void onEvent(@Nullable String id, @Nullable String type, @NotNull String data) {
         callbacks.add(new Event(id, type, data));
       }
       @Override public void onRetryChange(long timeMs) {

@@ -17,6 +17,7 @@ import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import okio.Buffer;
 import okio.Okio;
+import org.jetbrains.annotations.NotNull;
 
 public class SampleServer extends Dispatcher {
   private final SSLContext sslContext;
@@ -36,6 +37,7 @@ public class SampleServer extends Dispatcher {
     server.start(port);
   }
 
+  @NotNull
   @Override public MockResponse dispatch(RecordedRequest request) {
     String path = request.getPath();
     try {

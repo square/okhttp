@@ -79,6 +79,7 @@ import okio.BufferedSource;
 import okio.GzipSink;
 import okio.Okio;
 import okio.Utf8;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -472,7 +473,7 @@ public final class URLConnectionTest {
         return uploadKind == TransferKind.CHUNKED ? -1L : n;
       }
 
-      @Override public void writeTo(BufferedSink sink) throws IOException {
+      @Override public void writeTo(@NotNull BufferedSink sink) throws IOException {
         if (writeKind == WriteKind.BYTE_BY_BYTE) {
           for (int i = 0; i < n; ++i) {
             sink.writeByte('x');
@@ -1159,10 +1160,11 @@ public final class URLConnectionTest {
     AtomicReference<Call> callReference = new AtomicReference<>();
 
     class DisconnectingCookieJar implements CookieJar {
-      @Override public void saveFromResponse(HttpUrl url, List<Cookie> cookies) {
+      @Override public void saveFromResponse(@NotNull HttpUrl url, @NotNull List<Cookie> cookies) {
       }
 
-      @Override public List<Cookie> loadForRequest(HttpUrl url) {
+      @NotNull
+      @Override public List<Cookie> loadForRequest(@NotNull HttpUrl url) {
         callReference.get().cancel();
         return Collections.emptyList();
       }
@@ -2398,6 +2400,7 @@ public final class URLConnectionTest {
    * }</pre>
    */
   static class LegacyRedirectInterceptor implements Interceptor {
+    @NotNull
     @Override public Response intercept(Chain chain) throws IOException {
       Response response = chain.proceed(chain.request());
 
@@ -2681,7 +2684,7 @@ public final class URLConnectionTest {
             return null;
           }
 
-          @Override public void writeTo(BufferedSink sink) throws IOException {
+          @Override public void writeTo(@NotNull BufferedSink sink) throws IOException {
             byte[] data = new byte[2 * 1024 * 1024]; // 2 MiB.
             sink.write(data);
           }
@@ -2832,7 +2835,7 @@ public final class URLConnectionTest {
     Response response = getResponse(new Request.Builder()
         .url(server.url("/"))
         .post(new ForwardingRequestBody(transferKind.newRequestBody("def")) {
-          @Override public void writeTo(BufferedSink sink) throws IOException {
+          @Override public void writeTo(@NotNull BufferedSink sink) throws IOException {
             sinkReference.set(sink);
             super.writeTo(sink);
           }
@@ -3512,7 +3515,7 @@ public final class URLConnectionTest {
             return contentLength;
           }
 
-          @Override public void writeTo(BufferedSink sink) throws IOException {
+          @Override public void writeTo(@NotNull BufferedSink sink) throws IOException {
             byte[] buffer = new byte[1024 * 1024];
             for (long bytesWritten = 0; bytesWritten < contentLength; ) {
               int byteCount = (int) Math.min(buffer.length, contentLength - bytesWritten);
@@ -3815,7 +3818,7 @@ public final class URLConnectionTest {
             return null;
           }
 
-          @Override public void writeTo(BufferedSink sink) throws IOException {
+          @Override public void writeTo(@NotNull BufferedSink sink) throws IOException {
             sink.writeUtf8(body);
           }
         };
@@ -3836,7 +3839,7 @@ public final class URLConnectionTest {
             return null;
           }
 
-          @Override public void writeTo(BufferedSink sink) throws IOException {
+          @Override public void writeTo(@NotNull BufferedSink sink) throws IOException {
             sink.writeUtf8(body);
           }
         };
