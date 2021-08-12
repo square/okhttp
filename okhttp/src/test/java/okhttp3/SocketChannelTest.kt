@@ -197,7 +197,7 @@ class SocketChannelTest(
         listOf(HTTP_1_1, HTTP_2).flatMap { protocol ->
           listOf(TLS_1_3, TLS_1_2).flatMap { tlsVersion ->
             listOf(Channel, Standard).flatMap { socketMode ->
-              listOf(DISABLED, TlsExtensionMode.STANDARD).map { tlsExtensionMode ->
+              listOf(DISABLED, STANDARD).map { tlsExtensionMode ->
                 TlsInstance(provider, protocol, tlsVersion, socketMode, tlsExtensionMode)
               }
             }

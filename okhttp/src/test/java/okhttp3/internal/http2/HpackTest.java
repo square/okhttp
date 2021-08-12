@@ -32,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 public final class HpackTest {
   private final Buffer bytesIn = new Buffer();
   private Hpack.Reader hpackReader;
-  private Buffer bytesOut = new Buffer();
+  private final Buffer bytesOut = new Buffer();
   private Hpack.Writer hpackWriter;
 
   @BeforeEach public void reset() {

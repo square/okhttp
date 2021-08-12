@@ -28,8 +28,8 @@ import okhttp3.Route;
 public final class RecordingOkAuthenticator implements Authenticator {
   public final List<Response> responses = new ArrayList<>();
   public final List<Route> routes = new ArrayList<>();
-  public @Nullable String credential;
-  public @Nullable String scheme;
+  @Nullable public final String credential;
+  @Nullable public final String scheme;
 
   public RecordingOkAuthenticator(@Nullable String credential, @Nullable String scheme) {
     this.credential = credential;

@@ -45,7 +45,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * from the Apache HTTP Client test suite.
  */
 public final class HostnameVerifierTest {
-  private OkHostnameVerifier verifier = OkHostnameVerifier.INSTANCE;
+  private final OkHostnameVerifier verifier = OkHostnameVerifier.INSTANCE;
   @RegisterExtension public PlatformRule platform = new PlatformRule();
 
   @Test public void verify() {

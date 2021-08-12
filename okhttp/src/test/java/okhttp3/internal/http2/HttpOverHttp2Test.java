@@ -18,10 +18,8 @@ package okhttp3.internal.http2;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InterruptedIOException;
 import java.net.Authenticator;
 import java.net.HttpURLConnection;
-import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -37,7 +35,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
-import javax.net.SocketFactory;
 import javax.net.ssl.SSLException;
 import mockwebserver3.Dispatcher;
 import mockwebserver3.MockResponse;
@@ -52,7 +49,6 @@ import okhttp3.Callback;
 import okhttp3.Connection;
 import okhttp3.Cookie;
 import okhttp3.Credentials;
-import okhttp3.DelegatingSocketFactory;
 import okhttp3.EventListener;
 import okhttp3.Headers;
 import okhttp3.Interceptor;
@@ -491,7 +487,7 @@ public final class HttpOverHttp2Test {
     waitForDataFrames(Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE);
 
     assertThat(response1.body().contentLength()).isEqualTo(
-        (long) Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE);
+      Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE);
     int read = response1.body().source().read(new byte[8192]);
     assertThat(read).isEqualTo(8192);
 
@@ -1536,7 +1532,7 @@ public final class HttpOverHttp2Test {
 
     long elapsedUntilFailure = System.nanoTime() - executeAtNanos;
     assertThat((double) TimeUnit.NANOSECONDS.toMillis(elapsedUntilFailure)).isCloseTo(
-        (double) 1000, offset(250d));
+      1000, offset(250d));
 
     // Confirm a single ping was sent but not acknowledged.
     List<String> logs = testLogHandler.takeAll();
@@ -1969,13 +1965,11 @@ public final class HttpOverHttp2Test {
       Protocol protocol, MockWebServer mockWebServer) throws Exception {
     setUp(protocol, mockWebServer);
     client = client.newBuilder()
-        .addNetworkInterceptor(new Interceptor() {
-          @Override public Response intercept(Chain chain) throws IOException {
-            Request request = chain.request().newBuilder()
-                .header("Host", "privateobject.com")
-                .build();
-            return chain.proceed(request);
-          }
+        .addNetworkInterceptor(chain -> {
+          Request request = chain.request().newBuilder()
+              .header("Host", "privateobject.com")
+              .build();
+          return chain.proceed(request);
         })
         .build();
 
@@ -2002,8 +1996,8 @@ public final class HttpOverHttp2Test {
   }
 
   class AsyncRequest implements Runnable {
-    String path;
-    CountDownLatch countDownLatch;
+    final String path;
+    final CountDownLatch countDownLatch;
 
     AsyncRequest(String path, CountDownLatch countDownLatch) {
       this.path = path;

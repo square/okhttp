@@ -206,7 +206,7 @@ class KotlinSourceModernTest {
 
   @Test
   fun challenge() {
-    var challenge = Challenge("", mapOf<String?, String>("" to ""))
+    var challenge = Challenge("", mapOf("" to ""))
     challenge = Challenge("", "")
     val scheme: String = challenge.scheme
     val authParams: Map<String?, String> = challenge.authParams
@@ -411,7 +411,7 @@ class KotlinSourceModernTest {
     val name: String = formBody.name(0)
     val encodedValue: String = formBody.encodedValue(0)
     val value: String = formBody.value(0)
-    val contentType: MediaType? = formBody.contentType()
+    val contentType: MediaType = formBody.contentType()
     val contentLength: Long = formBody.contentLength()
     formBody.writeTo(Buffer())
     val requestBody: RequestBody = formBody
@@ -758,7 +758,7 @@ class KotlinSourceModernTest {
     val size: Int = multipartBody.size
     val parts: List<MultipartBody.Part> = multipartBody.parts
     val part: MultipartBody.Part = multipartBody.part(0)
-    val contentType: MediaType? = multipartBody.contentType()
+    val contentType: MediaType = multipartBody.contentType()
     val contentLength: Long = multipartBody.contentLength()
     multipartBody.writeTo(Buffer())
     val mixed: MediaType = MultipartBody.MIXED

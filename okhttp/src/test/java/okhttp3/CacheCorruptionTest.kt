@@ -58,8 +58,7 @@ class CacheCorruptionTest(
   private val handshakeCertificates = localhost()
   private lateinit var client: OkHttpClient
   private lateinit var cache: Cache
-  private val NULL_HOSTNAME_VERIFIER =
-    HostnameVerifier { _: String?, _: SSLSession? -> true }
+  private val NULL_HOSTNAME_VERIFIER = HostnameVerifier { _: String?, _: SSLSession? -> true }
   private val cookieManager = CookieManager()
 
   @BeforeEach

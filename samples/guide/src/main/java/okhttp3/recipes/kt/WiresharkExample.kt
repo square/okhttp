@@ -325,6 +325,6 @@ fun main() {
   // Call this before anything else initialises the JSSE stack.
   WireSharkListenerFactory.register()
 
-  val example = WiresharkExample(tlsVersions = listOf(TlsVersion.TLS_1_2), launch = CommandLine)
+  val example = WiresharkExample(tlsVersions = listOf(TLS_1_2), launch = CommandLine)
   example.run()
 }

@@ -143,7 +143,7 @@ public final class RecordedResponse {
 
   public RecordedResponse assertFailure(Class<?>... allowedExceptionTypes) {
     boolean found = false;
-    for (Class expectedClass : allowedExceptionTypes) {
+    for (Class<?> expectedClass : allowedExceptionTypes) {
       if (expectedClass.isInstance(failure)) {
         found = true;
         break;

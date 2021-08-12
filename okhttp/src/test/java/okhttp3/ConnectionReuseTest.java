@@ -43,7 +43,7 @@ public final class ConnectionReuseTest {
   @RegisterExtension public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
   private MockWebServer server;
-  private HandshakeCertificates handshakeCertificates = localhost();
+  private final HandshakeCertificates handshakeCertificates = localhost();
   private OkHttpClient client = clientTestRule.newClient();
 
   @BeforeEach

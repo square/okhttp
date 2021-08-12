@@ -56,7 +56,7 @@ public class DnsOverHttpsTest {
 
   private MockWebServer server;
   private Dns dns;
-  private FileSystem cacheFs = new FakeFileSystem();
+  private final FileSystem cacheFs = new FakeFileSystem();
 
   private final OkHttpClient bootstrapClient = new OkHttpClient.Builder()
       .protocols(asList(Protocol.HTTP_2, Protocol.HTTP_1_1))
