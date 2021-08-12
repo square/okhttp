@@ -2623,14 +2623,14 @@ public final class CacheTest {
     FileSystem loggingFileSystem = new ForwardingFileSystem(fileSystem) {
       @NotNull
       @Override
-      public Path onPathParameter(@NotNull Path path, @NotNull java.lang.String functionName, @NotNull java.lang.String parameterName) {
+      public Path onPathParameter(@NotNull Path path, @NotNull String functionName, @NotNull String parameterName) {
         events.add(functionName + ":" + path);
         return path;
       }
 
       @NotNull
       @Override
-      public Path onPathResult(@NotNull Path path, @NotNull java.lang.String functionName) {
+      public Path onPathResult(@NotNull Path path, @NotNull String functionName) {
         events.add(functionName + ":" + path);
         return path;
       }
