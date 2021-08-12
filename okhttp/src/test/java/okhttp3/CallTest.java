@@ -3818,7 +3818,7 @@ public final class CallTest {
 
   @Test public void connectionIsImmediatelyUnhealthy() throws Exception {
     EventListener listener = new EventListener() {
-      @Override public void connectionAcquired(@NotNull Call call, Connection connection) {
+      @Override public void connectionAcquired(@NotNull Call call, @NotNull Connection connection) {
         Util.closeQuietly(connection.socket());
       }
     };

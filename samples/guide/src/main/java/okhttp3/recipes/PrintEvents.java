@@ -33,6 +33,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class PrintEvents {
   private final OkHttpClient client = new OkHttpClient.Builder()
@@ -134,12 +135,12 @@ public final class PrintEvents {
     }
 
     @Override public void connectEnd(
-        @NotNull Call call, @NotNull InetSocketAddress inetSocketAddress, @NotNull Proxy proxy, Protocol protocol) {
+        @NotNull Call call, @NotNull InetSocketAddress inetSocketAddress, @NotNull Proxy proxy, @Nullable Protocol protocol) {
       printEvent("connectEnd");
     }
 
     @Override public void connectFailed(@NotNull Call call, @NotNull InetSocketAddress inetSocketAddress, @NotNull Proxy proxy,
-                                        Protocol protocol, @NotNull IOException ioe) {
+                                        @Nullable Protocol protocol, @NotNull IOException ioe) {
       printEvent("connectFailed");
     }
 

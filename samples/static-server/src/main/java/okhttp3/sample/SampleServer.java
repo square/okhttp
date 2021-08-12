@@ -38,7 +38,7 @@ public class SampleServer extends Dispatcher {
   }
 
   @NotNull
-  @Override public MockResponse dispatch(RecordedRequest request) {
+  @Override public MockResponse dispatch(@NotNull RecordedRequest request) {
     String path = request.getPath();
     try {
       if (!path.startsWith("/") || path.contains("..")) throw new FileNotFoundException();

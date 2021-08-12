@@ -983,7 +983,7 @@ public final class Http2ConnectionTest {
         throw new AssertionError();
       }
 
-      @Override public void onSettings(@NotNull Http2Connection connection, Settings settings) {
+      @Override public void onSettings(@NotNull Http2Connection connection, @NotNull Settings settings) {
         maxConcurrentStreams.set(settings.getMaxConcurrentStreams());
         maxConcurrentStreamsUpdated.countDown();
       }

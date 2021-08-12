@@ -67,7 +67,7 @@ public class CustomDispatcherTest {
     final Dispatcher dispatcher = new Dispatcher() {
       @NotNull
       @Override
-      public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
+      public MockResponse dispatch(@NotNull RecordedRequest request) throws InterruptedException {
         if (request.getPath().equals(firstRequest)) {
           latch.await();
         }

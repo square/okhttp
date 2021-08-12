@@ -49,6 +49,7 @@ import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.ByteString;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -200,7 +201,7 @@ public final class WebSocketHttpTest {
 
     final RuntimeException e = new RuntimeException("boom");
     clientListener.setNextEventDelegate(new WebSocketListener() {
-      @Override public void onFailure(@NotNull WebSocket webSocket, @NotNull Throwable t, Response response) {
+      @Override public void onFailure(@NotNull WebSocket webSocket, @NotNull Throwable t, @Nullable Response response) {
         throw e;
       }
     });

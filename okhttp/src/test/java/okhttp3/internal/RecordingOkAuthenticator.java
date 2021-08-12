@@ -47,7 +47,7 @@ public final class RecordingOkAuthenticator implements Authenticator {
     return routes.get(0);
   }
 
-  @Override public Request authenticate(Route route, @NotNull Response response) throws IOException {
+  @Override public Request authenticate(@Nullable Route route, @NotNull Response response) throws IOException {
     if (route == null) throw new NullPointerException("route == null");
     if (response == null) throw new NullPointerException("response == null");
 

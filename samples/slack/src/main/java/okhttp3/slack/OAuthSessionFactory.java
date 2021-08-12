@@ -78,7 +78,7 @@ public final class OAuthSessionFactory extends Dispatcher implements Closeable {
 
   /** When the browser hits the redirect URL, use the provided code to ask Slack for a session. */
   @NotNull
-  @Override public MockResponse dispatch(RecordedRequest request) {
+  @Override public MockResponse dispatch(@NotNull RecordedRequest request) {
     HttpUrl requestUrl = mockWebServer.url(request.getPath());
     String code = requestUrl.queryParameter("code");
     String stateString = requestUrl.queryParameter("state");

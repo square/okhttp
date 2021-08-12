@@ -8,6 +8,7 @@ import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okio.ByteString;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class WebSocketEcho extends WebSocketListener {
   private void run() {
@@ -44,7 +45,7 @@ public final class WebSocketEcho extends WebSocketListener {
     System.out.println("CLOSE: " + code + " " + reason);
   }
 
-  @Override public void onFailure(@NotNull WebSocket webSocket, Throwable t, Response response) {
+  @Override public void onFailure(@NotNull WebSocket webSocket, Throwable t, @Nullable Response response) {
     t.printStackTrace();
   }
 

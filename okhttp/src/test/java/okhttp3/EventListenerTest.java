@@ -154,7 +154,7 @@ public final class EventListenerTest {
         completionLatch.countDown();
       }
 
-      @Override public void onResponse(@NotNull Call call, Response response) {
+      @Override public void onResponse(@NotNull Call call, @NotNull Response response) {
         response.close();
         completionLatch.countDown();
       }

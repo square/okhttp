@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import okio.ByteString;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static okhttp3.internal.Util.userAgent;
 
@@ -80,7 +81,7 @@ public final class AutobahnTester {
         latch.countDown();
       }
 
-      @Override public void onFailure(@NotNull WebSocket webSocket, @NotNull Throwable t, Response response) {
+      @Override public void onFailure(@NotNull WebSocket webSocket, @NotNull Throwable t, @Nullable Response response) {
         t.printStackTrace(System.out);
         latch.countDown();
       }
@@ -112,7 +113,7 @@ public final class AutobahnTester {
         latch.countDown();
       }
 
-      @Override public void onFailure(@NotNull WebSocket webSocket, @NotNull Throwable t, Response response) {
+      @Override public void onFailure(@NotNull WebSocket webSocket, @NotNull Throwable t, @Nullable Response response) {
         failureRef.set(t);
         latch.countDown();
       }
@@ -139,7 +140,7 @@ public final class AutobahnTester {
         latch.countDown();
       }
 
-      @Override public void onFailure(@NotNull WebSocket webSocket, @NotNull Throwable t, Response response) {
+      @Override public void onFailure(@NotNull WebSocket webSocket, @NotNull Throwable t, @Nullable Response response) {
         latch.countDown();
       }
     });

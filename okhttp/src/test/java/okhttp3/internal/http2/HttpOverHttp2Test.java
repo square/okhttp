@@ -1293,7 +1293,7 @@ public final class HttpOverHttp2Test {
         fail();
       }
 
-      @Override public void onResponse(@NotNull Call call, Response response) throws IOException {
+      @Override public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
         responses.offer(response.body().string());
       }
     };
@@ -1839,7 +1839,7 @@ public final class HttpOverHttp2Test {
 
     BlockingQueue<String> bodies = new LinkedBlockingQueue<>();
     Callback callback = new Callback() {
-      @Override public void onResponse(@NotNull Call call, Response response) throws IOException {
+      @Override public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
         bodies.add(response.body().string());
         latch.countDown();
       }

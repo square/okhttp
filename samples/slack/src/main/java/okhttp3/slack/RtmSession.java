@@ -21,6 +21,7 @@ import okhttp3.WebSocket;
 import okhttp3.Response;
 import okhttp3.WebSocketListener;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /** A realtime messaging session. */
 public final class RtmSession extends WebSocketListener implements Closeable {
@@ -56,7 +57,7 @@ public final class RtmSession extends WebSocketListener implements Closeable {
     System.out.println("onClose (" + code + "): " + reason);
   }
 
-  @Override public void onFailure(@NotNull WebSocket webSocket, @NotNull Throwable t, Response response) {
+  @Override public void onFailure(@NotNull WebSocket webSocket, @NotNull Throwable t, @Nullable Response response) {
     // TODO(jwilson): can I read the response body? Do I have to?
     System.out.println("onFailure " + response);
   }
