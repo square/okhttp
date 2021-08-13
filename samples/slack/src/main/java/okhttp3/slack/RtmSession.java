@@ -52,7 +52,7 @@ public final class RtmSession extends WebSocketListener implements Closeable {
     System.out.println("onMessage: " + text);
   }
 
-  @Override public void onClosing(WebSocket webSocket, int code, @NotNull String reason) {
+  @Override public void onClosing(@NotNull WebSocket webSocket, int code, @NotNull String reason) {
     webSocket.close(1000, null);
     System.out.println("onClose (" + code + "): " + reason);
   }

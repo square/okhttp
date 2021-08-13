@@ -25,7 +25,7 @@ public final class WebSocketEcho extends WebSocketListener {
     client.dispatcher().executorService().shutdown();
   }
 
-  @Override public void onOpen(WebSocket webSocket, @NotNull Response response) {
+  @Override public void onOpen(@NotNull WebSocket webSocket, @NotNull Response response) {
     webSocket.send("Hello...");
     webSocket.send("...World!");
     webSocket.send(ByteString.decodeHex("deadbeef"));
@@ -36,16 +36,16 @@ public final class WebSocketEcho extends WebSocketListener {
     System.out.println("MESSAGE: " + text);
   }
 
-  @Override public void onMessage(@NotNull WebSocket webSocket, ByteString bytes) {
+  @Override public void onMessage(@NotNull WebSocket webSocket, @NotNull ByteString bytes) {
     System.out.println("MESSAGE: " + bytes.hex());
   }
 
-  @Override public void onClosing(WebSocket webSocket, int code, @NotNull String reason) {
+  @Override public void onClosing(@NotNull WebSocket webSocket, int code, @NotNull String reason) {
     webSocket.close(1000, null);
     System.out.println("CLOSE: " + code + " " + reason);
   }
 
-  @Override public void onFailure(@NotNull WebSocket webSocket, Throwable t, @Nullable Response response) {
+  @Override public void onFailure(@NotNull WebSocket webSocket, @NotNull Throwable t, @Nullable Response response) {
     t.printStackTrace();
   }
 

@@ -130,7 +130,7 @@ public final class PrintEvents {
       printEvent("secureConnectStart");
     }
 
-    @Override public void secureConnectEnd(@NotNull Call call, Handshake handshake) {
+    @Override public void secureConnectEnd(@NotNull Call call, @Nullable Handshake handshake) {
       printEvent("secureConnectEnd");
     }
 

@@ -30,6 +30,7 @@ import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * This prints events for a single in-flight call. It won't work for multiple concurrent calls
@@ -103,17 +104,17 @@ public final class PrintEventsNonConcurrent {
       printEvent("secureConnectStart");
     }
 
-    @Override public void secureConnectEnd(@NotNull Call call, Handshake handshake) {
+    @Override public void secureConnectEnd(@NotNull Call call, @Nullable Handshake handshake) {
       printEvent("secureConnectEnd");
     }
 
-    @Override public void connectEnd(
-        @NotNull Call call, @NotNull InetSocketAddress inetSocketAddress, @NotNull Proxy proxy, Protocol protocol) {
+    @Override public void connectEnd(@NotNull Call call, @NotNull InetSocketAddress inetSocketAddress,
+                                     @NotNull Proxy proxy, @Nullable Protocol protocol) {
       printEvent("connectEnd");
     }
 
     @Override public void connectFailed(@NotNull Call call, @NotNull InetSocketAddress inetSocketAddress, @NotNull Proxy proxy,
-                                        Protocol protocol, @NotNull IOException ioe) {
+                                        @Nullable Protocol protocol, @NotNull IOException ioe) {
       printEvent("connectFailed");
     }
 
