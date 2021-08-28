@@ -19,7 +19,7 @@ import java.io.IOException
 import okhttp3.internal.http2.Http2Stream
 import mockwebserver3.RecordedRequest
 
-interface DuplexResponseBody {
+fun interface DuplexResponseBody {
   @Throws(IOException::class)
   fun onRequest(request: RecordedRequest, http2Stream: Http2Stream)
 }
