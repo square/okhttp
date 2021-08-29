@@ -166,7 +166,7 @@ class MultipartReader @Throws(IOException::class) constructor(
       error("unreachable") // TODO(jwilson): fix intersectWith() to return T.
     }
 
-    override fun timeout() = timeout
+    override fun timeout(): Timeout = timeout
   }
 
   /**

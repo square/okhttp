@@ -114,5 +114,5 @@ class Challenge(
     return result
   }
 
-  override fun toString() = "$scheme authParams=$authParams"
+  override fun toString(): String = "$scheme authParams=$authParams"
 }

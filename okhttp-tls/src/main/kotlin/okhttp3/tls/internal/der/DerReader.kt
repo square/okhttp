@@ -311,7 +311,7 @@ internal class DerReader(source: Source) {
     return source.readByteString(bytesLeft)
   }
 
-  override fun toString() = path.joinToString(separator = " / ")
+  override fun toString(): String = path.joinToString(separator = " / ")
 
   companion object {
     /**

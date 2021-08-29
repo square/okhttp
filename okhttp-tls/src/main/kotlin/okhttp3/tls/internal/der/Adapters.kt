@@ -209,7 +209,7 @@ internal object Adapters {
 
   /** Decodes any value without interpretation as [AnyValue]. */
   val ANY_VALUE = object : DerAdapter<AnyValue> {
-    override fun matches(header: DerHeader) = true
+    override fun matches(header: DerHeader): Boolean = true
 
     override fun fromDer(reader: DerReader): AnyValue {
       reader.read("ANY") { header ->
@@ -329,7 +329,7 @@ internal object Adapters {
         (adapter as DerAdapter<Any?>).toDer(writer, v)
       }
 
-      override fun toString() = choices.joinToString(separator = " OR ")
+      override fun toString(): String = choices.joinToString(separator = " OR ")
     }
   }
 
@@ -346,7 +346,7 @@ internal object Adapters {
     chooser: (Any?) -> DerAdapter<*>?
   ): DerAdapter<Any?> {
     return object : DerAdapter<Any?> {
-      override fun matches(header: DerHeader) = true
+      override fun matches(header: DerHeader): Boolean = true
 
       override fun toDer(writer: DerWriter, value: Any?) {
         // If we don't understand this hint, encode the body as a byte string. The byte string

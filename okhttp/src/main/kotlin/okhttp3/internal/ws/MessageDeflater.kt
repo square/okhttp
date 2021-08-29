@@ -61,5 +61,5 @@ class MessageDeflater(
   @Throws(IOException::class)
   override fun close() = deflaterSink.close()
 
-  private fun Buffer.endsWith(suffix: ByteString) = rangeEquals(size - suffix.size, suffix)
+  private fun Buffer.endsWith(suffix: ByteString): Boolean = rangeEquals(size - suffix.size, suffix)
 }

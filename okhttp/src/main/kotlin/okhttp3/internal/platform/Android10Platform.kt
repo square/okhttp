@@ -53,7 +53,7 @@ class Android10Platform : Platform() {
         ?.configureTlsExtensions(sslSocket, hostname, protocols)
   }
 
-  override fun getSelectedProtocol(sslSocket: SSLSocket) =
+  override fun getSelectedProtocol(sslSocket: SSLSocket): String? =
       // No TLS extensions if the socket class is custom.
       socketAdapters.find { it.matchesSocket(sslSocket) }?.getSelectedProtocol(sslSocket)
 

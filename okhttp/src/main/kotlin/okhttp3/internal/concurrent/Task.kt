@@ -66,5 +66,5 @@ abstract class Task(
     this.queue = queue
   }
 
-  override fun toString() = name
+  override fun toString(): String = name
 }
