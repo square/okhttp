@@ -58,7 +58,7 @@ sealed class CallEvent {
     val domainName: String,
     val inetAddressList: List<InetAddress>
   ) : CallEvent() {
-    override fun closes(timestampNs: Long) = DnsStart(timestampNs, call, domainName)
+    override fun closes(timestampNs: Long): CallEvent = DnsStart(timestampNs, call, domainName)
   }
 
   data class ConnectStart(
@@ -75,7 +75,7 @@ sealed class CallEvent {
     val proxy: Proxy?,
     val protocol: Protocol?
   ) : CallEvent() {
-    override fun closes(timestampNs: Long) =
+    override fun closes(timestampNs: Long): CallEvent =
       ConnectStart(timestampNs, call, inetSocketAddress, proxy)
   }
 
@@ -87,7 +87,7 @@ sealed class CallEvent {
     val protocol: Protocol?,
     val ioe: IOException
   ) : CallEvent() {
-    override fun closes(timestampNs: Long) =
+    override fun closes(timestampNs: Long): CallEvent =
       ConnectStart(timestampNs, call, inetSocketAddress, proxy)
   }
 
@@ -101,7 +101,7 @@ sealed class CallEvent {
     override val call: Call,
     val handshake: Handshake?
   ) : CallEvent() {
-    override fun closes(timestampNs: Long) = SecureConnectStart(timestampNs, call)
+    override fun closes(timestampNs: Long): CallEvent = SecureConnectStart(timestampNs, call)
   }
 
   data class ConnectionAcquired(
@@ -115,7 +115,7 @@ sealed class CallEvent {
     override val call: Call,
     val connection: Connection
   ) : CallEvent() {
-    override fun closes(timestampNs: Long) = ConnectionAcquired(timestampNs, call, connection)
+    override fun closes(timestampNs: Long): CallEvent = ConnectionAcquired(timestampNs, call, connection)
   }
 
   data class CallStart(
@@ -127,7 +127,7 @@ sealed class CallEvent {
     override val timestampNs: Long,
     override val call: Call
   ) : CallEvent() {
-    override fun closes(timestampNs: Long) = CallStart(timestampNs, call)
+    override fun closes(timestampNs: Long): CallEvent = CallStart(timestampNs, call)
   }
 
   data class CallFailed(
@@ -151,7 +151,7 @@ sealed class CallEvent {
     override val call: Call,
     val headerLength: Long
   ) : CallEvent() {
-    override fun closes(timestampNs: Long) = RequestHeadersStart(timestampNs, call)
+    override fun closes(timestampNs: Long): CallEvent = RequestHeadersStart(timestampNs, call)
   }
 
   data class RequestBodyStart(
@@ -164,7 +164,7 @@ sealed class CallEvent {
     override val call: Call,
     val bytesWritten: Long
   ) : CallEvent() {
-    override fun closes(timestampNs: Long) = RequestBodyStart(timestampNs, call)
+    override fun closes(timestampNs: Long): CallEvent = RequestBodyStart(timestampNs, call)
   }
 
   data class RequestFailed(
@@ -183,7 +183,7 @@ sealed class CallEvent {
     override val call: Call,
     val headerLength: Long
   ) : CallEvent() {
-    override fun closes(timestampNs: Long) = RequestHeadersStart(timestampNs, call)
+    override fun closes(timestampNs: Long): CallEvent = RequestHeadersStart(timestampNs, call)
   }
 
   data class ResponseBodyStart(
@@ -196,7 +196,7 @@ sealed class CallEvent {
     override val call: Call,
     val bytesRead: Long
   ) : CallEvent() {
-    override fun closes(timestampNs: Long) = ResponseBodyStart(timestampNs, call)
+    override fun closes(timestampNs: Long): CallEvent = ResponseBodyStart(timestampNs, call)
   }
 
   data class ResponseFailed(

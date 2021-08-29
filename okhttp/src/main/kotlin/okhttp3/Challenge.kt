@@ -78,14 +78,14 @@ class Challenge(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "scheme"),
       level = DeprecationLevel.ERROR)
-  fun scheme() = scheme
+  fun scheme(): String = scheme
 
   @JvmName("-deprecated_authParams")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "authParams"),
       level = DeprecationLevel.ERROR)
-  fun authParams() = authParams
+  fun authParams(): Map<String?, String> = authParams
 
   @JvmName("-deprecated_realm")
   @Deprecated(
