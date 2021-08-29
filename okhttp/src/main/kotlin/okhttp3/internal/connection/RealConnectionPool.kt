@@ -162,9 +162,7 @@ class RealConnectionPool(
           if (idleDurationNs > longestIdleDurationNs) {
             longestIdleDurationNs = idleDurationNs
             longestIdleConnection = connection
-          } else {
-            Unit
-          }
+          } else Unit
         }
       }
     }
