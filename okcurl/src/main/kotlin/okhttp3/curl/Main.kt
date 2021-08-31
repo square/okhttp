@@ -291,7 +291,7 @@ class Main : Runnable {
             override fun format(record: LogRecord): String {
               val parameters = record.parameters
               return if (parameters != null) {
-                format("%s%n%s%n", record.message, record.parameters.first())
+                format("%s%n%s%n", record.message, parameters.first())
               } else {
                 format("%s%n", record.message)
               }

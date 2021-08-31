@@ -15,7 +15,6 @@
  */
 package okhttp3
 
-import java.net.InetAddress
 import java.util.concurrent.TimeUnit
 import java.util.logging.Handler
 import java.util.logging.Level

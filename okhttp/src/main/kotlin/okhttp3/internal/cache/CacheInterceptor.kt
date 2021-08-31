@@ -36,6 +36,7 @@ import okhttp3.internal.http.RealResponseBody
 import okhttp3.internal.http.promisesBody
 import okio.Buffer
 import okio.Source
+import okio.Timeout
 import okio.buffer
 
 /** Serves requests from the cache and writes responses to the cache. */
@@ -197,7 +198,7 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
         return bytesRead
       }
 
-      override fun timeout() = source.timeout()
+      override fun timeout(): Timeout = source.timeout()
 
       @Throws(IOException::class)
       override fun close() {

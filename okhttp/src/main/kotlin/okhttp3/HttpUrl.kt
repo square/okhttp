@@ -778,14 +778,14 @@ class HttpUrl internal constructor(
       message = "moved to toUrl()",
       replaceWith = ReplaceWith(expression = "toUrl()"),
       level = DeprecationLevel.ERROR)
-  fun url() = toUrl()
+  fun url(): URL = toUrl()
 
   @JvmName("-deprecated_uri")
   @Deprecated(
       message = "moved to toUri()",
       replaceWith = ReplaceWith(expression = "toUri()"),
       level = DeprecationLevel.ERROR)
-  fun uri() = toUri()
+  fun uri(): URI = toUri()
 
   @JvmName("-deprecated_scheme")
   @Deprecated(

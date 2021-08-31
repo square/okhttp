@@ -109,7 +109,7 @@ class Request internal constructor(
       level = DeprecationLevel.ERROR)
   fun cacheControl(): CacheControl = cacheControl
 
-  override fun toString() = buildString {
+  override fun toString(): String = buildString {
     append("Request{method=")
     append(method)
     append(", url=")
@@ -233,18 +233,18 @@ class Request internal constructor(
       }
     }
 
-    open fun get() = method("GET", null)
+    open fun get(): Builder = method("GET", null)
 
-    open fun head() = method("HEAD", null)
+    open fun head(): Builder = method("HEAD", null)
 
-    open fun post(body: RequestBody) = method("POST", body)
+    open fun post(body: RequestBody): Builder = method("POST", body)
 
     @JvmOverloads
-    open fun delete(body: RequestBody? = EMPTY_REQUEST) = method("DELETE", body)
+    open fun delete(body: RequestBody? = EMPTY_REQUEST): Builder = method("DELETE", body)
 
-    open fun put(body: RequestBody) = method("PUT", body)
+    open fun put(body: RequestBody): Builder = method("PUT", body)
 
-    open fun patch(body: RequestBody) = method("PATCH", body)
+    open fun patch(body: RequestBody): Builder = method("PATCH", body)
 
     open fun method(method: String, body: RequestBody?): Builder = apply {
       require(method.isNotEmpty()) {

@@ -266,11 +266,11 @@ abstract class ResponseBody : Closeable {
       contentType: MediaType? = null,
       contentLength: Long = -1L
     ): ResponseBody = object : ResponseBody() {
-      override fun contentType() = contentType
+      override fun contentType(): MediaType? = contentType
 
-      override fun contentLength() = contentLength
+      override fun contentLength(): Long = contentLength
 
-      override fun source() = this@asResponseBody
+      override fun source(): BufferedSource = this@asResponseBody
     }
 
     @JvmStatic
@@ -281,7 +281,7 @@ abstract class ResponseBody : Closeable {
             imports = ["okhttp3.ResponseBody.Companion.toResponseBody"]
         ),
         level = DeprecationLevel.WARNING)
-    fun create(contentType: MediaType?, content: String) = content.toResponseBody(contentType)
+    fun create(contentType: MediaType?, content: String): ResponseBody = content.toResponseBody(contentType)
 
     @JvmStatic
     @Deprecated(
@@ -291,7 +291,7 @@ abstract class ResponseBody : Closeable {
             imports = ["okhttp3.ResponseBody.Companion.toResponseBody"]
         ),
         level = DeprecationLevel.WARNING)
-    fun create(contentType: MediaType?, content: ByteArray) = content.toResponseBody(contentType)
+    fun create(contentType: MediaType?, content: ByteArray): ResponseBody = content.toResponseBody(contentType)
 
     @JvmStatic
     @Deprecated(
@@ -301,7 +301,7 @@ abstract class ResponseBody : Closeable {
             imports = ["okhttp3.ResponseBody.Companion.toResponseBody"]
         ),
         level = DeprecationLevel.WARNING)
-    fun create(contentType: MediaType?, content: ByteString) = content.toResponseBody(contentType)
+    fun create(contentType: MediaType?, content: ByteString): ResponseBody = content.toResponseBody(contentType)
 
     @JvmStatic
     @Deprecated(
@@ -315,6 +315,6 @@ abstract class ResponseBody : Closeable {
       contentType: MediaType?,
       contentLength: Long,
       content: BufferedSource
-    ) = content.asResponseBody(contentType, contentLength)
+    ): ResponseBody = content.asResponseBody(contentType, contentLength)
   }
 }

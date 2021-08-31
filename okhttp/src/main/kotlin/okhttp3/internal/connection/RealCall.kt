@@ -47,6 +47,7 @@ import okhttp3.internal.http.RetryAndFollowUpInterceptor
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.threadName
 import okio.AsyncTimeout
+import okio.Timeout
 
 /**
  * Bridge between OkHttp's application and network layers. This class exposes high-level application
@@ -116,10 +117,10 @@ class RealCall(
   @Volatile private var exchange: Exchange? = null
   @Volatile var connectionToCancel: RealConnection? = null
 
-  override fun timeout() = timeout
+  override fun timeout(): Timeout = timeout
 
   @SuppressWarnings("CloneDoesntCallSuperClone") // We are a final type & this saves clearing state.
-  override fun clone() = RealCall(client, originalRequest, forWebSocket)
+  override fun clone(): Call = RealCall(client, originalRequest, forWebSocket)
 
   override fun request(): Request = originalRequest
 
@@ -142,7 +143,7 @@ class RealCall(
     eventListener.canceled(this)
   }
 
-  override fun isCanceled() = canceled
+  override fun isCanceled(): Boolean = canceled
 
   override fun execute(): Response {
     check(executed.compareAndSet(false, true)) { "Already Executed" }
@@ -453,7 +454,7 @@ class RealCall(
     )
   }
 
-  fun retryAfterFailure() = exchangeFinder!!.retryAfterFailure()
+  fun retryAfterFailure(): Boolean = exchangeFinder!!.retryAfterFailure()
 
   /**
    * Returns a string that describes this call. Doesn't include a full URL as that might contain

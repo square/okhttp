@@ -741,7 +741,7 @@ class Cache(
     }
 
     /** Returns true if a Vary header contains an asterisk. Such responses cannot be cached. */
-    fun Response.hasVaryAll() = "*" in headers.varyFields()
+    fun Response.hasVaryAll(): Boolean = "*" in headers.varyFields()
 
     /**
      * Returns the names of the request headers that need to be checked for equality when caching.
