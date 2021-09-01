@@ -39,7 +39,7 @@ import java.util.concurrent.TimeUnit
  *
  * A good way to signal a failure is with a synthetic HTTP response:
  *
- * ```
+ * ```kotlin
  *   @Throws(IOException::class)
  *   override fun intercept(chain: Interceptor.Chain): Response {
  *     if (myConfig.isInvalid()) {
@@ -65,7 +65,7 @@ fun interface Interceptor {
      * Constructs an interceptor for a lambda. This compact syntax is most useful for inline
      * interceptors.
      *
-     * ```
+     * ```kotlin
      * val interceptor = Interceptor { chain: Interceptor.Chain ->
      *     chain.proceed(chain.request())
      * }
