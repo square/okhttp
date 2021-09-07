@@ -17,7 +17,7 @@
 object Versions {
   const val bnd = "5.3.0"
   const val bouncyCastle = "1.69"
-  const val checkStyle = "8.45.1"
+  const val checkStyle = "9.0"
   const val conscrypt = "2.5.2"
   const val junit5 = "5.7.2"
   const val junit5Android = "1.2.2"
@@ -30,7 +30,7 @@ object Versions {
 object Dependencies {
   const val kotlinPlugin = "org.jetbrains.kotlin:kotlin-gradle-plugin:${Versions.kotlin}"
   const val dokkaPlugin = "org.jetbrains.dokka:dokka-gradle-plugin:0.10.1"
-  const val androidPlugin = "com.android.tools.build:gradle:7.0.1"
+  const val androidPlugin = "com.android.tools.build:gradle:7.0.2"
   const val androidJunit5Plugin = "de.mannodermaus.gradle.plugins:android-junit5:1.7.1.1"
   const val graalPlugin = "gradle.plugin.com.palantir.graal:gradle-graal:0.9.0"
   const val bndPlugin = "biz.aQute.bnd:biz.aQute.bnd.gradle:${Versions.bnd}"
@@ -50,7 +50,7 @@ object Dependencies {
   const val equinox = "org.eclipse.platform:org.eclipse.osgi:3.16.300"
   const val guava = "com.google.guava:guava:30.1.1-jre"
   const val hamcrest = "org.hamcrest:hamcrest-library:2.2"
-  const val jnrUnixsocket = "com.github.jnr:jnr-unixsocket:0.38.8"
+  const val jnrUnixsocket = "com.github.jnr:jnr-unixsocket:0.38.9"
   const val jsoup = "org.jsoup:jsoup:1.14.2"
   const val jsr305 = "com.google.code.findbugs:jsr305:3.0.2"
   const val junit = "junit:junit:4.13.2"
