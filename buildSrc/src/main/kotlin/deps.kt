@@ -35,6 +35,10 @@ object Dependencies {
   const val graalPlugin = "gradle.plugin.com.palantir.graal:gradle-graal:0.9.0"
   const val bndPlugin = "biz.aQute.bnd:biz.aQute.bnd.gradle:${Versions.bnd}"
   const val shadowPlugin = "gradle.plugin.com.github.jengelman.gradle.plugins:shadow:7.0.0"
+  const val japicmpPlugin = "me.champeau.gradle:japicmp-gradle-plugin:0.2.9"
+  const val animalsnifferPlugin = "ru.vyarus:gradle-animalsniffer-plugin:1.5.3"
+  const val errorpronePlugin = "net.ltgt.gradle:gradle-errorprone-plugin:2.0.2"
+  const val spotlessPlugin = "com.diffplug.spotless:spotless-plugin-gradle:5.15.0"
 
   const val android = "org.robolectric:android-all:11-robolectric-6757853"
   const val animalSniffer = "org.codehaus.mojo:animal-sniffer-annotations:1.20"
@@ -81,4 +85,6 @@ object Dependencies {
   const val nativeImageSvm = "org.graalvm.nativeimage:svm:21.2.0"
   const val jettyClient = "org.eclipse.jetty:jetty-client:9.4.27.v20200227"
   const val checkStyle = "com.puppycrawl.tools:checkstyle:${Versions.checkStyle}"
+  const val signatureAndroid21 = "net.sf.androidscents.signature:android-api-level-21:5.0.1_r2@signature"
+  const val signatureJava18 = "org.codehaus.mojo.signature:java18:1.0@signature"
 }
