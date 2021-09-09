@@ -54,7 +54,7 @@ object Dependencies {
   const val equinox = "org.eclipse.platform:org.eclipse.osgi:3.16.300"
   const val guava = "com.google.guava:guava:30.1.1-jre"
   const val hamcrest = "org.hamcrest:hamcrest-library:2.2"
-  const val jnrUnixsocket = "com.github.jnr:jnr-unixsocket:0.38.9"
+  const val jnrUnixsocket = "com.github.jnr:jnr-unixsocket:0.38.10"
   const val jsoup = "org.jsoup:jsoup:1.14.2"
   const val jsr305 = "com.google.code.findbugs:jsr305:3.0.2"
   const val junit = "junit:junit:4.13.2"
