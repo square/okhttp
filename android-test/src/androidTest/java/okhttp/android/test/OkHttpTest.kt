@@ -58,6 +58,7 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Assumptions.assumeTrue
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -94,21 +95,19 @@ import okhttp3.DelegatingSSLSocketFactory
 class OkHttpTest(val server: MockWebServer) {
   @Suppress("RedundantVisibilityModifier")
   @JvmField
-  @RegisterExtension
-  public val platform = PlatformRule()
+  @RegisterExtension public val platform = PlatformRule()
 
   @Suppress("RedundantVisibilityModifier")
   @JvmField
-  @RegisterExtension
-  public val clientTestRule = OkHttpClientTestRule().apply {
+  @RegisterExtension public val clientTestRule = OkHttpClientTestRule().apply {
     logger = Logger.getLogger(OkHttpTest::class.java.name)
   }
 
   private var client: OkHttpClient = clientTestRule.newClient()
 
   private val moshi = Moshi.Builder()
-    .add(KotlinJsonAdapterFactory())
-    .build()
+      .add(KotlinJsonAdapterFactory())
+      .build()
 
   private val handshakeCertificates = localhost()
 
@@ -130,17 +129,17 @@ class OkHttpTest(val server: MockWebServer) {
     val request = Request.Builder().url("https://api.twitter.com/robots.txt").build()
 
     val clientCertificates = HandshakeCertificates.Builder()
-      .addPlatformTrustedCertificates()
-      .apply {
-        if (Build.VERSION.SDK_INT >= 24) {
-          addInsecureHost(server.hostName)
+        .addPlatformTrustedCertificates()
+        .apply {
+          if (Build.VERSION.SDK_INT >= 24) {
+            addInsecureHost(server.hostName)
+          }
         }
-      }
-      .build()
+        .build()
 
     client = client.newBuilder()
-      .sslSocketFactory(clientCertificates.sslSocketFactory(), clientCertificates.trustManager)
-      .build()
+        .sslSocketFactory(clientCertificates.sslSocketFactory(), clientCertificates.trustManager)
+        .build()
 
     val response = client.newCall(request).execute()
 
@@ -178,19 +177,19 @@ class OkHttpTest(val server: MockWebServer) {
       var socketClass: String? = null
 
       val clientCertificates = HandshakeCertificates.Builder()
-        .addPlatformTrustedCertificates()
-        .addInsecureHost(server.hostName)
-        .build()
+          .addPlatformTrustedCertificates()
+          .addInsecureHost(server.hostName)
+          .build()
 
       // Need fresh client to reset sslSocketFactoryOrNull
       client = OkHttpClient.Builder()
-        .eventListenerFactory(clientTestRule.wrap(object : EventListener() {
-          override fun connectionAcquired(call: Call, connection: Connection) {
-            socketClass = connection.socket().javaClass.name
-          }
-        }))
-        .sslSocketFactory(clientCertificates.sslSocketFactory(), clientCertificates.trustManager)
-        .build()
+          .eventListenerFactory(clientTestRule.wrap(object : EventListener() {
+        override fun connectionAcquired(call: Call, connection: Connection) {
+          socketClass = connection.socket().javaClass.name
+        }
+      }))
+          .sslSocketFactory(clientCertificates.sslSocketFactory(), clientCertificates.trustManager)
+          .build()
 
       val response = client.newCall(request).execute()
 
@@ -199,16 +198,16 @@ class OkHttpTest(val server: MockWebServer) {
         assertEquals(200, response.code)
         // see https://github.com/google/conscrypt/blob/b9463b2f74df42d85c73715a5f19e005dfb7b802/android/src/main/java/org/conscrypt/Platform.java#L613
         when {
-          Build.VERSION.SDK_INT >= 24 -> {
-            // Conscrypt 2.5+ defaults to SSLEngine-based SSLSocket
-            assertEquals("org.conscrypt.Java8EngineSocket", socketClass)
-          }
-          Build.VERSION.SDK_INT < 22 -> {
-            assertEquals("org.conscrypt.KitKatPlatformOpenSSLSocketImplAdapter", socketClass)
-          }
-          else -> {
-            assertEquals("org.conscrypt.ConscryptFileDescriptorSocket", socketClass)
-          }
+            Build.VERSION.SDK_INT >= 24 -> {
+              // Conscrypt 2.5+ defaults to SSLEngine-based SSLSocket
+              assertEquals("org.conscrypt.Java8EngineSocket", socketClass)
+            }
+            Build.VERSION.SDK_INT < 22 -> {
+              assertEquals("org.conscrypt.KitKatPlatformOpenSSLSocketImplAdapter", socketClass)
+            }
+            else -> {
+              assertEquals("org.conscrypt.ConscryptFileDescriptorSocket", socketClass)
+            }
         }
         assertEquals(TlsVersion.TLS_1_3, response.handshake?.tlsVersion)
       }
@@ -232,9 +231,9 @@ class OkHttpTest(val server: MockWebServer) {
       }
 
       val clientCertificates = HandshakeCertificates.Builder()
-        .addPlatformTrustedCertificates()
-        .addInsecureHost(server.hostName)
-        .build()
+          .addPlatformTrustedCertificates()
+          .addInsecureHost(server.hostName)
+          .build()
 
       val request = Request.Builder().url("https://facebook.com/robots.txt").build()
 
@@ -242,13 +241,13 @@ class OkHttpTest(val server: MockWebServer) {
 
       // Need fresh client to reset sslSocketFactoryOrNull
       client = OkHttpClient.Builder()
-        .eventListenerFactory(clientTestRule.wrap(object : EventListener() {
-          override fun connectionAcquired(call: Call, connection: Connection) {
-            socketClass = connection.socket().javaClass.name
-          }
-        }))
-        .sslSocketFactory(clientCertificates.sslSocketFactory(), clientCertificates.trustManager)
-        .build()
+          .eventListenerFactory(clientTestRule.wrap(object : EventListener() {
+        override fun connectionAcquired(call: Call, connection: Connection) {
+          socketClass = connection.socket().javaClass.name
+        }
+      }))
+          .sslSocketFactory(clientCertificates.sslSocketFactory(), clientCertificates.trustManager)
+          .build()
 
       val response = client.newCall(request).execute()
 
@@ -288,21 +287,21 @@ class OkHttpTest(val server: MockWebServer) {
     var socketClass: String? = null
 
     val clientCertificates = HandshakeCertificates.Builder()
-      .addPlatformTrustedCertificates().apply {
-        if (Build.VERSION.SDK_INT >= 24) {
-          addInsecureHost(server.hostName)
+        .addPlatformTrustedCertificates().apply {
+          if (Build.VERSION.SDK_INT >= 24) {
+            addInsecureHost(server.hostName)
+          }
         }
-      }
-      .build()
+        .build()
 
     client = client.newBuilder()
-      .eventListenerFactory(clientTestRule.wrap(object : EventListener() {
-        override fun connectionAcquired(call: Call, connection: Connection) {
-          socketClass = connection.socket().javaClass.name
-        }
-      }))
-      .sslSocketFactory(clientCertificates.sslSocketFactory(), clientCertificates.trustManager)
-      .build()
+        .eventListenerFactory(clientTestRule.wrap(object : EventListener() {
+          override fun connectionAcquired(call: Call, connection: Connection) {
+            socketClass = connection.socket().javaClass.name
+          }
+        }))
+        .sslSocketFactory(clientCertificates.sslSocketFactory(), clientCertificates.trustManager)
+        .build()
 
     val response = client.newCall(request).execute()
 
@@ -402,10 +401,8 @@ class OkHttpTest(val server: MockWebServer) {
       assertEquals(Protocol.HTTP_2, response.protocol)
       val tlsVersion = response.handshake?.tlsVersion
       assertTrue(tlsVersion == TlsVersion.TLS_1_2 || tlsVersion == TlsVersion.TLS_1_3)
-      assertEquals(
-        "CN=localhost",
-        (response.handshake!!.peerCertificates.first() as X509Certificate).subjectDN.name
-      )
+      assertEquals("CN=localhost",
+          (response.handshake!!.peerCertificates.first() as X509Certificate).subjectDN.name)
     }
   }
 
@@ -414,8 +411,8 @@ class OkHttpTest(val server: MockWebServer) {
     enableTls()
 
     val certificatePinner = CertificatePinner.Builder()
-      .add(server.hostName, "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
-      .build()
+        .add(server.hostName, "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
+        .build()
     client = client.newBuilder().certificatePinner(certificatePinner).build()
 
     server.enqueue(MockResponse().setBody("abc"))
@@ -434,11 +431,9 @@ class OkHttpTest(val server: MockWebServer) {
     enableTls()
 
     val certificatePinner = CertificatePinner.Builder()
-      .add(
-        server.hostName,
-        CertificatePinner.pin(handshakeCertificates.trustManager.acceptedIssuers[0])
-      )
-      .build()
+        .add(server.hostName,
+            CertificatePinner.pin(handshakeCertificates.trustManager.acceptedIssuers[0]))
+        .build()
     client = client.newBuilder().certificatePinner(certificatePinner).build()
 
     server.enqueue(MockResponse().setBody("abc"))
@@ -469,15 +464,11 @@ class OkHttpTest(val server: MockWebServer) {
       assertEquals(200, response.code)
     }
 
-    assertEquals(
-      listOf(
-        "CallStart", "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
+    assertEquals(listOf("CallStart", "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd",
         "ConnectStart", "SecureConnectStart", "SecureConnectEnd", "ConnectEnd",
         "ConnectionAcquired", "RequestHeadersStart", "RequestHeadersEnd", "ResponseHeadersStart",
         "ResponseHeadersEnd", "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased",
-        "CallEnd"
-      ), eventListener.recordedEventTypes()
-    )
+        "CallEnd"), eventListener.recordedEventTypes())
 
     eventListener.clearAllEvents()
 
@@ -485,14 +476,10 @@ class OkHttpTest(val server: MockWebServer) {
       assertEquals(200, response.code)
     }
 
-    assertEquals(
-      listOf(
-        "CallStart",
+    assertEquals(listOf("CallStart",
         "ConnectionAcquired", "RequestHeadersStart", "RequestHeadersEnd", "ResponseHeadersStart",
         "ResponseHeadersEnd", "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased",
-        "CallEnd"
-      ), eventListener.recordedEventTypes()
-    )
+        "CallEnd"), eventListener.recordedEventTypes())
   }
 
   @Test
@@ -534,12 +521,12 @@ class OkHttpTest(val server: MockWebServer) {
     assumeNetwork()
 
     client = client.newBuilder()
-      .eventListenerFactory(clientTestRule.wrap(LoggingEventListener.Factory()))
-      .build()
+        .eventListenerFactory(clientTestRule.wrap(LoggingEventListener.Factory()))
+        .build()
 
     val dohDns = buildCloudflareIp(client)
     val dohEnabledClient =
-      client.newBuilder().eventListenerFactory(EventListener.NONE.asFactory()).dns(dohDns).build()
+        client.newBuilder().eventListenerFactory(EventListener.NONE.asFactory()).dns(dohDns).build()
 
     dohEnabledClient.get("https://www.twitter.com/robots.txt")
     dohEnabledClient.get("https://www.facebook.com/robots.txt")
@@ -565,12 +552,13 @@ class OkHttpTest(val server: MockWebServer) {
     val hostnameVerifier = HostnameVerifier { _, _ -> true }
 
     client = client.newBuilder()
-      .sslSocketFactory(sslSocketFactory, trustManager)
-      .hostnameVerifier(hostnameVerifier)
-      .build()
+        .sslSocketFactory(sslSocketFactory, trustManager)
+        .hostnameVerifier(hostnameVerifier)
+        .build()
 
     client.get("https://www.facebook.com/robots.txt")
   }
+
 
   @Test
   fun testCustomSSLSocketFactoryWithoutALPN() {
@@ -616,11 +604,7 @@ class OkHttpTest(val server: MockWebServer) {
 
       @Suppress("unused", "UNUSED_PARAMETER")
       // called by Android via reflection in X509TrustManagerExtensions
-      fun checkServerTrusted(
-        chain: Array<out X509Certificate>,
-        authType: String,
-        hostname: String
-      ): List<X509Certificate> {
+      fun checkServerTrusted(chain: Array<out X509Certificate>, authType: String, hostname: String): List<X509Certificate> {
         withHostCalled = true
         return chain.toList()
       }
@@ -636,9 +620,9 @@ class OkHttpTest(val server: MockWebServer) {
     val hostnameVerifier = HostnameVerifier { _, _ -> true }
 
     client = client.newBuilder()
-      .sslSocketFactory(sslSocketFactory, trustManager)
-      .hostnameVerifier(hostnameVerifier)
-      .build()
+        .sslSocketFactory(sslSocketFactory, trustManager)
+        .hostnameVerifier(hostnameVerifier)
+        .build()
 
     client.get("https://www.facebook.com/robots.txt")
 
@@ -656,7 +640,7 @@ class OkHttpTest(val server: MockWebServer) {
     assumeNetwork()
 
     val request =
-      Request.Builder().url("https://example_underscore_123.s3.amazonaws.com/").build()
+        Request.Builder().url("https://example_underscore_123.s3.amazonaws.com/").build()
 
     try {
       client.newCall(request).execute().close()
@@ -687,10 +671,9 @@ class OkHttpTest(val server: MockWebServer) {
 
       var socketClass: String? = null
 
-      val trustManager =
-        TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm()).apply {
-          init(null as KeyStore?)
-        }.trustManagers.first() as X509TrustManager
+      val trustManager = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm()).apply {
+        init(null as KeyStore?)
+      }.trustManagers.first() as X509TrustManager
 
       val sslContext = Platform.get().newSSLContext().apply {
         // TODO remove most of this code after https://github.com/bcgit/bc-java/issues/686
@@ -698,13 +681,13 @@ class OkHttpTest(val server: MockWebServer) {
       }
 
       client = client.newBuilder()
-        .sslSocketFactory(sslContext.socketFactory, trustManager)
-        .eventListenerFactory(clientTestRule.wrap(object : EventListener() {
-          override fun connectionAcquired(call: Call, connection: Connection) {
-            socketClass = connection.socket().javaClass.name
-          }
-        }))
-        .build()
+          .sslSocketFactory(sslContext.socketFactory, trustManager)
+          .eventListenerFactory(clientTestRule.wrap(object : EventListener() {
+            override fun connectionAcquired(call: Call, connection: Connection) {
+              socketClass = connection.socket().javaClass.name
+            }
+          }))
+          .build()
 
       val request = Request.Builder().url("https://facebook.com/robots.txt").build()
 
@@ -732,7 +715,7 @@ class OkHttpTest(val server: MockWebServer) {
 
       override fun publish(record: LogRecord) {
         calls.getOrPut(record.loggerName) { AtomicInteger(0) }
-          .incrementAndGet()
+            .incrementAndGet()
       }
 
       override fun flush() {
@@ -745,24 +728,24 @@ class OkHttpTest(val server: MockWebServer) {
     }
 
     Logger.getLogger("")
-      .addHandler(testHandler)
+        .addHandler(testHandler)
     Logger.getLogger("okhttp3")
-      .addHandler(testHandler)
+        .addHandler(testHandler)
     Logger.getLogger(Http2::class.java.name)
-      .addHandler(testHandler)
+        .addHandler(testHandler)
     Logger.getLogger(TaskRunner::class.java.name)
-      .addHandler(testHandler)
+        .addHandler(testHandler)
     Logger.getLogger(OkHttpClient::class.java.name)
-      .addHandler(testHandler)
+        .addHandler(testHandler)
 
     server.enqueue(MockResponse().setBody("abc"))
 
     val request = Request.Builder()
-      .url(server.url("/"))
-      .build()
+        .url(server.url("/"))
+        .build()
 
     val response = client.newCall(request)
-      .execute()
+        .execute()
 
     response.use {
       assertEquals(200, response.code)
@@ -787,31 +770,31 @@ class OkHttpTest(val server: MockWebServer) {
 
     try {
       client = client.newBuilder()
-        .cache(cache)
-        .build()
+          .cache(cache)
+          .build()
 
       val request = Request.Builder()
-        .url(server.url("/"))
-        .build()
+          .url(server.url("/"))
+          .build()
 
       client.newCall(request)
-        .execute()
-        .use {
-          assertEquals(200, it.code)
-          assertNull(it.cacheResponse)
-          assertNotNull(it.networkResponse)
+          .execute()
+          .use {
+            assertEquals(200, it.code)
+            assertNull(it.cacheResponse)
+            assertNotNull(it.networkResponse)
 
-          assertEquals(3, it.cacheControl.maxAgeSeconds)
-          assertTrue(it.cacheControl.isPublic)
-        }
+            assertEquals(3, it.cacheControl.maxAgeSeconds)
+            assertTrue(it.cacheControl.isPublic)
+          }
 
       client.newCall(request)
-        .execute()
-        .use {
-          assertEquals(200, it.code)
-          assertNotNull(it.cacheResponse)
-          assertNull(it.networkResponse)
-        }
+          .execute()
+          .use {
+            assertEquals(200, it.code)
+            assertNotNull(it.cacheResponse)
+            assertNull(it.networkResponse)
+          }
 
       assertEquals(1, cache.hitCount())
       assertEquals(1, cache.networkCount())
@@ -832,16 +815,15 @@ class OkHttpTest(val server: MockWebServer) {
 
   fun buildCloudflareIp(bootstrapClient: OkHttpClient): DnsOverHttps {
     return DnsOverHttps.Builder().client(bootstrapClient)
-      .url("https://1.1.1.1/dns-query".toHttpUrl())
-      .build()
+        .url("https://1.1.1.1/dns-query".toHttpUrl())
+        .build()
   }
 
   private fun enableTls() {
     client = client.newBuilder()
-      .sslSocketFactory(
-        handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
-      )
-      .build()
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager)
+        .build()
     server.useHttps(handshakeCertificates.sslSocketFactory(), false)
   }
 
