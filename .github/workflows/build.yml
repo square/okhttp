@@ -225,7 +225,7 @@ jobs:
       - name: Run Checks
         run: ./gradlew test -Dokhttp.platform=corretto
 
-  testopenjdk16:
+  testopenjdk17:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
 
@@ -243,7 +243,7 @@ jobs:
           java-version: 11
 
       - name: Run Checks
-        run: ./gradlew test -Dtest.java.version=16
+        run: ./gradlew test -Dtest.java.version=17
 
   testwindows:
     runs-on: windows-latest
