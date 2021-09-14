@@ -172,9 +172,7 @@ class Http1ExchangeCodec(
   override fun readResponseHeaders(expectContinue: Boolean): Response.Builder? {
     check(state == STATE_OPEN_REQUEST_BODY ||
         state == STATE_WRITING_REQUEST_BODY ||
-        state == STATE_READ_RESPONSE_HEADERS ||
-        state == STATE_IDLE
-    ) {
+        state == STATE_READ_RESPONSE_HEADERS) {
       "state: $state"
     }
 
