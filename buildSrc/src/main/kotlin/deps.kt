@@ -23,7 +23,7 @@ object Versions {
   const val junit5Android = "1.2.2"
   const val kotlin = "1.5.30"
   const val moshi = "1.12.0"
-  const val okio = "3.0.0-alpha.9"
+  const val okio = "3.0.0-alpha.10"
   const val picocli = "4.6.1"
 }
 
