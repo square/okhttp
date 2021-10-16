@@ -294,7 +294,10 @@ class RealConnection(
     try {
       Platform.get().connectSocket(rawSocket, route.socketAddress, connectTimeout)
     } catch (e: ConnectException) {
-      throw ConnectException("Failed to connect to ${route.socketAddress}").apply {
+      throw ConnectException(
+        "Failed to connect to: ${route.socketAddress.hostName}:${route.socketAddress.port}" +
+          " (IP: ${route.socketAddress.address.hostAddress})"
+      ).apply {
         initCause(e)
       }
     }
