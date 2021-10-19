@@ -61,8 +61,10 @@ class RealEventSource(
         return
       }
 
-      // This is a long-lived response. Cancel full-call timeouts.
-      call.timeoutEarlyExit()
+      if (this::call.isInitialized) {
+        // This is a long-lived response. Cancel full-call timeouts.
+        call.timeoutEarlyExit()
+      }
 
       // Replace the body with an empty one so the callbacks can't see real data.
       val response = response.newBuilder()
