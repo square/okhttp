@@ -17,7 +17,6 @@ package okhttp3.sse.internal;
 
 import mockwebserver3.MockResponse;
 import mockwebserver3.MockWebServer;
-import mockwebserver3.junit5.internal.MockWebServerExtension;
 import okhttp3.OkHttpClient;
 import okhttp3.OkHttpClientTestRule;
 import okhttp3.Request;
@@ -28,12 +27,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.io.IOException;
 
-@ExtendWith(MockWebServerExtension.class)
 @Tag("Slowish")
 public final class EventSourcesHttpTest {
   @RegisterExtension public final PlatformRule platform = new PlatformRule();
