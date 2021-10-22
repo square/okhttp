@@ -38,8 +38,9 @@ class RealEventSource(
     val client = client.newBuilder()
         .eventListener(EventListener.NONE)
         .build()
-    call = client.newCall(request) as RealCall
-    call?.enqueue(this)
+    val realCall = client.newCall(request) as RealCall
+    call = realCall
+    realCall.enqueue(this)
   }
 
   override fun onResponse(call: Call, response: Response) {
