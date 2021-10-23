@@ -40,7 +40,7 @@ object Dependencies {
   const val errorpronePlugin = "net.ltgt.gradle:gradle-errorprone-plugin:2.0.2"
   const val spotlessPlugin = "com.diffplug.spotless:spotless-plugin-gradle:5.15.0"
 
-  const val android = "org.robolectric:android-all:11-robolectric-6757853"
+  const val android = "org.robolectric:android-all:12-robolectric-7732740"
   const val animalSniffer = "org.codehaus.mojo:animal-sniffer-annotations:1.20"
   const val assertj = "org.assertj:assertj-core:3.21.0"
   const val bndResolve = "biz.aQute.bnd:biz.aQute.resolve:${Versions.bnd}"
