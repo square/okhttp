@@ -253,7 +253,7 @@ class Cookie private constructor(
    * Builds a cookie. The [name], [value], and [domain] values must all be set before calling
    * [build].
    */
-  class Builder {
+  class Builder() {
     private var name: String? = null
     private var value: String? = null
     private var expiresAt = MAX_DATE
@@ -264,9 +264,7 @@ class Cookie private constructor(
     private var persistent = false
     private var hostOnly = false
 
-    constructor()
-
-    internal constructor(cookie: Cookie) {
+    internal constructor(cookie: Cookie) : this() {
       this.name = cookie.name
       this.value = cookie.value
       this.expiresAt = cookie.expiresAt

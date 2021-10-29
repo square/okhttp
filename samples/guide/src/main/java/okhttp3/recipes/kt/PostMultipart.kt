@@ -53,7 +53,7 @@ class PostMultipart {
      * The imgur client ID for OkHttp recipes. If you're using imgur for anything other than running
      * these examples, please request your own client ID! https://api.imgur.com/oauth2
      */
-    private val IMGUR_CLIENT_ID = "9199fdef135c122"
+    private const val IMGUR_CLIENT_ID = "9199fdef135c122"
     private val MEDIA_TYPE_PNG = "image/png".toMediaType()
   }
 }
