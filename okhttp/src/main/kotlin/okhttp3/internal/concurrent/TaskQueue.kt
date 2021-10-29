@@ -215,5 +215,5 @@ class TaskQueue internal constructor(
     return tasksCanceled
   }
 
-  override fun toString() = name
+  override fun toString(): String = name
 }

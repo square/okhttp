@@ -27,7 +27,6 @@ import java.util.concurrent.TimeUnit;
 import okhttp3.testing.PlatformRule;
 import okio.ByteString;
 import org.bouncycastle.asn1.x509.GeneralName;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 

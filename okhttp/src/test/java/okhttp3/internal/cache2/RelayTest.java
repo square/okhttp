@@ -40,8 +40,8 @@ import static org.junit.jupiter.api.Assertions.fail;
 @Tag("Slowish")
 public final class RelayTest {
   @TempDir File tempDir;
-  private ExecutorService executor = Executors.newCachedThreadPool();
-  private ByteString metadata = ByteString.encodeUtf8("great metadata!");
+  private final ExecutorService executor = Executors.newCachedThreadPool();
+  private final ByteString metadata = ByteString.encodeUtf8("great metadata!");
   private File file;
 
   @BeforeEach

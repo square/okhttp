@@ -30,7 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
 
 public final class CookieTest {
-  HttpUrl url = HttpUrl.get("https://example.com/");
+  final HttpUrl url = HttpUrl.get("https://example.com/");
 
   @Test public void simpleCookie() throws Exception {
     Cookie cookie = Cookie.parse(url, "SID=31d4d96e407aad42");

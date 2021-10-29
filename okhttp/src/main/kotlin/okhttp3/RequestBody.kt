@@ -196,7 +196,7 @@ abstract class RequestBody {
             imports = ["okhttp3.RequestBody.Companion.toRequestBody"]
         ),
         level = DeprecationLevel.WARNING)
-    fun create(contentType: MediaType?, content: String) = content.toRequestBody(contentType)
+    fun create(contentType: MediaType?, content: String): RequestBody = content.toRequestBody(contentType)
 
     @JvmStatic
     @Deprecated(
@@ -225,7 +225,7 @@ abstract class RequestBody {
       content: ByteArray,
       offset: Int = 0,
       byteCount: Int = content.size
-    ) = content.toRequestBody(contentType, offset, byteCount)
+    ): RequestBody = content.toRequestBody(contentType, offset, byteCount)
 
     @JvmStatic
     @Deprecated(
@@ -235,6 +235,6 @@ abstract class RequestBody {
             imports = ["okhttp3.RequestBody.Companion.asRequestBody"]
         ),
         level = DeprecationLevel.WARNING)
-    fun create(contentType: MediaType?, file: File) = file.asRequestBody(contentType)
+    fun create(contentType: MediaType?, file: File): RequestBody= file.asRequestBody(contentType)
   }
 }

@@ -7,6 +7,10 @@ buildscript {
     classpath Dependencies.graalPlugin
     classpath Dependencies.bndPlugin
     classpath Dependencies.shadowPlugin
+    classpath Dependencies.japicmpPlugin
+    classpath Dependencies.animalsnifferPlugin
+    classpath Dependencies.errorpronePlugin
+    classpath Dependencies.spotlessPlugin
   }
 
   repositories {
@@ -14,13 +18,6 @@ buildscript {
     gradlePluginPortal()
     google()
   }
-}
-
-plugins {
-  id "ru.vyarus.animalsniffer" version "1.5.3"
-  id "me.champeau.gradle.japicmp" version "0.2.9"
-  id "com.diffplug.spotless" version "5.14.2"
-  id "net.ltgt.errorprone" version "2.0.2"
 }
 
 allprojects {
@@ -50,23 +47,6 @@ allprojects {
   }
 }
 
-ext.applyOsgi = { project ->
-  project.apply plugin: 'biz.aQute.bnd.builder'
-
-  project.sourceSets {
-    osgi
-  }
-
-  project.jar { t ->
-    t.setClasspath(project.sourceSets.osgi['compileClasspath'] + project.sourceSets.main['compileClasspath'])
-  }
-
-  project.dependencies {
-    // The OSGi kotlin-stdlib lets bnd infer bundle versions.
-    osgiApi Dependencies.kotlinStdlibOsgi
-  }
-}
-
 /** Configure building for Java+Kotlin projects. */
 subprojects { project ->
   if (project.name == 'android-test') return
@@ -77,6 +57,7 @@ subprojects { project ->
   apply plugin: 'java'
   apply plugin: 'java-library'
   apply plugin: 'checkstyle'
+  apply plugin: "com.diffplug.spotless"
   apply plugin: 'ru.vyarus.animalsniffer'
   apply plugin: 'org.jetbrains.dokka'
   apply plugin: 'biz.aQute.bnd.builder'
@@ -115,8 +96,8 @@ subprojects { project ->
     sourceSets = [sourceSets.main]
   }
   dependencies {
-    signature 'net.sf.androidscents.signature:android-api-level-21:5.0.1_r2@signature'
-    signature 'org.codehaus.mojo.signature:java18:1.0@signature'
+    signature Dependencies.signatureAndroid21
+    signature Dependencies.signatureJava18
   }
 
   tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
@@ -268,26 +249,6 @@ subprojects { project ->
   }
 }
 
-
 tasks.wrapper {
   distributionType = Wrapper.DistributionType.ALL
 }
-
-/**
- * Returns a .jar file for the golden version of this project.
- * https://github.com/Visistema/Groovy1/blob/ba5eb9b2f19ca0cc8927359ce414c4e1974b7016/gradle/binarycompatibility.gradle#L48
- */
-ext.baselineJar = { project, version ->
-  def group = project.group
-  def artifactId = project.ext.artifactId
-  try {
-    String jarFile = "$artifactId-${version}.jar"
-    project.group = 'virtual_group_for_japicmp' // Prevent it from resolving the current version.
-    def dependency = project.dependencies.create("$group:$artifactId:$version@jar")
-    return project.configurations.detachedConfiguration(dependency).files
-        .find { (it.name == jarFile) }
-  } finally {
-    project.group = group
-  }
-}
-ext.baselineVersion = "3.14.1"

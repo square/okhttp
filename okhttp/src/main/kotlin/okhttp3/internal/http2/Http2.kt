@@ -119,7 +119,7 @@ object Http2 {
         direction, streamId, length, formattedType, formattedFlags)
   }
 
-  internal fun formattedType(type: Int) =
+  internal fun formattedType(type: Int): String =
     if (type < FRAME_NAMES.size) FRAME_NAMES[type] else format("0x%02x", type)
 
   /**

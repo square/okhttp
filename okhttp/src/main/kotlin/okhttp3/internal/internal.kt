@@ -33,16 +33,16 @@ import okhttp3.internal.connection.RealConnection
 fun parseCookie(currentTimeMillis: Long, url: HttpUrl, setCookie: String): Cookie? =
     Cookie.parse(currentTimeMillis, url, setCookie)
 
-fun cookieToString(cookie: Cookie, forObsoleteRfc2965: Boolean) =
+fun cookieToString(cookie: Cookie, forObsoleteRfc2965: Boolean): String =
     cookie.toString(forObsoleteRfc2965)
 
-fun addHeaderLenient(builder: Headers.Builder, line: String) =
+fun addHeaderLenient(builder: Headers.Builder, line: String): Headers.Builder =
     builder.addLenient(line)
 
-fun addHeaderLenient(builder: Headers.Builder, name: String, value: String) =
+fun addHeaderLenient(builder: Headers.Builder, name: String, value: String): Headers.Builder =
     builder.addLenient(name, value)
 
-fun cacheGet(cache: Cache, request: Request) = cache.get(request)
+fun cacheGet(cache: Cache, request: Request): Response? = cache.get(request)
 
 fun applyConnectionSpec(connectionSpec: ConnectionSpec, sslSocket: SSLSocket, isFallback: Boolean) =
     connectionSpec.apply(sslSocket, isFallback)

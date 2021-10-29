@@ -25,7 +25,7 @@ import org.assertj.core.api.Assertions.assertThat
  * deterministic. All tasks are executed on-demand on the test thread by calls to [runTasks] and
  * [advanceUntil].
  */
-class TaskFaker() {
+class TaskFaker {
   @Suppress("NOTHING_TO_INLINE")
   internal inline fun Any.assertThreadHoldsLock() {
     if (assertionsEnabled && !Thread.holdsLock(this)) {
@@ -156,7 +156,7 @@ class TaskFaker() {
       val runnable = futureRunnables.removeAt(0)
       currentRunnables.add(runnable)
       if (currentRunnables.size > 1) isParallel = true
-      executorService.execute(Runnable {
+      executorService.execute {
         try {
           runnable.run()
         } finally {
@@ -165,7 +165,7 @@ class TaskFaker() {
             taskRunner.notify()
           }
         }
-      })
+      }
       taskRunner.wait() // Wait for the coordinator to stall.
     }
   }

@@ -91,77 +91,77 @@ class Address(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "url"),
       level = DeprecationLevel.ERROR)
-  fun url() = url
+  fun url(): HttpUrl = url
 
   @JvmName("-deprecated_dns")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "dns"),
       level = DeprecationLevel.ERROR)
-  fun dns() = dns
+  fun dns(): Dns = dns
 
   @JvmName("-deprecated_socketFactory")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "socketFactory"),
       level = DeprecationLevel.ERROR)
-  fun socketFactory() = socketFactory
+  fun socketFactory(): SocketFactory = socketFactory
 
   @JvmName("-deprecated_proxyAuthenticator")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "proxyAuthenticator"),
       level = DeprecationLevel.ERROR)
-  fun proxyAuthenticator() = proxyAuthenticator
+  fun proxyAuthenticator(): Authenticator = proxyAuthenticator
 
   @JvmName("-deprecated_protocols")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "protocols"),
       level = DeprecationLevel.ERROR)
-  fun protocols() = protocols
+  fun protocols(): List<Protocol> = protocols
 
   @JvmName("-deprecated_connectionSpecs")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "connectionSpecs"),
       level = DeprecationLevel.ERROR)
-  fun connectionSpecs() = connectionSpecs
+  fun connectionSpecs(): List<ConnectionSpec> = connectionSpecs
 
   @JvmName("-deprecated_proxySelector")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "proxySelector"),
       level = DeprecationLevel.ERROR)
-  fun proxySelector() = proxySelector
+  fun proxySelector(): ProxySelector = proxySelector
 
   @JvmName("-deprecated_proxy")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "proxy"),
       level = DeprecationLevel.ERROR)
-  fun proxy() = proxy
+  fun proxy(): Proxy? = proxy
 
   @JvmName("-deprecated_sslSocketFactory")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "sslSocketFactory"),
       level = DeprecationLevel.ERROR)
-  fun sslSocketFactory() = sslSocketFactory
+  fun sslSocketFactory(): SSLSocketFactory? = sslSocketFactory
 
   @JvmName("-deprecated_hostnameVerifier")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "hostnameVerifier"),
       level = DeprecationLevel.ERROR)
-  fun hostnameVerifier() = hostnameVerifier
+  fun hostnameVerifier(): HostnameVerifier? = hostnameVerifier
 
   @JvmName("-deprecated_certificatePinner")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "certificatePinner"),
       level = DeprecationLevel.ERROR)
-  fun certificatePinner() = certificatePinner
+  fun certificatePinner(): CertificatePinner? = certificatePinner
 
   override fun equals(other: Any?): Boolean {
     return other is Address &&

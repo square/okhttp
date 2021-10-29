@@ -182,5 +182,5 @@ internal class DerWriter(sink: BufferedSink) {
     }
   }
 
-  override fun toString() = path.joinToString(separator = " / ")
+  override fun toString(): String = path.joinToString(separator = " / ")
 }

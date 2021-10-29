@@ -120,7 +120,7 @@ public final class URLConnectionTest {
 
   private MockWebServer server;
   private MockWebServer server2;
-  private HandshakeCertificates handshakeCertificates = localhost();
+  private final HandshakeCertificates handshakeCertificates = localhost();
   private OkHttpClient client = clientTestRule.newClient();
   private @Nullable Cache cache;
 
@@ -2180,7 +2180,7 @@ public final class URLConnectionTest {
 
     server.enqueue(new MockResponse()
         .setResponseCode(HTTP_MOVED_TEMP)
-        .addHeader("Location: " + server2.url("/").url().toString())
+        .addHeader("Location: " + server2.url("/").url())
         .setBody("This page has moved!"));
     server.enqueue(new MockResponse()
         .setBody("This is the first server again!"));
@@ -2226,7 +2226,7 @@ public final class URLConnectionTest {
 
     server.enqueue(new MockResponse()
         .setResponseCode(HTTP_MOVED_TEMP)
-        .addHeader("Location: " + server2.url("/b").toString())
+        .addHeader("Location: " + server2.url("/b"))
         .setBody("This page has moved!"));
 
     assertContent("This is the 2nd server!", getResponse(newRequest("/a")));

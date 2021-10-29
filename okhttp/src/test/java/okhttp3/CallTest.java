@@ -112,12 +112,12 @@ public final class CallTest {
   private final MockWebServer server;
   private final MockWebServer server2;
   private RecordingEventListener listener = new RecordingEventListener();
-  private HandshakeCertificates handshakeCertificates = localhost();
+  private final HandshakeCertificates handshakeCertificates = localhost();
   private OkHttpClient client = clientTestRule.newClientBuilder()
       .eventListenerFactory(clientTestRule.wrap(listener))
       .build();
-  private RecordingCallback callback = new RecordingCallback();
-  private Cache cache = new Cache(Path.get("/cache"), Integer.MAX_VALUE, new LoggingFilesystem(fileSystem));
+  private final RecordingCallback callback = new RecordingCallback();
+  private final Cache cache = new Cache(Path.get("/cache"), Integer.MAX_VALUE, new LoggingFilesystem(fileSystem));
 
   public CallTest(MockWebServer server, MockWebServer server2) {
     this.server = server;
@@ -980,14 +980,12 @@ public final class CallTest {
     server.enqueue(new MockResponse());
 
     client = client.newBuilder()
-        .addInterceptor(new Interceptor() {
-          @Override public Response intercept(Chain chain) throws IOException {
-            try {
-              chain.proceed(chain.request());
-              throw new AssertionError();
-            } catch (IOException expected) {
-              return chain.proceed(chain.request());
-            }
+        .addInterceptor(chain -> {
+          try {
+            chain.proceed(chain.request());
+            throw new AssertionError();
+          } catch (IOException expected) {
+            return chain.proceed(chain.request());
           }
         })
         .build();
@@ -1006,17 +1004,15 @@ public final class CallTest {
         .setBody("abc"));
 
     client = clientTestRule.newClientBuilder()
-        .addInterceptor(new Interceptor() {
-          @Override public Response intercept(Chain chain) throws IOException {
-            Response response = chain.proceed(chain.request());
-            try {
-              chain.proceed(chain.request());
-              fail();
-            } catch (IllegalStateException expected) {
-              assertThat(expected).hasMessageContaining("please call response.close()");
-            }
-            return response;
+        .addInterceptor(chain -> {
+          Response response = chain.proceed(chain.request());
+          try {
+            chain.proceed(chain.request());
+            fail();
+          } catch (IllegalStateException expected) {
+            assertThat(expected).hasMessageContaining("please call response.close()");
           }
+          return response;
         })
         .build();
 
@@ -4024,7 +4020,7 @@ public final class CallTest {
 
   private static class RecordingSSLSocketFactory extends DelegatingSSLSocketFactory {
 
-    private List<SSLSocket> socketsCreated = new ArrayList<>();
+    private final List<SSLSocket> socketsCreated = new ArrayList<>();
 
     public RecordingSSLSocketFactory(SSLSocketFactory delegate) {
       super(delegate);

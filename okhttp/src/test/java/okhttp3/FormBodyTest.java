@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import okio.Buffer;
 import org.junit.jupiter.api.Test;
-import java.nio.charset.Charset;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

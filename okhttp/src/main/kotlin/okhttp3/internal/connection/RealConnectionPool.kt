@@ -41,7 +41,7 @@ class RealConnectionPool(
 
   private val cleanupQueue: TaskQueue = taskRunner.newQueue()
   private val cleanupTask = object : Task("$okHttpName ConnectionPool") {
-    override fun runOnce() = cleanup(System.nanoTime())
+    override fun runOnce(): Long = cleanup(System.nanoTime())
   }
 
   /**
@@ -162,9 +162,7 @@ class RealConnectionPool(
           if (idleDurationNs > longestIdleDurationNs) {
             longestIdleDurationNs = idleDurationNs
             longestIdleConnection = connection
-          } else {
-            Unit
-          }
+          } else Unit
         }
       }
     }

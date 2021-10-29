@@ -41,8 +41,8 @@ public class HpackRoundTripTest extends HpackDecodeTestBase {
     }
   }
 
-  private Buffer bytesOut = new Buffer();
-  private Hpack.Writer hpackWriter = new Hpack.Writer(bytesOut);
+  private final Buffer bytesOut = new Buffer();
+  private final Hpack.Writer hpackWriter = new Hpack.Writer(bytesOut);
 
   @ParameterizedTest
   @ArgumentsSource(StoriesTestProvider.class)

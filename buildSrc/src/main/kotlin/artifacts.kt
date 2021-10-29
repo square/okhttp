@@ -14,6 +14,16 @@
  * limitations under the License.
  */
 
+import aQute.bnd.gradle.BundleTaskConvention
+import java.io.File
+import org.gradle.api.Project
+import org.gradle.api.plugins.ExtensionAware
+import org.gradle.api.tasks.SourceSetContainer
+import org.gradle.kotlin.dsl.apply
+import org.gradle.kotlin.dsl.extra
+import org.gradle.kotlin.dsl.get
+import org.gradle.kotlin.dsl.withConvention
+
 object Projects {
   /** Returns the artifact ID for the project, or null if it is not published. */
   @JvmStatic
@@ -35,4 +45,41 @@ object Projects {
       else -> null
     }
   }
+
+  @JvmStatic
+  fun applyOsgi(project: Project, vararg bndProperties: String) {
+    project.run {
+      apply(plugin = "biz.aQute.bnd.builder")
+      sourceSets.create("osgi")
+      tasks["jar"].withConvention(BundleTaskConvention::class) {
+        setClasspath(sourceSets["osgi"].compileClasspath + project.sourceSets["main"].compileClasspath)
+        bnd(*bndProperties)
+      }
+      dependencies.add("osgiApi", Dependencies.kotlinStdlibOsgi)
+    }
+  }
+
+  /**
+   * Returns a .jar file for the golden version of this project.
+   * https://github.com/Visistema/Groovy1/blob/ba5eb9b2f19ca0cc8927359ce414c4e1974b7016/gradle/binarycompatibility.gradle#L48
+   */
+  @JvmStatic
+  @JvmOverloads
+  fun baselineJar(project: Project, version: String = "3.14.1"): File? {
+    val group = project.group
+    val artifactId = project.extra["artifactId"]
+    return try {
+      val jarFile = "$artifactId-${version}.jar"
+      project.group = "virtual_group_for_japicmp"
+      val dependency = project.dependencies.create("$group:$artifactId:$version@jar")
+      project.configurations.detachedConfiguration(dependency).files.find { (it.name == jarFile) }
+    } catch (e: Exception) {
+      null
+    } finally {
+      project.group = group
+    }
+  }
 }
+
+val Project.sourceSets: SourceSetContainer
+  get() = (this as ExtensionAware).extensions.getByName("sourceSets") as SourceSetContainer

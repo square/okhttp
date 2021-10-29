@@ -16,6 +16,7 @@
 
 package okhttp3;
 
+import javax.net.ssl.HostnameVerifier;
 import java.io.IOException;
 import java.net.CookieManager;
 import java.net.HttpURLConnection;
@@ -25,15 +26,14 @@ import java.security.cert.Certificate;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.TimeZone;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-import javax.net.ssl.HostnameVerifier;
 import mockwebserver3.MockResponse;
 import mockwebserver3.MockWebServer;
 import mockwebserver3.RecordedRequest;
@@ -67,7 +67,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 public final class CacheTest {
   private static final HostnameVerifier NULL_HOSTNAME_VERIFIER = (name, session) -> true;
 
-  public FakeFileSystem fileSystem = new FakeFileSystem();
+  public final FakeFileSystem fileSystem = new FakeFileSystem();
   @RegisterExtension public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
   @RegisterExtension public final PlatformRule platform = new PlatformRule();
 
@@ -1931,8 +1931,7 @@ public final class CacheTest {
     Response response1 = get(server.url("/a"));
     assertThat(response1.body().string()).isEqualTo("A");
     assertThat(response1.header("Allow")).isNull();
-    assertThat((double) (response1.receivedResponseAtMillis() - t0)).isCloseTo(
-        (double) 0, offset(250.0));
+    assertThat((double) (response1.receivedResponseAtMillis() - t0)).isCloseTo(0, offset(250.0));
 
     // A conditional cache hit updates the cache.
     Thread.sleep(500); // Make sure t0 and t1 are distinct.
@@ -1942,8 +1941,7 @@ public final class CacheTest {
     assertThat(response2.body().string()).isEqualTo("A");
     assertThat(response2.header("Allow")).isEqualTo("GET, HEAD");
     Long updatedTimestamp = response2.receivedResponseAtMillis();
-    assertThat((double) (updatedTimestamp - t1)).isCloseTo(
-        (double) 0, offset(250.0));
+    assertThat((double) (updatedTimestamp - t1)).isCloseTo(0, offset(250.0));
 
     // A full cache hit reads the cache.
     Thread.sleep(10);

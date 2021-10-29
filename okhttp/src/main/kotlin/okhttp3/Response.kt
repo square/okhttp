@@ -302,7 +302,7 @@ class Response internal constructor(
     checkNotNull(body) { "response is not eligible for a body and must not be closed" }.close()
   }
 
-  override fun toString() =
+  override fun toString(): String =
       "Response{protocol=$protocol, code=$code, message=$message, url=${request.url}}"
 
   open class Builder {
