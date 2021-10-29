@@ -21,11 +21,9 @@ import okhttp3.Response
 import okhttp3.internal.connection.Exchange
 import okhttp3.internal.connection.RealCall
 import okhttp3.internal.connection.RealConnection
-import okio.ExperimentalFileSystem
 import okio.FileSystem
 import okio.Path
 
-@OptIn(ExperimentalFileSystem::class)
 fun buildCache(file: Path, maxSize: Long, fileSystem: FileSystem): Cache {
   return Cache(file, maxSize, fileSystem)
 }

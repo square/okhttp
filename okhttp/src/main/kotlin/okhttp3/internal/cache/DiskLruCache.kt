@@ -15,6 +15,10 @@
  */
 package okhttp3.internal.cache
 
+import java.io.Closeable
+import java.io.EOFException
+import java.io.Flushable
+import java.io.IOException
 import okhttp3.internal.assertThreadHoldsLock
 import okhttp3.internal.cache.DiskLruCache.Editor
 import okhttp3.internal.closeQuietly
@@ -27,7 +31,6 @@ import okhttp3.internal.okHttpName
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.WARN
 import okio.BufferedSink
-import okio.ExperimentalFileSystem
 import okio.FileNotFoundException
 import okio.FileSystem
 import okio.ForwardingFileSystem
@@ -37,10 +40,6 @@ import okio.Sink
 import okio.Source
 import okio.blackholeSink
 import okio.buffer
-import java.io.Closeable
-import java.io.EOFException
-import java.io.Flushable
-import java.io.IOException
 
 /**
  * A cache that uses a bounded amount of space on a filesystem. Each cache entry has a string key
@@ -85,7 +84,6 @@ import java.io.IOException
  * @param valueCount the number of values per cache entry. Must be positive.
  * @param maxSize the maximum number of bytes this cache should use to store.
  */
-@OptIn(ExperimentalFileSystem::class)
 class DiskLruCache(
   fileSystem: FileSystem,
 
@@ -103,14 +101,11 @@ class DiskLruCache(
   taskRunner: TaskRunner
 ) : Closeable, Flushable {
   internal val fileSystem: FileSystem = object : ForwardingFileSystem(fileSystem) {
-    override fun sink(file: Path): Sink {
+    override fun sink(file: Path, mustCreate: Boolean): Sink {
       file.parent?.let {
-        // TODO from okhttp3.internal.io.FileSystem
-        if (!exists(it)) {
-          createDirectories(it)
-        }
+        createDirectories(it)
       }
-      return super.sink(file)
+      return super.sink(file, mustCreate)
     }
   }
 
