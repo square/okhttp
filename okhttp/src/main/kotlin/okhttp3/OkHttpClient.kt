@@ -58,14 +58,14 @@ import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
  *
  * Use `new OkHttpClient()` to create a shared instance with the default settings:
  *
- * ```
+ * ```java
  * // The singleton HTTP client.
  * public final OkHttpClient client = new OkHttpClient();
  * ```
  *
  * Or use `new OkHttpClient.Builder()` to create a shared instance with custom settings:
  *
- * ```
+ * ```java
  * // The singleton HTTP client.
  * public final OkHttpClient client = new OkHttpClient.Builder()
  *     .addInterceptor(new HttpLoggingInterceptor())
@@ -80,18 +80,18 @@ import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
  * add configuration to the derived client for a specific purpose.
  *
  * This example shows the single instance with default configurations.
- * 
- * ```
+ *
+ * ```java
  * public final OkHttpClient client = new OkHttpClient.Builder()
  *     .readTimeout(1000, TimeUnit.MILLISECONDS)
  *     .writeTimeout(1000, TimeUnit.MILLISECONDS)
  *     .build();
  * ```
  *
- * This example shows a call with a short 500 millisecond read timeout and a 1000 millisecond 
+ * This example shows a call with a short 500 millisecond read timeout and a 1000 millisecond
  * write timeout. Original configuration is kept, but can be overriden.
  *
- * ```
+ * ```java
  * OkHttpClient eagerClient = client.newBuilder()
  *     .readTimeout(500, TimeUnit.MILLISECONDS)
  *     .build();
@@ -107,21 +107,21 @@ import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
  * Shutdown the dispatcher's executor service with [shutdown()][ExecutorService.shutdown]. This will
  * also cause future calls to the client to be rejected.
  *
- * ```
+ * ```java
  * client.dispatcher().executorService().shutdown();
  * ```
  *
  * Clear the connection pool with [evictAll()][ConnectionPool.evictAll]. Note that the connection
  * pool's daemon thread may not exit immediately.
  *
- * ```
+ * ```java
  * client.connectionPool().evictAll();
  * ```
  *
  * If your client has a cache, call [close()][Cache.close]. Note that it is an error to create calls
  * against a cache that is closed, and doing so will cause the call to crash.
  *
- * ```
+ * ```java
  * client.cache().close();
  * ```
  *
@@ -773,7 +773,7 @@ open class OkHttpClient internal constructor(
      *
      * If necessary, you can create and configure the defaults yourself with the following code:
      *
-     * ```
+     * ```java
      * TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(
      * TrustManagerFactory.getDefaultAlgorithm());
      * trustManagerFactory.init((KeyStore) null);
@@ -797,7 +797,7 @@ open class OkHttpClient internal constructor(
      *
      * Trust managers targeting Android must also define a method that has this signature:
      *
-     * ```
+     * ```java
      *    @SuppressWarnings("unused")
      *    public List<X509Certificate> checkServerTrusted(
      *        X509Certificate[] chain, String authType, String host) throws CertificateException {

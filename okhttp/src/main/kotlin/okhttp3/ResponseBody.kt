@@ -58,7 +58,7 @@ import okio.ByteString
  * block. With this structure the compiler inserts an implicit `finally` clause that calls
  * [close()][Response.close] for you.
  *
- * ```
+ * ```java
  * Call call = client.newCall(request);
  * try (Response response = call.execute()) {
  * ... // Use the response.
@@ -67,7 +67,7 @@ import okio.ByteString
  *
  * You can use a similar block for asynchronous calls:
  *
- * ```
+ * ```java
  * Call call = client.newCall(request);
  * call.enqueue(new Callback() {
  *   public void onResponse(Call call, Response response) throws IOException {
