@@ -37,7 +37,7 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Tag("Slowish")
-//@ExtendWith(MockWebServerExtension.class)
+@ExtendWith(MockWebServerExtension.class)
 public final class EventSourceHttpTest {
   @RegisterExtension public final PlatformRule platform = new PlatformRule();
 
