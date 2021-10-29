@@ -324,6 +324,32 @@ public class CookiesTest {
     assertEquals(Collections.<Cookie>emptyList(), actualCookies);
   }
 
+  @Test public void testQuoteStripping() throws Exception {
+    MockWebServer server = new MockWebServer();
+    server.start();
+
+    client = client.newBuilder()
+            .cookieJar(new JavaNetCookieJar(new CookieManager() {
+              @Override public Map<String, List<String>> get(URI uri,
+                                                             Map<String, List<String>> requestHeaders) {
+                Map<String, List<String>> result = new LinkedHashMap<>();
+                result.put("COOKIE", Collections.singletonList("Bar=\""));
+                result.put("cooKIE2", Collections.singletonList("Baz=\"baz\""));
+                return result;
+              }
+            }))
+            .build();
+
+    server.enqueue(new MockResponse());
+
+    get(server.url("/"));
+
+    RecordedRequest request = server.takeRequest();
+    assertEquals(request.getHeader("Cookie"), "Bar=\"; Baz=baz");
+    assertNull(request.getHeader("Cookie2"));
+    assertNull(request.getHeader("Quux"));
+  }
+
   private HttpUrl urlWithIpAddress(MockWebServer server, String path) throws Exception {
     return server.url(path)
         .newBuilder()
