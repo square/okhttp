@@ -21,7 +21,6 @@ import okhttp3.internal.cache.DiskLruCache.Editor
 import okhttp3.internal.cache.DiskLruCache.Snapshot
 import okhttp3.internal.concurrent.TaskFaker
 import okhttp3.internal.io.FaultyFileSystem
-import okio.ExperimentalFileSystem
 import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
@@ -43,7 +42,6 @@ import java.io.IOException
 import java.util.ArrayDeque
 import java.util.NoSuchElementException
 
-@OptIn(ExperimentalFileSystem::class)
 class FileSystemParamProvider: SimpleProvider() {
   override fun arguments() = listOf(
     FakeFileSystem().apply { emulateUnix() } to false,
@@ -54,7 +52,6 @@ class FileSystemParamProvider: SimpleProvider() {
 
 @Timeout(60)
 @Tag("Slow")
-@OptIn(ExperimentalFileSystem::class)
 class DiskLruCacheTest {
   private lateinit var filesystem: FaultyFileSystem
   private var windows: Boolean = false

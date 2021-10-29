@@ -34,7 +34,6 @@ import okio.BufferedSource
 import okio.ByteString.Companion.decodeBase64
 import okio.ByteString.Companion.encodeUtf8
 import okio.ByteString.Companion.toByteString
-import okio.ExperimentalFileSystem
 import okio.FileSystem
 import okio.ForwardingSink
 import okio.ForwardingSource
@@ -143,7 +142,6 @@ import java.util.TreeSet
  *
  * [rfc_7234]: http://tools.ietf.org/html/rfc7234
  */
-@OptIn(ExperimentalFileSystem::class)
 class Cache(
   directory: Path,
   maxSize: Long,
@@ -169,7 +167,6 @@ class Cache(
     get() = cache.isClosed()
 
   /** Create a cache of at most [maxSize] bytes in [directory]. */
-  @OptIn(ExperimentalFileSystem::class)
   constructor(directory: File, maxSize: Long) : this(
     directory.toOkioPath(), maxSize, FileSystem.SYSTEM
   )

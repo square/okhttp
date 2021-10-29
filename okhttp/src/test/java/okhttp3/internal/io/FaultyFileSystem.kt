@@ -15,17 +15,14 @@
  */
 package okhttp3.internal.io
 
+import java.io.IOException
 import okio.Buffer
-import okio.ExperimentalFileSystem
 import okio.FileSystem
 import okio.ForwardingFileSystem
 import okio.ForwardingSink
 import okio.Path
 import okio.Sink
-import java.io.IOException
-import java.util.LinkedHashSet
 
-@OptIn(ExperimentalFileSystem::class)
 class FaultyFileSystem constructor(delegate: FileSystem?) : ForwardingFileSystem(delegate!!) {
   private val writeFaults: MutableSet<Path> = LinkedHashSet()
   private val deleteFaults: MutableSet<Path> = LinkedHashSet()
@@ -62,20 +59,22 @@ class FaultyFileSystem constructor(delegate: FileSystem?) : ForwardingFileSystem
   }
 
   @Throws(IOException::class)
-  override fun delete(path: Path) {
+  override fun delete(path: Path, mustExist: Boolean) {
     if (deleteFaults.contains(path)) throw IOException("boom!")
-    super.delete(path)
+    super.delete(path, mustExist)
   }
 
   @Throws(IOException::class)
-  override fun deleteRecursively(fileOrDirectory: Path) {
+  override fun deleteRecursively(fileOrDirectory: Path, mustExist: Boolean) {
     if (deleteFaults.contains(fileOrDirectory)) throw IOException("boom!")
-    super.deleteRecursively(fileOrDirectory)
+    super.deleteRecursively(fileOrDirectory, mustExist)
   }
 
-  override fun appendingSink(file: Path): Sink = FaultySink(super.appendingSink(file), file)
+  override fun appendingSink(file: Path, mustExist: Boolean): Sink =
+    FaultySink(super.appendingSink(file, mustExist), file)
 
-  override fun sink(file: Path): Sink = FaultySink(super.sink(file), file)
+  override fun sink(file: Path, mustCreate: Boolean): Sink =
+    FaultySink(super.sink(file, mustCreate), file)
 
   inner class FaultySink(sink: Sink, private val file: Path) : ForwardingSink(sink) {
     override fun write(source: Buffer, byteCount: Long) {
