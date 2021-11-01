@@ -167,6 +167,10 @@ subprojects { project ->
         prefix = "okhttp3.internal"
         suppress = true
       }
+      perPackageOption {
+        prefix = "mockwebserver3.internal"
+        suppress = true
+      }
       if (project.file('Module.md').exists()) {
         includes = ['Module.md']
       }
