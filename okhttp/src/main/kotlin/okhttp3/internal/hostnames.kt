@@ -47,7 +47,7 @@ fun String.toCanonicalHost(): String? {
   }
 
   try {
-    val result = IDN.toASCII(host).toLowerCase(Locale.US)
+    val result = IDN.toASCII(host).lowercase(Locale.US)
     if (result.isEmpty()) return null
 
     // Confirm that the IDN ToASCII result doesn't contain any illegal characters.
@@ -175,7 +175,7 @@ private fun decodeIpv4Suffix(
       val c = input[i]
       if (c < '0' || c > '9') break
       if (value == 0 && groupOffset != i) return false // Reject unnecessary leading '0's.
-      value = value * 10 + c.toInt() - '0'.toInt()
+      value = value * 10 + c.code - '0'.code
       if (value > 255) return false // Value out of range.
       i++
     }
@@ -218,11 +218,11 @@ private fun inet6AddressToAscii(address: ByteArray): String {
   var i = 0
   while (i < address.size) {
     if (i == longestRunOffset) {
-      result.writeByte(':'.toInt())
+      result.writeByte(':'.code)
       i += longestRunLength
-      if (i == 16) result.writeByte(':'.toInt())
+      if (i == 16) result.writeByte(':'.code)
     } else {
-      if (i > 0) result.writeByte(':'.toInt())
+      if (i > 0) result.writeByte(':'.code)
       val group = address[i] and 0xff shl 8 or (address[i + 1] and 0xff)
       result.writeHexadecimalUnsignedLong(group.toLong())
       i += 2

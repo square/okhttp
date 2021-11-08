@@ -40,7 +40,8 @@ import okhttp3.internal.threadFactory
  * Most applications should share a process-wide [TaskRunner] and use queues for per-client work.
  */
 class TaskRunner(
-  val backend: Backend
+  val backend: Backend,
+  internal val logger: Logger = TaskRunner.logger
 ) {
   private var nextQueueName = 10000
   private var coordinatorWaiting = false
@@ -59,7 +60,7 @@ class TaskRunner(
           awaitTaskToRun()
         } ?: return
 
-        logElapsed(task, task.queue!!) {
+        logger.logElapsed(task, task.queue!!) {
           var completedNormally = false
           try {
             runTask(task)
@@ -243,6 +244,7 @@ class TaskRunner(
   }
 
   fun cancelAll() {
+    this.assertThreadHoldsLock()
     for (i in busyQueues.size - 1 downTo 0) {
       busyQueues[i].cancelAllAndDecide()
     }
@@ -305,9 +307,9 @@ class TaskRunner(
   }
 
   companion object {
+    val logger: Logger = Logger.getLogger(TaskRunner::class.java.name)
+
     @JvmField
     val INSTANCE = TaskRunner(RealBackend(threadFactory("$okHttpName TaskRunner", daemon = true)))
-
-    val logger: Logger = Logger.getLogger(TaskRunner::class.java.name)
   }
 }

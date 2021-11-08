@@ -30,14 +30,20 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 
 class AndroidSocketAdapterTest {
-  @RegisterExtension @JvmField val platform = PlatformRule.conscrypt()
+  @RegisterExtension @JvmField val platform = PlatformRule()
 
-  val context by lazy {
+  @BeforeEach
+  fun setUp() {
+    platform.assumeConscrypt()
+  }
+
+  val context: SSLContext by lazy {
     val provider: Provider = Conscrypt.newProviderBuilder().provideTrustManager(true).build()
 
     SSLContext.getInstance("TLS", provider).apply {

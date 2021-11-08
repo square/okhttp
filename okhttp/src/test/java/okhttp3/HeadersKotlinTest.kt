@@ -55,9 +55,9 @@ class HeadersKotlinTest {
     builder["c"] = "d"
     builder["e"] = Date(0L)
     builder["g"] = Instant.EPOCH
-    assertThat(builder.get("a")).isEqualTo("b")
-    assertThat(builder.get("c")).isEqualTo("d")
-    assertThat(builder.get("e")).isEqualTo("Thu, 01 Jan 1970 00:00:00 GMT")
-    assertThat(builder.get("g")).isEqualTo("Thu, 01 Jan 1970 00:00:00 GMT")
+    assertThat(builder["a"]).isEqualTo("b")
+    assertThat(builder["c"]).isEqualTo("d")
+    assertThat(builder["e"]).isEqualTo("Thu, 01 Jan 1970 00:00:00 GMT")
+    assertThat(builder["g"]).isEqualTo("Thu, 01 Jan 1970 00:00:00 GMT")
   }
 }

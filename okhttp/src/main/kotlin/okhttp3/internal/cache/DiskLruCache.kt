@@ -15,6 +15,10 @@
  */
 package okhttp3.internal.cache
 
+import java.io.Closeable
+import java.io.EOFException
+import java.io.Flushable
+import java.io.IOException
 import okhttp3.internal.assertThreadHoldsLock
 import okhttp3.internal.cache.DiskLruCache.Editor
 import okhttp3.internal.closeQuietly
@@ -27,7 +31,6 @@ import okhttp3.internal.okHttpName
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.WARN
 import okio.BufferedSink
-import okio.ExperimentalFileSystem
 import okio.FileNotFoundException
 import okio.FileSystem
 import okio.ForwardingFileSystem
@@ -37,10 +40,6 @@ import okio.Sink
 import okio.Source
 import okio.blackholeSink
 import okio.buffer
-import java.io.Closeable
-import java.io.EOFException
-import java.io.Flushable
-import java.io.IOException
 
 /**
  * A cache that uses a bounded amount of space on a filesystem. Each cache entry has a string key
@@ -85,7 +84,6 @@ import java.io.IOException
  * @param valueCount the number of values per cache entry. Must be positive.
  * @param maxSize the maximum number of bytes this cache should use to store.
  */
-@OptIn(ExperimentalFileSystem::class)
 class DiskLruCache(
   fileSystem: FileSystem,
 
@@ -103,14 +101,11 @@ class DiskLruCache(
   taskRunner: TaskRunner
 ) : Closeable, Flushable {
   internal val fileSystem: FileSystem = object : ForwardingFileSystem(fileSystem) {
-    override fun sink(file: Path): Sink {
+    override fun sink(file: Path, mustCreate: Boolean): Sink {
       file.parent?.let {
-        // TODO from okhttp3.internal.io.FileSystem
-        if (!exists(it)) {
-          createDirectories(it)
-        }
+        createDirectories(it)
       }
-      return super.sink(file)
+      return super.sink(file, mustCreate)
     }
   }
 
@@ -400,22 +395,22 @@ class DiskLruCache(
     journalWriter?.close()
 
     fileSystem.write(journalFileTmp) {
-      writeUtf8(MAGIC).writeByte('\n'.toInt())
-      writeUtf8(VERSION_1).writeByte('\n'.toInt())
-      writeDecimalLong(appVersion.toLong()).writeByte('\n'.toInt())
-      writeDecimalLong(valueCount.toLong()).writeByte('\n'.toInt())
-      writeByte('\n'.toInt())
+      writeUtf8(MAGIC).writeByte('\n'.code)
+      writeUtf8(VERSION_1).writeByte('\n'.code)
+      writeDecimalLong(appVersion.toLong()).writeByte('\n'.code)
+      writeDecimalLong(valueCount.toLong()).writeByte('\n'.code)
+      writeByte('\n'.code)
 
       for (entry in lruEntries.values) {
         if (entry.currentEditor != null) {
-          writeUtf8(DIRTY).writeByte(' '.toInt())
+          writeUtf8(DIRTY).writeByte(' '.code)
           writeUtf8(entry.key)
-          writeByte('\n'.toInt())
+          writeByte('\n'.code)
         } else {
-          writeUtf8(CLEAN).writeByte(' '.toInt())
+          writeUtf8(CLEAN).writeByte(' '.code)
           writeUtf8(entry.key)
           entry.writeLengths(this)
-          writeByte('\n'.toInt())
+          writeByte('\n'.code)
         }
       }
     }
@@ -448,9 +443,9 @@ class DiskLruCache(
 
     redundantOpCount++
     journalWriter!!.writeUtf8(READ)
-        .writeByte(' '.toInt())
+        .writeByte(' '.code)
         .writeUtf8(key)
-        .writeByte('\n'.toInt())
+        .writeByte('\n'.code)
     if (journalRebuildRequired()) {
       cleanupQueue.schedule(cleanupTask)
     }
@@ -493,9 +488,9 @@ class DiskLruCache(
     // Flush the journal before creating files to prevent file leaks.
     val journalWriter = this.journalWriter!!
     journalWriter.writeUtf8(DIRTY)
-        .writeByte(' '.toInt())
+        .writeByte(' '.code)
         .writeUtf8(key)
-        .writeByte('\n'.toInt())
+        .writeByte('\n'.code)
     journalWriter.flush()
 
     if (hasJournalErrors) {
@@ -567,18 +562,18 @@ class DiskLruCache(
     journalWriter!!.apply {
       if (entry.readable || success) {
         entry.readable = true
-        writeUtf8(CLEAN).writeByte(' '.toInt())
+        writeUtf8(CLEAN).writeByte(' '.code)
         writeUtf8(entry.key)
         entry.writeLengths(this)
-        writeByte('\n'.toInt())
+        writeByte('\n'.code)
         if (success) {
           entry.sequenceNumber = nextSequenceNumber++
         }
       } else {
         lruEntries.remove(entry.key)
-        writeUtf8(REMOVE).writeByte(' '.toInt())
+        writeUtf8(REMOVE).writeByte(' '.code)
         writeUtf8(entry.key)
-        writeByte('\n'.toInt())
+        writeByte('\n'.code)
       }
       flush()
     }
@@ -625,9 +620,9 @@ class DiskLruCache(
         // Mark this entry as 'DIRTY' so that if the process crashes this entry won't be used.
         journalWriter?.let {
           it.writeUtf8(DIRTY)
-          it.writeByte(' '.toInt())
+          it.writeByte(' '.code)
           it.writeUtf8(entry.key)
-          it.writeByte('\n'.toInt())
+          it.writeByte('\n'.code)
           it.flush()
         }
       }
@@ -648,9 +643,9 @@ class DiskLruCache(
     redundantOpCount++
     journalWriter?.let {
       it.writeUtf8(REMOVE)
-      it.writeByte(' '.toInt())
+      it.writeByte(' '.code)
       it.writeUtf8(entry.key)
-      it.writeByte('\n'.toInt())
+      it.writeByte('\n'.code)
     }
     lruEntries.remove(entry.key)
 
@@ -1000,7 +995,7 @@ class DiskLruCache(
     @Throws(IOException::class)
     internal fun writeLengths(writer: BufferedSink) {
       for (length in lengths) {
-        writer.writeByte(' '.toInt()).writeDecimalLong(length)
+        writer.writeByte(' '.code).writeDecimalLong(length)
       }
     }
 

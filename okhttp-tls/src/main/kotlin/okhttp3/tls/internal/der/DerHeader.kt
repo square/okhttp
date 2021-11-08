@@ -65,7 +65,7 @@ internal data class DerHeader(
     return result
   }
 
-  override fun toString() = "$tagClass/$tag"
+  override fun toString(): String = "$tagClass/$tag"
 
   companion object {
     const val TAG_CLASS_UNIVERSAL = 0b0000_0000

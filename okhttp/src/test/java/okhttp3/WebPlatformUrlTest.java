@@ -16,6 +16,7 @@
 package okhttp3;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import okio.BufferedSource;
@@ -31,11 +32,7 @@ public final class WebPlatformUrlTest {
   public static class TestDataParamProvider extends SimpleProvider {
     @Override
     public List<Object> arguments() throws IOException {
-      List<Object> result = new ArrayList<>();
-      for (WebPlatformUrlTestData urlTestData : loadTests()) {
-        result.add(urlTestData);
-      }
-      return result;
+      return new ArrayList<>(loadTests());
     }
   }
 
@@ -114,8 +111,9 @@ public final class WebPlatformUrlTest {
   }
 
   private static List<WebPlatformUrlTestData> loadTests() throws IOException {
-    BufferedSource source = Okio.buffer(Okio.source(
-        WebPlatformUrlTest.class.getResourceAsStream("/web-platform-test-urltestdata.txt")));
+    InputStream resourceAsStream = WebPlatformUrlTest.class.
+            getResourceAsStream("/web-platform-test-urltestdata.txt");
+    BufferedSource source = Okio.buffer(Okio.source(resourceAsStream));
     return WebPlatformUrlTestData.load(source);
   }
 }

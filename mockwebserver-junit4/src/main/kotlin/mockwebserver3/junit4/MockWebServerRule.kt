@@ -27,13 +27,13 @@ import java.util.logging.Logger
  * In Java JUnit 4 tests (ie. tests annotated `@org.junit.Test`), use this by defining a field with
  * the `@Rule` annotation:
  *
- * ```
+ * ```java
  * @Rule public final MockWebServerRule serverRule = new MockWebServerRule();
  * ```
  *
  * For Kotlin the `@JvmField` annotation is also necessary:
  *
- * ```
+ * ```kotlin
  * @JvmField @Rule val serverRule = MockWebServerRule()
  * ```
  */

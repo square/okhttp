@@ -55,7 +55,7 @@ public static final MediaType JSON
 OkHttpClient client = new OkHttpClient();
 
 String post(String url, String json) throws IOException {
-  RequestBody body = RequestBody.create(JSON, json);
+  RequestBody body = RequestBody.create(json, JSON);
   Request request = new Request.Builder()
       .url(url)
       .post(body)
@@ -99,10 +99,10 @@ Releases
 
 Our [change log][changelog] has release history.
 
-The latest release is available on [Maven Central](https://search.maven.org/artifact/com.squareup.okhttp3/okhttp/4.9.0/jar).
+The latest release is available on [Maven Central](https://search.maven.org/artifact/com.squareup.okhttp3/okhttp/4.9.2/jar).
 
 ```kotlin
-implementation("com.squareup.okhttp3:okhttp:4.9.0")
+implementation("com.squareup.okhttp3:okhttp:4.9.2")
 ```
 
 Snapshot builds are [available][snap]. [R8 and ProGuard][r8_proguard] rules are available.
@@ -112,8 +112,8 @@ Also, we have a [bill of materials (BOM)][bom] available to help you keep OkHttp
 ```kotlin
     dependencies {
        // define a BOM and its version
-       implementation(platform("com.squareup.okhttp3:okhttp-bom:4.9.0"))
-       
+       implementation(platform("com.squareup.okhttp3:okhttp-bom:4.9.2"))
+
        // define any required OkHttp artifacts without version
        implementation("com.squareup.okhttp3:okhttp")
        implementation("com.squareup.okhttp3:logging-interceptor")
@@ -125,16 +125,17 @@ MockWebServer
 
 OkHttp includes a library for testing HTTP, HTTPS, and HTTP/2 clients.
 
-The latest release is available on [Maven Central](https://search.maven.org/artifact/com.squareup.okhttp3/mockwebserver/4.9.0/jar).
+The latest release is available on [Maven Central](https://search.maven.org/artifact/com.squareup.okhttp3/mockwebserver/4.9.2/jar).
 
 ```kotlin
-testImplementation("com.squareup.okhttp3:mockwebserver:4.9.0")
+testImplementation("com.squareup.okhttp3:mockwebserver:4.9.2")
 ```
 
 GraalVM Native Image
 --------------------
 
 Building your native images with Graal https://www.graalvm.org/ should work automatically.
+This is not currently in a final released version, so 5.0.0-alpha.2 should be used.
 Please report any bugs or workarounds you find.
 
 See the okcurl module for an example build.
@@ -164,7 +165,7 @@ limitations under the License.
 ```
 
  [bom]: https://docs.gradle.org/6.2/userguide/platforms.html#sub:bom_import
- [changelog]: http://square.github.io/okhttp/changelog/
+ [changelog]: https://square.github.io/okhttp/changelog/
  [conscrypt]: https://github.com/google/conscrypt/
  [get_example]: https://raw.github.com/square/okhttp/master/samples/guide/src/main/java/okhttp3/guide/GetExample.java
  [kotlin]: https://kotlinlang.org/
@@ -174,6 +175,6 @@ limitations under the License.
  [okio]: https://github.com/square/okio
  [post_example]: https://raw.github.com/square/okhttp/master/samples/guide/src/main/java/okhttp3/guide/PostExample.java
  [r8_proguard]: https://square.github.io/okhttp/r8_proguard/
- [recipes]: http://square.github.io/okhttp/recipes/
+ [recipes]: https://square.github.io/okhttp/recipes/
  [snap]: https://oss.sonatype.org/content/repositories/snapshots/
  [tls_history]: https://square.github.io/okhttp/tls_configuration_history/

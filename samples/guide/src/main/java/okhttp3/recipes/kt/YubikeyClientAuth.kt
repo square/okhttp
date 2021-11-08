@@ -19,7 +19,6 @@ import java.io.IOException
 import java.security.KeyStore
 import java.security.SecureRandom
 import java.security.Security
-import java.util.Arrays
 import javax.net.ssl.KeyManagerFactory
 import javax.net.ssl.KeyStoreBuilderParameters
 import javax.net.ssl.SSLContext
@@ -47,7 +46,7 @@ import okhttp3.internal.platform.Platform
  * Install OpenSC separately. On a mac `brew cast install opensc`.
  */
 @SuppressSignatureCheck
-class YubikeyClientAuth() {
+class YubikeyClientAuth {
   fun run() {
     // The typical PKCS11 slot, may vary with different hardware.
     val slot = 0
@@ -61,11 +60,11 @@ class YubikeyClientAuth() {
 
     val callbackHandler = ConsoleCallbackHandler
 
-    val builderList: List<KeyStore.Builder> = Arrays.asList(
-        KeyStore.Builder.newInstance("PKCS11", null, KeyStore.CallbackHandlerProtection(callbackHandler))
+    val builderList: List<KeyStore.Builder> = listOf(
+      KeyStore.Builder.newInstance("PKCS11", null, KeyStore.CallbackHandlerProtection(callbackHandler))
 
-        // Example if you want to combine multiple keystore types
-        // KeyStore.Builder.newInstance("PKCS12", null, File("keystore.p12"), PasswordProtection("rosebud".toCharArray()))
+      // Example if you want to combine multiple keystore types
+      // KeyStore.Builder.newInstance("PKCS12", null, File("keystore.p12"), PasswordProtection("rosebud".toCharArray()))
     )
 
     val keyManagerFactory = KeyManagerFactory.getInstance("NewSunX509")

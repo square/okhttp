@@ -32,7 +32,7 @@ public class ConnectionSpecSelectorTest {
   public static final SSLHandshakeException RETRYABLE_EXCEPTION = new SSLHandshakeException(
       "Simulated handshake exception");
 
-  private HandshakeCertificates handshakeCertificates = localhost();
+  private final HandshakeCertificates handshakeCertificates = localhost();
 
   @Test
   public void nonRetryableIOException() throws Exception {

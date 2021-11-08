@@ -50,7 +50,7 @@ internal data class BasicDerAdapter<T>(
     require(tag >= 0)
   }
 
-  override fun matches(header: DerHeader) = header.tagClass == tagClass && header.tag == tag
+  override fun matches(header: DerHeader): Boolean = header.tagClass == tagClass && header.tag == tag
 
   override fun fromDer(reader: DerReader): T {
     val peekedHeader = reader.peekHeader()
@@ -109,16 +109,16 @@ internal data class BasicDerAdapter<T>(
   fun withTag(
     tagClass: Int = DerHeader.TAG_CLASS_CONTEXT_SPECIFIC,
     tag: Long
-  ) = copy(tagClass = tagClass, tag = tag)
+  ): BasicDerAdapter<T> = copy(tagClass = tagClass, tag = tag)
 
   /** Returns a copy of this adapter that doesn't encode values equal to [defaultValue]. */
-  fun optional(defaultValue: T? = null) = copy(isOptional = true, defaultValue = defaultValue)
+  fun optional(defaultValue: T? = null): BasicDerAdapter<T> = copy(isOptional = true, defaultValue = defaultValue)
 
   /**
    * Returns a copy of this adapter that sets the encoded or decoded value as the type hint for the
    * other adapters on this SEQUENCE to interrogate.
    */
-  fun asTypeHint() = copy(typeHint = true)
+  fun asTypeHint(): BasicDerAdapter<T> = copy(typeHint = true)
 
   // Avoid Long.hashCode(long) which isn't available on Android 5.
   override fun hashCode(): Int {
@@ -133,7 +133,7 @@ internal data class BasicDerAdapter<T>(
     return result
   }
 
-  override fun toString() = "$name [$tagClass/$tag]"
+  override fun toString(): String = "$name [$tagClass/$tag]"
 
   /** Reads and writes values without knowledge of the enclosing tag, length, or defaults. */
   interface Codec<T> {

@@ -40,7 +40,7 @@ public final class OAuthSessionFactory extends Dispatcher implements Closeable {
   private MockWebServer mockWebServer;
 
   /** Guarded by this. */
-  private Map<ByteString, Listener> listeners = new LinkedHashMap<>();
+  private final Map<ByteString, Listener> listeners = new LinkedHashMap<>();
 
   public OAuthSessionFactory(SlackApi slackApi) {
     this.slackApi = slackApi;

@@ -31,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SuppressWarnings("ConstantConditions")
 @Timeout(30)
 public class RecordedRequestTest {
-  private Headers headers = Util.EMPTY_HEADERS;
+  private final Headers headers = Util.EMPTY_HEADERS;
 
   private static class FakeSocket extends Socket {
     private final InetAddress localAddress;

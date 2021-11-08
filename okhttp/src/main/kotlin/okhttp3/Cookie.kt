@@ -247,6 +247,8 @@ class Cookie private constructor(
     }
   }
 
+  fun newBuilder(): Builder = Builder(this)
+
   /**
    * Builds a cookie. The [name], [value], and [domain] values must all be set before calling
    * [build].
@@ -261,6 +263,20 @@ class Cookie private constructor(
     private var httpOnly = false
     private var persistent = false
     private var hostOnly = false
+
+    constructor()
+
+    internal constructor(cookie: Cookie) {
+      this.name = cookie.name
+      this.value = cookie.value
+      this.expiresAt = cookie.expiresAt
+      this.domain = cookie.domain
+      this.path = cookie.path
+      this.secure = cookie.secure
+      this.httpOnly = cookie.httpOnly
+      this.persistent = cookie.persistent
+      this.hostOnly = cookie.hostOnly
+    }
 
     fun name(name: String) = apply {
       require(name.trim() == name) { "name is not trimmed" }
@@ -509,7 +525,7 @@ class Cookie private constructor(
             dayOfMonth = matcher.group(1).toInt()
           }
           month == -1 && matcher.usePattern(MONTH_PATTERN).matches() -> {
-            val monthString = matcher.group(1).toLowerCase(Locale.US)
+            val monthString = matcher.group(1).lowercase(Locale.US)
             month = MONTH_PATTERN.pattern().indexOf(monthString) / 4 // Sneaky! jan=1, dec=12.
           }
           year == -1 && matcher.usePattern(YEAR_PATTERN).matches() -> {
@@ -552,12 +568,12 @@ class Cookie private constructor(
      */
     private fun dateCharacterOffset(input: String, pos: Int, limit: Int, invert: Boolean): Int {
       for (i in pos until limit) {
-        val c = input[i].toInt()
-        val dateCharacter = (c < ' '.toInt() && c != '\t'.toInt() || c >= '\u007f'.toInt() ||
-            c in '0'.toInt()..'9'.toInt() ||
-            c in 'a'.toInt()..'z'.toInt() ||
-            c in 'A'.toInt()..'Z'.toInt() ||
-            c == ':'.toInt())
+        val c = input[i].code
+        val dateCharacter = (c < ' '.code && c != '\t'.code || c >= '\u007f'.code ||
+            c in '0'.code..'9'.code ||
+            c in 'a'.code..'z'.code ||
+            c in 'A'.code..'Z'.code ||
+            c == ':'.code)
         if (dateCharacter == !invert) return i
       }
       return limit

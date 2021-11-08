@@ -148,6 +148,7 @@ public class HttpUrlTest {
   @Test
   public void parseNoScheme() throws Exception {
     assertInvalid("//host", "Expected URL scheme 'http' or 'https' but no scheme was found for //host");
+    assertInvalid("://host", "Expected URL scheme 'http' or 'https' but no scheme was found for ://hos...");
     assertInvalid("/path", "Expected URL scheme 'http' or 'https' but no scheme was found for /path");
     assertInvalid("path", "Expected URL scheme 'http' or 'https' but no scheme was found for path");
     assertInvalid("?query", "Expected URL scheme 'http' or 'https' but no scheme was found for ?query");
@@ -1682,6 +1683,11 @@ public class HttpUrlTest {
   public void fromJavaNetUrlUnsupportedScheme() throws Exception {
     // java.net.MalformedURLException: unknown protocol: mailto
     platform.assumeNotAndroid();
+
+    // Accessing an URL protocol that was not enabled. The URL protocol mailto is not tested and might not work as
+    // expected. It can be enabled by adding the --enable-url-protocols=mailto option to the native-image command.
+    platform.assumeNotGraalVMImage();
+
     URL javaNetUrl = new URL("mailto:user@example.com");
     assertThat(HttpUrl.get(javaNetUrl)).isNull();
   }

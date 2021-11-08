@@ -32,14 +32,15 @@ class RealEventSource(
   private val request: Request,
   private val listener: EventSourceListener
 ) : EventSource, ServerSentEventReader.Callback, Callback {
-  private lateinit var call: RealCall
+  private var call: RealCall? = null
 
   fun connect(client: OkHttpClient) {
     val client = client.newBuilder()
         .eventListener(EventListener.NONE)
         .build()
-    call = client.newCall(request) as RealCall
-    call.enqueue(this)
+    val realCall = client.newCall(request) as RealCall
+    call = realCall
+    realCall.enqueue(this)
   }
 
   override fun onResponse(call: Call, response: Response) {
@@ -62,7 +63,7 @@ class RealEventSource(
       }
 
       // This is a long-lived response. Cancel full-call timeouts.
-      call.timeoutEarlyExit()
+      call?.timeoutEarlyExit()
 
       // Replace the body with an empty one so the callbacks can't see real data.
       val response = response.newBuilder()
@@ -94,7 +95,7 @@ class RealEventSource(
   override fun request(): Request = request
 
   override fun cancel() {
-    call.cancel()
+    call?.cancel()
   }
 
   override fun onEvent(id: String?, type: String?, data: String) {

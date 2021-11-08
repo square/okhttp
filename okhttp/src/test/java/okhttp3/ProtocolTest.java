@@ -34,9 +34,7 @@ public class ProtocolTest {
 
   @Test
   public void testGetUnknown() {
-    assertThrows(IOException.class, () -> {
-      Protocol.get("tcp");
-    });
+    assertThrows(IOException.class, () -> Protocol.get("tcp"));
   }
 
   @Test

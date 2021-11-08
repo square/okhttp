@@ -18,14 +18,15 @@ package okhttp3.internal.platform
 import android.annotation.SuppressLint
 import android.os.Build
 import android.security.NetworkSecurityPolicy
+import android.util.CloseGuard
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol
 import okhttp3.internal.SuppressSignatureCheck
+import okhttp3.internal.platform.android.AndroidSocketAdapter
 import okhttp3.internal.platform.android.Android10SocketAdapter
 import okhttp3.internal.platform.android.AndroidCertificateChainCleaner
-import okhttp3.internal.platform.android.AndroidSocketAdapter
 import okhttp3.internal.platform.android.BouncyCastleSocketAdapter
 import okhttp3.internal.platform.android.ConscryptSocketAdapter
 import okhttp3.internal.platform.android.DeferredSocketAdapter
@@ -52,9 +53,26 @@ class Android10Platform : Platform() {
         ?.configureTlsExtensions(sslSocket, hostname, protocols)
   }
 
-  override fun getSelectedProtocol(sslSocket: SSLSocket) =
+  override fun getSelectedProtocol(sslSocket: SSLSocket): String? =
       // No TLS extensions if the socket class is custom.
       socketAdapters.find { it.matchesSocket(sslSocket) }?.getSelectedProtocol(sslSocket)
+
+  override fun getStackTraceForCloseable(closer: String): Any? {
+    return if (Build.VERSION.SDK_INT >= 30) {
+      CloseGuard().apply { open(closer) }
+    } else {
+      super.getStackTraceForCloseable(closer)
+    }
+  }
+
+  override fun logCloseableLeak(message: String, stackTrace: Any?) {
+    if (Build.VERSION.SDK_INT >= 30) {
+      (stackTrace as CloseGuard).warnIfOpen()
+    } else {
+      // Unable to report via CloseGuard. As a last-ditch effort, send it to the logger.
+      super.logCloseableLeak(message, stackTrace)
+    }
+  }
 
   @SuppressLint("NewApi")
   override fun isCleartextTrafficPermitted(hostname: String): Boolean =

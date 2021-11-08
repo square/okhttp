@@ -51,7 +51,7 @@ public final class ConnectionCoalescingTest {
   private OkHttpClient client;
   private HeldCertificate rootCa;
   private HeldCertificate certificate;
-  private FakeDns dns = new FakeDns();
+  private final FakeDns dns = new FakeDns();
   private HttpUrl url;
   private List<InetAddress> serverIps;
 

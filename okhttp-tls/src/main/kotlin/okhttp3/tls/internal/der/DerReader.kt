@@ -112,8 +112,7 @@ internal class DerReader(source: Source) {
     val tagAndClass = source.readByte().toInt() and 0xff
     val tagClass = tagAndClass and 0b1100_0000
     val constructed = (tagAndClass and 0b0010_0000) == 0b0010_0000
-    val tag0 = tagAndClass and 0b0001_1111
-    val tag = when (tag0) {
+    val tag = when (val tag0 = tagAndClass and 0b0001_1111) {
       0b0001_1111 -> readVariableLengthLong()
       else -> tag0.toLong()
     }
@@ -256,7 +255,7 @@ internal class DerReader(source: Source) {
 
   fun readObjectIdentifier(): String {
     val result = Buffer()
-    val dot = '.'.toByte().toInt()
+    val dot = '.'.code.toByte().toInt()
     when (val xy = readVariableLengthLong()) {
       in 0L until 40L -> {
         result.writeDecimalLong(0)
@@ -283,7 +282,7 @@ internal class DerReader(source: Source) {
 
   fun readRelativeObjectIdentifier(): String {
     val result = Buffer()
-    val dot = '.'.toByte().toInt()
+    val dot = '.'.code.toByte().toInt()
     while (byteCount < limit) {
       if (result.size > 0) {
         result.writeByte(dot)
@@ -312,7 +311,7 @@ internal class DerReader(source: Source) {
     return source.readByteString(bytesLeft)
   }
 
-  override fun toString() = path.joinToString(separator = " / ")
+  override fun toString(): String = path.joinToString(separator = " / ")
 
   companion object {
     /**

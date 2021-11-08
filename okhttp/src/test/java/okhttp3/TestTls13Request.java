@@ -100,7 +100,7 @@ public class TestTls13Request {
           + response.body().bytes().length
           + "b");
     } catch (IOException ioe) {
-      System.out.println(ioe.toString());
+      System.out.println(ioe);
     }
   }
 }
