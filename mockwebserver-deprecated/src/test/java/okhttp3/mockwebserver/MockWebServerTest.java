@@ -59,8 +59,8 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeFalse;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 @SuppressWarnings({"ArraysAsListWithZeroOrOneArgument", "deprecation"})
 @Timeout(30)

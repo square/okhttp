@@ -32,20 +32,20 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 public final class CertificatePinnerTest {
-  static HeldCertificate certA1 = new HeldCertificate.Builder()
+  static final HeldCertificate certA1 = new HeldCertificate.Builder()
       .serialNumber(100L)
       .build();
-  static String certA1Sha256Pin = CertificatePinner.pin(certA1.certificate());
+  static final String certA1Sha256Pin = CertificatePinner.pin(certA1.certificate());
 
-  static HeldCertificate certB1 = new HeldCertificate.Builder()
+  static final HeldCertificate certB1 = new HeldCertificate.Builder()
       .serialNumber(200L)
       .build();
-  static String certB1Sha256Pin = CertificatePinner.pin(certB1.certificate());
+  static final String certB1Sha256Pin = CertificatePinner.pin(certB1.certificate());
 
-  static HeldCertificate certC1 = new HeldCertificate.Builder()
+  static final HeldCertificate certC1 = new HeldCertificate.Builder()
       .serialNumber(300L)
       .build();
-  static String certC1Sha1Pin = "sha1/" + sha1Hash(certC1.certificate()).base64();
+  static final String certC1Sha1Pin = "sha1/" + sha1Hash(certC1.certificate()).base64();
 
   @Test public void malformedPin() throws Exception {
     CertificatePinner.Builder builder = new CertificatePinner.Builder();

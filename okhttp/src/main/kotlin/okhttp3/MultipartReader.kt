@@ -33,7 +33,7 @@ import okio.buffer
  *
  * Typical use loops over the parts in sequence:
  *
- * ```
+ * ```kotlin
  * val response: Response = call.execute()
  * val multipartReader = MultipartReader(response.body!!)
  *
@@ -166,7 +166,7 @@ class MultipartReader @Throws(IOException::class) constructor(
       error("unreachable") // TODO(jwilson): fix intersectWith() to return T.
     }
 
-    override fun timeout() = timeout
+    override fun timeout(): Timeout = timeout
   }
 
   /**

@@ -62,10 +62,10 @@ class TaskQueue internal constructor(
     synchronized(taskRunner) {
       if (shutdown) {
         if (task.cancelable) {
-          taskLog(task, this) { "schedule canceled (queue is shutdown)" }
+          taskRunner.logger.taskLog(task, this) { "schedule canceled (queue is shutdown)" }
           return
         }
-        taskLog(task, this) { "schedule failed (queue is shutdown)" }
+        taskRunner.logger.taskLog(task, this) { "schedule failed (queue is shutdown)" }
         throw RejectedExecutionException()
       }
 
@@ -76,22 +76,24 @@ class TaskQueue internal constructor(
   }
 
   /** Overload of [schedule] that uses a lambda for a repeating task. */
-  inline fun schedule(
+  fun schedule(
     name: String,
     delayNanos: Long = 0L,
-    crossinline block: () -> Long
+    block: () -> Long
   ) {
     schedule(object : Task(name) {
-      override fun runOnce() = block()
+      override fun runOnce(): Long {
+        return block()
+      }
     }, delayNanos)
   }
 
   /** Executes [block] once on a task runner thread. */
-  inline fun execute(
+  fun execute(
     name: String,
     delayNanos: Long = 0L,
     cancelable: Boolean = true,
-    crossinline block: () -> Unit
+    block: () -> Unit
   ) {
     schedule(object : Task(name, cancelable) {
       override fun runOnce(): Long {
@@ -150,13 +152,13 @@ class TaskQueue internal constructor(
     val existingIndex = futureTasks.indexOf(task)
     if (existingIndex != -1) {
       if (task.nextExecuteNanoTime <= executeNanoTime) {
-        taskLog(task, this) { "already scheduled" }
+        taskRunner.logger.taskLog(task, this) { "already scheduled" }
         return false
       }
       futureTasks.removeAt(existingIndex) // Already scheduled later: reschedule below!
     }
     task.nextExecuteNanoTime = executeNanoTime
-    taskLog(task, this) {
+    taskRunner.logger.taskLog(task, this) {
       if (recurrence) "run again after ${formatDuration(executeNanoTime - now)}"
       else "scheduled after ${formatDuration(executeNanoTime - now)}"
     }
@@ -205,7 +207,7 @@ class TaskQueue internal constructor(
     var tasksCanceled = false
     for (i in futureTasks.size - 1 downTo 0) {
       if (futureTasks[i].cancelable) {
-        taskLog(futureTasks[i], this) { "canceled" }
+        taskRunner.logger.taskLog(futureTasks[i], this) { "canceled" }
         tasksCanceled = true
         futureTasks.removeAt(i)
       }
@@ -213,5 +215,5 @@ class TaskQueue internal constructor(
     return tasksCanceled
   }
 
-  override fun toString() = name
+  override fun toString(): String = name
 }

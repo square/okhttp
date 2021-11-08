@@ -16,5 +16,5 @@ dependencies {
 }
 
 animalsniffer {
-  setIgnoreFailures(true)
+  isIgnoreFailures = true
 }

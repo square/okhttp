@@ -94,7 +94,7 @@ class JavaNetCookieJar(private val cookieHandler: CookieHandler) : CookieJar {
       }
 
       // If the value is "quoted", drop the quotes.
-      if (value.startsWith("\"") && value.endsWith("\"")) {
+      if (value.startsWith("\"") && value.endsWith("\"") && value.length >= 2) {
         value = value.substring(1, value.length - 1)
       }
 

@@ -117,7 +117,7 @@ class MockWebServer : Closeable {
     get() = atomicRequestCount.get()
 
   /** The number of bytes of the POST body to keep in memory to the given limit. */
-  var bodyLimit = Long.MAX_VALUE
+  var bodyLimit: Long = Long.MAX_VALUE
 
   var serverSocketFactory: ServerSocketFactory? = null
     @Synchronized get() {
@@ -165,7 +165,7 @@ class MockWebServer : Closeable {
    * HTTP/2. This is true by default; set to false to disable negotiation and restrict connections
    * to HTTP/1.1.
    */
-  var protocolNegotiationEnabled = true
+  var protocolNegotiationEnabled: Boolean = true
 
   /**
    * The protocols supported by ALPN on incoming HTTPS connections in order of preference. The list
@@ -692,7 +692,7 @@ class MockWebServer : Closeable {
           break
         }
         addHeaderLenient(headers, header)
-        val lowercaseHeader = header.toLowerCase(Locale.US)
+        val lowercaseHeader = header.lowercase(Locale.US)
         if (contentLength == -1L && lowercaseHeader.startsWith("content-length:")) {
           contentLength = header.substring(15).trim().toLong()
         }
@@ -909,11 +909,11 @@ class MockWebServer : Closeable {
   override fun close() = shutdown()
 
   /** A buffer wrapper that drops data after [bodyLimit] bytes. */
-  private class TruncatingBuffer internal constructor(
+  private class TruncatingBuffer(
     private var remainingByteCount: Long
   ) : Sink {
-    internal val buffer = Buffer()
-    internal var receivedByteCount = 0L
+    val buffer = Buffer()
+    var receivedByteCount = 0L
 
     @Throws(IOException::class)
     override fun write(source: Buffer, byteCount: Long) {

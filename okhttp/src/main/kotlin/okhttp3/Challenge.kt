@@ -60,7 +60,7 @@ class Challenge(
   init {
     val newAuthParams = mutableMapOf<String?, String>()
     for ((key, value) in authParams) {
-      val newKey = key?.toLowerCase(US)
+      val newKey = key?.lowercase(US)
       newAuthParams[newKey] = value
     }
     this.authParams = unmodifiableMap<String?, String>(newAuthParams)
@@ -78,14 +78,14 @@ class Challenge(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "scheme"),
       level = DeprecationLevel.ERROR)
-  fun scheme() = scheme
+  fun scheme(): String = scheme
 
   @JvmName("-deprecated_authParams")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "authParams"),
       level = DeprecationLevel.ERROR)
-  fun authParams() = authParams
+  fun authParams(): Map<String?, String> = authParams
 
   @JvmName("-deprecated_realm")
   @Deprecated(
@@ -114,5 +114,5 @@ class Challenge(
     return result
   }
 
-  override fun toString() = "$scheme authParams=$authParams"
+  override fun toString(): String = "$scheme authParams=$authParams"
 }

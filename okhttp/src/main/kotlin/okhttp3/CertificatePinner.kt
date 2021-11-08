@@ -42,7 +42,7 @@ import okio.ByteString.Companion.toByteString
  *
  * For example, to pin `https://publicobject.com`, start with a broken configuration:
  *
- * ```
+ * ```java
  * String hostname = "publicobject.com";
  * CertificatePinner certificatePinner = new CertificatePinner.Builder()
  *     .add(hostname, "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
@@ -59,7 +59,7 @@ import okio.ByteString.Companion.toByteString
  *
  * As expected, this fails with a certificate pinning exception:
  *
- * ```
+ * ```java
  * javax.net.ssl.SSLPeerUnverifiedException: Certificate pinning failure!
  * Peer certificate chain:
  *     sha256/afwiKY3RxoMmLkuRW1l7QsPZTJPwDS2pdDROQjXw8ig=: CN=publicobject.com, OU=PositiveSSL
@@ -77,7 +77,7 @@ import okio.ByteString.Companion.toByteString
  * Follow up by pasting the public key hashes from the exception into the
  * certificate pinner's configuration:
  *
- * ```
+ * ```java
  * CertificatePinner certificatePinner = new CertificatePinner.Builder()
  *     .add("publicobject.com", "sha256/afwiKY3RxoMmLkuRW1l7QsPZTJPwDS2pdDROQjXw8ig=")
  *     .add("publicobject.com", "sha256/klO23nT2ehFDXCfx3eHTDRESMz3asj1muO+4aIdjiuY=")

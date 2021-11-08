@@ -19,7 +19,6 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.InetAddress
 import java.net.UnknownHostException
-import java.util.ArrayList
 import java.util.concurrent.CountDownLatch
 import okhttp3.CacheControl
 import okhttp3.Call
@@ -85,9 +84,7 @@ class DnsOverHttps internal constructor(
 
     executeRequests(hostname, networkRequests, results, failures)
 
-    return if (results.isNotEmpty()) {
-      results
-    } else {
+    return results.ifEmpty {
       throwBestFailure(hostname, failures)
     }
   }

@@ -25,12 +25,12 @@ import static okhttp3.internal.Util.immutableListOf;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public final class AddressTest {
-  private Dns dns = Dns.SYSTEM;
-  private SocketFactory socketFactory = SocketFactory.getDefault();
-  private Authenticator authenticator = Authenticator.NONE;
-  private List<Protocol> protocols = immutableListOf(Protocol.HTTP_1_1);
-  private List<ConnectionSpec> connectionSpecs = immutableListOf(ConnectionSpec.MODERN_TLS);
-  private RecordingProxySelector proxySelector = new RecordingProxySelector();
+  private final Dns dns = Dns.SYSTEM;
+  private final SocketFactory socketFactory = SocketFactory.getDefault();
+  private final Authenticator authenticator = Authenticator.NONE;
+  private final List<Protocol> protocols = immutableListOf(Protocol.HTTP_1_1);
+  private final List<ConnectionSpec> connectionSpecs = immutableListOf(ConnectionSpec.MODERN_TLS);
+  private final RecordingProxySelector proxySelector = new RecordingProxySelector();
 
   @Test public void equalsAndHashcode() throws Exception {
     Address a = new Address("square.com", 80, dns, socketFactory, null, null, null,

@@ -89,7 +89,7 @@ public class TestDohMain {
           Throwable e = uhe;
 
           while (e != null) {
-            System.out.println(e.toString());
+            System.out.println(e);
 
             e = e.getCause();
           }

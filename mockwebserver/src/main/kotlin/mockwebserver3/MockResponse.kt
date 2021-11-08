@@ -49,13 +49,13 @@ class MockResponse : Cloneable {
 
   private var body: Buffer? = null
 
-  var throttleBytesPerPeriod = Long.MAX_VALUE
+  var throttleBytesPerPeriod: Long = Long.MAX_VALUE
     private set
   private var throttlePeriodAmount = 1L
   private var throttlePeriodUnit = TimeUnit.SECONDS
 
   @set:JvmName("socketPolicy")
-  var socketPolicy = SocketPolicy.KEEP_OPEN
+  var socketPolicy: SocketPolicy = SocketPolicy.KEEP_OPEN
 
   /**
    * Sets the [HTTP/2 error code](https://tools.ietf.org/html/rfc7540#section-7) to be
@@ -64,7 +64,7 @@ class MockResponse : Cloneable {
    * [SocketPolicy.DO_NOT_READ_REQUEST_BODY].
    */
   @set:JvmName("http2ErrorCode")
-  var http2ErrorCode = -1
+  var http2ErrorCode: Int = -1
 
   private var bodyDelayAmount = 0L
   private var bodyDelayUnit = TimeUnit.MILLISECONDS
@@ -253,7 +253,7 @@ class MockResponse : Cloneable {
       message = "moved to var",
       replaceWith = ReplaceWith(expression = "socketPolicy"),
       level = DeprecationLevel.ERROR)
-  fun getSocketPolicy() = socketPolicy
+  fun getSocketPolicy(): SocketPolicy = socketPolicy
 
   /**
    * Sets the socket policy and returns this.
@@ -271,7 +271,7 @@ class MockResponse : Cloneable {
       message = "moved to var",
       replaceWith = ReplaceWith(expression = "http2ErrorCode"),
       level = DeprecationLevel.ERROR)
-  fun getHttp2ErrorCode() = http2ErrorCode
+  fun getHttp2ErrorCode(): Int = http2ErrorCode
 
   /**
    * Sets the HTTP/2 error code and returns this.
@@ -345,7 +345,7 @@ class MockResponse : Cloneable {
     webSocketListener = listener
   }
 
-  override fun toString() = status
+  override fun toString(): String = status
 
   companion object {
     private const val CHUNKED_BODY_HEADER = "Transfer-encoding: chunked"

@@ -74,24 +74,24 @@ class MediaType private constructor(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "type"),
       level = DeprecationLevel.ERROR)
-  fun type() = type
+  fun type(): String = type
 
   @JvmName("-deprecated_subtype")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "subtype"),
       level = DeprecationLevel.ERROR)
-  fun subtype() = subtype
+  fun subtype(): String = subtype
 
   /**
    * Returns the encoded media type, like "text/plain; charset=utf-8", appropriate for use in a
    * Content-Type header.
    */
-  override fun toString() = mediaType
+  override fun toString(): String = mediaType
 
-  override fun equals(other: Any?) = other is MediaType && other.mediaType == mediaType
+  override fun equals(other: Any?): Boolean = other is MediaType && other.mediaType == mediaType
 
-  override fun hashCode() = mediaType.hashCode()
+  override fun hashCode(): Int = mediaType.hashCode()
 
   companion object {
     private const val TOKEN = "([a-zA-Z0-9-!#$%&'*+.^_`{|}~]+)"
@@ -109,8 +109,8 @@ class MediaType private constructor(
     fun String.toMediaType(): MediaType {
       val typeSubtype = TYPE_SUBTYPE.matcher(this)
       require(typeSubtype.lookingAt()) { "No subtype found for: \"$this\"" }
-      val type = typeSubtype.group(1).toLowerCase(Locale.US)
-      val subtype = typeSubtype.group(2).toLowerCase(Locale.US)
+      val type = typeSubtype.group(1).lowercase(Locale.US)
+      val subtype = typeSubtype.group(2).lowercase(Locale.US)
 
       val parameterNamesAndValues = mutableListOf<String>()
       val parameter = PARAMETER.matcher(this)

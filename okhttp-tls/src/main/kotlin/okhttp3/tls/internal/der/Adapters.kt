@@ -33,7 +33,7 @@ internal object Adapters {
       tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
       tag = 1L,
       codec = object : BasicDerAdapter.Codec<Boolean> {
-        override fun decode(reader: DerReader) = reader.readBoolean()
+        override fun decode(reader: DerReader): Boolean = reader.readBoolean()
         override fun encode(writer: DerWriter, value: Boolean) = writer.writeBoolean(value)
       }
   )
@@ -43,7 +43,7 @@ internal object Adapters {
       tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
       tag = 2L,
       codec = object : BasicDerAdapter.Codec<Long> {
-        override fun decode(reader: DerReader) = reader.readLong()
+        override fun decode(reader: DerReader): Long = reader.readLong()
         override fun encode(writer: DerWriter, value: Long) = writer.writeLong(value)
       }
   )
@@ -53,7 +53,7 @@ internal object Adapters {
       tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
       tag = 2L,
       codec = object : BasicDerAdapter.Codec<BigInteger> {
-        override fun decode(reader: DerReader) = reader.readBigInteger()
+        override fun decode(reader: DerReader): BigInteger = reader.readBigInteger()
         override fun encode(writer: DerWriter, value: BigInteger) = writer.writeBigInteger(value)
       }
   )
@@ -63,7 +63,7 @@ internal object Adapters {
       tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
       tag = 3L,
       codec = object : BasicDerAdapter.Codec<BitString> {
-        override fun decode(reader: DerReader) = reader.readBitString()
+        override fun decode(reader: DerReader): BitString = reader.readBitString()
         override fun encode(writer: DerWriter, value: BitString) = writer.writeBitString(value)
       }
   )
@@ -73,7 +73,7 @@ internal object Adapters {
       tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
       tag = 4L,
       codec = object : BasicDerAdapter.Codec<ByteString> {
-        override fun decode(reader: DerReader) = reader.readOctetString()
+        override fun decode(reader: DerReader): ByteString = reader.readOctetString()
         override fun encode(writer: DerWriter, value: ByteString) = writer.writeOctetString(value)
       }
   )
@@ -83,7 +83,7 @@ internal object Adapters {
       tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
       tag = 5L,
       codec = object : BasicDerAdapter.Codec<Unit?> {
-        override fun decode(reader: DerReader) = null
+        override fun decode(reader: DerReader): Unit? = null
         override fun encode(writer: DerWriter, value: Unit?) {
         }
       }
@@ -94,7 +94,7 @@ internal object Adapters {
       tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
       tag = 6L,
       codec = object : BasicDerAdapter.Codec<String> {
-        override fun decode(reader: DerReader) = reader.readObjectIdentifier()
+        override fun decode(reader: DerReader): String = reader.readObjectIdentifier()
         override fun encode(writer: DerWriter, value: String) = writer.writeObjectIdentifier(value)
       }
   )
@@ -104,7 +104,7 @@ internal object Adapters {
       tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
       tag = 12L,
       codec = object : BasicDerAdapter.Codec<String> {
-        override fun decode(reader: DerReader) = reader.readUtf8String()
+        override fun decode(reader: DerReader): String = reader.readUtf8String()
         override fun encode(writer: DerWriter, value: String) = writer.writeUtf8(value)
       }
   )
@@ -122,7 +122,7 @@ internal object Adapters {
       tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
       tag = 19L,
       codec = object : BasicDerAdapter.Codec<String> {
-        override fun decode(reader: DerReader) = reader.readUtf8String()
+        override fun decode(reader: DerReader): String = reader.readUtf8String()
         override fun encode(writer: DerWriter, value: String) = writer.writeUtf8(value)
       }
   )
@@ -137,7 +137,7 @@ internal object Adapters {
       tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
       tag = 22L,
       codec = object : BasicDerAdapter.Codec<String> {
-        override fun decode(reader: DerReader) = reader.readUtf8String()
+        override fun decode(reader: DerReader): String = reader.readUtf8String()
         override fun encode(writer: DerWriter, value: String) = writer.writeUtf8(value)
       }
   )
@@ -209,7 +209,7 @@ internal object Adapters {
 
   /** Decodes any value without interpretation as [AnyValue]. */
   val ANY_VALUE = object : DerAdapter<AnyValue> {
-    override fun matches(header: DerHeader) = true
+    override fun matches(header: DerHeader): Boolean = true
 
     override fun fromDer(reader: DerReader): AnyValue {
       reader.read("ANY") { header ->
@@ -329,7 +329,7 @@ internal object Adapters {
         (adapter as DerAdapter<Any?>).toDer(writer, v)
       }
 
-      override fun toString() = choices.joinToString(separator = " OR ")
+      override fun toString(): String = choices.joinToString(separator = " OR ")
     }
   }
 
@@ -346,7 +346,7 @@ internal object Adapters {
     chooser: (Any?) -> DerAdapter<*>?
   ): DerAdapter<Any?> {
     return object : DerAdapter<Any?> {
-      override fun matches(header: DerHeader) = true
+      override fun matches(header: DerHeader): Boolean = true
 
       override fun toDer(writer: DerWriter, value: Any?) {
         // If we don't understand this hint, encode the body as a byte string. The byte string

@@ -65,12 +65,10 @@ class StatusLine(
         }
         val httpMinorVersion = statusLine[7] - '0'
         codeStart = 9
-        protocol = if (httpMinorVersion == 0) {
-          Protocol.HTTP_1_0
-        } else if (httpMinorVersion == 1) {
-          Protocol.HTTP_1_1
-        } else {
-          throw ProtocolException("Unexpected status line: $statusLine")
+        protocol = when (httpMinorVersion) {
+          0 -> Protocol.HTTP_1_0
+          1 -> Protocol.HTTP_1_1
+          else -> throw ProtocolException("Unexpected status line: $statusLine")
         }
       } else if (statusLine.startsWith("ICY ")) {
         // Shoutcast uses ICY instead of "HTTP/1.0".

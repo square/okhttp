@@ -1,9 +1,16 @@
 buildscript {
   dependencies {
-    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.30"
-    classpath "org.jetbrains.dokka:dokka-gradle-plugin:0.10.1"
-    classpath "com.android.tools.build:gradle:4.0.2"
-    classpath Dependencies.bnd
+    classpath Dependencies.kotlinPlugin
+    classpath Dependencies.dokkaPlugin
+    classpath Dependencies.androidPlugin
+    classpath Dependencies.androidJunit5Plugin
+    classpath Dependencies.graalPlugin
+    classpath Dependencies.bndPlugin
+    classpath Dependencies.shadowPlugin
+    classpath Dependencies.japicmpPlugin
+    classpath Dependencies.animalsnifferPlugin
+    classpath Dependencies.errorpronePlugin
+    classpath Dependencies.spotlessPlugin
   }
 
   repositories {
@@ -13,14 +20,6 @@ buildscript {
   }
 }
 
-plugins {
-  id "ru.vyarus.animalsniffer" version "1.5.1"
-  id "com.github.johnrengelman.shadow" version "5.2.0"
-  id "me.champeau.gradle.japicmp" version "0.2.9"
-  id "com.diffplug.spotless" version "5.1.2"
-  id "net.ltgt.errorprone" version "1.2.1"
-}
-
 allprojects {
   group = 'com.squareup.okhttp3'
   project.ext.artifactId = Projects.publishedArtifactId(project.name)
@@ -28,9 +27,8 @@ allprojects {
 
   repositories {
     mavenCentral()
-    maven { url 'https://dl.bintray.com/kotlin/dokka' }
-    maven { url 'https://kotlin.bintray.com/kotlinx/' }
     google()
+    maven { url 'https://dl.bintray.com/kotlin/dokka' }
   }
 
   task downloadDependencies() {
@@ -39,22 +37,13 @@ allprojects {
       configurations.findAll { it.canBeResolved }.files
     }
   }
-}
 
-ext.applyOsgi = { project ->
-  project.apply plugin: 'biz.aQute.bnd.builder'
-
-  project.sourceSets {
-    osgi
-  }
-
-  project.jar { t ->
-    t.setClasspath(project.sourceSets.osgi['compileClasspath'] + project.sourceSets.main['compileClasspath'])
-  }
-
-  project.dependencies {
-    // The OSGi kotlin-stdlib lets bnd infer bundle versions.
-    osgiApi Dependencies.kotlinStdlibOsgi
+  normalization {
+    runtimeClasspath {
+      metaInf {
+        ignoreAttribute("Bnd-LastModified")
+      }
+    }
   }
 }
 
@@ -68,6 +57,7 @@ subprojects { project ->
   apply plugin: 'java'
   apply plugin: 'java-library'
   apply plugin: 'checkstyle'
+  apply plugin: "com.diffplug.spotless"
   apply plugin: 'ru.vyarus.animalsniffer'
   apply plugin: 'org.jetbrains.dokka'
   apply plugin: 'biz.aQute.bnd.builder'
@@ -88,14 +78,14 @@ subprojects { project ->
     checkstyleConfig
   }
   dependencies {
-    checkstyleConfig dependencies.create("com.puppycrawl.tools:checkstyle:${Versions.checkstyle}") {
+    checkstyleConfig dependencies.create(Dependencies.checkStyle) {
       transitive = false
     }
   }
   afterEvaluate {
     checkstyle {
       config = resources.text.fromArchiveEntry(configurations.checkstyleConfig, 'google_checks.xml')
-      toolVersion "${Versions.checkstyle}"
+      toolVersion "${Versions.checkStyle}"
       sourceSets = [project.sourceSets.main]
     }
   }
@@ -106,13 +96,14 @@ subprojects { project ->
     sourceSets = [sourceSets.main]
   }
   dependencies {
-    signature 'net.sf.androidscents.signature:android-api-level-21:5.0.1_r2@signature'
-    signature 'org.codehaus.mojo.signature:java18:1.0@signature'
+    signature Dependencies.signatureAndroid21
+    signature Dependencies.signatureJava18
   }
 
   tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
     kotlinOptions {
       jvmTarget = "1.8"
+      freeCompilerArgs = ['-Xjvm-default=compatibility', '-Xopt-in=kotlin.RequiresOptIn']
     }
   }
 
@@ -154,11 +145,11 @@ subprojects { project ->
     }
   } else if (platform == "conscrypt") {
     dependencies {
-      testRuntime "org.conscrypt:conscrypt-openjdk-uber:${versions.conscrypt}"
+      testRuntimeOnly Dependencies.conscrypt
     }
   } else if (platform == "openjsse") {
     dependencies {
-      testRuntime Dependencies.openjsse
+      testRuntimeOnly Dependencies.openjsse
     }
   }
 
@@ -174,6 +165,10 @@ subprojects { project ->
       jdkVersion = 8
       perPackageOption {
         prefix = "okhttp3.internal"
+        suppress = true
+      }
+      perPackageOption {
+        prefix = "mockwebserver3.internal"
         suppress = true
       }
       if (project.file('Module.md').exists()) {
@@ -258,26 +253,6 @@ subprojects { project ->
   }
 }
 
-
 tasks.wrapper {
   distributionType = Wrapper.DistributionType.ALL
 }
-
-/**
- * Returns a .jar file for the golden version of this project.
- * https://github.com/Visistema/Groovy1/blob/ba5eb9b2f19ca0cc8927359ce414c4e1974b7016/gradle/binarycompatibility.gradle#L48
- */
-ext.baselineJar = { project, version ->
-  def group = project.group
-  def artifactId = project.ext.artifactId
-  try {
-    String jarFile = "$artifactId-${version}.jar"
-    project.group = 'virtual_group_for_japicmp' // Prevent it from resolving the current version.
-    def dependency = project.dependencies.create("$group:$artifactId:$version@jar")
-    return project.configurations.detachedConfiguration(dependency).files
-        .find { (it.name == jarFile) }
-  } finally {
-    project.group = group
-  }
-}
-ext.baselineVersion = "3.14.1"

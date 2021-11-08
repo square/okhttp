@@ -94,7 +94,7 @@ private fun Buffer.readChallengeHeader(result: MutableList<Challenge>) {
       return
     }
 
-    var eqCount = skipAll('='.toByte())
+    var eqCount = skipAll('='.code.toByte())
     val commaSuffixed = skipCommasAndWhitespace()
 
     // It's a token68 because there isn't a value after it.
@@ -107,19 +107,19 @@ private fun Buffer.readChallengeHeader(result: MutableList<Challenge>) {
 
     // It's a series of parameter names and values.
     val parameters = mutableMapOf<String?, String>()
-    eqCount += skipAll('='.toByte())
+    eqCount += skipAll('='.code.toByte())
     while (true) {
       if (peek == null) {
         peek = readToken()
         if (skipCommasAndWhitespace()) break // We peeked a scheme name followed by ','.
-        eqCount = skipAll('='.toByte())
+        eqCount = skipAll('='.code.toByte())
       }
       if (eqCount == 0) break // We peeked a scheme name.
       if (eqCount > 1) return // Unexpected '=' characters.
       if (skipCommasAndWhitespace()) return // Unexpected ','.
 
       val parameterValue = when {
-        startsWith('"'.toByte()) -> readQuotedString()
+        startsWith('"'.code.toByte()) -> readQuotedString()
         else -> readToken()
       } ?: return // Expected a value.
 
@@ -137,13 +137,13 @@ private fun Buffer.skipCommasAndWhitespace(): Boolean {
   var commaFound = false
   loop@ while (!exhausted()) {
     when (this[0]) {
-      ','.toByte() -> {
+      ','.code.toByte() -> {
         // Consume ','.
         readByte()
         commaFound = true
       }
 
-      ' '.toByte(), '\t'.toByte() -> {
+      ' '.code.toByte(), '\t'.code.toByte() -> {
         readByte()
         // Consume space or tab.
       }
@@ -154,7 +154,7 @@ private fun Buffer.skipCommasAndWhitespace(): Boolean {
   return commaFound
 }
 
-private fun Buffer.startsWith(prefix: Byte) = !exhausted() && this[0] == prefix
+private fun Buffer.startsWith(prefix: Byte): Boolean = !exhausted() && this[0] == prefix
 
 /**
  * Reads a double-quoted string, unescaping quoted pairs like `\"` to the 2nd character in each
@@ -163,13 +163,13 @@ private fun Buffer.startsWith(prefix: Byte) = !exhausted() && this[0] == prefix
  */
 @Throws(EOFException::class)
 private fun Buffer.readQuotedString(): String? {
-  require(readByte() == '\"'.toByte())
+  require(readByte() == '\"'.code.toByte())
   val result = Buffer()
   while (true) {
     val i = indexOfElement(QUOTED_STRING_DELIMITERS)
     if (i == -1L) return null // Unterminated quoted string.
 
-    if (this[i] == '"'.toByte()) {
+    if (this[i] == '"'.code.toByte()) {
       result.write(this, i)
       // Consume '"'.
       readByte()

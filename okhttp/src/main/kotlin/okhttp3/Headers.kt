@@ -210,7 +210,7 @@ class Headers private constructor(
   fun toMultimap(): Map<String, List<String>> {
     val result = TreeMap<String, MutableList<String>>(String.CASE_INSENSITIVE_ORDER)
     for (i in 0 until size) {
-      val name = name(i).toLowerCase(Locale.US)
+      val name = name(i).lowercase(Locale.US)
       var values: MutableList<String>? = result[name]
       if (values == null) {
         values = ArrayList(2)
@@ -439,7 +439,7 @@ class Headers private constructor(
       for (i in name.indices) {
         val c = name[i]
         require(c in '\u0021'..'\u007e') {
-          format("Unexpected char %#04x at %d in header name: %s", c.toInt(), i, name)
+          format("Unexpected char %#04x at %d in header name: %s", c.code, i, name)
         }
       }
     }
@@ -448,7 +448,7 @@ class Headers private constructor(
       for (i in value.indices) {
         val c = value[i]
         require(c == '\t' || c in '\u0020'..'\u007e') {
-          format("Unexpected char %#04x at %d in %s value", c.toInt(), i, name) +
+          format("Unexpected char %#04x at %d in %s value", c.code, i, name) +
               (if (isSensitiveHeader(name)) "" else ": $value")
         }
       }

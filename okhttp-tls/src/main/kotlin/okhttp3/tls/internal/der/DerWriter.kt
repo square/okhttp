@@ -147,12 +147,12 @@ internal class DerWriter(sink: BufferedSink) {
   fun writeObjectIdentifier(s: String) {
     val utf8 = Buffer().writeUtf8(s)
     val v1 = utf8.readDecimalLong()
-    require(utf8.readByte() == '.'.toByte())
+    require(utf8.readByte() == '.'.code.toByte())
     val v2 = utf8.readDecimalLong()
     writeVariableLengthLong(v1 * 40 + v2)
 
     while (!utf8.exhausted()) {
-      require(utf8.readByte() == '.'.toByte())
+      require(utf8.readByte() == '.'.code.toByte())
       val vN = utf8.readDecimalLong()
       writeVariableLengthLong(vN)
     }
@@ -161,11 +161,11 @@ internal class DerWriter(sink: BufferedSink) {
   fun writeRelativeObjectIdentifier(s: String) {
     // Add a leading dot so each subidentifier has a dot prefix.
     val utf8 = Buffer()
-        .writeByte('.'.toByte().toInt())
+        .writeByte('.'.code.toByte().toInt())
         .writeUtf8(s)
 
     while (!utf8.exhausted()) {
-      require(utf8.readByte() == '.'.toByte())
+      require(utf8.readByte() == '.'.code.toByte())
       val vN = utf8.readDecimalLong()
       writeVariableLengthLong(vN)
     }
@@ -182,5 +182,5 @@ internal class DerWriter(sink: BufferedSink) {
     }
   }
 
-  override fun toString() = path.joinToString(separator = " / ")
+  override fun toString(): String = path.joinToString(separator = " / ")
 }

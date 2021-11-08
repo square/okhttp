@@ -15,6 +15,8 @@
  */
 package okhttp3.internal.platform
 
+import java.security.NoSuchAlgorithmException
+import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
@@ -40,16 +42,16 @@ open class Jdk9Platform : Platform() {
 
   @SuppressSignatureCheck
   override fun getSelectedProtocol(sslSocket: SSLSocket): String? {
-    try {
+    return try {
       // SSLSocket.getApplicationProtocol returns "" if application protocols values will not
       // be used. Observed if you didn't specify SSLParameters.setApplicationProtocols
-      return when (val protocol = sslSocket.applicationProtocol) {
+      when (val protocol = sslSocket.applicationProtocol) {
         null, "" -> null
         else -> protocol
       }
     } catch (e: UnsupportedOperationException) {
       // https://docs.oracle.com/javase/9/docs/api/javax/net/ssl/SSLSocket.html#getApplicationProtocol--
-      return null
+      null
     }
   }
 
@@ -62,14 +64,28 @@ open class Jdk9Platform : Platform() {
         "clientBuilder.sslSocketFactory(SSLSocketFactory) not supported on JDK 8 (>= 252) or JDK 9+")
   }
 
+  override fun newSSLContext(): SSLContext {
+    return when {
+      majorVersion != null && majorVersion >= 9 ->
+        SSLContext.getInstance("TLS")
+      else ->
+        try {
+          // Based on SSLSocket.getApplicationProtocol check we should
+          // have TLSv1.3 if we request it.
+          // See https://www.oracle.com/java/technologies/javase/8u261-relnotes.html
+          SSLContext.getInstance("TLSv1.3")
+        } catch (nsae: NoSuchAlgorithmException) {
+          SSLContext.getInstance("TLS")
+        }
+    }
+  }
+
   companion object {
     val isAvailable: Boolean
 
+    val majorVersion = System.getProperty("java.specification.version")?.toIntOrNull()
+
     init {
-      val jdkVersion: String? = System.getProperty("java.specification.version")
-
-      val majorVersion = jdkVersion?.toIntOrNull()
-
       isAvailable = if (majorVersion != null) {
         majorVersion >= 9
       } else {

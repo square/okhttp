@@ -91,7 +91,7 @@ enum class Protocol(private val protocol: String) {
    *
    * [iana]: https://www.iana.org/assignments/tls-extensiontype-values
    */
-  override fun toString() = protocol
+  override fun toString(): String = protocol
 
   companion object {
     /**

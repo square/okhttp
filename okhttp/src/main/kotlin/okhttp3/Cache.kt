@@ -34,7 +34,6 @@ import okio.BufferedSource
 import okio.ByteString.Companion.decodeBase64
 import okio.ByteString.Companion.encodeUtf8
 import okio.ByteString.Companion.toByteString
-import okio.ExperimentalFileSystem
 import okio.FileSystem
 import okio.ForwardingSink
 import okio.ForwardingSource
@@ -83,7 +82,7 @@ import java.util.TreeSet
  * the cache, and fetch data directly from the server. To force a full refresh, add the `no-cache`
  * directive:
  *
- * ```
+ * ```java
  * Request request = new Request.Builder()
  *     .cacheControl(new CacheControl.Builder().noCache().build())
  *     .url("http://publicobject.com/helloworld.txt")
@@ -93,7 +92,7 @@ import java.util.TreeSet
  * If it is only necessary to force a cached response to be validated by the server, use the more
  * efficient `max-age=0` directive instead:
  *
- * ```
+ * ```java
  * Request request = new Request.Builder()
  *     .cacheControl(new CacheControl.Builder()
  *         .maxAge(0, TimeUnit.SECONDS)
@@ -109,7 +108,7 @@ import java.util.TreeSet
  * downloaded. To restrict a request to locally-cached resources, add the `only-if-cached`
  * directive:
  *
- * ```
+ * ```java
  * Request request = new Request.Builder()
  *     .cacheControl(new CacheControl.Builder()
  *         .onlyIfCached()
@@ -128,7 +127,7 @@ import java.util.TreeSet
  * To permit stale cached responses, use the `max-stale` directive with the maximum staleness in
  * seconds:
  *
- * ```
+ * ```java
  * Request request = new Request.Builder()
  *     .cacheControl(new CacheControl.Builder()
  *         .maxStale(365, TimeUnit.DAYS)
@@ -143,9 +142,7 @@ import java.util.TreeSet
  *
  * [rfc_7234]: http://tools.ietf.org/html/rfc7234
  */
-@OptIn(ExperimentalFileSystem::class)
-class Cache
-internal constructor(
+class Cache(
   directory: Path,
   maxSize: Long,
   fileSystem: FileSystem
@@ -170,7 +167,6 @@ internal constructor(
     get() = cache.isClosed()
 
   /** Create a cache of at most [maxSize] bytes in [directory]. */
-  @OptIn(ExperimentalFileSystem::class)
   constructor(directory: File, maxSize: Long) : this(
     directory.toOkioPath(), maxSize, FileSystem.SYSTEM
   )
@@ -450,8 +446,6 @@ internal constructor(
     private val sentRequestMillis: Long
     private val receivedResponseMillis: Long
 
-    private val isHttps: Boolean get() = url.scheme == "https"
-
     /**
      * Reads an entry from an input stream. A typical entry looks like this:
      *
@@ -537,7 +531,7 @@ internal constructor(
         receivedResponseMillis = receivedResponseMillisString?.toLong() ?: 0L
         responseHeaders = responseHeadersBuilder.build()
 
-        if (isHttps) {
+        if (url.isHttps) {
           val blank = source.readUtf8LineStrict()
           if (blank.isNotEmpty()) {
             throw IOException("expected \"\" but was \"$blank\"")
@@ -574,39 +568,39 @@ internal constructor(
     @Throws(IOException::class)
     fun writeTo(editor: DiskLruCache.Editor) {
       editor.newSink(ENTRY_METADATA).buffer().use { sink ->
-        sink.writeUtf8(url.toString()).writeByte('\n'.toInt())
-        sink.writeUtf8(requestMethod).writeByte('\n'.toInt())
-        sink.writeDecimalLong(varyHeaders.size.toLong()).writeByte('\n'.toInt())
+        sink.writeUtf8(url.toString()).writeByte('\n'.code)
+        sink.writeUtf8(requestMethod).writeByte('\n'.code)
+        sink.writeDecimalLong(varyHeaders.size.toLong()).writeByte('\n'.code)
         for (i in 0 until varyHeaders.size) {
           sink.writeUtf8(varyHeaders.name(i))
             .writeUtf8(": ")
             .writeUtf8(varyHeaders.value(i))
-            .writeByte('\n'.toInt())
+            .writeByte('\n'.code)
         }
 
-        sink.writeUtf8(StatusLine(protocol, code, message).toString()).writeByte('\n'.toInt())
-        sink.writeDecimalLong((responseHeaders.size + 2).toLong()).writeByte('\n'.toInt())
+        sink.writeUtf8(StatusLine(protocol, code, message).toString()).writeByte('\n'.code)
+        sink.writeDecimalLong((responseHeaders.size + 2).toLong()).writeByte('\n'.code)
         for (i in 0 until responseHeaders.size) {
           sink.writeUtf8(responseHeaders.name(i))
             .writeUtf8(": ")
             .writeUtf8(responseHeaders.value(i))
-            .writeByte('\n'.toInt())
+            .writeByte('\n'.code)
         }
         sink.writeUtf8(SENT_MILLIS)
           .writeUtf8(": ")
           .writeDecimalLong(sentRequestMillis)
-          .writeByte('\n'.toInt())
+          .writeByte('\n'.code)
         sink.writeUtf8(RECEIVED_MILLIS)
           .writeUtf8(": ")
           .writeDecimalLong(receivedResponseMillis)
-          .writeByte('\n'.toInt())
+          .writeByte('\n'.code)
 
-        if (isHttps) {
-          sink.writeByte('\n'.toInt())
-          sink.writeUtf8(handshake!!.cipherSuite.javaName).writeByte('\n'.toInt())
+        if (url.isHttps) {
+          sink.writeByte('\n'.code)
+          sink.writeUtf8(handshake!!.cipherSuite.javaName).writeByte('\n'.code)
           writeCertList(sink, handshake.peerCertificates)
           writeCertList(sink, handshake.localCertificates)
-          sink.writeUtf8(handshake.tlsVersion.javaName).writeByte('\n'.toInt())
+          sink.writeUtf8(handshake.tlsVersion.javaName).writeByte('\n'.code)
         }
       }
     }
@@ -634,11 +628,11 @@ internal constructor(
     @Throws(IOException::class)
     private fun writeCertList(sink: BufferedSink, certificates: List<Certificate>) {
       try {
-        sink.writeDecimalLong(certificates.size.toLong()).writeByte('\n'.toInt())
+        sink.writeDecimalLong(certificates.size.toLong()).writeByte('\n'.code)
         for (element in certificates) {
           val bytes = element.encoded
           val line = bytes.toByteString().base64()
-          sink.writeUtf8(line).writeByte('\n'.toInt())
+          sink.writeUtf8(line).writeByte('\n'.code)
         }
       } catch (e: CertificateEncodingException) {
         throw IOException(e.message)
@@ -744,7 +738,7 @@ internal constructor(
     }
 
     /** Returns true if a Vary header contains an asterisk. Such responses cannot be cached. */
-    fun Response.hasVaryAll() = "*" in headers.varyFields()
+    fun Response.hasVaryAll(): Boolean = "*" in headers.varyFields()
 
     /**
      * Returns the names of the request headers that need to be checked for equality when caching.
