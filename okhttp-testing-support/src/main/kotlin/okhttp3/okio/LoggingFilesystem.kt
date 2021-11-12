@@ -15,23 +15,21 @@
  */
 package okhttp3.okio
 
-import okio.ExperimentalFileSystem
 import okio.FileSystem
 import okio.ForwardingFileSystem
 import okio.Path
 import okio.Sink
 import okio.Source
 
-@OptIn(ExperimentalFileSystem::class)
 class LoggingFilesystem(fileSystem: FileSystem) : ForwardingFileSystem(fileSystem) {
   fun log(line: String) {
     println(line)
   }
 
-  override fun appendingSink(file: Path): Sink {
+  override fun appendingSink(file: Path, mustExist: Boolean): Sink {
     log("appendingSink($file)")
 
-    return super.appendingSink(file)
+    return super.appendingSink(file, mustExist)
   }
 
   override fun atomicMove(source: Path, target: Path) {
@@ -40,22 +38,22 @@ class LoggingFilesystem(fileSystem: FileSystem) : ForwardingFileSystem(fileSyste
     super.atomicMove(source, target)
   }
 
-  override fun createDirectory(dir: Path) {
+  override fun createDirectory(dir: Path, mustCreate: Boolean) {
     log("createDirectory($dir)")
 
-    super.createDirectory(dir)
+    super.createDirectory(dir, mustCreate)
   }
 
-  override fun delete(path: Path) {
+  override fun delete(path: Path, mustExist: Boolean) {
     log("delete($path)")
 
-    super.delete(path)
+    super.delete(path, mustExist)
   }
 
-  override fun sink(path: Path): Sink {
+  override fun sink(path: Path, mustCreate: Boolean): Sink {
     log("sink($path)")
 
-    return super.sink(path)
+    return super.sink(path, mustCreate)
   }
 
   override fun source(file: Path): Source {
