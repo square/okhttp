@@ -17,6 +17,7 @@
 package okhttp3.internal.platform
 
 import java.io.IOException
+import java.net.IDN
 import java.net.InetSocketAddress
 import java.net.Socket
 import java.security.GeneralSecurityException
@@ -172,9 +173,17 @@ open class Platform {
     }
   }
 
+  open fun IDNtoASCII(domain: String): String {
+    return IDN.toASCII(domain)
+  }
+
+  open fun IDNtoUnicode(domain: String): String {
+    return IDN.toUnicode(domain)
+  }
+
   override fun toString(): String = javaClass.simpleName
 
-  companion object {
+    companion object {
     @Volatile private var platform = findPlatform()
 
     const val INFO = 4

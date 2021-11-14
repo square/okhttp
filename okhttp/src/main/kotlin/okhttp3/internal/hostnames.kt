@@ -15,10 +15,10 @@
  */
 package okhttp3.internal
 
-import java.net.IDN
 import java.net.InetAddress
 import java.util.Arrays
 import java.util.Locale
+import okhttp3.internal.platform.Platform
 import okio.Buffer
 
 /**
@@ -47,7 +47,7 @@ fun String.toCanonicalHost(): String? {
   }
 
   try {
-    val result = IDN.toASCII(host).lowercase(Locale.US)
+    val result = Platform.get().IDNtoASCII(host).lowercase(Locale.US)
     if (result.isEmpty()) return null
 
     // Confirm that the IDN ToASCII result doesn't contain any illegal characters.

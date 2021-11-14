@@ -16,20 +16,17 @@
 package okhttp3.internal.platform
 
 import android.annotation.SuppressLint
+import android.icu.text.IDNA
 import android.os.Build
 import android.security.NetworkSecurityPolicy
 import android.util.CloseGuard
+import java.util.logging.Level
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol
 import okhttp3.internal.SuppressSignatureCheck
-import okhttp3.internal.platform.android.AndroidSocketAdapter
-import okhttp3.internal.platform.android.Android10SocketAdapter
-import okhttp3.internal.platform.android.AndroidCertificateChainCleaner
-import okhttp3.internal.platform.android.BouncyCastleSocketAdapter
-import okhttp3.internal.platform.android.ConscryptSocketAdapter
-import okhttp3.internal.platform.android.DeferredSocketAdapter
+import okhttp3.internal.platform.android.*
 import okhttp3.internal.tls.CertificateChainCleaner
 
 /** Android 29+. */
@@ -42,6 +39,15 @@ class Android10Platform : Platform() {
       DeferredSocketAdapter(ConscryptSocketAdapter.factory),
       DeferredSocketAdapter(BouncyCastleSocketAdapter.factory)
   ).filter { it.isSupported() }
+
+  var idna = IDNA.getUTS46Instance(
+    IDNA.NONTRANSITIONAL_TO_ASCII
+      or IDNA.NONTRANSITIONAL_TO_UNICODE
+      or IDNA.CHECK_BIDI
+      or IDNA.CHECK_CONTEXTJ
+      or IDNA.CHECK_CONTEXTO
+      or IDNA.USE_STD3_RULES
+  )
 
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? =
       socketAdapters.find { it.matchesSocketFactory(sslSocketFactory) }
@@ -80,6 +86,26 @@ class Android10Platform : Platform() {
 
   override fun buildCertificateChainCleaner(trustManager: X509TrustManager): CertificateChainCleaner =
       AndroidCertificateChainCleaner.buildIfSupported(trustManager) ?: super.buildCertificateChainCleaner(trustManager)
+
+  override fun IDNtoASCII(domain: String): String {
+    val output = StringBuilder()
+    val info = IDNA.Info()
+    idna.nameToASCII(domain, output, info)
+    if (info.hasErrors()) {
+      log("IDNAtoASCII error " + info.errors, INFO)
+    }
+    return output.toString()
+  }
+
+  override fun IDNtoUnicode(domain: String): String {
+    val output = StringBuilder()
+    val info = IDNA.Info()
+    idna.nameToUnicode(domain, output, info)
+    if (info.hasErrors()) {
+      log("IDNtoUnicode error " + info.errors, INFO)
+    }
+    return output.toString()
+  }
 
   companion object {
     val isSupported: Boolean = isAndroid && Build.VERSION.SDK_INT >= 29

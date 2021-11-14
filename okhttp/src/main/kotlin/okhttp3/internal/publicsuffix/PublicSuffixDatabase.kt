@@ -17,7 +17,6 @@ package okhttp3.internal.publicsuffix
 
 import java.io.IOException
 import java.io.InterruptedIOException
-import java.net.IDN
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
@@ -66,7 +65,7 @@ class PublicSuffixDatabase {
    */
   fun getEffectiveTldPlusOne(domain: String): String? {
     // We use UTF-8 in the list so we need to convert to Unicode.
-    val unicodeDomain = IDN.toUnicode(domain)
+    val unicodeDomain = Platform.get().IDNtoUnicode(domain)
     val domainLabels = splitDomain(unicodeDomain)
 
     val rule = findMatchingRule(domainLabels)
