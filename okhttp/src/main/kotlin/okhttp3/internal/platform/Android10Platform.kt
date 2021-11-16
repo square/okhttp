@@ -20,13 +20,17 @@ import android.icu.text.IDNA
 import android.os.Build
 import android.security.NetworkSecurityPolicy
 import android.util.CloseGuard
-import java.util.logging.Level
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol
 import okhttp3.internal.SuppressSignatureCheck
-import okhttp3.internal.platform.android.*
+import okhttp3.internal.platform.android.AndroidSocketAdapter
+import okhttp3.internal.platform.android.Android10SocketAdapter
+import okhttp3.internal.platform.android.AndroidCertificateChainCleaner
+import okhttp3.internal.platform.android.BouncyCastleSocketAdapter
+import okhttp3.internal.platform.android.ConscryptSocketAdapter
+import okhttp3.internal.platform.android.DeferredSocketAdapter
 import okhttp3.internal.tls.CertificateChainCleaner
 
 /** Android 29+. */
@@ -92,7 +96,7 @@ class Android10Platform : Platform() {
     val info = IDNA.Info()
     idna.nameToASCII(domain, output, info)
     if (info.hasErrors()) {
-      log("IDNAtoASCII error " + info.errors, INFO)
+      throw IllegalArgumentException("nameToASCII error " + info.errors)
     }
     return output.toString()
   }
@@ -102,7 +106,7 @@ class Android10Platform : Platform() {
     val info = IDNA.Info()
     idna.nameToUnicode(domain, output, info)
     if (info.hasErrors()) {
-      log("IDNtoUnicode error " + info.errors, INFO)
+      throw IllegalArgumentException("nameToUnicode error " + info.errors)
     }
     return output.toString()
   }
