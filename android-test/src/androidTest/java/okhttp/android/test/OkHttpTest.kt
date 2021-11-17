@@ -604,6 +604,16 @@ class OkHttpTest(val server: MockWebServer) {
   }
 
   @Test
+  fun testIDNA2008Request() {
+    assumeNetwork()
+
+    val request =
+      Request.Builder().url("https://fußball.de/").build()
+
+    client.newCall(request).execute().close()
+  }
+
+  @Test
   fun testUnderscoreRequest() {
     assumeNetwork()
 

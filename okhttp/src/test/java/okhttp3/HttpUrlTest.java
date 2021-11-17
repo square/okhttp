@@ -1993,4 +1993,9 @@ public class HttpUrlTest {
     assertThat(parse("http://Facebook.com").host()).isEqualTo("facebook.com");
     assertThat(parse("http://FacebooK.com").host()).isEqualTo("facebook.com");
   }
+
+  @Test
+  public void testIDNS2008() {
+    assertThat(parse("http://fußball.de").host()).isEqualTo("fußball.de");
+  }
 }
