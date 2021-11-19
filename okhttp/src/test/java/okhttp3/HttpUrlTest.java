@@ -1996,7 +1996,7 @@ public class HttpUrlTest {
 
   @Test
   public void testIDNA2008NotWorkingOnJDK() {
-    assertThat(parse("http://fussball.de").host()).isEqualTo("fußball.de");
-    assertThat(parse("http://strasse.de").host()).isEqualTo("straße.de");
+    assertThat(parse("http://fußball.de").host()).isEqualTo("fussball.de");
+    assertThat(parse("http://straße.de").host()).isEqualTo("strasse.de");
   }
 }
