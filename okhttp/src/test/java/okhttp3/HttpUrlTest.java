@@ -1995,7 +1995,8 @@ public class HttpUrlTest {
   }
 
   @Test
-  public void testIDNS2008() {
+  public void testIDNA2008() {
     assertThat(parse("http://fußball.de").host()).isEqualTo("fußball.de");
+    assertThat(parse("http://straße.de").host()).isEqualTo("straße.de");
   }
 }

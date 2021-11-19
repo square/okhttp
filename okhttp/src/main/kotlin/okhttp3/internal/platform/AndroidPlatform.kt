@@ -35,6 +35,8 @@ import okhttp3.internal.platform.android.BouncyCastleSocketAdapter
 import okhttp3.internal.platform.android.ConscryptSocketAdapter
 import okhttp3.internal.platform.android.DeferredSocketAdapter
 import okhttp3.internal.platform.android.StandardAndroidSocketAdapter
+import okhttp3.internal.platform.idna.ICUIDNConverter
+import okhttp3.internal.platform.idna.IDNConverter
 import okhttp3.internal.tls.BasicTrustRootIndex
 import okhttp3.internal.tls.CertificateChainCleaner
 import okhttp3.internal.tls.TrustRootIndex
@@ -131,7 +133,12 @@ class AndroidPlatform : Platform() {
     }
   }
 
+  override val idnConverter: IDNConverter = androidIDNConverter()
+
   companion object {
+    fun androidIDNConverter() =
+      if (Build.VERSION.SDK_INT >= 24) ICUIDNConverter() else IDNConverter()
+
     val isSupported: Boolean = when {
       !isAndroid -> false
       Build.VERSION.SDK_INT >= 30 -> false // graylisted methods are banned

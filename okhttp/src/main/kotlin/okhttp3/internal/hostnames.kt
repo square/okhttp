@@ -47,7 +47,7 @@ fun String.toCanonicalHost(): String? {
   }
 
   try {
-    val result = Platform.get().IDNtoASCII(host).lowercase(Locale.US)
+    val result = Platform.get().idnConverter.toASCII(host).lowercase(Locale.US)
     if (result.isEmpty()) return null
 
     // Confirm that the IDN ToASCII result doesn't contain any illegal characters.

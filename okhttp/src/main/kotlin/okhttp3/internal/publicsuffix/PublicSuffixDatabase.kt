@@ -65,7 +65,7 @@ class PublicSuffixDatabase {
    */
   fun getEffectiveTldPlusOne(domain: String): String? {
     // We use UTF-8 in the list so we need to convert to Unicode.
-    val unicodeDomain = Platform.get().IDNtoUnicode(domain)
+    val unicodeDomain = Platform.get().idnConverter.toUnicode(domain)
     val domainLabels = splitDomain(unicodeDomain)
 
     val rule = findMatchingRule(domainLabels)

@@ -17,7 +17,6 @@
 package okhttp3.internal.platform
 
 import java.io.IOException
-import java.net.IDN
 import java.net.InetSocketAddress
 import java.net.Socket
 import java.security.GeneralSecurityException
@@ -34,6 +33,7 @@ import javax.net.ssl.X509TrustManager
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.internal.platform.android.AndroidLog
+import okhttp3.internal.platform.idna.IDNConverter
 import okhttp3.internal.readFieldOrNull
 import okhttp3.internal.tls.BasicCertificateChainCleaner
 import okhttp3.internal.tls.BasicTrustRootIndex
@@ -173,13 +173,7 @@ open class Platform {
     }
   }
 
-  open fun IDNtoASCII(domain: String): String {
-    return IDN.toASCII(domain)
-  }
-
-  open fun IDNtoUnicode(domain: String): String {
-    return IDN.toUnicode(domain)
-  }
+  open val idnConverter = IDNConverter()
 
   override fun toString(): String = javaClass.simpleName
 

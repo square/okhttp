@@ -58,7 +58,6 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Assumptions.assumeTrue
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -607,10 +606,25 @@ class OkHttpTest(val server: MockWebServer) {
   fun testIDNA2008Request() {
     assumeNetwork()
 
-    val request =
-      Request.Builder().url("https://fußball.de/").build()
+    val client = client.newBuilder().followRedirects(false).build()
 
-    client.newCall(request).execute().close()
+    val request =
+      Request.Builder().url("https://straße.de/").build()
+
+    client.newCall(request).execute().use {
+      assertEquals("CN=www.xn--strae-oqa.de", it.handshake?.peerPrincipal.toString())
+    }
+  }
+
+  @Test
+  fun testIDNA2008() {
+    if (Build.VERSION.SDK_INT >= 24) {
+      assertEquals("xn--fuball-cta.de", "http://fußball.de".toHttpUrl().host)
+      assertEquals("xn--strae-oqa.de", "http://straße.de".toHttpUrl().host)
+    } else {
+      assertEquals("fussball.de", "http://fußball.de".toHttpUrl().host)
+      assertEquals("strasse.de", "http://straße.de".toHttpUrl().host)
+    }
   }
 
   @Test

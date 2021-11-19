@@ -16,7 +16,6 @@
 package okhttp3.internal.platform
 
 import android.annotation.SuppressLint
-import android.icu.text.IDNA
 import android.os.Build
 import android.security.NetworkSecurityPolicy
 import android.util.CloseGuard
@@ -31,6 +30,7 @@ import okhttp3.internal.platform.android.AndroidCertificateChainCleaner
 import okhttp3.internal.platform.android.BouncyCastleSocketAdapter
 import okhttp3.internal.platform.android.ConscryptSocketAdapter
 import okhttp3.internal.platform.android.DeferredSocketAdapter
+import okhttp3.internal.platform.idna.IDNConverter
 import okhttp3.internal.tls.CertificateChainCleaner
 
 /** Android 29+. */
@@ -43,15 +43,6 @@ class Android10Platform : Platform() {
       DeferredSocketAdapter(ConscryptSocketAdapter.factory),
       DeferredSocketAdapter(BouncyCastleSocketAdapter.factory)
   ).filter { it.isSupported() }
-
-  var idna = IDNA.getUTS46Instance(
-    IDNA.NONTRANSITIONAL_TO_ASCII
-      or IDNA.NONTRANSITIONAL_TO_UNICODE
-      or IDNA.CHECK_BIDI
-      or IDNA.CHECK_CONTEXTJ
-      or IDNA.CHECK_CONTEXTO
-      or IDNA.USE_STD3_RULES
-  )
 
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? =
       socketAdapters.find { it.matchesSocketFactory(sslSocketFactory) }
@@ -91,25 +82,7 @@ class Android10Platform : Platform() {
   override fun buildCertificateChainCleaner(trustManager: X509TrustManager): CertificateChainCleaner =
       AndroidCertificateChainCleaner.buildIfSupported(trustManager) ?: super.buildCertificateChainCleaner(trustManager)
 
-  override fun IDNtoASCII(domain: String): String {
-    val output = StringBuilder()
-    val info = IDNA.Info()
-    idna.nameToASCII(domain, output, info)
-    if (info.hasErrors()) {
-      throw IllegalArgumentException("nameToASCII error " + info.errors)
-    }
-    return output.toString()
-  }
-
-  override fun IDNtoUnicode(domain: String): String {
-    val output = StringBuilder()
-    val info = IDNA.Info()
-    idna.nameToUnicode(domain, output, info)
-    if (info.hasErrors()) {
-      throw IllegalArgumentException("nameToUnicode error " + info.errors)
-    }
-    return output.toString()
-  }
+  override val idnConverter: IDNConverter = AndroidPlatform.androidIDNConverter()
 
   companion object {
     val isSupported: Boolean = isAndroid && Build.VERSION.SDK_INT >= 29
