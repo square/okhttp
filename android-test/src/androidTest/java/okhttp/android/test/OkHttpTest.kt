@@ -630,6 +630,11 @@ class OkHttpTest(val server: MockWebServer) {
   }
 
   @Test
+  fun testUnderscoreUrl() {
+    assertEquals("example_underscore_123.s3.amazonaws.com", "https://example_underscore_123.s3.amazonaws.com/".toHttpUrl().host)
+  }
+
+  @Test
   fun testUnderscoreRequest() {
     assumeNetwork()
 
