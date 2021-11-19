@@ -621,9 +621,11 @@ class OkHttpTest(val server: MockWebServer) {
     if (Build.VERSION.SDK_INT >= 24) {
       assertEquals("xn--fuball-cta.de", "http://fußball.de".toHttpUrl().host)
       assertEquals("xn--strae-oqa.de", "http://straße.de".toHttpUrl().host)
+      assertEquals("xn--berall-ist-8db.de", "http://überall-ist.de".toHttpUrl().host)
     } else {
       assertEquals("fussball.de", "http://fußball.de".toHttpUrl().host)
       assertEquals("strasse.de", "http://straße.de".toHttpUrl().host)
+      assertEquals("xn--berall-ist-8db.de", "http://überall-ist.de".toHttpUrl().host)
     }
   }
 
