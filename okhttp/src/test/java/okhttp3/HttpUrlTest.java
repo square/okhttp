@@ -1999,4 +1999,10 @@ public class HttpUrlTest {
     assertThat(parse("http://fußball.de").host()).isEqualTo("fussball.de");
     assertThat(parse("http://straße.de").host()).isEqualTo("strasse.de");
   }
+
+  @Test
+  public void testUnderscoreUrl() {
+    assertThat(HttpUrl.get("https://example_underscore_123.s3.amazonaws.com/").host())
+      .isEqualTo("example_underscore_123.s3.amazonaws.com");
+  }
 }
