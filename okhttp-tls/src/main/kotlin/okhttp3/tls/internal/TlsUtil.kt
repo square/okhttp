@@ -30,6 +30,7 @@ import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 
+@IgnoreJRERequirement
 object TlsUtil {
   val password = "password".toCharArray()
 

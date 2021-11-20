@@ -31,11 +31,6 @@ afterEvaluate {
   }
 }
 
-animalsniffer {
-  // InsecureExtendedTrustManager (API 24+)
-  ignore = listOf("javax.net.ssl.X509ExtendedTrustManager")
-}
-
 tasks.register<JapicmpTask>("japicmp") {
   dependsOn("jar")
   oldClasspath = files(Projects.baselineJar(project))
