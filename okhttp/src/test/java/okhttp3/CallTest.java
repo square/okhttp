@@ -88,6 +88,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -3534,36 +3535,189 @@ public final class CallTest {
   }
 
   /** https://github.com/square/okhttp/issues/2344 */
-  @Test public void ipv6HostHasSquareBraces() throws Exception {
-    // Use a proxy to fake IPv6 connectivity, even if localhost doesn't have IPv6.
+  @Test public void ipv6HostHasSquareBracesHttp1() throws Exception {
+    configureClientAndServerProxies(false /* http2 */);
+    server.enqueue(new MockResponse()
+      .setBody("response body"));
+
+    int port = server.getPort();
+    HttpUrl url = server.url("/").newBuilder()
+        .host("::1")
+        .port(port)
+        .build();
+    Request request = new Request.Builder()
+        .url(url)
+        .build();
+    Response response = client.newCall(request).execute();
+    assertThat(response.body().string()).isEqualTo("response body");
+
+    RecordedRequest connect = server.takeRequest();
+    assertThat(connect.getRequestLine()).isEqualTo("CONNECT [::1]:" + port + " HTTP/1.1");
+    assertThat(connect.getHeader("Host")).isEqualTo("[::1]:" + port);
+    assertThat(connect.getHeader(":authority")).isNull();
+
+    RecordedRequest get = server.takeRequest();
+    assertThat(get.getRequestLine()).isEqualTo("GET / HTTP/1.1");
+    assertThat(get.getHeader("Host")).isEqualTo("[::1]:" + port);
+    assertThat(get.getHeader(":authority")).isNull();
+    assertThat(get.getRequestUrl()).isEqualTo(url);
+  }
+
+  @Test public void ipv6HostHasSquareBracesHttp2() throws Exception {
+    configureClientAndServerProxies(true /* http2 */);
+    server.enqueue(new MockResponse()
+      .setBody("response body"));
+
+    int port = server.getPort();
+    HttpUrl url = server.url("/").newBuilder()
+      .host("::1")
+      .port(port)
+      .build();
+    Request request = new Request.Builder()
+      .url(url)
+      .build();
+    Response response = client.newCall(request).execute();
+    assertThat(response.body().string()).isEqualTo("response body");
+
+    RecordedRequest connect = server.takeRequest();
+    assertThat(connect.getRequestLine()).isEqualTo("CONNECT [::1]:" + port + " HTTP/1.1");
+    assertThat(connect.getHeader("Host")).isEqualTo("[::1]:" + port);
+    assertThat(connect.getHeader(":authority")).isNull();
+
+    RecordedRequest get = server.takeRequest();
+    assertThat(get.getRequestLine()).isEqualTo("GET / HTTP/1.1");
+    assertThat(get.getHeader("Host")).isNull();
+    assertThat(get.getHeader(":authority")).isEqualTo("[::1]:" + port);
+    assertThat(get.getRequestUrl()).isEqualTo(url);
+  }
+
+  @Test public void ipv4IpHostHasNoSquareBracesHttp1() throws Exception {
+    configureClientAndServerProxies(false /* http2 */);
+    server.enqueue(new MockResponse()
+      .setBody("response body"));
+
+    int port = server.getPort();
+    HttpUrl url = server.url("/").newBuilder()
+        .host("127.0.0.1")
+        .port(port)
+        .build();
+    Request request = new Request.Builder()
+        .url(url)
+        .build();
+    Response response = client.newCall(request).execute();
+    assertThat(response.body().string()).isEqualTo("response body");
+
+    RecordedRequest connect = server.takeRequest();
+    assertThat(connect.getRequestLine()).isEqualTo("CONNECT 127.0.0.1:" + port + " HTTP/1.1");
+    assertThat(connect.getHeader("Host")).isEqualTo("127.0.0.1:" + port);
+    assertThat(connect.getHeader(":authority")).isNull();
+
+    RecordedRequest get = server.takeRequest();
+    assertThat(get.getRequestLine()).isEqualTo("GET / HTTP/1.1");
+    assertThat(get.getHeader("Host")).isEqualTo("127.0.0.1:" + port);
+    assertThat(get.getHeader(":authority")).isNull();
+    assertThat(get.getRequestUrl()).isEqualTo(url);
+  }
+
+  @Test public void ipv4IpHostHasNoSquareBracesHttp2() throws Exception {
+    configureClientAndServerProxies(true /* http2 */);
+    server.enqueue(new MockResponse()
+      .setBody("response body"));
+
+    int port = server.getPort();
+    HttpUrl url = server.url("/").newBuilder()
+        .host("127.0.0.1")
+        .port(port)
+        .build();
+    Request request = new Request.Builder()
+        .url(url)
+        .build();
+    Response response = client.newCall(request).execute();
+    assertThat(response.body().string()).isEqualTo("response body");
+
+    RecordedRequest connect = server.takeRequest();
+    assertThat(connect.getRequestLine()).isEqualTo("CONNECT 127.0.0.1:" + port + " HTTP/1.1");
+    assertThat(connect.getHeader("Host")).isEqualTo("127.0.0.1:" + port);
+    assertThat(connect.getHeader(":authority")).isNull();
+
+    RecordedRequest get = server.takeRequest();
+    assertThat(get.getRequestLine()).isEqualTo("GET / HTTP/1.1");
+    assertThat(get.getHeader("Host")).isNull();
+    assertThat(get.getHeader(":authority")).isEqualTo("127.0.0.1:" + port);
+    assertThat(get.getRequestUrl()).isEqualTo(url);
+  }
+
+  @Test public void hostnameRequestHostHasNoSquareBracesHttp1() throws Exception {
+    configureClientAndServerProxies(false /* http2 */);
+    server.enqueue(new MockResponse()
+      .setBody("response body"));
+
+    int port = server.getPort();
+    HttpUrl url = server.url("/").newBuilder()
+        .host("any-host-name")
+        .port(port)
+        .build();
+    Request request = new Request.Builder()
+        .url(url)
+        .build();
+    Response response = client.newCall(request).execute();
+    assertThat(response.body().string()).isEqualTo("response body");
+
+    RecordedRequest connect = server.takeRequest();
+    assertThat(connect.getRequestLine()).isEqualTo("CONNECT any-host-name:" + port + " HTTP/1.1");
+    assertThat(connect.getHeader("Host")).isEqualTo("any-host-name:" + port);
+    assertThat(connect.getHeader(":authority")).isNull();
+
+    RecordedRequest get = server.takeRequest();
+    assertThat(get.getRequestLine()).isEqualTo("GET / HTTP/1.1");
+    assertThat(get.getHeader("Host")).isEqualTo("any-host-name:" + port);
+    assertThat(get.getHeader(":authority")).isNull();
+    assertThat(get.getRequestUrl()).isEqualTo(url);
+  }
+
+  @Test public void hostnameRequestHostHasNoSquareBracesHttp2() throws Exception {
+    configureClientAndServerProxies(true /* http2 */);
+    server.enqueue(new MockResponse()
+      .setBody("response body"));
+
+    int port = server.getPort();
+    HttpUrl url = server.url("/").newBuilder()
+        .host("any-host-name")
+        .port(port)
+        .build();
+    Request request = new Request.Builder()
+        .url(url)
+        .build();
+    Response response = client.newCall(request).execute();
+    assertThat(response.body().string()).isEqualTo("response body");
+
+    RecordedRequest connect = server.takeRequest();
+    assertThat(connect.getRequestLine()).isEqualTo("CONNECT any-host-name:" + port + " HTTP/1.1");
+    assertThat(connect.getHeader("Host")).isEqualTo("any-host-name:" + port);
+    assertThat(connect.getHeader(":authority")).isNull();
+
+    RecordedRequest get = server.takeRequest();
+    assertThat(get.getRequestLine()).isEqualTo("GET / HTTP/1.1");
+    assertThat(get.getHeader("Host")).isNull();
+    assertThat(get.getHeader(":authority")).isEqualTo("any-host-name:" + port);
+    assertThat(get.getRequestUrl()).isEqualTo(url);
+  }
+
+  /** Use a proxy to fake IPv6 connectivity, even if localhost doesn't have IPv6. */
+  private void configureClientAndServerProxies(boolean http2) {
     server.useHttps(handshakeCertificates.sslSocketFactory(), true);
-    server.setProtocols(Collections.singletonList(Protocol.HTTP_1_1));
+    server.setProtocols(http2
+      ? Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1)
+      : Arrays.asList(Protocol.HTTP_1_1));
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
         .clearHeaders());
-    server.enqueue(new MockResponse()
-        .setBody("response body"));
-
     client = client.newBuilder()
         .sslSocketFactory(
             handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
         .proxy(server.toProxyAddress())
         .build();
-
-    Request request = new Request.Builder()
-        .url("https://[::1]/")
-        .build();
-    Response response = client.newCall(request).execute();
-    assertThat(response.body().string()).isEqualTo("response body");
-
-    RecordedRequest connect = server.takeRequest();
-    assertThat(connect.getRequestLine()).isEqualTo("CONNECT [::1]:443 HTTP/1.1");
-    assertThat(connect.getHeader("Host")).isEqualTo("[::1]:443");
-
-    RecordedRequest get = server.takeRequest();
-    assertThat(get.getRequestLine()).isEqualTo("GET / HTTP/1.1");
-    assertThat(get.getHeader("Host")).isEqualTo("[::1]");
   }
 
   private RequestBody requestBody(final boolean chunked, final long size, final int writeSize) {
