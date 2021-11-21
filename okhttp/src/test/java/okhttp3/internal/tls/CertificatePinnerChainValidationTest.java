@@ -396,9 +396,6 @@ public final class CertificatePinnerChainValidationTest {
    * certificate.
    */
   @Test public void signersMustHaveCaBitSet() throws Exception {
-    // TODO failing on conscrypt
-    platform.assumeNotConscrypt();
-
     HeldCertificate attackerCa = new HeldCertificate.Builder()
         .serialNumber(1L)
         .certificateAuthority(4)
@@ -479,6 +476,132 @@ public final class CertificatePinnerChainValidationTest {
       // We didn't have the opportunity to do certificate pinning because the handshake failed.
       assertThat(expected).hasMessageContaining("this is not a CA certificate");
     }
+  }
+
+  /**
+   * Attack the CA intermediates check by presenting unrelated chains to the handshake vs.
+   * certificate pinner.
+   *
+   * This chain is valid but not pinned:
+   *
+   * <pre>{@code
+   *
+   *   attackerCa
+   *    -> phonyVictim
+   *
+   * }</pre>
+   *
+   * This chain is pinned but not valid:
+   *
+   * <pre>{@code
+   *
+   *   attackerCa
+   *     -> pinnedRoot (trusted by CertificatePinner)
+   *         -> compromisedIntermediate (max intermediates: 0)
+   *             -> attackerIntermediate (max intermediates: 0)
+   *                 -> phonyVictim
+   * }</pre>
+   */
+  @Test public void intermediateMustNotHaveMoreIntermediatesThanSigner() throws Exception {
+    HeldCertificate attackerCa = new HeldCertificate.Builder()
+        .serialNumber(1L)
+        .certificateAuthority(2)
+        .commonName("attacker ca")
+        .build();
+    HeldCertificate pinnedRoot = new HeldCertificate.Builder()
+        .serialNumber(2L)
+        .certificateAuthority(1)
+        .commonName("pinned root")
+        .signedBy(attackerCa)
+        .build();
+    HeldCertificate compromisedIntermediate = new HeldCertificate.Builder()
+        .serialNumber(3L)
+        .certificateAuthority(0)
+        .commonName("compromised intermediate")
+        .signedBy(pinnedRoot)
+        .build();
+    HeldCertificate attackerIntermediate = new HeldCertificate.Builder()
+        .keyPair(attackerCa.keyPair()) // Share keys between compromised CA and intermediate!
+        .serialNumber(4L)
+        .certificateAuthority(0) // More intermediates than permitted by signer!
+        .commonName("attacker intermediate")
+        .signedBy(compromisedIntermediate)
+        .build();
+    HeldCertificate phonyVictim = new HeldCertificate.Builder()
+        .serialNumber(5L)
+        .signedBy(attackerIntermediate)
+        .addSubjectAlternativeName("victim.com")
+        .commonName("victim")
+        .build();
+
+    CertificatePinner certificatePinner = new CertificatePinner.Builder()
+        .add(server.getHostName(), CertificatePinner.pin(pinnedRoot.certificate()))
+        .build();
+    HandshakeCertificates handshakeCertificates = new HandshakeCertificates.Builder()
+        .addTrustedCertificate(pinnedRoot.certificate())
+        .addTrustedCertificate(attackerCa.certificate())
+        .build();
+    OkHttpClient client = clientTestRule.newClientBuilder()
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
+        .hostnameVerifier(new RecordingHostnameVerifier())
+        .certificatePinner(certificatePinner)
+        .build();
+
+    HandshakeCertificates serverHandshakeCertificates = new HandshakeCertificates.Builder()
+        .heldCertificate(
+            phonyVictim,
+            attackerIntermediate.certificate(),
+            compromisedIntermediate.certificate(),
+            pinnedRoot.certificate()
+        )
+        .build();
+    server.useHttps(serverHandshakeCertificates.sslSocketFactory(), false);
+
+    server.enqueue(new MockResponse());
+
+    // Make a request from client to server. It should not succeed certificate checks.
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+    Call call = client.newCall(request);
+    try (Response response = call.execute()) {
+      fail("expected connection failure but got " + response);
+    } catch (SSLHandshakeException expected) {
+    }
+  }
+
+  @Test public void lonePinnedCertificate() throws Exception {
+    HeldCertificate onlyCertificate = new HeldCertificate.Builder()
+        .serialNumber(1L)
+        .commonName("root")
+        .build();
+    CertificatePinner certificatePinner = new CertificatePinner.Builder()
+        .add(server.getHostName(), CertificatePinner.pin(onlyCertificate.certificate()))
+        .build();
+    HandshakeCertificates handshakeCertificates = new HandshakeCertificates.Builder()
+        .addTrustedCertificate(onlyCertificate.certificate())
+        .build();
+    OkHttpClient client = clientTestRule.newClientBuilder()
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
+        .hostnameVerifier(new RecordingHostnameVerifier())
+        .certificatePinner(certificatePinner)
+        .build();
+
+    HandshakeCertificates serverHandshakeCertificates = new HandshakeCertificates.Builder()
+        .heldCertificate(onlyCertificate)
+        .build();
+    server.useHttps(serverHandshakeCertificates.sslSocketFactory(), false);
+
+    // The request should complete successfully.
+    server.enqueue(new MockResponse()
+        .setBody("abc"));
+    Call call1 = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response1 = call1.execute();
+    assertThat(response1.body().string()).isEqualTo("abc");
   }
 
   private SSLSocketFactory newServerSocketFactory(HeldCertificate heldCertificate,
