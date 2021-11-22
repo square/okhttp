@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+## Version 4.9.3
+
+_2021-11-21_
+
+ * Fix: Don't fail HTTP/2 responses if they complete before a `RST_STREAM` is sent.
+
+
 ## Version 4.9.2
 
 _2021-09-30_
