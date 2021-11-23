@@ -1,24 +1,46 @@
 Change Log
 ==========
 
+## Version 5.0.0-alpha.3
+
+_2021-11-22_
+
+ *  Fix: Change `Headers.toString()` to redact authorization and cookie headers.
+ *  Fix: Don't do DNS to get the hostname for `RecordedRequest.requestUrl`. This was doing a DNS
+    lookup for the local hostname, but we really just wanted the `Host` header.
+ *  Fix: Don't crash with a `InaccessibleObjectException` when detecting the platform trust manager
+    on Java 17+.
+ *  Fix: Don't crash if a cookie's value is a lone double quote character.
+ *  Fix: Don't crash when canceling an event source created by `EventSources.processResponse()`.
+ *  New: `Cache` now has a public constructor that takes an [okio.FileSystem]. This should make it
+    possible to implement decorators for cache encryption or compression.
+ *  New: `Cookie.newBuilder()` to build upon an existing cookie.
+ *  New: Use TLSv1.3 when running on JDK 8u261 or newer.
+ *  New: `QueueDispatcher.clear()` may be used to reset a MockWebServer instance.
+ *  New: `FileDescriptor.toRequestBody()` may be particularly useful for users of Android's Storage
+    Access Framework.
+ *  Upgrade: [Kotlin 1.5.31][kotlin_1_5_31].
+ *  Upgrade: [Okio 3.0.0][okio_3_0_0].
+
+
 ## Version 4.9.3
 
 _2021-11-21_
 
- * Fix: Don't fail HTTP/2 responses if they complete before a `RST_STREAM` is sent.
+ *  Fix: Don't fail HTTP/2 responses if they complete before a `RST_STREAM` is sent.
 
 
 ## Version 4.9.2
 
 _2021-09-30_
 
- * Fix: Don't include potentially-sensitive header values in `Headers.toString()` or exceptions.
-   This applies to `Authorization`, `Cookie`, `Proxy-Authorization`, and `Set-Cookie` headers.
- * Fix: Don't crash with an `InaccessibleObjectException` when running on JDK17+ with strong
-   encapsulation enabled.
- * Fix: Strictly verify hostnames used with OkHttp's `HostnameVerifier`. Programs that make direct
-   manual calls to `HostnameVerifier` could be defeated if the hostnames they pass in are not
-   strictly ASCII. This issue is tracked as [CVE-2021-0341].
+ *  Fix: Don't include potentially-sensitive header values in `Headers.toString()` or exceptions.
+    This applies to `Authorization`, `Cookie`, `Proxy-Authorization`, and `Set-Cookie` headers.
+ *  Fix: Don't crash with an `InaccessibleObjectException` when running on JDK17+ with strong
+    encapsulation enabled.
+ *  Fix: Strictly verify hostnames used with OkHttp's `HostnameVerifier`. Programs that make direct
+    manual calls to `HostnameVerifier` could be defeated if the hostnames they pass in are not
+    strictly ASCII. This issue is tracked as [CVE-2021-0341].
 
 
 ## Version 5.0.0-alpha.2
@@ -590,8 +612,8 @@ _2019-06-03_
 
  [bom]: https://docs.gradle.org/6.2/userguide/platforms.html#sub:bom_import
  [bouncy_castle_releases]: https://www.bouncycastle.org/releasenotes.html
- [dev_server]: https://github.com/square/okhttp/blob/482f88300f78c3419b04379fc26c3683c10d6a9d/samples/guide/src/main/java/okhttp3/recipes/kt/DevServer.kt
  [CVE-2021-0341]: https://nvd.nist.gov/vuln/detail/CVE-2021-0341
+ [dev_server]: https://github.com/square/okhttp/blob/482f88300f78c3419b04379fc26c3683c10d6a9d/samples/guide/src/main/java/okhttp3/recipes/kt/DevServer.kt
  [fun_interface]: https://kotlinlang.org/docs/reference/fun-interfaces.html
  [graalvm]: https://www.graalvm.org/
  [graalvm_21]: https://www.graalvm.org/release-notes/21_0/
@@ -600,14 +622,17 @@ _2019-06-03_
  [kotlin_1_3_71]: https://github.com/JetBrains/kotlin/releases/tag/v1.3.71
  [kotlin_1_4_10]: https://github.com/JetBrains/kotlin/releases/tag/v1.4.10
  [kotlin_1_4_20]: https://github.com/JetBrains/kotlin/releases/tag/v1.4.20
+ [kotlin_1_5_31]: https://github.com/JetBrains/kotlin/releases/tag/v1.5.31
  [legacy_interceptor]: https://gist.github.com/swankjesse/80135f4e03629527e723ab3bcf64be0b
  [okhttp4_blog_post]: https://cashapp.github.io/2019-06-26/okhttp-4-goes-kotlin
+ [okio.FileSystem]: https://square.github.io/okio/file_system/
  [okio_2_6_0]: https://square.github.io/okio/changelog/#version-260
  [okio_2_7_0]: https://square.github.io/okio/changelog/#version-270
  [okio_2_9_0]: https://square.github.io/okio/changelog/#version-290
+ [okio_3_0_0]: https://square.github.io/okio/changelog/#version-300
  [public_suffix]: https://publicsuffix.org/
- [upgrading_to_okhttp_4]: https://square.github.io/okhttp/upgrading_to_okhttp_4/
  [rfc_2045]: https://tools.ietf.org/html/rfc2045
  [rfc_7231_647]: https://tools.ietf.org/html/rfc7231#section-6.4.7
  [rfc_7692]: https://tools.ietf.org/html/rfc7692
  [semver]: https://semver.org/
+ [upgrading_to_okhttp_4]: https://square.github.io/okhttp/upgrading_to_okhttp_4/
