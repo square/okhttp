@@ -15,6 +15,9 @@
  */
 package okhttp3.sse.internal;
 
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import mockwebserver3.MockResponse;
 import mockwebserver3.MockWebServer;
 import mockwebserver3.junit5.internal.MockWebServerExtension;
@@ -30,9 +33,6 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
-
-import javax.annotation.Nullable;
-import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -67,6 +67,17 @@ public final class EventSourceHttpTest {
     listener.assertOpen();
     listener.assertEvent(null, null, "hey");
     listener.assertClose();
+  }
+
+  @Test public void cancelInEventShortCircuits() throws IOException {
+    server.enqueue(new MockResponse().setBody(""
+      + "data: hey\n"
+      + "\n").setHeader("content-type", "text/event-stream"));
+    listener.enqueueCancel(); // Will cancel in onOpen().
+
+    newEventSource();
+    listener.assertOpen();
+    listener.assertFailure("canceled");
   }
 
   @Test public void badContentType() {
