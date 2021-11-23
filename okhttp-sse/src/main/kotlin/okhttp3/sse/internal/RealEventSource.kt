@@ -28,11 +28,12 @@ import okhttp3.internal.connection.RealCall
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSourceListener
 
-class RealEventSource(
+internal class RealEventSource(
   private val request: Request,
   private val listener: EventSourceListener
 ) : EventSource, ServerSentEventReader.Callback, Callback {
   private var call: RealCall? = null
+  @Volatile private var canceled = false
 
   fun connect(client: OkHttpClient) {
     val client = client.newBuilder()
@@ -72,14 +73,24 @@ class RealEventSource(
 
       val reader = ServerSentEventReader(body.source(), this)
       try {
-        listener.onOpen(this, response)
-        while (reader.processNextEvent()) {
+        if (!canceled) {
+          listener.onOpen(this, response)
+          while (!canceled && reader.processNextEvent()) {
+          }
         }
       } catch (e: Exception) {
-        listener.onFailure(this, e, response)
+        val exception = when {
+          canceled -> IOException("canceled", e)
+          else -> e
+        }
+        listener.onFailure(this, exception, response)
         return
       }
-      listener.onClosed(this)
+      if (canceled) {
+        listener.onFailure(this, IOException("canceled"), response)
+      } else {
+        listener.onClosed(this)
+      }
     }
   }
 
@@ -95,6 +106,7 @@ class RealEventSource(
   override fun request(): Request = request
 
   override fun cancel() {
+    canceled = true
     call?.cancel()
   }
 

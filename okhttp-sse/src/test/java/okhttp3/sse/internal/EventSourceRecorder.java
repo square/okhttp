@@ -29,27 +29,43 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public final class EventSourceRecorder extends EventSourceListener {
   private final BlockingQueue<Object> events = new LinkedBlockingDeque<>();
+  private boolean cancel = false;
+
+  public void enqueueCancel() {
+    cancel = true;
+  }
 
   @Override public void onOpen(EventSource eventSource, Response response) {
     Platform.get().log("[ES] onOpen", Platform.INFO, null);
     events.add(new Open(eventSource, response));
+    drainCancelQueue(eventSource);
   }
 
   @Override public void onEvent(EventSource eventSource, @Nullable String id, @Nullable String type,
       String data) {
     Platform.get().log("[ES] onEvent", Platform.INFO, null);
     events.add(new Event(id, type, data));
+    drainCancelQueue(eventSource);
   }
 
   @Override public void onClosed(EventSource eventSource) {
     Platform.get().log("[ES] onClosed", Platform.INFO, null);
     events.add(new Closed());
+    drainCancelQueue(eventSource);
   }
 
   @Override
   public void onFailure(EventSource eventSource, @Nullable Throwable t, @Nullable Response response) {
     Platform.get().log("[ES] onFailure", Platform.INFO, t);
     events.add(new Failure(t, response));
+    drainCancelQueue(eventSource);
+  }
+
+  private void drainCancelQueue(EventSource eventSource) {
+    if (cancel) {
+      cancel = false;
+      eventSource.cancel();
+    }
   }
 
   private Object nextEvent() {
