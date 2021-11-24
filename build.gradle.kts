@@ -98,14 +98,14 @@ subprojects {
     configure<CheckstyleExtension> {
       config = resources.text.fromArchiveEntry(checkstyleConfig, "google_checks.xml")
       toolVersion = Versions.checkStyle
-      sourceSets = listOf(project.sourceSets.getByName("main"))
+      sourceSets = listOf(project.sourceSets["main"])
     }
   }
 
   // Animal Sniffer confirms we generally don't use APIs not on Java 8.
   configure<AnimalSnifferExtension> {
     annotation = "okhttp3.internal.SuppressSignatureCheck"
-    sourceSets = listOf(project.sourceSets.getByName("main"))
+    sourceSets = listOf(project.sourceSets["main"])
   }
   val signature by configurations.getting
   dependencies {
@@ -223,14 +223,14 @@ subprojects {
     }
 
     publications {
-      val maven by creating(MavenPublication::class) {
+      create<MavenPublication>("maven") {
         groupId = project.group.toString()
         artifactId = project.ext["artifactId"].toString()
         version = project.version.toString()
         if (bom) {
-          from(components.getByName("javaPlatform"))
+          from(components["javaPlatform"])
         } else {
-          from(components.getByName("java"))
+          from(components["java"])
         }
         pom {
           name.set(project.name)
@@ -239,7 +239,7 @@ subprojects {
           licenses {
             license {
               name.set("The Apache Software License, Version 2.0")
-              url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+              url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
             }
           }
           developers {
@@ -270,7 +270,7 @@ subprojects {
 
   val publishing = extensions.getByType<PublishingExtension>()
   configure<SigningExtension> {
-    sign(publishing.publications.getByName("maven"))
+    sign(publishing.publications["maven"])
   }
 }
 
