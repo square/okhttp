@@ -2,7 +2,9 @@ import com.android.build.gradle.internal.tasks.factory.dependsOn
 import me.champeau.gradle.japicmp.JapicmpTask
 
 plugins {
+  kotlin("jvm")
   id("me.champeau.gradle.japicmp")
+  id("org.jetbrains.dokka")
 }
 
 tasks.jar {

@@ -1,3 +1,8 @@
+plugins {
+  kotlin("jvm")
+  id("org.jetbrains.dokka")
+}
+
 Projects.applyOsgi(
   project,
   "Export-Package: okhttp3.dnsoverhttps",

@@ -3,7 +3,9 @@ import java.nio.charset.StandardCharsets
 import me.champeau.gradle.japicmp.JapicmpTask
 
 plugins {
+  kotlin("jvm")
   id("me.champeau.gradle.japicmp")
+  id("org.jetbrains.dokka")
 }
 
 Projects.applyOsgi(
@@ -62,7 +64,7 @@ tasks.register<Copy>("copyJavaTemplates") {
   filteringCharset = StandardCharsets.UTF_8.toString()
 }.let {
   tasks.compileKotlin.dependsOn(it)
-  tasks.sourcesJar.dependsOn(it)
+  tasks.named("sourcesJar").dependsOn(it)
 }
 
 // Expose OSGi jars to the test environment.
