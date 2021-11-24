@@ -38,7 +38,7 @@ allprojects {
     maven(url = "https://dl.bintray.com/kotlin/dokka")
   }
 
-  val downloadDependencies by tasks.creating {
+  tasks.create("downloadDependencies") {
     description = "Download all dependencies to the Gradle cache"
     doLast {
       for (configuration in configurations) {
@@ -73,7 +73,7 @@ subprojects {
   apply(plugin = "biz.aQute.bnd.builder")
 
   tasks.withType<JavaCompile> {
-    options.encoding = "UTF-8"
+    options.encoding = Charsets.UTF_8.toString()
   }
 
   configure<JavaPluginExtension> {
@@ -115,7 +115,7 @@ subprojects {
 
   tasks.withType<KotlinCompile> {
     kotlinOptions {
-      jvmTarget = "1.8"
+      jvmTarget = JavaVersion.VERSION_1_8.toString()
       freeCompilerArgs = listOf(
         "-Xjvm-default=compatibility",
         "-Xopt-in=kotlin.RequiresOptIn"
