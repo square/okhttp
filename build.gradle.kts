@@ -153,7 +153,7 @@ subprojects {
 
   if (platform == "jdk8alpn") {
     // Add alpn-boot on Java 8 so we can use HTTP/2 without a stable API.
-    val alpnBootVersion = Alpn.alpnBootVersion()
+    val alpnBootVersion = alpnBootVersion()
     if (alpnBootVersion != null) {
       val alpnBootJar = configurations.detachedConfiguration(
         dependencies.create("org.mortbay.jetty.alpn:alpn-boot:$alpnBootVersion")
