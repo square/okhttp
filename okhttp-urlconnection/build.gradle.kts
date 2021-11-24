@@ -9,8 +9,7 @@ plugins {
 
 val mainProj: Project by lazy { project(":okhttp") }
 
-Projects.applyOsgi(
-  project,
+project.applyOsgi(
   "Fragment-Host: com.squareup.okhttp3; bundle-version=\"\${range;[==,+);\${version_cleanup;${mainProj.version}}}\"",
   "Automatic-Module-Name: okhttp3.urlconnection",
   "Bundle-SymbolicName: com.squareup.okhttp3.urlconnection",
@@ -38,7 +37,7 @@ afterEvaluate {
 
 tasks.register<JapicmpTask>("japicmp") {
   dependsOn("jar")
-  oldClasspath = files(Projects.baselineJar(project))
+  oldClasspath = files(project.baselineJar())
   newClasspath = files(tasks.jar.get().archiveFile)
   isOnlyBinaryIncompatibleModified = true
   isFailOnModification = true

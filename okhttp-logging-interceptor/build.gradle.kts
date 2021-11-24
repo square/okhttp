@@ -7,8 +7,7 @@ plugins {
   id("me.champeau.gradle.japicmp")
 }
 
-Projects.applyOsgi(
-  project,
+project.applyOsgi(
   "Export-Package: okhttp3.logging",
   "Automatic-Module-Name: okhttp3.logging",
   "Bundle-SymbolicName: com.squareup.okhttp3.logging"
@@ -36,7 +35,7 @@ afterEvaluate {
 
 tasks.register<JapicmpTask>("japicmp") {
   dependsOn("jar")
-  oldClasspath = files(Projects.baselineJar(project))
+  oldClasspath = files(project.baselineJar())
   newClasspath = files(tasks.jar.get().archiveFile)
   isOnlyBinaryIncompatibleModified = true
   isFailOnModification = true

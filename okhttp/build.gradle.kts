@@ -8,8 +8,7 @@ plugins {
   id("org.jetbrains.dokka")
 }
 
-Projects.applyOsgi(
-  project,
+project.applyOsgi(
   "Export-Package: okhttp3,okhttp3.internal.*;okhttpinternal=true;mandatory:=okhttpinternal",
   "Import-Package: " +
     "android.*;resolution:=optional," +
@@ -126,7 +125,7 @@ afterEvaluate {
 
 tasks.register<JapicmpTask>("japicmp") {
   dependsOn("jar")
-  oldClasspath = files(Projects.baselineJar(project))
+  oldClasspath = files(project.baselineJar())
   newClasspath = files(tasks.jar.get().archiveFile)
   isOnlyBinaryIncompatibleModified = true
   isFailOnModification = true

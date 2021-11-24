@@ -29,7 +29,7 @@ buildscript {
 
 allprojects {
   group = "com.squareup.okhttp3"
-  project.ext["artifactId"] = Projects.publishedArtifactId(project.name)
+  project.ext["artifactId"] = project.name.publishedArtifactId()
   version = "5.0.0-SNAPSHOT"
 
   repositories {
