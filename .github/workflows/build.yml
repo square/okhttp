@@ -327,7 +327,6 @@ jobs:
         env:
           API_LEVEL: ${{ matrix.api-level }}
 
-
   testandroidregression:
     runs-on: macos-latest
     timeout-minutes: 10
@@ -359,3 +358,28 @@ jobs:
           script: ./gradlew -PandroidBuild :regression-test:connectedCheck
         env:
           API_LEVEL: ${{ matrix.api-level }}
+
+  testandroidregressionUnified:
+    runs-on: macos-latest
+    timeout-minutes: 10
+    if: contains(github.event.pull_request.labels.*.name, 'android-regression')
+
+    strategy:
+      fail-fast: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Configure JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: 11
+
+      - name: Test
+        run: |
+          ./gradlew -PandroidBuild :regression-test:pixel2api29Check
