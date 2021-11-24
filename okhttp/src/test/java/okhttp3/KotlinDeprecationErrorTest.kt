@@ -45,7 +45,6 @@ import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import okhttp3.tls.internal.TlsUtil.localhost
 import okio.Buffer
-import org.junit.Ignore
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
@@ -101,7 +100,7 @@ class KotlinDeprecationErrorTest {
 
   @Test @Disabled
   fun challenge() {
-    val challenge = Challenge("", mapOf<String?, String>("" to ""))
+    val challenge = Challenge("", mapOf("" to ""))
     val scheme: String = challenge.scheme()
     val authParams: Map<String?, String> = challenge.authParams()
     val realm: String? = challenge.realm()

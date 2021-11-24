@@ -17,9 +17,7 @@ package mockwebserver3.junit4
 
 import java.net.ConnectException
 import java.util.concurrent.atomic.AtomicBoolean
-import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Assert
 import org.junit.Assert.fail
 import org.junit.Test
 import org.junit.runner.Description

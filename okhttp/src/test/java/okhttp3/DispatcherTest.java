@@ -17,11 +17,11 @@ import static org.junit.jupiter.api.Assertions.fail;
 public final class DispatcherTest {
   @RegisterExtension public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
-  RecordingExecutor executor = new RecordingExecutor(this);
-  RecordingCallback callback = new RecordingCallback();
-  RecordingWebSocketListener webSocketListener = new RecordingWebSocketListener();
-  Dispatcher dispatcher = new Dispatcher(executor);
-  RecordingEventListener listener = new RecordingEventListener();
+  final RecordingExecutor executor = new RecordingExecutor(this);
+  final RecordingCallback callback = new RecordingCallback();
+  final RecordingWebSocketListener webSocketListener = new RecordingWebSocketListener();
+  final Dispatcher dispatcher = new Dispatcher(executor);
+  final RecordingEventListener listener = new RecordingEventListener();
   OkHttpClient client = clientTestRule.newClientBuilder()
       .dispatcher(dispatcher)
       .eventListenerFactory(clientTestRule.wrap(listener))

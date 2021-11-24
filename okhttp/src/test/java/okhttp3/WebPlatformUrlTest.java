@@ -32,11 +32,7 @@ public final class WebPlatformUrlTest {
   public static class TestDataParamProvider extends SimpleProvider {
     @Override
     public List<Object> arguments() throws IOException {
-      List<Object> result = new ArrayList<>();
-      for (WebPlatformUrlTestData urlTestData : loadTests()) {
-        result.add(urlTestData);
-      }
-      return result;
+      return new ArrayList<>(loadTests());
     }
   }
 

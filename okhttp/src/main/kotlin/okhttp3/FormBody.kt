@@ -43,17 +43,17 @@ class FormBody internal constructor(
       level = DeprecationLevel.ERROR)
   fun size(): Int = size
 
-  fun encodedName(index: Int) = encodedNames[index]
+  fun encodedName(index: Int): String = encodedNames[index]
 
-  fun name(index: Int) = encodedName(index).percentDecode(plusIsSpace = true)
+  fun name(index: Int): String = encodedName(index).percentDecode(plusIsSpace = true)
 
-  fun encodedValue(index: Int) = encodedValues[index]
+  fun encodedValue(index: Int): String = encodedValues[index]
 
-  fun value(index: Int) = encodedValue(index).percentDecode(plusIsSpace = true)
+  fun value(index: Int): String = encodedValue(index).percentDecode(plusIsSpace = true)
 
-  override fun contentType() = CONTENT_TYPE
+  override fun contentType(): MediaType = CONTENT_TYPE
 
-  override fun contentLength() = writeOrCountBytes(null, true)
+  override fun contentLength(): Long = writeOrCountBytes(null, true)
 
   @Throws(IOException::class)
   override fun writeTo(sink: BufferedSink) {

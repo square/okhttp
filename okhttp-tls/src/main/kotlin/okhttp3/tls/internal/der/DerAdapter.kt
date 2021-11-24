@@ -80,7 +80,7 @@ internal interface DerAdapter<T> {
     forceConstructed: Boolean? = null
   ): BasicDerAdapter<T> {
     val codec = object : BasicDerAdapter.Codec<T> {
-      override fun decode(reader: DerReader) = fromDer(reader)
+      override fun decode(reader: DerReader): T = fromDer(reader)
       override fun encode(writer: DerWriter, value: T) {
         toDer(writer, value)
         if (forceConstructed != null) {

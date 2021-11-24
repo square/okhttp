@@ -53,7 +53,7 @@ class PublicSuffixDatabase {
    *
    * Here are some examples:
    *
-   * ```
+   * ```java
    * assertEquals("google.com", getEffectiveTldPlusOne("google.com"));
    * assertEquals("google.com", getEffectiveTldPlusOne("www.google.com"));
    * assertNull(getEffectiveTldPlusOne("com"));

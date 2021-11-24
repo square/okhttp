@@ -60,7 +60,7 @@ public class Case implements Cloneable {
     result.wire = wire;
     result.headers = new ArrayList<>();
     for (Map<String, String> header : headers) {
-      result.headers.add(new LinkedHashMap<String, String>(header));
+      result.headers.add(new LinkedHashMap<>(header));
     }
     return result;
   }

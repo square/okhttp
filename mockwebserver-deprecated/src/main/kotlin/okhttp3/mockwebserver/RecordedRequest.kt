@@ -88,7 +88,7 @@ class RecordedRequest {
     socket: Socket,
     failure: IOException? = null
   ) {
-    this.requestLine = requestLine;
+    this.requestLine = requestLine
     this.headers = headers
     this.chunkSizes = chunkSizes
     this.bodySize = bodySize

@@ -135,7 +135,7 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
           "close".equals(response.header("Connection"), ignoreCase = true)) {
         exchange.noNewExchangesOnConnection()
       }
-      if ((code == 204 || code == 205) && response.body?.contentLength() ?: -1L > 0L) {
+      if ((code == 204 || code == 205) && (response.body?.contentLength() ?: -1L) > 0L) {
         throw ProtocolException(
             "HTTP $code had non-zero Content-Length: ${response.body?.contentLength()}")
       }

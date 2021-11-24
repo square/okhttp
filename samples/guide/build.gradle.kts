@@ -1,4 +1,5 @@
 plugins {
+  kotlin("jvm")
   kotlin("kapt")
 }
 
@@ -18,6 +19,6 @@ java {
   }
 }
 
-tasks.withType<JavaCompile> {
+tasks.compileJava {
   options.isWarnings = false
 }

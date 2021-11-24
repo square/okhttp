@@ -70,7 +70,7 @@ public final class Crawler {
 
       Thread currentThread = Thread.currentThread();
       String originalName = currentThread.getName();
-      currentThread.setName("Crawler " + url.toString());
+      currentThread.setName("Crawler " + url);
       try {
         fetch(url);
       } catch (IOException e) {

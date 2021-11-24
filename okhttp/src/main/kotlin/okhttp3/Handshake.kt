@@ -61,21 +61,21 @@ class Handshake internal constructor(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "tlsVersion"),
       level = DeprecationLevel.ERROR)
-  fun tlsVersion() = tlsVersion
+  fun tlsVersion(): TlsVersion = tlsVersion
 
   @JvmName("-deprecated_cipherSuite")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "cipherSuite"),
       level = DeprecationLevel.ERROR)
-  fun cipherSuite() = cipherSuite
+  fun cipherSuite(): CipherSuite = cipherSuite
 
   @JvmName("-deprecated_peerCertificates")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "peerCertificates"),
       level = DeprecationLevel.ERROR)
-  fun peerCertificates() = peerCertificates
+  fun peerCertificates(): List<Certificate> = peerCertificates
 
   /** Returns the remote peer's principle, or null if that peer is anonymous. */
   @get:JvmName("peerPrincipal")
@@ -87,14 +87,14 @@ class Handshake internal constructor(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "peerPrincipal"),
       level = DeprecationLevel.ERROR)
-  fun peerPrincipal() = peerPrincipal
+  fun peerPrincipal(): Principal? = peerPrincipal
 
   @JvmName("-deprecated_localCertificates")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "localCertificates"),
       level = DeprecationLevel.ERROR)
-  fun localCertificates() = localCertificates
+  fun localCertificates(): List<Certificate> = localCertificates
 
   /** Returns the local principle, or null if this peer is anonymous. */
   @get:JvmName("localPrincipal")
@@ -106,7 +106,7 @@ class Handshake internal constructor(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "localPrincipal"),
       level = DeprecationLevel.ERROR)
-  fun localPrincipal() = localPrincipal
+  fun localPrincipal(): Principal? = localPrincipal
 
   override fun equals(other: Any?): Boolean {
     return other is Handshake &&
@@ -145,8 +145,7 @@ class Handshake internal constructor(
     @JvmStatic
     @JvmName("get")
     fun SSLSession.handshake(): Handshake {
-      val cipherSuiteString = checkNotNull(cipherSuite) { "cipherSuite == null" }
-      val cipherSuite = when (cipherSuiteString) {
+      val cipherSuite = when (val cipherSuiteString = checkNotNull(cipherSuite) { "cipherSuite == null" }) {
         "TLS_NULL_WITH_NULL_NULL", "SSL_NULL_WITH_NULL_NULL" -> {
           throw IOException("cipherSuite == $cipherSuiteString")
         }

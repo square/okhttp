@@ -1,3 +1,7 @@
+plugins {
+  id("java-platform")
+}
+
 dependencies {
   constraints {
     project.rootProject.subprojects.forEach { subproject ->

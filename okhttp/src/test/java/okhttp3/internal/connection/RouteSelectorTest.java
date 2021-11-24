@@ -72,8 +72,8 @@ public final class RouteSelectorTest {
   private static final String proxyBHost = "proxyb";
   private static final Proxy proxyB =
       new Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved(proxyBHost, proxyBPort));
-  private String uriHost = "hosta";
-  private int uriPort = 1003;
+  private final String uriHost = "hosta";
+  private final int uriPort = 1003;
 
   private Call call;
   private SocketFactory socketFactory;
@@ -85,7 +85,7 @@ public final class RouteSelectorTest {
   private final List<Protocol> protocols = Arrays.asList(Protocol.HTTP_1_1);
   private final FakeDns dns = new FakeDns();
   private final RecordingProxySelector proxySelector = new RecordingProxySelector();
-  private RouteDatabase routeDatabase = new RouteDatabase();
+  private final RouteDatabase routeDatabase = new RouteDatabase();
 
   @BeforeEach public void setUp() throws Exception {
     call = clientTestRule.newClient().newCall(new Request.Builder()

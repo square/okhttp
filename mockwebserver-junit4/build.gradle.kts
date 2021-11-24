@@ -1,3 +1,8 @@
+plugins {
+  kotlin("jvm")
+  id("org.jetbrains.dokka")
+}
+
 tasks.jar {
   manifest {
     attributes("Automatic-Module-Name" to "mockwebserver3.junit4")

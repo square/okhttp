@@ -1,11 +1,53 @@
 Change Log
 ==========
 
+## Version 5.0.0-alpha.3
+
+_2021-11-22_
+
+ *  Fix: Change `Headers.toString()` to redact authorization and cookie headers.
+ *  Fix: Don't do DNS to get the hostname for `RecordedRequest.requestUrl`. This was doing a DNS
+    lookup for the local hostname, but we really just wanted the `Host` header.
+ *  Fix: Don't crash with a `InaccessibleObjectException` when detecting the platform trust manager
+    on Java 17+.
+ *  Fix: Don't crash if a cookie's value is a lone double quote character.
+ *  Fix: Don't crash when canceling an event source created by `EventSources.processResponse()`.
+ *  New: `Cache` now has a public constructor that takes an [okio.FileSystem]. This should make it
+    possible to implement decorators for cache encryption or compression.
+ *  New: `Cookie.newBuilder()` to build upon an existing cookie.
+ *  New: Use TLSv1.3 when running on JDK 8u261 or newer.
+ *  New: `QueueDispatcher.clear()` may be used to reset a MockWebServer instance.
+ *  New: `FileDescriptor.toRequestBody()` may be particularly useful for users of Android's Storage
+    Access Framework.
+ *  Upgrade: [Kotlin 1.5.31][kotlin_1_5_31].
+ *  Upgrade: [Okio 3.0.0][okio_3_0_0].
+
+
+## Version 4.9.3
+
+_2021-11-21_
+
+ *  Fix: Don't fail HTTP/2 responses if they complete before a `RST_STREAM` is sent.
+
+
+## Version 4.9.2
+
+_2021-09-30_
+
+ *  Fix: Don't include potentially-sensitive header values in `Headers.toString()` or exceptions.
+    This applies to `Authorization`, `Cookie`, `Proxy-Authorization`, and `Set-Cookie` headers.
+ *  Fix: Don't crash with an `InaccessibleObjectException` when running on JDK17+ with strong
+    encapsulation enabled.
+ *  Fix: Strictly verify hostnames used with OkHttp's `HostnameVerifier`. Programs that make direct
+    manual calls to `HostnameVerifier` could be defeated if the hostnames they pass in are not
+    strictly ASCII. This issue is tracked as [CVE-2021-0341].
+
+
 ## Version 5.0.0-alpha.2
 
 _2021-01-30_
 
-**In this release MockWebServer has a new Maven coordinate and package name.** A longstanding 
+**In this release MockWebServer has a new Maven coordinate and package name.** A longstanding
 problem with MockWebServer has been its API dependency on JUnit 4. We've reorganized things to
 remove that dependency while preserving backwards compatibility.
 
@@ -17,14 +59,14 @@ remove that dependency while preserving backwards compatibility.
 | com.squareup.okhttp3:mockwebserver:5.0.0-alpha.2         | okhttp3.mockwebserver | Obsolete. Depends on JUnit 4.     |
 
 The new APIs use `mockwebserver3` in both the Maven coordinate and package name. This new API is
-**not stable** and will likely change before the final 5.0.0 release.  
+**not stable** and will likely change before the final 5.0.0 release.
 
 If you have code that subclasses `okhttp3.mockwebserver.QueueDispatcher`, this update is not source
 or binary compatible. Migrating to the new `mockwebserver3` package will fix this problem.
 
- *  New: DNS over HTTPS is now a stable feature of OkHttp. We introduced this as an experimental 
+ *  New: DNS over HTTPS is now a stable feature of OkHttp. We introduced this as an experimental
     module in 2018. We are confident in its stable API and solid implementation.
- *  Fix: Work around a crash in Android 10 and 11 that may be triggered when two threads 
+ *  Fix: Work around a crash in Android 10 and 11 that may be triggered when two threads
     concurrently close an SSL socket. This would have appeared in crash logs as
     `NullPointerException: bio == null`.
  *  Fix: Use plus `+` instead of `%20` to encode space characters in `FormBody`. This was a
@@ -46,7 +88,7 @@ _2021-01-30_
 
 GraalVM is an exciting new platform and we're eager to adopt it. The startup time improvements over
 the JVM are particularly impressive. Try it with okcurl:
- 
+
 ```
 $ ./gradlew okcurl:nativeImage
 $ ./okcurl/build/graal/okcurl https://cash.app/robots.txt
@@ -57,7 +99,7 @@ and Android! Please report any issues you encounter: we'll fix them urgently.
 
  *  Fix: Attempt to read the response body even if the server canceled the request. This will cause
     some calls to return nice error codes like `HTTP/1.1 429 Too Many Requests` instead of transport
-    errors like `SocketException: Connection reset` and `StreamResetException: stream was reset: 
+    errors like `SocketException: Connection reset` and `StreamResetException: stream was reset:
     CANCEL`.
  *  New: Support OSGi metadata.
  *  Upgrade: [Okio 2.9.0][okio_2_9_0].
@@ -84,7 +126,7 @@ _2021-01-30_
 _2020-09-11_
 
 **With this release, `okhttp-tls` no longer depends on Bouncy Castle and doesn't install the
-Bouncy Castle security provider.** If you still need it, you can do it yourself: 
+Bouncy Castle security provider.** If you still need it, you can do it yourself:
 
 ```
 Security.addProvider(BouncyCastleProvider())
@@ -117,14 +159,14 @@ _2020-08-06_
 _2020-07-11_
 
  *  New: Change `HeldCertificate.Builder` to use its own ASN.1 certificate encoder. This is part
-    of our effort to remove the okhttp-tls module's dependency on Bouncy Castle. We think Bouncy 
-    Castle is great! But it's a large dependency (6.5 MiB) and its security provider feature 
+    of our effort to remove the okhttp-tls module's dependency on Bouncy Castle. We think Bouncy
+    Castle is great! But it's a large dependency (6.5 MiB) and its security provider feature
     impacts VM-wide behavior.
 
  *  New: Reduce contention for applications that make a very high number of concurrent requests.
     Previously OkHttp used its connection pool as a lock when making changes to connections and
     calls. With this change each connection is locked independently.
-    
+
  *  Upgrade: [Okio 2.7.0][okio_2_7_0].
 
     ```kotlin
@@ -133,8 +175,8 @@ _2020-07-11_
 
  *  Fix: Avoid log messages like "Didn't find class org.conscrypt.ConscryptHostnameVerifier" when
     detecting the TLS capabilities of the host platform.
-    
- *  Fix: Don't crash in `HttpUrl.topPrivateDomain()` when the hostname is malformed. 
+
+ *  Fix: Don't crash in `HttpUrl.topPrivateDomain()` when the hostname is malformed.
 
  *  Fix: Don't attempt Brotli decompression if the response body is empty.
 
@@ -359,8 +401,8 @@ _2020-01-07_
 
  *  Fix: Don't crash with a `NullPointerException` when a web socket is closed before it connects.
     This regression was introduced in OkHttp 4.3.0.
- *  Fix: Don't crash with an `IllegalArgumentException` when using custom trust managers on 
-    Android 10. Android uses reflection to look up a magic `checkServerTrusted()` method and we 
+ *  Fix: Don't crash with an `IllegalArgumentException` when using custom trust managers on
+    Android 10. Android uses reflection to look up a magic `checkServerTrusted()` method and we
     didn't have it.
  *  Fix: Explicitly specify the remote server name when making HTTPS connections on Android 5. In
     4.3.0 we introduced a regression where server name indication (SNI) was broken on Android 5.
@@ -371,7 +413,7 @@ _2020-01-07_
 _2019-12-31_
 
  *  Fix: Degrade HTTP/2 connections after a timeout. When an HTTP/2 stream times out it may impact
-    the stream only or the entire connection. With this fix OkHttp will now send HTTP/2 pings after 
+    the stream only or the entire connection. With this fix OkHttp will now send HTTP/2 pings after
     a stream timeout to determine whether the connection should remain eligible for pooling.
 
  *  Fix: Don't call `EventListener.responseHeadersStart()` or `responseBodyStart()` until bytes have
@@ -380,16 +422,16 @@ _2019-12-31_
     event always used to follow one of these events; now it may be sent without them.
 
  *  New: Upgrade to Kotlin 1.3.61.
- 
- *  New: Match any number of subdomains with two asterisks in `CertificatePinner`. For example, 
+
+ *  New: Match any number of subdomains with two asterisks in `CertificatePinner`. For example,
     `**.squareup.com` matches `us-west.www.squareup.com`, `www.squareup.com` and `squareup.com`.
 
- *  New: Share threads more aggressively between OkHttp's HTTP/2 connections, connection pool, 
+ *  New: Share threads more aggressively between OkHttp's HTTP/2 connections, connection pool,
     web sockets, and cache. OkHttp has a new internal task runner abstraction for managed task
     scheduling. In your debugger you will see new thread names and more use of daemon threads.
 
- *  Fix: Don't drop callbacks on unexpected exceptions. When an interceptor throws an unchecked 
-    exception the callback is now notified that the call was canceled. The exception is still sent 
+ *  Fix: Don't drop callbacks on unexpected exceptions. When an interceptor throws an unchecked
+    exception the callback is now notified that the call was canceled. The exception is still sent
     to the uncaught exception handler for reporting and recovery.
 
  *  Fix: Un-deprecate `MockResponse.setHeaders()` and other setters. These were deprecated in OkHttp
@@ -403,7 +445,7 @@ _2019-12-31_
 
  *  Fix: Undo a performance regression introduced in OkHttp 4.0 caused by differences in behavior
     between Kotlin's `assert()` and Java's `assert()`. (Kotlin always evaluates the argument; Java
-    only does when assertions are enabled.) 
+    only does when assertions are enabled.)
 
  *  Fix: Honor `RequestBody.isOneShot()` in `HttpLoggingInterceptor`.
 
@@ -570,6 +612,7 @@ _2019-06-03_
 
  [bom]: https://docs.gradle.org/6.2/userguide/platforms.html#sub:bom_import
  [bouncy_castle_releases]: https://www.bouncycastle.org/releasenotes.html
+ [CVE-2021-0341]: https://nvd.nist.gov/vuln/detail/CVE-2021-0341
  [dev_server]: https://github.com/square/okhttp/blob/482f88300f78c3419b04379fc26c3683c10d6a9d/samples/guide/src/main/java/okhttp3/recipes/kt/DevServer.kt
  [fun_interface]: https://kotlinlang.org/docs/reference/fun-interfaces.html
  [graalvm]: https://www.graalvm.org/
@@ -579,14 +622,17 @@ _2019-06-03_
  [kotlin_1_3_71]: https://github.com/JetBrains/kotlin/releases/tag/v1.3.71
  [kotlin_1_4_10]: https://github.com/JetBrains/kotlin/releases/tag/v1.4.10
  [kotlin_1_4_20]: https://github.com/JetBrains/kotlin/releases/tag/v1.4.20
+ [kotlin_1_5_31]: https://github.com/JetBrains/kotlin/releases/tag/v1.5.31
  [legacy_interceptor]: https://gist.github.com/swankjesse/80135f4e03629527e723ab3bcf64be0b
  [okhttp4_blog_post]: https://cashapp.github.io/2019-06-26/okhttp-4-goes-kotlin
+ [okio.FileSystem]: https://square.github.io/okio/file_system/
  [okio_2_6_0]: https://square.github.io/okio/changelog/#version-260
  [okio_2_7_0]: https://square.github.io/okio/changelog/#version-270
  [okio_2_9_0]: https://square.github.io/okio/changelog/#version-290
+ [okio_3_0_0]: https://square.github.io/okio/changelog/#version-300
  [public_suffix]: https://publicsuffix.org/
- [upgrading_to_okhttp_4]: https://square.github.io/okhttp/upgrading_to_okhttp_4/
  [rfc_2045]: https://tools.ietf.org/html/rfc2045
  [rfc_7231_647]: https://tools.ietf.org/html/rfc7231#section-6.4.7
  [rfc_7692]: https://tools.ietf.org/html/rfc7692
  [semver]: https://semver.org/
+ [upgrading_to_okhttp_4]: https://square.github.io/okhttp/upgrading_to_okhttp_4/

@@ -1,3 +1,7 @@
+plugins {
+  kotlin("jvm")
+}
+
 dependencies {
   testImplementation(Dependencies.okio)
   testImplementation(Dependencies.moshi)

@@ -32,7 +32,7 @@ interface Call : Cloneable {
    * To avoid leaking resources callers should close the [Response] which in turn will close the
    * underlying [ResponseBody].
    *
-   * ```
+   * ```java
    * // ensure the response (and underlying response body) is closed
    * try (Response response = client.newCall(request).execute()) {
    *   ...

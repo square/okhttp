@@ -21,7 +21,6 @@ import okhttp3.internal.buildCache
 import okhttp3.okio.LoggingFilesystem
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.internal.TlsUtil.localhost
-import okio.ExperimentalFileSystem
 import okio.Path.Companion.toPath
 import okio.fakefilesystem.FakeFileSystem
 import org.assertj.core.api.Assertions.assertThat
@@ -40,11 +39,9 @@ import java.util.concurrent.TimeUnit
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSession
 
-@OptIn(ExperimentalFileSystem::class)
 class CacheCorruptionTest(
   var server: MockWebServer
 ) {
-  @OptIn(ExperimentalFileSystem::class)
   var fileSystem = FakeFileSystem()
 
   @JvmField
@@ -58,8 +55,7 @@ class CacheCorruptionTest(
   private val handshakeCertificates = localhost()
   private lateinit var client: OkHttpClient
   private lateinit var cache: Cache
-  private val NULL_HOSTNAME_VERIFIER =
-    HostnameVerifier { _: String?, _: SSLSession? -> true }
+  private val NULL_HOSTNAME_VERIFIER = HostnameVerifier { _: String?, _: SSLSession? -> true }
   private val cookieManager = CookieManager()
 
   @BeforeEach

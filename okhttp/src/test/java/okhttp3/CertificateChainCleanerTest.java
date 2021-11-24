@@ -72,9 +72,11 @@ public final class CertificateChainCleanerTest {
   @Test public void orderedChainOfCertificatesWithRoot() throws Exception {
     HeldCertificate root = new HeldCertificate.Builder()
         .serialNumber(1L)
+        .certificateAuthority(1)
         .build();
     HeldCertificate certA = new HeldCertificate.Builder()
         .serialNumber(2L)
+        .certificateAuthority(0)
         .signedBy(root)
         .build();
     HeldCertificate certB = new HeldCertificate.Builder()
@@ -90,9 +92,11 @@ public final class CertificateChainCleanerTest {
   @Test public void orderedChainOfCertificatesWithoutRoot() throws Exception {
     HeldCertificate root = new HeldCertificate.Builder()
         .serialNumber(1L)
+        .certificateAuthority(1)
         .build();
     HeldCertificate certA = new HeldCertificate.Builder()
         .serialNumber(2L)
+        .certificateAuthority(0)
         .signedBy(root)
         .build();
     HeldCertificate certB = new HeldCertificate.Builder()
@@ -109,13 +113,16 @@ public final class CertificateChainCleanerTest {
   @Test public void unorderedChainOfCertificatesWithRoot() throws Exception {
     HeldCertificate root = new HeldCertificate.Builder()
         .serialNumber(1L)
+        .certificateAuthority(2)
         .build();
     HeldCertificate certA = new HeldCertificate.Builder()
         .serialNumber(2L)
+        .certificateAuthority(1)
         .signedBy(root)
         .build();
     HeldCertificate certB = new HeldCertificate.Builder()
         .serialNumber(3L)
+        .certificateAuthority(0)
         .signedBy(certA)
         .build();
     HeldCertificate certC = new HeldCertificate.Builder()
@@ -131,13 +138,16 @@ public final class CertificateChainCleanerTest {
   @Test public void unorderedChainOfCertificatesWithoutRoot() throws Exception {
     HeldCertificate root = new HeldCertificate.Builder()
         .serialNumber(1L)
+        .certificateAuthority(2)
         .build();
     HeldCertificate certA = new HeldCertificate.Builder()
         .serialNumber(2L)
+        .certificateAuthority(1)
         .signedBy(root)
         .build();
     HeldCertificate certB = new HeldCertificate.Builder()
         .serialNumber(3L)
+        .certificateAuthority(0)
         .signedBy(certA)
         .build();
     HeldCertificate certC = new HeldCertificate.Builder()
@@ -153,9 +163,11 @@ public final class CertificateChainCleanerTest {
   @Test public void unrelatedCertificatesAreOmitted() throws Exception {
     HeldCertificate root = new HeldCertificate.Builder()
         .serialNumber(1L)
+        .certificateAuthority(1)
         .build();
     HeldCertificate certA = new HeldCertificate.Builder()
         .serialNumber(2L)
+        .certificateAuthority(0)
         .signedBy(root)
         .build();
     HeldCertificate certB = new HeldCertificate.Builder()
@@ -174,13 +186,16 @@ public final class CertificateChainCleanerTest {
   @Test public void chainGoesAllTheWayToSelfSignedRoot() throws Exception {
     HeldCertificate selfSigned = new HeldCertificate.Builder()
         .serialNumber(1L)
+        .certificateAuthority(2)
         .build();
     HeldCertificate trusted = new HeldCertificate.Builder()
         .serialNumber(2L)
         .signedBy(selfSigned)
+        .certificateAuthority(1)
         .build();
     HeldCertificate certA = new HeldCertificate.Builder()
         .serialNumber(3L)
+        .certificateAuthority(0)
         .signedBy(trusted)
         .build();
     HeldCertificate certB = new HeldCertificate.Builder()
@@ -201,13 +216,16 @@ public final class CertificateChainCleanerTest {
   @Test public void trustedRootNotSelfSigned() throws Exception {
     HeldCertificate unknownSigner = new HeldCertificate.Builder()
         .serialNumber(1L)
+        .certificateAuthority(2)
         .build();
     HeldCertificate trusted = new HeldCertificate.Builder()
         .signedBy(unknownSigner)
+        .certificateAuthority(1)
         .serialNumber(2L)
         .build();
     HeldCertificate intermediateCa = new HeldCertificate.Builder()
         .signedBy(trusted)
+        .certificateAuthority(0)
         .serialNumber(3L)
         .build();
     HeldCertificate certificate = new HeldCertificate.Builder()
@@ -258,6 +276,7 @@ public final class CertificateChainCleanerTest {
     for (int i = 1; i <= length; i++) {
       result.add(0, new HeldCertificate.Builder()
           .signedBy(!result.isEmpty() ? result.get(0) : null)
+          .certificateAuthority(length - i)
           .serialNumber(i)
           .build());
     }

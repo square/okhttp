@@ -1,10 +1,9 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-
 plugins {
+  kotlin("jvm")
   id("com.github.johnrengelman.shadow")
 }
 
-tasks.withType<JavaCompile> {
+tasks.compileJava {
   options.isWarnings = false
 }
 
@@ -18,6 +17,6 @@ dependencies {
   implementation(project(":mockwebserver-deprecated"))
 }
 
-tasks.named<ShadowJar>("shadowJar") {
+tasks.shadowJar {
   mergeServiceFiles()
 }

@@ -38,7 +38,7 @@ import okhttp3.internal.authenticator.JavaNetAuthenticator
  * challenge. The proxy authenticator may return either an authenticated request, or null to
  * connect without authentication.
  *
- * ```
+ * ```java
  * for (Challenge challenge : response.challenges()) {
  *   // If this is preemptive auth, use a preemptive credential.
  *   if (challenge.scheme().equalsIgnoreCase("OkHttp-Preemptive")) {
@@ -63,7 +63,7 @@ import okhttp3.internal.authenticator.JavaNetAuthenticator
  * When reactive authentication is requested by an origin web server, the response code is 401
  * and the implementation should respond with a new request that sets the "Authorization" header.
  *
- * ```
+ * ```java
  * if (response.request().header("Authorization") != null) {
  *   return null; // Give up, we've already failed to authenticate.
  * }
@@ -77,7 +77,7 @@ import okhttp3.internal.authenticator.JavaNetAuthenticator
  * When reactive authentication is requested by a proxy server, the response code is 407 and the
  * implementation should respond with a new request that sets the "Proxy-Authorization" header.
  *
- * ```
+ * ```java
  * if (response.request().header("Proxy-Authorization") != null) {
  *   return null; // Give up, we've already failed to authenticate.
  * }
@@ -100,7 +100,7 @@ import okhttp3.internal.authenticator.JavaNetAuthenticator
  * to limit the retries by the class of errors and number of attempts.  To get the number of
  * attempts to the current point use this function.
  *
- * ```
+ * ```java
  * private int responseCount(Response response) {
  *   int result = 1;
  *   while ((response = response.priorResponse()) != null) {

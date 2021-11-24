@@ -1,3 +1,7 @@
+plugins {
+  kotlin("jvm")
+}
+
 tasks.jar {
   manifest {
     attributes("Automatic-Module-Name" to "mockwebserver3")
