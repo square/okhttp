@@ -29,33 +29,27 @@ import okhttp3.internal.platform.Platform
 
 @TargetClass(AndroidPlatform::class)
 @Delete
-class TargetAndroidPlatform {
-}
+class TargetAndroidPlatform
 
 @TargetClass(Android10Platform::class)
 @Delete
-class TargetAndroid10Platform {
-}
+class TargetAndroid10Platform
 
 @TargetClass(BouncyCastlePlatform::class)
 @Delete
-class TargetBouncyCastlePlatform {
-}
+class TargetBouncyCastlePlatform
 
 @TargetClass(ConscryptPlatform::class)
 @Delete
-class TargetConscryptPlatform {
-}
+class TargetConscryptPlatform
 
 @TargetClass(Jdk8WithJettyBootPlatform::class)
 @Delete
-class TargetJdk8WithJettyBootPlatform {
-}
+class TargetJdk8WithJettyBootPlatform
 
 @TargetClass(OpenJSSEPlatform::class)
 @Delete
-class TargetOpenJSSEPlatform {
-}
+class TargetOpenJSSEPlatform
 
 @TargetClass(Platform.Companion::class)
 class TargetPlatform {

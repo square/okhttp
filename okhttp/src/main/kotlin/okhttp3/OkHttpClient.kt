@@ -476,7 +476,7 @@ open class OkHttpClient internal constructor(
       level = DeprecationLevel.ERROR)
   fun pingIntervalMillis(): Int = pingIntervalMillis
 
-  class Builder constructor() {
+  class Builder() {
     internal var dispatcher: Dispatcher = Dispatcher()
     internal var connectionPool: ConnectionPool = ConnectionPool()
     internal val interceptors: MutableList<Interceptor> = mutableListOf()

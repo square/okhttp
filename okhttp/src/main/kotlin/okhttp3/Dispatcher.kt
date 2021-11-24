@@ -35,7 +35,7 @@ import okhttp3.internal.threadFactory
  * executor, it should be able to run [the configured maximum][maxRequests] number of calls
  * concurrently.
  */
-class Dispatcher constructor() {
+class Dispatcher() {
   /**
    * The maximum number of requests to execute concurrently. Above this requests queue in memory,
    * waiting for the running calls to complete.
