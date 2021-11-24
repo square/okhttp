@@ -1,3 +1,7 @@
+plugins {
+  kotlin("jvm")
+}
+
 dependencies {
   testImplementation(project(":okhttp"))
   testImplementation(project(":mockwebserver"))

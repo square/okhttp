@@ -1,3 +1,8 @@
+plugins {
+  kotlin("jvm")
+  id("org.jetbrains.dokka")
+}
+
 tasks {
   jar {
     manifest {

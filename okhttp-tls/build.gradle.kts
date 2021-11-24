@@ -2,6 +2,9 @@ import com.android.build.gradle.internal.tasks.factory.dependsOn
 import me.champeau.gradle.japicmp.JapicmpTask
 
 plugins {
+  kotlin("jvm")
+  id("org.jetbrains.dokka")
+  id("ru.vyarus.animalsniffer")
   id("me.champeau.gradle.japicmp")
 }
 

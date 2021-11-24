@@ -3,6 +3,7 @@ import java.nio.charset.StandardCharsets
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
+  kotlin("jvm")
   kotlin("kapt")
   id("com.palantir.graal")
   id("com.github.johnrengelman.shadow")
@@ -29,7 +30,7 @@ tasks.register<Copy>("copyResourcesTemplates") {
   filteringCharset = StandardCharsets.UTF_8.toString()
 }.let {
   tasks.processResources.dependsOn(it)
-  tasks.sourcesJar.dependsOn(it)
+  tasks.named("sourcesJar").dependsOn(it)
 }
 
 dependencies {
