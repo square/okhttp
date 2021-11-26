@@ -1,10 +1,14 @@
 import com.android.build.gradle.internal.tasks.factory.dependsOn
+import com.vanniktech.maven.publish.JavadocJar
+import com.vanniktech.maven.publish.KotlinJvm
+import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import me.champeau.gradle.japicmp.JapicmpTask
 
 plugins {
   kotlin("jvm")
-  id("me.champeau.gradle.japicmp")
   id("org.jetbrains.dokka")
+  id("com.vanniktech.maven.publish.base")
+  id("me.champeau.gradle.japicmp")
 }
 
 tasks.jar {
@@ -15,19 +19,12 @@ tasks.jar {
 
 dependencies {
   api(project(":okhttp"))
-  api(project(":mockwebserver"))
+  api(project(":mockwebserver3"))
   api(Dependencies.junit)
 
   testImplementation(project(":okhttp-testing-support"))
   testImplementation(project(":okhttp-tls"))
   testImplementation(Dependencies.assertj)
-}
-
-afterEvaluate {
-  tasks.dokka {
-    outputDirectory = "$rootDir/docs/4.x"
-    outputFormat = "gfm"
-  }
 }
 
 tasks.register<JapicmpTask>("japicmp") {
@@ -49,3 +46,8 @@ tasks.register<JapicmpTask>("japicmp") {
     "okhttp3.mockwebserver.QueueDispatcher"
   )
 }.let(tasks.check::dependsOn)
+
+
+configure<MavenPublishBaseExtension> {
+  configure(KotlinJvm(javadocJar = JavadocJar.Dokka("dokkaGfm")))
+}

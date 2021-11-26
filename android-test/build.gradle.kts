@@ -58,7 +58,7 @@ dependencies {
   androidTestImplementation(Dependencies.bouncycastle)
   androidTestImplementation(Dependencies.bouncycastletls)
   androidTestImplementation(Dependencies.conscryptAndroid)
-  androidTestImplementation(project(":mockwebserver-junit5"))
+  androidTestImplementation(project(":mockwebserver3-junit5"))
   androidTestImplementation(project(":okhttp-brotli"))
   androidTestImplementation(project(":okhttp-dnsoverhttps"))
   androidTestImplementation(project(":okhttp-logging-interceptor"))

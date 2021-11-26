@@ -3,6 +3,6 @@ plugins {
 }
 
 dependencies {
-  implementation(project(":mockwebserver-deprecated"))
+  implementation(project(":mockwebserver"))
   implementation(Dependencies.moshi)
 }

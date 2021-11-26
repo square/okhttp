@@ -20,28 +20,8 @@ import org.gradle.api.Project
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.kotlin.dsl.apply
-import org.gradle.kotlin.dsl.extra
 import org.gradle.kotlin.dsl.get
 import org.gradle.kotlin.dsl.withConvention
-
-fun String.publishedArtifactId(): String? {
-  return when (this) {
-    "okhttp-logging-interceptor" -> "logging-interceptor"
-    "mockwebserver" -> "mockwebserver3"
-    "mockwebserver-junit4" -> "mockwebserver3-junit4"
-    "mockwebserver-junit5" -> "mockwebserver3-junit5"
-    "mockwebserver-deprecated" -> "mockwebserver"
-    "okcurl",
-    "okhttp",
-    "okhttp-bom",
-    "okhttp-brotli",
-    "okhttp-dnsoverhttps",
-    "okhttp-sse",
-    "okhttp-tls",
-    "okhttp-urlconnection" -> this
-    else -> null
-  }
-}
 
 fun Project.applyOsgi(vararg bndProperties: String) {
   apply(plugin = "biz.aQute.bnd.builder")
@@ -59,11 +39,10 @@ fun Project.applyOsgi(vararg bndProperties: String) {
  */
 fun Project.baselineJar(version: String = "3.14.1"): File? {
   val originalGroup = group
-  val artifactId = extra["artifactId"]
   return try {
-    val jarFile = "$artifactId-${version}.jar"
+    val jarFile = "$name-$version.jar"
     group = "virtual_group_for_japicmp"
-    val dependency = dependencies.create("$originalGroup:$artifactId:$version@jar")
+    val dependency = dependencies.create("$originalGroup:$name:$version@jar")
     configurations.detachedConfiguration(dependency).files.find { (it.name == jarFile) }
   } catch (e: Exception) {
     null

@@ -4,6 +4,6 @@ plugins {
 
 dependencies {
   implementation(project(":okhttp"))
-  implementation(project(":mockwebserver-deprecated"))
+  implementation(project(":mockwebserver"))
   implementation(Dependencies.jnrUnixsocket)
 }
