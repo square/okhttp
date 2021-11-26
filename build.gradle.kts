@@ -1,4 +1,5 @@
-import java.net.URI
+import com.vanniktech.maven.publish.MavenPublishBaseExtension
+import com.vanniktech.maven.publish.SonatypeHost
 import java.net.URL
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.dokka.gradle.DokkaTask
@@ -18,6 +19,7 @@ buildscript {
     classpath(Dependencies.animalsnifferPlugin)
     classpath(Dependencies.errorpronePlugin)
     classpath(Dependencies.spotlessPlugin)
+    classpath(Dependencies.vanniktechPublishPlugin)
   }
 
   repositories {
@@ -27,9 +29,10 @@ buildscript {
   }
 }
 
+apply(plugin = "com.vanniktech.maven.publish.base")
+
 allprojects {
   group = "com.squareup.okhttp3"
-  project.ext["artifactId"] = project.name.publishedArtifactId()
   version = "5.0.0-SNAPSHOT"
 
   repositories {
@@ -176,101 +179,60 @@ subprojects {
     sourceCompatibility = JavaVersion.VERSION_1_8.toString()
     targetCompatibility = JavaVersion.VERSION_1_8.toString()
   }
-
-  tasks.withType<DokkaTask> {
-    configuration {
-      reportUndocumented = false
-      skipDeprecated = true
-      jdkVersion = 8
-      perPackageOption {
-        prefix = "okhttp3.internal"
-        suppress = true
-      }
-      perPackageOption {
-        prefix = "mockwebserver3.internal"
-        suppress = true
-      }
-      if (project.file("Module.md").exists()) {
-        includes = listOf("Module.md")
-      }
-      externalDocumentationLink {
-        url = URL("https://square.github.io/okio/2.x/okio/")
-        packageListUrl = URL("https://square.github.io/okio/2.x/okio/package-list")
-      }
-    }
-  }
 }
 
 /** Configure publishing and signing for published Java and JavaPlatform subprojects. */
 subprojects {
-  val project = this@subprojects
-  if (project.ext.get("artifactId") == null) return@subprojects
-  val bom = project.ext["artifactId"] == "okhttp-bom"
-
-  if (bom) {
-    apply(plugin = "java-platform")
-  }
-
-  apply(plugin = "maven-publish")
-  apply(plugin = "signing")
-
-  configure<PublishingExtension> {
-    if (!bom) {
-      configure<JavaPluginExtension> {
-        withJavadocJar()
-        withSourcesJar()
+  tasks.withType<DokkaTask>().configureEach {
+    dokkaSourceSets.configureEach {
+      reportUndocumented.set(false)
+      skipDeprecated.set(true)
+      jdkVersion.set(8)
+      perPackageOption {
+        matchingRegex.set("okhttp3\\.internal.*")
+        suppress.set(true)
       }
-    }
-
-    publications {
-      create<MavenPublication>("maven") {
-        groupId = project.group.toString()
-        artifactId = project.ext["artifactId"].toString()
-        version = project.version.toString()
-        if (bom) {
-          from(components["javaPlatform"])
-        } else {
-          from(components["java"])
-        }
-        pom {
-          name.set(project.name)
-          description.set("Square’s meticulous HTTP client for Java and Kotlin.")
-          url.set("https://square.github.io/okhttp/")
-          licenses {
-            license {
-              name.set("The Apache Software License, Version 2.0")
-              url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
-            }
-          }
-          developers {
-            developer {
-              name.set("Square, Inc.")
-            }
-          }
-          scm {
-            connection.set("scm:git:https://github.com/square/okhttp.git")
-            developerConnection.set("scm:git:ssh://git@github.com/square/okhttp.git")
-            url.set("https://github.com/square/okhttp")
-          }
-        }
+      perPackageOption {
+        matchingRegex.set("mockwebserver3\\.internal.*")
+        suppress.set(true)
       }
-    }
-
-    repositories {
-      maven {
-        name = "mavencentral"
-        url = URI("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
-        credentials {
-          username = System.getenv("SONATYPE_NEXUS_USERNAME")
-          password = System.getenv("SONATYPE_NEXUS_PASSWORD")
-        }
+      if (project.file("Module.md").exists()) {
+        includes.from(project.file("Module.md"))
+      }
+      externalDocumentationLink {
+        url.set(URL("https://square.github.io/okio/2.x/okio/"))
+        packageListUrl.set(URL("https://square.github.io/okio/2.x/okio/package-list"))
       }
     }
   }
 
-  val publishing = extensions.getByType<PublishingExtension>()
-  configure<SigningExtension> {
-    sign(publishing.publications["maven"])
+  plugins.withId("com.vanniktech.maven.publish.base") {
+    configure<MavenPublishBaseExtension> {
+      publishToMavenCentral(SonatypeHost.DEFAULT)
+      signAllPublications()
+      pom {
+        name.set(project.name)
+        description.set("Square’s meticulous HTTP client for Java and Kotlin.")
+        url.set("https://square.github.io/okhttp/")
+        licenses {
+          license {
+            name.set("The Apache Software License, Version 2.0")
+            url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+            distribution.set("repo")
+          }
+        }
+        scm {
+          connection.set("scm:git:https://github.com/square/okhttp.git")
+          developerConnection.set("scm:git:ssh://git@github.com/square/okhttp.git")
+          url.set("https://github.com/square/okhttp")
+        }
+        developers {
+          developer {
+            name.set("Square, Inc.")
+          }
+        }
+      }
+    }
   }
 }
 

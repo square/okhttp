@@ -29,7 +29,7 @@ object Versions {
 
 object Dependencies {
   const val kotlinPlugin = "org.jetbrains.kotlin:kotlin-gradle-plugin:${Versions.kotlin}"
-  const val dokkaPlugin = "org.jetbrains.dokka:dokka-gradle-plugin:0.10.1"
+  const val dokkaPlugin = "org.jetbrains.dokka:dokka-gradle-plugin:1.5.31"
   const val androidPlugin = "com.android.tools.build:gradle:7.0.2"
   const val androidJunit5Plugin = "de.mannodermaus.gradle.plugins:android-junit5:1.8.0.0"
   const val graalPlugin = "gradle.plugin.com.palantir.graal:gradle-graal:0.9.0"
@@ -39,6 +39,7 @@ object Dependencies {
   const val animalsnifferPlugin = "ru.vyarus:gradle-animalsniffer-plugin:1.5.3"
   const val errorpronePlugin = "net.ltgt.gradle:gradle-errorprone-plugin:2.0.2"
   const val spotlessPlugin = "com.diffplug.spotless:spotless-plugin-gradle:5.15.0"
+  const val vanniktechPublishPlugin = "com.vanniktech:gradle-maven-publish-plugin:0.18.0"
 
   const val android = "org.robolectric:android-all:12-robolectric-7732740"
   const val animalSniffer = "org.codehaus.mojo:animal-sniffer-annotations:1.20"

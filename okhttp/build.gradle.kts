@@ -1,11 +1,15 @@
 import com.android.build.gradle.internal.tasks.factory.dependsOn
+import com.vanniktech.maven.publish.JavadocJar
+import com.vanniktech.maven.publish.KotlinJvm
+import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import java.nio.charset.StandardCharsets
 import me.champeau.gradle.japicmp.JapicmpTask
 
 plugins {
   kotlin("jvm")
-  id("me.champeau.gradle.japicmp")
   id("org.jetbrains.dokka")
+  id("com.vanniktech.maven.publish.base")
+  id("me.champeau.gradle.japicmp")
 }
 
 project.applyOsgi(
@@ -56,16 +60,6 @@ normalization {
   }
 }
 
-tasks.register<Copy>("copyJavaTemplates") {
-  from("src/main/java-templates")
-  into("$buildDir/generated/sources/java-templates/java/main")
-  expand("projectVersion" to project.version)
-  filteringCharset = StandardCharsets.UTF_8.toString()
-}.let {
-  tasks.compileKotlin.dependsOn(it)
-  tasks.named("sourcesJar").dependsOn(it)
-}
-
 // Expose OSGi jars to the test environment.
 configurations {
   create("osgiTestDeploy")
@@ -95,11 +89,11 @@ dependencies {
   testImplementation(project(":okhttp-testing-support"))
   testImplementation(project(":okhttp-tls"))
   testImplementation(project(":okhttp-urlconnection"))
+  testImplementation(project(":mockwebserver3"))
+  testImplementation(project(":mockwebserver3-junit4"))
+  testImplementation(project(":mockwebserver3-junit5"))
   testImplementation(project(":mockwebserver"))
-  testImplementation(project(":mockwebserver-junit4"))
-  testImplementation(project(":mockwebserver-junit5"))
-  testImplementation(project(":mockwebserver-deprecated"))
-  testImplementation(project(":okhttp-logging-interceptor"))
+  testImplementation(project(":logging-interceptor"))
   testImplementation(project(":okhttp-brotli"))
   testImplementation(project(":okhttp-dnsoverhttps"))
   testImplementation(project(":okhttp-sse"))
@@ -114,13 +108,6 @@ dependencies {
   add("osgiTestDeploy", Dependencies.equinox)
   add("osgiTestDeploy", Dependencies.kotlinStdlibOsgi)
   testCompileOnly(Dependencies.jsr305)
-}
-
-afterEvaluate {
-  tasks.dokka {
-    outputDirectory = "$rootDir/docs/4.x"
-    outputFormat = "gfm"
-  }
 }
 
 tasks.register<JapicmpTask>("japicmp") {
@@ -185,3 +172,18 @@ tasks.register<JapicmpTask>("japicmp") {
     "okhttp3.Request\$Builder#delete()",
   )
 }.let(tasks.check::dependsOn)
+
+configure<MavenPublishBaseExtension> {
+  configure(KotlinJvm(javadocJar = JavadocJar.Dokka("dokkaGfm")))
+}
+
+tasks.register<Copy>("copyJavaTemplates") {
+  from("src/main/java-templates")
+  into("$buildDir/generated/sources/java-templates/java/main")
+  expand("projectVersion" to project.version)
+  filteringCharset = StandardCharsets.UTF_8.toString()
+}.let {
+  tasks.compileKotlin.dependsOn(it)
+  tasks.named("javaSourcesJar").dependsOn(it)
+}
+
