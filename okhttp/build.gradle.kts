@@ -1,7 +1,6 @@
 import com.android.build.gradle.internal.tasks.factory.dependsOn
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinJvm
-import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import java.nio.charset.StandardCharsets
 import me.champeau.gradle.japicmp.JapicmpTask
 
@@ -61,12 +60,10 @@ normalization {
 }
 
 // Expose OSGi jars to the test environment.
-configurations {
-  create("osgiTestDeploy")
-}
+val osgiTestDeploy: Configuration by configurations.creating
 
 tasks.register<Copy>("copyOsgiTestDeployment") {
-  from(configurations["osgiTestDeploy"])
+  from(osgiTestDeploy)
   into("$buildDir/resources/test/okhttp3/osgi/deployments")
 }.let(tasks.test::dependsOn)
 
@@ -173,7 +170,7 @@ tasks.register<JapicmpTask>("japicmp") {
   )
 }.let(tasks.check::dependsOn)
 
-configure<MavenPublishBaseExtension> {
+mavenPublishing {
   configure(KotlinJvm(javadocJar = JavadocJar.Dokka("dokkaGfm")))
 }
 
@@ -184,6 +181,6 @@ tasks.register<Copy>("copyJavaTemplates") {
   filteringCharset = StandardCharsets.UTF_8.toString()
 }.let {
   tasks.compileKotlin.dependsOn(it)
-  tasks.named("javaSourcesJar").dependsOn(it)
+  tasks["javaSourcesJar"].dependsOn(it)
 }
 

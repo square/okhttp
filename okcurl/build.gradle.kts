@@ -1,7 +1,6 @@
 import com.android.build.gradle.internal.tasks.factory.dependsOn
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinJvm
-import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import java.nio.charset.StandardCharsets
 import org.apache.tools.ant.taskdefs.condition.Os
 
@@ -62,7 +61,7 @@ graal {
   }
 }
 
-configure<MavenPublishBaseExtension> {
+mavenPublishing {
   configure(KotlinJvm(javadocJar = JavadocJar.Dokka("dokkaGfm")))
 }
 
@@ -73,5 +72,5 @@ tasks.register<Copy>("copyResourcesTemplates") {
   filteringCharset = StandardCharsets.UTF_8.toString()
 }.let {
   tasks.processResources.dependsOn(it)
-  tasks.named("javaSourcesJar").dependsOn(it)
+  tasks["javaSourcesJar"].dependsOn(it)
 }

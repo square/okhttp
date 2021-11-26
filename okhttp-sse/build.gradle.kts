@@ -1,7 +1,6 @@
 import com.android.build.gradle.internal.tasks.factory.dependsOn
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinJvm
-import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import me.champeau.gradle.japicmp.JapicmpTask
 
 plugins {
@@ -43,6 +42,6 @@ tasks.register<JapicmpTask>("japicmp") {
   )
 }.let(tasks.check::dependsOn)
 
-configure<MavenPublishBaseExtension> {
+mavenPublishing {
   configure(KotlinJvm(javadocJar = JavadocJar.Dokka("dokkaGfm")))
 }

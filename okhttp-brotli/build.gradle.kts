@@ -1,6 +1,5 @@
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinJvm
-import com.vanniktech.maven.publish.MavenPublishBaseExtension
 
 plugins {
   kotlin("jvm")
@@ -25,6 +24,6 @@ dependencies {
   testImplementation(Dependencies.assertj)
 }
 
-configure<MavenPublishBaseExtension> {
+mavenPublishing {
   configure(KotlinJvm(javadocJar = JavadocJar.Dokka("dokkaGfm")))
 }
