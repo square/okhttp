@@ -32,7 +32,7 @@ afterEvaluate {
 
 tasks.register<JapicmpTask>("japicmp") {
   dependsOn("jar")
-  oldClasspath = files(Projects.baselineJar(project))
+  oldClasspath = files(project.baselineJar())
   newClasspath = files(tasks.jar.get().archiveFile)
   isOnlyBinaryIncompatibleModified = true
   isFailOnModification = true

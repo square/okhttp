@@ -5,7 +5,7 @@ plugins {
 dependencies {
   constraints {
     project.rootProject.subprojects.forEach { subproject ->
-      val artifactId = Projects.publishedArtifactId(subproject.name)
+      val artifactId = subproject.name.publishedArtifactId()
       if (artifactId != null && artifactId != "okhttp-bom") {
         api(subproject)
       }

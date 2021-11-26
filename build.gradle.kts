@@ -29,7 +29,7 @@ buildscript {
 
 allprojects {
   group = "com.squareup.okhttp3"
-  project.ext["artifactId"] = Projects.publishedArtifactId(project.name)
+  project.ext["artifactId"] = project.name.publishedArtifactId()
   version = "5.0.0-SNAPSHOT"
 
   repositories {
@@ -38,7 +38,7 @@ allprojects {
     maven(url = "https://dl.bintray.com/kotlin/dokka")
   }
 
-  val downloadDependencies by tasks.creating {
+  tasks.create("downloadDependencies") {
     description = "Download all dependencies to the Gradle cache"
     doLast {
       for (configuration in configurations) {
@@ -73,7 +73,7 @@ subprojects {
   apply(plugin = "biz.aQute.bnd.builder")
 
   tasks.withType<JavaCompile> {
-    options.encoding = "UTF-8"
+    options.encoding = Charsets.UTF_8.toString()
   }
 
   configure<JavaPluginExtension> {
@@ -98,14 +98,14 @@ subprojects {
     configure<CheckstyleExtension> {
       config = resources.text.fromArchiveEntry(checkstyleConfig, "google_checks.xml")
       toolVersion = Versions.checkStyle
-      sourceSets = listOf(project.sourceSets.getByName("main"))
+      sourceSets = listOf(project.sourceSets["main"])
     }
   }
 
   // Animal Sniffer confirms we generally don't use APIs not on Java 8.
   configure<AnimalSnifferExtension> {
     annotation = "okhttp3.internal.SuppressSignatureCheck"
-    sourceSets = listOf(project.sourceSets.getByName("main"))
+    sourceSets = listOf(project.sourceSets["main"])
   }
   val signature by configurations.getting
   dependencies {
@@ -115,7 +115,7 @@ subprojects {
 
   tasks.withType<KotlinCompile> {
     kotlinOptions {
-      jvmTarget = "1.8"
+      jvmTarget = JavaVersion.VERSION_1_8.toString()
       freeCompilerArgs = listOf(
         "-Xjvm-default=compatibility",
         "-Xopt-in=kotlin.RequiresOptIn"
@@ -153,7 +153,7 @@ subprojects {
 
   if (platform == "jdk8alpn") {
     // Add alpn-boot on Java 8 so we can use HTTP/2 without a stable API.
-    val alpnBootVersion = Alpn.alpnBootVersion()
+    val alpnBootVersion = alpnBootVersion()
     if (alpnBootVersion != null) {
       val alpnBootJar = configurations.detachedConfiguration(
         dependencies.create("org.mortbay.jetty.alpn:alpn-boot:$alpnBootVersion")
@@ -223,14 +223,14 @@ subprojects {
     }
 
     publications {
-      val maven by creating(MavenPublication::class) {
+      create<MavenPublication>("maven") {
         groupId = project.group.toString()
         artifactId = project.ext["artifactId"].toString()
         version = project.version.toString()
         if (bom) {
-          from(components.getByName("javaPlatform"))
+          from(components["javaPlatform"])
         } else {
-          from(components.getByName("java"))
+          from(components["java"])
         }
         pom {
           name.set(project.name)
@@ -239,7 +239,7 @@ subprojects {
           licenses {
             license {
               name.set("The Apache Software License, Version 2.0")
-              url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+              url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
             }
           }
           developers {
@@ -270,7 +270,7 @@ subprojects {
 
   val publishing = extensions.getByType<PublishingExtension>()
   configure<SigningExtension> {
-    sign(publishing.publications.getByName("maven"))
+    sign(publishing.publications["maven"])
   }
 }
 
