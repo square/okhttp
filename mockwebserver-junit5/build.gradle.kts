@@ -31,6 +31,5 @@ dependencies {
 }
 
 configure<MavenPublishBaseExtension> {
-  configure(KotlinJvm(javadocJar = JavadocJar.Dokka("dokkaGfm"))
-  )
+  configure(KotlinJvm(javadocJar = JavadocJar.Dokka("dokkaGfm")))
 }
