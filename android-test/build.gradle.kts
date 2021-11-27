@@ -61,7 +61,7 @@ dependencies {
   androidTestImplementation(project(":mockwebserver3-junit5"))
   androidTestImplementation(project(":okhttp-brotli"))
   androidTestImplementation(project(":okhttp-dnsoverhttps"))
-  androidTestImplementation(project(":okhttp-logging-interceptor"))
+  androidTestImplementation(project(":logging-interceptor"))
   androidTestImplementation(project(":okhttp-sse"))
   androidTestImplementation(project(":okhttp-testing-support"))
   androidTestImplementation(project(":okhttp-tls"))
