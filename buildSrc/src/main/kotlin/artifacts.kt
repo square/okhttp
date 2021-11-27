@@ -14,20 +14,19 @@
  * limitations under the License.
  */
 
-import aQute.bnd.gradle.BundleTaskConvention
+import aQute.bnd.gradle.BundleTaskExtension
 import java.io.File
 import org.gradle.api.Project
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.kotlin.dsl.apply
 import org.gradle.kotlin.dsl.get
-import org.gradle.kotlin.dsl.withConvention
 
 fun Project.applyOsgi(vararg bndProperties: String) {
   apply(plugin = "biz.aQute.bnd.builder")
-  sourceSets.create("osgi")
-  tasks["jar"].withConvention(BundleTaskConvention::class) {
-    setClasspath(sourceSets["osgi"].compileClasspath + project.sourceSets["main"].compileClasspath)
+  val osgi = sourceSets.create("osgi")
+  tasks["jar"].extensions.configure<BundleTaskExtension>(BundleTaskExtension.NAME) {
+    setClasspath(osgi.compileClasspath + sourceSets["main"].compileClasspath)
     bnd(*bndProperties)
   }
   dependencies.add("osgiApi", Dependencies.kotlinStdlibOsgi)
@@ -52,4 +51,4 @@ fun Project.baselineJar(version: String = "3.14.1"): File? {
 }
 
 val Project.sourceSets: SourceSetContainer
-  get() = (this as ExtensionAware).extensions.getByName("sourceSets") as SourceSetContainer
+  get() = (this as ExtensionAware).extensions["sourceSets"] as SourceSetContainer
