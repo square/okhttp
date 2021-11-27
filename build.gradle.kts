@@ -90,7 +90,7 @@ subprojects {
     exclude("**/CipherSuite.java")
   }
 
-  val checkstyleConfig by configurations.creating
+  val checkstyleConfig: Configuration by configurations.creating
   dependencies {
     checkstyleConfig(Dependencies.checkStyle) {
       isTransitive = false
@@ -110,7 +110,7 @@ subprojects {
     annotation = "okhttp3.internal.SuppressSignatureCheck"
     sourceSets = listOf(project.sourceSets["main"])
   }
-  val signature by configurations.getting
+  val signature: Configuration by configurations.getting
   dependencies {
     signature(Dependencies.signatureAndroid21)
     signature(Dependencies.signatureJava18)
@@ -129,7 +129,7 @@ subprojects {
   val platform = System.getProperty("okhttp.platform", "jdk9")
   val testJavaVersion = System.getProperty("test.java.version", "11").toInt()
 
-  val testRuntimeOnly by configurations.getting
+  val testRuntimeOnly: Configuration by configurations.getting
   dependencies {
     testRuntimeOnly(Dependencies.junit5JupiterEngine)
     testRuntimeOnly(Dependencies.junit5VintageEngine)
@@ -236,6 +236,6 @@ subprojects {
   }
 }
 
-tasks.withType<Wrapper> {
+tasks.wrapper {
   distributionType = Wrapper.DistributionType.ALL
 }
