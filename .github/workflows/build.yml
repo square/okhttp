@@ -305,7 +305,7 @@ jobs:
         api-level:
           - 21
           - 28
-          - 31
+          - 30
 
     steps:
       - name: Checkout
@@ -320,9 +320,14 @@ jobs:
           distribution: 'adopt'
           java-version: 11
 
-      - name: Test
-        run: |
-          ./gradlew -PandroidBuild :android-test:pixel2api${{ matrix.api-level }}Check -Pandroid.sdk.channel=3
+      - name: Run Tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          target: playstore
+          script: ./gradlew -PandroidBuild :android-test:connectedCheck
+        env:
+          API_LEVEL: ${{ matrix.api-level }}
 
   testandroidregression:
     runs-on: macos-latest
@@ -345,6 +350,11 @@ jobs:
           distribution: 'adopt'
           java-version: 11
 
-      - name: Test
-        run: |
-          ./gradlew -PandroidBuild :regression-test:pixel2api31Check -Pandroid.sdk.channel=3
+      - name: Run Tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          target: playstore
+          script: ./gradlew -PandroidBuild :regression-test:connectedCheck
+        env:
+          API_LEVEL: ${{ matrix.api-level }}
