@@ -38,7 +38,7 @@ android {
       create<ManagedVirtualDevice>("pixel2api31") {
         device = "Pixel 2"
         apiLevel = 31
-        systemImageSource = "google"
+        systemImageSource = "aosp-atd"
         abi = "x86"
       }
     }

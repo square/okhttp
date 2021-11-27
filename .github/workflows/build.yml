@@ -322,7 +322,7 @@ jobs:
 
       - name: Test
         run: |
-          ./gradlew -PandroidBuild :android-test:pixel2api${{ matrix.api-level }}Check
+          ./gradlew -PandroidBuild :android-test:pixel2api${{ matrix.api-level }}Check -Pandroid.sdk.channel=3
 
   testandroidregression:
     runs-on: macos-latest
@@ -347,4 +347,4 @@ jobs:
 
       - name: Test
         run: |
-          ./gradlew -PandroidBuild :regression-test:pixel2api31Check
+          ./gradlew -PandroidBuild :regression-test:pixel2api31Check -Pandroid.sdk.channel=3
