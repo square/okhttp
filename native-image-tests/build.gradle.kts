@@ -14,7 +14,7 @@ dependencies {
   implementation(project(":okhttp"))
   implementation(project(":okhttp-brotli"))
   implementation(project(":okhttp-dnsoverhttps"))
-  implementation(project(":okhttp-logging-interceptor"))
+  implementation(project(":logging-interceptor"))
   implementation(project(":okhttp-sse"))
   implementation(project(":okhttp-testing-support"))
   implementation(project(":okhttp-tls"))
