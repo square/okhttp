@@ -38,7 +38,6 @@ allprojects {
   repositories {
     mavenCentral()
     google()
-    maven(url = "https://dl.bintray.com/kotlin/dokka")
   }
 
   tasks.create("downloadDependencies") {
