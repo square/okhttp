@@ -183,4 +183,3 @@ tasks.register<Copy>("copyJavaTemplates") {
   tasks.compileKotlin.dependsOn(it)
   tasks["javaSourcesJar"].dependsOn(it)
 }
-
