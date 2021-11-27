@@ -215,7 +215,6 @@ public final class ClientAuthTest {
       // Conscrypt, JDK 8 (>= 292), JDK 9
     } catch (IOException expected) {
       assertThat(expected.getMessage()).isEqualTo("exhausted all routes");
-      assertThat(expected.getSuppressed()).isNotEmpty();
     }
   }
 
@@ -274,7 +273,6 @@ public final class ClientAuthTest {
       // It didn't fail until it reached the application layer.
     } catch (IOException expected) {
       assertThat(expected.getMessage()).isEqualTo("exhausted all routes");
-      assertThat(expected.getSuppressed()).isNotEmpty();
     }
   }
 
