@@ -47,7 +47,7 @@ tasks.shadowJar {
 graal {
   mainClass("okhttp3.curl.Main")
   outputName("okcurl")
-  graalVersion("21.2.0")
+  graalVersion(Versions.graal)
   javaVersion("11")
 
   option("--no-fallback")
