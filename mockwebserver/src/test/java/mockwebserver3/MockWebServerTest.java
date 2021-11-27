@@ -27,6 +27,7 @@ import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -34,8 +35,11 @@ import javax.net.ssl.HttpsURLConnection;
 import okhttp3.Handshake;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.RecordingHostnameVerifier;
+import okhttp3.Request;
+import okhttp3.Response;
 import okhttp3.TestUtil;
 import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
@@ -602,6 +606,25 @@ public final class MockWebServerTest {
     assertThat(handshake.localCertificates().size()).isEqualTo(1);
     assertThat(handshake.peerPrincipal()).isNotNull();
     assertThat(handshake.peerCertificates().size()).isEqualTo(1);
+  }
+
+  @Test public void proxiedRequestGetsCorrectRequestUrl() throws Exception {
+    server.enqueue(new MockResponse().setBody("Result"));
+
+    OkHttpClient proxiedClient = new OkHttpClient.Builder()
+      .proxy(server.toProxyAddress())
+      .readTimeout(Duration.ofMillis(100))
+      .build();
+
+    Request request = new Request.Builder().url("http://android.com/").build();
+
+    try (Response response = proxiedClient.newCall(request).execute()) {
+      assertThat(response.body().string()).isEqualTo("Result");
+    }
+
+    RecordedRequest recordedRequest = server.takeRequest();
+
+    assertThat(recordedRequest.getRequestUrl()).isEqualTo(HttpUrl.get("http://android.com/"));
   }
 
   @Test
