@@ -62,9 +62,9 @@ android {
         abi = "x86"
       }
 
-      create<ManagedVirtualDevice>("pixel2api30") {
+      create<ManagedVirtualDevice>("pixel2api31") {
         device = "Pixel 2"
-        apiLevel = 30
+        apiLevel = 31
         systemImageSource = "google"
         abi = "x86"
       }

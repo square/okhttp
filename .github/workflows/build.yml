@@ -304,7 +304,8 @@ jobs:
       matrix:
         api-level:
           - 21
-          - 29
+          - 28
+          - 31
 
     steps:
       - name: Checkout
@@ -319,47 +320,11 @@ jobs:
           distribution: 'adopt'
           java-version: 11
 
-      - name: Run Tests
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: ${{ matrix.api-level }}
-          script: ./gradlew -PandroidBuild :android-test:connectedCheck
-        env:
-          API_LEVEL: ${{ matrix.api-level }}
+      - name: Test
+        run: |
+          ./gradlew -PandroidBuild :android-test:pixel2api${{ matrix.api-level }}Check
 
   testandroidregression:
-    runs-on: macos-latest
-    timeout-minutes: 10
-    if: contains(github.event.pull_request.labels.*.name, 'android-regression')
-
-    strategy:
-      fail-fast: false
-      matrix:
-        api-level:
-          - 29
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@v1
-
-      - name: Configure JDK
-        uses: actions/setup-java@v2
-        with:
-          distribution: 'adopt'
-          java-version: 11
-
-      - name: Run Tests
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: ${{ matrix.api-level }}
-          script: ./gradlew -PandroidBuild :regression-test:connectedCheck
-        env:
-          API_LEVEL: ${{ matrix.api-level }}
-
-  testandroidregressionUnified:
     runs-on: macos-latest
     timeout-minutes: 10
     if: contains(github.event.pull_request.labels.*.name, 'android-regression')
@@ -382,4 +347,4 @@ jobs:
 
       - name: Test
         run: |
-          ./gradlew -PandroidBuild :regression-test:pixel2api29Check
+          ./gradlew -PandroidBuild :regression-test:pixel2api31Check
