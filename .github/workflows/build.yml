@@ -324,7 +324,7 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
-          target: playstore
+          target: google_apis
           script: ./gradlew -PandroidBuild :android-test:connectedCheck
         env:
           API_LEVEL: ${{ matrix.api-level }}
@@ -354,7 +354,7 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
-          target: playstore
+          target: google_apis
           script: ./gradlew -PandroidBuild :regression-test:connectedCheck
         env:
           API_LEVEL: ${{ matrix.api-level }}
