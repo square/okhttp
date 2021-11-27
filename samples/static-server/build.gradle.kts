@@ -14,7 +14,7 @@ tasks.jar {
 }
 
 dependencies {
-  implementation(project(":mockwebserver-deprecated"))
+  implementation(project(":mockwebserver"))
 }
 
 tasks.shadowJar {

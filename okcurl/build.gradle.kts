@@ -1,10 +1,14 @@
 import com.android.build.gradle.internal.tasks.factory.dependsOn
+import com.vanniktech.maven.publish.JavadocJar
+import com.vanniktech.maven.publish.KotlinJvm
 import java.nio.charset.StandardCharsets
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
   kotlin("jvm")
   kotlin("kapt")
+  id("org.jetbrains.dokka")
+  id("com.vanniktech.maven.publish.base")
   id("com.palantir.graal")
   id("com.github.johnrengelman.shadow")
 }
@@ -23,19 +27,9 @@ sourceSets {
   }
 }
 
-tasks.register<Copy>("copyResourcesTemplates") {
-  from("src/main/resources-templates")
-  into("$buildDir/generated/resources-templates")
-  expand("projectVersion" to "${project.version}")
-  filteringCharset = StandardCharsets.UTF_8.toString()
-}.let {
-  tasks.processResources.dependsOn(it)
-  tasks.named("sourcesJar").dependsOn(it)
-}
-
 dependencies {
   api(project(":okhttp"))
-  api(project(":okhttp-logging-interceptor"))
+  api(project(":logging-interceptor"))
   implementation(Dependencies.picocli)
   implementation(Dependencies.guava)
 
@@ -65,4 +59,18 @@ graal {
     // see https://www.graalvm.org/docs/reference-manual/native-image/#prerequisites
     windowsVsVarsPath("C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\\Auxiliary\\Build\\vcvars64.bat")
   }
+}
+
+mavenPublishing {
+  configure(KotlinJvm(javadocJar = JavadocJar.Dokka("dokkaGfm")))
+}
+
+tasks.register<Copy>("copyResourcesTemplates") {
+  from("src/main/resources-templates")
+  into("$buildDir/generated/resources-templates")
+  expand("projectVersion" to "${project.version}")
+  filteringCharset = StandardCharsets.UTF_8.toString()
+}.let {
+  tasks.processResources.dependsOn(it)
+  tasks["javaSourcesJar"].dependsOn(it)
 }

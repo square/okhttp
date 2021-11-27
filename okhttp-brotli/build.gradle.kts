@@ -1,10 +1,13 @@
+import com.vanniktech.maven.publish.JavadocJar
+import com.vanniktech.maven.publish.KotlinJvm
+
 plugins {
   kotlin("jvm")
   id("org.jetbrains.dokka")
+  id("com.vanniktech.maven.publish.base")
 }
 
-Projects.applyOsgi(
-  project,
+project.applyOsgi(
   "Export-Package: okhttp3.brotli",
   "Automatic-Module-Name: okhttp3.brotli",
   "Bundle-SymbolicName: com.squareup.okhttp3.brotli"
@@ -21,9 +24,6 @@ dependencies {
   testImplementation(Dependencies.assertj)
 }
 
-afterEvaluate {
-  tasks.dokka {
-    outputDirectory = "$rootDir/docs/4.x"
-    outputFormat = "gfm"
-  }
+mavenPublishing {
+  configure(KotlinJvm(javadocJar = JavadocJar.Dokka("dokkaGfm")))
 }
