@@ -37,7 +37,6 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
     var invokeStartEvent = true
     var responseBuilder: Response.Builder? = null
     var sendRequestException: IOException? = null
-
     try {
       exchange.writeRequestHeaders(request)
 

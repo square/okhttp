@@ -55,9 +55,6 @@ class ServerTruncatesRequestTest(
     platform.assumeNotOpenJSSE()
     platform.assumeHttp2Support()
     platform.assumeNotBouncyCastle()
-
-    // https://github.com/square/okhttp/issues/6853
-    platform.assumeNotAndroid()
   }
 
   @Test fun serverTruncatesRequestOnLongPostHttp1() {
