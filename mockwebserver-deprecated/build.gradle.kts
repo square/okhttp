@@ -48,5 +48,5 @@ tasks.register<JapicmpTask>("japicmp") {
 
 
 mavenPublishing {
-  configure(KotlinJvm(javadocJar = JavadocJar.Dokka("dokkaGfm")))
+  configure(KotlinJvm(javadocJar = JavadocJar.Dokka("dokkaJavadoc")))
 }
