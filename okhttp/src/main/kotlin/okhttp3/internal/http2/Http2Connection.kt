@@ -150,6 +150,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     if (builder.pingIntervalMillis != 0) {
       val pingIntervalNanos = TimeUnit.MILLISECONDS.toNanos(builder.pingIntervalMillis.toLong())
       writerQueue.schedule("$connectionName ping", pingIntervalNanos) {
+        println("Http2 connection writerQueue")
         val failDueToMissingPong = synchronized(this@Http2Connection) {
           if (intervalPongsReceived < intervalPingsSent) {
             return@synchronized true
@@ -162,6 +163,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
           failConnection(null)
           return@schedule -1L
         } else {
+          println("Http2 writePing")
           writePing(false, INTERVAL_PING, 0)
           return@schedule pingIntervalNanos
         }
@@ -616,6 +618,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
       try {
         reader.readConnectionPreface(this)
         while (reader.nextFrame(false, this)) {
+          println("reader.nextFrame")
         }
         connectionErrorCode = ErrorCode.NO_ERROR
         streamErrorCode = ErrorCode.CANCEL

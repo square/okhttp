@@ -56,18 +56,24 @@ class TaskRunner(
   private val runnable: Runnable = object : Runnable {
     override fun run() {
       while (true) {
+        println("TaskRunner.a")
         val task = synchronized(this@TaskRunner) {
           awaitTaskToRun()
         } ?: return
 
+        println("TaskRunner.b")
+
         logger.logElapsed(task, task.queue!!) {
           var completedNormally = false
           try {
+            println("TaskRunner.c")
             runTask(task)
+            println("TaskRunner.d")
             completedNormally = true
           } finally {
             // If the task is crashing start another thread to service the queues.
             if (!completedNormally) {
+              println("TaskRunner restart")
               backend.execute(this)
             }
           }
@@ -90,6 +96,7 @@ class TaskRunner(
     if (coordinatorWaiting) {
       backend.coordinatorNotify(this@TaskRunner)
     } else {
+      println("TaskRunner kickCoordinator")
       backend.execute(runnable)
     }
   }
@@ -197,6 +204,9 @@ class TaskRunner(
 
           // Also start another thread if there's more work or scheduling to do.
           if (multipleReadyTasks || !coordinatorWaiting && readyQueues.isNotEmpty()) {
+
+            println("TaskRunner submitting")
+
             backend.execute(runnable)
           }
 
