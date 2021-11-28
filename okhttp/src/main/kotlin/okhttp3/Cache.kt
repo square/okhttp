@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.io.Closeable
 import java.io.File
 import java.io.Flushable
@@ -425,7 +426,7 @@ class Cache internal constructor(
   }
 
   private class Entry {
-    private val url: String
+    private val url: HttpUrl
     private val varyHeaders: Headers
     private val requestMethod: String
     private val protocol: Protocol
@@ -436,7 +437,7 @@ class Cache internal constructor(
     private val sentRequestMillis: Long
     private val receivedResponseMillis: Long
 
-    private val isHttps: Boolean get() = url.startsWith("https://")
+    private val isHttps: Boolean get() = url.scheme == "https"
 
     /**
      * Reads an entry from an input stream. A typical entry looks like this:
@@ -490,9 +491,14 @@ class Cache internal constructor(
      * optional. If present, it contains the TLS version.
      */
     @Throws(IOException::class) constructor(rawSource: Source) {
-      try {
+      rawSource.use {
         val source = rawSource.buffer()
-        url = source.readUtf8LineStrict()
+        val urlLine = source.readUtf8LineStrict()
+        // Choice here is between failing with a correct RuntimeException
+        // or mostly silently with an IOException
+        url = urlLine.toHttpUrlOrNull() ?: throw IOException("Cache corruption for $urlLine").also {
+          Platform.get().log("cache corruption", Platform.WARN, it)
+        }
         requestMethod = source.readUtf8LineStrict()
         val varyHeadersBuilder = Headers.Builder()
         val varyRequestHeaderLineCount = readInt(source)
@@ -536,13 +542,11 @@ class Cache internal constructor(
         } else {
           handshake = null
         }
-      } finally {
-        rawSource.close()
       }
     }
 
     constructor(response: Response) {
-      this.url = response.request.url.toString()
+      this.url = response.request.url
       this.varyHeaders = response.varyHeaders()
       this.requestMethod = response.request.method
       this.protocol = response.protocol
@@ -557,7 +561,7 @@ class Cache internal constructor(
     @Throws(IOException::class)
     fun writeTo(editor: DiskLruCache.Editor) {
       editor.newSink(ENTRY_METADATA).buffer().use { sink ->
-        sink.writeUtf8(url).writeByte('\n'.toInt())
+        sink.writeUtf8(url.toString()).writeByte('\n'.toInt())
         sink.writeUtf8(requestMethod).writeByte('\n'.toInt())
         sink.writeDecimalLong(varyHeaders.size.toLong()).writeByte('\n'.toInt())
         for (i in 0 until varyHeaders.size) {
@@ -618,8 +622,8 @@ class Cache internal constructor(
     private fun writeCertList(sink: BufferedSink, certificates: List<Certificate>) {
       try {
         sink.writeDecimalLong(certificates.size.toLong()).writeByte('\n'.toInt())
-        for (i in 0 until certificates.size) {
-          val bytes = certificates[i].encoded
+        for (element in certificates) {
+          val bytes = element.encoded
           val line = bytes.toByteString().base64()
           sink.writeUtf8(line).writeByte('\n'.toInt())
         }
@@ -629,7 +633,7 @@ class Cache internal constructor(
     }
 
     fun matches(request: Request, response: Response): Boolean {
-      return url == request.url.toString() &&
+      return url == request.url &&
           requestMethod == request.method &&
           varyMatches(response, varyHeaders, request)
     }
