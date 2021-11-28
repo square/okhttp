@@ -1,12 +1,16 @@
 import com.android.build.gradle.internal.tasks.factory.dependsOn
+import com.vanniktech.maven.publish.JavadocJar
+import com.vanniktech.maven.publish.KotlinJvm
 import me.champeau.gradle.japicmp.JapicmpTask
 
 plugins {
+  kotlin("jvm")
+  id("org.jetbrains.dokka")
+  id("com.vanniktech.maven.publish.base")
   id("me.champeau.gradle.japicmp")
 }
 
-Projects.applyOsgi(
-  project,
+project.applyOsgi(
   "Export-Package: okhttp3.sse",
   "Automatic-Module-Name: okhttp3.sse",
   "Bundle-SymbolicName: com.squareup.okhttp3.sse"
@@ -17,23 +21,16 @@ dependencies {
   compileOnly(Dependencies.jsr305)
 
   testImplementation(project(":okhttp-testing-support"))
-  testImplementation(project(":mockwebserver"))
-  testImplementation(project(":mockwebserver-junit5"))
+  testImplementation(project(":mockwebserver3"))
+  testImplementation(project(":mockwebserver3-junit5"))
   testImplementation(Dependencies.junit)
   testImplementation(Dependencies.assertj)
   testCompileOnly(Dependencies.jsr305)
 }
 
-afterEvaluate {
-  tasks.dokka {
-    outputDirectory = "$rootDir/docs/4.x"
-    outputFormat = "gfm"
-  }
-}
-
 tasks.register<JapicmpTask>("japicmp") {
   dependsOn("jar")
-  oldClasspath = files(Projects.baselineJar(project))
+  oldClasspath = files(project.baselineJar())
   newClasspath = files(tasks.jar.get().archiveFile)
   isOnlyBinaryIncompatibleModified = true
   isFailOnModification = true
@@ -44,3 +41,7 @@ tasks.register<JapicmpTask>("japicmp") {
     "okhttp3.internal.sse"
   )
 }.let(tasks.check::dependsOn)
+
+mavenPublishing {
+  configure(KotlinJvm(javadocJar = JavadocJar.Dokka("dokkaGfm")))
+}

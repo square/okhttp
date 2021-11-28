@@ -178,7 +178,7 @@ public final class SocketRecorder {
         }
 
         // TLS extensions were used; replace with the real SSLSocket to make Jetty ALPN happy.
-        putMethod.invoke(null, delegate, providerInstance);
+        putMethod.invoke(null, getDelegate(), providerInstance);
         super.startHandshake();
       } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
         throw new AssertionError();
@@ -195,11 +195,11 @@ public final class SocketRecorder {
       }
     }
 
-    @Override public InputStream getInputStream() throws IOException {
+    @Override public InputStream getInputStream() {
       return inputStream;
     }
 
-    @Override public OutputStream getOutputStream() throws IOException {
+    @Override public OutputStream getOutputStream() {
       return outputStream;
     }
   }

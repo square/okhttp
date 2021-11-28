@@ -1,3 +1,12 @@
+import com.vanniktech.maven.publish.JavadocJar
+import com.vanniktech.maven.publish.KotlinJvm
+
+plugins {
+  kotlin("jvm")
+  id("org.jetbrains.dokka")
+  id("com.vanniktech.maven.publish.base")
+}
+
 tasks {
   jar {
     manifest {
@@ -11,7 +20,7 @@ tasks {
 }
 
 dependencies {
-  api(project(":mockwebserver"))
+  api(project(":mockwebserver3"))
   api(Dependencies.junit5Api)
   compileOnly(Dependencies.animalSniffer)
 
@@ -20,9 +29,6 @@ dependencies {
   testImplementation(Dependencies.kotlinJunit5)
 }
 
-afterEvaluate {
-  tasks.dokka {
-    outputDirectory = "$rootDir/docs/4.x"
-    outputFormat = "gfm"
-  }
+mavenPublishing {
+  configure(KotlinJvm(javadocJar = JavadocJar.Dokka("dokkaGfm")))
 }

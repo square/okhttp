@@ -28,18 +28,20 @@ import okhttp3.internal.connection.RealCall
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSourceListener
 
-class RealEventSource(
+internal class RealEventSource(
   private val request: Request,
   private val listener: EventSourceListener
 ) : EventSource, ServerSentEventReader.Callback, Callback {
-  private lateinit var call: RealCall
+  private var call: RealCall? = null
+  @Volatile private var canceled = false
 
   fun connect(client: OkHttpClient) {
     val client = client.newBuilder()
         .eventListener(EventListener.NONE)
         .build()
-    call = client.newCall(request) as RealCall
-    call.enqueue(this)
+    val realCall = client.newCall(request) as RealCall
+    call = realCall
+    realCall.enqueue(this)
   }
 
   override fun onResponse(call: Call, response: Response) {
@@ -62,7 +64,7 @@ class RealEventSource(
       }
 
       // This is a long-lived response. Cancel full-call timeouts.
-      call.timeoutEarlyExit()
+      call?.timeoutEarlyExit()
 
       // Replace the body with an empty one so the callbacks can't see real data.
       val response = response.newBuilder()
@@ -71,14 +73,24 @@ class RealEventSource(
 
       val reader = ServerSentEventReader(body.source(), this)
       try {
-        listener.onOpen(this, response)
-        while (reader.processNextEvent()) {
+        if (!canceled) {
+          listener.onOpen(this, response)
+          while (!canceled && reader.processNextEvent()) {
+          }
         }
       } catch (e: Exception) {
-        listener.onFailure(this, e, response)
+        val exception = when {
+          canceled -> IOException("canceled", e)
+          else -> e
+        }
+        listener.onFailure(this, exception, response)
         return
       }
-      listener.onClosed(this)
+      if (canceled) {
+        listener.onFailure(this, IOException("canceled"), response)
+      } else {
+        listener.onClosed(this)
+      }
     }
   }
 
@@ -94,7 +106,8 @@ class RealEventSource(
   override fun request(): Request = request
 
   override fun cancel() {
-    call.cancel()
+    canceled = true
+    call?.cancel()
   }
 
   override fun onEvent(id: String?, type: String?, data: String) {

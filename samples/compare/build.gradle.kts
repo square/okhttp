@@ -1,7 +1,11 @@
+plugins {
+  kotlin("jvm")
+}
+
 dependencies {
   testImplementation(project(":okhttp"))
-  testImplementation(project(":mockwebserver"))
-  testRuntimeOnly(project(":mockwebserver-junit5"))
+  testImplementation(project(":mockwebserver3"))
+  testRuntimeOnly(project(":mockwebserver3-junit5"))
   testImplementation(project(":okhttp-tls"))
   testImplementation(project(":okhttp-testing-support"))
   testImplementation(Dependencies.httpclient5)

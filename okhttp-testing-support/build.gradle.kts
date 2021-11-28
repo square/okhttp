@@ -1,3 +1,8 @@
+plugins {
+  kotlin("jvm")
+  id("ru.vyarus.animalsniffer")
+}
+
 dependencies {
   api(project(":okhttp"))
   api(Dependencies.assertj)

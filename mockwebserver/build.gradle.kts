@@ -1,3 +1,12 @@
+import com.vanniktech.maven.publish.JavadocJar
+import com.vanniktech.maven.publish.KotlinJvm
+
+plugins {
+  kotlin("jvm")
+  id("org.jetbrains.dokka")
+  id("com.vanniktech.maven.publish.base")
+}
+
 tasks.jar {
   manifest {
     attributes("Automatic-Module-Name" to "mockwebserver3")
@@ -9,14 +18,11 @@ dependencies {
 
   testImplementation(project(":okhttp-testing-support"))
   testImplementation(project(":okhttp-tls"))
-  testRuntimeOnly(project(":mockwebserver-junit5"))
+  testRuntimeOnly(project(":mockwebserver3-junit5"))
   testImplementation(Dependencies.junit)
   testImplementation(Dependencies.assertj)
 }
 
-afterEvaluate {
-  tasks.dokka {
-    outputDirectory = "$rootDir/docs/4.x"
-    outputFormat = "gfm"
-  }
+mavenPublishing {
+  configure(KotlinJvm(javadocJar = JavadocJar.Dokka("dokkaGfm")))
 }

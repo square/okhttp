@@ -55,7 +55,7 @@ public class FallbackTestClientSocketFactory extends DelegatingSSLSocketFactory 
           enabledCipherSuites.add(suite);
         }
       }
-      delegate.setEnabledCipherSuites(
+      getDelegate().setEnabledCipherSuites(
           enabledCipherSuites.toArray(new String[enabledCipherSuites.size()]));
     }
   }

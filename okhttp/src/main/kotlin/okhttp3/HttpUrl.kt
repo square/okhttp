@@ -40,7 +40,7 @@ import java.util.LinkedHashSet
  * compose and decompose Internet addresses. For example, this code will compose and print a URL for
  * Google search:
  *
- * ```
+ * ```java
  * HttpUrl url = new HttpUrl.Builder()
  *     .scheme("https")
  *     .host("www.google.com")
@@ -58,7 +58,7 @@ import java.util.LinkedHashSet
  *
  * As another example, this code prints the human-readable query parameters of a Twitter search:
  *
- * ```
+ * ```java
  * HttpUrl url = HttpUrl.parse("https://twitter.com/search?q=cute%20%23puppies&f=images");
  * for (int i = 0, size = url.querySize(); i < size; i++) {
  *   System.out.println(url.queryParameterName(i) + ": " + url.queryParameterValue(i));
@@ -76,7 +76,7 @@ import java.util.LinkedHashSet
  * component parts, this class implements relative URL resolution: what address you'd reach by
  * clicking a relative link on a specified page. For example:
  *
- * ```
+ * ```java
  * HttpUrl base = HttpUrl.parse("https://www.youtube.com/user/WatchTheDaily/videos");
  * HttpUrl link = base.resolve("../../watch?v=cbP2N1BQdYc");
  * System.out.println(link);
@@ -165,7 +165,7 @@ import java.util.LinkedHashSet
  * start of the URL's query. But within the query and fragment components, the `?` character
  * doesn't delimit anything and doesn't need to be escaped.
  *
- * ```
+ * ```java
  * HttpUrl url = HttpUrl.parse("http://who-let-the-dogs.out").newBuilder()
  *     .addPathSegment("_Who?_")
  *     .query("_Who?_")
@@ -237,7 +237,7 @@ import java.util.LinkedHashSet
  * securely. Suppose you're building a webservice that checks that incoming paths are prefixed
  * "/static/images/" before serving the corresponding assets from the filesystem.
  *
- * ```
+ * ```java
  * String attack = "http://example.com/static/images/../../../../../etc/passwd";
  * System.out.println(new URL(attack).getPath());
  * System.out.println(new URI(attack).getPath());

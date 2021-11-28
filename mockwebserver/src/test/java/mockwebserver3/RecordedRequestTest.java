@@ -98,23 +98,14 @@ public class RecordedRequestTest {
     assertThat(request.getRequestUrl().toString()).isEqualTo("http://127.0.0.1/");
   }
 
-  @Test public void testLocalhostIpv6() throws UnknownHostException {
-    Socket socket = new FakeSocket(InetAddress.getByAddress("localhost",
+  @Test public void testHostname() throws UnknownHostException {
+    Headers headers = Headers.of("Host", "host-from-header.com");
+    Socket socket = new FakeSocket(InetAddress.getByAddress("host-from-address.com",
         new byte[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}), 80);
 
     RecordedRequest request = new RecordedRequest("GET / HTTP/1.1", headers,
         Collections.emptyList(), 0, new Buffer(), 0, socket);
 
-    assertThat(request.getRequestUrl().toString()).isEqualTo("http://localhost/");
-  }
-
-  @Test public void testLocalhostIpv4() throws UnknownHostException {
-    Socket socket =
-        new FakeSocket(InetAddress.getByAddress("localhost", new byte[] {127, 0, 0, 1}), 80);
-
-    RecordedRequest request = new RecordedRequest("GET / HTTP/1.1", headers,
-        Collections.emptyList(), 0, new Buffer(), 0, socket);
-
-    assertThat(request.getRequestUrl().toString()).isEqualTo("http://localhost/");
+    assertThat(request.getRequestUrl().toString()).isEqualTo("http://host-from-header.com/");
   }
 }

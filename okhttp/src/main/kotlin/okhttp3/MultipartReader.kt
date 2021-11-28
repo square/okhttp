@@ -33,7 +33,7 @@ import okio.buffer
  *
  * Typical use loops over the parts in sequence:
  *
- * ```
+ * ```kotlin
  * val response: Response = call.execute()
  * val multipartReader = MultipartReader(response.body!!)
  *

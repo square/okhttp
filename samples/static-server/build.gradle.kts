@@ -1,4 +1,5 @@
 plugins {
+  kotlin("jvm")
   id("com.github.johnrengelman.shadow")
 }
 
@@ -13,7 +14,7 @@ tasks.jar {
 }
 
 dependencies {
-  implementation(project(":mockwebserver-deprecated"))
+  implementation(project(":mockwebserver"))
 }
 
 tasks.shadowJar {

@@ -30,8 +30,6 @@ import java.nio.charset.StandardCharsets.UTF_16BE
 import java.nio.charset.StandardCharsets.UTF_16LE
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.Collections
-import java.util.Comparator
-import java.util.LinkedHashMap
 import java.util.Locale
 import java.util.TimeZone
 import java.util.concurrent.ThreadFactory
@@ -54,7 +52,6 @@ import okio.Buffer
 import okio.BufferedSink
 import okio.BufferedSource
 import okio.ByteString.Companion.decodeHex
-import okio.ExperimentalFileSystem
 import okio.FileSystem
 import okio.Options
 import okio.Path
@@ -541,7 +538,6 @@ fun ServerSocket.closeQuietly() {
  *
  * @param file a file in the directory to check. This file shouldn't already exist!
  */
-@OptIn(ExperimentalFileSystem::class)
 fun FileSystem.isCivilized(file: Path): Boolean {
   sink(file).use {
     try {
@@ -555,7 +551,6 @@ fun FileSystem.isCivilized(file: Path): Boolean {
 }
 
 /** Delete file we expect but don't require to exist. */
-@OptIn(ExperimentalFileSystem::class)
 fun FileSystem.deleteIfExists(path: Path) {
   try {
     delete(path)
@@ -567,7 +562,6 @@ fun FileSystem.deleteIfExists(path: Path) {
 /**
  * Tolerant delete, try to clear as many files as possible even after a failure.
  */
-@OptIn(ExperimentalFileSystem::class)
 fun FileSystem.deleteContents(directory: Path) {
   var exception: IOException? = null
   val files = try {

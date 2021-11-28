@@ -84,6 +84,8 @@ import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
+import okhttp3.DelegatingSSLSocket
+import okhttp3.DelegatingSSLSocketFactory
 
 /**
  * Run with "./gradlew :android-test:connectedCheck" and make sure ANDROID_SDK_ROOT is set.
@@ -555,6 +557,36 @@ class OkHttpTest(val server: MockWebServer) {
         .build()
 
     client.get("https://www.facebook.com/robots.txt")
+  }
+
+
+  @Test
+  fun testCustomSSLSocketFactoryWithoutALPN() {
+    enableTls()
+
+    val sslSocketFactory = client.sslSocketFactory
+    val trustManager = client.x509TrustManager!!
+
+    val delegatingSocketFactory = object : DelegatingSSLSocketFactory(sslSocketFactory) {
+      override fun configureSocket(sslSocket: SSLSocket): SSLSocket {
+        return object : DelegatingSSLSocket(sslSocket) {
+          override fun getApplicationProtocol(): String {
+            throw UnsupportedOperationException()
+          }
+        }
+      }
+    }
+
+    client = client.newBuilder()
+      .sslSocketFactory(delegatingSocketFactory, trustManager)
+      .build()
+
+    val request = Request.Builder().url(server.url("/").toString()).build()
+    val response = client.newCall(request).execute()
+    response.use {
+      assertEquals(200, response.code)
+      assertEquals(Protocol.HTTP_1_1, response.protocol)
+    }
   }
 
   @Test

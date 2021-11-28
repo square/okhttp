@@ -124,7 +124,7 @@ fun findTests(selectors: List<DiscoverySelector>): List<TestDescriptor> {
   val testEngine = buildTestEngine()
   val filters = listOf<PostDiscoveryFilter>()
   val discoveryOrchestrator = EngineDiscoveryOrchestrator(listOf(testEngine), filters)
-  val discovered = discoveryOrchestrator.discover(request, "run")
+  val discovered = discoveryOrchestrator.discover(request, EngineDiscoveryOrchestrator.Phase.EXECUTION)
 
   return discovered.getEngineTestDescriptor(testEngine).descendants.toList()
 }

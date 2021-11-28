@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.net.ServerSocketFactory;
@@ -63,8 +64,7 @@ public final class ThreadInterruptTest {
     server.setServerSocketFactory(
         new DelegatingServerSocketFactory(ServerSocketFactory.getDefault()) {
           @Override
-          protected ServerSocket configureServerSocket(ServerSocket serverSocket)
-              throws IOException {
+          protected ServerSocket configureServerSocket(ServerSocket serverSocket) throws SocketException {
             serverSocket.setReceiveBufferSize(SOCKET_BUFFER_SIZE);
             return serverSocket;
           }

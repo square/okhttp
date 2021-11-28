@@ -1,13 +1,17 @@
 import com.android.build.gradle.internal.tasks.factory.dependsOn
+import com.vanniktech.maven.publish.JavadocJar
+import com.vanniktech.maven.publish.KotlinJvm
 import java.nio.charset.StandardCharsets
 import me.champeau.gradle.japicmp.JapicmpTask
 
 plugins {
+  kotlin("jvm")
+  id("org.jetbrains.dokka")
+  id("com.vanniktech.maven.publish.base")
   id("me.champeau.gradle.japicmp")
 }
 
-Projects.applyOsgi(
-  project,
+project.applyOsgi(
   "Export-Package: okhttp3,okhttp3.internal.*;okhttpinternal=true;mandatory:=okhttpinternal",
   "Import-Package: " +
     "android.*;resolution:=optional," +
@@ -55,23 +59,11 @@ normalization {
   }
 }
 
-tasks.register<Copy>("copyJavaTemplates") {
-  from("src/main/java-templates")
-  into("$buildDir/generated/sources/java-templates/java/main")
-  expand("projectVersion" to project.version)
-  filteringCharset = StandardCharsets.UTF_8.toString()
-}.let {
-  tasks.compileKotlin.dependsOn(it)
-  tasks.sourcesJar.dependsOn(it)
-}
-
 // Expose OSGi jars to the test environment.
-configurations {
-  create("osgiTestDeploy")
-}
+val osgiTestDeploy: Configuration by configurations.creating
 
 tasks.register<Copy>("copyOsgiTestDeployment") {
-  from(configurations["osgiTestDeploy"])
+  from(osgiTestDeploy)
   into("$buildDir/resources/test/okhttp3/osgi/deployments")
 }.let(tasks.test::dependsOn)
 
@@ -94,11 +86,11 @@ dependencies {
   testImplementation(project(":okhttp-testing-support"))
   testImplementation(project(":okhttp-tls"))
   testImplementation(project(":okhttp-urlconnection"))
+  testImplementation(project(":mockwebserver3"))
+  testImplementation(project(":mockwebserver3-junit4"))
+  testImplementation(project(":mockwebserver3-junit5"))
   testImplementation(project(":mockwebserver"))
-  testImplementation(project(":mockwebserver-junit4"))
-  testImplementation(project(":mockwebserver-junit5"))
-  testImplementation(project(":mockwebserver-deprecated"))
-  testImplementation(project(":okhttp-logging-interceptor"))
+  testImplementation(project(":logging-interceptor"))
   testImplementation(project(":okhttp-brotli"))
   testImplementation(project(":okhttp-dnsoverhttps"))
   testImplementation(project(":okhttp-sse"))
@@ -115,16 +107,9 @@ dependencies {
   testCompileOnly(Dependencies.jsr305)
 }
 
-afterEvaluate {
-  tasks.dokka {
-    outputDirectory = "$rootDir/docs/4.x"
-    outputFormat = "gfm"
-  }
-}
-
 tasks.register<JapicmpTask>("japicmp") {
   dependsOn("jar")
-  oldClasspath = files(Projects.baselineJar(project))
+  oldClasspath = files(project.baselineJar())
   newClasspath = files(tasks.jar.get().archiveFile)
   isOnlyBinaryIncompatibleModified = true
   isFailOnModification = true
@@ -184,3 +169,17 @@ tasks.register<JapicmpTask>("japicmp") {
     "okhttp3.Request\$Builder#delete()",
   )
 }.let(tasks.check::dependsOn)
+
+mavenPublishing {
+  configure(KotlinJvm(javadocJar = JavadocJar.Dokka("dokkaGfm")))
+}
+
+tasks.register<Copy>("copyJavaTemplates") {
+  from("src/main/java-templates")
+  into("$buildDir/generated/sources/java-templates/java/main")
+  expand("projectVersion" to project.version)
+  filteringCharset = StandardCharsets.UTF_8.toString()
+}.let {
+  tasks.compileKotlin.dependsOn(it)
+  tasks["javaSourcesJar"].dependsOn(it)
+}

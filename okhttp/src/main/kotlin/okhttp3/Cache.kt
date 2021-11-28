@@ -34,7 +34,6 @@ import okio.BufferedSource
 import okio.ByteString.Companion.decodeBase64
 import okio.ByteString.Companion.encodeUtf8
 import okio.ByteString.Companion.toByteString
-import okio.ExperimentalFileSystem
 import okio.FileSystem
 import okio.ForwardingSink
 import okio.ForwardingSource
@@ -83,7 +82,7 @@ import java.util.TreeSet
  * the cache, and fetch data directly from the server. To force a full refresh, add the `no-cache`
  * directive:
  *
- * ```
+ * ```java
  * Request request = new Request.Builder()
  *     .cacheControl(new CacheControl.Builder().noCache().build())
  *     .url("http://publicobject.com/helloworld.txt")
@@ -93,7 +92,7 @@ import java.util.TreeSet
  * If it is only necessary to force a cached response to be validated by the server, use the more
  * efficient `max-age=0` directive instead:
  *
- * ```
+ * ```java
  * Request request = new Request.Builder()
  *     .cacheControl(new CacheControl.Builder()
  *         .maxAge(0, TimeUnit.SECONDS)
@@ -109,7 +108,7 @@ import java.util.TreeSet
  * downloaded. To restrict a request to locally-cached resources, add the `only-if-cached`
  * directive:
  *
- * ```
+ * ```java
  * Request request = new Request.Builder()
  *     .cacheControl(new CacheControl.Builder()
  *         .onlyIfCached()
@@ -128,7 +127,7 @@ import java.util.TreeSet
  * To permit stale cached responses, use the `max-stale` directive with the maximum staleness in
  * seconds:
  *
- * ```
+ * ```java
  * Request request = new Request.Builder()
  *     .cacheControl(new CacheControl.Builder()
  *         .maxStale(365, TimeUnit.DAYS)
@@ -143,7 +142,6 @@ import java.util.TreeSet
  *
  * [rfc_7234]: http://tools.ietf.org/html/rfc7234
  */
-@OptIn(ExperimentalFileSystem::class)
 class Cache(
   directory: Path,
   maxSize: Long,
@@ -169,7 +167,6 @@ class Cache(
     get() = cache.isClosed()
 
   /** Create a cache of at most [maxSize] bytes in [directory]. */
-  @OptIn(ExperimentalFileSystem::class)
   constructor(directory: File, maxSize: Long) : this(
     directory.toOkioPath(), maxSize, FileSystem.SYSTEM
   )
