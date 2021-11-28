@@ -38,10 +38,8 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
     var responseBuilder: Response.Builder? = null
     var sendRequestException: IOException? = null
 
-    // Send request headers, or if failed then avoid any attempt to read an early response.
-    exchange.writeRequestHeaders(request)
-
     try {
+      exchange.writeRequestHeaders(request)
 
       if (HttpMethod.permitsRequestBody(request.method) && requestBody != null) {
         // If there's a "Expect: 100-continue" header on the request, wait for a "HTTP/1.1 100

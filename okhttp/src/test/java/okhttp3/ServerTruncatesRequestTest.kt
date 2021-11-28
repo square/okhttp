@@ -28,6 +28,7 @@ import okio.BufferedSink
 import okio.IOException
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -54,6 +55,9 @@ class ServerTruncatesRequestTest(
     platform.assumeNotOpenJSSE()
     platform.assumeHttp2Support()
     platform.assumeNotBouncyCastle()
+
+    // https://github.com/square/okhttp/issues/6853
+    platform.assumeNotAndroid()
   }
 
   @Test fun serverTruncatesRequestOnLongPostHttp1() {
@@ -192,6 +196,7 @@ class ServerTruncatesRequestTest(
     }
   }
 
+  @Disabled("Follow up with fix in https://github.com/square/okhttp/issues/6853")
   @Test fun serverDisconnectsBeforeSecondRequestHttp1() {
     enableProtocol(Protocol.HTTP_1_1)
 
