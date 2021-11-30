@@ -25,7 +25,7 @@ jobs:
       - name: Configure JDK
         uses: actions/setup-java@v2
         with:
-          distribution: 'adopt'
+          distribution: 'zulu'
           java-version: 11
 
       - name: Upload Artifacts
