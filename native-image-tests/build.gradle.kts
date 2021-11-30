@@ -53,7 +53,7 @@ sourceSets {
 graal {
   mainClass("okhttp3.RunTestsKt")
   outputName("ConsoleLauncher")
-  graalVersion("21.2.0")
+  graalVersion(Versions.graal)
   javaVersion("11")
 
   option("--no-fallback")
