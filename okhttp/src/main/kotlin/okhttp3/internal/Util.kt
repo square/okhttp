@@ -670,4 +670,4 @@ internal inline fun <T> Iterable<T>.filterList(predicate: T.() -> Boolean): List
   return result
 }
 
-const val userAgent: String = "okhttp/${OkHttp.VERSION}"
+val userAgent: String = "okhttp/${OkHttp.VERSION}"
