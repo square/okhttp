@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import javax.net.ssl.SSLSocket
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy
@@ -27,10 +28,12 @@ import okio.BufferedSink
 import okio.IOException
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.fail
 
 @Timeout(30)
@@ -187,6 +190,54 @@ class ServerTruncatesRequestTest(
     call.execute().use { response ->
       assertThat(response.body!!.string()).isEqualTo("abc")
       assertThat(response.trailers()).isEqualTo(headersOf("caboose", "xyz"))
+    }
+  }
+
+  @Disabled("Follow up with fix in https://github.com/square/okhttp/issues/6853")
+  @Test fun serverDisconnectsBeforeSecondRequestHttp1() {
+    enableProtocol(Protocol.HTTP_1_1)
+
+    server.enqueue(MockResponse().setResponseCode(200).setBody("Req1"))
+    server.enqueue(MockResponse().setResponseCode(200).setBody("Req2"))
+
+    val eventListener = object : EventListener() {
+      var socket: SSLSocket? = null
+      var closed = false
+
+      override fun connectionAcquired(call: Call, connection: Connection) {
+        socket = connection.socket() as SSLSocket
+      }
+
+      override fun requestHeadersStart(call: Call) {
+        if (closed) {
+          throw IOException("fake socket failure")
+        }
+      }
+    }
+    val localClient = client.newBuilder().eventListener(eventListener).build()
+
+    val call1 = localClient.newCall(
+      Request.Builder()
+        .url(server.url("/"))
+        .build()
+    )
+
+    call1.execute().use { response ->
+      assertThat(response.body!!.string()).isEqualTo("Req1")
+      assertThat(response.handshake).isNotNull
+      assertThat(response.protocol == Protocol.HTTP_1_1)
+    }
+
+    eventListener.closed = true
+
+    val call2 = localClient.newCall(
+      Request.Builder()
+        .url(server.url("/"))
+        .build()
+    )
+
+    assertThrows<IOException>("fake socket failure") {
+      call2.execute()
     }
   }
 
