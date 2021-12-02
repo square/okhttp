@@ -43,6 +43,12 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
 
   @Volatile private var headersToRedact = emptySet<String>()
 
+  /**
+   * Maximum body size in bytes that will get logged otherwise the body will
+   * be omitted. Works only for level [Level.BODY]
+   */
+  @Volatile var bodySizeLimit: Long = Long.MAX_VALUE
+
   @set:JvmName("level")
   @Volatile var level = Level.NONE
 
@@ -245,7 +251,14 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
         logger.log("<-- END HTTP (encoded body omitted)")
       } else {
         val source = responseBody.source()
-        source.request(Long.MAX_VALUE) // Buffer the entire body.
+        val bodyLimitReached = source.request(bodySizeLimit)
+        if (bodyLimitReached && bodySizeLimit != Long.MAX_VALUE) {
+          val omittedSize = responseBody.contentLength().takeUnless { it == -1L }?.minus(bodySizeLimit)
+          logger.log("")
+          logger.log("<-- END HTTP (too long body ${if (omittedSize == null) "some bytes omitted" else "$omittedSize-byte omitted"})")
+          return response
+        }
+
         var buffer = source.buffer
 
         var gzippedLength: Long? = null

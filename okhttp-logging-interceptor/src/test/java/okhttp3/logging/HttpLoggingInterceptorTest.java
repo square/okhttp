@@ -79,6 +79,11 @@ public final class HttpLoggingInterceptorTest {
     applicationInterceptor.setLevel(level);
   }
 
+  private void setBodyLoggingLimit(long limit) {
+    networkInterceptor.setBodySizeLimit(limit);
+    applicationInterceptor.setBodySizeLimit(limit);
+  }
+
   @BeforeEach public void setUp(MockWebServer server) {
     this.server = server;
 
@@ -542,6 +547,41 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("Hello!")
         .assertLogEqual("<-- END HTTP (6-byte body)")
         .assertNoMoreLogs();
+  }
+
+  @Test public void bodyResponseBodyLimited() throws IOException {
+    setLevel(Level.BODY);
+    setBodyLoggingLimit(5);
+
+    server.enqueue(new MockResponse()
+      .setBody("Hello!")
+      .setHeader("Content-Type", PLAIN));
+    Response response = client.newCall(request().build()).execute();
+    response.body().close();
+
+    applicationLogs
+      .assertLogEqual("--> GET " + url)
+      .assertLogEqual("--> END GET")
+      .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
+      .assertLogEqual("Content-Length: 6")
+      .assertLogEqual("Content-Type: text/plain; charset=utf-8")
+      .assertLogEqual("")
+      .assertLogEqual("<-- END HTTP (too long body 1-byte omitted)")
+      .assertNoMoreLogs();
+
+    networkLogs
+      .assertLogEqual("--> GET " + url + " http/1.1")
+      .assertLogEqual("Host: " + host)
+      .assertLogEqual("Connection: Keep-Alive")
+      .assertLogEqual("Accept-Encoding: gzip")
+      .assertLogMatch("User-Agent: okhttp/.+")
+      .assertLogEqual("--> END GET")
+      .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
+      .assertLogEqual("Content-Length: 6")
+      .assertLogEqual("Content-Type: text/plain; charset=utf-8")
+      .assertLogEqual("")
+      .assertLogEqual("<-- END HTTP (too long body 1-byte omitted)")
+      .assertNoMoreLogs();
   }
 
   @Test public void bodyResponseBodyChunked() throws IOException {
