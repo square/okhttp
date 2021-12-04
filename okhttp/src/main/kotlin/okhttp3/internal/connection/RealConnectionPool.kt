@@ -193,8 +193,8 @@ class RealConnectionPool(
 
       inUseConnectionCount > 0 -> {
         // All connections are in use. It'll be at least the keep alive duration 'til we run
-        // again.
-        return keepAliveDurationNs
+        // again, ensure this isn't small enough to cause constant churn.
+        return keepAliveDurationNs.coerceAtLeast(oneMinuteInNs)
       }
 
       else -> {
@@ -243,5 +243,7 @@ class RealConnectionPool(
 
   companion object {
     fun get(connectionPool: ConnectionPool): RealConnectionPool = connectionPool.delegate
+
+    val oneMinuteInNs = TimeUnit.NANOSECONDS.convert(java.time.Duration.ofMinutes(1))
   }
 }
