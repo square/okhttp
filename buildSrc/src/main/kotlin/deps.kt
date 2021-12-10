@@ -21,8 +21,8 @@ object Versions {
   const val conscrypt = "2.5.2"
   const val junit5 = "5.8.2"
   const val junit5Android = "1.3.0"
-  const val kotlin = "1.5.31"
-  const val moshi = "1.12.0"
+  const val kotlin = "1.6.0"
+  const val moshi = "1.13.0"
   const val okio = "3.0.0"
   const val picocli = "4.6.2"
   const val graal = "21.2.0"
@@ -30,7 +30,7 @@ object Versions {
 
 object Dependencies {
   const val kotlinPlugin = "org.jetbrains.kotlin:kotlin-gradle-plugin:${Versions.kotlin}"
-  const val dokkaPlugin = "org.jetbrains.dokka:dokka-gradle-plugin:1.5.31"
+  const val dokkaPlugin = "org.jetbrains.dokka:dokka-gradle-plugin:1.6.0"
   const val androidPlugin = "com.android.tools.build:gradle:7.0.3"
   const val androidJunit5Plugin = "de.mannodermaus.gradle.plugins:android-junit5:1.8.0.0"
   const val graalPlugin = "gradle.plugin.com.palantir.graal:gradle-graal:0.10.0"
