@@ -21,7 +21,7 @@ object Versions {
   const val conscrypt = "2.5.2"
   const val junit5 = "5.8.2"
   const val junit5Android = "1.3.0"
-  const val kotlin = "1.6.0"
+  const val kotlin = "1.6.10"
   const val moshi = "1.13.0"
   const val okio = "3.0.0"
   const val picocli = "4.6.2"
