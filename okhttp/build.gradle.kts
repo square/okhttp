@@ -1,14 +1,76 @@
 import com.android.build.gradle.internal.tasks.factory.dependsOn
 import com.vanniktech.maven.publish.JavadocJar
-import com.vanniktech.maven.publish.KotlinJvm
+import com.vanniktech.maven.publish.KotlinMultiplatform
 import java.nio.charset.StandardCharsets
 import me.champeau.gradle.japicmp.JapicmpTask
+import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
 
 plugins {
-  kotlin("jvm")
+  kotlin("multiplatform")
   id("org.jetbrains.dokka")
   id("com.vanniktech.maven.publish.base")
   id("me.champeau.gradle.japicmp")
+}
+
+kotlin {
+  jvm {
+    withJava()
+  }
+
+  sourceSets {
+    val commonMain by getting {
+      kotlin.srcDir("$buildDir/generated/sources/kotlinTemplates")
+      dependencies {
+      }
+    }
+    val commonTest by getting {
+      dependencies {
+      }
+    }
+
+    val jvmMain by getting {
+      dependencies {
+        api(Dependencies.okio)
+        api(Dependencies.kotlinStdlib)
+
+        // These compileOnly dependencies must also be listed in the OSGi configuration above.
+        compileOnly(Dependencies.android)
+        compileOnly(Dependencies.bouncycastle)
+        compileOnly(Dependencies.bouncycastletls)
+        compileOnly(Dependencies.conscrypt)
+        compileOnly(Dependencies.openjsse)
+        compileOnly(Dependencies.jsr305)
+        compileOnly(Dependencies.animalSniffer)
+
+        // graal build support
+        compileOnly(Dependencies.nativeImageSvm)
+      }
+    }
+    val jvmTest by getting {
+      dependencies {
+        implementation(project(":okhttp-testing-support"))
+        implementation(project(":okhttp-tls"))
+        implementation(project(":okhttp-urlconnection"))
+        implementation(project(":mockwebserver3"))
+        implementation(project(":mockwebserver3-junit4"))
+        implementation(project(":mockwebserver3-junit5"))
+        implementation(project(":mockwebserver"))
+        implementation(project(":logging-interceptor"))
+        implementation(project(":okhttp-brotli"))
+        implementation(project(":okhttp-dnsoverhttps"))
+        implementation(project(":okhttp-sse"))
+        implementation(Dependencies.okioFakeFileSystem)
+        implementation(Dependencies.conscrypt)
+        implementation(Dependencies.junit)
+        implementation(Dependencies.junit5Api)
+        implementation(Dependencies.junit5JupiterParams)
+        implementation(Dependencies.assertj)
+        implementation(Dependencies.openjsse)
+        implementation(Dependencies.bndResolve)
+        compileOnly(Dependencies.jsr305)
+      }
+    }
+  }
 }
 
 project.applyOsgi(
@@ -68,43 +130,8 @@ tasks.register<Copy>("copyOsgiTestDeployment") {
 }.let(tasks.test::dependsOn)
 
 dependencies {
-  api(Dependencies.okio)
-  api(Dependencies.kotlinStdlib)
-
-  // These compileOnly dependencies must also be listed in the OSGi configuration above.
-  compileOnly(Dependencies.android)
-  compileOnly(Dependencies.bouncycastle)
-  compileOnly(Dependencies.bouncycastletls)
-  compileOnly(Dependencies.conscrypt)
-  compileOnly(Dependencies.openjsse)
-  compileOnly(Dependencies.jsr305)
-  compileOnly(Dependencies.animalSniffer)
-
-  // graal build support
-  compileOnly(Dependencies.nativeImageSvm)
-
-  testImplementation(project(":okhttp-testing-support"))
-  testImplementation(project(":okhttp-tls"))
-  testImplementation(project(":okhttp-urlconnection"))
-  testImplementation(project(":mockwebserver3"))
-  testImplementation(project(":mockwebserver3-junit4"))
-  testImplementation(project(":mockwebserver3-junit5"))
-  testImplementation(project(":mockwebserver"))
-  testImplementation(project(":logging-interceptor"))
-  testImplementation(project(":okhttp-brotli"))
-  testImplementation(project(":okhttp-dnsoverhttps"))
-  testImplementation(project(":okhttp-sse"))
-  testImplementation(Dependencies.okioFakeFileSystem)
-  testImplementation(Dependencies.conscrypt)
-  testImplementation(Dependencies.junit)
-  testImplementation(Dependencies.junit5Api)
-  testImplementation(Dependencies.junit5JupiterParams)
-  testImplementation(Dependencies.assertj)
-  testImplementation(Dependencies.openjsse)
-  testImplementation(Dependencies.bndResolve)
-  add("osgiTestDeploy", Dependencies.equinox)
-  add("osgiTestDeploy", Dependencies.kotlinStdlibOsgi)
-  testCompileOnly(Dependencies.jsr305)
+  osgiTestDeploy(Dependencies.equinox)
+  osgiTestDeploy(Dependencies.kotlinStdlibOsgi)
 }
 
 tasks.register<JapicmpTask>("japicmp") {
@@ -171,15 +198,16 @@ tasks.register<JapicmpTask>("japicmp") {
 }.let(tasks.check::dependsOn)
 
 mavenPublishing {
-  configure(KotlinJvm(javadocJar = JavadocJar.Dokka("dokkaGfm")))
+  configure(KotlinMultiplatform(javadocJar = JavadocJar.Dokka("dokkaGfm")))
 }
 
-tasks.register<Copy>("copyJavaTemplates") {
-  from("src/main/java-templates")
-  into("$buildDir/generated/sources/java-templates/java/main")
+val copyKotlinTemplates = tasks.register<Copy>("copyKotlinTemplates") {
+  from("src/commonMain/kotlinTemplates")
+  into("$buildDir/generated/sources/kotlinTemplates")
   expand("projectVersion" to project.version)
   filteringCharset = StandardCharsets.UTF_8.toString()
-}.let {
-  tasks.compileKotlin.dependsOn(it)
-  tasks["javaSourcesJar"].dependsOn(it)
+}
+
+tasks.withType<KotlinCompile<*>> {
+  dependsOn(copyKotlinTemplates)
 }

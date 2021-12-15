@@ -20,6 +20,7 @@ import org.gradle.api.Project
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.kotlin.dsl.apply
+import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.get
 
 fun Project.applyOsgi(vararg bndProperties: String) {
@@ -29,7 +30,10 @@ fun Project.applyOsgi(vararg bndProperties: String) {
     setClasspath(osgi.compileClasspath + sourceSets["main"].compileClasspath)
     bnd(*bndProperties)
   }
-  dependencies.add("osgiApi", Dependencies.kotlinStdlibOsgi)
+  val osgiApi = configurations.findByName("jvmOsgiApi") ?: configurations.getByName("osgiApi")
+  dependencies {
+    osgiApi(Dependencies.kotlinStdlibOsgi)
+  }
 }
 
 /**
