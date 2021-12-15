@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.HttpsURLConnection;
+import mockwebserver3.rawsocketclient.RawSocketClient;
 import okhttp3.Handshake;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
@@ -485,20 +486,31 @@ public final class MockWebServerTest {
   }
 
   @Test public void http100Continue() throws Exception {
-    server.enqueue(new MockResponse().setBody("response"));
+    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.EXPECT_CONTINUE));
+    RawSocketClient client = new RawSocketClient(server.getPort());
+    client.sendInUtf8(
+      "POST / HTTP/1.1\r\n" +
+      "Expect: 100-Continue\r\n" +
+      "Content-Length: 0\r\n" +
+      "\r\n");
 
-    URL url = server.url("/").url();
-    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-    connection.setDoOutput(true);
-    connection.setRequestProperty("Expect", "100-Continue");
-    connection.getOutputStream().write("request".getBytes(UTF_8));
+    RecordedRequest requestWithExpect = server.takeRequest();
+    assertThat(requestWithExpect.getBody().readUtf8()).isEqualTo("");
 
-    InputStream in = connection.getInputStream();
-    BufferedReader reader = new BufferedReader(new InputStreamReader(in, UTF_8));
-    assertThat(reader.readLine()).isEqualTo("response");
+    String response = client.readResponseUtf8String();
 
-    RecordedRequest request = server.takeRequest();
-    assertThat(request.getBody().readUtf8()).isEqualTo("request");
+    // MockWebServer currently doesn't wait for announced request
+    assertThat(response).isEqualTo(
+      "HTTP/1.1 100 Continue\r\n" +
+      "Content-Length: 0\r\n" +
+      "\r\n" +
+      "HTTP/1.1 200 OK\r\n" +
+      "Content-Length: 0\r\n" +
+      "\r\n");
+
+    client.sendInUtf8("announced request");
+    // cannot make MockServer assertion on this request because it has no headers
+    client.close();
   }
 
   @Test public void testH2PriorKnowledgeServerFallback() {
