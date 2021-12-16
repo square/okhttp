@@ -87,12 +87,6 @@ project.applyOsgi(
   "Bundle-SymbolicName: com.squareup.okhttp3"
 )
 
-sourceSets {
-  main {
-    java.srcDirs("$buildDir/generated/sources/java-templates/java/main")
-  }
-}
-
 normalization {
   runtimeClasspath {
     /*
@@ -124,10 +118,13 @@ normalization {
 // Expose OSGi jars to the test environment.
 val osgiTestDeploy: Configuration by configurations.creating
 
-tasks.register<Copy>("copyOsgiTestDeployment") {
+val copyOsgiTestDeployment by tasks.creating(Copy::class.java) {
   from(osgiTestDeploy)
-  into("$buildDir/resources/test/okhttp3/osgi/deployments")
-}.let(tasks.test::dependsOn)
+  into("$buildDir/resources/jvmTest/okhttp3/osgi/deployments")
+}
+val jvmTest by tasks.getting {
+  dependsOn(copyOsgiTestDeployment)
+}
 
 dependencies {
   osgiTestDeploy(Dependencies.equinox)
@@ -135,9 +132,9 @@ dependencies {
 }
 
 tasks.register<JapicmpTask>("japicmp") {
-  dependsOn("jar")
+  dependsOn("jvmJar")
   oldClasspath = files(project.baselineJar())
-  newClasspath = files(tasks.jar.get().archiveFile)
+  newClasspath = files(tasks.getByName<Jar>("jvmJar").archiveFile)
   isOnlyBinaryIncompatibleModified = true
   isFailOnModification = true
   txtOutputFile = file("$buildDir/reports/japi.txt")
@@ -207,7 +204,6 @@ val copyKotlinTemplates = tasks.register<Copy>("copyKotlinTemplates") {
   expand("projectVersion" to project.version)
   filteringCharset = StandardCharsets.UTF_8.toString()
 }
-
 tasks.withType<KotlinCompile<*>> {
   dependsOn(copyKotlinTemplates)
 }

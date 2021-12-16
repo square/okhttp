@@ -14,25 +14,47 @@
  * limitations under the License.
  */
 
-import aQute.bnd.gradle.BundleTaskExtension
+import aQute.bnd.gradle.BundleTaskConvention
 import java.io.File
 import org.gradle.api.Project
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.tasks.SourceSetContainer
-import org.gradle.kotlin.dsl.apply
+import org.gradle.api.tasks.bundling.Jar
 import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.get
+import org.gradle.kotlin.dsl.getByName
 
 fun Project.applyOsgi(vararg bndProperties: String) {
-  apply(plugin = "biz.aQute.bnd.builder")
-  val osgi = sourceSets.create("osgi")
-  tasks["jar"].extensions.configure<BundleTaskExtension>(BundleTaskExtension.NAME) {
-    setClasspath(osgi.compileClasspath + sourceSets["main"].compileClasspath)
-    bnd(*bndProperties)
+  // Configure OSGi for the JVM platform on kotlin-multiplatform.
+  plugins.withId("org.jetbrains.kotlin.multiplatform") {
+    applyOsgi("jvmJar", "jvmOsgiApi", bndProperties)
   }
-  val osgiApi = configurations.findByName("jvmOsgiApi") ?: configurations.getByName("osgiApi")
-  dependencies {
+
+  // Configure OSGi for kotlin-jvm.
+  plugins.withId("org.jetbrains.kotlin.jvm") {
+    applyOsgi("jar", "osgiApi", bndProperties)
+  }
+}
+
+private fun Project.applyOsgi(
+  jarTaskName: String,
+  osgiApiConfigurationName: String,
+  bndProperties: Array<out String>
+) {
+  val osgi = project.sourceSets.create("osgi")
+  val osgiApi = project.configurations.getByName(osgiApiConfigurationName)
+  project.dependencies {
     osgiApi(Dependencies.kotlinStdlibOsgi)
+  }
+
+  val jarTask = tasks.getByName<Jar>(jarTaskName)
+  val bndConvention = BundleTaskConvention(jarTask)
+  bndConvention.setClasspath(osgi.compileClasspath + sourceSets["main"].compileClasspath)
+  bndConvention.bnd(*bndProperties)
+
+  // Call the convention when the task has finished, to modify the jar to contain OSGi metadata.
+  jarTask.doLast {
+    bndConvention.buildBundle()
   }
 }
 

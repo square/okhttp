@@ -58,7 +58,7 @@ public final class OsgiTest {
 
   @BeforeEach
   public void setUp() throws Exception {
-    testResourceDir = new File("./build/resources/test/okhttp3/osgi");
+    testResourceDir = new File("./build/resources/jvmTest/okhttp3/osgi");
     workspaceDir = new File(testResourceDir, "workspace");
 
     // Ensure we start from scratch.
