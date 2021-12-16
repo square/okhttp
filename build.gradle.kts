@@ -67,7 +67,6 @@ subprojects {
   if (project.name == "okhttp-bom") return@subprojects
   if (project.name == "regression-test") return@subprojects
 
-  apply(plugin = "org.jetbrains.kotlin.jvm")
   apply(plugin = "checkstyle")
   apply(plugin = "com.diffplug.spotless")
   apply(plugin = "ru.vyarus.animalsniffer")
