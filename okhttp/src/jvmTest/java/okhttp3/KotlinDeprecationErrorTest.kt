@@ -22,7 +22,6 @@ import java.net.ProxySelector
 import java.net.Socket
 import java.net.URI
 import java.net.URL
-import java.nio.charset.Charset
 import java.security.KeyPair
 import java.security.Principal
 import java.security.cert.Certificate

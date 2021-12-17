@@ -37,7 +37,7 @@ import okhttp3.tls.internal.TlsUtil;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
+import static kotlin.text.Charsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**

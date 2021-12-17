@@ -20,7 +20,6 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.io.Reader
-import java.nio.charset.Charset
 import kotlin.text.Charsets.UTF_8
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.internal.closeQuietly

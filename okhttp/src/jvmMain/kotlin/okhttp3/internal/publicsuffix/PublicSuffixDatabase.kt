@@ -18,7 +18,7 @@ package okhttp3.internal.publicsuffix
 import java.io.IOException
 import java.io.InterruptedIOException
 import java.net.IDN
-import java.nio.charset.StandardCharsets.UTF_8
+import kotlin.text.Charsets.UTF_8
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
 import okhttp3.internal.and

@@ -43,7 +43,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
+import static kotlin.text.Charsets.UTF_8;
 import static java.util.Arrays.asList;
 import static okhttp3.TestUtil.headerEntries;
 import static okhttp3.TestUtil.repeat;

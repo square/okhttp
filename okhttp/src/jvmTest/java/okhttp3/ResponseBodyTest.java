@@ -27,7 +27,7 @@ import okio.ForwardingSource;
 import okio.Okio;
 import org.junit.jupiter.api.Test;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
+import static kotlin.text.Charsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
 

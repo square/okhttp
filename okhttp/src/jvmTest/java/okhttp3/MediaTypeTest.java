@@ -16,11 +16,13 @@
  */
 package okhttp3;
 
-import java.nio.charset.StandardCharsets;
+import kotlin.text.Charsets;
 import okhttp3.internal.platform.Platform;
 import org.junit.jupiter.api.Test;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
+import java.nio.charset.Charset;
+
+import static kotlin.text.Charsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -203,11 +205,11 @@ public class MediaTypeTest {
   public void testDefaultCharset() throws Exception {
     MediaType noCharset = parse("text/plain");
     assertThat(noCharset.charset(UTF_8).name()).isEqualTo("UTF-8");
-    assertThat(noCharset.charset(StandardCharsets.US_ASCII).name()).isEqualTo("US-ASCII");
+    assertThat(noCharset.charset(Charsets.US_ASCII).name()).isEqualTo("US-ASCII");
 
     MediaType charset = parse("text/plain; charset=iso-8859-1");
     assertThat(charset.charset(UTF_8).name()).isEqualTo("ISO-8859-1");
-    assertThat(charset.charset(StandardCharsets.US_ASCII).name()).isEqualTo("ISO-8859-1");
+    assertThat(charset.charset(Charsets.US_ASCII).name()).isEqualTo("ISO-8859-1");
   }
 
   @Test

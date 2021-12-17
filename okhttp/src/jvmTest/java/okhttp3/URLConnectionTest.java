@@ -89,7 +89,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.opentest4j.TestAbortedException;
 
 import static java.net.HttpURLConnection.HTTP_MOVED_TEMP;
-import static java.nio.charset.StandardCharsets.UTF_8;
+import static kotlin.text.Charsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.Locale.US;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;

@@ -24,7 +24,6 @@ import java.io.File
 import java.io.FileDescriptor
 import java.io.FileInputStream
 import java.io.IOException
-import java.nio.charset.Charset
 import kotlin.text.Charsets.UTF_8
 
 abstract class RequestBody {

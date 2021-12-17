@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Square, Inc.
+ * Copyright (C) 2021 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package okhttp3
 
-import kotlin.text.Charsets.ISO_8859_1
-import okio.ByteString.Companion.encode
+actual typealias Charset = java.nio.charset.Charset
 
-/** Factory for HTTP authorization credentials. */
-object Credentials {
-  /** Returns an auth credential for the Basic scheme. */
-  @JvmStatic @JvmOverloads fun basic(
-    username: String,
-    password: String,
-    charset: Charset = ISO_8859_1
-  ): String {
-    val usernameAndPassword = "$username:$password"
-    val encoded = usernameAndPassword.encode(charset).base64()
-    return "Basic $encoded"
-  }
-}
+actual val Charset.name: String get() = name()

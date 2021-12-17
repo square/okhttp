@@ -16,7 +16,6 @@
 package okhttp3
 
 import java.io.IOException
-import java.nio.charset.Charset
 import okhttp3.HttpUrl.Companion.FORM_ENCODE_SET
 import okhttp3.HttpUrl.Companion.canonicalize
 import okhttp3.HttpUrl.Companion.percentDecode

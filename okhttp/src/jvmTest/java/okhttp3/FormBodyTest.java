@@ -16,7 +16,7 @@
 package okhttp3;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import kotlin.text.Charsets;
 import okio.Buffer;
 import org.junit.jupiter.api.Test;
 
@@ -204,7 +204,7 @@ public final class FormBodyTest {
   }
 
   @Test public void manualCharset() throws Exception {
-    FormBody body = new FormBody.Builder(StandardCharsets.ISO_8859_1)
+    FormBody body = new FormBody.Builder(Charsets.ISO_8859_1)
         .add("name", "Nicolás")
         .build();
 
