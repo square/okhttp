@@ -26,13 +26,7 @@ public class RawSocketClient implements AutoCloseable {
     InputStream in = socket.getInputStream();
     byte[] array = new byte[MAX_RESPONSE_CHUNK_SIZE_IN_BYTES];
     int bytesRead = in.read(array);
-    return new String(trimArrayTo(array, bytesRead), UTF_8);
-  }
-
-  private byte[] trimArrayTo(byte[] array, int bytesRead) {
-    byte[] trimmedArray = new byte[bytesRead];
-    System.arraycopy(array, 0, trimmedArray, 0, bytesRead);
-    return trimmedArray;
+    return new String(array, 0, bytesRead, UTF_8);
   }
 
   @Override

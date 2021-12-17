@@ -496,7 +496,7 @@ public final class MockWebServerTest {
 
     RecordedRequest requestWithExpect = server.takeRequest();
     assertThat(requestWithExpect.getBody().readUtf8()).isEqualTo("");
-
+    Thread.sleep(100); // wait for whole response
     String response = client.readResponseUtf8String();
 
     // MockWebServer currently doesn't wait for announced request
