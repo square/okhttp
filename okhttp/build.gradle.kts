@@ -18,15 +18,13 @@ kotlin {
   }
 
   sourceSets {
-    val commonMain by getting {
+    commonMain {
       kotlin.srcDir("$buildDir/generated/sources/kotlinTemplates")
       dependencies {
         api(Dependencies.okio)
       }
     }
-    val commonTest by getting {
-      dependencies {
-      }
+    commonTest {
     }
     val nonJvmMain by creating {
       dependencies {
@@ -34,7 +32,7 @@ kotlin {
       }
     }
 
-    val jvmMain by getting {
+    getByName("jvmMain") {
       dependencies {
         api(Dependencies.okio)
         api(Dependencies.kotlinStdlib)
@@ -52,7 +50,7 @@ kotlin {
         compileOnly(Dependencies.nativeImageSvm)
       }
     }
-    val jvmTest by getting {
+    getByName("jvmTest") {
       dependencies {
         implementation(project(":okhttp-testing-support"))
         implementation(project(":okhttp-tls"))
@@ -128,7 +126,7 @@ val copyOsgiTestDeployment by tasks.creating(Copy::class.java) {
   from(osgiTestDeploy)
   into("$buildDir/resources/jvmTest/okhttp3/osgi/deployments")
 }
-val jvmTest by tasks.getting {
+tasks.getByName("jvmTest") {
   dependsOn(copyOsgiTestDeployment)
 }
 
