@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-import aQute.bnd.gradle.BundleTaskConvention
+import aQute.bnd.gradle.BundleTaskExtension
 import java.io.File
 import org.gradle.api.Project
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.kotlin.dsl.dependencies
+import org.gradle.kotlin.dsl.findByType
 import org.gradle.kotlin.dsl.get
 import org.gradle.kotlin.dsl.getByName
 
@@ -48,13 +49,16 @@ private fun Project.applyOsgi(
   }
 
   val jarTask = tasks.getByName<Jar>(jarTaskName)
-  val bndConvention = BundleTaskConvention(jarTask)
-  bndConvention.setClasspath(osgi.compileClasspath + sourceSets["main"].compileClasspath)
-  bndConvention.bnd(*bndProperties)
-
+  val bundleExtension = jarTask.extensions.findByType() ?: jarTask.extensions.create(
+    BundleTaskExtension.NAME, BundleTaskExtension::class.java, jarTask
+  )
+  bundleExtension.run {
+    setClasspath(osgi.compileClasspath + sourceSets["main"].compileClasspath)
+    bnd(*bndProperties)
+  }
   // Call the convention when the task has finished, to modify the jar to contain OSGi metadata.
   jarTask.doLast {
-    bndConvention.buildBundle()
+    bundleExtension.buildAction().execute(this)
   }
 }
 
