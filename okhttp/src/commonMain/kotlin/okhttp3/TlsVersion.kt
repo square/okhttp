@@ -15,6 +15,9 @@
  */
 package okhttp3
 
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmStatic
+
 /**
  * Versions of TLS that can be offered when negotiating a secure socket. See
  * [javax.net.ssl.SSLSocket.setEnabledProtocols].

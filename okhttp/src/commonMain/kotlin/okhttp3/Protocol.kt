@@ -15,7 +15,7 @@
  */
 package okhttp3
 
-import java.io.IOException
+import kotlin.jvm.JvmStatic
 
 /**
  * Protocols that OkHttp implements for [ALPN][ietf_alpn] selection.
