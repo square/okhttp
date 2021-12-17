@@ -13,7 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package okhttp3
 
-actual typealias IOException = java.io.IOException
+actual enum class TlsVersion {
+  TLS_1_3, // 2016.
+  TLS_1_2, // 2008.
+  TLS_1_1, // 2006.
+  TLS_1_0, // 1999.
+  SSL_3_0; // 1996.
+}

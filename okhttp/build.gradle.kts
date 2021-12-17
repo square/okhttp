@@ -19,12 +19,18 @@ kotlin {
 
   sourceSets {
     val commonMain by getting {
-      kotlin.srcDir("$buildDir/generated/sources/kotlinTemplates")
       dependencies {
+        api(Dependencies.okio)
       }
     }
     val commonTest by getting {
       dependencies {
+      }
+    }
+    val nonJvmMain by creating {
+      kotlin.srcDir("src/nonJvmMain/kotlin")
+      dependencies {
+        dependsOn(commonMain)
       }
     }
 
