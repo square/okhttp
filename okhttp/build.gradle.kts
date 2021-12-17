@@ -26,9 +26,9 @@ kotlin {
     }
     commonTest {
     }
-    val nonJvmMain by creating {
+    create("nonJvmMain") {
       dependencies {
-        dependsOn(commonMain)
+        dependsOn(sourceSets.commonMain.get())
       }
     }
 
