@@ -60,4 +60,4 @@ Cutting a Release
 
 [github_actions]: https://github.com/square/okhttp/actions
 [sonatype_issues]: https://issues.sonatype.org/
-[sonatype_nexus]: https://oss.sonatype.org/
+[sonatype_nexus]: https://s01.oss.sonatype.org/
