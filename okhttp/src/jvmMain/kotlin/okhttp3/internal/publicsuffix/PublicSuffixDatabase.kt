@@ -237,7 +237,8 @@ class PublicSuffixDatabase {
   }
 
   companion object {
-    const val PUBLIC_SUFFIX_RESOURCE = "publicsuffixes.gz"
+    @JvmField
+    val PUBLIC_SUFFIX_RESOURCE = "${PublicSuffixDatabase::class.java.simpleName}.gz"
 
     private val WILDCARD_LABEL = byteArrayOf('*'.code.toByte())
     private val PREVAILING_RULE = listOf("*")
