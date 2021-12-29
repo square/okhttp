@@ -13,24 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3;
+package okhttp3
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.fail;
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import okhttp3.MediaType.Companion.toMediaType
 
-public class MediaTypeGetTest extends MediaTypeTest {
-  @Override
-  protected MediaType parse(String string) {
-    return MediaType.get(string);
-  }
+class MediaTypeGetTest : MediaTypeTest() {
+  override fun parse(string: String): MediaType = string.toMediaType()
 
-  @Override
-  protected void assertInvalid(String string, String exceptionMessage) {
-    try {
-      parse(string);
-      fail("Expected get of \"" + string + "\" to throw with: " + exceptionMessage);
-    } catch (IllegalArgumentException e) {
-      assertThat(e.getMessage()).isEqualTo(exceptionMessage);
+  override fun assertInvalid(string: String, exceptionMessage: String?) {
+    val e = assertFailsWith<IllegalArgumentException> {
+      parse(string)
     }
+    assertEquals(exceptionMessage, e.message)
   }
 }
