@@ -16,8 +16,7 @@
 package okhttp3
 
 import java.nio.charset.Charset
-import java.util.Locale
-import java.util.regex.Pattern
+import okhttp3.internal.matchAtPolyfill
 
 /**
  * An [RFC 2045][rfc_2045] Media Type, appropriate to describe the content type of an HTTP request
@@ -96,8 +95,8 @@ class MediaType private constructor(
   companion object {
     private const val TOKEN = "([a-zA-Z0-9-!#$%&'*+.^_`{|}~]+)"
     private const val QUOTED = "\"([^\"]*)\""
-    private val TYPE_SUBTYPE = Pattern.compile("$TOKEN/$TOKEN")
-    private val PARAMETER = Pattern.compile(";\\s*(?:$TOKEN=(?:$TOKEN|$QUOTED))?")
+    private val TYPE_SUBTYPE = Regex("$TOKEN/$TOKEN")
+    private val PARAMETER = Regex(";\\s*(?:$TOKEN=(?:$TOKEN|$QUOTED))?")
 
     /**
      * Returns a media type for this string.
@@ -107,31 +106,30 @@ class MediaType private constructor(
     @JvmStatic
     @JvmName("get")
     fun String.toMediaType(): MediaType {
-      val typeSubtype = TYPE_SUBTYPE.matcher(this)
-      require(typeSubtype.lookingAt()) { "No subtype found for: \"$this\"" }
-      val type = typeSubtype.group(1).lowercase(Locale.US)
-      val subtype = typeSubtype.group(2).lowercase(Locale.US)
+      val typeSubtype: MatchResult = TYPE_SUBTYPE.matchAtPolyfill(this, 0)
+        ?: throw IllegalArgumentException("No subtype found for: \"$this\"")
+      val type = typeSubtype.groupValues[1].lowercase()
+      val subtype = typeSubtype.groupValues[2].lowercase()
 
       val parameterNamesAndValues = mutableListOf<String>()
-      val parameter = PARAMETER.matcher(this)
-      var s = typeSubtype.end()
+      var s = typeSubtype.range.last + 1
       while (s < length) {
-        parameter.region(s, length)
-        require(parameter.lookingAt()) {
+        val parameter = PARAMETER.matchAtPolyfill(this, s)
+        require(parameter != null) {
           "Parameter is not formatted correctly: \"${substring(s)}\" for: \"$this\""
         }
 
-        val name = parameter.group(1)
+        val name = parameter.groups[1]?.value
         if (name == null) {
-          s = parameter.end()
+          s = parameter.range.last + 1
           continue
         }
 
-        val token = parameter.group(2)
+        val token = parameter.groups[2]?.value
         val value = when {
           token == null -> {
             // Value is "double-quoted". That's valid and our regex group already strips the quotes.
-            parameter.group(3)
+            parameter.groups[3]!!.value
           }
           token.startsWith("'") && token.endsWith("'") && token.length > 2 -> {
             // If the token is 'single-quoted' it's invalid! But we're lenient and strip the quotes.
@@ -142,7 +140,7 @@ class MediaType private constructor(
 
         parameterNamesAndValues += name
         parameterNamesAndValues += value
-        s = parameter.end()
+        s = parameter.range.last + 1
       }
 
       return MediaType(this, type, subtype, parameterNamesAndValues.toTypedArray())

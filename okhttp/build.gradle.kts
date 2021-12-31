@@ -25,6 +25,10 @@ kotlin {
       }
     }
     commonTest {
+      dependencies {
+        implementation(Dependencies.kotlinTest)
+        implementation(Dependencies.kotlinTestAnnotations)
+      }
     }
     create("nonJvmMain") {
       dependencies {
@@ -68,6 +72,7 @@ kotlin {
         implementation(Dependencies.junit)
         implementation(Dependencies.junit5Api)
         implementation(Dependencies.junit5JupiterParams)
+        implementation(Dependencies.kotlinTestJunit)
         implementation(Dependencies.assertj)
         implementation(Dependencies.openjsse)
         implementation(Dependencies.bndResolve)
