@@ -1,4 +1,4 @@
-Note that publicsuffixes.gz is compiled from The Public Suffix List:
+Note that PublicSuffixDatabase.gz is compiled from The Public Suffix List:
 https://publicsuffix.org/list/public_suffix_list.dat
 
 It is subject to the terms of the Mozilla Public License, v. 2.0:
