@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:JvmName("Util")
 package okhttp3.internal
 
 import kotlin.jvm.JvmField
-import kotlin.jvm.JvmName
 import okhttp3.OkHttp
 import okio.Buffer
 import okio.BufferedSink
