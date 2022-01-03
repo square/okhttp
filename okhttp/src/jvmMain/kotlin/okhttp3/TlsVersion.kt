@@ -19,7 +19,7 @@ package okhttp3
  * Versions of TLS that can be offered when negotiating a secure socket. See
  * [javax.net.ssl.SSLSocket.setEnabledProtocols].
  */
-enum class TlsVersion(
+actual enum class TlsVersion(
   @get:JvmName("javaName") val javaName: String
 ) {
   TLS_1_3("TLSv1.3"), // 2016.
@@ -37,7 +37,7 @@ enum class TlsVersion(
 
   companion object {
     @JvmStatic
-    fun forJavaName(javaName: String): TlsVersion {
+    fun forJavaName(javaName: String): TlsVersion  {
       return when (javaName) {
         "TLSv1.3" -> TLS_1_3
         "TLSv1.2" -> TLS_1_2
