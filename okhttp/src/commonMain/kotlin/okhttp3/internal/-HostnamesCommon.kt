@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 The Android Open Source Project
+ * Copyright (C) 2021 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,53 +15,24 @@
  */
 package okhttp3.internal
 
-import java.net.IDN
-import java.net.InetAddress
-import java.util.Arrays
-import java.util.Locale
 import okio.Buffer
 
 /**
- * If this is an IP address, this returns the IP address in canonical form.
+ * Quick and dirty pattern to differentiate IP addresses from hostnames. This is an approximation
+ * of Android's private InetAddress#isNumeric API.
  *
- * Otherwise this performs IDN ToASCII encoding and canonicalize the result to lowercase. For
- * example this converts `☃.net` to `xn--n3h.net`, and `WwW.GoOgLe.cOm` to `www.google.com`.
- * `null` will be returned if the host cannot be ToASCII encoded or if the result contains
- * unsupported ASCII characters.
+ * This matches IPv6 addresses as a hex string containing at least one colon, and possibly
+ * including dots after the first colon. It matches IPv4 addresses as strings containing only
+ * decimal digits and dots. This pattern matches strings like "a:.23" and "54" that are neither IP
+ * addresses nor hostnames; they will be verified as IP addresses (which is a more strict
+ * verification).
  */
-fun String.toCanonicalHost(): String? {
-  val host: String = this
+private val VERIFY_AS_IP_ADDRESS = "([0-9a-fA-F]*:[0-9a-fA-F:.]*)|([\\d.]+)".toRegex()
 
-  // If the input contains a :, it’s an IPv6 address.
-  if (":" in host) {
-    // If the input is encased in square braces "[...]", drop 'em.
-    val inetAddress = (if (host.startsWith("[") && host.endsWith("]")) {
-      decodeIpv6(host, 1, host.length - 1)
-    } else {
-      decodeIpv6(host, 0, host.length)
-    }) ?: return null
-    val address = inetAddress.address
-    if (address.size == 16) return inet6AddressToAscii(address)
-    if (address.size == 4) return inetAddress.hostAddress // An IPv4-mapped IPv6 address.
-    throw AssertionError("Invalid IPv6 address: '$host'")
-  }
+/** Returns true if this string is not a host name and might be an IP address. */
+fun String.canParseAsIpAddress(): Boolean = VERIFY_AS_IP_ADDRESS.matches(this)
 
-  try {
-    val result = IDN.toASCII(host).lowercase(Locale.US)
-    if (result.isEmpty()) return null
-
-    // Confirm that the IDN ToASCII result doesn't contain any illegal characters.
-    return if (result.containsInvalidHostnameAsciiCodes()) {
-      null
-    } else {
-      result // TODO: implement all label limits.
-    }
-  } catch (_: IllegalArgumentException) {
-    return null
-  }
-}
-
-private fun String.containsInvalidHostnameAsciiCodes(): Boolean {
+internal fun String.containsInvalidHostnameAsciiCodes(): Boolean {
   for (i in 0 until length) {
     val c = this[i]
     // The WHATWG Host parsing rules accepts some character codes which are invalid by
@@ -81,7 +52,7 @@ private fun String.containsInvalidHostnameAsciiCodes(): Boolean {
 }
 
 /** Decodes an IPv6 address like 1111:2222:3333:4444:5555:6666:7777:8888 or ::1. */
-private fun decodeIpv6(input: String, pos: Int, limit: Int): InetAddress? {
+internal fun decodeIpv6(input: String, pos: Int, limit: Int): ByteArray? {
   val address = ByteArray(16)
   var b = 0
   var compress = -1
@@ -141,15 +112,15 @@ private fun decodeIpv6(input: String, pos: Int, limit: Int): InetAddress? {
   //
   if (b != address.size) {
     if (compress == -1) return null // Address didn't have compression or enough groups.
-    System.arraycopy(address, compress, address, address.size - (b - compress), b - compress)
-    Arrays.fill(address, compress, compress + (address.size - b), 0.toByte())
+    address.copyInto(address, address.size - (b - compress), compress, b)
+    address.fill(0.toByte(), compress, compress + (address.size - b))
   }
 
-  return InetAddress.getByAddress(address)
+  return address
 }
 
 /** Decodes an IPv4 address suffix of an IPv6 address, like 1111::5555:6666:192.168.0.1. */
-private fun decodeIpv4Suffix(
+internal fun decodeIpv4Suffix(
   input: String,
   pos: Int,
   limit: Int,
@@ -191,7 +162,7 @@ private fun decodeIpv4Suffix(
 }
 
 /** Encodes an IPv6 address in canonical form according to RFC 5952. */
-private fun inet6AddressToAscii(address: ByteArray): String {
+internal fun inet6AddressToAscii(address: ByteArray): String {
   // Go through the address looking for the longest run of 0s. Each group is 2-bytes.
   // A run must be longer than one group (section 4.2.2).
   // If there are multiple equal runs, the first one must be used (section 4.2.3).
