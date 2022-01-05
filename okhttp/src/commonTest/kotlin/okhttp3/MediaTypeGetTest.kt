@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Square, Inc.
+ * Copyright (C) 2022 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import okhttp3.MediaType.Companion.toMediaType
 
-class MediaTypeGetTest : MediaTypeTest() {
+open class MediaTypeGetTest : MediaTypeTest() {
   override fun parse(string: String): MediaType = string.toMediaType()
 
   override fun assertInvalid(string: String, exceptionMessage: String?) {
