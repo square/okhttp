@@ -72,7 +72,32 @@ jobs:
           java-version: 11
 
       - name: Run Checks
-        run: ./gradlew test -Dtest.java.version=11
+        run: ./gradlew jvmTest -Dtest.java.version=11
+
+      - name: Publish Test Report
+        if: success() || failure()
+        uses: mikepenz/action-junit-report@v2
+        with:
+          report_paths: '**/build/test-results/test/TEST-*.xml'
+
+  testjs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Configure JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: 11
+
+      - name: Run Checks
+        run: ./gradlew jsTest
 
       - name: Publish Test Report
         if: success() || failure()
@@ -98,7 +123,7 @@ jobs:
           java-version: 11
 
       - name: Run Checks
-        run: ./gradlew test -Dtest.java.version=11
+        run: ./gradlew jvmTest -Dtest.java.version=11
 
   testopenjdk8:
     runs-on: ubuntu-latest
@@ -118,7 +143,7 @@ jobs:
           java-version: 11
 
       - name: Run Checks
-        run: ./gradlew test -Dtest.java.version=8
+        run: ./gradlew jvmTest -Dtest.java.version=8
 
   testopenjdk8alpn:
     runs-on: ubuntu-latest
@@ -144,7 +169,7 @@ jobs:
           java-version: 11
 
       - name: Run Checks
-        run: ./gradlew test -Dtest.java.version=8 -Dokhttp.platform=jdk8alpn -Dalpn.boot.version=8.1.13.v20181017 -Dorg.gradle.java.installations.paths=/opt/hostedtoolcache/Java_Adopt_jdk/8.0.242-8.1/x64
+        run: ./gradlew jvmTest -Dtest.java.version=8 -Dokhttp.platform=jdk8alpn -Dalpn.boot.version=8.1.13.v20181017 -Dorg.gradle.java.installations.paths=/opt/hostedtoolcache/Java_Adopt_jdk/8.0.242-8.1/x64
 
   testopenjsse:
     runs-on: ubuntu-latest
@@ -164,7 +189,7 @@ jobs:
           java-version: 11
 
       - name: Run Checks
-        run: ./gradlew test -Dtest.java.version=8 -Dokhttp.platform=openjsse
+        run: ./gradlew jvmTest -Dtest.java.version=8 -Dokhttp.platform=openjsse
 
   testconscrypt:
     runs-on: ubuntu-latest
@@ -184,7 +209,7 @@ jobs:
           java-version: 11
 
       - name: Run Checks
-        run: ./gradlew test -Dokhttp.platform=conscrypt
+        run: ./gradlew jvmTest -Dokhttp.platform=conscrypt
 
   testbouncycastle:
     runs-on: ubuntu-latest
@@ -204,7 +229,7 @@ jobs:
           java-version: 11
 
       - name: Run Checks
-        run: ./gradlew test -Dokhttp.platform=bouncycastle
+        run: ./gradlew jvmTest -Dokhttp.platform=bouncycastle
 
   testcorretto:
     runs-on: ubuntu-latest
@@ -225,7 +250,7 @@ jobs:
           java-version: 11
 
       - name: Run Checks
-        run: ./gradlew test -Dokhttp.platform=corretto
+        run: ./gradlew jvmTest -Dokhttp.platform=corretto
 
   testopenjdk17:
     runs-on: ubuntu-latest
@@ -245,7 +270,7 @@ jobs:
           java-version: 11
 
       - name: Run Checks
-        run: ./gradlew test -Dtest.java.version=17
+        run: ./gradlew jvmTest -Dtest.java.version=17
 
   testwindows:
     runs-on: windows-latest
@@ -267,7 +292,7 @@ jobs:
 
       - name: Test
         run: |
-          ./gradlew test
+          ./gradlew jvmTest
 
   testgraal:
     runs-on: ubuntu-latest
