@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2022 Square, Inc.
+ * Copyright (C) 2013 Square, Inc.
+ * Copyright (C) 2011 The Guava Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
