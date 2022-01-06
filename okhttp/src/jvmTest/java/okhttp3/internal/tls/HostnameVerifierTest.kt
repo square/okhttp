@@ -22,7 +22,6 @@ import java.security.cert.X509Certificate
 import java.util.stream.Stream
 import javax.net.ssl.SSLSession
 import javax.security.auth.x500.X500Principal
-import kotlin.text.Charsets.UTF_8
 import okhttp3.FakeSSLSession
 import okhttp3.OkHttpClient
 import okhttp3.internal.canParseAsIpAddress
@@ -790,7 +789,7 @@ class HostnameVerifierTest {
 
   private fun certificate(certificate: String): X509Certificate {
     return CertificateFactory.getInstance("X.509")
-      .generateCertificate(ByteArrayInputStream(certificate.toByteArray(UTF_8)))
+      .generateCertificate(ByteArrayInputStream(certificate.toByteArray()))
       as X509Certificate
   }
 
