@@ -2889,7 +2889,7 @@ class URLConnectionTest {
     } catch (expected: IllegalStateException) {
     }
     try {
-      sinkReference.get().write("ghi".toByteArray(Charsets.UTF_8))
+      sinkReference.get().write("ghi".toByteArray())
       sinkReference.get().emit()
       fail<Any>()
     } catch (expected: IllegalStateException) {

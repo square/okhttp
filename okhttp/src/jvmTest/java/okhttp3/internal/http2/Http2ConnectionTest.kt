@@ -21,7 +21,6 @@ import java.io.InterruptedIOException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.text.Charsets.UTF_8
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.TestUtil.headerEntries
 import okhttp3.TestUtil.repeat
@@ -171,11 +170,11 @@ class Http2ConnectionTest {
     val data1 = peer.takeFrame()
     assertThat(data1.type).isEqualTo(Http2.TYPE_DATA)
     assertThat(data1.streamId).isEqualTo(3)
-    assertArrayEquals("abcde".toByteArray(UTF_8), data1.data)
+    assertArrayEquals("abcde".toByteArray(), data1.data)
     val data2 = peer.takeFrame()
     assertThat(data2.type).isEqualTo(Http2.TYPE_DATA)
     assertThat(data2.streamId).isEqualTo(3)
-    assertArrayEquals("fghi".toByteArray(UTF_8), data2.data)
+    assertArrayEquals("fghi".toByteArray(), data2.data)
   }
 
   /**
@@ -257,7 +256,7 @@ class Http2ConnectionTest {
     val data1 = peer.takeFrame()
     assertThat(data1.type).isEqualTo(Http2.TYPE_DATA)
     assertThat(data1.streamId).isEqualTo(3)
-    assertArrayEquals("abcdef".toByteArray(UTF_8), data1.data)
+    assertArrayEquals("abcdef".toByteArray(), data1.data)
   }
 
   @Test fun readSendsWindowUpdateHttp2() {
@@ -529,7 +528,7 @@ class Http2ConnectionTest {
     assertThat(synStream.associatedStreamId).isEqualTo(-1)
     assertThat(synStream.headerBlock).isEqualTo(headerEntries("b", "banana"))
     val requestData = peer.takeFrame()
-    assertArrayEquals("c3po".toByteArray(UTF_8), requestData.data)
+    assertArrayEquals("c3po".toByteArray(), requestData.data)
   }
 
   @Test fun serverFinishesStreamWithHeaders() {
@@ -716,7 +715,7 @@ class Http2ConnectionTest {
     val data1 = peer.takeFrame()
     assertThat(data1.type).isEqualTo(Http2.TYPE_DATA)
     assertThat(data1.streamId).isEqualTo(3)
-    assertArrayEquals("abcdefghi".toByteArray(UTF_8), data1.data)
+    assertArrayEquals("abcdefghi".toByteArray(), data1.data)
     assertThat(data1.inFinished).isFalse
     val headers2 = peer.takeFrame()
     assertThat(headers2.type).isEqualTo(Http2.TYPE_HEADERS)
@@ -847,7 +846,7 @@ class Http2ConnectionTest {
     assertThat(synStream.associatedStreamId).isEqualTo(-1)
     assertThat(synStream.headerBlock).isEqualTo(headerEntries("b", "banana"))
     val requestData = peer.takeFrame()
-    assertArrayEquals("c3po".toByteArray(UTF_8), requestData.data)
+    assertArrayEquals("c3po".toByteArray(), requestData.data)
     val nextFrame = peer.takeFrame()
     assertThat(nextFrame.headerBlock).isEqualTo(headerEntries("e", "elephant"))
   }
@@ -1187,7 +1186,7 @@ class Http2ConnectionTest {
     assertThat(synStream.outFinished).isFalse
     val data = peer.takeFrame()
     assertThat(data.type).isEqualTo(Http2.TYPE_DATA)
-    assertArrayEquals("square".toByteArray(UTF_8), data.data)
+    assertArrayEquals("square".toByteArray(), data.data)
     val fin = peer.takeFrame()
     assertThat(fin.type).isEqualTo(Http2.TYPE_DATA)
     assertThat(fin.inFinished).isTrue
@@ -1383,7 +1382,7 @@ class Http2ConnectionTest {
     val data1 = peer.takeFrame()
     assertThat(data1.type).isEqualTo(Http2.TYPE_DATA)
     assertThat(data1.streamId).isEqualTo(3)
-    assertArrayEquals("abcdef".toByteArray(UTF_8), data1.data)
+    assertArrayEquals("abcdef".toByteArray(), data1.data)
   }
 
   @Test fun sendGoAway() {
@@ -1662,7 +1661,7 @@ class Http2ConnectionTest {
     assertThat(peer.takeFrame().type).isEqualTo(Http2.TYPE_HEADERS)
     val data = peer.takeFrame()
     assertThat(data.type).isEqualTo(Http2.TYPE_DATA)
-    assertArrayEquals("abcdefghij".toByteArray(UTF_8), data.data)
+    assertArrayEquals("abcdefghij".toByteArray(), data.data)
     assertThat(data.inFinished).isTrue
   }
 

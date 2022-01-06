@@ -242,7 +242,7 @@ class HttpOverHttp2Test {
   @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
   fun noDefaultContentLengthOnStreamingPost(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
-    val postBytes = "FGHIJ".toByteArray(Charsets.UTF_8)
+    val postBytes = "FGHIJ".toByteArray()
     server.enqueue(MockResponse().setBody("ABCDE"))
     val call = client.newCall(
       Request.Builder()
@@ -267,7 +267,7 @@ class HttpOverHttp2Test {
   @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
   fun userSuppliedContentLengthHeader(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
-    val postBytes = "FGHIJ".toByteArray(Charsets.UTF_8)
+    val postBytes = "FGHIJ".toByteArray()
     server.enqueue(MockResponse().setBody("ABCDE"))
     val call = client.newCall(
       Request.Builder()
@@ -298,7 +298,7 @@ class HttpOverHttp2Test {
     protocol: Protocol, mockWebServer: MockWebServer
   ) {
     setUp(protocol, mockWebServer)
-    val postBytes = "FGHIJ".toByteArray(Charsets.UTF_8)
+    val postBytes = "FGHIJ".toByteArray()
     server.enqueue(MockResponse().setBody("ABCDE"))
     val call = client.newCall(
       Request.Builder()
