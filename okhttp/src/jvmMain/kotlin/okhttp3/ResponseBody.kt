@@ -22,8 +22,8 @@ import java.io.InputStreamReader
 import java.io.Reader
 import java.nio.charset.Charset
 import kotlin.text.Charsets.UTF_8
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.internal.closeQuietly
+import okhttp3.internal.getCharsetAndFinalType
 import okhttp3.internal.readBomAsCharset
 import okio.Buffer
 import okio.BufferedSource
@@ -226,17 +226,7 @@ abstract class ResponseBody : Closeable {
     @JvmStatic
     @JvmName("create")
     fun String.toResponseBody(contentType: MediaType? = null): ResponseBody {
-      var charset: Charset = UTF_8
-      var finalContentType: MediaType? = contentType
-      if (contentType != null) {
-        val resolvedCharset = contentType.charset()
-        if (resolvedCharset == null) {
-          charset = UTF_8
-          finalContentType = "$contentType; charset=utf-8".toMediaTypeOrNull()
-        } else {
-          charset = resolvedCharset
-        }
-      }
+      val (charset, finalContentType) = contentType.getCharsetAndFinalType()
       val buffer = Buffer().writeString(this, charset)
       return buffer.asResponseBody(finalContentType, buffer.size)
     }

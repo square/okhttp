@@ -15,17 +15,15 @@
  */
 package okhttp3
 
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.internal.checkOffsetAndCount
-import okio.BufferedSink
-import okio.ByteString
-import okio.source
 import java.io.File
 import java.io.FileDescriptor
 import java.io.FileInputStream
 import java.io.IOException
-import java.nio.charset.Charset
-import kotlin.text.Charsets.UTF_8
+import okhttp3.internal.checkOffsetAndCount
+import okhttp3.internal.getCharsetAndFinalType
+import okio.BufferedSink
+import okio.ByteString
+import okio.source
 
 abstract class RequestBody {
 
@@ -105,17 +103,7 @@ abstract class RequestBody {
     @JvmStatic
     @JvmName("create")
     fun String.toRequestBody(contentType: MediaType? = null): RequestBody {
-      var charset: Charset = UTF_8
-      var finalContentType: MediaType? = contentType
-      if (contentType != null) {
-        val resolvedCharset = contentType.charset()
-        if (resolvedCharset == null) {
-          charset = UTF_8
-          finalContentType = "$contentType; charset=utf-8".toMediaTypeOrNull()
-        } else {
-          charset = resolvedCharset
-        }
-      }
+      val (charset, finalContentType) = contentType.getCharsetAndFinalType()
       val bytes = toByteArray(charset)
       return bytes.toRequestBody(finalContentType, 0, bytes.size)
     }
