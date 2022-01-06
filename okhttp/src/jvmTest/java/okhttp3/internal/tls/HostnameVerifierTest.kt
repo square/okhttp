@@ -17,12 +17,12 @@
 package okhttp3.internal.tls
 
 import java.io.ByteArrayInputStream
-import java.nio.charset.StandardCharsets.UTF_8
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 import java.util.stream.Stream
 import javax.net.ssl.SSLSession
 import javax.security.auth.x500.X500Principal
+import kotlin.text.Charsets.UTF_8
 import okhttp3.FakeSSLSession
 import okhttp3.OkHttpClient
 import okhttp3.internal.canParseAsIpAddress

@@ -21,8 +21,8 @@ import java.net.URI
 import java.net.URISyntaxException
 import java.net.URL
 import java.nio.charset.Charset
-import java.nio.charset.StandardCharsets.UTF_8
 import java.util.Collections
+import kotlin.text.Charsets.UTF_8
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.internal.canParseAsIpAddress
