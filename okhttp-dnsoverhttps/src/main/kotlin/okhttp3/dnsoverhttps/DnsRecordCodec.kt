@@ -18,7 +18,6 @@ package okhttp3.dnsoverhttps
 import java.io.EOFException
 import java.net.InetAddress
 import java.net.UnknownHostException
-import java.nio.charset.StandardCharsets
 import okio.Buffer
 import okio.ByteString
 import okio.utf8Size
@@ -32,7 +31,7 @@ object DnsRecordCodec {
   const val TYPE_A = 0x0001
   const val TYPE_AAAA = 0x001c
   private const val TYPE_PTR = 0x000c
-  private val ASCII = StandardCharsets.US_ASCII
+  private val ASCII = Charsets.US_ASCII
 
   fun encodeQuery(host: String, type: Int): ByteString = Buffer().apply {
     writeShort(0) // query id

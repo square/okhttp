@@ -18,10 +18,10 @@ package okhttp3.internal.http2
 import java.io.EOFException
 import java.io.IOException
 import java.io.InterruptedIOException
-import java.nio.charset.StandardCharsets.UTF_8
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.text.Charsets.UTF_8
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.TestUtil.headerEntries
 import okhttp3.TestUtil.repeat

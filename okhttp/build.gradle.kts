@@ -1,7 +1,6 @@
 import com.android.build.gradle.internal.tasks.factory.dependsOn
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
-import java.nio.charset.StandardCharsets
 import me.champeau.gradle.japicmp.JapicmpTask
 import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
 
@@ -246,7 +245,7 @@ val copyKotlinTemplates = tasks.register<Copy>("copyKotlinTemplates") {
   from("src/commonMain/kotlinTemplates")
   into("$buildDir/generated/sources/kotlinTemplates")
   expand("projectVersion" to project.version)
-  filteringCharset = StandardCharsets.UTF_8.toString()
+  filteringCharset = Charsets.UTF_8.toString()
 }
 tasks.withType<KotlinCompile<*>> {
   dependsOn(copyKotlinTemplates)
