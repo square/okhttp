@@ -58,7 +58,7 @@ fun ConnectionSpec.effectiveCipherSuites(socketEnabledCipherSuites: Array<String
   }
 }
 
-fun MediaType?.getCharsetAndFinalType(): Pair<Charset, MediaType?>  {
+fun MediaType?.chooseCharset(): Pair<Charset, MediaType?> {
   var charset: Charset = Charsets.UTF_8
   var finalContentType: MediaType? = this
   if (this != null) {

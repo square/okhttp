@@ -20,7 +20,7 @@ import java.io.FileDescriptor
 import java.io.FileInputStream
 import java.io.IOException
 import okhttp3.internal.checkOffsetAndCount
-import okhttp3.internal.getCharsetAndFinalType
+import okhttp3.internal.chooseCharset
 import okio.BufferedSink
 import okio.ByteString
 import okio.source
@@ -103,7 +103,7 @@ abstract class RequestBody {
     @JvmStatic
     @JvmName("create")
     fun String.toRequestBody(contentType: MediaType? = null): RequestBody {
-      val (charset, finalContentType) = contentType.getCharsetAndFinalType()
+      val (charset, finalContentType) = contentType.chooseCharset()
       val bytes = toByteArray(charset)
       return bytes.toRequestBody(finalContentType, 0, bytes.size)
     }
