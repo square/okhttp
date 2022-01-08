@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+// If false - JS targets will not be configured in multiplatform projects.
+val kmpJsEnabled = System.getProperty("kjs", "true").toBoolean()
+
 object Versions {
   const val bnd = "6.1.0"
   const val bouncyCastle = "1.70"
@@ -74,6 +77,7 @@ object Dependencies {
   const val kotlinTest = "org.jetbrains.kotlin:kotlin-test-common:${Versions.kotlin}"
   const val kotlinTestAnnotations ="org.jetbrains.kotlin:kotlin-test-annotations-common:${Versions.kotlin}"
   const val kotlinTestJunit ="org.jetbrains.kotlin:kotlin-test-junit:${Versions.kotlin}"
+  const val kotlinTestJs ="org.jetbrains.kotlin:kotlin-test-js:${Versions.kotlin}"
   const val moshi = "com.squareup.moshi:moshi:${Versions.moshi}"
   const val moshiKotlin = "com.squareup.moshi:moshi-kotlin:${Versions.moshi}"
   const val moshiCompiler = "com.squareup.moshi:moshi-kotlin-codegen:${Versions.moshi}"

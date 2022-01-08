@@ -16,13 +16,10 @@
  */
 package okhttp3
 
-import java.nio.charset.StandardCharsets
-import java.util.Locale
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.internal.platform.Platform.Companion.isAndroid
 
 /**
  * Test MediaType API and parsing.
@@ -31,6 +28,8 @@ import okhttp3.internal.platform.Platform.Companion.isAndroid
  * MediaTypeTest.
  */
 open class MediaTypeTest {
+  open fun MediaType.charsetName(): String? = parameter("charset")?.uppercase()
+
   protected open fun parse(string: String): MediaType = string.toMediaTypeOrNull()!!
 
   protected open fun assertInvalid(string: String, exceptionMessage: String?) {
@@ -41,7 +40,7 @@ open class MediaTypeTest {
     val mediaType = parse("text/plain;boundary=foo;charset=utf-8")
     assertEquals("text", mediaType.type)
     assertEquals("plain", mediaType.subtype)
-    assertEquals("UTF-8", mediaType.charset()!!.name())
+    assertEquals("UTF-8", mediaType.charsetName())
     assertEquals("text/plain;boundary=foo;charset=utf-8", mediaType.toString())
     assertEquals(mediaType, parse("text/plain;boundary=foo;charset=utf-8"))
     assertEquals(
@@ -126,12 +125,12 @@ open class MediaTypeTest {
 
   @Test fun testDoubleQuotesAreSpecial() {
     val mediaType = parse("text/plain;a=\";charset=utf-8;b=\"")
-    assertNull(mediaType.charset())
+    assertNull(mediaType.charsetName())
   }
 
   @Test fun testSingleQuotesAreNotSpecial() {
     val mediaType = parse("text/plain;a=';charset=utf-8;b='")
-    assertEquals("UTF-8", mediaType.charset()!!.name())
+    assertEquals("UTF-8", mediaType.charsetName())
   }
 
   @Test fun testParseWithSpecialCharacters() {
@@ -144,7 +143,7 @@ open class MediaTypeTest {
     val mediaType = parse("text/plain;a=1;b=2;charset=utf-8;c=3")
     assertEquals("text", mediaType.type)
     assertEquals("plain", mediaType.subtype)
-    assertEquals("UTF-8", mediaType.charset()!!.name())
+    assertEquals("UTF-8", mediaType.charsetName())
     assertEquals("utf-8", mediaType.parameter("charset"))
     assertEquals("1", mediaType.parameter("a"))
     assertEquals("2", mediaType.parameter("b"))
@@ -157,27 +156,17 @@ open class MediaTypeTest {
 
   @Test fun testCharsetAndQuoting() {
     val mediaType = parse("text/plain;a=\";charset=us-ascii\";charset=\"utf-8\";b=\"iso-8859-1\"")
-    assertEquals("UTF-8", mediaType.charset()!!.name())
+    assertEquals("UTF-8", mediaType.charsetName())
   }
 
   @Test fun testDuplicatedCharsets() {
     val mediaType = parse("text/plain; charset=utf-8; charset=UTF-8")
-    assertEquals("UTF-8", mediaType.charset()!!.name())
+    assertEquals("UTF-8", mediaType.charsetName())
   }
 
   @Test fun testMultipleCharsetsReturnsFirstMatch() {
     val mediaType = parse("text/plain; charset=utf-8; charset=utf-16")
-    assertEquals("UTF-8", mediaType.charset()!!.name())
-  }
-
-  @Test fun testIllegalCharsetName() {
-    val mediaType = parse("text/plain; charset=\"!@#$%^&*()\"")
-    assertNull(mediaType.charset())
-  }
-
-  @Test fun testUnsupportedCharset() {
-    val mediaType = parse("text/plain; charset=utf-wtf")
-    assertNull(mediaType.charset())
+    assertEquals("UTF-8", mediaType.charsetName())
   }
 
   /**
@@ -186,46 +175,14 @@ open class MediaTypeTest {
    */
   @Test fun testCharsetNameIsSingleQuoted() {
     val mediaType = parse("text/plain;charset='utf-8'")
-    assertEquals("UTF-8", mediaType.charset()!!.name())
-  }
-
-  @Test fun testCharsetNameIsDoubleQuotedAndSingleQuoted() {
-    val mediaType = parse("text/plain;charset=\"'utf-8'\"")
-    if (isAndroid) {
-      // Charset.forName("'utf-8'") == UTF-8
-      assertEquals("UTF-8", mediaType.charset()!!.name())
-    } else {
-      assertNull(mediaType.charset())
-    }
-  }
-
-  @Test fun testCharsetNameIsDoubleQuotedSingleQuote() {
-    val mediaType = parse("text/plain;charset=\"'\"")
-    assertNull(mediaType.charset())
-  }
-
-  @Test fun testDefaultCharset() {
-    val noCharset = parse("text/plain")
-    assertEquals(
-      "UTF-8", noCharset.charset(StandardCharsets.UTF_8)!!.name()
-    )
-    assertEquals(
-      "US-ASCII", noCharset.charset(StandardCharsets.US_ASCII)!!.name()
-    )
-    val charset = parse("text/plain; charset=iso-8859-1")
-    assertEquals(
-      "ISO-8859-1", charset.charset(StandardCharsets.UTF_8)!!.name()
-    )
-    assertEquals(
-      "ISO-8859-1", charset.charset(StandardCharsets.US_ASCII)!!.name()
-    )
+    assertEquals("UTF-8", mediaType.charsetName())
   }
 
   @Test fun testParseDanglingSemicolon() {
     val mediaType = parse("text/plain;")
     assertEquals("text", mediaType.type)
     assertEquals("plain", mediaType.subtype)
-    assertNull(mediaType.charset())
+    assertNull(mediaType.charsetName())
     assertEquals("text/plain;", mediaType.toString())
   }
 
@@ -246,32 +203,6 @@ open class MediaTypeTest {
   @Test fun testRepeatedParameter() {
     val mediaType = parse("multipart/mixed; number=2; number=3")
     assertEquals("2", mediaType.parameter("number"))
-  }
-
-  @Test fun testTurkishDotlessIWithEnUs() {
-    withLocale(Locale("en", "US")) {
-      val mediaType = parse("IMAGE/JPEG")
-      assertEquals("image", mediaType.type)
-      assertEquals("jpeg", mediaType.subtype)
-    }
-  }
-
-  @Test fun testTurkishDotlessIWithTrTr() {
-    withLocale(Locale("tr", "TR")) {
-      val mediaType = parse("IMAGE/JPEG")
-      assertEquals("image", mediaType.type)
-      assertEquals("jpeg", mediaType.subtype)
-    }
-  }
-
-  private fun <T> withLocale(locale: Locale, block: () -> T): T {
-    val previous = Locale.getDefault()
-    try {
-      Locale.setDefault(locale)
-      return block()
-    } finally {
-      Locale.setDefault(previous)
-    }
   }
   private fun assertMediaType(string: String) {
     assertEquals(string, parse(string).toString())
