@@ -130,7 +130,7 @@ internal fun headersCheckName(name: String) {
   for (i in name.indices) {
     val c = name[i]
     require(c in '\u0021'..'\u007e') {
-      "Unexpected char 0x${c.code.toString(16)} at $i in header name: $name"
+      "Unexpected char 0x${c.charCode()} at $i in header name: $name"
     }
   }
 }
@@ -139,9 +139,17 @@ internal fun headersCheckValue(value: String, name: String) {
   for (i in value.indices) {
     val c = value[i]
     require(c == '\t' || c in '\u0020'..'\u007e') {
-      "Unexpected char 0x${c.code.toString(16)} at $i in $name value" +
+      "Unexpected char 0x${c.charCode()} at $i in $name value" +
         (if (isSensitiveHeader(name)) "" else ": $value")
     }
+  }
+}
+
+private fun Char.charCode() = code.toString(16).let {
+  if (it.length < 2) {
+    "0$it"
+  } else {
+    it
   }
 }
 
