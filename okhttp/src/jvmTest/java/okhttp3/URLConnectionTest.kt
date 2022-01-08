@@ -34,7 +34,6 @@ import java.net.SocketTimeoutException
 import java.net.URI
 import java.net.URLConnection
 import java.net.UnknownHostException
-import java.nio.charset.StandardCharsets
 import java.security.KeyStore
 import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
