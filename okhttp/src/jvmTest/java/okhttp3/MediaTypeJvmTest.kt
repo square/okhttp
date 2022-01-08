@@ -23,7 +23,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.internal.platform.Platform.Companion.isAndroid
 import org.junit.jupiter.api.Test
 
-class MediaTypeJavaTest: MediaTypeGetTest() {
+class MediaTypeJvmTest: MediaTypeGetTest() {
   override fun MediaType.charsetName(): String? = this.charset()?.name()
 
   @Test fun testCharsetNameIsDoubleQuotedAndSingleQuotedAndroid() {

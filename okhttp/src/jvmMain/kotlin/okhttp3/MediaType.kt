@@ -67,9 +67,9 @@ actual class MediaType internal actual constructor(
 
   actual override fun toString(): String = commonToString()
 
-  actual override fun equals(other: Any?): Boolean = commonEquals(other)
+  override fun equals(other: Any?): Boolean = commonEquals(other)
 
-  actual override fun hashCode(): Int = commonHashCode()
+  override fun hashCode(): Int = commonHashCode()
 
   actual companion object {
     @JvmStatic
