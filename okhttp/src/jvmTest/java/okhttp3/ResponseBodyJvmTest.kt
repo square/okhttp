@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import assertk.assertions.isEqualTo
 import okio.buffer
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
@@ -22,7 +23,6 @@ import okio.Buffer
 import okio.BufferedSource
 import okio.ByteString
 import okio.ForwardingSource
-import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
 import java.io.IOException
 import java.io.InputStreamReader
@@ -35,7 +35,7 @@ import okhttp3.internal.and
 import okio.ByteString.Companion.decodeHex
 import org.assertj.core.api.Assertions.assertThat
 
-class ResponseBodyTest {
+class ResponseBodyJvmTest {
   @Test
   fun stringEmpty() {
     val body = body("")
@@ -234,48 +234,13 @@ class ResponseBodyTest {
   }
 
   @Test
-  fun sourceEmpty() {
-    val body = body("")
-    val source = body.source()
-    assertThat(source.exhausted()).isTrue
-    assertThat(source.readUtf8()).isEqualTo("")
-  }
-
-  @Test
   fun sourceSeesBom() {
-    val body = body("efbbbf68656c6c6f")
+    val body = "efbbbf68656c6c6f".decodeHex().toResponseBody()
     val source = body.source()
-    assertThat(source.readByte() and 0xff).isEqualTo(0xef)
-    assertThat(source.readByte() and 0xff).isEqualTo(0xbb)
-    assertThat(source.readByte() and 0xff).isEqualTo(0xbf)
-    assertThat(source.readUtf8()).isEqualTo("hello")
-  }
-
-  @Test
-  fun sourceClosesUnderlyingSource() {
-    val closed = AtomicBoolean()
-    val body: ResponseBody = object : ResponseBody() {
-      override fun contentType(): MediaType? {
-        return null
-      }
-
-      override fun contentLength(): Long {
-        return 5
-      }
-
-      override fun source(): BufferedSource {
-        val source = Buffer().writeUtf8("hello")
-        return object : ForwardingSource(source) {
-          @Throws(IOException::class)
-          override fun close() {
-            closed.set(true)
-            super.close()
-          }
-        }.buffer()
-      }
-    }
-    body.source().close()
-    assertThat(closed.get()).isTrue
+    assertk.assertThat(source.readByte() and 0xff).isEqualTo(0xef)
+    assertk.assertThat(source.readByte() and 0xff).isEqualTo(0xbb)
+    assertk.assertThat(source.readByte() and 0xff).isEqualTo(0xbf)
+    assertk.assertThat(source.readUtf8()).isEqualTo("hello")
   }
 
   @Test
@@ -507,28 +472,10 @@ class ResponseBodyTest {
   }
 
   @Test
-  fun throwingUnderlyingSourceClosesQuietly() {
-    val body: ResponseBody = object : ResponseBody() {
-      override fun contentType(): MediaType? {
-        return null
-      }
-
-      override fun contentLength(): Long {
-        return 5
-      }
-
-      override fun source(): BufferedSource {
-        val source = Buffer().writeUtf8("hello")
-        return object : ForwardingSource(source) {
-          @Throws(IOException::class)
-          override fun close() {
-            throw IOException("Broken!")
-          }
-        }.buffer()
-      }
-    }
-    assertThat(body.source().readUtf8()).isEqualTo("hello")
-    body.close()
+  fun unicodeTextWithUnsupportedEncoding() {
+    val text = "eile oli oliiviõli"
+    val body = text.toResponseBody("text/plain; charset=unknown".toMediaType())
+    assertk.assertThat(body.string()).isEqualTo(text)
   }
 
   companion object {
@@ -538,7 +485,6 @@ class ResponseBodyTest {
       return hex.decodeHex().toResponseBody(mediaType)
     }
 
-    @Throws(IOException::class)
     fun exhaust(reader: Reader): String {
       val builder = StringBuilder()
       val buf = CharArray(10)

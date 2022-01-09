@@ -55,6 +55,11 @@ kotlin {
         dependsOn(sourceSets.commonMain.get())
       }
     }
+    val nonJvmTest = create("nonJvmTest") {
+      dependencies {
+        dependsOn(sourceSets.commonTest.get())
+      }
+    }
 
     getByName("jvmMain") {
       dependencies {
@@ -110,6 +115,7 @@ kotlin {
 
       getByName("jsTest") {
         dependencies {
+          dependsOn(nonJvmTest)
           implementation(Dependencies.kotlinTestJs)
         }
       }
