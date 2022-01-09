@@ -24,18 +24,7 @@ class HeadersJsTest {
   @Test
   fun nameIndexesAreStrict() {
     val headers = Headers.headersOf("a", "b", "c", "d")
-    assertThat(headers.name(-1)).isEqualTo(undefined)
-    assertThat(headers.name(0)).isEqualTo("a")
-    assertThat(headers.name(1)).isEqualTo("c")
-    assertThat(headers.name(2)).isEqualTo(undefined)
-  }
 
-  @Test
-  fun valueIndexesAreStrict() {
-    val headers = Headers.headersOf("a", "b", "c", "d")
-    assertThat(headers.value(-1)).isEqualTo(undefined)
-    assertThat(headers.value(0)).isEqualTo("b")
-    assertThat(headers.value(1)).isEqualTo("d")
-    assertThat(headers.value(2)).isEqualTo(undefined)
+    assertThat(headers.names()).isEqualTo(setOf("a", "b"))
   }
 }
