@@ -19,10 +19,8 @@ package okhttp3.internal
 
 import okhttp3.Headers
 
-// TODO find out why [] doesn't fail and returns undefined
 internal fun Headers.commonName(index: Int): String = namesAndValues[index * 2]
 
-// TODO find out why [] doesn't fail and returns undefined
 internal fun Headers.commonValue(index: Int): String = namesAndValues[index * 2 + 1]
 
 internal fun Headers.commonValues(name: String): List<String> {
