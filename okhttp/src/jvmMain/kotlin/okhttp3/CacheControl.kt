@@ -16,6 +16,14 @@
 package okhttp3
 
 import java.util.concurrent.TimeUnit
+import okhttp3.internal.commonBuild
+import okhttp3.internal.commonForceNetwork
+import okhttp3.internal.commonImmutable
+import okhttp3.internal.commonNoCache
+import okhttp3.internal.commonNoStore
+import okhttp3.internal.commonNoTransform
+import okhttp3.internal.commonOnlyIfCached
+import okhttp3.internal.commonToString
 import okhttp3.internal.indexOfNonWhitespace
 import okhttp3.internal.toNonNegativeInt
 
@@ -43,7 +51,7 @@ actual class CacheControl internal actual constructor(
 
   @get:JvmName("immutable") actual val immutable: Boolean,
 
-  private var headerValue: String?
+  internal actual var headerValue: String?
 ) {
   @JvmName("-deprecated_noCache")
   @Deprecated(
@@ -115,29 +123,7 @@ actual class CacheControl internal actual constructor(
       level = DeprecationLevel.ERROR)
   fun immutable(): Boolean = immutable
 
-  override fun toString(): String {
-    var result = headerValue
-    if (result == null) {
-      result = buildString {
-        if (noCache) append("no-cache, ")
-        if (noStore) append("no-store, ")
-        if (maxAgeSeconds != -1) append("max-age=").append(maxAgeSeconds).append(", ")
-        if (sMaxAgeSeconds != -1) append("s-maxage=").append(sMaxAgeSeconds).append(", ")
-        if (isPrivate) append("private, ")
-        if (isPublic) append("public, ")
-        if (mustRevalidate) append("must-revalidate, ")
-        if (maxStaleSeconds != -1) append("max-stale=").append(maxStaleSeconds).append(", ")
-        if (minFreshSeconds != -1) append("min-fresh=").append(minFreshSeconds).append(", ")
-        if (onlyIfCached) append("only-if-cached, ")
-        if (noTransform) append("no-transform, ")
-        if (immutable) append("immutable, ")
-        if (length == 0) return "" // isEmpty() is problematic with Kotlin 1.4 and JDK 15
-        delete(length - 2, length)
-      }
-      headerValue = result
-    }
-    return result
-  }
+  actual override fun toString(): String = commonToString()
 
   actual class Builder {
     internal actual var noCache: Boolean = false
@@ -149,13 +135,15 @@ actual class CacheControl internal actual constructor(
     internal actual var noTransform: Boolean = false
     internal actual var immutable: Boolean = false
 
-    actual fun noCache() = apply {
-      this.noCache = true
-    }
+    actual fun noCache() = commonNoCache()
 
-    actual fun noStore() = apply {
-      this.noStore = true
-    }
+    actual fun noStore() = commonNoStore()
+
+    actual fun onlyIfCached() = commonOnlyIfCached()
+
+    actual fun noTransform() = commonNoTransform()
+
+    actual fun immutable() = commonImmutable()
 
     fun maxAge(maxAge: Int, timeUnit: TimeUnit) = apply {
       require(maxAge >= 0) { "maxAge < 0: $maxAge" }
@@ -175,18 +163,6 @@ actual class CacheControl internal actual constructor(
       this.minFreshSeconds = minFreshSecondsLong.clampToInt()
     }
 
-    actual fun onlyIfCached() = apply {
-      this.onlyIfCached = true
-    }
-
-    actual fun noTransform() = apply {
-      this.noTransform = true
-    }
-
-    actual fun immutable() = apply {
-      this.immutable = true
-    }
-
     private fun Long.clampToInt(): Int {
       return when {
         this > Integer.MAX_VALUE -> Integer.MAX_VALUE
@@ -194,17 +170,12 @@ actual class CacheControl internal actual constructor(
       }
     }
 
-    actual fun build(): CacheControl {
-      return CacheControl(noCache, noStore, maxAgeSeconds, -1, false, false, false, maxStaleSeconds,
-          minFreshSeconds, onlyIfCached, noTransform, immutable, null)
-    }
+    actual fun build(): CacheControl = commonBuild()
   }
 
   actual companion object {
     @JvmField
-    actual val FORCE_NETWORK = Builder()
-        .noCache()
-        .build()
+    actual val FORCE_NETWORK = commonForceNetwork()
 
     @JvmField
     val FORCE_CACHE = Builder()

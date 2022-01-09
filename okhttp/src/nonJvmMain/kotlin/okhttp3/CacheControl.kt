@@ -15,6 +15,15 @@
  */
 package okhttp3
 
+import okhttp3.internal.commonBuild
+import okhttp3.internal.commonForceNetwork
+import okhttp3.internal.commonImmutable
+import okhttp3.internal.commonNoCache
+import okhttp3.internal.commonNoStore
+import okhttp3.internal.commonNoTransform
+import okhttp3.internal.commonOnlyIfCached
+import okhttp3.internal.commonToString
+
 actual class CacheControl internal actual constructor(
   actual val noCache: Boolean,
   actual val noStore: Boolean,
@@ -28,31 +37,9 @@ actual class CacheControl internal actual constructor(
   actual val onlyIfCached: Boolean,
   actual val noTransform: Boolean,
   actual val immutable: Boolean,
-  private var headerValue: String?
+  internal actual var headerValue: String?
 ) {
-  override fun toString(): String {
-    var result = headerValue
-    if (result == null) {
-      result = buildString {
-        if (noCache) append("no-cache, ")
-        if (noStore) append("no-store, ")
-        if (maxAgeSeconds != -1) append("max-age=").append(maxAgeSeconds).append(", ")
-        if (sMaxAgeSeconds != -1) append("s-maxage=").append(sMaxAgeSeconds).append(", ")
-        if (isPrivate) append("private, ")
-        if (isPublic) append("public, ")
-        if (mustRevalidate) append("must-revalidate, ")
-        if (maxStaleSeconds != -1) append("max-stale=").append(maxStaleSeconds).append(", ")
-        if (minFreshSeconds != -1) append("min-fresh=").append(minFreshSeconds).append(", ")
-        if (onlyIfCached) append("only-if-cached, ")
-        if (noTransform) append("no-transform, ")
-        if (immutable) append("immutable, ")
-        if (isEmpty()) return ""
-        deleteRange(length - 2, length)
-      }
-      headerValue = result
-    }
-    return result
-  }
+  actual override fun toString(): String = commonToString()
 
   actual class Builder {
     internal actual var noCache: Boolean = false
@@ -64,35 +51,20 @@ actual class CacheControl internal actual constructor(
     internal actual var noTransform: Boolean = false
     internal actual var immutable: Boolean = false
 
-    actual fun noCache() = apply {
-      this.noCache = true
-    }
+    actual fun noCache() = commonNoCache()
 
-    actual fun noStore() = apply {
-      this.noStore = true
-    }
+    actual fun noStore() = commonNoStore()
 
-    actual fun onlyIfCached() = apply {
-      this.onlyIfCached = true
-    }
+    actual fun onlyIfCached() = commonOnlyIfCached()
 
-    actual fun noTransform() = apply {
-      this.noTransform = true
-    }
+    actual fun noTransform() = commonNoTransform()
 
-    actual fun immutable() = apply {
-      this.immutable = true
-    }
+    actual fun immutable() = commonImmutable()
 
-    actual fun build(): CacheControl {
-      return CacheControl(noCache, noStore, maxAgeSeconds, -1, false, false, false, maxStaleSeconds,
-          minFreshSeconds, onlyIfCached, noTransform, immutable, null)
-    }
+    actual fun build(): CacheControl = commonBuild()
   }
 
   actual companion object {
-    actual val FORCE_NETWORK = Builder()
-        .noCache()
-        .build()
+    actual val FORCE_NETWORK = commonForceNetwork()
   }
 }

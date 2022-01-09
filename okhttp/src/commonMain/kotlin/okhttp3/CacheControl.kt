@@ -90,6 +90,10 @@ expect class CacheControl internal constructor(
 
   val immutable: Boolean
 
+  internal var headerValue: String?
+
+  override fun toString(): String
+
   /** Builds a `Cache-Control` request header. */
   class Builder constructor() {
     internal var noCache: Boolean
