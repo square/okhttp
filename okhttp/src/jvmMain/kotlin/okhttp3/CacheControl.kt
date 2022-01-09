@@ -19,6 +19,9 @@ import java.util.concurrent.TimeUnit
 import okhttp3.internal.commonBuild
 import okhttp3.internal.commonForceNetwork
 import okhttp3.internal.commonImmutable
+import okhttp3.internal.commonMaxAge
+import okhttp3.internal.commonMaxStale
+import okhttp3.internal.commonMinFresh
 import okhttp3.internal.commonNoCache
 import okhttp3.internal.commonNoStore
 import okhttp3.internal.commonNoTransform
@@ -145,30 +148,11 @@ actual class CacheControl internal actual constructor(
 
     actual fun immutable() = commonImmutable()
 
-    fun maxAge(maxAge: Int, timeUnit: TimeUnit) = apply {
-      require(maxAge >= 0) { "maxAge < 0: $maxAge" }
-      val maxAgeSecondsLong = timeUnit.toSeconds(maxAge.toLong())
-      this.maxAgeSeconds = maxAgeSecondsLong.clampToInt()
-    }
+    actual fun maxAge(maxAge: Int, timeUnit: TimeUnit) = commonMaxAge(maxAge, timeUnit)
 
-    fun maxStale(maxStale: Int, timeUnit: TimeUnit) = apply {
-      require(maxStale >= 0) { "maxStale < 0: $maxStale" }
-      val maxStaleSecondsLong = timeUnit.toSeconds(maxStale.toLong())
-      this.maxStaleSeconds = maxStaleSecondsLong.clampToInt()
-    }
+    actual fun maxStale(maxStale: Int, timeUnit: TimeUnit) = commonMaxStale(maxStale, timeUnit)
 
-    fun minFresh(minFresh: Int, timeUnit: TimeUnit) = apply {
-      require(minFresh >= 0) { "minFresh < 0: $minFresh" }
-      val minFreshSecondsLong = timeUnit.toSeconds(minFresh.toLong())
-      this.minFreshSeconds = minFreshSecondsLong.clampToInt()
-    }
-
-    private fun Long.clampToInt(): Int {
-      return when {
-        this > Integer.MAX_VALUE -> Integer.MAX_VALUE
-        else -> toInt()
-      }
-    }
+    actual fun minFresh(minFresh: Int, timeUnit: TimeUnit) = commonMinFresh(minFresh, timeUnit)
 
     actual fun build(): CacheControl = commonBuild()
   }
@@ -297,9 +281,21 @@ actual class CacheControl internal actual constructor(
         headerValue = null
       }
 
-      return CacheControl(noCache, noStore, maxAgeSeconds, sMaxAgeSeconds, isPrivate, isPublic,
-          mustRevalidate, maxStaleSeconds, minFreshSeconds, onlyIfCached, noTransform, immutable,
-          headerValue)
+      return CacheControl(
+        noCache = noCache,
+        noStore = noStore,
+        maxAgeSeconds = maxAgeSeconds,
+        sMaxAgeSeconds = sMaxAgeSeconds,
+        isPrivate = isPrivate,
+        isPublic = isPublic,
+        mustRevalidate = mustRevalidate,
+        maxStaleSeconds = maxStaleSeconds,
+        minFreshSeconds = minFreshSeconds,
+        onlyIfCached = onlyIfCached,
+        noTransform = noTransform,
+        immutable = immutable,
+        headerValue = headerValue
+      )
     }
 
     /**

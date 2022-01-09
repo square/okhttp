@@ -15,6 +15,8 @@
  */
 package okhttp3
 
+import okhttp3.internal.TimeUnit
+
 /**
  * A Cache-Control header with cache directives from a server or client. These directives set policy
  * on what responses can be stored, and which requests can be satisfied by those stored responses.
@@ -118,7 +120,7 @@ expect class CacheControl internal constructor(
      * @param maxAge a non-negative integer. This is stored and transmitted with [TimeUnit.SECONDS]
      *     precision; finer precision will be lost.
      */
-//    fun maxAge(maxAge: Int, timeUnit: TimeUnit): Builder
+    fun maxAge(maxAge: Int, timeUnit: TimeUnit): Builder
 
     /**
      * Accept cached responses that have exceeded their freshness lifetime by up to `maxStale`. If
@@ -127,7 +129,7 @@ expect class CacheControl internal constructor(
      * @param maxStale a non-negative integer. This is stored and transmitted with
      *     [TimeUnit.SECONDS] precision; finer precision will be lost.
      */
-//    fun maxStale(maxStale: Int, timeUnit: TimeUnit): Builder
+    fun maxStale(maxStale: Int, timeUnit: TimeUnit): Builder
 
     /**
      * Sets the minimum number of seconds that a response will continue to be fresh for. If the
@@ -137,7 +139,7 @@ expect class CacheControl internal constructor(
      * @param minFresh a non-negative integer. This is stored and transmitted with
      *     [TimeUnit.SECONDS] precision; finer precision will be lost.
      */
-//    fun minFresh(minFresh: Int, timeUnit: TimeUnit): Builder
+    fun minFresh(minFresh: Int, timeUnit: TimeUnit): Builder
 
     /**
      * Only accept the response if it is in the cache. If the response isn't cached, a `504
