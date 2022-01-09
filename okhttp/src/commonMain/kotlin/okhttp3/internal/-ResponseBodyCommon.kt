@@ -17,78 +17,56 @@
 package okhttp3.internal
 
 import okhttp3.MediaType
+import okhttp3.ResponseBody
+import okhttp3.ResponseBody.Companion.asResponseBody
+import okio.Buffer
+import okio.BufferedSource
+import okio.ByteString
+import okio.IOException
+import okio.use
 
-internal fun MediaType.commonParameter(name: String): String? {
-  for (i in parameterNamesAndValues.indices step 2) {
-    if (parameterNamesAndValues[i].equals(name, ignoreCase = true)) {
-      return parameterNamesAndValues[i + 1]
-    }
+internal fun ResponseBody.commonBytes() = commonConsumeSource(BufferedSource::readByteArray) { it.size }
+
+internal fun ResponseBody.commonByteString() = commonConsumeSource(BufferedSource::readByteString) { it.size }
+
+internal inline fun <T : Any> ResponseBody.commonConsumeSource(
+  consumer: (BufferedSource) -> T,
+  sizeMapper: (T) -> Int
+): T {
+  val contentLength = contentLength()
+  if (contentLength > Int.MAX_VALUE) {
+    throw IOException("Cannot buffer entire body for content length: $contentLength")
   }
-  return null
+
+  val bytes = source().use(consumer)
+  val size = sizeMapper(bytes)
+  if (contentLength != -1L && contentLength != size.toLong()) {
+    throw IOException("Content-Length ($contentLength) and stream length ($size) disagree")
+  }
+  return bytes
 }
 
-internal fun MediaType.commonEquals(other: Any?): Boolean = other is MediaType && other.mediaType == mediaType
+internal fun ResponseBody.commonClose() = source().closeQuietly()
 
-internal fun MediaType.commonToString(): String = mediaType
-
-internal fun MediaType.commonHashCode(): Int = mediaType.hashCode()
-
-private const val TOKEN = "([a-zA-Z0-9-!#$%&'*+.^_`{|}~]+)"
-private const val QUOTED = "\"([^\"]*)\""
-private val TYPE_SUBTYPE = Regex("$TOKEN/$TOKEN")
-private val PARAMETER = Regex(";\\s*(?:$TOKEN=(?:$TOKEN|$QUOTED))?")
-
-/**
- * Returns a media type for this string.
- *
- * @throws IllegalArgumentException if this is not a well-formed media type.
- */
-internal fun String.commonToMediaType(): MediaType {
-  val typeSubtype: MatchResult = TYPE_SUBTYPE.matchAtPolyfill(this, 0)
-    ?: throw IllegalArgumentException("No subtype found for: \"$this\"")
-  val type = typeSubtype.groupValues[1].lowercase()
-  val subtype = typeSubtype.groupValues[2].lowercase()
-
-  val parameterNamesAndValues = mutableListOf<String>()
-  var s = typeSubtype.range.last + 1
-  while (s < length) {
-    val parameter = PARAMETER.matchAtPolyfill(this, s)
-    require(parameter != null) {
-      "Parameter is not formatted correctly: \"${substring(s)}\" for: \"$this\""
-    }
-
-    val name = parameter.groups[1]?.value
-    if (name == null) {
-      s = parameter.range.last + 1
-      continue
-    }
-
-    val token = parameter.groups[2]?.value
-    val value = when {
-      token == null -> {
-        // Value is "double-quoted". That's valid and our regex group already strips the quotes.
-        parameter.groups[3]!!.value
-      }
-      token.startsWith("'") && token.endsWith("'") && token.length > 2 -> {
-        // If the token is 'single-quoted' it's invalid! But we're lenient and strip the quotes.
-        token.substring(1, token.length - 1)
-      }
-      else -> token
-    }
-
-    parameterNamesAndValues += name
-    parameterNamesAndValues += value
-    s = parameter.range.last + 1
-  }
-
-  return MediaType(this, type, subtype, parameterNamesAndValues.toTypedArray())
+internal fun ByteArray.commonToResponseBody(contentType: MediaType?): ResponseBody {
+  return Buffer()
+    .write(this)
+    .asResponseBody(contentType, size.toLong())
 }
 
-/** Returns a media type for this, or null if this is not a well-formed media type. */
-fun String.commonToMediaTypeOrNull(): MediaType? {
-  return try {
-    commonToMediaType()
-  } catch (_: IllegalArgumentException) {
-    null
-  }
+internal fun ByteString.commonToResponseBody(contentType: MediaType?): ResponseBody {
+  return Buffer()
+    .write(this)
+    .asResponseBody(contentType, size.toLong())
+}
+
+internal fun BufferedSource.commonAsResponseBody(
+  contentType: MediaType?,
+  contentLength: Long
+): ResponseBody = object : ResponseBody() {
+  override fun contentType(): MediaType? = contentType
+
+  override fun contentLength(): Long = contentLength
+
+  override fun source(): BufferedSource = this@commonAsResponseBody
 }

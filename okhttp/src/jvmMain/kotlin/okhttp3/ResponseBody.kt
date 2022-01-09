@@ -23,7 +23,11 @@ import java.io.Reader
 import java.nio.charset.Charset
 import okhttp3.internal.charset
 import okhttp3.internal.chooseCharset
-import okhttp3.internal.closeQuietly
+import okhttp3.internal.commonAsResponseBody
+import okhttp3.internal.commonByteString
+import okhttp3.internal.commonBytes
+import okhttp3.internal.commonClose
+import okhttp3.internal.commonToResponseBody
 import okhttp3.internal.readBomAsCharset
 import okio.Buffer
 import okio.BufferedSource
@@ -97,21 +101,17 @@ import okio.ByteString
  * re-read the bytes of the response. Use this one shot to read the entire response into memory with
  * [bytes] or [string]. Or stream the response with either [source], [byteStream], or [charStream].
  */
-abstract class ResponseBody : Closeable {
+actual abstract class ResponseBody : Closeable {
   /** Multiple calls to [charStream] must return the same instance. */
   private var reader: Reader? = null
 
-  abstract fun contentType(): MediaType?
+  actual abstract fun contentType(): MediaType?
 
-  /**
-   * Returns the number of bytes in that will returned by [bytes], or [byteStream], or -1 if
-   * unknown.
-   */
-  abstract fun contentLength(): Long
+  actual abstract fun contentLength(): Long
 
   fun byteStream(): InputStream = source().inputStream()
 
-  abstract fun source(): BufferedSource
+  actual abstract fun source(): BufferedSource
 
   /**
    * Returns the response as a byte array.
@@ -120,8 +120,9 @@ abstract class ResponseBody : Closeable {
    * may trigger an [OutOfMemoryError]. Prefer to stream the response body if this is a
    * possibility for your response.
    */
+  // TODO consider which of these should be part of common API
   @Throws(IOException::class)
-  fun bytes() = consumeSource(BufferedSource::readByteArray) { it.size }
+  fun bytes() = commonBytes()
 
   /**
    * Returns the response as a [ByteString].
@@ -130,25 +131,9 @@ abstract class ResponseBody : Closeable {
    * may trigger an [OutOfMemoryError]. Prefer to stream the response body if this is a
    * possibility for your response.
    */
+  // TODO consider which of these should be part of common API
   @Throws(IOException::class)
-  fun byteString() = consumeSource(BufferedSource::readByteString) { it.size }
-
-  private inline fun <T : Any> consumeSource(
-    consumer: (BufferedSource) -> T,
-    sizeMapper: (T) -> Int
-  ): T {
-    val contentLength = contentLength()
-    if (contentLength > Int.MAX_VALUE) {
-      throw IOException("Cannot buffer entire body for content length: $contentLength")
-    }
-
-    val bytes = source().use(consumer)
-    val size = sizeMapper(bytes)
-    if (contentLength != -1L && contentLength != size.toLong()) {
-      throw IOException("Content-Length ($contentLength) and stream length ($size) disagree")
-    }
-    return bytes
-  }
+  fun byteString() = commonByteString()
 
   /**
    * Returns the response as a character stream.
@@ -162,6 +147,7 @@ abstract class ResponseBody : Closeable {
    *
    * Otherwise the response bytes are decoded as UTF-8.
    */
+  // TODO consider which of these should be part of common API
   fun charStream(): Reader = reader ?: BomAwareReader(source(), charset()).also {
     reader = it
   }
@@ -182,6 +168,7 @@ abstract class ResponseBody : Closeable {
    * may trigger an [OutOfMemoryError]. Prefer to stream the response body if this is a
    * possibility for your response.
    */
+  // TODO consider which of these should be part of common API
   @Throws(IOException::class)
   fun string(): String = source().use { source ->
     source.readString(charset = source.readBomAsCharset(charset()))
@@ -189,7 +176,7 @@ abstract class ResponseBody : Closeable {
 
   private fun charset() = contentType().charset()
 
-  override fun close() = source().closeQuietly()
+  actual override fun close() = commonClose()
 
   internal class BomAwareReader(
     private val source: BufferedSource,
@@ -218,50 +205,29 @@ abstract class ResponseBody : Closeable {
     }
   }
 
-  companion object {
-    /**
-     * Returns a new response body that transmits this string. If [contentType] is non-null and
-     * lacks a charset, this will use UTF-8.
-     */
+  actual companion object {
     @JvmStatic
     @JvmName("create")
-    fun String.toResponseBody(contentType: MediaType? = null): ResponseBody {
+    actual fun String.toResponseBody(contentType: MediaType?): ResponseBody {
       val (charset, finalContentType) = contentType.chooseCharset()
       val buffer = Buffer().writeString(this, charset)
       return buffer.asResponseBody(finalContentType, buffer.size)
     }
 
-    /** Returns a new response body that transmits this byte array. */
     @JvmStatic
     @JvmName("create")
-    fun ByteArray.toResponseBody(contentType: MediaType? = null): ResponseBody {
-      return Buffer()
-          .write(this)
-          .asResponseBody(contentType, size.toLong())
-    }
+    actual fun ByteArray.toResponseBody(contentType: MediaType?): ResponseBody = commonToResponseBody(contentType)
 
-    /** Returns a new response body that transmits this byte string. */
     @JvmStatic
     @JvmName("create")
-    fun ByteString.toResponseBody(contentType: MediaType? = null): ResponseBody {
-      return Buffer()
-          .write(this)
-          .asResponseBody(contentType, size.toLong())
-    }
+    actual fun ByteString.toResponseBody(contentType: MediaType?): ResponseBody = commonToResponseBody(contentType)
 
-    /** Returns a new response body that transmits this source. */
     @JvmStatic
     @JvmName("create")
-    fun BufferedSource.asResponseBody(
-      contentType: MediaType? = null,
-      contentLength: Long = -1L
-    ): ResponseBody = object : ResponseBody() {
-      override fun contentType(): MediaType? = contentType
-
-      override fun contentLength(): Long = contentLength
-
-      override fun source(): BufferedSource = this@asResponseBody
-    }
+    actual fun BufferedSource.asResponseBody(
+      contentType: MediaType?,
+      contentLength: Long
+    ): ResponseBody = commonAsResponseBody(contentType, contentLength)
 
     @JvmStatic
     @Deprecated(
