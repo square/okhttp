@@ -22,25 +22,12 @@ package okhttp3
  * See [RFC 7234, 5.2](https://tools.ietf.org/html/rfc7234#section-5.2).
  */
 expect class CacheControl internal constructor(
-  /**
-   * In a response, this field's name "no-cache" is misleading. It doesn't prevent us from caching
-   * the response; it only means we have to validate the response with the origin server before
-   * returning it. We can do this with a conditional GET.
-   *
-   * In a request, it means do not use a cache to satisfy the request.
-   */
   noCache: Boolean,
 
-  /** If true, this response should not be cached. */
   noStore: Boolean,
 
-  /** The duration past the response's served date that it can be served without validation. */
   maxAgeSeconds: Int,
 
-  /**
-   * The "s-maxage" directive is the max age for shared caches. Not to be confused with "max-age"
-   * for non-shared caches, As in Firefox and Chrome, this directive is not honored by this cache.
-   */
   sMaxAgeSeconds: Int,
 
   isPrivate: Boolean,
@@ -52,12 +39,6 @@ expect class CacheControl internal constructor(
 
   minFreshSeconds: Int,
 
-  /**
-   * This field's name "only-if-cached" is misleading. It actually means "do not use the network".
-   * It is set by a client who only wants to make a request if it can be fully satisfied by the
-   * cache. Cached responses that would require validation (ie. conditional gets) are not permitted
-   * if this header is set.
-   */
   onlyIfCached: Boolean,
 
   noTransform: Boolean,
