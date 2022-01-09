@@ -19,9 +19,9 @@ package okhttp3.internal
 
 import okhttp3.Headers
 
-internal fun Headers.commonName(index: Int): String = namesAndValues.getOrNull(index * 2) ?: throw IndexOutOfBoundsException()
+internal fun Headers.commonName(index: Int): String = namesAndValues.getOrNull(index * 2) ?: throw IndexOutOfBoundsException("name[$index]")
 
-internal fun Headers.commonValue(index: Int): String = namesAndValues.getOrNull(index * 2 + 1) ?: throw IndexOutOfBoundsException()
+internal fun Headers.commonValue(index: Int): String = namesAndValues.getOrNull(index * 2 + 1) ?: throw IndexOutOfBoundsException("value[$index]")
 
 internal fun Headers.commonValues(name: String): List<String> {
   var result: MutableList<String>? = null

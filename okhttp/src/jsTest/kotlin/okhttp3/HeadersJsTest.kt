@@ -25,6 +25,6 @@ class HeadersJsTest {
   fun nameIndexesAreStrict() {
     val headers = Headers.headersOf("a", "b", "c", "d")
 
-    assertThat(headers.names()).isEqualTo(setOf("a", "b"))
+    assertThat(headers.names()).isEqualTo(setOf("a", "c"))
   }
 }
