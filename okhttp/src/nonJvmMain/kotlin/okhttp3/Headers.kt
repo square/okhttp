@@ -50,8 +50,7 @@ actual class Headers internal actual constructor(
   actual fun value(index: Int): String = commonValue(index)
 
   actual fun names(): Set<String> {
-    // TODO check ok with unsorted set
-    return (0 until size step 2).map { name(it) }.toSet()
+    return (0 until size step 2).map { name(it) }.distinctBy { it.lowercase() }.toSet()
   }
 
   actual fun values(name: String): List<String> = commonValues(name)
@@ -89,12 +88,6 @@ actual class Headers internal actual constructor(
     actual fun add(name: String, value: String) = commonAdd(name, value)
 
     actual fun addAll(headers: Headers) = commonAddAll(headers)
-
-    /**
-     * Add a field with the specified value without any validation. Only appropriate for headers
-     * from the remote peer or cache.
-     */
-    internal fun addLenient(name: String, value: String) = commonAddLenient(name, value)
 
     actual fun removeAll(name: String) = commonRemoveAll(name)
 

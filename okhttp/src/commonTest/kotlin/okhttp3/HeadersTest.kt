@@ -124,38 +124,6 @@ class HeadersTest {
     }
   }
 
-  @Test fun nameIndexesAreStrict() {
-    val headers = headersOf("a", "b", "c", "d")
-    try {
-      headers.name(-1)
-      fail()
-    } catch (expected: IndexOutOfBoundsException) {
-    }
-    assertThat(headers.name(0)).isEqualTo("a")
-    assertThat(headers.name(1)).isEqualTo("c")
-    try {
-      headers.name(2)
-      fail()
-    } catch (expected: IndexOutOfBoundsException) {
-    }
-  }
-
-  @Test fun valueIndexesAreStrict() {
-    val headers = headersOf("a", "b", "c", "d")
-    try {
-      headers.value(-1)
-      fail()
-    } catch (expected: IndexOutOfBoundsException) {
-    }
-    assertThat(headers.value(0)).isEqualTo("b")
-    assertThat(headers.value(1)).isEqualTo("d")
-    try {
-      headers.value(2)
-      fail()
-    } catch (expected: IndexOutOfBoundsException) {
-    }
-  }
-
   @Test fun builderRejectsUnicodeInHeaderName() {
     try {
       Headers.Builder().add("héader1", "value1")
