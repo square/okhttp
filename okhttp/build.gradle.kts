@@ -41,6 +41,7 @@ kotlin {
       kotlin.srcDir("$buildDir/generated/sources/kotlinTemplates")
       dependencies {
         api(Dependencies.okio)
+        api(Dependencies.assertk)
       }
     }
     val commonTest by getting {
