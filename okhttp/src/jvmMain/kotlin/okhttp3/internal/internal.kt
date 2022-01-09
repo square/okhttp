@@ -73,5 +73,9 @@ fun MediaType?.chooseCharset(): Pair<Charset, MediaType?> {
   return charset to finalContentType
 }
 
+fun MediaType?.charset(defaultValue: Charset = Charsets.UTF_8): Charset {
+  return this?.charset(defaultValue) ?: Charsets.UTF_8
+}
+
 val Response.connection: RealConnection
   get() = this.exchange!!.connection

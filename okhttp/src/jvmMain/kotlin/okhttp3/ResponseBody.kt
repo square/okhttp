@@ -21,7 +21,7 @@ import java.io.InputStream
 import java.io.InputStreamReader
 import java.io.Reader
 import java.nio.charset.Charset
-import kotlin.text.Charsets.UTF_8
+import okhttp3.internal.charset
 import okhttp3.internal.chooseCharset
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.readBomAsCharset
@@ -187,7 +187,7 @@ abstract class ResponseBody : Closeable {
     source.readString(charset = source.readBomAsCharset(charset()))
   }
 
-  private fun charset() = contentType()?.charset(UTF_8) ?: UTF_8
+  private fun charset() = contentType().charset()
 
   override fun close() = source().closeQuietly()
 
