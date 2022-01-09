@@ -82,7 +82,16 @@ enum class Protocol(private val protocol: String) {
    * QUIC is not natively supported by OkHttp, but provided to allow a theoretical interceptor that
    * provides support.
    */
-  QUIC("quic");
+  QUIC("quic"),
+
+  /**
+   * HTTP/3 is the third and upcoming major version of the Hypertext Transfer Protocol used to
+   * exchange information. HTTP/3 runs over QUIC, which is published as RFC 9000.
+   *
+   * HTTP/3 is not natively supported by OkHttp, but provided to allow a theoretical interceptor
+   * that provides support.
+   */
+  HTTP_3("h3");
 
   /**
    * Returns the string used to identify this protocol for ALPN, like "http/1.1", "spdy/3.1" or
@@ -112,6 +121,7 @@ enum class Protocol(private val protocol: String) {
         HTTP_2.protocol -> HTTP_2
         SPDY_3.protocol -> SPDY_3
         QUIC.protocol -> QUIC
+        HTTP_3.protocol -> HTTP_3
         else -> throw IOException("Unexpected protocol: $protocol")
       }
     }

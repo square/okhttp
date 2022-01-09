@@ -1,7 +1,6 @@
 import com.android.build.gradle.internal.tasks.factory.dependsOn
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinJvm
-import java.nio.charset.StandardCharsets
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
@@ -69,7 +68,7 @@ tasks.register<Copy>("copyResourcesTemplates") {
   from("src/main/resources-templates")
   into("$buildDir/generated/resources-templates")
   expand("projectVersion" to "${project.version}")
-  filteringCharset = StandardCharsets.UTF_8.toString()
+  filteringCharset = Charsets.UTF_8.toString()
 }.let {
   tasks.processResources.dependsOn(it)
   tasks["javaSourcesJar"].dependsOn(it)

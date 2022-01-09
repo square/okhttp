@@ -16,59 +16,42 @@
 package okhttp3
 
 import java.util.concurrent.TimeUnit
+import okhttp3.internal.commonBuild
+import okhttp3.internal.commonForceNetwork
+import okhttp3.internal.commonImmutable
+import okhttp3.internal.commonNoCache
+import okhttp3.internal.commonNoStore
+import okhttp3.internal.commonNoTransform
+import okhttp3.internal.commonOnlyIfCached
+import okhttp3.internal.commonToString
 import okhttp3.internal.indexOfNonWhitespace
 import okhttp3.internal.toNonNegativeInt
 
-/**
- * A Cache-Control header with cache directives from a server or client. These directives set policy
- * on what responses can be stored, and which requests can be satisfied by those stored responses.
- *
- * See [RFC 7234, 5.2](https://tools.ietf.org/html/rfc7234#section-5.2).
- */
-class CacheControl private constructor(
-  /**
-   * In a response, this field's name "no-cache" is misleading. It doesn't prevent us from caching
-   * the response; it only means we have to validate the response with the origin server before
-   * returning it. We can do this with a conditional GET.
-   *
-   * In a request, it means do not use a cache to satisfy the request.
-   */
-  @get:JvmName("noCache") val noCache: Boolean,
+actual class CacheControl internal actual constructor(
+  @get:JvmName("noCache") actual val noCache: Boolean,
 
-  /** If true, this response should not be cached. */
-  @get:JvmName("noStore") val noStore: Boolean,
+  @get:JvmName("noStore") actual val noStore: Boolean,
 
-  /** The duration past the response's served date that it can be served without validation. */
-  @get:JvmName("maxAgeSeconds") val maxAgeSeconds: Int,
+  @get:JvmName("maxAgeSeconds") actual val maxAgeSeconds: Int,
 
-  /**
-   * The "s-maxage" directive is the max age for shared caches. Not to be confused with "max-age"
-   * for non-shared caches, As in Firefox and Chrome, this directive is not honored by this cache.
-   */
-  @get:JvmName("sMaxAgeSeconds") val sMaxAgeSeconds: Int,
+  @get:JvmName("sMaxAgeSeconds") actual val sMaxAgeSeconds: Int,
 
-  val isPrivate: Boolean,
-  val isPublic: Boolean,
+  actual val isPrivate: Boolean,
+  actual val isPublic: Boolean,
 
-  @get:JvmName("mustRevalidate") val mustRevalidate: Boolean,
+  @get:JvmName("mustRevalidate") actual val mustRevalidate: Boolean,
 
-  @get:JvmName("maxStaleSeconds") val maxStaleSeconds: Int,
+  @get:JvmName("maxStaleSeconds") actual val maxStaleSeconds: Int,
 
-  @get:JvmName("minFreshSeconds") val minFreshSeconds: Int,
+  @get:JvmName("minFreshSeconds") actual val minFreshSeconds: Int,
 
-  /**
-   * This field's name "only-if-cached" is misleading. It actually means "do not use the network".
-   * It is set by a client who only wants to make a request if it can be fully satisfied by the
-   * cache. Cached responses that would require validation (ie. conditional gets) are not permitted
-   * if this header is set.
-   */
-  @get:JvmName("onlyIfCached") val onlyIfCached: Boolean,
+  @get:JvmName("onlyIfCached") actual val onlyIfCached: Boolean,
 
-  @get:JvmName("noTransform") val noTransform: Boolean,
+  @get:JvmName("noTransform") actual val noTransform: Boolean,
 
-  @get:JvmName("immutable") val immutable: Boolean,
+  @get:JvmName("immutable") actual val immutable: Boolean,
 
-  private var headerValue: String?
+  internal actual var headerValue: String?
 ) {
   @JvmName("-deprecated_noCache")
   @Deprecated(
@@ -140,106 +123,44 @@ class CacheControl private constructor(
       level = DeprecationLevel.ERROR)
   fun immutable(): Boolean = immutable
 
-  override fun toString(): String {
-    var result = headerValue
-    if (result == null) {
-      result = buildString {
-        if (noCache) append("no-cache, ")
-        if (noStore) append("no-store, ")
-        if (maxAgeSeconds != -1) append("max-age=").append(maxAgeSeconds).append(", ")
-        if (sMaxAgeSeconds != -1) append("s-maxage=").append(sMaxAgeSeconds).append(", ")
-        if (isPrivate) append("private, ")
-        if (isPublic) append("public, ")
-        if (mustRevalidate) append("must-revalidate, ")
-        if (maxStaleSeconds != -1) append("max-stale=").append(maxStaleSeconds).append(", ")
-        if (minFreshSeconds != -1) append("min-fresh=").append(minFreshSeconds).append(", ")
-        if (onlyIfCached) append("only-if-cached, ")
-        if (noTransform) append("no-transform, ")
-        if (immutable) append("immutable, ")
-        if (length == 0) return "" // isEmpty() is problematic with Kotlin 1.4 and JDK 15
-        delete(length - 2, length)
-      }
-      headerValue = result
-    }
-    return result
-  }
+  actual override fun toString(): String = commonToString()
 
-  /** Builds a `Cache-Control` request header. */
-  class Builder {
-    private var noCache: Boolean = false
-    private var noStore: Boolean = false
-    private var maxAgeSeconds = -1
-    private var maxStaleSeconds = -1
-    private var minFreshSeconds = -1
-    private var onlyIfCached: Boolean = false
-    private var noTransform: Boolean = false
-    private var immutable: Boolean = false
+  actual class Builder {
+    internal actual var noCache: Boolean = false
+    internal actual var noStore: Boolean = false
+    internal actual var maxAgeSeconds = -1
+    internal actual var maxStaleSeconds = -1
+    internal actual var minFreshSeconds = -1
+    internal actual var onlyIfCached: Boolean = false
+    internal actual var noTransform: Boolean = false
+    internal actual var immutable: Boolean = false
 
-    /** Don't accept an unvalidated cached response. */
-    fun noCache() = apply {
-      this.noCache = true
-    }
+    actual fun noCache() = commonNoCache()
 
-    /** Don't store the server's response in any cache. */
-    fun noStore() = apply {
-      this.noStore = true
-    }
+    actual fun noStore() = commonNoStore()
 
-    /**
-     * Sets the maximum age of a cached response. If the cache response's age exceeds [maxAge], it
-     * will not be used and a network request will be made.
-     *
-     * @param maxAge a non-negative integer. This is stored and transmitted with [TimeUnit.SECONDS]
-     *     precision; finer precision will be lost.
-     */
+    actual fun onlyIfCached() = commonOnlyIfCached()
+
+    actual fun noTransform() = commonNoTransform()
+
+    actual fun immutable() = commonImmutable()
+
     fun maxAge(maxAge: Int, timeUnit: TimeUnit) = apply {
       require(maxAge >= 0) { "maxAge < 0: $maxAge" }
       val maxAgeSecondsLong = timeUnit.toSeconds(maxAge.toLong())
       this.maxAgeSeconds = maxAgeSecondsLong.clampToInt()
     }
 
-    /**
-     * Accept cached responses that have exceeded their freshness lifetime by up to `maxStale`. If
-     * unspecified, stale cache responses will not be used.
-     *
-     * @param maxStale a non-negative integer. This is stored and transmitted with
-     *     [TimeUnit.SECONDS] precision; finer precision will be lost.
-     */
     fun maxStale(maxStale: Int, timeUnit: TimeUnit) = apply {
       require(maxStale >= 0) { "maxStale < 0: $maxStale" }
       val maxStaleSecondsLong = timeUnit.toSeconds(maxStale.toLong())
       this.maxStaleSeconds = maxStaleSecondsLong.clampToInt()
     }
 
-    /**
-     * Sets the minimum number of seconds that a response will continue to be fresh for. If the
-     * response will be stale when [minFresh] have elapsed, the cached response will not be used and
-     * a network request will be made.
-     *
-     * @param minFresh a non-negative integer. This is stored and transmitted with
-     *     [TimeUnit.SECONDS] precision; finer precision will be lost.
-     */
     fun minFresh(minFresh: Int, timeUnit: TimeUnit) = apply {
       require(minFresh >= 0) { "minFresh < 0: $minFresh" }
       val minFreshSecondsLong = timeUnit.toSeconds(minFresh.toLong())
       this.minFreshSeconds = minFreshSecondsLong.clampToInt()
-    }
-
-    /**
-     * Only accept the response if it is in the cache. If the response isn't cached, a `504
-     * Unsatisfiable Request` response will be returned.
-     */
-    fun onlyIfCached() = apply {
-      this.onlyIfCached = true
-    }
-
-    /** Don't accept a transformed response. */
-    fun noTransform() = apply {
-      this.noTransform = true
-    }
-
-    fun immutable() = apply {
-      this.immutable = true
     }
 
     private fun Long.clampToInt(): Int {
@@ -249,37 +170,19 @@ class CacheControl private constructor(
       }
     }
 
-    fun build(): CacheControl {
-      return CacheControl(noCache, noStore, maxAgeSeconds, -1, false, false, false, maxStaleSeconds,
-          minFreshSeconds, onlyIfCached, noTransform, immutable, null)
-    }
+    actual fun build(): CacheControl = commonBuild()
   }
 
-  companion object {
-    /**
-     * Cache control request directives that require network validation of responses. Note that such
-     * requests may be assisted by the cache via conditional GET requests.
-     */
+  actual companion object {
     @JvmField
-    val FORCE_NETWORK = Builder()
-        .noCache()
-        .build()
+    actual val FORCE_NETWORK = commonForceNetwork()
 
-    /**
-     * Cache control request directives that uses the cache only, even if the cached response is
-     * stale. If the response isn't available in the cache or requires server validation, the call
-     * will fail with a `504 Unsatisfiable Request`.
-     */
     @JvmField
     val FORCE_CACHE = Builder()
         .onlyIfCached()
         .maxStale(Integer.MAX_VALUE, TimeUnit.SECONDS)
         .build()
 
-    /**
-     * Returns the cache directives of [headers]. This honors both Cache-Control and Pragma headers
-     * if they are present.
-     */
     @JvmStatic
     fun parse(headers: Headers): CacheControl {
       var noCache = false

@@ -19,7 +19,6 @@ import java.io.File
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.SocketTimeoutException
-import java.nio.charset.StandardCharsets
 import java.time.Duration
 import java.util.Arrays
 import java.util.concurrent.BlockingQueue
@@ -243,7 +242,7 @@ class HttpOverHttp2Test {
   @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
   fun noDefaultContentLengthOnStreamingPost(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
-    val postBytes = "FGHIJ".toByteArray(StandardCharsets.UTF_8)
+    val postBytes = "FGHIJ".toByteArray()
     server.enqueue(MockResponse().setBody("ABCDE"))
     val call = client.newCall(
       Request.Builder()
@@ -268,7 +267,7 @@ class HttpOverHttp2Test {
   @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
   fun userSuppliedContentLengthHeader(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
-    val postBytes = "FGHIJ".toByteArray(StandardCharsets.UTF_8)
+    val postBytes = "FGHIJ".toByteArray()
     server.enqueue(MockResponse().setBody("ABCDE"))
     val call = client.newCall(
       Request.Builder()
@@ -299,7 +298,7 @@ class HttpOverHttp2Test {
     protocol: Protocol, mockWebServer: MockWebServer
   ) {
     setUp(protocol, mockWebServer)
-    val postBytes = "FGHIJ".toByteArray(StandardCharsets.UTF_8)
+    val postBytes = "FGHIJ".toByteArray()
     server.enqueue(MockResponse().setBody("ABCDE"))
     val call = client.newCall(
       Request.Builder()

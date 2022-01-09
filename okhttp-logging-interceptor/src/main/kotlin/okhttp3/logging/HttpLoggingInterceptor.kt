@@ -17,13 +17,13 @@ package okhttp3.logging
 
 import java.io.IOException
 import java.nio.charset.Charset
-import java.nio.charset.StandardCharsets.UTF_8
 import java.util.TreeSet
 import java.util.concurrent.TimeUnit
 import okhttp3.Headers
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
+import okhttp3.internal.charset
 import okhttp3.internal.http.promisesBody
 import okhttp3.internal.platform.Platform
 import okhttp3.logging.internal.isProbablyUtf8
@@ -202,8 +202,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
         val buffer = Buffer()
         requestBody.writeTo(buffer)
 
-        val contentType = requestBody.contentType()
-        val charset: Charset = contentType?.charset(UTF_8) ?: UTF_8
+        val charset: Charset = requestBody.contentType().charset()
 
         logger.log("")
         if (buffer.isProbablyUtf8()) {
@@ -257,8 +256,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
           }
         }
 
-        val contentType = responseBody.contentType()
-        val charset: Charset = contentType?.charset(UTF_8) ?: UTF_8
+        val charset: Charset = responseBody.contentType().charset()
 
         if (!buffer.isProbablyUtf8()) {
           logger.log("")

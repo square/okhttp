@@ -17,7 +17,6 @@
 package okhttp3.internal.tls
 
 import java.io.ByteArrayInputStream
-import java.nio.charset.StandardCharsets.UTF_8
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 import java.util.stream.Stream
@@ -790,7 +789,7 @@ class HostnameVerifierTest {
 
   private fun certificate(certificate: String): X509Certificate {
     return CertificateFactory.getInstance("X.509")
-      .generateCertificate(ByteArrayInputStream(certificate.toByteArray(UTF_8)))
+      .generateCertificate(ByteArrayInputStream(certificate.toByteArray()))
       as X509Certificate
   }
 

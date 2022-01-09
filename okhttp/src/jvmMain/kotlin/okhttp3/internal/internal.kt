@@ -19,6 +19,7 @@
 
 package okhttp3.internal
 
+import java.nio.charset.Charset
 import javax.net.ssl.SSLSocket
 import okhttp3.Cache
 import okhttp3.CipherSuite
@@ -26,6 +27,8 @@ import okhttp3.ConnectionSpec
 import okhttp3.Cookie
 import okhttp3.Headers
 import okhttp3.HttpUrl
+import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.internal.connection.RealConnection
@@ -53,6 +56,25 @@ fun ConnectionSpec.effectiveCipherSuites(socketEnabledCipherSuites: Array<String
   } else {
     socketEnabledCipherSuites
   }
+}
+
+fun MediaType?.chooseCharset(): Pair<Charset, MediaType?> {
+  var charset: Charset = Charsets.UTF_8
+  var finalContentType: MediaType? = this
+  if (this != null) {
+    val resolvedCharset = this.charset()
+    if (resolvedCharset == null) {
+      charset = Charsets.UTF_8
+      finalContentType = "$this; charset=utf-8".toMediaTypeOrNull()
+    } else {
+      charset = resolvedCharset
+    }
+  }
+  return charset to finalContentType
+}
+
+fun MediaType?.charset(defaultValue: Charset = Charsets.UTF_8): Charset {
+  return this?.charset(defaultValue) ?: Charsets.UTF_8
 }
 
 val Response.connection: RealConnection

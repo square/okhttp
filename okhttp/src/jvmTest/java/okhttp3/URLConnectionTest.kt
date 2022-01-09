@@ -34,7 +34,6 @@ import java.net.SocketTimeoutException
 import java.net.URI
 import java.net.URLConnection
 import java.net.UnknownHostException
-import java.nio.charset.StandardCharsets
 import java.security.KeyStore
 import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
@@ -2890,7 +2889,7 @@ class URLConnectionTest {
     } catch (expected: IllegalStateException) {
     }
     try {
-      sinkReference.get().write("ghi".toByteArray(StandardCharsets.UTF_8))
+      sinkReference.get().write("ghi".toByteArray())
       sinkReference.get().emit()
       fail<Any>()
     } catch (expected: IllegalStateException) {

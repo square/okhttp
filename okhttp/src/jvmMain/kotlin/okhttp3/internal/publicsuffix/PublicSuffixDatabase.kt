@@ -18,7 +18,6 @@ package okhttp3.internal.publicsuffix
 import java.io.IOException
 import java.io.InterruptedIOException
 import java.net.IDN
-import java.nio.charset.StandardCharsets.UTF_8
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
 import okhttp3.internal.and
@@ -112,7 +111,7 @@ class PublicSuffixDatabase {
     }
 
     // Break apart the domain into UTF-8 labels, i.e. foo.bar.com turns into [foo, bar, com].
-    val domainLabelsUtf8Bytes = Array(domainLabels.size) { i -> domainLabels[i].toByteArray(UTF_8) }
+    val domainLabelsUtf8Bytes = Array(domainLabels.size) { i -> domainLabels[i].toByteArray() }
 
     // Start by looking for exact matches. We start at the leftmost label. For example, foo.bar.com
     // will look like: [foo, bar, com], [bar, com], [com]. The longest matching rule wins.
@@ -331,7 +330,7 @@ class PublicSuffixDatabase {
             low = mid + end + 1
           } else {
             // Found a match.
-            match = String(this, mid, publicSuffixLength, UTF_8)
+            match = String(this, mid, publicSuffixLength)
             break
           }
         }
