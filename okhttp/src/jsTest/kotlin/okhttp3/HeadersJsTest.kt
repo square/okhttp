@@ -22,7 +22,7 @@ import kotlin.test.Test
 
 class HeadersJsTest {
   @Test
-  fun nameIndexesAreStrict() {
+  fun names() {
     val headers = Headers.headersOf("a", "b", "c", "d")
 
     assertThat(headers.names()).isEqualTo(setOf("a", "c"))
