@@ -33,13 +33,10 @@ actual abstract class ResponseBody : Closeable {
 
   actual abstract fun source(): BufferedSource
 
-  @Throws(IOException::class)
   actual fun bytes() = commonBytes()
 
-  @Throws(IOException::class)
   actual fun byteString() = commonByteString()
 
-  @Throws(IOException::class)
   actual fun string(): String {
     val charset = contentType()?.parameter("charset") ?: "UTF-8"
     if (!charset.equals("UTF-8", ignoreCase = true)) {
