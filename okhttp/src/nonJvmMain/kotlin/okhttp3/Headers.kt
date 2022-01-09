@@ -50,7 +50,7 @@ actual class Headers internal actual constructor(
   actual fun value(index: Int): String = commonValue(index)
 
   actual fun names(): Set<String> {
-    return (0 until size step 2).map { name(it) }.distinctBy { it.lowercase() }.toSet()
+    return (0 until size).map { name(it) }.distinctBy { it.lowercase() }.toSet()
   }
 
   actual fun values(name: String): List<String> = commonValues(name)
