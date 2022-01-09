@@ -235,7 +235,7 @@ class ResponseBodyJvmTest {
 
   @Test
   fun sourceSeesBom() {
-    val body = ResponseBodyTest.body("efbbbf68656c6c6f")
+    val body = "efbbbf68656c6c6f".decodeHex().toResponseBody()
     val source = body.source()
     assertk.assertThat(source.readByte() and 0xff).isEqualTo(0xef)
     assertk.assertThat(source.readByte() and 0xff).isEqualTo(0xbb)
@@ -469,6 +469,13 @@ class ResponseBodyJvmTest {
     }
     body.byteStream().close()
     assertThat(closed.get()).isTrue
+  }
+
+  @Test
+  fun unicodeTextWithUnsupportedEncoding() {
+    val text = "eile oli oliiviõli"
+    val body = text.toResponseBody("text/plain; charset=unknown".toMediaType())
+    assertk.assertThat(body.string()).isEqualTo(text)
   }
 
   companion object {

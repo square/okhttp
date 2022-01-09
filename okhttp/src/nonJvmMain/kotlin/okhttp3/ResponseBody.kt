@@ -16,12 +16,15 @@
 package okhttp3
 
 import okhttp3.internal.commonAsResponseBody
+import okhttp3.internal.commonByteString
+import okhttp3.internal.commonBytes
 import okhttp3.internal.commonClose
 import okhttp3.internal.commonToResponseBody
 import okio.Buffer
 import okio.BufferedSource
 import okio.ByteString
 import okio.Closeable
+import okio.IOException
 
 actual abstract class ResponseBody : Closeable {
   actual abstract fun contentType(): MediaType?
@@ -29,6 +32,21 @@ actual abstract class ResponseBody : Closeable {
   actual abstract fun contentLength(): Long
 
   actual abstract fun source(): BufferedSource
+
+  @Throws(IOException::class)
+  actual fun bytes() = commonBytes()
+
+  @Throws(IOException::class)
+  actual fun byteString() = commonByteString()
+
+  @Throws(IOException::class)
+  actual fun string(): String {
+    val charset = contentType()?.parameter("charset") ?: "UTF-8"
+    if (!charset.equals("UTF-8", ignoreCase = true)) {
+      throw IOException("Unsupported encoding '$charset'")
+    }
+    return source().readUtf8()
+  }
 
   actual override fun close() = commonClose()
 

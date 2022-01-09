@@ -45,27 +45,11 @@ actual abstract class ResponseBody : Closeable {
 
   actual abstract fun source(): BufferedSource
 
-  /**
-   * Returns the response as a byte array.
-   *
-   * This method loads entire response body into memory. If the response body is very large this
-   * may trigger an [OutOfMemoryError]. Prefer to stream the response body if this is a
-   * possibility for your response.
-   */
-  // TODO consider which of these should be part of common API
   @Throws(IOException::class)
-  fun bytes() = commonBytes()
+  actual fun bytes() = commonBytes()
 
-  /**
-   * Returns the response as a [ByteString].
-   *
-   * This method loads entire response body into memory. If the response body is very large this
-   * may trigger an [OutOfMemoryError]. Prefer to stream the response body if this is a
-   * possibility for your response.
-   */
-  // TODO consider which of these should be part of common API
   @Throws(IOException::class)
-  fun byteString() = commonByteString()
+  actual fun byteString() = commonByteString()
 
   /**
    * Returns the response as a character stream.
@@ -79,30 +63,12 @@ actual abstract class ResponseBody : Closeable {
    *
    * Otherwise the response bytes are decoded as UTF-8.
    */
-  // TODO consider which of these should be part of common API
   fun charStream(): Reader = reader ?: BomAwareReader(source(), charset()).also {
     reader = it
   }
 
-  /**
-   * Returns the response as a string.
-   *
-   * If the response starts with a
-   * [Byte Order Mark (BOM)](https://en.wikipedia.org/wiki/Byte_order_mark), it is consumed and
-   * used to determine the charset of the response bytes.
-   *
-   * Otherwise if the response has a `Content-Type` header that specifies a charset, that is used
-   * to determine the charset of the response bytes.
-   *
-   * Otherwise the response bytes are decoded as UTF-8.
-   *
-   * This method loads entire response body into memory. If the response body is very large this
-   * may trigger an [OutOfMemoryError]. Prefer to stream the response body if this is a
-   * possibility for your response.
-   */
-  // TODO consider which of these should be part of common API
   @Throws(IOException::class)
-  fun string(): String = source().use { source ->
+  actual fun string(): String = source().use { source ->
     source.readString(charset = source.readBomAsCharset(charset()))
   }
 

@@ -18,13 +18,13 @@ package okhttp3
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isTrue
-import kotlin.jvm.JvmOverloads
 import kotlin.test.Test
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
 import okio.Buffer
 import okio.BufferedSource
 import okio.ByteString.Companion.decodeHex
+import okio.ByteString.Companion.encodeUtf8
 import okio.IOException
 import okio.Source
 import okio.buffer
@@ -32,7 +32,8 @@ import okio.buffer
 class ResponseBodyTest {
   @Test
   fun sourceEmpty() {
-    val body = body("")
+    val mediaType = if (null == null) null else "any/thing; charset=${null}".toMediaType()
+    val body = "".decodeHex().toResponseBody(mediaType)
     val source = body.source()
     assertThat(source.exhausted()).isTrue()
     assertThat(source.readUtf8()).isEqualTo("")
@@ -90,12 +91,46 @@ class ResponseBodyTest {
     body.close()
   }
 
-  companion object {
-    @JvmOverloads
-    fun body(hex: String, charset: String? = null): ResponseBody {
-      val mediaType = if (charset == null) null else "any/thing; charset=$charset".toMediaType()
-      return hex.decodeHex().toResponseBody(mediaType)
-    }
+  @Test
+  fun unicodeText() {
+    val text = "eile oli oliiviõli"
+    val body = text.toResponseBody()
+    assertThat(body.string()).isEqualTo(text)
+  }
+
+  @Test
+  fun unicodeTextWithCharset() {
+    val text = "eile oli oliiviõli"
+    val body = text.toResponseBody("text/plain; charset=UTF-8".toMediaType())
+    assertThat(body.string()).isEqualTo(text)
+  }
+
+  @Test
+  fun unicodeByteString() {
+    val text = "eile oli oliiviõli"
+    val body = text.toResponseBody()
+    assertThat(body.byteString()).isEqualTo(text.encodeUtf8())
+  }
+
+  @Test
+  fun unicodeByteStringWithCharset() {
+    val text = "eile oli oliiviõli".encodeUtf8()
+    val body = text.toResponseBody("text/plain; charset=EBCDIC".toMediaType())
+    assertThat(body.byteString()).isEqualTo(text)
+  }
+
+  @Test
+  fun unicodeBytes() {
+    val text = "eile oli oliiviõli"
+    val body = text.toResponseBody()
+    assertThat(body.bytes()).isEqualTo(text.encodeToByteArray())
+  }
+
+  @Test
+  fun unicodeBytesWithCharset() {
+    val text = "eile oli oliiviõli".encodeToByteArray()
+    val body = text.toResponseBody("text/plain; charset=EBCDIC".toMediaType())
+    assertThat(body.bytes()).isEqualTo(text)
   }
 }
 

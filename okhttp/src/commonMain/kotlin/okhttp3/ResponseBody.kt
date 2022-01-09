@@ -16,13 +16,9 @@
 
 package okhttp3
 
-import okhttp3.internal.closeQuietly
-import okio.Buffer
 import okio.BufferedSource
 import okio.ByteString
 import okio.Closeable
-import kotlin.jvm.JvmName
-import kotlin.jvm.JvmStatic
 import okio.IOException
 
 /**
@@ -104,12 +100,60 @@ expect abstract class ResponseBody constructor() : Closeable {
 
   abstract fun source(): BufferedSource
 
+  /**
+   * Returns the response as a byte array.
+   *
+   * This method loads entire response body into memory. If the response body is very large this
+   * may trigger an [OutOfMemoryError]. Prefer to stream the response body if this is a
+   * possibility for your response.
+   */
+  @Throws(IOException::class)
+  fun bytes(): ByteArray
+
+  /**
+   * Returns the response as a [ByteString].
+   *
+   * This method loads entire response body into memory. If the response body is very large this
+   * may trigger an [OutOfMemoryError]. Prefer to stream the response body if this is a
+   * possibility for your response.
+   */
+  @Throws(IOException::class)
+  fun byteString(): ByteString
+
+  /**
+   * Returns the response as a string.
+   *
+   * On Non JVM Platforms, this only supports the UTF-8 encoding, all other encodings will
+   * be treated as unknown.
+   *
+   * On JVM Platforms:
+   *
+   * If the response starts with a
+   * [Byte Order Mark (BOM)](https://en.wikipedia.org/wiki/Byte_order_mark), it is consumed and
+   * used to determine the charset of the response bytes.
+   *
+   * Otherwise if the response has a `Content-Type` header that specifies a charset, that is used
+   * to determine the charset of the response bytes.
+   *
+   * Otherwise the response bytes are decoded as UTF-8.
+   *
+   * This method loads entire response body into memory. If the response body is very large this
+   * may trigger an [OutOfMemoryError]. Prefer to stream the response body if this is a
+   * possibility for your response.
+   */
+  @Throws(IOException::class)
+  fun string(): String
+
   override fun close()
 
   companion object {
     /**
      * Returns a new response body that transmits this string. If [contentType] is non-null and
-     * lacks a charset, this will use UTF-8.
+     * has a charset other than utf-8 the behaviour differs by platform.
+     *
+     * On the JVM the encoding will be used instead of utf-8.
+     *
+     * On non JVM platforms, this method will fail for encodings other than utf-8.
      */
     fun String.toResponseBody(contentType: MediaType? = null): ResponseBody
 
