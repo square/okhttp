@@ -35,7 +35,7 @@ package okhttp3
  * [oracle_providers]: https://docs.oracle.com/javase/10/security/oracle-providers.htm
  * [conscrypt_providers]: https://github.com/google/conscrypt/blob/master/common/src/main/java/org/conscrypt/NativeCrypto.java
  */
-class CipherSuite private constructor(
+actual class CipherSuite private constructor(
   /**
    * Returns the Java name of this cipher suite. For some older cipher suites the Java name has the
    * prefix `SSL_`, causing the Java name to be different from the instance name which is always

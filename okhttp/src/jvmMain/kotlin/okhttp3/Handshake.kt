@@ -22,33 +22,17 @@ import java.security.cert.X509Certificate
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSession
 import okhttp3.internal.immutableListOf
+import okhttp3.internal.name
 import okhttp3.internal.toImmutableList
 
-/**
- * A record of a TLS handshake. For HTTPS clients, the client is *local* and the remote server is
- * its *peer*.
- *
- * This value object describes a completed handshake. Use [ConnectionSpec] to set policy for new
- * handshakes.
- */
-class Handshake internal constructor(
-  /**
-   * Returns the TLS version used for this connection. This value wasn't tracked prior to OkHttp
-   * 3.0. For responses cached by preceding versions this returns [TlsVersion.SSL_3_0].
-   */
-  @get:JvmName("tlsVersion") val tlsVersion: TlsVersion,
-
-  /** Returns the cipher suite used for the connection. */
-  @get:JvmName("cipherSuite") val cipherSuite: CipherSuite,
-
-  /** Returns a possibly-empty list of certificates that identify this peer. */
-  @get:JvmName("localCertificates") val localCertificates: List<Certificate>,
-
+actual class Handshake internal constructor(
+  @get:JvmName("tlsVersion") actual val tlsVersion: TlsVersion,
+  @get:JvmName("cipherSuite") actual val cipherSuite: CipherSuite,
+  @get:JvmName("localCertificates") actual val localCertificates: List<Certificate>,
   // Delayed provider of peerCertificates, to allow lazy cleaning.
   peerCertificatesFn: () -> List<Certificate>
 ) {
-  /** Returns a possibly-empty list of certificates that identify the remote peer. */
-  @get:JvmName("peerCertificates") val peerCertificates: List<Certificate> by lazy {
+  @get:JvmName("peerCertificates") actual val peerCertificates: List<Certificate> by lazy {
     try {
       peerCertificatesFn()
     } catch (spue: SSLPeerUnverifiedException) {
@@ -108,7 +92,7 @@ class Handshake internal constructor(
       level = DeprecationLevel.ERROR)
   fun localPrincipal(): Principal? = localPrincipal
 
-  override fun equals(other: Any?): Boolean {
+  actual override fun equals(other: Any?): Boolean {
     return other is Handshake &&
         other.tlsVersion == tlsVersion &&
         other.cipherSuite == cipherSuite &&
@@ -116,7 +100,7 @@ class Handshake internal constructor(
         other.localCertificates == localCertificates
   }
 
-  override fun hashCode(): Int {
+  actual override fun hashCode(): Int {
     var result = 17
     result = 31 * result + tlsVersion.hashCode()
     result = 31 * result + cipherSuite.hashCode()
@@ -125,7 +109,7 @@ class Handshake internal constructor(
     return result
   }
 
-  override fun toString(): String {
+  actual override fun toString(): String {
     val peerCertificatesString = peerCertificates.map { it.name }.toString()
     return "Handshake{" +
         "tlsVersion=$tlsVersion " +
@@ -133,12 +117,6 @@ class Handshake internal constructor(
         "peerCertificates=$peerCertificatesString " +
         "localCertificates=${localCertificates.map { it.name }}}"
   }
-
-  private val Certificate.name: String
-    get() = when (this) {
-      is X509Certificate -> subjectDN.toString()
-      else -> type
-    }
 
   companion object {
     @Throws(IOException::class)
