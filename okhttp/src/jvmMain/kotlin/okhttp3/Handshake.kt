@@ -21,18 +21,23 @@ import java.security.cert.Certificate
 import java.security.cert.X509Certificate
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSession
+import okhttp3.internal.commonEquals
+import okhttp3.internal.commonHashCode
+import okhttp3.internal.commonToString
 import okhttp3.internal.immutableListOf
-import okhttp3.internal.name
 import okhttp3.internal.toImmutableList
 
 actual class Handshake internal constructor(
   @get:JvmName("tlsVersion") actual val tlsVersion: TlsVersion,
   @get:JvmName("cipherSuite") actual val cipherSuite: CipherSuite,
-  @get:JvmName("localCertificates") actual val localCertificates: List<Certificate>,
+
+  /** Returns a possibly-empty list of certificates that identify this peer. */
+  @get:JvmName("localCertificates") val localCertificates: List<Certificate>,
   // Delayed provider of peerCertificates, to allow lazy cleaning.
   peerCertificatesFn: () -> List<Certificate>
 ) {
-  @get:JvmName("peerCertificates") actual val peerCertificates: List<Certificate> by lazy {
+  /** Returns a possibly-empty list of certificates that identify the remote peer. */
+  @get:JvmName("peerCertificates") val peerCertificates: List<Certificate> by lazy {
     try {
       peerCertificatesFn()
     } catch (spue: SSLPeerUnverifiedException) {
@@ -92,31 +97,11 @@ actual class Handshake internal constructor(
       level = DeprecationLevel.ERROR)
   fun localPrincipal(): Principal? = localPrincipal
 
-  actual override fun equals(other: Any?): Boolean {
-    return other is Handshake &&
-        other.tlsVersion == tlsVersion &&
-        other.cipherSuite == cipherSuite &&
-        other.peerCertificates == peerCertificates &&
-        other.localCertificates == localCertificates
-  }
+  override fun equals(other: Any?): Boolean = commonEquals(other)
 
-  actual override fun hashCode(): Int {
-    var result = 17
-    result = 31 * result + tlsVersion.hashCode()
-    result = 31 * result + cipherSuite.hashCode()
-    result = 31 * result + peerCertificates.hashCode()
-    result = 31 * result + localCertificates.hashCode()
-    return result
-  }
+  override fun hashCode(): Int = commonHashCode()
 
-  actual override fun toString(): String {
-    val peerCertificatesString = peerCertificates.map { it.name }.toString()
-    return "Handshake{" +
-        "tlsVersion=$tlsVersion " +
-        "cipherSuite=$cipherSuite " +
-        "peerCertificates=$peerCertificatesString " +
-        "localCertificates=${localCertificates.map { it.name }}}"
-  }
+  override fun toString(): String = commonToString()
 
   companion object {
     @Throws(IOException::class)

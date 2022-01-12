@@ -17,6 +17,7 @@
 package okhttp3.internal
 
 import okhttp3.Certificate
+import okhttp3.DummyCertificate
 
 internal actual val Certificate.name: String
-  get() = this.subjectDN
+  get() = (this as? DummyCertificate)?.subjectDN ?: this::class.simpleName.toString()

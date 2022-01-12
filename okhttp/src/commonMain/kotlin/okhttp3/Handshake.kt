@@ -37,10 +37,4 @@ expect class Handshake {
 
   /** Returns a possibly-empty list of certificates that identify the remote peer. */
   val peerCertificates: List<Certificate>
-
-  override fun equals(other: Any?): Boolean
-
-  override fun hashCode(): Int
-
-  override fun toString(): String
 }

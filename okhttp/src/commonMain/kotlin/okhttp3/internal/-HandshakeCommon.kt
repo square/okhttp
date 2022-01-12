@@ -19,7 +19,7 @@ package okhttp3.internal
 import okhttp3.Certificate
 import okhttp3.Handshake
 
-internal fun Handshake.equals(other: Any?): Boolean {
+internal fun Handshake.commonEquals(other: Any?): Boolean {
   return other is Handshake &&
     other.tlsVersion == tlsVersion &&
     other.cipherSuite == cipherSuite &&
@@ -27,7 +27,7 @@ internal fun Handshake.equals(other: Any?): Boolean {
     other.localCertificates == localCertificates
 }
 
-internal fun Handshake.hashCode(): Int {
+internal fun Handshake.commonHashCode(): Int {
   var result = 17
   result = 31 * result + tlsVersion.hashCode()
   result = 31 * result + cipherSuite.hashCode()
@@ -36,7 +36,7 @@ internal fun Handshake.hashCode(): Int {
   return result
 }
 
-internal fun Handshake.toString(): String {
+internal fun Handshake.commonToString(): String {
   val peerCertificatesString = peerCertificates.map { it.name }.toString()
   return "Handshake{" +
     "tlsVersion=$tlsVersion " +

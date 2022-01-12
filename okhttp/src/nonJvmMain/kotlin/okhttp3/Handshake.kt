@@ -15,7 +15,9 @@
  */
 package okhttp3
 
-import okhttp3.internal.name
+import okhttp3.internal.commonEquals
+import okhttp3.internal.commonHashCode
+import okhttp3.internal.commonToString
 
 actual class Handshake internal constructor(
   actual val tlsVersion: TlsVersion,
@@ -23,29 +25,9 @@ actual class Handshake internal constructor(
   actual val localCertificates: List<Certificate>,
   actual val peerCertificates: List<Certificate>
 ) {
-  actual override fun equals(other: Any?): Boolean {
-    return other is Handshake &&
-        other.tlsVersion == tlsVersion &&
-        other.cipherSuite == cipherSuite &&
-        other.peerCertificates == peerCertificates &&
-        other.localCertificates == localCertificates
-  }
+  override fun equals(other: Any?): Boolean = commonEquals(other)
 
-  actual override fun hashCode(): Int {
-    var result = 17
-    result = 31 * result + tlsVersion.hashCode()
-    result = 31 * result + cipherSuite.hashCode()
-    result = 31 * result + peerCertificates.hashCode()
-    result = 31 * result + localCertificates.hashCode()
-    return result
-  }
+  override fun hashCode(): Int = commonHashCode()
 
-  actual override fun toString(): String {
-    val peerCertificatesString = peerCertificates.map { it.name }.toString()
-    return "Handshake{" +
-        "tlsVersion=$tlsVersion " +
-        "cipherSuite=$cipherSuite " +
-        "peerCertificates=$peerCertificatesString " +
-        "localCertificates=${localCertificates.map { it.name }}}"
-  }
+  override fun toString(): String = commonToString()
 }

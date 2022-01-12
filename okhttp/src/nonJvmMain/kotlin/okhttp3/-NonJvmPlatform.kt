@@ -16,5 +16,9 @@
 
 package okhttp3
 
-actual abstract class Certificate(val subjectDN: String) {
-}
+import okio.ByteString
+
+actual abstract class Certificate
+
+// TODO replace with platform specific certificate
+class DummyCertificate(val subjectDN: String, val certificateBytes: ByteString): Certificate()
