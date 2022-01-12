@@ -20,6 +20,7 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isTrue
 import kotlin.test.Test
+import kotlin.time.DurationUnit
 
 class CacheControlTest {
   @Test
@@ -46,9 +47,9 @@ class CacheControlTest {
     val cacheControl = CacheControl.Builder()
       .noCache()
       .noStore()
-//      .maxAge(1, TimeUnit.SECONDS)
-//      .maxStale(2, TimeUnit.SECONDS)
-//      .minFresh(3, TimeUnit.SECONDS)
+      .maxAge(1, DurationUnit.SECONDS)
+      .maxStale(2, DurationUnit.SECONDS)
+      .minFresh(3, DurationUnit.SECONDS)
       .onlyIfCached()
       .noTransform()
       .immutable()
@@ -58,9 +59,9 @@ class CacheControlTest {
     )
     assertThat(cacheControl.noCache).isTrue()
     assertThat(cacheControl.noStore).isTrue()
-//    assertThat(cacheControl.maxAgeSeconds).isEqualTo(1)
-//    assertThat(cacheControl.maxStaleSeconds).isEqualTo(2)
-//    assertThat(cacheControl.minFreshSeconds).isEqualTo(3)
+    assertThat(cacheControl.maxAgeSeconds).isEqualTo(1)
+    assertThat(cacheControl.maxStaleSeconds).isEqualTo(2)
+    assertThat(cacheControl.minFreshSeconds).isEqualTo(3)
     assertThat(cacheControl.onlyIfCached).isTrue()
     assertThat(cacheControl.noTransform).isTrue()
     assertThat(cacheControl.immutable).isTrue()

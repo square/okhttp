@@ -15,7 +15,7 @@
  */
 package okhttp3
 
-import okhttp3.internal.TimeUnit
+import kotlin.time.DurationUnit
 import okhttp3.internal.commonBuild
 import okhttp3.internal.commonForceNetwork
 import okhttp3.internal.commonImmutable
@@ -65,11 +65,11 @@ actual class CacheControl internal actual constructor(
 
     actual fun immutable() = commonImmutable()
 
-    actual fun maxAge(maxAge: Int, timeUnit: TimeUnit) = commonMaxAge(maxAge, timeUnit)
+    actual fun maxAge(maxAge: Int, timeUnit: DurationUnit) = commonMaxAge(maxAge, timeUnit)
 
-    actual fun maxStale(maxStale: Int, timeUnit: TimeUnit) = commonMaxStale(maxStale, timeUnit)
+    actual fun maxStale(maxStale: Int, timeUnit: DurationUnit) = commonMaxStale(maxStale, timeUnit)
 
-    actual fun minFresh(minFresh: Int, timeUnit: TimeUnit) = commonMinFresh(minFresh, timeUnit)
+    actual fun minFresh(minFresh: Int, timeUnit: DurationUnit) = commonMinFresh(minFresh, timeUnit)
 
     actual fun build(): CacheControl = commonBuild()
   }
