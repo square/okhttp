@@ -55,7 +55,7 @@ class CacheControlTest {
       .immutable()
       .build()
     assertThat(cacheControl.toString()).isEqualTo(
-      "no-cache, no-store, only-if-cached, no-transform, immutable"
+      "no-cache, no-store, max-age=1, max-stale=2, min-fresh=3, only-if-cached, no-transform, immutable"
     )
     assertThat(cacheControl.noCache).isTrue()
     assertThat(cacheControl.noStore).isTrue()
