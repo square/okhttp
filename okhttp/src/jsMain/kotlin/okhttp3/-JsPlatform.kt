@@ -20,5 +20,5 @@ import okio.ByteString
 
 actual abstract class Certificate
 
-// TODO replace with platform specific certificate
+// TODO replace with JS specific certificate
 class DummyCertificate(val subjectDN: String, val certificateBytes: ByteString): Certificate()
