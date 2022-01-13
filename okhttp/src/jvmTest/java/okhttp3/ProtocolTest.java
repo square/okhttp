@@ -30,6 +30,8 @@ public class ProtocolTest {
     assertThat(Protocol.get("h2")).isEqualTo(Protocol.HTTP_2);
     assertThat(Protocol.get("h2_prior_knowledge")).isEqualTo(Protocol.H2_PRIOR_KNOWLEDGE);
     assertThat(Protocol.get("quic")).isEqualTo(Protocol.QUIC);
+    assertThat(Protocol.get("h3")).isEqualTo(Protocol.HTTP_3);
+    assertThat(Protocol.get("h3-29")).isEqualTo(Protocol.HTTP_3);
   }
 
   @Test
@@ -45,5 +47,6 @@ public class ProtocolTest {
     assertThat(Protocol.HTTP_2.toString()).isEqualTo("h2");
     assertThat(Protocol.H2_PRIOR_KNOWLEDGE.toString()).isEqualTo("h2_prior_knowledge");
     assertThat(Protocol.QUIC.toString()).isEqualTo("quic");
+    assertThat(Protocol.HTTP_3.toString()).isEqualTo("h3");
   }
 }
