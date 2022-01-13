@@ -32,12 +32,12 @@ actual class Handshake internal constructor(
   @get:JvmName("cipherSuite") actual val cipherSuite: CipherSuite,
 
   /** Returns a possibly-empty list of certificates that identify this peer. */
-  @get:JvmName("localCertificates") val localCertificates: List<Certificate>,
+  @get:JvmName("localCertificates") actual val localCertificates: List<Certificate>,
   // Delayed provider of peerCertificates, to allow lazy cleaning.
   peerCertificatesFn: () -> List<Certificate>
 ) {
   /** Returns a possibly-empty list of certificates that identify the remote peer. */
-  @get:JvmName("peerCertificates") val peerCertificates: List<Certificate> by lazy {
+  @get:JvmName("peerCertificates") actual val peerCertificates: List<Certificate> by lazy {
     try {
       peerCertificatesFn()
     } catch (spue: SSLPeerUnverifiedException) {
