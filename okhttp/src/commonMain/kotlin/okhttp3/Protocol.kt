@@ -121,8 +121,10 @@ enum class Protocol(private val protocol: String) {
         HTTP_2.protocol -> HTTP_2
         SPDY_3.protocol -> SPDY_3
         QUIC.protocol -> QUIC
-        HTTP_3.protocol -> HTTP_3
-        else -> throw IOException("Unexpected protocol: $protocol")
+        else -> {
+          // Support HTTP3 draft like h3-29
+          if (protocol.startsWith(HTTP_3.protocol)) HTTP_3 else throw IOException("Unexpected protocol: $protocol")
+        }
       }
     }
   }
