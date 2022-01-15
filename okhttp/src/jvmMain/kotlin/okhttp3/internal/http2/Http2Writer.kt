@@ -249,6 +249,7 @@ class Http2Writer(
         type = TYPE_WINDOW_UPDATE,
         flags = FLAG_NONE
     )
+    println("UPDATE $windowSizeIncrement")
     sink.writeInt(windowSizeIncrement.toInt())
     sink.flush()
   }

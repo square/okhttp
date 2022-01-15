@@ -109,9 +109,9 @@ class Http2Reader(
     val type = source.readByte() and 0xff
     val flags = source.readByte() and 0xff
     val streamId = source.readInt() and 0x7fffffff // Ignore reserved bit.
-//    if (type != TYPE_DATA) {
+    if (type != TYPE_DATA) {
       println(frameLog(true, streamId, length, type, flags))
-//    }
+    }
 
     if (requireSettings && type != TYPE_SETTINGS) {
       throw IOException("Expected a SETTINGS frame but was ${formattedType(type)}")
