@@ -99,7 +99,7 @@ class RealConnection(
   private var socket: Socket? = null
   private var handshake: Handshake? = null
   private var protocol: Protocol? = null
-  private var http2Connection: Http2Connection? = null
+  var http2Connection: Http2Connection? = null
   private var source: BufferedSource? = null
   private var sink: BufferedSink? = null
 

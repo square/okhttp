@@ -255,7 +255,7 @@ class Http2Writer(
 
   @Throws(IOException::class)
   fun frameHeader(streamId: Int, length: Int, type: Int, flags: Int) {
-    if (logger.isLoggable(FINE)) logger.fine(frameLog(false, streamId, length, type, flags))
+    println(frameLog(false, streamId, length, type, flags))
     require(length <= maxFrameSize) { "FRAME_SIZE_ERROR length > $maxFrameSize: $length" }
     require(streamId and 0x80000000.toInt() == 0) { "reserved bit set: $streamId" }
     sink.writeMedium(length)

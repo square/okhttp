@@ -333,15 +333,19 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     }
   }
 
+  val cancelledStreams = mutableSetOf<Int>()
+
   internal fun writeSynResetLater(
     streamId: Int,
     errorCode: ErrorCode
   ) {
-    writerQueue.execute("$connectionName[$streamId] writeSynReset") {
-      try {
-        writeSynReset(streamId, errorCode)
-      } catch (e: IOException) {
-        failConnection(e)
+    if (cancelledStreams.add(streamId)) {
+      writerQueue.execute("$connectionName[$streamId] writeSynReset") {
+        try {
+          writeSynReset(streamId, errorCode)
+        } catch (e: IOException) {
+          failConnection(e)
+        }
       }
     }
   }
