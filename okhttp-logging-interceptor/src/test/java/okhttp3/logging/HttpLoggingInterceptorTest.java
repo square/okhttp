@@ -44,6 +44,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import static okhttp3.RequestBody.gzip;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -576,24 +577,6 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("Hello!")
         .assertLogEqual("<-- END HTTP (6-byte body)")
         .assertNoMoreLogs();
-  }
-
-  private RequestBody gzip(final RequestBody body) {
-    return new RequestBody() {
-      @Override public MediaType contentType() {
-        return body.contentType();
-      }
-
-      @Override public long contentLength() {
-        return -1; // We don't know the compressed length in advance!
-      }
-
-      @Override public void writeTo(BufferedSink sink) throws IOException {
-        BufferedSink gzipSink = Okio.buffer(new GzipSink(sink));
-        body.writeTo(gzipSink);
-        gzipSink.close();
-      }
-    };
   }
 
   @Test public void bodyRequestGzipEncoded() throws IOException {
