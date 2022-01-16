@@ -16,9 +16,14 @@
 package okhttp3
 
 import java.util.concurrent.TimeUnit
+import kotlin.time.DurationUnit
 import okhttp3.internal.commonBuild
+import okhttp3.internal.commonClampToInt
 import okhttp3.internal.commonForceNetwork
 import okhttp3.internal.commonImmutable
+import okhttp3.internal.commonMaxAge
+import okhttp3.internal.commonMaxStale
+import okhttp3.internal.commonMinFresh
 import okhttp3.internal.commonNoCache
 import okhttp3.internal.commonNoStore
 import okhttp3.internal.commonNoTransform
@@ -145,29 +150,50 @@ actual class CacheControl internal actual constructor(
 
     actual fun immutable() = commonImmutable()
 
+    actual fun maxAge(maxAge: Int, timeUnit: DurationUnit) = commonMaxAge(maxAge, timeUnit)
+
+    actual fun maxStale(maxStale: Int, timeUnit: DurationUnit) = commonMaxStale(maxStale, timeUnit)
+
+    actual fun minFresh(minFresh: Int, timeUnit: DurationUnit) = commonMinFresh(minFresh, timeUnit)
+
+    /**
+     * Sets the maximum age of a cached response. If the cache response's age exceeds [maxAge], it
+     * will not be used and a network request will be made.
+     *
+     * @param maxAge a non-negative integer. This is stored and transmitted with [TimeUnit.SECONDS]
+     *     precision; finer precision will be lost.
+     */
     fun maxAge(maxAge: Int, timeUnit: TimeUnit) = apply {
       require(maxAge >= 0) { "maxAge < 0: $maxAge" }
       val maxAgeSecondsLong = timeUnit.toSeconds(maxAge.toLong())
-      this.maxAgeSeconds = maxAgeSecondsLong.clampToInt()
+      this.maxAgeSeconds = maxAgeSecondsLong.commonClampToInt()
     }
 
+    /**
+     * Accept cached responses that have exceeded their freshness lifetime by up to `maxStale`. If
+     * unspecified, stale cache responses will not be used.
+     *
+     * @param maxStale a non-negative integer. This is stored and transmitted with
+     *     [TimeUnit.SECONDS] precision; finer precision will be lost.
+     */
     fun maxStale(maxStale: Int, timeUnit: TimeUnit) = apply {
       require(maxStale >= 0) { "maxStale < 0: $maxStale" }
       val maxStaleSecondsLong = timeUnit.toSeconds(maxStale.toLong())
-      this.maxStaleSeconds = maxStaleSecondsLong.clampToInt()
+      this.maxStaleSeconds = maxStaleSecondsLong.commonClampToInt()
     }
 
+    /**
+     * Sets the minimum number of seconds that a response will continue to be fresh for. If the
+     * response will be stale when [minFresh] have elapsed, the cached response will not be used and
+     * a network request will be made.
+     *
+     * @param minFresh a non-negative integer. This is stored and transmitted with
+     *     [TimeUnit.SECONDS] precision; finer precision will be lost.
+     */
     fun minFresh(minFresh: Int, timeUnit: TimeUnit) = apply {
       require(minFresh >= 0) { "minFresh < 0: $minFresh" }
       val minFreshSecondsLong = timeUnit.toSeconds(minFresh.toLong())
-      this.minFreshSeconds = minFreshSecondsLong.clampToInt()
-    }
-
-    private fun Long.clampToInt(): Int {
-      return when {
-        this > Integer.MAX_VALUE -> Integer.MAX_VALUE
-        else -> toInt()
-      }
+      this.minFreshSeconds = minFreshSecondsLong.commonClampToInt()
     }
 
     actual fun build(): CacheControl = commonBuild()
@@ -297,9 +323,21 @@ actual class CacheControl internal actual constructor(
         headerValue = null
       }
 
-      return CacheControl(noCache, noStore, maxAgeSeconds, sMaxAgeSeconds, isPrivate, isPublic,
-          mustRevalidate, maxStaleSeconds, minFreshSeconds, onlyIfCached, noTransform, immutable,
-          headerValue)
+      return CacheControl(
+        noCache = noCache,
+        noStore = noStore,
+        maxAgeSeconds = maxAgeSeconds,
+        sMaxAgeSeconds = sMaxAgeSeconds,
+        isPrivate = isPrivate,
+        isPublic = isPublic,
+        mustRevalidate = mustRevalidate,
+        maxStaleSeconds = maxStaleSeconds,
+        minFreshSeconds = minFreshSeconds,
+        onlyIfCached = onlyIfCached,
+        noTransform = noTransform,
+        immutable = immutable,
+        headerValue = headerValue
+      )
     }
 
     /**
