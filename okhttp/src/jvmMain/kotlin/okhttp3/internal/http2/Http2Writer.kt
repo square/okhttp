@@ -249,14 +249,13 @@ class Http2Writer(
         type = TYPE_WINDOW_UPDATE,
         flags = FLAG_NONE
     )
-    println("UPDATE $windowSizeIncrement")
     sink.writeInt(windowSizeIncrement.toInt())
     sink.flush()
   }
 
   @Throws(IOException::class)
   fun frameHeader(streamId: Int, length: Int, type: Int, flags: Int) {
-    println(frameLog(false, streamId, length, type, flags))
+    if (logger.isLoggable(FINE)) logger.fine(frameLog(false, streamId, length, type, flags))
     require(length <= maxFrameSize) { "FRAME_SIZE_ERROR length > $maxFrameSize: $length" }
     require(streamId and 0x80000000.toInt() == 0) { "reserved bit set: $streamId" }
     sink.writeMedium(length)

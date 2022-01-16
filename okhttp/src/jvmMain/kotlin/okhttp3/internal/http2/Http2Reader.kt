@@ -109,9 +109,7 @@ class Http2Reader(
     val type = source.readByte() and 0xff
     val flags = source.readByte() and 0xff
     val streamId = source.readInt() and 0x7fffffff // Ignore reserved bit.
-    if (type != TYPE_DATA) {
-      println(frameLog(true, streamId, length, type, flags))
-    }
+    if (logger.isLoggable(FINE)) logger.fine(frameLog(true, streamId, length, type, flags))
 
     if (requireSettings && type != TYPE_SETTINGS) {
       throw IOException("Expected a SETTINGS frame but was ${formattedType(type)}")
@@ -363,7 +361,7 @@ class Http2Reader(
       length = left
       val type = source.readByte() and 0xff
       flags = source.readByte() and 0xff
-      println(frameLog(true, streamId, length, type, flags))
+      if (logger.isLoggable(FINE)) logger.fine(frameLog(true, streamId, length, type, flags))
       streamId = source.readInt() and 0x7fffffff
       if (type != TYPE_CONTINUATION) throw IOException("$type != TYPE_CONTINUATION")
       if (streamId != previousStreamId) throw IOException("TYPE_CONTINUATION streamId changed")
