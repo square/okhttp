@@ -249,8 +249,8 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
         nextStreamId += 2
         stream = Http2Stream(streamId, this, outFinished, inFinished, null)
         flushHeaders = !out ||
-            writeBytesTotal >= writeBytesMaximum ||
-            stream.writeBytesTotal >= stream.writeBytesMaximum
+          writeBytesTotal >= writeBytesMaximum ||
+          stream.writeBytesTotal >= stream.writeBytesMaximum
         if (stream.isOpen) {
           streams[streamId] = stream
         }
@@ -492,7 +492,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
    * @param taskRunner the TaskRunner to use, daemon by default.
    */
   @Throws(IOException::class) @JvmOverloads
-  fun start(sendConnectionPreface: Boolean = true, taskRunner: TaskRunner = TaskRunner.INSTANCE) {
+  fun start(sendConnectionPreface: Boolean = true) {
     if (sendConnectionPreface) {
       writer.connectionPreface()
       writer.settings(okHttpSettings)

@@ -142,7 +142,7 @@ open class OkHttpClient internal constructor(
    * origin server, cache, or both).
    */
   @get:JvmName("interceptors") val interceptors: List<Interceptor> =
-      builder.interceptors.toImmutableList()
+    builder.interceptors.toImmutableList()
 
   /**
    * Returns an immutable list of interceptors that observe a single network request and response.
@@ -150,13 +150,13 @@ open class OkHttpClient internal constructor(
    * a network interceptor to short-circuit or repeat a network request.
    */
   @get:JvmName("networkInterceptors") val networkInterceptors: List<Interceptor> =
-      builder.networkInterceptors.toImmutableList()
+    builder.networkInterceptors.toImmutableList()
 
   @get:JvmName("eventListenerFactory") val eventListenerFactory: EventListener.Factory =
-      builder.eventListenerFactory
+    builder.eventListenerFactory
 
   @get:JvmName("retryOnConnectionFailure") val retryOnConnectionFailure: Boolean =
-      builder.retryOnConnectionFailure
+    builder.retryOnConnectionFailure
 
   @get:JvmName("authenticator") val authenticator: Authenticator = builder.authenticator
 
@@ -173,14 +173,14 @@ open class OkHttpClient internal constructor(
   @get:JvmName("proxy") val proxy: Proxy? = builder.proxy
 
   @get:JvmName("proxySelector") val proxySelector: ProxySelector =
-      when {
-        // Defer calls to ProxySelector.getDefault() because it can throw a SecurityException.
-        builder.proxy != null -> NullProxySelector
-        else -> builder.proxySelector ?: ProxySelector.getDefault() ?: NullProxySelector
-      }
+    when {
+      // Defer calls to ProxySelector.getDefault() because it can throw a SecurityException.
+      builder.proxy != null -> NullProxySelector
+      else -> builder.proxySelector ?: ProxySelector.getDefault() ?: NullProxySelector
+    }
 
   @get:JvmName("proxyAuthenticator") val proxyAuthenticator: Authenticator =
-      builder.proxyAuthenticator
+    builder.proxyAuthenticator
 
   @get:JvmName("socketFactory") val socketFactory: SocketFactory = builder.socketFactory
 
@@ -192,7 +192,7 @@ open class OkHttpClient internal constructor(
   @get:JvmName("x509TrustManager") val x509TrustManager: X509TrustManager?
 
   @get:JvmName("connectionSpecs") val connectionSpecs: List<ConnectionSpec> =
-      builder.connectionSpecs
+    builder.connectionSpecs
 
   @get:JvmName("protocols") val protocols: List<Protocol> = builder.protocols
 
@@ -227,7 +227,8 @@ open class OkHttpClient internal constructor(
   @get:JvmName("minWebSocketMessageToCompress")
   val minWebSocketMessageToCompress: Long = builder.minWebSocketMessageToCompress
 
-  val routeDatabase: RouteDatabase = builder.routeDatabase ?: RouteDatabase()
+  internal val routeDatabase: RouteDatabase = builder.routeDatabase ?: RouteDatabase()
+  internal val taskRunner: TaskRunner = builder.taskRunner ?: TaskRunner.INSTANCE
 
   constructor() : this(Builder())
 
@@ -242,13 +243,13 @@ open class OkHttpClient internal constructor(
       this.certificateChainCleaner = builder.certificateChainCleaner!!
       this.x509TrustManager = builder.x509TrustManagerOrNull!!
       this.certificatePinner = builder.certificatePinner
-          .withCertificateChainCleaner(certificateChainCleaner!!)
+        .withCertificateChainCleaner(certificateChainCleaner!!)
     } else {
       this.x509TrustManager = Platform.get().platformTrustManager()
       this.sslSocketFactoryOrNull = Platform.get().newSslSocketFactory(x509TrustManager!!)
       this.certificateChainCleaner = CertificateChainCleaner.get(x509TrustManager!!)
       this.certificatePinner = builder.certificatePinner
-          .withCertificateChainCleaner(certificateChainCleaner!!)
+        .withCertificateChainCleaner(certificateChainCleaner!!)
     }
 
     verifyClientState()
@@ -280,13 +281,13 @@ open class OkHttpClient internal constructor(
   /** Uses [request] to connect a new web socket. */
   override fun newWebSocket(request: Request, listener: WebSocketListener): WebSocket {
     val webSocket = RealWebSocket(
-        taskRunner = TaskRunner.INSTANCE,
-        originalRequest = request,
-        listener = listener,
-        random = Random(),
-        pingIntervalMillis = pingIntervalMillis.toLong(),
-        extensions = null, // Always null for clients.
-        minimumDeflateSize = minWebSocketMessageToCompress
+      taskRunner = taskRunner,
+      originalRequest = request,
+      listener = listener,
+      random = Random(),
+      pingIntervalMillis = pingIntervalMillis.toLong(),
+      extensions = null, // Always null for clients.
+      minimumDeflateSize = minWebSocketMessageToCompress
     )
     webSocket.connect(this)
     return webSocket
@@ -296,184 +297,210 @@ open class OkHttpClient internal constructor(
 
   @JvmName("-deprecated_dispatcher")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "dispatcher"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "dispatcher"),
+    level = DeprecationLevel.ERROR
+  )
   fun dispatcher(): Dispatcher = dispatcher
 
   @JvmName("-deprecated_connectionPool")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "connectionPool"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "connectionPool"),
+    level = DeprecationLevel.ERROR
+  )
   fun connectionPool(): ConnectionPool = connectionPool
 
   @JvmName("-deprecated_interceptors")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "interceptors"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "interceptors"),
+    level = DeprecationLevel.ERROR
+  )
   fun interceptors(): List<Interceptor> = interceptors
 
   @JvmName("-deprecated_networkInterceptors")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "networkInterceptors"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "networkInterceptors"),
+    level = DeprecationLevel.ERROR
+  )
   fun networkInterceptors(): List<Interceptor> = networkInterceptors
 
   @JvmName("-deprecated_eventListenerFactory")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "eventListenerFactory"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "eventListenerFactory"),
+    level = DeprecationLevel.ERROR
+  )
   fun eventListenerFactory(): EventListener.Factory = eventListenerFactory
 
   @JvmName("-deprecated_retryOnConnectionFailure")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "retryOnConnectionFailure"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "retryOnConnectionFailure"),
+    level = DeprecationLevel.ERROR
+  )
   fun retryOnConnectionFailure(): Boolean = retryOnConnectionFailure
 
   @JvmName("-deprecated_authenticator")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "authenticator"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "authenticator"),
+    level = DeprecationLevel.ERROR
+  )
   fun authenticator(): Authenticator = authenticator
 
   @JvmName("-deprecated_followRedirects")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "followRedirects"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "followRedirects"),
+    level = DeprecationLevel.ERROR
+  )
   fun followRedirects(): Boolean = followRedirects
 
   @JvmName("-deprecated_followSslRedirects")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "followSslRedirects"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "followSslRedirects"),
+    level = DeprecationLevel.ERROR
+  )
   fun followSslRedirects(): Boolean = followSslRedirects
 
   @JvmName("-deprecated_cookieJar")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "cookieJar"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "cookieJar"),
+    level = DeprecationLevel.ERROR
+  )
   fun cookieJar(): CookieJar = cookieJar
 
   @JvmName("-deprecated_cache")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "cache"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "cache"),
+    level = DeprecationLevel.ERROR
+  )
   fun cache(): Cache? = cache
 
   @JvmName("-deprecated_dns")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "dns"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "dns"),
+    level = DeprecationLevel.ERROR
+  )
   fun dns(): Dns = dns
 
   @JvmName("-deprecated_proxy")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "proxy"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "proxy"),
+    level = DeprecationLevel.ERROR
+  )
   fun proxy(): Proxy? = proxy
 
   @JvmName("-deprecated_proxySelector")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "proxySelector"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "proxySelector"),
+    level = DeprecationLevel.ERROR
+  )
   fun proxySelector(): ProxySelector = proxySelector
 
   @JvmName("-deprecated_proxyAuthenticator")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "proxyAuthenticator"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "proxyAuthenticator"),
+    level = DeprecationLevel.ERROR
+  )
   fun proxyAuthenticator(): Authenticator = proxyAuthenticator
 
   @JvmName("-deprecated_socketFactory")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "socketFactory"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "socketFactory"),
+    level = DeprecationLevel.ERROR
+  )
   fun socketFactory(): SocketFactory = socketFactory
 
   @JvmName("-deprecated_sslSocketFactory")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "sslSocketFactory"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "sslSocketFactory"),
+    level = DeprecationLevel.ERROR
+  )
   fun sslSocketFactory(): SSLSocketFactory = sslSocketFactory
 
   @JvmName("-deprecated_connectionSpecs")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "connectionSpecs"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "connectionSpecs"),
+    level = DeprecationLevel.ERROR
+  )
   fun connectionSpecs(): List<ConnectionSpec> = connectionSpecs
 
   @JvmName("-deprecated_protocols")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "protocols"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "protocols"),
+    level = DeprecationLevel.ERROR
+  )
   fun protocols(): List<Protocol> = protocols
 
   @JvmName("-deprecated_hostnameVerifier")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "hostnameVerifier"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "hostnameVerifier"),
+    level = DeprecationLevel.ERROR
+  )
   fun hostnameVerifier(): HostnameVerifier = hostnameVerifier
 
   @JvmName("-deprecated_certificatePinner")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "certificatePinner"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "certificatePinner"),
+    level = DeprecationLevel.ERROR
+  )
   fun certificatePinner(): CertificatePinner = certificatePinner
 
   @JvmName("-deprecated_callTimeoutMillis")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "callTimeoutMillis"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "callTimeoutMillis"),
+    level = DeprecationLevel.ERROR
+  )
   fun callTimeoutMillis(): Int = callTimeoutMillis
 
   @JvmName("-deprecated_connectTimeoutMillis")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "connectTimeoutMillis"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "connectTimeoutMillis"),
+    level = DeprecationLevel.ERROR
+  )
   fun connectTimeoutMillis(): Int = connectTimeoutMillis
 
   @JvmName("-deprecated_readTimeoutMillis")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "readTimeoutMillis"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "readTimeoutMillis"),
+    level = DeprecationLevel.ERROR
+  )
   fun readTimeoutMillis(): Int = readTimeoutMillis
 
   @JvmName("-deprecated_writeTimeoutMillis")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "writeTimeoutMillis"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "writeTimeoutMillis"),
+    level = DeprecationLevel.ERROR
+  )
   fun writeTimeoutMillis(): Int = writeTimeoutMillis
 
   @JvmName("-deprecated_pingIntervalMillis")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "pingIntervalMillis"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "pingIntervalMillis"),
+    level = DeprecationLevel.ERROR
+  )
   fun pingIntervalMillis(): Int = pingIntervalMillis
 
   class Builder() {
@@ -507,6 +534,7 @@ open class OkHttpClient internal constructor(
     internal var pingInterval = 0
     internal var minWebSocketMessageToCompress = RealWebSocket.DEFAULT_MINIMUM_DEFLATE_SIZE
     internal var routeDatabase: RouteDatabase? = null
+    internal var taskRunner: TaskRunner? = null
 
     internal constructor(okHttpClient: OkHttpClient) : this() {
       this.dispatcher = okHttpClient.dispatcher
@@ -539,6 +567,7 @@ open class OkHttpClient internal constructor(
       this.pingInterval = okHttpClient.pingIntervalMillis
       this.minWebSocketMessageToCompress = okHttpClient.minWebSocketMessageToCompress
       this.routeDatabase = okHttpClient.routeDatabase
+      this.taskRunner = okHttpClient.taskRunner
     }
 
     /**
@@ -570,7 +599,7 @@ open class OkHttpClient internal constructor(
 
     @JvmName("-addInterceptor") // Prefix with '-' to prevent ambiguous overloads from Java.
     inline fun addInterceptor(crossinline block: (chain: Interceptor.Chain) -> Response) =
-        addInterceptor(Interceptor { chain -> block(chain) })
+      addInterceptor(Interceptor { chain -> block(chain) })
 
     /**
      * Returns a modifiable list of interceptors that observe a single network request and response.
@@ -585,7 +614,7 @@ open class OkHttpClient internal constructor(
 
     @JvmName("-addNetworkInterceptor") // Prefix with '-' to prevent ambiguous overloads from Java.
     inline fun addNetworkInterceptor(crossinline block: (chain: Interceptor.Chain) -> Response) =
-        addNetworkInterceptor(Interceptor { chain -> block(chain) })
+      addNetworkInterceptor(Interceptor { chain -> block(chain) })
 
     /**
      * Configure a single client scoped listener that will receive all analytic events for this
@@ -749,8 +778,8 @@ open class OkHttpClient internal constructor(
      *     `sslSocketFactory(SSLSocketFactory, X509TrustManager)`, which avoids such reflection.
      */
     @Deprecated(
-        message = "Use the sslSocketFactory overload that accepts a X509TrustManager.",
-        level = DeprecationLevel.ERROR
+      message = "Use the sslSocketFactory overload that accepts a X509TrustManager.",
+      level = DeprecationLevel.ERROR
     )
     fun sslSocketFactory(sslSocketFactory: SSLSocketFactory) = apply {
       if (sslSocketFactory != this.sslSocketFactoryOrNull) {
@@ -758,10 +787,13 @@ open class OkHttpClient internal constructor(
       }
 
       this.sslSocketFactoryOrNull = sslSocketFactory
-      this.x509TrustManagerOrNull = Platform.get().trustManager(sslSocketFactory) ?: throw IllegalStateException(
+      this.x509TrustManagerOrNull =
+        Platform.get().trustManager(sslSocketFactory) ?: throw IllegalStateException(
           "Unable to extract the trust manager on ${Platform.get()}, " +
-              "sslSocketFactory is ${sslSocketFactory.javaClass}")
-      this.certificateChainCleaner = Platform.get().buildCertificateChainCleaner(x509TrustManagerOrNull!!)
+            "sslSocketFactory is ${sslSocketFactory.javaClass}"
+        )
+      this.certificateChainCleaner =
+        Platform.get().buildCertificateChainCleaner(x509TrustManagerOrNull!!)
     }
 
     /**
@@ -1083,6 +1115,8 @@ open class OkHttpClient internal constructor(
     internal val DEFAULT_PROTOCOLS = immutableListOf(HTTP_2, HTTP_1_1)
 
     internal val DEFAULT_CONNECTION_SPECS = immutableListOf(
-        ConnectionSpec.MODERN_TLS, ConnectionSpec.CLEARTEXT)
+      ConnectionSpec.MODERN_TLS,
+      ConnectionSpec.CLEARTEXT,
+    )
   }
 }
