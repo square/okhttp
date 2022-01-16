@@ -187,14 +187,14 @@ class RealCall(
     interceptors += CallServerInterceptor(forWebSocket)
 
     val chain = RealInterceptorChain(
-        call = this,
-        interceptors = interceptors,
-        index = 0,
-        exchange = null,
-        request = originalRequest,
-        connectTimeoutMillis = client.connectTimeoutMillis,
-        readTimeoutMillis = client.readTimeoutMillis,
-        writeTimeoutMillis = client.writeTimeoutMillis
+      call = this,
+      interceptors = interceptors,
+      index = 0,
+      exchange = null,
+      request = originalRequest,
+      connectTimeoutMillis = client.connectTimeoutMillis,
+      readTimeoutMillis = client.readTimeoutMillis,
+      writeTimeoutMillis = client.writeTimeoutMillis
     )
 
     var calledNoMoreExchanges = false
@@ -229,17 +229,18 @@ class RealCall(
     synchronized(this) {
       check(!responseBodyOpen) {
         "cannot make a new request because the previous response is still open: " +
-            "please call response.close()"
+          "please call response.close()"
       }
       check(!requestBodyOpen)
     }
 
     if (newExchangeFinder) {
       this.exchangeFinder = ExchangeFinder(
-          connectionPool,
-          createAddress(request.url),
-          this,
-          eventListener
+        client.taskRunner,
+        connectionPool,
+        createAddress(request.url),
+        this,
+        eventListener
       )
     }
   }
@@ -439,18 +440,18 @@ class RealCall(
     }
 
     return Address(
-        uriHost = url.host,
-        uriPort = url.port,
-        dns = client.dns,
-        socketFactory = client.socketFactory,
-        sslSocketFactory = sslSocketFactory,
-        hostnameVerifier = hostnameVerifier,
-        certificatePinner = certificatePinner,
-        proxyAuthenticator = client.proxyAuthenticator,
-        proxy = client.proxy,
-        protocols = client.protocols,
-        connectionSpecs = client.connectionSpecs,
-        proxySelector = client.proxySelector
+      uriHost = url.host,
+      uriPort = url.port,
+      dns = client.dns,
+      socketFactory = client.socketFactory,
+      sslSocketFactory = sslSocketFactory,
+      hostnameVerifier = hostnameVerifier,
+      certificatePinner = certificatePinner,
+      proxyAuthenticator = client.proxyAuthenticator,
+      proxy = client.proxy,
+      protocols = client.protocols,
+      connectionSpecs = client.connectionSpecs,
+      proxySelector = client.proxySelector
     )
   }
 
@@ -462,8 +463,8 @@ class RealCall(
    */
   private fun toLoggableString(): String {
     return ((if (isCanceled()) "canceled " else "") +
-        (if (forWebSocket) "web socket" else "call") +
-        " to " + redactedUrl())
+      (if (forWebSocket) "web socket" else "call") +
+      " to " + redactedUrl())
   }
 
   internal fun redactedUrl(): String = originalRequest.url.redact()
@@ -482,10 +483,10 @@ class RealCall(
       get() = originalRequest.url.host
 
     val request: Request
-        get() = originalRequest
+      get() = originalRequest
 
     val call: RealCall
-        get() = this@RealCall
+      get() = this@RealCall
 
     /**
      * Attempt to enqueue this async call on [executorService]. This will attempt to clean up

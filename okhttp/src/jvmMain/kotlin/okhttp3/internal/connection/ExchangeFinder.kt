@@ -24,6 +24,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Route
 import okhttp3.internal.canReuseConnectionFor
 import okhttp3.internal.closeQuietly
+import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.http.ExchangeCodec
 import okhttp3.internal.http.RealInterceptorChain
 import okhttp3.internal.http2.ConnectionShutdownException
@@ -54,6 +55,7 @@ import okhttp3.internal.http2.StreamResetException
  * executing [call].
  */
 class ExchangeFinder(
+  private val taskRunner: TaskRunner,
   private val connectionPool: RealConnectionPool,
   internal val address: Address,
   private val call: RealCall,
@@ -72,12 +74,12 @@ class ExchangeFinder(
   ): ExchangeCodec {
     try {
       val resultConnection = findHealthyConnection(
-          connectTimeout = chain.connectTimeoutMillis,
-          readTimeout = chain.readTimeoutMillis,
-          writeTimeout = chain.writeTimeoutMillis,
-          pingIntervalMillis = client.pingIntervalMillis,
-          connectionRetryEnabled = client.retryOnConnectionFailure,
-          doExtensiveHealthChecks = chain.request.method != "GET"
+        connectTimeout = chain.connectTimeoutMillis,
+        readTimeout = chain.readTimeoutMillis,
+        writeTimeout = chain.writeTimeoutMillis,
+        pingIntervalMillis = client.pingIntervalMillis,
+        connectionRetryEnabled = client.retryOnConnectionFailure,
+        doExtensiveHealthChecks = chain.request.method != "GET"
       )
       return resultConnection.newCodec(client, chain)
     } catch (e: RouteException) {
@@ -104,11 +106,11 @@ class ExchangeFinder(
   ): RealConnection {
     while (true) {
       val candidate = findConnection(
-          connectTimeout = connectTimeout,
-          readTimeout = readTimeout,
-          writeTimeout = writeTimeout,
-          pingIntervalMillis = pingIntervalMillis,
-          connectionRetryEnabled = connectionRetryEnabled
+        connectTimeout = connectTimeout,
+        readTimeout = readTimeout,
+        writeTimeout = writeTimeout,
+        pingIntervalMillis = pingIntervalMillis,
+        connectionRetryEnabled = connectionRetryEnabled
       )
 
       // Confirm that the connection is good.
@@ -220,17 +222,17 @@ class ExchangeFinder(
     }
 
     // Connect. Tell the call about the connecting call so async cancels work.
-    val newConnection = RealConnection(connectionPool, route)
+    val newConnection = RealConnection(taskRunner, connectionPool, route)
     call.connectionToCancel = newConnection
     try {
       newConnection.connect(
-          connectTimeout,
-          readTimeout,
-          writeTimeout,
-          pingIntervalMillis,
-          connectionRetryEnabled,
-          call,
-          eventListener
+        connectTimeout,
+        readTimeout,
+        writeTimeout,
+        pingIntervalMillis,
+        connectionRetryEnabled,
+        call,
+        eventListener
       )
     } finally {
       call.connectionToCancel = null

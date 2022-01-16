@@ -1926,7 +1926,7 @@ class Http2ConnectionTest {
       .socket(socket)
       .pushObserver(IGNORE)
       .build()
-    connection.start( /* sendConnectionPreface = */false, taskRunner)
+    connection.start(sendConnectionPreface = false)
     val queues = taskRunner.activeQueues()
     assertThat(queues).hasSize(1)
   }
