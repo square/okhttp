@@ -19,6 +19,7 @@ import java.io.IOException
 import java.io.InterruptedIOException
 import java.net.SocketTimeoutException
 import java.util.logging.ConsoleHandler
+import java.util.logging.Filter
 import java.util.logging.Level
 import java.util.logging.LogRecord
 import java.util.logging.Logger
@@ -62,7 +63,7 @@ class MediaTest {
 
     override fun callFailed(call: Call, ioe: IOException) {
       if (ioe is InterruptedIOException) {
-        // Uncomment to fix
+        // Uncomment to repair the connection
 //        connection?.noNewExchanges = true
       }
     }
@@ -76,6 +77,13 @@ class MediaTest {
         override fun format(record: LogRecord) =
           String.format("[%1\$tF %1\$tT] %2\$s %n", record.millis, record.message)
       }
+      this.filter = Filter {
+        false
+//            || it.message.contains("WINDOW_UPDATE")
+//          || it.message.contains("GOAWAY")
+//          || it.message.contains("HEADERS")
+//          || it.message.contains("DATA")
+      }
     }
 
     logger = Logger.getLogger(Http2::class.java.name).apply {
@@ -86,7 +94,9 @@ class MediaTest {
 
   @Test
   fun get() {
-    val threads = (1..10).map {
+    // with threads = 1, the first request will succeed.  With threads = 10 it will get blocked
+    val threadCount = 10
+    val threads = (1..threadCount).map {
       Thread { runDownloadThread(it) }.apply {
         start()
       }
@@ -114,7 +124,7 @@ class MediaTest {
           try {
             response.body!!.source().skip(8000001)
           } catch (ioe: InterruptedIOException) {
-            println("$id:Interrupted")
+//            println("$id:Interrupted")
           }
         }
       } catch (ste: SocketTimeoutException) {
