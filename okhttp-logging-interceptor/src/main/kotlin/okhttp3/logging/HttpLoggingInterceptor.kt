@@ -262,7 +262,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
         var gzippedLength: Long? = null
         if ("gzip".equals(headers["Content-Encoding"], ignoreCase = true)) {
           gzippedLength = buffer.size
-          GzipSource(buffer.clone()).use { gzippedResponseBody ->
+          GzipSource(buffer).use { gzippedResponseBody ->
             buffer = Buffer()
             buffer.writeAll(gzippedResponseBody)
           }
