@@ -199,18 +199,30 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
       } else if (requestBody.isOneShot()) {
         logger.log("--> END ${request.method} (one-shot body omitted)")
       } else {
-        val buffer = Buffer()
+        var buffer = Buffer()
         requestBody.writeTo(buffer)
+
+        var gzippedLength: Long? = null
+        if ("gzip".equals(headers["Content-Encoding"], ignoreCase = true)) {
+          gzippedLength = buffer.size
+          GzipSource(buffer).use { gzippedResponseBody ->
+            buffer = Buffer()
+            buffer.writeAll(gzippedResponseBody)
+          }
+        }
 
         val charset: Charset = requestBody.contentType().charset()
 
         logger.log("")
-        if (buffer.isProbablyUtf8()) {
+        if (!buffer.isProbablyUtf8()) {
+          logger.log(
+            "--> END ${request.method} (binary ${requestBody.contentLength()}-byte body omitted)"
+          )
+        } else if (gzippedLength != null) {
+          logger.log("--> END ${request.method} (${buffer.size}-byte, $gzippedLength-gzipped-byte body)")
+        } else {
           logger.log(buffer.readString(charset))
           logger.log("--> END ${request.method} (${requestBody.contentLength()}-byte body)")
-        } else {
-          logger.log(
-              "--> END ${request.method} (binary ${requestBody.contentLength()}-byte body omitted)")
         }
       }
     }

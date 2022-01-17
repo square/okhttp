@@ -22,12 +22,13 @@ import java.util.List;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import javax.net.ssl.HostnameVerifier;
+import mockwebserver3.MockResponse;
+import mockwebserver3.MockWebServer;
 import mockwebserver3.junit5.internal.MockWebServerExtension;
 import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
-import okhttp3.testing.PlatformRule;
 import okhttp3.Protocol;
 import okhttp3.RecordingHostnameVerifier;
 import okhttp3.Request;
@@ -35,8 +36,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okhttp3.logging.HttpLoggingInterceptor.Level;
-import mockwebserver3.MockResponse;
-import mockwebserver3.MockWebServer;
+import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.BufferedSink;
@@ -46,6 +46,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import static okhttp3.RequestBody.gzip;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -578,6 +579,42 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("Hello!")
         .assertLogEqual("<-- END HTTP (6-byte body)")
         .assertNoMoreLogs();
+  }
+
+  @Test public void bodyRequestGzipEncoded() throws IOException {
+    setLevel(Level.BODY);
+
+    server.enqueue(new MockResponse()
+      .setHeader("Content-Type", PLAIN)
+      .setBody(new Buffer().writeUtf8("Uncompressed")));
+
+    Response response = client.newCall(request()
+        .addHeader("Content-Encoding", "gzip")
+        .post(gzip(RequestBody.create("Uncompressed", null)))
+      .build()).execute();
+
+    ResponseBody responseBody = response.body();
+    assertThat(responseBody.string()).overridingErrorMessage(
+      "Expected response body to be valid").isEqualTo("Uncompressed");
+    responseBody.close();
+
+    networkLogs
+      .assertLogEqual("--> POST " + url + " http/1.1")
+      .assertLogEqual("Content-Encoding: gzip")
+      .assertLogEqual("Transfer-Encoding: chunked")
+      .assertLogEqual("Host: " + host)
+      .assertLogEqual("Connection: Keep-Alive")
+      .assertLogEqual("Accept-Encoding: gzip")
+      .assertLogMatch("User-Agent: okhttp/.+")
+      .assertLogEqual("")
+      .assertLogEqual("--> END POST (12-byte, 32-gzipped-byte body)")
+      .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
+      .assertLogEqual("Content-Type: text/plain; charset=utf-8")
+      .assertLogMatch("Content-Length: \\d+")
+      .assertLogEqual("")
+      .assertLogEqual("Uncompressed")
+      .assertLogEqual("<-- END HTTP (12-byte body)")
+      .assertNoMoreLogs();
   }
 
   @Test public void bodyResponseGzipEncoded() throws IOException {
