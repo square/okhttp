@@ -45,6 +45,15 @@ Calls are executed in one of two ways:
 
 Calls can be canceled from any thread. This will fail the call if it hasn’t yet completed! Code that is writing the request body or reading the response body will suffer an `IOException` when its call is canceled.
 
+## Interrupts vs Cancellations
+
+OkHttp is not currently interrupt safe.  An interrupt in an execute call can result in a headers
+frame being partially written to the connection.  See https://github.com/square/okhttp/issues/7016.
+After this the connection is in an unknown state.
+
+Instead `call.cancel` or `body.close` should be used to cleanly cancel the request.
+If an interrupt happens during reading the response body, then the response must still be closed.
+
 ## Dispatch
 
 For synchronous calls, you bring your own thread and are responsible for managing how many simultaneous requests you make. Too many simultaneous connections wastes resources; too few harms latency.
