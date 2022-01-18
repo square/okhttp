@@ -27,19 +27,25 @@ import java.util.logging.SimpleFormatter
 import okhttp3.Call
 import okhttp3.Connection
 import okhttp3.EventListener
-import okhttp3.Handshake
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.internal.connection.RealConnection
 import okhttp3.internal.http2.Http2
-import okhttp3.internal.http2.Http2Connection
-import org.junit.Before
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 class MediaTest {
   var active: Int = 1
   var logger: Logger? = null
+
+  // Whether to interrupt the execute call or the body read.
+  val interruptEarlyExecute = true
+
+  // if true, then after an interrupt exception, the connection will be closed
+  // thread 1 will recover if stuck on the next request after a SocketTimeoutException
+  val repairConnection = false
+
+  val detailedLogging = false
 
   val client = OkHttpClient.Builder()
     .eventListenerFactory { ClosingListener() }
@@ -50,11 +56,13 @@ class MediaTest {
 
   val request =
     Request.Builder()
-      .url("https://storage.googleapis.com/wvmedia/clear/h264/tears/tears_h264_high_1080p_20000.mp4")
+      .url(
+        "https://storage.googleapis.com/wvmedia/clear/h264/tears/tears_h264_high_1080p_20000.mp4"
+      )
       .header("Range", "bytes=0-8000000")
       .build()
 
-  class ClosingListener: EventListener() {
+  inner class ClosingListener : EventListener() {
     var connection: RealConnection? = null
 
     override fun connectionAcquired(call: Call, connection: Connection) {
@@ -63,8 +71,15 @@ class MediaTest {
 
     override fun callFailed(call: Call, ioe: IOException) {
       if (ioe is InterruptedIOException) {
-        // Uncomment to repair the connection
-//        connection?.noNewExchanges = true
+        if (repairConnection) {
+          connection?.noNewExchanges = true
+        }
+      }
+    }
+
+    override fun canceled(call: Call) {
+      if (detailedLogging) {
+        println("Canceled")
       }
     }
   }
@@ -78,11 +93,12 @@ class MediaTest {
           String.format("[%1\$tF %1\$tT] %2\$s %n", record.millis, record.message)
       }
       this.filter = Filter {
-        false
-//            || it.message.contains("WINDOW_UPDATE")
-//          || it.message.contains("GOAWAY")
-//          || it.message.contains("HEADERS")
-//          || it.message.contains("DATA")
+        detailedLogging && (
+          it.message.contains("WINDOW_UPDATE")
+            || it.message.contains("GOAWAY")
+            || it.message.contains("HEADERS")
+            || it.message.contains("DATA")
+          )
       }
     }
 
@@ -111,20 +127,30 @@ class MediaTest {
       Thread.interrupted()
 
       try {
-        val response = client.newCall(request).execute()
+        val call = client.newCall(request)
         if (active == id) {
+          val response = call.execute()
           response.use {
-            val body = it.body!!.source()
-            body.skip(8000001)
+            it.body!!.source().skip(8000001)
             println("$id:Success")
           }
         } else {
           Thread.sleep(200)
-          Thread.currentThread().interrupt()
+          if (interruptEarlyExecute) {
+            Thread.currentThread().interrupt()
+          }
           try {
-            response.body!!.source().skip(8000001)
+            call.execute().use {
+              if (!interruptEarlyExecute) {
+                Thread.currentThread().interrupt()
+              }
+              it.body!!.source().skip(8000001)
+            }
           } catch (ioe: InterruptedIOException) {
-//            println("$id:Interrupted")
+            // sample logging
+            if (detailedLogging || id == 2) {
+              println("$id:Interrupted")
+            }
           }
         }
       } catch (ste: SocketTimeoutException) {
