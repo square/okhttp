@@ -41,8 +41,11 @@ class MediaTest {
   // Whether to interrupt the execute call or the body read.
   val interruptEarlyExecute = false
 
+  // Whether to interrupt just before request sending.
+  val interruptRequestSending = true
+
   // Whether to interrupt just after request sent.
-  val interruptRequestSent = true
+  val interruptRequestSent = false
 
   // if true, then after an interrupt exception, the connection will be closed
   // thread 1 will recover if stuck on the next request after a SocketTimeoutException
@@ -70,6 +73,12 @@ class MediaTest {
 
     override fun connectionAcquired(call: Call, connection: Connection) {
       this.connection = connection as RealConnection
+    }
+
+    override fun requestHeadersStart(call: Call) {
+      if (interruptRequestSending && call.request().tag(Int::class.javaObjectType) != 1) {
+        Thread.currentThread().interrupt()
+      }
     }
 
     override fun requestHeadersEnd(call: Call, request: Request) {
