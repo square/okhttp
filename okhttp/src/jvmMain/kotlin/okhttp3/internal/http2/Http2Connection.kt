@@ -237,6 +237,11 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     val stream: Http2Stream
     val streamId: Int
 
+    // trigger interrupts before we write to the buffered output
+    // since flush is likely where we get notified.
+    if (Thread.interrupted())
+      throw InterruptedIOException()
+
     synchronized(writer) {
       synchronized(this) {
         if (nextStreamId > Int.MAX_VALUE / 2) {
