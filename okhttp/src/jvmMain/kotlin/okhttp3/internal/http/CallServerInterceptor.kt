@@ -16,6 +16,7 @@
 package okhttp3.internal.http
 
 import java.io.IOException
+import java.io.InterruptedIOException
 import java.net.ProtocolException
 import okhttp3.Interceptor
 import okhttp3.Response
@@ -79,6 +80,10 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
         exchange.finishRequest()
       }
     } catch (e: IOException) {
+      if (e is InterruptedIOException) {
+        exchange.cancel()
+        throw e // Interrupted externally, so fail
+      }
       if (e is ConnectionShutdownException) {
         throw e // No request was sent so there's no response to read.
       }
@@ -141,6 +146,10 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
       }
       return response
     } catch (e: IOException) {
+      if (e is InterruptedIOException) {
+        exchange.cancel()
+        throw e // Interrupted externally, so fail
+      }
       if (sendRequestException != null) {
         sendRequestException.addSuppressed(e)
         throw sendRequestException
