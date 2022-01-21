@@ -10,6 +10,7 @@ dependencies {
   implementation(project(":okhttp-tls"))
   implementation(Dependencies.animalSniffer)
   implementation(Dependencies.moshi)
+  implementation(Dependencies.okioFakeFileSystem)
   kapt(Dependencies.moshiCompiler)
 }
 
