@@ -3900,7 +3900,7 @@ open class CallTest(
       .build()
     executeSynchronously("/")
       .assertFailure(IOException::class.java)
-      .assertFailure("exhausted all routes")
+      .assertFailure("Socket closed", "Socket is closed")
   }
 
   @Test fun requestBodyThrowsUnrelatedToNetwork() {
