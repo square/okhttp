@@ -150,6 +150,10 @@ class RealConnection(
   internal val isMultiplexed: Boolean
     get() = http2Connection != null
 
+  /** True if we haven't yet called [connect] on this. */
+  internal val isNew: Boolean
+    get() = protocol == null
+
   /** Prevent further exchanges from being created on this connection. */
   @Synchronized internal fun noNewExchanges() {
     noNewExchanges = true
@@ -173,7 +177,7 @@ class RealConnection(
     call: Call,
     eventListener: EventListener
   ) {
-    check(protocol == null) { "already connected" }
+    check(isNew) { "already connected" }
 
     var routeException: RouteException? = null
     val connectionSpecs = route.address.connectionSpecs
