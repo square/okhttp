@@ -16,6 +16,7 @@
  */
 package okhttp3.internal.connection
 
+import java.net.Socket
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
 import okhttp3.Address
@@ -67,28 +68,50 @@ class RealConnectionPool(
   }
 
   /**
-   * Attempts to acquire a recycled connection to [address] for [call]. Returns true if a connection
-   * was acquired.
+   * Attempts to acquire a recycled connection to [address] for [call]. Returns the connection if it
+   * was acquired, or null if no connection was acquired. The acquired connection will also be
+   * assigned to [RealCall.connection].
+   *
+   * This confirms the returned connection is healthy before returning it. If this encounters any
+   * unhealthy connections in its search, this will clean them up.
    *
    * If [routes] is non-null these are the resolved routes (ie. IP addresses) for the connection.
    * This is used to coalesce related domains to the same HTTP/2 connection, such as `square.com`
    * and `square.ca`.
    */
   fun callAcquirePooledConnection(
+    doExtensiveHealthChecks: Boolean,
     address: Address,
     call: RealCall,
     routes: List<Route>?,
     requireMultiplexed: Boolean
-  ): Boolean {
+  ): RealConnection? {
     for (connection in connections) {
-      synchronized(connection) {
-        if (requireMultiplexed && !connection.isMultiplexed) return@synchronized
-        if (!connection.isEligible(address, routes)) return@synchronized
-        call.acquireConnectionNoEvents(connection)
-        return true
+      // In the first synchronized block, acquire the connection if it can satisfy this call.
+      val acquired = synchronized(connection) {
+        when {
+          requireMultiplexed && !connection.isMultiplexed -> false
+          !connection.isEligible(address, routes) -> false
+          else -> {
+            call.acquireConnectionNoEvents(connection)
+            true
+          }
+        }
       }
+      if (!acquired) continue
+
+      // Confirm the connection is healthy and return it.
+      if (connection.isHealthy(doExtensiveHealthChecks)) return connection
+
+      // In the second synchronized block, release the unhealthy acquired connection. We're also on
+      // the hook to close this connection if its no longer in use.
+      val toClose: Socket? = synchronized(connection) {
+        connection.noNewExchanges = true
+        call.releaseConnectionNoEvents()
+      }
+      toClose?.closeQuietly()
     }
-    return false
+    return null
   }
 
   fun put(connection: RealConnection) {

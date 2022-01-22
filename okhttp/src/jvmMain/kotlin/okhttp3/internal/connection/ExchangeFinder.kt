@@ -73,7 +73,7 @@ class ExchangeFinder(
     chain: RealInterceptorChain
   ): ExchangeCodec {
     try {
-      val resultConnection = findHealthyConnection(
+      val resultConnection = findConnection(
         connectTimeout = chain.connectTimeoutMillis,
         readTimeout = chain.readTimeoutMillis,
         writeTimeout = chain.writeTimeoutMillis,
@@ -92,57 +92,14 @@ class ExchangeFinder(
   }
 
   /**
-   * Finds a connection and returns it if it is healthy. If it is unhealthy the process is repeated
-   * until a healthy connection is found.
-   */
-  @Throws(IOException::class)
-  private fun findHealthyConnection(
-    connectTimeout: Int,
-    readTimeout: Int,
-    writeTimeout: Int,
-    pingIntervalMillis: Int,
-    connectionRetryEnabled: Boolean,
-    doExtensiveHealthChecks: Boolean
-  ): RealConnection {
-    while (true) {
-      val candidate = findConnection(
-        connectTimeout = connectTimeout,
-        readTimeout = readTimeout,
-        writeTimeout = writeTimeout,
-        pingIntervalMillis = pingIntervalMillis,
-        connectionRetryEnabled = connectionRetryEnabled
-      )
-
-      // Confirm that the connection is good.
-      if (candidate.isHealthy(doExtensiveHealthChecks)) {
-        return candidate
-      }
-
-      // If it isn't, take it out of the pool.
-      candidate.noNewExchanges()
-
-      // Make sure we have some routes left to try. One example where we may exhaust all the routes
-      // would happen if we made a new connection and it immediately is detected as unhealthy.
-      if (nextRouteToTry != null) continue
-
-      val routesLeft = routeSelection?.hasNext() ?: true
-      if (routesLeft) continue
-
-      val routesSelectionLeft = routeSelector?.hasNext() ?: true
-      if (routesSelectionLeft) continue
-
-      throw IOException("exhausted all routes")
-    }
-  }
-
-  /**
-   * Returns a connection to host a new stream. This prefers the existing connection if it exists,
-   * then the pool, finally building a new connection.
+   * Returns a healthy connection to host a new stream. This prefers the existing connection if it
+   * exists, then the pool, finally building a new connection.
    *
    * This checks for cancellation before each blocking operation.
    */
   @Throws(IOException::class)
   fun findConnection(
+    doExtensiveHealthChecks: Boolean,
     connectTimeout: Int,
     readTimeout: Int,
     writeTimeout: Int,
@@ -151,7 +108,7 @@ class ExchangeFinder(
   ): RealConnection {
     if (call.isCanceled()) throw IOException("Canceled")
 
-    val callConnection = tryReuseCallConnection()
+    val callConnection = tryReuseCallConnection(doExtensiveHealthChecks)
     if (callConnection != null) return callConnection
 
     // We need a new connection. Give it fresh stats.
@@ -160,7 +117,7 @@ class ExchangeFinder(
     otherFailureCount = 0
 
     // Attempt to get a connection from the pool.
-    val pooled1 = findPooledConnection()
+    val pooled1 = findPooledConnection(doExtensiveHealthChecks)
     if (pooled1 != null) return pooled1
 
     // Do blocking calls to plan a route for a new connection.
@@ -168,7 +125,7 @@ class ExchangeFinder(
 
     // Now that we have a set of IP addresses, make another attempt at getting a connection from
     // the pool. We have a better chance of matching thanks to connection coalescing.
-    val pooled2 = findPooledConnection(newConnection, routes)
+    val pooled2 = findPooledConnection(doExtensiveHealthChecks, newConnection, routes)
     if (pooled2 != null) return pooled2
 
     // Connect. Tell the call about the connecting call so async cancels work.
@@ -190,7 +147,7 @@ class ExchangeFinder(
 
     // If we raced another call connecting to this host, coalesce the connections. This makes for
     // 3 different lookups in the connection pool!
-    val pooled3 = findPooledConnection(newConnection, routes)
+    val pooled3 = findPooledConnection(doExtensiveHealthChecks, newConnection, routes)
     if (pooled3 != null) return pooled3
 
     synchronized(newConnection) {
@@ -208,14 +165,23 @@ class ExchangeFinder(
    * If the call's connection exists and is eligible for another exchange, it is returned. If it
    * exists but cannot be used for another exchange, it is closed and this returns null.
    */
-  private fun tryReuseCallConnection(): RealConnection? {
+  private fun tryReuseCallConnection(doExtensiveHealthChecks: Boolean): RealConnection? {
     // This may be mutated by releaseConnectionNoEvents()!
     val candidate = call.connection ?: return null
 
-    var toClose: Socket? = null
-    synchronized(candidate) {
-      if (candidate.noNewExchanges || !sameHostAndPort(candidate.route().address.url)) {
-        toClose = call.releaseConnectionNoEvents()
+    // Make sure this connection is healthy & eligible for new exchanges. If it's no longer needed
+    // then we're on the hook to close it.
+    val healthy = candidate.isHealthy(doExtensiveHealthChecks)
+    val toClose: Socket? = synchronized(candidate) {
+      when {
+        !healthy -> {
+          candidate.noNewExchanges = true
+          call.releaseConnectionNoEvents()
+        }
+        candidate.noNewExchanges || !sameHostAndPort(candidate.route().address.url) -> {
+          call.releaseConnectionNoEvents()
+        }
+        else -> null
       }
     }
 
@@ -259,6 +225,7 @@ class ExchangeFinder(
     }
 
     // List available IP addresses for the current proxy. This may block in Dns.lookup().
+    if (!newRouteSelector.hasNext()) throw IOException("exhausted all routes")
     val newRouteSelection = newRouteSelector.next()
     routeSelection = newRouteSelection
 
@@ -277,18 +244,20 @@ class ExchangeFinder(
    * starts.
    */
   private fun findPooledConnection(
+    doExtensiveHealthChecks: Boolean,
     connectionToReplace: RealConnection? = null,
     routes: List<Route>? = null,
   ): RealConnection? {
-    val requireMultiplexed = connectionToReplace != null && !connectionToReplace.isNew
-    if (!connectionPool.callAcquirePooledConnection(address, call, routes, requireMultiplexed)) {
-      return null
-    }
+    val result = connectionPool.callAcquirePooledConnection(
+      doExtensiveHealthChecks = doExtensiveHealthChecks,
+      address = address,
+      call = call,
+      routes = routes,
+      requireMultiplexed = connectionToReplace != null && !connectionToReplace.isNew
+    ) ?: return null
 
-    val result = call.connection!!
-
-    // If we coalesced our connection, remember the replaced connection's route. If the coalesced
-    // connection is broken we must try the replaced route again.
+    // If we coalesced our connection, remember the replaced connection's route. That way if the
+    // coalesced connection later fails we don't waste a valid route.
     if (connectionToReplace != null) {
       nextRouteToTry = connectionToReplace.route()
       if (!connectionToReplace.isNew) {
@@ -301,7 +270,6 @@ class ExchangeFinder(
   }
 
   fun trackFailure(e: IOException) {
-    nextRouteToTry = null
     if (e is StreamResetException && e.errorCode == ErrorCode.REFUSED_STREAM) {
       refusedStreamCount++
     } else if (e is ConnectionShutdownException) {
@@ -355,6 +323,7 @@ class ExchangeFinder(
 
     synchronized(connection) {
       if (connection.routeFailureCount != 0) return null
+      if (!connection.noNewExchanges) return null // This route is still in use.
       if (!connection.route().address.url.canReuseConnectionFor(address.url)) return null
       return connection.route()
     }
