@@ -167,12 +167,12 @@ expect class CacheControl internal constructor(
      * stale. If the response isn't available in the cache or requires server validation, the call
      * will fail with a `504 Unsatisfiable Request`.
      */
-//    val FORCE_CACHE: CacheControl
+   val FORCE_CACHE: CacheControl
 
     /**
      * Returns the cache directives of [headers]. This honors both Cache-Control and Pragma headers
      * if they are present.
      */
-//    fun parse(headers: Headers): CacheControl
+   fun parse(headers: Headers): CacheControl
   }
 }

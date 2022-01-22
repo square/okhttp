@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package okhttp3.internal.http
 
 actual object HttpMethod {
   actual fun invalidatesCache(method: String): Boolean = commonInvalidatesCache(method)
 
-  @JvmStatic actual // Despite being 'internal', this method is called by popular 3rd party SDKs.
-  fun requiresRequestBody(method: String): Boolean = commonRequiresRequestBody(method)
+  // Despite being 'internal', this method is called by popular 3rd party SDKs.
+  actual fun requiresRequestBody(method: String): Boolean = commonRequiresRequestBody(method)
 
-  @JvmStatic actual // Despite being 'internal', this method is called by popular 3rd party SDKs.
-  fun permitsRequestBody(method: String): Boolean = commonPermitsRequestBody(method)
+  // Despite being 'internal', this method is called by popular 3rd party SDKs.
+  actual fun permitsRequestBody(method: String): Boolean = commonPermitsRequestBody(method)
 
   actual fun redirectsWithBody(method: String): Boolean = commonRedirectsWithBody(method)
 
