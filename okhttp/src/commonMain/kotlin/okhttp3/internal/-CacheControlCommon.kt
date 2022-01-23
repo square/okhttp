@@ -18,6 +18,7 @@ package okhttp3.internal
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 import okhttp3.CacheControl
+import okhttp3.Headers
 
 internal fun CacheControl.commonToString(): String {
   var result = headerValue
@@ -72,6 +73,12 @@ internal fun CacheControl.Companion.commonForceNetwork() = CacheControl.Builder(
   .noCache()
   .build()
 
+
+internal fun CacheControl.Companion.commonForceCache() = CacheControl.Builder()
+  .onlyIfCached()
+  .maxStale(Int.MAX_VALUE, DurationUnit.SECONDS)
+  .build()
+
 internal fun CacheControl.Builder.commonBuild(): CacheControl {
   return CacheControl(
     noCache = noCache,
@@ -108,4 +115,147 @@ internal fun CacheControl.Builder.commonNoTransform() = apply {
 
 internal fun CacheControl.Builder.commonImmutable() = apply {
   this.immutable = true
+}
+
+internal fun CacheControl.Companion.commonParse(headers: Headers): CacheControl {
+  var noCache = false
+  var noStore = false
+  var maxAgeSeconds = -1
+  var sMaxAgeSeconds = -1
+  var isPrivate = false
+  var isPublic = false
+  var mustRevalidate = false
+  var maxStaleSeconds = -1
+  var minFreshSeconds = -1
+  var onlyIfCached = false
+  var noTransform = false
+  var immutable = false
+
+  var canUseHeaderValue = true
+  var headerValue: String? = null
+
+  loop@ for (i in 0 until headers.size) {
+    val name = headers.name(i)
+    val value = headers.value(i)
+
+    when {
+      name.equals("Cache-Control", ignoreCase = true) -> {
+        if (headerValue != null) {
+          // Multiple cache-control headers means we can't use the raw value.
+          canUseHeaderValue = false
+        } else {
+          headerValue = value
+        }
+      }
+      name.equals("Pragma", ignoreCase = true) -> {
+        // Might specify additional cache-control params. We invalidate just in case.
+        canUseHeaderValue = false
+      }
+      else -> {
+        continue@loop
+      }
+    }
+
+    var pos = 0
+    while (pos < value.length) {
+      val tokenStart = pos
+      pos = value.indexOfElement("=,;", pos)
+      val directive = value.substring(tokenStart, pos).trim()
+      val parameter: String?
+
+      if (pos == value.length || value[pos] == ',' || value[pos] == ';') {
+        pos++ // Consume ',' or ';' (if necessary).
+        parameter = null
+      } else {
+        pos++ // Consume '='.
+        pos = value.indexOfNonWhitespace(pos)
+
+        if (pos < value.length && value[pos] == '\"') {
+          // Quoted string.
+          pos++ // Consume '"' open quote.
+          val parameterStart = pos
+          pos = value.indexOf('"', pos)
+          parameter = value.substring(parameterStart, pos)
+          pos++ // Consume '"' close quote (if necessary).
+        } else {
+          // Unquoted string.
+          val parameterStart = pos
+          pos = value.indexOfElement(",;", pos)
+          parameter = value.substring(parameterStart, pos).trim()
+        }
+      }
+
+      when {
+        "no-cache".equals(directive, ignoreCase = true) -> {
+          noCache = true
+        }
+        "no-store".equals(directive, ignoreCase = true) -> {
+          noStore = true
+        }
+        "max-age".equals(directive, ignoreCase = true) -> {
+          maxAgeSeconds = parameter.toNonNegativeInt(-1)
+        }
+        "s-maxage".equals(directive, ignoreCase = true) -> {
+          sMaxAgeSeconds = parameter.toNonNegativeInt(-1)
+        }
+        "private".equals(directive, ignoreCase = true) -> {
+          isPrivate = true
+        }
+        "public".equals(directive, ignoreCase = true) -> {
+          isPublic = true
+        }
+        "must-revalidate".equals(directive, ignoreCase = true) -> {
+          mustRevalidate = true
+        }
+        "max-stale".equals(directive, ignoreCase = true) -> {
+          maxStaleSeconds = parameter.toNonNegativeInt(Int.MAX_VALUE)
+        }
+        "min-fresh".equals(directive, ignoreCase = true) -> {
+          minFreshSeconds = parameter.toNonNegativeInt(-1)
+        }
+        "only-if-cached".equals(directive, ignoreCase = true) -> {
+          onlyIfCached = true
+        }
+        "no-transform".equals(directive, ignoreCase = true) -> {
+          noTransform = true
+        }
+        "immutable".equals(directive, ignoreCase = true) -> {
+          immutable = true
+        }
+      }
+    }
+  }
+
+  if (!canUseHeaderValue) {
+    headerValue = null
+  }
+
+  return CacheControl(
+    noCache = noCache,
+    noStore = noStore,
+    maxAgeSeconds = maxAgeSeconds,
+    sMaxAgeSeconds = sMaxAgeSeconds,
+    isPrivate = isPrivate,
+    isPublic = isPublic,
+    mustRevalidate = mustRevalidate,
+    maxStaleSeconds = maxStaleSeconds,
+    minFreshSeconds = minFreshSeconds,
+    onlyIfCached = onlyIfCached,
+    noTransform = noTransform,
+    immutable = immutable,
+    headerValue = headerValue
+  )
+}
+
+/**
+ * Returns the next index in this at or after [startIndex] that is a character from
+ * [characters]. Returns the input length if none of the requested characters can be found.
+ */
+private fun String.indexOfElement(characters: String, startIndex: Int = 0): Int {
+  for (i in startIndex until length) {
+    if (this[i] in characters) {
+      return i
+    }
+  }
+  return length
 }
