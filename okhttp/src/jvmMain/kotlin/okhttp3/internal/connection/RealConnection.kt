@@ -179,33 +179,23 @@ class RealConnection(
   ) {
     check(isNew) { "already connected" }
 
-    var routeException: RouteException? = null
+    var firstException: IOException? = null
     val connectionSpecs = route.address.connectionSpecs
     val connectionSpecSelector = ConnectionSpecSelector(connectionSpecs)
 
     if (route.address.sslSocketFactory == null) {
       if (ConnectionSpec.CLEARTEXT !in connectionSpecs) {
-        throw RouteException(
-          UnknownServiceException(
-            "CLEARTEXT communication not enabled for client"
-          )
-        )
+        throw UnknownServiceException("CLEARTEXT communication not enabled for client")
       }
       val host = route.address.url.host
       if (!Platform.get().isCleartextTrafficPermitted(host)) {
-        throw RouteException(
-          UnknownServiceException(
-            "CLEARTEXT communication to $host not permitted by network security policy"
-          )
+        throw UnknownServiceException(
+          "CLEARTEXT communication to $host not permitted by network security policy"
         )
       }
     } else {
       if (Protocol.H2_PRIOR_KNOWLEDGE in route.address.protocols) {
-        throw RouteException(
-          UnknownServiceException(
-            "H2_PRIOR_KNOWLEDGE cannot be used with HTTPS"
-          )
-        )
+        throw UnknownServiceException("H2_PRIOR_KNOWLEDGE cannot be used with HTTPS")
       }
     }
 
@@ -237,23 +227,21 @@ class RealConnection(
 
         eventListener.connectFailed(call, route.socketAddress, route.proxy, null, e)
 
-        if (routeException == null) {
-          routeException = RouteException(e)
+        if (firstException == null) {
+          firstException = e
         } else {
-          routeException.addConnectException(e)
+          firstException.addSuppressed(e)
         }
 
         if (!connectionRetryEnabled || !connectionSpecSelector.connectionFailed(e)) {
-          throw routeException
+          throw firstException
         }
       }
     }
 
     if (route.requiresTunnel() && rawSocket == null) {
-      throw RouteException(
-        ProtocolException(
-          "Too many tunnel connections attempted: $MAX_TUNNEL_ATTEMPTS"
-        )
+      throw ProtocolException(
+        "Too many tunnel connections attempted: $MAX_TUNNEL_ATTEMPTS"
       )
     }
 

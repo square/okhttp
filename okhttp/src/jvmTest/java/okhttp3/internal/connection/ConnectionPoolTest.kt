@@ -32,6 +32,7 @@ import okhttp3.internal.RecordingOkAuthenticator
 import okhttp3.internal.concurrent.TaskFaker
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.connection.RealConnection.Companion.newTestConnection
+import okhttp3.internal.http.RealInterceptorChain
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -93,7 +94,7 @@ class ConnectionPoolTest {
       .connectionPool(poolApi)
       .build()
     val call = client.newCall(newRequest(addressA)) as RealCall
-    call.enterNetworkInterceptorExchange(call.request(), true)
+    call.enterNetworkInterceptorExchange(call.request(), true, newChain(call))
     synchronized(c1) { call.acquireConnectionNoEvents(c1) }
 
     // Running at time 50, the pool returns that nothing can be evicted until time 150.
@@ -217,7 +218,7 @@ class ConnectionPoolTest {
       .connectionPool(pool)
       .build()
     val call = client.newCall(newRequest(connection.route().address)) as RealCall
-    call.enterNetworkInterceptorExchange(call.request(), true)
+    call.enterNetworkInterceptorExchange(call.request(), true, newChain(call))
     synchronized(connection) { call.acquireConnectionNoEvents(connection) }
   }
 
@@ -259,6 +260,19 @@ class ConnectionPoolTest {
       address = address,
       proxy = Proxy.NO_PROXY,
       socketAddress = InetSocketAddress.createUnresolved(address.url.host, address.url.port)
+    )
+  }
+
+  private fun newChain(call: RealCall): RealInterceptorChain {
+    return RealInterceptorChain(
+      call = call,
+      interceptors = listOf(),
+      index = 0,
+      exchange = null,
+      request = call.request(),
+      connectTimeoutMillis = 10_000,
+      readTimeoutMillis = 10_000,
+      writeTimeoutMillis = 10_000
     )
   }
 

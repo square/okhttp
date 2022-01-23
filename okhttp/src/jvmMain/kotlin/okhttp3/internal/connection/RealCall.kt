@@ -19,6 +19,7 @@ import java.io.IOException
 import java.io.InterruptedIOException
 import java.lang.ref.WeakReference
 import java.net.Socket
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit.MILLISECONDS
@@ -115,7 +116,7 @@ class RealCall(
 
   @Volatile private var canceled = false
   @Volatile private var exchange: Exchange? = null
-  @Volatile var connectionToCancel: RealConnection? = null
+  internal val connectionsToCancel = CopyOnWriteArrayList<RealConnection>()
 
   override fun timeout(): Timeout = timeout
 
@@ -138,7 +139,9 @@ class RealCall(
 
     canceled = true
     exchange?.cancel()
-    connectionToCancel?.cancel()
+    for (connection in connectionsToCancel) {
+      connection.cancel()
+    }
 
     eventListener.canceled(this)
   }
@@ -223,7 +226,11 @@ class RealCall(
    *
    * @param newExchangeFinder true if this is not a retry and new routing can be performed.
    */
-  fun enterNetworkInterceptorExchange(request: Request, newExchangeFinder: Boolean) {
+  fun enterNetworkInterceptorExchange(
+    request: Request,
+    newExchangeFinder: Boolean,
+    chain: RealInterceptorChain,
+  ) {
     check(interceptorScopedExchange == null)
 
     synchronized(this) {
@@ -236,17 +243,16 @@ class RealCall(
 
     if (newExchangeFinder) {
       this.exchangeFinder = ExchangeFinder(
-        client.taskRunner,
-        connectionPool,
+        client,
         createAddress(request.url),
         this,
-        eventListener
+        chain,
       )
     }
   }
 
   /** Finds a new or pooled connection to carry a forthcoming request and response. */
-  internal fun initExchange(chain: RealInterceptorChain): Exchange {
+  internal fun initExchange(): Exchange {
     synchronized(this) {
       check(expectMoreExchanges) { "released" }
       check(!responseBodyOpen)
@@ -254,7 +260,7 @@ class RealCall(
     }
 
     val exchangeFinder = this.exchangeFinder!!
-    val codec = exchangeFinder.find(client, chain)
+    val codec = exchangeFinder.find()
     val result = Exchange(this, eventListener, exchangeFinder, codec)
     this.interceptorScopedExchange = result
     this.exchange = result
