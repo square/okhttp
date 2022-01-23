@@ -78,7 +78,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.data.Offset
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.fail
-import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Tag
@@ -2076,7 +2075,7 @@ class HttpOverHttp2Test {
   fun concurrentHttp2ConnectionsDeduplicated(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
     assumeTrue(protocol === Protocol.HTTP_2)
-    server.useHttps(handshakeCertificates!!.sslSocketFactory(), true)
+    server.useHttps(handshakeCertificates.sslSocketFactory(), true)
     val queueDispatcher = QueueDispatcher()
     queueDispatcher.enqueueResponse(
       MockResponse()
