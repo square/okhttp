@@ -40,7 +40,7 @@ import okio.buffer
 class Exchange(
   internal val call: RealCall,
   internal val eventListener: EventListener,
-  internal val finder: ExchangeFinder,
+  internal val finder: RoutePlanner,
   private val codec: ExchangeCodec
 ) {
   /** True if the request body need not complete before the response body starts. */
