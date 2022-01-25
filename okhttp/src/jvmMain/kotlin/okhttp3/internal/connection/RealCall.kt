@@ -85,7 +85,7 @@ class RealCall(
   private var callStackTrace: Any? = null
 
   /** Finds an exchange to send the next request and receive the next response. */
-  private var exchangeFinder: ExchangeFinder? = null
+  private var routePlanner: RoutePlanner? = null
 
   var connection: RealConnection? = null
     private set
@@ -224,11 +224,11 @@ class RealCall(
    *
    * Note that an exchange will not be needed if the request is satisfied by the cache.
    *
-   * @param newExchangeFinder true if this is not a retry and new routing can be performed.
+   * @param newRoutePlanner true if this is not a retry and new routing can be performed.
    */
   fun enterNetworkInterceptorExchange(
     request: Request,
-    newExchangeFinder: Boolean,
+    newRoutePlanner: Boolean,
     chain: RealInterceptorChain,
   ) {
     check(interceptorScopedExchange == null)
@@ -241,8 +241,8 @@ class RealCall(
       check(!requestBodyOpen)
     }
 
-    if (newExchangeFinder) {
-      this.exchangeFinder = ExchangeFinder(
+    if (newRoutePlanner) {
+      this.routePlanner = RealRoutePlanner(
         client,
         createAddress(request.url),
         this,
@@ -252,16 +252,18 @@ class RealCall(
   }
 
   /** Finds a new or pooled connection to carry a forthcoming request and response. */
-  internal fun initExchange(): Exchange {
+  internal fun initExchange(chain: RealInterceptorChain): Exchange {
     synchronized(this) {
       check(expectMoreExchanges) { "released" }
       check(!responseBodyOpen)
       check(!requestBodyOpen)
     }
 
-    val exchangeFinder = this.exchangeFinder!!
-    val codec = exchangeFinder.find()
-    val result = Exchange(this, eventListener, exchangeFinder, codec)
+    val routePlanner = this.routePlanner!!
+    val codec = ExchangeFinder(routePlanner)
+      .find()
+      .newCodec(client, chain)
+    val result = Exchange(this, eventListener, routePlanner, codec)
     this.interceptorScopedExchange = result
     this.exchange = result
     synchronized(this) {
@@ -461,7 +463,7 @@ class RealCall(
     )
   }
 
-  fun retryAfterFailure(): Boolean = exchangeFinder!!.retryAfterFailure()
+  fun retryAfterFailure(): Boolean = routePlanner!!.retryAfterFailure()
 
   /**
    * Returns a string that describes this call. Doesn't include a full URL as that might contain

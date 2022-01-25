@@ -59,10 +59,10 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
     val call = realChain.call
     var followUpCount = 0
     var priorResponse: Response? = null
-    var newExchangeFinder = true
+    var newRoutePlanner = true
     var recoveredFailures = listOf<IOException>()
     while (true) {
-      call.enterNetworkInterceptorExchange(request, newExchangeFinder, chain)
+      call.enterNetworkInterceptorExchange(request, newRoutePlanner, chain)
 
       var response: Response
       var closeActiveExchange = true
@@ -73,7 +73,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
 
         try {
           response = realChain.proceed(request)
-          newExchangeFinder = true
+          newRoutePlanner = true
         } catch (e: IOException) {
           // An attempt to communicate with a server failed. The request may have been sent.
           if (!recover(e, call, request, requestSendStarted = e !is ConnectionShutdownException)) {
@@ -81,7 +81,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
           } else {
             recoveredFailures += e
           }
-          newExchangeFinder = false
+          newRoutePlanner = false
           continue
         }
 
