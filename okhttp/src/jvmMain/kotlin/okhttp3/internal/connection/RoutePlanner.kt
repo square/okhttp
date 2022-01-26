@@ -53,11 +53,11 @@ interface RoutePlanner {
 
   fun trackFailure(e: IOException)
 
-  /**
-   * Returns true if the current route has a failure that retrying could fix, and that there's
-   * a route to retry on.
-   */
-  fun retryAfterFailure(): Boolean
+  /** Returns true if this planner has received any failures. */
+  fun hasFailure(): Boolean
+
+  /** Returns true if this planner has more routes to try. */
+  fun hasMoreRoutes(): Boolean
 
   /**
    * Returns true if the host and port are unchanged from when this was created. This is used to
@@ -78,5 +78,7 @@ interface RoutePlanner {
     fun connect()
 
     fun handleSuccess(): RealConnection
+
+    fun cancel()
   }
 }

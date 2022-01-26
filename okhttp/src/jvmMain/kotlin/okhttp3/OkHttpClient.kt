@@ -158,6 +158,8 @@ open class OkHttpClient internal constructor(
   @get:JvmName("retryOnConnectionFailure") val retryOnConnectionFailure: Boolean =
     builder.retryOnConnectionFailure
 
+  @get:JvmName("fastFallback") val fastFallback: Boolean = builder.fastFallback
+
   @get:JvmName("authenticator") val authenticator: Authenticator = builder.authenticator
 
   @get:JvmName("followRedirects") val followRedirects: Boolean = builder.followRedirects
@@ -510,6 +512,7 @@ open class OkHttpClient internal constructor(
     internal val networkInterceptors: MutableList<Interceptor> = mutableListOf()
     internal var eventListenerFactory: EventListener.Factory = EventListener.NONE.asFactory()
     internal var retryOnConnectionFailure = true
+    internal var fastFallback = false
     internal var authenticator: Authenticator = Authenticator.NONE
     internal var followRedirects = true
     internal var followSslRedirects = true
@@ -543,6 +546,7 @@ open class OkHttpClient internal constructor(
       this.networkInterceptors += okHttpClient.networkInterceptors
       this.eventListenerFactory = okHttpClient.eventListenerFactory
       this.retryOnConnectionFailure = okHttpClient.retryOnConnectionFailure
+      this.fastFallback = okHttpClient.fastFallback
       this.authenticator = okHttpClient.authenticator
       this.followRedirects = okHttpClient.followRedirects
       this.followSslRedirects = okHttpClient.followSslRedirects
@@ -656,6 +660,19 @@ open class OkHttpClient internal constructor(
      */
     fun retryOnConnectionFailure(retryOnConnectionFailure: Boolean) = apply {
       this.retryOnConnectionFailure = retryOnConnectionFailure
+    }
+
+    /**
+     * Configure this client to perform fast fallbacks by attempting multiple connections
+     * concurrently, returning once any connection connects successfully.
+     *
+     * This implements Happy Eyeballs ([RFC 6555][rfc_6555]), balancing connect latency vs.
+     * wasted resources.
+     *
+     * [rfc_6555]: https://datatracker.ietf.org/doc/html/rfc6555
+     */
+    fun fastFallback(fastFallback: Boolean) = apply {
+      this.fastFallback = fastFallback
     }
 
     /**

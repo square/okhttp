@@ -39,7 +39,7 @@ internal class ExchangeFinder(
         } else {
           firstException.addSuppressed(e)
         }
-        if (!routePlanner.retryAfterFailure()) {
+        if (!routePlanner.hasMoreRoutes()) {
           throw firstException
         }
       }
