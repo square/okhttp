@@ -38,9 +38,7 @@ import okhttp3.Request
 import okhttp3.Route
 import okhttp3.internal.connection.RouteSelector.Companion.socketHost
 import okhttp3.internal.http.RecordingProxySelector
-import okhttp3.internal.platform.Platform.Companion.isAndroid
 import okhttp3.testing.PlatformRule
-import okhttp3.testing.PlatformVersion.majorVersion
 import okhttp3.tls.internal.TlsUtil.localhost
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.fail
@@ -462,16 +460,71 @@ class RouteSelectorTest {
   }
 
   @Test fun routeToString() {
-    val route = Route(
-      httpAddress(),
-      Proxy.NO_PROXY,
-      InetSocketAddress.createUnresolved("host", 1234)
+    val ipv4Address = InetAddress.getByAddress(
+      byteArrayOf(1, 2, 3, 4)
     )
-    val expected = when {
-      isAndroid || majorVersion < 14 -> "Route{host:1234}"
-      else -> "Route{host/<unresolved>:1234}"
-    }
-    assertThat(route.toString()).isEqualTo(expected)
+    assertThat(
+      Route(
+        httpAddress("1.2.3.4", 1003),
+        Proxy.NO_PROXY,
+        InetSocketAddress(ipv4Address, 1003)
+      ).toString()
+    ).isEqualTo("1.2.3.4:1003")
+    assertThat(
+      Route(
+        httpAddress("example.com", 1003),
+        Proxy.NO_PROXY,
+        InetSocketAddress(ipv4Address, 1003)
+      ).toString()
+    ).isEqualTo("example.com at 1.2.3.4:1003")
+    assertThat(
+      Route(
+        httpAddress("example.com", 1003),
+        Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved("proxy.example.com", 1003)),
+        InetSocketAddress(ipv4Address, 1003)
+      ).toString()
+    ).isEqualTo("example.com via proxy 1.2.3.4:1003")
+    assertThat(
+      Route(
+        httpAddress("example.com", 1003),
+        Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved("proxy.example.com", 1003)),
+        InetSocketAddress(ipv4Address, 5678)
+      ).toString()
+    ).isEqualTo("example.com:1003 via proxy 1.2.3.4:5678")
+  }
+
+  @Test fun routeToStringIpv6() {
+    val ipv6Address = InetAddress.getByAddress(
+      byteArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1)
+    )
+    assertThat(
+      Route(
+        httpAddress("::1", 1003),
+        Proxy.NO_PROXY,
+        InetSocketAddress(ipv6Address, uriPort)
+      ).toString()
+    ).isEqualTo("[::1]:1003")
+    assertThat(
+      Route(
+        httpAddress("example.com", 1003),
+        Proxy.NO_PROXY,
+        InetSocketAddress(ipv6Address, uriPort)
+      ).toString()
+    ).isEqualTo("example.com at [::1]:1003")
+    assertThat(
+      Route(
+        httpAddress("example.com", 1003),
+        Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved("proxy.example.com", 1003)),
+        InetSocketAddress(ipv6Address, 5678)
+      ).toString()
+    ).isEqualTo("example.com:1003 via proxy [::1]:5678")
+    assertThat(
+      Route(
+        httpAddress("::2", 1003),
+        Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved("proxy.example.com", 1003)),
+        InetSocketAddress(ipv6Address, 5678)
+      ).toString()
+    ).isEqualTo("[::2]:1003 via proxy [::1]:5678")
   }
 
   private fun assertRoute(
@@ -488,7 +541,10 @@ class RouteSelectorTest {
   }
 
   /** Returns an address that's without an SSL socket factory or hostname verifier.  */
-  private fun httpAddress(): Address {
+  private fun httpAddress(
+    uriHost: String = this.uriHost,
+    uriPort: Int = this.uriPort,
+  ): Address {
     return Address(
       uriHost = uriHost,
       uriPort = uriPort,
