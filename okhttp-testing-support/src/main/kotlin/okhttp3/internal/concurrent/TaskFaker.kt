@@ -17,7 +17,7 @@ package okhttp3.internal.concurrent
 
 import java.util.concurrent.Executors
 import java.util.logging.Logger
-import okhttp3.internal.assertionsEnabled
+import okhttp3.OkHttpClient
 import org.assertj.core.api.Assertions.assertThat
 
 /**
@@ -46,7 +46,7 @@ class TaskFaker {
   @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "NOTHING_TO_INLINE")
   internal inline fun Any.notify() = (this as Object).notify()
 
-  internal val logger = Logger.getLogger("TaskFaker." + instance++)
+  val logger = Logger.getLogger("TaskFaker." + instance++)
 
   /** Runnables scheduled for execution. These will execute tasks and perform scheduling. */
   private val futureRunnables = mutableListOf<Runnable>()
@@ -202,5 +202,8 @@ class TaskFaker {
 
   companion object {
     var instance = 0
+
+    @JvmField
+    val assertionsEnabled: Boolean = OkHttpClient::class.java.desiredAssertionStatus()
   }
 }
