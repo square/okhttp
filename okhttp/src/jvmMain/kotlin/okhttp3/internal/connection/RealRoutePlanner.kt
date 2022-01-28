@@ -190,6 +190,10 @@ internal class RealRoutePlanner(
     }
 
     override fun handleSuccess() = connection
+
+    override fun cancel() {
+      error("unexpected cancel of reused connection")
+    }
   }
 
   /** Establish a new connection. */
@@ -238,6 +242,10 @@ internal class RealRoutePlanner(
       eventListener.connectionAcquired(call, connection)
       return connection
     }
+
+    override fun cancel() {
+      connection.cancel()
+    }
   }
 
   override fun trackFailure(e: IOException) {
@@ -250,11 +258,11 @@ internal class RealRoutePlanner(
     }
   }
 
-  override fun retryAfterFailure(): Boolean {
-    if (refusedStreamCount == 0 && connectionShutdownCount == 0 && otherFailureCount == 0) {
-      return false // Nothing to recover from.
-    }
+  override fun hasFailure(): Boolean {
+    return refusedStreamCount > 0 || connectionShutdownCount > 0 || otherFailureCount > 0
+  }
 
+  override fun hasMoreRoutes(): Boolean {
     if (nextRouteToTry != null) {
       return true
     }

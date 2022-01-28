@@ -260,9 +260,11 @@ class RealCall(
     }
 
     val routePlanner = this.routePlanner!!
-    val codec = ExchangeFinder(routePlanner)
-      .find()
-      .newCodec(client, chain)
+    val connection = when {
+      client.fastFallback -> FastFallbackExchangeFinder(routePlanner, client.taskRunner).find()
+      else -> ExchangeFinder(routePlanner).find()
+    }
+    val codec = connection.newCodec(client, chain)
     val result = Exchange(this, eventListener, routePlanner, codec)
     this.interceptorScopedExchange = result
     this.exchange = result
@@ -463,7 +465,7 @@ class RealCall(
     )
   }
 
-  fun retryAfterFailure(): Boolean = routePlanner!!.retryAfterFailure()
+  fun retryAfterFailure(): Boolean = routePlanner!!.hasFailure() && routePlanner!!.hasMoreRoutes()
 
   /**
    * Returns a string that describes this call. Doesn't include a full URL as that might contain
