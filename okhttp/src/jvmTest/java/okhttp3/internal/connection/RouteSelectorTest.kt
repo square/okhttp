@@ -23,23 +23,17 @@ import java.net.ProxySelector
 import java.net.SocketAddress
 import java.net.URI
 import java.net.UnknownHostException
-import javax.net.SocketFactory
-import javax.net.ssl.HostnameVerifier
-import javax.net.ssl.HttpsURLConnection
 import okhttp3.Address
-import okhttp3.Authenticator
 import okhttp3.Call
-import okhttp3.ConnectionSpec
 import okhttp3.EventListener
 import okhttp3.FakeDns
 import okhttp3.OkHttpClientTestRule
-import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Route
+import okhttp3.TestValueFactory
 import okhttp3.internal.connection.RouteSelector.Companion.socketHost
 import okhttp3.internal.http.RecordingProxySelector
 import okhttp3.testing.PlatformRule
-import okhttp3.tls.internal.TlsUtil.localhost
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
@@ -53,23 +47,18 @@ class RouteSelectorTest {
   @RegisterExtension
   val clientTestRule = OkHttpClientTestRule()
 
-  val connectionSpecs = listOf(
-    ConnectionSpec.MODERN_TLS,
-    ConnectionSpec.COMPATIBLE_TLS,
-    ConnectionSpec.CLEARTEXT
-  )
-
-  private val uriHost = "hosta"
-  private val uriPort = 1003
-  private lateinit var call: Call
-  private lateinit var socketFactory: SocketFactory
-  private val handshakeCertificates = localhost()
-  private val sslSocketFactory = handshakeCertificates.sslSocketFactory()
-  private lateinit var hostnameVerifier: HostnameVerifier
-  private val authenticator = Authenticator.NONE
-  private val protocols = listOf(Protocol.HTTP_1_1)
   private val dns = FakeDns()
   private val proxySelector = RecordingProxySelector()
+  private val uriHost = "hosta"
+  private val uriPort = 1003
+  private val factory = TestValueFactory().apply {
+    this.dns = this@RouteSelectorTest.dns
+    this.proxySelector = this@RouteSelectorTest.proxySelector
+    this.uriHost = this@RouteSelectorTest.uriHost
+    this.uriPort = this@RouteSelectorTest.uriPort
+  }
+
+  private lateinit var call: Call
   private val routeDatabase = RouteDatabase()
 
   @BeforeEach fun setUp() {
@@ -78,12 +67,10 @@ class RouteSelectorTest {
         .url("https://$uriHost:$uriPort/")
         .build()
     )
-    socketFactory = SocketFactory.getDefault()
-    hostnameVerifier = HttpsURLConnection.getDefaultHostnameVerifier()
   }
 
   @Test fun singleRoute() {
-    val address = httpAddress()
+    val address = factory.newAddress()
     val routeSelector = RouteSelector(address, routeDatabase, call, EventListener.NONE)
     assertThat(routeSelector.hasNext()).isTrue
     dns[uriHost] = dns.allocate(1)
@@ -105,7 +92,7 @@ class RouteSelectorTest {
   }
 
   @Test fun singleRouteReturnsFailedRoute() {
-    val address = httpAddress()
+    val address = factory.newAddress()
     var routeSelector = RouteSelector(address, routeDatabase, call, EventListener.NONE)
     assertThat(routeSelector.hasNext()).isTrue
     dns[uriHost] = dns.allocate(1)
@@ -130,19 +117,8 @@ class RouteSelectorTest {
   }
 
   @Test fun explicitProxyTriesThatProxysAddressesOnly() {
-    val address = Address(
-      uriHost = uriHost,
-      uriPort = uriPort,
-      dns = dns,
-      socketFactory = socketFactory,
-      sslSocketFactory = null,
-      hostnameVerifier = null,
-      certificatePinner = null,
-      proxyAuthenticator = authenticator,
+    val address = factory.newAddress(
       proxy = proxyA,
-      protocols = protocols,
-      connectionSpecs = connectionSpecs,
-      proxySelector = proxySelector
     )
     val routeSelector = RouteSelector(address, routeDatabase, call, EventListener.NONE)
     assertThat(routeSelector.hasNext()).isTrue
@@ -157,19 +133,8 @@ class RouteSelectorTest {
   }
 
   @Test fun explicitDirectProxy() {
-    val address = Address(
-      uriHost = uriHost,
-      uriPort = uriPort,
-      dns = dns,
-      socketFactory = socketFactory,
-      sslSocketFactory = null,
-      hostnameVerifier = null,
-      certificatePinner = null,
-      proxyAuthenticator = authenticator,
+    val address = factory.newAddress(
       proxy = Proxy.NO_PROXY,
-      protocols = protocols,
-      connectionSpecs = connectionSpecs,
-      proxySelector = proxySelector
     )
     val routeSelector = RouteSelector(address, routeDatabase, call, EventListener.NONE)
     assertThat(routeSelector.hasNext()).isTrue
@@ -191,19 +156,9 @@ class RouteSelectorTest {
     // The string '>' is okay in a hostname in HttpUrl, which does very light hostname validation.
     // It is not okay in URI, and so it's stripped and we get a URI with a null host.
     val bogusHostname = ">"
-    val address = Address(
+    val address = factory.newAddress(
       uriHost = bogusHostname,
       uriPort = uriPort,
-      dns = dns,
-      socketFactory = socketFactory,
-      sslSocketFactory = null,
-      hostnameVerifier = null,
-      certificatePinner = null,
-      proxyAuthenticator = authenticator,
-      proxy = null,
-      protocols = protocols,
-      connectionSpecs = connectionSpecs,
-      proxySelector = proxySelector
     )
     val routeSelector = RouteSelector(address, routeDatabase, call, EventListener.NONE)
     assertThat(routeSelector.hasNext()).isTrue
@@ -228,18 +183,7 @@ class RouteSelectorTest {
       }
     }
 
-    val address = Address(
-      uriHost = uriHost,
-      uriPort = uriPort,
-      dns = dns,
-      socketFactory = socketFactory,
-      sslSocketFactory = null,
-      hostnameVerifier = null,
-      certificatePinner = null,
-      proxyAuthenticator = authenticator,
-      proxy = null,
-      protocols = protocols,
-      connectionSpecs = connectionSpecs,
+    val address = factory.newAddress(
       proxySelector = nullProxySelector
     )
     val routeSelector = RouteSelector(address, routeDatabase, call, EventListener.NONE)
@@ -253,7 +197,7 @@ class RouteSelectorTest {
   }
 
   @Test fun proxySelectorReturnsNoProxies() {
-    val address = httpAddress()
+    val address = factory.newAddress()
     val routeSelector = RouteSelector(address, routeDatabase, call, EventListener.NONE)
     assertThat(routeSelector.hasNext()).isTrue
     dns[uriHost] = dns.allocate(2)
@@ -267,7 +211,7 @@ class RouteSelectorTest {
   }
 
   @Test fun proxySelectorReturnsMultipleProxies() {
-    val address = httpAddress()
+    val address = factory.newAddress()
     proxySelector.proxies.add(proxyA)
     proxySelector.proxies.add(proxyB)
     val routeSelector = RouteSelector(address, routeDatabase, call, EventListener.NONE)
@@ -295,7 +239,7 @@ class RouteSelectorTest {
   }
 
   @Test fun proxySelectorDirectConnectionsAreSkipped() {
-    val address = httpAddress()
+    val address = factory.newAddress()
     proxySelector.proxies.add(Proxy.NO_PROXY)
     val routeSelector = RouteSelector(address, routeDatabase, call, EventListener.NONE)
     proxySelector.assertRequests(address.url.toUri())
@@ -311,7 +255,7 @@ class RouteSelectorTest {
   }
 
   @Test fun proxyDnsFailureContinuesToNextProxy() {
-    val address = httpAddress()
+    val address = factory.newAddress()
     proxySelector.proxies.add(proxyA)
     proxySelector.proxies.add(proxyB)
     proxySelector.proxies.add(proxyA)
@@ -341,7 +285,7 @@ class RouteSelectorTest {
   }
 
   @Test fun multipleProxiesMultipleInetAddressesMultipleConfigurations() {
-    val address = httpsAddress()
+    val address = factory.newHttpsAddress()
     proxySelector.proxies.add(proxyA)
     proxySelector.proxies.add(proxyB)
     val routeSelector = RouteSelector(address, routeDatabase, call, EventListener.NONE)
@@ -367,7 +311,7 @@ class RouteSelectorTest {
   }
 
   @Test fun failedRouteWithSingleProxy() {
-    val address = httpsAddress()
+    val address = factory.newHttpsAddress()
     var routeSelector = RouteSelector(address, routeDatabase, call, EventListener.NONE)
     val numberOfAddresses = 2
     dns[uriHost] = dns.allocate(numberOfAddresses)
@@ -396,7 +340,7 @@ class RouteSelectorTest {
   }
 
   @Test fun failedRouteWithMultipleProxies() {
-    val address = httpsAddress()
+    val address = factory.newHttpsAddress()
     proxySelector.proxies.add(proxyA)
     proxySelector.proxies.add(proxyB)
     var routeSelector = RouteSelector(address, routeDatabase, call, EventListener.NONE)
@@ -426,7 +370,7 @@ class RouteSelectorTest {
   }
 
   @Test fun queryForAllSelectedRoutes() {
-    val address = httpAddress()
+    val address = factory.newAddress()
     val routeSelector = RouteSelector(address, routeDatabase, call, EventListener.NONE)
     dns[uriHost] = dns.allocate(2)
     val selection = routeSelector.next()
@@ -465,28 +409,28 @@ class RouteSelectorTest {
     )
     assertThat(
       Route(
-        httpAddress("1.2.3.4", 1003),
+        factory.newAddress(uriHost = "1.2.3.4", uriPort = 1003),
         Proxy.NO_PROXY,
         InetSocketAddress(ipv4Address, 1003)
       ).toString()
     ).isEqualTo("1.2.3.4:1003")
     assertThat(
       Route(
-        httpAddress("example.com", 1003),
+        factory.newAddress(uriHost = "example.com", uriPort = 1003),
         Proxy.NO_PROXY,
         InetSocketAddress(ipv4Address, 1003)
       ).toString()
     ).isEqualTo("example.com at 1.2.3.4:1003")
     assertThat(
       Route(
-        httpAddress("example.com", 1003),
+        factory.newAddress(uriHost = "example.com", uriPort = 1003),
         Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved("proxy.example.com", 1003)),
         InetSocketAddress(ipv4Address, 1003)
       ).toString()
     ).isEqualTo("example.com via proxy 1.2.3.4:1003")
     assertThat(
       Route(
-        httpAddress("example.com", 1003),
+        factory.newAddress(uriHost = "example.com", uriPort = 1003),
         Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved("proxy.example.com", 1003)),
         InetSocketAddress(ipv4Address, 5678)
       ).toString()
@@ -499,28 +443,28 @@ class RouteSelectorTest {
     )
     assertThat(
       Route(
-        httpAddress("::1", 1003),
+        factory.newAddress(uriHost = "::1", uriPort = 1003),
         Proxy.NO_PROXY,
         InetSocketAddress(ipv6Address, uriPort)
       ).toString()
     ).isEqualTo("[::1]:1003")
     assertThat(
       Route(
-        httpAddress("example.com", 1003),
+        factory.newAddress(uriHost = "example.com", uriPort = 1003),
         Proxy.NO_PROXY,
         InetSocketAddress(ipv6Address, uriPort)
       ).toString()
     ).isEqualTo("example.com at [::1]:1003")
     assertThat(
       Route(
-        httpAddress("example.com", 1003),
+        factory.newAddress(uriHost = "example.com", uriPort = 1003),
         Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved("proxy.example.com", 1003)),
         InetSocketAddress(ipv6Address, 5678)
       ).toString()
     ).isEqualTo("example.com:1003 via proxy [::1]:5678")
     assertThat(
       Route(
-        httpAddress("::2", 1003),
+        factory.newAddress(uriHost = "::2", uriPort = 1003),
         Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved("proxy.example.com", 1003)),
         InetSocketAddress(ipv6Address, 5678)
       ).toString()
@@ -538,44 +482,6 @@ class RouteSelectorTest {
     assertThat(route.proxy).isEqualTo(proxy)
     assertThat(route.socketAddress.address).isEqualTo(socketAddress)
     assertThat(route.socketAddress.port).isEqualTo(socketPort)
-  }
-
-  /** Returns an address that's without an SSL socket factory or hostname verifier.  */
-  private fun httpAddress(
-    uriHost: String = this.uriHost,
-    uriPort: Int = this.uriPort,
-  ): Address {
-    return Address(
-      uriHost = uriHost,
-      uriPort = uriPort,
-      dns = dns,
-      socketFactory = socketFactory,
-      sslSocketFactory = null,
-      hostnameVerifier = null,
-      certificatePinner = null,
-      proxyAuthenticator = authenticator,
-      proxy = null,
-      protocols = protocols,
-      connectionSpecs = connectionSpecs,
-      proxySelector = proxySelector
-    )
-  }
-
-  private fun httpsAddress(): Address {
-    return Address(
-      uriHost = uriHost,
-      uriPort = uriPort,
-      dns = dns,
-      socketFactory = socketFactory,
-      sslSocketFactory = sslSocketFactory,
-      hostnameVerifier = hostnameVerifier,
-      certificatePinner = null,
-      proxyAuthenticator = authenticator,
-      proxy = null,
-      protocols = protocols,
-      connectionSpecs = connectionSpecs,
-      proxySelector = proxySelector
-    )
   }
 
   companion object {
