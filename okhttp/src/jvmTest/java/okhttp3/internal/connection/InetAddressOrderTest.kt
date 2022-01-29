@@ -33,9 +33,8 @@ class InetAddressOrderTest {
     val result =
       InetAddressOrder.reorder(listOf(ipv4_10_0_0_6, ipv4_10_0_0_1, ipv4_10_0_0_4, ipv6_ab, ipv6_fc))
 
-    // TODO not currently preferring second ipv6 to second ipv4
     assertThat(result).isEqualTo(
-      listOf(ipv6_ab, ipv4_10_0_0_6, ipv4_10_0_0_1, ipv4_10_0_0_4, ipv6_fc)
+      listOf(ipv6_ab, ipv4_10_0_0_6, ipv6_fc, ipv4_10_0_0_1, ipv4_10_0_0_4)
     )
   }
 

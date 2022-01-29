@@ -16,71 +16,32 @@
 
 package okhttp3.internal.connection
 
-import java.net.Inet4Address
 import java.net.Inet6Address
 import java.net.InetAddress
+import okhttp3.internal.interleave
 
 /**
  * Implementation of HappyEyeballs Sorting Addresses.
  *
+ * The current implementation does not address any of:
+ *  - Async DNS split by IP class
+ *  - Stateful handling of connectivity results
+ *  - The priorititisation of addresses
+ *
  * https://datatracker.ietf.org/doc/html/rfc8305#section-4
  */
 object InetAddressOrder {
-  // TODO consider return value a sequence
-  // TODO consider making network aware
-  // TODO make dns lookups async internally
   fun reorder(addresses: List<InetAddress>): List<InetAddress> {
     if (addresses.size < 2) {
       return addresses
     }
 
-    val prioritised = priorityReorder(addresses)
+    val (ipv6, ipv4) = addresses.partition { it is Inet6Address }
 
-    /*
-     * If the client is stateful and has a history of expected round-trip
-     * times (RTTs) for the routes to access each address, it SHOULD add a
-     * Destination Address Selection rule between rules 8 and 9 that prefers
-     * addresses with lower RTTs.  If the client keeps track of which
-     * addresses it used in the past, it SHOULD add another Destination
-     * Address Selection rule between the RTT rule and rule 9, which prefers
-     * used addresses over unused ones.
-     */
-
-    val firstIpv6Index = prioritised.indexOfFirst {
-      it is Inet6Address
+    return if (ipv6.isEmpty() || ipv4.isEmpty()) {
+      addresses
+    } else {
+      interleave(ipv6, ipv4)
     }
-    val firstIpv4Index = prioritised.indexOfFirst {
-      it is Inet4Address
-    }
-
-    if (firstIpv6Index == -1 || firstIpv4Index == -1) {
-      return prioritised
-    }
-
-    return buildList {
-      add(prioritised[firstIpv6Index])
-      add(prioritised[firstIpv4Index])
-      addAll(prioritised.filterIndexed { i, _ ->
-        i != firstIpv6Index && i != firstIpv4Index
-      })
-    }
-  }
-
-  private fun priorityReorder(addresses: List<InetAddress>): List<InetAddress> {
-    /*
-     * TODO
-     * Rule 1: Avoid unusable destinations.
-     * Rule 2: Prefer matching scope.
-     * Rule 3: Avoid deprecated addresses.
-     * Rule 4: Prefer home addresses.
-     * Rule 5: Prefer matching label.
-     * Rule 6: Prefer higher precedence.
-     * Rule 7: Prefer native transport.
-     * Rule 8: Prefer smaller scope.
-     * Rule 9: Use longest matching prefix.
-     * Rule 10: Otherwise, leave the order unchanged.
-     * Rules 9 and 10 MAY be superseded if the implementation has other means of sorting.
-    */
-    return addresses
   }
 }
