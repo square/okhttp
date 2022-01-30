@@ -2,7 +2,7 @@ Recipes
 =======
 
 We've written some recipes that demonstrate how to solve common problems with OkHttp. Read through them to learn about how everything works together. Cut-and-paste these examples freely; that's what they're for.
- 
+
 ### Synchronous Get ([.kt][SynchronousGetKotlin], [.java][SynchronousGetJava])
 
 Download a file, print its headers, and print its response body as a string.
@@ -50,7 +50,7 @@ public void run() throws Exception {
   }
 }
 ```
- 
+
 ### Asynchronous Get ([.kt][AsynchronousGetKotlin], [.java][AsynchronousGetJava])
 
 Download a file on a worker thread, and get called back when the response is readable. The callback is made after the response headers are ready. Reading the response body may still block. OkHttp doesn't currently offer asynchronous APIs to receive a response body in parts.
@@ -112,7 +112,7 @@ public void run() throws Exception {
   });
 }
 ```
- 
+
 ### Accessing Headers ([.kt][AccessHeadersKotlin], [.java][AccessHeadersJava])
 
 Typically HTTP headers work like a `Map<String, String>`: each field has one value or none. But some headers permit multiple values, like Guava's [Multimap](https://guava.dev/releases/23.0/api/docs/com/google/common/collect/Multimap.html). For example, it's legal and common for an HTTP response to supply multiple `Vary` headers. OkHttp's APIs attempt to make both cases comfortable.
@@ -144,7 +144,7 @@ fun run() {
   }
 }
 ```
-    
+
 === "Java"
 ```java
 private final OkHttpClient client = new OkHttpClient();
@@ -166,7 +166,7 @@ public void run() throws Exception {
   }
 }
 ```
- 
+
 ### Posting a String ([.kt][PostStringKotlin], [.java][PostStringJava])
 
 Use an HTTP POST to send a request body to a service. This example posts a markdown document to a web service that renders markdown as HTML. Because the entire request body is in memory simultaneously, avoid posting large (greater than 1 MiB) documents using this API.
@@ -229,9 +229,9 @@ public void run() throws Exception {
   }
 }
 ```
- 
+
 ### Post Streaming ([.kt][PostStreamingKotlin], [.java][PostStreamingJava])
- 
+
 Here we `POST` a request body as a stream. The content of this request body is being generated as it's being written. This example streams directly into the [Okio](https://github.com/square/okio) buffered sink. Your programs may prefer an `OutputStream`, which you can get from `BufferedSink.outputStream()`.
 
 === "Kotlin"
@@ -317,7 +317,7 @@ public void run() throws Exception {
   }
 }
 ```
- 
+
 ### Posting a File ([.kt][PostFileKotlin], [.java][PostFileJava])
 
 It's easy to use a file as a request body.
@@ -367,7 +367,7 @@ public void run() throws Exception {
   }
 }
 ```
- 
+
 ### Posting form parameters ([.kt][PostFormKotlin], [.java][PostFormJava])
 
 Use `FormBody.Builder` to build a request body that works like an HTML `<form>` tag. Names and values will be encoded using an HTML-compatible form URL encoding.
@@ -412,7 +412,7 @@ public void run() throws Exception {
   }
 }
 ```
- 
+
 ### Posting a multipart request ([.kt][PostMultipartKotlin], [.java][PostMultipartJava])
 
 `MultipartBody.Builder` can build sophisticated request bodies compatible with HTML file upload forms. Each part of a multipart request body is itself a request body, and can define its own headers. If present, these headers should describe the part body, such as its `Content-Disposition`. The `Content-Length` and `Content-Type` headers are added automatically if they're available.
@@ -485,9 +485,9 @@ public void run() throws Exception {
   }
 }
 ```
- 
+
 ### Parse a JSON Response With Moshi ([.kt][ParseResponseWithMoshiKotlin], [.java][ParseResponseWithMoshiJava])
-  
+
 [Moshi](https://github.com/square/moshi) is a handy API for converting between JSON and Java objects. Here we're using it to decode a JSON response from a GitHub API.
 
 Note that `ResponseBody.charStream()` uses the `Content-Type` response header to select which charset to use when decoding the response body. It defaults to `UTF-8` if no charset is specified.
@@ -550,7 +550,7 @@ static class GistFile {
   String content;
 }
 ```
- 
+
 ### Response Caching ([.kt][CacheResponseKotlin], [.java][CacheResponseJava])
 
 To cache responses, you'll need a cache directory that you can read and write to, and a limit on the cache's size. The cache directory should be private, and untrusted applications should not be able to read its contents!
@@ -637,7 +637,7 @@ public void run() throws Exception {
 ```
 
 To prevent a response from using the cache, use [`CacheControl.FORCE_NETWORK`](https://square.github.io/okhttp/4.x/okhttp/okhttp3/-cache-control/-f-o-r-c-e_-n-e-t-w-o-r-k/). To prevent it from using the network, use [`CacheControl.FORCE_CACHE`](https://square.github.io/okhttp/4.x/okhttp/okhttp3/-cache-control/-f-o-r-c-e_-c-a-c-h-e/). Be warned: if you use `FORCE_CACHE` and the response requires the network, OkHttp will return a `504 Unsatisfiable Request` response.
- 
+
 ### Canceling a Call ([.kt][CancelCallKotlin], [.java][CancelCallJava])
 
 Use `Call.cancel()` to stop an ongoing call immediately. If a thread is currently writing a request or reading a response, it will receive an `IOException`. Use this to conserve the network when a call is no longer necessary; for example when your user navigates away from an application. Both synchronous and asynchronous calls can be canceled.
@@ -706,7 +706,7 @@ public void run() throws Exception {
   }
 }
 ```
- 
+
 ### Timeouts ([.kt][ConfigureTimeoutsKotlin], [.java][ConfigureTimeoutsJava])
 
 Use timeouts to fail a call when its peer is unreachable. Network partitions can be due to client connectivity problems, server availability problems, or anything between. OkHttp supports connect, write, read, and full call timeouts.
@@ -752,7 +752,7 @@ public void run() throws Exception {
   }
 }
 ```
- 
+
 ### Per-call Configuration ([.kt][PerCallSettingsKotlin], [.java][PerCallSettingsJava])
 
 All the HTTP client configuration lives in `OkHttpClient` including proxy settings, timeouts, and caches. When you need to change the configuration of a single call, call `OkHttpClient.newBuilder()`. This returns a builder that shares the same connection pool, dispatcher, and configuration with the original client. In the example below, we make one request with a 500 ms timeout and another with a 3000 ms timeout.
@@ -821,7 +821,7 @@ public void run() throws Exception {
   }
 }
 ```
- 
+
 ### Handling authentication ([.kt][AuthenticateKotlin], [.java][AuthenticateJava])
 
 OkHttp can automatically retry unauthenticated requests. When a response is `401 Not Authorized`, an `Authenticator` is asked to supply credentials. Implementations should build a new request that includes the missing credentials. If no credentials are available, return null to skip the retry.
@@ -860,6 +860,29 @@ fun run() {
   }
 }
 ```
+
+To avoid making many retries when authentication isn't working, you can return null to give up. For example, you may want to skip the retry when these exact credentials have already been attempted:
+
+```kotlin
+if (credential == response.request.header("Authorization")) {
+  return null // If we already failed with these credentials, don't retry.
+ }
+```
+
+You may also skip the retry when you’ve hit an application-defined attempt limit:
+
+```kotlin
+if (response.responseCount >= 3) {
+  return null // If we've failed 3 times, give up.
+}
+```
+
+This above code relies on this `responseCount` extension val:
+
+```kotlin
+val Response.responseCount: Int
+  get() = generateSequence(this) { it.priorResponse }.count()
+```
 === "Java"
 ```java
 private final OkHttpClient client;
@@ -895,7 +918,7 @@ public void run() throws Exception {
   }
 }
 ```
-    
+
   To avoid making many retries when authentication isn't working, you can return null to give up. For example, you may want to skip the retry when these exact credentials have already been attempted:
 
 ```java
@@ -924,31 +947,31 @@ private int responseCount(Response response) {
 }
 ```
 
- [SynchronousGetJava]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/SynchronousGet.java 
+ [SynchronousGetJava]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/SynchronousGet.java
  [SynchronousGetKotlin]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/kt/SynchronousGet.kt
- [AsynchronousGetJava]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/AsynchronousGet.java 
+ [AsynchronousGetJava]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/AsynchronousGet.java
  [AsynchronousGetKotlin]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/kt/AsynchronousGet.kt
- [AccessHeadersJava]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/AccessHeaders.java 
+ [AccessHeadersJava]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/AccessHeaders.java
  [AccessHeadersKotlin]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/kt/AccessHeaders.kt
- [PostStringJava]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/PostString.java 
+ [PostStringJava]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/PostString.java
  [PostStringKotlin]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/kt/PostString.kt
- [PostStreamingJava]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/PostStreaming.java 
+ [PostStreamingJava]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/PostStreaming.java
  [PostStreamingKotlin]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/kt/PostStreaming.kt
- [PostFileJava]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/PostFile.java 
+ [PostFileJava]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/PostFile.java
  [PostFileKotlin]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/kt/PostFile.kt
- [PostFormJava]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/PostForm.java 
+ [PostFormJava]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/PostForm.java
  [PostFormKotlin]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/kt/PostForm.kt
- [PostMultipartJava]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/PostMultipart.java 
+ [PostMultipartJava]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/PostMultipart.java
  [PostMultipartKotlin]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/kt/PostMultipart.kt
- [ParseResponseWithMoshiJava]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/ParseResponseWithMoshi.java 
+ [ParseResponseWithMoshiJava]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/ParseResponseWithMoshi.java
  [ParseResponseWithMoshiKotlin]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/kt/ParseResponseWithMoshi.kt
- [CacheResponseJava]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/CacheResponse.java 
+ [CacheResponseJava]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/CacheResponse.java
  [CacheResponseKotlin]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/kt/CacheResponse.kt
- [CancelCallJava]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/CancelCall.java 
+ [CancelCallJava]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/CancelCall.java
  [CancelCallKotlin]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/kt/CancelCall.kt
- [ConfigureTimeoutsJava]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/ConfigureTimeouts.java 
+ [ConfigureTimeoutsJava]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/ConfigureTimeouts.java
  [ConfigureTimeoutsKotlin]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/kt/ConfigureTimeouts.kt
- [PerCallSettingsJava]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/PerCallSettings.java 
+ [PerCallSettingsJava]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/PerCallSettings.java
  [PerCallSettingsKotlin]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/kt/PerCallSettings.kt
- [AuthenticateJava]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/Authenticate.java 
+ [AuthenticateJava]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/Authenticate.java
  [AuthenticateKotlin]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/kt/Authenticate.kt
