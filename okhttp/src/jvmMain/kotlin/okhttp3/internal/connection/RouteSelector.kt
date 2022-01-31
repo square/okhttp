@@ -165,10 +165,10 @@ class RouteSelector(
         throw UnknownHostException("${address.dns} returned no addresses for $socketHost")
       }
 
+      eventListener.dnsEnd(call, socketHost, addresses)
+
       // Try each address for best behavior in mixed IPv4/IPv6 environments.
       val prioritisedAddresses = InetAddressOrder.reorder(addresses)
-
-      eventListener.dnsEnd(call, socketHost, prioritisedAddresses)
 
       for (inetAddress in addresses) {
         mutableInetSocketAddresses += InetSocketAddress(inetAddress, socketPort)
