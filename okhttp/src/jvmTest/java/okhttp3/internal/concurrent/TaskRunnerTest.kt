@@ -402,6 +402,7 @@ class TaskRunnerTest {
         "three:run@100000 parallel=true"
     )
 
+    taskFaker.runTasks()
     taskFaker.assertNoMoreTasks()
 
     assertThat(testLogHandler.takeAll()).containsExactly(
