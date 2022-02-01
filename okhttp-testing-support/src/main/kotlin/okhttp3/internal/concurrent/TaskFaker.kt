@@ -16,8 +16,11 @@
 package okhttp3.internal.concurrent
 
 import java.io.Closeable
+import java.util.AbstractQueue
+import java.util.concurrent.BlockingQueue
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.logging.Logger
 import okhttp3.OkHttpClient
@@ -35,6 +38,7 @@ import org.assertj.core.api.Assertions.assertThat
  *
  *  * By being ready to start. Newly-created tasks don't run immediately.
  *  * By finishing their work. This occurs when [Runnable.run] returns.
+ *  * By waiting until the simulated clock reaches a specific time.
  *  * By requesting to wait by calling [TaskRunner.Backend.coordinatorWait].
  *
  * Most test methods start by unblocking task threads, then wait for those task threads to stall
@@ -94,6 +98,9 @@ class TaskFaker : Closeable {
   /** The thread currently waiting for time to advance. Guarded by [taskRunner]. */
   private var waitingCoordinatorThread: Thread? = null
 
+  /** True if new tasks should run immediately without stalling. Guarded by [taskRunner]. */
+  private var isRunningAllTasks = false
+
   /** A task runner that posts tasks to this fake. Tasks won't be executed until requested. */
   val taskRunner: TaskRunner = TaskRunner(object : TaskRunner.Backend {
     override fun execute(taskRunner: TaskRunner, runnable: Runnable) {
@@ -108,7 +115,9 @@ class TaskFaker : Closeable {
           tasksRunningCount++
           if (tasksRunningCount > 1) isParallel = true
           try {
-            stall(taskRunner)
+            if (!isRunningAllTasks) {
+              stall()
+            }
             runnable.run()
           } catch (e: InterruptedException) {
             if (!tasksExecutor.isShutdown) throw e // Ignore shutdown-triggered interruptions.
@@ -119,7 +128,7 @@ class TaskFaker : Closeable {
         }
       }
 
-      // Execute() must not return until the launched task reaches stall().
+      // Execute() must not return until the launched task stalls.
       while (!acquiredTaskRunnerLock.get()) {
         taskRunner.wait()
       }
@@ -143,29 +152,38 @@ class TaskFaker : Closeable {
 
       waitingCoordinatorThread = Thread.currentThread()
       try {
-        stall(taskRunner)
+        stall()
       } finally {
         waitingCoordinatorThread = null
       }
     }
 
-    /** Wait for the test thread to proceed. */
-    private fun stall(taskRunner: TaskRunner) {
-      taskRunner.assertThreadHoldsLock()
-
-      val currentThread = Thread.currentThread()
-      taskBecameStalled.release()
-      stalledTasks += currentThread
-      try {
-        while (currentThread in stalledTasks) {
-          taskRunner.wait()
-        }
-      } catch (e: InterruptedException) {
-        stalledTasks.remove(currentThread)
-        throw e
-      }
-    }
+    override fun <T> decorate(queue: BlockingQueue<T>) = TaskFakerBlockingQueue(queue)
   }, logger = logger)
+
+  /** Wait for the test thread to proceed. */
+  private fun stall() {
+    taskRunner.assertThreadHoldsLock()
+
+    val currentThread = Thread.currentThread()
+    taskBecameStalled.release()
+    stalledTasks += currentThread
+    try {
+      while (currentThread in stalledTasks) {
+        taskRunner.wait()
+      }
+    } catch (e: InterruptedException) {
+      stalledTasks.remove(currentThread)
+      throw e
+    }
+  }
+
+  private fun unstallTasks() {
+    taskRunner.assertThreadHoldsLock()
+
+    stalledTasks.clear()
+    taskRunner.notifyAll()
+  }
 
   /** Runs all tasks that are ready. Used by the test thread only. */
   fun runTasks() {
@@ -177,9 +195,9 @@ class TaskFaker : Closeable {
     taskRunner.assertThreadDoesntHoldLock()
 
     synchronized(taskRunner) {
+      isRunningAllTasks = true
       nanoTime = newTime
-      stalledTasks.clear()
-      taskRunner.notifyAll()
+      unstallTasks()
     }
 
     waitForTasksToStall()
@@ -191,6 +209,7 @@ class TaskFaker : Closeable {
     while (true) {
       synchronized(taskRunner) {
         if (tasksRunningCount == stalledTasks.size) {
+          isRunningAllTasks = false
           return@waitForTasksToStall // All stalled.
         }
         taskBecameStalled.drainPermits()
@@ -235,6 +254,63 @@ class TaskFaker : Closeable {
     }
 
     waitForTasksToStall()
+  }
+
+  /** Sleep until [durationNanos] elapses. For use by the task threads. */
+  fun sleep(durationNanos: Long) {
+    taskRunner.assertThreadHoldsLock()
+
+    val waitUntil = nanoTime + durationNanos
+    while (nanoTime < waitUntil) {
+      stall()
+    }
+  }
+
+  /**
+   * This blocking queue hooks into a fake clock rather than using regular JVM timing for functions
+   * like [poll]. It is only usable within task faker tasks.
+   */
+  private inner class TaskFakerBlockingQueue<T>(
+    val delegate: BlockingQueue<T>
+  ) : AbstractQueue<T>(), BlockingQueue<T> {
+    override val size: Int = delegate.size
+
+    override fun poll(): T = delegate.poll()
+
+    override fun poll(timeout: Long, unit: TimeUnit): T? {
+      taskRunner.assertThreadHoldsLock()
+
+      val waitUntil = nanoTime + unit.toNanos(timeout)
+      while (true) {
+        val result = poll()
+        if (result != null) return result
+        if (nanoTime >= waitUntil) return null
+        stall()
+      }
+    }
+
+    override fun put(element: T) {
+      taskRunner.assertThreadHoldsLock()
+
+      delegate.put(element)
+      unstallTasks()
+    }
+
+    override fun iterator() = error("unsupported")
+
+    override fun offer(e: T) = error("unsupported")
+
+    override fun peek(): T = error("unsupported")
+
+    override fun offer(element: T, timeout: Long, unit: TimeUnit) = error("unsupported")
+
+    override fun take() = error("unsupported")
+
+    override fun remainingCapacity() = error("unsupported")
+
+    override fun drainTo(sink: MutableCollection<in T>) = error("unsupported")
+
+    override fun drainTo(sink: MutableCollection<in T>, maxElements: Int) = error("unsupported")
   }
 
   /** Returns true if no tasks have been scheduled. This runs the coordinator for confirmation. */
