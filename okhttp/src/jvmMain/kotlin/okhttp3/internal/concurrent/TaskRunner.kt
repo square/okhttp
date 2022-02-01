@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.concurrent
 
+import java.util.concurrent.BlockingQueue
 import java.util.concurrent.SynchronousQueue
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.ThreadPoolExecutor
@@ -260,6 +261,7 @@ class TaskRunner(
     fun nanoTime(): Long
     fun coordinatorNotify(taskRunner: TaskRunner)
     fun coordinatorWait(taskRunner: TaskRunner, nanos: Long)
+    fun <T> decorate(queue: BlockingQueue<T>): BlockingQueue<T>
     fun execute(taskRunner: TaskRunner, runnable: Runnable)
   }
 
@@ -291,6 +293,8 @@ class TaskRunner(
         (taskRunner as Object).wait(ms, ns.toInt())
       }
     }
+
+    override fun <T> decorate(queue: BlockingQueue<T>) = queue
 
     override fun execute(taskRunner: TaskRunner, runnable: Runnable) {
       executor.execute(runnable)

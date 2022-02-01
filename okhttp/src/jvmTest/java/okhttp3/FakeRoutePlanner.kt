@@ -17,11 +17,18 @@ package okhttp3
 
 import java.io.IOException
 import java.util.concurrent.LinkedBlockingDeque
+import okhttp3.internal.concurrent.TaskFaker
 import okhttp3.internal.connection.RoutePlanner
 
 class FakeRoutePlanner(
-  val factory: TestValueFactory,
+  private val taskFaker: TaskFaker,
 ) : RoutePlanner {
+  /**
+   * Note that we don't use the same [TaskFaker] for this factory. That way off-topic tasks like
+   * connection pool maintenance tasks don't add noise to route planning tests.
+   */
+  private val factory = TestValueFactory()
+
   private val pool = factory.newConnectionPool()
 
   val events = LinkedBlockingDeque<String>()
@@ -72,16 +79,27 @@ class FakeRoutePlanner(
     val connection = factory.newConnection(pool, factory.newRoute(address))
 
     override var isConnected = false
+    var connectDelayNanos = 0L
 
     override fun connect() {
-      events += "plan $id connect"
-      isConnected = true
+      check(!isConnected) { "already connected" }
+      events += "plan $id connecting..."
+
+      taskFaker.sleep(connectDelayNanos)
+
+      if (canceled) {
+        events += "plan $id connect canceled"
+      } else {
+        events += "plan $id connected"
+        isConnected = true
+      }
     }
 
     override fun handleSuccess() = connection
 
     override fun cancel() {
       events += "plan $id cancel"
+      canceled = true
     }
   }
 }

@@ -402,16 +402,15 @@ class TaskRunnerTest {
     assertThat(log).isEmpty()
 
     taskFaker.advanceUntil(100.µs)
-    assertThat(log).containsExactly(
+    assertThat(log).containsExactlyInAnyOrder(
         "one:run@100000 parallel=true",
         "two:run@100000 parallel=true",
         "three:run@100000 parallel=true"
     )
 
-    taskFaker.runTasks()
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
+    assertThat(testLogHandler.takeAll()).containsExactlyInAnyOrder(
         "FINE: Q10000 scheduled after 100 µs: task one",
         "FINE: Q10001 scheduled after 100 µs: task two",
         "FINE: Q10002 scheduled after 100 µs: task three",
