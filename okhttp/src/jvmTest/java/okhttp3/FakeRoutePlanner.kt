@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import java.io.Closeable
 import java.io.IOException
 import java.util.concurrent.LinkedBlockingDeque
 import okhttp3.internal.concurrent.TaskFaker
@@ -22,7 +23,7 @@ import okhttp3.internal.connection.RoutePlanner
 
 class FakeRoutePlanner(
   private val taskFaker: TaskFaker,
-) : RoutePlanner {
+) : RoutePlanner, Closeable {
   /**
    * Note that we don't use the same [TaskFaker] for this factory. That way off-topic tasks like
    * connection pool maintenance tasks don't add noise to route planning tests.
@@ -58,7 +59,7 @@ class FakeRoutePlanner(
   }
 
   override fun trackFailure(e: IOException) {
-    events += "failure"
+    events += "tracking failure: $e"
     hasFailure = true
   }
 
@@ -72,6 +73,10 @@ class FakeRoutePlanner(
     return url.host == address.url.host && url.port == address.url.port
   }
 
+  override fun close() {
+    factory.close()
+  }
+
   inner class FakePlan(
     val id: Int
   ) : RoutePlanner.Plan {
@@ -80,6 +85,7 @@ class FakeRoutePlanner(
 
     override var isConnected = false
     var connectDelayNanos = 0L
+    var connectThrowable: Throwable? = null
 
     override fun connect() {
       check(!isConnected) { "already connected" }
@@ -87,11 +93,18 @@ class FakeRoutePlanner(
 
       taskFaker.sleep(connectDelayNanos)
 
-      if (canceled) {
-        events += "plan $id connect canceled"
-      } else {
-        events += "plan $id connected"
-        isConnected = true
+      when {
+        connectThrowable != null -> {
+          events += "plan $id connect failed"
+          throw connectThrowable!!
+        }
+        canceled -> {
+          events += "plan $id connect canceled"
+        }
+        else -> {
+          events += "plan $id connected"
+          isConnected = true
+        }
       }
     }
 

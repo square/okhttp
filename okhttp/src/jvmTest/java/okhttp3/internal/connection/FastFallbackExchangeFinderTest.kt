@@ -15,10 +15,12 @@
  */
 package okhttp3.internal.connection
 
+import java.io.IOException
 import okhttp3.FakeRoutePlanner
 import okhttp3.internal.concurrent.TaskFaker
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
 
 /**
@@ -39,7 +41,8 @@ internal class FastFallbackExchangeFinderTest {
 
   @AfterEach
   fun tearDown() {
-    factory.close()
+    taskFaker.close()
+    routePlanner.close()
   }
 
   @Test
@@ -206,6 +209,125 @@ internal class FastFallbackExchangeFinderTest {
     taskFaker.advanceUntil(520.ms)
     assertThat(takeEvent()).isEqualTo("plan 0 connect canceled")
     assertThat(routePlanner.events.poll()).isNull()
+  }
+
+  @Test
+  fun takeMultipleConnections() {
+    val plan0 = routePlanner.addPlan()
+    plan0.isConnected = true
+    val plan1 = routePlanner.addPlan()
+    plan1.isConnected = true
+
+    taskRunner.newQueue().execute("connect") {
+      val result0 = finder.find()
+      assertThat(result0).isEqualTo(plan0.connection)
+      val result1 = finder.find()
+      assertThat(result1).isEqualTo(plan1.connection)
+    }
+
+    taskFaker.runTasks()
+    taskFaker.assertNoMoreTasks()
+    assertThat(takeEvent()).isEqualTo("take plan 0")
+    assertThat(takeEvent()).isEqualTo("take plan 1")
+    assertThat(takeEvent()).isNull()
+  }
+
+  @Test
+  fun firstConnectionFailsAndNoOthersExist() {
+    val plan0 = routePlanner.addPlan()
+    plan0.connectThrowable = IOException("boom!")
+
+    taskRunner.newQueue().execute("connect") {
+      try {
+        finder.find()
+        fail()
+      } catch (e: IOException) {
+        assertThat(e).hasMessage("boom!")
+      }
+    }
+
+    taskFaker.runTasks()
+    taskFaker.assertNoMoreTasks()
+    assertThat(takeEvent()).isEqualTo("take plan 0")
+    assertThat(takeEvent()).isEqualTo("plan 0 connecting...")
+    assertThat(takeEvent()).isEqualTo("plan 0 connect failed")
+    assertThat(takeEvent()).isEqualTo("tracking failure: java.io.IOException: boom!")
+    assertThat(takeEvent()).isNull()
+  }
+
+  @Test
+  fun firstConnectionFailsToConnectAndSecondSucceeds() {
+    val plan0 = routePlanner.addPlan()
+    plan0.connectThrowable = IOException("boom!")
+    val plan1 = routePlanner.addPlan()
+    plan1.isConnected = true
+
+    taskRunner.newQueue().execute("connect") {
+      val result0 = finder.find()
+      assertThat(result0).isEqualTo(plan1.connection)
+    }
+
+    taskFaker.runTasks()
+    taskFaker.assertNoMoreTasks()
+    assertThat(takeEvent()).isEqualTo("take plan 0")
+    assertThat(takeEvent()).isEqualTo("plan 0 connecting...")
+    assertThat(takeEvent()).isEqualTo("plan 0 connect failed")
+    assertThat(takeEvent()).isEqualTo("tracking failure: java.io.IOException: boom!")
+    assertThat(takeEvent()).isEqualTo("take plan 1")
+    assertThat(takeEvent()).isNull()
+  }
+
+  @Test
+  fun firstConnectionFailsToConnectAndSecondFailureIsSuppressedException() {
+    val plan0 = routePlanner.addPlan()
+    plan0.connectThrowable = IOException("boom 0!")
+    val plan1 = routePlanner.addPlan()
+    plan1.connectThrowable = IOException("boom 1!")
+
+    taskRunner.newQueue().execute("connect") {
+      try {
+        finder.find()
+        fail()
+      } catch (e: IOException) {
+        assertThat(e).hasMessage("boom 0!")
+        assertThat(e.suppressed.single()).hasMessage("boom 1!")
+      }
+    }
+
+    taskFaker.runTasks()
+    taskFaker.assertNoMoreTasks()
+    assertThat(takeEvent()).isEqualTo("take plan 0")
+    assertThat(takeEvent()).isEqualTo("plan 0 connecting...")
+    assertThat(takeEvent()).isEqualTo("plan 0 connect failed")
+    assertThat(takeEvent()).isEqualTo("tracking failure: java.io.IOException: boom 0!")
+    assertThat(takeEvent()).isEqualTo("take plan 1")
+    assertThat(takeEvent()).isEqualTo("plan 1 connecting...")
+    assertThat(takeEvent()).isEqualTo("plan 1 connect failed")
+    assertThat(takeEvent()).isEqualTo("tracking failure: java.io.IOException: boom 1!")
+    assertThat(takeEvent()).isNull()
+  }
+
+  @Test
+  fun firstConnectionCrashesWithUncheckedException() {
+    val plan0 = routePlanner.addPlan()
+    plan0.connectThrowable = IllegalStateException("boom!")
+    routePlanner.addPlan() // This plan should not be used.
+
+    taskRunner.newQueue().execute("connect") {
+      try {
+        finder.find()
+        fail()
+      } catch (e: IllegalStateException) {
+        assertThat(e).hasMessage("boom!")
+      }
+    }
+
+    taskFaker.runTasks()
+    taskFaker.assertNoMoreTasks()
+    assertThat(takeEvent()).isEqualTo("take plan 0")
+    assertThat(takeEvent()).isEqualTo("plan 0 connecting...")
+    assertThat(takeEvent()).isEqualTo("plan 0 connect failed")
+    assertThat(takeEvent()).isNull()
   }
 
   private fun takeEvent() = routePlanner.events.poll()
