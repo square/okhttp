@@ -16,28 +16,14 @@
 package okhttp3.internal.concurrent
 
 import java.util.concurrent.Executors
-import java.util.concurrent.Semaphore
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.logging.Logger
 import okhttp3.OkHttpClient
 import org.assertj.core.api.Assertions.assertThat
 
 /**
  * Runs a [TaskRunner] in a controlled environment so that everything is sequential and
- * deterministic.
- *
- * This class ensures that at most one thread is running at a time. This is initially the JUnit test
- * thread, which temporarily shares its execution privilege by calling [runTasks], [runNextTask], or
- * [advanceUntil]. These methods wait for its task threads to stop executing before it returns.
- *
- * Task threads stall execution in these ways:
- *
- *  * By being ready to start. Newly-created tasks don't run immediately.
- *  * By finishing their work. This occurs when [Runnable.run] returns.
- *  * By requesting to wait by calling [TaskRunner.Backend.coordinatorWait].
- *
- * Most test methods start by unblocking task threads, then wait for those task threads to stall
- * again before returning.
+ * deterministic. All tasks are executed on-demand on the test thread by calls to [runTasks] and
+ * [advanceUntil].
  */
 class TaskFaker {
   @Suppress("NOTHING_TO_INLINE")
@@ -58,180 +44,157 @@ class TaskFaker {
   internal inline fun Any.wait() = (this as Object).wait()
 
   @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "NOTHING_TO_INLINE")
-  internal inline fun Any.notifyAll() = (this as Object).notifyAll()
+  internal inline fun Any.notify() = (this as Object).notify()
 
   val logger = Logger.getLogger("TaskFaker." + instance++)
 
-  /** Though this executor service may hold many threads, they are not executed concurrently. */
-  private val tasksExecutor = Executors.newCachedThreadPool()
+  /** Runnables scheduled for execution. These will execute tasks and perform scheduling. */
+  private val futureRunnables = mutableListOf<Runnable>()
 
-  /** The number of runnables known to [tasksExecutor]. Guarded by [taskRunner]. */
-  private var tasksRunningCount = 0
-
-  /**
-   * Threads in this list are waiting for either [interruptCoordinatorThread] or [notifyAll].
-   * Guarded by [taskRunner].
-   */
-  private val stalledTasks = mutableListOf<Thread>()
+  /** Runnables currently executing. */
+  private val currentRunnables = mutableListOf<Runnable>()
 
   /**
-   * Released whenever a thread is either added to [stalledTasks] or completes. The test thread
-   * uses this to wait until all subject threads complete or stall.
+   * Executor service for the runnables above. This executor service should never have more than two
+   * active threads: one for a currently-executing task and one for a currently-sleeping task.
    */
-  private val taskBecameStalled = Semaphore(0)
+  private val executorService = Executors.newCachedThreadPool()
 
-  /**
-   * True if this task faker has ever had multiple tasks scheduled to run concurrently. Guarded by
-   * [taskRunner].
-   */
+  /** True if this task faker has ever had multiple tasks scheduled to run concurrently. */
   var isParallel = false
 
   /** Guarded by [taskRunner]. */
   var nanoTime = 0L
     private set
 
-  /** The thread currently waiting for time to advance. Guarded by [taskRunner]. */
-  private var waitingCoordinatorThread: Thread? = null
+  /** The thread currently waiting for time to advance. */
+  private var waitingThread: Thread? = null
+
+  /** Guarded by taskRunner. Time at which we should yield execution to a waiting runnable. */
+  private var waitingUntilTime = Long.MAX_VALUE
+
+  /** Total number of runnables executed. */
+  private var executedRunnableCount = 0
+
+  /** Stall once we've executed this many runnables. */
+  private var executedTaskLimit = Int.MAX_VALUE
 
   /** A task runner that posts tasks to this fake. Tasks won't be executed until requested. */
   val taskRunner: TaskRunner = TaskRunner(object : TaskRunner.Backend {
-    override fun execute(taskRunner: TaskRunner, runnable: Runnable) {
+    override fun beforeTask(taskRunner: TaskRunner) {
       taskRunner.assertThreadHoldsLock()
-      val acquiredTaskRunnerLock = AtomicBoolean()
 
-      tasksExecutor.execute {
-        synchronized(taskRunner) {
-          acquiredTaskRunnerLock.set(true)
-          taskRunner.notifyAll()
-
-          tasksRunningCount++
-          if (tasksRunningCount > 1) isParallel = true
-          try {
-            stall(taskRunner)
-            runnable.run()
-          } finally {
-            tasksRunningCount--
-            taskBecameStalled.release()
-          }
-        }
+      while (executedRunnableCount >= executedTaskLimit) {
+        coordinatorWait(taskRunner, Long.MAX_VALUE)
       }
+    }
 
-      // Execute() must not return until the launched task reaches stall().
-      while (!acquiredTaskRunnerLock.get()) {
-        taskRunner.wait()
-      }
+    override fun execute(runnable: Runnable) {
+      futureRunnables.add(runnable)
     }
 
     override fun nanoTime() = nanoTime
 
     override fun coordinatorNotify(taskRunner: TaskRunner) {
       taskRunner.assertThreadHoldsLock()
-      check(waitingCoordinatorThread != null)
 
-      stalledTasks.remove(waitingCoordinatorThread)
-      taskRunner.notifyAll()
+      waitingUntilTime = nanoTime
     }
 
     override fun coordinatorWait(taskRunner: TaskRunner, nanos: Long) {
       taskRunner.assertThreadHoldsLock()
 
-      check(waitingCoordinatorThread == null)
-      if (nanos == 0L) return
+      check(waitingUntilTime == Long.MAX_VALUE)
+      check(waitingThread == null)
 
-      waitingCoordinatorThread = Thread.currentThread()
+      waitingThread = Thread.currentThread()
+      waitingUntilTime = if (nanos < Long.MAX_VALUE) nanoTime + nanos else Long.MAX_VALUE
       try {
-        stall(taskRunner)
-      } finally {
-        waitingCoordinatorThread = null
-      }
-    }
-
-    /** Wait for the test thread to proceed. */
-    private fun stall(taskRunner: TaskRunner) {
-      taskRunner.assertThreadHoldsLock()
-
-      val currentThread = Thread.currentThread()
-      taskBecameStalled.release()
-      stalledTasks += currentThread
-      try {
-        while (currentThread in stalledTasks) {
+        if (nanoTime < waitingUntilTime) {
+          // Stall because there's no work to do.
+          taskRunner.notify()
           taskRunner.wait()
         }
-      } catch (e: InterruptedException) {
-        stalledTasks.remove(currentThread)
-        throw e
+      } finally {
+        waitingThread = null
+        waitingUntilTime = Long.MAX_VALUE
       }
     }
   }, logger = logger)
 
-  /** Runs all tasks that are ready. Used by the test thread only. */
+  /** Runs all tasks that are ready without advancing the simulated clock. */
   fun runTasks() {
     advanceUntil(nanoTime)
   }
 
-  /** Advance the simulated clock, then runs tasks that are ready. Used by the test thread only. */
+  /** Advance the simulated clock and run anything ready at the new time. */
   fun advanceUntil(newTime: Long) {
     taskRunner.assertThreadDoesntHoldLock()
 
     synchronized(taskRunner) {
       nanoTime = newTime
-      stalledTasks.clear()
-      taskRunner.notifyAll()
-    }
 
-    waitForTasksToStall()
-  }
+      while (true) {
+        runRunnables(taskRunner)
 
-  private fun waitForTasksToStall() {
-    taskRunner.assertThreadDoesntHoldLock()
-
-    while (true) {
-      synchronized(taskRunner) {
-        if (tasksRunningCount == stalledTasks.size) {
-          return@waitForTasksToStall // All stalled.
+        if (waitingUntilTime <= nanoTime) {
+          // Let the coordinator do its business at the new time.
+          taskRunner.notify()
+          taskRunner.wait()
+        } else {
+          return
         }
-        taskBecameStalled.drainPermits()
       }
-      taskBecameStalled.acquire()
     }
   }
 
-  /** Confirm all tasks have completed. Used by the test thread only. */
+  /** Returns true if anything was executed. */
+  private fun runRunnables(taskRunner: TaskRunner) {
+    taskRunner.assertThreadHoldsLock()
+
+    while (futureRunnables.isNotEmpty()) {
+      val runnable = futureRunnables.removeAt(0)
+      currentRunnables.add(runnable)
+      if (currentRunnables.size > 1) isParallel = true
+      executorService.execute {
+        try {
+          runnable.run()
+        } finally {
+          currentRunnables.remove(runnable)
+          synchronized(taskRunner) {
+            taskRunner.notify()
+          }
+        }
+      }
+      taskRunner.wait() // Wait for the coordinator to stall.
+    }
+  }
+
   fun assertNoMoreTasks() {
-    taskRunner.assertThreadDoesntHoldLock()
-
-    synchronized(taskRunner) {
-      assertThat(stalledTasks).isEmpty()
-    }
+    assertThat(futureRunnables).isEmpty()
+    assertThat(waitingUntilTime)
+        .withFailMessage("tasks are scheduled to run at $waitingUntilTime")
+        .isEqualTo(Long.MAX_VALUE)
   }
 
-  /** Unblock a waiting task thread. Used by the test thread only. */
   fun interruptCoordinatorThread() {
     taskRunner.assertThreadDoesntHoldLock()
 
-    // Make sure the coordinator is ready to be interrupted.
-    runTasks()
-
     synchronized(taskRunner) {
-      val toInterrupt = waitingCoordinatorThread ?: error("no thread currently waiting")
-      taskBecameStalled.drainPermits()
-      toInterrupt.interrupt()
+      check(waitingThread != null) { "no thread currently waiting" }
+      waitingThread!!.interrupt()
+      taskRunner.wait() // Wait for the coordinator to stall.
     }
-
-    waitForTasksToStall()
   }
 
-  /** Ask a single task to proceed. Used by the test thread only. */
+  /** Advances and runs up to one task. */
   fun runNextTask() {
-    taskRunner.assertThreadDoesntHoldLock()
-
-    synchronized(taskRunner) {
-      check(stalledTasks.size >= 1) { "no tasks to run" }
-      stalledTasks.removeFirst()
-      taskRunner.notifyAll()
+    executedTaskLimit = executedRunnableCount + 1
+    try {
+      advanceUntil(nanoTime)
+    } finally {
+      executedTaskLimit = Int.MAX_VALUE
     }
-
-    waitForTasksToStall()
   }
 
   /** Returns true if no tasks have been scheduled. This runs the coordinator for confirmation. */
