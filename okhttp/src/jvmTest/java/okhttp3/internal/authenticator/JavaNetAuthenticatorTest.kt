@@ -47,6 +47,7 @@ class JavaNetAuthenticatorTest {
   @AfterEach
   fun tearDown() {
     Authenticator.setDefault(null)
+    factory.close()
   }
 
   @Test

@@ -227,7 +227,7 @@ class CallKotlinTest(
   /** Confirm suppressed exceptions that occur while connecting are returned. */
   @Test fun connectExceptionsAreReturnedAsSuppressed() {
     val proxySelector = RecordingProxySelector()
-    proxySelector.proxies.add(Proxy(Proxy.Type.HTTP, TestUtil.UNREACHABLE_ADDRESS))
+    proxySelector.proxies.add(Proxy(Proxy.Type.HTTP, TestUtil.UNREACHABLE_ADDRESS_IPV4))
     proxySelector.proxies.add(Proxy.NO_PROXY)
     server.shutdown()
 

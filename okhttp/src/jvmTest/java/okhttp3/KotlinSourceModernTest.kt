@@ -76,6 +76,7 @@ import okio.BufferedSink
 import okio.BufferedSource
 import okio.ByteString
 import okio.Timeout
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assumptions.assumeFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
@@ -102,6 +103,11 @@ class KotlinSourceModernTest {
   @BeforeEach
   fun disabled() {
     assumeFalse(true)
+  }
+
+  @AfterEach
+  fun tearDown() {
+    factory.close()
   }
 
   @Test

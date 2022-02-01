@@ -135,7 +135,10 @@ subprojects {
 
   tasks.withType<Test> {
     useJUnitPlatform()
-    jvmArgs = jvmArgs!! + listOf("-Dokhttp.platform=$platform")
+    jvmArgs = jvmArgs!! + listOf(
+      "-Dokhttp.platform=$platform",
+      "-XX:+HeapDumpOnOutOfMemoryError"
+    )
 
     val javaToolchains = project.extensions.getByType<JavaToolchainService>()
     javaLauncher.set(javaToolchains.launcherFor {

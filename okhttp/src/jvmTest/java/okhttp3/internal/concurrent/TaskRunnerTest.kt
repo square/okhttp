@@ -18,6 +18,7 @@ package okhttp3.internal.concurrent
 import java.util.concurrent.RejectedExecutionException
 import okhttp3.TestLogHandler
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.fail
@@ -32,6 +33,11 @@ class TaskRunnerTest {
   private val redQueue = taskRunner.newQueue()
   private val blueQueue = taskRunner.newQueue()
   private val greenQueue = taskRunner.newQueue()
+
+  @AfterEach
+  internal fun tearDown() {
+    taskFaker.close()
+  }
 
   @Test fun executeDelayed() {
     redQueue.execute("task", 100.µs) {

@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.concurrent
 
+import java.io.Closeable
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicBoolean
@@ -39,7 +40,7 @@ import org.assertj.core.api.Assertions.assertThat
  * Most test methods start by unblocking task threads, then wait for those task threads to stall
  * again before returning.
  */
-class TaskFaker {
+class TaskFaker : Closeable {
   @Suppress("NOTHING_TO_INLINE")
   internal inline fun Any.assertThreadHoldsLock() {
     if (assertionsEnabled && !Thread.holdsLock(this)) {
@@ -109,6 +110,8 @@ class TaskFaker {
           try {
             stall(taskRunner)
             runnable.run()
+          } catch (e: InterruptedException) {
+            if (!tasksExecutor.isShutdown) throw e // Ignore shutdown-triggered interruptions.
           } finally {
             tasksRunningCount--
             taskBecameStalled.release()
@@ -236,6 +239,10 @@ class TaskFaker {
 
   /** Returns true if no tasks have been scheduled. This runs the coordinator for confirmation. */
   fun isIdle() = taskRunner.activeQueues().isEmpty()
+
+  override fun close() {
+    tasksExecutor.shutdownNow()
+  }
 
   companion object {
     var instance = 0

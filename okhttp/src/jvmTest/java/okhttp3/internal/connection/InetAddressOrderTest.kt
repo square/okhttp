@@ -30,8 +30,14 @@ class InetAddressOrderTest {
   val ipv6_fc = Inet6Address.getByName("::fc")
 
   @Test fun prioritiseIpv6Example() {
-    val result =
-      InetAddressOrder.reorder(listOf(ipv4_10_0_0_6, ipv4_10_0_0_1, ipv4_10_0_0_4, ipv6_ab, ipv6_fc))
+    val result = reorderForHappyEyeballs(
+      listOf(
+        ipv4_10_0_0_6,
+        ipv4_10_0_0_1,
+        ipv4_10_0_0_4,
+        ipv6_ab, ipv6_fc
+      )
+    )
 
     assertThat(result).isEqualTo(
       listOf(ipv6_ab, ipv4_10_0_0_6, ipv6_fc, ipv4_10_0_0_1, ipv4_10_0_0_4)
@@ -39,8 +45,7 @@ class InetAddressOrderTest {
   }
 
   @Test fun ipv6Only() {
-    val result =
-      InetAddressOrder.reorder(listOf(ipv6_ab, ipv6_fc))
+    val result = reorderForHappyEyeballs(listOf(ipv6_ab, ipv6_fc))
 
     assertThat(result).isEqualTo(
       listOf(ipv6_ab, ipv6_fc)
@@ -48,8 +53,13 @@ class InetAddressOrderTest {
   }
 
   @Test fun ipv4Only() {
-    val result =
-      InetAddressOrder.reorder(listOf(ipv4_10_0_0_6, ipv4_10_0_0_1, ipv4_10_0_0_4))
+    val result = reorderForHappyEyeballs(
+      listOf(
+        ipv4_10_0_0_6,
+        ipv4_10_0_0_1,
+        ipv4_10_0_0_4
+      )
+    )
 
     assertThat(result).isEqualTo(
       listOf(ipv4_10_0_0_6, ipv4_10_0_0_1, ipv4_10_0_0_4)
@@ -57,8 +67,7 @@ class InetAddressOrderTest {
   }
 
   @Test fun singleIpv6() {
-    val result =
-      InetAddressOrder.reorder(listOf(ipv6_ab))
+    val result = reorderForHappyEyeballs(listOf(ipv6_ab))
 
     assertThat(result).isEqualTo(
       listOf(ipv6_ab)
@@ -66,8 +75,7 @@ class InetAddressOrderTest {
   }
 
   @Test fun singleIpv4() {
-    val result =
-      InetAddressOrder.reorder(listOf(ipv4_10_0_0_6))
+    val result = reorderForHappyEyeballs(listOf(ipv4_10_0_0_6))
 
     assertThat(result).isEqualTo(
       listOf(ipv4_10_0_0_6)
@@ -75,8 +83,7 @@ class InetAddressOrderTest {
   }
 
   @Test fun prioritiseIpv6() {
-    val result =
-      InetAddressOrder.reorder(listOf(ipv4_10_0_0_6, ipv6_ab))
+    val result = reorderForHappyEyeballs(listOf(ipv4_10_0_0_6, ipv6_ab))
 
     assertThat(result).isEqualTo(
       listOf(ipv6_ab, ipv4_10_0_0_6)
