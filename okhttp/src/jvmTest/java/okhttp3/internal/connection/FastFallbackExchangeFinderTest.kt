@@ -18,6 +18,7 @@ package okhttp3.internal.connection
 import okhttp3.FakeRoutePlanner
 import okhttp3.TestValueFactory
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 
 /** Unit test for [FastFallbackExchangeFinder] implementation details. */
@@ -25,6 +26,11 @@ internal class FastFallbackExchangeFinderTest {
   private val factory = TestValueFactory()
   private val routePlanner = FakeRoutePlanner(factory)
   private val finder = FastFallbackExchangeFinder(routePlanner, factory.taskRunner)
+
+  @AfterEach
+  fun tearDown() {
+    factory.close()
+  }
 
   @Test
   fun takeConnectedConnection() {

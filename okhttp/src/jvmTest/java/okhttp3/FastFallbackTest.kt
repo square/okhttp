@@ -101,14 +101,18 @@ class FastFallbackTest {
   }
 
   @Test
-  fun callIpv4WhenBothServersAreReachable() {
+  fun callIpv6FirstEvenWhenIpv4IpIsListedFirst() {
+    dnsResults = listOf(
+      localhostIpv4,
+      localhostIpv6,
+    )
     serverIpv4.enqueue(
       MockResponse()
-        .setBody("hello from IPv4")
+        .setBody("unexpected call to IPv4")
     )
     serverIpv6.enqueue(
       MockResponse()
-        .setBody("unexpected call to IPv6")
+        .setBody("hello from IPv6")
     )
 
     val call = client.newCall(
@@ -117,7 +121,7 @@ class FastFallbackTest {
         .build()
     )
     val response = call.execute()
-    assertThat(response.body!!.string()).isEqualTo("hello from IPv4")
+    assertThat(response.body!!.string()).isEqualTo("hello from IPv6")
 
     // In the process we made one successful connection attempt.
     assertThat(listener.recordedEventTypes().filter { it == "ConnectStart" }).hasSize(1)
@@ -170,8 +174,9 @@ class FastFallbackTest {
     assertThat(response.body!!.string()).isEqualTo("hello from IPv4")
 
     // In the process we made one successful connection attempt.
-    assertThat(listener.recordedEventTypes().filter { it == "ConnectStart" }).hasSize(1)
-    assertThat(listener.recordedEventTypes().filter { it == "ConnectFailed" }).hasSize(0)
+    assertThat(listener.recordedEventTypes().filter { it == "ConnectStart" }).hasSize(2)
+    assertThat(listener.recordedEventTypes().filter { it == "ConnectFailed" }).hasSize(1)
+    assertThat(listener.recordedEventTypes().filter { it == "ConnectEnd" }).hasSize(1)
   }
 
   @Test
@@ -191,8 +196,9 @@ class FastFallbackTest {
     assertThat(response.body!!.string()).isEqualTo("hello from IPv6")
 
     // In the process we made two connection attempts including one failure.
-    assertThat(listener.recordedEventTypes().filter { it == "ConnectStart" }).hasSize(2)
-    assertThat(listener.recordedEventTypes().filter { it == "ConnectFailed" }).hasSize(1)
+    assertThat(listener.recordedEventTypes().filter { it == "ConnectStart" }).hasSize(1)
+    assertThat(listener.recordedEventTypes().filter { it == "ConnectEnd" }).hasSize(1)
+    assertThat(listener.recordedEventTypes().filter { it == "ConnectFailed" }).hasSize(0)
   }
 
   @Test
@@ -215,15 +221,15 @@ class FastFallbackTest {
   }
 
   @Test
-  fun reachesIpv6AfterUnreachableAddress() {
+  fun reachesIpv4AfterUnreachableIpv6Address() {
     dnsResults = listOf(
-      TestUtil.UNREACHABLE_ADDRESS.address,
-      localhostIpv6,
+      TestUtil.UNREACHABLE_ADDRESS_IPV6.address,
+      localhostIpv4,
     )
-    serverIpv4.shutdown()
-    serverIpv6.enqueue(
+    serverIpv6.shutdown()
+    serverIpv4.enqueue(
       MockResponse()
-        .setBody("hello from IPv6")
+        .setBody("hello from IPv4")
     )
 
     val call = client.newCall(
@@ -232,7 +238,7 @@ class FastFallbackTest {
         .build()
     )
     val response = call.execute()
-    assertThat(response.body!!.string()).isEqualTo("hello from IPv6")
+    assertThat(response.body!!.string()).isEqualTo("hello from IPv4")
 
     // In the process we made two connection attempts including one failure.
     assertThat(listener.recordedEventTypes().filter { it == "ConnectStart" }).hasSize(2)
@@ -242,7 +248,7 @@ class FastFallbackTest {
   @Test
   fun timesOutWithFastFallbackDisabled() {
     dnsResults = listOf(
-      TestUtil.UNREACHABLE_ADDRESS.address,
+      TestUtil.UNREACHABLE_ADDRESS_IPV4.address,
       localhostIpv6,
     )
     serverIpv4.shutdown()

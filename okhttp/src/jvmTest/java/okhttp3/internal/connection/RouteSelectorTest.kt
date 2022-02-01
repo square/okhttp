@@ -35,6 +35,7 @@ import okhttp3.internal.connection.RouteSelector.Companion.socketHost
 import okhttp3.internal.http.RecordingProxySelector
 import okhttp3.testing.PlatformRule
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -67,6 +68,10 @@ class RouteSelectorTest {
         .url("https://$uriHost:$uriPort/")
         .build()
     )
+  }
+
+  @AfterEach fun tearDown() {
+    factory.close()
   }
 
   @Test fun singleRoute() {
