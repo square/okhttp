@@ -21,6 +21,7 @@ import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.logging.Logger
 import okhttp3.internal.addIfAbsent
+import okhttp3.internal.assertThreadDoesntHoldLock
 import okhttp3.internal.assertThreadHoldsLock
 import okhttp3.internal.concurrent.TaskRunner.Companion.INSTANCE
 import okhttp3.internal.notify
@@ -67,9 +68,7 @@ class TaskRunner(
           } finally {
             // If the task is crashing start another thread to service the queues.
             if (!completedNormally) {
-              synchronized(this@TaskRunner) {
-                backend.execute(this@TaskRunner, this)
-              }
+              backend.execute(this)
             }
           }
         }
@@ -91,7 +90,7 @@ class TaskRunner(
     if (coordinatorWaiting) {
       backend.coordinatorNotify(this@TaskRunner)
     } else {
-      backend.execute(this@TaskRunner, runnable)
+      backend.execute(runnable)
     }
   }
 
@@ -107,6 +106,8 @@ class TaskRunner(
   }
 
   private fun runTask(task: Task) {
+    this.assertThreadDoesntHoldLock()
+
     val currentThread = Thread.currentThread()
     val oldName = currentThread.name
     currentThread.name = task.name
@@ -196,7 +197,7 @@ class TaskRunner(
 
           // Also start another thread if there's more work or scheduling to do.
           if (multipleReadyTasks || !coordinatorWaiting && readyQueues.isNotEmpty()) {
-            backend.execute(this@TaskRunner, runnable)
+            backend.execute(runnable)
           }
 
           return readyTask
@@ -257,10 +258,11 @@ class TaskRunner(
   }
 
   interface Backend {
+    fun beforeTask(taskRunner: TaskRunner)
     fun nanoTime(): Long
     fun coordinatorNotify(taskRunner: TaskRunner)
     fun coordinatorWait(taskRunner: TaskRunner, nanos: Long)
-    fun execute(taskRunner: TaskRunner, runnable: Runnable)
+    fun execute(runnable: Runnable)
   }
 
   class RealBackend(threadFactory: ThreadFactory) : Backend {
@@ -271,6 +273,9 @@ class TaskRunner(
       SynchronousQueue(),
       threadFactory
     )
+
+    override fun beforeTask(taskRunner: TaskRunner) {
+    }
 
     override fun nanoTime() = System.nanoTime()
 
@@ -292,7 +297,7 @@ class TaskRunner(
       }
     }
 
-    override fun execute(taskRunner: TaskRunner, runnable: Runnable) {
+    override fun execute(runnable: Runnable) {
       executor.execute(runnable)
     }
 
