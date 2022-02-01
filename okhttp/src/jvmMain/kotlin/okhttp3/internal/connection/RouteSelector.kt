@@ -37,7 +37,8 @@ class RouteSelector(
   private val address: Address,
   private val routeDatabase: RouteDatabase,
   private val call: Call,
-  private val eventListener: EventListener
+  private val fastFallback: Boolean,
+  private val eventListener: EventListener,
 ) {
   /* State for negotiating the next proxy to use. */
   private var proxies = emptyList<Proxy>()
@@ -168,9 +169,12 @@ class RouteSelector(
       eventListener.dnsEnd(call, socketHost, addresses)
 
       // Try each address for best behavior in mixed IPv4/IPv6 environments.
-      val prioritisedAddresses = InetAddressOrder.reorder(addresses)
+      val orderedAddresses = when {
+        fastFallback -> reorderForHappyEyeballs(addresses)
+        else -> addresses
+      }
 
-      for (inetAddress in addresses) {
+      for (inetAddress in orderedAddresses) {
         mutableInetSocketAddresses += InetSocketAddress(inetAddress, socketPort)
       }
     }

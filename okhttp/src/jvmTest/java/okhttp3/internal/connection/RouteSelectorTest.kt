@@ -71,7 +71,7 @@ class RouteSelectorTest {
 
   @Test fun singleRoute() {
     val address = factory.newAddress()
-    val routeSelector = RouteSelector(address, routeDatabase, call, EventListener.NONE)
+    val routeSelector = newRouteSelector(address)
     assertThat(routeSelector.hasNext()).isTrue
     dns[uriHost] = dns.allocate(1)
     val selection = routeSelector.next()
@@ -93,13 +93,13 @@ class RouteSelectorTest {
 
   @Test fun singleRouteReturnsFailedRoute() {
     val address = factory.newAddress()
-    var routeSelector = RouteSelector(address, routeDatabase, call, EventListener.NONE)
+    var routeSelector = newRouteSelector(address)
     assertThat(routeSelector.hasNext()).isTrue
     dns[uriHost] = dns.allocate(1)
     var selection = routeSelector.next()
     val route = selection.next()
     routeDatabase.failed(route)
-    routeSelector = RouteSelector(address, routeDatabase, call, EventListener.NONE)
+    routeSelector = newRouteSelector(address)
     selection = routeSelector.next()
     assertRoute(selection.next(), address, Proxy.NO_PROXY, dns.lookup(uriHost, 0), uriPort)
     assertThat(selection.hasNext()).isFalse
@@ -120,7 +120,7 @@ class RouteSelectorTest {
     val address = factory.newAddress(
       proxy = proxyA,
     )
-    val routeSelector = RouteSelector(address, routeDatabase, call, EventListener.NONE)
+    val routeSelector = newRouteSelector(address)
     assertThat(routeSelector.hasNext()).isTrue
     dns[proxyAHost] = dns.allocate(2)
     val selection = routeSelector.next()
@@ -136,7 +136,7 @@ class RouteSelectorTest {
     val address = factory.newAddress(
       proxy = Proxy.NO_PROXY,
     )
-    val routeSelector = RouteSelector(address, routeDatabase, call, EventListener.NONE)
+    val routeSelector = newRouteSelector(address)
     assertThat(routeSelector.hasNext()).isTrue
     dns[uriHost] = dns.allocate(2)
     val selection = routeSelector.next()
@@ -160,7 +160,7 @@ class RouteSelectorTest {
       uriHost = bogusHostname,
       uriPort = uriPort,
     )
-    val routeSelector = RouteSelector(address, routeDatabase, call, EventListener.NONE)
+    val routeSelector = newRouteSelector(address)
     assertThat(routeSelector.hasNext()).isTrue
     dns[bogusHostname] = dns.allocate(1)
     val selection = routeSelector.next()
@@ -186,7 +186,7 @@ class RouteSelectorTest {
     val address = factory.newAddress(
       proxySelector = nullProxySelector
     )
-    val routeSelector = RouteSelector(address, routeDatabase, call, EventListener.NONE)
+    val routeSelector = newRouteSelector(address)
     assertThat(routeSelector.hasNext()).isTrue
     dns[uriHost] = dns.allocate(1)
     val selection = routeSelector.next()
@@ -198,7 +198,7 @@ class RouteSelectorTest {
 
   @Test fun proxySelectorReturnsNoProxies() {
     val address = factory.newAddress()
-    val routeSelector = RouteSelector(address, routeDatabase, call, EventListener.NONE)
+    val routeSelector = newRouteSelector(address)
     assertThat(routeSelector.hasNext()).isTrue
     dns[uriHost] = dns.allocate(2)
     val selection = routeSelector.next()
@@ -214,7 +214,7 @@ class RouteSelectorTest {
     val address = factory.newAddress()
     proxySelector.proxies.add(proxyA)
     proxySelector.proxies.add(proxyB)
-    val routeSelector = RouteSelector(address, routeDatabase, call, EventListener.NONE)
+    val routeSelector = newRouteSelector(address)
     proxySelector.assertRequests(address.url.toUri())
 
     // First try the IP addresses of the first proxy, in sequence.
@@ -241,7 +241,7 @@ class RouteSelectorTest {
   @Test fun proxySelectorDirectConnectionsAreSkipped() {
     val address = factory.newAddress()
     proxySelector.proxies.add(Proxy.NO_PROXY)
-    val routeSelector = RouteSelector(address, routeDatabase, call, EventListener.NONE)
+    val routeSelector = newRouteSelector(address)
     proxySelector.assertRequests(address.url.toUri())
 
     // Only the origin server will be attempted.
@@ -259,7 +259,7 @@ class RouteSelectorTest {
     proxySelector.proxies.add(proxyA)
     proxySelector.proxies.add(proxyB)
     proxySelector.proxies.add(proxyA)
-    val routeSelector = RouteSelector(address, routeDatabase, call, EventListener.NONE)
+    val routeSelector = newRouteSelector(address)
     proxySelector.assertRequests(address.url.toUri())
     assertThat(routeSelector.hasNext()).isTrue
     dns[proxyAHost] = dns.allocate(1)
@@ -288,7 +288,7 @@ class RouteSelectorTest {
     val address = factory.newHttpsAddress()
     proxySelector.proxies.add(proxyA)
     proxySelector.proxies.add(proxyB)
-    val routeSelector = RouteSelector(address, routeDatabase, call, EventListener.NONE)
+    val routeSelector = newRouteSelector(address)
 
     // Proxy A
     dns[proxyAHost] = dns.allocate(2)
@@ -312,7 +312,7 @@ class RouteSelectorTest {
 
   @Test fun failedRouteWithSingleProxy() {
     val address = factory.newHttpsAddress()
-    var routeSelector = RouteSelector(address, routeDatabase, call, EventListener.NONE)
+    var routeSelector = newRouteSelector(address)
     val numberOfAddresses = 2
     dns[uriHost] = dns.allocate(numberOfAddresses)
 
@@ -325,7 +325,7 @@ class RouteSelectorTest {
     // Add first regular route as failed.
     routeDatabase.failed(regularRoutes[0])
     // Reset selector
-    routeSelector = RouteSelector(address, routeDatabase, call, EventListener.NONE)
+    routeSelector = newRouteSelector(address)
 
     // The first selection prioritizes the non-failed routes.
     val selection2 = routeSelector.next()
@@ -343,7 +343,7 @@ class RouteSelectorTest {
     val address = factory.newHttpsAddress()
     proxySelector.proxies.add(proxyA)
     proxySelector.proxies.add(proxyB)
-    var routeSelector = RouteSelector(address, routeDatabase, call, EventListener.NONE)
+    var routeSelector = newRouteSelector(address)
     dns[proxyAHost] = dns.allocate(1)
     dns[proxyBHost] = dns.allocate(1)
 
@@ -353,7 +353,7 @@ class RouteSelectorTest {
     val route = selection.next()
     assertRoute(route, address, proxyA, dns.lookup(proxyAHost, 0), proxyAPort)
     routeDatabase.failed(route)
-    routeSelector = RouteSelector(address, routeDatabase, call, EventListener.NONE)
+    routeSelector = newRouteSelector(address)
 
     // Confirm we enumerate both proxies, giving preference to the route from ProxyB.
     val selection2 = routeSelector.next()
@@ -371,7 +371,7 @@ class RouteSelectorTest {
 
   @Test fun queryForAllSelectedRoutes() {
     val address = factory.newAddress()
-    val routeSelector = RouteSelector(address, routeDatabase, call, EventListener.NONE)
+    val routeSelector = newRouteSelector(address)
     dns[uriHost] = dns.allocate(2)
     val selection = routeSelector.next()
     dns.assertRequests(uriHost)
@@ -382,6 +382,50 @@ class RouteSelectorTest {
     assertThat(selection.next()).isSameAs(routes[1])
     assertThat(selection.hasNext()).isFalse
     assertThat(routeSelector.hasNext()).isFalse
+  }
+
+  @Test fun addressesNotSortedWhenFastFallbackIsOff() {
+    val address = factory.newAddress(
+      proxy = Proxy.NO_PROXY
+    )
+    val routeSelector = newRouteSelector(
+      address = address,
+      fastFallback = false,
+    )
+    assertThat(routeSelector.hasNext()).isTrue()
+    val (ipv4_1, ipv4_2) = dns.allocate(2)
+    val (ipv6_1, ipv6_2) = dns.allocateIpv6(2)
+    dns[uriHost] = listOf(ipv4_1, ipv4_2, ipv6_1, ipv6_2)
+
+    val selection = routeSelector.next()
+    assertThat(selection.routes.map { it.socketAddress.address }).containsExactly(
+      ipv4_1,
+      ipv4_2,
+      ipv6_1,
+      ipv6_2,
+    )
+  }
+
+  @Test fun addressesSortedWhenFastFallbackIsOn() {
+    val address = factory.newAddress(
+      proxy = Proxy.NO_PROXY
+    )
+    val routeSelector = newRouteSelector(
+      address = address,
+      fastFallback = true,
+    )
+    assertThat(routeSelector.hasNext()).isTrue()
+    val (ipv4_1, ipv4_2) = dns.allocate(2)
+    val (ipv6_1, ipv6_2) = dns.allocateIpv6(2)
+    dns[uriHost] = listOf(ipv4_1, ipv4_2, ipv6_1, ipv6_2)
+
+    val selection = routeSelector.next()
+    assertThat(selection.routes.map { it.socketAddress.address }).containsExactly(
+      ipv6_1,
+      ipv4_1,
+      ipv6_2,
+      ipv4_2,
+    )
   }
 
   @Test fun getHostString() {
@@ -482,6 +526,21 @@ class RouteSelectorTest {
     assertThat(route.proxy).isEqualTo(proxy)
     assertThat(route.socketAddress.address).isEqualTo(socketAddress)
     assertThat(route.socketAddress.port).isEqualTo(socketPort)
+  }
+
+  private fun newRouteSelector(
+    address: Address,
+    routeDatabase: RouteDatabase = this.routeDatabase,
+    fastFallback: Boolean = false,
+    call: Call = this.call,
+  ): RouteSelector {
+    return RouteSelector(
+      address = address,
+      routeDatabase = routeDatabase,
+      call = call,
+      fastFallback = fastFallback,
+      eventListener = EventListener.NONE,
+    )
   }
 
   companion object {

@@ -26,22 +26,20 @@ import okhttp3.internal.interleave
  * The current implementation does not address any of:
  *  - Async DNS split by IP class
  *  - Stateful handling of connectivity results
- *  - The priorititisation of addresses
+ *  - The prioritisation of addresses
  *
  * https://datatracker.ietf.org/doc/html/rfc8305#section-4
  */
-object InetAddressOrder {
-  fun reorder(addresses: List<InetAddress>): List<InetAddress> {
-    if (addresses.size < 2) {
-      return addresses
-    }
+fun reorderForHappyEyeballs(addresses: List<InetAddress>): List<InetAddress> {
+  if (addresses.size < 2) {
+    return addresses
+  }
 
-    val (ipv6, ipv4) = addresses.partition { it is Inet6Address }
+  val (ipv6, ipv4) = addresses.partition { it is Inet6Address }
 
-    return if (ipv6.isEmpty() || ipv4.isEmpty()) {
-      addresses
-    } else {
-      interleave(ipv6, ipv4)
-    }
+  return if (ipv6.isEmpty() || ipv4.isEmpty()) {
+    addresses
+  } else {
+    interleave(ipv6, ipv4)
   }
 }
