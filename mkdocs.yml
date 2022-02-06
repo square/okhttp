@@ -84,7 +84,8 @@ plugins:
         'debug_logging.md': 'contribute/debug_logging.md'
 
 nav:
-  - 'Overview': index.md
+  - 'Overview':
+    - index.md
     - 'Stack Overflow': https://stackoverflow.com/questions/tagged/okhttp?sort=active
   - 'Features':
     - 'Calls': features/calls.md
@@ -94,7 +95,8 @@ nav:
     - 'HTTPS': features/https.md
     - 'Interceptors': features/interceptors.md
   - 'Recipes': recipes.md
-  - 'Security': security/security.md
+  - 'Security':
+    - security/security.md
     - 'Providers': security/security_providers.md
     - 'Configuration History': security/tls_configuration_history.md
   - 'Works with OkHttp': works_with_okhttp.md
@@ -107,7 +109,8 @@ nav:
     - 'tls': 4.x/okhttp-tls/okhttp3.tls/index.md
     - 'urlconnection': 4.x/okhttp-urlconnection/okhttp3/index.md
     - 'mockwebserver': 4.x/mockwebserver/okhttp3.mockwebserver/index.md
-  - 'Change Logs': changelogs/changelog.md
+  - 'Change Logs':
+    - changelogs/changelog.md
     - 'Upgrading to OkHttp 4': changelogs/upgrading_to_okhttp_4.md
     - 'Version 3.x': changelogs/changelog_3x.md
     - 'Version 2.x': changelogs/changelog_2x.md
