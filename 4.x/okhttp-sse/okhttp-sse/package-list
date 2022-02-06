@@ -1,0 +1,29 @@
+$dokka.format:gfm-v1
+$dokka.linkExtension:md
+$dokka.location:okhttp3.sse.internal////PointingToDeclaration/okhttp-sse/okhttp3.sse.internal/index.md
+$dokka.location:okhttp3.sse.internal/ServerSentEventReader.Callback///PointingToDeclaration/okhttp-sse/okhttp3.sse.internal/-server-sent-event-reader/-callback/index.md
+$dokka.location:okhttp3.sse.internal/ServerSentEventReader.Callback/onEvent/#kotlin.String?#kotlin.String?#kotlin.String/PointingToDeclaration/okhttp-sse/okhttp3.sse.internal/-server-sent-event-reader/-callback/on-event.md
+$dokka.location:okhttp3.sse.internal/ServerSentEventReader.Callback/onRetryChange/#kotlin.Long/PointingToDeclaration/okhttp-sse/okhttp3.sse.internal/-server-sent-event-reader/-callback/on-retry-change.md
+$dokka.location:okhttp3.sse.internal/ServerSentEventReader.Companion///PointingToDeclaration/okhttp-sse/okhttp3.sse.internal/-server-sent-event-reader/-companion/index.md
+$dokka.location:okhttp3.sse.internal/ServerSentEventReader.Companion/options/#/PointingToDeclaration/okhttp-sse/okhttp3.sse.internal/-server-sent-event-reader/-companion/options.md
+$dokka.location:okhttp3.sse.internal/ServerSentEventReader///PointingToDeclaration/okhttp-sse/okhttp3.sse.internal/-server-sent-event-reader/index.md
+$dokka.location:okhttp3.sse.internal/ServerSentEventReader/ServerSentEventReader/#okio.BufferedSource#okhttp3.sse.internal.ServerSentEventReader.Callback/PointingToDeclaration/okhttp-sse/okhttp3.sse.internal/-server-sent-event-reader/-server-sent-event-reader.md
+$dokka.location:okhttp3.sse.internal/ServerSentEventReader/processNextEvent/#/PointingToDeclaration/okhttp-sse/okhttp3.sse.internal/-server-sent-event-reader/process-next-event.md
+$dokka.location:okhttp3.sse////PointingToDeclaration/okhttp-sse/okhttp3.sse/index.md
+$dokka.location:okhttp3.sse/EventSource.Factory///PointingToDeclaration/okhttp-sse/okhttp3.sse/-event-source/-factory/index.md
+$dokka.location:okhttp3.sse/EventSource.Factory/newEventSource/#okhttp3.Request#okhttp3.sse.EventSourceListener/PointingToDeclaration/okhttp-sse/okhttp3.sse/-event-source/-factory/new-event-source.md
+$dokka.location:okhttp3.sse/EventSource///PointingToDeclaration/okhttp-sse/okhttp3.sse/-event-source/index.md
+$dokka.location:okhttp3.sse/EventSource/cancel/#/PointingToDeclaration/okhttp-sse/okhttp3.sse/-event-source/cancel.md
+$dokka.location:okhttp3.sse/EventSource/request/#/PointingToDeclaration/okhttp-sse/okhttp3.sse/-event-source/request.md
+$dokka.location:okhttp3.sse/EventSourceListener///PointingToDeclaration/okhttp-sse/okhttp3.sse/-event-source-listener/index.md
+$dokka.location:okhttp3.sse/EventSourceListener/EventSourceListener/#/PointingToDeclaration/okhttp-sse/okhttp3.sse/-event-source-listener/-event-source-listener.md
+$dokka.location:okhttp3.sse/EventSourceListener/onClosed/#okhttp3.sse.EventSource/PointingToDeclaration/okhttp-sse/okhttp3.sse/-event-source-listener/on-closed.md
+$dokka.location:okhttp3.sse/EventSourceListener/onEvent/#okhttp3.sse.EventSource#kotlin.String?#kotlin.String?#kotlin.String/PointingToDeclaration/okhttp-sse/okhttp3.sse/-event-source-listener/on-event.md
+$dokka.location:okhttp3.sse/EventSourceListener/onFailure/#okhttp3.sse.EventSource#kotlin.Throwable?#okhttp3.Response?/PointingToDeclaration/okhttp-sse/okhttp3.sse/-event-source-listener/on-failure.md
+$dokka.location:okhttp3.sse/EventSourceListener/onOpen/#okhttp3.sse.EventSource#okhttp3.Response/PointingToDeclaration/okhttp-sse/okhttp3.sse/-event-source-listener/on-open.md
+$dokka.location:okhttp3.sse/EventSources///PointingToDeclaration/okhttp-sse/okhttp3.sse/-event-sources/index.md
+$dokka.location:okhttp3.sse/EventSources/createFactory/#okhttp3.OkHttpClient/PointingToDeclaration/okhttp-sse/okhttp3.sse/-event-sources/create-factory.md
+$dokka.location:okhttp3.sse/EventSources/processResponse/#okhttp3.Response#okhttp3.sse.EventSourceListener/PointingToDeclaration/okhttp-sse/okhttp3.sse/-event-sources/process-response.md
+okhttp3.sse
+okhttp3.sse.internal
+

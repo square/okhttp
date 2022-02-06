@@ -1,0 +1,52 @@
+$dokka.format:gfm-v1
+$dokka.linkExtension:md
+$dokka.location:okhttp3.tls.internal////PointingToDeclaration/okhttp-tls/okhttp3.tls.internal/index.md
+$dokka.location:okhttp3.tls.internal/TlsUtil///PointingToDeclaration/okhttp-tls/okhttp3.tls.internal/-tls-util/index.md
+$dokka.location:okhttp3.tls.internal/TlsUtil/localhost/#/PointingToDeclaration/okhttp-tls/okhttp3.tls.internal/-tls-util/localhost.md
+$dokka.location:okhttp3.tls.internal/TlsUtil/newKeyManager/#kotlin.String?#okhttp3.tls.HeldCertificate?#kotlin.Array[java.security.cert.X509Certificate]/PointingToDeclaration/okhttp-tls/okhttp3.tls.internal/-tls-util/new-key-manager.md
+$dokka.location:okhttp3.tls.internal/TlsUtil/newTrustManager/#kotlin.String?#kotlin.collections.List[java.security.cert.X509Certificate]#kotlin.collections.List[kotlin.String]/PointingToDeclaration/okhttp-tls/okhttp3.tls.internal/-tls-util/new-trust-manager.md
+$dokka.location:okhttp3.tls.internal/TlsUtil/password/#/PointingToDeclaration/okhttp-tls/okhttp3.tls.internal/-tls-util/password.md
+$dokka.location:okhttp3.tls////PointingToDeclaration/okhttp-tls/okhttp3.tls/index.md
+$dokka.location:okhttp3.tls//certificatePem/java.security.cert.X509Certificate#/PointingToDeclaration/okhttp-tls/okhttp3.tls/certificate-pem.md
+$dokka.location:okhttp3.tls//decodeCertificatePem/kotlin.String#/PointingToDeclaration/okhttp-tls/okhttp3.tls/decode-certificate-pem.md
+$dokka.location:okhttp3.tls/HandshakeCertificates.Builder///PointingToDeclaration/okhttp-tls/okhttp3.tls/-handshake-certificates/-builder/index.md
+$dokka.location:okhttp3.tls/HandshakeCertificates.Builder/Builder/#/PointingToDeclaration/okhttp-tls/okhttp3.tls/-handshake-certificates/-builder/-builder.md
+$dokka.location:okhttp3.tls/HandshakeCertificates.Builder/addInsecureHost/#kotlin.String/PointingToDeclaration/okhttp-tls/okhttp3.tls/-handshake-certificates/-builder/add-insecure-host.md
+$dokka.location:okhttp3.tls/HandshakeCertificates.Builder/addPlatformTrustedCertificates/#/PointingToDeclaration/okhttp-tls/okhttp3.tls/-handshake-certificates/-builder/add-platform-trusted-certificates.md
+$dokka.location:okhttp3.tls/HandshakeCertificates.Builder/addTrustedCertificate/#java.security.cert.X509Certificate/PointingToDeclaration/okhttp-tls/okhttp3.tls/-handshake-certificates/-builder/add-trusted-certificate.md
+$dokka.location:okhttp3.tls/HandshakeCertificates.Builder/build/#/PointingToDeclaration/okhttp-tls/okhttp3.tls/-handshake-certificates/-builder/build.md
+$dokka.location:okhttp3.tls/HandshakeCertificates.Builder/heldCertificate/#okhttp3.tls.HeldCertificate#kotlin.Array[java.security.cert.X509Certificate]/PointingToDeclaration/okhttp-tls/okhttp3.tls/-handshake-certificates/-builder/held-certificate.md
+$dokka.location:okhttp3.tls/HandshakeCertificates///PointingToDeclaration/okhttp-tls/okhttp3.tls/-handshake-certificates/index.md
+$dokka.location:okhttp3.tls/HandshakeCertificates/keyManager/#/PointingToDeclaration/okhttp-tls/okhttp3.tls/-handshake-certificates/key-manager.md
+$dokka.location:okhttp3.tls/HandshakeCertificates/sslContext/#/PointingToDeclaration/okhttp-tls/okhttp3.tls/-handshake-certificates/ssl-context.md
+$dokka.location:okhttp3.tls/HandshakeCertificates/sslSocketFactory/#/PointingToDeclaration/okhttp-tls/okhttp3.tls/-handshake-certificates/ssl-socket-factory.md
+$dokka.location:okhttp3.tls/HandshakeCertificates/trustManager/#/PointingToDeclaration/okhttp-tls/okhttp3.tls/-handshake-certificates/trust-manager.md
+$dokka.location:okhttp3.tls/HeldCertificate.Builder.Companion///PointingToDeclaration/okhttp-tls/okhttp3.tls/-held-certificate/-builder/-companion/index.md
+$dokka.location:okhttp3.tls/HeldCertificate.Builder///PointingToDeclaration/okhttp-tls/okhttp3.tls/-held-certificate/-builder/index.md
+$dokka.location:okhttp3.tls/HeldCertificate.Builder/Builder/#/PointingToDeclaration/okhttp-tls/okhttp3.tls/-held-certificate/-builder/-builder.md
+$dokka.location:okhttp3.tls/HeldCertificate.Builder/addSubjectAlternativeName/#kotlin.String/PointingToDeclaration/okhttp-tls/okhttp3.tls/-held-certificate/-builder/add-subject-alternative-name.md
+$dokka.location:okhttp3.tls/HeldCertificate.Builder/build/#/PointingToDeclaration/okhttp-tls/okhttp3.tls/-held-certificate/-builder/build.md
+$dokka.location:okhttp3.tls/HeldCertificate.Builder/certificateAuthority/#kotlin.Int/PointingToDeclaration/okhttp-tls/okhttp3.tls/-held-certificate/-builder/certificate-authority.md
+$dokka.location:okhttp3.tls/HeldCertificate.Builder/commonName/#kotlin.String/PointingToDeclaration/okhttp-tls/okhttp3.tls/-held-certificate/-builder/common-name.md
+$dokka.location:okhttp3.tls/HeldCertificate.Builder/duration/#kotlin.Long#java.util.concurrent.TimeUnit/PointingToDeclaration/okhttp-tls/okhttp3.tls/-held-certificate/-builder/duration.md
+$dokka.location:okhttp3.tls/HeldCertificate.Builder/ecdsa256/#/PointingToDeclaration/okhttp-tls/okhttp3.tls/-held-certificate/-builder/ecdsa256.md
+$dokka.location:okhttp3.tls/HeldCertificate.Builder/keyPair/#java.security.KeyPair/PointingToDeclaration/okhttp-tls/okhttp3.tls/-held-certificate/-builder/key-pair.md
+$dokka.location:okhttp3.tls/HeldCertificate.Builder/keyPair/#java.security.PublicKey#java.security.PrivateKey/PointingToDeclaration/okhttp-tls/okhttp3.tls/-held-certificate/-builder/key-pair.md
+$dokka.location:okhttp3.tls/HeldCertificate.Builder/organizationalUnit/#kotlin.String/PointingToDeclaration/okhttp-tls/okhttp3.tls/-held-certificate/-builder/organizational-unit.md
+$dokka.location:okhttp3.tls/HeldCertificate.Builder/rsa2048/#/PointingToDeclaration/okhttp-tls/okhttp3.tls/-held-certificate/-builder/rsa2048.md
+$dokka.location:okhttp3.tls/HeldCertificate.Builder/serialNumber/#java.math.BigInteger/PointingToDeclaration/okhttp-tls/okhttp3.tls/-held-certificate/-builder/serial-number.md
+$dokka.location:okhttp3.tls/HeldCertificate.Builder/serialNumber/#kotlin.Long/PointingToDeclaration/okhttp-tls/okhttp3.tls/-held-certificate/-builder/serial-number.md
+$dokka.location:okhttp3.tls/HeldCertificate.Builder/signedBy/#okhttp3.tls.HeldCertificate?/PointingToDeclaration/okhttp-tls/okhttp3.tls/-held-certificate/-builder/signed-by.md
+$dokka.location:okhttp3.tls/HeldCertificate.Builder/validityInterval/#kotlin.Long#kotlin.Long/PointingToDeclaration/okhttp-tls/okhttp3.tls/-held-certificate/-builder/validity-interval.md
+$dokka.location:okhttp3.tls/HeldCertificate.Companion///PointingToDeclaration/okhttp-tls/okhttp3.tls/-held-certificate/-companion/index.md
+$dokka.location:okhttp3.tls/HeldCertificate.Companion/decode/#kotlin.String/PointingToDeclaration/okhttp-tls/okhttp3.tls/-held-certificate/-companion/decode.md
+$dokka.location:okhttp3.tls/HeldCertificate///PointingToDeclaration/okhttp-tls/okhttp3.tls/-held-certificate/index.md
+$dokka.location:okhttp3.tls/HeldCertificate/HeldCertificate/#java.security.KeyPair#java.security.cert.X509Certificate/PointingToDeclaration/okhttp-tls/okhttp3.tls/-held-certificate/-held-certificate.md
+$dokka.location:okhttp3.tls/HeldCertificate/certificate/#/PointingToDeclaration/okhttp-tls/okhttp3.tls/-held-certificate/certificate.md
+$dokka.location:okhttp3.tls/HeldCertificate/certificatePem/#/PointingToDeclaration/okhttp-tls/okhttp3.tls/-held-certificate/certificate-pem.md
+$dokka.location:okhttp3.tls/HeldCertificate/keyPair/#/PointingToDeclaration/okhttp-tls/okhttp3.tls/-held-certificate/key-pair.md
+$dokka.location:okhttp3.tls/HeldCertificate/privateKeyPkcs1Pem/#/PointingToDeclaration/okhttp-tls/okhttp3.tls/-held-certificate/private-key-pkcs1-pem.md
+$dokka.location:okhttp3.tls/HeldCertificate/privateKeyPkcs8Pem/#/PointingToDeclaration/okhttp-tls/okhttp3.tls/-held-certificate/private-key-pkcs8-pem.md
+okhttp3.tls
+okhttp3.tls.internal
+

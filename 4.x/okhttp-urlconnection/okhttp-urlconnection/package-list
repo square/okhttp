@@ -1,0 +1,12 @@
+$dokka.format:gfm-v1
+$dokka.linkExtension:md
+$dokka.location:okhttp3////PointingToDeclaration/okhttp-urlconnection/okhttp3/index.md
+$dokka.location:okhttp3/JavaNetAuthenticator///PointingToDeclaration/okhttp-urlconnection/okhttp3/-java-net-authenticator/index.md
+$dokka.location:okhttp3/JavaNetAuthenticator/JavaNetAuthenticator/#/PointingToDeclaration/okhttp-urlconnection/okhttp3/-java-net-authenticator/-java-net-authenticator.md
+$dokka.location:okhttp3/JavaNetAuthenticator/authenticate/#okhttp3.Route?#okhttp3.Response/PointingToDeclaration/okhttp-urlconnection/okhttp3/-java-net-authenticator/authenticate.md
+$dokka.location:okhttp3/JavaNetCookieJar///PointingToDeclaration/okhttp-urlconnection/okhttp3/-java-net-cookie-jar/index.md
+$dokka.location:okhttp3/JavaNetCookieJar/JavaNetCookieJar/#java.net.CookieHandler/PointingToDeclaration/okhttp-urlconnection/okhttp3/-java-net-cookie-jar/-java-net-cookie-jar.md
+$dokka.location:okhttp3/JavaNetCookieJar/loadForRequest/#okhttp3.HttpUrl/PointingToDeclaration/okhttp-urlconnection/okhttp3/-java-net-cookie-jar/load-for-request.md
+$dokka.location:okhttp3/JavaNetCookieJar/saveFromResponse/#okhttp3.HttpUrl#kotlin.collections.List[okhttp3.Cookie]/PointingToDeclaration/okhttp-urlconnection/okhttp3/-java-net-cookie-jar/save-from-response.md
+okhttp3
+
