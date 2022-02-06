@@ -115,7 +115,8 @@ nav:
     - 'Version 3.x': changelogs/changelog_3x.md
     - 'Version 2.x': changelogs/changelog_2x.md
     - 'Version 1.x': changelogs/changelog_1x.md
-  - 'Contributing': contribute/contributing.md
+  - 'Contributing':
+    - contribute/contributing.md
     - 'Code of Conduct': contribute/code_of_conduct.md
     - 'Concurrency': contribute/concurrency.md
     - 'Debug Logging': contribute/debug_logging.md
