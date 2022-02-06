@@ -26,11 +26,6 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://square.github.io/okhttp/4.x/upgrading_to_okhttp_4/</loc>
-         <lastmod>2022-02-06</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
          <loc>https://square.github.io/okhttp/4.x/logging-interceptor/okhttp3.logging/</loc>
          <lastmod>2022-02-06</lastmod>
          <changefreq>daily</changefreq>
@@ -5227,6 +5222,11 @@
     </url>
     <url>
          <loc>https://square.github.io/okhttp/changelogs/changelog_3x/</loc>
+         <lastmod>2022-02-06</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://square.github.io/okhttp/changelogs/upgrading_to_okhttp_4/</loc>
          <lastmod>2022-02-06</lastmod>
          <changefreq>daily</changefreq>
     </url>
