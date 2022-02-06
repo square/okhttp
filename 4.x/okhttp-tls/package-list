@@ -1,6 +1,0 @@
-$dokka.format:gfm
-$dokka.linkExtension:md
-$dokka.location:okhttp3.tls$certificatePem(java.security.cert.X509Certificate)okhttp3.tls/java.security.cert.-x509-certificate/certificate-pem.md
-$dokka.location:okhttp3.tls$decodeCertificatePem(kotlin.String)okhttp3.tls/kotlin.-string/decode-certificate-pem.md
-okhttp3.tls
-okhttp3.tls.internal

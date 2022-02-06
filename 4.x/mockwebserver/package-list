@@ -1,5 +1,0 @@
-$dokka.format:gfm
-$dokka.linkExtension:md
-
-mockwebserver3
-mockwebserver3.internal.duplex

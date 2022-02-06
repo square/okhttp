@@ -1,5 +1,0 @@
-$dokka.format:gfm
-$dokka.linkExtension:md
-
-okhttp3.sse
-okhttp3.sse.internal
