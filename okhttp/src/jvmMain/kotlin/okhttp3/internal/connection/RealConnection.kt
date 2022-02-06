@@ -307,7 +307,7 @@ class RealConnection(
           true /* autoClose */
         ) as SSLSocket
 
-        val tlsEquipPlan = equipPlan.withInitialConnectionSpec(connectionSpecs, sslSocket)
+        val tlsEquipPlan = equipPlan.withCurrentOrInitialConnectionSpec(connectionSpecs, sslSocket)
         val connectionSpec = connectionSpecs[tlsEquipPlan.connectionSpecIndex]
 
         // Figure out the next connection spec in case we need a retry.

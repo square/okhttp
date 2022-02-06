@@ -52,7 +52,7 @@ internal data class EquipPlan(
 
   /** Returns this if its [connectionSpecIndex] is defined, or defines it otherwise. */
   @Throws(IOException::class)
-  fun withInitialConnectionSpec(
+  fun withCurrentOrInitialConnectionSpec(
     connectionSpecs: List<ConnectionSpec>,
     sslSocket: SSLSocket
   ): EquipPlan {
@@ -73,7 +73,7 @@ internal data class EquipPlan(
   ): EquipPlan? {
     for (i in connectionSpecIndex + 1 until connectionSpecs.size) {
       if (connectionSpecs[i].isCompatible(sslSocket)) {
-        return copy(connectionSpecIndex = i)
+        return copy(connectionSpecIndex = i, isTlsFallback = (connectionSpecIndex != -1))
       }
     }
     return null
