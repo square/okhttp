@@ -57,6 +57,7 @@ markdown_extensions:
   - tables
 
 plugins:
+  - search
   - redirects:
       redirect_maps:
         # Redirect all feature pages to features/*
@@ -85,7 +86,7 @@ plugins:
 
 nav:
   - 'Overview':
-    - index.md
+    - 'Overview': index.md
     - 'Stack Overflow': https://stackoverflow.com/questions/tagged/okhttp?sort=active
   - 'Features':
     - 'Calls': features/calls.md
@@ -96,7 +97,7 @@ nav:
     - 'Interceptors': features/interceptors.md
   - 'Recipes': recipes.md
   - 'Security':
-    - security/security.md
+    - 'Security': security/security.md
     - 'Providers': security/security_providers.md
     - 'Configuration History': security/tls_configuration_history.md
   - 'Works with OkHttp': works_with_okhttp.md
@@ -110,13 +111,14 @@ nav:
     - 'urlconnection': 4.x/okhttp-urlconnection/okhttp3/index.md
     - 'mockwebserver': 4.x/mockwebserver/okhttp3.mockwebserver/index.md
   - 'Change Logs':
-    - changelogs/changelog.md
+    - 'Change Log': changelogs/changelog.md
+    - '4.x Change Log': changelogs/changelog_4x.md
     - 'Upgrading to OkHttp 4': changelogs/upgrading_to_okhttp_4.md
-    - 'Version 3.x': changelogs/changelog_3x.md
-    - 'Version 2.x': changelogs/changelog_2x.md
-    - 'Version 1.x': changelogs/changelog_1x.md
+    - '3.x Change Log': changelogs/changelog_3x.md
+    - '2.x Change Log': changelogs/changelog_2x.md
+    - '1.x Change Log': changelogs/changelog_1x.md
   - 'Contributing':
-    - contribute/contributing.md
+    - 'Contributing': contribute/contributing.md
     - 'Code of Conduct': contribute/code_of_conduct.md
     - 'Concurrency': contribute/concurrency.md
     - 'Debug Logging': contribute/debug_logging.md

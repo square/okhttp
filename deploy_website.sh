@@ -15,10 +15,10 @@ DIR=temp-clone
 rm -rf $DIR
 
 # Clone the current repo into temp folder
-#git clone $REPO $DIR
+git clone $REPO $DIR
 # Replace `git clone` with these lines to hack on the website locally
- cp -a . "../okhttp-website"
- mv "../okhttp-website" "$DIR"
+# cp -a . "../okhttp-website"
+# mv "../okhttp-website" "$DIR"
 
 # Move working directory into temp folder
 cd $DIR
