@@ -2,12 +2,12 @@ site_name: OkHttp
 site_url: https://square.github.io/okhttp/
 repo_name: OkHttp
 repo_url: https://github.com/square/okhttp
-site_description: "An HTTP & HTTP/2 client for Android and Java applications"
+site_description: "Square’s meticulous HTTP client for the JVM, Android, and GraalVM"
 site_author: Square, Inc.
 remote_branch: gh-pages
 edit_uri: ""
 
-copyright: 'Copyright &copy; 2019-2022 Square, Inc.'
+copyright: 'Copyright &copy; 2022 Block, Inc.'
 
 theme:
   name: 'material'
@@ -62,9 +62,7 @@ plugins:
         # Redirect all feature pages to features/*
         'caching.md': 'features/caching.md'
         'calls.md': 'features/calls.md'
-        'concurrency.md': 'features/concurrency.md'
         'connections.md': 'features/connections.md'
-        'debug_logging.md': 'features/debug_logging.md'
         'events.md': 'features/events.md'
         'https.md': 'features/events.md'
         'interceptors.md': 'features/interceptors.md'
@@ -72,62 +70,50 @@ plugins:
         # Redirect all Security pages to security/*
         'security.md': 'security/security.md'
         'security_providers.md': 'security/security_providers.md'
-        # Redirect upgrading_to_okhttp_4 to 4.x/*
-        'upgrading_to_okhttp_4.md': '4.x/upgrading_to_okhttp_4.md'
+        'tls_configuration_history.md': 'security/tls_configuration_history.md'
         # Redirect all changelog pages to changelog/*
         'changelog.md': 'changelogs/changelog.md'
+        'upgrading_to_okhttp_4.md': 'changelogs/upgrading_to_okhttp_4.md'
         'changelog_3x.md': 'changelogs/changelog_3x.md'
         'changelog_2x.md': 'changelogs/changelog_2x.md'
         'changelog_1x.md': 'changelogs/changelog_1x.md'
-        'tls_configuration_history.md': 'changelogs/tls_configuration_history.md'
         # Redirect all contributing pages to contribute/*
         'contributing.md': 'contribute/contributing.md'
         'code_of_conduct.md': 'contribute/code_of_conduct.md'
+        'concurrency.md': 'contribute/concurrency.md'
+        'debug_logging.md': 'contribute/debug_logging.md'
 
 nav:
-  - 'Overview':
-    - 'Introduction': index.md
+  - 'Overview': index.md
     - 'Stack Overflow': https://stackoverflow.com/questions/tagged/okhttp?sort=active
   - 'Features':
-    - 'Caching': features/caching.md
     - 'Calls': features/calls.md
-    - 'Concurrency': features/concurrency.md
+    - 'Caching': features/caching.md
     - 'Connections': features/connections.md
-    - 'Debug Logging': features/debug_logging.md
     - 'Events': features/events.md
     - 'HTTPS': features/https.md
     - 'Interceptors': features/interceptors.md
-    - 'R8 / ProGuard': features/r8_proguard.md
   - 'Recipes': recipes.md
-  - 'Security':
-    - 'Security Policy': security/security.md
-    - 'Security Providers': security/security_providers.md
+  - 'Security': security/security.md
+    - 'Providers': security/security_providers.md
+    - 'Configuration History': security/tls_configuration_history.md
   - 'Works with OkHttp': works_with_okhttp.md
-  - '4.x API':
-    - 'Upgrading to OkHttp 4': 4.x/upgrading_to_okhttp_4.md
+  - 'API':
     - 'okhttp': 4.x/okhttp/okhttp3/index.md
     - 'brotli': 4.x/okhttp-brotli/okhttp3.brotli/index.md
     - 'dnsoverhttps': 4.x/okhttp-dnsoverhttps/okhttp3.dnsoverhttps/index.md
-    - 'logging-interceptor': 4.x/okhttp-logging-interceptor/okhttp3.logging/index.md
+    - 'logging-interceptor': 4.x/logging-interceptor/okhttp3.logging/index.md
     - 'sse': 4.x/okhttp-sse/okhttp3.sse/index.md
     - 'tls': 4.x/okhttp-tls/okhttp3.tls/index.md
     - 'urlconnection': 4.x/okhttp-urlconnection/okhttp3/index.md
     - 'mockwebserver': 4.x/mockwebserver/okhttp3.mockwebserver/index.md
-  - '3.12.x API':
-    - 'okhttp': https://square.github.io/okhttp/3.x/okhttp/
-    - 'dnsoverhttps': https://square.github.io/okhttp/3.x/okhttp-dnsoverhttps/
-    - 'logging-interceptor': https://square.github.io/okhttp/3.x/logging-interceptor/
-    - 'sse': https://square.github.io/okhttp/3.x/okhttp-sse/
-    - 'tls': https://square.github.io/okhttp/3.x/okhttp-tls/
-    - 'urlconnection': https://square.github.io/okhttp/3.x/okhttp-urlconnection/
-    - 'mockwebserver': https://square.github.io/okhttp/3.x/mockwebserver/
-  - 'Change Logs':
-    - 'Latest': changelogs/changelog.md
+  - 'Change Logs': changelogs/changelog.md
+    - 'Upgrading to OkHttp 4': changelogs/upgrading_to_okhttp_4.md
     - 'Version 3.x': changelogs/changelog_3x.md
     - 'Version 2.x': changelogs/changelog_2x.md
     - 'Version 1.x': changelogs/changelog_1x.md
-    - 'TLS History': changelogs/tls_configuration_history.md
-  - 'Contributing':
-    - 'Contribute': contribute/contributing.md
+  - 'Contributing': contribute/contributing.md
     - 'Code of Conduct': contribute/code_of_conduct.md
+    - 'Concurrency': contribute/concurrency.md
+    - 'Debug Logging': contribute/debug_logging.md
 
