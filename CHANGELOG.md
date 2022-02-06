@@ -656,7 +656,7 @@ _2019-06-03_
  [kotlin_1_5_31]: https://github.com/JetBrains/kotlin/releases/tag/v1.5.31
  [kotlin_1_6_10]: https://github.com/JetBrains/kotlin/releases/tag/v1.6.10
  [legacy_interceptor]: https://gist.github.com/swankjesse/80135f4e03629527e723ab3bcf64be0b
- [okhttp4_blog_post]: https://cashapp.github.io/2019-06-26/okhttp-4-goes-kotlin
+ [okhttp4_blog_post]: https://code.cash.app/okhttp-4-goes-kotlin
  [okio.FileSystem]: https://square.github.io/okio/file_system/
  [okio_2_6_0]: https://square.github.io/okio/changelog/#version-260
  [okio_2_7_0]: https://square.github.io/okio/changelog/#version-270
