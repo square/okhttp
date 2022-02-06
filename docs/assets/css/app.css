@@ -1,0 +1,61 @@
+:root {
+  --external-link-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Clink xmlns='' type='text/css' rel='stylesheet' id='dark-mode-custom-link'/%3E%3Clink xmlns='' type='text/css' rel='stylesheet' id='dark-mode-general-link'/%3E%3Cstyle xmlns='' lang='en' type='text/css' id='dark-mode-custom-style'/%3E%3Cstyle xmlns='' lang='en' type='text/css' id='dark-mode-native-style'/%3E%3Cpath d='M432 320h-32a16 16 0 0 0-16 16v112H64V128h144a16 16 0 0 0 16-16V80a16 16 0 0 0-16-16H48a48 48 0 0 0-48 48v352a48 48 0 0 0 48 48h352a48 48 0 0 0 48-48V336a16 16 0 0 0-16-16zM488 0H360c-21.37 0-32.05 25.91-17 41l35.73 35.73L135 320.37a24 24 0 0 0 0 34L157.67 377a24 24 0 0 0 34 0l243.61-243.68L471 169c15 15 41 4.5 41-17V24a24 24 0 0 0-24-24z'/%3E%3C/svg%3E");
+}
+
+@font-face {
+    font-family: cash-market;
+    src: url("https://cash-f.squarecdn.com/static/fonts/cash-market/v2/CashMarket-Regular.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal
+}
+
+@font-face {
+    font-family: cash-market;
+    src: url("https://cash-f.squarecdn.com/static/fonts/cash-market/v2/CashMarket-Medium.woff2") format("woff2");
+    font-weight: 500;
+    font-style: normal
+}
+
+@font-face {
+    font-family: cash-market;
+    src: url("https://cash-f.squarecdn.com/static/fonts/cash-market/v2/CashMarket-Bold.woff2") format("woff2");
+    font-weight: 700;
+    font-style: normal
+}
+
+body, input {
+    font-family: cash-market,"Helvetica Neue",helvetica,sans-serif;
+}
+
+.md-typeset h1, .md-typeset h2, .md-typeset h3, .md-typeset h4 {
+    font-family: cash-market,"Helvetica Neue",helvetica,sans-serif;
+    line-height: normal;
+    font-weight: bold;
+}
+
+button.dl {
+  font-weight: 300;
+  font-size: 25px;
+  line-height: 40px;
+  padding: 3px 10px;
+  display: inline-block;
+  border-radius: 6px;
+  color: #f0f0f0;
+  margin: 5px 0;
+  width: auto;
+}
+
+.logo {
+  text-align: center;
+  margin-top: 150px;
+}
+
+a[href^="http" ]:not(.md-social__link, .md-button, [data-sub-html], .md-footer-social__link, .md-source, .md-search-result__link, .md-logo, [href*="squidfunk.github.io"]):after {
+    background: transparent var(--external-link-icon) 0 0 no-repeat;
+    content: "";
+    display: inline-block;
+    height: 12px;
+    margin-left: 3px;
+    width: 12px;
+    filter: invert(1);
+}
