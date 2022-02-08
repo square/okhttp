@@ -195,7 +195,7 @@ abstract class EventListener {
    * Invoked when a connection attempt fails. This failure is not terminal if further routes are
    * available and failure recovery is enabled.
    *
-   * If the `call` uses HTTPS, this will be invoked after [secureConnectEnd], otherwise it will
+   * If the `call` uses HTTPS, this will be invoked after [secureConnectStart], otherwise it will
    * invoked after [connectStart].
    */
   open fun connectFailed(
