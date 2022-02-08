@@ -19,7 +19,7 @@ dependencies {
 
   testImplementation(projects.okhttpTestingSupport)
   testImplementation(project(":mockwebserver"))
-  testImplementation(project(":mockwebserver3-junit5"))
+  testImplementation(projects.mockwebserver3Junit5)
   testImplementation(Dependencies.okioFakeFileSystem)
   testImplementation(Dependencies.conscrypt)
   testImplementation(Dependencies.junit)

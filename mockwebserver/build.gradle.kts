@@ -18,7 +18,7 @@ dependencies {
 
   testImplementation(projects.okhttpTestingSupport)
   testImplementation(projects.okhttpTls)
-  testRuntimeOnly(project(":mockwebserver3-junit5"))
+  testRuntimeOnly(projects.mockwebserver3Junit5)
   testImplementation(Dependencies.junit)
   testImplementation(Dependencies.assertj)
 }

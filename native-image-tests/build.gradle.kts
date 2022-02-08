@@ -23,7 +23,7 @@ dependencies {
   implementation(project(":mockwebserver"))
   implementation(project(":okhttp-urlconnection"))
   implementation(project(":mockwebserver3-junit4"))
-  implementation(project(":mockwebserver3-junit5"))
+  implementation(projects.mockwebserver3Junit5)
   implementation(Dependencies.bndResolve)
   implementation(Dependencies.junit5Api)
   implementation(Dependencies.junit5JupiterParams)
