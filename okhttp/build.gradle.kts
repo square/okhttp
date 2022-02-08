@@ -92,7 +92,7 @@ kotlin {
         implementation(projects.loggingInterceptor)
         implementation(projects.okhttpBrotli)
         implementation(projects.okhttpDnsoverhttps)
-        implementation(project(":okhttp-sse"))
+        implementation(projects.okhttpSse)
         implementation(Dependencies.okioFakeFileSystem)
         implementation(Dependencies.conscrypt)
         implementation(Dependencies.junit)

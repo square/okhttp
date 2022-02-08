@@ -62,7 +62,7 @@ dependencies {
   androidTestImplementation(projects.okhttpBrotli)
   androidTestImplementation(projects.okhttpDnsoverhttps)
   androidTestImplementation(projects.loggingInterceptor)
-  androidTestImplementation(project(":okhttp-sse"))
+  androidTestImplementation(projects.okhttpSse)
   androidTestImplementation(projects.okhttpTestingSupport)
   androidTestImplementation(projects.okhttpTls)
   androidTestImplementation(Dependencies.androidxExtJunit)

@@ -15,7 +15,7 @@ dependencies {
   implementation(projects.okhttpBrotli)
   implementation(projects.okhttpDnsoverhttps)
   implementation(projects.loggingInterceptor)
-  implementation(project(":okhttp-sse"))
+  implementation(projects.okhttpSse)
   implementation(projects.okhttpTestingSupport)
   implementation(projects.okhttpTls)
   implementation(Dependencies.assertj)
