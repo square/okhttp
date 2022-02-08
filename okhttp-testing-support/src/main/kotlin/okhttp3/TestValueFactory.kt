@@ -31,6 +31,7 @@ import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.connection.RealCall
 import okhttp3.internal.connection.RealConnection
 import okhttp3.internal.connection.RealConnectionPool
+import okhttp3.internal.connection.RealRoutePlanner
 import okhttp3.internal.http.RealInterceptorChain
 import okhttp3.internal.http.RecordingProxySelector
 import okhttp3.tls.HandshakeCertificates
@@ -174,6 +175,14 @@ class TestValueFactory : Closeable {
     return Request.Builder()
       .url(address.url)
       .build()
+  }
+
+  fun newRoutePlanner(
+    client: OkHttpClient,
+    address: Address = newAddress(),
+  ): RealRoutePlanner {
+    val call = RealCall(client, newRequest(address), forWebSocket = false)
+    return RealRoutePlanner(client, address, call, newChain(call))
   }
 
   override fun close() {

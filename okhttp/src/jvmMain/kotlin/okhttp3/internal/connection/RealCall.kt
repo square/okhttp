@@ -116,7 +116,7 @@ class RealCall(
 
   @Volatile private var canceled = false
   @Volatile private var exchange: Exchange? = null
-  internal val connectionsToCancel = CopyOnWriteArrayList<RealConnection>()
+  internal val plansToCancel = CopyOnWriteArrayList<RoutePlanner.Plan>()
 
   override fun timeout(): Timeout = timeout
 
@@ -139,8 +139,8 @@ class RealCall(
 
     canceled = true
     exchange?.cancel()
-    for (connection in connectionsToCancel) {
-      connection.cancel()
+    for (plan in plansToCancel) {
+      plan.cancel()
     }
 
     eventListener.canceled(this)

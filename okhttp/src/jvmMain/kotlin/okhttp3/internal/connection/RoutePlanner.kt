@@ -40,7 +40,7 @@ import okhttp3.HttpUrl
  * It is possible to cancel the finding process by canceling its call.
  *
  * Implementations of this interface are not thread-safe. Each instance is thread-confined to the
- * thread executing [call].
+ * thread executing the call.
  */
 interface RoutePlanner {
   val address: Address
@@ -74,11 +74,25 @@ interface RoutePlanner {
   interface Plan {
     val isConnected: Boolean
 
-    @Throws(IOException::class)
-    fun connect()
+    fun connect(): ConnectResult
 
     fun handleSuccess(): RealConnection
 
     fun cancel()
   }
+
+  /**
+   * What to do once a plan has executed.
+   *
+   * If [nextPlan] is not-null, another attempt should be made by following it. If [throwable] is
+   * non-null, it should be reported to the user should all further attempts fail.
+   *
+   * The two values are independent: results can contain both (recoverable error), neither
+   * (success), just an exception (permanent failure), or just a plan (non-exceptional retry).
+   */
+  data class ConnectResult(
+    val plan: Plan,
+    val nextPlan: Plan? = null,
+    val throwable: Throwable? = null,
+  )
 }

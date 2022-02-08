@@ -20,6 +20,7 @@ import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.TimeUnit
 import okhttp3.internal.concurrent.Task
 import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.connection.RoutePlanner.ConnectResult
 import okhttp3.internal.connection.RoutePlanner.Plan
 import okhttp3.internal.okHttpName
 
@@ -83,7 +84,7 @@ internal class FastFallbackExchangeFinder(
 
     // Already connected? Enqueue the result immediately.
     if (plan.isConnected) {
-      connectResults.put(ConnectResult(plan, null))
+      connectResults.put(ConnectResult(plan))
       return
     }
 
@@ -91,12 +92,12 @@ internal class FastFallbackExchangeFinder(
     val taskName = "$okHttpName connect ${routePlanner.address.url.redact()}"
     taskRunner.newQueue().schedule(object : Task(taskName) {
       override fun runOnce(): Long {
-        try {
+        val connectResult = try {
           plan.connect()
-          connectResults.put(ConnectResult(plan, null))
         } catch (e: Throwable) {
-          connectResults.put(ConnectResult(plan, e))
+          ConnectResult(plan, throwable = e)
         }
+        connectResults.put(connectResult)
         return -1L
       }
     })
@@ -129,9 +130,4 @@ internal class FastFallbackExchangeFinder(
       firstException!!.addSuppressed(exception)
     }
   }
-
-  private class ConnectResult(
-    val plan: Plan,
-    val throwable: Throwable?,
-  )
 }
