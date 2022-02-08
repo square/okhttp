@@ -86,7 +86,7 @@ kotlin {
         implementation(projects.okhttpTls)
         implementation(projects.okhttpUrlconnection)
         implementation(projects.mockwebserver3)
-        implementation(project(":mockwebserver3-junit4"))
+        implementation(projects.mockwebserver3Junit4)
         implementation(projects.mockwebserver3Junit5)
         implementation(project(":mockwebserver"))
         implementation(project(":logging-interceptor"))

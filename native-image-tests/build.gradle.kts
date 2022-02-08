@@ -22,7 +22,7 @@ dependencies {
   implementation(projects.mockwebserver3)
   implementation(project(":mockwebserver"))
   implementation(projects.okhttpUrlconnection)
-  implementation(project(":mockwebserver3-junit4"))
+  implementation(projects.mockwebserver3Junit4)
   implementation(projects.mockwebserver3Junit5)
   implementation(Dependencies.bndResolve)
   implementation(Dependencies.junit5Api)
