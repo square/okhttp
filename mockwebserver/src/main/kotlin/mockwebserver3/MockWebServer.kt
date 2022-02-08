@@ -53,6 +53,7 @@ import mockwebserver3.SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY
 import mockwebserver3.SocketPolicy.DO_NOT_READ_REQUEST_BODY
 import mockwebserver3.SocketPolicy.EXPECT_CONTINUE
 import mockwebserver3.SocketPolicy.FAIL_HANDSHAKE
+import mockwebserver3.SocketPolicy.HALF_CLOSE_AFTER_REQUEST
 import mockwebserver3.SocketPolicy.NO_RESPONSE
 import mockwebserver3.SocketPolicy.RESET_STREAM_AT_START
 import mockwebserver3.SocketPolicy.SHUTDOWN_INPUT_AT_END
@@ -607,6 +608,10 @@ class MockWebServer : Closeable {
       val response = dispatcher.dispatch(request)
       if (response.socketPolicy === DISCONNECT_AFTER_REQUEST) {
         socket.close()
+        return false
+      }
+      if (response.socketPolicy === HALF_CLOSE_AFTER_REQUEST) {
+        socket.shutdownOutput()
         return false
       }
       if (response.socketPolicy === NO_RESPONSE) {
