@@ -89,7 +89,7 @@ kotlin {
         implementation(projects.mockwebserver3Junit4)
         implementation(projects.mockwebserver3Junit5)
         implementation(projects.mockwebserver)
-        implementation(project(":logging-interceptor"))
+        implementation(projects.loggingInterceptor)
         implementation(project(":okhttp-brotli"))
         implementation(project(":okhttp-dnsoverhttps"))
         implementation(project(":okhttp-sse"))
