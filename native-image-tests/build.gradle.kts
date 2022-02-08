@@ -21,7 +21,7 @@ dependencies {
   implementation(Dependencies.assertj)
   implementation(projects.mockwebserver3)
   implementation(project(":mockwebserver"))
-  implementation(project(":okhttp-urlconnection"))
+  implementation(projects.okhttpUrlconnection)
   implementation(project(":mockwebserver3-junit4"))
   implementation(projects.mockwebserver3Junit5)
   implementation(Dependencies.bndResolve)
