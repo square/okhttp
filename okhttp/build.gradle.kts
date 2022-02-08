@@ -85,7 +85,7 @@ kotlin {
         implementation(projects.okhttpTestingSupport)
         implementation(projects.okhttpTls)
         implementation(project(":okhttp-urlconnection"))
-        implementation(project(":mockwebserver3"))
+        implementation(projects.mockwebserver3)
         implementation(project(":mockwebserver3-junit4"))
         implementation(projects.mockwebserver3Junit5)
         implementation(project(":mockwebserver"))

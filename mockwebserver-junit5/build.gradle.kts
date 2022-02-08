@@ -20,7 +20,7 @@ tasks {
 }
 
 dependencies {
-  api(project(":mockwebserver3"))
+  api(projects.mockwebserver3)
   api(Dependencies.junit5Api)
   compileOnly(Dependencies.animalSniffer)
 

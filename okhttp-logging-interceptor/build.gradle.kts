@@ -22,7 +22,7 @@ dependencies {
 
   testCompileOnly(Dependencies.jsr305)
   testImplementation(Dependencies.junit)
-  testImplementation(project(":mockwebserver3"))
+  testImplementation(projects.mockwebserver3)
   testImplementation(projects.mockwebserver3Junit5)
   testImplementation(projects.okhttpTestingSupport)
   testImplementation(projects.okhttpTls)

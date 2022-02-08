@@ -18,7 +18,7 @@ tasks.jar {
 
 dependencies {
   api(projects.okhttp)
-  api(project(":mockwebserver3"))
+  api(projects.mockwebserver3)
   api(Dependencies.junit)
 
   testImplementation(projects.okhttpTestingSupport)
