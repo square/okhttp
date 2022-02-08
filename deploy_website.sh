@@ -4,7 +4,7 @@
 # https://squidfunk.github.io/mkdocs-material/
 # It requires Python to run.
 # Install the packages with the following command:
-# pip install mkdocs mkdocs-material
+# pip install mkdocs mkdocs-material mkdocs-redirects
 
 set -ex
 
@@ -16,20 +16,23 @@ rm -rf $DIR
 
 # Clone the current repo into temp folder
 git clone $REPO $DIR
+# Replace `git clone` with these lines to hack on the website locally
+# cp -a . "../okhttp-website"
+# mv "../okhttp-website" "$DIR"
 
 # Move working directory into temp folder
 cd $DIR
 
 # Generate the API docs
 ./gradlew \
-  :mockwebserver:dokka \
-  :okhttp-brotli:dokka \
-  :okhttp-dnsoverhttps:dokka \
-  :okhttp-logging-interceptor:dokka \
-  :okhttp-sse:dokka \
-  :okhttp-tls:dokka \
-  :okhttp-urlconnection:dokka \
-  :okhttp:dokka
+  :mockwebserver:dokkaGfm \
+  :okhttp-brotli:dokkaGfm \
+  :okhttp-dnsoverhttps:dokkaGfm \
+  :logging-interceptor:dokkaGfm \
+  :okhttp-sse:dokkaGfm \
+  :okhttp-tls:dokkaGfm \
+  :okhttp-urlconnection:dokkaGfm \
+  :okhttp:dokkaGfm
 
 # Dokka filenames like `-http-url/index.md` don't work well with MkDocs <title> tags.
 # Assign metadata to the file's first Markdown heading.
@@ -45,7 +48,7 @@ title_markdown_file() {
 }
 
 set +x
-for MARKDOWN_FILE in $(find docs/4.x/ -name '*.md'); do
+for MARKDOWN_FILE in $(find docs/4.x -name '*.md'); do
   echo $MARKDOWN_FILE
   title_markdown_file $MARKDOWN_FILE
 done
@@ -53,8 +56,8 @@ set -x
 
 # Copy in special files that GitHub wants in the project root.
 cat README.md | grep -v 'project website' > docs/index.md
-cp CHANGELOG.md docs/changelog.md
-cp CONTRIBUTING.md docs/contributing.md
+cp CHANGELOG.md docs/changelogs/changelog.md
+cp CONTRIBUTING.md docs/contribute/contributing.md
 
 # Build the site and push the new files up to GitHub
 mkdocs gh-deploy

@@ -205,6 +205,9 @@ subprojects {
         packageListUrl.set(URL("https://square.github.io/okio/2.x/okio/package-list"))
       }
     }
+    if (name == "dokkaGfm") {
+      outputDirectory.set(file("${rootDir}/docs/4.x"))
+    }
   }
 
   plugins.withId("com.vanniktech.maven.publish.base") {
