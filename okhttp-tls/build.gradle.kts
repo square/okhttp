@@ -23,7 +23,7 @@ dependencies {
   compileOnly(Dependencies.jsr305)
   compileOnly(Dependencies.animalSniffer)
 
-  testImplementation(project(":okhttp-testing-support"))
+  testImplementation(projects.okhttpTestingSupport)
   testImplementation(project(":mockwebserver3-junit5"))
   testImplementation(Dependencies.junit)
   testImplementation(Dependencies.assertj)

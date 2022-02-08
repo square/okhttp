@@ -7,7 +7,7 @@ dependencies {
   testImplementation(project(":mockwebserver3"))
   testRuntimeOnly(project(":mockwebserver3-junit5"))
   testImplementation(project(":okhttp-tls"))
-  testImplementation(project(":okhttp-testing-support"))
+  testImplementation(projects.okhttpTestingSupport)
   testImplementation(Dependencies.httpclient5)
   testImplementation(Dependencies.jettyClient)
   testImplementation(Dependencies.junit)

@@ -16,7 +16,7 @@ tasks.jar {
 dependencies {
   api(projects.okhttp)
 
-  testImplementation(project(":okhttp-testing-support"))
+  testImplementation(projects.okhttpTestingSupport)
   testImplementation(project(":okhttp-tls"))
   testRuntimeOnly(project(":mockwebserver3-junit5"))
   testImplementation(Dependencies.junit)

@@ -20,7 +20,7 @@ dependencies {
   api(projects.okhttp)
   compileOnly(Dependencies.jsr305)
 
-  testImplementation(project(":okhttp-testing-support"))
+  testImplementation(projects.okhttpTestingSupport)
   testImplementation(project(":mockwebserver3"))
   testImplementation(project(":mockwebserver3-junit5"))
   testImplementation(Dependencies.junit)

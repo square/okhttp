@@ -50,7 +50,7 @@ dependencies {
   implementation(Dependencies.playServicesSafetynet)
   implementation(projects.okhttp)
 
-  androidTestImplementation(project(":okhttp-testing-support")) {
+  androidTestImplementation(projects.okhttpTestingSupport) {
     exclude("org.openjsse", "openjsse")
     exclude("org.conscrypt", "conscrypt-openjdk-uber")
     exclude("software.amazon.cryptools", "AmazonCorrettoCryptoProvider")
@@ -63,7 +63,7 @@ dependencies {
   androidTestImplementation(project(":okhttp-dnsoverhttps"))
   androidTestImplementation(project(":logging-interceptor"))
   androidTestImplementation(project(":okhttp-sse"))
-  androidTestImplementation(project(":okhttp-testing-support"))
+  androidTestImplementation(projects.okhttpTestingSupport)
   androidTestImplementation(project(":okhttp-tls"))
   androidTestImplementation(Dependencies.androidxExtJunit)
   androidTestImplementation(Dependencies.androidxEspressoCore)

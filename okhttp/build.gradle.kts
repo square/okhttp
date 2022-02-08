@@ -82,7 +82,7 @@ kotlin {
     getByName("jvmTest") {
       dependencies {
         dependsOn(commonTest)
-        implementation(project(":okhttp-testing-support"))
+        implementation(projects.okhttpTestingSupport)
         implementation(project(":okhttp-tls"))
         implementation(project(":okhttp-urlconnection"))
         implementation(project(":mockwebserver3"))

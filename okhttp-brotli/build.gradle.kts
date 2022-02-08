@@ -18,7 +18,7 @@ dependencies {
   api(Dependencies.brotli)
   compileOnly(Dependencies.jsr305)
 
-  testImplementation(project(":okhttp-testing-support"))
+  testImplementation(projects.okhttpTestingSupport)
   testImplementation(Dependencies.conscrypt)
   testImplementation(Dependencies.junit)
   testImplementation(Dependencies.assertj)

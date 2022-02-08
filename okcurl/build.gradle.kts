@@ -34,7 +34,7 @@ dependencies {
 
   kapt(Dependencies.picocliCompiler)
 
-  testImplementation(project(":okhttp-testing-support"))
+  testImplementation(projects.okhttpTestingSupport)
   testImplementation(Dependencies.junit5Api)
   testImplementation(Dependencies.assertj)
 }

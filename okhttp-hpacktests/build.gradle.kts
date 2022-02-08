@@ -6,7 +6,7 @@ dependencies {
   testImplementation(Dependencies.okio)
   testImplementation(Dependencies.moshi)
   testImplementation(projects.okhttp)
-  testImplementation(project(":okhttp-testing-support"))
+  testImplementation(projects.okhttpTestingSupport)
   testImplementation(project(":mockwebserver"))
   testImplementation(Dependencies.junit)
   testImplementation(Dependencies.assertj)
