@@ -93,6 +93,7 @@ class DiskLruCacheTest {
     while (!toClose.isEmpty()) {
       toClose.pop().close()
     }
+    taskFaker.close()
 
     // TODO uncomment after fixing up snapshot calls in this test
     // (filesystem.delegate as? FakeFileSystem)?.checkNoOpenFiles()

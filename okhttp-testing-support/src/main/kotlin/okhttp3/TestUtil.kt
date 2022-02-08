@@ -27,7 +27,8 @@ import org.junit.jupiter.api.Assumptions.assumeTrue
 
 object TestUtil {
   @JvmField
-  val UNREACHABLE_ADDRESS = InetSocketAddress("198.51.100.1", 8080)
+  val UNREACHABLE_ADDRESS_IPV4 = InetSocketAddress("198.51.100.1", 8080)
+  val UNREACHABLE_ADDRESS_IPV6 = InetSocketAddress("::ffff:198.51.100.1", 8080)
 
   /** See `org.graalvm.nativeimage.ImageInfo`. */
   @JvmStatic val isGraalVmImage = System.getProperty("org.graalvm.nativeimage.imagecode") != null

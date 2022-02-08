@@ -21,6 +21,7 @@ import okhttp3.TestUtil.awaitGarbageCollection
 import okhttp3.TestValueFactory
 import okhttp3.internal.concurrent.TaskRunner
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 
 class ConnectionPoolTest {
@@ -33,6 +34,10 @@ class ConnectionPoolTest {
   private val routeB1 = factory.newRoute(addressB)
   private val addressC = factory.newAddress("c")
   private val routeC1 = factory.newRoute(addressC)
+
+  @AfterEach fun tearDown() {
+    factory.close()
+  }
 
   @Test fun connectionsEvictedWhenIdleLongEnough() {
     val pool = factory.newConnectionPool()

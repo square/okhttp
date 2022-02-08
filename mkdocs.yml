@@ -2,75 +2,124 @@ site_name: OkHttp
 site_url: https://square.github.io/okhttp/
 repo_name: OkHttp
 repo_url: https://github.com/square/okhttp
-site_description: "An HTTP & HTTP/2 client for Android and Java applications"
+site_description: "Square’s meticulous HTTP client for the JVM, Android, and GraalVM"
 site_author: Square, Inc.
 remote_branch: gh-pages
 edit_uri: ""
 
-copyright: 'Copyright &copy; 2019 Square, Inc.'
+copyright: 'Copyright &copy; 2022 Block, Inc.'
 
 theme:
   name: 'material'
-  favicon: images/icon-square.png
-  logo: images/icon-square.png
+  favicon: assets/images/icon-square.png
+  logo: assets/images/icon-square.png
   palette:
-    primary: 'teal'
-    accent: 'white'
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: blue
+      toggle:
+        icon: octicons/sun-24
+        name: "Switch to Dark Mode"
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: blue
+      toggle:
+        icon: octicons/moon-24
+        name: "Switch to Light Mode"
+  features:
+  - navigation.tabs
 
 extra_css:
-  - 'css/app.css'
+  - 'assets/css/app.css'
 
 markdown_extensions:
   - smarty
-  - codehilite:
-      guess_lang: false
   - footnotes
   - meta
   - toc:
       permalink: true
+  - attr_list
   - pymdownx.betterem:
       smart_enable: all
   - pymdownx.caret
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
   - pymdownx.inlinehilite
   - pymdownx.magiclink
   - pymdownx.smartsymbols
   - pymdownx.superfences
   - pymdownx.tilde
-  - pymdownx.tabbed
+  - pymdownx.tabbed:
+      alternate_style: true
   - tables
 
+plugins:
+  - search
+  - redirects:
+      redirect_maps:
+        # Redirect all feature pages to features/*
+        'caching.md': 'features/caching.md'
+        'calls.md': 'features/calls.md'
+        'connections.md': 'features/connections.md'
+        'events.md': 'features/events.md'
+        'https.md': 'features/events.md'
+        'interceptors.md': 'features/interceptors.md'
+        'r8_proguard.md': 'features/r8_proguard.md'
+        # Redirect all Security pages to security/*
+        'security.md': 'security/security.md'
+        'security_providers.md': 'security/security_providers.md'
+        'tls_configuration_history.md': 'security/tls_configuration_history.md'
+        # Redirect all changelog pages to changelog/*
+        'changelog.md': 'changelogs/changelog.md'
+        'upgrading_to_okhttp_4.md': 'changelogs/upgrading_to_okhttp_4.md'
+        'changelog_3x.md': 'changelogs/changelog_3x.md'
+        'changelog_2x.md': 'changelogs/changelog_2x.md'
+        'changelog_1x.md': 'changelogs/changelog_1x.md'
+        # Redirect all contributing pages to contribute/*
+        'contributing.md': 'contribute/contributing.md'
+        'code_of_conduct.md': 'contribute/code_of_conduct.md'
+        'concurrency.md': 'contribute/concurrency.md'
+        'debug_logging.md': 'contribute/debug_logging.md'
+
 nav:
-  - 'Overview': index.md
-  - 'Stack Overflow ⏏': https://stackoverflow.com/questions/tagged/okhttp?sort=active
-  - 'Calls': calls.md
-  - 'Caching': caching.md
-  - 'Connections': connections.md
-  - 'Events': events.md
-  - 'HTTPS': https.md
-  - 'Interceptors': interceptors.md
+  - 'Overview':
+    - 'Overview': index.md
+    - 'Stack Overflow': https://stackoverflow.com/questions/tagged/okhttp?sort=active
+  - 'Features':
+    - 'Calls': features/calls.md
+    - 'Caching': features/caching.md
+    - 'Connections': features/connections.md
+    - 'Events': features/events.md
+    - 'HTTPS': features/https.md
+    - 'Interceptors': features/interceptors.md
   - 'Recipes': recipes.md
-  - 'Security': security.md
-  - 'Security Providers': security_providers.md
+  - 'Security':
+    - 'Security': security/security.md
+    - 'Providers': security/security_providers.md
+    - 'Configuration History': security/tls_configuration_history.md
   - 'Works with OkHttp': works_with_okhttp.md
-  - 'Upgrading to OkHttp 4': upgrading_to_okhttp_4.md
-  - '4.x API':
+  - 'API':
     - 'okhttp': 4.x/okhttp/okhttp3/index.md
     - 'brotli': 4.x/okhttp-brotli/okhttp3.brotli/index.md
     - 'dnsoverhttps': 4.x/okhttp-dnsoverhttps/okhttp3.dnsoverhttps/index.md
-    - 'logging-interceptor': 4.x/okhttp-logging-interceptor/okhttp3.logging/index.md
+    - 'logging-interceptor': 4.x/logging-interceptor/okhttp3.logging/index.md
     - 'sse': 4.x/okhttp-sse/okhttp3.sse/index.md
     - 'tls': 4.x/okhttp-tls/okhttp3.tls/index.md
     - 'urlconnection': 4.x/okhttp-urlconnection/okhttp3/index.md
     - 'mockwebserver': 4.x/mockwebserver/okhttp3.mockwebserver/index.md
-  - '3.12.x API':
-    - 'okhttp ⏏': https://square.github.io/okhttp/3.x/okhttp/
-    - 'dnsoverhttps ⏏': https://square.github.io/okhttp/3.x/okhttp-dnsoverhttps/
-    - 'logging-interceptor ⏏': https://square.github.io/okhttp/3.x/logging-interceptor/
-    - 'sse ⏏': https://square.github.io/okhttp/3.x/okhttp-sse/
-    - 'tls ⏏': https://square.github.io/okhttp/3.x/okhttp-tls/
-    - 'urlconnection ⏏': https://square.github.io/okhttp/3.x/okhttp-urlconnection/
-    - 'mockwebserver ⏏': https://square.github.io/okhttp/3.x/mockwebserver/
-  - 'Change Log': changelog.md
-  - 'Contributing': contributing.md
-  - 'Code of Conduct': code_of_conduct.md
+  - 'Change Logs':
+    - 'Change Log': changelogs/changelog.md
+    - '4.x Change Log': changelogs/changelog_4x.md
+    - 'Upgrading to OkHttp 4': changelogs/upgrading_to_okhttp_4.md
+    - '3.x Change Log': changelogs/changelog_3x.md
+    - '2.x Change Log': changelogs/changelog_2x.md
+    - '1.x Change Log': changelogs/changelog_1x.md
+  - 'Contributing':
+    - 'Contributing': contribute/contributing.md
+    - 'Code of Conduct': contribute/code_of_conduct.md
+    - 'Concurrency': contribute/concurrency.md
+    - 'Debug Logging': contribute/debug_logging.md
 

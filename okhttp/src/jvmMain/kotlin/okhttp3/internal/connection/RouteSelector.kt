@@ -37,7 +37,8 @@ class RouteSelector(
   private val address: Address,
   private val routeDatabase: RouteDatabase,
   private val call: Call,
-  private val eventListener: EventListener
+  private val fastFallback: Boolean,
+  private val eventListener: EventListener,
 ) {
   /* State for negotiating the next proxy to use. */
   private var proxies = emptyList<Proxy>()
@@ -160,7 +161,6 @@ class RouteSelector(
     } else {
       eventListener.dnsStart(call, socketHost)
 
-      // Try each address for best behavior in mixed IPv4/IPv6 environments.
       val addresses = address.dns.lookup(socketHost)
       if (addresses.isEmpty()) {
         throw UnknownHostException("${address.dns} returned no addresses for $socketHost")
@@ -168,7 +168,13 @@ class RouteSelector(
 
       eventListener.dnsEnd(call, socketHost, addresses)
 
-      for (inetAddress in addresses) {
+      // Try each address for best behavior in mixed IPv4/IPv6 environments.
+      val orderedAddresses = when {
+        fastFallback -> reorderForHappyEyeballs(addresses)
+        else -> addresses
+      }
+
+      for (inetAddress in orderedAddresses) {
         mutableInetSocketAddresses += InetSocketAddress(inetAddress, socketPort)
       }
     }

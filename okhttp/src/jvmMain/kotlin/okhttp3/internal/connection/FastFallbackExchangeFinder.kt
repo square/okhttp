@@ -40,7 +40,7 @@ internal class FastFallbackExchangeFinder(
    * Results are posted here as they occur. The find job is done when either one plan completes
    * successfully or all plans fail.
    */
-  private val connectResults = LinkedBlockingDeque<ConnectResult>()
+  private val connectResults = taskRunner.backend.decorate(LinkedBlockingDeque<ConnectResult>())
 
   /** Exceptions accumulate here. */
   private var firstException: IOException? = null

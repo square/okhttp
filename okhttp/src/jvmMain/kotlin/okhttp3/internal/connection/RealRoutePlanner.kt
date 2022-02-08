@@ -131,7 +131,13 @@ internal class RealRoutePlanner(
     // Decide which proxy to use, if any. This may block in ProxySelector.select().
     var newRouteSelector = routeSelector
     if (newRouteSelector == null) {
-      newRouteSelector = RouteSelector(address, call.client.routeDatabase, call, eventListener)
+      newRouteSelector = RouteSelector(
+        address = address,
+        routeDatabase = call.client.routeDatabase,
+        call = call,
+        fastFallback = client.fastFallback,
+        eventListener = eventListener
+      )
       routeSelector = newRouteSelector
     }
 

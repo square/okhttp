@@ -44,6 +44,7 @@ import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import okhttp3.tls.internal.TlsUtil.localhost
 import okio.Buffer
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
@@ -60,6 +61,11 @@ import org.junit.jupiter.api.Test
 )
 class KotlinDeprecationErrorTest {
   private val factory = TestValueFactory()
+
+  @AfterEach
+  fun tearDown() {
+    factory.close()
+  }
 
   @Test @Disabled
   fun address() {

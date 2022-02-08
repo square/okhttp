@@ -52,7 +52,7 @@ common cipher suite and TLS version, your call will fail like this:
 ```
 Caused by: javax.net.ssl.SSLProtocolException: SSL handshake aborted: ssl=0x7f2719a89e80:
     Failure in SSL library, usually a protocol error
-        error:14077410:SSL routines:SSL23_GET_SERVER_HELLO:sslv3 alert handshake 
+        error:14077410:SSL routines:SSL23_GET_SERVER_HELLO:sslv3 alert handshake
         failure (external/openssl/ssl/s23_clnt.c:770 0x7f2728a53ea0:0x00000000)
     at com.android.org.conscrypt.NativeCrypto.SSL_do_handshake(Native Method)
 ```
@@ -64,13 +64,13 @@ Applications expected to be installed on older Android devices should consider a
 [Google Play Services’ ProviderInstaller][provider_installer]. This will increase security for users
 and increase connectivity with web servers.
 
-### Certificate Pinning ([.kt][CertificatePinningKotlin], [.java][CertificatePinningJava]) 
+### Certificate Pinning ([.kt][CertificatePinningKotlin], [.java][CertificatePinningJava])
 
 By default, OkHttp trusts the certificate authorities of the host platform. This strategy maximizes connectivity, but it is subject to certificate authority attacks such as the [2011 DigiNotar attack](https://www.computerworld.com/article/2510951/cybercrime-hacking/hackers-spied-on-300-000-iranians-using-fake-google-certificate.html). It also assumes your HTTPS servers’ certificates are signed by a certificate authority.
 
 Use [CertificatePinner](https://square.github.io/okhttp/4.x/okhttp/okhttp3/-certificate-pinner/) to restrict which certificates and certificate authorities are trusted. Certificate pinning increases security, but limits your server team’s abilities to update their TLS certificates. **Do not use certificate pinning without the blessing of your server’s TLS administrator!**
 
-=== "Kotlin"
+=== ":material-language-kotlin: Kotlin"
     ```kotlin
       private val client = OkHttpClient.Builder()
           .certificatePinner(
@@ -78,22 +78,22 @@ Use [CertificatePinner](https://square.github.io/okhttp/4.x/okhttp/okhttp3/-cert
                   .add("publicobject.com", "sha256/afwiKY3RxoMmLkuRW1l7QsPZTJPwDS2pdDROQjXw8ig=")
                   .build())
           .build()
-    
+
       fun run() {
         val request = Request.Builder()
             .url("https://publicobject.com/robots.txt")
             .build()
-    
+
         client.newCall(request).execute().use { response ->
           if (!response.isSuccessful) throw IOException("Unexpected code $response")
-    
+
           for (certificate in response.handshake!!.peerCertificates) {
             println(CertificatePinner.pin(certificate))
           }
         }
       }
     ```
-=== "Java"
+=== ":material-language-java: Java"
     ```java
       private final OkHttpClient client = new OkHttpClient.Builder()
           .certificatePinner(
@@ -101,15 +101,15 @@ Use [CertificatePinner](https://square.github.io/okhttp/4.x/okhttp/okhttp3/-cert
                   .add("publicobject.com", "sha256/afwiKY3RxoMmLkuRW1l7QsPZTJPwDS2pdDROQjXw8ig=")
                   .build())
           .build();
-    
+
       public void run() throws Exception {
         Request request = new Request.Builder()
             .url("https://publicobject.com/robots.txt")
             .build();
-    
+
         try (Response response = client.newCall(request).execute()) {
           if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
-    
+
           for (Certificate certificate : response.handshake().peerCertificates()) {
             System.out.println(CertificatePinner.pin(certificate));
           }
@@ -121,37 +121,37 @@ Use [CertificatePinner](https://square.github.io/okhttp/4.x/okhttp/okhttp3/-cert
 
 The full code sample shows how to replace the host platform’s certificate authorities with your own set. As above, **do not use custom certificates without the blessing of your server’s TLS administrator!**
 
-=== "Kotlin"
+=== ":material-language-kotlin: Kotlin"
     ```kotlin
       private val client: OkHttpClient
-    
+
       init {
         val trustManager = trustManagerForCertificates(trustedCertificatesInputStream())
         val sslContext = SSLContext.getInstance("TLS")
         sslContext.init(null, arrayOf<TrustManager>(trustManager), null)
         val sslSocketFactory = sslContext.socketFactory
-    
+
         client = OkHttpClient.Builder()
             .sslSocketFactory(sslSocketFactory, trustManager)
             .build()
       }
-    
+
       fun run() {
         val request = Request.Builder()
             .url("https://publicobject.com/helloworld.txt")
             .build()
-    
+
         client.newCall(request).execute().use { response ->
           if (!response.isSuccessful) throw IOException("Unexpected code $response")
-    
+
           for ((name, value) in response.headers) {
             println("$name: $value")
           }
-    
+
           println(response.body!!.string())
         }
       }
-    
+
       /**
        * Returns an input stream containing one or more certificate PEM files. This implementation just
        * embeds the PEM files in Java strings; most applications will instead read this from a resource
@@ -160,15 +160,15 @@ The full code sample shows how to replace the host platform’s certificate auth
       private fun trustedCertificatesInputStream(): InputStream {
         ... // Full source omitted. See sample.
       }
-    
+
       private fun trustManagerForCertificates(inputStream: InputStream): X509TrustManager {
         ... // Full source omitted. See sample.
       }
     ```
-=== "Java"
+=== ":material-language-java: Java"
     ```java
       private final OkHttpClient client;
-    
+
       public CustomTrust() {
         X509TrustManager trustManager;
         SSLSocketFactory sslSocketFactory;
@@ -180,25 +180,25 @@ The full code sample shows how to replace the host platform’s certificate auth
         } catch (GeneralSecurityException e) {
           throw new RuntimeException(e);
         }
-    
+
         client = new OkHttpClient.Builder()
             .sslSocketFactory(sslSocketFactory, trustManager)
             .build();
       }
-    
+
       public void run() throws Exception {
         Request request = new Request.Builder()
             .url("https://publicobject.com/helloworld.txt")
             .build();
-    
+
         Response response = client.newCall(request).execute();
         System.out.println(response.body().string());
       }
-    
+
       private InputStream trustedCertificatesInputStream() {
         ... // Full source omitted. See sample.
       }
-    
+
       public SSLContext sslContextForTrustedCertificates(InputStream in) {
         ... // Full source omitted. See sample.
       }

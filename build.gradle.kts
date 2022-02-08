@@ -135,7 +135,10 @@ subprojects {
 
   tasks.withType<Test> {
     useJUnitPlatform()
-    jvmArgs = jvmArgs!! + listOf("-Dokhttp.platform=$platform")
+    jvmArgs = jvmArgs!! + listOf(
+      "-Dokhttp.platform=$platform",
+      "-XX:+HeapDumpOnOutOfMemoryError"
+    )
 
     val javaToolchains = project.extensions.getByType<JavaToolchainService>()
     javaLauncher.set(javaToolchains.launcherFor {
@@ -201,6 +204,9 @@ subprojects {
         url.set(URL("https://square.github.io/okio/2.x/okio/"))
         packageListUrl.set(URL("https://square.github.io/okio/2.x/okio/package-list"))
       }
+    }
+    if (name == "dokkaGfm") {
+      outputDirectory.set(file("${rootDir}/docs/4.x"))
     }
   }
 
