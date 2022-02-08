@@ -28,7 +28,7 @@ object Versions {
   const val moshi = "1.13.0"
   const val okio = "3.0.0"
   const val picocli = "4.6.2"
-  const val graal = "21.2.0"
+  const val graal = "22.0.0.2"
 }
 
 object Dependencies {
