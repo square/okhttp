@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-  testImplementation(project(":okhttp"))
+  testImplementation(projects.okhttp)
   testImplementation(project(":mockwebserver3"))
   testRuntimeOnly(project(":mockwebserver3-junit5"))
   testImplementation(project(":okhttp-tls"))

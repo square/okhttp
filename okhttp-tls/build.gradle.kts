@@ -19,7 +19,7 @@ project.applyOsgi(
 
 dependencies {
   api(Dependencies.okio)
-  implementation(project(":okhttp"))
+  implementation(projects.okhttp)
   compileOnly(Dependencies.jsr305)
   compileOnly(Dependencies.animalSniffer)
 

@@ -14,7 +14,7 @@ project.applyOsgi(
 )
 
 dependencies {
-  api(project(":okhttp"))
+  api(projects.okhttp)
   compileOnly(Dependencies.jsr305)
 
   testImplementation(project(":okhttp-testing-support"))

@@ -5,7 +5,7 @@ plugins {
 dependencies {
   testImplementation(Dependencies.okio)
   testImplementation(Dependencies.moshi)
-  testImplementation(project(":okhttp"))
+  testImplementation(projects.okhttp)
   testImplementation(project(":okhttp-testing-support"))
   testImplementation(project(":mockwebserver"))
   testImplementation(Dependencies.junit)

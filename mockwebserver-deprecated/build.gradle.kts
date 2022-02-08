@@ -17,7 +17,7 @@ tasks.jar {
 }
 
 dependencies {
-  api(project(":okhttp"))
+  api(projects.okhttp)
   api(project(":mockwebserver3"))
   api(Dependencies.junit)
 

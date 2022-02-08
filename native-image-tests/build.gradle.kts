@@ -11,7 +11,7 @@ dependencies {
   implementation(Dependencies.junitPlatformConsole)
   implementation(Dependencies.okioFakeFileSystem)
 
-  implementation(project(":okhttp"))
+  implementation(projects.okhttp)
   implementation(project(":okhttp-brotli"))
   implementation(project(":okhttp-dnsoverhttps"))
   implementation(project(":logging-interceptor"))

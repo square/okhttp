@@ -4,7 +4,7 @@ plugins {
 }
 
 dependencies {
-  api(project(":okhttp"))
+  api(projects.okhttp)
   api(project(":okhttp-tls"))
   api(Dependencies.assertj)
   api(Dependencies.bouncycastle)

@@ -48,7 +48,7 @@ android {
 dependencies {
   implementation(Dependencies.kotlinReflect)
   implementation(Dependencies.playServicesSafetynet)
-  implementation(project(":okhttp"))
+  implementation(projects.okhttp)
 
   androidTestImplementation(project(":okhttp-testing-support")) {
     exclude("org.openjsse", "openjsse")

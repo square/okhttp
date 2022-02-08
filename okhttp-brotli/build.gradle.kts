@@ -14,7 +14,7 @@ project.applyOsgi(
 )
 
 dependencies {
-  api(project(":okhttp"))
+  api(projects.okhttp)
   api(Dependencies.brotli)
   compileOnly(Dependencies.jsr305)
 

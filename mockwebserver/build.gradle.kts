@@ -14,7 +14,7 @@ tasks.jar {
 }
 
 dependencies {
-  api(project(":okhttp"))
+  api(projects.okhttp)
 
   testImplementation(project(":okhttp-testing-support"))
   testImplementation(project(":okhttp-tls"))

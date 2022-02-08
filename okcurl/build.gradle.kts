@@ -27,7 +27,7 @@ sourceSets {
 }
 
 dependencies {
-  api(project(":okhttp"))
+  api(projects.okhttp)
   api(project(":logging-interceptor"))
   implementation(Dependencies.picocli)
   implementation(Dependencies.guava)
