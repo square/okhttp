@@ -13,7 +13,7 @@ dependencies {
 
   implementation(projects.okhttp)
   implementation(projects.okhttpBrotli)
-  implementation(project(":okhttp-dnsoverhttps"))
+  implementation(projects.okhttpDnsoverhttps)
   implementation(projects.loggingInterceptor)
   implementation(project(":okhttp-sse"))
   implementation(projects.okhttpTestingSupport)

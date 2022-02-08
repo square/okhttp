@@ -60,7 +60,7 @@ dependencies {
   androidTestImplementation(Dependencies.conscryptAndroid)
   androidTestImplementation(projects.mockwebserver3Junit5)
   androidTestImplementation(projects.okhttpBrotli)
-  androidTestImplementation(project(":okhttp-dnsoverhttps"))
+  androidTestImplementation(projects.okhttpDnsoverhttps)
   androidTestImplementation(projects.loggingInterceptor)
   androidTestImplementation(project(":okhttp-sse"))
   androidTestImplementation(projects.okhttpTestingSupport)

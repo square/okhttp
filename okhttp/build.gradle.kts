@@ -91,7 +91,7 @@ kotlin {
         implementation(projects.mockwebserver)
         implementation(projects.loggingInterceptor)
         implementation(projects.okhttpBrotli)
-        implementation(project(":okhttp-dnsoverhttps"))
+        implementation(projects.okhttpDnsoverhttps)
         implementation(project(":okhttp-sse"))
         implementation(Dependencies.okioFakeFileSystem)
         implementation(Dependencies.conscrypt)
