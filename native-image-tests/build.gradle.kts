@@ -20,7 +20,7 @@ dependencies {
   implementation(projects.okhttpTls)
   implementation(Dependencies.assertj)
   implementation(projects.mockwebserver3)
-  implementation(project(":mockwebserver"))
+  implementation(projects.mockwebserver)
   implementation(projects.okhttpUrlconnection)
   implementation(projects.mockwebserver3Junit4)
   implementation(projects.mockwebserver3Junit5)

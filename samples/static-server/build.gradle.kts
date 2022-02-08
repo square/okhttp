@@ -14,7 +14,7 @@ tasks.jar {
 }
 
 dependencies {
-  implementation(project(":mockwebserver"))
+  implementation(projects.mockwebserver)
 }
 
 tasks.shadowJar {

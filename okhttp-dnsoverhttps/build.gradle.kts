@@ -18,7 +18,7 @@ dependencies {
   compileOnly(Dependencies.jsr305)
 
   testImplementation(projects.okhttpTestingSupport)
-  testImplementation(project(":mockwebserver"))
+  testImplementation(projects.mockwebserver)
   testImplementation(projects.mockwebserver3Junit5)
   testImplementation(Dependencies.okioFakeFileSystem)
   testImplementation(Dependencies.conscrypt)

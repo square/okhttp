@@ -4,6 +4,6 @@ plugins {
 
 dependencies {
   implementation(projects.okhttp)
-  implementation(project(":mockwebserver"))
+  implementation(projects.mockwebserver)
   implementation(Dependencies.jnrUnixsocket)
 }

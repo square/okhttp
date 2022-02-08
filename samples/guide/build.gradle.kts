@@ -5,7 +5,7 @@ plugins {
 
 dependencies {
   implementation(projects.okhttp)
-  implementation(project(":mockwebserver"))
+  implementation(projects.mockwebserver)
   implementation(projects.okhttpTestingSupport)
   implementation(projects.okhttpTls)
   implementation(Dependencies.animalSniffer)

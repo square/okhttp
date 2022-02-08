@@ -88,7 +88,7 @@ kotlin {
         implementation(projects.mockwebserver3)
         implementation(projects.mockwebserver3Junit4)
         implementation(projects.mockwebserver3Junit5)
-        implementation(project(":mockwebserver"))
+        implementation(projects.mockwebserver)
         implementation(project(":logging-interceptor"))
         implementation(project(":okhttp-brotli"))
         implementation(project(":okhttp-dnsoverhttps"))
