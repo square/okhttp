@@ -3,6 +3,6 @@ plugins {
 }
 
 dependencies {
-  implementation(project(":okhttp"))
+  implementation(projects.okhttp)
   implementation(Dependencies.moshi)
 }

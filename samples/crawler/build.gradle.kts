@@ -8,7 +8,7 @@ application {
 }
 
 dependencies {
-  implementation(project(":okhttp"))
+  implementation(projects.okhttp)
   implementation(Dependencies.jsoup)
 }
 

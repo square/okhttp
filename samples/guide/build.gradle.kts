@@ -4,10 +4,10 @@ plugins {
 }
 
 dependencies {
-  implementation(project(":okhttp"))
-  implementation(project(":mockwebserver"))
-  implementation(project(":okhttp-testing-support"))
-  implementation(project(":okhttp-tls"))
+  implementation(projects.okhttp)
+  implementation(projects.mockwebserver)
+  implementation(projects.okhttpTestingSupport)
+  implementation(projects.okhttpTls)
   implementation(Dependencies.animalSniffer)
   implementation(Dependencies.moshi)
   kapt(Dependencies.moshiCompiler)

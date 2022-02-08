@@ -27,14 +27,14 @@ sourceSets {
 }
 
 dependencies {
-  api(project(":okhttp"))
-  api(project(":logging-interceptor"))
+  api(projects.okhttp)
+  api(projects.loggingInterceptor)
   implementation(Dependencies.picocli)
   implementation(Dependencies.guava)
 
   kapt(Dependencies.picocliCompiler)
 
-  testImplementation(project(":okhttp-testing-support"))
+  testImplementation(projects.okhttpTestingSupport)
   testImplementation(Dependencies.junit5Api)
   testImplementation(Dependencies.assertj)
 }

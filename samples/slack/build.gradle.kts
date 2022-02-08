@@ -3,6 +3,6 @@ plugins {
 }
 
 dependencies {
-  implementation(project(":mockwebserver"))
+  implementation(projects.mockwebserver)
   implementation(Dependencies.moshi)
 }

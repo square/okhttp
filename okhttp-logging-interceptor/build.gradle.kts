@@ -17,15 +17,15 @@ project.applyOsgi(
 )
 
 dependencies {
-  api(project(":okhttp"))
+  api(projects.okhttp)
   compileOnly(Dependencies.jsr305)
 
   testCompileOnly(Dependencies.jsr305)
   testImplementation(Dependencies.junit)
-  testImplementation(project(":mockwebserver3"))
-  testImplementation(project(":mockwebserver3-junit5"))
-  testImplementation(project(":okhttp-testing-support"))
-  testImplementation(project(":okhttp-tls"))
+  testImplementation(projects.mockwebserver3)
+  testImplementation(projects.mockwebserver3Junit5)
+  testImplementation(projects.okhttpTestingSupport)
+  testImplementation(projects.okhttpTls)
   testImplementation(Dependencies.assertj)
 }
 

@@ -19,12 +19,12 @@ project.applyOsgi(
 
 dependencies {
   api(Dependencies.okio)
-  implementation(project(":okhttp"))
+  implementation(projects.okhttp)
   compileOnly(Dependencies.jsr305)
   compileOnly(Dependencies.animalSniffer)
 
-  testImplementation(project(":okhttp-testing-support"))
-  testImplementation(project(":mockwebserver3-junit5"))
+  testImplementation(projects.okhttpTestingSupport)
+  testImplementation(projects.mockwebserver3Junit5)
   testImplementation(Dependencies.junit)
   testImplementation(Dependencies.assertj)
 }

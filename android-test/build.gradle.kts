@@ -48,9 +48,9 @@ android {
 dependencies {
   implementation(Dependencies.kotlinReflect)
   implementation(Dependencies.playServicesSafetynet)
-  implementation(project(":okhttp"))
+  implementation(projects.okhttp)
 
-  androidTestImplementation(project(":okhttp-testing-support")) {
+  androidTestImplementation(projects.okhttpTestingSupport) {
     exclude("org.openjsse", "openjsse")
     exclude("org.conscrypt", "conscrypt-openjdk-uber")
     exclude("software.amazon.cryptools", "AmazonCorrettoCryptoProvider")
@@ -58,13 +58,13 @@ dependencies {
   androidTestImplementation(Dependencies.bouncycastle)
   androidTestImplementation(Dependencies.bouncycastletls)
   androidTestImplementation(Dependencies.conscryptAndroid)
-  androidTestImplementation(project(":mockwebserver3-junit5"))
-  androidTestImplementation(project(":okhttp-brotli"))
-  androidTestImplementation(project(":okhttp-dnsoverhttps"))
-  androidTestImplementation(project(":logging-interceptor"))
-  androidTestImplementation(project(":okhttp-sse"))
-  androidTestImplementation(project(":okhttp-testing-support"))
-  androidTestImplementation(project(":okhttp-tls"))
+  androidTestImplementation(projects.mockwebserver3Junit5)
+  androidTestImplementation(projects.okhttpBrotli)
+  androidTestImplementation(projects.okhttpDnsoverhttps)
+  androidTestImplementation(projects.loggingInterceptor)
+  androidTestImplementation(projects.okhttpSse)
+  androidTestImplementation(projects.okhttpTestingSupport)
+  androidTestImplementation(projects.okhttpTls)
   androidTestImplementation(Dependencies.androidxExtJunit)
   androidTestImplementation(Dependencies.androidxEspressoCore)
   androidTestImplementation(Dependencies.httpclient5)
