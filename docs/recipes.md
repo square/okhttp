@@ -860,6 +860,29 @@ Use `Response.challenges()` to get the schemes and realms of any authentication 
             .build()
       }
     ```
+
+    To avoid making many retries when authentication isn't working, you can return null to give up. For example, you may want to skip the retry when these exact credentials have already been attempted:
+
+    ```kotlin
+    if (credential == response.request.header("Authorization")) {
+      return null // If we already failed with these credentials, don't retry.
+     }
+    ```
+
+    You may also skip the retry when you’ve hit an application-defined attempt limit:
+
+    ```kotlin
+    if (response.responseCount >= 3) {
+      return null // If we've failed 3 times, give up.
+    }
+    ```
+
+    This above code relies on this `responseCount` extension val:
+
+    ```kotlin
+    val Response.responseCount: Int
+      get() = generateSequence(this) { it.priorResponse }.count()
+    ```
 === ":material-language-java: Java"
     ```java
       private final OkHttpClient client;
