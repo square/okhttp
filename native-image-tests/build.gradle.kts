@@ -12,7 +12,7 @@ dependencies {
   implementation(Dependencies.okioFakeFileSystem)
 
   implementation(projects.okhttp)
-  implementation(project(":okhttp-brotli"))
+  implementation(projects.okhttpBrotli)
   implementation(project(":okhttp-dnsoverhttps"))
   implementation(projects.loggingInterceptor)
   implementation(project(":okhttp-sse"))
