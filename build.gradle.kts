@@ -80,7 +80,6 @@ subprojects {
   configure<JavaPluginExtension> {
     toolchain {
       languageVersion.set(JavaLanguageVersion.of(11))
-      vendor.set(JvmVendorSpec.ADOPTOPENJDK)
     }
   }
 
@@ -143,7 +142,6 @@ subprojects {
     val javaToolchains = project.extensions.getByType<JavaToolchainService>()
     javaLauncher.set(javaToolchains.launcherFor {
       languageVersion.set(JavaLanguageVersion.of(testJavaVersion))
-      vendor.set(JvmVendorSpec.ADOPTOPENJDK)
     })
 
     maxParallelForks = Runtime.getRuntime().availableProcessors() * 2
