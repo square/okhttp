@@ -64,7 +64,7 @@ dependencies {
   androidTestImplementation(project(":logging-interceptor"))
   androidTestImplementation(project(":okhttp-sse"))
   androidTestImplementation(projects.okhttpTestingSupport)
-  androidTestImplementation(project(":okhttp-tls"))
+  androidTestImplementation(projects.okhttpTls)
   androidTestImplementation(Dependencies.androidxExtJunit)
   androidTestImplementation(Dependencies.androidxEspressoCore)
   androidTestImplementation(Dependencies.httpclient5)

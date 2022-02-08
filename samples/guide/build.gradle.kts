@@ -7,7 +7,7 @@ dependencies {
   implementation(projects.okhttp)
   implementation(project(":mockwebserver"))
   implementation(projects.okhttpTestingSupport)
-  implementation(project(":okhttp-tls"))
+  implementation(projects.okhttpTls)
   implementation(Dependencies.animalSniffer)
   implementation(Dependencies.moshi)
   kapt(Dependencies.moshiCompiler)

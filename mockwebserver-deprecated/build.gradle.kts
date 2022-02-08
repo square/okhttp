@@ -22,7 +22,7 @@ dependencies {
   api(Dependencies.junit)
 
   testImplementation(projects.okhttpTestingSupport)
-  testImplementation(project(":okhttp-tls"))
+  testImplementation(projects.okhttpTls)
   testImplementation(Dependencies.assertj)
 }
 

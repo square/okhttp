@@ -17,7 +17,7 @@ dependencies {
   api(projects.okhttp)
 
   testImplementation(projects.okhttpTestingSupport)
-  testImplementation(project(":okhttp-tls"))
+  testImplementation(projects.okhttpTls)
   testRuntimeOnly(project(":mockwebserver3-junit5"))
   testImplementation(Dependencies.junit)
   testImplementation(Dependencies.assertj)

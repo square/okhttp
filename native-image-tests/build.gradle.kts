@@ -17,7 +17,7 @@ dependencies {
   implementation(project(":logging-interceptor"))
   implementation(project(":okhttp-sse"))
   implementation(projects.okhttpTestingSupport)
-  implementation(project(":okhttp-tls"))
+  implementation(projects.okhttpTls)
   implementation(Dependencies.assertj)
   implementation(project(":mockwebserver3"))
   implementation(project(":mockwebserver"))

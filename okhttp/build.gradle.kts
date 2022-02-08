@@ -83,7 +83,7 @@ kotlin {
       dependencies {
         dependsOn(commonTest)
         implementation(projects.okhttpTestingSupport)
-        implementation(project(":okhttp-tls"))
+        implementation(projects.okhttpTls)
         implementation(project(":okhttp-urlconnection"))
         implementation(project(":mockwebserver3"))
         implementation(project(":mockwebserver3-junit4"))
