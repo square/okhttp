@@ -20,7 +20,7 @@ import assertk.assertions.isEqualTo
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.junit.jupiter.api.Test
 
-class PublicDatabaseTest {
+class PublicSuffixDatabaseTest {
   @Test
   fun testResourcesLoaded() {
     val url = "https://api.twitter.com".toHttpUrl()
