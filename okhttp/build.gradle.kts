@@ -128,10 +128,12 @@ project.applyOsgi(
   "Import-Package: " +
     "android.*;resolution:=optional," +
     "com.oracle.svm.core.annotate;resolution:=optional," +
+    "com.oracle.svm.core.configure;resolution:=optional," +
     "dalvik.system;resolution:=optional," +
     "org.conscrypt;resolution:=optional," +
     "org.bouncycastle.*;resolution:=optional," +
     "org.openjsse.*;resolution:=optional," +
+    "org.graalvm.nativeimage;resolution:=optional," +
     "sun.security.ssl;resolution:=optional,*",
   "Automatic-Module-Name: okhttp3",
   "Bundle-SymbolicName: com.squareup.okhttp3"
