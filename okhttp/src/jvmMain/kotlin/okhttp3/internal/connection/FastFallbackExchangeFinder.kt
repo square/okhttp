@@ -16,6 +16,7 @@
 package okhttp3.internal.connection
 
 import java.io.IOException
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.TimeUnit
 import okhttp3.internal.concurrent.Task
@@ -35,7 +36,7 @@ internal class FastFallbackExchangeFinder(
   private val connectDelayMillis = 250L
 
   /** Plans currently being connected, and that will later be added to [connectResults]. */
-  private var connectsInFlight = mutableListOf<Plan>()
+  private var connectsInFlight = CopyOnWriteArrayList<Plan>()
 
   /**
    * Results are posted here as they occur. The find job is done when either one plan completes
@@ -93,12 +94,40 @@ internal class FastFallbackExchangeFinder(
     taskRunner.newQueue().schedule(object : Task(taskName) {
       override fun runOnce(): Long {
         val connectResult = try {
-          plan.connect()
+          connectAndDoRetries()
         } catch (e: Throwable) {
           ConnectResult(plan, throwable = e)
         }
         connectResults.put(connectResult)
         return -1L
+      }
+
+      private fun connectAndDoRetries(): ConnectResult {
+        var firstException: Throwable? = null
+        var currentPlan = plan
+        while (true) {
+          val connectResult = currentPlan.connect()
+
+          if (connectResult.throwable == null) {
+            if (connectResult.nextPlan == null) return connectResult // Success.
+          } else {
+            if (firstException == null) {
+              firstException = connectResult.throwable
+            } else {
+              firstException.addSuppressed(connectResult.throwable)
+            }
+
+            // Fail if there's no next plan, or if this failure exception is not recoverable.
+            if (connectResult.nextPlan == null || connectResult.throwable !is IOException) break
+          }
+
+          // Replace the currently-running plan with its successor.
+          connectsInFlight.add(connectResult.nextPlan)
+          connectsInFlight.remove(currentPlan)
+          currentPlan = connectResult.nextPlan
+        }
+
+        return ConnectResult(currentPlan, throwable = firstException)
       }
     })
   }
