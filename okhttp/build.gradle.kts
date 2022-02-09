@@ -134,6 +134,7 @@ project.applyOsgi(
     "org.bouncycastle.*;resolution:=optional," +
     "org.openjsse.*;resolution:=optional," +
     "org.graalvm.nativeimage;resolution:=optional," +
+    "org.graalvm.nativeimage.hosted;resolution:=optional," +
     "sun.security.ssl;resolution:=optional,*",
   "Automatic-Module-Name: okhttp3",
   "Bundle-SymbolicName: com.squareup.okhttp3"
