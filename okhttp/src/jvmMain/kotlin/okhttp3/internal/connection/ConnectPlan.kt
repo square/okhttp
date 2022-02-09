@@ -38,7 +38,6 @@ import okhttp3.internal.closeQuietly
 import okhttp3.internal.connection.RoutePlanner.ConnectResult
 import okhttp3.internal.http.ExchangeCodec
 import okhttp3.internal.http1.Http1ExchangeCodec
-import okhttp3.internal.http2.Http2Connection
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.tls.OkHostnameVerifier
 import okhttp3.internal.toHostHeader
@@ -87,7 +86,6 @@ class ConnectPlan(
   internal var socket: Socket? = null
   private var handshake: Handshake? = null
   private var protocol: Protocol? = null
-  private var http2Connection: Http2Connection? = null
   private var source: BufferedSource? = null
   private var sink: BufferedSink? = null
   private var connection: RealConnection? = null
@@ -164,7 +162,7 @@ class ConnectPlan(
         }
       }
 
-      this.connection = RealConnection(
+      val connection = RealConnection(
         taskRunner = client.taskRunner,
         connectionPool = client.connectionPool.delegate,
         route = route,
@@ -172,18 +170,15 @@ class ConnectPlan(
         socket = socket,
         handshake = handshake,
         protocol = protocol,
-        http2Connection = http2Connection,
         source = source,
         sink = sink,
+        pingIntervalMillis = client.pingIntervalMillis,
       )
-
-      if (protocol == Protocol.HTTP_2 || protocol == Protocol.H2_PRIOR_KNOWLEDGE) {
-        startHttp2(connection!!)
-      }
+      this.connection = connection
+      connection.start()
 
       // Success.
       eventListener.connectEnd(call, route.socketAddress, route.proxy, protocol)
-      connection!!.idleAtNs = System.nanoTime()
       success = true
       return ConnectResult(plan = this)
     } catch (e: IOException) {
@@ -275,22 +270,6 @@ class ConnectPlan(
         return ConnectResult(plan = this, throwable = failure)
       }
     }
-  }
-
-  @Throws(IOException::class)
-  private fun startHttp2(connection: RealConnection) {
-    val socket = this.socket!!
-    val source = this.source!!
-    val sink = this.sink!!
-    socket.soTimeout = 0 // HTTP/2 connection timeouts are set per-stream.
-    val http2Connection = Http2Connection.Builder(client = true, client.taskRunner)
-      .socket(socket, route.address.url.host, source, sink)
-      .listener(connection)
-      .pingIntervalMillis(client.pingIntervalMillis)
-      .build()
-    this.http2Connection = http2Connection
-    connection.allocationLimit = Http2Connection.DEFAULT_SETTINGS.getMaxConcurrentStreams()
-    http2Connection.start()
   }
 
   @Throws(IOException::class)

@@ -73,10 +73,12 @@ class RealConnection(
   private var socket: Socket?,
   private var handshake: Handshake?,
   private var protocol: Protocol?,
-  private var http2Connection: Http2Connection?,
   private var source: BufferedSource?,
   private var sink: BufferedSink?,
+  private val pingIntervalMillis: Int,
 ) : Http2Connection.Listener(), Connection, ExchangeCodec.Carrier {
+  private var http2Connection: Http2Connection? = null
+
   // These properties are guarded by this.
 
   /**
@@ -108,7 +110,7 @@ class RealConnection(
    * The maximum number of concurrent streams that can be carried by this connection. If
    * `allocations.size() < allocationLimit` then new streams can be created on this connection.
    */
-  internal var allocationLimit = 1
+  private var allocationLimit = 1
 
   /** Current calls carried by this connection. */
   val calls = mutableListOf<Reference<RealCall>>()
@@ -135,6 +137,30 @@ class RealConnection(
 
   @Synchronized internal fun incrementSuccessCount() {
     successCount++
+  }
+
+  @Throws(IOException::class)
+  fun start() {
+    idleAtNs = System.nanoTime()
+    if (protocol == Protocol.HTTP_2 || protocol == Protocol.H2_PRIOR_KNOWLEDGE) {
+      startHttp2()
+    }
+  }
+
+  @Throws(IOException::class)
+  private fun startHttp2() {
+    val socket = this.socket!!
+    val source = this.source!!
+    val sink = this.sink!!
+    socket.soTimeout = 0 // HTTP/2 connection timeouts are set per-stream.
+    val http2Connection = Http2Connection.Builder(client = true, taskRunner)
+      .socket(socket, route.address.url.host, source, sink)
+      .listener(this)
+      .pingIntervalMillis(pingIntervalMillis)
+      .build()
+    this.http2Connection = http2Connection
+    this.allocationLimit = Http2Connection.DEFAULT_SETTINGS.getMaxConcurrentStreams()
+    http2Connection.start()
   }
 
   /**
@@ -379,9 +405,9 @@ class RealConnection(
         socket = socket,
         handshake = null,
         protocol = null,
-        http2Connection = null,
         source = null,
         sink = null,
+        pingIntervalMillis = 0,
       )
       result.idleAtNs = idleAtNs
       return result
