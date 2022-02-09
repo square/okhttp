@@ -16,6 +16,7 @@
 
 package okhttp3.internal.graal
 
+import com.oracle.svm.core.annotate.AutomaticFeature
 import com.oracle.svm.core.configure.ResourcesRegistry
 import org.graalvm.nativeimage.ImageSingletons
 import org.graalvm.nativeimage.hosted.Feature
@@ -25,6 +26,7 @@ import org.graalvm.nativeimage.hosted.Feature
  *
  * Currently, includes all necessary resources.
  */
+@AutomaticFeature
 class OkHttpFeature : Feature {
   override fun beforeAnalysis(access: Feature.BeforeAnalysisAccess?) {
     val resourcesRegistry = ImageSingletons.lookup(ResourcesRegistry::class.java)
