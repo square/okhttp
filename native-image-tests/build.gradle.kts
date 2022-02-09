@@ -41,7 +41,6 @@ animalsniffer {
 sourceSets {
   main {
     java.srcDirs(
-      "../okhttp/src/jvmTest/java",
       "../okhttp-brotli/src/test/java",
       "../okhttp-dnsoverhttps/src/test/java",
       "../okhttp-logging-interceptor/src/test/java",
