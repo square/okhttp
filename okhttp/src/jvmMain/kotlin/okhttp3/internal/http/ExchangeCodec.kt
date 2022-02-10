@@ -19,14 +19,15 @@ import java.io.IOException
 import okhttp3.Headers
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.internal.connection.RealConnection
+import okhttp3.Route
+import okhttp3.internal.connection.RealCall
 import okio.Sink
 import okio.Source
 
 /** Encodes HTTP requests and decodes HTTP responses. */
 interface ExchangeCodec {
-  /** Returns the connection that carries this codec. */
-  val connection: RealConnection
+  /** The connection or CONNECT tunnel that owns this codec. */
+  val carrier: Carrier
 
   /** Returns an output stream where the request body can be streamed. */
   @Throws(IOException::class)
@@ -68,6 +69,17 @@ interface ExchangeCodec {
    * That may happen later by the connection pool thread.
    */
   fun cancel()
+
+  /**
+   * Carries an exchange. This is usually a connection, but it could also be a connect plan for
+   * CONNECT tunnels. Note that CONNECT tunnels are significantly less capable than connections.
+   */
+  interface Carrier {
+    val route: Route
+    fun trackFailure(call: RealCall, e: IOException?)
+    fun noNewExchanges()
+    fun cancel()
+  }
 
   companion object {
     /**

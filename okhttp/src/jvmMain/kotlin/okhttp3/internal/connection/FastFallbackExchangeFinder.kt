@@ -16,10 +16,12 @@
 package okhttp3.internal.connection
 
 import java.io.IOException
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.TimeUnit
 import okhttp3.internal.concurrent.Task
 import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.connection.RoutePlanner.ConnectResult
 import okhttp3.internal.connection.RoutePlanner.Plan
 import okhttp3.internal.okHttpName
 
@@ -34,7 +36,7 @@ internal class FastFallbackExchangeFinder(
   private val connectDelayMillis = 250L
 
   /** Plans currently being connected, and that will later be added to [connectResults]. */
-  private var connectsInFlight = mutableListOf<Plan>()
+  private var connectsInFlight = CopyOnWriteArrayList<Plan>()
 
   /**
    * Results are posted here as they occur. The find job is done when either one plan completes
@@ -83,7 +85,7 @@ internal class FastFallbackExchangeFinder(
 
     // Already connected? Enqueue the result immediately.
     if (plan.isConnected) {
-      connectResults.put(ConnectResult(plan, null))
+      connectResults.put(ConnectResult(plan))
       return
     }
 
@@ -91,13 +93,41 @@ internal class FastFallbackExchangeFinder(
     val taskName = "$okHttpName connect ${routePlanner.address.url.redact()}"
     taskRunner.newQueue().schedule(object : Task(taskName) {
       override fun runOnce(): Long {
-        try {
-          plan.connect()
-          connectResults.put(ConnectResult(plan, null))
+        val connectResult = try {
+          connectAndDoRetries()
         } catch (e: Throwable) {
-          connectResults.put(ConnectResult(plan, e))
+          ConnectResult(plan, throwable = e)
         }
+        connectResults.put(connectResult)
         return -1L
+      }
+
+      private fun connectAndDoRetries(): ConnectResult {
+        var firstException: Throwable? = null
+        var currentPlan = plan
+        while (true) {
+          val connectResult = currentPlan.connect()
+
+          if (connectResult.throwable == null) {
+            if (connectResult.nextPlan == null) return connectResult // Success.
+          } else {
+            if (firstException == null) {
+              firstException = connectResult.throwable
+            } else {
+              firstException.addSuppressed(connectResult.throwable)
+            }
+
+            // Fail if there's no next plan, or if this failure exception is not recoverable.
+            if (connectResult.nextPlan == null || connectResult.throwable !is IOException) break
+          }
+
+          // Replace the currently-running plan with its successor.
+          connectsInFlight.add(connectResult.nextPlan)
+          connectsInFlight.remove(currentPlan)
+          currentPlan = connectResult.nextPlan
+        }
+
+        return ConnectResult(currentPlan, throwable = firstException)
       }
     })
   }
@@ -129,9 +159,4 @@ internal class FastFallbackExchangeFinder(
       firstException!!.addSuppressed(exception)
     }
   }
-
-  private class ConnectResult(
-    val plan: Plan,
-    val throwable: Throwable?,
-  )
 }

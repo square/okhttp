@@ -20,6 +20,7 @@ import java.io.IOException
 import java.util.concurrent.LinkedBlockingDeque
 import okhttp3.internal.concurrent.TaskFaker
 import okhttp3.internal.connection.RoutePlanner
+import okhttp3.internal.connection.RoutePlanner.ConnectResult
 
 class FakeRoutePlanner(
   private val taskFaker: TaskFaker,
@@ -87,23 +88,25 @@ class FakeRoutePlanner(
     var connectDelayNanos = 0L
     var connectThrowable: Throwable? = null
 
-    override fun connect() {
+    override fun connect(): ConnectResult {
       check(!isConnected) { "already connected" }
       events += "plan $id connecting..."
 
       taskFaker.sleep(connectDelayNanos)
 
-      when {
+      return when {
         connectThrowable != null -> {
           events += "plan $id connect failed"
-          throw connectThrowable!!
+          ConnectResult(this, throwable = connectThrowable)
         }
         canceled -> {
           events += "plan $id connect canceled"
+          ConnectResult(this, throwable = IOException("canceled"))
         }
         else -> {
           events += "plan $id connected"
           isConnected = true
+          ConnectResult(this)
         }
       }
     }

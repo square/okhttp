@@ -20,16 +20,28 @@ import java.security.cert.CertificateException
 import javax.net.ssl.SSLHandshakeException
 import javax.net.ssl.SSLSocket
 import okhttp3.ConnectionSpec
+import okhttp3.OkHttpClientTestRule
+import okhttp3.TestValueFactory
 import okhttp3.TlsVersion
 import okhttp3.tls.internal.TlsUtil.localhost
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
-class EquipPlanTest {
+class RetryConnectionTest {
+  private val factory = TestValueFactory()
   private val handshakeCertificates = localhost()
-  private val retryableException = SSLHandshakeException(
-    "Simulated handshake exception"
-  )
+  private val retryableException = SSLHandshakeException("Simulated handshake exception")
+
+  @RegisterExtension
+  val clientTestRule = OkHttpClientTestRule()
+
+  private var client = clientTestRule.newClient()
+
+  @AfterEach internal fun tearDown() {
+    factory.close()
+  }
 
   @Test fun nonRetryableIOException() {
     val exception = IOException("Non-handshake exception")
@@ -51,7 +63,8 @@ class EquipPlanTest {
     val sslV3 = ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
       .tlsVersions(TlsVersion.SSL_3_0)
       .build()
-    val equipPlan = EquipPlan(connectionSpecIndex = -1)
+    val routePlanner = factory.newRoutePlanner(client)
+    val route = factory.newRoute()
     val connectionSpecs = listOf(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS, sslV3)
     val enabledSocketTlsVersions = arrayOf(
       TlsVersion.TLS_1_2,
@@ -61,7 +74,8 @@ class EquipPlanTest {
     var socket = createSocketWithEnabledProtocols(*enabledSocketTlsVersions)
 
     // MODERN_TLS is used here.
-    val attempt0 = equipPlan.withCurrentOrInitialConnectionSpec(connectionSpecs, socket)
+    val attempt0 = routePlanner.planConnectToRoute(route)
+      .planWithCurrentOrInitialConnectionSpec(connectionSpecs, socket)
     assertThat(attempt0.isTlsFallback).isFalse()
     connectionSpecs[attempt0.connectionSpecIndex].apply(socket, attempt0.isTlsFallback)
     assertEnabledProtocols(socket, TlsVersion.TLS_1_2)

@@ -51,10 +51,11 @@ class Exchange(
   internal var hasFailure: Boolean = false
     private set
 
-  internal val connection: RealConnection = codec.connection
+  internal val connection: RealConnection
+    get() = codec.carrier as? RealConnection ?: error("no connection for CONNECT tunnels")
 
   internal val isCoalescedConnection: Boolean
-    get() = finder.address.url.host != connection.route().address.url.host
+    get() = finder.address.url.host != codec.carrier.route.address.url.host
 
   @Throws(IOException::class)
   fun writeRequestHeaders(request: Request) {
@@ -142,7 +143,7 @@ class Exchange(
   @Throws(SocketException::class)
   fun newWebSocketStreams(): RealWebSocket.Streams {
     call.timeoutEarlyExit()
-    return codec.connection.newWebSocketStreams(this)
+    return (codec.carrier as RealConnection).newWebSocketStreams(this)
   }
 
   fun webSocketUpgradeFailed() {
@@ -150,7 +151,7 @@ class Exchange(
   }
 
   fun noNewExchangesOnConnection() {
-    codec.connection.noNewExchanges()
+    codec.carrier.noNewExchanges()
   }
 
   fun cancel() {
@@ -169,7 +170,7 @@ class Exchange(
   private fun trackFailure(e: IOException) {
     hasFailure = true
     finder.trackFailure(e)
-    codec.connection.trackFailure(call, e)
+    codec.carrier.trackFailure(call, e)
   }
 
   fun <E : IOException?> bodyComplete(
