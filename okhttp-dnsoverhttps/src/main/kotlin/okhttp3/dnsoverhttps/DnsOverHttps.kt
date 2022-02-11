@@ -66,11 +66,15 @@ class DnsOverHttps internal constructor(
         throw UnknownHostException("public hosts not resolved")
       }
     }
-
+    
     return try {
-      listOf(InetAddressUtil.forString(hostname))
-    } catch (e: UnknownHostException) {
       lookupHttps(hostname)
+    } catch (bestFailure: UnknownHostException) {
+      try {
+        listOf(InetAddressUtil.forString(hostname))
+      } catch (e: Exception) {
+        throw bestFailure // throw the raw lookupHttps exception
+      }
     }
   }
 
