@@ -67,7 +67,11 @@ class DnsOverHttps internal constructor(
       }
     }
 
-    return lookupHttps(hostname)
+    return try {
+      listOf(InetAddressUtil.forString(hostname))
+    } catch (e: UnknownHostException) {
+      lookupHttps(hostname)
+    }
   }
 
   @Throws(UnknownHostException::class)
