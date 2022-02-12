@@ -84,6 +84,18 @@ public class DnsOverHttpsTest {
         "/lookup?ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ");
   }
 
+  @Test public void getIPAddressHost() throws Exception {
+    dns = buildLocalhost(bootstrapClient, true);
+
+    String hostIPv4 = "127.0.0.1";
+    List<InetAddress> resultIPv4 = dns.lookup(hostIPv4);
+    assertThat(resultIPv4).contains(address(hostIPv4));
+
+    String hostIPv6 = "2a03:2880:f029:11:face:b00c:0:2";
+    List<InetAddress> resultIPv6 = dns.lookup(hostIPv6);
+    assertThat(resultIPv6).contains(address(hostIPv6));
+  }
+
   @Test public void getIpv6() throws Exception {
     server.enqueue(dnsResponse(
         "0000818000010003000000000567726170680866616365626f6f6b03636f6d0000010001c00c00050001"
