@@ -4,5 +4,5 @@ plugins {
 
 dependencies {
   implementation(projects.mockwebserver)
-  implementation(Dependencies.moshi)
+  implementation(libs.squareup.moshi)
 }

@@ -7,14 +7,16 @@ org-bouncycastle = "1.70"
 org-jetbrains-dokka = "1.6.0"
 org-jetbrains-kotlin = "1.6.10"
 org-junit-jupiter = "5.8.2"
+graalvm-svm = "22.0.0.2"
 
 [libraries]
-aQute-bnd-gradle = { module = "biz.aQute.bnd:biz.aQute.bnd.gradle", version.ref = "biz-aQute-bnd" }
+aQute-bnd-gradle-plugin = { module = "biz.aQute.bnd:biz.aQute.bnd.gradle", version.ref = "biz-aQute-bnd" }
 aQute-resolve = { module = "biz.aQute.bnd:biz.aQute.resolve", version.ref = "biz-aQute-bnd" }
 amazon-corretto = "software.amazon.cryptools:AmazonCorrettoCryptoProvider:1.6.1"
 android-gradle = "com.android.tools.build:gradle:7.0.4"
 animalsniffer-plugin = "ru.vyarus:gradle-animalsniffer-plugin:1.5.4"
 assertj-core = "org.assertj:assertj-core:3.21.0"
+assertk = "com.willowtreeapps.assertk:assertk:0.25"
 benmanes-versions = "com.github.ben-manes:gradle-versions-plugin:0.42.0"
 bouncycastle-bcpkix = { module = "org.bouncycastle:bcpkix-jdk15to18", version.ref = "org-bouncycastle" }
 bouncycastle-bcprov = { module = "org.bouncycastle:bcprov-jdk15to18", version.ref = "org-bouncycastle" }
@@ -24,14 +26,14 @@ animalsniffer-annotations = "org.codehaus.mojo:animal-sniffer-annotations:1.20"
 codehaus-signature-java18 = "org.codehaus.mojo.signature:java18:1.0"
 conscrypt-openjdk = "org.conscrypt:conscrypt-openjdk-uber:2.5.2"
 dokka-all-modules-page-plugin = { module = "org.jetbrains.dokka:all-modules-page-plugin", version.ref = "org-jetbrains-dokka" }
-dokka-dokka-base = { module = "org.jetbrains.dokka:dokka-base", version.ref = "org-jetbrains-dokka" }
-dokka-dokka-gradle-plugin = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "org-jetbrains-dokka" }
+dokka-base = { module = "org.jetbrains.dokka:dokka-base", version.ref = "org-jetbrains-dokka" }
+dokka-gradle-plugin = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "org-jetbrains-dokka" }
 dokka-gfm-template-processing-plugin = { module = "org.jetbrains.dokka:gfm-template-processing-plugin", version.ref = "org-jetbrains-dokka" }
 dokka-jekyll-template-processing-plugin = { module = "org.jetbrains.dokka:jekyll-template-processing-plugin", version.ref = "org-jetbrains-dokka" }
 eclipse-jetty-client = "org.eclipse.jetty:jetty-client:9.4.27.v20200227"
 errorprone-gradle-plugin = "net.ltgt.gradle:gradle-errorprone-plugin:2.0.2"
 findbugs-jsr305 = "com.google.code.findbugs:jsr305:3.0.2"
-graalvm-nativeimage-svm = "org.graalvm.nativeimage:svm:22.0.0.2"
+graalvm-nativeimage-svm = { module = "org.graalvm.nativeimage:svm", version.ref = "graalvm-svm" }
 guava-jre = "com.google.guava:guava:31.0.1-jre"
 hamcrest-library = "org.hamcrest:hamcrest-library:2.2"
 httpcomponents-httpclient5 = "org.apache.httpcomponents.client5:httpclient5:5.0"
@@ -39,7 +41,7 @@ info-picocli = { module = "info.picocli:picocli", version.ref = "info-picocli" }
 info-picocli-codegen = { module = "info.picocli:picocli-codegen", version.ref = "info-picocli" }
 japicmp-gradle-plugin = "me.champeau.gradle:japicmp-gradle-plugin:0.3.0"
 jnr-unixsocket = "com.github.jnr:jnr-unixsocket:0.38.15"
-johnrengelman-shadow = "gradle.plugin.com.github.johnrengelman:shadow:7.1.0"
+johnrengelman-shadow-plugin = "gradle.plugin.com.github.johnrengelman:shadow:7.1.0"
 jsoup = "org.jsoup:jsoup:1.14.3"
 junit = "junit:junit:4.13.2"
 junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "org-junit-jupiter" }
@@ -60,17 +62,16 @@ littlerobots-vcuplugin = "nl.littlerobots.vcu:plugin:0.3.0"
 mannodermaus-androidjunit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.8.0.0"
 openjsse = "org.openjsse:openjsse:1.1.8"
 eclipse-osgi = "org.eclipse.platform:org.eclipse.osgi:3.17.100"
-palantir-gradle-graal = "gradle.plugin.com.palantir.graal:gradle-graal:0.10.0"
+palantir-graal-gradle-plugin = "gradle.plugin.com.palantir.graal:gradle-graal:0.10.0"
 puppycrawl-checkstyle = "com.puppycrawl.tools:checkstyle:9.2"
 robolectric-android = "org.robolectric:android-all:12-robolectric-7732740"
 signature-android-apilevel21 = "net.sf.androidscents.signature:android-api-level-21:5.0.1_r2"
-spotless-gradle = "com.diffplug.spotless:spotless-plugin-gradle:6.0.4"
+spotless-gradle-plugin = "com.diffplug.spotless:spotless-plugin-gradle:6.0.4"
 squareup-moshi = { module = "com.squareup.moshi:moshi", version.ref = "com-squareup-moshi" }
 squareup-moshi-kotlincodegen = { module = "com.squareup.moshi:moshi-kotlin-codegen", version.ref = "com-squareup-moshi" }
 squareup-okio = { module = "com.squareup.okio:okio", version.ref = "com-squareup-okio" }
 squareup-okio-fakefilesystem = { module = "com.squareup.okio:okio-fakefilesystem", version.ref = "com-squareup-okio" }
 vanniktech-publish-plugin = "com.vanniktech:gradle-maven-publish-plugin:0.18.0"
-assertk = "com.willowtreeapps.assertk:assertk:0.25"
 
 [plugins]
 aQute-bnd = "biz.aQute.bnd:6.1.0"

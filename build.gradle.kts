@@ -8,18 +8,18 @@ import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
 
 buildscript {
   dependencies {
-    classpath(Dependencies.dokkaPlugin)
-    classpath(Dependencies.kotlinPlugin)
+    classpath(libs.dokka.gradle.plugin)
+    classpath(libs.kotlin.gradle.plugin)
     classpath(Dependencies.androidPlugin)
     classpath(Dependencies.androidJunit5Plugin)
-    classpath(Dependencies.graalPlugin)
-    classpath(Dependencies.bndPlugin)
-    classpath(Dependencies.shadowPlugin)
-    classpath(Dependencies.japicmpPlugin)
-    classpath(Dependencies.animalsnifferPlugin)
-    classpath(Dependencies.errorpronePlugin)
-    classpath(Dependencies.spotlessPlugin)
-    classpath(Dependencies.vanniktechPublishPlugin)
+    classpath(libs.palantir.graal.gradle.plugin)
+    classpath(libs.aQute.bnd.gradle.plugin)
+    classpath(libs.johnrengelman.shadow.plugin)
+    classpath(libs.japicmp.gradle.plugin)
+    classpath(libs.animalsniffer.plugin)
+    classpath(libs.errorprone.gradle.plugin)
+    classpath(libs.spotless.gradle.plugin)
+    classpath(libs.vanniktech.publish.plugin)
 
     classpath("com.github.ben-manes:gradle-versions-plugin:0.42.0")
     classpath("nl.littlerobots.vcu:plugin:0.3.0")

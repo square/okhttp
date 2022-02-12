@@ -21,11 +21,11 @@ tasks {
 
 dependencies {
   api(projects.mockwebserver3)
-  api(Dependencies.junit5Api)
-  compileOnly(Dependencies.animalSniffer)
+  api(libs.junit.jupiter.api)
+  compileOnly(libs.animalsniffer.annotations)
 
-  testRuntimeOnly(Dependencies.junit5JupiterEngine)
-  testImplementation(Dependencies.assertj)
+  testRuntimeOnly(libs.junit.jupiter.engine)
+  testImplementation(libs.assertj.core)
   testImplementation(Dependencies.kotlinJunit5)
 }
 

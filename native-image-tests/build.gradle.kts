@@ -1,4 +1,5 @@
 import org.apache.tools.ant.taskdefs.condition.Os
+import org.jetbrains.kotlin.incremental.ChangesCollector.Companion.getNonPrivateNames
 
 plugins {
   id("com.palantir.graal")
@@ -6,11 +7,11 @@ plugins {
 }
 
 dependencies {
-  implementation(Dependencies.assertj)
-  implementation(Dependencies.junit5Api)
-  implementation(Dependencies.junit5JupiterEngine)
+  implementation(libs.assertj.core)
+  implementation(libs.junit.jupiter.api)
+  implementation(libs.junit.jupiter.engine)
   implementation(Dependencies.junitPlatformConsole)
-  implementation(Dependencies.okioFakeFileSystem)
+  implementation(libs.squareup.okio.fakefilesystem)
 
   implementation(projects.okhttp)
   implementation(projects.okhttpBrotli)
@@ -19,19 +20,19 @@ dependencies {
   implementation(projects.okhttpSse)
   implementation(projects.okhttpTestingSupport)
   implementation(projects.okhttpTls)
-  implementation(Dependencies.assertj)
+  implementation(libs.assertj.core)
   implementation(projects.mockwebserver3)
   implementation(projects.mockwebserver)
   implementation(projects.okhttpUrlconnection)
   implementation(projects.mockwebserver3Junit4)
   implementation(projects.mockwebserver3Junit5)
-  implementation(Dependencies.bndResolve)
-  implementation(Dependencies.junit5Api)
-  implementation(Dependencies.junit5JupiterParams)
+  implementation(libs.aQute.resolve)
+  implementation(libs.junit.jupiter.api)
+  implementation(libs.junit.jupiter.params)
 
-  implementation(Dependencies.nativeImageSvm)
+  implementation(libs.graalvm.nativeimage.svm)
 
-  compileOnly(Dependencies.jsr305)
+  compileOnly(libs.findbugs.jsr305)
 }
 
 animalsniffer {
@@ -52,7 +53,7 @@ sourceSets {
 graal {
   mainClass("okhttp3.RunTestsKt")
   outputName("ConsoleLauncher")
-  graalVersion(Versions.graal)
+  graalVersion(libs.versions.graalvm.svm.get())
   javaVersion("11")
 
   option("--no-fallback")

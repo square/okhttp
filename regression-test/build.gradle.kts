@@ -43,11 +43,11 @@ dependencies {
     exclude("org.bouncycastle")
   }
   androidTestImplementation("com.squareup.okhttp3:mockwebserver:${okhttpLegacyVersion}")
-  androidTestImplementation(Dependencies.bouncycastle)
-  androidTestImplementation(Dependencies.bouncycastletls)
+  androidTestImplementation(libs.bouncycastle.bcprov)
+  androidTestImplementation(libs.bouncycastle.bctls)
   androidTestImplementation(Dependencies.androidxExtJunit)
   androidTestImplementation(Dependencies.androidxEspressoCore)
-  androidTestImplementation(Dependencies.httpclient5)
-  androidTestImplementation(Dependencies.moshi)
-  androidTestImplementation(Dependencies.moshiKotlin)
+  androidTestImplementation(libs.httpcomponents.httpclient5)
+  androidTestImplementation(libs.squareup.moshi)
+  androidTestImplementation(libs.squareup.moshi.kotlincodegen)
 }
