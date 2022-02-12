@@ -101,7 +101,7 @@ kotlin {
         implementation(libs.kotlin.test.junit)
         implementation(libs.assertj.core)
         implementation(libs.openjsse)
-        implementation(libs.aQute.resolve)
+        implementation(libs.aqute.resolve)
         compileOnly(libs.findbugs.jsr305)
       }
 
@@ -180,8 +180,8 @@ tasks.getByName("jvmTest") {
 }
 
 dependencies {
-  osgiTestDeploy(Dependencies.equinox)
-  osgiTestDeploy(Dependencies.kotlinStdlibOsgi)
+  osgiTestDeploy(libs.equinox)
+  osgiTestDeploy(libs.kotlin.stdlib.osgi)
 }
 
 tasks.register<JapicmpTask>("japicmp") {

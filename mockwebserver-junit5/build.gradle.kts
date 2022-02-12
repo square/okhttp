@@ -26,7 +26,7 @@ dependencies {
 
   testRuntimeOnly(libs.junit.jupiter.engine)
   testImplementation(libs.assertj.core)
-  testImplementation(Dependencies.kotlinJunit5)
+  testImplementation(libs.kotlin.junit5)
 }
 
 mavenPublishing {

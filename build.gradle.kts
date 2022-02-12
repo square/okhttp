@@ -8,21 +8,20 @@ import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
 
 buildscript {
   dependencies {
-    classpath(libs.dokka.gradle.plugin)
-    classpath(libs.kotlin.gradle.plugin)
-    classpath(Dependencies.androidPlugin)
-    classpath(Dependencies.androidJunit5Plugin)
-    classpath(libs.palantir.graal.gradle.plugin)
-    classpath(libs.aQute.bnd.gradle.plugin)
-    classpath(libs.johnrengelman.shadow.plugin)
-    classpath(libs.japicmp.gradle.plugin)
-    classpath(libs.animalsniffer.plugin)
-    classpath(libs.errorprone.gradle.plugin)
-    classpath(libs.spotless.gradle.plugin)
-    classpath(libs.vanniktech.publish.plugin)
-
-    classpath("com.github.ben-manes:gradle-versions-plugin:0.42.0")
-    classpath("nl.littlerobots.vcu:plugin:0.3.0")
+    classpath(libs.gradleplugin.dokka)
+    classpath(libs.gradleplugin.kotlin)
+    classpath(libs.gradleplugin.android.junit5)
+    classpath(libs.gradleplugin.android)
+    classpath(libs.gradleplugin.palantir.graal)
+    classpath(libs.gradleplugin.aqute.bnd)
+    classpath(libs.gradleplugin.johnrengelman.shadow)
+    classpath(libs.gradleplugin.japicmp)
+    classpath(libs.gradleplugin.animalsniffer)
+    classpath(libs.gradleplugin.errorprone)
+    classpath(libs.gradleplugin.spotless)
+    classpath(libs.gradleplugin.vanniktech)
+    classpath(libs.gradleplugin.benmanes.versions)
+    classpath(libs.gradleplugin.littlerobots.vcu)
   }
 
   repositories {
@@ -94,7 +93,7 @@ subprojects {
 
   val checkstyleConfig: Configuration by configurations.creating
   dependencies {
-    checkstyleConfig(Dependencies.checkStyle) {
+    checkstyleConfig("com.puppycrawl.tools:checkstyle:9.2") {
       isTransitive = false
     }
   }
@@ -102,20 +101,21 @@ subprojects {
   afterEvaluate {
     configure<CheckstyleExtension> {
       config = resources.text.fromArchiveEntry(checkstyleConfig, "google_checks.xml")
-      toolVersion = Versions.checkStyle
+      toolVersion = libs.versions.checkStyle.get()
       sourceSets = listOf(project.sourceSets["main"])
     }
-  }
 
-  // Animal Sniffer confirms we generally don't use APIs not on Java 8.
-  configure<AnimalSnifferExtension> {
-    annotation = "okhttp3.internal.SuppressSignatureCheck"
-    sourceSets = listOf(project.sourceSets["main"])
-  }
-  val signature: Configuration by configurations.getting
-  dependencies {
-    signature(Dependencies.signatureAndroid21)
-    signature(Dependencies.signatureJava18)
+    // Animal Sniffer confirms we generally don't use APIs not on Java 8.
+    configure<AnimalSnifferExtension> {
+      annotation = "okhttp3.internal.SuppressSignatureCheck"
+      sourceSets = listOf(project.sourceSets["main"])
+    }
+
+    val signature: Configuration by configurations.getting
+    dependencies {
+      signature(libs.signature.android.apilevel21)
+      signature(libs.codehaus.signature.java18)
+    }
   }
 
   tasks.withType<KotlinCompile> {
@@ -132,9 +132,12 @@ subprojects {
   val testJavaVersion = System.getProperty("test.java.version", "11").toInt()
 
   val testRuntimeOnly: Configuration by configurations.getting
-  dependencies {
-    testRuntimeOnly(Dependencies.junit5JupiterEngine)
-    testRuntimeOnly(Dependencies.junit5VintageEngine)
+
+  afterEvaluate {
+    dependencies {
+      testRuntimeOnly(libs.junit.jupiter.engine)
+      testRuntimeOnly(libs.junit.vintage.engine)
+    }
   }
 
   tasks.withType<Test> {
@@ -171,11 +174,11 @@ subprojects {
     }
   } else if (platform == "conscrypt") {
     dependencies {
-      testRuntimeOnly(Dependencies.conscrypt)
+      testRuntimeOnly(libs.conscrypt)
     }
   } else if (platform == "openjsse") {
     dependencies {
-      testRuntimeOnly(Dependencies.openjsse)
+      testRuntimeOnly(libs.openjsse)
     }
   }
 

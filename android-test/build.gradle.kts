@@ -46,8 +46,8 @@ android {
 }
 
 dependencies {
-  implementation(Dependencies.kotlinReflect)
-  implementation(Dependencies.playServicesSafetynet)
+  implementation(libs.kotlin.reflect)
+  implementation(libs.playservices.safetynet)
   implementation(projects.okhttp)
 
   androidTestImplementation(projects.okhttpTestingSupport) {
@@ -57,7 +57,7 @@ dependencies {
   }
   androidTestImplementation(libs.bouncycastle.bcprov)
   androidTestImplementation(libs.bouncycastle.bctls)
-  androidTestImplementation(Dependencies.conscryptAndroid)
+  androidTestImplementation(libs.conscrypt.android)
   androidTestImplementation(projects.mockwebserver3Junit5)
   androidTestImplementation(projects.okhttpBrotli)
   androidTestImplementation(projects.okhttpDnsoverhttps)
@@ -65,15 +65,15 @@ dependencies {
   androidTestImplementation(projects.okhttpSse)
   androidTestImplementation(projects.okhttpTestingSupport)
   androidTestImplementation(projects.okhttpTls)
-  androidTestImplementation(Dependencies.androidxExtJunit)
-  androidTestImplementation(Dependencies.androidxEspressoCore)
+  androidTestImplementation(libs.androidx.junit)
+  androidTestImplementation(libs.androidx.espresso.core)
   androidTestImplementation(libs.httpcomponents.httpclient5)
   androidTestImplementation(libs.squareup.moshi)
   androidTestImplementation(libs.squareup.moshi.kotlincodegen)
   androidTestImplementation(libs.squareup.okio.fakefilesystem)
 
-  androidTestImplementation(Dependencies.androidxTestRunner)
+  androidTestImplementation(libs.androidx.test.runner)
   androidTestImplementation(libs.junit.jupiter.api)
-  androidTestImplementation(Dependencies.junit5AndroidCore)
-  androidTestRuntimeOnly(Dependencies.junit5AndroidRunner)
+  androidTestImplementation(libs.junit5android.core)
+  androidTestRuntimeOnly(libs.junit5android.runner)
 }

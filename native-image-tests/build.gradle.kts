@@ -10,7 +10,7 @@ dependencies {
   implementation(libs.assertj.core)
   implementation(libs.junit.jupiter.api)
   implementation(libs.junit.jupiter.engine)
-  implementation(Dependencies.junitPlatformConsole)
+  implementation(libs.junit.platform.console)
   implementation(libs.squareup.okio.fakefilesystem)
 
   implementation(projects.okhttp)
@@ -26,7 +26,7 @@ dependencies {
   implementation(projects.okhttpUrlconnection)
   implementation(projects.mockwebserver3Junit4)
   implementation(projects.mockwebserver3Junit5)
-  implementation(libs.aQute.resolve)
+  implementation(libs.aqute.resolve)
   implementation(libs.junit.jupiter.api)
   implementation(libs.junit.jupiter.params)
 
@@ -53,7 +53,7 @@ sourceSets {
 graal {
   mainClass("okhttp3.RunTestsKt")
   outputName("ConsoleLauncher")
-  graalVersion(libs.versions.graalvm.svm.get())
+  graalVersion(libs.versions.graalvm.get())
   javaVersion("11")
 
   option("--no-fallback")
