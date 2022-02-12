@@ -1,6 +1,7 @@
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import com.vanniktech.maven.publish.SonatypeHost
 import java.net.URL
+import nl.littlerobots.vcu.plugin.versionCatalogUpdate
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -250,8 +251,23 @@ tasks.wrapper {
   distributionType = Wrapper.DistributionType.ALL
 }
 
+versionCatalogUpdate {
+  sortByKey = true
+
+  keep {
+    // gradle profiles are used to enable/disable some modules so keep all
+    keepUnusedVersions.set(true)
+    keepUnusedLibraries.set(true)
+    keepUnusedPlugins.set(true)
+  }
+}
+
 tasks.withType<com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask> {
   rejectVersionIf {
-    candidate.version.contains(".*-(beta|alpha).*/".toRegex())
+    candidate.run {
+      version.contains("alpha") ||
+        version.contains("beta") ||
+        version.contains("1.6.20-M")
+    }
   }
 }
