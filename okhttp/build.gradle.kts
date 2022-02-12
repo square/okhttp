@@ -40,14 +40,14 @@ kotlin {
     commonMain {
       kotlin.srcDir("$buildDir/generated/sources/kotlinTemplates")
       dependencies {
-        api(Dependencies.okio)
-        api(Dependencies.assertk)
+        api(libs.squareup.okio)
+        api(libs.assertk)
       }
     }
     val commonTest by getting {
       dependencies {
-        implementation(Dependencies.kotlinTest)
-        implementation(Dependencies.kotlinTestAnnotations)
+        implementation(libs.kotlin.test.common)
+        implementation(libs.kotlin.test.annotations)
       }
     }
     val nonJvmMain = create("nonJvmMain") {
@@ -63,20 +63,20 @@ kotlin {
 
     getByName("jvmMain") {
       dependencies {
-        api(Dependencies.okio)
-        api(Dependencies.kotlinStdlib)
+        api(libs.squareup.okio)
+        api(libs.kotlin.stdlib)
 
         // These compileOnly dependencies must also be listed in the OSGi configuration above.
-        compileOnly(Dependencies.android)
-        compileOnly(Dependencies.bouncycastle)
-        compileOnly(Dependencies.bouncycastletls)
-        compileOnly(Dependencies.conscrypt)
-        compileOnly(Dependencies.openjsse)
-        compileOnly(Dependencies.jsr305)
-        compileOnly(Dependencies.animalSniffer)
+        compileOnly(libs.robolectric.android)
+        compileOnly(libs.bouncycastle.bcprov)
+        compileOnly(libs.bouncycastle.bctls)
+        compileOnly(libs.conscrypt.openjdk)
+        compileOnly(libs.openjsse)
+        compileOnly(libs.findbugs.jsr305)
+        compileOnly(libs.animalsniffer.annotations)
 
         // graal build support
-        compileOnly(Dependencies.nativeImageSvm)
+        compileOnly(libs.graalvm.nativeimage.svm)
       }
     }
     getByName("jvmTest") {
@@ -93,30 +93,30 @@ kotlin {
         implementation(projects.okhttpBrotli)
         implementation(projects.okhttpDnsoverhttps)
         implementation(projects.okhttpSse)
-        implementation(Dependencies.okioFakeFileSystem)
-        implementation(Dependencies.conscrypt)
-        implementation(Dependencies.junit)
-        implementation(Dependencies.junit5Api)
-        implementation(Dependencies.junit5JupiterParams)
-        implementation(Dependencies.kotlinTestJunit)
-        implementation(Dependencies.assertj)
-        implementation(Dependencies.openjsse)
-        implementation(Dependencies.bndResolve)
-        compileOnly(Dependencies.jsr305)
+        implementation(libs.squareup.okio.fakefilesystem)
+        implementation(libs.conscrypt.openjdk)
+        implementation(libs.junit)
+        implementation(libs.junit.jupiter.api)
+        implementation(libs.junit.jupiter.params)
+        implementation(libs.kotlin.test.junit)
+        implementation(libs.assertj.core)
+        implementation(libs.openjsse)
+        implementation(libs.aQute.resolve)
+        compileOnly(libs.findbugs.jsr305)
       }
 
       getByName("jsMain") {
         dependencies {
           dependsOn(nonJvmMain)
-          api(Dependencies.okio)
-          api(Dependencies.kotlinStdlib)
+          api(libs.squareup.okio)
+          api(libs.kotlin.stdlib)
         }
       }
 
       getByName("jsTest") {
         dependencies {
           dependsOn(nonJvmTest)
-          implementation(Dependencies.kotlinTestJs)
+          implementation(libs.kotlin.test.js)
         }
       }
     }

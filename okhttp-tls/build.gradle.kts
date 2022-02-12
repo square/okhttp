@@ -18,15 +18,15 @@ project.applyOsgi(
 )
 
 dependencies {
-  api(Dependencies.okio)
+  api(libs.squareup.okio)
   implementation(projects.okhttp)
-  compileOnly(Dependencies.jsr305)
-  compileOnly(Dependencies.animalSniffer)
+  compileOnly(libs.findbugs.jsr305)
+  compileOnly(libs.animalsniffer.annotations)
 
   testImplementation(projects.okhttpTestingSupport)
   testImplementation(projects.mockwebserver3Junit5)
-  testImplementation(Dependencies.junit)
-  testImplementation(Dependencies.assertj)
+  testImplementation(libs.junit)
+  testImplementation(libs.assertj.core)
 }
 
 animalsniffer {

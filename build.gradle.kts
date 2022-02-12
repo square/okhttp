@@ -8,8 +8,8 @@ import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
 
 buildscript {
   dependencies {
-    classpath(Dependencies.kotlinPlugin)
     classpath(Dependencies.dokkaPlugin)
+    classpath(Dependencies.kotlinPlugin)
     classpath(Dependencies.androidPlugin)
     classpath(Dependencies.androidJunit5Plugin)
     classpath(Dependencies.graalPlugin)
@@ -20,6 +20,9 @@ buildscript {
     classpath(Dependencies.errorpronePlugin)
     classpath(Dependencies.spotlessPlugin)
     classpath(Dependencies.vanniktechPublishPlugin)
+
+    classpath("com.github.ben-manes:gradle-versions-plugin:0.42.0")
+    classpath("nl.littlerobots.vcu:plugin:0.3.0")
   }
 
   repositories {
@@ -30,6 +33,8 @@ buildscript {
 }
 
 apply(plugin = "com.vanniktech.maven.publish.base")
+apply(plugin = "com.github.ben-manes.versions")
+apply(plugin = "nl.littlerobots.version-catalog-update")
 
 allprojects {
   group = "com.squareup.okhttp3"
@@ -240,4 +245,10 @@ subprojects {
 
 tasks.wrapper {
   distributionType = Wrapper.DistributionType.ALL
+}
+
+tasks.withType<com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask> {
+  rejectVersionIf {
+    candidate.version.contains(".*-(beta|alpha).*/".toRegex())
+  }
 }
