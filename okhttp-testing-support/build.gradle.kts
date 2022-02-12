@@ -11,8 +11,10 @@ dependencies {
   implementation(libs.bouncycastle.bcpkix)
   implementation(libs.bouncycastle.bctls)
   api(libs.conscrypt.openjdk)
-  api(libs.amazon.corretto)
   api(libs.openjsse)
+  api(variantOf(libs.amazon.corretto) {
+    classifier("linux-x86_64")
+  })
   api(libs.hamcrest.library)
   api(libs.junit.jupiter.api)
   api(libs.junit.jupiter.params)
