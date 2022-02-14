@@ -53,6 +53,8 @@ class DnsOverHttps internal constructor(
   @get:JvmName("resolvePrivateAddresses") val resolvePrivateAddresses: Boolean,
   @get:JvmName("resolvePublicAddresses") val resolvePublicAddresses: Boolean
 ) : Dns {
+  private val ipv4Regex = """^((25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(\.|$)){4}\b""".toRegex()
+
   @Throws(UnknownHostException::class)
   override fun lookup(hostname: String): List<InetAddress> {
     if (!resolvePrivateAddresses || !resolvePublicAddresses) {
@@ -66,16 +68,32 @@ class DnsOverHttps internal constructor(
         throw UnknownHostException("public hosts not resolved")
       }
     }
-    
+
     return try {
       lookupHttps(hostname)
     } catch (bestFailure: UnknownHostException) {
-      try {
-        listOf(InetAddressUtil.forString(hostname))
-      } catch (e: Exception) {
-        throw bestFailure // throw the raw lookupHttps exception
+      if (checkIsIpAddress(hostname)) {
+        try {
+          InetAddress.getAllByName(hostname).toList()
+        } catch (e: UnknownHostException) {
+          throw bestFailure
+        }
+      } else {
+        throw bestFailure
       }
     }
+  }
+
+  private fun checkIsIpAddress(hostname: String): Boolean {
+    if (ipv4Regex.matches(hostname)) {
+      return true
+    }
+
+    if (hostname[0].digitToIntOrNull(16) != null || hostname[0] == ':' || hostname[0] == '[') {
+      return true
+    }
+
+    return false
   }
 
   @Throws(UnknownHostException::class)
