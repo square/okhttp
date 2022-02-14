@@ -41,13 +41,13 @@ kotlin {
       kotlin.srcDir("$buildDir/generated/sources/kotlinTemplates")
       dependencies {
         api(Dependencies.okio)
-        api(Dependencies.assertk)
       }
     }
     val commonTest by getting {
       dependencies {
         implementation(Dependencies.kotlinTest)
         implementation(Dependencies.kotlinTestAnnotations)
+        implementation(Dependencies.assertk)
       }
     }
     val nonJvmMain = create("nonJvmMain") {
