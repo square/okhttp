@@ -32,6 +32,7 @@ import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import okhttp3.internal.canParseAsIpAddress
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
 
@@ -53,7 +54,6 @@ class DnsOverHttps internal constructor(
   @get:JvmName("resolvePrivateAddresses") val resolvePrivateAddresses: Boolean,
   @get:JvmName("resolvePublicAddresses") val resolvePublicAddresses: Boolean
 ) : Dns {
-  private val ipv4Regex = """^((25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(\.|$)){4}\b""".toRegex()
 
   @Throws(UnknownHostException::class)
   override fun lookup(hostname: String): List<InetAddress> {
@@ -72,9 +72,14 @@ class DnsOverHttps internal constructor(
     return try {
       lookupHttps(hostname)
     } catch (bestFailure: UnknownHostException) {
-      if (checkIsIpAddress(hostname)) {
+      val address = if (hostname.startsWith("[") && hostname.endsWith("]")) {
+        hostname.substring(1, hostname.length - 1)
+      } else {
+        hostname
+      }
+      if (address.canParseAsIpAddress()) {
         try {
-          InetAddress.getAllByName(hostname).toList()
+          InetAddress.getAllByName(address).toList()
         } catch (e: UnknownHostException) {
           throw bestFailure
         }
@@ -82,18 +87,6 @@ class DnsOverHttps internal constructor(
         throw bestFailure
       }
     }
-  }
-
-  private fun checkIsIpAddress(hostname: String): Boolean {
-    if (ipv4Regex.matches(hostname)) {
-      return true
-    }
-
-    if (hostname[0].digitToIntOrNull(16) != null || hostname[0] == ':' || hostname[0] == '[') {
-      return true
-    }
-
-    return false
   }
 
   @Throws(UnknownHostException::class)
