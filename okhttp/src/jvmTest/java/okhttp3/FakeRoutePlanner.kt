@@ -82,30 +82,58 @@ class FakeRoutePlanner(
     val id: Int
   ) : RoutePlanner.Plan {
     var canceled = false
+    var connectState = ConnectState.READY
     val connection = factory.newConnection(pool, factory.newRoute(address))
 
-    override var isConnected = false
-    var connectDelayNanos = 0L
-    var connectThrowable: Throwable? = null
+    override val isConnected: Boolean
+      get() = connectState == ConnectState.TLS_CONNECTED
 
-    override fun connect(): ConnectResult {
-      check(!isConnected) { "already connected" }
-      events += "plan $id connecting..."
+    var tcpConnectDelayNanos = 0L
+    var tcpConnectThrowable: Throwable? = null
+    var tlsConnectDelayNanos = 0L
+    var tlsConnectThrowable: Throwable? = null
 
-      taskFaker.sleep(connectDelayNanos)
+    override fun connectTcp(): ConnectResult {
+      check(connectState == ConnectState.READY)
+      events += "plan $id TCP connecting..."
+
+      taskFaker.sleep(tcpConnectDelayNanos)
 
       return when {
-        connectThrowable != null -> {
-          events += "plan $id connect failed"
-          ConnectResult(this, throwable = connectThrowable)
+        tcpConnectThrowable != null -> {
+          events += "plan $id TCP connect failed"
+          ConnectResult(this, throwable = tcpConnectThrowable)
         }
         canceled -> {
-          events += "plan $id connect canceled"
+          events += "plan $id TCP connect canceled"
           ConnectResult(this, throwable = IOException("canceled"))
         }
         else -> {
-          events += "plan $id connected"
-          isConnected = true
+          events += "plan $id TCP connected"
+          connectState = ConnectState.TCP_CONNECTED
+          ConnectResult(this)
+        }
+      }
+    }
+
+    override fun connectTlsEtc(): ConnectResult {
+      check(connectState == ConnectState.TCP_CONNECTED)
+      events += "plan $id TLS connecting..."
+
+      taskFaker.sleep(tlsConnectDelayNanos)
+
+      return when {
+        tlsConnectThrowable != null -> {
+          events += "plan $id TLS connect failed"
+          ConnectResult(this, throwable = tlsConnectThrowable)
+        }
+        canceled -> {
+          events += "plan $id TLS connect canceled"
+          ConnectResult(this, throwable = IOException("canceled"))
+        }
+        else -> {
+          events += "plan $id TLS connected"
+          connectState = ConnectState.TLS_CONNECTED
           ConnectResult(this)
         }
       }
@@ -117,5 +145,11 @@ class FakeRoutePlanner(
       events += "plan $id cancel"
       canceled = true
     }
+  }
+
+  enum class ConnectState {
+    READY,
+    TCP_CONNECTED,
+    TLS_CONNECTED,
   }
 }

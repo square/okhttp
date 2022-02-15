@@ -112,7 +112,31 @@ class ConnectPlan(
     )
   }
 
-  override fun connect(): ConnectResult {
+  override fun connectTcp(): ConnectResult {
+    check(rawSocket == null) { "TCP already connected" }
+
+    var success = false
+
+    // Tell the call about the connecting call so async cancels work.
+    call.plansToCancel += this
+    try {
+      eventListener.connectStart(call, route.socketAddress, route.proxy)
+      connectSocket()
+      success = true
+      return ConnectResult(plan = this)
+    } catch (e: IOException) {
+      eventListener.connectFailed(call, route.socketAddress, route.proxy, null, e)
+      return ConnectResult(plan = this, throwable = e)
+    } finally {
+      call.plansToCancel -= this
+      if (!success) {
+        rawSocket?.closeQuietly()
+      }
+    }
+  }
+
+  override fun connectTlsEtc(): ConnectResult {
+    check(rawSocket != null) { "TCP not connected" }
     check(!isConnected) { "already connected" }
 
     val connectionSpecs = route.address.connectionSpecs
@@ -122,9 +146,6 @@ class ConnectPlan(
     // Tell the call about the connecting call so async cancels work.
     call.plansToCancel += this
     try {
-      eventListener.connectStart(call, route.socketAddress, route.proxy)
-      connectSocket()
-
       if (tunnelRequest != null) {
         val tunnelResult = connectTunnel()
 
