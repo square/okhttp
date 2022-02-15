@@ -106,7 +106,11 @@ internal class FastFallbackExchangeFinder(
         var firstException: Throwable? = null
         var currentPlan = plan
         while (true) {
-          val connectResult = currentPlan.connect()
+          val tcpConnectResult = currentPlan.connectTcp()
+          val connectResult = when {
+            tcpConnectResult.isSuccess -> currentPlan.connectTlsEtc()
+            else -> tcpConnectResult
+          }
 
           if (connectResult.throwable == null) {
             if (connectResult.nextPlan == null) return connectResult // Success.

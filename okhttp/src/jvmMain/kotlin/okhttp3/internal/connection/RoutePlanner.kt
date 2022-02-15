@@ -74,7 +74,9 @@ interface RoutePlanner {
   interface Plan {
     val isConnected: Boolean
 
-    fun connect(): ConnectResult
+    fun connectTcp(): ConnectResult
+
+    fun connectTlsEtc(): ConnectResult
 
     fun handleSuccess(): RealConnection
 
@@ -94,5 +96,8 @@ interface RoutePlanner {
     val plan: Plan,
     val nextPlan: Plan? = null,
     val throwable: Throwable? = null,
-  )
+  ) {
+    val isSuccess: Boolean
+      get() = nextPlan == null && throwable == null
+  }
 }
