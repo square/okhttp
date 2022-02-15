@@ -92,14 +92,14 @@ subprojects {
     exclude("**/CipherSuite.java")
   }
 
-  val checkstyleConfig: Configuration by configurations.creating
-  dependencies {
-    checkstyleConfig("com.puppycrawl.tools:checkstyle:9.2") {
-      isTransitive = false
-    }
-  }
-
   afterEvaluate {
+    val checkstyleConfig: Configuration by configurations.creating
+    dependencies {
+      checkstyleConfig(libs.checkStyle) {
+        isTransitive = false
+      }
+    }
+
     configure<CheckstyleExtension> {
       config = resources.text.fromArchiveEntry(checkstyleConfig, "google_checks.xml")
       toolVersion = libs.versions.checkStyle.get()
