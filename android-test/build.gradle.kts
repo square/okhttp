@@ -63,7 +63,6 @@ dependencies {
   androidTestImplementation(projects.okhttpDnsoverhttps)
   androidTestImplementation(projects.loggingInterceptor)
   androidTestImplementation(projects.okhttpSse)
-  androidTestImplementation(projects.okhttpTestingSupport)
   androidTestImplementation(projects.okhttpTls)
   androidTestImplementation(libs.androidx.junit)
   androidTestImplementation(libs.androidx.espresso.core)
