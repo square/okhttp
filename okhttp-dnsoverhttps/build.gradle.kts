@@ -15,15 +15,15 @@ project.applyOsgi(
 
 dependencies {
   api(projects.okhttp)
-  compileOnly(Dependencies.jsr305)
+  compileOnly(libs.findbugs.jsr305)
 
   testImplementation(projects.okhttpTestingSupport)
   testImplementation(projects.mockwebserver)
   testImplementation(projects.mockwebserver3Junit5)
-  testImplementation(Dependencies.okioFakeFileSystem)
-  testImplementation(Dependencies.conscrypt)
-  testImplementation(Dependencies.junit)
-  testImplementation(Dependencies.assertj)
+  testImplementation(libs.squareup.okio.fakefilesystem)
+  testImplementation(libs.conscrypt.openjdk)
+  testImplementation(libs.junit)
+  testImplementation(libs.assertj.core)
 }
 
 mavenPublishing {

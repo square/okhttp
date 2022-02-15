@@ -15,9 +15,9 @@ tasks.jar {
 
 dependencies {
   api(projects.mockwebserver3)
-  api(Dependencies.junit)
+  api(libs.junit)
 
-  testImplementation(Dependencies.assertj)
+  testImplementation(libs.assertj.core)
 }
 
 mavenPublishing {

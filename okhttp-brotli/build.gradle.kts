@@ -15,13 +15,13 @@ project.applyOsgi(
 
 dependencies {
   api(projects.okhttp)
-  api(Dependencies.brotli)
-  compileOnly(Dependencies.jsr305)
+  api(libs.brotli.dec)
+  compileOnly(libs.findbugs.jsr305)
 
   testImplementation(projects.okhttpTestingSupport)
-  testImplementation(Dependencies.conscrypt)
-  testImplementation(Dependencies.junit)
-  testImplementation(Dependencies.assertj)
+  testImplementation(libs.conscrypt.openjdk)
+  testImplementation(libs.junit)
+  testImplementation(libs.assertj.core)
 }
 
 mavenPublishing {

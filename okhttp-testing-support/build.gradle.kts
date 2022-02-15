@@ -6,19 +6,21 @@ plugins {
 dependencies {
   api(projects.okhttp)
   api(projects.okhttpTls)
-  api(Dependencies.assertj)
-  api(Dependencies.bouncycastle)
-  implementation(Dependencies.bouncycastlepkix)
-  implementation(Dependencies.bouncycastletls)
-  api(Dependencies.conscrypt)
-  api(Dependencies.corretto)
-  api(Dependencies.openjsse)
-  api(Dependencies.hamcrest)
-  api(Dependencies.junit5Api)
-  api(Dependencies.junit5JupiterParams)
+  api(libs.assertj.core)
+  api(libs.bouncycastle.bcprov)
+  implementation(libs.bouncycastle.bcpkix)
+  implementation(libs.bouncycastle.bctls)
+  api(libs.conscrypt.openjdk)
+  api(libs.openjsse)
+  api(variantOf(libs.amazon.corretto) {
+    classifier("linux-x86_64")
+  })
+  api(libs.hamcrest.library)
+  api(libs.junit.jupiter.api)
+  api(libs.junit.jupiter.params)
 
-  compileOnly(Dependencies.jsr305)
-  compileOnly(Dependencies.android)
+  compileOnly(libs.findbugs.jsr305)
+  compileOnly(libs.robolectric.android)
 }
 
 animalsniffer {

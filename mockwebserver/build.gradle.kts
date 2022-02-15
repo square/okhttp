@@ -19,8 +19,8 @@ dependencies {
   testImplementation(projects.okhttpTestingSupport)
   testImplementation(projects.okhttpTls)
   testRuntimeOnly(projects.mockwebserver3Junit5)
-  testImplementation(Dependencies.junit)
-  testImplementation(Dependencies.assertj)
+  testImplementation(libs.junit)
+  testImplementation(libs.assertj.core)
 }
 
 mavenPublishing {

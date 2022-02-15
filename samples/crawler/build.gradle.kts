@@ -9,7 +9,7 @@ application {
 
 dependencies {
   implementation(projects.okhttp)
-  implementation(Dependencies.jsoup)
+  implementation(libs.jsoup)
 }
 
 tasks.compileJava {

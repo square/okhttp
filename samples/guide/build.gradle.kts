@@ -8,9 +8,9 @@ dependencies {
   implementation(projects.mockwebserver)
   implementation(projects.okhttpTestingSupport)
   implementation(projects.okhttpTls)
-  implementation(Dependencies.animalSniffer)
-  implementation(Dependencies.moshi)
-  kapt(Dependencies.moshiCompiler)
+  implementation(libs.animalsniffer.annotations)
+  implementation(libs.squareup.moshi)
+  kapt(libs.moshiCompiler)
 }
 
 java {

@@ -1,6 +1,7 @@
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import com.vanniktech.maven.publish.SonatypeHost
 import java.net.URL
+import nl.littlerobots.vcu.plugin.versionCatalogUpdate
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -8,18 +9,20 @@ import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
 
 buildscript {
   dependencies {
-    classpath(Dependencies.kotlinPlugin)
-    classpath(Dependencies.dokkaPlugin)
-    classpath(Dependencies.androidPlugin)
-    classpath(Dependencies.androidJunit5Plugin)
-    classpath(Dependencies.graalPlugin)
-    classpath(Dependencies.bndPlugin)
-    classpath(Dependencies.shadowPlugin)
-    classpath(Dependencies.japicmpPlugin)
-    classpath(Dependencies.animalsnifferPlugin)
-    classpath(Dependencies.errorpronePlugin)
-    classpath(Dependencies.spotlessPlugin)
-    classpath(Dependencies.vanniktechPublishPlugin)
+    classpath(libs.gradleplugin.dokka)
+    classpath(libs.gradleplugin.kotlin)
+    classpath(libs.gradleplugin.android.junit5)
+    classpath(libs.gradleplugin.android)
+    classpath(libs.gradleplugin.palantir.graal)
+    classpath(libs.gradleplugin.aqute.bnd)
+    classpath(libs.gradleplugin.johnrengelman.shadow)
+    classpath(libs.gradleplugin.japicmp)
+    classpath(libs.gradleplugin.animalsniffer)
+    classpath(libs.gradleplugin.errorprone)
+    classpath(libs.gradleplugin.spotless)
+    classpath(libs.gradleplugin.vanniktech)
+    classpath(libs.gradleplugin.benmanes.versions)
+    classpath(libs.gradleplugin.littlerobots.vcu)
   }
 
   repositories {
@@ -30,6 +33,8 @@ buildscript {
 }
 
 apply(plugin = "com.vanniktech.maven.publish.base")
+apply(plugin = "com.github.ben-manes.versions")
+apply(plugin = "nl.littlerobots.version-catalog-update")
 
 allprojects {
   group = "com.squareup.okhttp3"
@@ -87,30 +92,31 @@ subprojects {
     exclude("**/CipherSuite.java")
   }
 
-  val checkstyleConfig: Configuration by configurations.creating
-  dependencies {
-    checkstyleConfig(Dependencies.checkStyle) {
-      isTransitive = false
-    }
-  }
-
   afterEvaluate {
+    val checkstyleConfig: Configuration by configurations.creating
+    dependencies {
+      checkstyleConfig(libs.checkStyle) {
+        isTransitive = false
+      }
+    }
+
     configure<CheckstyleExtension> {
       config = resources.text.fromArchiveEntry(checkstyleConfig, "google_checks.xml")
-      toolVersion = Versions.checkStyle
+      toolVersion = libs.versions.checkStyle.get()
       sourceSets = listOf(project.sourceSets["main"])
     }
-  }
 
-  // Animal Sniffer confirms we generally don't use APIs not on Java 8.
-  configure<AnimalSnifferExtension> {
-    annotation = "okhttp3.internal.SuppressSignatureCheck"
-    sourceSets = listOf(project.sourceSets["main"])
-  }
-  val signature: Configuration by configurations.getting
-  dependencies {
-    signature(Dependencies.signatureAndroid21)
-    signature(Dependencies.signatureJava18)
+    // Animal Sniffer confirms we generally don't use APIs not on Java 8.
+    configure<AnimalSnifferExtension> {
+      annotation = "okhttp3.internal.SuppressSignatureCheck"
+      sourceSets = listOf(project.sourceSets["main"])
+    }
+
+    val signature: Configuration by configurations.getting
+    dependencies {
+      signature(libs.signature.android.apilevel21)
+      signature(libs.codehaus.signature.java18)
+    }
   }
 
   tasks.withType<KotlinCompile> {
@@ -127,9 +133,12 @@ subprojects {
   val testJavaVersion = System.getProperty("test.java.version", "11").toInt()
 
   val testRuntimeOnly: Configuration by configurations.getting
-  dependencies {
-    testRuntimeOnly(Dependencies.junit5JupiterEngine)
-    testRuntimeOnly(Dependencies.junit5VintageEngine)
+
+  afterEvaluate {
+    dependencies {
+      testRuntimeOnly(libs.junit.jupiter.engine)
+      testRuntimeOnly(libs.junit.vintage.engine)
+    }
   }
 
   tasks.withType<Test> {
@@ -166,11 +175,11 @@ subprojects {
     }
   } else if (platform == "conscrypt") {
     dependencies {
-      testRuntimeOnly(Dependencies.conscrypt)
+      testRuntimeOnly(libs.conscrypt)
     }
   } else if (platform == "openjsse") {
     dependencies {
-      testRuntimeOnly(Dependencies.openjsse)
+      testRuntimeOnly(libs.openjsse)
     }
   }
 
@@ -240,4 +249,25 @@ subprojects {
 
 tasks.wrapper {
   distributionType = Wrapper.DistributionType.ALL
+}
+
+versionCatalogUpdate {
+  sortByKey = true
+
+  keep {
+    // gradle profiles are used to enable/disable some modules so keep all
+    keepUnusedVersions.set(true)
+    keepUnusedLibraries.set(true)
+    keepUnusedPlugins.set(true)
+  }
+}
+
+tasks.withType<com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask> {
+  rejectVersionIf {
+    candidate.run {
+      version.contains("alpha") ||
+        version.contains("beta") ||
+        version.contains("1.6.20-M")
+    }
+  }
 }

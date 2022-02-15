@@ -18,15 +18,15 @@ project.applyOsgi(
 
 dependencies {
   api(projects.okhttp)
-  compileOnly(Dependencies.jsr305)
+  compileOnly(libs.findbugs.jsr305)
 
-  testCompileOnly(Dependencies.jsr305)
-  testImplementation(Dependencies.junit)
+  testCompileOnly(libs.findbugs.jsr305)
+  testImplementation(libs.junit)
   testImplementation(projects.mockwebserver3)
   testImplementation(projects.mockwebserver3Junit5)
   testImplementation(projects.okhttpTestingSupport)
   testImplementation(projects.okhttpTls)
-  testImplementation(Dependencies.assertj)
+  testImplementation(libs.assertj.core)
 }
 
 tasks.register<JapicmpTask>("japicmp") {
