@@ -37,7 +37,13 @@ internal class ExchangeFinder(
         }
 
         if (!plan.isConnected) {
-          val (_, nextPlan, failure) = plan.connect()
+          val tcpConnectResult = plan.connectTcp()
+          val connectResult = when {
+            tcpConnectResult.isSuccess -> plan.connectTlsEtc()
+            else -> tcpConnectResult
+          }
+
+          val (_, nextPlan, failure) = connectResult
 
           queuedPlan = nextPlan
           if (failure != null) throw failure

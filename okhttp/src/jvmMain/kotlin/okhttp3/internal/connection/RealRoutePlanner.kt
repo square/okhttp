@@ -197,7 +197,11 @@ class RealRoutePlanner(
 
     override val isConnected: Boolean = true
 
-    override fun connect(): ConnectResult {
+    override fun connectTcp(): ConnectResult {
+      error("already connected")
+    }
+
+    override fun connectTlsEtc(): ConnectResult {
       error("already connected")
     }
 
