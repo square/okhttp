@@ -88,12 +88,14 @@ public class DnsOverHttpsTest {
     dns = buildLocalhost(bootstrapClient, true);
 
     String hostIPv4 = "127.0.0.1";
-    List<InetAddress> resultIPv4 = dns.lookup(hostIPv4);
-    assertThat(resultIPv4).contains(address(hostIPv4));
+    assertThat(dns.lookup(hostIPv4)).contains(address(hostIPv4));
 
     String hostIPv6 = "2a03:2880:f029:11:face:b00c:0:2";
-    List<InetAddress> resultIPv6 = dns.lookup(hostIPv6);
-    assertThat(resultIPv6).contains(address(hostIPv6));
+    assertThat(dns.lookup(hostIPv6)).contains(address(hostIPv6));
+
+    String hostIPv6Loopback = "::1";
+    assertThat(dns.lookup(hostIPv6Loopback)).contains(address(hostIPv6Loopback));
+    assertThat(dns.lookup("[::1]")).contains(address(hostIPv6Loopback));
   }
 
   @Test public void getIpv6() throws Exception {
