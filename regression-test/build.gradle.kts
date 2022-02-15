@@ -49,5 +49,5 @@ dependencies {
   androidTestImplementation(libs.androidx.espresso.core)
   androidTestImplementation(libs.httpcomponents.httpclient5)
   androidTestImplementation(libs.squareup.moshi)
-  androidTestImplementation(libs.squareup.moshi.kotlincodegen)
+  androidTestImplementation(libs.squareup.moshi.kotlin)
 }

@@ -29,6 +29,7 @@ dependencies {
   implementation(libs.aqute.resolve)
   implementation(libs.junit.jupiter.api)
   implementation(libs.junit.jupiter.params)
+  implementation(libs.assertk)
 
   implementation(libs.graalvm.nativeimage.svm)
 
