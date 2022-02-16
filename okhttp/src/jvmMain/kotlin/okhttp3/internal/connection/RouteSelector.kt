@@ -16,6 +16,7 @@
 package okhttp3.internal.connection
 
 import java.io.IOException
+import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.Proxy
 import java.net.SocketException
@@ -26,6 +27,7 @@ import okhttp3.Call
 import okhttp3.EventListener
 import okhttp3.HttpUrl
 import okhttp3.Route
+import okhttp3.internal.canParseAsIpAddress
 import okhttp3.internal.immutableListOf
 import okhttp3.internal.toImmutableList
 
@@ -159,14 +161,19 @@ class RouteSelector(
     if (proxy.type() == Proxy.Type.SOCKS) {
       mutableInetSocketAddresses += InetSocketAddress.createUnresolved(socketHost, socketPort)
     } else {
-      eventListener.dnsStart(call, socketHost)
+      val addresses = if (socketHost.canParseAsIpAddress()) {
+        listOf(InetAddress.getByName(socketHost))
+      } else {
+        eventListener.dnsStart(call, socketHost)
 
-      val addresses = address.dns.lookup(socketHost)
-      if (addresses.isEmpty()) {
-        throw UnknownHostException("${address.dns} returned no addresses for $socketHost")
+        val result = address.dns.lookup(socketHost)
+        if (result.isEmpty()) {
+          throw UnknownHostException("${address.dns} returned no addresses for $socketHost")
+        }
+
+        eventListener.dnsEnd(call, socketHost, result)
+        result
       }
-
-      eventListener.dnsEnd(call, socketHost, addresses)
 
       // Try each address for best behavior in mixed IPv4/IPv6 environments.
       val orderedAddresses = when {
