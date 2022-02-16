@@ -53,7 +53,6 @@ class DnsOverHttps internal constructor(
   @get:JvmName("resolvePrivateAddresses") val resolvePrivateAddresses: Boolean,
   @get:JvmName("resolvePublicAddresses") val resolvePublicAddresses: Boolean
 ) : Dns {
-
   @Throws(UnknownHostException::class)
   override fun lookup(hostname: String): List<InetAddress> {
     if (!resolvePrivateAddresses || !resolvePublicAddresses) {
