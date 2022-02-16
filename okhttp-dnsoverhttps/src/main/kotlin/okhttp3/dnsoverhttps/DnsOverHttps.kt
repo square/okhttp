@@ -32,7 +32,6 @@ import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
-import okhttp3.internal.canParseAsIpAddress
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
 
@@ -69,24 +68,7 @@ class DnsOverHttps internal constructor(
       }
     }
 
-    return try {
-      lookupHttps(hostname)
-    } catch (bestFailure: UnknownHostException) {
-      val address = if (hostname.startsWith("[") && hostname.endsWith("]")) {
-        hostname.substring(1, hostname.length - 1)
-      } else {
-        hostname
-      }
-      if (address.canParseAsIpAddress()) {
-        try {
-          InetAddress.getAllByName(address).toList()
-        } catch (e: UnknownHostException) {
-          throw bestFailure
-        }
-      } else {
-        throw bestFailure
-      }
-    }
+    return lookupHttps(hostname)
   }
 
   @Throws(UnknownHostException::class)
