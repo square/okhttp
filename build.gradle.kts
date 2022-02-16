@@ -10,16 +10,16 @@ buildscript {
   dependencies {
     classpath(libs.gradlePlugin.dokka)
     classpath(libs.gradlePlugin.kotlin)
-    classpath(libs.gradlePlugin.android.junit5)
+    classpath(libs.gradlePlugin.androidJunit5)
     classpath(libs.gradlePlugin.android)
-    classpath(libs.gradlePlugin.palantir.graal)
-    classpath(libs.gradlePlugin.aqute.bnd)
-    classpath(libs.gradlePlugin.johnrengelman.shadow)
+    classpath(libs.gradlePlugin.graal)
+    classpath(libs.gradlePlugin.bnd)
+    classpath(libs.gradlePlugin.shadow)
     classpath(libs.gradlePlugin.japicmp)
     classpath(libs.gradlePlugin.animalsniffer)
     classpath(libs.gradlePlugin.errorprone)
     classpath(libs.gradlePlugin.spotless)
-    classpath(libs.gradlePlugin.vanniktech)
+    classpath(libs.gradlePlugin.mavenPublish)
   }
 
   repositories {
