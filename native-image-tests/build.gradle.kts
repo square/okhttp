@@ -31,7 +31,7 @@ dependencies {
   implementation(libs.junit.jupiter.params)
   implementation(libs.assertk)
 
-  implementation(libs.graalvm.nativeimage.svm)
+  implementation(libs.nativeImageSvm)
 
   compileOnly(libs.findbugs.jsr305)
 }

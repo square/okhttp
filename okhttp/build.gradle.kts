@@ -76,7 +76,7 @@ kotlin {
         compileOnly(libs.animalsniffer.annotations)
 
         // graal build support
-        compileOnly(libs.graalvm.nativeimage.svm)
+        compileOnly(libs.nativeImageSvm)
       }
     }
     getByName("jvmTest") {
