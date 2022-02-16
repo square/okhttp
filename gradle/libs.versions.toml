@@ -26,7 +26,7 @@ bouncycastle-bcpkix = { module = "org.bouncycastle:bcpkix-jdk15to18", version.re
 bouncycastle-bcprov = { module = "org.bouncycastle:bcprov-jdk15to18", version.ref = "org-bouncycastle" }
 bouncycastle-bctls = { module = "org.bouncycastle:bctls-jdk15to18", version.ref = "org-bouncycastle" }
 brotli-dec = "org.brotli:dec:0.1.2"
-checkStyle = "com.puppycrawl.tools:checkstyle:9.2"
+checkStyle = { module = "com.puppycrawl.tools:checkstyle", version.ref = "checkStyle" }
 codehaus-signature-java18 = "org.codehaus.mojo.signature:java18:1.0"
 conscrypt-android = { module = "org.conscrypt:conscrypt-android", version.ref = "org-conscrypt" }
 conscrypt-openjdk = { module = "org.conscrypt:conscrypt-openjdk-uber", version.ref = "org-conscrypt" }
