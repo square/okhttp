@@ -44,7 +44,6 @@ gradleplugin-android = "com.android.tools.build:gradle:7.1.1"
 gradleplugin-android-junit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.8.0.0"
 gradleplugin-animalsniffer = "ru.vyarus:gradle-animalsniffer-plugin:1.5.4"
 gradleplugin-aqute-bnd = { module = "biz.aQute.bnd:biz.aQute.bnd.gradle", version.ref = "biz-aQute-bnd" }
-gradleplugin-benmanes-versions = "com.github.ben-manes:gradle-versions-plugin:0.42.0"
 gradleplugin-dokka = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "org-jetbrains-dokka" }
 gradleplugin-dokka-all-modules-page = { module = "org.jetbrains.dokka:all-modules-page-plugin", version.ref = "org-jetbrains-dokka" }
 gradleplugin-dokka-gfm-template-processing = { module = "org.jetbrains.dokka:gfm-template-processing-plugin", version.ref = "org-jetbrains-dokka" }
@@ -53,7 +52,6 @@ gradleplugin-errorprone = "net.ltgt.gradle:gradle-errorprone-plugin:2.0.2"
 gradleplugin-japicmp = "me.champeau.gradle:japicmp-gradle-plugin:0.3.0"
 gradleplugin-johnrengelman-shadow = "gradle.plugin.com.github.johnrengelman:shadow:7.1.2"
 gradleplugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "org-jetbrains-kotlin" }
-gradleplugin-littlerobots-vcu = "nl.littlerobots.vcu:plugin:0.3.0"
 gradleplugin-mannodermaus-androidjunit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.8.2.0"
 gradleplugin-palantir-graal = "gradle.plugin.com.palantir.graal:gradle-graal:0.10.0"
 gradleplugin-spotless = "com.diffplug.spotless:spotless-plugin-gradle:6.2.2"
