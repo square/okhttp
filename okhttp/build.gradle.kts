@@ -180,7 +180,7 @@ tasks.getByName("jvmTest") {
 }
 
 dependencies {
-  osgiTestDeploy(libs.equinox)
+  osgiTestDeploy(libs.eclipseOsgi)
   osgiTestDeploy(libs.kotlin.stdlib.osgi)
 }
 

@@ -47,7 +47,7 @@ dependencies {
   androidTestImplementation(libs.bouncycastle.bctls)
   androidTestImplementation(libs.androidx.junit)
   androidTestImplementation(libs.androidx.espresso.core)
-  androidTestImplementation(libs.httpcomponents.httpclient5)
+  androidTestImplementation(libs.httpClient5)
   androidTestImplementation(libs.squareup.moshi)
   androidTestImplementation(libs.squareup.moshi.kotlin)
 }
