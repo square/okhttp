@@ -143,7 +143,7 @@ public final class EventListenerTest {
     server.enqueue(new MockResponse()
       .setBody("abc"));
 
-    String ipAddress = InetAddress.getLocalHost().getHostAddress();
+    String ipAddress = InetAddress.getLoopbackAddress().getHostAddress();
 
     Call call = client.newCall(new Request.Builder()
       .url(server.url("/").newBuilder().host(ipAddress).build())
