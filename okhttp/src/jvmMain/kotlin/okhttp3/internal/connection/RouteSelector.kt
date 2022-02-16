@@ -162,7 +162,7 @@ class RouteSelector(
       mutableInetSocketAddresses += InetSocketAddress.createUnresolved(socketHost, socketPort)
     } else {
       val addresses = if (socketHost.canParseAsIpAddress()) {
-        listOf<InetAddress>(InetAddress.getByName(socketHost))
+        listOf(InetAddress.getByName(socketHost))
       } else {
         eventListener.dnsStart(call, socketHost)
 
