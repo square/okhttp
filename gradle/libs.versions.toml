@@ -3,22 +3,16 @@ biz-aQute-bnd = "6.1.0"
 checkStyle = "9.2"
 com-squareup-moshi = "1.13.0"
 com-squareup-okio = "3.0.0"
-conscrypt = "2.5.2"
 de-mannodermaus-junit5 = "1.3.0"
 graalvm = "22.0.0.2"
-info-picocli = "4.6.3"
-junit5 = "5.8.2"
-junit5Android = "1.3.0"
 org-bouncycastle = "1.70"
 org-conscrypt = "2.5.2"
-org-eclipse-platform = "3.17.100"
-org-jetbrains-dokka = "1.6.10"
 org-jetbrains-kotlin = "1.6.10"
 org-junit-jupiter = "5.8.2"
-picocli = "4.6.2"
+picocli = "4.6.3"
 
 [libraries]
-amazon-corretto = "software.amazon.cryptools:AmazonCorrettoCryptoProvider:1.6.1"
+amazonCorretto = "software.amazon.cryptools:AmazonCorrettoCryptoProvider:1.6.1"
 androidx-espresso-core = "androidx.test.espresso:espresso-core:3.4.0"
 androidx-junit = "androidx.test.ext:junit:1.1.3"
 androidx-test-runner = "androidx.test:runner:1.4.0"
@@ -30,38 +24,29 @@ bouncycastle-bcpkix = { module = "org.bouncycastle:bcpkix-jdk15to18", version.re
 bouncycastle-bcprov = { module = "org.bouncycastle:bcprov-jdk15to18", version.ref = "org-bouncycastle" }
 bouncycastle-bctls = { module = "org.bouncycastle:bctls-jdk15to18", version.ref = "org-bouncycastle" }
 brotli-dec = "org.brotli:dec:0.1.2"
-checkStyle = "com.puppycrawl.tools:checkstyle:9.2"
+checkStyle = { module = "com.puppycrawl.tools:checkstyle", version.ref = "checkStyle" }
 codehaus-signature-java18 = "org.codehaus.mojo.signature:java18:1.0"
 conscrypt-android = { module = "org.conscrypt:conscrypt-android", version.ref = "org-conscrypt" }
 conscrypt-openjdk = { module = "org.conscrypt:conscrypt-openjdk-uber", version.ref = "org-conscrypt" }
-dokka-base = { module = "org.jetbrains.dokka:dokka-base", version.ref = "org-jetbrains-dokka" }
-eclipse-jetty-client = "org.eclipse.jetty:jetty-client:9.4.27.v20200227"
-eclipse-osgi = { module = "org.eclipse.platform:org.eclipse.osgi", version.ref = "org-eclipse-platform" }
-equinox = { module = "org.eclipse.platform:org.eclipse.osgi", version.ref = "org-eclipse-platform" }
+eclipseOsgi = "org.eclipse.platform:org.eclipse.osgi:3.17.100"
 findbugs-jsr305 = "com.google.code.findbugs:jsr305:3.0.2"
-graalvm-nativeimage-svm = { module = "org.graalvm.nativeimage:svm", version.ref = "graalvm" }
-gradleplugin-android = "com.android.tools.build:gradle:7.1.1"
-gradleplugin-android-junit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.8.0.0"
-gradleplugin-animalsniffer = "ru.vyarus:gradle-animalsniffer-plugin:1.5.4"
-gradleplugin-aqute-bnd = { module = "biz.aQute.bnd:biz.aQute.bnd.gradle", version.ref = "biz-aQute-bnd" }
-gradleplugin-dokka = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "org-jetbrains-dokka" }
-gradleplugin-dokka-all-modules-page = { module = "org.jetbrains.dokka:all-modules-page-plugin", version.ref = "org-jetbrains-dokka" }
-gradleplugin-dokka-gfm-template-processing = { module = "org.jetbrains.dokka:gfm-template-processing-plugin", version.ref = "org-jetbrains-dokka" }
-gradleplugin-dokka-jekyll-template-processing = { module = "org.jetbrains.dokka:jekyll-template-processing-plugin", version.ref = "org-jetbrains-dokka" }
-gradleplugin-errorprone = "net.ltgt.gradle:gradle-errorprone-plugin:2.0.2"
-gradleplugin-japicmp = "me.champeau.gradle:japicmp-gradle-plugin:0.3.0"
-gradleplugin-johnrengelman-shadow = "gradle.plugin.com.github.johnrengelman:shadow:7.1.2"
-gradleplugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "org-jetbrains-kotlin" }
-gradleplugin-mannodermaus-androidjunit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.8.2.0"
-gradleplugin-palantir-graal = "gradle.plugin.com.palantir.graal:gradle-graal:0.10.0"
-gradleplugin-spotless = "com.diffplug.spotless:spotless-plugin-gradle:6.2.2"
-gradleplugin-vanniktech = "com.vanniktech:gradle-maven-publish-plugin:0.18.0"
+nativeImageSvm = { module = "org.graalvm.nativeimage:svm", version.ref = "graalvm" }
+gradlePlugin-android = "com.android.tools.build:gradle:7.1.1"
+gradlePlugin-androidJunit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.8.0.0"
+gradlePlugin-animalsniffer = "ru.vyarus:gradle-animalsniffer-plugin:1.5.4"
+gradlePlugin-bnd = { module = "biz.aQute.bnd:biz.aQute.bnd.gradle", version.ref = "biz-aQute-bnd" }
+gradlePlugin-dokka = "org.jetbrains.dokka:dokka-gradle-plugin:1.6.10"
+gradlePlugin-errorprone = "net.ltgt.gradle:gradle-errorprone-plugin:2.0.2"
+gradlePlugin-japicmp = "me.champeau.gradle:japicmp-gradle-plugin:0.3.0"
+gradlePlugin-shadow = "gradle.plugin.com.github.johnrengelman:shadow:7.1.2"
+gradlePlugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "org-jetbrains-kotlin" }
+gradlePlugin-graal = "gradle.plugin.com.palantir.graal:gradle-graal:0.10.0"
+gradlePlugin-spotless = "com.diffplug.spotless:spotless-plugin-gradle:6.2.2"
+gradlePlugin-mavenPublish = "com.vanniktech:gradle-maven-publish-plugin:0.18.0"
 guava-jre = "com.google.guava:guava:31.0.1-jre"
-hamcrest-library = "org.hamcrest:hamcrest-library:2.2"
-httpcomponents-httpclient5 = "org.apache.httpcomponents.client5:httpclient5:5.1.3"
-info-picocli = { module = "info.picocli:picocli", version.ref = "info-picocli" }
-info-picocli-codegen = { module = "info.picocli:picocli-codegen", version.ref = "info-picocli" }
-jetty-client = "org.eclipse.jetty:jetty-client:11.0.8"
+hamcrestLibrary = "org.hamcrest:hamcrest-library:2.2"
+httpClient5 = "org.apache.httpcomponents.client5:httpclient5:5.1.3"
+jettyClient = "org.eclipse.jetty:jetty-client:11.0.8"
 jnr-unixsocket = "com.github.jnr:jnr-unixsocket:0.38.17"
 jsoup = "org.jsoup:jsoup:1.14.3"
 junit = "junit:junit:4.13.2"
@@ -72,27 +57,22 @@ junit-platform-console = "org.junit.platform:junit-platform-console:1.7.2"
 junit-vintage-engine = "org.junit.vintage:junit-vintage-engine:5.8.2"
 junit5android-core = { module = "de.mannodermaus.junit5:android-test-core", version.ref = "de-mannodermaus-junit5" }
 junit5android-runner = { module = "de.mannodermaus.junit5:android-test-runner", version.ref = "de-mannodermaus-junit5" }
-kotlin-annotation-processing-gradle = { module = "org.jetbrains.kotlin:kotlin-annotation-processing-gradle", version.ref = "org-jetbrains-kotlin" }
 kotlin-junit5 = { module = "org.jetbrains.kotlin:kotlin-test-junit5", version.ref = "org-jetbrains-kotlin" }
-kotlin-osgi-bundle = { module = "org.jetbrains.kotlin:kotlin-osgi-bundle", version.ref = "org-jetbrains-kotlin" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "org-jetbrains-kotlin" }
-kotlin-scripting-compiler-embeddable = { module = "org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable", version.ref = "org-jetbrains-kotlin" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "org-jetbrains-kotlin" }
 kotlin-stdlib-osgi = { module = "org.jetbrains.kotlin:kotlin-osgi-bundle", version.ref = "org-jetbrains-kotlin" }
 kotlin-test-annotations = { module = "org.jetbrains.kotlin:kotlin-test-annotations-common", version.ref = "org-jetbrains-kotlin" }
 kotlin-test-common = { module = "org.jetbrains.kotlin:kotlin-test-common", version.ref = "org-jetbrains-kotlin" }
 kotlin-test-js = { module = "org.jetbrains.kotlin:kotlin-test-js", version.ref = "org-jetbrains-kotlin" }
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "org-jetbrains-kotlin" }
-kotlin-test-junit5 = { module = "org.jetbrains.kotlin:kotlin-test-junit5", version.ref = "org-jetbrains-kotlin" }
-moshiCompiler = { module = "com.squareup.moshi:moshi-kotlin-codegen", version.ref = "com-squareup-moshi" }
 openjsse = "org.openjsse:openjsse:1.1.9"
-picocli = { module = "info.picocli:picocli", version.ref = "info-picocli" }
-picocli-compiler = { module = "info.picocli:picocli-codegen", version.ref = "info-picocli" }
+picocli = { module = "info.picocli:picocli", version.ref = "picocli" }
+picocli-compiler = { module = "info.picocli:picocli-codegen", version.ref = "picocli" }
 playservices-safetynet = "com.google.android.gms:play-services-safetynet:17.0.1"
-puppycrawl-checkstyle = "com.puppycrawl.tools:checkstyle:9.3"
 robolectric-android = "org.robolectric:android-all:12-robolectric-7732740"
 signature-android-apilevel21 = "net.sf.androidscents.signature:android-api-level-21:5.0.1_r2"
 squareup-moshi = { module = "com.squareup.moshi:moshi", version.ref = "com-squareup-moshi" }
 squareup-moshi-kotlin = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "com-squareup-moshi" }
+squareup-moshi-compiler = { module = "com.squareup.moshi:moshi-kotlin-codegen", version.ref = "com-squareup-moshi" }
 squareup-okio = { module = "com.squareup.okio:okio", version.ref = "com-squareup-okio" }
 squareup-okio-fakefilesystem = { module = "com.squareup.okio:okio-fakefilesystem", version.ref = "com-squareup-okio" }

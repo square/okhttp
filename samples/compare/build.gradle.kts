@@ -8,8 +8,8 @@ dependencies {
   testRuntimeOnly(projects.mockwebserver3Junit5)
   testImplementation(projects.okhttpTls)
   testImplementation(projects.okhttpTestingSupport)
-  testImplementation(libs.httpcomponents.httpclient5)
-  testImplementation(libs.jetty.client)
+  testImplementation(libs.httpClient5)
+  testImplementation(libs.jettyClient)
   testImplementation(libs.junit)
   testImplementation(libs.assertj.core)
 }

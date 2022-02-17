@@ -76,7 +76,7 @@ kotlin {
         compileOnly(libs.animalsniffer.annotations)
 
         // graal build support
-        compileOnly(libs.graalvm.nativeimage.svm)
+        compileOnly(libs.nativeImageSvm)
       }
     }
     getByName("jvmTest") {
@@ -180,7 +180,7 @@ tasks.getByName("jvmTest") {
 }
 
 dependencies {
-  osgiTestDeploy(libs.equinox)
+  osgiTestDeploy(libs.eclipseOsgi)
   osgiTestDeploy(libs.kotlin.stdlib.osgi)
 }
 

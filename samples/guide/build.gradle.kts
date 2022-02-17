@@ -10,7 +10,7 @@ dependencies {
   implementation(projects.okhttpTls)
   implementation(libs.animalsniffer.annotations)
   implementation(libs.squareup.moshi)
-  kapt(libs.moshiCompiler)
+  kapt(libs.squareup.moshi.compiler)
 }
 
 java {
