@@ -247,6 +247,8 @@ tasks.wrapper {
   distributionType = Wrapper.DistributionType.ALL
 }
 
+// Fix until 1.6.20 https://youtrack.jetbrains.com/issue/KT-49109
 rootProject.plugins.withType(NodeJsRootPlugin::class.java) {
-  rootProject.the<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension>().nodeVersion = "16.0.0"
+  rootProject.the<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension>().nodeVersion =
+    "16.13.0"
 }
