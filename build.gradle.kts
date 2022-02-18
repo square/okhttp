@@ -3,6 +3,7 @@ import com.vanniktech.maven.publish.SonatypeHost
 import java.net.URL
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.dokka.gradle.DokkaTask
+import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
 
@@ -244,4 +245,8 @@ subprojects {
 
 tasks.wrapper {
   distributionType = Wrapper.DistributionType.ALL
+}
+
+rootProject.plugins.withType(NodeJsRootPlugin::class.java) {
+  rootProject.the<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension>().nodeVersion = "16.0.0"
 }
