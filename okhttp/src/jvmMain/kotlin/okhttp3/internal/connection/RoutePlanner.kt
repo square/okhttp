@@ -72,7 +72,7 @@ interface RoutePlanner {
    * multiple plans concurrently.
    */
   interface Plan {
-    val isConnected: Boolean
+    val isReady: Boolean
 
     fun connectTcp(): ConnectResult
 
@@ -81,6 +81,9 @@ interface RoutePlanner {
     fun handleSuccess(): RealConnection
 
     fun cancel()
+
+    /** Returns a plan to attempt if canceling this plan was a mistake! */
+    fun retry(): Plan?
   }
 
   /**

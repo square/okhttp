@@ -36,7 +36,7 @@ internal class ExchangeFinder(
           else -> routePlanner.plan()
         }
 
-        if (!plan.isConnected) {
+        if (!plan.isReady) {
           val tcpConnectResult = plan.connectTcp()
           val connectResult = when {
             tcpConnectResult.isSuccess -> plan.connectTlsEtc()

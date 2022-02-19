@@ -30,7 +30,6 @@ import okhttp3.Route
 import okhttp3.internal.EMPTY_RESPONSE
 import okhttp3.internal.canReuseConnectionFor
 import okhttp3.internal.closeQuietly
-import okhttp3.internal.connection.RoutePlanner.ConnectResult
 import okhttp3.internal.connection.RoutePlanner.Plan
 import okhttp3.internal.http.RealInterceptorChain
 import okhttp3.internal.http2.ConnectionShutdownException
@@ -176,7 +175,7 @@ class RealRoutePlanner(
       address = address,
       call = call,
       routes = routes,
-      requireMultiplexed = planToReplace != null && planToReplace.isConnected
+      requireMultiplexed = planToReplace != null && planToReplace.isReady
     ) ?: return null
 
     // If we coalesced our connection, remember the replaced connection's route. That way if the
@@ -188,28 +187,6 @@ class RealRoutePlanner(
 
     call.eventListener.connectionAcquired(call, result)
     return ReusePlan(result)
-  }
-
-  /** Reuse an existing connection. */
-  internal class ReusePlan(
-    val connection: RealConnection,
-  ) : Plan {
-
-    override val isConnected: Boolean = true
-
-    override fun connectTcp(): ConnectResult {
-      error("already connected")
-    }
-
-    override fun connectTlsEtc(): ConnectResult {
-      error("already connected")
-    }
-
-    override fun handleSuccess() = connection
-
-    override fun cancel() {
-      error("unexpected cancel of reused connection")
-    }
   }
 
   /** Returns a plan for the first attempt at [route]. This throws if no plan is possible. */

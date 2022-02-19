@@ -56,6 +56,10 @@ class FakeRoutePlanner(
     }
     val result = plans[nextPlanIndex++]
     events += "take plan ${result.id}"
+
+    val planningThrowable = result.planningThrowable
+    if (planningThrowable != null) throw planningThrowable
+
     return result
   }
 
@@ -81,17 +85,46 @@ class FakeRoutePlanner(
   inner class FakePlan(
     val id: Int
   ) : RoutePlanner.Plan {
+    var planningThrowable: Throwable? = null
     var canceled = false
     var connectState = ConnectState.READY
     val connection = factory.newConnection(pool, factory.newRoute(address))
+    var retry: FakePlan? = null
+    var retryTaken = false
 
-    override val isConnected: Boolean
+    override val isReady: Boolean
       get() = connectState == ConnectState.TLS_CONNECTED
 
     var tcpConnectDelayNanos = 0L
     var tcpConnectThrowable: Throwable? = null
+    var connectTcpNextPlan: FakePlan? = null
     var tlsConnectDelayNanos = 0L
     var tlsConnectThrowable: Throwable? = null
+    var connectTlsNextPlan: FakePlan? = null
+
+    fun createRetry(): FakePlan {
+      check(retry == null)
+      return FakePlan(nextPlanId++)
+        .also {
+          retry = it
+        }
+    }
+
+    fun createConnectTcpNextPlan(): FakePlan {
+      check(connectTcpNextPlan == null)
+      return FakePlan(nextPlanId++)
+        .also {
+          connectTcpNextPlan = it
+        }
+    }
+
+    fun createConnectTlsNextPlan(): FakePlan {
+      check(connectTlsNextPlan == null)
+      return FakePlan(nextPlanId++)
+        .also {
+          connectTlsNextPlan = it
+        }
+    }
 
     override fun connectTcp(): ConnectResult {
       check(connectState == ConnectState.READY)
@@ -102,11 +135,15 @@ class FakeRoutePlanner(
       return when {
         tcpConnectThrowable != null -> {
           events += "plan $id TCP connect failed"
-          ConnectResult(this, throwable = tcpConnectThrowable)
+          ConnectResult(this, nextPlan = connectTcpNextPlan, throwable = tcpConnectThrowable)
         }
         canceled -> {
           events += "plan $id TCP connect canceled"
-          ConnectResult(this, throwable = IOException("canceled"))
+          ConnectResult(this, nextPlan = connectTcpNextPlan, throwable = IOException("canceled"))
+        }
+        connectTcpNextPlan != null -> {
+          events += "plan $id needs follow-up"
+          ConnectResult(this, nextPlan = connectTcpNextPlan)
         }
         else -> {
           events += "plan $id TCP connected"
@@ -125,11 +162,15 @@ class FakeRoutePlanner(
       return when {
         tlsConnectThrowable != null -> {
           events += "plan $id TLS connect failed"
-          ConnectResult(this, throwable = tlsConnectThrowable)
+          ConnectResult(this, nextPlan = connectTlsNextPlan, throwable = tlsConnectThrowable)
         }
         canceled -> {
           events += "plan $id TLS connect canceled"
-          ConnectResult(this, throwable = IOException("canceled"))
+          ConnectResult(this, nextPlan = connectTlsNextPlan, throwable = IOException("canceled"))
+        }
+        connectTlsNextPlan != null -> {
+          events += "plan $id needs follow-up"
+          ConnectResult(this, nextPlan = connectTlsNextPlan)
         }
         else -> {
           events += "plan $id TLS connected"
@@ -144,6 +185,12 @@ class FakeRoutePlanner(
     override fun cancel() {
       events += "plan $id cancel"
       canceled = true
+    }
+
+    override fun retry(): FakePlan? {
+      check(!retryTaken)
+      retryTaken = true
+      return retry
     }
   }
 
