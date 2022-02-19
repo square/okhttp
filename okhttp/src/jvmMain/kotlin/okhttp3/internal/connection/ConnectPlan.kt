@@ -90,7 +90,8 @@ class ConnectPlan(
   private var sink: BufferedSink? = null
   private var connection: RealConnection? = null
 
-  override val isConnected: Boolean
+  /** True if this connection is ready for use, including TCP, tunnels, and TLS. */
+  override val isReady: Boolean
     get() = protocol != null
 
   private fun copy(
@@ -137,7 +138,7 @@ class ConnectPlan(
 
   override fun connectTlsEtc(): ConnectResult {
     check(rawSocket != null) { "TCP not connected" }
-    check(!isConnected) { "already connected" }
+    check(!isReady) { "already connected" }
 
     val connectionSpecs = route.address.connectionSpecs
     var retryTlsConnection: ConnectPlan? = null
@@ -485,6 +486,20 @@ class ConnectPlan(
   override fun cancel() {
     // Close the raw socket so we don't end up doing synchronous I/O.
     rawSocket?.closeQuietly()
+  }
+
+  override fun retry(): RoutePlanner.Plan {
+    return ConnectPlan(
+      client = client,
+      call = call,
+      routePlanner = routePlanner,
+      route = route,
+      routes = routes,
+      attempt = attempt,
+      tunnelRequest = tunnelRequest,
+      connectionSpecIndex = connectionSpecIndex,
+      isTlsFallback = isTlsFallback,
+    )
   }
 
   fun closeQuietly() {
