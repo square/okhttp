@@ -33,7 +33,8 @@ internal class FastFallbackExchangeFinder(
   private val routePlanner: RoutePlanner,
   private val taskRunner: TaskRunner,
 ) {
-  private val connectDelayMillis = 250L
+  private val connectDelayNanos = TimeUnit.MILLISECONDS.toNanos(250L)
+  private var nextTcpConnectAtNanos = Long.MIN_VALUE
 
   /**
    * Plans currently being connected, and that will later be added to [connectResults]. This is
@@ -65,9 +66,17 @@ internal class FastFallbackExchangeFinder(
       ) {
         if (routePlanner.isCanceled()) throw IOException("Canceled")
 
-        launchTcpConnect()
+        // Launch a new connection if we're ready to.
+        val now = taskRunner.backend.nanoTime()
+        var awaitTimeoutNanos = nextTcpConnectAtNanos - now
+        if (tcpConnectsInFlight.isEmpty() || awaitTimeoutNanos <= 0) {
+          launchTcpConnect()
+          nextTcpConnectAtNanos = now + connectDelayNanos
+          awaitTimeoutNanos = connectDelayNanos
+        }
 
-        var connectResult = awaitTcpConnect(connectDelayMillis, TimeUnit.MILLISECONDS) ?: continue
+        // Wait for an in-flight connect to complete or fail.
+        var connectResult = awaitTcpConnect(awaitTimeoutNanos, TimeUnit.NANOSECONDS) ?: continue
 
         if (connectResult.isSuccess) {
           // We have a connected TCP connection. Cancel and defer the racing connects that all lost.
