@@ -41,7 +41,10 @@ internal class FastFallbackExchangeFinder(
    */
   private val tcpConnectsInFlight = CopyOnWriteArrayList<Plan>()
 
-  /** Plans we started, and canceled, because another plan won a race. */
+  /**
+   * These are retries of plans that were canceled when they lost a race. If the race's winner ends
+   * up not working out, this is what we'll attempt first.
+   */
   private val deferredPlans = ArrayDeque<Plan>()
 
   /**
@@ -64,10 +67,10 @@ internal class FastFallbackExchangeFinder(
 
         launchTcpConnect()
 
-        var connectResult = awaitTcpConnect() ?: continue
+        var connectResult = awaitTcpConnect(connectDelayMillis, TimeUnit.MILLISECONDS) ?: continue
 
         if (connectResult.isSuccess) {
-          // We have a connected TCP connection. Cancel the other racing connects that all lost.
+          // We have a connected TCP connection. Cancel and defer the racing connects that all lost.
           cancelInFlightConnects()
 
           // Finish connecting. We won't have to if the winner is from the connection pool.
@@ -93,6 +96,7 @@ internal class FastFallbackExchangeFinder(
 
         val nextPlan = connectResult.nextPlan
         if (nextPlan != null) {
+          // Try this plan's successor before deferred plans because it won the race!
           deferredPlans.addFirst(nextPlan)
         }
       }
@@ -152,10 +156,10 @@ internal class FastFallbackExchangeFinder(
     })
   }
 
-  private fun awaitTcpConnect(): ConnectResult? {
+  private fun awaitTcpConnect(timeout: Long, unit: TimeUnit): ConnectResult? {
     if (tcpConnectsInFlight.isEmpty()) return null
 
-    val result = connectResults.poll(connectDelayMillis, TimeUnit.MILLISECONDS) ?: return null
+    val result = connectResults.poll(timeout, unit) ?: return null
 
     tcpConnectsInFlight.remove(result.plan)
 
