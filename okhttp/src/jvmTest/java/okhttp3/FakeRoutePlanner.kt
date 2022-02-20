@@ -19,6 +19,7 @@ import java.io.Closeable
 import java.io.IOException
 import java.util.concurrent.LinkedBlockingDeque
 import okhttp3.internal.concurrent.TaskFaker
+import okhttp3.internal.connection.RealConnection
 import okhttp3.internal.connection.RoutePlanner
 import okhttp3.internal.connection.RoutePlanner.ConnectResult
 
@@ -35,7 +36,6 @@ class FakeRoutePlanner(
 
   val events = LinkedBlockingDeque<String>()
   var canceled = false
-  var hasFailure = false
   private var nextPlanId = 0
   private var nextPlanIndex = 0
   private val plans = mutableListOf<FakePlan>()
@@ -63,14 +63,7 @@ class FakeRoutePlanner(
     return result
   }
 
-  override fun trackFailure(e: IOException) {
-    events += "tracking failure: $e"
-    hasFailure = true
-  }
-
-  override fun hasFailure() = hasFailure
-
-  override fun hasMoreRoutes(): Boolean {
+  override fun hasNext(failedConnection: RealConnection?): Boolean {
     return nextPlanIndex < plans.size
   }
 

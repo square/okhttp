@@ -85,7 +85,7 @@ class RealCall(
   private var callStackTrace: Any? = null
 
   /** Finds an exchange to send the next request and receive the next response. */
-  private var routePlanner: RoutePlanner? = null
+  private var exchangeFinder: ExchangeFinder? = null
 
   var connection: RealConnection? = null
     private set
@@ -242,12 +242,16 @@ class RealCall(
     }
 
     if (newRoutePlanner) {
-      this.routePlanner = RealRoutePlanner(
+      val routePlanner = RealRoutePlanner(
         client,
         createAddress(request.url),
         this,
         chain,
       )
+      this.exchangeFinder = when {
+        client.fastFallback -> FastFallbackExchangeFinder(routePlanner, client.taskRunner)
+        else -> SequentialExchangeFinder(routePlanner)
+      }
     }
   }
 
@@ -259,13 +263,10 @@ class RealCall(
       check(!requestBodyOpen)
     }
 
-    val routePlanner = this.routePlanner!!
-    val connection = when {
-      client.fastFallback -> FastFallbackExchangeFinder(routePlanner, client.taskRunner).find()
-      else -> ExchangeFinder(routePlanner).find()
-    }
+    val exchangeFinder = this.exchangeFinder!!
+    val connection = exchangeFinder.find()
     val codec = connection.newCodec(client, chain)
-    val result = Exchange(this, eventListener, routePlanner, codec)
+    val result = Exchange(this, eventListener, exchangeFinder, codec)
     this.interceptorScopedExchange = result
     this.exchange = result
     synchronized(this) {
@@ -465,7 +466,10 @@ class RealCall(
     )
   }
 
-  fun retryAfterFailure(): Boolean = routePlanner!!.hasFailure() && routePlanner!!.hasMoreRoutes()
+  fun retryAfterFailure(): Boolean {
+    return exchange?.hasFailure == true &&
+      exchangeFinder!!.routePlanner.hasNext(exchange?.connection)
+  }
 
   /**
    * Returns a string that describes this call. Doesn't include a full URL as that might contain
