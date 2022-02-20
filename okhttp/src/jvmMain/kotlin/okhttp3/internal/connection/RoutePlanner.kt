@@ -51,13 +51,13 @@ interface RoutePlanner {
   @Throws(IOException::class)
   fun plan(): Plan
 
-  fun trackFailure(e: IOException)
-
-  /** Returns true if this planner has received any failures. */
-  fun hasFailure(): Boolean
-
-  /** Returns true if this planner has more routes to try. */
-  fun hasMoreRoutes(): Boolean
+  /**
+   * Returns true if there's more route plans to try.
+   *
+   * @param failedConnection an optional connection that was resulted in a failure. If the failure
+   *     is recoverable, the connection's route may be recovered for the retry.
+   */
+  fun hasNext(failedConnection: RealConnection? = null): Boolean
 
   /**
    * Returns true if the host and port are unchanged from when this was created. This is used to

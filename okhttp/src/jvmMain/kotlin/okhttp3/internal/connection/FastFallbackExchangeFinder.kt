@@ -30,9 +30,9 @@ import okhttp3.internal.okHttpName
  * connects successfully. This kicks off new attempts every 250 ms until a connect succeeds.
  */
 internal class FastFallbackExchangeFinder(
-  private val routePlanner: RoutePlanner,
+  override val routePlanner: RoutePlanner,
   private val taskRunner: TaskRunner,
-) {
+) : ExchangeFinder {
   private val connectDelayNanos = TimeUnit.MILLISECONDS.toNanos(250L)
   private var nextTcpConnectAtNanos = Long.MIN_VALUE
 
@@ -54,15 +54,12 @@ internal class FastFallbackExchangeFinder(
    */
   private val connectResults = taskRunner.backend.decorate(LinkedBlockingDeque<ConnectResult>())
 
-  /** True until we've launched all the connects we'll ever launch. */
-  private var routePlannerHasMoreRoutes = true
-
-  fun find(): RealConnection {
+  override fun find(): RealConnection {
     var firstException: IOException? = null
     try {
-      while (routePlannerHasMoreRoutes ||
-        tcpConnectsInFlight.isNotEmpty() ||
-        deferredPlans.isNotEmpty()
+      while (tcpConnectsInFlight.isNotEmpty() ||
+        deferredPlans.isNotEmpty() ||
+        routePlanner.hasNext()
       ) {
         if (routePlanner.isCanceled()) throw IOException("Canceled")
 
@@ -95,7 +92,6 @@ internal class FastFallbackExchangeFinder(
         val throwable = connectResult.throwable
         if (throwable != null) {
           if (throwable !is IOException) throw throwable
-          routePlanner.trackFailure(throwable)
           if (firstException == null) {
             firstException = throwable
           } else {
@@ -121,13 +117,11 @@ internal class FastFallbackExchangeFinder(
       deferredPlans.isNotEmpty() -> {
         deferredPlans.removeFirst()
       }
-      routePlannerHasMoreRoutes -> {
+      routePlanner.hasNext() -> {
         try {
           routePlanner.plan()
         } catch (e: Throwable) {
           FailedPlan(e)
-        } finally {
-          routePlannerHasMoreRoutes = routePlanner.hasMoreRoutes()
         }
       }
       else -> return // Nothing further to try.

@@ -40,7 +40,7 @@ import okio.buffer
 class Exchange(
   internal val call: RealCall,
   internal val eventListener: EventListener,
-  internal val finder: RoutePlanner,
+  internal val finder: ExchangeFinder,
   private val codec: ExchangeCodec
 ) {
   /** True if the request body need not complete before the response body starts. */
@@ -55,7 +55,7 @@ class Exchange(
     get() = codec.carrier as? RealConnection ?: error("no connection for CONNECT tunnels")
 
   internal val isCoalescedConnection: Boolean
-    get() = finder.address.url.host != codec.carrier.route.address.url.host
+    get() = finder.routePlanner.address.url.host != codec.carrier.route.address.url.host
 
   @Throws(IOException::class)
   fun writeRequestHeaders(request: Request) {
@@ -169,7 +169,6 @@ class Exchange(
 
   private fun trackFailure(e: IOException) {
     hasFailure = true
-    finder.trackFailure(e)
     codec.carrier.trackFailure(call, e)
   }
 

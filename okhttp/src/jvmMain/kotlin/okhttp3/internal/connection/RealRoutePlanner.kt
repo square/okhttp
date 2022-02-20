@@ -32,9 +32,6 @@ import okhttp3.internal.canReuseConnectionFor
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.connection.RoutePlanner.Plan
 import okhttp3.internal.http.RealInterceptorChain
-import okhttp3.internal.http2.ConnectionShutdownException
-import okhttp3.internal.http2.ErrorCode
-import okhttp3.internal.http2.StreamResetException
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.toHostHeader
 import okhttp3.internal.userAgent
@@ -49,9 +46,6 @@ class RealRoutePlanner(
 
   private var routeSelection: RouteSelector.Selection? = null
   private var routeSelector: RouteSelector? = null
-  private var refusedStreamCount = 0
-  private var connectionShutdownCount = 0
-  private var otherFailureCount = 0
   private var nextRouteToTry: Route? = null
 
   override fun isCanceled(): Boolean = call.isCanceled()
@@ -60,11 +54,6 @@ class RealRoutePlanner(
   override fun plan(): Plan {
     val reuseCallConnection = planReuseCallConnection()
     if (reuseCallConnection != null) return reuseCallConnection
-
-    // We need a new connection. Give it fresh stats.
-    refusedStreamCount = 0
-    connectionShutdownCount = 0
-    otherFailureCount = 0
 
     // Attempt to get a connection from the pool.
     val pooled1 = planReusePooledConnection()
@@ -263,30 +252,18 @@ class RealRoutePlanner(
     return authenticatedRequest ?: proxyConnectRequest
   }
 
-  override fun trackFailure(e: IOException) {
-    if (e is StreamResetException && e.errorCode == ErrorCode.REFUSED_STREAM) {
-      refusedStreamCount++
-    } else if (e is ConnectionShutdownException) {
-      connectionShutdownCount++
-    } else {
-      otherFailureCount++
-    }
-  }
-
-  override fun hasFailure(): Boolean {
-    return refusedStreamCount > 0 || connectionShutdownCount > 0 || otherFailureCount > 0
-  }
-
-  override fun hasMoreRoutes(): Boolean {
+  override fun hasNext(failedConnection: RealConnection?): Boolean {
     if (nextRouteToTry != null) {
       return true
     }
 
-    val retryRoute = retryRoute()
-    if (retryRoute != null) {
-      // Lock in the route because retryRoute() is racy and we don't want to call it twice.
-      nextRouteToTry = retryRoute
-      return true
+    if (failedConnection != null) {
+      val retryRoute = retryRoute(failedConnection)
+      if (retryRoute != null) {
+        // Lock in the route because retryRoute() is racy and we don't want to call it twice.
+        nextRouteToTry = retryRoute
+        return true
+      }
     }
 
     // If we have a routes left, use 'em.
@@ -300,17 +277,11 @@ class RealRoutePlanner(
   }
 
   /**
-   * Return the route from the current connection if it should be retried, even if the connection
-   * itself is unhealthy. The biggest gotcha here is that we shouldn't reuse routes from coalesced
+   * Return the route from [connection] if it should be retried, even if the connection itself is
+   * unhealthy. The biggest gotcha here is that we shouldn't reuse routes from coalesced
    * connections.
    */
-  private fun retryRoute(): Route? {
-    if (refusedStreamCount > 1 || connectionShutdownCount > 1 || otherFailureCount > 0) {
-      return null // This route has too many problems to retry.
-    }
-
-    val connection = call.connection ?: return null
-
+  private fun retryRoute(connection: RealConnection): Route? {
     synchronized(connection) {
       if (connection.routeFailureCount != 0) return null
       if (!connection.noNewExchanges) return null // This route is still in use.

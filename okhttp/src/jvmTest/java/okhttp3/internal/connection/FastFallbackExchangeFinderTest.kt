@@ -200,7 +200,7 @@ internal class FastFallbackExchangeFinderTest {
     val plan0 = routePlanner.addPlan()
     plan0.tcpConnectDelayNanos = 520.ms
     val plan1 = routePlanner.addPlan()
-    plan1.tcpConnectDelayNanos = 260.ms // Connect completes at 510ms.
+    plan1.tcpConnectDelayNanos = 260.ms // Connect completes at 510 ms.
     val plan2 = routePlanner.addPlan()
     plan2.connectState = TLS_CONNECTED
 
@@ -263,6 +263,58 @@ internal class FastFallbackExchangeFinderTest {
   }
 
   @Test
+  fun takeMultipleConnectionsReturnsRaceLoser() {
+    val plan0 = routePlanner.addPlan()
+    plan0.tcpConnectDelayNanos = 270.ms
+    val plan1 = routePlanner.addPlan()
+    plan1.tcpConnectDelayNanos = 10.ms // Connect at time = 260 ms.
+    val plan2 = plan0.createRetry()
+    plan2.tcpConnectDelayNanos = 20.ms // Connect at time = 280 ms.
+
+    taskRunner.newQueue().execute("connect") {
+      val result0 = finder.find()
+      assertThat(result0).isEqualTo(plan1.connection)
+      val result1 = finder.find()
+      assertThat(result1).isEqualTo(plan2.connection)
+    }
+
+    taskFaker.runTasks()
+    assertEvents(
+      "take plan 0",
+      "plan 0 TCP connecting...",
+    )
+
+    taskFaker.advanceUntil(250.ms)
+    assertEvents(
+      "take plan 1",
+      "plan 1 TCP connecting...",
+    )
+
+    taskFaker.advanceUntil(260.ms)
+    assertEvents(
+      "plan 1 TCP connected",
+      "plan 0 cancel",
+      "plan 1 TLS connecting...",
+      "plan 1 TLS connected",
+      "plan 2 TCP connecting..."
+    )
+
+    taskFaker.advanceUntil(270.ms)
+    assertEvents(
+      "plan 0 TCP connect canceled",
+    )
+
+    taskFaker.advanceUntil(280.ms)
+    assertEvents(
+      "plan 2 TCP connected",
+      "plan 2 TLS connecting...",
+      "plan 2 TLS connected",
+    )
+
+    taskFaker.assertNoMoreTasks()
+  }
+
+  @Test
   fun firstConnectionFailsAndNoOthersExist() {
     val plan0 = routePlanner.addPlan()
     plan0.tcpConnectThrowable = IOException("boom!")
@@ -281,7 +333,6 @@ internal class FastFallbackExchangeFinderTest {
       "take plan 0",
       "plan 0 TCP connecting...",
       "plan 0 TCP connect failed",
-      "tracking failure: java.io.IOException: boom!",
     )
 
     taskFaker.assertNoMoreTasks()
@@ -304,7 +355,6 @@ internal class FastFallbackExchangeFinderTest {
       "take plan 0",
       "plan 0 TCP connecting...",
       "plan 0 TCP connect failed",
-      "tracking failure: java.io.IOException: boom!",
       "take plan 1",
     )
 
@@ -333,11 +383,9 @@ internal class FastFallbackExchangeFinderTest {
       "take plan 0",
       "plan 0 TCP connecting...",
       "plan 0 TCP connect failed",
-      "tracking failure: java.io.IOException: boom 0!",
       "take plan 1",
       "plan 1 TCP connecting...",
       "plan 1 TCP connect failed",
-      "tracking failure: java.io.IOException: boom 1!",
     )
 
     taskFaker.assertNoMoreTasks()
@@ -385,7 +433,6 @@ internal class FastFallbackExchangeFinderTest {
     taskFaker.runTasks()
     assertEvents(
       "take plan 0",
-      "tracking failure: ${UnknownServiceException("boom!")}",
     )
 
     taskFaker.assertNoMoreTasks()
@@ -405,7 +452,6 @@ internal class FastFallbackExchangeFinderTest {
     taskFaker.runTasks()
     assertEvents(
       "take plan 0",
-      "tracking failure: ${UnknownServiceException("boom!")}",
       "take plan 1",
       "plan 1 TCP connecting...",
       "plan 1 TCP connected",
@@ -450,7 +496,6 @@ internal class FastFallbackExchangeFinderTest {
       "plan 0 cancel",
       "plan 1 TLS connecting...",
       "plan 1 TLS connect failed",
-      "tracking failure: java.io.IOException: boom!",
       "plan 2 TCP connecting...",
       "plan 2 TCP connected",
       "plan 2 TLS connecting...",
@@ -616,7 +661,6 @@ internal class FastFallbackExchangeFinderTest {
     taskFaker.advanceUntil(270.ms)
     assertEvents(
       "plan 1 TLS connect failed",
-      "tracking failure: ${IOException("boom!")}",
       "plan 2 TCP connecting...",
     )
 
@@ -695,19 +739,16 @@ internal class FastFallbackExchangeFinderTest {
     taskFaker.advanceUntil(510.ms)
     assertEvents(
       "plan 0 TCP connect failed",
-      "tracking failure: ${IOException("boom!")}",
     )
 
     taskFaker.advanceUntil(520.ms)
     assertEvents(
       "plan 1 TCP connect failed",
-      "tracking failure: ${IOException("boom!")}",
     )
 
     taskFaker.advanceUntil(530.ms)
     assertEvents(
       "plan 2 TCP connect failed",
-      "tracking failure: ${IOException("boom!")}",
       "take plan 3",
       "plan 3 TCP connecting...",
     )
