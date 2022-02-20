@@ -82,7 +82,10 @@ interface RoutePlanner {
 
     fun cancel()
 
-    /** Returns a plan to attempt if canceling this plan was a mistake! */
+    /**
+     * Returns a plan to attempt if canceling this plan was a mistake! The returned plan is not
+     * canceled, even if this plan is canceled.
+     */
     fun retry(): Plan?
   }
 
