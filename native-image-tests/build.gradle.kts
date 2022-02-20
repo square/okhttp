@@ -1,5 +1,4 @@
 import org.apache.tools.ant.taskdefs.condition.Os
-import org.jetbrains.kotlin.incremental.ChangesCollector.Companion.getNonPrivateNames
 
 plugins {
   id("com.palantir.graal")
