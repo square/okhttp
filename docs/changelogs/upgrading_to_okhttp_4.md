@@ -217,7 +217,7 @@ Android Studio’s Advanced Profiling feature rewrites OkHttp bytecode for instr
 Unfortunately it crashes on OkHttp 4.x’s bytecode. Until [Google’s bug][advanced_profiling_bug] is
 fixed you must disable advanced profiling in Android Studio.
 
-![Disable Advanced Profiling](images/disable_advanced_profiling@2x.png)
+![Disable Advanced Profiling](../assets/images/disable_advanced_profiling@2x.png)
 
 
 R8 / ProGuard
@@ -275,5 +275,5 @@ android {
  [kotlin_sams]: https://youtrack.jetbrains.com/issue/KT-11129
  [mockito]: https://site.mockito.org/
  [proguard_problems]: https://github.com/square/okhttp/issues/5167
- [require_android_5]: https://cashapp.github.io/2019-02-05/okhttp-3-13-requires-android-5
+ [require_android_5]: https://code.cash.app/okhttp-3-13-requires-android-5
  [r8]: https://developer.android.com/studio/releases#r8-default

@@ -16,60 +16,43 @@
 package okhttp3
 
 import java.net.Proxy
-import java.net.ProxySelector
-import javax.net.SocketFactory
 import okhttp3.internal.http.RecordingProxySelector
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 
 class AddressTest {
-  private val dns = Dns.SYSTEM
-  private val socketFactory = SocketFactory.getDefault()
-  private val authenticator = Authenticator.NONE
-  private val protocols = listOf(Protocol.HTTP_1_1)
-  private val connectionSpecs = listOf(ConnectionSpec.MODERN_TLS)
-  private val proxySelector = RecordingProxySelector()
+  private val factory = TestValueFactory().apply {
+    uriHost = "example.com"
+    uriPort = 80
+  }
+
+  @AfterEach fun tearDown() {
+    factory.close()
+  }
 
   @Test fun equalsAndHashcode() {
-    val a = testAddress()
-    val b = testAddress()
+    val a = factory.newAddress()
+    val b = factory.newAddress()
     assertThat(b).isEqualTo(a)
     assertThat(b.hashCode()).isEqualTo(a.hashCode())
   }
 
   @Test fun differentProxySelectorsAreDifferent() {
-    val a = testAddress(proxySelector = RecordingProxySelector())
-    val b = testAddress(proxySelector = RecordingProxySelector())
+    val a = factory.newAddress(proxySelector = RecordingProxySelector())
+    val b = factory.newAddress(proxySelector = RecordingProxySelector())
     assertThat(b).isNotEqualTo(a)
   }
 
   @Test fun addressToString() {
-    val address = testAddress()
+    val address = factory.newAddress()
     assertThat(address.toString())
-      .isEqualTo("Address{square.com:80, proxySelector=RecordingProxySelector}")
+      .isEqualTo("Address{example.com:80, proxySelector=RecordingProxySelector}")
   }
 
   @Test fun addressWithProxyToString() {
-    val address = testAddress(proxy = Proxy.NO_PROXY)
+    val address = factory.newAddress(proxy = Proxy.NO_PROXY)
     assertThat(address.toString())
-      .isEqualTo("Address{square.com:80, proxy=${Proxy.NO_PROXY}}")
+      .isEqualTo("Address{example.com:80, proxy=${Proxy.NO_PROXY}}")
   }
-
-  private fun testAddress(
-    proxy: Proxy? = null,
-    proxySelector: ProxySelector = this.proxySelector
-  ) = Address(
-    uriHost = "square.com",
-    uriPort = 80,
-    dns = dns,
-    socketFactory = socketFactory,
-    sslSocketFactory = null,
-    hostnameVerifier = null,
-    certificatePinner = null,
-    proxyAuthenticator = authenticator,
-    proxy = proxy,
-    protocols = protocols,
-    connectionSpecs = connectionSpecs,
-    proxySelector = proxySelector
-  )
 }

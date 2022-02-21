@@ -18,6 +18,7 @@ package okhttp3.internal.concurrent
 import java.util.concurrent.RejectedExecutionException
 import okhttp3.TestLogHandler
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.fail
@@ -32,6 +33,11 @@ class TaskRunnerTest {
   private val redQueue = taskRunner.newQueue()
   private val blueQueue = taskRunner.newQueue()
   private val greenQueue = taskRunner.newQueue()
+
+  @AfterEach
+  internal fun tearDown() {
+    taskFaker.close()
+  }
 
   @Test fun executeDelayed() {
     redQueue.execute("task", 100.µs) {
@@ -396,7 +402,7 @@ class TaskRunnerTest {
     assertThat(log).isEmpty()
 
     taskFaker.advanceUntil(100.µs)
-    assertThat(log).containsExactly(
+    assertThat(log).containsExactlyInAnyOrder(
         "one:run@100000 parallel=true",
         "two:run@100000 parallel=true",
         "three:run@100000 parallel=true"
@@ -404,7 +410,7 @@ class TaskRunnerTest {
 
     taskFaker.assertNoMoreTasks()
 
-    assertThat(testLogHandler.takeAll()).containsExactly(
+    assertThat(testLogHandler.takeAll()).containsExactlyInAnyOrder(
         "FINE: Q10000 scheduled after 100 µs: task one",
         "FINE: Q10001 scheduled after 100 µs: task two",
         "FINE: Q10002 scheduled after 100 µs: task three",

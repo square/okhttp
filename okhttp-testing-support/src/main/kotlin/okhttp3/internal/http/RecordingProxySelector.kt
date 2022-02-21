@@ -27,8 +27,8 @@ import org.assertj.core.api.Assertions.assertThat
 class RecordingProxySelector : ProxySelector() {
   @JvmField val proxies = mutableListOf<Proxy>()
 
-  private val requestedUris: MutableList<URI> = ArrayList()
-  private val failures: MutableList<String> = ArrayList()
+  private val requestedUris = mutableListOf<URI>()
+  private val failures = mutableListOf<String>()
 
   override fun select(uri: URI): List<Proxy> {
     requestedUris.add(uri)

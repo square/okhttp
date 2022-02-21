@@ -1,6 +1,37 @@
 Change Log
 ==========
 
+## Version 5.0.0-alpha.4
+
+_2022-02-01_
+
+**This release introduces fast fallback to better support mixed IPv4+IPv6 networks.** Fast fallback
+is what we're calling our implementation of Happy Eyeballs, [RFC 8305][rfc_8305]. With this
+feature OkHttp will attempt both IPv6 and IPv4 connections concurrently, keeping whichever connects
+first. Fast fallback gives IPv6 connections a 250 ms head start so IPv6 is preferred on networks
+where it's available.
+
+To opt-in, configure your `OkHttpClient.Builder`:
+
+
+```
+OkHttpClient client = new OkHttpClient.Builder()
+    .fastFallback(true)
+    .build();
+```
+
+ *  New: Change the build from Kotlin-JVM to Kotlin-multiplatform (which includes JVM). Both
+    native and JavaScript platforms are unstable preview releases and subject to
+    backwards-incompatible changes in forthcoming releases.
+ *  Fix: Don't crash loading the public suffix database resource in obfuscated builds.
+ *  Fix: Don't silently ignore calls to `EventSource.cancel()` made from
+    `EventSourceListener.onOpen()`.
+ *  Fix: Enforce the max intermediates constraint when using pinned certificates with Conscrypt.
+    This impacts Conscrypt when the server's presented certificates form both a trusted-but-unpinned
+    chain and an untrusted-but-pinned chain.
+ *  Upgrade: [Kotlin 1.6.10][kotlin_1_6_10].
+
+
 ## Version 5.0.0-alpha.3
 
 _2021-11-22_
@@ -623,8 +654,9 @@ _2019-06-03_
  [kotlin_1_4_10]: https://github.com/JetBrains/kotlin/releases/tag/v1.4.10
  [kotlin_1_4_20]: https://github.com/JetBrains/kotlin/releases/tag/v1.4.20
  [kotlin_1_5_31]: https://github.com/JetBrains/kotlin/releases/tag/v1.5.31
+ [kotlin_1_6_10]: https://github.com/JetBrains/kotlin/releases/tag/v1.6.10
  [legacy_interceptor]: https://gist.github.com/swankjesse/80135f4e03629527e723ab3bcf64be0b
- [okhttp4_blog_post]: https://cashapp.github.io/2019-06-26/okhttp-4-goes-kotlin
+ [okhttp4_blog_post]: https://code.cash.app/okhttp-4-goes-kotlin
  [okio.FileSystem]: https://square.github.io/okio/file_system/
  [okio_2_6_0]: https://square.github.io/okio/changelog/#version-260
  [okio_2_7_0]: https://square.github.io/okio/changelog/#version-270
@@ -634,5 +666,6 @@ _2019-06-03_
  [rfc_2045]: https://tools.ietf.org/html/rfc2045
  [rfc_7231_647]: https://tools.ietf.org/html/rfc7231#section-6.4.7
  [rfc_7692]: https://tools.ietf.org/html/rfc7692
+ [rfc_8305]: https://tools.ietf.org/html/rfc8305
  [semver]: https://semver.org/
  [upgrading_to_okhttp_4]: https://square.github.io/okhttp/upgrading_to_okhttp_4/

@@ -10,25 +10,23 @@ plugins {
   id("me.champeau.gradle.japicmp")
 }
 
-val mainProj: Project by lazy { project(":okhttp") }
-
 project.applyOsgi(
-  "Fragment-Host: com.squareup.okhttp3; bundle-version=\"\${range;[==,+);\${version_cleanup;${mainProj.version}}}\"",
+  "Fragment-Host: com.squareup.okhttp3; bundle-version=\"\${range;[==,+);\${version_cleanup;${projects.okhttp.version}}}\"",
   "Automatic-Module-Name: okhttp3.urlconnection",
   "Bundle-SymbolicName: com.squareup.okhttp3.urlconnection",
   "-removeheaders: Private-Package"
 )
 
 dependencies {
-  api(mainProj)
-  compileOnly(Dependencies.jsr305)
-  compileOnly(Dependencies.animalSniffer)
+  api(projects.okhttp)
+  compileOnly(libs.findbugs.jsr305)
+  compileOnly(libs.animalsniffer.annotations)
 
-  testImplementation(project(":okhttp-testing-support"))
-  testImplementation(project(":okhttp-tls"))
-  testImplementation(project(":mockwebserver"))
-  testImplementation(Dependencies.junit)
-  testImplementation(Dependencies.assertj)
+  testImplementation(projects.okhttpTestingSupport)
+  testImplementation(projects.okhttpTls)
+  testImplementation(projects.mockwebserver)
+  testImplementation(libs.junit)
+  testImplementation(libs.assertj.core)
 }
 
 tasks.register<JapicmpTask>("japicmp") {

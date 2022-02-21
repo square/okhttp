@@ -27,16 +27,16 @@ sourceSets {
 }
 
 dependencies {
-  api(project(":okhttp"))
-  api(project(":logging-interceptor"))
-  implementation(Dependencies.picocli)
-  implementation(Dependencies.guava)
+  api(projects.okhttp)
+  api(projects.loggingInterceptor)
+  implementation(libs.picocli)
+  implementation(libs.guava.jre)
 
-  kapt(Dependencies.picocliCompiler)
+  kapt(libs.picocli.compiler)
 
-  testImplementation(project(":okhttp-testing-support"))
-  testImplementation(Dependencies.junit5Api)
-  testImplementation(Dependencies.assertj)
+  testImplementation(projects.okhttpTestingSupport)
+  testImplementation(libs.junit.jupiter.api)
+  testImplementation(libs.assertj.core)
 }
 
 tasks.shadowJar {
@@ -46,7 +46,7 @@ tasks.shadowJar {
 graal {
   mainClass("okhttp3.curl.Main")
   outputName("okcurl")
-  graalVersion(Versions.graal)
+  graalVersion(libs.versions.graalvm.get())
   javaVersion("11")
 
   option("--no-fallback")

@@ -33,6 +33,7 @@ okhttp3.MultipartReaderTest
 okhttp3.OkHttpClientTest
 okhttp3.OkHttpTest
 okhttp3.ProtocolTest
+okhttp3.PublicSuffixDatabaseTest
 okhttp3.PublicInternalApiTest
 okhttp3.RequestTest
 okhttp3.ResponseBodyTest

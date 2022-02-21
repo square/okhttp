@@ -3,6 +3,6 @@ plugins {
 }
 
 dependencies {
-  implementation(project(":okhttp"))
-  implementation(Dependencies.moshi)
+  implementation(projects.okhttp)
+  implementation(libs.squareup.moshi)
 }

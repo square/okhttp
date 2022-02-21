@@ -114,9 +114,10 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
     var client = testClient
     if (client == null) {
       client = OkHttpClient.Builder()
-          .dns(SINGLE_INET_ADDRESS_DNS) // Prevent unexpected fallback addresses.
-          .eventListenerFactory { ClientRuleEventListener(logger = ::addEvent) }
-          .build()
+        .fastFallback(true) // Test this by default, since it'll soon be the default.
+        .dns(SINGLE_INET_ADDRESS_DNS) // Prevent unexpected fallback addresses.
+        .eventListenerFactory { ClientRuleEventListener(logger = ::addEvent) }
+        .build()
       testClient = client
     }
     return client

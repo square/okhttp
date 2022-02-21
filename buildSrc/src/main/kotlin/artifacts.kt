@@ -45,7 +45,7 @@ private fun Project.applyOsgi(
   val osgi = project.sourceSets.create("osgi")
   val osgiApi = project.configurations.getByName(osgiApiConfigurationName)
   project.dependencies {
-    osgiApi(Dependencies.kotlinStdlibOsgi)
+    osgiApi("org.jetbrains.kotlin:kotlin-osgi-bundle:1.6.10")
   }
 
   val jarTask = tasks.getByName<Jar>(jarTaskName)

@@ -37,7 +37,6 @@ import okhttp3.RecordingEventListener
 import okhttp3.Request
 import okhttp3.TlsVersion
 import okhttp3.dnsoverhttps.DnsOverHttps
-import okhttp3.internal.asFactory
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.http2.Http2
 import okhttp3.internal.platform.Android10Platform
@@ -58,7 +57,6 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Assumptions.assumeTrue
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -526,7 +524,7 @@ class OkHttpTest(val server: MockWebServer) {
 
     val dohDns = buildCloudflareIp(client)
     val dohEnabledClient =
-        client.newBuilder().eventListenerFactory(EventListener.NONE.asFactory()).dns(dohDns).build()
+        client.newBuilder().eventListener(EventListener.NONE).dns(dohDns).build()
 
     dohEnabledClient.get("https://www.twitter.com/robots.txt")
     dohEnabledClient.get("https://www.facebook.com/robots.txt")

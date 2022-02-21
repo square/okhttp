@@ -17,12 +17,13 @@ package okhttp3
 
 import java.net.InetAddress
 import java.net.UnknownHostException
+import okio.Buffer
 import org.assertj.core.api.Assertions.assertThat
 
 class FakeDns : Dns {
   private val hostAddresses: MutableMap<String, List<InetAddress>> = mutableMapOf()
   private val requestedHosts: MutableList<String> = mutableListOf()
-  private var nextAddress = 100
+  private var nextAddress = 0xff000064L // 255.0.0.100 in IPv4; ::ff00:64 in IPv6.
 
   /** Sets the results for `hostname`.  */
   operator fun set(
@@ -57,26 +58,27 @@ class FakeDns : Dns {
     requestedHosts.clear()
   }
 
-  /** Allocates and returns `count` fake addresses like [255.0.0.100, 255.0.0.101].  */
+  /** Allocates and returns `count` fake IPv4 addresses like [255.0.0.100, 255.0.0.101].  */
   fun allocate(count: Int): List<InetAddress> {
-    return try {
-      val result: MutableList<InetAddress> = mutableListOf()
-      for (i in 0 until count) {
-        if (nextAddress > 255) {
-          throw AssertionError("too many addresses allocated")
-        }
-        result.add(
-            InetAddress.getByAddress(
-                byteArrayOf(
-                    255.toByte(), 0.toByte(), 0.toByte(),
-                    nextAddress++.toByte()
-                )
-            )
+    val from = nextAddress
+    nextAddress += count
+    return (from until nextAddress)
+      .map {
+        return@map InetAddress.getByAddress(
+          Buffer().writeInt(it.toInt()).readByteArray()
         )
       }
-      result
-    } catch (e: UnknownHostException) {
-      throw AssertionError()
-    }
+  }
+
+  /** Allocates and returns `count` fake IPv6 addresses like [::ff00:64, ::ff00:65].  */
+  fun allocateIpv6(count: Int): List<InetAddress> {
+    val from = nextAddress
+    nextAddress += count
+    return (from until nextAddress)
+      .map {
+        return@map InetAddress.getByAddress(
+          Buffer().writeLong(0L).writeLong(it).readByteArray()
+        )
+      }
   }
 }

@@ -29,7 +29,7 @@ _2020-02-24_
 
 _2020-01-11_
 
- *  Fix: Don't crash if the connection is closed when sending a degraded ping. This fixes a 
+ *  Fix: Don't crash if the connection is closed when sending a degraded ping. This fixes a
     regression that was introduced in OkHttp 3.14.5.
 
 
@@ -38,7 +38,7 @@ _2020-01-11_
 _2020-01-03_
 
  *  Fix: Degrade HTTP/2 connections after a timeout. When an HTTP/2 stream times out it may impact
-    the stream only or the entire connection. With this fix OkHttp will now send HTTP/2 pings after 
+    the stream only or the entire connection. With this fix OkHttp will now send HTTP/2 pings after
     a stream timeout to determine whether the connection should remain eligible for pooling.
 
 
@@ -263,7 +263,7 @@ _2020-02-24_
 
 _2020-01-11_
 
- *  Fix: Don't crash if the connection is closed when sending a degraded ping. This fixes a 
+ *  Fix: Don't crash if the connection is closed when sending a degraded ping. This fixes a
     regression that was introduced in OkHttp 3.12.7.
 
 
@@ -272,7 +272,7 @@ _2020-01-11_
 _2020-01-03_
 
  *  Fix: Degrade HTTP/2 connections after a timeout. When an HTTP/2 stream times out it may impact
-    the stream only or the entire connection. With this fix OkHttp will now send HTTP/2 pings after 
+    the stream only or the entire connection. With this fix OkHttp will now send HTTP/2 pings after
     a stream timeout to determine whether the connection should remain eligible for pooling.
 
 
@@ -1128,6 +1128,6 @@ stuck on the old version.
  [okhttp_idling_resource]: https://github.com/JakeWharton/okhttp-idling-resource
  [public_suffix]: https://publicsuffix.org/
  [remove_cbc_ecdsa]: https://developers.google.com/web/updates/2016/12/chrome-56-deprecations#remove_cbc-mode_ecdsa_ciphers_in_tls
- [require_android_5]: https://cashapp.github.io/2019-02-05/okhttp-3-13-requires-android-5
+ [require_android_5]: https://code.cash.app/okhttp-3-13-requires-android-5
  [tls_configuration_history]: https://square.github.io/okhttp/tls_configuration_history/
  [upgrading_to_okhttp_4]: https://square.github.io/okhttp/upgrading_to_okhttp_4/

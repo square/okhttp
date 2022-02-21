@@ -69,6 +69,12 @@ enum class SocketPolicy {
    */
   DISCONNECT_AFTER_REQUEST,
 
+  /**
+   * Half close connection (InputStream for client) after reading the request but before
+   * writing the response. Use this to simulate late connection pool failures.
+   */
+  HALF_CLOSE_AFTER_REQUEST,
+
   /** Close connection after reading half of the request body (if present). */
   DISCONNECT_DURING_REQUEST_BODY,
 

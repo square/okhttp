@@ -76,6 +76,7 @@ import okio.BufferedSink
 import okio.BufferedSource
 import okio.ByteString
 import okio.Timeout
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assumptions.assumeFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
@@ -97,14 +98,21 @@ import org.junit.jupiter.api.Test
 )
 @Disabled
 class KotlinSourceModernTest {
+  private val factory = TestValueFactory()
+
   @BeforeEach
   fun disabled() {
     assumeFalse(true)
   }
 
+  @AfterEach
+  fun tearDown() {
+    factory.close()
+  }
+
   @Test
   fun address() {
-    val address: Address = newAddress()
+    val address: Address = factory.newAddress()
     val url: HttpUrl = address.url
     val dns: Dns = address.dns
     val socketFactory: SocketFactory = address.socketFactory
@@ -634,7 +642,7 @@ class KotlinSourceModernTest {
   fun javaNetAuthenticator() {
     val authenticator = JavaNetAuthenticator()
     val response = Response.Builder().build()
-    var request: Request? = authenticator.authenticate(newRoute(), response)
+    var request: Request? = authenticator.authenticate(factory.newRoute(), response)
     request = authenticator.authenticate(null, response)
   }
 
@@ -1087,7 +1095,7 @@ class KotlinSourceModernTest {
 
   @Test
   fun route() {
-    val route: Route = newRoute()
+    val route: Route = factory.newRoute()
     val address: Address = route.address
     val proxy: Proxy = route.proxy
     val inetSocketAddress: InetSocketAddress = route.socketAddress
@@ -1130,23 +1138,6 @@ class KotlinSourceModernTest {
     }
   }
 
-  private fun newAddress(): Address {
-    return Address(
-        "",
-        0,
-        Dns.SYSTEM,
-        SocketFactory.getDefault(),
-        localhost().sslSocketFactory(),
-        OkHostnameVerifier,
-        CertificatePinner.DEFAULT,
-        Authenticator.NONE,
-        Proxy.NO_PROXY,
-        listOf(Protocol.HTTP_1_1),
-        listOf(ConnectionSpec.MODERN_TLS),
-        NullProxySelector
-    )
-  }
-
   private fun newCall(): Call {
     return object : Call {
       override fun request(): Request = TODO()
@@ -1187,9 +1178,5 @@ class KotlinSourceModernTest {
       override fun writeTimeoutMillis(): Int = TODO()
       override fun withWriteTimeout(timeout: Int, unit: TimeUnit): Interceptor.Chain = TODO()
     }
-  }
-
-  private fun newRoute(): Route {
-    return Route(newAddress(), Proxy.NO_PROXY, InetSocketAddress.createUnresolved("", 0))
   }
 }

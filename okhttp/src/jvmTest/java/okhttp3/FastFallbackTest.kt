@@ -19,13 +19,16 @@ import java.io.IOException
 import java.net.Inet4Address
 import java.net.Inet6Address
 import java.net.InetAddress
+import java.util.concurrent.TimeUnit
 import kotlin.test.assertFailsWith
+import kotlin.test.fail
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.opentest4j.TestAbortedException
 
@@ -39,7 +42,8 @@ import org.opentest4j.TestAbortedException
  *
  * This test only runs on host machines that have both IPv4 and IPv6 addresses for localhost.
  */
-class HappyEyeballsTest {
+@Timeout(30)
+class FastFallbackTest {
   @RegisterExtension
   val clientTestRule = OkHttpClientTestRule()
 
@@ -80,7 +84,9 @@ class HappyEyeballsTest {
 
     client = clientTestRule.newClientBuilder()
       .eventListenerFactory(clientTestRule.wrap(listener))
+      .connectTimeout(60, TimeUnit.SECONDS) // Deliberately exacerbate slow fallbacks.
       .dns { dnsResults }
+      .fastFallback(true)
       .build()
     url = serverIpv4.url("/")
       .newBuilder()
@@ -95,14 +101,18 @@ class HappyEyeballsTest {
   }
 
   @Test
-  fun callIpv4WhenBothServersAreReachable() {
+  fun callIpv6FirstEvenWhenIpv4IpIsListedFirst() {
+    dnsResults = listOf(
+      localhostIpv4,
+      localhostIpv6,
+    )
     serverIpv4.enqueue(
       MockResponse()
-        .setBody("hello from IPv4")
+        .setBody("unexpected call to IPv4")
     )
     serverIpv6.enqueue(
       MockResponse()
-        .setBody("unexpected call to IPv6")
+        .setBody("hello from IPv6")
     )
 
     val call = client.newCall(
@@ -111,7 +121,7 @@ class HappyEyeballsTest {
         .build()
     )
     val response = call.execute()
-    assertThat(response.body!!.string()).isEqualTo("hello from IPv4")
+    assertThat(response.body!!.string()).isEqualTo("hello from IPv6")
 
     // In the process we made one successful connection attempt.
     assertThat(listener.recordedEventTypes().filter { it == "ConnectStart" }).hasSize(1)
@@ -164,8 +174,9 @@ class HappyEyeballsTest {
     assertThat(response.body!!.string()).isEqualTo("hello from IPv4")
 
     // In the process we made one successful connection attempt.
-    assertThat(listener.recordedEventTypes().filter { it == "ConnectStart" }).hasSize(1)
-    assertThat(listener.recordedEventTypes().filter { it == "ConnectFailed" }).hasSize(0)
+    assertThat(listener.recordedEventTypes().filter { it == "ConnectStart" }).hasSize(2)
+    assertThat(listener.recordedEventTypes().filter { it == "ConnectFailed" }).hasSize(1)
+    assertThat(listener.recordedEventTypes().filter { it == "ConnectEnd" }).hasSize(1)
   }
 
   @Test
@@ -185,8 +196,9 @@ class HappyEyeballsTest {
     assertThat(response.body!!.string()).isEqualTo("hello from IPv6")
 
     // In the process we made two connection attempts including one failure.
-    assertThat(listener.recordedEventTypes().filter { it == "ConnectStart" }).hasSize(2)
-    assertThat(listener.recordedEventTypes().filter { it == "ConnectFailed" }).hasSize(1)
+    assertThat(listener.recordedEventTypes().filter { it == "ConnectStart" }).hasSize(1)
+    assertThat(listener.recordedEventTypes().filter { it == "ConnectEnd" }).hasSize(1)
+    assertThat(listener.recordedEventTypes().filter { it == "ConnectFailed" }).hasSize(0)
   }
 
   @Test
@@ -208,23 +220,16 @@ class HappyEyeballsTest {
     assertThat(listener.recordedEventTypes().filter { it == "ConnectFailed" }).hasSize(2)
   }
 
-  /**
-   * This test currently completes successfully, but it takes 10 second to time out connecting to
-   * the unreachable address.
-   *
-   * Upon implementing Happy Eyeballs we should change this test to fail if it takes that long. We
-   * should also extend the connect timeout beyond 10 seconds to exacerbate the problem.
-   */
   @Test
-  fun reachesIpv6AfterUnreachableAddress() {
+  fun reachesIpv4AfterUnreachableIpv6Address() {
     dnsResults = listOf(
-      TestUtil.UNREACHABLE_ADDRESS.address,
-      localhostIpv6,
+      TestUtil.UNREACHABLE_ADDRESS_IPV6.address,
+      localhostIpv4,
     )
-    serverIpv4.shutdown()
-    serverIpv6.enqueue(
+    serverIpv6.shutdown()
+    serverIpv4.enqueue(
       MockResponse()
-        .setBody("hello from IPv6")
+        .setBody("hello from IPv4")
     )
 
     val call = client.newCall(
@@ -233,10 +238,39 @@ class HappyEyeballsTest {
         .build()
     )
     val response = call.execute()
-    assertThat(response.body!!.string()).isEqualTo("hello from IPv6")
+    assertThat(response.body!!.string()).isEqualTo("hello from IPv4")
 
     // In the process we made two connection attempts including one failure.
     assertThat(listener.recordedEventTypes().filter { it == "ConnectStart" }).hasSize(2)
     assertThat(listener.recordedEventTypes().filter { it == "ConnectFailed" }).hasSize(1)
+  }
+
+  @Test
+  fun timesOutWithFastFallbackDisabled() {
+    dnsResults = listOf(
+      TestUtil.UNREACHABLE_ADDRESS_IPV4.address,
+      localhostIpv6,
+    )
+    serverIpv4.shutdown()
+    serverIpv6.enqueue(
+      MockResponse()
+        .setBody("hello from IPv6")
+    )
+
+    client = client.newBuilder()
+      .fastFallback(false)
+      .callTimeout(1_000, TimeUnit.MILLISECONDS)
+      .build()
+    val call = client.newCall(
+      Request.Builder()
+        .url(url)
+        .build()
+    )
+    try {
+      call.execute()
+      fail("expected a timeout")
+    } catch (e: IOException) {
+      assertThat(e).hasMessage("timeout")
+    }
   }
 }

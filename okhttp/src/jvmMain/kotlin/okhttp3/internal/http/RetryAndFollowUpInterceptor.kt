@@ -40,7 +40,6 @@ import okhttp3.internal.canReuseConnectionFor
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.connection.Exchange
 import okhttp3.internal.connection.RealCall
-import okhttp3.internal.connection.RouteException
 import okhttp3.internal.http.StatusLine.Companion.HTTP_MISDIRECTED_REQUEST
 import okhttp3.internal.http.StatusLine.Companion.HTTP_PERM_REDIRECT
 import okhttp3.internal.http.StatusLine.Companion.HTTP_TEMP_REDIRECT
@@ -60,10 +59,10 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
     val call = realChain.call
     var followUpCount = 0
     var priorResponse: Response? = null
-    var newExchangeFinder = true
+    var newRoutePlanner = true
     var recoveredFailures = listOf<IOException>()
     while (true) {
-      call.enterNetworkInterceptorExchange(request, newExchangeFinder)
+      call.enterNetworkInterceptorExchange(request, newRoutePlanner, chain)
 
       var response: Response
       var closeActiveExchange = true
@@ -74,16 +73,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
 
         try {
           response = realChain.proceed(request)
-          newExchangeFinder = true
-        } catch (e: RouteException) {
-          // The attempt to connect via a route failed. The request will not have been sent.
-          if (!recover(e.lastConnectException, call, request, requestSendStarted = false)) {
-            throw e.firstConnectException.withSuppressed(recoveredFailures)
-          } else {
-            recoveredFailures += e.firstConnectException
-          }
-          newExchangeFinder = false
-          continue
+          newRoutePlanner = true
         } catch (e: IOException) {
           // An attempt to communicate with a server failed. The request may have been sent.
           if (!recover(e, call, request, requestSendStarted = e !is ConnectionShutdownException)) {
@@ -91,7 +81,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
           } else {
             recoveredFailures += e
           }
-          newExchangeFinder = false
+          newRoutePlanner = false
           continue
         }
 
