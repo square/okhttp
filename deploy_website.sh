@@ -66,7 +66,7 @@ mkdocs gh-deploy
 git checkout gh-pages
 git cherry-pick bb229b9dcc9a21a73edbf8d936bea88f52e0a3ff
 git cherry-pick c695732f1d4aea103b826876c077fbfea630e244
-git push
+git push --set-upstream origin gh-pages
 
 # Delete our temp folder
 cd ..
