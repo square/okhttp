@@ -775,6 +775,114 @@ internal class FastFallbackExchangeFinderTest {
     taskFaker.assertNoMoreTasks()
   }
 
+  /**
+   * Confirm at most 4 connect attempts are permitted in-flight at a time. When we get to the 5th
+   * connection we don't start it until an earlier connection completes.
+   */
+  @Test
+  fun maximumConnectsEnforced() {
+    val plan0 = routePlanner.addPlan()
+    plan0.tcpConnectDelayNanos = 2_010.ms
+    plan0.tcpConnectThrowable = IOException("boom!")
+
+    val plan1 = routePlanner.addPlan()
+    plan1.tcpConnectDelayNanos = 2_020.ms
+    plan1.tcpConnectThrowable = IOException("boom!")
+
+    val plan2 = routePlanner.addPlan()
+    plan2.tcpConnectDelayNanos = 2_030.ms
+    plan2.tcpConnectThrowable = IOException("boom!")
+
+    val plan3 = routePlanner.addPlan()
+    plan3.tcpConnectDelayNanos = 1_800.ms
+
+    val plan4 = routePlanner.addPlan()
+    plan4.tcpConnectDelayNanos = 550.ms
+
+    val plan5 = routePlanner.addPlan()
+    plan5.tcpConnectDelayNanos = 300.ms
+
+    val plan6 = routePlanner.addPlan()
+    plan6.tcpConnectDelayNanos = 10.ms
+
+    taskRunner.newQueue().execute("connect") {
+      val result0 = finder.find()
+      assertThat(result0).isEqualTo(plan6.connection)
+    }
+
+    taskFaker.runTasks()
+    assertEvents(
+      "take plan 0",
+      "plan 0 TCP connecting...",
+    )
+
+    taskFaker.advanceUntil(250.ms)
+    assertEvents(
+      "take plan 1",
+      "plan 1 TCP connecting...",
+    )
+
+    taskFaker.advanceUntil(500.ms)
+    assertEvents(
+      "take plan 2",
+      "plan 2 TCP connecting...",
+    )
+
+    taskFaker.advanceUntil(750.ms)
+    assertEvents(
+      "take plan 3",
+      "plan 3 TCP connecting...",
+    )
+
+    taskFaker.advanceUntil(2_010.ms)
+    assertEvents(
+      "plan 0 TCP connect failed",
+      "take plan 4",
+      "plan 4 TCP connecting...",
+    )
+
+    taskFaker.advanceUntil(2_270.ms)
+    assertEvents(
+      "plan 1 TCP connect failed",
+      "take plan 5",
+      "plan 5 TCP connecting...",
+    )
+
+    taskFaker.advanceUntil(2_530.ms)
+    assertEvents(
+      "plan 2 TCP connect failed",
+      "take plan 6",
+      "plan 6 TCP connecting...",
+    )
+
+    taskFaker.advanceUntil(2_540.ms)
+    assertEvents(
+      "plan 6 TCP connected",
+      "plan 3 cancel",
+      "plan 4 cancel",
+      "plan 5 cancel",
+      "plan 6 TLS connecting...",
+      "plan 6 TLS connected",
+    )
+
+    taskFaker.advanceUntil(2_550.ms)
+    assertEvents(
+      "plan 3 TCP connect canceled",
+    )
+
+    taskFaker.advanceUntil(2_560.ms)
+    assertEvents(
+      "plan 4 TCP connect canceled",
+    )
+
+    taskFaker.advanceUntil(2_570.ms)
+    assertEvents(
+      "plan 5 TCP connect canceled",
+    )
+
+    taskFaker.assertNoMoreTasks()
+  }
+
   private fun assertEvents(vararg expected: String) {
     val actual = generateSequence { routePlanner.events.poll() }.toList()
     assertThat(actual).containsExactly(*expected)

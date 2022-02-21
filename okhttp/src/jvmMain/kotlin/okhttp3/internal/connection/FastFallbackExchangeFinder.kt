@@ -34,6 +34,7 @@ internal class FastFallbackExchangeFinder(
   private val taskRunner: TaskRunner,
 ) : ExchangeFinder {
   private val connectDelayNanos = TimeUnit.MILLISECONDS.toNanos(250L)
+  private val maxConcurrentConnects = 4
   private var nextTcpConnectAtNanos = Long.MIN_VALUE
 
   /**
@@ -63,13 +64,24 @@ internal class FastFallbackExchangeFinder(
       ) {
         if (routePlanner.isCanceled()) throw IOException("Canceled")
 
-        // Launch a new connection if we're ready to.
-        val now = taskRunner.backend.nanoTime()
-        var awaitTimeoutNanos = nextTcpConnectAtNanos - now
-        if (tcpConnectsInFlight.isEmpty() || awaitTimeoutNanos <= 0) {
-          launchTcpConnect()
-          nextTcpConnectAtNanos = now + connectDelayNanos
-          awaitTimeoutNanos = connectDelayNanos
+        val awaitTimeoutNanos = when {
+          tcpConnectsInFlight.size < maxConcurrentConnects -> {
+            val now = taskRunner.backend.nanoTime()
+            val timeUntilTcpConnectAtNanos = nextTcpConnectAtNanos - now
+            if (tcpConnectsInFlight.isEmpty() || timeUntilTcpConnectAtNanos <= 0) {
+              // We're ready to launch a new connection.
+              launchTcpConnect()
+              nextTcpConnectAtNanos = now + connectDelayNanos
+              connectDelayNanos
+            } else {
+              // Wait to launch a new connection.
+              timeUntilTcpConnectAtNanos
+            }
+          }
+          else -> {
+            // Wait indefinitely because we've got the maximum number of connections in flight.
+            TimeUnit.SECONDS.toNanos(60)
+          }
         }
 
         // Wait for an in-flight connect to complete or fail.
