@@ -22,6 +22,7 @@ import java.time.Duration
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy
+import okhttp3.Headers.Companion.headersOf
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.TestUtil.assertSuppressed
@@ -270,5 +271,25 @@ class CallKotlinTest(
         assertThat(suppressed).isNotSameAs(expected)
       }
     }
+  }
+
+  @Test
+  fun responseRequestIsLastRedirect() {
+    server.enqueue(
+      MockResponse()
+        .setResponseCode(302)
+        .addHeader("Location: /b")
+    )
+    server.enqueue(MockResponse())
+
+    val request = Request.Builder()
+      .url(server.url("/"))
+      .build()
+
+    val call = client.newCall(request)
+    val response = call.execute()
+
+    assertThat(response.request.url.encodedPath).isEqualTo("/b")
+    assertThat(response.request.headers).isEqualTo(headersOf())
   }
 }
