@@ -39,13 +39,17 @@ import okio.Buffer
  */
 class Response internal constructor(
   /**
-   * The wire-level request that initiated this HTTP response. This is not necessarily the same
-   * request issued by the application:
+   * The request that initiated this HTTP response. This is not necessarily the same request issued
+   * by the application:
    *
-   * * It may be transformed by the HTTP client. For example, the client may copy headers like
-   *   `Content-Length` from the request body.
+   * * It may be transformed by the user's interceptors. For example, an application interceptor
+   *   may add headers like `User-Agent`.
    * * It may be the request generated in response to an HTTP redirect or authentication
    *   challenge. In this case the request URL may be different than the initial request URL.
+   *
+   * Use the `request` of the [networkResponse] field to get the wire-level request that was
+   * transmitted. In the case of follow-ups and redirects, also look at the `request` of the
+   * [priorResponse] objects, which have its own [priorResponse].
    */
   @get:JvmName("request") val request: Request,
 

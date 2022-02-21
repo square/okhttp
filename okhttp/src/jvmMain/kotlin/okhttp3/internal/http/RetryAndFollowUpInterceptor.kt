@@ -85,14 +85,18 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
           continue
         }
 
+        // Clear out downstream interceptor's additional request headers, cookies, etc.
+        val responseBuilder = response.newBuilder()
+          .request(request)
+
         // Attach the prior response if it exists. Such responses never have a body.
         if (priorResponse != null) {
-          response = response.newBuilder()
-              .priorResponse(priorResponse.newBuilder()
-                  .body(null)
-                  .build())
-              .build()
+          responseBuilder.priorResponse(priorResponse.newBuilder()
+            .body(null)
+            .build())
         }
+
+        response = responseBuilder.build()
 
         val exchange = call.interceptorScopedExchange
         val followUp = followUpRequest(response, exchange)
