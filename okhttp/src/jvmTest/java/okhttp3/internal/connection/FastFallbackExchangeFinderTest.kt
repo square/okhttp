@@ -775,16 +775,6 @@ internal class FastFallbackExchangeFinderTest {
     taskFaker.assertNoMoreTasks()
   }
 
-  @Test
-  fun cancelEarlyDuringTcpConnectDoesntLeak() {
-    // TODO(jwilson): change ConnectPlan.cancel() to work even if rawSocket hasn't been created yet.
-  }
-
-  @Test
-  fun routeFailureStatisticsAreTrackedPerRoute() {
-    // TODO(jwilson): we call resetStatistics() in the wrong phrase for racy connects.
-  }
-
   private fun assertEvents(vararg expected: String) {
     val actual = generateSequence { routePlanner.events.poll() }.toList()
     assertThat(actual).containsExactly(*expected)

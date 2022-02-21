@@ -74,6 +74,9 @@ class ConnectPlan(
 ) : RoutePlanner.Plan, ExchangeCodec.Carrier {
   private val eventListener = call.eventListener
 
+  /** True if this connect was canceled; typically because it lost a race. */
+  @Volatile private var canceled = false
+
   // These properties are initialized by connect() and never reassigned.
 
   /** The low-level TCP socket. */
@@ -232,6 +235,11 @@ class ConnectPlan(
       else -> Socket(route.proxy)
     }
     this.rawSocket = rawSocket
+
+    // Handle the race where cancel() precedes connectSocket(). We don't want to miss a cancel.
+    if (canceled) {
+      throw IOException("canceled")
+    }
 
     rawSocket.soTimeout = client.readTimeoutMillis
     try {
@@ -484,6 +492,7 @@ class ConnectPlan(
   }
 
   override fun cancel() {
+    canceled = true
     // Close the raw socket so we don't end up doing synchronous I/O.
     rawSocket?.closeQuietly()
   }
