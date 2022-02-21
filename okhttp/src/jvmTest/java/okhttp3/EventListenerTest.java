@@ -139,6 +139,27 @@ public final class EventListenerTest {
         "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
   }
 
+  @Test public void successfulCallEventSequenceForIpAddress() throws IOException {
+    server.enqueue(new MockResponse()
+      .setBody("abc"));
+
+    String ipAddress = InetAddress.getLoopbackAddress().getHostAddress();
+
+    Call call = client.newCall(new Request.Builder()
+      .url(server.url("/").newBuilder().host(ipAddress).build())
+      .build());
+    Response response = call.execute();
+    assertThat(response.code()).isEqualTo(200);
+    assertThat(response.body().string()).isEqualTo("abc");
+    response.body().close();
+
+    assertThat(listener.recordedEventTypes()).containsExactly("CallStart",
+      "ProxySelectStart", "ProxySelectEnd",
+      "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
+      "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
+      "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
+  }
+
   @Test public void successfulCallEventSequenceForEnqueue() throws Exception {
     server.enqueue(new MockResponse()
         .setBody("abc"));

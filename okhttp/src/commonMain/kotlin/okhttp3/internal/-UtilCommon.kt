@@ -360,3 +360,19 @@ internal inline fun <T> Iterable<T>.filterList(predicate: T.() -> Boolean): List
 }
 
 internal const val userAgent: String = "okhttp/${OkHttp.VERSION}"
+
+internal fun <T> interleave(a: Iterable<T>, b: Iterable<T>): List<T> {
+  val ia = a.iterator()
+  val ib = b.iterator()
+
+  return buildList {
+    while (ia.hasNext() || ib.hasNext()) {
+      if (ia.hasNext()) {
+        add(ia.next())
+      }
+      if (ib.hasNext()) {
+        add(ib.next())
+      }
+    }
+  }
+}

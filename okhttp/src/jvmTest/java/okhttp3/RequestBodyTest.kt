@@ -20,6 +20,7 @@ import java.io.FileInputStream
 import java.io.IOException
 import java.nio.file.Path
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okio.Buffer
 import okio.FileSystem
@@ -103,15 +104,32 @@ class RequestBodyTest {
     }
   }
 
+  @Test
+  fun testPathRead() {
+    assertOnPath(content = "Hello") { path ->
+      val requestBody = path.asRequestBody(FileSystem.SYSTEM)
+
+      val buffer = Buffer()
+      requestBody.writeTo(buffer)
+      assertThat(buffer.readUtf8()).isEqualTo("Hello")
+    }
+  }
+
   private inline fun <T> assertOnFileDescriptor(content: String? = null, fn: (FileDescriptor) -> T): T {
+    return assertOnPath(content) {
+      FileInputStream(filePath.toFile()).use { fis ->
+        fn(fis.fd)
+      }
+    }
+  }
+
+  private inline fun <T> assertOnPath(content: String? = null, fn: (okio.Path) -> T): T {
     FileSystem.SYSTEM.write(filePath) {
       if (content != null) {
         writeUtf8(content)
       }
     }
 
-    return FileInputStream(filePath.toFile()).use { fis ->
-      fn(fis.fd)
-    }
+    return fn(filePath)
   }
 }

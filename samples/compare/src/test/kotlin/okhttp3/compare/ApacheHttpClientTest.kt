@@ -54,6 +54,6 @@ class ApacheHttpClientTest {
     assertThat(recorded.getHeader("Accept")).isEqualTo("text/plain")
     assertThat(recorded.getHeader("Accept-Encoding")).isEqualTo("gzip, x-gzip, deflate")
     assertThat(recorded.getHeader("Connection")).isEqualTo("keep-alive")
-    assertThat(recorded.getHeader("User-Agent")).startsWith("Apache-HttpClient/5.0")
+    assertThat(recorded.getHeader("User-Agent")).startsWith("Apache-HttpClient/")
   }
 }

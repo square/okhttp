@@ -25,9 +25,9 @@ import okhttp3.internal.toImmutableList
 
 /**
  * A specification for a connection to an origin server. For simple connections, this is the
- * server's hostname and port. If an explicit proxy is requested (or [no proxy][Proxy.NO_PROXY] is explicitly requested),
- * this also includes that proxy information. For secure connections the address also includes the SSL socket factory,
- * hostname verifier, and certificate pinner.
+ * server's hostname and port. If an explicit proxy is requested (or [no proxy][Proxy.NO_PROXY] is
+ * explicitly requested), this also includes that proxy information. For secure connections the
+ * address also includes the SSL socket factory, hostname verifier, and certificate pinner.
  *
  * HTTP requests that share the same [Address] may also share the same [Connection].
  */
@@ -53,8 +53,8 @@ class Address(
   @get:JvmName("proxyAuthenticator") val proxyAuthenticator: Authenticator,
 
   /**
-   * Returns this address's explicitly-specified HTTP proxy, or null to delegate to the {@linkplain
-   * #proxySelector proxy selector}.
+   * Returns this address's explicitly-specified HTTP proxy, or null to delegate to the
+   * [proxy selector][proxySelector].
    */
   @get:JvmName("proxy") val proxy: Proxy?,
 

@@ -881,7 +881,7 @@ open class CallTest(
    */
   @Test fun connectTimeoutsAttemptsAlternateRoute() {
     val proxySelector = RecordingProxySelector()
-    proxySelector.proxies.add(Proxy(Proxy.Type.HTTP, TestUtil.UNREACHABLE_ADDRESS))
+    proxySelector.proxies.add(Proxy(Proxy.Type.HTTP, TestUtil.UNREACHABLE_ADDRESS_IPV4))
     proxySelector.proxies.add(server.toProxyAddress())
     server.enqueue(
       MockResponse()
@@ -1434,6 +1434,61 @@ open class CallTest(
     assertThat(recordedRequest.body.readUtf8()).isEqualTo("def")
     assertThat(recordedRequest.getHeader("Content-Length")).isEqualTo("3")
     assertThat(recordedRequest.getHeader("Content-Type")).isEqualTo("text/plain; charset=utf-8")
+  }
+
+  @Test fun serverHalfClosingBeforeResponse() {
+    server.enqueue(MockResponse().setBody("abc"))
+    server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.HALF_CLOSE_AFTER_REQUEST))
+    server.enqueue(MockResponse().setBody("abc"))
+
+    val client = client.newBuilder()
+      .retryOnConnectionFailure(false)
+      .build()
+
+    // Seed the connection pool so we have something that can fail.
+    val request1 = Request.Builder().url(server.url("/")).build()
+    val response1 = client.newCall(request1).execute()
+    assertThat(response1.body!!.string()).isEqualTo("abc")
+
+    listener.clearAllEvents()
+
+    val request2 = Request.Builder()
+      .url(server.url("/"))
+      .post("body!".toRequestBody("text/plain".toMediaType()))
+      .build()
+    try {
+      client.newCall(request2).execute()
+      fail()
+    } catch (e: IOException) {
+      assertThat(e).hasMessageStartingWith("unexpected end of stream on http://")
+      // expected
+    }
+
+    assertThat(listener.recordedEventTypes()).containsExactly(
+      "CallStart", "ConnectionAcquired", "RequestHeadersStart", "RequestHeadersEnd",
+      "RequestBodyStart", "RequestBodyEnd", "ResponseFailed", "ConnectionReleased", "CallFailed"
+    )
+    listener.clearAllEvents()
+
+    val response3 = client.newCall(request1).execute()
+    assertThat(response3.body!!.string()).isEqualTo("abc")
+
+    assertThat(listener.recordedEventTypes()).containsExactly(
+      "CallStart", "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd", "ConnectStart",
+      "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart", "RequestHeadersEnd",
+      "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart", "ResponseBodyEnd",
+      "ConnectionReleased", "CallEnd"
+    )
+
+    val get = server.takeRequest()
+    assertThat(get.sequenceNumber).isEqualTo(0)
+
+    val post1 = server.takeRequest()
+    assertThat(post1.body.readUtf8()).isEqualTo("body!")
+    assertThat(post1.sequenceNumber).isEqualTo(1)
+
+    val get2 = server.takeRequest()
+    assertThat(get2.sequenceNumber).isEqualTo(0)
   }
 
   @Test fun postBodyRetransmittedOnFailureRecovery() {
@@ -3900,7 +3955,7 @@ open class CallTest(
       .build()
     executeSynchronously("/")
       .assertFailure(IOException::class.java)
-      .assertFailure("exhausted all routes")
+      .assertFailure("Socket closed", "Socket is closed")
   }
 
   @Test fun requestBodyThrowsUnrelatedToNetwork() {

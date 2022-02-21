@@ -17,13 +17,13 @@ tasks.jar {
 }
 
 dependencies {
-  api(project(":okhttp"))
-  api(project(":mockwebserver3"))
-  api(Dependencies.junit)
+  api(projects.okhttp)
+  api(projects.mockwebserver3)
+  api(libs.junit)
 
-  testImplementation(project(":okhttp-testing-support"))
-  testImplementation(project(":okhttp-tls"))
-  testImplementation(Dependencies.assertj)
+  testImplementation(projects.okhttpTestingSupport)
+  testImplementation(projects.okhttpTls)
+  testImplementation(libs.assertj.core)
 }
 
 tasks.register<JapicmpTask>("japicmp") {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Square, Inc.
+ * Copyright (C) 2022 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,20 @@
  */
 package okhttp3.internal.connection
 
-import java.io.IOException
+/** Reuse a connection from the pool. */
+internal class ReusePlan(
+  val connection: RealConnection,
+) : RoutePlanner.Plan {
 
-/**
- * An exception thrown to indicate a problem connecting via a single Route. Multiple attempts may
- * have been made with alternative protocols, none of which were successful.
- */
-class RouteException internal constructor(val firstConnectException: IOException) :
-    RuntimeException(firstConnectException) {
-  var lastConnectException: IOException = firstConnectException
-    private set
+  override val isReady = true
 
-  fun addConnectException(e: IOException) {
-    firstConnectException.addSuppressed(e)
-    lastConnectException = e
-  }
+  override fun connectTcp() = error("already connected")
+
+  override fun connectTlsEtc() = error("already connected")
+
+  override fun handleSuccess() = connection
+
+  override fun cancel() = error("unexpected cancel")
+
+  override fun retry() = error("unexpected retry")
 }

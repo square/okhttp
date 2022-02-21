@@ -17,20 +17,21 @@ package okhttp3.logging;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
+import mockwebserver3.MockResponse;
+import mockwebserver3.MockWebServer;
+import mockwebserver3.SocketPolicy;
 import mockwebserver3.junit5.internal.MockWebServerExtension;
 import okhttp3.Call;
 import okhttp3.EventListener;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
-import okhttp3.TestUtil;
-import okhttp3.testing.PlatformRule;
+import okhttp3.OkHttpClientTestRule;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import mockwebserver3.MockResponse;
-import mockwebserver3.MockWebServer;
-import mockwebserver3.SocketPolicy;
+import okhttp3.TestUtil;
+import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,6 +50,7 @@ public final class LoggingEventListenerTest {
   private static final MediaType PLAIN = MediaType.get("text/plain");
 
   @RegisterExtension public final PlatformRule platform = new PlatformRule();
+  @RegisterExtension public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
   private MockWebServer server;
 
   private final HandshakeCertificates handshakeCertificates = localhost();
@@ -61,13 +63,12 @@ public final class LoggingEventListenerTest {
   @BeforeEach
   public void setUp(MockWebServer server) {
     this.server = server;
-    client =
-        new OkHttpClient.Builder()
-            .eventListenerFactory(loggingEventListenerFactory)
-            .sslSocketFactory(
-                handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
-            .retryOnConnectionFailure(false)
-            .build();
+    this.client = clientTestRule.newClientBuilder()
+      .eventListenerFactory(loggingEventListenerFactory)
+      .sslSocketFactory(handshakeCertificates.sslSocketFactory(),
+          handshakeCertificates.trustManager())
+      .retryOnConnectionFailure(false)
+      .build();
 
     url = server.url("/");
   }

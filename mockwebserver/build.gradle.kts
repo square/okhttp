@@ -14,13 +14,13 @@ tasks.jar {
 }
 
 dependencies {
-  api(project(":okhttp"))
+  api(projects.okhttp)
 
-  testImplementation(project(":okhttp-testing-support"))
-  testImplementation(project(":okhttp-tls"))
-  testRuntimeOnly(project(":mockwebserver3-junit5"))
-  testImplementation(Dependencies.junit)
-  testImplementation(Dependencies.assertj)
+  testImplementation(projects.okhttpTestingSupport)
+  testImplementation(projects.okhttpTls)
+  testRuntimeOnly(projects.mockwebserver3Junit5)
+  testImplementation(libs.junit)
+  testImplementation(libs.assertj.core)
 }
 
 mavenPublishing {

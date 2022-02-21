@@ -48,9 +48,11 @@ import org.junit.jupiter.api.Timeout
 @Tag("Slow")
 class Http2ConnectionTest {
   private val peer = MockHttp2Peer()
+  private val taskFaker = TaskFaker()
 
   @AfterEach fun tearDown() {
     peer.close()
+    taskFaker.close()
   }
 
   @Test fun serverPingsClientHttp2() {
@@ -1919,7 +1921,6 @@ class Http2ConnectionTest {
   @Test fun connectionUsesTaskRunner() {
     peer.acceptFrame() // SYN_STREAM.
     peer.play()
-    val taskFaker = TaskFaker()
     val taskRunner = taskFaker.taskRunner
     val socket = peer.openSocket()
     val connection = Http2Connection.Builder(true, taskRunner)

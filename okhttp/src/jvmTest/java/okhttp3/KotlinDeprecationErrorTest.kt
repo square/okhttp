@@ -34,7 +34,6 @@ import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509KeyManager
 import javax.net.ssl.X509TrustManager
-import okhttp3.internal.proxy.NullProxySelector
 import okhttp3.logging.HttpLoggingInterceptor
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -45,6 +44,7 @@ import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import okhttp3.tls.internal.TlsUtil.localhost
 import okio.Buffer
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
@@ -60,9 +60,16 @@ import org.junit.jupiter.api.Test
     "VARIABLE_WITH_REDUNDANT_INITIALIZER"
 )
 class KotlinDeprecationErrorTest {
+  private val factory = TestValueFactory()
+
+  @AfterEach
+  fun tearDown() {
+    factory.close()
+  }
+
   @Test @Disabled
   fun address() {
-    val address: Address = newAddress()
+    val address: Address = factory.newAddress()
     val url: HttpUrl = address.url()
     val dns: Dns = address.dns()
     val socketFactory: SocketFactory = address.socketFactory()
@@ -338,7 +345,7 @@ class KotlinDeprecationErrorTest {
 
   @Test @Disabled
   fun route() {
-    val route: Route = newRoute()
+    val route: Route = factory.newRoute()
     val address: Address = route.address()
     val proxy: Proxy = route.proxy()
     val inetSocketAddress: InetSocketAddress = route.socketAddress()
@@ -348,30 +355,5 @@ class KotlinDeprecationErrorTest {
   fun tlsVersion() {
     val tlsVersion: TlsVersion = TlsVersion.TLS_1_3
     val javaName: String = tlsVersion.javaName()
-  }
-
-  private fun newAddress(): Address {
-    return Address(
-        "",
-        0,
-        Dns.SYSTEM,
-        SocketFactory.getDefault(),
-        localhost().sslSocketFactory(),
-        newHostnameVerifier(),
-        CertificatePinner.DEFAULT,
-        Authenticator.NONE,
-        Proxy.NO_PROXY,
-        listOf(Protocol.HTTP_1_1),
-        listOf(ConnectionSpec.MODERN_TLS),
-        NullProxySelector
-    )
-  }
-
-  private fun newHostnameVerifier(): HostnameVerifier {
-    return HostnameVerifier { _, _ -> false }
-  }
-
-  private fun newRoute(): Route {
-    return Route(newAddress(), Proxy.NO_PROXY, InetSocketAddress.createUnresolved("", 0))
   }
 }

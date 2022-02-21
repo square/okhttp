@@ -26,7 +26,6 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.internal.EMPTY_HEADERS
 import okhttp3.internal.checkOffsetAndCount
-import okhttp3.internal.connection.RealConnection
 import okhttp3.internal.discard
 import okhttp3.internal.headersContentLength
 import okhttp3.internal.http.ExchangeCodec
@@ -64,8 +63,7 @@ import okio.Timeout
 class Http1ExchangeCodec(
   /** The client that configures this stream. May be null for HTTPS proxy tunnels. */
   private val client: OkHttpClient?,
-  /** The connection that carries this stream. */
-  override val connection: RealConnection,
+  override val carrier: ExchangeCodec.Carrier,
   private val source: BufferedSource,
   private val sink: BufferedSink
 ) : ExchangeCodec {
@@ -101,7 +99,7 @@ class Http1ExchangeCodec(
   }
 
   override fun cancel() {
-    connection.cancel()
+    carrier.cancel()
   }
 
   /**
@@ -115,7 +113,7 @@ class Http1ExchangeCodec(
    * the proper value.
    */
   override fun writeRequestHeaders(request: Request) {
-    val requestLine = RequestLine.get(request, connection.route().proxy.type())
+    val requestLine = RequestLine.get(request, carrier.route.proxy.type())
     writeRequest(request.headers, requestLine)
   }
 
@@ -200,7 +198,7 @@ class Http1ExchangeCodec(
       }
     } catch (e: EOFException) {
       // Provide more context if the server ends the stream before sending a response.
-      val address = connection.route().address.url.redact()
+      val address = carrier.route.address.url.redact()
       throw IOException("unexpected end of stream on $address", e)
     }
   }
@@ -232,7 +230,7 @@ class Http1ExchangeCodec(
   private fun newUnknownLengthSource(): Source {
     check(state == STATE_OPEN_RESPONSE_BODY) { "state: $state" }
     state = STATE_READING_RESPONSE_BODY
-    connection.noNewExchanges()
+    carrier.noNewExchanges()
     return UnknownLengthSource()
   }
 
@@ -332,7 +330,7 @@ class Http1ExchangeCodec(
       return try {
         source.read(sink, byteCount)
       } catch (e: IOException) {
-        connection.noNewExchanges()
+        carrier.noNewExchanges()
         responseBodyComplete()
         throw e
       }
@@ -369,7 +367,7 @@ class Http1ExchangeCodec(
 
       val read = super.read(sink, minOf(bytesRemaining, byteCount))
       if (read == -1L) {
-        connection.noNewExchanges() // The server didn't supply the promised content length.
+        carrier.noNewExchanges() // The server didn't supply the promised content length.
         val e = ProtocolException("unexpected end of stream")
         responseBodyComplete()
         throw e
@@ -387,7 +385,7 @@ class Http1ExchangeCodec(
 
       if (bytesRemaining != 0L &&
           !discard(ExchangeCodec.DISCARD_STREAM_TIMEOUT_MILLIS, MILLISECONDS)) {
-        connection.noNewExchanges() // Unread bytes remain on the stream.
+        carrier.noNewExchanges() // Unread bytes remain on the stream.
         responseBodyComplete()
       }
 
@@ -413,7 +411,7 @@ class Http1ExchangeCodec(
 
       val read = super.read(sink, minOf(byteCount, bytesRemainingInChunk))
       if (read == -1L) {
-        connection.noNewExchanges() // The server didn't supply the promised chunk length.
+        carrier.noNewExchanges() // The server didn't supply the promised chunk length.
         val e = ProtocolException("unexpected end of stream")
         responseBodyComplete()
         throw e
@@ -450,7 +448,7 @@ class Http1ExchangeCodec(
       if (closed) return
       if (hasMoreChunks &&
           !discard(ExchangeCodec.DISCARD_STREAM_TIMEOUT_MILLIS, MILLISECONDS)) {
-        connection.noNewExchanges() // Unread bytes remain on the stream.
+        carrier.noNewExchanges() // Unread bytes remain on the stream.
         responseBodyComplete()
       }
       closed = true

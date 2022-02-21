@@ -36,18 +36,18 @@ android {
 dependencies {
   val okhttpLegacyVersion = "3.12.12"
 
-  implementation(Dependencies.kotlinReflect)
-  implementation(Dependencies.playServicesSafetynet)
+  implementation(libs.kotlin.reflect)
+  implementation(libs.playservices.safetynet)
   implementation("com.squareup.okhttp3:okhttp:${okhttpLegacyVersion}")
   implementation("com.squareup.okhttp3:okhttp-tls:${okhttpLegacyVersion}") {
     exclude("org.bouncycastle")
   }
   androidTestImplementation("com.squareup.okhttp3:mockwebserver:${okhttpLegacyVersion}")
-  androidTestImplementation(Dependencies.bouncycastle)
-  androidTestImplementation(Dependencies.bouncycastletls)
-  androidTestImplementation(Dependencies.androidxExtJunit)
-  androidTestImplementation(Dependencies.androidxEspressoCore)
-  androidTestImplementation(Dependencies.httpclient5)
-  androidTestImplementation(Dependencies.moshi)
-  androidTestImplementation(Dependencies.moshiKotlin)
+  androidTestImplementation(libs.bouncycastle.bcprov)
+  androidTestImplementation(libs.bouncycastle.bctls)
+  androidTestImplementation(libs.androidx.junit)
+  androidTestImplementation(libs.androidx.espresso.core)
+  androidTestImplementation(libs.httpClient5)
+  androidTestImplementation(libs.squareup.moshi)
+  androidTestImplementation(libs.squareup.moshi.kotlin)
 }

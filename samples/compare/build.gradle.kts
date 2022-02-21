@@ -3,15 +3,15 @@ plugins {
 }
 
 dependencies {
-  testImplementation(project(":okhttp"))
-  testImplementation(project(":mockwebserver3"))
-  testRuntimeOnly(project(":mockwebserver3-junit5"))
-  testImplementation(project(":okhttp-tls"))
-  testImplementation(project(":okhttp-testing-support"))
-  testImplementation(Dependencies.httpclient5)
-  testImplementation(Dependencies.jettyClient)
-  testImplementation(Dependencies.junit)
-  testImplementation(Dependencies.assertj)
+  testImplementation(projects.okhttp)
+  testImplementation(projects.mockwebserver3)
+  testRuntimeOnly(projects.mockwebserver3Junit5)
+  testImplementation(projects.okhttpTls)
+  testImplementation(projects.okhttpTestingSupport)
+  testImplementation(libs.httpClient5)
+  testImplementation(libs.jettyClient)
+  testImplementation(libs.junit)
+  testImplementation(libs.assertj.core)
 }
 
 tasks.compileJava {
