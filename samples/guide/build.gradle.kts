@@ -10,6 +10,7 @@ dependencies {
   implementation(projects.okhttpTls)
   implementation(libs.animalsniffer.annotations)
   implementation(libs.squareup.moshi)
+  implementation(libs.squareup.okio.fakefilesystem)
   kapt(libs.squareup.moshi.compiler)
 }
 
