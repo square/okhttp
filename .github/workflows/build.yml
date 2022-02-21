@@ -19,9 +19,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@v1
-
       - name: Configure JDK
         uses: actions/setup-java@v2
         with:
@@ -50,9 +47,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@v1
-
       - name: Configure JDK
         uses: actions/setup-java@v2
         with:
@@ -75,9 +69,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-
-      - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@v1
 
       - name: Configure JDK
         uses: actions/setup-java@v2
@@ -107,9 +98,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-
-      - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@v1
 
       - name: Configure JDK
         uses: actions/setup-java@v2
@@ -141,9 +129,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@v1
-
       - name: Configure JDK
         uses: actions/setup-java@v2
         with:
@@ -168,9 +153,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@v1
-
       - name: Configure JDK
         uses: actions/setup-java@v2
         with:
@@ -194,9 +176,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-
-      - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@v1
 
       - name: Install Old JDK 8
         uses: actions/setup-java@v2
@@ -228,9 +207,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@v1
-
       - name: Configure JDK
         uses: actions/setup-java@v2
         with:
@@ -255,9 +231,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@v1
-
       - name: Configure JDK
         uses: actions/setup-java@v2
         with:
@@ -281,9 +254,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-
-      - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@v1
 
       - name: Configure JDK
         uses: actions/setup-java@v2
@@ -310,9 +280,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@v1
-
       - name: Configure JDK
         uses: actions/setup-java@v2
         with:
@@ -336,9 +303,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-
-      - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@v1
 
       - name: Configure JDK
         uses: actions/setup-java@v2
@@ -365,9 +329,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@v1
-
       - name: Configure JDK
         uses: actions/setup-java@v2
         with:
@@ -393,9 +354,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-
-      - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@v1
 
       - name: Configure JDK
         uses: actions/setup-java@v2
@@ -434,9 +392,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-
-      - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@v1
 
       - name: Configure JDK
         uses: actions/setup-java@v2
@@ -493,9 +448,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-
-      - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@v1
 
       - name: Configure JDK
         uses: actions/setup-java@v2
