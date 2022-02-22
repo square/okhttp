@@ -88,31 +88,29 @@ subprojects {
     exclude("**/CipherSuite.java")
   }
 
-  afterEvaluate {
-    val checkstyleConfig: Configuration by configurations.creating
-    dependencies {
-      checkstyleConfig(libs.checkStyle) {
-        isTransitive = false
-      }
+  val checkstyleConfig: Configuration by configurations.creating
+  dependencies {
+    checkstyleConfig(rootProject.libs.checkStyle) {
+      isTransitive = false
     }
+  }
 
-    configure<CheckstyleExtension> {
-      config = resources.text.fromArchiveEntry(checkstyleConfig, "google_checks.xml")
-      toolVersion = libs.versions.checkStyle.get()
-      sourceSets = listOf(project.sourceSets["main"])
-    }
+  configure<CheckstyleExtension> {
+    config = resources.text.fromArchiveEntry(checkstyleConfig, "google_checks.xml")
+    toolVersion = rootProject.libs.versions.checkStyle.get()
+    sourceSets = listOf(project.sourceSets["main"])
+  }
 
-    // Animal Sniffer confirms we generally don't use APIs not on Java 8.
-    configure<AnimalSnifferExtension> {
-      annotation = "okhttp3.internal.SuppressSignatureCheck"
-      sourceSets = listOf(project.sourceSets["main"])
-    }
+  // Animal Sniffer confirms we generally don't use APIs not on Java 8.
+  configure<AnimalSnifferExtension> {
+    annotation = "okhttp3.internal.SuppressSignatureCheck"
+    sourceSets = listOf(project.sourceSets["main"])
+  }
 
-    val signature: Configuration by configurations.getting
-    dependencies {
-      signature(libs.signature.android.apilevel21)
-      signature(libs.codehaus.signature.java18)
-    }
+  val signature: Configuration by configurations.getting
+  dependencies {
+    signature(rootProject.libs.signature.android.apilevel21)
+    signature(rootProject.libs.codehaus.signature.java18)
   }
 
   tasks.withType<KotlinCompile> {
@@ -129,12 +127,9 @@ subprojects {
   val testJavaVersion = System.getProperty("test.java.version", "11").toInt()
 
   val testRuntimeOnly: Configuration by configurations.getting
-
-  afterEvaluate {
-    dependencies {
-      testRuntimeOnly(libs.junit.jupiter.engine)
-      testRuntimeOnly(libs.junit.vintage.engine)
-    }
+  dependencies {
+    testRuntimeOnly(rootProject.libs.junit.jupiter.engine)
+    testRuntimeOnly(rootProject.libs.junit.vintage.engine)
   }
 
   tasks.withType<Test> {
