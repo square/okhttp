@@ -51,6 +51,7 @@ import java.security.cert.CertificateException
 import java.security.cert.CertificateFactory
 import java.util.NoSuchElementException
 import java.util.TreeSet
+import okhttp3.internal.http.HttpMethod
 
 /**
  * Caches HTTP and HTTPS responses to the filesystem so they may be reused, saving time and

@@ -31,6 +31,7 @@ import okhttp3.internal.closeQuietly
 import okhttp3.internal.connection.RealCall
 import okhttp3.internal.discard
 import okhttp3.internal.http.ExchangeCodec
+import okhttp3.internal.http.HttpMethod
 import okhttp3.internal.http.RealResponseBody
 import okhttp3.internal.http.promisesBody
 import okio.Buffer
