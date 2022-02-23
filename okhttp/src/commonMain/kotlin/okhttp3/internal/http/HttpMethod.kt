@@ -15,17 +15,20 @@
  */
 package okhttp3.internal.http
 
+import kotlin.jvm.JvmStatic
+
 object HttpMethod {
+  @JvmStatic // Despite being 'internal', this method is called by popular 3rd party SDKs.
   fun invalidatesCache(method: String): Boolean =
     (method == "POST" || method == "PATCH" || method == "PUT" ||
       method == "DELETE" || method == "MOVE")
 
-  // Despite being 'internal', this method is called by popular 3rd party SDKs.
+  @JvmStatic // Despite being 'internal', this method is called by popular 3rd party SDKs.
   fun requiresRequestBody(method: String): Boolean = (method == "POST" || method == "PUT" ||
     method == "PATCH" || method == "PROPPATCH" || // WebDAV
     method == "REPORT")
 
-  // Despite being 'internal', this method is called by popular 3rd party SDKs.
+  @JvmStatic // Despite being 'internal', this method is called by popular 3rd party SDKs.
   fun permitsRequestBody(method: String): Boolean = !(method == "GET" || method == "HEAD")
 
   fun redirectsWithBody(method: String): Boolean = method == "PROPFIND"
