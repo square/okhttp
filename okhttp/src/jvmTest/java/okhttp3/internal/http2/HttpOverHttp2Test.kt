@@ -78,7 +78,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.data.Offset
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.fail
-import org.junit.jupiter.api.Assumptions
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Timeout
@@ -928,7 +928,7 @@ class HttpOverHttp2Test {
   }
 
   @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
-  fun recoverFromOneRefusedStreamReusesConnection(
+  fun noRecoveryFromOneRefusedStream(
     protocol: Protocol, mockWebServer: MockWebServer
   ) {
     setUp(protocol, mockWebServer)
@@ -946,13 +946,163 @@ class HttpOverHttp2Test {
         .url(server.url("/"))
         .build()
     )
-    val response = call.execute()
-    assertThat(response.body!!.string()).isEqualTo("abc")
+    try {
+      call.execute()
+      fail<Any?>()
+    } catch (expected: StreamResetException) {
+      assertThat(expected.errorCode).isEqualTo(ErrorCode.REFUSED_STREAM)
+    }
+  }
 
-    // New connection.
+  @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
+  fun recoverFromRefusedStreamWhenAnotherRouteExists(
+    protocol: Protocol, mockWebServer: MockWebServer
+  ) {
+    setUp(protocol, mockWebServer)
+    client = client.newBuilder()
+      .dns(DoubleInetAddressDns()) // Two routes!
+      .build()
+    server.enqueue(
+      MockResponse()
+        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
+        .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.httpCode)
+    )
+    server.enqueue(
+      MockResponse()
+        .setBody("abc")
+    )
+
+    val request = Request.Builder()
+      .url(server.url("/"))
+      .build()
+    val response = client.newCall(request).execute()
+    assertThat(response.body!!.string()).isEqualTo("abc")
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
-    // Reused connection.
+
+    // Note that although we have two routes available, we only use one. The retry is permitted
+    // because there are routes available, but it chooses the existing connection since it isn't
+    // yet considered unhealthy.
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
+  }
+
+  @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
+  fun noRecoveryWhenRoutesExhausted(
+    protocol: Protocol, mockWebServer: MockWebServer
+  ) {
+    setUp(protocol, mockWebServer)
+    client = client.newBuilder()
+      .dns(DoubleInetAddressDns()) // Two routes!
+      .build()
+    server.enqueue(
+      MockResponse()
+        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
+        .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.httpCode)
+    )
+    server.enqueue(
+      MockResponse()
+        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
+        .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.httpCode)
+    )
+    server.enqueue(
+      MockResponse()
+        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
+        .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.httpCode)
+    )
+
+    val request = Request.Builder()
+      .url(server.url("/"))
+      .build()
+    try {
+      client.newCall(request).execute()
+      fail<Any?>()
+    } catch (expected: StreamResetException) {
+      assertThat(expected.errorCode).isEqualTo(ErrorCode.REFUSED_STREAM)
+    }
+    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0) // New connection.
+    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1) // Pooled connection.
+    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0) // New connection.
+  }
+
+  @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
+  fun connectionWithOneRefusedStreamIsPooled(
+    protocol: Protocol, mockWebServer: MockWebServer
+  ) {
+    setUp(protocol, mockWebServer)
+    server.enqueue(
+      MockResponse()
+        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
+        .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.httpCode)
+    )
+    server.enqueue(
+      MockResponse()
+        .setBody("abc")
+    )
+    val request = Request.Builder()
+      .url(server.url("/"))
+      .build()
+
+    // First call fails because it only has one route.
+    try {
+      client.newCall(request).execute()
+      fail<Any?>()
+    } catch (expected: StreamResetException) {
+      assertThat(expected.errorCode).isEqualTo(ErrorCode.REFUSED_STREAM)
+    }
+    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+
+    // Second call succeeds on the pooled connection.
+    val response = client.newCall(request).execute()
+    assertThat(response.body!!.string()).isEqualTo("abc")
+    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
+  }
+
+  @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
+  fun connectionWithTwoRefusedStreamsIsNotPooled(
+    protocol: Protocol, mockWebServer: MockWebServer
+  ) {
+    setUp(protocol, mockWebServer)
+    server.enqueue(
+      MockResponse()
+        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
+        .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.httpCode)
+    )
+    server.enqueue(
+      MockResponse()
+        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
+        .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.httpCode)
+    )
+    server.enqueue(
+      MockResponse()
+        .setBody("abc")
+    )
+    server.enqueue(
+      MockResponse()
+        .setBody("def")
+    )
+    val request = Request.Builder()
+      .url(server.url("/"))
+      .build()
+
+    // First call makes a new connection and fails because it is the only route.
+    try {
+      client.newCall(request).execute()
+      fail<Any?>()
+    } catch (expected: StreamResetException) {
+      assertThat(expected.errorCode).isEqualTo(ErrorCode.REFUSED_STREAM)
+    }
+    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0) // New connection.
+
+    // Second call attempts the pooled connection, and it fails. Then it retries a new route which
+    // succeeds.
+    val response2 = client.newCall(request).execute()
+    assertThat(response2.body!!.string()).isEqualTo("abc")
+    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1) // Pooled connection.
+    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0) // New connection.
+
+    // Third call reuses the second connection.
+    val response3 = client.newCall(request).execute()
+    assertThat(response3.body!!.string()).isEqualTo("def")
+    assertThat(server.takeRequest().sequenceNumber).isEqualTo(1) // New connection.
   }
 
   /**
@@ -1919,14 +2069,13 @@ class HttpOverHttp2Test {
    * connections are requested concurrently OkHttp will pessimistically connect multiple times, then
    * close any unnecessary connections. This test confirms that behavior works as intended.
    *
-   *
    * This test uses proxy tunnels to get a hook while a connection is being established.
    */
   @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
   fun concurrentHttp2ConnectionsDeduplicated(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
-    Assumptions.assumeTrue(protocol === Protocol.HTTP_2)
-    server.useHttps(handshakeCertificates!!.sslSocketFactory(), true)
+    assumeTrue(protocol === Protocol.HTTP_2)
+    server.useHttps(handshakeCertificates.sslSocketFactory(), true)
     val queueDispatcher = QueueDispatcher()
     queueDispatcher.enqueueResponse(
       MockResponse()

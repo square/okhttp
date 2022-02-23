@@ -25,6 +25,7 @@ import mockwebserver3.SocketPolicy
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.TestUtil.assertSuppressed
+import okhttp3.internal.DoubleInetAddressDns
 import okhttp3.internal.connection.RealConnection
 import okhttp3.internal.connection.RealConnection.Companion.IDLE_CONNECTION_HEALTHY_NS
 import okhttp3.internal.http.RecordingProxySelector
@@ -223,17 +224,39 @@ class CallKotlinTest(
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
   }
 
-  @Test fun exceptionsAreReturnedAsSuppressed() {
+  /** Confirm suppressed exceptions that occur while connecting are returned. */
+  @Test fun connectExceptionsAreReturnedAsSuppressed() {
     val proxySelector = RecordingProxySelector()
-    proxySelector.proxies.add(Proxy(Proxy.Type.HTTP, TestUtil.UNREACHABLE_ADDRESS))
+    proxySelector.proxies.add(Proxy(Proxy.Type.HTTP, TestUtil.UNREACHABLE_ADDRESS_IPV4))
     proxySelector.proxies.add(Proxy.NO_PROXY)
-
-    server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))
+    server.shutdown()
 
     client = client.newBuilder()
         .proxySelector(proxySelector)
         .readTimeout(Duration.ofMillis(100))
         .connectTimeout(Duration.ofMillis(100))
+        .build()
+
+    val request = Request.Builder().url(server.url("/")).build()
+    try {
+      client.newCall(request).execute()
+      fail("")
+    } catch (expected: IOException) {
+      expected.assertSuppressed {
+        val suppressed = it.single()
+        assertThat(suppressed).isInstanceOf(IOException::class.java)
+        assertThat(suppressed).isNotSameAs(expected)
+      }
+    }
+  }
+
+  /** Confirm suppressed exceptions that occur after connecting are returned. */
+  @Test fun httpExceptionsAreReturnedAsSuppressed() {
+    server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))
+    server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))
+
+    client = client.newBuilder()
+        .dns(DoubleInetAddressDns()) // Two routes so we get two failures.
         .build()
 
     val request = Request.Builder().url(server.url("/")).build()

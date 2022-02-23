@@ -26,7 +26,9 @@ import okhttp3.internal.commonIsOneShot
 import okhttp3.internal.commonToRequestBody
 import okio.BufferedSink
 import okio.ByteString
+import okio.FileSystem
 import okio.GzipSink
+import okio.Path
 import okio.buffer
 import okio.source
 
@@ -99,6 +101,21 @@ actual abstract class RequestBody {
 
         override fun writeTo(sink: BufferedSink) {
           source().use { source -> sink.writeAll(source) }
+        }
+      }
+    }
+
+    /** Returns a new request body that transmits the content of this. */
+    @JvmStatic
+    @JvmName("create")
+    fun Path.asRequestBody(fileSystem: FileSystem, contentType: MediaType? = null): RequestBody {
+      return object : RequestBody() {
+        override fun contentType() = contentType
+
+        override fun contentLength() = fileSystem.metadata(this@asRequestBody).size ?: -1
+
+        override fun writeTo(sink: BufferedSink) {
+          fileSystem.source(this@asRequestBody).use { source -> sink.writeAll(source) }
         }
       }
     }

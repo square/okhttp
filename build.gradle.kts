@@ -3,23 +3,24 @@ import com.vanniktech.maven.publish.SonatypeHost
 import java.net.URL
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.dokka.gradle.DokkaTask
+import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
 
 buildscript {
   dependencies {
-    classpath(Dependencies.kotlinPlugin)
-    classpath(Dependencies.dokkaPlugin)
-    classpath(Dependencies.androidPlugin)
-    classpath(Dependencies.androidJunit5Plugin)
-    classpath(Dependencies.graalPlugin)
-    classpath(Dependencies.bndPlugin)
-    classpath(Dependencies.shadowPlugin)
-    classpath(Dependencies.japicmpPlugin)
-    classpath(Dependencies.animalsnifferPlugin)
-    classpath(Dependencies.errorpronePlugin)
-    classpath(Dependencies.spotlessPlugin)
-    classpath(Dependencies.vanniktechPublishPlugin)
+    classpath(libs.gradlePlugin.dokka)
+    classpath(libs.gradlePlugin.kotlin)
+    classpath(libs.gradlePlugin.androidJunit5)
+    classpath(libs.gradlePlugin.android)
+    classpath(libs.gradlePlugin.graal)
+    classpath(libs.gradlePlugin.bnd)
+    classpath(libs.gradlePlugin.shadow)
+    classpath(libs.gradlePlugin.japicmp)
+    classpath(libs.gradlePlugin.animalsniffer)
+    classpath(libs.gradlePlugin.errorprone)
+    classpath(libs.gradlePlugin.spotless)
+    classpath(libs.gradlePlugin.mavenPublish)
   }
 
   repositories {
@@ -33,7 +34,7 @@ apply(plugin = "com.vanniktech.maven.publish.base")
 
 allprojects {
   group = "com.squareup.okhttp3"
-  version = "5.0.0-SNAPSHOT"
+  version = "5.0.0-alpha.5"
 
   repositories {
     mavenCentral()
@@ -80,7 +81,6 @@ subprojects {
   configure<JavaPluginExtension> {
     toolchain {
       languageVersion.set(JavaLanguageVersion.of(11))
-      vendor.set(JvmVendorSpec.ADOPTOPENJDK)
     }
   }
 
@@ -88,30 +88,31 @@ subprojects {
     exclude("**/CipherSuite.java")
   }
 
-  val checkstyleConfig: Configuration by configurations.creating
-  dependencies {
-    checkstyleConfig(Dependencies.checkStyle) {
-      isTransitive = false
-    }
-  }
-
   afterEvaluate {
+    val checkstyleConfig: Configuration by configurations.creating
+    dependencies {
+      checkstyleConfig(libs.checkStyle) {
+        isTransitive = false
+      }
+    }
+
     configure<CheckstyleExtension> {
       config = resources.text.fromArchiveEntry(checkstyleConfig, "google_checks.xml")
-      toolVersion = Versions.checkStyle
+      toolVersion = libs.versions.checkStyle.get()
       sourceSets = listOf(project.sourceSets["main"])
     }
-  }
 
-  // Animal Sniffer confirms we generally don't use APIs not on Java 8.
-  configure<AnimalSnifferExtension> {
-    annotation = "okhttp3.internal.SuppressSignatureCheck"
-    sourceSets = listOf(project.sourceSets["main"])
-  }
-  val signature: Configuration by configurations.getting
-  dependencies {
-    signature(Dependencies.signatureAndroid21)
-    signature(Dependencies.signatureJava18)
+    // Animal Sniffer confirms we generally don't use APIs not on Java 8.
+    configure<AnimalSnifferExtension> {
+      annotation = "okhttp3.internal.SuppressSignatureCheck"
+      sourceSets = listOf(project.sourceSets["main"])
+    }
+
+    val signature: Configuration by configurations.getting
+    dependencies {
+      signature(libs.signature.android.apilevel21)
+      signature(libs.codehaus.signature.java18)
+    }
   }
 
   tasks.withType<KotlinCompile> {
@@ -128,19 +129,24 @@ subprojects {
   val testJavaVersion = System.getProperty("test.java.version", "11").toInt()
 
   val testRuntimeOnly: Configuration by configurations.getting
-  dependencies {
-    testRuntimeOnly(Dependencies.junit5JupiterEngine)
-    testRuntimeOnly(Dependencies.junit5VintageEngine)
+
+  afterEvaluate {
+    dependencies {
+      testRuntimeOnly(libs.junit.jupiter.engine)
+      testRuntimeOnly(libs.junit.vintage.engine)
+    }
   }
 
   tasks.withType<Test> {
     useJUnitPlatform()
-    jvmArgs = jvmArgs!! + listOf("-Dokhttp.platform=$platform")
+    jvmArgs = jvmArgs!! + listOf(
+      "-Dokhttp.platform=$platform",
+      "-XX:+HeapDumpOnOutOfMemoryError"
+    )
 
     val javaToolchains = project.extensions.getByType<JavaToolchainService>()
     javaLauncher.set(javaToolchains.launcherFor {
       languageVersion.set(JavaLanguageVersion.of(testJavaVersion))
-      vendor.set(JvmVendorSpec.ADOPTOPENJDK)
     })
 
     maxParallelForks = Runtime.getRuntime().availableProcessors() * 2
@@ -165,11 +171,11 @@ subprojects {
     }
   } else if (platform == "conscrypt") {
     dependencies {
-      testRuntimeOnly(Dependencies.conscrypt)
+      testRuntimeOnly(libs.conscrypt)
     }
   } else if (platform == "openjsse") {
     dependencies {
-      testRuntimeOnly(Dependencies.openjsse)
+      testRuntimeOnly(libs.openjsse)
     }
   }
 
@@ -201,6 +207,9 @@ subprojects {
         url.set(URL("https://square.github.io/okio/2.x/okio/"))
         packageListUrl.set(URL("https://square.github.io/okio/2.x/okio/package-list"))
       }
+    }
+    if (name == "dokkaGfm") {
+      outputDirectory.set(file("${rootDir}/docs/4.x"))
     }
   }
 
@@ -236,4 +245,10 @@ subprojects {
 
 tasks.wrapper {
   distributionType = Wrapper.DistributionType.ALL
+}
+
+// Fix until 1.6.20 https://youtrack.jetbrains.com/issue/KT-49109
+rootProject.plugins.withType(NodeJsRootPlugin::class.java) {
+  rootProject.the<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension>().nodeVersion =
+    "16.13.0"
 }

@@ -14,16 +14,16 @@ project.applyOsgi(
 )
 
 dependencies {
-  api(project(":okhttp"))
-  compileOnly(Dependencies.jsr305)
+  api(projects.okhttp)
+  compileOnly(libs.findbugs.jsr305)
 
-  testImplementation(project(":okhttp-testing-support"))
-  testImplementation(project(":mockwebserver"))
-  testImplementation(project(":mockwebserver3-junit5"))
-  testImplementation(Dependencies.okioFakeFileSystem)
-  testImplementation(Dependencies.conscrypt)
-  testImplementation(Dependencies.junit)
-  testImplementation(Dependencies.assertj)
+  testImplementation(projects.okhttpTestingSupport)
+  testImplementation(projects.mockwebserver)
+  testImplementation(projects.mockwebserver3Junit5)
+  testImplementation(libs.squareup.okio.fakefilesystem)
+  testImplementation(libs.conscrypt.openjdk)
+  testImplementation(libs.junit)
+  testImplementation(libs.assertj.core)
 }
 
 mavenPublishing {

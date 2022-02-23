@@ -15,44 +15,33 @@
  */
 package okhttp3.internal.connection
 
-import java.net.InetSocketAddress
-import java.net.Proxy
-import java.net.ProxySelector
-import java.net.Socket
-import java.util.concurrent.TimeUnit
-import javax.net.SocketFactory
-import okhttp3.Address
 import okhttp3.ConnectionPool
-import okhttp3.Dns
 import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Route
 import okhttp3.TestUtil.awaitGarbageCollection
-import okhttp3.internal.RecordingOkAuthenticator
-import okhttp3.internal.concurrent.TaskFaker
+import okhttp3.TestValueFactory
 import okhttp3.internal.concurrent.TaskRunner
-import okhttp3.internal.connection.RealConnection.Companion.newTestConnection
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 
 class ConnectionPoolTest {
+  private val factory = TestValueFactory()
+
   /** The fake task runner prevents the cleanup runnable from being started.  */
-  private val taskRunner = TaskFaker().taskRunner
-  private val addressA = newAddress("a")
-  private val routeA1 = newRoute(addressA)
-  private val addressB = newAddress("b")
-  private val routeB1 = newRoute(addressB)
-  private val addressC = newAddress("c")
-  private val routeC1 = newRoute(addressC)
+  private val addressA = factory.newAddress("a")
+  private val routeA1 = factory.newRoute(addressA)
+  private val addressB = factory.newAddress("b")
+  private val routeB1 = factory.newRoute(addressB)
+  private val addressC = factory.newAddress("c")
+  private val routeC1 = factory.newRoute(addressC)
+
+  @AfterEach fun tearDown() {
+    factory.close()
+  }
 
   @Test fun connectionsEvictedWhenIdleLongEnough() {
-    val pool = RealConnectionPool(
-      taskRunner = taskRunner,
-      maxIdleConnections = Int.MAX_VALUE,
-      keepAliveDuration = 100L,
-      timeUnit = TimeUnit.NANOSECONDS
-    )
-    val c1 = newConnection(pool, routeA1, 50L)
+    val pool = factory.newConnectionPool()
+    val c1 = factory.newConnection(pool, routeA1, 50L)
 
     // Running at time 50, the pool returns that nothing can be evicted until time 150.
     assertThat(pool.cleanup(50L)).isEqualTo(100L)
@@ -81,19 +70,14 @@ class ConnectionPoolTest {
   }
 
   @Test fun inUseConnectionsNotEvicted() {
-    val pool = RealConnectionPool(
-      taskRunner = taskRunner,
-      maxIdleConnections = Int.MAX_VALUE,
-      keepAliveDuration = 100L,
-      timeUnit = TimeUnit.NANOSECONDS
-    )
+    val pool = factory.newConnectionPool()
     val poolApi = ConnectionPool(pool)
-    val c1 = newConnection(pool, routeA1, 50L)
+    val c1 = factory.newConnection(pool, routeA1, 50L)
     val client = OkHttpClient.Builder()
       .connectionPool(poolApi)
       .build()
-    val call = client.newCall(newRequest(addressA)) as RealCall
-    call.enterNetworkInterceptorExchange(call.request(), true)
+    val call = client.newCall(factory.newRequest(addressA)) as RealCall
+    call.enterNetworkInterceptorExchange(call.request(), true, factory.newChain(call))
     synchronized(c1) { call.acquireConnectionNoEvents(c1) }
 
     // Running at time 50, the pool returns that nothing can be evicted until time 150.
@@ -113,14 +97,9 @@ class ConnectionPoolTest {
   }
 
   @Test fun cleanupPrioritizesEarliestEviction() {
-    val pool = RealConnectionPool(
-      taskRunner = taskRunner,
-      maxIdleConnections = Int.MAX_VALUE,
-      keepAliveDuration = 100L,
-      timeUnit = TimeUnit.NANOSECONDS
-    )
-    val c1 = newConnection(pool, routeA1, 75L)
-    val c2 = newConnection(pool, routeB1, 50L)
+    val pool = factory.newConnectionPool()
+    val c1 = factory.newConnection(pool, routeA1, 75L)
+    val c2 = factory.newConnection(pool, routeB1, 50L)
 
     // Running at time 75, the pool returns that nothing can be evicted until time 150.
     assertThat(pool.cleanup(75L)).isEqualTo(75L)
@@ -148,14 +127,11 @@ class ConnectionPoolTest {
   }
 
   @Test fun oldestConnectionsEvictedIfIdleLimitExceeded() {
-    val pool = RealConnectionPool(
-      taskRunner = taskRunner,
-      maxIdleConnections = 2,
-      keepAliveDuration = 100L,
-      timeUnit = TimeUnit.NANOSECONDS
+    val pool = factory.newConnectionPool(
+      maxIdleConnections = 2
     )
-    val c1 = newConnection(pool, routeA1, 50L)
-    val c2 = newConnection(pool, routeB1, 75L)
+    val c1 = factory.newConnection(pool, routeA1, 50L)
+    val c2 = factory.newConnection(pool, routeB1, 75L)
 
     // With 2 connections, there's no need to evict until the connections time out.
     assertThat(pool.cleanup(100L)).isEqualTo(50L)
@@ -164,7 +140,7 @@ class ConnectionPoolTest {
     assertThat(c2.socket().isClosed).isFalse
 
     // Add a third connection
-    val c3 = newConnection(pool, routeC1, 75L)
+    val c3 = factory.newConnection(pool, routeC1, 75L)
 
     // The third connection bounces the first.
     assertThat(pool.cleanup(100L)).isEqualTo(0L)
@@ -175,14 +151,9 @@ class ConnectionPoolTest {
   }
 
   @Test fun leakedAllocation() {
-    val pool = RealConnectionPool(
-      taskRunner = taskRunner,
-      maxIdleConnections = Int.MAX_VALUE,
-      keepAliveDuration = 100L,
-      timeUnit = TimeUnit.NANOSECONDS
-    )
+    val pool = factory.newConnectionPool()
     val poolApi = ConnectionPool(pool)
-    val c1 = newConnection(pool, routeA1, 0L)
+    val c1 = factory.newConnection(pool, routeA1, 0L)
     allocateAndLeakAllocation(poolApi, c1)
     awaitGarbageCollection()
     assertThat(pool.cleanup(100L)).isEqualTo(0L)
@@ -194,10 +165,11 @@ class ConnectionPoolTest {
 
   @Test fun interruptStopsThread() {
     val realTaskRunner = TaskRunner.INSTANCE
-    val pool = RealConnectionPool(
-      realTaskRunner, 2, 100L, TimeUnit.NANOSECONDS
+    val pool = factory.newConnectionPool(
+      taskRunner = TaskRunner.INSTANCE,
+      maxIdleConnections = 2
     )
-    newConnection(pool, routeA1, Long.MAX_VALUE)
+    factory.newConnection(pool, routeA1)
     assertThat(realTaskRunner.activeQueues()).isNotEmpty
     Thread.sleep(100)
     val threads = arrayOfNulls<Thread>(Thread.activeCount() * 2)
@@ -216,55 +188,8 @@ class ConnectionPoolTest {
     val client = OkHttpClient.Builder()
       .connectionPool(pool)
       .build()
-    val call = client.newCall(newRequest(connection.route().address)) as RealCall
-    call.enterNetworkInterceptorExchange(call.request(), true)
+    val call = client.newCall(factory.newRequest(connection.route().address)) as RealCall
+    call.enterNetworkInterceptorExchange(call.request(), true, factory.newChain(call))
     synchronized(connection) { call.acquireConnectionNoEvents(connection) }
-  }
-
-  private fun newConnection(
-    pool: RealConnectionPool,
-    route: Route,
-    idleAtNanos: Long
-  ): RealConnection {
-    val result = newTestConnection(
-      taskRunner = TaskRunner.INSTANCE,
-      connectionPool = pool,
-      route = route,
-      socket = Socket(),
-      idleAtNs = idleAtNanos
-    )
-    synchronized(result) { pool.put(result) }
-    return result
-  }
-
-  private fun newAddress(name: String): Address {
-    return Address(
-      uriHost = name,
-      uriPort = 1,
-      dns = Dns.SYSTEM,
-      socketFactory = SocketFactory.getDefault(),
-      sslSocketFactory = null,
-      hostnameVerifier = null,
-      certificatePinner = null,
-      proxyAuthenticator = RecordingOkAuthenticator("password", null),
-      proxy = null,
-      protocols = emptyList(),
-      connectionSpecs = emptyList(),
-      proxySelector = ProxySelector.getDefault()
-    )
-  }
-
-  private fun newRoute(address: Address): Route {
-    return Route(
-      address = address,
-      proxy = Proxy.NO_PROXY,
-      socketAddress = InetSocketAddress.createUnresolved(address.url.host, address.url.port)
-    )
-  }
-
-  private fun newRequest(address: Address): Request {
-    return Request.Builder()
-      .url(address.url)
-      .build()
   }
 }

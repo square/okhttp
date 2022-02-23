@@ -89,6 +89,7 @@ public final class ConnectionCoalescingTest {
         .build();
 
     client = clientTestRule.newClientBuilder()
+        .fastFallback(false) // Avoid data races.
         .dns(dns)
         .sslSocketFactory(
             handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())

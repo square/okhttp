@@ -376,3 +376,19 @@ internal fun checkOffsetAndCount(arrayLength: Long, offset: Long, count: Long) {
 
 val commonEmptyHeaders: Headers = Headers.headersOf()
 val commonEmptyRequestBody: RequestBody = EMPTY_BYTE_ARRAY.toRequestBody()
+
+internal fun <T> interleave(a: Iterable<T>, b: Iterable<T>): List<T> {
+  val ia = a.iterator()
+  val ib = b.iterator()
+
+  return buildList {
+    while (ia.hasNext() || ib.hasNext()) {
+      if (ia.hasNext()) {
+        add(ia.next())
+      }
+      if (ib.hasNext()) {
+        add(ib.next())
+      }
+    }
+  }
+}

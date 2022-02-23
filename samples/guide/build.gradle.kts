@@ -4,18 +4,19 @@ plugins {
 }
 
 dependencies {
-  implementation(project(":okhttp"))
-  implementation(project(":mockwebserver"))
-  implementation(project(":okhttp-testing-support"))
-  implementation(project(":okhttp-tls"))
-  implementation(Dependencies.animalSniffer)
-  implementation(Dependencies.moshi)
-  kapt(Dependencies.moshiCompiler)
+  implementation(projects.okhttp)
+  implementation(projects.mockwebserver)
+  implementation(projects.okhttpTestingSupport)
+  implementation(projects.okhttpTls)
+  implementation(libs.animalsniffer.annotations)
+  implementation(libs.squareup.moshi)
+  implementation(libs.squareup.okio.fakefilesystem)
+  kapt(libs.squareup.moshi.compiler)
 }
 
 java {
   toolchain {
-    languageVersion.set(JavaLanguageVersion.of(14))
+    languageVersion.set(JavaLanguageVersion.of(17))
   }
 }
 

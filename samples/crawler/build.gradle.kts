@@ -8,8 +8,8 @@ application {
 }
 
 dependencies {
-  implementation(project(":okhttp"))
-  implementation(Dependencies.jsoup)
+  implementation(projects.okhttp)
+  implementation(libs.jsoup)
 }
 
 tasks.compileJava {
