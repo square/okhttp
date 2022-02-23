@@ -30,8 +30,6 @@ buildscript {
   }
 }
 
-apply(plugin = "com.vanniktech.maven.publish.base")
-
 allprojects {
   group = "com.squareup.okhttp3"
   version = "5.0.0-alpha.5"
@@ -71,7 +69,6 @@ subprojects {
   apply(plugin = "checkstyle")
   apply(plugin = "com.diffplug.spotless")
   apply(plugin = "ru.vyarus.animalsniffer")
-  apply(plugin = "org.jetbrains.dokka")
   apply(plugin = "biz.aQute.bnd.builder")
 
   tasks.withType<JavaCompile> {
