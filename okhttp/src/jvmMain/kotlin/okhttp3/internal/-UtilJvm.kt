@@ -34,11 +34,9 @@ import kotlin.text.Charsets.UTF_32LE
 import kotlin.text.Charsets.UTF_8
 import okhttp3.EventListener
 import okhttp3.Headers
-import okhttp3.Headers.Companion.headersOf
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okhttp3.ResponseBody
 import okhttp3.ResponseBody.Companion.toResponseBody
@@ -48,21 +46,17 @@ import okio.BufferedSource
 import okio.Source
 
 @JvmField
-val EMPTY_HEADERS: Headers = headersOf()
+val EMPTY_HEADERS: Headers = commonEmptyHeaders
+@JvmField
+val EMPTY_REQUEST: RequestBody = commonEmptyRequestBody
 @JvmField
 val EMPTY_RESPONSE: ResponseBody = EMPTY_BYTE_ARRAY.toResponseBody()
-@JvmField
-val EMPTY_REQUEST: RequestBody = EMPTY_BYTE_ARRAY.toRequestBody()
+
+actual typealias HttpUrlRepresentation = HttpUrl
 
 /** GMT and UTC are equivalent for our purposes. */
 @JvmField
 internal val UTC: TimeZone = TimeZone.getTimeZone("GMT")!!
-
-internal fun checkOffsetAndCount(arrayLength: Long, offset: Long, count: Long) {
-  if (offset or count < 0L || offset > arrayLength || arrayLength - offset < count) {
-    throw ArrayIndexOutOfBoundsException("length=$arrayLength, offset=$offset, count=$offset")
-  }
-}
 
 fun threadFactory(
   name: String,
