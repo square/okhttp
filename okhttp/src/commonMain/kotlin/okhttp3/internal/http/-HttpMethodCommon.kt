@@ -16,29 +16,3 @@
 
 package okhttp3.internal.http
 
-@Suppress("unused")
-fun HttpMethod.commonInvalidatesCache(method: String): Boolean = (method == "POST" ||
-  method == "PATCH" ||
-  method == "PUT" ||
-  method == "DELETE" ||
-  method == "MOVE") // WebDAV
-
-@Suppress("unused")
-fun HttpMethod.commonRequiresRequestBody(method: String): Boolean = (method == "POST" ||
-  method == "PUT" ||
-  method == "PATCH" ||
-  method == "PROPPATCH" || // WebDAV
-  method == "REPORT") // CalDAV/CardDAV (defined in WebDAV Versioning)
-
-@Suppress("unused")
-fun HttpMethod.commonPermitsRequestBody(method: String): Boolean = !(method == "GET" || method == "HEAD")
-
-@Suppress("unused")
-fun HttpMethod.commonRedirectsWithBody(method: String): Boolean =
-  // (WebDAV) redirects should also maintain the request body
-  method == "PROPFIND"
-
-@Suppress("unused")
-fun HttpMethod.commonRedirectsToGet(method: String): Boolean =
-  // All requests but PROPFIND should redirect to a GET request.
-  method != "PROPFIND"

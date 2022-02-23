@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.internal.commonContentLength
 import okhttp3.internal.commonIsDuplex
 import okhttp3.internal.commonIsOneShot
@@ -37,8 +38,14 @@ actual abstract class RequestBody {
   actual companion object {
     actual fun String.toRequestBody(contentType: MediaType?): RequestBody {
       val bytes = commonAsUtf8ToByteArray()
-      // TODO Consider adding charset UTF-8 to contentType
-      return bytes.toRequestBody(contentType, 0, bytes.size)
+
+      val resolvedContentType = if (contentType != null && contentType.parameter("charset") == null) {
+        "$this; charset=utf-8".toMediaTypeOrNull()
+      } else {
+        contentType
+      }
+
+      return bytes.toRequestBody(resolvedContentType, 0, bytes.size)
     }
 
     actual fun ByteString.toRequestBody(contentType: MediaType?): RequestBody =

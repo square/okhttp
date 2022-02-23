@@ -23,7 +23,6 @@ import okhttp3.internal.cache.CacheStrategy
 import okhttp3.internal.cache.DiskLruCache
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.TaskRunner
-import okhttp3.internal.http.HttpMethod
 import okhttp3.internal.http.StatusLine
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.WARN
