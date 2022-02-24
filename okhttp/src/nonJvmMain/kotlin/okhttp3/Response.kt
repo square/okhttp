@@ -36,7 +36,6 @@ import okhttp3.internal.http.StatusLine.Companion.HTTP_PERM_REDIRECT
 import okhttp3.internal.http.StatusLine.Companion.HTTP_TEMP_REDIRECT
 import okio.Buffer
 import okio.Closeable
-import okio.IOException
 
 /**
  * An HTTP response. Instances of this class are not immutable: the response body is a one-shot
