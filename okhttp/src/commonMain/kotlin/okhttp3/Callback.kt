@@ -15,7 +15,7 @@
  */
 package okhttp3
 
-import java.io.IOException
+import okio.IOException
 
 interface Callback {
   /**

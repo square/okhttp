@@ -15,14 +15,14 @@
  */
 package okhttp3
 
-import java.io.IOException
+import okio.IOException
 import okio.Timeout
 
 /**
  * A call is a request that has been prepared for execution. A call can be canceled. As this object
  * represents a single request/response pair (stream), it cannot be executed twice.
  */
-interface Call : Cloneable {
+interface Call {
   /** Returns the original request that initiated this call. */
   fun request(): Request
 
@@ -91,7 +91,7 @@ interface Call : Cloneable {
    * Create a new, identical call to this one which can be enqueued or executed even if this call
    * has already been.
    */
-  public override fun clone(): Call
+  fun clone(): Call
 
   fun interface Factory {
     fun newCall(request: Request): Call
