@@ -130,7 +130,6 @@ actual class Response internal constructor(
    * **Warning:** this method loads the requested bytes into memory. Most applications should set
    * a modest limit on `byteCount`, such as 1 MiB.
    */
-  @Throws(IOException::class)
   actual fun peekBody(byteCount: Long): ResponseBody {
     val peeked = body!!.source().peek()
     val buffer = Buffer()
