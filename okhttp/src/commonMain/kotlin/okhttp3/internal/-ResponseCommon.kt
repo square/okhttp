@@ -16,10 +16,8 @@
 
 package okhttp3.internal
 
-import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import okhttp3.CacheControl
-import okhttp3.Challenge
 import okhttp3.Headers
 import okhttp3.Protocol
 import okhttp3.Request
@@ -29,19 +27,14 @@ import okhttp3.ResponseBody.Companion.asResponseBody
 import okhttp3.internal.http.HTTP_MOVED_PERM
 import okhttp3.internal.http.HTTP_MOVED_TEMP
 import okhttp3.internal.http.HTTP_MULT_CHOICE
-import okhttp3.internal.http.HTTP_PROXY_AUTH
+import okhttp3.internal.http.HTTP_PERM_REDIRECT
 import okhttp3.internal.http.HTTP_SEE_OTHER
-import okhttp3.internal.http.HTTP_UNAUTHORIZED
-import okhttp3.internal.http.StatusLine.Companion.HTTP_PERM_REDIRECT
-import okhttp3.internal.http.StatusLine.Companion.HTTP_TEMP_REDIRECT
+import okhttp3.internal.http.HTTP_TEMP_REDIRECT
+
 import okio.Buffer
 import okio.IOException
 
-/**
- * Returns true if the code is in [200..300), which means the request was successfully received,
- * understood, and accepted.
- */
-val Response.isSuccessful: Boolean
+val Response.commonIsSuccessful: Boolean
   get() = code in 200..299
 
 fun Response.commonHeaders(name: String): List<String> = headers.values(name)
@@ -49,17 +42,6 @@ fun Response.commonHeaders(name: String): List<String> = headers.values(name)
 @JvmOverloads
 fun Response.commonHeader(name: String, defaultValue: String?): String? = headers[name] ?: defaultValue
 
-/**
- * Peeks up to [byteCount] bytes from the response body and returns them as a new response
- * body. If fewer than [byteCount] bytes are in the response body, the full response body is
- * returned. If more than [byteCount] bytes are in the response body, the returned value
- * will be truncated to [byteCount] bytes.
- *
- * It is an error to call this method after the body has been consumed.
- *
- * **Warning:** this method loads the requested bytes into memory. Most applications should set
- * a modest limit on `byteCount`, such as 1 MiB.
- */
 @Throws(IOException::class)
 fun Response.commonPeekBody(byteCount: Long): ResponseBody {
   val peeked = body!!.source().peek()
@@ -71,17 +53,12 @@ fun Response.commonPeekBody(byteCount: Long): ResponseBody {
 
 fun Response.commonNewBuilder(): Response.Builder = Response.Builder(this)
 
-/** Returns true if this response redirects to another resource. */
 val Response.commonIsRedirect: Boolean
   get() = when (code) {
     HTTP_PERM_REDIRECT, HTTP_TEMP_REDIRECT, HTTP_MULT_CHOICE, HTTP_MOVED_PERM, HTTP_MOVED_TEMP, HTTP_SEE_OTHER -> true
     else -> false
   }
 
-/**
- * Returns the cache control directives for this response. This is never null, even if this
- * response contains no `Cache-Control` header.
- */
 val Response.commonCacheControl: CacheControl
   get() {
     var result = lazyCacheControl
@@ -92,12 +69,6 @@ val Response.commonCacheControl: CacheControl
     return result
   }
 
-/**
- * Closes the response body. Equivalent to `body().close()`.
- *
- * It is an error to close a response that is not eligible for a body. This includes the
- * responses returned from [cacheResponse], [networkResponse], and [priorResponse].
- */
 fun Response.commonClose() {
   checkNotNull(body) { "response is not eligible for a body and must not be closed" }.close()
 }
@@ -121,28 +92,18 @@ fun Response.Builder.commonMessage(message: String) = apply {
   this.message = message
 }
 
-/**
- * Sets the header named [name] to [value]. If this request already has any headers
- * with that name, they are all replaced.
- */
 fun Response.Builder.commonHeader(name: String, value: String) = apply {
   headers[name] = value
 }
 
-/**
- * Adds a header with [name] to [value]. Prefer this method for multiply-valued
- * headers like "Set-Cookie".
- */
 fun Response.Builder.commonAddHeader(name: String, value: String) = apply {
   headers.add(name, value)
 }
 
-/** Removes all headers named [name] on this builder. */
 fun Response.Builder.commonRemoveHeader(name: String) = apply {
   headers.removeAll(name)
 }
 
-/** Removes all headers on this builder and adds [headers]. */
 fun Response.Builder.commonHeaders(headers: Headers) = apply {
   this.headers = headers.newBuilder()
 }

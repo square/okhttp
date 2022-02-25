@@ -42,13 +42,6 @@ class StatusLine(
   }
 
   companion object {
-    /** Numeric status code, 307: Temporary Redirect. */
-    const val HTTP_TEMP_REDIRECT = 307
-    const val HTTP_PERM_REDIRECT = 308
-    /** RFC 7540, Section 9.1.2. Retry these if the exchange used connection coalescing. */
-    const val HTTP_MISDIRECTED_REQUEST = 421
-    const val HTTP_CONTINUE = 100
-
     fun get(response: Response): StatusLine {
       return StatusLine(response.protocol, response.code, response.message)
     }
@@ -85,8 +78,10 @@ class StatusLine(
         throw ProtocolException("Unexpected status line: $statusLine")
       }
       val code =
-        statusLine.substring(codeStart, codeStart + 3).toIntOrNull() ?:
-        throw ProtocolException("Unexpected status line: $statusLine")
+        statusLine.substring(codeStart, codeStart + 3).toIntOrNull()
+          ?: throw ProtocolException(
+            "Unexpected status line: $statusLine"
+          )
 
       // Parse an optional response message like "OK" or "Not Modified". If it
       // exists, it is separated from the response code by a space.

@@ -17,28 +17,28 @@ package okhttp3
 
 import java.io.Closeable
 import java.io.IOException
-import java.net.HttpURLConnection.HTTP_MOVED_PERM
-import java.net.HttpURLConnection.HTTP_MOVED_TEMP
-import java.net.HttpURLConnection.HTTP_MULT_CHOICE
 import java.net.HttpURLConnection.HTTP_PROXY_AUTH
-import java.net.HttpURLConnection.HTTP_SEE_OTHER
 import java.net.HttpURLConnection.HTTP_UNAUTHORIZED
 import okhttp3.ResponseBody.Companion.asResponseBody
 import okhttp3.internal.commonAddHeader
 import okhttp3.internal.commonBody
+import okhttp3.internal.commonCacheControl
 import okhttp3.internal.commonCacheResponse
+import okhttp3.internal.commonClose
 import okhttp3.internal.commonCode
 import okhttp3.internal.commonHeader
 import okhttp3.internal.commonHeaders
+import okhttp3.internal.commonIsRedirect
+import okhttp3.internal.commonIsSuccessful
 import okhttp3.internal.commonMessage
 import okhttp3.internal.commonNetworkResponse
+import okhttp3.internal.commonNewBuilder
 import okhttp3.internal.commonPriorResponse
 import okhttp3.internal.commonProtocol
 import okhttp3.internal.commonRemoveHeader
 import okhttp3.internal.commonRequest
+import okhttp3.internal.commonToString
 import okhttp3.internal.connection.Exchange
-import okhttp3.internal.http.StatusLine.Companion.HTTP_PERM_REDIRECT
-import okhttp3.internal.http.StatusLine.Companion.HTTP_TEMP_REDIRECT
 import okhttp3.internal.http.parseChallenges
 import okio.Buffer
 
@@ -108,8 +108,7 @@ actual class Response internal constructor(
       level = DeprecationLevel.ERROR)
   fun code(): Int = code
 
-  actual val isSuccessful: Boolean
-    get() = code in 200..299
+  actual val isSuccessful: Boolean = commonIsSuccessful
 
   @JvmName("-deprecated_message")
   @Deprecated(
@@ -125,10 +124,10 @@ actual class Response internal constructor(
       level = DeprecationLevel.ERROR)
   fun handshake(): Handshake? = handshake
 
-  actual fun headers(name: String): List<String> = headers.values(name)
+  actual fun headers(name: String): List<String> = commonHeaders(name)
 
   @JvmOverloads
-  actual fun header(name: String, defaultValue: String?): String? = headers[name] ?: defaultValue
+  actual fun header(name: String, defaultValue: String?): String? = commonHeader(name, defaultValue)
 
   @JvmName("-deprecated_headers")
   @Deprecated(
@@ -160,14 +159,10 @@ actual class Response internal constructor(
       level = DeprecationLevel.ERROR)
   fun body(): ResponseBody? = body
 
-  actual fun newBuilder(): Builder = Builder(this)
+  actual fun newBuilder(): Builder = commonNewBuilder()
 
   /** Returns true if this response redirects to another resource. */
-  actual val isRedirect: Boolean
-    get() = when (code) {
-      HTTP_PERM_REDIRECT, HTTP_TEMP_REDIRECT, HTTP_MULT_CHOICE, HTTP_MOVED_PERM, HTTP_MOVED_TEMP, HTTP_SEE_OTHER -> true
-      else -> false
-    }
+  actual val isRedirect: Boolean = commonIsRedirect
 
   @JvmName("-deprecated_networkResponse")
   @Deprecated(
@@ -212,14 +207,7 @@ actual class Response internal constructor(
   }
 
   @get:JvmName("cacheControl") actual val cacheControl: CacheControl
-    get() {
-      var result = lazyCacheControl
-      if (result == null) {
-        result = CacheControl.parse(headers)
-        lazyCacheControl = result
-      }
-      return result
-    }
+    get() = commonCacheControl
 
   @JvmName("-deprecated_cacheControl")
   @Deprecated(
@@ -242,12 +230,9 @@ actual class Response internal constructor(
       level = DeprecationLevel.ERROR)
   fun receivedResponseAtMillis(): Long = receivedResponseAtMillis
 
-  actual override fun close() {
-    checkNotNull(body) { "response is not eligible for a body and must not be closed" }.close()
-  }
+  actual override fun close() = commonClose()
 
-  actual override fun toString(): String =
-      "Response{protocol=$protocol, code=$code, message=$message, url=${request.url}}"
+  actual override fun toString(): String = commonToString()
 
   actual open class Builder {
     internal actual var request: Request? = null

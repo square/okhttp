@@ -15,26 +15,23 @@
  */
 package okhttp3
 
-import okhttp3.ResponseBody.Companion.asResponseBody
 import okhttp3.internal.commonAddHeader
 import okhttp3.internal.commonBody
+import okhttp3.internal.commonCacheControl
 import okhttp3.internal.commonCacheResponse
 import okhttp3.internal.commonCode
 import okhttp3.internal.commonHeader
 import okhttp3.internal.commonHeaders
+import okhttp3.internal.commonIsRedirect
+import okhttp3.internal.commonIsSuccessful
 import okhttp3.internal.commonMessage
 import okhttp3.internal.commonNetworkResponse
+import okhttp3.internal.commonNewBuilder
+import okhttp3.internal.commonPeekBody
 import okhttp3.internal.commonPriorResponse
 import okhttp3.internal.commonProtocol
 import okhttp3.internal.commonRemoveHeader
 import okhttp3.internal.commonRequest
-import okhttp3.internal.http.HTTP_MOVED_PERM
-import okhttp3.internal.http.HTTP_MOVED_TEMP
-import okhttp3.internal.http.HTTP_MULT_CHOICE
-import okhttp3.internal.http.HTTP_SEE_OTHER
-import okhttp3.internal.http.StatusLine.Companion.HTTP_PERM_REDIRECT
-import okhttp3.internal.http.StatusLine.Companion.HTTP_TEMP_REDIRECT
-import okio.Buffer
 import okio.Closeable
 
 /**
@@ -111,12 +108,11 @@ actual class Response internal constructor(
    * Returns true if the code is in [200..300), which means the request was successfully received,
    * understood, and accepted.
    */
-  actual val isSuccessful: Boolean
-    get() = code in 200..299
+  actual val isSuccessful: Boolean = commonIsSuccessful
 
-  actual fun headers(name: String): List<String> = headers.values(name)
+  actual fun headers(name: String): List<String> = commonHeaders(name)
 
-  actual fun header(name: String, defaultValue: String?): String? = headers[name] ?: defaultValue
+  actual fun header(name: String, defaultValue: String?): String? = commonHeader(name, defaultValue)
 
   /**
    * Peeks up to [byteCount] bytes from the response body and returns them as a new response
@@ -129,36 +125,20 @@ actual class Response internal constructor(
    * **Warning:** this method loads the requested bytes into memory. Most applications should set
    * a modest limit on `byteCount`, such as 1 MiB.
    */
-  actual fun peekBody(byteCount: Long): ResponseBody {
-    val peeked = body!!.source().peek()
-    val buffer = Buffer()
-    peeked.request(byteCount)
-    buffer.write(peeked, minOf(byteCount, peeked.buffer.size))
-    return buffer.asResponseBody(body.contentType(), buffer.size)
-  }
+  actual fun peekBody(byteCount: Long): ResponseBody = commonPeekBody(byteCount)
 
-  actual fun newBuilder(): Builder = Builder(this)
+  actual fun newBuilder(): Builder = commonNewBuilder()
 
   /** Returns true if this response redirects to another resource. */
   actual val isRedirect: Boolean
-    get() = when (code) {
-      HTTP_PERM_REDIRECT, HTTP_TEMP_REDIRECT, HTTP_MULT_CHOICE, HTTP_MOVED_PERM, HTTP_MOVED_TEMP, HTTP_SEE_OTHER -> true
-      else -> false
-    }
+    get() = commonIsRedirect
 
   /**
    * Returns the cache control directives for this response. This is never null, even if this
    * response contains no `Cache-Control` header.
    */
   actual val cacheControl: CacheControl
-    get() {
-      var result = lazyCacheControl
-      if (result == null) {
-        result = CacheControl.parse(headers)
-        lazyCacheControl = result
-      }
-      return result
-    }
+    get() = commonCacheControl
 
   /**
    * Closes the response body. Equivalent to `body().close()`.
