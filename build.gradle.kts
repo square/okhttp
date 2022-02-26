@@ -163,11 +163,11 @@ subprojects {
     }
   } else if (platform == "conscrypt") {
     dependencies {
-      testRuntimeOnly(libs.conscrypt)
+      testRuntimeOnly(rootProject.libs.conscrypt)
     }
   } else if (platform == "openjsse") {
     dependencies {
-      testRuntimeOnly(libs.openjsse)
+      testRuntimeOnly(rootProject.libs.openjsse)
     }
   }
 
