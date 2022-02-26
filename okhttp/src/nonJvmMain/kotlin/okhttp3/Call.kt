@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Square, Inc.
+ * Copyright (c) 2022 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 package okhttp3
 
@@ -19,9 +20,9 @@ package okhttp3
  * A call is a request that has been prepared for execution. A call can be canceled. As this object
  * represents a single request/response pair (stream), it cannot be executed twice.
  */
-expect interface Call {
+actual interface Call {
   /** Returns the original request that initiated this call. */
-  fun request(): Request
+  actual fun request(): Request
 
   /**
    * Schedules the request to be executed at some point in the future.
@@ -34,35 +35,26 @@ expect interface Call {
    *
    * @throws IllegalStateException when the call has already been executed.
    */
-  fun enqueue(responseCallback: Callback)
+  actual fun enqueue(responseCallback: Callback)
 
   /** Cancels the request, if possible. Requests that are already complete cannot be canceled. */
-  fun cancel()
+  actual fun cancel()
 
   /**
    * Returns true if this call has been either [executed][execute] or [enqueued][enqueue]. It is an
    * error to execute a call more than once.
    */
-  fun isExecuted(): Boolean
+  actual fun isExecuted(): Boolean
 
-  fun isCanceled(): Boolean
-
-//  /**
-//   * Returns a timeout that spans the entire call: resolving DNS, connecting, writing the request
-//   * body, server processing, and reading the response body. If the call requires redirects or
-//   * retries all must complete within one timeout period.
-//   *
-//   * Configure the client's default timeout with [OkHttpClient.Builder.callTimeout].
-//   */
-//  fun timeout(): Timeout
+  actual fun isCanceled(): Boolean
 
   /**
    * Create a new, identical call to this one which can be enqueued or executed even if this call
    * has already been.
    */
-  fun clone(): Call
+  actual fun clone(): Call
 
-  fun interface Factory {
-    fun newCall(request: Request): Call
+  actual fun interface Factory {
+    actual fun newCall(request: Request): Call
   }
 }
