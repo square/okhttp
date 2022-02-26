@@ -19,12 +19,7 @@ package okhttp3
 import okio.IOException
 import okio.Timeout
 
-/**
- * A call is a request that has been prepared for execution. A call can be canceled. As this object
- * represents a single request/response pair (stream), it cannot be executed twice.
- */
 actual interface Call {
-  /** Returns the original request that initiated this call. */
   actual fun request(): Request
 
   /**
@@ -55,26 +50,10 @@ actual interface Call {
   @Throws(IOException::class)
   fun execute(): Response
 
-  /**
-   * Schedules the request to be executed at some point in the future.
-   *
-   * The [dispatcher][OkHttpClient.dispatcher] defines when the request will run: usually
-   * immediately unless there are several other requests currently being executed.
-   *
-   * This client will later call back `responseCallback` with either an HTTP response or a failure
-   * exception.
-   *
-   * @throws IllegalStateException when the call has already been executed.
-   */
   actual fun enqueue(responseCallback: Callback)
 
-  /** Cancels the request, if possible. Requests that are already complete cannot be canceled. */
   actual fun cancel()
 
-  /**
-   * Returns true if this call has been either [executed][execute] or [enqueued][enqueue]. It is an
-   * error to execute a call more than once.
-   */
   actual fun isExecuted(): Boolean
 
   actual fun isCanceled(): Boolean
@@ -88,10 +67,6 @@ actual interface Call {
    */
   fun timeout(): Timeout
 
-  /**
-   * Create a new, identical call to this one which can be enqueued or executed even if this call
-   * has already been.
-   */
   actual fun clone(): Call
 
   actual fun interface Factory {
