@@ -39,6 +39,7 @@ allprojects {
   repositories {
     mavenCentral()
     google()
+    jcenter()
   }
 
   tasks.create("downloadDependencies") {

@@ -17,6 +17,8 @@ kotlin {
   }
   if (kmpJsEnabled) {
     js {
+      useCommonJs()
+
       compilations.all {
         kotlinOptions {
           moduleKind = "umd"
@@ -110,6 +112,7 @@ kotlin {
           dependsOn(nonJvmMain)
           api(libs.squareup.okio)
           api(libs.kotlin.stdlib)
+          implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
         }
       }
 
@@ -117,6 +120,10 @@ kotlin {
         dependencies {
           dependsOn(nonJvmTest)
           implementation(libs.kotlin.test.js)
+
+          implementation("org.jetbrains.kotlinx:kotlinx-nodejs:0.0.7")
+          implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.0")
+          implementation(npm("node-fetch", "2.6.1"))
         }
       }
     }
