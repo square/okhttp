@@ -975,7 +975,6 @@ public final class okhttp3/Request {
 	public final fun -deprecated_url ()Lokhttp3/HttpUrl;
 	public final fun body ()Lokhttp3/RequestBody;
 	public final fun cacheControl ()Lokhttp3/CacheControl;
-	public final fun getTags ()Ljava/util/Map;
 	public final fun header (Ljava/lang/String;)Ljava/lang/String;
 	public final fun headers ()Lokhttp3/Headers;
 	public final fun headers (Ljava/lang/String;)Ljava/util/List;

@@ -37,7 +37,7 @@ actual class Request internal constructor(
   @get:JvmName("method") actual val method: String,
   @get:JvmName("headers") actual val headers: Headers,
   @get:JvmName("body") actual val body: RequestBody?,
-  val tags: Map<Class<*>, Any>
+  internal val tags: Map<Class<*>, Any>
 ) {
   internal actual var lazyCacheControl: CacheControl? = null
 
