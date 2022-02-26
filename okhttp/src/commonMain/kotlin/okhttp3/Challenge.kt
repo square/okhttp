@@ -17,8 +17,6 @@
 
 package okhttp3
 
-import okhttp3.internal.commonEquals
-
 /**
  * An [RFC 7235][rfc_7235] challenge.
  *
