@@ -16,21 +16,22 @@
 package okhttp3.internal.cache
 
 import java.net.HttpURLConnection.HTTP_BAD_METHOD
-import java.net.HttpURLConnection.HTTP_GONE
-import java.net.HttpURLConnection.HTTP_MOVED_PERM
-import java.net.HttpURLConnection.HTTP_MOVED_TEMP
-import java.net.HttpURLConnection.HTTP_MULT_CHOICE
 import java.net.HttpURLConnection.HTTP_NOT_AUTHORITATIVE
-import java.net.HttpURLConnection.HTTP_NOT_FOUND
-import java.net.HttpURLConnection.HTTP_NOT_IMPLEMENTED
-import java.net.HttpURLConnection.HTTP_NO_CONTENT
-import java.net.HttpURLConnection.HTTP_OK
 import java.net.HttpURLConnection.HTTP_REQ_TOO_LONG
 import java.util.Date
 import java.util.concurrent.TimeUnit.SECONDS
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.internal.http.StatusLine
+import okhttp3.internal.http.HTTP_GONE
+import okhttp3.internal.http.HTTP_MOVED_PERM
+import okhttp3.internal.http.HTTP_MOVED_TEMP
+import okhttp3.internal.http.HTTP_MULT_CHOICE
+import okhttp3.internal.http.HTTP_NOT_FOUND
+import okhttp3.internal.http.HTTP_NOT_IMPLEMENTED
+import okhttp3.internal.http.HTTP_NO_CONTENT
+import okhttp3.internal.http.HTTP_OK
+import okhttp3.internal.http.HTTP_PERM_REDIRECT
+import okhttp3.internal.http.HTTP_TEMP_REDIRECT
 import okhttp3.internal.http.toHttpDateOrNull
 import okhttp3.internal.toNonNegativeInt
 
@@ -301,12 +302,12 @@ class CacheStrategy internal constructor(
         HTTP_GONE,
         HTTP_REQ_TOO_LONG,
         HTTP_NOT_IMPLEMENTED,
-        StatusLine.HTTP_PERM_REDIRECT -> {
+        HTTP_PERM_REDIRECT -> {
           // These codes can be cached unless headers forbid it.
         }
 
         HTTP_MOVED_TEMP,
-        StatusLine.HTTP_TEMP_REDIRECT -> {
+        HTTP_TEMP_REDIRECT -> {
           // These codes can only be cached with the right response headers.
           // http://tools.ietf.org/html/rfc7234#section-3
           // s-maxage is not checked because OkHttp is a private cache that should ignore s-maxage.

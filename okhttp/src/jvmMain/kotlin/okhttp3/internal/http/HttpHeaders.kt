@@ -28,7 +28,6 @@ import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.Response
 import okhttp3.internal.headersContentLength
-import okhttp3.internal.http.StatusLine.Companion.HTTP_CONTINUE
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.skipAll
 import okio.Buffer

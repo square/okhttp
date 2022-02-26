@@ -1,0 +1,11 @@
+public final class okhttp3/JavaNetAuthenticator : okhttp3/Authenticator {
+	public fun <init> ()V
+	public fun authenticate (Lokhttp3/Route;Lokhttp3/Response;)Lokhttp3/Request;
+}
+
+public final class okhttp3/JavaNetCookieJar : okhttp3/CookieJar {
+	public fun <init> (Ljava/net/CookieHandler;)V
+	public fun loadForRequest (Lokhttp3/HttpUrl;)Ljava/util/List;
+	public fun saveFromResponse (Lokhttp3/HttpUrl;Ljava/util/List;)V
+}
+
