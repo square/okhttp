@@ -7,6 +7,7 @@ Here’s some libraries that work nicely with OkHttp.
  * [Coil](https://github.com/coil-kt/coil): An image loading library for Android backed by Kotlin Coroutines.
  * [Communicator](https://github.com/Taig/Communicator): An OkHttp wrapper for Scala built with Android in mind.
  * [CWAC-NetSecurity](https://github.com/commonsguy/cwac-netsecurity): Simplifying Secure Internet Access.
+ * [Failsafe](https://failsafe.dev/okhttp/): Fault tolerance and resilience patterns. 
  * [Flipper](https://fbflipper.com/): A desktop debugging platform for mobile developers.
  * [Fresco](https://github.com/facebook/fresco): An Android library for managing images and the memory they use.
  * [Glide](https://github.com/bumptech/glide): An image loading and caching library for Android focused on smooth scrolling.

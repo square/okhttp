@@ -20,9 +20,9 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Configure JDK
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
-          distribution: 'adopt'
+          distribution: 'zulu'
           java-version: 11
 
       - uses: actions/cache@v2
@@ -55,9 +55,9 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Configure JDK
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
-          distribution: 'adopt'
+          distribution: 'zulu'
           java-version: 11
 
       - uses: actions/cache@v2
@@ -78,9 +78,9 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Configure JDK
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
-          distribution: 'adopt'
+          distribution: 'zulu'
           java-version: 11
 
       - uses: actions/cache@v2
@@ -107,9 +107,9 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Configure JDK
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
-          distribution: 'adopt'
+          distribution: 'zulu'
           java-version: 11
 
       - uses: actions/cache@v2
@@ -137,7 +137,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Configure JDK
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
           java-version: 11
@@ -161,9 +161,9 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Configure JDK
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
-          distribution: 'adopt'
+          distribution: 'zulu'
           java-version: 11
 
       - uses: actions/cache@v2
@@ -185,15 +185,15 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Install Old JDK 8
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
-          distribution: 'adopt'
+          distribution: 'zulu'
           java-version: 8.0.242
 
       - name: Configure JDK
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
-          distribution: 'adopt'
+          distribution: 'zulu'
           java-version: 11
 
       - uses: actions/cache@v2
@@ -215,9 +215,9 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Configure JDK
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
-          distribution: 'adopt'
+          distribution: 'zulu'
           java-version: 11
 
       - uses: actions/cache@v2
@@ -239,9 +239,9 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Configure JDK
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
-          distribution: 'adopt'
+          distribution: 'zulu'
           java-version: 11
 
       - uses: actions/cache@v2
@@ -263,9 +263,9 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Configure JDK
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
-          distribution: 'adopt'
+          distribution: 'zulu'
           java-version: 11
 
       - uses: actions/cache@v2
@@ -288,9 +288,9 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Configure JDK
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
-          distribution: 'adopt'
+          distribution: 'zulu'
           java-version: 11
 
       - uses: actions/cache@v2
@@ -312,9 +312,9 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Configure JDK
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
-          distribution: 'adopt'
+          distribution: 'zulu'
           java-version: 11
 
       - uses: actions/cache@v2
@@ -337,9 +337,9 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Configure JDK
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
-          distribution: 'adopt'
+          distribution: 'zulu'
           java-version: 11
 
       - uses: actions/cache@v2
@@ -363,9 +363,9 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Configure JDK
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
-          distribution: 'adopt'
+          distribution: 'zulu'
           java-version: 11
 
       - uses: actions/cache@v2
@@ -401,9 +401,9 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Configure JDK
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
-          distribution: 'adopt'
+          distribution: 'zulu'
           java-version: 11
 
       - uses: actions/cache@v2
@@ -457,9 +457,9 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Configure JDK
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
-          distribution: 'adopt'
+          distribution: 'zulu'
           java-version: 11
 
       - uses: actions/cache@v2
