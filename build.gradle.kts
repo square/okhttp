@@ -1,6 +1,7 @@
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import com.vanniktech.maven.publish.SonatypeHost
 import java.net.URL
+import kotlinx.validation.ApiValidationExtension
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin
@@ -21,6 +22,7 @@ buildscript {
     classpath(libs.gradlePlugin.errorprone)
     classpath(libs.gradlePlugin.spotless)
     classpath(libs.gradlePlugin.mavenPublish)
+    classpath(libs.gradlePlugin.binaryCompatibilityValidator)
   }
 
   repositories {
@@ -239,6 +241,18 @@ subprojects {
           }
         }
       }
+    }
+  }
+
+  plugins.withId("binary-compatibility-validator") {
+    configure<ApiValidationExtension> {
+      ignoredPackages += "okhttp3.logging.internal"
+      ignoredPackages += "mockwebserver3.internal"
+      ignoredPackages += "okhttp3.internal"
+      ignoredPackages += "mockwebserver3.junit5.internal"
+      ignoredPackages += "okhttp3.brotli.internal"
+      ignoredPackages += "okhttp3.sse.internal"
+      ignoredPackages += "okhttp3.tls.internal"
     }
   }
 }

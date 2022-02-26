@@ -1,0 +1,23 @@
+public abstract interface class okhttp3/sse/EventSource {
+	public abstract fun cancel ()V
+	public abstract fun request ()Lokhttp3/Request;
+}
+
+public abstract interface class okhttp3/sse/EventSource$Factory {
+	public abstract fun newEventSource (Lokhttp3/Request;Lokhttp3/sse/EventSourceListener;)Lokhttp3/sse/EventSource;
+}
+
+public abstract class okhttp3/sse/EventSourceListener {
+	public fun <init> ()V
+	public fun onClosed (Lokhttp3/sse/EventSource;)V
+	public fun onEvent (Lokhttp3/sse/EventSource;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public fun onFailure (Lokhttp3/sse/EventSource;Ljava/lang/Throwable;Lokhttp3/Response;)V
+	public fun onOpen (Lokhttp3/sse/EventSource;Lokhttp3/Response;)V
+}
+
+public final class okhttp3/sse/EventSources {
+	public static final field INSTANCE Lokhttp3/sse/EventSources;
+	public static final fun createFactory (Lokhttp3/OkHttpClient;)Lokhttp3/sse/EventSource$Factory;
+	public static final fun processResponse (Lokhttp3/Response;Lokhttp3/sse/EventSourceListener;)V
+}
+

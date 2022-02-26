@@ -1,0 +1,63 @@
+public final class okhttp3/tls/Certificates {
+	public static final fun certificatePem (Ljava/security/cert/X509Certificate;)Ljava/lang/String;
+	public static final fun decodeCertificatePem (Ljava/lang/String;)Ljava/security/cert/X509Certificate;
+}
+
+public final class okhttp3/tls/HandshakeCertificates {
+	public final fun -deprecated_keyManager ()Ljavax/net/ssl/X509KeyManager;
+	public final fun -deprecated_trustManager ()Ljavax/net/ssl/X509TrustManager;
+	public synthetic fun <init> (Ljavax/net/ssl/X509KeyManager;Ljavax/net/ssl/X509TrustManager;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun keyManager ()Ljavax/net/ssl/X509KeyManager;
+	public final fun sslContext ()Ljavax/net/ssl/SSLContext;
+	public final fun sslSocketFactory ()Ljavax/net/ssl/SSLSocketFactory;
+	public final fun trustManager ()Ljavax/net/ssl/X509TrustManager;
+}
+
+public final class okhttp3/tls/HandshakeCertificates$Builder {
+	public fun <init> ()V
+	public final fun addInsecureHost (Ljava/lang/String;)Lokhttp3/tls/HandshakeCertificates$Builder;
+	public final fun addPlatformTrustedCertificates ()Lokhttp3/tls/HandshakeCertificates$Builder;
+	public final fun addTrustedCertificate (Ljava/security/cert/X509Certificate;)Lokhttp3/tls/HandshakeCertificates$Builder;
+	public final fun build ()Lokhttp3/tls/HandshakeCertificates;
+	public final fun heldCertificate (Lokhttp3/tls/HeldCertificate;[Ljava/security/cert/X509Certificate;)Lokhttp3/tls/HandshakeCertificates$Builder;
+}
+
+public final class okhttp3/tls/HeldCertificate {
+	public static final field Companion Lokhttp3/tls/HeldCertificate$Companion;
+	public final fun -deprecated_certificate ()Ljava/security/cert/X509Certificate;
+	public final fun -deprecated_keyPair ()Ljava/security/KeyPair;
+	public fun <init> (Ljava/security/KeyPair;Ljava/security/cert/X509Certificate;)V
+	public final fun certificate ()Ljava/security/cert/X509Certificate;
+	public final fun certificatePem ()Ljava/lang/String;
+	public static final fun decode (Ljava/lang/String;)Lokhttp3/tls/HeldCertificate;
+	public final fun keyPair ()Ljava/security/KeyPair;
+	public final fun privateKeyPkcs1Pem ()Ljava/lang/String;
+	public final fun privateKeyPkcs8Pem ()Ljava/lang/String;
+}
+
+public final class okhttp3/tls/HeldCertificate$Builder {
+	public static final field Companion Lokhttp3/tls/HeldCertificate$Builder$Companion;
+	public fun <init> ()V
+	public final fun addSubjectAlternativeName (Ljava/lang/String;)Lokhttp3/tls/HeldCertificate$Builder;
+	public final fun build ()Lokhttp3/tls/HeldCertificate;
+	public final fun certificateAuthority (I)Lokhttp3/tls/HeldCertificate$Builder;
+	public final fun commonName (Ljava/lang/String;)Lokhttp3/tls/HeldCertificate$Builder;
+	public final fun duration (JLjava/util/concurrent/TimeUnit;)Lokhttp3/tls/HeldCertificate$Builder;
+	public final fun ecdsa256 ()Lokhttp3/tls/HeldCertificate$Builder;
+	public final fun keyPair (Ljava/security/KeyPair;)Lokhttp3/tls/HeldCertificate$Builder;
+	public final fun keyPair (Ljava/security/PublicKey;Ljava/security/PrivateKey;)Lokhttp3/tls/HeldCertificate$Builder;
+	public final fun organizationalUnit (Ljava/lang/String;)Lokhttp3/tls/HeldCertificate$Builder;
+	public final fun rsa2048 ()Lokhttp3/tls/HeldCertificate$Builder;
+	public final fun serialNumber (J)Lokhttp3/tls/HeldCertificate$Builder;
+	public final fun serialNumber (Ljava/math/BigInteger;)Lokhttp3/tls/HeldCertificate$Builder;
+	public final fun signedBy (Lokhttp3/tls/HeldCertificate;)Lokhttp3/tls/HeldCertificate$Builder;
+	public final fun validityInterval (JJ)Lokhttp3/tls/HeldCertificate$Builder;
+}
+
+public final class okhttp3/tls/HeldCertificate$Builder$Companion {
+}
+
+public final class okhttp3/tls/HeldCertificate$Companion {
+	public final fun decode (Ljava/lang/String;)Lokhttp3/tls/HeldCertificate;
+}
+
