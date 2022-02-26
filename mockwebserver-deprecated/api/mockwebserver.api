@@ -21,6 +21,7 @@ public final class okhttp3/mockwebserver/MockResponse : java/lang/Cloneable {
 	public fun clone ()Lokhttp3/mockwebserver/MockResponse;
 	public final fun getBody ()Lokio/Buffer;
 	public final fun getBodyDelay (Ljava/util/concurrent/TimeUnit;)J
+	public final fun getDuplexResponseBody ()Lokhttp3/mockwebserver/internal/duplex/DuplexResponseBody;
 	public final fun getHeaders ()Lokhttp3/Headers;
 	public final fun getHeadersDelay (Ljava/util/concurrent/TimeUnit;)J
 	public final fun getHttp2ErrorCode ()I
@@ -34,8 +35,10 @@ public final class okhttp3/mockwebserver/MockResponse : java/lang/Cloneable {
 	public final fun getWebSocketListener ()Lokhttp3/WebSocketListener;
 	public final fun headers (Lokhttp3/Headers;)V
 	public final fun http2ErrorCode (I)V
+	public final fun isDuplex ()Z
 	public final fun removeHeader (Ljava/lang/String;)Lokhttp3/mockwebserver/MockResponse;
 	public final fun setBody (Ljava/lang/String;)Lokhttp3/mockwebserver/MockResponse;
+	public final fun setBody (Lokhttp3/mockwebserver/internal/duplex/DuplexResponseBody;)Lokhttp3/mockwebserver/MockResponse;
 	public final fun setBody (Lokio/Buffer;)Lokhttp3/mockwebserver/MockResponse;
 	public final fun setBodyDelay (JLjava/util/concurrent/TimeUnit;)Lokhttp3/mockwebserver/MockResponse;
 	public final fun setChunkedBody (Ljava/lang/String;I)Lokhttp3/mockwebserver/MockResponse;
@@ -74,17 +77,12 @@ public final class okhttp3/mockwebserver/MockWebServer : org/junit/rules/Externa
 	public fun close ()V
 	public final fun enqueue (Lokhttp3/mockwebserver/MockResponse;)V
 	public final fun getBodyLimit ()J
-	public static fun getBodyLimit$delegate (Lokhttp3/mockwebserver/MockWebServer;)Ljava/lang/Object;
-	public final fun getDelegate ()Lmockwebserver3/MockWebServer;
 	public final fun getDispatcher ()Lokhttp3/mockwebserver/Dispatcher;
 	public final fun getHostName ()Ljava/lang/String;
 	public final fun getPort ()I
 	public final fun getProtocolNegotiationEnabled ()Z
-	public static fun getProtocolNegotiationEnabled$delegate (Lokhttp3/mockwebserver/MockWebServer;)Ljava/lang/Object;
 	public final fun getRequestCount ()I
-	public static fun getRequestCount$delegate (Lokhttp3/mockwebserver/MockWebServer;)Ljava/lang/Object;
 	public final fun getServerSocketFactory ()Ljavax/net/ServerSocketFactory;
-	public static fun getServerSocketFactory$delegate (Lokhttp3/mockwebserver/MockWebServer;)Ljava/lang/Object;
 	public final fun noClientAuth ()V
 	public final fun protocols ()Ljava/util/List;
 	public final fun requestClientAuth ()V
@@ -122,14 +120,19 @@ public final class okhttp3/mockwebserver/PushPromise {
 	public final fun response ()Lokhttp3/mockwebserver/MockResponse;
 }
 
-public final class okhttp3/mockwebserver/QueueDispatcher : okhttp3/mockwebserver/Dispatcher {
+public class okhttp3/mockwebserver/QueueDispatcher : okhttp3/mockwebserver/Dispatcher {
+	public static final field Companion Lokhttp3/mockwebserver/QueueDispatcher$Companion;
 	public fun <init> ()V
 	public fun dispatch (Lokhttp3/mockwebserver/RecordedRequest;)Lokhttp3/mockwebserver/MockResponse;
-	public final fun enqueueResponse (Lokhttp3/mockwebserver/MockResponse;)V
+	public fun enqueueResponse (Lokhttp3/mockwebserver/MockResponse;)V
+	protected final fun getResponseQueue ()Ljava/util/concurrent/BlockingQueue;
 	public fun peek ()Lokhttp3/mockwebserver/MockResponse;
-	public final fun setFailFast (Lokhttp3/mockwebserver/MockResponse;)V
-	public final fun setFailFast (Z)V
+	public fun setFailFast (Lokhttp3/mockwebserver/MockResponse;)V
+	public fun setFailFast (Z)V
 	public fun shutdown ()V
+}
+
+public final class okhttp3/mockwebserver/QueueDispatcher$Companion {
 }
 
 public final class okhttp3/mockwebserver/RecordedRequest {
@@ -161,7 +164,6 @@ public final class okhttp3/mockwebserver/SocketPolicy : java/lang/Enum {
 	public static final field DISCONNECT_AT_START Lokhttp3/mockwebserver/SocketPolicy;
 	public static final field DISCONNECT_DURING_REQUEST_BODY Lokhttp3/mockwebserver/SocketPolicy;
 	public static final field DISCONNECT_DURING_RESPONSE_BODY Lokhttp3/mockwebserver/SocketPolicy;
-	public static final field DO_NOT_READ_REQUEST_BODY Lokhttp3/mockwebserver/SocketPolicy;
 	public static final field EXPECT_CONTINUE Lokhttp3/mockwebserver/SocketPolicy;
 	public static final field FAIL_HANDSHAKE Lokhttp3/mockwebserver/SocketPolicy;
 	public static final field KEEP_OPEN Lokhttp3/mockwebserver/SocketPolicy;
@@ -174,5 +176,24 @@ public final class okhttp3/mockwebserver/SocketPolicy : java/lang/Enum {
 	public static final field UPGRADE_TO_SSL_AT_END Lokhttp3/mockwebserver/SocketPolicy;
 	public static fun valueOf (Ljava/lang/String;)Lokhttp3/mockwebserver/SocketPolicy;
 	public static fun values ()[Lokhttp3/mockwebserver/SocketPolicy;
+}
+
+public abstract interface class okhttp3/mockwebserver/internal/duplex/DuplexResponseBody {
+	public abstract fun onRequest (Lokhttp3/mockwebserver/RecordedRequest;Lokhttp3/internal/http2/Http2Stream;)V
+}
+
+public final class okhttp3/mockwebserver/internal/duplex/MockDuplexResponseBody : okhttp3/mockwebserver/internal/duplex/DuplexResponseBody {
+	public fun <init> ()V
+	public final fun awaitSuccess ()V
+	public final fun cancelStream (Lokhttp3/internal/http2/ErrorCode;)Lokhttp3/mockwebserver/internal/duplex/MockDuplexResponseBody;
+	public final fun exhaustRequest ()Lokhttp3/mockwebserver/internal/duplex/MockDuplexResponseBody;
+	public final fun exhaustResponse ()Lokhttp3/mockwebserver/internal/duplex/MockDuplexResponseBody;
+	public fun onRequest (Lokhttp3/mockwebserver/RecordedRequest;Lokhttp3/internal/http2/Http2Stream;)V
+	public final fun receiveRequest (Ljava/lang/String;)Lokhttp3/mockwebserver/internal/duplex/MockDuplexResponseBody;
+	public final fun requestIOException ()Lokhttp3/mockwebserver/internal/duplex/MockDuplexResponseBody;
+	public final fun sendResponse (Ljava/lang/String;)Lokhttp3/mockwebserver/internal/duplex/MockDuplexResponseBody;
+	public final fun sendResponse (Ljava/lang/String;Ljava/util/concurrent/CountDownLatch;)Lokhttp3/mockwebserver/internal/duplex/MockDuplexResponseBody;
+	public static synthetic fun sendResponse$default (Lokhttp3/mockwebserver/internal/duplex/MockDuplexResponseBody;Ljava/lang/String;Ljava/util/concurrent/CountDownLatch;ILjava/lang/Object;)Lokhttp3/mockwebserver/internal/duplex/MockDuplexResponseBody;
+	public final fun sleep (JLjava/util/concurrent/TimeUnit;)Lokhttp3/mockwebserver/internal/duplex/MockDuplexResponseBody;
 }
 
