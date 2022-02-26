@@ -20,26 +20,18 @@ import java.util.Collections.singletonMap
 import java.util.Collections.unmodifiableMap
 import java.util.Locale.US
 import kotlin.text.Charsets.ISO_8859_1
+import okhttp3.internal.commonEquals
+import okhttp3.internal.commonHashCode
+import okhttp3.internal.commonToString
 
-/**
- * An [RFC 7235][rfc_7235] challenge.
- *
- * [rfc_7235]: https://tools.ietf.org/html/rfc7235
- */
-class Challenge(
-  /** Returns the authentication scheme, like `Basic`. */
-  @get:JvmName("scheme") val scheme: String,
+actual class Challenge actual constructor(
+  @get:JvmName("scheme") actual val scheme: String,
 
   authParams: Map<String?, String>
 ) {
-  /**
-   * Returns the auth params, including [realm] and [charset] if present, but as
-   * strings. The map's keys are lowercase and should be treated case-insensitively.
-   */
-  @get:JvmName("authParams") val authParams: Map<String?, String>
+  @get:JvmName("authParams") actual val authParams: Map<String?, String>
 
-  /** Returns the protection space. */
-  @get:JvmName("realm") val realm: String?
+  @get:JvmName("realm") actual val realm: String?
     get() = authParams["realm"]
 
   /** The charset that should be used to encode the credentials. */
@@ -55,7 +47,7 @@ class Challenge(
       return ISO_8859_1
     }
 
-  constructor(scheme: String, realm: String) : this(scheme, singletonMap("realm", realm))
+  actual constructor(scheme: String, realm: String) : this(scheme, singletonMap("realm", realm))
 
   init {
     val newAuthParams = mutableMapOf<String?, String>()
@@ -101,18 +93,9 @@ class Challenge(
       level = DeprecationLevel.ERROR)
   fun charset(): Charset = charset
 
-  override fun equals(other: Any?): Boolean {
-    return other is Challenge &&
-        other.scheme == scheme &&
-        other.authParams == authParams
-  }
+  actual override fun equals(other: Any?): Boolean = commonEquals(other)
 
-  override fun hashCode(): Int {
-    var result = 29
-    result = 31 * result + scheme.hashCode()
-    result = 31 * result + authParams.hashCode()
-    return result
-  }
+  actual override fun hashCode(): Int = commonHashCode()
 
-  override fun toString(): String = "$scheme authParams=$authParams"
+  actual override fun toString(): String = commonToString()
 }
