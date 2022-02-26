@@ -1,0 +1,178 @@
+public abstract class okhttp3/mockwebserver/Dispatcher {
+	public fun <init> ()V
+	public abstract fun dispatch (Lokhttp3/mockwebserver/RecordedRequest;)Lokhttp3/mockwebserver/MockResponse;
+	public fun peek ()Lokhttp3/mockwebserver/MockResponse;
+	public fun shutdown ()V
+}
+
+public final class okhttp3/mockwebserver/MockResponse : java/lang/Cloneable {
+	public static final field Companion Lokhttp3/mockwebserver/MockResponse$Companion;
+	public final fun -deprecated_getHeaders ()Lokhttp3/Headers;
+	public final fun -deprecated_getHttp2ErrorCode ()I
+	public final fun -deprecated_getSocketPolicy ()Lokhttp3/mockwebserver/SocketPolicy;
+	public final fun -deprecated_getStatus ()Ljava/lang/String;
+	public final fun -deprecated_getTrailers ()Lokhttp3/Headers;
+	public fun <init> ()V
+	public final fun addHeader (Ljava/lang/String;)Lokhttp3/mockwebserver/MockResponse;
+	public final fun addHeader (Ljava/lang/String;Ljava/lang/Object;)Lokhttp3/mockwebserver/MockResponse;
+	public final fun addHeaderLenient (Ljava/lang/String;Ljava/lang/Object;)Lokhttp3/mockwebserver/MockResponse;
+	public final fun clearHeaders ()Lokhttp3/mockwebserver/MockResponse;
+	public synthetic fun clone ()Ljava/lang/Object;
+	public fun clone ()Lokhttp3/mockwebserver/MockResponse;
+	public final fun getBody ()Lokio/Buffer;
+	public final fun getBodyDelay (Ljava/util/concurrent/TimeUnit;)J
+	public final fun getHeaders ()Lokhttp3/Headers;
+	public final fun getHeadersDelay (Ljava/util/concurrent/TimeUnit;)J
+	public final fun getHttp2ErrorCode ()I
+	public final fun getPushPromises ()Ljava/util/List;
+	public final fun getSettings ()Lokhttp3/internal/http2/Settings;
+	public final fun getSocketPolicy ()Lokhttp3/mockwebserver/SocketPolicy;
+	public final fun getStatus ()Ljava/lang/String;
+	public final fun getThrottleBytesPerPeriod ()J
+	public final fun getThrottlePeriod (Ljava/util/concurrent/TimeUnit;)J
+	public final fun getTrailers ()Lokhttp3/Headers;
+	public final fun getWebSocketListener ()Lokhttp3/WebSocketListener;
+	public final fun headers (Lokhttp3/Headers;)V
+	public final fun http2ErrorCode (I)V
+	public final fun removeHeader (Ljava/lang/String;)Lokhttp3/mockwebserver/MockResponse;
+	public final fun setBody (Ljava/lang/String;)Lokhttp3/mockwebserver/MockResponse;
+	public final fun setBody (Lokio/Buffer;)Lokhttp3/mockwebserver/MockResponse;
+	public final fun setBodyDelay (JLjava/util/concurrent/TimeUnit;)Lokhttp3/mockwebserver/MockResponse;
+	public final fun setChunkedBody (Ljava/lang/String;I)Lokhttp3/mockwebserver/MockResponse;
+	public final fun setChunkedBody (Lokio/Buffer;I)Lokhttp3/mockwebserver/MockResponse;
+	public final fun setHeader (Ljava/lang/String;Ljava/lang/Object;)Lokhttp3/mockwebserver/MockResponse;
+	public final fun setHeaders (Lokhttp3/Headers;)Lokhttp3/mockwebserver/MockResponse;
+	public final fun setHeadersDelay (JLjava/util/concurrent/TimeUnit;)Lokhttp3/mockwebserver/MockResponse;
+	public final fun setHttp2ErrorCode (I)Lokhttp3/mockwebserver/MockResponse;
+	public final fun setResponseCode (I)Lokhttp3/mockwebserver/MockResponse;
+	public final fun setSocketPolicy (Lokhttp3/mockwebserver/SocketPolicy;)Lokhttp3/mockwebserver/MockResponse;
+	public final fun setStatus (Ljava/lang/String;)Lokhttp3/mockwebserver/MockResponse;
+	public final fun setTrailers (Lokhttp3/Headers;)Lokhttp3/mockwebserver/MockResponse;
+	public final fun socketPolicy (Lokhttp3/mockwebserver/SocketPolicy;)V
+	public final fun status (Ljava/lang/String;)V
+	public final fun throttleBody (JJLjava/util/concurrent/TimeUnit;)Lokhttp3/mockwebserver/MockResponse;
+	public fun toString ()Ljava/lang/String;
+	public final fun trailers (Lokhttp3/Headers;)V
+	public final fun withPush (Lokhttp3/mockwebserver/PushPromise;)Lokhttp3/mockwebserver/MockResponse;
+	public final fun withSettings (Lokhttp3/internal/http2/Settings;)Lokhttp3/mockwebserver/MockResponse;
+	public final fun withWebSocketUpgrade (Lokhttp3/WebSocketListener;)Lokhttp3/mockwebserver/MockResponse;
+}
+
+public final class okhttp3/mockwebserver/MockResponse$Companion {
+}
+
+public final class okhttp3/mockwebserver/MockWebServer : org/junit/rules/ExternalResource, java/io/Closeable {
+	public static final field Companion Lokhttp3/mockwebserver/MockWebServer$Companion;
+	public final fun -deprecated_bodyLimit (J)V
+	public final fun -deprecated_port ()I
+	public final fun -deprecated_protocolNegotiationEnabled (Z)V
+	public final fun -deprecated_protocols ()Ljava/util/List;
+	public final fun -deprecated_protocols (Ljava/util/List;)V
+	public final fun -deprecated_requestCount ()I
+	public final fun -deprecated_serverSocketFactory (Ljavax/net/ServerSocketFactory;)V
+	public fun <init> ()V
+	public fun close ()V
+	public final fun enqueue (Lokhttp3/mockwebserver/MockResponse;)V
+	public final fun getBodyLimit ()J
+	public static fun getBodyLimit$delegate (Lokhttp3/mockwebserver/MockWebServer;)Ljava/lang/Object;
+	public final fun getDelegate ()Lmockwebserver3/MockWebServer;
+	public final fun getDispatcher ()Lokhttp3/mockwebserver/Dispatcher;
+	public final fun getHostName ()Ljava/lang/String;
+	public final fun getPort ()I
+	public final fun getProtocolNegotiationEnabled ()Z
+	public static fun getProtocolNegotiationEnabled$delegate (Lokhttp3/mockwebserver/MockWebServer;)Ljava/lang/Object;
+	public final fun getRequestCount ()I
+	public static fun getRequestCount$delegate (Lokhttp3/mockwebserver/MockWebServer;)Ljava/lang/Object;
+	public final fun getServerSocketFactory ()Ljavax/net/ServerSocketFactory;
+	public static fun getServerSocketFactory$delegate (Lokhttp3/mockwebserver/MockWebServer;)Ljava/lang/Object;
+	public final fun noClientAuth ()V
+	public final fun protocols ()Ljava/util/List;
+	public final fun requestClientAuth ()V
+	public final fun requireClientAuth ()V
+	public final fun setBodyLimit (J)V
+	public final fun setDispatcher (Lokhttp3/mockwebserver/Dispatcher;)V
+	public final fun setProtocolNegotiationEnabled (Z)V
+	public final fun setProtocols (Ljava/util/List;)V
+	public final fun setServerSocketFactory (Ljavax/net/ServerSocketFactory;)V
+	public final fun shutdown ()V
+	public final fun start ()V
+	public final fun start (I)V
+	public final fun start (Ljava/net/InetAddress;I)V
+	public static synthetic fun start$default (Lokhttp3/mockwebserver/MockWebServer;IILjava/lang/Object;)V
+	public final fun takeRequest ()Lokhttp3/mockwebserver/RecordedRequest;
+	public final fun takeRequest (JLjava/util/concurrent/TimeUnit;)Lokhttp3/mockwebserver/RecordedRequest;
+	public final fun toProxyAddress ()Ljava/net/Proxy;
+	public fun toString ()Ljava/lang/String;
+	public final fun url (Ljava/lang/String;)Lokhttp3/HttpUrl;
+	public final fun useHttps (Ljavax/net/ssl/SSLSocketFactory;Z)V
+}
+
+public final class okhttp3/mockwebserver/MockWebServer$Companion {
+}
+
+public final class okhttp3/mockwebserver/PushPromise {
+	public final fun -deprecated_headers ()Lokhttp3/Headers;
+	public final fun -deprecated_method ()Ljava/lang/String;
+	public final fun -deprecated_path ()Ljava/lang/String;
+	public final fun -deprecated_response ()Lokhttp3/mockwebserver/MockResponse;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lokhttp3/Headers;Lokhttp3/mockwebserver/MockResponse;)V
+	public final fun headers ()Lokhttp3/Headers;
+	public final fun method ()Ljava/lang/String;
+	public final fun path ()Ljava/lang/String;
+	public final fun response ()Lokhttp3/mockwebserver/MockResponse;
+}
+
+public final class okhttp3/mockwebserver/QueueDispatcher : okhttp3/mockwebserver/Dispatcher {
+	public fun <init> ()V
+	public fun dispatch (Lokhttp3/mockwebserver/RecordedRequest;)Lokhttp3/mockwebserver/MockResponse;
+	public final fun enqueueResponse (Lokhttp3/mockwebserver/MockResponse;)V
+	public fun peek ()Lokhttp3/mockwebserver/MockResponse;
+	public final fun setFailFast (Lokhttp3/mockwebserver/MockResponse;)V
+	public final fun setFailFast (Z)V
+	public fun shutdown ()V
+}
+
+public final class okhttp3/mockwebserver/RecordedRequest {
+	public final fun -deprecated_utf8Body ()Ljava/lang/String;
+	public fun <init> (Ljava/lang/String;Lokhttp3/Headers;Ljava/util/List;JLokio/Buffer;ILjava/net/Socket;)V
+	public fun <init> (Ljava/lang/String;Lokhttp3/Headers;Ljava/util/List;JLokio/Buffer;ILjava/net/Socket;Ljava/io/IOException;)V
+	public synthetic fun <init> (Ljava/lang/String;Lokhttp3/Headers;Ljava/util/List;JLokio/Buffer;ILjava/net/Socket;Ljava/io/IOException;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getBody ()Lokio/Buffer;
+	public final fun getBodySize ()J
+	public final fun getChunkSizes ()Ljava/util/List;
+	public final fun getFailure ()Ljava/io/IOException;
+	public final fun getHandshake ()Lokhttp3/Handshake;
+	public final fun getHeader (Ljava/lang/String;)Ljava/lang/String;
+	public final fun getHeaders ()Lokhttp3/Headers;
+	public final fun getMethod ()Ljava/lang/String;
+	public final fun getPath ()Ljava/lang/String;
+	public final fun getRequestLine ()Ljava/lang/String;
+	public final fun getRequestUrl ()Lokhttp3/HttpUrl;
+	public final fun getSequenceNumber ()I
+	public final fun getTlsVersion ()Lokhttp3/TlsVersion;
+	public final fun getUtf8Body ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class okhttp3/mockwebserver/SocketPolicy : java/lang/Enum {
+	public static final field CONTINUE_ALWAYS Lokhttp3/mockwebserver/SocketPolicy;
+	public static final field DISCONNECT_AFTER_REQUEST Lokhttp3/mockwebserver/SocketPolicy;
+	public static final field DISCONNECT_AT_END Lokhttp3/mockwebserver/SocketPolicy;
+	public static final field DISCONNECT_AT_START Lokhttp3/mockwebserver/SocketPolicy;
+	public static final field DISCONNECT_DURING_REQUEST_BODY Lokhttp3/mockwebserver/SocketPolicy;
+	public static final field DISCONNECT_DURING_RESPONSE_BODY Lokhttp3/mockwebserver/SocketPolicy;
+	public static final field DO_NOT_READ_REQUEST_BODY Lokhttp3/mockwebserver/SocketPolicy;
+	public static final field EXPECT_CONTINUE Lokhttp3/mockwebserver/SocketPolicy;
+	public static final field FAIL_HANDSHAKE Lokhttp3/mockwebserver/SocketPolicy;
+	public static final field KEEP_OPEN Lokhttp3/mockwebserver/SocketPolicy;
+	public static final field NO_RESPONSE Lokhttp3/mockwebserver/SocketPolicy;
+	public static final field RESET_STREAM_AT_START Lokhttp3/mockwebserver/SocketPolicy;
+	public static final field SHUTDOWN_INPUT_AT_END Lokhttp3/mockwebserver/SocketPolicy;
+	public static final field SHUTDOWN_OUTPUT_AT_END Lokhttp3/mockwebserver/SocketPolicy;
+	public static final field SHUTDOWN_SERVER_AFTER_RESPONSE Lokhttp3/mockwebserver/SocketPolicy;
+	public static final field STALL_SOCKET_AT_START Lokhttp3/mockwebserver/SocketPolicy;
+	public static final field UPGRADE_TO_SSL_AT_END Lokhttp3/mockwebserver/SocketPolicy;
+	public static fun valueOf (Ljava/lang/String;)Lokhttp3/mockwebserver/SocketPolicy;
+	public static fun values ()[Lokhttp3/mockwebserver/SocketPolicy;
+}
+

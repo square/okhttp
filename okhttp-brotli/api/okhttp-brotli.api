@@ -1,0 +1,5 @@
+public final class okhttp3/brotli/BrotliInterceptor : okhttp3/Interceptor {
+	public static final field INSTANCE Lokhttp3/brotli/BrotliInterceptor;
+	public fun intercept (Lokhttp3/Interceptor$Chain;)Lokhttp3/Response;
+}
+
