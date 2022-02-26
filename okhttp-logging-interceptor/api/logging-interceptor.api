@@ -1,0 +1,70 @@
+public final class okhttp3/logging/HttpLoggingInterceptor : okhttp3/Interceptor {
+	public final fun -deprecated_level ()Lokhttp3/logging/HttpLoggingInterceptor$Level;
+	public fun <init> ()V
+	public fun <init> (Lokhttp3/logging/HttpLoggingInterceptor$Logger;)V
+	public synthetic fun <init> (Lokhttp3/logging/HttpLoggingInterceptor$Logger;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getLevel ()Lokhttp3/logging/HttpLoggingInterceptor$Level;
+	public fun intercept (Lokhttp3/Interceptor$Chain;)Lokhttp3/Response;
+	public final fun level (Lokhttp3/logging/HttpLoggingInterceptor$Level;)V
+	public final fun redactHeader (Ljava/lang/String;)V
+	public final fun setLevel (Lokhttp3/logging/HttpLoggingInterceptor$Level;)Lokhttp3/logging/HttpLoggingInterceptor;
+}
+
+public final class okhttp3/logging/HttpLoggingInterceptor$Level : java/lang/Enum {
+	public static final field BASIC Lokhttp3/logging/HttpLoggingInterceptor$Level;
+	public static final field BODY Lokhttp3/logging/HttpLoggingInterceptor$Level;
+	public static final field HEADERS Lokhttp3/logging/HttpLoggingInterceptor$Level;
+	public static final field NONE Lokhttp3/logging/HttpLoggingInterceptor$Level;
+	public static fun valueOf (Ljava/lang/String;)Lokhttp3/logging/HttpLoggingInterceptor$Level;
+	public static fun values ()[Lokhttp3/logging/HttpLoggingInterceptor$Level;
+}
+
+public abstract interface class okhttp3/logging/HttpLoggingInterceptor$Logger {
+	public static final field Companion Lokhttp3/logging/HttpLoggingInterceptor$Logger$Companion;
+	public static final field DEFAULT Lokhttp3/logging/HttpLoggingInterceptor$Logger;
+	public abstract fun log (Ljava/lang/String;)V
+}
+
+public final class okhttp3/logging/HttpLoggingInterceptor$Logger$Companion {
+}
+
+public final class okhttp3/logging/LoggingEventListener : okhttp3/EventListener {
+	public synthetic fun <init> (Lokhttp3/logging/HttpLoggingInterceptor$Logger;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun cacheConditionalHit (Lokhttp3/Call;Lokhttp3/Response;)V
+	public fun cacheHit (Lokhttp3/Call;Lokhttp3/Response;)V
+	public fun cacheMiss (Lokhttp3/Call;)V
+	public fun callEnd (Lokhttp3/Call;)V
+	public fun callFailed (Lokhttp3/Call;Ljava/io/IOException;)V
+	public fun callStart (Lokhttp3/Call;)V
+	public fun canceled (Lokhttp3/Call;)V
+	public fun connectEnd (Lokhttp3/Call;Ljava/net/InetSocketAddress;Ljava/net/Proxy;Lokhttp3/Protocol;)V
+	public fun connectFailed (Lokhttp3/Call;Ljava/net/InetSocketAddress;Ljava/net/Proxy;Lokhttp3/Protocol;Ljava/io/IOException;)V
+	public fun connectStart (Lokhttp3/Call;Ljava/net/InetSocketAddress;Ljava/net/Proxy;)V
+	public fun connectionAcquired (Lokhttp3/Call;Lokhttp3/Connection;)V
+	public fun connectionReleased (Lokhttp3/Call;Lokhttp3/Connection;)V
+	public fun dnsEnd (Lokhttp3/Call;Ljava/lang/String;Ljava/util/List;)V
+	public fun dnsStart (Lokhttp3/Call;Ljava/lang/String;)V
+	public fun proxySelectEnd (Lokhttp3/Call;Lokhttp3/HttpUrl;Ljava/util/List;)V
+	public fun proxySelectStart (Lokhttp3/Call;Lokhttp3/HttpUrl;)V
+	public fun requestBodyEnd (Lokhttp3/Call;J)V
+	public fun requestBodyStart (Lokhttp3/Call;)V
+	public fun requestFailed (Lokhttp3/Call;Ljava/io/IOException;)V
+	public fun requestHeadersEnd (Lokhttp3/Call;Lokhttp3/Request;)V
+	public fun requestHeadersStart (Lokhttp3/Call;)V
+	public fun responseBodyEnd (Lokhttp3/Call;J)V
+	public fun responseBodyStart (Lokhttp3/Call;)V
+	public fun responseFailed (Lokhttp3/Call;Ljava/io/IOException;)V
+	public fun responseHeadersEnd (Lokhttp3/Call;Lokhttp3/Response;)V
+	public fun responseHeadersStart (Lokhttp3/Call;)V
+	public fun satisfactionFailure (Lokhttp3/Call;Lokhttp3/Response;)V
+	public fun secureConnectEnd (Lokhttp3/Call;Lokhttp3/Handshake;)V
+	public fun secureConnectStart (Lokhttp3/Call;)V
+}
+
+public class okhttp3/logging/LoggingEventListener$Factory : okhttp3/EventListener$Factory {
+	public fun <init> ()V
+	public fun <init> (Lokhttp3/logging/HttpLoggingInterceptor$Logger;)V
+	public synthetic fun <init> (Lokhttp3/logging/HttpLoggingInterceptor$Logger;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun create (Lokhttp3/Call;)Lokhttp3/EventListener;
+}
+
