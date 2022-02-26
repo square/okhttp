@@ -25,7 +25,7 @@ import okio.utf8Size
 /**
  * Trivial Dns Encoder/Decoder, basically ripped from Netty full implementation.
  */
-object DnsRecordCodec {
+internal object DnsRecordCodec {
   private const val SERVFAIL = 2
   private const val NXDOMAIN = 3
   const val TYPE_A = 0x0001
