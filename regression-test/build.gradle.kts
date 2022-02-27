@@ -34,7 +34,7 @@ android {
 
 
 dependencies {
-  val okhttpLegacyVersion = "3.12.12"
+  val okhttpLegacyVersion = "4.9.3"
 
   implementation(libs.kotlin.reflect)
   implementation(libs.playservices.safetynet)
