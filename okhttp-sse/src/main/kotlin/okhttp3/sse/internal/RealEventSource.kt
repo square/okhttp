@@ -15,7 +15,6 @@
  */
 package okhttp3.sse.internal
 
-import java.io.IOException
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.EventListener
@@ -27,6 +26,7 @@ import okhttp3.internal.EMPTY_RESPONSE
 import okhttp3.internal.connection.RealCall
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSourceListener
+import java.io.IOException
 
 internal class RealEventSource(
   private val request: Request,
@@ -37,8 +37,8 @@ internal class RealEventSource(
 
   fun connect(client: OkHttpClient) {
     val client = client.newBuilder()
-        .eventListener(EventListener.NONE)
-        .build()
+      .eventListener(EventListener.NONE)
+      .build()
     val realCall = client.newCall(request) as RealCall
     call = realCall
     realCall.enqueue(this)
@@ -58,8 +58,10 @@ internal class RealEventSource(
       val body = response.body!!
 
       if (!body.isEventStream()) {
-        listener.onFailure(this,
-            IllegalStateException("Invalid content-type: ${body.contentType()}"), response)
+        listener.onFailure(
+          this,
+          IllegalStateException("Invalid content-type: ${body.contentType()}"), response
+        )
         return
       }
 
@@ -68,8 +70,8 @@ internal class RealEventSource(
 
       // Replace the body with an empty one so the callbacks can't see real data.
       val response = response.newBuilder()
-          .body(EMPTY_RESPONSE)
-          .build()
+        .body(EMPTY_RESPONSE)
+        .build()
 
       val reader = ServerSentEventReader(body.source(), this)
       try {

@@ -42,11 +42,13 @@ class JettyHttpClientTest {
   }
 
   @Test fun get(server: MockWebServer) {
-    server.enqueue(MockResponse()
-        .setBody("hello, Jetty HTTP Client"))
+    server.enqueue(
+      MockResponse()
+        .setBody("hello, Jetty HTTP Client")
+    )
 
     val request = client.newRequest(server.url("/").toUri())
-        .header("Accept", "text/plain")
+      .header("Accept", "text/plain")
     val response = request.send()
     assertThat(response.status).isEqualTo(200)
     assertThat(response.contentAsString).isEqualTo("hello, Jetty HTTP Client")

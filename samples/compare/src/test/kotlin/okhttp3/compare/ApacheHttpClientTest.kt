@@ -39,8 +39,10 @@ class ApacheHttpClientTest {
   }
 
   @Test fun get(server: MockWebServer) {
-    server.enqueue(MockResponse()
-        .setBody("hello, Apache HttpClient 5.x"))
+    server.enqueue(
+      MockResponse()
+        .setBody("hello, Apache HttpClient 5.x")
+    )
 
     val request = HttpGet(server.url("/").toUri())
     request.addHeader("Accept", "text/plain")

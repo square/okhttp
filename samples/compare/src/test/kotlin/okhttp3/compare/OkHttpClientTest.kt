@@ -35,15 +35,17 @@ class OkHttpClientTest {
   @Test fun get(server: MockWebServer) {
     platform.assumeNotBouncyCastle()
 
-    server.enqueue(MockResponse()
-        .setBody("hello, OkHttp"))
+    server.enqueue(
+      MockResponse()
+        .setBody("hello, OkHttp")
+    )
 
     val client = OkHttpClient()
 
     val request = Request.Builder()
-        .url(server.url("/"))
-        .header("Accept", "text/plain")
-        .build()
+      .url(server.url("/"))
+      .header("Accept", "text/plain")
+      .build()
     val response = client.newCall(request).execute()
     assertThat(response.code).isEqualTo(200)
     assertThat(response.body!!.string()).isEqualTo("hello, OkHttp")
