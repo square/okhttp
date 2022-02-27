@@ -28,11 +28,3 @@ public final class okhttp3/dnsoverhttps/DnsOverHttps$Companion {
 	public final fun getDNS_MESSAGE ()Lokhttp3/MediaType;
 }
 
-public final class okhttp3/dnsoverhttps/DnsRecordCodec {
-	public static final field INSTANCE Lokhttp3/dnsoverhttps/DnsRecordCodec;
-	public static final field TYPE_A I
-	public static final field TYPE_AAAA I
-	public final fun decodeAnswers (Ljava/lang/String;Lokio/ByteString;)Ljava/util/List;
-	public final fun encodeQuery (Ljava/lang/String;I)Lokio/ByteString;
-}
-
