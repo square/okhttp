@@ -137,7 +137,8 @@ fun findTests(selectors: List<DiscoverySelector>): List<TestDescriptor> {
  */
 fun treeListener(): TestExecutionListener {
   return Class.forName(
-    "org.junit.platform.console.tasks.TreePrintingListener").declaredConstructors.first()
+    "org.junit.platform.console.tasks.TreePrintingListener"
+  ).declaredConstructors.first()
     .apply {
       isAccessible = true
     }

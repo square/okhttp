@@ -57,6 +57,6 @@ class SampleTest {
   }
 }
 
-class SampleTestProvider: SimpleProvider() {
+class SampleTestProvider : SimpleProvider() {
   override fun arguments() = listOf("A", "B")
 }
