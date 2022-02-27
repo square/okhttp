@@ -15,12 +15,6 @@
  */
 package okhttp3.tls.internal.der
 
-import java.math.BigInteger
-import java.net.InetAddress
-import java.net.ProtocolException
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.TimeZone
 import okhttp3.tls.internal.der.CertificateAdapters.generalNameDnsName
 import okhttp3.tls.internal.der.CertificateAdapters.generalNameIpAddress
 import okhttp3.tls.internal.der.ObjectIdentifiers.basicConstraints
@@ -35,13 +29,19 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
+import java.math.BigInteger
+import java.net.InetAddress
+import java.net.ProtocolException
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.TimeZone
 
 internal class DerTest {
   @Test fun `decode tag and length`() {
     val buffer = Buffer()
-        .writeByte(0b00011110)
-        .writeByte(0b10000001)
-        .writeByte(0b11001001)
+      .writeByte(0b00011110)
+      .writeByte(0b10000001)
+      .writeByte(0b11001001)
 
     val derReader = DerReader(buffer)
 
@@ -57,10 +57,10 @@ internal class DerTest {
 
   @Test fun `decode length encoded with leading zero byte`() {
     val buffer = Buffer()
-        .writeByte(0b00000010)
-        .writeByte(0b10000010)
-        .writeByte(0b00000000)
-        .writeByte(0b01111111)
+      .writeByte(0b00000010)
+      .writeByte(0b10000010)
+      .writeByte(0b00000000)
+      .writeByte(0b01111111)
 
     val derReader = DerReader(buffer)
 
@@ -74,9 +74,9 @@ internal class DerTest {
 
   @Test fun `decode length not encoded in shortest form possible`() {
     val buffer = Buffer()
-        .writeByte(0b00000010)
-        .writeByte(0b10000001)
-        .writeByte(0b01111111)
+      .writeByte(0b00000010)
+      .writeByte(0b10000001)
+      .writeByte(0b01111111)
 
     val derReader = DerReader(buffer)
 
@@ -90,16 +90,16 @@ internal class DerTest {
 
   @Test fun `decode length equal to Long MAX_VALUE`() {
     val buffer = Buffer()
-        .writeByte(0b00000010)
-        .writeByte(0b10001000)
-        .writeByte(0b01111111)
-        .writeByte(0b11111111)
-        .writeByte(0b11111111)
-        .writeByte(0b11111111)
-        .writeByte(0b11111111)
-        .writeByte(0b11111111)
-        .writeByte(0b11111111)
-        .writeByte(0b11111111)
+      .writeByte(0b00000010)
+      .writeByte(0b10001000)
+      .writeByte(0b01111111)
+      .writeByte(0b11111111)
+      .writeByte(0b11111111)
+      .writeByte(0b11111111)
+      .writeByte(0b11111111)
+      .writeByte(0b11111111)
+      .writeByte(0b11111111)
+      .writeByte(0b11111111)
 
     val derReader = DerReader(buffer)
 
@@ -109,16 +109,16 @@ internal class DerTest {
 
   @Test fun `decode length overflowing Long`() {
     val buffer = Buffer()
-        .writeByte(0b00000010)
-        .writeByte(0b10001000)
-        .writeByte(0b10000000)
-        .writeByte(0b00000000)
-        .writeByte(0b00000000)
-        .writeByte(0b00000000)
-        .writeByte(0b00000000)
-        .writeByte(0b00000000)
-        .writeByte(0b00000000)
-        .writeByte(0b00000000)
+      .writeByte(0b00000010)
+      .writeByte(0b10001000)
+      .writeByte(0b10000000)
+      .writeByte(0b00000000)
+      .writeByte(0b00000000)
+      .writeByte(0b00000000)
+      .writeByte(0b00000000)
+      .writeByte(0b00000000)
+      .writeByte(0b00000000)
+      .writeByte(0b00000000)
 
     val derReader = DerReader(buffer)
 
@@ -132,18 +132,18 @@ internal class DerTest {
 
   @Test fun `decode length encoded with more than 8 bytes`() {
     val buffer = Buffer()
-        .writeByte(0b00000010)
-        .writeByte(0b10001001)
-        .writeByte(0b11111111)
-        .writeByte(0b11111111)
-        .writeByte(0b11111111)
-        .writeByte(0b11111111)
-        .writeByte(0b11111111)
-        .writeByte(0b11111111)
-        .writeByte(0b11111111)
-        .writeByte(0b11111111)
-        .writeByte(0b11111111)
-        .writeByte(0b11111111)
+      .writeByte(0b00000010)
+      .writeByte(0b10001001)
+      .writeByte(0b11111111)
+      .writeByte(0b11111111)
+      .writeByte(0b11111111)
+      .writeByte(0b11111111)
+      .writeByte(0b11111111)
+      .writeByte(0b11111111)
+      .writeByte(0b11111111)
+      .writeByte(0b11111111)
+      .writeByte(0b11111111)
+      .writeByte(0b11111111)
 
     val derReader = DerReader(buffer)
 
@@ -152,7 +152,7 @@ internal class DerTest {
       fail("")
     } catch (expected: ProtocolException) {
       assertThat(expected.message)
-          .isEqualTo("length encoded with more than 8 bytes is not supported")
+        .isEqualTo("length encoded with more than 8 bytes is not supported")
     }
   }
 
@@ -170,7 +170,7 @@ internal class DerTest {
 
   @Test fun `decode primitive bit string`() {
     val buffer = Buffer()
-        .write("0307040A3B5F291CD0".decodeHex())
+      .write("0307040A3B5F291CD0".decodeHex())
 
     val derReader = DerReader(buffer)
 
@@ -195,7 +195,7 @@ internal class DerTest {
 
   @Test fun `decode primitive string`() {
     val buffer = Buffer()
-        .write("1A054A6F6E6573".decodeHex())
+      .write("1A054A6F6E6573".decodeHex())
 
     val derReader = DerReader(buffer)
 
@@ -224,7 +224,7 @@ internal class DerTest {
     // Type1 ::= VisibleString
     // Type2 ::= [APPLICATION 3] IMPLICIT Type1
     val buffer = Buffer()
-        .write("43054A6F6E6573".decodeHex())
+      .write("43054A6F6E6573".decodeHex())
 
     val derReader = DerReader(buffer)
 
@@ -255,7 +255,7 @@ internal class DerTest {
     // Type2 ::= [APPLICATION 3] IMPLICIT Type1
     // Type3 ::= [2] Type2
     val buffer = Buffer()
-        .write("A20743054A6F6E6573".decodeHex())
+      .write("A20743054A6F6E6573".decodeHex())
 
     val derReader = DerReader(buffer)
 
@@ -299,7 +299,7 @@ internal class DerTest {
     // Type3 ::= [2] Type2
     // Type4 ::= [APPLICATION 7] IMPLICIT Type3
     val buffer = Buffer()
-        .write("670743054A6F6E6573".decodeHex())
+      .write("670743054A6F6E6573".decodeHex())
 
     val derReader = DerReader(buffer)
 
@@ -343,7 +343,7 @@ internal class DerTest {
     // Type2 ::= [APPLICATION 3] IMPLICIT Type1
     // Type5 ::= [2] IMPLICIT Type2
     val buffer = Buffer()
-        .write("82054A6F6E6573".decodeHex())
+      .write("82054A6F6E6573".decodeHex())
 
     val derReader = DerReader(buffer)
 
@@ -365,9 +365,9 @@ internal class DerTest {
     val derWriter = DerWriter(buffer)
 
     derWriter.write(
-        name = "test",
-        tagClass = DerHeader.TAG_CLASS_CONTEXT_SPECIFIC,
-        tag = 2L
+      name = "test",
+      tagClass = DerHeader.TAG_CLASS_CONTEXT_SPECIFIC,
+      tag = 2L
     ) {
       derWriter.writeOctetString("Jones".encodeUtf8())
     }
@@ -377,7 +377,7 @@ internal class DerTest {
 
   @Test fun `decode object identifier without adapter`() {
     val buffer = Buffer()
-        .write("0603883703".decodeHex())
+      .write("0603883703".decodeHex())
 
     val derReader = DerReader(buffer)
 
@@ -396,9 +396,9 @@ internal class DerTest {
     val derWriter = DerWriter(buffer)
 
     derWriter.write(
-        name = "test",
-        tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
-        tag = 6L
+      name = "test",
+      tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
+      tag = 6L
     ) {
       derWriter.writeObjectIdentifier("2.999.3")
     }
@@ -408,7 +408,7 @@ internal class DerTest {
 
   @Test fun `decode relative object identifier`() {
     val buffer = Buffer()
-        .write("0D04c27B0302".decodeHex())
+      .write("0D04c27B0302".decodeHex())
 
     val derReader = DerReader(buffer)
 
@@ -427,9 +427,9 @@ internal class DerTest {
     val derWriter = DerWriter(buffer)
 
     derWriter.write(
-        name = "test",
-        tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
-        tag = 13L
+      name = "test",
+      tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
+      tag = 13L
     ) {
       derWriter.writeRelativeObjectIdentifier("8571.3.2")
     }
@@ -439,12 +439,12 @@ internal class DerTest {
 
   @Test fun `decode raw sequence`() {
     val buffer = Buffer()
-        .write("300A".decodeHex())
-        .write("1505".decodeHex())
-        .write("Smith".encodeUtf8())
-        .write("01".decodeHex())
-        .write("01".decodeHex())
-        .write("FF".decodeHex())
+      .write("300A".decodeHex())
+      .write("1505".decodeHex())
+      .write("Smith".encodeUtf8())
+      .write("01".decodeHex())
+      .write("01".decodeHex())
+      .write("FF".decodeHex())
 
     val derReader = DerReader(buffer)
 
@@ -472,23 +472,23 @@ internal class DerTest {
     val derWriter = DerWriter(buffer)
 
     derWriter.write(
-        name = "test",
-        tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
-        tag = 16L
+      name = "test",
+      tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
+      tag = 16L
     ) {
 
       derWriter.write(
-          name = "test",
-          tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
-          tag = 21L
+        name = "test",
+        tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
+        tag = 21L
       ) {
         derWriter.writeOctetString("Smith".encodeUtf8())
       }
 
       derWriter.write(
-          name = "test",
-          tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
-          tag = 1L
+        name = "test",
+        tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
+        tag = 1L
       ) {
         derWriter.writeBoolean(true)
       }
@@ -682,62 +682,62 @@ internal class DerTest {
 
   @Test fun `parse utc time`() {
     assertThat(Adapters.parseUtcTime("920521000000Z"))
-        .isEqualTo(date("1992-05-21T00:00:00.000+0000").time)
+      .isEqualTo(date("1992-05-21T00:00:00.000+0000").time)
     assertThat(Adapters.parseUtcTime("920622123421Z"))
-        .isEqualTo(date("1992-06-22T12:34:21.000+0000").time)
+      .isEqualTo(date("1992-06-22T12:34:21.000+0000").time)
     assertThat(Adapters.parseUtcTime("920722132100Z"))
-        .isEqualTo(date("1992-07-22T13:21:00.000+0000").time)
+      .isEqualTo(date("1992-07-22T13:21:00.000+0000").time)
   }
 
   @Test fun `decode utc time two digit year cutoff is 1950`() {
     assertThat(Adapters.parseUtcTime("500101000000Z"))
-        .isEqualTo(date("1950-01-01T00:00:00.000+0000").time)
+      .isEqualTo(date("1950-01-01T00:00:00.000+0000").time)
     assertThat(Adapters.parseUtcTime("500101010000Z"))
-        .isEqualTo(date("1950-01-01T01:00:00.000+0000").time)
+      .isEqualTo(date("1950-01-01T01:00:00.000+0000").time)
 
     assertThat(Adapters.parseUtcTime("491231225959Z"))
-        .isEqualTo(date("2049-12-31T22:59:59.000+0000").time)
+      .isEqualTo(date("2049-12-31T22:59:59.000+0000").time)
     assertThat(Adapters.parseUtcTime("491231235959Z"))
-        .isEqualTo(date("2049-12-31T23:59:59.000+0000").time)
+      .isEqualTo(date("2049-12-31T23:59:59.000+0000").time)
   }
 
   @Test fun `encode utc time two digit year cutoff is 1950`() {
     assertThat(Adapters.formatUtcTime(date("1950-01-01T00:00:00.000+0000").time))
-        .isEqualTo("500101000000Z")
+      .isEqualTo("500101000000Z")
     assertThat(Adapters.formatUtcTime(date("2049-12-31T23:59:59.000+0000").time))
-        .isEqualTo("491231235959Z")
+      .isEqualTo("491231235959Z")
   }
 
   @Test fun `parse generalized time`() {
     assertThat(Adapters.parseGeneralizedTime("18990101000000Z"))
-        .isEqualTo(date("1899-01-01T00:00:00.000+0000").time)
+      .isEqualTo(date("1899-01-01T00:00:00.000+0000").time)
     assertThat(Adapters.parseGeneralizedTime("19500101000000Z"))
-        .isEqualTo(date("1950-01-01T00:00:00.000+0000").time)
+      .isEqualTo(date("1950-01-01T00:00:00.000+0000").time)
     assertThat(Adapters.parseGeneralizedTime("20500101000000Z"))
-        .isEqualTo(date("2050-01-01T00:00:00.000+0000").time)
+      .isEqualTo(date("2050-01-01T00:00:00.000+0000").time)
     assertThat(Adapters.parseGeneralizedTime("20990101000000Z"))
-        .isEqualTo(date("2099-01-01T00:00:00.000+0000").time)
+      .isEqualTo(date("2099-01-01T00:00:00.000+0000").time)
     assertThat(Adapters.parseGeneralizedTime("19920521000000Z"))
-        .isEqualTo(date("1992-05-21T00:00:00.000+0000").time)
+      .isEqualTo(date("1992-05-21T00:00:00.000+0000").time)
     assertThat(Adapters.parseGeneralizedTime("19920622123421Z"))
-        .isEqualTo(date("1992-06-22T12:34:21.000+0000").time)
+      .isEqualTo(date("1992-06-22T12:34:21.000+0000").time)
   }
 
   @Disabled("fractional seconds are not implemented")
   @Test fun `parse generalized time with fractional seconds`() {
     assertThat(Adapters.parseGeneralizedTime("19920722132100.3Z"))
-        .isEqualTo(date("1992-07-22T13:21:00.300+0000").time)
+      .isEqualTo(date("1992-07-22T13:21:00.300+0000").time)
   }
 
   @Test fun `format generalized time`() {
     assertThat(Adapters.formatGeneralizedTime(date("1899-01-01T00:00:00.000+0000").time))
-        .isEqualTo("18990101000000Z")
+      .isEqualTo("18990101000000Z")
     assertThat(Adapters.formatGeneralizedTime(date("1950-01-01T00:00:00.000+0000").time))
-        .isEqualTo("19500101000000Z")
+      .isEqualTo("19500101000000Z")
     assertThat(Adapters.formatGeneralizedTime(date("2050-01-01T00:00:00.000+0000").time))
-        .isEqualTo("20500101000000Z")
+      .isEqualTo("20500101000000Z")
     assertThat(Adapters.formatGeneralizedTime(date("2099-01-01T00:00:00.000+0000").time))
-        .isEqualTo("20990101000000Z")
+      .isEqualTo("20990101000000Z")
   }
 
   @Test fun `decode object identifier`() {
@@ -755,13 +755,13 @@ internal class DerTest {
   @Test fun `sequence algorithm`() {
     val bytes = "300d06092a864886f70d01010b0500".decodeHex()
     val algorithmIdentifier = AlgorithmIdentifier(
-        algorithm = sha256WithRSAEncryption,
-        parameters = null
+      algorithm = sha256WithRSAEncryption,
+      parameters = null
     )
     assertThat(CertificateAdapters.algorithmIdentifier.fromDer(bytes))
-        .isEqualTo(algorithmIdentifier)
+      .isEqualTo(algorithmIdentifier)
     assertThat(CertificateAdapters.algorithmIdentifier.toDer(algorithmIdentifier))
-        .isEqualTo(bytes)
+      .isEqualTo(bytes)
   }
 
   @Test fun `bit string`() {
@@ -792,7 +792,8 @@ internal class DerTest {
   @Test fun `cannot decode constructed octet string`() {
     try {
       Adapters.OCTET_STRING.fromDer(
-          "2410040668656c6c6f200406776f726c6421".decodeHex())
+        "2410040668656c6c6f200406776f726c6421".decodeHex()
+      )
       fail("")
     } catch (expected: ProtocolException) {
       assertThat(expected).hasMessage("constructed octet strings not supported for DER")
@@ -802,7 +803,8 @@ internal class DerTest {
   @Test fun `cannot decode constructed bit string`() {
     try {
       Adapters.BIT_STRING.fromDer(
-          "231203070068656c6c6f20030700776f726c6421".decodeHex())
+        "231203070068656c6c6f20030700776f726c6421".decodeHex()
+      )
       fail("")
     } catch (expected: ProtocolException) {
       assertThat(expected).hasMessage("constructed bit strings not supported for DER")
@@ -812,7 +814,8 @@ internal class DerTest {
   @Test fun `cannot decode constructed string`() {
     try {
       Adapters.UTF8_STRING.fromDer(
-          "2c100c0668656c6c6f200c06776f726c6421".decodeHex())
+        "2c100c0668656c6c6f200c06776f726c6421".decodeHex()
+      )
       fail("")
     } catch (expected: ProtocolException) {
       assertThat(expected).hasMessage("constructed strings not supported for DER")
@@ -822,7 +825,8 @@ internal class DerTest {
   @Test fun `cannot decode indefinite length bit string`() {
     try {
       Adapters.BIT_STRING.fromDer(
-          "23800303000A3B0305045F291CD00000".decodeHex())
+        "23800303000A3B0305045F291CD00000".decodeHex()
+      )
       fail("")
     } catch (expected: ProtocolException) {
       assertThat(expected).hasMessage("indefinite length not permitted for DER")
@@ -831,7 +835,7 @@ internal class DerTest {
 
   @Test fun `cannot decode constructed octet string in enclosing sequence`() {
     val buffer = Buffer()
-        .write("3A0904034A6F6E04026573".decodeHex())
+      .write("3A0904034A6F6E04026573".decodeHex())
     val derReader = DerReader(buffer)
     try {
       derReader.read("test") {
@@ -847,62 +851,62 @@ internal class DerTest {
     val bytes = "8704c0a80201".decodeHex()
     val localhost = InetAddress.getByName("192.168.2.1").address.toByteString()
     assertThat(CertificateAdapters.generalName.fromDer(bytes))
-        .isEqualTo(generalNameIpAddress to localhost)
+      .isEqualTo(generalNameIpAddress to localhost)
     assertThat(CertificateAdapters.generalName.toDer(generalNameIpAddress to localhost))
-        .isEqualTo(bytes)
+      .isEqualTo(bytes)
   }
 
   @Test fun `choice dns`() {
     val bytes = "820b6578616d706c652e636f6d".decodeHex()
     assertThat(CertificateAdapters.generalName.fromDer(bytes))
-        .isEqualTo(generalNameDnsName to "example.com")
+      .isEqualTo(generalNameDnsName to "example.com")
     assertThat(CertificateAdapters.generalName.toDer(generalNameDnsName to "example.com"))
-        .isEqualTo(bytes)
+      .isEqualTo(bytes)
   }
 
   @Test fun `extension with type hint for basic constraints`() {
     val extension = Extension(
-        basicConstraints,
-        false,
-        BasicConstraints(true, 4)
+      basicConstraints,
+      false,
+      BasicConstraints(true, 4)
     )
     val bytes = "300f0603551d13040830060101ff020104".decodeHex()
 
     assertThat(CertificateAdapters.extension.toDer(extension))
-        .isEqualTo(bytes)
+      .isEqualTo(bytes)
     assertThat(CertificateAdapters.extension.fromDer(bytes))
-        .isEqualTo(extension)
+      .isEqualTo(extension)
   }
 
   @Test fun `extension with type hint for subject alternative names`() {
     val extension = Extension(
-        subjectAlternativeName,
-        false,
-        listOf(
-            generalNameDnsName to "cash.app",
-            generalNameDnsName to "www.cash.app"
-        )
+      subjectAlternativeName,
+      false,
+      listOf(
+        generalNameDnsName to "cash.app",
+        generalNameDnsName to "www.cash.app"
+      )
     )
     val bytes = "30210603551d11041a30188208636173682e617070820c7777772e636173682e617070".decodeHex()
 
     assertThat(CertificateAdapters.extension.toDer(extension))
-        .isEqualTo(bytes)
+      .isEqualTo(bytes)
     assertThat(CertificateAdapters.extension.fromDer(bytes))
-        .isEqualTo(extension)
+      .isEqualTo(extension)
   }
 
   @Test fun `extension with unknown type hint`() {
     val extension = Extension(
-        commonName, // common name is not an extension.
-        false,
-        "3006800109810109".decodeHex()
+      commonName, // common name is not an extension.
+      false,
+      "3006800109810109".decodeHex()
     )
     val bytes = "300f060355040304083006800109810109".decodeHex()
 
     assertThat(CertificateAdapters.extension.toDer(extension))
-        .isEqualTo(bytes)
+      .isEqualTo(bytes)
     assertThat(CertificateAdapters.extension.fromDer(bytes))
-        .isEqualTo(extension)
+      .isEqualTo(extension)
   }
 
   /** Tags larger than 30 are a special case. */
@@ -950,11 +954,11 @@ internal class DerTest {
   ) {
     companion object {
       val ADAPTER = Adapters.sequence(
-          "Point",
-          Adapters.INTEGER_AS_LONG.withTag(tag = 0L).optional(),
-          Adapters.INTEGER_AS_LONG.withTag(tag = 1L).optional(),
-          decompose = { listOf(it.x, it.y) },
-          construct = { Point(it[0] as Long?, it[1] as Long?) }
+        "Point",
+        Adapters.INTEGER_AS_LONG.withTag(tag = 0L).optional(),
+        Adapters.INTEGER_AS_LONG.withTag(tag = 1L).optional(),
+        decompose = { listOf(it.x, it.y) },
+        construct = { Point(it[0] as Long?, it[1] as Long?) }
       )
     }
   }

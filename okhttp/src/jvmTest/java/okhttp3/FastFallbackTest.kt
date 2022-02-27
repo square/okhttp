@@ -15,13 +15,6 @@
  */
 package okhttp3
 
-import java.io.IOException
-import java.net.Inet4Address
-import java.net.Inet6Address
-import java.net.InetAddress
-import java.util.concurrent.TimeUnit
-import kotlin.test.assertFailsWith
-import kotlin.test.fail
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import org.assertj.core.api.Assertions.assertThat
@@ -31,6 +24,13 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.opentest4j.TestAbortedException
+import java.io.IOException
+import java.net.Inet4Address
+import java.net.Inet6Address
+import java.net.InetAddress
+import java.util.concurrent.TimeUnit
+import kotlin.test.assertFailsWith
+import kotlin.test.fail
 
 /**
  * This test binds two different web servers (IPv4 and IPv6) to the same port, but on different

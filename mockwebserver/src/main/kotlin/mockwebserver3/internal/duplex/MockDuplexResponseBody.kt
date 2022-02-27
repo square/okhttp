@@ -15,11 +15,6 @@
  */
 package mockwebserver3.internal.duplex
 
-import java.io.IOException
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.FutureTask
-import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.TimeUnit
 import mockwebserver3.RecordedRequest
 import okhttp3.internal.http2.ErrorCode
 import okhttp3.internal.http2.Http2Stream
@@ -27,6 +22,11 @@ import okio.BufferedSink
 import okio.BufferedSource
 import okio.buffer
 import okio.utf8Size
+import java.io.IOException
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.FutureTask
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.TimeUnit
 
 private typealias Action = (RecordedRequest, BufferedSource, BufferedSink, Http2Stream) -> Unit
 
@@ -111,7 +111,7 @@ class MockDuplexResponseBody : DuplexResponseBody {
   /** Returns once the duplex conversation completes successfully. */
   fun awaitSuccess() {
     val futureTask = results.poll(5, TimeUnit.SECONDS)
-        ?: throw AssertionError("no onRequest call received")
+      ?: throw AssertionError("no onRequest call received")
     futureTask.get(5, TimeUnit.SECONDS)
   }
 }

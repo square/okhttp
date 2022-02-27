@@ -33,11 +33,13 @@ fun String.toCanonicalHost(): String? {
   // If the input contains a :, it’s an IPv6 address.
   if (":" in host) {
     // If the input is encased in square braces "[...]", drop 'em.
-    val inetAddressByteArray = (if (host.startsWith("[") && host.endsWith("]")) {
-      decodeIpv6(host, 1, host.length - 1)
-    } else {
-      decodeIpv6(host, 0, host.length)
-    }) ?: return null
+    val inetAddressByteArray = (
+      if (host.startsWith("[") && host.endsWith("]")) {
+        decodeIpv6(host, 1, host.length - 1)
+      } else {
+        decodeIpv6(host, 0, host.length)
+      }
+      ) ?: return null
     val inetAddress = InetAddress.getByAddress(inetAddressByteArray)
     val address = inetAddress.address
     if (address.size == 16) return inet6AddressToAscii(address)

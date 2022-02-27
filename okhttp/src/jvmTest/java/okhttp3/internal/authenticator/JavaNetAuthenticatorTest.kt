@@ -15,8 +15,6 @@
  */
 package okhttp3.internal.authenticator
 
-import java.net.Authenticator
-import java.net.InetAddress
 import junit.framework.TestCase.assertNull
 import okhttp3.FakeDns
 import okhttp3.Protocol.HTTP_2
@@ -28,6 +26,8 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.net.Authenticator
+import java.net.InetAddress
 
 // Most tests from URLConnectionTest
 class JavaNetAuthenticatorTest {
@@ -57,35 +57,35 @@ class JavaNetAuthenticatorTest {
     val route = factory.newRoute()
 
     val request = Request.Builder()
-        .url("https://server/robots.txt")
-        .build()
+      .url("https://server/robots.txt")
+      .build()
     val response = Response.Builder()
-        .request(request)
-        .code(401)
-        .header("WWW-Authenticate", "Basic realm=\"User Visible Realm\"")
-        .protocol(HTTP_2)
-        .message("Unauthorized")
-        .build()
+      .request(request)
+      .code(401)
+      .header("WWW-Authenticate", "Basic realm=\"User Visible Realm\"")
+      .protocol(HTTP_2)
+      .message("Unauthorized")
+      .build()
     val authRequest = authenticator.authenticate(route, response)
 
     assertEquals(
-        "Basic ${RecordingAuthenticator.BASE_64_CREDENTIALS}", authRequest!!.header("Authorization")
+      "Basic ${RecordingAuthenticator.BASE_64_CREDENTIALS}", authRequest!!.header("Authorization")
     )
   }
 
   @Test
   fun noSupportForNonBasicAuth() {
     val request = Request.Builder()
-        .url("https://server/robots.txt")
-        .build()
+      .url("https://server/robots.txt")
+      .build()
 
     val response = Response.Builder()
-        .request(request)
-        .code(401)
-        .header("WWW-Authenticate", "UnsupportedScheme realm=\"User Visible Realm\"")
-        .protocol(HTTP_2)
-        .message("Unauthorized")
-        .build()
+      .request(request)
+      .code(401)
+      .header("WWW-Authenticate", "UnsupportedScheme realm=\"User Visible Realm\"")
+      .protocol(HTTP_2)
+      .message("Unauthorized")
+      .build()
 
     val authRequest = authenticator.authenticate(null, response)
     assertNull(authRequest)

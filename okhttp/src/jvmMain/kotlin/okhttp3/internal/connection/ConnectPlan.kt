@@ -15,17 +15,6 @@
  */
 package okhttp3.internal.connection
 
-import java.io.IOException
-import java.net.ConnectException
-import java.net.HttpURLConnection
-import java.net.ProtocolException
-import java.net.Proxy
-import java.net.Socket
-import java.net.UnknownServiceException
-import java.security.cert.X509Certificate
-import java.util.concurrent.TimeUnit
-import javax.net.ssl.SSLPeerUnverifiedException
-import javax.net.ssl.SSLSocket
 import okhttp3.CertificatePinner
 import okhttp3.ConnectionSpec
 import okhttp3.Handshake
@@ -46,6 +35,17 @@ import okio.BufferedSource
 import okio.buffer
 import okio.sink
 import okio.source
+import java.io.IOException
+import java.net.ConnectException
+import java.net.HttpURLConnection
+import java.net.ProtocolException
+import java.net.Proxy
+import java.net.Socket
+import java.net.UnknownServiceException
+import java.security.cert.X509Certificate
+import java.util.concurrent.TimeUnit
+import javax.net.ssl.SSLPeerUnverifiedException
+import javax.net.ssl.SSLSocket
 
 /**
  * A single attempt to connect to a remote server, including these steps:
@@ -442,7 +442,7 @@ class ConnectPlan(
     return nextConnectionSpec(connectionSpecs, sslSocket)
       ?: throw UnknownServiceException(
         "Unable to find acceptable protocols." +
-          " isFallback=${isTlsFallback}," +
+          " isFallback=$isTlsFallback," +
           " modes=$connectionSpecs," +
           " supported protocols=${sslSocket.enabledProtocols!!.contentToString()}"
       )

@@ -151,7 +151,7 @@ actual class Response internal constructor(
   }
 
   actual override fun toString(): String =
-      "Response{protocol=$protocol, code=$code, message=$message, url=${request.url}}"
+    "Response{protocol=$protocol, code=$code, message=$message, url=${request.url}}"
 
   actual open class Builder {
     internal actual var request: Request? = null
@@ -182,7 +182,7 @@ actual class Response internal constructor(
 
     actual open fun request(request: Request) = commonRequest(request)
 
-    actual open fun protocol(protocol: Protocol) =commonProtocol(protocol)
+    actual open fun protocol(protocol: Protocol) = commonProtocol(protocol)
 
     actual open fun code(code: Int) = commonCode(code)
 
@@ -217,15 +217,15 @@ actual class Response internal constructor(
     actual open fun build(): Response {
       check(code >= 0) { "code < 0: $code" }
       return Response(
-          checkNotNull(request) { "request == null" },
-          checkNotNull(protocol) { "protocol == null" },
-          checkNotNull(message) { "message == null" },
-          code,
-          headers.build(),
-          body,
-          networkResponse,
-          cacheResponse,
-          priorResponse,
+        checkNotNull(request) { "request == null" },
+        checkNotNull(protocol) { "protocol == null" },
+        checkNotNull(message) { "message == null" },
+        code,
+        headers.build(),
+        body,
+        networkResponse,
+        cacheResponse,
+        priorResponse,
       )
     }
   }

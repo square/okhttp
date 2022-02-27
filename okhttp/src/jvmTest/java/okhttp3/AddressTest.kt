@@ -15,11 +15,11 @@
  */
 package okhttp3
 
-import java.net.Proxy
 import okhttp3.internal.http.RecordingProxySelector
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
+import java.net.Proxy
 
 class AddressTest {
   private val factory = TestValueFactory().apply {

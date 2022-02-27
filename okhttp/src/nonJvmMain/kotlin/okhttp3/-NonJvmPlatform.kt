@@ -19,4 +19,4 @@ package okhttp3
 
 import okio.IOException
 
-actual class ProtocolException actual constructor(message: String): IOException(message)
+actual class ProtocolException actual constructor(message: String) : IOException(message)

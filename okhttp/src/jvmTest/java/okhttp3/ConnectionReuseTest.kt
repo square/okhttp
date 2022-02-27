@@ -15,8 +15,6 @@
  */
 package okhttp3
 
-import java.util.concurrent.TimeUnit
-import javax.net.ssl.SSLException
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy
@@ -34,6 +32,8 @@ import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.RegisterExtension
+import java.util.concurrent.TimeUnit
+import javax.net.ssl.SSLException
 
 @Timeout(30)
 @Tag("Slowish")
@@ -296,16 +296,18 @@ class ConnectionReuseTest {
         // Since this test knowingly leaks a connection, avoid using the default shared connection
         // pool, which should remain clean for subsequent tests.
         .connectionPool(ConnectionPool())
-        .addNetworkInterceptor(Interceptor { chain: Interceptor.Chain? ->
-          val response = chain!!.proceed(
-            chain.request()
-          )
-          responsesNotClosed.add(response)
-          response
-            .newBuilder()
-            .body("unrelated response body!".toResponseBody(null))
-            .build()
-        })
+        .addNetworkInterceptor(
+          Interceptor { chain: Interceptor.Chain? ->
+            val response = chain!!.proceed(
+              chain.request()
+            )
+            responsesNotClosed.add(response)
+            response
+              .newBuilder()
+              .body("unrelated response body!".toResponseBody(null))
+              .build()
+          }
+        )
         .build()
     server.enqueue(
       MockResponse()

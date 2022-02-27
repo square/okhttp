@@ -15,12 +15,12 @@
  */
 package okhttp3.internal.idn
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
 import okio.Buffer
 import okio.FileSystem
 import okio.Path.Companion.toPath
 import org.assertj.core.api.Assertions.assertThat
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class StringprepTablesReaderTest {
   @Test fun readRfc3491FromResources() {
@@ -41,7 +41,8 @@ class StringprepTablesReaderTest {
       |  0234-024F
       |  0000-001F; [CONTROL CHARACTERS]
       |  007F; DELETE
-      |""".trimMargin()
+      |
+      """.trimMargin()
     )
 
     val rangeList = buffer.readCodePointSet()
@@ -63,7 +64,8 @@ class StringprepTablesReaderTest {
       |    180C; ; Map to nothing
       |    0041; 0061; Case map
       |    0390; 03B9 0308 0301; Case map
-      |""".trimMargin()
+      |
+      """.trimMargin()
     )
 
     val mappings = buffer.readCodePointMappings()

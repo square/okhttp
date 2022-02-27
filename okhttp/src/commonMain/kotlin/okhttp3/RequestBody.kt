@@ -15,10 +15,10 @@
  */
 package okhttp3
 
-import kotlin.jvm.JvmOverloads
 import okio.BufferedSink
 import okio.ByteString
 import okio.IOException
+import kotlin.jvm.JvmOverloads
 
 expect abstract class RequestBody constructor() {
 

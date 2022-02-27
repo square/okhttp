@@ -15,7 +15,6 @@
  */
 package okhttp3
 
-import kotlin.time.DurationUnit
 import okhttp3.internal.commonBuild
 import okhttp3.internal.commonForceCache
 import okhttp3.internal.commonForceNetwork
@@ -29,6 +28,7 @@ import okhttp3.internal.commonNoTransform
 import okhttp3.internal.commonOnlyIfCached
 import okhttp3.internal.commonParse
 import okhttp3.internal.commonToString
+import kotlin.time.DurationUnit
 
 actual class CacheControl internal actual constructor(
   actual val noCache: Boolean,

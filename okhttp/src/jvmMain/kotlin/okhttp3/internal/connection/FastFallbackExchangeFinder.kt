@@ -15,15 +15,15 @@
  */
 package okhttp3.internal.connection
 
-import java.io.IOException
-import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.LinkedBlockingDeque
-import java.util.concurrent.TimeUnit
 import okhttp3.internal.concurrent.Task
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.connection.RoutePlanner.ConnectResult
 import okhttp3.internal.connection.RoutePlanner.Plan
 import okhttp3.internal.okHttpName
+import java.io.IOException
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.LinkedBlockingDeque
+import java.util.concurrent.TimeUnit
 
 /**
  * Speculatively connects to each IP address of a target address, returning as soon as one of them

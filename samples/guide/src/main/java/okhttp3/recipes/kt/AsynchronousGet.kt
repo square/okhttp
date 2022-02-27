@@ -15,20 +15,20 @@
  */
 package okhttp3.recipes.kt
 
-import java.io.IOException
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import java.io.IOException
 
 class AsynchronousGet {
   private val client = OkHttpClient()
 
   fun run() {
     val request = Request.Builder()
-        .url("http://publicobject.com/helloworld.txt")
-        .build()
+      .url("http://publicobject.com/helloworld.txt")
+      .build()
 
     client.newCall(request).enqueue(object : Callback {
       override fun onFailure(call: Call, e: IOException) {

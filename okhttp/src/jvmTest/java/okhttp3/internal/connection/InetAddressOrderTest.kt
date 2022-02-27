@@ -18,9 +18,9 @@ package okhttp3.internal.connection
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import org.junit.jupiter.api.Test
 import java.net.Inet4Address
 import java.net.Inet6Address
-import org.junit.jupiter.api.Test
 
 class InetAddressOrderTest {
   val ipv4_10_0_0_6 = Inet4Address.getByName("10.0.0.6")

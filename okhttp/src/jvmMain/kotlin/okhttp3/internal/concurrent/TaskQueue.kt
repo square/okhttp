@@ -15,10 +15,10 @@
  */
 package okhttp3.internal.concurrent
 
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.RejectedExecutionException
 import okhttp3.internal.assertThreadDoesntHoldLock
 import okhttp3.internal.okHttpName
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.RejectedExecutionException
 
 /**
  * A set of tasks that are executed in sequential order.
@@ -82,11 +82,14 @@ class TaskQueue internal constructor(
     delayNanos: Long = 0L,
     block: () -> Long
   ) {
-    schedule(object : Task(name) {
-      override fun runOnce(): Long {
-        return block()
-      }
-    }, delayNanos)
+    schedule(
+      object : Task(name) {
+        override fun runOnce(): Long {
+          return block()
+        }
+      },
+      delayNanos
+    )
   }
 
   /** Executes [block] once on a task runner thread. */
@@ -97,12 +100,15 @@ class TaskQueue internal constructor(
     cancelable: Boolean = true,
     block: () -> Unit
   ) {
-    schedule(object : Task(name, cancelable) {
-      override fun runOnce(): Long {
-        block()
-        return -1L
-      }
-    }, delayNanos)
+    schedule(
+      object : Task(name, cancelable) {
+        override fun runOnce(): Long {
+          block()
+          return -1L
+        }
+      },
+      delayNanos
+    )
   }
 
   /** Returns a latch that reaches 0 when the queue is next idle. */

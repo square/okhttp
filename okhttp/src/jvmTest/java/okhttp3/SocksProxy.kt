@@ -15,6 +15,17 @@
  */
 package okhttp3
 
+import okhttp3.internal.and
+import okhttp3.internal.closeQuietly
+import okhttp3.internal.threadFactory
+import okhttp3.internal.threadName
+import okio.Buffer
+import okio.BufferedSink
+import okio.BufferedSource
+import okio.buffer
+import okio.sink
+import okio.source
+import okio.use
 import java.io.IOException
 import java.net.InetAddress
 import java.net.InetSocketAddress
@@ -30,17 +41,6 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.logging.Level
 import java.util.logging.Logger
-import okhttp3.internal.and
-import okhttp3.internal.closeQuietly
-import okhttp3.internal.threadFactory
-import okhttp3.internal.threadName
-import okio.Buffer
-import okio.BufferedSink
-import okio.BufferedSource
-import okio.buffer
-import okio.sink
-import okio.source
-import okio.use
 
 /**
  * A limited implementation of SOCKS Protocol Version 5, intended to be similar to MockWebServer.
@@ -136,7 +136,8 @@ class SocksProxy {
   }
 
   private fun acceptCommand(
-    fromAddress: InetAddress, fromSource: BufferedSource,
+    fromAddress: InetAddress,
+    fromSource: BufferedSource,
     fromSink: BufferedSink
   ) {
     // Read the command.

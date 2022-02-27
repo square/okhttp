@@ -16,10 +16,10 @@
  */
 package okhttp3
 
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
 
 /**
  * Test MediaType API and parsing.

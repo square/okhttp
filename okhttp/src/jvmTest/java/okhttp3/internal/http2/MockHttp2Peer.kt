@@ -15,6 +15,13 @@
  */
 package okhttp3.internal.http2
 
+import okhttp3.internal.closeQuietly
+import okhttp3.internal.threadFactory
+import okio.Buffer
+import okio.BufferedSource
+import okio.ByteString
+import okio.buffer
+import okio.source
 import java.io.Closeable
 import java.io.IOException
 import java.net.InetSocketAddress
@@ -24,13 +31,6 @@ import java.util.concurrent.BlockingQueue
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.logging.Logger
-import okhttp3.internal.closeQuietly
-import okhttp3.internal.threadFactory
-import okio.Buffer
-import okio.BufferedSource
-import okio.ByteString
-import okio.buffer
-import okio.source
 
 /** Replays prerecorded outgoing frames and records incoming frames.  */
 class MockHttp2Peer : Closeable {
@@ -202,8 +202,10 @@ class MockHttp2Peer : Closeable {
     }
 
     override fun headers(
-      inFinished: Boolean, streamId: Int,
-      associatedStreamId: Int, headerBlock: List<Header>
+      inFinished: Boolean,
+      streamId: Int,
+      associatedStreamId: Int,
+      headerBlock: List<Header>
     ) {
       check(type == -1)
       this.type = Http2.TYPE_HEADERS
@@ -257,7 +259,9 @@ class MockHttp2Peer : Closeable {
     }
 
     override fun priority(
-      streamId: Int, streamDependency: Int, weight: Int,
+      streamId: Int,
+      streamDependency: Int,
+      weight: Int,
       exclusive: Boolean
     ) {
       throw UnsupportedOperationException()

@@ -50,7 +50,6 @@ internal fun canonicalUrl(url: String): String {
   }
 }
 
-
 fun Request.Builder.commonHeader(name: String, value: String) = apply {
   headers[name] = value
 }

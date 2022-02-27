@@ -15,10 +15,10 @@
  */
 package okhttp3.internal
 
-import kotlin.time.DurationUnit
-import kotlin.time.toDuration
 import okhttp3.CacheControl
 import okhttp3.Headers
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 internal fun CacheControl.commonToString(): String {
   var result = headerValue
@@ -72,7 +72,6 @@ internal fun Long.commonClampToInt(): Int {
 internal fun CacheControl.Companion.commonForceNetwork() = CacheControl.Builder()
   .noCache()
   .build()
-
 
 internal fun CacheControl.Companion.commonForceCache() = CacheControl.Builder()
   .onlyIfCached()

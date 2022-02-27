@@ -15,12 +15,6 @@
  */
 package okhttp3.internal.http2
 
-import java.io.EOFException
-import java.io.IOException
-import java.io.InterruptedIOException
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicInteger
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.TestUtil.headerEntries
 import okhttp3.TestUtil.repeat
@@ -43,6 +37,12 @@ import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
+import java.io.EOFException
+import java.io.IOException
+import java.io.InterruptedIOException
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 @Timeout(5)
 @Tag("Slow")
@@ -2006,7 +2006,9 @@ class Http2ConnectionTest {
     }
 
     @Synchronized override fun onHeaders(
-      streamId: Int, responseHeaders: List<Header>, last: Boolean
+      streamId: Int,
+      responseHeaders: List<Header>,
+      last: Boolean
     ): Boolean {
       assertThat(streamId).isEqualTo(2)
       assertThat(last).isTrue
@@ -2016,7 +2018,10 @@ class Http2ConnectionTest {
     }
 
     @Synchronized override fun onData(
-      streamId: Int, source: BufferedSource, byteCount: Int, last: Boolean
+      streamId: Int,
+      source: BufferedSource,
+      byteCount: Int,
+      last: Boolean
     ): Boolean {
       events.add(AssertionError("onData"))
       notifyAll()
@@ -2042,7 +2047,10 @@ class Http2ConnectionTest {
       ) = false
 
       override fun onData(
-        streamId: Int, source: BufferedSource, byteCount: Int, last: Boolean
+        streamId: Int,
+        source: BufferedSource,
+        byteCount: Int,
+        last: Boolean
       ): Boolean {
         source.skip(byteCount.toLong())
         return false

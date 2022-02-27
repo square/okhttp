@@ -82,13 +82,15 @@ class SessionReuseTest(
 
     client = client.newBuilder()
       .connectionSpecs(listOf(spec))
-      .eventListenerFactory(clientTestRule.wrap(object : EventListener() {
-        override fun connectionAcquired(call: Call, connection: Connection) {
-          val sslSocket = connection.socket() as SSLSocket
+      .eventListenerFactory(
+        clientTestRule.wrap(object : EventListener() {
+          override fun connectionAcquired(call: Call, connection: Connection) {
+            val sslSocket = connection.socket() as SSLSocket
 
-          sessionIds.add(sslSocket.session.id.toByteString().hex())
-        }
-      }))
+            sessionIds.add(sslSocket.session.id.toByteString().hex())
+          }
+        })
+      )
       .sslSocketFactory(sslSocketFactory, handshakeCertificates.trustManager)
       .build()
 

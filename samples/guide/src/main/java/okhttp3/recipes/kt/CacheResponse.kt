@@ -15,24 +15,26 @@
  */
 package okhttp3.recipes.kt
 
-import java.io.File
-import java.io.IOException
 import okhttp3.Cache
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.io.File
+import java.io.IOException
 
 class CacheResponse(cacheDirectory: File) {
   private val client: OkHttpClient = OkHttpClient.Builder()
-      .cache(Cache(
-          directory = cacheDirectory,
-          maxSize = 10L * 1024L * 1024L // 1 MiB
-      ))
-      .build()
+    .cache(
+      Cache(
+        directory = cacheDirectory,
+        maxSize = 10L * 1024L * 1024L // 1 MiB
+      )
+    )
+    .build()
 
   fun run() {
     val request = Request.Builder()
-        .url("http://publicobject.com/helloworld.txt")
-        .build()
+      .url("http://publicobject.com/helloworld.txt")
+      .build()
 
     val response1Body = client.newCall(request).execute().use {
       if (!it.isSuccessful) throw IOException("Unexpected code $it")

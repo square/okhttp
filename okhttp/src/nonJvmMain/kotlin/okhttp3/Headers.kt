@@ -19,7 +19,6 @@ package okhttp3
 
 import okhttp3.internal.commonAdd
 import okhttp3.internal.commonAddAll
-import okhttp3.internal.commonAddLenient
 import okhttp3.internal.commonBuild
 import okhttp3.internal.commonEquals
 import okhttp3.internal.commonGet

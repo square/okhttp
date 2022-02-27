@@ -15,8 +15,6 @@
  */
 package okhttp3.internal.connection
 
-import java.io.IOException
-import java.net.UnknownServiceException
 import okhttp3.FakeRoutePlanner
 import okhttp3.FakeRoutePlanner.ConnectState.TLS_CONNECTED
 import okhttp3.internal.concurrent.TaskFaker
@@ -24,6 +22,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
+import java.io.IOException
+import java.net.UnknownServiceException
 
 /**
  * Unit test for [FastFallbackExchangeFinder] implementation details.

@@ -15,18 +15,6 @@
  */
 package okhttp3.internal.connection
 
-import java.io.IOException
-import java.io.InterruptedIOException
-import java.lang.ref.WeakReference
-import java.net.Socket
-import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.RejectedExecutionException
-import java.util.concurrent.TimeUnit.MILLISECONDS
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
-import javax.net.ssl.HostnameVerifier
-import javax.net.ssl.SSLSocketFactory
 import okhttp3.Address
 import okhttp3.Call
 import okhttp3.Callback
@@ -49,6 +37,18 @@ import okhttp3.internal.platform.Platform
 import okhttp3.internal.threadName
 import okio.AsyncTimeout
 import okio.Timeout
+import java.io.IOException
+import java.io.InterruptedIOException
+import java.lang.ref.WeakReference
+import java.net.Socket
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.RejectedExecutionException
+import java.util.concurrent.TimeUnit.MILLISECONDS
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.SSLSocketFactory
 
 /**
  * Bridge between OkHttp's application and network layers. This class exposes high-level application
@@ -476,9 +476,11 @@ class RealCall(
    * sensitive information.
    */
   private fun toLoggableString(): String {
-    return ((if (isCanceled()) "canceled " else "") +
-      (if (forWebSocket) "web socket" else "call") +
-      " to " + redactedUrl())
+    return (
+      (if (isCanceled()) "canceled " else "") +
+        (if (forWebSocket) "web socket" else "call") +
+        " to " + redactedUrl()
+      )
   }
 
   internal fun redactedUrl(): String = originalRequest.url.redact()

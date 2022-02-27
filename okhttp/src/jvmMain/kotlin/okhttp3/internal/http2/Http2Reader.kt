@@ -15,11 +15,6 @@
  */
 package okhttp3.internal.http2
 
-import java.io.Closeable
-import java.io.EOFException
-import java.io.IOException
-import java.util.logging.Level.FINE
-import java.util.logging.Logger
 import okhttp3.internal.and
 import okhttp3.internal.format
 import okhttp3.internal.http2.Http2.CONNECTION_PREFACE
@@ -48,6 +43,11 @@ import okio.BufferedSource
 import okio.ByteString
 import okio.Source
 import okio.Timeout
+import java.io.Closeable
+import java.io.EOFException
+import java.io.IOException
+import java.util.logging.Level.FINE
+import java.util.logging.Logger
 
 /**
  * Reads HTTP/2 transport frames.
@@ -62,8 +62,8 @@ class Http2Reader(
 ) : Closeable {
   private val continuation: ContinuationSource = ContinuationSource(this.source)
   private val hpackReader: Hpack.Reader = Hpack.Reader(
-      source = continuation,
-      headerTableSizeSetting = 4096
+    source = continuation,
+    headerTableSizeSetting = 4096
   )
 
   @Throws(IOException::class)
@@ -203,7 +203,8 @@ class Http2Reader(
     if (streamId == 0) throw IOException("TYPE_RST_STREAM streamId == 0")
     val errorCodeInt = source.readInt()
     val errorCode = ErrorCode.fromHttp2(errorCodeInt) ?: throw IOException(
-        "TYPE_RST_STREAM unexpected error code: $errorCodeInt")
+      "TYPE_RST_STREAM unexpected error code: $errorCodeInt"
+    )
     handler.rstStream(streamId, errorCode)
   }
 
@@ -295,7 +296,8 @@ class Http2Reader(
     val errorCodeInt = source.readInt()
     val opaqueDataLength = length - 8
     val errorCode = ErrorCode.fromHttp2(errorCodeInt) ?: throw IOException(
-        "TYPE_GOAWAY unexpected error code: $errorCodeInt")
+      "TYPE_GOAWAY unexpected error code: $errorCodeInt"
+    )
     var debugData = ByteString.EMPTY
     if (opaqueDataLength > 0) { // Must read debug data in order to not corrupt the connection.
       debugData = source.readByteString(opaqueDataLength.toLong())

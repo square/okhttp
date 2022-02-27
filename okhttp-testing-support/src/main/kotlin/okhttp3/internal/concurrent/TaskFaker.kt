@@ -15,6 +15,8 @@
  */
 package okhttp3.internal.concurrent
 
+import okhttp3.OkHttpClient
+import org.assertj.core.api.Assertions.assertThat
 import java.io.Closeable
 import java.util.AbstractQueue
 import java.util.concurrent.BlockingQueue
@@ -23,8 +25,6 @@ import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.logging.Logger
-import okhttp3.OkHttpClient
-import org.assertj.core.api.Assertions.assertThat
 
 /**
  * Runs a [TaskRunner] in a controlled environment so that everything is sequential and
@@ -102,64 +102,67 @@ class TaskFaker : Closeable {
   private var isRunningAllTasks = false
 
   /** A task runner that posts tasks to this fake. Tasks won't be executed until requested. */
-  val taskRunner: TaskRunner = TaskRunner(object : TaskRunner.Backend {
-    override fun execute(taskRunner: TaskRunner, runnable: Runnable) {
-      taskRunner.assertThreadHoldsLock()
-      val acquiredTaskRunnerLock = AtomicBoolean()
+  val taskRunner: TaskRunner = TaskRunner(
+    object : TaskRunner.Backend {
+      override fun execute(taskRunner: TaskRunner, runnable: Runnable) {
+        taskRunner.assertThreadHoldsLock()
+        val acquiredTaskRunnerLock = AtomicBoolean()
 
-      tasksExecutor.execute {
-        synchronized(taskRunner) {
-          acquiredTaskRunnerLock.set(true)
-          taskRunner.notifyAll()
+        tasksExecutor.execute {
+          synchronized(taskRunner) {
+            acquiredTaskRunnerLock.set(true)
+            taskRunner.notifyAll()
 
-          tasksRunningCount++
-          if (tasksRunningCount > 1) isParallel = true
-          try {
-            if (!isRunningAllTasks) {
-              stall()
+            tasksRunningCount++
+            if (tasksRunningCount > 1) isParallel = true
+            try {
+              if (!isRunningAllTasks) {
+                stall()
+              }
+              runnable.run()
+            } catch (e: InterruptedException) {
+              if (!tasksExecutor.isShutdown) throw e // Ignore shutdown-triggered interruptions.
+            } finally {
+              tasksRunningCount--
+              taskBecameStalled.release()
             }
-            runnable.run()
-          } catch (e: InterruptedException) {
-            if (!tasksExecutor.isShutdown) throw e // Ignore shutdown-triggered interruptions.
-          } finally {
-            tasksRunningCount--
-            taskBecameStalled.release()
           }
+        }
+
+        // Execute() must not return until the launched task stalls.
+        while (!acquiredTaskRunnerLock.get()) {
+          taskRunner.wait()
         }
       }
 
-      // Execute() must not return until the launched task stalls.
-      while (!acquiredTaskRunnerLock.get()) {
-        taskRunner.wait()
+      override fun nanoTime() = nanoTime
+
+      override fun coordinatorNotify(taskRunner: TaskRunner) {
+        taskRunner.assertThreadHoldsLock()
+        check(waitingCoordinatorThread != null)
+
+        stalledTasks.remove(waitingCoordinatorThread)
+        taskRunner.notifyAll()
       }
-    }
 
-    override fun nanoTime() = nanoTime
+      override fun coordinatorWait(taskRunner: TaskRunner, nanos: Long) {
+        taskRunner.assertThreadHoldsLock()
 
-    override fun coordinatorNotify(taskRunner: TaskRunner) {
-      taskRunner.assertThreadHoldsLock()
-      check(waitingCoordinatorThread != null)
+        check(waitingCoordinatorThread == null)
+        if (nanos == 0L) return
 
-      stalledTasks.remove(waitingCoordinatorThread)
-      taskRunner.notifyAll()
-    }
-
-    override fun coordinatorWait(taskRunner: TaskRunner, nanos: Long) {
-      taskRunner.assertThreadHoldsLock()
-
-      check(waitingCoordinatorThread == null)
-      if (nanos == 0L) return
-
-      waitingCoordinatorThread = Thread.currentThread()
-      try {
-        stall()
-      } finally {
-        waitingCoordinatorThread = null
+        waitingCoordinatorThread = Thread.currentThread()
+        try {
+          stall()
+        } finally {
+          waitingCoordinatorThread = null
+        }
       }
-    }
 
-    override fun <T> decorate(queue: BlockingQueue<T>) = TaskFakerBlockingQueue(queue)
-  }, logger = logger)
+      override fun <T> decorate(queue: BlockingQueue<T>) = TaskFakerBlockingQueue(queue)
+    },
+    logger = logger
+  )
 
   /** Wait for the test thread to proceed. */
   private fun stall() {

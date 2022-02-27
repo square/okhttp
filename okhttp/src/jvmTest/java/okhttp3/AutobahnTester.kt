@@ -15,12 +15,12 @@
  */
 package okhttp3
 
+import okhttp3.internal.userAgent
+import okio.ByteString
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
-import okhttp3.internal.userAgent
-import okio.ByteString
 
 /**
  * Exercises the web socket implementation against the
@@ -52,30 +52,33 @@ class AutobahnTester {
   private fun runTest(number: Long, count: Long) {
     val latch = CountDownLatch(1)
     val startNanos = AtomicLong()
-    newWebSocket("/runCase?case=$number&agent=okhttp", object : WebSocketListener() {
-      override fun onOpen(webSocket: WebSocket, response: Response) {
-        println("Executing test case $number/$count")
-        startNanos.set(System.nanoTime())
-      }
+    newWebSocket(
+      "/runCase?case=$number&agent=okhttp",
+      object : WebSocketListener() {
+        override fun onOpen(webSocket: WebSocket, response: Response) {
+          println("Executing test case $number/$count")
+          startNanos.set(System.nanoTime())
+        }
 
-      override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
-        webSocket.send(bytes)
-      }
+        override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
+          webSocket.send(bytes)
+        }
 
-      override fun onMessage(webSocket: WebSocket, text: String) {
-        webSocket.send(text)
-      }
+        override fun onMessage(webSocket: WebSocket, text: String) {
+          webSocket.send(text)
+        }
 
-      override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
-        webSocket.close(1000, null)
-        latch.countDown()
-      }
+        override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
+          webSocket.close(1000, null)
+          latch.countDown()
+        }
 
-      override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-        t.printStackTrace(System.out)
-        latch.countDown()
+        override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+          t.printStackTrace(System.out)
+          latch.countDown()
+        }
       }
-    })
+    )
 
     check(latch.await(30, TimeUnit.SECONDS)) { "Timed out waiting for test $number to finish." }
     val endNanos = System.nanoTime()
@@ -88,21 +91,24 @@ class AutobahnTester {
     val countRef = AtomicLong()
     val failureRef = AtomicReference<Throwable>()
 
-    newWebSocket("/getCaseCount", object : WebSocketListener() {
-      override fun onMessage(webSocket: WebSocket, text: String) {
-        countRef.set(text.toLong())
-      }
+    newWebSocket(
+      "/getCaseCount",
+      object : WebSocketListener() {
+        override fun onMessage(webSocket: WebSocket, text: String) {
+          countRef.set(text.toLong())
+        }
 
-      override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
-        webSocket.close(1000, null)
-        latch.countDown()
-      }
+        override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
+          webSocket.close(1000, null)
+          latch.countDown()
+        }
 
-      override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-        failureRef.set(t)
-        latch.countDown()
+        override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+          failureRef.set(t)
+          latch.countDown()
+        }
       }
-    })
+    )
 
     check(latch.await(10, TimeUnit.SECONDS)) { "Timed out waiting for count." }
 
@@ -116,16 +122,19 @@ class AutobahnTester {
 
   private fun updateReports() {
     val latch = CountDownLatch(1)
-    newWebSocket("/updateReports?agent=$userAgent", object : WebSocketListener() {
-      override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
-        webSocket.close(1000, null)
-        latch.countDown()
-      }
+    newWebSocket(
+      "/updateReports?agent=$userAgent",
+      object : WebSocketListener() {
+        override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
+          webSocket.close(1000, null)
+          latch.countDown()
+        }
 
-      override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-        latch.countDown()
+        override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+          latch.countDown()
+        }
       }
-    })
+    )
 
     check(latch.await(10, TimeUnit.SECONDS)) { "Timed out waiting for count." }
   }

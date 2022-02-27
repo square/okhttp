@@ -15,13 +15,6 @@
  */
 package okhttp3
 
-import java.io.IOException
-import java.net.InetAddress
-import java.net.InetSocketAddress
-import java.net.Proxy
-import java.util.Deque
-import java.util.concurrent.ConcurrentLinkedDeque
-import java.util.concurrent.TimeUnit
 import okhttp3.CallEvent.CacheConditionalHit
 import okhttp3.CallEvent.CacheHit
 import okhttp3.CallEvent.CacheMiss
@@ -54,6 +47,13 @@ import okhttp3.CallEvent.SecureConnectStart
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.data.Offset
 import org.junit.jupiter.api.Assertions.assertTrue
+import java.io.IOException
+import java.net.InetAddress
+import java.net.InetSocketAddress
+import java.net.Proxy
+import java.util.Deque
+import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.concurrent.TimeUnit
 
 open class RecordingEventListener : EventListener() {
   val eventSequence: Deque<CallEvent> = ConcurrentLinkedDeque()
@@ -108,10 +108,10 @@ open class RecordingEventListener : EventListener() {
 
     if (elapsedMs != -1L) {
       assertThat(
-          TimeUnit.NANOSECONDS.toMillis(actualElapsedNs)
-              .toDouble()
+        TimeUnit.NANOSECONDS.toMillis(actualElapsedNs)
+          .toDouble()
       )
-          .isCloseTo(elapsedMs.toDouble(), Offset.offset(100.0))
+        .isCloseTo(elapsedMs.toDouble(), Offset.offset(100.0))
     }
 
     return result
@@ -128,8 +128,8 @@ open class RecordingEventListener : EventListener() {
   private fun logEvent(e: CallEvent) {
     for (lock in forbiddenLocks) {
       assertThat(Thread.holdsLock(lock))
-          .overridingErrorMessage(lock.toString())
-          .isFalse()
+        .overridingErrorMessage(lock.toString())
+        .isFalse()
     }
 
     val startEvent = e.closes(-1L)

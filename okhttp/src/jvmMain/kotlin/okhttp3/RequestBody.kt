@@ -15,10 +15,6 @@
  */
 package okhttp3
 
-import java.io.File
-import java.io.FileDescriptor
-import java.io.FileInputStream
-import java.io.IOException
 import okhttp3.internal.chooseCharset
 import okhttp3.internal.commonContentLength
 import okhttp3.internal.commonIsDuplex
@@ -31,6 +27,10 @@ import okio.GzipSink
 import okio.Path
 import okio.buffer
 import okio.source
+import java.io.File
+import java.io.FileDescriptor
+import java.io.FileInputStream
+import java.io.IOException
 
 actual abstract class RequestBody {
 
@@ -122,22 +122,24 @@ actual abstract class RequestBody {
 
     @JvmStatic
     @Deprecated(
-        message = "Moved to extension function. Put the 'content' argument first to fix Java",
-        replaceWith = ReplaceWith(
-            expression = "content.toRequestBody(contentType)",
-            imports = ["okhttp3.RequestBody.Companion.toRequestBody"]
-        ),
-        level = DeprecationLevel.WARNING)
+      message = "Moved to extension function. Put the 'content' argument first to fix Java",
+      replaceWith = ReplaceWith(
+        expression = "content.toRequestBody(contentType)",
+        imports = ["okhttp3.RequestBody.Companion.toRequestBody"]
+      ),
+      level = DeprecationLevel.WARNING
+    )
     fun create(contentType: MediaType?, content: String): RequestBody = content.toRequestBody(contentType)
 
     @JvmStatic
     @Deprecated(
-        message = "Moved to extension function. Put the 'content' argument first to fix Java",
-        replaceWith = ReplaceWith(
-            expression = "content.toRequestBody(contentType)",
-            imports = ["okhttp3.RequestBody.Companion.toRequestBody"]
-        ),
-        level = DeprecationLevel.WARNING)
+      message = "Moved to extension function. Put the 'content' argument first to fix Java",
+      replaceWith = ReplaceWith(
+        expression = "content.toRequestBody(contentType)",
+        imports = ["okhttp3.RequestBody.Companion.toRequestBody"]
+      ),
+      level = DeprecationLevel.WARNING
+    )
     fun create(
       contentType: MediaType?,
       content: ByteString
@@ -146,12 +148,13 @@ actual abstract class RequestBody {
     @JvmOverloads
     @JvmStatic
     @Deprecated(
-        message = "Moved to extension function. Put the 'content' argument first to fix Java",
-        replaceWith = ReplaceWith(
-            expression = "content.toRequestBody(contentType, offset, byteCount)",
-            imports = ["okhttp3.RequestBody.Companion.toRequestBody"]
-        ),
-        level = DeprecationLevel.WARNING)
+      message = "Moved to extension function. Put the 'content' argument first to fix Java",
+      replaceWith = ReplaceWith(
+        expression = "content.toRequestBody(contentType, offset, byteCount)",
+        imports = ["okhttp3.RequestBody.Companion.toRequestBody"]
+      ),
+      level = DeprecationLevel.WARNING
+    )
     fun create(
       contentType: MediaType?,
       content: ByteArray,
@@ -161,13 +164,14 @@ actual abstract class RequestBody {
 
     @JvmStatic
     @Deprecated(
-        message = "Moved to extension function. Put the 'file' argument first to fix Java",
-        replaceWith = ReplaceWith(
-            expression = "file.asRequestBody(contentType)",
-            imports = ["okhttp3.RequestBody.Companion.asRequestBody"]
-        ),
-        level = DeprecationLevel.WARNING)
-    fun create(contentType: MediaType?, file: File): RequestBody= file.asRequestBody(contentType)
+      message = "Moved to extension function. Put the 'file' argument first to fix Java",
+      replaceWith = ReplaceWith(
+        expression = "file.asRequestBody(contentType)",
+        imports = ["okhttp3.RequestBody.Companion.asRequestBody"]
+      ),
+      level = DeprecationLevel.WARNING
+    )
+    fun create(contentType: MediaType?, file: File): RequestBody = file.asRequestBody(contentType)
 
     /**
      * Returns a gzip version of the RequestBody, with compressed payload.

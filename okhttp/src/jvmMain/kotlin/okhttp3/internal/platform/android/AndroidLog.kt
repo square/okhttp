@@ -16,16 +16,16 @@
 package okhttp3.internal.platform.android
 
 import android.util.Log
-import java.util.concurrent.CopyOnWriteArraySet
-import java.util.logging.Handler
-import java.util.logging.Level
-import java.util.logging.LogRecord
-import java.util.logging.Logger
 import okhttp3.OkHttpClient
 import okhttp3.internal.SuppressSignatureCheck
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.http2.Http2
 import okhttp3.internal.platform.android.AndroidLog.androidLog
+import java.util.concurrent.CopyOnWriteArraySet
+import java.util.logging.Handler
+import java.util.logging.Level
+import java.util.logging.LogRecord
+import java.util.logging.Logger
 
 private val LogRecord.androidLevel: Int
   get() = when {

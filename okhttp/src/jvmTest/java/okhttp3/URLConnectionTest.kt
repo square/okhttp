@@ -15,6 +15,40 @@
  */
 package okhttp3
 
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
+import mockwebserver3.SocketPolicy
+import okhttp3.Credentials.basic
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.TestUtil.assertSuppressed
+import okhttp3.internal.RecordingAuthenticator
+import okhttp3.internal.RecordingOkAuthenticator
+import okhttp3.internal.addHeaderLenient
+import okhttp3.internal.http.HTTP_PERM_REDIRECT
+import okhttp3.internal.http.HTTP_TEMP_REDIRECT
+import okhttp3.internal.platform.Platform.Companion.get
+import okhttp3.internal.userAgent
+import okhttp3.testing.Flaky
+import okhttp3.testing.PlatformRule
+import okhttp3.tls.internal.TlsUtil.localhost
+import okio.Buffer
+import okio.BufferedSink
+import okio.GzipSink
+import okio.buffer
+import okio.utf8Size
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.fail
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Tag
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.api.io.TempDir
+import org.opentest4j.TestAbortedException
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -51,40 +85,6 @@ import javax.net.ssl.SSLProtocolException
 import javax.net.ssl.TrustManager
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
-import mockwebserver3.MockResponse
-import mockwebserver3.MockWebServer
-import mockwebserver3.SocketPolicy
-import okhttp3.Credentials.basic
-import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.TestUtil.assertSuppressed
-import okhttp3.internal.RecordingAuthenticator
-import okhttp3.internal.RecordingOkAuthenticator
-import okhttp3.internal.addHeaderLenient
-import okhttp3.internal.http.HTTP_PERM_REDIRECT
-import okhttp3.internal.http.HTTP_TEMP_REDIRECT
-import okhttp3.internal.platform.Platform.Companion.get
-import okhttp3.internal.userAgent
-import okhttp3.testing.Flaky
-import okhttp3.testing.PlatformRule
-import okhttp3.tls.internal.TlsUtil.localhost
-import okio.Buffer
-import okio.BufferedSink
-import okio.GzipSink
-import okio.buffer
-import okio.utf8Size
-import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.fail
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
-import org.junit.jupiter.api.Tag
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.RegisterExtension
-import org.junit.jupiter.api.io.TempDir
-import org.opentest4j.TestAbortedException
 
 /** Android's URLConnectionTest, ported to exercise OkHttp's Call API.  */
 @Tag("Slow")
@@ -362,8 +362,8 @@ class URLConnectionTest {
     // of recording is non-deterministic.
     val requestAfter = server.takeRequest()
     assertThat(
-      requestAfter.sequenceNumber == 0
-        || server.requestCount == 3 && server.takeRequest().sequenceNumber == 0
+      requestAfter.sequenceNumber == 0 ||
+        server.requestCount == 3 && server.takeRequest().sequenceNumber == 0
     ).isTrue
   }
 
@@ -1621,10 +1621,10 @@ class URLConnectionTest {
   // http://code.google.com/p/android/issues/detail?id=11140
   @Test fun digestAuthentication() {
     val calls = authCallsForHeader(
-      "WWW-Authenticate: Digest "
-        + "realm=\"testrealm@host.com\", qop=\"auth,auth-int\", "
-        + "nonce=\"dcd98b7102dd2f0e8b11d0f600bfb0c093\", "
-        + "opaque=\"5ccc069c403ebaf9f0171e9517f40e41\""
+      "WWW-Authenticate: Digest " +
+        "realm=\"testrealm@host.com\", qop=\"auth,auth-int\", " +
+        "nonce=\"dcd98b7102dd2f0e8b11d0f600bfb0c093\", " +
+        "opaque=\"5ccc069c403ebaf9f0171e9517f40e41\""
     )
     assertThat(calls.size).isEqualTo(0)
   }
@@ -2993,7 +2993,7 @@ class URLConnectionTest {
     response.body!!.close()
   }
 
- @Test fun getContentLengthConnects() {
+  @Test fun getContentLengthConnects() {
     server.enqueue(
       MockResponse()
         .setBody("ABC")

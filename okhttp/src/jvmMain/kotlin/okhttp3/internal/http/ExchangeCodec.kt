@@ -15,7 +15,6 @@
  */
 package okhttp3.internal.http
 
-import java.io.IOException
 import okhttp3.Headers
 import okhttp3.Request
 import okhttp3.Response
@@ -23,6 +22,7 @@ import okhttp3.Route
 import okhttp3.internal.connection.RealCall
 import okio.Sink
 import okio.Source
+import java.io.IOException
 
 /** Encodes HTTP requests and decodes HTTP responses. */
 interface ExchangeCodec {

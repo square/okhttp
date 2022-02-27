@@ -15,12 +15,12 @@
  */
 package okhttp3
 
-import java.util.concurrent.AbstractExecutorService
-import java.util.concurrent.RejectedExecutionException
-import java.util.concurrent.TimeUnit
 import okhttp3.internal.connection.RealCall
 import okhttp3.internal.finishedAccessor
 import org.assertj.core.api.Assertions.assertThat
+import java.util.concurrent.AbstractExecutorService
+import java.util.concurrent.RejectedExecutionException
+import java.util.concurrent.TimeUnit
 
 internal class RecordingExecutor(
   private val dispatcherTest: DispatcherTest

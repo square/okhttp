@@ -15,6 +15,18 @@
  */
 package okhttp3.internal
 
+import okhttp3.EventListener
+import okhttp3.Headers
+import okhttp3.HttpUrl
+import okhttp3.OkHttpClient
+import okhttp3.RequestBody
+import okhttp3.Response
+import okhttp3.ResponseBody
+import okhttp3.ResponseBody.Companion.toResponseBody
+import okhttp3.internal.http2.Header
+import okio.Buffer
+import okio.BufferedSource
+import okio.Source
 import java.io.IOException
 import java.io.InterruptedIOException
 import java.net.InetSocketAddress
@@ -32,18 +44,6 @@ import kotlin.text.Charsets.UTF_16LE
 import kotlin.text.Charsets.UTF_32BE
 import kotlin.text.Charsets.UTF_32LE
 import kotlin.text.Charsets.UTF_8
-import okhttp3.EventListener
-import okhttp3.Headers
-import okhttp3.HttpUrl
-import okhttp3.OkHttpClient
-import okhttp3.RequestBody
-import okhttp3.Response
-import okhttp3.ResponseBody
-import okhttp3.ResponseBody.Companion.toResponseBody
-import okhttp3.internal.http2.Header
-import okio.Buffer
-import okio.BufferedSource
-import okio.Source
 
 @JvmField
 val EMPTY_HEADERS: Headers = commonEmptyHeaders
@@ -121,8 +121,8 @@ internal fun Headers.toHeaderList(): List<Header> = (0 until size).map {
 
 /** Returns true if an HTTP request for this URL and [other] can reuse a connection. */
 internal fun HttpUrl.canReuseConnectionFor(other: HttpUrl): Boolean = host == other.host &&
-    port == other.port &&
-    scheme == other.scheme
+  port == other.port &&
+  scheme == other.scheme
 
 internal fun EventListener.asFactory() = EventListener.Factory { this }
 
@@ -308,7 +308,7 @@ internal val assertionsEnabled: Boolean = OkHttpClient::class.java.desiredAssert
  */
 @JvmField
 internal val okHttpName: String =
-    OkHttpClient::class.java.name.removePrefix("okhttp3.").removeSuffix("Client")
+  OkHttpClient::class.java.name.removePrefix("okhttp3.").removeSuffix("Client")
 
 @Suppress("NOTHING_TO_INLINE")
 internal inline fun Any.assertThreadHoldsLock() {

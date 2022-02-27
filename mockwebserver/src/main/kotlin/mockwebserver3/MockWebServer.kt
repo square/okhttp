@@ -17,33 +17,6 @@
 
 package mockwebserver3
 
-import java.io.Closeable
-import java.io.IOException
-import java.net.InetAddress
-import java.net.InetSocketAddress
-import java.net.ProtocolException
-import java.net.Proxy
-import java.net.ServerSocket
-import java.net.Socket
-import java.net.SocketException
-import java.security.SecureRandom
-import java.security.cert.CertificateException
-import java.security.cert.X509Certificate
-import java.util.Collections
-import java.util.Locale
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.logging.Level
-import java.util.logging.Logger
-import javax.net.ServerSocketFactory
-import javax.net.ssl.SSLContext
-import javax.net.ssl.SSLSocket
-import javax.net.ssl.SSLSocketFactory
-import javax.net.ssl.TrustManager
-import javax.net.ssl.X509TrustManager
 import mockwebserver3.SocketPolicy.CONTINUE_ALWAYS
 import mockwebserver3.SocketPolicy.DISCONNECT_AFTER_REQUEST
 import mockwebserver3.SocketPolicy.DISCONNECT_AT_END
@@ -93,6 +66,33 @@ import okio.Timeout
 import okio.buffer
 import okio.sink
 import okio.source
+import java.io.Closeable
+import java.io.IOException
+import java.net.InetAddress
+import java.net.InetSocketAddress
+import java.net.ProtocolException
+import java.net.Proxy
+import java.net.ServerSocket
+import java.net.Socket
+import java.net.SocketException
+import java.security.SecureRandom
+import java.security.cert.CertificateException
+import java.security.cert.X509Certificate
+import java.util.Collections
+import java.util.Locale
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.logging.Level
+import java.util.logging.Logger
+import javax.net.ServerSocketFactory
+import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLSocket
+import javax.net.ssl.SSLSocketFactory
+import javax.net.ssl.TrustManager
+import javax.net.ssl.X509TrustManager
 
 /**
  * A scriptable web server. Callers supply canned responses and the server replays them upon request
@@ -178,16 +178,16 @@ class MockWebServer : Closeable {
   @get:JvmName("protocols") var protocols: List<Protocol> =
     immutableListOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
     set(value) {
-      val protocolList = value.toImmutableList()
-      require(Protocol.H2_PRIOR_KNOWLEDGE !in protocolList || protocolList.size == 1) {
-        "protocols containing h2_prior_knowledge cannot use other protocols: $protocolList"
+        val protocolList = value.toImmutableList()
+        require(Protocol.H2_PRIOR_KNOWLEDGE !in protocolList || protocolList.size == 1) {
+          "protocols containing h2_prior_knowledge cannot use other protocols: $protocolList"
+        }
+        require(Protocol.HTTP_1_1 in protocolList || Protocol.H2_PRIOR_KNOWLEDGE in protocolList) {
+          "protocols doesn't contain http/1.1: $protocolList"
+        }
+        require(null !in protocolList as List<Protocol?>) { "protocols must not contain null" }
+        field = protocolList
       }
-      require(Protocol.HTTP_1_1 in protocolList || Protocol.H2_PRIOR_KNOWLEDGE in protocolList) {
-        "protocols doesn't contain http/1.1: $protocolList"
-      }
-      require(null !in protocolList as List<Protocol?>) { "protocols must not contain null" }
-      field = protocolList
-    }
 
   var started: Boolean = false
   private var shutdown: Boolean = false
@@ -1118,9 +1118,11 @@ class MockWebServer : Closeable {
 
       sleepIfDelayed(headersDelayMs)
       val body = response.getBody()
-      val outFinished = (body == null &&
-        response.pushPromises.isEmpty() &&
-        !response.isDuplex)
+      val outFinished = (
+        body == null &&
+          response.pushPromises.isEmpty() &&
+          !response.isDuplex
+        )
       val flushHeaders = body == null || bodyDelayMs != 0L
       require(!outFinished || trailers.size == 0) {
         "unsupported: no body and non-empty trailers $trailers"

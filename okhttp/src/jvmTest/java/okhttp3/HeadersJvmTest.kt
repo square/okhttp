@@ -15,17 +15,18 @@
  */
 package okhttp3
 
-import java.time.Instant
-import java.util.*
-import kotlin.test.fail
 import okhttp3.Headers.Companion.toHeaders
 import okhttp3.internal.EMPTY_HEADERS
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.time.Instant
+import java.util.Date
+import kotlin.test.fail
 
 class HeadersJvmTest {
 
-  @Test fun byteCount() {
+  @Test
+  fun byteCount() {
     assertThat(EMPTY_HEADERS.byteCount()).isEqualTo(0L)
     assertThat(
       Headers.Builder()
@@ -42,7 +43,8 @@ class HeadersJvmTest {
     ).isEqualTo(20L)
   }
 
-  @Test fun addDate() {
+  @Test
+  fun addDate() {
     val expected = Date(0L)
     val headers = Headers.Builder()
       .add("testDate", expected)
@@ -51,7 +53,8 @@ class HeadersJvmTest {
     assertThat(headers.getDate("testDate")).isEqualTo(Date(0L))
   }
 
-  @Test fun addInstant() {
+  @Test
+  fun addInstant() {
     val expected = Instant.ofEpochMilli(0L)
     val headers = Headers.Builder()
       .add("Test-Instant", expected)
@@ -60,7 +63,8 @@ class HeadersJvmTest {
     assertThat(headers.getInstant("Test-Instant")).isEqualTo(expected)
   }
 
-  @Test fun setDate() {
+  @Test
+  fun setDate() {
     val expected = Date(1000)
     val headers = Headers.Builder()
       .add("testDate", Date(0L))
@@ -70,7 +74,8 @@ class HeadersJvmTest {
     assertThat(headers.getDate("testDate")).isEqualTo(expected)
   }
 
-  @Test fun setInstant() {
+  @Test
+  fun setInstant() {
     val expected = Instant.ofEpochMilli(1000L)
     val headers = Headers.Builder()
       .add("Test-Instant", Instant.ofEpochMilli(0L))
@@ -80,7 +85,8 @@ class HeadersJvmTest {
     assertThat(headers.getInstant("Test-Instant")).isEqualTo(expected)
   }
 
-  @Test fun addParsing() {
+  @Test
+  fun addParsing() {
     val headers = Headers.Builder()
       .add("foo: bar")
       .add(" foo: baz") // Name leading whitespace is trimmed.
@@ -95,7 +101,8 @@ class HeadersJvmTest {
     assertThat(headers.values("kit")).containsExactly("kat")
   }
 
-  @Test fun addThrowsOnEmptyName() {
+  @Test
+  fun addThrowsOnEmptyName() {
     try {
       Headers.Builder().add(": bar")
       fail()
@@ -108,7 +115,8 @@ class HeadersJvmTest {
     }
   }
 
-  @Test fun addThrowsOnNoColon() {
+  @Test
+  fun addThrowsOnNoColon() {
     try {
       Headers.Builder().add("foo bar")
       fail()
@@ -116,7 +124,8 @@ class HeadersJvmTest {
     }
   }
 
-  @Test fun addThrowsOnMultiColon() {
+  @Test
+  fun addThrowsOnMultiColon() {
     try {
       Headers.Builder().add(":status: 200 OK")
       fail()
@@ -124,7 +133,8 @@ class HeadersJvmTest {
     }
   }
 
-  @Test fun addUnsafeNonAsciiRejectsUnicodeName() {
+  @Test
+  fun addUnsafeNonAsciiRejectsUnicodeName() {
     try {
       Headers.Builder()
         .addUnsafeNonAscii("héader1", "value1")
@@ -135,7 +145,8 @@ class HeadersJvmTest {
     }
   }
 
-  @Test fun addUnsafeNonAsciiAcceptsUnicodeValue() {
+  @Test
+  fun addUnsafeNonAsciiAcceptsUnicodeValue() {
     val headers = Headers.Builder()
       .addUnsafeNonAscii("header1", "valué1")
       .build()
@@ -143,7 +154,8 @@ class HeadersJvmTest {
   }
 
   // Fails on JS, ClassCastException: Illegal cast
-  @Test fun ofMapThrowsOnNull() {
+  @Test
+  fun ofMapThrowsOnNull() {
     try {
       (mapOf("User-Agent" to null) as Map<String, String>).toHeaders()
       fail()
@@ -151,7 +163,8 @@ class HeadersJvmTest {
     }
   }
 
-  @Test fun toMultimapGroupsHeaders() {
+  @Test
+  fun toMultimapGroupsHeaders() {
     val headers = Headers.headersOf(
       "cache-control", "no-cache",
       "cache-control", "no-store",
@@ -162,7 +175,8 @@ class HeadersJvmTest {
     assertThat(headerMap["user-agent"]!!.size).isEqualTo(1)
   }
 
-  @Test fun toMultimapUsesCanonicalCase() {
+  @Test
+  fun toMultimapUsesCanonicalCase() {
     val headers = Headers.headersOf(
       "cache-control", "no-store",
       "Cache-Control", "no-cache",
@@ -173,7 +187,8 @@ class HeadersJvmTest {
     assertThat(headerMap["user-agent"]!!.size).isEqualTo(1)
   }
 
-  @Test fun toMultimapAllowsCaseInsensitiveGet() {
+  @Test
+  fun toMultimapAllowsCaseInsensitiveGet() {
     val headers = Headers.headersOf(
       "cache-control", "no-store",
       "Cache-Control", "no-cache"

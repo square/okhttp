@@ -17,11 +17,11 @@ package okhttp3
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
-import kotlin.test.Test
-import kotlin.test.fail
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
 import okio.IOException
+import kotlin.test.Test
+import kotlin.test.fail
 
 class ResponseBodyNonJvmTest {
   @Test

@@ -15,9 +15,9 @@
  */
 package okhttp3
 
+import okhttp3.MediaType.Companion.toMediaType
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import okhttp3.MediaType.Companion.toMediaType
 
 class MediaTypeJsTest {
   open fun MediaType.charsetName(): String? = parameter("charset")

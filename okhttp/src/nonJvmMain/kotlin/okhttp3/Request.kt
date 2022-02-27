@@ -155,10 +155,10 @@ actual class Request internal constructor(
 
     actual open fun build(): Request {
       return Request(
-          checkNotNull(url) { "url == null" },
-          method,
-          headers.build(),
-          body,
+        checkNotNull(url) { "url == null" },
+        method,
+        headers.build(),
+        body,
       )
     }
   }

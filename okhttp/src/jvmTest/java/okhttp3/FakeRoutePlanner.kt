@@ -15,13 +15,13 @@
  */
 package okhttp3
 
-import java.io.Closeable
-import java.io.IOException
-import java.util.concurrent.LinkedBlockingDeque
 import okhttp3.internal.concurrent.TaskFaker
 import okhttp3.internal.connection.RealConnection
 import okhttp3.internal.connection.RoutePlanner
 import okhttp3.internal.connection.RoutePlanner.ConnectResult
+import java.io.Closeable
+import java.io.IOException
+import java.util.concurrent.LinkedBlockingDeque
 
 class FakeRoutePlanner(
   private val taskFaker: TaskFaker,

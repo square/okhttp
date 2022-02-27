@@ -17,13 +17,6 @@
 
 package okhttp3
 
-import java.time.Instant
-import java.util.ArrayList
-import java.util.Collections
-import java.util.Date
-import java.util.Locale
-import java.util.TreeMap
-import java.util.TreeSet
 import okhttp3.internal.commonAdd
 import okhttp3.internal.commonAddAll
 import okhttp3.internal.commonAddLenient
@@ -46,6 +39,13 @@ import okhttp3.internal.headersCheckName
 import okhttp3.internal.http.toHttpDateOrNull
 import okhttp3.internal.http.toHttpDateString
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
+import java.time.Instant
+import java.util.ArrayList
+import java.util.Collections
+import java.util.Date
+import java.util.Locale
+import java.util.TreeMap
+import java.util.TreeSet
 
 @Suppress("NAME_SHADOWING")
 actual class Headers internal actual constructor(
@@ -74,9 +74,10 @@ actual class Headers internal actual constructor(
 
   @JvmName("-deprecated_size")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "size"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "size"),
+    level = DeprecationLevel.ERROR
+  )
   fun size(): Int = size
 
   actual fun name(index: Int): String = commonName(index)
@@ -240,9 +241,10 @@ actual class Headers internal actual constructor(
 
     @JvmName("-deprecated_of")
     @Deprecated(
-        message = "function name changed",
-        replaceWith = ReplaceWith(expression = "headersOf(*namesAndValues)"),
-        level = DeprecationLevel.ERROR)
+      message = "function name changed",
+      replaceWith = ReplaceWith(expression = "headersOf(*namesAndValues)"),
+      level = DeprecationLevel.ERROR
+    )
     fun of(vararg namesAndValues: String): Headers {
       return headersOf(*namesAndValues)
     }
@@ -253,9 +255,10 @@ actual class Headers internal actual constructor(
 
     @JvmName("-deprecated_of")
     @Deprecated(
-        message = "function moved to extension",
-        replaceWith = ReplaceWith(expression = "headers.toHeaders()"),
-        level = DeprecationLevel.ERROR)
+      message = "function moved to extension",
+      replaceWith = ReplaceWith(expression = "headers.toHeaders()"),
+      level = DeprecationLevel.ERROR
+    )
     fun of(headers: Map<String, String>): Headers {
       return headers.toHeaders()
     }

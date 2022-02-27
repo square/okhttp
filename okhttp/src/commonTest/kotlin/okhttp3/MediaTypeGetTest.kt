@@ -15,9 +15,9 @@
  */
 package okhttp3
 
+import okhttp3.MediaType.Companion.toMediaType
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import okhttp3.MediaType.Companion.toMediaType
 
 open class MediaTypeGetTest : MediaTypeTest() {
   override fun parse(string: String): MediaType = string.toMediaType()

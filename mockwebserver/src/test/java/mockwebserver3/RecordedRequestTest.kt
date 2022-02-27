@@ -15,8 +15,6 @@
  */
 package mockwebserver3
 
-import java.net.InetAddress
-import java.net.Socket
 import okhttp3.Headers
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.internal.EMPTY_HEADERS
@@ -24,6 +22,8 @@ import okio.Buffer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
+import java.net.InetAddress
+import java.net.Socket
 
 @Timeout(30)
 class RecordedRequestTest {

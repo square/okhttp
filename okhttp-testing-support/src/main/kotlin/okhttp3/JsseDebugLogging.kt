@@ -66,17 +66,20 @@ object JsseDebugLogging {
 
   fun enableJsseDebugLogging(debugHandler: (JsseDebugMessage) -> Unit = this::quietDebug): Closeable {
     System.setProperty("javax.net.debug", "")
-    return OkHttpDebugLogging.enable("javax.net.ssl", object : Handler() {
-      override fun publish(record: LogRecord) {
-        val param = record.parameters?.firstOrNull() as? String
-        debugHandler(JsseDebugMessage(record.message, param))
-      }
+    return OkHttpDebugLogging.enable(
+      "javax.net.ssl",
+      object : Handler() {
+        override fun publish(record: LogRecord) {
+          val param = record.parameters?.firstOrNull() as? String
+          debugHandler(JsseDebugMessage(record.message, param))
+        }
 
-      override fun flush() {
-      }
+        override fun flush() {
+        }
 
-      override fun close() {
+        override fun close() {
+        }
       }
-    })
+    )
   }
 }

@@ -15,7 +15,6 @@
  */
 package okhttp3
 
-import java.net.URL
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.internal.canonicalUrl
 import okhttp3.internal.commonAddHeader
@@ -31,6 +30,7 @@ import okhttp3.internal.commonPost
 import okhttp3.internal.commonPut
 import okhttp3.internal.commonRemoveHeader
 import okhttp3.internal.toImmutableMap
+import java.net.URL
 
 actual class Request internal constructor(
   @get:JvmName("url") actual val url: HttpUrl,
@@ -78,37 +78,42 @@ actual class Request internal constructor(
 
   @JvmName("-deprecated_url")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "url"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "url"),
+    level = DeprecationLevel.ERROR
+  )
   fun url(): HttpUrl = url
 
   @JvmName("-deprecated_method")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "method"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "method"),
+    level = DeprecationLevel.ERROR
+  )
   fun method(): String = method
 
   @JvmName("-deprecated_headers")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "headers"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "headers"),
+    level = DeprecationLevel.ERROR
+  )
   fun headers(): Headers = headers
 
   @JvmName("-deprecated_body")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "body"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "body"),
+    level = DeprecationLevel.ERROR
+  )
   fun body(): RequestBody? = body
 
   @JvmName("-deprecated_cacheControl")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "cacheControl"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "cacheControl"),
+    level = DeprecationLevel.ERROR
+  )
   fun cacheControl(): CacheControl = cacheControl
 
   override fun toString(): String = buildString {
@@ -224,11 +229,11 @@ actual class Request internal constructor(
 
     actual open fun build(): Request {
       return Request(
-          checkNotNull(url) { "url == null" },
-          method,
-          headers.build(),
-          body,
-          tags.toImmutableMap()
+        checkNotNull(url) { "url == null" },
+        method,
+        headers.build(),
+        body,
+        tags.toImmutableMap()
       )
     }
   }

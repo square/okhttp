@@ -16,11 +16,11 @@
  */
 package okhttp3.internal.http
 
-import kotlin.jvm.JvmField
 import okhttp3.Protocol
 import okhttp3.ProtocolException
 import okhttp3.Response
 import okio.IOException
+import kotlin.jvm.JvmField
 
 /** An HTTP response status line like "HTTP/1.1 200 OK". */
 class StatusLine(

@@ -30,14 +30,15 @@ actual enum class TlsVersion(
 
   @JvmName("-deprecated_javaName")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "javaName"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "javaName"),
+    level = DeprecationLevel.ERROR
+  )
   fun javaName(): String = javaName
 
   companion object {
     @JvmStatic
-    fun forJavaName(javaName: String): TlsVersion  {
+    fun forJavaName(javaName: String): TlsVersion {
       return when (javaName) {
         "TLSv1.3" -> TLS_1_3
         "TLSv1.2" -> TLS_1_2

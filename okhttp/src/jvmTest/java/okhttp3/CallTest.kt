@@ -15,35 +15,6 @@
  */
 package okhttp3
 
-import java.io.FileNotFoundException
-import java.io.IOException
-import java.io.InterruptedIOException
-import java.net.CookieManager
-import java.net.CookiePolicy
-import java.net.HttpCookie
-import java.net.HttpURLConnection
-import java.net.InetAddress
-import java.net.ProtocolException
-import java.net.Proxy
-import java.net.SocketTimeoutException
-import java.net.UnknownHostException
-import java.net.UnknownServiceException
-import java.time.Duration
-import java.util.Arrays
-import java.util.concurrent.BlockingQueue
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.Executors
-import java.util.concurrent.SynchronousQueue
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicReference
-import javax.net.ssl.SSLException
-import javax.net.ssl.SSLHandshakeException
-import javax.net.ssl.SSLPeerUnverifiedException
-import javax.net.ssl.SSLProtocolException
-import javax.net.ssl.SSLSocket
-import javax.net.ssl.SSLSocketFactory
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.QueueDispatcher
@@ -94,6 +65,35 @@ import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.RegisterExtension
+import java.io.FileNotFoundException
+import java.io.IOException
+import java.io.InterruptedIOException
+import java.net.CookieManager
+import java.net.CookiePolicy
+import java.net.HttpCookie
+import java.net.HttpURLConnection
+import java.net.InetAddress
+import java.net.ProtocolException
+import java.net.Proxy
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
+import java.net.UnknownServiceException
+import java.time.Duration
+import java.util.Arrays
+import java.util.concurrent.BlockingQueue
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.SynchronousQueue
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
+import javax.net.ssl.SSLException
+import javax.net.ssl.SSLHandshakeException
+import javax.net.ssl.SSLPeerUnverifiedException
+import javax.net.ssl.SSLProtocolException
+import javax.net.ssl.SSLSocket
+import javax.net.ssl.SSLSocketFactory
 
 @Timeout(30)
 open class CallTest(
@@ -906,14 +906,16 @@ open class CallTest(
     )
     server.enqueue(MockResponse())
     client = client.newBuilder()
-      .addInterceptor(Interceptor { chain: Interceptor.Chain ->
-        try {
-          chain.proceed(chain.request())
-          throw AssertionError()
-        } catch (expected: IOException) {
-          chain.proceed(chain.request())
+      .addInterceptor(
+        Interceptor { chain: Interceptor.Chain ->
+          try {
+            chain.proceed(chain.request())
+            throw AssertionError()
+          } catch (expected: IOException) {
+            chain.proceed(chain.request())
+          }
         }
-      })
+      )
       .build()
     val request = Request.Builder()
       .url(server.url("/"))
@@ -929,18 +931,20 @@ open class CallTest(
         .setBody("abc")
     )
     client = clientTestRule.newClientBuilder()
-      .addInterceptor(Interceptor { chain: Interceptor.Chain ->
-        val response = chain.proceed(
-          chain.request()
-        )
-        try {
-          chain.proceed(chain.request())
-          fail<Unit>()
-        } catch (expected: IllegalStateException) {
-          assertThat(expected).hasMessageContaining("please call response.close()")
+      .addInterceptor(
+        Interceptor { chain: Interceptor.Chain ->
+          val response = chain.proceed(
+            chain.request()
+          )
+          try {
+            chain.proceed(chain.request())
+            fail<Unit>()
+          } catch (expected: IllegalStateException) {
+            assertThat(expected).hasMessageContaining("please call response.close()")
+          }
+          response
         }
-        response
-      })
+      )
       .build()
     val request = Request.Builder()
       .url(server.url("/"))
@@ -1153,8 +1157,8 @@ open class CallTest(
     server.enqueue(MockResponse().setBody("response that will never be received"))
     val response = executeSynchronously("/")
     response.assertFailure(
-      SSLException::class.java,  // JDK 11 response to the FAIL_HANDSHAKE
-      SSLProtocolException::class.java,  // RI response to the FAIL_HANDSHAKE
+      SSLException::class.java, // JDK 11 response to the FAIL_HANDSHAKE
+      SSLProtocolException::class.java, // RI response to the FAIL_HANDSHAKE
       SSLHandshakeException::class.java // Android's response to the FAIL_HANDSHAKE
     )
     assertThat(client.connectionSpecs).doesNotContain(ConnectionSpec.COMPATIBLE_TLS)
@@ -2352,14 +2356,16 @@ open class CallTest(
     server.enqueue(MockResponse())
     val latch = CountDownLatch(1)
     client = client.newBuilder()
-      .addNetworkInterceptor(Interceptor { chain: Interceptor.Chain ->
-        try {
-          latch.await()
-        } catch (e: InterruptedException) {
-          throw AssertionError(e)
+      .addNetworkInterceptor(
+        Interceptor { chain: Interceptor.Chain ->
+          try {
+            latch.await()
+          } catch (e: InterruptedException) {
+            throw AssertionError(e)
+          }
+          chain.proceed(chain.request())
         }
-        chain.proceed(chain.request())
-      })
+      )
       .build()
     val call = client.newCall(
       Request.Builder()
@@ -2566,10 +2572,12 @@ open class CallTest(
 
   @Test fun cancelWithInterceptor() {
     client = client.newBuilder()
-      .addInterceptor(Interceptor { chain: Interceptor.Chain ->
-        chain.proceed(chain.request())
-        throw AssertionError() // We expect an exception.
-      })
+      .addInterceptor(
+        Interceptor { chain: Interceptor.Chain ->
+          chain.proceed(chain.request())
+          throw AssertionError() // We expect an exception.
+        }
+      )
       .build()
     val call = client.newCall(Request.Builder().url(server.url("/a")).build())
     call.cancel()
@@ -4019,19 +4027,21 @@ open class CallTest(
     )
     val closed = AtomicBoolean()
     client = client.newBuilder()
-      .addInterceptor(Interceptor { chain ->
-        val response = chain.proceed(chain.request())
-        chain.call().cancel() // Cancel after we have the response.
-        val closeTrackingSource = object : ForwardingSource(response.body!!.source()) {
-          override fun close() {
-            closed.set(true)
-            super.close()
+      .addInterceptor(
+        Interceptor { chain ->
+          val response = chain.proceed(chain.request())
+          chain.call().cancel() // Cancel after we have the response.
+          val closeTrackingSource = object : ForwardingSource(response.body!!.source()) {
+            override fun close() {
+              closed.set(true)
+              super.close()
+            }
           }
+          response.newBuilder()
+            .body(closeTrackingSource.buffer().asResponseBody())
+            .build()
         }
-        response.newBuilder()
-          .body(closeTrackingSource.buffer().asResponseBody())
-          .build()
-      })
+      )
       .build()
     executeSynchronously("/").assertFailure("Canceled")
     assertThat(closed.get()).isTrue

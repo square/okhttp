@@ -15,10 +15,6 @@
  */
 package okhttp3
 
-import java.io.FileDescriptor
-import java.io.FileInputStream
-import java.io.IOException
-import java.nio.file.Path
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -30,6 +26,10 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
+import java.io.FileDescriptor
+import java.io.FileInputStream
+import java.io.IOException
+import java.nio.file.Path
 
 class RequestBodyTest {
   private lateinit var filePath: okio.Path

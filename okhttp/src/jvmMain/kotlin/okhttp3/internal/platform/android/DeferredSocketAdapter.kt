@@ -15,8 +15,8 @@
  */
 package okhttp3.internal.platform.android
 
-import javax.net.ssl.SSLSocket
 import okhttp3.Protocol
+import javax.net.ssl.SSLSocket
 
 /**
  * Deferred implementation of SocketAdapter that works by observing the socket

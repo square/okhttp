@@ -15,7 +15,6 @@
  */
 package okhttp3
 
-import javax.net.ssl.SSLSocket
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy
@@ -32,9 +31,10 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
-import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.fail
+import javax.net.ssl.SSLSocket
 
 @Timeout(30)
 @Tag("Slowish")
@@ -48,8 +48,8 @@ class ServerTruncatesRequestTest(
   private val handshakeCertificates = localhost()
 
   private var client = clientTestRule.newClientBuilder()
-      .eventListenerFactory(clientTestRule.wrap(listener))
-      .build()
+    .eventListenerFactory(clientTestRule.wrap(listener))
+    .build()
 
   @BeforeEach fun setUp() {
     platform.assumeNotOpenJSSE()
@@ -67,10 +67,12 @@ class ServerTruncatesRequestTest(
   }
 
   private fun serverTruncatesRequestOnLongPost(https: Boolean) {
-    server.enqueue(MockResponse()
-      .setSocketPolicy(SocketPolicy.DO_NOT_READ_REQUEST_BODY)
-      .setBody("abc")
-      .apply { this.http2ErrorCode = ErrorCode.NO_ERROR.httpCode })
+    server.enqueue(
+      MockResponse()
+        .setSocketPolicy(SocketPolicy.DO_NOT_READ_REQUEST_BODY)
+        .setBody("abc")
+        .apply { this.http2ErrorCode = ErrorCode.NO_ERROR.httpCode }
+    )
 
     val call = client.newCall(
       Request.Builder()
@@ -121,10 +123,12 @@ class ServerTruncatesRequestTest(
   @Test fun serverTruncatesRequestHttp2OnDuplexRequest() {
     enableProtocol(Protocol.HTTP_2)
 
-    server.enqueue(MockResponse()
-      .setSocketPolicy(SocketPolicy.DO_NOT_READ_REQUEST_BODY)
-      .setBody("abc")
-      .apply { this.http2ErrorCode = ErrorCode.NO_ERROR.httpCode })
+    server.enqueue(
+      MockResponse()
+        .setSocketPolicy(SocketPolicy.DO_NOT_READ_REQUEST_BODY)
+        .setBody("abc")
+        .apply { this.http2ErrorCode = ErrorCode.NO_ERROR.httpCode }
+    )
 
     val requestBody = AsyncRequestBody()
 
@@ -165,11 +169,11 @@ class ServerTruncatesRequestTest(
 
   private fun serverTruncatesRequestButTrailersCanStillBeRead(http2: Boolean) {
     val mockResponse = MockResponse()
-        .setSocketPolicy(SocketPolicy.DO_NOT_READ_REQUEST_BODY)
-        .apply {
-          this.trailers = headersOf("caboose", "xyz")
-          this.http2ErrorCode = ErrorCode.NO_ERROR.httpCode
-        }
+      .setSocketPolicy(SocketPolicy.DO_NOT_READ_REQUEST_BODY)
+      .apply {
+        this.trailers = headersOf("caboose", "xyz")
+        this.http2ErrorCode = ErrorCode.NO_ERROR.httpCode
+      }
 
     // Trailers always work for HTTP/2, but only for chunked bodies in HTTP/1.
     if (http2) {
@@ -295,19 +299,19 @@ class ServerTruncatesRequestTest(
   private fun enableProtocol(protocol: Protocol) {
     enableTls()
     client = client.newBuilder()
-        .protocols(listOf(protocol, Protocol.HTTP_1_1))
-        .build()
+      .protocols(listOf(protocol, Protocol.HTTP_1_1))
+      .build()
     server.protocols = client.protocols
   }
 
   private fun enableTls() {
     client = client.newBuilder()
-        .sslSocketFactory(
-          handshakeCertificates.sslSocketFactory(),
-          handshakeCertificates.trustManager
-        )
-        .hostnameVerifier(RecordingHostnameVerifier())
-        .build()
+      .sslSocketFactory(
+        handshakeCertificates.sslSocketFactory(),
+        handshakeCertificates.trustManager
+      )
+      .hostnameVerifier(RecordingHostnameVerifier())
+      .build()
     server.useHttps(handshakeCertificates.sslSocketFactory(), false)
   }
 

@@ -16,9 +16,6 @@
  */
 package okhttp3.internal.connection
 
-import java.net.Socket
-import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.TimeUnit
 import okhttp3.Address
 import okhttp3.ConnectionPool
 import okhttp3.Route
@@ -30,6 +27,9 @@ import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.connection.RealCall.CallReference
 import okhttp3.internal.okHttpName
 import okhttp3.internal.platform.Platform
+import java.net.Socket
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.TimeUnit
 
 class RealConnectionPool(
   taskRunner: TaskRunner,
@@ -191,8 +191,8 @@ class RealConnectionPool(
     }
 
     when {
-      longestIdleDurationNs >= this.keepAliveDurationNs
-          || idleConnectionCount > this.maxIdleConnections -> {
+      longestIdleDurationNs >= this.keepAliveDurationNs ||
+        idleConnectionCount > this.maxIdleConnections -> {
         // We've chosen a connection to evict. Confirm it's still okay to be evict, then close it.
         val connection = longestIdleConnection!!
         synchronized(connection) {
@@ -248,7 +248,7 @@ class RealConnectionPool(
       // We've discovered a leaked call. This is an application bug.
       val callReference = reference as CallReference
       val message = "A connection to ${connection.route().address.url} was leaked. " +
-          "Did you forget to close a response body?"
+        "Did you forget to close a response body?"
       Platform.get().logCloseableLeak(message, callReference.callStackTrace)
 
       references.removeAt(i)

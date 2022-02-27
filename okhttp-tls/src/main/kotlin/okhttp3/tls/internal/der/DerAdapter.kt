@@ -90,10 +90,10 @@ internal interface DerAdapter<T> {
     }
 
     return BasicDerAdapter(
-        name = "EXPLICIT",
-        tagClass = tagClass,
-        tag = tag,
-        codec = codec
+      name = "EXPLICIT",
+      tagClass = tagClass,
+      tag = tag,
+      codec = codec
     )
   }
 
@@ -125,9 +125,9 @@ internal interface DerAdapter<T> {
   /** Returns an adapter that returns a set of values of this type. */
   fun asSetOf(): BasicDerAdapter<List<T>> {
     return asSequenceOf(
-        name = "SET OF",
-        tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
-        tag = 17L
+      name = "SET OF",
+      tagClass = DerHeader.TAG_CLASS_UNIVERSAL,
+      tag = 17L
     )
   }
 }

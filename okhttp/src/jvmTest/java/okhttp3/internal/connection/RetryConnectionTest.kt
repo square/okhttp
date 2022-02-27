@@ -15,10 +15,6 @@
  */
 package okhttp3.internal.connection
 
-import java.io.IOException
-import java.security.cert.CertificateException
-import javax.net.ssl.SSLHandshakeException
-import javax.net.ssl.SSLSocket
 import okhttp3.ConnectionSpec
 import okhttp3.OkHttpClientTestRule
 import okhttp3.TestValueFactory
@@ -28,6 +24,10 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
+import java.io.IOException
+import java.security.cert.CertificateException
+import javax.net.ssl.SSLHandshakeException
+import javax.net.ssl.SSLSocket
 
 class RetryConnectionTest {
   private val factory = TestValueFactory()

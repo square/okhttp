@@ -15,10 +15,6 @@
  */
 package okhttp3
 
-import java.text.ParseException
-import java.text.SimpleDateFormat
-import java.util.Arrays
-import java.util.Date
 import okhttp3.Cookie.Companion.parse
 import okhttp3.Cookie.Companion.parseAll
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -28,6 +24,10 @@ import okhttp3.internal.parseCookie
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
+import java.text.ParseException
+import java.text.SimpleDateFormat
+import java.util.Arrays
+import java.util.Date
 
 class CookieTest {
   val url = "https://example.com/".toHttpUrl()
@@ -326,7 +326,8 @@ class CookieTest {
   }
 
   @Test fun defaultPathIsUsedIfPathDoesntHaveLeadingSlash() {
-    assertThat(parse("http://example.com/foo/bar".toHttpUrl(), "a=b; path=quux")!!.path
+    assertThat(
+      parse("http://example.com/foo/bar".toHttpUrl(), "a=b; path=quux")!!.path
     ).isEqualTo("/foo")
     assertThat(parse("http://example.com/foo/bar".toHttpUrl(), "a=b; path=")!!.path)
       .isEqualTo("/foo")
@@ -372,11 +373,12 @@ class CookieTest {
   @Test fun lastExpiresAtWins() {
     assertThat(
       parseCookie(
-        0L, url, "a=b; "
-        + "Expires=Thu, 01 Jan 1970 00:00:02 GMT; "
-        + "Expires=Thu, 01 Jan 1970 00:00:04 GMT; "
-        + "Expires=Thu, 01 Jan 1970 00:00:01 GMT; "
-        + "Expires=Thu, 01 Jan 1970 00:00:03 GMT"
+        0L, url,
+        "a=b; " +
+          "Expires=Thu, 01 Jan 1970 00:00:02 GMT; " +
+          "Expires=Thu, 01 Jan 1970 00:00:04 GMT; " +
+          "Expires=Thu, 01 Jan 1970 00:00:01 GMT; " +
+          "Expires=Thu, 01 Jan 1970 00:00:03 GMT"
       )!!.expiresAt
     ).isEqualTo(3000L)
   }

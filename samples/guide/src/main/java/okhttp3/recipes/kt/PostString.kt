@@ -15,11 +15,11 @@
  */
 package okhttp3.recipes.kt
 
-import java.io.IOException
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import java.io.IOException
 
 class PostString {
   private val client = OkHttpClient()
@@ -32,12 +32,13 @@ class PostString {
         | * _1.0_ May 6, 2013
         | * _1.1_ June 15, 2013
         | * _1.2_ August 11, 2013
-        |""".trimMargin()
+        |
+    """.trimMargin()
 
     val request = Request.Builder()
-        .url("https://api.github.com/markdown/raw")
-        .post(postBody.toRequestBody(MEDIA_TYPE_MARKDOWN))
-        .build()
+      .url("https://api.github.com/markdown/raw")
+      .post(postBody.toRequestBody(MEDIA_TYPE_MARKDOWN))
+      .build()
 
     client.newCall(request).execute().use { response ->
       if (!response.isSuccessful) throw IOException("Unexpected code $response")

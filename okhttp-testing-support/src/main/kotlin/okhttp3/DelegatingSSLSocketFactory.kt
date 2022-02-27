@@ -40,7 +40,10 @@ open class DelegatingSSLSocketFactory(private val delegate: SSLSocketFactory) : 
 
   @Throws(IOException::class)
   override fun createSocket(
-    host: String, port: Int, localAddress: InetAddress, localPort: Int
+    host: String,
+    port: Int,
+    localAddress: InetAddress,
+    localPort: Int
   ): SSLSocket {
     val sslSocket = delegate.createSocket(host, port, localAddress, localPort) as SSLSocket
     return configureSocket(sslSocket)
@@ -54,7 +57,10 @@ open class DelegatingSSLSocketFactory(private val delegate: SSLSocketFactory) : 
 
   @Throws(IOException::class)
   override fun createSocket(
-    host: InetAddress, port: Int, localAddress: InetAddress, localPort: Int
+    host: InetAddress,
+    port: Int,
+    localAddress: InetAddress,
+    localPort: Int
   ): SSLSocket {
     val sslSocket = delegate.createSocket(host, port, localAddress, localPort) as SSLSocket
     return configureSocket(sslSocket)
@@ -70,7 +76,10 @@ open class DelegatingSSLSocketFactory(private val delegate: SSLSocketFactory) : 
 
   @Throws(IOException::class)
   override fun createSocket(
-    socket: Socket, host: String, port: Int, autoClose: Boolean
+    socket: Socket,
+    host: String,
+    port: Int,
+    autoClose: Boolean
   ): SSLSocket {
     val sslSocket = delegate.createSocket(socket, host, port, autoClose) as SSLSocket
     return configureSocket(sslSocket)

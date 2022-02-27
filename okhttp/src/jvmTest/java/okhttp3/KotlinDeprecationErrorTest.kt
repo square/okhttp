@@ -15,6 +15,19 @@
  */
 package okhttp3
 
+import okhttp3.logging.HttpLoggingInterceptor
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
+import okhttp3.mockwebserver.PushPromise
+import okhttp3.mockwebserver.RecordedRequest
+import okhttp3.mockwebserver.SocketPolicy
+import okhttp3.tls.HandshakeCertificates
+import okhttp3.tls.HeldCertificate
+import okhttp3.tls.internal.TlsUtil.localhost
+import okio.Buffer
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
 import java.io.File
 import java.net.InetSocketAddress
 import java.net.Proxy
@@ -34,19 +47,6 @@ import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509KeyManager
 import javax.net.ssl.X509TrustManager
-import okhttp3.logging.HttpLoggingInterceptor
-import okhttp3.mockwebserver.MockResponse
-import okhttp3.mockwebserver.MockWebServer
-import okhttp3.mockwebserver.PushPromise
-import okhttp3.mockwebserver.RecordedRequest
-import okhttp3.mockwebserver.SocketPolicy
-import okhttp3.tls.HandshakeCertificates
-import okhttp3.tls.HeldCertificate
-import okhttp3.tls.internal.TlsUtil.localhost
-import okio.Buffer
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Disabled
-import org.junit.jupiter.api.Test
 
 /**
  * Access every declaration that is deprecated with [DeprecationLevel.ERROR]. Although new Kotlin
@@ -54,10 +54,10 @@ import org.junit.jupiter.api.Test
  * ensures the symbols remain available and with the expected parameter and return types.
  */
 @Suppress(
-    "DEPRECATION_ERROR",
-    "UNUSED_VALUE",
-    "UNUSED_VARIABLE",
-    "VARIABLE_WITH_REDUNDANT_INITIALIZER"
+  "DEPRECATION_ERROR",
+  "UNUSED_VALUE",
+  "UNUSED_VARIABLE",
+  "VARIABLE_WITH_REDUNDANT_INITIALIZER"
 )
 class KotlinDeprecationErrorTest {
   private val factory = TestValueFactory()
@@ -151,7 +151,7 @@ class KotlinDeprecationErrorTest {
   @Test @Disabled
   fun handshake() {
     val handshake: Handshake =
-        Handshake.get((localhost().sslSocketFactory().createSocket() as SSLSocket).session)
+      Handshake.get((localhost().sslSocketFactory().createSocket() as SSLSocket).session)
     val tlsVersion: TlsVersion = handshake.tlsVersion()
     val cipherSuite: CipherSuite = handshake.cipherSuite()
     val peerCertificates: List<Certificate> = handshake.peerCertificates()

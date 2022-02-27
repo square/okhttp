@@ -107,9 +107,9 @@ private val optionsSemicolon = Options.of(
 )
 
 private val optionsSemicolonOrNewlineOrDash = Options.of(
-  ";".encodeUtf8(),  // 0 is ';'.
+  ";".encodeUtf8(), // 0 is ';'.
   "\n".encodeUtf8(), // 1 is '\n'.
-  "-".encodeUtf8(),  // 2 is '-'.
+  "-".encodeUtf8(), // 2 is '-'.
 )
 
 internal fun BufferedSource.readCodePointSet(): RangeListCodePointSet {
@@ -185,6 +185,6 @@ class MappingListCodePointMapping(
 
 class RangeListCodePointSet(
   val ranges: List<IntRange>,
-): CodePointSet {
+) : CodePointSet {
   override fun contains(codePoint: Int) = ranges.any { codePoint in it }
 }

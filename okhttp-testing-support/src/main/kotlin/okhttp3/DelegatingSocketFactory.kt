@@ -39,7 +39,9 @@ open class DelegatingSocketFactory(private val delegate: SocketFactory) : Socket
 
   @Throws(IOException::class)
   override fun createSocket(
-    host: String, port: Int, localAddress: InetAddress,
+    host: String,
+    port: Int,
+    localAddress: InetAddress,
     localPort: Int
   ): Socket {
     val socket = delegate.createSocket(host, port, localAddress, localPort)
@@ -54,7 +56,9 @@ open class DelegatingSocketFactory(private val delegate: SocketFactory) : Socket
 
   @Throws(IOException::class)
   override fun createSocket(
-    host: InetAddress, port: Int, localAddress: InetAddress,
+    host: InetAddress,
+    port: Int,
+    localAddress: InetAddress,
     localPort: Int
   ): Socket {
     val socket = delegate.createSocket(host, port, localAddress, localPort)

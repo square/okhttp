@@ -15,8 +15,6 @@
  */
 package okhttp3
 
-import java.util.concurrent.TimeUnit
-import kotlin.time.DurationUnit
 import okhttp3.internal.commonBuild
 import okhttp3.internal.commonClampToInt
 import okhttp3.internal.commonForceCache
@@ -31,6 +29,8 @@ import okhttp3.internal.commonNoTransform
 import okhttp3.internal.commonOnlyIfCached
 import okhttp3.internal.commonParse
 import okhttp3.internal.commonToString
+import java.util.concurrent.TimeUnit
+import kotlin.time.DurationUnit
 
 actual class CacheControl internal actual constructor(
   @get:JvmName("noCache") actual val noCache: Boolean,
@@ -60,72 +60,82 @@ actual class CacheControl internal actual constructor(
 ) {
   @JvmName("-deprecated_noCache")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "noCache"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "noCache"),
+    level = DeprecationLevel.ERROR
+  )
   fun noCache(): Boolean = noCache
 
   @JvmName("-deprecated_noStore")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "noStore"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "noStore"),
+    level = DeprecationLevel.ERROR
+  )
   fun noStore(): Boolean = noStore
 
   @JvmName("-deprecated_maxAgeSeconds")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "maxAgeSeconds"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "maxAgeSeconds"),
+    level = DeprecationLevel.ERROR
+  )
   fun maxAgeSeconds(): Int = maxAgeSeconds
 
   @JvmName("-deprecated_sMaxAgeSeconds")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "sMaxAgeSeconds"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "sMaxAgeSeconds"),
+    level = DeprecationLevel.ERROR
+  )
   fun sMaxAgeSeconds(): Int = sMaxAgeSeconds
 
   @JvmName("-deprecated_mustRevalidate")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "mustRevalidate"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "mustRevalidate"),
+    level = DeprecationLevel.ERROR
+  )
   fun mustRevalidate(): Boolean = mustRevalidate
 
   @JvmName("-deprecated_maxStaleSeconds")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "maxStaleSeconds"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "maxStaleSeconds"),
+    level = DeprecationLevel.ERROR
+  )
   fun maxStaleSeconds(): Int = maxStaleSeconds
 
   @JvmName("-deprecated_minFreshSeconds")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "minFreshSeconds"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "minFreshSeconds"),
+    level = DeprecationLevel.ERROR
+  )
   fun minFreshSeconds(): Int = minFreshSeconds
 
   @JvmName("-deprecated_onlyIfCached")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "onlyIfCached"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "onlyIfCached"),
+    level = DeprecationLevel.ERROR
+  )
   fun onlyIfCached(): Boolean = onlyIfCached
 
   @JvmName("-deprecated_noTransform")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "noTransform"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "noTransform"),
+    level = DeprecationLevel.ERROR
+  )
   fun noTransform(): Boolean = noTransform
 
   @JvmName("-deprecated_immutable")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "immutable"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "immutable"),
+    level = DeprecationLevel.ERROR
+  )
   fun immutable(): Boolean = immutable
 
   actual override fun toString(): String = commonToString()

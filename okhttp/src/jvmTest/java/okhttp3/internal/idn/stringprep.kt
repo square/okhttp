@@ -66,7 +66,6 @@ class Stringprep(
 
       if (first) {
         firstIsRandalcat = codePoint in randalcatSet
-
       } else if (firstIsRandalcat) {
         // 'If a string contains any RandALCat character, the string MUST NOT contain any LCat
         // character.'
@@ -75,7 +74,6 @@ class Stringprep(
         // 'If a string contains any RandALCat character, a RandALCat character MUST be the last
         // character of the string.'
         if (validateBuffer.exhausted() && codePoint !in randalcatSet) return null
-
       } else {
         // 'If a string contains any RandALCat character, a RandALCat character MUST be the first
         // character of the string'

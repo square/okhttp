@@ -19,8 +19,6 @@
 
 package okhttp3.internal
 
-import java.nio.charset.Charset
-import javax.net.ssl.SSLSocket
 import okhttp3.Cache
 import okhttp3.CipherSuite
 import okhttp3.ConnectionSpec
@@ -32,23 +30,25 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.internal.connection.RealConnection
+import java.nio.charset.Charset
+import javax.net.ssl.SSLSocket
 
 fun parseCookie(currentTimeMillis: Long, url: HttpUrl, setCookie: String): Cookie? =
-    Cookie.parse(currentTimeMillis, url, setCookie)
+  Cookie.parse(currentTimeMillis, url, setCookie)
 
 fun cookieToString(cookie: Cookie, forObsoleteRfc2965: Boolean): String =
-    cookie.toString(forObsoleteRfc2965)
+  cookie.toString(forObsoleteRfc2965)
 
 fun addHeaderLenient(builder: Headers.Builder, line: String): Headers.Builder =
-    builder.addLenient(line)
+  builder.addLenient(line)
 
 fun addHeaderLenient(builder: Headers.Builder, name: String, value: String): Headers.Builder =
-    builder.addLenient(name, value)
+  builder.addLenient(name, value)
 
 fun cacheGet(cache: Cache, request: Request): Response? = cache.get(request)
 
 fun applyConnectionSpec(connectionSpec: ConnectionSpec, sslSocket: SSLSocket, isFallback: Boolean) =
-    connectionSpec.apply(sslSocket, isFallback)
+  connectionSpec.apply(sslSocket, isFallback)
 
 fun ConnectionSpec.effectiveCipherSuites(socketEnabledCipherSuites: Array<String>): Array<String> {
   return if (cipherSuitesAsString != null) {

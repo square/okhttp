@@ -16,13 +16,16 @@
 package okhttp3
 
 import assertk.assertions.isEqualTo
-import okio.buffer
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
+import okhttp3.internal.and
 import okio.Buffer
 import okio.BufferedSource
 import okio.ByteString
+import okio.ByteString.Companion.decodeHex
 import okio.ForwardingSource
+import okio.buffer
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.io.IOException
 import java.io.InputStreamReader
@@ -31,9 +34,6 @@ import java.lang.AssertionError
 import java.lang.StringBuilder
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.atomic.AtomicBoolean
-import okhttp3.internal.and
-import okio.ByteString.Companion.decodeHex
-import org.assertj.core.api.Assertions.assertThat
 
 class ResponseBodyJvmTest {
   @Test

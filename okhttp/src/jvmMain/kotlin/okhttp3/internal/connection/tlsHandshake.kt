@@ -15,13 +15,13 @@
  */
 package okhttp3.internal.connection
 
+import okio.IOException
 import java.io.InterruptedIOException
 import java.net.ProtocolException
 import java.security.cert.CertificateException
 import javax.net.ssl.SSLException
 import javax.net.ssl.SSLHandshakeException
 import javax.net.ssl.SSLPeerUnverifiedException
-import okio.IOException
 
 /** Returns true if a TLS connection should be retried after [e]. */
 fun retryTlsHandshake(e: IOException): Boolean {

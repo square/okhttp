@@ -15,16 +15,6 @@
  */
 package okhttp3.tls
 
-import java.net.InetAddress
-import java.net.InetSocketAddress
-import java.net.ServerSocket
-import java.security.PrivateKey
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
-import java.util.concurrent.Future
-import javax.net.ServerSocketFactory
-import javax.net.SocketFactory
-import javax.net.ssl.SSLSocket
 import okhttp3.Handshake
 import okhttp3.Handshake.Companion.handshake
 import okhttp3.internal.closeQuietly
@@ -35,6 +25,16 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
+import java.net.InetAddress
+import java.net.InetSocketAddress
+import java.net.ServerSocket
+import java.security.PrivateKey
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.Future
+import javax.net.ServerSocketFactory
+import javax.net.SocketFactory
+import javax.net.ssl.SSLSocket
 
 class HandshakeCertificatesTest {
   @RegisterExtension
@@ -163,7 +163,8 @@ class HandshakeCertificatesTest {
   }
 
   private fun doClientHandshake(
-    client: HandshakeCertificates, serverAddress: InetSocketAddress
+    client: HandshakeCertificates,
+    serverAddress: InetSocketAddress
   ): Future<Handshake> {
     return executorService.submit<Handshake> {
       SocketFactory.getDefault().createSocket().use { rawSocket ->

@@ -15,14 +15,14 @@
  */
 package okhttp3
 
-import java.util.*
-import kotlin.test.assertEquals
-import kotlin.test.assertNull
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.internal.platform.Platform.Companion.isAndroid
 import org.junit.jupiter.api.Test
+import java.util.Locale
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
-class MediaTypeJvmTest: MediaTypeGetTest() {
+class MediaTypeJvmTest : MediaTypeGetTest() {
   override fun MediaType.charsetName(): String? = this.charset()?.name()
 
   @Test fun testCharsetNameIsDoubleQuotedAndSingleQuotedAndroid() {

@@ -39,9 +39,9 @@ class WebPlatformUrlTest {
       return
     }
 
-    if (!testData.base!!.startsWith("https:")
-      && !testData.base!!.startsWith("http:")
-      && testData.base != "about:blank"
+    if (!testData.base!!.startsWith("https:") &&
+      !testData.base!!.startsWith("http:") &&
+      testData.base != "about:blank"
     ) {
       System.err.println("Ignoring unsupported base ${testData.base}")
       return

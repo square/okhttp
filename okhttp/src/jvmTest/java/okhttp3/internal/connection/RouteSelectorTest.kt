@@ -15,14 +15,6 @@
  */
 package okhttp3.internal.connection
 
-import java.io.IOException
-import java.net.InetAddress
-import java.net.InetSocketAddress
-import java.net.Proxy
-import java.net.ProxySelector
-import java.net.SocketAddress
-import java.net.URI
-import java.net.UnknownHostException
 import okhttp3.Address
 import okhttp3.Call
 import okhttp3.EventListener
@@ -40,6 +32,14 @@ import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
+import java.io.IOException
+import java.net.InetAddress
+import java.net.InetSocketAddress
+import java.net.Proxy
+import java.net.ProxySelector
+import java.net.SocketAddress
+import java.net.URI
+import java.net.UnknownHostException
 
 class RouteSelectorTest {
   @RegisterExtension

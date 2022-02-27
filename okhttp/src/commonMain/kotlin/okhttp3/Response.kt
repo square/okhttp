@@ -51,11 +51,11 @@ expect class Response : Closeable {
   /** Returns the HTTP status code. */
   val code: Int
 
-  ///**
+  // /**
   // * Returns the TLS handshake of the connection that carried this response, or null if the
   // * response was received without TLS.
   // */
-  //val handshake: Handshake?
+  // val handshake: Handshake?
 
   /** Returns the HTTP headers. */
   val headers: Headers

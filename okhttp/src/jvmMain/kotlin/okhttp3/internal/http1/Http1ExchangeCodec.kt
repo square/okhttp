@@ -15,10 +15,6 @@
  */
 package okhttp3.internal.http1
 
-import java.io.EOFException
-import java.io.IOException
-import java.net.ProtocolException
-import java.util.concurrent.TimeUnit.MILLISECONDS
 import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
@@ -29,11 +25,11 @@ import okhttp3.internal.checkOffsetAndCount
 import okhttp3.internal.discard
 import okhttp3.internal.headersContentLength
 import okhttp3.internal.http.ExchangeCodec
+import okhttp3.internal.http.HTTP_CONTINUE
 import okhttp3.internal.http.RequestLine
 import okhttp3.internal.http.StatusLine
 import okhttp3.internal.http.promisesBody
 import okhttp3.internal.http.receiveHeaders
-import okhttp3.internal.http.HTTP_CONTINUE
 import okhttp3.internal.skipAll
 import okio.Buffer
 import okio.BufferedSink
@@ -42,6 +38,10 @@ import okio.ForwardingTimeout
 import okio.Sink
 import okio.Source
 import okio.Timeout
+import java.io.EOFException
+import java.io.IOException
+import java.net.ProtocolException
+import java.util.concurrent.TimeUnit.MILLISECONDS
 
 /**
  * A socket connection that can be used to send HTTP/1.1 messages. This class strictly enforces the
@@ -71,10 +71,10 @@ class Http1ExchangeCodec(
   private val headersReader = HeadersReader(source)
 
   private val Response.isChunked: Boolean
-      get() = "chunked".equals(header("Transfer-Encoding"), ignoreCase = true)
+    get() = "chunked".equals(header("Transfer-Encoding"), ignoreCase = true)
 
   private val Request.isChunked: Boolean
-      get() = "chunked".equals(header("Transfer-Encoding"), ignoreCase = true)
+    get() = "chunked".equals(header("Transfer-Encoding"), ignoreCase = true)
 
   /**
    * Received trailers. Null unless the response body uses chunked transfer-encoding and includes
@@ -89,12 +89,14 @@ class Http1ExchangeCodec(
   override fun createRequestBody(request: Request, contentLength: Long): Sink {
     return when {
       request.body != null && request.body.isDuplex() -> throw ProtocolException(
-          "Duplex connections are not supported for HTTP/1")
+        "Duplex connections are not supported for HTTP/1"
+      )
       request.isChunked -> newChunkedSink() // Stream a request body of unknown length.
       contentLength != -1L -> newKnownLengthSink() // Stream a request body of a known length.
       else -> // Stream a request body of a known length.
         throw IllegalStateException(
-            "Cannot stream a request body without chunked encoding or a known content length!")
+          "Cannot stream a request body without chunked encoding or a known content length!"
+        )
     }
   }
 
@@ -159,18 +161,20 @@ class Http1ExchangeCodec(
     sink.writeUtf8(requestLine).writeUtf8("\r\n")
     for (i in 0 until headers.size) {
       sink.writeUtf8(headers.name(i))
-          .writeUtf8(": ")
-          .writeUtf8(headers.value(i))
-          .writeUtf8("\r\n")
+        .writeUtf8(": ")
+        .writeUtf8(headers.value(i))
+        .writeUtf8("\r\n")
     }
     sink.writeUtf8("\r\n")
     state = STATE_OPEN_REQUEST_BODY
   }
 
   override fun readResponseHeaders(expectContinue: Boolean): Response.Builder? {
-    check(state == STATE_OPEN_REQUEST_BODY ||
+    check(
+      state == STATE_OPEN_REQUEST_BODY ||
         state == STATE_WRITING_REQUEST_BODY ||
-        state == STATE_READ_RESPONSE_HEADERS) {
+        state == STATE_READ_RESPONSE_HEADERS
+    ) {
       "state: $state"
     }
 
@@ -178,10 +182,10 @@ class Http1ExchangeCodec(
       val statusLine = StatusLine.parse(headersReader.readLine())
 
       val responseBuilder = Response.Builder()
-          .protocol(statusLine.protocol)
-          .code(statusLine.code)
-          .message(statusLine.message)
-          .headers(headersReader.readHeaders())
+        .protocol(statusLine.protocol)
+        .code(statusLine.code)
+        .message(statusLine.message)
+        .headers(headersReader.readHeaders())
 
       return when {
         expectContinue && statusLine.code == HTTP_CONTINUE -> {
@@ -352,7 +356,7 @@ class Http1ExchangeCodec(
 
   /** An HTTP body with a fixed length specified in advance. */
   private inner class FixedLengthSource(private var bytesRemaining: Long) :
-      AbstractSource() {
+    AbstractSource() {
 
     init {
       if (bytesRemaining == 0L) {
@@ -384,7 +388,8 @@ class Http1ExchangeCodec(
       if (closed) return
 
       if (bytesRemaining != 0L &&
-          !discard(ExchangeCodec.DISCARD_STREAM_TIMEOUT_MILLIS, MILLISECONDS)) {
+        !discard(ExchangeCodec.DISCARD_STREAM_TIMEOUT_MILLIS, MILLISECONDS)
+      ) {
         carrier.noNewExchanges() // Unread bytes remain on the stream.
         responseBodyComplete()
       }
@@ -395,7 +400,7 @@ class Http1ExchangeCodec(
 
   /** An HTTP body with alternating chunk sizes and chunk bodies. */
   private inner class ChunkedSource(private val url: HttpUrl) :
-      AbstractSource() {
+    AbstractSource() {
     private var bytesRemainingInChunk = NO_CHUNK_YET
     private var hasMoreChunks = true
 
@@ -429,8 +434,10 @@ class Http1ExchangeCodec(
         bytesRemainingInChunk = source.readHexadecimalUnsignedLong()
         val extensions = source.readUtf8LineStrict().trim()
         if (bytesRemainingInChunk < 0L || extensions.isNotEmpty() && !extensions.startsWith(";")) {
-          throw ProtocolException("expected chunk size and optional extensions" +
-              " but was \"$bytesRemainingInChunk$extensions\"")
+          throw ProtocolException(
+            "expected chunk size and optional extensions" +
+              " but was \"$bytesRemainingInChunk$extensions\""
+          )
         }
       } catch (e: NumberFormatException) {
         throw ProtocolException(e.message)
@@ -447,7 +454,8 @@ class Http1ExchangeCodec(
     override fun close() {
       if (closed) return
       if (hasMoreChunks &&
-          !discard(ExchangeCodec.DISCARD_STREAM_TIMEOUT_MILLIS, MILLISECONDS)) {
+        !discard(ExchangeCodec.DISCARD_STREAM_TIMEOUT_MILLIS, MILLISECONDS)
+      ) {
         carrier.noNewExchanges() // Unread bytes remain on the stream.
         responseBodyComplete()
       }

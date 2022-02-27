@@ -15,10 +15,10 @@
  */
 package okhttp3.internal.platform.android
 
+import okhttp3.Protocol
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
-import okhttp3.Protocol
 
 interface SocketAdapter {
   fun isSupported(): Boolean

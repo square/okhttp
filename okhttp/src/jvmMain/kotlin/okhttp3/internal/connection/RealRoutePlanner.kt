@@ -15,10 +15,6 @@
  */
 package okhttp3.internal.connection
 
-import java.io.IOException
-import java.net.HttpURLConnection
-import java.net.Socket
-import java.net.UnknownServiceException
 import okhttp3.Address
 import okhttp3.ConnectionSpec
 import okhttp3.HttpUrl
@@ -35,6 +31,10 @@ import okhttp3.internal.http.RealInterceptorChain
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.toHostHeader
 import okhttp3.internal.userAgent
+import java.io.IOException
+import java.net.HttpURLConnection
+import java.net.Socket
+import java.net.UnknownServiceException
 
 class RealRoutePlanner(
   private val client: OkHttpClient,

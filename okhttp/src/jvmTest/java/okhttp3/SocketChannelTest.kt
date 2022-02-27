@@ -121,7 +121,7 @@ class SocketChannelTest(
             else -> TODO()
           }
 
-          val serverSslSocketFactory = object: DelegatingSSLSocketFactory(sslSocketFactory) {
+          val serverSslSocketFactory = object : DelegatingSSLSocketFactory(sslSocketFactory) {
             override fun configureSocket(sslSocket: SSLSocket): SSLSocket {
               return sslSocket.apply {
                 sslParameters = sslParameters.apply {

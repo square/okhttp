@@ -15,12 +15,6 @@
  */
 package okhttp3
 
-import java.util.concurrent.TimeUnit
-import java.util.logging.Handler
-import java.util.logging.Level
-import java.util.logging.LogManager
-import java.util.logging.LogRecord
-import java.util.logging.Logger
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.http2.Http2
 import okhttp3.testing.Flaky
@@ -29,6 +23,12 @@ import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
+import java.util.concurrent.TimeUnit
+import java.util.logging.Handler
+import java.util.logging.Level
+import java.util.logging.LogManager
+import java.util.logging.LogRecord
+import java.util.logging.Logger
 
 /**
  * Apply this rule to all tests. It adds additional checks for leaked resources and uncaught

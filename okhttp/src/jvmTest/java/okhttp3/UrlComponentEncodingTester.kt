@@ -41,35 +41,35 @@ internal class UrlComponentEncodingTester private constructor() {
   }
 
   fun nonPrintableAscii(encoding: Encoding) = apply {
-    encodings[      0x0] = encoding // Null character
-    encodings[      0x1] = encoding // Start of Header
-    encodings[      0x2] = encoding // Start of Text
-    encodings[      0x3] = encoding // End of Text
-    encodings[      0x4] = encoding // End of Transmission
-    encodings[      0x5] = encoding // Enquiry
-    encodings[      0x6] = encoding // Acknowledgment
-    encodings[      0x7] = encoding // Bell
+    encodings[ 0x0] = encoding // Null character
+    encodings[ 0x1] = encoding // Start of Header
+    encodings[ 0x2] = encoding // Start of Text
+    encodings[ 0x3] = encoding // End of Text
+    encodings[ 0x4] = encoding // End of Transmission
+    encodings[ 0x5] = encoding // Enquiry
+    encodings[ 0x6] = encoding // Acknowledgment
+    encodings[ 0x7] = encoding // Bell
     encodings['\b'.code] = encoding // Backspace
-    encodings[      0xb] = encoding // Vertical Tab
-    encodings[      0xe] = encoding // Shift Out
-    encodings[      0xf] = encoding // Shift In
-    encodings[     0x10] = encoding // Data Link Escape
-    encodings[     0x11] = encoding // Device Control 1 (oft. XON)
-    encodings[     0x12] = encoding // Device Control 2
-    encodings[     0x13] = encoding // Device Control 3 (oft. XOFF)
-    encodings[     0x14] = encoding // Device Control 4
-    encodings[     0x15] = encoding // Negative Acknowledgment
-    encodings[     0x16] = encoding // Synchronous idle
-    encodings[     0x17] = encoding // End of Transmission Block
-    encodings[     0x18] = encoding // Cancel
-    encodings[     0x19] = encoding // End of Medium
-    encodings[     0x1a] = encoding // Substitute
-    encodings[     0x1b] = encoding // Escape
-    encodings[     0x1c] = encoding // File Separator
-    encodings[     0x1d] = encoding // Group Separator
-    encodings[     0x1e] = encoding // Record Separator
-    encodings[     0x1f] = encoding // Unit Separator
-    encodings[     0x7f] = encoding // Delete
+    encodings[ 0xb] = encoding // Vertical Tab
+    encodings[ 0xe] = encoding // Shift Out
+    encodings[ 0xf] = encoding // Shift In
+    encodings[ 0x10] = encoding // Data Link Escape
+    encodings[ 0x11] = encoding // Device Control 1 (oft. XON)
+    encodings[ 0x12] = encoding // Device Control 2
+    encodings[ 0x13] = encoding // Device Control 3 (oft. XOFF)
+    encodings[ 0x14] = encoding // Device Control 4
+    encodings[ 0x15] = encoding // Negative Acknowledgment
+    encodings[ 0x16] = encoding // Synchronous idle
+    encodings[ 0x17] = encoding // End of Transmission Block
+    encodings[ 0x18] = encoding // Cancel
+    encodings[ 0x19] = encoding // End of Medium
+    encodings[ 0x1a] = encoding // Substitute
+    encodings[ 0x1b] = encoding // Escape
+    encodings[ 0x1c] = encoding // File Separator
+    encodings[ 0x1d] = encoding // Group Separator
+    encodings[ 0x1e] = encoding // Record Separator
+    encodings[ 0x1f] = encoding // Unit Separator
+    encodings[ 0x7f] = encoding // Delete
   }
 
   fun nonAscii(encoding: Encoding) = apply {
@@ -138,7 +138,10 @@ internal class UrlComponentEncodingTester private constructor() {
   }
 
   private fun testParseOriginal(
-    codePoint: Int, codePointString: String, encoding: Encoding, component: Component
+    codePoint: Int,
+    codePointString: String,
+    encoding: Encoding,
+    component: Component
   ) {
     val expected = encoding.encode(codePoint)
     if (encoding !== Encoding.PERCENT) return
@@ -174,7 +177,10 @@ internal class UrlComponentEncodingTester private constructor() {
   }
 
   private fun testUri(
-    codePoint: Int, codePointString: String, encoding: Encoding, component: Component
+    codePoint: Int,
+    codePointString: String,
+    encoding: Encoding,
+    component: Component
   ) {
     if (codePoint == '%'.code) return
     val encoded = encoding.encode(codePoint)

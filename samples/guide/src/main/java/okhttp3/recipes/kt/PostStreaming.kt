@@ -15,12 +15,12 @@
  */
 package okhttp3.recipes.kt
 
-import java.io.IOException
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
 import okio.BufferedSink
+import java.io.IOException
 
 class PostStreaming {
   private val client = OkHttpClient()
@@ -47,9 +47,9 @@ class PostStreaming {
     }
 
     val request = Request.Builder()
-        .url("https://api.github.com/markdown/raw")
-        .post(requestBody)
-        .build()
+      .url("https://api.github.com/markdown/raw")
+      .post(requestBody)
+      .build()
 
     client.newCall(request).execute().use { response ->
       if (!response.isSuccessful) throw IOException("Unexpected code $response")

@@ -18,10 +18,10 @@ package okhttp3
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotEqualTo
-import kotlin.test.Test
-import kotlin.test.fail
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.Headers.Companion.toHeaders
+import kotlin.test.Test
+import kotlin.test.fail
 
 class HeadersTest {
   @Test fun ofTrims() {
@@ -266,7 +266,8 @@ class HeadersTest {
       |cookie: ██
       |set-cookie: ██
       |user-agent: OkHttp
-      |""".trimMargin()
+      |
+      """.trimMargin()
     )
   }
 

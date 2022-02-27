@@ -15,16 +15,6 @@
  */
 package okhttp3
 
-import java.io.Closeable
-import java.net.InetSocketAddress
-import java.net.Proxy
-import java.net.ProxySelector
-import java.net.Socket
-import java.util.concurrent.TimeUnit
-import javax.net.SocketFactory
-import javax.net.ssl.HostnameVerifier
-import javax.net.ssl.HttpsURLConnection
-import javax.net.ssl.SSLSocketFactory
 import okhttp3.internal.RecordingOkAuthenticator
 import okhttp3.internal.concurrent.TaskFaker
 import okhttp3.internal.concurrent.TaskRunner
@@ -36,6 +26,16 @@ import okhttp3.internal.http.RealInterceptorChain
 import okhttp3.internal.http.RecordingProxySelector
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.internal.TlsUtil.localhost
+import java.io.Closeable
+import java.net.InetSocketAddress
+import java.net.Proxy
+import java.net.ProxySelector
+import java.net.Socket
+import java.util.concurrent.TimeUnit
+import javax.net.SocketFactory
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.HttpsURLConnection
+import javax.net.ssl.SSLSocketFactory
 
 /**
  * OkHttp is usually tested with functional tests: these use public APIs to confirm behavior against
@@ -118,7 +118,6 @@ class TestValueFactory : Closeable {
       proxySelector = proxySelector,
     )
   }
-
 
   fun newHttpsAddress(
     uriHost: String = this.uriHost,

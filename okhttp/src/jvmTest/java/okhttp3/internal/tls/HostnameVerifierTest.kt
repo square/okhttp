@@ -16,12 +16,6 @@
  */
 package okhttp3.internal.tls
 
-import java.io.ByteArrayInputStream
-import java.security.cert.CertificateFactory
-import java.security.cert.X509Certificate
-import java.util.stream.Stream
-import javax.net.ssl.SSLSession
-import javax.security.auth.x500.X500Principal
 import okhttp3.FakeSSLSession
 import okhttp3.OkHttpClient
 import okhttp3.internal.canParseAsIpAddress
@@ -32,6 +26,12 @@ import okhttp3.tls.internal.TlsUtil.localhost
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
+import java.io.ByteArrayInputStream
+import java.security.cert.CertificateFactory
+import java.security.cert.X509Certificate
+import java.util.stream.Stream
+import javax.net.ssl.SSLSession
+import javax.security.auth.x500.X500Principal
 
 /**
  * Tests for our hostname verifier. Most of these tests are from AOSP, which itself includes tests

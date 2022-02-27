@@ -15,14 +15,14 @@
  */
 package okhttp3
 
+import okhttp3.internal.commonEquals
+import okhttp3.internal.commonHashCode
+import okhttp3.internal.commonToString
 import java.nio.charset.Charset
 import java.util.Collections.singletonMap
 import java.util.Collections.unmodifiableMap
 import java.util.Locale.US
 import kotlin.text.Charsets.ISO_8859_1
-import okhttp3.internal.commonEquals
-import okhttp3.internal.commonHashCode
-import okhttp3.internal.commonToString
 
 actual class Challenge actual constructor(
   @get:JvmName("scheme") actual val scheme: String,
@@ -67,30 +67,34 @@ actual class Challenge actual constructor(
 
   @JvmName("-deprecated_scheme")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "scheme"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "scheme"),
+    level = DeprecationLevel.ERROR
+  )
   fun scheme(): String = scheme
 
   @JvmName("-deprecated_authParams")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "authParams"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "authParams"),
+    level = DeprecationLevel.ERROR
+  )
   fun authParams(): Map<String?, String> = authParams
 
   @JvmName("-deprecated_realm")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "realm"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "realm"),
+    level = DeprecationLevel.ERROR
+  )
   fun realm(): String? = realm
 
   @JvmName("-deprecated_charset")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "charset"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "charset"),
+    level = DeprecationLevel.ERROR
+  )
   fun charset(): Charset = charset
 
   actual override fun equals(other: Any?): Boolean = commonEquals(other)

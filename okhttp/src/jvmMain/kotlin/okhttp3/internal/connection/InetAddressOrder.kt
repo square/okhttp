@@ -16,9 +16,9 @@
 
 package okhttp3.internal.connection
 
+import okhttp3.internal.interleave
 import java.net.Inet6Address
 import java.net.InetAddress
-import okhttp3.internal.interleave
 
 /**
  * Implementation of HappyEyeballs Sorting Addresses.

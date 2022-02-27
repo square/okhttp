@@ -15,13 +15,13 @@
  */
 package okhttp3
 
-import java.nio.charset.Charset
 import okhttp3.internal.commonEquals
 import okhttp3.internal.commonHashCode
 import okhttp3.internal.commonParameter
 import okhttp3.internal.commonToMediaType
 import okhttp3.internal.commonToMediaTypeOrNull
 import okhttp3.internal.commonToString
+import java.nio.charset.Charset
 
 actual class MediaType internal actual constructor(
   internal actual val mediaType: String,

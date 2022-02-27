@@ -15,15 +15,6 @@
  */
 package mockwebserver3.internal.http2
 
-import java.io.File
-import java.io.IOException
-import java.net.ProtocolException
-import java.net.ServerSocket
-import java.net.Socket
-import java.util.logging.Level
-import java.util.logging.Logger
-import javax.net.ssl.SSLSocket
-import javax.net.ssl.SSLSocketFactory
 import okhttp3.Protocol
 import okhttp3.Protocol.Companion.get
 import okhttp3.internal.closeQuietly
@@ -35,6 +26,15 @@ import okhttp3.internal.platform.Platform
 import okhttp3.tls.internal.TlsUtil.localhost
 import okio.buffer
 import okio.source
+import java.io.File
+import java.io.IOException
+import java.net.ProtocolException
+import java.net.ServerSocket
+import java.net.Socket
+import java.util.logging.Level
+import java.util.logging.Logger
+import javax.net.ssl.SSLSocket
+import javax.net.ssl.SSLSocketFactory
 
 /** A basic HTTP/2 server that serves the contents of a local directory.  */
 class Http2Server(

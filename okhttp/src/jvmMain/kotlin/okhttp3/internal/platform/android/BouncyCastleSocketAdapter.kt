@@ -15,11 +15,11 @@
  */
 package okhttp3.internal.platform.android
 
-import javax.net.ssl.SSLSocket
 import okhttp3.Protocol
 import okhttp3.internal.platform.BouncyCastlePlatform
 import okhttp3.internal.platform.Platform
 import org.bouncycastle.jsse.BCSSLSocket
+import javax.net.ssl.SSLSocket
 
 /**
  * Simple non-reflection SocketAdapter for BouncyCastle.

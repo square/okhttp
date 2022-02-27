@@ -16,15 +16,6 @@
  */
 package okhttp3.internal.connection
 
-import java.io.IOException
-import java.lang.ref.Reference
-import java.net.Proxy
-import java.net.Socket
-import java.net.SocketException
-import java.security.cert.X509Certificate
-import java.util.concurrent.TimeUnit.MILLISECONDS
-import javax.net.ssl.SSLPeerUnverifiedException
-import javax.net.ssl.SSLSocket
 import okhttp3.Address
 import okhttp3.Connection
 import okhttp3.Handshake
@@ -51,6 +42,15 @@ import okhttp3.internal.tls.OkHostnameVerifier
 import okhttp3.internal.ws.RealWebSocket
 import okio.BufferedSink
 import okio.BufferedSource
+import java.io.IOException
+import java.lang.ref.Reference
+import java.net.Proxy
+import java.net.Socket
+import java.net.SocketException
+import java.security.cert.X509Certificate
+import java.util.concurrent.TimeUnit.MILLISECONDS
+import javax.net.ssl.SSLPeerUnverifiedException
+import javax.net.ssl.SSLSocket
 
 /**
  * A connection to a remote web server capable of carrying 1 or more concurrent streams.
@@ -295,7 +295,8 @@ class RealConnection(
     val socket = this.socket!!
     val source = this.source!!
     if (rawSocket.isClosed || socket.isClosed || socket.isInputShutdown ||
-      socket.isOutputShutdown) {
+      socket.isOutputShutdown
+    ) {
       return false
     }
 

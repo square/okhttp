@@ -17,12 +17,12 @@ package okhttp3
 
 import okhttp3.CacheControl.Companion.parse
 import okhttp3.Headers.Companion.headersOf
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
 import java.lang.Exception
 import java.lang.IllegalArgumentException
 import java.util.concurrent.TimeUnit
-import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Assertions.fail
 
 class CacheControlJvmTest {
   @Test
@@ -39,8 +39,8 @@ class CacheControlJvmTest {
       .immutable()
       .build()
     assertThat(cacheControl.toString()).isEqualTo(
-      "no-cache, no-store, max-age=1, max-stale=2, min-fresh=3, only-if-cached, "
-        + "no-transform, immutable"
+      "no-cache, no-store, max-age=1, max-stale=2, min-fresh=3, only-if-cached, " +
+        "no-transform, immutable"
     )
     assertThat(cacheControl.noCache).isTrue
     assertThat(cacheControl.noStore).isTrue
@@ -80,8 +80,10 @@ class CacheControlJvmTest {
   @Test
   @Throws(Exception::class)
   fun parse() {
-    val header = ("no-cache, no-store, max-age=1, s-maxage=2, private, public, must-revalidate, "
-      + "max-stale=3, min-fresh=4, only-if-cached, no-transform")
+    val header = (
+      "no-cache, no-store, max-age=1, s-maxage=2, private, public, must-revalidate, " +
+        "max-stale=3, min-fresh=4, only-if-cached, no-transform"
+      )
     val cacheControl = parse(
       Headers.Builder()
         .set("Cache-Control", header)

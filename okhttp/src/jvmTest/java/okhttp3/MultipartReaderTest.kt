@@ -45,8 +45,8 @@ class MultipartReaderTest {
         |mnop
         |
         |--simple boundary--
-        """.trimMargin()
-        .replace("\n", "\r\n")
+    """.trimMargin()
+      .replace("\n", "\r\n")
 
     val parts = MultipartReader(
       boundary = "simple boundary",
@@ -81,8 +81,8 @@ class MultipartReaderTest {
         |
         |abcd
         |--simple boundary--
-        """.trimMargin()
-        .replace("\n", "\r\n")
+    """.trimMargin()
+      .replace("\n", "\r\n")
 
     val responseBody = multipart.toResponseBody(
       "application/multipart; boundary=\"simple boundary\"".toMediaType()
@@ -103,8 +103,9 @@ class MultipartReaderTest {
         |
         |abcd
         |efgh
-        |""".trimMargin()
-        .replace("\n", "\r\n")
+        |
+    """.trimMargin()
+      .replace("\n", "\r\n")
 
     val parts = MultipartReader(
       boundary = "simple boundary",
@@ -129,8 +130,9 @@ class MultipartReaderTest {
     val multipart = """
         |--simple boundary
         |abcd
-        |""".trimMargin()
-        .replace("\n", "\r\n")
+        |
+    """.trimMargin()
+      .replace("\n", "\r\n")
 
     val parts = MultipartReader(
       boundary = "simple boundary",
@@ -153,9 +155,9 @@ class MultipartReaderTest {
         |
         |efgh
         |--simple boundary--
-        """.trimMargin()
-        .replace("\n", "\r\n")
-        .replace(Regex("(?m)abcd\r\n"), "abcd\n")
+    """.trimMargin()
+      .replace("\n", "\r\n")
+      .replace(Regex("(?m)abcd\r\n"), "abcd\n")
 
     val parts = MultipartReader(
       boundary = "simple boundary",
@@ -177,8 +179,8 @@ class MultipartReaderTest {
         |
         |efgh
         |--simple boundary--
-        """.trimMargin()
-        .replace("\n", "\r\n")
+    """.trimMargin()
+      .replace("\n", "\r\n")
 
     val parts = MultipartReader(
       boundary = "simple boundary",
@@ -202,8 +204,8 @@ class MultipartReaderTest {
         |
         |mnop
         |--simple boundary--
-        """.trimMargin()
-        .replace("\n", "\r\n")
+    """.trimMargin()
+      .replace("\n", "\r\n")
 
     val parts = MultipartReader(
       boundary = "simple boundary",
@@ -228,8 +230,8 @@ class MultipartReaderTest {
         |
         |mnop
         |--simple boundary--
-        """.trimMargin()
-        .replace("\n", "\r\n")
+    """.trimMargin()
+      .replace("\n", "\r\n")
 
     val parts = MultipartReader(
       boundary = "simple boundary",
@@ -256,8 +258,8 @@ class MultipartReaderTest {
         |
         |abcd
         |--simple boundary--
-        """.trimMargin()
-        .replace("\n", "\r\n")
+    """.trimMargin()
+      .replace("\n", "\r\n")
 
     val parts = MultipartReader(
       boundary = "simple boundary",
@@ -294,8 +296,8 @@ class MultipartReaderTest {
   @Test fun `zero parts`() {
     val multipart = """
         |--simple boundary--
-        """.trimMargin()
-        .replace("\n", "\r\n")
+    """.trimMargin()
+      .replace("\n", "\r\n")
 
     val parts = MultipartReader(
       boundary = "simple boundary",
@@ -318,8 +320,8 @@ class MultipartReaderTest {
         |
         |abcd
         |--simple boundary--
-        """.trimMargin()
-        .replace("\n", "\r\n")
+    """.trimMargin()
+      .replace("\n", "\r\n")
 
     val parts = MultipartReader(
       boundary = "simple boundary",
@@ -340,8 +342,9 @@ class MultipartReaderTest {
         |abcd
         |--simple boundary--
         |this is the epilogue! it is also invisible to application code
-        |""".trimMargin()
-        .replace("\n", "\r\n")
+        |
+    """.trimMargin()
+      .replace("\n", "\r\n")
 
     val parts = MultipartReader(
       boundary = "simple boundary",
@@ -361,9 +364,9 @@ class MultipartReaderTest {
         |
         |abcd
         |--simple boundary--
-        """.trimMargin()
-        .replace(Regex("(?m)simple boundary$"), "simple boundary \t \t")
-        .replace("\n", "\r\n")
+    """.trimMargin()
+      .replace(Regex("(?m)simple boundary$"), "simple boundary \t \t")
+      .replace("\n", "\r\n")
 
     val parts = MultipartReader(
       boundary = "simple boundary",
@@ -383,9 +386,9 @@ class MultipartReaderTest {
         |
         |abcd
         |--simple boundary--
-        """.trimMargin()
-        .replace(Regex("(?m)simple boundary--$"), "simple boundary-- \t \t")
-        .replace("\n", "\r\n")
+    """.trimMargin()
+      .replace(Regex("(?m)simple boundary--$"), "simple boundary-- \t \t")
+      .replace("\n", "\r\n")
 
     val parts = MultipartReader(
       boundary = "simple boundary",
@@ -402,9 +405,9 @@ class MultipartReaderTest {
   @Test fun `other characters after boundary`() {
     val multipart = """
         |--simple boundary hi
-        """.trimMargin()
-        .replace(Regex("(?m)simple boundary$"), "simple boundary ")
-        .replace("\n", "\r\n")
+    """.trimMargin()
+      .replace(Regex("(?m)simple boundary$"), "simple boundary ")
+      .replace("\n", "\r\n")
 
     val parts = MultipartReader(
       boundary = "simple boundary",
@@ -425,8 +428,8 @@ class MultipartReaderTest {
         |
         |abcd
         |--simple boundary  --
-        """.trimMargin()
-        .replace("\n", "\r\n")
+    """.trimMargin()
+      .replace("\n", "\r\n")
 
     val parts = MultipartReader(
       boundary = "simple boundary",
@@ -454,8 +457,8 @@ class MultipartReaderTest {
         |
         |efgh
         |-----
-        """.trimMargin()
-        .replace("\n", "\r\n")
+    """.trimMargin()
+      .replace("\n", "\r\n")
 
     val parts = MultipartReader(
       boundary = "-",
@@ -482,8 +485,8 @@ class MultipartReaderTest {
         |
         |efgh
         |--simple boundary--
-        """.trimMargin()
-        .replace("\n", "\r\n")
+    """.trimMargin()
+      .replace("\n", "\r\n")
 
     val parts = MultipartReader(
       boundary = "simple boundary",
@@ -511,11 +514,11 @@ class MultipartReaderTest {
   /** Confirm that [MultipartBody] and [MultipartReader] can work together. */
   @Test fun `multipart round trip`() {
     val body = MultipartBody.Builder("boundary")
-        .setType(MultipartBody.PARALLEL)
-        .addPart("Quick".toRequestBody("text/plain".toMediaType()))
-        .addFormDataPart("color", "Brown")
-        .addFormDataPart("animal", "fox.txt", "Fox".toRequestBody())
-        .build()
+      .setType(MultipartBody.PARALLEL)
+      .addPart("Quick".toRequestBody("text/plain".toMediaType()))
+      .addFormDataPart("color", "Brown")
+      .addFormDataPart("animal", "fox.txt", "Fox".toRequestBody())
+      .build()
 
     val bodyContent = Buffer()
     body.writeTo(bodyContent)

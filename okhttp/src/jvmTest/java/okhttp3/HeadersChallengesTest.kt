@@ -26,8 +26,9 @@ class HeadersChallengesTest {
   @Test fun testDigestChallengeWithStrictRfc2617Header() {
     val headers = Headers.Builder()
       .add(
-        "WWW-Authenticate", "Digest realm=\"myrealm\", nonce=\"fjalskdflwejrlaskdfjlaskdjflaks"
-          + "jdflkasdf\", qop=\"auth\", stale=\"FALSE\""
+        "WWW-Authenticate",
+        "Digest realm=\"myrealm\", nonce=\"fjalskdflwejrlaskdfjlaskdjflaks" +
+          "jdflkasdf\", qop=\"auth\", stale=\"FALSE\""
       )
       .build()
     val challenges = headers.parseChallenges("WWW-Authenticate")
@@ -45,8 +46,9 @@ class HeadersChallengesTest {
   @Test fun testDigestChallengeWithDifferentlyOrderedAuthParams() {
     val headers = Headers.Builder()
       .add(
-        "WWW-Authenticate", "Digest qop=\"auth\", realm=\"myrealm\", nonce=\"fjalskdflwejrlask"
-          + "dfjlaskdjflaksjdflkasdf\", stale=\"FALSE\""
+        "WWW-Authenticate",
+        "Digest qop=\"auth\", realm=\"myrealm\", nonce=\"fjalskdflwejrlask" +
+          "dfjlaskdjflaksjdflkasdf\", stale=\"FALSE\""
       )
       .build()
     val challenges = headers.parseChallenges("WWW-Authenticate")
@@ -64,8 +66,9 @@ class HeadersChallengesTest {
   @Test fun testDigestChallengeWithDifferentlyOrderedAuthParams2() {
     val headers = Headers.Builder()
       .add(
-        "WWW-Authenticate", "Digest qop=\"auth\", nonce=\"fjalskdflwejrlaskdfjlaskdjflaksjdflk"
-          + "asdf\", realm=\"myrealm\", stale=\"FALSE\""
+        "WWW-Authenticate",
+        "Digest qop=\"auth\", nonce=\"fjalskdflwejrlaskdfjlaskdjflaksjdflk" +
+          "asdf\", realm=\"myrealm\", stale=\"FALSE\""
       )
       .build()
     val challenges = headers.parseChallenges("WWW-Authenticate")
@@ -83,8 +86,9 @@ class HeadersChallengesTest {
   @Test fun testDigestChallengeWithMissingRealm() {
     val headers = Headers.Builder()
       .add(
-        "WWW-Authenticate", "Digest qop=\"auth\", underrealm=\"myrealm\", nonce=\"fjalskdflwej"
-          + "rlaskdfjlaskdjflaksjdflkasdf\", stale=\"FALSE\""
+        "WWW-Authenticate",
+        "Digest qop=\"auth\", underrealm=\"myrealm\", nonce=\"fjalskdflwej" +
+          "rlaskdfjlaskdjflaksjdflkasdf\", stale=\"FALSE\""
       )
       .build()
     val challenges = headers.parseChallenges("WWW-Authenticate")
@@ -102,8 +106,9 @@ class HeadersChallengesTest {
   @Test fun testDigestChallengeWithAdditionalSpaces() {
     val headers = Headers.Builder()
       .add(
-        "WWW-Authenticate", "Digest qop=\"auth\",    realm=\"myrealm\", nonce=\"fjalskdflwejrl"
-          + "askdfjlaskdjflaksjdflkasdf\", stale=\"FALSE\""
+        "WWW-Authenticate",
+        "Digest qop=\"auth\",    realm=\"myrealm\", nonce=\"fjalskdflwejrl" +
+          "askdfjlaskdjflaksjdflkasdf\", stale=\"FALSE\""
       )
       .build()
     val challenges = headers.parseChallenges("WWW-Authenticate")
@@ -121,8 +126,9 @@ class HeadersChallengesTest {
   @Test fun testDigestChallengeWithAdditionalSpacesBeforeFirstAuthParam() {
     val headers = Headers.Builder()
       .add(
-        "WWW-Authenticate", "Digest    realm=\"myrealm\", nonce=\"fjalskdflwejrlaskdfjlaskdjfl"
-          + "aksjdflkasdf\", qop=\"auth\", stale=\"FALSE\""
+        "WWW-Authenticate",
+        "Digest    realm=\"myrealm\", nonce=\"fjalskdflwejrlaskdfjlaskdjfl" +
+          "aksjdflkasdf\", qop=\"auth\", stale=\"FALSE\""
       )
       .build()
     val challenges = headers.parseChallenges("WWW-Authenticate")
@@ -140,8 +146,9 @@ class HeadersChallengesTest {
   @Test fun testDigestChallengeWithCamelCasedNames() {
     val headers = Headers.Builder()
       .add(
-        "WWW-Authenticate", "DiGeSt qop=\"auth\", rEaLm=\"myrealm\", nonce=\"fjalskdflwejrlask"
-          + "dfjlaskdjflaksjdflkasdf\", stale=\"FALSE\""
+        "WWW-Authenticate",
+        "DiGeSt qop=\"auth\", rEaLm=\"myrealm\", nonce=\"fjalskdflwejrlask" +
+          "dfjlaskdjflaksjdflkasdf\", stale=\"FALSE\""
       )
       .build()
     val challenges = headers.parseChallenges("WWW-Authenticate")
@@ -160,8 +167,9 @@ class HeadersChallengesTest {
     // Strict RFC 2617 camelcased.
     val headers = Headers.Builder()
       .add(
-        "WWW-Authenticate", "DIgEsT rEaLm=\"myrealm\", nonce=\"fjalskdflwejrlaskdfjlaskdjflaks"
-          + "jdflkasdf\", qop=\"auth\", stale=\"FALSE\""
+        "WWW-Authenticate",
+        "DIgEsT rEaLm=\"myrealm\", nonce=\"fjalskdflwejrlaskdfjlaskdjflaks" +
+          "jdflkasdf\", qop=\"auth\", stale=\"FALSE\""
       )
       .build()
     val challenges = headers.parseChallenges("WWW-Authenticate")
@@ -360,7 +368,8 @@ class HeadersChallengesTest {
       .add("WWW-Authenticate", "Other abc==")
       .build()
     assertThat(headers.parseChallenges("WWW-Authenticate"))
-      .isEqualTo(listOf(Challenge("Other", mapOf(null to "abc==")))
+      .isEqualTo(
+        listOf(Challenge("Other", mapOf(null to "abc==")))
       )
   }
 

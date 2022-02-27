@@ -15,12 +15,12 @@
  */
 package okhttp3.recipes.kt
 
-import java.io.IOException
-import java.security.cert.X509Certificate
 import okhttp3.OkHttpClient
 import okhttp3.Request.Builder
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.decodeCertificatePem
+import java.io.IOException
+import java.security.cert.X509Certificate
 
 class CustomTrust {
   // PEM files for root certificates of Comodo and Entrust. These two CAs are sufficient to view
@@ -62,7 +62,7 @@ class CustomTrust {
     0MC2Hb46TpSi125sC8KKfPog88Tk5c0NqMuRkrF8hey1FGlmDoLnzc7ILaZRfyHB
     NVOFBkpdn627G190
     -----END CERTIFICATE-----
-    """.trimIndent().decodeCertificatePem()
+  """.trimIndent().decodeCertificatePem()
 
   // CN=Entrust Root Certification Authority, OU="(c) 2006 Entrust, Inc.", OU=www.entrust.net/CPS is incorporated by reference, O="Entrust, Inc.", C=US
   val entrustRootCertificateAuthority = """
@@ -93,7 +93,7 @@ class CustomTrust {
     eu6FSqdQgPCnXEqULl8FmTxSQeDNtGPPAUO6nIPcj2A781q0tHuu2guQOHXvgR1m
     0vdXcDazv/wor3ElhVsT/h5/WrQ8
     -----END CERTIFICATE-----
-    """.trimIndent().decodeCertificatePem()
+  """.trimIndent().decodeCertificatePem()
 
   // CN=Let's Encrypt Authority X3, O=Let's Encrypt, C=US
   val letsEncryptCertificateAuthority = """
@@ -124,7 +124,7 @@ class CustomTrust {
     PfZ+G6Z6h7mjem0Y+iWlkYcV4PIWL1iwBi8saCbGS5jN2p8M+X+Q7UNKEkROb3N6
     KOqkqm57TH2H3eDJAkSnh6/DNFu0Qg==
     -----END CERTIFICATE-----
-    """.trimIndent().decodeCertificatePem()
+  """.trimIndent().decodeCertificatePem()
 
   private val client: OkHttpClient
 
@@ -133,15 +133,15 @@ class CustomTrust {
     // instead read this from a resource file that gets bundled with the application.
     val certificates =
       HandshakeCertificates.Builder()
-          .addTrustedCertificate(letsEncryptCertificateAuthority)
-          .addTrustedCertificate(entrustRootCertificateAuthority)
-          .addTrustedCertificate(comodoRsaCertificationAuthority)
-          // Uncomment if standard certificates are also required.
-          // .addPlatformTrustedCertificates()
-          .build()
-    client = OkHttpClient.Builder()
-        .sslSocketFactory(certificates.sslSocketFactory(), certificates.trustManager)
+        .addTrustedCertificate(letsEncryptCertificateAuthority)
+        .addTrustedCertificate(entrustRootCertificateAuthority)
+        .addTrustedCertificate(comodoRsaCertificationAuthority)
+        // Uncomment if standard certificates are also required.
+        // .addPlatformTrustedCertificates()
         .build()
+    client = OkHttpClient.Builder()
+      .sslSocketFactory(certificates.sslSocketFactory(), certificates.trustManager)
+      .build()
   }
 
   fun run() {
@@ -152,21 +152,21 @@ class CustomTrust {
   private fun showUrl(url: String) {
     val request = Builder().url(url).build()
     client.newCall(request)
-        .execute()
-        .use { response ->
-          if (!response.isSuccessful) {
-            val responseHeaders = response.headers
-            for (i in 0 until responseHeaders.size) {
-              println(responseHeaders.name(i) + ": " + responseHeaders.value(i))
-            }
-            throw IOException("Unexpected code $response")
+      .execute()
+      .use { response ->
+        if (!response.isSuccessful) {
+          val responseHeaders = response.headers
+          for (i in 0 until responseHeaders.size) {
+            println(responseHeaders.name(i) + ": " + responseHeaders.value(i))
           }
-          println(response.body!!.string())
-
-          for (peerCertificate in response.handshake?.peerCertificates.orEmpty()) {
-            println((peerCertificate as X509Certificate).subjectDN)
-          }
+          throw IOException("Unexpected code $response")
         }
+        println(response.body!!.string())
+
+        for (peerCertificate in response.handshake?.peerCertificates.orEmpty()) {
+          println((peerCertificate as X509Certificate).subjectDN)
+        }
+      }
   }
 }
 

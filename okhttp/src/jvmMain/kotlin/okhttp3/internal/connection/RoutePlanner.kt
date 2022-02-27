@@ -15,9 +15,9 @@
  */
 package okhttp3.internal.connection
 
-import java.io.IOException
 import okhttp3.Address
 import okhttp3.HttpUrl
+import java.io.IOException
 
 /**
  * Policy on choosing which connection to use for an exchange and any retries that follow. This uses

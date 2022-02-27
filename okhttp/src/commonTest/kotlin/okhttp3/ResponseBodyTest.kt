@@ -18,7 +18,6 @@ package okhttp3
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isTrue
-import kotlin.test.Test
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
 import okio.Buffer
@@ -28,6 +27,7 @@ import okio.ByteString.Companion.encodeUtf8
 import okio.IOException
 import okio.Source
 import okio.buffer
+import kotlin.test.Test
 
 class ResponseBodyTest {
   @Test

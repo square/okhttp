@@ -15,7 +15,6 @@
  */
 package okhttp3.recipes.kt
 
-import java.io.IOException
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -23,6 +22,7 @@ import okhttp3.RequestBody.Companion.asRequestBody
 import okio.Path.Companion.toPath
 import okio.buffer
 import okio.fakefilesystem.FakeFileSystem
+import java.io.IOException
 
 class PostPath {
   private val client = OkHttpClient()
@@ -35,9 +35,9 @@ class PostPath {
     }
 
     val request = Request.Builder()
-        .url("https://httpbin.org/anything")
-        .put(path.asRequestBody(fileSystem, MEDIA_TYPE_JSON))
-        .build()
+      .url("https://httpbin.org/anything")
+      .put(path.asRequestBody(fileSystem, MEDIA_TYPE_JSON))
+      .build()
 
     client.newCall(request).execute().use { response ->
       if (!response.isSuccessful) throw IOException("Unexpected code $response")

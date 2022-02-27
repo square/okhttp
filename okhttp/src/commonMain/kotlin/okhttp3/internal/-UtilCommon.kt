@@ -15,7 +15,6 @@
  */
 package okhttp3.internal
 
-import kotlin.jvm.JvmField
 import okhttp3.Headers
 import okhttp3.OkHttp
 import okhttp3.RequestBody
@@ -32,6 +31,7 @@ import okio.IOException
 import okio.Options
 import okio.Path
 import okio.use
+import kotlin.jvm.JvmField
 
 // Temporary until we have a HttpUrl in common
 expect class HttpUrlRepresentation
@@ -138,7 +138,6 @@ internal fun String.indexOfLastNonAsciiWhitespace(
   return startIndex
 }
 
-
 /** Equivalent to `string.substring(startIndex, endIndex).trim()`. */
 fun String.trimSubstring(startIndex: Int = 0, endIndex: Int = length): String {
   val start = indexOfFirstNonAsciiWhitespace(startIndex, endIndex)
@@ -218,9 +217,11 @@ internal fun BufferedSink.writeMedium(medium: Int) {
 
 @Throws(IOException::class)
 internal fun BufferedSource.readMedium(): Int {
-  return (readByte() and 0xff shl 16
-    or (readByte() and 0xff shl 8)
-    or (readByte() and 0xff))
+  return (
+    readByte() and 0xff shl 16
+      or (readByte() and 0xff shl 8)
+      or (readByte() and 0xff)
+    )
 }
 
 /** Run [block] until it either throws an [IOException] or completes. */

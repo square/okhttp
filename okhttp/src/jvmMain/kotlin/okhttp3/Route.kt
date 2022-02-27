@@ -15,9 +15,9 @@
  */
 package okhttp3
 
+import okhttp3.internal.toCanonicalHost
 import java.net.InetSocketAddress
 import java.net.Proxy
-import okhttp3.internal.toCanonicalHost
 
 /**
  * The concrete route used by a connection to reach an abstract origin server. When creating a
@@ -44,23 +44,26 @@ class Route(
 
   @JvmName("-deprecated_address")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "address"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "address"),
+    level = DeprecationLevel.ERROR
+  )
   fun address(): Address = address
 
   @JvmName("-deprecated_proxy")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "proxy"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "proxy"),
+    level = DeprecationLevel.ERROR
+  )
   fun proxy(): Proxy = proxy
 
   @JvmName("-deprecated_socketAddress")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "socketAddress"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "socketAddress"),
+    level = DeprecationLevel.ERROR
+  )
   fun socketAddress(): InetSocketAddress = socketAddress
 
   /**
@@ -73,9 +76,9 @@ class Route(
 
   override fun equals(other: Any?): Boolean {
     return other is Route &&
-        other.address == address &&
-        other.proxy == proxy &&
-        other.socketAddress == socketAddress
+      other.address == address &&
+      other.proxy == proxy &&
+      other.socketAddress == socketAddress
   }
 
   override fun hashCode(): Int {

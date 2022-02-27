@@ -15,17 +15,6 @@
  */
 package okhttp3
 
-import java.io.IOException
-import java.net.CookieManager
-import java.net.Proxy
-import java.net.ProxySelector
-import java.net.ResponseCache
-import java.net.SocketAddress
-import java.net.URI
-import java.time.Duration
-import java.util.AbstractList
-import javax.net.ssl.SSLSession
-import javax.net.ssl.SSLSocketFactory
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.internal.platform.Platform.Companion.get
@@ -40,6 +29,17 @@ import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
+import java.io.IOException
+import java.net.CookieManager
+import java.net.Proxy
+import java.net.ProxySelector
+import java.net.ResponseCache
+import java.net.SocketAddress
+import java.net.URI
+import java.time.Duration
+import java.util.AbstractList
+import javax.net.ssl.SSLSession
+import javax.net.ssl.SSLSocketFactory
 
 class OkHttpClientTest {
   @RegisterExtension
@@ -189,8 +189,8 @@ class OkHttpClientTest {
       fail<Any>()
     } catch (expected: IllegalArgumentException) {
       assertThat(expected.message).isEqualTo(
-        "protocols containing h2_prior_knowledge cannot use other protocols: "
-          + "[h2_prior_knowledge, http/1.1]"
+        "protocols containing h2_prior_knowledge cannot use other protocols: " +
+          "[h2_prior_knowledge, http/1.1]"
       )
     }
   }
@@ -202,8 +202,8 @@ class OkHttpClientTest {
       fail<Any>()
     } catch (expected: IllegalArgumentException) {
       assertThat(expected.message).isEqualTo(
-        "protocols containing h2_prior_knowledge cannot use other protocols: "
-          + "[h2_prior_knowledge, h2_prior_knowledge]"
+        "protocols containing h2_prior_knowledge cannot use other protocols: " +
+          "[h2_prior_knowledge, h2_prior_knowledge]"
       )
     }
   }
@@ -352,16 +352,19 @@ class OkHttpClientTest {
     )
 
     // logically different scope of client for route db
-    assertNotSame(client.routeDatabase,
+    assertNotSame(
+      client.routeDatabase,
       client.newBuilder()
         .dns { listOf() }
         .build()
         .routeDatabase
     )
-    assertNotSame(client.routeDatabase, client.newBuilder()
-      .proxyAuthenticator { _: Route?, _: Response? -> null }
-      .build()
-      .routeDatabase
+    assertNotSame(
+      client.routeDatabase,
+      client.newBuilder()
+        .proxyAuthenticator { _: Route?, _: Response? -> null }
+        .build()
+        .routeDatabase
     )
     assertNotSame(
       client.routeDatabase,
@@ -398,7 +401,8 @@ class OkHttpClientTest {
         .build()
         .routeDatabase
     )
-    assertNotSame(client.routeDatabase,
+    assertNotSame(
+      client.routeDatabase,
       client.newBuilder()
         .hostnameVerifier { _: String?, _: SSLSession? -> false }
         .build()

@@ -15,10 +15,6 @@
  */
 package okhttp3.internal.ws
 
-import java.io.EOFException
-import java.io.IOException
-import java.net.ProtocolException
-import java.util.Random
 import okhttp3.internal.format
 import okio.Buffer
 import okio.ByteString
@@ -30,6 +26,10 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
+import java.io.EOFException
+import java.io.IOException
+import java.net.ProtocolException
+import java.util.Random
 
 class WebSocketReaderTest {
   private val data = Buffer()

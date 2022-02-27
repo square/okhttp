@@ -15,10 +15,6 @@
  */
 package okhttp3.internal.http2
 
-import java.io.IOException
-import java.util.Arrays
-import java.util.concurrent.atomic.AtomicInteger
-import kotlin.math.pow
 import okhttp3.TestUtil.headerEntries
 import okhttp3.internal.EMPTY_BYTE_ARRAY
 import okhttp3.internal.http2.Http2.FLAG_COMPRESSED
@@ -39,6 +35,10 @@ import okio.buffer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
+import java.io.IOException
+import java.util.Arrays
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.math.pow
 
 class Http2Test {
   val frame = Buffer()
@@ -65,17 +65,22 @@ class Http2Test {
 
     // Check writer sends the same bytes.
     assertThat(sendHeaderFrames(true, sentHeaders)).isEqualTo(frame)
-    reader.nextFrame(requireSettings = false, object : BaseTestHandler() {
-      override fun headers(
-        inFinished: Boolean, streamId: Int,
-        associatedStreamId: Int, headerBlock: List<Header>
-      ) {
-        assertThat(inFinished).isTrue
-        assertThat(streamId).isEqualTo(expectedStreamId)
-        assertThat(associatedStreamId).isEqualTo(-1)
-        assertThat(headerBlock).isEqualTo(sentHeaders)
+    reader.nextFrame(
+      requireSettings = false,
+      object : BaseTestHandler() {
+        override fun headers(
+          inFinished: Boolean,
+          streamId: Int,
+          associatedStreamId: Int,
+          headerBlock: List<Header>
+        ) {
+          assertThat(inFinished).isTrue
+          assertThat(streamId).isEqualTo(expectedStreamId)
+          assertThat(associatedStreamId).isEqualTo(-1)
+          assertThat(headerBlock).isEqualTo(sentHeaders)
+        }
       }
-    })
+    )
   }
 
   @Test fun headersWithPriority() {
@@ -88,28 +93,33 @@ class Http2Test {
     frame.writeInt(0) // Independent stream.
     frame.writeByte(255) // Heaviest weight, zero-indexed.
     frame.writeAll(headerBytes)
-    reader.nextFrame(requireSettings = false, object : BaseTestHandler() {
-      override fun priority(
-        streamId: Int, streamDependency: Int, weight: Int,
-        exclusive: Boolean
-      ) {
-        assertThat(streamDependency).isEqualTo(0)
-        assertThat(weight).isEqualTo(256)
-        assertThat(exclusive).isFalse
-      }
+    reader.nextFrame(
+      requireSettings = false,
+      object : BaseTestHandler() {
+        override fun priority(
+          streamId: Int,
+          streamDependency: Int,
+          weight: Int,
+          exclusive: Boolean
+        ) {
+          assertThat(streamDependency).isEqualTo(0)
+          assertThat(weight).isEqualTo(256)
+          assertThat(exclusive).isFalse
+        }
 
-      override fun headers(
-        inFinished: Boolean,
-        streamId: Int,
-        associatedStreamId: Int,
-        headerBlock: List<Header>
-      ) {
-        assertThat(inFinished).isFalse
-        assertThat(streamId).isEqualTo(expectedStreamId)
-        assertThat(associatedStreamId).isEqualTo(-1)
-        assertThat(headerBlock).isEqualTo(sentHeaders)
+        override fun headers(
+          inFinished: Boolean,
+          streamId: Int,
+          associatedStreamId: Int,
+          headerBlock: List<Header>
+        ) {
+          assertThat(inFinished).isFalse
+          assertThat(streamId).isEqualTo(expectedStreamId)
+          assertThat(associatedStreamId).isEqualTo(-1)
+          assertThat(headerBlock).isEqualTo(sentHeaders)
+        }
       }
-    })
+    )
   }
 
   /** Headers are compressed, then framed.  */
@@ -135,17 +145,22 @@ class Http2Test {
     assertThat(sendHeaderFrames(false, sentHeaders)).isEqualTo(frame)
 
     // Reading the above frames should result in a concatenated headerBlock.
-    reader.nextFrame(requireSettings = false, object : BaseTestHandler() {
-      override fun headers(
-        inFinished: Boolean, streamId: Int,
-        associatedStreamId: Int, headerBlock: List<Header>
-      ) {
-        assertThat(inFinished).isFalse
-        assertThat(streamId).isEqualTo(expectedStreamId)
-        assertThat(associatedStreamId).isEqualTo(-1)
-        assertThat(headerBlock).isEqualTo(sentHeaders)
+    reader.nextFrame(
+      requireSettings = false,
+      object : BaseTestHandler() {
+        override fun headers(
+          inFinished: Boolean,
+          streamId: Int,
+          associatedStreamId: Int,
+          headerBlock: List<Header>
+        ) {
+          assertThat(inFinished).isFalse
+          assertThat(streamId).isEqualTo(expectedStreamId)
+          assertThat(associatedStreamId).isEqualTo(-1)
+          assertThat(headerBlock).isEqualTo(sentHeaders)
+        }
       }
-    })
+    )
   }
 
   @Test fun pushPromise() {
@@ -168,17 +183,20 @@ class Http2Test {
     assertThat(sendPushPromiseFrames(expectedPromisedStreamId, pushPromise)).isEqualTo(
       frame
     )
-    reader.nextFrame(requireSettings = false, object : BaseTestHandler() {
-      override fun pushPromise(
-        streamId: Int,
-        promisedStreamId: Int,
-        requestHeaders: List<Header>
-      ) {
-        assertThat(streamId).isEqualTo(expectedStreamId)
-        assertThat(promisedStreamId).isEqualTo(expectedPromisedStreamId)
-        assertThat(requestHeaders).isEqualTo(pushPromise)
+    reader.nextFrame(
+      requireSettings = false,
+      object : BaseTestHandler() {
+        override fun pushPromise(
+          streamId: Int,
+          promisedStreamId: Int,
+          requestHeaders: List<Header>
+        ) {
+          assertThat(streamId).isEqualTo(expectedStreamId)
+          assertThat(promisedStreamId).isEqualTo(expectedPromisedStreamId)
+          assertThat(requestHeaders).isEqualTo(pushPromise)
+        }
       }
-    })
+    )
   }
 
   /** Headers are compressed, then framed.  */
@@ -208,17 +226,20 @@ class Http2Test {
     )
 
     // Reading the above frames should result in a concatenated headerBlock.
-    reader.nextFrame(requireSettings = false, object : BaseTestHandler() {
-      override fun pushPromise(
-        streamId: Int,
-        promisedStreamId: Int,
-        requestHeaders: List<Header>
-      ) {
-        assertThat(streamId).isEqualTo(expectedStreamId)
-        assertThat(promisedStreamId).isEqualTo(expectedPromisedStreamId)
-        assertThat(requestHeaders).isEqualTo(pushPromise)
+    reader.nextFrame(
+      requireSettings = false,
+      object : BaseTestHandler() {
+        override fun pushPromise(
+          streamId: Int,
+          promisedStreamId: Int,
+          requestHeaders: List<Header>
+        ) {
+          assertThat(streamId).isEqualTo(expectedStreamId)
+          assertThat(promisedStreamId).isEqualTo(expectedPromisedStreamId)
+          assertThat(requestHeaders).isEqualTo(pushPromise)
+        }
       }
-    })
+    )
   }
 
   @Test fun readRstStreamFrame() {
@@ -227,12 +248,15 @@ class Http2Test {
     frame.writeByte(FLAG_NONE)
     frame.writeInt(expectedStreamId and 0x7fffffff)
     frame.writeInt(ErrorCode.PROTOCOL_ERROR.httpCode)
-    reader.nextFrame(requireSettings = false, object : BaseTestHandler() {
-      override fun rstStream(streamId: Int, errorCode: ErrorCode) {
-        assertThat(streamId).isEqualTo(expectedStreamId)
-        assertThat(errorCode).isEqualTo(ErrorCode.PROTOCOL_ERROR)
+    reader.nextFrame(
+      requireSettings = false,
+      object : BaseTestHandler() {
+        override fun rstStream(streamId: Int, errorCode: ErrorCode) {
+          assertThat(streamId).isEqualTo(expectedStreamId)
+          assertThat(errorCode).isEqualTo(ErrorCode.PROTOCOL_ERROR)
+        }
       }
-    })
+    )
   }
 
   @Test fun readSettingsFrame() {
@@ -245,14 +269,17 @@ class Http2Test {
     frame.writeInt(reducedTableSizeBytes)
     frame.writeShort(2) // SETTINGS_ENABLE_PUSH
     frame.writeInt(0)
-    reader.nextFrame(requireSettings = false, object : BaseTestHandler() {
-      override fun settings(clearPrevious: Boolean, settings: Settings) {
-        // No clearPrevious in HTTP/2.
-        assertThat(clearPrevious).isFalse
-        assertThat(settings.headerTableSize).isEqualTo(reducedTableSizeBytes)
-        assertThat(settings.getEnablePush(true)).isFalse
+    reader.nextFrame(
+      requireSettings = false,
+      object : BaseTestHandler() {
+        override fun settings(clearPrevious: Boolean, settings: Settings) {
+          // No clearPrevious in HTTP/2.
+          assertThat(clearPrevious).isFalse
+          assertThat(settings.headerTableSize).isEqualTo(reducedTableSizeBytes)
+          assertThat(settings.getEnablePush(true)).isFalse
+        }
       }
-    })
+    )
   }
 
   @Test fun readSettingsFrameInvalidPushValue() {
@@ -278,11 +305,14 @@ class Http2Test {
     frame.writeShort(7) // old number for SETTINGS_INITIAL_WINDOW_SIZE
     frame.writeInt(1)
     val settingValue = AtomicInteger()
-    reader.nextFrame(requireSettings = false, object : BaseTestHandler() {
-      override fun settings(clearPrevious: Boolean, settings: Settings) {
-        settingValue.set(settings[7])
+    reader.nextFrame(
+      requireSettings = false,
+      object : BaseTestHandler() {
+        override fun settings(clearPrevious: Boolean, settings: Settings) {
+          settingValue.set(settings[7])
+        }
       }
-    })
+    )
     assertThat(1).isEqualTo(settingValue.toInt())
   }
 
@@ -293,11 +323,14 @@ class Http2Test {
     frame.writeInt(0) // Settings are always on the connection stream 0.
     frame.write("f000".decodeHex()) // Id reserved for experimental use.
     frame.writeInt(1)
-    reader.nextFrame(requireSettings = false, object : BaseTestHandler() {
-      override fun settings(clearPrevious: Boolean, settings: Settings) {
-        // no-op
+    reader.nextFrame(
+      requireSettings = false,
+      object : BaseTestHandler() {
+        override fun settings(clearPrevious: Boolean, settings: Settings) {
+          // no-op
+        }
       }
-    })
+    )
   }
 
   @Test fun readSettingsFrameNegativeWindowSize() {
@@ -376,13 +409,16 @@ class Http2Test {
 
     // Check writer sends the same bytes.
     assertThat(sendPingFrame(true, expectedPayload1, expectedPayload2)).isEqualTo(frame)
-    reader.nextFrame(requireSettings = false, object : BaseTestHandler() {
-      override fun ping(ack: Boolean, payload1: Int, payload2: Int) {
-        assertThat(ack).isTrue
-        assertThat(payload1).isEqualTo(expectedPayload1)
-        assertThat(payload2).isEqualTo(expectedPayload2)
+    reader.nextFrame(
+      requireSettings = false,
+      object : BaseTestHandler() {
+        override fun ping(ack: Boolean, payload1: Int, payload2: Int) {
+          assertThat(ack).isTrue
+          assertThat(payload1).isEqualTo(expectedPayload1)
+          assertThat(payload2).isEqualTo(expectedPayload2)
+        }
       }
-    })
+    )
   }
 
   @Test fun maxLengthDataFrame() {
@@ -396,17 +432,20 @@ class Http2Test {
 
     // Check writer sends the same bytes.
     assertThat(sendDataFrame(Buffer().write(expectedData))).isEqualTo(frame)
-    reader.nextFrame(requireSettings = false, object : BaseTestHandler() {
-      override fun data(inFinished: Boolean, streamId: Int, source: BufferedSource, length: Int) {
-        assertThat(inFinished).isFalse
-        assertThat(streamId).isEqualTo(expectedStreamId)
-        assertThat(length).isEqualTo(Http2.INITIAL_MAX_FRAME_SIZE)
-        val data = source.readByteString(length.toLong())
-        for (b in data.toByteArray()) {
-          assertThat(b).isEqualTo(2.toByte())
+    reader.nextFrame(
+      requireSettings = false,
+      object : BaseTestHandler() {
+        override fun data(inFinished: Boolean, streamId: Int, source: BufferedSource, length: Int) {
+          assertThat(inFinished).isFalse
+          assertThat(streamId).isEqualTo(expectedStreamId)
+          assertThat(length).isEqualTo(Http2.INITIAL_MAX_FRAME_SIZE)
+          val data = source.readByteString(length.toLong())
+          for (b in data.toByteArray()) {
+            assertThat(b).isEqualTo(2.toByte())
+          }
         }
       }
-    })
+    )
   }
 
   @Test fun dataFrameNotAssociateWithStream() {
@@ -551,12 +590,15 @@ class Http2Test {
 
     // Check writer sends the same bytes.
     assertThat(windowUpdate(expectedWindowSizeIncrement)).isEqualTo(frame)
-    reader.nextFrame(requireSettings = false, object : BaseTestHandler() {
-      override fun windowUpdate(streamId: Int, windowSizeIncrement: Long) {
-        assertThat(streamId).isEqualTo(expectedStreamId)
-        assertThat(windowSizeIncrement).isEqualTo(expectedWindowSizeIncrement)
+    reader.nextFrame(
+      requireSettings = false,
+      object : BaseTestHandler() {
+        override fun windowUpdate(streamId: Int, windowSizeIncrement: Long) {
+          assertThat(streamId).isEqualTo(expectedStreamId)
+          assertThat(windowSizeIncrement).isEqualTo(expectedWindowSizeIncrement)
+        }
       }
-    })
+    )
   }
 
   @Test fun badWindowSizeIncrement() {
@@ -588,15 +630,20 @@ class Http2Test {
     // Check writer sends the same bytes.
     assertThat(sendGoAway(expectedStreamId, expectedError, EMPTY_BYTE_ARRAY))
       .isEqualTo(frame)
-    reader.nextFrame(requireSettings = false, object : BaseTestHandler() {
-      override fun goAway(
-        lastGoodStreamId: Int, errorCode: ErrorCode, debugData: ByteString
-      ) {
-        assertThat(lastGoodStreamId).isEqualTo(expectedStreamId)
-        assertThat(errorCode).isEqualTo(expectedError)
-        assertThat(debugData.size).isEqualTo(0)
+    reader.nextFrame(
+      requireSettings = false,
+      object : BaseTestHandler() {
+        override fun goAway(
+          lastGoodStreamId: Int,
+          errorCode: ErrorCode,
+          debugData: ByteString
+        ) {
+          assertThat(lastGoodStreamId).isEqualTo(expectedStreamId)
+          assertThat(errorCode).isEqualTo(expectedError)
+          assertThat(debugData.size).isEqualTo(0)
+        }
       }
-    })
+    )
   }
 
   @Test fun goAwayWithDebugDataRoundTrip() {
@@ -614,15 +661,20 @@ class Http2Test {
 
     // Check writer sends the same bytes.
     assertThat(sendGoAway(0, expectedError, expectedData.toByteArray())).isEqualTo(frame)
-    reader.nextFrame(requireSettings = false, object : BaseTestHandler() {
-      override fun goAway(
-        lastGoodStreamId: Int, errorCode: ErrorCode, debugData: ByteString
-      ) {
-        assertThat(lastGoodStreamId).isEqualTo(0)
-        assertThat(errorCode).isEqualTo(expectedError)
-        assertThat(debugData).isEqualTo(expectedData)
+    reader.nextFrame(
+      requireSettings = false,
+      object : BaseTestHandler() {
+        override fun goAway(
+          lastGoodStreamId: Int,
+          errorCode: ErrorCode,
+          debugData: ByteString
+        ) {
+          assertThat(lastGoodStreamId).isEqualTo(0)
+          assertThat(errorCode).isEqualTo(expectedError)
+          assertThat(debugData).isEqualTo(expectedData)
+        }
       }
-    })
+    )
   }
 
   @Test fun frameSizeError() {

@@ -16,7 +16,6 @@
 
 package okhttp3.internal
 
-import kotlin.jvm.JvmOverloads
 import okhttp3.CacheControl
 import okhttp3.Headers
 import okhttp3.Protocol
@@ -30,9 +29,9 @@ import okhttp3.internal.http.HTTP_MULT_CHOICE
 import okhttp3.internal.http.HTTP_PERM_REDIRECT
 import okhttp3.internal.http.HTTP_SEE_OTHER
 import okhttp3.internal.http.HTTP_TEMP_REDIRECT
-
 import okio.Buffer
 import okio.IOException
+import kotlin.jvm.JvmOverloads
 
 val Response.commonIsSuccessful: Boolean
   get() = code in 200..299
