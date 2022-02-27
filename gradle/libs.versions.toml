@@ -68,7 +68,7 @@ nativeImageSvm = { module = "org.graalvm.nativeimage:svm", version.ref = "graalv
 openjsse = "org.openjsse:openjsse:1.1.9"
 picocli = { module = "info.picocli:picocli", version.ref = "picocli" }
 picocli-compiler = { module = "info.picocli:picocli-codegen", version.ref = "picocli" }
-playservices-safetynet = "com.google.android.gms:play-services-safetynet:17.0.1"
+playservices-safetynet = "com.google.android.gms:play-services-safetynet:18.0.1"
 robolectric-android = "org.robolectric:android-all:12-robolectric-7732740"
 signature-android-apilevel21 = "net.sf.androidscents.signature:android-api-level-21:5.0.1_r2"
 squareup-moshi = { module = "com.squareup.moshi:moshi", version.ref = "com-squareup-moshi" }
