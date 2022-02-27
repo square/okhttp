@@ -4,6 +4,7 @@ import java.net.URL
 import kotlinx.validation.ApiValidationExtension
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.dokka.gradle.DokkaTask
+import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
@@ -17,7 +18,6 @@ buildscript {
     classpath(libs.gradlePlugin.graal)
     classpath(libs.gradlePlugin.bnd)
     classpath(libs.gradlePlugin.shadow)
-    classpath(libs.gradlePlugin.japicmp)
     classpath(libs.gradlePlugin.animalsniffer)
     classpath(libs.gradlePlugin.errorprone)
     classpath(libs.gradlePlugin.spotless)
@@ -255,6 +255,5 @@ tasks.wrapper {
 
 // Fix until 1.6.20 https://youtrack.jetbrains.com/issue/KT-49109
 rootProject.plugins.withType(NodeJsRootPlugin::class.java) {
-  rootProject.the<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension>().nodeVersion =
-    "16.13.0"
+  rootProject.the<NodeJsRootExtension>().nodeVersion = "16.13.0"
 }

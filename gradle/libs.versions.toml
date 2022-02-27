@@ -38,7 +38,6 @@ gradlePlugin-bnd = { module = "biz.aQute.bnd:biz.aQute.bnd.gradle", version.ref 
 gradlePlugin-dokka = "org.jetbrains.dokka:dokka-gradle-plugin:1.6.10"
 gradlePlugin-errorprone = "net.ltgt.gradle:gradle-errorprone-plugin:2.0.2"
 gradlePlugin-graal = "gradle.plugin.com.palantir.graal:gradle-graal:0.10.0"
-gradlePlugin-japicmp = "me.champeau.gradle:japicmp-gradle-plugin:0.3.1"
 gradlePlugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "org-jetbrains-kotlin" }
 gradlePlugin-mavenPublish = "com.vanniktech:gradle-maven-publish-plugin:0.18.0"
 gradlePlugin-shadow = "gradle.plugin.com.github.johnrengelman:shadow:7.1.2"
