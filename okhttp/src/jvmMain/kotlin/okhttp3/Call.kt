@@ -19,7 +19,7 @@ package okhttp3
 import okio.IOException
 import okio.Timeout
 
-actual interface Call {
+actual interface Call : Cloneable {
   actual fun request(): Request
 
   /**
@@ -67,7 +67,7 @@ actual interface Call {
    */
   fun timeout(): Timeout
 
-  actual fun clone(): Call
+  public override actual fun clone(): Call
 
   actual fun interface Factory {
     actual fun newCall(request: Request): Call
