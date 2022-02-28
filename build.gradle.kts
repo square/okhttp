@@ -175,7 +175,7 @@ subprojects {
 
   apply(plugin = "com.diffplug.spotless")
   configure<SpotlessExtension> {
-    ratchetFrom("master")
+    ratchetFrom("origin/master")
     kotlin {
       target("**/*.kt")
       ktlint(libs.versions.ktlint.get()).userData(
