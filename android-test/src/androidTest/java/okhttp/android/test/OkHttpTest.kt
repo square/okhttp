@@ -631,8 +631,7 @@ class OkHttpTest(val server: MockWebServer) {
       override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
     }
 
-    val sslContext = Platform.get().newSSLContext().apply
-    {
+    val sslContext = Platform.get().newSSLContext().apply {
       init(null, arrayOf(trustManager), null)
     }
     val sslSocketFactory = sslContext.socketFactory
