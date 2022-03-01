@@ -583,6 +583,8 @@ class OkHttpTest(val server: MockWebServer) {
   fun testCustomSSLSocketFactoryWithoutALPN() {
     enableTls()
 
+    server.enqueue(MockResponse().setBody("abc"))
+
     val sslSocketFactory = client.sslSocketFactory
     val trustManager = client.x509TrustManager!!
 
