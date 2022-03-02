@@ -306,7 +306,6 @@ jobs:
           java-version: 11
 
       - name: Test
-        run: |
         uses: gradle/gradle-build-action@v2
         with:
           arguments: jvmTest
