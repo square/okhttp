@@ -25,16 +25,10 @@ jobs:
           distribution: 'zulu'
           java-version: 11
 
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/**.gradle.kts', '**/gradle/wrapper/gradle-wrapper.properties', '**/libs.versions.toml') }}
-
       - name: Upload Artifacts
-        run: |
-          ./gradlew clean publish --stacktrace
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: clean publish --stacktrace
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_NEXUS_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_NEXUS_PASSWORD }}
@@ -62,15 +56,10 @@ jobs:
           distribution: 'zulu'
           java-version: 11
 
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/**.gradle.kts', '**/gradle/wrapper/gradle-wrapper.properties', '**/libs.versions.toml') }}
-
       - name: Run Checks
-        run: ./gradlew check -x test
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: check -x test
 
   testopenjdk11:
     runs-on: ubuntu-latest
@@ -87,15 +76,10 @@ jobs:
           distribution: 'zulu'
           java-version: 11
 
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/**.gradle.kts', '**/gradle/wrapper/gradle-wrapper.properties', '**/libs.versions.toml') }}
-
       - name: Run Checks
-        run: ./gradlew jvmTest -Dtest.java.version=11
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: jvmTest -Dtest.java.version=11
 
       - name: Publish Test Report
         if: success() || failure()
@@ -118,15 +102,10 @@ jobs:
           distribution: 'zulu'
           java-version: 11
 
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/**.gradle.kts', '**/gradle/wrapper/gradle-wrapper.properties', '**/libs.versions.toml') }}
-
       - name: Run Checks
-        run: ./gradlew jsTest
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: jsTest
 
       - name: Publish Test Report
         if: success() || failure()
@@ -150,15 +129,10 @@ jobs:
           distribution: 'zulu'
           java-version: 11
 
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/**.gradle.kts', '**/gradle/wrapper/gradle-wrapper.properties', '**/libs.versions.toml') }}
-
       - name: Run Checks
-        run: ./gradlew jvmTest -Dtest.java.version=11
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: jvmTest -Dtest.java.version=11
 
   testopenjdk8:
     runs-on: ubuntu-latest
@@ -176,15 +150,10 @@ jobs:
           distribution: 'zulu'
           java-version: 11
 
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/**.gradle.kts', '**/gradle/wrapper/gradle-wrapper.properties', '**/libs.versions.toml') }}
-
       - name: Run Checks
-        run: ./gradlew jvmTest -Dtest.java.version=8
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: jvmTest -Dtest.java.version=8
 
   testopenjdk8alpn:
     runs-on: ubuntu-latest
@@ -208,15 +177,10 @@ jobs:
           distribution: 'zulu'
           java-version: 11
 
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/**.gradle.kts', '**/gradle/wrapper/gradle-wrapper.properties', '**/libs.versions.toml') }}
-
       - name: Run Checks
-        run: ./gradlew jvmTest -Dtest.java.version=8 -Dokhttp.platform=jdk8alpn -Dalpn.boot.version=8.1.13.v20181017 -Dorg.gradle.java.installations.paths=/opt/hostedtoolcache/Java_Adopt_jdk/8.0.242-8.1/x64
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: jvmTest -Dtest.java.version=8 -Dokhttp.platform=jdk8alpn -Dalpn.boot.version=8.1.13.v20181017 -Dorg.gradle.java.installations.paths=/opt/hostedtoolcache/Java_Adopt_jdk/8.0.242-8.1/x64
 
   testopenjsse:
     runs-on: ubuntu-latest
@@ -234,15 +198,10 @@ jobs:
           distribution: 'zulu'
           java-version: 11
 
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/**.gradle.kts', '**/gradle/wrapper/gradle-wrapper.properties', '**/libs.versions.toml') }}
-
       - name: Run Checks
-        run: ./gradlew jvmTest -Dtest.java.version=8 -Dokhttp.platform=openjsse
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: jvmTest -Dtest.java.version=8 -Dokhttp.platform=openjsse
 
   testconscrypt:
     runs-on: ubuntu-latest
@@ -260,15 +219,10 @@ jobs:
           distribution: 'zulu'
           java-version: 11
 
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/**.gradle.kts', '**/gradle/wrapper/gradle-wrapper.properties', '**/libs.versions.toml') }}
-
       - name: Run Checks
-        run: ./gradlew jvmTest -Dokhttp.platform=conscrypt
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: jvmTest -Dokhttp.platform=conscrypt
 
   testbouncycastle:
     runs-on: ubuntu-latest
@@ -286,15 +240,10 @@ jobs:
           distribution: 'zulu'
           java-version: 11
 
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/**.gradle.kts', '**/gradle/wrapper/gradle-wrapper.properties', '**/libs.versions.toml') }}
-
       - name: Run Checks
-        run: ./gradlew jvmTest -Dokhttp.platform=bouncycastle
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: jvmTest -Dokhttp.platform=bouncycastle
 
   testcorretto:
     runs-on: ubuntu-latest
@@ -313,15 +262,10 @@ jobs:
           distribution: 'zulu'
           java-version: 11
 
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/**.gradle.kts', '**/gradle/wrapper/gradle-wrapper.properties', '**/libs.versions.toml') }}
-
       - name: Run Checks
-        run: ./gradlew jvmTest -Dokhttp.platform=corretto
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: jvmTest -Dokhttp.platform=corretto
 
   testopenjdk17:
     runs-on: ubuntu-latest
@@ -339,15 +283,10 @@ jobs:
           distribution: 'zulu'
           java-version: 11
 
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/**.gradle.kts', '**/gradle/wrapper/gradle-wrapper.properties', '**/libs.versions.toml') }}
-
       - name: Run Checks
-        run: ./gradlew jvmTest -Dtest.java.version=17
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: jvmTest -Dtest.java.version=17
 
   testwindows:
     runs-on: windows-latest
@@ -366,16 +305,10 @@ jobs:
           distribution: 'zulu'
           java-version: 11
 
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/**.gradle.kts', '**/gradle/wrapper/gradle-wrapper.properties', '**/libs.versions.toml') }}
-
       - name: Test
-        run: |
-          ./gradlew jvmTest
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: jvmTest
 
   testgraal:
     runs-on: ubuntu-latest
@@ -394,18 +327,15 @@ jobs:
           distribution: 'zulu'
           java-version: 11
 
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/**.gradle.kts', '**/gradle/wrapper/gradle-wrapper.properties', '**/libs.versions.toml') }}
-
       - name: Build okcurl
-        run: ./gradlew okcurl:nativeImage
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: okcurl:nativeImage
 
       - name: Build ConsoleLauncher
-        run: ./gradlew -PgraalBuild native-image-tests:nativeImage
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: -PgraalBuild native-image-tests:nativeImage
 
       - name: Run Checks
         run: ./native-image-tests/build/graal/ConsoleLauncher
@@ -434,12 +364,8 @@ jobs:
           distribution: 'zulu'
           java-version: 11
 
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/**.gradle.kts', '**/gradle/wrapper/gradle-wrapper.properties', '**/libs.versions.toml') }}
+      - name: Gradle cache
+        uses: gradle/gradle-build-action@v2
 
       - name: AVD cache
         uses: actions/cache@v2
@@ -492,12 +418,8 @@ jobs:
           distribution: 'zulu'
           java-version: 11
 
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/**.gradle.kts', '**/gradle/wrapper/gradle-wrapper.properties', '**/libs.versions.toml') }}
+      - name: Gradle cache
+        uses: gradle/gradle-build-action@v2
 
       - name: AVD cache
         uses: actions/cache@v2
