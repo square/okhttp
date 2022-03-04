@@ -139,11 +139,7 @@ class MultipartBody internal constructor(
       }
 
       val contentLength = body.contentLength()
-      if (contentLength != -1L) {
-        sink.writeUtf8("Content-Length: ")
-            .writeDecimalLong(contentLength)
-            .write(CRLF)
-      } else if (countBytes) {
+      if (contentLength == -1L) {
         // We can't measure the body's size without the sizes of its components.
         byteCountBuffer!!.clear()
         return -1L
