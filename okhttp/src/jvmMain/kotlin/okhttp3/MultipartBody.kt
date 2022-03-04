@@ -139,7 +139,7 @@ class MultipartBody internal constructor(
       }
 
       val contentLength = body.contentLength()
-      if (contentLength == -1L) {
+      if (contentLength == -1L && countBytes) {
         // We can't measure the body's size without the sizes of its components.
         byteCountBuffer!!.clear()
         return -1L
