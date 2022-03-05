@@ -14,22 +14,13 @@
  * limitations under the License.
  *
  */
+
 package okhttp3
 
-actual interface Call {
-  actual fun request(): Request
-
-  actual fun enqueue(responseCallback: Callback)
-
-  actual fun cancel()
-
-  actual fun isExecuted(): Boolean
-
-  actual fun isCanceled(): Boolean
-
-  actual fun clone(): Call
-
-  actual fun interface Factory {
-    actual fun newCall(request: Request): Call
+class TestCallFactory(
+  private val callbackHandler: (Call, Callback) -> Unit
+): Call.Factory {
+  override fun newCall(request: Request): Call {
+    return TestCall(request, callbackHandler)
   }
 }

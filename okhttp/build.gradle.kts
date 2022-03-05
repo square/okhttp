@@ -51,6 +51,7 @@ kotlin {
     val nonJvmMain = create("nonJvmMain") {
       dependencies {
         dependsOn(sourceSets.commonMain.get())
+        implementation(libs.kotlinx.coroutines.core)
       }
     }
     val nonJvmTest = create("nonJvmTest") {
