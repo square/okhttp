@@ -237,7 +237,7 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
       (testClass.orElseGet { null }?.isAnnotationPresent(Flaky::class.java) == true)
   }
 
-  @Synchronized private fun logEvents() {
+  @Synchronized public fun logEvents() {
     // Will be ineffective if test overrides the listener
     synchronized(clientEventsList) {
       println("$testName Events (${clientEventsList.size})")

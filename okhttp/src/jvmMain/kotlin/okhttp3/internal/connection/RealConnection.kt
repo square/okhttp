@@ -28,6 +28,7 @@ import javax.net.ssl.SSLSocket
 import okhttp3.Address
 import okhttp3.Connection
 import okhttp3.Handshake
+import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
@@ -40,6 +41,7 @@ import okhttp3.internal.http.ExchangeCodec
 import okhttp3.internal.http.RealInterceptorChain
 import okhttp3.internal.http1.Http1ExchangeCodec
 import okhttp3.internal.http2.ConnectionShutdownException
+import okhttp3.internal.http2.EarlyHintsObserver
 import okhttp3.internal.http2.ErrorCode
 import okhttp3.internal.http2.Http2Connection
 import okhttp3.internal.http2.Http2ExchangeCodec
@@ -76,7 +78,7 @@ class RealConnection(
   private var source: BufferedSource?,
   private var sink: BufferedSink?,
   private val pingIntervalMillis: Int,
-) : Http2Connection.Listener(), Connection, ExchangeCodec.Carrier {
+) : Http2Connection.Listener(), Connection, ExchangeCodec.Carrier, EarlyHintsObserver {
   private var http2Connection: Http2Connection? = null
 
   // These properties are guarded by this.
@@ -157,6 +159,7 @@ class RealConnection(
       .socket(socket, route.address.url.host, source, sink)
       .listener(this)
       .pingIntervalMillis(pingIntervalMillis)
+      .earlyHintsObserver(this)
       .build()
     this.http2Connection = http2Connection
     this.allocationLimit = Http2Connection.DEFAULT_SETTINGS.getMaxConcurrentStreams()
@@ -321,6 +324,10 @@ class RealConnection(
   /** When settings are received, adjust the allocation limit. */
   @Synchronized override fun onSettings(connection: Http2Connection, settings: Settings) {
     allocationLimit = settings.getMaxConcurrentStreams()
+  }
+
+  override fun onEarlyHints(streamId: Int, requestHeaders: Headers) {
+    println(requestHeaders)
   }
 
   override fun handshake(): Handshake? = handshake
