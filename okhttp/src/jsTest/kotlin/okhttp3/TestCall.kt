@@ -28,6 +28,8 @@ class TestCall(
 
   override fun request(): Request = request
 
+  override suspend fun executeAsync(): Response = jsExecuteAsync()
+
   override fun enqueue(responseCallback: Callback) {
     check(!executed) { "Already Executed" }
 

@@ -16,8 +16,6 @@
  */
 package okhttp3
 
-import kotlin.coroutines.resumeWithException
-import kotlinx.coroutines.suspendCancellableCoroutine
 import okio.IOException
 
 actual interface Call {
@@ -48,22 +46,7 @@ actual interface Call {
    *     remote server accepted the request before the failure.
    * @throws IllegalStateException when the call has already been executed.
    */
-  suspend fun executeAsync(): Response {
-    return suspendCancellableCoroutine { continuation ->
-      continuation.invokeOnCancellation {
-        cancel()
-      }
-      enqueue(object : Callback {
-        override fun onFailure(call: Call, e: IOException) {
-          continuation.resumeWithException(e)
-        }
-
-        override fun onResponse(call: Call, response: Response) {
-          continuation.resume(value = response, onCancellation = { call.cancel() })
-        }
-      })
-    }
-  }
+  suspend fun executeAsync(): Response
 
   actual fun enqueue(responseCallback: Callback)
 
