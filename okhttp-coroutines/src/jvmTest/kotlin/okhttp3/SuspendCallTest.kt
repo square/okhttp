@@ -22,9 +22,6 @@ package okhttp3
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isTrue
-import java.io.IOException
-import java.util.concurrent.TimeUnit
-import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.TimeoutCancellationException
@@ -39,6 +36,9 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.fail
+import java.io.IOException
+import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.seconds
 
 @ExtendWith(MockWebServerExtension::class)
 class SuspendCallTest(
@@ -69,9 +69,11 @@ class SuspendCallTest(
   @Test
   fun timeoutCall() {
     runTest {
-      server.enqueue(MockResponse()
-        .setBodyDelay(5, TimeUnit.SECONDS)
-        .setBody("abc"))
+      server.enqueue(
+        MockResponse()
+          .setBodyDelay(5, TimeUnit.SECONDS)
+          .setBody("abc")
+      )
 
       val call = client.newCall(request)
 
@@ -95,20 +97,22 @@ class SuspendCallTest(
   @Test
   fun cancelledCall() {
     runTest {
-      server.enqueue(MockResponse()
-        .setBodyDelay(5, TimeUnit.SECONDS)
-        .setBody("abc"))
+      server.enqueue(
+        MockResponse()
+          .setBodyDelay(5, TimeUnit.SECONDS)
+          .setBody("abc")
+      )
 
       val call = client.newCall(request)
 
       try {
-          call.executeAsync().use {
-            call.cancel()
-            withContext(Dispatchers.IO) {
-              it.body?.string()
-            }
-            fail("No expected to get response")
+        call.executeAsync().use {
+          call.cancel()
+          withContext(Dispatchers.IO) {
+            it.body?.string()
           }
+          fail("No expected to get response")
+        }
       } catch (ioe: IOException) {
         // expected
       }
@@ -120,9 +124,11 @@ class SuspendCallTest(
   @Test
   fun failedCall() {
     runTest {
-      server.enqueue(MockResponse()
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST)
-        .setBody("abc"))
+      server.enqueue(
+        MockResponse()
+          .setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST)
+          .setBody("abc")
+      )
 
       val call = client.newCall(request)
 

@@ -21,12 +21,11 @@ package okhttp3
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
-import kotlin.test.Test
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
-import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
 import okio.use
+import kotlin.test.Test
 
 class SuspendCallTest {
   val request = Request.Builder().url("https://example.org/test").build()
@@ -42,9 +41,12 @@ class SuspendCallTest {
     val call = client.newCall(request)
 
     callbackHandler = { _, callback ->
-      callback.onResponse(call, buildResponse(call) {
-        body("abc".toResponseBody())
-      })
+      callback.onResponse(
+        call,
+        buildResponse(call) {
+          body("abc".toResponseBody())
+        }
+      )
     }
 
     val response = call.executeAsync()

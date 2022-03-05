@@ -19,7 +19,7 @@ package okhttp3
 
 class TestCallFactory(
   private val callbackHandler: (Call, Callback) -> Unit
-): Call.Factory {
+) : Call.Factory {
   override fun newCall(request: Request): Call {
     return TestCall(request, callbackHandler)
   }

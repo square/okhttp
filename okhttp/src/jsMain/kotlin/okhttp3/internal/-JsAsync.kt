@@ -17,12 +17,12 @@
 
 package okhttp3.internal
 
-import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.Response
 import okio.IOException
+import kotlin.coroutines.resumeWithException
 
 suspend fun Call.jsExecuteAsync(): Response {
   return suspendCancellableCoroutine { continuation ->

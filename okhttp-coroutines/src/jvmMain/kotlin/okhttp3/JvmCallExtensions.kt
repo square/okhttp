@@ -17,9 +17,9 @@
 
 package okhttp3
 
-import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okio.IOException
+import kotlin.coroutines.resumeWithException
 
 suspend fun Call.awaitResponse(): Response {
   return suspendCancellableCoroutine { continuation ->
