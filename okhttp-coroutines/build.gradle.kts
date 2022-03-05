@@ -71,7 +71,7 @@ kotlin {
       dependencies {
         dependsOn(commonTest)
         implementation(projects.okhttpTestingSupport)
-        implementation(libs.kotlinx.coroutines.core)
+        implementation(libs.kotlinx.coroutines.test)
         implementation(projects.mockwebserver3Junit5)
       }
 

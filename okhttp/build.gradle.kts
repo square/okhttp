@@ -116,6 +116,7 @@ kotlin {
         dependencies {
           dependsOn(nonJvmTest)
           implementation(libs.kotlin.test.js)
+          implementation(libs.kotlinx.coroutines.test)
         }
       }
     }
