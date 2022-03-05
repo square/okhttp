@@ -85,20 +85,14 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
   /** Asynchronously writes frames to the outgoing socket. */
   private val writerQueue = taskRunner.newQueue()
 
-  /** Ensures push promise callback events are sent in order per stream. */
+  /** Ensures push promise callbacks events are sent in order per stream. */
   private val pushQueue = taskRunner.newQueue()
-
-  /** Ensures early hints callback events are sent in order per stream. */
-  private val earlyHintQueue = taskRunner.newQueue()
 
   /** Notifies the listener of settings changes. */
   private val settingsListenerQueue = taskRunner.newQueue()
 
   /** User code to run in response to push promise events. */
   private val pushObserver: PushObserver = builder.pushObserver
-
-  /** User code to run in response to early hint events. */
-  private val earlyHintsObserver: EarlyHintsObserver = builder.earlyHintsObserver
 
   // Total number of pings send and received of the corresponding types. All guarded by this.
   private var intervalPingsSent = 0L
@@ -573,7 +567,6 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     internal lateinit var sink: BufferedSink
     internal var listener = Listener.REFUSE_INCOMING_STREAMS
     internal var pushObserver = PushObserver.CANCEL
-    internal var earlyHintsObserver = EarlyHintsObserver.IGNORE
     internal var pingIntervalMillis: Int = 0
 
     @Throws(IOException::class) @JvmOverloads
@@ -602,10 +595,6 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
 
     fun pingIntervalMillis(pingIntervalMillis: Int) = apply {
       this.pingIntervalMillis = pingIntervalMillis
-    }
-
-    fun earlyHintsObserver(earlyHintsObserver: EarlyHintsObserver) = apply {
-      this.earlyHintsObserver = earlyHintsObserver
     }
 
     fun build(): Http2Connection {
@@ -690,7 +679,6 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
 
           // Create a stream.
           val headers = headerBlock.toHeaders()
-
           val newStream = Http2Stream(streamId, this@Http2Connection, false, inFinished, headers)
           lastGoodStreamId = streamId
           streams[streamId] = newStream
@@ -710,18 +698,8 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
         }
       }
 
-      val headers = headerBlock.toHeaders()
-
-      if (headers[":status"] == "103") {
-        earlyHintQueue.execute("$connectionName[$streamId] earlyHints") {
-          val earlyHintsHeaders = headers.newBuilder().removeAll(":status").build()
-          earlyHintsObserver.onEarlyHints(streamId, earlyHintsHeaders)
-        }
-        return
-      }
-
       // Update an existing stream.
-      stream!!.receiveHeaders(headers, inFinished)
+      stream!!.receiveHeaders(headerBlock.toHeaders(), inFinished)
     }
 
     override fun rstStream(streamId: Int, errorCode: ErrorCode) {

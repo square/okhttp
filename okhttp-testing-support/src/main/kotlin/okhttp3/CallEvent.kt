@@ -173,12 +173,6 @@ sealed class CallEvent {
     val ioe: IOException
   ) : CallEvent()
 
-  data class EarlyHints(
-    override val timestampNs: Long,
-    override val call: Call,
-    val headerLength: Long
-  ) : CallEvent()
-
   data class ResponseHeadersStart(
     override val timestampNs: Long,
     override val call: Call

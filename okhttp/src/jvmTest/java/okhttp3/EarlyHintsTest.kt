@@ -17,6 +17,11 @@
 
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.hasSize
+import assertk.assertions.isEqualTo
+import assertk.assertions.isGreaterThan
+import assertk.assertions.isNotNull
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
@@ -26,14 +31,21 @@ class EarlyHintsTest {
     recordSslDebug = true
   }
 
-  val eventListener = RecordingEventListener()
+  val responseHeaders = mutableListOf<Response>()
+
+  val eventListener = object : EventListener() {
+    override fun responseHeadersEnd(call: Call, response: Response) {
+      responseHeaders.add(response)
+    }
+  }
 
   private val client = clientTestRule.newClientBuilder()
     .eventListenerFactory(clientTestRule.wrap(eventListener))
     .build()
 
   @Test
-  fun testCloudflare() {
+  fun testTestServer() {
+    // Not working - https://early-hints.fastlylabs.com/test.png
     val request = Request.Builder().url("https://tradingstrategy.ai")
       .header("User-Agent", "curl/7.77.0")
       .build()
@@ -46,6 +58,16 @@ class EarlyHintsTest {
       println(response.code)
       println(response.body?.contentType())
     }
+
+    assertThat(responseHeaders).hasSize(2)
+
+    val response103 = responseHeaders[0]
+    assertThat(response103.code).isEqualTo(103)
+    assertThat(response103.headers.names()).isEqualTo(setOf("link"))
+
+    val response200 = responseHeaders[1]
+    assertThat(response200.code).isEqualTo(200)
+    assertThat(response200.headers.size).isGreaterThan(1)
 
     clientTestRule.logEvents()
   }

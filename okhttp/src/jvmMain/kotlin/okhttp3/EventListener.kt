@@ -294,12 +294,6 @@ abstract class EventListener {
   ) {
   }
 
-  open fun earlyHints(
-    call: Call,
-    headers: Headers
-  ) {
-  }
-
   /**
    * Invoked when response headers are first returned from the server.
    *

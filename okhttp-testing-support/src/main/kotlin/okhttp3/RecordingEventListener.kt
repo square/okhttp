@@ -229,10 +229,6 @@ open class RecordingEventListener : EventListener() {
     ioe: IOException
   ) = logEvent(RequestFailed(System.nanoTime(), call, ioe))
 
-  override fun earlyHints(call: Call, headers: Headers) = logEvent(
-    CallEvent.EarlyHints(System.nanoTime(), call, headers.byteCount())
-  )
-
   override fun responseHeadersStart(
     call: Call
   ) = logEvent(ResponseHeadersStart(System.nanoTime(), call))

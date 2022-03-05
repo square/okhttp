@@ -103,8 +103,10 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
           .receivedResponseAtMillis(System.currentTimeMillis())
           .build()
       var code = response.code
-      if (code == 100) {
-        // Server sent a 100-continue even though we did not request one. Try again to read the
+      while (code in 100..199) {
+        exchange.eventListener.responseHeadersEnd(exchange.call, response)
+
+        // Server sent a 1xx so report and continue. Try again to read the
         // actual response status.
         responseBuilder = exchange.readResponseHeaders(expectContinue = false)!!
         if (invokeStartEvent) {
