@@ -17,6 +17,7 @@
 
 package okhttp3
 
+import okhttp3.internal.jsExecuteAsync
 import okio.IOException
 
 class TestCall(

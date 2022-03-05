@@ -25,9 +25,11 @@ import assertk.assertions.isTrue
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -57,7 +59,9 @@ class SuspendCallTest(
       val call = client.newCall(request)
 
       call.executeAsync().use {
-        assertThat(it.body?.string()).isEqualTo("abc")
+        withContext(Dispatchers.IO) {
+          assertThat(it.body?.string()).isEqualTo("abc")
+        }
       }
     }
   }
@@ -74,7 +78,9 @@ class SuspendCallTest(
       try {
         withTimeout(1.seconds) {
           call.executeAsync().use {
-            it.body?.string()
+            withContext(Dispatchers.IO) {
+              it.body?.string()
+            }
             fail("No expected to get response")
           }
         }
@@ -98,7 +104,9 @@ class SuspendCallTest(
       try {
           call.executeAsync().use {
             call.cancel()
-            it.body?.string()
+            withContext(Dispatchers.IO) {
+              it.body?.string()
+            }
             fail("No expected to get response")
           }
       } catch (ioe: IOException) {
@@ -120,7 +128,9 @@ class SuspendCallTest(
 
       try {
         call.executeAsync().use {
-          it.body?.string()
+          withContext(Dispatchers.IO) {
+            it.body?.string()
+          }
         }
         fail("No expected to get response")
       } catch (ioe: IOException) {

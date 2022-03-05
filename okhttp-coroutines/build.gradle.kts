@@ -95,9 +95,9 @@ kotlin {
 }
 
 project.applyOsgi(
-  "Export-Package: okhttp3.ktx",
-  "Automatic-Module-Name: okhttp3.ktx",
-  "Bundle-SymbolicName: com.squareup.okhttp3.ktx"
+  "Export-Package: okhttp3.coroutines",
+  "Automatic-Module-Name: okhttp3.coroutines",
+  "Bundle-SymbolicName: com.squareup.okhttp3.coroutines"
 )
 
 mavenPublishing {

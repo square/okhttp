@@ -15,10 +15,13 @@
  *
  */
 
-package okhttp3
+package okhttp3.internal
 
 import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.suspendCancellableCoroutine
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.Response
 import okio.IOException
 
 suspend fun Call.jsExecuteAsync(): Response {
