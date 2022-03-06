@@ -17,13 +17,13 @@
 
 package okhttp3.internal
 
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.Response
 import okio.IOException
 import kotlin.coroutines.resumeWithException
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 /**
  * An external implementation of Call.executeAsync, useful in
