@@ -23,7 +23,14 @@ import okhttp3.Callback
 import okhttp3.Response
 import okio.IOException
 import kotlin.coroutines.resumeWithException
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 
+/**
+ * An external implementation of Call.executeAsync, useful in
+ * implementations of Call that implement enqueue and don't
+ * generally use coroutines in the implementation.
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
 suspend fun Call.jsExecuteAsync(): Response {
   return suspendCancellableCoroutine { continuation ->
     continuation.invokeOnCancellation {
