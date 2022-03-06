@@ -32,6 +32,7 @@ project(":okhttp-logging-interceptor").name = "logging-interceptor"
 include(":okhttp-sse")
 include(":okhttp-testing-support")
 include(":okhttp-tls")
+include(":okhttp-coroutines")
 include(":okhttp-urlconnection")
 include(":samples:compare")
 include(":samples:crawler")
