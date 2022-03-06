@@ -17,25 +17,23 @@
 
 package okhttp3
 
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okio.IOException
 import kotlin.coroutines.resumeWithException
 
-suspend fun Call.awaitResponse(): Response {
-  return suspendCancellableCoroutine { continuation ->
-    continuation.invokeOnCancellation {
-      cancel()
-    }
-    enqueue(object : Callback {
-      override fun onFailure(call: Call, e: IOException) {
-        continuation.resumeWithException(e)
-      }
-
-      override fun onResponse(call: Call, response: Response) {
-        continuation.resume(value = response, onCancellation = { call.cancel() })
-      }
-    })
+@OptIn(ExperimentalCoroutinesApi::class)
+actual suspend fun Call.executeAsync(): Response = suspendCancellableCoroutine { continuation ->
+  continuation.invokeOnCancellation {
+    this.cancel()
   }
-}
+  this.enqueue(object : Callback {
+    override fun onFailure(call: Call, e: IOException) {
+      continuation.resumeWithException(e)
+    }
 
-actual suspend fun Call.executeAsync(): Response = this.awaitResponse()
+    override fun onResponse(call: Call, response: Response) {
+      continuation.resume(value = response, onCancellation = { call.cancel() })
+    }
+  })
+}
