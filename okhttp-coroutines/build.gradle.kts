@@ -1,5 +1,5 @@
 import com.vanniktech.maven.publish.JavadocJar
-import com.vanniktech.maven.publish.KotlinJvm
+import com.vanniktech.maven.publish.KotlinMultiplatform
 
 plugins {
   kotlin("multiplatform")
@@ -101,5 +101,7 @@ project.applyOsgi(
 )
 
 mavenPublishing {
-  configure(KotlinJvm(javadocJar = JavadocJar.Dokka("dokkaGfm")))
+  configure(
+    KotlinMultiplatform(javadocJar = JavadocJar.Dokka("dokkaGfm"))
+  )
 }
