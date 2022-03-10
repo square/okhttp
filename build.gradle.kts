@@ -1,4 +1,3 @@
-import com.diffplug.gradle.spotless.SpotlessExtension
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import com.vanniktech.maven.publish.SonatypeHost
 import java.net.URL
@@ -66,22 +65,6 @@ allprojects {
 subprojects {
   val project = this@subprojects
   if (project.name == "okhttp-bom") return@subprojects
-
-  apply(plugin = "com.diffplug.spotless")
-  configure<SpotlessExtension> {
-    ratchetFrom("origin/master")
-    kotlin {
-      target("**/*.kt")
-      ktlint(libs.versions.ktlint.get()).userData(
-        mapOf(
-          "indent_size" to "2",
-          "disabled_rules" to "filename"
-        )
-      )
-      trimTrailingWhitespace()
-      endWithNewline()
-    }
-  }
 
   if (project.name == "android-test") return@subprojects
   if (project.name == "regression-test") return@subprojects

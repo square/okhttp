@@ -11,7 +11,6 @@ org-jetbrains-coroutines = "1.6.0"
 org-jetbrains-kotlin = "1.6.10"
 org-junit-jupiter = "5.8.2"
 picocli = "4.6.3"
-ktlint = "0.44.0"
 
 [libraries]
 amazonCorretto = "software.amazon.cryptools:AmazonCorrettoCryptoProvider:1.6.1"
