@@ -15,6 +15,8 @@
  */
 package okhttp3.internal.concurrent
 
+import okhttp3.OkHttpClient
+import org.assertj.core.api.Assertions.assertThat
 import java.io.Closeable
 import java.util.AbstractQueue
 import java.util.concurrent.BlockingQueue
@@ -23,8 +25,6 @@ import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.logging.Logger
-import okhttp3.OkHttpClient
-import org.assertj.core.api.Assertions.assertThat
 
 /**
  * Runs a [TaskRunner] in a controlled environment so that everything is sequential and
@@ -264,6 +264,14 @@ class TaskFaker : Closeable {
     while (nanoTime < waitUntil) {
       stall()
     }
+  }
+
+  /**
+   * Artificially stall until manually resumed by the test thread with [runTasks]. Use this to
+   * simulate races in tasks that doesn't have a deterministic sequence.
+   */
+  fun yield() {
+    stall()
   }
 
   /**
