@@ -15,15 +15,15 @@
  */
 package okhttp3.internal.connection
 
-import java.io.IOException
-import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.LinkedBlockingDeque
-import java.util.concurrent.TimeUnit
 import okhttp3.internal.concurrent.Task
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.connection.RoutePlanner.ConnectResult
 import okhttp3.internal.connection.RoutePlanner.Plan
 import okhttp3.internal.okHttpName
+import java.io.IOException
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.LinkedBlockingDeque
+import java.util.concurrent.TimeUnit
 
 /**
  * Speculatively connects to each IP address of a target address, returning as soon as one of them
@@ -66,14 +66,17 @@ internal class FastFallbackExchangeFinder(
         // Launch a new connection if we're ready to.
         val now = taskRunner.backend.nanoTime()
         var awaitTimeoutNanos = nextTcpConnectAtNanos - now
+        var connectResult: ConnectResult? = null
         if (tcpConnectsInFlight.isEmpty() || awaitTimeoutNanos <= 0) {
-          launchTcpConnect()
+          connectResult = launchTcpConnect()
           nextTcpConnectAtNanos = now + connectDelayNanos
           awaitTimeoutNanos = connectDelayNanos
         }
 
         // Wait for an in-flight connect to complete or fail.
-        var connectResult = awaitTcpConnect(awaitTimeoutNanos, TimeUnit.NANOSECONDS) ?: continue
+        if (connectResult == null) {
+          connectResult = awaitTcpConnect(awaitTimeoutNanos, TimeUnit.NANOSECONDS) ?: continue
+        }
 
         if (connectResult.isSuccess) {
           // We have a connected TCP connection. Cancel and defer the racing connects that all lost.
@@ -112,7 +115,12 @@ internal class FastFallbackExchangeFinder(
     throw firstException!!
   }
 
-  private fun launchTcpConnect() {
+  /**
+   * Returns non-null if we don't need to wait for the launched result. In such cases, this result
+   * must be processed before whatever is waiting in the queue because we may have already acquired
+   * its connection.
+   */
+  private fun launchTcpConnect(): ConnectResult? {
     val plan = when {
       deferredPlans.isNotEmpty() -> {
         deferredPlans.removeFirst()
@@ -124,24 +132,17 @@ internal class FastFallbackExchangeFinder(
           FailedPlan(e)
         }
       }
-      else -> return // Nothing further to try.
+      else -> return null // Nothing further to try.
     }
 
-    tcpConnectsInFlight += plan
+    // Already connected. Return it immediately.
+    if (plan.isReady) return ConnectResult(plan)
 
-    // Already connected? Enqueue the result immediately.
-    if (plan.isReady) {
-      connectResults.put(ConnectResult(plan))
-      return
-    }
-
-    // Already failed? Enqueue the result immediately.
-    if (plan is FailedPlan) {
-      connectResults.put(plan.result)
-      return
-    }
+    // Already failed? Return it immediately.
+    if (plan is FailedPlan) return plan.result
 
     // Connect TCP asynchronously.
+    tcpConnectsInFlight += plan
     val taskName = "$okHttpName connect ${routePlanner.address.url.redact()}"
     taskRunner.newQueue().schedule(object : Task(taskName) {
       override fun runOnce(): Long {
@@ -157,6 +158,7 @@ internal class FastFallbackExchangeFinder(
         return -1L
       }
     })
+    return null
   }
 
   private fun awaitTcpConnect(timeout: Long, unit: TimeUnit): ConnectResult? {

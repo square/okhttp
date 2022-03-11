@@ -15,8 +15,6 @@
  */
 package okhttp3.internal.connection
 
-import java.io.IOException
-import java.net.UnknownServiceException
 import okhttp3.FakeRoutePlanner
 import okhttp3.FakeRoutePlanner.ConnectState.TLS_CONNECTED
 import okhttp3.internal.concurrent.TaskFaker
@@ -24,6 +22,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
+import java.io.IOException
+import java.net.UnknownServiceException
 
 /**
  * Unit test for [FastFallbackExchangeFinder] implementation details.
@@ -773,6 +773,52 @@ internal class FastFallbackExchangeFinderTest {
     )
 
     taskFaker.assertNoMoreTasks()
+  }
+
+  /**
+   * This test causes two connections to become available simultaneously, one from a TCP connect and
+   * one from the pool. We must take the pooled connection because by taking it from the pool, we've
+   * fully acquired it.
+   *
+   * This test yields threads to force the decision of plan1 to be deliberate and not lucky. In
+   * particular, we set up this sequence of events:
+   *
+   *  1. take plan 0
+   *  3. plan 0 connects
+   *  4. finish taking plan 1
+   *
+   * https://github.com/square/okhttp/issues/7152
+   */
+  @Test
+  fun reusePlanAndNewConnectRace() {
+    val plan0 = routePlanner.addPlan()
+    plan0.tcpConnectDelayNanos = 250.ms
+    plan0.yieldBeforeTcpConnectReturns = true // Yield so we get a chance to take plan1...
+    val plan1 = routePlanner.addPlan()
+    plan1.connectState = TLS_CONNECTED
+    plan1.yieldBeforePlanReturns = true // ... but let plan 0 connect before we act upon it.
+
+    taskRunner.newQueue().execute("connect") {
+      val result0 = finder.find()
+      assertThat(result0).isEqualTo(plan0.connection)
+    }
+
+    taskFaker.runTasks()
+    assertEvents(
+      "take plan 0",
+      "plan 0 TCP connecting...",
+    )
+
+    taskFaker.advanceUntil(250.ms)
+    assertEvents(
+      "take plan 1",
+    )
+
+    taskFaker.runTasks()
+    assertEvents(
+      "plan 0 TCP connected",
+      "plan 0 cancel"
+    )
   }
 
   private fun assertEvents(vararg expected: String) {
