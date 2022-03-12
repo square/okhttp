@@ -1,17 +1,8 @@
-public final class okhttp/android/test/BuildConfig {
-	public static final field BUILD_TYPE Ljava/lang/String;
-	public static final field DEBUG Z
-	public static final field LIBRARY_PACKAGE_NAME Ljava/lang/String;
-	public fun <init> ()V
-}
-
 public final class okhttp3/android/AndroidDns : okhttp3/AsyncDns {
 	public fun <init> ()V
 	public fun <init> (Landroid/net/Network;Ljava/util/List;)V
 	public synthetic fun <init> (Landroid/net/Network;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun asDns ()Lokhttp3/Dns;
-	public final fun getDnsClasses ()Ljava/util/List;
-	public final fun getNetwork ()Landroid/net/Network;
 	public fun query (Ljava/lang/String;Lokhttp3/AsyncDns$Callback;)V
 }
 
