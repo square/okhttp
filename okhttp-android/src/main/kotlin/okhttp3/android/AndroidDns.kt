@@ -35,8 +35,10 @@ import okhttp3.AsyncDns
  */
 @RequiresApi(Build.VERSION_CODES.Q)
 class AndroidDns(
-  val network: Network? = null,
-  val dnsClasses: List<AsyncDns.DnsClass> = listOf(AsyncDns.DnsClass.IPV6, AsyncDns.DnsClass.IPV4)
+  private val network: Network? = null,
+  private val dnsClasses: List<AsyncDns.DnsClass> = listOf(
+    AsyncDns.DnsClass.IPV6, AsyncDns.DnsClass.IPV4
+  )
 ) :
   AsyncDns {
   @RequiresApi(Build.VERSION_CODES.Q)

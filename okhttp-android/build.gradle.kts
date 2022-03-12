@@ -22,6 +22,10 @@ android {
       "runnerBuilder" to "de.mannodermaus.junit5.AndroidJUnit5Builder",
       "notPackage" to "org.bouncycastle"
     )
+
+    buildFeatures {
+      buildConfig = false
+    }
   }
 
   compileOptions {

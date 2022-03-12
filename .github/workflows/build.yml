@@ -390,7 +390,7 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
-          script: ./gradlew -PandroidBuild :android-test:connectedCheck
+          script: ./gradlew -PandroidBuild :okhttp-android:connectedCheck :android-test:connectedCheck
         env:
           API_LEVEL: ${{ matrix.api-level }}
 
