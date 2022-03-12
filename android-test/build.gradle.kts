@@ -19,12 +19,12 @@ android {
     )
   }
 
-  sourceSets["androidTest"].java.srcDirs(
-    "../okhttp-brotli/src/test/java",
-    "../okhttp-dnsoverhttps/src/test/java",
-    "../okhttp-logging-interceptor/src/test/java",
-    "../okhttp-sse/src/test/java"
-  )
+  // sourceSets["androidTest"].java.srcDirs(
+  //   "../okhttp-brotli/src/test/java",
+  //   "../okhttp-dnsoverhttps/src/test/java",
+  //   "../okhttp-logging-interceptor/src/test/java",
+  //   "../okhttp-sse/src/test/java"
+  // )
 
   compileOptions {
     targetCompatibility(JavaVersion.VERSION_11)
@@ -49,6 +49,7 @@ dependencies {
   implementation(libs.kotlin.reflect)
   implementation(libs.playservices.safetynet)
   implementation(projects.okhttp)
+  implementation(projects.okhttpAndroid)
 
   androidTestImplementation(projects.okhttpTestingSupport) {
     exclude("org.openjsse", "openjsse")
@@ -64,6 +65,7 @@ dependencies {
   androidTestImplementation(projects.loggingInterceptor)
   androidTestImplementation(projects.okhttpSse)
   androidTestImplementation(projects.okhttpTls)
+  androidTestImplementation(projects.okhttpAndroid)
   androidTestImplementation(libs.androidx.junit)
   androidTestImplementation(libs.androidx.espresso.core)
   androidTestImplementation(libs.httpClient5)

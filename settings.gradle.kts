@@ -12,8 +12,8 @@ project(":mockwebserver-junit5").name = "mockwebserver3-junit5"
 val androidBuild: String? by settings
 val graalBuild: String? by settings
 
+include(":android-test")
 if (androidBuild != null) {
-  include(":android-test")
   include(":regression-test")
 }
 
@@ -23,6 +23,7 @@ if (graalBuild != null) {
 
 include(":okcurl")
 include(":okhttp")
+include(":okhttp-android")
 include(":okhttp-bom")
 include(":okhttp-brotli")
 include(":okhttp-dnsoverhttps")
