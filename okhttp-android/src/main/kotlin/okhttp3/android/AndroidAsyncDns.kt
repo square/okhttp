@@ -34,7 +34,7 @@ import okhttp3.AsyncDns
  * @param network network to use, if not selects the default network.
  */
 @RequiresApi(Build.VERSION_CODES.Q)
-class AndroidDns(
+class AndroidAsyncDns(
   private val network: Network? = null,
   private val dnsClasses: List<AsyncDns.DnsClass> = listOf(
     AsyncDns.DnsClass.IPV6, AsyncDns.DnsClass.IPV4
@@ -51,7 +51,7 @@ class AndroidDns(
     dnsClasses.forEach { dnsClass ->
       resolver.query(
         network, hostname, dnsClass.type, DnsResolver.FLAG_EMPTY, executor, null,
-        callback(callback, AsyncDns.DnsClass.IPV4, executing)
+        callback(callback, dnsClass, executing)
       )
     }
   }

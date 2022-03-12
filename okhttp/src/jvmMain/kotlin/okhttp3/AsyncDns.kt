@@ -76,7 +76,11 @@ interface AsyncDns {
 
     query(hostname, object : Callback {
       override fun onAddressResults(dnsClass: DnsClass, addresses: List<InetAddress>) {
-        allAddresses.addAll(addresses)
+        // TODO remove before landing
+        println("$hostname $dnsClass $addresses")
+        synchronized(allAddresses) {
+          allAddresses.addAll(addresses)
+        }
       }
 
       override fun onComplete() {
@@ -84,12 +88,17 @@ interface AsyncDns {
       }
 
       override fun onError(dnsClass: DnsClass, e: IOException) {
-        allExceptions.add(e)
+        // TODO remove before landing
+        println("$hostname $dnsClass $e")
+        synchronized(allExceptions) {
+          allExceptions.add(e)
+        }
       }
     })
 
     latch.await()
 
+    // No mutations should be possible after this point
     if (allAddresses.isEmpty()) {
       val first = allExceptions.firstOrNull() ?: UnknownHostException("No results for $hostname")
 

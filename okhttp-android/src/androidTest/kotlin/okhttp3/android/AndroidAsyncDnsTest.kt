@@ -42,14 +42,16 @@ import org.opentest4j.TestAbortedException
  * Run with "./gradlew :android-test:connectedCheck" and make sure ANDROID_SDK_ROOT is set.
  */
 @ExtendWith(MockWebServerExtension::class)
-class AndroidDnsTest(val server: MockWebServer) {
-  private val dns = AndroidDns()
+class AndroidAsyncDnsTest(val server: MockWebServer) {
+  private val dns = AndroidAsyncDns()
+
+  private val localhostName: String = InetAddress.getByName("localhost").canonicalHostName
 
   private val localhost: HandshakeCertificates by lazy {
     // Generate a self-signed cert for the server to serve and the client to trust.
     val heldCertificate = HeldCertificate.Builder()
       .commonName("localhost")
-      .addSubjectAlternativeName(InetAddress.getByName("localhost").canonicalHostName)
+      .addSubjectAlternativeName(localhostName)
       .build()
     return@lazy HandshakeCertificates.Builder()
       .heldCertificate(heldCertificate)
@@ -57,7 +59,7 @@ class AndroidDnsTest(val server: MockWebServer) {
       .build()
   }
 
-  val client = OkHttpClient.Builder()
+  private val client = OkHttpClient.Builder()
     .dns(dns.asDns())
     .sslSocketFactory(localhost.sslSocketFactory(), localhost.trustManager)
     .build()
@@ -96,7 +98,7 @@ class AndroidDnsTest(val server: MockWebServer) {
     var exception: Exception? = null
     val latch = CountDownLatch(1)
 
-    dns.query("localhost", object : AsyncDns.Callback {
+    dns.query(localhostName, object : AsyncDns.Callback {
       override fun onAddressResults(dnsClass: AsyncDns.DnsClass, addresses: List<InetAddress>) {
         allAddresses.addAll(addresses)
       }
@@ -156,7 +158,7 @@ class AndroidDnsTest(val server: MockWebServer) {
       connectivityManager.activeNetwork ?: throw TestAbortedException("No active network")
 
     val client = OkHttpClient.Builder()
-      .dns(AndroidDns(network = network, dnsClasses = listOf(AsyncDns.DnsClass.IPV4)).asDns())
+      .dns(AndroidAsyncDns(network = network, dnsClasses = listOf(AsyncDns.DnsClass.IPV4)).asDns())
       .socketFactory(network.socketFactory)
       .build()
 
