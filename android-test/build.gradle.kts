@@ -19,12 +19,12 @@ android {
     )
   }
 
-  // sourceSets["androidTest"].java.srcDirs(
-  //   "../okhttp-brotli/src/test/java",
-  //   "../okhttp-dnsoverhttps/src/test/java",
-  //   "../okhttp-logging-interceptor/src/test/java",
-  //   "../okhttp-sse/src/test/java"
-  // )
+  sourceSets["androidTest"].java.srcDirs(
+    "../okhttp-brotli/src/test/java",
+    "../okhttp-dnsoverhttps/src/test/java",
+    "../okhttp-logging-interceptor/src/test/java",
+    "../okhttp-sse/src/test/java"
+  )
 
   compileOptions {
     targetCompatibility(JavaVersion.VERSION_11)

@@ -16,7 +16,11 @@
  */
 package okhttp3.android
 
+import android.content.Context
+import android.net.ConnectivityManager
+import androidx.test.platform.app.InstrumentationRegistry
 import java.net.InetAddress
+import java.net.UnknownHostException
 import java.util.concurrent.CountDownLatch
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -32,6 +36,7 @@ import org.assertj.core.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.opentest4j.TestAbortedException
 
 /**
  * Run with "./gradlew :android-test:connectedCheck" and make sure ANDROID_SDK_ROOT is set.
@@ -75,10 +80,6 @@ class AndroidDnsTest(val server: MockWebServer) {
 
   @Test
   fun testRequestInvalid() {
-    val dns = AndroidDns()
-
-    val client = OkHttpClient.Builder().dns(dns.asDns()).build()
-
     val call = client.newCall(Request.Builder().url("https://google.invalid/").build())
 
     try {
@@ -91,8 +92,6 @@ class AndroidDnsTest(val server: MockWebServer) {
 
   @Test
   fun testDnsRequest() {
-    val dns = AndroidDns()
-
     val allAddresses = mutableListOf<InetAddress>()
     var exception: Exception? = null
     val latch = CountDownLatch(1)
@@ -120,8 +119,6 @@ class AndroidDnsTest(val server: MockWebServer) {
 
   @Test
   fun testDnsRequestInvalid() {
-    val dns = AndroidDns()
-
     val allAddresses = mutableListOf<InetAddress>()
     var exception: Exception? = null
     val latch = CountDownLatch(1)
@@ -145,5 +142,37 @@ class AndroidDnsTest(val server: MockWebServer) {
 
     assertThat(exception).isNull()
     assertThat(allAddresses).isEmpty()
+  }
+
+  @Test
+  fun testRequestOnNetwork() {
+    assumeNetwork()
+
+    val context = InstrumentationRegistry.getInstrumentation().context
+    val connectivityManager =
+      context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+
+    val network =
+      connectivityManager.activeNetwork ?: throw TestAbortedException("No active network")
+
+    val client = OkHttpClient.Builder()
+      .dns(AndroidDns(network = network, dnsClasses = listOf(AsyncDns.DnsClass.IPV4)).asDns())
+      .socketFactory(network.socketFactory)
+      .build()
+
+    val call =
+      client.newCall(Request.Builder().url("https://google.com/robots.txt").build())
+
+    call.execute().use { response ->
+      assertThat(response.code).isEqualTo(200)
+    }
+  }
+
+  private fun assumeNetwork() {
+    try {
+      InetAddress.getByName("www.google.com")
+    } catch (uhe: UnknownHostException) {
+      throw TestAbortedException(uhe.message, uhe)
+    }
   }
 }
