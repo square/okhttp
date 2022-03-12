@@ -39,6 +39,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.data.Offset
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertArrayEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -1930,6 +1931,38 @@ class Http2ConnectionTest {
     connection.start(sendConnectionPreface = false)
     val queues = taskRunner.activeQueues()
     assertThat(queues).hasSize(1)
+  }
+
+  @Test fun interruptDuringNewStream() {
+    // Write the mocking script.
+    peer.sendFrame().settings(Settings())
+    peer.acceptFrame() // ACK
+    peer.acceptFrame() // SYN_STREAM
+    peer.sendFrame().headers(false, 3, headerEntries("a", "android"))
+    peer.sendFrame().data(true, 3, data(0), 0)
+    peer.play()
+
+    // Play it back.
+    val connection = connect(peer)
+
+    val frameCountBeforeStream = peer.frameCount()
+
+    Thread.currentThread().interrupt()
+    try {
+      connection.newStream(headerEntries("b", "banana"), false)
+    } catch (iioe: InterruptedIOException) {
+      // clear interrupt status
+      assertTrue(Thread.interrupted())
+    }
+
+    // Will fail here unless the interrupt is triggered eagerly
+    assertThat(connection.openStreamCount()).isEqualTo(0)
+
+    // Verify the peer received what was expected.
+    val synStream = peer.pollFrame()
+    assertThat(synStream).isNull()
+    assertThat(peer.frameCount()).isEqualTo(frameCountBeforeStream)
+    assertThat(peer.frameCount()).isEqualTo(5)
   }
 
   private fun data(byteCount: Int): Buffer = Buffer().write(ByteArray(byteCount))
