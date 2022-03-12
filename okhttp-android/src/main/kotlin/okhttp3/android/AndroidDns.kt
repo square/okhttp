@@ -27,23 +27,31 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 import okhttp3.AsyncDns
 
+/**
+ * Dns implementation based on android.net.DnsResolver, which submits two requests for
+ * A and AAAA records, and returns the addresses or exception from each before returning.
+ *
+ * @param network network to use, if not selects the default network.
+ */
 @RequiresApi(Build.VERSION_CODES.Q)
-class AndroidDns(val network: Network? = null) : AsyncDns {
+class AndroidDns(
+  val network: Network? = null,
+  val dnsClasses: List<AsyncDns.DnsClass> = listOf(AsyncDns.DnsClass.IPV6, AsyncDns.DnsClass.IPV4)
+) :
+  AsyncDns {
   @RequiresApi(Build.VERSION_CODES.Q)
   private val resolver = DnsResolver.getInstance()
   private val executor = Executors.newSingleThreadExecutor()
 
   override fun query(hostname: String, callback: AsyncDns.Callback) {
-    val executing = AtomicInteger(2)
+    val executing = AtomicInteger(dnsClasses.size)
 
-    resolver.query(
-      network, hostname, DnsResolver.TYPE_A, DnsResolver.FLAG_EMPTY, executor, null,
-      callback(callback, AsyncDns.DnsClass.IPV4, executing)
-    )
-    resolver.query(
-      network, hostname, DnsResolver.TYPE_AAAA, DnsResolver.FLAG_EMPTY, executor, null,
-      callback(callback, AsyncDns.DnsClass.IPV6, executing)
-    )
+    dnsClasses.forEach { dnsClass ->
+      resolver.query(
+        network, hostname, dnsClass.type, DnsResolver.FLAG_EMPTY, executor, null,
+        callback(callback, AsyncDns.DnsClass.IPV4, executing)
+      )
+    }
   }
 
   private fun callback(
@@ -54,11 +62,7 @@ class AndroidDns(val network: Network? = null) : AsyncDns {
     override fun onAnswer(addresses: List<InetAddress>, rCode: Int) {
       callback.onAddressResults(dnsClass, addresses)
 
-      synchronized(executing) {
-        if (executing.decrementAndGet() == 0) {
-          callback.onComplete()
-        }
-      }
+      possiblyComplete()
     }
 
     override fun onError(e: DnsResolver.DnsException) {
@@ -66,6 +70,11 @@ class AndroidDns(val network: Network? = null) : AsyncDns {
         initCause(e)
       })
 
+      possiblyComplete()
+    }
+
+    private fun possiblyComplete() {
+      // Synchronized to ensure that onComplete is always after the last result sent
       synchronized(executing) {
         if (executing.decrementAndGet() == 0) {
           callback.onComplete()

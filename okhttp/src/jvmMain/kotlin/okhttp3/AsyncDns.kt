@@ -17,8 +17,6 @@
 
 package okhttp3
 
-import android.net.DnsResolver.TYPE_A
-import android.net.DnsResolver.TYPE_AAAA
 import java.net.InetAddress
 import java.net.UnknownHostException
 import java.util.concurrent.CountDownLatch
@@ -34,8 +32,8 @@ import okio.IOException
  *
  * Implementations of this interface must be safe for concurrent use.
  *
- * The interface may be extended over time with additional records types,
- * so as SCVB/HTTPS records.
+ * The interface may be extended by specific AsyncDns implementations with additional records types,
+ * so as SCVB/HTTPS records, which may not be generally applicable.
  */
 interface AsyncDns {
   /**
@@ -112,5 +110,10 @@ interface AsyncDns {
   enum class DnsClass(val type: Int) {
     IPV4(TYPE_A),
     IPV6(TYPE_AAAA);
+  }
+
+  companion object {
+    const val TYPE_A = 1
+    const val TYPE_AAAA = 28
   }
 }
