@@ -1,4 +1,4 @@
-public final class okhttp3/android/AndroidDns : okhttp3/AsyncDns {
+public final class okhttp3/android/AndroidAsyncDns : okhttp3/AsyncDns {
 	public fun <init> ()V
 	public fun <init> (Landroid/net/Network;Ljava/util/List;)V
 	public synthetic fun <init> (Landroid/net/Network;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V

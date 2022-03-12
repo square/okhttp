@@ -54,6 +54,7 @@ class AndroidAsyncDnsTest(val server: MockWebServer) {
       .addSubjectAlternativeName(localhostName)
       .build()
     return@lazy HandshakeCertificates.Builder()
+      .addPlatformTrustedCertificates()
       .heldCertificate(heldCertificate)
       .addTrustedCertificate(heldCertificate.certificate)
       .build()
@@ -81,6 +82,17 @@ class AndroidAsyncDnsTest(val server: MockWebServer) {
   }
 
   @Test
+  fun testRequestExternal() {
+    assumeNetwork()
+
+    val call = client.newCall(Request.Builder().url("https://google.com/robots.txt").build())
+
+    call.execute().use { response ->
+      assertThat(response.code).isEqualTo(200)
+    }
+  }
+
+  @Test
   fun testRequestInvalid() {
     val call = client.newCall(Request.Builder().url("https://google.invalid/").build())
 
@@ -94,11 +106,18 @@ class AndroidAsyncDnsTest(val server: MockWebServer) {
 
   @Test
   fun testDnsRequest() {
+    val (allAddresses, exception) = dnsQuery(localhostName)
+
+    assertThat(exception).isNull()
+    assertThat(allAddresses).isNotEmpty
+  }
+
+  private fun dnsQuery(hostname: String): Pair<List<InetAddress>, Exception?> {
     val allAddresses = mutableListOf<InetAddress>()
     var exception: Exception? = null
     val latch = CountDownLatch(1)
 
-    dns.query(localhostName, object : AsyncDns.Callback {
+    dns.query(hostname, object : AsyncDns.Callback {
       override fun onAddressResults(dnsClass: AsyncDns.DnsClass, addresses: List<InetAddress>) {
         allAddresses.addAll(addresses)
       }
@@ -114,6 +133,15 @@ class AndroidAsyncDnsTest(val server: MockWebServer) {
     })
 
     latch.await()
+
+    return Pair(allAddresses, exception)
+  }
+
+  @Test
+  fun testDnsRequestExternal() {
+    assumeNetwork()
+
+    val (allAddresses, exception) = dnsQuery("google.com")
 
     assertThat(exception).isNull()
     assertThat(allAddresses).isNotEmpty
@@ -121,26 +149,7 @@ class AndroidAsyncDnsTest(val server: MockWebServer) {
 
   @Test
   fun testDnsRequestInvalid() {
-    val allAddresses = mutableListOf<InetAddress>()
-    var exception: Exception? = null
-    val latch = CountDownLatch(1)
-
-    dns.query("google.invalid", object : AsyncDns.Callback {
-      override fun onAddressResults(dnsClass: AsyncDns.DnsClass, addresses: List<InetAddress>) {
-        allAddresses.addAll(addresses)
-      }
-
-      override fun onComplete() {
-        latch.countDown()
-      }
-
-      override fun onError(dnsClass: AsyncDns.DnsClass, e: IOException) {
-        exception = e
-        latch.countDown()
-      }
-    })
-
-    latch.await()
+    val (allAddresses, exception) = dnsQuery("google.invalid")
 
     assertThat(exception).isNull()
     assertThat(allAddresses).isEmpty()
