@@ -14,6 +14,7 @@ picocli = "4.6.3"
 
 [libraries]
 amazonCorretto = "software.amazon.cryptools:AmazonCorrettoCryptoProvider:1.6.1"
+androidx-annotation = "androidx.annotation:annotation:1.3.0"
 androidx-espresso-core = "androidx.test.espresso:espresso-core:3.4.0"
 androidx-junit = "androidx.test.ext:junit:1.1.3"
 androidx-test-runner = "androidx.test:runner:1.4.0"

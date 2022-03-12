@@ -17,30 +17,31 @@
 
 package okhttp3.android
 
-import android.annotation.SuppressLint
 import android.net.DnsResolver
+import android.net.Network
+import android.os.Build
+import androidx.annotation.RequiresApi
 import java.net.InetAddress
 import java.net.UnknownHostException
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 import okhttp3.AsyncDns
 
-@SuppressLint("NewApi") // API 29!
-class AndroidDns : AsyncDns {
-  val resolver = DnsResolver.getInstance()
-  val executor = Executors.newSingleThreadExecutor()
-
-  val f: AsyncDns = this
+@RequiresApi(Build.VERSION_CODES.Q)
+class AndroidDns(val network: Network? = null) : AsyncDns {
+  @RequiresApi(Build.VERSION_CODES.Q)
+  private val resolver = DnsResolver.getInstance()
+  private val executor = Executors.newSingleThreadExecutor()
 
   override fun query(hostname: String, callback: AsyncDns.Callback) {
     val executing = AtomicInteger(2)
 
     resolver.query(
-      null, hostname, DnsResolver.TYPE_A, DnsResolver.FLAG_EMPTY, executor, null,
+      network, hostname, DnsResolver.TYPE_A, DnsResolver.FLAG_EMPTY, executor, null,
       callback(callback, AsyncDns.DnsClass.IPV4, executing)
     )
     resolver.query(
-      null, hostname, DnsResolver.TYPE_AAAA, DnsResolver.FLAG_EMPTY, executor, null,
+      network, hostname, DnsResolver.TYPE_AAAA, DnsResolver.FLAG_EMPTY, executor, null,
       callback(callback, AsyncDns.DnsClass.IPV6, executing)
     )
   }

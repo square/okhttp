@@ -14,41 +14,57 @@
  * limitations under the License.
  *
  */
-package okhttp.android.test
+package okhttp3.android
 
 import java.net.InetAddress
 import java.util.concurrent.CountDownLatch
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.junit5.internal.MockWebServerExtension
-import okhttp3.android.AndroidDns
 import okhttp3.AsyncDns
-import okhttp3.OkHttpClientTestRule
+import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.tls.HandshakeCertificates
+import okhttp3.tls.HeldCertificate
 import okio.IOException
-import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.fail
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import org.junit.jupiter.api.extension.RegisterExtension
 
 /**
  * Run with "./gradlew :android-test:connectedCheck" and make sure ANDROID_SDK_ROOT is set.
  */
 @ExtendWith(MockWebServerExtension::class)
-class AsyncDnsTest(val server: MockWebServer) {
-  @Suppress("RedundantVisibilityModifier")
-  @JvmField
-  @RegisterExtension public val clientTestRule = OkHttpClientTestRule()
+class AndroidDnsTest(val server: MockWebServer) {
+  private val dns = AndroidDns()
+
+  private val localhost: HandshakeCertificates by lazy {
+    // Generate a self-signed cert for the server to serve and the client to trust.
+    val heldCertificate = HeldCertificate.Builder()
+      .commonName("localhost")
+      .addSubjectAlternativeName(InetAddress.getByName("localhost").canonicalHostName)
+      .build()
+    return@lazy HandshakeCertificates.Builder()
+      .heldCertificate(heldCertificate)
+      .addTrustedCertificate(heldCertificate.certificate)
+      .build()
+  }
+
+  val client = OkHttpClient.Builder()
+    .dns(dns.asDns())
+    .sslSocketFactory(localhost.sslSocketFactory(), localhost.trustManager)
+    .build()
+
+  @BeforeEach
+  fun init() {
+    server.useHttps(localhost.sslSocketFactory(), false)
+  }
 
   @Test
   fun testRequest() {
     server.enqueue(MockResponse())
-
-    val dns = AndroidDns()
-
-    val client = clientTestRule.newClientBuilder().dns(dns.asDns()).build()
 
     val call = client.newCall(Request.Builder().url(server.url("/")).build())
 
@@ -61,7 +77,7 @@ class AsyncDnsTest(val server: MockWebServer) {
   fun testRequestInvalid() {
     val dns = AndroidDns()
 
-    val client = clientTestRule.newClientBuilder().dns(dns.asDns()).build()
+    val client = OkHttpClient.Builder().dns(dns.asDns()).build()
 
     val call = client.newCall(Request.Builder().url("https://google.invalid/").build())
 
@@ -81,7 +97,7 @@ class AsyncDnsTest(val server: MockWebServer) {
     var exception: Exception? = null
     val latch = CountDownLatch(1)
 
-    dns.query("localhost", object: AsyncDns.Callback {
+    dns.query("localhost", object : AsyncDns.Callback {
       override fun onAddressResults(dnsClass: AsyncDns.DnsClass, addresses: List<InetAddress>) {
         allAddresses.addAll(addresses)
       }
@@ -110,7 +126,7 @@ class AsyncDnsTest(val server: MockWebServer) {
     var exception: Exception? = null
     val latch = CountDownLatch(1)
 
-    dns.query("google.invalid", object: AsyncDns.Callback {
+    dns.query("google.invalid", object : AsyncDns.Callback {
       override fun onAddressResults(dnsClass: AsyncDns.DnsClass, addresses: List<InetAddress>) {
         allAddresses.addAll(addresses)
       }
