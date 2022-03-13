@@ -39,6 +39,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.data.Offset
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertArrayEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Tag
@@ -1951,8 +1952,7 @@ class Http2ConnectionTest {
     try {
       connection.newStream(headerEntries("b", "banana"), false)
     } catch (iioe: InterruptedIOException) {
-      // clear interrupt status
-      assertTrue(Thread.interrupted())
+      assertFalse(Thread.currentThread().isInterrupted)
     }
 
     // Will fail here unless the interrupt is triggered eagerly

@@ -239,7 +239,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
 
     // trigger interrupts before we write to the buffered output
     // since flush is likely where we get notified.
-    if (Thread.currentThread().isInterrupted) {
+    if (Thread.interrupted()) {
       throw InterruptedIOException()
     }
 
