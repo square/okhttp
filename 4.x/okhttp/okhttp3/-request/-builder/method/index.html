@@ -1030,8 +1030,11 @@
 
 <p>//<a href="../../../../../">okhttp</a>/<a href="../../../">okhttp3</a>/<a href="../../">Request</a>/<a href="../">Builder</a>/<a href="./">method</a></p>
 <h1 id="method">method<a class="headerlink" href="#method" title="Permanent link">&para;</a></h1>
-<p>[jvm]\
-open fun <a href="./">method</a>(method: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>, body: <a href="../../../-request-body/">RequestBody</a>?): <a href="../">Request.Builder</a></p>
+<p>[common, jvm, nonJvm]\
+[common]\
+expect open fun <a href="./">method</a>(method: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>, body: <a href="../../../-request-body/">RequestBody</a>?): <a href="../">Request.Builder</a></p>
+<p>[jvm, nonJvm]\
+actual open fun <a href="./">method</a>(method: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>, body: <a href="../../../-request-body/">RequestBody</a>?): <a href="../">Request.Builder</a></p>
 
               
             </article>

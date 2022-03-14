@@ -1030,9 +1030,12 @@
 
 <p>//<a href="../../../../../">okhttp</a>/<a href="../../../">okhttp3</a>/<a href="../../">Request</a>/<a href="../">Builder</a>/<a href="./">header</a></p>
 <h1 id="header">header<a class="headerlink" href="#header" title="Permanent link">&para;</a></h1>
-<p>[jvm]\
-open fun <a href="./">header</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>, value: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="../">Request.Builder</a></p>
+<p>[common]\
+expect open fun <a href="./">header</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>, value: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="../">Request.Builder</a></p>
 <p>Sets the header named <a href="./">name</a> to <a href="./">value</a>. If this request already has any headers with that name, they are all replaced.</p>
+<p>[jvm, nonJvm]\
+[jvm, nonJvm]\
+actual open fun <a href="./">header</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>, value: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="../">Request.Builder</a></p>
 
               
             </article>

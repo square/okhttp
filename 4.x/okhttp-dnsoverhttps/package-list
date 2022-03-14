@@ -24,10 +24,5 @@ $dokka.location:okhttp3.dnsoverhttps/DnsOverHttps/post/#/PointingToDeclaration/
 $dokka.location:okhttp3.dnsoverhttps/DnsOverHttps/resolvePrivateAddresses/#/PointingToDeclaration/okhttp-dnsoverhttps/okhttp3.dnsoverhttps/-dns-over-https/resolve-private-addresses.md
 $dokka.location:okhttp3.dnsoverhttps/DnsOverHttps/resolvePublicAddresses/#/PointingToDeclaration/okhttp-dnsoverhttps/okhttp3.dnsoverhttps/-dns-over-https/resolve-public-addresses.md
 $dokka.location:okhttp3.dnsoverhttps/DnsOverHttps/url/#/PointingToDeclaration/okhttp-dnsoverhttps/okhttp3.dnsoverhttps/-dns-over-https/url.md
-$dokka.location:okhttp3.dnsoverhttps/DnsRecordCodec///PointingToDeclaration/okhttp-dnsoverhttps/okhttp3.dnsoverhttps/-dns-record-codec/index.md
-$dokka.location:okhttp3.dnsoverhttps/DnsRecordCodec/TYPE_A/#/PointingToDeclaration/okhttp-dnsoverhttps/okhttp3.dnsoverhttps/-dns-record-codec/-t-y-p-e_-a.md
-$dokka.location:okhttp3.dnsoverhttps/DnsRecordCodec/TYPE_AAAA/#/PointingToDeclaration/okhttp-dnsoverhttps/okhttp3.dnsoverhttps/-dns-record-codec/-t-y-p-e_-a-a-a-a.md
-$dokka.location:okhttp3.dnsoverhttps/DnsRecordCodec/decodeAnswers/#kotlin.String#okio.ByteString/PointingToDeclaration/okhttp-dnsoverhttps/okhttp3.dnsoverhttps/-dns-record-codec/decode-answers.md
-$dokka.location:okhttp3.dnsoverhttps/DnsRecordCodec/encodeQuery/#kotlin.String#kotlin.Int/PointingToDeclaration/okhttp-dnsoverhttps/okhttp3.dnsoverhttps/-dns-record-codec/encode-query.md
 okhttp3.dnsoverhttps
 

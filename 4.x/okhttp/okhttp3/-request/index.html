@@ -1059,9 +1059,11 @@
 
 <p>//<a href="../../../">okhttp</a>/<a href="../">okhttp3</a>/<a href="./">Request</a></p>
 <h1 id="request">Request<a class="headerlink" href="#request" title="Permanent link">&para;</a></h1>
-<p>[jvm]\
-class <a href="./">Request</a></p>
+<p>[common]\
+expect class <a href="./">Request</a></p>
 <p>An HTTP request. Instances of this class are immutable if their <a href="body/">body</a> is null or itself immutable.</p>
+<p>[jvm, nonJvm]\
+actual class <a href="./">Request</a></p>
 <h2 id="types">Types<a class="headerlink" href="#types" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1073,7 +1075,7 @@ class <a href="./">Request</a></p>
 <tbody>
 <tr>
 <td><a href="-builder/">Builder</a></td>
-<td>[jvm]<br>open class <a href="-builder/">Builder</a></td>
+<td>[common, jvm, nonJvm]<br>[common]<br>expect open class <a href="-builder/">Builder</a><br>[jvm, nonJvm]<br>actual open class <a href="-builder/">Builder</a></td>
 </tr>
 </tbody>
 </table>
@@ -1088,23 +1090,23 @@ class <a href="./">Request</a></p>
 <tbody>
 <tr>
 <td><a href="header/">header</a></td>
-<td>[jvm]<br>fun <a href="header/">header</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>?</td>
+<td>[common, jvm, nonJvm]<br>[common]<br>expect fun <a href="header/">header</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>?<br>[jvm, nonJvm]<br>actual fun <a href="header/">header</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>?</td>
 </tr>
 <tr>
 <td><a href="headers/">headers</a></td>
-<td>[jvm]<br>fun <a href="headers/">headers</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>&gt;</td>
+<td>[common, jvm, nonJvm]<br>[common]<br>expect fun <a href="headers/">headers</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>&gt;<br>[jvm, nonJvm]<br>actual fun <a href="headers/">headers</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>&gt;</td>
 </tr>
 <tr>
 <td><a href="new-builder/">newBuilder</a></td>
-<td>[jvm]<br>fun <a href="new-builder/">newBuilder</a>(): <a href="-builder/">Request.Builder</a></td>
+<td>[common, jvm, nonJvm]<br>[common]<br>expect fun <a href="new-builder/">newBuilder</a>(): <a href="-builder/">Request.Builder</a><br>[jvm, nonJvm]<br>actual fun <a href="new-builder/">newBuilder</a>(): <a href="-builder/">Request.Builder</a></td>
 </tr>
 <tr>
 <td><a href="tag/">tag</a></td>
 <td>[jvm]<br>fun <a href="tag/">tag</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a>?<br>Returns the tag attached with Object.class as a key, or null if no tag is attached with that key.<br>[jvm]<br>fun &lt;<a href="tag/">T</a>&gt; <a href="tag/">tag</a>(type: <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html">Class</a>&lt;out <a href="tag/">T</a>&gt;): <a href="tag/">T</a>?<br>Returns the tag attached with <a href="tag/">type</a> as a key, or null if no tag is attached with that key.</td>
 </tr>
 <tr>
-<td><a href="to-string/">toString</a></td>
-<td>[jvm]<br>open override fun <a href="to-string/">toString</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></td>
+<td>toString</td>
+<td>[jvm, nonJvm]<br>[jvm]<br>open override fun <a href="%5Bjvm%5Dto-string/">toString</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><br>[nonJvm]<br>open override fun <a href="%5Bnon-jvm%5Dto-string/">toString</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></td>
 </tr>
 </tbody>
 </table>
@@ -1119,27 +1121,27 @@ class <a href="./">Request</a></p>
 <tbody>
 <tr>
 <td><a href="body/">body</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;body&rdquo;)<br>val <a href="body/">body</a>: <a href="../-request-body/">RequestBody</a>?</td>
+<td>[common]<br>expect val <a href="body/">body</a>: <a href="../-request-body/">RequestBody</a>?<br>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;body&rdquo;)<br>actual val <a href="body/">body</a>: <a href="../-request-body/">RequestBody</a>?<br>[nonJvm]<br>actual val <a href="body/">body</a>: <a href="../-request-body/">RequestBody</a>?</td>
 </tr>
 <tr>
 <td><a href="cache-control/">cacheControl</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;cacheControl&rdquo;)<br>val <a href="cache-control/">cacheControl</a>: <a href="../-cache-control/">CacheControl</a><br>Returns the cache control directives for this response. This is never null, even if this response contains no Cache-Control header.</td>
+<td>[common]<br>expect val <a href="cache-control/">cacheControl</a>: <a href="../-cache-control/">CacheControl</a><br>Returns the cache control directives for this response. This is never null, even if this response contains no Cache-Control header.<br>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;cacheControl&rdquo;)<br>actual val <a href="cache-control/">cacheControl</a>: <a href="../-cache-control/">CacheControl</a><br>[nonJvm]<br>actual val <a href="cache-control/">cacheControl</a>: <a href="../-cache-control/">CacheControl</a></td>
 </tr>
 <tr>
 <td><a href="headers/">headers</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;headers&rdquo;)<br>val <a href="headers/">headers</a>: <a href="../-headers/">Headers</a></td>
+<td>[common]<br>expect val <a href="headers/">headers</a>: <a href="../-headers/">Headers</a><br>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;headers&rdquo;)<br>actual val <a href="headers/">headers</a>: <a href="../-headers/">Headers</a><br>[nonJvm]<br>actual val <a href="headers/">headers</a>: <a href="../-headers/">Headers</a></td>
 </tr>
 <tr>
 <td><a href="is-https/">isHttps</a></td>
-<td>[jvm]<br>val <a href="is-https/">isHttps</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></td>
+<td>[common]<br>expect val <a href="is-https/">isHttps</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><br>[jvm, nonJvm]<br>actual val <a href="is-https/">isHttps</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></td>
 </tr>
 <tr>
 <td><a href="method/">method</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;method&rdquo;)<br>val <a href="method/">method</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></td>
+<td>[common]<br>expect val <a href="method/">method</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><br>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;method&rdquo;)<br>actual val <a href="method/">method</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><br>[nonJvm]<br>actual val <a href="method/">method</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></td>
 </tr>
 <tr>
 <td><a href="url/">url</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;url&rdquo;)<br>val <a href="url/">url</a>: <a href="../-http-url/">HttpUrl</a></td>
+<td>[common]<br>expect val <a href="url/">url</a>: HttpUrlRepresentation<br>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;url&rdquo;)<br>actual val <a href="url/">url</a>: HttpUrlRepresentation<br>[nonJvm]<br>actual val <a href="url/">url</a>: HttpUrlRepresentation</td>
 </tr>
 </tbody>
 </table>

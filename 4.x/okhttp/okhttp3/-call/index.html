@@ -1052,9 +1052,13 @@
 
 <p>//<a href="../../../">okhttp</a>/<a href="../">okhttp3</a>/<a href="./">Call</a></p>
 <h1 id="call">Call<a class="headerlink" href="#call" title="Permanent link">&para;</a></h1>
-<p>[jvm]\
-interface <a href="./">Call</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-cloneable/index.html">Cloneable</a></p>
+<p>[common]\
+expect interface <a href="./">Call</a></p>
 <p>A call is a request that has been prepared for execution. A call can be canceled. As this object represents a single request/response pair (stream), it cannot be executed twice.</p>
+<p>[jvm]\
+actual interface <a href="./">Call</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-cloneable/index.html">Cloneable</a></p>
+<p>[nonJvm]\
+actual interface <a href="./">Call</a></p>
 <h2 id="types">Types<a class="headerlink" href="#types" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1066,7 +1070,7 @@ interface <a href="./">Call</a> : <a href="https://kotlinlang.org/api/latest/jvm
 <tbody>
 <tr>
 <td><a href="-factory/">Factory</a></td>
-<td>[jvm]<br>fun interface <a href="-factory/">Factory</a></td>
+<td>[common, jvm, nonJvm]<br>[common]<br>expect fun interface <a href="-factory/">Factory</a><br>[jvm, nonJvm]<br>actual fun interface <a href="-factory/">Factory</a></td>
 </tr>
 </tbody>
 </table>
@@ -1081,31 +1085,35 @@ interface <a href="./">Call</a> : <a href="https://kotlinlang.org/api/latest/jvm
 <tbody>
 <tr>
 <td><a href="cancel/">cancel</a></td>
-<td>[jvm]<br>abstract fun <a href="cancel/">cancel</a>()<br>Cancels the request, if possible. Requests that are already complete cannot be canceled.</td>
+<td>[common]<br>expect abstract fun <a href="cancel/">cancel</a>()<br>Cancels the request, if possible. Requests that are already complete cannot be canceled.<br>[jvm, nonJvm]<br>[jvm, nonJvm]<br>actual abstract fun <a href="cancel/">cancel</a>()</td>
 </tr>
 <tr>
 <td><a href="clone/">clone</a></td>
-<td>[jvm]<br>abstract override fun <a href="clone/">clone</a>(): <a href="./">Call</a><br>Create a new, identical call to this one which can be enqueued or executed even if this call has already been.</td>
+<td>[common]<br>expect abstract fun <a href="clone/">clone</a>(): <a href="./">Call</a><br>Create a new, identical call to this one which can be enqueued or executed even if this call has already been.<br>[jvm, nonJvm]<br>[jvm]<br>actual abstract override fun <a href="clone/">clone</a>(): <a href="./">Call</a><br>[nonJvm]<br>actual abstract fun <a href="clone/">clone</a>(): <a href="./">Call</a></td>
 </tr>
 <tr>
 <td><a href="enqueue/">enqueue</a></td>
-<td>[jvm]<br>abstract fun <a href="enqueue/">enqueue</a>(responseCallback: <a href="../-callback/">Callback</a>)<br>Schedules the request to be executed at some point in the future.</td>
+<td>[common]<br>expect abstract fun <a href="enqueue/">enqueue</a>(responseCallback: <a href="../-callback/">Callback</a>)<br>Schedules the request to be executed at some point in the future.<br>[jvm, nonJvm]<br>[jvm, nonJvm]<br>actual abstract fun <a href="enqueue/">enqueue</a>(responseCallback: Callback)</td>
 </tr>
 <tr>
 <td><a href="execute/">execute</a></td>
 <td>[jvm]<br>abstract fun <a href="execute/">execute</a>(): <a href="../-response/">Response</a><br>Invokes the request immediately, and blocks until the response can be processed or is in error.</td>
 </tr>
 <tr>
+<td><a href="execute-async/">executeAsync</a></td>
+<td>[nonJvm]<br>abstract suspend fun <a href="execute-async/">executeAsync</a>(): <a href="../-response/">Response</a><br>Invokes the request immediately, and blocks until the response can be processed or is in error.</td>
+</tr>
+<tr>
 <td><a href="is-canceled/">isCanceled</a></td>
-<td>[jvm]<br>abstract fun <a href="is-canceled/">isCanceled</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></td>
+<td>[common, jvm, nonJvm]<br>[common]<br>expect abstract fun <a href="is-canceled/">isCanceled</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><br>[jvm, nonJvm]<br>actual abstract fun <a href="is-canceled/">isCanceled</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></td>
 </tr>
 <tr>
 <td><a href="is-executed/">isExecuted</a></td>
-<td>[jvm]<br>abstract fun <a href="is-executed/">isExecuted</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><br>Returns true if this call has been either <a href="execute/">executed</a> or <a href="enqueue/">enqueued</a>. It is an error to execute a call more than once.</td>
+<td>[common]<br>expect abstract fun <a href="is-executed/">isExecuted</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><br>Returns true if this call has been either execute or <a href="enqueue/">enqueued</a>. It is an error to execute a call more than once.<br>[jvm, nonJvm]<br>[jvm, nonJvm]<br>actual abstract fun <a href="is-executed/">isExecuted</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></td>
 </tr>
 <tr>
 <td><a href="request/">request</a></td>
-<td>[jvm]<br>abstract fun <a href="request/">request</a>(): <a href="../-request/">Request</a><br>Returns the original request that initiated this call.</td>
+<td>[common]<br>expect abstract fun <a href="request/">request</a>(): <a href="../-request/">Request</a><br>Returns the original request that initiated this call.<br>[jvm, nonJvm]<br>[jvm, nonJvm]<br>actual abstract fun <a href="request/">request</a>(): <a href="../-request/">Request</a></td>
 </tr>
 <tr>
 <td><a href="timeout/">timeout</a></td>

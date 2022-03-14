@@ -1030,9 +1030,12 @@
 
 <p>//<a href="../../../../">okhttp</a>/<a href="../../">okhttp3</a>/<a href="../">RequestBody</a>/<a href="./">contentType</a></p>
 <h1 id="contenttype">contentType<a class="headerlink" href="#contenttype" title="Permanent link">&para;</a></h1>
-<p>[jvm]\
-abstract fun <a href="./">contentType</a>(): <a href="../../-media-type/">MediaType</a>?</p>
+<p>[common]\
+expect abstract fun <a href="./">contentType</a>(): <a href="../../-media-type/">MediaType</a>?</p>
 <p>Returns the Content-Type header for this body.</p>
+<p>[jvm, nonJvm]\
+[jvm, nonJvm]\
+actual abstract fun <a href="./">contentType</a>(): <a href="../../-media-type/">MediaType</a>?</p>
 
               
             </article>

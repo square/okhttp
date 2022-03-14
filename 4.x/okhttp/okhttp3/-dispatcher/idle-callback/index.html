@@ -1035,7 +1035,7 @@
 <p>@set:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-synchronized/index.html">Synchronized</a></p>
 <p>var <a href="./">idleCallback</a>: <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Runnable.html">Runnable</a>? = null</p>
 <p>A callback to be invoked each time the dispatcher becomes idle (when the number of running calls returns to zero).</p>
-<p>Note: The time at which a <a href="../../-call/">call</a> is considered idle is different depending on whether it was run <a href="../../-call/enqueue/">asynchronously</a> or <a href="../../-call/execute/">synchronously</a>. Asynchronous calls become idle after the <a href="../../-callback/on-response/">onResponse</a> or <a href="../../-callback/on-failure/">onFailure</a> callback has returned. Synchronous calls become idle once <a href="../../-call/execute/">execute()</a> returns. This means that if you are doing synchronous calls the network layer will not truly be idle until every returned <a href="../../-response/">Response</a> has been closed.</p>
+<p>Note: The time at which a <a href="../../-call/">call</a> is considered idle is different depending on whether it was run <a href="../../-call/enqueue/">asynchronously</a> or <a href="../../-call/execute/">synchronously</a>. Asynchronous calls become idle after the onResponse or onFailure callback has returned. Synchronous calls become idle once <a href="../../-call/execute/">execute()</a> returns. This means that if you are doing synchronous calls the network layer will not truly be idle until every returned <a href="../../-response/">Response</a> has been closed.</p>
 
               
             </article>

@@ -1030,9 +1030,12 @@
 
 <p>//<a href="../../../../">okhttp</a>/<a href="../../">okhttp3</a>/<a href="../">Call</a>/<a href="./">isExecuted</a></p>
 <h1 id="isexecuted">isExecuted<a class="headerlink" href="#isexecuted" title="Permanent link">&para;</a></h1>
-<p>[jvm]\
-abstract fun <a href="./">isExecuted</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></p>
-<p>Returns true if this call has been either <a href="../execute/">executed</a> or <a href="../enqueue/">enqueued</a>. It is an error to execute a call more than once.</p>
+<p>[common]\
+expect abstract fun <a href="./">isExecuted</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></p>
+<p>Returns true if this call has been either execute or <a href="../enqueue/">enqueued</a>. It is an error to execute a call more than once.</p>
+<p>[jvm, nonJvm]\
+[jvm, nonJvm]\
+actual abstract fun <a href="./">isExecuted</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></p>
 
               
             </article>

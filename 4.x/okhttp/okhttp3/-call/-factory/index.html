@@ -1052,8 +1052,10 @@
 
 <p>//<a href="../../../../">okhttp</a>/<a href="../../">okhttp3</a>/<a href="../">Call</a>/<a href="./">Factory</a></p>
 <h1 id="factory">Factory<a class="headerlink" href="#factory" title="Permanent link">&para;</a></h1>
-<p>[jvm]\
-fun interface <a href="./">Factory</a></p>
+<p>[common]\
+expect fun interface <a href="./">Factory</a></p>
+<p>[jvm, nonJvm]\
+actual fun interface <a href="./">Factory</a></p>
 <h2 id="functions">Functions<a class="headerlink" href="#functions" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1065,7 +1067,7 @@ fun interface <a href="./">Factory</a></p>
 <tbody>
 <tr>
 <td><a href="new-call/">newCall</a></td>
-<td>[jvm]<br>abstract fun <a href="new-call/">newCall</a>(request: <a href="../../-request/">Request</a>): <a href="../">Call</a></td>
+<td>[common, jvm, nonJvm]<br>[common]<br>expect abstract fun <a href="new-call/">newCall</a>(request: <a href="../../-request/">Request</a>): <a href="../">Call</a><br>[jvm, nonJvm]<br>actual abstract fun <a href="new-call/">newCall</a>(request: <a href="../../-request/">Request</a>): <a href="../">Call</a></td>
 </tr>
 </tbody>
 </table>

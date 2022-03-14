@@ -1030,9 +1030,14 @@
 
 <p>//<a href="../../../../">okhttp</a>/<a href="../../">okhttp3</a>/<a href="../">Response</a>/<a href="./">isSuccessful</a></p>
 <h1 id="issuccessful">isSuccessful<a class="headerlink" href="#issuccessful" title="Permanent link">&para;</a></h1>
-<p>[jvm]\
-val <a href="./">isSuccessful</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></p>
+<p>[common, nonJvm]\
+[common]\
+expect val <a href="./">isSuccessful</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></p>
+<p>[nonJvm]\
+actual val <a href="./">isSuccessful</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></p>
 <p>Returns true if the code is in [200..300), which means the request was successfully received, understood, and accepted.</p>
+<p>[jvm]\
+actual val <a href="./">isSuccessful</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></p>
 
               
             </article>

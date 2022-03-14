@@ -1052,10 +1052,13 @@
 
 <p>//<a href="../../../../../">okhttp</a>/<a href="../../../">okhttp3</a>/<a href="../../">Request</a>/<a href="../">Builder</a>/<a href="./">url</a></p>
 <h1 id="url">url<a class="headerlink" href="#url" title="Permanent link">&para;</a></h1>
-<p>[jvm]\
+<p>[jvm, nonJvm]\
+[jvm]\
 open fun <a href="./">url</a>(url: <a href="../../../-http-url/">HttpUrl</a>): <a href="../">Request.Builder</a></p>
+<p>[jvm, nonJvm]\
+actual open fun <a href="./">url</a>(url: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="../">Request.Builder</a></p>
 <p>[jvm]\
-open fun <a href="./">url</a>(url: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="../">Request.Builder</a></p>
+open fun <a href="./">url</a>(url: <a href="https://docs.oracle.com/javase/8/docs/api/java/net/URL.html">URL</a>): <a href="../">Request.Builder</a></p>
 <p>Sets the URL target of this request.</p>
 <h2 id="throws">Throws<a class="headerlink" href="#throws" title="Permanent link">&para;</a></h2>
 <table>
@@ -1068,12 +1071,12 @@ open fun <a href="./">url</a>(url: <a href="https://kotlinlang.org/api/latest/jv
 <tbody>
 <tr>
 <td><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-argument-exception/index.html">kotlin.IllegalArgumentException</a></td>
-<td>if <a href="./">url</a> is not a valid HTTP or HTTPS URL. Avoid this     exception by calling HttpUrl.parse; it returns null for invalid URLs.</td>
+<td>if the scheme of <a href="./">url</a> is not http or https.</td>
 </tr>
 </tbody>
 </table>
-<p>[jvm]\
-open fun <a href="./">url</a>(url: <a href="https://docs.oracle.com/javase/8/docs/api/java/net/URL.html">URL</a>): <a href="../">Request.Builder</a></p>
+<p>[common]\
+expect open fun <a href="./">url</a>(url: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="../">Request.Builder</a></p>
 <p>Sets the URL target of this request.</p>
 <h2 id="throws_1">Throws<a class="headerlink" href="#throws_1" title="Permanent link">&para;</a></h2>
 <table>
@@ -1086,7 +1089,7 @@ open fun <a href="./">url</a>(url: <a href="https://docs.oracle.com/javase/8/doc
 <tbody>
 <tr>
 <td><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-argument-exception/index.html">kotlin.IllegalArgumentException</a></td>
-<td>if the scheme of <a href="./">url</a> is not http or https.</td>
+<td>if <a href="./">url</a> is not a valid HTTP or HTTPS URL. Avoid this     exception by calling HttpUrl.parse; it returns null for invalid URLs.</td>
 </tr>
 </tbody>
 </table>

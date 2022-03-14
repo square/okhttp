@@ -636,6 +636,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#verifying-artifacts" class="md-nav__link">
+    Verifying Artifacts
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1088,6 +1095,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#verifying-artifacts" class="md-nav__link">
+    Verifying Artifacts
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1136,6 +1150,15 @@ can make. We therefore encourage reporting security issues with the code
 contained in this repository.</p>
 <p>If you believe you have discovered a security vulnerability, please follow the
 guidelines at <a href="https://bugcrowd.com/squareopensource">https://bugcrowd.com/squareopensource</a></p>
+<h2 id="verifying-artifacts">Verifying Artifacts<a class="headerlink" href="#verifying-artifacts" title="Permanent link">&para;</a></h2>
+<p>We sign our artifacts using this <a href="https://keyserver.ubuntu.com/pks/lookup?op=hget&amp;search=a79b48fd6a1f31699c788b50c97d0b98">key</a>:</p>
+<div class="highlight"><pre><span></span><code>pub rsa4096/dbd744ace7ade6aa50dd591f66b50994442d2d40 2021-07-09T14:50:19Z
+     Hash=a79b48fd6a1f31699c788b50c97d0b98
+
+uid Square Clippy &lt;opensource@squareup.com&gt;
+sig  sig  66b50994442d2d40 2021-07-09T14:50:19Z 2041-07-04T14:50:19Z ____________________ [selfsig]
+</code></pre></div>
+<p>The best way to verify artifacts is <a href="https://docs.gradle.org/current/userguide/dependency_verification.html#sec:signature-verification">automatically with Gradle</a>.</p>
 
               
             </article>

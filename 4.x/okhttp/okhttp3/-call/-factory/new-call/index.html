@@ -1030,8 +1030,11 @@
 
 <p>//<a href="../../../../../">okhttp</a>/<a href="../../../">okhttp3</a>/<a href="../../">Call</a>/<a href="../">Factory</a>/<a href="./">newCall</a></p>
 <h1 id="newcall">newCall<a class="headerlink" href="#newcall" title="Permanent link">&para;</a></h1>
-<p>[jvm]\
-abstract fun <a href="./">newCall</a>(request: <a href="../../../-request/">Request</a>): <a href="../../">Call</a></p>
+<p>[common, jvm, nonJvm]\
+[common]\
+expect abstract fun <a href="./">newCall</a>(request: <a href="../../../-request/">Request</a>): <a href="../../">Call</a></p>
+<p>[jvm, nonJvm]\
+actual abstract fun <a href="./">newCall</a>(request: <a href="../../../-request/">Request</a>): <a href="../../">Call</a></p>
 
               
             </article>

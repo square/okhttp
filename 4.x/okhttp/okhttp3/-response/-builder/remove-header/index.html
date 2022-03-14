@@ -1030,9 +1030,14 @@
 
 <p>//<a href="../../../../../">okhttp</a>/<a href="../../../">okhttp3</a>/<a href="../../">Response</a>/<a href="../">Builder</a>/<a href="./">removeHeader</a></p>
 <h1 id="removeheader">removeHeader<a class="headerlink" href="#removeheader" title="Permanent link">&para;</a></h1>
-<p>[jvm]\
-open fun <a href="./">removeHeader</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="../">Response.Builder</a></p>
+<p>[common, nonJvm]\
+[common]\
+expect open fun <a href="./">removeHeader</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="../">Response.Builder</a></p>
+<p>[nonJvm]\
+actual open fun <a href="./">removeHeader</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="../">Response.Builder</a></p>
 <p>Removes all headers named <a href="./">name</a> on this builder.</p>
+<p>[jvm]\
+actual open fun <a href="./">removeHeader</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="../">Response.Builder</a></p>
 
               
             </article>

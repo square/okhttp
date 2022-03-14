@@ -1030,9 +1030,12 @@
 
 <p>//<a href="../../../../">okhttp</a>/<a href="../../">okhttp3</a>/<a href="../">Call</a>/<a href="./">cancel</a></p>
 <h1 id="cancel">cancel<a class="headerlink" href="#cancel" title="Permanent link">&para;</a></h1>
-<p>[jvm]\
-abstract fun <a href="./">cancel</a>()</p>
+<p>[common]\
+expect abstract fun <a href="./">cancel</a>()</p>
 <p>Cancels the request, if possible. Requests that are already complete cannot be canceled.</p>
+<p>[jvm, nonJvm]\
+[jvm, nonJvm]\
+actual abstract fun <a href="./">cancel</a>()</p>
 
               
             </article>

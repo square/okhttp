@@ -1052,8 +1052,8 @@
 
 <p>//<a href="../../../../">okhttp</a>/<a href="../../">okhttp3</a>/<a href="../">RequestBody</a>/<a href="./">isDuplex</a></p>
 <h1 id="isduplex">isDuplex<a class="headerlink" href="#isduplex" title="Permanent link">&para;</a></h1>
-<p>[jvm]\
-open fun <a href="./">isDuplex</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></p>
+<p>[common]\
+expect open fun <a href="./">isDuplex</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></p>
 <p>A duplex request body is special in how it is <strong>transmitted</strong> on the network and in the <strong>API contract</strong> between OkHttp and the application.</p>
 <p>This method returns false unless it is overridden by a subclass.</p>
 <h3 id="duplex-transmission">Duplex Transmission<a class="headerlink" href="#duplex-transmission" title="Permanent link">&para;</a></h3>
@@ -1062,6 +1062,9 @@ open fun <a href="./">isDuplex</a>(): <a href="https://kotlinlang.org/api/latest
 <p>Because the encoding of interleaved data is not well-defined for HTTP/1, duplex request bodies may only be used with HTTP/2. Calls to HTTP/1 servers will fail before the HTTP request is transmitted. If you cannot ensure that your client and server both support HTTP/2, do not use this feature.</p>
 <h3 id="duplex-apis">Duplex APIs<a class="headerlink" href="#duplex-apis" title="Permanent link">&para;</a></h3>
 <p>With regular request bodies it is not legal to write bytes to the sink passed to <a href="../write-to/">RequestBody.writeTo</a> after that method returns. For duplex requests bodies that condition is lifted. Such writes occur on an application-provided thread and may occur concurrently with reads of the <a href="../../-response-body/">ResponseBody</a>. For duplex request bodies, <a href="../write-to/">writeTo</a> should return quickly, possibly by handing off the provided request body to another thread to perform writing.</p>
+<p>[jvm, nonJvm]\
+[jvm, nonJvm]\
+actual open fun <a href="./">isDuplex</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></p>
 
               
             </article>

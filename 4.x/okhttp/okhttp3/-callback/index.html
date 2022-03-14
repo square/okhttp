@@ -1045,7 +1045,7 @@
 
 <p>//<a href="../../../">okhttp</a>/<a href="../">okhttp3</a>/<a href="./">Callback</a></p>
 <h1 id="callback">Callback<a class="headerlink" href="#callback" title="Permanent link">&para;</a></h1>
-<p>[jvm]\
+<p>[common]\
 interface <a href="./">Callback</a></p>
 <h2 id="functions">Functions<a class="headerlink" href="#functions" title="Permanent link">&para;</a></h2>
 <table>
@@ -1058,11 +1058,11 @@ interface <a href="./">Callback</a></p>
 <tbody>
 <tr>
 <td><a href="on-failure/">onFailure</a></td>
-<td>[jvm]<br>abstract fun <a href="on-failure/">onFailure</a>(call: <a href="../-call/">Call</a>, e: <a href="https://docs.oracle.com/javase/8/docs/api/java/io/IOException.html">IOException</a>)<br>Called when the request could not be executed due to cancellation, a connectivity problem or timeout. Because networks can fail during an exchange, it is possible that the remote server accepted the request before the failure.</td>
+<td>[common]<br>abstract fun <a href="on-failure/">onFailure</a>(call: <a href="../-call/">Call</a>, e: <a href="https://square.github.io/okio/2.x/okio/okio/-i-o-exception/index.html">IOException</a>)<br>Called when the request could not be executed due to cancellation, a connectivity problem or timeout. Because networks can fail during an exchange, it is possible that the remote server accepted the request before the failure.</td>
 </tr>
 <tr>
 <td><a href="on-response/">onResponse</a></td>
-<td>[jvm]<br>abstract fun <a href="on-response/">onResponse</a>(call: <a href="../-call/">Call</a>, response: <a href="../-response/">Response</a>)<br>Called when the HTTP response was successfully returned by the remote server. The callback may proceed to read the response body with <a href="../-response/body/">Response.body</a>. The response is still live until its response body is <a href="../-response-body/">closed</a>. The recipient of the callback may consume the response body on another thread.</td>
+<td>[common]<br>abstract fun <a href="on-response/">onResponse</a>(call: <a href="../-call/">Call</a>, response: <a href="../-response/">Response</a>)<br>Called when the HTTP response was successfully returned by the remote server. The callback may proceed to read the response body with <a href="../-response/body/">Response.body</a>. The response is still live until its response body is <a href="../-response-body/">closed</a>. The recipient of the callback may consume the response body on another thread.</td>
 </tr>
 </tbody>
 </table>

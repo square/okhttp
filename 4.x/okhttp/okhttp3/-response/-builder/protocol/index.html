@@ -1030,8 +1030,11 @@
 
 <p>//<a href="../../../../../">okhttp</a>/<a href="../../../">okhttp3</a>/<a href="../../">Response</a>/<a href="../">Builder</a>/<a href="./">protocol</a></p>
 <h1 id="protocol">protocol<a class="headerlink" href="#protocol" title="Permanent link">&para;</a></h1>
-<p>[jvm]\
-open fun <a href="./">protocol</a>(protocol: Protocol): <a href="../">Response.Builder</a></p>
+<p>[common, jvm, nonJvm]\
+[common]\
+expect open fun <a href="./">protocol</a>(protocol: <a href="../../../-protocol/">Protocol</a>): <a href="../">Response.Builder</a></p>
+<p>[jvm, nonJvm]\
+actual open fun <a href="./">protocol</a>(protocol: Protocol): <a href="../">Response.Builder</a></p>
 
               
             </article>

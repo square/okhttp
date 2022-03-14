@@ -1030,8 +1030,11 @@
 
 <p>//<a href="../../../../">okhttp</a>/<a href="../../">okhttp3</a>/<a href="../">Request</a>/<a href="./">header</a></p>
 <h1 id="header">header<a class="headerlink" href="#header" title="Permanent link">&para;</a></h1>
-<p>[jvm]\
-fun <a href="./">header</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>?</p>
+<p>[common, jvm, nonJvm]\
+[common]\
+expect fun <a href="./">header</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>?</p>
+<p>[jvm, nonJvm]\
+actual fun <a href="./">header</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>?</p>
 
               
             </article>

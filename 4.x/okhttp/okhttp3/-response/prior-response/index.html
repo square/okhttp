@@ -1030,10 +1030,15 @@
 
 <p>//<a href="../../../../">okhttp</a>/<a href="../../">okhttp3</a>/<a href="../">Response</a>/<a href="./">priorResponse</a></p>
 <h1 id="priorresponse">priorResponse<a class="headerlink" href="#priorresponse" title="Permanent link">&para;</a></h1>
+<p>[common, nonJvm]\
+[common]\
+expect val <a href="./">priorResponse</a>: <a href="../">Response</a>?</p>
+<p>[nonJvm]\
+actual val <a href="./">priorResponse</a>: <a href="../">Response</a>?</p>
+<p>Returns the response for the HTTP redirect or authorization challenge that triggered this response, or null if this response wasn&rsquo;t triggered by an automatic retry. The body of the returned response should not be read because it has already been consumed by the redirecting client.</p>
 <p>[jvm]\</p>
 <p>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;priorResponse&rdquo;)</p>
-<p>val <a href="./">priorResponse</a>: <a href="../">Response</a>?</p>
-<p>Returns the response for the HTTP redirect or authorization challenge that triggered this response, or null if this response wasn&rsquo;t triggered by an automatic retry. The body of the returned response should not be read because it has already been consumed by the redirecting client.</p>
+<p>actual val <a href="./">priorResponse</a>: <a href="../">Response</a>?</p>
 
               
             </article>

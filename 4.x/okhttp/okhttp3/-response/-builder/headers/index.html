@@ -1030,9 +1030,14 @@
 
 <p>//<a href="../../../../../">okhttp</a>/<a href="../../../">okhttp3</a>/<a href="../../">Response</a>/<a href="../">Builder</a>/<a href="./">headers</a></p>
 <h1 id="headers">headers<a class="headerlink" href="#headers" title="Permanent link">&para;</a></h1>
-<p>[jvm]\
-open fun <a href="./">headers</a>(headers: <a href="../../../-headers/">Headers</a>): <a href="../">Response.Builder</a></p>
+<p>[common, nonJvm]\
+[common]\
+expect open fun <a href="./">headers</a>(headers: <a href="../../../-headers/">Headers</a>): <a href="../">Response.Builder</a></p>
+<p>[nonJvm]\
+actual open fun <a href="./">headers</a>(headers: <a href="../../../-headers/">Headers</a>): <a href="../">Response.Builder</a></p>
 <p>Removes all headers on this builder and adds <a href="./">headers</a>.</p>
+<p>[jvm]\
+actual open fun <a href="./">headers</a>(headers: <a href="../../../-headers/">Headers</a>): <a href="../">Response.Builder</a></p>
 
               
             </article>

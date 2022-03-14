@@ -1030,14 +1030,20 @@
 
 <p>//<a href="../../../../">okhttp</a>/<a href="../../">okhttp3</a>/<a href="../">Response</a>/<a href="./">request</a></p>
 <h1 id="request">request<a class="headerlink" href="#request" title="Permanent link">&para;</a></h1>
-<p>[jvm]\</p>
-<p>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;request&rdquo;)</p>
-<p>val <a href="./">request</a>: <a href="../../-request/">Request</a></p>
-<p>The wire-level request that initiated this HTTP response. This is not necessarily the same request issued by the application:</p>
+<p>[common, nonJvm]\
+[common]\
+expect val <a href="./">request</a>: <a href="../../-request/">Request</a></p>
+<p>[nonJvm]\
+actual val <a href="./">request</a>: <a href="../../-request/">Request</a></p>
+<p>The request that initiated this HTTP response. This is not necessarily the same request issued by the application:</p>
 <ul>
-<li>It may be transformed by the HTTP client. For example, the client may copy headers like Content-Length from the request body.</li>
+<li>It may be transformed by the user&rsquo;s interceptors. For example, an application interceptor may add headers like User-Agent.</li>
 <li>It may be the request generated in response to an HTTP redirect or authentication challenge. In this case the request URL may be different than the initial request URL.</li>
 </ul>
+<p>Use the request of the <a href="../network-response/">networkResponse</a> field to get the wire-level request that was transmitted. In the case of follow-ups and redirects, also look at the request of the <a href="../prior-response/">priorResponse</a> objects, which have its own <a href="../prior-response/">priorResponse</a>.</p>
+<p>[jvm]\</p>
+<p>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;request&rdquo;)</p>
+<p>actual val <a href="./">request</a>: <a href="../../-request/">Request</a></p>
 
               
             </article>

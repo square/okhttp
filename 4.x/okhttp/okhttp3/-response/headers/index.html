@@ -1030,11 +1030,19 @@
 
 <p>//<a href="../../../../">okhttp</a>/<a href="../../">okhttp3</a>/<a href="../">Response</a>/<a href="./">headers</a></p>
 <h1 id="headers">headers<a class="headerlink" href="#headers" title="Permanent link">&para;</a></h1>
-<p>[jvm]\
-fun <a href="./">headers</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>&gt;</p>
+<p>[common, jvm, nonJvm]\
+[common]\
+expect fun <a href="./">headers</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>&gt;</p>
+<p>[jvm, nonJvm]\
+actual fun <a href="./">headers</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>&gt;</p>
+<p>[common, jvm, nonJvm]\
+[common]\
+expect val <a href="./">headers</a>: <a href="../../-headers/">Headers</a></p>
 <p>[jvm]\</p>
 <p>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;headers&rdquo;)</p>
-<p>val <a href="./">headers</a>: <a href="../../-headers/">Headers</a></p>
+<p>actual val <a href="./">headers</a>: <a href="../../-headers/">Headers</a></p>
+<p>[nonJvm]\
+actual val <a href="./">headers</a>: <a href="../../-headers/">Headers</a></p>
 <p>Returns the HTTP headers.</p>
 
               

@@ -1117,11 +1117,11 @@
 </tr>
 <tr>
 <td><a href="-call/">Call</a></td>
-<td>[jvm]<br>interface <a href="-call/">Call</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-cloneable/index.html">Cloneable</a><br>A call is a request that has been prepared for execution. A call can be canceled. As this object represents a single request/response pair (stream), it cannot be executed twice.</td>
+<td>[common]<br>expect interface <a href="-call/">Call</a><br>A call is a request that has been prepared for execution. A call can be canceled. As this object represents a single request/response pair (stream), it cannot be executed twice.<br>[jvm, nonJvm]<br>[jvm]<br>actual interface <a href="-call/">Call</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-cloneable/index.html">Cloneable</a><br>[nonJvm]<br>actual interface <a href="-call/">Call</a></td>
 </tr>
 <tr>
 <td><a href="-callback/">Callback</a></td>
-<td>[jvm]<br>interface <a href="-callback/">Callback</a></td>
+<td>[common]<br>interface <a href="-callback/">Callback</a></td>
 </tr>
 <tr>
 <td><a href="-certificate-pinner/">CertificatePinner</a></td>
@@ -1129,7 +1129,7 @@
 </tr>
 <tr>
 <td><a href="-challenge/">Challenge</a></td>
-<td>[jvm]<br>class <a href="-challenge/">Challenge</a>(scheme: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>, authParams: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-map/index.html">Map</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>?, <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>&gt;)<br>An <a href="https://tools.ietf.org/html/rfc7235">RFC 7235</a> challenge.</td>
+<td>[common]<br>expect class <a href="-challenge/">Challenge</a>(scheme: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>, authParams: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-map/index.html">Map</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>?, <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>&gt;)<br>An <a href="https://tools.ietf.org/html/rfc7235">RFC 7235</a> challenge.<br>[jvm, nonJvm]<br>[jvm, nonJvm]<br>actual class <a href="-challenge/">Challenge</a>(scheme: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>, authParams: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-map/index.html">Map</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>?, <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>&gt;)</td>
 </tr>
 <tr>
 <td><a href="-cipher-suite/">CipherSuite</a></td>
@@ -1212,16 +1212,20 @@
 <td>[common]<br>enum <a href="-protocol/">Protocol</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-enum/index.html">Enum</a>&lt;<a href="-protocol/">Protocol</a>&gt; <br>Protocols that OkHttp implements for <a href="http://tools.ietf.org/html/draft-ietf-tls-applayerprotoneg">ALPN</a> selection.</td>
 </tr>
 <tr>
+<td><a href="-protocol-exception/">ProtocolException</a></td>
+<td>[common, nonJvm, jvm]<br>[common]<br>expect class <a href="-protocol-exception/">ProtocolException</a>(message: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>) : <a href="https://square.github.io/okio/2.x/okio/okio/-i-o-exception/index.html">IOException</a><br>[nonJvm]<br>actual class <a href="-protocol-exception/">ProtocolException</a>(message: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>)<br>[jvm]<br>actual typealias <a href="-protocol-exception/">ProtocolException</a> = <a href="https://docs.oracle.com/javase/8/docs/api/java/net/ProtocolException.html">ProtocolException</a></td>
+</tr>
+<tr>
 <td><a href="-request/">Request</a></td>
-<td>[jvm]<br>class <a href="-request/">Request</a><br>An HTTP request. Instances of this class are immutable if their <a href="-request/body/">body</a> is null or itself immutable.</td>
+<td>[common]<br>expect class <a href="-request/">Request</a><br>An HTTP request. Instances of this class are immutable if their <a href="-request/body/">body</a> is null or itself immutable.<br>[jvm, nonJvm]<br>[jvm, nonJvm]<br>actual class <a href="-request/">Request</a></td>
 </tr>
 <tr>
 <td><a href="-request-body/">RequestBody</a></td>
-<td>[jvm]<br>abstract class <a href="-request-body/">RequestBody</a></td>
+<td>[common, jvm, nonJvm]<br>[common]<br>expect abstract class <a href="-request-body/">RequestBody</a><br>[jvm, nonJvm]<br>actual abstract class <a href="-request-body/">RequestBody</a></td>
 </tr>
 <tr>
 <td><a href="-response/">Response</a></td>
-<td>[jvm]<br>class <a href="-response/">Response</a> : <a href="https://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html">Closeable</a><br>An HTTP response. Instances of this class are not immutable: the response body is a one-shot value that may be consumed only once and then closed. All other properties are immutable.</td>
+<td>[common, nonJvm]<br>[common]<br>expect class <a href="-response/">Response</a> : <a href="https://square.github.io/okio/2.x/okio/okio/-closeable/index.html">Closeable</a><br>[nonJvm]<br>actual class <a href="-response/">Response</a><br>An HTTP response. Instances of this class are not immutable: the response body is a one-shot value that may be consumed only once and then closed. All other properties are immutable.<br>[jvm]<br>actual class <a href="-response/">Response</a> : <a href="https://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html">Closeable</a></td>
 </tr>
 <tr>
 <td><a href="-response-body/">ResponseBody</a></td>

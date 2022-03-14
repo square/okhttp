@@ -1045,10 +1045,10 @@
 
 <p>//<a href="../../../../">okhttp</a>/<a href="../../">okhttp3</a>/<a href="../">Call</a>/<a href="./">enqueue</a></p>
 <h1 id="enqueue">enqueue<a class="headerlink" href="#enqueue" title="Permanent link">&para;</a></h1>
-<p>[jvm]\
-abstract fun <a href="./">enqueue</a>(responseCallback: <a href="../../-callback/">Callback</a>)</p>
+<p>[common]\
+expect abstract fun <a href="./">enqueue</a>(responseCallback: <a href="../../-callback/">Callback</a>)</p>
 <p>Schedules the request to be executed at some point in the future.</p>
-<p>The <a href="../../-ok-http-client/dispatcher/">dispatcher</a> defines when the request will run: usually immediately unless there are several other requests currently being executed.</p>
+<p>The OkHttpClient.dispatcher defines when the request will run: usually immediately unless there are several other requests currently being executed.</p>
 <p>This client will later call back responseCallback with either an HTTP response or a failure exception.</p>
 <h2 id="throws">Throws<a class="headerlink" href="#throws" title="Permanent link">&para;</a></h2>
 <table>
@@ -1065,6 +1065,9 @@ abstract fun <a href="./">enqueue</a>(responseCallback: <a href="../../-callback
 </tr>
 </tbody>
 </table>
+<p>[jvm, nonJvm]\
+[jvm, nonJvm]\
+actual abstract fun <a href="./">enqueue</a>(responseCallback: Callback)</p>
 
               
             </article>

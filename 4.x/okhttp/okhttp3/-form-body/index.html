@@ -1091,11 +1091,11 @@ class <a href="./">FormBody</a> : <a href="../-request-body/">RequestBody</a></p
 <tbody>
 <tr>
 <td><a href="content-length/">contentLength</a></td>
-<td>[jvm]<br>open override fun <a href="content-length/">contentLength</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a><br>Returns the number of bytes that will be written to sink in a call to <a href="write-to/">writeTo</a>, or -1 if that count is unknown.</td>
+<td>[jvm]<br>open override fun <a href="content-length/">contentLength</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a></td>
 </tr>
 <tr>
 <td><a href="content-type/">contentType</a></td>
-<td>[jvm]<br>open override fun <a href="content-type/">contentType</a>(): <a href="../-media-type/">MediaType</a><br>Returns the Content-Type header for this body.</td>
+<td>[jvm]<br>open override fun <a href="content-type/">contentType</a>(): <a href="../-media-type/">MediaType</a></td>
 </tr>
 <tr>
 <td><a href="encoded-name/">encodedName</a></td>
@@ -1107,11 +1107,11 @@ class <a href="./">FormBody</a> : <a href="../-request-body/">RequestBody</a></p
 </tr>
 <tr>
 <td><a href="../-request-body/is-duplex/">isDuplex</a></td>
-<td>[jvm]<br>open fun <a href="../-request-body/is-duplex/">isDuplex</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><br>A duplex request body is special in how it is <strong>transmitted</strong> on the network and in the <strong>API contract</strong> between OkHttp and the application.</td>
+<td>[jvm]<br>actual open fun <a href="../-request-body/is-duplex/">isDuplex</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></td>
 </tr>
 <tr>
 <td><a href="../-request-body/is-one-shot/">isOneShot</a></td>
-<td>[jvm]<br>open fun <a href="../-request-body/is-one-shot/">isOneShot</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><br>Returns true if this body expects at most one call to <a href="../-request-body/write-to/">writeTo</a> and can be transmitted at most once. This is typically used when writing the request body is destructive and it is not possible to recreate the request body after it has been sent.</td>
+<td>[jvm]<br>actual open fun <a href="../-request-body/is-one-shot/">isOneShot</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></td>
 </tr>
 <tr>
 <td><a href="name/">name</a></td>
@@ -1123,7 +1123,7 @@ class <a href="./">FormBody</a> : <a href="../-request-body/">RequestBody</a></p
 </tr>
 <tr>
 <td><a href="write-to/">writeTo</a></td>
-<td>[jvm]<br>open override fun <a href="write-to/">writeTo</a>(sink: <a href="https://square.github.io/okio/2.x/okio/okio/-buffered-sink/index.html">BufferedSink</a>)<br>Writes the content of this request to <a href="write-to/">sink</a>.</td>
+<td>[jvm]<br>open override fun <a href="write-to/">writeTo</a>(sink: <a href="https://square.github.io/okio/2.x/okio/okio/-buffered-sink/index.html">BufferedSink</a>)</td>
 </tr>
 </tbody>
 </table>

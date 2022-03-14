@@ -85,12 +85,13 @@ $dokka.location:okhttp3/Call/cancel/#/PointingToDeclaration/okhttp/okhttp3/-cal
 $dokka.location:okhttp3/Call/clone/#/PointingToDeclaration/okhttp/okhttp3/-call/clone.md
 $dokka.location:okhttp3/Call/enqueue/#okhttp3.Callback/PointingToDeclaration/okhttp/okhttp3/-call/enqueue.md
 $dokka.location:okhttp3/Call/execute/#/PointingToDeclaration/okhttp/okhttp3/-call/execute.md
+$dokka.location:okhttp3/Call/executeAsync/#/PointingToDeclaration/okhttp/okhttp3/-call/execute-async.md
 $dokka.location:okhttp3/Call/isCanceled/#/PointingToDeclaration/okhttp/okhttp3/-call/is-canceled.md
 $dokka.location:okhttp3/Call/isExecuted/#/PointingToDeclaration/okhttp/okhttp3/-call/is-executed.md
 $dokka.location:okhttp3/Call/request/#/PointingToDeclaration/okhttp/okhttp3/-call/request.md
 $dokka.location:okhttp3/Call/timeout/#/PointingToDeclaration/okhttp/okhttp3/-call/timeout.md
 $dokka.location:okhttp3/Callback///PointingToDeclaration/okhttp/okhttp3/-callback/index.md
-$dokka.location:okhttp3/Callback/onFailure/#okhttp3.Call#java.io.IOException/PointingToDeclaration/okhttp/okhttp3/-callback/on-failure.md
+$dokka.location:okhttp3/Callback/onFailure/#okhttp3.Call#okio.IOException/PointingToDeclaration/okhttp/okhttp3/-callback/on-failure.md
 $dokka.location:okhttp3/Callback/onResponse/#okhttp3.Call#okhttp3.Response/PointingToDeclaration/okhttp/okhttp3/-callback/on-response.md
 $dokka.location:okhttp3/CertificatePinner.Builder///PointingToDeclaration/okhttp/okhttp3/-certificate-pinner/-builder/index.md
 $dokka.location:okhttp3/CertificatePinner.Builder/Builder/#/PointingToDeclaration/okhttp/okhttp3/-certificate-pinner/-builder/-builder.md
@@ -660,6 +661,8 @@ $dokka.location:okhttp3/Protocol.QUIC///PointingToDeclaration/okhttp/okhttp3/-p
 $dokka.location:okhttp3/Protocol.SPDY_3///PointingToDeclaration/okhttp/okhttp3/-protocol/-s-p-d-y_3/index.md
 $dokka.location:okhttp3/Protocol///PointingToDeclaration/okhttp/okhttp3/-protocol/index.md
 $dokka.location:okhttp3/Protocol/toString/#/PointingToDeclaration/okhttp/okhttp3/-protocol/to-string.md
+$dokka.location:okhttp3/ProtocolException///PointingToDeclaration/okhttp/okhttp3/-protocol-exception/index.md
+$dokka.location:okhttp3/ProtocolException/ProtocolException/#kotlin.String/PointingToDeclaration/okhttp/okhttp3/-protocol-exception/-protocol-exception.md
 $dokka.location:okhttp3/Request.Builder///PointingToDeclaration/okhttp/okhttp3/-request/-builder/index.md
 $dokka.location:okhttp3/Request.Builder/Builder/#/PointingToDeclaration/okhttp/okhttp3/-request/-builder/-builder.md
 $dokka.location:okhttp3/Request.Builder/addHeader/#kotlin.String#kotlin.String/PointingToDeclaration/okhttp/okhttp3/-request/-builder/add-header.md
@@ -691,10 +694,11 @@ $dokka.location:okhttp3/Request/method/#/PointingToDeclaration/okhttp/okhttp3/-
 $dokka.location:okhttp3/Request/newBuilder/#/PointingToDeclaration/okhttp/okhttp3/-request/new-builder.md
 $dokka.location:okhttp3/Request/tag/#/PointingToDeclaration/okhttp/okhttp3/-request/tag.md
 $dokka.location:okhttp3/Request/tag/#java.lang.Class[TypeParam(bounds=[kotlin.Any?])]/PointingToDeclaration/okhttp/okhttp3/-request/tag.md
-$dokka.location:okhttp3/Request/toString/#/PointingToDeclaration/okhttp/okhttp3/-request/to-string.md
+$dokka.location:okhttp3/Request/toString/#/PointingToDeclaration/okhttp/okhttp3/-request/[non-jvm]to-string.md
 $dokka.location:okhttp3/Request/url/#/PointingToDeclaration/okhttp/okhttp3/-request/url.md
 $dokka.location:okhttp3/RequestBody.Companion///PointingToDeclaration/okhttp/okhttp3/-request-body/-companion/index.md
 $dokka.location:okhttp3/RequestBody.Companion/asRequestBody/java.io.File#okhttp3.MediaType?/PointingToDeclaration/okhttp/okhttp3/-request-body/-companion/as-request-body.md
+$dokka.location:okhttp3/RequestBody.Companion/asRequestBody/okio.Path#okio.FileSystem#okhttp3.MediaType?/PointingToDeclaration/okhttp/okhttp3/-request-body/-companion/as-request-body.md
 $dokka.location:okhttp3/RequestBody.Companion/gzip/okhttp3.RequestBody#/PointingToDeclaration/okhttp/okhttp3/-request-body/-companion/gzip.md
 $dokka.location:okhttp3/RequestBody.Companion/toRequestBody/java.io.FileDescriptor#okhttp3.MediaType?/PointingToDeclaration/okhttp/okhttp3/-request-body/-companion/to-request-body.md
 $dokka.location:okhttp3/RequestBody.Companion/toRequestBody/kotlin.ByteArray#okhttp3.MediaType?#kotlin.Int#kotlin.Int/PointingToDeclaration/okhttp/okhttp3/-request-body/-companion/to-request-body.md

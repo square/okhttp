@@ -1030,11 +1030,16 @@
 
 <p>//<a href="../../../../">okhttp</a>/<a href="../../">okhttp3</a>/<a href="../">Response</a>/<a href="./">peekBody</a></p>
 <h1 id="peekbody">peekBody<a class="headerlink" href="#peekbody" title="Permanent link">&para;</a></h1>
-<p>[jvm]\
-fun <a href="./">peekBody</a>(byteCount: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a>): <a href="../../-response-body/">ResponseBody</a></p>
+<p>[common, nonJvm]\
+[common]\
+expect fun <a href="./">peekBody</a>(byteCount: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a>): <a href="../../-response-body/">ResponseBody</a></p>
+<p>[nonJvm]\
+actual fun <a href="./">peekBody</a>(byteCount: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a>): <a href="../../-response-body/">ResponseBody</a></p>
 <p>Peeks up to <a href="./">byteCount</a> bytes from the response body and returns them as a new response body. If fewer than <a href="./">byteCount</a> bytes are in the response body, the full response body is returned. If more than <a href="./">byteCount</a> bytes are in the response body, the returned value will be truncated to <a href="./">byteCount</a> bytes.</p>
 <p>It is an error to call this method after the body has been consumed.</p>
 <p><strong>Warning:</strong> this method loads the requested bytes into memory. Most applications should set a modest limit on byteCount, such as 1 MiB.</p>
+<p>[jvm]\
+actual fun <a href="./">peekBody</a>(byteCount: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a>): <a href="../../-response-body/">ResponseBody</a></p>
 
               
             </article>

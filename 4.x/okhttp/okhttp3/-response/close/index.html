@@ -1030,10 +1030,15 @@
 
 <p>//<a href="../../../../">okhttp</a>/<a href="../../">okhttp3</a>/<a href="../">Response</a>/<a href="./">close</a></p>
 <h1 id="close">close<a class="headerlink" href="#close" title="Permanent link">&para;</a></h1>
-<p>[jvm]\
-open override fun <a href="./">close</a>()</p>
+<p>[common, nonJvm]\
+[common]\
+expect open override fun <a href="./">close</a>()</p>
+<p>[nonJvm]\
+actual open fun <a href="./">close</a>()</p>
 <p>Closes the response body. Equivalent to body().close().</p>
 <p>It is an error to close a response that is not eligible for a body. This includes the responses returned from <a href="../cache-response/">cacheResponse</a>, <a href="../network-response/">networkResponse</a>, and <a href="../prior-response/">priorResponse</a>.</p>
+<p>[jvm]\
+actual open override fun <a href="./">close</a>()</p>
 
               
             </article>

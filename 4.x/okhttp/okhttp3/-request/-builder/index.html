@@ -1052,8 +1052,10 @@
 
 <p>//<a href="../../../../">okhttp</a>/<a href="../../">okhttp3</a>/<a href="../">Request</a>/<a href="./">Builder</a></p>
 <h1 id="builder">Builder<a class="headerlink" href="#builder" title="Permanent link">&para;</a></h1>
-<p>[jvm]\
-open class <a href="./">Builder</a></p>
+<p>[common]\
+expect open class <a href="./">Builder</a></p>
+<p>[jvm, nonJvm]\
+actual open class <a href="./">Builder</a></p>
 <h2 id="constructors">Constructors<a class="headerlink" href="#constructors" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1065,7 +1067,7 @@ open class <a href="./">Builder</a></p>
 <tbody>
 <tr>
 <td><a href="-builder/">Builder</a></td>
-<td>[jvm]<br>fun <a href="-builder/">Builder</a>()</td>
+<td>[common]<br>expect fun <a href="-builder/">Builder</a>()<br>[jvm, nonJvm]<br>actual fun <a href="-builder/">Builder</a>()</td>
 </tr>
 </tbody>
 </table>
@@ -1080,55 +1082,55 @@ open class <a href="./">Builder</a></p>
 <tbody>
 <tr>
 <td><a href="add-header/">addHeader</a></td>
-<td>[jvm]<br>open fun <a href="add-header/">addHeader</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>, value: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="./">Request.Builder</a><br>Adds a header with <a href="add-header/">name</a> and <a href="add-header/">value</a>. Prefer this method for multiply-valued headers like &ldquo;Cookie&rdquo;.</td>
+<td>[common]<br>expect open fun <a href="add-header/">addHeader</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>, value: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="./">Request.Builder</a><br>Adds a header with <a href="add-header/">name</a> and <a href="add-header/">value</a>. Prefer this method for multiply-valued headers like &ldquo;Cookie&rdquo;.<br>[jvm, nonJvm]<br>[jvm, nonJvm]<br>actual open fun <a href="add-header/">addHeader</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>, value: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="./">Request.Builder</a></td>
 </tr>
 <tr>
 <td><a href="build/">build</a></td>
-<td>[jvm]<br>open fun <a href="build/">build</a>(): <a href="../">Request</a></td>
+<td>[common, jvm, nonJvm]<br>[common]<br>expect open fun <a href="build/">build</a>(): <a href="../">Request</a><br>[jvm, nonJvm]<br>actual open fun <a href="build/">build</a>(): <a href="../">Request</a></td>
 </tr>
 <tr>
 <td><a href="cache-control/">cacheControl</a></td>
-<td>[jvm]<br>open fun <a href="cache-control/">cacheControl</a>(cacheControl: <a href="../../-cache-control/">CacheControl</a>): <a href="./">Request.Builder</a><br>Sets this request&rsquo;s Cache-Control header, replacing any cache control headers already present. If <a href="cache-control/">cacheControl</a> doesn&rsquo;t define any directives, this clears this request&rsquo;s cache-control headers.</td>
+<td>[common]<br>expect open fun <a href="cache-control/">cacheControl</a>(cacheControl: <a href="../../-cache-control/">CacheControl</a>): <a href="./">Request.Builder</a><br>Sets this request&rsquo;s Cache-Control header, replacing any cache control headers already present. If <a href="cache-control/">cacheControl</a> doesn&rsquo;t define any directives, this clears this request&rsquo;s cache-control headers.<br>[jvm, nonJvm]<br>[jvm, nonJvm]<br>actual open fun <a href="cache-control/">cacheControl</a>(cacheControl: <a href="../../-cache-control/">CacheControl</a>): <a href="./">Request.Builder</a></td>
 </tr>
 <tr>
 <td><a href="delete/">delete</a></td>
-<td>[jvm]<br>@<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-overloads/index.html">JvmOverloads</a><br>open fun <a href="delete/">delete</a>(body: <a href="../../-request-body/">RequestBody</a>? = EMPTY_REQUEST): <a href="./">Request.Builder</a></td>
+<td>[common, jvm, nonJvm]<br>[common]<br>expect open fun <a href="delete/">delete</a>(body: <a href="../../-request-body/">RequestBody</a>? = commonEmptyRequestBody): <a href="./">Request.Builder</a><br>[jvm]<br>@<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-overloads/index.html">JvmOverloads</a><br>actual open fun <a href="delete/">delete</a>(body: <a href="../../-request-body/">RequestBody</a>? = commonEmptyRequestBody): <a href="./">Request.Builder</a><br>[nonJvm]<br>actual open fun <a href="delete/">delete</a>(body: <a href="../../-request-body/">RequestBody</a>? = commonEmptyRequestBody): <a href="./">Request.Builder</a></td>
 </tr>
 <tr>
 <td><a href="get/">get</a></td>
-<td>[jvm]<br>open fun <a href="get/">get</a>(): <a href="./">Request.Builder</a></td>
+<td>[common, jvm, nonJvm]<br>[common]<br>expect open fun <a href="get/">get</a>(): <a href="./">Request.Builder</a><br>[jvm, nonJvm]<br>actual open fun <a href="get/">get</a>(): <a href="./">Request.Builder</a></td>
 </tr>
 <tr>
 <td><a href="head/">head</a></td>
-<td>[jvm]<br>open fun <a href="head/">head</a>(): <a href="./">Request.Builder</a></td>
+<td>[common, jvm, nonJvm]<br>[common]<br>expect open fun <a href="head/">head</a>(): <a href="./">Request.Builder</a><br>[jvm, nonJvm]<br>actual open fun <a href="head/">head</a>(): <a href="./">Request.Builder</a></td>
 </tr>
 <tr>
 <td><a href="header/">header</a></td>
-<td>[jvm]<br>open fun <a href="header/">header</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>, value: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="./">Request.Builder</a><br>Sets the header named <a href="header/">name</a> to <a href="header/">value</a>. If this request already has any headers with that name, they are all replaced.</td>
+<td>[common]<br>expect open fun <a href="header/">header</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>, value: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="./">Request.Builder</a><br>Sets the header named <a href="header/">name</a> to <a href="header/">value</a>. If this request already has any headers with that name, they are all replaced.<br>[jvm, nonJvm]<br>[jvm, nonJvm]<br>actual open fun <a href="header/">header</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>, value: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="./">Request.Builder</a></td>
 </tr>
 <tr>
 <td><a href="headers/">headers</a></td>
-<td>[jvm]<br>open fun <a href="headers/">headers</a>(headers: <a href="../../-headers/">Headers</a>): <a href="./">Request.Builder</a><br>Removes all headers on this builder and adds <a href="headers/">headers</a>.</td>
+<td>[common]<br>expect open fun <a href="headers/">headers</a>(headers: <a href="../../-headers/">Headers</a>): <a href="./">Request.Builder</a><br>Removes all headers on this builder and adds <a href="headers/">headers</a>.<br>[jvm, nonJvm]<br>[jvm, nonJvm]<br>actual open fun <a href="headers/">headers</a>(headers: <a href="../../-headers/">Headers</a>): <a href="./">Request.Builder</a></td>
 </tr>
 <tr>
 <td><a href="method/">method</a></td>
-<td>[jvm]<br>open fun <a href="method/">method</a>(method: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>, body: <a href="../../-request-body/">RequestBody</a>?): <a href="./">Request.Builder</a></td>
+<td>[common, jvm, nonJvm]<br>[common]<br>expect open fun <a href="method/">method</a>(method: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>, body: <a href="../../-request-body/">RequestBody</a>?): <a href="./">Request.Builder</a><br>[jvm, nonJvm]<br>actual open fun <a href="method/">method</a>(method: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>, body: <a href="../../-request-body/">RequestBody</a>?): <a href="./">Request.Builder</a></td>
 </tr>
 <tr>
 <td><a href="patch/">patch</a></td>
-<td>[jvm]<br>open fun <a href="patch/">patch</a>(body: <a href="../../-request-body/">RequestBody</a>): <a href="./">Request.Builder</a></td>
+<td>[common, jvm, nonJvm]<br>[common]<br>expect open fun <a href="patch/">patch</a>(body: <a href="../../-request-body/">RequestBody</a>): <a href="./">Request.Builder</a><br>[jvm, nonJvm]<br>actual open fun <a href="patch/">patch</a>(body: <a href="../../-request-body/">RequestBody</a>): <a href="./">Request.Builder</a></td>
 </tr>
 <tr>
 <td><a href="post/">post</a></td>
-<td>[jvm]<br>open fun <a href="post/">post</a>(body: <a href="../../-request-body/">RequestBody</a>): <a href="./">Request.Builder</a></td>
+<td>[common, jvm, nonJvm]<br>[common]<br>expect open fun <a href="post/">post</a>(body: <a href="../../-request-body/">RequestBody</a>): <a href="./">Request.Builder</a><br>[jvm, nonJvm]<br>actual open fun <a href="post/">post</a>(body: <a href="../../-request-body/">RequestBody</a>): <a href="./">Request.Builder</a></td>
 </tr>
 <tr>
 <td><a href="put/">put</a></td>
-<td>[jvm]<br>open fun <a href="put/">put</a>(body: <a href="../../-request-body/">RequestBody</a>): <a href="./">Request.Builder</a></td>
+<td>[common, jvm, nonJvm]<br>[common]<br>expect open fun <a href="put/">put</a>(body: <a href="../../-request-body/">RequestBody</a>): <a href="./">Request.Builder</a><br>[jvm, nonJvm]<br>actual open fun <a href="put/">put</a>(body: <a href="../../-request-body/">RequestBody</a>): <a href="./">Request.Builder</a></td>
 </tr>
 <tr>
 <td><a href="remove-header/">removeHeader</a></td>
-<td>[jvm]<br>open fun <a href="remove-header/">removeHeader</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="./">Request.Builder</a><br>Removes all headers named <a href="remove-header/">name</a> on this builder.</td>
+<td>[common]<br>expect open fun <a href="remove-header/">removeHeader</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="./">Request.Builder</a><br>Removes all headers named <a href="remove-header/">name</a> on this builder.<br>[jvm, nonJvm]<br>[jvm, nonJvm]<br>actual open fun <a href="remove-header/">removeHeader</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="./">Request.Builder</a></td>
 </tr>
 <tr>
 <td><a href="tag/">tag</a></td>
@@ -1136,7 +1138,7 @@ open class <a href="./">Builder</a></p>
 </tr>
 <tr>
 <td><a href="url/">url</a></td>
-<td>[jvm]<br>open fun <a href="url/">url</a>(url: <a href="https://docs.oracle.com/javase/8/docs/api/java/net/URL.html">URL</a>): <a href="./">Request.Builder</a><br>open fun <a href="url/">url</a>(url: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="./">Request.Builder</a><br>Sets the URL target of this request.<br>[jvm]<br>open fun <a href="url/">url</a>(url: <a href="../../-http-url/">HttpUrl</a>): <a href="./">Request.Builder</a></td>
+<td>[jvm, common]<br>[jvm]<br>open fun <a href="url/">url</a>(url: <a href="https://docs.oracle.com/javase/8/docs/api/java/net/URL.html">URL</a>): <a href="./">Request.Builder</a><br>[common]<br>expect open fun <a href="url/">url</a>(url: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="./">Request.Builder</a><br>Sets the URL target of this request.<br>[jvm, nonJvm]<br>[jvm, nonJvm]<br>actual open fun <a href="url/">url</a>(url: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="./">Request.Builder</a><br>[jvm]<br>open fun <a href="url/">url</a>(url: <a href="../../-http-url/">HttpUrl</a>): <a href="./">Request.Builder</a></td>
 </tr>
 </tbody>
 </table>

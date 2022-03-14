@@ -1078,7 +1078,7 @@ expect abstract class <a href="./">ResponseBody</a> : <a href="https://square.gi
 <p>A one-shot stream from the origin server to the client application with the raw bytes of the response body. Each response body is supported by an active connection to the webserver. This imposes both obligations and limits on the client application.</p>
 <h3 id="the-response-body-must-be-closed">The response body must be closed.<a class="headerlink" href="#the-response-body-must-be-closed" title="Permanent link">&para;</a></h3>
 <p>Each response body is backed by a limited resource like a socket (live network responses) or an open file (for cached responses). Failing to close the response body will leak resources and may ultimately cause the application to slow down or crash.</p>
-<p>Both this class and Response implement <a href="https://square.github.io/okio/2.x/okio/okio/-closeable/index.html">Closeable</a>. Closing a response simply closes its response body. If you invoke Call.execute or implement Callback.onResponse you must close this body by calling any of the following methods:</p>
+<p>Both this class and <a href="../-response/">Response</a> implement <a href="https://square.github.io/okio/2.x/okio/okio/-closeable/index.html">Closeable</a>. Closing a response simply closes its response body. If you invoke Call.execute or implement <a href="../-callback/on-response/">Callback.onResponse</a> you must close this body by calling any of the following methods:</p>
 <ul>
 <li>Response.close()</li>
 <li>Response.body().close()</li>
@@ -1089,7 +1089,7 @@ expect abstract class <a href="./">ResponseBody</a> : <a href="https://square.gi
 <li>Response.body().string()</li>
 </ul>
 <p>There is no benefit to invoking multiple close() methods for the same response body.</p>
-<p>For synchronous calls, the easiest way to make sure a response body is closed is with a try block. With this structure the compiler inserts an implicit finally clause that calls Response.close for you.</p>
+<p>For synchronous calls, the easiest way to make sure a response body is closed is with a try block. With this structure the compiler inserts an implicit finally clause that calls <a href="../-response/close/">close()</a> for you.</p>
 <p>Call call = client.newCall(request);\
 try (Response response = call.execute()) {\
 &hellip; // Use the response.\

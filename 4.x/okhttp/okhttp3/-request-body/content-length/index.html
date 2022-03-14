@@ -1030,9 +1030,12 @@
 
 <p>//<a href="../../../../">okhttp</a>/<a href="../../">okhttp3</a>/<a href="../">RequestBody</a>/<a href="./">contentLength</a></p>
 <h1 id="contentlength">contentLength<a class="headerlink" href="#contentlength" title="Permanent link">&para;</a></h1>
-<p>[jvm]\
-open fun <a href="./">contentLength</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a></p>
+<p>[common]\
+expect open fun <a href="./">contentLength</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a></p>
 <p>Returns the number of bytes that will be written to sink in a call to <a href="../write-to/">writeTo</a>, or -1 if that count is unknown.</p>
+<p>[jvm, nonJvm]\
+[jvm, nonJvm]\
+actual open fun <a href="./">contentLength</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a></p>
 
               
             </article>

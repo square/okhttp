@@ -1066,10 +1066,16 @@
 
 <p>//<a href="../../../">okhttp</a>/<a href="../">okhttp3</a>/<a href="./">Response</a></p>
 <h1 id="response">Response<a class="headerlink" href="#response" title="Permanent link">&para;</a></h1>
-<p>[jvm]\
-class <a href="./">Response</a> : <a href="https://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html">Closeable</a></p>
+<p>[common]\
+expect class <a href="./">Response</a> : <a href="https://square.github.io/okio/2.x/okio/okio/-closeable/index.html">Closeable</a></p>
 <p>An HTTP response. Instances of this class are not immutable: the response body is a one-shot value that may be consumed only once and then closed. All other properties are immutable.</p>
-<p>This class implements <a href="https://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html">Closeable</a>. Closing it simply closes its response body. See <a href="../-response-body/">ResponseBody</a> for an explanation and examples.</p>
+<p>This class implements <a href="https://square.github.io/okio/2.x/okio/okio/-closeable/index.html">Closeable</a>. Closing it simply closes its response body. See <a href="../-response-body/">ResponseBody</a> for an explanation and examples.</p>
+<p>[jvm]\
+actual class <a href="./">Response</a> : <a href="https://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html">Closeable</a></p>
+<p>[nonJvm]\
+actual class <a href="./">Response</a></p>
+<p>An HTTP response. Instances of this class are not immutable: the response body is a one-shot value that may be consumed only once and then closed. All other properties are immutable.</p>
+<p>This class implements Closeable. Closing it simply closes its response body. See <a href="../-response-body/">ResponseBody</a> for an explanation and examples.</p>
 <h2 id="types">Types<a class="headerlink" href="#types" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1081,7 +1087,7 @@ class <a href="./">Response</a> : <a href="https://docs.oracle.com/javase/8/docs
 <tbody>
 <tr>
 <td><a href="-builder/">Builder</a></td>
-<td>[jvm]<br>open class <a href="-builder/">Builder</a></td>
+<td>[common, jvm, nonJvm]<br>[common]<br>expect open class <a href="-builder/">Builder</a><br>[jvm, nonJvm]<br>actual open class <a href="-builder/">Builder</a></td>
 </tr>
 </tbody>
 </table>
@@ -1100,27 +1106,27 @@ class <a href="./">Response</a> : <a href="https://docs.oracle.com/javase/8/docs
 </tr>
 <tr>
 <td><a href="close/">close</a></td>
-<td>[jvm]<br>open override fun <a href="close/">close</a>()<br>Closes the response body. Equivalent to body().close().</td>
+<td>[common, nonJvm]<br>[common]<br>expect open override fun <a href="close/">close</a>()<br>[nonJvm]<br>actual open fun <a href="close/">close</a>()<br>Closes the response body. Equivalent to body().close().<br>[jvm]<br>actual open override fun <a href="close/">close</a>()</td>
 </tr>
 <tr>
 <td><a href="header/">header</a></td>
-<td>[jvm]<br>@<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-overloads/index.html">JvmOverloads</a><br>fun <a href="header/">header</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>, defaultValue: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>? = null): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>?</td>
+<td>[common, jvm, nonJvm]<br>[common]<br>expect fun <a href="header/">header</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>, defaultValue: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>? = null): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>?<br>[jvm]<br>@<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-overloads/index.html">JvmOverloads</a><br>actual fun <a href="header/">header</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>, defaultValue: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>? = null): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>?<br>[nonJvm]<br>actual fun <a href="header/">header</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>, defaultValue: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>? = null): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>?</td>
 </tr>
 <tr>
 <td><a href="headers/">headers</a></td>
-<td>[jvm]<br>fun <a href="headers/">headers</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>&gt;</td>
+<td>[common, jvm, nonJvm]<br>[common]<br>expect fun <a href="headers/">headers</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>&gt;<br>[jvm, nonJvm]<br>actual fun <a href="headers/">headers</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>&gt;</td>
 </tr>
 <tr>
 <td><a href="new-builder/">newBuilder</a></td>
-<td>[jvm]<br>fun <a href="new-builder/">newBuilder</a>(): <a href="-builder/">Response.Builder</a></td>
+<td>[common, jvm, nonJvm]<br>[common]<br>expect fun <a href="new-builder/">newBuilder</a>(): <a href="-builder/">Response.Builder</a><br>[jvm, nonJvm]<br>actual fun <a href="new-builder/">newBuilder</a>(): <a href="-builder/">Response.Builder</a></td>
 </tr>
 <tr>
 <td><a href="peek-body/">peekBody</a></td>
-<td>[jvm]<br>fun <a href="peek-body/">peekBody</a>(byteCount: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a>): <a href="../-response-body/">ResponseBody</a><br>Peeks up to <a href="peek-body/">byteCount</a> bytes from the response body and returns them as a new response body. If fewer than <a href="peek-body/">byteCount</a> bytes are in the response body, the full response body is returned. If more than <a href="peek-body/">byteCount</a> bytes are in the response body, the returned value will be truncated to <a href="peek-body/">byteCount</a> bytes.</td>
+<td>[common, nonJvm]<br>[common]<br>expect fun <a href="peek-body/">peekBody</a>(byteCount: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a>): <a href="../-response-body/">ResponseBody</a><br>[nonJvm]<br>actual fun <a href="peek-body/">peekBody</a>(byteCount: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a>): <a href="../-response-body/">ResponseBody</a><br>Peeks up to <a href="peek-body/">byteCount</a> bytes from the response body and returns them as a new response body. If fewer than <a href="peek-body/">byteCount</a> bytes are in the response body, the full response body is returned. If more than <a href="peek-body/">byteCount</a> bytes are in the response body, the returned value will be truncated to <a href="peek-body/">byteCount</a> bytes.<br>[jvm]<br>actual fun <a href="peek-body/">peekBody</a>(byteCount: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a>): <a href="../-response-body/">ResponseBody</a></td>
 </tr>
 <tr>
 <td><a href="to-string/">toString</a></td>
-<td>[jvm]<br>open override fun <a href="to-string/">toString</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></td>
+<td>[common, jvm, nonJvm]<br>[common]<br>expect open override fun <a href="to-string/">toString</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><br>[jvm, nonJvm]<br>actual open override fun <a href="to-string/">toString</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></td>
 </tr>
 <tr>
 <td><a href="trailers/">trailers</a></td>
@@ -1139,19 +1145,19 @@ class <a href="./">Response</a> : <a href="https://docs.oracle.com/javase/8/docs
 <tbody>
 <tr>
 <td><a href="body/">body</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;body&rdquo;)<br>val <a href="body/">body</a>: <a href="../-response-body/">ResponseBody</a>?<br>Returns a non-null value if this response was passed to <a href="../-callback/on-response/">Callback.onResponse</a> or returned from <a href="../-call/execute/">Call.execute</a>. Response bodies must be <a href="../-response-body/">closed</a> and may be consumed only once.</td>
+<td>[common]<br>expect val <a href="body/">body</a>: <a href="../-response-body/">ResponseBody</a>?<br>Returns a non-null value if this response was passed to <a href="../-callback/on-response/">Callback.onResponse</a> or returned from Call.execute. Response bodies must be <a href="../-response-body/">closed</a> and may be consumed only once.<br>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;body&rdquo;)<br>actual val <a href="body/">body</a>: <a href="../-response-body/">ResponseBody</a>?<br>[nonJvm]<br>actual val <a href="body/">body</a>: <a href="../-response-body/">ResponseBody</a>?<br>Returns a non-null value if this response was passed to Callback.onResponse or returned from Call.execute. Response bodies must be <a href="../-response-body/">closed</a> and may be consumed only once.</td>
 </tr>
 <tr>
 <td><a href="cache-control/">cacheControl</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;cacheControl&rdquo;)<br>val <a href="cache-control/">cacheControl</a>: <a href="../-cache-control/">CacheControl</a><br>Returns the cache control directives for this response. This is never null, even if this response contains no Cache-Control header.</td>
+<td>[common]<br>expect val <a href="cache-control/">cacheControl</a>: <a href="../-cache-control/">CacheControl</a><br>Returns the cache control directives for this response. This is never null, even if this response contains no Cache-Control header.<br>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;cacheControl&rdquo;)<br>actual val <a href="cache-control/">cacheControl</a>: <a href="../-cache-control/">CacheControl</a><br>[nonJvm]<br>actual val <a href="cache-control/">cacheControl</a>: <a href="../-cache-control/">CacheControl</a><br>Returns the cache control directives for this response. This is never null, even if this response contains no Cache-Control header.</td>
 </tr>
 <tr>
 <td><a href="cache-response/">cacheResponse</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;cacheResponse&rdquo;)<br>val <a href="cache-response/">cacheResponse</a>: <a href="./">Response</a>?<br>Returns the raw response received from the cache. Will be null if this response didn&rsquo;t use the cache. For conditional get requests the cache response and network response may both be non-null. The body of the returned response should not be read.</td>
+<td>[common]<br>expect val <a href="cache-response/">cacheResponse</a>: <a href="./">Response</a>?<br>Returns the raw response received from the cache. Will be null if this response didn&rsquo;t use the cache. For conditional get requests the cache response and network response may both be non-null. The body of the returned response should not be read.<br>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;cacheResponse&rdquo;)<br>actual val <a href="cache-response/">cacheResponse</a>: <a href="./">Response</a>?<br>[nonJvm]<br>actual val <a href="cache-response/">cacheResponse</a>: <a href="./">Response</a>?<br>Returns the raw response received from the cache. Will be null if this response didn&rsquo;t use the cache. For conditional get requests the cache response and network response may both be non-null. The body of the returned response should not be read.</td>
 </tr>
 <tr>
 <td><a href="code/">code</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;code&rdquo;)<br>val <a href="code/">code</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><br>Returns the HTTP status code.</td>
+<td>[common]<br>expect val <a href="code/">code</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><br>Returns the HTTP status code.<br>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;code&rdquo;)<br>actual val <a href="code/">code</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><br>[nonJvm]<br>actual val <a href="code/">code</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><br>Returns the HTTP status code.</td>
 </tr>
 <tr>
 <td><a href="handshake/">handshake</a></td>
@@ -1159,31 +1165,31 @@ class <a href="./">Response</a> : <a href="https://docs.oracle.com/javase/8/docs
 </tr>
 <tr>
 <td><a href="headers/">headers</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;headers&rdquo;)<br>val <a href="headers/">headers</a>: <a href="../-headers/">Headers</a><br>Returns the HTTP headers.</td>
+<td>[common]<br>expect val <a href="headers/">headers</a>: <a href="../-headers/">Headers</a><br>Returns the HTTP headers.<br>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;headers&rdquo;)<br>actual val <a href="headers/">headers</a>: <a href="../-headers/">Headers</a><br>Returns the HTTP headers.<br>[nonJvm]<br>actual val <a href="headers/">headers</a>: <a href="../-headers/">Headers</a><br>Returns the HTTP headers.</td>
 </tr>
 <tr>
 <td><a href="is-redirect/">isRedirect</a></td>
-<td>[jvm]<br>val <a href="is-redirect/">isRedirect</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><br>Returns true if this response redirects to another resource.</td>
+<td>[common]<br>expect val <a href="is-redirect/">isRedirect</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><br>Returns true if this response redirects to another resource.<br>[jvm, nonJvm]<br>actual val <a href="is-redirect/">isRedirect</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><br>Returns true if this response redirects to another resource.</td>
 </tr>
 <tr>
 <td><a href="is-successful/">isSuccessful</a></td>
-<td>[jvm]<br>val <a href="is-successful/">isSuccessful</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><br>Returns true if the code is in [200..300), which means the request was successfully received, understood, and accepted.</td>
+<td>[common]<br>expect val <a href="is-successful/">isSuccessful</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><br>Returns true if the code is in [200..300), which means the request was successfully received, understood, and accepted.<br>[jvm]<br>actual val <a href="is-successful/">isSuccessful</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><br>[nonJvm]<br>actual val <a href="is-successful/">isSuccessful</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><br>Returns true if the code is in [200..300), which means the request was successfully received, understood, and accepted.</td>
 </tr>
 <tr>
 <td><a href="message/">message</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;message&rdquo;)<br>val <a href="message/">message</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><br>Returns the HTTP status message.</td>
+<td>[common]<br>expect val <a href="message/">message</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><br>Returns the HTTP status message.<br>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;message&rdquo;)<br>actual val <a href="message/">message</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><br>[nonJvm]<br>actual val <a href="message/">message</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><br>Returns the HTTP status message.</td>
 </tr>
 <tr>
 <td><a href="network-response/">networkResponse</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;networkResponse&rdquo;)<br>val <a href="network-response/">networkResponse</a>: <a href="./">Response</a>?<br>Returns the raw response received from the network. Will be null if this response didn&rsquo;t use the network, such as when the response is fully cached. The body of the returned response should not be read.</td>
+<td>[common]<br>expect val <a href="network-response/">networkResponse</a>: <a href="./">Response</a>?<br>Returns the raw response received from the network. Will be null if this response didn&rsquo;t use the network, such as when the response is fully cached. The body of the returned response should not be read.<br>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;networkResponse&rdquo;)<br>actual val <a href="network-response/">networkResponse</a>: <a href="./">Response</a>?<br>[nonJvm]<br>actual val <a href="network-response/">networkResponse</a>: <a href="./">Response</a>?<br>Returns the raw response received from the network. Will be null if this response didn&rsquo;t use the network, such as when the response is fully cached. The body of the returned response should not be read.</td>
 </tr>
 <tr>
 <td><a href="prior-response/">priorResponse</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;priorResponse&rdquo;)<br>val <a href="prior-response/">priorResponse</a>: <a href="./">Response</a>?<br>Returns the response for the HTTP redirect or authorization challenge that triggered this response, or null if this response wasn&rsquo;t triggered by an automatic retry. The body of the returned response should not be read because it has already been consumed by the redirecting client.</td>
+<td>[common]<br>expect val <a href="prior-response/">priorResponse</a>: <a href="./">Response</a>?<br>Returns the response for the HTTP redirect or authorization challenge that triggered this response, or null if this response wasn&rsquo;t triggered by an automatic retry. The body of the returned response should not be read because it has already been consumed by the redirecting client.<br>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;priorResponse&rdquo;)<br>actual val <a href="prior-response/">priorResponse</a>: <a href="./">Response</a>?<br>[nonJvm]<br>actual val <a href="prior-response/">priorResponse</a>: <a href="./">Response</a>?<br>Returns the response for the HTTP redirect or authorization challenge that triggered this response, or null if this response wasn&rsquo;t triggered by an automatic retry. The body of the returned response should not be read because it has already been consumed by the redirecting client.</td>
 </tr>
 <tr>
 <td><a href="protocol/">protocol</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;protocol&rdquo;)<br>val <a href="protocol/">protocol</a>: Protocol<br>Returns the HTTP protocol, such as Protocol.HTTP_1_1 or Protocol.HTTP_1_0.</td>
+<td>[common]<br>expect val <a href="protocol/">protocol</a>: <a href="../-protocol/">Protocol</a><br>Returns the HTTP protocol, such as <a href="../-protocol/-h-t-t-p_1_1/">Protocol.HTTP_1_1</a> or <a href="../-protocol/-h-t-t-p_1_0/">Protocol.HTTP_1_0</a>.<br>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;protocol&rdquo;)<br>actual val <a href="protocol/">protocol</a>: Protocol<br>[nonJvm]<br>actual val <a href="protocol/">protocol</a>: Protocol<br>Returns the HTTP protocol, such as Protocol.HTTP_1_1 or Protocol.HTTP_1_0.</td>
 </tr>
 <tr>
 <td><a href="received-response-at-millis/">receivedResponseAtMillis</a></td>
@@ -1191,7 +1197,7 @@ class <a href="./">Response</a> : <a href="https://docs.oracle.com/javase/8/docs
 </tr>
 <tr>
 <td><a href="request/">request</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;request&rdquo;)<br>val <a href="request/">request</a>: <a href="../-request/">Request</a><br>The wire-level request that initiated this HTTP response. This is not necessarily the same request issued by the application:</td>
+<td>[common]<br>expect val <a href="request/">request</a>: <a href="../-request/">Request</a><br>The request that initiated this HTTP response. This is not necessarily the same request issued by the application:<br>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;request&rdquo;)<br>actual val <a href="request/">request</a>: <a href="../-request/">Request</a><br>[nonJvm]<br>actual val <a href="request/">request</a>: <a href="../-request/">Request</a><br>The request that initiated this HTTP response. This is not necessarily the same request issued by the application:</td>
 </tr>
 <tr>
 <td><a href="sent-request-at-millis/">sentRequestAtMillis</a></td>

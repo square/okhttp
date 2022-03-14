@@ -1030,9 +1030,14 @@
 
 <p>//<a href="../../../../">okhttp</a>/<a href="../../">okhttp3</a>/<a href="../">Call</a>/<a href="./">clone</a></p>
 <h1 id="clone">clone<a class="headerlink" href="#clone" title="Permanent link">&para;</a></h1>
-<p>[jvm]\
-abstract override fun <a href="./">clone</a>(): <a href="../">Call</a></p>
+<p>[common]\
+expect abstract fun <a href="./">clone</a>(): <a href="../">Call</a></p>
 <p>Create a new, identical call to this one which can be enqueued or executed even if this call has already been.</p>
+<p>[jvm, nonJvm]\
+[jvm]\
+actual abstract override fun <a href="./">clone</a>(): <a href="../">Call</a></p>
+<p>[nonJvm]\
+actual abstract fun <a href="./">clone</a>(): <a href="../">Call</a></p>
 
               
             </article>

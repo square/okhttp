@@ -1030,18 +1030,21 @@
 
 <p>//<a href="../../../../">okhttp</a>/<a href="../../">okhttp3</a>/<a href="../">RequestBody</a>/<a href="./">isOneShot</a></p>
 <h1 id="isoneshot">isOneShot<a class="headerlink" href="#isoneshot" title="Permanent link">&para;</a></h1>
-<p>[jvm]\
-open fun <a href="./">isOneShot</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></p>
+<p>[common]\
+expect open fun <a href="./">isOneShot</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></p>
 <p>Returns true if this body expects at most one call to <a href="../write-to/">writeTo</a> and can be transmitted at most once. This is typically used when writing the request body is destructive and it is not possible to recreate the request body after it has been sent.</p>
 <p>This method returns false unless it is overridden by a subclass.</p>
 <p>By default OkHttp will attempt to retransmit request bodies when the original request fails due to any of:</p>
 <ul>
 <li>A stale connection. The request was made on a reused connection and that reused connection     has since been closed by the server.</li>
 <li>A client timeout (HTTP 408).</li>
-<li>A authorization challenge (HTTP 401 and 407) that is satisfied by the <a href="../../-authenticator/">Authenticator</a>.</li>
+<li>A authorization challenge (HTTP 401 and 407) that is satisfied by the Authenticator.</li>
 <li>A retryable server failure (HTTP 503 with a Retry-After: 0 response header).</li>
 <li>A misdirected request (HTTP 421) on a coalesced connection.</li>
 </ul>
+<p>[jvm, nonJvm]\
+[jvm, nonJvm]\
+actual open fun <a href="./">isOneShot</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></p>
 
               
             </article>

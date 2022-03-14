@@ -1030,8 +1030,11 @@
 
 <p>//<a href="../../../../">okhttp</a>/<a href="../../">okhttp3</a>/<a href="../">Call</a>/<a href="./">isCanceled</a></p>
 <h1 id="iscanceled">isCanceled<a class="headerlink" href="#iscanceled" title="Permanent link">&para;</a></h1>
-<p>[jvm]\
-abstract fun <a href="./">isCanceled</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></p>
+<p>[common, jvm, nonJvm]\
+[common]\
+expect abstract fun <a href="./">isCanceled</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></p>
+<p>[jvm, nonJvm]\
+actual abstract fun <a href="./">isCanceled</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></p>
 
               
             </article>
