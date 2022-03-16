@@ -1,0 +1,9 @@
+public final class mockwebserver3/junit4/MockWebServerRule : org/junit/rules/ExternalResource {
+	public static final field Companion Lmockwebserver3/junit4/MockWebServerRule$Companion;
+	public fun <init> ()V
+	public final fun getServer ()Lmockwebserver3/MockWebServer;
+}
+
+public final class mockwebserver3/junit4/MockWebServerRule$Companion {
+}
+

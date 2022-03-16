@@ -23,7 +23,6 @@ import okhttp3.internal.cache.CacheStrategy
 import okhttp3.internal.cache.DiskLruCache
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.TaskRunner
-import okhttp3.internal.http.HttpMethod
 import okhttp3.internal.http.StatusLine
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.WARN
@@ -52,6 +51,7 @@ import java.security.cert.CertificateException
 import java.security.cert.CertificateFactory
 import java.util.NoSuchElementException
 import java.util.TreeSet
+import okhttp3.internal.http.HttpMethod
 
 /**
  * Caches HTTP and HTTPS responses to the filesystem so they may be reused, saving time and

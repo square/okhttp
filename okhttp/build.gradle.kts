@@ -1,14 +1,12 @@
-import com.android.build.gradle.internal.tasks.factory.dependsOn
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
-import me.champeau.gradle.japicmp.JapicmpTask
 import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
 
 plugins {
   kotlin("multiplatform")
   id("org.jetbrains.dokka")
   id("com.vanniktech.maven.publish.base")
-  id("me.champeau.gradle.japicmp")
+  id("binary-compatibility-validator")
 }
 
 kotlin {
@@ -53,6 +51,7 @@ kotlin {
     val nonJvmMain = create("nonJvmMain") {
       dependencies {
         dependsOn(sourceSets.commonMain.get())
+        implementation(libs.kotlinx.coroutines.core)
       }
     }
     val nonJvmTest = create("nonJvmTest") {
@@ -117,6 +116,7 @@ kotlin {
         dependencies {
           dependsOn(nonJvmTest)
           implementation(libs.kotlin.test.js)
+          implementation(libs.kotlinx.coroutines.test)
         }
       }
     }
@@ -183,69 +183,6 @@ dependencies {
   osgiTestDeploy(libs.eclipseOsgi)
   osgiTestDeploy(libs.kotlin.stdlib.osgi)
 }
-
-tasks.register<JapicmpTask>("japicmp") {
-  dependsOn("jvmJar")
-  oldClasspath = files(project.baselineJar())
-  newClasspath = files(tasks.getByName<Jar>("jvmJar").archiveFile)
-  isOnlyBinaryIncompatibleModified = true
-  isFailOnModification = true
-  txtOutputFile = file("$buildDir/reports/japi.txt")
-  isIgnoreMissingClasses = true
-  isIncludeSynthetic = true
-  packageExcludes = listOf(
-    "okhttp3.internal",
-    "okhttp3.internal.annotations",
-    "okhttp3.internal.cache",
-    "okhttp3.internal.cache2",
-    "okhttp3.internal.connection",
-    "okhttp3.internal.http",
-    "okhttp3.internal.http1",
-    "okhttp3.internal.http2",
-    "okhttp3.internal.io",
-    "okhttp3.internal.platform",
-    "okhttp3.internal.proxy",
-    "okhttp3.internal.publicsuffix",
-    "okhttp3.internal.tls",
-    "okhttp3.internal.ws",
-  )
-  classExcludes = listOf(
-    // Package-private in 3.x, internal in 4.0.0:
-    "okhttp3.Cache\$CacheResponseBody\$1",
-    "okhttp3.RealCall\$AsyncCall",
-  )
-  methodExcludes = listOf(
-    // Became "final" despite a non-final enclosing class in 4.0.0:
-    "okhttp3.OkHttpClient#authenticator()",
-    "okhttp3.OkHttpClient#cache()",
-    "okhttp3.OkHttpClient#callTimeoutMillis()",
-    "okhttp3.OkHttpClient#certificatePinner()",
-    "okhttp3.OkHttpClient#connectionPool()",
-    "okhttp3.OkHttpClient#connectionSpecs()",
-    "okhttp3.OkHttpClient#connectTimeoutMillis()",
-    "okhttp3.OkHttpClient#cookieJar()",
-    "okhttp3.OkHttpClient#dispatcher()",
-    "okhttp3.OkHttpClient#dns()",
-    "okhttp3.OkHttpClient#eventListenerFactory()",
-    "okhttp3.OkHttpClient#followRedirects()",
-    "okhttp3.OkHttpClient#followSslRedirects()",
-    "okhttp3.OkHttpClient#hostnameVerifier()",
-    "okhttp3.OkHttpClient#interceptors()",
-    "okhttp3.OkHttpClient#networkInterceptors()",
-    "okhttp3.OkHttpClient#pingIntervalMillis()",
-    "okhttp3.OkHttpClient#protocols()",
-    "okhttp3.OkHttpClient#proxy()",
-    "okhttp3.OkHttpClient#proxyAuthenticator()",
-    "okhttp3.OkHttpClient#proxySelector()",
-    "okhttp3.OkHttpClient#readTimeoutMillis()",
-    "okhttp3.OkHttpClient#retryOnConnectionFailure()",
-    "okhttp3.OkHttpClient#socketFactory()",
-    "okhttp3.OkHttpClient#sslSocketFactory()",
-    "okhttp3.OkHttpClient#writeTimeoutMillis()",
-    "okhttp3.OkHttpClient#writeTimeoutMillis()",
-    "okhttp3.Request\$Builder#delete()",
-  )
-}.let(tasks.check::dependsOn)
 
 mavenPublishing {
   configure(KotlinMultiplatform(javadocJar = JavadocJar.Dokka("dokkaGfm")))

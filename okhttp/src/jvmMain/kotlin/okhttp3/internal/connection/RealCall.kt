@@ -64,7 +64,7 @@ class RealCall(
   /** The application's original request unadulterated by redirects or auth headers. */
   val originalRequest: Request,
   val forWebSocket: Boolean
-) : Call {
+) : Call, Cloneable {
   private val connectionPool: RealConnectionPool = client.connectionPool.delegate
 
   internal val eventListener: EventListener = client.eventListenerFactory.create(this)

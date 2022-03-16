@@ -18,14 +18,6 @@ package okhttp3.internal.http
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InterruptedIOException
-import java.net.HttpURLConnection.HTTP_CLIENT_TIMEOUT
-import java.net.HttpURLConnection.HTTP_MOVED_PERM
-import java.net.HttpURLConnection.HTTP_MOVED_TEMP
-import java.net.HttpURLConnection.HTTP_MULT_CHOICE
-import java.net.HttpURLConnection.HTTP_PROXY_AUTH
-import java.net.HttpURLConnection.HTTP_SEE_OTHER
-import java.net.HttpURLConnection.HTTP_UNAUTHORIZED
-import java.net.HttpURLConnection.HTTP_UNAVAILABLE
 import java.net.ProtocolException
 import java.net.Proxy
 import java.net.SocketTimeoutException
@@ -40,9 +32,6 @@ import okhttp3.internal.canReuseConnectionFor
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.connection.Exchange
 import okhttp3.internal.connection.RealCall
-import okhttp3.internal.http.StatusLine.Companion.HTTP_MISDIRECTED_REQUEST
-import okhttp3.internal.http.StatusLine.Companion.HTTP_PERM_REDIRECT
-import okhttp3.internal.http.StatusLine.Companion.HTTP_TEMP_REDIRECT
 import okhttp3.internal.http2.ConnectionShutdownException
 import okhttp3.internal.withSuppressed
 
@@ -85,14 +74,18 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
           continue
         }
 
+        // Clear out downstream interceptor's additional request headers, cookies, etc.
+        val responseBuilder = response.newBuilder()
+          .request(request)
+
         // Attach the prior response if it exists. Such responses never have a body.
         if (priorResponse != null) {
-          response = response.newBuilder()
-              .priorResponse(priorResponse.newBuilder()
-                  .body(null)
-                  .build())
-              .build()
+          responseBuilder.priorResponse(priorResponse.newBuilder()
+            .body(null)
+            .build())
         }
+
+        response = responseBuilder.build()
 
         val exchange = call.interceptorScopedExchange
         val followUp = followUpRequest(response, exchange)

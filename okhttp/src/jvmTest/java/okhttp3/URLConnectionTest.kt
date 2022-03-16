@@ -63,7 +63,8 @@ import okhttp3.TestUtil.assertSuppressed
 import okhttp3.internal.RecordingAuthenticator
 import okhttp3.internal.RecordingOkAuthenticator
 import okhttp3.internal.addHeaderLenient
-import okhttp3.internal.http.StatusLine
+import okhttp3.internal.http.HTTP_PERM_REDIRECT
+import okhttp3.internal.http.HTTP_TEMP_REDIRECT
 import okhttp3.internal.platform.Platform.Companion.get
 import okhttp3.internal.userAgent
 import okhttp3.testing.Flaky
@@ -2434,7 +2435,7 @@ class URLConnectionTest {
     override fun intercept(chain: Interceptor.Chain): Response {
       val response = chain.proceed(chain.request())
       val code = response.code
-      if (code != StatusLine.HTTP_TEMP_REDIRECT && code != StatusLine.HTTP_PERM_REDIRECT) return response
+      if (code != HTTP_TEMP_REDIRECT && code != HTTP_PERM_REDIRECT) return response
       val method = response.request.method
       if (method == "GET" || method == "HEAD") return response
       val location = response.header("Location") ?: return response
@@ -2450,7 +2451,7 @@ class URLConnectionTest {
       .addNetworkInterceptor(LegacyRedirectInterceptor())
       .build()
     val response1 = MockResponse()
-      .setResponseCode(StatusLine.HTTP_TEMP_REDIRECT)
+      .setResponseCode(HTTP_TEMP_REDIRECT)
       .setBody("This page has moved!")
       .addHeader("Location: /page2")
     server.enqueue(response1)
@@ -2471,7 +2472,7 @@ class URLConnectionTest {
       .addNetworkInterceptor(LegacyRedirectInterceptor())
       .build()
     val response1 = MockResponse()
-      .setResponseCode(StatusLine.HTTP_PERM_REDIRECT)
+      .setResponseCode(HTTP_PERM_REDIRECT)
       .setBody("This page has moved!")
       .addHeader("Location: /page2")
     server.enqueue(response1)
@@ -2490,7 +2491,7 @@ class URLConnectionTest {
   private fun testRedirect(temporary: Boolean, method: String) {
     val response1 = MockResponse()
       .setResponseCode(
-        if (temporary) StatusLine.HTTP_TEMP_REDIRECT else StatusLine.HTTP_PERM_REDIRECT
+        if (temporary) HTTP_TEMP_REDIRECT else HTTP_PERM_REDIRECT
       )
       .addHeader("Location: /page2")
     if (method != "HEAD") {

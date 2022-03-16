@@ -27,10 +27,10 @@ import okhttp3.Response
 import okhttp3.internal.headersContentLength
 import okhttp3.internal.http.ExchangeCodec
 import okhttp3.internal.http.ExchangeCodec.Carrier
+import okhttp3.internal.http.HTTP_CONTINUE
 import okhttp3.internal.http.RealInterceptorChain
 import okhttp3.internal.http.RequestLine
 import okhttp3.internal.http.StatusLine
-import okhttp3.internal.http.StatusLine.Companion.HTTP_CONTINUE
 import okhttp3.internal.http.promisesBody
 import okhttp3.internal.http2.Header.Companion.RESPONSE_STATUS_UTF8
 import okhttp3.internal.http2.Header.Companion.TARGET_AUTHORITY

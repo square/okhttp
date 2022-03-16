@@ -31,9 +31,9 @@ import okhttp3.internal.headersContentLength
 import okhttp3.internal.http.ExchangeCodec
 import okhttp3.internal.http.RequestLine
 import okhttp3.internal.http.StatusLine
-import okhttp3.internal.http.StatusLine.Companion.HTTP_CONTINUE
 import okhttp3.internal.http.promisesBody
 import okhttp3.internal.http.receiveHeaders
+import okhttp3.internal.http.HTTP_CONTINUE
 import okhttp3.internal.skipAll
 import okio.Buffer
 import okio.BufferedSink

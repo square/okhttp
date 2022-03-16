@@ -16,7 +16,11 @@
 package okhttp3.internal
 
 import kotlin.jvm.JvmField
+import okhttp3.Headers
 import okhttp3.OkHttp
+import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
+import okio.ArrayIndexOutOfBoundsException
 import okio.Buffer
 import okio.BufferedSink
 import okio.BufferedSource
@@ -28,6 +32,9 @@ import okio.IOException
 import okio.Options
 import okio.Path
 import okio.use
+
+// Temporary until we have a HttpUrl in common
+expect class HttpUrlRepresentation
 
 // TODO: migrate callers to [Regex.matchAt] when that API is not experimental.
 internal fun Regex.matchAtPolyfill(input: CharSequence, index: Int): MatchResult? {
@@ -360,6 +367,15 @@ internal inline fun <T> Iterable<T>.filterList(predicate: T.() -> Boolean): List
 }
 
 internal const val userAgent: String = "okhttp/${OkHttp.VERSION}"
+
+internal fun checkOffsetAndCount(arrayLength: Long, offset: Long, count: Long) {
+  if (offset or count < 0L || offset > arrayLength || arrayLength - offset < count) {
+    throw ArrayIndexOutOfBoundsException("length=$arrayLength, offset=$offset, count=$offset")
+  }
+}
+
+val commonEmptyHeaders: Headers = Headers.headersOf()
+val commonEmptyRequestBody: RequestBody = EMPTY_BYTE_ARRAY.toRequestBody()
 
 internal fun <T> interleave(a: Iterable<T>, b: Iterable<T>): List<T> {
   val ia = a.iterator()

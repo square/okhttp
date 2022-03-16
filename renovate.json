@@ -1,0 +1,10 @@
+{
+  "extends": [
+    "config:base"
+  ],
+  "ignoreDeps": [
+    "com.squareup.okhttp3:okhttp",
+    "com.squareup.okhttp3:okhttp-tls",
+    "com.squareup.okhttp3:mockwebserver"
+  ]
+}

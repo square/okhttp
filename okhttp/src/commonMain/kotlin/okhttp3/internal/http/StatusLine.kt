@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Square, Inc.
+ * Copyright (c) 2022 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,13 +12,15 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 package okhttp3.internal.http
 
-import java.io.IOException
-import java.net.ProtocolException
+import kotlin.jvm.JvmField
 import okhttp3.Protocol
+import okhttp3.ProtocolException
 import okhttp3.Response
+import okio.IOException
 
 /** An HTTP response status line like "HTTP/1.1 200 OK". */
 class StatusLine(
@@ -40,13 +42,6 @@ class StatusLine(
   }
 
   companion object {
-    /** Numeric status code, 307: Temporary Redirect. */
-    const val HTTP_TEMP_REDIRECT = 307
-    const val HTTP_PERM_REDIRECT = 308
-    /** RFC 7540, Section 9.1.2. Retry these if the exchange used connection coalescing. */
-    const val HTTP_MISDIRECTED_REQUEST = 421
-    const val HTTP_CONTINUE = 100
-
     fun get(response: Response): StatusLine {
       return StatusLine(response.protocol, response.code, response.message)
     }
@@ -82,11 +77,11 @@ class StatusLine(
       if (statusLine.length < codeStart + 3) {
         throw ProtocolException("Unexpected status line: $statusLine")
       }
-      val code = try {
-        Integer.parseInt(statusLine.substring(codeStart, codeStart + 3))
-      } catch (_: NumberFormatException) {
-        throw ProtocolException("Unexpected status line: $statusLine")
-      }
+      val code =
+        statusLine.substring(codeStart, codeStart + 3).toIntOrNull()
+          ?: throw ProtocolException(
+            "Unexpected status line: $statusLine"
+          )
 
       // Parse an optional response message like "OK" or "Not Modified". If it
       // exists, it is separated from the response code by a space.

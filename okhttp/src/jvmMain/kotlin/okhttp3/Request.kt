@@ -17,30 +17,36 @@ package okhttp3
 
 import java.net.URL
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.internal.EMPTY_REQUEST
-import okhttp3.internal.http.HttpMethod
+import okhttp3.internal.canonicalUrl
+import okhttp3.internal.commonAddHeader
+import okhttp3.internal.commonCacheControl
+import okhttp3.internal.commonDelete
+import okhttp3.internal.commonGet
+import okhttp3.internal.commonHead
+import okhttp3.internal.commonHeader
+import okhttp3.internal.commonHeaders
+import okhttp3.internal.commonMethod
+import okhttp3.internal.commonPatch
+import okhttp3.internal.commonPost
+import okhttp3.internal.commonPut
+import okhttp3.internal.commonRemoveHeader
 import okhttp3.internal.toImmutableMap
 
-/**
- * An HTTP request. Instances of this class are immutable if their [body] is null or itself
- * immutable.
- */
-class Request internal constructor(
-  @get:JvmName("url") val url: HttpUrl,
-  @get:JvmName("method") val method: String,
-  @get:JvmName("headers") val headers: Headers,
-  @get:JvmName("body") val body: RequestBody?,
+actual class Request internal constructor(
+  @get:JvmName("url") actual val url: HttpUrl,
+  @get:JvmName("method") actual val method: String,
+  @get:JvmName("headers") actual val headers: Headers,
+  @get:JvmName("body") actual val body: RequestBody?,
   internal val tags: Map<Class<*>, Any>
 ) {
+  internal actual var lazyCacheControl: CacheControl? = null
 
-  private var lazyCacheControl: CacheControl? = null
-
-  val isHttps: Boolean
+  actual val isHttps: Boolean
     get() = url.isHttps
 
-  fun header(name: String): String? = headers[name]
+  actual fun header(name: String): String? = commonHeader(name)
 
-  fun headers(name: String): List<String> = headers.values(name)
+  actual fun headers(name: String): List<String> = commonHeaders(name)
 
   /**
    * Returns the tag attached with `Object.class` as a key, or null if no tag is attached with
@@ -58,13 +64,9 @@ class Request internal constructor(
    */
   fun <T> tag(type: Class<out T>): T? = type.cast(tags[type])
 
-  fun newBuilder(): Builder = Builder(this)
+  actual fun newBuilder(): Builder = Builder(this)
 
-  /**
-   * Returns the cache control directives for this response. This is never null, even if this
-   * response contains no `Cache-Control` header.
-   */
-  @get:JvmName("cacheControl") val cacheControl: CacheControl
+  @get:JvmName("cacheControl") actual val cacheControl: CacheControl
     get() {
       var result = lazyCacheControl
       if (result == null) {
@@ -133,21 +135,21 @@ class Request internal constructor(
     append('}')
   }
 
-  open class Builder {
-    internal var url: HttpUrl? = null
-    internal var method: String
-    internal var headers: Headers.Builder
-    internal var body: RequestBody? = null
+  actual open class Builder {
+    internal actual var url: HttpUrl? = null
+    internal actual var method: String
+    internal actual var headers: Headers.Builder
+    internal actual var body: RequestBody? = null
 
     /** A mutable map of tags, or an immutable empty map if we don't have any. */
     internal var tags: MutableMap<Class<*>, Any> = mutableMapOf()
 
-    constructor() {
+    actual constructor() {
       this.method = "GET"
       this.headers = Headers.Builder()
     }
 
-    internal constructor(request: Request) {
+    internal actual constructor(request: Request) {
       this.url = request.url
       this.method = request.method
       this.body = request.body
@@ -163,25 +165,8 @@ class Request internal constructor(
       this.url = url
     }
 
-    /**
-     * Sets the URL target of this request.
-     *
-     * @throws IllegalArgumentException if [url] is not a valid HTTP or HTTPS URL. Avoid this
-     *     exception by calling [HttpUrl.parse]; it returns null for invalid URLs.
-     */
-    open fun url(url: String): Builder {
-      // Silently replace web socket URLs with HTTP URLs.
-      val finalUrl: String = when {
-        url.startsWith("ws:", ignoreCase = true) -> {
-          "http:${url.substring(3)}"
-        }
-        url.startsWith("wss:", ignoreCase = true) -> {
-          "https:${url.substring(4)}"
-        }
-        else -> url
-      }
-
-      return url(finalUrl.toHttpUrl())
+    actual open fun url(url: String): Builder {
+      return url(canonicalUrl(url).toHttpUrl())
     }
 
     /**
@@ -191,77 +176,30 @@ class Request internal constructor(
      */
     open fun url(url: URL) = url(url.toString().toHttpUrl())
 
-    /**
-     * Sets the header named [name] to [value]. If this request already has any headers
-     * with that name, they are all replaced.
-     */
-    open fun header(name: String, value: String) = apply {
-      headers[name] = value
-    }
+    actual open fun header(name: String, value: String) = commonHeader(name, value)
 
-    /**
-     * Adds a header with [name] and [value]. Prefer this method for multiply-valued
-     * headers like "Cookie".
-     *
-     * Note that for some headers including `Content-Length` and `Content-Encoding`,
-     * OkHttp may replace [value] with a header derived from the request body.
-     */
-    open fun addHeader(name: String, value: String) = apply {
-      headers.add(name, value)
-    }
+    actual open fun addHeader(name: String, value: String) = commonAddHeader(name, value)
 
-    /** Removes all headers named [name] on this builder. */
-    open fun removeHeader(name: String) = apply {
-      headers.removeAll(name)
-    }
+    actual open fun removeHeader(name: String) = commonRemoveHeader(name)
 
-    /** Removes all headers on this builder and adds [headers]. */
-    open fun headers(headers: Headers) = apply {
-      this.headers = headers.newBuilder()
-    }
+    actual open fun headers(headers: Headers) = commonHeaders(headers)
 
-    /**
-     * Sets this request's `Cache-Control` header, replacing any cache control headers already
-     * present. If [cacheControl] doesn't define any directives, this clears this request's
-     * cache-control headers.
-     */
-    open fun cacheControl(cacheControl: CacheControl): Builder {
-      val value = cacheControl.toString()
-      return when {
-        value.isEmpty() -> removeHeader("Cache-Control")
-        else -> header("Cache-Control", value)
-      }
-    }
+    actual open fun cacheControl(cacheControl: CacheControl): Builder = commonCacheControl(cacheControl)
 
-    open fun get(): Builder = method("GET", null)
+    actual open fun get(): Builder = commonGet()
 
-    open fun head(): Builder = method("HEAD", null)
+    actual open fun head(): Builder = commonHead()
 
-    open fun post(body: RequestBody): Builder = method("POST", body)
+    actual open fun post(body: RequestBody): Builder = commonPost(body)
 
     @JvmOverloads
-    open fun delete(body: RequestBody? = EMPTY_REQUEST): Builder = method("DELETE", body)
+    actual open fun delete(body: RequestBody?): Builder = commonDelete(body)
 
-    open fun put(body: RequestBody): Builder = method("PUT", body)
+    actual open fun put(body: RequestBody): Builder = commonPut(body)
 
-    open fun patch(body: RequestBody): Builder = method("PATCH", body)
+    actual open fun patch(body: RequestBody): Builder = commonPatch(body)
 
-    open fun method(method: String, body: RequestBody?): Builder = apply {
-      require(method.isNotEmpty()) {
-        "method.isEmpty() == true"
-      }
-      if (body == null) {
-        require(!HttpMethod.requiresRequestBody(method)) {
-          "method $method must have a request body."
-        }
-      } else {
-        require(HttpMethod.permitsRequestBody(method)) {
-          "method $method must not have a request body."
-        }
-      }
-      this.method = method
-      this.body = body
-    }
+    actual open fun method(method: String, body: RequestBody?): Builder = commonMethod(method, body)
 
     /** Attaches [tag] to the request using `Object.class` as a key. */
     open fun tag(tag: Any?): Builder = tag(Any::class.java, tag)
@@ -284,7 +222,7 @@ class Request internal constructor(
       }
     }
 
-    open fun build(): Request {
+    actual open fun build(): Request {
       return Request(
           checkNotNull(url) { "url == null" },
           method,

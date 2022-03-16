@@ -15,13 +15,13 @@
  */
 package okhttp3
 
-import java.io.Closeable
-import java.io.IOException
-import java.util.concurrent.LinkedBlockingDeque
 import okhttp3.internal.concurrent.TaskFaker
 import okhttp3.internal.connection.RealConnection
 import okhttp3.internal.connection.RoutePlanner
 import okhttp3.internal.connection.RoutePlanner.ConnectResult
+import java.io.Closeable
+import java.io.IOException
+import java.util.concurrent.LinkedBlockingDeque
 
 class FakeRoutePlanner(
   private val taskFaker: TaskFaker,
@@ -57,6 +57,10 @@ class FakeRoutePlanner(
     val result = plans[nextPlanIndex++]
     events += "take plan ${result.id}"
 
+    if (result.yieldBeforePlanReturns) {
+      taskFaker.yield()
+    }
+
     val planningThrowable = result.planningThrowable
     if (planningThrowable != null) throw planningThrowable
 
@@ -84,12 +88,14 @@ class FakeRoutePlanner(
     val connection = factory.newConnection(pool, factory.newRoute(address))
     var retry: FakePlan? = null
     var retryTaken = false
+    var yieldBeforePlanReturns = false
 
     override val isReady: Boolean
       get() = connectState == ConnectState.TLS_CONNECTED
 
     var tcpConnectDelayNanos = 0L
     var tcpConnectThrowable: Throwable? = null
+    var yieldBeforeTcpConnectReturns = false
     var connectTcpNextPlan: FakePlan? = null
     var tlsConnectDelayNanos = 0L
     var tlsConnectThrowable: Throwable? = null
@@ -124,6 +130,10 @@ class FakeRoutePlanner(
       events += "plan $id TCP connecting..."
 
       taskFaker.sleep(tcpConnectDelayNanos)
+
+      if (yieldBeforeTcpConnectReturns) {
+        taskFaker.yield()
+      }
 
       return when {
         tcpConnectThrowable != null -> {

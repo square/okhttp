@@ -1,8 +1,10 @@
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import com.vanniktech.maven.publish.SonatypeHost
 import java.net.URL
+import kotlinx.validation.ApiValidationExtension
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.dokka.gradle.DokkaTask
+import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
@@ -16,11 +18,11 @@ buildscript {
     classpath(libs.gradlePlugin.graal)
     classpath(libs.gradlePlugin.bnd)
     classpath(libs.gradlePlugin.shadow)
-    classpath(libs.gradlePlugin.japicmp)
     classpath(libs.gradlePlugin.animalsniffer)
     classpath(libs.gradlePlugin.errorprone)
     classpath(libs.gradlePlugin.spotless)
     classpath(libs.gradlePlugin.mavenPublish)
+    classpath(libs.gradlePlugin.binaryCompatibilityValidator)
   }
 
   repositories {
@@ -30,11 +32,9 @@ buildscript {
   }
 }
 
-apply(plugin = "com.vanniktech.maven.publish.base")
-
 allprojects {
   group = "com.squareup.okhttp3"
-  version = "5.0.0-alpha.5"
+  version = "5.0.0-SNAPSHOT"
 
   repositories {
     mavenCentral()
@@ -64,14 +64,13 @@ allprojects {
 /** Configure building for Java+Kotlin projects. */
 subprojects {
   val project = this@subprojects
-  if (project.name == "android-test") return@subprojects
   if (project.name == "okhttp-bom") return@subprojects
+
+  if (project.name == "android-test") return@subprojects
   if (project.name == "regression-test") return@subprojects
 
   apply(plugin = "checkstyle")
-  apply(plugin = "com.diffplug.spotless")
   apply(plugin = "ru.vyarus.animalsniffer")
-  apply(plugin = "org.jetbrains.dokka")
   apply(plugin = "biz.aQute.bnd.builder")
 
   tasks.withType<JavaCompile> {
@@ -88,31 +87,29 @@ subprojects {
     exclude("**/CipherSuite.java")
   }
 
-  afterEvaluate {
-    val checkstyleConfig: Configuration by configurations.creating
-    dependencies {
-      checkstyleConfig(libs.checkStyle) {
-        isTransitive = false
-      }
+  val checkstyleConfig: Configuration by configurations.creating
+  dependencies {
+    checkstyleConfig(rootProject.libs.checkStyle) {
+      isTransitive = false
     }
+  }
 
-    configure<CheckstyleExtension> {
-      config = resources.text.fromArchiveEntry(checkstyleConfig, "google_checks.xml")
-      toolVersion = libs.versions.checkStyle.get()
-      sourceSets = listOf(project.sourceSets["main"])
-    }
+  configure<CheckstyleExtension> {
+    config = resources.text.fromArchiveEntry(checkstyleConfig, "google_checks.xml")
+    toolVersion = rootProject.libs.versions.checkStyle.get()
+    sourceSets = listOf(project.sourceSets["main"])
+  }
 
-    // Animal Sniffer confirms we generally don't use APIs not on Java 8.
-    configure<AnimalSnifferExtension> {
-      annotation = "okhttp3.internal.SuppressSignatureCheck"
-      sourceSets = listOf(project.sourceSets["main"])
-    }
+  // Animal Sniffer confirms we generally don't use APIs not on Java 8.
+  configure<AnimalSnifferExtension> {
+    annotation = "okhttp3.internal.SuppressSignatureCheck"
+    sourceSets = listOf(project.sourceSets["main"])
+  }
 
-    val signature: Configuration by configurations.getting
-    dependencies {
-      signature(libs.signature.android.apilevel21)
-      signature(libs.codehaus.signature.java18)
-    }
+  val signature: Configuration by configurations.getting
+  dependencies {
+    signature(rootProject.libs.signature.android.apilevel21)
+    signature(rootProject.libs.codehaus.signature.java18)
   }
 
   tasks.withType<KotlinCompile> {
@@ -129,12 +126,9 @@ subprojects {
   val testJavaVersion = System.getProperty("test.java.version", "11").toInt()
 
   val testRuntimeOnly: Configuration by configurations.getting
-
-  afterEvaluate {
-    dependencies {
-      testRuntimeOnly(libs.junit.jupiter.engine)
-      testRuntimeOnly(libs.junit.vintage.engine)
-    }
+  dependencies {
+    testRuntimeOnly(rootProject.libs.junit.jupiter.engine)
+    testRuntimeOnly(rootProject.libs.junit.vintage.engine)
   }
 
   tasks.withType<Test> {
@@ -171,11 +165,11 @@ subprojects {
     }
   } else if (platform == "conscrypt") {
     dependencies {
-      testRuntimeOnly(libs.conscrypt)
+      testRuntimeOnly(rootProject.libs.conscrypt.openjdk)
     }
   } else if (platform == "openjsse") {
     dependencies {
-      testRuntimeOnly(libs.openjsse)
+      testRuntimeOnly(rootProject.libs.openjsse)
     }
   }
 
@@ -241,6 +235,18 @@ subprojects {
       }
     }
   }
+
+  plugins.withId("binary-compatibility-validator") {
+    configure<ApiValidationExtension> {
+      ignoredPackages += "okhttp3.logging.internal"
+      ignoredPackages += "mockwebserver3.internal"
+      ignoredPackages += "okhttp3.internal"
+      ignoredPackages += "mockwebserver3.junit5.internal"
+      ignoredPackages += "okhttp3.brotli.internal"
+      ignoredPackages += "okhttp3.sse.internal"
+      ignoredPackages += "okhttp3.tls.internal"
+    }
+  }
 }
 
 tasks.wrapper {
@@ -249,6 +255,5 @@ tasks.wrapper {
 
 // Fix until 1.6.20 https://youtrack.jetbrains.com/issue/KT-49109
 rootProject.plugins.withType(NodeJsRootPlugin::class.java) {
-  rootProject.the<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension>().nodeVersion =
-    "16.13.0"
+  rootProject.the<NodeJsRootExtension>().nodeVersion = "16.13.0"
 }
