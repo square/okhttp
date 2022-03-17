@@ -1951,6 +1951,7 @@ class Http2ConnectionTest {
     Thread.currentThread().interrupt()
     try {
       connection.newStream(headerEntries("b", "banana"), false)
+      fail()
     } catch (iioe: InterruptedIOException) {
       assertThat(Thread.interrupted()).isTrue()
     }
@@ -1993,6 +1994,7 @@ class Http2ConnectionTest {
 
     try {
       connection.newStream(InterruptingList(headerEntries("b", "banana")), false)
+      fail()
     } catch (iioe: InterruptedIOException) {
       assertThat(Thread.interrupted()).isTrue()
     }
