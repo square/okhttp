@@ -240,6 +240,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     // trigger interrupts before we write to the buffered output
     // since flush is likely where we get notified.
     if (Thread.currentThread().isInterrupted) {
+      // Throwing an IOException, so leave interrupt status.
       throw InterruptedIOException()
     }
 
@@ -279,6 +280,8 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     } catch (iioe: InterruptedIOException) {
       // connection cannot be trusted anymore, partial writes are possible
       this.failConnection(iioe)
+      // Throwing an IOException, so set interrupt status.
+      Thread.currentThread().interrupt()
       throw iioe
     }
   }
