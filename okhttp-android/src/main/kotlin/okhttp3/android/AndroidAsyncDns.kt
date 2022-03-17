@@ -24,7 +24,6 @@ import androidx.annotation.RequiresApi
 import java.net.InetAddress
 import java.net.UnknownHostException
 import java.util.concurrent.Executors
-import java.util.concurrent.atomic.AtomicInteger
 import okhttp3.AsyncDns
 
 /**
@@ -35,10 +34,8 @@ import okhttp3.AsyncDns
  */
 @RequiresApi(Build.VERSION_CODES.Q)
 class AndroidAsyncDns(
+  private val dnsClass: AsyncDns.DnsClass,
   private val network: Network? = null,
-  private val dnsClasses: List<AsyncDns.DnsClass> = listOf(
-    AsyncDns.DnsClass.IPV6, AsyncDns.DnsClass.IPV4
-  )
 ) :
   AsyncDns {
   @RequiresApi(Build.VERSION_CODES.Q)
@@ -46,42 +43,24 @@ class AndroidAsyncDns(
   private val executor = Executors.newSingleThreadExecutor()
 
   override fun query(hostname: String, callback: AsyncDns.Callback) {
-    val executing = AtomicInteger(dnsClasses.size)
+    resolver.query(
+      network, hostname, dnsClass.type, DnsResolver.FLAG_EMPTY, executor, null,
+      object : DnsResolver.Callback<List<InetAddress>> {
+        override fun onAnswer(addresses: List<InetAddress>, rCode: Int) {
+          callback.onResponse(hostname, addresses)
+        }
 
-    dnsClasses.forEach { dnsClass ->
-      resolver.query(
-        network, hostname, dnsClass.type, DnsResolver.FLAG_EMPTY, executor, null,
-        callback(callback, dnsClass, executing)
-      )
-    }
-  }
-
-  private fun callback(
-    callback: AsyncDns.Callback,
-    dnsClass: AsyncDns.DnsClass,
-    executing: AtomicInteger
-  ) = object : DnsResolver.Callback<List<InetAddress>> {
-    override fun onAnswer(addresses: List<InetAddress>, rCode: Int) {
-      callback.onAddressResults(dnsClass, addresses)
-
-      possiblyComplete()
-    }
-
-    override fun onError(e: DnsResolver.DnsException) {
-      callback.onError(dnsClass, UnknownHostException(e.message).apply {
-        initCause(e)
-      })
-
-      possiblyComplete()
-    }
-
-    private fun possiblyComplete() {
-      // Synchronized to ensure that onComplete is always after the last result sent
-      synchronized(executing) {
-        if (executing.decrementAndGet() == 0) {
-          callback.onComplete()
+        override fun onError(e: DnsResolver.DnsException) {
+          callback.onFailure(hostname, UnknownHostException(e.message).apply {
+            initCause(e)
+          })
         }
       }
-    }
+    )
+  }
+
+  companion object {
+    val IPv4 = AndroidAsyncDns(dnsClass = AsyncDns.DnsClass.IPV4)
+    val IPv6 = AndroidAsyncDns(dnsClass = AsyncDns.DnsClass.IPV6)
   }
 }

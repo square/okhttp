@@ -44,8 +44,6 @@ import org.opentest4j.TestAbortedException
  */
 @ExtendWith(MockWebServerExtension::class)
 class AndroidAsyncDnsTest(val server: MockWebServer) {
-  private val dns = AndroidAsyncDns()
-
   private val localhostName: String = InetAddress.getByName("localhost").canonicalHostName
 
   private val localhost: HandshakeCertificates by lazy {
@@ -62,7 +60,7 @@ class AndroidAsyncDnsTest(val server: MockWebServer) {
   }
 
   private val client = OkHttpClient.Builder()
-    .dns(dns.asDns())
+    .dns(AsyncDns.toDns(AndroidAsyncDns.IPv4, AndroidAsyncDns.IPv6))
     .sslSocketFactory(localhost.sslSocketFactory(), localhost.trustManager)
     .build()
 
@@ -120,16 +118,14 @@ class AndroidAsyncDnsTest(val server: MockWebServer) {
     var exception: Exception? = null
     val latch = CountDownLatch(1)
 
-    dns.query(hostname, object : AsyncDns.Callback {
-      override fun onAddressResults(dnsClass: AsyncDns.DnsClass, addresses: List<InetAddress>) {
+    // assumes an IPv4 address
+    AndroidAsyncDns.IPv4.query(hostname, object : AsyncDns.Callback {
+      override fun onResponse(hostname: String, addresses: List<InetAddress>) {
         allAddresses.addAll(addresses)
-      }
-
-      override fun onComplete() {
         latch.countDown()
       }
 
-      override fun onError(dnsClass: AsyncDns.DnsClass, e: IOException) {
+      override fun onFailure(hostname: String, e: IOException) {
         exception = e
         latch.countDown()
       }
@@ -170,7 +166,7 @@ class AndroidAsyncDnsTest(val server: MockWebServer) {
       connectivityManager.activeNetwork ?: throw TestAbortedException("No active network")
 
     val client = OkHttpClient.Builder()
-      .dns(AndroidAsyncDns(network = network, dnsClasses = listOf(AsyncDns.DnsClass.IPV4)).asDns())
+      .dns(AsyncDns.toDns(AndroidAsyncDns.IPv4, AndroidAsyncDns.IPv6))
       .socketFactory(network.socketFactory)
       .build()
 

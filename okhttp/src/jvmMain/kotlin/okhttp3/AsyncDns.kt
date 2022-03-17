@@ -31,9 +31,6 @@ import okio.IOException
  *  * dnsjava Resolver
  *
  * Implementations of this interface must be safe for concurrent use.
- *
- * The interface may be extended by specific AsyncDns implementations with additional records types,
- * so as SCVB/HTTPS records, which may not be generally applicable.
  */
 interface AsyncDns {
   /**
@@ -46,70 +43,16 @@ interface AsyncDns {
    */
   interface Callback {
     /**
-     * Return addresses for a single dns class, IPv4 (A) or IPv6 (AAAA).
-     *
-     * This method may be called multiple times, including with the same dnsClass,
-     * before a final onComplete or onError.
+     * Return addresses for a dns question,
+     * typically but always a single class of IPv4 (A) or IPv6 (AAAA).
+     * May be empty.
      */
-    fun onAddressResults(dnsClass: DnsClass, addresses: List<InetAddress>)
+    fun onResponse(hostname: String, addresses: List<InetAddress>)
 
     /**
-     * Returns an error for a single dns class, the overall request may still succeed.
+     * Returns an error for the dns query.
      */
-    fun onError(dnsClass: DnsClass, e: IOException)
-
-    /**
-     * Returns a final signal that indicates no more calls to onAddressResults or onError
-     * should be expected.
-     */
-    fun onComplete()
-  }
-
-  /**
-   * Adapt an AsyncDns implementation to Dns, waiting until onComplete is received
-   * and returning results if available.
-   */
-  fun asDns(): Dns = Dns { hostname ->
-    val allAddresses = mutableListOf<InetAddress>()
-    val allExceptions = mutableListOf<IOException>()
-    val latch = CountDownLatch(1)
-
-    query(hostname, object : Callback {
-      override fun onAddressResults(dnsClass: DnsClass, addresses: List<InetAddress>) {
-        // TODO remove before landing
-        println("$hostname $dnsClass $addresses")
-        synchronized(allAddresses) {
-          allAddresses.addAll(addresses)
-        }
-      }
-
-      override fun onComplete() {
-        latch.countDown()
-      }
-
-      override fun onError(dnsClass: DnsClass, e: IOException) {
-        // TODO remove before landing
-        println("$hostname $dnsClass $e")
-        synchronized(allExceptions) {
-          allExceptions.add(e)
-        }
-      }
-    })
-
-    latch.await()
-
-    // No mutations should be possible after this point
-    if (allAddresses.isEmpty()) {
-      val first = allExceptions.firstOrNull() ?: UnknownHostException("No results for $hostname")
-
-      allExceptions.drop(1).forEach {
-        first.addSuppressed(it)
-      }
-
-      throw first
-    }
-
-    allAddresses
+    fun onFailure(hostname: String, e: IOException)
   }
 
   /**
@@ -124,5 +67,48 @@ interface AsyncDns {
   companion object {
     const val TYPE_A = 1
     const val TYPE_AAAA = 28
+
+    /**
+     * Adapt an AsyncDns implementation to Dns, waiting until onComplete is received
+     * and returning results if available.
+     */
+    fun toDns(vararg asyncDns: AsyncDns): Dns = Dns { hostname ->
+      val allAddresses = mutableListOf<InetAddress>()
+      val allExceptions = mutableListOf<IOException>()
+      val latch = CountDownLatch(asyncDns.size)
+
+      asyncDns.forEach {
+        it.query(hostname, object : Callback {
+          override fun onResponse(hostname: String, addresses: List<InetAddress>) {
+            synchronized(allAddresses) {
+              allAddresses.addAll(addresses)
+            }
+            latch.countDown()
+          }
+
+          override fun onFailure(hostname: String, e: IOException) {
+            synchronized(allExceptions) {
+              allExceptions.add(e)
+            }
+            latch.countDown()
+          }
+        })
+      }
+
+      latch.await()
+
+      // No mutations should be possible after this point
+      if (allAddresses.isEmpty()) {
+        val first = allExceptions.firstOrNull() ?: UnknownHostException("No results for $hostname")
+
+        allExceptions.drop(1).forEach {
+          first.addSuppressed(it)
+        }
+
+        throw first
+      }
+
+      allAddresses
+    }
   }
 }
