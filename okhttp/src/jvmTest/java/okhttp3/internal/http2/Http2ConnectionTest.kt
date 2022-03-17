@@ -1938,9 +1938,9 @@ class Http2ConnectionTest {
     // Write the mocking script.
     peer.sendFrame().settings(Settings())
     peer.acceptFrame() // ACK
-    peer.acceptFrame() // SYN_STREAM
-    peer.sendFrame().headers(false, 3, headerEntries("a", "android"))
-    peer.sendFrame().data(true, 3, data(0), 0)
+    // peer.acceptFrame() // SYN_STREAM
+    // peer.sendFrame().headers(false, 3, headerEntries("a", "android"))
+    // peer.sendFrame().data(true, 3, data(0), 0)
     peer.play()
 
     // Play it back.
@@ -1952,17 +1952,60 @@ class Http2ConnectionTest {
     try {
       connection.newStream(headerEntries("b", "banana"), false)
     } catch (iioe: InterruptedIOException) {
-      assertFalse(Thread.currentThread().isInterrupted)
+      assertThat(Thread.interrupted()).isTrue()
     }
 
     // Will fail here unless the interrupt is triggered eagerly
     assertThat(connection.openStreamCount()).isEqualTo(0)
+    assertThat(connection.isHealthy(-1)).isTrue()
 
     // Verify the peer received what was expected.
     val synStream = peer.pollFrame()
     assertThat(synStream).isNull()
     assertThat(peer.frameCount()).isEqualTo(frameCountBeforeStream)
-    assertThat(peer.frameCount()).isEqualTo(5)
+    assertThat(peer.frameCount()).isEqualTo(2)
+  }
+
+  @Test fun interruptLaterDuringNewStream() {
+    // Write the mocking script.
+    peer.sendFrame().settings(Settings())
+    peer.acceptFrame() // ACK
+    // peer.acceptFrame() // SYN_STREAM
+    // peer.sendFrame().headers(false, 3, headerEntries("a", "android"))
+    // peer.sendFrame().data(true, 3, data(0), 0)
+    peer.play()
+
+    // Play it back.
+    val connection = connect(peer)
+
+    val frameCountBeforeStream = peer.frameCount()
+
+    class InterruptingList(contents: Collection<Header>) : java.util.ArrayList<Header>(contents) {
+      // called in Hpack.writeHeaders
+      override fun get(index: Int): Header {
+        if (index == 0) {
+          Thread.currentThread().interrupt()
+        }
+
+        return super.get(index)
+      }
+    }
+
+    try {
+      connection.newStream(InterruptingList(headerEntries("b", "banana")), false)
+    } catch (iioe: InterruptedIOException) {
+      assertThat(Thread.interrupted()).isTrue()
+    }
+
+    // Will fail here unless the interrupt is triggered eagerly
+    assertThat(connection.openStreamCount()).isEqualTo(0)
+    assertThat(connection.isHealthy(-1)).isFalse()
+
+    // Verify the peer received what was expected.
+    val synStream = peer.pollFrame()
+    assertThat(synStream).isNull()
+    assertThat(peer.frameCount()).isEqualTo(frameCountBeforeStream)
+    assertThat(peer.frameCount()).isEqualTo(2)
   }
 
   private fun data(byteCount: Int): Buffer = Buffer().write(ByteArray(byteCount))

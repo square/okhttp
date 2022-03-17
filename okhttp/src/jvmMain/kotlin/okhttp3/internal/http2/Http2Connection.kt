@@ -239,42 +239,48 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
 
     // trigger interrupts before we write to the buffered output
     // since flush is likely where we get notified.
-    if (Thread.interrupted()) {
+    if (Thread.currentThread().isInterrupted) {
       throw InterruptedIOException()
     }
 
-    synchronized(writer) {
-      synchronized(this) {
-        if (nextStreamId > Int.MAX_VALUE / 2) {
-          shutdown(REFUSED_STREAM)
+    try {
+      synchronized(writer) {
+        synchronized(this) {
+          if (nextStreamId > Int.MAX_VALUE / 2) {
+            shutdown(REFUSED_STREAM)
+          }
+          if (isShutdown) {
+            throw ConnectionShutdownException()
+          }
+          streamId = nextStreamId
+          nextStreamId += 2
+          stream = Http2Stream(streamId, this, outFinished, inFinished, null)
+          flushHeaders = !out ||
+            writeBytesTotal >= writeBytesMaximum ||
+            stream.writeBytesTotal >= stream.writeBytesMaximum
+          if (stream.isOpen) {
+            streams[streamId] = stream
+          }
         }
-        if (isShutdown) {
-          throw ConnectionShutdownException()
-        }
-        streamId = nextStreamId
-        nextStreamId += 2
-        stream = Http2Stream(streamId, this, outFinished, inFinished, null)
-        flushHeaders = !out ||
-          writeBytesTotal >= writeBytesMaximum ||
-          stream.writeBytesTotal >= stream.writeBytesMaximum
-        if (stream.isOpen) {
-          streams[streamId] = stream
+        if (associatedStreamId == 0) {
+          writer.headers(outFinished, streamId, requestHeaders)
+        } else {
+          require(!client) { "client streams shouldn't have associated stream IDs" }
+          // HTTP/2 has a PUSH_PROMISE frame.
+          writer.pushPromise(associatedStreamId, streamId, requestHeaders)
         }
       }
-      if (associatedStreamId == 0) {
-        writer.headers(outFinished, streamId, requestHeaders)
-      } else {
-        require(!client) { "client streams shouldn't have associated stream IDs" }
-        // HTTP/2 has a PUSH_PROMISE frame.
-        writer.pushPromise(associatedStreamId, streamId, requestHeaders)
+
+      if (flushHeaders) {
+        writer.flush()
       }
-    }
 
-    if (flushHeaders) {
-      writer.flush()
+      return stream
+    } catch (iioe: InterruptedIOException) {
+      // connection cannot be trusted anymore, partial writes are possible
+      this.failConnection(iioe)
+      throw iioe
     }
-
-    return stream
   }
 
   @Throws(IOException::class)
