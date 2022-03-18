@@ -282,7 +282,10 @@ class Http2Stream internal constructor(
 
     val open: Boolean
     synchronized(this) {
-      if (!hasResponseHeaders || !inFinished) {
+      if (!hasResponseHeaders ||
+        headers[Header.RESPONSE_STATUS_UTF8] != null ||
+        headers[Header.TARGET_METHOD_UTF8] != null
+      ) {
         hasResponseHeaders = true
         headersQueue += headers
       } else {

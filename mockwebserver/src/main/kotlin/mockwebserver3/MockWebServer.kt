@@ -1049,9 +1049,8 @@ class MockWebServer : Closeable {
       val headers = httpHeaders.build()
 
       val peek = dispatcher.peek()
-      if (!readBody && peek.socketPolicy === EXPECT_CONTINUE) {
-        val continueHeaders =
-          listOf(Header(Header.RESPONSE_STATUS, "100 Continue".encodeUtf8()))
+      if (peek.socketPolicy === EXPECT_CONTINUE) {
+        val continueHeaders = listOf(Header(Header.RESPONSE_STATUS, "100 Continue".encodeUtf8()))
         stream.writeHeaders(continueHeaders, outFinished = false, flushHeaders = true)
         stream.connection.flush()
         readBody = true
