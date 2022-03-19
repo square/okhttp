@@ -2780,7 +2780,7 @@ open class CallTest(
   @Test fun serverRespondsWithUnsolicited100Continue() {
     server.enqueue(
       MockResponse()
-        .setSocketPolicy(SocketPolicy.CONTINUE_ALWAYS)
+        .setSocketPolicy(SocketPolicy.EXPECT_CONTINUE)
     )
     val request = Request.Builder()
       .url(server.url("/"))
