@@ -265,7 +265,7 @@ public final class DuplexTest {
     MockDuplexResponseBody mockDuplexResponseBody = enqueueResponseWithBody(
         new MockResponse()
             .clearHeaders()
-            .setSocketPolicy(SocketPolicy.EXPECT_CONTINUE),
+            .add100Continue(),
         new MockDuplexResponseBody()
             .receiveRequest("request body\n")
             .sendResponse("response body\n")

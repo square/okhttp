@@ -56,7 +56,13 @@ internal fun MockResponse.wrap(): mockwebserver3.MockResponse {
   result.status = status
   result.headers = headers
   result.trailers = trailers
-  result.socketPolicy = socketPolicy.wrap()
+  result.socketPolicy = when (socketPolicy) {
+    SocketPolicy.EXPECT_CONTINUE, SocketPolicy.CONTINUE_ALWAYS -> {
+      result.add100Continue()
+      mockwebserver3.SocketPolicy.KEEP_OPEN
+    }
+    else -> socketPolicy.wrap()
+  }
   result.http2ErrorCode = http2ErrorCode
   result.throttleBody(throttleBytesPerPeriod, getThrottlePeriod(MILLISECONDS), MILLISECONDS)
   result.setBodyDelay(getBodyDelay(MILLISECONDS), MILLISECONDS)

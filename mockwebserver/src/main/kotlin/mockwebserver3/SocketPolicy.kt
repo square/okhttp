@@ -121,16 +121,4 @@ enum class SocketPolicy {
    * Fail HTTP/2 requests without processing them by sending an [MockResponse.getHttp2ErrorCode].
    */
   RESET_STREAM_AT_START,
-
-  /**
-   * Transmit a `HTTP/1.1 100 Continue` response before reading the HTTP request body.
-   * Typically this response is sent when a client makes a request with the header `Expect: 100-continue`.
-   */
-  EXPECT_CONTINUE,
-
-  /**
-   * Transmit a `HTTP/1.1 100 Continue` response before reading the HTTP request body even
-   * if the client does not send the header `Expect: 100-continue` in its request.
-   */
-  CONTINUE_ALWAYS
 }
