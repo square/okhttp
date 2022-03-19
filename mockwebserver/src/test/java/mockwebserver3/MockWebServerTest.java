@@ -501,6 +501,25 @@ public final class MockWebServerTest {
     assertThat(request.getBody().readUtf8()).isEqualTo("request");
   }
 
+  @Test public void multiple1xxResponses() throws Exception {
+    server.enqueue(new MockResponse()
+      .add100Continue()
+      .add100Continue()
+      .setBody("response"));
+
+    URL url = server.url("/").url();
+    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+    connection.setDoOutput(true);
+    connection.getOutputStream().write("request".getBytes(UTF_8));
+
+    InputStream in = connection.getInputStream();
+    BufferedReader reader = new BufferedReader(new InputStreamReader(in, UTF_8));
+    assertThat(reader.readLine()).isEqualTo("response");
+
+    RecordedRequest request = server.takeRequest();
+    assertThat(request.getBody().readUtf8()).isEqualTo("request");
+  }
+
   @Test public void testH2PriorKnowledgeServerFallback() {
     try {
       server.setProtocols(asList(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.HTTP_1_1));
