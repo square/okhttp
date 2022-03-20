@@ -49,6 +49,7 @@ dependencies {
   implementation(libs.kotlin.reflect)
   implementation(libs.playservices.safetynet)
   implementation(projects.okhttp)
+  implementation(projects.okhttpAndroid)
 
   androidTestImplementation(projects.okhttpTestingSupport) {
     exclude("org.openjsse", "openjsse")
@@ -64,6 +65,7 @@ dependencies {
   androidTestImplementation(projects.loggingInterceptor)
   androidTestImplementation(projects.okhttpSse)
   androidTestImplementation(projects.okhttpTls)
+  androidTestImplementation(projects.okhttpAndroid)
   androidTestImplementation(libs.androidx.junit)
   androidTestImplementation(libs.androidx.espresso.core)
   androidTestImplementation(libs.httpClient5)

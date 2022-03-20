@@ -66,6 +66,7 @@ subprojects {
   val project = this@subprojects
   if (project.name == "okhttp-bom") return@subprojects
 
+  if (project.name == "okhttp-android") return@subprojects
   if (project.name == "android-test") return@subprojects
   if (project.name == "regression-test") return@subprojects
 

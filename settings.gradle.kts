@@ -23,6 +23,7 @@ if (graalBuild != null) {
 
 include(":okcurl")
 include(":okhttp")
+include(":okhttp-android")
 include(":okhttp-bom")
 include(":okhttp-brotli")
 include(":okhttp-dnsoverhttps")
