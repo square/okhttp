@@ -11,8 +11,6 @@ out
 lib
 generated
 
-target
-pom.xml.*
 release.properties
 local.properties
 

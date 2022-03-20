@@ -1,0 +1,54 @@
+plugins {
+  id 'com.android.test'
+  id 'kotlin-android'
+}
+
+android {
+  compileSdk 31
+  defaultConfig {
+    minSdk 23
+    targetSdk 31
+
+    testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+  }
+
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_1_8
+    targetCompatibility JavaVersion.VERSION_1_8
+  }
+  kotlinOptions {
+    jvmTarget = JavaVersion.VERSION_1_8
+  }
+  targetProjectPath = ":benchmarks:app"
+  experimentalProperties["android.experimental.self-instrumenting"] = true
+
+  buildTypes {
+    benchmark {
+      isDefault = true
+      debuggable = true
+      signingConfig = debug.signingConfig
+      matchingFallbacks = ['release']
+    }
+  }
+}
+
+androidComponents {
+  beforeVariants(selector().all()) {
+    // enable only the benchmark buildType, since we only want to measure close to release performance
+    enabled = buildType == 'benchmark'
+  }
+}
+
+dependencies {
+  implementation "org.jetbrains.kotlin:kotlin-stdlib:1.6.10"
+  implementation 'androidx.test.ext:junit:1.1.3'
+  implementation 'androidx.test.espresso:espresso-core:3.4.0'
+  implementation 'androidx.test.uiautomator:uiautomator:2.2.0'
+  implementation "androidx.benchmark:benchmark-macro-junit4:1.1.0-beta04"
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+  kotlinOptions {
+    freeCompilerArgs += "-opt-in=kotlin.RequiresOptIn"
+  }
+}
