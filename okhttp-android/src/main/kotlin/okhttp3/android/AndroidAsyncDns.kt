@@ -27,8 +27,10 @@ import java.util.concurrent.Executors
 import okhttp3.AsyncDns
 
 /**
- * Dns implementation based on android.net.DnsResolver, which submits two requests for
- * A and AAAA records, and returns the addresses or exception from each before returning.
+ * DNS implementation based on android.net.DnsResolver, which submits a request for
+ * A or AAAA records, and returns the addresses or exception.
+ *
+ * Two instances must be used to get all results for an address.
  *
  * @param network network to use, if not selects the default network.
  */
@@ -36,8 +38,7 @@ import okhttp3.AsyncDns
 class AndroidAsyncDns(
   private val dnsClass: AsyncDns.DnsClass,
   private val network: Network? = null,
-) :
-  AsyncDns {
+) : AsyncDns {
   @RequiresApi(Build.VERSION_CODES.Q)
   private val resolver = DnsResolver.getInstance()
   private val executor = Executors.newSingleThreadExecutor()

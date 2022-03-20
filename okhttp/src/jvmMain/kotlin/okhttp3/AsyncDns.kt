@@ -25,7 +25,7 @@ import okio.IOException
 /**
  * An async domain name service that resolves IP addresses for host names.
  *
- * The main implementations will typically be implemented using specific Dns libraries such as
+ * The main implementations will typically be implemented using specific DNS libraries such as
  *  * Android DnsResolver
  *  * OkHttp DnsOverHttps
  *  * dnsjava Resolver
@@ -34,29 +34,28 @@ import okio.IOException
  */
 interface AsyncDns {
   /**
-   * Query dns records for `hostname`, in the order they are received.
+   * Query DNS records for `hostname`, in the order they are received.
    */
   fun query(hostname: String, callback: Callback)
 
   /**
-   * Callback to receive results from the Dns Queries.
+   * Callback to receive results from the DNS Queries.
    */
   interface Callback {
     /**
-     * Return addresses for a dns question,
-     * typically but always a single class of IPv4 (A) or IPv6 (AAAA).
-     * May be empty.
+     * Return addresses for a dns query for a single class of IPv4 (A) or IPv6 (AAAA).
+     * May be an empty list indicating that the host is unreachable.
      */
     fun onResponse(hostname: String, addresses: List<InetAddress>)
 
     /**
-     * Returns an error for the dns query.
+     * Returns an error for the DNS query.
      */
     fun onFailure(hostname: String, e: IOException)
   }
 
   /**
-   * Class of Dns addresses, such that clients that treat these differently, such
+   * Class of DNS addresses, such that clients that treat these differently, such
    * as attempting IPv6 first, can make such decisions.
    */
   enum class DnsClass(val type: Int) {
