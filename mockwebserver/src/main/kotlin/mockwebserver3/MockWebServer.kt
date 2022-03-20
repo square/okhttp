@@ -44,14 +44,12 @@ import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
-import mockwebserver3.SocketPolicy.CONTINUE_ALWAYS
 import mockwebserver3.SocketPolicy.DISCONNECT_AFTER_REQUEST
 import mockwebserver3.SocketPolicy.DISCONNECT_AT_END
 import mockwebserver3.SocketPolicy.DISCONNECT_AT_START
 import mockwebserver3.SocketPolicy.DISCONNECT_DURING_REQUEST_BODY
 import mockwebserver3.SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY
 import mockwebserver3.SocketPolicy.DO_NOT_READ_REQUEST_BODY
-import mockwebserver3.SocketPolicy.EXPECT_CONTINUE
 import mockwebserver3.SocketPolicy.FAIL_HANDSHAKE
 import mockwebserver3.SocketPolicy.HALF_CLOSE_AFTER_REQUEST
 import mockwebserver3.SocketPolicy.NO_RESPONSE
@@ -87,7 +85,6 @@ import okhttp3.internal.ws.WebSocketProtocol
 import okio.Buffer
 import okio.BufferedSink
 import okio.BufferedSource
-import okio.ByteString.Companion.encodeUtf8
 import okio.Sink
 import okio.Timeout
 import okio.buffer
@@ -719,19 +716,11 @@ class MockWebServer : Closeable {
         ) {
           chunked = true
         }
-        if (lowercaseHeader.startsWith("expect:") &&
-          lowercaseHeader.substring(7).trim().equals("100-continue", ignoreCase = true)
-        ) {
-          expectContinue = true
-        }
       }
 
-      val socketPolicy = dispatcher.peek().socketPolicy
-      if (expectContinue && socketPolicy === EXPECT_CONTINUE || socketPolicy === CONTINUE_ALWAYS) {
-        sink.writeUtf8("HTTP/1.1 100 Continue\r\n")
-        sink.writeUtf8("Content-Length: 0\r\n")
-        sink.writeUtf8("\r\n")
-        sink.flush()
+      val peek = dispatcher.peek()
+      for (response in peek.informationalResponses) {
+        writeHttpResponse(socket, sink, response)
       }
 
       var hasBody = false
@@ -802,10 +791,9 @@ class MockWebServer : Closeable {
       .url("$scheme://$authority/")
       .headers(request.headers)
       .build()
-    val statusParts = response.status.split(' ', limit = 3)
     val fancyResponse = Response.Builder()
-      .code(statusParts[1].toInt())
-      .message(statusParts[2])
+      .code(response.code)
+      .message(response.message)
       .headers(response.headers)
       .request(fancyRequest)
       .protocol(Protocol.HTTP_1_1)
@@ -1049,12 +1037,12 @@ class MockWebServer : Closeable {
       val headers = httpHeaders.build()
 
       val peek = dispatcher.peek()
-      if (!readBody && peek.socketPolicy === EXPECT_CONTINUE) {
-        val continueHeaders =
-          listOf(Header(Header.RESPONSE_STATUS, "100 Continue".encodeUtf8()))
-        stream.writeHeaders(continueHeaders, outFinished = false, flushHeaders = true)
-        stream.connection.flush()
-        readBody = true
+      for (response in peek.informationalResponses) {
+        sleepIfDelayed(response.getHeadersDelay(TimeUnit.MILLISECONDS))
+        stream.writeHeaders(response.toHttp2Headers(), outFinished = false, flushHeaders = true)
+        if (response.code == 100) {
+          readBody = true
+        }
       }
 
       val body = Buffer()
@@ -1089,6 +1077,15 @@ class MockWebServer : Closeable {
       )
     }
 
+    private fun MockResponse.toHttp2Headers(): List<Header> {
+      val result = mutableListOf<Header>()
+      result += Header(Header.RESPONSE_STATUS, code.toString())
+      for ((name, value) in headers) {
+        result += Header(name, value)
+      }
+      return result
+    }
+
     @Throws(IOException::class)
     private fun writeResponse(
       stream: Http2Stream,
@@ -1101,22 +1098,9 @@ class MockWebServer : Closeable {
       if (response.socketPolicy === NO_RESPONSE) {
         return
       }
-      val http2Headers = mutableListOf<Header>()
-      val statusParts = response.status.split(' ', limit = 3)
-      val headersDelayMs = response.getHeadersDelay(TimeUnit.MILLISECONDS)
+
       val bodyDelayMs = response.getBodyDelay(TimeUnit.MILLISECONDS)
-
-      if (statusParts.size < 2) {
-        throw AssertionError("Unexpected status: ${response.status}")
-      }
-      http2Headers.add(Header(Header.RESPONSE_STATUS, statusParts[1]))
-      val headers = response.headers
-      for ((name, value) in headers) {
-        http2Headers.add(Header(name, value))
-      }
       val trailers = response.trailers
-
-      sleepIfDelayed(headersDelayMs)
       val body = response.getBody()
       val outFinished = (body == null &&
         response.pushPromises.isEmpty() &&
@@ -1125,7 +1109,10 @@ class MockWebServer : Closeable {
       require(!outFinished || trailers.size == 0) {
         "unsupported: no body and non-empty trailers $trailers"
       }
-      stream.writeHeaders(http2Headers, outFinished, flushHeaders)
+
+      sleepIfDelayed(response.getHeadersDelay(TimeUnit.MILLISECONDS))
+      stream.writeHeaders(response.toHttp2Headers(), outFinished, flushHeaders)
+
       if (trailers.size > 0) {
         stream.enqueueTrailers(trailers)
       }

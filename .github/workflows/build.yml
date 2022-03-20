@@ -83,7 +83,7 @@ jobs:
 
       - name: Publish Test Report
         if: success() || failure()
-        uses: mikepenz/action-junit-report@v2
+        uses: mikepenz/action-junit-report@v3
         with:
           report_paths: '**/build/test-results/test/TEST-*.xml'
 
@@ -109,7 +109,7 @@ jobs:
 
       - name: Publish Test Report
         if: success() || failure()
-        uses: mikepenz/action-junit-report@v2
+        uses: mikepenz/action-junit-report@v3
         with:
           report_paths: '**/build/test-results/test/TEST-*.xml'
 

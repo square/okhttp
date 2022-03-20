@@ -13,18 +13,23 @@ public final class mockwebserver3/MockResponse : java/lang/Cloneable {
 	public final fun -deprecated_getStatus ()Ljava/lang/String;
 	public final fun -deprecated_getTrailers ()Lokhttp3/Headers;
 	public fun <init> ()V
+	public final fun add100Continue ()Lmockwebserver3/MockResponse;
 	public final fun addHeader (Ljava/lang/String;)Lmockwebserver3/MockResponse;
 	public final fun addHeader (Ljava/lang/String;Ljava/lang/Object;)Lmockwebserver3/MockResponse;
 	public final fun addHeaderLenient (Ljava/lang/String;Ljava/lang/Object;)Lmockwebserver3/MockResponse;
+	public final fun addInformationalResponse (Lmockwebserver3/MockResponse;)Lmockwebserver3/MockResponse;
 	public final fun clearHeaders ()Lmockwebserver3/MockResponse;
 	public synthetic fun clone ()Ljava/lang/Object;
 	public fun clone ()Lmockwebserver3/MockResponse;
 	public final fun getBody ()Lokio/Buffer;
 	public final fun getBodyDelay (Ljava/util/concurrent/TimeUnit;)J
+	public final fun getCode ()I
 	public final fun getDuplexResponseBody ()Lmockwebserver3/internal/duplex/DuplexResponseBody;
 	public final fun getHeaders ()Lokhttp3/Headers;
 	public final fun getHeadersDelay (Ljava/util/concurrent/TimeUnit;)J
 	public final fun getHttp2ErrorCode ()I
+	public final fun getInformationalResponses ()Ljava/util/List;
+	public final fun getMessage ()Ljava/lang/String;
 	public final fun getPushPromises ()Ljava/util/List;
 	public final fun getSettings ()Lokhttp3/internal/http2/Settings;
 	public final fun getSocketPolicy ()Lmockwebserver3/SocketPolicy;
@@ -161,14 +166,12 @@ public final class mockwebserver3/RecordedRequest {
 }
 
 public final class mockwebserver3/SocketPolicy : java/lang/Enum {
-	public static final field CONTINUE_ALWAYS Lmockwebserver3/SocketPolicy;
 	public static final field DISCONNECT_AFTER_REQUEST Lmockwebserver3/SocketPolicy;
 	public static final field DISCONNECT_AT_END Lmockwebserver3/SocketPolicy;
 	public static final field DISCONNECT_AT_START Lmockwebserver3/SocketPolicy;
 	public static final field DISCONNECT_DURING_REQUEST_BODY Lmockwebserver3/SocketPolicy;
 	public static final field DISCONNECT_DURING_RESPONSE_BODY Lmockwebserver3/SocketPolicy;
 	public static final field DO_NOT_READ_REQUEST_BODY Lmockwebserver3/SocketPolicy;
-	public static final field EXPECT_CONTINUE Lmockwebserver3/SocketPolicy;
 	public static final field FAIL_HANDSHAKE Lmockwebserver3/SocketPolicy;
 	public static final field HALF_CLOSE_AFTER_REQUEST Lmockwebserver3/SocketPolicy;
 	public static final field KEEP_OPEN Lmockwebserver3/SocketPolicy;

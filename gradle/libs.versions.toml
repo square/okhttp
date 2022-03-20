@@ -30,7 +30,7 @@ checkStyle = { module = "com.puppycrawl.tools:checkstyle", version.ref = "checkS
 codehaus-signature-java18 = "org.codehaus.mojo.signature:java18:1.0"
 conscrypt-android = { module = "org.conscrypt:conscrypt-android", version.ref = "org-conscrypt" }
 conscrypt-openjdk = { module = "org.conscrypt:conscrypt-openjdk-uber", version.ref = "org-conscrypt" }
-eclipseOsgi = "org.eclipse.platform:org.eclipse.osgi:3.17.100"
+eclipseOsgi = "org.eclipse.platform:org.eclipse.osgi:3.17.200"
 findbugs-jsr305 = "com.google.code.findbugs:jsr305:3.0.2"
 gradlePlugin-android = "com.android.tools.build:gradle:7.0.4"
 gradlePlugin-androidJunit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.8.2.0"
@@ -73,7 +73,7 @@ openjsse = "org.openjsse:openjsse:1.1.9"
 picocli = { module = "info.picocli:picocli", version.ref = "picocli" }
 picocli-compiler = { module = "info.picocli:picocli-codegen", version.ref = "picocli" }
 playservices-safetynet = "com.google.android.gms:play-services-safetynet:18.0.1"
-robolectric-android = "org.robolectric:android-all:12-robolectric-7732740"
+robolectric-android = "org.robolectric:android-all:12.1-robolectric-8229987"
 signature-android-apilevel21 = "net.sf.androidscents.signature:android-api-level-21:5.0.1_r2"
 squareup-moshi = { module = "com.squareup.moshi:moshi", version.ref = "com-squareup-moshi" }
 squareup-moshi-compiler = { module = "com.squareup.moshi:moshi-kotlin-codegen", version.ref = "com-squareup-moshi" }

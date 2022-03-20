@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+## Version 5.0.0-alpha.6
+
+_2022-03-14_
+
+ *  Fix: Don't attempt to close pooled connections. We saw occasional fast fallback calls crash in
+    the previous alpha due to an unexpected race.
+
+
 ## Version 5.0.0-alpha.5
 
 _2022-02-21_

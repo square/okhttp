@@ -73,14 +73,13 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
-
 import static java.util.Arrays.asList;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.any;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.Assume.assumeThat;
+import static org.junit.jupiter.api.Assertions.fail;
 
 @Flaky // STDOUT logging enabled for test
 @Timeout(30)
@@ -1433,7 +1432,7 @@ public final class EventListenerTest {
   /** Response headers start, then the entire request body, then response headers end. */
   @Test public void expectContinueStartsResponseHeadersEarly() throws Exception {
     server.enqueue(new MockResponse()
-        .setSocketPolicy(SocketPolicy.EXPECT_CONTINUE));
+        .add100Continue());
 
     Request request = new Request.Builder()
         .url(server.url("/"))
@@ -1454,7 +1453,7 @@ public final class EventListenerTest {
   @Test public void timeToFirstByteGapBetweenResponseHeaderStartAndEnd() throws IOException {
     long responseHeadersStartDelay = 250L;
     server.enqueue(new MockResponse()
-        .setSocketPolicy(SocketPolicy.EXPECT_CONTINUE)
+        .add100Continue()
         .setHeadersDelay(responseHeadersStartDelay, TimeUnit.MILLISECONDS));
 
     Request request = new Request.Builder()

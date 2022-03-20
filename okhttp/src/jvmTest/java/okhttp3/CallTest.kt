@@ -2716,7 +2716,7 @@ open class CallTest(
   @Test fun expect100ContinueNonEmptyRequestBody() {
     server.enqueue(
       MockResponse()
-        .setSocketPolicy(SocketPolicy.EXPECT_CONTINUE)
+        .add100Continue()
     )
     val request = Request.Builder()
       .url(server.url("/"))
@@ -2780,7 +2780,7 @@ open class CallTest(
   @Test fun serverRespondsWithUnsolicited100Continue() {
     server.enqueue(
       MockResponse()
-        .setSocketPolicy(SocketPolicy.CONTINUE_ALWAYS)
+        .add100Continue()
     )
     val request = Request.Builder()
       .url(server.url("/"))
@@ -2830,7 +2830,7 @@ open class CallTest(
   @Test fun successfulExpectContinuePermitsConnectionReuse() {
     server.enqueue(
       MockResponse()
-        .setSocketPolicy(SocketPolicy.EXPECT_CONTINUE)
+        .add100Continue()
     )
     server.enqueue(MockResponse())
     executeSynchronously(

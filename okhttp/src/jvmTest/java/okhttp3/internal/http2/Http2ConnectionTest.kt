@@ -1673,8 +1673,10 @@ class Http2ConnectionTest {
     peer.acceptFrame() // ACK
     peer.acceptFrame() // SYN_STREAM
     peer.acceptFrame() // PING
-    peer.sendFrame().headers(false, 3, headerEntries("a", "android"))
-    peer.sendFrame().headers(false, 3, headerEntries("c", "c3po"))
+    peer.sendFrame()
+      .headers(false, 3, headerEntries(Header.RESPONSE_STATUS_UTF8, "HTTP/1.1 100"))
+    peer.sendFrame()
+      .headers(false, 3, headerEntries(Header.RESPONSE_STATUS_UTF8, "HTTP/1.1 200"))
     peer.sendFrame().ping(true, Http2Connection.AWAIT_PING, 0)
     peer.play()
 
@@ -1682,8 +1684,10 @@ class Http2ConnectionTest {
     val connection = connect(peer)
     val stream = connection.newStream(headerEntries("b", "banana"), true)
     connection.writePingAndAwaitPong() // Ensure that the HEADERS has been received.
-    assertThat(stream.takeHeaders()).isEqualTo(headersOf("a", "android"))
-    assertThat(stream.takeHeaders()).isEqualTo(headersOf("c", "c3po"))
+    assertThat(stream.takeHeaders())
+      .isEqualTo(headersOf(Header.RESPONSE_STATUS_UTF8, "HTTP/1.1 100"))
+    assertThat(stream.takeHeaders())
+      .isEqualTo(headersOf(Header.RESPONSE_STATUS_UTF8, "HTTP/1.1 200"))
 
     // Verify the peer received what was expected.
     val synStream = peer.takeFrame()
