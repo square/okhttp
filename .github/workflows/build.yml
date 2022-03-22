@@ -368,7 +368,7 @@ jobs:
         uses: gradle/gradle-build-action@v2
 
       - name: AVD cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: avd-cache
         with:
           path: |
@@ -422,7 +422,7 @@ jobs:
         uses: gradle/gradle-build-action@v2
 
       - name: AVD cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: avd-cache
         with:
           path: |
