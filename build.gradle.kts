@@ -1,5 +1,7 @@
+import com.android.build.gradle.internal.tasks.factory.dependsOn
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import com.vanniktech.maven.publish.SonatypeHost
+import com.vanniktech.maven.publish.nexus.CloseAndReleaseRepositoryTask
 import java.net.URL
 import kotlinx.validation.ApiValidationExtension
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
@@ -209,8 +211,12 @@ subprojects {
   }
 
   plugins.withId("com.vanniktech.maven.publish.base") {
+    val stagingRepositoryId = when {
+      "$version".endsWith("-SNAPSHOT") -> null
+      else -> System.getenv("GITHUB_RUN_ID")
+    }
     configure<MavenPublishBaseExtension> {
-      publishToMavenCentral(SonatypeHost.S01)
+      publishToMavenCentral(SonatypeHost.S01, stagingRepositoryId)
       signAllPublications()
       pom {
         name.set(project.name)
@@ -235,6 +241,11 @@ subprojects {
         }
       }
     }
+    rootProject.tasks.withType<CloseAndReleaseRepositoryTask>().all {
+      this.stagingRepository = stagingRepositoryId
+    }
+    rootProject.tasks.named("closeAndReleaseRepository")
+      .dependsOn(tasks.named("publish"))
   }
 
   plugins.withId("binary-compatibility-validator") {
