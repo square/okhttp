@@ -95,6 +95,7 @@ nav:
     - 'Events': features/events.md
     - 'HTTPS': features/https.md
     - 'Interceptors': features/interceptors.md
+    - 'Canceling Calls': features/canceling_calls.md
   - 'Recipes': recipes.md
   - 'Security':
     - 'Security': security/security.md
