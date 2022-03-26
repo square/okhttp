@@ -979,7 +979,7 @@ class DiskLruCache(
     @Throws(IOException::class)
     internal fun setLengths(strings: List<String>) {
       if (strings.size != valueCount) {
-        throw invalidLengths(strings)
+        invalidLengths(strings)
       }
 
       try {
@@ -987,7 +987,7 @@ class DiskLruCache(
           lengths[i] = strings[i].toLong()
         }
       } catch (_: NumberFormatException) {
-        throw invalidLengths(strings)
+        invalidLengths(strings)
       }
     }
 
