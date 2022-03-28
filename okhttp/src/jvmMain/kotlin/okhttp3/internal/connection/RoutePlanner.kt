@@ -30,7 +30,11 @@ import okhttp3.HttpUrl
  *     possible for shared exchanges to make requests to different host names! See
  *     [RealConnection.isEligible] for details.
  *
- *  3. If there's no existing connection, make a list of routes (which may require blocking DNS
+ *  3. Attempt plans from prior connect attempts for this call. These occur as either follow-ups to
+ *     failed connect attempts (such as trying the next [ConnectionSpec]), or as attempts that lost
+ *     a race in fast follow-up.
+ *
+ *  4. If there's no existing connection, make a list of routes (which may require blocking DNS
  *     lookups) and attempt a new connection them. When failures occur, retries iterate the list of
  *     available routes.
  *
@@ -44,6 +48,9 @@ import okhttp3.HttpUrl
  */
 interface RoutePlanner {
   val address: Address
+
+  /** Follow-ups for failed plans and plans that lost a race. */
+  val deferredPlans: ArrayDeque<Plan>
 
   fun isCanceled(): Boolean
 
@@ -68,7 +75,7 @@ interface RoutePlanner {
 
   /**
    * A plan holds either an immediately-usable connection, or one that must be connected first.
-   * These steps are split so callers can call [connect] on a background thread if attempting
+   * These steps are split so callers can call [connectTcp] on a background thread if attempting
    * multiple plans concurrently.
    */
   interface Plan {

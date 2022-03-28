@@ -48,6 +48,8 @@ class RealRoutePlanner(
   private var routeSelector: RouteSelector? = null
   private var nextRouteToTry: Route? = null
 
+  override val deferredPlans = ArrayDeque<Plan>()
+
   override fun isCanceled(): Boolean = call.isCanceled()
 
   @Throws(IOException::class)
@@ -58,6 +60,9 @@ class RealRoutePlanner(
     // Attempt to get a connection from the pool.
     val pooled1 = planReusePooledConnection()
     if (pooled1 != null) return pooled1
+
+    // Attempt a deferred plan before new routes.
+    if (deferredPlans.isNotEmpty()) return deferredPlans.removeFirst()
 
     // Do blocking calls to plan a route for a new connection.
     val connect = planConnect()
@@ -253,6 +258,10 @@ class RealRoutePlanner(
   }
 
   override fun hasNext(failedConnection: RealConnection?): Boolean {
+    if (deferredPlans.isNotEmpty()) {
+      return true
+    }
+
     if (nextRouteToTry != null) {
       return true
     }

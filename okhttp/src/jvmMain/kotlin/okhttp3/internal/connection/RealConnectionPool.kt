@@ -104,7 +104,7 @@ class RealConnectionPool(
       if (connection.isHealthy(doExtensiveHealthChecks)) return connection
 
       // In the second synchronized block, release the unhealthy acquired connection. We're also on
-      // the hook to close this connection if its no longer in use.
+      // the hook to close this connection if it's no longer in use.
       val toClose: Socket? = synchronized(connection) {
         connection.noNewExchanges = true
         call.releaseConnectionNoEvents()

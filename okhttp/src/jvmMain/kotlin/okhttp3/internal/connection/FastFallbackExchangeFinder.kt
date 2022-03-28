@@ -15,15 +15,15 @@
  */
 package okhttp3.internal.connection
 
+import java.io.IOException
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.LinkedBlockingDeque
+import java.util.concurrent.TimeUnit
 import okhttp3.internal.concurrent.Task
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.connection.RoutePlanner.ConnectResult
 import okhttp3.internal.connection.RoutePlanner.Plan
 import okhttp3.internal.okHttpName
-import java.io.IOException
-import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.LinkedBlockingDeque
-import java.util.concurrent.TimeUnit
 
 /**
  * Speculatively connects to each IP address of a target address, returning as soon as one of them
@@ -43,12 +43,6 @@ internal class FastFallbackExchangeFinder(
   private val tcpConnectsInFlight = CopyOnWriteArrayList<Plan>()
 
   /**
-   * These are retries of plans that were canceled when they lost a race. If the race's winner ends
-   * up not working out, this is what we'll attempt first.
-   */
-  private val deferredPlans = ArrayDeque<Plan>()
-
-  /**
    * Results are posted here as they occur. The find job is done when either one plan completes
    * successfully or all plans fail.
    */
@@ -57,10 +51,7 @@ internal class FastFallbackExchangeFinder(
   override fun find(): RealConnection {
     var firstException: IOException? = null
     try {
-      while (tcpConnectsInFlight.isNotEmpty() ||
-        deferredPlans.isNotEmpty() ||
-        routePlanner.hasNext()
-      ) {
+      while (tcpConnectsInFlight.isNotEmpty() || routePlanner.hasNext()) {
         if (routePlanner.isCanceled()) throw IOException("Canceled")
 
         // Launch a new connection if we're ready to.
@@ -105,7 +96,7 @@ internal class FastFallbackExchangeFinder(
         val nextPlan = connectResult.nextPlan
         if (nextPlan != null) {
           // Try this plan's successor before deferred plans because it won the race!
-          deferredPlans.addFirst(nextPlan)
+          routePlanner.deferredPlans.addFirst(nextPlan)
         }
       }
     } finally {
@@ -122,9 +113,6 @@ internal class FastFallbackExchangeFinder(
    */
   private fun launchTcpConnect(): ConnectResult? {
     val plan = when {
-      deferredPlans.isNotEmpty() -> {
-        deferredPlans.removeFirst()
-      }
       routePlanner.hasNext() -> {
         try {
           routePlanner.plan()
@@ -175,7 +163,7 @@ internal class FastFallbackExchangeFinder(
     for (plan in tcpConnectsInFlight) {
       plan.cancel()
       val retry = plan.retry() ?: continue
-      deferredPlans += retry
+      routePlanner.deferredPlans.addLast(retry)
     }
     tcpConnectsInFlight.clear()
   }
