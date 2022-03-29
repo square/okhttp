@@ -42,6 +42,7 @@ import okhttp3.RecordingEventListener;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.internal.http2.ConnectionShutdownException;
+import okhttp3.testing.Flaky;
 import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okhttp3.tls.HeldCertificate;
@@ -50,7 +51,6 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
-
 import static java.util.Arrays.asList;
 import static okhttp3.tls.internal.TlsUtil.newKeyManager;
 import static okhttp3.tls.internal.TlsUtil.newTrustManager;
@@ -191,7 +191,8 @@ public final class ClientAuthTest {
     assertThat(response.body().string()).isEqualTo("abc");
   }
 
-  @Test public void missingClientAuthFailsForNeeds() throws Exception {
+  @Test @Flaky
+  public void missingClientAuthFailsForNeeds() throws Exception {
     // Fails with 11.0.1 https://github.com/square/okhttp/issues/4598
     // StreamReset stream was reset: PROT...
 

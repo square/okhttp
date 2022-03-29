@@ -24,6 +24,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.fail
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import okhttp3.testing.Flaky
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -221,6 +222,7 @@ class FastFallbackTest {
   }
 
   @Test
+  @Flaky
   fun reachesIpv4AfterUnreachableIpv6Address() {
     dnsResults = listOf(
       TestUtil.UNREACHABLE_ADDRESS_IPV6.address,
