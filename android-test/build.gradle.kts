@@ -50,6 +50,7 @@ dependencies {
   implementation(libs.playservices.safetynet)
   implementation(projects.okhttp)
   implementation(projects.okhttpAndroid)
+  implementation(libs.squareup.okio)
 
   androidTestImplementation(projects.okhttpTestingSupport) {
     exclude("org.openjsse", "openjsse")
