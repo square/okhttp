@@ -65,7 +65,7 @@ class Http2Reader(
       source = continuation,
       headerTableSizeSetting = 4096
   )
-
+  private const val EARLY_HINTS_CODE = "103"
   @Throws(IOException::class)
   fun readConnectionPreface(handler: Handler) {
     if (client) {
@@ -146,7 +146,10 @@ class Http2Reader(
     headerBlockLength = lengthWithoutPadding(headerBlockLength, flags, padding)
     val headerBlock = readHeaderBlock(headerBlockLength, padding, flags, streamId)
 
-    handler.headers(endStream, streamId, -1, headerBlock)
+    // Ignore early hints
+	  if (!(headerBlockLength != 0 && headerBlock[0].value.utf8().equals(EARLY_HINTS_CODE))) {
+		  handler.headers(endStream, streamId, -1, headerBlock)
+	  }
   }
 
   @Throws(IOException::class)
