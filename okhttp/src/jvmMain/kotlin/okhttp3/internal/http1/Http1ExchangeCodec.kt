@@ -34,6 +34,7 @@ import okhttp3.internal.http.StatusLine
 import okhttp3.internal.http.promisesBody
 import okhttp3.internal.http.receiveHeaders
 import okhttp3.internal.http.HTTP_CONTINUE
+import okhttp3.internal.http.HTTP_EARLY_HINTS
 import okhttp3.internal.skipAll
 import okio.Buffer
 import okio.BufferedSink
@@ -189,6 +190,11 @@ class Http1ExchangeCodec(
           null
         }
         statusLine.code == HTTP_CONTINUE -> {
+          state = STATE_READ_RESPONSE_HEADERS
+          responseBuilder
+        }
+        statusLine.code == HTTP_EARLY_HINTS -> {
+          // Early Hints will mean a second header are coming.
           state = STATE_READ_RESPONSE_HEADERS
           responseBuilder
         }
