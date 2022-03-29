@@ -15,13 +15,13 @@
  */
 package okhttp3
 
+import java.io.Closeable
+import java.io.IOException
+import java.util.concurrent.LinkedBlockingDeque
 import okhttp3.internal.concurrent.TaskFaker
 import okhttp3.internal.connection.RealConnection
 import okhttp3.internal.connection.RoutePlanner
 import okhttp3.internal.connection.RoutePlanner.ConnectResult
-import java.io.Closeable
-import java.io.IOException
-import java.util.concurrent.LinkedBlockingDeque
 
 class FakeRoutePlanner(
   private val taskFaker: TaskFaker,
@@ -40,6 +40,8 @@ class FakeRoutePlanner(
   private var nextPlanIndex = 0
   private val plans = mutableListOf<FakePlan>()
 
+  override val deferredPlans = ArrayDeque<RoutePlanner.Plan>()
+
   override val address = factory.newAddress("example.com")
 
   fun addPlan(): FakePlan {
@@ -51,6 +53,9 @@ class FakeRoutePlanner(
   override fun isCanceled() = canceled
 
   override fun plan(): FakePlan {
+    // Return deferred plans preferentially. These don't require addPlan().
+    if (deferredPlans.isNotEmpty()) return deferredPlans.removeFirst() as FakePlan
+
     require(nextPlanIndex < plans.size) {
       "not enough plans! call addPlan() in the test to set this up"
     }
@@ -68,7 +73,7 @@ class FakeRoutePlanner(
   }
 
   override fun hasNext(failedConnection: RealConnection?): Boolean {
-    return nextPlanIndex < plans.size
+    return deferredPlans.isNotEmpty() || nextPlanIndex < plans.size
   }
 
   override fun sameHostAndPort(url: HttpUrl): Boolean {

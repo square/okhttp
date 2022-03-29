@@ -23,19 +23,11 @@ internal class SequentialExchangeFinder(
 ) : ExchangeFinder {
   override fun find(): RealConnection {
     var firstException: IOException? = null
-    var queuedPlan: RoutePlanner.Plan? = null
     while (true) {
       if (routePlanner.isCanceled()) throw IOException("Canceled")
 
       try {
-        val plan = when {
-          queuedPlan != null -> {
-            val result = queuedPlan
-            queuedPlan = null
-            result
-          }
-          else -> routePlanner.plan()
-        }
+        val plan = routePlanner.plan()
 
         if (!plan.isReady) {
           val tcpConnectResult = plan.connectTcp()
@@ -46,9 +38,11 @@ internal class SequentialExchangeFinder(
 
           val (_, nextPlan, failure) = connectResult
 
-          queuedPlan = nextPlan
           if (failure != null) throw failure
-          if (nextPlan != null) continue
+          if (nextPlan != null) {
+            routePlanner.deferredPlans.addFirst(nextPlan)
+            continue
+          }
         }
         return plan.handleSuccess()
       } catch (e: IOException) {
@@ -57,7 +51,7 @@ internal class SequentialExchangeFinder(
         } else {
           firstException.addSuppressed(e)
         }
-        if (queuedPlan == null && !routePlanner.hasNext()) {
+        if (!routePlanner.hasNext()) {
           throw firstException
         }
       }
