@@ -1,5 +1,5 @@
 #!/bin/sh -e
 
-../gradlew -q --console plain installDist
+../gradlew -q --console plain nativeImage
 
-./build/install/okcurl/bin/okcurl "$@"
+./build/graal/okcurl "$@"
