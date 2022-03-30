@@ -29,6 +29,7 @@ import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy
 import okhttp3.internal.http2.ErrorCode
+import okhttp3.testing.Flaky
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -226,6 +227,7 @@ class FastFallbackTest {
   }
 
   @Test
+  @Flaky
   fun reachesIpv4AfterUnreachableIpv6Address() {
     dnsResults = listOf(
       TestUtil.UNREACHABLE_ADDRESS_IPV6.address,
