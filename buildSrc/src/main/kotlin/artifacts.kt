@@ -16,6 +16,7 @@
 
 import aQute.bnd.gradle.BundleTaskExtension
 import org.gradle.api.Project
+import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.bundling.Jar
@@ -43,8 +44,11 @@ private fun Project.applyOsgi(
 ) {
   val osgi = project.sourceSets.create("osgi")
   val osgiApi = project.configurations.getByName(osgiApiConfigurationName)
+  val kotlinOsgi = extensions.getByType(VersionCatalogsExtension::class.java).named("libs")
+    .findLibrary("kotlin.stdlib.osgi").get().get()
+
   project.dependencies {
-    osgiApi("org.jetbrains.kotlin:kotlin-osgi-bundle:1.6.10")
+    osgiApi(kotlinOsgi)
   }
 
   val jarTask = tasks.getByName<Jar>(jarTaskName)
