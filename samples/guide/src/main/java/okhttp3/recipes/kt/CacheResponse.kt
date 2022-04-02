@@ -40,7 +40,7 @@ class CacheResponse(cacheDirectory: File) {
       println("Response 1 response:          $it")
       println("Response 1 cache response:    ${it.cacheResponse}")
       println("Response 1 network response:  ${it.networkResponse}")
-      return@use it.body!!.string()
+      return@use it.body.string()
     }
 
     val response2Body = client.newCall(request).execute().use {
@@ -49,7 +49,7 @@ class CacheResponse(cacheDirectory: File) {
       println("Response 2 response:          $it")
       println("Response 2 cache response:    ${it.cacheResponse}")
       println("Response 2 network response:  ${it.networkResponse}")
-      return@use it.body!!.string()
+      return@use it.body.string()
     }
 
     println("Response 2 equals Response 1? " + (response1Body == response2Body))

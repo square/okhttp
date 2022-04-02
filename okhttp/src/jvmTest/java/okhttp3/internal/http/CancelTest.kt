@@ -194,7 +194,7 @@ class CancelTest {
     )
     val response = call.execute()
     cancelLater(call, 500)
-    val responseBody = response.body!!.byteStream()
+    val responseBody = response.body.byteStream()
     val buffer = ByteArray(1024)
     try {
       while (responseBody.read(buffer) != -1) {
@@ -228,7 +228,7 @@ class CancelTest {
     val call = client.newCall(Request.Builder().url(server.url("/")).build())
     val response = call.execute()
     val cancelLatch = cancelLater(call, 500)
-    val responseBody = response.body!!.byteStream()
+    val responseBody = response.body.byteStream()
     val buffer = ByteArray(1024)
     try {
       while (responseBody.read(buffer) != -1) {
@@ -256,7 +256,7 @@ class CancelTest {
 
     val call2 = client.newCall(Request.Builder().url(server.url("/")).build())
     call2.execute().use {
-      assertEquals(".", it.body!!.string())
+      assertEquals(".", it.body.string())
     }
 
     val events2 = listener.eventSequence.filter { isConnectionEvent(it) }.map { it.name }

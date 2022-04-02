@@ -31,6 +31,6 @@ private fun sendRequest(url: String, client: OkHttpClient) {
   val req = Request.Builder().url(url).build()
 
   client.newCall(req).execute().use {
-    println(it.body?.string())
+    println(it.body.string())
   }
 }

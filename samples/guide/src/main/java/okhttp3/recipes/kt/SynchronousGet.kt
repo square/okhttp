@@ -34,7 +34,7 @@ class SynchronousGet {
         println("$name: $value")
       }
 
-      println(response.body!!.string())
+      println(response.body.string())
     }
   }
 }

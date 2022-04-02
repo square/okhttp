@@ -171,7 +171,7 @@ class SocketChannelTest(
 
     assertThat(response).isNotNull()
 
-    assertThat(response.body!!.string()).isNotBlank()
+    assertThat(response.body.string()).isNotBlank()
 
     if (socketMode is TlsInstance) {
       assertThat(response.handshake!!.tlsVersion).isEqualTo(socketMode.tlsVersion)

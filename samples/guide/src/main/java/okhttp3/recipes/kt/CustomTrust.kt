@@ -161,7 +161,7 @@ class CustomTrust {
             }
             throw IOException("Unexpected code $response")
           }
-          println(response.body!!.string())
+          println(response.body.string())
 
           for (peerCertificate in response.handshake?.peerCertificates.orEmpty()) {
             println((peerCertificate as X509Certificate).subjectDN)

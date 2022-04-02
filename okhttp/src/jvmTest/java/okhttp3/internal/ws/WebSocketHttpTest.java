@@ -42,6 +42,7 @@ import okhttp3.TestLogHandler;
 import okhttp3.TestUtil;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
+import okhttp3.internal.UnreadableResponseBody;
 import okhttp3.internal.concurrent.TaskRunner;
 import okhttp3.testing.Flaky;
 import okhttp3.testing.PlatformRule;
@@ -54,7 +55,6 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-
 import static java.util.Arrays.asList;
 import static okhttp3.TestUtil.repeat;
 import static okhttp3.tls.internal.TlsUtil.localhost;
@@ -399,7 +399,7 @@ public final class WebSocketHttpTest {
           assertThat(chain.request().body()).isNull();
           Response response = chain.proceed(chain.request());
           assertThat(response.header("Connection")).isEqualTo("Upgrade");
-          assertThat(response.body().source().exhausted()).isTrue();
+          assertThat(response.body()).isInstanceOf(UnreadableResponseBody.class);
           interceptedCount.incrementAndGet();
           return response;
         })

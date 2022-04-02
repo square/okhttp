@@ -60,7 +60,7 @@ class SuspendCallTest(
 
       call.executeAsync().use {
         withContext(Dispatchers.IO) {
-          assertThat(it.body?.string()).isEqualTo("abc")
+          assertThat(it.body.string()).isEqualTo("abc")
         }
       }
     }
@@ -81,7 +81,7 @@ class SuspendCallTest(
         withTimeout(1.seconds) {
           call.executeAsync().use {
             withContext(Dispatchers.IO) {
-              it.body?.string()
+              it.body.string()
             }
             fail("No expected to get response")
           }
@@ -109,7 +109,7 @@ class SuspendCallTest(
         call.executeAsync().use {
           call.cancel()
           withContext(Dispatchers.IO) {
-            it.body?.string()
+            it.body.string()
           }
           fail("No expected to get response")
         }
@@ -135,7 +135,7 @@ class SuspendCallTest(
       try {
         call.executeAsync().use {
           withContext(Dispatchers.IO) {
-            it.body?.string()
+            it.body.string()
           }
         }
         fail("No expected to get response")

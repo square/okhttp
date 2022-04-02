@@ -18,11 +18,11 @@ package okhttp3;
 import java.io.IOException;
 import okio.Buffer;
 import okio.BufferedSource;
+import okio.ByteString;
 import okio.Okio;
 import okio.Source;
 import okio.Timeout;
 import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -70,6 +70,25 @@ public final class ResponseTest {
   @Test public void zeroStatusCodeIsValid() {
     Response response = newResponse(responseBody("set status code 0"), 0);
     assertThat(response.code()).isEqualTo(0);
+  }
+
+  @Test public void defaultResponseBodyIsEmpty() throws Exception {
+    Response response = new Response.Builder()
+      .request(new Request.Builder()
+        .url("https://example.com/")
+        .build())
+      .protocol(Protocol.HTTP_1_1)
+      .code(200)
+      .message("OK")
+      .build();
+    assertThat(response.body().contentType()).isNull();
+    assertThat(response.body().contentLength()).isEqualTo(0L);
+    assertThat(response.body().byteString()).isEqualTo(ByteString.EMPTY);
+  }
+
+  @Test public void nullResponseBody() {
+    assertThatThrownBy(() -> new Response.Builder().body(null))
+      .isInstanceOf(NullPointerException.class);
   }
 
   /**

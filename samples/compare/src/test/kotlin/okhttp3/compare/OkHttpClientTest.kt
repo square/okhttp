@@ -46,7 +46,7 @@ class OkHttpClientTest {
         .build()
     val response = client.newCall(request).execute()
     assertThat(response.code).isEqualTo(200)
-    assertThat(response.body!!.string()).isEqualTo("hello, OkHttp")
+    assertThat(response.body.string()).isEqualTo("hello, OkHttp")
 
     val recorded = server.takeRequest()
     assertThat(recorded.getHeader("Accept")).isEqualTo("text/plain")

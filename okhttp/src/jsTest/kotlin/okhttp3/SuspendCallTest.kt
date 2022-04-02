@@ -51,7 +51,7 @@ class SuspendCallTest {
 
     val response = call.executeAsync()
     response.use {
-      assertThat(it.body?.string()).isEqualTo("abc")
+      assertThat(it.body.string()).isEqualTo("abc")
     }
 
     assertThat(response.code).isEqualTo(200)

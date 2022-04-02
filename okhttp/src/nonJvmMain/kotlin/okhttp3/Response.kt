@@ -20,6 +20,7 @@ import okhttp3.internal.commonBody
 import okhttp3.internal.commonCacheControl
 import okhttp3.internal.commonCacheResponse
 import okhttp3.internal.commonCode
+import okhttp3.internal.commonEmptyResponse
 import okhttp3.internal.commonHeader
 import okhttp3.internal.commonHeaders
 import okhttp3.internal.commonIsRedirect
@@ -77,7 +78,7 @@ actual class Response internal constructor(
    * This always returns null on responses returned from [cacheResponse], [networkResponse],
    * and [priorResponse].
    */
-  actual val body: ResponseBody?,
+  actual val body: ResponseBody,
 
   /**
    * Returns the raw response received from the network. Will be null if this response didn't use
@@ -143,11 +144,11 @@ actual class Response internal constructor(
   /**
    * Closes the response body. Equivalent to `body().close()`.
    *
-   * It is an error to close a response that is not eligible for a body. This includes the
-   * responses returned from [cacheResponse], [networkResponse], and [priorResponse].
+   * Prior to OkHttp 5.0, it was an error to close a response that is not eligible for a body. This
+   * includes the responses returned from [cacheResponse], [networkResponse], and [priorResponse].
    */
   actual override fun close() {
-    checkNotNull(body) { "response is not eligible for a body and must not be closed" }.close()
+    body.close()
   }
 
   actual override fun toString(): String =
@@ -159,7 +160,7 @@ actual class Response internal constructor(
     internal actual var code = -1
     internal actual var message: String? = null
     internal actual var headers: Headers.Builder
-    internal actual var body: ResponseBody? = null
+    internal actual var body: ResponseBody = commonEmptyResponse
     internal actual var networkResponse: Response? = null
     internal actual var cacheResponse: Response? = null
     internal actual var priorResponse: Response? = null
@@ -206,7 +207,7 @@ actual class Response internal constructor(
     /** Removes all headers on this builder and adds [headers]. */
     actual open fun headers(headers: Headers) = commonHeaders(headers)
 
-    actual open fun body(body: ResponseBody?) = commonBody(body)
+    actual open fun body(body: ResponseBody) = commonBody(body)
 
     actual open fun networkResponse(networkResponse: Response?) = commonNetworkResponse(networkResponse)
 

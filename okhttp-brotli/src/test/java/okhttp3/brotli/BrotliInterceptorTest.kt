@@ -45,7 +45,7 @@ class BrotliInterceptorTest {
 
     val uncompressed = uncompress(response)
 
-    val responseString = uncompressed.body?.string()
+    val responseString = uncompressed.body.string()
     assertThat(responseString).contains("\"brotli\": true,")
     assertThat(responseString).contains("\"Accept-Encoding\": \"br\"")
   }
@@ -65,7 +65,7 @@ class BrotliInterceptorTest {
 
     val uncompressed = uncompress(response)
 
-    val responseString = uncompressed.body?.string()
+    val responseString = uncompressed.body.string()
     assertThat(responseString).contains("\"gzipped\": true,")
     assertThat(responseString).contains("\"Accept-Encoding\": \"br,gzip\"")
   }
@@ -76,7 +76,7 @@ class BrotliInterceptorTest {
 
     val same = uncompress(response)
 
-    val responseString = same.body?.string()
+    val responseString = same.body.string()
     assertThat(responseString).isEqualTo("XXXX")
   }
 
@@ -88,7 +88,7 @@ class BrotliInterceptorTest {
 
     try {
       val failingResponse = uncompress(response)
-      failingResponse.body?.string()
+      failingResponse.body.string()
 
       fail("expected uncompress error")
     } catch (ioe: IOException) {
@@ -107,7 +107,7 @@ class BrotliInterceptorTest {
 
     val same = uncompress(response)
 
-    val responseString = same.body?.string()
+    val responseString = same.body.string()
     assertThat(responseString).isEmpty()
   }
 
