@@ -152,7 +152,7 @@ class ConnectionReuseTest {
       .url(server.url("/"))
       .build()
     val response = client.newCall(request).execute()
-    assertThat(response.body!!.string()).isEqualTo("b")
+    assertThat(response.body.string()).isEqualTo("b")
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
   }
@@ -173,7 +173,7 @@ class ConnectionReuseTest {
       .url(server.url("/"))
       .build()
     val response = client.newCall(request).execute()
-    assertThat(response.body!!.string()).isEqualTo("b")
+    assertThat(response.body.string()).isEqualTo("b")
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
   }
@@ -186,10 +186,10 @@ class ConnectionReuseTest {
       .url(server.url("/"))
       .build()
     val responseA = client.newCall(request).execute()
-    assertThat(responseA.body!!.string()).isEqualTo("a")
+    assertThat(responseA.body.string()).isEqualTo("a")
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
     val responseB = client.newCall(request).execute()
-    assertThat(responseB.body!!.string()).isEqualTo("b")
+    assertThat(responseB.body.string()).isEqualTo("b")
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
   }
@@ -204,8 +204,8 @@ class ConnectionReuseTest {
       .build()
     val response1 = client.newCall(request).execute()
     val response2 = client.newCall(request).execute()
-    response1.body!!.string() // Discard the response body.
-    response2.body!!.string() // Discard the response body.
+    response1.body.string() // Discard the response body.
+    response2.body.string() // Discard the response body.
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
   }
@@ -220,12 +220,12 @@ class ConnectionReuseTest {
       .url(server.url("/"))
       .build()
     val response1 = client.newCall(request).execute()
-    assertThat(response1.body!!.string()).isEqualTo("a")
+    assertThat(response1.body.string()).isEqualTo("a")
 
     // Give the thread pool a chance to evict.
     Thread.sleep(500)
     val response2 = client.newCall(request).execute()
-    assertThat(response2.body!!.string()).isEqualTo("b")
+    assertThat(response2.body.string()).isEqualTo("b")
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
   }
@@ -239,7 +239,7 @@ class ConnectionReuseTest {
       .url(server.url("/"))
       .build()
     val response = client.newCall(request).execute()
-    response.body!!.close()
+    response.body.close()
 
     // This client shares a connection pool but has a different SSL socket factory.
     val handshakeCertificates2 = HandshakeCertificates.Builder().build()
@@ -266,14 +266,14 @@ class ConnectionReuseTest {
       .url(server.url("/"))
       .build()
     val response1 = client.newCall(request).execute()
-    response1.body!!.close()
+    response1.body.close()
 
     // This client shares a connection pool but has a different SSL socket factory.
     val anotherClient = client.newBuilder()
       .hostnameVerifier(RecordingHostnameVerifier())
       .build()
     val response2 = anotherClient.newCall(request).execute()
-    response2.body!!.close()
+    response2.body.close()
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
   }
@@ -323,7 +323,7 @@ class ConnectionReuseTest {
     val call = client.newCall(request)
     call.execute().use { response ->
       assertThat(
-        response.body!!.string()
+        response.body.string()
       ).isEqualTo("unrelated response body!")
     }
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
@@ -359,7 +359,7 @@ class ConnectionReuseTest {
   private fun assertConnectionReused(vararg requests: Request?) {
     for (i in requests.indices) {
       val response = client.newCall(requests[i]!!).execute()
-      response.body!!.string() // Discard the response body.
+      response.body.string() // Discard the response body.
       assertThat(server.takeRequest().sequenceNumber).isEqualTo(i)
     }
   }
@@ -367,7 +367,7 @@ class ConnectionReuseTest {
   private fun assertConnectionNotReused(vararg requests: Request?) {
     for (request in requests) {
       val response = client.newCall(request!!).execute()
-      response.body!!.string() // Discard the response body.
+      response.body.string() // Discard the response body.
       assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
     }
   }

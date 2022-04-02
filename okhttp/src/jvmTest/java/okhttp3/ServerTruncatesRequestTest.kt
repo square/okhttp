@@ -80,7 +80,7 @@ class ServerTruncatesRequestTest(
     )
 
     call.execute().use { response ->
-      assertThat(response.body!!.string()).isEqualTo("abc")
+      assertThat(response.body.string()).isEqualTo("abc")
     }
 
     val expectedEvents = mutableListOf<String>()
@@ -136,7 +136,7 @@ class ServerTruncatesRequestTest(
     )
 
     call.execute().use { response ->
-      assertThat(response.body!!.string()).isEqualTo("abc")
+      assertThat(response.body.string()).isEqualTo("abc")
       val requestBodyOut = requestBody.takeSink()
       try {
         SlowRequestBody.writeTo(requestBodyOut)
@@ -188,7 +188,7 @@ class ServerTruncatesRequestTest(
     )
 
     call.execute().use { response ->
-      assertThat(response.body!!.string()).isEqualTo("abc")
+      assertThat(response.body.string()).isEqualTo("abc")
       assertThat(response.trailers()).isEqualTo(headersOf("caboose", "xyz"))
     }
   }
@@ -223,7 +223,7 @@ class ServerTruncatesRequestTest(
     )
 
     call1.execute().use { response ->
-      assertThat(response.body!!.string()).isEqualTo("Req1")
+      assertThat(response.body.string()).isEqualTo("Req1")
       assertThat(response.handshake).isNotNull
       assertThat(response.protocol == Protocol.HTTP_1_1)
     }
@@ -276,7 +276,7 @@ class ServerTruncatesRequestTest(
         .build()
     )
     callB.execute().use { response ->
-      assertThat(response.body!!.string()).isEqualTo("abc")
+      assertThat(response.body.string()).isEqualTo("abc")
     }
   }
 
@@ -288,7 +288,7 @@ class ServerTruncatesRequestTest(
         .build()
     )
     callB.execute().use { response ->
-      assertThat(response.body!!.string()).isEqualTo("healthy")
+      assertThat(response.body.string()).isEqualTo("healthy")
     }
   }
 

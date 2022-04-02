@@ -27,7 +27,7 @@ fun uncompress(response: Response): Response {
   if (!response.promisesBody()) {
     return response
   }
-  val body = response.body ?: return response
+  val body = response.body
   val encoding = response.header("Content-Encoding") ?: return response
 
   val decompressedSource = when {

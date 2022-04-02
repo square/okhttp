@@ -127,7 +127,7 @@ class FastFallbackTest {
         .build()
     )
     val response = call.execute()
-    assertThat(response.body!!.string()).isEqualTo("hello from IPv6")
+    assertThat(response.body.string()).isEqualTo("hello from IPv6")
 
     // In the process we made one successful connection attempt.
     assertThat(listener.recordedEventTypes().filter { it == "ConnectStart" }).hasSize(1)
@@ -156,7 +156,7 @@ class FastFallbackTest {
         .build()
     )
     val response = call.execute()
-    assertThat(response.body!!.string()).isEqualTo("hello from IPv6")
+    assertThat(response.body.string()).isEqualTo("hello from IPv6")
 
     // In the process we made one successful connection attempt.
     assertThat(listener.recordedEventTypes().filter { it == "ConnectStart" }).hasSize(1)
@@ -177,7 +177,7 @@ class FastFallbackTest {
         .build()
     )
     val response = call.execute()
-    assertThat(response.body!!.string()).isEqualTo("hello from IPv4")
+    assertThat(response.body.string()).isEqualTo("hello from IPv4")
 
     // In the process we made one successful connection attempt.
     assertThat(listener.recordedEventTypes().filter { it == "ConnectStart" }).hasSize(2)
@@ -199,7 +199,7 @@ class FastFallbackTest {
         .build()
     )
     val response = call.execute()
-    assertThat(response.body!!.string()).isEqualTo("hello from IPv6")
+    assertThat(response.body.string()).isEqualTo("hello from IPv6")
 
     // In the process we made two connection attempts including one failure.
     assertThat(listener.recordedEventTypes().filter { it == "ConnectStart" }).hasSize(1)
@@ -245,7 +245,7 @@ class FastFallbackTest {
         .build()
     )
     val response = call.execute()
-    assertThat(response.body!!.string()).isEqualTo("hello from IPv4")
+    assertThat(response.body.string()).isEqualTo("hello from IPv4")
 
     // In the process we made two connection attempts including one failure.
     assertThat(listener.recordedEventTypes().filter { it == "ConnectStart" }).hasSize(2)
@@ -347,7 +347,7 @@ class FastFallbackTest {
         .build()
     )
     val response = call.execute()
-    assertThat(response.body!!.string()).isEqualTo("this was the 2nd request on IPv4")
+    assertThat(response.body.string()).isEqualTo("this was the 2nd request on IPv4")
     assertThat(serverIpv4.takeRequest().sequenceNumber).isEqualTo(0)
     assertThat(serverIpv4.takeRequest().sequenceNumber).isEqualTo(1)
   }

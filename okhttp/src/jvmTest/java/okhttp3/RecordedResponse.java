@@ -105,7 +105,6 @@ public final class RecordedResponse {
   public RecordedResponse priorResponse() {
     Response priorResponse = response.priorResponse();
     assertThat(priorResponse).isNotNull();
-    assertThat(priorResponse.body()).isNull();
     return new RecordedResponse(priorResponse.request(), priorResponse, null, null, null);
   }
 
@@ -115,7 +114,6 @@ public final class RecordedResponse {
   public RecordedResponse networkResponse() {
     Response networkResponse = response.networkResponse();
     assertThat(networkResponse).isNotNull();
-    assertThat(networkResponse.body()).isNull();
     return new RecordedResponse(networkResponse.request(), networkResponse, null, null, null);
   }
 
@@ -137,7 +135,6 @@ public final class RecordedResponse {
   public RecordedResponse cacheResponse() {
     Response cacheResponse = response.cacheResponse();
     assertThat(cacheResponse).isNotNull();
-    assertThat(cacheResponse.body()).isNull();
     return new RecordedResponse(cacheResponse.request(), cacheResponse, null, null, null);
   }
 

@@ -19,6 +19,7 @@ package okhttp3.internal
 import kotlin.jvm.JvmOverloads
 import okhttp3.CacheControl
 import okhttp3.Headers
+import okhttp3.MediaType
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
@@ -30,9 +31,44 @@ import okhttp3.internal.http.HTTP_MULT_CHOICE
 import okhttp3.internal.http.HTTP_PERM_REDIRECT
 import okhttp3.internal.http.HTTP_SEE_OTHER
 import okhttp3.internal.http.HTTP_TEMP_REDIRECT
-
 import okio.Buffer
 import okio.IOException
+import okio.Source
+import okio.Timeout
+import okio.buffer
+
+class UnreadableResponseBody(
+  private val mediaType: MediaType?,
+  private val contentLength: Long,
+): ResponseBody(), Source {
+  override fun contentType() = mediaType
+  override fun contentLength() = contentLength
+  override fun source() = buffer()
+
+  override fun read(sink: Buffer, byteCount: Long): Long {
+    throw IllegalStateException("""
+      |Unreadable ResponseBody! These Response objects have bodies that are stripped:
+      | * Response.cacheResponse
+      | * Response.networkResponse
+      | * Response.priorResponse
+      | * EventSourceListener
+      | * WebSocketListener
+      |(It is safe to call contentType() and contentLength() on these response bodies.)
+      """.trimMargin()
+    )
+  }
+
+  override fun timeout() = Timeout.NONE
+
+  override fun close() {
+  }
+}
+
+fun Response.stripBody(): Response {
+  return newBuilder()
+    .body(UnreadableResponseBody(body.contentType(), body.contentLength()))
+    .build()
+}
 
 val Response.commonIsSuccessful: Boolean
   get() = code in 200..299
@@ -44,7 +80,7 @@ fun Response.commonHeader(name: String, defaultValue: String?): String? = header
 
 @Throws(IOException::class)
 fun Response.commonPeekBody(byteCount: Long): ResponseBody {
-  val peeked = body!!.source().peek()
+  val peeked = body.source().peek()
   val buffer = Buffer()
   peeked.request(byteCount)
   buffer.write(peeked, minOf(byteCount, peeked.buffer.size))
@@ -70,7 +106,7 @@ val Response.commonCacheControl: CacheControl
   }
 
 fun Response.commonClose() {
-  checkNotNull(body) { "response is not eligible for a body and must not be closed" }.close()
+  body.close()
 }
 
 fun Response.commonToString(): String =
@@ -108,7 +144,7 @@ fun Response.Builder.commonHeaders(headers: Headers) = apply {
   this.headers = headers.newBuilder()
 }
 
-fun Response.Builder.commonBody(body: ResponseBody?) = apply {
+fun Response.Builder.commonBody(body: ResponseBody) = apply {
   this.body = body
 }
 
@@ -124,7 +160,6 @@ fun Response.Builder.commonCacheResponse(cacheResponse: Response?) = apply {
 
 private fun checkSupportResponse(name: String, response: Response?) {
   response?.apply {
-    require(body == null) { "$name.body != null" }
     require(networkResponse == null) { "$name.networkResponse != null" }
     require(cacheResponse == null) { "$name.cacheResponse != null" }
     require(priorResponse == null) { "$name.priorResponse != null" }
@@ -132,12 +167,5 @@ private fun checkSupportResponse(name: String, response: Response?) {
 }
 
 fun Response.Builder.commonPriorResponse(priorResponse: Response?) = apply {
-  checkPriorResponse(priorResponse)
   this.priorResponse = priorResponse
-}
-
-private fun checkPriorResponse(response: Response?) {
-  response?.apply {
-    require(body == null) { "priorResponse.body != null" }
-  }
 }

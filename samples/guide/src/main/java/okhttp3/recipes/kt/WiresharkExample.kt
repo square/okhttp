@@ -307,7 +307,7 @@ class WiresharkExample(tlsVersions: List<TlsVersion>, private val launch: Launch
       client.newCall(request)
           .execute()
           .use {
-            val firstLine = it.body!!.string()
+            val firstLine = it.body.string()
                 .lines()
                 .first()
             if (this.launch != CommandLine) {

@@ -75,8 +75,8 @@ class CallKotlinTest(
     val cloned = call.clone()
     val response2 = cloned.execute()
 
-    assertThat("abc").isEqualTo(response1.body!!.string())
-    assertThat("def").isEqualTo(response2.body!!.string())
+    assertThat("abc").isEqualTo(response1.body.string())
+    assertThat("def").isEqualTo(response2.body.string())
   }
 
   @Test
@@ -209,7 +209,7 @@ class CallKotlinTest(
         .build()
     val responseA = client.newCall(requestA).execute()
 
-    assertThat(responseA.body!!.string()).isEqualTo("a")
+    assertThat(responseA.body.string()).isEqualTo("a")
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
 
     // Give the socket a chance to become stale.
@@ -221,7 +221,7 @@ class CallKotlinTest(
         .post("b".toRequestBody("text/plain".toMediaType()))
         .build()
     val responseB = client.newCall(requestB).execute()
-    assertThat(responseB.body!!.string()).isEqualTo("b")
+    assertThat(responseB.body.string()).isEqualTo("b")
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
   }
 

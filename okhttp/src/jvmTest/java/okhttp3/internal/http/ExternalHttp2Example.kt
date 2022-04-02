@@ -35,11 +35,11 @@ object ExternalHttp2Example {
       println(response.code)
       println("PROTOCOL ${response.protocol}")
       var line: String?
-      while (response.body!!.source().readUtf8Line().also { line = it } != null) {
+      while (response.body.source().readUtf8Line().also { line = it } != null) {
         println(line)
       }
     } finally {
-      response.body!!.close()
+      response.body.close()
     }
     client.connectionPool.evictAll()
   }

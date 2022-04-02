@@ -26,7 +26,6 @@ import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okhttp3.internal.platform.Platform;
 import okio.ByteString;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 public final class WebSocketRecorder extends WebSocketListener {
@@ -264,7 +263,7 @@ public final class WebSocketRecorder extends WebSocketListener {
       this.t = t;
       this.response = response;
       String responseBody = null;
-      if (response != null) {
+      if (response != null && response.code() != 101) {
         try {
           responseBody = response.body().string();
         } catch (IOException ignored) {

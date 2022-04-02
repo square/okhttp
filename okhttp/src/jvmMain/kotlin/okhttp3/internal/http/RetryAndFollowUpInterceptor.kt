@@ -33,6 +33,7 @@ import okhttp3.internal.closeQuietly
 import okhttp3.internal.connection.Exchange
 import okhttp3.internal.connection.RealCall
 import okhttp3.internal.http2.ConnectionShutdownException
+import okhttp3.internal.stripBody
 import okhttp3.internal.withSuppressed
 
 /**
@@ -75,17 +76,10 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
         }
 
         // Clear out downstream interceptor's additional request headers, cookies, etc.
-        val responseBuilder = response.newBuilder()
+        response = response.newBuilder()
           .request(request)
-
-        // Attach the prior response if it exists. Such responses never have a body.
-        if (priorResponse != null) {
-          responseBuilder.priorResponse(priorResponse.newBuilder()
-            .body(null)
-            .build())
-        }
-
-        response = responseBuilder.build()
+          .priorResponse(priorResponse?.stripBody())
+          .build()
 
         val exchange = call.interceptorScopedExchange
         val followUp = followUpRequest(response, exchange)
@@ -104,7 +98,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
           return response
         }
 
-        response.body?.closeQuietly()
+        response.body.closeQuietly()
 
         if (++followUpCount > MAX_FOLLOW_UPS) {
           throw ProtocolException("Too many follow-up requests: $followUpCount")

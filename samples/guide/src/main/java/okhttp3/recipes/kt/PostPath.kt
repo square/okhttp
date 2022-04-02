@@ -43,7 +43,7 @@ class PostPath {
       if (!response.isSuccessful) throw IOException("Unexpected code $response")
 
       fileSystem.sink(path).use {
-        response.body!!.source().readAll(it)
+        response.body.source().readAll(it)
       }
 
       println(fileSystem.source(path).buffer().readUtf8())

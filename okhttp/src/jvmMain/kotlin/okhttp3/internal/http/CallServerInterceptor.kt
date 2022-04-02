@@ -19,8 +19,8 @@ import java.io.IOException
 import java.net.ProtocolException
 import okhttp3.Interceptor
 import okhttp3.Response
-import okhttp3.internal.EMPTY_RESPONSE
 import okhttp3.internal.http2.ConnectionShutdownException
+import okhttp3.internal.stripBody
 import okio.buffer
 
 /** This is the last interceptor in the chain. It makes a network call to the server. */
@@ -123,9 +123,7 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
 
       response = if (forWebSocket && code == 101) {
         // Connection is upgrading, but we need to ensure interceptors see a non-null response body.
-        response.newBuilder()
-            .body(EMPTY_RESPONSE)
-            .build()
+        response.stripBody()
       } else {
         response.newBuilder()
             .body(exchange.openResponseBody(response))
@@ -135,9 +133,9 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
           "close".equals(response.header("Connection"), ignoreCase = true)) {
         exchange.noNewExchangesOnConnection()
       }
-      if ((code == 204 || code == 205) && (response.body?.contentLength() ?: -1L) > 0L) {
+      if ((code == 204 || code == 205) && response.body.contentLength() > 0L) {
         throw ProtocolException(
-            "HTTP $code had non-zero Content-Length: ${response.body?.contentLength()}")
+            "HTTP $code had non-zero Content-Length: ${response.body.contentLength()}")
       }
       return response
     } catch (e: IOException) {

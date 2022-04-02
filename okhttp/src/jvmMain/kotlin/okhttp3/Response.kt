@@ -26,6 +26,7 @@ import okhttp3.internal.commonCacheControl
 import okhttp3.internal.commonCacheResponse
 import okhttp3.internal.commonClose
 import okhttp3.internal.commonCode
+import okhttp3.internal.commonEmptyResponse
 import okhttp3.internal.commonHeader
 import okhttp3.internal.commonHeaders
 import okhttp3.internal.commonIsRedirect
@@ -60,7 +61,7 @@ actual class Response internal constructor(
   /** Returns the HTTP headers. */
   @get:JvmName("headers") actual val headers: Headers,
 
-  @get:JvmName("body") actual val body: ResponseBody?,
+  @get:JvmName("body") actual val body: ResponseBody,
 
   @get:JvmName("networkResponse") actual val networkResponse: Response?,
 
@@ -145,7 +146,7 @@ actual class Response internal constructor(
 
   @Throws(IOException::class)
   actual fun peekBody(byteCount: Long): ResponseBody {
-    val peeked = body!!.source().peek()
+    val peeked = body.source().peek()
     val buffer = Buffer()
     peeked.request(byteCount)
     buffer.write(peeked, minOf(byteCount, peeked.buffer.size))
@@ -157,7 +158,7 @@ actual class Response internal constructor(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "body"),
       level = DeprecationLevel.ERROR)
-  fun body(): ResponseBody? = body
+  fun body() = body
 
   actual fun newBuilder(): Builder = commonNewBuilder()
 
@@ -241,7 +242,7 @@ actual class Response internal constructor(
     internal actual var message: String? = null
     internal var handshake: Handshake? = null
     internal actual var headers: Headers.Builder
-    internal actual var body: ResponseBody? = null
+    internal actual var body: ResponseBody = commonEmptyResponse
     internal actual var networkResponse: Response? = null
     internal actual var cacheResponse: Response? = null
     internal actual var priorResponse: Response? = null
@@ -289,7 +290,7 @@ actual class Response internal constructor(
 
     actual open fun headers(headers: Headers) = commonHeaders(headers)
 
-    actual open fun body(body: ResponseBody?) = commonBody(body)
+    actual open fun body(body: ResponseBody) = commonBody(body)
 
     actual open fun networkResponse(networkResponse: Response?) = commonNetworkResponse(networkResponse)
 

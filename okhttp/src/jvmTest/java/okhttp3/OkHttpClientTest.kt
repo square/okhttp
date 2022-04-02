@@ -224,7 +224,7 @@ class OkHttpClientTest {
       .url(server!!.url("/"))
       .build()
     val response = client.newCall(request).execute()
-    assertThat(response.body!!.string()).isEqualTo("abc")
+    assertThat(response.body.string()).isEqualTo("abc")
   }
 
   @Test fun sslSocketFactorySetAsSocketFactory() {

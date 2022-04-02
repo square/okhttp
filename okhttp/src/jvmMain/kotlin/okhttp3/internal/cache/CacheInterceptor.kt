@@ -26,7 +26,6 @@ import okhttp3.Headers
 import okhttp3.Interceptor
 import okhttp3.Protocol
 import okhttp3.Response
-import okhttp3.internal.EMPTY_RESPONSE
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.connection.RealCall
 import okhttp3.internal.discard
@@ -34,6 +33,7 @@ import okhttp3.internal.http.ExchangeCodec
 import okhttp3.internal.http.HttpMethod
 import okhttp3.internal.http.RealResponseBody
 import okhttp3.internal.http.promisesBody
+import okhttp3.internal.stripBody
 import okio.Buffer
 import okio.Source
 import okio.Timeout
@@ -58,7 +58,7 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
 
     if (cacheCandidate != null && cacheResponse == null) {
       // The cache candidate wasn't applicable. Close it.
-      cacheCandidate.body?.closeQuietly()
+      cacheCandidate.body.closeQuietly()
     }
 
     // If we're forbidden from using the network and the cache is insufficient, fail.
@@ -68,7 +68,6 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
           .protocol(Protocol.HTTP_1_1)
           .code(HTTP_GATEWAY_TIMEOUT)
           .message("Unsatisfiable Request (only-if-cached)")
-          .body(EMPTY_RESPONSE)
           .sentRequestAtMillis(-1L)
           .receivedResponseAtMillis(System.currentTimeMillis())
           .build().also {
@@ -79,7 +78,7 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
     // If we don't need the network, we're done.
     if (networkRequest == null) {
       return cacheResponse!!.newBuilder()
-          .cacheResponse(stripBody(cacheResponse))
+          .cacheResponse(cacheResponse.stripBody())
           .build().also {
             listener.cacheHit(call, it)
           }
@@ -97,7 +96,7 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
     } finally {
       // If we're crashing on I/O or otherwise, don't leak the cache body.
       if (networkResponse == null && cacheCandidate != null) {
-        cacheCandidate.body?.closeQuietly()
+        cacheCandidate.body.closeQuietly()
       }
     }
 
@@ -108,11 +107,11 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
             .headers(combine(cacheResponse.headers, networkResponse.headers))
             .sentRequestAtMillis(networkResponse.sentRequestAtMillis)
             .receivedResponseAtMillis(networkResponse.receivedResponseAtMillis)
-            .cacheResponse(stripBody(cacheResponse))
-            .networkResponse(stripBody(networkResponse))
+            .cacheResponse(cacheResponse.stripBody())
+            .networkResponse(networkResponse.stripBody())
             .build()
 
-        networkResponse.body!!.close()
+        networkResponse.body.close()
 
         // Update the cache after combining headers but before stripping the
         // Content-Encoding header (as performed by initContentStream()).
@@ -122,13 +121,13 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
           listener.cacheHit(call, it)
         }
       } else {
-        cacheResponse.body?.closeQuietly()
+        cacheResponse.body.closeQuietly()
       }
     }
 
     val response = networkResponse!!.newBuilder()
-        .cacheResponse(stripBody(cacheResponse))
-        .networkResponse(stripBody(networkResponse))
+        .cacheResponse(cacheResponse?.stripBody())
+        .networkResponse(networkResponse.stripBody())
         .build()
 
     if (cache != null) {
@@ -166,7 +165,7 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
     if (cacheRequest == null) return response
     val cacheBodyUnbuffered = cacheRequest.body()
 
-    val source = response.body!!.source()
+    val source = response.body.source()
     val cacheBody = cacheBodyUnbuffered.buffer()
 
     val cacheWritingSource = object : Source {
@@ -219,15 +218,6 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
   }
 
   companion object {
-
-    private fun stripBody(response: Response?): Response? {
-      return if (response?.body != null) {
-        response.newBuilder().body(null).build()
-      } else {
-        response
-      }
-    }
-
     /** Combines cached headers with a network headers as defined by RFC 7234, 4.3.4. */
     private fun combine(cachedHeaders: Headers, networkHeaders: Headers): Headers {
       val result = Headers.Builder()

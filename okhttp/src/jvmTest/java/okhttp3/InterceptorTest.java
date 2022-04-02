@@ -45,7 +45,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-
 import static okhttp3.TestUtil.assertSuppressed;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -633,56 +632,6 @@ public final class InterceptorTest {
 
     Response response = client.newCall(request).execute();
     response.body().close();
-  }
-
-  @Test public void applicationInterceptorResponseMustHaveBody() throws Exception {
-    server.enqueue(new MockResponse());
-
-    Interceptor interceptor = chain -> {
-      Response response = chain.proceed(chain.request());
-      return response.newBuilder()
-          .body(null)
-          .build();
-    };
-    client = client.newBuilder()
-        .addInterceptor(interceptor)
-        .build();
-
-    Request request = new Request.Builder()
-        .url(server.url("/"))
-        .build();
-    try {
-      client.newCall(request).execute();
-      fail();
-    } catch (IllegalStateException expected) {
-      assertThat(expected.getMessage()).isEqualTo(
-          ("interceptor " + interceptor + " returned a response with no body"));
-    }
-  }
-
-  @Test public void networkInterceptorResponseMustHaveBody() throws Exception {
-    server.enqueue(new MockResponse());
-
-    Interceptor interceptor = chain -> {
-      Response response = chain.proceed(chain.request());
-      return response.newBuilder()
-          .body(null)
-          .build();
-    };
-    client = client.newBuilder()
-        .addNetworkInterceptor(interceptor)
-        .build();
-
-    Request request = new Request.Builder()
-        .url(server.url("/"))
-        .build();
-    try {
-      client.newCall(request).execute();
-      fail();
-    } catch (IllegalStateException expected) {
-      assertThat(expected.getMessage()).isEqualTo(
-          ("interceptor " + interceptor + " returned a response with no body"));
-    }
   }
 
   @Test public void connectTimeout() throws Exception {

@@ -1057,7 +1057,6 @@ class KotlinSourceModernTest {
     builder = builder.removeHeader("")
     builder = builder.headers(headersOf())
     builder = builder.body("".toResponseBody(null))
-    builder = builder.body(null)
     builder = builder.networkResponse(Response.Builder().build())
     builder = builder.networkResponse(null)
     builder = builder.cacheResponse(Response.Builder().build())

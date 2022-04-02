@@ -115,8 +115,6 @@ class RealInterceptorChain(
       }
     }
 
-    check(response.body != null) { "interceptor $interceptor returned a response with no body" }
-
     return response
   }
 }

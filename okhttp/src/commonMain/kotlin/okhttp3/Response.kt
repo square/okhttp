@@ -68,7 +68,7 @@ expect class Response : Closeable {
    * This always returns null on responses returned from [cacheResponse], [networkResponse],
    * and [priorResponse].
    */
-  val body: ResponseBody?
+  val body: ResponseBody
 
   /**
    * Returns the raw response received from the network. Will be null if this response didn't use
@@ -152,8 +152,8 @@ expect class Response : Closeable {
   /**
    * Closes the response body. Equivalent to `body().close()`.
    *
-   * It is an error to close a response that is not eligible for a body. This includes the
-   * responses returned from [cacheResponse], [networkResponse], and [priorResponse].
+   * Prior to OkHttp 5.0, it was an error to close a response that is not eligible for a body. This
+   * includes the responses returned from [cacheResponse], [networkResponse], and [priorResponse].
    */
   override fun close()
 
@@ -166,7 +166,7 @@ expect class Response : Closeable {
     internal var message: String?
     // internal var handshake: Handshake? = null
     internal var headers: Headers.Builder
-    internal var body: ResponseBody?
+    internal var body: ResponseBody
     internal var networkResponse: Response?
     internal var cacheResponse: Response?
     internal var priorResponse: Response?
@@ -204,7 +204,7 @@ expect class Response : Closeable {
     /** Removes all headers on this builder and adds [headers]. */
     open fun headers(headers: Headers): Builder
 
-    open fun body(body: ResponseBody?): Builder
+    open fun body(body: ResponseBody): Builder
 
     open fun networkResponse(networkResponse: Response?): Builder
 
