@@ -37,7 +37,7 @@ import okio.Source
 import okio.Timeout
 import okio.buffer
 
-class UnreadableResponseBody(
+internal class UnreadableResponseBody(
   private val mediaType: MediaType?,
   private val contentLength: Long,
 ): ResponseBody(), Source {
@@ -64,7 +64,7 @@ class UnreadableResponseBody(
   }
 }
 
-fun Response.stripBody(): Response {
+internal fun Response.stripBody(): Response {
   return newBuilder()
     .body(UnreadableResponseBody(body.contentType(), body.contentLength()))
     .build()
