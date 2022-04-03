@@ -999,6 +999,8 @@ public final class okhttp3/Request {
 	public final fun -deprecated_headers ()Lokhttp3/Headers;
 	public final fun -deprecated_method ()Ljava/lang/String;
 	public final fun -deprecated_url ()Lokhttp3/HttpUrl;
+	public fun <init> (Lokhttp3/HttpUrl;Lokhttp3/Headers;Ljava/lang/String;Lokhttp3/RequestBody;)V
+	public synthetic fun <init> (Lokhttp3/HttpUrl;Lokhttp3/Headers;Ljava/lang/String;Lokhttp3/RequestBody;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun body ()Lokhttp3/RequestBody;
 	public final fun cacheControl ()Lokhttp3/CacheControl;
 	public final fun header (Ljava/lang/String;)Ljava/lang/String;
