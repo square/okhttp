@@ -17,6 +17,7 @@ package okhttp3.recipes.kt
 
 import java.io.File
 import java.io.IOException
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -28,10 +29,10 @@ class PostFile {
   fun run() {
     val file = File("README.md")
 
-    val request = Request.Builder()
-        .url("https://api.github.com/markdown/raw")
-        .post(file.asRequestBody(MEDIA_TYPE_MARKDOWN))
-        .build()
+    val request = Request(
+      url = "https://api.github.com/markdown/raw".toHttpUrl(),
+      body = file.asRequestBody(MEDIA_TYPE_MARKDOWN),
+    )
 
     client.newCall(request).execute().use { response ->
       if (!response.isSuccessful) throw IOException("Unexpected code $response")

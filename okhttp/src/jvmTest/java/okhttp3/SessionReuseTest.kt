@@ -95,7 +95,7 @@ class SessionReuseTest(
     server.enqueue(MockResponse().setBody("abc1"))
     server.enqueue(MockResponse().setBody("abc2"))
 
-    val request = Request.Builder().url(server.url("/")).build()
+    val request = Request(server.url("/"))
 
     client.newCall(request).execute().use { response ->
       assertEquals(200, response.code)

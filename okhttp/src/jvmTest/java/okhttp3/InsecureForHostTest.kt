@@ -47,9 +47,7 @@ class InsecureForHostTest(
         .sslSocketFactory(clientCertificates.sslSocketFactory(), clientCertificates.trustManager)
         .build()
 
-    val call = client.newCall(Request.Builder()
-        .url(server.url("/"))
-        .build())
+    val call = client.newCall(Request(server.url("/")))
     val response = call.execute()
     assertThat(response.code).isEqualTo(200)
     assertThat(response.handshake!!.cipherSuite).isNotNull()
@@ -79,9 +77,7 @@ class InsecureForHostTest(
         .sslSocketFactory(clientCertificates.sslSocketFactory(), clientCertificates.trustManager)
         .build()
 
-    val call = client.newCall(Request.Builder()
-        .url(server.url("/"))
-        .build())
+    val call = client.newCall(Request(server.url("/")))
     try {
       call.execute()
       fail("")
@@ -103,9 +99,7 @@ class InsecureForHostTest(
         .sslSocketFactory(clientCertificates.sslSocketFactory(), clientCertificates.trustManager)
         .build()
 
-    val call = client.newCall(Request.Builder()
-        .url(server.url("/"))
-        .build())
+    val call = client.newCall(Request(server.url("/")))
     try {
       call.execute()
       fail("")

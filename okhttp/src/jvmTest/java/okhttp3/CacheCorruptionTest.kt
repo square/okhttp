@@ -161,7 +161,7 @@ class CacheCorruptionTest(
       )
       .hostnameVerifier(NULL_HOSTNAME_VERIFIER)
       .build()
-    val request: Request = Request.Builder().url(server.url("/")).build()
+    val request: Request = Request(server.url("/"))
     val response1: Response = client.newCall(request).execute()
     val bodySource = response1.body.source()
     assertThat(bodySource.readUtf8()).isEqualTo("ABC.1")

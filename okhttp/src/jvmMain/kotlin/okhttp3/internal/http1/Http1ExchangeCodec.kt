@@ -88,7 +88,7 @@ class Http1ExchangeCodec(
 
   override fun createRequestBody(request: Request, contentLength: Long): Sink {
     return when {
-      request.body != null && request.body.isDuplex() -> throw ProtocolException(
+      request.body?.isDuplex() == true -> throw ProtocolException(
           "Duplex connections are not supported for HTTP/1")
       request.isChunked -> newChunkedSink() // Stream a request body of unknown length.
       contentLength != -1L -> newKnownLengthSink() // Stream a request body of a known length.

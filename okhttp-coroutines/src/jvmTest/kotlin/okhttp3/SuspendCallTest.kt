@@ -49,7 +49,7 @@ class SuspendCallTest(
 
   private var client = clientTestRule.newClientBuilder().build()
 
-  val request = Request.Builder().url(server.url("/")).build()
+  val request = Request(server.url("/"))
 
   @Test
   fun suspendCall() {

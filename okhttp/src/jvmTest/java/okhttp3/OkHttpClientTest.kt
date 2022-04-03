@@ -220,9 +220,7 @@ class OkHttpClientTest {
     server!!.enqueue(MockResponse().setBody("abc"))
     ProxySelector.setDefault(null)
     val client = clientTestRule.newClient()
-    val request = Request.Builder()
-      .url(server!!.url("/"))
-      .build()
+    val request = Request(server!!.url("/"))
     val response = client.newCall(request).execute()
     assertThat(response.body.string()).isEqualTo("abc")
   }

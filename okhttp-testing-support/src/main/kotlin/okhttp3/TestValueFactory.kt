@@ -171,17 +171,11 @@ class TestValueFactory : Closeable {
     )
   }
 
-  fun newRequest(address: Address): Request {
-    return Request.Builder()
-      .url(address.url)
-      .build()
-  }
-
   fun newRoutePlanner(
     client: OkHttpClient,
     address: Address = newAddress(),
   ): RealRoutePlanner {
-    val call = RealCall(client, newRequest(address), forWebSocket = false)
+    val call = RealCall(client, Request(address.url), forWebSocket = false)
     return RealRoutePlanner(client, address, call, newChain(call))
   }
 
