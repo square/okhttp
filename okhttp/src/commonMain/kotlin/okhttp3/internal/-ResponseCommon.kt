@@ -64,7 +64,7 @@ internal class UnreadableResponseBody(
   }
 }
 
-internal fun Response.stripBody(): Response {
+fun Response.stripBody(): Response {
   return newBuilder()
     .body(UnreadableResponseBody(body.contentType(), body.contentLength()))
     .build()
