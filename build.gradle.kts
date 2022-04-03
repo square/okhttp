@@ -21,6 +21,7 @@ buildscript {
     classpath(libs.gradlePlugin.spotless)
     classpath(libs.gradlePlugin.mavenPublish)
     classpath(libs.gradlePlugin.binaryCompatibilityValidator)
+    classpath(libs.gradlePlugin.testRetry)
   }
 
   repositories {
@@ -71,6 +72,9 @@ subprojects {
   apply(plugin = "checkstyle")
   apply(plugin = "ru.vyarus.animalsniffer")
   apply(plugin = "biz.aQute.bnd.builder")
+  apply(plugin = "org.gradle.test-retry")
+
+  val isCiServer = System.getenv().containsKey("CI")
 
   tasks.withType<JavaCompile> {
     options.encoding = Charsets.UTF_8.toString()
@@ -149,6 +153,16 @@ subprojects {
 
     systemProperty("okhttp.platform", platform)
     systemProperty("junit.jupiter.extensions.autodetection.enabled", "true")
+
+    retry {
+      if (isCiServer) {
+        maxRetries.set(2)
+        maxFailures.set(10)
+        filter {
+          includeAnnotationClasses.add("*Flaky")
+        }
+      }
+    }
   }
 
   if (platform == "jdk8alpn") {
