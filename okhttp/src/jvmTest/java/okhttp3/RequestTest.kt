@@ -411,7 +411,7 @@ class RequestTest {
   fun multipleTags() {
     val uuidTag = UUID.randomUUID()
     val stringTag = "dilophosaurus"
-    val longTag = 20170815L
+    val longTag = 20170815L as Long?
     val objectTag = Any()
     val request = Request.Builder()
       .url("https://square.com")
