@@ -32,17 +32,51 @@ import okhttp3.internal.commonPut
 import okhttp3.internal.commonRemoveHeader
 import okhttp3.internal.toImmutableMap
 
-actual class Request internal constructor(
-  @get:JvmName("url") actual val url: HttpUrl,
-  @get:JvmName("method") actual val method: String,
-  @get:JvmName("headers") actual val headers: Headers,
-  @get:JvmName("body") actual val body: RequestBody?,
-  internal val tags: Map<Class<*>, Any>
-) {
+actual class Request internal actual constructor(builder: Builder) {
+  @get:JvmName("url")
+  actual val url: HttpUrl = checkNotNull(builder.url) { "url == null" }
+
+  @get:JvmName("method")
+  actual val method: String = builder.method
+
+  @get:JvmName("headers")
+  actual val headers: Headers = builder.headers.build()
+
+  @get:JvmName("body")
+  actual val body: RequestBody? = builder.body
+
+  internal val tags: Map<Class<*>, Any> = builder.tags.toImmutableMap()
+
   internal actual var lazyCacheControl: CacheControl? = null
 
   actual val isHttps: Boolean
     get() = url.isHttps
+
+  /**
+   * Constructs a new request.
+   *
+   * Use [Builder] for more fluent construction, including helper methods for various HTTP methods.
+   *
+   * @param method defaults to "GET" if [body] is null, and "POST" otherwise.
+   */
+  constructor(
+    url: HttpUrl,
+    headers: Headers = Headers.headersOf(),
+    method: String = "\u0000", // Sentinel value chooses based on what the body is.
+    body: RequestBody? = null,
+  ) : this(
+    Builder()
+      .url(url)
+      .headers(headers)
+      .method(
+        when {
+          method != "\u0000" -> method
+          body != null -> "POST"
+          else -> "GET"
+        },
+        body
+      )
+  )
 
   actual fun header(name: String): String? = commonHeader(name)
 
@@ -222,14 +256,6 @@ actual class Request internal constructor(
       }
     }
 
-    actual open fun build(): Request {
-      return Request(
-          checkNotNull(url) { "url == null" },
-          method,
-          headers.build(),
-          body,
-          tags.toImmutableMap()
-      )
-    }
+    actual open fun build() = Request(this)
   }
 }

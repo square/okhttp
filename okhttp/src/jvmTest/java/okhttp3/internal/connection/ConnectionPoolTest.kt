@@ -17,6 +17,7 @@ package okhttp3.internal.connection
 
 import okhttp3.ConnectionPool
 import okhttp3.OkHttpClient
+import okhttp3.Request
 import okhttp3.TestUtil.awaitGarbageCollection
 import okhttp3.TestValueFactory
 import okhttp3.internal.concurrent.TaskRunner
@@ -76,7 +77,7 @@ class ConnectionPoolTest {
     val client = OkHttpClient.Builder()
       .connectionPool(poolApi)
       .build()
-    val call = client.newCall(factory.newRequest(addressA)) as RealCall
+    val call = client.newCall(Request(addressA.url)) as RealCall
     call.enterNetworkInterceptorExchange(call.request(), true, factory.newChain(call))
     synchronized(c1) { call.acquireConnectionNoEvents(c1) }
 
@@ -188,7 +189,7 @@ class ConnectionPoolTest {
     val client = OkHttpClient.Builder()
       .connectionPool(pool)
       .build()
-    val call = client.newCall(factory.newRequest(connection.route().address)) as RealCall
+    val call = client.newCall(Request(connection.route().address.url)) as RealCall
     call.enterNetworkInterceptorExchange(call.request(), true, factory.newChain(call))
     synchronized(connection) { call.acquireConnectionNoEvents(connection) }
   }

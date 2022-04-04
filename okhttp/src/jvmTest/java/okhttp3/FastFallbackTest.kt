@@ -121,11 +121,7 @@ class FastFallbackTest {
         .setBody("hello from IPv6")
     )
 
-    val call = client.newCall(
-      Request.Builder()
-        .url(url)
-        .build()
-    )
+    val call = client.newCall(Request(url))
     val response = call.execute()
     assertThat(response.body.string()).isEqualTo("hello from IPv6")
 
@@ -150,11 +146,7 @@ class FastFallbackTest {
         .setBody("hello from IPv6")
     )
 
-    val call = client.newCall(
-      Request.Builder()
-        .url(url)
-        .build()
-    )
+    val call = client.newCall(Request(url))
     val response = call.execute()
     assertThat(response.body.string()).isEqualTo("hello from IPv6")
 
@@ -171,11 +163,7 @@ class FastFallbackTest {
         .setBody("hello from IPv4")
     )
 
-    val call = client.newCall(
-      Request.Builder()
-        .url(url)
-        .build()
-    )
+    val call = client.newCall(Request(url))
     val response = call.execute()
     assertThat(response.body.string()).isEqualTo("hello from IPv4")
 
@@ -193,11 +181,7 @@ class FastFallbackTest {
         .setBody("hello from IPv6")
     )
 
-    val call = client.newCall(
-      Request.Builder()
-        .url(url)
-        .build()
-    )
+    val call = client.newCall(Request(url))
     val response = call.execute()
     assertThat(response.body.string()).isEqualTo("hello from IPv6")
 
@@ -212,11 +196,7 @@ class FastFallbackTest {
     serverIpv4.shutdown()
     serverIpv6.shutdown()
 
-    val call = client.newCall(
-      Request.Builder()
-        .url(url)
-        .build()
-    )
+    val call = client.newCall(Request(url))
     assertFailsWith<IOException> {
       call.execute()
     }
@@ -239,11 +219,7 @@ class FastFallbackTest {
         .setBody("hello from IPv4")
     )
 
-    val call = client.newCall(
-      Request.Builder()
-        .url(url)
-        .build()
-    )
+    val call = client.newCall(Request(url))
     val response = call.execute()
     assertThat(response.body.string()).isEqualTo("hello from IPv4")
 
@@ -268,11 +244,7 @@ class FastFallbackTest {
       .fastFallback(false)
       .callTimeout(1_000, TimeUnit.MILLISECONDS)
       .build()
-    val call = client.newCall(
-      Request.Builder()
-        .url(url)
-        .build()
-    )
+    val call = client.newCall(Request(url))
     try {
       call.execute()
       fail("expected a timeout")
@@ -341,11 +313,7 @@ class FastFallbackTest {
     )
 
     // Confirm the retry succeeds on the same connection.
-    val call = client.newCall(
-      Request.Builder()
-        .url(url)
-        .build()
-    )
+    val call = client.newCall(Request(url))
     val response = call.execute()
     assertThat(response.body.string()).isEqualTo("this was the 2nd request on IPv4")
     assertThat(serverIpv4.takeRequest().sequenceNumber).isEqualTo(0)

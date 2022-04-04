@@ -964,6 +964,17 @@ class KotlinSourceModernTest {
   }
 
   @Test
+  fun requestConstructor() {
+    Request(url = "".toHttpUrl())
+    Request(
+      url = "".toHttpUrl(),
+      headers = headersOf(),
+      method = "",
+      body = "".toRequestBody(null),
+    )
+  }
+
+  @Test
   fun requestBuilder() {
     val requestBody = "".toRequestBody(null)
     var builder = Request.Builder()

@@ -22,7 +22,7 @@ import okhttp3.internal.commonEmptyRequestBody
  * An HTTP request. Instances of this class are immutable if their [body] is null or itself
  * immutable.
  */
-expect class Request {
+expect class Request private constructor(builder: Builder) {
   val url: HttpUrlRepresentation
   val method: String
   val headers: Headers

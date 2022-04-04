@@ -46,9 +46,7 @@ class DevServer {
 
   fun run() {
     try {
-      val request = Request.Builder()
-          .url(server.url("/"))
-          .build()
+      val request = Request(server.url("/"))
 
       client.newCall(request).execute().use { response ->
         if (!response.isSuccessful) throw IOException("Unexpected code $response")

@@ -265,9 +265,7 @@ open class CallTest(
     val response = client.newCall(headRequest).execute()
     assertThat(response.code).isEqualTo(200)
     assertArrayEquals(ByteArray(0), response.body.bytes())
-    val getRequest = Request.Builder()
-      .url(server.url("/"))
-      .build()
+    val getRequest = Request(server.url("/"))
     executeSynchronously(getRequest)
       .assertCode(200)
       .assertBody("abc")
@@ -293,9 +291,7 @@ open class CallTest(
       .assertCode(200)
       .assertHeader("Content-Encoding", "chunked")
       .assertBody("")
-    val getRequest = Request.Builder()
-      .url(server.url("/"))
-      .build()
+    val getRequest = Request(server.url("/"))
     executeSynchronously(getRequest)
       .assertCode(200)
       .assertBody("abc")
@@ -315,10 +311,10 @@ open class CallTest(
 
   @Test fun post() {
     server.enqueue(MockResponse().setBody("abc"))
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .post("def".toRequestBody("text/plain".toMediaType()))
-      .build()
+    val request = Request(
+      url = server.url("/"),
+      body = "def".toRequestBody("text/plain".toMediaType()),
+    )
     executeSynchronously(request)
       .assertCode(200)
       .assertBody("abc")
@@ -651,9 +647,7 @@ open class CallTest(
   @Test fun legalToExecuteTwiceCloning() {
     server.enqueue(MockResponse().setBody("abc"))
     server.enqueue(MockResponse().setBody("def"))
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .build()
+    val request = Request(server.url("/"))
     val call = client.newCall(request)
     val response1 = call.execute()
     val cloned = call.clone()
@@ -665,9 +659,7 @@ open class CallTest(
   @Test fun legalToExecuteTwiceCloning_Async() {
     server.enqueue(MockResponse().setBody("abc"))
     server.enqueue(MockResponse().setBody("def"))
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .build()
+    val request = Request(server.url("/"))
     val call = client.newCall(request)
     call.enqueue(callback)
     val cloned = call.clone()
@@ -701,9 +693,7 @@ open class CallTest(
 
   @Test fun exceptionThrownByOnResponseIsRedactedAndLogged() {
     server.enqueue(MockResponse())
-    val request = Request.Builder()
-      .url(server.url("/secret"))
-      .build()
+    val request = Request(server.url("/secret"))
     client.newCall(request).enqueue(object : Callback {
       override fun onFailure(call: Call, e: IOException) {
         fail<Unit>()
@@ -915,9 +905,7 @@ open class CallTest(
         }
       })
       .build()
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .build()
+    val request = Request(server.url("/"))
     executeSynchronously(request)
       .assertCode(200)
   }
@@ -942,9 +930,7 @@ open class CallTest(
         response
       })
       .build()
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .build()
+    val request = Request(server.url("/"))
     executeSynchronously(request).assertBody("abc")
   }
 
@@ -1068,9 +1054,7 @@ open class CallTest(
         .setBody("abc")
         .addHeader("Content-Type: text/plain")
     )
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .build()
+    val request = Request(server.url("/"))
     client.newCall(request).enqueue(callback)
     callback.await(request.url).assertHandshake()
   }
@@ -1224,9 +1208,7 @@ open class CallTest(
         handshakeCertificates.trustManager
       )
       .build()
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .build()
+    val request = Request(server.url("/"))
     client.newCall(request).enqueue(callback)
     callback.await(request.url).assertBody("abc")
   }
@@ -1339,11 +1321,7 @@ open class CallTest(
       .build()
     server.useHttps(handshakeCertificates.sslSocketFactory(), false)
     server.enqueue(MockResponse())
-    val call = client.newCall(
-      Request.Builder()
-        .url(server.url("/"))
-        .build()
-    )
+    val call = client.newCall(Request(server.url("/")))
     try {
       call.execute()
       fail<Unit>()
@@ -1422,10 +1400,10 @@ open class CallTest(
 
   @Test fun post_Async() {
     server.enqueue(MockResponse().setBody("abc"))
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .post("def".toRequestBody("text/plain".toMediaType()))
-      .build()
+    val request = Request(
+      url = server.url("/"),
+      body = "def".toRequestBody("text/plain".toMediaType())
+    )
     client.newCall(request).enqueue(callback)
     callback.await(request.url)
       .assertCode(200)
@@ -1452,10 +1430,10 @@ open class CallTest(
 
     listener.clearAllEvents()
 
-    val request2 = Request.Builder()
-      .url(server.url("/"))
-      .post("body!".toRequestBody("text/plain".toMediaType()))
-      .build()
+    val request2 = Request(
+      url = server.url("/"),
+      body = "body!".toRequestBody("text/plain".toMediaType()),
+    )
     try {
       client.newCall(request2).execute()
       fail()
@@ -1500,10 +1478,10 @@ open class CallTest(
     val request1 = Request.Builder().url(server.url("/")).build()
     val response1 = client.newCall(request1).execute()
     assertThat(response1.body.string()).isEqualTo("abc")
-    val request2 = Request.Builder()
-      .url(server.url("/"))
-      .post("body!".toRequestBody("text/plain".toMediaType()))
-      .build()
+    val request2 = Request(
+      server.url("/"),
+      body = "body!".toRequestBody("text/plain".toMediaType()),
+    )
     val response2 = client.newCall(request2).execute()
     assertThat(response2.body.string()).isEqualTo("def")
     val get = server.takeRequest()
@@ -1664,15 +1642,11 @@ open class CallTest(
     client = client.newBuilder()
       .cache(cache)
       .build()
-    val request1 = Request.Builder()
-      .url(server.url("/"))
-      .build()
+    val request1 = Request(server.url("/"))
     client.newCall(request1).enqueue(callback)
     callback.await(request1.url).assertCode(200).assertBody("A")
     assertThat(server.takeRequest().getHeader("If-None-Match")).isNull()
-    val request2 = Request.Builder()
-      .url(server.url("/"))
-      .build()
+    val request2 = Request(server.url("/"))
     client.newCall(request2).enqueue(callback)
     callback.await(request2.url).assertCode(200).assertBody("A")
     assertThat(server.takeRequest().getHeader("If-None-Match")).isEqualTo("v1")
@@ -1743,15 +1717,11 @@ open class CallTest(
     client = client.newBuilder()
       .cache(cache)
       .build()
-    val request1 = Request.Builder()
-      .url(server.url("/"))
-      .build()
+    val request1 = Request(server.url("/"))
     client.newCall(request1).enqueue(callback)
     callback.await(request1.url).assertCode(200).assertBody("A")
     assertThat(server.takeRequest().getHeader("If-None-Match")).isNull()
-    val request2 = Request.Builder()
-      .url(server.url("/"))
-      .build()
+    val request2 = Request(server.url("/"))
     client.newCall(request2).enqueue(callback)
     callback.await(request2.url).assertCode(200).assertBody("B")
     assertThat(server.takeRequest().getHeader("If-None-Match")).isEqualTo("v1")
@@ -1830,10 +1800,10 @@ open class CallTest(
     )
     server.enqueue(MockResponse().setBody("Page 2"))
     val response = client.newCall(
-      Request.Builder()
-        .url(server.url("/page1"))
-        .post("Request Body".toRequestBody("text/plain".toMediaType()))
-        .build()
+      Request(
+        url = server.url("/page1"),
+        body = "Request Body".toRequestBody("text/plain".toMediaType()),
+      )
     ).execute()
     assertThat(response.body.string()).isEqualTo("Page 2")
     val page1 = server.takeRequest()
@@ -1852,9 +1822,7 @@ open class CallTest(
         .setBody("You took too long!")
     )
     server.enqueue(MockResponse().setBody("Body"))
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .build()
+    val request = Request(server.url("/"))
     val response = client.newCall(request).execute()
     assertThat(response.body.string()).isEqualTo("Body")
   }
@@ -1868,9 +1836,7 @@ open class CallTest(
         .setHeader("Retry-After", "1")
         .setBody("You took too long!")
     )
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .build()
+    val request = Request(server.url("/"))
     val response = client.newCall(request).execute()
     assertThat(response.body.string()).isEqualTo("You took too long!")
   }
@@ -1884,10 +1850,10 @@ open class CallTest(
         .setBody("You took too long!")
     )
     server.enqueue(MockResponse().setBody("Body"))
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .post("Hello".toRequestBody("text/plain".toMediaType()))
-      .build()
+    val request = Request(
+      server.url("/"),
+      body = "Hello".toRequestBody("text/plain".toMediaType()),
+    )
     val response = client.newCall(request).execute()
     assertThat(response.body.string()).isEqualTo("Body")
     val request1 = server.takeRequest()
@@ -1907,9 +1873,7 @@ open class CallTest(
     client = client.newBuilder()
       .retryOnConnectionFailure(false)
       .build()
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .build()
+    val request = Request(server.url("/"))
     val response = client.newCall(request).execute()
     assertThat(response.code).isEqualTo(408)
     assertThat(response.body!!.string()).isEqualTo("You took too long!")
@@ -1930,9 +1894,7 @@ open class CallTest(
         .setHeader("Connection", "Close")
         .setBody("You took too long!")
     )
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .build()
+    val request = Request(server.url("/"))
     val response = client.newCall(request).execute()
     assertThat(response.code).isEqualTo(408)
     assertThat(response.body.string()).isEqualTo("You took too long!")
@@ -1956,9 +1918,7 @@ open class CallTest(
         .setHeader("Retry-After", "0")
         .setBody("You took too long!")
     )
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .build()
+    val request = Request(server.url("/"))
     val response = client.newCall(request).execute()
     assertThat(response.code).isEqualTo(503)
     assertThat(response.body.string()).isEqualTo("You took too long!")
@@ -1975,9 +1935,7 @@ open class CallTest(
         .setBody("You took too long!")
     )
     server.enqueue(MockResponse().setBody("Body"))
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .build()
+    val request = Request(server.url("/"))
     val response = client.newCall(request).execute()
     assertThat(response.body.string()).isEqualTo("Body")
   }
@@ -1993,9 +1951,9 @@ open class CallTest(
       MockResponse()
         .setBody("thank you for retrying")
     )
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .post(object : RequestBody() {
+    val request = Request(
+      url = server.url("/"),
+      body = object : RequestBody() {
         var attempt = 0
         override fun contentType(): MediaType? {
           return null
@@ -2004,8 +1962,8 @@ open class CallTest(
         override fun writeTo(sink: BufferedSink) {
           sink.writeUtf8("attempt " + attempt++)
         }
-      })
-      .build()
+      },
+    )
     val response = client.newCall(request).execute()
     assertThat(response.code).isEqualTo(200)
     assertThat(response.body.string()).isEqualTo("thank you for retrying")
@@ -2025,9 +1983,9 @@ open class CallTest(
       MockResponse()
         .setBody("thank you for retrying")
     )
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .post(object : RequestBody() {
+    val request = Request(
+      url = server.url("/"),
+      body = object : RequestBody() {
         var attempt = 0
         override fun contentType(): MediaType? {
           return null
@@ -2040,8 +1998,8 @@ open class CallTest(
         override fun isOneShot(): Boolean {
           return true
         }
-      })
-      .build()
+      },
+    )
     val response = client.newCall(request).execute()
     assertThat(response.code).isEqualTo(503)
     assertThat(response.body.string()).isEqualTo("please retry")
@@ -2128,11 +2086,7 @@ open class CallTest(
     client = client.newBuilder()
       .cookieJar(JavaNetCookieJar(cookieManager))
       .build()
-    val response = client.newCall(
-      Request.Builder()
-        .url(server.url("/page1"))
-        .build()
-    ).execute()
+    val response = client.newCall(Request(server.url("/page1"))).execute()
     assertThat(response.body.string()).isEqualTo("Page 2")
     val request1 = server.takeRequest()
     assertThat(request1.getHeader("Cookie")).isEqualTo("c=cookie")
@@ -2331,11 +2285,7 @@ open class CallTest(
         .setSocketPolicy(SocketPolicy.STALL_SOCKET_AT_START)
     )
     val cancelDelayMillis = 300L
-    val call = client.newCall(
-      Request.Builder()
-        .url(server.url("/").newBuilder().scheme(scheme!!).build())
-        .build()
-    )
+    val call = client.newCall(Request(server.url("/").newBuilder().scheme(scheme!!).build()))
     cancelLater(call, cancelDelayMillis)
     val startNanos = System.nanoTime()
     try {
@@ -2361,11 +2311,7 @@ open class CallTest(
         chain.proceed(chain.request())
       })
       .build()
-    val call = client.newCall(
-      Request.Builder()
-        .url(server.url("/a"))
-        .build()
-    )
+    val call = client.newCall(Request(server.url("/a")))
     call.enqueue(callback)
     call.cancel()
     latch.countDown()
@@ -2373,11 +2319,7 @@ open class CallTest(
   }
 
   @Test fun cancelAll() {
-    val call = client.newCall(
-      Request.Builder()
-        .url(server.url("/"))
-        .build()
-    )
+    val call = client.newCall(Request(server.url("/")))
     call.enqueue(callback)
     client.dispatcher.cancelAll()
     callback.await(server.url("/")).assertFailure("Canceled", "Socket closed", "Socket is closed")
@@ -2396,7 +2338,7 @@ open class CallTest(
       }
     }
     client = client.newBuilder().eventListener(listener).build()
-    val call = client.newCall(Request.Builder().url(server.url("/a")).build())
+    val call = client.newCall(Request(server.url("/a")))
     try {
       call.execute()
       fail<Unit>()
@@ -2411,7 +2353,7 @@ open class CallTest(
 
   @Test fun cancelBeforeBodyIsRead() {
     server.enqueue(MockResponse().setBody("def").throttleBody(1, 750, TimeUnit.MILLISECONDS))
-    val call = client.newCall(Request.Builder().url(server.url("/a")).build())
+    val call = client.newCall(Request(server.url("/a")))
     val executor = Executors.newSingleThreadExecutor()
     val result = executor.submit<Response?> { call.execute() }
     Thread.sleep(100) // wait for it to go in flight.
@@ -2425,7 +2367,7 @@ open class CallTest(
   }
 
   @Test fun cancelInFlightBeforeResponseReadThrowsIOE() {
-    val request = Request.Builder().url(server.url("/a")).build()
+    val request = Request(server.url("/a"))
     val call = client.newCall(request)
     server.dispatcher = object : mockwebserver3.Dispatcher() {
       override fun dispatch(request: RecordedRequest): MockResponse {
@@ -2462,8 +2404,8 @@ open class CallTest(
     client = client.newBuilder()
       .dispatcher(dispatcher)
       .build()
-    val requestA = Request.Builder().url(server.url("/a")).build()
-    val requestB = Request.Builder().url(server.url("/b")).build()
+    val requestA = Request(server.url("/a"))
+    val requestB = Request(server.url("/b"))
     val callA = client.newCall(requestA)
     val callB = client.newCall(requestB)
     server.dispatcher = object : mockwebserver3.Dispatcher() {
@@ -2492,7 +2434,7 @@ open class CallTest(
   }
 
   @Test fun canceledBeforeResponseReadSignalsOnFailure() {
-    val requestA = Request.Builder().url(server.url("/a")).build()
+    val requestA = Request(server.url("/a"))
     val call = client.newCall(requestA)
     server.dispatcher = object : mockwebserver3.Dispatcher() {
       override fun dispatch(request: RecordedRequest): MockResponse {
@@ -2527,7 +2469,7 @@ open class CallTest(
     val latch = CountDownLatch(1)
     val bodyRef = AtomicReference<String?>()
     val failureRef = AtomicBoolean()
-    val request = Request.Builder().url(server.url("/a")).build()
+    val request = Request(server.url("/a"))
     val call = client.newCall(request)
     call.enqueue(object : Callback {
       override fun onFailure(call: Call, e: IOException) {
@@ -2571,7 +2513,7 @@ open class CallTest(
         throw AssertionError() // We expect an exception.
       })
       .build()
-    val call = client.newCall(Request.Builder().url(server.url("/a")).build())
+    val call = client.newCall(Request(server.url("/a")))
     call.cancel()
     try {
       call.execute()
@@ -2782,10 +2724,10 @@ open class CallTest(
       MockResponse()
         .add100Continue()
     )
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .post("abc".toRequestBody("text/plain".toMediaType()))
-      .build()
+    val request = Request(
+      url = server.url("/"),
+      body = "abc".toRequestBody("text/plain".toMediaType()),
+    )
     executeSynchronously(request)
       .assertCode(200)
       .assertSuccessful()
@@ -2807,10 +2749,10 @@ open class CallTest(
       MockResponse()
         .setStatus("HTTP/1.1 100 Continue")
     )
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .post("abc".toRequestBody("text/plain".toMediaType()))
-      .build()
+    val request = Request(
+      url = server.url("/"),
+      body = "abc".toRequestBody("text/plain".toMediaType()),
+    )
     val call = client.newCall(request)
     try {
       call.execute()
@@ -2840,11 +2782,7 @@ open class CallTest(
         .post("abc".toRequestBody("text/plain".toMediaType()))
         .build()
     )
-    executeSynchronously(
-      Request.Builder()
-        .url(server.url("/"))
-        .build()
-    )
+    executeSynchronously(Request(server.url("/")))
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
   }
@@ -2866,11 +2804,7 @@ open class CallTest(
         .post("abc".toRequestBody("text/plain".toMediaType()))
         .build()
     )
-    executeSynchronously(
-      Request.Builder()
-        .url(server.url("/"))
-        .build()
-    )
+    executeSynchronously(Request(server.url("/")))
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
   }
@@ -2887,11 +2821,7 @@ open class CallTest(
         .post("abc".toRequestBody("text/plain".toMediaType()))
         .build()
     )
-    executeSynchronously(
-      Request.Builder()
-        .url(server.url("/"))
-        .build()
-    )
+    executeSynchronously(Request(server.url("/")))
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
   }
@@ -2919,9 +2849,7 @@ open class CallTest(
       .dns(dns)
       .build()
     server.enqueue(MockResponse())
-    val request = Request.Builder()
-      .url(server.url("/").newBuilder().host("android.com").build())
-      .build()
+    val request = Request(server.url("/").newBuilder().host("android.com").build())
     executeSynchronously(request).assertCode(200)
     dns.assertRequests("android.com")
   }
@@ -2935,9 +2863,7 @@ open class CallTest(
       .dns(dns)
       .build()
     server.enqueue(MockResponse())
-    val request = Request.Builder()
-      .url(server.url("/").newBuilder().host("android.com").build())
-      .build()
+    val request = Request(server.url("/").newBuilder().host("android.com").build())
     executeSynchronously(request).assertFailure("$dns returned no addresses for android.com")
     dns.assertRequests("android.com")
   }
@@ -2962,10 +2888,10 @@ open class CallTest(
       }
     }
     val call = client.newCall(
-      Request.Builder()
-        .url(server.url("/"))
-        .post(requestBody)
-        .build()
+      Request(
+        url = server.url("/"),
+        body = requestBody
+      )
     )
     call.execute().use { response ->
       assertThat(response.code).isEqualTo(200)
@@ -3040,9 +2966,7 @@ open class CallTest(
       .proxy(server.toProxyAddress())
       .hostnameVerifier(hostnameVerifier)
       .build()
-    val request = Request.Builder()
-      .url("https://android.com/foo")
-      .build()
+    val request = Request("https://android.com/foo".toHttpUrl())
     try {
       client.newCall(request).execute()
       fail<Unit>()
@@ -3077,9 +3001,7 @@ open class CallTest(
       .proxyAuthenticator(RecordingOkAuthenticator("password", "Basic"))
       .hostnameVerifier(RecordingHostnameVerifier())
       .build()
-    val request = Request.Builder()
-      .url("https://android.com/foo")
-      .build()
+    val request = Request("https://android.com/foo".toHttpUrl())
     val response = client.newCall(request).execute()
     assertThat(response.body.string()).isEqualTo("response body")
     val connect1 = server.takeRequest()
@@ -3108,9 +3030,7 @@ open class CallTest(
       .proxy(server.toProxyAddress())
       .proxyAuthenticator(RecordingOkAuthenticator("password", "Basic"))
       .build()
-    val request = Request.Builder()
-      .url("http://android.com/foo")
-      .build()
+    val request = Request("http://android.com/foo".toHttpUrl())
     val response = client.newCall(request).execute()
     assertThat(response.body.string()).isEqualTo("response body")
     val get1 = server.takeRequest()
@@ -3152,9 +3072,7 @@ open class CallTest(
       .proxyAuthenticator(RecordingOkAuthenticator("password", "Basic"))
       .hostnameVerifier(RecordingHostnameVerifier())
       .build()
-    val request = Request.Builder()
-      .url("https://android.com/foo")
-      .build()
+    val request = Request("https://android.com/foo".toHttpUrl())
     val response = client.newCall(request).execute()
     assertThat(response.body.string()).isEqualTo("response body")
 
@@ -3188,9 +3106,7 @@ open class CallTest(
       .proxyAuthenticator(RecordingOkAuthenticator("password", "Basic"))
       .hostnameVerifier(RecordingHostnameVerifier())
       .build()
-    val request = Request.Builder()
-      .url("https://android.com/foo")
-      .build()
+    val request = Request("https://android.com/foo".toHttpUrl())
     try {
       client.newCall(request).execute()
       fail<Unit>()
@@ -3265,9 +3181,7 @@ open class CallTest(
           .build()
       }
       .build()
-    val request = Request.Builder()
-      .url("https://android.com/foo")
-      .build()
+    val request = Request("https://android.com/foo".toHttpUrl())
     executeSynchronously(request).assertSuccessful()
     val connect = server.takeRequest()
     assertThat(connect.method).isEqualTo("CONNECT")
@@ -3310,9 +3224,7 @@ open class CallTest(
           .build()
       }
       .build()
-    val request = Request.Builder()
-      .url("https://android.com/foo")
-      .build()
+    val request = Request("https://android.com/foo".toHttpUrl())
     executeSynchronously(request).assertSuccessful()
     val connect1 = server.takeRequest()
     assertThat(connect1.method).isEqualTo("CONNECT")
@@ -3337,9 +3249,7 @@ open class CallTest(
       )
       .proxy(server.toProxyAddress())
       .build()
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .build()
+    val request = Request(server.url("/"))
     try {
       client.newCall(request).execute()
       fail<Unit>()
@@ -3428,7 +3338,7 @@ open class CallTest(
         .addHeader("content-length: 0")
         .addHeaderLenient("a b", "c")
     )
-    val call = client.newCall(Request.Builder().url(server.url("/")).build())
+    val call = client.newCall(Request(server.url("/")))
     val response = call.execute()
     assertThat(response.header("a b")).isEqualTo("c")
   }
@@ -3440,7 +3350,7 @@ open class CallTest(
         .addHeader("content-length: 0")
         .addHeaderLenient("a\tb", "c")
     )
-    val call = client.newCall(Request.Builder().url(server.url("/")).build())
+    val call = client.newCall(Request(server.url("/")))
     val response = call.execute()
     assertThat(response.header("a\tb")).isEqualTo("c")
   }
@@ -3463,19 +3373,17 @@ open class CallTest(
       )
       .build()
     server2.shutdown()
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .post("abc".toRequestBody("text/plain".toMediaType()))
-      .build()
+    val request = Request(
+      url = server.url("/"),
+      body = "abc".toRequestBody("text/plain".toMediaType()),
+    )
     executeSynchronously(request)
     assertThat(server.takeRequest().body.readUtf8()).isEqualTo("abc")
   }
 
   @Disabled // This may fail in DNS lookup, which we don't have timeouts for.
   @Test fun invalidHost() {
-    val request = Request.Builder()
-      .url("http://1234.1.1.1/".toHttpUrl())
-      .build()
+    val request = Request("http://1234.1.1.1/".toHttpUrl())
     executeSynchronously(request)
       .assertFailure(UnknownHostException::class.java)
   }
@@ -3511,10 +3419,10 @@ open class CallTest(
   private fun upload(chunked: Boolean, size: Int, writeSize: Int) {
     server.enqueue(MockResponse())
     executeSynchronously(
-      Request.Builder()
-        .url(server.url("/"))
-        .post(requestBody(chunked, size.toLong(), writeSize))
-        .build()
+      Request(
+        url = server.url("/"),
+        body = requestBody(chunked, size.toLong(), writeSize),
+      )
     )
   }
 
@@ -3530,9 +3438,7 @@ open class CallTest(
       .host("::1")
       .port(port)
       .build()
-    val request = Request.Builder()
-      .url(url)
-      .build()
+    val request = Request(url)
     val response = client.newCall(request).execute()
     assertThat(response.body.string()).isEqualTo("response body")
     val connect = server.takeRequest()
@@ -3557,9 +3463,7 @@ open class CallTest(
       .host("::1")
       .port(port)
       .build()
-    val request = Request.Builder()
-      .url(url)
-      .build()
+    val request = Request(url)
     val response = client.newCall(request).execute()
     assertThat(response.body.string()).isEqualTo("response body")
     val connect = server.takeRequest()
@@ -3590,9 +3494,7 @@ open class CallTest(
       .host("127.0.0.1")
       .port(port)
       .build()
-    val request = Request.Builder()
-      .url(url)
-      .build()
+    val request = Request(url)
     val response = client.newCall(request).execute()
     assertThat(response.body.string()).isEqualTo("response body")
     val connect = server.takeRequest()
@@ -3623,9 +3525,7 @@ open class CallTest(
       .host("127.0.0.1")
       .port(port)
       .build()
-    val request = Request.Builder()
-      .url(url)
-      .build()
+    val request = Request(url)
     val response = client.newCall(request).execute()
     assertThat(response.body.string()).isEqualTo("response body")
     val connect = server.takeRequest()
@@ -3650,9 +3550,7 @@ open class CallTest(
       .host("any-host-name")
       .port(port)
       .build()
-    val request = Request.Builder()
-      .url(url)
-      .build()
+    val request = Request(url)
     val response = client.newCall(request).execute()
     assertThat(response.body.string()).isEqualTo("response body")
     val connect = server.takeRequest()
@@ -3677,9 +3575,7 @@ open class CallTest(
       .host("any-host-name")
       .port(port)
       .build()
-    val request = Request.Builder()
-      .url(url)
-      .build()
+    val request = Request(url)
     val response = client.newCall(request).execute()
     assertThat(response.body.string()).isEqualTo("response body")
     val connect = server.takeRequest()
@@ -3753,9 +3649,7 @@ open class CallTest(
     client = clientTestRule.newClientBuilder()
       .connectionPool(ConnectionPool(0, 10, TimeUnit.MILLISECONDS))
       .build()
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .build()
+    val request = Request(server.url("/"))
     client.newCall(request).execute() // Ignore the response so it gets leaked then GC'd.
     awaitGarbageCollection()
     val message = testLogHandler.take()
@@ -3773,9 +3667,7 @@ open class CallTest(
     client = clientTestRule.newClientBuilder()
       .connectionPool(ConnectionPool(0, 10, TimeUnit.MILLISECONDS))
       .build()
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .build()
+    val request = Request(server.url("/"))
     val latch = CountDownLatch(1)
     client.newCall(request).enqueue(object : Callback {
       override fun onFailure(call: Call, e: IOException) {
@@ -3806,9 +3698,7 @@ open class CallTest(
     client = client.newBuilder()
       .authenticator { _: Route?, _: Response -> throw IOException("IOException!") }
       .build()
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .build()
+    val request = Request(server.url("/"))
     executeSynchronously(request)
       .assertFailure(IOException::class.java)
     assertThat(client.connectionPool.idleConnectionCount()).isEqualTo(1)
@@ -3824,9 +3714,7 @@ open class CallTest(
         throw IOException("IOException!")
       }
       .build()
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .build()
+    val request = Request(server.url("/"))
     executeSynchronously(request)
       .assertFailure(IOException::class.java)
     assertThat(client.connectionPool.idleConnectionCount()).isEqualTo(1)
@@ -3860,9 +3748,7 @@ open class CallTest(
     val url = server.url("/").newBuilder()
       .host(localIpAddress)
       .build()
-    val request = Request.Builder()
-      .url(url)
-      .build()
+    val request = Request(url)
     executeSynchronously(request)
       .assertCode(200)
 
@@ -3881,10 +3767,10 @@ open class CallTest(
         throw FileNotFoundException()
       }
     }
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .post(body)
-      .build()
+    val request = Request(
+      url = server.url("/"),
+      body = body,
+    )
     client = client.newBuilder()
       .dns(DoubleInetAddressDns())
       .build()
@@ -3901,11 +3787,7 @@ open class CallTest(
       .setChunkedBody("HelloBonjour", 1024)
       .setTrailers(headersOf("trailers", "boom"))
     server.enqueue(mockResponse)
-    val call = client.newCall(
-      Request.Builder()
-        .url(server.url("/"))
-        .build()
-    )
+    val call = client.newCall(Request(server.url("/")))
     val response = call.execute()
     val source = response.body.source()
     assertThat(response.header("h1")).isEqualTo("v1")
@@ -3928,11 +3810,7 @@ open class CallTest(
       .setTrailers(headersOf("trailers", "boom"))
     server.enqueue(mockResponse)
     enableProtocol(Protocol.HTTP_2)
-    val call = client.newCall(
-      Request.Builder()
-        .url(server.url("/"))
-        .build()
-    )
+    val call = client.newCall(Request(server.url("/")))
     call.execute().use { response ->
       val source = response.body.source()
       assertThat(response.header("h1")).isEqualTo("v1")
@@ -3960,9 +3838,9 @@ open class CallTest(
 
   @Test fun requestBodyThrowsUnrelatedToNetwork() {
     server.enqueue(MockResponse())
-    val request = Request.Builder()
-      .url(server.url("/"))
-      .post(object : RequestBody() {
+    val request = Request(
+      url = server.url("/"),
+      body = object : RequestBody() {
         override fun contentType(): MediaType? {
           return null
         }
@@ -3971,8 +3849,8 @@ open class CallTest(
           sink.flush() // For determinism, always send a partial request to the server.
           throw IOException("boom")
         }
-      })
-      .build()
+      },
+    )
     executeSynchronously(request).assertFailure("boom")
     assertThat(server.takeRequest().failure).isNotNull
   }
@@ -4001,11 +3879,7 @@ open class CallTest(
         }
       })
       .build()
-    val call = cancelClient.newCall(
-      Request.Builder()
-        .url(server.url("/"))
-        .build()
-    )
+    val call = cancelClient.newCall(Request(server.url("/")))
     val response = call.execute()
     assertThat(response.body.string()).isEqualTo("abc")
     executeSynchronously("/").assertCode(200)
@@ -4049,9 +3923,7 @@ open class CallTest(
     server.enqueue(MockResponse()
       .setBody("this is the redirect target"))
 
-    val call = client.newCall(Request.Builder()
-      .url(server.url("/"))
-      .build())
+    val call = client.newCall(Request(server.url("/")))
     val response = call.execute()
     assertThat(response.body.string()).isEqualTo("this is the redirect target")
     assertThat(response.priorResponse?.body?.contentType())
@@ -4079,10 +3951,10 @@ open class CallTest(
       .retryOnConnectionFailure(false)
       .build()
     val call = nonRetryingClient.newCall(
-      Request.Builder()
-        .url(server.url("/"))
-        .post(requestBody)
-        .build()
+      Request(
+        url = server.url("/"),
+        body = requestBody,
+      )
     )
     try {
       call.execute()

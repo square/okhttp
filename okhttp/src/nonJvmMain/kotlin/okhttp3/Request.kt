@@ -30,16 +30,42 @@ import okhttp3.internal.commonPost
 import okhttp3.internal.commonPut
 import okhttp3.internal.commonRemoveHeader
 
-actual class Request internal constructor(
-  actual val url: String,
-  actual val method: String,
-  actual val headers: Headers,
-  actual val body: RequestBody?,
-) {
+actual class Request internal actual constructor(builder: Builder) {
+  actual val url: String = checkNotNull(builder.url) { "url == null" }
+  actual val method: String = builder.method
+  actual val headers: Headers = builder.headers.build()
+  actual val body: RequestBody? = builder.body
+
   internal actual var lazyCacheControl: CacheControl? = null
 
   actual val isHttps: Boolean
     get() = url.startsWith("https://")
+
+  /**
+   * Constructs a new request.
+   *
+   * Use [Builder] for more fluent construction, including helper methods for various HTTP methods.
+   *
+   * @param method defaults to "GET" if [body] is null, and "POST" otherwise.
+   */
+  constructor(
+    url: String,
+    headers: Headers = Headers.headersOf(),
+    method: String = "\u0000", // Sentinel value chooses based on what the body is.
+    body: RequestBody? = null,
+  ) : this(
+    Builder()
+      .url(url)
+      .headers(headers)
+      .method(
+        when {
+          method != "\u0000" -> method
+          body != null -> "POST"
+          else -> "GET"
+        },
+        body
+      )
+  )
 
   actual fun header(name: String): String? = commonHeader(name)
 
@@ -153,13 +179,6 @@ actual class Request internal constructor(
     //   }
     // }
 
-    actual open fun build(): Request {
-      return Request(
-          checkNotNull(url) { "url == null" },
-          method,
-          headers.build(),
-          body,
-      )
-    }
+    actual open fun build() = Request(this)
   }
 }

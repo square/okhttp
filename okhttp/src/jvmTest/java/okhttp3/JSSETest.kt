@@ -62,7 +62,7 @@ class JSSETest(
 
     server.enqueue(MockResponse().setBody("abc"))
 
-    val request = Request.Builder().url(server.url("/")).build()
+    val request = Request(server.url("/"))
 
     val response = client.newCall(request).execute()
 

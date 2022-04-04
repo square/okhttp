@@ -145,9 +145,9 @@ class CancelTest {
     setUp(mode)
     server.enqueue(MockResponse())
     val call = client.newCall(
-      Request.Builder()
-        .url(server.url("/"))
-        .post(object : RequestBody() {
+      Request(
+        url = server.url("/"),
+        body = object : RequestBody() {
           override fun contentType(): MediaType? {
             return null
           }
@@ -162,8 +162,8 @@ class CancelTest {
             }
             fail("Expected connection to be closed")
           }
-        })
-        .build()
+        },
+      )
     )
     cancelLater(call, 500)
     try {
@@ -187,11 +187,7 @@ class CancelTest {
         )
         .throttleBody(64 * 1024, 125, MILLISECONDS)
     ) // 500 Kbps
-    val call = client.newCall(
-      Request.Builder()
-        .url(server.url("/"))
-        .build()
-    )
+    val call = client.newCall(Request(server.url("/")))
     val response = call.execute()
     cancelLater(call, 500)
     val responseBody = response.body.byteStream()
@@ -254,7 +250,7 @@ class CancelTest {
     assertThat(events).contains("ResponseFailed")
     assertThat(events).contains("ConnectionReleased")
 
-    val call2 = client.newCall(Request.Builder().url(server.url("/")).build())
+    val call2 = client.newCall(Request(server.url("/")))
     call2.execute().use {
       assertEquals(".", it.body.string())
     }

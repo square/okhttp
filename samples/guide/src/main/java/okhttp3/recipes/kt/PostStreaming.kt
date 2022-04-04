@@ -16,6 +16,7 @@
 package okhttp3.recipes.kt
 
 import java.io.IOException
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -46,10 +47,10 @@ class PostStreaming {
       }
     }
 
-    val request = Request.Builder()
-        .url("https://api.github.com/markdown/raw")
-        .post(requestBody)
-        .build()
+    val request = Request(
+      url = "https://api.github.com/markdown/raw".toHttpUrl(),
+      body = requestBody,
+    )
 
     client.newCall(request).execute().use { response ->
       if (!response.isSuccessful) throw IOException("Unexpected code $response")

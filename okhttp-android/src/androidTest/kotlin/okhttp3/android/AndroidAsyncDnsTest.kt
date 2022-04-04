@@ -26,6 +26,7 @@ import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.junit5.internal.MockWebServerExtension
 import okhttp3.AsyncDns
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.tls.HandshakeCertificates
@@ -74,7 +75,7 @@ class AndroidAsyncDnsTest(val server: MockWebServer) {
   fun testRequest() {
     server.enqueue(MockResponse())
 
-    val call = client.newCall(Request.Builder().url(server.url("/")).build())
+    val call = client.newCall(Request(server.url("/")))
 
     call.execute().use { response ->
       assertThat(response.code).isEqualTo(200)
@@ -85,7 +86,7 @@ class AndroidAsyncDnsTest(val server: MockWebServer) {
   fun testRequestExternal() {
     assumeNetwork()
 
-    val call = client.newCall(Request.Builder().url("https://google.com/robots.txt").build())
+    val call = client.newCall(Request("https://google.com/robots.txt".toHttpUrl()))
 
     call.execute().use { response ->
       assertThat(response.code).isEqualTo(200)
@@ -94,7 +95,7 @@ class AndroidAsyncDnsTest(val server: MockWebServer) {
 
   @Test
   fun testRequestInvalid() {
-    val call = client.newCall(Request.Builder().url("https://google.invalid/").build())
+    val call = client.newCall(Request("https://google.invalid/".toHttpUrl()))
 
     try {
       call.execute()
@@ -171,7 +172,7 @@ class AndroidAsyncDnsTest(val server: MockWebServer) {
       .build()
 
     val call =
-      client.newCall(Request.Builder().url("https://google.com/robots.txt").build())
+      client.newCall(Request("https://google.com/robots.txt".toHttpUrl()))
 
     call.execute().use { response ->
       assertThat(response.code).isEqualTo(200)
