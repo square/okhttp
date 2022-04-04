@@ -61,6 +61,12 @@ jobs:
         with:
           arguments: check -x test
 
+      - name: Publish Test Report
+        if: github.repository == 'square/okhttp' && github.ref == 'refs/heads/master'
+        uses: mikepenz/action-junit-report@v3
+        with:
+          report_paths: '**/build/test-results/*/TEST-*.xml'
+
   testopenjdk11:
     runs-on: ubuntu-latest
 
@@ -82,10 +88,10 @@ jobs:
           arguments: jvmTest -Dtest.java.version=11
 
       - name: Publish Test Report
-        if: success() || failure()
+        if: github.repository == 'square/okhttp' && github.ref == 'refs/heads/master'
         uses: mikepenz/action-junit-report@v3
         with:
-          report_paths: '**/build/test-results/test/TEST-*.xml'
+          report_paths: '**/build/test-results/*/TEST-*.xml'
 
   testjs:
     runs-on: ubuntu-latest
