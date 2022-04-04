@@ -391,6 +391,7 @@ public final class WebSocketHttpTest {
         "Request header not permitted: 'Sec-WebSocket-Extensions'");
   }
 
+  @SuppressWarnings("KotlinInternalInJava")
   @Test public void webSocketAndApplicationInterceptors() {
     final AtomicInteger interceptedCount = new AtomicInteger();
 
