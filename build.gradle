@@ -7,17 +7,17 @@ buildscript {
       'bouncycastle': '1.65',
       'brotli': '0.1.2',
       'checkstyle': '8.28',
-      'conscrypt': '2.5.1',
+      'conscrypt': '2.5.2',
       'corretto': '1.3.1',
       'findbugs': '3.0.2',
-      'guava': '28.2-jre',
+      'guava': '31.1-jre',
       'java': '1.8',
       'jnrUnixsocket': '0.28',
       'jsoup': '1.13.1',
       'junit': '4.13',
-      'kotlin': '1.4.10',
+      'kotlin': '1.6.20',
       'moshi': '1.9.2',
-      'okio': '2.8.0',
+      'okio': '3.0.0',
       'ktlint': '0.38.0',
       'picocli': '4.2.0',
       'openjsse': '1.1.0'
@@ -47,7 +47,7 @@ buildscript {
   ]
 
   dependencies {
-    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.10"
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.20"
     classpath "org.jetbrains.dokka:dokka-gradle-plugin:0.10.1"
     classpath "com.android.tools.build:gradle:4.0.1"
   }
