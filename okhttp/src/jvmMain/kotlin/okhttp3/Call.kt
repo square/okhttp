@@ -67,7 +67,7 @@ actual interface Call : Cloneable {
    */
   fun timeout(): Timeout
 
-  public override actual fun clone(): Call
+  public actual override fun clone(): Call
 
   actual fun interface Factory {
     actual fun newCall(request: Request): Call
