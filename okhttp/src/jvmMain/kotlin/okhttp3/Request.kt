@@ -32,7 +32,6 @@ import okhttp3.internal.commonPost
 import okhttp3.internal.commonPut
 import okhttp3.internal.commonRemoveHeader
 import okhttp3.internal.commonTag
-import okhttp3.internal.toImmutableMap
 
 actual class Request internal actual constructor(builder: Builder) {
   @get:JvmName("url")
@@ -47,7 +46,7 @@ actual class Request internal actual constructor(builder: Builder) {
   @get:JvmName("body")
   actual val body: RequestBody? = builder.body
 
-  internal actual val tags: Map<KClass<*>, Any> = builder.tags.toImmutableMap()
+  internal actual val tags: Map<KClass<*>, Any> = builder.tags.toMap()
 
   internal actual var lazyCacheControl: CacheControl? = null
 

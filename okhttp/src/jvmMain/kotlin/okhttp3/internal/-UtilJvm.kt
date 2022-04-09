@@ -223,13 +223,6 @@ fun <T> immutableListOf(vararg elements: T): List<T> {
   return Collections.unmodifiableList(listOf(*elements.clone()))
 }
 
-internal actual fun <K, V> Map<K, V>.toImmutableMap(): Map<K, V> {
-  return when {
-    isEmpty() -> emptyMap()
-    else -> Collections.unmodifiableMap(LinkedHashMap(this))
-  }
-}
-
 /** Closes this, ignoring any checked exceptions. */
 internal fun Socket.closeQuietly() {
   try {
