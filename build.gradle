@@ -47,9 +47,9 @@ buildscript {
   ]
 
   dependencies {
-    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.20"
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.10"
     classpath "org.jetbrains.dokka:dokka-gradle-plugin:0.10.1"
-    classpath "com.android.tools.build:gradle:4.0.1"
+    classpath "com.android.tools.build:gradle:4.0.2"
   }
 
   repositories {
@@ -93,9 +93,6 @@ allprojects {
 
   repositories {
     mavenCentral()
-    maven {
-      url 'https://dl.bintray.com/kotlin/dokka'
-    }
     google()
   }
 
