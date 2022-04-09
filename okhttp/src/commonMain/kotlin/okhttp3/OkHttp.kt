@@ -15,6 +15,8 @@
  */
 package okhttp3
 
+import okhttp3.internal.CONST_VERSION
+
 object OkHttp {
   /**
    * This is a string like "4.5.0-RC1", "4.5.0", or "4.6.0-SNAPSHOT" indicating the version of
@@ -31,5 +33,6 @@ object OkHttp {
    *
    * [semver]: https://semver.org
    */
-  const val VERSION = "$projectVersion"
+  @Suppress("MayBeConstant") // Non-const so external callers get the runtime version.
+  val VERSION = CONST_VERSION
 }
