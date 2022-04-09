@@ -862,7 +862,7 @@ public final class okhttp3/OkHttp {
 	public static final field VERSION Ljava/lang/String;
 }
 
-public class okhttp3/OkHttpClient : java/lang/Cloneable, okhttp3/Call$Factory, okhttp3/WebSocket$Factory {
+public class okhttp3/OkHttpClient : okhttp3/Call$Factory, okhttp3/WebSocket$Factory {
 	public static final field Companion Lokhttp3/OkHttpClient$Companion;
 	public final fun -deprecated_authenticator ()Lokhttp3/Authenticator;
 	public final fun -deprecated_cache ()Lokhttp3/Cache;
@@ -896,7 +896,6 @@ public class okhttp3/OkHttpClient : java/lang/Cloneable, okhttp3/Call$Factory, o
 	public final fun callTimeoutMillis ()I
 	public final fun certificateChainCleaner ()Lokhttp3/internal/tls/CertificateChainCleaner;
 	public final fun certificatePinner ()Lokhttp3/CertificatePinner;
-	public fun clone ()Ljava/lang/Object;
 	public final fun connectTimeoutMillis ()I
 	public final fun connectionPool ()Lokhttp3/ConnectionPool;
 	public final fun connectionSpecs ()Ljava/util/List;
