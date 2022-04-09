@@ -2,12 +2,9 @@ apply plugin: 'com.android.library'
 apply plugin: 'org.jetbrains.kotlin.android'
 
 repositories {
-  jcenter {
-    // Required for a dependency of Android lint.
-    content {
-      includeGroup 'org.jetbrains.trove4j'
-    }
-  }
+  mavenCentral()
+  gradlePluginPortal()
+  google()
 }
 
 android {
