@@ -223,12 +223,10 @@ fun <T> immutableListOf(vararg elements: T): List<T> {
   return Collections.unmodifiableList(listOf(*elements.clone()))
 }
 
-/** Returns an immutable copy of this. */
-internal fun <K, V> Map<K, V>.toImmutableMap(): Map<K, V> {
-  return if (isEmpty()) {
-    emptyMap()
-  } else {
-    Collections.unmodifiableMap(LinkedHashMap(this))
+internal actual fun <K, V> Map<K, V>.toImmutableMap(): Map<K, V> {
+  return when {
+    isEmpty() -> emptyMap()
+    else -> Collections.unmodifiableMap(LinkedHashMap(this))
   }
 }
 

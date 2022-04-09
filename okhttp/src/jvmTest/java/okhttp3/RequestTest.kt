@@ -335,6 +335,10 @@ class RequestTest {
     assertThat(request.tag(Any::class.java)).isNull()
     assertThat(request.tag(UUID::class.java)).isNull()
     assertThat(request.tag(String::class.java)).isNull()
+
+    // Alternate access APIs also work.
+    assertThat(request.tag<String>()).isNull()
+    assertThat(request.tag(String::class)).isNull()
   }
 
   @Test
@@ -348,6 +352,10 @@ class RequestTest {
     assertThat(request.tag(Any::class.java)).isSameAs(tag)
     assertThat(request.tag(UUID::class.java)).isNull()
     assertThat(request.tag(String::class.java)).isNull()
+
+    // Alternate access APIs also work.
+    assertThat(request.tag<Any>()).isSameAs(tag)
+    assertThat(request.tag(Any::class)).isSameAs(tag)
   }
 
   @Test
@@ -380,19 +388,61 @@ class RequestTest {
     assertThat(request.tag(Any::class.java)).isSameAs(tag)
     assertThat(request.tag(UUID::class.java)).isNull()
     assertThat(request.tag(String::class.java)).isNull()
+
+    // Alternate access APIs also work.
+    assertThat(request.tag(Any::class)).isSameAs(tag)
+    assertThat(request.tag<Any>()).isSameAs(tag)
   }
 
   @Test
-  fun typedTag() {
+  fun javaClassTag() {
     val uuidTag = UUID.randomUUID()
     val request = Request.Builder()
       .url("https://square.com")
-      .tag(UUID::class.java, uuidTag)
+      .tag(UUID::class.java, uuidTag) // Use the Class<*> parameter.
       .build()
     assertThat(request.tag()).isNull()
     assertThat(request.tag(Any::class.java)).isNull()
     assertThat(request.tag(UUID::class.java)).isSameAs(uuidTag)
     assertThat(request.tag(String::class.java)).isNull()
+
+    // Alternate access APIs also work.
+    assertThat(request.tag(UUID::class)).isSameAs(uuidTag)
+    assertThat(request.tag<UUID>()).isSameAs(uuidTag)
+  }
+
+  @Test
+  fun kotlinReifiedTag() {
+    val uuidTag = UUID.randomUUID()
+    val request = Request.Builder()
+      .url("https://square.com")
+      .tag<UUID>(uuidTag) // Use the type parameter.
+      .build()
+    assertThat(request.tag()).isNull()
+    assertThat(request.tag<Any>()).isNull()
+    assertThat(request.tag<UUID>()).isSameAs(uuidTag)
+    assertThat(request.tag<String>()).isNull()
+
+    // Alternate access APIs also work.
+    assertThat(request.tag(UUID::class.java)).isSameAs(uuidTag)
+    assertThat(request.tag(UUID::class)).isSameAs(uuidTag)
+  }
+
+  @Test
+  fun kotlinClassTag() {
+    val uuidTag = UUID.randomUUID()
+    val request = Request.Builder()
+      .url("https://square.com")
+      .tag(UUID::class, uuidTag) // Use the KClass<*> parameter.
+      .build()
+    assertThat(request.tag()).isNull()
+    assertThat(request.tag(Any::class)).isNull()
+    assertThat(request.tag(UUID::class)).isSameAs(uuidTag)
+    assertThat(request.tag(String::class)).isNull()
+
+    // Alternate access APIs also work.
+    assertThat(request.tag(UUID::class.java)).isSameAs(uuidTag)
+    assertThat(request.tag<UUID>()).isSameAs(uuidTag)
   }
 
   @Test

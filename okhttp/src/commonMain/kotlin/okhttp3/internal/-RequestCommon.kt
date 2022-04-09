@@ -16,6 +16,7 @@
 
 package okhttp3.internal
 
+import kotlin.reflect.KClass
 import okhttp3.CacheControl
 import okhttp3.Headers
 import okhttp3.Request
@@ -102,4 +103,18 @@ fun Request.Builder.commonMethod(method: String, body: RequestBody?): Request.Bu
   }
   this.method = method
   this.body = body
+}
+
+fun <T : Any> Request.Builder.commonTag(type: KClass<T>, tag: T?) = apply {
+  if (tag == null) {
+    if (tags.isNotEmpty()) {
+      (tags as MutableMap).remove(type)
+    }
+  } else {
+    val mutableTags: MutableMap<KClass<*>, Any> = when {
+      tags.isEmpty() -> mutableMapOf<KClass<*>, Any>().also { tags = it }
+      else -> tags as MutableMap<KClass<*>, Any>
+    }
+    mutableTags[type] = tag
+  }
 }

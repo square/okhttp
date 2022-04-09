@@ -17,3 +17,5 @@
 package okhttp3.internal
 
 actual typealias HttpUrlRepresentation = String
+
+internal actual fun <K, V> Map<K, V>.toImmutableMap(): Map<K, V> = toMap()

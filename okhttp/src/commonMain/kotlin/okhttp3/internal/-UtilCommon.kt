@@ -395,3 +395,6 @@ internal fun <T> interleave(a: Iterable<T>, b: Iterable<T>): List<T> {
     }
   }
 }
+
+/** Returns an immutable copy of this. */
+internal expect fun <K, V> Map<K, V>.toImmutableMap(): Map<K, V>
