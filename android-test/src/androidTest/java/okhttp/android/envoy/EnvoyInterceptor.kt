@@ -22,7 +22,6 @@ import io.envoyproxy.envoymobile.RequestHeadersBuilder
 import io.envoyproxy.envoymobile.RequestMethod
 import io.envoyproxy.envoymobile.StreamPrototype
 import java.io.IOException
-import java.lang.IllegalArgumentException
 import java.nio.ByteBuffer
 import java.util.concurrent.Executors
 import kotlin.coroutines.cancellation.CancellationException
@@ -31,11 +30,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
-import okhttp3.*
+import okhttp3.Headers
+import okhttp3.Interceptor
+import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.Protocol
+import okhttp3.Request
+import okhttp3.Response
 import okhttp3.ResponseBody.Companion.asResponseBody
 import okio.Buffer
-import okio.Okio
 import okio.Pipe
 import okio.buffer
 
@@ -52,7 +55,6 @@ suspend fun makeRequest(engine: Engine, request: Request) =
   suspendCancellableCoroutine<Response> { continuation ->
     val responseBuilder = Response.Builder()
       .request(request)
-      .protocol(if (request.isHttps) Protocol.QUIC else Protocol.HTTP_1_1)
       .sentRequestAtMillis(System.currentTimeMillis())
 
     val bodyPipe = Pipe(1024L * 1024L)
@@ -69,7 +71,16 @@ suspend fun makeRequest(engine: Engine, request: Request) =
 
         contentType = headers["content-type"]?.toMediaTypeOrNull()
 
+        // TODO check this logic
+        val alpn = headers["x-envoy-upstream-alpn"]
+        val protocol = if (alpn != null) {
+          Protocol.get(alpn)
+        } else {
+          if (request.isHttps) Protocol.QUIC else Protocol.HTTP_1_1
+        }
+
         responseBuilder
+          .protocol(protocol)
           .code(responseHeaders.httpStatus ?: 0)
           .message(responseHeaders.httpStatus.toString())
           .receivedResponseAtMillis(System.currentTimeMillis())
@@ -85,11 +96,12 @@ suspend fun makeRequest(engine: Engine, request: Request) =
         println("Dropping trailers " + responseTrailers.toHeaders())
       }
       .setOnResponseData { data, endStream, streamIntel ->
-        bodySink.write(data)
-
         if (endStream) {
           bodySink.close()
         }
+      }
+      .setOnComplete { streamIntel, finalStreamIntel ->
+        bodySink.close()
       }
       .setOnError { error, streamIntel, finalStreamIntel ->
         // TODO how to signal error correctly?
@@ -114,6 +126,8 @@ suspend fun makeRequest(engine: Engine, request: Request) =
       request.url.host,
       request.url.encodedPath
     ).apply {
+      // TODO addH2RawDomains for Protocol.H2C?
+
       request.headers.toMultimap().forEach { (name, values) ->
         values.forEach { value ->
           add(name, value)
@@ -143,7 +157,9 @@ suspend fun makeRequest(engine: Engine, request: Request) =
         .sendHeaders(requestHeaders.build(), endStream = true)
     }
 
-    continuation.invokeOnCancellation { stream.cancel() }
+    continuation.invokeOnCancellation {
+      stream.cancel()
+    }
   }
 
 private fun io.envoyproxy.envoymobile.Headers.toHeaders(): Headers {

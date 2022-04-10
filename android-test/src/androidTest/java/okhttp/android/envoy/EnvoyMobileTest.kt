@@ -39,6 +39,7 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
+import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
@@ -67,9 +68,9 @@ class EnvoyMobileTest {
     val application = ApplicationProvider.getApplicationContext<Application>()
 
     engine = AndroidEngineBuilder(application, baseConfiguration = Standard())
-      .addLogLevel(LogLevel.TRACE)
-      .setOnEngineRunning { println("Envoy async internal setup completed") }
+      .addLogLevel(LogLevel.INFO)
       .setLogger { println(it) }
+      // .enableHappyEyeballs(true)
       .build()
 
     client = OkHttpClient.Builder()
@@ -95,6 +96,31 @@ class EnvoyMobileTest {
     response.use {
       printResponse(response)
     }
+
+    assertEquals(Protocol.QUIC, response.protocol)
+  }
+
+  @Test
+  fun get2() = runTest {
+    val client = OkHttpClient.Builder()
+      .addInterceptor(EnvoyInterceptor(engine))
+      .build()
+
+    val getRequest = Request(url = aiortc + "get")
+
+    val response = client.newCall(getRequest).executeAsync()
+
+    response.use {
+      printResponse(response)
+    }
+
+    val response2 = client.newCall(getRequest).executeAsync()
+
+    response.use {
+      printResponse(response2)
+    }
+
+    assertEquals(Protocol.QUIC, response.protocol)
   }
 
   @Test
@@ -117,6 +143,7 @@ class EnvoyMobileTest {
   }
 
   @Test
+  @Disabled
   fun cancel() = runTest {
     val client = OkHttpClient.Builder()
       .addInterceptor(EnvoyInterceptor(engine))
