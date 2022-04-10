@@ -2,5 +2,9 @@
     package="okhttp.android.test">
   <application
       android:usesCleartextTraffic="true" />
+
   <uses-permission android:name="android.permission.INTERNET" />
+  <!--  This permission is needed in order to allow the application
+     to initiate DNS resolution via c-ares. -->
+  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 </manifest>

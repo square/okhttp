@@ -20,33 +20,49 @@ package okhttp.android.envoy
 
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.envoyproxy.envoymobile.AndroidEngineBuilder
 import io.envoyproxy.envoymobile.Engine
 import io.envoyproxy.envoymobile.LogLevel
 import io.envoyproxy.envoymobile.Standard
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.toList
 import kotlinx.coroutines.test.runTest
-import okhttp3.*
+import kotlinx.coroutines.withTimeout
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
-import org.junit.After
-import org.junit.Before
-import org.junit.Test
-import org.junit.runner.RunWith
+import okhttp3.Response
+import okhttp3.executeAsync
+import okio.IOException
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.fail
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
 
 /**
  * Envoy Mobile.
  *
  * https://github.com/envoyproxy/envoy-mobile
  */
-@RunWith(AndroidJUnit4::class)
 class EnvoyMobileTest {
   private lateinit var client: OkHttpClient
   private lateinit var engine: Engine
 
-  @Before
+  val aiortc = "https://cloudflare-quic.com/b/".toHttpUrl()
+
+  @BeforeEach
   fun setup() {
     val application = ApplicationProvider.getApplicationContext<Application>()
 
@@ -61,36 +77,95 @@ class EnvoyMobileTest {
       .build()
   }
 
-  @After
+  @AfterEach
   fun teardown() {
     engine.terminate()
   }
 
   @Test
-  fun getInterceptor() = runTest {
-    val aiortc = "https://quic.aiortc.org".toHttpUrl()
-
+  fun get() = runTest {
     val client = OkHttpClient.Builder()
       .addInterceptor(EnvoyInterceptor(engine))
       .build()
 
-    val getRequest = Request(url = aiortc / "/httpbin/get")
+    val getRequest = Request(url = aiortc + "get")
 
     val response = client.newCall(getRequest).executeAsync()
-    printResponse(response)
 
-    val response1 = client.newCall(getRequest).executeAsync()
-    printResponse(response1)
+    response.use {
+      printResponse(response)
+    }
+  }
+
+  @Test
+  fun post() = runTest {
+    val client = OkHttpClient.Builder()
+      .addInterceptor(EnvoyInterceptor(engine))
+      .build()
 
     val postRequest =
       Request(
-        url = aiortc / "/httpbin/post",
+        url = aiortc + "post",
         body = "{}".toRequestBody("application/json".toMediaType())
       )
 
-    val response2 = client.newCall(postRequest).executeAsync()
+    val response = client.newCall(postRequest).executeAsync()
 
-    printResponse(response2)
+    response.use {
+      printResponse(response)
+    }
+  }
+
+  @Test
+  fun cancel() = runTest {
+    val client = OkHttpClient.Builder()
+      .addInterceptor(EnvoyInterceptor(engine))
+      .build()
+
+    val getRequest = Request(url = aiortc + "delay/30")
+
+    try {
+      withTimeout(5.seconds) {
+        client.newCall(getRequest).executeAsync()
+      }
+      fail("Request should have failed")
+    } catch (tce: TimeoutCancellationException) {
+      // expected
+    }
+  }
+
+  @Test
+  @Disabled
+  fun enqueue() = runTest {
+    val client = OkHttpClient.Builder()
+      .addInterceptor(EnvoyInterceptor(engine))
+      .build()
+
+    val requests = 10
+    val latch = CountDownLatch(requests)
+
+    val failureChannel = Channel<IOException>(requests)
+
+    repeat(requests) {
+      val getRequest = Request(url = aiortc + "get?id=$it")
+      client.newCall(getRequest).enqueue(object : Callback {
+        override fun onFailure(call: Call, e: IOException) {
+          failureChannel.trySend(e)
+          latch.countDown()
+        }
+
+        override fun onResponse(call: Call, response: Response) {
+          response.use {
+            printResponse(response)
+          }
+          latch.countDown()
+        }
+      })
+    }
+
+    latch.await(20, TimeUnit.SECONDS)
+
+    assertEquals(listOf<IOException>(), failureChannel.toList())
   }
 
   private fun printResponse(response: Response) {
@@ -101,6 +176,6 @@ class EnvoyMobileTest {
   }
 }
 
-private operator fun HttpUrl.div(link: String): HttpUrl {
+private operator fun HttpUrl.plus(link: String): HttpUrl {
   return this.resolve(link)!!
 }
