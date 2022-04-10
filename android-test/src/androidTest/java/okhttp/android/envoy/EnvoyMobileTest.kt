@@ -24,14 +24,20 @@ import io.envoyproxy.envoymobile.AndroidEngineBuilder
 import io.envoyproxy.envoymobile.Engine
 import io.envoyproxy.envoymobile.LogLevel
 import io.envoyproxy.envoymobile.Standard
+import java.util.concurrent.CancellationException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.toList
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import okhttp3.Call
 import okhttp3.Callback
@@ -44,11 +50,13 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okhttp3.executeAsync
 import okio.IOException
+import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 /**
@@ -136,13 +144,47 @@ class EnvoyMobileTest {
     val getRequest = Request(url = aiortc + "delay/30")
 
     try {
-      withTimeout(5.seconds) {
-        client.newCall(getRequest).executeAsync()
+      withContext(Dispatchers.Default) {
+        withTimeout(1.seconds) {
+          client.newCall(getRequest).executeAsync()
+        }
       }
       fail("Request should have failed")
     } catch (tce: TimeoutCancellationException) {
       // expected
     }
+  }
+
+  @Test
+  fun cancelViaCall() = runTest {
+    val client = OkHttpClient.Builder()
+      .addInterceptor(EnvoyInterceptor(engine))
+      .build()
+
+    val getRequest = Request(url = aiortc + "delay/30")
+
+    val call = client.newCall(getRequest)
+
+    val job = launch(SupervisorJob()) {
+      try {
+        call.executeAsync()
+        fail()
+      } catch (ce: CancellationException) {
+        Assertions.assertThat(ce).hasMessage("TestScopeImpl is cancelling")
+      }
+    }
+
+    withContext(Dispatchers.Default) {
+      delay(1000)
+    }
+
+    call.cancel()
+
+    withContext(Dispatchers.Default) {
+      delay(1000)
+    }
+
+    Assertions.assertThat(job.isCancelled)
   }
 
   @Test

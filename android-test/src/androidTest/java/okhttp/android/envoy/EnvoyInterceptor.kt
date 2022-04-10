@@ -26,9 +26,7 @@ import java.nio.ByteBuffer
 import java.util.concurrent.Executors
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.coroutines.resumeWithException
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.Headers
 import okhttp3.Interceptor
@@ -42,125 +40,149 @@ import okio.Buffer
 import okio.Pipe
 import okio.buffer
 
-class EnvoyInterceptor(val engine: Engine) : Interceptor {
-  override fun intercept(chain: Interceptor.Chain): Response {
-    return runBlocking(Dispatchers.IO) {
-      makeRequest(engine, chain.request())
+class EnvoyInterceptor(private val engine: Engine) : CoroutineInterceptor() {
+  override suspend fun interceptSuspend(chain: Interceptor.Chain): Response {
+    val request = chain.request()
+
+    // TODO wire up call cancellation when possible
+    // https://github.com/square/okhttp/issues/7164
+
+    return suspendCancellableCoroutine { continuation ->
+      val responseBuilder = Response.Builder()
+        .request(request)
+        .sentRequestAtMillis(System.currentTimeMillis())
+
+      val bodyPipe = Pipe(1024L * 1024L)
+      val bodySink = bodyPipe.sink.buffer()
+      val bodySource = bodyPipe.source.buffer()
+
+      var contentType: MediaType?
+
+      val streamPrototype: StreamPrototype = engine
+        .streamClient()
+        .newStreamPrototype()
+        .setOnResponseHeaders { responseHeaders, endStream, streamIntel ->
+          if (chain.call().isCanceled()) {
+            continuation.cancel(CancellationException("underlying connection was cancelled"))
+            return@setOnResponseHeaders
+          }
+
+          val headers = responseHeaders.toHeaders()
+
+          contentType = headers["content-type"]?.toMediaTypeOrNull()
+
+          // TODO check this logic
+          val alpn = headers["x-envoy-upstream-alpn"]
+          val protocol = if (alpn != null) {
+            Protocol.get(alpn)
+          } else {
+            if (request.isHttps) Protocol.QUIC else Protocol.HTTP_1_1
+          }
+
+          responseBuilder
+            .protocol(protocol)
+            .code(responseHeaders.httpStatus ?: 0)
+            .message(responseHeaders.httpStatus.toString())
+            .receivedResponseAtMillis(System.currentTimeMillis())
+            .headers(headers)
+
+          if (!endStream) {
+            responseBuilder.body(bodySource.asResponseBody(contentType, -1))
+          }
+
+          continuation.resume(responseBuilder.build(), onCancellation = {})
+        }
+        .setOnResponseTrailers { responseTrailers, streamIntel ->
+          if (chain.call().isCanceled()) {
+            continuation.cancel(CancellationException("underlying connection was cancelled"))
+            return@setOnResponseTrailers
+          }
+
+          println("Dropping trailers " + responseTrailers.toHeaders())
+        }
+        .setOnResponseData { data, endStream, streamIntel ->
+          if (chain.call().isCanceled()) {
+            continuation.cancel(CancellationException("underlying connection was cancelled"))
+            return@setOnResponseData
+          }
+          if (endStream) {
+            bodySink.close()
+          }
+        }
+        .setOnComplete { streamIntel, finalStreamIntel ->
+          if (chain.call().isCanceled()) {
+            continuation.cancel(CancellationException("underlying connection was cancelled"))
+            return@setOnComplete
+          }
+          bodySink.close()
+        }
+        .setOnError { error, streamIntel, finalStreamIntel ->
+          if (chain.call().isCanceled()) {
+            continuation.cancel(CancellationException("underlying connection was cancelled"))
+            return@setOnError
+          }
+
+          // TODO how to signal error correctly?
+          bodySource.close()
+
+          continuation.resumeWithException(
+            IOException(
+              "${error.errorCode}: ${error.message}",
+              error.cause
+            )
+          )
+        }
+        .setOnCancel { streamIntel, finalStreamIntel ->
+          continuation.cancel(CancellationException("underlying connection was cancelled"))
+          bodyPipe.cancel()
+        }
+
+      val body = request.body
+
+      val requestHeaders = RequestHeadersBuilder(
+        request.envoyMethod,
+        if (request.isHttps) "https" else "http",
+        request.url.host,
+        request.url.encodedPath
+      ).apply {
+        // TODO addH2RawDomains for Protocol.H2C?
+
+        request.headers.toMultimap().forEach { (name, values) ->
+          values.forEach { value ->
+            add(name, value)
+          }
+        }
+      }
+
+      val stream = if (body != null) {
+        val requestBodyType = body.contentType()
+        if (requestBodyType != null) {
+          requestHeaders.add("Content-Type", requestBodyType.toString())
+        }
+
+        val stream = streamPrototype
+          .start(Executors.newSingleThreadExecutor())
+          .sendHeaders(requestHeaders.build(), endStream = false)
+
+        // TODO loop in chunks
+        val buffer = Buffer()
+        body.writeTo(buffer)
+        stream.close(ByteBuffer.wrap(buffer.readByteArray()))
+
+        stream
+      } else {
+        streamPrototype
+          .start(Executors.newSingleThreadExecutor())
+          .sendHeaders(requestHeaders.build(), endStream = true)
+      }
+
+      continuation.invokeOnCancellation {
+        stream.cancel()
+        bodyPipe.cancel()
+      }
     }
   }
 }
-
-@ExperimentalCoroutinesApi
-suspend fun makeRequest(engine: Engine, request: Request) =
-  suspendCancellableCoroutine<Response> { continuation ->
-    val responseBuilder = Response.Builder()
-      .request(request)
-      .sentRequestAtMillis(System.currentTimeMillis())
-
-    val bodyPipe = Pipe(1024L * 1024L)
-    val bodySink = bodyPipe.sink.buffer()
-    val bodySource = bodyPipe.source.buffer()
-
-    var contentType: MediaType?
-
-    val streamPrototype: StreamPrototype = engine
-      .streamClient()
-      .newStreamPrototype()
-      .setOnResponseHeaders { responseHeaders, endStream, streamIntel ->
-        val headers = responseHeaders.toHeaders()
-
-        contentType = headers["content-type"]?.toMediaTypeOrNull()
-
-        // TODO check this logic
-        val alpn = headers["x-envoy-upstream-alpn"]
-        val protocol = if (alpn != null) {
-          Protocol.get(alpn)
-        } else {
-          if (request.isHttps) Protocol.QUIC else Protocol.HTTP_1_1
-        }
-
-        responseBuilder
-          .protocol(protocol)
-          .code(responseHeaders.httpStatus ?: 0)
-          .message(responseHeaders.httpStatus.toString())
-          .receivedResponseAtMillis(System.currentTimeMillis())
-          .headers(headers)
-
-        if (!endStream) {
-          responseBuilder.body(bodySource.asResponseBody(contentType, -1))
-        }
-
-        continuation.resume(responseBuilder.build(), onCancellation = {})
-      }
-      .setOnResponseTrailers { responseTrailers, streamIntel ->
-        println("Dropping trailers " + responseTrailers.toHeaders())
-      }
-      .setOnResponseData { data, endStream, streamIntel ->
-        if (endStream) {
-          bodySink.close()
-        }
-      }
-      .setOnComplete { streamIntel, finalStreamIntel ->
-        bodySink.close()
-      }
-      .setOnError { error, streamIntel, finalStreamIntel ->
-        // TODO how to signal error correctly?
-        bodySource.close()
-
-        continuation.resumeWithException(
-          IOException(
-            "${error.errorCode}: ${error.message}",
-            error.cause
-          )
-        )
-      }
-      .setOnCancel { streamIntel, finalStreamIntel ->
-        continuation.cancel(CancellationException("underlying connection was cancelled"))
-      }
-
-    val body = request.body
-
-    val requestHeaders = RequestHeadersBuilder(
-      request.envoyMethod,
-      if (request.isHttps) "https" else "http",
-      request.url.host,
-      request.url.encodedPath
-    ).apply {
-      // TODO addH2RawDomains for Protocol.H2C?
-
-      request.headers.toMultimap().forEach { (name, values) ->
-        values.forEach { value ->
-          add(name, value)
-        }
-      }
-    }
-
-    val stream = if (body != null) {
-      val requestBodyType = body.contentType()
-      if (requestBodyType != null) {
-        requestHeaders.add("Content-Type", requestBodyType.toString())
-      }
-
-      val stream = streamPrototype
-        .start(Executors.newSingleThreadExecutor())
-        .sendHeaders(requestHeaders.build(), endStream = false)
-
-      // TODO loop in chunks
-      val buffer = Buffer()
-      body.writeTo(buffer)
-      stream.close(ByteBuffer.wrap(buffer.readByteArray()))
-
-      stream
-    } else {
-      streamPrototype
-        .start(Executors.newSingleThreadExecutor())
-        .sendHeaders(requestHeaders.build(), endStream = true)
-    }
-
-    continuation.invokeOnCancellation {
-      stream.cancel()
-    }
-  }
 
 private fun io.envoyproxy.envoymobile.Headers.toHeaders(): Headers {
   val builder = Headers.Builder()
