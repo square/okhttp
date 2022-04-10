@@ -2,6 +2,7 @@ package okhttp3;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.util.Comparator;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,6 +27,35 @@ public final class DispatcherTest {
       .dispatcher(dispatcher)
       .eventListenerFactory(clientTestRule.wrap(listener))
       .build();
+
+  static class Priority {
+    private final float priority;
+
+    Priority() {
+      priority = 0;
+    }
+
+    Priority(float priority) {
+      this.priority = priority;
+    }
+
+    float priority() {
+      return priority;
+    }
+  }
+
+  final Comparator<Call> priorityOrder = (c1, c2) -> {
+    Object t1 = c1.request().tag();
+    Object t2 = c2.request().tag();
+
+    float p1 = 0;
+    if (t1 instanceof Priority) p1 = ((Priority) t1).priority;
+
+    float p2 = 0;
+    if (t2 instanceof Priority) p2 = ((Priority) t2).priority;
+
+    return Float.compare(p1, p2);
+  };
 
   @BeforeEach public void setUp() throws Exception {
     dispatcher.setMaxRequests(20);
@@ -311,6 +341,72 @@ public final class DispatcherTest {
         .containsExactly("CallStart", "CallStart", "CallFailed");
   }
 
+  @Test public void priorityAsyncCallDispatcher() throws Exception {
+    dispatcher.setMaxRequests(3);
+    dispatcher.setPriorityOrder(priorityOrder);
+
+    client.newCall(newRequest("http://a/1")).enqueue(callback);
+    client.newCall(newRequest("http://a/2")).enqueue(callback);
+    client.newCall(newRequest("http://a/3")).enqueue(callback);
+    client.newCall(newRequest("http://a/4")).enqueue(callback);
+    client.newCall(newRequest("http://a/5")).enqueue(callback);
+    client.newCall(newRequest("http://b/1", -1)).enqueue(callback);
+    client.newCall(newRequest("http://b/2", Float.MAX_VALUE)).enqueue(callback);
+    client.newCall(newRequest("http://b/3", 1)).enqueue(callback);
+
+    executor.assertJobs("http://a/1", "http://a/2", "http://a/3");
+
+    executor.finishJob("http://a/1");
+    executor.assertJobs("http://a/2", "http://a/3", "http://b/2");
+
+    executor.finishJob("http://a/2");
+    executor.assertJobs("http://a/3", "http://b/2", "http://b/3");
+
+    executor.finishJob("http://a/3");
+    executor.assertJobs("http://b/2", "http://b/3", "http://a/4");
+
+    executor.finishJob("http://b/2");
+    executor.assertJobs("http://b/3", "http://a/4", "http://a/5");
+
+    executor.finishJob("http://b/3");
+    executor.assertJobs("http://a/4", "http://a/5", "http://b/1");
+
+    executor.finishJob("http://a/4");
+    executor.assertJobs("http://a/5", "http://b/1");
+  }
+
+  @Test public void priorityAsyncCallDispatcherWithMaxRequestsPerHost() {
+    dispatcher.setMaxRequests(3);
+    dispatcher.setMaxRequestsPerHost(2);
+    dispatcher.setPriorityOrder(priorityOrder);
+
+    client.newCall(newRequest("http://a/1")).enqueue(callback);
+    client.newCall(newRequest("http://a/2")).enqueue(callback);
+    client.newCall(newRequest("http://a/3")).enqueue(callback);
+    client.newCall(newRequest("http://a/4")).enqueue(callback);
+    client.newCall(newRequest("http://b/1")).enqueue(callback);
+    client.newCall(newRequest("http://b/2", 1)).enqueue(callback);
+    client.newCall(newRequest("http://b/3", 1)).enqueue(callback);
+    client.newCall(newRequest("http://b/4", 1)).enqueue(callback);
+
+    executor.assertJobs("http://a/1", "http://a/2", "http://b/1");
+
+    executor.finishJob("http://a/1");
+    executor.assertJobs("http://a/2", "http://b/1", "http://b/2");
+
+    executor.finishJob("http://a/2");
+    executor.assertJobs("http://b/1", "http://b/2", "http://a/3");
+
+    executor.finishJob("http://b/2");
+    executor.assertJobs("http://b/1", "http://a/3", "http://b/3");
+
+    executor.finishJob("http://b/1");
+    executor.assertJobs("http://a/3", "http://b/3", "http://b/4");
+
+    executor.finishJob("http://b/4");
+    executor.assertJobs("http://a/3", "http://b/3", "http://a/4");
+  }
+
   private Thread makeSynchronousCall(Call call) {
     Thread thread = new Thread(() -> {
       try {
@@ -329,5 +425,9 @@ public final class DispatcherTest {
 
   private Request newRequest(String url, String tag) {
     return new Request.Builder().url(url).tag(tag).build();
+  }
+
+  private Request newRequest(String url, float priority) {
+    return new Request.Builder().url(url).tag(new Priority(priority)).build();
   }
 }

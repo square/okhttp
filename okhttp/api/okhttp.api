@@ -470,11 +470,13 @@ public final class okhttp3/Dispatcher {
 	public final fun -deprecated_executorService ()Ljava/util/concurrent/ExecutorService;
 	public fun <init> ()V
 	public fun <init> (Ljava/util/concurrent/ExecutorService;)V
+	public synthetic fun <init> (Ljava/util/concurrent/ExecutorService;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun cancelAll ()V
 	public final fun executorService ()Ljava/util/concurrent/ExecutorService;
 	public final fun getIdleCallback ()Ljava/lang/Runnable;
 	public final fun getMaxRequests ()I
 	public final fun getMaxRequestsPerHost ()I
+	public final fun priorityOrder ()Ljava/util/Comparator;
 	public final fun queuedCalls ()Ljava/util/List;
 	public final fun queuedCallsCount ()I
 	public final fun runningCalls ()Ljava/util/List;
@@ -482,6 +484,7 @@ public final class okhttp3/Dispatcher {
 	public final fun setIdleCallback (Ljava/lang/Runnable;)V
 	public final fun setMaxRequests (I)V
 	public final fun setMaxRequestsPerHost (I)V
+	public final fun setPriorityOrder (Ljava/util/Comparator;)V
 }
 
 public abstract interface class okhttp3/Dns {

@@ -18,6 +18,7 @@ package okhttp3
 import java.util.ArrayDeque
 import java.util.Collections
 import java.util.Deque
+import java.util.LinkedList
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.SynchronousQueue
 import java.util.concurrent.ThreadPoolExecutor
@@ -98,8 +99,20 @@ class Dispatcher() {
       return executorServiceOrNull!!
     }
 
+
+  @get:Synchronized
+  @set:Synchronized
+  @get:JvmName("priorityOrder")
+    /**
+     * A comparator that determines the priority of the async calls.
+     * A call with the highest priority will be executed first.
+     *
+     * When [priorityOrder] is null or returns 0, calls that are enqueued first have priority.
+     */
+  var priorityOrder: Comparator<Call>? = null
+
   /** Ready async calls in the order they'll be run. */
-  private val readyAsyncCalls = ArrayDeque<AsyncCall>()
+  private val readyAsyncCalls = LinkedList<AsyncCall>()
 
   /** Running asynchronous calls. Includes canceled calls that haven't finished yet. */
   private val runningAsyncCalls = ArrayDeque<AsyncCall>()
@@ -113,13 +126,26 @@ class Dispatcher() {
 
   internal fun enqueue(call: AsyncCall) {
     synchronized(this) {
-      readyAsyncCalls.add(call)
-
       // Mutate the AsyncCall so that it shares the AtomicInteger of an existing running call to
       // the same host.
       if (!call.call.forWebSocket) {
         val existingCall = findExistingCallWithHost(call.host)
         if (existingCall != null) call.reuseCallsPerHostFrom(existingCall)
+      }
+
+      val priorityOrder = priorityOrder
+
+      if (priorityOrder == null) readyAsyncCalls.addLast(call) else {
+        val i = readyAsyncCalls.listIterator()
+
+        while (i.hasNext()) {
+          if (priorityOrder.compare(i.next().call, call.call) < 0) {
+            i.previous()
+            break
+          }
+        }
+
+        i.add(call)
       }
     }
     promoteAndExecute()
@@ -164,6 +190,12 @@ class Dispatcher() {
     val executableCalls = mutableListOf<AsyncCall>()
     val isRunning: Boolean
     synchronized(this) {
+      val priorityOrder = priorityOrder
+
+      if (priorityOrder != null) {
+        readyAsyncCalls.sortWith { a, b -> priorityOrder.compare(b.call, a.call) } // sort in descending order
+      }
+
       val i = readyAsyncCalls.iterator()
       while (i.hasNext()) {
         val asyncCall = i.next()
