@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import kotlin.jvm.JvmField
 import okhttp3.internal.CONST_VERSION
 
 object OkHttp {
@@ -34,5 +35,6 @@ object OkHttp {
    * [semver]: https://semver.org
    */
   @Suppress("MayBeConstant") // Non-const so external callers get the runtime version.
+  @JvmField
   val VERSION = CONST_VERSION
 }
