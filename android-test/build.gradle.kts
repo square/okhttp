@@ -4,6 +4,12 @@ plugins {
   id("de.mannodermaus.android-junit5")
 }
 
+repositories {
+  flatDir {
+    dirs("lib") //this way we can find the .aar file in libs folder
+  }
+}
+
 android {
   compileSdk = 31
 
@@ -50,6 +56,10 @@ dependencies {
   implementation(libs.playservices.safetynet)
   implementation(projects.okhttp)
   implementation(projects.okhttpAndroid)
+  implementation(projects.okhttpCoroutines)
+
+  // envoy
+  implementation(group = "", name = "envoy-0.4.5", ext = "aar")
 
   androidTestImplementation(projects.okhttpTestingSupport) {
     exclude("org.openjsse", "openjsse")
@@ -72,6 +82,7 @@ dependencies {
   androidTestImplementation(libs.squareup.moshi)
   androidTestImplementation(libs.squareup.moshi.kotlin)
   androidTestImplementation(libs.squareup.okio.fakefilesystem)
+  androidTestImplementation(libs.kotlinx.coroutines.test)
 
   androidTestImplementation(libs.androidx.test.runner)
   androidTestImplementation(libs.junit.jupiter.api)
