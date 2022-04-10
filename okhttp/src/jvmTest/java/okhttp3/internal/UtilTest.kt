@@ -18,28 +18,12 @@ package okhttp3.internal
 import java.net.InetAddress
 import java.net.ServerSocket
 import java.net.Socket
-import java.util.LinkedHashMap
 import okio.buffer
 import okio.source
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
 
 class UtilTest {
-  @Test fun immutableMap() {
-    val map = LinkedHashMap<String, String>()
-    map["a"] = "A"
-    val immutableCopy = map.toImmutableMap()
-    assertThat(mapOf("a" to "A")).isEqualTo(immutableCopy)
-    map.clear()
-    assertThat(mapOf("a" to "A")).isEqualTo(immutableCopy)
-    try {
-      (immutableCopy as MutableMap).clear()
-      fail()
-    } catch (_: UnsupportedOperationException) {
-    }
-  }
-
   @Test fun socketIsHealthy() {
     val localhost = InetAddress.getLoopbackAddress()
     val serverSocket = ServerSocket(0, 1, localhost)

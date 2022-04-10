@@ -957,6 +957,8 @@ class KotlinSourceModernTest {
     val header: String? = request.header("")
     val headersForName: List<String> = request.headers("")
     val body: RequestBody? = request.body
+    var stringTag: String? = request.tag(String::class)
+    stringTag = request.tag<String>()
     var tag: Any? = request.tag()
     tag = request.tag(Any::class.java)
     val builder: Request.Builder = request.newBuilder()
