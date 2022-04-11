@@ -54,7 +54,7 @@ public final class DispatcherTest {
     float p2 = 0;
     if (t2 instanceof Priority) p2 = ((Priority) t2).priority;
 
-    return Float.compare(p1, p2);
+    return Float.compare(p2, p1);
   };
 
   @BeforeEach public void setUp() throws Exception {

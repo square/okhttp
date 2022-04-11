@@ -175,7 +175,7 @@ class Dispatcher() {
     val isRunning: Boolean
     synchronized(this) {
       priorityOrder?.let { comparator ->
-        readyAsyncCalls.sortWith { a, b -> comparator.compare(b.call, a.call) } // sort in descending order
+        readyAsyncCalls.sortWith { a, b -> comparator.compare(a.call, b.call) }
       }
 
       val i = readyAsyncCalls.iterator()
