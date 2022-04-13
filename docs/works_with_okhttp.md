@@ -30,6 +30,7 @@ Here’s some libraries that work nicely with OkHttp.
  * [PersistentCookieJar](https://github.com/franmontiel/PersistentCookieJar): A persistent `CookieJar`.
  * ⬜️ [Picasso](https://github.com/square/picasso): A powerful image downloading and caching library for Android.
  * ⬜️ [Retrofit](https://github.com/square/retrofit): Type-safe HTTP client for Android and Java by Square.
+ * [ScribeJava](https://github.com/scribejava/scribejava): Simple OAuth library for Java
  * [Stetho](https://github.com/facebook/stetho): Stetho is a debug bridge for Android applications.
  * [Thrifty](https://github.com/Microsoft/thrifty): An implementation of Apache Thrift for Android.
  * ⬜️ [Wire](https://github.com/square/wire): Clean, lightweight protocol buffers for Android and Java.
