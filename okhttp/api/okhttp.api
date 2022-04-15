@@ -470,7 +470,6 @@ public final class okhttp3/Dispatcher {
 	public final fun -deprecated_executorService ()Ljava/util/concurrent/ExecutorService;
 	public fun <init> ()V
 	public fun <init> (Ljava/util/concurrent/ExecutorService;)V
-	public synthetic fun <init> (Ljava/util/concurrent/ExecutorService;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun cancelAll ()V
 	public final fun executorService ()Ljava/util/concurrent/ExecutorService;
 	public final fun getIdleCallback ()Ljava/lang/Runnable;
