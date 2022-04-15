@@ -58,6 +58,8 @@ actual interface Call {
 
   actual fun clone(): Call
 
+  actual fun onCancel(cancelFn: () -> Unit)
+
   actual fun interface Factory {
     actual fun newCall(request: Request): Call
   }

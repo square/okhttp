@@ -118,6 +118,8 @@ class RealCall(
   @Volatile private var exchange: Exchange? = null
   internal val plansToCancel = CopyOnWriteArrayList<RoutePlanner.Plan>()
 
+  @Volatile private var onCancels: List<() -> Unit> = listOf()
+
   override fun timeout(): Timeout = timeout
 
   @SuppressWarnings("CloneDoesntCallSuperClone") // We are a final type & this saves clearing state.
@@ -144,9 +146,19 @@ class RealCall(
     }
 
     eventListener.canceled(this)
+
+    onCancels.forEach { onCancel ->
+      onCancel()
+    }
   }
 
   override fun isCanceled(): Boolean = canceled
+
+  override fun onCancel(cancelFn: () -> Unit) {
+    synchronized(this) {
+      onCancels = onCancels + cancelFn
+    }
+  }
 
   override fun execute(): Response {
     check(executed.compareAndSet(false, true)) { "Already Executed" }

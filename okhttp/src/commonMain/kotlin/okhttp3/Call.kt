@@ -62,6 +62,16 @@ expect interface Call {
    */
   fun clone(): Call
 
+  /**
+   * Registers a callback for cancellation of the Call.
+   * Typically used in an interceptor that may be in a blocking
+   * call and may need to proactively cancel other work.
+   *
+   * Most cancellation should be handled via existing
+   * [execute], [enqueue] and executeAsync behaviour.
+   */
+  actual fun onCancel(cancelFn: () -> Unit)
+
   fun interface Factory {
     fun newCall(request: Request): Call
   }
