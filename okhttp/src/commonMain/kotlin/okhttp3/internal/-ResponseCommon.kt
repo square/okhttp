@@ -144,6 +144,10 @@ fun Response.Builder.commonHeaders(headers: Headers) = apply {
   this.headers = headers.newBuilder()
 }
 
+fun Response.Builder.commonTrailers(trailersFn: (() -> Headers)) = apply {
+  this.trailersFn = trailersFn
+}
+
 fun Response.Builder.commonBody(body: ResponseBody) = apply {
   this.body = body
 }
