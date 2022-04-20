@@ -69,7 +69,7 @@ kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "org-jetbrains-coroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "org-jetbrains-coroutines" }
 nativeImageSvm = { module = "org.graalvm.nativeimage:svm", version.ref = "graalvm" }
-openjsse = "org.openjsse:openjsse:1.1.9"
+openjsse = "org.openjsse:openjsse:1.1.10"
 picocli = { module = "info.picocli:picocli", version.ref = "picocli" }
 picocli-compiler = { module = "info.picocli:picocli-codegen", version.ref = "picocli" }
 playservices-safetynet = "com.google.android.gms:play-services-safetynet:18.0.1"
