@@ -66,7 +66,7 @@ import org.junit.jupiter.api.Test
 class EnvoyMobileTest {
   private lateinit var client: OkHttpClient
 
-  val aiortc = "https://cloudflare-quic.com/b/".toHttpUrl()
+  val cloudflare = "https://cloudflare-quic.com/b/".toHttpUrl()
 
   @BeforeEach
   fun buildClient() {
@@ -76,12 +76,12 @@ class EnvoyMobileTest {
   }
 
   @Test
-  fun get() = runTest {
+  fun cloudflareGet() = runTest {
     val client = OkHttpClient.Builder()
       .addInterceptor(EnvoyInterceptor(engine))
       .build()
 
-    val getRequest = Request(url = aiortc.resolve("get")!!)
+    val getRequest = Request(url = cloudflare.resolve("get")!!)
 
     val response = client.newCall(getRequest).executeAsync()
 
@@ -93,7 +93,30 @@ class EnvoyMobileTest {
   }
 
   @Test
-  fun get2() = runTest {
+  fun google() = runTest {
+    val client = OkHttpClient.Builder()
+      .addInterceptor(EnvoyInterceptor(engine))
+      .build()
+
+    val getRequest = Request(url = "https://google.com/".toHttpUrl())
+
+    val response = client.newCall(getRequest).executeAsync()
+
+    response.use {
+      printResponse(response)
+    }
+
+    val response2 = client.newCall(getRequest).executeAsync()
+
+    response.use {
+      printResponse(response2)
+    }
+
+    assertEquals(Protocol.HTTP_3, response2.protocol)
+  }
+
+  @Test
+  fun httpIs() = runTest {
     val client = OkHttpClient.Builder()
       .addInterceptor(EnvoyInterceptor(engine))
       .build()
@@ -116,14 +139,14 @@ class EnvoyMobileTest {
   }
 
   @Test
-  fun post() = runTest {
+  fun cloudflarePost() = runTest {
     val client = OkHttpClient.Builder()
       .addInterceptor(EnvoyInterceptor(engine))
       .build()
 
     val postRequest =
       Request(
-        url = aiortc.resolve("post")!!,
+        url = cloudflare.resolve("post")!!,
         body = "{}".toRequestBody("application/json".toMediaType())
       )
 
@@ -135,12 +158,12 @@ class EnvoyMobileTest {
   }
 
   @Test
-  fun cancel() = runTest {
+  fun cloudflareCancel() = runTest {
     val client = OkHttpClient.Builder()
       .addInterceptor(EnvoyInterceptor(engine))
       .build()
 
-    val getRequest = Request(url = aiortc.resolve("delay/30")!!)
+    val getRequest = Request(url = cloudflare.resolve("delay/30")!!)
 
     try {
       withContext(Dispatchers.Default) {
@@ -160,7 +183,7 @@ class EnvoyMobileTest {
       .addInterceptor(EnvoyInterceptor(engine))
       .build()
 
-    val getRequest = Request(url = aiortc.resolve("delay/30")!!)
+    val getRequest = Request(url = cloudflare.resolve("delay/30")!!)
 
     val call = client.newCall(getRequest)
 
@@ -198,7 +221,7 @@ class EnvoyMobileTest {
     val failureChannel = Channel<IOException>(requests)
 
     repeat(requests) {
-      val getRequest = Request(url = aiortc.resolve("get?id=$it")!!)
+      val getRequest = Request(url = cloudflare.resolve("get?id=$it")!!)
       client.newCall(getRequest).enqueue(object : Callback {
         override fun onFailure(call: Call, e: IOException) {
           failureChannel.trySend(e)
@@ -238,7 +261,7 @@ class EnvoyMobileTest {
       engine = AndroidEngineBuilder(application, baseConfiguration = Standard())
         .addLogLevel(LogLevel.INFO)
         .setLogger { println(it) }
-        .enableHappyEyeballs(true)
+        .enableHttp3(true)
         // .enableHappyEyeballs(true)
         .build()
     }
