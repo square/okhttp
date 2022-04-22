@@ -4,12 +4,6 @@ plugins {
   id("de.mannodermaus.android-junit5")
 }
 
-repositories {
-  flatDir {
-    dirs("lib") //this way we can find the .aar file in libs folder
-  }
-}
-
 android {
   compileSdk = 31
 
@@ -58,10 +52,7 @@ dependencies {
   implementation(projects.okhttpAndroid)
   implementation(projects.okhttpCoroutines)
 
-  // envoy
-  implementation(group = "", name = "envoy-0.4.6.20220420-preview", ext = "aar")
-
-  // implementation("io.envoyproxy.envoymobile:envoy:0.4.6.20220420-preview")
+  implementation("io.envoyproxy.envoymobile:envoy:0.4.6.20220421-preview-2")
 
   androidTestImplementation(projects.okhttpTestingSupport) {
     exclude("org.openjsse", "openjsse")
