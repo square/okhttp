@@ -83,8 +83,6 @@ class EnvoyMobileTest {
 
     val getRequest = Request(url = cloudflare.resolve("get")!!)
 
-    val responsePre = client.newCall(getRequest).executeAsync().close()
-
     val response = client.newCall(getRequest).executeAsync()
 
     response.use {
@@ -101,8 +99,6 @@ class EnvoyMobileTest {
       .build()
 
     val getRequest = Request(url = "https://google.com/".toHttpUrl())
-
-    val responsePre = client.newCall(getRequest).executeAsync().close()
 
     val response = client.newCall(getRequest).executeAsync()
 
@@ -126,8 +122,6 @@ class EnvoyMobileTest {
       .build()
 
     val getRequest = Request(url = "https://http3.is/".toHttpUrl())
-
-    val responsePre = client.newCall(getRequest).executeAsync().close()
 
     val response = client.newCall(getRequest).executeAsync()
 
@@ -268,7 +262,7 @@ class EnvoyMobileTest {
         .addLogLevel(LogLevel.INFO)
         .setLogger { println(it) }
         .enableHttp3(true)
-        // .enableHappyEyeballs(true)
+        .enableHappyEyeballs(true)
         .build()
     }
 
