@@ -52,7 +52,7 @@ dependencies {
   implementation(projects.okhttpAndroid)
   implementation(projects.okhttpCoroutines)
 
-  implementation("io.envoyproxy.envoymobile:envoy:0.4.6.20220421-preview-2")
+  implementation(libs.envoyMobile)
 
   androidTestImplementation(projects.okhttpTestingSupport) {
     exclude("org.openjsse", "openjsse")
