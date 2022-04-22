@@ -18,6 +18,7 @@
 package okhttp.android.envoy
 
 import io.envoyproxy.envoymobile.Engine
+import io.envoyproxy.envoymobile.RequestHeaders
 import io.envoyproxy.envoymobile.RequestHeadersBuilder
 import io.envoyproxy.envoymobile.RequestMethod
 import io.envoyproxy.envoymobile.StreamPrototype
@@ -152,9 +153,6 @@ class EnvoyInterceptor(private val engine: Engine) : CoroutineInterceptor() {
             add(name, value)
           }
         }
-
-        // Set based on protocols
-        add("x-envoy-mobile-upstream-protocol", "http3")
       }
 
       val stream = if (body != null) {
@@ -163,9 +161,11 @@ class EnvoyInterceptor(private val engine: Engine) : CoroutineInterceptor() {
           requestHeaders.add("Content-Type", requestBodyType.toString())
         }
 
+        val headers = buildHttp3Headers(requestHeaders)
+
         val stream = streamPrototype
           .start(Executors.newSingleThreadExecutor())
-          .sendHeaders(requestHeaders.build(), endStream = false)
+          .sendHeaders(headers, endStream = false)
 
         // TODO loop in chunks
         val buffer = Buffer()
@@ -174,9 +174,11 @@ class EnvoyInterceptor(private val engine: Engine) : CoroutineInterceptor() {
 
         stream
       } else {
+        val headers = buildHttp3Headers(requestHeaders)
+
         streamPrototype
           .start(Executors.newSingleThreadExecutor())
-          .sendHeaders(requestHeaders.build(), endStream = true)
+          .sendHeaders(headers, endStream = true)
       }
 
       continuation.invokeOnCancellation {
@@ -184,6 +186,16 @@ class EnvoyInterceptor(private val engine: Engine) : CoroutineInterceptor() {
         bodyPipe.cancel()
       }
     }
+  }
+
+  private fun buildHttp3Headers(requestHeaders: RequestHeadersBuilder): RequestHeaders {
+    val headers = requestHeaders.build()
+
+    // TODO Set based on protocols
+    @Suppress("UNCHECKED_CAST")
+    (headers.headers as MutableMap<String, MutableList<String>>)["x-envoy-mobile-upstream-protocol"] =
+      mutableListOf("http3")
+    return headers
   }
 }
 
