@@ -109,14 +109,14 @@ class EnvoyInterceptor(private val engine: Engine) : CoroutineInterceptor() {
             bodySink.close()
           }
         }
-        .setOnComplete { streamIntel, finalStreamIntel ->
+        .setOnComplete { finalStreamIntel ->
           if (chain.call().isCanceled()) {
             continuation.cancel(CancellationException("underlying connection was cancelled"))
             return@setOnComplete
           }
           bodySink.close()
         }
-        .setOnError { error, streamIntel, finalStreamIntel ->
+        .setOnError { error, finalStreamIntel ->
           if (chain.call().isCanceled()) {
             continuation.cancel(CancellationException("underlying connection was cancelled"))
             return@setOnError
@@ -132,7 +132,7 @@ class EnvoyInterceptor(private val engine: Engine) : CoroutineInterceptor() {
             )
           )
         }
-        .setOnCancel { streamIntel, finalStreamIntel ->
+        .setOnCancel { finalStreamIntel ->
           continuation.cancel(CancellationException("underlying connection was cancelled"))
           bodyPipe.cancel()
         }
@@ -152,6 +152,9 @@ class EnvoyInterceptor(private val engine: Engine) : CoroutineInterceptor() {
             add(name, value)
           }
         }
+
+        // Set based on protocols
+        add("x-envoy-mobile-upstream-protocol", "http3")
       }
 
       val stream = if (body != null) {

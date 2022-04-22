@@ -41,10 +41,10 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import okhttp3.Call
 import okhttp3.Callback
-import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
+import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
@@ -56,7 +56,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 /**
@@ -82,7 +81,7 @@ class EnvoyMobileTest {
       .addInterceptor(EnvoyInterceptor(engine))
       .build()
 
-    val getRequest = Request(url = aiortc + "get")
+    val getRequest = Request(url = aiortc.resolve("get")!!)
 
     val response = client.newCall(getRequest).executeAsync()
 
@@ -90,7 +89,7 @@ class EnvoyMobileTest {
       printResponse(response)
     }
 
-    // assertEquals(Protocol.QUIC, response.protocol)
+    assertEquals(Protocol.HTTP_3, response.protocol)
   }
 
   @Test
@@ -113,7 +112,7 @@ class EnvoyMobileTest {
       printResponse(response2)
     }
 
-    // assertEquals(Protocol.QUIC, response2.protocol)
+    assertEquals(Protocol.HTTP_3, response2.protocol)
   }
 
   @Test
@@ -124,7 +123,7 @@ class EnvoyMobileTest {
 
     val postRequest =
       Request(
-        url = aiortc + "post",
+        url = aiortc.resolve("post")!!,
         body = "{}".toRequestBody("application/json".toMediaType())
       )
 
@@ -141,7 +140,7 @@ class EnvoyMobileTest {
       .addInterceptor(EnvoyInterceptor(engine))
       .build()
 
-    val getRequest = Request(url = aiortc + "delay/30")
+    val getRequest = Request(url = aiortc.resolve("delay/30")!!)
 
     try {
       withContext(Dispatchers.Default) {
@@ -161,7 +160,7 @@ class EnvoyMobileTest {
       .addInterceptor(EnvoyInterceptor(engine))
       .build()
 
-    val getRequest = Request(url = aiortc + "delay/30")
+    val getRequest = Request(url = aiortc.resolve("delay/30")!!)
 
     val call = client.newCall(getRequest)
 
@@ -199,7 +198,7 @@ class EnvoyMobileTest {
     val failureChannel = Channel<IOException>(requests)
 
     repeat(requests) {
-      val getRequest = Request(url = aiortc + "get?id=$it")
+      val getRequest = Request(url = aiortc.resolve("get?id=$it")!!)
       client.newCall(getRequest).enqueue(object : Callback {
         override fun onFailure(call: Call, e: IOException) {
           failureChannel.trySend(e)
@@ -239,6 +238,7 @@ class EnvoyMobileTest {
       engine = AndroidEngineBuilder(application, baseConfiguration = Standard())
         .addLogLevel(LogLevel.INFO)
         .setLogger { println(it) }
+        .enableHappyEyeballs(true)
         // .enableHappyEyeballs(true)
         .build()
     }
@@ -249,8 +249,4 @@ class EnvoyMobileTest {
       engine.terminate()
     }
   }
-}
-
-private operator fun HttpUrl.plus(link: String): HttpUrl {
-  return this.resolve(link)!!
 }

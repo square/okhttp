@@ -59,7 +59,9 @@ dependencies {
   implementation(projects.okhttpCoroutines)
 
   // envoy
-  implementation(group = "", name = "envoy-0.4.5", ext = "aar")
+  implementation(group = "", name = "envoy-0.4.6.20220420-preview", ext = "aar")
+
+  // implementation("io.envoyproxy.envoymobile:envoy:0.4.6.20220420-preview")
 
   androidTestImplementation(projects.okhttpTestingSupport) {
     exclude("org.openjsse", "openjsse")
