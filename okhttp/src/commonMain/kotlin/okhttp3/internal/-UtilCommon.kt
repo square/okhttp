@@ -17,7 +17,6 @@ package okhttp3.internal
 
 import kotlin.jvm.JvmField
 import okhttp3.Headers
-import okhttp3.OkHttp
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.ResponseBody
@@ -368,7 +367,7 @@ internal inline fun <T> Iterable<T>.filterList(predicate: T.() -> Boolean): List
   return result
 }
 
-internal const val userAgent: String = "okhttp/${OkHttp.VERSION}"
+internal const val userAgent: String = "okhttp/${CONST_VERSION}"
 
 internal fun checkOffsetAndCount(arrayLength: Long, offset: Long, count: Long) {
   if (offset or count < 0L || offset > arrayLength || arrayLength - offset < count) {

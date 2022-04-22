@@ -1010,6 +1010,7 @@ public final class okhttp3/Request {
 	public final fun newBuilder ()Lokhttp3/Request$Builder;
 	public final fun tag ()Ljava/lang/Object;
 	public final fun tag (Ljava/lang/Class;)Ljava/lang/Object;
+	public final fun tag (Lkotlin/reflect/KClass;)Ljava/lang/Object;
 	public fun toString ()Ljava/lang/String;
 	public final fun url ()Lokhttp3/HttpUrl;
 }
@@ -1033,6 +1034,7 @@ public class okhttp3/Request$Builder {
 	public fun removeHeader (Ljava/lang/String;)Lokhttp3/Request$Builder;
 	public fun tag (Ljava/lang/Class;Ljava/lang/Object;)Lokhttp3/Request$Builder;
 	public fun tag (Ljava/lang/Object;)Lokhttp3/Request$Builder;
+	public final fun tag (Lkotlin/reflect/KClass;Ljava/lang/Object;)Lokhttp3/Request$Builder;
 	public fun url (Ljava/lang/String;)Lokhttp3/Request$Builder;
 	public fun url (Ljava/net/URL;)Lokhttp3/Request$Builder;
 	public fun url (Lokhttp3/HttpUrl;)Lokhttp3/Request$Builder;

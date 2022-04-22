@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import kotlin.reflect.KClass
 import okhttp3.internal.canonicalUrl
 import okhttp3.internal.commonAddHeader
 import okhttp3.internal.commonCacheControl
@@ -29,12 +30,14 @@ import okhttp3.internal.commonPatch
 import okhttp3.internal.commonPost
 import okhttp3.internal.commonPut
 import okhttp3.internal.commonRemoveHeader
+import okhttp3.internal.commonTag
 
 actual class Request internal actual constructor(builder: Builder) {
   actual val url: String = checkNotNull(builder.url) { "url == null" }
   actual val method: String = builder.method
   actual val headers: Headers = builder.headers.build()
   actual val body: RequestBody? = builder.body
+  internal actual val tags: Map<KClass<*>, Any> = builder.tags.toMap()
 
   internal actual var lazyCacheControl: CacheControl? = null
 
@@ -76,6 +79,10 @@ actual class Request internal actual constructor(builder: Builder) {
   actual val cacheControl: CacheControl
     get() = commonCacheControl()
 
+  actual inline fun <reified T : Any> tag(): T? = tag(T::class)
+
+  actual fun <T : Any> tag(type: KClass<T>): T? = tags[type] as T?
+
   override fun toString(): String = buildString {
     append("Request{method=")
     append(method)
@@ -105,6 +112,7 @@ actual class Request internal actual constructor(builder: Builder) {
     internal actual var method: String
     internal actual var headers: Headers.Builder
     internal actual var body: RequestBody? = null
+    internal actual var tags = mapOf<KClass<*>, Any>()
 
     // /** A mutable map of tags, or an immutable empty map if we don't have any. */
     // internal var tags: MutableMap<Class<*>, Any> = mutableMapOf()
@@ -118,11 +126,10 @@ actual class Request internal actual constructor(builder: Builder) {
       this.url = request.url
       this.method = request.method
       this.body = request.body
-      // this.tags = if (request.tags.isEmpty()) {
-      //   mutableMapOf()
-      // } else {
-      //   request.tags.toMutableMap()
-      // }
+      this.tags = when {
+        request.tags.isEmpty() -> mapOf()
+        else -> request.tags.toMutableMap()
+      }
       this.headers = request.headers.newBuilder()
     }
 
@@ -158,26 +165,9 @@ actual class Request internal actual constructor(builder: Builder) {
 
     actual open fun method(method: String, body: RequestBody?): Builder = commonMethod(method, body)
 
-    // /** Attaches [tag] to the request using `Object.class` as a key. */
-    // open fun tag(tag: Any?): Builder = tag(Any::class.java, tag)
+    actual inline fun <reified T : Any> tag(tag: T?): Builder = tag(T::class, tag)
 
-    // /**
-    //  * Attaches [tag] to the request using [type] as a key. Tags can be read from a
-    //  * request using [Request.tag]. Use null to remove any existing tag assigned for [type].
-    //  *
-    //  * Use this API to attach timing, debugging, or other application data to a request so that
-    //  * you may read it in interceptors, event listeners, or callbacks.
-    //  */
-    // open fun <T> tag(type: Class<in T>, tag: T?) = apply {
-    //   if (tag == null) {
-    //     tags.remove(type)
-    //   } else {
-    //     if (tags.isEmpty()) {
-    //       tags = mutableMapOf()
-    //     }
-    //     tags[type] = type.cast(tag)!! // Force-unwrap due to lack of contracts on Class#cast()
-    //   }
-    // }
+    actual fun <T : Any> tag(type: KClass<T>, tag: T?): Builder = commonTag(type, tag)
 
     actual open fun build() = Request(this)
   }
