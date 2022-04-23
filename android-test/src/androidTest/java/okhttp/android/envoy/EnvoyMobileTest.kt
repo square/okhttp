@@ -53,6 +53,7 @@ import okio.IOException
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
@@ -106,6 +107,8 @@ class EnvoyMobileTest {
       printResponse(response)
     }
 
+    assertEquals(Protocol.HTTP_2, response.protocol)
+
     val response2 = client.newCall(getRequest).executeAsync()
 
     response.use {
@@ -126,13 +129,27 @@ class EnvoyMobileTest {
     val response = client.newCall(getRequest).executeAsync()
 
     response.use {
-      printResponse(response)
+      println(response)
+      println(response.headers)
+      println(response.body.contentType())
+      val body = response.body.string()
+      println(body)
+
+      assertTrue(body.contains("HTTP/3 .* was not used".toRegex()))
     }
+
+    assertEquals(Protocol.HTTP_2, response.protocol)
 
     val response2 = client.newCall(getRequest).executeAsync()
 
-    response.use {
-      printResponse(response2)
+    response2.use {
+      println(response2)
+      println(response2.headers)
+      println(response2.body.contentType())
+      val body = response2.body.string()
+      println(body)
+
+      assertTrue(body.contains("<title>HTTP/3!</title>"))
     }
 
     assertEquals(Protocol.HTTP_3, response2.protocol)
@@ -262,7 +279,7 @@ class EnvoyMobileTest {
         .addLogLevel(LogLevel.INFO)
         .setLogger { println(it) }
         .enableHttp3(true)
-        .enableHappyEyeballs(true)
+        // .enableHappyEyeballs(true)
         .build()
     }
 

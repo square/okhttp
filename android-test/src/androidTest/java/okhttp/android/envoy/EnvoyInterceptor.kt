@@ -106,6 +106,7 @@ class EnvoyInterceptor(private val engine: Engine) : CoroutineInterceptor() {
             continuation.cancel(CancellationException("underlying connection was cancelled"))
             return@setOnResponseData
           }
+          bodySink.write(data)
           if (endStream) {
             bodySink.close()
           }
