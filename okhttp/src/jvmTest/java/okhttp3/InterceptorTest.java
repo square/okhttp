@@ -27,6 +27,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import kotlin.Unit;
 import mockwebserver3.MockResponse;
@@ -800,10 +801,16 @@ public final class InterceptorTest {
 
   @Test public void chainCanCancelCall() throws Exception {
     AtomicReference<Call> callRef = new AtomicReference<>();
+    AtomicBoolean cancelled = new AtomicBoolean(false);
 
     Interceptor interceptor = chain -> {
       Call call = chain.call();
       callRef.set(call);
+
+      call.onCancel(() -> {
+        cancelled.set(true);
+        return null;
+      });
 
       assertThat(call.isCanceled()).isFalse();
       call.cancel();
@@ -828,6 +835,7 @@ public final class InterceptorTest {
     }
 
     assertThat(callRef.get()).isSameAs(call);
+    assertThat(cancelled.get()).isTrue();
   }
 
   private RequestBody uppercase(RequestBody original) {
