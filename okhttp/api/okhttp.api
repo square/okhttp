@@ -151,6 +151,7 @@ public abstract interface class okhttp3/Call : java/lang/Cloneable {
 	public abstract fun execute ()Lokhttp3/Response;
 	public abstract fun isCanceled ()Z
 	public abstract fun isExecuted ()Z
+	public abstract fun onCancel (Lkotlin/jvm/functions/Function0;)V
 	public abstract fun request ()Lokhttp3/Request;
 	public abstract fun timeout ()Lokio/Timeout;
 }

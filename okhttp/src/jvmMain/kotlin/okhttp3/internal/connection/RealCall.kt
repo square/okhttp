@@ -118,7 +118,7 @@ class RealCall(
   @Volatile private var exchange: Exchange? = null
   internal val plansToCancel = CopyOnWriteArrayList<RoutePlanner.Plan>()
 
-  @Volatile private var onCancels: List<() -> Unit> = listOf()
+  private var onCancels: List<() -> Unit> = listOf()
 
   override fun timeout(): Timeout = timeout
 
@@ -147,8 +147,10 @@ class RealCall(
 
     eventListener.canceled(this)
 
-    onCancels.forEach { onCancel ->
-      onCancel()
+    synchronized(this) {
+      for (onCancel in onCancels) {
+        onCancel()
+      }
     }
   }
 
@@ -156,7 +158,11 @@ class RealCall(
 
   override fun onCancel(cancelFn: () -> Unit) {
     synchronized(this) {
-      onCancels = onCancels + cancelFn
+      if (!canceled) {
+        onCancels = onCancels + cancelFn
+      } else {
+        cancelFn()
+      }
     }
   }
 
