@@ -171,6 +171,9 @@ class Cache(
   )
 
   internal fun get(request: Request): Response? {
+    if (request.method != "GET") {
+      return null
+    }
     val key = key(request.url)
     val snapshot: DiskLruCache.Snapshot = try {
       cache[key] ?: return null
