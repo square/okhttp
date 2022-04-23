@@ -170,8 +170,7 @@ expect class Response : Closeable {
     internal var networkResponse: Response?
     internal var cacheResponse: Response?
     internal var priorResponse: Response?
-    // internal var exchange: Exchange?
-    internal var trailersFn: (() -> Headers)?
+    internal var trailersFn: (() -> Headers)
 
     constructor()
 

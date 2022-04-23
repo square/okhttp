@@ -169,7 +169,7 @@ actual class Response internal constructor(
     internal actual var networkResponse: Response? = null
     internal actual var cacheResponse: Response? = null
     internal actual var priorResponse: Response? = null
-    internal actual var trailersFn: (() -> Headers)? = null
+    internal actual var trailersFn: (() -> Headers) = { Headers.headersOf() }
 
     actual constructor() {
       headers = Headers.Builder()
@@ -235,6 +235,7 @@ actual class Response internal constructor(
           networkResponse,
           cacheResponse,
           priorResponse,
+          trailersFn
       )
     }
   }

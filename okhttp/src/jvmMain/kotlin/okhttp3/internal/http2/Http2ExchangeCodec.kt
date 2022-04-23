@@ -198,6 +198,7 @@ class Http2ExchangeCodec(
           .code(statusLine.code)
           .message(statusLine.message)
           .headers(headersBuilder.build())
+          .trailers { error("trailers not available") }
     }
   }
 }

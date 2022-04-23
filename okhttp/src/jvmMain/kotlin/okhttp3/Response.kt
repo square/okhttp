@@ -86,7 +86,7 @@ actual class Response internal constructor(
 
   @get:JvmName("exchange") internal val exchange: Exchange?,
 
-  private var trailersFn: (() -> Headers)? = null
+  private var trailersFn: (() -> Headers)
 ) : Closeable {
 
   internal actual var lazyCacheControl: CacheControl? = null
@@ -145,7 +145,7 @@ actual class Response internal constructor(
    * before the entire HTTP response body has been consumed.
    */
   @Throws(IOException::class)
-  actual fun trailers(): Headers = checkNotNull(trailersFn) { "trailers not available" }()
+  actual fun trailers(): Headers = trailersFn()
 
   @Throws(IOException::class)
   actual fun peekBody(byteCount: Long): ResponseBody {
@@ -252,7 +252,7 @@ actual class Response internal constructor(
     internal var sentRequestAtMillis: Long = 0
     internal var receivedResponseAtMillis: Long = 0
     internal var exchange: Exchange? = null
-    internal actual var trailersFn: (() -> Headers)? = null
+    internal actual var trailersFn: (() -> Headers) = { Headers.headersOf() }
 
     actual constructor() {
       headers = Headers.Builder()
