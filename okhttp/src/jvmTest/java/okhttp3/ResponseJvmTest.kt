@@ -19,7 +19,13 @@ import assertk.assertThat
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import kotlin.test.assertFailsWith
+import okhttp3.ResponseBody.Companion.asResponseBody
 import okhttp3.ResponseBody.Companion.toResponseBody
+import okio.Buffer
+import okio.BufferedSource
+import okio.Source
+import okio.Timeout
+import okio.buffer
 import org.junit.jupiter.api.Test
 
 class ResponseJvmTest {
@@ -51,6 +57,39 @@ class ResponseJvmTest {
     }
 
     assertThat(response.trailers()["a"]).isEqualTo("b")
+  }
+
+  @Test fun peekAfterReadingResponse() {
+    val response = newResponse(responseBody("abc"))
+    assertThat(response.body.string()).isEqualTo("abc")
+
+    assertFailsWith<IllegalStateException> {
+      response.peekBody(3)
+    }
+  }
+
+  /**
+   * Returns a new response body that refuses to be read once it has been closed. This is true of
+   * most [BufferedSource] instances, but not of [Buffer].
+   */
+  private fun responseBody(content: String): ResponseBody {
+    val data = Buffer().writeUtf8(content)
+    val source: Source = object : Source {
+      var closed = false
+      override fun close() {
+        closed = true
+      }
+
+      override fun read(sink: Buffer, byteCount: Long): Long {
+        check(!closed)
+        return data.read(sink, byteCount)
+      }
+
+      override fun timeout(): Timeout {
+        return Timeout.NONE
+      }
+    }
+    return source.buffer().asResponseBody(null, -1)
   }
 
   private fun newResponse(

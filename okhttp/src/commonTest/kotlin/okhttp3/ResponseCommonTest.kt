@@ -42,15 +42,6 @@ class ResponseCommonTest {
     assertThat(response.body.string()).isEqualTo("abc")
   }
 
-  @Test fun peekAfterReadingResponse() {
-    val response = newResponse(responseBody("abc"))
-    assertThat(response.body.string()).isEqualTo("abc")
-
-    assertFailsWith<IllegalStateException> {
-      response.peekBody(3)
-    }
-  }
-
   @Test fun eachPeakIsIndependent() {
     val response = newResponse(responseBody("abcdef"))
     val p1 = response.peekBody(4)
