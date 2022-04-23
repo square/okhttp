@@ -2,13 +2,13 @@
 biz-aQute-bnd = "6.2.0"
 checkStyle = "10.1"
 com-squareup-moshi = "1.13.0"
-com-squareup-okio = "3.0.0"
+com-squareup-okio = "3.1.0"
 de-mannodermaus-junit5 = "1.3.0"
 graalvm = "22.0.0.2"
-org-bouncycastle = "1.70"
+org-bouncycastle = "1.71"
 org-conscrypt = "2.5.2"
 org-jetbrains-coroutines = "1.6.1"
-org-jetbrains-kotlin = "1.6.20"
+org-jetbrains-kotlin = "1.6.21"
 org-junit-jupiter = "5.8.2"
 picocli = "4.6.3"
 
@@ -35,15 +35,15 @@ findbugs-jsr305 = "com.google.code.findbugs:jsr305:3.0.2"
 gradlePlugin-android = "com.android.tools.build:gradle:7.0.4"
 gradlePlugin-androidJunit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.8.2.0"
 gradlePlugin-animalsniffer = "ru.vyarus:gradle-animalsniffer-plugin:1.5.4"
-gradlePlugin-binaryCompatibilityValidator = "org.jetbrains.kotlinx.binary-compatibility-validator:org.jetbrains.kotlinx.binary-compatibility-validator.gradle.plugin:0.8.0"
+gradlePlugin-binaryCompatibilityValidator = "org.jetbrains.kotlinx.binary-compatibility-validator:org.jetbrains.kotlinx.binary-compatibility-validator.gradle.plugin:0.9.0"
 gradlePlugin-bnd = { module = "biz.aQute.bnd:biz.aQute.bnd.gradle", version.ref = "biz-aQute-bnd" }
-gradlePlugin-dokka = "org.jetbrains.dokka:dokka-gradle-plugin:1.6.10"
+gradlePlugin-dokka = "org.jetbrains.dokka:dokka-gradle-plugin:1.6.20"
 gradlePlugin-errorprone = "net.ltgt.gradle:gradle-errorprone-plugin:2.0.2"
 gradlePlugin-graal = "gradle.plugin.com.palantir.graal:gradle-graal:0.10.0"
 gradlePlugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "org-jetbrains-kotlin" }
 gradlePlugin-mavenPublish = "com.vanniktech:gradle-maven-publish-plugin:0.19.0"
 gradlePlugin-shadow = "gradle.plugin.com.github.johnrengelman:shadow:7.1.2"
-gradlePlugin-spotless = "com.diffplug.spotless:spotless-plugin-gradle:6.4.2"
+gradlePlugin-spotless = "com.diffplug.spotless:spotless-plugin-gradle:6.5.0"
 guava-jre = "com.google.guava:guava:31.1-jre"
 hamcrestLibrary = "org.hamcrest:hamcrest-library:2.2"
 httpClient5 = "org.apache.httpcomponents.client5:httpclient5:5.1.3"
@@ -69,7 +69,7 @@ kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "org-jetbrains-coroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "org-jetbrains-coroutines" }
 nativeImageSvm = { module = "org.graalvm.nativeimage:svm", version.ref = "graalvm" }
-openjsse = "org.openjsse:openjsse:1.1.9"
+openjsse = "org.openjsse:openjsse:1.1.10"
 picocli = { module = "info.picocli:picocli", version.ref = "picocli" }
 picocli-compiler = { module = "info.picocli:picocli-codegen", version.ref = "picocli" }
 playservices-safetynet = "com.google.android.gms:play-services-safetynet:18.0.1"
