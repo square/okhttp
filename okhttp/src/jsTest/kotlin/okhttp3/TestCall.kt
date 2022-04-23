@@ -26,6 +26,7 @@ class TestCall(
 ) : Call {
   var cancelled = false
   var executed = false
+  private var onCancels: MutableList<() -> Unit> = mutableListOf()
 
   override fun request(): Request = request
 
@@ -43,6 +44,13 @@ class TestCall(
 
   override fun cancel() {
     cancelled = true
+    for (onCancel in onCancels) {
+      onCancel()
+    }
+  }
+
+  override fun onCancel(cancelFn: () -> Unit) {
+    onCancels += cancelFn
   }
 
   override fun isExecuted(): Boolean {

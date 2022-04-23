@@ -70,7 +70,7 @@ expect interface Call {
    * Most cancellation should be handled via existing
    * [execute], [enqueue] and executeAsync behaviour.
    */
-  actual fun onCancel(cancelFn: () -> Unit)
+  fun onCancel(cancelFn: () -> Unit)
 
   fun interface Factory {
     fun newCall(request: Request): Call
