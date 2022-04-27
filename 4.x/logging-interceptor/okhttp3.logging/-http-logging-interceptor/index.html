@@ -1067,7 +1067,7 @@
 <p>//<a href="../../../">logging-interceptor</a>/<a href="../">okhttp3.logging</a>/<a href="./">HttpLoggingInterceptor</a></p>
 <h1 id="httplogginginterceptor">HttpLoggingInterceptor<a class="headerlink" href="#httplogginginterceptor" title="Permanent link">&para;</a></h1>
 <p>[jvm]\
-class <a href="./">HttpLoggingInterceptor</a>@<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-overloads/index.html">JvmOverloads</a>constructor(logger: <a href="-logger/">HttpLoggingInterceptor.Logger</a>) : Interceptor</p>
+class <a href="./">HttpLoggingInterceptor</a>@<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-overloads/index.html">JvmOverloads</a>constructor(logger: <a href="-logger/">HttpLoggingInterceptor.Logger</a> = Logger.DEFAULT) : Interceptor</p>
 <p>An OkHttp interceptor which logs request and response information. Can be applied as an application interceptor or as a OkHttpClient.networkInterceptors.</p>
 <p>The format of the logs created by this class should not be considered stable and may change slightly between releases. If you need a stable logging format, use your own interceptor.</p>
 <h2 id="constructors">Constructors<a class="headerlink" href="#constructors" title="Permanent link">&para;</a></h2>
@@ -1138,7 +1138,7 @@ class <a href="./">HttpLoggingInterceptor</a>@<a href="https://kotlinlang.org/ap
 <tbody>
 <tr>
 <td><a href="level/">level</a></td>
-<td>[jvm]<br>@<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-volatile/index.html">Volatile</a><br>@set:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;level&rdquo;)<br>var <a href="level/">level</a>: <a href="-level/">HttpLoggingInterceptor.Level</a></td>
+<td>[jvm]<br>@<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-volatile/index.html">Volatile</a><br>@set:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;level&quot;)<br>var <a href="level/">level</a>: <a href="-level/">HttpLoggingInterceptor.Level</a></td>
 </tr>
 </tbody>
 </table>

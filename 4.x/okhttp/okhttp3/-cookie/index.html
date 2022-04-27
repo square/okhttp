@@ -1124,39 +1124,39 @@ class <a href="./">Cookie</a></p>
 <tbody>
 <tr>
 <td><a href="domain/">domain</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;domain&rdquo;)<br>val <a href="domain/">domain</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><br>Returns the cookie&rsquo;s domain. If <a href="host-only/">hostOnly</a> returns true this is the only domain that matches this cookie; otherwise it matches this domain and all subdomains.</td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;domain&quot;)<br>val <a href="domain/">domain</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><br>Returns the cookie&rsquo;s domain. If <a href="host-only/">hostOnly</a> returns true this is the only domain that matches this cookie; otherwise it matches this domain and all subdomains.</td>
 </tr>
 <tr>
 <td><a href="expires-at/">expiresAt</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;expiresAt&rdquo;)<br>val <a href="expires-at/">expiresAt</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a><br>Returns the time that this cookie expires, in the same format as <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/System.html#currentTimeMillis--">System.currentTimeMillis</a>. This is December 31, 9999 if the cookie is <a href="persistent/">persistent</a>, in which case it will expire at the end of the current session.</td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;expiresAt&quot;)<br>val <a href="expires-at/">expiresAt</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a><br>Returns the time that this cookie expires, in the same format as <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/System.html#currentTimeMillis--">System.currentTimeMillis</a>. This is December 31, 9999 if the cookie is <a href="persistent/">persistent</a>, in which case it will expire at the end of the current session.</td>
 </tr>
 <tr>
 <td><a href="host-only/">hostOnly</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;hostOnly&rdquo;)<br>val <a href="host-only/">hostOnly</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><br>Returns true if this cookie&rsquo;s domain should be interpreted as a single host name, or false if it should be interpreted as a pattern. This flag will be false if its Set-Cookie header included a domain attribute.</td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;hostOnly&quot;)<br>val <a href="host-only/">hostOnly</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><br>Returns true if this cookie&rsquo;s domain should be interpreted as a single host name, or false if it should be interpreted as a pattern. This flag will be false if its Set-Cookie header included a domain attribute.</td>
 </tr>
 <tr>
 <td><a href="http-only/">httpOnly</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;httpOnly&rdquo;)<br>val <a href="http-only/">httpOnly</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><br>Returns true if this cookie should be limited to only HTTP APIs. In web browsers this prevents the cookie from being accessible to scripts.</td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;httpOnly&quot;)<br>val <a href="http-only/">httpOnly</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><br>Returns true if this cookie should be limited to only HTTP APIs. In web browsers this prevents the cookie from being accessible to scripts.</td>
 </tr>
 <tr>
 <td><a href="name/">name</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;name&rdquo;)<br>val <a href="name/">name</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><br>Returns a non-empty string with this cookie&rsquo;s name.</td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;name&quot;)<br>val <a href="name/">name</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><br>Returns a non-empty string with this cookie&rsquo;s name.</td>
 </tr>
 <tr>
 <td><a href="path/">path</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;path&rdquo;)<br>val <a href="path/">path</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><br>Returns this cookie&rsquo;s path. This cookie matches URLs prefixed with path segments that match this path&rsquo;s segments. For example, if this path is /foo this cookie matches requests to /foo and /foo/bar, but not / or /football.</td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;path&quot;)<br>val <a href="path/">path</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><br>Returns this cookie&rsquo;s path. This cookie matches URLs prefixed with path segments that match this path&rsquo;s segments. For example, if this path is /foo this cookie matches requests to /foo and /foo/bar, but not / or /football.</td>
 </tr>
 <tr>
 <td><a href="persistent/">persistent</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;persistent&rdquo;)<br>val <a href="persistent/">persistent</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><br>Returns true if this cookie does not expire at the end of the current session.</td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;persistent&quot;)<br>val <a href="persistent/">persistent</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><br>Returns true if this cookie does not expire at the end of the current session.</td>
 </tr>
 <tr>
 <td><a href="secure/">secure</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;secure&rdquo;)<br>val <a href="secure/">secure</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><br>Returns true if this cookie should be limited to only HTTPS requests.</td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;secure&quot;)<br>val <a href="secure/">secure</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><br>Returns true if this cookie should be limited to only HTTPS requests.</td>
 </tr>
 <tr>
 <td><a href="value/">value</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;value&rdquo;)<br>val <a href="value/">value</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><br>Returns a possibly-empty string with this cookie&rsquo;s value.</td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;value&quot;)<br>val <a href="value/">value</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><br>Returns a possibly-empty string with this cookie&rsquo;s value.</td>
 </tr>
 </tbody>
 </table>

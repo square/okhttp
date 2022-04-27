@@ -1088,7 +1088,7 @@
 <p>//<a href="../../../">okhttp</a>/<a href="../">okhttp3</a>/<a href="./">OkHttpClient</a></p>
 <h1 id="okhttpclient">OkHttpClient<a class="headerlink" href="#okhttpclient" title="Permanent link">&para;</a></h1>
 <p>[jvm]\
-open class <a href="./">OkHttpClient</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-cloneable/index.html">Cloneable</a>, <a href="../-call/-factory/">Call.Factory</a>, <a href="../-web-socket/-factory/">WebSocket.Factory</a></p>
+open class <a href="./">OkHttpClient</a> : <a href="../-call/-factory/">Call.Factory</a>, <a href="../-web-socket/-factory/">WebSocket.Factory</a></p>
 <p>Factory for <a href="../-call/">calls</a>, which can be used to send HTTP requests and read their responses.</p>
 <h2 id="okhttpclients-should-be-shared">OkHttpClients Should Be Shared<a class="headerlink" href="#okhttpclients-should-be-shared" title="Permanent link">&para;</a></h2>
 <p>OkHttp performs best when you create a single OkHttpClient instance and reuse it for all of your HTTP calls. This is because each client holds its own connection pool and thread pools. Reusing connections and threads reduces latency and saves memory. Conversely, creating a client for each request wastes resources on idle pools.</p>
@@ -1190,123 +1190,123 @@ Response response = eagerClient.newCall(request).execute();</p>
 <tbody>
 <tr>
 <td><a href="authenticator/">authenticator</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;authenticator&rdquo;)<br>val <a href="authenticator/">authenticator</a>: <a href="../-authenticator/">Authenticator</a></td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;authenticator&quot;)<br>val <a href="authenticator/">authenticator</a>: <a href="../-authenticator/">Authenticator</a></td>
 </tr>
 <tr>
 <td><a href="cache/">cache</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;cache&rdquo;)<br>val <a href="cache/">cache</a>: <a href="../-cache/">Cache</a>?</td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;cache&quot;)<br>val <a href="cache/">cache</a>: <a href="../-cache/">Cache</a>?</td>
 </tr>
 <tr>
 <td><a href="call-timeout-millis/">callTimeoutMillis</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;callTimeoutMillis&rdquo;)<br>val <a href="call-timeout-millis/">callTimeoutMillis</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><br>Default call timeout (in milliseconds). By default there is no timeout for complete calls, but there is for the connect, write, and read actions within a call.</td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;callTimeoutMillis&quot;)<br>val <a href="call-timeout-millis/">callTimeoutMillis</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><br>Default call timeout (in milliseconds). By default there is no timeout for complete calls, but there is for the connect, write, and read actions within a call.</td>
 </tr>
 <tr>
 <td><a href="certificate-chain-cleaner/">certificateChainCleaner</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;certificateChainCleaner&rdquo;)<br>val <a href="certificate-chain-cleaner/">certificateChainCleaner</a>: CertificateChainCleaner?</td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;certificateChainCleaner&quot;)<br>val <a href="certificate-chain-cleaner/">certificateChainCleaner</a>: CertificateChainCleaner?</td>
 </tr>
 <tr>
 <td><a href="certificate-pinner/">certificatePinner</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;certificatePinner&rdquo;)<br>val <a href="certificate-pinner/">certificatePinner</a>: <a href="../-certificate-pinner/">CertificatePinner</a></td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;certificatePinner&quot;)<br>val <a href="certificate-pinner/">certificatePinner</a>: <a href="../-certificate-pinner/">CertificatePinner</a></td>
 </tr>
 <tr>
 <td><a href="connection-pool/">connectionPool</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;connectionPool&rdquo;)<br>val <a href="connection-pool/">connectionPool</a>: <a href="../-connection-pool/">ConnectionPool</a></td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;connectionPool&quot;)<br>val <a href="connection-pool/">connectionPool</a>: <a href="../-connection-pool/">ConnectionPool</a></td>
 </tr>
 <tr>
 <td><a href="connection-specs/">connectionSpecs</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;connectionSpecs&rdquo;)<br>val <a href="connection-specs/">connectionSpecs</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a>&lt;<a href="../-connection-spec/">ConnectionSpec</a>&gt;</td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;connectionSpecs&quot;)<br>val <a href="connection-specs/">connectionSpecs</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a>&lt;<a href="../-connection-spec/">ConnectionSpec</a>&gt;</td>
 </tr>
 <tr>
 <td><a href="connect-timeout-millis/">connectTimeoutMillis</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;connectTimeoutMillis&rdquo;)<br>val <a href="connect-timeout-millis/">connectTimeoutMillis</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><br>Default connect timeout (in milliseconds). The default is 10 seconds.</td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;connectTimeoutMillis&quot;)<br>val <a href="connect-timeout-millis/">connectTimeoutMillis</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><br>Default connect timeout (in milliseconds). The default is 10 seconds.</td>
 </tr>
 <tr>
 <td><a href="cookie-jar/">cookieJar</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;cookieJar&rdquo;)<br>val <a href="cookie-jar/">cookieJar</a>: <a href="../-cookie-jar/">CookieJar</a></td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;cookieJar&quot;)<br>val <a href="cookie-jar/">cookieJar</a>: <a href="../-cookie-jar/">CookieJar</a></td>
 </tr>
 <tr>
 <td><a href="dispatcher/">dispatcher</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;dispatcher&rdquo;)<br>val <a href="dispatcher/">dispatcher</a>: <a href="../-dispatcher/">Dispatcher</a></td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;dispatcher&quot;)<br>val <a href="dispatcher/">dispatcher</a>: <a href="../-dispatcher/">Dispatcher</a></td>
 </tr>
 <tr>
 <td><a href="dns/">dns</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;dns&rdquo;)<br>val <a href="dns/">dns</a>: <a href="../-dns/">Dns</a></td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;dns&quot;)<br>val <a href="dns/">dns</a>: <a href="../-dns/">Dns</a></td>
 </tr>
 <tr>
 <td><a href="event-listener-factory/">eventListenerFactory</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;eventListenerFactory&rdquo;)<br>val <a href="event-listener-factory/">eventListenerFactory</a>: <a href="../-event-listener/-factory/">EventListener.Factory</a></td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;eventListenerFactory&quot;)<br>val <a href="event-listener-factory/">eventListenerFactory</a>: <a href="../-event-listener/-factory/">EventListener.Factory</a></td>
 </tr>
 <tr>
 <td><a href="fast-fallback/">fastFallback</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;fastFallback&rdquo;)<br>val <a href="fast-fallback/">fastFallback</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;fastFallback&quot;)<br>val <a href="fast-fallback/">fastFallback</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></td>
 </tr>
 <tr>
 <td><a href="follow-redirects/">followRedirects</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;followRedirects&rdquo;)<br>val <a href="follow-redirects/">followRedirects</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;followRedirects&quot;)<br>val <a href="follow-redirects/">followRedirects</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></td>
 </tr>
 <tr>
 <td><a href="follow-ssl-redirects/">followSslRedirects</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;followSslRedirects&rdquo;)<br>val <a href="follow-ssl-redirects/">followSslRedirects</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;followSslRedirects&quot;)<br>val <a href="follow-ssl-redirects/">followSslRedirects</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></td>
 </tr>
 <tr>
 <td><a href="hostname-verifier/">hostnameVerifier</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;hostnameVerifier&rdquo;)<br>val <a href="hostname-verifier/">hostnameVerifier</a>: <a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/HostnameVerifier.html">HostnameVerifier</a></td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;hostnameVerifier&quot;)<br>val <a href="hostname-verifier/">hostnameVerifier</a>: <a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/HostnameVerifier.html">HostnameVerifier</a></td>
 </tr>
 <tr>
 <td><a href="interceptors/">interceptors</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;interceptors&rdquo;)<br>val <a href="interceptors/">interceptors</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a>&lt;<a href="../-interceptor/">Interceptor</a>&gt;<br>Returns an immutable list of interceptors that observe the full span of each call: from before the connection is established (if any) until after the response source is selected (either the origin server, cache, or both).</td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;interceptors&quot;)<br>val <a href="interceptors/">interceptors</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a>&lt;<a href="../-interceptor/">Interceptor</a>&gt;<br>Returns an immutable list of interceptors that observe the full span of each call: from before the connection is established (if any) until after the response source is selected (either the origin server, cache, or both).</td>
 </tr>
 <tr>
 <td><a href="min-web-socket-message-to-compress/">minWebSocketMessageToCompress</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;minWebSocketMessageToCompress&rdquo;)<br>val <a href="min-web-socket-message-to-compress/">minWebSocketMessageToCompress</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a><br>Minimum outbound web socket message size (in bytes) that will be compressed. The default is 1024 bytes.</td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;minWebSocketMessageToCompress&quot;)<br>val <a href="min-web-socket-message-to-compress/">minWebSocketMessageToCompress</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a><br>Minimum outbound web socket message size (in bytes) that will be compressed. The default is 1024 bytes.</td>
 </tr>
 <tr>
 <td><a href="network-interceptors/">networkInterceptors</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;networkInterceptors&rdquo;)<br>val <a href="network-interceptors/">networkInterceptors</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a>&lt;<a href="../-interceptor/">Interceptor</a>&gt;<br>Returns an immutable list of interceptors that observe a single network request and response. These interceptors must call <a href="../-interceptor/-chain/proceed/">Interceptor.Chain.proceed</a> exactly once: it is an error for a network interceptor to short-circuit or repeat a network request.</td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;networkInterceptors&quot;)<br>val <a href="network-interceptors/">networkInterceptors</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a>&lt;<a href="../-interceptor/">Interceptor</a>&gt;<br>Returns an immutable list of interceptors that observe a single network request and response. These interceptors must call <a href="../-interceptor/-chain/proceed/">Interceptor.Chain.proceed</a> exactly once: it is an error for a network interceptor to short-circuit or repeat a network request.</td>
 </tr>
 <tr>
 <td><a href="ping-interval-millis/">pingIntervalMillis</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;pingIntervalMillis&rdquo;)<br>val <a href="ping-interval-millis/">pingIntervalMillis</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><br>Web socket and HTTP/2 ping interval (in milliseconds). By default pings are not sent.</td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;pingIntervalMillis&quot;)<br>val <a href="ping-interval-millis/">pingIntervalMillis</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><br>Web socket and HTTP/2 ping interval (in milliseconds). By default pings are not sent.</td>
 </tr>
 <tr>
 <td><a href="protocols/">protocols</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;protocols&rdquo;)<br>val <a href="protocols/">protocols</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a>&lt;Protocol&gt;</td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;protocols&quot;)<br>val <a href="protocols/">protocols</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a>&lt;Protocol&gt;</td>
 </tr>
 <tr>
 <td><a href="proxy/">proxy</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;proxy&rdquo;)<br>val <a href="proxy/">proxy</a>: <a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html">Proxy</a>?</td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;proxy&quot;)<br>val <a href="proxy/">proxy</a>: <a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html">Proxy</a>?</td>
 </tr>
 <tr>
 <td><a href="proxy-authenticator/">proxyAuthenticator</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;proxyAuthenticator&rdquo;)<br>val <a href="proxy-authenticator/">proxyAuthenticator</a>: <a href="../-authenticator/">Authenticator</a></td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;proxyAuthenticator&quot;)<br>val <a href="proxy-authenticator/">proxyAuthenticator</a>: <a href="../-authenticator/">Authenticator</a></td>
 </tr>
 <tr>
 <td><a href="proxy-selector/">proxySelector</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;proxySelector&rdquo;)<br>val <a href="proxy-selector/">proxySelector</a>: <a href="https://docs.oracle.com/javase/8/docs/api/java/net/ProxySelector.html">ProxySelector</a></td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;proxySelector&quot;)<br>val <a href="proxy-selector/">proxySelector</a>: <a href="https://docs.oracle.com/javase/8/docs/api/java/net/ProxySelector.html">ProxySelector</a></td>
 </tr>
 <tr>
 <td><a href="read-timeout-millis/">readTimeoutMillis</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;readTimeoutMillis&rdquo;)<br>val <a href="read-timeout-millis/">readTimeoutMillis</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><br>Default read timeout (in milliseconds). The default is 10 seconds.</td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;readTimeoutMillis&quot;)<br>val <a href="read-timeout-millis/">readTimeoutMillis</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><br>Default read timeout (in milliseconds). The default is 10 seconds.</td>
 </tr>
 <tr>
 <td><a href="retry-on-connection-failure/">retryOnConnectionFailure</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;retryOnConnectionFailure&rdquo;)<br>val <a href="retry-on-connection-failure/">retryOnConnectionFailure</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;retryOnConnectionFailure&quot;)<br>val <a href="retry-on-connection-failure/">retryOnConnectionFailure</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></td>
 </tr>
 <tr>
 <td><a href="socket-factory/">socketFactory</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;socketFactory&rdquo;)<br>val <a href="socket-factory/">socketFactory</a>: <a href="https://docs.oracle.com/javase/8/docs/api/javax/net/SocketFactory.html">SocketFactory</a></td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;socketFactory&quot;)<br>val <a href="socket-factory/">socketFactory</a>: <a href="https://docs.oracle.com/javase/8/docs/api/javax/net/SocketFactory.html">SocketFactory</a></td>
 </tr>
 <tr>
 <td><a href="ssl-socket-factory/">sslSocketFactory</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;sslSocketFactory&rdquo;)<br>val <a href="ssl-socket-factory/">sslSocketFactory</a>: <a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLSocketFactory.html">SSLSocketFactory</a></td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;sslSocketFactory&quot;)<br>val <a href="ssl-socket-factory/">sslSocketFactory</a>: <a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLSocketFactory.html">SSLSocketFactory</a></td>
 </tr>
 <tr>
 <td><a href="write-timeout-millis/">writeTimeoutMillis</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;writeTimeoutMillis&rdquo;)<br>val <a href="write-timeout-millis/">writeTimeoutMillis</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><br>Default write timeout (in milliseconds). The default is 10 seconds.</td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;writeTimeoutMillis&quot;)<br>val <a href="write-timeout-millis/">writeTimeoutMillis</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><br>Default write timeout (in milliseconds). The default is 10 seconds.</td>
 </tr>
 <tr>
 <td><a href="x509-trust-manager/">x509TrustManager</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;x509TrustManager&rdquo;)<br>val <a href="x509-trust-manager/">x509TrustManager</a>: <a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/X509TrustManager.html">X509TrustManager</a>?</td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;x509TrustManager&quot;)<br>val <a href="x509-trust-manager/">x509TrustManager</a>: <a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/X509TrustManager.html">X509TrustManager</a>?</td>
 </tr>
 </tbody>
 </table>

@@ -1032,13 +1032,13 @@
 <h1 id="queryparametervalues">queryParameterValues<a class="headerlink" href="#queryparametervalues" title="Permanent link">&para;</a></h1>
 <p>[jvm]\
 fun <a href="./">queryParameterValues</a>(name: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>?&gt;</p>
-<p>Returns all values for the query parameter name ordered by their appearance in this URL. For example this returns [&ldquo;banana&rdquo;] for queryParameterValue(&ldquo;b&rdquo;) on <a href="http://host/?a=apple&amp;b=banana">http://host/?a=apple&amp;b=banana</a>.</p>
+<p>Returns all values for the query parameter name ordered by their appearance in this URL. For example this returns [&quot;banana&quot;] for queryParameterValue(&quot;b&quot;) on <a href="http://host/?a=apple&amp;b=banana">http://host/?a=apple&amp;b=banana</a>.</p>
 <table>
 <thead>
 <tr>
 <th>URL</th>
-<th>queryParameterValues(&ldquo;a&rdquo;)</th>
-<th>queryParameterValues(&ldquo;b&rdquo;)</th>
+<th>queryParameterValues(&quot;a&quot;)</th>
+<th>queryParameterValues(&quot;b&quot;)</th>
 </tr>
 </thead>
 <tbody>
@@ -1054,17 +1054,17 @@ fun <a href="./">queryParameterValues</a>(name: <a href="https://kotlinlang.org/
 </tr>
 <tr>
 <td><a href="http://host/?a=apple&amp;k=key+lime">http://host/?a=apple&amp;k=key+lime</a></td>
-<td>[&ldquo;apple&rdquo;]</td>
+<td>[&quot;apple&quot;]</td>
 <td>[]</td>
 </tr>
 <tr>
 <td><a href="http://host/?a=apple&amp;a=apricot">http://host/?a=apple&amp;a=apricot</a></td>
-<td>[&ldquo;apple&rdquo;, &ldquo;apricot&rdquo;]</td>
+<td>[&quot;apple&quot;, &quot;apricot&quot;]</td>
 <td>[]</td>
 </tr>
 <tr>
 <td><a href="http://host/?a=apple&amp;b">http://host/?a=apple&amp;b</a></td>
-<td>[&ldquo;apple&rdquo;]</td>
+<td>[&quot;apple&quot;]</td>
 <td>[null]</td>
 </tr>
 </tbody>

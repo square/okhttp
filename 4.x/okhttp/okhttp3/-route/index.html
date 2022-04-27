@@ -1060,7 +1060,7 @@
 <p>//<a href="../../../">okhttp</a>/<a href="../">okhttp3</a>/<a href="./">Route</a></p>
 <h1 id="route">Route<a class="headerlink" href="#route" title="Permanent link">&para;</a></h1>
 <p>[jvm]\
-class <a href="./">Route</a>(address: <a href="../-address/">Address</a>, proxy: <a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html">Proxy</a>, socketAddress: <a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetSocketAddress.html">InetSocketAddress</a>)</p>
+class <a href="./">Route</a>(val address: <a href="../-address/">Address</a>, val proxy: <a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html">Proxy</a>, val socketAddress: <a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetSocketAddress.html">InetSocketAddress</a>)</p>
 <p>The concrete route used by a connection to reach an abstract origin server. When creating a connection the client has many options:</p>
 <ul>
 <li><strong>HTTP proxy:</strong> a proxy server may be explicitly configured for the client. Otherwise, the     <a href="https://docs.oracle.com/javase/8/docs/api/java/net/ProxySelector.html">proxy selector</a> is used. It may return multiple proxies to attempt.</li>
@@ -1120,15 +1120,15 @@ class <a href="./">Route</a>(address: <a href="../-address/">Address</a>, proxy:
 <tbody>
 <tr>
 <td><a href="address/">address</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;address&rdquo;)<br>val <a href="address/">address</a>: <a href="../-address/">Address</a></td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;address&quot;)<br>val <a href="address/">address</a>: <a href="../-address/">Address</a></td>
 </tr>
 <tr>
 <td><a href="proxy/">proxy</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;proxy&rdquo;)<br>val <a href="proxy/">proxy</a>: <a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html">Proxy</a><br>Returns the <a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html">Proxy</a> of this route.</td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;proxy&quot;)<br>val <a href="proxy/">proxy</a>: <a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html">Proxy</a><br>Returns the <a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html">Proxy</a> of this route.</td>
 </tr>
 <tr>
 <td><a href="socket-address/">socketAddress</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;socketAddress&rdquo;)<br>val <a href="socket-address/">socketAddress</a>: <a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetSocketAddress.html">InetSocketAddress</a></td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;socketAddress&quot;)<br>val <a href="socket-address/">socketAddress</a>: <a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetSocketAddress.html">InetSocketAddress</a></td>
 </tr>
 </tbody>
 </table>

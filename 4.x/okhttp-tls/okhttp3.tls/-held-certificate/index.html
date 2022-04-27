@@ -1067,16 +1067,16 @@
 <p>//<a href="../../../">okhttp-tls</a>/<a href="../">okhttp3.tls</a>/<a href="./">HeldCertificate</a></p>
 <h1 id="heldcertificate">HeldCertificate<a class="headerlink" href="#heldcertificate" title="Permanent link">&para;</a></h1>
 <p>[jvm]\
-class <a href="./">HeldCertificate</a>(keyPair: <a href="https://docs.oracle.com/javase/8/docs/api/java/security/KeyPair.html">KeyPair</a>, certificate: <a href="https://docs.oracle.com/javase/8/docs/api/java/security/cert/X509Certificate.html">X509Certificate</a>)</p>
+class <a href="./">HeldCertificate</a>(val keyPair: <a href="https://docs.oracle.com/javase/8/docs/api/java/security/KeyPair.html">KeyPair</a>, val certificate: <a href="https://docs.oracle.com/javase/8/docs/api/java/security/cert/X509Certificate.html">X509Certificate</a>)</p>
 <p>A certificate and its private key. These are some properties of certificates that are used with TLS:</p>
 <ul>
-<li><strong>A common name.</strong> This is a string identifier for the certificate. It usually describes the     purpose of the certificate like &ldquo;Entrust Root Certification Authority - G2&rdquo; or     &ldquo;<a href="http://www.squareup.com">www.squareup.com</a>&rdquo;.</li>
+<li><strong>A common name.</strong> This is a string identifier for the certificate. It usually describes the     purpose of the certificate like &quot;Entrust Root Certification Authority - G2&quot; or     &quot;<a href="http://www.squareup.com&amp;quot">www.squareup.com&amp;quot</a>;.</li>
 <li><strong>A set of hostnames.</strong> These are in the certificate&rsquo;s subject alternative name (SAN)     extension. A subject alternative name is either a literal hostname (squareup.com), a literal     IP address (74.122.190.80), or a hostname pattern (*.api.squareup.com).</li>
 <li><strong>A validity interval.</strong> A certificate should not be used before its validity interval starts     or after it ends.</li>
 <li><strong>A public key.</strong> This cryptographic key is used for asymmetric encryption digital signatures.     Note that the private key is not a part of the certificate!</li>
 <li><strong>A signature issued by another certificate&rsquo;s private key.</strong> This mechanism allows a trusted     third-party to endorse a certificate. Third parties should only endorse certificates once     they&rsquo;ve confirmed that the owner of the private key is also the owner of the certificate&rsquo;s     other properties.</li>
 </ul>
-<p>Certificates are signed by other certificates and a sequence of them is called a certificate chain. The chain terminates in a self-signed &ldquo;root&rdquo; certificate. Signing certificates in the middle of the chain are called &ldquo;intermediates&rdquo;. Organizations that offer certificate signing are called certificate authorities (CAs).</p>
+<p>Certificates are signed by other certificates and a sequence of them is called a certificate chain. The chain terminates in a self-signed &quot;root&quot; certificate. Signing certificates in the middle of the chain are called &quot;intermediates&quot;. Organizations that offer certificate signing are called certificate authorities (CAs).</p>
 <p>Browsers and other HTTP clients need a set of trusted root certificates to authenticate their peers. Sets of root certificates are managed by either the HTTP client (like Firefox), or the host platform (like Android). In July 2018 Android had 134 trusted root certificates for its HTTP clients to trust.</p>
 <p>For example, in order to establish a secure connection to <a href="https://www.squareup.com/">https://www.squareup.com/</a>, these three certificates are used.</p>
 <p><a href="http://www.squareup.com">www.squareup.com</a> certificate:\
@@ -1102,7 +1102,7 @@ Subject Alternative Names: none\
 Validity: 2009-07-07T17:25:54Z – 2030-12-07T17:55:54Z\
 Public Key: ba84b672db9e0c6be299e93001a776ea32b895411ac9da614e5872cffef68279bf7361060aa527d8&hellip;\
 Self-signed Signature: 799f1d96c6b6793f228d87d3870304606a6b9a2e59897311ac43d1f513ff8d392bc0f&hellip;</p>
-<p>In this example the HTTP client already knows and trusts the last certificate, &ldquo;Entrust Root Certification Authority - G2&rdquo;. That certificate is used to verify the signature of the intermediate certificate, &ldquo;Entrust Certification Authority - L1M&rdquo;. The intermediate certificate is used to verify the signature of the &ldquo;<a href="http://www.squareup.com">www.squareup.com</a>&rdquo; certificate.</p>
+<p>In this example the HTTP client already knows and trusts the last certificate, &quot;Entrust Root Certification Authority - G2&quot;. That certificate is used to verify the signature of the intermediate certificate, &quot;Entrust Certification Authority - L1M&quot;. The intermediate certificate is used to verify the signature of the &quot;<a href="http://www.squareup.com&amp;quot">www.squareup.com&amp;quot</a>; certificate.</p>
 <p>This roles are reversed for client authentication. In that case the client has a private key and a chain of certificates. The server uses a set of trusted root certificates to authenticate the client. Subject alternative names are not used for client authentication.</p>
 <h2 id="constructors">Constructors<a class="headerlink" href="#constructors" title="Permanent link">&para;</a></h2>
 <table>
@@ -1172,11 +1172,11 @@ Self-signed Signature: 799f1d96c6b6793f228d87d3870304606a6b9a2e59897311ac43d1f51
 <tbody>
 <tr>
 <td><a href="certificate/">certificate</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;certificate&rdquo;)<br>val <a href="certificate/">certificate</a>: <a href="https://docs.oracle.com/javase/8/docs/api/java/security/cert/X509Certificate.html">X509Certificate</a></td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;certificate&quot;)<br>val <a href="certificate/">certificate</a>: <a href="https://docs.oracle.com/javase/8/docs/api/java/security/cert/X509Certificate.html">X509Certificate</a></td>
 </tr>
 <tr>
 <td><a href="key-pair/">keyPair</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;keyPair&rdquo;)<br>val <a href="key-pair/">keyPair</a>: <a href="https://docs.oracle.com/javase/8/docs/api/java/security/KeyPair.html">KeyPair</a></td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;keyPair&quot;)<br>val <a href="key-pair/">keyPair</a>: <a href="https://docs.oracle.com/javase/8/docs/api/java/security/KeyPair.html">KeyPair</a></td>
 </tr>
 </tbody>
 </table>

@@ -1034,8 +1034,8 @@
 <p>@<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-static/index.html">JvmStatic</a></p>
 <p>fun <a href="../../">RequestBody</a>.<a href="./">gzip</a>(): <a href="../../">RequestBody</a></p>
 <p>Returns a gzip version of the RequestBody, with compressed payload. This is not automatic as not all servers support gzip compressed requests.</p>
-<p>val request = Request.Builder().url(&ldquo;&hellip;&rdquo;)\
- .addHeader(&ldquo;Content-Encoding&rdquo;, &ldquo;gzip&rdquo;)\
+<p>val request = Request.Builder().url(&quot;&hellip;&quot;)\
+ .addHeader(&quot;Content-Encoding&quot;, &quot;gzip&quot;)\
  .post(uncompressedBody.gzip())\
  .build()</p>
 

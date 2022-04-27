@@ -1055,12 +1055,12 @@ TrustManagerFactory.getDefaultAlgorithm());\
 trustManagerFactory.init((KeyStore) null);\
 TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();\
 if (trustManagers.length != 1 || !(trustManagers[0] instanceof X509TrustManager)) {\
-    throw new IllegalStateException(&ldquo;Unexpected default trust managers:&rdquo;\
+    throw new IllegalStateException(&quot;Unexpected default trust managers:&quot;\
         + Arrays.toString(trustManagers));\
 }\
 X509TrustManager trustManager = (X509TrustManager) trustManagers[0];\
 \
-SSLContext sslContext = SSLContext.getInstance(&ldquo;TLS&rdquo;);\
+SSLContext sslContext = SSLContext.getInstance(&quot;TLS&quot;);\
 sslContext.init(null, new TrustManager[] { trustManager }, null);\
 SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();\
 \
@@ -1069,7 +1069,7 @@ OkHttpClient client = new OkHttpClient.Builder()\
     .build();</p>
 <h2 id="trustmanagers-on-android-are-weird">TrustManagers on Android are Weird!<a class="headerlink" href="#trustmanagers-on-android-are-weird" title="Permanent link">&para;</a></h2>
 <p>Trust managers targeting Android must also define a method that has this signature:</p>
-<pre><code>@SuppressWarnings("unused")\
+<pre><code>@SuppressWarnings(&amp;quot;unused&amp;quot;)\
 public List&amp;lt;X509Certificate&amp;gt; checkServerTrusted(\
     X509Certificate[] chain, String authType, String host) throws CertificateException {\
 }

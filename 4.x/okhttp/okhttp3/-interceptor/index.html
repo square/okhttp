@@ -1069,8 +1069,8 @@ override fun intercept(chain: Interceptor.Chain): Response {\
         .request(chain.request())\
         .protocol(Protocol.HTTP_1_1)\
         .code(400)\
-        .message(&ldquo;client config invalid&rdquo;)\
-        .body(&ldquo;client config invalid&rdquo;.toResponseBody(null))\
+        .message(&quot;client config invalid&quot;)\
+        .body(&quot;client config invalid&quot;.toResponseBody(null))\
         .build()\
   }\
 \

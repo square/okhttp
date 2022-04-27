@@ -1103,14 +1103,14 @@ class <a href="./">Cache</a>(directory: <a href="https://square.github.io/okio/2
 <p>In some situations, such as after a user clicks a &lsquo;refresh&rsquo; button, it may be necessary to skip the cache, and fetch data directly from the server. To force a full refresh, add the no-cache directive:</p>
 <p>Request request = new Request.Builder()\
     .cacheControl(new CacheControl.Builder().noCache().build())\
-    .url(&ldquo;<a href="http://publicobject.com/helloworld.txt">http://publicobject.com/helloworld.txt</a>&rdquo;)\
+    .url(&quot;<a href="http://publicobject.com/helloworld.txt&amp;quot">http://publicobject.com/helloworld.txt&amp;quot</a>;)\
     .build();</p>
 <p>If it is only necessary to force a cached response to be validated by the server, use the more efficient max-age=0 directive instead:</p>
 <p>Request request = new Request.Builder()\
     .cacheControl(new CacheControl.Builder()\
         .maxAge(0, TimeUnit.SECONDS)\
         .build())\
-    .url(&ldquo;<a href="http://publicobject.com/helloworld.txt">http://publicobject.com/helloworld.txt</a>&rdquo;)\
+    .url(&quot;<a href="http://publicobject.com/helloworld.txt&amp;quot">http://publicobject.com/helloworld.txt&amp;quot</a>;)\
     .build();</p>
 <h2 id="force-a-cache-response">Force a Cache Response<a class="headerlink" href="#force-a-cache-response" title="Permanent link">&para;</a></h2>
 <p>Sometimes you&rsquo;ll want to show resources if they are available immediately, but not otherwise. This can be used so your application can show <em>something</em> while waiting for the latest data to be downloaded. To restrict a request to locally-cached resources, add the only-if-cached directive:</p>
@@ -1118,7 +1118,7 @@ class <a href="./">Cache</a>(directory: <a href="https://square.github.io/okio/2
     .cacheControl(new CacheControl.Builder()\
         .onlyIfCached()\
         .build())\
-    .url(&ldquo;<a href="http://publicobject.com/helloworld.txt">http://publicobject.com/helloworld.txt</a>&rdquo;)\
+    .url(&quot;<a href="http://publicobject.com/helloworld.txt&amp;quot">http://publicobject.com/helloworld.txt&amp;quot</a>;)\
     .build();\
 Response forceCacheResponse = client.newCall(request).execute();\
 if (forceCacheResponse.code() != 504) {\
@@ -1131,7 +1131,7 @@ if (forceCacheResponse.code() != 504) {\
     .cacheControl(new CacheControl.Builder()\
         .maxStale(365, TimeUnit.DAYS)\
         .build())\
-    .url(&ldquo;<a href="http://publicobject.com/helloworld.txt">http://publicobject.com/helloworld.txt</a>&rdquo;)\
+    .url(&quot;<a href="http://publicobject.com/helloworld.txt&amp;quot">http://publicobject.com/helloworld.txt&amp;quot</a>;)\
     .build();</p>
 <p>The <a href="../-cache-control/">CacheControl</a> class can configure request caching directives and parse response caching directives. It even offers convenient constants <a href="../-cache-control/-companion/-f-o-r-c-e_-n-e-t-w-o-r-k/">CacheControl.FORCE_NETWORK</a> and <a href="../-cache-control/-companion/-f-o-r-c-e_-c-a-c-h-e/">CacheControl.FORCE_CACHE</a> that address the use cases above.</p>
 <h2 id="constructors">Constructors<a class="headerlink" href="#constructors" title="Permanent link">&para;</a></h2>
@@ -1242,11 +1242,11 @@ if (forceCacheResponse.code() != 504) {\
 <tbody>
 <tr>
 <td><a href="directory/">directory</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;directory&rdquo;)<br>val <a href="directory/">directory</a>: <a href="https://docs.oracle.com/javase/8/docs/api/java/io/File.html">File</a></td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;directory&quot;)<br>val <a href="directory/">directory</a>: <a href="https://docs.oracle.com/javase/8/docs/api/java/io/File.html">File</a></td>
 </tr>
 <tr>
 <td><a href="directory-path/">directoryPath</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;directoryPath&rdquo;)<br>val <a href="directory-path/">directoryPath</a>: <a href="https://square.github.io/okio/2.x/okio/okio/-path/index.html">Path</a></td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;directoryPath&quot;)<br>val <a href="directory-path/">directoryPath</a>: <a href="https://square.github.io/okio/2.x/okio/okio/-path/index.html">Path</a></td>
 </tr>
 <tr>
 <td><a href="is-closed/">isClosed</a></td>

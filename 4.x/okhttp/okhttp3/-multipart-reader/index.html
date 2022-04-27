@@ -1067,7 +1067,7 @@
 <p>//<a href="../../../">okhttp</a>/<a href="../">okhttp3</a>/<a href="./">MultipartReader</a></p>
 <h1 id="multipartreader">MultipartReader<a class="headerlink" href="#multipartreader" title="Permanent link">&para;</a></h1>
 <p>[jvm]\
-class <a href="./">MultipartReader</a>constructor(source: <a href="https://square.github.io/okio/2.x/okio/okio/-buffered-source/index.html">BufferedSource</a>, boundary: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>) : <a href="https://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html">Closeable</a></p>
+class <a href="./">MultipartReader</a>constructor(source: <a href="https://square.github.io/okio/2.x/okio/okio/-buffered-source/index.html">BufferedSource</a>, val boundary: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>) : <a href="https://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html">Closeable</a></p>
 <p>Reads a stream of <a href="http://www.ietf.org/rfc/rfc2046.txt">RFC 2046</a> multipart body parts. Callers read parts one-at-a-time until <a href="next-part/">nextPart</a> returns null. After calling <a href="next-part/">nextPart</a> any preceding parts should not be read.</p>
 <p>Typical use loops over the parts in sequence:</p>
 <p>val response: Response = call.execute()\
@@ -1111,7 +1111,7 @@ multipartReader.use {\
 <tbody>
 <tr>
 <td><a href="-part/">Part</a></td>
-<td>[jvm]<br>class <a href="-part/">Part</a>(headers: <a href="../-headers/">Headers</a>, body: <a href="https://square.github.io/okio/2.x/okio/okio/-buffered-source/index.html">BufferedSource</a>) : <a href="https://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html">Closeable</a><br>A single part in a multipart body.</td>
+<td>[jvm]<br>class <a href="-part/">Part</a>(val headers: <a href="../-headers/">Headers</a>, val body: <a href="https://square.github.io/okio/2.x/okio/okio/-buffered-source/index.html">BufferedSource</a>) : <a href="https://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html">Closeable</a><br>A single part in a multipart body.</td>
 </tr>
 </tbody>
 </table>
@@ -1145,7 +1145,7 @@ multipartReader.use {\
 <tbody>
 <tr>
 <td><a href="boundary/">boundary</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;boundary&rdquo;)<br>val <a href="boundary/">boundary</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;boundary&quot;)<br>val <a href="boundary/">boundary</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></td>
 </tr>
 </tbody>
 </table>

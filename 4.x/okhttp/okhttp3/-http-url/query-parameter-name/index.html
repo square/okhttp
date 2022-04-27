@@ -1032,7 +1032,7 @@
 <h1 id="queryparametername">queryParameterName<a class="headerlink" href="#queryparametername" title="Permanent link">&para;</a></h1>
 <p>[jvm]\
 fun <a href="./">queryParameterName</a>(index: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a>): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></p>
-<p>Returns the name of the query parameter at index. For example this returns &ldquo;a&rdquo; for queryParameterName(0) on <a href="http://host/?a=apple&amp;b=banana">http://host/?a=apple&amp;b=banana</a>. This throws if index is not less than the <a href="../query-size/">query size</a>.</p>
+<p>Returns the name of the query parameter at index. For example this returns &quot;a&quot; for queryParameterName(0) on <a href="http://host/?a=apple&amp;b=banana">http://host/?a=apple&amp;b=banana</a>. This throws if index is not less than the <a href="../query-size/">query size</a>.</p>
 <table>
 <thead>
 <tr>
@@ -1049,23 +1049,23 @@ fun <a href="./">queryParameterName</a>(index: <a href="https://kotlinlang.org/a
 </tr>
 <tr>
 <td><a href="http://host/">http://host/</a>?</td>
-<td>&rdquo;&ldquo;</td>
+<td>&quot;&quot;</td>
 <td>exception</td>
 </tr>
 <tr>
 <td><a href="http://host/?a=apple&amp;k=key+lime">http://host/?a=apple&amp;k=key+lime</a></td>
-<td>&ldquo;a&rdquo;</td>
-<td>&ldquo;k&rdquo;</td>
+<td>&quot;a&quot;</td>
+<td>&quot;k&quot;</td>
 </tr>
 <tr>
 <td><a href="http://host/?a=apple&amp;a=apricot">http://host/?a=apple&amp;a=apricot</a></td>
-<td>&ldquo;a&rdquo;</td>
-<td>&ldquo;a&rdquo;</td>
+<td>&quot;a&quot;</td>
+<td>&quot;a&quot;</td>
 </tr>
 <tr>
 <td><a href="http://host/?a=apple&amp;b">http://host/?a=apple&amp;b</a></td>
-<td>&ldquo;a&rdquo;</td>
-<td>&ldquo;b&rdquo;</td>
+<td>&quot;a&quot;</td>
+<td>&quot;b&quot;</td>
 </tr>
 </tbody>
 </table>

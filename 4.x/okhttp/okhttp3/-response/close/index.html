@@ -1032,11 +1032,11 @@
 <h1 id="close">close<a class="headerlink" href="#close" title="Permanent link">&para;</a></h1>
 <p>[common, nonJvm]\
 [common]\
-expect open override fun <a href="./">close</a>()</p>
+expect open fun <a href="./">close</a>()</p>
 <p>[nonJvm]\
-actual open fun <a href="./">close</a>()</p>
+actual open override fun <a href="./">close</a>()</p>
 <p>Closes the response body. Equivalent to body().close().</p>
-<p>It is an error to close a response that is not eligible for a body. This includes the responses returned from <a href="../cache-response/">cacheResponse</a>, <a href="../network-response/">networkResponse</a>, and <a href="../prior-response/">priorResponse</a>.</p>
+<p>Prior to OkHttp 5.0, it was an error to close a response that is not eligible for a body. This includes the responses returned from <a href="../cache-response/">cacheResponse</a>, <a href="../network-response/">networkResponse</a>, and <a href="../prior-response/">priorResponse</a>.</p>
 <p>[jvm]\
 actual open override fun <a href="./">close</a>()</p>
 

@@ -1074,11 +1074,11 @@
 <p>//<a href="../../../">okhttp</a>/<a href="../">okhttp3</a>/<a href="./">ResponseBody</a></p>
 <h1 id="responsebody">ResponseBody<a class="headerlink" href="#responsebody" title="Permanent link">&para;</a></h1>
 <p>[common]\
-expect abstract class <a href="./">ResponseBody</a> : <a href="https://square.github.io/okio/2.x/okio/okio/-closeable/index.html">Closeable</a></p>
+expect abstract class <a href="./">ResponseBody</a></p>
 <p>A one-shot stream from the origin server to the client application with the raw bytes of the response body. Each response body is supported by an active connection to the webserver. This imposes both obligations and limits on the client application.</p>
 <h3 id="the-response-body-must-be-closed">The response body must be closed.<a class="headerlink" href="#the-response-body-must-be-closed" title="Permanent link">&para;</a></h3>
 <p>Each response body is backed by a limited resource like a socket (live network responses) or an open file (for cached responses). Failing to close the response body will leak resources and may ultimately cause the application to slow down or crash.</p>
-<p>Both this class and <a href="../-response/">Response</a> implement <a href="https://square.github.io/okio/2.x/okio/okio/-closeable/index.html">Closeable</a>. Closing a response simply closes its response body. If you invoke Call.execute or implement <a href="../-callback/on-response/">Callback.onResponse</a> you must close this body by calling any of the following methods:</p>
+<p>Both this class and <a href="../-response/">Response</a> implement Closeable. Closing a response simply closes its response body. If you invoke Call.execute or implement <a href="../-callback/on-response/">Callback.onResponse</a> you must close this body by calling any of the following methods:</p>
 <ul>
 <li>Response.close()</li>
 <li>Response.body().close()</li>
@@ -1114,7 +1114,7 @@ call.enqueue(new Callback() {\
 <p>[jvm]\
 actual abstract class <a href="./">ResponseBody</a> : <a href="https://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html">Closeable</a></p>
 <p>[nonJvm]\
-actual abstract class <a href="./">ResponseBody</a></p>
+actual abstract class <a href="./">ResponseBody</a> : <a href="https://square.github.io/okio/2.x/okio/okio/-closeable/index.html">Closeable</a></p>
 <h2 id="constructors">Constructors<a class="headerlink" href="#constructors" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1126,7 +1126,7 @@ actual abstract class <a href="./">ResponseBody</a></p>
 <tbody>
 <tr>
 <td><a href="-response-body/">ResponseBody</a></td>
-<td>[common]<br>expect fun <a href="-response-body/">ResponseBody</a>()</td>
+<td>[jvm, nonJvm]<br>fun <a href="-response-body/">ResponseBody</a>()<br>[common]<br>expect fun <a href="-response-body/">ResponseBody</a>()</td>
 </tr>
 </tbody>
 </table>
@@ -1164,7 +1164,7 @@ actual abstract class <a href="./">ResponseBody</a></p>
 </tr>
 <tr>
 <td><a href="byte-string/">byteString</a></td>
-<td>[common]<br>expect fun <a href="byte-string/">byteString</a>(): <a href="https://square.github.io/okio/2.x/okio/okio/-byte-string/index.html">ByteString</a><br>Returns the response as a <a href="https://square.github.io/okio/2.x/okio/okio/-byte-string/index.html">ByteString</a>.<br>[jvm, nonJvm]<br>[jvm, nonJvm]<br>actual fun <a href="byte-string/">byteString</a>(): <a href="https://square.github.io/okio/2.x/okio/okio/-byte-string/index.html">ByteString</a></td>
+<td>[common]<br>expect fun <a href="byte-string/">byteString</a>(): &lt;ERROR CLASS&gt;<br>Returns the response as a ByteString.<br>[jvm, nonJvm]<br>[jvm, nonJvm]<br>actual fun <a href="byte-string/">byteString</a>(): &lt;ERROR CLASS&gt;</td>
 </tr>
 <tr>
 <td><a href="char-stream/">charStream</a></td>
@@ -1172,7 +1172,7 @@ actual abstract class <a href="./">ResponseBody</a></p>
 </tr>
 <tr>
 <td><a href="close/">close</a></td>
-<td>[common, jvm, nonJvm]<br>[common]<br>expect open override fun <a href="close/">close</a>()<br>[jvm]<br>actual open override fun <a href="close/">close</a>()<br>[nonJvm]<br>actual open fun <a href="close/">close</a>()</td>
+<td>[common, jvm, nonJvm]<br>[common]<br>expect open fun <a href="close/">close</a>()<br>[jvm, nonJvm]<br>actual open override fun <a href="close/">close</a>()</td>
 </tr>
 <tr>
 <td><a href="content-length/">contentLength</a></td>
@@ -1184,7 +1184,7 @@ actual abstract class <a href="./">ResponseBody</a></p>
 </tr>
 <tr>
 <td><a href="source/">source</a></td>
-<td>[common, jvm, nonJvm]<br>[common]<br>expect abstract fun <a href="source/">source</a>(): <a href="https://square.github.io/okio/2.x/okio/okio/-buffered-source/index.html">BufferedSource</a><br>[jvm, nonJvm]<br>actual abstract fun <a href="source/">source</a>(): <a href="https://square.github.io/okio/2.x/okio/okio/-buffered-source/index.html">BufferedSource</a></td>
+<td>[common, jvm, nonJvm]<br>[common]<br>expect abstract fun <a href="source/">source</a>(): &lt;ERROR CLASS&gt;<br>[jvm, nonJvm]<br>actual abstract fun <a href="source/">source</a>(): &lt;ERROR CLASS&gt;</td>
 </tr>
 <tr>
 <td><a href="string/">string</a></td>

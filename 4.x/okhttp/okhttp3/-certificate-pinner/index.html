@@ -1099,16 +1099,16 @@ class <a href="./">CertificatePinner</a></p>
 <h2 id="setting-up-certificate-pinning">Setting up Certificate Pinning<a class="headerlink" href="#setting-up-certificate-pinning" title="Permanent link">&para;</a></h2>
 <p>The easiest way to pin a host is turn on pinning with a broken configuration and read the expected configuration when the connection fails. Be sure to do this on a trusted network, and without man-in-the-middle tools like <a href="http://charlesproxy.com">Charles</a> or <a href="http://fiddlertool.com">Fiddler</a>.</p>
 <p>For example, to pin <a href="https://publicobject.com">https://publicobject.com</a>, start with a broken configuration:</p>
-<p>String hostname = &ldquo;publicobject.com&rdquo;;\
+<p>String hostname = &quot;publicobject.com&quot;;\
 CertificatePinner certificatePinner = new CertificatePinner.Builder()\
-    .add(hostname, &ldquo;sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=&rdquo;)\
+    .add(hostname, &quot;sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=&quot;)\
     .build();\
 OkHttpClient client = OkHttpClient.Builder()\
     .certificatePinner(certificatePinner)\
     .build();\
 \
 Request request = new Request.Builder()\
-    .url(&ldquo;https://&rdquo; + hostname)\
+    .url(&quot;https://&quot; + hostname)\
     .build();\
 client.newCall(request).execute();</p>
 <p>As expected, this fails with a certificate pinning exception:</p>
@@ -1126,10 +1126,10 @@ Pinned certificates for publicobject.com:\
   at okhttp3.Connection.connectAndSetOwner(Connection.java)</p>
 <p>Follow up by pasting the public key hashes from the exception into the certificate pinner&rsquo;s configuration:</p>
 <p>CertificatePinner certificatePinner = new CertificatePinner.Builder()\
-    .add(&ldquo;publicobject.com&rdquo;, &ldquo;sha256/afwiKY3RxoMmLkuRW1l7QsPZTJPwDS2pdDROQjXw8ig=&rdquo;)\
-    .add(&ldquo;publicobject.com&rdquo;, &ldquo;sha256/klO23nT2ehFDXCfx3eHTDRESMz3asj1muO+4aIdjiuY=&rdquo;)\
-    .add(&ldquo;publicobject.com&rdquo;, &ldquo;sha256/grX4Ta9HpZx6tSHkmCrvpApTQGo67CYDnvprLg5yRME=&rdquo;)\
-    .add(&ldquo;publicobject.com&rdquo;, &ldquo;sha256/lCppFqbkrlJ3EcVFAkeip0+44VaoJUymbnOaEUk7tEU=&rdquo;)\
+    .add(&quot;publicobject.com&quot;, &quot;sha256/afwiKY3RxoMmLkuRW1l7QsPZTJPwDS2pdDROQjXw8ig=&quot;)\
+    .add(&quot;publicobject.com&quot;, &quot;sha256/klO23nT2ehFDXCfx3eHTDRESMz3asj1muO+4aIdjiuY=&quot;)\
+    .add(&quot;publicobject.com&quot;, &quot;sha256/grX4Ta9HpZx6tSHkmCrvpApTQGo67CYDnvprLg5yRME=&quot;)\
+    .add(&quot;publicobject.com&quot;, &quot;sha256/lCppFqbkrlJ3EcVFAkeip0+44VaoJUymbnOaEUk7tEU=&quot;)\
     .build();</p>
 <h2 id="domain-patterns">Domain Patterns<a class="headerlink" href="#domain-patterns" title="Permanent link">&para;</a></h2>
 <p>Pinning is per-hostname and/or per-wildcard pattern. To pin both publicobject.com and <a href="http://www.publicobject.com">www.publicobject.com</a> you must configure both hostnames. Or you may use patterns to match sets of related domain names. The following forms are permitted:</p>

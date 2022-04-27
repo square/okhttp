@@ -1035,6 +1035,22 @@ open fun <a href="./">tag</a>(tag: <a href="https://kotlinlang.org/api/latest/jv
 <p>Attaches <a href="./">tag</a> to the request using Object.class as a key.</p>
 <p>[jvm]\
 open fun &lt;<a href="./">T</a>&gt; <a href="./">tag</a>(type: <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html">Class</a>&lt;in <a href="./">T</a>&gt;, tag: <a href="./">T</a>?): <a href="../">Request.Builder</a></p>
+<p>Attaches <a href="./">tag</a> to the request using <a href="./">type</a> as a key. Tags can be read from a request using <a href="../../any-tag/">Request.anyTag</a>. Use null to remove any existing tag assigned for <a href="./">type</a>.</p>
+<p>Use this API to attach timing, debugging, or other application data to a request so that you may read it in interceptors, event listeners, or callbacks.</p>
+<p>[common]\
+expect inline fun &lt;<a href="./">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a>&gt; <a href="./">tag</a>(tag: <a href="./">T</a>?): <a href="../">Request.Builder</a></p>
+<p>Attaches <a href="./">tag</a> to the request using <a href="./">T</a> as a key. Tags can be read from a request using <a href="../../tag/">Request.tag</a>. Use null to remove any existing tag assigned for <a href="./">T</a>.</p>
+<p>Use this API to attach timing, debugging, or other application data to a request so that you may read it in interceptors, event listeners, or callbacks.</p>
+<p>[jvm, nonJvm]\
+[jvm]\</p>
+<p>@<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;reifiedTag&quot;)</p>
+<p>actual inline fun &lt;<a href="./">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a>&gt; <a href="./">tag</a>(tag: <a href="./">T</a>?): <a href="../">Request.Builder</a></p>
+<p>[nonJvm]\
+actual inline fun &lt;<a href="./">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a>&gt; <a href="./">tag</a>(tag: <a href="./">T</a>?): <a href="../">Request.Builder</a></p>
+<p>[jvm, nonJvm]\
+actual fun &lt;<a href="./">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a>&gt; <a href="./">tag</a>(type: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-class/index.html">KClass</a>&lt;<a href="./">T</a>&gt;, tag: <a href="./">T</a>?): <a href="../">Request.Builder</a></p>
+<p>[common]\
+expect fun &lt;<a href="./">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a>&gt; <a href="./">tag</a>(type: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-class/index.html">KClass</a>&lt;<a href="./">T</a>&gt;, tag: <a href="./">T</a>?): <a href="../">Request.Builder</a></p>
 <p>Attaches <a href="./">tag</a> to the request using <a href="./">type</a> as a key. Tags can be read from a request using <a href="../../tag/">Request.tag</a>. Use null to remove any existing tag assigned for <a href="./">type</a>.</p>
 <p>Use this API to attach timing, debugging, or other application data to a request so that you may read it in interceptors, event listeners, or callbacks.</p>
 

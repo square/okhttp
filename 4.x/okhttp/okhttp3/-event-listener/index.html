@@ -1124,7 +1124,7 @@ abstract class <a href="./">EventListener</a></p>
 </ul>
 </li>
 </ul>
-<p>This nesting is typical but not strict. For example, when calls use &ldquo;Expect: continue&rdquo; the request body start and end events occur within the response header events. Similarly, <a href="../-request-body/is-duplex/">duplex calls</a> interleave the request and response bodies.</p>
+<p>This nesting is typical but not strict. For example, when calls use &quot;Expect: continue&quot; the request body start and end events occur within the response header events. Similarly, <a href="../-request-body/is-duplex/">duplex calls</a> interleave the request and response bodies.</p>
 <p>Since connections may be reused, the proxy selection, DNS, and connect events may not be present for a call. In future releases of OkHttp these events may also occur concurrently to permit multiple routes to be attempted simultaneously.</p>
 <p>Events and sequences of events may be repeated for retries and follow-ups.</p>
 <p>All event methods must execute fast, without external locking, cannot throw exceptions, attempt to mutate the event parameters, or be re-entrant back into the client. Any IO - writing to files or network should be done asynchronously.</p>

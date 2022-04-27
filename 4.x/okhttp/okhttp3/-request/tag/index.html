@@ -1030,13 +1030,23 @@
 
 <p>//<a href="../../../../">okhttp</a>/<a href="../../">okhttp3</a>/<a href="../">Request</a>/<a href="./">tag</a></p>
 <h1 id="tag">tag<a class="headerlink" href="#tag" title="Permanent link">&para;</a></h1>
-<p>[jvm]\
-fun <a href="./">tag</a>(): <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a>?</p>
-<p>Returns the tag attached with Object.class as a key, or null if no tag is attached with that key.</p>
-<p>Prior to OkHttp 3.11, this method never returned null if no tag was attached. Instead it returned either this request, or the request upon which this request was derived with <a href="../new-builder/">newBuilder</a>.</p>
-<p>[jvm]\
+<p>[jvm, common]\
+[jvm]\
 fun &lt;<a href="./">T</a>&gt; <a href="./">tag</a>(type: <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html">Class</a>&lt;out <a href="./">T</a>&gt;): <a href="./">T</a>?</p>
+<p>[common]\
+expect fun &lt;<a href="./">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a>&gt; <a href="./">tag</a>(type: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-class/index.html">KClass</a>&lt;<a href="./">T</a>&gt;): <a href="./">T</a>?</p>
 <p>Returns the tag attached with <a href="./">type</a> as a key, or null if no tag is attached with that key.</p>
+<p>[common]\
+expect inline fun &lt;<a href="./">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a>&gt; <a href="./">tag</a>(): <a href="./">T</a>?</p>
+<p>Returns the tag attached with <a href="./">T</a> as a key, or null if no tag is attached with that key.</p>
+<p>[jvm, nonJvm]\
+[jvm]\</p>
+<p>@<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;reifiedTag&quot;)</p>
+<p>actual inline fun &lt;<a href="./">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a>&gt; <a href="./">tag</a>(): <a href="./">T</a>?</p>
+<p>[nonJvm]\
+actual inline fun &lt;<a href="./">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a>&gt; <a href="./">tag</a>(): <a href="./">T</a>?</p>
+<p>[jvm, nonJvm]\
+actual fun &lt;<a href="./">T</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a>&gt; <a href="./">tag</a>(type: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-class/index.html">KClass</a>&lt;<a href="./">T</a>&gt;): <a href="./">T</a>?</p>
 
               
             </article>

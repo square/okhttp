@@ -1031,9 +1031,9 @@
 <p>//<a href="../../../../">okhttp</a>/<a href="../../">okhttp3</a>/<a href="../">HttpUrl</a>/<a href="./">pathSegments</a></p>
 <h1 id="pathsegments">pathSegments<a class="headerlink" href="#pathsegments" title="Permanent link">&para;</a></h1>
 <p>[jvm]\</p>
-<p>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;pathSegments&rdquo;)</p>
+<p>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;pathSegments&quot;)</p>
 <p>val <a href="./">pathSegments</a>: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a>&lt;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>&gt;</p>
-<p>A list of path segments like [&ldquo;a&rdquo;, &ldquo;b&rdquo;, &ldquo;c&rdquo;] for the URL <a href="http://host/a/b/c">http://host/a/b/c</a>. This list is never empty though it may contain a single empty string.</p>
+<p>A list of path segments like [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;] for the URL <a href="http://host/a/b/c">http://host/a/b/c</a>. This list is never empty though it may contain a single empty string.</p>
 <table>
 <thead>
 <tr>
@@ -1044,15 +1044,15 @@
 <tbody>
 <tr>
 <td><a href="http://host/">http://host/</a></td>
-<td>[&ldquo;&rdquo;]</td>
+<td>[&quot;&quot;]</td>
 </tr>
 <tr>
-<td><a href="http://host/a/b/c">http://host/a/b/c</a>&ldquo;</td>
-<td>[&ldquo;a&rdquo;, &ldquo;b&rdquo;, &ldquo;c&rdquo;]</td>
+<td><a href="http://host/a/b/c&amp;quot">http://host/a/b/c&amp;quot</a>;</td>
+<td>[&quot;a&quot;, &quot;b&quot;, &quot;c&quot;]</td>
 </tr>
 <tr>
-<td><a href="http://host/a/b%20c/d">http://host/a/b%20c/d</a>&ldquo;</td>
-<td>[&ldquo;a&rdquo;, &ldquo;b c&rdquo;, &ldquo;d&rdquo;]</td>
+<td><a href="http://host/a/b%20c/d&amp;quot">http://host/a/b%20c/d&amp;quot</a>;</td>
+<td>[&quot;a&quot;, &quot;b c&quot;, &quot;d&quot;]</td>
 </tr>
 </tbody>
 </table>

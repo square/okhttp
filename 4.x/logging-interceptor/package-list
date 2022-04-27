@@ -3,10 +3,10 @@ $dokka.linkExtension:md
 $dokka.location:okhttp3.logging.internal////PointingToDeclaration/logging-interceptor/okhttp3.logging.internal/index.md
 $dokka.location:okhttp3.logging.internal//isProbablyUtf8/okio.Buffer#/PointingToDeclaration/logging-interceptor/okhttp3.logging.internal/is-probably-utf8.md
 $dokka.location:okhttp3.logging////PointingToDeclaration/logging-interceptor/okhttp3.logging/index.md
-$dokka.location:okhttp3.logging/HttpLoggingInterceptor.Level.BASIC///PointingToDeclaration/logging-interceptor/okhttp3.logging/-http-logging-interceptor/-level/-b-a-s-i-c/index.md
-$dokka.location:okhttp3.logging/HttpLoggingInterceptor.Level.BODY///PointingToDeclaration/logging-interceptor/okhttp3.logging/-http-logging-interceptor/-level/-b-o-d-y/index.md
-$dokka.location:okhttp3.logging/HttpLoggingInterceptor.Level.HEADERS///PointingToDeclaration/logging-interceptor/okhttp3.logging/-http-logging-interceptor/-level/-h-e-a-d-e-r-s/index.md
-$dokka.location:okhttp3.logging/HttpLoggingInterceptor.Level.NONE///PointingToDeclaration/logging-interceptor/okhttp3.logging/-http-logging-interceptor/-level/-n-o-n-e/index.md
+$dokka.location:okhttp3.logging/HttpLoggingInterceptor.Level.BASIC///PointingToDeclaration/{"org.jetbrains.dokka.links.EnumEntryDRIExtra":{"key":"org.jetbrains.dokka.links.EnumEntryDRIExtra"}}logging-interceptor/okhttp3.logging/-http-logging-interceptor/-level/-b-a-s-i-c/index.md
+$dokka.location:okhttp3.logging/HttpLoggingInterceptor.Level.BODY///PointingToDeclaration/{"org.jetbrains.dokka.links.EnumEntryDRIExtra":{"key":"org.jetbrains.dokka.links.EnumEntryDRIExtra"}}logging-interceptor/okhttp3.logging/-http-logging-interceptor/-level/-b-o-d-y/index.md
+$dokka.location:okhttp3.logging/HttpLoggingInterceptor.Level.HEADERS///PointingToDeclaration/{"org.jetbrains.dokka.links.EnumEntryDRIExtra":{"key":"org.jetbrains.dokka.links.EnumEntryDRIExtra"}}logging-interceptor/okhttp3.logging/-http-logging-interceptor/-level/-h-e-a-d-e-r-s/index.md
+$dokka.location:okhttp3.logging/HttpLoggingInterceptor.Level.NONE///PointingToDeclaration/{"org.jetbrains.dokka.links.EnumEntryDRIExtra":{"key":"org.jetbrains.dokka.links.EnumEntryDRIExtra"}}logging-interceptor/okhttp3.logging/-http-logging-interceptor/-level/-n-o-n-e/index.md
 $dokka.location:okhttp3.logging/HttpLoggingInterceptor.Level///PointingToDeclaration/logging-interceptor/okhttp3.logging/-http-logging-interceptor/-level/index.md
 $dokka.location:okhttp3.logging/HttpLoggingInterceptor.Logger.Companion///PointingToDeclaration/logging-interceptor/okhttp3.logging/-http-logging-interceptor/-logger/-companion/index.md
 $dokka.location:okhttp3.logging/HttpLoggingInterceptor.Logger.Companion/DEFAULT/#/PointingToDeclaration/logging-interceptor/okhttp3.logging/-http-logging-interceptor/-logger/-companion/-d-e-f-a-u-l-t.md

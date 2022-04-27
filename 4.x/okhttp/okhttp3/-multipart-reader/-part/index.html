@@ -1060,7 +1060,7 @@
 <p>//<a href="../../../../">okhttp</a>/<a href="../../">okhttp3</a>/<a href="../">MultipartReader</a>/<a href="./">Part</a></p>
 <h1 id="part">Part<a class="headerlink" href="#part" title="Permanent link">&para;</a></h1>
 <p>[jvm]\
-class <a href="./">Part</a>(headers: <a href="../../-headers/">Headers</a>, body: <a href="https://square.github.io/okio/2.x/okio/okio/-buffered-source/index.html">BufferedSource</a>) : <a href="https://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html">Closeable</a></p>
+class <a href="./">Part</a>(val headers: <a href="../../-headers/">Headers</a>, val body: <a href="https://square.github.io/okio/2.x/okio/okio/-buffered-source/index.html">BufferedSource</a>) : <a href="https://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html">Closeable</a></p>
 <p>A single part in a multipart body.</p>
 <h2 id="constructors">Constructors<a class="headerlink" href="#constructors" title="Permanent link">&para;</a></h2>
 <table>
@@ -1103,11 +1103,11 @@ class <a href="./">Part</a>(headers: <a href="../../-headers/">Headers</a>, body
 <tbody>
 <tr>
 <td><a href="body/">body</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;body&rdquo;)<br>val <a href="body/">body</a>: <a href="https://square.github.io/okio/2.x/okio/okio/-buffered-source/index.html">BufferedSource</a></td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;body&quot;)<br>val <a href="body/">body</a>: <a href="https://square.github.io/okio/2.x/okio/okio/-buffered-source/index.html">BufferedSource</a></td>
 </tr>
 <tr>
 <td><a href="headers/">headers</a></td>
-<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &ldquo;headers&rdquo;)<br>val <a href="headers/">headers</a>: <a href="../../-headers/">Headers</a></td>
+<td>[jvm]<br>@get:<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;headers&quot;)<br>val <a href="headers/">headers</a>: <a href="../../-headers/">Headers</a></td>
 </tr>
 </tbody>
 </table>

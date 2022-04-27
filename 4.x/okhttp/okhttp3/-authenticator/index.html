@@ -1077,13 +1077,13 @@
 fun interface <a href="./">Authenticator</a></p>
 <p>Performs either <strong>preemptive</strong> authentication before connecting to a proxy server, or <strong>reactive</strong> authentication after receiving a challenge from either an origin web server or proxy server.</p>
 <h2 id="preemptive-authentication">Preemptive Authentication<a class="headerlink" href="#preemptive-authentication" title="Permanent link">&para;</a></h2>
-<p>To make HTTPS calls using an HTTP proxy server OkHttp must first negotiate a connection with the proxy. This proxy connection is called a &ldquo;TLS Tunnel&rdquo; and is specified by <a href="https://tools.ietf.org/html/rfc2817">RFC 2817</a>. The HTTP CONNECT request that creates this tunnel connection is special: it does not participate in any <a href="../-interceptor/">interceptors</a> or <a href="../-event-listener/">event listeners</a>. It doesn&rsquo;t include the motivating request&rsquo;s HTTP headers or even its full URL; only the target server&rsquo;s hostname is sent to the proxy.</p>
+<p>To make HTTPS calls using an HTTP proxy server OkHttp must first negotiate a connection with the proxy. This proxy connection is called a &quot;TLS Tunnel&quot; and is specified by <a href="https://tools.ietf.org/html/rfc2817">RFC 2817</a>. The HTTP CONNECT request that creates this tunnel connection is special: it does not participate in any <a href="../-interceptor/">interceptors</a> or <a href="../-event-listener/">event listeners</a>. It doesn&rsquo;t include the motivating request&rsquo;s HTTP headers or even its full URL; only the target server&rsquo;s hostname is sent to the proxy.</p>
 <p>Prior to sending any CONNECT request OkHttp always calls the proxy authenticator so that it may prepare preemptive authentication. OkHttp will call <a href="authenticate/">authenticate</a> with a fake HTTP/1.1 407 Proxy Authentication Required response that has a Proxy-Authenticate: OkHttp-Preemptive challenge. The proxy authenticator may return either an authenticated request, or null to connect without authentication.</p>
 <p>for (Challenge challenge : response.challenges()) {\
   // If this is preemptive auth, use a preemptive credential.\
-  if (challenge.scheme().equalsIgnoreCase(&ldquo;OkHttp-Preemptive&rdquo;)) {\
+  if (challenge.scheme().equalsIgnoreCase(&quot;OkHttp-Preemptive&quot;)) {\
     return response.request().newBuilder()\
-        .header(&ldquo;Proxy-Authorization&rdquo;, &ldquo;secret&rdquo;)\
+        .header(&quot;Proxy-Authorization&quot;, &quot;secret&quot;)\
         .build();\
   }\
 }\
@@ -1091,23 +1091,23 @@ return null; // Didn&rsquo;t find a preemptive auth scheme.</p>
 <h2 id="reactive-authentication">Reactive Authentication<a class="headerlink" href="#reactive-authentication" title="Permanent link">&para;</a></h2>
 <p>Implementations authenticate by returning a follow-up request that includes an authorization header, or they may decline the challenge by returning null. In this case the unauthenticated response will be returned to the caller that triggered it.</p>
 <p>Implementations should check if the initial request already included an attempt to authenticate. If so it is likely that further attempts will not be useful and the authenticator should give up.</p>
-<p>When reactive authentication is requested by an origin web server, the response code is 401 and the implementation should respond with a new request that sets the &ldquo;Authorization&rdquo; header.</p>
-<p>if (response.request().header(&ldquo;Authorization&rdquo;) != null) {\
+<p>When reactive authentication is requested by an origin web server, the response code is 401 and the implementation should respond with a new request that sets the &quot;Authorization&quot; header.</p>
+<p>if (response.request().header(&quot;Authorization&quot;) != null) {\
   return null; // Give up, we&rsquo;ve already failed to authenticate.\
 }\
 \
 String credential = Credentials.basic(&hellip;)\
 return response.request().newBuilder()\
-    .header(&ldquo;Authorization&rdquo;, credential)\
+    .header(&quot;Authorization&quot;, credential)\
     .build();</p>
-<p>When reactive authentication is requested by a proxy server, the response code is 407 and the implementation should respond with a new request that sets the &ldquo;Proxy-Authorization&rdquo; header.</p>
-<p>if (response.request().header(&ldquo;Proxy-Authorization&rdquo;) != null) {\
+<p>When reactive authentication is requested by a proxy server, the response code is 407 and the implementation should respond with a new request that sets the &quot;Proxy-Authorization&quot; header.</p>
+<p>if (response.request().header(&quot;Proxy-Authorization&quot;) != null) {\
   return null; // Give up, we&rsquo;ve already failed to authenticate.\
 }\
 \
 String credential = Credentials.basic(&hellip;)\
 return response.request().newBuilder()\
-    .header(&ldquo;Proxy-Authorization&rdquo;, credential)\
+    .header(&quot;Proxy-Authorization&quot;, credential)\
     .build();</p>
 <p>The proxy authenticator may implement preemptive authentication, reactive authentication, or both.</p>
 <p>Applications may configure OkHttp with an authenticator for origin servers, or proxy servers, or both.</p>
