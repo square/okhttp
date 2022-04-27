@@ -1200,29 +1200,31 @@ the fixes or features below, please upgrade.</p>
 <ul>
 <li>
 <p>New: Named and default parameters constructor for <code>Request</code>:</p>
-<p><div class="highlight"><pre><span></span><code>val request = Request(
+<div class="highlight"><pre><span></span><code>val request = Request(
   url = &quot;https://cash.app/&quot;.toHttpUrl(),
 )
 </code></pre></div>
- *  New: <code>Response.body</code> is now non-null. This was generally the case in OkHttp 4.x, but the Kotlin
-type declaration was nullable to support rare cases like the body on <code>Response.cacheResponse</code>,
-<code>Response.networkResponse</code>, and <code>Response.priorResponse</code>. In such cases the body is now
-non-null, but attempts to read its content will fail.
- *  New: Kotlin-specific APIs for request tags. Kotlin language users can lookup tags with a type
-parameter only, like <code>request.tag&lt;MyTagClass&gt;()</code>.
- *  New: MockWebServer has improved support for HTTP/1xx responses. Once you&rsquo;ve migrated to the new
-<code>mockwebserver3</code> package, there&rsquo;s a new field, <code>MockResponse.informationalResponses</code>.
- *  Fix: Don&rsquo;t interpret trailers as headers after an HTTP/100 response. This was a bug only when
-the HTTP response body itself is empty.
- *  Fix: Don&rsquo;t crash when a fast fallback call has both a deferred connection and a held connection.
- *  Fix: <code>OkHttpClient</code> no longer implements <code>Cloneable</code>. It never should have; the class is
-immutable. This is left over from OkHttp 2.x (!) when that class was mutable. We&rsquo;re using the
-5.x upgrade as an opportunity to remove very obsolete APIs.
- *  Fix: Recover gracefully when Android&rsquo;s <code>NativeCrypto</code> crashes with <code>"ssl == null"</code>. This occurs
-when OkHttp retrieves ALPN state on a closed connection.
- *  Upgrade: <a href="https://github.com/JetBrains/kotlin/releases/tag/v1.6.21">Kotlin 1.6.21</a>.
- *  Upgrade: <a href="https://square.github.io/okio/changelog/#version-310">Okio 3.1.0</a>.</p>
 </li>
+<li>
+<p>New: <code>Response.body</code> is now non-null. This was generally the case in OkHttp 4.x, but the Kotlin
+    type declaration was nullable to support rare cases like the body on <code>Response.cacheResponse</code>,
+    <code>Response.networkResponse</code>, and <code>Response.priorResponse</code>. In such cases the body is now
+    non-null, but attempts to read its content will fail.</p>
+</li>
+<li>New: Kotlin-specific APIs for request tags. Kotlin language users can lookup tags with a type
+    parameter only, like <code>request.tag&lt;MyTagClass&gt;()</code>.</li>
+<li>New: MockWebServer has improved support for HTTP/1xx responses. Once you&rsquo;ve migrated to the new
+    <code>mockwebserver3</code> package, there&rsquo;s a new field, <code>MockResponse.informationalResponses</code>.</li>
+<li>Fix: Don&rsquo;t interpret trailers as headers after an HTTP/100 response. This was a bug only when
+    the HTTP response body itself is empty.</li>
+<li>Fix: Don&rsquo;t crash when a fast fallback call has both a deferred connection and a held connection.</li>
+<li>Fix: <code>OkHttpClient</code> no longer implements <code>Cloneable</code>. It never should have; the class is
+    immutable. This is left over from OkHttp 2.x (!) when that class was mutable. We&rsquo;re using the
+    5.x upgrade as an opportunity to remove very obsolete APIs.</li>
+<li>Fix: Recover gracefully when Android&rsquo;s <code>NativeCrypto</code> crashes with <code>"ssl == null"</code>. This occurs
+    when OkHttp retrieves ALPN state on a closed connection.</li>
+<li>Upgrade: <a href="https://github.com/JetBrains/kotlin/releases/tag/v1.6.21">Kotlin 1.6.21</a>.</li>
+<li>Upgrade: <a href="https://square.github.io/okio/changelog/#version-310">Okio 3.1.0</a>.</li>
 </ul>
 <h2 id="version-500-alpha6">Version 5.0.0-alpha.6<a class="headerlink" href="#version-500-alpha6" title="Permanent link">&para;</a></h2>
 <p><em>2022-03-14</em></p>
