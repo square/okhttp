@@ -22,6 +22,7 @@ the fixes or features below, please upgrade.
       url = "https://cash.app/".toHttpUrl(),
     )
     ```
+
  *  New: `Response.body` is now non-null. This was generally the case in OkHttp 4.x, but the Kotlin
     type declaration was nullable to support rare cases like the body on `Response.cacheResponse`,
     `Response.networkResponse`, and `Response.priorResponse`. In such cases the body is now
