@@ -1,6 +1,47 @@
 Change Log
 ==========
 
+## Version 5.0.0-alpha.7
+
+_2022-04-26_
+
+**This release introduces new Kotlin-friendly APIs.** When we migrated OkHttp from Java to Kotlin in
+OkHttp 4.0, we kept our Java-first APIs. With 5.0 we're continuing to support Java and adding
+additional improvements for Kotlin users. In this alpha we're excited to skip-the-builder for
+requests and remove a common source of non-null assertions (`!!`) on the response body.
+
+The alpha releases in the 5.0.0 series have production-quality code and an unstable API. We expect
+to make changes to the APIs introduced in 5.0.0-alpha.X. These releases are safe for production use
+and 'alpha' strictly signals that we're still experimenting with some new APIs. If you're eager for
+the fixes or features below, please upgrade.
+
+ *  New: Named and default parameters constructor for `Request`:
+
+    ```
+    val request = Request(
+      url = "https://cash.app/".toHttpUrl(),
+    )
+    ```
+ *  New: `Response.body` is now non-null. This was generally the case in OkHttp 4.x, but the Kotlin
+    type declaration was nullable to support rare cases like the body on `Response.cacheResponse`,
+    `Response.networkResponse`, and `Response.priorResponse`. In such cases the body is now
+    non-null, but attempts to read its content will fail.
+ *  New: Kotlin-specific APIs for request tags. Kotlin language users can lookup tags with a type
+    parameter only, like `request.tag<MyTagClass>()`.
+ *  New: MockWebServer has improved support for HTTP/1xx responses. Once you've migrated to the new
+    `mockwebserver3` package, there's a new field, `MockResponse.informationalResponses`.
+ *  Fix: Don't interpret trailers as headers after an HTTP/100 response. This was a bug only when
+    the HTTP response body itself is empty.
+ *  Fix: Don't crash when a fast fallback call has both a deferred connection and a held connection.
+ *  Fix: `OkHttpClient` no longer implements `Cloneable`. It never should have; the class is
+    immutable. This is left over from OkHttp 2.x (!) when that class was mutable. We're using the
+    5.x upgrade as an opportunity to remove very obsolete APIs.
+ *  Fix: Recover gracefully when Android's `NativeCrypto` crashes with `"ssl == null"`. This occurs
+    when OkHttp retrieves ALPN state on a closed connection.
+ *  Upgrade: [Kotlin 1.6.21][kotlin_1_6_21].
+ *  Upgrade: [Okio 3.1.0][okio_3_1_0].
+
+
 ## Version 5.0.0-alpha.6
 
 _2022-03-14_
@@ -156,6 +197,8 @@ release is the version name.
 [kotlin_1_4_20]: https://github.com/JetBrains/kotlin/releases/tag/v1.4.20
 [kotlin_1_5_31]: https://github.com/JetBrains/kotlin/releases/tag/v1.5.31
 [kotlin_1_6_10]: https://github.com/JetBrains/kotlin/releases/tag/v1.6.10
+[kotlin_1_6_21]: https://github.com/JetBrains/kotlin/releases/tag/v1.6.21
 [okio_2_9_0]: https://square.github.io/okio/changelog/#version-290
 [okio_3_0_0]: https://square.github.io/okio/changelog/#version-300
+[okio_3_1_0]: https://square.github.io/okio/changelog/#version-310
 [rfc_8305]: https://tools.ietf.org/html/rfc8305

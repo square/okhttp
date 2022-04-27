@@ -32,7 +32,7 @@ buildscript {
 
 allprojects {
   group = "com.squareup.okhttp3"
-  version = "5.0.0-SNAPSHOT"
+  version = "5.0.0-alpha.7"
 
   repositories {
     mavenCentral()
