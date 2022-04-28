@@ -6,6 +6,7 @@ Here’s some libraries that work nicely with OkHttp.
  * [Chucker](https://github.com/ChuckerTeam/chucker): An in-app HTTP inspector for Android OkHttp clients.
  * [Coil](https://github.com/coil-kt/coil): An image loading library for Android backed by Kotlin Coroutines.
  * [Communicator](https://github.com/Taig/Communicator): An OkHttp wrapper for Scala built with Android in mind.
+ * [Cronet Transport for OkHttp](https://github.com/google/cronet-transport-for-okhttp): A HTTP3 ready transport layer for OkHttp on Android, based on Chromium network stack.  
  * [CWAC-NetSecurity](https://github.com/commonsguy/cwac-netsecurity): Simplifying Secure Internet Access.
  * [Failsafe](https://failsafe.dev/okhttp/): Fault tolerance and resilience patterns. 
  * [Flipper](https://fbflipper.com/): A desktop debugging platform for mobile developers.
