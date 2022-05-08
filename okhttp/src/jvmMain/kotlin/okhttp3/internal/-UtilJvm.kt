@@ -313,3 +313,4 @@ internal inline fun Any.assertThreadDoesntHoldLock() {
     throw AssertionError("Thread ${Thread.currentThread().name} MUST NOT hold lock on $this")
   }
 }
+actual fun String.lowercase() = this.toLowerCase(Locale.ROOT)
