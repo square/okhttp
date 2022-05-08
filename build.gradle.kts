@@ -118,7 +118,7 @@ subprojects {
 
       freeCompilerArgs = listOf(
         "-Xjvm-default=compatibility",
-        "-Xopt-in=kotlin.RequiresOptIn"
+        "-opt-in=kotlin.RequiresOptIn"
       )
     }
   }

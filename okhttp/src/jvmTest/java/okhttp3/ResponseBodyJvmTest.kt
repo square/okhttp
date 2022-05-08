@@ -32,6 +32,7 @@ import java.lang.StringBuilder
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.atomic.AtomicBoolean
 import okhttp3.internal.and
+import okhttp3.internal.code
 import okio.ByteString.Companion.decodeHex
 import org.assertj.core.api.Assertions.assertThat
 

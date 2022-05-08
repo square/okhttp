@@ -23,6 +23,7 @@ import kotlin.text.Charsets.ISO_8859_1
 import okhttp3.internal.commonEquals
 import okhttp3.internal.commonHashCode
 import okhttp3.internal.commonToString
+import okhttp3.internal.lowercase
 
 actual class Challenge actual constructor(
   @get:JvmName("scheme") actual val scheme: String,
@@ -52,7 +53,7 @@ actual class Challenge actual constructor(
   init {
     val newAuthParams = mutableMapOf<String?, String>()
     for ((key, value) in authParams) {
-      val newKey = key?.lowercase(US)
+      val newKey = key?.toLowerCase(US)
       newAuthParams[newKey] = value
     }
     this.authParams = unmodifiableMap<String?, String>(newAuthParams)

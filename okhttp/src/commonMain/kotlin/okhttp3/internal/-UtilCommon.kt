@@ -394,3 +394,16 @@ internal fun <T> interleave(a: Iterable<T>, b: Iterable<T>): List<T> {
     }
   }
 }
+
+@Suppress("DEPRECATION")
+val Char.code
+  get() = this.toInt()
+
+@Suppress("DEPRECATION")
+fun String.lowercase() = this.toLowerCase()
+
+inline fun <E> buildList(builderAction: MutableList<E>.() -> Unit): List<E> {
+  return mutableListOf<E>().apply {
+    builderAction()
+  }
+}

@@ -28,7 +28,7 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
  * MediaTypeTest.
  */
 open class MediaTypeTest {
-  open fun MediaType.charsetName(): String? = parameter("charset")?.uppercase()
+  open fun MediaType.charsetName(): String? = parameter("charset")?.toUpperCase()
 
   protected open fun parse(string: String): MediaType = string.toMediaTypeOrNull()!!
 

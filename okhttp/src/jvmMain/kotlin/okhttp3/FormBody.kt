@@ -21,6 +21,7 @@ import okhttp3.HttpUrl.Companion.FORM_ENCODE_SET
 import okhttp3.HttpUrl.Companion.canonicalize
 import okhttp3.HttpUrl.Companion.percentDecode
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.internal.code
 import okhttp3.internal.toImmutableList
 import okio.Buffer
 import okio.BufferedSink

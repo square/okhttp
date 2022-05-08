@@ -16,6 +16,7 @@
 package okhttp3.tls.internal.der
 
 import java.math.BigInteger
+import okhttp3.internal.code
 import okio.Buffer
 import okio.BufferedSink
 import okio.ByteString

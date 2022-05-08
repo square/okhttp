@@ -63,6 +63,7 @@ import okhttp3.TestUtil.assertSuppressed
 import okhttp3.internal.RecordingAuthenticator
 import okhttp3.internal.RecordingOkAuthenticator
 import okhttp3.internal.addHeaderLenient
+import okhttp3.internal.code
 import okhttp3.internal.http.HTTP_PERM_REDIRECT
 import okhttp3.internal.http.HTTP_TEMP_REDIRECT
 import okhttp3.internal.platform.Platform.Companion.get
@@ -1730,7 +1731,7 @@ class URLConnectionTest {
     assertThat(call).contains("type=" + java.net.Authenticator.RequestorType.SERVER)
     assertThat(call).contains("prompt=Bar")
     assertThat(call).contains("protocol=http")
-    assertThat(call.lowercase(Locale.US))
+    assertThat(call.toLowerCase(Locale.US))
       .contains("scheme=basic") // lowercase for the RI.
   }
 
@@ -1747,7 +1748,8 @@ class URLConnectionTest {
     assertThat(call).contains("type=" + java.net.Authenticator.RequestorType.PROXY)
     assertThat(call).contains("prompt=Bar")
     assertThat(call).contains("protocol=http")
-    assertThat(call.lowercase(Locale.US)).contains("scheme=basic")
+    "".toLowerCase()
+    assertThat(call.toLowerCase(Locale.US)).contains("scheme=basic")
   }
 
   private fun authCallsForHeader(authHeader: String): List<String> {

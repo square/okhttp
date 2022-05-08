@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+@file:OptIn(ExperimentalTime::class)
+
 package okhttp3
 
 import assertk.assertThat
@@ -21,6 +24,7 @@ import assertk.assertions.isFalse
 import assertk.assertions.isTrue
 import kotlin.test.Test
 import kotlin.time.DurationUnit
+import kotlin.time.ExperimentalTime
 
 class CacheControlTest {
   @Test
