@@ -19,6 +19,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.internal.code
 import okhttp3.internal.format
+import okhttp3.internal.lowercase
 import okio.Buffer
 import okio.ByteString.Companion.encodeUtf8
 import org.junit.jupiter.api.Assertions.fail
@@ -275,9 +276,9 @@ internal class UrlComponentEncodingTester private constructor() {
       }
       override operator fun get(url: HttpUrl): String {
         val host = url.host
-        return host.substring(1, host.length - 5).toLowerCase()
+        return host.substring(1, host.length - 5).lowercase()
       }
-      override fun canonicalize(s: String): String = s.toLowerCase()
+      override fun canonicalize(s: String): String = s.lowercase()
     },
 
     PATH {

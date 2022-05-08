@@ -46,6 +46,7 @@ import okhttp3.internal.headersCheckName
 import okhttp3.internal.http.toHttpDateOrNull
 import okhttp3.internal.http.toHttpDateString
 import okhttp3.internal.http2.Header
+import okhttp3.internal.lowercase
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 
 @Suppress("NAME_SHADOWING")
@@ -124,7 +125,7 @@ actual class Headers internal actual constructor(
   fun toMultimap(): Map<String, List<String>> {
     val result = TreeMap<String, MutableList<String>>(String.CASE_INSENSITIVE_ORDER)
     for (i in 0 until size) {
-      val name = name(i).toLowerCase(Locale.US)
+      val name = name(i).lowercase(Locale.US)
       var values: MutableList<String>? = result[name]
       if (values == null) {
         values = ArrayList(2)

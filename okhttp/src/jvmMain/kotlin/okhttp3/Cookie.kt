@@ -28,6 +28,7 @@ import okhttp3.internal.delimiterOffset
 import okhttp3.internal.http.MAX_DATE
 import okhttp3.internal.http.toHttpDateString
 import okhttp3.internal.indexOfControlOrNonAscii
+import okhttp3.internal.lowercase
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
 import okhttp3.internal.toCanonicalHost
 import okhttp3.internal.trimSubstring
@@ -524,7 +525,7 @@ class Cookie private constructor(
             dayOfMonth = matcher.group(1).toInt()
           }
           month == -1 && matcher.usePattern(MONTH_PATTERN).matches() -> {
-            val monthString = matcher.group(1).toLowerCase(Locale.US)
+            val monthString = matcher.group(1).lowercase(Locale.US)
             month = MONTH_PATTERN.pattern().indexOf(monthString) / 4 // Sneaky! jan=1, dec=12.
           }
           year == -1 && matcher.usePattern(YEAR_PATTERN).matches() -> {

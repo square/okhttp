@@ -53,7 +53,7 @@ actual class Challenge actual constructor(
   init {
     val newAuthParams = mutableMapOf<String?, String>()
     for ((key, value) in authParams) {
-      val newKey = key?.toLowerCase(US)
+      val newKey = key?.lowercase(US)
       newAuthParams[newKey] = value
     }
     this.authParams = unmodifiableMap<String?, String>(newAuthParams)

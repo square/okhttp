@@ -20,6 +20,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.internal.uppercase
 
 /**
  * Test MediaType API and parsing.
@@ -28,7 +29,7 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
  * MediaTypeTest.
  */
 open class MediaTypeTest {
-  open fun MediaType.charsetName(): String? = parameter("charset")?.toUpperCase()
+  open fun MediaType.charsetName(): String? = parameter("charset")?.uppercase()
 
   protected open fun parse(string: String): MediaType = string.toMediaTypeOrNull()!!
 

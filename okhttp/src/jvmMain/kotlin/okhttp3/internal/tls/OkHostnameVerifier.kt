@@ -25,6 +25,7 @@ import java.util.Locale
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLException
 import javax.net.ssl.SSLSession
+import okhttp3.internal.lowercase
 
 /**
  * A HostnameVerifier consistent with [RFC 2818][rfc_2818].
@@ -80,7 +81,7 @@ object OkHostnameVerifier : HostnameVerifier {
    */
   private fun String.asciiToLowercase(): String {
     return when {
-      isAscii() -> toLowerCase(Locale.US) // This is an ASCII string.
+      isAscii() -> lowercase(Locale.US) // This is an ASCII string.
       else -> this
     }
   }

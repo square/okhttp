@@ -76,6 +76,7 @@ import okhttp3.internal.http2.Header
 import okhttp3.internal.http2.Http2Connection
 import okhttp3.internal.http2.Http2Stream
 import okhttp3.internal.immutableListOf
+import okhttp3.internal.lowercase
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.threadFactory
 import okhttp3.internal.toImmutableList
@@ -707,7 +708,7 @@ class MockWebServer : Closeable {
           break
         }
         addHeaderLenient(headers, header)
-        val lowercaseHeader = header.toLowerCase(Locale.US)
+        val lowercaseHeader = header.lowercase(Locale.US)
         if (contentLength == -1L && lowercaseHeader.startsWith("content-length:")) {
           contentLength = header.substring(15).trim().toLong()
         }
