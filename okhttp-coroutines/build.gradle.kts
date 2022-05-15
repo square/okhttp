@@ -38,7 +38,7 @@ kotlin {
       dependencies {
         api(libs.squareup.okio)
         api(projects.okhttp)
-        implementation(libs.kotlinx.coroutines.core)
+        api(libs.kotlinx.coroutines.core)
       }
     }
     val commonTest by getting {
@@ -52,7 +52,7 @@ kotlin {
       dependencies {
         dependsOn(sourceSets.commonMain.get())
         api(projects.okhttp)
-        implementation(libs.kotlinx.coroutines.core)
+        api(libs.kotlinx.coroutines.core)
       }
     }
     val nonJvmTest = create("nonJvmTest") {
