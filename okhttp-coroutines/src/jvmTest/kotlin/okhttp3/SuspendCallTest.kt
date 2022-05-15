@@ -39,8 +39,6 @@ import org.junit.jupiter.api.fail
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.ExperimentalTime
-import kotlinx.coroutines.runBlocking
 
 @ExtendWith(MockWebServerExtension::class)
 class SuspendCallTest(
@@ -55,7 +53,7 @@ class SuspendCallTest(
 
   @Test
   fun suspendCall() {
-    runBlocking {
+    runTest {
       server.enqueue(MockResponse().setBody("abc"))
 
       val call = client.newCall(request)
@@ -70,7 +68,7 @@ class SuspendCallTest(
 
   @Test
   fun timeoutCall() {
-    runBlocking {
+    runTest {
       server.enqueue(
         MockResponse()
           .setBodyDelay(5, TimeUnit.SECONDS)
@@ -98,7 +96,7 @@ class SuspendCallTest(
 
   @Test
   fun cancelledCall() {
-    runBlocking {
+    runTest {
       server.enqueue(
         MockResponse()
           .setBodyDelay(5, TimeUnit.SECONDS)
@@ -125,7 +123,7 @@ class SuspendCallTest(
 
   @Test
   fun failedCall() {
-    runBlocking {
+    runTest {
       server.enqueue(
         MockResponse()
           .setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST)
