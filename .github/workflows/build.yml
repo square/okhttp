@@ -93,6 +93,32 @@ jobs:
         with:
           report_paths: '**/build/test-results/*/TEST-*.xml'
 
+  testopenjdk17:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Configure JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 17
+
+      - name: Run Checks
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: jvmTest -Dtest.java.version=17
+
+      - name: Publish Test Report
+        if: github.repository == 'square/okhttp' && github.ref == 'refs/heads/master'
+        uses: mikepenz/action-junit-report@v3
+        with:
+          report_paths: '**/build/test-results/*/TEST-*.xml'
+
   testjs:
     runs-on: ubuntu-latest
 
