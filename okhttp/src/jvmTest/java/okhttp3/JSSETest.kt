@@ -15,13 +15,14 @@
  */
 package okhttp3
 
+import javax.net.ssl.SSLSocket
+import javax.net.ssl.SSLSocketFactory
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.TestUtil.assumeNetwork
 import okhttp3.internal.connection
 import okhttp3.testing.PlatformRule
 import okhttp3.testing.PlatformVersion
-import okhttp3.tls.internal.TlsUtil
 import okio.ByteString.Companion.toByteString
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -30,16 +31,12 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
-import javax.net.ssl.SSLSocket
-import javax.net.ssl.SSLSocketFactory
 
 class JSSETest(
   val server: MockWebServer
 ) {
   @JvmField @RegisterExtension var platform = PlatformRule()
   @JvmField @RegisterExtension val clientTestRule = OkHttpClientTestRule()
-
-  private val handshakeCertificates = TlsUtil.localhost()
 
   var client = clientTestRule.newClient()
 
@@ -58,7 +55,7 @@ class JSSETest(
     // TODO test jdk.tls.client.enableSessionTicketExtension
     // TODO check debugging information
 
-    enableTls()
+    client = clientTestRule.enableTls(server)
 
     server.enqueue(MockResponse().setBody("abc"))
 
@@ -141,14 +138,5 @@ class JSSETest(
     assertEquals(2, sessionIds.size)
     assertNotEquals(sessionIds[0], sessionIds[1])
     assertThat(sessionIds[0]).isNotBlank()
-  }
-
-  private fun enableTls() {
-    client = client.newBuilder()
-      .sslSocketFactory(
-        handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
-      )
-      .build()
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
   }
 }

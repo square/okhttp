@@ -107,8 +107,6 @@ class OkHttpTest(val server: MockWebServer) {
     .add(KotlinJsonAdapterFactory())
     .build()
 
-  private val handshakeCertificates = localhost()
-
   @Test
   fun testPlatform() {
     assertTrue(Platform.isAndroid)
@@ -225,7 +223,9 @@ class OkHttpTest(val server: MockWebServer) {
 
     try {
       try {
-        ProviderInstaller.installIfNeeded(InstrumentationRegistry.getInstrumentation().targetContext)
+        ProviderInstaller.installIfNeeded(
+          InstrumentationRegistry.getInstrumentation().targetContext
+        )
       } catch (gpsnae: GooglePlayServicesNotAvailableException) {
         throw TestAbortedException("Google Play Services not available", gpsnae)
       }
@@ -392,7 +392,7 @@ class OkHttpTest(val server: MockWebServer) {
 
   @Test
   fun testMockWebserverRequest() {
-    enableTls()
+    client = clientTestRule.enableTls(server)
 
     server.enqueue(MockResponse().setBody("abc"))
 
@@ -414,7 +414,7 @@ class OkHttpTest(val server: MockWebServer) {
 
   @Test
   fun testCertificatePinningFailure() {
-    enableTls()
+    client = clientTestRule.enableTls(server)
 
     val certificatePinner = CertificatePinner.Builder()
       .add(server.hostName, "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
@@ -434,7 +434,7 @@ class OkHttpTest(val server: MockWebServer) {
 
   @Test
   fun testCertificatePinningSuccess() {
-    enableTls()
+    client = clientTestRule.enableTls(server)
 
     val certificatePinner = CertificatePinner.Builder()
       .add(
@@ -459,7 +459,7 @@ class OkHttpTest(val server: MockWebServer) {
   fun testEventListener() {
     val eventListener = RecordingEventListener()
 
-    enableTls()
+    client = clientTestRule.enableTls(server)
 
     client = client.newBuilder().eventListenerFactory(clientTestRule.wrap(eventListener)).build()
 
@@ -504,7 +504,7 @@ class OkHttpTest(val server: MockWebServer) {
   fun testSessionReuse() {
     val sessionIds = mutableListOf<String>()
 
-    enableTls()
+    client = clientTestRule.enableTls(server)
 
     client = client.newBuilder().eventListenerFactory(
       clientTestRule.wrap(object : EventListener() {
@@ -581,7 +581,7 @@ class OkHttpTest(val server: MockWebServer) {
 
   @Test
   fun testCustomSSLSocketFactoryWithoutALPN() {
-    enableTls()
+    client = clientTestRule.enableTls(server)
 
     server.enqueue(MockResponse().setBody("abc"))
 
@@ -625,7 +625,11 @@ class OkHttpTest(val server: MockWebServer) {
 
       @Suppress("unused", "UNUSED_PARAMETER")
       // called by Android via reflection in X509TrustManagerExtensions
-      fun checkServerTrusted(chain: Array<out X509Certificate>, authType: String, hostname: String): List<X509Certificate> {
+      fun checkServerTrusted(
+        chain: Array<out X509Certificate>,
+        authType: String,
+        hostname: String
+      ): List<X509Certificate> {
         withHostCalled = true
         return chain.toList()
       }
@@ -692,9 +696,10 @@ class OkHttpTest(val server: MockWebServer) {
 
       var socketClass: String? = null
 
-      val trustManager = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm()).apply {
-        init(null as KeyStore?)
-      }.trustManagers.first() as X509TrustManager
+      val trustManager =
+        TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm()).apply {
+          init(null as KeyStore?)
+        }.trustManagers.first() as X509TrustManager
 
       val sslContext = Platform.get().newSSLContext().apply {
         // TODO remove most of this code after https://github.com/bcgit/bc-java/issues/686
@@ -729,9 +734,11 @@ class OkHttpTest(val server: MockWebServer) {
   }
 
   @Test
-  @Disabled("TODO: currently logging okhttp3.internal.concurrent.TaskRunner, okhttp3.internal.http2.Http2")
+  @Disabled(
+    "TODO: currently logging okhttp3.internal.concurrent.TaskRunner, okhttp3.internal.http2.Http2"
+  )
   fun testLoggingLevels() {
-    enableTls()
+    client = clientTestRule.enableTls(server)
 
     val testHandler = object : Handler() {
       val calls = mutableMapOf<String, AtomicInteger>()
@@ -781,7 +788,7 @@ class OkHttpTest(val server: MockWebServer) {
   }
 
   fun testCachedRequest() {
-    enableTls()
+    client = clientTestRule.enableTls(server)
 
     server.enqueue(MockResponse().setBody("abc").addHeader("cache-control: public, max-age=3"))
     server.enqueue(MockResponse().setBody("abc"))
@@ -840,15 +847,6 @@ class OkHttpTest(val server: MockWebServer) {
     return DnsOverHttps.Builder().client(bootstrapClient)
       .url("https://1.1.1.1/dns-query".toHttpUrl())
       .build()
-  }
-
-  private fun enableTls() {
-    client = client.newBuilder()
-      .sslSocketFactory(
-        handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
-      )
-      .build()
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
   }
 
   private fun assumeNetwork() {

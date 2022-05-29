@@ -6,6 +6,7 @@ plugins {
 dependencies {
   api(projects.okhttp)
   api(projects.okhttpTls)
+  api(projects.mockwebserver)
   api(libs.assertj.core)
   api(libs.bouncycastle.bcprov)
   implementation(libs.bouncycastle.bcpkix)

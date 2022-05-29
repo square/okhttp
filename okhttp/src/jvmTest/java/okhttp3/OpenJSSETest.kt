@@ -105,10 +105,6 @@ class OpenJSSETest(
         .addTrustedCertificate(heldCertificate.certificate)
         .build()
 
-    client = client.newBuilder()
-        .sslSocketFactory(
-            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager)
-        .build()
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+    client = clientTestRule.enableTls(server, handshakeCertificates)
   }
 }

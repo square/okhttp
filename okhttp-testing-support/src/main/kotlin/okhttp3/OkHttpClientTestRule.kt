@@ -21,9 +21,12 @@ import java.util.logging.Level
 import java.util.logging.LogManager
 import java.util.logging.LogRecord
 import java.util.logging.Logger
+import mockwebserver3.MockWebServer
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.http2.Http2
 import okhttp3.testing.Flaky
+import okhttp3.tls.HandshakeCertificates
+import okhttp3.tls.internal.TlsUtil
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.extension.AfterEachCallback
@@ -45,6 +48,10 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
   private var defaultUncaughtExceptionHandler: Thread.UncaughtExceptionHandler? = null
   private var taskQueuesWereIdle: Boolean = false
 
+  val handshakeCertificates by lazy {
+    TlsUtil.localhost()
+  }
+
   var logger: Logger? = null
 
   var recordEvents = true
@@ -52,7 +59,8 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
   var recordFrames = false
   var recordSslDebug = false
 
-  private val sslExcludeFilter = "^(?:Inaccessible trust store|trustStore is|Reload the trust store|Reload trust certs|Reloaded|adding as trusted certificates|Ignore disabled cipher suite|Ignore unsupported cipher suite).*".toRegex()
+  private val sslExcludeFilter =
+    "^(?:Inaccessible trust store|trustStore is|Reload the trust store|Reload trust certs|Reloaded|adding as trusted certificates|Ignore disabled cipher suite|Ignore unsupported cipher suite).*".toRegex()
 
   private val testLogHandler = object : Handler() {
     override fun publish(record: LogRecord) {
@@ -99,7 +107,11 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
     EventListener.Factory { ClientRuleEventListener(eventListener, ::addEvent) }
 
   fun wrap(eventListenerFactory: EventListener.Factory) =
-    EventListener.Factory { call -> ClientRuleEventListener(eventListenerFactory.create(call), ::addEvent) }
+    EventListener.Factory { call ->
+      ClientRuleEventListener(
+        eventListenerFactory.create(call), ::addEvent
+      )
+    }
 
   /**
    * Returns an OkHttpClient for tests to use as a starting point.
@@ -125,6 +137,19 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
 
   fun newClientBuilder(): OkHttpClient.Builder {
     return newClient().newBuilder()
+  }
+
+  fun enableTls(
+    server: MockWebServer,
+    handshakeCertificates: HandshakeCertificates = this.handshakeCertificates
+  ): OkHttpClient {
+    testClient = newClientBuilder()
+      .sslSocketFactory(
+        this.handshakeCertificates.sslSocketFactory(), this.handshakeCertificates.trustManager
+      )
+      .build()
+    server.useHttps(this.handshakeCertificates.sslSocketFactory(), false)
+    return testClient!!
   }
 
   @Synchronized private fun addEvent(event: String) {

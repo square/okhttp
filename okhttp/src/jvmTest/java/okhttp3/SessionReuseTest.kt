@@ -15,12 +15,12 @@
  */
 package okhttp3
 
+import javax.net.ssl.SSLSocket
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule
 import okhttp3.testing.PlatformVersion
-import okhttp3.tls.internal.TlsUtil
 import okio.ByteString.Companion.toByteString
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -30,15 +30,12 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
-import javax.net.ssl.SSLSocket
 
 class SessionReuseTest(
   val server: MockWebServer
 ) {
   @JvmField @RegisterExtension var platform = PlatformRule()
   @JvmField @RegisterExtension val clientTestRule = OkHttpClientTestRule()
-
-  private val handshakeCertificates = TlsUtil.localhost()
 
   var client = clientTestRule.newClient()
 
@@ -59,7 +56,7 @@ class SessionReuseTest(
 
     val sessionIds = mutableListOf<String>()
 
-    enableTls()
+    client = clientTestRule.enableTls(server)
 
     val tlsVersion = TlsVersion.forJavaName(tlsVersion)
     val spec = ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
@@ -68,7 +65,7 @@ class SessionReuseTest(
 
     var reuseSession = false
 
-    val sslContext = handshakeCertificates.sslContext()
+    val sslContext = clientTestRule.handshakeCertificates.sslContext()
     val systemSslSocketFactory = sslContext.socketFactory
     val sslSocketFactory = object : DelegatingSSLSocketFactory(systemSslSocketFactory) {
       override fun configureSocket(sslSocket: SSLSocket): SSLSocket {
@@ -89,7 +86,7 @@ class SessionReuseTest(
           sessionIds.add(sslSocket.session.id.toByteString().hex())
         }
       }))
-      .sslSocketFactory(sslSocketFactory, handshakeCertificates.trustManager)
+      .sslSocketFactory(sslSocketFactory, clientTestRule.handshakeCertificates.trustManager)
       .build()
 
     server.enqueue(MockResponse().setBody("abc1"))
@@ -146,14 +143,5 @@ class SessionReuseTest(
       }
       assertThat(sessionIds[0]).isNotBlank()
     }
-  }
-
-  private fun enableTls() {
-    client = client.newBuilder()
-      .sslSocketFactory(
-        handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
-      )
-      .build()
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
   }
 }

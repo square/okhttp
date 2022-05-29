@@ -23,7 +23,6 @@ import okhttp3.Headers.Companion.headersOf
 import okhttp3.internal.duplex.AsyncRequestBody
 import okhttp3.internal.http2.ErrorCode
 import okhttp3.testing.PlatformRule
-import okhttp3.tls.internal.TlsUtil.localhost
 import okio.BufferedSink
 import okio.IOException
 import org.assertj.core.api.Assertions.assertThat
@@ -32,8 +31,8 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
-import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.fail
 
 @Timeout(30)
@@ -45,11 +44,10 @@ class ServerTruncatesRequestTest(
   @RegisterExtension @JvmField var clientTestRule = OkHttpClientTestRule()
 
   private val listener = RecordingEventListener()
-  private val handshakeCertificates = localhost()
 
   private var client = clientTestRule.newClientBuilder()
-      .eventListenerFactory(clientTestRule.wrap(listener))
-      .build()
+    .eventListenerFactory(clientTestRule.wrap(listener))
+    .build()
 
   @BeforeEach fun setUp() {
     platform.assumeNotOpenJSSE()
@@ -165,11 +163,11 @@ class ServerTruncatesRequestTest(
 
   private fun serverTruncatesRequestButTrailersCanStillBeRead(http2: Boolean) {
     val mockResponse = MockResponse()
-        .setSocketPolicy(SocketPolicy.DO_NOT_READ_REQUEST_BODY)
-        .apply {
-          this.trailers = headersOf("caboose", "xyz")
-          this.http2ErrorCode = ErrorCode.NO_ERROR.httpCode
-        }
+      .setSocketPolicy(SocketPolicy.DO_NOT_READ_REQUEST_BODY)
+      .apply {
+        this.trailers = headersOf("caboose", "xyz")
+        this.http2ErrorCode = ErrorCode.NO_ERROR.httpCode
+      }
 
     // Trailers always work for HTTP/2, but only for chunked bodies in HTTP/1.
     if (http2) {
@@ -277,22 +275,11 @@ class ServerTruncatesRequestTest(
   }
 
   private fun enableProtocol(protocol: Protocol) {
-    enableTls()
+    client = clientTestRule.enableTls(server)
     client = client.newBuilder()
-        .protocols(listOf(protocol, Protocol.HTTP_1_1))
-        .build()
+      .protocols(listOf(protocol, Protocol.HTTP_1_1))
+      .build()
     server.protocols = client.protocols
-  }
-
-  private fun enableTls() {
-    client = client.newBuilder()
-        .sslSocketFactory(
-          handshakeCertificates.sslSocketFactory(),
-          handshakeCertificates.trustManager
-        )
-        .hostnameVerifier(RecordingHostnameVerifier())
-        .build()
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
   }
 
   /** A request body that slowly trickles bytes, expecting to not complete. */

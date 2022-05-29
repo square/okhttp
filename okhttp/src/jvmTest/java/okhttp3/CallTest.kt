@@ -200,7 +200,7 @@ open class CallTest(
   }
 
   @Test fun get_HTTPS() {
-    enableTls()
+    client = clientTestRule.enableTls(server, handshakeCertificates)
     get()
   }
 
@@ -300,7 +300,7 @@ open class CallTest(
   }
 
   @Test fun head_HTTPS() {
-    enableTls()
+    client = clientTestRule.enableTls(server, handshakeCertificates)
     head()
   }
 
@@ -326,7 +326,7 @@ open class CallTest(
   }
 
   @Test fun post_HTTPS() {
-    enableTls()
+    client = clientTestRule.enableTls(server, handshakeCertificates)
     post()
   }
 
@@ -352,7 +352,7 @@ open class CallTest(
   }
 
   @Test fun postZerolength_HTTPS() {
-    enableTls()
+    client = clientTestRule.enableTls(server, handshakeCertificates)
     postZeroLength()
   }
 
@@ -366,7 +366,7 @@ open class CallTest(
   }
 
   @Test fun postBodyRetransmittedAfterAuthorizationFail_HTTPS() {
-    enableTls()
+    client = clientTestRule.enableTls(server, handshakeCertificates)
     postBodyRetransmittedAfterAuthorizationFail("abc")
   }
 
@@ -381,7 +381,7 @@ open class CallTest(
   }
 
   @Test fun postEmptyBodyRetransmittedAfterAuthorizationFail_HTTPS() {
-    enableTls()
+    client = clientTestRule.enableTls(server, handshakeCertificates)
     postBodyRetransmittedAfterAuthorizationFail("")
   }
 
@@ -481,7 +481,7 @@ open class CallTest(
   }
 
   @Test fun delete_HTTPS() {
-    enableTls()
+    client = clientTestRule.enableTls(server, handshakeCertificates)
     delete()
   }
 
@@ -523,7 +523,7 @@ open class CallTest(
   }
 
   @Test fun put_HTTPS() {
-    enableTls()
+    client = clientTestRule.enableTls(server, handshakeCertificates)
     put()
   }
 
@@ -554,7 +554,7 @@ open class CallTest(
   }
 
   @Test fun patch_HTTPS() {
-    enableTls()
+    client = clientTestRule.enableTls(server, handshakeCertificates)
     patch()
   }
 
@@ -844,7 +844,7 @@ open class CallTest(
 
   /** https://github.com/square/okhttp/issues/442  */
   @Test fun tlsTimeoutsNotRetried() {
-    enableTls()
+    client = clientTestRule.enableTls(server, handshakeCertificates)
     server.enqueue(
       MockResponse()
         .setSocketPolicy(SocketPolicy.NO_RESPONSE)
@@ -1038,7 +1038,7 @@ open class CallTest(
   }
 
   @Test fun tls() {
-    enableTls()
+    client = clientTestRule.enableTls(server, handshakeCertificates)
     server.enqueue(
       MockResponse()
         .setBody("abc")
@@ -1048,7 +1048,7 @@ open class CallTest(
   }
 
   @Test fun tls_Async() {
-    enableTls()
+    client = clientTestRule.enableTls(server, handshakeCertificates)
     server.enqueue(
       MockResponse()
         .setBody("abc")
@@ -1331,7 +1331,7 @@ open class CallTest(
   }
 
   @Test fun setFollowSslRedirectsFalse() {
-    enableTls()
+    client = clientTestRule.enableTls(server, handshakeCertificates)
     server.enqueue(
       MockResponse()
         .setResponseCode(301)
@@ -1348,7 +1348,7 @@ open class CallTest(
 
   @Test fun matchingPinnedCertificate() {
     // Fails on 11.0.1 https://github.com/square/okhttp/issues/4703
-    enableTls()
+    client = clientTestRule.enableTls(server, handshakeCertificates)
     server.enqueue(MockResponse())
     server.enqueue(MockResponse())
 
@@ -1376,7 +1376,7 @@ open class CallTest(
   }
 
   @Test fun unmatchingPinnedCertificate() {
-    enableTls()
+    client = clientTestRule.enableTls(server, handshakeCertificates)
     server.enqueue(MockResponse())
 
     // Pin publicobject.com's cert.
@@ -2384,7 +2384,7 @@ open class CallTest(
   }
 
   @Test fun cancelInFlightBeforeResponseReadThrowsIOE_HTTPS() {
-    enableTls()
+    client = clientTestRule.enableTls(server, handshakeCertificates)
     cancelInFlightBeforeResponseReadThrowsIOE()
   }
 
@@ -2424,7 +2424,7 @@ open class CallTest(
   }
 
   @Test fun canceledBeforeIOSignalsOnFailure_HTTPS() {
-    enableTls()
+    client = clientTestRule.enableTls(server, handshakeCertificates)
     canceledBeforeIOSignalsOnFailure()
   }
 
@@ -2451,7 +2451,7 @@ open class CallTest(
   }
 
   @Test fun canceledBeforeResponseReadSignalsOnFailure_HTTPS() {
-    enableTls()
+    client = clientTestRule.enableTls(server, handshakeCertificates)
     canceledBeforeResponseReadSignalsOnFailure()
   }
 
@@ -2496,7 +2496,7 @@ open class CallTest(
 
   @Test
   fun canceledAfterResponseIsDeliveredBreaksStreamButSignalsOnce_HTTPS() {
-    enableTls()
+    client = clientTestRule.enableTls(server, handshakeCertificates)
     canceledAfterResponseIsDeliveredBreaksStreamButSignalsOnce()
   }
 
@@ -3866,7 +3866,7 @@ open class CallTest(
    * on an implementation detail so it might not be a valid test case in the future.
    */
   @Test fun cancelAfterResponseBodyEnd() {
-    enableTls()
+    client = clientTestRule.enableTls(server, handshakeCertificates)
     server.enqueue(MockResponse().setBody("abc"))
     server.enqueue(MockResponse().setBody("def"))
     client = client.newBuilder()
@@ -3920,8 +3920,10 @@ open class CallTest(
         .addHeader("Test", "Redirect from /a to /b")
         .setBody("/a has moved!")
     )
-    server.enqueue(MockResponse()
-      .setBody("this is the redirect target"))
+    server.enqueue(
+      MockResponse()
+        .setBody("this is the redirect target")
+    )
 
     val call = client.newCall(Request(server.url("/")))
     val response = call.execute()
@@ -3991,21 +3993,11 @@ open class CallTest(
    * Tests that use this will fail unless boot classpath is set. Ex. `-Xbootclasspath/p:/tmp/alpn-boot-8.0.0.v20140317`
    */
   private fun enableProtocol(protocol: Protocol) {
-    enableTls()
+    client = clientTestRule.enableTls(server, handshakeCertificates)
     client = client.newBuilder()
       .protocols(listOf(protocol, Protocol.HTTP_1_1))
       .build()
     server.protocols = client.protocols
-  }
-
-  private fun enableTls() {
-    client = client.newBuilder()
-      .sslSocketFactory(
-        handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
-      )
-      .hostnameVerifier(RecordingHostnameVerifier())
-      .build()
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
   }
 
   private fun gzip(data: String): Buffer {
