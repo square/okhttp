@@ -93,7 +93,7 @@ class Http2ExchangeCodec(
 
   override fun readResponseHeaders(expectContinue: Boolean): Response.Builder? {
     val stream = stream ?: throw IOException("stream wasn't created")
-    val headers = stream.takeHeaders()
+    val headers = stream.takeHeaders(callerIsIdle = expectContinue)
     val responseBuilder = readHttp2HeadersList(headers, protocol)
     return if (expectContinue && responseBuilder.code == HTTP_CONTINUE) {
       null
