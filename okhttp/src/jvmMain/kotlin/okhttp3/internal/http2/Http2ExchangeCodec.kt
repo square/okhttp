@@ -42,6 +42,7 @@ import okhttp3.internal.http2.Header.Companion.TARGET_PATH_UTF8
 import okhttp3.internal.http2.Header.Companion.TARGET_SCHEME
 import okhttp3.internal.http2.Header.Companion.TARGET_SCHEME_UTF8
 import okhttp3.internal.immutableListOf
+import okhttp3.internal.lowercase
 import okio.Sink
 import okio.Source
 

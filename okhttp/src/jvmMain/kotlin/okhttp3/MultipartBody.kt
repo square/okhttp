@@ -18,6 +18,7 @@ package okhttp3
 import java.io.IOException
 import java.util.UUID
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.internal.code
 import okhttp3.internal.toImmutableList
 import okio.Buffer
 import okio.BufferedSink

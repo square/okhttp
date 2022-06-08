@@ -13,10 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:OptIn(ExperimentalTime::class)
+
 package okhttp3
 
 import java.util.concurrent.TimeUnit
 import kotlin.time.DurationUnit
+import kotlin.time.ExperimentalTime
 import okhttp3.internal.commonBuild
 import okhttp3.internal.commonClampToInt
 import okhttp3.internal.commonForceCache

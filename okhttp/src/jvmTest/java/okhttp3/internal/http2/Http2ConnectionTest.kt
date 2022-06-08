@@ -26,6 +26,7 @@ import okhttp3.TestUtil.headerEntries
 import okhttp3.TestUtil.repeat
 import okhttp3.internal.EMPTY_BYTE_ARRAY
 import okhttp3.internal.EMPTY_HEADERS
+import okhttp3.internal.code
 import okhttp3.internal.concurrent.TaskFaker
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.notifyAll

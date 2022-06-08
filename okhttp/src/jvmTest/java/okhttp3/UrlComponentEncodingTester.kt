@@ -17,7 +17,9 @@ package okhttp3
 
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.internal.code
 import okhttp3.internal.format
+import okhttp3.internal.lowercase
 import okio.Buffer
 import okio.ByteString.Companion.encodeUtf8
 import org.junit.jupiter.api.Assertions.fail

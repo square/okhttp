@@ -13,9 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+@file:OptIn(ExperimentalTime::class)
+
 package okhttp3
 
 import kotlin.time.DurationUnit
+import kotlin.time.ExperimentalTime
 
 /**
  * A Cache-Control header with cache directives from a server or client. These directives set policy
