@@ -160,6 +160,14 @@ class ConnectPlan(
       }
 
       if (route.address.sslSocketFactory != null) {
+        // Assume the server won't send a TLS ServerHello until we send a TLS ClientHello. If
+        // that happens, then we will have buffered bytes that are needed by the SSLSocket!
+        // This check is imperfect: it doesn't tell us whether a handshake will succeed, just
+        // that it will almost certainly fail because the proxy has sent unexpected data.
+        if (source?.buffer?.exhausted() == false || sink?.buffer?.exhausted() == false) {
+          throw IOException("TLS tunnel buffered too many bytes!")
+        }
+
         eventListener.secureConnectStart(call)
 
         // Create the wrapper over the connected socket.
@@ -404,16 +412,7 @@ class ConnectPlan(
       tunnelCodec.skipConnectBody(response)
 
       when (response.code) {
-        HttpURLConnection.HTTP_OK -> {
-          // Assume the server won't send a TLS ServerHello until we send a TLS ClientHello. If
-          // that happens, then we will have buffered bytes that are needed by the SSLSocket!
-          // This check is imperfect: it doesn't tell us whether a handshake will succeed, just
-          // that it will almost certainly fail because the proxy has sent unexpected data.
-          if (!source.buffer.exhausted() || !sink.buffer.exhausted()) {
-            throw IOException("TLS tunnel buffered too many bytes!")
-          }
-          return null
-        }
+        HttpURLConnection.HTTP_OK -> return null
 
         HttpURLConnection.HTTP_PROXY_AUTH -> {
           nextRequest = route.address.proxyAuthenticator.authenticate(route, response)
