@@ -860,6 +860,13 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#version-500-alpha8" class="md-nav__link">
+    Version 5.0.0-alpha.8
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-500-alpha7" class="md-nav__link">
     Version 5.0.0-alpha.7
   </a>
@@ -1117,6 +1124,13 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#version-500-alpha8" class="md-nav__link">
+    Version 5.0.0-alpha.8
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-500-alpha7" class="md-nav__link">
     Version 5.0.0-alpha.7
   </a>
@@ -1187,6 +1201,38 @@
 
 
 <h1 id="change-log">Change Log<a class="headerlink" href="#change-log" title="Permanent link">&para;</a></h1>
+<h2 id="version-500-alpha8">Version 5.0.0-alpha.8<a class="headerlink" href="#version-500-alpha8" title="Permanent link">&para;</a></h2>
+<p><em>2022-06-08</em></p>
+<ul>
+<li>
+<p>Fix: Change how <code>H2_PRIOR_KNOWLEDGE</code> works with HTTP proxies. Previously OkHttp assumed the
+    proxy itself was a prior knowledge HTTP/2 server. With this update, OkHttp attempts a <code>CONNECT</code>
+    tunnel just as it would with HTTPS. For prior knowledge with proxies OkHttp&rsquo;s is now consistent
+    with these curl arguments:</p>
+<div class="highlight"><pre><span></span><code>curl \
+  --http2-prior-knowledge \
+  --proxy localhost:8888 \
+  --proxytunnel \
+  http://squareup.com/robots.txt
+</code></pre></div>
+</li>
+<li>
+<p>Fix: Support executing OkHttp on kotlin-stdlib versions as old as 1.4. The library still builds
+    on up-to-date Kotlin releases (1.6.21) but no longer needs that version as a runtime dependency.
+    This should make it easier to use OkHttp in Gradle plugins.</p>
+</li>
+<li>
+<p>Fix: Don&rsquo;t start the clock on response timeouts until the request body is fully transmitted.
+    This is only relevant for duplex request bodies, because they are written concurrently when
+    reading the response body.</p>
+</li>
+<li>
+<p>New: <code>MockResponse.inTunnel()</code> is a new <code>mockwebserver3</code> API to configure responses that are
+    served while creating a proxy tunnel. This obsoletes both the <code>tunnelProxy</code> argument on
+    <code>MockWebServer</code> and the <code>UPGRADE_TO_SSL_AT_END</code> socket option. (Only APIs on <code>mockwebserver3</code>
+    are changed; the old <code>okhttp3.mockwebserver</code> APIs remain as they always have been.</p>
+</li>
+</ul>
 <h2 id="version-500-alpha7">Version 5.0.0-alpha.7<a class="headerlink" href="#version-500-alpha7" title="Permanent link">&para;</a></h2>
 <p><em>2022-04-26</em></p>
 <p><strong>This release introduces new Kotlin-friendly APIs.</strong> When we migrated OkHttp from Java to Kotlin in

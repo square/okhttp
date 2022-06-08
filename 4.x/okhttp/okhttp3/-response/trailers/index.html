@@ -1030,9 +1030,14 @@
 
 <p>//<a href="../../../../">okhttp</a>/<a href="../../">okhttp3</a>/<a href="../">Response</a>/<a href="./">trailers</a></p>
 <h1 id="trailers">trailers<a class="headerlink" href="#trailers" title="Permanent link">&para;</a></h1>
+<p>[common, jvm]\
+[common]\
+expect fun <a href="./">trailers</a>(): <a href="../../-headers/">Headers</a></p>
 <p>[jvm]\
-fun <a href="./">trailers</a>(): <a href="../../-headers/">Headers</a></p>
+actual fun <a href="./">trailers</a>(): <a href="../../-headers/">Headers</a></p>
 <p>Returns the trailers after the HTTP response, which may be empty. It is an error to call this before the entire HTTP response body has been consumed.</p>
+<p>[nonJvm]\
+actual fun <a href="./">trailers</a>(): <a href="../../-headers/">Headers</a></p>
 
               
             </article>

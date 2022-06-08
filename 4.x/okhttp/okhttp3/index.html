@@ -1221,7 +1221,7 @@
 </tr>
 <tr>
 <td><a href="-protocol-exception/">ProtocolException</a></td>
-<td>[common, nonJvm, jvm]<br>[common]<br>expect class <a href="-protocol-exception/">ProtocolException</a>(message: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>)<br>[nonJvm]<br>actual class <a href="-protocol-exception/">ProtocolException</a>(message: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>) : <a href="https://square.github.io/okio/2.x/okio/okio/-i-o-exception/index.html">IOException</a><br>[jvm]<br>actual typealias <a href="-protocol-exception/">ProtocolException</a> = <a href="https://docs.oracle.com/javase/8/docs/api/java/net/ProtocolException.html">ProtocolException</a></td>
+<td>[common, nonJvm, jvm]<br>[common]<br>expect class <a href="-protocol-exception/">ProtocolException</a>(message: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>) : <a href="https://square.github.io/okio/2.x/okio/okio/-i-o-exception/index.html">IOException</a><br>[nonJvm]<br>actual class <a href="-protocol-exception/">ProtocolException</a>(message: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>) : <a href="https://square.github.io/okio/2.x/okio/okio/-i-o-exception/index.html">IOException</a><br>[jvm]<br>actual typealias <a href="-protocol-exception/">ProtocolException</a> = <a href="https://docs.oracle.com/javase/8/docs/api/java/net/ProtocolException.html">ProtocolException</a></td>
 </tr>
 <tr>
 <td><a href="-request/">Request</a></td>
@@ -1233,11 +1233,11 @@
 </tr>
 <tr>
 <td><a href="-response/">Response</a></td>
-<td>[common, nonJvm]<br>[common]<br>expect class <a href="-response/">Response</a><br>[nonJvm]<br>actual class <a href="-response/">Response</a> : <a href="https://square.github.io/okio/2.x/okio/okio/-closeable/index.html">Closeable</a><br>An HTTP response. Instances of this class are not immutable: the response body is a one-shot value that may be consumed only once and then closed. All other properties are immutable.<br>[jvm]<br>actual class <a href="-response/">Response</a> : <a href="https://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html">Closeable</a></td>
+<td>[common, nonJvm]<br>[common]<br>expect class <a href="-response/">Response</a> : <a href="https://square.github.io/okio/2.x/okio/okio/-closeable/index.html">Closeable</a><br>[nonJvm]<br>actual class <a href="-response/">Response</a> : <a href="https://square.github.io/okio/2.x/okio/okio/-closeable/index.html">Closeable</a><br>An HTTP response. Instances of this class are not immutable: the response body is a one-shot value that may be consumed only once and then closed. All other properties are immutable.<br>[jvm]<br>actual class <a href="-response/">Response</a> : <a href="https://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html">Closeable</a></td>
 </tr>
 <tr>
 <td><a href="-response-body/">ResponseBody</a></td>
-<td>[common]<br>expect abstract class <a href="-response-body/">ResponseBody</a><br>A one-shot stream from the origin server to the client application with the raw bytes of the response body. Each response body is supported by an active connection to the webserver. This imposes both obligations and limits on the client application.<br>[jvm, nonJvm]<br>[jvm]<br>actual abstract class <a href="-response-body/">ResponseBody</a> : <a href="https://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html">Closeable</a><br>[nonJvm]<br>actual abstract class <a href="-response-body/">ResponseBody</a> : <a href="https://square.github.io/okio/2.x/okio/okio/-closeable/index.html">Closeable</a></td>
+<td>[common]<br>expect abstract class <a href="-response-body/">ResponseBody</a> : <a href="https://square.github.io/okio/2.x/okio/okio/-closeable/index.html">Closeable</a><br>A one-shot stream from the origin server to the client application with the raw bytes of the response body. Each response body is supported by an active connection to the webserver. This imposes both obligations and limits on the client application.<br>[jvm, nonJvm]<br>[jvm]<br>actual abstract class <a href="-response-body/">ResponseBody</a> : <a href="https://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html">Closeable</a><br>[nonJvm]<br>actual abstract class <a href="-response-body/">ResponseBody</a> : <a href="https://square.github.io/okio/2.x/okio/okio/-closeable/index.html">Closeable</a></td>
 </tr>
 <tr>
 <td><a href="-route/">Route</a></td>

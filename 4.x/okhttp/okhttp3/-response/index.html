@@ -1067,9 +1067,9 @@
 <p>//<a href="../../../">okhttp</a>/<a href="../">okhttp3</a>/<a href="./">Response</a></p>
 <h1 id="response">Response<a class="headerlink" href="#response" title="Permanent link">&para;</a></h1>
 <p>[common]\
-expect class <a href="./">Response</a></p>
+expect class <a href="./">Response</a> : <a href="https://square.github.io/okio/2.x/okio/okio/-closeable/index.html">Closeable</a></p>
 <p>An HTTP response. Instances of this class are not immutable: the response body is a one-shot value that may be consumed only once and then closed. All other properties are immutable.</p>
-<p>This class implements Closeable. Closing it simply closes its response body. See <a href="../-response-body/">ResponseBody</a> for an explanation and examples.</p>
+<p>This class implements <a href="https://square.github.io/okio/2.x/okio/okio/-closeable/index.html">Closeable</a>. Closing it simply closes its response body. See <a href="../-response-body/">ResponseBody</a> for an explanation and examples.</p>
 <p>[jvm]\
 actual class <a href="./">Response</a> : <a href="https://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html">Closeable</a></p>
 <p>[nonJvm]\
@@ -1106,7 +1106,7 @@ actual class <a href="./">Response</a> : <a href="https://square.github.io/okio/
 </tr>
 <tr>
 <td><a href="close/">close</a></td>
-<td>[common, nonJvm]<br>[common]<br>expect open fun <a href="close/">close</a>()<br>[nonJvm]<br>actual open override fun <a href="close/">close</a>()<br>Closes the response body. Equivalent to body().close().<br>[jvm]<br>actual open override fun <a href="close/">close</a>()</td>
+<td>[common, nonJvm]<br>[common]<br>expect open override fun <a href="close/">close</a>()<br>[nonJvm]<br>actual open override fun <a href="close/">close</a>()<br>Closes the response body. Equivalent to body().close().<br>[jvm]<br>actual open override fun <a href="close/">close</a>()</td>
 </tr>
 <tr>
 <td><a href="header/">header</a></td>
@@ -1130,7 +1130,7 @@ actual class <a href="./">Response</a> : <a href="https://square.github.io/okio/
 </tr>
 <tr>
 <td><a href="trailers/">trailers</a></td>
-<td>[jvm]<br>fun <a href="trailers/">trailers</a>(): <a href="../-headers/">Headers</a><br>Returns the trailers after the HTTP response, which may be empty. It is an error to call this before the entire HTTP response body has been consumed.</td>
+<td>[common, jvm]<br>[common]<br>expect fun <a href="trailers/">trailers</a>(): <a href="../-headers/">Headers</a><br>[jvm]<br>actual fun <a href="trailers/">trailers</a>(): <a href="../-headers/">Headers</a><br>Returns the trailers after the HTTP response, which may be empty. It is an error to call this before the entire HTTP response body has been consumed.<br>[nonJvm]<br>actual fun <a href="trailers/">trailers</a>(): <a href="../-headers/">Headers</a></td>
 </tr>
 </tbody>
 </table>

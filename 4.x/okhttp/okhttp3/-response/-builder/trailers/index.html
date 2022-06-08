@@ -12,14 +12,14 @@
         <meta name="author" content="Square, Inc.">
       
       
-        <link rel="canonical" href="https://square.github.io/okhttp/4.x/okhttp/okhttp3/-request-body/-companion/to-request-body/">
+        <link rel="canonical" href="https://square.github.io/okhttp/4.x/okhttp/okhttp3/-response/-builder/trailers/">
       
       <link rel="icon" href="../../../../../../assets/images/icon-square.png">
       <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.2.1">
     
     
       
-        <title>toRequestBody - OkHttp - OkHttp</title>
+        <title>trailers - OkHttp - OkHttp</title>
       
     
     
@@ -70,7 +70,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#torequestbody" class="md-skip">
+        <a href="#trailers" class="md-skip">
           Skip to content
         </a>
       
@@ -102,7 +102,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              toRequestBody - OkHttp
+              trailers - OkHttp
             
           </span>
         </div>
@@ -1028,45 +1028,13 @@
                 
 
 
-<p>//<a href="../../../../../">okhttp</a>/<a href="../../../">okhttp3</a>/<a href="../../">RequestBody</a>/<a href="../">Companion</a>/<a href="./">toRequestBody</a></p>
-<h1 id="torequestbody">toRequestBody<a class="headerlink" href="#torequestbody" title="Permanent link">&para;</a></h1>
-<p>[jvm, common]\
-[jvm]\</p>
-<p>@<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-static/index.html">JvmStatic</a></p>
-<p>@<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;create&quot;)</p>
-<p>fun <a href="https://docs.oracle.com/javase/8/docs/api/java/io/FileDescriptor.html">FileDescriptor</a>.<a href="./">toRequestBody</a>(contentType: <a href="../../../-media-type/">MediaType</a>? = null): <a href="../../">RequestBody</a></p>
-<p>[common]\</p>
-<p>@<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-overloads/index.html">JvmOverloads</a></p>
-<p>expect fun <a href="https://square.github.io/okio/2.x/okio/okio/-byte-string/index.html">ByteString</a>.<a href="./">toRequestBody</a>(contentType: <a href="../../../-media-type/">MediaType</a>? = null): <a href="../../">RequestBody</a></p>
-<p>[common]\</p>
-<p>@<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-overloads/index.html">JvmOverloads</a></p>
-<p>expect fun <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html">ByteArray</a>.<a href="./">toRequestBody</a>(contentType: <a href="../../../-media-type/">MediaType</a>? = null, offset: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a> = 0, byteCount: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a> = size): <a href="../../">RequestBody</a></p>
-<p>Returns a new request body that transmits this.</p>
-<p>[common, jvm]\
-[common]\</p>
-<p>@<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-overloads/index.html">JvmOverloads</a></p>
-<p>expect fun <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>.<a href="./">toRequestBody</a>(contentType: <a href="../../../-media-type/">MediaType</a>? = null): <a href="../../">RequestBody</a></p>
-<p>[jvm]\</p>
-<p>@<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-static/index.html">JvmStatic</a></p>
-<p>@<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;create&quot;)</p>
-<p>actual fun <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>.<a href="./">toRequestBody</a>(contentType: <a href="../../../-media-type/">MediaType</a>? = null): <a href="../../">RequestBody</a></p>
-<p>Returns a new request body that transmits this string. If <a href="./">contentType</a> is non-null and lacks a charset, this will use UTF-8.</p>
-<p>[nonJvm, jvm]\
-[nonJvm]\
-actual fun <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a>.<a href="./">toRequestBody</a>(contentType: <a href="../../../-media-type/">MediaType</a>? = null): <a href="../../">RequestBody</a></p>
-<p>[jvm]\</p>
-<p>@<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-static/index.html">JvmStatic</a></p>
-<p>@<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;create&quot;)</p>
-<p>actual fun <a href="https://square.github.io/okio/2.x/okio/okio/-byte-string/index.html">ByteString</a>.<a href="./">toRequestBody</a>(contentType: <a href="../../../-media-type/">MediaType</a>? = null): <a href="../../">RequestBody</a></p>
-<p>[nonJvm]\
-actual fun <a href="https://square.github.io/okio/2.x/okio/okio/-byte-string/index.html">ByteString</a>.<a href="./">toRequestBody</a>(contentType: <a href="../../../-media-type/">MediaType</a>? = null): <a href="../../">RequestBody</a></p>
-<p>[jvm]\</p>
-<p>@<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-overloads/index.html">JvmOverloads</a></p>
-<p>@<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-static/index.html">JvmStatic</a></p>
-<p>@<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html">JvmName</a>(name = &quot;create&quot;)</p>
-<p>actual fun <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html">ByteArray</a>.<a href="./">toRequestBody</a>(contentType: <a href="../../../-media-type/">MediaType</a>? = null, offset: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a> = 0, byteCount: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a> = size): <a href="../../">RequestBody</a></p>
-<p>[nonJvm]\
-actual fun <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html">ByteArray</a>.<a href="./">toRequestBody</a>(contentType: <a href="../../../-media-type/">MediaType</a>? = null, offset: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a> = 0, byteCount: <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a> = size): <a href="../../">RequestBody</a></p>
+<p>//<a href="../../../../../">okhttp</a>/<a href="../../../">okhttp3</a>/<a href="../../">Response</a>/<a href="../">Builder</a>/<a href="./">trailers</a></p>
+<h1 id="trailers">trailers<a class="headerlink" href="#trailers" title="Permanent link">&para;</a></h1>
+<p>[common, jvm, nonJvm]\
+[common]\
+expect open fun <a href="./">trailers</a>(trailersFn: () -&gt; <a href="../../../-headers/">Headers</a>): <a href="../">Response.Builder</a></p>
+<p>[jvm, nonJvm]\
+actual open fun <a href="./">trailers</a>(trailersFn: () -&gt; <a href="../../../-headers/">Headers</a>): <a href="../">Response.Builder</a></p>
 
               
             </article>
