@@ -115,7 +115,7 @@ class CancelTest {
         }
       }
     if (connectionType != HTTP) {
-      server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+      server.useHttps(handshakeCertificates.sslSocketFactory())
     }
     server.start()
 

@@ -142,7 +142,7 @@ class CacheCorruptionTest(
   }
 
   private fun testCorruptingCache(corruptor: () -> Unit): Response {
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
       MockResponse()
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))

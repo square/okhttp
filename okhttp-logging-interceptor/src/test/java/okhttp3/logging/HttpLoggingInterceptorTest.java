@@ -796,7 +796,7 @@ public final class HttpLoggingInterceptorTest {
   @Test public void http2() throws Exception {
     platform.assumeNotBouncyCastle();
 
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false);
+    server.useHttps(handshakeCertificates.sslSocketFactory());
     url = server.url("/");
 
     setLevel(Level.BASIC);
@@ -877,7 +877,7 @@ public final class HttpLoggingInterceptorTest {
     platform.assumeHttp2Support();
     platform.assumeNotBouncyCastle();
 
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false); // HTTP/2
+    server.useHttps(handshakeCertificates.sslSocketFactory()); // HTTP/2
     url = server.url("/");
 
     setLevel(Level.BODY);

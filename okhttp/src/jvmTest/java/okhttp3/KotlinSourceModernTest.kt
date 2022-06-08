@@ -737,7 +737,7 @@ class KotlinSourceModernTest {
     mockWebServer.protocolNegotiationEnabled = false
     mockWebServer.protocols = listOf()
     val protocols: List<Protocol> = mockWebServer.protocols
-    mockWebServer.useHttps(SSLSocketFactory.getDefault() as SSLSocketFactory, false)
+    mockWebServer.useHttps(SSLSocketFactory.getDefault() as SSLSocketFactory)
     mockWebServer.noClientAuth()
     mockWebServer.requestClientAuth()
     mockWebServer.requireClientAuth()

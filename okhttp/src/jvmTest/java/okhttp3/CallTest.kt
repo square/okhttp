@@ -1133,7 +1133,7 @@ open class CallTest(
   }
 
   @Test fun tlsHandshakeFailure_noFallbackByDefault() {
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE))
     server.enqueue(MockResponse().setBody("response that will never be received"))
     val response = executeSynchronously("/")
@@ -1146,7 +1146,7 @@ open class CallTest(
   }
 
   @Test fun recoverFromTlsHandshakeFailure() {
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE))
     server.enqueue(MockResponse().setBody("abc"))
     client = client.newBuilder()
@@ -1169,7 +1169,7 @@ open class CallTest(
       // This only works if the client socket supports TLS_FALLBACK_SCSV.
       return
     }
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE))
     val clientSocketFactory = RecordingSSLSocketFactory(
       handshakeCertificates.sslSocketFactory()
@@ -1196,7 +1196,7 @@ open class CallTest(
   }
 
   @Test fun recoverFromTlsHandshakeFailure_Async() {
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE))
     server.enqueue(MockResponse().setBody("abc"))
     client = client.newBuilder()
@@ -1223,7 +1223,7 @@ open class CallTest(
         handshakeCertificates.trustManager
       )
       .build()
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE))
     val request = Request.Builder().url(server.url("/")).build()
     try {
@@ -1256,7 +1256,7 @@ open class CallTest(
     client = client.newBuilder()
       .sslSocketFactory(clientCertificates.sslSocketFactory(), clientCertificates.trustManager)
       .build()
-    server.useHttps(serverCertificates.sslSocketFactory(), false)
+    server.useHttps(serverCertificates.sslSocketFactory())
     executeSynchronously("/")
       .assertFailureMatches("(?s)Hostname localhost not verified.*")
   }
@@ -1292,8 +1292,7 @@ open class CallTest(
     val serverCertificates = HandshakeCertificates.Builder()
       .build()
     server.useHttps(
-      socketFactoryWithCipherSuite(serverCertificates.sslSocketFactory(), cipherSuite),
-      false
+        socketFactoryWithCipherSuite(serverCertificates.sslSocketFactory(), cipherSuite)
     )
     executeSynchronously("/")
       .assertFailure(SSLHandshakeException::class.java)
@@ -1320,7 +1319,7 @@ open class CallTest(
     client = client.newBuilder()
       .protocols(listOf(Protocol.H2_PRIOR_KNOWLEDGE))
       .build()
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(MockResponse())
     val call = client.newCall(Request(server.url("/")))
     try {
@@ -2908,7 +2907,7 @@ open class CallTest(
 
   /** Test which headers are sent unencrypted to the HTTP proxy.  */
   @Test fun proxyConnectOmitsApplicationHeaders() {
-    server.useHttps(handshakeCertificates.sslSocketFactory(), true)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
       MockResponse()
         .inTunnel()
@@ -2977,7 +2976,7 @@ open class CallTest(
 
   /** Respond to a proxy authorization challenge.  */
   @Test fun proxyAuthenticateOnConnect() {
-    server.useHttps(handshakeCertificates.sslSocketFactory(), true)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
       MockResponse()
         .inTunnel()
@@ -3046,7 +3045,7 @@ open class CallTest(
    * TLS tunnel. https://github.com/square/okhttp/issues/2426
    */
   @Test fun proxyAuthenticateOnConnectWithConnectionClose() {
-    server.useHttps(handshakeCertificates.sslSocketFactory(), true)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     server.protocols = listOf<Protocol>(Protocol.HTTP_1_1)
     server.enqueue(
       MockResponse()
@@ -3087,7 +3086,7 @@ open class CallTest(
   }
 
   @Test fun tooManyProxyAuthFailuresWithConnectionClose() {
-    server.useHttps(handshakeCertificates.sslSocketFactory(), true)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     server.protocols = listOf(Protocol.HTTP_1_1)
     for (i in 0..20) {
       server.enqueue(
@@ -3120,7 +3119,7 @@ open class CallTest(
    * credentials. Worse, that approach leaks proxy credentials to the origin server.
    */
   @Test fun noPreemptiveProxyAuthorization() {
-    server.useHttps(handshakeCertificates.sslSocketFactory(), true)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
       MockResponse()
         .inTunnel()
@@ -3151,7 +3150,7 @@ open class CallTest(
 
   /** Confirm that we can send authentication information without being prompted first.  */
   @Test fun preemptiveProxyAuthentication() {
-    server.useHttps(handshakeCertificates.sslSocketFactory(), true)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
       MockResponse()
         .inTunnel()
@@ -3192,7 +3191,7 @@ open class CallTest(
   }
 
   @Test fun preemptiveThenReactiveProxyAuthentication() {
-    server.useHttps(handshakeCertificates.sslSocketFactory(), true)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
       MockResponse()
         .inTunnel()
@@ -3235,7 +3234,7 @@ open class CallTest(
 
   /** https://github.com/square/okhttp/issues/4915  */
   @Test @Disabled fun proxyDisconnectsAfterRequest() {
-    server.useHttps(handshakeCertificates.sslSocketFactory(), true)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
       MockResponse()
         .inTunnel()
@@ -3590,7 +3589,7 @@ open class CallTest(
 
   /** Use a proxy to fake IPv6 connectivity, even if localhost doesn't have IPv6.  */
   private fun configureClientAndServerProxies(http2: Boolean) {
-    server.useHttps(handshakeCertificates.sslSocketFactory(), true)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     server.protocols = when {
       http2 -> listOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
       else -> listOf(Protocol.HTTP_1_1)
@@ -3732,7 +3731,7 @@ open class CallTest(
       .build()
 
     // Use that certificate on the server and trust it on the client.
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     client = client.newBuilder()
       .sslSocketFactory(
         handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
@@ -4003,7 +4002,7 @@ open class CallTest(
       )
       .hostnameVerifier(RecordingHostnameVerifier())
       .build()
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
   }
 
   private fun gzip(data: String): Buffer {

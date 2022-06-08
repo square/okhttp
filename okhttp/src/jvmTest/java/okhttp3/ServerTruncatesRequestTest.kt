@@ -292,7 +292,7 @@ class ServerTruncatesRequestTest(
         )
         .hostnameVerifier(RecordingHostnameVerifier())
         .build()
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
   }
 
   /** A request body that slowly trickles bytes, expecting to not complete. */

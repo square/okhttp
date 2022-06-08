@@ -152,7 +152,7 @@ public final class LoggingEventListenerTest {
     TestUtil.assumeNotWindows();
     platform.assumeNotBouncyCastle();
 
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false);
+    server.useHttps(handshakeCertificates.sslSocketFactory());
     url = server.url("/");
 
     server.enqueue(new MockResponse());
@@ -221,7 +221,7 @@ public final class LoggingEventListenerTest {
     TestUtil.assumeNotWindows();
     platform.assumeNotBouncyCastle();
 
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false);
+    server.useHttps(handshakeCertificates.sslSocketFactory());
     server.setProtocols(asList(HTTP_2, HTTP_1_1));
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
     url = server.url("/");

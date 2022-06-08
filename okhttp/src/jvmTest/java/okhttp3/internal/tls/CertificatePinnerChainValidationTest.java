@@ -98,7 +98,7 @@ public final class CertificatePinnerChainValidationTest {
     HandshakeCertificates serverHandshakeCertificates = new HandshakeCertificates.Builder()
         .heldCertificate(certificate, intermediateCa.certificate())
         .build();
-    server.useHttps(serverHandshakeCertificates.sslSocketFactory(), false);
+    server.useHttps(serverHandshakeCertificates.sslSocketFactory());
 
     // The request should complete successfully.
     server.enqueue(new MockResponse()
@@ -146,7 +146,7 @@ public final class CertificatePinnerChainValidationTest {
     HandshakeCertificates serverHandshakeCertificates = new HandshakeCertificates.Builder()
         .heldCertificate(certificate, intermediateCa.certificate())
         .build();
-    server.useHttps(serverHandshakeCertificates.sslSocketFactory(), false);
+    server.useHttps(serverHandshakeCertificates.sslSocketFactory());
 
     // The request should complete successfully.
     server.enqueue(new MockResponse()
@@ -232,7 +232,7 @@ public final class CertificatePinnerChainValidationTest {
     SSLSocketFactory socketFactory = newServerSocketFactory(rogueCertificate,
         compromisedIntermediateCa.certificate(), goodCertificate.certificate());
 
-    server.useHttps(socketFactory, false);
+    server.useHttps(socketFactory);
     server.enqueue(new MockResponse()
         .setBody("abc")
         .addHeader("Content-Type: text/plain"));
@@ -311,7 +311,7 @@ public final class CertificatePinnerChainValidationTest {
 
     SSLSocketFactory socketFactory = newServerSocketFactory(rogueCertificate,
         goodIntermediateCa.certificate(), compromisedIntermediateCa.certificate());
-    server.useHttps(socketFactory, false);
+    server.useHttps(socketFactory);
     server.enqueue(new MockResponse()
         .setBody("abc")
         .addHeader("Content-Type: text/plain"));
@@ -456,7 +456,7 @@ public final class CertificatePinnerChainValidationTest {
             attackerIntermediate.certificate()
         )
         .build();
-    server.useHttps(serverHandshakeCertificates.sslSocketFactory(), false);
+    server.useHttps(serverHandshakeCertificates.sslSocketFactory());
 
     server.enqueue(new MockResponse());
 
@@ -556,7 +556,7 @@ public final class CertificatePinnerChainValidationTest {
             pinnedRoot.certificate()
         )
         .build();
-    server.useHttps(serverHandshakeCertificates.sslSocketFactory(), false);
+    server.useHttps(serverHandshakeCertificates.sslSocketFactory());
 
     server.enqueue(new MockResponse());
 
@@ -592,7 +592,7 @@ public final class CertificatePinnerChainValidationTest {
     HandshakeCertificates serverHandshakeCertificates = new HandshakeCertificates.Builder()
         .heldCertificate(onlyCertificate)
         .build();
-    server.useHttps(serverHandshakeCertificates.sslSocketFactory(), false);
+    server.useHttps(serverHandshakeCertificates.sslSocketFactory());
 
     // The request should complete successfully.
     server.enqueue(new MockResponse()
