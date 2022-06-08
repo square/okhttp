@@ -696,11 +696,12 @@ public final class EventListenerTest {
   @Test public void authenticatingTunnelProxyConnect() throws IOException {
     enableTlsWithTunnel(true);
     server.enqueue(new MockResponse()
+        .inTunnel()
         .setResponseCode(407)
         .addHeader("Proxy-Authenticate: Basic realm=\"localhost\"")
         .addHeader("Connection: close"));
     server.enqueue(new MockResponse()
-        .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END));
+        .inTunnel());
     server.enqueue(new MockResponse());
 
     client = client.newBuilder()
@@ -768,7 +769,7 @@ public final class EventListenerTest {
   @Test public void secureConnectWithTunnel() throws IOException {
     enableTlsWithTunnel(true);
     server.enqueue(new MockResponse()
-        .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END));
+        .inTunnel());
     server.enqueue(new MockResponse());
 
     client = client.newBuilder()

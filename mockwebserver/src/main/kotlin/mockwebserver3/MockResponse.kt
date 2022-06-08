@@ -25,6 +25,9 @@ import okio.Buffer
 
 /** A scripted response to be replayed by the mock web server. */
 class MockResponse : Cloneable {
+  var inTunnel = false
+    private set
+
   var informationalResponses: List<MockResponse> = listOf()
     private set
 
@@ -360,6 +363,18 @@ class MockResponse : Cloneable {
     setHeader("Upgrade", "websocket")
     body = null
     webSocketListener = listener
+  }
+
+  /**
+   * Configures this response to be served as a response to an HTTP CONNECT request, either for
+   * doing HTTPS through an HTTP proxy, or HTTP/2 prior knowledge through an HTTP proxy.
+   *
+   * When a new connection is received, all in-tunnel responses are served before the connection is
+   * upgraded to HTTPS or HTTP/2.
+   */
+  fun inTunnel() = apply {
+    removeHeader("Content-Length")
+    inTunnel = true
   }
 
   /**

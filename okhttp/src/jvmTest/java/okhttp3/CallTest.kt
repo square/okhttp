@@ -2910,8 +2910,7 @@ open class CallTest(
     server.useHttps(handshakeCertificates.sslSocketFactory(), true)
     server.enqueue(
       MockResponse()
-        .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
-        .clearHeaders()
+        .inTunnel()
     )
     server.enqueue(
       MockResponse()
@@ -2980,13 +2979,13 @@ open class CallTest(
     server.useHttps(handshakeCertificates.sslSocketFactory(), true)
     server.enqueue(
       MockResponse()
+        .inTunnel()
         .setResponseCode(407)
         .addHeader("Proxy-Authenticate: Basic realm=\"localhost\"")
     )
     server.enqueue(
       MockResponse()
-        .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
-        .clearHeaders()
+        .inTunnel()
     )
     server.enqueue(
       MockResponse()
@@ -3050,14 +3049,14 @@ open class CallTest(
     server.protocols = listOf<Protocol>(Protocol.HTTP_1_1)
     server.enqueue(
       MockResponse()
+        .inTunnel()
         .setResponseCode(407)
         .addHeader("Proxy-Authenticate: Basic realm=\"localhost\"")
         .addHeader("Connection: close")
     )
     server.enqueue(
       MockResponse()
-        .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
-        .clearHeaders()
+        .inTunnel()
     )
     server.enqueue(
       MockResponse()
@@ -3123,8 +3122,7 @@ open class CallTest(
     server.useHttps(handshakeCertificates.sslSocketFactory(), true)
     server.enqueue(
       MockResponse()
-        .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
-        .clearHeaders()
+        .inTunnel()
     )
     server.enqueue(
       MockResponse()
@@ -3155,8 +3153,7 @@ open class CallTest(
     server.useHttps(handshakeCertificates.sslSocketFactory(), true)
     server.enqueue(
       MockResponse()
-        .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
-        .clearHeaders()
+        .inTunnel()
     )
     server.enqueue(
       MockResponse()
@@ -3197,14 +3194,14 @@ open class CallTest(
     server.useHttps(handshakeCertificates.sslSocketFactory(), true)
     server.enqueue(
       MockResponse()
+        .inTunnel()
         .setResponseCode(HttpURLConnection.HTTP_PROXY_AUTH)
         .addHeader("Proxy-Authenticate", "Basic realm=\"localhost\"")
         .setBody("proxy auth required")
     )
     server.enqueue(
       MockResponse()
-        .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
-        .clearHeaders()
+        .inTunnel()
     )
     server.enqueue(MockResponse())
     val challengeSchemes: MutableList<String?> = ArrayList()
@@ -3240,6 +3237,7 @@ open class CallTest(
     server.useHttps(handshakeCertificates.sslSocketFactory(), true)
     server.enqueue(
       MockResponse()
+        .inTunnel()
         .setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST)
     )
     client = client.newBuilder()
@@ -3598,8 +3596,7 @@ open class CallTest(
     }
     server.enqueue(
       MockResponse()
-        .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
-        .clearHeaders()
+        .inTunnel()
     )
     client = client.newBuilder()
       .sslSocketFactory(

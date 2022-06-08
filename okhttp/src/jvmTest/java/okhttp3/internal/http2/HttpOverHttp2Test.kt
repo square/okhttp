@@ -76,6 +76,7 @@ import okio.BufferedSink
 import okio.GzipSink
 import okio.buffer
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assumptions.assumeThat
 import org.assertj.core.data.Offset
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.fail
@@ -154,7 +155,7 @@ class HttpOverHttp2Test {
 
   @ParameterizedTest
   @ArgumentsSource(ProtocolParamProvider::class)
-  operator fun get(protocol: Protocol, mockWebServer: MockWebServer) {
+  fun get(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
     server.enqueue(
       MockResponse()
@@ -1842,13 +1843,11 @@ class HttpOverHttp2Test {
     val queueDispatcher = QueueDispatcher()
     queueDispatcher.enqueueResponse(
       MockResponse()
-        .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
-        .clearHeaders()
+        .inTunnel()
     )
     queueDispatcher.enqueueResponse(
       MockResponse()
-        .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
-        .clearHeaders()
+        .inTunnel()
     )
     queueDispatcher.enqueueResponse(
       MockResponse()
@@ -2024,6 +2023,47 @@ class HttpOverHttp2Test {
     }
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.failure).hasMessage("stream was reset: CANCEL")
+  }
+
+  @ParameterizedTest
+  @ArgumentsSource(ProtocolParamProvider::class)
+  fun http2WithProxy(protocol: Protocol, mockWebServer: MockWebServer) {
+    // TODO(jwilson): fix H2_PRIOR_KNOWLEDGE
+    assumeThat(protocol).isEqualTo(Protocol.HTTP_2)
+
+    setUp(protocol, mockWebServer)
+    server.enqueue(
+      MockResponse()
+        .inTunnel()
+    )
+    server.enqueue(
+      MockResponse()
+        .setBody("ABCDE")
+        .setStatus("HTTP/1.1 200 Sweet")
+    )
+    val client = client.newBuilder()
+      .proxy(server.toProxyAddress())
+      .build()
+
+    val call = client.newCall(
+      Request(
+        server.url("/").resolve("//android.com/foo")!!
+      )
+    )
+
+    val response = call.execute()
+    assertThat(response.body.string()).isEqualTo("ABCDE")
+    assertThat(response.code).isEqualTo(200)
+    assertThat(response.message).isEqualTo("")
+    assertThat(response.protocol).isEqualTo(protocol)
+
+    val tunnelRequest = server.takeRequest()
+    assertThat(tunnelRequest.requestLine).isEqualTo("CONNECT android.com:443 HTTP/1.1")
+
+    val request = server.takeRequest()
+    assertThat(request.requestLine).isEqualTo("GET /foo HTTP/1.1")
+    assertThat(request.getHeader(":scheme")).isEqualTo(scheme)
+    assertThat(request.getHeader(":authority")).isEqualTo("android.com")
   }
 
   companion object {
