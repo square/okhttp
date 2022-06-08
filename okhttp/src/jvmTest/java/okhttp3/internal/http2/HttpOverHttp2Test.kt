@@ -76,7 +76,6 @@ import okio.BufferedSink
 import okio.GzipSink
 import okio.buffer
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assumptions.assumeThat
 import org.assertj.core.data.Offset
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.fail
@@ -2028,9 +2027,6 @@ class HttpOverHttp2Test {
   @ParameterizedTest
   @ArgumentsSource(ProtocolParamProvider::class)
   fun http2WithProxy(protocol: Protocol, mockWebServer: MockWebServer) {
-    // TODO(jwilson): fix H2_PRIOR_KNOWLEDGE
-    assumeThat(protocol).isEqualTo(Protocol.HTTP_2)
-
     setUp(protocol, mockWebServer)
     server.enqueue(
       MockResponse()
@@ -2045,12 +2041,14 @@ class HttpOverHttp2Test {
       .proxy(server.toProxyAddress())
       .build()
 
-    val call = client.newCall(
-      Request(
-        server.url("/").resolve("//android.com/foo")!!
-      )
-    )
+    val url = server.url("/").resolve("//android.com/foo")!!
+    val port = when (url.scheme) {
+      "https" -> 443
+      "http" -> 80
+      else -> error("unexpected scheme")
+    }
 
+    val call = client.newCall(Request(url))
     val response = call.execute()
     assertThat(response.body.string()).isEqualTo("ABCDE")
     assertThat(response.code).isEqualTo(200)
@@ -2058,12 +2056,60 @@ class HttpOverHttp2Test {
     assertThat(response.protocol).isEqualTo(protocol)
 
     val tunnelRequest = server.takeRequest()
-    assertThat(tunnelRequest.requestLine).isEqualTo("CONNECT android.com:443 HTTP/1.1")
+    assertThat(tunnelRequest.requestLine).isEqualTo("CONNECT android.com:$port HTTP/1.1")
 
     val request = server.takeRequest()
     assertThat(request.requestLine).isEqualTo("GET /foo HTTP/1.1")
     assertThat(request.getHeader(":scheme")).isEqualTo(scheme)
     assertThat(request.getHeader(":authority")).isEqualTo("android.com")
+  }
+
+  /** Respond to a proxy authorization challenge.  */
+  @ParameterizedTest
+  @ArgumentsSource(ProtocolParamProvider::class)
+  fun proxyAuthenticateOnConnect(protocol: Protocol, mockWebServer: MockWebServer) {
+    setUp(protocol, mockWebServer)
+    server.enqueue(
+      MockResponse()
+        .inTunnel()
+        .setResponseCode(407)
+        .addHeader("Proxy-Authenticate: Basic realm=\"localhost\"")
+    )
+    server.enqueue(
+      MockResponse()
+        .inTunnel()
+    )
+    server.enqueue(
+      MockResponse()
+        .setBody("response body")
+    )
+    val client = client.newBuilder()
+      .proxy(server.toProxyAddress())
+      .proxyAuthenticator(RecordingOkAuthenticator("password", "Basic"))
+      .build()
+
+    val url = server.url("/").resolve("//android.com/foo")!!
+    val port = when (url.scheme) {
+      "https" -> 443
+      "http" -> 80
+      else -> error("unexpected scheme")
+    }
+
+    val request = Request(url)
+    val response = client.newCall(request).execute()
+    assertThat(response.body.string()).isEqualTo("response body")
+
+    val connect1 = server.takeRequest()
+    assertThat(connect1.requestLine).isEqualTo("CONNECT android.com:$port HTTP/1.1")
+    assertThat(connect1.getHeader("Proxy-Authorization")).isNull()
+
+    val connect2 = server.takeRequest()
+    assertThat(connect2.requestLine).isEqualTo("CONNECT android.com:$port HTTP/1.1")
+    assertThat(connect2.getHeader("Proxy-Authorization")).isEqualTo("password")
+
+    val get = server.takeRequest()
+    assertThat(get.requestLine).isEqualTo("GET /foo HTTP/1.1")
+    assertThat(get.getHeader("Proxy-Authorization")).isNull()
   }
 
   companion object {
