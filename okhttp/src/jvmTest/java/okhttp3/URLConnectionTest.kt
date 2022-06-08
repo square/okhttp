@@ -910,8 +910,7 @@ class URLConnectionTest {
     server.useHttps(handshakeCertificates.sslSocketFactory(), true)
     server.enqueue(
       MockResponse()
-        .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
-        .clearHeaders()
+        .inTunnel()
     )
     server.enqueue(
       MockResponse()
@@ -945,10 +944,11 @@ class URLConnectionTest {
     initResponseCache()
     server.useHttps(handshakeCertificates.sslSocketFactory(), true)
     // The inclusion of a body in the response to a CONNECT is key to reproducing b/6754912.
-    val badProxyResponse = MockResponse()
-      .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
-      .setBody("bogus proxy connect response content")
-    server.enqueue(badProxyResponse)
+    server.enqueue(
+      MockResponse()
+        .inTunnel()
+        .setBody("bogus proxy connect response content")
+    )
     server.enqueue(
       MockResponse()
         .setBody("response")
@@ -991,8 +991,7 @@ class URLConnectionTest {
     server.useHttps(handshakeCertificates.sslSocketFactory(), true)
     server.enqueue(
       MockResponse()
-        .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
-        .clearHeaders()
+        .inTunnel()
     )
     server.enqueue(
       MockResponse()
@@ -1031,13 +1030,13 @@ class URLConnectionTest {
     server.useHttps(handshakeCertificates.sslSocketFactory(), true)
     server.enqueue(
       MockResponse()
+        .inTunnel()
         .setResponseCode(407)
         .addHeader("Proxy-Authenticate: Basic realm=\"localhost\"")
     )
     server.enqueue(
       MockResponse()
-        .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
-        .clearHeaders()
+        .inTunnel()
     )
     server.enqueue(
       MockResponse()
@@ -1076,8 +1075,7 @@ class URLConnectionTest {
     server.useHttps(handshakeCertificates.sslSocketFactory(), true)
     server.enqueue(
       MockResponse()
-        .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
-        .clearHeaders()
+        .inTunnel()
     )
     server.enqueue(
       MockResponse()
@@ -1106,8 +1104,7 @@ class URLConnectionTest {
     server.useHttps(socketFactory, true)
     server.enqueue(
       MockResponse()
-        .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
-        .clearHeaders()
+        .inTunnel()
     )
     server.enqueue(
       MockResponse()

@@ -61,6 +61,10 @@ internal fun MockResponse.wrap(): mockwebserver3.MockResponse {
       result.add100Continue()
       mockwebserver3.SocketPolicy.KEEP_OPEN
     }
+    SocketPolicy.UPGRADE_TO_SSL_AT_END -> {
+      result.inTunnel()
+      mockwebserver3.SocketPolicy.KEEP_OPEN
+    }
     else -> socketPolicy.wrap()
   }
   result.http2ErrorCode = http2ErrorCode
