@@ -104,12 +104,12 @@ expect class Response : Closeable {
 
   fun header(name: String, defaultValue: String? = null): String?
 
-  // /**
-  //  * Returns the trailers after the HTTP response, which may be empty. It is an error to call this
-  //  * before the entire HTTP response body has been consumed.
-  //  */
-  // @Throws(IOException::class)
-  // fun trailers(): Headers
+  /**
+   * Returns the trailers after the HTTP response, which may be empty. It is an error to call this
+   * before the entire HTTP response body has been consumed.
+   */
+  @Throws(IOException::class)
+  fun trailers(): Headers
 
   /**
    * Peeks up to [byteCount] bytes from the response body and returns them as a new response
@@ -164,13 +164,13 @@ expect class Response : Closeable {
     internal var protocol: Protocol?
     internal var code: Int
     internal var message: String?
-    // internal var handshake: Handshake? = null
+    // internal var handshake: Handshake?
     internal var headers: Headers.Builder
     internal var body: ResponseBody
     internal var networkResponse: Response?
     internal var cacheResponse: Response?
     internal var priorResponse: Response?
-    // internal var exchange: Exchange? = null
+    internal var trailersFn: (() -> Headers)
 
     constructor()
 
@@ -203,6 +203,8 @@ expect class Response : Closeable {
 
     /** Removes all headers on this builder and adds [headers]. */
     open fun headers(headers: Headers): Builder
+
+    open fun trailers(trailersFn: (() -> Headers)): Builder
 
     open fun body(body: ResponseBody): Builder
 

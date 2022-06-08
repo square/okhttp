@@ -39,6 +39,7 @@ import okhttp3.internal.commonProtocol
 import okhttp3.internal.commonRemoveHeader
 import okhttp3.internal.commonRequest
 import okhttp3.internal.commonToString
+import okhttp3.internal.commonTrailers
 import okhttp3.internal.connection.Exchange
 import okhttp3.internal.http.parseChallenges
 import okio.Buffer
@@ -83,7 +84,9 @@ actual class Response internal constructor(
    */
   @get:JvmName("receivedResponseAtMillis") val receivedResponseAtMillis: Long,
 
-  @get:JvmName("exchange") internal val exchange: Exchange?
+  @get:JvmName("exchange") internal val exchange: Exchange?,
+
+  private var trailersFn: (() -> Headers)
 ) : Closeable {
 
   internal actual var lazyCacheControl: CacheControl? = null
@@ -142,7 +145,7 @@ actual class Response internal constructor(
    * before the entire HTTP response body has been consumed.
    */
   @Throws(IOException::class)
-  fun trailers(): Headers = checkNotNull(exchange) { "trailers not available" }.trailers()
+  actual fun trailers(): Headers = trailersFn()
 
   @Throws(IOException::class)
   actual fun peekBody(byteCount: Long): ResponseBody {
@@ -249,6 +252,7 @@ actual class Response internal constructor(
     internal var sentRequestAtMillis: Long = 0
     internal var receivedResponseAtMillis: Long = 0
     internal var exchange: Exchange? = null
+    internal actual var trailersFn: (() -> Headers) = { Headers.headersOf() }
 
     actual constructor() {
       headers = Headers.Builder()
@@ -268,6 +272,7 @@ actual class Response internal constructor(
       this.sentRequestAtMillis = response.sentRequestAtMillis
       this.receivedResponseAtMillis = response.receivedResponseAtMillis
       this.exchange = response.exchange
+      this.trailersFn = response.trailersFn
     }
 
     actual open fun request(request: Request) = commonRequest(request)
@@ -298,6 +303,8 @@ actual class Response internal constructor(
 
     actual open fun priorResponse(priorResponse: Response?) = commonPriorResponse(priorResponse)
 
+    actual open fun trailers(trailersFn: (() -> Headers)): Builder = commonTrailers(trailersFn)
+
     open fun sentRequestAtMillis(sentRequestAtMillis: Long) = apply {
       this.sentRequestAtMillis = sentRequestAtMillis
     }
@@ -306,8 +313,9 @@ actual class Response internal constructor(
       this.receivedResponseAtMillis = receivedResponseAtMillis
     }
 
-    internal fun initExchange(deferredTrailers: Exchange) {
-      this.exchange = deferredTrailers
+    internal fun initExchange(exchange: Exchange) {
+      this.exchange = exchange
+      this.trailersFn = { exchange.trailers() }
     }
 
     actual open fun build(): Response {
@@ -325,7 +333,8 @@ actual class Response internal constructor(
           priorResponse,
           sentRequestAtMillis,
           receivedResponseAtMillis,
-          exchange
+          exchange,
+          trailersFn
       )
     }
   }
