@@ -67,7 +67,7 @@ class AndroidAsyncDnsTest(val server: MockWebServer) {
 
   @BeforeEach
   fun init() {
-    server.useHttps(localhost.sslSocketFactory(), false)
+    server.useHttps(localhost.sslSocketFactory())
   }
 
   @Test

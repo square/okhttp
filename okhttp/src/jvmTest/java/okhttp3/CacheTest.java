@@ -264,7 +264,7 @@ public final class CacheTest {
   }
 
   @Test public void secureResponseCaching() throws IOException {
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false);
+    server.useHttps(handshakeCertificates.sslSocketFactory());
     server.enqueue(new MockResponse()
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
@@ -362,7 +362,7 @@ public final class CacheTest {
   }
 
   @Test public void secureResponseCachingAndRedirects() throws IOException {
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false);
+    server.useHttps(handshakeCertificates.sslSocketFactory());
     server.enqueue(new MockResponse()
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
@@ -405,7 +405,7 @@ public final class CacheTest {
    * https://github.com/square/okhttp/issues/214
    */
   @Test public void secureResponseCachingAndProtocolRedirects() throws IOException {
-    server2.useHttps(handshakeCertificates.sslSocketFactory(), false);
+    server2.useHttps(handshakeCertificates.sslSocketFactory());
     server2.enqueue(new MockResponse()
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
@@ -1780,7 +1780,7 @@ public final class CacheTest {
   }
 
   @Test public void varyAndHttps() throws Exception {
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false);
+    server.useHttps(handshakeCertificates.sslSocketFactory());
     server.enqueue(new MockResponse()
         .addHeader("Cache-Control: max-age=60")
         .addHeader("Vary: Accept-Language")

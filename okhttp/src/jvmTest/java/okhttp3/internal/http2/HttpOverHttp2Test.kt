@@ -129,7 +129,7 @@ class HttpOverHttp2Test {
     platform.assumeNotBouncyCastle()
     if (protocol === Protocol.HTTP_2) {
       platform.assumeHttp2Support()
-      server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+      server.useHttps(handshakeCertificates.sslSocketFactory())
       client = clientTestRule.newClientBuilder()
         .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
         .sslSocketFactory(
@@ -1839,7 +1839,7 @@ class HttpOverHttp2Test {
   fun concurrentHttp2ConnectionsDeduplicated(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
     assumeTrue(protocol === Protocol.HTTP_2)
-    server.useHttps(handshakeCertificates.sslSocketFactory(), true)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     val queueDispatcher = QueueDispatcher()
     queueDispatcher.enqueueResponse(
       MockResponse()

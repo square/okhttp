@@ -710,7 +710,7 @@ public final class DuplexTest {
             handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
         .build();
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false);
+    server.useHttps(handshakeCertificates.sslSocketFactory());
   }
 
   private class DelayedRequestBody extends RequestBody {

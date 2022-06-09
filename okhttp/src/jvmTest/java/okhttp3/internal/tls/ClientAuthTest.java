@@ -126,7 +126,7 @@ public final class ClientAuthTest {
 
     SSLSocketFactory socketFactory = buildServerSslSocketFactory();
 
-    server.useHttps(socketFactory, false);
+    server.useHttps(socketFactory);
     server.requestClientAuth();
     server.enqueue(new MockResponse().setBody("abc"));
 
@@ -144,7 +144,7 @@ public final class ClientAuthTest {
 
     SSLSocketFactory socketFactory = buildServerSslSocketFactory();
 
-    server.useHttps(socketFactory, false);
+    server.useHttps(socketFactory);
     server.requireClientAuth();
     server.enqueue(new MockResponse().setBody("abc"));
 
@@ -162,7 +162,7 @@ public final class ClientAuthTest {
 
     SSLSocketFactory socketFactory = buildServerSslSocketFactory();
 
-    server.useHttps(socketFactory, false);
+    server.useHttps(socketFactory);
     server.noClientAuth();
     server.enqueue(new MockResponse().setBody("abc"));
 
@@ -179,7 +179,7 @@ public final class ClientAuthTest {
 
     SSLSocketFactory socketFactory = buildServerSslSocketFactory();
 
-    server.useHttps(socketFactory, false);
+    server.useHttps(socketFactory);
     server.requestClientAuth();
     server.enqueue(new MockResponse().setBody("abc"));
 
@@ -200,7 +200,7 @@ public final class ClientAuthTest {
 
     SSLSocketFactory socketFactory = buildServerSslSocketFactory();
 
-    server.useHttps(socketFactory, false);
+    server.useHttps(socketFactory);
     server.requireClientAuth();
 
     Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
@@ -231,7 +231,7 @@ public final class ClientAuthTest {
 
     SSLSocketFactory socketFactory = buildServerSslSocketFactory();
 
-    server.useHttps(socketFactory, false);
+    server.useHttps(socketFactory);
     server.requireClientAuth();
 
     Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
@@ -256,7 +256,7 @@ public final class ClientAuthTest {
 
     SSLSocketFactory socketFactory = buildServerSslSocketFactory();
 
-    server.useHttps(socketFactory, false);
+    server.useHttps(socketFactory);
     server.requireClientAuth();
 
     Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
@@ -298,7 +298,7 @@ public final class ClientAuthTest {
 
     SSLSocketFactory socketFactory = buildServerSslSocketFactory();
 
-    server.useHttps(socketFactory, false);
+    server.useHttps(socketFactory);
     server.requireClientAuth();
 
     Call call = client.newCall(new Request.Builder().url(server.url("/")).build());

@@ -322,7 +322,7 @@ class ConnectionReuseTest {
       .hostnameVerifier(RecordingHostnameVerifier())
       .protocols(protocols.toList())
       .build()
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     server.protocols = client.protocols
   }
 

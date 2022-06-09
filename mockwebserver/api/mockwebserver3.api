@@ -111,7 +111,7 @@ public final class mockwebserver3/MockWebServer : java/io/Closeable {
 	public final fun toProxyAddress ()Ljava/net/Proxy;
 	public fun toString ()Ljava/lang/String;
 	public final fun url (Ljava/lang/String;)Lokhttp3/HttpUrl;
-	public final fun useHttps (Ljavax/net/ssl/SSLSocketFactory;Z)V
+	public final fun useHttps (Ljavax/net/ssl/SSLSocketFactory;)V
 }
 
 public final class mockwebserver3/MockWebServer$Companion {

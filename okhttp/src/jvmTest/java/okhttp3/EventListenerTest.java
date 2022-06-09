@@ -314,7 +314,7 @@ public final class EventListenerTest {
   }
 
   @Test public void secondCallEventSequence() throws IOException {
-    enableTlsWithTunnel(false);
+    enableTlsWithTunnel();
     server.setProtocols(asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
     server.enqueue(new MockResponse());
     server.enqueue(new MockResponse());
@@ -396,7 +396,7 @@ public final class EventListenerTest {
   }
 
   @Test public void successfulEmptyH2CallEventSequence() throws IOException {
-    enableTlsWithTunnel(false);
+    enableTlsWithTunnel();
     server.setProtocols(asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
     server.enqueue(new MockResponse());
 
@@ -407,7 +407,7 @@ public final class EventListenerTest {
   }
 
   @Test public void successfulEmptyHttpsCallEventSequence() throws IOException {
-    enableTlsWithTunnel(false);
+    enableTlsWithTunnel();
     server.setProtocols(asList(Protocol.HTTP_1_1));
     server.enqueue(new MockResponse()
         .setBody("abc"));
@@ -419,7 +419,7 @@ public final class EventListenerTest {
   }
 
   @Test public void successfulChunkedHttpsCallEventSequence() throws IOException {
-    enableTlsWithTunnel(false);
+    enableTlsWithTunnel();
     server.setProtocols(asList(Protocol.HTTP_1_1));
     server.enqueue(
         new MockResponse().setBodyDelay(100, TimeUnit.MILLISECONDS).setChunkedBody("Hello!", 2));
@@ -431,7 +431,7 @@ public final class EventListenerTest {
   }
 
   @Test public void successfulChunkedH2CallEventSequence() throws IOException {
-    enableTlsWithTunnel(false);
+    enableTlsWithTunnel();
     server.setProtocols(asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
     server.enqueue(
         new MockResponse().setBodyDelay(100, TimeUnit.MILLISECONDS).setChunkedBody("Hello!", 2));
@@ -582,7 +582,7 @@ public final class EventListenerTest {
   }
 
   @Test public void failedConnect() throws UnknownHostException {
-    enableTlsWithTunnel(false);
+    enableTlsWithTunnel();
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
 
@@ -611,7 +611,7 @@ public final class EventListenerTest {
   }
 
   @Test public void multipleConnectsForSingleCall() throws IOException {
-    enableTlsWithTunnel(false);
+    enableTlsWithTunnel();
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
     server.enqueue(new MockResponse());
@@ -694,7 +694,7 @@ public final class EventListenerTest {
   }
 
   @Test public void authenticatingTunnelProxyConnect() throws IOException {
-    enableTlsWithTunnel(true);
+    enableTlsWithTunnel();
     server.enqueue(new MockResponse()
         .inTunnel()
         .setResponseCode(407)
@@ -726,7 +726,7 @@ public final class EventListenerTest {
   }
 
   @Test public void successfulSecureConnect() throws IOException {
-    enableTlsWithTunnel(false);
+    enableTlsWithTunnel();
     server.enqueue(new MockResponse());
 
     Call call = client.newCall(new Request.Builder()
@@ -745,7 +745,7 @@ public final class EventListenerTest {
   }
 
   @Test public void failedSecureConnect() {
-    enableTlsWithTunnel(false);
+    enableTlsWithTunnel();
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
 
@@ -767,7 +767,7 @@ public final class EventListenerTest {
   }
 
   @Test public void secureConnectWithTunnel() throws IOException {
-    enableTlsWithTunnel(true);
+    enableTlsWithTunnel();
     server.enqueue(new MockResponse()
         .inTunnel());
     server.enqueue(new MockResponse());
@@ -792,7 +792,7 @@ public final class EventListenerTest {
   }
 
   @Test public void multipleSecureConnectsForSingleCall() throws IOException {
-    enableTlsWithTunnel(false);
+    enableTlsWithTunnel();
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
     server.enqueue(new MockResponse());
@@ -816,7 +816,7 @@ public final class EventListenerTest {
   }
 
   @Test public void noSecureConnectsOnPooledConnection() throws IOException {
-    enableTlsWithTunnel(false);
+    enableTlsWithTunnel();
     server.enqueue(new MockResponse());
     server.enqueue(new MockResponse());
 
@@ -926,7 +926,7 @@ public final class EventListenerTest {
   }
 
   @Test public void responseBodyFailHttp1OverHttps() throws IOException {
-    enableTlsWithTunnel(false);
+    enableTlsWithTunnel();
     server.setProtocols(asList(Protocol.HTTP_1_1));
     responseBodyFail(Protocol.HTTP_1_1);
   }
@@ -934,7 +934,7 @@ public final class EventListenerTest {
   @Test public void responseBodyFailHttp2OverHttps() throws IOException {
     platform.assumeHttp2Support();
 
-    enableTlsWithTunnel(false);
+    enableTlsWithTunnel();
     server.setProtocols(asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
     responseBodyFail(Protocol.HTTP_2);
   }
@@ -1026,7 +1026,7 @@ public final class EventListenerTest {
   }
 
   @Test public void requestBodyFailHttp1OverHttps() {
-    enableTlsWithTunnel(false);
+    enableTlsWithTunnel();
     server.setProtocols(asList(Protocol.HTTP_1_1));
 
     requestBodyFail(Protocol.HTTP_1_1);
@@ -1035,7 +1035,7 @@ public final class EventListenerTest {
   @Test public void requestBodyFailHttp2OverHttps() {
     platform.assumeHttp2Support();
 
-    enableTlsWithTunnel(false);
+    enableTlsWithTunnel();
     server.setProtocols(asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
 
     requestBodyFail(Protocol.HTTP_2);
@@ -1147,7 +1147,7 @@ public final class EventListenerTest {
   }
 
   @Test public void requestBodySuccessHttp1OverHttps() throws IOException {
-    enableTlsWithTunnel(false);
+    enableTlsWithTunnel();
     server.setProtocols(asList(Protocol.HTTP_1_1));
     requestBodySuccess(RequestBody.create("Hello", MediaType.get("text/plain")), equalTo(5L),
         equalTo(19L));
@@ -1156,7 +1156,7 @@ public final class EventListenerTest {
   @Test public void requestBodySuccessHttp2OverHttps() throws IOException {
     platform.assumeHttp2Support();
 
-    enableTlsWithTunnel(false);
+    enableTlsWithTunnel();
     server.setProtocols(asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
     requestBodySuccess(RequestBody.create("Hello", MediaType.get("text/plain")), equalTo(5L),
         equalTo(19L));
@@ -1227,7 +1227,7 @@ public final class EventListenerTest {
   }
 
   @Test public void timeToFirstByteHttp1OverHttps() throws IOException {
-    enableTlsWithTunnel(false);
+    enableTlsWithTunnel();
     server.setProtocols(asList(Protocol.HTTP_1_1));
 
     timeToFirstByte();
@@ -1235,7 +1235,7 @@ public final class EventListenerTest {
 
   @Test public void timeToFirstByteHttp2OverHttps() throws IOException {
     platform.assumeHttp2Support();
-    enableTlsWithTunnel(false);
+    enableTlsWithTunnel();
     server.setProtocols(asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
 
     timeToFirstByte();
@@ -1333,13 +1333,13 @@ public final class EventListenerTest {
     listener.takeEvent(CallEnd.class, 0L);
   }
 
-  private void enableTlsWithTunnel(boolean tunnelProxy) {
+  private void enableTlsWithTunnel() {
     client = client.newBuilder()
         .sslSocketFactory(
             handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
         .build();
-    server.useHttps(handshakeCertificates.sslSocketFactory(), tunnelProxy);
+    server.useHttps(handshakeCertificates.sslSocketFactory());
   }
 
   @Test public void redirectUsingSameConnectionEventSequence() throws IOException {

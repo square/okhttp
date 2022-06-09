@@ -521,7 +521,7 @@ public final class WebSocketHttpTest {
   }
 
   @Test public void wssScheme() {
-    webServer.useHttps(handshakeCertificates.sslSocketFactory(), false);
+    webServer.useHttps(handshakeCertificates.sslSocketFactory());
     client = client.newBuilder()
         .sslSocketFactory(
             handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
@@ -532,7 +532,7 @@ public final class WebSocketHttpTest {
   }
 
   @Test public void httpsScheme() {
-    webServer.useHttps(handshakeCertificates.sslSocketFactory(), false);
+    webServer.useHttps(handshakeCertificates.sslSocketFactory());
     client = client.newBuilder()
         .sslSocketFactory(
             handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())

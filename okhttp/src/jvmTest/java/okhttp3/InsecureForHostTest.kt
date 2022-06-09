@@ -35,7 +35,7 @@ class InsecureForHostTest(
 
   @Test fun `untrusted host in insecureHosts connects successfully`() {
     val serverCertificates = localhost()
-    server.useHttps(serverCertificates.sslSocketFactory(), false)
+    server.useHttps(serverCertificates.sslSocketFactory())
     server.enqueue(MockResponse())
 
     val clientCertificates = HandshakeCertificates.Builder()
@@ -65,7 +65,7 @@ class InsecureForHostTest(
     val serverCertificates = HandshakeCertificates.Builder()
         .heldCertificate(heldCertificate)
         .build()
-    server.useHttps(serverCertificates.sslSocketFactory(), false)
+    server.useHttps(serverCertificates.sslSocketFactory())
     server.enqueue(MockResponse())
 
     val clientCertificates = HandshakeCertificates.Builder()
@@ -87,7 +87,7 @@ class InsecureForHostTest(
 
   @Test fun `untrusted host not in insecureHosts fails with SSLException`() {
     val serverCertificates = localhost()
-    server.useHttps(serverCertificates.sslSocketFactory(), false)
+    server.useHttps(serverCertificates.sslSocketFactory())
     server.enqueue(MockResponse())
 
     val clientCertificates = HandshakeCertificates.Builder()
