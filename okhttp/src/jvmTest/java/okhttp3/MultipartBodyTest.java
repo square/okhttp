@@ -37,7 +37,6 @@ public final class MultipartBodyTest {
   @Test public void singlePart() throws Exception {
     String expected = ""
         + "--123\r\n"
-        + "Content-Length: 13\r\n"
         + "\r\n"
         + "Hello, World!\r\n"
         + "--123--\r\n";
@@ -50,7 +49,7 @@ public final class MultipartBodyTest {
     assertThat(body.type()).isEqualTo(MultipartBody.MIXED);
     assertThat(body.contentType().toString()).isEqualTo("multipart/mixed; boundary=123");
     assertThat(body.parts().size()).isEqualTo(1);
-    assertThat(body.contentLength()).isEqualTo(53);
+    assertThat(body.contentLength()).isEqualTo(33L);
 
     Buffer buffer = new Buffer();
     body.writeTo(buffer);
@@ -61,15 +60,12 @@ public final class MultipartBodyTest {
   @Test public void threeParts() throws Exception {
     String expected = ""
         + "--123\r\n"
-        + "Content-Length: 5\r\n"
         + "\r\n"
         + "Quick\r\n"
         + "--123\r\n"
-        + "Content-Length: 5\r\n"
         + "\r\n"
         + "Brown\r\n"
         + "--123\r\n"
-        + "Content-Length: 3\r\n"
         + "\r\n"
         + "Fox\r\n"
         + "--123--\r\n";
@@ -84,7 +80,7 @@ public final class MultipartBodyTest {
     assertThat(body.type()).isEqualTo(MultipartBody.MIXED);
     assertThat(body.contentType().toString()).isEqualTo("multipart/mixed; boundary=123");
     assertThat(body.parts().size()).isEqualTo(3);
-    assertThat(body.contentLength()).isEqualTo(112);
+    assertThat(body.contentLength()).isEqualTo(55L);
 
     Buffer buffer = new Buffer();
     body.writeTo(buffer);
@@ -96,25 +92,21 @@ public final class MultipartBodyTest {
     String expected = ""
         + "--AaB03x\r\n"
         + "Content-Disposition: form-data; name=\"submit-name\"\r\n"
-        + "Content-Length: 5\r\n"
         + "\r\n"
         + "Larry\r\n"
         + "--AaB03x\r\n"
         + "Content-Disposition: form-data; name=\"files\"\r\n"
         + "Content-Type: multipart/mixed; boundary=BbC04y\r\n"
-        + "Content-Length: 337\r\n"
         + "\r\n"
         + "--BbC04y\r\n"
         + "Content-Disposition: file; filename=\"file1.txt\"\r\n"
         + "Content-Type: text/plain; charset=utf-8\r\n"
-        + "Content-Length: 29\r\n"
         + "\r\n"
         + "... contents of file1.txt ...\r\n"
         + "--BbC04y\r\n"
         + "Content-Disposition: file; filename=\"file2.gif\"\r\n"
         + "Content-Transfer-Encoding: binary\r\n"
         + "Content-Type: image/gif\r\n"
-        + "Content-Length: 29\r\n"
         + "\r\n"
         + "... contents of file2.gif ...\r\n"
         + "--BbC04y--\r\n"
@@ -145,7 +137,7 @@ public final class MultipartBodyTest {
     assertThat(body.contentType().toString()).isEqualTo(
         "multipart/form-data; boundary=AaB03x");
     assertThat(body.parts().size()).isEqualTo(2);
-    assertThat(body.contentLength()).isEqualTo(568);
+    assertThat(body.contentLength()).isEqualTo(488L);
 
     Buffer buffer = new Buffer();
     body.writeTo(buffer);
@@ -158,22 +150,18 @@ public final class MultipartBodyTest {
         + "--AaB03x\r\n"
         + "Content-Disposition: form-data; name=\"field with spaces\"; filename=\"filename with spaces.txt\"\r\n"
         + "Content-Type: text/plain; charset=utf-8\r\n"
-        + "Content-Length: 4\r\n"
         + "\r\n"
         + "okay\r\n"
         + "--AaB03x\r\n"
         + "Content-Disposition: form-data; name=\"field with %22\"\r\n"
-        + "Content-Length: 1\r\n"
         + "\r\n"
         + "\"\r\n"
         + "--AaB03x\r\n"
         + "Content-Disposition: form-data; name=\"field with %22\"\r\n"
-        + "Content-Length: 3\r\n"
         + "\r\n"
         + "%22\r\n"
         + "--AaB03x\r\n"
         + "Content-Disposition: form-data; name=\"field with \u007e\"\r\n"
-        + "Content-Length: 5\r\n"
         + "\r\n"
         + "Alpha\r\n"
         + "--AaB03x--\r\n";
@@ -211,14 +199,12 @@ public final class MultipartBodyTest {
 
     String expected = ""
         + "--123\r\n"
-        + "Content-Length: 5\r\n"
         + "\r\n"
         + "Quick\r\n"
         + "--123\r\n"
         + "\r\n"
         + "Brown\r\n"
         + "--123\r\n"
-        + "Content-Length: 3\r\n"
         + "\r\n"
         + "Fox\r\n"
         + "--123--\r\n";
@@ -278,7 +264,6 @@ public final class MultipartBodyTest {
         + "--AaB03x\r\n"
         + "Content-Disposition: form-data; name=\"attachment\"; filename=\"resumé.pdf\"\r\n"
         + "Content-Type: application/pdf; charset=utf-8\r\n"
-        + "Content-Length: 17\r\n"
         + "\r\n"
         + "Jesse’s Resumé\r\n"
         + "--AaB03x--\r\n";
