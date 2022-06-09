@@ -552,7 +552,7 @@ public final class MockWebServerTest {
 
   @Test public void https() throws Exception {
     HandshakeCertificates handshakeCertificates = localhost();
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false);
+    server.useHttps(handshakeCertificates.sslSocketFactory());
     server.enqueue(new MockResponse().setBody("abc"));
 
     HttpUrl url = server.url("/");
@@ -594,7 +594,7 @@ public final class MockWebServerTest {
         .heldCertificate(serverCertificate)
         .build();
 
-    server.useHttps(serverHandshakeCertificates.sslSocketFactory(), false);
+    server.useHttps(serverHandshakeCertificates.sslSocketFactory());
     server.enqueue(new MockResponse().setBody("abc"));
     server.requestClientAuth();
 

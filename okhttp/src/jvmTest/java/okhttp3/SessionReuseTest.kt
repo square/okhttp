@@ -154,6 +154,6 @@ class SessionReuseTest(
         handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
       )
       .build()
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
   }
 }

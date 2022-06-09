@@ -64,12 +64,16 @@ class Route(
   fun socketAddress(): InetSocketAddress = socketAddress
 
   /**
-   * Returns true if this route tunnels HTTPS through an HTTP proxy.
+   * Returns true if this route tunnels HTTPS or HTTP/2 through an HTTP proxy.
    * See [RFC 2817, Section 5.2][rfc_2817].
    *
    * [rfc_2817]: http://www.ietf.org/rfc/rfc2817.txt
    */
-  fun requiresTunnel(): Boolean = address.sslSocketFactory != null && proxy.type() == Proxy.Type.HTTP
+  fun requiresTunnel(): Boolean {
+    if (proxy.type() != Proxy.Type.HTTP) return false
+    return (address.sslSocketFactory != null) ||
+      (Protocol.H2_PRIOR_KNOWLEDGE in address.protocols)
+  }
 
   override fun equals(other: Any?): Boolean {
     return other is Route &&

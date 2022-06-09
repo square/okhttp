@@ -69,7 +69,7 @@ class CallHandshakeTest {
         handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager)
       .hostnameVerifier(RecordingHostnameVerifier())
       .build()
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
 
     defaultEnabledCipherSuites =
       handshakeCertificates.sslSocketFactory().defaultCipherSuites.toList()

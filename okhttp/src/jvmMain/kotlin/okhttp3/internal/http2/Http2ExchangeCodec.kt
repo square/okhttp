@@ -42,6 +42,7 @@ import okhttp3.internal.http2.Header.Companion.TARGET_PATH_UTF8
 import okhttp3.internal.http2.Header.Companion.TARGET_SCHEME
 import okhttp3.internal.http2.Header.Companion.TARGET_SCHEME_UTF8
 import okhttp3.internal.immutableListOf
+import okhttp3.internal.lowercase
 import okio.Sink
 import okio.Source
 
@@ -93,7 +94,7 @@ class Http2ExchangeCodec(
 
   override fun readResponseHeaders(expectContinue: Boolean): Response.Builder? {
     val stream = stream ?: throw IOException("stream wasn't created")
-    val headers = stream.takeHeaders()
+    val headers = stream.takeHeaders(callerIsIdle = expectContinue)
     val responseBuilder = readHttp2HeadersList(headers, protocol)
     return if (expectContinue && responseBuilder.code == HTTP_CONTINUE) {
       null
@@ -198,6 +199,7 @@ class Http2ExchangeCodec(
           .code(statusLine.code)
           .message(statusLine.message)
           .headers(headersBuilder.build())
+          .trailers { error("trailers not available") }
     }
   }
 }

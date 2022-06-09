@@ -135,7 +135,7 @@ class SocketChannelTest(
               }
             }
           }
-          server.useHttps(serverSslSocketFactory, false)
+          server.useHttps(serverSslSocketFactory)
         } else if (socketMode == Channel) {
           socketFactory(ChannelSocketFactory())
         }

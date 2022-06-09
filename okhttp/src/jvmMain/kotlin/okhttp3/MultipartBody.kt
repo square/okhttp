@@ -18,6 +18,7 @@ package okhttp3
 import java.io.IOException
 import java.util.UUID
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.internal.code
 import okhttp3.internal.toImmutableList
 import okio.Buffer
 import okio.BufferedSink
@@ -38,11 +39,13 @@ class MultipartBody internal constructor(
   private val contentType: MediaType = "$type; boundary=$boundary".toMediaType()
   private var contentLength = -1L
 
-  @get:JvmName("boundary") val boundary: String
+  @get:JvmName("boundary")
+  val boundary: String
     get() = boundaryByteString.utf8()
 
   /** The number of parts in this multipart body. */
-  @get:JvmName("size") val size: Int
+  @get:JvmName("size")
+  val size: Int
     get() = parts.size
 
   fun part(index: Int): Part = parts[index]
@@ -52,30 +55,34 @@ class MultipartBody internal constructor(
 
   @JvmName("-deprecated_type")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "type"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "type"),
+    level = DeprecationLevel.ERROR
+  )
   fun type(): MediaType = type
 
   @JvmName("-deprecated_boundary")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "boundary"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "boundary"),
+    level = DeprecationLevel.ERROR
+  )
   fun boundary(): String = boundary
 
   @JvmName("-deprecated_size")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "size"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "size"),
+    level = DeprecationLevel.ERROR
+  )
   fun size(): Int = size
 
   @JvmName("-deprecated_parts")
   @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "parts"),
-      level = DeprecationLevel.ERROR)
+    message = "moved to val",
+    replaceWith = ReplaceWith(expression = "parts"),
+    level = DeprecationLevel.ERROR
+  )
   fun parts(): List<Part> = parts
 
   @Throws(IOException::class)
@@ -125,26 +132,22 @@ class MultipartBody internal constructor(
       if (headers != null) {
         for (h in 0 until headers.size) {
           sink.writeUtf8(headers.name(h))
-              .write(COLONSPACE)
-              .writeUtf8(headers.value(h))
-              .write(CRLF)
+            .write(COLONSPACE)
+            .writeUtf8(headers.value(h))
+            .write(CRLF)
         }
       }
 
       val contentType = body.contentType()
       if (contentType != null) {
         sink.writeUtf8("Content-Type: ")
-            .writeUtf8(contentType.toString())
-            .write(CRLF)
+          .writeUtf8(contentType.toString())
+          .write(CRLF)
       }
 
+      // We can't measure the body's size without the sizes of its components.
       val contentLength = body.contentLength()
-      if (contentLength != -1L) {
-        sink.writeUtf8("Content-Length: ")
-            .writeDecimalLong(contentLength)
-            .write(CRLF)
-      } else if (countBytes) {
-        // We can't measure the body's size without the sizes of its components.
+      if (contentLength == -1L && countBytes) {
         byteCountBuffer!!.clear()
         return -1L
       }
@@ -180,16 +183,18 @@ class MultipartBody internal constructor(
 
     @JvmName("-deprecated_headers")
     @Deprecated(
-        message = "moved to val",
-        replaceWith = ReplaceWith(expression = "headers"),
-        level = DeprecationLevel.ERROR)
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "headers"),
+      level = DeprecationLevel.ERROR
+    )
     fun headers(): Headers? = headers
 
     @JvmName("-deprecated_body")
     @Deprecated(
-        message = "moved to val",
-        replaceWith = ReplaceWith(expression = "body"),
-        level = DeprecationLevel.ERROR)
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "body"),
+      level = DeprecationLevel.ERROR
+    )
     fun body(): RequestBody = body
 
     companion object {
@@ -205,7 +210,7 @@ class MultipartBody internal constructor(
 
       @JvmStatic
       fun createFormData(name: String, value: String): Part =
-          createFormData(name, null, value.toRequestBody())
+        createFormData(name, null, value.toRequestBody())
 
       @JvmStatic
       fun createFormData(name: String, filename: String?, body: RequestBody): Part {
@@ -220,8 +225,8 @@ class MultipartBody internal constructor(
         }
 
         val headers = Headers.Builder()
-            .addUnsafeNonAscii("Content-Disposition", disposition)
-            .build()
+          .addUnsafeNonAscii("Content-Disposition", disposition)
+          .build()
 
         return create(headers, body)
       }

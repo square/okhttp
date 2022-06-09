@@ -6,9 +6,9 @@ Here’s some libraries that work nicely with OkHttp.
  * [Chucker](https://github.com/ChuckerTeam/chucker): An in-app HTTP inspector for Android OkHttp clients.
  * [Coil](https://github.com/coil-kt/coil): An image loading library for Android backed by Kotlin Coroutines.
  * [Communicator](https://github.com/Taig/Communicator): An OkHttp wrapper for Scala built with Android in mind.
- * [Cronet Transport for OkHttp](https://github.com/google/cronet-transport-for-okhttp): A HTTP3 ready transport layer for OkHttp on Android, based on Chromium network stack.  
+ * [Cronet Transport for OkHttp](https://github.com/google/cronet-transport-for-okhttp): A HTTP3 ready transport layer for OkHttp on Android, based on Chromium network stack.
  * [CWAC-NetSecurity](https://github.com/commonsguy/cwac-netsecurity): Simplifying Secure Internet Access.
- * [Failsafe](https://failsafe.dev/okhttp/): Fault tolerance and resilience patterns. 
+ * [Failsafe](https://failsafe.dev/okhttp/): Fault tolerance and resilience patterns.
  * [Flipper](https://fbflipper.com/): A desktop debugging platform for mobile developers.
  * [Fresco](https://github.com/facebook/fresco): An Android library for managing images and the memory they use.
  * [Glide](https://github.com/bumptech/glide): An image loading and caching library for Android focused on smooth scrolling.
@@ -25,6 +25,7 @@ Here’s some libraries that work nicely with OkHttp.
  * [okhttp-signpost](https://github.com/pakerfeldt/okhttp-signpost): OAuth signing with signpost and OkHttp.
  * [okhttp-staleiferror-interceptor](https://github.com/PeelTechnologies/okhttp-staleiferror-interceptor/): serve stale responses when the server isn’t reachable.
  * [okhttp-stats](https://github.com/flipkart-incubator/okhttp-stats): Get stats like average network speed.
+ * [okhttp-system-keystore](https://github.com/charleskorn/okhttp-system-keystore): Use trusted certificates from the operating system keystore (Keychain on macOS, Certificate Store on Windows).
  * ⬜️ [Okio](https://github.com/square/okio/): A modern I/O API for Java.
  * [OkLog](https://github.com/simonpercic/OkLog): Response logging interceptor for OkHttp. Logs a URL link with URL-encoded response for every OkHttp call.
  * [Okurl](https://github.com/yschimke/okurl/wiki) A curl-like client for social networks and other APIs.

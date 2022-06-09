@@ -20,11 +20,12 @@ import java.net.HttpURLConnection;
 import java.net.ProtocolException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import mockwebserver3.MockResponse;
 import mockwebserver3.MockWebServer;
-import mockwebserver3.SocketPolicy;
 import mockwebserver3.internal.duplex.MockDuplexResponseBody;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.duplex.AsyncRequestBody;
@@ -35,6 +36,7 @@ import okhttp3.tls.HandshakeCertificates;
 import okio.BufferedSink;
 import okio.BufferedSource;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
@@ -61,11 +63,17 @@ public final class DuplexTest {
       .eventListenerFactory(clientTestRule.wrap(listener))
       .build();
 
+  private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
+
   @BeforeEach public void setUp(MockWebServer server) {
     this.server = server;
     platform.assumeNotOpenJSSE();
     platform.assumeHttp2Support();
     platform.assumeNotBouncyCastle();
+  }
+
+  @AfterEach public void tearDown() {
+    executorService.shutdown();
   }
 
   @Test public void http1DoesntSupportDuplex() throws IOException {
@@ -573,6 +581,110 @@ public final class DuplexTest {
     assertThat(log.take()).contains("StreamResetException: stream was reset: NO_ERROR");
   }
 
+  /**
+   * We delay sending the last byte of the request body 1500 ms. The 1000 ms read timeout should
+   * only elapse 1000 ms after the request body is sent.
+   */
+  @Test public void headersReadTimeoutDoesNotStartUntilLastRequestBodyByteFire() throws Exception {
+    enableProtocol(Protocol.HTTP_2);
+
+    server.enqueue(new MockResponse()
+      .setHeadersDelay(1500, TimeUnit.MILLISECONDS));
+
+    Request request = new Request.Builder()
+      .url(server.url("/"))
+      .post(new DelayedRequestBody(RequestBody.create("hello", null), 1500, TimeUnit.MILLISECONDS))
+      .build();
+
+    client = client.newBuilder()
+      .readTimeout(1000, TimeUnit.MILLISECONDS)
+      .build();
+
+    Call call = client.newCall(request);
+    try {
+      call.execute();
+      fail();
+    } catch (IOException e) {
+      assertThat(e.getMessage()).isEqualTo("timeout");
+    }
+  }
+
+  /** Same as the previous test, but the server stalls sending the response body. */
+  @Test public void bodyReadTimeoutDoesNotStartUntilLastRequestBodyByteFire() throws Exception {
+    enableProtocol(Protocol.HTTP_2);
+
+    server.enqueue(new MockResponse()
+      .setBodyDelay(1500, TimeUnit.MILLISECONDS)
+      .setBody("this should never be received"));
+
+    Request request = new Request.Builder()
+      .url(server.url("/"))
+      .post(new DelayedRequestBody(RequestBody.create("hello", null), 1500, TimeUnit.MILLISECONDS))
+      .build();
+
+    client = client.newBuilder()
+      .readTimeout(1000, TimeUnit.MILLISECONDS)
+      .build();
+
+    Call call = client.newCall(request);
+    Response response = call.execute();
+    try {
+      response.body().string();
+      fail();
+    } catch (IOException e) {
+      assertThat(e.getMessage()).isEqualTo("timeout");
+    }
+  }
+
+  /**
+   * We delay sending the last byte of the request body 1500 ms. The 1000 ms read timeout shouldn't
+   * elapse because it shouldn't start until the request body is sent.
+   */
+  @Test public void headersReadTimeoutDoesNotStartUntilLastRequestBodyByteNoFire() throws Exception {
+    enableProtocol(Protocol.HTTP_2);
+
+    server.enqueue(new MockResponse()
+      .setHeadersDelay(500, TimeUnit.MILLISECONDS));
+
+    Request request = new Request.Builder()
+      .url(server.url("/"))
+      .post(new DelayedRequestBody(RequestBody.create("hello", null), 1500, TimeUnit.MILLISECONDS))
+      .build();
+
+    client = client.newBuilder()
+      .readTimeout(1000, TimeUnit.MILLISECONDS)
+      .build();
+
+    Call call = client.newCall(request);
+    Response response = call.execute();
+    assertThat(response.isSuccessful()).isTrue();
+  }
+
+  /**
+   * We delay sending the last byte of the request body 1500 ms. The 1000 ms read timeout shouldn't
+   * elapse because it shouldn't start until the request body is sent.
+   */
+  @Test public void bodyReadTimeoutDoesNotStartUntilLastRequestBodyByteNoFire() throws Exception {
+    enableProtocol(Protocol.HTTP_2);
+
+    server.enqueue(new MockResponse()
+      .setBodyDelay(500, TimeUnit.MILLISECONDS)
+      .setBody("success"));
+
+    Request request = new Request.Builder()
+      .url(server.url("/"))
+      .post(new DelayedRequestBody(RequestBody.create("hello", null), 1500, TimeUnit.MILLISECONDS))
+      .build();
+
+    client = client.newBuilder()
+      .readTimeout(1000, TimeUnit.MILLISECONDS)
+      .build();
+
+    Call call = client.newCall(request);
+    Response response = call.execute();
+    assertThat(response.body().string()).isEqualTo("success");
+  }
+
   private MockDuplexResponseBody enqueueResponseWithBody(
       MockResponse response, MockDuplexResponseBody body) {
     MwsDuplexAccess.instance.setBody(response, body);
@@ -598,6 +710,35 @@ public final class DuplexTest {
             handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
         .build();
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false);
+    server.useHttps(handshakeCertificates.sslSocketFactory());
+  }
+
+  private class DelayedRequestBody extends RequestBody {
+    private final RequestBody delegate;
+    private final long delayMillis;
+
+    public DelayedRequestBody(RequestBody delegate, long delay, TimeUnit timeUnit) {
+      this.delegate = delegate;
+      this.delayMillis = timeUnit.toMillis(delay);
+    }
+
+    @Override public MediaType contentType() {
+      return delegate.contentType();
+    }
+
+    @Override public boolean isDuplex() {
+      return true;
+    }
+
+    @Override public void writeTo(BufferedSink sink) throws IOException {
+      executorService.schedule(() -> {
+        try {
+          delegate.writeTo(sink);
+          sink.close();
+        } catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }, delayMillis, TimeUnit.MILLISECONDS);
+    }
   }
 }

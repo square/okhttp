@@ -63,8 +63,10 @@ import okhttp3.TestUtil.assertSuppressed
 import okhttp3.internal.RecordingAuthenticator
 import okhttp3.internal.RecordingOkAuthenticator
 import okhttp3.internal.addHeaderLenient
+import okhttp3.internal.code
 import okhttp3.internal.http.HTTP_PERM_REDIRECT
 import okhttp3.internal.http.HTTP_TEMP_REDIRECT
+import okhttp3.internal.lowercase
 import okhttp3.internal.platform.Platform.Companion.get
 import okhttp3.internal.userAgent
 import okhttp3.testing.Flaky
@@ -469,7 +471,7 @@ class URLConnectionTest {
 
   @Test
   fun connectViaHttps() {
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
       MockResponse()
         .setBody("this response comes via HTTPS")
@@ -497,7 +499,7 @@ class URLConnectionTest {
   }
 
   private fun connectViaHttpsReusingConnections(rebuildClient: Boolean) {
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
       MockResponse()
         .setBody("this response comes via HTTPS")
@@ -538,7 +540,7 @@ class URLConnectionTest {
 
   @Test
   fun connectViaHttpsReusingConnectionsDifferentFactories() {
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
       MockResponse()
         .setBody("this response comes via HTTPS")
@@ -581,7 +583,7 @@ class URLConnectionTest {
   // TODO(jwilson): tests below this marker need to be migrated to OkHttp's request/response API.
   @Test
   fun connectViaHttpsWithSSLFallback() {
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
       MockResponse()
         .setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE)
@@ -610,7 +612,7 @@ class URLConnectionTest {
 
   @Test
   fun connectViaHttpsWithSSLFallbackFailuresRecorded() {
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
       MockResponse()
         .setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE)
@@ -645,7 +647,7 @@ class URLConnectionTest {
    */
   @Test
   fun sslFallbackNotUsedWhenRecycledConnectionFails() {
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
       MockResponse()
         .setBody("abc")
@@ -685,7 +687,7 @@ class URLConnectionTest {
   @Test
   fun connectViaHttpsToUntrustedServer() {
     // Flaky https://github.com/square/okhttp/issues/5222
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(MockResponse()) // unused
     try {
       getResponse(newRequest("/foo"))
@@ -782,7 +784,7 @@ class URLConnectionTest {
       ): Socket? = null
     }
     if (useHttps) {
-      server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+      server.useHttps(handshakeCertificates.sslSocketFactory())
       client = client.newBuilder()
         .sslSocketFactory(
           handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
@@ -864,7 +866,7 @@ class URLConnectionTest {
   }
 
   private fun testConnectViaDirectProxyToHttps(proxyConfig: ProxyConfig) {
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
       MockResponse()
         .setBody("this response comes via HTTPS")
@@ -907,11 +909,10 @@ class URLConnectionTest {
    */
   private fun testConnectViaHttpProxyToHttps(proxyConfig: ProxyConfig) {
     val hostnameVerifier = RecordingHostnameVerifier()
-    server.useHttps(handshakeCertificates.sslSocketFactory(), true)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
       MockResponse()
-        .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
-        .clearHeaders()
+        .inTunnel()
     )
     server.enqueue(
       MockResponse()
@@ -943,12 +944,13 @@ class URLConnectionTest {
   @Test
   fun connectViaHttpProxyToHttpsUsingBadProxyAndHttpResponseCache() {
     initResponseCache()
-    server.useHttps(handshakeCertificates.sslSocketFactory(), true)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     // The inclusion of a body in the response to a CONNECT is key to reproducing b/6754912.
-    val badProxyResponse = MockResponse()
-      .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
-      .setBody("bogus proxy connect response content")
-    server.enqueue(badProxyResponse)
+    server.enqueue(
+      MockResponse()
+        .inTunnel()
+        .setBody("bogus proxy connect response content")
+    )
     server.enqueue(
       MockResponse()
         .setBody("response")
@@ -988,11 +990,10 @@ class URLConnectionTest {
   @Test
   fun proxyConnectIncludesProxyHeadersOnly() {
     val hostnameVerifier = RecordingHostnameVerifier()
-    server.useHttps(handshakeCertificates.sslSocketFactory(), true)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
       MockResponse()
-        .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
-        .clearHeaders()
+        .inTunnel()
     )
     server.enqueue(
       MockResponse()
@@ -1028,16 +1029,16 @@ class URLConnectionTest {
   @Test
   fun proxyAuthenticateOnConnect() {
     java.net.Authenticator.setDefault(RecordingAuthenticator())
-    server.useHttps(handshakeCertificates.sslSocketFactory(), true)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
       MockResponse()
+        .inTunnel()
         .setResponseCode(407)
         .addHeader("Proxy-Authenticate: Basic realm=\"localhost\"")
     )
     server.enqueue(
       MockResponse()
-        .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
-        .clearHeaders()
+        .inTunnel()
     )
     server.enqueue(
       MockResponse()
@@ -1073,11 +1074,10 @@ class URLConnectionTest {
   // http://code.google.com/p/android/issues/detail?id=37221
   @Test
   fun proxyWithConnectionClose() {
-    server.useHttps(handshakeCertificates.sslSocketFactory(), true)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
       MockResponse()
-        .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
-        .clearHeaders()
+        .inTunnel()
     )
     server.enqueue(
       MockResponse()
@@ -1103,11 +1103,10 @@ class URLConnectionTest {
   fun proxyWithConnectionReuse() {
     val socketFactory = handshakeCertificates.sslSocketFactory()
     val hostnameVerifier = RecordingHostnameVerifier()
-    server.useHttps(socketFactory, true)
+    server.useHttps(socketFactory)
     server.enqueue(
       MockResponse()
-        .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
-        .clearHeaders()
+        .inTunnel()
     )
     server.enqueue(
       MockResponse()
@@ -1447,7 +1446,7 @@ class URLConnectionTest {
     if (tls) {
       val socketFactory = handshakeCertificates.sslSocketFactory()
       val hostnameVerifier = RecordingHostnameVerifier()
-      server.useHttps(socketFactory, false)
+      server.useHttps(socketFactory)
       client = client.newBuilder()
         .sslSocketFactory(socketFactory, handshakeCertificates.trustManager)
         .hostnameVerifier(hostnameVerifier)
@@ -1903,7 +1902,7 @@ class URLConnectionTest {
    * http://code.google.com/p/android/issues/detail?id=12860
    */
   private fun testSecureStreamingPost(streamingMode: TransferKind) {
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
       MockResponse()
         .setBody("Success!")
@@ -2161,7 +2160,7 @@ class URLConnectionTest {
 
   @Test
   fun redirectedOnHttps() {
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
       MockResponse()
         .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
@@ -2193,7 +2192,7 @@ class URLConnectionTest {
 
   @Test
   fun notRedirectedFromHttpsToHttp() {
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
       MockResponse()
         .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
@@ -2234,7 +2233,7 @@ class URLConnectionTest {
       MockResponse()
         .setBody("This is insecure HTTP!")
     )
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
       MockResponse()
         .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
@@ -2255,7 +2254,7 @@ class URLConnectionTest {
 
   @Test
   fun redirectedFromHttpToHttpsFollowingProtocolRedirects() {
-    server2.useHttps(handshakeCertificates.sslSocketFactory(), false)
+    server2.useHttps(handshakeCertificates.sslSocketFactory())
     server2.enqueue(
       MockResponse()
         .setBody("This is secure HTTPS!")
@@ -2289,8 +2288,8 @@ class URLConnectionTest {
 
   private fun redirectToAnotherOriginServer(https: Boolean) {
     if (https) {
-      server.useHttps(handshakeCertificates.sslSocketFactory(), false)
-      server2.useHttps(handshakeCertificates.sslSocketFactory(), false)
+      server.useHttps(handshakeCertificates.sslSocketFactory())
+      server2.useHttps(handshakeCertificates.sslSocketFactory())
       server2.protocolNegotiationEnabled = false
       client = client.newBuilder()
         .sslSocketFactory(
@@ -2709,7 +2708,7 @@ class URLConnectionTest {
       .hostnameVerifier(hostnameVerifier)
       .sslSocketFactory(sslContext.socketFactory, trustManager)
       .build()
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
       MockResponse()
         .setBody("ABC")
@@ -3820,7 +3819,7 @@ class URLConnectionTest {
 
   @Test
   fun testNoSslFallback() {
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false /* tunnelProxy */)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
       MockResponse()
         .setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE)
@@ -4232,7 +4231,7 @@ class URLConnectionTest {
       .hostnameVerifier(RecordingHostnameVerifier())
       .protocols(Arrays.asList(protocol, Protocol.HTTP_1_1))
       .build()
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     server.protocolNegotiationEnabled = true
     server.protocols = client.protocols
   }

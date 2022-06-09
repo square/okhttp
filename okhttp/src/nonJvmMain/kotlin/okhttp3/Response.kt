@@ -33,6 +33,7 @@ import okhttp3.internal.commonPriorResponse
 import okhttp3.internal.commonProtocol
 import okhttp3.internal.commonRemoveHeader
 import okhttp3.internal.commonRequest
+import okhttp3.internal.commonTrailers
 import okio.Closeable
 
 /**
@@ -101,6 +102,8 @@ actual class Response internal constructor(
    * client.
    */
   actual val priorResponse: Response?,
+
+  private var trailersFn: (() -> Headers) = { Headers.headersOf() }
 ) : Closeable {
 
   internal actual var lazyCacheControl: CacheControl? = null
@@ -114,6 +117,8 @@ actual class Response internal constructor(
   actual fun headers(name: String): List<String> = commonHeaders(name)
 
   actual fun header(name: String, defaultValue: String?): String? = commonHeader(name, defaultValue)
+
+  actual fun trailers(): Headers = trailersFn.invoke()
 
   /**
    * Peeks up to [byteCount] bytes from the response body and returns them as a new response
@@ -164,6 +169,7 @@ actual class Response internal constructor(
     internal actual var networkResponse: Response? = null
     internal actual var cacheResponse: Response? = null
     internal actual var priorResponse: Response? = null
+    internal actual var trailersFn: (() -> Headers) = { Headers.headersOf() }
 
     actual constructor() {
       headers = Headers.Builder()
@@ -207,6 +213,8 @@ actual class Response internal constructor(
     /** Removes all headers on this builder and adds [headers]. */
     actual open fun headers(headers: Headers) = commonHeaders(headers)
 
+    actual open fun trailers(trailersFn: (() -> Headers)): Builder = commonTrailers(trailersFn)
+
     actual open fun body(body: ResponseBody) = commonBody(body)
 
     actual open fun networkResponse(networkResponse: Response?) = commonNetworkResponse(networkResponse)
@@ -227,6 +235,7 @@ actual class Response internal constructor(
           networkResponse,
           cacheResponse,
           priorResponse,
+          trailersFn
       )
     }
   }

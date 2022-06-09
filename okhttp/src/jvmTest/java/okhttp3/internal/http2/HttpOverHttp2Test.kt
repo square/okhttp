@@ -65,6 +65,7 @@ import okhttp3.TestUtil.repeat
 import okhttp3.internal.DoubleInetAddressDns
 import okhttp3.internal.EMPTY_REQUEST
 import okhttp3.internal.RecordingOkAuthenticator
+import okhttp3.internal.code
 import okhttp3.internal.connection.RealConnection
 import okhttp3.internal.discard
 import okhttp3.testing.Flaky
@@ -128,7 +129,7 @@ class HttpOverHttp2Test {
     platform.assumeNotBouncyCastle()
     if (protocol === Protocol.HTTP_2) {
       platform.assumeHttp2Support()
-      server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+      server.useHttps(handshakeCertificates.sslSocketFactory())
       client = clientTestRule.newClientBuilder()
         .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
         .sslSocketFactory(
@@ -154,7 +155,7 @@ class HttpOverHttp2Test {
 
   @ParameterizedTest
   @ArgumentsSource(ProtocolParamProvider::class)
-  operator fun get(protocol: Protocol, mockWebServer: MockWebServer) {
+  fun get(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
     server.enqueue(
       MockResponse()
@@ -1838,17 +1839,15 @@ class HttpOverHttp2Test {
   fun concurrentHttp2ConnectionsDeduplicated(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
     assumeTrue(protocol === Protocol.HTTP_2)
-    server.useHttps(handshakeCertificates.sslSocketFactory(), true)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
     val queueDispatcher = QueueDispatcher()
     queueDispatcher.enqueueResponse(
       MockResponse()
-        .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
-        .clearHeaders()
+        .inTunnel()
     )
     queueDispatcher.enqueueResponse(
       MockResponse()
-        .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
-        .clearHeaders()
+        .inTunnel()
     )
     queueDispatcher.enqueueResponse(
       MockResponse()
@@ -2024,6 +2023,94 @@ class HttpOverHttp2Test {
     }
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.failure).hasMessage("stream was reset: CANCEL")
+  }
+
+  @ParameterizedTest
+  @ArgumentsSource(ProtocolParamProvider::class)
+  fun http2WithProxy(protocol: Protocol, mockWebServer: MockWebServer) {
+    setUp(protocol, mockWebServer)
+    server.enqueue(
+      MockResponse()
+        .inTunnel()
+    )
+    server.enqueue(
+      MockResponse()
+        .setBody("ABCDE")
+        .setStatus("HTTP/1.1 200 Sweet")
+    )
+    val client = client.newBuilder()
+      .proxy(server.toProxyAddress())
+      .build()
+
+    val url = server.url("/").resolve("//android.com/foo")!!
+    val port = when (url.scheme) {
+      "https" -> 443
+      "http" -> 80
+      else -> error("unexpected scheme")
+    }
+
+    val call = client.newCall(Request(url))
+    val response = call.execute()
+    assertThat(response.body.string()).isEqualTo("ABCDE")
+    assertThat(response.code).isEqualTo(200)
+    assertThat(response.message).isEqualTo("")
+    assertThat(response.protocol).isEqualTo(protocol)
+
+    val tunnelRequest = server.takeRequest()
+    assertThat(tunnelRequest.requestLine).isEqualTo("CONNECT android.com:$port HTTP/1.1")
+
+    val request = server.takeRequest()
+    assertThat(request.requestLine).isEqualTo("GET /foo HTTP/1.1")
+    assertThat(request.getHeader(":scheme")).isEqualTo(scheme)
+    assertThat(request.getHeader(":authority")).isEqualTo("android.com")
+  }
+
+  /** Respond to a proxy authorization challenge.  */
+  @ParameterizedTest
+  @ArgumentsSource(ProtocolParamProvider::class)
+  fun proxyAuthenticateOnConnect(protocol: Protocol, mockWebServer: MockWebServer) {
+    setUp(protocol, mockWebServer)
+    server.enqueue(
+      MockResponse()
+        .inTunnel()
+        .setResponseCode(407)
+        .addHeader("Proxy-Authenticate: Basic realm=\"localhost\"")
+    )
+    server.enqueue(
+      MockResponse()
+        .inTunnel()
+    )
+    server.enqueue(
+      MockResponse()
+        .setBody("response body")
+    )
+    val client = client.newBuilder()
+      .proxy(server.toProxyAddress())
+      .proxyAuthenticator(RecordingOkAuthenticator("password", "Basic"))
+      .build()
+
+    val url = server.url("/").resolve("//android.com/foo")!!
+    val port = when (url.scheme) {
+      "https" -> 443
+      "http" -> 80
+      else -> error("unexpected scheme")
+    }
+
+    val request = Request(url)
+    val response = client.newCall(request).execute()
+    assertThat(response.body.string()).isEqualTo("response body")
+
+    val connect1 = server.takeRequest()
+    assertThat(connect1.requestLine).isEqualTo("CONNECT android.com:$port HTTP/1.1")
+    assertThat(connect1.getHeader("Proxy-Authorization")).isNull()
+
+    val connect2 = server.takeRequest()
+    assertThat(connect2.requestLine).isEqualTo("CONNECT android.com:$port HTTP/1.1")
+    assertThat(connect2.getHeader("Proxy-Authorization")).isEqualTo("password")
+
+    val get = server.takeRequest()
+    assertThat(get.requestLine).isEqualTo("GET /foo HTTP/1.1")
+    assertThat(get.getHeader("Proxy-Authorization")).isNull()
   }
 
   companion object {

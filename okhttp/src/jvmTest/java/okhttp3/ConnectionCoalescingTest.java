@@ -98,7 +98,7 @@ public final class ConnectionCoalescingTest {
     HandshakeCertificates serverHandshakeCertificates = new HandshakeCertificates.Builder()
         .heldCertificate(certificate)
         .build();
-    server.useHttps(serverHandshakeCertificates.sslSocketFactory(), false);
+    server.useHttps(serverHandshakeCertificates.sslSocketFactory());
 
     url = server.url("/robots.txt");
   }

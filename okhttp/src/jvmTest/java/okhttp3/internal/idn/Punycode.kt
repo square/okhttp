@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.idn
 
+import okhttp3.internal.code
 import okio.Buffer
 
 /**

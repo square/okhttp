@@ -145,7 +145,7 @@ class MockWebServer : ExternalResource(), Closeable {
   fun protocols(): List<Protocol> = delegate.protocols
 
   fun useHttps(sslSocketFactory: SSLSocketFactory, tunnelProxy: Boolean) {
-    delegate.useHttps(sslSocketFactory, tunnelProxy)
+    delegate.useHttps(sslSocketFactory)
   }
 
   fun noClientAuth() {

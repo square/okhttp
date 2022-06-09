@@ -526,7 +526,6 @@ class MultipartReaderTest {
     assertThat(quickPart.headers).isEqualTo(
       headersOf(
         "Content-Type", "text/plain; charset=utf-8",
-        "Content-Length", "5"
       )
     )
     assertThat(quickPart.body.readUtf8()).isEqualTo("Quick")
@@ -535,7 +534,6 @@ class MultipartReaderTest {
     assertThat(brownPart.headers).isEqualTo(
       headersOf(
         "Content-Disposition", "form-data; name=\"color\"",
-        "Content-Length", "5"
       )
     )
     assertThat(brownPart.body.readUtf8()).isEqualTo("Brown")
@@ -544,7 +542,6 @@ class MultipartReaderTest {
     assertThat(foxPart.headers).isEqualTo(
       headersOf(
         "Content-Disposition", "form-data; name=\"animal\"; filename=\"fox.txt\"",
-        "Content-Length", "3"
       )
     )
     assertThat(foxPart.body.readUtf8()).isEqualTo("Fox")

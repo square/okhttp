@@ -95,6 +95,8 @@ actual class Request internal actual constructor(builder: Builder) {
    * Prior to OkHttp 3.11, this method never returned null if no tag was attached. Instead it
    * returned either this request, or the request upon which this request was derived with
    * [newBuilder].
+   *
+   * @suppress this method breaks Dokka! https://github.com/Kotlin/dokka/issues/2473
    */
   fun tag(): Any? = tag<Any>()
 

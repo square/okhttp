@@ -28,6 +28,7 @@ public final class mockwebserver3/MockResponse : java/lang/Cloneable {
 	public final fun getHeaders ()Lokhttp3/Headers;
 	public final fun getHeadersDelay (Ljava/util/concurrent/TimeUnit;)J
 	public final fun getHttp2ErrorCode ()I
+	public final fun getInTunnel ()Z
 	public final fun getInformationalResponses ()Ljava/util/List;
 	public final fun getMessage ()Ljava/lang/String;
 	public final fun getPushPromises ()Ljava/util/List;
@@ -40,6 +41,7 @@ public final class mockwebserver3/MockResponse : java/lang/Cloneable {
 	public final fun getWebSocketListener ()Lokhttp3/WebSocketListener;
 	public final fun headers (Lokhttp3/Headers;)V
 	public final fun http2ErrorCode (I)V
+	public final fun inTunnel ()Lmockwebserver3/MockResponse;
 	public final fun isDuplex ()Z
 	public final fun removeHeader (Ljava/lang/String;)Lmockwebserver3/MockResponse;
 	public final fun setBody (Ljava/lang/String;)Lmockwebserver3/MockResponse;
@@ -109,7 +111,7 @@ public final class mockwebserver3/MockWebServer : java/io/Closeable {
 	public final fun toProxyAddress ()Ljava/net/Proxy;
 	public fun toString ()Ljava/lang/String;
 	public final fun url (Ljava/lang/String;)Lokhttp3/HttpUrl;
-	public final fun useHttps (Ljavax/net/ssl/SSLSocketFactory;Z)V
+	public final fun useHttps (Ljavax/net/ssl/SSLSocketFactory;)V
 }
 
 public final class mockwebserver3/MockWebServer$Companion {
@@ -181,7 +183,6 @@ public final class mockwebserver3/SocketPolicy : java/lang/Enum {
 	public static final field SHUTDOWN_OUTPUT_AT_END Lmockwebserver3/SocketPolicy;
 	public static final field SHUTDOWN_SERVER_AFTER_RESPONSE Lmockwebserver3/SocketPolicy;
 	public static final field STALL_SOCKET_AT_START Lmockwebserver3/SocketPolicy;
-	public static final field UPGRADE_TO_SSL_AT_END Lmockwebserver3/SocketPolicy;
 	public static fun valueOf (Ljava/lang/String;)Lmockwebserver3/SocketPolicy;
 	public static fun values ()[Lmockwebserver3/SocketPolicy;
 }
