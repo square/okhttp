@@ -3092,6 +3092,7 @@ open class CallTest(
     for (i in 0..20) {
       server.enqueue(
         MockResponse()
+          .inTunnel()
           .setResponseCode(407)
           .addHeader("Proxy-Authenticate: Basic realm=\"localhost\"")
           .addHeader("Connection: close")
