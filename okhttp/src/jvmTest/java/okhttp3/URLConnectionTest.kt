@@ -1888,6 +1888,22 @@ class URLConnectionTest {
   }
 
   @Test
+  fun ntripr1() {
+    server.enqueue(
+      MockResponse()
+        .setStatus("SOURCETABLE 200 OK")
+        .addHeader("Server: NTRIP Caster 1.5.5/1.0")
+        .addHeader("Date: 23/Jan/2004:08:54:59 UTC")
+        .addHeader("Content-Type: text/plain")
+        .setBody("STR;FFMJ2;Frankfurt;RTCM 2.1;1(1),3(19),16(59);0;GPS;GREF;DEU;50.12;8.68;0;1;GPSNet V2.10;none;N;N;560;Demo\nENDSOURCETABLE")
+    )
+    val response = getResponse(newRequest("/"))
+    assertThat(response.code).isEqualTo(200)
+    assertThat(response.message).isEqualTo("OK")
+    assertContent("STR;FFMJ2;Frankfurt;RTCM 2.1;1(1),3(19),16(59);0;GPS;GREF;DEU;50.12;8.68;0;1;GPSNet V2.10;none;N;N;560;Demo\nENDSOURCETABLE", response)
+  }
+
+  @Test
   fun secureFixedLengthStreaming() {
     testSecureStreamingPost(TransferKind.FIXED_LENGTH)
   }

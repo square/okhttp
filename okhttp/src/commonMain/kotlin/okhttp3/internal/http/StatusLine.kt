@@ -69,6 +69,10 @@ class StatusLine(
         // Shoutcast uses ICY instead of "HTTP/1.0".
         protocol = Protocol.HTTP_1_0
         codeStart = 4
+      } else if (statusLine.startsWith("SOURCETABLE ")) {
+        // NTRIP r1 uses SOURCETABLE instead of HTTP/1.1
+        protocol = Protocol.HTTP_1_1
+        codeStart = 12
       } else {
         throw ProtocolException("Unexpected status line: $statusLine")
       }
