@@ -1125,8 +1125,8 @@ open class HttpUrlTest {
   @Test
   fun pathWithBackslash() {
     val base = parse("http://host/a/b/c")
-    assertThat(base.resolve("d\\e\\u000c")).isEqualTo(parse("http://host/a/b/d/e/f"))
-    assertThat(base.resolve("../..\\d\\e\\u000c"))
+    assertThat(base.resolve("d\\e\\f")).isEqualTo(parse("http://host/a/b/d/e/f"))
+    assertThat(base.resolve("../..\\d\\e\\f"))
       .isEqualTo(parse("http://host/d/e/f"))
     assertThat(base.resolve("..\\..")).isEqualTo(parse("http://host/"))
   }
