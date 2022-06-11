@@ -32,6 +32,29 @@ private val VERIFY_AS_IP_ADDRESS = "([0-9a-fA-F]*:[0-9a-fA-F:.]*)|([\\d.]+)".toR
 /** Returns true if this string is not a host name and might be an IP address. */
 fun String.canParseAsIpAddress(): Boolean = VERIFY_AS_IP_ADDRESS.matches(this)
 
+/**
+ * Returns true if the length is not valid for DNS (empty or greater than 253 characters), or if any
+ * label is longer than 63 characters. Trailing dots are okay.
+ */
+internal fun String.containsInvalidLabelLengths(): Boolean {
+  if (length !in 1..253) return true
+
+  var labelStart = 0
+  while (true) {
+    val dot = indexOf('.', startIndex = labelStart)
+    val labelLength = when (dot) {
+      -1 -> length - labelStart
+      else -> dot - labelStart
+    }
+    if (labelLength !in 1..63) return true
+    if (dot == -1) break
+    if (dot == length - 1) break // Trailing '.' is allowed.
+    labelStart = dot + 1
+  }
+
+  return false
+}
+
 internal fun String.containsInvalidHostnameAsciiCodes(): Boolean {
   for (i in 0 until length) {
     val c = this[i]
