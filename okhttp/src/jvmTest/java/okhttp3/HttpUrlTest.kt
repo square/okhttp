@@ -2262,18 +2262,18 @@ open class HttpUrlTest {
     assertThat(parse("http://a./").toString()).isEqualTo("http://a./")
     assertThat(parse("http://${name251}a./").toString()).isEqualTo("http://${name251}a./")
     assertThat(parse("http://${name251}aa/").toString()).isEqualTo("http://${name251}aa/")
-    assertInvalid("http://${name251}aa./", "hostname longer than 253 characters")
+    assertInvalid("http://${name251}aa./", "Invalid URL host: \"${name251}aa.\"")
   }
 
   @Test
   fun labelIsEmpty() {
-    assertInvalid("http:///", "empty label")
-    assertInvalid("http://a..b/", "empty label")
-    assertInvalid("http://.a/", "empty label")
-    assertInvalid("http://./", "empty label")
-    assertInvalid("http://../", "empty label")
-    assertInvalid("http://.../", "empty label")
-    assertInvalid("http://…/", "empty label")
+    assertInvalid("http:///", "Invalid URL host: \"\"")
+    assertInvalid("http://a..b/", "Invalid URL host: \"a..b\"")
+    assertInvalid("http://.a/", "Invalid URL host: \".a\"")
+    assertInvalid("http://./", "Invalid URL host: \".\"")
+    assertInvalid("http://../", "Invalid URL host: \"..\"")
+    assertInvalid("http://.../", "Invalid URL host: \"...\"")
+    assertInvalid("http://…/", "Invalid URL host: \"…\"")
   }
 
   @Test
@@ -2282,16 +2282,16 @@ open class HttpUrlTest {
     assertThat(parse("http://$a63/").toString()).isEqualTo("http://$a63/")
     assertThat(parse("http://a.$a63/").toString()).isEqualTo("http://a.$a63/")
     assertThat(parse("http://$a63.a/").toString()).isEqualTo("http://$a63.a/")
-    assertInvalid("http://a$a63/", "label longer than 63 characters")
-    assertInvalid("http://a.a$a63/", "label longer than 63 characters")
-    assertInvalid("http://a$a63.a/", "label longer than 63 characters")
+    assertInvalid("http://a$a63/", "Invalid URL host: \"a$a63\"")
+    assertInvalid("http://a.a$a63/", "Invalid URL host: \"a.a$a63\"")
+    assertInvalid("http://a$a63.a/", "Invalid URL host: \"a$a63.a\"")
   }
 
   @Test
   fun labelTooLongDueToAsciiExpansion() {
     val a60 = "a".repeat(60)
     assertThat(parse("http://\u2121$a60/").toString()).isEqualTo("http://tel$a60/")
-    assertInvalid("http://a\u2121$a60/", "label longer than 63 characters")
+    assertInvalid("http://a\u2121$a60/", "Invalid URL host: \"a\u2121$a60\"")
   }
 
   @Test
@@ -2299,6 +2299,6 @@ open class HttpUrlTest {
     val dotA126 = "a.".repeat(126)
     assertThat(parse("http://a$dotA126/").toString())
       .isEqualTo("http://a$dotA126/")
-    assertInvalid("http://aa$dotA126/", "hostname longer than 253 characters")
+    assertInvalid("http://aa$dotA126/", "Invalid URL host: \"aa$dotA126\"")
   }
 }

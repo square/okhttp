@@ -3091,7 +3091,7 @@ class URLConnectionTest {
   @Test
   fun malformedUrlThrowsUnknownHostException() {
     try {
-      getResponse(Request("http://./foo.html".toHttpUrl()))
+      getResponse(Request("http://-/foo.html".toHttpUrl()))
       fail<Any>()
     } catch (expected: UnknownHostException) {
     }
