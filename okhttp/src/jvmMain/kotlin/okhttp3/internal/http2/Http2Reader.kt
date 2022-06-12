@@ -42,6 +42,7 @@ import okhttp3.internal.http2.Http2.TYPE_SETTINGS
 import okhttp3.internal.http2.Http2.TYPE_WINDOW_UPDATE
 import okhttp3.internal.http2.Http2.formattedType
 import okhttp3.internal.http2.Http2.frameLog
+import okhttp3.internal.http2.Http2.frameLogWindowUpdate
 import okhttp3.internal.readMedium
 import okio.Buffer
 import okio.BufferedSource
@@ -109,7 +110,9 @@ class Http2Reader(
     val type = source.readByte() and 0xff
     val flags = source.readByte() and 0xff
     val streamId = source.readInt() and 0x7fffffff // Ignore reserved bit.
-    if (logger.isLoggable(FINE)) logger.fine(frameLog(true, streamId, length, type, flags))
+    if (type != TYPE_WINDOW_UPDATE && logger.isLoggable(FINE)) {
+      logger.fine(frameLog(true, streamId, length, type, flags))
+    }
 
     if (requireSettings && type != TYPE_SETTINGS) {
       throw IOException("Expected a SETTINGS frame but was ${formattedType(type)}")
@@ -308,6 +311,14 @@ class Http2Reader(
     if (length != 4) throw IOException("TYPE_WINDOW_UPDATE length !=4: $length")
     val increment = source.readInt() and 0x7fffffffL
     if (increment == 0L) throw IOException("windowSizeIncrement was 0")
+    if (logger.isLoggable(FINE)) {
+      logger.fine(frameLogWindowUpdate(
+        inbound = true,
+        streamId = streamId,
+        length = length,
+        windowSizeIncrement = increment,
+      ))
+    }
     handler.windowUpdate(streamId, increment)
   }
 

@@ -36,6 +36,7 @@ import okhttp3.internal.http2.Http2.TYPE_RST_STREAM
 import okhttp3.internal.http2.Http2.TYPE_SETTINGS
 import okhttp3.internal.http2.Http2.TYPE_WINDOW_UPDATE
 import okhttp3.internal.http2.Http2.frameLog
+import okhttp3.internal.http2.Http2.frameLogWindowUpdate
 import okhttp3.internal.writeMedium
 import okio.Buffer
 import okio.BufferedSink
@@ -243,6 +244,14 @@ class Http2Writer(
     require(windowSizeIncrement != 0L && windowSizeIncrement <= 0x7fffffffL) {
       "windowSizeIncrement == 0 || windowSizeIncrement > 0x7fffffffL: $windowSizeIncrement"
     }
+    if (logger.isLoggable(FINE)) {
+      logger.fine(frameLogWindowUpdate(
+        inbound = false,
+        streamId = streamId,
+        length = 4,
+        windowSizeIncrement = windowSizeIncrement,
+      ))
+    }
     frameHeader(
         streamId = streamId,
         length = 4,
@@ -255,7 +264,9 @@ class Http2Writer(
 
   @Throws(IOException::class)
   fun frameHeader(streamId: Int, length: Int, type: Int, flags: Int) {
-    if (logger.isLoggable(FINE)) logger.fine(frameLog(false, streamId, length, type, flags))
+    if (type != TYPE_WINDOW_UPDATE && logger.isLoggable(FINE)) {
+      logger.fine(frameLog(false, streamId, length, type, flags))
+    }
     require(length <= maxFrameSize) { "FRAME_SIZE_ERROR length > $maxFrameSize: $length" }
     require(streamId and 0x80000000.toInt() == 0) { "reserved bit set: $streamId" }
     sink.writeMedium(length)
