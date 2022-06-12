@@ -90,7 +90,7 @@ object Http2 {
   }
 
   /**
-   * Returns human-readable representation of HTTP/2 frame headers.
+   * Returns a human-readable representation of HTTP/2 frame headers.
    *
    * The format is:
    *
@@ -117,6 +117,22 @@ object Http2 {
     val direction = if (inbound) "<<" else ">>"
     return format("%s 0x%08x %5d %-13s %s",
         direction, streamId, length, formattedType, formattedFlags)
+  }
+
+  /**
+   * Returns a human-readable representation of a `WINDOW_UPDATE` frame. This frame includes the
+   * window size increment instead of flags.
+   */
+  fun frameLogWindowUpdate(
+    inbound: Boolean,
+    streamId: Int,
+    length: Int,
+    windowSizeIncrement: Long,
+  ): String {
+    val formattedType = formattedType(TYPE_WINDOW_UPDATE)
+    val direction = if (inbound) "<<" else ">>"
+    return format("%s 0x%08x %5d %-13s %d",
+        direction, streamId, length, formattedType, windowSizeIncrement)
   }
 
   internal fun formattedType(type: Int): String =
