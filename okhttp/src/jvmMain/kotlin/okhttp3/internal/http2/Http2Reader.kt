@@ -306,11 +306,18 @@ class Http2Reader(
     handler.goAway(lastStreamId, errorCode, debugData)
   }
 
+  /** Unlike other `readXxx()` functions, this one must log the frame before returning. */
   @Throws(IOException::class)
   private fun readWindowUpdate(handler: Handler, length: Int, flags: Int, streamId: Int) {
-    if (length != 4) throw IOException("TYPE_WINDOW_UPDATE length !=4: $length")
-    val increment = source.readInt() and 0x7fffffffL
-    if (increment == 0L) throw IOException("windowSizeIncrement was 0")
+    val increment: Long
+    try {
+      if (length != 4) throw IOException("TYPE_WINDOW_UPDATE length !=4: $length")
+      increment = source.readInt() and 0x7fffffffL
+      if (increment == 0L) throw IOException("windowSizeIncrement was 0")
+    } catch (e: Exception) {
+      logger.fine(frameLog(true, streamId, length, TYPE_WINDOW_UPDATE, flags))
+      throw e
+    }
     if (logger.isLoggable(FINE)) {
       logger.fine(frameLogWindowUpdate(
         inbound = true,
