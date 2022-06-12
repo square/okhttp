@@ -74,21 +74,21 @@ kotlin {
         implementation(libs.kotlinx.coroutines.test)
         implementation(projects.mockwebserver3Junit5)
       }
+    }
 
-      getByName("jsMain") {
-        dependencies {
-          dependsOn(nonJvmMain)
-          api(projects.okhttp)
-          api(libs.squareup.okio)
-          api(libs.kotlin.stdlib)
-        }
+    getByName("jsMain") {
+      dependencies {
+        dependsOn(nonJvmMain)
+        api(projects.okhttp)
+        api(libs.squareup.okio)
+        api(libs.kotlin.stdlib)
       }
+    }
 
-      getByName("jsTest") {
-        dependencies {
-          dependsOn(nonJvmTest)
-          implementation(libs.kotlin.test.js)
-        }
+    getByName("jsTest") {
+      dependencies {
+        dependsOn(nonJvmTest)
+        implementation(libs.kotlin.test.js)
       }
     }
   }

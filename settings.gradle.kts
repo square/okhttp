@@ -28,6 +28,7 @@ include(":okhttp-bom")
 include(":okhttp-brotli")
 include(":okhttp-dnsoverhttps")
 include(":okhttp-hpacktests")
+include(":okhttp-ktor")
 include(":okhttp-logging-interceptor")
 project(":okhttp-logging-interceptor").name = "logging-interceptor"
 include(":okhttp-sse")
