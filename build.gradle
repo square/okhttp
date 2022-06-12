@@ -89,7 +89,7 @@ ext.publishedArtifactId = { project ->
 allprojects {
   group = 'com.squareup.okhttp3'
   project.ext.artifactId = rootProject.ext.publishedArtifactId(project)
-  version = '4.9.4-SNAPSHOT'
+  version = '4.10.0'
 
   repositories {
     mavenCentral()
@@ -280,7 +280,7 @@ subprojects { project ->
     repositories {
       maven {
         name = "mavencentral"
-        url = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+        url = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
         credentials {
           username System.getenv('SONATYPE_NEXUS_USERNAME')
           password System.getenv('SONATYPE_NEXUS_PASSWORD')
