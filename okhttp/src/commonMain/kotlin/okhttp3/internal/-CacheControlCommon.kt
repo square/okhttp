@@ -18,9 +18,9 @@
 
 package okhttp3.internal
 
+import kotlin.time.Duration
 import kotlin.time.DurationUnit
 import kotlin.time.ExperimentalTime
-import kotlin.time.toDuration
 import okhttp3.CacheControl
 import okhttp3.Headers
 
@@ -50,23 +50,30 @@ internal fun CacheControl.commonToString(): String {
 
 internal fun CacheControl.Builder.commonMaxAge(maxAge: Int, timeUnit: DurationUnit) = apply {
   require(maxAge >= 0) { "maxAge < 0: $maxAge" }
-  val maxAgeSecondsLong = maxAge.toDuration(timeUnit).inWholeSeconds
-  this.maxAgeSeconds = maxAgeSecondsLong.commonClampToInt()
+  val maxAgeSecondsDouble = Duration.convert(maxAge.toDouble(), timeUnit, DurationUnit.SECONDS)
+  this.maxAgeSeconds = maxAgeSecondsDouble.commonClampToInt()
 }
 
 internal fun CacheControl.Builder.commonMaxStale(maxStale: Int, timeUnit: DurationUnit) = apply {
   require(maxStale >= 0) { "maxStale < 0: $maxStale" }
-  val maxStaleSecondsLong = maxStale.toDuration(timeUnit).inWholeSeconds
-  this.maxStaleSeconds = maxStaleSecondsLong.commonClampToInt()
+  val maxStaleSecondsDouble = Duration.convert(maxStale.toDouble(), timeUnit, DurationUnit.SECONDS)
+  this.maxStaleSeconds = maxStaleSecondsDouble.commonClampToInt()
 }
 
 internal fun CacheControl.Builder.commonMinFresh(minFresh: Int, timeUnit: DurationUnit) = apply {
   require(minFresh >= 0) { "minFresh < 0: $minFresh" }
-  val minFreshSecondsLong = minFresh.toDuration(timeUnit).inWholeSeconds
-  this.minFreshSeconds = minFreshSecondsLong.commonClampToInt()
+  val minFreshSecondsDouble = Duration.convert(minFresh.toDouble(), timeUnit, DurationUnit.SECONDS)
+  this.minFreshSeconds = minFreshSecondsDouble.commonClampToInt()
 }
 
 internal fun Long.commonClampToInt(): Int {
+  return when {
+    this > Int.MAX_VALUE -> Int.MAX_VALUE
+    else -> toInt()
+  }
+}
+
+internal fun Double.commonClampToInt(): Int {
   return when {
     this > Int.MAX_VALUE -> Int.MAX_VALUE
     else -> toInt()
