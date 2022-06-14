@@ -3,7 +3,7 @@ OkHttp 4.x Change Log
 
 ## Version 4.10.0
 
-_2021-06-12_
+_2022-06-12_
 
  *  Upgrade: [Kotlin 1.6.20][kotlin_1_6_20].
  *  Upgrade: [Okio 3.0.0][okio_3_0_0].
