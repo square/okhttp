@@ -1,6 +1,21 @@
 Change Log
 ==========
 
+## Version 5.0.0-alpha.9
+
+_2022-06-16_
+
+ *  New: Enforce label length limits in URLs. `HttpUrl` now rejects URLs whose domains aren't valid.
+    This includes overly-long domain names (longer than 253 characters), overly-long labels (more
+    than 63 characters between dots), and empty labels.
+ *  New: Don't include the `Content-Length` header in multipart bodies. Servers must delimit
+    OkHttp's request bodies using the boundary only. (This change makes OkHttp more consistent with
+    browsers and other HTTP clients.)
+ *  New: Drop the `tunnelProxy` argument in `MockWebServer.useHttps()`. This change only impacts
+    the OkHttp 5.x API which uses the `mockwebserver3` package.
+ *  Fix: Don't call `toDuration()` which isn't available in kotlin-stdlib 1.4.
+
+
 ## Version 5.0.0-alpha.8
 
 _2022-06-08_
