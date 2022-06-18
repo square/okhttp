@@ -115,8 +115,8 @@ subprojects {
     kotlinOptions {
       jvmTarget = JavaVersion.VERSION_1_8.toString()
       freeCompilerArgs = listOf(
-        "-Xjvm-default=compatibility",
-        "-Xopt-in=kotlin.RequiresOptIn"
+        "-Xjvm-default=all-compatibility",
+        "-opt-in=kotlin.RequiresOptIn"
       )
     }
   }
