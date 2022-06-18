@@ -20,7 +20,7 @@ import assertk.assertions.isEqualTo
 import kotlin.test.Test
 import okhttp3.RequestBody.Companion.toRequestBody
 
-class RequestBodyTest {
+class CommonRequestBodyTest {
   @Test
   fun correctContentType() {
     val body = "Body"
