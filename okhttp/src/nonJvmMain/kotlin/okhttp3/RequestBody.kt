@@ -40,7 +40,7 @@ actual abstract class RequestBody {
       val bytes = commonAsUtf8ToByteArray()
 
       val resolvedContentType = if (contentType != null && contentType.parameter("charset") == null) {
-        "$this; charset=utf-8".toMediaTypeOrNull()
+        "$contentType; charset=utf-8".toMediaTypeOrNull()
       } else {
         contentType
       }
