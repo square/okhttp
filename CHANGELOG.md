@@ -1,6 +1,18 @@
 Change Log
 ==========
 
+## Version 5.0.0-alpha.10
+
+_2022-06-26_
+
+ *  Fix: Configure the multiplatform artifact (`com.squareup.okhttp3:okhttp:3.x.x`) to depend on the
+    JVM artifact (`com.squareup.okhttp3:okhttp-jvm:3.x.x`) for Maven builds. This should work-around
+    an issue where Maven doesn't interpret Gradle metadata.
+ *  Fix: Make another attempt at supporting Kotlin 1.5.31 at runtime. We were crashing on
+    `DurationUnit` which was a typealias in 1.5.x.
+ *  Upgrade: [Okio 3.2.0][okio_3_2_0].
+
+
 ## Version 5.0.0-alpha.9
 
 _2022-06-16_
@@ -248,4 +260,5 @@ release is the version name.
 [okio_2_9_0]: https://square.github.io/okio/changelog/#version-290
 [okio_3_0_0]: https://square.github.io/okio/changelog/#version-300
 [okio_3_1_0]: https://square.github.io/okio/changelog/#version-310
+[okio_3_2_0]: https://square.github.io/okio/changelog/#version-320
 [rfc_8305]: https://tools.ietf.org/html/rfc8305
