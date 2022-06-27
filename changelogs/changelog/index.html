@@ -860,6 +860,20 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#version-500-alpha10" class="md-nav__link">
+    Version 5.0.0-alpha.10
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-500-alpha9" class="md-nav__link">
+    Version 5.0.0-alpha.9
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-500-alpha8" class="md-nav__link">
     Version 5.0.0-alpha.8
   </a>
@@ -1124,6 +1138,20 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#version-500-alpha10" class="md-nav__link">
+    Version 5.0.0-alpha.10
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-500-alpha9" class="md-nav__link">
+    Version 5.0.0-alpha.9
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-500-alpha8" class="md-nav__link">
     Version 5.0.0-alpha.8
   </a>
@@ -1201,6 +1229,29 @@
 
 
 <h1 id="change-log">Change Log<a class="headerlink" href="#change-log" title="Permanent link">&para;</a></h1>
+<h2 id="version-500-alpha10">Version 5.0.0-alpha.10<a class="headerlink" href="#version-500-alpha10" title="Permanent link">&para;</a></h2>
+<p><em>2022-06-26</em></p>
+<ul>
+<li>Fix: Configure the multiplatform artifact (<code>com.squareup.okhttp3:okhttp:3.x.x</code>) to depend on the
+    JVM artifact (<code>com.squareup.okhttp3:okhttp-jvm:3.x.x</code>) for Maven builds. This should work-around
+    an issue where Maven doesn&rsquo;t interpret Gradle metadata.</li>
+<li>Fix: Make another attempt at supporting Kotlin 1.5.31 at runtime. We were crashing on
+    <code>DurationUnit</code> which was a typealias in 1.5.x.</li>
+<li>Upgrade: <a href="https://square.github.io/okio/changelog/#version-320">Okio 3.2.0</a>.</li>
+</ul>
+<h2 id="version-500-alpha9">Version 5.0.0-alpha.9<a class="headerlink" href="#version-500-alpha9" title="Permanent link">&para;</a></h2>
+<p><em>2022-06-16</em></p>
+<ul>
+<li>New: Enforce label length limits in URLs. <code>HttpUrl</code> now rejects URLs whose domains aren&rsquo;t valid.
+    This includes overly-long domain names (longer than 253 characters), overly-long labels (more
+    than 63 characters between dots), and empty labels.</li>
+<li>New: Don&rsquo;t include the <code>Content-Length</code> header in multipart bodies. Servers must delimit
+    OkHttp&rsquo;s request bodies using the boundary only. (This change makes OkHttp more consistent with
+    browsers and other HTTP clients.)</li>
+<li>New: Drop the <code>tunnelProxy</code> argument in <code>MockWebServer.useHttps()</code>. This change only impacts
+    the OkHttp 5.x API which uses the <code>mockwebserver3</code> package.</li>
+<li>Fix: Don&rsquo;t call <code>toDuration()</code> which isn&rsquo;t available in kotlin-stdlib 1.4.</li>
+</ul>
 <h2 id="version-500-alpha8">Version 5.0.0-alpha.8<a class="headerlink" href="#version-500-alpha8" title="Permanent link">&para;</a></h2>
 <p><em>2022-06-08</em></p>
 <ul>
