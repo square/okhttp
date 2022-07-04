@@ -24,6 +24,7 @@ import java.security.cert.CertificateEncodingException
 import java.security.cert.CertificateException
 import java.security.cert.CertificateFactory
 import java.util.TreeSet
+import java.util.concurrent.TimeUnit
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.internal.EMPTY_HEADERS
@@ -33,6 +34,7 @@ import okhttp3.internal.cache.DiskLruCache
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.code
 import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.connection.RealConnectionPool
 import okhttp3.internal.http.HttpMethod
 import okhttp3.internal.http.StatusLine
 import okhttp3.internal.platform.Platform
@@ -145,15 +147,27 @@ import okio.buffer
 class Cache(
   directory: Path,
   maxSize: Long,
-  fileSystem: FileSystem
+  fileSystem: FileSystem,
+  taskRunner: TaskRunner
 ) : Closeable, Flushable {
+  constructor(
+    directory: Path,
+    maxSize: Long,
+    fileSystem: FileSystem,
+  ) : this(
+    directory,
+    maxSize,
+    fileSystem,
+    TaskRunner.INSTANCE
+  )
+
   internal val cache = DiskLruCache(
     fileSystem = fileSystem,
     directory = directory,
     appVersion = VERSION,
     valueCount = ENTRY_COUNT,
     maxSize = maxSize,
-    taskRunner = TaskRunner.INSTANCE
+    taskRunner = taskRunner
   )
 
   // read and write statistics, all guarded by 'this'.

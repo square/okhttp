@@ -43,4 +43,6 @@ include(":samples:slack")
 include(":samples:static-server")
 include(":samples:unixdomainsockets")
 
+include(":okhttp-loom")
+
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")

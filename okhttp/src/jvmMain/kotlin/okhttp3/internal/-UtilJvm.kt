@@ -258,7 +258,7 @@ internal fun Int.toHexString(): String = Integer.toHexString(this)
 internal inline fun Any.wait() = (this as Object).wait()
 
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "NOTHING_TO_INLINE")
-internal inline fun Any.notify() = (this as Object).notify()
+inline fun Any.notify() = (this as Object).notify()
 
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "NOTHING_TO_INLINE")
 internal inline fun Any.notifyAll() = (this as Object).notifyAll()

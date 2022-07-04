@@ -36,12 +36,24 @@ class ConnectionPool internal constructor(
   constructor(
     maxIdleConnections: Int,
     keepAliveDuration: Long,
-    timeUnit: TimeUnit
+    timeUnit: TimeUnit,
+    taskRunner: TaskRunner
   ) : this(RealConnectionPool(
-      taskRunner = TaskRunner.INSTANCE,
+      taskRunner = taskRunner,
       maxIdleConnections = maxIdleConnections,
       keepAliveDuration = keepAliveDuration,
       timeUnit = timeUnit
+  ))
+
+  constructor(
+    maxIdleConnections: Int,
+    keepAliveDuration: Long,
+    timeUnit: TimeUnit,
+  ) : this(RealConnectionPool(
+    taskRunner = TaskRunner.INSTANCE,
+    maxIdleConnections = maxIdleConnections,
+    keepAliveDuration = keepAliveDuration,
+    timeUnit = timeUnit
   ))
 
   constructor() : this(5, 5, TimeUnit.MINUTES)
