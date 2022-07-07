@@ -8,7 +8,7 @@ graalvm = "22.0.0.2"
 org-bouncycastle = "1.71"
 org-conscrypt = "2.5.2"
 org-jetbrains-coroutines = "1.6.3"
-org-jetbrains-kotlin = "1.6.21"
+org-jetbrains-kotlin = "1.7.10"
 org-junit-jupiter = "5.8.2"
 picocli = "4.6.3"
 
