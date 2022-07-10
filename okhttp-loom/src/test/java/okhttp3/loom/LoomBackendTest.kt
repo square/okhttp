@@ -18,21 +18,36 @@ package okhttp3.loom
 import java.net.InetSocketAddress
 import java.net.Proxy
 import java.util.concurrent.CompletableFuture
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
+import mockwebserver3.junit5.internal.MockWebServerExtension
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.EventListener
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.testing.PlatformRule
+import okhttp3.tls.internal.TlsUtil
 import okio.IOException
 import org.assertj.core.api.Assertions.*
-import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
 
-class LoomBackendTest {
+@ExtendWith(MockWebServerExtension::class)
+class LoomBackendTest(
+  val server: MockWebServer
+) {
+  @RegisterExtension
+  val platform = PlatformRule()
+
   private var assertVirtual = false
 
-  val client = LoomClientBuilder.clientBuilder()
+  private val handshakeCertificates = TlsUtil.localhost()
+
+  var client = LoomClientBuilder.clientBuilder()
     .eventListener(object : EventListener() {
       override fun connectStart(call: Call, inetSocketAddress: InetSocketAddress, proxy: Proxy) {
         assertVirtual()
@@ -48,42 +63,75 @@ class LoomBackendTest {
     })
     .build()
 
+  private fun enableTls() {
+    client = client.newBuilder()
+      .sslSocketFactory(
+        handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
+      )
+      .build()
+    server.useHttps(handshakeCertificates.sslSocketFactory())
+  }
+
   fun assertVirtual() {
     if (assertVirtual) {
       assertThat(Thread.currentThread().isVirtual).isTrue()
     }
   }
 
-  @Test
-  fun makeExecuteRequest() {
-    val testThread = Thread.currentThread()
+  @ParameterizedTest
+  @MethodSource("ssl")
+  fun makeExecuteRequest(ssl: Boolean) {
+    if (ssl) {
+      enableTls()
+    }
+
+    server.enqueue(MockResponse().apply {
+      setBody("12345")
+    })
 
     val response =
-      client.newCall(Request("https://www.google.com/robots.txt".toHttpUrl())).execute()
+      client.newCall(Request(server.url("/"))).execute()
 
-    assertThat(response.protocol).isEqualTo(Protocol.HTTP_2)
-    assertThat(response.body.string()).contains("Disallow")
+    assertThat(response.protocol).isEqualTo(if (ssl) Protocol.HTTP_2 else Protocol.HTTP_1_1)
+    assertThat(response.body.string()).contains("12345")
   }
 
-  @Test
-  fun makeEnqueueRequest() {
+  @ParameterizedTest
+  @MethodSource("ssl")
+  fun makeEnqueueRequest(ssl: Boolean) {
+    if (ssl) {
+      enableTls()
+    }
+
+    server.enqueue(MockResponse().apply {
+      setBody("12345")
+    })
+
     assertVirtual = true
 
-    val completableFuture = CompletableFuture<String>()
+    val completableFuture = CompletableFuture<Response>()
 
-    val response =
-      client.newCall(Request("https://www.google.com/robots.txt".toHttpUrl())).enqueue(
-        object: Callback {
-          override fun onFailure(call: Call, e: IOException) {
-            completableFuture.completeExceptionally(e)
-          }
-
-          override fun onResponse(call: Call, response: Response) {
-            completableFuture.complete(response.body.string())
-          }
+    client.newCall(Request(server.url("/"))).enqueue(
+      object : Callback {
+        override fun onFailure(call: Call, e: IOException) {
+          completableFuture.completeExceptionally(e)
         }
-      )
 
-    assertThat(completableFuture.get()).contains("Disallow")
+        override fun onResponse(call: Call, response: Response) {
+          completableFuture.complete(response)
+        }
+      }
+    )
+
+    val response = completableFuture.get()
+    assertThat(response.protocol).isEqualTo(if (ssl) Protocol.HTTP_2 else Protocol.HTTP_1_1)
+    assertThat(response.body.string()).contains("12345")
+  }
+
+  companion object {
+    @JvmStatic
+    fun ssl(): Collection<Boolean> {
+      return listOfNotNull(true, false)
+    }
   }
 }

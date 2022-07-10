@@ -36,6 +36,9 @@ dependencies {
   api(projects.okhttp)
   compileOnly(libs.findbugs.jsr305)
 
+  testImplementation(projects.okhttp)
+  testImplementation(projects.mockwebserver3)
+  testImplementation(projects.mockwebserver3Junit5)
   testImplementation(projects.okhttpTestingSupport)
   testImplementation(libs.conscrypt.openjdk)
   testImplementation(libs.junit)
