@@ -283,7 +283,7 @@ class TaskRunner(
     override fun nanoTime() = System.nanoTime()
 
     override fun coordinatorNotify(taskRunner: TaskRunner) {
-      taskRunner.notify()
+      taskRunner.condition.signal()
     }
 
     /**

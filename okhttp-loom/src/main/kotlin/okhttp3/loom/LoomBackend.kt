@@ -31,7 +31,6 @@ class LoomBackend(
   override fun nanoTime(): Long = System.nanoTime()
 
   override fun coordinatorNotify(taskRunner: TaskRunner) {
-    taskRunner.lock.assertThreadHolds()
     taskRunner.condition.signal()
   }
 
@@ -42,7 +41,6 @@ class LoomBackend(
   @Throws(InterruptedException::class)
   @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
   override fun coordinatorWait(taskRunner: TaskRunner, nanos: Long) {
-    taskRunner.lock.assertThreadHolds()
     if (nanos > 0) {
       taskRunner.condition.awaitNanos(nanos)
     }
@@ -52,15 +50,5 @@ class LoomBackend(
 
   override fun execute(taskRunner: TaskRunner, runnable: Runnable) {
     executor.execute(runnable)
-  }
-}
-
-@JvmField
-internal val assertionsEnabled: Boolean = OkHttpClient::class.java.desiredAssertionStatus()
-
-@Suppress("NOTHING_TO_INLINE")
-internal inline fun ReentrantLock.assertThreadHolds() {
-  if (assertionsEnabled && !this.isHeldByCurrentThread) {
-    throw AssertionError("Thread ${Thread.currentThread().name} MUST hold lock on $this")
   }
 }
