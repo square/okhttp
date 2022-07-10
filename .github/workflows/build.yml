@@ -140,6 +140,32 @@ jobs:
         with:
           arguments: jvmTest -Dtest.java.version=11
 
+  testloom:
+    runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.labels.*.name, 'providers')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Configure JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: 19-ea
+
+      - name: Configure JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 11
+
+      - name: Run Checks
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: jvmTest -Dtest.java.version=19
+
   testopenjdk8:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdk8')

@@ -11,6 +11,7 @@ project(":mockwebserver-junit5").name = "mockwebserver3-junit5"
 
 val androidBuild: String? by settings
 val graalBuild: String? by settings
+val loomBuild: String? by settings
 
 if (androidBuild != null) {
   include(":android-test")
@@ -19,6 +20,10 @@ if (androidBuild != null) {
 
 if (graalBuild != null) {
   include(":native-image-tests")
+}
+
+if (loomBuild != null) {
+  include(":okhttp-loom")
 }
 
 include(":okcurl")
@@ -42,7 +47,5 @@ include(":samples:simple-client")
 include(":samples:slack")
 include(":samples:static-server")
 include(":samples:unixdomainsockets")
-
-include(":okhttp-loom")
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
