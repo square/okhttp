@@ -23,6 +23,4 @@ object LoomClientBuilder {
       )
       .taskRunner(taskRunner)
   }
-
-  fun client(): OkHttpClient = clientBuilder().build()
 }

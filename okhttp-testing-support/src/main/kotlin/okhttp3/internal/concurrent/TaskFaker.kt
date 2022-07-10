@@ -25,6 +25,7 @@ import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.logging.Logger
+import kotlin.concurrent.withLock
 
 /**
  * Runs a [TaskRunner] in a controlled environment so that everything is sequential and
@@ -108,9 +109,9 @@ class TaskFaker : Closeable {
       val acquiredTaskRunnerLock = AtomicBoolean()
 
       tasksExecutor.execute {
-        synchronized(taskRunner) {
+        taskRunner.lock.withLock {
           acquiredTaskRunnerLock.set(true)
-          taskRunner.notifyAll()
+          taskRunner.condition.signalAll()
 
           tasksRunningCount++
           if (tasksRunningCount > 1) isParallel = true
@@ -194,7 +195,7 @@ class TaskFaker : Closeable {
   fun advanceUntil(newTime: Long) {
     taskRunner.assertThreadDoesntHoldLock()
 
-    synchronized(taskRunner) {
+    taskRunner.lock.withLock {
       isRunningAllTasks = true
       nanoTime = newTime
       unstallTasks()
@@ -207,7 +208,7 @@ class TaskFaker : Closeable {
     taskRunner.assertThreadDoesntHoldLock()
 
     while (true) {
-      synchronized(taskRunner) {
+      taskRunner.lock.withLock {
         if (tasksRunningCount == stalledTasks.size) {
           isRunningAllTasks = false
           return@waitForTasksToStall // All stalled.
@@ -222,7 +223,7 @@ class TaskFaker : Closeable {
   fun assertNoMoreTasks() {
     taskRunner.assertThreadDoesntHoldLock()
 
-    synchronized(taskRunner) {
+    taskRunner.lock.withLock {
       assertThat(stalledTasks).isEmpty()
     }
   }
@@ -234,7 +235,7 @@ class TaskFaker : Closeable {
     // Make sure the coordinator is ready to be interrupted.
     runTasks()
 
-    synchronized(taskRunner) {
+    taskRunner.lock.withLock {
       val toInterrupt = waitingCoordinatorThread ?: error("no thread currently waiting")
       taskBecameStalled.drainPermits()
       toInterrupt.interrupt()
@@ -247,7 +248,7 @@ class TaskFaker : Closeable {
   fun runNextTask() {
     taskRunner.assertThreadDoesntHoldLock()
 
-    synchronized(taskRunner) {
+    taskRunner.lock.withLock {
       check(stalledTasks.size >= 1) { "no tasks to run" }
       stalledTasks.removeFirst()
       taskRunner.notifyAll()

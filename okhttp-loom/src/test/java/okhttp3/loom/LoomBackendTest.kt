@@ -17,7 +17,10 @@ package okhttp3.loom
 
 import java.net.InetSocketAddress
 import java.net.Proxy
+import java.util.Collections
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.junit5.internal.MockWebServerExtension
@@ -126,6 +129,49 @@ class LoomBackendTest(
     val response = completableFuture.get()
     assertThat(response.protocol).isEqualTo(if (ssl) Protocol.HTTP_2 else Protocol.HTTP_1_1)
     assertThat(response.body.string()).contains("12345")
+  }
+
+  @ParameterizedTest
+  @MethodSource("ssl")
+  fun makeEnqueueBatch(ssl: Boolean) {
+    if (ssl) {
+      enableTls()
+    }
+
+    val requests = 1000
+    val countDownLatch = CountDownLatch(requests)
+
+    repeat(requests) {
+      server.enqueue(MockResponse().apply {
+        setBody("12345")
+      })
+    }
+
+    assertVirtual = true
+
+    val errors = Collections.synchronizedList(mutableListOf<Throwable>())
+
+    repeat(requests) {
+      client.newCall(Request(server.url("/"))).enqueue(
+        object : Callback {
+          override fun onFailure(call: Call, e: IOException) {
+            countDownLatch.countDown()
+            errors.add(e)
+          }
+
+          override fun onResponse(call: Call, response: Response) {
+            countDownLatch.countDown()
+            assertThat(response.body.string()).isEqualTo("12345")
+          }
+        }
+      )
+    }
+
+    countDownLatch.await(10, TimeUnit.SECONDS)
+
+    assertThat(countDownLatch.count).isEqualTo(0)
+
+    assertThat(errors).isEmpty()
   }
 
   companion object {

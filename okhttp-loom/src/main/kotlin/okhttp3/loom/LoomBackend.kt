@@ -18,8 +18,9 @@ package okhttp3.loom
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.locks.ReentrantLock
+import okhttp3.OkHttpClient
 import okhttp3.internal.concurrent.TaskRunner
-import okhttp3.internal.notify
 
 /**
  * May not be needed, if doesn't change from real backend.
@@ -29,9 +30,9 @@ class LoomBackend(
 ) : TaskRunner.Backend {
   override fun nanoTime(): Long = System.nanoTime()
 
-
   override fun coordinatorNotify(taskRunner: TaskRunner) {
-    taskRunner.notify()
+    taskRunner.lock.assertThreadHolds()
+    taskRunner.condition.signal()
   }
 
   /**
@@ -41,10 +42,9 @@ class LoomBackend(
   @Throws(InterruptedException::class)
   @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
   override fun coordinatorWait(taskRunner: TaskRunner, nanos: Long) {
-    val ms = nanos / 1_000_000L
-    val ns = nanos - (ms * 1_000_000L)
-    if (ms > 0L || nanos > 0) {
-      (taskRunner as Object).wait(ms, ns.toInt())
+    taskRunner.lock.assertThreadHolds()
+    if (nanos > 0) {
+      taskRunner.condition.awaitNanos(nanos)
     }
   }
 
@@ -52,5 +52,15 @@ class LoomBackend(
 
   override fun execute(taskRunner: TaskRunner, runnable: Runnable) {
     executor.execute(runnable)
+  }
+}
+
+@JvmField
+internal val assertionsEnabled: Boolean = OkHttpClient::class.java.desiredAssertionStatus()
+
+@Suppress("NOTHING_TO_INLINE")
+internal inline fun ReentrantLock.assertThreadHolds() {
+  if (assertionsEnabled && !this.isHeldByCurrentThread) {
+    throw AssertionError("Thread ${Thread.currentThread().name} MUST hold lock on $this")
   }
 }
