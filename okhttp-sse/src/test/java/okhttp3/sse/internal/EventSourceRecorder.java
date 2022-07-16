@@ -143,6 +143,8 @@ public final class EventSourceRecorder extends EventSourceListener {
         try {
           responseBody = response.body().string();
         } catch (IOException ignored) {
+        } catch (IllegalStateException ise) {
+          // Body was stripped (UnreadableResponseBody)
         }
       }
       this.responseBody = responseBody;
