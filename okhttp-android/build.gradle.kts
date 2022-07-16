@@ -1,3 +1,4 @@
+import com.vanniktech.maven.publish.AndroidSingleVariantLibrary
 import com.vanniktech.maven.publish.JavadocJar
 
 plugins {
@@ -61,6 +62,5 @@ dependencies {
 }
 
 mavenPublishing {
-  @Suppress("DEPRECATION") // Requires AGP 7.1.x
-  configure(com.vanniktech.maven.publish.AndroidLibrary(javadocJar = JavadocJar.Dokka("dokkaGfm")))
+  configure(AndroidSingleVariantLibrary("release"))
 }
