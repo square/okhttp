@@ -21,6 +21,8 @@ dependencies {
   compileOnly(libs.findbugs.jsr305)
   compileOnly(libs.animalsniffer.annotations)
 
+  testImplementation(libs.assertj.core)
+
   testImplementation(projects.okhttpTestingSupport)
   testImplementation(projects.mockwebserver3Junit5)
   testImplementation(libs.junit)
