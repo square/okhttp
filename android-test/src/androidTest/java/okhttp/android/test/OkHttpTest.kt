@@ -268,7 +268,7 @@ class OkHttpTest(val server: MockWebServer) {
   }
 
   private fun localhostInsecureRequest() {
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
 
     server.enqueue(MockResponse().setResponseCode(200))
 
@@ -848,7 +848,7 @@ class OkHttpTest(val server: MockWebServer) {
         handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
       )
       .build()
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
   }
 
   private fun assumeNetwork() {
