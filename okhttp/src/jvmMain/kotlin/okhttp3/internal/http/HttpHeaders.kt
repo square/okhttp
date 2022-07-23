@@ -27,7 +27,6 @@ import okhttp3.CookieJar
 import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.Response
-import okhttp3.internal.code
 import okhttp3.internal.headersContentLength
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.skipAll

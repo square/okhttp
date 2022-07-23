@@ -67,7 +67,6 @@ import okhttp3.internal.DoubleInetAddressDns
 import okhttp3.internal.RecordingOkAuthenticator
 import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.closeQuietly
-import okhttp3.internal.code
 import okhttp3.internal.http.RecordingProxySelector
 import okhttp3.internal.userAgent
 import okhttp3.okio.LoggingFilesystem

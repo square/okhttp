@@ -46,7 +46,6 @@ import okhttp3.internal.headersCheckName
 import okhttp3.internal.http.toHttpDateOrNull
 import okhttp3.internal.http.toHttpDateString
 import okhttp3.internal.http2.Header
-import okhttp3.internal.lowercase
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 
 @Suppress("NAME_SHADOWING")

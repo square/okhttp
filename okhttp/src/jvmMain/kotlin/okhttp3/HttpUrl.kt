@@ -26,7 +26,6 @@ import kotlin.text.Charsets.UTF_8
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.internal.canParseAsIpAddress
-import okhttp3.internal.code
 import okhttp3.internal.delimiterOffset
 import okhttp3.internal.indexOfFirstNonAsciiWhitespace
 import okhttp3.internal.indexOfLastNonAsciiWhitespace

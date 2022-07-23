@@ -15,7 +15,6 @@
  */
 package okhttp3.internal.idn
 
-import okhttp3.internal.code
 import okio.Buffer
 import okio.BufferedSource
 import okio.ByteString.Companion.encodeUtf8

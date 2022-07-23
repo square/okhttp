@@ -15,7 +15,7 @@
  *
  */
 
-@file:OptIn(ExperimentalCoroutinesApi::class, ExperimentalTime::class)
+@file:OptIn(ExperimentalCoroutinesApi::class)
 
 package okhttp3
 
@@ -39,7 +39,6 @@ import org.junit.jupiter.api.fail
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.ExperimentalTime
 
 @ExtendWith(MockWebServerExtension::class)
 class SuspendCallTest(
