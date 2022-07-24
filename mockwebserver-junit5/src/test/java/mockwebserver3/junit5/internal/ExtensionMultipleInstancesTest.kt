@@ -23,9 +23,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 
 @ExtendWith(MockWebServerExtension::class)
-class ExtensionMultipleInstancesTest(
-  private val testInstance: MockWebServer
-) {
+class ExtensionMultipleInstancesTest {
   var defaultInstancePort: Int = -1
   var instanceAPort: Int = -1
   var instanceBPort: Int = -1

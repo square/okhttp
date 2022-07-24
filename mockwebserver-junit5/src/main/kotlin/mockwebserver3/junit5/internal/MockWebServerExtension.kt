@@ -41,15 +41,9 @@ import org.junit.jupiter.api.extension.ParameterResolver
 class MockWebServerExtension
   : BeforeEachCallback, AfterEachCallback, ParameterResolver {
   private val ExtensionContext.resource: ServersForTest
-    get() {
-      val store = getStore(namespace)
-      var result = store.get(this.uniqueId) as ServersForTest?
-      if (result == null) {
-        result = ServersForTest()
-        store.put(this.uniqueId, result)
-      }
-      return result
-    }
+    get() = getStore(namespace).getOrComputeIfAbsent(this.uniqueId) {
+      ServersForTest()
+    } as ServersForTest
 
   private class ServersForTest {
     private val servers = mutableMapOf<String, MockWebServer>()
@@ -87,7 +81,11 @@ class MockWebServerExtension
   override fun supportsParameter(
     parameterContext: ParameterContext,
     extensionContext: ExtensionContext
-  ): Boolean = parameterContext.parameter.type === MockWebServer::class.java
+  ): Boolean {
+    // Not supported on constructors, or static contexts
+    return parameterContext.parameter.type === MockWebServer::class.java
+      && extensionContext.testMethod.isPresent
+  }
 
   @Suppress("NewApi")
   override fun resolveParameter(
@@ -100,7 +98,6 @@ class MockWebServerExtension
     } else {
       defaultName
     }
-    println(extensionContext)
     return extensionContext.resource.server(name)
   }
 
@@ -108,18 +105,11 @@ class MockWebServerExtension
   @Suppress("NewApi")
   override fun beforeEach(context: ExtensionContext) {
     context.resource.startAll()
-    if (context.testMethod.isPresent) {
-      context.parent.get().resource.startAll()
-    }
   }
 
   @Suppress("NewApi")
   override fun afterEach(context: ExtensionContext) {
     context.resource.shutdownAll()
-    if (context.testMethod.isPresent) {
-      val testContext = context.parent.get()
-      testContext.resource.shutdownAll()
-    }
   }
 
   companion object {

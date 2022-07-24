@@ -22,15 +22,12 @@ import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
 
 @ExtendWith(MockWebServerExtension::class)
-class ExtensionMultipleTestsTest(
-  private val testInstance: MockWebServer
-) {
+class ExtensionMultipleTestsTest() {
   @Test
   fun testClient1(
     defaultInstance: MockWebServer,
     @MockWebServerInstance("A") instanceA: MockWebServer,
   ) {
-    assertThat(seenInstances.add(testInstance.port)).isTrue()
     assertThat(seenInstances.add(defaultInstance.port)).isTrue()
     assertThat(seenInstances.add(instanceA.port)).isTrue()
   }
@@ -40,7 +37,6 @@ class ExtensionMultipleTestsTest(
     defaultInstance: MockWebServer,
     @MockWebServerInstance("A") instanceA: MockWebServer,
   ) {
-    assertThat(seenInstances.add(testInstance.port)).isTrue()
     assertThat(seenInstances.add(defaultInstance.port)).isTrue()
     assertThat(seenInstances.add(instanceA.port)).isTrue()
   }
