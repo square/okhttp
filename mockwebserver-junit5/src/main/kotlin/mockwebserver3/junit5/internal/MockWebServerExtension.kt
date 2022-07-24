@@ -102,12 +102,10 @@ class MockWebServerExtension
   }
 
   /** Start the servers passed in as test method parameters. */
-  @Suppress("NewApi")
   override fun beforeEach(context: ExtensionContext) {
     context.resource.startAll()
   }
 
-  @Suppress("NewApi")
   override fun afterEach(context: ExtensionContext) {
     context.resource.shutdownAll()
   }
