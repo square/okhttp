@@ -26,7 +26,18 @@ import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.ParameterContext
 import org.junit.jupiter.api.extension.ParameterResolver
 
-/** Runs MockWebServer for the duration of a single test method. */
+/**
+ * Runs MockWebServer for the duration of a single test method.
+ *
+ * Specifically while junit instances passes into test constructor
+ * are typically shares amongst all tests, a fresh instance will be
+ * received here. Use with @BeforeAll and @AfterAll, is not supported.
+ *
+ * There are 3 ids for instances
+ * - The test instance default (passed into constructor)
+ * - The test lifecycle default (passed into test method, plus @BeforeEach, @AfterEach)
+ * - named instances with @MockWebServerInstance.
+ */
 class MockWebServerExtension
   : BeforeEachCallback, AfterEachCallback, ParameterResolver {
   private val ExtensionContext.resource: ServersForTest
