@@ -61,11 +61,11 @@ suspend fun main() {
     // survey.printWarnings()
     // println()
     //
-    survey.printGoogleSheet()
-    println()
-    //
-    // survey.printCipherSuiteKt()
+    // survey.printGoogleSheet()
     // println()
+
+    survey.printCipherSuiteKt()
+    println()
   } finally {
     client.dispatcher.executorService.shutdown()
     client.connectionPool.evictAll()

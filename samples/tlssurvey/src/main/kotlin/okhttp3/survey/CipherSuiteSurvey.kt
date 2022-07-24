@@ -18,6 +18,7 @@ package okhttp3.survey
 import okio.ByteString
 import java.lang.IllegalArgumentException
 import java.util.regex.Pattern
+import okhttp3.CipherSuite
 import okio.ByteString.Companion.decodeHex
 
 /**
@@ -216,12 +217,16 @@ class CipherSuiteSurvey(
       }
       append(suiteId.name)
       append(" = init(\"")
-      append(suiteId.name)
+      append(sanitiseStringName(suiteId.name))
       append("\", ")
       append("0x")
       append(suiteId.id.hex())
       append(")")
     }
+  }
+
+  private fun sanitiseStringName(name: String): String {
+    return CipherSuite.forJavaName(name).javaName
   }
 
   fun addRecord(records: MutableMap<SuiteId, Record>, s: String, java: String, android: String) {

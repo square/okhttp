@@ -17,28 +17,8 @@ package okhttp3.survey
 
 import okio.ByteString
 
-data class Client(val name: String, val enabled: List<SuiteId> = listOf(), val disabled: List<SuiteId> = listOf()) {
-  fun enabled(vararg suites: SuiteId): Client {
-    return Client(name, suites.toList(), disabled)
-  }
+data class Client(val name: String, val enabled: List<SuiteId> = listOf(), val disabled: List<SuiteId> = listOf())
 
-  fun disabled(vararg suites: SuiteId): Client {
-    return Client(name, enabled, suites.toList())
-  }
-}
-
-class SuiteId(val id: ByteString, val name: String) {
-  override fun equals(other: Any?): Boolean {
-    return (other is SuiteId && other.id == id)
-  }
-
-  override fun hashCode(): Int {
-    return id.hashCode()
-  }
-
-  override fun toString(): String {
-    return id.hex() + "/" + name
-  }
-}
+data class SuiteId(val id: ByteString, val name: String)
 
 data class Record(val java: String, val android: String)
