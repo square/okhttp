@@ -17,7 +17,6 @@ package okhttp3.internal.idn
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import okhttp3.internal.code
 import okio.Buffer
 import okio.FileSystem
 import okio.Path.Companion.toPath

@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:OptIn(ExperimentalTime::class)
-
 package okhttp3
 
 import java.util.concurrent.TimeUnit
 import kotlin.time.DurationUnit
-import kotlin.time.ExperimentalTime
 import okhttp3.internal.commonBuild
 import okhttp3.internal.commonClampToInt
 import okhttp3.internal.commonForceCache
 import okhttp3.internal.commonForceNetwork
 import okhttp3.internal.commonImmutable
+import okhttp3.internal.commonMaxAge
+import okhttp3.internal.commonMaxStale
+import okhttp3.internal.commonMinFresh
 import okhttp3.internal.commonNoCache
 import okhttp3.internal.commonNoStore
 import okhttp3.internal.commonNoTransform
@@ -150,18 +150,11 @@ actual class CacheControl internal actual constructor(
 
     actual fun immutable() = commonImmutable()
 
-    // We are compiling with kotlin 1.6 but need to run with older versions at runtime. For
-    // maximum compat we therefore need to handle both the case where DurationUnit is typealiased
-    // to TimeUnit (as it was pre-1.6) and where it is a distinct wrapper enum (in 1.6). We also
-    // can't use durationUnit.toTimeUnit() because that doesn't exist in the typealiased case.
-    // This function should work in either case.
-    internal fun toJavaTimeUnit(durationUnit: DurationUnit) = TimeUnit.valueOf(durationUnit.name)
+    actual fun maxAge(maxAge: Int, timeUnit: DurationUnit) = commonMaxAge(maxAge, timeUnit)
 
-    actual fun maxAge(maxAge: Int, timeUnit: DurationUnit) = maxAge(maxAge, toJavaTimeUnit(timeUnit))
+    actual fun maxStale(maxStale: Int, timeUnit: DurationUnit) = commonMaxStale(maxStale, timeUnit)
 
-    actual fun maxStale(maxStale: Int, timeUnit: DurationUnit) = maxStale(maxStale, toJavaTimeUnit(timeUnit))
-
-    actual fun minFresh(minFresh: Int, timeUnit: DurationUnit) = minFresh(minFresh, toJavaTimeUnit(timeUnit))
+    actual fun minFresh(minFresh: Int, timeUnit: DurationUnit) = commonMinFresh(minFresh, timeUnit)
 
     /**
      * Sets the maximum age of a cached response. If the cache response's age exceeds [maxAge], it

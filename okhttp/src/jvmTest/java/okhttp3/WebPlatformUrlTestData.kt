@@ -15,7 +15,6 @@
  */
 package okhttp3
 
-import okhttp3.internal.code
 import okhttp3.internal.format
 import okio.Buffer
 import okio.BufferedSource

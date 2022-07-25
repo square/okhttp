@@ -16,7 +16,6 @@
 package okhttp3.sse.internal
 
 import java.io.IOException
-import okhttp3.internal.code
 import okhttp3.internal.toLongOrDefault
 import okio.Buffer
 import okio.BufferedSource

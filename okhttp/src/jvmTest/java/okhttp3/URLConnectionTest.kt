@@ -63,10 +63,8 @@ import okhttp3.TestUtil.assertSuppressed
 import okhttp3.internal.RecordingAuthenticator
 import okhttp3.internal.RecordingOkAuthenticator
 import okhttp3.internal.addHeaderLenient
-import okhttp3.internal.code
 import okhttp3.internal.http.HTTP_PERM_REDIRECT
 import okhttp3.internal.http.HTTP_TEMP_REDIRECT
-import okhttp3.internal.lowercase
 import okhttp3.internal.platform.Platform.Companion.get
 import okhttp3.internal.userAgent
 import okhttp3.testing.Flaky

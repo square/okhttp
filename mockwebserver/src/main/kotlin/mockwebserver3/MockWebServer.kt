@@ -75,7 +75,6 @@ import okhttp3.internal.http2.Header
 import okhttp3.internal.http2.Http2Connection
 import okhttp3.internal.http2.Http2Stream
 import okhttp3.internal.immutableListOf
-import okhttp3.internal.lowercase
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.threadFactory
 import okhttp3.internal.toImmutableList
