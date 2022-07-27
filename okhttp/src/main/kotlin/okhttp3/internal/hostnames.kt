@@ -31,7 +31,19 @@ import okio.Buffer
  */
 fun String.toCanonicalHost(): String? {
   val host: String = this
-
+  val host: String = this
+  var scopeid:String=""
+  if (host.startsWith("[") ) {
+    host=host.substring(1)
+  }
+  if (host.endsWith("]") ) {
+    host=host.substring(0,host.length-1)
+  }
+  val index=host.indexOf("%")
+  if(index!=-1){
+    scopeid=host.substring(index)
+    host = host.substring(0,index)
+  }
   // If the input contains a :, it’s an IPv6 address.
   if (":" in host) {
     // If the input is encased in square braces "[...]", drop 'em.
@@ -41,7 +53,7 @@ fun String.toCanonicalHost(): String? {
       decodeIpv6(host, 0, host.length)
     }) ?: return null
     val address = inetAddress.address
-    if (address.size == 16) return inet6AddressToAscii(address)
+    if (address.size == 16) return inet6AddressToAscii(address)+scopeid
     if (address.size == 4) return inetAddress.hostAddress // An IPv4-mapped IPv6 address.
     throw AssertionError("Invalid IPv6 address: '$host'")
   }
