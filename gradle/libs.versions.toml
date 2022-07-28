@@ -32,7 +32,7 @@ conscrypt-android = { module = "org.conscrypt:conscrypt-android", version.ref = 
 conscrypt-openjdk = { module = "org.conscrypt:conscrypt-openjdk-uber", version.ref = "org-conscrypt" }
 eclipseOsgi = "org.eclipse.platform:org.eclipse.osgi:3.18.0"
 findbugs-jsr305 = "com.google.code.findbugs:jsr305:3.0.2"
-gradlePlugin-android = "com.android.tools.build:gradle:7.0.4"
+gradlePlugin-android = "com.android.tools.build:gradle:7.2.1"
 gradlePlugin-androidJunit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.8.2.1"
 gradlePlugin-animalsniffer = "ru.vyarus:gradle-animalsniffer-plugin:1.5.4"
 gradlePlugin-binaryCompatibilityValidator = "org.jetbrains.kotlinx.binary-compatibility-validator:org.jetbrains.kotlinx.binary-compatibility-validator.gradle.plugin:0.11.0"
