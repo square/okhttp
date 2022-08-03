@@ -39,7 +39,7 @@ gradlePlugin-binaryCompatibilityValidator = "org.jetbrains.kotlinx.binary-compat
 gradlePlugin-bnd = { module = "biz.aQute.bnd:biz.aQute.bnd.gradle", version.ref = "biz-aQute-bnd" }
 gradlePlugin-dokka = "org.jetbrains.dokka:dokka-gradle-plugin:1.6.21"
 gradlePlugin-errorprone = "net.ltgt.gradle:gradle-errorprone-plugin:2.0.2"
-gradlePlugin-graal = "gradle.plugin.com.palantir.graal:gradle-graal:0.12.0"
+gradlePlugin-graal = "com.palantir.graal:gradle-graal:0.12.0"
 gradlePlugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "org-jetbrains-kotlin" }
 gradlePlugin-mavenPublish = "com.vanniktech:gradle-maven-publish-plugin:0.20.0"
 gradlePlugin-shadow = "gradle.plugin.com.github.johnrengelman:shadow:7.1.2"
