@@ -335,11 +335,15 @@ jobs:
 
       - name: Build okcurl
         uses: gradle/gradle-build-action@v2
+        env:
+          USE_NATIVE_IMAGE_JAVA_PLATFORM_MODULE_SYSTEM: false
         with:
           arguments: okcurl:nativeImage
 
       - name: Build ConsoleLauncher
         uses: gradle/gradle-build-action@v2
+        env:
+          USE_NATIVE_IMAGE_JAVA_PLATFORM_MODULE_SYSTEM: false
         with:
           arguments: -PgraalBuild native-image-tests:nativeImage
 
