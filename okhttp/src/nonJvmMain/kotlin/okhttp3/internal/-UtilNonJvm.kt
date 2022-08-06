@@ -16,11 +16,4 @@
 
 package okhttp3.internal
 
-import kotlin.text.lowercase as kotlinLowerCase
-import kotlin.text.uppercase as kotlinUpperCase
-
 actual typealias HttpUrlRepresentation = String
-
-actual inline fun String.lowercase() = this.kotlinLowerCase()
-
-actual inline fun String.uppercase() = this.kotlinUpperCase()

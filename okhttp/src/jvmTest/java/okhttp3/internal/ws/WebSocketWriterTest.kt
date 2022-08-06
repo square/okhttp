@@ -17,7 +17,6 @@ package okhttp3.internal.ws
 
 import java.util.Random
 import okhttp3.TestUtil.repeat
-import okhttp3.internal.code
 import okhttp3.internal.format
 import okhttp3.internal.ws.WebSocketProtocol.OPCODE_BINARY
 import okhttp3.internal.ws.WebSocketProtocol.OPCODE_TEXT
