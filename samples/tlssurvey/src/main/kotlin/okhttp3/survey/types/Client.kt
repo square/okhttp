@@ -15,7 +15,13 @@
  */
 package okhttp3.survey.types
 
-data class Client(val userAgent: String, val version: String, val enabled: List<SuiteId> = listOf(), val disabled: List<SuiteId> = listOf()) {
+data class Client(
+  val userAgent: String,
+  val version: String,
+  val platform: String?,
+  val enabled: List<SuiteId> = listOf(),
+  val supported: List<SuiteId> = listOf()
+) {
   val nameAndVersion: String
     get() = "$userAgent/$version"
 }

@@ -22,18 +22,32 @@ import okhttp3.ConnectionSpec
 import okhttp3.OkHttp
 import okhttp3.survey.types.Client
 import okhttp3.survey.types.SuiteId
+import okio.FileSystem
+import okio.Path.Companion.toPath
 import org.conscrypt.Conscrypt
 
 fun currentOkHttp(ianaSuites: IanaSuites): Client {
-  val supportedSuites: MutableList<SuiteId> = ArrayList()
-  for (suite in ConnectionSpec.MODERN_TLS.cipherSuites!!) {
-    supportedSuites.add(ianaSuites.fromJavaName(suite.javaName))
+  val supportedSuites = buildList {
+    for (suite in ConnectionSpec.COMPATIBLE_TLS.cipherSuites!!) {
+      add(ianaSuites.fromJavaName(suite.javaName))
+    }
   }
-  val enabledSuites: MutableList<SuiteId> = ArrayList()
-  for (suite in ConnectionSpec.COMPATIBLE_TLS.cipherSuites!!) {
-    enabledSuites.add(ianaSuites.fromJavaName(suite.javaName))
+  val enabledSuites = buildList {
+    for (suite in ConnectionSpec.MODERN_TLS.cipherSuites!!) {
+      add(ianaSuites.fromJavaName(suite.javaName))
+    }
   }
-  return Client("OkHttp", OkHttp.VERSION, enabledSuites, supportedSuites)
+
+  return Client("OkHttp", OkHttp.VERSION, null, enabledSuites, supportedSuites)
+}
+
+fun historicOkHttp(version: String): Client {
+  val enabled = FileSystem.RESOURCES.read("okhttp_${version.replace(".", "_")}.txt".toPath()) {
+    this.readUtf8().lines().filter { it.isNotBlank() }.map {
+      SuiteId(null, it.trim())
+    }
+  }
+  return Client("OkHttp", version, null, enabled = enabled)
 }
 
 fun currentVm(ianaSuites: IanaSuites): Client {
@@ -49,15 +63,18 @@ fun systemDefault(name: String, version: String, ianaSuites: IanaSuites): Client
   return try {
     val socketFactory = SSLSocketFactory.getDefault() as SSLSocketFactory
     val sslSocket = socketFactory.createSocket() as SSLSocket
-    val supportedSuites: MutableList<SuiteId> = ArrayList()
-    for (suite in sslSocket.supportedCipherSuites) {
-      supportedSuites.add(ianaSuites.fromJavaName(suite))
+    val supportedSuites = buildList {
+      for (suite in sslSocket.supportedCipherSuites) {
+        add(ianaSuites.fromJavaName(suite))
+      }
     }
-    val enabledSuites: MutableList<SuiteId> = ArrayList()
-    for (suite in sslSocket.enabledCipherSuites) {
-      enabledSuites.add(ianaSuites.fromJavaName(suite))
+    val enabledSuites = buildList {
+      for (suite in sslSocket.enabledCipherSuites) {
+        add(ianaSuites.fromJavaName(suite))
+      }
     }
-    Client(name, version, enabledSuites, supportedSuites)
+
+    Client(name, version, null, enabledSuites, supportedSuites)
   } catch (e: IOException) {
     throw RuntimeException(e)
   }

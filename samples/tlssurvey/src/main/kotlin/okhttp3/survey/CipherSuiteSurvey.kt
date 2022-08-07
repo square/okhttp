@@ -168,24 +168,25 @@ class CipherSuiteSurvey(
   }
 
   fun printGoogleSheet() {
-    print("id")
-    print("\tname")
+    print("name")
     for (client in clients) {
       print("\t")
       print(client.nameAndVersion)
     }
     println()
     for (suiteId in RECORDS.keys) {
-      print("0x")
-      print(suiteId.id?.hex() ?: "-")
-      print("\t")
       print(suiteId.name)
       for (client in clients) {
         print("\t")
-        val index = client.enabled.indexOf(suiteId)
+        val index = client.enabled.indexOfFirst { it.matches(suiteId) }
         if (index != -1) {
-          print(index)
-        } else if (client.disabled.contains(suiteId)) {
+          print(index + 1)
+        } else if (client.supported.find { it.matches(suiteId) } != null) {
+          // Not currently supported, as since 3.9.x we filter to a list
+          // that is a subset of the platforms.
+          // The correct answer for developers who override ConnectionSpec,
+          // it would be the platform defaults, so look at Java and Android
+          // for the answers.
           print("□")
         }
       }
@@ -200,7 +201,7 @@ class CipherSuiteSurvey(
           println("Unexpected suite " + suiteId + " in " + client.nameAndVersion)
         }
       }
-      for (suiteId in client.disabled) {
+      for (suiteId in client.supported) {
         if (!RECORDS.containsKey(suiteId)) {
           println("Unexpected suite " + suiteId + " in " + client.nameAndVersion)
         }

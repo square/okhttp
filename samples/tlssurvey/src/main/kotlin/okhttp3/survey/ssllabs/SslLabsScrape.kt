@@ -41,7 +41,7 @@ class SslLabsScraper(
 
   suspend fun query(): List<Client> {
     return api.clients().map { userAgent ->
-      Client(userAgent.name, userAgent.version, enabled = userAgent.suiteNames.map { SuiteId(null, it) })
+      Client(userAgent.name, userAgent.version, userAgent.platform, enabled = userAgent.suiteNames.map { SuiteId(null, it) })
     }
   }
 }

@@ -31,7 +31,6 @@ suspend fun main() {
   val sslLabsScraper = SslLabsScraper(client)
 
   try {
-    val ianaSuitesOld = ianaSuitesJuly2019
     val ianaSuitesNew = fetchIanaSuites(client)
 
     val sslLabsClients = sslLabsScraper.query()
@@ -46,12 +45,30 @@ suspend fun main() {
     val firefox73 = sslLabsClients.first { it.userAgent == "Firefox" && it.version == "73" }
     val java7 = sslLabsClients.first { it.userAgent == "Java" && it.version == "7u25" }
     val java12 = sslLabsClients.first { it.userAgent == "Java" && it.version == "12.0.1" }
-    val edge18 = sslLabsClients.first { it.userAgent == "Edge" && it.version == "18" }
+    val safari12iOS = sslLabsClients.first { it.userAgent == "Safari" && it.platform == "iOS 12.3.1" }
+    val safari12Osx = sslLabsClients.first { it.userAgent == "Safari" && it.platform == "MacOS 10.14.6 Beta" }
+
+    val okhttp = currentOkHttp(ianaSuitesNew)
+
+    val okHttp_4_10 = historicOkHttp("4.10")
+    val okHttp_3_14 = historicOkHttp("3.14")
+    val okHttp_3_13 = historicOkHttp("3.13")
+    val okHttp_3_11 = historicOkHttp("3.11")
+    val okHttp_3_9 = historicOkHttp("3.9")
+
+    val conscrypt = conscrypt(ianaSuitesNew)
+
+    val currentVm = currentVm(ianaSuitesNew)
 
     val clients = listOf(
-      conscrypt(ianaSuitesNew),
-      currentVm(ianaSuitesNew),
-      currentOkHttp(ianaSuitesNew),
+      okhttp,
+      okHttp_3_9,
+      okHttp_3_11,
+      okHttp_3_13,
+      okHttp_3_14,
+      okHttp_4_10,
+      conscrypt,
+      currentVm,
       android5,
       android9,
       java7,
@@ -62,7 +79,8 @@ suspend fun main() {
       chrome33,
       chrome57,
       chrome80,
-      edge18,
+      safari12iOS,
+      safari12Osx
     )
 
     val survey = CipherSuiteSurvey(clients, ianaSuitesNew)
