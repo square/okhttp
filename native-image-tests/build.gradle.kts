@@ -57,7 +57,6 @@ graal {
   javaVersion("11")
 
   option("--no-fallback")
-  option("--allow-incomplete-classpath")
   option("--report-unsupported-elements-at-runtime")
   option("-H:+ReportExceptionStackTraces")
 }

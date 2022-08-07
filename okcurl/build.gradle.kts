@@ -50,7 +50,6 @@ graal {
   javaVersion("11")
 
   option("--no-fallback")
-  option("--allow-incomplete-classpath")
 
   if (Os.isFamily(Os.FAMILY_WINDOWS)) {
     // May be possible without, but autodetection is problematic on Windows 10
