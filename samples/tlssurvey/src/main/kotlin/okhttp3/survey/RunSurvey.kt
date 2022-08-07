@@ -20,6 +20,7 @@ import okhttp3.Cache
 import okhttp3.OkHttpClient
 import okhttp3.survey.ssllabs.SslLabsScraper
 import okhttp3.survey.types.Client
+import okhttp3.survey.types.SuiteId
 import okio.FileSystem
 import okio.Path.Companion.toPath
 import org.conscrypt.Conscrypt
@@ -91,7 +92,7 @@ suspend fun main() {
       safari12Osx
     )
 
-    val orderBy = okhttp.enabled + chrome80.enabled + safari12Osx.enabled + java12.enabled
+    val orderBy = okhttp.enabled + chrome80.enabled + safari12Osx.enabled + rest(clients)
     val survey = CipherSuiteSurvey(clients = clients, ianaSuites = ianaSuitesNew, orderBy = orderBy)
 
     survey.printGoogleSheet()
@@ -99,4 +100,9 @@ suspend fun main() {
     client.dispatcher.executorService.shutdown()
     client.connectionPool.evictAll()
   }
+}
+
+fun rest(clients: List<Client>): List<SuiteId> {
+  // combine all ciphers to get these near the top
+  return clients.flatMap { it.enabled }
 }
