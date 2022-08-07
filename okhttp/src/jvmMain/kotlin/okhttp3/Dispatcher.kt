@@ -15,9 +15,7 @@
  */
 package okhttp3
 
-import java.util.ArrayDeque
-import java.util.Collections
-import java.util.Deque
+import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.SynchronousQueue
 import java.util.concurrent.ThreadPoolExecutor
@@ -182,7 +180,16 @@ class Dispatcher() {
     // Avoid resubmitting if we can't logically progress
     // particularly because RealCall handles a RejectedExecutionException
     // by executing on the same thread.
-    if (!executorService.isShutdown) {
+    if (executorService.isShutdown) {
+      synchronized(this) {
+        for (i in 0 until executableCalls.size) {
+          val asyncCall = executableCalls[i]
+          asyncCall.callsPerHost.decrementAndGet()
+          runningAsyncCalls.remove(asyncCall)
+        }
+        idleCallback?.run()
+      }
+    } else {
       for (i in 0 until executableCalls.size) {
         val asyncCall = executableCalls[i]
         asyncCall.executeOn(executorService)
