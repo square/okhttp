@@ -15,14 +15,17 @@
  */
 package okhttp3.survey
 
+import java.security.Security
 import okhttp3.Cache
 import okhttp3.OkHttpClient
 import okhttp3.survey.ssllabs.SslLabsScraper
+import okhttp3.survey.types.Client
 import okio.FileSystem
 import okio.Path.Companion.toPath
+import org.conscrypt.Conscrypt
 
 suspend fun main() {
-//  Security.addProvider(Conscrypt.newProvider())
+  val includeConscrypt = false
 
   val client = OkHttpClient.Builder()
     .cache(Cache("build/okhttp_cache".toPath(), 100_000_000, FileSystem.SYSTEM))
@@ -56,12 +59,21 @@ suspend fun main() {
     val okHttp_3_11 = historicOkHttp("3.11")
     val okHttp_3_9 = historicOkHttp("3.9")
 
-    val conscrypt = conscrypt(ianaSuitesNew)
-
     val currentVm = currentVm(ianaSuitesNew)
+
+    val conscrypt = if (includeConscrypt) {
+      Security.addProvider(Conscrypt.newProvider())
+      conscrypt(ianaSuitesNew)
+    } else {
+      Client("Conscrypt", "Disabled", null, listOf())
+    }
 
     val clients = listOf(
       okhttp,
+      chrome80,
+      firefox73,
+      android9,
+      safari12iOS,
       okHttp_3_9,
       okHttp_3_11,
       okHttp_3_13,
@@ -70,32 +82,19 @@ suspend fun main() {
       conscrypt,
       currentVm,
       android5,
-      android9,
       java7,
       java12,
       firefox34,
       firefox53,
-      firefox73,
       chrome33,
       chrome57,
-      chrome80,
-      safari12iOS,
       safari12Osx
     )
 
-    val survey = CipherSuiteSurvey(clients, ianaSuitesNew)
+    val orderBy = okhttp.enabled + chrome80.enabled + safari12Osx.enabled + java12.enabled
+    val survey = CipherSuiteSurvey(clients = clients, ianaSuites = ianaSuitesNew, orderBy = orderBy)
 
-    // survey.showIanaDiff(ianaSuitesOld, ianaSuitesNew)
-    // println()
-
-//     survey.printWarnings()
-//     println()
-
-     survey.printGoogleSheet()
-     println()
-
-//    survey.printCipherSuiteKt()
-    println()
+    survey.printGoogleSheet()
   } finally {
     client.dispatcher.executorService.shutdown()
     client.connectionPool.evictAll()
