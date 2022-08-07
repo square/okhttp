@@ -60,7 +60,7 @@ internal class RecordingExecutor(
   }
 
   override fun isShutdown(): Boolean {
-    throw UnsupportedOperationException()
+    return shutdown
   }
 
   override fun isTerminated(): Boolean {
