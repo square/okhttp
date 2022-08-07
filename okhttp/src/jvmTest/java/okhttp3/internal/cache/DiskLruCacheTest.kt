@@ -41,7 +41,6 @@ import java.io.FileNotFoundException
 import java.io.IOException
 import java.util.ArrayDeque
 import java.util.NoSuchElementException
-import okhttp3.internal.code
 
 class FileSystemParamProvider: SimpleProvider() {
   override fun arguments() = listOf(

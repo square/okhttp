@@ -15,7 +15,7 @@
  *
  */
 
-@file:OptIn(ExperimentalCoroutinesApi::class, ExperimentalTime::class)
+@file:OptIn(ExperimentalCoroutinesApi::class)
 
 package okhttp3
 

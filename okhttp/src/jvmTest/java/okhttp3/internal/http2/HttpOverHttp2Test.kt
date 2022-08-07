@@ -65,7 +65,6 @@ import okhttp3.TestUtil.repeat
 import okhttp3.internal.DoubleInetAddressDns
 import okhttp3.internal.EMPTY_REQUEST
 import okhttp3.internal.RecordingOkAuthenticator
-import okhttp3.internal.code
 import okhttp3.internal.connection.RealConnection
 import okhttp3.internal.discard
 import okhttp3.testing.Flaky

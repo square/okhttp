@@ -21,7 +21,6 @@ import java.net.IDN
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
 import okhttp3.internal.and
-import okhttp3.internal.code
 import okhttp3.internal.platform.Platform
 import okio.GzipSource
 import okio.buffer

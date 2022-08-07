@@ -17,7 +17,6 @@ package okhttp3.tls.internal.der
 
 import java.math.BigInteger
 import java.net.ProtocolException
-import okhttp3.internal.code
 import okio.Buffer
 import okio.BufferedSource
 import okio.ByteString
