@@ -15,41 +15,53 @@
  */
 package okhttp3.survey
 
-import java.security.Security
+import okhttp3.Cache
 import okhttp3.OkHttpClient
+import okhttp3.survey.ssllabs.SslLabsScraper
 import okio.FileSystem
 import okio.Path.Companion.toPath
-import org.conscrypt.Conscrypt
 
 suspend fun main() {
-  Security.addProvider(Conscrypt.newProvider())
+//  Security.addProvider(Conscrypt.newProvider())
 
-  val client = OkHttpClient()
+  val client = OkHttpClient.Builder()
+    .cache(Cache("build/okhttp_cache".toPath(), 100_000_000, FileSystem.SYSTEM))
+    .build()
+
+  val sslLabsScraper = SslLabsScraper(client)
 
   try {
     val ianaSuitesOld = ianaSuitesJuly2019
     val ianaSuitesNew = fetchIanaSuites(client)
 
-    // TODO grab live config from
-    // https://ssl-config.mozilla.org/guidelines/5.6.json
+    val sslLabsClients = sslLabsScraper.query()
 
-    // TODO load old OkHttp versions
+    val android5 = sslLabsClients.first { it.userAgent == "Android" && it.version == "5.0.0" }
+    val android9 = sslLabsClients.first { it.userAgent == "Android" && it.version == "9.0" }
+    val chrome33 = sslLabsClients.first { it.userAgent == "Chrome" && it.version == "33" }
+    val chrome57 = sslLabsClients.first { it.userAgent == "Chrome" && it.version == "57" }
+    val chrome80 = sslLabsClients.first { it.userAgent == "Chrome" && it.version == "80" }
+    val firefox34 = sslLabsClients.first { it.userAgent == "Firefox" && it.version == "34" }
+    val firefox53 = sslLabsClients.first { it.userAgent == "Firefox" && it.version == "53" }
+    val firefox73 = sslLabsClients.first { it.userAgent == "Firefox" && it.version == "73" }
+    val java7 = sslLabsClients.first { it.userAgent == "Java" && it.version == "7u25" }
+    val java12 = sslLabsClients.first { it.userAgent == "Java" && it.version == "12.0.1" }
+    val edge18 = sslLabsClients.first { it.userAgent == "Edge" && it.version == "18" }
 
     val clients = listOf(
       conscrypt(ianaSuitesNew),
       currentVm(ianaSuitesNew),
       currentOkHttp(ianaSuitesNew),
-      firefox65, // existing
-      chrome64, // existing
-      chrome72, // existing
       android5,
       android9,
-      chrome65,
-      chrome70,
-      chrome80,
-      firefox72,
       java7,
       java12,
+      firefox34,
+      firefox53,
+      firefox73,
+      chrome33,
+      chrome57,
+      chrome80,
       edge18,
     )
 
@@ -57,14 +69,14 @@ suspend fun main() {
 
     // survey.showIanaDiff(ianaSuitesOld, ianaSuitesNew)
     // println()
-    //
-    // survey.printWarnings()
-    // println()
-    //
-    // survey.printGoogleSheet()
-    // println()
 
-    survey.printCipherSuiteKt()
+//     survey.printWarnings()
+//     println()
+
+     survey.printGoogleSheet()
+     println()
+
+//    survey.printCipherSuiteKt()
     println()
   } finally {
     client.dispatcher.executorService.shutdown()

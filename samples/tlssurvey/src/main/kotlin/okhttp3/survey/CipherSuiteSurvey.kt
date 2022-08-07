@@ -15,10 +15,12 @@
  */
 package okhttp3.survey
 
-import okio.ByteString
-import java.lang.IllegalArgumentException
 import java.util.regex.Pattern
 import okhttp3.CipherSuite
+import okhttp3.survey.types.Client
+import okhttp3.survey.types.Record
+import okhttp3.survey.types.SuiteId
+import okio.ByteString
 import okio.ByteString.Companion.decodeHex
 
 /**
@@ -170,12 +172,12 @@ class CipherSuiteSurvey(
     print("\tname")
     for (client in clients) {
       print("\t")
-      print(client.name)
+      print(client.nameAndVersion)
     }
     println()
     for (suiteId in RECORDS.keys) {
       print("0x")
-      print(suiteId.id.hex())
+      print(suiteId.id?.hex() ?: "-")
       print("\t")
       print(suiteId.name)
       for (client in clients) {
@@ -195,12 +197,12 @@ class CipherSuiteSurvey(
     for (client in clients) {
       for (suiteId in client.enabled) {
         if (!RECORDS.containsKey(suiteId)) {
-          println("Unexpected suite " + suiteId + " in " + client.name)
+          println("Unexpected suite " + suiteId + " in " + client.nameAndVersion)
         }
       }
       for (suiteId in client.disabled) {
         if (!RECORDS.containsKey(suiteId)) {
-          println("Unexpected suite " + suiteId + " in " + client.name)
+          println("Unexpected suite " + suiteId + " in " + client.nameAndVersion)
         }
       }
     }
@@ -220,7 +222,7 @@ class CipherSuiteSurvey(
       append(sanitiseStringName(suiteId.name))
       append("\", ")
       append("0x")
-      append(suiteId.id.hex())
+      append(suiteId.id!!.hex())
       append(")")
     }
   }

@@ -16,10 +16,12 @@
 package okhttp3.survey
 
 import java.io.IOException
-import java.security.Security
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import okhttp3.ConnectionSpec
+import okhttp3.OkHttp
+import okhttp3.survey.types.Client
+import okhttp3.survey.types.SuiteId
 import org.conscrypt.Conscrypt
 
 fun currentOkHttp(ianaSuites: IanaSuites): Client {
@@ -31,20 +33,19 @@ fun currentOkHttp(ianaSuites: IanaSuites): Client {
   for (suite in ConnectionSpec.COMPATIBLE_TLS.cipherSuites!!) {
     enabledSuites.add(ianaSuites.fromJavaName(suite.javaName))
   }
-  return Client("OkHttp", enabledSuites, supportedSuites)
+  return Client("OkHttp", OkHttp.VERSION, enabledSuites, supportedSuites)
 }
 
 fun currentVm(ianaSuites: IanaSuites): Client {
-  val name = System.getProperty("java.vm.name") + " " + System.getProperty("java.version")
-  return systemDefault(name, ianaSuites)
+  return systemDefault(System.getProperty("java.vm.name"), System.getProperty("java.version"), ianaSuites)
 }
 
 fun conscrypt(ianaSuites: IanaSuites): Client {
   val version = Conscrypt.version()
-  return systemDefault("Conscrypt " + version.major() + "." + version.minor(), ianaSuites)
+  return systemDefault("Conscrypt", "" + version.major() + "." + version.minor(), ianaSuites)
 }
 
-fun systemDefault(name: String, ianaSuites: IanaSuites): Client {
+fun systemDefault(name: String, version: String, ianaSuites: IanaSuites): Client {
   return try {
     val socketFactory = SSLSocketFactory.getDefault() as SSLSocketFactory
     val sslSocket = socketFactory.createSocket() as SSLSocket
@@ -56,7 +57,7 @@ fun systemDefault(name: String, ianaSuites: IanaSuites): Client {
     for (suite in sslSocket.enabledCipherSuites) {
       enabledSuites.add(ianaSuites.fromJavaName(suite))
     }
-    Client(name, enabledSuites, supportedSuites)
+    Client(name, version, enabledSuites, supportedSuites)
   } catch (e: IOException) {
     throw RuntimeException(e)
   }

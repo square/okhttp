@@ -15,12 +15,12 @@
  */
 package okhttp3.survey
 
-import java.lang.IllegalArgumentException
 import okhttp3.CipherSuite
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.executeAsync
+import okhttp3.survey.types.SuiteId
 import okio.ByteString
 import okio.ByteString.Companion.decodeHex
 import okio.IOException
