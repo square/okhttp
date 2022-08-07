@@ -4,12 +4,47 @@ import com.vanniktech.maven.publish.KotlinJvm
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
-  kotlin("jvm")
+  kotlin("multiplatform")
   kotlin("kapt")
   id("org.jetbrains.dokka")
   id("com.vanniktech.maven.publish.base")
   id("com.palantir.graal")
   id("com.github.johnrengelman.shadow")
+}
+
+kotlin {
+  jvm {
+    withJava()
+  }
+
+  sourceSets {
+    all {
+      languageSettings.optIn("kotlin.RequiresOptIn")
+    }
+
+    val jvmMain by getting {
+      kotlin.srcDir("$buildDir/generated/resources-templates")
+
+      dependencies {
+        api(projects.okhttp)
+        api(projects.loggingInterceptor)
+        api(libs.squareup.okio)
+        implementation("com.github.ajalt.clikt:clikt:3.5.0")
+        api(libs.guava.jre)
+      }
+    }
+
+    val jvmTest by getting {
+      dependencies {
+        dependsOn(jvmMain)
+        implementation(projects.okhttpTestingSupport)
+        api(libs.squareup.okio)
+        implementation(libs.kotlin.test.common)
+        implementation(libs.kotlin.test.annotations)
+        api(libs.assertk)
+      }
+    }
+  }
 }
 
 tasks.jar {
@@ -19,32 +54,12 @@ tasks.jar {
   }
 }
 
-// resources-templates.
-sourceSets {
-  main {
-    resources.srcDirs("$buildDir/generated/resources-templates")
-  }
-}
-
-dependencies {
-  api(projects.okhttp)
-  api(projects.loggingInterceptor)
-  implementation(libs.picocli)
-  implementation(libs.guava.jre)
-
-  kapt(libs.picocli.compiler)
-
-  testImplementation(projects.okhttpTestingSupport)
-  testImplementation(libs.junit.jupiter.api)
-  testImplementation(libs.assertj.core)
-}
-
 tasks.shadowJar {
   mergeServiceFiles()
 }
 
 graal {
-  mainClass("okhttp3.curl.Main")
+  mainClass("okhttp3.curl.MainKt")
   outputName("okcurl")
   graalVersion(libs.versions.graalvm.get())
   javaVersion("11")
@@ -70,5 +85,6 @@ tasks.register<Copy>("copyResourcesTemplates") {
   filteringCharset = Charsets.UTF_8.toString()
 }.let {
   tasks.processResources.dependsOn(it)
+  tasks.compileJava.dependsOn(it)
   tasks["javaSourcesJar"].dependsOn(it)
 }
