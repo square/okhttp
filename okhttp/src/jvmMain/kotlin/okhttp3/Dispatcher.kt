@@ -181,14 +181,17 @@ class Dispatcher() {
     // particularly because RealCall handles a RejectedExecutionException
     // by executing on the same thread.
     if (executorService.isShutdown) {
-      synchronized(this) {
         for (i in 0 until executableCalls.size) {
           val asyncCall = executableCalls[i]
           asyncCall.callsPerHost.decrementAndGet()
-          runningAsyncCalls.remove(asyncCall)
+
+          synchronized(this) {
+            runningAsyncCalls.remove(asyncCall)
+          }
+
+          asyncCall.failRejected()
         }
         idleCallback?.run()
-      }
     } else {
       for (i in 0 until executableCalls.size) {
         val asyncCall = executableCalls[i]

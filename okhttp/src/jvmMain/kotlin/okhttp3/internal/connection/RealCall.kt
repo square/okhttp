@@ -27,16 +27,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSocketFactory
-import okhttp3.Address
-import okhttp3.Call
-import okhttp3.Callback
-import okhttp3.CertificatePinner
-import okhttp3.EventListener
-import okhttp3.HttpUrl
-import okhttp3.Interceptor
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Response
+import okhttp3.*
 import okhttp3.internal.assertThreadDoesntHoldLock
 import okhttp3.internal.assertThreadHoldsLock
 import okhttp3.internal.cache.CacheInterceptor
@@ -514,15 +505,19 @@ class RealCall(
         executorService.execute(this)
         success = true
       } catch (e: RejectedExecutionException) {
-        val ioException = InterruptedIOException("executor rejected")
-        ioException.initCause(e)
-        noMoreExchanges(ioException)
-        responseCallback.onFailure(this@RealCall, ioException)
+        failRejected(e)
       } finally {
         if (!success) {
           client.dispatcher.finished(this) // This call is no longer running!
         }
       }
+    }
+
+    internal fun failRejected(e: RejectedExecutionException? = null) {
+      val ioException = InterruptedIOException("executor rejected")
+      ioException.initCause(e)
+      noMoreExchanges(ioException)
+      responseCallback.onFailure(this@RealCall, ioException)
     }
 
     override fun run() {
