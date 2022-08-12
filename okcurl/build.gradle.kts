@@ -13,19 +13,31 @@ plugins {
 }
 
 kotlin {
-  jvm {
-    withJava()
-  }
+  jvm()
 
   sourceSets {
     all {
       languageSettings.optIn("kotlin.RequiresOptIn")
     }
 
+    commonMain {
+      dependencies {
+        api(libs.kotlin.stdlib)
+      }
+    }
+
+    commonTest {
+      dependencies {
+        api(libs.kotlin.stdlib)
+        implementation(kotlin("test"))
+      }
+    }
+
     val jvmMain by getting {
       kotlin.srcDir("$buildDir/generated/resources-templates")
 
       dependencies {
+        api(libs.kotlin.stdlib)
         api(projects.okhttp)
         api(projects.loggingInterceptor)
         api(libs.squareup.okio)
@@ -36,12 +48,11 @@ kotlin {
 
     val jvmTest by getting {
       dependencies {
-        dependsOn(jvmMain)
+        api(libs.kotlin.stdlib)
         implementation(projects.okhttpTestingSupport)
         api(libs.squareup.okio)
-        implementation(libs.kotlin.test.common)
-        implementation(libs.kotlin.test.annotations)
         api(libs.assertk)
+        implementation(kotlin("test"))
       }
     }
   }
@@ -50,7 +61,7 @@ kotlin {
 tasks.jar {
   manifest {
     attributes("Automatic-Module-Name" to "okhttp3.curl")
-    attributes("Main-Class" to "okhttp3.curl.Main")
+    attributes("Main-Class" to "okhttp3.curl.MainCommandLineKt")
   }
 }
 
@@ -59,7 +70,7 @@ tasks.shadowJar {
 }
 
 graal {
-  mainClass("okhttp3.curl.MainKt")
+  mainClass("okhttp3.curl.MainCommandLineKt")
   outputName("okcurl")
   graalVersion(libs.versions.graalvm.get())
   javaVersion("11")
@@ -73,6 +84,17 @@ graal {
     windowsVsVarsPath("C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\\Auxiliary\\Build\\vcvars64.bat")
   }
 }
+
+val copyJvmJar = tasks.register<Copy>("copyJvmJar") {
+  val sourceFile = project.tasks.getByName("jvmJar").outputs.files.singleFile
+  val destinationFile = project.tasks.getByName("jar").outputs.files.singleFile
+  from(sourceFile)
+  into(destinationFile.parentFile)
+  rename (sourceFile.name, destinationFile.name)
+}
+
+tasks.getByName("copyJvmJar").dependsOn(tasks.getByName("jvmJar"))
+tasks.getByName("nativeImage").dependsOn(copyJvmJar)
 
 mavenPublishing {
   configure(KotlinJvm(javadocJar = JavadocJar.Dokka("dokkaGfm")))

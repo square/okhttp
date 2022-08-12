@@ -22,11 +22,10 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
 import assertk.assertions.startsWith
-//import kotlin.test.Test
-//import kotlin.test.fail
+import kotlin.test.Test
 
 class MainTest {
-//  @Test
+  @Test
   fun simple() {
     val request = fromArgs("http://example.com").createRequest()
     assertThat(request.method).isEqualTo("GET")
@@ -34,7 +33,7 @@ class MainTest {
     assertThat(request.body).isNull()
   }
 
-//  @Test
+  @Test
   @Throws(IOException::class) fun put() {
     val request = fromArgs("-X", "PUT", "-d", "foo", "http://example.com").createRequest()
     assertThat(request.method).isEqualTo("PUT")
@@ -42,7 +41,7 @@ class MainTest {
     assertThat(request.body!!.contentLength()).isEqualTo(3)
   }
 
-//  @Test
+  @Test
   fun dataPost() {
     val request = fromArgs("-d", "foo", "http://example.com").createRequest()
     val body = request.body
@@ -54,7 +53,7 @@ class MainTest {
     assertThat(bodyAsString(body)).isEqualTo("foo")
   }
 
-//  @Test
+  @Test
   fun dataPut() {
     val request = fromArgs("-d", "foo", "-X", "PUT", "http://example.com").createRequest()
     val body = request.body
@@ -66,7 +65,7 @@ class MainTest {
     assertThat(bodyAsString(body)).isEqualTo("foo")
   }
 
-//  @Test
+  @Test
   fun contentTypeHeader() {
     val request = fromArgs(
       "-d", "foo", "-H", "Content-Type: application/json",
@@ -80,7 +79,7 @@ class MainTest {
     assertThat(bodyAsString(body)).isEqualTo("foo")
   }
 
-//  @Test
+  @Test
   fun referer() {
     val request = fromArgs("-e", "foo", "http://example.com").createRequest()
     assertThat(request.method).isEqualTo("GET")
@@ -89,7 +88,7 @@ class MainTest {
     assertThat(request.body).isNull()
   }
 
-//  @Test
+  @Test
   fun userAgent() {
     val request = fromArgs("-A", "foo", "http://example.com").createRequest()
     assertThat(request.method).isEqualTo("GET")
@@ -98,13 +97,13 @@ class MainTest {
     assertThat(request.body).isNull()
   }
 
-//  @Test
+  @Test
   fun defaultUserAgent() {
     val request = fromArgs("http://example.com").createRequest()
     assertThat(request.header("User-Agent")!!).startsWith("okcurl/")
   }
 
-//  @Test
+  @Test
   fun headerSplitWithDate() {
     val request = fromArgs(
       "-H", "If-Modified-Since: Mon, 18 Aug 2014 15:16:06 GMT",

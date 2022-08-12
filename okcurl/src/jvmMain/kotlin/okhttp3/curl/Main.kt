@@ -16,42 +16,37 @@
 package okhttp3.curl
 
 import com.github.ajalt.clikt.core.CliktCommand
-import com.github.ajalt.clikt.core.UsageError
 import com.github.ajalt.clikt.parameters.arguments.argument
-import com.github.ajalt.clikt.parameters.options.*
+import com.github.ajalt.clikt.parameters.options.default
+import com.github.ajalt.clikt.parameters.options.flag
+import com.github.ajalt.clikt.parameters.options.multiple
+import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.int
-import java.io.IOException
 import java.security.cert.X509Certificate
 import java.util.*
 import java.util.concurrent.TimeUnit.SECONDS
-import java.util.logging.*
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
-import kotlin.system.exitProcess
-import okhttp3.MediaType
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.Call
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.curl.internal.commonCreateRequest
+import okhttp3.curl.internal.commonRun
 import okhttp3.curl.logging.LoggingUtil
-import okhttp3.internal.format
-import okhttp3.internal.http.StatusLine
-import okhttp3.internal.http2.Http2
 import okhttp3.internal.platform.Platform
 import okhttp3.logging.HttpLoggingInterceptor
 import okhttp3.logging.LoggingEventListener
-import okio.sink
 
-class Main : CliktCommand(name = NAME, help = "A curl for the next-generation web.") {
-  val method: String? by option("-X", "--request", help="Specify request command to use")
+actual class Main : CliktCommand(name = NAME, help = "A curl for the next-generation web.") {
+  actual val method: String? by option("-X", "--request", help="Specify request command to use")
 
-  val data: String? by option("-d", "--data", help="HTTP POST data")
+  actual val data: String? by option("-d", "--data", help="HTTP POST data")
 
-  val headers: List<String>? by option("-H", "--header", help="Custom header to pass to server").multiple()
+  actual val headers: List<String>? by option("-H", "--header", help="Custom header to pass to server").multiple()
 
-  val userAgent: String by option("-A", "--user-agent", help="User-Agent to send to server").default(NAME + "/" + versionString())
+  actual val userAgent: String by option("-A", "--user-agent", help="User-Agent to send to server").default(NAME + "/" + versionString())
 
   val connectTimeout: Int by option("--connect-timeout", help="Maximum time allowed for connection (seconds)").int().default(DEFAULT_TIMEOUT)
 
@@ -63,54 +58,29 @@ class Main : CliktCommand(name = NAME, help = "A curl for the next-generation we
 
   val allowInsecure: Boolean by option("-k", "--insecure", help="Allow connections to SSL sites without certs").flag()
 
-  val showHeaders: Boolean by option("-i", "--include", help="Include protocol headers in the output").flag()
+  actual val showHeaders: Boolean by option("-i", "--include", help="Include protocol headers in the output").flag()
 
   val showHttp2Frames: Boolean by option("--frames", help="Log HTTP/2 frames to STDERR").flag()
 
-  val referer: String? by option("-e", "--referer", help="Referer URL")
+  actual val referer: String? by option("-e", "--referer", help="Referer URL")
 
   val verbose: Boolean by option("-v", "--verbose", help="Makes $NAME verbose during the operation").flag()
 
   val sslDebug: Boolean by option(help="Output SSL Debug").flag()
 
-  val url: String? by argument(name = "url", help="Remote resource URL")
+  actual val url: String? by argument(name = "url", help="Remote resource URL")
 
-  private lateinit var client: OkHttpClient
+  actual var client: Call.Factory? = null
 
-  override fun run() {
+  actual override fun run() {
     LoggingUtil.configureLogging(debug = verbose, showHttp2Frames = showHttp2Frames, sslDebug = sslDebug)
 
-    client = createClient()
-    val request = createRequest()
-
-    try {
-      val response = client.newCall(request).execute()
-      if (showHeaders) {
-        println(StatusLine.get(response))
-        val headers = response.headers
-        for ((name, value) in headers) {
-          println("$name: $value")
-        }
-        println()
-      }
-
-      // Stream the response to the System.out as it is returned from the server.
-      val out = System.out.sink()
-      val source = response.body.source()
-      while (!source.exhausted()) {
-        out.write(source.buffer, source.buffer.size)
-        out.flush()
-      }
-
-      response.body.close()
-    } catch (e: IOException) {
-      e.printStackTrace()
-    } finally {
-      close()
-    }
+    commonRun()
   }
 
-  private fun createClient(): OkHttpClient {
+  actual fun createRequest(): Request = commonCreateRequest()
+
+  actual fun createClient(): Call.Factory {
     val builder = OkHttpClient.Builder()
     builder.followSslRedirects(followRedirects)
     if (connectTimeout != DEFAULT_TIMEOUT) {
@@ -135,54 +105,10 @@ class Main : CliktCommand(name = NAME, help = "A curl for the next-generation we
     return builder.build()
   }
 
-  fun createRequest(): Request {
-    val request = Request.Builder()
-
-    val requestMethod = method ?: if (data != null) "POST" else "GET"
-
-    val url = url ?: throw UsageError("No url provided")
-
-    request.url(url)
-
-    data?.let {
-      request.method(requestMethod, it.toRequestBody(mediaType()))
-    }
-
-    for (header in headers.orEmpty()) {
-      val parts = header.split(':', limit = 2)
-      if (!isSpecialHeader(parts[0])) {
-        request.header(parts[0], parts[1])
-      }
-    }
-    referer?.let {
-      request.header("Referer", it)
-    }
-    request.header("User-Agent", userAgent)
-
-    return request.build()
-  }
-
-  private fun isSpecialHeader(s: String): Boolean {
-    return s.equals("Content-Type", ignoreCase = true)
-  }
-
-  private fun mediaType(): MediaType? {
-    val mimeType = headers?.let {
-      for (header in it) {
-        val parts = header.split(':', limit = 2)
-        if ("Content-Type".equals(parts[0], ignoreCase = true)) {
-          return@let parts[1].trim()
-        }
-      }
-      return@let null
-    } ?: "application/x-www-form-urlencoded"
-
-    return mimeType.toMediaTypeOrNull()
-  }
-
-  private fun close() {
-    client.connectionPool.evictAll() // Close any persistent connections.
-    client.dispatcher.executorService.shutdownNow()
+  actual fun close() {
+    val okHttpClient = client as OkHttpClient
+    okHttpClient.connectionPool.evictAll() // Close any persistent connections.
+    okHttpClient.dispatcher.executorService.shutdownNow()
   }
 
   companion object {
@@ -213,9 +139,4 @@ class Main : CliktCommand(name = NAME, help = "A curl for the next-generation we
     private fun createInsecureHostnameVerifier(): HostnameVerifier =
         HostnameVerifier { _, _ -> true }
   }
-}
-
-fun main(args: Array<String>) {
-  Main().main(args)
-  exitProcess(0)
 }
