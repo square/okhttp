@@ -23,15 +23,21 @@ import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import okhttp3.tls.internal.TlsUtil.localhost
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.fail
 
-class InsecureForHostTest(
-  val server: MockWebServer
-) {
+class InsecureForHostTest {
   @RegisterExtension @JvmField val platform = PlatformRule()
   @RegisterExtension @JvmField val clientTestRule = OkHttpClientTestRule()
+
+  private lateinit var server: MockWebServer
+
+  @BeforeEach
+  fun setup(server: MockWebServer) {
+    this.server = server
+  }
 
   @Test fun `untrusted host in insecureHosts connects successfully`() {
     val serverCertificates = localhost()

@@ -110,7 +110,7 @@ open class CallTest {
   val testLogHandler = TestLogHandler(OkHttpClient::class.java)
 
   private lateinit var server: MockWebServer
-  private lateinit var  server2: MockWebServer
+  private lateinit var server2: MockWebServer
 
   private var listener = RecordingEventListener()
   private val handshakeCertificates = localhost()
@@ -129,7 +129,7 @@ open class CallTest {
     @MockWebServerInstance("server2") server2: MockWebServer
   ) {
     this.server = server
-    this.server2 = server
+    this.server2 = server2
 
     platform.assumeNotOpenJSSE()
     platform.assumeNotBouncyCastle()
