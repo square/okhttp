@@ -15,7 +15,9 @@
  */
 package okhttp3
 
-import java.util.*
+import java.util.ArrayDeque
+import java.util.Collections
+import java.util.Deque
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.SynchronousQueue
 import java.util.concurrent.ThreadPoolExecutor

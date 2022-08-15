@@ -27,7 +27,16 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSocketFactory
-import okhttp3.*
+import okhttp3.Address
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.CertificatePinner
+import okhttp3.EventListener
+import okhttp3.HttpUrl
+import okhttp3.Interceptor
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
 import okhttp3.internal.assertThreadDoesntHoldLock
 import okhttp3.internal.assertThreadHoldsLock
 import okhttp3.internal.cache.CacheInterceptor

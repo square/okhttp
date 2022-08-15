@@ -16,11 +16,12 @@
 package okhttp3
 
 import java.io.IOException
+import mockwebserver3.MockWebServer
 import org.junit.jupiter.api.Test
 
 class DispatcherCleanupTest {
   @Test
-  fun testFinish() {
+  fun testFinish(server: MockWebServer) {
     val okhttp = OkHttpClient()
     val callback = object : Callback {
       override fun onFailure(call: Call, e: IOException) {}
@@ -29,7 +30,7 @@ class DispatcherCleanupTest {
       }
     }
     repeat(10_000) {
-      okhttp.newCall(Request.Builder().url("https://example.com").build()).enqueue(callback)
+      okhttp.newCall(Request.Builder().url(server.url("/")).build()).enqueue(callback)
     }
     okhttp.dispatcher.executorService.shutdown()
   }
