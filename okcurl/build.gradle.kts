@@ -41,7 +41,7 @@ kotlin {
         api(projects.okhttp)
         api(projects.loggingInterceptor)
         api(libs.squareup.okio)
-        implementation("com.github.ajalt.clikt:clikt:3.5.0")
+        implementation(libs.clikt)
         api(libs.guava.jre)
       }
     }
@@ -65,7 +65,7 @@ kotlin {
         implementation(projects.okhttp)
         implementation(projects.loggingInterceptor)
         implementation(libs.squareup.okio)
-        implementation("com.github.ajalt.clikt:clikt:3.5.0")
+        implementation(libs.clikt)
         implementation(libs.guava.jre)
       }
     }
