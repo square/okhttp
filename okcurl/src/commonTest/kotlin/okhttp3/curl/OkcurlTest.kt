@@ -20,7 +20,6 @@ import kotlin.test.Test
 class OkcurlTest {
   @Test
   fun simple() {
-//    Main().main(listOf("--help"))
-    Main().main(listOf("https://www.twitter.com/robots.txt"))
+    Main().main(listOf("--help"))
   }
 }
