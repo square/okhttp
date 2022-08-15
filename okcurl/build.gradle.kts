@@ -99,6 +99,8 @@ graal {
   }
 }
 
+// Workaround for https://github.com/palantir/gradle-graal/issues/129
+// Copy the jvmJar output into the normal jar location
 val copyJvmJar = tasks.register<Copy>("copyJvmJar") {
   val sourceFile = project.tasks.getByName("jvmJar").outputs.files.singleFile
   val destinationFile = project.tasks.getByName("jar").outputs.files.singleFile
@@ -106,7 +108,6 @@ val copyJvmJar = tasks.register<Copy>("copyJvmJar") {
   into(destinationFile.parentFile)
   rename (sourceFile.name, destinationFile.name)
 }
-
 tasks.getByName("copyJvmJar").dependsOn(tasks.getByName("jvmJar"))
 tasks.getByName("nativeImage").dependsOn(copyJvmJar)
 
