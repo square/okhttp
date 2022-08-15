@@ -18,26 +18,31 @@ package okhttp3.curl
 import java.io.IOException
 import okhttp3.RequestBody
 import okio.Buffer
-import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Test
-import picocli.CommandLine
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNull
+import assertk.assertions.startsWith
+import kotlin.test.Test
 
 class MainTest {
-  @Test fun simple() {
+  @Test
+  fun simple() {
     val request = fromArgs("http://example.com").createRequest()
     assertThat(request.method).isEqualTo("GET")
     assertThat(request.url.toString()).isEqualTo("http://example.com/")
     assertThat(request.body).isNull()
   }
 
-  @Test @Throws(IOException::class) fun put() {
+  @Test
+  @Throws(IOException::class) fun put() {
     val request = fromArgs("-X", "PUT", "-d", "foo", "http://example.com").createRequest()
     assertThat(request.method).isEqualTo("PUT")
     assertThat(request.url.toString()).isEqualTo("http://example.com/")
     assertThat(request.body!!.contentLength()).isEqualTo(3)
   }
 
-  @Test fun dataPost() {
+  @Test
+  fun dataPost() {
     val request = fromArgs("-d", "foo", "http://example.com").createRequest()
     val body = request.body
     assertThat(request.method).isEqualTo("POST")
@@ -48,7 +53,8 @@ class MainTest {
     assertThat(bodyAsString(body)).isEqualTo("foo")
   }
 
-  @Test fun dataPut() {
+  @Test
+  fun dataPut() {
     val request = fromArgs("-d", "foo", "-X", "PUT", "http://example.com").createRequest()
     val body = request.body
     assertThat(request.method).isEqualTo("PUT")
@@ -59,7 +65,8 @@ class MainTest {
     assertThat(bodyAsString(body)).isEqualTo("foo")
   }
 
-  @Test fun contentTypeHeader() {
+  @Test
+  fun contentTypeHeader() {
     val request = fromArgs(
       "-d", "foo", "-H", "Content-Type: application/json",
       "http://example.com"
@@ -72,7 +79,8 @@ class MainTest {
     assertThat(bodyAsString(body)).isEqualTo("foo")
   }
 
-  @Test fun referer() {
+  @Test
+  fun referer() {
     val request = fromArgs("-e", "foo", "http://example.com").createRequest()
     assertThat(request.method).isEqualTo("GET")
     assertThat(request.url.toString()).isEqualTo("http://example.com/")
@@ -80,7 +88,8 @@ class MainTest {
     assertThat(request.body).isNull()
   }
 
-  @Test fun userAgent() {
+  @Test
+  fun userAgent() {
     val request = fromArgs("-A", "foo", "http://example.com").createRequest()
     assertThat(request.method).isEqualTo("GET")
     assertThat(request.url.toString()).isEqualTo("http://example.com/")
@@ -88,12 +97,14 @@ class MainTest {
     assertThat(request.body).isNull()
   }
 
-  @Test fun defaultUserAgent() {
+  @Test
+  fun defaultUserAgent() {
     val request = fromArgs("http://example.com").createRequest()
-    assertThat(request.header("User-Agent")).startsWith("okcurl/")
+    assertThat(request.header("User-Agent")!!).startsWith("okcurl/")
   }
 
-  @Test fun headerSplitWithDate() {
+  @Test
+  fun headerSplitWithDate() {
     val request = fromArgs(
       "-H", "If-Modified-Since: Mon, 18 Aug 2014 15:16:06 GMT",
       "http://example.com"
@@ -104,8 +115,10 @@ class MainTest {
   }
 
   companion object {
-    fun fromArgs(vararg args: String?): Main {
-      return CommandLine.populateCommand(Main(), *args)
+    fun fromArgs(vararg args: String): Main {
+      return Main().apply {
+        parse(args.toList())
+      }
     }
 
     private fun bodyAsString(body: RequestBody?): String {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Square, Inc.
+ * Copyright (C) 2014 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,32 @@
  */
 package okhttp3.curl
 
-fun main() {
-  Main.main(arrayOf("https://www.google.com/robots.txt"))
+import com.github.ajalt.clikt.core.CliktCommand
+import okhttp3.Call
+import okhttp3.Request
+
+expect class Main() : CliktCommand {
+  val method: String?
+
+  val data: String?
+
+  val url: String?
+
+  val referer: String?
+
+  val headers: List<String>?
+
+  val showHeaders: Boolean
+
+  val userAgent: String
+
+  var client: Call.Factory?
+
+  override fun run()
+
+  fun createClient(): Call.Factory
+
+  fun createRequest(): Request
+
+  internal fun close()
 }
