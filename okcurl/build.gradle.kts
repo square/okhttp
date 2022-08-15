@@ -55,6 +55,20 @@ kotlin {
         implementation(kotlin("test"))
       }
     }
+
+    // Workaround for https://github.com/palantir/gradle-graal/issues/129
+    // Add a second configuration to populate
+    // runtimeClasspath vs jvmRuntimeClasspath
+    val main by register("main") {
+      dependencies {
+        implementation(libs.kotlin.stdlib)
+        implementation(projects.okhttp)
+        implementation(projects.loggingInterceptor)
+        implementation(libs.squareup.okio)
+        implementation("com.github.ajalt.clikt:clikt:3.5.0")
+        implementation(libs.guava.jre)
+      }
+    }
   }
 }
 
