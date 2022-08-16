@@ -33,9 +33,7 @@ import org.junit.jupiter.api.extension.RegisterExtension
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 
-class JSSETest(
-  val server: MockWebServer
-) {
+class JSSETest {
   @JvmField @RegisterExtension var platform = PlatformRule()
   @JvmField @RegisterExtension val clientTestRule = OkHttpClientTestRule()
 
@@ -43,8 +41,12 @@ class JSSETest(
 
   var client = clientTestRule.newClient()
 
+  private lateinit var server: MockWebServer
+
   @BeforeEach
-  fun setUp() {
+  fun setUp(server: MockWebServer) {
+    this.server = server
+
     // Default after JDK 14, but we are avoiding tests that assume special setup.
     // System.setProperty("jdk.tls.client.enableSessionTicketExtension", "true")
     // System.setProperty("jdk.tls.server.enableSessionTicketExtension", "true")

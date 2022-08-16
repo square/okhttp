@@ -39,9 +39,7 @@ import java.util.concurrent.TimeUnit
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSession
 
-class CacheCorruptionTest(
-  var server: MockWebServer
-) {
+class CacheCorruptionTest {
   var fileSystem = FakeFileSystem()
 
   @JvmField
@@ -57,9 +55,12 @@ class CacheCorruptionTest(
   private lateinit var cache: Cache
   private val NULL_HOSTNAME_VERIFIER = HostnameVerifier { _: String?, _: SSLSession? -> true }
   private val cookieManager = CookieManager()
+  private lateinit var server: MockWebServer
 
   @BeforeEach
-  fun setUp() {
+  fun setUp(server: MockWebServer) {
+    this.server = server
+
     platform.assumeNotOpenJSSE()
     platform.assumeNotBouncyCastle()
     server.protocolNegotiationEnabled = false

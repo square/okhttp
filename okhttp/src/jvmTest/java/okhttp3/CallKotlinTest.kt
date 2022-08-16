@@ -43,9 +43,7 @@ import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.fail
 
 @Timeout(30)
-class CallKotlinTest(
-  val server: MockWebServer
-) {
+class CallKotlinTest {
   @JvmField @RegisterExtension val platform = PlatformRule()
   @JvmField @RegisterExtension val clientTestRule = OkHttpClientTestRule().apply {
     recordFrames = true
@@ -54,9 +52,11 @@ class CallKotlinTest(
 
   private var client = clientTestRule.newClient()
   private val handshakeCertificates = localhost()
+  private lateinit var server: MockWebServer
 
   @BeforeEach
-  fun setup() {
+  fun setUp(server: MockWebServer) {
+    this.server = server
     platform.assumeNotBouncyCastle()
   }
 
