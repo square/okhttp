@@ -36,7 +36,7 @@ cd $DIR
 
 # mkdocs doesn't correctly handle the .md paths in package-list, so post-process.
 # See https://github.com/square/okhttp/issues/7338
-find docs/4.x -name package-list -exec sed -i '' -e s/index.md$// -e s/\.md$/\\//g {} \;
+find docs/4.x -name package-list -exec sed -i '' -e 's/index.md$/index.html/' -e 's/\.md$/\.html/' -e '1 s/gfm/html/' -e '2 s/md/html/' {} \;
 
 # Dokka filenames like `-http-url/index.md` don't work well with MkDocs <title> tags.
 # Assign metadata to the file's first Markdown heading.
