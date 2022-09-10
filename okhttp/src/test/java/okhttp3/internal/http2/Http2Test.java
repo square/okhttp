@@ -646,6 +646,39 @@ public final class Http2Test {
     });
   }
 
+  @Test public void ignoresEarlyHints() throws IOException {
+    final List<Header> earlyHintsHeaders = headerEntries(
+            ":status", "103",
+            "link", "link: </images/progress.svg>; rel=preload\", \"link: </images/icons/server.svg>; rel=preload\", \"link: </images/icons/arrow.svg>; rel=preload"
+    );
+
+    Buffer earlyHintsBytes = literalHeaders(earlyHintsHeaders);
+    writeMedium(frame, (int) earlyHintsBytes.size());
+    frame.writeByte(Http2.TYPE_HEADERS);
+    frame.writeByte(FLAG_END_HEADERS);
+    frame.writeInt(expectedStreamId & 0x7fffffff);
+    frame.writeAll(earlyHintsBytes);
+
+    final List<Header> sentHeaders = headerEntries(
+            ":status", "200",
+            "name", "value"
+    );
+
+    Buffer headerBytes = literalHeaders(sentHeaders);
+    writeMedium(frame, (int) headerBytes.size());
+    frame.writeByte(Http2.TYPE_HEADERS);
+    frame.writeByte(FLAG_END_HEADERS | FLAG_END_STREAM);
+    frame.writeInt(expectedStreamId & 0x7fffffff);
+    frame.writeAll(headerBytes);
+
+    assertThat(reader.nextFrame(false, new BaseTestHandler() {
+      @Override
+      public void headers(boolean inFinished, int streamId, int associatedStreamId, List<Header> headerBlock) {
+        assertThat(headerBlock).isEqualTo(sentHeaders);
+      }
+    })).isEqualTo(true);
+  }
+
   @Test public void frameSizeError() throws IOException {
     Http2Writer writer = new Http2Writer(new Buffer(), true);
 

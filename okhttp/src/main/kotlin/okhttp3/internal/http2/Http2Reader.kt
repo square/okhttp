@@ -46,6 +46,7 @@ import okhttp3.internal.readMedium
 import okio.Buffer
 import okio.BufferedSource
 import okio.ByteString
+import okio.ByteString.Companion.encodeUtf8
 import okio.Source
 import okio.Timeout
 
@@ -65,7 +66,6 @@ class Http2Reader(
       source = continuation,
       headerTableSizeSetting = 4096
   )
-  private const val EARLY_HINTS_CODE = "103"
   @Throws(IOException::class)
   fun readConnectionPreface(handler: Handler) {
     if (client) {
@@ -147,10 +147,13 @@ class Http2Reader(
     val headerBlock = readHeaderBlock(headerBlockLength, padding, flags, streamId)
 
     // Ignore early hints
-	  if (!(headerBlockLength != 0 && headerBlock[0].value.equals(EARLY_HINTS_CODE))) {
+	  if (!(isEarlyHint(headerBlockLength, headerBlock))) {
 		  handler.headers(endStream, streamId, -1, headerBlock)
 	  }
   }
+
+  private fun isEarlyHint(headerBlockLength: Int, headerBlock: List<Header>) =
+    headerBlockLength != 0 && headerBlock[0].value == EARLY_HINTS_CODE && headerBlock[0].name == STATUS
 
   @Throws(IOException::class)
   private fun readHeaderBlock(length: Int, padding: Int, flags: Int, streamId: Int): List<Header> {
@@ -497,6 +500,9 @@ class Http2Reader(
 
   companion object {
     val logger: Logger = Logger.getLogger(Http2::class.java.name)
+
+    private val EARLY_HINTS_CODE = "103".encodeUtf8()
+    private val STATUS = ":status".encodeUtf8()
 
     @Throws(IOException::class)
     fun lengthWithoutPadding(length: Int, flags: Int, padding: Int): Int {
