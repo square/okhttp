@@ -61,5 +61,5 @@ dependencies {
 }
 
 mavenPublishing {
-  configure(com.vanniktech.maven.publish.AndroidSingleVariantLibrary())
+  configure(com.vanniktech.maven.publish.AndroidSingleVariantLibrary(publishJavadocJar=false))
 }
