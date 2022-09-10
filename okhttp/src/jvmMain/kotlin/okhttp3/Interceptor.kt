@@ -100,5 +100,12 @@ fun interface Interceptor {
     fun writeTimeoutMillis(): Int
 
     fun withWriteTimeout(timeout: Int, unit: TimeUnit): Chain
+
+    /**
+     * Add an EventListener to the Call instance, that will receive all
+     * subsequent events. The chain is not mutated, since the Call is shared
+     * when copying a Chain.
+     */
+    fun withEventListener(eventListener: EventListener): Chain
   }
 }

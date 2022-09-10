@@ -759,6 +759,75 @@ public final class InterceptorTest {
     }
   }
 
+  @Test
+  public void interceptorCanAddEventListener() throws Exception {
+    RecordingEventListener clientEventListener = new RecordingEventListener();
+    RecordingEventListener applicationEventListener = new RecordingEventListener(false);
+    RecordingEventListener networkEventListener = new RecordingEventListener(false);
+
+    client = client.newBuilder()
+      .eventListener(clientEventListener)
+      .addInterceptor(chain ->
+        chain.withEventListener(applicationEventListener).proceed(chain.request())
+      )
+      .addNetworkInterceptor(chain ->
+        chain.withEventListener(networkEventListener).proceed(chain.request())
+      )
+      .build();
+
+    server.enqueue(new MockResponse()
+      .setBody("abc")
+      .throttleBody(1, 1, TimeUnit.SECONDS));
+
+    Request request1 = new Request.Builder().url(server.url("/")).build();
+    Call call = client.newCall(request1);
+
+    call.execute().body().string();
+
+    assertThat(clientEventListener.recordedEventTypes()).containsExactly(
+      "CallStart",
+      "ProxySelectStart",
+      "ProxySelectEnd",
+      "DnsStart",
+      "DnsEnd",
+      "ConnectStart",
+      "ConnectEnd",
+      "ConnectionAcquired",
+      "RequestHeadersStart",
+      "RequestHeadersEnd",
+      "ResponseHeadersStart",
+      "ResponseHeadersEnd",
+      "ResponseBodyStart",
+      "ResponseBodyEnd",
+      "ConnectionReleased",
+      "CallEnd");
+    assertThat(applicationEventListener.recordedEventTypes()).containsExactly(
+      "ProxySelectStart",
+      "ProxySelectEnd",
+      "DnsStart",
+      "DnsEnd",
+      "ConnectStart",
+      "ConnectEnd",
+      "ConnectionAcquired",
+      "RequestHeadersStart",
+      "RequestHeadersEnd",
+      "ResponseHeadersStart",
+      "ResponseHeadersEnd",
+      "ResponseBodyStart",
+      "ResponseBodyEnd",
+      "ConnectionReleased",
+      "CallEnd");
+    assertThat(networkEventListener.recordedEventTypes()).containsExactly(
+      "RequestHeadersStart",
+      "RequestHeadersEnd",
+      "ResponseHeadersStart",
+      "ResponseHeadersEnd",
+      "ResponseBodyStart",
+      "ResponseBodyEnd",
+      "ConnectionReleased",
+      "CallEnd");
+  }
+
   @Test public void chainWithWriteTimeout() throws Exception {
     Interceptor interceptor1 = chainA -> {
       assertThat(chainA.writeTimeoutMillis()).isEqualTo(5000);

@@ -55,7 +55,9 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.data.Offset
 import org.junit.jupiter.api.Assertions.assertTrue
 
-open class RecordingEventListener : EventListener() {
+open class RecordingEventListener(
+  private val enforceOrder: Boolean = true
+) : EventListener() {
   val eventSequence: Deque<CallEvent> = ConcurrentLinkedDeque()
 
   private val forbiddenLocks = mutableListOf<Any>()
@@ -133,7 +135,7 @@ open class RecordingEventListener : EventListener() {
     }
 
     val startEvent = e.closes(-1L)
-    if (startEvent != null) {
+    if (enforceOrder && startEvent != null) {
       assertTrue(eventSequence.any { it == e.closes(it.timestampNs) })
     }
 

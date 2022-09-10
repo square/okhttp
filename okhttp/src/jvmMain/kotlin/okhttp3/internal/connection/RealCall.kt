@@ -67,7 +67,7 @@ class RealCall(
 ) : Call, Cloneable {
   private val connectionPool: RealConnectionPool = client.connectionPool.delegate
 
-  internal val eventListener: EventListener = client.eventListenerFactory.create(this)
+  internal val eventListener: EventListenerList = EventListenerList(client.eventListenerFactory.create(this))
 
   private val timeout = object : AsyncTimeout() {
     override fun timedOut() {

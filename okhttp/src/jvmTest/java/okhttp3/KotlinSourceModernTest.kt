@@ -1189,6 +1189,7 @@ class KotlinSourceModernTest {
       override fun withReadTimeout(timeout: Int, unit: TimeUnit): Interceptor.Chain = TODO()
       override fun writeTimeoutMillis(): Int = TODO()
       override fun withWriteTimeout(timeout: Int, unit: TimeUnit): Interceptor.Chain = TODO()
+      override fun withEventListener(eventListener: EventListener): Interceptor.Chain = TODO()
     }
   }
 }
