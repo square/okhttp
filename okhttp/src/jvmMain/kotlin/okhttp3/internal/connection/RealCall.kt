@@ -31,7 +31,6 @@ import okhttp3.Address
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.CertificatePinner
-import okhttp3.EventListener
 import okhttp3.HttpUrl
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
