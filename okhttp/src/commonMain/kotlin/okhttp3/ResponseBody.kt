@@ -98,8 +98,6 @@ expect abstract class ResponseBody constructor() : Closeable {
    */
   abstract fun contentLength(): Long
 
-  abstract fun source(): BufferedSource
-
   /**
    * Returns the response as a byte array.
    *
