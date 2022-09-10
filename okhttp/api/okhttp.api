@@ -752,6 +752,7 @@ public abstract interface class okhttp3/Interceptor$Chain {
 	public abstract fun readTimeoutMillis ()I
 	public abstract fun request ()Lokhttp3/Request;
 	public abstract fun withConnectTimeout (ILjava/util/concurrent/TimeUnit;)Lokhttp3/Interceptor$Chain;
+	public abstract fun withEventListener (Lokhttp3/EventListener;)Lokhttp3/Interceptor$Chain;
 	public abstract fun withReadTimeout (ILjava/util/concurrent/TimeUnit;)Lokhttp3/Interceptor$Chain;
 	public abstract fun withWriteTimeout (ILjava/util/concurrent/TimeUnit;)Lokhttp3/Interceptor$Chain;
 	public abstract fun writeTimeoutMillis ()I
