@@ -55,11 +55,11 @@ fun ConnectionSpec.effectiveCipherSuites(socketEnabledCipherSuites: Array<String
     // 3 options here for ordering
     // 1) Legacy Platform - based on the Platform/Provider existing ordering in
     // sslSocket.enabledCipherSuites
-    // 2) OkHttp Client - based on MODERN_CIPHER_SUITES source code ordering
+    // 2) OkHttp Client - based on MODERN_TLS source code ordering
     // 3) Caller specified but assuming the visible defaults in MODERN_CIPHER_SUITES are rejigged
     // to match legacy i.e. the platform/provider
     //
-    // Opting for 3 here and in MODERN_CIPHER_SUITES via platformOrdered
+    // Opting for 2 here and keeping MODERN_TLS in line with secure browsers.
     cipherSuitesAsString.intersect(socketEnabledCipherSuites, CipherSuite.ORDER_BY_NAME)
   } else {
     socketEnabledCipherSuites
