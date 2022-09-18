@@ -29,185 +29,198 @@ import okhttp3.Request
 import okhttp3.Response
 
 internal class EventListenerList(
-  vararg initialCalls: EventListener
+  var existingListener: EventListener
 ) : EventListener() {
-  private val listeners = initialCalls.toMutableList()
+  private var additionalListeners: MutableList<EventListener>? = null
+
+  inline fun forEachListener(fn: EventListener.() -> Unit) {
+    existingListener.fn()
+    synchronized(this) {
+      additionalListeners?.forEach(fn)
+    }
+  }
 
   override fun callStart(call: Call) {
-    listeners.forEach {
-      it.callStart(call)
+    forEachListener {
+      callStart(call)
     }
   }
 
   override fun proxySelectStart(call: Call, url: HttpUrl) {
-    listeners.forEach {
-      it.proxySelectStart(call, url)
+    forEachListener {
+      proxySelectStart(call, url)
     }
   }
 
   override fun proxySelectEnd(call: Call, url: HttpUrl, proxies: List<Proxy>) {
-    listeners.forEach {
-      it.proxySelectEnd(call, url, proxies)
+    forEachListener {
+      proxySelectEnd(call, url, proxies)
     }
   }
 
   override fun dnsStart(call: Call, domainName: String) {
-    listeners.forEach {
-      it.dnsStart(call, domainName)
+    forEachListener {
+      dnsStart(call, domainName)
     }
   }
 
   override fun dnsEnd(call: Call, domainName: String, inetAddressList: List<InetAddress>) {
-    listeners.forEach {
-      it.dnsEnd(call, domainName, inetAddressList)
+    forEachListener {
+      dnsEnd(call, domainName, inetAddressList)
     }
   }
 
   override fun connectStart(call: Call, inetSocketAddress: InetSocketAddress, proxy: Proxy) {
-    listeners.forEach {
-      it.connectStart(call, inetSocketAddress, proxy)
+    forEachListener {
+      connectStart(call, inetSocketAddress, proxy)
     }
   }
 
   override fun secureConnectStart(call: Call) {
-    listeners.forEach {
-      it.secureConnectStart(call)
+    forEachListener {
+      secureConnectStart(call)
     }
   }
 
   override fun secureConnectEnd(call: Call, handshake: Handshake?) {
-    listeners.forEach {
-      it.secureConnectEnd(call, handshake)
+    forEachListener {
+      secureConnectEnd(call, handshake)
     }
   }
 
   override fun connectEnd(call: Call, inetSocketAddress: InetSocketAddress, proxy: Proxy, protocol: Protocol?) {
-    listeners.forEach {
-      it.connectEnd(call, inetSocketAddress, proxy, protocol)
+    forEachListener {
+      connectEnd(call, inetSocketAddress, proxy, protocol)
     }
   }
 
   override fun connectFailed(call: Call, inetSocketAddress: InetSocketAddress, proxy: Proxy, protocol: Protocol?, ioe: IOException) {
-    listeners.forEach {
-      it.connectFailed(call, inetSocketAddress, proxy, protocol, ioe)
+    forEachListener {
+      connectFailed(call, inetSocketAddress, proxy, protocol, ioe)
     }
   }
 
   override fun connectionAcquired(call: Call, connection: Connection) {
-    listeners.forEach {
-      it.connectionAcquired(call, connection)
+    forEachListener {
+      connectionAcquired(call, connection)
     }
   }
 
   override fun connectionReleased(call: Call, connection: Connection) {
-    listeners.forEach {
-      it.connectionReleased(call, connection)
+    forEachListener {
+      connectionReleased(call, connection)
     }
   }
 
   override fun requestHeadersStart(call: Call) {
-    listeners.forEach {
-      it.requestHeadersStart(call)
+    forEachListener {
+      requestHeadersStart(call)
     }
   }
 
   override fun requestHeadersEnd(call: Call, request: Request) {
-    listeners.forEach {
-      it.requestHeadersEnd(call, request)
+    forEachListener {
+      requestHeadersEnd(call, request)
     }
   }
 
   override fun requestBodyStart(call: Call) {
-    listeners.forEach {
-      it.requestBodyStart(call)
+    forEachListener {
+      requestBodyStart(call)
     }
   }
 
   override fun requestBodyEnd(call: Call, byteCount: Long) {
-    listeners.forEach {
-      it.requestBodyEnd(call, byteCount)
+    forEachListener {
+      requestBodyEnd(call, byteCount)
     }
   }
 
   override fun requestFailed(call: Call, ioe: IOException) {
-    listeners.forEach {
-      it.requestFailed(call, ioe)
+    forEachListener {
+      requestFailed(call, ioe)
     }
   }
 
   override fun responseHeadersStart(call: Call) {
-    listeners.forEach {
-      it.responseHeadersStart(call)
+    forEachListener {
+      responseHeadersStart(call)
     }
   }
 
   override fun responseHeadersEnd(call: Call, response: Response) {
-    listeners.forEach {
-      it.responseHeadersEnd(call, response)
+    forEachListener {
+      responseHeadersEnd(call, response)
     }
   }
 
   override fun responseBodyStart(call: Call) {
-    listeners.forEach {
-      it.responseBodyStart(call)
+    forEachListener {
+      responseBodyStart(call)
     }
   }
 
   override fun responseBodyEnd(call: Call, byteCount: Long) {
-    listeners.forEach {
-      it.responseBodyEnd(call, byteCount)
+    forEachListener {
+      responseBodyEnd(call, byteCount)
     }
   }
 
   override fun responseFailed(call: Call, ioe: IOException) {
-    listeners.forEach {
-      it.responseFailed(call, ioe)
+    forEachListener {
+      responseFailed(call, ioe)
     }
   }
 
   override fun callEnd(call: Call) {
-    listeners.forEach {
-      it.callEnd(call)
+    forEachListener {
+      callEnd(call)
     }
   }
 
   override fun callFailed(call: Call, ioe: IOException) {
-    listeners.forEach {
-      it.callFailed(call, ioe)
+    forEachListener {
+      callFailed(call, ioe)
     }
   }
 
   override fun canceled(call: Call) {
-    listeners.forEach {
-      it.canceled(call)
+    forEachListener {
+      canceled(call)
     }
   }
 
   override fun satisfactionFailure(call: Call, response: Response) {
-    listeners.forEach {
-      it.satisfactionFailure(call, response)
+    forEachListener {
+      satisfactionFailure(call, response)
     }
   }
 
   override fun cacheHit(call: Call, response: Response) {
-    listeners.forEach {
-      it.cacheHit(call, response)
+    forEachListener {
+      cacheHit(call, response)
     }
   }
 
   override fun cacheMiss(call: Call) {
-    listeners.forEach {
-      it.cacheMiss(call)
+    forEachListener {
+      cacheMiss(call)
     }
   }
 
   override fun cacheConditionalHit(call: Call, cachedResponse: Response) {
-    listeners.forEach {
-      it.cacheConditionalHit(call, cachedResponse)
+    forEachListener {
+      cacheConditionalHit(call, cachedResponse)
     }
   }
 
   fun addListener(eventListener: EventListener) {
-    listeners.add(eventListener)
+    synchronized(this) {
+      if (additionalListeners == null) {
+        additionalListeners = mutableListOf(eventListener)
+      } else {
+        additionalListeners?.add(eventListener)
+      }
+    }
   }
 }
