@@ -16,10 +16,6 @@ kotlin {
   jvm()
 
   sourceSets {
-    all {
-      languageSettings.optIn("kotlin.RequiresOptIn")
-    }
-
     commonMain {
       dependencies {
         api(libs.kotlin.stdlib)
