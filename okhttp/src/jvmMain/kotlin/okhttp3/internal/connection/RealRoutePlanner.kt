@@ -20,6 +20,7 @@ import java.net.HttpURLConnection
 import java.net.Socket
 import java.net.UnknownServiceException
 import okhttp3.Address
+import okhttp3.ConnectionListener
 import okhttp3.ConnectionSpec
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
@@ -40,6 +41,7 @@ class RealRoutePlanner(
   override val address: Address,
   private val call: RealCall,
   chain: RealInterceptorChain,
+  private val connectionListener: ConnectionListener
 ) : RoutePlanner {
   private val doExtensiveHealthChecks = chain.request.method != "GET"
 
@@ -110,6 +112,7 @@ class RealRoutePlanner(
     // The call's connection was released.
     toClose?.closeQuietly()
     call.eventListener.connectionReleased(call, candidate)
+    candidate.connectionListener.connectionReleased(candidate, call)
     return null
   }
 
@@ -179,6 +182,7 @@ class RealRoutePlanner(
     }
 
     call.eventListener.connectionAcquired(call, result)
+    result.connectionListener.connectionAcquired(result, call)
     return ReusePlan(result)
   }
 
@@ -217,6 +221,7 @@ class RealRoutePlanner(
       tunnelRequest = tunnelRequest,
       connectionSpecIndex = -1,
       isTlsFallback = false,
+      connectionListener = connectionListener
     )
   }
 

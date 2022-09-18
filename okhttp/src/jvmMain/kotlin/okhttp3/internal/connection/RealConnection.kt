@@ -27,6 +27,7 @@ import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocket
 import okhttp3.Address
 import okhttp3.Connection
+import okhttp3.ConnectionListener
 import okhttp3.Handshake
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
@@ -76,6 +77,7 @@ class RealConnection(
   private var source: BufferedSource?,
   private var sink: BufferedSink?,
   private val pingIntervalMillis: Int,
+  internal val connectionListener: ConnectionListener
 ) : Http2Connection.Listener(), Connection, ExchangeCodec.Carrier {
   private var http2Connection: Http2Connection? = null
 
@@ -90,6 +92,13 @@ class RealConnection(
    * Once true this is always true. Guarded by this.
    */
   var noNewExchanges = false
+    set(value) {
+      val previousValue = field
+      field = value
+      if (!previousValue) {
+        connectionListener.noNewExchanges(this)
+      }
+    }
 
   /**
    * If true, this connection may not be used for coalesced requests. These are requests that could
@@ -408,6 +417,7 @@ class RealConnection(
         source = null,
         sink = null,
         pingIntervalMillis = 0,
+        ConnectionListener.NONE
       )
       result.idleAtNs = idleAtNs
       return result

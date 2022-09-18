@@ -20,6 +20,7 @@ import java.net.Socket
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
 import okhttp3.Address
+import okhttp3.ConnectionListener
 import okhttp3.ConnectionPool
 import okhttp3.Route
 import okhttp3.internal.assertThreadHoldsLock
@@ -36,7 +37,8 @@ class RealConnectionPool(
   /** The maximum number of idle connections for each address. */
   private val maxIdleConnections: Int,
   keepAliveDuration: Long,
-  timeUnit: TimeUnit
+  timeUnit: TimeUnit,
+  internal val connectionListener: ConnectionListener
 ) {
   private val keepAliveDurationNs: Long = timeUnit.toNanos(keepAliveDuration)
 
@@ -118,6 +120,7 @@ class RealConnectionPool(
     connection.assertThreadHoldsLock()
 
     connections.add(connection)
+    connectionListener.connectionOpened(connection)
     cleanupQueue.schedule(cleanupTask)
   }
 
@@ -131,6 +134,7 @@ class RealConnectionPool(
     return if (connection.noNewExchanges || maxIdleConnections == 0) {
       connection.noNewExchanges = true
       connections.remove(connection)
+      connectionListener.connectionClosed(connection)
       if (connections.isEmpty()) cleanupQueue.cancelAll()
       true
     } else {
@@ -200,6 +204,7 @@ class RealConnectionPool(
           if (connection.idleAtNs + longestIdleDurationNs != now) return 0L // No longer oldest.
           connection.noNewExchanges = true
           connections.remove(longestIdleConnection)
+          connectionListener.connectionClosed(connection)
         }
 
         connection.socket().closeQuietly()
