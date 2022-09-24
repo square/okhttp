@@ -1032,14 +1032,14 @@ open class HttpUrlTest {
         ' '.code,
         '"'.code,
         '#'.code,
-              '<'.code,
-              '>'.code,
-              '\\'.code,
-              '^'.code,
-              '`'.code,
-              '{'.code,
-              '|'.code,
-              '}'.code
+        '<'.code,
+        '>'.code,
+        '\\'.code,
+        '^'.code,
+        '`'.code,
+        '{'.code,
+        '|'.code,
+        '}'.code
       )
       .nonAscii(Encoding.IDENTITY)
       .test(UrlComponentEncodingTester.Component.FRAGMENT)
