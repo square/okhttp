@@ -95,6 +95,7 @@ import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.RegisterExtension
+import org.junitpioneer.jupiter.RetryingTest
 
 @Timeout(30)
 open class CallTest {
@@ -1133,7 +1134,9 @@ open class CallTest {
       )
   }
 
-  @Test fun recoverWhenRetryOnConnectionFailureIsFalse_HTTP2() {
+  @RetryingTest(5)
+  @Flaky
+  fun recoverWhenRetryOnConnectionFailureIsFalse_HTTP2() {
     enableProtocol(Protocol.HTTP_2)
     noRecoverWhenRetryOnConnectionFailureIsFalse()
   }

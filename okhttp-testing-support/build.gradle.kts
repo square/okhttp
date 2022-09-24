@@ -19,6 +19,8 @@ dependencies {
   api(libs.junit.jupiter.api)
   api(libs.junit.jupiter.params)
 
+  api("org.junit-pioneer:junit-pioneer:1.7.1")
+
   compileOnly(libs.findbugs.jsr305)
   compileOnly(libs.robolectric.android)
 }
