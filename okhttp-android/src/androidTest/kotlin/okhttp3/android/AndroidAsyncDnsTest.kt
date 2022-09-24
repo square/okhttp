@@ -44,7 +44,7 @@ import org.opentest4j.TestAbortedException
  * Run with "./gradlew :android-test:connectedCheck" and make sure ANDROID_SDK_ROOT is set.
  */
 @ExtendWith(MockWebServerExtension::class)
-class AndroidAsyncDnsTest(val server: MockWebServer) {
+class AndroidAsyncDnsTest {
   private val localhostName: String = InetAddress.getByName("localhost").canonicalHostName
 
   private val localhost: HandshakeCertificates by lazy {
@@ -64,6 +64,13 @@ class AndroidAsyncDnsTest(val server: MockWebServer) {
     .dns(AsyncDns.toDns(AndroidAsyncDns.IPv4, AndroidAsyncDns.IPv6))
     .sslSocketFactory(localhost.sslSocketFactory(), localhost.trustManager)
     .build()
+
+  private lateinit var server: MockWebServer
+
+  @BeforeEach
+  fun setup(server: MockWebServer) {
+    this.server = server
+  }
 
   @BeforeEach
   fun init() {
