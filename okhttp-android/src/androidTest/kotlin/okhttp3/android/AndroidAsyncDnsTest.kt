@@ -68,12 +68,8 @@ class AndroidAsyncDnsTest {
   private lateinit var server: MockWebServer
 
   @BeforeEach
-  fun setup(server: MockWebServer) {
-    this.server = server
-  }
-
-  @BeforeEach
   fun init() {
+    this.server = server
     server.useHttps(localhost.sslSocketFactory())
   }
 
