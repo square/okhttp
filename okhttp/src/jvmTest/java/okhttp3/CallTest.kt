@@ -1885,7 +1885,7 @@ open class CallTest {
     val request = Request(server.url("/"))
     val response = client.newCall(request).execute()
     assertThat(response.code).isEqualTo(408)
-    assertThat(response.body!!.string()).isEqualTo("You took too long!")
+    assertThat(response.body.string()).isEqualTo("You took too long!")
   }
 
   @Test fun maxClientRequestTimeoutRetries() {
