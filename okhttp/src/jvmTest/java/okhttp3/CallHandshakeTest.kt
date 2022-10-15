@@ -185,6 +185,11 @@ class CallHandshakeTest {
 
   @Test
   fun defaultOrderMaintained() {
+    // Flaky in CI
+    // CallHandshakeTest[jvm] > defaultOrderMaintained()[jvm] FAILED
+    //  org.bouncycastle.tls.TlsFatalAlertReceived: handshake_failure(40)
+    platform.assumeNotBouncyCastle()
+
     val client = makeClient()
     makeRequest(client)
 
