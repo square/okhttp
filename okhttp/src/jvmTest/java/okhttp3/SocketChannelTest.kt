@@ -77,6 +77,9 @@ class SocketChannelTest {
   @BeforeEach
   fun setUp(server: MockWebServer) {
     this.server = server
+
+    // Test designed for Conscrypt and JSSE
+    platform.assumeNotBouncyCastle()
   }
 
   @ParameterizedTest

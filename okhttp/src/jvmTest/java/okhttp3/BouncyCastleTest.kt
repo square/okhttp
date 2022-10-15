@@ -44,7 +44,7 @@ class BouncyCastleTest {
 
     client.newCall(request).execute().use {
       assertThat(it.protocol).isEqualTo(Protocol.HTTP_2)
-      assertThat(it.handshake!!.tlsVersion).isEqualTo(TlsVersion.TLS_1_2)
+      assertThat(it.handshake!!.tlsVersion).isEqualTo(TlsVersion.TLS_1_3)
     }
   }
 }

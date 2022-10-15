@@ -49,6 +49,11 @@ class SessionReuseTest {
     // Default after JDK 14, but we are avoiding tests that assume special setup.
     // System.setProperty("jdk.tls.client.enableSessionTicketExtension", "true")
     // System.setProperty("jdk.tls.server.enableSessionTicketExtension", "true")
+
+    // Session reuse not tested
+    // org.bouncycastle.tls.TlsFatalAlert: handshake_failure(40); No selectable cipher suite
+    //	at org.bouncycastle.tls.AbstractTlsServer.getSelectedCipherSuite(Unknown Source)
+    platform.assumeNotBouncyCastle()
   }
 
   @ParameterizedTest(name = "{displayName}({arguments})")
