@@ -18,8 +18,10 @@ package okhttp3.internal.http
 import java.io.IOException
 import java.net.ProtocolException
 import okhttp3.Interceptor
+import okhttp3.Protocol
 import okhttp3.Response
 import okhttp3.internal.EMPTY_RESPONSE
+import okhttp3.internal.connection.Exchange
 import okhttp3.internal.http2.ConnectionShutdownException
 import okio.buffer
 
@@ -103,9 +105,8 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
           .receivedResponseAtMillis(System.currentTimeMillis())
           .build()
       var code = response.code
-      if (code == 100) {
-        // Server sent a 100-continue even though we did not request one. Try again to read the
-        // actual response status.
+
+      if (shouldIgnoreAndWaitForRealResponse(code, exchange)) {
         responseBuilder = exchange.readResponseHeaders(expectContinue = false)!!
         if (invokeStartEvent) {
           exchange.responseHeadersStart()
@@ -147,5 +148,16 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
       }
       throw e
     }
+  }
+
+  private fun shouldIgnoreAndWaitForRealResponse(code: Int, exchange: Exchange): Boolean = when {
+    // Server sent a 100-continue even though we did not request one. Try again to read the
+    // actual response status.
+    code == 100 -> true
+
+    // Early Hints (103) but not supported yet in OkHttp
+    code == 103 -> true
+
+    else -> false
   }
 }
