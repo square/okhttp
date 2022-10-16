@@ -1039,7 +1039,7 @@ class KotlinSourceModernTest {
     val headers: Headers = response.headers
     val trailers: Headers = response.trailers()
     val peekBody: ResponseBody = response.peekBody(0L)
-    val body: ResponseBody? = response.body
+    val body: ResponseBody = response.body
     val builder: Response.Builder = response.newBuilder()
     val redirect: Boolean = response.isRedirect
     val networkResponse: Response? = response.networkResponse
