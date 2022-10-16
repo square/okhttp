@@ -60,7 +60,8 @@ class MockResponse : Cloneable {
   /**
    * Sets the [HTTP/2 error code](https://tools.ietf.org/html/rfc7540#section-7) to be
    * returned when resetting the stream.
-   * This is only valid with [SocketPolicy.RESET_STREAM_AT_START].
+   * This is only valid with [SocketPolicy.RESET_STREAM_AT_START] and
+   * [SocketPolicy.DO_NOT_READ_REQUEST_BODY].
    */
   @set:JvmName("http2ErrorCode")
   var http2ErrorCode = -1
