@@ -35,7 +35,7 @@ findbugs-jsr305 = "com.google.code.findbugs:jsr305:3.0.2"
 gradlePlugin-android = "com.android.tools.build:gradle:7.2.2"
 gradlePlugin-androidJunit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.8.2.1"
 gradlePlugin-animalsniffer = "ru.vyarus:gradle-animalsniffer-plugin:1.6.0"
-gradlePlugin-binaryCompatibilityValidator = "org.jetbrains.kotlinx.binary-compatibility-validator:org.jetbrains.kotlinx.binary-compatibility-validator.gradle.plugin:0.12.0"
+gradlePlugin-binaryCompatibilityValidator = "org.jetbrains.kotlinx.binary-compatibility-validator:org.jetbrains.kotlinx.binary-compatibility-validator.gradle.plugin:0.12.1"
 gradlePlugin-bnd = { module = "biz.aQute.bnd:biz.aQute.bnd.gradle", version.ref = "biz-aQute-bnd" }
 gradlePlugin-dokka = "org.jetbrains.dokka:dokka-gradle-plugin:1.7.10"
 gradlePlugin-errorprone = "net.ltgt.gradle:gradle-errorprone-plugin:3.0.1"
