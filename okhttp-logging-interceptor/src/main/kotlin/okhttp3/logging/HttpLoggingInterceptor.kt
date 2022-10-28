@@ -120,11 +120,11 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
     }
   }
 
-  fun redactHeader(name: String) {
+  fun redactHeader(name: String) = apply {
     val newHeadersToRedact = TreeSet(String.CASE_INSENSITIVE_ORDER)
     newHeadersToRedact += headersToRedact
     newHeadersToRedact += name
-    headersToRedact = newHeadersToRedact
+    this.headersToRedact = newHeadersToRedact
   }
 
   /**
