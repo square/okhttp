@@ -46,6 +46,7 @@ class StatusLine(
     /** RFC 7540, Section 9.1.2. Retry these if the exchange used connection coalescing. */
     const val HTTP_MISDIRECTED_REQUEST = 421
     const val HTTP_CONTINUE = 100
+    const val HTTP_EARLY_HINTS = 103
 
     fun get(response: Response): StatusLine {
       return StatusLine(response.protocol, response.code, response.message)
