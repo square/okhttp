@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.platform.android
 
+import android.os.Build
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import javax.net.ssl.SSLSocket
@@ -52,9 +53,12 @@ open class AndroidSocketAdapter(private val sslSocketClass: Class<in SSLSocket>)
         // Enable session tickets.
         setUseSessionTickets.invoke(sslSocket, true)
 
-        if (hostname != null) {
-          // This is SSLParameters.setServerNames() in API 24+.
-          setHostname.invoke(sslSocket, hostname)
+        // SNI is enabled by default since SDK_INT 23
+        if (Build.VERSION.SDK_INT < 23 && hostname != null) {
+          // Backport option
+          if (System.getProperty("jsse.enableSNIExtension", "true") == "true") {
+            setHostname.invoke(sslSocket, hostname)
+          }
         }
 
         // Enable ALPN.
