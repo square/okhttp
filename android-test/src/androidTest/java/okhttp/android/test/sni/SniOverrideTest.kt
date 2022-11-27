@@ -71,21 +71,6 @@ class SniOverrideTest {
       .dns {
         Dns.SYSTEM.lookup("sni.cloudflaressl.com")
       }
-      .hostnameVerifier { hostname, session ->
-        val s = "hostname: $hostname peerHost:${session.peerHost}"
-        Log.d("SniOverrideTest", s)
-        try {
-          val cert = session.peerCertificates[0] as X509Certificate
-          for (name in cert.subjectAlternativeNames) {
-            if (name[0] as Int == 2) {
-              Log.d("SniOverrideTest", "cert: " + name[1])
-            }
-          }
-          true
-        } catch (e: Exception) {
-          false
-        }
-      }
       .build()
 
     val request = Request.Builder()
