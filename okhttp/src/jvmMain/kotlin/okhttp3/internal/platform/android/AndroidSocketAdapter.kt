@@ -53,16 +53,25 @@ open class AndroidSocketAdapter(private val sslSocketClass: Class<in SSLSocket>)
         // Enable session tickets.
         setUseSessionTickets.invoke(sslSocket, true)
 
+        // Original
 //        if (hostname != null) {
 //          // This is SSLParameters.setServerNames() in API 24+.
 //          setHostname.invoke(sslSocket, hostname)
 //        }
-        if (Build.VERSION.SDK_INT < 23 && hostname != null) {
-          // Backport option
-          if (System.getProperty("jsse.enableSNIExtension", "true") == "true") {
-            setHostname.invoke(sslSocket, hostname)
-          }
+
+        // Modified to assume platform support on 24+
+        if (hostname != null && Build.VERSION.SDK_INT < 23) {
+          // This is SSLParameters.setServerNames() in API 24+.
+          setHostname.invoke(sslSocket, hostname)
         }
+
+        // From https://github.com/square/okhttp/pull/7525
+//        if (Build.VERSION.SDK_INT < 23 && hostname != null) {
+//          // Backport option
+//          if (System.getProperty("jsse.enableSNIExtension", "true") == "true") {
+//            setHostname.invoke(sslSocket, hostname)
+//          }
+//        }
 
         // Enable ALPN.
         setAlpnProtocols.invoke(

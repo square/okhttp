@@ -17,6 +17,7 @@ package okhttp.android.test.sni;
 
 import android.util.Log
 import java.security.cert.X509Certificate
+import okhttp3.Dns
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
@@ -33,9 +34,7 @@ class SniOverrideTest {
     .build()
 
   @Test
-  fun get() {
-    var serverCertName: Any? = null
-
+  fun getWithCustomSocketFactory() {
     client = client.newBuilder()
       .sslSocketFactory(CustomSSLSocketFactory(client.sslSocketFactory), client.x509TrustManager!!)
       .hostnameVerifier { hostname, session ->
@@ -46,7 +45,6 @@ class SniOverrideTest {
           for (name in cert.subjectAlternativeNames) {
             if (name[0] as Int == 2) {
               Log.d("SniOverrideTest", "cert: " + name[1])
-              serverCertName = name[1]
             }
           }
           true
@@ -59,6 +57,39 @@ class SniOverrideTest {
     val request = Request.Builder()
       .url("https://sni.cloudflaressl.com/cdn-cgi/trace")
       .header("Host", "cloudflare-dns.com")
+      .build()
+    client.newCall(request).execute().use { response ->
+      assertThat(response.code).isEqualTo(200)
+      assertThat(response.protocol).isEqualTo(Protocol.HTTP_2)
+      assertThat(response.body.string()).contains("h=cloudflare-dns.com")
+    }
+  }
+
+  @Test
+  fun getWithDns() {
+    client = client.newBuilder()
+      .dns {
+        Dns.SYSTEM.lookup("sni.cloudflaressl.com")
+      }
+      .hostnameVerifier { hostname, session ->
+        val s = "hostname: $hostname peerHost:${session.peerHost}"
+        Log.d("SniOverrideTest", s)
+        try {
+          val cert = session.peerCertificates[0] as X509Certificate
+          for (name in cert.subjectAlternativeNames) {
+            if (name[0] as Int == 2) {
+              Log.d("SniOverrideTest", "cert: " + name[1])
+            }
+          }
+          true
+        } catch (e: Exception) {
+          false
+        }
+      }
+      .build()
+
+    val request = Request.Builder()
+      .url("https://cloudflare-dns.com/cdn-cgi/trace")
       .build()
     client.newCall(request).execute().use { response ->
       assertThat(response.code).isEqualTo(200)
