@@ -458,6 +458,14 @@ public final class Util {
     return VERIFY_AS_IP_ADDRESS.matcher(host).matches();
   }
 
+  /** Returns true if we should void putting this header in an exception or toString(). */
+  public static boolean isSensitiveHeader(String name) {
+    return name.equalsIgnoreCase("Authorization")
+          || name.equalsIgnoreCase("Cookie")
+          || name.equalsIgnoreCase("Proxy-Authorization")
+          || name.equalsIgnoreCase("Set-Cookie");
+  }
+
   /** Returns a {@link Locale#US} formatted {@link String}. */
   public static String format(String format, Object... args) {
     return String.format(Locale.US, format, args);

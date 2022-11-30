@@ -17,6 +17,8 @@
 
 package okhttp3;
 
+import static okhttp3.internal.Util.isSensitiveHeader;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -183,7 +185,9 @@ public final class Headers {
   @Override public String toString() {
     StringBuilder result = new StringBuilder();
     for (int i = 0, size = size(); i < size; i++) {
-      result.append(name(i)).append(": ").append(value(i)).append("\n");
+      String name = name(i);
+      String value = isSensitiveHeader(name) ? "██" : value(i);
+      result.append(name(i)).append(": ").append(value).append("\n");
     }
     return result.toString();
   }
@@ -282,7 +286,8 @@ public final class Headers {
       char c = value.charAt(i);
       if ((c <= '\u001f' && c != '\t') || c >= '\u007f') {
         throw new IllegalArgumentException(Util.format(
-            "Unexpected char %#04x at %d in %s value: %s", (int) c, i, name, value));
+            "Unexpected char %#04x at %d in %s value%s", (int) c, i, name,
+              isSensitiveHeader(name) ? "" : (": " + value)));
       }
     }
   }
