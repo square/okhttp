@@ -71,7 +71,7 @@ Further examples are on the [OkHttp Recipes page][recipes].
 Requirements
 ------------
 
-OkHttp works on Android 5.0+ (API level 21+) and Java 8+.
+OkHttp works on Android 5.0+ (API level 21+) and Java 8+. On Android projects with a `minSdk` below 26 (Android 8.0), [core library desugaring](https://developer.android.com/studio/write/java8-support#library-desugaring) is required.
 
 OkHttp depends on [Okio][okio] for high-performance I/O and the [Kotlin standard library][kotlin]. Both are small libraries with strong backward-compatibility.
 

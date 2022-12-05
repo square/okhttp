@@ -18,6 +18,10 @@ package okhttp3.internal.http
 import java.text.DateFormat
 import java.text.ParsePosition
 import java.text.SimpleDateFormat
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 import java.util.Date
 import java.util.Locale
 import okhttp3.internal.UTC
@@ -29,15 +33,9 @@ internal const val MAX_DATE = 253402300799999L
  * Most websites serve cookies in the blessed format. Eagerly create the parser to ensure such
  * cookies are on the fast path.
  */
-private val STANDARD_DATE_FORMAT = object : ThreadLocal<DateFormat>() {
-  override fun initialValue(): DateFormat {
-    // Date format specified by RFC 7231 section 7.1.1.1.
-    return SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.US).apply {
-      isLenient = false
-      timeZone = UTC
-    }
-  }
-}
+// Date format specified by RFC 7231 section 7.1.1.1.
+private val STANDARD_DATE_FORMAT = DateTimeFormatter
+  .ofPattern("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.ENGLISH).withZone(ZoneOffset.UTC)
 
 /** If we fail to parse a date in a non-standard format, try each of these formats in sequence. */
 private val BROWSER_COMPATIBLE_DATE_FORMAT_STRINGS = arrayOf(
@@ -69,38 +67,36 @@ private val BROWSER_COMPATIBLE_DATE_FORMATS =
 fun String.toHttpDateOrNull(): Date? {
   if (isEmpty()) return null
 
-  val position = ParsePosition(0)
-  var result = STANDARD_DATE_FORMAT.get().parse(this, position)
-  if (position.index == length) {
-    // STANDARD_DATE_FORMAT must match exactly; all text must be consumed, e.g. no ignored
-    // non-standard trailing "+01:00". Those cases are covered below.
-    return result
-  }
-  synchronized(BROWSER_COMPATIBLE_DATE_FORMAT_STRINGS) {
-    for (i in 0 until BROWSER_COMPATIBLE_DATE_FORMAT_STRINGS.size) {
-      var format: DateFormat? = BROWSER_COMPATIBLE_DATE_FORMATS[i]
-      if (format == null) {
-        format = SimpleDateFormat(BROWSER_COMPATIBLE_DATE_FORMAT_STRINGS[i], Locale.US).apply {
-          // Set the timezone to use when interpreting formats that don't have a timezone. GMT is
-          // specified by RFC 7231.
-          timeZone = UTC
+  try {
+    return Date.from(ZonedDateTime.parse(this, STANDARD_DATE_FORMAT).toInstant())
+  } catch (e: DateTimeParseException) {
+    // Covers cases where the string could not be parsed.
+    synchronized(BROWSER_COMPATIBLE_DATE_FORMAT_STRINGS) {
+      for (i in BROWSER_COMPATIBLE_DATE_FORMAT_STRINGS.indices) {
+        var format: DateFormat? = BROWSER_COMPATIBLE_DATE_FORMATS[i]
+        if (format == null) {
+          format = SimpleDateFormat(BROWSER_COMPATIBLE_DATE_FORMAT_STRINGS[i], Locale.US).apply {
+            // Set the timezone to use when interpreting formats that don't have a timezone. GMT is
+            // specified by RFC 7231.
+            timeZone = UTC
+          }
+          BROWSER_COMPATIBLE_DATE_FORMATS[i] = format
         }
-        BROWSER_COMPATIBLE_DATE_FORMATS[i] = format
-      }
-      position.index = 0
-      result = format.parse(this, position)
-      if (position.index != 0) {
-        // Something was parsed. It's possible the entire string was not consumed but we ignore
-        // that. If any of the BROWSER_COMPATIBLE_DATE_FORMAT_STRINGS ended in "'GMT'" we'd have
-        // to also check that position.getIndex() == value.length() otherwise parsing might have
-        // terminated early, ignoring things like "+01:00". Leaving this as != 0 means that any
-        // trailing junk is ignored.
-        return result
+        val position = ParsePosition(0)
+        val result = format.parse(this, position)
+        if (position.index != 0) {
+          // Something was parsed. It's possible the entire string was not consumed but we ignore
+          // that. If any of the BROWSER_COMPATIBLE_DATE_FORMAT_STRINGS ended in "'GMT'" we'd have
+          // to also check that position.getIndex() == value.length() otherwise parsing might have
+          // terminated early, ignoring things like "+01:00". Leaving this as != 0 means that any
+          // trailing junk is ignored.
+          return result
+        }
       }
     }
+    return null
   }
-  return null
 }
 
 /** Returns the string for this date. */
-fun Date.toHttpDateString(): String = STANDARD_DATE_FORMAT.get().format(this)
+fun Date.toHttpDateString(): String = STANDARD_DATE_FORMAT.format(toInstant().atZone(ZoneOffset.UTC))
