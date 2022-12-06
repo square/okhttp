@@ -30,7 +30,7 @@ clikt = "com.github.ajalt.clikt:clikt:3.5.0"
 codehaus-signature-java18 = "org.codehaus.mojo.signature:java18:1.0"
 conscrypt-android = { module = "org.conscrypt:conscrypt-android", version.ref = "org-conscrypt" }
 conscrypt-openjdk = { module = "org.conscrypt:conscrypt-openjdk-uber", version.ref = "org-conscrypt" }
-eclipseOsgi = "org.eclipse.platform:org.eclipse.osgi:3.18.100"
+eclipseOsgi = "org.eclipse.platform:org.eclipse.osgi:3.18.200"
 findbugs-jsr305 = "com.google.code.findbugs:jsr305:3.0.2"
 gradlePlugin-android = "com.android.tools.build:gradle:7.2.2"
 gradlePlugin-androidJunit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.8.2.1"
