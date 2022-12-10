@@ -452,7 +452,7 @@ jobs:
       - name: Run Tests
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: android-test:${{ matrix.api-level }}Check
+          arguments: -PandroidBuild android-test:${{ matrix.api-level }}Check
 
 
   testandroidregression:
