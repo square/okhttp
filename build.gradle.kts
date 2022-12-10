@@ -32,6 +32,8 @@ buildscript {
   }
 }
 
+apply(plugin = "org.jetbrains.dokka")
+
 allprojects {
   group = "com.squareup.okhttp3"
   version = "5.0.0-SNAPSHOT"
