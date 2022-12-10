@@ -54,7 +54,7 @@ open class AndroidSocketAdapter(private val sslSocketClass: Class<in SSLSocket>)
         setUseSessionTickets.invoke(sslSocket, true)
 
         // Assume platform support on 24+
-        if (hostname != null && Build.VERSION.SDK_INT < 23) {
+        if (hostname != null && Build.VERSION.SDK_INT <= 23) {
           // This is SSLParameters.setServerNames() in API 24+.
           setHostname.invoke(sslSocket, hostname)
         }
