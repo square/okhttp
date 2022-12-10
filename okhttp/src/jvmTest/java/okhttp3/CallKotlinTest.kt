@@ -41,6 +41,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.fail
+import org.junitpioneer.jupiter.RetryingTest
 
 @Timeout(30)
 class CallKotlinTest {
@@ -103,7 +104,8 @@ class CallKotlinTest {
     server.useHttps(handshakeCertificates.sslSocketFactory())
   }
 
-  @Test
+  @RetryingTest(5)
+  @Flaky
   fun testHeadAfterPut() {
     class ErringRequestBody : RequestBody() {
       override fun contentType(): MediaType {
