@@ -31,10 +31,8 @@ jobs:
           distribution: 'zulu'
           java-version: 11
 
-      - name: Run Checks
-        uses: gradle/gradle-build-action@v2
-        with:
-          arguments: check -x test
+      - name: Generate Docs
+        run: ./test_docs.sh
 
       - uses: actions/upload-artifact@v3
         with:
