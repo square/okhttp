@@ -15,7 +15,7 @@ Specific security vs. connectivity decisions are implemented by [ConnectionSpec]
  * `COMPATIBLE_TLS` is a secure configuration that connects to secure–but not current–HTTPS servers.
  * `CLEARTEXT` is an insecure configuration that is used for `http://` URLs.
 
-These loosely follow the model set in [Google Cloud Policies](https://cloud.google.com/load-balancing/docs/ssl-policies-concepts). We [track changes](tls_configuration_history.md) to this policy.
+These loosely follow the model set in [Google Cloud Policies](https://cloud.google.com/load-balancing/docs/ssl-policies-concepts). We [track changes](../security/tls_configuration_history.md) to this policy.
 
 By default, OkHttp will attempt a `MODERN_TLS` connection.  However by configuring the client connectionSpecs you can allow a fall back to `COMPATIBLE_TLS` connection if the modern configuration fails.
 
@@ -58,7 +58,7 @@ Caused by: javax.net.ssl.SSLProtocolException: SSL handshake aborted: ssl=0x7f27
 ```
 
 You can check a web server's configuration using [Qualys SSL Labs][qualys]. OkHttp's TLS
-configuration history is [tracked here](tls_configuration_history.md).
+configuration history is [tracked here](../features/tls_configuration_history.md).
 
 Applications expected to be installed on older Android devices should consider adopting the
 [Google Play Services’ ProviderInstaller][provider_installer]. This will increase security for users
