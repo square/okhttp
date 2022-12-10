@@ -851,7 +851,7 @@ public final class HpackTest {
   }
 
   @Test public void lowercaseHeaderNameBeforeEmit() throws IOException {
-    hpackWriter.writeHeaders(List.of(new Header("FoO", "BaR")));
+    hpackWriter.writeHeaders(asList(new Header("FoO", "BaR")));
     assertBytes(0x40, 3, 'f', 'o', 'o', 3, 'B', 'a', 'R');
   }
 
@@ -873,26 +873,26 @@ public final class HpackTest {
 
   @Test public void emitsDynamicTableSizeUpdate() throws IOException {
     hpackWriter.resizeHeaderTable(2048);
-    hpackWriter.writeHeaders(List.of(new Header("foo", "bar")));
+    hpackWriter.writeHeaders(asList(new Header("foo", "bar")));
     assertBytes(
         0x3F, 0xE1, 0xF, // Dynamic table size update (size = 2048).
         0x40, 3, 'f', 'o', 'o', 3, 'b', 'a', 'r');
 
     hpackWriter.resizeHeaderTable(8192);
-    hpackWriter.writeHeaders(List.of(new Header("bar", "foo")));
+    hpackWriter.writeHeaders(asList(new Header("bar", "foo")));
     assertBytes(
         0x3F, 0xE1, 0x3F, // Dynamic table size update (size = 8192).
         0x40, 3, 'b', 'a', 'r', 3, 'f', 'o', 'o');
 
     // No more dynamic table updates should be emitted.
-    hpackWriter.writeHeaders(List.of(new Header("far", "boo")));
+    hpackWriter.writeHeaders(asList(new Header("far", "boo")));
     assertBytes(0x40, 3, 'f', 'a', 'r', 3, 'b', 'o', 'o');
   }
 
   @Test public void noDynamicTableSizeUpdateWhenSizeIsEqual() throws IOException {
     int currentSize = hpackWriter.headerTableSizeSetting;
     hpackWriter.resizeHeaderTable(currentSize);
-    hpackWriter.writeHeaders(List.of(new Header("foo", "bar")));
+    hpackWriter.writeHeaders(asList(new Header("foo", "bar")));
 
     assertBytes(0x40, 3, 'f', 'o', 'o', 3, 'b', 'a', 'r');
   }
@@ -900,7 +900,7 @@ public final class HpackTest {
   @Test public void growDynamicTableSize() throws IOException {
     hpackWriter.resizeHeaderTable(8192);
     hpackWriter.resizeHeaderTable(16384);
-    hpackWriter.writeHeaders(List.of(new Header("foo", "bar")));
+    hpackWriter.writeHeaders(asList(new Header("foo", "bar")));
 
     assertBytes(
         0x3F, 0xE1, 0x7F, // Dynamic table size update (size = 16384).
@@ -910,7 +910,7 @@ public final class HpackTest {
   @Test public void shrinkDynamicTableSize() throws IOException {
     hpackWriter.resizeHeaderTable(2048);
     hpackWriter.resizeHeaderTable(0);
-    hpackWriter.writeHeaders(List.of(new Header("foo", "bar")));
+    hpackWriter.writeHeaders(asList(new Header("foo", "bar")));
 
     assertBytes(
         0x20, // Dynamic size update (size = 0).
@@ -923,7 +923,7 @@ public final class HpackTest {
     hpackWriter.resizeHeaderTable(0);
     hpackWriter.resizeHeaderTable(4096);
     hpackWriter.resizeHeaderTable(2048);
-    hpackWriter.writeHeaders(List.of(new Header("foo", "bar")));
+    hpackWriter.writeHeaders(asList(new Header("foo", "bar")));
 
     assertBytes(
         0x20, // Dynamic size update (size = 0).
