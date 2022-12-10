@@ -43,6 +43,27 @@ android {
     "README.txt",
     "org/bouncycastle/LICENSE"
   )
+
+  testOptions {
+    managedDevices {
+      devices {
+        maybeCreate<com.android.build.api.dsl.ManagedVirtualDevice>("api30").apply {
+          device = "Pixel 2"
+          apiLevel = 30
+          systemImageSource = "google"
+        }
+      }
+      devices {
+        maybeCreate<com.android.build.api.dsl.ManagedVirtualDevice>("api33").apply {
+          device = "Pixel 2"
+          apiLevel = 33
+          systemImageSource = "google"
+        }
+      }
+    }
+  }
+
+
 }
 
 dependencies {

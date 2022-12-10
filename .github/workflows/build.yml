@@ -359,7 +359,7 @@ jobs:
       - name: Run Checks
         run: ./native-image-tests/build/graal/ConsoleLauncher
 
-  testandroid:
+  testlegacyandroid:
     runs-on: macos-latest
     timeout-minutes: 30
     if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'android')
@@ -369,7 +369,7 @@ jobs:
       matrix:
         api-level:
           - 21
-          - 29
+          - 24
 
     steps:
       - name: Checkout
@@ -412,6 +412,47 @@ jobs:
           script: ./gradlew -PandroidBuild :okhttp-android:connectedCheck :android-test:connectedCheck
         env:
           API_LEVEL: ${{ matrix.api-level }}
+
+  testmodernandroid:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'android')
+
+    strategy:
+      fail-fast: false
+      matrix:
+        api-level:
+          - 30
+          - 33
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Configure JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 11
+
+      - name: Gradle cache
+        uses: gradle/gradle-build-action@v2
+
+      - name: AVD cache
+        uses: actions/cache@v3
+        id: avd-cache
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-${{ matrix.api-level }}
+
+      - name: Run Tests
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: android-test:${{ matrix.api-level }}Check
 
 
   testandroidregression:
