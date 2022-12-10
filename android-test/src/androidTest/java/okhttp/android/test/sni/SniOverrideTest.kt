@@ -15,24 +15,81 @@
  */
 package okhttp.android.test.sni;
 
+import android.os.Build
 import android.util.Log
 import java.security.cert.X509Certificate
 import okhttp3.Dns
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 
 /**
- * Test for overriding SNI.
+ * Test for new Let's Encrypt Root Certificate.
  */
 @Tag("Remote")
 class SniOverrideTest {
+  var client = OkHttpClient.Builder()
+    .build()
+
+  @Test
+  fun getWithCustomSocketFactory() {
+    assumeTrue(Build.VERSION.SDK_INT >= 24)
+
+    class CustomSSLSocketFactory(
+      delegate: SSLSocketFactory
+    ) : DelegatingSSLSocketFactory(delegate) {
+      override fun configureSocket(sslSocket: SSLSocket): SSLSocket {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+          val parameters = sslSocket.sslParameters
+          val sni = parameters.serverNames
+          Log.d("CustomSSLSocketFactory", "old SNI: $sni")
+          parameters.serverNames = mutableListOf<SNIServerName>(SNIHostName("cloudflare-dns.com"))
+          sslSocket.sslParameters = parameters
+        }
+
+        return sslSocket
+      }
+    }
+
+    client = client.newBuilder()
+      .sslSocketFactory(CustomSSLSocketFactory(client.sslSocketFactory), client.x509TrustManager!!)
+      .hostnameVerifier { hostname, session ->
+        val s = "hostname: $hostname peerHost:${session.peerHost}"
+        Log.d("SniOverrideTest", s)
+        try {
+          val cert = session.peerCertificates[0] as X509Certificate
+          for (name in cert.subjectAlternativeNames) {
+            if (name[0] as Int == 2) {
+              Log.d("SniOverrideTest", "cert: " + name[1])
+            }
+          }
+          true
+        } catch (e: Exception) {
+          false
+        }
+      }
+      .build()
+
+    val request = Request.Builder()
+      .url("https://sni.cloudflaressl.com/cdn-cgi/trace")
+      .header("Host", "cloudflare-dns.com")
+      .build()
+    client.newCall(request).execute().use { response ->
+      assertThat(response.code).isEqualTo(200)
+      assertThat(response.protocol).isEqualTo(Protocol.HTTP_2)
+
+
+      assertThat(response.body.string()).contains("h=cloudflare-dns.com")
+    }
+  }
+
   @Test
   fun getWithDns() {
-    val client = client.newBuilder()
+    client = client.newBuilder()
       .dns {
         Dns.SYSTEM.lookup("sni.cloudflaressl.com")
       }
