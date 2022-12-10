@@ -31,6 +31,12 @@ jobs:
           distribution: 'zulu'
           java-version: 11
 
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
+
+      - run: pip install mkdocs-material
+
       - name: Generate Docs
         run: ./test_docs.sh
 
