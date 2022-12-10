@@ -408,7 +408,7 @@ public final class EventListenerTest {
 
   @Test public void successfulEmptyHttpsCallEventSequence() throws IOException {
     enableTlsWithTunnel();
-    server.setProtocols(List.of(Protocol.HTTP_1_1));
+    server.setProtocols(asList(Protocol.HTTP_1_1));
     server.enqueue(new MockResponse()
         .setBody("abc"));
 
@@ -420,7 +420,7 @@ public final class EventListenerTest {
 
   @Test public void successfulChunkedHttpsCallEventSequence() throws IOException {
     enableTlsWithTunnel();
-    server.setProtocols(List.of(Protocol.HTTP_1_1));
+    server.setProtocols(asList(Protocol.HTTP_1_1));
     server.enqueue(
         new MockResponse().setBodyDelay(100, TimeUnit.MILLISECONDS).setChunkedBody("Hello!", 2));
 
@@ -927,7 +927,7 @@ public final class EventListenerTest {
 
   @Test public void responseBodyFailHttp1OverHttps() throws IOException {
     enableTlsWithTunnel();
-    server.setProtocols(List.of(Protocol.HTTP_1_1));
+    server.setProtocols(asList(Protocol.HTTP_1_1));
     responseBodyFail(Protocol.HTTP_1_1);
   }
 
@@ -1027,7 +1027,7 @@ public final class EventListenerTest {
 
   @Test public void requestBodyFailHttp1OverHttps() {
     enableTlsWithTunnel();
-    server.setProtocols(List.of(Protocol.HTTP_1_1));
+    server.setProtocols(asList(Protocol.HTTP_1_1));
 
     requestBodyFail(Protocol.HTTP_1_1);
   }
@@ -1148,7 +1148,7 @@ public final class EventListenerTest {
 
   @Test public void requestBodySuccessHttp1OverHttps() throws IOException {
     enableTlsWithTunnel();
-    server.setProtocols(List.of(Protocol.HTTP_1_1));
+    server.setProtocols(asList(Protocol.HTTP_1_1));
     requestBodySuccess(RequestBody.create("Hello", MediaType.get("text/plain")), equalTo(5L),
         equalTo(19L));
   }
@@ -1228,7 +1228,7 @@ public final class EventListenerTest {
 
   @Test public void timeToFirstByteHttp1OverHttps() throws IOException {
     enableTlsWithTunnel();
-    server.setProtocols(List.of(Protocol.HTTP_1_1));
+    server.setProtocols(asList(Protocol.HTTP_1_1));
 
     timeToFirstByte();
   }

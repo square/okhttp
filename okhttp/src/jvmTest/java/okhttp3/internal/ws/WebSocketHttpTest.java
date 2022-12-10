@@ -22,7 +22,6 @@ import java.net.HttpURLConnection;
 import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
 import java.time.Duration;
-import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -772,7 +771,7 @@ public final class WebSocketHttpTest {
   @Test public void webSocketConnectionIsReleased() throws Exception {
     // This test assumes HTTP/1.1 pooling semantics.
     client = client.newBuilder()
-        .protocols(List.of(Protocol.HTTP_1_1))
+        .protocols(asList(Protocol.HTTP_1_1))
         .build();
 
     webServer.enqueue(new MockResponse()
