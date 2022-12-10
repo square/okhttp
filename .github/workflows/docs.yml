@@ -35,7 +35,7 @@ jobs:
         with:
           python-version: 3.x
 
-      - run: pip install mkdocs-material
+      - run: pip install mkdocs-material mkdocs-redirects
 
       - name: Generate Docs
         run: ./test_docs.sh
