@@ -118,7 +118,6 @@ subprojects {
       jvmTarget = JavaVersion.VERSION_1_8.toString()
       freeCompilerArgs = listOf(
         "-Xjvm-default=all",
-        "-opt-in=kotlin.RequiresOptIn"
       )
     }
   }

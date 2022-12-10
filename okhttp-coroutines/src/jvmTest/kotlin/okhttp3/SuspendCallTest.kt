@@ -39,17 +39,24 @@ import org.junit.jupiter.api.fail
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.ExperimentalTime
+import org.junit.jupiter.api.BeforeEach
 
 @ExtendWith(MockWebServerExtension::class)
-class SuspendCallTest(
-  private val server: MockWebServer,
-) {
+class SuspendCallTest {
   @RegisterExtension
   val clientTestRule = OkHttpClientTestRule()
 
   private var client = clientTestRule.newClientBuilder().build()
 
-  val request = Request(server.url("/"))
+  private lateinit var server: MockWebServer
+
+  val request by lazy { Request(server.url("/")) }
+
+  @BeforeEach
+  fun setup(server: MockWebServer) {
+    this.server = server
+  }
 
   @Test
   fun suspendCall() {

@@ -4,7 +4,7 @@ import com.vanniktech.maven.publish.KotlinJvm
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
-  kotlin("jvm")
+  kotlin("multiplatform")
   kotlin("kapt")
   id("org.jetbrains.dokka")
   id("com.vanniktech.maven.publish.base")
@@ -12,31 +12,67 @@ plugins {
   id("com.github.johnrengelman.shadow")
 }
 
+kotlin {
+  jvm()
+
+  sourceSets {
+    commonMain {
+      dependencies {
+        api(libs.kotlin.stdlib)
+      }
+    }
+
+    commonTest {
+      dependencies {
+        api(libs.kotlin.stdlib)
+        implementation(kotlin("test"))
+      }
+    }
+
+    val jvmMain by getting {
+      kotlin.srcDir("$buildDir/generated/resources-templates")
+
+      dependencies {
+        api(libs.kotlin.stdlib)
+        api(projects.okhttp)
+        api(projects.loggingInterceptor)
+        api(libs.squareup.okio)
+        implementation(libs.clikt)
+        api(libs.guava.jre)
+      }
+    }
+
+    val jvmTest by getting {
+      dependencies {
+        api(libs.kotlin.stdlib)
+        implementation(projects.okhttpTestingSupport)
+        api(libs.squareup.okio)
+        api(libs.assertk)
+        implementation(kotlin("test"))
+      }
+    }
+
+    // Workaround for https://github.com/palantir/gradle-graal/issues/129
+    // Add a second configuration to populate
+    // runtimeClasspath vs jvmRuntimeClasspath
+    val main by register("main") {
+      dependencies {
+        implementation(libs.kotlin.stdlib)
+        implementation(projects.okhttp)
+        implementation(projects.loggingInterceptor)
+        implementation(libs.squareup.okio)
+        implementation(libs.clikt)
+        implementation(libs.guava.jre)
+      }
+    }
+  }
+}
+
 tasks.jar {
   manifest {
     attributes("Automatic-Module-Name" to "okhttp3.curl")
-    attributes("Main-Class" to "okhttp3.curl.Main")
+    attributes("Main-Class" to "okhttp3.curl.MainCommandLineKt")
   }
-}
-
-// resources-templates.
-sourceSets {
-  main {
-    resources.srcDirs("$buildDir/generated/resources-templates")
-  }
-}
-
-dependencies {
-  api(projects.okhttp)
-  api(projects.loggingInterceptor)
-  implementation(libs.picocli)
-  implementation(libs.guava.jre)
-
-  kapt(libs.picocli.compiler)
-
-  testImplementation(projects.okhttpTestingSupport)
-  testImplementation(libs.junit.jupiter.api)
-  testImplementation(libs.assertj.core)
 }
 
 tasks.shadowJar {
@@ -44,13 +80,12 @@ tasks.shadowJar {
 }
 
 graal {
-  mainClass("okhttp3.curl.Main")
+  mainClass("okhttp3.curl.MainCommandLineKt")
   outputName("okcurl")
   graalVersion(libs.versions.graalvm.get())
   javaVersion("11")
 
   option("--no-fallback")
-  option("--allow-incomplete-classpath")
 
   if (Os.isFamily(Os.FAMILY_WINDOWS)) {
     // May be possible without, but autodetection is problematic on Windows 10
@@ -59,6 +94,18 @@ graal {
     windowsVsVarsPath("C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\\Auxiliary\\Build\\vcvars64.bat")
   }
 }
+
+// Workaround for https://github.com/palantir/gradle-graal/issues/129
+// Copy the jvmJar output into the normal jar location
+val copyJvmJar = tasks.register<Copy>("copyJvmJar") {
+  val sourceFile = project.tasks.getByName("jvmJar").outputs.files.singleFile
+  val destinationFile = project.tasks.getByName("jar").outputs.files.singleFile
+  from(sourceFile)
+  into(destinationFile.parentFile)
+  rename (sourceFile.name, destinationFile.name)
+}
+tasks.getByName("copyJvmJar").dependsOn(tasks.getByName("jvmJar"))
+tasks.getByName("nativeImage").dependsOn(copyJvmJar)
 
 mavenPublishing {
   configure(KotlinJvm(javadocJar = JavadocJar.Dokka("dokkaGfm")))
@@ -71,5 +118,6 @@ tasks.register<Copy>("copyResourcesTemplates") {
   filteringCharset = Charsets.UTF_8.toString()
 }.let {
   tasks.processResources.dependsOn(it)
+  tasks.compileJava.dependsOn(it)
   tasks["javaSourcesJar"].dependsOn(it)
 }

@@ -54,6 +54,7 @@ import javax.net.ssl.X509TrustManager
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy
+import mockwebserver3.junit5.internal.MockWebServerInstance
 import okhttp3.Credentials.basic
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -105,7 +106,7 @@ class URLConnectionTest {
   private var cache: Cache? = null
 
   @BeforeEach
-  fun setUp(server: MockWebServer, server2: MockWebServer) {
+  fun setUp(server: MockWebServer, @MockWebServerInstance("server2") server2: MockWebServer) {
     this.server = server
     this.server2 = server2
     platform.assumeNotBouncyCastle()

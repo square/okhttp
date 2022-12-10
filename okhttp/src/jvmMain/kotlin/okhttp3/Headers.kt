@@ -45,8 +45,6 @@ import okhttp3.internal.commonValues
 import okhttp3.internal.headersCheckName
 import okhttp3.internal.http.toHttpDateOrNull
 import okhttp3.internal.http.toHttpDateString
-import okhttp3.internal.http2.Header
-import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 
 @Suppress("NAME_SHADOWING")
 actual class Headers internal actual constructor(
@@ -64,10 +62,8 @@ actual class Headers internal actual constructor(
    * Returns the last value corresponding to the specified field parsed as an HTTP date, or null if
    * either the field is absent or cannot be parsed as a date.
    */
-  @IgnoreJRERequirement
   fun getInstant(name: String): Instant? {
-    val value = getDate(name)
-    return value?.toInstant()
+    return getDate(name)?.toInstant()
   }
 
   @get:JvmName("size") actual val size: Int
@@ -184,35 +180,25 @@ actual class Headers internal actual constructor(
      * Add a header with the specified name and formatted date. Does validation of header names and
      * value.
      */
-    fun add(name: String, value: Date) = apply {
-      add(name, value.toHttpDateString())
-    }
+    fun add(name: String, value: Date) = add(name, value.toHttpDateString())
 
     /**
      * Add a header with the specified name and formatted instant. Does validation of header names
      * and value.
      */
-    @IgnoreJRERequirement
-    fun add(name: String, value: Instant) = apply {
-      add(name, Date(value.toEpochMilli()))
-    }
+    fun add(name: String, value: Instant) = add(name, Date.from(value))
 
     /**
      * Set a field with the specified date. If the field is not found, it is added. If the field is
      * found, the existing values are replaced.
      */
-    operator fun set(name: String, value: Date) = apply {
-      set(name, value.toHttpDateString())
-    }
+    operator fun set(name: String, value: Date) = set(name, value.toHttpDateString())
 
     /**
      * Set a field with the specified instant. If the field is not found, it is added. If the field
      * is found, the existing values are replaced.
      */
-    @IgnoreJRERequirement
-    operator fun set(name: String, value: Instant) = apply {
-      return set(name, Date(value.toEpochMilli()))
-    }
+    operator fun set(name: String, value: Instant) = set(name, Date.from(value))
 
     /**
      * Add a field with the specified value without any validation. Only appropriate for headers

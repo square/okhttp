@@ -41,6 +41,7 @@ include(":samples:guide")
 include(":samples:simple-client")
 include(":samples:slack")
 include(":samples:static-server")
+include(":samples:tlssurvey")
 include(":samples:unixdomainsockets")
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")

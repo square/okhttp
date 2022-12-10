@@ -334,7 +334,7 @@ class KotlinDeprecationErrorTest {
     val message: String = response.message()
     val handshake: Handshake? = response.handshake()
     val headers: Headers = response.headers()
-    val body: ResponseBody? = response.body()
+    val body: ResponseBody = response.body()
     val networkResponse: Response? = response.networkResponse()
     val cacheResponse: Response? = response.cacheResponse()
     val priorResponse: Response? = response.priorResponse()
