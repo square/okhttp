@@ -384,7 +384,7 @@ class OkHttpTest {
     val response = client.newCall(request).execute()
 
     val results = response.use {
-      moshi.adapter(HowsMySslResults::class.java).fromJson(response.body!!.string())!!
+      moshi.adapter(HowsMySslResults::class.java).fromJson(response.body.string())!!
     }
 
     Platform.get().log("results $results", Platform.WARN)

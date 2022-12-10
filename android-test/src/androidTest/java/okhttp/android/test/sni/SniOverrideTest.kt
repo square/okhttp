@@ -18,11 +18,16 @@ package okhttp.android.test.sni;
 import android.os.Build
 import android.util.Log
 import java.security.cert.X509Certificate
+import javax.net.ssl.SNIHostName
+import javax.net.ssl.SNIServerName
+import javax.net.ssl.SSLSocket
+import javax.net.ssl.SSLSocketFactory
+import okhttp3.DelegatingSSLSocketFactory
 import okhttp3.Dns
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
