@@ -1,5 +1,5 @@
 [versions]
-biz-aQute-bnd = "6.3.1"
+biz-aQute-bnd = "6.4.0"
 checkStyle = "10.5.0"
 com-squareup-moshi = "1.14.0"
 com-squareup-okio = "3.2.0"
