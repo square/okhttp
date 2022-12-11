@@ -17,6 +17,7 @@ package okhttp3.internal
 
 import kotlin.jvm.JvmStatic
 import okhttp3.HttpUrl
+import okhttp3.internal.CommonHttpUrl.percentDecode
 import okhttp3.internal.HttpUrlCommon.canonicalize
 import okhttp3.internal.HttpUrlCommon.writePercentDecoded
 import okio.Buffer
@@ -581,5 +582,24 @@ object CommonHttpUrl {
       pos = ampersandOffset + 1
     }
     return result
+  }
+
+  fun HttpUrl.Builder.commonBuild(): HttpUrl {
+    @Suppress("UNCHECKED_CAST") // percentDecode returns either List<String?> or List<String>.
+    return HttpUrl(
+      scheme = scheme ?: throw IllegalStateException("scheme == null"),
+      username = encodedUsername.percentDecode(),
+      password = encodedPassword.percentDecode(),
+      host = host ?: throw IllegalStateException("host == null"),
+      port = effectivePort(),
+      pathSegments = encodedPathSegments.map { it.percentDecode() },
+      queryNamesAndValues = encodedQueryNamesAndValues?.map { it?.percentDecode(plusIsSpace = true) },
+      fragment = encodedFragment?.percentDecode(),
+      url = toString()
+    )
+  }
+
+  internal fun HttpUrl.Builder.effectivePort(): Int {
+    return if (port != -1) port else HttpUrl.defaultPort(scheme!!)
   }
 }

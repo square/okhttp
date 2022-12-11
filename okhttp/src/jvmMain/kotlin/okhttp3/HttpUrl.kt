@@ -38,6 +38,7 @@ import okhttp3.internal.CommonHttpUrl.commonAddEncodedQueryParameter
 import okhttp3.internal.CommonHttpUrl.commonAddPathSegment
 import okhttp3.internal.CommonHttpUrl.commonAddPathSegments
 import okhttp3.internal.CommonHttpUrl.commonAddQueryParameter
+import okhttp3.internal.CommonHttpUrl.commonBuild
 import okhttp3.internal.CommonHttpUrl.commonDefaultPort
 import okhttp3.internal.CommonHttpUrl.commonEncodedFragment
 import okhttp3.internal.CommonHttpUrl.commonEncodedPassword
@@ -73,6 +74,7 @@ import okhttp3.internal.CommonHttpUrl.commonSetPathSegment
 import okhttp3.internal.CommonHttpUrl.commonSetQueryParameter
 import okhttp3.internal.CommonHttpUrl.commonToString
 import okhttp3.internal.CommonHttpUrl.commonUsername
+import okhttp3.internal.CommonHttpUrl.effectivePort
 import okhttp3.internal.CommonHttpUrl.percentDecode
 import okhttp3.internal.CommonHttpUrl.resolvePath
 import okhttp3.internal.CommonHttpUrl.toQueryNamesAndValues
@@ -648,10 +650,6 @@ actual class HttpUrl internal actual constructor(
 
     actual fun port(port: Int) = commonPort(port)
 
-    private fun effectivePort(): Int {
-      return if (port != -1) port else defaultPort(scheme!!)
-    }
-
     actual fun addPathSegment(pathSegment: String) = commonAddPathSegment(pathSegment)
 
     /**
@@ -697,13 +695,7 @@ actual class HttpUrl internal actual constructor(
 
     actual fun fragment(fragment: String?) = commonFragment(fragment)
 
-    actual fun encodedFragment(encodedFragment: String?) = apply {
-      this.encodedFragment = encodedFragment?.canonicalize(
-          encodeSet = FRAGMENT_ENCODE_SET,
-          alreadyEncoded = true,
-          unicodeAllowed = true
-      )
-    }
+    actual fun encodedFragment(encodedFragment: String?) = commonEncodedFragment(encodedFragment)
 
     /**
      * Re-encodes the components of this URL so that it satisfies (obsolete) RFC 2396, which is
@@ -740,20 +732,7 @@ actual class HttpUrl internal actual constructor(
       )
     }
 
-    actual fun build(): HttpUrl {
-      @Suppress("UNCHECKED_CAST") // percentDecode returns either List<String?> or List<String>.
-      return HttpUrl(
-          scheme = scheme ?: throw IllegalStateException("scheme == null"),
-          username = encodedUsername.percentDecode(),
-          password = encodedPassword.percentDecode(),
-          host = host ?: throw IllegalStateException("host == null"),
-          port = effectivePort(),
-          pathSegments = encodedPathSegments.map { it.percentDecode() },
-          queryNamesAndValues = encodedQueryNamesAndValues?.map { it?.percentDecode(plusIsSpace = true) },
-          fragment = encodedFragment?.percentDecode(),
-          url = toString()
-      )
-    }
+    actual fun build(): HttpUrl = commonBuild()
 
     override fun toString(): String {
       return buildString {
