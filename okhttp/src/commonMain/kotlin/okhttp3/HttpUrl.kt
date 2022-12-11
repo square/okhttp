@@ -16,7 +16,6 @@
 package okhttp3
 
 import kotlin.jvm.JvmName
-import okhttp3.internal.delimiterOffset
 
 /**
  * A uniform resource locator (URL) with a scheme of either `http` or `https`. Use this class to

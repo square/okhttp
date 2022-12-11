@@ -17,12 +17,46 @@ package okhttp3.internal
 
 import kotlin.jvm.JvmStatic
 import okhttp3.HttpUrl
+import okhttp3.internal.HttpUrlCommon.canonicalize
+import okhttp3.internal.HttpUrlCommon.writePercentDecoded
+import okio.Buffer
 
 expect object HttpUrlCommon {
+  internal fun Buffer.writePercentDecoded(
+    encoded: String,
+    pos: Int,
+    limit: Int,
+    plusIsSpace: Boolean
+  )
+
+  internal fun String.canonicalize(
+    pos: Int = 0,
+    limit: Int = length,
+    encodeSet: String,
+    alreadyEncoded: Boolean = false,
+    strict: Boolean = false,
+    plusIsSpace: Boolean = false,
+    unicodeAllowed: Boolean = false,
+  ): String
 
 }
 
 object CommonHttpUrl {
+
+  internal val HEX_DIGITS =
+    charArrayOf('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F')
+  internal const val USERNAME_ENCODE_SET = " \"':;<=>@[]^`{}|/\\?#"
+  internal const val PASSWORD_ENCODE_SET = " \"':;<=>@[]^`{}|/\\?#"
+  internal const val PATH_SEGMENT_ENCODE_SET = " \"<>^`{}|/\\?#"
+  internal const val PATH_SEGMENT_ENCODE_SET_URI = "[]"
+  internal const val QUERY_ENCODE_SET = " \"'<>#"
+  internal const val QUERY_COMPONENT_REENCODE_SET = " \"'<>#&="
+  internal const val QUERY_COMPONENT_ENCODE_SET = " !\"#$&'(),/:;<=>?@[]\\^`{|}~"
+  internal const val QUERY_COMPONENT_ENCODE_SET_URI = "\\^`{|}"
+  internal const val FORM_ENCODE_SET = " !\"#$&'()+,/:;<=>?@[\\]^`{|}~"
+  internal const val FRAGMENT_ENCODE_SET = ""
+  internal const val FRAGMENT_ENCODE_SET_URI = " \"#<>\\^`{|}"
+
   val HttpUrl.commonEncodedUsername: String
     get() {
       if (username.isEmpty()) return ""
@@ -197,5 +231,74 @@ object CommonHttpUrl {
       "https" -> 443
       else -> -1
     }
+  }
+
+
+  /**
+   * @param scheme either "http" or "https".
+   */
+  fun HttpUrl.Builder.commonScheme(scheme: String) = apply {
+    when {
+      scheme.equals("http", ignoreCase = true) -> this.scheme = "http"
+      scheme.equals("https", ignoreCase = true) -> this.scheme = "https"
+      else -> throw IllegalArgumentException("unexpected scheme: $scheme")
+    }
+  }
+
+  fun HttpUrl.Builder.commonUsername(username: String) = apply {
+    this.encodedUsername = username.canonicalize(encodeSet = USERNAME_ENCODE_SET)
+  }
+
+  fun HttpUrl.Builder.commonEncodedUsername(encodedUsername: String) = apply {
+    this.encodedUsername = encodedUsername.canonicalize(
+      encodeSet = USERNAME_ENCODE_SET,
+      alreadyEncoded = true
+    )
+  }
+
+  fun HttpUrl.Builder.commonPassword(password: String) = apply {
+    this.encodedPassword = password.canonicalize(encodeSet = PASSWORD_ENCODE_SET)
+  }
+
+  fun HttpUrl.Builder.commonEncodedPassword(encodedPassword: String) = apply {
+    this.encodedPassword = encodedPassword.canonicalize(
+      encodeSet = PASSWORD_ENCODE_SET,
+      alreadyEncoded = true
+    )
+  }
+
+  /**
+   * @param host either a regular hostname, International Domain Name, IPv4 address, or IPv6
+   * address.
+   */
+  fun HttpUrl.Builder.commonHost(host: String) = apply {
+    val encoded = host.percentDecode().toCanonicalHost() ?: throw IllegalArgumentException(
+      "unexpected host: $host")
+    this.host = encoded
+  }
+
+  internal fun String.percentDecode(
+    pos: Int = 0,
+    limit: Int = length,
+    plusIsSpace: Boolean = false
+  ): String {
+    for (i in pos until limit) {
+      val c = this[i]
+      if (c == '%' || c == '+' && plusIsSpace) {
+        // Slow path: the character at i requires decoding!
+        val out = Buffer()
+        out.writeUtf8(this, pos, i)
+        out.writePercentDecoded(this, pos = i, limit = limit, plusIsSpace = plusIsSpace)
+        return out.readUtf8()
+      }
+    }
+
+    // Fast path: no characters in [pos..limit) required decoding.
+    return substring(pos, limit)
+  }
+
+  fun HttpUrl.Builder.commonPort(port: Int) = apply {
+    require(port in 1..65535) { "unexpected port: $port" }
+    this.port = port
   }
 }

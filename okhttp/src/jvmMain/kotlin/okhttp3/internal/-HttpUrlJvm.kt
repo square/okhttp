@@ -16,6 +16,9 @@
 package okhttp3.internal
 
 import java.nio.charset.Charset
+import okhttp3.internal.CommonHttpUrl.FORM_ENCODE_SET
+import okhttp3.internal.CommonHttpUrl.HEX_DIGITS
+import okhttp3.internal.JvmHttpUrl.canonicalizeInternal
 import okio.Buffer
 
 object JvmHttpUrl {
@@ -81,7 +84,7 @@ object JvmHttpUrl {
   internal fun parsePort(input: String, pos: Int, limit: Int): Int {
     return try {
       // Canonicalize the port string to skip '\n' etc.
-      val portString = input.canonicalize(pos = pos, limit = limit, encodeSet = "")
+      val portString = input.canonicalizeInternal(pos = pos, limit = limit, encodeSet = "")
       val i = portString.toInt()
       if (i in 1..65535) i else -1
     } catch (_: NumberFormatException) {
@@ -89,143 +92,14 @@ object JvmHttpUrl {
     }
   }
 
-  internal val HEX_DIGITS =
-    charArrayOf('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F')
-  internal const val USERNAME_ENCODE_SET = " \"':;<=>@[]^`{}|/\\?#"
-  internal const val PASSWORD_ENCODE_SET = " \"':;<=>@[]^`{}|/\\?#"
-  internal const val PATH_SEGMENT_ENCODE_SET = " \"<>^`{}|/\\?#"
-  internal const val PATH_SEGMENT_ENCODE_SET_URI = "[]"
-  internal const val QUERY_ENCODE_SET = " \"'<>#"
-  internal const val QUERY_COMPONENT_REENCODE_SET = " \"'<>#&="
-  internal const val QUERY_COMPONENT_ENCODE_SET = " !\"#$&'(),/:;<=>?@[]\\^`{|}~"
-  internal const val QUERY_COMPONENT_ENCODE_SET_URI = "\\^`{|}"
-  internal const val FORM_ENCODE_SET = " !\"#$&'()+,/:;<=>?@[\\]^`{|}~"
-  internal const val FRAGMENT_ENCODE_SET = ""
-  internal const val FRAGMENT_ENCODE_SET_URI = " \"#<>\\^`{|}"
-
-
-
-  internal fun String.percentDecode(
-    pos: Int = 0,
-    limit: Int = length,
-    plusIsSpace: Boolean = false
-  ): String {
-    for (i in pos until limit) {
-      val c = this[i]
-      if (c == '%' || c == '+' && plusIsSpace) {
-        // Slow path: the character at i requires decoding!
-        val out = Buffer()
-        out.writeUtf8(this, pos, i)
-        out.writePercentDecoded(this, pos = i, limit = limit, plusIsSpace = plusIsSpace)
-        return out.readUtf8()
-      }
-    }
-
-    // Fast path: no characters in [pos..limit) required decoding.
-    return substring(pos, limit)
-  }
-
-  private fun Buffer.writePercentDecoded(
-    encoded: String,
-    pos: Int,
-    limit: Int,
-    plusIsSpace: Boolean
-  ) {
-    var codePoint: Int
-    var i = pos
-    while (i < limit) {
-      codePoint = encoded.codePointAt(i)
-      if (codePoint == '%'.code && i + 2 < limit) {
-        val d1 = encoded[i + 1].parseHexDigit()
-        val d2 = encoded[i + 2].parseHexDigit()
-        if (d1 != -1 && d2 != -1) {
-          writeByte((d1 shl 4) + d2)
-          i += 2
-          i += Character.charCount(codePoint)
-          continue
-        }
-      } else if (codePoint == '+'.code && plusIsSpace) {
-        writeByte(' '.code)
-        i++
-        continue
-      }
-      writeUtf8CodePoint(codePoint)
-      i += Character.charCount(codePoint)
-    }
-  }
-
-  private fun String.isPercentEncoded(pos: Int, limit: Int): Boolean {
+  internal fun String.isPercentEncoded(pos: Int, limit: Int): Boolean {
     return pos + 2 < limit &&
       this[pos] == '%' &&
       this[pos + 1].parseHexDigit() != -1 &&
       this[pos + 2].parseHexDigit() != -1
   }
 
-  /**
-   * Returns a substring of `input` on the range `[pos..limit)` with the following
-   * transformations:
-   *
-   *  * Tabs, newlines, form feeds and carriage returns are skipped.
-   *
-   *  * In queries, ' ' is encoded to '+' and '+' is encoded to "%2B".
-   *
-   *  * Characters in `encodeSet` are percent-encoded.
-   *
-   *  * Control characters and non-ASCII characters are percent-encoded.
-   *
-   *  * All other characters are copied without transformation.
-   *
-   * @param alreadyEncoded true to leave '%' as-is; false to convert it to '%25'.
-   * @param strict true to encode '%' if it is not the prefix of a valid percent encoding.
-   * @param plusIsSpace true to encode '+' as "%2B" if it is not already encoded.
-   * @param unicodeAllowed true to leave non-ASCII codepoint unencoded.
-   * @param charset which charset to use, null equals UTF-8.
-   */
-  internal fun String.canonicalize(
-    pos: Int = 0,
-    limit: Int = length,
-    encodeSet: String,
-    alreadyEncoded: Boolean = false,
-    strict: Boolean = false,
-    plusIsSpace: Boolean = false,
-    unicodeAllowed: Boolean = false,
-    charset: Charset? = null
-  ): String {
-    var codePoint: Int
-    var i = pos
-    while (i < limit) {
-      codePoint = codePointAt(i)
-      if (codePoint < 0x20 ||
-        codePoint == 0x7f ||
-        codePoint >= 0x80 && !unicodeAllowed ||
-        codePoint.toChar() in encodeSet ||
-        codePoint == '%'.code &&
-        (!alreadyEncoded || strict && !isPercentEncoded(i, limit)) ||
-        codePoint == '+'.code && plusIsSpace) {
-        // Slow path: the character at i requires encoding!
-        val out = Buffer()
-        out.writeUtf8(this, pos, i)
-        out.writeCanonicalized(
-          input = this,
-          pos = i,
-          limit = limit,
-          encodeSet = encodeSet,
-          alreadyEncoded = alreadyEncoded,
-          strict = strict,
-          plusIsSpace = plusIsSpace,
-          unicodeAllowed = unicodeAllowed,
-          charset = charset
-        )
-        return out.readUtf8()
-      }
-      i += Character.charCount(codePoint)
-    }
-
-    // Fast path: no characters in [pos..limit) required encoding.
-    return substring(pos, limit)
-  }
-
-  private fun Buffer.writeCanonicalized(
+  internal fun Buffer.writeCanonicalized(
     input: String,
     pos: Int,
     limit: Int,
@@ -280,8 +154,117 @@ object JvmHttpUrl {
       i += Character.charCount(codePoint)
     }
   }
+
+  /**
+   * Returns a substring of `input` on the range `[pos..limit)` with the following
+   * transformations:
+   *
+   *  * Tabs, newlines, form feeds and carriage returns are skipped.
+   *
+   *  * In queries, ' ' is encoded to '+' and '+' is encoded to "%2B".
+   *
+   *  * Characters in `encodeSet` are percent-encoded.
+   *
+   *  * Control characters and non-ASCII characters are percent-encoded.
+   *
+   *  * All other characters are copied without transformation.
+   *
+   * @param alreadyEncoded true to leave '%' as-is; false to convert it to '%25'.
+   * @param strict true to encode '%' if it is not the prefix of a valid percent encoding.
+   * @param plusIsSpace true to encode '+' as "%2B" if it is not already encoded.
+   * @param unicodeAllowed true to leave non-ASCII codepoint unencoded.
+   * @param charset which charset to use, null equals UTF-8.
+   */
+  internal fun String.canonicalizeInternal(
+    pos: Int = 0,
+    limit: Int = length,
+    encodeSet: String,
+    alreadyEncoded: Boolean = false,
+    strict: Boolean = false,
+    plusIsSpace: Boolean = false,
+    unicodeAllowed: Boolean = false,
+    charset: Charset? = null
+  ): String {
+    var codePoint: Int
+    var i = pos
+    while (i < limit) {
+      codePoint = codePointAt(i)
+      if (codePoint < 0x20 ||
+        codePoint == 0x7f ||
+        codePoint >= 0x80 && !unicodeAllowed ||
+        codePoint.toChar() in encodeSet ||
+        codePoint == '%'.code &&
+        (!alreadyEncoded || strict && !isPercentEncoded(i, limit)) ||
+        codePoint == '+'.code && plusIsSpace) {
+        // Slow path: the character at i requires encoding!
+        val out = Buffer()
+        out.writeUtf8(this, pos, i)
+        out.writeCanonicalized(
+          input = this,
+          pos = i,
+          limit = limit,
+          encodeSet = encodeSet,
+          alreadyEncoded = alreadyEncoded,
+          strict = strict,
+          plusIsSpace = plusIsSpace,
+          unicodeAllowed = unicodeAllowed,
+          charset = charset
+        )
+        return out.readUtf8()
+      }
+      i += Character.charCount(codePoint)
+    }
+
+    // Fast path: no characters in [pos..limit) required encoding.
+    return substring(pos, limit)
+  }
 }
 
 actual object HttpUrlCommon {
+  internal actual fun Buffer.writePercentDecoded(
+    encoded: String,
+    pos: Int,
+    limit: Int,
+    plusIsSpace: Boolean
+  ) {
+    var codePoint: Int
+    var i = pos
+    while (i < limit) {
+      codePoint = encoded.codePointAt(i)
+      if (codePoint == '%'.code && i + 2 < limit) {
+        val d1 = encoded[i + 1].parseHexDigit()
+        val d2 = encoded[i + 2].parseHexDigit()
+        if (d1 != -1 && d2 != -1) {
+          writeByte((d1 shl 4) + d2)
+          i += 2
+          i += Character.charCount(codePoint)
+          continue
+        }
+      } else if (codePoint == '+'.code && plusIsSpace) {
+        writeByte(' '.code)
+        i++
+        continue
+      }
+      writeUtf8CodePoint(codePoint)
+      i += Character.charCount(codePoint)
+    }
+  }
+  internal actual fun String.canonicalize(
+    pos: Int,
+    limit: Int,
+    encodeSet: String,
+    alreadyEncoded: Boolean,
+    strict: Boolean,
+    plusIsSpace: Boolean,
+    unicodeAllowed: Boolean,
+  ): String = canonicalizeInternal(
+    pos = pos,
+    limit = limit,
+    encodeSet = encodeSet,
+    alreadyEncoded = alreadyEncoded,
+    strict = strict,
+    plusIsSpace = plusIsSpace,
+    unicodeAllowed = unicodeAllowed
+  )
 
 }

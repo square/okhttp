@@ -20,10 +20,18 @@ import java.net.MalformedURLException
 import java.net.URI
 import java.net.URISyntaxException
 import java.net.URL
-import java.util.Collections
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import okhttp3.internal.CommonHttpUrl
+import okhttp3.internal.CommonHttpUrl.FRAGMENT_ENCODE_SET
+import okhttp3.internal.CommonHttpUrl.FRAGMENT_ENCODE_SET_URI
+import okhttp3.internal.CommonHttpUrl.PASSWORD_ENCODE_SET
+import okhttp3.internal.CommonHttpUrl.PATH_SEGMENT_ENCODE_SET
+import okhttp3.internal.CommonHttpUrl.PATH_SEGMENT_ENCODE_SET_URI
+import okhttp3.internal.CommonHttpUrl.QUERY_COMPONENT_ENCODE_SET
+import okhttp3.internal.CommonHttpUrl.QUERY_COMPONENT_ENCODE_SET_URI
+import okhttp3.internal.CommonHttpUrl.QUERY_COMPONENT_REENCODE_SET
+import okhttp3.internal.CommonHttpUrl.QUERY_ENCODE_SET
+import okhttp3.internal.CommonHttpUrl.USERNAME_ENCODE_SET
 import okhttp3.internal.CommonHttpUrl.commonDefaultPort
 import okhttp3.internal.CommonHttpUrl.commonEncodedFragment
 import okhttp3.internal.CommonHttpUrl.commonEncodedPassword
@@ -45,21 +53,11 @@ import okhttp3.internal.CommonHttpUrl.commonQuerySize
 import okhttp3.internal.CommonHttpUrl.commonRedact
 import okhttp3.internal.CommonHttpUrl.commonResolve
 import okhttp3.internal.CommonHttpUrl.commonToString
+import okhttp3.internal.CommonHttpUrl.percentDecode
 import okhttp3.internal.CommonHttpUrl.toQueryString
-import okhttp3.internal.JvmHttpUrl.FRAGMENT_ENCODE_SET
-import okhttp3.internal.JvmHttpUrl.FRAGMENT_ENCODE_SET_URI
+import okhttp3.internal.HttpUrlCommon.canonicalize
 import okhttp3.internal.JvmHttpUrl.INVALID_HOST
-import okhttp3.internal.JvmHttpUrl.PASSWORD_ENCODE_SET
-import okhttp3.internal.JvmHttpUrl.PATH_SEGMENT_ENCODE_SET
-import okhttp3.internal.JvmHttpUrl.PATH_SEGMENT_ENCODE_SET_URI
-import okhttp3.internal.JvmHttpUrl.QUERY_COMPONENT_ENCODE_SET
-import okhttp3.internal.JvmHttpUrl.QUERY_COMPONENT_ENCODE_SET_URI
-import okhttp3.internal.JvmHttpUrl.QUERY_COMPONENT_REENCODE_SET
-import okhttp3.internal.JvmHttpUrl.QUERY_ENCODE_SET
-import okhttp3.internal.JvmHttpUrl.USERNAME_ENCODE_SET
-import okhttp3.internal.JvmHttpUrl.canonicalize
 import okhttp3.internal.JvmHttpUrl.parsePort
-import okhttp3.internal.JvmHttpUrl.percentDecode
 import okhttp3.internal.JvmHttpUrl.portColonOffset
 import okhttp3.internal.JvmHttpUrl.schemeDelimiterOffset
 import okhttp3.internal.JvmHttpUrl.slashCount
@@ -598,18 +596,14 @@ actual class HttpUrl internal actual constructor(
   fun fragment(): String? = fragment
 
   actual class Builder {
-    actual internal var scheme: String? = null
-    actual internal var encodedUsername = ""
-    actual internal var encodedPassword = ""
-    actual internal var host: String? = null
-    actual internal var port = -1
-    actual internal val encodedPathSegments = mutableListOf<String>()
-    actual internal var encodedQueryNamesAndValues: MutableList<String?>? = null
-    actual internal var encodedFragment: String? = null
-
-    init {
-      encodedPathSegments.add("") // The default path is '/' which needs a trailing space.
-    }
+    internal actual var scheme: String? = null
+    internal actual var encodedUsername = ""
+    internal actual var encodedPassword = ""
+    internal actual var host: String? = null
+    internal actual var port = -1
+    internal actual val encodedPathSegments = mutableListOf<String>("")
+    internal actual var encodedQueryNamesAndValues: MutableList<String?>? = null
+    internal actual var encodedFragment: String? = null
 
     /**
      * @param scheme either "http" or "https".
