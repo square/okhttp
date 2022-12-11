@@ -391,3 +391,9 @@ internal fun <T> interleave(a: Iterable<T>, b: Iterable<T>): List<T> {
     }
   }
 }
+
+// TODO check read only options for creating lists
+public fun <T> List<T>.readOnly() = this.toList()
+
+// TODO check read only options for creating lists
+public fun <T> Set<T>.readOnly() = this.toSet()

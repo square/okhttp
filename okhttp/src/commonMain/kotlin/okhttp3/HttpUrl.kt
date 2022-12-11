@@ -270,14 +270,14 @@ import okhttp3.internal.delimiterOffset
  */
 expect class HttpUrl internal constructor(
   scheme: String,
-username: String,
-password: String,
-host: String,
-port: Int,
-pathSegments: List<String>,
-queryNamesAndValues: List<String?>?,
-fragment: String?,
-url: String
+  username: String,
+  password: String,
+  host: String,
+  port: Int,
+  pathSegments: List<String>,
+  queryNamesAndValues: List<String?>?,
+  fragment: String?,
+  url: String
 ) {
 
   /** Either "http" or "https". */
@@ -499,6 +499,10 @@ url: String
    */
   val queryParameterNames: Set<String>
 
+  internal val url: String
+
+  internal val queryNamesAndValues: List<String?>?
+
   /**
    * Returns all values for the query parameter `name` ordered by their appearance in this
    * URL. For example this returns `["banana"]` for `queryParameterValue("b")` on
@@ -581,7 +585,7 @@ url: String
    */
   fun newBuilder(link: String): Builder?
 
-  class Builder {
+  class Builder constructor() {
     internal var scheme: String?
     internal var encodedUsername: String
     internal var encodedPassword: String
@@ -629,6 +633,8 @@ url: String
 
     fun query(query: String?): Builder
 
+    fun encodedQuery(encodedQuery: String?): Builder
+
     /** Encodes the query parameter using UTF-8 and adds it to this URL's query string. */
     fun addQueryParameter(name: String, value: String?): Builder
 
@@ -657,5 +663,7 @@ url: String
     fun String.toHttpUrl(): HttpUrl
 
     fun String.toHttpUrlOrNull(): HttpUrl?
+
+    fun defaultPort(scheme: String): Int
   }
 }

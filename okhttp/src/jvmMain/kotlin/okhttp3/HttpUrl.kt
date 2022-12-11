@@ -20,15 +20,34 @@ import java.net.MalformedURLException
 import java.net.URI
 import java.net.URISyntaxException
 import java.net.URL
-import java.nio.charset.Charset
 import java.util.Collections
-import kotlin.text.Charsets.UTF_8
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import okhttp3.internal.JvmHttpUrl.FORM_ENCODE_SET
+import okhttp3.internal.CommonHttpUrl
+import okhttp3.internal.CommonHttpUrl.commonDefaultPort
+import okhttp3.internal.CommonHttpUrl.commonEncodedFragment
+import okhttp3.internal.CommonHttpUrl.commonEncodedPassword
+import okhttp3.internal.CommonHttpUrl.commonEncodedPath
+import okhttp3.internal.CommonHttpUrl.commonEncodedPathSegments
+import okhttp3.internal.CommonHttpUrl.commonEncodedQuery
+import okhttp3.internal.CommonHttpUrl.commonEncodedUsername
+import okhttp3.internal.CommonHttpUrl.commonEquals
+import okhttp3.internal.CommonHttpUrl.commonHashCode
+import okhttp3.internal.CommonHttpUrl.commonNewBuilder
+import okhttp3.internal.CommonHttpUrl.commonPathSize
+import okhttp3.internal.CommonHttpUrl.commonQuery
+import okhttp3.internal.CommonHttpUrl.commonQueryParameter
+import okhttp3.internal.CommonHttpUrl.commonQueryParameterName
+import okhttp3.internal.CommonHttpUrl.commonQueryParameterNames
+import okhttp3.internal.CommonHttpUrl.commonQueryParameterValue
+import okhttp3.internal.CommonHttpUrl.commonQueryParameterValues
+import okhttp3.internal.CommonHttpUrl.commonQuerySize
+import okhttp3.internal.CommonHttpUrl.commonRedact
+import okhttp3.internal.CommonHttpUrl.commonResolve
+import okhttp3.internal.CommonHttpUrl.commonToString
+import okhttp3.internal.CommonHttpUrl.toQueryString
 import okhttp3.internal.JvmHttpUrl.FRAGMENT_ENCODE_SET
 import okhttp3.internal.JvmHttpUrl.FRAGMENT_ENCODE_SET_URI
-import okhttp3.internal.JvmHttpUrl.HEX_DIGITS
 import okhttp3.internal.JvmHttpUrl.INVALID_HOST
 import okhttp3.internal.JvmHttpUrl.PASSWORD_ENCODE_SET
 import okhttp3.internal.JvmHttpUrl.PATH_SEGMENT_ENCODE_SET
@@ -48,10 +67,8 @@ import okhttp3.internal.canParseAsIpAddress
 import okhttp3.internal.delimiterOffset
 import okhttp3.internal.indexOfFirstNonAsciiWhitespace
 import okhttp3.internal.indexOfLastNonAsciiWhitespace
-import okhttp3.internal.parseHexDigit
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
 import okhttp3.internal.toCanonicalHost
-import okio.Buffer
 
 /**
  * A uniform resource locator (URL) with a scheme of either `http` or `https`. Use this class to
@@ -321,12 +338,12 @@ actual class HttpUrl internal actual constructor(
    * non-empty, but never null. Values are null if the name has no corresponding '=' separator, or
    * empty, or non-empty.
    */
-  private val queryNamesAndValues: List<String?>?,
+  internal actual val queryNamesAndValues: List<String?>?,
 
   @get:JvmName("fragment") actual val fragment: String?,
 
   /** Canonical URL. */
-  private val url: String
+  internal actual val url: String
 ) {
   actual val isHttps: Boolean
     get() = scheme == "https"
@@ -369,156 +386,58 @@ actual class HttpUrl internal actual constructor(
   }
 
   @get:JvmName("encodedUsername") actual val encodedUsername: String
-    get() {
-      if (username.isEmpty()) return ""
-      val usernameStart = scheme.length + 3 // "://".length() == 3.
-      val usernameEnd = url.delimiterOffset(":@", usernameStart, url.length)
-      return url.substring(usernameStart, usernameEnd)
-    }
+    get() = commonEncodedUsername
 
   @get:JvmName("encodedPassword") actual val encodedPassword: String
-    get() {
-      if (password.isEmpty()) return ""
-      val passwordStart = url.indexOf(':', scheme.length + 3) + 1
-      val passwordEnd = url.indexOf('@')
-      return url.substring(passwordStart, passwordEnd)
-    }
+    get() = commonEncodedPassword
 
   @get:JvmName("pathSize")
-  actual val pathSize: Int get() = pathSegments.size
+  actual val pathSize: Int
+    get() = commonPathSize
 
   @get:JvmName("encodedPath") actual val encodedPath: String
-    get() {
-      val pathStart = url.indexOf('/', scheme.length + 3) // "://".length() == 3.
-      val pathEnd = url.delimiterOffset("?#", pathStart, url.length)
-      return url.substring(pathStart, pathEnd)
-    }
+    get() = commonEncodedPath
 
   @get:JvmName("encodedPathSegments") actual val encodedPathSegments: List<String>
-    get() {
-      val pathStart = url.indexOf('/', scheme.length + 3)
-      val pathEnd = url.delimiterOffset("?#", pathStart, url.length)
-      val result = mutableListOf<String>()
-      var i = pathStart
-      while (i < pathEnd) {
-        i++ // Skip the '/'.
-        val segmentEnd = url.delimiterOffset('/', i, pathEnd)
-        result.add(url.substring(i, segmentEnd))
-        i = segmentEnd
-      }
-      return result
-    }
+    get() = commonEncodedPathSegments
 
   @get:JvmName("encodedQuery") actual val encodedQuery: String?
-    get() {
-      if (queryNamesAndValues == null) return null // No query.
-      val queryStart = url.indexOf('?') + 1
-      val queryEnd = url.delimiterOffset('#', queryStart, url.length)
-      return url.substring(queryStart, queryEnd)
-    }
+    get() = commonEncodedQuery
 
   @get:JvmName("query") actual val query: String?
-    get() {
-      if (queryNamesAndValues == null) return null // No query.
-      val result = StringBuilder()
-      queryNamesAndValues.toQueryString(result)
-      return result.toString()
-    }
+    get() = commonQuery
 
   @get:JvmName("querySize") actual val querySize: Int
-    get() {
-      return if (queryNamesAndValues != null) queryNamesAndValues.size / 2 else 0
-    }
+    get() = commonQuerySize
 
-  actual fun queryParameter(name: String): String? {
-    if (queryNamesAndValues == null) return null
-    for (i in 0 until queryNamesAndValues.size step 2) {
-      if (name == queryNamesAndValues[i]) {
-        return queryNamesAndValues[i + 1]
-      }
-    }
-    return null
-  }
+  actual fun queryParameter(name: String): String? = commonQueryParameter(name)
 
   actual @get:JvmName("queryParameterNames") val queryParameterNames: Set<String>
-    get() {
-      if (queryNamesAndValues == null) return emptySet()
-      val result = LinkedHashSet<String>()
-      for (i in 0 until queryNamesAndValues.size step 2) {
-        result.add(queryNamesAndValues[i]!!)
-      }
-      return Collections.unmodifiableSet(result)
-    }
+    get() = commonQueryParameterNames
 
-  actual fun queryParameterValues(name: String): List<String?> {
-    if (queryNamesAndValues == null) return emptyList()
-    val result = mutableListOf<String?>()
-    for (i in 0 until queryNamesAndValues.size step 2) {
-      if (name == queryNamesAndValues[i]) {
-        result.add(queryNamesAndValues[i + 1])
-      }
-    }
-    return Collections.unmodifiableList(result)
-  }
+  actual fun queryParameterValues(name: String): List<String?> = commonQueryParameterValues(name)
 
-  actual fun queryParameterName(index: Int): String {
-    if (queryNamesAndValues == null) throw IndexOutOfBoundsException()
-    return queryNamesAndValues[index * 2]!!
-  }
+  actual fun queryParameterName(index: Int): String = commonQueryParameterName(index)
 
-  actual fun queryParameterValue(index: Int): String? {
-    if (queryNamesAndValues == null) throw IndexOutOfBoundsException()
-    return queryNamesAndValues[index * 2 + 1]
-  }
+  actual fun queryParameterValue(index: Int): String? = commonQueryParameterValue(index)
 
   @get:JvmName("encodedFragment")
   actual val encodedFragment: String?
-    get() {
-    if (fragment == null) return null
-    val fragmentStart = url.indexOf('#') + 1
-    return url.substring(fragmentStart)
-  }
+    get() = commonEncodedFragment
 
-  actual fun redact(): String {
-    return newBuilder("/...")!!
-        .username("")
-        .password("")
-        .build()
-        .toString()
-  }
+  actual fun redact(): String = commonRedact()
 
-  actual fun resolve(link: String): HttpUrl? = newBuilder(link)?.build()
+  actual fun resolve(link: String): HttpUrl? = commonResolve(link)
 
-  actual fun newBuilder(): Builder {
-    val result = Builder()
-    result.scheme = scheme
-    result.encodedUsername = encodedUsername
-    result.encodedPassword = encodedPassword
-    result.host = host
-    // If we're set to a default port, unset it in case of a scheme change.
-    result.port = if (port != defaultPort(scheme)) port else -1
-    result.encodedPathSegments.clear()
-    result.encodedPathSegments.addAll(encodedPathSegments)
-    result.encodedQuery(encodedQuery)
-    result.encodedFragment = encodedFragment
-    return result
-  }
+  actual fun newBuilder(): Builder = commonNewBuilder()
 
-  actual fun newBuilder(link: String): Builder? {
-    return try {
-      Builder().parse(this, link)
-    } catch (_: IllegalArgumentException) {
-      null
-    }
-  }
+  actual fun newBuilder(link: String): Builder? = commonNewBuilder(link)
 
-  override fun equals(other: Any?): Boolean {
-    return other is HttpUrl && other.url == url
-  }
+  override fun equals(other: Any?): Boolean = commonEquals(other)
 
-  override fun hashCode(): Int = url.hashCode()
+  override fun hashCode(): Int = commonHashCode()
 
-  override fun toString(): String = url
+  override fun toString(): String = commonToString()
 
   /**
    * Returns the domain name of this URL's [host] that is one level beneath the public suffix by
@@ -814,7 +733,7 @@ actual class HttpUrl internal actual constructor(
       )?.toQueryNamesAndValues()
     }
 
-    fun encodedQuery(encodedQuery: String?) = apply {
+    actual fun encodedQuery(encodedQuery: String?) = apply {
       this.encodedQueryNamesAndValues = encodedQuery?.canonicalize(
           encodeSet = QUERY_ENCODE_SET,
           alreadyEncoded = true,
@@ -1254,36 +1173,14 @@ actual class HttpUrl internal actual constructor(
   }
 
   actual companion object {
-
-    /** Returns 80 if `scheme.equals("http")`, 443 if `scheme.equals("https")` and -1 otherwise. */
     @JvmStatic
-    fun defaultPort(scheme: String): Int {
-      return when (scheme) {
-        "http" -> 80
-        "https" -> 443
-        else -> -1
-      }
-    }
+    actual fun defaultPort(scheme: String): Int = commonDefaultPort(scheme)
 
     /** Returns a path string for this list of path segments. */
     internal fun List<String>.toPathString(out: StringBuilder) {
       for (i in 0 until size) {
         out.append('/')
         out.append(this[i])
-      }
-    }
-
-    /** Returns a string for this list of query names and values. */
-    internal fun List<String?>.toQueryString(out: StringBuilder) {
-      for (i in 0 until size step 2) {
-        val name = this[i]
-        val value = this[i + 1]
-        if (i > 0) out.append('&')
-        out.append(name)
-        if (value != null) {
-          out.append('=')
-          out.append(value)
-        }
       }
     }
 
