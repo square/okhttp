@@ -22,16 +22,9 @@ import java.net.URISyntaxException
 import java.net.URL
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import okhttp3.internal.CommonHttpUrl.FRAGMENT_ENCODE_SET
 import okhttp3.internal.CommonHttpUrl.FRAGMENT_ENCODE_SET_URI
-import okhttp3.internal.CommonHttpUrl.PASSWORD_ENCODE_SET
-import okhttp3.internal.CommonHttpUrl.PATH_SEGMENT_ENCODE_SET
 import okhttp3.internal.CommonHttpUrl.PATH_SEGMENT_ENCODE_SET_URI
-import okhttp3.internal.CommonHttpUrl.QUERY_COMPONENT_ENCODE_SET
 import okhttp3.internal.CommonHttpUrl.QUERY_COMPONENT_ENCODE_SET_URI
-import okhttp3.internal.CommonHttpUrl.QUERY_COMPONENT_REENCODE_SET
-import okhttp3.internal.CommonHttpUrl.QUERY_ENCODE_SET
-import okhttp3.internal.CommonHttpUrl.USERNAME_ENCODE_SET
 import okhttp3.internal.CommonHttpUrl.commonAddEncodedPathSegment
 import okhttp3.internal.CommonHttpUrl.commonAddEncodedPathSegments
 import okhttp3.internal.CommonHttpUrl.commonAddEncodedQueryParameter
@@ -51,6 +44,7 @@ import okhttp3.internal.CommonHttpUrl.commonFragment
 import okhttp3.internal.CommonHttpUrl.commonHashCode
 import okhttp3.internal.CommonHttpUrl.commonHost
 import okhttp3.internal.CommonHttpUrl.commonNewBuilder
+import okhttp3.internal.CommonHttpUrl.commonParse
 import okhttp3.internal.CommonHttpUrl.commonPassword
 import okhttp3.internal.CommonHttpUrl.commonPathSize
 import okhttp3.internal.CommonHttpUrl.commonPort
@@ -62,7 +56,6 @@ import okhttp3.internal.CommonHttpUrl.commonQueryParameterValue
 import okhttp3.internal.CommonHttpUrl.commonQueryParameterValues
 import okhttp3.internal.CommonHttpUrl.commonQuerySize
 import okhttp3.internal.CommonHttpUrl.commonRedact
-import okhttp3.internal.CommonHttpUrl.commonRemoveAllCanonicalQueryParameters
 import okhttp3.internal.CommonHttpUrl.commonRemoveAllEncodedQueryParameters
 import okhttp3.internal.CommonHttpUrl.commonRemoveAllQueryParameters
 import okhttp3.internal.CommonHttpUrl.commonRemovePathSegment
@@ -72,25 +65,13 @@ import okhttp3.internal.CommonHttpUrl.commonSetEncodedPathSegment
 import okhttp3.internal.CommonHttpUrl.commonSetEncodedQueryParameter
 import okhttp3.internal.CommonHttpUrl.commonSetPathSegment
 import okhttp3.internal.CommonHttpUrl.commonSetQueryParameter
+import okhttp3.internal.CommonHttpUrl.commonToHttpUrl
+import okhttp3.internal.CommonHttpUrl.commonToHttpUrlOrNull
 import okhttp3.internal.CommonHttpUrl.commonToString
 import okhttp3.internal.CommonHttpUrl.commonUsername
-import okhttp3.internal.CommonHttpUrl.effectivePort
-import okhttp3.internal.CommonHttpUrl.percentDecode
-import okhttp3.internal.CommonHttpUrl.resolvePath
-import okhttp3.internal.CommonHttpUrl.toQueryNamesAndValues
-import okhttp3.internal.CommonHttpUrl.toQueryString
 import okhttp3.internal.HttpUrlCommon.canonicalize
-import okhttp3.internal.JvmHttpUrl.INVALID_HOST
-import okhttp3.internal.JvmHttpUrl.parsePort
-import okhttp3.internal.JvmHttpUrl.portColonOffset
-import okhttp3.internal.JvmHttpUrl.schemeDelimiterOffset
-import okhttp3.internal.JvmHttpUrl.slashCount
 import okhttp3.internal.canParseAsIpAddress
-import okhttp3.internal.delimiterOffset
-import okhttp3.internal.indexOfFirstNonAsciiWhitespace
-import okhttp3.internal.indexOfLastNonAsciiWhitespace
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
-import okhttp3.internal.toCanonicalHost
 
 /**
  * A uniform resource locator (URL) with a scheme of either `http` or `https`. Use this class to
@@ -734,244 +715,21 @@ actual class HttpUrl internal actual constructor(
 
     actual fun build(): HttpUrl = commonBuild()
 
-    override fun toString(): String {
-      return buildString {
-        if (scheme != null) {
-          append(scheme)
-          append("://")
-        } else {
-          append("//")
-        }
+    override fun toString(): String = commonToString()
 
-        if (encodedUsername.isNotEmpty() || encodedPassword.isNotEmpty()) {
-          append(encodedUsername)
-          if (encodedPassword.isNotEmpty()) {
-            append(':')
-            append(encodedPassword)
-          }
-          append('@')
-        }
-
-        if (host != null) {
-          if (':' in host!!) {
-            // Host is an IPv6 address.
-            append('[')
-            append(host)
-            append(']')
-          } else {
-            append(host)
-          }
-        }
-
-        if (port != -1 || scheme != null) {
-          val effectivePort = effectivePort()
-          if (scheme == null || effectivePort != defaultPort(scheme!!)) {
-            append(':')
-            append(effectivePort)
-          }
-        }
-
-        encodedPathSegments.toPathString(this)
-
-        if (encodedQueryNamesAndValues != null) {
-          append('?')
-          encodedQueryNamesAndValues!!.toQueryString(this)
-        }
-
-        if (encodedFragment != null) {
-          append('#')
-          append(encodedFragment)
-        }
-      }
-    }
-
-    actual internal fun parse(base: HttpUrl?, input: String): Builder {
-      var pos = input.indexOfFirstNonAsciiWhitespace()
-      val limit = input.indexOfLastNonAsciiWhitespace(pos)
-
-      // Scheme.
-      val schemeDelimiterOffset = schemeDelimiterOffset(input, pos, limit)
-      if (schemeDelimiterOffset != -1) {
-        when {
-          input.startsWith("https:", ignoreCase = true, startIndex = pos) -> {
-            this.scheme = "https"
-            pos += "https:".length
-          }
-          input.startsWith("http:", ignoreCase = true, startIndex = pos) -> {
-            this.scheme = "http"
-            pos += "http:".length
-          }
-          else -> throw IllegalArgumentException("Expected URL scheme 'http' or 'https' but was '" +
-              input.substring(0, schemeDelimiterOffset) + "'")
-        }
-      } else if (base != null) {
-        this.scheme = base.scheme
-      } else {
-        val truncated = if (input.length > 6) input.take(6) + "..." else input
-        throw IllegalArgumentException(
-            "Expected URL scheme 'http' or 'https' but no scheme was found for $truncated")
-      }
-
-      // Authority.
-      var hasUsername = false
-      var hasPassword = false
-      val slashCount = input.slashCount(pos, limit)
-      if (slashCount >= 2 || base == null || base.scheme != this.scheme) {
-        // Read an authority if either:
-        //  * The input starts with 2 or more slashes. These follow the scheme if it exists.
-        //  * The input scheme exists and is different from the base URL's scheme.
-        //
-        // The structure of an authority is:
-        //   username:password@host:port
-        //
-        // Username, password and port are optional.
-        //   [username[:password]@]host[:port]
-        pos += slashCount
-        authority@ while (true) {
-          val componentDelimiterOffset = input.delimiterOffset("@/\\?#", pos, limit)
-          val c = if (componentDelimiterOffset != limit) {
-            input[componentDelimiterOffset].code
-          } else {
-            -1
-          }
-          when (c) {
-            '@'.code -> {
-              // User info precedes.
-              if (!hasPassword) {
-                val passwordColonOffset = input.delimiterOffset(':', pos, componentDelimiterOffset)
-                val canonicalUsername = input.canonicalize(
-                    pos = pos,
-                    limit = passwordColonOffset,
-                    encodeSet = USERNAME_ENCODE_SET,
-                    alreadyEncoded = true
-                )
-                this.encodedUsername = if (hasUsername) {
-                  this.encodedUsername + "%40" + canonicalUsername
-                } else {
-                  canonicalUsername
-                }
-                if (passwordColonOffset != componentDelimiterOffset) {
-                  hasPassword = true
-                  this.encodedPassword = input.canonicalize(
-                      pos = passwordColonOffset + 1,
-                      limit = componentDelimiterOffset,
-                      encodeSet = PASSWORD_ENCODE_SET,
-                      alreadyEncoded = true
-                  )
-                }
-                hasUsername = true
-              } else {
-                this.encodedPassword = this.encodedPassword + "%40" + input.canonicalize(
-                    pos = pos,
-                    limit = componentDelimiterOffset,
-                    encodeSet = PASSWORD_ENCODE_SET,
-                    alreadyEncoded = true
-                )
-              }
-              pos = componentDelimiterOffset + 1
-            }
-
-            -1, '/'.code, '\\'.code, '?'.code, '#'.code -> {
-              // Host info precedes.
-              val portColonOffset = portColonOffset(input, pos, componentDelimiterOffset)
-              if (portColonOffset + 1 < componentDelimiterOffset) {
-                host = input.percentDecode(pos = pos, limit = portColonOffset).toCanonicalHost()
-                port = parsePort(input, portColonOffset + 1, componentDelimiterOffset)
-                require(port != -1) {
-                  "Invalid URL port: \"${input.substring(portColonOffset + 1,
-                      componentDelimiterOffset)}\""
-                }
-              } else {
-                host = input.percentDecode(pos = pos, limit = portColonOffset).toCanonicalHost()
-                port = defaultPort(scheme!!)
-              }
-              require(host != null) {
-                "$INVALID_HOST: \"${input.substring(pos, portColonOffset)}\""
-              }
-              pos = componentDelimiterOffset
-              break@authority
-            }
-          }
-        }
-      } else {
-        // This is a relative link. Copy over all authority components. Also maybe the path & query.
-        this.encodedUsername = base.encodedUsername
-        this.encodedPassword = base.encodedPassword
-        this.host = base.host
-        this.port = base.port
-        this.encodedPathSegments.clear()
-        this.encodedPathSegments.addAll(base.encodedPathSegments)
-        if (pos == limit || input[pos] == '#') {
-          encodedQuery(base.encodedQuery)
-        }
-      }
-
-      // Resolve the relative path.
-      val pathDelimiterOffset = input.delimiterOffset("?#", pos, limit)
-      resolvePath(input, pos, pathDelimiterOffset)
-      pos = pathDelimiterOffset
-
-      // Query.
-      if (pos < limit && input[pos] == '?') {
-        val queryDelimiterOffset = input.delimiterOffset('#', pos, limit)
-        this.encodedQueryNamesAndValues = input.canonicalize(
-            pos = pos + 1,
-            limit = queryDelimiterOffset,
-            encodeSet = QUERY_ENCODE_SET,
-            alreadyEncoded = true,
-            plusIsSpace = true
-        ).toQueryNamesAndValues()
-        pos = queryDelimiterOffset
-      }
-
-      // Fragment.
-      if (pos < limit && input[pos] == '#') {
-        this.encodedFragment = input.canonicalize(
-            pos = pos + 1,
-            limit = limit,
-            encodeSet = FRAGMENT_ENCODE_SET,
-            alreadyEncoded = true,
-            unicodeAllowed = true
-        )
-      }
-
-      return this
-    }
+    actual internal fun parse(base: HttpUrl?, input: String): Builder = commonParse(base, input)
   }
 
   actual companion object {
     @JvmStatic
     actual fun defaultPort(scheme: String): Int = commonDefaultPort(scheme)
 
-    /** Returns a path string for this list of path segments. */
-    internal fun List<String>.toPathString(out: StringBuilder) {
-      for (i in 0 until size) {
-        out.append('/')
-        out.append(this[i])
-      }
-    }
-
-    /**
-     * Returns a new [HttpUrl] representing this.
-     *
-     * @throws IllegalArgumentException If this is not a well-formed HTTP or HTTPS URL.
-     */
     @JvmStatic
-    @JvmName("get") actual fun String.toHttpUrl(): HttpUrl = Builder().parse(null, this).build()
+    @JvmName("get") actual fun String.toHttpUrl(): HttpUrl = commonToHttpUrl()
 
-    /**
-     * Returns a new `HttpUrl` representing `url` if it is a well-formed HTTP or HTTPS URL, or null
-     * if it isn't.
-     */
     @JvmStatic
     @JvmName("parse")
-    actual fun String.toHttpUrlOrNull(): HttpUrl? {
-      return try {
-        toHttpUrl()
-      } catch (_: IllegalArgumentException) {
-        null
-      }
-    }
+    actual fun String.toHttpUrlOrNull(): HttpUrl? = commonToHttpUrlOrNull()
 
     /**
      * Returns an [HttpUrl] for this if its protocol is `http` or `https`, or null if it has any

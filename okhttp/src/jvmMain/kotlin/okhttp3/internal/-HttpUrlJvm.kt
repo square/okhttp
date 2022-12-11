@@ -18,86 +18,11 @@ package okhttp3.internal
 import java.nio.charset.Charset
 import okhttp3.internal.CommonHttpUrl.FORM_ENCODE_SET
 import okhttp3.internal.CommonHttpUrl.HEX_DIGITS
+import okhttp3.internal.CommonHttpUrl.isPercentEncoded
 import okhttp3.internal.JvmHttpUrl.canonicalizeInternal
 import okio.Buffer
 
-object JvmHttpUrl {
-  internal const val INVALID_HOST = "Invalid URL host"
-
-  /**
-   * Returns the index of the ':' in `input` that is after scheme characters. Returns -1 if
-   * `input` does not have a scheme that starts at `pos`.
-   */
-  internal fun schemeDelimiterOffset(input: String, pos: Int, limit: Int): Int {
-    if (limit - pos < 2) return -1
-
-    val c0 = input[pos]
-    if ((c0 < 'a' || c0 > 'z') && (c0 < 'A' || c0 > 'Z')) return -1 // Not a scheme start char.
-
-    characters@ for (i in pos + 1 until limit) {
-      return when (input[i]) {
-        // Scheme character. Keep going.
-        in 'a'..'z', in 'A'..'Z', in '0'..'9', '+', '-', '.' -> continue@characters
-
-        // Scheme prefix!
-        ':' -> i
-
-        // Non-scheme character before the first ':'.
-        else -> -1
-      }
-    }
-
-    return -1 // No ':'; doesn't start with a scheme.
-  }
-
-  /** Returns the number of '/' and '\' slashes in this, starting at `pos`. */
-  internal fun String.slashCount(pos: Int, limit: Int): Int {
-    var slashCount = 0
-    for (i in pos until limit) {
-      val c = this[i]
-      if (c == '\\' || c == '/') {
-        slashCount++
-      } else {
-        break
-      }
-    }
-    return slashCount
-  }
-
-  /** Finds the first ':' in `input`, skipping characters between square braces "[...]". */
-  internal fun portColonOffset(input: String, pos: Int, limit: Int): Int {
-    var i = pos
-    while (i < limit) {
-      when (input[i]) {
-        '[' -> {
-          while (++i < limit) {
-            if (input[i] == ']') break
-          }
-        }
-        ':' -> return i
-      }
-      i++
-    }
-    return limit // No colon.
-  }
-
-  internal fun parsePort(input: String, pos: Int, limit: Int): Int {
-    return try {
-      // Canonicalize the port string to skip '\n' etc.
-      val portString = input.canonicalizeInternal(pos = pos, limit = limit, encodeSet = "")
-      val i = portString.toInt()
-      if (i in 1..65535) i else -1
-    } catch (_: NumberFormatException) {
-      -1 // Invalid port.
-    }
-  }
-
-  internal fun String.isPercentEncoded(pos: Int, limit: Int): Boolean {
-    return pos + 2 < limit &&
-      this[pos] == '%' &&
-      this[pos + 1].parseHexDigit() != -1 &&
-      this[pos + 2].parseHexDigit() != -1
-  }
+internal object JvmHttpUrl {
 
   internal fun Buffer.writeCanonicalized(
     input: String,
@@ -220,7 +145,7 @@ object JvmHttpUrl {
   }
 }
 
-actual object HttpUrlCommon {
+internal actual object HttpUrlCommon {
   internal actual fun Buffer.writePercentDecoded(
     encoded: String,
     pos: Int,

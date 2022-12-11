@@ -16,6 +16,7 @@
 package okhttp3
 
 import kotlin.jvm.JvmName
+import kotlin.jvm.JvmStatic
 
 /**
  * A uniform resource locator (URL) with a scheme of either `http` or `https`. Use this class to
@@ -659,10 +660,20 @@ expect class HttpUrl internal constructor(
   }
 
   companion object {
-    fun String.toHttpUrl(): HttpUrl
-
-    fun String.toHttpUrlOrNull(): HttpUrl?
 
     fun defaultPort(scheme: String): Int
+
+    /**
+     * Returns a new [HttpUrl] representing this.
+     *
+     * @throws IllegalArgumentException If this is not a well-formed HTTP or HTTPS URL.
+     */
+    fun String.toHttpUrl(): HttpUrl
+
+    /**
+     * Returns a new `HttpUrl` representing `url` if it is a well-formed HTTP or HTTPS URL, or null
+     * if it isn't.
+     */
+    fun String.toHttpUrlOrNull(): HttpUrl?
   }
 }
