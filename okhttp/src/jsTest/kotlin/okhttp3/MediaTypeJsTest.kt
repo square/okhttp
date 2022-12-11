@@ -20,7 +20,7 @@ import kotlin.test.assertEquals
 import okhttp3.MediaType.Companion.toMediaType
 
 class MediaTypeJsTest {
-  open fun MediaType.charsetName(): String? = parameter("charset")
+  fun MediaType.charsetName(): String? = parameter("charset")
 
   @Test
   fun testIllegalCharsetName() {

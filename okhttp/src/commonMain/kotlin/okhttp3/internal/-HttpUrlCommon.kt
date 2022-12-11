@@ -21,7 +21,7 @@ import okhttp3.internal.HttpUrlCommon.canonicalize
 import okhttp3.internal.HttpUrlCommon.writePercentDecoded
 import okio.Buffer
 
-expect internal object HttpUrlCommon {
+internal expect object HttpUrlCommon {
   internal fun Buffer.writePercentDecoded(
     encoded: String,
     pos: Int,
@@ -45,17 +45,20 @@ internal object CommonHttpUrl {
 
   internal val HEX_DIGITS =
     charArrayOf('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F')
-  internal const val USERNAME_ENCODE_SET = " \"':;<=>@[]^`{}|/\\?#"
-  internal const val PASSWORD_ENCODE_SET = " \"':;<=>@[]^`{}|/\\?#"
-  internal const val PATH_SEGMENT_ENCODE_SET = " \"<>^`{}|/\\?#"
+  private const val USERNAME_ENCODE_SET = " \"':;<=>@[]^`{}|/\\?#"
+  private const val PASSWORD_ENCODE_SET = " \"':;<=>@[]^`{}|/\\?#"
+  private const val PATH_SEGMENT_ENCODE_SET = " \"<>^`{}|/\\?#"
   internal const val PATH_SEGMENT_ENCODE_SET_URI = "[]"
-  internal const val QUERY_ENCODE_SET = " \"'<>#"
-  internal const val QUERY_COMPONENT_REENCODE_SET = " \"'<>#&="
-  internal const val QUERY_COMPONENT_ENCODE_SET = " !\"#$&'(),/:;<=>?@[]\\^`{|}~"
+  private const val QUERY_ENCODE_SET = " \"'<>#"
+  private const val QUERY_COMPONENT_REENCODE_SET = " \"'<>#&="
+  private const val QUERY_COMPONENT_ENCODE_SET = " !\"#$&'(),/:;<=>?@[]\\^`{|}~"
   internal const val QUERY_COMPONENT_ENCODE_SET_URI = "\\^`{|}"
   internal const val FORM_ENCODE_SET = " !\"#$&'()+,/:;<=>?@[\\]^`{|}~"
-  internal const val FRAGMENT_ENCODE_SET = ""
+  private const val FRAGMENT_ENCODE_SET = ""
   internal const val FRAGMENT_ENCODE_SET_URI = " \"#<>\\^`{|}"
+
+  val HttpUrl.commonIsHttps: Boolean
+    get() = scheme == "https"
 
   val HttpUrl.commonEncodedUsername: String
     get() {

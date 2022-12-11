@@ -717,7 +717,7 @@ actual class HttpUrl internal actual constructor(
 
     override fun toString(): String = commonToString()
 
-    actual internal fun parse(base: HttpUrl?, input: String): Builder = commonParse(base, input)
+    internal actual fun parse(base: HttpUrl?, input: String): Builder = commonParse(base, input)
   }
 
   actual companion object {

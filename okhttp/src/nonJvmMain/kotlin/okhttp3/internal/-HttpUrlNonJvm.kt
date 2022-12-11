@@ -15,10 +15,32 @@
  */
 package okhttp3.internal
 
-object NonJvmHttpUrl {
+import okio.Buffer
+
+internal object NonJvmHttpUrl {
 
 }
 
-actual object HttpUrlCommon {
-
+internal actual object HttpUrlCommon {
+  internal actual fun Buffer.writePercentDecoded(
+    encoded: String,
+    pos: Int,
+    limit: Int,
+    plusIsSpace: Boolean
+  ) {
+    // TODO implement decoding
+    writeUtf8(encoded)
+  }
+  internal actual fun String.canonicalize(
+    pos: Int,
+    limit: Int,
+    encodeSet: String,
+    alreadyEncoded: Boolean,
+    strict: Boolean,
+    plusIsSpace: Boolean,
+    unicodeAllowed: Boolean,
+  ): String {
+    // TODO implement canonicalization
+    return this
+  }
 }

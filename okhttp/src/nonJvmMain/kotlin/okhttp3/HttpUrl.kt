@@ -15,6 +15,52 @@
  */
 package okhttp3
 
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.internal.CommonHttpUrl
+import okhttp3.internal.CommonHttpUrl.commonAddEncodedPathSegment
+import okhttp3.internal.CommonHttpUrl.commonAddEncodedPathSegments
+import okhttp3.internal.CommonHttpUrl.commonAddEncodedQueryParameter
+import okhttp3.internal.CommonHttpUrl.commonAddPathSegment
+import okhttp3.internal.CommonHttpUrl.commonAddPathSegments
+import okhttp3.internal.CommonHttpUrl.commonAddQueryParameter
+import okhttp3.internal.CommonHttpUrl.commonBuild
+import okhttp3.internal.CommonHttpUrl.commonEncodedFragment
+import okhttp3.internal.CommonHttpUrl.commonEncodedPassword
+import okhttp3.internal.CommonHttpUrl.commonEncodedPath
+import okhttp3.internal.CommonHttpUrl.commonEncodedPathSegments
+import okhttp3.internal.CommonHttpUrl.commonEncodedQuery
+import okhttp3.internal.CommonHttpUrl.commonEncodedUsername
+import okhttp3.internal.CommonHttpUrl.commonEquals
+import okhttp3.internal.CommonHttpUrl.commonFragment
+import okhttp3.internal.CommonHttpUrl.commonHashCode
+import okhttp3.internal.CommonHttpUrl.commonHost
+import okhttp3.internal.CommonHttpUrl.commonIsHttps
+import okhttp3.internal.CommonHttpUrl.commonNewBuilder
+import okhttp3.internal.CommonHttpUrl.commonParse
+import okhttp3.internal.CommonHttpUrl.commonPassword
+import okhttp3.internal.CommonHttpUrl.commonPathSize
+import okhttp3.internal.CommonHttpUrl.commonPort
+import okhttp3.internal.CommonHttpUrl.commonQuery
+import okhttp3.internal.CommonHttpUrl.commonQueryParameter
+import okhttp3.internal.CommonHttpUrl.commonQueryParameterName
+import okhttp3.internal.CommonHttpUrl.commonQueryParameterNames
+import okhttp3.internal.CommonHttpUrl.commonQueryParameterValue
+import okhttp3.internal.CommonHttpUrl.commonQueryParameterValues
+import okhttp3.internal.CommonHttpUrl.commonQuerySize
+import okhttp3.internal.CommonHttpUrl.commonRedact
+import okhttp3.internal.CommonHttpUrl.commonRemoveAllEncodedQueryParameters
+import okhttp3.internal.CommonHttpUrl.commonRemoveAllQueryParameters
+import okhttp3.internal.CommonHttpUrl.commonRemovePathSegment
+import okhttp3.internal.CommonHttpUrl.commonResolve
+import okhttp3.internal.CommonHttpUrl.commonScheme
+import okhttp3.internal.CommonHttpUrl.commonSetEncodedPathSegment
+import okhttp3.internal.CommonHttpUrl.commonSetEncodedQueryParameter
+import okhttp3.internal.CommonHttpUrl.commonSetPathSegment
+import okhttp3.internal.CommonHttpUrl.commonSetQueryParameter
+import okhttp3.internal.CommonHttpUrl.commonToString
+import okhttp3.internal.CommonHttpUrl.commonUsername
+
 /**
  * A uniform resource locator (URL) with a scheme of either `http` or `https`. Use this class to
  * compose and decompose Internet addresses. For example, this code will compose and print a URL for
@@ -272,33 +318,160 @@ actual class HttpUrl internal actual constructor(
   actual val host: String,
   actual val port: Int,
   actual val pathSegments: List<String>,
-  private val queryNamesAndValues: List<String?>?,
+  internal actual val queryNamesAndValues: List<String?>?,
   actual val fragment: String?,
-  private val url: String
+  internal actual val url: String
 ) {
 
   actual val isHttps: Boolean
-    get() = TODO()
+    get() = commonIsHttps
+
+  actual val encodedUsername: String
+    get() = commonEncodedUsername
+
+  actual val encodedPassword: String
+    get() = commonEncodedPassword
 
   actual val pathSize: Int
-    get() = TODO()
+    get() = commonPathSize
+
+  actual val encodedPath: String
+    get() = commonEncodedPath
+
+  actual val encodedPathSegments: List<String>
+    get() = commonEncodedPathSegments
+
+  actual val encodedQuery: String?
+    get() = commonEncodedQuery
 
   actual val query: String?
-    get() = TODO()
+    get() = commonQuery
 
   actual val querySize: Int
-    get() = TODO()
+    get() = commonQuerySize
 
-  actual fun queryParameter(name: String): String? = TODO()
+  actual fun queryParameter(name: String): String? = commonQueryParameter(name)
 
   actual val queryParameterNames: Set<String>
-    get() = TODO()
+    get() = commonQueryParameterNames
 
-  actual fun queryParameterValues(name: String): List<String?> = TODO()
+  actual fun queryParameterValues(name: String): List<String?> = commonQueryParameterValues(name)
+
+  actual fun queryParameterName(index: Int): String = commonQueryParameterName(index)
+
+  actual fun queryParameterValue(index: Int): String? = commonQueryParameterValue(index)
+
+  actual val encodedFragment: String?
+    get() = commonEncodedFragment
+
+  actual fun redact(): String = commonRedact()
+
+  actual fun resolve(link: String): HttpUrl? = commonResolve(link)
+
+  actual fun newBuilder(): HttpUrl.Builder = commonNewBuilder()
+
+  actual fun newBuilder(link: String): Builder? = commonNewBuilder(link)
+
+  override fun equals(other: Any?): Boolean = commonEquals(other)
+
+  override fun hashCode(): Int = commonHashCode()
+
+  override fun toString(): String = commonToString()
 
   actual companion object {
     actual fun String.toHttpUrl(): HttpUrl = TODO()
 
     actual fun String.toHttpUrlOrNull(): HttpUrl? = TODO()
+
+    actual fun defaultPort(scheme: String): Int = CommonHttpUrl.commonDefaultPort(scheme)
+  }
+
+  actual class Builder {
+    internal actual var scheme: String? = null
+    internal actual var encodedUsername = ""
+    internal actual var encodedPassword = ""
+    internal actual var host: String? = null
+    internal actual var port = -1
+    internal actual val encodedPathSegments = mutableListOf<String>("")
+    internal actual var encodedQueryNamesAndValues: MutableList<String?>? = null
+    internal actual var encodedFragment: String? = null
+
+    /**
+     * @param scheme either "http" or "https".
+     */
+    actual fun scheme(scheme: String) = commonScheme(scheme)
+
+    actual fun username(username: String) = commonUsername(username)
+
+    actual fun encodedUsername(encodedUsername: String) = commonEncodedUsername(encodedUsername)
+
+    actual fun password(password: String) = commonPassword(password)
+
+    actual fun encodedPassword(encodedPassword: String) = commonEncodedPassword(encodedPassword)
+
+    /**
+     * @param host either a regular hostname, International Domain Name, IPv4 address, or IPv6
+     * address.
+     */
+    actual fun host(host: String) = commonHost(host)
+
+    actual fun port(port: Int) = commonPort(port)
+
+    actual fun addPathSegment(pathSegment: String) = commonAddPathSegment(pathSegment)
+
+    /**
+     * Adds a set of path segments separated by a slash (either `\` or `/`). If `pathSegments`
+     * starts with a slash, the resulting URL will have empty path segment.
+     */
+    actual fun addPathSegments(pathSegments: String): Builder = commonAddPathSegments(pathSegments)
+
+    actual fun addEncodedPathSegment(encodedPathSegment: String) = commonAddEncodedPathSegment(encodedPathSegment)
+
+    /**
+     * Adds a set of encoded path segments separated by a slash (either `\` or `/`). If
+     * `encodedPathSegments` starts with a slash, the resulting URL will have empty path segment.
+     */
+    actual fun addEncodedPathSegments(encodedPathSegments: String): Builder =
+      commonAddEncodedPathSegments(encodedPathSegments)
+
+
+    actual fun setPathSegment(index: Int, pathSegment: String) = commonSetPathSegment(index, pathSegment)
+
+    actual fun setEncodedPathSegment(index: Int, encodedPathSegment: String) =
+      commonSetEncodedPathSegment(index, encodedPathSegment)
+
+    actual fun removePathSegment(index: Int) = commonRemovePathSegment(index)
+
+    actual fun encodedPath(encodedPath: String) = commonEncodedPath(encodedPath)
+
+    actual fun query(query: String?) = commonQuery(query)
+
+    actual fun encodedQuery(encodedQuery: String?) = commonEncodedQuery(encodedQuery)
+
+    /** Encodes the query parameter using UTF-8 and adds it to this URL's query string. */
+    actual fun addQueryParameter(name: String, value: String?) = commonAddQueryParameter(name, value)
+
+    /** Adds the pre-encoded query parameter to this URL's query string. */
+    actual fun addEncodedQueryParameter(encodedName: String, encodedValue: String?) =
+      commonAddEncodedQueryParameter(encodedName, encodedValue)
+
+    actual fun setQueryParameter(name: String, value: String?) = commonSetQueryParameter(name, value)
+
+    actual fun setEncodedQueryParameter(encodedName: String, encodedValue: String?) =
+      commonSetEncodedQueryParameter(encodedName, encodedValue)
+
+    actual fun removeAllQueryParameters(name: String) = commonRemoveAllQueryParameters(name)
+
+    actual fun removeAllEncodedQueryParameters(encodedName: String) = commonRemoveAllEncodedQueryParameters(encodedName)
+
+    actual fun fragment(fragment: String?) = commonFragment(fragment)
+
+    actual fun encodedFragment(encodedFragment: String?) = commonEncodedFragment(encodedFragment)
+
+    actual fun build(): HttpUrl = commonBuild()
+
+    override fun toString(): String = commonToString()
+
+    internal actual fun parse(base: HttpUrl?, input: String): Builder = commonParse(base, input)
   }
 }
