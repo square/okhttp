@@ -19,7 +19,7 @@ import java.nio.charset.Charset
 import okhttp3.internal.CommonHttpUrl.FORM_ENCODE_SET
 import okhttp3.internal.CommonHttpUrl.HEX_DIGITS
 import okhttp3.internal.CommonHttpUrl.isPercentEncoded
-import okhttp3.internal.JvmHttpUrl.canonicalizeInternal
+import okhttp3.internal.JvmHttpUrl.canonicalizeWithCharset
 import okio.Buffer
 
 internal object JvmHttpUrl {
@@ -100,7 +100,7 @@ internal object JvmHttpUrl {
    * @param unicodeAllowed true to leave non-ASCII codepoint unencoded.
    * @param charset which charset to use, null equals UTF-8.
    */
-  internal fun String.canonicalizeInternal(
+  internal fun String.canonicalizeWithCharset(
     pos: Int = 0,
     limit: Int = length,
     encodeSet: String,
@@ -182,7 +182,7 @@ internal actual object HttpUrlCommon {
     strict: Boolean,
     plusIsSpace: Boolean,
     unicodeAllowed: Boolean,
-  ): String = canonicalizeInternal(
+  ): String = canonicalizeWithCharset(
     pos = pos,
     limit = limit,
     encodeSet = encodeSet,
