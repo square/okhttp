@@ -41,8 +41,11 @@ import okhttp3.internal.CommonHttpUrl.commonEncodedQuery
 import okhttp3.internal.CommonHttpUrl.commonEncodedUsername
 import okhttp3.internal.CommonHttpUrl.commonEquals
 import okhttp3.internal.CommonHttpUrl.commonHashCode
+import okhttp3.internal.CommonHttpUrl.commonHost
 import okhttp3.internal.CommonHttpUrl.commonNewBuilder
+import okhttp3.internal.CommonHttpUrl.commonPassword
 import okhttp3.internal.CommonHttpUrl.commonPathSize
+import okhttp3.internal.CommonHttpUrl.commonPort
 import okhttp3.internal.CommonHttpUrl.commonQuery
 import okhttp3.internal.CommonHttpUrl.commonQueryParameter
 import okhttp3.internal.CommonHttpUrl.commonQueryParameterName
@@ -52,7 +55,9 @@ import okhttp3.internal.CommonHttpUrl.commonQueryParameterValues
 import okhttp3.internal.CommonHttpUrl.commonQuerySize
 import okhttp3.internal.CommonHttpUrl.commonRedact
 import okhttp3.internal.CommonHttpUrl.commonResolve
+import okhttp3.internal.CommonHttpUrl.commonScheme
 import okhttp3.internal.CommonHttpUrl.commonToString
+import okhttp3.internal.CommonHttpUrl.commonUsername
 import okhttp3.internal.CommonHttpUrl.percentDecode
 import okhttp3.internal.CommonHttpUrl.toQueryString
 import okhttp3.internal.HttpUrlCommon.canonicalize
@@ -608,50 +613,23 @@ actual class HttpUrl internal actual constructor(
     /**
      * @param scheme either "http" or "https".
      */
-    actual fun scheme(scheme: String) = apply {
-      when {
-        scheme.equals("http", ignoreCase = true) -> this.scheme = "http"
-        scheme.equals("https", ignoreCase = true) -> this.scheme = "https"
-        else -> throw IllegalArgumentException("unexpected scheme: $scheme")
-      }
-    }
+    actual fun scheme(scheme: String) = commonScheme(scheme)
 
-    actual fun username(username: String) = apply {
-      this.encodedUsername = username.canonicalize(encodeSet = USERNAME_ENCODE_SET)
-    }
+    actual fun username(username: String) = commonUsername(username)
 
-    actual fun encodedUsername(encodedUsername: String) = apply {
-      this.encodedUsername = encodedUsername.canonicalize(
-          encodeSet = USERNAME_ENCODE_SET,
-          alreadyEncoded = true
-      )
-    }
+    actual fun encodedUsername(encodedUsername: String) = commonEncodedUsername(encodedUsername)
 
-    actual fun password(password: String) = apply {
-      this.encodedPassword = password.canonicalize(encodeSet = PASSWORD_ENCODE_SET)
-    }
+    actual fun password(password: String) = commonPassword(password)
 
-    actual fun encodedPassword(encodedPassword: String) = apply {
-      this.encodedPassword = encodedPassword.canonicalize(
-          encodeSet = PASSWORD_ENCODE_SET,
-          alreadyEncoded = true
-      )
-    }
+    actual fun encodedPassword(encodedPassword: String) = commonEncodedPassword(encodedPassword)
 
     /**
      * @param host either a regular hostname, International Domain Name, IPv4 address, or IPv6
      * address.
      */
-    actual fun host(host: String) = apply {
-      val encoded = host.percentDecode().toCanonicalHost() ?: throw IllegalArgumentException(
-          "unexpected host: $host")
-      this.host = encoded
-    }
+    actual fun host(host: String) = commonHost(host)
 
-    actual fun port(port: Int) = apply {
-      require(port in 1..65535) { "unexpected port: $port" }
-      this.port = port
-    }
+    actual fun port(port: Int) = commonPort(port)
 
     private fun effectivePort(): Int {
       return if (port != -1) port else defaultPort(scheme!!)
