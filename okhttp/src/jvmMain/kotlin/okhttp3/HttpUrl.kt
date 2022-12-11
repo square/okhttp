@@ -32,6 +32,12 @@ import okhttp3.internal.CommonHttpUrl.QUERY_COMPONENT_ENCODE_SET_URI
 import okhttp3.internal.CommonHttpUrl.QUERY_COMPONENT_REENCODE_SET
 import okhttp3.internal.CommonHttpUrl.QUERY_ENCODE_SET
 import okhttp3.internal.CommonHttpUrl.USERNAME_ENCODE_SET
+import okhttp3.internal.CommonHttpUrl.commonAddEncodedPathSegment
+import okhttp3.internal.CommonHttpUrl.commonAddEncodedPathSegments
+import okhttp3.internal.CommonHttpUrl.commonAddEncodedQueryParameter
+import okhttp3.internal.CommonHttpUrl.commonAddPathSegment
+import okhttp3.internal.CommonHttpUrl.commonAddPathSegments
+import okhttp3.internal.CommonHttpUrl.commonAddQueryParameter
 import okhttp3.internal.CommonHttpUrl.commonDefaultPort
 import okhttp3.internal.CommonHttpUrl.commonEncodedFragment
 import okhttp3.internal.CommonHttpUrl.commonEncodedPassword
@@ -40,6 +46,7 @@ import okhttp3.internal.CommonHttpUrl.commonEncodedPathSegments
 import okhttp3.internal.CommonHttpUrl.commonEncodedQuery
 import okhttp3.internal.CommonHttpUrl.commonEncodedUsername
 import okhttp3.internal.CommonHttpUrl.commonEquals
+import okhttp3.internal.CommonHttpUrl.commonFragment
 import okhttp3.internal.CommonHttpUrl.commonHashCode
 import okhttp3.internal.CommonHttpUrl.commonHost
 import okhttp3.internal.CommonHttpUrl.commonNewBuilder
@@ -54,11 +61,21 @@ import okhttp3.internal.CommonHttpUrl.commonQueryParameterValue
 import okhttp3.internal.CommonHttpUrl.commonQueryParameterValues
 import okhttp3.internal.CommonHttpUrl.commonQuerySize
 import okhttp3.internal.CommonHttpUrl.commonRedact
+import okhttp3.internal.CommonHttpUrl.commonRemoveAllCanonicalQueryParameters
+import okhttp3.internal.CommonHttpUrl.commonRemoveAllEncodedQueryParameters
+import okhttp3.internal.CommonHttpUrl.commonRemoveAllQueryParameters
+import okhttp3.internal.CommonHttpUrl.commonRemovePathSegment
 import okhttp3.internal.CommonHttpUrl.commonResolve
 import okhttp3.internal.CommonHttpUrl.commonScheme
+import okhttp3.internal.CommonHttpUrl.commonSetEncodedPathSegment
+import okhttp3.internal.CommonHttpUrl.commonSetEncodedQueryParameter
+import okhttp3.internal.CommonHttpUrl.commonSetPathSegment
+import okhttp3.internal.CommonHttpUrl.commonSetQueryParameter
 import okhttp3.internal.CommonHttpUrl.commonToString
 import okhttp3.internal.CommonHttpUrl.commonUsername
 import okhttp3.internal.CommonHttpUrl.percentDecode
+import okhttp3.internal.CommonHttpUrl.resolvePath
+import okhttp3.internal.CommonHttpUrl.toQueryNamesAndValues
 import okhttp3.internal.CommonHttpUrl.toQueryString
 import okhttp3.internal.HttpUrlCommon.canonicalize
 import okhttp3.internal.JvmHttpUrl.INVALID_HOST
@@ -635,159 +652,50 @@ actual class HttpUrl internal actual constructor(
       return if (port != -1) port else defaultPort(scheme!!)
     }
 
-    actual fun addPathSegment(pathSegment: String) = apply {
-      push(pathSegment, 0, pathSegment.length, addTrailingSlash = false, alreadyEncoded = false)
-    }
+    actual fun addPathSegment(pathSegment: String) = commonAddPathSegment(pathSegment)
 
     /**
      * Adds a set of path segments separated by a slash (either `\` or `/`). If `pathSegments`
      * starts with a slash, the resulting URL will have empty path segment.
      */
-    actual fun addPathSegments(pathSegments: String): Builder = addPathSegments(pathSegments, false)
+    actual fun addPathSegments(pathSegments: String): Builder = commonAddPathSegments(pathSegments)
 
-    actual fun addEncodedPathSegment(encodedPathSegment: String) = apply {
-      push(encodedPathSegment, 0, encodedPathSegment.length, addTrailingSlash = false,
-          alreadyEncoded = true)
-    }
+    actual fun addEncodedPathSegment(encodedPathSegment: String) = commonAddEncodedPathSegment(encodedPathSegment)
 
     /**
      * Adds a set of encoded path segments separated by a slash (either `\` or `/`). If
      * `encodedPathSegments` starts with a slash, the resulting URL will have empty path segment.
      */
-    actual fun addEncodedPathSegments(encodedPathSegments: String): Builder =
-        addPathSegments(encodedPathSegments, true)
+    actual fun addEncodedPathSegments(encodedPathSegments: String): Builder = commonAddEncodedPathSegments(encodedPathSegments)
 
-    private fun addPathSegments(pathSegments: String, alreadyEncoded: Boolean) = apply {
-      var offset = 0
-      do {
-        val segmentEnd = pathSegments.delimiterOffset("/\\", offset, pathSegments.length)
-        val addTrailingSlash = segmentEnd < pathSegments.length
-        push(pathSegments, offset, segmentEnd, addTrailingSlash, alreadyEncoded)
-        offset = segmentEnd + 1
-      } while (offset <= pathSegments.length)
-    }
 
-    actual fun setPathSegment(index: Int, pathSegment: String) = apply {
-      val canonicalPathSegment = pathSegment.canonicalize(encodeSet = PATH_SEGMENT_ENCODE_SET)
-      require(!isDot(canonicalPathSegment) && !isDotDot(canonicalPathSegment)) {
-        "unexpected path segment: $pathSegment"
-      }
-      encodedPathSegments[index] = canonicalPathSegment
-    }
+    actual fun setPathSegment(index: Int, pathSegment: String) = commonSetPathSegment(index, pathSegment)
 
-    actual fun setEncodedPathSegment(index: Int, encodedPathSegment: String) = apply {
-      val canonicalPathSegment = encodedPathSegment.canonicalize(
-          encodeSet = PATH_SEGMENT_ENCODE_SET,
-          alreadyEncoded = true
-      )
-      encodedPathSegments[index] = canonicalPathSegment
-      require(!isDot(canonicalPathSegment) && !isDotDot(canonicalPathSegment)) {
-        "unexpected path segment: $encodedPathSegment"
-      }
-    }
+    actual fun setEncodedPathSegment(index: Int, encodedPathSegment: String) = commonSetEncodedPathSegment(index, encodedPathSegment)
 
-    actual fun removePathSegment(index: Int) = apply {
-      encodedPathSegments.removeAt(index)
-      if (encodedPathSegments.isEmpty()) {
-        encodedPathSegments.add("") // Always leave at least one '/'.
-      }
-    }
+    actual fun removePathSegment(index: Int) = commonRemovePathSegment(index)
 
-    actual fun encodedPath(encodedPath: String) = apply {
-      require(encodedPath.startsWith("/")) { "unexpected encodedPath: $encodedPath" }
-      resolvePath(encodedPath, 0, encodedPath.length)
-    }
+    actual fun encodedPath(encodedPath: String) = commonEncodedPath(encodedPath)
 
-    actual fun query(query: String?) = apply {
-      this.encodedQueryNamesAndValues = query?.canonicalize(
-          encodeSet = QUERY_ENCODE_SET,
-          plusIsSpace = true
-      )?.toQueryNamesAndValues()
-    }
+    actual fun query(query: String?) = commonQuery(query)
 
-    actual fun encodedQuery(encodedQuery: String?) = apply {
-      this.encodedQueryNamesAndValues = encodedQuery?.canonicalize(
-          encodeSet = QUERY_ENCODE_SET,
-          alreadyEncoded = true,
-          plusIsSpace = true
-      )?.toQueryNamesAndValues()
-    }
+    actual fun encodedQuery(encodedQuery: String?) = commonEncodedQuery(encodedQuery)
 
     /** Encodes the query parameter using UTF-8 and adds it to this URL's query string. */
-    actual fun addQueryParameter(name: String, value: String?) = apply {
-      if (encodedQueryNamesAndValues == null) encodedQueryNamesAndValues = mutableListOf()
-      encodedQueryNamesAndValues!!.add(name.canonicalize(
-          encodeSet = QUERY_COMPONENT_ENCODE_SET,
-          plusIsSpace = true
-      ))
-      encodedQueryNamesAndValues!!.add(value?.canonicalize(
-          encodeSet = QUERY_COMPONENT_ENCODE_SET,
-          plusIsSpace = true
-      ))
-    }
+    actual fun addQueryParameter(name: String, value: String?) = commonAddQueryParameter(name, value)
 
     /** Adds the pre-encoded query parameter to this URL's query string. */
-    actual fun addEncodedQueryParameter(encodedName: String, encodedValue: String?) = apply {
-      if (encodedQueryNamesAndValues == null) encodedQueryNamesAndValues = mutableListOf()
-      encodedQueryNamesAndValues!!.add(encodedName.canonicalize(
-          encodeSet = QUERY_COMPONENT_REENCODE_SET,
-          alreadyEncoded = true,
-          plusIsSpace = true
-      ))
-      encodedQueryNamesAndValues!!.add(encodedValue?.canonicalize(
-          encodeSet = QUERY_COMPONENT_REENCODE_SET,
-          alreadyEncoded = true,
-          plusIsSpace = true
-      ))
-    }
+    actual fun addEncodedQueryParameter(encodedName: String, encodedValue: String?) = commonAddEncodedQueryParameter(encodedName, encodedValue)
 
-    actual fun setQueryParameter(name: String, value: String?) = apply {
-      removeAllQueryParameters(name)
-      addQueryParameter(name, value)
-    }
+    actual fun setQueryParameter(name: String, value: String?) = commonSetQueryParameter(name, value)
 
-    actual fun setEncodedQueryParameter(encodedName: String, encodedValue: String?) = apply {
-      removeAllEncodedQueryParameters(encodedName)
-      addEncodedQueryParameter(encodedName, encodedValue)
-    }
+    actual fun setEncodedQueryParameter(encodedName: String, encodedValue: String?) = commonSetEncodedQueryParameter(encodedName, encodedValue)
 
-    actual fun removeAllQueryParameters(name: String) = apply {
-      if (encodedQueryNamesAndValues == null) return this
-      val nameToRemove = name.canonicalize(
-          encodeSet = QUERY_COMPONENT_ENCODE_SET,
-          plusIsSpace = true
-      )
-      removeAllCanonicalQueryParameters(nameToRemove)
-    }
+    actual fun removeAllQueryParameters(name: String) = commonRemoveAllQueryParameters(name)
 
-    actual fun removeAllEncodedQueryParameters(encodedName: String) = apply {
-      if (encodedQueryNamesAndValues == null) return this
-      removeAllCanonicalQueryParameters(encodedName.canonicalize(
-          encodeSet = QUERY_COMPONENT_REENCODE_SET,
-          alreadyEncoded = true,
-          plusIsSpace = true
-      ))
-    }
+    actual fun removeAllEncodedQueryParameters(encodedName: String) = commonRemoveAllEncodedQueryParameters(encodedName)
 
-    private fun removeAllCanonicalQueryParameters(canonicalName: String) {
-      for (i in encodedQueryNamesAndValues!!.size - 2 downTo 0 step 2) {
-        if (canonicalName == encodedQueryNamesAndValues!![i]) {
-          encodedQueryNamesAndValues!!.removeAt(i + 1)
-          encodedQueryNamesAndValues!!.removeAt(i)
-          if (encodedQueryNamesAndValues!!.isEmpty()) {
-            encodedQueryNamesAndValues = null
-            return
-          }
-        }
-      }
-    }
-
-    actual fun fragment(fragment: String?) = apply {
-      this.encodedFragment = fragment?.canonicalize(
-          encodeSet = FRAGMENT_ENCODE_SET,
-          unicodeAllowed = true
-      )
-    }
+    actual fun fragment(fragment: String?) = commonFragment(fragment)
 
     actual fun encodedFragment(encodedFragment: String?) = apply {
       this.encodedFragment = encodedFragment?.canonicalize(
@@ -1050,98 +958,6 @@ actual class HttpUrl internal actual constructor(
 
       return this
     }
-
-    private fun resolvePath(input: String, startPos: Int, limit: Int) {
-      var pos = startPos
-      // Read a delimiter.
-      if (pos == limit) {
-        // Empty path: keep the base path as-is.
-        return
-      }
-      val c = input[pos]
-      if (c == '/' || c == '\\') {
-        // Absolute path: reset to the default "/".
-        encodedPathSegments.clear()
-        encodedPathSegments.add("")
-        pos++
-      } else {
-        // Relative path: clear everything after the last '/'.
-        encodedPathSegments[encodedPathSegments.size - 1] = ""
-      }
-
-      // Read path segments.
-      var i = pos
-      while (i < limit) {
-        val pathSegmentDelimiterOffset = input.delimiterOffset("/\\", i, limit)
-        val segmentHasTrailingSlash = pathSegmentDelimiterOffset < limit
-        push(input, i, pathSegmentDelimiterOffset, segmentHasTrailingSlash, true)
-        i = pathSegmentDelimiterOffset
-        if (segmentHasTrailingSlash) i++
-      }
-    }
-
-    /** Adds a path segment. If the input is ".." or equivalent, this pops a path segment. */
-    private fun push(
-      input: String,
-      pos: Int,
-      limit: Int,
-      addTrailingSlash: Boolean,
-      alreadyEncoded: Boolean
-    ) {
-      val segment = input.canonicalize(
-          pos = pos,
-          limit = limit,
-          encodeSet = PATH_SEGMENT_ENCODE_SET,
-          alreadyEncoded = alreadyEncoded
-      )
-      if (isDot(segment)) {
-        return // Skip '.' path segments.
-      }
-      if (isDotDot(segment)) {
-        pop()
-        return
-      }
-      if (encodedPathSegments[encodedPathSegments.size - 1].isEmpty()) {
-        encodedPathSegments[encodedPathSegments.size - 1] = segment
-      } else {
-        encodedPathSegments.add(segment)
-      }
-      if (addTrailingSlash) {
-        encodedPathSegments.add("")
-      }
-    }
-
-    private fun isDot(input: String): Boolean {
-      return input == "." || input.equals("%2e", ignoreCase = true)
-    }
-
-    private fun isDotDot(input: String): Boolean {
-      return input == ".." ||
-          input.equals("%2e.", ignoreCase = true) ||
-          input.equals(".%2e", ignoreCase = true) ||
-          input.equals("%2e%2e", ignoreCase = true)
-    }
-
-    /**
-     * Removes a path segment. When this method returns the last segment is always "", which means
-     * the encoded path will have a trailing '/'.
-     *
-     * Popping "/a/b/c/" yields "/a/b/". In this case the list of path segments goes from ["a",
-     * "b", "c", ""] to ["a", "b", ""].
-     *
-     * Popping "/a/b/c" also yields "/a/b/". The list of path segments goes from ["a", "b", "c"]
-     * to ["a", "b", ""].
-     */
-    private fun pop() {
-      val removed = encodedPathSegments.removeAt(encodedPathSegments.size - 1)
-
-      // Make sure the path ends with a '/' by either adding an empty string or clearing a segment.
-      if (removed.isEmpty() && encodedPathSegments.isNotEmpty()) {
-        encodedPathSegments[encodedPathSegments.size - 1] = ""
-      } else {
-        encodedPathSegments.add("")
-      }
-    }
   }
 
   actual companion object {
@@ -1154,31 +970,6 @@ actual class HttpUrl internal actual constructor(
         out.append('/')
         out.append(this[i])
       }
-    }
-
-    /**
-     * Cuts this string up into alternating parameter names and values. This divides a query string
-     * like `subject=math&easy&problem=5-2=3` into the list `["subject", "math", "easy", null,
-     * "problem", "5-2=3"]`. Note that values may be null and may contain '=' characters.
-     */
-    internal fun String.toQueryNamesAndValues(): MutableList<String?> {
-      val result = mutableListOf<String?>()
-      var pos = 0
-      while (pos <= length) {
-        var ampersandOffset = indexOf('&', pos)
-        if (ampersandOffset == -1) ampersandOffset = length
-
-        val equalsOffset = indexOf('=', pos)
-        if (equalsOffset == -1 || equalsOffset > ampersandOffset) {
-          result.add(substring(pos, ampersandOffset))
-          result.add(null) // No value for this name.
-        } else {
-          result.add(substring(pos, equalsOffset))
-          result.add(substring(equalsOffset + 1, ampersandOffset))
-        }
-        pos = ampersandOffset + 1
-      }
-      return result
     }
 
     /**

@@ -301,4 +301,285 @@ object CommonHttpUrl {
     require(port in 1..65535) { "unexpected port: $port" }
     this.port = port
   }
+
+
+  fun HttpUrl.Builder.commonAddPathSegment(pathSegment: String) = apply {
+    push(pathSegment, 0, pathSegment.length, addTrailingSlash = false, alreadyEncoded = false)
+  }
+
+  /**
+   * Adds a set of path segments separated by a slash (either `\` or `/`). If `pathSegments`
+   * starts with a slash, the resulting URL will have empty path segment.
+   */
+  fun HttpUrl.Builder.commonAddPathSegments(pathSegments: String): HttpUrl.Builder = commonAddPathSegments(pathSegments, false)
+
+  fun HttpUrl.Builder.commonAddEncodedPathSegment(encodedPathSegment: String) = apply {
+    push(encodedPathSegment, 0, encodedPathSegment.length, addTrailingSlash = false,
+      alreadyEncoded = true)
+  }
+
+  /**
+   * Adds a set of encoded path segments separated by a slash (either `\` or `/`). If
+   * `encodedPathSegments` starts with a slash, the resulting URL will have empty path segment.
+   */
+  fun HttpUrl.Builder.commonAddEncodedPathSegments(encodedPathSegments: String): HttpUrl.Builder =
+    commonAddPathSegments(encodedPathSegments, true)
+
+  private fun HttpUrl.Builder.commonAddPathSegments(pathSegments: String, alreadyEncoded: Boolean) = apply {
+    var offset = 0
+    do {
+      val segmentEnd = pathSegments.delimiterOffset("/\\", offset, pathSegments.length)
+      val addTrailingSlash = segmentEnd < pathSegments.length
+      push(pathSegments, offset, segmentEnd, addTrailingSlash, alreadyEncoded)
+      offset = segmentEnd + 1
+    } while (offset <= pathSegments.length)
+  }
+
+  fun HttpUrl.Builder.commonSetPathSegment(index: Int, pathSegment: String) = apply {
+    val canonicalPathSegment = pathSegment.canonicalize(encodeSet = PATH_SEGMENT_ENCODE_SET)
+    require(!isDot(canonicalPathSegment) && !isDotDot(canonicalPathSegment)) {
+      "unexpected path segment: $pathSegment"
+    }
+    encodedPathSegments[index] = canonicalPathSegment
+  }
+
+  fun HttpUrl.Builder.commonSetEncodedPathSegment(index: Int, encodedPathSegment: String) = apply {
+    val canonicalPathSegment = encodedPathSegment.canonicalize(
+      encodeSet = PATH_SEGMENT_ENCODE_SET,
+      alreadyEncoded = true
+    )
+    encodedPathSegments[index] = canonicalPathSegment
+    require(!isDot(canonicalPathSegment) && !isDotDot(canonicalPathSegment)) {
+      "unexpected path segment: $encodedPathSegment"
+    }
+  }
+
+  fun HttpUrl.Builder.commonRemovePathSegment(index: Int) = apply {
+    encodedPathSegments.removeAt(index)
+    if (encodedPathSegments.isEmpty()) {
+      encodedPathSegments.add("") // Always leave at least one '/'.
+    }
+  }
+
+  fun HttpUrl.Builder.commonEncodedPath(encodedPath: String) = apply {
+    require(encodedPath.startsWith("/")) { "unexpected encodedPath: $encodedPath" }
+    resolvePath(encodedPath, 0, encodedPath.length)
+  }
+
+  fun HttpUrl.Builder.commonQuery(query: String?) = apply {
+    this.encodedQueryNamesAndValues = query?.canonicalize(
+      encodeSet = QUERY_ENCODE_SET,
+      plusIsSpace = true
+    )?.toQueryNamesAndValues()
+  }
+
+  fun HttpUrl.Builder.commonEncodedQuery(encodedQuery: String?) = apply {
+    this.encodedQueryNamesAndValues = encodedQuery?.canonicalize(
+      encodeSet = QUERY_ENCODE_SET,
+      alreadyEncoded = true,
+      plusIsSpace = true
+    )?.toQueryNamesAndValues()
+  }
+
+  /** Encodes the query parameter using UTF-8 and adds it to this URL's query string. */
+  fun HttpUrl.Builder.commonAddQueryParameter(name: String, value: String?) = apply {
+    if (encodedQueryNamesAndValues == null) encodedQueryNamesAndValues = mutableListOf()
+    encodedQueryNamesAndValues!!.add(name.canonicalize(
+      encodeSet = QUERY_COMPONENT_ENCODE_SET,
+      plusIsSpace = true
+    ))
+    encodedQueryNamesAndValues!!.add(value?.canonicalize(
+      encodeSet = QUERY_COMPONENT_ENCODE_SET,
+      plusIsSpace = true
+    ))
+  }
+
+  /** Adds the pre-encoded query parameter to this URL's query string. */
+  fun HttpUrl.Builder.commonAddEncodedQueryParameter(encodedName: String, encodedValue: String?) = apply {
+    if (encodedQueryNamesAndValues == null) encodedQueryNamesAndValues = mutableListOf()
+    encodedQueryNamesAndValues!!.add(encodedName.canonicalize(
+      encodeSet = QUERY_COMPONENT_REENCODE_SET,
+      alreadyEncoded = true,
+      plusIsSpace = true
+    ))
+    encodedQueryNamesAndValues!!.add(encodedValue?.canonicalize(
+      encodeSet = QUERY_COMPONENT_REENCODE_SET,
+      alreadyEncoded = true,
+      plusIsSpace = true
+    ))
+  }
+
+  fun HttpUrl.Builder.commonSetQueryParameter(name: String, value: String?) = apply {
+    removeAllQueryParameters(name)
+    addQueryParameter(name, value)
+  }
+
+  fun HttpUrl.Builder.commonSetEncodedQueryParameter(encodedName: String, encodedValue: String?) = apply {
+    removeAllEncodedQueryParameters(encodedName)
+    addEncodedQueryParameter(encodedName, encodedValue)
+  }
+
+  fun HttpUrl.Builder.commonRemoveAllQueryParameters(name: String) = apply {
+    if (encodedQueryNamesAndValues == null) return this
+    val nameToRemove = name.canonicalize(
+      encodeSet = QUERY_COMPONENT_ENCODE_SET,
+      plusIsSpace = true
+    )
+    commonRemoveAllCanonicalQueryParameters(nameToRemove)
+  }
+
+  fun HttpUrl.Builder.commonRemoveAllEncodedQueryParameters(encodedName: String) = apply {
+    if (encodedQueryNamesAndValues == null) return this
+    commonRemoveAllCanonicalQueryParameters(encodedName.canonicalize(
+      encodeSet = QUERY_COMPONENT_REENCODE_SET,
+      alreadyEncoded = true,
+      plusIsSpace = true
+    ))
+  }
+
+  fun HttpUrl.Builder.commonRemoveAllCanonicalQueryParameters(canonicalName: String) {
+    for (i in encodedQueryNamesAndValues!!.size - 2 downTo 0 step 2) {
+      if (canonicalName == encodedQueryNamesAndValues!![i]) {
+        encodedQueryNamesAndValues!!.removeAt(i + 1)
+        encodedQueryNamesAndValues!!.removeAt(i)
+        if (encodedQueryNamesAndValues!!.isEmpty()) {
+          encodedQueryNamesAndValues = null
+          return
+        }
+      }
+    }
+  }
+
+  fun HttpUrl.Builder.commonFragment(fragment: String?) = apply {
+    this.encodedFragment = fragment?.canonicalize(
+      encodeSet = FRAGMENT_ENCODE_SET,
+      unicodeAllowed = true
+    )
+  }
+
+  fun HttpUrl.Builder.commonEncodedFragment(encodedFragment: String?) = apply {
+    this.encodedFragment = encodedFragment?.canonicalize(
+      encodeSet = FRAGMENT_ENCODE_SET,
+      alreadyEncoded = true,
+      unicodeAllowed = true
+    )
+  }
+
+
+  /** Adds a path segment. If the input is ".." or equivalent, this pops a path segment. */
+  internal fun HttpUrl.Builder.push(
+    input: String,
+    pos: Int,
+    limit: Int,
+    addTrailingSlash: Boolean,
+    alreadyEncoded: Boolean
+  ) {
+    val segment = input.canonicalize(
+      pos = pos,
+      limit = limit,
+      encodeSet = PATH_SEGMENT_ENCODE_SET,
+      alreadyEncoded = alreadyEncoded
+    )
+    if (isDot(segment)) {
+      return // Skip '.' path segments.
+    }
+    if (isDotDot(segment)) {
+      pop()
+      return
+    }
+    if (encodedPathSegments[encodedPathSegments.size - 1].isEmpty()) {
+      encodedPathSegments[encodedPathSegments.size - 1] = segment
+    } else {
+      encodedPathSegments.add(segment)
+    }
+    if (addTrailingSlash) {
+      encodedPathSegments.add("")
+    }
+  }
+
+  internal fun HttpUrl.Builder.isDot(input: String): Boolean {
+    return input == "." || input.equals("%2e", ignoreCase = true)
+  }
+
+  internal fun HttpUrl.Builder.isDotDot(input: String): Boolean {
+    return input == ".." ||
+      input.equals("%2e.", ignoreCase = true) ||
+      input.equals(".%2e", ignoreCase = true) ||
+      input.equals("%2e%2e", ignoreCase = true)
+  }
+
+  /**
+   * Removes a path segment. When this method returns the last segment is always "", which means
+   * the encoded path will have a trailing '/'.
+   *
+   * Popping "/a/b/c/" yields "/a/b/". In this case the list of path segments goes from ["a",
+   * "b", "c", ""] to ["a", "b", ""].
+   *
+   * Popping "/a/b/c" also yields "/a/b/". The list of path segments goes from ["a", "b", "c"]
+   * to ["a", "b", ""].
+   */
+  internal fun HttpUrl.Builder.pop() {
+    val removed = encodedPathSegments.removeAt(encodedPathSegments.size - 1)
+
+    // Make sure the path ends with a '/' by either adding an empty string or clearing a segment.
+    if (removed.isEmpty() && encodedPathSegments.isNotEmpty()) {
+      encodedPathSegments[encodedPathSegments.size - 1] = ""
+    } else {
+      encodedPathSegments.add("")
+    }
+  }
+
+  internal fun HttpUrl.Builder.resolvePath(input: String, startPos: Int, limit: Int) {
+    var pos = startPos
+    // Read a delimiter.
+    if (pos == limit) {
+      // Empty path: keep the base path as-is.
+      return
+    }
+    val c = input[pos]
+    if (c == '/' || c == '\\') {
+      // Absolute path: reset to the default "/".
+      encodedPathSegments.clear()
+      encodedPathSegments.add("")
+      pos++
+    } else {
+      // Relative path: clear everything after the last '/'.
+      encodedPathSegments[encodedPathSegments.size - 1] = ""
+    }
+
+    // Read path segments.
+    var i = pos
+    while (i < limit) {
+      val pathSegmentDelimiterOffset = input.delimiterOffset("/\\", i, limit)
+      val segmentHasTrailingSlash = pathSegmentDelimiterOffset < limit
+      push(input, i, pathSegmentDelimiterOffset, segmentHasTrailingSlash, true)
+      i = pathSegmentDelimiterOffset
+      if (segmentHasTrailingSlash) i++
+    }
+  }
+
+  /**
+   * Cuts this string up into alternating parameter names and values. This divides a query string
+   * like `subject=math&easy&problem=5-2=3` into the list `["subject", "math", "easy", null,
+   * "problem", "5-2=3"]`. Note that values may be null and may contain '=' characters.
+   */
+  internal fun String.toQueryNamesAndValues(): MutableList<String?> {
+    val result = mutableListOf<String?>()
+    var pos = 0
+    while (pos <= length) {
+      var ampersandOffset = indexOf('&', pos)
+      if (ampersandOffset == -1) ampersandOffset = length
+
+      val equalsOffset = indexOf('=', pos)
+      if (equalsOffset == -1 || equalsOffset > ampersandOffset) {
+        result.add(substring(pos, ampersandOffset))
+        result.add(null) // No value for this name.
+      } else {
+        result.add(substring(pos, equalsOffset))
+        result.add(substring(equalsOffset + 1, ampersandOffset))
+      }
+      pos = ampersandOffset + 1
+    }
+    return result
+  }
 }
