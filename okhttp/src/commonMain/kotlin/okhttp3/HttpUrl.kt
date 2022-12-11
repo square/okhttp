@@ -15,6 +15,9 @@
  */
 package okhttp3
 
+import kotlin.jvm.JvmName
+import okhttp3.internal.delimiterOffset
+
 /**
  * A uniform resource locator (URL) with a scheme of either `http` or `https`. Use this class to
  * compose and decompose Internet addresses. For example, this code will compose and print a URL for
@@ -365,6 +368,30 @@ url: String
   val isHttps: Boolean
 
   /**
+   * The username, or an empty string if none is set.
+   *
+   * | URL                              | `encodedUsername()` |
+   * | :------------------------------- | :------------------ |
+   * | `http://host/`                   | `""`                |
+   * | `http://username@host/`          | `"username"`        |
+   * | `http://username:password@host/` | `"username"`        |
+   * | `http://a%20b:c%20d@host/`       | `"a%20b"`           |
+   */
+  val encodedUsername: String
+
+  /**
+   * The password, or an empty string if none is set.
+   *
+   * | URL                              | `encodedPassword()` |
+   * | :--------------------------------| :------------------ |
+   * | `http://host/`                   | `""`                |
+   * | `http://username@host/`          | `""`                |
+   * | `http://username:password@host/` | `"password"`        |
+   * | `http://a%20b:c%20d@host/`       | `"c%20d"`           |
+   */
+  val encodedPassword: String
+
+  /**
    * The number of segments in this URL's path. This is also the number of slashes in this URL's
    * path, like 3 in `http://host/a/b/c`. This is always at least 1.
    *
@@ -375,6 +402,44 @@ url: String
    * | `http://host/a/b/c/` | `4`          |
    */
   val pathSize: Int
+
+  /**
+   * The entire path of this URL encoded for use in HTTP resource resolution. The returned path will
+   * start with `"/"`.
+   *
+   * | URL                     | `encodedPath()` |
+   * | :---------------------- | :-------------- |
+   * | `http://host/`          | `"/"`           |
+   * | `http://host/a/b/c`     | `"/a/b/c"`      |
+   * | `http://host/a/b%20c/d` | `"/a/b%20c/d"`  |
+   */
+  val encodedPath: String
+
+  /**
+   * A list of encoded path segments like `["a", "b", "c"]` for the URL `http://host/a/b/c`. This
+   * list is never empty though it may contain a single empty string.
+   *
+   * | URL                     | `encodedPathSegments()` |
+   * | :---------------------- | :---------------------- |
+   * | `http://host/`          | `[""]`                  |
+   * | `http://host/a/b/c`     | `["a", "b", "c"]`       |
+   * | `http://host/a/b%20c/d` | `["a", "b%20c", "d"]`   |
+   */
+  val encodedPathSegments: List<String>
+
+  /**
+   * The query of this URL, encoded for use in HTTP resource resolution. This string may be null
+   * (for URLs with no query), empty (for URLs with an empty query) or non-empty (all other URLs).
+   *
+   * | URL                               | `encodedQuery()`       |
+   * | :-------------------------------- | :--------------------- |
+   * | `http://host/`                    | null                   |
+   * | `http://host/?`                   | `""`                   |
+   * | `http://host/?a=apple&k=key+lime` | `"a=apple&k=key+lime"` |
+   * | `http://host/?a=apple&a=apricot`  | `"a=apple&a=apricot"`  |
+   * | `http://host/?a=apple&b`          | `"a=apple&b"`          |
+   */
+  val encodedQuery: String?
 
   /**
    * This URL's query, like `"abc"` for `http://host/?abc`. Most callers should prefer
@@ -449,6 +514,73 @@ url: String
    */
   fun queryParameterValues(name: String): List<String?>
 
+  /**
+   * Returns the name of the query parameter at `index`. For example this returns `"a"`
+   * for `queryParameterName(0)` on `http://host/?a=apple&b=banana`. This throws if
+   * `index` is not less than the [query size][querySize].
+   *
+   * | URL                               | `queryParameterName(0)` | `queryParameterName(1)` |
+   * | :-------------------------------- | :---------------------- | :---------------------- |
+   * | `http://host/`                    | exception               | exception               |
+   * | `http://host/?`                   | `""`                    | exception               |
+   * | `http://host/?a=apple&k=key+lime` | `"a"`                   | `"k"`                   |
+   * | `http://host/?a=apple&a=apricot`  | `"a"`                   | `"a"`                   |
+   * | `http://host/?a=apple&b`          | `"a"`                   | `"b"`                   |
+   */
+  fun queryParameterName(index: Int): String
+
+  /**
+   * Returns the value of the query parameter at `index`. For example this returns `"apple"` for
+   * `queryParameterName(0)` on `http://host/?a=apple&b=banana`. This throws if `index` is not less
+   * than the [query size][querySize].
+   *
+   * | URL                               | `queryParameterValue(0)` | `queryParameterValue(1)` |
+   * | :-------------------------------- | :----------------------- | :----------------------- |
+   * | `http://host/`                    | exception                | exception                |
+   * | `http://host/?`                   | null                     | exception                |
+   * | `http://host/?a=apple&k=key+lime` | `"apple"`                | `"key lime"`             |
+   * | `http://host/?a=apple&a=apricot`  | `"apple"`                | `"apricot"`              |
+   * | `http://host/?a=apple&b`          | `"apple"`                | null                     |
+   */
+  fun queryParameterValue(index: Int): String?
+
+  /**
+   * This URL's encoded fragment, like `"abc"` for `http://host/#abc`. This is null if the URL has
+   * no fragment.
+   *
+   * | URL                    | `encodedFragment()` |
+   * | :--------------------- | :------------------ |
+   * | `http://host/`         | null                |
+   * | `http://host/#`        | `""`                |
+   * | `http://host/#abc`     | `"abc"`             |
+   * | `http://host/#abc|def` | `"abc|def"`         |
+   */
+  @get:JvmName("encodedFragment") val encodedFragment: String?
+
+  /**
+   * Returns a string with containing this URL with its username, password, query, and fragment
+   * stripped, and its path replaced with `/...`. For example, redacting
+   * `http://username:password@example.com/path` returns `http://example.com/...`.
+   */
+  fun redact(): String
+
+  /**
+   * Returns the URL that would be retrieved by following `link` from this URL, or null if the
+   * resulting URL is not well-formed.
+   */
+  fun resolve(link: String): HttpUrl?
+
+  /**
+   * Returns a builder based on this URL.
+   */
+  fun newBuilder(): Builder
+
+  /**
+   * Returns a builder for the URL that would be retrieved by following `link` from this URL,
+   * or null if the resulting URL is not well-formed.
+   */
+  fun newBuilder(link: String): Builder?
+
   class Builder {
     internal var scheme: String?
     internal var encodedUsername: String
@@ -461,11 +593,60 @@ url: String
 
     fun scheme(scheme: String): Builder
     fun username(username: String): Builder
+
+    fun encodedUsername(encodedUsername: String): Builder
+
     fun password(password: String): Builder
+
+    fun encodedPassword(encodedPassword: String): Builder
+
     fun host(host: String): Builder
     fun port(port: Int): Builder
+
+    fun addPathSegment(pathSegment: String): Builder
+
+    /**
+     * Adds a set of path segments separated by a slash (either `\` or `/`). If `pathSegments`
+     * starts with a slash, the resulting URL will have empty path segment.
+     */
+    fun addPathSegments(pathSegments: String): Builder
+
+    fun addEncodedPathSegment(encodedPathSegment: String): Builder
+
+    /**
+     * Adds a set of encoded path segments separated by a slash (either `\` or `/`). If
+     * `encodedPathSegments` starts with a slash, the resulting URL will have empty path segment.
+     */
+    fun addEncodedPathSegments(encodedPathSegments: String): Builder
+
+    fun setPathSegment(index: Int, pathSegment: String): Builder
+
+    fun setEncodedPathSegment(index: Int, encodedPathSegment: String): Builder
+
+    fun removePathSegment(index: Int): Builder
+
+    fun encodedPath(encodedPath: String): Builder
+
     fun query(query: String?): Builder
+
+    /** Encodes the query parameter using UTF-8 and adds it to this URL's query string. */
+    fun addQueryParameter(name: String, value: String?): Builder
+
+    /** Adds the pre-encoded query parameter to this URL's query string. */
+    fun addEncodedQueryParameter(encodedName: String, encodedValue: String?): Builder
+
+    fun setQueryParameter(name: String, value: String?): Builder
+
+    fun setEncodedQueryParameter(encodedName: String, encodedValue: String?): Builder
+
+    fun removeAllQueryParameters(name: String): Builder
+
+    fun removeAllEncodedQueryParameters(encodedName: String): Builder
+
     fun fragment(fragment: String?): Builder
+
+    fun encodedFragment(encodedFragment: String?): Builder
+
     fun build(): HttpUrl
 
     internal fun parse(base: HttpUrl?, input: String): Builder
