@@ -51,8 +51,6 @@ val EMPTY_REQUEST: RequestBody = commonEmptyRequestBody
 @JvmField
 val EMPTY_RESPONSE: ResponseBody = commonEmptyResponse
 
-actual typealias HttpUrlRepresentation = HttpUrl
-
 /** GMT and UTC are equivalent for our purposes. */
 @JvmField
 internal val UTC: TimeZone = TimeZone.getTimeZone("GMT")!!

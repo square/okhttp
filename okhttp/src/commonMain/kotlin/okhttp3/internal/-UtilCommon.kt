@@ -34,9 +34,6 @@ import okio.Options
 import okio.Path
 import okio.use
 
-// Temporary until we have a HttpUrl in common
-expect class HttpUrlRepresentation
-
 // TODO: migrate callers to [Regex.matchAt] when that API is not experimental.
 internal fun Regex.matchAtPolyfill(input: CharSequence, index: Int): MatchResult? {
   val candidate = find(input, index) ?: return null

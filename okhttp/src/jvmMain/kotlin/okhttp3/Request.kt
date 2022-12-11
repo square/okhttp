@@ -201,7 +201,7 @@ actual class Request internal actual constructor(builder: Builder) {
       this.headers = request.headers.newBuilder()
     }
 
-    open fun url(url: HttpUrl): Builder = apply {
+    actual open fun url(url: HttpUrl): Builder = apply {
       this.url = url
     }
 

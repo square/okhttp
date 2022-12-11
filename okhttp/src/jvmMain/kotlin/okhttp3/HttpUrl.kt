@@ -284,78 +284,18 @@ import okio.Buffer
  *
  * [idna]: http://www.unicode.org/reports/tr46/#ToASCII
  */
-class HttpUrl internal constructor(
-  /** Either "http" or "https". */
-  @get:JvmName("scheme") val scheme: String,
+actual class HttpUrl internal actual constructor(
+  @get:JvmName("scheme") actual val scheme: String,
 
-  /**
-   * The decoded username, or an empty string if none is present.
-   *
-   * | URL                              | `username()` |
-   * | :------------------------------- | :----------- |
-   * | `http://host/`                   | `""`         |
-   * | `http://username@host/`          | `"username"` |
-   * | `http://username:password@host/` | `"username"` |
-   * | `http://a%20b:c%20d@host/`       | `"a b"`      |
-   */
-  @get:JvmName("username") val username: String,
+  @get:JvmName("username") actual val username: String,
 
-  /**
-   * Returns the decoded password, or an empty string if none is present.
-   *
-   * | URL                              | `password()` |
-   * | :------------------------------- | :----------- |
-   * | `http://host/`                   | `""`         |
-   * | `http://username@host/`          | `""`         |
-   * | `http://username:password@host/` | `"password"` |
-   * | `http://a%20b:c%20d@host/`       | `"c d"`      |
-   */
-  @get:JvmName("password") val password: String,
+  @get:JvmName("password") actual val password: String,
 
-  /**
-   * The host address suitable for use with [InetAddress.getAllByName]. May be:
-   *
-   *  * A regular host name, like `android.com`.
-   *
-   *  * An IPv4 address, like `127.0.0.1`.
-   *
-   *  * An IPv6 address, like `::1`. Note that there are no square braces.
-   *
-   *  * An encoded IDN, like `xn--n3h.net`.
-   *
-   * | URL                   | `host()`        |
-   * | :-------------------- | :-------------- |
-   * | `http://android.com/` | `"android.com"` |
-   * | `http://127.0.0.1/`   | `"127.0.0.1"`   |
-   * | `http://[::1]/`       | `"::1"`         |
-   * | `http://xn--n3h.net/` | `"xn--n3h.net"` |
-   */
-  @get:JvmName("host") val host: String,
+  @get:JvmName("host") actual val host: String,
 
-  /**
-   * The explicitly-specified port if one was provided, or the default port for this URL's scheme.
-   * For example, this returns 8443 for `https://square.com:8443/` and 443 for
-   * `https://square.com/`. The result is in `[1..65535]`.
-   *
-   * | URL                 | `port()` |
-   * | :------------------ | :------- |
-   * | `http://host/`      | `80`     |
-   * | `http://host:8000/` | `8000`   |
-   * | `https://host/`     | `443`    |
-   */
-  @get:JvmName("port") val port: Int,
+  @get:JvmName("port") actual val port: Int,
 
-  /**
-   * A list of path segments like `["a", "b", "c"]` for the URL `http://host/a/b/c`. This list is
-   * never empty though it may contain a single empty string.
-   *
-   * | URL                      | `pathSegments()`    |
-   * | :----------------------- | :------------------ |
-   * | `http://host/`           | `[""]`              |
-   * | `http://host/a/b/c"`     | `["a", "b", "c"]`   |
-   * | `http://host/a/b%20c/d"` | `["a", "b c", "d"]` |
-   */
-  @get:JvmName("pathSegments") val pathSegments: List<String>,
+  @get:JvmName("pathSegments") actual val pathSegments: List<String>,
 
   /**
    * Alternating, decoded query names and values, or null for no query. Names may be empty or
@@ -364,23 +304,13 @@ class HttpUrl internal constructor(
    */
   private val queryNamesAndValues: List<String?>?,
 
-  /**
-   * This URL's fragment, like `"abc"` for `http://host/#abc`. This is null if the URL has no
-   * fragment.
-   *
-   * | URL                    | `fragment()` |
-   * | :--------------------- | :----------- |
-   * | `http://host/`         | null         |
-   * | `http://host/#`        | `""`         |
-   * | `http://host/#abc`     | `"abc"`      |
-   * | `http://host/#abc|def` | `"abc|def"`  |
-   */
-  @get:JvmName("fragment") val fragment: String?,
+  @get:JvmName("fragment") actual val fragment: String?,
 
   /** Canonical URL. */
   private val url: String
 ) {
-  val isHttps: Boolean = scheme == "https"
+  actual val isHttps: Boolean
+    get() = scheme == "https"
 
   /** Returns this URL as a [java.net.URL][URL]. */
   @JvmName("url") fun toUrl(): URL {
@@ -465,7 +395,8 @@ class HttpUrl internal constructor(
    * | `http://host/a/b/c`  | `3`          |
    * | `http://host/a/b/c/` | `4`          |
    */
-  @get:JvmName("pathSize") val pathSize: Int get() = pathSegments.size
+  @get:JvmName("pathSize")
+  actual val pathSize: Int get() = pathSegments.size
 
   /**
    * The entire path of this URL encoded for use in HTTP resource resolution. The returned path will
@@ -542,7 +473,7 @@ class HttpUrl internal constructor(
    * | `http://host/?a=apple&a=apricot`  | `"a=apple&a=apricot"`  |
    * | `http://host/?a=apple&b`          | `"a=apple&b"`          |
    */
-  @get:JvmName("query") val query: String?
+  @get:JvmName("query") actual val query: String?
     get() {
       if (queryNamesAndValues == null) return null // No query.
       val result = StringBuilder()
@@ -563,7 +494,7 @@ class HttpUrl internal constructor(
    * | `http://host/?a=apple&a=apricot`  | `2`           |
    * | `http://host/?a=apple&b`          | `2`           |
    */
-  @get:JvmName("querySize") val querySize: Int
+  @get:JvmName("querySize") actual val querySize: Int
     get() {
       return if (queryNamesAndValues != null) queryNamesAndValues.size / 2 else 0
     }
@@ -580,7 +511,7 @@ class HttpUrl internal constructor(
    * | `http://host/?a=apple&a=apricot`  | `"apple"`             |
    * | `http://host/?a=apple&b`          | `"apple"`             |
    */
-  fun queryParameter(name: String): String? {
+  actual fun queryParameter(name: String): String? {
     if (queryNamesAndValues == null) return null
     for (i in 0 until queryNamesAndValues.size step 2) {
       if (name == queryNamesAndValues[i]) {
@@ -602,7 +533,7 @@ class HttpUrl internal constructor(
    * | `http://host/?a=apple&a=apricot`  | `["a"]`                 |
    * | `http://host/?a=apple&b`          | `["a", "b"]`            |
    */
-  @get:JvmName("queryParameterNames") val queryParameterNames: Set<String>
+  actual @get:JvmName("queryParameterNames") val queryParameterNames: Set<String>
     get() {
       if (queryNamesAndValues == null) return emptySet()
       val result = LinkedHashSet<String>()
@@ -625,7 +556,7 @@ class HttpUrl internal constructor(
    * | `http://host/?a=apple&a=apricot`  | `["apple", "apricot"]`      | `[]`                        |
    * | `http://host/?a=apple&b`          | `["apple"]`                 | `[null]`                    |
    */
-  fun queryParameterValues(name: String): List<String?> {
+  actual fun queryParameterValues(name: String): List<String?> {
     if (queryNamesAndValues == null) return emptyList()
     val result = mutableListOf<String?>()
     for (i in 0 until queryNamesAndValues.size step 2) {
@@ -905,15 +836,15 @@ class HttpUrl internal constructor(
       level = DeprecationLevel.ERROR)
   fun fragment(): String? = fragment
 
-  class Builder {
-    internal var scheme: String? = null
-    internal var encodedUsername = ""
-    internal var encodedPassword = ""
-    internal var host: String? = null
-    internal var port = -1
-    internal val encodedPathSegments = mutableListOf<String>()
-    internal var encodedQueryNamesAndValues: MutableList<String?>? = null
-    internal var encodedFragment: String? = null
+  actual class Builder {
+    actual internal var scheme: String? = null
+    actual internal var encodedUsername = ""
+    actual internal var encodedPassword = ""
+    actual internal var host: String? = null
+    actual internal var port = -1
+    actual internal val encodedPathSegments = mutableListOf<String>()
+    actual internal var encodedQueryNamesAndValues: MutableList<String?>? = null
+    actual internal var encodedFragment: String? = null
 
     init {
       encodedPathSegments.add("") // The default path is '/' which needs a trailing space.
@@ -922,7 +853,7 @@ class HttpUrl internal constructor(
     /**
      * @param scheme either "http" or "https".
      */
-    fun scheme(scheme: String) = apply {
+    actual fun scheme(scheme: String) = apply {
       when {
         scheme.equals("http", ignoreCase = true) -> this.scheme = "http"
         scheme.equals("https", ignoreCase = true) -> this.scheme = "https"
@@ -930,7 +861,7 @@ class HttpUrl internal constructor(
       }
     }
 
-    fun username(username: String) = apply {
+    actual fun username(username: String) = apply {
       this.encodedUsername = username.canonicalize(encodeSet = USERNAME_ENCODE_SET)
     }
 
@@ -941,7 +872,7 @@ class HttpUrl internal constructor(
       )
     }
 
-    fun password(password: String) = apply {
+    actual fun password(password: String) = apply {
       this.encodedPassword = password.canonicalize(encodeSet = PASSWORD_ENCODE_SET)
     }
 
@@ -956,13 +887,13 @@ class HttpUrl internal constructor(
      * @param host either a regular hostname, International Domain Name, IPv4 address, or IPv6
      * address.
      */
-    fun host(host: String) = apply {
+    actual fun host(host: String) = apply {
       val encoded = host.percentDecode().toCanonicalHost() ?: throw IllegalArgumentException(
           "unexpected host: $host")
       this.host = encoded
     }
 
-    fun port(port: Int) = apply {
+    actual fun port(port: Int) = apply {
       require(port in 1..65535) { "unexpected port: $port" }
       this.port = port
     }
@@ -1034,7 +965,7 @@ class HttpUrl internal constructor(
       resolvePath(encodedPath, 0, encodedPath.length)
     }
 
-    fun query(query: String?) = apply {
+    actual fun query(query: String?) = apply {
       this.encodedQueryNamesAndValues = query?.canonicalize(
           encodeSet = QUERY_ENCODE_SET,
           plusIsSpace = true
@@ -1118,7 +1049,7 @@ class HttpUrl internal constructor(
       }
     }
 
-    fun fragment(fragment: String?) = apply {
+    actual fun fragment(fragment: String?) = apply {
       this.encodedFragment = fragment?.canonicalize(
           encodeSet = FRAGMENT_ENCODE_SET,
           unicodeAllowed = true
@@ -1168,7 +1099,7 @@ class HttpUrl internal constructor(
       )
     }
 
-    fun build(): HttpUrl {
+    actual fun build(): HttpUrl {
       @Suppress("UNCHECKED_CAST") // percentDecode returns either List<String?> or List<String>.
       return HttpUrl(
           scheme = scheme ?: throw IllegalStateException("scheme == null"),
@@ -1234,7 +1165,7 @@ class HttpUrl internal constructor(
       }
     }
 
-    internal fun parse(base: HttpUrl?, input: String): Builder {
+    actual internal fun parse(base: HttpUrl?, input: String): Builder {
       var pos = input.indexOfFirstNonAsciiWhitespace()
       val limit = input.indexOfLastNonAsciiWhitespace(pos)
 
@@ -1552,7 +1483,7 @@ class HttpUrl internal constructor(
     }
   }
 
-  companion object {
+  actual companion object {
     private val HEX_DIGITS =
         charArrayOf('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F')
     internal const val USERNAME_ENCODE_SET = " \"':;<=>@[]^`{}|/\\?#"
@@ -1630,14 +1561,15 @@ class HttpUrl internal constructor(
      * @throws IllegalArgumentException If this is not a well-formed HTTP or HTTPS URL.
      */
     @JvmStatic
-    @JvmName("get") fun String.toHttpUrl(): HttpUrl = Builder().parse(null, this).build()
+    @JvmName("get") actual fun String.toHttpUrl(): HttpUrl = Builder().parse(null, this).build()
 
     /**
      * Returns a new `HttpUrl` representing `url` if it is a well-formed HTTP or HTTPS URL, or null
      * if it isn't.
      */
     @JvmStatic
-    @JvmName("parse") fun String.toHttpUrlOrNull(): HttpUrl? {
+    @JvmName("parse")
+    actual fun String.toHttpUrlOrNull(): HttpUrl? {
       return try {
         toHttpUrl()
       } catch (_: IllegalArgumentException) {
