@@ -16,6 +16,7 @@
 package okhttp3
 
 import java.io.IOException
+import java.lang.IllegalArgumentException
 import java.net.CookieHandler
 import java.net.HttpCookie
 import java.util.Collections
@@ -98,11 +99,18 @@ class JavaNetCookieJar(private val cookieHandler: CookieHandler) : CookieJar {
         value = value.substring(1, value.length - 1)
       }
 
-      result.add(Cookie.Builder()
-          .name(name)
-          .value(value)
-          .domain(url.host)
-          .build())
+      try {
+        result.add(
+          Cookie.Builder()
+            .name(name)
+            .value(value)
+            .domain(url.host)
+            .build()
+        )
+      } catch (iae: IllegalArgumentException) {
+        // Ignore this cookie; it can't be represented in OkHttp.
+      }
+
       pos = pairEnd + 1
     }
     return result

@@ -17,10 +17,12 @@ package okhttp.android.test
 
 import java.net.CookieManager
 import java.net.CookiePolicy
+import java.net.URI
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.JavaNetCookieJar
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -43,6 +45,7 @@ class CookiesTest {
 
   @Test
   fun testRequest() {
+    // TODO remove
     val request = Request.Builder().url("https://developer.android.com/training/multiscreen/screendensities").build()
 
     val response = client.newCall(request).execute()
@@ -52,13 +55,28 @@ class CookiesTest {
     }
 
     val cookies = cookieJar.loadForRequest(request.url)
-    Assertions.assertThat(cookies).isNotEmpty
+    assertThat(cookies).isNotEmpty
 
     val response2 = client.newCall(request).execute()
 
     response2.use {
       assertEquals(200, response2.code)
     }
+  }
+
+
+  @Test
+  fun skipsInvalidCookie() {
+    val url = "https://www.squareup.com/".toHttpUrl()
+
+    cookieManager.put(
+      URI(url.toString()),
+      mapOf("Set-Cookie" to listOf("a= android ; Domain=.squareup.com; Path=/"))
+    )
+    val actualCookies = cookieJar.loadForRequest(url)
+    assertThat(actualCookies.size).isEqualTo(1)
+    assertThat(actualCookies[0].name).isEqualTo("a")
+    assertThat(actualCookies[0].value).isEqualTo("android")
   }
 
   fun OkHttpClient.close() {
