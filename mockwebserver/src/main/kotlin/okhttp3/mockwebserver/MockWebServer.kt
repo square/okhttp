@@ -17,33 +17,6 @@
 
 package okhttp3.mockwebserver
 
-import java.io.Closeable
-import java.io.IOException
-import java.net.InetAddress
-import java.net.InetSocketAddress
-import java.net.ProtocolException
-import java.net.Proxy
-import java.net.ServerSocket
-import java.net.Socket
-import java.net.SocketException
-import java.security.SecureRandom
-import java.security.cert.CertificateException
-import java.security.cert.X509Certificate
-import java.util.Collections
-import java.util.Locale
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.logging.Level
-import java.util.logging.Logger
-import javax.net.ServerSocketFactory
-import javax.net.ssl.SSLContext
-import javax.net.ssl.SSLSocket
-import javax.net.ssl.SSLSocketFactory
-import javax.net.ssl.TrustManager
-import javax.net.ssl.X509TrustManager
 import okhttp3.Headers
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.HttpUrl
@@ -93,6 +66,33 @@ import okio.buffer
 import okio.sink
 import okio.source
 import org.junit.rules.ExternalResource
+import java.io.Closeable
+import java.io.IOException
+import java.net.InetAddress
+import java.net.InetSocketAddress
+import java.net.ProtocolException
+import java.net.Proxy
+import java.net.ServerSocket
+import java.net.Socket
+import java.net.SocketException
+import java.security.SecureRandom
+import java.security.cert.CertificateException
+import java.security.cert.X509Certificate
+import java.util.Collections
+import java.util.Locale
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.logging.Level
+import java.util.logging.Logger
+import javax.net.ServerSocketFactory
+import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLSocket
+import javax.net.ssl.SSLSocketFactory
+import javax.net.ssl.TrustManager
+import javax.net.ssl.X509TrustManager
 
 /**
  * A scriptable web server. Callers supply canned responses and the server replays them upon request
@@ -971,7 +971,11 @@ class MockWebServer : ExternalResource(), Closeable {
 
       val socketPolicy = response.socketPolicy
       if (socketPolicy === DISCONNECT_AFTER_REQUEST) {
-        socket.close()
+        if (response.http2ErrorCode != -1) {
+          stream.close(ErrorCode.fromHttp2(response.http2ErrorCode)!!, null)
+        } else {
+          socket.close()
+        }
         return
       }
       writeResponse(stream, request, response)

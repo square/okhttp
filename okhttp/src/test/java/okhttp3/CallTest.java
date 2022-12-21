@@ -47,6 +47,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Logger;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
@@ -63,6 +64,8 @@ import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.RecordingProxySelector;
+import okhttp3.internal.http2.ErrorCode;
+import okhttp3.internal.http2.Http2;
 import okhttp3.internal.io.InMemoryFileSystem;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
@@ -965,6 +968,32 @@ public final class CallTest {
     executeSynchronously(request)
         .assertCode(200)
         .assertBody("success!");
+  }
+
+  /**
+   * Make a request with two routes. The first route will time out because it's connecting to a
+   * special address that never connects. The automatic retry will succeed.
+   */
+  @Flaky
+  @Test public void refusedStreamDoesntRetryIndefinitely() throws IOException {
+    clientTestRule.setRecordFrames(true);
+    enableProtocol(Protocol.HTTP_2);
+
+    server.enqueue(
+            new MockResponse()
+                    .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.getHttpCode())
+                    .setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST)
+    );
+    server.enqueue(
+            new MockResponse()
+                    .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.getHttpCode())
+                    .setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST)
+    );
+    client = client.newBuilder()
+            .build();
+    Request request = new Request.Builder().url(server.url("/")).build();
+    executeSynchronously(request)
+            .assertFailure("stream was reset: REFUSED_STREAM");
   }
 
   /** https://github.com/square/okhttp/issues/4875 */
