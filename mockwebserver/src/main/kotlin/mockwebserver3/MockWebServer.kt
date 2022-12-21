@@ -998,7 +998,11 @@ class MockWebServer : Closeable {
 
       val socketPolicy = response.socketPolicy
       if (socketPolicy === DISCONNECT_AFTER_REQUEST) {
-        socket.close()
+        if (response.http2ErrorCode != -1) {
+          stream.close(ErrorCode.fromHttp2(response.http2ErrorCode)!!, null)
+        } else {
+          socket.close()
+        }
         return
       }
       writeResponse(stream, request, response)

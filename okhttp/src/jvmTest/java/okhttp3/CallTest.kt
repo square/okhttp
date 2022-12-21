@@ -69,6 +69,7 @@ import okhttp3.internal.RecordingOkAuthenticator
 import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.http.RecordingProxySelector
+import okhttp3.internal.http2.ErrorCode
 import okhttp3.internal.userAgent
 import okhttp3.okio.LoggingFilesystem
 import okhttp3.testing.Flaky
@@ -894,6 +895,28 @@ open class CallTest {
     executeSynchronously(request)
       .assertCode(200)
       .assertBody("success!")
+  }
+
+  /**
+   * Make a request with two routes. The first route will time out because it's connecting to a
+   * special address that never connects. The automatic retry will succeed.
+   */
+  @Flaky
+  @Test fun refusedStreamDoesntRetryIndefinitely() {
+    enableProtocol(Protocol.HTTP_2)
+
+    server.enqueue(
+      MockResponse()
+        .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.httpCode)
+        .setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST)
+    )
+    client = client.newBuilder()
+      .readTimeout(Duration.ofMillis(1000))
+      .connectTimeout(Duration.ofMillis(1000))
+      .build()
+    val request = Request.Builder().url(server.url("/")).build()
+    executeSynchronously(request)
+      .assertFailure("stream was reset: REFUSED_STREAM")
   }
 
   /** https://github.com/square/okhttp/issues/4875  */
