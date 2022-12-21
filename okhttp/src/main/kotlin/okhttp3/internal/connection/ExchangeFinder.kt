@@ -273,10 +273,12 @@ class ExchangeFinder(
    */
   fun retryAfterFailure(): Boolean {
     if (refusedStreamCount == 0 && connectionShutdownCount == 0 && otherFailureCount == 0) {
+      println("a false")
       return false // Nothing to recover from.
     }
 
     if (nextRouteToTry != null) {
+      println("b false")
       return true
     }
 
@@ -284,16 +286,25 @@ class ExchangeFinder(
     if (retryRoute != null) {
       // Lock in the route because retryRoute() is racy and we don't want to call it twice.
       nextRouteToTry = retryRoute
+      println("c true")
       return true
     }
 
     // If we have a routes left, use 'em.
-    if (routeSelection?.hasNext() == true) return true
+    if (routeSelection?.hasNext() == true) {
+      println("d true")
+      return true
+    }
 
     // If we haven't initialized the route selector yet, assume it'll have at least one route.
-    val localRouteSelector = routeSelector ?: return true
+    val localRouteSelector = routeSelector
+    if (localRouteSelector == null) {
+      println("e true")
+      return true
+    }
 
     // If we do have a route selector, use its routes.
+    println("f " + localRouteSelector.hasNext())
     return localRouteSelector.hasNext()
   }
 
@@ -304,14 +315,26 @@ class ExchangeFinder(
    */
   private fun retryRoute(): Route? {
     if (refusedStreamCount > 1 || connectionShutdownCount > 1 || otherFailureCount > 0) {
+      println("r1 null")
       return null // This route has too many problems to retry.
     }
 
-    val connection = call.connection ?: return null
+    val connection = call.connection
+    if (connection == null) {
+      println("r2 null")
+      return null
+    }
 
     synchronized(connection) {
-      if (connection.routeFailureCount != 0) return null
-      if (!connection.route().address.url.canReuseConnectionFor(address.url)) return null
+      if (connection.routeFailureCount != 0) {
+        println("r3 null")
+        return null
+      }
+      if (!connection.route().address.url.canReuseConnectionFor(address.url)) {
+        println("r4 null")
+        return null
+      }
+      println("r5 connection")
       return connection.route()
     }
   }

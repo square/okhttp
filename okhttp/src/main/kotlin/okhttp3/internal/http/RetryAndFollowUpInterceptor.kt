@@ -147,18 +147,23 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
     userRequest: Request,
     requestSendStarted: Boolean
   ): Boolean {
+    println("1")
     // The application layer has forbidden retries.
     if (!client.retryOnConnectionFailure) return false
 
+    println("2")
     // We can't send the request body again.
     if (requestSendStarted && requestIsOneShot(e, userRequest)) return false
 
+    println("3")
     // This exception is fatal.
     if (!isRecoverable(e, requestSendStarted)) return false
 
+    println("4")
     // No more routes to attempt.
     if (!call.retryAfterFailure()) return false
 
+    println("5")
     // For failure recovery, use the same route selector with a new connection.
     return true
   }
