@@ -35,6 +35,8 @@ import org.junit.Test;
 
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
+import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
 import static org.junit.Assert.fail;
@@ -164,7 +166,7 @@ public class CookiesTest {
     CookieHandler androidCookieHandler = new CookieHandler() {
       @Override public Map<String, List<String>> get(URI uri, Map<String, List<String>> map)
           throws IOException {
-        return Collections.singletonMap("Cookie", Collections.singletonList("$Version=\"1\"; "
+        return singletonMap("Cookie", singletonList("$Version=\"1\"; "
             + "a=\"android\";$Path=\"/\";$Domain=\"" + serverUrl.host() + "\"; "
             + "b=\"banana\";$Path=\"/\";$Domain=\"" + serverUrl.host() + "\""));
       }
@@ -245,8 +247,8 @@ public class CookiesTest {
           @Override public Map<String, List<String>> get(URI uri,
               Map<String, List<String>> requestHeaders) throws IOException {
             Map<String, List<String>> result = new LinkedHashMap<>();
-            result.put("COOKIE", Collections.singletonList("Bar=bar"));
-            result.put("cooKIE2", Collections.singletonList("Baz=baz"));
+            result.put("COOKIE", singletonList("Bar=bar"));
+            result.put("cooKIE2", singletonList("Baz=baz"));
             return result;
           }
         }))
@@ -312,6 +314,22 @@ public class CookiesTest {
     HttpUrl url2 = HttpUrl.get("https://www.squareup.com/");
     List<Cookie> actualCookies = cookieJar.loadForRequest(url2);
     assertThat(actualCookies).isEmpty();
+  }
+
+  @Test
+  public void skipsInvalidCookie() throws Exception {
+    CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
+    JavaNetCookieJar cookieJar = new JavaNetCookieJar(cookieManager);
+
+    HttpUrl url = HttpUrl.get("https://www.squareup.com/");
+
+    cookieManager.put(new URI(url.toString()),
+            singletonMap("Set-Cookie", singletonList("a= android ; Domain=.squareup.com; Path=/")));
+
+    List<Cookie> actualCookies = cookieJar.loadForRequest(url);
+    assertThat(actualCookies.size()).isEqualTo(1);
+    assertThat(actualCookies.get(0).name()).isEqualTo("a");
+    assertThat(actualCookies.get(0).value()).isEqualTo("android");
   }
 
   private HttpUrl urlWithIpAddress(MockWebServer server, String path) throws Exception {
