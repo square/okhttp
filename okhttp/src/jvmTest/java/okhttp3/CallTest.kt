@@ -904,6 +904,7 @@ open class CallTest {
   @Flaky
   @Test fun refusedStreamDoesntRetryIndefinitely() {
     enableProtocol(Protocol.HTTP_2)
+    clientTestRule.recordFrames = true
 
     server.enqueue(
       MockResponse()
