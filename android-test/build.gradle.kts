@@ -73,6 +73,8 @@ dependencies {
   androidTestImplementation(libs.squareup.moshi.kotlin)
   androidTestImplementation(libs.squareup.okio.fakefilesystem)
 
+  androidTestImplementation(projects.okhttpUrlconnection)
+
   androidTestImplementation(libs.androidx.test.runner)
   androidTestImplementation(libs.junit.jupiter.api)
   androidTestImplementation(libs.junit5android.core)
