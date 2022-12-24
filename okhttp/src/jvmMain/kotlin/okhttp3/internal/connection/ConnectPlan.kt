@@ -252,7 +252,7 @@ class ConnectPlan(
       throw IOException("canceled")
     }
 
-    rawSocket.soTimeout = client.readTimeoutMillis
+    rawSocket.soTimeout = chain.readTimeoutMillis()
     try {
       Platform.get().connectSocket(rawSocket, route.socketAddress, chain.connectTimeoutMillis())
     } catch (e: ConnectException) {
