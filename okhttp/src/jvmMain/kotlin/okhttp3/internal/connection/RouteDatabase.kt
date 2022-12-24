@@ -32,12 +32,12 @@ class RouteDatabase {
 
   /** Records a failure connecting to [failedRoute]. */
   @Synchronized fun failed(failedRoute: Route) {
-    _failedRoutes.add(failedRoute)
+//    _failedRoutes.add(failedRoute)
   }
 
   /** Records success connecting to [route]. */
   @Synchronized fun connected(route: Route) {
-    _failedRoutes.remove(route)
+//    _failedRoutes.remove(route)
   }
 
   /** Returns true if [route] has failed recently and should be avoided. */
