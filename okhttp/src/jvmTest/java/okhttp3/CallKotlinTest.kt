@@ -147,15 +147,17 @@ class CallKotlinTest {
         .header("Content-Type", "application/xml")
         .put(ValidRequestBody())
         .build()
-    // 201
-    client.newCall(request).execute()
+    client.newCall(request).execute().use {
+      assertEquals(201, it.code)
+    }
 
     request = Request.Builder()
         .url(endpointUrl)
         .head()
         .build()
-    // 204
-    client.newCall(request).execute()
+    client.newCall(request).execute().use {
+      assertEquals(204, it.code)
+    }
 
     request = Request.Builder()
         .url(endpointUrl)
@@ -174,19 +176,9 @@ class CallKotlinTest {
         .head()
         .build()
 
-    client.newCall(request).execute()
-
-    var recordedRequest = server.takeRequest()
-    assertEquals("PUT", recordedRequest.method)
-
-    recordedRequest = server.takeRequest()
-    assertEquals("HEAD", recordedRequest.method)
-
-    recordedRequest = server.takeRequest()
-    assertThat(recordedRequest.failure).isNotNull()
-
-    recordedRequest = server.takeRequest()
-    assertEquals("HEAD", recordedRequest.method)
+    client.newCall(request).execute().use {
+      assertEquals(204, it.code)
+    }
   }
 
   @Test
