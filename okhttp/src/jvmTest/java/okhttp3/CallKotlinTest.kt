@@ -104,7 +104,7 @@ class CallKotlinTest {
     server.useHttps(handshakeCertificates.sslSocketFactory())
   }
 
-//  @RetryingTest(5)
+  @RetryingTest(5)
   @Flaky
   fun testHeadAfterPut() {
     class ErringRequestBody : RequestBody() {
