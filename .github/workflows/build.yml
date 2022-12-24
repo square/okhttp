@@ -16,7 +16,7 @@ env:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    if: github.repository == 'square/okhttp' && github.ref == 'refs/heads/master'
+    if: github.repository == 'square/okhttp'
 
     steps:
       - name: Checkout
