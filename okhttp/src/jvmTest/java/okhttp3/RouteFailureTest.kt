@@ -1,17 +1,28 @@
+/*
+ * Copyright (C) 2022 Square, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package okhttp3
-
 
 import java.io.IOException
 import java.net.InetAddress
 import java.net.InetSocketAddress
-import java.net.Socket
-import java.net.SocketAddress
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy
 import mockwebserver3.junit5.internal.MockWebServerInstance
 import okhttp3.internal.http2.ErrorCode
-import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.internal.TlsUtil.localhost
 import org.assertj.core.api.Assertions.assertThat
@@ -19,7 +30,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
-@Flaky
 class RouteFailureTest {
   private lateinit var socketFactory: SpecificHostSocketFactory
   private lateinit var client: OkHttpClient
@@ -39,8 +49,8 @@ class RouteFailureTest {
 
   val dns = FakeDns()
 
-  val ipv4 = InetAddress.getByName("192.168.1.1")
-  val ipv6 = InetAddress.getByName("2606:2800:220:1:248:1893:25c8:1946")
+  val ipv4 = InetAddress.getByName("203.0.113.1")
+  val ipv6 = InetAddress.getByName("2001:db8:ffff:ffff:ffff:ffff:ffff:1")
 
   val refusedStream = MockResponse()
     .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.httpCode)
@@ -180,9 +190,58 @@ class RouteFailureTest {
     assertThat(server2.requestCount).isEqualTo(1)
   }
 
-  /**
-   * Tests that use this will fail unless boot classpath is set. Ex. `-Xbootclasspath/p:/tmp/alpn-boot-8.0.0.v20140317`
-   */
+  @Test
+  fun http2OneBadHostRetryOnConnectionFailure() {
+    enableProtocol(Protocol.HTTP_2)
+
+    val request = Request(server1.url("/"))
+
+    server1.enqueue(refusedStream)
+    server1.enqueue(refusedStream)
+
+    dns[server1.hostName] = listOf(ipv6)
+    socketFactory[ipv6] = server1.inetSocketAddress
+
+    client = client.newBuilder()
+      .fastFallback(false)
+      .apply {
+        retryOnConnectionFailure = true
+      }
+      .build()
+
+    executeSynchronously(request)
+      .assertFailureMatches("stream was reset: REFUSED_STREAM")
+
+    assertThat(client.routeDatabase.failedRoutes).isEmpty()
+    assertThat(server1.requestCount).isEqualTo(1)
+  }
+
+  @Test
+  fun http2OneBadHostRetryOnConnectionFailureFastFallback() {
+    enableProtocol(Protocol.HTTP_2)
+
+    val request = Request(server1.url("/"))
+
+    server1.enqueue(refusedStream)
+    server1.enqueue(refusedStream)
+
+    dns[server1.hostName] = listOf(ipv6)
+    socketFactory[ipv6] = server1.inetSocketAddress
+
+    client = client.newBuilder()
+      .fastFallback(true)
+      .apply {
+        retryOnConnectionFailure = true
+      }
+      .build()
+
+    executeSynchronously(request)
+      .assertFailureMatches("stream was reset: REFUSED_STREAM")
+
+    assertThat(client.routeDatabase.failedRoutes).isEmpty()
+    assertThat(server1.requestCount).isEqualTo(1)
+  }
+
   private fun enableProtocol(protocol: Protocol) {
     enableTls()
     client = client.newBuilder()
@@ -211,30 +270,6 @@ class RouteFailureTest {
       RecordedResponse(request, response, null, bodyString, null)
     } catch (e: IOException) {
       RecordedResponse(request, null, null, null, e)
-    }
-  }
-}
-
-class SpecificHostSocketFactory(
-  val defaultAddress: InetSocketAddress?
-) : DelegatingSocketFactory(getDefault()) {
-  private val hostMapping = mutableMapOf<InetAddress, InetSocketAddress>()
-
-  /** Sets the results for `hostname`.  */
-  operator fun set(
-    requested: InetAddress,
-    real: InetSocketAddress
-  ) {
-    hostMapping[requested] = real
-  }
-
-  override fun createSocket(): Socket {
-    return object : Socket() {
-      override fun connect(endpoint: SocketAddress?, timeout: Int) {
-        val requested = (endpoint as InetSocketAddress)
-        val inetSocketAddress = hostMapping[requested.address] ?: defaultAddress ?: requested
-        super.connect(inetSocketAddress, timeout)
-      }
     }
   }
 }
