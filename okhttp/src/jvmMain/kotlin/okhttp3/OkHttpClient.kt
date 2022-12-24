@@ -512,7 +512,7 @@ open class OkHttpClient internal constructor(
     internal val networkInterceptors: MutableList<Interceptor> = mutableListOf()
     internal var eventListenerFactory: EventListener.Factory = EventListener.NONE.asFactory()
     internal var retryOnConnectionFailure = true
-    internal var fastFallback = false
+    internal var fastFallback = true
     internal var authenticator: Authenticator = Authenticator.NONE
     internal var followRedirects = true
     internal var followSslRedirects = true
@@ -668,6 +668,8 @@ open class OkHttpClient internal constructor(
      *
      * This implements Happy Eyeballs ([RFC 6555][rfc_6555]), balancing connect latency vs.
      * wasted resources.
+     *
+     * Defaults to enabled, call with [fastFallback] = false to revert to 4.x behaviour.
      *
      * [rfc_6555]: https://datatracker.ietf.org/doc/html/rfc6555
      */
