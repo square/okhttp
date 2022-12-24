@@ -39,7 +39,7 @@ class RealRoutePlanner(
   private val client: OkHttpClient,
   override val address: Address,
   private val call: RealCall,
-  chain: RealInterceptorChain,
+  private val chain: RealInterceptorChain,
 ) : RoutePlanner {
   private val doExtensiveHealthChecks = chain.request.method != "GET"
 
@@ -210,6 +210,7 @@ class RealRoutePlanner(
     return ConnectPlan(
       client = client,
       call = call,
+      chain = chain,
       routePlanner = this,
       route = route,
       routes = routes,
