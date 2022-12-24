@@ -119,5 +119,5 @@ tasks.register<Copy>("copyResourcesTemplates") {
 }.let {
   tasks.processResources.dependsOn(it)
   tasks.compileJava.dependsOn(it)
-  tasks["javaSourcesJar"].dependsOn(it)
+  tasks["sourcesJar"].dependsOn(it)
 }
