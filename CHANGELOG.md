@@ -1,6 +1,21 @@
 Change Log
 ==========
 
+## Version 5.0.0-alpha.11
+
+_2022-12-24_
+
+ *  New: Enable fast fallback by default. It's our implementation of Happy Eyeballs,
+    [RFC 8305][rfc_8305]. Disable with `OkHttpClient.Builder.fastFallback(false)`.
+ *  Fix: Don't log response bodies for server-sent events.
+ *  Fix: Skip early hints (status code 103) responses.
+ *  Fix: Don't log sensitive headers in `Request.toString()`.
+ *  Fix: Don't crash when the dispatcher's `ExecutorService` is shutdown with many
+    calls still enqueued.
+ *  Upgrade: [GraalVM 22][graalvm_22].
+ *  Upgrade: [Kotlin 1.7.10][kotlin_1_7_10].
+
+
 ## Version 5.0.0-alpha.10
 
 _2022-06-26_
@@ -253,10 +268,12 @@ release is the version name.
 [assertk]: https://github.com/willowtreeapps/assertk
 [graalvm]: https://www.graalvm.org/
 [graalvm_21]: https://www.graalvm.org/release-notes/21_0/
+[graalvm_22]: https://www.graalvm.org/release-notes/22_2/
 [kotlin_1_4_20]: https://github.com/JetBrains/kotlin/releases/tag/v1.4.20
 [kotlin_1_5_31]: https://github.com/JetBrains/kotlin/releases/tag/v1.5.31
 [kotlin_1_6_10]: https://github.com/JetBrains/kotlin/releases/tag/v1.6.10
 [kotlin_1_6_21]: https://github.com/JetBrains/kotlin/releases/tag/v1.6.21
+[kotlin_1_7_10]: https://github.com/JetBrains/kotlin/releases/tag/v1.7.10
 [okio_2_9_0]: https://square.github.io/okio/changelog/#version-290
 [okio_3_0_0]: https://square.github.io/okio/changelog/#version-300
 [okio_3_1_0]: https://square.github.io/okio/changelog/#version-310
