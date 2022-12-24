@@ -653,7 +653,8 @@ public final class InterceptorTest {
     InetAddress localhost = InetAddress.getLoopbackAddress();
     ServerSocket serverSocket = new ServerSocket(0, 1, localhost);
     // Fill backlog queue with this request so subsequent requests will be blocked.
-    new Socket().connect(serverSocket.getLocalSocketAddress());
+    Socket socket = new Socket();
+    socket.connect(serverSocket.getLocalSocketAddress());
 
     client = client.newBuilder()
         .connectTimeout(Duration.ofSeconds(5))
@@ -677,6 +678,7 @@ public final class InterceptorTest {
       fail();
     } catch (SocketTimeoutException expected) {
     } finally {
+      socket.close();
       serverSocket.close();
     }
     long elapsedNanos = System.nanoTime() - startNanos;
