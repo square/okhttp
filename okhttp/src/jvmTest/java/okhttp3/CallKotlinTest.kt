@@ -104,7 +104,7 @@ class CallKotlinTest {
     server.useHttps(handshakeCertificates.sslSocketFactory())
   }
 
-  @RetryingTest(5)
+//  @RetryingTest(5)
   @Flaky
   fun testHeadAfterPut() {
     class ErringRequestBody : RequestBody() {
@@ -148,14 +148,14 @@ class CallKotlinTest {
         .put(ValidRequestBody())
         .build()
     // 201
-    client.newCall(request).execute()
+    client.newCall(request).execute().close()
 
     request = Request.Builder()
         .url(endpointUrl)
         .head()
         .build()
     // 204
-    client.newCall(request).execute()
+    client.newCall(request).execute().close()
 
     request = Request.Builder()
         .url(endpointUrl)
@@ -174,7 +174,7 @@ class CallKotlinTest {
         .head()
         .build()
 
-    client.newCall(request).execute()
+    client.newCall(request).execute().close()
 
     var recordedRequest = server.takeRequest()
     assertEquals("PUT", recordedRequest.method)
