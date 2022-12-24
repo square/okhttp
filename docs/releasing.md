@@ -41,7 +41,7 @@ Cutting a Release
     git push && git push --tags
     ```
 
-5. Wait for [GitHub Actions][github_actions] to start building the release.
+5. Wait for [GitHub Actions][github_actions] to start the publish job.
 
 6. Prepare for ongoing development and push to GitHub.
 
@@ -53,11 +53,7 @@ Cutting a Release
     git push
     ```
 
-7. Wait for [GitHub Actions][github_actions] to build and publish.
-
-8. Visit [Sonatype Nexus][sonatype_nexus] to promote (close then release) the releases. Or drop it
-   if there is a problem!
+7. Confirm the [GitHub Actions][github_actions] publish job succeeded.
 
 [github_actions]: https://github.com/square/okhttp/actions
 [sonatype_issues]: https://issues.sonatype.org/
-[sonatype_nexus]: https://s01.oss.sonatype.org/
