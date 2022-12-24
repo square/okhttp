@@ -47,6 +47,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import static okhttp3.TestUtil.assertSuppressed;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 @Tag("Slow")
@@ -670,13 +671,18 @@ public final class InterceptorTest {
             .build();
     Call call = client.newCall(request1);
 
+    long startNanos = System.nanoTime();
     try {
       call.execute();
       fail();
     } catch (SocketTimeoutException expected) {
+    } finally {
+      serverSocket.close();
     }
+    long elapsedNanos = System.nanoTime() - startNanos;
 
-    serverSocket.close();
+    assertTrue(elapsedNanos < TimeUnit.SECONDS.toNanos(5),
+      "Timeout should have taken ~100ms but was " + (elapsedNanos / 1e6) + " ms");
   }
 
   @Test public void chainWithReadTimeout() throws Exception {
