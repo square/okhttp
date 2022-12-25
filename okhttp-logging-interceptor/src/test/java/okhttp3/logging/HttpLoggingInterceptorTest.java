@@ -696,6 +696,48 @@ public final class HttpLoggingInterceptorTest {
           .assertNoMoreLogs();
     }
 
+  @Test public void bodyResponseIsStreaming() throws IOException {
+    setLevel(Level.BODY);
+
+    server.enqueue(new MockResponse()
+      .setHeader("Content-Type", "text/event-stream")
+      .setChunkedBody(""
+        + "event: add\n"
+        + "data: 73857293\n"
+        + "\n"
+        + "event: remove\n"
+        + "data: 2153\n"
+        + "\n"
+        + "event: add\n"
+        + "data: 113411\n"
+        + "\n", 8)
+    );
+    Response response = client.newCall(request().build()).execute();
+    response.body().close();
+
+    networkLogs
+      .assertLogEqual("--> GET " + url + " http/1.1")
+      .assertLogEqual("Host: " + host)
+      .assertLogEqual("Connection: Keep-Alive")
+      .assertLogEqual("Accept-Encoding: gzip")
+      .assertLogMatch("User-Agent: okhttp/.+")
+      .assertLogEqual("--> END GET")
+      .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
+      .assertLogEqual("Content-Type: text/event-stream")
+      .assertLogMatch("Transfer-encoding: chunked")
+      .assertLogEqual("<-- END HTTP (streaming)")
+      .assertNoMoreLogs();
+
+    applicationLogs
+      .assertLogEqual("--> GET " + url)
+      .assertLogEqual("--> END GET")
+      .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
+      .assertLogEqual("Content-Type: text/event-stream")
+      .assertLogMatch("Transfer-encoding: chunked")
+      .assertLogEqual("<-- END HTTP (streaming)")
+      .assertNoMoreLogs();
+  }
+
   @Test public void bodyGetMalformedCharset() throws IOException {
     setLevel(Level.BODY);
 

@@ -58,7 +58,7 @@ Caused by: javax.net.ssl.SSLProtocolException: SSL handshake aborted: ssl=0x7f27
 ```
 
 You can check a web server's configuration using [Qualys SSL Labs][qualys]. OkHttp's TLS
-configuration history is [tracked here](../features/tls_configuration_history.md).
+configuration history is [tracked here](../security/tls_configuration_history.md).
 
 Applications expected to be installed on older Android devices should consider adopting the
 [Google Play Services’ ProviderInstaller][provider_installer]. This will increase security for users
