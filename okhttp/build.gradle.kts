@@ -14,7 +14,7 @@ kotlin {
     withJava()
   }
   if (kmpJsEnabled) {
-    js {
+    js(IR) {
       compilations.all {
         kotlinOptions {
           moduleKind = "umd"
