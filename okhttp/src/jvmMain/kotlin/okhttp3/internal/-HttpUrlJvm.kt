@@ -182,14 +182,16 @@ internal actual object HttpUrlCommon {
     strict: Boolean,
     plusIsSpace: Boolean,
     unicodeAllowed: Boolean,
-  ): String = canonicalizeWithCharset(
-    pos = pos,
-    limit = limit,
-    encodeSet = encodeSet,
-    alreadyEncoded = alreadyEncoded,
-    strict = strict,
-    plusIsSpace = plusIsSpace,
-    unicodeAllowed = unicodeAllowed
-  )
+  ): String {
+    return canonicalizeWithCharset(
+      pos = pos,
+      limit = limit,
+      encodeSet = encodeSet,
+      alreadyEncoded = alreadyEncoded,
+      strict = strict,
+      plusIsSpace = plusIsSpace,
+      unicodeAllowed = unicodeAllowed
+    )
+  }
 
 }
