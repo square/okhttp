@@ -23,7 +23,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 @Suppress("HttpUrlsUsage") // Don't warn if we should be using https://.
-open class HttpUrlTest {
+open class HttpUrlCommonTest {
   protected open fun parse(url: String): HttpUrl {
     return url.toHttpUrl()
   }
