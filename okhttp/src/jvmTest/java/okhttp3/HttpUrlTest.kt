@@ -464,26 +464,26 @@ open class HttpUrlTest {
     UrlComponentEncodingTester.newInstance()
       .override(
         Encoding.PERCENT,
-        '['.toInt(),
-        ']'.toInt(),
-        '{'.toInt(),
-        '}'.toInt(),
-        '|'.toInt(),
-        '^'.toInt(),
-        '\''.toInt(),
-        ';'.toInt(),
-        '='.toInt(),
-        '@'.toInt()
+        '['.code,
+        ']'.code,
+        '{'.code,
+        '}'.code,
+        '|'.code,
+        '^'.code,
+        '\''.code,
+        ';'.code,
+        '='.code,
+        '@'.code
       )
       .override(
         Encoding.SKIP,
-        ':'.toInt(),
-        '/'.toInt(),
-        '\\'.toInt(),
-        '?'.toInt(),
-        '#'.toInt()
+        ':'.code,
+        '/'.code,
+        '\\'.code,
+        '?'.code,
+        '#'.code
       )
-      .escapeForUri('%'.toInt())
+      .escapeForUri('%'.code)
       .test(UrlComponentEncodingTester.Component.USER)
   }
 
@@ -492,26 +492,26 @@ open class HttpUrlTest {
     UrlComponentEncodingTester.newInstance()
       .override(
         Encoding.PERCENT,
-        '['.toInt(),
-        ']'.toInt(),
-        '{'.toInt(),
-        '}'.toInt(),
-        '|'.toInt(),
-        '^'.toInt(),
-        '\''.toInt(),
-        ':'.toInt(),
-        ';'.toInt(),
-        '='.toInt(),
-        '@'.toInt()
+        '['.code,
+        ']'.code,
+        '{'.code,
+        '}'.code,
+        '|'.code,
+        '^'.code,
+        '\''.code,
+        ':'.code,
+        ';'.code,
+        '='.code,
+        '@'.code
       )
       .override(
         Encoding.SKIP,
-        '/'.toInt(),
-        '\\'.toInt(),
-        '?'.toInt(),
-        '#'.toInt()
+        '/'.code,
+        '\\'.code,
+        '?'.code,
+        '#'.code
       )
-      .escapeForUri('%'.toInt())
+      .escapeForUri('%'.code)
       .test(UrlComponentEncodingTester.Component.PASSWORD)
   }
 
@@ -582,44 +582,44 @@ open class HttpUrlTest {
       .nonAscii(Encoding.FORBIDDEN)
       .override(
         Encoding.FORBIDDEN,
-        '\t'.toInt(),
-        '\n'.toInt(),
-        '\u000c'.toInt(),
-        '\r'.toInt(),
-        ' '.toInt()
+        '\t'.code,
+        '\n'.code,
+        '\u000c'.code,
+        '\r'.code,
+        ' '.code
       )
       .override(
         Encoding.FORBIDDEN,
-        '#'.toInt(),
-        '%'.toInt(),
-        '/'.toInt(),
-        ':'.toInt(),
-        '?'.toInt(),
-        '@'.toInt(),
-        '['.toInt(),
-        '\\'.toInt(),
-        ']'.toInt()
+        '#'.code,
+        '%'.code,
+        '/'.code,
+        ':'.code,
+        '?'.code,
+        '@'.code,
+        '['.code,
+        '\\'.code,
+        ']'.code
       )
       .override(
         Encoding.IDENTITY,
-        '\"'.toInt(),
-        '<'.toInt(),
-        '>'.toInt(),
-        '^'.toInt(),
-        '`'.toInt(),
-        '{'.toInt(),
-        '|'.toInt(),
-        '}'.toInt()
+        '\"'.code,
+        '<'.code,
+        '>'.code,
+        '^'.code,
+        '`'.code,
+        '{'.code,
+        '|'.code,
+        '}'.code
       )
       .stripForUri(
-        '\"'.toInt(),
-        '<'.toInt(),
-        '>'.toInt(),
-        '^'.toInt(),
-        '`'.toInt(),
-        '{'.toInt(),
-        '|'.toInt(),
-        '}'.toInt()
+        '\"'.code,
+        '<'.code,
+        '>'.code,
+        '^'.code,
+        '`'.code,
+        '{'.code,
+        '|'.code,
+        '}'.code
       )
       .test(UrlComponentEncodingTester.Component.HOST)
   }
@@ -963,35 +963,35 @@ open class HttpUrlTest {
     UrlComponentEncodingTester.newInstance()
       .override(
         Encoding.PERCENT,
-        '^'.toInt(),
-        '{'.toInt(),
-        '}'.toInt(),
-        '|'.toInt()
+        '^'.code,
+        '{'.code,
+        '}'.code,
+        '|'.code
       )
       .override(
         Encoding.SKIP,
-        '\\'.toInt(),
-        '?'.toInt(),
-        '#'.toInt()
+        '\\'.code,
+        '?'.code,
+        '#'.code
       )
-      .escapeForUri('%'.toInt(), '['.toInt(), ']'.toInt())
+      .escapeForUri('%'.code, '['.code, ']'.code)
       .test(UrlComponentEncodingTester.Component.PATH)
   }
 
   @Test
   fun queryCharacters() {
     UrlComponentEncodingTester.newInstance()
-      .override(Encoding.IDENTITY, '?'.toInt(), '`'.toInt())
-      .override(Encoding.PERCENT, '\''.toInt())
-      .override(Encoding.SKIP, '#'.toInt(), '+'.toInt())
+      .override(Encoding.IDENTITY, '?'.code, '`'.code)
+      .override(Encoding.PERCENT, '\''.code)
+      .override(Encoding.SKIP, '#'.code, '+'.code)
       .escapeForUri(
-        '%'.toInt(),
-        '\\'.toInt(),
-        '^'.toInt(),
-        '`'.toInt(),
-        '{'.toInt(),
-        '|'.toInt(),
-        '}'.toInt()
+        '%'.code,
+        '\\'.code,
+        '^'.code,
+        '`'.code,
+        '{'.code,
+        '|'.code,
+        '}'.code
       )
       .test(UrlComponentEncodingTester.Component.QUERY)
   }
@@ -999,17 +999,17 @@ open class HttpUrlTest {
   @Test
   fun queryValueCharacters() {
     UrlComponentEncodingTester.newInstance()
-      .override(Encoding.IDENTITY, '?'.toInt(), '`'.toInt())
-      .override(Encoding.PERCENT, '\''.toInt())
-      .override(Encoding.SKIP, '#'.toInt(), '+'.toInt())
+      .override(Encoding.IDENTITY, '?'.code, '`'.code)
+      .override(Encoding.PERCENT, '\''.code)
+      .override(Encoding.SKIP, '#'.code, '+'.code)
       .escapeForUri(
-        '%'.toInt(),
-        '\\'.toInt(),
-        '^'.toInt(),
-        '`'.toInt(),
-        '{'.toInt(),
-        '|'.toInt(),
-        '}'.toInt()
+        '%'.code,
+        '\\'.code,
+        '^'.code,
+        '`'.code,
+        '{'.code,
+        '|'.code,
+        '}'.code
       )
       .test(UrlComponentEncodingTester.Component.QUERY_VALUE)
   }
@@ -1019,27 +1019,27 @@ open class HttpUrlTest {
     UrlComponentEncodingTester.newInstance()
       .override(
         Encoding.IDENTITY,
-        ' '.toInt(),
-        '"'.toInt(),
-        '#'.toInt(),
-        '<'.toInt(),
-        '>'.toInt(),
-        '?'.toInt(),
-        '`'.toInt()
+        ' '.code,
+        '"'.code,
+        '#'.code,
+        '<'.code,
+        '>'.code,
+        '?'.code,
+        '`'.code
       )
       .escapeForUri(
-        '%'.toInt(),
-        ' '.toInt(),
-        '"'.toInt(),
-        '#'.toInt(),
-        '<'.toInt(),
-        '>'.toInt(),
-        '\\'.toInt(),
-        '^'.toInt(),
-        '`'.toInt(),
-        '{'.toInt(),
-        '|'.toInt(),
-        '}'.toInt()
+        '%'.code,
+        ' '.code,
+        '"'.code,
+        '#'.code,
+        '<'.code,
+        '>'.code,
+        '\\'.code,
+        '^'.code,
+        '`'.code,
+        '{'.code,
+        '|'.code,
+        '}'.code
       )
       .nonAscii(Encoding.IDENTITY)
       .test(UrlComponentEncodingTester.Component.FRAGMENT)

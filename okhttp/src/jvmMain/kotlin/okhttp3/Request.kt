@@ -32,6 +32,7 @@ import okhttp3.internal.commonPost
 import okhttp3.internal.commonPut
 import okhttp3.internal.commonRemoveHeader
 import okhttp3.internal.commonTag
+import okhttp3.internal.isSensitiveHeader
 
 actual class Request internal actual constructor(builder: Builder) {
   @get:JvmName("url")
@@ -166,7 +167,7 @@ actual class Request internal actual constructor(builder: Builder) {
         }
         append(name)
         append(':')
-        append(value)
+        append(if (isSensitiveHeader(name)) "██" else value)
       }
       append(']')
     }

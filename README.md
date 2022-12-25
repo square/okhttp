@@ -49,8 +49,7 @@ Post to a Server
 This program posts data to a service. [Full source][post_example].
 
 ```java
-public static final MediaType JSON
-    = MediaType.get("application/json; charset=utf-8");
+public static final MediaType JSON = MediaType.get("application/json");
 
 OkHttpClient client = new OkHttpClient();
 

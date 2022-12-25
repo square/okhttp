@@ -32,6 +32,8 @@ buildscript {
   }
 }
 
+apply(plugin = "org.jetbrains.dokka")
+
 allprojects {
   group = "com.squareup.okhttp3"
   version = "5.0.0-SNAPSHOT"
@@ -118,7 +120,6 @@ subprojects {
       jvmTarget = JavaVersion.VERSION_1_8.toString()
       freeCompilerArgs = listOf(
         "-Xjvm-default=all",
-        "-opt-in=kotlin.RequiresOptIn"
       )
     }
   }

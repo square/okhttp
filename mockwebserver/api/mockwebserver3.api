@@ -86,6 +86,7 @@ public final class mockwebserver3/MockWebServer : java/io/Closeable {
 	public final fun getBodyLimit ()J
 	public final fun getDispatcher ()Lmockwebserver3/Dispatcher;
 	public final fun getHostName ()Ljava/lang/String;
+	public final fun getInetSocketAddress ()Ljava/net/InetSocketAddress;
 	public final fun getPort ()I
 	public final fun getProtocolNegotiationEnabled ()Z
 	public final fun getRequestCount ()I

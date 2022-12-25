@@ -37,6 +37,9 @@ class InsecureForHostTest {
   @BeforeEach
   fun setup(server: MockWebServer) {
     this.server = server
+
+    // BCX509ExtendedTrustManager not supported in TlsUtil.newTrustManager
+    platform.assumeNotBouncyCastle()
   }
 
   @Test fun `untrusted host in insecureHosts connects successfully`() {
