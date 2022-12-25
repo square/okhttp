@@ -58,6 +58,8 @@ import okhttp3.internal.CommonHttpUrl.commonSetEncodedPathSegment
 import okhttp3.internal.CommonHttpUrl.commonSetEncodedQueryParameter
 import okhttp3.internal.CommonHttpUrl.commonSetPathSegment
 import okhttp3.internal.CommonHttpUrl.commonSetQueryParameter
+import okhttp3.internal.CommonHttpUrl.commonToHttpUrl
+import okhttp3.internal.CommonHttpUrl.commonToHttpUrlOrNull
 import okhttp3.internal.CommonHttpUrl.commonToString
 import okhttp3.internal.CommonHttpUrl.commonUsername
 
@@ -379,9 +381,9 @@ actual class HttpUrl internal actual constructor(
   override fun toString(): String = commonToString()
 
   actual companion object {
-    actual fun String.toHttpUrl(): HttpUrl = TODO()
+    actual fun String.toHttpUrl(): HttpUrl = commonToHttpUrl()
 
-    actual fun String.toHttpUrlOrNull(): HttpUrl? = TODO()
+    actual fun String.toHttpUrlOrNull(): HttpUrl? = commonToHttpUrlOrNull()
 
     actual fun defaultPort(scheme: String): Int = CommonHttpUrl.commonDefaultPort(scheme)
   }

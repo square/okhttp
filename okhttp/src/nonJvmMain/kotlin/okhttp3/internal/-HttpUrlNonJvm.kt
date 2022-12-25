@@ -29,7 +29,7 @@ internal actual object HttpUrlCommon {
     plusIsSpace: Boolean
   ) {
     // TODO implement decoding
-    writeUtf8(encoded)
+    writeUtf8(encoded, pos, limit)
   }
   internal actual fun String.canonicalize(
     pos: Int,
@@ -41,6 +41,6 @@ internal actual object HttpUrlCommon {
     unicodeAllowed: Boolean,
   ): String {
     // TODO implement canonicalization
-    return this
+    return this.subSequence(pos, limit).toString()
   }
 }
