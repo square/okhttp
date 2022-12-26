@@ -650,12 +650,6 @@ public final class InterceptorTest {
       return chain.proceed(chain.request());
     };
 
-    InetAddress localhost = InetAddress.getLoopbackAddress();
-    ServerSocket serverSocket = new ServerSocket(0, 1, localhost);
-    // Fill backlog queue with this request so subsequent requests will be blocked.
-    Socket socket = new Socket();
-    socket.connect(serverSocket.getLocalSocketAddress());
-
     client = client.newBuilder()
         .connectTimeout(Duration.ofSeconds(5))
         .addInterceptor(interceptor1)
@@ -664,11 +658,7 @@ public final class InterceptorTest {
 
     Request request1 =
         new Request.Builder()
-            .url(
-                "http://"
-                    + serverSocket.getInetAddress().getCanonicalHostName()
-                    + ":"
-                    + serverSocket.getLocalPort())
+            .url("http://" + TestUtil.UNREACHABLE_ADDRESS_IPV4)
             .build();
     Call call = client.newCall(request1);
 
@@ -677,9 +667,6 @@ public final class InterceptorTest {
       call.execute();
       fail();
     } catch (SocketTimeoutException expected) {
-    } finally {
-      socket.close();
-      serverSocket.close();
     }
     long elapsedNanos = System.nanoTime() - startNanos;
 
