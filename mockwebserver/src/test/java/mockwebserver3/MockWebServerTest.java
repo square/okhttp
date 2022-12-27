@@ -51,7 +51,6 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
-
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -83,9 +82,9 @@ public final class MockWebServerTest {
   }
 
   @Test public void defaultMockResponse() {
-    MockResponse response = new MockResponse();
-    assertThat(headersToList(response)).containsExactly("Content-Length: 0");
-    assertThat(response.getStatus()).isEqualTo("HTTP/1.1 200 OK");
+    MockResponse.Builder builder = new MockResponse.Builder();
+    assertThat(headersToList(builder)).containsExactly("Content-Length: 0");
+    assertThat(builder.getStatus()).isEqualTo("HTTP/1.1 200 OK");
   }
 
   @Test public void setResponseMockReason() {
@@ -99,56 +98,57 @@ public final class MockWebServerTest {
         "Mock Response"
     };
     for (int i = 0; i < 600; i++) {
-      MockResponse response = new MockResponse().setResponseCode(i);
+      MockResponse.Builder builder = new MockResponse.Builder().setResponseCode(i);
       String expectedReason = reasons[i / 100];
-      assertThat(response.getStatus()).isEqualTo(("HTTP/1.1 " + i + " " + expectedReason));
-      assertThat(headersToList(response)).containsExactly("Content-Length: 0");
+      assertThat(builder.getStatus()).isEqualTo(("HTTP/1.1 " + i + " " + expectedReason));
+      assertThat(headersToList(builder)).containsExactly("Content-Length: 0");
     }
   }
 
   @Test public void setStatusControlsWholeStatusLine() {
-    MockResponse response = new MockResponse().setStatus("HTTP/1.1 202 That'll do pig");
-    assertThat(headersToList(response)).containsExactly("Content-Length: 0");
-    assertThat(response.getStatus()).isEqualTo("HTTP/1.1 202 That'll do pig");
+    MockResponse.Builder builder = new MockResponse.Builder().setStatus("HTTP/1.1 202 That'll do pig");
+    assertThat(headersToList(builder)).containsExactly("Content-Length: 0");
+    assertThat(builder.getStatus()).isEqualTo("HTTP/1.1 202 That'll do pig");
   }
 
   @Test public void setBodyAdjustsHeaders() throws IOException {
-    MockResponse response = new MockResponse().setBody("ABC");
-    assertThat(headersToList(response)).containsExactly("Content-Length: 3");
+    MockResponse.Builder builder = new MockResponse.Builder().setBody("ABC");
+    assertThat(headersToList(builder)).containsExactly("Content-Length: 3");
+    MockResponse response = builder.build();
     assertThat(response.getBody().readUtf8()).isEqualTo("ABC");
   }
 
   @Test public void mockResponseAddHeader() {
-    MockResponse response = new MockResponse()
+    MockResponse.Builder builder = new MockResponse.Builder()
         .clearHeaders()
         .addHeader("Cookie: s=square")
         .addHeader("Cookie", "a=android");
-    assertThat(headersToList(response)).containsExactly("Cookie: s=square", "Cookie: a=android");
+    assertThat(headersToList(builder)).containsExactly("Cookie: s=square", "Cookie: a=android");
   }
 
   @Test public void mockResponseSetHeader() {
-    MockResponse response = new MockResponse()
+    MockResponse.Builder builder = new MockResponse.Builder()
         .clearHeaders()
         .addHeader("Cookie: s=square")
         .addHeader("Cookie: a=android")
         .addHeader("Cookies: delicious");
-    response.setHeader("cookie", "r=robot");
-    assertThat(headersToList(response)).containsExactly("Cookies: delicious", "cookie: r=robot");
+    builder.setHeader("cookie", "r=robot");
+    assertThat(headersToList(builder)).containsExactly("Cookies: delicious", "cookie: r=robot");
   }
 
   @Test public void mockResponseSetHeaders() {
-    MockResponse response = new MockResponse()
+    MockResponse.Builder builder = new MockResponse.Builder()
         .clearHeaders()
         .addHeader("Cookie: s=square")
         .addHeader("Cookies: delicious");
 
-    response.setHeaders(new Headers.Builder().add("Cookie", "a=android").build());
+    builder.setHeaders(new Headers.Builder().add("Cookie", "a=android").build());
 
-    assertThat(headersToList(response)).containsExactly("Cookie: a=android");
+    assertThat(headersToList(builder)).containsExactly("Cookie: a=android");
   }
 
   @Test public void regularResponse() throws Exception {
-    server.enqueue(new MockResponse().setBody("hello world"));
+    server.enqueue(new MockResponse.Builder().setBody("hello world").build());
 
     URL url = server.url("/").url();
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -167,11 +167,14 @@ public final class MockWebServerTest {
   }
 
   @Test public void redirect() throws Exception {
-    server.enqueue(new MockResponse()
+    server.enqueue(new MockResponse.Builder()
         .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
         .addHeader("Location: " + server.url("/new-path"))
-        .setBody("This page has moved!"));
-    server.enqueue(new MockResponse().setBody("This is the new location!"));
+        .setBody("This page has moved!")
+        .build());
+    server.enqueue(new MockResponse.Builder()
+        .setBody("This is the new location!")
+        .build());
 
     URLConnection connection = server.url("/").url().openConnection();
     InputStream in = connection.getInputStream();
@@ -194,7 +197,9 @@ public final class MockWebServerTest {
         Thread.sleep(1000);
       } catch (InterruptedException ignored) {
       }
-      server.enqueue(new MockResponse().setBody("enqueued in the background"));
+      server.enqueue(new MockResponse.Builder()
+          .setBody("enqueued in the background")
+          .build());
     }).start();
 
     URLConnection connection = server.url("/").url().openConnection();
@@ -204,10 +209,11 @@ public final class MockWebServerTest {
   }
 
   @Test public void nonHexadecimalChunkSize() throws Exception {
-    server.enqueue(new MockResponse()
+    server.enqueue(new MockResponse.Builder()
         .setBody("G\r\nxxxxxxxxxxxxxxxx\r\n0\r\n\r\n")
         .clearHeaders()
-        .addHeader("Transfer-encoding: chunked"));
+        .addHeader("Transfer-encoding: chunked")
+        .build());
 
     URLConnection connection = server.url("/").url().openConnection();
     InputStream in = connection.getInputStream();
@@ -219,11 +225,14 @@ public final class MockWebServerTest {
   }
 
   @Test public void responseTimeout() throws Exception {
-    server.enqueue(new MockResponse()
+    server.enqueue(new MockResponse.Builder()
         .setBody("ABC")
         .clearHeaders()
-        .addHeader("Content-Length: 4"));
-    server.enqueue(new MockResponse().setBody("DEF"));
+        .addHeader("Content-Length: 4")
+        .build());
+    server.enqueue(new MockResponse.Builder()
+        .setBody("DEF")
+        .build());
 
     URLConnection urlConnection = server.url("/").url().openConnection();
     urlConnection.setReadTimeout(1000);
@@ -250,7 +259,9 @@ public final class MockWebServerTest {
 
   @Disabled("Not actually failing where expected")
   @Test public void disconnectAtStart() throws Exception {
-    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START));
+    server.enqueue(new MockResponse.Builder()
+        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_START)
+        .build());
     server.enqueue(new MockResponse()); // The jdk's HttpUrlConnection is a bastard.
     server.enqueue(new MockResponse());
     try {
@@ -262,9 +273,13 @@ public final class MockWebServerTest {
   }
 
   @Test public void clearDispatcherQueue() throws Exception {
-    server.enqueue(new MockResponse().setBody("A"));
+    server.enqueue(new MockResponse.Builder()
+        .setBody("A")
+        .build());
     ((QueueDispatcher) server.getDispatcher()).clear();
-    server.enqueue(new MockResponse().setBody("B"));
+    server.enqueue(new MockResponse.Builder()
+        .setBody("B")
+        .build());
 
     InputStream in = server.url("/a").url().openConnection().getInputStream();
     assertThat(in.read()).isEqualTo('B');
@@ -277,8 +292,9 @@ public final class MockWebServerTest {
   @Test public void throttleRequest() throws Exception {
     TestUtil.assumeNotWindows();
 
-    server.enqueue(new MockResponse()
-        .throttleBody(3, 500, TimeUnit.MILLISECONDS));
+    server.enqueue(new MockResponse.Builder()
+        .throttleBody(3, 500, TimeUnit.MILLISECONDS)
+        .build());
 
     long startNanos = System.nanoTime();
     URLConnection connection = server.url("/").url().openConnection();
@@ -298,9 +314,10 @@ public final class MockWebServerTest {
   @Test public void throttleResponse() throws Exception {
     TestUtil.assumeNotWindows();
 
-    server.enqueue(new MockResponse()
+    server.enqueue(new MockResponse.Builder()
         .setBody("ABCDEF")
-        .throttleBody(3, 500, TimeUnit.MILLISECONDS));
+        .throttleBody(3, 500, TimeUnit.MILLISECONDS)
+        .build());
 
     long startNanos = System.nanoTime();
     URLConnection connection = server.url("/").url().openConnection();
@@ -321,9 +338,10 @@ public final class MockWebServerTest {
   @Test public void delayResponse() throws IOException {
     TestUtil.assumeNotWindows();
 
-    server.enqueue(new MockResponse()
+    server.enqueue(new MockResponse.Builder()
         .setBody("ABCDEF")
-        .setBodyDelay(1, SECONDS));
+        .setBodyDelay(1, SECONDS)
+        .build());
 
     long startNanos = System.nanoTime();
     URLConnection connection = server.url("/").url().openConnection();
@@ -337,7 +355,9 @@ public final class MockWebServerTest {
   }
 
   @Test public void disconnectRequestHalfway() throws Exception {
-    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_DURING_REQUEST_BODY));
+    server.enqueue(new MockResponse.Builder()
+        .setSocketPolicy(SocketPolicy.DISCONNECT_DURING_REQUEST_BODY)
+        .build());
     // Limit the size of the request body that the server holds in memory to an arbitrary
     // 3.5 MBytes so this test can pass on devices with little memory.
     server.setBodyLimit(7 * 512 * 1024);
@@ -368,9 +388,10 @@ public final class MockWebServerTest {
   }
 
   @Test public void disconnectResponseHalfway() throws IOException {
-    server.enqueue(new MockResponse()
+    server.enqueue(new MockResponse.Builder()
         .setBody("ab")
-        .setSocketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY));
+        .setSocketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY)
+        .build());
 
     URLConnection connection = server.url("/").url().openConnection();
     assertThat(connection.getContentLength()).isEqualTo(2);
@@ -386,8 +407,8 @@ public final class MockWebServerTest {
     }
   }
 
-  private List<String> headersToList(MockResponse response) {
-    Headers headers = response.getHeaders();
+  private List<String> headersToList(MockResponse.Builder response) {
+    Headers headers = response.build().getHeaders();
     int size = headers.size();
     List<String> headerList = new ArrayList<>(size);
     for (int i = 0; i < size; i++) {
@@ -445,7 +466,9 @@ public final class MockWebServerTest {
   }
 
   @Test public void requestUrlReconstructed() throws Exception {
-    server.enqueue(new MockResponse().setBody("hello world"));
+    server.enqueue(new MockResponse.Builder()
+        .setBody("hello world")
+        .build());
 
     URL url = server.url("/a/deep/path?key=foo%20bar").url();
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -467,7 +490,9 @@ public final class MockWebServerTest {
   }
 
   @Test public void shutdownServerAfterRequest() throws Exception {
-    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.SHUTDOWN_SERVER_AFTER_RESPONSE));
+    server.enqueue(new MockResponse.Builder()
+        .setSocketPolicy(SocketPolicy.SHUTDOWN_SERVER_AFTER_RESPONSE)
+        .build());
 
     URL url = server.url("/").url();
 
@@ -485,7 +510,9 @@ public final class MockWebServerTest {
   }
 
   @Test public void http100Continue() throws Exception {
-    server.enqueue(new MockResponse().setBody("response"));
+    server.enqueue(new MockResponse.Builder()
+        .setBody("response")
+        .build());
 
     URL url = server.url("/").url();
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -502,10 +529,11 @@ public final class MockWebServerTest {
   }
 
   @Test public void multiple1xxResponses() throws Exception {
-    server.enqueue(new MockResponse()
+    server.enqueue(new MockResponse.Builder()
       .add100Continue()
       .add100Continue()
-      .setBody("response"));
+      .setBody("response")
+      .build());
 
     URL url = server.url("/").url();
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -553,7 +581,9 @@ public final class MockWebServerTest {
   @Test public void https() throws Exception {
     HandshakeCertificates handshakeCertificates = localhost();
     server.useHttps(handshakeCertificates.sslSocketFactory());
-    server.enqueue(new MockResponse().setBody("abc"));
+    server.enqueue(new MockResponse.Builder()
+        .setBody("abc")
+        .build());
 
     HttpUrl url = server.url("/");
     HttpsURLConnection connection = (HttpsURLConnection) url.url().openConnection();
@@ -595,7 +625,9 @@ public final class MockWebServerTest {
         .build();
 
     server.useHttps(serverHandshakeCertificates.sslSocketFactory());
-    server.enqueue(new MockResponse().setBody("abc"));
+    server.enqueue(new MockResponse.Builder()
+        .setBody("abc")
+        .build());
     server.requestClientAuth();
 
     HeldCertificate clientCertificate = new HeldCertificate.Builder()
@@ -628,7 +660,9 @@ public final class MockWebServerTest {
   }
 
   @Test public void proxiedRequestGetsCorrectRequestUrl() throws Exception {
-    server.enqueue(new MockResponse().setBody("Result"));
+    server.enqueue(new MockResponse.Builder()
+        .setBody("Result")
+        .build());
 
     OkHttpClient proxiedClient = new OkHttpClient.Builder()
       .proxy(server.toProxyAddress())

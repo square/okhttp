@@ -39,7 +39,7 @@ internal fun Dispatcher.wrap(): mockwebserver3.Dispatcher {
 }
 
 internal fun MockResponse.wrap(): mockwebserver3.MockResponse {
-  val result = mockwebserver3.MockResponse()
+  val result = mockwebserver3.MockResponse.Builder()
   val copyFromWebSocketListener = webSocketListener
   if (copyFromWebSocketListener != null) {
     result.withWebSocketUpgrade(copyFromWebSocketListener)
@@ -54,8 +54,8 @@ internal fun MockResponse.wrap(): mockwebserver3.MockResponse {
 
   result.withSettings(settings)
   result.status = status
-  result.headers = headers
-  result.trailers = trailers
+  result.setHeaders(headers)
+  result.setTrailers(trailers)
   result.socketPolicy = when (socketPolicy) {
     SocketPolicy.EXPECT_CONTINUE, SocketPolicy.CONTINUE_ALWAYS -> {
       result.add100Continue()
@@ -71,7 +71,7 @@ internal fun MockResponse.wrap(): mockwebserver3.MockResponse {
   result.throttleBody(throttleBytesPerPeriod, getThrottlePeriod(MILLISECONDS), MILLISECONDS)
   result.setBodyDelay(getBodyDelay(MILLISECONDS), MILLISECONDS)
   result.setHeadersDelay(getHeadersDelay(MILLISECONDS), MILLISECONDS)
-  return result
+  return result.build()
 }
 
 private fun PushPromise.wrap(): mockwebserver3.PushPromise {

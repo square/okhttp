@@ -44,8 +44,9 @@ class JavaHttpClientTest {
       .followRedirects(NORMAL)
       .build()
 
-    server.enqueue(MockResponse()
-        .setBody("hello, Java HTTP Client"))
+    server.enqueue(MockResponse.Builder()
+        .setBody("hello, Java HTTP Client")
+        .build())
 
     val request = HttpRequest.newBuilder(server.url("/").toUri())
         .header("Accept", "text/plain")

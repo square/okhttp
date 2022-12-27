@@ -357,7 +357,7 @@ class MockWebServer : Closeable {
    * replaced with [setDispatcher][dispatcher].
    */
   fun enqueue(response: MockResponse) =
-    (dispatcher as QueueDispatcher).enqueueResponse(response.clone())
+    (dispatcher as QueueDispatcher).enqueueResponse(response)
 
   /**
    * Starts the server on the loopback interface for the given port.
@@ -795,9 +795,10 @@ class MockWebServer : Closeable {
     response: MockResponse
   ) {
     val key = request.getHeader("Sec-WebSocket-Key")
-    response.setHeader("Sec-WebSocket-Accept", WebSocketProtocol.acceptHeader(key!!))
-
-    writeHttpResponse(socket, sink, response)
+    val webSocketResponse = response.newBuilder()
+      .setHeader("Sec-WebSocket-Accept", WebSocketProtocol.acceptHeader(key!!))
+      .build()
+    writeHttpResponse(socket, sink, webSocketResponse)
 
     // Adapt the request and response into our Request and Response domain model.
     val scheme = if (request.tlsVersion != null) "https" else "http"
@@ -807,9 +808,9 @@ class MockWebServer : Closeable {
       .headers(request.headers)
       .build()
     val fancyResponse = Response.Builder()
-      .code(response.code)
-      .message(response.message)
-      .headers(response.headers)
+      .code(webSocketResponse.code)
+      .message(webSocketResponse.message)
+      .headers(webSocketResponse.headers)
       .request(fancyRequest)
       .protocol(Protocol.HTTP_1_1)
       .build()
@@ -821,13 +822,13 @@ class MockWebServer : Closeable {
     val webSocket = RealWebSocket(
       taskRunner = taskRunner,
       originalRequest = fancyRequest,
-      listener = response.webSocketListener!!,
+      listener = webSocketResponse.webSocketListener!!,
       random = SecureRandom(),
       pingIntervalMillis = 0,
-      extensions = WebSocketExtensions.parse(response.headers),
+      extensions = WebSocketExtensions.parse(webSocketResponse.headers),
       minimumDeflateSize = 0L // Compress all messages if compression is enabled.
     )
-    response.webSocketListener!!.onOpen(webSocket, fancyResponse)
+    webSocketResponse.webSocketListener!!.onOpen(webSocket, fancyResponse)
     val name = "MockWebServer WebSocket ${request.path!!}"
     webSocket.initReaderAndWriter(name, streams)
     try {
@@ -1184,10 +1185,10 @@ class MockWebServer : Closeable {
     init {
       MwsDuplexAccess.instance = object : MwsDuplexAccess() {
         override fun setBody(
-          mockResponse: MockResponse,
-          duplexResponseBody: DuplexResponseBody
+          mockResponseBuilder: MockResponse.Builder,
+          duplexResponseBody: DuplexResponseBody,
         ) {
-          mockResponse.setBody(duplexResponseBody)
+          mockResponseBuilder.setBody(duplexResponseBody)
         }
       }
     }
