@@ -628,7 +628,8 @@ public final class EventListenerTest {
   @Test public void multipleConnectsForSingleCall() throws IOException {
     enableTlsWithTunnel();
     server.enqueue(new MockResponse.Builder()
-        .setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
+        .setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE)
+        .build());
     server.enqueue(new MockResponse());
 
     client = client.newBuilder()

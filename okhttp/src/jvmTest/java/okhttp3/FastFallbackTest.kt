@@ -295,7 +295,7 @@ class FastFallbackTest {
       MockResponse.Builder()
         .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
         .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.httpCode)
-    )
+        .build())
     serverIpv4.enqueue(
       MockResponse(body = "this was the 2nd request on IPv4")
     )

@@ -39,15 +39,19 @@ import org.junit.jupiter.api.fail
 @Timeout(30)
 @Tag("Slowish")
 class ServerTruncatesRequestTest {
-  @RegisterExtension @JvmField val platform = PlatformRule()
-  @RegisterExtension @JvmField var clientTestRule = OkHttpClientTestRule()
+  @RegisterExtension
+  @JvmField
+  val platform = PlatformRule()
+  @RegisterExtension
+  @JvmField
+  var clientTestRule = OkHttpClientTestRule()
 
   private val listener = RecordingEventListener()
   private val handshakeCertificates = localhost()
 
   private var client = clientTestRule.newClientBuilder()
-      .eventListenerFactory(clientTestRule.wrap(listener))
-      .build()
+    .eventListenerFactory(clientTestRule.wrap(listener))
+    .build()
 
   private lateinit var server: MockWebServer
 
@@ -59,11 +63,13 @@ class ServerTruncatesRequestTest {
     platform.assumeNotBouncyCastle()
   }
 
-  @Test fun serverTruncatesRequestOnLongPostHttp1() {
+  @Test
+  fun serverTruncatesRequestOnLongPostHttp1() {
     serverTruncatesRequestOnLongPost(https = false)
   }
 
-  @Test fun serverTruncatesRequestOnLongPostHttp2() {
+  @Test
+  fun serverTruncatesRequestOnLongPostHttp2() {
     enableProtocol(Protocol.HTTP_2)
     serverTruncatesRequestOnLongPost(https = true)
   }
@@ -121,7 +127,8 @@ class ServerTruncatesRequestTest {
    * If the server returns a full response, it doesn't really matter if the HTTP/2 stream is reset.
    * Attempts to write the request body fails fast.
    */
-  @Test fun serverTruncatesRequestHttp2OnDuplexRequest() {
+  @Test
+  fun serverTruncatesRequestHttp2OnDuplexRequest() {
     enableProtocol(Protocol.HTTP_2)
 
     server.enqueue(MockResponse.Builder()
@@ -158,11 +165,13 @@ class ServerTruncatesRequestTest {
     makeSimpleCall()
   }
 
-  @Test fun serverTruncatesRequestButTrailersCanStillBeReadHttp1() {
+  @Test
+  fun serverTruncatesRequestButTrailersCanStillBeReadHttp1() {
     serverTruncatesRequestButTrailersCanStillBeRead(http2 = false)
   }
 
-  @Test fun serverTruncatesRequestButTrailersCanStillBeReadHttp2() {
+  @Test
+  fun serverTruncatesRequestButTrailersCanStillBeReadHttp2() {
     enableProtocol(Protocol.HTTP_2)
     serverTruncatesRequestButTrailersCanStillBeRead(http2 = true)
   }
@@ -180,7 +189,7 @@ class ServerTruncatesRequestTest {
       mockResponse.setChunkedBody("abc", 1)
     }
 
-    server.enqueue(mockResponse)
+    server.enqueue(mockResponse.build())
 
     val call = client.newCall(
       Request(
@@ -196,7 +205,8 @@ class ServerTruncatesRequestTest {
   }
 
   @Disabled("Follow up with fix in https://github.com/square/okhttp/issues/6853")
-  @Test fun serverDisconnectsBeforeSecondRequestHttp1() {
+  @Test
+  fun serverDisconnectsBeforeSecondRequestHttp1() {
     enableProtocol(Protocol.HTTP_1_1)
 
     server.enqueue(MockResponse(code = 200, body = "Req1"))
@@ -235,7 +245,8 @@ class ServerTruncatesRequestTest {
     }
   }
 
-  @Test fun noAttemptToReadResponseIfLoadingRequestBodyIsSourceOfFailure() {
+  @Test
+  fun noAttemptToReadResponseIfLoadingRequestBodyIsSourceOfFailure() {
     server.enqueue(MockResponse(body = "abc"))
 
     val requestBody = object : RequestBody() {
@@ -281,19 +292,19 @@ class ServerTruncatesRequestTest {
   private fun enableProtocol(protocol: Protocol) {
     enableTls()
     client = client.newBuilder()
-        .protocols(listOf(protocol, Protocol.HTTP_1_1))
-        .build()
+      .protocols(listOf(protocol, Protocol.HTTP_1_1))
+      .build()
     server.protocols = client.protocols
   }
 
   private fun enableTls() {
     client = client.newBuilder()
-        .sslSocketFactory(
-          handshakeCertificates.sslSocketFactory(),
-          handshakeCertificates.trustManager
-        )
-        .hostnameVerifier(RecordingHostnameVerifier())
-        .build()
+      .sslSocketFactory(
+        handshakeCertificates.sslSocketFactory(),
+        handshakeCertificates.trustManager
+      )
+      .hostnameVerifier(RecordingHostnameVerifier())
+      .build()
     server.useHttps(handshakeCertificates.sslSocketFactory())
   }
 

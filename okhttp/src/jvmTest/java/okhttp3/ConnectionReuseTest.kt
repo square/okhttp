@@ -49,28 +49,32 @@ class ConnectionReuseTest {
   private val handshakeCertificates: HandshakeCertificates = localhost()
   private var client: OkHttpClient = clientTestRule.newClient()
 
-  @BeforeEach fun setUp(server: MockWebServer) {
+  @BeforeEach
+  fun setUp(server: MockWebServer) {
     this.server = server
   }
 
-  @Test fun connectionsAreReused() {
+  @Test
+  fun connectionsAreReused() {
     server.enqueue(MockResponse(body = "a"))
     server.enqueue(MockResponse(body = "b"))
     val request = Request(server.url("/"))
     assertConnectionReused(request, request)
   }
 
-  @Test fun connectionsAreReusedForPosts() {
+  @Test
+  fun connectionsAreReusedForPosts() {
     server.enqueue(MockResponse(body = "a"))
     server.enqueue(MockResponse(body = "b"))
     val request = Request(
       url = server.url("/"),
-      body ="request body".toRequestBody("text/plain".toMediaType()),
+      body = "request body".toRequestBody("text/plain".toMediaType()),
     )
     assertConnectionReused(request, request)
   }
 
-  @Test fun connectionsAreReusedWithHttp2() {
+  @Test
+  fun connectionsAreReusedWithHttp2() {
     platform.assumeNotBouncyCastle()
     enableHttp2()
     server.enqueue(MockResponse(body = "a"))
@@ -79,7 +83,8 @@ class ConnectionReuseTest {
     assertConnectionReused(request, request)
   }
 
-  @Test fun connectionsAreNotReusedWithRequestConnectionClose() {
+  @Test
+  fun connectionsAreNotReusedWithRequestConnectionClose() {
     server.enqueue(MockResponse(body = "a"))
     server.enqueue(MockResponse(body = "b"))
     val requestA = Request.Builder()
@@ -90,7 +95,8 @@ class ConnectionReuseTest {
     assertConnectionNotReused(requestA, requestB)
   }
 
-  @Test fun connectionsAreNotReusedWithResponseConnectionClose() {
+  @Test
+  fun connectionsAreNotReusedWithResponseConnectionClose() {
     server.enqueue(
       MockResponse(
         headers = headersOf("Connection", "close"),
@@ -103,19 +109,21 @@ class ConnectionReuseTest {
     assertConnectionNotReused(requestA, requestB)
   }
 
-  @Test fun connectionsAreNotReusedWithUnknownLengthResponseBody() {
+  @Test
+  fun connectionsAreNotReusedWithUnknownLengthResponseBody() {
     server.enqueue(
       MockResponse.Builder()
         .setBody("a")
         .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
         .clearHeaders()
-    )
+        .build())
     server.enqueue(MockResponse(body = "b"))
     val request = Request(server.url("/"))
     assertConnectionNotReused(request, request)
   }
 
-  @Test fun connectionsAreNotReusedIfPoolIsSizeZero() {
+  @Test
+  fun connectionsAreNotReusedIfPoolIsSizeZero() {
     client = client.newBuilder()
       .connectionPool(ConnectionPool(0, 5, TimeUnit.SECONDS))
       .build()
@@ -125,7 +133,8 @@ class ConnectionReuseTest {
     assertConnectionNotReused(request, request)
   }
 
-  @Test fun connectionsReusedWithRedirectEvenIfPoolIsSizeZero() {
+  @Test
+  fun connectionsReusedWithRedirectEvenIfPoolIsSizeZero() {
     client = client.newBuilder()
       .connectionPool(ConnectionPool(0, 5, TimeUnit.SECONDS))
       .build()
@@ -144,7 +153,8 @@ class ConnectionReuseTest {
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
   }
 
-  @Test fun connectionsNotReusedWithRedirectIfDiscardingResponseIsSlow() {
+  @Test
+  fun connectionsNotReusedWithRedirectIfDiscardingResponseIsSlow() {
     client = client.newBuilder()
       .connectionPool(ConnectionPool(0, 5, TimeUnit.SECONDS))
       .build()
@@ -154,7 +164,7 @@ class ConnectionReuseTest {
         .addHeader("Location: /b")
         .setBodyDelay(1, TimeUnit.SECONDS)
         .setBody("a")
-    )
+        .build())
     server.enqueue(MockResponse(body = "b"))
     val request = Request(server.url("/"))
     val response = client.newCall(request).execute()
@@ -163,10 +173,12 @@ class ConnectionReuseTest {
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
   }
 
-  @Test fun silentRetryWhenIdempotentRequestFailsOnReusedConnection() {
+  @Test
+  fun silentRetryWhenIdempotentRequestFailsOnReusedConnection() {
     server.enqueue(MockResponse(body = "a"))
     server.enqueue(MockResponse.Builder()
-      .setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST))
+      .setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST)
+      .build())
     server.enqueue(MockResponse(body = "b"))
     val request = Request(server.url("/"))
     val responseA = client.newCall(request).execute()
@@ -178,7 +190,8 @@ class ConnectionReuseTest {
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
   }
 
-  @Test fun http2ConnectionsAreSharedBeforeResponseIsConsumed() {
+  @Test
+  fun http2ConnectionsAreSharedBeforeResponseIsConsumed() {
     platform.assumeNotBouncyCastle()
     enableHttp2()
     server.enqueue(MockResponse(body = "a"))
@@ -192,7 +205,8 @@ class ConnectionReuseTest {
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
   }
 
-  @Test fun connectionsAreEvicted() {
+  @Test
+  fun connectionsAreEvicted() {
     server.enqueue(MockResponse(body = "a"))
     server.enqueue(MockResponse(body = "b"))
     client = client.newBuilder()
@@ -210,7 +224,8 @@ class ConnectionReuseTest {
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
   }
 
-  @Test fun connectionsAreNotReusedIfSslSocketFactoryChanges() {
+  @Test
+  fun connectionsAreNotReusedIfSslSocketFactoryChanges() {
     platform.assumeNotBouncyCastle()
     enableHttps()
     server.enqueue(MockResponse())
@@ -235,7 +250,8 @@ class ConnectionReuseTest {
     }
   }
 
-  @Test fun connectionsAreNotReusedIfHostnameVerifierChanges() {
+  @Test
+  fun connectionsAreNotReusedIfHostnameVerifierChanges() {
     platform.assumeNotBouncyCastle()
     enableHttps()
     server.enqueue(MockResponse())
@@ -265,7 +281,8 @@ class ConnectionReuseTest {
    *
    * https://github.com/square/okhttp/issues/2409
    */
-  @Test fun connectionsAreNotReusedIfNetworkInterceptorInterferes() {
+  @Test
+  fun connectionsAreNotReusedIfNetworkInterceptorInterferes() {
     val responsesNotClosed: MutableList<Response?> = ArrayList()
     client =
       client.newBuilder()

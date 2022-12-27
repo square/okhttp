@@ -792,12 +792,8 @@ class HttpOverHttp2Test {
   @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
   fun cancelWithStreamNotCompleted(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
-    server.enqueue(
-      MockResponse(body = "abc")
-    )
-    server.enqueue(
-      MockResponse(body = "def")
-    )
+    server.enqueue(MockResponse(body = "abc"))
+    server.enqueue(MockResponse(body = "def"))
 
     // Disconnect before the stream is created. A connection is still established!
     val call1 = client.newCall(Request(server.url("/")))
@@ -826,9 +822,7 @@ class HttpOverHttp2Test {
         .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.httpCode)
         .build()
     )
-    server.enqueue(
-      MockResponse(body = "abc")
-    )
+    server.enqueue(MockResponse(body = "abc"))
     val call = client.newCall(Request(server.url("/")))
     try {
       call.execute()
@@ -852,9 +846,7 @@ class HttpOverHttp2Test {
         .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.httpCode)
         .build()
     )
-    server.enqueue(
-      MockResponse(body = "abc")
-    )
+    server.enqueue(MockResponse(body = "abc"))
 
     val request = Request(server.url("/"))
     val response = client.newCall(request).execute()
@@ -917,9 +909,7 @@ class HttpOverHttp2Test {
         .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.httpCode)
         .build()
     )
-    server.enqueue(
-      MockResponse(body = "abc")
-    )
+    server.enqueue(MockResponse(body = "abc"))
     val request = Request(server.url("/"))
 
     // First call fails because it only has one route.
@@ -954,12 +944,8 @@ class HttpOverHttp2Test {
         .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.httpCode)
         .build()
     )
-    server.enqueue(
-      MockResponse(body = "abc")
-    )
-    server.enqueue(
-      MockResponse(body = "def")
-    )
+    server.enqueue(MockResponse(body = "abc"))
+    server.enqueue(MockResponse(body = "def"))
     val request = Request(server.url("/"))
 
     // First call makes a new connection and fails because it is the only route.
@@ -1039,9 +1025,7 @@ class HttpOverHttp2Test {
         .setHttp2ErrorCode(errorCode!!.httpCode)
         .build()
     )
-    server.enqueue(
-      MockResponse(body = "abc")
-    )
+    server.enqueue(MockResponse(body = "abc"))
     client = client.newBuilder()
       .dns(DoubleInetAddressDns())
       .build()
@@ -1072,9 +1056,7 @@ class HttpOverHttp2Test {
         .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.httpCode)
         .build()
     )
-    server.enqueue(
-      MockResponse(body = "abc")
-    )
+    server.enqueue(MockResponse(body = "abc"))
     client = client.newBuilder()
       .dns(DoubleInetAddressDns())
       .build()
@@ -1244,9 +1226,7 @@ class HttpOverHttp2Test {
         .setHttp2ErrorCode(errorCode!!.httpCode)
         .build()
     )
-    server.enqueue(
-      MockResponse(body = "abc")
-    )
+    server.enqueue(MockResponse(body = "abc"))
     client = client.newBuilder()
       .retryOnConnectionFailure(false)
       .build()
@@ -1264,27 +1244,21 @@ class HttpOverHttp2Test {
     protocol: Protocol, mockWebServer: MockWebServer
   ) {
     setUp(protocol, mockWebServer)
-    server.enqueue(
-      MockResponse(code = 401)
-    )
+    server.enqueue(MockResponse(code = 401))
     server.enqueue(
       MockResponse.Builder()
         .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
         .setHttp2ErrorCode(ErrorCode.INTERNAL_ERROR.httpCode)
         .build()
     )
-    server.enqueue(
-      MockResponse(body = "DEF")
-    )
+    server.enqueue(MockResponse(body = "DEF"))
     server.enqueue(
       MockResponse(
         code = 301,
         headers = headersOf("Location", "/foo")
       )
     )
-    server.enqueue(
-      MockResponse(body = "ABC")
-    )
+    server.enqueue(MockResponse(body = "ABC"))
     val latch = CountDownLatch(1)
     val responses: BlockingQueue<String?> = SynchronousQueue()
     val authenticator = okhttp3.Authenticator { route: Route?, response: Response? ->
@@ -1419,9 +1393,7 @@ class HttpOverHttp2Test {
   @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
   fun noDataFramesSentWithNullRequestBody(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
-    server.enqueue(
-      MockResponse(body = "ABC")
-    )
+    server.enqueue(MockResponse(body = "ABC"))
     val call = client.newCall(
       Request.Builder()
         .url(server.url("/"))
@@ -1440,9 +1412,7 @@ class HttpOverHttp2Test {
   @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
   fun emptyDataFrameSentWithEmptyBody(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
-    server.enqueue(
-      MockResponse(body = "ABC")
-    )
+    server.enqueue(MockResponse(body = "ABC"))
     val call = client.newCall(
       Request.Builder()
         .url(server.url("/"))
@@ -1602,12 +1572,8 @@ class HttpOverHttp2Test {
         .setBody("a")
         .build()
     )
-    server.enqueue(
-      MockResponse(body = "b")
-    )
-    server.enqueue(
-      MockResponse(body = "c")
-    )
+    server.enqueue(MockResponse(body = "b"))
+    server.enqueue(MockResponse(body = "c"))
 
     // The first call times out.
     val call1 = client.newCall(Request(server.url("/")))
@@ -1769,9 +1735,7 @@ class HttpOverHttp2Test {
         .setBody("ABC")
         .build()
     )
-    server.enqueue(
-      MockResponse(body = "DEF")
-    )
+    server.enqueue(MockResponse(body = "DEF"))
     val client2 = client.newBuilder()
       .addNetworkInterceptor(object : Interceptor {
         var executedCall = false
@@ -2108,9 +2072,7 @@ class HttpOverHttp2Test {
         .inTunnel()
         .build()
     )
-    server.enqueue(
-      MockResponse(body = "response body")
-    )
+    server.enqueue(MockResponse(body = "response body"))
     val client = client.newBuilder()
       .proxy(server.toProxyAddress())
       .proxyAuthenticator(RecordingOkAuthenticator("password", "Basic"))

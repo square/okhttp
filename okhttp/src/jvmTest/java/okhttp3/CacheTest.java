@@ -191,7 +191,8 @@ public final class CacheTest {
       expectedResponseCode = 200;
       server.enqueue(new MockResponse.Builder()
           .setHeader("Cache-Control", "no-store")
-          .setBody("FGHIJ"));
+          .setBody("FGHIJ")
+          .build());
     }
 
     server.start();
@@ -558,7 +559,7 @@ public final class CacheTest {
   private void testServerPrematureDisconnect(TransferKind transferKind) throws IOException {
     MockResponse.Builder mockResponse = new MockResponse.Builder();
     transferKind.setBody(mockResponse, "ABCDE\nFGHIJKLMNOPQRSTUVWXYZ", 16);
-    server.enqueue(truncateViolently(mockResponse, 16));
+    server.enqueue(truncateViolently(mockResponse, 16).build());
     server.enqueue(new MockResponse.Builder()
         .setBody("Request #2")
         .build());
@@ -1118,7 +1119,8 @@ public final class CacheTest {
   private void assertNonIdentityEncodingCached(MockResponse response) throws Exception {
     server.enqueue(response.newBuilder()
         .setBody(gzip("ABCABCABC"))
-        .addHeader("Content-Encoding: gzip"));
+        .addHeader("Content-Encoding: gzip")
+        .build());
     server.enqueue(new MockResponse.Builder()
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
         .build());
@@ -2875,8 +2877,8 @@ public final class CacheTest {
   }
 
   private void assertFullyCached(MockResponse response) throws Exception {
-    server.enqueue(response.newBuilder().setBody("A"));
-    server.enqueue(response.newBuilder().setBody("B"));
+    server.enqueue(response.newBuilder().setBody("A").build());
+    server.enqueue(response.newBuilder().setBody("B").build());
 
     HttpUrl url = server.url("/");
     assertThat(get(url).body().string()).isEqualTo("A");

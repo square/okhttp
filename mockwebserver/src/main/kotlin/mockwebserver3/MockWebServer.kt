@@ -359,8 +359,6 @@ class MockWebServer : Closeable {
   fun enqueue(response: MockResponse) =
     (dispatcher as QueueDispatcher).enqueueResponse(response)
 
-  fun enqueue(response: MockResponse.Builder) = enqueue(response.build())
-
   /**
    * Starts the server on the loopback interface for the given port.
    *
