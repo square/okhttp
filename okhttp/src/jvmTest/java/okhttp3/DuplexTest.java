@@ -180,7 +180,7 @@ public final class DuplexTest {
             .clearHeaders()
             .addHeader("h1", "v1")
             .addHeader("h2", "v2")
-            .setTrailers(Headers.of("trailers", "boom")),
+            .trailers(Headers.of("trailers", "boom")),
         new MockDuplexResponseBody()
             .sendResponse("ok")
             .exhaustResponse());
@@ -328,14 +328,14 @@ public final class DuplexTest {
     MockDuplexResponseBody mockDuplexResponseBody = enqueueResponseWithBody(
         new MockResponse.Builder()
             .clearHeaders()
-            .setResponseCode(HttpURLConnection.HTTP_MOVED_PERM)
+            .code(HttpURLConnection.HTTP_MOVED_PERM)
             .addHeader("Location: /b"),
         new MockDuplexResponseBody()
             .sendResponse("/a has moved!\n", duplexResponseSent)
             .requestIOException()
             .exhaustResponse());
     server.enqueue(new MockResponse.Builder()
-        .setBody("this is /b")
+        .body("this is /b")
         .build());
 
     Call call = client.newCall(new Request.Builder()
@@ -383,7 +383,7 @@ public final class DuplexTest {
     MockDuplexResponseBody mockResponseBody1 = enqueueResponseWithBody(
         new MockResponse.Builder()
             .clearHeaders()
-            .setResponseCode(HttpURLConnection.HTTP_UNAUTHORIZED),
+            .code(HttpURLConnection.HTTP_UNAUTHORIZED),
         new MockDuplexResponseBody()
             .sendResponse("please authenticate!\n")
             .requestIOException()
@@ -432,7 +432,7 @@ public final class DuplexTest {
     enableProtocol(Protocol.HTTP_2);
 
     server.enqueue(new MockResponse.Builder()
-        .setHeadersDelay(500, TimeUnit.MILLISECONDS)
+        .headersDelay(500, TimeUnit.MILLISECONDS)
         .build());
 
     Request request = new Request.Builder()
@@ -590,7 +590,7 @@ public final class DuplexTest {
     enableProtocol(Protocol.HTTP_2);
 
     server.enqueue(new MockResponse.Builder()
-        .setHeadersDelay(1500, TimeUnit.MILLISECONDS)
+        .headersDelay(1500, TimeUnit.MILLISECONDS)
         .build());
 
     Request request = new Request.Builder()
@@ -616,8 +616,8 @@ public final class DuplexTest {
     enableProtocol(Protocol.HTTP_2);
 
     server.enqueue(new MockResponse.Builder()
-      .setBodyDelay(1500, TimeUnit.MILLISECONDS)
-      .setBody("this should never be received")
+      .bodyDelay(1500, TimeUnit.MILLISECONDS)
+      .body("this should never be received")
       .build());
 
     Request request = new Request.Builder()
@@ -647,7 +647,7 @@ public final class DuplexTest {
     enableProtocol(Protocol.HTTP_2);
 
     server.enqueue(new MockResponse.Builder()
-      .setHeadersDelay(500, TimeUnit.MILLISECONDS)
+      .headersDelay(500, TimeUnit.MILLISECONDS)
       .build());
 
     Request request = new Request.Builder()
@@ -672,8 +672,8 @@ public final class DuplexTest {
     enableProtocol(Protocol.HTTP_2);
 
     server.enqueue(new MockResponse.Builder()
-      .setBodyDelay(500, TimeUnit.MILLISECONDS)
-      .setBody("success")
+      .bodyDelay(500, TimeUnit.MILLISECONDS)
+      .body("success")
       .build());
 
     Request request = new Request.Builder()

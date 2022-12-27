@@ -102,7 +102,7 @@ public final class CertificatePinnerChainValidationTest {
 
     // The request should complete successfully.
     server.enqueue(new MockResponse.Builder()
-        .setBody("abc")
+        .body("abc")
         .build());
     Call call1 = client.newCall(new Request.Builder()
         .url(server.url("/"))
@@ -151,8 +151,8 @@ public final class CertificatePinnerChainValidationTest {
 
     // The request should complete successfully.
     server.enqueue(new MockResponse.Builder()
-        .setBody("abc")
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        .body("abc")
+        .socketPolicy(SocketPolicy.DISCONNECT_AT_END)
         .build());
     Call call1 = client.newCall(new Request.Builder()
         .url(server.url("/"))
@@ -166,8 +166,8 @@ public final class CertificatePinnerChainValidationTest {
 
     // Confirm that a second request also succeeds. This should detect caching problems.
     server.enqueue(new MockResponse.Builder()
-        .setBody("def")
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        .body("def")
+        .socketPolicy(SocketPolicy.DISCONNECT_AT_END)
         .build());
     Call call2 = client.newCall(new Request.Builder()
         .url(server.url("/"))
@@ -237,7 +237,7 @@ public final class CertificatePinnerChainValidationTest {
 
     server.useHttps(socketFactory);
     server.enqueue(new MockResponse.Builder()
-        .setBody("abc")
+        .body("abc")
         .addHeader("Content-Type: text/plain")
         .build());
 
@@ -317,7 +317,7 @@ public final class CertificatePinnerChainValidationTest {
         goodIntermediateCa.certificate(), compromisedIntermediateCa.certificate());
     server.useHttps(socketFactory);
     server.enqueue(new MockResponse.Builder()
-        .setBody("abc")
+        .body("abc")
         .addHeader("Content-Type: text/plain")
         .build());
 
@@ -601,7 +601,7 @@ public final class CertificatePinnerChainValidationTest {
 
     // The request should complete successfully.
     server.enqueue(new MockResponse.Builder()
-        .setBody("abc")
+        .body("abc")
         .build());
     Call call1 = client.newCall(new Request.Builder()
         .url(server.url("/"))

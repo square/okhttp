@@ -68,6 +68,7 @@ import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.http.HTTP_PERM_REDIRECT
 import okhttp3.internal.http.HTTP_TEMP_REDIRECT
 import okhttp3.internal.platform.Platform.Companion.get
+import okhttp3.internal.toHexString
 import okhttp3.internal.userAgent
 import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule
@@ -163,11 +164,11 @@ class URLConnectionTest {
   fun responseHeaders() {
     server.enqueue(
       MockResponse.Builder()
-        .setStatus("HTTP/1.0 200 Fantastic")
+        .status("HTTP/1.0 200 Fantastic")
         .addHeader("A: c")
         .addHeader("B: d")
         .addHeader("A: e")
-        .setChunkedBody("ABCDE\nFGHIJ\nKLMNO\nPQR", 8)
+        .chunkedBody("ABCDE\nFGHIJ\nKLMNO\nPQR", 8)
         .build()
     )
     val request = newRequest("/")
@@ -189,7 +190,7 @@ class URLConnectionTest {
   @Test
   fun serverSendsInvalidStatusLine() {
     server.enqueue(MockResponse.Builder()
-      .setStatus("HTP/1.1 200 OK")
+      .status("HTP/1.1 200 OK")
       .build())
     val request = newRequest("/")
     try {
@@ -202,7 +203,7 @@ class URLConnectionTest {
   @Test
   fun serverSendsInvalidCodeTooLarge() {
     server.enqueue(MockResponse.Builder()
-      .setStatus("HTTP/1.1 2147483648 OK")
+      .status("HTTP/1.1 2147483648 OK")
       .build())
     val request = newRequest("/")
     try {
@@ -215,7 +216,7 @@ class URLConnectionTest {
   @Test
   fun serverSendsInvalidCodeNotANumber() {
     server.enqueue(MockResponse.Builder()
-      .setStatus("HTTP/1.1 00a OK")
+      .status("HTTP/1.1 00a OK")
       .build())
     val request = newRequest("/")
     try {
@@ -228,7 +229,7 @@ class URLConnectionTest {
   @Test
   fun serverSendsUnnecessaryWhitespace() {
     server.enqueue(MockResponse.Builder()
-      .setStatus(" HTTP/1.1 2147483648 OK")
+      .status(" HTTP/1.1 2147483648 OK")
       .build())
     val request = newRequest("/")
     try {
@@ -286,7 +287,7 @@ class URLConnectionTest {
   @Test
   fun bug2939() {
     val response = MockResponse.Builder()
-      .setChunkedBody("ABCDE\nFGHIJ\nKLMNO\nPQR", 8)
+      .chunkedBody("ABCDE\nFGHIJ\nKLMNO\nPQR", 8)
       .build()
     server.enqueue(response)
     server.enqueue(response)
@@ -318,7 +319,7 @@ class URLConnectionTest {
   @Test
   fun chunkedConnectionsArePooled() {
     val response = MockResponse.Builder()
-      .setChunkedBody("ABCDEFGHIJKLMNOPQR", 5)
+      .chunkedBody("ABCDEFGHIJKLMNOPQR", 5)
       .build()
     server.enqueue(response)
     server.enqueue(response)
@@ -365,14 +366,12 @@ class URLConnectionTest {
 
   private fun testServerClosesOutput(socketPolicy: SocketPolicy) {
     server.enqueue(
-      MockResponse.Builder()
-        .setBody("This connection won't pool properly")
-        .setSocketPolicy(socketPolicy)
-        .build()
+      MockResponse(
+        body = "This connection won't pool properly",
+        socketPolicy = socketPolicy,
+      )
     )
-    val responseAfter = MockResponse.Builder()
-      .setBody("This comes after a busted connection")
-      .build()
+    val responseAfter = MockResponse(body = "This comes after a busted connection")
     server.enqueue(responseAfter)
     server.enqueue(responseAfter) // Enqueue 2x because the broken connection may be reused.
     val response1 = getResponse(newRequest("/a"))
@@ -580,11 +579,7 @@ class URLConnectionTest {
   @Test
   fun connectViaHttpsWithSSLFallback() {
     server.useHttps(handshakeCertificates.sslSocketFactory())
-    server.enqueue(
-      MockResponse.Builder()
-        .setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE)
-        .build()
-    )
+    server.enqueue(MockResponse(socketPolicy = SocketPolicy.FAIL_HANDSHAKE))
     server.enqueue(MockResponse(body = "this response comes via SSL"))
     client = client.newBuilder()
       .hostnameVerifier(
@@ -607,16 +602,8 @@ class URLConnectionTest {
   @Test
   fun connectViaHttpsWithSSLFallbackFailuresRecorded() {
     server.useHttps(handshakeCertificates.sslSocketFactory())
-    server.enqueue(
-      MockResponse.Builder()
-        .setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE)
-        .build()
-    )
-    server.enqueue(
-      MockResponse.Builder()
-        .setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE)
-        .build()
-    )
+    server.enqueue(MockResponse(socketPolicy = SocketPolicy.FAIL_HANDSHAKE))
+    server.enqueue(MockResponse(socketPolicy = SocketPolicy.FAIL_HANDSHAKE))
     client = client.newBuilder()
       .connectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS))
       .hostnameVerifier(RecordingHostnameVerifier())
@@ -645,10 +632,10 @@ class URLConnectionTest {
   fun sslFallbackNotUsedWhenRecycledConnectionFails() {
     server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
-      MockResponse.Builder()
-        .setBody("abc")
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
-        .build()
+      MockResponse(
+        body = "abc",
+        socketPolicy = SocketPolicy.DISCONNECT_AT_END,
+      )
     )
     server.enqueue(MockResponse(body = "def"))
     client = client.newBuilder()
@@ -730,7 +717,7 @@ class URLConnectionTest {
   fun contentDisagreesWithContentLengthHeaderBodyTooLong() {
     server.enqueue(
       MockResponse.Builder()
-        .setBody("abc\r\nYOU SHOULD NOT SEE THIS")
+        .body("abc\r\nYOU SHOULD NOT SEE THIS")
         .clearHeaders()
         .addHeader("Content-Length: 3")
         .build()
@@ -742,9 +729,9 @@ class URLConnectionTest {
   fun contentDisagreesWithContentLengthHeaderBodyTooShort() {
     server.enqueue(
       MockResponse.Builder()
-        .setBody("abc")
+        .body("abc")
         .setHeader("Content-Length", "5")
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        .socketPolicy(SocketPolicy.DISCONNECT_AT_END)
         .build())
     try {
       val response = getResponse(newRequest("/"))
@@ -816,10 +803,10 @@ class URLConnectionTest {
   @Test
   fun contentDisagreesWithChunkedHeaderBodyTooLong() {
     val builder = MockResponse.Builder()
-      .setChunkedBody("abc", 3)
-    val buffer = builder.build().getBody()
-    buffer!!.writeUtf8("\r\nYOU SHOULD NOT SEE THIS")
-    builder.setBody(buffer)
+      .chunkedBody("abc", 3)
+    val buffer = builder.build().body!!
+    buffer.writeUtf8("\r\nYOU SHOULD NOT SEE THIS")
+    builder.body(buffer)
     builder.clearHeaders()
     builder.addHeader("Transfer-encoding: chunked")
     server.enqueue(builder.build())
@@ -829,16 +816,15 @@ class URLConnectionTest {
   @Test
   fun contentDisagreesWithChunkedHeaderBodyTooShort() {
     val builder = MockResponse.Builder()
-      .setChunkedBody("abcdefg", 5)
+      .chunkedBody("abcdefg", 5)
     val truncatedBody = Buffer()
-    val fullBody = builder.build().getBody()
-    truncatedBody.write(fullBody!!, 4)
-    builder.setBody(truncatedBody)
+    val fullBody = builder.build().body!!
+    truncatedBody.write(fullBody, 4)
+    builder.body(truncatedBody)
     builder.clearHeaders()
     builder.addHeader("Transfer-encoding: chunked")
-    builder.setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
-    server.enqueue(builder
-      .build())
+    builder.socketPolicy(SocketPolicy.DISCONNECT_AT_END)
+    server.enqueue(builder.build())
     try {
       val response = getResponse(newRequest("/"))
       response.body.source().readUtf8(7)
@@ -902,13 +888,8 @@ class URLConnectionTest {
   private fun testConnectViaHttpProxyToHttps(proxyConfig: ProxyConfig) {
     val hostnameVerifier = RecordingHostnameVerifier()
     server.useHttps(handshakeCertificates.sslSocketFactory())
-    server.enqueue(
-      MockResponse.Builder()
-        .inTunnel()
-        .build())
-    server.enqueue(
-      MockResponse(body = "this response comes via a secure proxy")
-    )
+    server.enqueue(MockResponse(inTunnel = true))
+    server.enqueue(MockResponse(body = "this response comes via a secure proxy"))
     val url = "https://android.com/foo".toHttpUrl()
     client = client.newBuilder()
       .sslSocketFactory(
@@ -938,13 +919,12 @@ class URLConnectionTest {
     server.useHttps(handshakeCertificates.sslSocketFactory())
     // The inclusion of a body in the response to a CONNECT is key to reproducing b/6754912.
     server.enqueue(
-      MockResponse.Builder()
-        .inTunnel()
-        .setBody("bogus proxy connect response content")
-        .build())
-    server.enqueue(
-      MockResponse(body = "response")
+      MockResponse(
+        body = "bogus proxy connect response content",
+        inTunnel = true,
+      )
     )
+    server.enqueue(MockResponse(body = "response"))
 
     // Configure a single IP address for the host and a single configuration, so we only need one
     // failure to fail permanently.
@@ -981,13 +961,8 @@ class URLConnectionTest {
   fun proxyConnectIncludesProxyHeadersOnly() {
     val hostnameVerifier = RecordingHostnameVerifier()
     server.useHttps(handshakeCertificates.sslSocketFactory())
-    server.enqueue(
-      MockResponse.Builder()
-        .inTunnel()
-        .build())
-    server.enqueue(
-      MockResponse(body = "encrypted response from the origin server")
-    )
+    server.enqueue(MockResponse(inTunnel = true))
+    server.enqueue(MockResponse(body = "encrypted response from the origin server"))
     client = client.newBuilder()
       .proxy(server.toProxyAddress())
       .sslSocketFactory(
@@ -1020,18 +995,14 @@ class URLConnectionTest {
     java.net.Authenticator.setDefault(RecordingAuthenticator())
     server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
-      MockResponse.Builder()
-        .inTunnel()
-        .setResponseCode(407)
-        .addHeader("Proxy-Authenticate: Basic realm=\"localhost\"")
-        .build())
-    server.enqueue(
-      MockResponse.Builder()
-        .inTunnel()
-        .build())
-    server.enqueue(
-      MockResponse(body = "A")
+      MockResponse(
+        code = 407,
+        headers = headersOf("Proxy-Authenticate", "Basic realm=\"localhost\""),
+        inTunnel = true,
+      )
     )
+    server.enqueue(MockResponse(inTunnel = true))
+    server.enqueue(MockResponse(body = "A"))
     client = client.newBuilder()
       .proxyAuthenticator(Authenticator.JAVA_NET_AUTHENTICATOR)
       .proxy(server.toProxyAddress())
@@ -1063,13 +1034,8 @@ class URLConnectionTest {
   @Test
   fun proxyWithConnectionClose() {
     server.useHttps(handshakeCertificates.sslSocketFactory())
-    server.enqueue(
-      MockResponse.Builder()
-        .inTunnel()
-        .build())
-    server.enqueue(
-      MockResponse(body = "this response comes via a proxy")
-    )
+    server.enqueue(MockResponse(inTunnel = true))
+    server.enqueue(MockResponse(body = "this response comes via a proxy"))
     client = client.newBuilder()
       .proxy(server.toProxyAddress())
       .sslSocketFactory(
@@ -1091,16 +1057,9 @@ class URLConnectionTest {
     val socketFactory = handshakeCertificates.sslSocketFactory()
     val hostnameVerifier = RecordingHostnameVerifier()
     server.useHttps(socketFactory)
-    server.enqueue(
-      MockResponse.Builder()
-        .inTunnel()
-        .build())
-    server.enqueue(
-      MockResponse(body = "response 1")
-    )
-    server.enqueue(
-      MockResponse(body = "response 2")
-    )
+    server.enqueue(MockResponse(inTunnel = true))
+    server.enqueue(MockResponse(body = "response 1"))
+    server.enqueue(MockResponse(body = "response 2"))
     client = client.newBuilder()
       .proxy(server.toProxyAddress())
       .sslSocketFactory(socketFactory, handshakeCertificates.trustManager)
@@ -1134,7 +1093,7 @@ class URLConnectionTest {
     server.enqueue(
       MockResponse.Builder()
         .throttleBody(2, 100, TimeUnit.MILLISECONDS)
-        .setBody("ABCD")
+        .body("ABCD")
         .build()
     )
     val call = client.newCall(newRequest("/"))
@@ -1279,7 +1238,7 @@ class URLConnectionTest {
   fun nonHexChunkSize() {
     server.enqueue(
       MockResponse.Builder()
-        .setBody("5\r\nABCDE\r\nG\r\nFGHIJKLMNOPQRSTU\r\n0\r\n\r\n")
+        .body("5\r\nABCDE\r\nG\r\nFGHIJKLMNOPQRSTU\r\n0\r\n\r\n")
         .clearHeaders()
         .addHeader("Transfer-encoding: chunked")
         .build()
@@ -1297,7 +1256,7 @@ class URLConnectionTest {
   fun malformedChunkSize() {
     server.enqueue(
       MockResponse.Builder()
-        .setBody("5:x\r\nABCDE\r\n0\r\n\r\n")
+        .body("5:x\r\nABCDE\r\n0\r\n\r\n")
         .clearHeaders()
         .addHeader("Transfer-encoding: chunked")
         .build()
@@ -1315,7 +1274,7 @@ class URLConnectionTest {
   fun extensionAfterChunkSize() {
     server.enqueue(
       MockResponse.Builder()
-        .setBody("5;x\r\nABCDE\r\n0\r\n\r\n")
+        .body("5;x\r\nABCDE\r\n0\r\n\r\n")
         .clearHeaders()
         .addHeader("Transfer-encoding: chunked")
         .build()
@@ -1327,10 +1286,10 @@ class URLConnectionTest {
   fun missingChunkBody() {
     server.enqueue(
       MockResponse.Builder()
-        .setBody("5")
+        .body("5")
         .clearHeaders()
         .addHeader("Transfer-encoding: chunked")
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        .socketPolicy(SocketPolicy.DISCONNECT_AT_END)
         .build()
     )
     try {
@@ -1350,7 +1309,7 @@ class URLConnectionTest {
   fun gzipEncodingEnabledByDefault() {
     server.enqueue(
       MockResponse.Builder()
-        .setBody(gzip("ABCABCABC"))
+        .body(gzip("ABCABCABC"))
         .addHeader("Content-Encoding: gzip")
         .build()
     )
@@ -1369,7 +1328,7 @@ class URLConnectionTest {
     val bodyBytes = gzip("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
     server.enqueue(
       MockResponse.Builder()
-        .setBody(bodyBytes)
+        .body(bodyBytes)
         .addHeader("Content-Encoding: gzip")
         .build()
     )
@@ -1471,15 +1430,15 @@ class URLConnectionTest {
   @Test
   fun transparentGzipWorksAfterExceptionRecovery() {
     server.enqueue(
-      MockResponse.Builder()
-        .setBody("a")
-        .setSocketPolicy(SocketPolicy.SHUTDOWN_INPUT_AT_END)
-        .build()
+      MockResponse(
+        body = "a",
+        socketPolicy = SocketPolicy.SHUTDOWN_INPUT_AT_END,
+      )
     )
     server.enqueue(
       MockResponse.Builder()
         .addHeader("Content-Encoding: gzip")
-        .setBody(gzip("b"))
+        .body(gzip("b"))
         .build()
     )
 
@@ -1501,10 +1460,11 @@ class URLConnectionTest {
     client.connectionPool.evictAll()
     server.enqueue(
       MockResponse.Builder()
-        .setBody("{}")
+        .body("{}")
         .clearHeaders()
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
-        .build())
+        .socketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        .build()
+    )
     val response = getResponse(newRequest("/"))
     assertContent("{}", response)
     assertThat(client.connectionPool.idleConnectionCount()).isEqualTo(0)
@@ -1549,7 +1509,7 @@ class URLConnectionTest {
     // This response takes at least a full second to serve: 10,000 bytes served 100 bytes at a time.
     server.enqueue(
       MockResponse.Builder()
-        .setBody(Buffer().write(ByteArray(10000)))
+        .body(Buffer().write(ByteArray(10000)))
         .throttleBody(100, 10, TimeUnit.MILLISECONDS)
         .build())
     server.enqueue(
@@ -1747,9 +1707,9 @@ class URLConnectionTest {
     java.net.Authenticator.setDefault(authenticator)
     server.enqueue(
       MockResponse.Builder()
-        .setResponseCode(responseCode)
+        .code(responseCode)
         .addHeader(authHeader)
-        .setBody("Please authenticate.")
+        .body("Please authenticate.")
         .build())
     val response: Response
     if (proxy) {
@@ -1854,7 +1814,7 @@ class URLConnectionTest {
   fun shoutcast() {
     server.enqueue(
       MockResponse.Builder()
-        .setStatus("ICY 200 OK")
+        .status("ICY 200 OK")
         .addHeader("Accept-Ranges: none")
         .addHeader("Content-Type: audio/mpeg")
         .addHeader("icy-br:128")
@@ -1870,7 +1830,7 @@ class URLConnectionTest {
         .addHeader("Pragma: no-cache")
         .addHeader("Expires: Mon, 26 Jul 1997 05:00:00 GMT")
         .addHeader("icy-metaint:16000")
-        .setBody("mp3 data")
+        .body("mp3 data")
         .build())
     val response = getResponse(newRequest("/"))
     assertThat(response.code).isEqualTo(200)
@@ -1882,11 +1842,11 @@ class URLConnectionTest {
   fun ntripr1() {
     server.enqueue(
       MockResponse.Builder()
-        .setStatus("SOURCETABLE 200 OK")
+        .status("SOURCETABLE 200 OK")
         .addHeader("Server: NTRIP Caster 1.5.5/1.0")
         .addHeader("Date: 23/Jan/2004:08:54:59 UTC")
         .addHeader("Content-Type: text/plain")
-        .setBody("STR;FFMJ2;Frankfurt;RTCM 2.1;1(1),3(19),16(59);0;GPS;GREF;DEU;50.12;8.68;0;1;GPSNet V2.10;none;N;N;560;Demo\nENDSOURCETABLE")
+        .body("STR;FFMJ2;Frankfurt;RTCM 2.1;1(1),3(19),16(59);0;GPS;GREF;DEU;50.12;8.68;0;1;GPSNet V2.10;none;N;N;560;Demo\nENDSOURCETABLE")
         .build())
     val response = getResponse(newRequest("/"))
     assertThat(response.code).isEqualTo(200)
@@ -2084,7 +2044,7 @@ class URLConnectionTest {
     // ...then succeed the fourth time.
     val successfulResponse = MockResponse.Builder()
       .addHeader("Content-Encoding", "gzip")
-      .setBody(gzip("Successful auth!"))
+      .body(gzip("Successful auth!"))
       .build()
     server.enqueue(successfulResponse)
     java.net.Authenticator.setDefault(RecordingAuthenticator())
@@ -2148,14 +2108,11 @@ class URLConnectionTest {
 
   private fun testRedirected(transferKind: TransferKind, reuse: Boolean) {
     val mockResponse = MockResponse.Builder()
-      .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
+      .code(HttpURLConnection.HTTP_MOVED_TEMP)
       .addHeader("Location: /foo")
     transferKind.setBody(mockResponse, "This page has moved!", 10)
-    server.enqueue(mockResponse
-      .build())
-    server.enqueue(
-      MockResponse(body = "This is the new location!")
-    )
+    server.enqueue(mockResponse.build())
+    server.enqueue(MockResponse(body = "This is the new location!"))
     val response = getResponse(newRequest("/"))
     assertThat(readAscii(response.body.byteStream(), Int.MAX_VALUE)).isEqualTo(
       "This is the new location!"
@@ -2636,12 +2593,12 @@ class URLConnectionTest {
 
   private fun testRedirect(temporary: Boolean, method: String) {
     val response1 = MockResponse.Builder()
-      .setResponseCode(
+      .code(
         if (temporary) HTTP_TEMP_REDIRECT else HTTP_PERM_REDIRECT
       )
       .addHeader("Location: /page2")
     if (method != "HEAD") {
-      response1.setBody("This page has moved!")
+      response1.body("This page has moved!")
     }
     server.enqueue(response1.build())
     server.enqueue(MockResponse(body = "Page 2"))
@@ -2744,12 +2701,13 @@ class URLConnectionTest {
 
   private fun enqueueClientRequestTimeoutResponses() {
     server.enqueue(
-      MockResponse.Builder()
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
-        .setResponseCode(HttpURLConnection.HTTP_CLIENT_TIMEOUT)
-        .setHeader("Connection", "Close")
-        .setBody("You took too long!")
-        .build())
+      MockResponse(
+        code = HttpURLConnection.HTTP_CLIENT_TIMEOUT,
+        headers = headersOf("Connection", "Close"),
+        body = "You took too long!",
+        socketPolicy = SocketPolicy.DISCONNECT_AT_END,
+      )
+    )
     server.enqueue(
       MockResponse(body = "Body")
     )
@@ -2795,7 +2753,7 @@ class URLConnectionTest {
     // try to read more bytes than are sent, which results in a timeout.
     server.enqueue(
       MockResponse.Builder()
-        .setBody("ABC")
+        .body("ABC")
         .clearHeaders()
         .addHeader("Content-Length: 4")
         .build())
@@ -2948,14 +2906,13 @@ class URLConnectionTest {
   @Test
   fun sameConnectionRedirectAndReuse() {
     server.enqueue(
-      MockResponse.Builder()
-        .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
-        .setSocketPolicy(SocketPolicy.SHUTDOWN_INPUT_AT_END)
-        .addHeader("Location: /foo")
-        .build())
-    server.enqueue(
-      MockResponse(body = "This is the new page!")
+      MockResponse(
+        code = HttpURLConnection.HTTP_MOVED_TEMP,
+        headers = headersOf("Location", "/foo"),
+        socketPolicy = SocketPolicy.SHUTDOWN_INPUT_AT_END,
+      )
     )
+    server.enqueue(MockResponse(body = "This is the new page!"))
     assertContent("This is the new page!", getResponse(newRequest("/")))
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
@@ -2981,7 +2938,7 @@ class URLConnectionTest {
   fun singleByteReadIsSigned() {
     server.enqueue(
       MockResponse.Builder()
-        .setBody(
+        .body(
           Buffer()
             .writeByte(-2)
             .writeByte(-1)
@@ -3047,10 +3004,7 @@ class URLConnectionTest {
 
   @Test
   fun getHeadersThrows() {
-    server.enqueue(
-      MockResponse.Builder()
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_START)
-        .build())
+    server.enqueue(MockResponse(socketPolicy = SocketPolicy.DISCONNECT_AT_START))
     try {
       getResponse(newRequest("/"))
       fail<Any>()
@@ -3102,11 +3056,12 @@ class URLConnectionTest {
   fun readAfterLastByte() {
     server.enqueue(
       MockResponse.Builder()
-        .setBody("ABC")
+        .body("ABC")
         .clearHeaders()
         .addHeader("Connection: close")
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
-        .build())
+        .socketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        .build()
+    )
     val response = getResponse(newRequest("/"))
     val `in` = response.body.byteStream()
     assertThat(readAscii(`in`, 3)).isEqualTo("ABC")
@@ -3269,16 +3224,13 @@ class URLConnectionTest {
 
   private fun reusedConnectionFailsWithPost(transferKind: TransferKind, requestSize: Int) {
     server.enqueue(
-      MockResponse.Builder()
-        .setBody("A")
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
-        .build())
-    server.enqueue(
-      MockResponse(body = "B")
+      MockResponse(
+        body = "A",
+        socketPolicy = SocketPolicy.DISCONNECT_AT_END,
+      )
     )
-    server.enqueue(
-      MockResponse(body = "C")
-    )
+    server.enqueue(MockResponse(body = "B"))
+    server.enqueue(MockResponse(body = "C"))
     assertContent("A", getResponse(newRequest("/a")))
 
     // Give the server time to disconnect.
@@ -3313,16 +3265,9 @@ class URLConnectionTest {
 
   @Test
   fun postBodyRetransmittedOnFailureRecovery() {
-    server.enqueue(
-      MockResponse(body = "abc")
-    )
-    server.enqueue(
-      MockResponse.Builder()
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST)
-        .build())
-    server.enqueue(
-      MockResponse(body = "def")
-    )
+    server.enqueue(MockResponse(body = "abc"))
+    server.enqueue(MockResponse(socketPolicy = SocketPolicy.DISCONNECT_AFTER_REQUEST))
+    server.enqueue(MockResponse(body = "def"))
 
     // Seed the connection pool so we have something that can fail.
     assertContent("abc", getResponse(newRequest("/")))
@@ -3460,10 +3405,10 @@ class URLConnectionTest {
     val headers = Headers.Builder()
     addHeaderLenient(headers, ":A")
     server.enqueue(
-      MockResponse.Builder()
-        .setHeaders(headers.build())
-        .setBody("body")
-        .build()
+      MockResponse(
+        headers = headers.build(),
+        body = "body",
+      )
     )
     val response = getResponse(newRequest("/"))
     assertThat(response.code).isEqualTo(200)
@@ -3513,11 +3458,7 @@ class URLConnectionTest {
     addHeaderLenient(headersBuilder, ": ef")
     addHeaderLenient(headersBuilder, "\ud83c\udf69: \u2615\ufe0f")
     val headers = headersBuilder.build()
-    server.enqueue(
-      MockResponse.Builder()
-        .setHeaders(headers)
-        .build()
-    )
+    server.enqueue(MockResponse(headers = headers))
     val response = getResponse(newRequest("/"))
     assertThat(response.code).isEqualTo(200)
     assertThat(response.header("a\tb")).isEqualTo("c\u007fd")
@@ -3685,7 +3626,7 @@ class URLConnectionTest {
   fun http10SelectedProtocol() {
     server.enqueue(
       MockResponse.Builder()
-        .setStatus("HTTP/1.0 200 OK")
+        .status("HTTP/1.0 200 OK")
         .build()
     )
     val response = getResponse(newRequest("/"))
@@ -3696,7 +3637,7 @@ class URLConnectionTest {
   fun http11SelectedProtocol() {
     server.enqueue(
       MockResponse.Builder()
-        .setStatus("HTTP/1.1 200 OK")
+        .status("HTTP/1.1 200 OK")
         .build()
     )
     val response = getResponse(newRequest("/"))
@@ -3808,14 +3749,8 @@ class URLConnectionTest {
   @Test
   fun testNoSslFallback() {
     server.useHttps(handshakeCertificates.sslSocketFactory())
-    server.enqueue(
-      MockResponse.Builder()
-        .setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE)
-        .build()
-    )
-    server.enqueue(
-      MockResponse(body = "Response that would have needed fallbacks")
-    )
+    server.enqueue(MockResponse(socketPolicy = SocketPolicy.FAIL_HANDSHAKE))
+    server.enqueue(MockResponse(body = "Response that would have needed fallbacks"))
     client = client.newBuilder()
       .sslSocketFactory(
         handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
@@ -3846,7 +3781,7 @@ class URLConnectionTest {
     server.enqueue(
       MockResponse.Builder()
         .clearHeaders()
-        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
         .addHeader("Content-Encoding: gzip")
         .build())
     server.enqueue(
@@ -3872,10 +3807,10 @@ class URLConnectionTest {
   fun gzipWithRedirectAndConnectionReuse() {
     server.enqueue(
       MockResponse.Builder()
-        .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
+        .code(HttpURLConnection.HTTP_MOVED_TEMP)
         .addHeader("Location: /foo")
         .addHeader("Content-Encoding: gzip")
-        .setBody(gzip("Moved! Moved! Moved!"))
+        .body(gzip("Moved! Moved! Moved!"))
         .build())
     server.enqueue(
       MockResponse(body = "This is the new page!")
@@ -3949,7 +3884,7 @@ class URLConnectionTest {
     val redirectUrl = "http://host\u0000/"
     server.enqueue(
       MockResponse.Builder()
-        .setResponseCode(302)
+        .code(302)
         .addHeaderLenient("Location", redirectUrl)
         .build()
     )
@@ -3999,10 +3934,11 @@ class URLConnectionTest {
     platform.assumeHttp2Support()
     enableProtocol(Protocol.HTTP_2)
     server.enqueue(
-      MockResponse.Builder()
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
-        .setBody("abc")
-        .build())
+      MockResponse(
+        body = "abc",
+        socketPolicy = SocketPolicy.DISCONNECT_AT_END,
+      )
+    )
     server.enqueue(
       MockResponse(body = "def")
     )
@@ -4032,11 +3968,11 @@ class URLConnectionTest {
   @Test
   fun authenticateNoConnection() {
     server.enqueue(
-      MockResponse.Builder()
-        .addHeader("Connection: close")
-        .setResponseCode(401)
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
-        .build()
+      MockResponse(
+        code = 401,
+        headers = headersOf("Connection", "close"),
+        socketPolicy = SocketPolicy.DISCONNECT_AT_END,
+      )
     )
     java.net.Authenticator.setDefault(RecordingAuthenticator(null))
     client = client.newBuilder()
@@ -4076,7 +4012,7 @@ class URLConnectionTest {
   internal enum class TransferKind {
     CHUNKED {
       override fun setBody(response: MockResponse.Builder, content: Buffer?, chunkSize: Int) {
-        response.setChunkedBody(content!!, chunkSize)
+        response.chunkedBody(content!!, chunkSize)
       }
 
       override fun newRequestBody(body: String): RequestBody {
@@ -4094,7 +4030,7 @@ class URLConnectionTest {
 
     FIXED_LENGTH {
       override fun setBody(response: MockResponse.Builder, content: Buffer?, chunkSize: Int) {
-        response.setBody(content!!)
+        response.body(content!!)
       }
 
       override fun newRequestBody(body: String): RequestBody {
@@ -4112,8 +4048,8 @@ class URLConnectionTest {
 
     END_OF_STREAM {
       override fun setBody(response: MockResponse.Builder, content: Buffer?, chunkSize: Int) {
-        response.setBody(content!!)
-        response.setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        response.body(content!!)
+        response.socketPolicy(SocketPolicy.DISCONNECT_AT_END)
         response.removeHeader("Content-Length")
       }
 

@@ -239,7 +239,7 @@ public class DnsOverHttpsTest {
 
   private MockResponse dnsResponse(String s) {
     return new MockResponse.Builder()
-        .setBody(new Buffer().write(ByteString.decodeHex(s)))
+        .body(new Buffer().write(ByteString.decodeHex(s)))
         .addHeader("content-type", "application/dns-message")
         .addHeader("content-length", s.length() / 2)
         .build();

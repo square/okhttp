@@ -52,10 +52,10 @@ class RouteFailureTest {
   val ipv4 = InetAddress.getByName("203.0.113.1")
   val ipv6 = InetAddress.getByName("2001:db8:ffff:ffff:ffff:ffff:ffff:1")
 
-  val refusedStream = MockResponse.Builder()
-    .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.httpCode)
-    .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
-    .build()
+  val refusedStream = MockResponse(
+    socketPolicy = SocketPolicy.RESET_STREAM_AT_START,
+    http2ErrorCode = ErrorCode.REFUSED_STREAM.httpCode,
+  )
   val bodyResponse = MockResponse(body = "body")
 
   @BeforeEach

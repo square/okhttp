@@ -181,7 +181,7 @@ class CancelTest {
     val responseBodySize = 8 * 1024 * 1024 // 8 MiB.
     server.enqueue(
       MockResponse.Builder()
-        .setBody(
+        .body(
           Buffer()
             .write(ByteArray(responseBodySize))
         )
@@ -211,7 +211,7 @@ class CancelTest {
     val responseBodySize = 8 * 1024 * 1024 // 8 MiB.
     server.enqueue(
       MockResponse.Builder()
-        .setBody(
+        .body(
           Buffer()
             .write(ByteArray(responseBodySize))
         )

@@ -851,7 +851,7 @@ class MockWebServer : Closeable {
 
     writeHeaders(sink, response.headers)
 
-    val body = response.getBody() ?: return
+    val body = response.body ?: return
     sleepIfDelayed(response.getBodyDelay(TimeUnit.MILLISECONDS))
     throttledTransfer(response, socket, body, sink, body.size, false)
 
@@ -1117,7 +1117,7 @@ class MockWebServer : Closeable {
 
       val bodyDelayMs = response.getBodyDelay(TimeUnit.MILLISECONDS)
       val trailers = response.trailers
-      val body = response.getBody()
+      val body = response.body
       val outFinished = (body == null &&
         response.pushPromises.isEmpty() &&
         !response.isDuplex)
@@ -1174,7 +1174,7 @@ class MockWebServer : Closeable {
             socket = socket
           )
         )
-        val hasBody = pushPromise.response.getBody() != null
+        val hasBody = pushPromise.response.body != null
         val pushedStream = stream.connection.pushStream(stream.id, pushedHeaders, hasBody)
         writeResponse(pushedStream, request, pushPromise.response)
       }
@@ -1188,7 +1188,7 @@ class MockWebServer : Closeable {
           mockResponseBuilder: MockResponse.Builder,
           duplexResponseBody: DuplexResponseBody,
         ) {
-          mockResponseBuilder.setBody(duplexResponseBody)
+          mockResponseBuilder.body(duplexResponseBody)
         }
       }
     }

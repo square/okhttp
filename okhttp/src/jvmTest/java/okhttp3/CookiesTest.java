@@ -219,13 +219,13 @@ public class CookiesTest {
 
   @Test public void testRedirectsDoNotIncludeTooManyCookies() throws Exception {
     MockWebServer redirectTarget = new MockWebServer();
-    redirectTarget.enqueue(new MockResponse.Builder().setBody("A").build());
+    redirectTarget.enqueue(new MockResponse.Builder().body("A").build());
     redirectTarget.start();
     HttpUrl redirectTargetUrl = urlWithIpAddress(redirectTarget, "/");
 
     MockWebServer redirectSource = new MockWebServer();
     redirectSource.enqueue(new MockResponse.Builder()
-        .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
+        .code(HttpURLConnection.HTTP_MOVED_TEMP)
         .addHeader("Location: " + redirectTargetUrl)
         .build());
     redirectSource.start();

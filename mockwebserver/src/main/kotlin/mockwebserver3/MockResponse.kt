@@ -47,7 +47,8 @@ class MockResponse {
   val headers: Headers
   val trailers: Headers
 
-  private val body: Buffer?
+  val body: Buffer?
+    get() { return field?.clone() }
 
   val inTunnel: Boolean
   val informationalResponses: List<MockResponse>
@@ -78,16 +79,25 @@ class MockResponse {
   val webSocketListener: WebSocketListener?
   val duplexResponseBody: DuplexResponseBody?
 
+  val isDuplex: Boolean
+    get() = duplexResponseBody != null
+
   @JvmOverloads
   constructor(
     code: Int = 200,
     headers: Headers = headersOf(),
     body: String = "",
+    inTunnel: Boolean = false,
+    socketPolicy: SocketPolicy = SocketPolicy.KEEP_OPEN,
+    http2ErrorCode: Int = -1,
   ) : this(Builder()
     .apply {
       this.code = code
       this.headers.addAll(headers)
-      this.setBody(body)
+      this.body(body)
+      this.inTunnel = inTunnel
+      this.socketPolicy = socketPolicy
+      this.http2ErrorCode = http2ErrorCode
     }
   )
 
@@ -115,12 +125,6 @@ class MockResponse {
     this.duplexResponseBody = builder.duplexResponseBody
   }
 
-  /** Returns a copy of the raw HTTP payload. */
-  fun getBody(): Buffer? = body?.clone()
-
-  val isDuplex: Boolean
-    get() = duplexResponseBody != null
-
   fun getThrottlePeriod(unit: TimeUnit): Long =
     unit.convert(throttlePeriodAmount, throttlePeriodUnit)
 
@@ -136,11 +140,10 @@ class MockResponse {
 
   class Builder : Cloneable {
     var inTunnel: Boolean
-      private set
+      internal set
 
     val informationalResponses: MutableList<MockResponse>
 
-    @set:JvmName("status")
     var status: String
 
     var code: Int
@@ -172,10 +175,8 @@ class MockResponse {
     internal var throttlePeriodAmount: Long
     internal var throttlePeriodUnit: TimeUnit
 
-    @set:JvmName("socketPolicy")
     var socketPolicy: SocketPolicy
 
-    @set:JvmName("http2ErrorCode")
     var http2ErrorCode: Int
 
     internal var bodyDelayAmount: Long
@@ -240,12 +241,12 @@ class MockResponse {
       this.duplexResponseBody = mockResponse.duplexResponseBody
     }
 
-    fun setResponseCode(code: Int) = apply {
+    fun code(code: Int) = apply {
       this.code = code
     }
 
     /** Sets the status and returns this. */
-    fun setStatus(status: String) = apply {
+    fun status(status: String) = apply {
       this.status = status
     }
 
@@ -293,22 +294,22 @@ class MockResponse {
       headers.removeAll(name)
     }
 
-    fun setBody(body: Buffer) = apply {
+    fun body(body: Buffer) = apply {
       setHeader("Content-Length", body.size)
       this.body = body.clone() // Defensive copy.
     }
 
     /** Sets the response body to the UTF-8 encoded bytes of [body]. */
-    fun setBody(body: String): Builder = setBody(Buffer().writeUtf8(body))
+    fun body(body: String): Builder = body(Buffer().writeUtf8(body))
 
-    fun setBody(duplexResponseBody: DuplexResponseBody) = apply {
+    fun body(duplexResponseBody: DuplexResponseBody) = apply {
       this.duplexResponseBody = duplexResponseBody
     }
 
     /**
      * Sets the response body to [body], chunked every [maxChunkSize] bytes.
      */
-    fun setChunkedBody(body: Buffer, maxChunkSize: Int) = apply {
+    fun chunkedBody(body: Buffer, maxChunkSize: Int) = apply {
       removeHeader("Content-Length")
       headers.add(CHUNKED_BODY_HEADER)
 
@@ -328,26 +329,26 @@ class MockResponse {
      * Sets the response body to the UTF-8 encoded bytes of [body],
      * chunked every [maxChunkSize] bytes.
      */
-    fun setChunkedBody(body: String, maxChunkSize: Int): Builder =
-      setChunkedBody(Buffer().writeUtf8(body), maxChunkSize)
+    fun chunkedBody(body: String, maxChunkSize: Int): Builder =
+      chunkedBody(Buffer().writeUtf8(body), maxChunkSize)
 
     /** Sets the headers and returns this. */
-    fun setHeaders(headers: Headers) = apply {
+    fun headers(headers: Headers) = apply {
       this.headers = headers.newBuilder()
     }
 
     /** Sets the trailers and returns this. */
-    fun setTrailers(trailers: Headers) = apply {
+    fun trailers(trailers: Headers) = apply {
       this.trailers = trailers.newBuilder()
     }
 
     /** Sets the socket policy and returns this. */
-    fun setSocketPolicy(socketPolicy: SocketPolicy) = apply {
+    fun socketPolicy(socketPolicy: SocketPolicy) = apply {
       this.socketPolicy = socketPolicy
     }
 
     /** Sets the HTTP/2 error code and returns this. */
-    fun setHttp2ErrorCode(http2ErrorCode: Int) = apply {
+    fun http2ErrorCode(http2ErrorCode: Int) = apply {
       this.http2ErrorCode = http2ErrorCode
     }
 
@@ -365,12 +366,12 @@ class MockResponse {
      * Set the delayed time of the response body to [delay]. This applies to the response body
      * only; response headers are not affected.
      */
-    fun setBodyDelay(delay: Long, unit: TimeUnit) = apply {
+    fun bodyDelay(delay: Long, unit: TimeUnit) = apply {
       bodyDelayAmount = delay
       bodyDelayUnit = unit
     }
 
-    fun setHeadersDelay(delay: Long, unit: TimeUnit) = apply {
+    fun headersDelay(delay: Long, unit: TimeUnit) = apply {
       headersDelayAmount = delay
       headersDelayUnit = unit
     }
@@ -379,15 +380,15 @@ class MockResponse {
      * When [protocols][MockWebServer.protocols] include [HTTP_2][okhttp3.Protocol], this attaches a
      * pushed stream to this response.
      */
-    fun withPush(promise: PushPromise) = apply {
-      this.pushPromises.add(promise)
+    fun addPush(promise: PushPromise) = apply {
+      this.pushPromises += promise
     }
 
     /**
      * When [protocols][MockWebServer.protocols] include [HTTP_2][okhttp3.Protocol], this pushes
      * [settings] before writing the response.
      */
-    fun withSettings(settings: Settings) = apply {
+    fun settings(settings: Settings) = apply {
       this.settings.clear()
       this.settings.merge(settings)
     }
@@ -396,7 +397,7 @@ class MockResponse {
      * Attempts to perform a web socket upgrade on the connection.
      * This will overwrite any previously set status or body.
      */
-    fun withWebSocketUpgrade(listener: WebSocketListener) = apply {
+    fun webSocketUpgrade(listener: WebSocketListener) = apply {
       status = "HTTP/1.1 101 Switching Protocols"
       setHeader("Connection", "Upgrade")
       setHeader("Upgrade", "websocket")
@@ -418,7 +419,7 @@ class MockResponse {
 
     /**
      * Adds an HTTP 1xx response to precede this response. Note that this response's
-     * [headers delay][setHeadersDelay] applies after this response is transmitted. Set a
+     * [headers delay][headersDelay] applies after this response is transmitted. Set a
      * headers delay on that response to delay its transmission.
      */
     fun addInformationalResponse(response: MockResponse) = apply {
@@ -426,13 +427,7 @@ class MockResponse {
     }
 
     fun add100Continue() = apply {
-      addInformationalResponse(
-        Builder()
-          .apply {
-            code = 100
-          }
-          .build()
-      )
+      addInformationalResponse(MockResponse(code = 100))
     }
 
     public override fun clone(): Builder = build().newBuilder()

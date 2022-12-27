@@ -186,10 +186,12 @@ class CallKotlinTest {
         })
         .build()
 
-    server.enqueue(MockResponse.Builder()
-      .setBody("a")
-      .setSocketPolicy(SocketPolicy.SHUTDOWN_OUTPUT_AT_END)
-      .build())
+    server.enqueue(
+      MockResponse(
+        body = "a",
+        socketPolicy = SocketPolicy.SHUTDOWN_OUTPUT_AT_END
+      )
+    )
     server.enqueue(MockResponse(body = "b"))
 
     val requestA = Request(server.url("/"))
@@ -239,12 +241,8 @@ class CallKotlinTest {
 
   /** Confirm suppressed exceptions that occur after connecting are returned. */
   @Test fun httpExceptionsAreReturnedAsSuppressed() {
-    server.enqueue(MockResponse.Builder()
-      .setSocketPolicy(SocketPolicy.DISCONNECT_AT_START)
-      .build())
-    server.enqueue(MockResponse.Builder()
-      .setSocketPolicy(SocketPolicy.DISCONNECT_AT_START)
-      .build())
+    server.enqueue(MockResponse(socketPolicy = SocketPolicy.DISCONNECT_AT_START))
+    server.enqueue(MockResponse(socketPolicy = SocketPolicy.DISCONNECT_AT_START))
 
     client = client.newBuilder()
         .dns(DoubleInetAddressDns()) // Two routes so we get two failures.

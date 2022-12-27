@@ -168,7 +168,7 @@ public final class HttpLoggingInterceptorTest {
     setLevel(Level.BASIC);
 
     server.enqueue(new MockResponse.Builder()
-        .setBody("Hello!")
+        .body("Hello!")
         .setHeader("Content-Type", PLAIN)
         .build());
     Response response = client.newCall(request().build()).execute();
@@ -189,7 +189,7 @@ public final class HttpLoggingInterceptorTest {
     setLevel(Level.BASIC);
 
     server.enqueue(new MockResponse.Builder()
-        .setChunkedBody("Hello!", 2)
+        .chunkedBody("Hello!", 2)
         .setHeader("Content-Type", PLAIN)
         .build());
     Response response = client.newCall(request().build()).execute();
@@ -381,7 +381,7 @@ public final class HttpLoggingInterceptorTest {
     setLevel(Level.HEADERS);
 
     server.enqueue(new MockResponse.Builder()
-        .setBody("Hello!")
+        .body("Hello!")
         .setHeader("Content-Type", PLAIN)
         .build());
     Response response = client.newCall(request().build()).execute();
@@ -450,7 +450,7 @@ public final class HttpLoggingInterceptorTest {
 
   private void bodyGetNoBody(int code) throws IOException {
     server.enqueue(new MockResponse.Builder()
-        .setStatus("HTTP/1.1 " + code + " No Content")
+        .status("HTTP/1.1 " + code + " No Content")
         .build());
     Response response = client.newCall(request().build()).execute();
     response.body().close();
@@ -517,7 +517,7 @@ public final class HttpLoggingInterceptorTest {
     setLevel(Level.BODY);
 
     server.enqueue(new MockResponse.Builder()
-        .setBody("Hello!")
+        .body("Hello!")
         .setHeader("Content-Type", PLAIN)
         .build());
     Response response = client.newCall(request().build()).execute();
@@ -554,7 +554,7 @@ public final class HttpLoggingInterceptorTest {
     setLevel(Level.BODY);
 
     server.enqueue(new MockResponse.Builder()
-        .setChunkedBody("Hello!", 2)
+        .chunkedBody("Hello!", 2)
         .setHeader("Content-Type", PLAIN)
         .build());
     Response response = client.newCall(request().build()).execute();
@@ -592,7 +592,7 @@ public final class HttpLoggingInterceptorTest {
 
     server.enqueue(new MockResponse.Builder()
         .setHeader("Content-Type", PLAIN)
-        .setBody(new Buffer().writeUtf8("Uncompressed"))
+        .body(new Buffer().writeUtf8("Uncompressed"))
         .build());
 
     Response response = client.newCall(request()
@@ -630,7 +630,7 @@ public final class HttpLoggingInterceptorTest {
     server.enqueue(new MockResponse.Builder()
         .setHeader("Content-Encoding", "gzip")
         .setHeader("Content-Type", PLAIN)
-        .setBody(new Buffer().write(ByteString.decodeBase64(
+        .body(new Buffer().write(ByteString.decodeBase64(
             "H4sIAAAAAAAAAPNIzcnJ11HwQKIAdyO+9hMAAAA=")))
         .build());
     Response response = client.newCall(request().build()).execute();
@@ -674,7 +674,7 @@ public final class HttpLoggingInterceptorTest {
           // It's invalid to return this if not requested, but the server might anyway
           .setHeader("Content-Encoding", "br")
           .setHeader("Content-Type", PLAIN)
-          .setBody(new Buffer().write(ByteString.decodeBase64(
+          .body(new Buffer().write(ByteString.decodeBase64(
               "iwmASGVsbG8sIEhlbGxvLCBIZWxsbwoD")))
           .build());
       Response response = client.newCall(request().build()).execute();
@@ -710,7 +710,7 @@ public final class HttpLoggingInterceptorTest {
 
     server.enqueue(new MockResponse.Builder()
       .setHeader("Content-Type", "text/event-stream")
-      .setChunkedBody(""
+      .chunkedBody(""
         + "event: add\n"
         + "data: 73857293\n"
         + "\n"
@@ -753,7 +753,7 @@ public final class HttpLoggingInterceptorTest {
 
     server.enqueue(new MockResponse.Builder()
         .setHeader("Content-Type", "text/html; charset=0")
-        .setBody("Body with unknown charset")
+        .body("Body with unknown charset")
         .build());
     Response response = client.newCall(request().build()).execute();
     response.body().close();
@@ -797,7 +797,7 @@ public final class HttpLoggingInterceptorTest {
     buffer.writeUtf8CodePoint(0x1a);
     buffer.writeUtf8CodePoint(0x0a);
     server.enqueue(new MockResponse.Builder()
-        .setBody(buffer)
+        .body(buffer)
         .setHeader("Content-Type", "image/png; charset=utf-8")
         .build());
     Response response = client.newCall(request().build()).execute();
@@ -938,7 +938,7 @@ public final class HttpLoggingInterceptorTest {
     setLevel(Level.BODY);
 
     server.enqueue(new MockResponse.Builder()
-        .setBody("Hello response!")
+        .body("Hello response!")
         .build());
 
     RequestBody asyncRequestBody = new RequestBody() {
@@ -981,7 +981,7 @@ public final class HttpLoggingInterceptorTest {
     setLevel(Level.BODY);
 
     server.enqueue(new MockResponse.Builder()
-        .setBody("Hello response!")
+        .body("Hello response!")
         .build());
 
     RequestBody asyncRequestBody = new RequestBody() {

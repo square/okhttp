@@ -121,7 +121,7 @@ public final class EventListenerTest {
 
   @Test public void successfulCallEventSequence() throws IOException {
     server.enqueue(new MockResponse.Builder()
-        .setBody("abc")
+        .body("abc")
         .build());
 
     Call call = client.newCall(new Request.Builder()
@@ -141,7 +141,7 @@ public final class EventListenerTest {
 
   @Test public void successfulCallEventSequenceForIpAddress() throws IOException {
     server.enqueue(new MockResponse.Builder()
-        .setBody("abc")
+        .body("abc")
         .build());
 
     String ipAddress = InetAddress.getLoopbackAddress().getHostAddress();
@@ -163,7 +163,7 @@ public final class EventListenerTest {
 
   @Test public void successfulCallEventSequenceForEnqueue() throws Exception {
     server.enqueue(new MockResponse.Builder()
-        .setBody("abc")
+        .body("abc")
         .build());
 
     Call call = client.newCall(new Request.Builder()
@@ -195,7 +195,7 @@ public final class EventListenerTest {
 
   @Test public void failedCallEventSequence() {
     server.enqueue(new MockResponse.Builder()
-        .setHeadersDelay(2, TimeUnit.SECONDS)
+        .headersDelay(2, TimeUnit.SECONDS)
         .build());
 
     client = client.newBuilder()
@@ -220,9 +220,9 @@ public final class EventListenerTest {
 
   @Test public void failedDribbledCallEventSequence() throws IOException {
     server.enqueue(new MockResponse.Builder()
-        .setBody("0123456789")
+        .body("0123456789")
         .throttleBody(2, 100, TimeUnit.MILLISECONDS)
-        .setSocketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY)
+        .socketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY)
         .build());
 
     client = client.newBuilder()
@@ -269,7 +269,7 @@ public final class EventListenerTest {
 
   @Test public void cancelAsyncCall() throws IOException {
     server.enqueue(new MockResponse.Builder()
-        .setBody("abc")
+        .body("abc")
         .build());
 
     Call call = client.newCall(new Request.Builder()
@@ -290,7 +290,7 @@ public final class EventListenerTest {
 
   @Test public void multipleCancelsEmitsOnlyOneEvent() throws IOException {
     server.enqueue(new MockResponse.Builder()
-        .setBody("abc")
+        .body("abc")
         .build());
 
     Call call = client.newCall(new Request.Builder()
@@ -418,7 +418,7 @@ public final class EventListenerTest {
     enableTlsWithTunnel();
     server.setProtocols(asList(Protocol.HTTP_1_1));
     server.enqueue(new MockResponse.Builder()
-        .setBody("abc")
+        .body("abc")
         .build());
 
     assertSuccessfulEventOrder(anyResponse);
@@ -431,8 +431,8 @@ public final class EventListenerTest {
     enableTlsWithTunnel();
     server.setProtocols(asList(Protocol.HTTP_1_1));
     server.enqueue(new MockResponse.Builder()
-        .setBodyDelay(100, TimeUnit.MILLISECONDS)
-        .setChunkedBody("Hello!", 2)
+        .bodyDelay(100, TimeUnit.MILLISECONDS)
+        .chunkedBody("Hello!", 2)
         .build());
 
     assertSuccessfulEventOrder(anyResponse);
@@ -445,8 +445,8 @@ public final class EventListenerTest {
     enableTlsWithTunnel();
     server.setProtocols(asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
     server.enqueue(new MockResponse.Builder()
-        .setBodyDelay(100, TimeUnit.MILLISECONDS)
-        .setChunkedBody("Hello!", 2)
+        .bodyDelay(100, TimeUnit.MILLISECONDS)
+        .chunkedBody("Hello!", 2)
         .build());
 
     assertSuccessfulEventOrder(matchesProtocol(Protocol.HTTP_2));
@@ -503,7 +503,7 @@ public final class EventListenerTest {
 
   @Test public void multipleDnsLookupsForSingleCall() throws IOException {
     server.enqueue(new MockResponse.Builder()
-        .setResponseCode(301)
+        .code(301)
         .setHeader("Location", "http://www.fakeurl:" + server.getPort())
         .build());
     server.enqueue(new MockResponse());
@@ -598,7 +598,7 @@ public final class EventListenerTest {
   @Test public void failedConnect() throws UnknownHostException {
     enableTlsWithTunnel();
     server.enqueue(new MockResponse.Builder()
-        .setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE)
+        .socketPolicy(SocketPolicy.FAIL_HANDSHAKE)
         .build());
 
     Call call = client.newCall(new Request.Builder()
@@ -628,7 +628,7 @@ public final class EventListenerTest {
   @Test public void multipleConnectsForSingleCall() throws IOException {
     enableTlsWithTunnel();
     server.enqueue(new MockResponse.Builder()
-        .setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE)
+        .socketPolicy(SocketPolicy.FAIL_HANDSHAKE)
         .build());
     server.enqueue(new MockResponse());
 
@@ -713,7 +713,7 @@ public final class EventListenerTest {
     enableTlsWithTunnel();
     server.enqueue(new MockResponse.Builder()
         .inTunnel()
-        .setResponseCode(407)
+        .code(407)
         .addHeader("Proxy-Authenticate: Basic realm=\"localhost\"")
         .addHeader("Connection: close")
         .build());
@@ -765,7 +765,7 @@ public final class EventListenerTest {
   @Test public void failedSecureConnect() {
     enableTlsWithTunnel();
     server.enqueue(new MockResponse.Builder()
-        .setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE)
+        .socketPolicy(SocketPolicy.FAIL_HANDSHAKE)
         .build());
 
     Call call = client.newCall(new Request.Builder()
@@ -814,7 +814,7 @@ public final class EventListenerTest {
   @Test public void multipleSecureConnectsForSingleCall() throws IOException {
     enableTlsWithTunnel();
     server.enqueue(new MockResponse.Builder()
-        .setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE)
+        .socketPolicy(SocketPolicy.FAIL_HANDSHAKE)
         .build());
     server.enqueue(new MockResponse());
 
@@ -884,11 +884,11 @@ public final class EventListenerTest {
 
   @Test public void noConnectionFoundOnFollowUp() throws IOException {
     server.enqueue(new MockResponse.Builder()
-        .setResponseCode(301)
+        .code(301)
         .addHeader("Location", "/foo")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("ABC")
+        .body("ABC")
         .build());
 
     Call call = client.newCall(new Request.Builder()
@@ -932,12 +932,12 @@ public final class EventListenerTest {
 
   @Test public void multipleConnectionsFoundForSingleCall() throws IOException {
     server.enqueue(new MockResponse.Builder()
-        .setResponseCode(301)
+        .code(301)
         .addHeader("Location", "/foo")
         .addHeader("Connection", "Close")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("ABC")
+        .body("ABC")
         .build());
 
     Call call = client.newCall(new Request.Builder()
@@ -972,8 +972,8 @@ public final class EventListenerTest {
     // Use a 2 MiB body so the disconnect won't happen until the client has read some data.
     int responseBodySize = 2 * 1024 * 1024; // 2 MiB
     server.enqueue(new MockResponse.Builder()
-        .setBody(new Buffer().write(new byte[responseBodySize]))
-        .setSocketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY)
+        .body(new Buffer().write(new byte[responseBodySize]))
+        .socketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY)
         .build());
 
     Call call = client.newCall(new Request.Builder()
@@ -997,9 +997,9 @@ public final class EventListenerTest {
 
   @Test public void emptyResponseBody() throws IOException {
     server.enqueue(new MockResponse.Builder()
-        .setBody("")
-        .setBodyDelay(1, TimeUnit.SECONDS)
-        .setSocketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY)
+        .body("")
+        .bodyDelay(1, TimeUnit.SECONDS)
+        .socketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY)
         .build());
 
     Call call = client.newCall(new Request.Builder()
@@ -1018,7 +1018,7 @@ public final class EventListenerTest {
   @Test public void emptyResponseBodyConnectionClose() throws IOException {
     server.enqueue(new MockResponse.Builder()
         .addHeader("Connection", "close")
-        .setBody("")
+        .body("")
         .build());
 
     Call call = client.newCall(new Request.Builder()
@@ -1036,9 +1036,9 @@ public final class EventListenerTest {
 
   @Test public void responseBodyClosedClosedWithoutReadingAllData() throws IOException {
     server.enqueue(new MockResponse.Builder()
-        .setBody("abc")
-        .setBodyDelay(1, TimeUnit.SECONDS)
-        .setSocketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY)
+        .body("abc")
+        .bodyDelay(1, TimeUnit.SECONDS)
+        .socketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY)
         .build());
 
     Call call = client.newCall(new Request.Builder()
@@ -1076,7 +1076,7 @@ public final class EventListenerTest {
 
   private void requestBodyFail(@Nullable Protocol expectedProtocol) {
     server.enqueue(new MockResponse.Builder()
-        .setSocketPolicy(SocketPolicy.DISCONNECT_DURING_REQUEST_BODY)
+        .socketPolicy(SocketPolicy.DISCONNECT_DURING_REQUEST_BODY)
         .build());
 
     NonCompletingRequestBody request = new NonCompletingRequestBody();
@@ -1158,7 +1158,7 @@ public final class EventListenerTest {
     };
 
     server.enqueue(new MockResponse.Builder()
-        .setSocketPolicy(SocketPolicy.DISCONNECT_DURING_REQUEST_BODY)
+        .socketPolicy(SocketPolicy.DISCONNECT_DURING_REQUEST_BODY)
         .build());
 
     Call call = client.newCall(new Request.Builder()
@@ -1220,7 +1220,7 @@ public final class EventListenerTest {
 
   @Test public void successfulCallEventSequenceWithListener() throws IOException {
     server.enqueue(new MockResponse.Builder()
-        .setBody("abc")
+        .body("abc")
         .build());
 
     client = client.newBuilder()
@@ -1245,8 +1245,8 @@ public final class EventListenerTest {
   private void requestBodySuccess(RequestBody body, Matcher<Long> requestBodyBytes,
       Matcher<Long> responseHeaderLength) throws IOException {
     server.enqueue(new MockResponse.Builder()
-        .setResponseCode(200)
-        .setBody("World!")
+        .code(200)
+        .body("World!")
         .build());
 
     Call call = client.newCall(new Request.Builder()
@@ -1342,10 +1342,10 @@ public final class EventListenerTest {
 
     // Create a response with artificial delays.
     server.enqueue(new MockResponse.Builder()
-        .setHeadersDelay(responseHeadersStartDelay, TimeUnit.MILLISECONDS)
-        .setBodyDelay(responseBodyStartDelay, TimeUnit.MILLISECONDS)
+        .headersDelay(responseHeadersStartDelay, TimeUnit.MILLISECONDS)
+        .bodyDelay(responseBodyStartDelay, TimeUnit.MILLISECONDS)
         .throttleBody(5, responseBodyEndDelay, TimeUnit.MILLISECONDS)
-        .setBody("fghijk")
+        .body("fghijk")
         .build());
 
     // Make the call.
@@ -1379,7 +1379,7 @@ public final class EventListenerTest {
 
   @Test public void redirectUsingSameConnectionEventSequence() throws IOException {
     server.enqueue(new MockResponse.Builder()
-        .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
+        .code(HttpURLConnection.HTTP_MOVED_TEMP)
         .addHeader("Location: /foo")
         .build());
     server.enqueue(new MockResponse());
@@ -1401,7 +1401,7 @@ public final class EventListenerTest {
     MockWebServer otherServer = new MockWebServer();
     server.enqueue(
         new MockResponse.Builder()
-            .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
+            .code(HttpURLConnection.HTTP_MOVED_TEMP)
             .addHeader("Location: " + otherServer.url("/foo"))
             .build());
     otherServer.enqueue(new MockResponse());
@@ -1421,8 +1421,8 @@ public final class EventListenerTest {
   }
 
   @Test public void applicationInterceptorProceedsMultipleTimes() throws Exception {
-    server.enqueue(new MockResponse.Builder().setBody("a").build());
-    server.enqueue(new MockResponse.Builder().setBody("b").build());
+    server.enqueue(new MockResponse.Builder().body("a").build());
+    server.enqueue(new MockResponse.Builder().body("b").build());
 
     client = client.newBuilder()
         .addInterceptor(chain -> {
@@ -1493,7 +1493,7 @@ public final class EventListenerTest {
     long responseHeadersStartDelay = 250L;
     server.enqueue(new MockResponse.Builder()
         .add100Continue()
-        .setHeadersDelay(responseHeadersStartDelay, TimeUnit.MILLISECONDS)
+        .headersDelay(responseHeadersStartDelay, TimeUnit.MILLISECONDS)
         .build());
 
     Request request = new Request.Builder()
@@ -1517,7 +1517,7 @@ public final class EventListenerTest {
     enableCache();
 
     server.enqueue(new MockResponse.Builder()
-        .setBody("abc")
+        .body("abc")
         .build());
 
     Call call = client.newCall(new Request.Builder()
@@ -1540,10 +1540,10 @@ public final class EventListenerTest {
 
     server.enqueue(new MockResponse.Builder()
         .addHeader("ETag", "v1")
-        .setBody("abc")
+        .body("abc")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
         .build());
 
     Call call = client.newCall(new Request.Builder()
@@ -1574,12 +1574,12 @@ public final class EventListenerTest {
 
     server.enqueue(new MockResponse.Builder()
         .addHeader("ETag: v1")
-        .setBody("abc")
+        .body("abc")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setResponseCode(HttpURLConnection.HTTP_OK)
+        .code(HttpURLConnection.HTTP_OK)
         .addHeader("ETag: v2")
-        .setBody("abd")
+        .body("abd")
         .build());
 
     Call call = client.newCall(new Request.Builder()
@@ -1623,7 +1623,7 @@ public final class EventListenerTest {
     enableCache();
 
     server.enqueue(new MockResponse.Builder()
-        .setBody("abc")
+        .body("abc")
         .addHeader("cache-control: public, max-age=300")
         .build());
 

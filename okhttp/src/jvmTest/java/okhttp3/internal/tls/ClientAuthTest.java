@@ -131,7 +131,7 @@ public final class ClientAuthTest {
     server.useHttps(socketFactory);
     server.requestClientAuth();
     server.enqueue(new MockResponse.Builder()
-        .setBody("abc")
+        .body("abc")
         .build());
 
     Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
@@ -151,7 +151,7 @@ public final class ClientAuthTest {
     server.useHttps(socketFactory);
     server.requireClientAuth();
     server.enqueue(new MockResponse.Builder()
-        .setBody("abc")
+        .body("abc")
         .build());
 
     Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
@@ -171,7 +171,7 @@ public final class ClientAuthTest {
     server.useHttps(socketFactory);
     server.noClientAuth();
     server.enqueue(new MockResponse.Builder()
-        .setBody("abc")
+        .body("abc")
         .build());
 
     Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
@@ -190,7 +190,7 @@ public final class ClientAuthTest {
     server.useHttps(socketFactory);
     server.requestClientAuth();
     server.enqueue(new MockResponse.Builder()
-        .setBody("abc")
+        .body("abc")
         .build());
 
     Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
@@ -291,7 +291,7 @@ public final class ClientAuthTest {
 
   @Test public void invalidClientAuthEvents() throws Throwable {
     server.enqueue(new MockResponse.Builder()
-        .setBody("abc")
+        .body("abc")
         .build());
 
     clientCert = new HeldCertificate.Builder()

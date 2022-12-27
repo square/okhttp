@@ -32,8 +32,8 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
-import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.fail
 
 @Timeout(30)
@@ -75,11 +75,13 @@ class ServerTruncatesRequestTest {
   }
 
   private fun serverTruncatesRequestOnLongPost(https: Boolean) {
-    server.enqueue(MockResponse.Builder()
-      .setSocketPolicy(SocketPolicy.DO_NOT_READ_REQUEST_BODY)
-      .setBody("abc")
-      .setHttp2ErrorCode(ErrorCode.NO_ERROR.httpCode)
-      .build())
+    server.enqueue(
+      MockResponse(
+        body = "abc",
+        socketPolicy = SocketPolicy.DO_NOT_READ_REQUEST_BODY,
+        http2ErrorCode = ErrorCode.NO_ERROR.httpCode,
+      )
+    )
 
     val call = client.newCall(
       Request(
@@ -131,11 +133,13 @@ class ServerTruncatesRequestTest {
   fun serverTruncatesRequestHttp2OnDuplexRequest() {
     enableProtocol(Protocol.HTTP_2)
 
-    server.enqueue(MockResponse.Builder()
-      .setSocketPolicy(SocketPolicy.DO_NOT_READ_REQUEST_BODY)
-      .setBody("abc")
-      .setHttp2ErrorCode(ErrorCode.NO_ERROR.httpCode)
-      .build())
+    server.enqueue(
+      MockResponse(
+        body = "abc",
+        socketPolicy = SocketPolicy.DO_NOT_READ_REQUEST_BODY,
+        http2ErrorCode = ErrorCode.NO_ERROR.httpCode,
+      )
+    )
 
     val requestBody = AsyncRequestBody()
 
@@ -178,15 +182,15 @@ class ServerTruncatesRequestTest {
 
   private fun serverTruncatesRequestButTrailersCanStillBeRead(http2: Boolean) {
     val mockResponse = MockResponse.Builder()
-      .setSocketPolicy(SocketPolicy.DO_NOT_READ_REQUEST_BODY)
-      .setTrailers(headersOf("caboose", "xyz"))
-      .setHttp2ErrorCode(ErrorCode.NO_ERROR.httpCode)
+      .socketPolicy(SocketPolicy.DO_NOT_READ_REQUEST_BODY)
+      .trailers(headersOf("caboose", "xyz"))
+      .http2ErrorCode(ErrorCode.NO_ERROR.httpCode)
 
     // Trailers always work for HTTP/2, but only for chunked bodies in HTTP/1.
     if (http2) {
-      mockResponse.setBody("abc")
+      mockResponse.body("abc")
     } else {
-      mockResponse.setChunkedBody("abc", 1)
+      mockResponse.chunkedBody("abc", 1)
     }
 
     server.enqueue(mockResponse.build())

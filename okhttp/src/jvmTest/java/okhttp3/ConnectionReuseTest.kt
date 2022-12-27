@@ -113,10 +113,11 @@ class ConnectionReuseTest {
   fun connectionsAreNotReusedWithUnknownLengthResponseBody() {
     server.enqueue(
       MockResponse.Builder()
-        .setBody("a")
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        .body("a")
         .clearHeaders()
-        .build())
+        .socketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        .build()
+    )
     server.enqueue(MockResponse(body = "b"))
     val request = Request(server.url("/"))
     assertConnectionNotReused(request, request)
@@ -160,10 +161,10 @@ class ConnectionReuseTest {
       .build()
     server.enqueue(
       MockResponse.Builder()
-        .setResponseCode(301)
+        .code(301)
         .addHeader("Location: /b")
-        .setBodyDelay(1, TimeUnit.SECONDS)
-        .setBody("a")
+        .bodyDelay(1, TimeUnit.SECONDS)
+        .body("a")
         .build())
     server.enqueue(MockResponse(body = "b"))
     val request = Request(server.url("/"))
@@ -176,9 +177,7 @@ class ConnectionReuseTest {
   @Test
   fun silentRetryWhenIdempotentRequestFailsOnReusedConnection() {
     server.enqueue(MockResponse(body = "a"))
-    server.enqueue(MockResponse.Builder()
-      .setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST)
-      .build())
+    server.enqueue(MockResponse(socketPolicy = SocketPolicy.DISCONNECT_AFTER_REQUEST))
     server.enqueue(MockResponse(body = "b"))
     val request = Request(server.url("/"))
     val responseA = client.newCall(request).execute()

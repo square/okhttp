@@ -77,8 +77,8 @@ class SuspendCallTest {
     runTest {
       server.enqueue(
         MockResponse.Builder()
-          .setBodyDelay(5, TimeUnit.SECONDS)
-          .setBody("abc")
+          .bodyDelay(5, TimeUnit.SECONDS)
+          .body("abc")
           .build()
       )
 
@@ -106,8 +106,8 @@ class SuspendCallTest {
     runTest {
       server.enqueue(
         MockResponse.Builder()
-          .setBodyDelay(5, TimeUnit.SECONDS)
-          .setBody("abc")
+          .bodyDelay(5, TimeUnit.SECONDS)
+          .body("abc")
           .build()
       )
 
@@ -133,10 +133,10 @@ class SuspendCallTest {
   fun failedCall() {
     runTest {
       server.enqueue(
-        MockResponse.Builder()
-          .setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST)
-          .setBody("abc")
-          .build()
+        MockResponse(
+          body = "abc",
+          socketPolicy = SocketPolicy.DISCONNECT_AFTER_REQUEST,
+        )
       )
 
       val call = client.newCall(request)

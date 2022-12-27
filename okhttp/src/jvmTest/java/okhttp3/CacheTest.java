@@ -171,8 +171,8 @@ public final class CacheTest {
     MockResponse.Builder builder = new MockResponse.Builder()
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
-        .setResponseCode(responseCode)
-        .setBody("ABCDE")
+        .code(responseCode)
+        .body("ABCDE")
         .addHeader("WWW-Authenticate: challenge");
     if (responseCode == HttpURLConnection.HTTP_PROXY_AUTH) {
       builder.addHeader("Proxy-Authenticate: Basic realm=\"protected area\"");
@@ -180,7 +180,7 @@ public final class CacheTest {
       builder.addHeader("WWW-Authenticate: Basic realm=\"protected area\"");
     } else if (responseCode == HttpURLConnection.HTTP_NO_CONTENT
         || responseCode == HttpURLConnection.HTTP_RESET) {
-      builder.setBody(""); // We forbid bodies for 204 and 205.
+      builder.body(""); // We forbid bodies for 204 and 205.
     }
     server.enqueue(builder.build());
 
@@ -191,7 +191,7 @@ public final class CacheTest {
       expectedResponseCode = 200;
       server.enqueue(new MockResponse.Builder()
           .setHeader("Cache-Control", "no-store")
-          .setBody("FGHIJ")
+          .body("FGHIJ")
           .build());
     }
 
@@ -236,7 +236,7 @@ public final class CacheTest {
     MockResponse.Builder mockResponse = new MockResponse.Builder()
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
-        .setStatus("HTTP/1.1 200 Fantastic");
+        .status("HTTP/1.1 200 Fantastic");
     transferKind.setBody(mockResponse, "I love puppies but hate spiders", 1);
     server.enqueue(mockResponse.build());
 
@@ -273,7 +273,7 @@ public final class CacheTest {
     server.enqueue(new MockResponse.Builder()
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
-        .setBody("ABC")
+        .body("ABC")
         .build());
 
     client = client.newBuilder()
@@ -312,16 +312,16 @@ public final class CacheTest {
     server.enqueue(new MockResponse.Builder()
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
-        .setResponseCode(HttpURLConnection.HTTP_MOVED_PERM)
+        .code(HttpURLConnection.HTTP_MOVED_PERM)
         .addHeader("Location: /foo")
         .build());
     server.enqueue(new MockResponse.Builder()
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
-        .setBody("ABC")
+        .body("ABC")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("DEF")
+        .body("DEF")
         .build());
 
     Request request = new Request.Builder().url(server.url("/")).build();
@@ -340,14 +340,14 @@ public final class CacheTest {
   @Test public void redirectToCachedResult() throws Exception {
     server.enqueue(new MockResponse.Builder()
         .addHeader("Cache-Control: max-age=60")
-        .setBody("ABC")
+        .body("ABC")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setResponseCode(HttpURLConnection.HTTP_MOVED_PERM)
+        .code(HttpURLConnection.HTTP_MOVED_PERM)
         .addHeader("Location: /foo")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("DEF")
+        .body("DEF")
         .build());
 
     Request request1 = new Request.Builder().url(server.url("/foo")).build();
@@ -378,16 +378,16 @@ public final class CacheTest {
     server.enqueue(new MockResponse.Builder()
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
-        .setResponseCode(HttpURLConnection.HTTP_MOVED_PERM)
+        .code(HttpURLConnection.HTTP_MOVED_PERM)
         .addHeader("Location: /foo")
         .build());
     server.enqueue(new MockResponse.Builder()
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
-        .setBody("ABC")
+        .body("ABC")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("DEF")
+        .body("DEF")
         .build());
 
     client = client.newBuilder()
@@ -424,16 +424,16 @@ public final class CacheTest {
     server2.enqueue(new MockResponse.Builder()
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
-        .setBody("ABC")
+        .body("ABC")
         .build());
     server2.enqueue(new MockResponse.Builder()
-        .setBody("DEF")
+        .body("DEF")
         .build());
 
     server.enqueue(new MockResponse.Builder()
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
-        .setResponseCode(HttpURLConnection.HTTP_MOVED_PERM)
+        .code(HttpURLConnection.HTTP_MOVED_PERM)
         .addHeader("Location: " + server2.url("/"))
         .build());
 
@@ -482,19 +482,19 @@ public final class CacheTest {
   private void temporaryRedirectCachedWithCachingHeader(
       int responseCode, String headerName, String headerValue) throws Exception {
     server.enqueue(new MockResponse.Builder()
-        .setResponseCode(responseCode)
+        .code(responseCode)
         .addHeader(headerName, headerValue)
         .addHeader("Location", "/a")
         .build());
     server.enqueue(new MockResponse.Builder()
         .addHeader(headerName, headerValue)
-        .setBody("a")
+        .body("a")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("b")
+        .body("b")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("c")
+        .body("c")
         .build());
 
     HttpUrl url = server.url("/");
@@ -504,14 +504,14 @@ public final class CacheTest {
 
   private void temporaryRedirectNotCachedWithoutCachingHeader(int responseCode) throws Exception {
     server.enqueue(new MockResponse.Builder()
-        .setResponseCode(responseCode)
+        .code(responseCode)
         .addHeader("Location", "/a")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("a")
+        .body("a")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("b")
+        .body("b")
         .build());
 
     HttpUrl url = server.url("/");
@@ -522,15 +522,15 @@ public final class CacheTest {
   /** https://github.com/square/okhttp/issues/2198 */
   @Test public void cachedRedirect() throws IOException {
     server.enqueue(new MockResponse.Builder()
-        .setResponseCode(301)
+        .code(301)
         .addHeader("Cache-Control: max-age=60")
         .addHeader("Location: /bar")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("ABC")
+        .body("ABC")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("ABC")
+        .body("ABC")
         .build());
 
     Request request1 = new Request.Builder().url(server.url("/")).build();
@@ -561,7 +561,7 @@ public final class CacheTest {
     transferKind.setBody(mockResponse, "ABCDE\nFGHIJKLMNOPQRSTUVWXYZ", 16);
     server.enqueue(truncateViolently(mockResponse, 16).build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("Request #2")
+        .body("Request #2")
         .build());
 
     BufferedSource bodySource = get(server.url("/")).body().source();
@@ -601,7 +601,7 @@ public final class CacheTest {
     transferKind.setBody(builder, "ABCDE\nFGHIJKLMNOPQRSTUVWXYZ", 1024);
     server.enqueue(builder.build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("Request #2")
+        .body("Request #2")
         .build());
 
     Response response1 = get(server.url("/"));
@@ -630,7 +630,7 @@ public final class CacheTest {
     server.enqueue(new MockResponse.Builder()
         .addHeader("Last-Modified: " + formatDate(-105, TimeUnit.SECONDS))
         .addHeader("Date: " + formatDate(-5, TimeUnit.SECONDS))
-        .setBody("A")
+        .body("A")
         .build());
 
     HttpUrl url = server.url("/");
@@ -664,7 +664,7 @@ public final class CacheTest {
     server.enqueue(new MockResponse.Builder()
         .addHeader("Last-Modified: " + formatDate(-105, TimeUnit.DAYS))
         .addHeader("Date: " + formatDate(-5, TimeUnit.DAYS))
-        .setBody("A")
+        .body("A")
         .build());
 
     assertThat(get(server.url("/")).body().string()).isEqualTo("A");
@@ -678,10 +678,10 @@ public final class CacheTest {
     server.enqueue(new MockResponse.Builder()
         .addHeader("Last-Modified: " + formatDate(-105, TimeUnit.SECONDS))
         .addHeader("Date: " + formatDate(-5, TimeUnit.SECONDS))
-        .setBody("A")
+        .body("A")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("B")
+        .body("B")
         .build());
 
     HttpUrl url = server.url("/").newBuilder().addQueryParameter("foo", "bar").build();
@@ -866,14 +866,14 @@ public final class CacheTest {
     // 2. Invalidate it.
     // 3. Expect a cache miss.
     server.enqueue(new MockResponse.Builder()
-        .setBody("A")
+        .body("A")
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("B")
+        .body("B")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("C")
+        .body("C")
         .build());
 
     HttpUrl url = server.url("/");
@@ -895,15 +895,15 @@ public final class CacheTest {
     // 2. Invalidate it with an uncacheable response.
     // 3. Expect a cache miss.
     server.enqueue(new MockResponse.Builder()
-        .setBody("A")
+        .body("A")
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("B")
-        .setResponseCode(500)
+        .body("B")
+        .code(500)
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("C")
+        .body("C")
         .build());
 
     HttpUrl url = server.url("/");
@@ -925,15 +925,15 @@ public final class CacheTest {
     // 2. Invalidate it.
     // 3. Expect a cache miss.
     server.enqueue(new MockResponse.Builder()
-        .setBody("A")
+        .body("A")
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
         .build());
     server.enqueue(new MockResponse.Builder()
         .clearHeaders()
-        .setResponseCode(HttpURLConnection.HTTP_NO_CONTENT)
+        .code(HttpURLConnection.HTTP_NO_CONTENT)
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("C")
+        .body("C")
         .build());
 
     HttpUrl url = server.url("/");
@@ -1029,13 +1029,13 @@ public final class CacheTest {
     // 1. Request a range.
     // 2. Request a full document, expecting a cache miss.
     server.enqueue(new MockResponse.Builder()
-        .setBody("AA")
-        .setResponseCode(HttpURLConnection.HTTP_PARTIAL)
+        .body("AA")
+        .code(HttpURLConnection.HTTP_PARTIAL)
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
         .addHeader("Content-Range: bytes 1000-1001/2000")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("BB")
+        .body("BB")
         .build());
 
     HttpUrl url = server.url("/");
@@ -1059,16 +1059,16 @@ public final class CacheTest {
    */
   @Test public void serverReturnsDocumentOlderThanCache() throws Exception {
     server.enqueue(new MockResponse.Builder()
-        .setBody("A")
+        .body("A")
         .addHeader("Last-Modified: " + formatDate(-2, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(-1, TimeUnit.HOURS))
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("B")
+        .body("B")
         .addHeader("Last-Modified: " + formatDate(-4, TimeUnit.HOURS))
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
         .build());
 
     HttpUrl url = server.url("/");
@@ -1081,11 +1081,11 @@ public final class CacheTest {
   @Test public void clientSideNoStore() throws Exception {
     server.enqueue(new MockResponse.Builder()
         .addHeader("Cache-Control: max-age=60")
-        .setBody("A")
+        .body("A")
         .build());
     server.enqueue(new MockResponse.Builder()
         .addHeader("Cache-Control: max-age=60")
-        .setBody("B")
+        .body("B")
         .build());
 
     Request request1 = new Request.Builder()
@@ -1118,14 +1118,14 @@ public final class CacheTest {
 
   private void assertNonIdentityEncodingCached(MockResponse response) throws Exception {
     server.enqueue(response.newBuilder()
-        .setBody(gzip("ABCABCABC"))
+        .body(gzip("ABCABCABC"))
         .addHeader("Content-Encoding: gzip")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
         .build());
 
     // At least three request/response pairs are required because after the first request is cached
@@ -1138,18 +1138,18 @@ public final class CacheTest {
 
   @Test public void previouslyNotGzippedContentIsNotModifiedAndSpecifiesGzipEncoding() throws Exception {
     server.enqueue(new MockResponse.Builder()
-        .setBody("ABCABCABC")
+        .body("ABCABCABC")
         .addHeader("Content-Type: text/plain")
         .addHeader("Last-Modified: " + formatDate(-2, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(-1, TimeUnit.HOURS))
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
         .addHeader("Content-Type: text/plain")
         .addHeader("Content-Encoding: gzip")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("DEFDEFDEF")
+        .body("DEFDEFDEF")
         .build());
 
     assertThat(get(server.url("/")).body().string()).isEqualTo("ABCABCABC");
@@ -1159,19 +1159,19 @@ public final class CacheTest {
 
   @Test public void changedGzippedContentIsNotModifiedAndSpecifiesNewEncoding() throws Exception {
     server.enqueue(new MockResponse.Builder()
-        .setBody(gzip("ABCABCABC"))
+        .body(gzip("ABCABCABC"))
         .addHeader("Content-Type: text/plain")
         .addHeader("Last-Modified: " + formatDate(-2, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Content-Encoding: gzip")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
         .addHeader("Content-Type: text/plain")
         .addHeader("Content-Encoding: identity")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("DEFDEFDEF")
+        .body("DEFDEFDEF")
         .build());
 
     assertThat(get(server.url("/")).body().string()).isEqualTo("ABCABCABC");
@@ -1181,17 +1181,17 @@ public final class CacheTest {
 
   @Test public void notModifiedSpecifiesEncoding() throws Exception {
     server.enqueue(new MockResponse.Builder()
-        .setBody(gzip("ABCABCABC"))
+        .body(gzip("ABCABCABC"))
         .addHeader("Content-Encoding: gzip")
         .addHeader("Last-Modified: " + formatDate(-2, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(-1, TimeUnit.HOURS))
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
         .addHeader("Content-Encoding: gzip")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("DEFDEFDEF")
+        .body("DEFDEFDEF")
         .build());
 
     assertThat(get(server.url("/")).body().string()).isEqualTo("ABCABCABC");
@@ -1202,13 +1202,13 @@ public final class CacheTest {
   /** https://github.com/square/okhttp/issues/947 */
   @Test public void gzipAndVaryOnAcceptEncoding() throws Exception {
     server.enqueue(new MockResponse.Builder()
-        .setBody(gzip("ABCABCABC"))
+        .body(gzip("ABCABCABC"))
         .addHeader("Content-Encoding: gzip")
         .addHeader("Vary: Accept-Encoding")
         .addHeader("Cache-Control: max-age=60")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("FAIL")
+        .body("FAIL")
         .build());
 
     assertThat(get(server.url("/")).body().string()).isEqualTo("ABCABCABC");
@@ -1220,11 +1220,11 @@ public final class CacheTest {
 
     server.enqueue(new MockResponse.Builder()
         .addHeader("ETag: v1")
-        .setBody("A")
+        .body("A")
         .build());
     server.enqueue(new MockResponse.Builder()
         .clearHeaders()
-        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
         .build());
 
     assertThat(get(server.url("/")).body().string()).isEqualTo("A");
@@ -1241,13 +1241,13 @@ public final class CacheTest {
 
   @Test public void requestMaxAge() throws IOException {
     server.enqueue(new MockResponse.Builder()
-        .setBody("A")
+        .body("A")
         .addHeader("Last-Modified: " + formatDate(-2, TimeUnit.HOURS))
         .addHeader("Date: " + formatDate(-1, TimeUnit.MINUTES))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("B")
+        .body("B")
         .build());
 
     assertThat(get(server.url("/")).body().string()).isEqualTo("A");
@@ -1262,12 +1262,12 @@ public final class CacheTest {
 
   @Test public void requestMinFresh() throws IOException {
     server.enqueue(new MockResponse.Builder()
-        .setBody("A")
+        .body("A")
         .addHeader("Cache-Control: max-age=60")
         .addHeader("Date: " + formatDate(0, TimeUnit.MINUTES))
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("B")
+        .body("B")
         .build());
 
     assertThat(get(server.url("/")).body().string()).isEqualTo("A");
@@ -1282,12 +1282,12 @@ public final class CacheTest {
 
   @Test public void requestMaxStale() throws IOException {
     server.enqueue(new MockResponse.Builder()
-        .setBody("A")
+        .body("A")
         .addHeader("Cache-Control: max-age=120")
         .addHeader("Date: " + formatDate(-4, TimeUnit.MINUTES))
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("B")
+        .body("B")
         .build());
 
     assertThat(get(server.url("/")).body().string()).isEqualTo("A");
@@ -1305,12 +1305,12 @@ public final class CacheTest {
   @Test public void requestMaxStaleDirectiveWithNoValue() throws IOException {
     // Add a stale response to the cache.
     server.enqueue(new MockResponse.Builder()
-        .setBody("A")
+        .body("A")
         .addHeader("Cache-Control: max-age=120")
         .addHeader("Date: " + formatDate(-4, TimeUnit.MINUTES))
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("B")
+        .body("B")
         .build());
 
     assertThat(get(server.url("/")).body().string()).isEqualTo("A");
@@ -1328,12 +1328,12 @@ public final class CacheTest {
 
   @Test public void requestMaxStaleNotHonoredWithMustRevalidate() throws IOException {
     server.enqueue(new MockResponse.Builder()
-        .setBody("A")
+        .body("A")
         .addHeader("Cache-Control: max-age=120, must-revalidate")
         .addHeader("Date: " + formatDate(-4, TimeUnit.MINUTES))
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("B")
+        .body("B")
         .build());
 
     assertThat(get(server.url("/")).body().string()).isEqualTo("A");
@@ -1363,7 +1363,7 @@ public final class CacheTest {
 
   @Test public void requestOnlyIfCachedWithFullResponseCached() throws IOException {
     server.enqueue(new MockResponse.Builder()
-        .setBody("A")
+        .body("A")
         .addHeader("Cache-Control: max-age=30")
         .addHeader("Date: " + formatDate(0, TimeUnit.MINUTES))
         .build());
@@ -1382,7 +1382,7 @@ public final class CacheTest {
 
   @Test public void requestOnlyIfCachedWithConditionalResponseCached() throws IOException {
     server.enqueue(new MockResponse.Builder()
-        .setBody("A")
+        .body("A")
         .addHeader("Cache-Control: max-age=30")
         .addHeader("Date: " + formatDate(-1, TimeUnit.MINUTES))
         .build());
@@ -1402,7 +1402,7 @@ public final class CacheTest {
 
   @Test public void requestOnlyIfCachedWithUnhelpfulResponseCached() throws IOException {
     server.enqueue(new MockResponse.Builder()
-        .setBody("A")
+        .body("A")
         .build());
 
     assertThat(get(server.url("/")).body().string()).isEqualTo("A");
@@ -1423,10 +1423,10 @@ public final class CacheTest {
         .addHeader("Last-Modified: " + formatDate(-120, TimeUnit.SECONDS))
         .addHeader("Date: " + formatDate(0, TimeUnit.SECONDS))
         .addHeader("Cache-Control: max-age=60")
-        .setBody("A")
+        .body("A")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("B")
+        .body("B")
         .build());
 
     HttpUrl url = server.url("/");
@@ -1444,10 +1444,10 @@ public final class CacheTest {
         .addHeader("Last-Modified: " + formatDate(-120, TimeUnit.SECONDS))
         .addHeader("Date: " + formatDate(0, TimeUnit.SECONDS))
         .addHeader("Cache-Control: max-age=60")
-        .setBody("A")
+        .body("A")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("B")
+        .body("B")
         .build());
 
     HttpUrl url = server.url("/");
@@ -1487,10 +1487,10 @@ public final class CacheTest {
   private RecordedRequest assertClientSuppliedCondition(MockResponse seed, String conditionName,
       String conditionValue) throws Exception {
     server.enqueue(seed.newBuilder()
-        .setBody("A")
+        .body("A")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
         .build());
 
     HttpUrl url = server.url("/");
@@ -1525,10 +1525,10 @@ public final class CacheTest {
     server.enqueue(new MockResponse.Builder()
         .addHeader("Last-Modified: " + lastModifiedString)
         .addHeader("Expires: " + servedString)
-        .setBody("A")
+        .body("A")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
         .build());
 
     assertThat(get(server.url("/")).body().string()).isEqualTo("A");
@@ -1545,7 +1545,7 @@ public final class CacheTest {
 
   @Test public void clientSuppliedConditionWithoutCachedResult() throws Exception {
     server.enqueue(new MockResponse.Builder()
-        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
         .build());
 
     Request request = new Request.Builder()
@@ -1560,10 +1560,10 @@ public final class CacheTest {
   @Test public void authorizationRequestFullyCached() throws Exception {
     server.enqueue(new MockResponse.Builder()
         .addHeader("Cache-Control: max-age=60")
-        .setBody("A")
+        .body("A")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("B")
+        .body("B")
         .build());
 
     HttpUrl url = server.url("/");
@@ -1580,10 +1580,10 @@ public final class CacheTest {
     server.enqueue(new MockResponse.Builder()
         .addHeader("Cache-Control: max-age=60")
         .addHeader("Content-Location: /bar")
-        .setBody("A")
+        .body("A")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("B")
+        .body("B")
         .build());
 
     assertThat(get(server.url("/foo")).body().string()).isEqualTo("A");
@@ -1594,13 +1594,13 @@ public final class CacheTest {
     server.enqueue(new MockResponse.Builder()
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Cache-Control: max-age=0")
-        .setBody("A")
+        .body("A")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("B")
+        .body("B")
         .build());
 
     assertThat(get(server.url("/a")).body().string()).isEqualTo("A");
@@ -1616,13 +1616,13 @@ public final class CacheTest {
     server.enqueue(new MockResponse.Builder()
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Cache-Control: max-age=0")
-        .setBody("A")
+        .body("A")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("B")
+        .body("B")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("C")
+        .body("C")
         .build());
 
     assertThat(get(server.url("/")).body().string()).isEqualTo("A");
@@ -1640,13 +1640,13 @@ public final class CacheTest {
     server.enqueue(new MockResponse.Builder()
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Cache-Control: max-age=0")
-        .setBody("A")
+        .body("A")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
         .build());
 
     assertThat(get(server.url("/")).body().string()).isEqualTo("A");
@@ -1663,7 +1663,7 @@ public final class CacheTest {
   @Test public void statisticsFullCacheHit() throws Exception {
     server.enqueue(new MockResponse.Builder()
         .addHeader("Cache-Control: max-age=60")
-        .setBody("A")
+        .body("A")
         .build());
 
     assertThat(get(server.url("/")).body().string()).isEqualTo("A");
@@ -1681,10 +1681,10 @@ public final class CacheTest {
     server.enqueue(new MockResponse.Builder()
         .addHeader("Cache-Control: max-age=60")
         .addHeader("Vary: Accept-Language")
-        .setBody("A")
+        .body("A")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("B")
+        .body("B")
         .build());
 
     HttpUrl url = server.url("/");
@@ -1707,10 +1707,10 @@ public final class CacheTest {
     server.enqueue(new MockResponse.Builder()
         .addHeader("Cache-Control: max-age=60")
         .addHeader("Vary: Accept-Language")
-        .setBody("A")
+        .body("A")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("B")
+        .body("B")
         .build());
 
     HttpUrl url = server.url("/");
@@ -1732,10 +1732,10 @@ public final class CacheTest {
     server.enqueue(new MockResponse.Builder()
         .addHeader("Cache-Control: max-age=60")
         .addHeader("Vary: Foo")
-        .setBody("A")
+        .body("A")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("B")
+        .body("B")
         .build());
 
     assertThat(get(server.url("/")).body().string()).isEqualTo("A");
@@ -1746,10 +1746,10 @@ public final class CacheTest {
     server.enqueue(new MockResponse.Builder()
         .addHeader("Cache-Control: max-age=60")
         .addHeader("Vary: Foo")
-        .setBody("A")
+        .body("A")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("B")
+        .body("B")
         .build());
 
     assertThat(get(server.url("/")).body().string()).isEqualTo("A");
@@ -1764,10 +1764,10 @@ public final class CacheTest {
     server.enqueue(new MockResponse.Builder()
         .addHeader("Cache-Control: max-age=60")
         .addHeader("Vary: Foo")
-        .setBody("A")
+        .body("A")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("B")
+        .body("B")
         .build());
 
     Request request = new Request.Builder()
@@ -1782,10 +1782,10 @@ public final class CacheTest {
     server.enqueue(new MockResponse.Builder()
         .addHeader("Cache-Control: max-age=60")
         .addHeader("Vary: ACCEPT-LANGUAGE")
-        .setBody("A")
+        .body("A")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("B")
+        .body("B")
         .build());
 
     HttpUrl url = server.url("/");
@@ -1808,10 +1808,10 @@ public final class CacheTest {
         .addHeader("Cache-Control: max-age=60")
         .addHeader("Vary: Accept-Language, Accept-Charset")
         .addHeader("Vary: Accept-Encoding")
-        .setBody("A")
+        .body("A")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("B")
+        .body("B")
         .build());
 
     HttpUrl url = server.url("/");
@@ -1838,10 +1838,10 @@ public final class CacheTest {
         .addHeader("Cache-Control: max-age=60")
         .addHeader("Vary: Accept-Language, Accept-Charset")
         .addHeader("Vary: Accept-Encoding")
-        .setBody("A")
+        .body("A")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("B")
+        .body("B")
         .build());
 
     HttpUrl url = server.url("/");
@@ -1867,10 +1867,10 @@ public final class CacheTest {
     server.enqueue(new MockResponse.Builder()
         .addHeader("Cache-Control: max-age=60")
         .addHeader("Vary: Accept-Language")
-        .setBody("A")
+        .body("A")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("B")
+        .body("B")
         .build());
 
     HttpUrl url = server.url("/");
@@ -1895,10 +1895,10 @@ public final class CacheTest {
     server.enqueue(new MockResponse.Builder()
         .addHeader("Cache-Control: max-age=60")
         .addHeader("Vary: Accept-Language")
-        .setBody("A")
+        .body("A")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("B")
+        .body("B")
         .build());
 
     HttpUrl url = server.url("/");
@@ -1923,10 +1923,10 @@ public final class CacheTest {
     server.enqueue(new MockResponse.Builder()
         .addHeader("Cache-Control: max-age=60")
         .addHeader("Vary: *")
-        .setBody("A")
+        .body("A")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("B")
+        .body("B")
         .build());
 
     assertThat(get(server.url("/")).body().string()).isEqualTo("A");
@@ -1938,10 +1938,10 @@ public final class CacheTest {
     server.enqueue(new MockResponse.Builder()
         .addHeader("Cache-Control: max-age=60")
         .addHeader("Vary: Accept-Language")
-        .setBody("A")
+        .body("A")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("B")
+        .body("B")
         .build());
 
     client = client.newBuilder()
@@ -1976,11 +1976,11 @@ public final class CacheTest {
         .addHeader("Set-Cookie: a=FIRST")
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Cache-Control: max-age=0")
-        .setBody("A")
+        .body("A")
         .build());
     server.enqueue(new MockResponse.Builder()
         .addHeader("Set-Cookie: a=SECOND")
-        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
         .build());
 
     HttpUrl url = server.url("/");
@@ -1995,11 +1995,11 @@ public final class CacheTest {
         .addHeader("Allow: GET, HEAD")
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Cache-Control: max-age=0")
-        .setBody("A")
+        .body("A")
         .build());
     server.enqueue(new MockResponse.Builder()
         .addHeader("Allow: GET, HEAD, PUT")
-        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
         .build());
 
     Response response1 = get(server.url("/"));
@@ -2016,11 +2016,11 @@ public final class CacheTest {
         .addHeader("Transfer-Encoding: identity")
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Cache-Control: max-age=0")
-        .setBody("A")
+        .body("A")
         .build());
     server.enqueue(new MockResponse.Builder()
         .addHeader("Transfer-Encoding: none")
-        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
         .build());
 
     Response response1 = get(server.url("/"));
@@ -2037,10 +2037,10 @@ public final class CacheTest {
         .addHeader("Warning: 199 test danger")
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Cache-Control: max-age=0")
-        .setBody("A")
+        .body("A")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
         .build());
 
     Response response1 = get(server.url("/"));
@@ -2057,10 +2057,10 @@ public final class CacheTest {
         .addHeader("Warning: 299 test danger")
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Cache-Control: max-age=0")
-        .setBody("A")
+        .body("A")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
         .build());
 
     Response response1 = get(server.url("/"));
@@ -2074,7 +2074,7 @@ public final class CacheTest {
 
   @Test public void doNotCachePartialResponse() throws Exception {
     assertNotCached(new MockResponse.Builder()
-        .setResponseCode(HttpURLConnection.HTTP_PARTIAL)
+        .code(HttpURLConnection.HTTP_PARTIAL)
         .addHeader("Date: " + formatDate(0, TimeUnit.HOURS))
         .addHeader("Content-Range: bytes 100-100/200")
         .addHeader("Cache-Control: max-age=60")
@@ -2085,15 +2085,15 @@ public final class CacheTest {
     server.enqueue(new MockResponse.Builder()
         .addHeader("Last-Modified: " + formatDate(0, TimeUnit.SECONDS))
         .addHeader("Cache-Control: max-age=0")
-        .setBody("A")
+        .body("A")
         .build());
     server.enqueue(new MockResponse.Builder()
         .addHeader("Cache-Control: max-age=30")
         .addHeader("Allow: GET, HEAD")
-        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("B")
+        .body("B")
         .build());
 
     // A cache miss writes the cache.
@@ -2125,7 +2125,7 @@ public final class CacheTest {
 
   @Test public void responseSourceHeaderCached() throws IOException {
     server.enqueue(new MockResponse.Builder()
-        .setBody("A")
+        .body("A")
         .addHeader("Cache-Control: max-age=30")
         .addHeader("Date: " + formatDate(0, TimeUnit.MINUTES))
         .build());
@@ -2140,12 +2140,12 @@ public final class CacheTest {
 
   @Test public void responseSourceHeaderConditionalCacheFetched() throws IOException {
     server.enqueue(new MockResponse.Builder()
-        .setBody("A")
+        .body("A")
         .addHeader("Cache-Control: max-age=30")
         .addHeader("Date: " + formatDate(-31, TimeUnit.MINUTES))
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("B")
+        .body("B")
         .addHeader("Cache-Control: max-age=30")
         .addHeader("Date: " + formatDate(0, TimeUnit.MINUTES))
         .build());
@@ -2157,12 +2157,12 @@ public final class CacheTest {
 
   @Test public void responseSourceHeaderConditionalCacheNotFetched() throws IOException {
     server.enqueue(new MockResponse.Builder()
-        .setBody("A")
+        .body("A")
         .addHeader("Cache-Control: max-age=0")
         .addHeader("Date: " + formatDate(0, TimeUnit.MINUTES))
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setResponseCode(304)
+        .code(304)
         .build());
 
     assertThat(get(server.url("/")).body().string()).isEqualTo("A");
@@ -2172,7 +2172,7 @@ public final class CacheTest {
 
   @Test public void responseSourceHeaderFetched() throws IOException {
     server.enqueue(new MockResponse.Builder()
-        .setBody("A")
+        .body("A")
         .build());
 
     Response response = get(server.url("/"));
@@ -2184,8 +2184,8 @@ public final class CacheTest {
         .add("Cache-Control: max-age=120");
     Internal.addHeaderLenient(headers, ": A");
     server.enqueue(new MockResponse.Builder()
-        .setHeaders(headers.build())
-        .setBody("body")
+        .headers(headers.build())
+        .body("body")
         .build());
 
     Response response = get(server.url("/"));
@@ -2204,7 +2204,7 @@ public final class CacheTest {
     cache.close();
     server.enqueue(new MockResponse.Builder()
         .clearHeaders()
-        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
         .build());
 
     HttpUrl url = server.url("/");
@@ -2398,10 +2398,10 @@ public final class CacheTest {
   @Test public void evictAll() throws Exception {
     server.enqueue(new MockResponse.Builder()
         .addHeader("Cache-Control: max-age=60")
-        .setBody("A")
+        .body("A")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("B")
+        .body("B")
         .build());
 
     HttpUrl url = server.url("/");
@@ -2414,10 +2414,10 @@ public final class CacheTest {
   @Test public void networkInterceptorInvokedForConditionalGet() throws Exception {
     server.enqueue(new MockResponse.Builder()
         .addHeader("ETag: v1")
-        .setBody("A")
+        .body("A")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
         .build());
 
     // Seed the cache.
@@ -2440,7 +2440,7 @@ public final class CacheTest {
   @Test public void networkInterceptorNotInvokedForFullyCached() throws Exception {
     server.enqueue(new MockResponse.Builder()
         .addHeader("Cache-Control: max-age=60")
-        .setBody("A")
+        .body("A")
         .build());
 
     // Seed the cache.
@@ -2457,19 +2457,19 @@ public final class CacheTest {
   @Test public void iterateCache() throws Exception {
     // Put some responses in the cache.
     server.enqueue(new MockResponse.Builder()
-        .setBody("a")
+        .body("a")
         .build());
     HttpUrl urlA = server.url("/a");
     assertThat(get(urlA).body().string()).isEqualTo("a");
 
     server.enqueue(new MockResponse.Builder()
-        .setBody("b")
+        .body("b")
         .build());
     HttpUrl urlB = server.url("/b");
     assertThat(get(urlB).body().string()).isEqualTo("b");
 
     server.enqueue(new MockResponse.Builder()
-        .setBody("c")
+        .body("c")
         .build());
     HttpUrl urlC = server.url("/c");
     assertThat(get(urlC).body().string()).isEqualTo("c");
@@ -2496,7 +2496,7 @@ public final class CacheTest {
     // Put a response in the cache.
     server.enqueue(new MockResponse.Builder()
         .addHeader("Cache-Control: max-age=60")
-        .setBody("a")
+        .body("a")
         .build());
     HttpUrl url = server.url("/a");
     assertThat(get(url).body().string()).isEqualTo("a");
@@ -2508,7 +2508,7 @@ public final class CacheTest {
 
     // Confirm that subsequent requests suffer a cache miss.
     server.enqueue(new MockResponse.Builder()
-        .setBody("b")
+        .body("b")
         .build());
     assertThat(get(url).body().string()).isEqualTo("b");
   }
@@ -2516,7 +2516,7 @@ public final class CacheTest {
   @Test public void iteratorRemoveWithoutNextThrows() throws Exception {
     // Put a response in the cache.
     server.enqueue(new MockResponse.Builder()
-        .setBody("a")
+        .body("a")
         .build());
     HttpUrl url = server.url("/a");
     assertThat(get(url).body().string()).isEqualTo("a");
@@ -2533,7 +2533,7 @@ public final class CacheTest {
   @Test public void iteratorRemoveOncePerCallToNext() throws Exception {
     // Put a response in the cache.
     server.enqueue(new MockResponse.Builder()
-        .setBody("a")
+        .body("a")
         .build());
     HttpUrl url = server.url("/a");
     assertThat(get(url).body().string()).isEqualTo("a");
@@ -2553,7 +2553,7 @@ public final class CacheTest {
   @Test public void elementEvictedBetweenHasNextAndNext() throws Exception {
     // Put a response in the cache.
     server.enqueue(new MockResponse.Builder()
-        .setBody("a")
+        .body("a")
         .build());
     HttpUrl url = server.url("/a");
     assertThat(get(url).body().string()).isEqualTo("a");
@@ -2573,7 +2573,7 @@ public final class CacheTest {
   @Test public void elementEvictedBeforeHasNextIsOmitted() throws Exception {
     // Put a response in the cache.
     server.enqueue(new MockResponse.Builder()
-        .setBody("a")
+        .body("a")
         .build());
     HttpUrl url = server.url("/a");
     assertThat(get(url).body().string()).isEqualTo("a");
@@ -2594,17 +2594,17 @@ public final class CacheTest {
   @Test public void conditionalMissUpdatesCache() throws Exception {
     server.enqueue(new MockResponse.Builder()
         .addHeader("ETag: v1")
-        .setBody("A")
+        .body("A")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
         .build());
     server.enqueue(new MockResponse.Builder()
         .addHeader("ETag: v2")
-        .setBody("B")
+        .body("B")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
         .build());
 
     HttpUrl url = server.url("/");
@@ -2625,13 +2625,13 @@ public final class CacheTest {
         .addHeader("Cache-Control: max-age=0")
         .addHeaderLenient("Alpha", "α")
         .addHeaderLenient("β", "Beta")
-        .setBody("abcd")
+        .body("abcd")
         .build());
     server.enqueue(new MockResponse.Builder()
         .addHeader("Transfer-Encoding: none")
         .addHeaderLenient("Gamma", "Γ")
         .addHeaderLenient("Δ", "Delta")
-        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
         .build());
 
     Response response1 = get(server.url("/"));
@@ -2651,10 +2651,10 @@ public final class CacheTest {
     server.enqueue(new MockResponse.Builder()
         .addHeaderLenient("Etag", "α")
         .addHeader("Cache-Control: max-age=0")
-        .setBody("abcd")
+        .body("abcd")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
         .build());
 
     Response response1 = get(server.url("/"));
@@ -2674,10 +2674,10 @@ public final class CacheTest {
         .addHeader("A: a1")
         .addHeader("B: b2")
         .addHeader("B: b3")
-        .setBody("abcd")
+        .body("abcd")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
         .addHeader("B: b4")
         .addHeader("B: b5")
         .addHeader("C: c6")
@@ -2726,10 +2726,10 @@ public final class CacheTest {
 
   private void assertNotCached(MockResponse response) throws Exception {
     server.enqueue(response.newBuilder()
-        .setBody("A")
+        .body("A")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("B")
+        .body("B")
         .build());
 
     HttpUrl url = server.url("/");
@@ -2741,21 +2741,21 @@ public final class CacheTest {
   private RecordedRequest assertConditionallyCached(MockResponse response) throws Exception {
     // scenario 1: condition succeeds
     server.enqueue(response.newBuilder()
-        .setBody("A")
-        .setStatus("HTTP/1.1 200 A-OK")
+        .body("A")
+        .status("HTTP/1.1 200 A-OK")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
         .build());
 
     // scenario 2: condition fails
     server.enqueue(response.newBuilder()
-        .setBody("B")
-        .setStatus("HTTP/1.1 200 B-OK")
+        .body("B")
+        .status("HTTP/1.1 200 B-OK")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setStatus("HTTP/1.1 200 C-OK")
-        .setBody("C")
+        .status("HTTP/1.1 200 C-OK")
+        .body("C")
         .build());
 
     HttpUrl valid = server.url("/valid");
@@ -2785,10 +2785,10 @@ public final class CacheTest {
   @Test public void immutableIsCached() throws Exception {
     server.enqueue(new MockResponse.Builder()
         .addHeader("Cache-Control", "immutable, max-age=10")
-        .setBody("A")
+        .body("A")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("B")
+        .body("B")
         .build());
 
     HttpUrl url = server.url("/");
@@ -2798,14 +2798,14 @@ public final class CacheTest {
 
   @Test public void immutableIsCachedAfterMultipleCalls() throws Exception {
     server.enqueue(new MockResponse.Builder()
-        .setBody("A")
+        .body("A")
         .build());
     server.enqueue(new MockResponse.Builder()
         .addHeader("Cache-Control", "immutable, max-age=10")
-        .setBody("B")
+        .body("B")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("C")
+        .body("C")
         .build());
 
     HttpUrl url = server.url("/");
@@ -2877,8 +2877,8 @@ public final class CacheTest {
   }
 
   private void assertFullyCached(MockResponse response) throws Exception {
-    server.enqueue(response.newBuilder().setBody("A").build());
-    server.enqueue(response.newBuilder().setBody("B").build());
+    server.enqueue(response.newBuilder().body("A").build());
+    server.enqueue(response.newBuilder().body("B").build());
 
     HttpUrl url = server.url("/");
     assertThat(get(url).body().string()).isEqualTo("A");
@@ -2891,30 +2891,30 @@ public final class CacheTest {
    */
   private MockResponse.Builder truncateViolently(MockResponse.Builder builder, int numBytesToKeep) {
     MockResponse response = builder.build();
-    builder.setSocketPolicy(DISCONNECT_AT_END);
+    builder.socketPolicy(DISCONNECT_AT_END);
     Headers headers = response.getHeaders();
     Buffer truncatedBody = new Buffer();
     truncatedBody.write(response.getBody(), numBytesToKeep);
-    builder.setBody(truncatedBody);
-    builder.setHeaders(headers);
+    builder.body(truncatedBody);
+    builder.headers(headers);
     return builder;
   }
 
   enum TransferKind {
     CHUNKED {
       @Override void setBody(MockResponse.Builder response, Buffer content, int chunkSize) {
-        response.setChunkedBody(content, chunkSize);
+        response.chunkedBody(content, chunkSize);
       }
     },
     FIXED_LENGTH {
       @Override void setBody(MockResponse.Builder response, Buffer content, int chunkSize) {
-        response.setBody(content);
+        response.body(content);
       }
     },
     END_OF_STREAM {
       @Override void setBody(MockResponse.Builder response, Buffer content, int chunkSize) {
-        response.setBody(content);
-        response.setSocketPolicy(DISCONNECT_AT_END);
+        response.body(content);
+        response.socketPolicy(DISCONNECT_AT_END);
         response.removeHeader("Content-Length");
       }
     };

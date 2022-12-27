@@ -31,9 +31,7 @@ abstract class Dispatcher {
    * request bodies.
    */
   open fun peek(): MockResponse {
-    return MockResponse.Builder()
-      .setSocketPolicy(SocketPolicy.KEEP_OPEN)
-      .build()
+    return MockResponse(socketPolicy = SocketPolicy.KEEP_OPEN)
   }
 
   /**

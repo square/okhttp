@@ -35,9 +35,7 @@ class OkHttpClientTest {
   @Test fun get(server: MockWebServer) {
     platform.assumeNotBouncyCastle()
 
-    server.enqueue(MockResponse.Builder()
-        .setBody("hello, OkHttp")
-        .build())
+    server.enqueue(MockResponse(body = "hello, OkHttp"))
 
     val client = OkHttpClient()
 

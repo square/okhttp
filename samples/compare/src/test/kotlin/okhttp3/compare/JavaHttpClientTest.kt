@@ -45,7 +45,7 @@ class JavaHttpClientTest {
       .build()
 
     server.enqueue(MockResponse.Builder()
-        .setBody("hello, Java HTTP Client")
+        .body("hello, Java HTTP Client")
         .build())
 
     val request = HttpRequest.newBuilder(server.url("/").toUri())

@@ -53,7 +53,7 @@ public final class EventSourcesHttpTest {
 
   @Test public void processResponse() throws IOException {
     server.enqueue(new MockResponse.Builder()
-      .setBody(""
+      .body(""
           + "data: hey\n"
           + "\n").setHeader("content-type", "text/event-stream")
       .build());
@@ -71,7 +71,7 @@ public final class EventSourcesHttpTest {
 
   @Test public void cancelShortCircuits() throws IOException {
     server.enqueue(new MockResponse.Builder()
-      .setBody(""
+      .body(""
           + "data: hey\n"
           + "\n").setHeader("content-type", "text/event-stream")
       .build());

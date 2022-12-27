@@ -277,11 +277,11 @@ public final class ConnectionCoalescingTest {
 
   @Test public void skipsOnRedirectWhenDnsDontMatch() throws Exception {
     server.enqueue(new MockResponse.Builder()
-        .setResponseCode(301)
+        .code(301)
         .addHeader("Location", url.newBuilder().host("differentdns.com").build())
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("unexpected call")
+        .body("unexpected call")
         .build());
 
     try {
@@ -310,7 +310,7 @@ public final class ConnectionCoalescingTest {
 
   @Test public void skipsOnRedirectWhenNotSubjectAltName() throws Exception {
     server.enqueue(new MockResponse.Builder()
-        .setResponseCode(301)
+        .code(301)
         .addHeader("Location", url.newBuilder().host("nonsan.com").build())
         .build());
     server.enqueue(new MockResponse());
@@ -369,7 +369,7 @@ public final class ConnectionCoalescingTest {
     client = client.newBuilder().certificatePinner(pinner).build();
 
     server.enqueue(new MockResponse.Builder()
-        .setResponseCode(301)
+        .code(301)
         .addHeader("Location", url.newBuilder().host("san.com").build())
         .build());
     server.enqueue(new MockResponse());
@@ -406,7 +406,7 @@ public final class ConnectionCoalescingTest {
     client = client.newBuilder().hostnameVerifier(verifier).build();
 
     server.enqueue(new MockResponse.Builder()
-        .setResponseCode(301)
+        .code(301)
         .addHeader("Location", url.newBuilder().host("san.com").build())
         .build());
     server.enqueue(new MockResponse());
@@ -481,14 +481,14 @@ public final class ConnectionCoalescingTest {
 
   @Test public void misdirectedRequestResponseCode() throws Exception {
     server.enqueue(new MockResponse.Builder()
-        .setBody("seed connection")
+        .body("seed connection")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setResponseCode(421)
-        .setBody("misdirected!")
+        .code(421)
+        .body("misdirected!")
         .build());
     server.enqueue(new MockResponse.Builder()
-        .setBody("after misdirect")
+        .body("after misdirect")
         .build());
 
     // Seed the connection pool.
