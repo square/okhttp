@@ -95,7 +95,7 @@ class MockResponse {
       this.code = code
       this.headers.addAll(headers)
       this.body(body)
-      this.inTunnel = inTunnel
+      if (inTunnel) inTunnel()
       this.socketPolicy = socketPolicy
       this.http2ErrorCode = http2ErrorCode
     }
