@@ -20,6 +20,7 @@ import javax.net.ssl.SSLException
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy
+import okhttp3.Headers.Companion.headersOf
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.ResponseBody.Companion.toResponseBody
@@ -53,15 +54,15 @@ class ConnectionReuseTest {
   }
 
   @Test fun connectionsAreReused() {
-    server.enqueue(MockResponse().setBody("a"))
-    server.enqueue(MockResponse().setBody("b"))
+    server.enqueue(MockResponse(body = "a"))
+    server.enqueue(MockResponse(body = "b"))
     val request = Request(server.url("/"))
     assertConnectionReused(request, request)
   }
 
   @Test fun connectionsAreReusedForPosts() {
-    server.enqueue(MockResponse().setBody("a"))
-    server.enqueue(MockResponse().setBody("b"))
+    server.enqueue(MockResponse(body = "a"))
+    server.enqueue(MockResponse(body = "b"))
     val request = Request(
       url = server.url("/"),
       body ="request body".toRequestBody("text/plain".toMediaType()),
@@ -72,15 +73,15 @@ class ConnectionReuseTest {
   @Test fun connectionsAreReusedWithHttp2() {
     platform.assumeNotBouncyCastle()
     enableHttp2()
-    server.enqueue(MockResponse().setBody("a"))
-    server.enqueue(MockResponse().setBody("b"))
+    server.enqueue(MockResponse(body = "a"))
+    server.enqueue(MockResponse(body = "b"))
     val request = Request(server.url("/"))
     assertConnectionReused(request, request)
   }
 
   @Test fun connectionsAreNotReusedWithRequestConnectionClose() {
-    server.enqueue(MockResponse().setBody("a"))
-    server.enqueue(MockResponse().setBody("b"))
+    server.enqueue(MockResponse(body = "a"))
+    server.enqueue(MockResponse(body = "b"))
     val requestA = Request.Builder()
       .url(server.url("/"))
       .header("Connection", "close")
@@ -91,11 +92,12 @@ class ConnectionReuseTest {
 
   @Test fun connectionsAreNotReusedWithResponseConnectionClose() {
     server.enqueue(
-      MockResponse()
-        .addHeader("Connection", "close")
-        .setBody("a")
+      MockResponse(
+        headers = headersOf("Connection", "close"),
+        body = "a",
+      )
     )
-    server.enqueue(MockResponse().setBody("b"))
+    server.enqueue(MockResponse(body = "b"))
     val requestA = Request(server.url("/"))
     val requestB = Request(server.url("/"))
     assertConnectionNotReused(requestA, requestB)
@@ -103,12 +105,12 @@ class ConnectionReuseTest {
 
   @Test fun connectionsAreNotReusedWithUnknownLengthResponseBody() {
     server.enqueue(
-      MockResponse()
+      MockResponse.Builder()
         .setBody("a")
         .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
         .clearHeaders()
     )
-    server.enqueue(MockResponse().setBody("b"))
+    server.enqueue(MockResponse(body = "b"))
     val request = Request(server.url("/"))
     assertConnectionNotReused(request, request)
   }
@@ -117,8 +119,8 @@ class ConnectionReuseTest {
     client = client.newBuilder()
       .connectionPool(ConnectionPool(0, 5, TimeUnit.SECONDS))
       .build()
-    server.enqueue(MockResponse().setBody("a"))
-    server.enqueue(MockResponse().setBody("b"))
+    server.enqueue(MockResponse(body = "a"))
+    server.enqueue(MockResponse(body = "b"))
     val request = Request(server.url("/"))
     assertConnectionNotReused(request, request)
   }
@@ -128,12 +130,13 @@ class ConnectionReuseTest {
       .connectionPool(ConnectionPool(0, 5, TimeUnit.SECONDS))
       .build()
     server.enqueue(
-      MockResponse()
-        .setResponseCode(301)
-        .addHeader("Location: /b")
-        .setBody("a")
+      MockResponse(
+        code = 301,
+        headers = headersOf("Location", "/b"),
+        body = "a"
+      )
     )
-    server.enqueue(MockResponse().setBody("b"))
+    server.enqueue(MockResponse(body = "b"))
     val request = Request(server.url("/"))
     val response = client.newCall(request).execute()
     assertThat(response.body.string()).isEqualTo("b")
@@ -146,13 +149,13 @@ class ConnectionReuseTest {
       .connectionPool(ConnectionPool(0, 5, TimeUnit.SECONDS))
       .build()
     server.enqueue(
-      MockResponse()
+      MockResponse.Builder()
         .setResponseCode(301)
         .addHeader("Location: /b")
         .setBodyDelay(1, TimeUnit.SECONDS)
         .setBody("a")
     )
-    server.enqueue(MockResponse().setBody("b"))
+    server.enqueue(MockResponse(body = "b"))
     val request = Request(server.url("/"))
     val response = client.newCall(request).execute()
     assertThat(response.body.string()).isEqualTo("b")
@@ -161,9 +164,10 @@ class ConnectionReuseTest {
   }
 
   @Test fun silentRetryWhenIdempotentRequestFailsOnReusedConnection() {
-    server.enqueue(MockResponse().setBody("a"))
-    server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST))
-    server.enqueue(MockResponse().setBody("b"))
+    server.enqueue(MockResponse(body = "a"))
+    server.enqueue(MockResponse.Builder()
+      .setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST))
+    server.enqueue(MockResponse(body = "b"))
     val request = Request(server.url("/"))
     val responseA = client.newCall(request).execute()
     assertThat(responseA.body.string()).isEqualTo("a")
@@ -177,8 +181,8 @@ class ConnectionReuseTest {
   @Test fun http2ConnectionsAreSharedBeforeResponseIsConsumed() {
     platform.assumeNotBouncyCastle()
     enableHttp2()
-    server.enqueue(MockResponse().setBody("a"))
-    server.enqueue(MockResponse().setBody("b"))
+    server.enqueue(MockResponse(body = "a"))
+    server.enqueue(MockResponse(body = "b"))
     val request = Request(server.url("/"))
     val response1 = client.newCall(request).execute()
     val response2 = client.newCall(request).execute()
@@ -189,8 +193,8 @@ class ConnectionReuseTest {
   }
 
   @Test fun connectionsAreEvicted() {
-    server.enqueue(MockResponse().setBody("a"))
-    server.enqueue(MockResponse().setBody("b"))
+    server.enqueue(MockResponse(body = "a"))
+    server.enqueue(MockResponse(body = "b"))
     client = client.newBuilder()
       .connectionPool(ConnectionPool(5, 250, TimeUnit.MILLISECONDS))
       .build()
@@ -280,14 +284,14 @@ class ConnectionReuseTest {
         })
         .build()
     server.enqueue(
-      MockResponse()
-        .setResponseCode(301)
-        .addHeader("Location: /b")
-        .setBody("/a has moved!")
+      MockResponse(
+        code = 301,
+        headers = headersOf("Location", "/b"),
+        body = "/a has moved!",
+      )
     )
     server.enqueue(
-      MockResponse()
-        .setBody("/b is here")
+      MockResponse(body = "/b is here")
     )
     val request = Request(server.url("/"))
     val call = client.newCall(request)

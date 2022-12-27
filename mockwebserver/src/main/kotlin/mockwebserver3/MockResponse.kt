@@ -86,7 +86,7 @@ class MockResponse {
   ) : this(Builder()
     .apply {
       this.code = code
-      this.setHeaders(headers)
+      this.headers.addAll(headers)
       this.setBody(body)
     }
   )
@@ -158,7 +158,7 @@ class MockResponse {
           in 500..599 -> "Server Error"
           else -> "Mock Response"
         }
-        status = "HTTP/1.1 $code $reason"
+        status = "HTTP/1.1 $value $reason"
       }
 
     internal var headers: Headers.Builder

@@ -86,7 +86,9 @@ public final class InterceptorTest {
   }
 
   @Test public void networkInterceptorsCannotShortCircuitResponses() throws Exception {
-    server.enqueue(new MockResponse().setResponseCode(500));
+    server.enqueue(new MockResponse.Builder()
+        .setResponseCode(500)
+        .build());
 
     Interceptor interceptor = chain -> new Response.Builder()
         .request(chain.request())
@@ -138,7 +140,9 @@ public final class InterceptorTest {
   }
 
   @Test public void networkInterceptorsCannotChangeServerAddress() throws Exception {
-    server.enqueue(new MockResponse().setResponseCode(500));
+    server.enqueue(new MockResponse.Builder()
+        .setResponseCode(500)
+        .build());
 
     Interceptor interceptor = chain -> {
       Address address = chain.connection().route().address();
@@ -184,9 +188,10 @@ public final class InterceptorTest {
   }
 
   @Test public void networkInterceptorsObserveNetworkHeaders() throws Exception {
-    server.enqueue(new MockResponse()
+    server.enqueue(new MockResponse.Builder()
         .setBody(gzip("abcabcabc"))
-        .addHeader("Content-Encoding: gzip"));
+        .addHeader("Content-Encoding: gzip")
+        .build());
 
     Interceptor interceptor = chain -> {
       // The network request has everything: User-Agent, Host, Accept-Encoding.
@@ -292,9 +297,10 @@ public final class InterceptorTest {
   }
 
   private void rewriteResponseFromServer(boolean network) throws Exception {
-    server.enqueue(new MockResponse()
+    server.enqueue(new MockResponse.Builder()
         .addHeader("Original-Header: foo")
-        .setBody("abc"));
+        .setBody("abc")
+        .build());
 
     addInterceptor(network, chain -> {
       Response originalResponse = chain.proceed(chain.request());
@@ -385,8 +391,8 @@ public final class InterceptorTest {
   }
 
   @Test public void applicationInterceptorsCanMakeMultipleRequestsToServer() throws Exception {
-    server.enqueue(new MockResponse().setBody("a"));
-    server.enqueue(new MockResponse().setBody("b"));
+    server.enqueue(new MockResponse.Builder().setBody("a").build());
+    server.enqueue(new MockResponse.Builder().setBody("b").build());
 
     client = client.newBuilder()
         .addInterceptor(chain -> {
@@ -406,8 +412,8 @@ public final class InterceptorTest {
 
   /** Make sure interceptors can interact with the OkHttp client. */
   @Test public void interceptorMakesAnUnrelatedRequest() throws Exception {
-    server.enqueue(new MockResponse().setBody("a")); // Fetched by interceptor.
-    server.enqueue(new MockResponse().setBody("b")); // Fetched directly.
+    server.enqueue(new MockResponse.Builder().setBody("a").build()); // Fetched by interceptor.
+    server.enqueue(new MockResponse.Builder().setBody("b").build()); // Fetched directly.
 
     client = client.newBuilder()
         .addInterceptor(chain -> {
@@ -432,8 +438,8 @@ public final class InterceptorTest {
 
   /** Make sure interceptors can interact with the OkHttp client asynchronously. */
   @Test public void interceptorMakesAnUnrelatedAsyncRequest() throws Exception {
-    server.enqueue(new MockResponse().setBody("a")); // Fetched by interceptor.
-    server.enqueue(new MockResponse().setBody("b")); // Fetched directly.
+    server.enqueue(new MockResponse.Builder().setBody("a").build()); // Fetched by interceptor.
+    server.enqueue(new MockResponse.Builder().setBody("b").build()); // Fetched directly.
 
     client = client.newBuilder()
         .addInterceptor(chain -> {
@@ -612,9 +618,10 @@ public final class InterceptorTest {
   }
 
   @Test public void networkInterceptorReturnsConnectionOnEmptyBody() throws Exception {
-    server.enqueue(new MockResponse()
+    server.enqueue(new MockResponse.Builder()
         .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
-        .addHeader("Connection", "Close"));
+        .addHeader("Connection", "Close")
+        .build());
 
     Interceptor interceptor = chain -> {
       Response response = chain.proceed(chain.request());
@@ -700,9 +707,10 @@ public final class InterceptorTest {
         .addInterceptor(interceptor2)
         .build();
 
-    server.enqueue(new MockResponse()
+    server.enqueue(new MockResponse.Builder()
         .setBody("abc")
-        .throttleBody(1, 1, TimeUnit.SECONDS));
+        .throttleBody(1, 1, TimeUnit.SECONDS)
+        .build());
 
     Request request1 = new Request.Builder()
         .url(server.url("/"))
@@ -780,9 +788,10 @@ public final class InterceptorTest {
         .addInterceptor(interceptor2)
         .build();
 
-    server.enqueue(new MockResponse()
+    server.enqueue(new MockResponse.Builder()
         .setBody("abc")
-        .throttleBody(1, 1, TimeUnit.SECONDS));
+        .throttleBody(1, 1, TimeUnit.SECONDS)
+        .build());
 
     byte[] data = new byte[2 * 1024 * 1024]; // 2 MiB.
     Request request1 = new Request.Builder()

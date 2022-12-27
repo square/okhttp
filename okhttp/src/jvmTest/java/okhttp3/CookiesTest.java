@@ -62,11 +62,13 @@ public class CookiesTest {
         .build();
 
     HttpUrl urlWithIpAddress = urlWithIpAddress(server, "/path/foo");
-    server.enqueue(new MockResponse().addHeader("Set-Cookie: a=android; "
-        + "expires=Fri, 31-Dec-9999 23:59:59 GMT; "
-        + "path=/path; "
-        + "domain=" + urlWithIpAddress.host() + "; "
-        + "secure"));
+    server.enqueue(new MockResponse.Builder()
+        .addHeader("Set-Cookie: a=android; "
+            + "expires=Fri, 31-Dec-9999 23:59:59 GMT; "
+            + "path=/path; "
+            + "domain=" + urlWithIpAddress.host() + "; "
+            + "secure")
+        .build());
     get(urlWithIpAddress);
 
     List<HttpCookie> cookies = cookieManager.getCookieStore().getCookies();
@@ -90,13 +92,15 @@ public class CookiesTest {
         .build();
 
     HttpUrl urlWithIpAddress = urlWithIpAddress(server, "/path/foo");
-    server.enqueue(new MockResponse().addHeader("Set-Cookie: a=android; "
-        + "Comment=this cookie is delicious; "
-        + "Domain=" + urlWithIpAddress.host() + "; "
-        + "Max-Age=60; "
-        + "Path=/path; "
-        + "Secure; "
-        + "Version=1"));
+    server.enqueue(new MockResponse.Builder()
+        .addHeader("Set-Cookie: a=android; "
+            + "Comment=this cookie is delicious; "
+            + "Domain=" + urlWithIpAddress.host() + "; "
+            + "Max-Age=60; "
+            + "Path=/path; "
+            + "Secure; "
+            + "Version=1")
+        .build());
     get(urlWithIpAddress);
 
     List<HttpCookie> cookies = cookieManager.getCookieStore().getCookies();
@@ -119,16 +123,18 @@ public class CookiesTest {
         .build();
 
     HttpUrl urlWithIpAddress = urlWithIpAddress(server, "/path/foo");
-    server.enqueue(new MockResponse().addHeader("Set-Cookie: a=\"android\"; "
-        + "Comment=\"this cookie is delicious\"; "
-        + "CommentURL=\"http://google.com/\"; "
-        + "Discard; "
-        + "Domain=" + urlWithIpAddress.host() + "; "
-        + "Max-Age=60; "
-        + "Path=\"/path\"; "
-        + "Port=\"80,443," + server.getPort() + "\"; "
-        + "Secure; "
-        + "Version=\"1\""));
+    server.enqueue(new MockResponse.Builder()
+        .addHeader("Set-Cookie: a=\"android\"; "
+            + "Comment=\"this cookie is delicious\"; "
+            + "CommentURL=\"http://google.com/\"; "
+            + "Discard; "
+            + "Domain=" + urlWithIpAddress.host() + "; "
+            + "Max-Age=60; "
+            + "Path=\"/path\"; "
+            + "Port=\"80,443," + server.getPort() + "\"; "
+            + "Secure; "
+            + "Version=\"1\"")
+        .build());
     get(urlWithIpAddress);
 
     List<HttpCookie> cookies = cookieManager.getCookieStore().getCookies();
@@ -191,9 +197,10 @@ public class CookiesTest {
   }
 
   @Test public void receiveAndSendMultipleCookies() throws Exception {
-    server.enqueue(new MockResponse()
+    server.enqueue(new MockResponse.Builder()
         .addHeader("Set-Cookie", "a=android")
-        .addHeader("Set-Cookie", "b=banana"));
+        .addHeader("Set-Cookie", "b=banana")
+        .build());
     server.enqueue(new MockResponse());
 
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
@@ -212,14 +219,15 @@ public class CookiesTest {
 
   @Test public void testRedirectsDoNotIncludeTooManyCookies() throws Exception {
     MockWebServer redirectTarget = new MockWebServer();
-    redirectTarget.enqueue(new MockResponse().setBody("A"));
+    redirectTarget.enqueue(new MockResponse.Builder().setBody("A").build());
     redirectTarget.start();
     HttpUrl redirectTargetUrl = urlWithIpAddress(redirectTarget, "/");
 
     MockWebServer redirectSource = new MockWebServer();
-    redirectSource.enqueue(new MockResponse()
+    redirectSource.enqueue(new MockResponse.Builder()
         .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
-        .addHeader("Location: " + redirectTargetUrl));
+        .addHeader("Location: " + redirectTargetUrl)
+        .build());
     redirectSource.start();
     HttpUrl redirectSourceUrl = urlWithIpAddress(redirectSource, "/");
 

@@ -69,10 +69,11 @@ class ServerTruncatesRequestTest {
   }
 
   private fun serverTruncatesRequestOnLongPost(https: Boolean) {
-    server.enqueue(MockResponse()
+    server.enqueue(MockResponse.Builder()
       .setSocketPolicy(SocketPolicy.DO_NOT_READ_REQUEST_BODY)
       .setBody("abc")
-      .apply { this.http2ErrorCode = ErrorCode.NO_ERROR.httpCode })
+      .setHttp2ErrorCode(ErrorCode.NO_ERROR.httpCode)
+      .build())
 
     val call = client.newCall(
       Request(
@@ -123,10 +124,11 @@ class ServerTruncatesRequestTest {
   @Test fun serverTruncatesRequestHttp2OnDuplexRequest() {
     enableProtocol(Protocol.HTTP_2)
 
-    server.enqueue(MockResponse()
+    server.enqueue(MockResponse.Builder()
       .setSocketPolicy(SocketPolicy.DO_NOT_READ_REQUEST_BODY)
       .setBody("abc")
-      .apply { this.http2ErrorCode = ErrorCode.NO_ERROR.httpCode })
+      .setHttp2ErrorCode(ErrorCode.NO_ERROR.httpCode)
+      .build())
 
     val requestBody = AsyncRequestBody()
 
@@ -166,12 +168,10 @@ class ServerTruncatesRequestTest {
   }
 
   private fun serverTruncatesRequestButTrailersCanStillBeRead(http2: Boolean) {
-    val mockResponse = MockResponse()
-        .setSocketPolicy(SocketPolicy.DO_NOT_READ_REQUEST_BODY)
-        .apply {
-          this.trailers = headersOf("caboose", "xyz")
-          this.http2ErrorCode = ErrorCode.NO_ERROR.httpCode
-        }
+    val mockResponse = MockResponse.Builder()
+      .setSocketPolicy(SocketPolicy.DO_NOT_READ_REQUEST_BODY)
+      .setTrailers(headersOf("caboose", "xyz"))
+      .setHttp2ErrorCode(ErrorCode.NO_ERROR.httpCode)
 
     // Trailers always work for HTTP/2, but only for chunked bodies in HTTP/1.
     if (http2) {
@@ -199,8 +199,8 @@ class ServerTruncatesRequestTest {
   @Test fun serverDisconnectsBeforeSecondRequestHttp1() {
     enableProtocol(Protocol.HTTP_1_1)
 
-    server.enqueue(MockResponse().setResponseCode(200).setBody("Req1"))
-    server.enqueue(MockResponse().setResponseCode(200).setBody("Req2"))
+    server.enqueue(MockResponse(code = 200, body = "Req1"))
+    server.enqueue(MockResponse(code = 200, body = "Req2"))
 
     val eventListener = object : EventListener() {
       var socket: SSLSocket? = null
@@ -236,7 +236,7 @@ class ServerTruncatesRequestTest {
   }
 
   @Test fun noAttemptToReadResponseIfLoadingRequestBodyIsSourceOfFailure() {
-    server.enqueue(MockResponse().setBody("abc"))
+    server.enqueue(MockResponse(body = "abc"))
 
     val requestBody = object : RequestBody() {
       override fun contentType(): MediaType? = null
@@ -271,7 +271,7 @@ class ServerTruncatesRequestTest {
   }
 
   private fun makeSimpleCall() {
-    server.enqueue(MockResponse().setBody("healthy"))
+    server.enqueue(MockResponse(body = "healthy"))
     val callB = client.newCall(Request(server.url("/")))
     callB.execute().use { response ->
       assertThat(response.body.string()).isEqualTo("healthy")
