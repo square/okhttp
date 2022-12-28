@@ -47,6 +47,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import static okhttp3.TestUtil.assertSuppressed;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 @Tag("Slow")
@@ -656,11 +657,6 @@ public final class InterceptorTest {
       return chain.proceed(chain.request());
     };
 
-    InetAddress localhost = InetAddress.getLoopbackAddress();
-    ServerSocket serverSocket = new ServerSocket(0, 1, localhost);
-    // Fill backlog queue with this request so subsequent requests will be blocked.
-    new Socket().connect(serverSocket.getLocalSocketAddress());
-
     client = client.newBuilder()
         .connectTimeout(Duration.ofSeconds(5))
         .addInterceptor(interceptor1)
@@ -669,21 +665,20 @@ public final class InterceptorTest {
 
     Request request1 =
         new Request.Builder()
-            .url(
-                "http://"
-                    + serverSocket.getInetAddress().getCanonicalHostName()
-                    + ":"
-                    + serverSocket.getLocalPort())
+            .url("http://" + TestUtil.UNREACHABLE_ADDRESS_IPV4)
             .build();
     Call call = client.newCall(request1);
 
+    long startNanos = System.nanoTime();
     try {
       call.execute();
       fail();
     } catch (SocketTimeoutException expected) {
     }
+    long elapsedNanos = System.nanoTime() - startNanos;
 
-    serverSocket.close();
+    assertTrue(elapsedNanos < TimeUnit.SECONDS.toNanos(5),
+      "Timeout should have taken ~100ms but was " + (elapsedNanos / 1e6) + " ms");
   }
 
   @Test public void chainWithReadTimeout() throws Exception {
