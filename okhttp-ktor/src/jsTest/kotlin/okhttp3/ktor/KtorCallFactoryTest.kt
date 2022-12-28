@@ -24,11 +24,13 @@ import assertk.assertions.endsWith
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isGreaterThan
+import assertk.assertions.isGreaterThanOrEqualTo
 import assertk.assertions.isTrue
 import assertk.assertions.startsWith
 import assertk.fail
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.js.Js
+import io.ktor.util.PlatformUtils
 import io.ktor.utils.io.CancellationException
 import kotlin.test.Ignore
 import kotlin.test.Test
@@ -166,8 +168,12 @@ class KtorCallFactoryTest {
 
     assertThat(response.code).isEqualTo(200)
 
-    // restricted on browser mode
-    assertThat(response.headers.size).isGreaterThan(2)
+    if (PlatformUtils.IS_BROWSER) {
+      // restricted headers in browser mode
+      assertThat(response.headers.size).isGreaterThanOrEqualTo(2)
+    } else {
+      assertThat(response.headers.size).isGreaterThanOrEqualTo(5)
+    }
     assertThat(response.headers["content-type"]).isEqualTo("application/json")
 
     response.use {
