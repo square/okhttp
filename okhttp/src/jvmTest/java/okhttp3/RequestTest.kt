@@ -489,6 +489,32 @@ class RequestTest {
     assertThat(requestB.tag(String::class.java)).isSameAs("b")
     assertThat(requestC.tag(String::class.java)).isSameAs("c")
   }
+  
+  @Test
+  fun requestToStringRedactsSensitiveHeaders() {
+    val headers = Headers.Builder()
+      .add("content-length", "99")
+      .add("authorization", "peanutbutter")
+      .add("proxy-authorization", "chocolate")
+      .add("cookie", "drink=coffee")
+      .add("set-cookie", "accessory=sugar")
+      .add("user-agent", "OkHttp")
+      .build()
+    val request = Request(
+      "https://square.com".toHttpUrl(),
+      headers
+    )
+    assertThat(request.toString()).isEqualTo(
+      "Request{method=GET, url=https://square.com/, headers=[" +
+        "content-length:99," +
+        " authorization:██," +
+        " proxy-authorization:██," +
+        " cookie:██," +
+        " set-cookie:██," +
+        " user-agent:OkHttp" +
+        "]}"
+    )
+  }
 
   private fun bodyToHex(body: RequestBody): String {
     val buffer = Buffer()

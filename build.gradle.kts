@@ -1,5 +1,7 @@
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import com.vanniktech.maven.publish.SonatypeHost
+import groovy.util.Node
+import groovy.util.NodeList
 import java.net.URL
 import kotlinx.validation.ApiValidationExtension
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
@@ -29,6 +31,8 @@ buildscript {
     google()
   }
 }
+
+apply(plugin = "org.jetbrains.dokka")
 
 allprojects {
   group = "com.squareup.okhttp3"
@@ -113,12 +117,9 @@ subprojects {
 
   tasks.withType<KotlinCompile> {
     kotlinOptions {
-      apiVersion = "1.4"
       jvmTarget = JavaVersion.VERSION_1_8.toString()
-
       freeCompilerArgs = listOf(
-        "-Xjvm-default=compatibility",
-        "-opt-in=kotlin.RequiresOptIn"
+        "-Xjvm-default=all",
       )
     }
   }
@@ -209,8 +210,9 @@ subprojects {
   }
 
   plugins.withId("com.vanniktech.maven.publish.base") {
+    val publishingExtension = extensions.getByType(PublishingExtension::class.java)
     configure<MavenPublishBaseExtension> {
-      publishToMavenCentral(SonatypeHost.S01)
+      publishToMavenCentral(SonatypeHost.S01, automaticRelease = true)
       signAllPublications()
       pom {
         name.set(project.name)
@@ -231,6 +233,31 @@ subprojects {
         developers {
           developer {
             name.set("Square, Inc.")
+          }
+        }
+      }
+
+      // Configure the kotlinMultiplatform artifact to depend on the JVM artifact in pom.xml only.
+      // This hack allows Maven users to continue using our original OkHttp artifact names (like
+      // com.squareup.okhttp3:okhttp:5.x.y) even though we changed that artifact from JVM-only
+      // to Kotlin Multiplatform. Note that module.json doesn't need this hack.
+      val mavenPublications = publishingExtension.publications.withType<MavenPublication>()
+      mavenPublications.configureEach {
+        if (name != "jvm") return@configureEach
+        val jvmPublication = this
+        val kmpPublication = mavenPublications.getByName("kotlinMultiplatform")
+        kmpPublication.pom.withXml {
+          val root = asNode()
+          val dependencies = (root["dependencies"] as NodeList).firstOrNull() as Node?
+            ?: root.appendNode("dependencies")
+          for (child in dependencies.children().toList()) {
+            dependencies.remove(child as Node)
+          }
+          dependencies.appendNode("dependency").apply {
+            appendNode("groupId", jvmPublication.groupId)
+            appendNode("artifactId", jvmPublication.artifactId)
+            appendNode("version", jvmPublication.version)
+            appendNode("scope", "compile")
           }
         }
       }

@@ -20,7 +20,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.internal.uppercase
 
 /**
  * Test MediaType API and parsing.

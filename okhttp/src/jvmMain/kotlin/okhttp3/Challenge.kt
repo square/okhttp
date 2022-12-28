@@ -23,7 +23,6 @@ import kotlin.text.Charsets.ISO_8859_1
 import okhttp3.internal.commonEquals
 import okhttp3.internal.commonHashCode
 import okhttp3.internal.commonToString
-import okhttp3.internal.lowercase
 
 actual class Challenge actual constructor(
   @get:JvmName("scheme") actual val scheme: String,

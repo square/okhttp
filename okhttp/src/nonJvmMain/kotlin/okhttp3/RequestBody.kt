@@ -15,7 +15,6 @@
  */
 package okhttp3
 
-import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.internal.commonContentLength
 import okhttp3.internal.commonIsDuplex
@@ -41,7 +40,7 @@ actual abstract class RequestBody {
       val bytes = commonAsUtf8ToByteArray()
 
       val resolvedContentType = if (contentType != null && contentType.parameter("charset") == null) {
-        "$contentType; charset=utf-8".toMediaType()
+        "$contentType; charset=utf-8".toMediaTypeOrNull()
       } else {
         contentType
       }

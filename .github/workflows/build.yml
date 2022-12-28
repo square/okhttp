@@ -7,6 +7,9 @@ on:
   pull_request:
     types: [opened, labeled, unlabeled, synchronize]
 
+permissions:
+  contents: read
+
 env:
   GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.daemon=false -Dkotlin.incremental=false"
 
@@ -42,6 +45,8 @@ jobs:
       - uses: gradle/wrapper-validation-action@v1
 
   checkjdk11:
+    permissions:
+      checks: write # for mikepenz/action-junit-report
     runs-on: ubuntu-latest
 
     steps:
@@ -68,6 +73,8 @@ jobs:
           report_paths: '**/build/test-results/*/TEST-*.xml'
 
   testopenjdk11:
+    permissions:
+      checks: write # for mikepenz/action-junit-report
     runs-on: ubuntu-latest
 
     steps:
@@ -94,6 +101,8 @@ jobs:
           report_paths: '**/build/test-results/*/TEST-*.xml'
 
   testjs:
+    permissions:
+      checks: write # for mikepenz/action-junit-report
     runs-on: ubuntu-latest
 
     steps:
@@ -335,11 +344,15 @@ jobs:
 
       - name: Build okcurl
         uses: gradle/gradle-build-action@v2
+        env:
+          USE_NATIVE_IMAGE_JAVA_PLATFORM_MODULE_SYSTEM: false
         with:
           arguments: okcurl:nativeImage
 
       - name: Build ConsoleLauncher
         uses: gradle/gradle-build-action@v2
+        env:
+          USE_NATIVE_IMAGE_JAVA_PLATFORM_MODULE_SYSTEM: false
         with:
           arguments: -PgraalBuild native-image-tests:nativeImage
 

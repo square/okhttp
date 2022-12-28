@@ -1,6 +1,16 @@
 OkHttp 4.x Change Log
 =====================
 
+## Version 4.10.0
+
+_2022-06-12_
+
+ *  Upgrade: [Kotlin 1.6.20][kotlin_1_6_20].
+ *  Upgrade: [Okio 3.0.0][okio_3_0_0].
+ *  Fix: Recover gracefully when Android's `NativeCrypto` crashes with `"ssl == null"`. This occurs
+    when OkHttp retrieves ALPN state on a closed connection.
+
+
 ## Version 4.9.3
 
 _2021-11-21_
@@ -528,11 +538,13 @@ _2019-06-03_
  [jetty_8_252]: https://webtide.com/jetty-alpn-java-8u252/
  [kotlin_1_3_71]: https://github.com/JetBrains/kotlin/releases/tag/v1.3.71
  [kotlin_1_4_10]: https://github.com/JetBrains/kotlin/releases/tag/v1.4.10
+ [kotlin_1_6_20]: https://github.com/JetBrains/kotlin/releases/tag/v1.6.20
  [legacy_interceptor]: https://gist.github.com/swankjesse/80135f4e03629527e723ab3bcf64be0b
  [okhttp4_blog_post]: https://cashapp.github.io/2019-06-26/okhttp-4-goes-kotlin
  [okio.FileSystem]: https://square.github.io/okio/file_system/
  [okio_2_6_0]: https://square.github.io/okio/changelog/#version-260
  [okio_2_7_0]: https://square.github.io/okio/changelog/#version-270
+ [okio_3_0_0]: https://square.github.io/okio/changelog/#version-300
  [public_suffix]: https://publicsuffix.org/
  [rfc_2045]: https://tools.ietf.org/html/rfc2045
  [rfc_7231_647]: https://tools.ietf.org/html/rfc7231#section-6.4.7

@@ -1,6 +1,48 @@
 Change Log
 ==========
 
+## Version 5.0.0-alpha.11
+
+_2022-12-24_
+
+ *  New: Enable fast fallback by default. It's our implementation of Happy Eyeballs,
+    [RFC 8305][rfc_8305]. Disable with `OkHttpClient.Builder.fastFallback(false)`.
+ *  Fix: Don't log response bodies for server-sent events.
+ *  Fix: Skip early hints (status code 103) responses.
+ *  Fix: Don't log sensitive headers in `Request.toString()`.
+ *  Fix: Don't crash when the dispatcher's `ExecutorService` is shutdown with many
+    calls still enqueued.
+ *  Upgrade: [GraalVM 22][graalvm_22].
+ *  Upgrade: [Kotlin 1.7.10][kotlin_1_7_10].
+
+
+## Version 5.0.0-alpha.10
+
+_2022-06-26_
+
+ *  Fix: Configure the multiplatform artifact (`com.squareup.okhttp3:okhttp:3.x.x`) to depend on the
+    JVM artifact (`com.squareup.okhttp3:okhttp-jvm:3.x.x`) for Maven builds. This should work-around
+    an issue where Maven doesn't interpret Gradle metadata.
+ *  Fix: Make another attempt at supporting Kotlin 1.5.31 at runtime. We were crashing on
+    `DurationUnit` which was a typealias in 1.5.x.
+ *  Upgrade: [Okio 3.2.0][okio_3_2_0].
+
+
+## Version 5.0.0-alpha.9
+
+_2022-06-16_
+
+ *  New: Enforce label length limits in URLs. `HttpUrl` now rejects URLs whose domains aren't valid.
+    This includes overly-long domain names (longer than 253 characters), overly-long labels (more
+    than 63 characters between dots), and empty labels.
+ *  New: Don't include the `Content-Length` header in multipart bodies. Servers must delimit
+    OkHttp's request bodies using the boundary only. (This change makes OkHttp more consistent with
+    browsers and other HTTP clients.)
+ *  New: Drop the `tunnelProxy` argument in `MockWebServer.useHttps()`. This change only impacts
+    the OkHttp 5.x API which uses the `mockwebserver3` package.
+ *  Fix: Don't call `toDuration()` which isn't available in kotlin-stdlib 1.4.
+
+
 ## Version 5.0.0-alpha.8
 
 _2022-06-08_
@@ -226,11 +268,14 @@ release is the version name.
 [assertk]: https://github.com/willowtreeapps/assertk
 [graalvm]: https://www.graalvm.org/
 [graalvm_21]: https://www.graalvm.org/release-notes/21_0/
+[graalvm_22]: https://www.graalvm.org/release-notes/22_2/
 [kotlin_1_4_20]: https://github.com/JetBrains/kotlin/releases/tag/v1.4.20
 [kotlin_1_5_31]: https://github.com/JetBrains/kotlin/releases/tag/v1.5.31
 [kotlin_1_6_10]: https://github.com/JetBrains/kotlin/releases/tag/v1.6.10
 [kotlin_1_6_21]: https://github.com/JetBrains/kotlin/releases/tag/v1.6.21
+[kotlin_1_7_10]: https://github.com/JetBrains/kotlin/releases/tag/v1.7.10
 [okio_2_9_0]: https://square.github.io/okio/changelog/#version-290
 [okio_3_0_0]: https://square.github.io/okio/changelog/#version-300
 [okio_3_1_0]: https://square.github.io/okio/changelog/#version-310
+[okio_3_2_0]: https://square.github.io/okio/changelog/#version-320
 [rfc_8305]: https://tools.ietf.org/html/rfc8305

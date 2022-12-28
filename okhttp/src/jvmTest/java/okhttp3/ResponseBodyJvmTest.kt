@@ -32,7 +32,6 @@ import java.lang.StringBuilder
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.atomic.AtomicBoolean
 import okhttp3.internal.and
-import okhttp3.internal.code
 import okio.ByteString.Companion.decodeHex
 import org.assertj.core.api.Assertions.assertThat
 
@@ -491,7 +490,7 @@ class ResponseBodyJvmTest {
       val buf = CharArray(10)
       var read: Int
       while (reader.read(buf).also { read = it } != -1) {
-        builder.append(buf, 0, read)
+        builder.appendRange(buf, 0, read)
       }
       return builder.toString()
     }

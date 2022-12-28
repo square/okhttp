@@ -16,6 +16,7 @@
 package okhttp3
 
 import kotlin.reflect.KClass
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.internal.canonicalUrl
 import okhttp3.internal.commonAddHeader
 import okhttp3.internal.commonCacheControl
@@ -33,7 +34,7 @@ import okhttp3.internal.commonRemoveHeader
 import okhttp3.internal.commonTag
 
 actual class Request internal actual constructor(builder: Builder) {
-  actual val url: String = checkNotNull(builder.url) { "url == null" }
+  actual val url: HttpUrl = checkNotNull(builder.url) { "url == null" }
   actual val method: String = builder.method
   actual val headers: Headers = builder.headers.build()
   actual val body: RequestBody? = builder.body
@@ -42,7 +43,7 @@ actual class Request internal actual constructor(builder: Builder) {
   internal actual var lazyCacheControl: CacheControl? = null
 
   actual val isHttps: Boolean
-    get() = url.startsWith("https://")
+    get() = url.isHttps
 
   /**
    * Constructs a new request.
@@ -108,7 +109,7 @@ actual class Request internal actual constructor(builder: Builder) {
   }
 
   actual open class Builder {
-    internal actual var url: String? = null
+    internal actual var url: HttpUrl? = null
     internal actual var method: String
     internal actual var headers: Headers.Builder
     internal actual var body: RequestBody? = null
@@ -133,12 +134,12 @@ actual class Request internal actual constructor(builder: Builder) {
       this.headers = request.headers.newBuilder()
     }
 
-    // open fun url(url: HttpUrl): Builder = apply {
-    //   this.url = url
-    // }
+     actual open fun url(url: HttpUrl): Builder = apply {
+       this.url = url
+     }
 
     actual open fun url(url: String): Builder = apply {
-      this.url = canonicalUrl(url)
+      url(canonicalUrl(url).toHttpUrl())
     }
 
     actual open fun header(name: String, value: String) = commonHeader(name, value)

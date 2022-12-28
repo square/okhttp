@@ -34,9 +34,6 @@ import okio.Options
 import okio.Path
 import okio.use
 
-// Temporary until we have a HttpUrl in common
-expect class HttpUrlRepresentation
-
 // TODO: migrate callers to [Regex.matchAt] when that API is not experimental.
 internal fun Regex.matchAtPolyfill(input: CharSequence, index: Int): MatchResult? {
   val candidate = find(input, index) ?: return null
@@ -395,16 +392,8 @@ internal fun <T> interleave(a: Iterable<T>, b: Iterable<T>): List<T> {
   }
 }
 
-@Suppress("DEPRECATION")
-inline val Char.code
-  get() = this.toInt()
+// TODO check read only options for creating lists
+public fun <T> List<T>.readOnly() = this.toList()
 
-expect inline fun String.lowercase(): String
-
-expect inline fun String.uppercase(): String
-
-inline fun <E> buildList(builderAction: MutableList<E>.() -> Unit): List<E> {
-  return mutableListOf<E>().apply {
-    builderAction()
-  }
-}
+// TODO check read only options for creating lists
+public fun <T> Set<T>.readOnly() = this.toSet()

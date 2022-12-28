@@ -35,7 +35,7 @@ actual class MediaType internal actual constructor(
 
   /**
    * Returns the charset of this media type, or [defaultValue] if either this media type doesn't
-   * specify a charset, of it its charset is unsupported by the current runtime.
+   * specify a charset, or if its charset is unsupported by the current runtime.
    */
   @JvmOverloads
   fun charset(defaultValue: Charset? = null): Charset? {

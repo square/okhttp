@@ -38,9 +38,7 @@ import org.junit.jupiter.api.fail
 
 @Timeout(30)
 @Tag("Slowish")
-class ServerTruncatesRequestTest(
-  val server: MockWebServer
-) {
+class ServerTruncatesRequestTest {
   @RegisterExtension @JvmField val platform = PlatformRule()
   @RegisterExtension @JvmField var clientTestRule = OkHttpClientTestRule()
 
@@ -51,7 +49,11 @@ class ServerTruncatesRequestTest(
       .eventListenerFactory(clientTestRule.wrap(listener))
       .build()
 
-  @BeforeEach fun setUp() {
+  private lateinit var server: MockWebServer
+
+  @BeforeEach
+  fun setUp(server: MockWebServer) {
+    this.server = server
     platform.assumeNotOpenJSSE()
     platform.assumeHttp2Support()
     platform.assumeNotBouncyCastle()

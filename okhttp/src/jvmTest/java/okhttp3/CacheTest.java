@@ -37,6 +37,7 @@ import java.util.TimeZone;
 import mockwebserver3.MockResponse;
 import mockwebserver3.MockWebServer;
 import mockwebserver3.RecordedRequest;
+import mockwebserver3.junit5.internal.MockWebServerInstance;
 import okhttp3.internal.Internal;
 import okhttp3.internal.platform.Platform;
 import okhttp3.testing.PlatformRule;
@@ -78,7 +79,11 @@ public final class CacheTest {
   private Cache cache;
   private final CookieManager cookieManager = new CookieManager();
 
-  @BeforeEach public void setUp(MockWebServer server, MockWebServer server2) throws Exception {
+  @BeforeEach
+  public void setUp(
+    @MockWebServerInstance(name = "1") MockWebServer server,
+    @MockWebServerInstance(name = "2") MockWebServer server2
+  ) throws Exception {
     this.server = server;
     this.server2 = server2;
 

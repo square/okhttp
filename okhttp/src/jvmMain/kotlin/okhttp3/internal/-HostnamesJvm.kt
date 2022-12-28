@@ -27,7 +27,7 @@ import java.util.Locale
  * `null` will be returned if the host cannot be ToASCII encoded or if the result contains
  * unsupported ASCII characters.
  */
-fun String.toCanonicalHost(): String? {
+actual fun String.toCanonicalHost(): String? {
   val host: String = this
 
   // If the input contains a :, it’s an IPv6 address.
@@ -49,11 +49,14 @@ fun String.toCanonicalHost(): String? {
     val result = IDN.toASCII(host).lowercase(Locale.US)
     if (result.isEmpty()) return null
 
-    // Confirm that the IDN ToASCII result doesn't contain any illegal characters.
     return if (result.containsInvalidHostnameAsciiCodes()) {
+      // The IDN ToASCII result contains illegal characters.
+      null
+    } else if (result.containsInvalidLabelLengths()) {
+      // The IDN ToASCII result contains invalid labels.
       null
     } else {
-      result // TODO: implement all label limits.
+      result
     }
   } catch (_: IllegalArgumentException) {
     return null
