@@ -16,7 +16,7 @@ public final class mockwebserver3/MockResponse {
 	public fun <init> (ILokhttp3/Headers;Ljava/lang/String;ZLmockwebserver3/SocketPolicy;I)V
 	public synthetic fun <init> (ILokhttp3/Headers;Ljava/lang/String;ZLmockwebserver3/SocketPolicy;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (Lmockwebserver3/MockResponse$Builder;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun getBody ()Lokio/Buffer;
+	public final fun getBody ()Lmockwebserver3/MockResponseBody;
 	public final fun getBodyDelayNanos ()J
 	public final fun getCode ()I
 	public final fun getDuplexResponseBody ()Lmockwebserver3/internal/duplex/DuplexResponseBody;
@@ -58,6 +58,7 @@ public final class mockwebserver3/MockResponse$Builder : java/lang/Cloneable {
 	public synthetic fun clone ()Ljava/lang/Object;
 	public fun clone ()Lmockwebserver3/MockResponse$Builder;
 	public final fun code (I)Lmockwebserver3/MockResponse$Builder;
+	public final fun getBody ()Lmockwebserver3/MockResponseBody;
 	public final fun getCode ()I
 	public final fun getDuplexResponseBody ()Lmockwebserver3/internal/duplex/DuplexResponseBody;
 	public final fun getHttp2ErrorCode ()I
@@ -74,6 +75,7 @@ public final class mockwebserver3/MockResponse$Builder : java/lang/Cloneable {
 	public final fun http2ErrorCode (I)Lmockwebserver3/MockResponse$Builder;
 	public final fun inTunnel ()Lmockwebserver3/MockResponse$Builder;
 	public final fun removeHeader (Ljava/lang/String;)Lmockwebserver3/MockResponse$Builder;
+	public final fun setBody (Lmockwebserver3/MockResponseBody;)V
 	public final fun setCode (I)V
 	public final fun setHeader (Ljava/lang/String;Ljava/lang/Object;)Lmockwebserver3/MockResponse$Builder;
 	public final fun setHttp2ErrorCode (I)V
@@ -88,6 +90,11 @@ public final class mockwebserver3/MockResponse$Builder : java/lang/Cloneable {
 }
 
 public final class mockwebserver3/MockResponse$Companion {
+}
+
+public abstract interface class mockwebserver3/MockResponseBody {
+	public abstract fun getContentLength ()J
+	public abstract fun writeTo (Lokio/BufferedSink;)V
 }
 
 public final class mockwebserver3/MockWebServer : java/io/Closeable {
