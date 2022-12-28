@@ -17,6 +17,7 @@ package mockwebserver3
 
 import java.util.concurrent.TimeUnit
 import mockwebserver3.internal.duplex.DuplexResponseBody
+import mockwebserver3.internal.toMockResponseBody
 import okhttp3.Headers
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.WebSocketListener
@@ -47,8 +48,7 @@ class MockResponse {
   val headers: Headers
   val trailers: Headers
 
-  val body: Buffer?
-    get() { return field?.clone() }
+  val body: MockResponseBody?
 
   val inTunnel: Boolean
   val informationalResponses: List<MockResponse>
@@ -101,7 +101,7 @@ class MockResponse {
     this.status = builder.status
     this.headers = builder.headers.build()
     this.trailers = builder.trailers.build()
-    this.body = builder.body?.clone()
+    this.body = builder.body
     this.inTunnel = builder.inTunnel
     this.informationalResponses = builder.informationalResponses.toList()
     this.throttleBytesPerPeriod = builder.throttleBytesPerPeriod
@@ -152,7 +152,7 @@ class MockResponse {
 
     internal var trailers: Headers.Builder
 
-    internal var body: Buffer?
+    var body: MockResponseBody?
 
     var throttleBytesPerPeriod: Long
       private set
@@ -271,7 +271,7 @@ class MockResponse {
 
     fun body(body: Buffer) = apply {
       setHeader("Content-Length", body.size)
-      this.body = body.clone() // Defensive copy.
+      this.body = body.toMockResponseBody()
     }
 
     /** Sets the response body to the UTF-8 encoded bytes of [body]. */
@@ -297,7 +297,7 @@ class MockResponse {
         bytesOut.writeUtf8("\r\n")
       }
       bytesOut.writeUtf8("0\r\n") // Last chunk. Trailers follow!
-      this.body = bytesOut
+      this.body = bytesOut.toMockResponseBody()
     }
 
     /**

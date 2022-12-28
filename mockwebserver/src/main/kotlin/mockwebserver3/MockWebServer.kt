@@ -58,7 +58,10 @@ import mockwebserver3.SocketPolicy.SHUTDOWN_INPUT_AT_END
 import mockwebserver3.SocketPolicy.SHUTDOWN_OUTPUT_AT_END
 import mockwebserver3.SocketPolicy.SHUTDOWN_SERVER_AFTER_RESPONSE
 import mockwebserver3.SocketPolicy.STALL_SOCKET_AT_START
+import mockwebserver3.internal.ThrottledSink
+import mockwebserver3.internal.TriggerSink
 import mockwebserver3.internal.duplex.DuplexResponseBody
+import mockwebserver3.internal.sleepNanos
 import okhttp3.Headers
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.HttpUrl
@@ -672,29 +675,38 @@ class MockWebServer : Closeable {
 
       var hasBody = false
       val policy = dispatcher.peek()
-      if (policy.socketPolicy == DO_NOT_READ_REQUEST_BODY) {
-        // Ignore the body completely.
-      } else if (contentLength != -1L) {
-        hasBody = contentLength > 0L
-        throttledTransfer(policy, socket, source, requestBody.buffer(), contentLength, true)
-      } else if (chunked) {
-        hasBody = true
-        while (true) {
-          val chunkSize = source.readUtf8LineStrict().trim().toInt(16)
-          if (chunkSize == 0) {
-            readEmptyLine(source)
-            break
+      val requestBodySink = requestBody.withThrottlingAndSocketPolicy(
+        policy = policy,
+        disconnectHalfway = policy.socketPolicy == DISCONNECT_DURING_REQUEST_BODY,
+        expectedByteCount = contentLength,
+        socket = socket,
+      ).buffer()
+      requestBodySink.use {
+        when {
+          policy.socketPolicy == DO_NOT_READ_REQUEST_BODY -> {
+            // Ignore the body completely.
           }
-          chunkSizes.add(chunkSize)
-          throttledTransfer(
-            policy = policy,
-            socket = socket,
-            source = source,
-            sink = requestBody.buffer(),
-            byteCount = chunkSize.toLong(),
-            isRequest = true
-          )
-          readEmptyLine(source)
+
+          contentLength != -1L -> {
+            hasBody = contentLength > 0L
+            requestBodySink.write(source, contentLength)
+          }
+
+          chunked -> {
+            hasBody = true
+            while (true) {
+              val chunkSize = source.readUtf8LineStrict().trim().toInt(16)
+              if (chunkSize == 0) {
+                readEmptyLine(source)
+                break
+              }
+              chunkSizes.add(chunkSize)
+              requestBodySink.write(source, chunkSize.toLong())
+              readEmptyLine(source)
+            }
+          }
+
+          else -> Unit // No request body.
         }
       }
 
@@ -785,7 +797,14 @@ class MockWebServer : Closeable {
 
     val body = response.body ?: return
     sleepNanos(response.bodyDelayNanos)
-    throttledTransfer(response, socket, body, sink, body.size, false)
+    val responseBodySink = sink.withThrottlingAndSocketPolicy(
+      policy = response,
+      disconnectHalfway = response.socketPolicy == DISCONNECT_DURING_RESPONSE_BODY,
+      expectedByteCount = body.contentLength,
+      socket = socket,
+    ).buffer()
+    body.writeTo(responseBodySink)
+    responseBodySink.emit()
 
     if ("chunked".equals(response.headers["Transfer-Encoding"], ignoreCase = true)) {
       writeHeaders(sink, response.trailers)
@@ -804,69 +823,38 @@ class MockWebServer : Closeable {
     sink.flush()
   }
 
-  private fun sleepNanos(nanos: Long) {
-    val ms = nanos / 1_000_000L
-    val ns = nanos - (ms * 1_000_000L)
-    if (ms > 0L || nanos > 0) {
-      Thread.sleep(ms, ns.toInt())
-    }
-  }
-
-  /**
-   * Transfer bytes from [source] to [sink] until either [byteCount] bytes have
-   * been transferred or [source] is exhausted. The transfer is throttled according to [policy].
-   */
-  @Throws(IOException::class)
-  private fun throttledTransfer(
+  /** Returns a sink that applies throttling and disconnecting. */
+  private fun Sink.withThrottlingAndSocketPolicy(
     policy: MockResponse,
+    disconnectHalfway: Boolean,
+    expectedByteCount: Long,
     socket: Socket,
-    source: BufferedSource,
-    sink: BufferedSink,
-    byteCount: Long,
-    isRequest: Boolean
-  ) {
-    var byteCountNum = byteCount
-    if (byteCountNum == 0L) return
+  ): Sink {
+    var result: Sink = this
 
-    val buffer = Buffer()
-    val bytesPerPeriod = policy.throttleBytesPerPeriod
-    val periodDelayNanos = policy.throttlePeriodNanos
-
-    val halfByteCount = byteCountNum / 2
-    val disconnectHalfway = if (isRequest) {
-      policy.socketPolicy === DISCONNECT_DURING_REQUEST_BODY
-    } else {
-      policy.socketPolicy === DISCONNECT_DURING_RESPONSE_BODY
+    if (policy.throttlePeriodNanos > 0L) {
+      result = ThrottledSink(
+        delegate = result,
+        bytesPerPeriod = policy.throttleBytesPerPeriod,
+        periodDelayNanos = policy.throttlePeriodNanos,
+      )
     }
 
-    while (!socket.isClosed) {
-      var b = 0L
-      while (b < bytesPerPeriod) {
-        // Ensure we do not read past the allotted bytes in this period.
-        var toRead = minOf(byteCountNum, bytesPerPeriod - b)
-        // Ensure we do not read past halfway if the policy will kill the connection.
-        if (disconnectHalfway) {
-          toRead = minOf(toRead, byteCountNum - halfByteCount)
-        }
-
-        val read = source.read(buffer, toRead)
-        if (read == -1L) return
-
-        sink.write(buffer, read)
-        sink.flush()
-        b += read
-        byteCountNum -= read
-
-        if (disconnectHalfway && byteCountNum == halfByteCount) {
-          socket.close()
-          return
-        }
-
-        if (byteCountNum == 0L) return
+    if (disconnectHalfway) {
+      val halfwayByteCount = when {
+        expectedByteCount != -1L -> expectedByteCount / 2
+        else -> 0L
       }
-
-      sleepNanos(periodDelayNanos)
+      result = TriggerSink(
+        delegate = result,
+        triggerByteCount = halfwayByteCount,
+      ) {
+        result.flush()
+        socket.close()
+      }
     }
+
+    return result
   }
 
   @Throws(IOException::class)
@@ -998,18 +986,18 @@ class MockWebServer : Closeable {
       val body = Buffer()
       val requestLine = "$method $path HTTP/1.1"
       var exception: IOException? = null
-      if (readBody && !peek.isDuplex && peek.socketPolicy !== DO_NOT_READ_REQUEST_BODY) {
+      if (readBody && !peek.isDuplex && peek.socketPolicy != DO_NOT_READ_REQUEST_BODY) {
         try {
           val contentLengthString = headers["content-length"]
-          val byteCount = contentLengthString?.toLong() ?: Long.MAX_VALUE
-          throttledTransfer(
+          val requestBodySink = body.withThrottlingAndSocketPolicy(
             policy = peek,
+            disconnectHalfway = peek.socketPolicy == DISCONNECT_DURING_REQUEST_BODY,
+            expectedByteCount = contentLengthString?.toLong() ?: Long.MAX_VALUE,
             socket = socket,
-            source = stream.getSource().buffer(),
-            sink = body,
-            byteCount = byteCount,
-            isRequest = true
-          )
+          ).buffer()
+          requestBodySink.use {
+            it.writeAll(stream.getSource())
+          }
         } catch (e: IOException) {
           exception = e
         }
@@ -1068,9 +1056,15 @@ class MockWebServer : Closeable {
       }
       pushPromises(stream, request, response.pushPromises)
       if (body != null) {
-        stream.getSink().buffer().use { sink ->
-          sleepNanos(bodyDelayNanos)
-          throttledTransfer(response, socket, body, sink, body.size, false)
+        sleepNanos(bodyDelayNanos)
+        val responseBodySink = stream.getSink().withThrottlingAndSocketPolicy(
+          policy = response,
+          disconnectHalfway = response.socketPolicy == DISCONNECT_DURING_RESPONSE_BODY,
+          expectedByteCount = body.contentLength,
+          socket = socket
+        ).buffer()
+        responseBodySink.use {
+          body.writeTo(responseBodySink)
         }
       } else if (response.isDuplex) {
         val duplexResponseBody = response.duplexResponseBody!!
