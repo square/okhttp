@@ -48,9 +48,9 @@ class OkHttpClientTest {
     assertThat(response.body.string()).isEqualTo("hello, OkHttp")
 
     val recorded = server.takeRequest()
-    assertThat(recorded.getHeader("Accept")).isEqualTo("text/plain")
-    assertThat(recorded.getHeader("Accept-Encoding")).isEqualTo("gzip")
-    assertThat(recorded.getHeader("Connection")).isEqualTo("Keep-Alive")
-    assertThat(recorded.getHeader("User-Agent")).matches("okhttp/.*")
+      assertThat(recorded.headers["Accept"]).isEqualTo("text/plain")
+      assertThat(recorded.headers["Accept-Encoding"]).isEqualTo("gzip")
+      assertThat(recorded.headers["Connection"]).isEqualTo("Keep-Alive")
+      assertThat(recorded.headers["User-Agent"]).matches("okhttp/.*")
   }
 }

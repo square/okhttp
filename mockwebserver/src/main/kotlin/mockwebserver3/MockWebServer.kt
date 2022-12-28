@@ -176,8 +176,7 @@ class MockWebServer : Closeable {
    *
    * This list is ignored when [negotiation is disabled][protocolNegotiationEnabled].
    */
-  @get:JvmName("protocols") var protocols: List<Protocol> =
-    immutableListOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
+  var protocols: List<Protocol> = immutableListOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
     set(value) {
       val protocolList = value.toImmutableList()
       require(Protocol.H2_PRIOR_KNOWLEDGE !in protocolList || protocolList.size == 1) {
@@ -202,30 +201,10 @@ class MockWebServer : Closeable {
     }
   }
 
-  @JvmName("-deprecated_port")
-  @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "port"),
-    level = DeprecationLevel.ERROR
-  )
-  fun getPort(): Int = port
-
   fun toProxyAddress(): Proxy {
     before()
     val address = InetSocketAddress(_inetSocketAddress!!.address.canonicalHostName, port)
     return Proxy(Proxy.Type.HTTP, address)
-  }
-
-  @JvmName("-deprecated_serverSocketFactory")
-  @Deprecated(
-    message = "moved to var",
-    replaceWith = ReplaceWith(
-      expression = "run { this.serverSocketFactory = serverSocketFactory }"
-    ),
-    level = DeprecationLevel.ERROR
-  )
-  fun setServerSocketFactory(serverSocketFactory: ServerSocketFactory) = run {
-    this.serverSocketFactory = serverSocketFactory
   }
 
   /**
@@ -241,44 +220,6 @@ class MockWebServer : Closeable {
       .build()
       .resolve(path)!!
   }
-
-  @JvmName("-deprecated_bodyLimit")
-  @Deprecated(
-    message = "moved to var",
-    replaceWith = ReplaceWith(
-      expression = "run { this.bodyLimit = bodyLimit }"
-    ),
-    level = DeprecationLevel.ERROR
-  )
-  fun setBodyLimit(bodyLimit: Long) = run { this.bodyLimit = bodyLimit }
-
-  @JvmName("-deprecated_protocolNegotiationEnabled")
-  @Deprecated(
-    message = "moved to var",
-    replaceWith = ReplaceWith(
-      expression = "run { this.protocolNegotiationEnabled = protocolNegotiationEnabled }"
-    ),
-    level = DeprecationLevel.ERROR
-  )
-  fun setProtocolNegotiationEnabled(protocolNegotiationEnabled: Boolean) = run {
-    this.protocolNegotiationEnabled = protocolNegotiationEnabled
-  }
-
-  @JvmName("-deprecated_protocols")
-  @Deprecated(
-    message = "moved to var",
-    replaceWith = ReplaceWith(expression = "run { this.protocols = protocols }"),
-    level = DeprecationLevel.ERROR
-  )
-  fun setProtocols(protocols: List<Protocol>) = run { this.protocols = protocols }
-
-  @JvmName("-deprecated_protocols")
-  @Deprecated(
-    message = "moved to var",
-    replaceWith = ReplaceWith(expression = "protocols"),
-    level = DeprecationLevel.ERROR
-  )
-  fun protocols(): List<Protocol> = protocols
 
   /**
    * Serve requests with HTTPS rather than otherwise.
@@ -339,14 +280,6 @@ class MockWebServer : Closeable {
   @Throws(InterruptedException::class)
   fun takeRequest(timeout: Long, unit: TimeUnit): RecordedRequest? =
     requestQueue.poll(timeout, unit)
-
-  @JvmName("-deprecated_requestCount")
-  @Deprecated(
-    message = "moved to val",
-    replaceWith = ReplaceWith(expression = "requestCount"),
-    level = DeprecationLevel.ERROR
-  )
-  fun getRequestCount(): Int = requestCount
 
   /**
    * Scripts [response] to be returned to a request made in sequence. The first request is
@@ -634,8 +567,8 @@ class MockWebServer : Closeable {
 
       var reuseSocket = true
       val requestWantsWebSockets =
-        "Upgrade".equals(request.getHeader("Connection"), ignoreCase = true) &&
-          "websocket".equals(request.getHeader("Upgrade"), ignoreCase = true)
+        "Upgrade".equals(request.headers["Connection"], ignoreCase = true) &&
+          "websocket".equals(request.headers["Upgrade"], ignoreCase = true)
       val responseWantsWebSockets = response.webSocketListener != null
       if (requestWantsWebSockets && responseWantsWebSockets) {
         handleWebSocketUpgrade(socket, source, sink, request, response)
@@ -705,7 +638,6 @@ class MockWebServer : Closeable {
     val headers = Headers.Builder()
     var contentLength = -1L
     var chunked = false
-    var expectContinue = false
     val requestBody = TruncatingBuffer(bodyLimit)
     val chunkSizes = mutableListOf<Int>()
     var failure: IOException? = null
@@ -794,15 +726,15 @@ class MockWebServer : Closeable {
     request: RecordedRequest,
     response: MockResponse
   ) {
-    val key = request.getHeader("Sec-WebSocket-Key")
+    val key = request.headers["Sec-WebSocket-Key"]
     val webSocketResponse = response.newBuilder()
       .setHeader("Sec-WebSocket-Accept", WebSocketProtocol.acceptHeader(key!!))
       .build()
     writeHttpResponse(socket, sink, webSocketResponse)
 
     // Adapt the request and response into our Request and Response domain model.
-    val scheme = if (request.tlsVersion != null) "https" else "http"
-    val authority = request.getHeader("Host") // Has host and port.
+    val scheme = if (request.handshake != null) "https" else "http"
+    val authority = request.headers["Host"] // Has host and port.
     val fancyRequest = Request.Builder()
       .url("$scheme://$authority/")
       .headers(request.headers)
@@ -845,14 +777,14 @@ class MockWebServer : Closeable {
 
   @Throws(IOException::class)
   private fun writeHttpResponse(socket: Socket, sink: BufferedSink, response: MockResponse) {
-    sleepIfDelayed(response.getHeadersDelay(TimeUnit.MILLISECONDS))
+    sleepNanos(response.headersDelayNanos)
     sink.writeUtf8(response.status)
     sink.writeUtf8("\r\n")
 
     writeHeaders(sink, response.headers)
 
     val body = response.body ?: return
-    sleepIfDelayed(response.getBodyDelay(TimeUnit.MILLISECONDS))
+    sleepNanos(response.bodyDelayNanos)
     throttledTransfer(response, socket, body, sink, body.size, false)
 
     if ("chunked".equals(response.headers["Transfer-Encoding"], ignoreCase = true)) {
@@ -872,9 +804,11 @@ class MockWebServer : Closeable {
     sink.flush()
   }
 
-  private fun sleepIfDelayed(delayMs: Long) {
-    if (delayMs != 0L) {
-      Thread.sleep(delayMs)
+  private fun sleepNanos(nanos: Long) {
+    val ms = nanos / 1_000_000L
+    val ns = nanos - (ms * 1_000_000L)
+    if (ms > 0L || nanos > 0) {
+      Thread.sleep(ms, ns.toInt())
     }
   }
 
@@ -896,7 +830,7 @@ class MockWebServer : Closeable {
 
     val buffer = Buffer()
     val bytesPerPeriod = policy.throttleBytesPerPeriod
-    val periodDelayMs = policy.getThrottlePeriod(TimeUnit.MILLISECONDS)
+    val periodDelayNanos = policy.throttlePeriodNanos
 
     val halfByteCount = byteCountNum / 2
     val disconnectHalfway = if (isRequest) {
@@ -931,7 +865,7 @@ class MockWebServer : Closeable {
         if (byteCountNum == 0L) return
       }
 
-      sleepIfDelayed(periodDelayMs)
+      sleepNanos(periodDelayNanos)
     }
   }
 
@@ -1054,7 +988,7 @@ class MockWebServer : Closeable {
 
       val peek = dispatcher.peek()
       for (response in peek.informationalResponses) {
-        sleepIfDelayed(response.getHeadersDelay(TimeUnit.MILLISECONDS))
+        sleepNanos(response.headersDelayNanos)
         stream.writeHeaders(response.toHttp2Headers(), outFinished = false, flushHeaders = true)
         if (response.code == 100) {
           readBody = true
@@ -1115,18 +1049,18 @@ class MockWebServer : Closeable {
         return
       }
 
-      val bodyDelayMs = response.getBodyDelay(TimeUnit.MILLISECONDS)
+      val bodyDelayNanos = response.bodyDelayNanos
       val trailers = response.trailers
       val body = response.body
       val outFinished = (body == null &&
         response.pushPromises.isEmpty() &&
         !response.isDuplex)
-      val flushHeaders = body == null || bodyDelayMs != 0L
+      val flushHeaders = body == null || bodyDelayNanos != 0L
       require(!outFinished || trailers.size == 0) {
         "unsupported: no body and non-empty trailers $trailers"
       }
 
-      sleepIfDelayed(response.getHeadersDelay(TimeUnit.MILLISECONDS))
+      sleepNanos(response.headersDelayNanos)
       stream.writeHeaders(response.toHttp2Headers(), outFinished, flushHeaders)
 
       if (trailers.size > 0) {
@@ -1135,7 +1069,7 @@ class MockWebServer : Closeable {
       pushPromises(stream, request, response.pushPromises)
       if (body != null) {
         stream.getSink().buffer().use { sink ->
-          sleepIfDelayed(bodyDelayMs)
+          sleepNanos(bodyDelayNanos)
           throttledTransfer(response, socket, body, sink, body.size, false)
         }
       } else if (response.isDuplex) {

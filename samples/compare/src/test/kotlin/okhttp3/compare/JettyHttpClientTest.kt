@@ -51,9 +51,9 @@ class JettyHttpClientTest {
     assertThat(response.contentAsString).isEqualTo("hello, Jetty HTTP Client")
 
     val recorded = server.takeRequest()
-    assertThat(recorded.getHeader("Accept")).isEqualTo("text/plain")
-    assertThat(recorded.getHeader("Accept-Encoding")).isEqualTo("gzip")
-    assertThat(recorded.getHeader("Connection")).isNull()
-    assertThat(recorded.getHeader("User-Agent")).matches("Jetty/.*")
+      assertThat(recorded.headers["Accept"]).isEqualTo("text/plain")
+      assertThat(recorded.headers["Accept-Encoding"]).isEqualTo("gzip")
+      assertThat(recorded.headers["Connection"]).isNull()
+      assertThat(recorded.headers["User-Agent"]).matches("Jetty/.*")
   }
 }

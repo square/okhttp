@@ -942,7 +942,7 @@ public final class WebSocketHttpTest {
     closeWebSockets(client, server);
 
     RecordedRequest upgradeRequest = webServer.takeRequest();
-    assertThat(upgradeRequest.getHeader("Sec-WebSocket-Extensions"))
+    assertThat(upgradeRequest.getHeaders().get("Sec-WebSocket-Extensions"))
         .isEqualTo("permessage-deflate");
   }
 
@@ -967,7 +967,7 @@ public final class WebSocketHttpTest {
   }
 
   private MockResponse.Builder upgradeResponse(RecordedRequest request) {
-    String key = request.getHeader("Sec-WebSocket-Key");
+    String key = request.getHeaders().get("Sec-WebSocket-Key");
     return new MockResponse.Builder()
         .status("HTTP/1.1 101 Switching Protocols")
         .setHeader("Connection", "Upgrade")

@@ -160,7 +160,7 @@ public final class MockWebServerTest {
 
     RecordedRequest request = server.takeRequest();
     assertThat(request.getRequestLine()).isEqualTo("GET / HTTP/1.1");
-    assertThat(request.getHeader("Accept-Language")).isEqualTo("en-US");
+    assertThat(request.getHeaders().get("Accept-Language")).isEqualTo("en-US");
 
     // Server has no more requests.
     assertThat(server.takeRequest(100, MILLISECONDS)).isNull();

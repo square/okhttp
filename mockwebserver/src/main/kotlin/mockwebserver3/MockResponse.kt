@@ -54,8 +54,7 @@ class MockResponse {
   val informationalResponses: List<MockResponse>
 
   val throttleBytesPerPeriod: Long
-  private val throttlePeriodAmount: Long
-  private val throttlePeriodUnit: TimeUnit
+  val throttlePeriodNanos: Long
 
   val socketPolicy: SocketPolicy
 
@@ -66,11 +65,8 @@ class MockResponse {
    */
   val http2ErrorCode: Int
 
-  private val bodyDelayAmount: Long
-  private val bodyDelayUnit: TimeUnit
-
-  private val headersDelayAmount: Long
-  private var headersDelayUnit: TimeUnit
+  val bodyDelayNanos: Long
+  val headersDelayNanos: Long
 
   val pushPromises: List<PushPromise>
 
@@ -109,14 +105,11 @@ class MockResponse {
     this.inTunnel = builder.inTunnel
     this.informationalResponses = builder.informationalResponses.toList()
     this.throttleBytesPerPeriod = builder.throttleBytesPerPeriod
-    this.throttlePeriodAmount = builder.throttlePeriodAmount
-    this.throttlePeriodUnit = builder.throttlePeriodUnit
+    this.throttlePeriodNanos = builder.throttlePeriodNanos
     this.socketPolicy = builder.socketPolicy
     this.http2ErrorCode = builder.http2ErrorCode
-    this.bodyDelayAmount = builder.bodyDelayAmount
-    this.bodyDelayUnit = builder.bodyDelayUnit
-    this.headersDelayAmount = builder.headersDelayAmount
-    this.headersDelayUnit = builder.headersDelayUnit
+    this.bodyDelayNanos = builder.bodyDelayNanos
+    this.headersDelayNanos = builder.headersDelayNanos
     this.pushPromises = builder.pushPromises.toList()
     this.settings = Settings().apply {
       merge(builder.settings)
@@ -124,15 +117,6 @@ class MockResponse {
     this.webSocketListener = builder.webSocketListener
     this.duplexResponseBody = builder.duplexResponseBody
   }
-
-  fun getThrottlePeriod(unit: TimeUnit): Long =
-    unit.convert(throttlePeriodAmount, throttlePeriodUnit)
-
-  fun getBodyDelay(unit: TimeUnit): Long =
-    unit.convert(bodyDelayAmount, bodyDelayUnit)
-
-  fun getHeadersDelay(unit: TimeUnit): Long =
-    unit.convert(headersDelayAmount, headersDelayUnit)
 
   fun newBuilder(): Builder = Builder(this)
 
@@ -172,18 +156,15 @@ class MockResponse {
 
     var throttleBytesPerPeriod: Long
       private set
-    internal var throttlePeriodAmount: Long
-    internal var throttlePeriodUnit: TimeUnit
+    internal var throttlePeriodNanos: Long
 
     var socketPolicy: SocketPolicy
 
     var http2ErrorCode: Int
 
-    internal var bodyDelayAmount: Long
-    internal var bodyDelayUnit: TimeUnit
+    internal var bodyDelayNanos: Long
 
-    internal var headersDelayAmount: Long
-    internal var headersDelayUnit: TimeUnit
+    internal var headersDelayNanos: Long
 
     /** The streams the server will push with this response. */
     val pushPromises: MutableList<PushPromise>
@@ -203,14 +184,11 @@ class MockResponse {
         .add("Content-Length", "0")
       this.trailers = Headers.Builder()
       this.throttleBytesPerPeriod = Long.MAX_VALUE
-      this.throttlePeriodAmount = 1L
-      this.throttlePeriodUnit = TimeUnit.SECONDS
+      this.throttlePeriodNanos = 0L
       this.socketPolicy = SocketPolicy.KEEP_OPEN
       this.http2ErrorCode = -1
-      this.bodyDelayAmount = 0L
-      this.bodyDelayUnit = TimeUnit.MILLISECONDS
-      this.headersDelayAmount = 0L
-      this.headersDelayUnit = TimeUnit.MILLISECONDS
+      this.bodyDelayNanos = 0L
+      this.headersDelayNanos = 0L
       this.pushPromises = mutableListOf()
       this.settings = Settings()
       this.webSocketListener = null
@@ -225,14 +203,11 @@ class MockResponse {
       this.trailers = mockResponse.trailers.newBuilder()
       this.body = mockResponse.body
       this.throttleBytesPerPeriod = mockResponse.throttleBytesPerPeriod
-      this.throttlePeriodAmount = mockResponse.throttlePeriodAmount
-      this.throttlePeriodUnit = mockResponse.throttlePeriodUnit
+      this.throttlePeriodNanos = mockResponse.throttlePeriodNanos
       this.socketPolicy = mockResponse.socketPolicy
       this.http2ErrorCode = mockResponse.http2ErrorCode
-      this.bodyDelayAmount = mockResponse.bodyDelayAmount
-      this.bodyDelayUnit = mockResponse.bodyDelayUnit
-      this.headersDelayAmount = mockResponse.headersDelayAmount
-      this.headersDelayUnit = mockResponse.headersDelayUnit
+      this.bodyDelayNanos = mockResponse.bodyDelayNanos
+      this.headersDelayNanos = mockResponse.headersDelayNanos
       this.pushPromises = mockResponse.pushPromises.toMutableList()
       this.settings = Settings().apply {
         merge(mockResponse.settings)
@@ -358,8 +333,7 @@ class MockResponse {
      */
     fun throttleBody(bytesPerPeriod: Long, period: Long, unit: TimeUnit) = apply {
       throttleBytesPerPeriod = bytesPerPeriod
-      throttlePeriodAmount = period
-      throttlePeriodUnit = unit
+      throttlePeriodNanos = unit.toNanos(period)
     }
 
     /**
@@ -367,13 +341,11 @@ class MockResponse {
      * only; response headers are not affected.
      */
     fun bodyDelay(delay: Long, unit: TimeUnit) = apply {
-      bodyDelayAmount = delay
-      bodyDelayUnit = unit
+      bodyDelayNanos = unit.toNanos(delay)
     }
 
     fun headersDelay(delay: Long, unit: TimeUnit) = apply {
-      headersDelayAmount = delay
-      headersDelayUnit = unit
+      headersDelayNanos = unit.toNanos(delay)
     }
 
     /**

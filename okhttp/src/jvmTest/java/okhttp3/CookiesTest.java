@@ -168,7 +168,7 @@ public class CookiesTest {
     get(serverUrl);
     RecordedRequest request = server.takeRequest();
 
-    assertThat(request.getHeader("Cookie")).isEqualTo("a=android; b=banana");
+    assertThat(request.getHeaders().get("Cookie")).isEqualTo("a=android; b=banana");
   }
 
   @Test public void cookieHandlerLikeAndroid() throws Exception {
@@ -193,7 +193,7 @@ public class CookiesTest {
     get(serverUrl);
     RecordedRequest request = server.takeRequest();
 
-    assertThat(request.getHeader("Cookie")).isEqualTo("a=android; b=banana");
+    assertThat(request.getHeaders().get("Cookie")).isEqualTo("a=android; b=banana");
   }
 
   @Test public void receiveAndSendMultipleCookies() throws Exception {
@@ -210,11 +210,11 @@ public class CookiesTest {
 
     get(urlWithIpAddress(server, "/"));
     RecordedRequest request1 = server.takeRequest();
-    assertThat(request1.getHeader("Cookie")).isNull();
+    assertThat(request1.getHeaders().get("Cookie")).isNull();
 
     get(urlWithIpAddress(server, "/"));
     RecordedRequest request2 = server.takeRequest();
-    assertThat(request2.getHeader("Cookie")).isEqualTo("a=android; b=banana");
+    assertThat(request2.getHeaders().get("Cookie")).isEqualTo("a=android; b=banana");
   }
 
   @Test public void testRedirectsDoNotIncludeTooManyCookies() throws Exception {
@@ -245,7 +245,7 @@ public class CookiesTest {
     get(redirectSourceUrl);
     RecordedRequest request = redirectSource.takeRequest();
 
-    assertThat(request.getHeader("Cookie")).isEqualTo("c=cookie");
+    assertThat(request.getHeaders().get("Cookie")).isEqualTo("c=cookie");
 
     for (String header : redirectTarget.takeRequest().getHeaders().names()) {
       if (header.startsWith("Cookie")) {
@@ -272,9 +272,9 @@ public class CookiesTest {
     get(server.url("/"));
 
     RecordedRequest request = server.takeRequest();
-    assertThat(request.getHeader("Cookie")).isEqualTo("Bar=bar; Baz=baz");
-    assertThat(request.getHeader("Cookie2")).isNull();
-    assertThat(request.getHeader("Quux")).isNull();
+    assertThat(request.getHeaders().get("Cookie")).isEqualTo("Bar=bar; Baz=baz");
+    assertThat(request.getHeaders().get("Cookie2")).isNull();
+    assertThat(request.getHeaders().get("Quux")).isNull();
   }
 
   @Test public void acceptOriginalServerMatchesSubdomain() throws Exception {
@@ -347,9 +347,9 @@ public class CookiesTest {
     get(server.url("/"));
 
     RecordedRequest request = server.takeRequest();
-    assertThat(request.getHeader("Cookie")).isEqualTo("Bar=\"; Baz=baz");
-    assertThat(request.getHeader("Cookie2")).isNull();
-    assertThat(request.getHeader("Quux")).isNull();
+    assertThat(request.getHeaders().get("Cookie")).isEqualTo("Bar=\"; Baz=baz");
+    assertThat(request.getHeaders().get("Cookie2")).isNull();
+    assertThat(request.getHeaders().get("Quux")).isNull();
   }
 
   private HttpUrl urlWithIpAddress(MockWebServer server, String path) throws Exception {
