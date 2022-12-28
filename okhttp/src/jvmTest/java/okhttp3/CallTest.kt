@@ -168,9 +168,9 @@ open class CallTest {
       .assertReceivedResponseAtMillis(sentAt, receivedAt)
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.method).isEqualTo("GET")
-    assertThat(recordedRequest.getHeader("User-Agent")).isEqualTo("SyncApiTest")
+    assertThat(recordedRequest.headers["User-Agent"]).isEqualTo("SyncApiTest")
     assertThat(recordedRequest.body.size).isEqualTo(0)
-    assertThat(recordedRequest.getHeader("Content-Length")).isNull()
+    assertThat(recordedRequest.headers["Content-Length"]).isNull()
   }
 
   @Test
@@ -271,9 +271,9 @@ open class CallTest {
       .assertHeader("Content-Type", "text/plain")
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.method).isEqualTo("HEAD")
-    assertThat(recordedRequest.getHeader("User-Agent")).isEqualTo("SyncApiTest")
+    assertThat(recordedRequest.headers["User-Agent"]).isEqualTo("SyncApiTest")
     assertThat(recordedRequest.body.size).isEqualTo(0)
-    assertThat(recordedRequest.getHeader("Content-Length")).isNull()
+    assertThat(recordedRequest.headers["Content-Length"]).isNull()
   }
 
   @Test
@@ -350,8 +350,8 @@ open class CallTest {
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.method).isEqualTo("POST")
     assertThat(recordedRequest.body.readUtf8()).isEqualTo("def")
-    assertThat(recordedRequest.getHeader("Content-Length")).isEqualTo("3")
-    assertThat(recordedRequest.getHeader("Content-Type")).isEqualTo("text/plain; charset=utf-8")
+    assertThat(recordedRequest.headers["Content-Length"]).isEqualTo("3")
+    assertThat(recordedRequest.headers["Content-Type"]).isEqualTo("text/plain; charset=utf-8")
   }
 
   @Test
@@ -379,8 +379,8 @@ open class CallTest {
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.method).isEqualTo("POST")
     assertThat(recordedRequest.body.size).isEqualTo(0)
-    assertThat(recordedRequest.getHeader("Content-Length")).isEqualTo("0")
-    assertThat(recordedRequest.getHeader("Content-Type")).isNull()
+    assertThat(recordedRequest.headers["Content-Length"]).isEqualTo("0")
+    assertThat(recordedRequest.headers["Content-Type"]).isNull()
   }
 
   @Test
@@ -447,11 +447,11 @@ open class CallTest {
     val recordedRequest1 = server.takeRequest()
     assertThat(recordedRequest1.method).isEqualTo("POST")
     assertThat(recordedRequest1.body.readUtf8()).isEqualTo(body)
-    assertThat(recordedRequest1.getHeader("Authorization")).isNull()
+    assertThat(recordedRequest1.headers["Authorization"]).isNull()
     val recordedRequest2 = server.takeRequest()
     assertThat(recordedRequest2.method).isEqualTo("POST")
     assertThat(recordedRequest2.body.readUtf8()).isEqualTo(body)
-    assertThat(recordedRequest2.getHeader("Authorization")).isEqualTo(credential)
+    assertThat(recordedRequest2.headers["Authorization"]).isEqualTo(credential)
   }
 
   @Test
@@ -521,8 +521,8 @@ open class CallTest {
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.method).isEqualTo("DELETE")
     assertThat(recordedRequest.body.size).isEqualTo(0)
-    assertThat(recordedRequest.getHeader("Content-Length")).isEqualTo("0")
-    assertThat(recordedRequest.getHeader("Content-Type")).isNull()
+    assertThat(recordedRequest.headers["Content-Length"]).isEqualTo("0")
+    assertThat(recordedRequest.headers["Content-Type"]).isNull()
   }
 
   @Test
@@ -565,8 +565,8 @@ open class CallTest {
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.method).isEqualTo("PUT")
     assertThat(recordedRequest.body.readUtf8()).isEqualTo("def")
-    assertThat(recordedRequest.getHeader("Content-Length")).isEqualTo("3")
-    assertThat(recordedRequest.getHeader("Content-Type")).isEqualTo(
+    assertThat(recordedRequest.headers["Content-Length"]).isEqualTo("3")
+    assertThat(recordedRequest.headers["Content-Type"]).isEqualTo(
       "text/plain; charset=utf-8"
     )
   }
@@ -596,8 +596,8 @@ open class CallTest {
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.method).isEqualTo("PATCH")
     assertThat(recordedRequest.body.readUtf8()).isEqualTo("def")
-    assertThat(recordedRequest.getHeader("Content-Length")).isEqualTo("3")
-    assertThat(recordedRequest.getHeader("Content-Type")).isEqualTo("text/plain; charset=utf-8")
+    assertThat(recordedRequest.headers["Content-Length"]).isEqualTo("3")
+    assertThat(recordedRequest.headers["Content-Type"]).isEqualTo("text/plain; charset=utf-8")
   }
 
   @Test
@@ -625,8 +625,8 @@ open class CallTest {
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.method).isEqualTo("CUSTOM")
     assertThat(recordedRequest.body.readUtf8()).isEqualTo("def")
-    assertThat(recordedRequest.getHeader("Content-Length")).isEqualTo("3")
-    assertThat(recordedRequest.getHeader("Content-Type"))
+    assertThat(recordedRequest.headers["Content-Length"]).isEqualTo("3")
+    assertThat(recordedRequest.headers["Content-Type"])
       .isEqualTo("text/plain; charset=utf-8")
   }
 
@@ -639,8 +639,8 @@ open class CallTest {
       .build()
     executeSynchronously(request).assertCode(200)
     val recordedRequest = server.takeRequest()
-    assertThat(recordedRequest.getHeader("Content-Type")).isNull()
-    assertThat(recordedRequest.getHeader("Content-Length")).isEqualTo("3")
+    assertThat(recordedRequest.headers["Content-Type"]).isNull()
+    assertThat(recordedRequest.headers["Content-Length"]).isEqualTo("3")
     assertThat(recordedRequest.body.readUtf8()).isEqualTo("abc")
   }
 
@@ -671,7 +671,7 @@ open class CallTest {
     } catch (e: IllegalStateException) {
       assertThat(e.message).isEqualTo("Already Executed")
     }
-    assertThat(server.takeRequest().getHeader("User-Agent")).isEqualTo("SyncApiTest")
+    assertThat(server.takeRequest().headers["User-Agent"]).isEqualTo("SyncApiTest")
   }
 
   @Test
@@ -700,7 +700,7 @@ open class CallTest {
     } catch (e: IllegalStateException) {
       assertThat(e.message).isEqualTo("Already Executed")
     }
-    assertThat(server.takeRequest().getHeader("User-Agent")).isEqualTo("SyncApiTest")
+    assertThat(server.takeRequest().headers["User-Agent"]).isEqualTo("SyncApiTest")
     callback.await(request.url).assertSuccessful()
   }
 
@@ -752,7 +752,7 @@ open class CallTest {
       .assertCode(200)
       .assertHeader("Content-Type", "text/plain")
       .assertBody("abc")
-    assertThat(server.takeRequest().getHeader("User-Agent")).isEqualTo("AsyncApiTest")
+    assertThat(server.takeRequest().headers["User-Agent"]).isEqualTo("AsyncApiTest")
   }
 
   @Test
@@ -1495,8 +1495,8 @@ open class CallTest {
       .assertBody("abc")
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.body.readUtf8()).isEqualTo("def")
-    assertThat(recordedRequest.getHeader("Content-Length")).isEqualTo("3")
-    assertThat(recordedRequest.getHeader("Content-Type")).isEqualTo("text/plain; charset=utf-8")
+    assertThat(recordedRequest.headers["Content-Length"]).isEqualTo("3")
+    assertThat(recordedRequest.headers["Content-Type"]).isEqualTo("text/plain; charset=utf-8")
   }
 
   @Test
@@ -1610,7 +1610,7 @@ open class CallTest {
       .assertCode(200)
       .assertBody("A")
     val request1ReceivedAt = System.currentTimeMillis()
-    assertThat(server.takeRequest().getHeader("If-None-Match")).isNull()
+    assertThat(server.takeRequest().headers["If-None-Match"]).isNull()
 
     // Hit that stored response. It's different, but Vary says it doesn't matter.
     Thread.sleep(10) // Make sure the timestamps are unique.
@@ -1684,7 +1684,7 @@ open class CallTest {
       .assertHeader("Donut", "a")
       .assertBody("A")
     val request1ReceivedAt = System.currentTimeMillis()
-    assertThat(server.takeRequest().getHeader("If-None-Match")).isNull()
+    assertThat(server.takeRequest().headers["If-None-Match"]).isNull()
 
     // Hit that stored response. It's different, but Vary says it doesn't matter.
     Thread.sleep(10) // Make sure the timestamps are unique.
@@ -1693,7 +1693,7 @@ open class CallTest {
       "/", "Accept-Language", "en-US", "Accept-Charset", "UTF-8"
     )
     val request2ReceivedAt = System.currentTimeMillis()
-    assertThat(server.takeRequest().getHeader("If-None-Match")).isEqualTo("v1")
+    assertThat(server.takeRequest().headers["If-None-Match"]).isEqualTo("v1")
 
     // Check the merged response. The request is the application's original request.
     cacheHit.assertCode(200)
@@ -1748,11 +1748,11 @@ open class CallTest {
     val request1 = Request(server.url("/"))
     client.newCall(request1).enqueue(callback)
     callback.await(request1.url).assertCode(200).assertBody("A")
-    assertThat(server.takeRequest().getHeader("If-None-Match")).isNull()
+    assertThat(server.takeRequest().headers["If-None-Match"]).isNull()
     val request2 = Request(server.url("/"))
     client.newCall(request2).enqueue(callback)
     callback.await(request2.url).assertCode(200).assertBody("A")
-    assertThat(server.takeRequest().getHeader("If-None-Match")).isEqualTo("v1")
+    assertThat(server.takeRequest().headers["If-None-Match"]).isEqualTo("v1")
   }
 
   @Test
@@ -1781,7 +1781,7 @@ open class CallTest {
       .assertCode(200)
       .assertBody("A")
     val request1ReceivedAt = System.currentTimeMillis()
-    assertThat(server.takeRequest().getHeader("If-None-Match")).isNull()
+    assertThat(server.takeRequest().headers["If-None-Match"]).isNull()
 
     // Different request, but Vary says it doesn't matter.
     Thread.sleep(10) // Make sure the timestamps are unique.
@@ -1790,7 +1790,7 @@ open class CallTest {
       "/", "Accept-Language", "en-US", "Accept-Charset", "UTF-8"
     )
     val request2ReceivedAt = System.currentTimeMillis()
-    assertThat(server.takeRequest().getHeader("If-None-Match")).isEqualTo("v1")
+    assertThat(server.takeRequest().headers["If-None-Match"]).isEqualTo("v1")
 
     // Check the user response. It has the application's original request.
     cacheMiss.assertCode(200)
@@ -1834,11 +1834,11 @@ open class CallTest {
     val request1 = Request(server.url("/"))
     client.newCall(request1).enqueue(callback)
     callback.await(request1.url).assertCode(200).assertBody("A")
-    assertThat(server.takeRequest().getHeader("If-None-Match")).isNull()
+    assertThat(server.takeRequest().headers["If-None-Match"]).isNull()
     val request2 = Request(server.url("/"))
     client.newCall(request2).enqueue(callback)
     callback.await(request2.url).assertCode(200).assertBody("B")
-    assertThat(server.takeRequest().getHeader("If-None-Match")).isEqualTo("v1")
+    assertThat(server.takeRequest().headers["If-None-Match"]).isEqualTo("v1")
   }
 
   @Test
@@ -2225,7 +2225,7 @@ open class CallTest {
       .build()
     executeSynchronously("/").assertCode(200)
     val recordedRequest = server.takeRequest()
-    assertThat(recordedRequest.getHeader("Cookie")).isEqualTo("a=b; c=d")
+    assertThat(recordedRequest.headers["Cookie"]).isEqualTo("a=b; c=d")
   }
 
   @Test
@@ -2250,9 +2250,9 @@ open class CallTest {
     val response = client.newCall(Request(server.url("/page1"))).execute()
     assertThat(response.body.string()).isEqualTo("Page 2")
     val request1 = server.takeRequest()
-    assertThat(request1.getHeader("Cookie")).isEqualTo("c=cookie")
+    assertThat(request1.headers["Cookie"]).isEqualTo("c=cookie")
     val request2 = server2.takeRequest()
-    assertThat(request2.getHeader("Cookie")).isNull()
+    assertThat(request2.headers["Cookie"]).isNull()
   }
 
   @Test
@@ -2272,7 +2272,7 @@ open class CallTest {
     val response = client.newCall(request).execute()
     assertThat(response.body.string()).isEqualTo("Page 2")
     val redirectRequest = server2.takeRequest()
-    assertThat(redirectRequest.getHeader("Authorization")).isNull()
+    assertThat(redirectRequest.headers["Authorization"]).isNull()
     assertThat(redirectRequest.path).isEqualTo("/b")
   }
 
@@ -2792,7 +2792,7 @@ open class CallTest {
 
     // The request did not offer gzip support.
     val recordedRequest = server.takeRequest()
-    assertThat(recordedRequest.getHeader("Accept-Encoding")).isNull()
+    assertThat(recordedRequest.headers["Accept-Encoding"]).isNull()
   }
 
   @Test
@@ -2837,7 +2837,7 @@ open class CallTest {
     server.enqueue(MockResponse())
     executeSynchronously("/")
     val recordedRequest = server.takeRequest()
-    assertThat(recordedRequest.getHeader("User-Agent")).matches(userAgent)
+    assertThat(recordedRequest.headers["User-Agent"]).matches(userAgent)
   }
 
   @Test
@@ -3174,13 +3174,13 @@ open class CallTest {
       "encrypted response from the origin server"
     )
     val connect = server.takeRequest()
-    assertThat(connect.getHeader("Private")).isNull()
-    assertThat(connect.getHeader("User-Agent")).isEqualTo(userAgent)
-    assertThat(connect.getHeader("Proxy-Connection")).isEqualTo("Keep-Alive")
-    assertThat(connect.getHeader("Host")).isEqualTo("android.com:443")
+    assertThat(connect.headers["Private"]).isNull()
+    assertThat(connect.headers["User-Agent"]).isEqualTo(userAgent)
+    assertThat(connect.headers["Proxy-Connection"]).isEqualTo("Keep-Alive")
+    assertThat(connect.headers["Host"]).isEqualTo("android.com:443")
     val get = server.takeRequest()
-    assertThat(get.getHeader("Private")).isEqualTo("Secret")
-    assertThat(get.getHeader("User-Agent")).isEqualTo("App 1.0")
+    assertThat(get.headers["Private"]).isEqualTo("Secret")
+    assertThat(get.headers["User-Agent"]).isEqualTo("App 1.0")
     assertThat(hostnameVerifier.calls).containsExactly("verify android.com")
   }
 
@@ -3244,13 +3244,13 @@ open class CallTest {
     assertThat(response.body.string()).isEqualTo("response body")
     val connect1 = server.takeRequest()
     assertThat(connect1.requestLine).isEqualTo("CONNECT android.com:443 HTTP/1.1")
-    assertThat(connect1.getHeader("Proxy-Authorization")).isNull()
+    assertThat(connect1.headers["Proxy-Authorization"]).isNull()
     val connect2 = server.takeRequest()
     assertThat(connect2.requestLine).isEqualTo("CONNECT android.com:443 HTTP/1.1")
-    assertThat(connect2.getHeader("Proxy-Authorization")).isEqualTo("password")
+    assertThat(connect2.headers["Proxy-Authorization"]).isEqualTo("password")
     val get = server.takeRequest()
     assertThat(get.requestLine).isEqualTo("GET /foo HTTP/1.1")
-    assertThat(get.getHeader("Proxy-Authorization")).isNull()
+    assertThat(get.headers["Proxy-Authorization"]).isNull()
   }
 
   /** Confirm that the proxy authenticator works for unencrypted HTTP proxies.  */
@@ -3274,10 +3274,10 @@ open class CallTest {
     assertThat(response.body.string()).isEqualTo("response body")
     val get1 = server.takeRequest()
     assertThat(get1.requestLine).isEqualTo("GET http://android.com/foo HTTP/1.1")
-    assertThat(get1.getHeader("Proxy-Authorization")).isNull()
+    assertThat(get1.headers["Proxy-Authorization"]).isNull()
     val get2 = server.takeRequest()
     assertThat(get2.requestLine).isEqualTo("GET http://android.com/foo HTTP/1.1")
-    assertThat(get2.getHeader("Proxy-Authorization")).isEqualTo("password")
+    assertThat(get2.headers["Proxy-Authorization"]).isEqualTo("password")
   }
 
   /**
@@ -3382,9 +3382,9 @@ open class CallTest {
     val response = client.newCall(request).execute()
     assertThat(response.body.string()).isEqualTo("response body")
     val connect1 = server.takeRequest()
-    assertThat(connect1.getHeader("Proxy-Authorization")).isNull()
+    assertThat(connect1.headers["Proxy-Authorization"]).isNull()
     val connect2 = server.takeRequest()
-    assertThat(connect2.getHeader("Proxy-Authorization")).isEqualTo("password")
+    assertThat(connect2.headers["Proxy-Authorization"]).isEqualTo("password")
   }
 
   /** Confirm that we can send authentication information without being prompted first.  */
@@ -3416,11 +3416,11 @@ open class CallTest {
     executeSynchronously(request).assertSuccessful()
     val connect = server.takeRequest()
     assertThat(connect.method).isEqualTo("CONNECT")
-    assertThat(connect.getHeader("Proxy-Authorization")).isEqualTo(credential)
+    assertThat(connect.headers["Proxy-Authorization"]).isEqualTo(credential)
     assertThat(connect.path).isEqualTo("/")
     val get = server.takeRequest()
     assertThat(get.method).isEqualTo("GET")
-    assertThat(get.getHeader("Proxy-Authorization")).isNull()
+    assertThat(get.headers["Proxy-Authorization"]).isNull()
     assertThat(get.path).isEqualTo("/foo")
   }
 
@@ -3458,10 +3458,10 @@ open class CallTest {
     executeSynchronously(request).assertSuccessful()
     val connect1 = server.takeRequest()
     assertThat(connect1.method).isEqualTo("CONNECT")
-    assertThat(connect1.getHeader("Proxy-Authorization")).isEqualTo(credential)
+    assertThat(connect1.headers["Proxy-Authorization"]).isEqualTo(credential)
     val connect2 = server.takeRequest()
     assertThat(connect2.method).isEqualTo("CONNECT")
-    assertThat(connect2.getHeader("Proxy-Authorization")).isEqualTo(credential)
+    assertThat(connect2.headers["Proxy-Authorization"]).isEqualTo(credential)
     assertThat(challengeSchemes).containsExactly("OkHttp-Preemptive", "Basic")
   }
 
@@ -3693,12 +3693,12 @@ open class CallTest {
     assertThat(response.body.string()).isEqualTo("response body")
     val connect = server.takeRequest()
     assertThat(connect.requestLine).isEqualTo("CONNECT [::1]:$port HTTP/1.1")
-    assertThat(connect.getHeader("Host")).isEqualTo("[::1]:$port")
-    assertThat(connect.getHeader(":authority")).isNull()
+    assertThat(connect.headers["Host"]).isEqualTo("[::1]:$port")
+    assertThat(connect.headers[":authority"]).isNull()
     val get = server.takeRequest()
     assertThat(get.requestLine).isEqualTo("GET / HTTP/1.1")
-    assertThat(get.getHeader("Host")).isEqualTo("[::1]:$port")
-    assertThat(get.getHeader(":authority")).isNull()
+    assertThat(get.headers["Host"]).isEqualTo("[::1]:$port")
+    assertThat(get.headers[":authority"]).isNull()
     assertThat(get.requestUrl).isEqualTo(url)
   }
 
@@ -3720,14 +3720,14 @@ open class CallTest {
     assertThat(connect.requestLine).isEqualTo(
       "CONNECT [::1]:$port HTTP/1.1"
     )
-    assertThat(connect.getHeader("Host")).isEqualTo(
+    assertThat(connect.headers["Host"]).isEqualTo(
       "[::1]:$port"
     )
-    assertThat(connect.getHeader(":authority")).isNull()
+    assertThat(connect.headers[":authority"]).isNull()
     val get = server.takeRequest()
     assertThat(get.requestLine).isEqualTo("GET / HTTP/1.1")
-    assertThat(get.getHeader("Host")).isNull()
-    assertThat(get.getHeader(":authority")).isEqualTo(
+    assertThat(get.headers["Host"]).isNull()
+    assertThat(get.headers[":authority"]).isEqualTo(
       "[::1]:$port"
     )
     assertThat(get.requestUrl).isEqualTo(url)
@@ -3751,16 +3751,16 @@ open class CallTest {
     assertThat(connect.requestLine).isEqualTo(
       "CONNECT 127.0.0.1:$port HTTP/1.1"
     )
-    assertThat(connect.getHeader("Host")).isEqualTo(
+    assertThat(connect.headers["Host"]).isEqualTo(
       "127.0.0.1:$port"
     )
-    assertThat(connect.getHeader(":authority")).isNull()
+    assertThat(connect.headers[":authority"]).isNull()
     val get = server.takeRequest()
     assertThat(get.requestLine).isEqualTo("GET / HTTP/1.1")
-    assertThat(get.getHeader("Host")).isEqualTo(
+    assertThat(get.headers["Host"]).isEqualTo(
       "127.0.0.1:$port"
     )
-    assertThat(get.getHeader(":authority")).isNull()
+    assertThat(get.headers[":authority"]).isNull()
     assertThat(get.requestUrl).isEqualTo(url)
   }
 
@@ -3780,12 +3780,12 @@ open class CallTest {
     assertThat(response.body.string()).isEqualTo("response body")
     val connect = server.takeRequest()
     assertThat(connect.requestLine).isEqualTo("CONNECT 127.0.0.1:$port HTTP/1.1")
-    assertThat(connect.getHeader("Host")).isEqualTo("127.0.0.1:$port")
-    assertThat(connect.getHeader(":authority")).isNull()
+    assertThat(connect.headers["Host"]).isEqualTo("127.0.0.1:$port")
+    assertThat(connect.headers[":authority"]).isNull()
     val get = server.takeRequest()
     assertThat(get.requestLine).isEqualTo("GET / HTTP/1.1")
-    assertThat(get.getHeader("Host")).isNull()
-    assertThat(get.getHeader(":authority")).isEqualTo("127.0.0.1:$port")
+    assertThat(get.headers["Host"]).isNull()
+    assertThat(get.headers[":authority"]).isEqualTo("127.0.0.1:$port")
     assertThat(get.requestUrl).isEqualTo(url)
   }
 
@@ -3805,12 +3805,12 @@ open class CallTest {
     assertThat(response.body.string()).isEqualTo("response body")
     val connect = server.takeRequest()
     assertThat(connect.requestLine).isEqualTo("CONNECT any-host-name:$port HTTP/1.1")
-    assertThat(connect.getHeader("Host")).isEqualTo("any-host-name:$port")
-    assertThat(connect.getHeader(":authority")).isNull()
+    assertThat(connect.headers["Host"]).isEqualTo("any-host-name:$port")
+    assertThat(connect.headers[":authority"]).isNull()
     val get = server.takeRequest()
     assertThat(get.requestLine).isEqualTo("GET / HTTP/1.1")
-    assertThat(get.getHeader("Host")).isEqualTo("any-host-name:$port")
-    assertThat(get.getHeader(":authority")).isNull()
+    assertThat(get.headers["Host"]).isEqualTo("any-host-name:$port")
+    assertThat(get.headers[":authority"]).isNull()
     assertThat(get.requestUrl).isEqualTo(url)
   }
 
@@ -3830,12 +3830,12 @@ open class CallTest {
     assertThat(response.body.string()).isEqualTo("response body")
     val connect = server.takeRequest()
     assertThat(connect.requestLine).isEqualTo("CONNECT any-host-name:$port HTTP/1.1")
-    assertThat(connect.getHeader("Host")).isEqualTo("any-host-name:$port")
-    assertThat(connect.getHeader(":authority")).isNull()
+    assertThat(connect.headers["Host"]).isEqualTo("any-host-name:$port")
+    assertThat(connect.headers[":authority"]).isNull()
     val get = server.takeRequest()
     assertThat(get.requestLine).isEqualTo("GET / HTTP/1.1")
-    assertThat(get.getHeader("Host")).isNull()
-    assertThat(get.getHeader(":authority")).isEqualTo("any-host-name:$port")
+    assertThat(get.headers["Host"]).isNull()
+    assertThat(get.headers[":authority"]).isEqualTo("any-host-name:$port")
     assertThat(get.requestUrl).isEqualTo(url)
   }
 
@@ -3997,7 +3997,7 @@ open class CallTest {
 
     // Confirm that the IP address was used in the host header.
     val recordedRequest = server.takeRequest()
-    assertThat(recordedRequest.getHeader("Host")).isEqualTo("$localIpAddress:${server.port}")
+    assertThat(recordedRequest.headers["Host"]).isEqualTo("$localIpAddress:${server.port}")
   }
 
   @Test

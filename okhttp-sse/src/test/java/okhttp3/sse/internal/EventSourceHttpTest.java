@@ -156,7 +156,7 @@ public final class EventSourceHttpTest {
     listener.assertEvent(null, null, "hey");
     listener.assertClose();
 
-    assertThat(server.takeRequest().getHeader("Accept")).isEqualTo("text/plain");
+    assertThat(server.takeRequest().getHeaders().get("Accept")).isEqualTo("text/plain");
   }
 
   @Test public void setsMissingAccept() throws InterruptedException {
@@ -172,7 +172,7 @@ public final class EventSourceHttpTest {
     listener.assertEvent(null, null, "hey");
     listener.assertClose();
 
-    assertThat(server.takeRequest().getHeader("Accept")).isEqualTo("text/event-stream");
+    assertThat(server.takeRequest().getHeaders().get("Accept")).isEqualTo("text/event-stream");
   }
 
   private EventSource newEventSource() {

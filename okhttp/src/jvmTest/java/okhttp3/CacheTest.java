@@ -652,8 +652,8 @@ public final class CacheTest {
         .addHeader("Last-Modified: " + lastModifiedDate)
         .addHeader("Date: " + formatDate(-15, TimeUnit.SECONDS))
         .build());
-    assertThat(conditionalRequest.getHeader("If-Modified-Since")).isEqualTo(
-        lastModifiedDate);
+    assertThat(conditionalRequest.getHeaders().get("If-Modified-Since"))
+        .isEqualTo(lastModifiedDate);
   }
 
   @Test public void defaultExpirationDateFullyCachedForMoreThan24Hours() throws Exception {
@@ -695,8 +695,8 @@ public final class CacheTest {
         .addHeader("Last-Modified: " + lastModifiedDate)
         .addHeader("Expires: " + formatDate(-1, TimeUnit.HOURS))
         .build());
-    assertThat(conditionalRequest.getHeader("If-Modified-Since")).isEqualTo(
-        lastModifiedDate);
+    assertThat(conditionalRequest.getHeaders().get("If-Modified-Since"))
+        .isEqualTo(lastModifiedDate);
   }
 
   @Test public void expirationDateInThePastWithNoLastModifiedHeader() throws Exception {
@@ -726,8 +726,8 @@ public final class CacheTest {
         .addHeader("Last-Modified: " + lastModifiedDate)
         .addHeader("Cache-Control: max-age=60")
         .build());
-    assertThat(conditionalRequest.getHeader("If-Modified-Since")).isEqualTo(
-        lastModifiedDate);
+    assertThat(conditionalRequest.getHeaders().get("If-Modified-Since"))
+        .isEqualTo(lastModifiedDate);
   }
 
   @Test public void maxAgeInThePastWithDateHeaderButNoLastModifiedHeader() throws Exception {
@@ -954,7 +954,7 @@ public final class CacheTest {
     RecordedRequest conditionalRequest = assertConditionallyCached(new MockResponse.Builder()
         .addHeader("ETag: v1")
         .build());
-    assertThat(conditionalRequest.getHeader("If-None-Match")).isEqualTo("v1");
+    assertThat(conditionalRequest.getHeaders().get("If-None-Match")).isEqualTo("v1");
   }
 
   /** If both If-Modified-Since and If-None-Match conditions apply, send only If-None-Match. */
@@ -965,8 +965,8 @@ public final class CacheTest {
         .addHeader("Last-Modified: " + lastModifiedDate)
         .addHeader("Expires: " + formatDate(-1, TimeUnit.HOURS))
         .build());
-    assertThat(conditionalRequest.getHeader("If-None-Match")).isEqualTo("v1");
-    assertThat(conditionalRequest.getHeader("If-Modified-Since")).isNull();
+    assertThat(conditionalRequest.getHeaders().get("If-None-Match")).isEqualTo("v1");
+    assertThat(conditionalRequest.getHeaders().get("If-Modified-Since")).isNull();
   }
 
   @Test public void etagAndExpirationDateInTheFuture() throws Exception {
@@ -990,8 +990,8 @@ public final class CacheTest {
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
         .addHeader("Cache-Control: no-cache")
         .build());
-    assertThat(conditionalRequest.getHeader("If-Modified-Since")).isEqualTo(
-        lastModifiedDate);
+    assertThat(conditionalRequest.getHeaders().get("If-Modified-Since"))
+        .isEqualTo(lastModifiedDate);
   }
 
   @Test public void pragmaNoCache() throws Exception {
@@ -1007,8 +1007,8 @@ public final class CacheTest {
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
         .addHeader("Pragma: no-cache")
         .build());
-    assertThat(conditionalRequest.getHeader("If-Modified-Since")).isEqualTo(
-        lastModifiedDate);
+    assertThat(conditionalRequest.getHeaders().get("If-Modified-Since"))
+        .isEqualTo(lastModifiedDate);
   }
 
   @Test public void cacheControlNoStore() throws Exception {
@@ -1468,8 +1468,8 @@ public final class CacheTest {
     String ifModifiedSinceDate = formatDate(-24, TimeUnit.HOURS);
     RecordedRequest request =
         assertClientSuppliedCondition(response, "If-Modified-Since", ifModifiedSinceDate);
-    assertThat(request.getHeader("If-Modified-Since")).isEqualTo(ifModifiedSinceDate);
-    assertThat(request.getHeader("If-None-Match")).isNull();
+    assertThat(request.getHeaders().get("If-Modified-Since")).isEqualTo(ifModifiedSinceDate);
+    assertThat(request.getHeaders().get("If-None-Match")).isNull();
   }
 
   @Test public void clientSuppliedIfNoneMatchSinceWithCachedResult() throws Exception {
@@ -1480,8 +1480,8 @@ public final class CacheTest {
         .addHeader("Cache-Control: max-age=0")
         .build();
     RecordedRequest request = assertClientSuppliedCondition(response, "If-None-Match", "v1");
-    assertThat(request.getHeader("If-None-Match")).isEqualTo("v1");
-    assertThat(request.getHeader("If-Modified-Since")).isNull();
+    assertThat(request.getHeaders().get("If-None-Match")).isEqualTo("v1");
+    assertThat(request.getHeaders().get("If-Modified-Since")).isNull();
   }
 
   private RecordedRequest assertClientSuppliedCondition(MockResponse seed, String conditionName,
@@ -1536,11 +1536,11 @@ public final class CacheTest {
 
     // The first request has no conditions.
     RecordedRequest request1 = server.takeRequest();
-    assertThat(request1.getHeader("If-Modified-Since")).isNull();
+    assertThat(request1.getHeaders().get("If-Modified-Since")).isNull();
 
     // The 2nd request uses the server's date format.
     RecordedRequest request2 = server.takeRequest();
-    assertThat(request2.getHeader("If-Modified-Since")).isEqualTo(lastModifiedString);
+    assertThat(request2.getHeaders().get("If-Modified-Since")).isEqualTo(lastModifiedString);
   }
 
   @Test public void clientSuppliedConditionWithoutCachedResult() throws Exception {
@@ -2613,10 +2613,10 @@ public final class CacheTest {
     assertThat(get(url).body().string()).isEqualTo("B");
     assertThat(get(url).body().string()).isEqualTo("B");
 
-    assertThat(server.takeRequest().getHeader("If-None-Match")).isNull();
-    assertThat(server.takeRequest().getHeader("If-None-Match")).isEqualTo("v1");
-    assertThat(server.takeRequest().getHeader("If-None-Match")).isEqualTo("v1");
-    assertThat(server.takeRequest().getHeader("If-None-Match")).isEqualTo("v2");
+    assertThat(server.takeRequest().getHeaders().get("If-None-Match")).isNull();
+    assertThat(server.takeRequest().getHeaders().get("If-None-Match")).isEqualTo("v1");
+    assertThat(server.takeRequest().getHeaders().get("If-None-Match")).isEqualTo("v1");
+    assertThat(server.takeRequest().getHeaders().get("If-None-Match")).isEqualTo("v2");
   }
 
   @Test public void combinedCacheHeadersCanBeNonAscii() throws Exception {
@@ -2663,8 +2663,8 @@ public final class CacheTest {
     Response response2 = get(server.url("/"));
     assertThat(response2.body().string()).isEqualTo("abcd");
 
-    assertThat(server.takeRequest().getHeader("If-None-Match")).isNull();
-    assertThat(server.takeRequest().getHeader("If-None-Match")).isEqualTo("α");
+    assertThat(server.takeRequest().getHeaders().get("If-None-Match")).isNull();
+    assertThat(server.takeRequest().getHeaders().get("If-None-Match")).isEqualTo("α");
   }
 
   @Test public void conditionalHitHeadersCombined() throws Exception {
@@ -2825,8 +2825,8 @@ public final class CacheTest {
         .addHeader("Last-Modified: " + lastModifiedDate)
         .addHeader("Date: " + formatDate(-15, TimeUnit.SECONDS))
         .build());
-    assertThat(conditionalRequest.getHeader("If-Modified-Since")).isEqualTo(
-        lastModifiedDate);
+    assertThat(conditionalRequest.getHeaders().get("If-Modified-Since"))
+        .isEqualTo(lastModifiedDate);
   }
 
   @Test

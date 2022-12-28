@@ -68,7 +68,6 @@ import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.http.HTTP_PERM_REDIRECT
 import okhttp3.internal.http.HTTP_TEMP_REDIRECT
 import okhttp3.internal.platform.Platform.Companion.get
-import okhttp3.internal.toHexString
 import okhttp3.internal.userAgent
 import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule
@@ -146,8 +145,8 @@ class URLConnectionTest {
     response.close()
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.headers.values("D")).isEqualTo(listOf("e", "f"))
-    assertThat(recordedRequest.getHeader("G")).isNull()
-    assertThat(recordedRequest.getHeader("null")).isNull()
+    assertThat(recordedRequest.headers["G"]).isNull()
+    assertThat(recordedRequest.headers["null"]).isNull()
   }
 
   @Test
@@ -596,7 +595,7 @@ class URLConnectionTest {
     assertThat(failHandshakeRequest.requestLine).isEmpty()
     val fallbackRequest = server.takeRequest()
     assertThat(fallbackRequest.requestLine).isEqualTo("GET /foo HTTP/1.1")
-    assertThat(fallbackRequest.tlsVersion).isIn(TlsVersion.TLS_1_2, TlsVersion.TLS_1_3)
+    assertThat(fallbackRequest.handshake?.tlsVersion).isIn(TlsVersion.TLS_1_2, TlsVersion.TLS_1_3)
   }
 
   @Test
@@ -654,9 +653,9 @@ class URLConnectionTest {
       TlsVersion.TLS_1_3
     ) // v1.2 on OpenJDK 8.
     val request1 = server.takeRequest()
-    assertThat(tlsVersions).contains(request1.tlsVersion)
+    assertThat(tlsVersions).contains(request1.handshake?.tlsVersion)
     val request2 = server.takeRequest()
-    assertThat(tlsVersions).contains(request2.tlsVersion)
+    assertThat(tlsVersions).contains(request2.handshake?.tlsVersion)
   }
 
   /**
@@ -710,7 +709,7 @@ class URLConnectionTest {
     assertThat(request.requestLine).isEqualTo(
       "GET http://android.com/foo HTTP/1.1"
     )
-    assertThat(request.getHeader("Host")).isEqualTo("android.com")
+    assertThat(request.headers["Host"]).isEqualTo("android.com")
   }
 
   @Test
@@ -903,10 +902,10 @@ class URLConnectionTest {
     assertThat(connect.requestLine).overridingErrorMessage(
       "Connect line failure on proxy"
     ).isEqualTo("CONNECT android.com:443 HTTP/1.1")
-    assertThat(connect.getHeader("Host")).isEqualTo("android.com:443")
+    assertThat(connect.headers["Host"]).isEqualTo("android.com:443")
     val get = server.takeRequest()
     assertThat(get.requestLine).isEqualTo("GET /foo HTTP/1.1")
-    assertThat(get.getHeader("Host")).isEqualTo("android.com")
+    assertThat(get.headers["Host"]).isEqualTo("android.com")
     assertThat(hostnameVerifier.calls).isEqualTo(
       Arrays.asList("verify android.com")
     )
@@ -946,7 +945,7 @@ class URLConnectionTest {
     assertThat(connect.requestLine).isEqualTo(
       "CONNECT android.com:443 HTTP/1.1"
     )
-    assertThat(connect.getHeader("Host")).isEqualTo("android.com:443")
+    assertThat(connect.headers["Host"]).isEqualTo("android.com:443")
   }
 
   private fun initResponseCache() {
@@ -980,13 +979,13 @@ class URLConnectionTest {
     )
     assertContent("encrypted response from the origin server", response)
     val connect = server.takeRequest()
-    assertThat(connect.getHeader("Private")).isNull()
-    assertThat(connect.getHeader("Proxy-Authorization")).isNull()
-    assertThat(connect.getHeader("User-Agent")).isEqualTo(userAgent)
-    assertThat(connect.getHeader("Host")).isEqualTo("android.com:443")
-    assertThat(connect.getHeader("Proxy-Connection")).isEqualTo("Keep-Alive")
+    assertThat(connect.headers["Private"]).isNull()
+    assertThat(connect.headers["Proxy-Authorization"]).isNull()
+    assertThat(connect.headers["User-Agent"]).isEqualTo(userAgent)
+    assertThat(connect.headers["Host"]).isEqualTo("android.com:443")
+    assertThat(connect.headers["Proxy-Connection"]).isEqualTo("Keep-Alive")
     val get = server.takeRequest()
-    assertThat(get.getHeader("Private")).isEqualTo("Secret")
+    assertThat(get.headers["Private"]).isEqualTo("Secret")
     assertThat(hostnameVerifier.calls).isEqualTo(listOf("verify android.com"))
   }
 
@@ -1019,14 +1018,14 @@ class URLConnectionTest {
     assertContent("A", response)
     val connect1 = server.takeRequest()
     assertThat(connect1.requestLine).isEqualTo("CONNECT android.com:443 HTTP/1.1")
-    assertThat(connect1.getHeader("Proxy-Authorization")).isNull()
+    assertThat(connect1.headers["Proxy-Authorization"]).isNull()
     val connect2 = server.takeRequest()
     assertThat(connect2.requestLine).isEqualTo("CONNECT android.com:443 HTTP/1.1")
-    assertThat(connect2.getHeader("Proxy-Authorization"))
+    assertThat(connect2.headers["Proxy-Authorization"])
       .isEqualTo("Basic ${RecordingAuthenticator.BASE_64_CREDENTIALS}")
     val get = server.takeRequest()
     assertThat(get.requestLine).isEqualTo("GET /foo HTTP/1.1")
-    assertThat(get.getHeader("Proxy-Authorization")).isNull()
+    assertThat(get.headers["Proxy-Authorization"]).isNull()
   }
 
   // Don't disconnect after building a tunnel with CONNECT
@@ -1320,7 +1319,7 @@ class URLConnectionTest {
     assertThat(response.header("Content-Encoding")).isNull()
     assertThat(response.body.contentLength()).isEqualTo(-1L)
     val request = server.takeRequest()
-    assertThat(request.getHeader("Accept-Encoding")).isEqualTo("gzip")
+    assertThat(request.headers["Accept-Encoding"]).isEqualTo("gzip")
   }
 
   @Test
@@ -1342,7 +1341,7 @@ class URLConnectionTest {
     assertThat(readAscii(gunzippedIn, Int.MAX_VALUE)).isEqualTo("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
     assertThat(response.body.contentLength()).isEqualTo(bodyBytes.size)
     val request = server.takeRequest()
-    assertThat(request.getHeader("Accept-Encoding")).isEqualTo("gzip")
+    assertThat(request.headers["Accept-Encoding"]).isEqualTo("gzip")
   }
 
   @Test
@@ -1381,7 +1380,7 @@ class URLConnectionTest {
     )
     assertThat(readAscii(response.body.byteStream(), Int.MAX_VALUE)).isEqualTo("ABCDE")
     val request = server.takeRequest()
-    assertThat(request.getHeader("Accept-Encoding")).isEqualTo("custom")
+    assertThat(request.headers["Accept-Encoding"]).isEqualTo("custom")
   }
 
   /**
@@ -1586,7 +1585,7 @@ class URLConnectionTest {
 
     // No authorization header for the request...
     val recordedRequest = server.takeRequest()
-    assertThat(recordedRequest.getHeader("Authorization")).isNull()
+    assertThat(recordedRequest.headers["Authorization"]).isNull()
     assertThat(recordedRequest.body.readUtf8()).isEqualTo("ABCD")
   }
 
@@ -1635,11 +1634,11 @@ class URLConnectionTest {
     val recordedRequest1 = server.takeRequest()
     assertThat(recordedRequest1.method).isEqualTo("POST")
     assertThat(recordedRequest1.body.readUtf8()).isEqualTo(body)
-    assertThat(recordedRequest1.getHeader("Authorization")).isNull()
+    assertThat(recordedRequest1.headers["Authorization"]).isNull()
     val recordedRequest2 = server.takeRequest()
     assertThat(recordedRequest2.method).isEqualTo("POST")
     assertThat(recordedRequest2.body.readUtf8()).isEqualTo(body)
-    assertThat(recordedRequest2.getHeader("Authorization")).isEqualTo(credential)
+    assertThat(recordedRequest2.headers["Authorization"]).isEqualTo(credential)
   }
 
   @Test
@@ -1929,13 +1928,13 @@ class URLConnectionTest {
 
     // No authorization header for the first request...
     var request = server.takeRequest()
-    assertThat(request.getHeader("Authorization")).isNull()
+    assertThat(request.headers["Authorization"]).isNull()
 
     // ...but the three requests that follow include an authorization header.
     for (i in 0..2) {
       request = server.takeRequest()
       assertThat(request.requestLine).isEqualTo("POST / HTTP/1.1")
-      assertThat(request.getHeader("Authorization")).isEqualTo(
+      assertThat(request.headers["Authorization"]).isEqualTo(
         "Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS
       )
       assertThat(request.body.readUtf8()).isEqualTo("ABCD")
@@ -1967,13 +1966,13 @@ class URLConnectionTest {
 
     // No authorization header for the first request...
     var request = server.takeRequest()
-    assertThat(request.getHeader("Authorization")).isNull()
+    assertThat(request.headers["Authorization"]).isNull()
 
     // ...but the three requests that follow requests include an authorization header.
     for (i in 0..2) {
       request = server.takeRequest()
       assertThat(request.requestLine).isEqualTo("GET / HTTP/1.1")
-      assertThat(request.getHeader("Authorization"))
+      assertThat(request.headers["Authorization"])
         .isEqualTo("Basic ${RecordingAuthenticator.BASE_64_CREDENTIALS}")
     }
   }
@@ -2015,17 +2014,17 @@ class URLConnectionTest {
 
     // No authorization header for the first request...
     val request1 = server.takeRequest()
-    assertThat(request1.getHeader("Authorization")).isNull()
+    assertThat(request1.headers["Authorization"]).isNull()
 
     // UTF-8 encoding for the first credential.
     val request2 = server.takeRequest()
-    assertThat(request2.getHeader("Authorization")).isEqualTo(
+    assertThat(request2.headers["Authorization"]).isEqualTo(
       "Basic dXNlcm5hbWU6bcO2dG9yaGVhZA=="
     )
 
     // ISO-8859-1 encoding for the second credential.
     val request3 = server.takeRequest()
-    assertThat(request3.getHeader("Authorization"))
+    assertThat(request3.headers["Authorization"])
       .isEqualTo("Basic dXNlcm5hbWU6bfZ0b3JoZWFk")
   }
 
@@ -2057,13 +2056,13 @@ class URLConnectionTest {
 
     // no authorization header for the first request...
     var request = server.takeRequest()
-    assertThat(request.getHeader("Authorization")).isNull()
+    assertThat(request.headers["Authorization"]).isNull()
 
     // ...but the three requests that follow requests include an authorization header
     for (i in 0..2) {
       request = server.takeRequest()
       assertThat(request.requestLine).isEqualTo("GET / HTTP/1.1")
-      assertThat(request.getHeader("Authorization")).isEqualTo(
+      assertThat(request.headers["Authorization"]).isEqualTo(
         "Basic ${RecordingAuthenticator.BASE_64_CREDENTIALS}"
       )
     }
@@ -2297,8 +2296,8 @@ class URLConnectionTest {
     assertContent("This is the 2nd server, again!", getResponse(Request(server2.url("/"))))
     val server1Host = server.hostName + ":" + server.port
     val server2Host = server2.hostName + ":" + server2.port
-    assertThat(server.takeRequest().getHeader("Host")).isEqualTo(server1Host)
-    assertThat(server2.takeRequest().getHeader("Host")).isEqualTo(server2Host)
+    assertThat(server.takeRequest().headers["Host"]).isEqualTo(server1Host)
+    assertThat(server2.takeRequest().headers["Host"]).isEqualTo(server2Host)
     assertThat(server.takeRequest().sequenceNumber)
       .overridingErrorMessage("Expected connection reuse")
       .isEqualTo(1)
@@ -2361,7 +2360,7 @@ class URLConnectionTest {
       .build()
     assertContent("Page 2", getResponse(newRequest("/a")))
     val redirectRequest = server2.takeRequest()
-    assertThat(redirectRequest.getHeader("Authorization")).isNull()
+    assertThat(redirectRequest.headers["Authorization"]).isNull()
     assertThat(redirectRequest.path).isEqualTo("/b")
   }
 
@@ -2446,9 +2445,9 @@ class URLConnectionTest {
       .isEqualTo("POST /page1 HTTP/1.1")
     val page2 = server.takeRequest()
     assertThat(page2.requestLine).isEqualTo("GET /page2 HTTP/1.1")
-    assertThat(page2.getHeader("Content-Length")).isNull()
-    assertThat(page2.getHeader("Content-Type")).isNull()
-    assertThat(page2.getHeader("Transfer-Encoding")).isNull()
+    assertThat(page2.headers["Content-Length"]).isNull()
+    assertThat(page2.headers["Content-Type"]).isNull()
+    assertThat(page2.headers["Transfer-Encoding"]).isNull()
   }
 
   @Test
@@ -3095,7 +3094,7 @@ class URLConnectionTest {
     )
     assertThat(readAscii(response.body.byteStream(), Int.MAX_VALUE)).isEqualTo("A")
     val request = server.takeRequest()
-    assertThat(request.getHeader("Content-Length")).isEqualTo("3")
+    assertThat(request.headers["Content-Length"]).isEqualTo("3")
     response.body.close()
   }
 
@@ -3502,8 +3501,8 @@ class URLConnectionTest {
       .authenticator(authenticator)
       .build()
     assertContent("A", getResponse(newRequest("/private")))
-    assertThat(server.takeRequest().getHeader("Authorization")).isNull()
-    assertThat(server.takeRequest().getHeader("Authorization")).isEqualTo(credential)
+    assertThat(server.takeRequest().headers["Authorization"]).isNull()
+    assertThat(server.takeRequest().headers["Authorization"]).isEqualTo(credential)
     assertThat(authenticator.onlyRoute().proxy).isEqualTo(Proxy.NO_PROXY)
     val response = authenticator.onlyResponse()
     assertThat(response.request.url.toUrl().path).isEqualTo("/private")
@@ -3527,8 +3526,8 @@ class URLConnectionTest {
       .authenticator(authenticator)
       .build()
     assertContent("A", getResponse(newRequest("/private")))
-    assertThat(server.takeRequest().getHeader("Authorization")).isNull()
-    assertThat(server.takeRequest().getHeader("Authorization")).isEqualTo(
+    assertThat(server.takeRequest().headers["Authorization"]).isNull()
+    assertThat(server.takeRequest().headers["Authorization"]).isEqualTo(
       "oauthed abc123"
     )
     val response = authenticator.onlyResponse()
@@ -3679,7 +3678,7 @@ class URLConnectionTest {
     assertContent("", response)
     val zeroLengthPayload = server.takeRequest()
     assertThat(zeroLengthPayload.method).isEqualTo(method)
-    assertThat(zeroLengthPayload.getHeader("content-length")).isEqualTo("0")
+    assertThat(zeroLengthPayload.headers["content-length"]).isEqualTo("0")
     assertThat(zeroLengthPayload.bodySize).isEqualTo(0L)
   }
 
@@ -3741,7 +3740,7 @@ class URLConnectionTest {
     )
     assertContent("", response)
     val request = server.takeRequest()
-    assertThat(request.getHeader("Content-Length")).isEqualTo(
+    assertThat(request.headers["Content-Length"]).isEqualTo(
       java.lang.Long.toString(contentLength)
     )
   }
@@ -3849,7 +3848,7 @@ class URLConnectionTest {
     )
     assertContent("abc", getResponse(newRequest("/")))
     val request = server.takeRequest()
-    assertThat(request.getHeader("User-Agent")).isEqualTo(userAgent)
+    assertThat(request.headers["User-Agent"]).isEqualTo(userAgent)
   }
 
   @Test

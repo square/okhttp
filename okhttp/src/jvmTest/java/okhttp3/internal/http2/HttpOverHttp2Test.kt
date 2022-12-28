@@ -165,8 +165,8 @@ class HttpOverHttp2Test {
     assertThat(response.protocol).isEqualTo(protocol)
     val request = server.takeRequest()
     assertThat(request.requestLine).isEqualTo("GET /foo HTTP/1.1")
-    assertThat(request.getHeader(":scheme")).isEqualTo(scheme)
-    assertThat(request.getHeader(":authority")).isEqualTo("${server.hostName}:${server.port}")
+      assertThat(request.headers[":scheme"]).isEqualTo(scheme)
+      assertThat(request.headers[":authority"]).isEqualTo("${server.hostName}:${server.port}")
   }
 
   @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
@@ -249,7 +249,7 @@ class HttpOverHttp2Test {
     val request = server.takeRequest()
     assertThat(request.requestLine).isEqualTo("POST /foo HTTP/1.1")
     org.junit.jupiter.api.Assertions.assertArrayEquals(postBytes, request.body.readByteArray())
-    assertThat(request.getHeader("Content-Length")).isNull()
+      assertThat(request.headers["Content-Length"]).isNull()
   }
 
   @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
@@ -276,7 +276,7 @@ class HttpOverHttp2Test {
     val request = server.takeRequest()
     assertThat(request.requestLine).isEqualTo("POST /foo HTTP/1.1")
     org.junit.jupiter.api.Assertions.assertArrayEquals(postBytes, request.body.readByteArray())
-    assertThat(request.getHeader("Content-Length")!!.toInt()).isEqualTo(
+    assertThat(request.headers["Content-Length"]!!.toInt()).isEqualTo(
       postBytes.size.toLong()
     )
   }
@@ -309,7 +309,7 @@ class HttpOverHttp2Test {
     val request = server.takeRequest()
     assertThat(request.requestLine).isEqualTo("POST /foo HTTP/1.1")
     org.junit.jupiter.api.Assertions.assertArrayEquals(postBytes, request.body.readByteArray())
-    assertThat(request.getHeader("Content-Length")!!.toInt())
+    assertThat(request.headers["Content-Length"]!!.toInt())
       .isEqualTo(postBytes.size.toLong())
   }
 
@@ -483,10 +483,10 @@ class HttpOverHttp2Test {
     val response = call.execute()
     assertThat(response.body.string()).isEqualTo("Successful auth!")
     val denied = server.takeRequest()
-    assertThat(denied.getHeader("Authorization")).isNull()
+      assertThat(denied.headers["Authorization"]).isNull()
     val accepted = server.takeRequest()
     assertThat(accepted.requestLine).isEqualTo("GET / HTTP/1.1")
-    assertThat(accepted.getHeader("Authorization")).isEqualTo(credential)
+      assertThat(accepted.headers["Authorization"]).isEqualTo(credential)
   }
 
   @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
@@ -763,7 +763,7 @@ class HttpOverHttp2Test {
     val response = call.execute()
     assertThat(response.body.string()).isEqualTo("")
     val request = server.takeRequest()
-    assertThat(request.getHeader("Cookie")).isEqualTo("a=b")
+      assertThat(request.headers["Cookie"]).isEqualTo("a=b")
   }
 
   @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
@@ -1336,13 +1336,13 @@ class HttpOverHttp2Test {
     assertThat(response.message).isEqualTo("")
     val request = server.takeRequest()
     assertThat(request.requestLine).isEqualTo("GET /foo HTTP/1.1")
-    assertThat(request.getHeader(":scheme")).isEqualTo(scheme)
-    assertThat(request.getHeader(":authority")).isEqualTo(
+      assertThat(request.headers[":scheme"]).isEqualTo(scheme)
+      assertThat(request.headers[":authority"]).isEqualTo(
       server.hostName + ":" + server.port
     )
     val pushedRequest = server.takeRequest()
     assertThat(pushedRequest.requestLine).isEqualTo("GET /foo/bar HTTP/1.1")
-    assertThat(pushedRequest.getHeader("foo")).isEqualTo("bar")
+      assertThat(pushedRequest.headers["foo"]).isEqualTo("bar")
   }
 
   @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
@@ -1365,15 +1365,15 @@ class HttpOverHttp2Test {
     assertThat(response.message).isEqualTo("")
     val request = server.takeRequest()
     assertThat(request.requestLine).isEqualTo("GET /foo HTTP/1.1")
-    assertThat(request.getHeader(":scheme")).isEqualTo(scheme)
-    assertThat(request.getHeader(":authority")).isEqualTo(
+      assertThat(request.headers[":scheme"]).isEqualTo(scheme)
+      assertThat(request.headers[":authority"]).isEqualTo(
       server.hostName + ":" + server.port
     )
     val pushedRequest = server.takeRequest()
     assertThat(pushedRequest.requestLine).isEqualTo(
       "HEAD /foo/bar HTTP/1.1"
     )
-    assertThat(pushedRequest.getHeader("foo")).isEqualTo("bar")
+      assertThat(pushedRequest.headers["foo"]).isEqualTo("bar")
   }
 
   @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
@@ -1878,7 +1878,7 @@ class HttpOverHttp2Test {
     val response = call.execute()
     assertThat(response.body.string()).isEqualTo("")
     val recordedRequest = server.takeRequest()
-    assertThat(recordedRequest.getHeader(":authority")).isEqualTo("privateobject.com")
+      assertThat(recordedRequest.headers[":authority"]).isEqualTo("privateobject.com")
   }
 
   private fun gzip(bytes: String): Buffer {
@@ -2004,8 +2004,8 @@ class HttpOverHttp2Test {
 
     val request = server.takeRequest()
     assertThat(request.requestLine).isEqualTo("GET /foo HTTP/1.1")
-    assertThat(request.getHeader(":scheme")).isEqualTo(scheme)
-    assertThat(request.getHeader(":authority")).isEqualTo("android.com")
+      assertThat(request.headers[":scheme"]).isEqualTo(scheme)
+      assertThat(request.headers[":authority"]).isEqualTo("android.com")
   }
 
   /** Respond to a proxy authorization challenge.  */
@@ -2040,15 +2040,15 @@ class HttpOverHttp2Test {
 
     val connect1 = server.takeRequest()
     assertThat(connect1.requestLine).isEqualTo("CONNECT android.com:$port HTTP/1.1")
-    assertThat(connect1.getHeader("Proxy-Authorization")).isNull()
+      assertThat(connect1.headers["Proxy-Authorization"]).isNull()
 
     val connect2 = server.takeRequest()
     assertThat(connect2.requestLine).isEqualTo("CONNECT android.com:$port HTTP/1.1")
-    assertThat(connect2.getHeader("Proxy-Authorization")).isEqualTo("password")
+      assertThat(connect2.headers["Proxy-Authorization"]).isEqualTo("password")
 
     val get = server.takeRequest()
     assertThat(get.requestLine).isEqualTo("GET /foo HTTP/1.1")
-    assertThat(get.getHeader("Proxy-Authorization")).isNull()
+      assertThat(get.headers["Proxy-Authorization"]).isNull()
   }
 
   companion object {
