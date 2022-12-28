@@ -33,6 +33,13 @@ expect class Request private constructor(builder: Builder) {
 
   val isHttps: Boolean
 
+  constructor(
+    url: HttpUrl,
+    headers: Headers = Headers.headersOf(),
+    method: String = "\u0000", // Sentinel value chooses based on what the body is.
+    body: RequestBody? = null,
+  )
+
   fun header(name: String): String?
 
   fun headers(name: String): List<String>

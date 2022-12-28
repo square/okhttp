@@ -118,3 +118,27 @@ fun <T : Any> Request.Builder.commonTag(type: KClass<T>, tag: T?) = apply {
     mutableTags[type] = tag
   }
 }
+
+fun Request.commonToString(): String = buildString {
+  append("Request{method=")
+  append(method)
+  append(", url=")
+  append(url)
+  if (headers.size != 0) {
+    append(", headers=[")
+    headers.forEachIndexed { index, (name, value) ->
+      if (index > 0) {
+        append(", ")
+      }
+      append(name)
+      append(':')
+      append(if (isSensitiveHeader(name)) "██" else value)
+    }
+    append(']')
+  }
+  if (tags.isNotEmpty()) {
+    append(", tags=")
+    append(tags)
+  }
+  append('}')
+}

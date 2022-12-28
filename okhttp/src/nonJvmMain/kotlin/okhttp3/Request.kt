@@ -15,7 +15,6 @@
  */
 package okhttp3
 
-import kotlin.reflect.KClass
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.internal.canonicalUrl
 import okhttp3.internal.commonAddHeader
@@ -32,6 +31,8 @@ import okhttp3.internal.commonPost
 import okhttp3.internal.commonPut
 import okhttp3.internal.commonRemoveHeader
 import okhttp3.internal.commonTag
+import okhttp3.internal.commonToString
+import kotlin.reflect.KClass
 
 actual class Request internal actual constructor(builder: Builder) {
   actual val url: HttpUrl = checkNotNull(builder.url) { "url == null" }
@@ -52,11 +53,11 @@ actual class Request internal actual constructor(builder: Builder) {
    *
    * @param method defaults to "GET" if [body] is null, and "POST" otherwise.
    */
-  constructor(
-    url: String,
-    headers: Headers = Headers.headersOf(),
-    method: String = "\u0000", // Sentinel value chooses based on what the body is.
-    body: RequestBody? = null,
+  actual constructor(
+    url: HttpUrl,
+    headers: Headers,
+    method: String,
+    body: RequestBody?,
   ) : this(
     Builder()
       .url(url)
@@ -84,29 +85,7 @@ actual class Request internal actual constructor(builder: Builder) {
 
   actual fun <T : Any> tag(type: KClass<T>): T? = tags[type] as T?
 
-  override fun toString(): String = buildString {
-    append("Request{method=")
-    append(method)
-    append(", url=")
-    append(url)
-    if (headers.size != 0) {
-      append(", headers=[")
-      headers.forEachIndexed { index, (name, value) ->
-        if (index > 0) {
-          append(", ")
-        }
-        append(name)
-        append(':')
-        append(value)
-      }
-      append(']')
-    }
-    // if (tags.isNotEmpty()) {
-    //   append(", tags=")
-    //   append(tags)
-    // }
-    append('}')
-  }
+  override fun toString(): String = commonToString()
 
   actual open class Builder {
     internal actual var url: HttpUrl? = null
@@ -170,6 +149,6 @@ actual class Request internal actual constructor(builder: Builder) {
 
     actual fun <T : Any> tag(type: KClass<T>, tag: T?): Builder = commonTag(type, tag)
 
-    actual open fun build() = Request(this)
+    actual open fun build(): Request = Request(this)
   }
 }
