@@ -31,16 +31,14 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.js.Js
 import io.ktor.utils.io.CancellationException
 import kotlin.test.Ignore
-import kotlinx.coroutines.test.runTest
-import okio.use
 import kotlin.test.Test
-import kotlin.test.assertFails
-import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.Headers
@@ -49,6 +47,7 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okio.IOException
+import okio.use
 
 class KtorCallFactoryTest {
   val httpbin = "https://nghttp2.org/httpbin/"
@@ -68,7 +67,9 @@ class KtorCallFactoryTest {
     assertThat(response.code).isEqualTo(200)
 
     response.use {
-      val body = it.body.string()
+      val body = withContext(Dispatchers.Default) {
+        it.body.string()
+      }
       assertThat(body).startsWith("{\n")
       assertThat(body).contains("headers")
       assertThat(body).endsWith("\n}\n")
@@ -165,7 +166,8 @@ class KtorCallFactoryTest {
 
     assertThat(response.code).isEqualTo(200)
 
-    assertThat(response.headers.size).isGreaterThan(5)
+    // restricted on browser mode
+    assertThat(response.headers.size).isGreaterThan(2)
     assertThat(response.headers["content-type"]).isEqualTo("application/json")
 
     response.use {

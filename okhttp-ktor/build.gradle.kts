@@ -43,7 +43,7 @@ kotlin {
     val jsMain = getByName("jsMain") {
       dependencies {
         dependsOn(nonJvmMain)
-        implementation("com.squareup.okio:okio-js:3.1.0")
+        implementation("com.squareup.okio:okio-js:3.2.0")
       }
     }
 

@@ -36,7 +36,7 @@ import okhttp3.ResponseBody
 
 suspend fun Request.toHttpRequestBuilder(): HttpRequestBuilder {
   return HttpRequestBuilder().apply {
-    url.takeFrom(this@toHttpRequestBuilder.url)
+    url.takeFrom(this@toHttpRequestBuilder.url.toString())
 
     headers {
       this@toHttpRequestBuilder.headers.forEach { (name, value) ->
