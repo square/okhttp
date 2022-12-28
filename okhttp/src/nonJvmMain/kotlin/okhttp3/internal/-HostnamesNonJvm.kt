@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 The Android Open Source Project
+ * Copyright (C) 2022 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,6 @@
  */
 package okhttp3.internal
 
-import java.net.IDN
-import java.net.InetAddress
-import java.util.Locale
-
-/**
- * If this is an IP address, this returns the IP address in canonical form.
- *
- * Otherwise this performs IDN ToASCII encoding and canonicalize the result to lowercase. For
- * example this converts `☃.net` to `xn--n3h.net`, and `WwW.GoOgLe.cOm` to `www.google.com`.
- * `null` will be returned if the host cannot be ToASCII encoded or if the result contains
- * unsupported ASCII characters.
- */
 actual fun String.toCanonicalHost(): String? {
   val host: String = this
 
@@ -38,15 +26,12 @@ actual fun String.toCanonicalHost(): String? {
     } else {
       decodeIpv6(host, 0, host.length)
     }) ?: return null
-    val inetAddress = InetAddress.getByAddress(inetAddressByteArray)
-    val address = inetAddress.address
-    if (address.size == 16) return inet6AddressToAscii(address)
-    if (address.size == 4) return inetAddress.hostAddress // An IPv4-mapped IPv6 address.
-    throw AssertionError("Invalid IPv6 address: '$host'")
+    // TODO implement properly
+    return inet6AddressToAscii(inetAddressByteArray)
   }
 
   try {
-    val result = IDN.toASCII(host).lowercase(Locale.US)
+    val result = idnToAscii(host)
     if (result.isEmpty()) return null
 
     return if (result.containsInvalidHostnameAsciiCodes()) {
@@ -61,4 +46,13 @@ actual fun String.toCanonicalHost(): String? {
   } catch (_: IllegalArgumentException) {
     return null
   }
+}
+
+internal fun inet4AddressToAscii(address: ByteArray): String {
+  return address.joinToString(".")
+}
+
+fun idnToAscii(host: String): String {
+  // TODO implement properly
+  return host.lowercase()
 }
