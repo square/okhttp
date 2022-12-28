@@ -29,13 +29,11 @@ internal const val MAX_DATE = 253402300799999L
  * Most websites serve cookies in the blessed format. Eagerly create the parser to ensure such
  * cookies are on the fast path.
  */
-private val STANDARD_DATE_FORMAT = object : ThreadLocal<DateFormat>() {
-  override fun initialValue(): DateFormat {
-    // Date format specified by RFC 7231 section 7.1.1.1.
-    return SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.US).apply {
-      isLenient = false
-      timeZone = UTC
-    }
+private val STANDARD_DATE_FORMAT by lazy {
+  // Date format specified by RFC 7231 section 7.1.1.1.
+  SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.US).apply {
+    isLenient = false
+    timeZone = UTC
   }
 }
 
@@ -70,7 +68,7 @@ fun String.toHttpDateOrNull(): Date? {
   if (isEmpty()) return null
 
   val position = ParsePosition(0)
-  var result = STANDARD_DATE_FORMAT.get().parse(this, position)
+  var result = STANDARD_DATE_FORMAT.parse(this, position)
   if (position.index == length) {
     // STANDARD_DATE_FORMAT must match exactly; all text must be consumed, e.g. no ignored
     // non-standard trailing "+01:00". Those cases are covered below.
@@ -103,4 +101,4 @@ fun String.toHttpDateOrNull(): Date? {
 }
 
 /** Returns the string for this date. */
-fun Date.toHttpDateString(): String = STANDARD_DATE_FORMAT.get().format(this)
+fun Date.toHttpDateString(): String = STANDARD_DATE_FORMAT.format(this)
