@@ -803,7 +803,8 @@ class URLConnectionTest {
   fun contentDisagreesWithChunkedHeaderBodyTooLong() {
     val builder = MockResponse.Builder()
       .chunkedBody("abc", 3)
-    val buffer = builder.build().body!!
+    val buffer = Buffer()
+    builder.body!!.writeTo(buffer)
     buffer.writeUtf8("\r\nYOU SHOULD NOT SEE THIS")
     builder.body(buffer)
     builder.clearHeaders()
@@ -816,8 +817,9 @@ class URLConnectionTest {
   fun contentDisagreesWithChunkedHeaderBodyTooShort() {
     val builder = MockResponse.Builder()
       .chunkedBody("abcdefg", 5)
+    val fullBody = Buffer()
+    builder.body!!.writeTo(fullBody)
     val truncatedBody = Buffer()
-    val fullBody = builder.build().body!!
     truncatedBody.write(fullBody, 4)
     builder.body(truncatedBody)
     builder.clearHeaders()

@@ -2889,12 +2889,14 @@ public final class CacheTest {
    * Shortens the body of {@code response} but not the corresponding headers. Only useful to test
    * how clients respond to the premature conclusion of the HTTP body.
    */
-  private MockResponse.Builder truncateViolently(MockResponse.Builder builder, int numBytesToKeep) {
+  private MockResponse.Builder truncateViolently(MockResponse.Builder builder, int numBytesToKeep) throws IOException {
     MockResponse response = builder.build();
     builder.socketPolicy(DISCONNECT_AT_END);
     Headers headers = response.getHeaders();
+    Buffer fullBody = new Buffer();
+    response.getBody().writeTo(fullBody);
     Buffer truncatedBody = new Buffer();
-    truncatedBody.write(response.getBody(), numBytesToKeep);
+    truncatedBody.write(fullBody, numBytesToKeep);
     builder.body(truncatedBody);
     builder.headers(headers);
     return builder;
