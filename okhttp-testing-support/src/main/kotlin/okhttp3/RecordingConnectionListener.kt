@@ -26,7 +26,7 @@ import org.assertj.core.data.Offset
 open class RecordingConnectionListener : ConnectionListener() {
   val eventSequence: Deque<ConnectionEvent> = ConcurrentLinkedDeque()
 
-  private val forbiddenLocks = mutableListOf<Any>()
+  private val forbiddenLocks = mutableSetOf<Any>()
 
   /** The timestamp of the last taken event, used to measure elapsed time between events. */
   private var lastTimestampNs: Long? = null
@@ -96,22 +96,28 @@ open class RecordingConnectionListener : ConnectionListener() {
   private fun logEvent(e: ConnectionEvent) {
     for (lock in forbiddenLocks) {
       assertThat(Thread.holdsLock(lock))
-        .overridingErrorMessage(lock.toString())
+        .overridingErrorMessage("Called with lock $lock")
         .isFalse()
     }
 
     eventSequence.offer(e)
   }
 
-  override fun connectionOpening(route: Route) = logEvent(ConnectionEvent.ConnectionOpening(System.nanoTime(), route))
+  override fun connectStart(route: Route, call: Call) = logEvent(ConnectionEvent.ConnectStart(System.nanoTime(), route, call))
 
-  override fun connectFailed(route: Route, failure: IOException) = logEvent(ConnectionEvent.ConnectFailed(System.nanoTime(), route, failure))
+  override fun connectFailed(route: Route, call: Call, failure: IOException) = logEvent(ConnectionEvent.ConnectFailed(System.nanoTime(), route, call, failure))
 
-  override fun connectionOpened(connection: Connection) = logEvent(ConnectionEvent.ConnectionOpened(System.nanoTime(), connection))
+  override fun connectEnd(connection: Connection) {
+    forbidLock(connection)
+    logEvent(ConnectionEvent.ConnectEnd(System.nanoTime(), connection))
+  }
 
   override fun connectionClosed(connection: Connection) = logEvent(ConnectionEvent.ConnectionClosed(System.nanoTime(), connection))
 
-  override fun connectionAcquired(connection: Connection, call: Call) = logEvent(ConnectionEvent.ConnectionAcquired(System.nanoTime(), connection, call))
+  override fun connectionAcquired(connection: Connection, call: Call) {
+    forbidLock(connection)
+    logEvent(ConnectionEvent.ConnectionAcquired(System.nanoTime(), connection, call))
+  }
 
   override fun connectionReleased(connection: Connection, call: Call) = logEvent(ConnectionEvent.ConnectionReleased(System.nanoTime(), connection, call))
 

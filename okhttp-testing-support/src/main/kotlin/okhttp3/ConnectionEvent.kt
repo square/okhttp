@@ -30,18 +30,20 @@ sealed class ConnectionEvent {
   val name: String
     get() = javaClass.simpleName
 
-  data class ConnectionOpening(
+  data class ConnectStart(
     override val timestampNs: Long,
     val route: Route,
+    val call: Call
   ) : ConnectionEvent()
 
   data class ConnectFailed(
     override val timestampNs: Long,
     val route: Route,
+    val call: Call,
     val exception: IOException
   ) : ConnectionEvent()
 
-  data class ConnectionOpened(
+  data class ConnectEnd(
     override val timestampNs: Long,
     override val connection: Connection,
   ) : ConnectionEvent()

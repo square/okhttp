@@ -26,9 +26,9 @@ import okio.IOException
  * Any IO - writing to files or network should be done asynchronously.
  */
 abstract class ConnectionListener {
-  open fun connectionOpening(route: Route) {}
-  open fun connectFailed(route: Route, failure: IOException) {}
-  open fun connectionOpened(connection: Connection) {}
+  open fun connectStart(route: Route, call: Call) {}
+  open fun connectFailed(route: Route, call: Call, failure: IOException) {}
+  open fun connectEnd(connection: Connection) {}
   open fun connectionClosed(connection: Connection) {}
   open fun connectionAcquired(connection: Connection, call: Call) {}
   open fun connectionReleased(connection: Connection, call: Call) {}

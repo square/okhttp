@@ -120,7 +120,7 @@ class RealConnectionPool(
     connection.assertThreadHoldsLock()
 
     connections.add(connection)
-    connectionListener.connectionOpened(connection)
+    connectionListener.connectEnd(connection)
     cleanupQueue.schedule(cleanupTask)
   }
 

@@ -131,14 +131,14 @@ class ConnectPlan(
     call.plansToCancel += this
     try {
       eventListener.connectStart(call, route.socketAddress, route.proxy)
-      connectionListener.connectionOpening(route)
+      connectionListener.connectStart(route, call)
 
       connectSocket()
       success = true
       return ConnectResult(plan = this)
     } catch (e: IOException) {
       eventListener.connectFailed(call, route.socketAddress, route.proxy, null, e)
-      connectionListener.connectFailed(route, e)
+      connectionListener.connectFailed(route, call, e)
       return ConnectResult(plan = this, throwable = e)
     } finally {
       call.plansToCancel -= this
@@ -226,7 +226,7 @@ class ConnectPlan(
       return ConnectResult(plan = this)
     } catch (e: IOException) {
       eventListener.connectFailed(call, route.socketAddress, route.proxy, null, e)
-      connectionListener.connectFailed(route, e)
+      connectionListener.connectFailed(route, call, e)
 
       if (!client.retryOnConnectionFailure || !retryTlsHandshake(e)) {
         retryTlsConnection = null
@@ -316,7 +316,7 @@ class ConnectPlan(
           "Too many tunnel connections attempted: $MAX_TUNNEL_ATTEMPTS"
         )
         eventListener.connectFailed(call, route.socketAddress, route.proxy, null, failure)
-        connectionListener.connectFailed(route, failure)
+        connectionListener.connectFailed(route, call, failure)
         return ConnectResult(plan = this, throwable = failure)
       }
     }

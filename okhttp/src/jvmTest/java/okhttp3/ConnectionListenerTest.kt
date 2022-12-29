@@ -73,8 +73,8 @@ class ConnectionListenerTest {
     assertThat(response.code).isEqualTo(200)
     assertThat(response.body.string()).isEqualTo("abc")
     response.body.close()
-    assertThat(listener.recordedEventTypes()).containsExactly("ConnectionOpening",
-      "ConnectionOpened",
+    assertThat(listener.recordedEventTypes()).containsExactly("ConnectStart",
+      "ConnectEnd",
       "ConnectionAcquired",
       "ConnectionReleased")
   }
@@ -95,8 +95,8 @@ class ConnectionListenerTest {
     } catch (expected: IOException) {
       assertThat(expected.message).isIn("timeout", "Read timed out")
     }
-    assertThat(listener.recordedEventTypes()).containsExactly("ConnectionOpening",
-      "ConnectionOpened",
+    assertThat(listener.recordedEventTypes()).containsExactly("ConnectStart",
+      "ConnectEnd",
       "ConnectionAcquired",
       "NoNewExchanges",
       "ConnectionClosed",
@@ -113,8 +113,8 @@ class ConnectionListenerTest {
     response.body.string()
     response.body.close()
     assertThat(listener.recordedEventTypes()).containsExactly(
-      "ConnectionOpening",
-      "ConnectionOpened",
+      "ConnectStart",
+      "ConnectEnd",
       "ConnectionAcquired",
       "ConnectionReleased")
   }
@@ -166,7 +166,7 @@ class ConnectionListenerTest {
     val response = call.execute()
     assertThat(response.code).isEqualTo(200)
     response.body.close()
-    listener.removeUpToEvent(ConnectionEvent.ConnectionOpened::class.java)
+    listener.removeUpToEvent(ConnectionEvent.ConnectEnd::class.java)
     listener.removeUpToEvent(ConnectionEvent.ConnectionReleased::class.java)
     listener.removeUpToEvent(ConnectionEvent.ConnectionAcquired::class.java)
     listener.removeUpToEvent(ConnectionEvent.ConnectionReleased::class.java)
@@ -184,7 +184,7 @@ class ConnectionListenerTest {
     response.body.close()
     val address = client.dns.lookup(server!!.hostName)[0]
     val expectedAddress = InetSocketAddress(address, server!!.port)
-    val event = listener.removeUpToEvent(ConnectionEvent.ConnectionOpening::class.java)
+    val event = listener.removeUpToEvent(ConnectionEvent.ConnectStart::class.java)
     assertThat(event.route.socketAddress).isEqualTo(expectedAddress)
   }
 
@@ -226,10 +226,10 @@ class ConnectionListenerTest {
     assertThat(response.code).isEqualTo(200)
     response.body.close()
     assertThat(listener.recordedEventTypes()).containsExactly(
-      "ConnectionOpening",
+      "ConnectStart",
       "ConnectFailed",
-      "ConnectionOpening",
-      "ConnectionOpened",
+      "ConnectStart",
+      "ConnectEnd",
       "ConnectionAcquired",
       "ConnectionReleased")
   }
@@ -249,11 +249,11 @@ class ConnectionListenerTest {
     assertThat(response.code).isEqualTo(200)
     response.body.close()
     assertThat(listener.recordedEventTypes()).containsExactly(
-      "ConnectionOpening",
-      "ConnectionOpened",
+      "ConnectStart",
+      "ConnectEnd",
       "ConnectionAcquired",
       "ConnectionReleased")
-    val event = listener.removeUpToEvent(ConnectionEvent.ConnectionOpened::class.java)
+    val event = listener.removeUpToEvent(ConnectionEvent.ConnectEnd::class.java)
     assertThat(event.connection.route().proxy).isEqualTo(proxy)
   }
 
