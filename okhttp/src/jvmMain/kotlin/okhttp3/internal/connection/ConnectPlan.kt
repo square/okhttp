@@ -479,13 +479,15 @@ class ConnectPlan(
   override fun handleSuccess(): RealConnection {
     call.client.routeDatabase.connected(route)
 
+    val connection = this.connection!!
+    connectionListener.connectEnd(connection)
+
     // If we raced another call connecting to this host, coalesce the connections. This makes for
     // 3 different lookups in the connection pool!
     val pooled3 = routePlanner.planReusePooledConnection(this, routes)
     if (pooled3 != null) return pooled3.connection
 
-    val connection = this.connection!!
-    synchronized(connection) {
+    connection.synchronizedWithEvents {
       client.connectionPool.delegate.put(connection)
       call.acquireConnectionNoEvents(connection)
     }

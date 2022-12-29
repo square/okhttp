@@ -90,7 +90,7 @@ class RealConnectionPool(
   ): RealConnection? {
     for (connection in connections) {
       // In the first synchronized block, acquire the connection if it can satisfy this call.
-      val acquired = synchronized(connection) {
+      val acquired = connection.synchronizedWithEvents {
         when {
           requireMultiplexed && !connection.isMultiplexed -> false
           !connection.isEligible(address, routes) -> false
@@ -120,7 +120,7 @@ class RealConnectionPool(
     connection.assertThreadHoldsLock()
 
     connections.add(connection)
-    connectionListener.connectEnd(connection)
+//    connection.queueEvent { connectionListener.connectEnd(connection) }
     cleanupQueue.schedule(cleanupTask)
   }
 
@@ -134,7 +134,7 @@ class RealConnectionPool(
     return if (connection.noNewExchanges || maxIdleConnections == 0) {
       connection.noNewExchanges = true
       connections.remove(connection)
-      connectionListener.connectionClosed(connection)
+      connection.queueEvent { connectionListener.connectionClosed(connection) }
       if (connections.isEmpty()) cleanupQueue.cancelAll()
       true
     } else {
@@ -147,13 +147,13 @@ class RealConnectionPool(
     val i = connections.iterator()
     while (i.hasNext()) {
       val connection = i.next()
-      val socketToClose = synchronized(connection) {
+      val socketToClose = connection.synchronizedWithEvents {
         if (connection.calls.isEmpty()) {
           i.remove()
           connection.noNewExchanges = true
-          return@synchronized connection.socket()
+          return@synchronizedWithEvents connection.socket()
         } else {
-          return@synchronized null
+          return@synchronizedWithEvents null
         }
       }
       socketToClose?.closeQuietly()
@@ -177,7 +177,7 @@ class RealConnectionPool(
 
     // Find either a connection to evict, or the time that the next eviction is due.
     for (connection in connections) {
-      synchronized(connection) {
+      connection.synchronizedWithEvents {
         // If the connection is in use, keep searching.
         if (pruneAndGetAllocationCount(connection, now) > 0) {
           inUseConnectionCount++

@@ -19,6 +19,7 @@ import java.util.Deque
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.TimeUnit
 import okhttp3.ConnectionEvent.NoNewExchanges
+import okhttp3.internal.connection.RealConnection
 import okio.IOException
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.data.Offset
@@ -109,6 +110,9 @@ open class RecordingConnectionListener : ConnectionListener() {
 
   override fun connectEnd(connection: Connection) {
     forbidLock(connection)
+    (connection as? RealConnection)?.let {
+      assertThat(it.takeQueuedEvents()).isEmpty()
+    }
     logEvent(ConnectionEvent.ConnectEnd(System.nanoTime(), connection))
   }
 
@@ -119,7 +123,15 @@ open class RecordingConnectionListener : ConnectionListener() {
     logEvent(ConnectionEvent.ConnectionAcquired(System.nanoTime(), connection, call))
   }
 
-  override fun connectionReleased(connection: Connection, call: Call) = logEvent(ConnectionEvent.ConnectionReleased(System.nanoTime(), connection, call))
+  override fun connectionReleased(connection: Connection, call: Call) {
+    if (eventSequence.find { it is ConnectionEvent.ConnectStart && it.connection == connection } != null && connection is RealConnection) {
+      if (connection.noNewExchanges) {
+        assertThat(eventSequence).anyMatch { it is NoNewExchanges && it.connection == connection }
+      }
+    }
+
+    logEvent(ConnectionEvent.ConnectionReleased(System.nanoTime(), connection, call))
+  }
 
   override fun noNewExchanges(connection: Connection) = logEvent(NoNewExchanges(System.nanoTime(), connection))
 }

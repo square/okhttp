@@ -295,11 +295,11 @@ class RealRoutePlanner(
    * connections.
    */
   private fun retryRoute(connection: RealConnection): Route? {
-    synchronized(connection) {
-      if (connection.routeFailureCount != 0) return null
-      if (!connection.noNewExchanges) return null // This route is still in use.
-      if (!connection.route().address.url.canReuseConnectionFor(address.url)) return null
-      return connection.route()
+    return connection.synchronizedWithEvents {
+      if (connection.routeFailureCount != 0) null
+      else if (!connection.noNewExchanges) null // This route is still in use.
+      else if (!connection.route().address.url.canReuseConnectionFor(address.url)) null
+      else connection.route()
     }
   }
 

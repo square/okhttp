@@ -35,11 +35,13 @@ import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 
 @Flaky // STDOUT logging enabled for test
 @Timeout(30)
 @Tag("Slow")
-class ConnectionListenerTest {
+open class ConnectionListenerTest {
   @RegisterExtension
   val platform = PlatformRule()
 
@@ -48,8 +50,12 @@ class ConnectionListenerTest {
   private var server: MockWebServer? = null
   private val listener = RecordingConnectionListener()
   private val handshakeCertificates = localhost()
-  private var client = clientTestRule.newClientBuilder()
+
+  open val fastFallback: Boolean = true
+
+  private var client: OkHttpClient = clientTestRule.newClientBuilder()
     .connectionPool(ConnectionPool(connectionListener = listener))
+      .fastFallback(fastFallback)
     .build()
 
   @BeforeEach
@@ -61,8 +67,8 @@ class ConnectionListenerTest {
     listener.forbidLock(client.dispatcher)
   }
 
-  @Test
-  @Throws(IOException::class)
+  @ParameterizedTest
+  @ValueSource(booleans = [true, false])
   fun successfulCallEventSequence() {
     server!!.enqueue(MockResponse()
       .setBody("abc"))
@@ -73,10 +79,12 @@ class ConnectionListenerTest {
     assertThat(response.code).isEqualTo(200)
     assertThat(response.body.string()).isEqualTo("abc")
     response.body.close()
-    assertThat(listener.recordedEventTypes()).containsExactly("ConnectStart",
+    assertThat(listener.recordedEventTypes()).containsExactly(
+      "ConnectStart",
       "ConnectEnd",
       "ConnectionAcquired",
-      "ConnectionReleased")
+      "ConnectionReleased"
+    )
   }
 
   @Test
@@ -95,12 +103,14 @@ class ConnectionListenerTest {
     } catch (expected: IOException) {
       assertThat(expected.message).isIn("timeout", "Read timed out")
     }
-    assertThat(listener.recordedEventTypes()).containsExactly("ConnectStart",
+    assertThat(listener.recordedEventTypes()).containsExactly(
+      "ConnectStart",
       "ConnectEnd",
       "ConnectionAcquired",
       "NoNewExchanges",
       "ConnectionClosed",
-      "ConnectionReleased")
+      "ConnectionReleased"
+    )
   }
 
   @Throws(IOException::class)
@@ -116,7 +126,8 @@ class ConnectionListenerTest {
       "ConnectStart",
       "ConnectEnd",
       "ConnectionAcquired",
-      "ConnectionReleased")
+      "ConnectionReleased"
+    )
   }
 
   @Test
@@ -135,7 +146,10 @@ class ConnectionListenerTest {
       .build())
     val response = call.execute()
     response.close()
-    assertThat(listener.recordedEventTypes()).containsExactly("ConnectionAcquired", "ConnectionReleased")
+    assertThat(listener.recordedEventTypes()).containsExactly(
+      "ConnectionAcquired",
+      "ConnectionReleased"
+    )
   }
 
   @Test
@@ -231,7 +245,8 @@ class ConnectionListenerTest {
       "ConnectStart",
       "ConnectEnd",
       "ConnectionAcquired",
-      "ConnectionReleased")
+      "ConnectionReleased"
+    )
   }
 
   @Test
@@ -265,4 +280,11 @@ class ConnectionListenerTest {
       .build()
     server!!.useHttps(handshakeCertificates.sslSocketFactory())
   }
+}
+
+@Flaky // STDOUT logging enabled for test
+@Timeout(30)
+@Tag("Slow")
+class ConnectionListenerLegacyTest: ConnectionListenerTest() {
+  override val fastFallback: Boolean = false
 }

@@ -96,7 +96,9 @@ class RealConnection(
       val previousValue = field
       field = value
       if (!previousValue) {
-        connectionListener.noNewExchanges(this)
+        queueEvent {
+          connectionListener.noNewExchanges(this)
+        }
       }
     }
 
@@ -133,6 +135,8 @@ class RealConnection(
    */
   internal val isMultiplexed: Boolean
     get() = http2Connection != null
+
+  private val queuedEvents = mutableListOf<Runnable>()
 
   /** Prevent further exchanges from being created on this connection. */
   @Synchronized override fun noNewExchanges() {
@@ -388,12 +392,31 @@ class RealConnection(
 
   override fun protocol(): Protocol = protocol!!
 
+  fun queueEvent(function: Runnable) {
+    Exception().printStackTrace()
+    queuedEvents.add(function)
+  }
+
+  fun takeQueuedEvents(): List<Runnable> = queuedEvents.toList().also {
+    queuedEvents.clear()
+  }
+
   override fun toString(): String {
     return "Connection{${route.address.url.host}:${route.address.url.port}," +
       " proxy=${route.proxy}" +
       " hostAddress=${route.socketAddress}" +
       " cipherSuite=${handshake?.cipherSuite ?: "none"}" +
       " protocol=$protocol}"
+  }
+
+  fun <T> synchronizedWithEvents(function: () -> T): T {
+    return synchronized(this) {
+      function()
+    }.also {
+      takeQueuedEvents().forEach {
+        it.run()
+      }
+    }
   }
 
   companion object {

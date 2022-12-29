@@ -15,7 +15,6 @@
  */
 package okhttp3
 
-import java.net.ProtocolException
 import okio.IOException
 
 /**
@@ -26,12 +25,39 @@ import okio.IOException
  * Any IO - writing to files or network should be done asynchronously.
  */
 abstract class ConnectionListener {
+  /**
+   * Invoked as soon as a call causes a connection to be started.
+   */
   open fun connectStart(route: Route, call: Call) {}
+
+  /**
+   * Invoked when a connection fails to be established.
+   */
   open fun connectFailed(route: Route, call: Call, failure: IOException) {}
+
+  /**
+   * Invoked as soon as a connection is successfully established.
+   */
   open fun connectEnd(connection: Connection) {}
+
+  /**
+   * Invoked when a connection is released as no longer required.
+   */
   open fun connectionClosed(connection: Connection) {}
+
+  /**
+   * Invoked when a call is assigned a particular connection.
+   */
   open fun connectionAcquired(connection: Connection, call: Call) {}
+
+  /**
+   * Invoked when a call no longer uses a connection.
+   */
   open fun connectionReleased(connection: Connection, call: Call) {}
+
+  /**
+   * Invoked when a connection is marked for no new exchanges.
+   */
   open fun noNewExchanges(connection: Connection) {}
 
   companion object {
