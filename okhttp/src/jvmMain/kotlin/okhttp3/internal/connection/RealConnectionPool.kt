@@ -199,13 +199,13 @@ class RealConnectionPool(
           || idleConnectionCount > this.maxIdleConnections -> {
         // We've chosen a connection to evict. Confirm it's still okay to be evict, then close it.
         val connection = longestIdleConnection!!
-        synchronized(connection) {
+        connection.synchronizedWithEvents {
           if (connection.calls.isNotEmpty()) return 0L // No longer idle.
           if (connection.idleAtNs + longestIdleDurationNs != now) return 0L // No longer oldest.
           connection.noNewExchanges = true
           connections.remove(longestIdleConnection)
-          connectionListener.connectionClosed(connection)
         }
+        connectionListener.connectionClosed(connection)
 
         connection.socket().closeQuietly()
         if (connections.isEmpty()) cleanupQueue.cancelAll()

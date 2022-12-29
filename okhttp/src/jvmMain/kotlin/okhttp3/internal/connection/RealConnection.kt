@@ -396,8 +396,12 @@ class RealConnection(
     queuedEvents.add(function)
   }
 
-  fun takeQueuedEvents(): List<Runnable> = queuedEvents.toList().also {
-    queuedEvents.clear()
+  fun takeQueuedEvents(): List<Runnable> = if (queuedEvents.isEmpty()) {
+    emptyList()
+  } else {
+    queuedEvents.toList().also {
+      queuedEvents.clear()
+    }
   }
 
   override fun toString(): String {
@@ -408,7 +412,7 @@ class RealConnection(
       " protocol=$protocol}"
   }
 
-  fun <T> synchronizedWithEvents(function: () -> T): T {
+  inline fun <T> synchronizedWithEvents(function: () -> T): T {
     return synchronized(this) {
       function()
     }.also {
