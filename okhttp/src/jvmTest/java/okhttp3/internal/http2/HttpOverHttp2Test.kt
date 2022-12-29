@@ -1416,8 +1416,8 @@ class HttpOverHttp2Test {
     // doesn't wait to read the client's DATA frame and may send a DATA frame before the client
     // does. So we can't assume the client's empty DATA will be logged first.
     assertThat(countFrames(logs, "FINE: >> 0x00000003     0 DATA          END_STREAM"))
-      .isEqualTo(2L)
-    assertThat(countFrames(logs, "FINE: >> 0x00000003     3 DATA          "))
+      .isEqualTo(1L)
+    assertThat(countFrames(logs, "FINE: >> 0x00000003     3 DATA          END_STREAM"))
       .isEqualTo(1L)
   }
 
