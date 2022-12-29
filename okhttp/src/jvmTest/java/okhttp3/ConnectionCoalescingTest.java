@@ -276,11 +276,13 @@ public final class ConnectionCoalescingTest {
   }
 
   @Test public void skipsOnRedirectWhenDnsDontMatch() throws Exception {
-    server.enqueue(new MockResponse()
-        .setResponseCode(301)
-        .addHeader("Location", url.newBuilder().host("differentdns.com").build()));
-    server.enqueue(new MockResponse()
-        .setBody("unexpected call"));
+    server.enqueue(new MockResponse.Builder()
+        .code(301)
+        .addHeader("Location", url.newBuilder().host("differentdns.com").build())
+        .build());
+    server.enqueue(new MockResponse.Builder()
+        .body("unexpected call")
+        .build());
 
     try {
       Response response = execute(url);
@@ -307,9 +309,10 @@ public final class ConnectionCoalescingTest {
   }
 
   @Test public void skipsOnRedirectWhenNotSubjectAltName() throws Exception {
-    server.enqueue(new MockResponse()
-        .setResponseCode(301)
-        .addHeader("Location", url.newBuilder().host("nonsan.com").build()));
+    server.enqueue(new MockResponse.Builder()
+        .code(301)
+        .addHeader("Location", url.newBuilder().host("nonsan.com").build())
+        .build());
     server.enqueue(new MockResponse());
 
     try {
@@ -365,9 +368,10 @@ public final class ConnectionCoalescingTest {
         .build();
     client = client.newBuilder().certificatePinner(pinner).build();
 
-    server.enqueue(new MockResponse()
-        .setResponseCode(301)
-        .addHeader("Location", url.newBuilder().host("san.com").build()));
+    server.enqueue(new MockResponse.Builder()
+        .code(301)
+        .addHeader("Location", url.newBuilder().host("san.com").build())
+        .build());
     server.enqueue(new MockResponse());
 
     try {
@@ -401,9 +405,10 @@ public final class ConnectionCoalescingTest {
     HostnameVerifier verifier = (name, session) -> true;
     client = client.newBuilder().hostnameVerifier(verifier).build();
 
-    server.enqueue(new MockResponse()
-        .setResponseCode(301)
-        .addHeader("Location", url.newBuilder().host("san.com").build()));
+    server.enqueue(new MockResponse.Builder()
+        .code(301)
+        .addHeader("Location", url.newBuilder().host("san.com").build())
+        .build());
     server.enqueue(new MockResponse());
 
     assert200Http2Response(execute(url), "san.com");
@@ -475,13 +480,16 @@ public final class ConnectionCoalescingTest {
   }
 
   @Test public void misdirectedRequestResponseCode() throws Exception {
-    server.enqueue(new MockResponse()
-        .setBody("seed connection"));
-    server.enqueue(new MockResponse()
-        .setResponseCode(421)
-        .setBody("misdirected!"));
-    server.enqueue(new MockResponse()
-        .setBody("after misdirect"));
+    server.enqueue(new MockResponse.Builder()
+        .body("seed connection")
+        .build());
+    server.enqueue(new MockResponse.Builder()
+        .code(421)
+        .body("misdirected!")
+        .build());
+    server.enqueue(new MockResponse.Builder()
+        .body("after misdirect")
+        .build());
 
     // Seed the connection pool.
     assert200Http2Response(execute(url), server.getHostName());

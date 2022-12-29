@@ -63,8 +63,8 @@ class CallKotlinTest {
 
   @Test
   fun legalToExecuteTwiceCloning() {
-    server.enqueue(MockResponse().setBody("abc"))
-    server.enqueue(MockResponse().setBody("def"))
+    server.enqueue(MockResponse(body = "abc"))
+    server.enqueue(MockResponse(body = "def"))
 
     val request = Request(server.url("/"))
 
@@ -83,7 +83,7 @@ class CallKotlinTest {
   fun testMockWebserverRequest() {
     enableTls()
 
-    server.enqueue(MockResponse().setBody("abc"))
+    server.enqueue(MockResponse(body = "abc"))
 
     val request = Request.Builder().url(server.url("/")).build()
 
@@ -130,15 +130,9 @@ class CallKotlinTest {
       }
     }
 
-    server.enqueue(MockResponse().apply {
-      setResponseCode(201)
-    })
-    server.enqueue(MockResponse().apply {
-      setResponseCode(204)
-    })
-    server.enqueue(MockResponse().apply {
-      setResponseCode(204)
-    })
+    server.enqueue(MockResponse(code = 201))
+    server.enqueue(MockResponse(code = 204))
+    server.enqueue(MockResponse(code = 204))
 
     val endpointUrl = server.url("/endpoint")
 
@@ -192,9 +186,13 @@ class CallKotlinTest {
         })
         .build()
 
-    server.enqueue(MockResponse().setBody("a")
-        .setSocketPolicy(SocketPolicy.SHUTDOWN_OUTPUT_AT_END))
-    server.enqueue(MockResponse().setBody("b"))
+    server.enqueue(
+      MockResponse(
+        body = "a",
+        socketPolicy = SocketPolicy.SHUTDOWN_OUTPUT_AT_END
+      )
+    )
+    server.enqueue(MockResponse(body = "b"))
 
     val requestA = Request(server.url("/"))
     val responseA = client.newCall(requestA).execute()
@@ -243,8 +241,8 @@ class CallKotlinTest {
 
   /** Confirm suppressed exceptions that occur after connecting are returned. */
   @Test fun httpExceptionsAreReturnedAsSuppressed() {
-    server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))
-    server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))
+    server.enqueue(MockResponse(socketPolicy = SocketPolicy.DISCONNECT_AT_START))
+    server.enqueue(MockResponse(socketPolicy = SocketPolicy.DISCONNECT_AT_START))
 
     client = client.newBuilder()
         .dns(DoubleInetAddressDns()) // Two routes so we get two failures.
@@ -266,9 +264,10 @@ class CallKotlinTest {
   @Test
   fun responseRequestIsLastRedirect() {
     server.enqueue(
-      MockResponse()
-        .setResponseCode(302)
-        .addHeader("Location: /b")
+      MockResponse(
+        code = 302,
+        headers = headersOf("Location", "/b"),
+      )
     )
     server.enqueue(MockResponse())
 

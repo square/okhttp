@@ -167,9 +167,10 @@ public final class HttpLoggingInterceptorTest {
   @Test public void basicResponseBody() throws IOException {
     setLevel(Level.BASIC);
 
-    server.enqueue(new MockResponse()
-        .setBody("Hello!")
-        .setHeader("Content-Type", PLAIN));
+    server.enqueue(new MockResponse.Builder()
+        .body("Hello!")
+        .setHeader("Content-Type", PLAIN)
+        .build());
     Response response = client.newCall(request().build()).execute();
     response.body().close();
 
@@ -187,9 +188,10 @@ public final class HttpLoggingInterceptorTest {
   @Test public void basicChunkedResponseBody() throws IOException {
     setLevel(Level.BASIC);
 
-    server.enqueue(new MockResponse()
-        .setChunkedBody("Hello!", 2)
-        .setHeader("Content-Type", PLAIN));
+    server.enqueue(new MockResponse.Builder()
+        .chunkedBody("Hello!", 2)
+        .setHeader("Content-Type", PLAIN)
+        .build());
     Response response = client.newCall(request().build()).execute();
     response.body().close();
 
@@ -378,9 +380,10 @@ public final class HttpLoggingInterceptorTest {
   @Test public void headersResponseBody() throws IOException {
     setLevel(Level.HEADERS);
 
-    server.enqueue(new MockResponse()
-        .setBody("Hello!")
-        .setHeader("Content-Type", PLAIN));
+    server.enqueue(new MockResponse.Builder()
+        .body("Hello!")
+        .setHeader("Content-Type", PLAIN)
+        .build());
     Response response = client.newCall(request().build()).execute();
     response.body().close();
 
@@ -446,8 +449,9 @@ public final class HttpLoggingInterceptorTest {
   }
 
   private void bodyGetNoBody(int code) throws IOException {
-    server.enqueue(new MockResponse()
-        .setStatus("HTTP/1.1 " + code + " No Content"));
+    server.enqueue(new MockResponse.Builder()
+        .status("HTTP/1.1 " + code + " No Content")
+        .build());
     Response response = client.newCall(request().build()).execute();
     response.body().close();
 
@@ -512,9 +516,10 @@ public final class HttpLoggingInterceptorTest {
   @Test public void bodyResponseBody() throws IOException {
     setLevel(Level.BODY);
 
-    server.enqueue(new MockResponse()
-        .setBody("Hello!")
-        .setHeader("Content-Type", PLAIN));
+    server.enqueue(new MockResponse.Builder()
+        .body("Hello!")
+        .setHeader("Content-Type", PLAIN)
+        .build());
     Response response = client.newCall(request().build()).execute();
     response.body().close();
 
@@ -548,9 +553,10 @@ public final class HttpLoggingInterceptorTest {
   @Test public void bodyResponseBodyChunked() throws IOException {
     setLevel(Level.BODY);
 
-    server.enqueue(new MockResponse()
-        .setChunkedBody("Hello!", 2)
-        .setHeader("Content-Type", PLAIN));
+    server.enqueue(new MockResponse.Builder()
+        .chunkedBody("Hello!", 2)
+        .setHeader("Content-Type", PLAIN)
+        .build());
     Response response = client.newCall(request().build()).execute();
     response.body().close();
 
@@ -584,9 +590,10 @@ public final class HttpLoggingInterceptorTest {
   @Test public void bodyRequestGzipEncoded() throws IOException {
     setLevel(Level.BODY);
 
-    server.enqueue(new MockResponse()
-      .setHeader("Content-Type", PLAIN)
-      .setBody(new Buffer().writeUtf8("Uncompressed")));
+    server.enqueue(new MockResponse.Builder()
+        .setHeader("Content-Type", PLAIN)
+        .body(new Buffer().writeUtf8("Uncompressed"))
+        .build());
 
     Response response = client.newCall(request()
         .addHeader("Content-Encoding", "gzip")
@@ -620,11 +627,12 @@ public final class HttpLoggingInterceptorTest {
   @Test public void bodyResponseGzipEncoded() throws IOException {
     setLevel(Level.BODY);
 
-    server.enqueue(new MockResponse()
+    server.enqueue(new MockResponse.Builder()
         .setHeader("Content-Encoding", "gzip")
         .setHeader("Content-Type", PLAIN)
-        .setBody(new Buffer().write(ByteString.decodeBase64(
-            "H4sIAAAAAAAAAPNIzcnJ11HwQKIAdyO+9hMAAAA="))));
+        .body(new Buffer().write(ByteString.decodeBase64(
+            "H4sIAAAAAAAAAPNIzcnJ11HwQKIAdyO+9hMAAAA=")))
+        .build());
     Response response = client.newCall(request().build()).execute();
 
     ResponseBody responseBody = response.body();
@@ -662,12 +670,13 @@ public final class HttpLoggingInterceptorTest {
   @Test public void bodyResponseUnknownEncoded() throws IOException {
       setLevel(Level.BODY);
 
-      server.enqueue(new MockResponse()
+      server.enqueue(new MockResponse.Builder()
           // It's invalid to return this if not requested, but the server might anyway
           .setHeader("Content-Encoding", "br")
           .setHeader("Content-Type", PLAIN)
-          .setBody(new Buffer().write(ByteString.decodeBase64(
-              "iwmASGVsbG8sIEhlbGxvLCBIZWxsbwoD"))));
+          .body(new Buffer().write(ByteString.decodeBase64(
+              "iwmASGVsbG8sIEhlbGxvLCBIZWxsbwoD")))
+          .build());
       Response response = client.newCall(request().build()).execute();
       response.body().close();
 
@@ -699,9 +708,9 @@ public final class HttpLoggingInterceptorTest {
   @Test public void bodyResponseIsStreaming() throws IOException {
     setLevel(Level.BODY);
 
-    server.enqueue(new MockResponse()
+    server.enqueue(new MockResponse.Builder()
       .setHeader("Content-Type", "text/event-stream")
-      .setChunkedBody(""
+      .chunkedBody(""
         + "event: add\n"
         + "data: 73857293\n"
         + "\n"
@@ -711,6 +720,7 @@ public final class HttpLoggingInterceptorTest {
         + "event: add\n"
         + "data: 113411\n"
         + "\n", 8)
+      .build()
     );
     Response response = client.newCall(request().build()).execute();
     response.body().close();
@@ -741,9 +751,10 @@ public final class HttpLoggingInterceptorTest {
   @Test public void bodyGetMalformedCharset() throws IOException {
     setLevel(Level.BODY);
 
-    server.enqueue(new MockResponse()
+    server.enqueue(new MockResponse.Builder()
         .setHeader("Content-Type", "text/html; charset=0")
-        .setBody("Body with unknown charset"));
+        .body("Body with unknown charset")
+        .build());
     Response response = client.newCall(request().build()).execute();
     response.body().close();
 
@@ -785,9 +796,10 @@ public final class HttpLoggingInterceptorTest {
     buffer.writeUtf8CodePoint(0x0a);
     buffer.writeUtf8CodePoint(0x1a);
     buffer.writeUtf8CodePoint(0x0a);
-    server.enqueue(new MockResponse()
-        .setBody(buffer)
-        .setHeader("Content-Type", "image/png; charset=utf-8"));
+    server.enqueue(new MockResponse.Builder()
+        .body(buffer)
+        .setHeader("Content-Type", "image/png; charset=utf-8")
+        .build());
     Response response = client.newCall(request().build()).execute();
     response.body().close();
 
@@ -874,8 +886,9 @@ public final class HttpLoggingInterceptorTest {
             .addInterceptor(applicationInterceptor)
             .build();
 
-    server.enqueue(
-        new MockResponse().addHeader("SeNsItIvE", "Value").addHeader("Not-Sensitive", "Value"));
+    server.enqueue(new MockResponse.Builder()
+        .addHeader("SeNsItIvE", "Value").addHeader("Not-Sensitive", "Value")
+        .build());
     Response response =
         client
             .newCall(
@@ -924,8 +937,9 @@ public final class HttpLoggingInterceptorTest {
 
     setLevel(Level.BODY);
 
-    server.enqueue(new MockResponse()
-        .setBody("Hello response!"));
+    server.enqueue(new MockResponse.Builder()
+        .body("Hello response!")
+        .build());
 
     RequestBody asyncRequestBody = new RequestBody() {
       @Override public @Nullable MediaType contentType() {
@@ -966,8 +980,9 @@ public final class HttpLoggingInterceptorTest {
 
     setLevel(Level.BODY);
 
-    server.enqueue(new MockResponse()
-                           .setBody("Hello response!"));
+    server.enqueue(new MockResponse.Builder()
+        .body("Hello response!")
+        .build());
 
     RequestBody asyncRequestBody = new RequestBody() {
       @Override public @Nullable MediaType contentType() {

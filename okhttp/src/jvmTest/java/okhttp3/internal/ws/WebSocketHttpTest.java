@@ -106,7 +106,9 @@ public final class WebSocketHttpTest {
   }
 
   @Test public void textMessage() {
-    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+    webServer.enqueue(new MockResponse.Builder()
+        .webSocketUpgrade(serverListener)
+        .build());
     WebSocket webSocket = newWebSocket();
 
     clientListener.assertOpen();
@@ -119,7 +121,9 @@ public final class WebSocketHttpTest {
   }
 
   @Test public void binaryMessage() {
-    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+    webServer.enqueue(new MockResponse.Builder()
+        .webSocketUpgrade(serverListener)
+        .build());
     WebSocket webSocket = newWebSocket();
 
     clientListener.assertOpen();
@@ -132,7 +136,9 @@ public final class WebSocketHttpTest {
   }
 
   @Test public void nullStringThrows() {
-    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+    webServer.enqueue(new MockResponse.Builder()
+        .webSocketUpgrade(serverListener)
+        .build());
     WebSocket webSocket = newWebSocket();
 
     clientListener.assertOpen();
@@ -149,7 +155,9 @@ public final class WebSocketHttpTest {
   @Test public void nullByteStringThrows() {
     TestUtil.assumeNotWindows();
 
-    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+    webServer.enqueue(new MockResponse.Builder()
+        .webSocketUpgrade(serverListener)
+        .build());
     WebSocket webSocket = newWebSocket();
 
     clientListener.assertOpen();
@@ -164,7 +172,9 @@ public final class WebSocketHttpTest {
   }
 
   @Test public void serverMessage() {
-    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+    webServer.enqueue(new MockResponse.Builder()
+        .webSocketUpgrade(serverListener)
+        .build());
     WebSocket webSocket = newWebSocket();
 
     clientListener.assertOpen();
@@ -177,7 +187,9 @@ public final class WebSocketHttpTest {
   }
 
   @Test public void throwingOnOpenFailsImmediately() {
-    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+    webServer.enqueue(new MockResponse.Builder()
+        .webSocketUpgrade(serverListener)
+        .build());
 
     final RuntimeException e = new RuntimeException();
     clientListener.setNextEventDelegate(new WebSocketListener() {
@@ -195,7 +207,10 @@ public final class WebSocketHttpTest {
 
   @Disabled("AsyncCall currently lets runtime exceptions propagate.")
   @Test public void throwingOnFailLogs() throws Exception {
-    webServer.enqueue(new MockResponse().setResponseCode(200).setBody("Body"));
+    webServer.enqueue(new MockResponse.Builder()
+        .code(200)
+        .body("Body")
+        .build());
 
     final RuntimeException e = new RuntimeException("boom");
     clientListener.setNextEventDelegate(new WebSocketListener() {
@@ -210,7 +225,9 @@ public final class WebSocketHttpTest {
   }
 
   @Test public void throwingOnMessageClosesImmediatelyAndFails() {
-    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+    webServer.enqueue(new MockResponse.Builder()
+        .webSocketUpgrade(serverListener)
+        .build());
     newWebSocket();
 
     clientListener.assertOpen();
@@ -230,7 +247,9 @@ public final class WebSocketHttpTest {
   }
 
   @Test public void throwingOnClosingClosesImmediatelyAndFails() {
-    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+    webServer.enqueue(new MockResponse.Builder()
+        .webSocketUpgrade(serverListener)
+        .build());
     newWebSocket();
 
     clientListener.assertOpen();
@@ -250,7 +269,9 @@ public final class WebSocketHttpTest {
   }
 
   @Test public void unplannedCloseHandledByCloseWithoutFailure() {
-    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+    webServer.enqueue(new MockResponse.Builder()
+        .webSocketUpgrade(serverListener)
+        .build());
     newWebSocket();
 
     clientListener.assertOpen();
@@ -270,7 +291,9 @@ public final class WebSocketHttpTest {
   }
 
   @Test public void unplannedCloseHandledWithoutFailure() {
-    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+    webServer.enqueue(new MockResponse.Builder()
+        .webSocketUpgrade(serverListener)
+        .build());
     newWebSocket();
 
     WebSocket webSocket = clientListener.assertOpen();
@@ -280,7 +303,10 @@ public final class WebSocketHttpTest {
   }
 
   @Test public void non101RetainsBody() throws IOException {
-    webServer.enqueue(new MockResponse().setResponseCode(200).setBody("Body"));
+    webServer.enqueue(new MockResponse.Builder()
+        .code(200)
+        .body("Body")
+        .build());
     newWebSocket();
 
     clientListener.assertFailure(200, "Body", ProtocolException.class,
@@ -288,7 +314,9 @@ public final class WebSocketHttpTest {
   }
 
   @Test public void notFound() throws IOException {
-    webServer.enqueue(new MockResponse().setStatus("HTTP/1.1 404 Not Found"));
+    webServer.enqueue(new MockResponse.Builder()
+        .status("HTTP/1.1 404 Not Found")
+        .build());
     newWebSocket();
 
     clientListener.assertFailure(404, null, ProtocolException.class,
@@ -296,8 +324,12 @@ public final class WebSocketHttpTest {
   }
 
   @Test public void clientTimeoutClosesBody() {
-    webServer.enqueue(new MockResponse().setResponseCode(408));
-    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+    webServer.enqueue(new MockResponse.Builder()
+        .code(408)
+        .build());
+    webServer.enqueue(new MockResponse.Builder()
+        .webSocketUpgrade(serverListener)
+        .build());
     WebSocket webSocket = newWebSocket();
 
     clientListener.assertOpen();
@@ -313,10 +345,11 @@ public final class WebSocketHttpTest {
   }
 
   @Test public void missingConnectionHeader() throws IOException {
-    webServer.enqueue(new MockResponse()
-        .setResponseCode(101)
+    webServer.enqueue(new MockResponse.Builder()
+        .code(101)
         .setHeader("Upgrade", "websocket")
-        .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk="));
+        .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk=")
+        .build());
     newWebSocket();
 
     clientListener.assertFailure(101, null, ProtocolException.class,
@@ -324,11 +357,12 @@ public final class WebSocketHttpTest {
   }
 
   @Test public void wrongConnectionHeader() throws IOException {
-    webServer.enqueue(new MockResponse()
-        .setResponseCode(101)
+    webServer.enqueue(new MockResponse.Builder()
+        .code(101)
         .setHeader("Upgrade", "websocket")
         .setHeader("Connection", "Downgrade")
-        .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk="));
+        .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk=")
+        .build());
     newWebSocket();
 
     clientListener.assertFailure(101, null, ProtocolException.class,
@@ -336,10 +370,11 @@ public final class WebSocketHttpTest {
   }
 
   @Test public void missingUpgradeHeader() throws IOException {
-    webServer.enqueue(new MockResponse()
-        .setResponseCode(101)
+    webServer.enqueue(new MockResponse.Builder()
+        .code(101)
         .setHeader("Connection", "Upgrade")
-        .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk="));
+        .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk=")
+        .build());
     newWebSocket();
 
     clientListener.assertFailure(101, null, ProtocolException.class,
@@ -347,11 +382,12 @@ public final class WebSocketHttpTest {
   }
 
   @Test public void wrongUpgradeHeader() throws IOException {
-    webServer.enqueue(new MockResponse()
-        .setResponseCode(101)
+    webServer.enqueue(new MockResponse.Builder()
+        .code(101)
         .setHeader("Connection", "Upgrade")
         .setHeader("Upgrade", "Pepsi")
-        .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk="));
+        .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk=")
+        .build());
     newWebSocket();
 
     clientListener.assertFailure(101, null, ProtocolException.class,
@@ -359,10 +395,11 @@ public final class WebSocketHttpTest {
   }
 
   @Test public void missingMagicHeader() throws IOException {
-    webServer.enqueue(new MockResponse()
-        .setResponseCode(101)
+    webServer.enqueue(new MockResponse.Builder()
+        .code(101)
         .setHeader("Connection", "Upgrade")
-        .setHeader("Upgrade", "websocket"));
+        .setHeader("Upgrade", "websocket")
+        .build());
     newWebSocket();
 
     clientListener.assertFailure(101, null, ProtocolException.class,
@@ -370,11 +407,12 @@ public final class WebSocketHttpTest {
   }
 
   @Test public void wrongMagicHeader() throws IOException {
-    webServer.enqueue(new MockResponse()
-        .setResponseCode(101)
+    webServer.enqueue(new MockResponse.Builder()
+        .code(101)
         .setHeader("Connection", "Upgrade")
         .setHeader("Upgrade", "websocket")
-        .setHeader("Sec-WebSocket-Accept", "magic"));
+        .setHeader("Sec-WebSocket-Accept", "magic")
+        .build());
     newWebSocket();
 
     clientListener.assertFailure(101, null, ProtocolException.class,
@@ -406,7 +444,9 @@ public final class WebSocketHttpTest {
         })
         .build();
 
-    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+    webServer.enqueue(new MockResponse.Builder()
+        .webSocketUpgrade(serverListener)
+        .build());
 
     WebSocket webSocket = newWebSocket();
     clientListener.assertOpen();
@@ -422,7 +462,9 @@ public final class WebSocketHttpTest {
         })
         .build();
 
-    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+    webServer.enqueue(new MockResponse.Builder()
+        .webSocketUpgrade(serverListener)
+        .build());
 
     WebSocket webSocket = newWebSocket();
     clientListener.assertOpen();
@@ -432,7 +474,9 @@ public final class WebSocketHttpTest {
   }
 
   @Test public void overflowOutgoingQueue() {
-    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+    webServer.enqueue(new MockResponse.Builder()
+        .webSocketUpgrade(serverListener)
+        .build());
 
     WebSocket webSocket = newWebSocket();
     clientListener.assertOpen();
@@ -466,7 +510,9 @@ public final class WebSocketHttpTest {
   }
 
   @Test public void closeReasonMaximumLength() {
-    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+    webServer.enqueue(new MockResponse.Builder()
+        .webSocketUpgrade(serverListener)
+        .build());
 
     String clientReason = repeat('C', 123);
     String serverReason = repeat('S', 123);
@@ -486,7 +532,9 @@ public final class WebSocketHttpTest {
   }
 
   @Test public void closeReasonTooLong() {
-    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+    webServer.enqueue(new MockResponse.Builder()
+        .webSocketUpgrade(serverListener)
+        .build());
 
     WebSocket webSocket = newWebSocket();
     WebSocket server = serverListener.assertOpen();
@@ -543,8 +591,9 @@ public final class WebSocketHttpTest {
   }
 
   @Test public void readTimeoutAppliesToHttpRequest() {
-    webServer.enqueue(new MockResponse()
-        .setSocketPolicy(SocketPolicy.NO_RESPONSE));
+    webServer.enqueue(new MockResponse.Builder()
+        .socketPolicy(SocketPolicy.NO_RESPONSE)
+        .build());
 
     WebSocket webSocket = newWebSocket();
 
@@ -561,9 +610,10 @@ public final class WebSocketHttpTest {
     webServer.setDispatcher(new Dispatcher() {
       @Override public MockResponse dispatch(RecordedRequest request) {
         return upgradeResponse(request)
-            .setBody(new Buffer().write(ByteString.decodeHex("81"))) // Truncated frame.
+            .body(new Buffer().write(ByteString.decodeHex("81"))) // Truncated frame.
             .removeHeader("Content-Length")
-            .setSocketPolicy(SocketPolicy.KEEP_OPEN);
+            .socketPolicy(SocketPolicy.KEEP_OPEN)
+            .build();
       }
     });
 
@@ -575,7 +625,9 @@ public final class WebSocketHttpTest {
   }
 
   @Test public void readTimeoutDoesNotApplyAcrossFrames() throws Exception {
-    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+    webServer.enqueue(new MockResponse.Builder()
+        .webSocketUpgrade(serverListener)
+        .build());
     WebSocket webSocket = newWebSocket();
 
     clientListener.assertOpen();
@@ -595,7 +647,9 @@ public final class WebSocketHttpTest {
         .pingInterval(Duration.ofMillis(500))
         .build();
 
-    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+    webServer.enqueue(new MockResponse.Builder()
+        .webSocketUpgrade(serverListener)
+        .build());
     RealWebSocket webSocket = newWebSocket();
 
     clientListener.assertOpen();
@@ -623,7 +677,9 @@ public final class WebSocketHttpTest {
   }
 
   @Test public void clientDoesNotPingServerByDefault() throws Exception {
-    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+    webServer.enqueue(new MockResponse.Builder()
+        .webSocketUpgrade(serverListener)
+        .build());
     RealWebSocket webSocket = newWebSocket();
 
     clientListener.assertOpen();
@@ -656,15 +712,17 @@ public final class WebSocketHttpTest {
 
     // Stall in onOpen to prevent pongs from being sent.
     final CountDownLatch latch = new CountDownLatch(1);
-    webServer.enqueue(new MockResponse().withWebSocketUpgrade(new WebSocketListener() {
-      @Override public void onOpen(WebSocket webSocket, Response response) {
-        try {
-          latch.await(); // The server can't respond to pings!
-        } catch (InterruptedException e) {
-          throw new AssertionError(e);
+    webServer.enqueue(new MockResponse.Builder()
+      .webSocketUpgrade(new WebSocketListener() {
+        @Override public void onOpen(WebSocket webSocket, Response response) {
+          try {
+            latch.await(); // The server can't respond to pings!
+          } catch (InterruptedException e) {
+            throw new AssertionError(e);
+          }
         }
-      }
-    }));
+      })
+      .build());
 
     long openAtNanos = System.nanoTime();
     newWebSocket();
@@ -680,7 +738,9 @@ public final class WebSocketHttpTest {
 
   /** https://github.com/square/okhttp/issues/2788 */
   @Test public void clientCancelsIfCloseIsNotAcknowledged() {
-    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+    webServer.enqueue(new MockResponse.Builder()
+        .webSocketUpgrade(serverListener)
+        .build());
     RealWebSocket webSocket = newWebSocket();
 
     clientListener.assertOpen();
@@ -709,7 +769,9 @@ public final class WebSocketHttpTest {
         .eventListenerFactory(clientTestRule.wrap(listener))
         .build();
 
-    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+    webServer.enqueue(new MockResponse.Builder()
+        .webSocketUpgrade(serverListener)
+        .build());
     WebSocket webSocket = newWebSocket();
 
     clientListener.assertOpen();
@@ -730,8 +792,9 @@ public final class WebSocketHttpTest {
   }
 
   @Test public void callTimeoutAppliesToSetup() throws Exception {
-    webServer.enqueue(new MockResponse()
-        .setHeadersDelay(500, TimeUnit.MILLISECONDS));
+    webServer.enqueue(new MockResponse.Builder()
+        .headersDelay(500, TimeUnit.MILLISECONDS)
+        .build());
 
     client = client.newBuilder()
         .readTimeout(Duration.ZERO)
@@ -748,8 +811,9 @@ public final class WebSocketHttpTest {
         .callTimeout(Duration.ofMillis(100))
         .build();
 
-    webServer.enqueue(new MockResponse()
-        .withWebSocketUpgrade(serverListener));
+    webServer.enqueue(new MockResponse.Builder()
+        .webSocketUpgrade(serverListener)
+        .build());
     WebSocket webSocket = newWebSocket();
 
     clientListener.assertOpen();
@@ -774,9 +838,10 @@ public final class WebSocketHttpTest {
         .protocols(asList(Protocol.HTTP_1_1))
         .build();
 
-    webServer.enqueue(new MockResponse()
-        .setResponseCode(HttpURLConnection.HTTP_NOT_FOUND)
-        .setBody("not found!"));
+    webServer.enqueue(new MockResponse.Builder()
+        .code(HttpURLConnection.HTTP_NOT_FOUND)
+        .body("not found!")
+        .build());
     webServer.enqueue(new MockResponse());
 
     newWebSocket();
@@ -835,9 +900,10 @@ public final class WebSocketHttpTest {
   }
 
   private void successfulExtensions(String extensionsHeader) throws Exception {
-    webServer.enqueue(new MockResponse()
+    webServer.enqueue(new MockResponse.Builder()
         .addHeader("Sec-WebSocket-Extensions", extensionsHeader)
-        .withWebSocketUpgrade(serverListener));
+        .webSocketUpgrade(serverListener)
+        .build());
 
     WebSocket client = newWebSocket();
     clientListener.assertOpen();
@@ -876,14 +942,15 @@ public final class WebSocketHttpTest {
     closeWebSockets(client, server);
 
     RecordedRequest upgradeRequest = webServer.takeRequest();
-    assertThat(upgradeRequest.getHeader("Sec-WebSocket-Extensions"))
+    assertThat(upgradeRequest.getHeaders().get("Sec-WebSocket-Extensions"))
         .isEqualTo("permessage-deflate");
   }
 
   private void extensionNegotiationFailure(String extensionsHeader) throws Exception {
-    webServer.enqueue(new MockResponse()
+    webServer.enqueue(new MockResponse.Builder()
         .addHeader("Sec-WebSocket-Extensions", extensionsHeader)
-        .withWebSocketUpgrade(serverListener));
+        .webSocketUpgrade(serverListener)
+        .build());
 
     newWebSocket();
     clientListener.assertOpen();
@@ -899,17 +966,19 @@ public final class WebSocketHttpTest {
     serverListener.assertExhausted();
   }
 
-  private MockResponse upgradeResponse(RecordedRequest request) {
-    String key = request.getHeader("Sec-WebSocket-Key");
-    return new MockResponse()
-        .setStatus("HTTP/1.1 101 Switching Protocols")
+  private MockResponse.Builder upgradeResponse(RecordedRequest request) {
+    String key = request.getHeaders().get("Sec-WebSocket-Key");
+    return new MockResponse.Builder()
+        .status("HTTP/1.1 101 Switching Protocols")
         .setHeader("Connection", "Upgrade")
         .setHeader("Upgrade", "websocket")
         .setHeader("Sec-WebSocket-Accept", WebSocketProtocol.INSTANCE.acceptHeader(key));
   }
 
   private void websocketScheme(String scheme) {
-    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+    webServer.enqueue(new MockResponse.Builder()
+        .webSocketUpgrade(serverListener)
+        .build());
 
     Request request = new Request.Builder()
         .url(scheme + "://" + webServer.getHostName() + ":" + webServer.getPort() + "/")

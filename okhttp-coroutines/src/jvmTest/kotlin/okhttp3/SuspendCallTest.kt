@@ -39,7 +39,6 @@ import org.junit.jupiter.api.fail
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.ExperimentalTime
 import org.junit.jupiter.api.BeforeEach
 
 @ExtendWith(MockWebServerExtension::class)
@@ -61,7 +60,7 @@ class SuspendCallTest {
   @Test
   fun suspendCall() {
     runTest {
-      server.enqueue(MockResponse().setBody("abc"))
+      server.enqueue(MockResponse(body = "abc"))
 
       val call = client.newCall(request)
 
@@ -77,9 +76,10 @@ class SuspendCallTest {
   fun timeoutCall() {
     runTest {
       server.enqueue(
-        MockResponse()
-          .setBodyDelay(5, TimeUnit.SECONDS)
-          .setBody("abc")
+        MockResponse.Builder()
+          .bodyDelay(5, TimeUnit.SECONDS)
+          .body("abc")
+          .build()
       )
 
       val call = client.newCall(request)
@@ -105,9 +105,10 @@ class SuspendCallTest {
   fun cancelledCall() {
     runTest {
       server.enqueue(
-        MockResponse()
-          .setBodyDelay(5, TimeUnit.SECONDS)
-          .setBody("abc")
+        MockResponse.Builder()
+          .bodyDelay(5, TimeUnit.SECONDS)
+          .body("abc")
+          .build()
       )
 
       val call = client.newCall(request)
@@ -132,9 +133,10 @@ class SuspendCallTest {
   fun failedCall() {
     runTest {
       server.enqueue(
-        MockResponse()
-          .setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST)
-          .setBody("abc")
+        MockResponse(
+          body = "abc",
+          socketPolicy = SocketPolicy.DISCONNECT_AFTER_REQUEST,
+        )
       )
 
       val call = client.newCall(request)
