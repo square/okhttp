@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy
+import okhttp3.Headers.Companion.headersOf
 import okhttp3.internal.DoubleInetAddressDns
 import okhttp3.internal.connection.RealConnectionPool.Companion.get
 import okhttp3.testing.Flaky
@@ -70,8 +71,7 @@ open class ConnectionListenerTest {
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
   fun successfulCallEventSequence() {
-    server!!.enqueue(MockResponse()
-      .setBody("abc"))
+    server!!.enqueue(MockResponse(body = "abc"))
     val call = client.newCall(Request.Builder()
       .url(server!!.url("/"))
       .build())
@@ -89,8 +89,10 @@ open class ConnectionListenerTest {
 
   @Test
   fun failedCallEventSequence() {
-    server!!.enqueue(MockResponse()
-      .setHeadersDelay(2, TimeUnit.SECONDS))
+    server!!.enqueue(MockResponse.Builder()
+      .headersDelay(2, TimeUnit.SECONDS)
+      .build()
+    )
     client = client.newBuilder()
       .readTimeout(Duration.ofMillis(250))
       .build()
@@ -164,9 +166,10 @@ open class ConnectionListenerTest {
   @Test
   @Throws(IOException::class)
   fun multipleDnsLookupsForSingleCall() {
-    server!!.enqueue(MockResponse()
-      .setResponseCode(301)
-      .setHeader("Location", "http://www.fakeurl:" + server!!.port))
+    server!!.enqueue(MockResponse(
+      code = 301,
+      headers = headersOf("Location", "http://www.fakeurl:" + server!!.port)
+    ))
     server!!.enqueue(MockResponse())
     val dns = FakeDns()
     dns["fakeurl"] = client.dns.lookup(server!!.hostName)
@@ -206,8 +209,7 @@ open class ConnectionListenerTest {
   @Throws(UnknownHostException::class)
   fun failedConnect() {
     enableTlsWithTunnel()
-    server!!.enqueue(MockResponse()
-      .setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE))
+    server!!.enqueue(MockResponse(socketPolicy = SocketPolicy.FAIL_HANDSHAKE))
     val call = client.newCall(Request.Builder()
       .url(server!!.url("/"))
       .build())
@@ -227,8 +229,7 @@ open class ConnectionListenerTest {
   @Throws(IOException::class)
   fun multipleConnectsForSingleCall() {
     enableTlsWithTunnel()
-    server!!.enqueue(MockResponse()
-      .setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE))
+    server!!.enqueue(MockResponse(socketPolicy = SocketPolicy.FAIL_HANDSHAKE))
     server!!.enqueue(MockResponse())
     client = client.newBuilder()
       .dns(DoubleInetAddressDns())
