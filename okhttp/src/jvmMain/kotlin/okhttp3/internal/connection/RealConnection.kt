@@ -393,7 +393,6 @@ class RealConnection(
   override fun protocol(): Protocol = protocol!!
 
   fun queueEvent(function: Runnable) {
-    Exception().printStackTrace()
     queuedEvents.add(function)
   }
 
