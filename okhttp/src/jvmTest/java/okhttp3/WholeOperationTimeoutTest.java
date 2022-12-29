@@ -122,8 +122,9 @@ public final class WholeOperationTimeoutTest {
   }
 
   @Test public void timeoutProcessing() throws Exception {
-    server.enqueue(new MockResponse()
-        .setHeadersDelay(500, TimeUnit.MILLISECONDS));
+    server.enqueue(new MockResponse.Builder()
+        .headersDelay(500, TimeUnit.MILLISECONDS)
+        .build());
 
     Request request = new Request.Builder()
         .url(server.url("/"))
@@ -141,8 +142,9 @@ public final class WholeOperationTimeoutTest {
   }
 
   @Test public void timeoutProcessingWithEnqueue() throws Exception {
-    server.enqueue(new MockResponse()
-        .setHeadersDelay(500, TimeUnit.MILLISECONDS));
+    server.enqueue(new MockResponse.Builder()
+        .headersDelay(500, TimeUnit.MILLISECONDS)
+        .build());
 
     Request request = new Request.Builder()
         .url(server.url("/"))
@@ -171,8 +173,9 @@ public final class WholeOperationTimeoutTest {
   }
 
   @Test public void timeoutReadingResponse() throws Exception {
-    server.enqueue(new MockResponse()
-        .setBody(BIG_ENOUGH_BODY));
+    server.enqueue(new MockResponse.Builder()
+        .body(BIG_ENOUGH_BODY)
+        .build());
 
     Request request = new Request.Builder()
         .url(server.url("/"))
@@ -192,8 +195,9 @@ public final class WholeOperationTimeoutTest {
   }
 
   @Test public void timeoutReadingResponseWithEnqueue() throws Exception {
-    server.enqueue(new MockResponse()
-        .setBody(BIG_ENOUGH_BODY));
+    server.enqueue(new MockResponse.Builder()
+        .body(BIG_ENOUGH_BODY)
+        .build());
 
     Request request = new Request.Builder()
         .url(server.url("/"))
@@ -232,26 +236,31 @@ public final class WholeOperationTimeoutTest {
   }
 
   @Test public void singleTimeoutForAllFollowUpRequests() throws Exception {
-    server.enqueue(new MockResponse()
-        .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
+    server.enqueue(new MockResponse.Builder()
+        .code(HttpURLConnection.HTTP_MOVED_TEMP)
         .setHeader("Location", "/b")
-        .setHeadersDelay(100, TimeUnit.MILLISECONDS));
-    server.enqueue(new MockResponse()
-        .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
+        .headersDelay(100, TimeUnit.MILLISECONDS)
+        .build());
+    server.enqueue(new MockResponse.Builder()
+        .code(HttpURLConnection.HTTP_MOVED_TEMP)
         .setHeader("Location", "/c")
-        .setHeadersDelay(100, TimeUnit.MILLISECONDS));
-    server.enqueue(new MockResponse()
-        .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
+        .headersDelay(100, TimeUnit.MILLISECONDS)
+        .build());
+    server.enqueue(new MockResponse.Builder()
+        .code(HttpURLConnection.HTTP_MOVED_TEMP)
         .setHeader("Location", "/d")
-        .setHeadersDelay(100, TimeUnit.MILLISECONDS));
-    server.enqueue(new MockResponse()
-        .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
+        .headersDelay(100, TimeUnit.MILLISECONDS)
+        .build());
+    server.enqueue(new MockResponse.Builder()
+        .code(HttpURLConnection.HTTP_MOVED_TEMP)
         .setHeader("Location", "/e")
-        .setHeadersDelay(100, TimeUnit.MILLISECONDS));
-    server.enqueue(new MockResponse()
-        .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
+        .headersDelay(100, TimeUnit.MILLISECONDS)
+        .build());
+    server.enqueue(new MockResponse.Builder()
+        .code(HttpURLConnection.HTTP_MOVED_TEMP)
         .setHeader("Location", "/f")
-        .setHeadersDelay(100, TimeUnit.MILLISECONDS));
+        .headersDelay(100, TimeUnit.MILLISECONDS)
+        .build());
     server.enqueue(new MockResponse());
 
     Request request = new Request.Builder()
@@ -273,12 +282,14 @@ public final class WholeOperationTimeoutTest {
   public void timeoutFollowingRedirectOnNewConnection() throws Exception {
     MockWebServer otherServer = new MockWebServer();
 
-    server.enqueue(
-        new MockResponse()
-            .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
-            .setHeader("Location", otherServer.url("/")));
+    server.enqueue(new MockResponse.Builder()
+        .code(HttpURLConnection.HTTP_MOVED_TEMP)
+        .setHeader("Location", otherServer.url("/"))
+        .build());
 
-    otherServer.enqueue(new MockResponse().setHeadersDelay(500, TimeUnit.MILLISECONDS));
+    otherServer.enqueue(new MockResponse.Builder()
+        .headersDelay(500, TimeUnit.MILLISECONDS)
+        .build());
 
     Request request = new Request.Builder().url(server.url("/")).build();
 
@@ -297,9 +308,10 @@ public final class WholeOperationTimeoutTest {
   @Test public void noTimeout() throws Exception {
     // Flaky https://github.com/square/okhttp/issues/5304
 
-    server.enqueue(new MockResponse()
-        .setHeadersDelay(250, TimeUnit.MILLISECONDS)
-        .setBody(BIG_ENOUGH_BODY));
+    server.enqueue(new MockResponse.Builder()
+        .headersDelay(250, TimeUnit.MILLISECONDS)
+        .body(BIG_ENOUGH_BODY)
+        .build());
 
     Request request = new Request.Builder()
         .url(server.url("/"))

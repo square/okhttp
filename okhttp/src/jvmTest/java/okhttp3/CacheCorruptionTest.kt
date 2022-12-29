@@ -15,8 +15,19 @@
  */
 package okhttp3
 
+import java.net.CookieManager
+import java.net.ResponseCache
+import java.text.DateFormat
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
+import java.util.concurrent.TimeUnit
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.SSLSession
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import okhttp3.Headers.Companion.headersOf
 import okhttp3.internal.buildCache
 import okhttp3.okio.LoggingFilesystem
 import okhttp3.testing.PlatformRule
@@ -28,16 +39,6 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
-import java.net.CookieManager
-import java.net.ResponseCache
-import java.text.DateFormat
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import java.util.TimeZone
-import java.util.concurrent.TimeUnit
-import javax.net.ssl.HostnameVerifier
-import javax.net.ssl.SSLSession
 
 class CacheCorruptionTest {
   var fileSystem = FakeFileSystem()
@@ -145,16 +146,22 @@ class CacheCorruptionTest {
   private fun testCorruptingCache(corruptor: () -> Unit): Response {
     server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
-      MockResponse()
-        .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
-        .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
-        .setBody("ABC.1")
+      MockResponse(
+        headers = headersOf(
+          "Last-Modified", formatDate(-1, TimeUnit.HOURS)!!,
+          "Expires", formatDate(1, TimeUnit.HOURS)!!,
+        ),
+        body = "ABC.1",
+      )
     )
     server.enqueue(
-      MockResponse()
-        .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
-        .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
-        .setBody("ABC.2")
+      MockResponse(
+        headers = headersOf(
+          "Last-Modified", formatDate(-1, TimeUnit.HOURS)!!,
+          "Expires", formatDate(1, TimeUnit.HOURS)!!,
+        ),
+        body = "ABC.2",
+      )
     )
     client = client.newBuilder()
       .sslSocketFactory(
@@ -162,7 +169,7 @@ class CacheCorruptionTest {
       )
       .hostnameVerifier(NULL_HOSTNAME_VERIFIER)
       .build()
-    val request: Request = Request(server.url("/"))
+    val request = Request(server.url("/"))
     val response1: Response = client.newCall(request).execute()
     val bodySource = response1.body.source()
     assertThat(bodySource.readUtf8()).isEqualTo("ABC.1")

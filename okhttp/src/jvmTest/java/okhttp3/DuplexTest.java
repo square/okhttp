@@ -43,7 +43,6 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
-
 import static java.util.Arrays.asList;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -91,7 +90,7 @@ public final class DuplexTest {
   @Test public void trueDuplexClientWritesFirst() throws Exception {
     enableProtocol(Protocol.HTTP_2);
     MockDuplexResponseBody mockDuplexResponseBody = enqueueResponseWithBody(
-        new MockResponse()
+        new MockResponse.Builder()
             .clearHeaders(),
         new MockDuplexResponseBody()
             .receiveRequest("request A\n")
@@ -134,7 +133,7 @@ public final class DuplexTest {
   @Test public void trueDuplexServerWritesFirst() throws Exception {
     enableProtocol(Protocol.HTTP_2);
     MockDuplexResponseBody mockDuplexResponseBody = enqueueResponseWithBody(
-        new MockResponse()
+        new MockResponse.Builder()
             .clearHeaders(),
         new MockDuplexResponseBody()
             .sendResponse("response A\n")
@@ -177,11 +176,11 @@ public final class DuplexTest {
   @Test public void clientReadsHeadersDataTrailers() throws Exception {
     enableProtocol(Protocol.HTTP_2);
     MockDuplexResponseBody mockDuplexResponseBody = enqueueResponseWithBody(
-        new MockResponse()
+        new MockResponse.Builder()
             .clearHeaders()
             .addHeader("h1", "v1")
             .addHeader("h2", "v2")
-            .setTrailers(Headers.of("trailers", "boom")),
+            .trailers(Headers.of("trailers", "boom")),
         new MockDuplexResponseBody()
             .sendResponse("ok")
             .exhaustResponse());
@@ -207,7 +206,7 @@ public final class DuplexTest {
 
     enableProtocol(Protocol.HTTP_2);
     MockDuplexResponseBody mockDuplexResponseBody = enqueueResponseWithBody(
-        new MockResponse()
+        new MockResponse.Builder()
             .clearHeaders()
             .addHeader("h1", "v1")
             .addHeader("h2", "v2"),
@@ -236,7 +235,7 @@ public final class DuplexTest {
   @Test public void requestBodyEndsAfterResponseBody() throws Exception {
     enableProtocol(Protocol.HTTP_2);
     MockDuplexResponseBody mockDuplexResponseBody = enqueueResponseWithBody(
-        new MockResponse()
+        new MockResponse.Builder()
             .clearHeaders(),
         new MockDuplexResponseBody()
             .exhaustResponse()
@@ -271,7 +270,7 @@ public final class DuplexTest {
     enableProtocol(Protocol.HTTP_2);
 
     MockDuplexResponseBody mockDuplexResponseBody = enqueueResponseWithBody(
-        new MockResponse()
+        new MockResponse.Builder()
             .clearHeaders()
             .add100Continue(),
         new MockDuplexResponseBody()
@@ -327,16 +326,17 @@ public final class DuplexTest {
         .build();
 
     MockDuplexResponseBody mockDuplexResponseBody = enqueueResponseWithBody(
-        new MockResponse()
+        new MockResponse.Builder()
             .clearHeaders()
-            .setResponseCode(HttpURLConnection.HTTP_MOVED_PERM)
+            .code(HttpURLConnection.HTTP_MOVED_PERM)
             .addHeader("Location: /b"),
         new MockDuplexResponseBody()
             .sendResponse("/a has moved!\n", duplexResponseSent)
             .requestIOException()
             .exhaustResponse());
-    server.enqueue(new MockResponse()
-        .setBody("this is /b"));
+    server.enqueue(new MockResponse.Builder()
+        .body("this is /b")
+        .build());
 
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
@@ -381,15 +381,15 @@ public final class DuplexTest {
         .build();
 
     MockDuplexResponseBody mockResponseBody1 = enqueueResponseWithBody(
-        new MockResponse()
+        new MockResponse.Builder()
             .clearHeaders()
-            .setResponseCode(HttpURLConnection.HTTP_UNAUTHORIZED),
+            .code(HttpURLConnection.HTTP_UNAUTHORIZED),
         new MockDuplexResponseBody()
             .sendResponse("please authenticate!\n")
             .requestIOException()
             .exhaustResponse());
     MockDuplexResponseBody mockResponseBody2 = enqueueResponseWithBody(
-        new MockResponse()
+        new MockResponse.Builder()
             .clearHeaders(),
         new MockDuplexResponseBody()
             .sendResponse("response body\n")
@@ -431,8 +431,9 @@ public final class DuplexTest {
   @Test public void fullCallTimeoutAppliesToSetup() throws Exception {
     enableProtocol(Protocol.HTTP_2);
 
-    server.enqueue(new MockResponse()
-        .setHeadersDelay(500, TimeUnit.MILLISECONDS));
+    server.enqueue(new MockResponse.Builder()
+        .headersDelay(500, TimeUnit.MILLISECONDS)
+        .build());
 
     Request request = new Request.Builder()
         .url(server.url("/"))
@@ -454,7 +455,7 @@ public final class DuplexTest {
     enableProtocol(Protocol.HTTP_2);
 
     MockDuplexResponseBody mockDuplexResponseBody = enqueueResponseWithBody(
-        new MockResponse()
+        new MockResponse.Builder()
             .clearHeaders(),
         new MockDuplexResponseBody()
             .sendResponse("response A\n")
@@ -490,7 +491,7 @@ public final class DuplexTest {
   @Test public void duplexWithRewriteInterceptors() throws Exception {
     enableProtocol(Protocol.HTTP_2);
     MockDuplexResponseBody mockDuplexResponseBody = enqueueResponseWithBody(
-        new MockResponse()
+        new MockResponse.Builder()
             .clearHeaders(),
         new MockDuplexResponseBody()
             .receiveRequest("REQUEST A\n")
@@ -541,7 +542,7 @@ public final class DuplexTest {
 
     enableProtocol(Protocol.HTTP_2);
     MockDuplexResponseBody mockDuplexResponseBody = enqueueResponseWithBody(
-        new MockResponse()
+        new MockResponse.Builder()
             .clearHeaders(),
         new MockDuplexResponseBody()
             .sendResponse("success!")
@@ -588,8 +589,9 @@ public final class DuplexTest {
   @Test public void headersReadTimeoutDoesNotStartUntilLastRequestBodyByteFire() throws Exception {
     enableProtocol(Protocol.HTTP_2);
 
-    server.enqueue(new MockResponse()
-      .setHeadersDelay(1500, TimeUnit.MILLISECONDS));
+    server.enqueue(new MockResponse.Builder()
+        .headersDelay(1500, TimeUnit.MILLISECONDS)
+        .build());
 
     Request request = new Request.Builder()
       .url(server.url("/"))
@@ -613,9 +615,10 @@ public final class DuplexTest {
   @Test public void bodyReadTimeoutDoesNotStartUntilLastRequestBodyByteFire() throws Exception {
     enableProtocol(Protocol.HTTP_2);
 
-    server.enqueue(new MockResponse()
-      .setBodyDelay(1500, TimeUnit.MILLISECONDS)
-      .setBody("this should never be received"));
+    server.enqueue(new MockResponse.Builder()
+      .bodyDelay(1500, TimeUnit.MILLISECONDS)
+      .body("this should never be received")
+      .build());
 
     Request request = new Request.Builder()
       .url(server.url("/"))
@@ -643,8 +646,9 @@ public final class DuplexTest {
   @Test public void headersReadTimeoutDoesNotStartUntilLastRequestBodyByteNoFire() throws Exception {
     enableProtocol(Protocol.HTTP_2);
 
-    server.enqueue(new MockResponse()
-      .setHeadersDelay(500, TimeUnit.MILLISECONDS));
+    server.enqueue(new MockResponse.Builder()
+      .headersDelay(500, TimeUnit.MILLISECONDS)
+      .build());
 
     Request request = new Request.Builder()
       .url(server.url("/"))
@@ -667,9 +671,10 @@ public final class DuplexTest {
   @Test public void bodyReadTimeoutDoesNotStartUntilLastRequestBodyByteNoFire() throws Exception {
     enableProtocol(Protocol.HTTP_2);
 
-    server.enqueue(new MockResponse()
-      .setBodyDelay(500, TimeUnit.MILLISECONDS)
-      .setBody("success"));
+    server.enqueue(new MockResponse.Builder()
+      .bodyDelay(500, TimeUnit.MILLISECONDS)
+      .body("success")
+      .build());
 
     Request request = new Request.Builder()
       .url(server.url("/"))
@@ -686,9 +691,9 @@ public final class DuplexTest {
   }
 
   private MockDuplexResponseBody enqueueResponseWithBody(
-      MockResponse response, MockDuplexResponseBody body) {
-    MwsDuplexAccess.instance.setBody(response, body);
-    server.enqueue(response);
+      MockResponse.Builder builder, MockDuplexResponseBody body) {
+    MwsDuplexAccess.instance.setBody(builder, body);
+    server.enqueue(builder.build());
     return body;
   }
 

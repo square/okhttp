@@ -47,6 +47,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import static okhttp3.TestUtil.assertSuppressed;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 @Tag("Slow")
@@ -86,7 +87,9 @@ public final class InterceptorTest {
   }
 
   @Test public void networkInterceptorsCannotShortCircuitResponses() throws Exception {
-    server.enqueue(new MockResponse().setResponseCode(500));
+    server.enqueue(new MockResponse.Builder()
+        .code(500)
+        .build());
 
     Interceptor interceptor = chain -> new Response.Builder()
         .request(chain.request())
@@ -138,7 +141,9 @@ public final class InterceptorTest {
   }
 
   @Test public void networkInterceptorsCannotChangeServerAddress() throws Exception {
-    server.enqueue(new MockResponse().setResponseCode(500));
+    server.enqueue(new MockResponse.Builder()
+        .code(500)
+        .build());
 
     Interceptor interceptor = chain -> {
       Address address = chain.connection().route().address();
@@ -184,9 +189,10 @@ public final class InterceptorTest {
   }
 
   @Test public void networkInterceptorsObserveNetworkHeaders() throws Exception {
-    server.enqueue(new MockResponse()
-        .setBody(gzip("abcabcabc"))
-        .addHeader("Content-Encoding: gzip"));
+    server.enqueue(new MockResponse.Builder()
+        .body(gzip("abcabcabc"))
+        .addHeader("Content-Encoding: gzip")
+        .build());
 
     Interceptor interceptor = chain -> {
       // The network request has everything: User-Agent, Host, Accept-Encoding.
@@ -278,8 +284,8 @@ public final class InterceptorTest {
 
     RecordedRequest recordedRequest = server.takeRequest();
     assertThat(recordedRequest.getBody().readUtf8()).isEqualTo("ABC");
-    assertThat(recordedRequest.getHeader("Original-Header")).isEqualTo("foo");
-    assertThat(recordedRequest.getHeader("OkHttp-Intercepted")).isEqualTo("yep");
+    assertThat(recordedRequest.getHeaders().get("Original-Header")).isEqualTo("foo");
+    assertThat(recordedRequest.getHeaders().get("OkHttp-Intercepted")).isEqualTo("yep");
     assertThat(recordedRequest.getMethod()).isEqualTo("POST");
   }
 
@@ -292,9 +298,10 @@ public final class InterceptorTest {
   }
 
   private void rewriteResponseFromServer(boolean network) throws Exception {
-    server.enqueue(new MockResponse()
+    server.enqueue(new MockResponse.Builder()
         .addHeader("Original-Header: foo")
-        .setBody("abc"));
+        .body("abc")
+        .build());
 
     addInterceptor(network, chain -> {
       Response originalResponse = chain.proceed(chain.request());
@@ -385,8 +392,8 @@ public final class InterceptorTest {
   }
 
   @Test public void applicationInterceptorsCanMakeMultipleRequestsToServer() throws Exception {
-    server.enqueue(new MockResponse().setBody("a"));
-    server.enqueue(new MockResponse().setBody("b"));
+    server.enqueue(new MockResponse.Builder().body("a").build());
+    server.enqueue(new MockResponse.Builder().body("b").build());
 
     client = client.newBuilder()
         .addInterceptor(chain -> {
@@ -406,8 +413,8 @@ public final class InterceptorTest {
 
   /** Make sure interceptors can interact with the OkHttp client. */
   @Test public void interceptorMakesAnUnrelatedRequest() throws Exception {
-    server.enqueue(new MockResponse().setBody("a")); // Fetched by interceptor.
-    server.enqueue(new MockResponse().setBody("b")); // Fetched directly.
+    server.enqueue(new MockResponse.Builder().body("a").build()); // Fetched by interceptor.
+    server.enqueue(new MockResponse.Builder().body("b").build()); // Fetched directly.
 
     client = client.newBuilder()
         .addInterceptor(chain -> {
@@ -432,8 +439,8 @@ public final class InterceptorTest {
 
   /** Make sure interceptors can interact with the OkHttp client asynchronously. */
   @Test public void interceptorMakesAnUnrelatedAsyncRequest() throws Exception {
-    server.enqueue(new MockResponse().setBody("a")); // Fetched by interceptor.
-    server.enqueue(new MockResponse().setBody("b")); // Fetched directly.
+    server.enqueue(new MockResponse.Builder().body("a").build()); // Fetched by interceptor.
+    server.enqueue(new MockResponse.Builder().body("b").build()); // Fetched directly.
 
     client = client.newBuilder()
         .addInterceptor(chain -> {
@@ -612,9 +619,10 @@ public final class InterceptorTest {
   }
 
   @Test public void networkInterceptorReturnsConnectionOnEmptyBody() throws Exception {
-    server.enqueue(new MockResponse()
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
-        .addHeader("Connection", "Close"));
+    server.enqueue(new MockResponse.Builder()
+        .socketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        .addHeader("Connection", "Close")
+        .build());
 
     Interceptor interceptor = chain -> {
       Response response = chain.proceed(chain.request());
@@ -649,11 +657,6 @@ public final class InterceptorTest {
       return chain.proceed(chain.request());
     };
 
-    InetAddress localhost = InetAddress.getLoopbackAddress();
-    ServerSocket serverSocket = new ServerSocket(0, 1, localhost);
-    // Fill backlog queue with this request so subsequent requests will be blocked.
-    new Socket().connect(serverSocket.getLocalSocketAddress());
-
     client = client.newBuilder()
         .connectTimeout(Duration.ofSeconds(5))
         .addInterceptor(interceptor1)
@@ -662,21 +665,20 @@ public final class InterceptorTest {
 
     Request request1 =
         new Request.Builder()
-            .url(
-                "http://"
-                    + serverSocket.getInetAddress().getCanonicalHostName()
-                    + ":"
-                    + serverSocket.getLocalPort())
+            .url("http://" + TestUtil.UNREACHABLE_ADDRESS_IPV4)
             .build();
     Call call = client.newCall(request1);
 
+    long startNanos = System.nanoTime();
     try {
       call.execute();
       fail();
     } catch (SocketTimeoutException expected) {
     }
+    long elapsedNanos = System.nanoTime() - startNanos;
 
-    serverSocket.close();
+    assertTrue(elapsedNanos < TimeUnit.SECONDS.toNanos(5),
+      "Timeout should have taken ~100ms but was " + (elapsedNanos / 1e6) + " ms");
   }
 
   @Test public void chainWithReadTimeout() throws Exception {
@@ -700,9 +702,10 @@ public final class InterceptorTest {
         .addInterceptor(interceptor2)
         .build();
 
-    server.enqueue(new MockResponse()
-        .setBody("abc")
-        .throttleBody(1, 1, TimeUnit.SECONDS));
+    server.enqueue(new MockResponse.Builder()
+        .body("abc")
+        .throttleBody(1, 1, TimeUnit.SECONDS)
+        .build());
 
     Request request1 = new Request.Builder()
         .url(server.url("/"))
@@ -780,9 +783,10 @@ public final class InterceptorTest {
         .addInterceptor(interceptor2)
         .build();
 
-    server.enqueue(new MockResponse()
-        .setBody("abc")
-        .throttleBody(1, 1, TimeUnit.SECONDS));
+    server.enqueue(new MockResponse.Builder()
+        .body("abc")
+        .throttleBody(1, 1, TimeUnit.SECONDS)
+        .build());
 
     byte[] data = new byte[2 * 1024 * 1024]; // 2 MiB.
     Request request1 = new Request.Builder()

@@ -125,7 +125,8 @@ open class CallTest {
     fileSystem = LoggingFilesystem(fileSystem)
   )
 
-  @BeforeEach fun setUp(
+  @BeforeEach
+  fun setUp(
     server: MockWebServer,
     @MockWebServerInstance("server2") server2: MockWebServer
   ) {
@@ -136,19 +137,21 @@ open class CallTest {
     platform.assumeNotBouncyCastle()
   }
 
-  @AfterEach fun tearDown() {
+  @AfterEach
+  fun tearDown() {
     cache.close()
     fileSystem.checkNoOpenFiles()
   }
 
-  @Test fun get() {
+  @Test
+  fun get() {
     server.enqueue(
-      MockResponse()
-        .setBody("abc")
+      MockResponse.Builder()
+        .body("abc")
         .clearHeaders()
         .addHeader("content-type: text/plain")
         .addHeader("content-length", "3")
-    )
+        .build())
     val sentAt = System.currentTimeMillis()
     val recordedResponse = executeSynchronously("/", "User-Agent", "SyncApiTest")
     val receivedAt = System.currentTimeMillis()
@@ -165,17 +168,19 @@ open class CallTest {
       .assertReceivedResponseAtMillis(sentAt, receivedAt)
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.method).isEqualTo("GET")
-    assertThat(recordedRequest.getHeader("User-Agent")).isEqualTo("SyncApiTest")
+    assertThat(recordedRequest.headers["User-Agent"]).isEqualTo("SyncApiTest")
     assertThat(recordedRequest.body.size).isEqualTo(0)
-    assertThat(recordedRequest.getHeader("Content-Length")).isNull()
+    assertThat(recordedRequest.headers["Content-Length"]).isNull()
   }
 
-  @Test fun buildRequestUsingHttpUrl() {
+  @Test
+  fun buildRequestUsingHttpUrl() {
     server.enqueue(MockResponse())
     executeSynchronously("/").assertSuccessful()
   }
 
-  @Test fun invalidScheme() {
+  @Test
+  fun invalidScheme() {
     val requestBuilder = Request.Builder()
     try {
       requestBuilder.url("ftp://hostname/path")
@@ -185,7 +190,8 @@ open class CallTest {
     }
   }
 
-  @Test fun invalidPort() {
+  @Test
+  fun invalidPort() {
     val requestBuilder = Request.Builder()
     try {
       requestBuilder.url("http://localhost:65536/")
@@ -195,28 +201,35 @@ open class CallTest {
     }
   }
 
-  @Test fun getReturns500() {
-    server.enqueue(MockResponse().setResponseCode(500))
+  @Test
+  fun getReturns500() {
+    server.enqueue(MockResponse(code = 500))
     executeSynchronously("/")
       .assertCode(500)
       .assertNotSuccessful()
   }
 
-  @Test fun get_HTTP_2() {
+  @Test
+  fun get_HTTP_2() {
     enableProtocol(Protocol.HTTP_2)
     get()
   }
 
-  @Test fun get_HTTPS() {
+  @Test
+  fun get_HTTPS() {
     enableTls()
     get()
   }
 
-  @Test fun repeatedHeaderNames() {
+  @Test
+  fun repeatedHeaderNames() {
     server.enqueue(
-      MockResponse()
-        .addHeader("B", "123")
-        .addHeader("B", "234")
+      MockResponse(
+        headers = headersOf(
+          "B", "123",
+          "B", "234",
+        )
+      )
     )
     executeSynchronously("/", "A", "345", "A", "456")
       .assertCode(200)
@@ -225,12 +238,14 @@ open class CallTest {
     assertThat(recordedRequest.headers.values("A")).containsExactly("345", "456")
   }
 
-  @Test fun repeatedHeaderNames_HTTP_2() {
+  @Test
+  fun repeatedHeaderNames_HTTP_2() {
     enableProtocol(Protocol.HTTP_2)
     repeatedHeaderNames()
   }
 
-  @Test fun getWithRequestBody() {
+  @Test
+  fun getWithRequestBody() {
     server.enqueue(MockResponse())
     try {
       Request.Builder().method("GET", "abc".toRequestBody("text/plain".toMediaType()))
@@ -239,8 +254,13 @@ open class CallTest {
     }
   }
 
-  @Test fun head() {
-    server.enqueue(MockResponse().addHeader("Content-Type: text/plain"))
+  @Test
+  fun head() {
+    server.enqueue(
+      MockResponse(
+        headers = headersOf("Content-Type", "text/plain")
+      )
+    )
     val request = Request.Builder()
       .url(server.url("/"))
       .head()
@@ -251,20 +271,20 @@ open class CallTest {
       .assertHeader("Content-Type", "text/plain")
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.method).isEqualTo("HEAD")
-    assertThat(recordedRequest.getHeader("User-Agent")).isEqualTo("SyncApiTest")
+    assertThat(recordedRequest.headers["User-Agent"]).isEqualTo("SyncApiTest")
     assertThat(recordedRequest.body.size).isEqualTo(0)
-    assertThat(recordedRequest.getHeader("Content-Length")).isNull()
+    assertThat(recordedRequest.headers["Content-Length"]).isNull()
   }
 
-  @Test fun headResponseContentLengthIsIgnored() {
+  @Test
+  fun headResponseContentLengthIsIgnored() {
     server.enqueue(
-      MockResponse()
+      MockResponse.Builder()
         .clearHeaders()
         .addHeader("Content-Length", "100")
-    )
+        .build())
     server.enqueue(
-      MockResponse()
-        .setBody("abc")
+      MockResponse(body = "abc")
     )
     val headRequest = Request.Builder()
       .url(server.url("/"))
@@ -281,16 +301,14 @@ open class CallTest {
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
   }
 
-  @Test fun headResponseContentEncodingIsIgnored() {
+  @Test
+  fun headResponseContentEncodingIsIgnored() {
     server.enqueue(
-      MockResponse()
+      MockResponse.Builder()
         .clearHeaders()
         .addHeader("Content-Encoding", "chunked")
-    )
-    server.enqueue(
-      MockResponse()
-        .setBody("abc")
-    )
+        .build())
+    server.enqueue(MockResponse(body = "abc"))
     val headRequest = Request.Builder()
       .url(server.url("/"))
       .head()
@@ -307,18 +325,21 @@ open class CallTest {
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
   }
 
-  @Test fun head_HTTPS() {
+  @Test
+  fun head_HTTPS() {
     enableTls()
     head()
   }
 
-  @Test fun head_HTTP_2() {
+  @Test
+  fun head_HTTP_2() {
     enableProtocol(Protocol.HTTP_2)
     head()
   }
 
-  @Test fun post() {
-    server.enqueue(MockResponse().setBody("abc"))
+  @Test
+  fun post() {
+    server.enqueue(MockResponse(body = "abc"))
     val request = Request(
       url = server.url("/"),
       body = "def".toRequestBody("text/plain".toMediaType()),
@@ -329,22 +350,25 @@ open class CallTest {
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.method).isEqualTo("POST")
     assertThat(recordedRequest.body.readUtf8()).isEqualTo("def")
-    assertThat(recordedRequest.getHeader("Content-Length")).isEqualTo("3")
-    assertThat(recordedRequest.getHeader("Content-Type")).isEqualTo("text/plain; charset=utf-8")
+    assertThat(recordedRequest.headers["Content-Length"]).isEqualTo("3")
+    assertThat(recordedRequest.headers["Content-Type"]).isEqualTo("text/plain; charset=utf-8")
   }
 
-  @Test fun post_HTTPS() {
+  @Test
+  fun post_HTTPS() {
     enableTls()
     post()
   }
 
-  @Test fun post_HTTP_2() {
+  @Test
+  fun post_HTTP_2() {
     enableProtocol(Protocol.HTTP_2)
     post()
   }
 
-  @Test fun postZeroLength() {
-    server.enqueue(MockResponse().setBody("abc"))
+  @Test
+  fun postZeroLength() {
+    server.enqueue(MockResponse(body = "abc"))
     val request = Request.Builder()
       .url(server.url("/"))
       .method("POST", ByteArray(0).toRequestBody(null))
@@ -355,51 +379,59 @@ open class CallTest {
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.method).isEqualTo("POST")
     assertThat(recordedRequest.body.size).isEqualTo(0)
-    assertThat(recordedRequest.getHeader("Content-Length")).isEqualTo("0")
-    assertThat(recordedRequest.getHeader("Content-Type")).isNull()
+    assertThat(recordedRequest.headers["Content-Length"]).isEqualTo("0")
+    assertThat(recordedRequest.headers["Content-Type"]).isNull()
   }
 
-  @Test fun postZerolength_HTTPS() {
+  @Test
+  fun postZerolength_HTTPS() {
     enableTls()
     postZeroLength()
   }
 
-  @Test fun postZerolength_HTTP_2() {
+  @Test
+  fun postZerolength_HTTP_2() {
     enableProtocol(Protocol.HTTP_2)
     postZeroLength()
   }
 
-  @Test fun postBodyRetransmittedAfterAuthorizationFail() {
+  @Test
+  fun postBodyRetransmittedAfterAuthorizationFail() {
     postBodyRetransmittedAfterAuthorizationFail("abc")
   }
 
-  @Test fun postBodyRetransmittedAfterAuthorizationFail_HTTPS() {
+  @Test
+  fun postBodyRetransmittedAfterAuthorizationFail_HTTPS() {
     enableTls()
     postBodyRetransmittedAfterAuthorizationFail("abc")
   }
 
-  @Test fun postBodyRetransmittedAfterAuthorizationFail_HTTP_2() {
+  @Test
+  fun postBodyRetransmittedAfterAuthorizationFail_HTTP_2() {
     enableProtocol(Protocol.HTTP_2)
     postBodyRetransmittedAfterAuthorizationFail("abc")
   }
 
   /** Don't explode when resending an empty post. https://github.com/square/okhttp/issues/1131  */
-  @Test fun postEmptyBodyRetransmittedAfterAuthorizationFail() {
+  @Test
+  fun postEmptyBodyRetransmittedAfterAuthorizationFail() {
     postBodyRetransmittedAfterAuthorizationFail("")
   }
 
-  @Test fun postEmptyBodyRetransmittedAfterAuthorizationFail_HTTPS() {
+  @Test
+  fun postEmptyBodyRetransmittedAfterAuthorizationFail_HTTPS() {
     enableTls()
     postBodyRetransmittedAfterAuthorizationFail("")
   }
 
-  @Test fun postEmptyBodyRetransmittedAfterAuthorizationFail_HTTP_2() {
+  @Test
+  fun postEmptyBodyRetransmittedAfterAuthorizationFail_HTTP_2() {
     enableProtocol(Protocol.HTTP_2)
     postBodyRetransmittedAfterAuthorizationFail("")
   }
 
   private fun postBodyRetransmittedAfterAuthorizationFail(body: String) {
-    server.enqueue(MockResponse().setResponseCode(401))
+    server.enqueue(MockResponse(code = 401))
     server.enqueue(MockResponse())
     val request = Request.Builder()
       .url(server.url("/"))
@@ -415,18 +447,19 @@ open class CallTest {
     val recordedRequest1 = server.takeRequest()
     assertThat(recordedRequest1.method).isEqualTo("POST")
     assertThat(recordedRequest1.body.readUtf8()).isEqualTo(body)
-    assertThat(recordedRequest1.getHeader("Authorization")).isNull()
+    assertThat(recordedRequest1.headers["Authorization"]).isNull()
     val recordedRequest2 = server.takeRequest()
     assertThat(recordedRequest2.method).isEqualTo("POST")
     assertThat(recordedRequest2.body.readUtf8()).isEqualTo(body)
-    assertThat(recordedRequest2.getHeader("Authorization")).isEqualTo(credential)
+    assertThat(recordedRequest2.headers["Authorization"]).isEqualTo(credential)
   }
 
-  @Test fun attemptAuthorization20Times() {
+  @Test
+  fun attemptAuthorization20Times() {
     for (i in 0..19) {
-      server.enqueue(MockResponse().setResponseCode(401))
+      server.enqueue(MockResponse(code = 401))
     }
-    server.enqueue(MockResponse().setBody("Success!"))
+    server.enqueue(MockResponse(body = "Success!"))
     val credential = basic("jesse", "secret")
     client = client.newBuilder()
       .authenticator(RecordingOkAuthenticator(credential, null))
@@ -436,9 +469,10 @@ open class CallTest {
       .assertBody("Success!")
   }
 
-  @Test fun doesNotAttemptAuthorization21Times() {
+  @Test
+  fun doesNotAttemptAuthorization21Times() {
     for (i in 0..20) {
-      server.enqueue(MockResponse().setResponseCode(401))
+      server.enqueue(MockResponse(code = 401))
     }
     val credential = basic("jesse", "secret")
     client = client.newBuilder()
@@ -456,12 +490,14 @@ open class CallTest {
    * We had a bug where we were passing a null route to the authenticator.
    * https://github.com/square/okhttp/issues/3809
    */
-  @Test fun authenticateWithNoConnection() {
+  @Test
+  fun authenticateWithNoConnection() {
     server.enqueue(
-      MockResponse()
-        .addHeader("Connection: close")
-        .setResponseCode(401)
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
+      MockResponse(
+        code = 401,
+        headers = headersOf("Connection", "close"),
+        socketPolicy = SocketPolicy.DISCONNECT_AT_END
+      )
     )
     val authenticator = RecordingOkAuthenticator(null, null)
     client = client.newBuilder()
@@ -472,8 +508,9 @@ open class CallTest {
     assertThat(authenticator.onlyRoute()).isNotNull
   }
 
-  @Test fun delete() {
-    server.enqueue(MockResponse().setBody("abc"))
+  @Test
+  fun delete() {
+    server.enqueue(MockResponse(body = "abc"))
     val request = Request.Builder()
       .url(server.url("/"))
       .delete()
@@ -484,22 +521,25 @@ open class CallTest {
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.method).isEqualTo("DELETE")
     assertThat(recordedRequest.body.size).isEqualTo(0)
-    assertThat(recordedRequest.getHeader("Content-Length")).isEqualTo("0")
-    assertThat(recordedRequest.getHeader("Content-Type")).isNull()
+    assertThat(recordedRequest.headers["Content-Length"]).isEqualTo("0")
+    assertThat(recordedRequest.headers["Content-Type"]).isNull()
   }
 
-  @Test fun delete_HTTPS() {
+  @Test
+  fun delete_HTTPS() {
     enableTls()
     delete()
   }
 
-  @Test fun delete_HTTP_2() {
+  @Test
+  fun delete_HTTP_2() {
     enableProtocol(Protocol.HTTP_2)
     delete()
   }
 
-  @Test fun deleteWithRequestBody() {
-    server.enqueue(MockResponse().setBody("abc"))
+  @Test
+  fun deleteWithRequestBody() {
+    server.enqueue(MockResponse(body = "abc"))
     val request = Request.Builder()
       .url(server.url("/"))
       .method("DELETE", "def".toRequestBody("text/plain".toMediaType()))
@@ -512,8 +552,9 @@ open class CallTest {
     assertThat(recordedRequest.body.readUtf8()).isEqualTo("def")
   }
 
-  @Test fun put() {
-    server.enqueue(MockResponse().setBody("abc"))
+  @Test
+  fun put() {
+    server.enqueue(MockResponse(body = "abc"))
     val request = Request.Builder()
       .url(server.url("/"))
       .put("def".toRequestBody("text/plain".toMediaType()))
@@ -524,24 +565,27 @@ open class CallTest {
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.method).isEqualTo("PUT")
     assertThat(recordedRequest.body.readUtf8()).isEqualTo("def")
-    assertThat(recordedRequest.getHeader("Content-Length")).isEqualTo("3")
-    assertThat(recordedRequest.getHeader("Content-Type")).isEqualTo(
+    assertThat(recordedRequest.headers["Content-Length"]).isEqualTo("3")
+    assertThat(recordedRequest.headers["Content-Type"]).isEqualTo(
       "text/plain; charset=utf-8"
     )
   }
 
-  @Test fun put_HTTPS() {
+  @Test
+  fun put_HTTPS() {
     enableTls()
     put()
   }
 
-  @Test fun put_HTTP_2() {
+  @Test
+  fun put_HTTP_2() {
     enableProtocol(Protocol.HTTP_2)
     put()
   }
 
-  @Test fun patch() {
-    server.enqueue(MockResponse().setBody("abc"))
+  @Test
+  fun patch() {
+    server.enqueue(MockResponse(body = "abc"))
     val request = Request.Builder()
       .url(server.url("/"))
       .patch("def".toRequestBody("text/plain".toMediaType()))
@@ -552,22 +596,25 @@ open class CallTest {
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.method).isEqualTo("PATCH")
     assertThat(recordedRequest.body.readUtf8()).isEqualTo("def")
-    assertThat(recordedRequest.getHeader("Content-Length")).isEqualTo("3")
-    assertThat(recordedRequest.getHeader("Content-Type")).isEqualTo("text/plain; charset=utf-8")
+    assertThat(recordedRequest.headers["Content-Length"]).isEqualTo("3")
+    assertThat(recordedRequest.headers["Content-Type"]).isEqualTo("text/plain; charset=utf-8")
   }
 
-  @Test fun patch_HTTP_2() {
+  @Test
+  fun patch_HTTP_2() {
     enableProtocol(Protocol.HTTP_2)
     patch()
   }
 
-  @Test fun patch_HTTPS() {
+  @Test
+  fun patch_HTTPS() {
     enableTls()
     patch()
   }
 
-  @Test fun customMethodWithBody() {
-    server.enqueue(MockResponse().setBody("abc"))
+  @Test
+  fun customMethodWithBody() {
+    server.enqueue(MockResponse(body = "abc"))
     val request = Request.Builder()
       .url(server.url("/"))
       .method("CUSTOM", "def".toRequestBody("text/plain".toMediaType()))
@@ -578,12 +625,13 @@ open class CallTest {
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.method).isEqualTo("CUSTOM")
     assertThat(recordedRequest.body.readUtf8()).isEqualTo("def")
-    assertThat(recordedRequest.getHeader("Content-Length")).isEqualTo("3")
-    assertThat(recordedRequest.getHeader("Content-Type"))
+    assertThat(recordedRequest.headers["Content-Length"]).isEqualTo("3")
+    assertThat(recordedRequest.headers["Content-Type"])
       .isEqualTo("text/plain; charset=utf-8")
   }
 
-  @Test fun unspecifiedRequestBodyContentTypeDoesNotGetDefault() {
+  @Test
+  fun unspecifiedRequestBodyContentTypeDoesNotGetDefault() {
     server.enqueue(MockResponse())
     val request = Request.Builder()
       .url(server.url("/"))
@@ -591,16 +639,18 @@ open class CallTest {
       .build()
     executeSynchronously(request).assertCode(200)
     val recordedRequest = server.takeRequest()
-    assertThat(recordedRequest.getHeader("Content-Type")).isNull()
-    assertThat(recordedRequest.getHeader("Content-Length")).isEqualTo("3")
+    assertThat(recordedRequest.headers["Content-Type"]).isNull()
+    assertThat(recordedRequest.headers["Content-Length"]).isEqualTo("3")
     assertThat(recordedRequest.body.readUtf8()).isEqualTo("abc")
   }
 
-  @Test fun illegalToExecuteTwice() {
+  @Test
+  fun illegalToExecuteTwice() {
     server.enqueue(
-      MockResponse()
-        .setBody("abc")
-        .addHeader("Content-Type: text/plain")
+      MockResponse(
+        headers = headersOf("Content-Type", "text/plain"),
+        body = "abc",
+      )
     )
     val request = Request.Builder()
       .url(server.url("/"))
@@ -621,14 +671,16 @@ open class CallTest {
     } catch (e: IllegalStateException) {
       assertThat(e.message).isEqualTo("Already Executed")
     }
-    assertThat(server.takeRequest().getHeader("User-Agent")).isEqualTo("SyncApiTest")
+    assertThat(server.takeRequest().headers["User-Agent"]).isEqualTo("SyncApiTest")
   }
 
-  @Test fun illegalToExecuteTwice_Async() {
+  @Test
+  fun illegalToExecuteTwice_Async() {
     server.enqueue(
-      MockResponse()
-        .setBody("abc")
-        .addHeader("Content-Type: text/plain")
+      MockResponse(
+        headers = headersOf("Content-Type", "text/plain"),
+        body = "abc",
+      )
     )
     val request = Request.Builder()
       .url(server.url("/"))
@@ -648,13 +700,14 @@ open class CallTest {
     } catch (e: IllegalStateException) {
       assertThat(e.message).isEqualTo("Already Executed")
     }
-    assertThat(server.takeRequest().getHeader("User-Agent")).isEqualTo("SyncApiTest")
+    assertThat(server.takeRequest().headers["User-Agent"]).isEqualTo("SyncApiTest")
     callback.await(request.url).assertSuccessful()
   }
 
-  @Test fun legalToExecuteTwiceCloning() {
-    server.enqueue(MockResponse().setBody("abc"))
-    server.enqueue(MockResponse().setBody("def"))
+  @Test
+  fun legalToExecuteTwiceCloning() {
+    server.enqueue(MockResponse(body = "abc"))
+    server.enqueue(MockResponse(body = "def"))
     val request = Request(server.url("/"))
     val call = client.newCall(request)
     val response1 = call.execute()
@@ -664,9 +717,10 @@ open class CallTest {
     assertThat("def").isEqualTo(response2.body.string())
   }
 
-  @Test fun legalToExecuteTwiceCloning_Async() {
-    server.enqueue(MockResponse().setBody("abc"))
-    server.enqueue(MockResponse().setBody("def"))
+  @Test
+  fun legalToExecuteTwiceCloning_Async() {
+    server.enqueue(MockResponse(body = "abc"))
+    server.enqueue(MockResponse(body = "def"))
     val request = Request(server.url("/"))
     val call = client.newCall(request)
     call.enqueue(callback)
@@ -681,11 +735,13 @@ open class CallTest {
     assertThat(bodies).contains("def")
   }
 
-  @Test fun get_Async() {
+  @Test
+  fun get_Async() {
     server.enqueue(
-      MockResponse()
-        .setBody("abc")
-        .addHeader("Content-Type: text/plain")
+      MockResponse(
+        headers = headersOf("Content-Type", "text/plain"),
+        body = "abc",
+      )
     )
     val request = Request.Builder()
       .url(server.url("/"))
@@ -696,10 +752,11 @@ open class CallTest {
       .assertCode(200)
       .assertHeader("Content-Type", "text/plain")
       .assertBody("abc")
-    assertThat(server.takeRequest().getHeader("User-Agent")).isEqualTo("AsyncApiTest")
+    assertThat(server.takeRequest().headers["User-Agent"]).isEqualTo("AsyncApiTest")
   }
 
-  @Test fun exceptionThrownByOnResponseIsRedactedAndLogged() {
+  @Test
+  fun exceptionThrownByOnResponseIsRedactedAndLogged() {
     server.enqueue(MockResponse())
     val request = Request(server.url("/secret"))
     client.newCall(request).enqueue(object : Callback {
@@ -715,10 +772,11 @@ open class CallTest {
       .isEqualTo("INFO: Callback failure for call to " + server.url("/") + "...")
   }
 
-  @Test fun connectionPooling() {
-    server.enqueue(MockResponse().setBody("abc"))
-    server.enqueue(MockResponse().setBody("def"))
-    server.enqueue(MockResponse().setBody("ghi"))
+  @Test
+  fun connectionPooling() {
+    server.enqueue(MockResponse(body = "abc"))
+    server.enqueue(MockResponse(body = "def"))
+    server.enqueue(MockResponse(body = "ghi"))
     executeSynchronously("/a").assertBody("abc")
     executeSynchronously("/b").assertBody("def")
     executeSynchronously("/c").assertBody("ghi")
@@ -733,10 +791,11 @@ open class CallTest {
    *
    * https://github.com/square/okhttp/issues/5519
    */
-  @Test fun connectionPoolingWithFreshClientSamePool() {
-    server.enqueue(MockResponse().setBody("abc"))
-    server.enqueue(MockResponse().setBody("def"))
-    server.enqueue(MockResponse().setBody("ghi"))
+  @Test
+  fun connectionPoolingWithFreshClientSamePool() {
+    server.enqueue(MockResponse(body = "abc"))
+    server.enqueue(MockResponse(body = "def"))
+    server.enqueue(MockResponse(body = "ghi"))
     client = OkHttpClient.Builder()
       .connectionPool(client.connectionPool)
       .proxy(server.toProxyAddress())
@@ -757,13 +816,14 @@ open class CallTest {
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(2)
   }
 
-  @Test fun connectionPoolingWithClientBuiltOffProxy() {
+  @Test
+  fun connectionPoolingWithClientBuiltOffProxy() {
     client = OkHttpClient.Builder()
       .proxy(server.toProxyAddress())
       .build()
-    server.enqueue(MockResponse().setBody("abc"))
-    server.enqueue(MockResponse().setBody("def"))
-    server.enqueue(MockResponse().setBody("ghi"))
+    server.enqueue(MockResponse(body = "abc"))
+    server.enqueue(MockResponse(body = "def"))
+    server.enqueue(MockResponse(body = "ghi"))
     client = client.newBuilder().build()
     executeSynchronously("/a").assertBody("abc")
     client = client.newBuilder().build()
@@ -775,10 +835,11 @@ open class CallTest {
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(2)
   }
 
-  @Test fun connectionPooling_Async() {
-    server.enqueue(MockResponse().setBody("abc"))
-    server.enqueue(MockResponse().setBody("def"))
-    server.enqueue(MockResponse().setBody("ghi"))
+  @Test
+  fun connectionPooling_Async() {
+    server.enqueue(MockResponse(body = "abc"))
+    server.enqueue(MockResponse(body = "def"))
+    server.enqueue(MockResponse(body = "ghi"))
     client.newCall(Request.Builder().url(server.url("/a")).build()).enqueue(callback)
     callback.await(server.url("/a")).assertBody("abc")
     client.newCall(Request.Builder().url(server.url("/b")).build()).enqueue(callback)
@@ -790,9 +851,10 @@ open class CallTest {
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(2)
   }
 
-  @Test fun connectionReuseWhenResponseBodyConsumed_Async() {
-    server.enqueue(MockResponse().setBody("abc"))
-    server.enqueue(MockResponse().setBody("def"))
+  @Test
+  fun connectionReuseWhenResponseBodyConsumed_Async() {
+    server.enqueue(MockResponse(body = "abc"))
+    server.enqueue(MockResponse(body = "def"))
     val request = Request.Builder().url(server.url("/a")).build()
     client.newCall(request).enqueue(object : Callback {
       override fun onFailure(call: Call, e: IOException) {
@@ -816,9 +878,13 @@ open class CallTest {
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
   }
 
-  @Test fun timeoutsUpdatedOnReusedConnections() {
-    server.enqueue(MockResponse().setBody("abc"))
-    server.enqueue(MockResponse().setBody("def").throttleBody(1, 750, TimeUnit.MILLISECONDS))
+  @Test
+  fun timeoutsUpdatedOnReusedConnections() {
+    server.enqueue(MockResponse(body = "abc"))
+    server.enqueue(MockResponse.Builder()
+      .body("def")
+      .throttleBody(1, 750, TimeUnit.MILLISECONDS)
+      .build())
 
     // First request: time out after 1s.
     client = client.newBuilder()
@@ -851,16 +917,11 @@ open class CallTest {
   }
 
   /** https://github.com/square/okhttp/issues/442  */
-  @Test fun tlsTimeoutsNotRetried() {
+  @Test
+  fun tlsTimeoutsNotRetried() {
     enableTls()
-    server.enqueue(
-      MockResponse()
-        .setSocketPolicy(SocketPolicy.NO_RESPONSE)
-    )
-    server.enqueue(
-      MockResponse()
-        .setBody("unreachable!")
-    )
+    server.enqueue(MockResponse(socketPolicy = SocketPolicy.NO_RESPONSE))
+    server.enqueue(MockResponse(body = "unreachable!"))
     client = client.newBuilder()
       .readTimeout(Duration.ofMillis(100))
       .build()
@@ -877,14 +938,12 @@ open class CallTest {
    * Make a request with two routes. The first route will time out because it's connecting to a
    * special address that never connects. The automatic retry will succeed.
    */
-  @Test fun connectTimeoutsAttemptsAlternateRoute() {
+  @Test
+  fun connectTimeoutsAttemptsAlternateRoute() {
     val proxySelector = RecordingProxySelector()
     proxySelector.proxies.add(Proxy(Proxy.Type.HTTP, TestUtil.UNREACHABLE_ADDRESS_IPV4))
     proxySelector.proxies.add(server.toProxyAddress())
-    server.enqueue(
-      MockResponse()
-        .setBody("success!")
-    )
+    server.enqueue(MockResponse(body = "success!"))
     client = client.newBuilder()
       .proxySelector(proxySelector)
       .readTimeout(Duration.ofMillis(100))
@@ -897,11 +956,9 @@ open class CallTest {
   }
 
   /** https://github.com/square/okhttp/issues/4875  */
-  @Test fun interceptorRecoversWhenRoutesExhausted() {
-    server.enqueue(
-      MockResponse()
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_START)
-    )
+  @Test
+  fun interceptorRecoversWhenRoutesExhausted() {
+    server.enqueue(MockResponse(socketPolicy = SocketPolicy.DISCONNECT_AT_START))
     server.enqueue(MockResponse())
     client = client.newBuilder()
       .addInterceptor(Interceptor { chain: Interceptor.Chain ->
@@ -919,10 +976,10 @@ open class CallTest {
   }
 
   /** https://github.com/square/okhttp/issues/4761  */
-  @Test fun interceptorCallsProceedWithoutClosingPriorResponse() {
+  @Test
+  fun interceptorCallsProceedWithoutClosingPriorResponse() {
     server.enqueue(
-      MockResponse()
-        .setBody("abc")
+      MockResponse(body = "abc")
     )
     client = clientTestRule.newClientBuilder()
       .addInterceptor(Interceptor { chain: Interceptor.Chain ->
@@ -946,14 +1003,11 @@ open class CallTest {
    * Make a request with two routes. The first route will fail because the null server connects but
    * never responds. The manual retry will succeed.
    */
-  @Test fun readTimeoutFails() {
-    server.enqueue(
-      MockResponse()
-        .setSocketPolicy(SocketPolicy.STALL_SOCKET_AT_START)
-    )
+  @Test
+  fun readTimeoutFails() {
+    server.enqueue(MockResponse(socketPolicy = SocketPolicy.STALL_SOCKET_AT_START))
     server2.enqueue(
-      MockResponse()
-        .setBody("success!")
+      MockResponse(body = "success!")
     )
     val proxySelector = RecordingProxySelector()
     proxySelector.proxies.add(server.toProxyAddress())
@@ -971,7 +1025,8 @@ open class CallTest {
   }
 
   /** https://github.com/square/okhttp/issues/1801  */
-  @Test fun asyncCallEngineInitialized() {
+  @Test
+  fun asyncCallEngineInitialized() {
     val c = client.newBuilder()
       .addInterceptor(Interceptor { throw IOException() })
       .build()
@@ -981,7 +1036,8 @@ open class CallTest {
     assertThat(response.request).isEqualTo(request)
   }
 
-  @Test fun reusedSinksGetIndependentTimeoutInstances() {
+  @Test
+  fun reusedSinksGetIndependentTimeoutInstances() {
     server.enqueue(MockResponse())
     server.enqueue(MockResponse())
 
@@ -1022,9 +1078,10 @@ open class CallTest {
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
   }
 
-  @Test fun reusedSourcesGetIndependentTimeoutInstances() {
-    server.enqueue(MockResponse().setBody("abc"))
-    server.enqueue(MockResponse().setBody("def"))
+  @Test
+  fun reusedSourcesGetIndependentTimeoutInstances() {
+    server.enqueue(MockResponse(body = "abc"))
+    server.enqueue(MockResponse(body = "def"))
 
     // Call 1: set a deadline on the response body.
     val request1 = Request.Builder().url(server.url("/")).build()
@@ -1045,29 +1102,34 @@ open class CallTest {
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
   }
 
-  @Test fun tls() {
+  @Test
+  fun tls() {
     enableTls()
     server.enqueue(
-      MockResponse()
-        .setBody("abc")
-        .addHeader("Content-Type: text/plain")
+      MockResponse(
+        headers = headersOf("Content-Type", "text/plain"),
+        body = "abc",
+      )
     )
     executeSynchronously("/").assertHandshake()
   }
 
-  @Test fun tls_Async() {
+  @Test
+  fun tls_Async() {
     enableTls()
     server.enqueue(
-      MockResponse()
-        .setBody("abc")
-        .addHeader("Content-Type: text/plain")
+      MockResponse(
+        headers = headersOf("Content-Type", "text/plain"),
+        body = "abc",
+      )
     )
     val request = Request(server.url("/"))
     client.newCall(request).enqueue(callback)
     callback.await(request.url).assertHandshake()
   }
 
-  @Test fun recoverWhenRetryOnConnectionFailureIsTrue() {
+  @Test
+  fun recoverWhenRetryOnConnectionFailureIsTrue() {
     // Set to 2 because the seeding request will count down before the retried request does.
     val requestFinished = CountDownLatch(2)
     val dispatcher: QueueDispatcher = object : QueueDispatcher() {
@@ -1078,11 +1140,9 @@ open class CallTest {
         return super.dispatch(request)
       }
     }
-    dispatcher.enqueueResponse(MockResponse().setBody("seed connection pool"))
-    dispatcher.enqueueResponse(
-      MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST)
-    )
-    dispatcher.enqueueResponse(MockResponse().setBody("retry success"))
+    dispatcher.enqueueResponse(MockResponse(body = "seed connection pool"))
+    dispatcher.enqueueResponse(MockResponse(socketPolicy = SocketPolicy.DISCONNECT_AFTER_REQUEST))
+    dispatcher.enqueueResponse(MockResponse(body = "retry success"))
     server.dispatcher = dispatcher
     listener = object : RecordingEventListener() {
       override fun requestHeadersEnd(call: Call, request: Request) {
@@ -1110,15 +1170,17 @@ open class CallTest {
     listener.removeUpToEvent(CallEnd::class.java)
   }
 
-  @Test fun recoverWhenRetryOnConnectionFailureIsTrue_HTTP2() {
+  @Test
+  fun recoverWhenRetryOnConnectionFailureIsTrue_HTTP2() {
     enableProtocol(Protocol.HTTP_2)
     recoverWhenRetryOnConnectionFailureIsTrue()
   }
 
-  @Test fun noRecoverWhenRetryOnConnectionFailureIsFalse() {
-    server.enqueue(MockResponse().setBody("seed connection pool"))
-    server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST))
-    server.enqueue(MockResponse().setBody("unreachable!"))
+  @Test
+  fun noRecoverWhenRetryOnConnectionFailureIsFalse() {
+    server.enqueue(MockResponse(body = "seed connection pool"))
+    server.enqueue(MockResponse(socketPolicy = SocketPolicy.DISCONNECT_AFTER_REQUEST))
+    server.enqueue(MockResponse(body = "unreachable!"))
     client = client.newBuilder()
       .dns(DoubleInetAddressDns())
       .retryOnConnectionFailure(false)
@@ -1141,10 +1203,11 @@ open class CallTest {
     noRecoverWhenRetryOnConnectionFailureIsFalse()
   }
 
-  @Test fun tlsHandshakeFailure_noFallbackByDefault() {
+  @Test
+  fun tlsHandshakeFailure_noFallbackByDefault() {
     server.useHttps(handshakeCertificates.sslSocketFactory())
-    server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE))
-    server.enqueue(MockResponse().setBody("response that will never be received"))
+    server.enqueue(MockResponse(socketPolicy = SocketPolicy.FAIL_HANDSHAKE))
+    server.enqueue(MockResponse(body = "response that will never be received"))
     val response = executeSynchronously("/")
     response.assertFailure(
       SSLException::class.java,  // JDK 11 response to the FAIL_HANDSHAKE
@@ -1154,10 +1217,11 @@ open class CallTest {
     assertThat(client.connectionSpecs).doesNotContain(ConnectionSpec.COMPATIBLE_TLS)
   }
 
-  @Test fun recoverFromTlsHandshakeFailure() {
+  @Test
+  fun recoverFromTlsHandshakeFailure() {
     server.useHttps(handshakeCertificates.sslSocketFactory())
-    server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE))
-    server.enqueue(MockResponse().setBody("abc"))
+    server.enqueue(MockResponse(socketPolicy = SocketPolicy.FAIL_HANDSHAKE))
+    server.enqueue(MockResponse(body = "abc"))
     client = client.newBuilder()
       .hostnameVerifier(
         RecordingHostnameVerifier()
@@ -1170,7 +1234,8 @@ open class CallTest {
     executeSynchronously("/").assertBody("abc")
   }
 
-  @Test fun recoverFromTlsHandshakeFailure_tlsFallbackScsvEnabled() {
+  @Test
+  fun recoverFromTlsHandshakeFailure_tlsFallbackScsvEnabled() {
     platform.assumeNotConscrypt()
     val tlsFallbackScsv = "TLS_FALLBACK_SCSV"
     val supportedCiphers = listOf(*handshakeCertificates.sslSocketFactory().supportedCipherSuites)
@@ -1179,7 +1244,7 @@ open class CallTest {
       return
     }
     server.useHttps(handshakeCertificates.sslSocketFactory())
-    server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE))
+    server.enqueue(MockResponse(socketPolicy = SocketPolicy.FAIL_HANDSHAKE))
     val clientSocketFactory = RecordingSSLSocketFactory(
       handshakeCertificates.sslSocketFactory()
     )
@@ -1204,10 +1269,11 @@ open class CallTest {
       .contains(tlsFallbackScsv)
   }
 
-  @Test fun recoverFromTlsHandshakeFailure_Async() {
+  @Test
+  fun recoverFromTlsHandshakeFailure_Async() {
     server.useHttps(handshakeCertificates.sslSocketFactory())
-    server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE))
-    server.enqueue(MockResponse().setBody("abc"))
+    server.enqueue(MockResponse(socketPolicy = SocketPolicy.FAIL_HANDSHAKE))
+    server.enqueue(MockResponse(body = "abc"))
     client = client.newBuilder()
       .hostnameVerifier(
         RecordingHostnameVerifier()
@@ -1223,7 +1289,8 @@ open class CallTest {
     callback.await(request.url).assertBody("abc")
   }
 
-  @Test fun noRecoveryFromTlsHandshakeFailureWhenTlsFallbackIsDisabled() {
+  @Test
+  fun noRecoveryFromTlsHandshakeFailureWhenTlsFallbackIsDisabled() {
     client = client.newBuilder()
       .connectionSpecs(listOf(ConnectionSpec.MODERN_TLS, ConnectionSpec.CLEARTEXT))
       .hostnameVerifier(RecordingHostnameVerifier())
@@ -1233,7 +1300,7 @@ open class CallTest {
       )
       .build()
     server.useHttps(handshakeCertificates.sslSocketFactory())
-    server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE))
+    server.enqueue(MockResponse(socketPolicy = SocketPolicy.FAIL_HANDSHAKE))
     val request = Request.Builder().url(server.url("/")).build()
     try {
       client.newCall(request).execute()
@@ -1249,7 +1316,8 @@ open class CallTest {
     }
   }
 
-  @Test fun tlsHostnameVerificationFailure() {
+  @Test
+  fun tlsHostnameVerificationFailure() {
     assumeNotWindows()
     server.enqueue(MockResponse())
     val serverCertificate = HeldCertificate.Builder()
@@ -1274,7 +1342,8 @@ open class CallTest {
    * Anonymous cipher suites were disabled in OpenJDK because they're rarely used and permit
    * man-in-the-middle attacks. https://bugs.openjdk.java.net/browse/JDK-8212823
    */
-  @Test fun anonCipherSuiteUnsupported() {
+  @Test
+  fun anonCipherSuiteUnsupported() {
     platform.assumeNotConscrypt()
 
     // The _anon_ suites became unsupported in "1.8.0_201" and "11.0.2".
@@ -1307,7 +1376,8 @@ open class CallTest {
       .assertFailure(SSLHandshakeException::class.java)
   }
 
-  @Test fun cleartextCallsFailWhenCleartextIsDisabled() {
+  @Test
+  fun cleartextCallsFailWhenCleartextIsDisabled() {
     // Configure the client with only TLS configurations. No cleartext!
     client = client.newBuilder()
       .connectionSpecs(listOf(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS))
@@ -1324,7 +1394,8 @@ open class CallTest {
     }
   }
 
-  @Test fun httpsCallsFailWhenProtocolIsH2PriorKnowledge() {
+  @Test
+  fun httpsCallsFailWhenProtocolIsH2PriorKnowledge() {
     client = client.newBuilder()
       .protocols(listOf(Protocol.H2_PRIOR_KNOWLEDGE))
       .build()
@@ -1339,12 +1410,14 @@ open class CallTest {
     }
   }
 
-  @Test fun setFollowSslRedirectsFalse() {
+  @Test
+  fun setFollowSslRedirectsFalse() {
     enableTls()
     server.enqueue(
-      MockResponse()
-        .setResponseCode(301)
-        .addHeader("Location: http://square.com")
+      MockResponse(
+        code = 301,
+        headers = headersOf("Location", "http://square.com"),
+      )
     )
     client = client.newBuilder()
       .followSslRedirects(false)
@@ -1355,7 +1428,8 @@ open class CallTest {
     response.body.close()
   }
 
-  @Test fun matchingPinnedCertificate() {
+  @Test
+  fun matchingPinnedCertificate() {
     // Fails on 11.0.1 https://github.com/square/okhttp/issues/4703
     enableTls()
     server.enqueue(MockResponse())
@@ -1384,7 +1458,8 @@ open class CallTest {
     response2.body.close()
   }
 
-  @Test fun unmatchingPinnedCertificate() {
+  @Test
+  fun unmatchingPinnedCertificate() {
     enableTls()
     server.enqueue(MockResponse())
 
@@ -1407,8 +1482,9 @@ open class CallTest {
     }
   }
 
-  @Test fun post_Async() {
-    server.enqueue(MockResponse().setBody("abc"))
+  @Test
+  fun post_Async() {
+    server.enqueue(MockResponse(body = "abc"))
     val request = Request(
       url = server.url("/"),
       body = "def".toRequestBody("text/plain".toMediaType())
@@ -1419,14 +1495,15 @@ open class CallTest {
       .assertBody("abc")
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.body.readUtf8()).isEqualTo("def")
-    assertThat(recordedRequest.getHeader("Content-Length")).isEqualTo("3")
-    assertThat(recordedRequest.getHeader("Content-Type")).isEqualTo("text/plain; charset=utf-8")
+    assertThat(recordedRequest.headers["Content-Length"]).isEqualTo("3")
+    assertThat(recordedRequest.headers["Content-Type"]).isEqualTo("text/plain; charset=utf-8")
   }
 
-  @Test fun serverHalfClosingBeforeResponse() {
-    server.enqueue(MockResponse().setBody("abc"))
-    server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.HALF_CLOSE_AFTER_REQUEST))
-    server.enqueue(MockResponse().setBody("abc"))
+  @Test
+  fun serverHalfClosingBeforeResponse() {
+    server.enqueue(MockResponse(body = "abc"))
+    server.enqueue(MockResponse(socketPolicy = SocketPolicy.HALF_CLOSE_AFTER_REQUEST))
+    server.enqueue(MockResponse(body = "abc"))
 
     val client = client.newBuilder()
       .retryOnConnectionFailure(false)
@@ -1478,10 +1555,11 @@ open class CallTest {
     assertThat(get2.sequenceNumber).isEqualTo(0)
   }
 
-  @Test fun postBodyRetransmittedOnFailureRecovery() {
-    server.enqueue(MockResponse().setBody("abc"))
-    server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST))
-    server.enqueue(MockResponse().setBody("def"))
+  @Test
+  fun postBodyRetransmittedOnFailureRecovery() {
+    server.enqueue(MockResponse(body = "abc"))
+    server.enqueue(MockResponse(socketPolicy = SocketPolicy.DISCONNECT_AFTER_REQUEST))
+    server.enqueue(MockResponse(body = "def"))
 
     // Seed the connection pool so we have something that can fail.
     val request1 = Request.Builder().url(server.url("/")).build()
@@ -1503,18 +1581,23 @@ open class CallTest {
     assertThat(post2.sequenceNumber).isEqualTo(0)
   }
 
-  @Test fun postBodyRetransmittedOnFailureRecovery_HTTP2() {
+  @Test
+  fun postBodyRetransmittedOnFailureRecovery_HTTP2() {
     enableProtocol(Protocol.HTTP_2)
     postBodyRetransmittedOnFailureRecovery()
   }
 
-  @Test fun cacheHit() {
+  @Test
+  fun cacheHit() {
     server.enqueue(
-      MockResponse()
-        .addHeader("ETag: v1")
-        .addHeader("Cache-Control: max-age=60")
-        .addHeader("Vary: Accept-Charset")
-        .setBody("A")
+      MockResponse(
+        headers = headersOf(
+          "ETag", "v1",
+          "Cache-Control", "max-age=60",
+          "Vary", "Accept-Charset",
+        ),
+        body = "A",
+      )
     )
     client = client.newBuilder()
       .cache(cache)
@@ -1527,7 +1610,7 @@ open class CallTest {
       .assertCode(200)
       .assertBody("A")
     val request1ReceivedAt = System.currentTimeMillis()
-    assertThat(server.takeRequest().getHeader("If-None-Match")).isNull()
+    assertThat(server.takeRequest().headers["If-None-Match"]).isNull()
 
     // Hit that stored response. It's different, but Vary says it doesn't matter.
     Thread.sleep(10) // Make sure the timestamps are unique.
@@ -1572,19 +1655,24 @@ open class CallTest {
     cacheHit.assertNoNetworkResponse()
   }
 
-  @Test fun conditionalCacheHit() {
+  @Test
+  fun conditionalCacheHit() {
     server.enqueue(
-      MockResponse()
-        .addHeader("ETag: v1")
-        .addHeader("Vary: Accept-Charset")
-        .addHeader("Donut: a")
-        .setBody("A")
+      MockResponse(
+        headers = headersOf(
+          "ETag", "v1",
+          "Vary", "Accept-Charset",
+          "Donut", "a",
+        ),
+        body = "A",
+      )
     )
     server.enqueue(
-      MockResponse().clearHeaders()
+      MockResponse.Builder()
+        .clearHeaders()
         .addHeader("Donut: b")
-        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
-    )
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .build())
     client = client.newBuilder()
       .cache(cache)
       .build()
@@ -1596,7 +1684,7 @@ open class CallTest {
       .assertHeader("Donut", "a")
       .assertBody("A")
     val request1ReceivedAt = System.currentTimeMillis()
-    assertThat(server.takeRequest().getHeader("If-None-Match")).isNull()
+    assertThat(server.takeRequest().headers["If-None-Match"]).isNull()
 
     // Hit that stored response. It's different, but Vary says it doesn't matter.
     Thread.sleep(10) // Make sure the timestamps are unique.
@@ -1605,7 +1693,7 @@ open class CallTest {
       "/", "Accept-Language", "en-US", "Accept-Charset", "UTF-8"
     )
     val request2ReceivedAt = System.currentTimeMillis()
-    assertThat(server.takeRequest().getHeader("If-None-Match")).isEqualTo("v1")
+    assertThat(server.takeRequest().headers["If-None-Match"]).isEqualTo("v1")
 
     // Check the merged response. The request is the application's original request.
     cacheHit.assertCode(200)
@@ -1641,38 +1729,49 @@ open class CallTest {
       .assertReceivedResponseAtMillis(request2SentAt, request2ReceivedAt)
   }
 
-  @Test fun conditionalCacheHit_Async() {
-    server.enqueue(MockResponse().setBody("A").addHeader("ETag: v1"))
+  @Test
+  fun conditionalCacheHit_Async() {
     server.enqueue(
-      MockResponse()
-        .clearHeaders()
-        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+      MockResponse(
+        headers = headersOf("ETag", "v1"),
+        body = "A",
+      )
     )
+    server.enqueue(
+      MockResponse.Builder()
+        .clearHeaders()
+        .code(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .build())
     client = client.newBuilder()
       .cache(cache)
       .build()
     val request1 = Request(server.url("/"))
     client.newCall(request1).enqueue(callback)
     callback.await(request1.url).assertCode(200).assertBody("A")
-    assertThat(server.takeRequest().getHeader("If-None-Match")).isNull()
+    assertThat(server.takeRequest().headers["If-None-Match"]).isNull()
     val request2 = Request(server.url("/"))
     client.newCall(request2).enqueue(callback)
     callback.await(request2.url).assertCode(200).assertBody("A")
-    assertThat(server.takeRequest().getHeader("If-None-Match")).isEqualTo("v1")
+    assertThat(server.takeRequest().headers["If-None-Match"]).isEqualTo("v1")
   }
 
-  @Test fun conditionalCacheMiss() {
+  @Test
+  fun conditionalCacheMiss() {
     server.enqueue(
-      MockResponse()
-        .addHeader("ETag: v1")
-        .addHeader("Vary: Accept-Charset")
-        .addHeader("Donut: a")
-        .setBody("A")
+      MockResponse(
+        headers = headersOf(
+          "ETag", "v1",
+          "Vary", "Accept-Charset",
+          "Donut", "a",
+        ),
+        body = "A",
+      )
     )
     server.enqueue(
-      MockResponse()
-        .addHeader("Donut: b")
-        .setBody("B")
+      MockResponse(
+        headers = headersOf("Donut", "b"),
+        body = "B",
+      )
     )
     client = client.newBuilder()
       .cache(cache)
@@ -1682,7 +1781,7 @@ open class CallTest {
       .assertCode(200)
       .assertBody("A")
     val request1ReceivedAt = System.currentTimeMillis()
-    assertThat(server.takeRequest().getHeader("If-None-Match")).isNull()
+    assertThat(server.takeRequest().headers["If-None-Match"]).isNull()
 
     // Different request, but Vary says it doesn't matter.
     Thread.sleep(10) // Make sure the timestamps are unique.
@@ -1691,7 +1790,7 @@ open class CallTest {
       "/", "Accept-Language", "en-US", "Accept-Charset", "UTF-8"
     )
     val request2ReceivedAt = System.currentTimeMillis()
-    assertThat(server.takeRequest().getHeader("If-None-Match")).isEqualTo("v1")
+    assertThat(server.takeRequest().headers["If-None-Match"]).isEqualTo("v1")
 
     // Check the user response. It has the application's original request.
     cacheMiss.assertCode(200)
@@ -1720,23 +1819,30 @@ open class CallTest {
       .assertReceivedResponseAtMillis(request2SentAt, request2ReceivedAt)
   }
 
-  @Test fun conditionalCacheMiss_Async() {
-    server.enqueue(MockResponse().setBody("A").addHeader("ETag: v1"))
-    server.enqueue(MockResponse().setBody("B"))
+  @Test
+  fun conditionalCacheMiss_Async() {
+    server.enqueue(
+      MockResponse(
+        body = "A",
+        headers = headersOf("ETag", "v1")
+      )
+    )
+    server.enqueue(MockResponse(body = "B"))
     client = client.newBuilder()
       .cache(cache)
       .build()
     val request1 = Request(server.url("/"))
     client.newCall(request1).enqueue(callback)
     callback.await(request1.url).assertCode(200).assertBody("A")
-    assertThat(server.takeRequest().getHeader("If-None-Match")).isNull()
+    assertThat(server.takeRequest().headers["If-None-Match"]).isNull()
     val request2 = Request(server.url("/"))
     client.newCall(request2).enqueue(callback)
     callback.await(request2.url).assertCode(200).assertBody("B")
-    assertThat(server.takeRequest().getHeader("If-None-Match")).isEqualTo("v1")
+    assertThat(server.takeRequest().headers["If-None-Match"]).isEqualTo("v1")
   }
 
-  @Test fun onlyIfCachedReturns504WhenNotCached() {
+  @Test
+  fun onlyIfCachedReturns504WhenNotCached() {
     executeSynchronously("/", "Cache-Control", "only-if-cached")
       .assertCode(504)
       .assertBody("")
@@ -1744,16 +1850,18 @@ open class CallTest {
       .assertNoCacheResponse()
   }
 
-  @Test fun networkDropsOnConditionalGet() {
+  @Test
+  fun networkDropsOnConditionalGet() {
     client = client.newBuilder()
       .cache(cache)
       .build()
 
     // Seed the cache.
     server.enqueue(
-      MockResponse()
-        .addHeader("ETag: v1")
-        .setBody("A")
+      MockResponse(
+        headers = headersOf("ETag", "v1"),
+        body = "A",
+      )
     )
     executeSynchronously("/")
       .assertCode(200)
@@ -1766,22 +1874,29 @@ open class CallTest {
     executeSynchronously("/").assertFailure(UnknownHostException::class.java)
   }
 
-  @Test fun redirect() {
+  @Test
+  fun redirect() {
     server.enqueue(
-      MockResponse()
-        .setResponseCode(301)
-        .addHeader("Location: /b")
-        .addHeader("Test", "Redirect from /a to /b")
-        .setBody("/a has moved!")
+      MockResponse(
+        code = 301,
+        headers = headersOf(
+          "Location", "/b",
+          "Test", "Redirect from /a to /b",
+        ),
+        body = "/a has moved!",
+      )
     )
     server.enqueue(
-      MockResponse()
-        .setResponseCode(302)
-        .addHeader("Location: /c")
-        .addHeader("Test", "Redirect from /b to /c")
-        .setBody("/b has moved!")
+      MockResponse(
+        code = 302,
+        headers = headersOf(
+          "Location", "/c",
+          "Test", "Redirect from /b to /c",
+        ),
+        body = "/b has moved!",
+      )
     )
-    server.enqueue(MockResponse().setBody("C"))
+    server.enqueue(MockResponse(body = "C"))
     executeSynchronously("/a")
       .assertCode(200)
       .assertBody("C")
@@ -1800,14 +1915,16 @@ open class CallTest {
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(2)
   }
 
-  @Test fun postRedirectsToGet() {
+  @Test
+  fun postRedirectsToGet() {
     server.enqueue(
-      MockResponse()
-        .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
-        .addHeader("Location: /page2")
-        .setBody("This page has moved!")
+      MockResponse(
+        code = HttpURLConnection.HTTP_MOVED_TEMP,
+        headers = headersOf("Location", "/page2"),
+        body = "This page has moved!",
+      )
     )
-    server.enqueue(MockResponse().setBody("Page 2"))
+    server.enqueue(MockResponse(body = "Page 2"))
     val response = client.newCall(
       Request(
         url = server.url("/page1"),
@@ -1822,43 +1939,51 @@ open class CallTest {
     assertThat(page2.requestLine).isEqualTo("GET /page2 HTTP/1.1")
   }
 
-  @Test fun getClientRequestTimeout() {
+  @Test
+  fun getClientRequestTimeout() {
     server.enqueue(
-      MockResponse()
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
-        .setResponseCode(408)
-        .setHeader("Connection", "Close")
-        .setBody("You took too long!")
+      MockResponse(
+        code = 408,
+        headers = headersOf("Connection", "Close"),
+        body = "You took too long!",
+        socketPolicy = SocketPolicy.DISCONNECT_AT_END,
+      )
     )
-    server.enqueue(MockResponse().setBody("Body"))
+    server.enqueue(MockResponse(body = "Body"))
     val request = Request(server.url("/"))
     val response = client.newCall(request).execute()
     assertThat(response.body.string()).isEqualTo("Body")
   }
 
-  @Test fun getClientRequestTimeoutWithBackPressure() {
+  @Test
+  fun getClientRequestTimeoutWithBackPressure() {
     server.enqueue(
-      MockResponse()
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
-        .setResponseCode(408)
-        .setHeader("Connection", "Close")
-        .setHeader("Retry-After", "1")
-        .setBody("You took too long!")
+      MockResponse(
+        code = 408,
+        headers = headersOf(
+          "Connection", "Close",
+          "Retry-After", "1",
+        ),
+        body = "You took too long!",
+        socketPolicy = SocketPolicy.DISCONNECT_AT_END,
+      )
     )
     val request = Request(server.url("/"))
     val response = client.newCall(request).execute()
     assertThat(response.body.string()).isEqualTo("You took too long!")
   }
 
-  @Test fun requestBodyRetransmittedOnClientRequestTimeout() {
+  @Test
+  fun requestBodyRetransmittedOnClientRequestTimeout() {
     server.enqueue(
-      MockResponse()
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
-        .setResponseCode(408)
-        .setHeader("Connection", "Close")
-        .setBody("You took too long!")
+      MockResponse(
+        code = 408,
+        headers = headersOf("Connection", "Close"),
+        body = "You took too long!",
+        socketPolicy = SocketPolicy.DISCONNECT_AT_END,
+      )
     )
-    server.enqueue(MockResponse().setBody("Body"))
+    server.enqueue(MockResponse(body = "Body"))
     val request = Request(
       server.url("/"),
       body = "Hello".toRequestBody("text/plain".toMediaType()),
@@ -1871,13 +1996,15 @@ open class CallTest {
     assertThat(request2.body.readUtf8()).isEqualTo("Hello")
   }
 
-  @Test fun disableClientRequestTimeoutRetry() {
+  @Test
+  fun disableClientRequestTimeoutRetry() {
     server.enqueue(
-      MockResponse()
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
-        .setResponseCode(408)
-        .setHeader("Connection", "Close")
-        .setBody("You took too long!")
+      MockResponse(
+        code = 408,
+        headers = headersOf("Connection", "Close"),
+        body = "You took too long!",
+        socketPolicy = SocketPolicy.DISCONNECT_AT_END,
+      )
     )
     client = client.newBuilder()
       .retryOnConnectionFailure(false)
@@ -1888,20 +2015,23 @@ open class CallTest {
     assertThat(response.body.string()).isEqualTo("You took too long!")
   }
 
-  @Test fun maxClientRequestTimeoutRetries() {
+  @Test
+  fun maxClientRequestTimeoutRetries() {
     server.enqueue(
-      MockResponse()
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
-        .setResponseCode(408)
-        .setHeader("Connection", "Close")
-        .setBody("You took too long!")
+      MockResponse(
+        code = 408,
+        headers = headersOf("Connection", "Close"),
+        body = "You took too long!",
+        socketPolicy = SocketPolicy.DISCONNECT_AT_END,
+      )
     )
     server.enqueue(
-      MockResponse()
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
-        .setResponseCode(408)
-        .setHeader("Connection", "Close")
-        .setBody("You took too long!")
+      MockResponse(
+        code = 408,
+        headers = headersOf("Connection", "Close"),
+        body = "You took too long!",
+        socketPolicy = SocketPolicy.DISCONNECT_AT_END,
+      )
     )
     val request = Request(server.url("/"))
     val response = client.newCall(request).execute()
@@ -1910,22 +2040,29 @@ open class CallTest {
     assertThat(server.requestCount).isEqualTo(2)
   }
 
-  @Test fun maxUnavailableTimeoutRetries() {
+  @Test
+  fun maxUnavailableTimeoutRetries() {
     server.enqueue(
-      MockResponse()
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
-        .setResponseCode(503)
-        .setHeader("Connection", "Close")
-        .setHeader("Retry-After", "0")
-        .setBody("You took too long!")
+      MockResponse(
+        code = 503,
+        headers = headersOf(
+          "Connection", "Close",
+          "Retry-After", "0",
+        ),
+        body = "You took too long!",
+        socketPolicy = SocketPolicy.DISCONNECT_AT_END,
+      )
     )
     server.enqueue(
-      MockResponse()
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
-        .setResponseCode(503)
-        .setHeader("Connection", "Close")
-        .setHeader("Retry-After", "0")
-        .setBody("You took too long!")
+      MockResponse(
+        code = 503,
+        headers = headersOf(
+          "Connection", "Close",
+          "Retry-After", "0",
+        ),
+        body = "You took too long!",
+        socketPolicy = SocketPolicy.DISCONNECT_AT_END,
+      )
     )
     val request = Request(server.url("/"))
     val response = client.newCall(request).execute()
@@ -1934,31 +2071,36 @@ open class CallTest {
     assertThat(server.requestCount).isEqualTo(2)
   }
 
-  @Test fun retryOnUnavailableWith0RetryAfter() {
+  @Test
+  fun retryOnUnavailableWith0RetryAfter() {
     server.enqueue(
-      MockResponse()
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
-        .setResponseCode(503)
-        .setHeader("Connection", "Close")
-        .setHeader("Retry-After", "0")
-        .setBody("You took too long!")
+      MockResponse(
+        code = 503,
+        headers = headersOf(
+          "Connection", "Close",
+          "Retry-After", "0",
+        ),
+        body = "You took too long!",
+        socketPolicy = SocketPolicy.DISCONNECT_AT_END,
+      )
     )
-    server.enqueue(MockResponse().setBody("Body"))
+    server.enqueue(MockResponse(body = "Body"))
     val request = Request(server.url("/"))
     val response = client.newCall(request).execute()
     assertThat(response.body.string()).isEqualTo("Body")
   }
 
-  @Test fun canRetryNormalRequestBody() {
+  @Test
+  fun canRetryNormalRequestBody() {
     server.enqueue(
-      MockResponse()
-        .setResponseCode(503)
-        .setHeader("Retry-After", "0")
-        .setBody("please retry")
+      MockResponse(
+        code = 503,
+        headers = headersOf("Retry-After", "0"),
+        body = "please retry",
+      )
     )
     server.enqueue(
-      MockResponse()
-        .setBody("thank you for retrying")
+      MockResponse(body = "thank you for retrying")
     )
     val request = Request(
       url = server.url("/"),
@@ -1981,16 +2123,17 @@ open class CallTest {
     assertThat(server.requestCount).isEqualTo(2)
   }
 
-  @Test fun cannotRetryOneShotRequestBody() {
+  @Test
+  fun cannotRetryOneShotRequestBody() {
     server.enqueue(
-      MockResponse()
-        .setResponseCode(503)
-        .setHeader("Retry-After", "0")
-        .setBody("please retry")
+      MockResponse(
+        code = 503,
+        headers = headersOf("Retry-After", "0"),
+        body = "please retry",
+      )
     )
     server.enqueue(
-      MockResponse()
-        .setBody("thank you for retrying")
+      MockResponse(body = "thank you for retrying")
     )
     val request = Request(
       url = server.url("/"),
@@ -2016,15 +2159,17 @@ open class CallTest {
     assertThat(server.requestCount).isEqualTo(1)
   }
 
-  @Test fun propfindRedirectsToPropfindAndMaintainsRequestBody() {
+  @Test
+  fun propfindRedirectsToPropfindAndMaintainsRequestBody() {
     // given
     server.enqueue(
-      MockResponse()
-        .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
-        .addHeader("Location: /page2")
-        .setBody("This page has moved!")
+      MockResponse(
+        code = HttpURLConnection.HTTP_MOVED_TEMP,
+        headers = headersOf("Location", "/page2"),
+        body = "This page has moved!",
+      )
     )
-    server.enqueue(MockResponse().setBody("Page 2"))
+    server.enqueue(MockResponse(body = "Page 2"))
 
     // when
     val response = client.newCall(
@@ -2044,11 +2189,15 @@ open class CallTest {
     assertThat(page2.body.readUtf8()).isEqualTo("Request Body")
   }
 
-  @Test fun responseCookies() {
+  @Test
+  fun responseCookies() {
     server.enqueue(
-      MockResponse()
-        .addHeader("Set-Cookie", "a=b; Expires=Thu, 01 Jan 1970 00:00:00 GMT")
-        .addHeader("Set-Cookie", "c=d; Expires=Fri, 02 Jan 1970 23:59:59 GMT; path=/bar; secure")
+      MockResponse(
+        headers = headersOf(
+          "Set-Cookie", "a=b; Expires=Thu, 01 Jan 1970 00:00:00 GMT",
+          "Set-Cookie", "c=d; Expires=Fri, 02 Jan 1970 23:59:59 GMT; path=/bar; secure",
+        )
+      )
     )
     val cookieJar = RecordingCookieJar()
     client = client.newBuilder()
@@ -2063,7 +2212,8 @@ open class CallTest {
       .isEqualTo("c=d; expires=Fri, 02 Jan 1970 23:59:59 GMT; path=/bar; secure")
   }
 
-  @Test fun requestCookies() {
+  @Test
+  fun requestCookies() {
     server.enqueue(MockResponse())
     val cookieJar = RecordingCookieJar()
     cookieJar.enqueueRequestCookies(
@@ -2075,15 +2225,17 @@ open class CallTest {
       .build()
     executeSynchronously("/").assertCode(200)
     val recordedRequest = server.takeRequest()
-    assertThat(recordedRequest.getHeader("Cookie")).isEqualTo("a=b; c=d")
+    assertThat(recordedRequest.headers["Cookie"]).isEqualTo("a=b; c=d")
   }
 
-  @Test fun redirectsDoNotIncludeTooManyCookies() {
-    server2.enqueue(MockResponse().setBody("Page 2"))
+  @Test
+  fun redirectsDoNotIncludeTooManyCookies() {
+    server2.enqueue(MockResponse(body = "Page 2"))
     server.enqueue(
-      MockResponse()
-        .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
-        .addHeader("Location: " + server2.url("/"))
+      MockResponse(
+        code = HttpURLConnection.HTTP_MOVED_TEMP,
+        headers = headersOf("Location", server2.url("/").toString()),
+      )
     )
     val cookieManager = CookieManager(null, CookiePolicy.ACCEPT_ORIGINAL_SERVER)
     val cookie = HttpCookie("c", "cookie")
@@ -2098,21 +2250,20 @@ open class CallTest {
     val response = client.newCall(Request(server.url("/page1"))).execute()
     assertThat(response.body.string()).isEqualTo("Page 2")
     val request1 = server.takeRequest()
-    assertThat(request1.getHeader("Cookie")).isEqualTo("c=cookie")
+    assertThat(request1.headers["Cookie"]).isEqualTo("c=cookie")
     val request2 = server2.takeRequest()
-    assertThat(request2.getHeader("Cookie")).isNull()
+    assertThat(request2.headers["Cookie"]).isNull()
   }
 
-  @Test fun redirectsDoNotIncludeTooManyAuthHeaders() {
-    server2.enqueue(MockResponse().setBody("Page 2"))
+  @Test
+  fun redirectsDoNotIncludeTooManyAuthHeaders() {
+    server2.enqueue(MockResponse(body = "Page 2"))
+    server.enqueue(MockResponse(code = 401))
     server.enqueue(
-      MockResponse()
-        .setResponseCode(401)
-    )
-    server.enqueue(
-      MockResponse()
-        .setResponseCode(302)
-        .addHeader("Location: " + server2.url("/b"))
+      MockResponse(
+        code = 302,
+        headers = headersOf("Location", server2.url("/b").toString()),
+      )
     )
     client = client.newBuilder()
       .authenticator(RecordingOkAuthenticator(basic("jesse", "secret"), null))
@@ -2121,26 +2272,33 @@ open class CallTest {
     val response = client.newCall(request).execute()
     assertThat(response.body.string()).isEqualTo("Page 2")
     val redirectRequest = server2.takeRequest()
-    assertThat(redirectRequest.getHeader("Authorization")).isNull()
+    assertThat(redirectRequest.headers["Authorization"]).isNull()
     assertThat(redirectRequest.path).isEqualTo("/b")
   }
 
-  @Test fun redirect_Async() {
+  @Test
+  fun redirect_Async() {
     server.enqueue(
-      MockResponse()
-        .setResponseCode(301)
-        .addHeader("Location: /b")
-        .addHeader("Test", "Redirect from /a to /b")
-        .setBody("/a has moved!")
+      MockResponse(
+        code = 301,
+        headers = headersOf(
+          "Location", "/b",
+          "Test", "Redirect from /a to /b"
+        ),
+        body = "/a has moved!",
+      )
     )
     server.enqueue(
-      MockResponse()
-        .setResponseCode(302)
-        .addHeader("Location: /c")
-        .addHeader("Test", "Redirect from /b to /c")
-        .setBody("/b has moved!")
+      MockResponse(
+        code = 302,
+        headers = headersOf(
+          "Location", "/c",
+          "Test", "Redirect from /b to /c"
+        ),
+        body = "/b has moved!",
+      )
     )
-    server.enqueue(MockResponse().setBody("C"))
+    server.enqueue(MockResponse(body = "C"))
     val request = Request.Builder().url(server.url("/a")).build()
     client.newCall(request).enqueue(callback)
     callback.await(server.url("/a"))
@@ -2162,32 +2320,36 @@ open class CallTest {
   }
 
   @Tag("Slow")
-  @Test fun follow20Redirects() {
+  @Test
+  fun follow20Redirects() {
     for (i in 0..19) {
       server.enqueue(
-        MockResponse()
-          .setResponseCode(301)
-          .addHeader("Location: /" + (i + 1))
-          .setBody("Redirecting to /" + (i + 1))
+        MockResponse(
+          code = 301,
+          headers = headersOf("Location", "/${i + 1}"),
+          body = "Redirecting to /" + (i + 1),
+        )
       )
     }
-    server.enqueue(MockResponse().setBody("Success!"))
+    server.enqueue(MockResponse(body = "Success!"))
     executeSynchronously("/0")
       .assertCode(200)
       .assertBody("Success!")
   }
 
   @Tag("Slow")
-  @Test fun follow20Redirects_Async() {
+  @Test
+  fun follow20Redirects_Async() {
     for (i in 0..19) {
       server.enqueue(
-        MockResponse()
-          .setResponseCode(301)
-          .addHeader("Location: /" + (i + 1))
-          .setBody("Redirecting to /" + (i + 1))
+        MockResponse(
+          code = 301,
+          headers = headersOf("Location", "/" + (i + 1)),
+          body = "Redirecting to /" + (i + 1),
+        )
       )
     }
-    server.enqueue(MockResponse().setBody("Success!"))
+    server.enqueue(MockResponse(body = "Success!"))
     val request = Request.Builder().url(server.url("/0")).build()
     client.newCall(request).enqueue(callback)
     callback.await(server.url("/0"))
@@ -2196,13 +2358,15 @@ open class CallTest {
   }
 
   @Tag("Slow")
-  @Test fun doesNotFollow21Redirects() {
+  @Test
+  fun doesNotFollow21Redirects() {
     for (i in 0..20) {
       server.enqueue(
-        MockResponse()
-          .setResponseCode(301)
-          .addHeader("Location: /" + (i + 1))
-          .setBody("Redirecting to /" + (i + 1))
+        MockResponse(
+          code = 301,
+          headers = headersOf("Location", "/${i + 1}"),
+          body = "Redirecting to /${i + 1}",
+        )
       )
     }
     try {
@@ -2214,13 +2378,15 @@ open class CallTest {
   }
 
   @Tag("Slow")
-  @Test fun doesNotFollow21Redirects_Async() {
+  @Test
+  fun doesNotFollow21Redirects_Async() {
     for (i in 0..20) {
       server.enqueue(
-        MockResponse()
-          .setResponseCode(301)
-          .addHeader("Location: /" + (i + 1))
-          .setBody("Redirecting to /" + (i + 1))
+        MockResponse(
+          code = 301,
+          headers = headersOf("Location", "/${i + 1}"),
+          body = "Redirecting to /${i + 1}",
+        )
       )
     }
     val request = Request.Builder().url(server.url("/0")).build()
@@ -2228,34 +2394,39 @@ open class CallTest {
     callback.await(server.url("/0")).assertFailure("Too many follow-up requests: 21")
   }
 
-  @Test fun http204WithBodyDisallowed() {
+  @Test
+  fun http204WithBodyDisallowed() {
     server.enqueue(
-      MockResponse()
-        .setResponseCode(204)
-        .setBody("I'm not even supposed to be here today.")
+      MockResponse(
+        code = 204,
+        body = "I'm not even supposed to be here today.",
+      )
     )
     executeSynchronously("/")
       .assertFailure("HTTP 204 had non-zero Content-Length: 39")
   }
 
-  @Test fun http205WithBodyDisallowed() {
+  @Test
+  fun http205WithBodyDisallowed() {
     server.enqueue(
-      MockResponse()
-        .setResponseCode(205)
-        .setBody("I'm not even supposed to be here today.")
+      MockResponse(
+        code = 205,
+        body = "I'm not even supposed to be here today.",
+      )
     )
     executeSynchronously("/")
       .assertFailure("HTTP 205 had non-zero Content-Length: 39")
   }
 
-  @Test fun httpWithExcessiveHeaders() {
+  @Test
+  fun httpWithExcessiveHeaders() {
     val longLine = "HTTP/1.1 200 " + stringFill('O', 256 * 1024) + "K"
     server.protocols = listOf(Protocol.HTTP_1_1)
     server.enqueue(
-      MockResponse()
-        .setStatus(longLine)
-        .setBody("I'm not even supposed to be here today.")
-    )
+      MockResponse.Builder()
+        .status(longLine)
+        .body("I'm not even supposed to be here today.")
+        .build())
     executeSynchronously("/")
       .assertFailureMatches(".*unexpected end of stream on " + server.url("/").redact())
   }
@@ -2266,7 +2437,8 @@ open class CallTest {
     return String(value)
   }
 
-  @Test fun canceledBeforeExecute() {
+  @Test
+  fun canceledBeforeExecute() {
     val call = client.newCall(Request.Builder().url(server.url("/a")).build())
     call.cancel()
     try {
@@ -2278,21 +2450,20 @@ open class CallTest {
   }
 
   @Tag("Slowish")
-  @Test fun cancelDuringHttpConnect() {
+  @Test
+  fun cancelDuringHttpConnect() {
     cancelDuringConnect("http")
   }
 
   @Tag("Slowish")
-  @Test fun cancelDuringHttpsConnect() {
+  @Test
+  fun cancelDuringHttpsConnect() {
     cancelDuringConnect("https")
   }
 
   /** Cancel a call that's waiting for connect to complete.  */
   private fun cancelDuringConnect(scheme: String?) {
-    server.enqueue(
-      MockResponse()
-        .setSocketPolicy(SocketPolicy.STALL_SOCKET_AT_START)
-    )
+    server.enqueue(MockResponse(socketPolicy = SocketPolicy.STALL_SOCKET_AT_START))
     val cancelDelayMillis = 300L
     val call = client.newCall(Request(server.url("/").newBuilder().scheme(scheme!!).build()))
     cancelLater(call, cancelDelayMillis)
@@ -2307,7 +2478,8 @@ open class CallTest {
       .isCloseTo(cancelDelayMillis.toFloat(), Offset.offset(100f))
   }
 
-  @Test fun cancelImmediatelyAfterEnqueue() {
+  @Test
+  fun cancelImmediatelyAfterEnqueue() {
     server.enqueue(MockResponse())
     val latch = CountDownLatch(1)
     client = client.newBuilder()
@@ -2327,15 +2499,17 @@ open class CallTest {
     callback.await(server.url("/a")).assertFailure("Canceled", "Socket closed", "Socket is closed")
   }
 
-  @Test fun cancelAll() {
+  @Test
+  fun cancelAll() {
     val call = client.newCall(Request(server.url("/")))
     call.enqueue(callback)
     client.dispatcher.cancelAll()
     callback.await(server.url("/")).assertFailure("Canceled", "Socket closed", "Socket is closed")
   }
 
-  @Test fun cancelWhileRequestHeadersAreSent() {
-    server.enqueue(MockResponse().setBody("A"))
+  @Test
+  fun cancelWhileRequestHeadersAreSent() {
+    server.enqueue(MockResponse(body = "A"))
     val listener: EventListener = object : EventListener() {
       override fun requestHeadersStart(call: Call) {
         try {
@@ -2355,13 +2529,18 @@ open class CallTest {
     }
   }
 
-  @Test fun cancelWhileRequestHeadersAreSent_HTTP_2() {
+  @Test
+  fun cancelWhileRequestHeadersAreSent_HTTP_2() {
     enableProtocol(Protocol.HTTP_2)
     cancelWhileRequestHeadersAreSent()
   }
 
-  @Test fun cancelBeforeBodyIsRead() {
-    server.enqueue(MockResponse().setBody("def").throttleBody(1, 750, TimeUnit.MILLISECONDS))
+  @Test
+  fun cancelBeforeBodyIsRead() {
+    server.enqueue(MockResponse.Builder()
+      .body("def")
+      .throttleBody(1, 750, TimeUnit.MILLISECONDS)
+      .build())
     val call = client.newCall(Request(server.url("/a")))
     val executor = Executors.newSingleThreadExecutor()
     val result = executor.submit<Response?> { call.execute() }
@@ -2375,13 +2554,14 @@ open class CallTest {
     assertThat(server.requestCount).isEqualTo(1)
   }
 
-  @Test fun cancelInFlightBeforeResponseReadThrowsIOE() {
+  @Test
+  fun cancelInFlightBeforeResponseReadThrowsIOE() {
     val request = Request(server.url("/a"))
     val call = client.newCall(request)
     server.dispatcher = object : mockwebserver3.Dispatcher() {
       override fun dispatch(request: RecordedRequest): MockResponse {
         call.cancel()
-        return MockResponse().setBody("A")
+        return MockResponse(body = "A")
       }
     }
     try {
@@ -2392,12 +2572,14 @@ open class CallTest {
     assertThat(server.takeRequest().path).isEqualTo("/a")
   }
 
-  @Test fun cancelInFlightBeforeResponseReadThrowsIOE_HTTPS() {
+  @Test
+  fun cancelInFlightBeforeResponseReadThrowsIOE_HTTPS() {
     enableTls()
     cancelInFlightBeforeResponseReadThrowsIOE()
   }
 
-  @Test fun cancelInFlightBeforeResponseReadThrowsIOE_HTTP_2() {
+  @Test
+  fun cancelInFlightBeforeResponseReadThrowsIOE_HTTP_2() {
     enableProtocol(Protocol.HTTP_2)
     cancelInFlightBeforeResponseReadThrowsIOE()
   }
@@ -2406,7 +2588,8 @@ open class CallTest {
    * This test puts a request in front of one that is to be canceled, so that it is canceled before
    * I/O takes place.
    */
-  @Test fun canceledBeforeIOSignalsOnFailure() {
+  @Test
+  fun canceledBeforeIOSignalsOnFailure() {
     // Force requests to be executed serially.
     val dispatcher = Dispatcher(client.dispatcher.executorService)
     dispatcher.maxRequests = 1
@@ -2421,7 +2604,7 @@ open class CallTest {
       var nextResponse = 'A'
       override fun dispatch(request: RecordedRequest): MockResponse {
         callB.cancel()
-        return MockResponse().setBody((nextResponse++).toString())
+        return MockResponse(body = (nextResponse++).toString())
       }
     }
     callA.enqueue(callback)
@@ -2432,23 +2615,26 @@ open class CallTest {
     callback.await(requestB.url).assertFailure("Canceled", "Socket closed")
   }
 
-  @Test fun canceledBeforeIOSignalsOnFailure_HTTPS() {
+  @Test
+  fun canceledBeforeIOSignalsOnFailure_HTTPS() {
     enableTls()
     canceledBeforeIOSignalsOnFailure()
   }
 
-  @Test fun canceledBeforeIOSignalsOnFailure_HTTP_2() {
+  @Test
+  fun canceledBeforeIOSignalsOnFailure_HTTP_2() {
     enableProtocol(Protocol.HTTP_2)
     canceledBeforeIOSignalsOnFailure()
   }
 
-  @Test fun canceledBeforeResponseReadSignalsOnFailure() {
+  @Test
+  fun canceledBeforeResponseReadSignalsOnFailure() {
     val requestA = Request(server.url("/a"))
     val call = client.newCall(requestA)
     server.dispatcher = object : mockwebserver3.Dispatcher() {
       override fun dispatch(request: RecordedRequest): MockResponse {
         call.cancel()
-        return MockResponse().setBody("A")
+        return MockResponse(body = "A")
       }
     }
     call.enqueue(callback)
@@ -2459,12 +2645,14 @@ open class CallTest {
     )
   }
 
-  @Test fun canceledBeforeResponseReadSignalsOnFailure_HTTPS() {
+  @Test
+  fun canceledBeforeResponseReadSignalsOnFailure_HTTPS() {
     enableTls()
     canceledBeforeResponseReadSignalsOnFailure()
   }
 
-  @Test fun canceledBeforeResponseReadSignalsOnFailure_HTTP_2() {
+  @Test
+  fun canceledBeforeResponseReadSignalsOnFailure_HTTP_2() {
     enableProtocol(Protocol.HTTP_2)
     canceledBeforeResponseReadSignalsOnFailure()
   }
@@ -2473,8 +2661,9 @@ open class CallTest {
    * There's a race condition where the cancel may apply after the stream has already been
    * processed.
    */
-  @Test fun canceledAfterResponseIsDeliveredBreaksStreamButSignalsOnce() {
-    server.enqueue(MockResponse().setBody("A"))
+  @Test
+  fun canceledAfterResponseIsDeliveredBreaksStreamButSignalsOnce() {
+    server.enqueue(MockResponse(body = "A"))
     val latch = CountDownLatch(1)
     val bodyRef = AtomicReference<String?>()
     val failureRef = AtomicBoolean()
@@ -2515,7 +2704,8 @@ open class CallTest {
     canceledAfterResponseIsDeliveredBreaksStreamButSignalsOnce()
   }
 
-  @Test fun cancelWithInterceptor() {
+  @Test
+  fun cancelWithInterceptor() {
     client = client.newBuilder()
       .addInterceptor(Interceptor { chain: Interceptor.Chain ->
         chain.proceed(chain.request())
@@ -2532,14 +2722,15 @@ open class CallTest {
     assertThat(server.requestCount).isEqualTo(0)
   }
 
-  @Test fun gzip() {
+  @Test
+  fun gzip() {
     val gzippedBody = gzip("abcabcabc")
     val bodySize = java.lang.Long.toString(gzippedBody.size)
     server.enqueue(
-      MockResponse()
-        .setBody(gzippedBody)
+      MockResponse.Builder()
+        .body(gzippedBody)
         .addHeader("Content-Encoding: gzip")
-    )
+        .build())
 
     // Confirm that the user request doesn't have Accept-Encoding, and the user
     // response doesn't have a Content-Encoding or Content-Length.
@@ -2558,33 +2749,32 @@ open class CallTest {
   }
 
   /** https://github.com/square/okhttp/issues/1927  */
-  @Test fun gzipResponseAfterAuthenticationChallenge() {
+  @Test
+  fun gzipResponseAfterAuthenticationChallenge() {
+    server.enqueue(MockResponse(code = 401))
     server.enqueue(
-      MockResponse()
-        .setResponseCode(401)
-    )
-    server.enqueue(
-      MockResponse()
-        .setBody(gzip("abcabcabc"))
+      MockResponse.Builder()
+        .body(gzip("abcabcabc"))
         .addHeader("Content-Encoding: gzip")
-    )
+        .build())
     client = client.newBuilder()
       .authenticator(RecordingOkAuthenticator("password", null))
       .build()
     executeSynchronously("/").assertBody("abcabcabc")
   }
 
-  @Test fun rangeHeaderPreventsAutomaticGzip() {
+  @Test
+  fun rangeHeaderPreventsAutomaticGzip() {
     val gzippedBody = gzip("abcabcabc")
 
     // Enqueue a gzipped response. Our request isn't expecting it, but that's okay.
     server.enqueue(
-      MockResponse()
-        .setResponseCode(HttpURLConnection.HTTP_PARTIAL)
-        .setBody(gzippedBody)
+      MockResponse.Builder()
+        .code(HttpURLConnection.HTTP_PARTIAL)
+        .body(gzippedBody)
         .addHeader("Content-Encoding: gzip")
         .addHeader("Content-Range: bytes 0-" + (gzippedBody.size - 1))
-    )
+        .build())
 
     // Make a range request.
     val request = Request.Builder()
@@ -2602,12 +2792,13 @@ open class CallTest {
 
     // The request did not offer gzip support.
     val recordedRequest = server.takeRequest()
-    assertThat(recordedRequest.getHeader("Accept-Encoding")).isNull()
+    assertThat(recordedRequest.headers["Accept-Encoding"]).isNull()
   }
 
-  @Test fun asyncResponseCanBeConsumedLater() {
-    server.enqueue(MockResponse().setBody("abc"))
-    server.enqueue(MockResponse().setBody("def"))
+  @Test
+  fun asyncResponseCanBeConsumedLater() {
+    server.enqueue(MockResponse(body = "abc"))
+    server.enqueue(MockResponse(body = "def"))
     val request = Request.Builder()
       .url(server.url("/"))
       .header("User-Agent", "SyncApiTest")
@@ -2641,21 +2832,24 @@ open class CallTest {
     response.body.close()
   }
 
-  @Test fun userAgentIsIncludedByDefault() {
+  @Test
+  fun userAgentIsIncludedByDefault() {
     server.enqueue(MockResponse())
     executeSynchronously("/")
     val recordedRequest = server.takeRequest()
-    assertThat(recordedRequest.getHeader("User-Agent")).matches(userAgent)
+    assertThat(recordedRequest.headers["User-Agent"]).matches(userAgent)
   }
 
-  @Test fun setFollowRedirectsFalse() {
+  @Test
+  fun setFollowRedirectsFalse() {
     server.enqueue(
-      MockResponse()
-        .setResponseCode(302)
-        .addHeader("Location: /b")
-        .setBody("A")
+      MockResponse(
+        code = 302,
+        headers = headersOf("Location", "/b"),
+        body = "A",
+      )
     )
-    server.enqueue(MockResponse().setBody("B"))
+    server.enqueue(MockResponse(body = "B"))
     client = client.newBuilder()
       .followRedirects(false)
       .build()
@@ -2664,11 +2858,11 @@ open class CallTest {
       .assertCode(302)
   }
 
-  @Test fun expect100ContinueNonEmptyRequestBody() {
-    server.enqueue(
-      MockResponse()
+  @Test
+  fun expect100ContinueNonEmptyRequestBody() {
+    server.enqueue(MockResponse.Builder()
         .add100Continue()
-    )
+        .build())
     val request = Request.Builder()
       .url(server.url("/"))
       .header("Expect", "100-continue")
@@ -2680,7 +2874,8 @@ open class CallTest {
     assertThat(server.takeRequest().body.readUtf8()).isEqualTo("abc")
   }
 
-  @Test fun expect100ContinueEmptyRequestBody() {
+  @Test
+  fun expect100ContinueEmptyRequestBody() {
     server.enqueue(MockResponse())
     val request = Request.Builder()
       .url(server.url("/"))
@@ -2692,17 +2887,16 @@ open class CallTest {
       .assertSuccessful()
   }
 
-  @Test fun expect100ContinueEmptyRequestBody_HTTP2() {
+  @Test
+  fun expect100ContinueEmptyRequestBody_HTTP2() {
     enableProtocol(Protocol.HTTP_2)
     expect100ContinueEmptyRequestBody()
   }
 
   @Tag("Slowish")
-  @Test fun expect100ContinueTimesOutWithoutContinue() {
-    server.enqueue(
-      MockResponse()
-        .setSocketPolicy(SocketPolicy.NO_RESPONSE)
-    )
+  @Test
+  fun expect100ContinueTimesOutWithoutContinue() {
+    server.enqueue(MockResponse(socketPolicy = SocketPolicy.NO_RESPONSE))
     client = client.newBuilder()
       .readTimeout(Duration.ofMillis(500))
       .build()
@@ -2728,11 +2922,12 @@ open class CallTest {
     expect100ContinueTimesOutWithoutContinue()
   }
 
-  @Test fun serverRespondsWithUnsolicited100Continue() {
+  @Test
+  fun serverRespondsWithUnsolicited100Continue() {
     server.enqueue(
-      MockResponse()
+      MockResponse.Builder()
         .add100Continue()
-    )
+        .build())
     val request = Request(
       url = server.url("/"),
       body = "abc".toRequestBody("text/plain".toMediaType()),
@@ -2744,22 +2939,23 @@ open class CallTest {
     assertThat(recordedRequest.body.readUtf8()).isEqualTo("abc")
   }
 
-  @Test fun serverRespondsWithEarlyHintsHttp2() {
+  @Test
+  fun serverRespondsWithEarlyHintsHttp2() {
     enableProtocol(Protocol.HTTP_2)
     serverRespondsWithEarlyHints()
   }
 
-  @Test fun serverRespondsWithEarlyHints() {
-    val mockResponse = MockResponse()
+  @Test
+  fun serverRespondsWithEarlyHints() {
     server.enqueue(
-   mockResponse.apply {
-     addInformationalResponse(
-       MockResponse()
-         .setResponseCode(103)
-         .setHeaders(headersOf("Link", "</style.css>; rel=preload; as=style"))
-     )
-   }
- )
+      MockResponse.Builder()
+        .addInformationalResponse(
+          MockResponse(
+            code = 103,
+            headers = headersOf("Link", "</style.css>; rel=preload; as=style"),
+          )
+        ).build()
+    )
     val request = Request(
       url = server.url("/"),
       body = "abc".toRequestBody("text/plain".toMediaType()),
@@ -2772,20 +2968,19 @@ open class CallTest {
     assertThat(recordedRequest.headers["Link"]).isNull()
   }
 
-  @Test fun serverRespondsWithUnsolicited100Continue_HTTP2() {
+  @Test
+  fun serverRespondsWithUnsolicited100Continue_HTTP2() {
     enableProtocol(Protocol.HTTP_2)
     serverRespondsWithUnsolicited100Continue()
   }
 
   @Tag("Slow")
-  @Test fun serverRespondsWith100ContinueOnly() {
+  @Test
+  fun serverRespondsWith100ContinueOnly() {
     client = client.newBuilder()
       .readTimeout(Duration.ofSeconds(1))
       .build()
-    server.enqueue(
-      MockResponse()
-        .setStatus("HTTP/1.1 100 Continue")
-    )
+    server.enqueue(MockResponse(code = 100))
     val request = Request(
       url = server.url("/"),
       body = "abc".toRequestBody("text/plain".toMediaType()),
@@ -2801,16 +2996,18 @@ open class CallTest {
   }
 
   @Tag("Slow")
-  @Test fun serverRespondsWith100ContinueOnly_HTTP2() {
+  @Test
+  fun serverRespondsWith100ContinueOnly_HTTP2() {
     enableProtocol(Protocol.HTTP_2)
     serverRespondsWith100ContinueOnly()
   }
 
-  @Test fun successfulExpectContinuePermitsConnectionReuse() {
+  @Test
+  fun successfulExpectContinuePermitsConnectionReuse() {
     server.enqueue(
-      MockResponse()
+      MockResponse.Builder()
         .add100Continue()
-    )
+        .build())
     server.enqueue(MockResponse())
     executeSynchronously(
       Request.Builder()
@@ -2825,13 +3022,15 @@ open class CallTest {
   }
 
   @Tag("Slow")
-  @Test fun successfulExpectContinuePermitsConnectionReuseWithHttp2() {
+  @Test
+  fun successfulExpectContinuePermitsConnectionReuseWithHttp2() {
     enableProtocol(Protocol.HTTP_2)
     successfulExpectContinuePermitsConnectionReuse()
   }
 
   @Tag("Slow")
-  @Test fun unsuccessfulExpectContinuePreventsConnectionReuse() {
+  @Test
+  fun unsuccessfulExpectContinuePreventsConnectionReuse() {
     server.enqueue(MockResponse())
     server.enqueue(MockResponse())
     executeSynchronously(
@@ -2846,7 +3045,8 @@ open class CallTest {
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
   }
 
-  @Test fun unsuccessfulExpectContinuePermitsConnectionReuseWithHttp2() {
+  @Test
+  fun unsuccessfulExpectContinuePermitsConnectionReuseWithHttp2() {
     platform.assumeHttp2Support()
     enableProtocol(Protocol.HTTP_2)
     server.enqueue(MockResponse())
@@ -2864,21 +3064,23 @@ open class CallTest {
   }
 
   /** We forbid non-ASCII characters in outgoing request headers, but accept UTF-8.  */
-  @Test fun responseHeaderParsingIsLenient() {
+  @Test
+  fun responseHeaderParsingIsLenient() {
     val headersBuilder = Headers.Builder()
     headersBuilder.add("Content-Length", "0")
     addHeaderLenient(headersBuilder, "a\tb: c\u007fd")
     addHeaderLenient(headersBuilder, ": ef")
     addHeaderLenient(headersBuilder, "\ud83c\udf69: \u2615\ufe0f")
     val headers = headersBuilder.build()
-    server.enqueue(MockResponse().setHeaders(headers))
+    server.enqueue(MockResponse(headers = headers))
     executeSynchronously("/")
       .assertHeader("a\tb", "c\u007fd")
       .assertHeader("\ud83c\udf69", "\u2615\ufe0f")
       .assertHeader("", "ef")
   }
 
-  @Test fun customDns() {
+  @Test
+  fun customDns() {
     // Configure a DNS that returns our local MockWebServer for android.com.
     val dns = FakeDns()
     dns["android.com"] = Dns.SYSTEM.lookup(server.url("/").host)
@@ -2891,7 +3093,8 @@ open class CallTest {
     dns.assertRequests("android.com")
   }
 
-  @Test fun dnsReturnsZeroIpAddresses() {
+  @Test
+  fun dnsReturnsZeroIpAddresses() {
     // Configure a DNS that returns our local MockWebServer for android.com.
     val dns = FakeDns()
     val ipAddresses = mutableListOf<InetAddress>()
@@ -2907,10 +3110,11 @@ open class CallTest {
 
   /** We had a bug where failed HTTP/2 calls could break the entire connection.  */
   @Flaky
-  @Test fun failingCallsDoNotInterfereWithConnection() {
+  @Test
+  fun failingCallsDoNotInterfereWithConnection() {
     enableProtocol(Protocol.HTTP_2)
-    server.enqueue(MockResponse().setBody("Response 1"))
-    server.enqueue(MockResponse().setBody("Response 2"))
+    server.enqueue(MockResponse(body = "Response 1"))
+    server.enqueue(MockResponse(body = "Response 2"))
     val requestBody: RequestBody = object : RequestBody() {
       override fun contentType(): MediaType? {
         return null
@@ -2943,15 +3147,13 @@ open class CallTest {
   }
 
   /** Test which headers are sent unencrypted to the HTTP proxy.  */
-  @Test fun proxyConnectOmitsApplicationHeaders() {
+  @Test
+  fun proxyConnectOmitsApplicationHeaders() {
     server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
-      MockResponse()
-        .inTunnel()
-    )
+      MockResponse(inTunnel = true))
     server.enqueue(
-      MockResponse()
-        .setBody("encrypted response from the origin server")
+      MockResponse(body = "encrypted response from the origin server")
     )
     val hostnameVerifier = RecordingHostnameVerifier()
     client = client.newBuilder()
@@ -2972,13 +3174,13 @@ open class CallTest {
       "encrypted response from the origin server"
     )
     val connect = server.takeRequest()
-    assertThat(connect.getHeader("Private")).isNull()
-    assertThat(connect.getHeader("User-Agent")).isEqualTo(userAgent)
-    assertThat(connect.getHeader("Proxy-Connection")).isEqualTo("Keep-Alive")
-    assertThat(connect.getHeader("Host")).isEqualTo("android.com:443")
+    assertThat(connect.headers["Private"]).isNull()
+    assertThat(connect.headers["User-Agent"]).isEqualTo(userAgent)
+    assertThat(connect.headers["Proxy-Connection"]).isEqualTo("Keep-Alive")
+    assertThat(connect.headers["Host"]).isEqualTo("android.com:443")
     val get = server.takeRequest()
-    assertThat(get.getHeader("Private")).isEqualTo("Secret")
-    assertThat(get.getHeader("User-Agent")).isEqualTo("App 1.0")
+    assertThat(get.headers["Private"]).isEqualTo("Secret")
+    assertThat(get.headers["User-Agent"]).isEqualTo("App 1.0")
     assertThat(hostnameVerifier.calls).containsExactly("verify android.com")
   }
 
@@ -2986,13 +3188,14 @@ open class CallTest {
    * We had a bug where OkHttp would crash if HTTP proxies returned a truncated response.
    * https://github.com/square/okhttp/issues/5727
    */
-  @Test fun proxyUpgradeFailsWithTruncatedResponse() {
+  @Test
+  fun proxyUpgradeFailsWithTruncatedResponse() {
     server.enqueue(
-      MockResponse()
-        .setBody("abc")
+      MockResponse.Builder()
+        .body("abc")
         .setHeader("Content-Length", "5")
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
-    )
+        .socketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        .build())
     val hostnameVerifier = RecordingHostnameVerifier()
     client = client.newBuilder()
       .sslSocketFactory(
@@ -3012,21 +3215,20 @@ open class CallTest {
   }
 
   /** Respond to a proxy authorization challenge.  */
-  @Test fun proxyAuthenticateOnConnect() {
+  @Test
+  fun proxyAuthenticateOnConnect() {
     server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
-      MockResponse()
-        .inTunnel()
-        .setResponseCode(407)
-        .addHeader("Proxy-Authenticate: Basic realm=\"localhost\"")
+      MockResponse(
+        code = 407,
+        headers = headersOf("Proxy-Authenticate", "Basic realm=\"localhost\""),
+        inTunnel = true,
+      )
     )
     server.enqueue(
-      MockResponse()
-        .inTunnel()
-    )
+      MockResponse(inTunnel = true))
     server.enqueue(
-      MockResponse()
-        .setBody("response body")
+      MockResponse(body = "response body")
     )
     client = client.newBuilder()
       .sslSocketFactory(
@@ -3042,25 +3244,26 @@ open class CallTest {
     assertThat(response.body.string()).isEqualTo("response body")
     val connect1 = server.takeRequest()
     assertThat(connect1.requestLine).isEqualTo("CONNECT android.com:443 HTTP/1.1")
-    assertThat(connect1.getHeader("Proxy-Authorization")).isNull()
+    assertThat(connect1.headers["Proxy-Authorization"]).isNull()
     val connect2 = server.takeRequest()
     assertThat(connect2.requestLine).isEqualTo("CONNECT android.com:443 HTTP/1.1")
-    assertThat(connect2.getHeader("Proxy-Authorization")).isEqualTo("password")
+    assertThat(connect2.headers["Proxy-Authorization"]).isEqualTo("password")
     val get = server.takeRequest()
     assertThat(get.requestLine).isEqualTo("GET /foo HTTP/1.1")
-    assertThat(get.getHeader("Proxy-Authorization")).isNull()
+    assertThat(get.headers["Proxy-Authorization"]).isNull()
   }
 
   /** Confirm that the proxy authenticator works for unencrypted HTTP proxies.  */
-  @Test fun httpProxyAuthenticate() {
+  @Test
+  fun httpProxyAuthenticate() {
     server.enqueue(
-      MockResponse()
-        .setResponseCode(407)
-        .addHeader("Proxy-Authenticate: Basic realm=\"localhost\"")
+      MockResponse(
+        code = 407,
+        headers = headersOf("Proxy-Authenticate", "Basic realm=\"localhost\""),
+      )
     )
     server.enqueue(
-      MockResponse()
-        .setBody("response body")
+      MockResponse(body = "response body")
     )
     client = client.newBuilder()
       .proxy(server.toProxyAddress())
@@ -3071,33 +3274,32 @@ open class CallTest {
     assertThat(response.body.string()).isEqualTo("response body")
     val get1 = server.takeRequest()
     assertThat(get1.requestLine).isEqualTo("GET http://android.com/foo HTTP/1.1")
-    assertThat(get1.getHeader("Proxy-Authorization")).isNull()
+    assertThat(get1.headers["Proxy-Authorization"]).isNull()
     val get2 = server.takeRequest()
     assertThat(get2.requestLine).isEqualTo("GET http://android.com/foo HTTP/1.1")
-    assertThat(get2.getHeader("Proxy-Authorization")).isEqualTo("password")
+    assertThat(get2.headers["Proxy-Authorization"]).isEqualTo("password")
   }
 
   /**
    * OkHttp has a bug where a `Connection: close` response header is not honored when establishing a
    * TLS tunnel. https://github.com/square/okhttp/issues/2426
    */
-  @Test fun proxyAuthenticateOnConnectWithConnectionClose() {
+  @Test
+  fun proxyAuthenticateOnConnectWithConnectionClose() {
     server.useHttps(handshakeCertificates.sslSocketFactory())
     server.protocols = listOf<Protocol>(Protocol.HTTP_1_1)
     server.enqueue(
-      MockResponse()
-        .inTunnel()
-        .setResponseCode(407)
-        .addHeader("Proxy-Authenticate: Basic realm=\"localhost\"")
-        .addHeader("Connection: close")
+      MockResponse(
+        code = 407,
+        headers = headersOf(
+          "Proxy-Authenticate", "Basic realm=\"localhost\"",
+          "Connection", "close",
+        ),
+        inTunnel = true,
+      )
     )
-    server.enqueue(
-      MockResponse()
-        .inTunnel()
-    )
-    server.enqueue(
-      MockResponse()
-        .setBody("response body")
+    server.enqueue(MockResponse(inTunnel = true))
+    server.enqueue(MockResponse(body = "response body")
     )
     client = client.newBuilder()
       .sslSocketFactory(
@@ -3122,16 +3324,20 @@ open class CallTest {
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(1)
   }
 
-  @Test fun tooManyProxyAuthFailuresWithConnectionClose() {
+  @Test
+  fun tooManyProxyAuthFailuresWithConnectionClose() {
     server.useHttps(handshakeCertificates.sslSocketFactory())
     server.protocols = listOf(Protocol.HTTP_1_1)
     for (i in 0..20) {
       server.enqueue(
-        MockResponse()
-          .inTunnel()
-          .setResponseCode(407)
-          .addHeader("Proxy-Authenticate: Basic realm=\"localhost\"")
-          .addHeader("Connection: close")
+        MockResponse(
+          code = 407,
+          headers = headersOf(
+            "Proxy-Authenticate", "Basic realm=\"localhost\"",
+            "Connection", "close",
+          ),
+          inTunnel = true,
+        )
       )
     }
     client = client.newBuilder()
@@ -3156,16 +3362,11 @@ open class CallTest {
    * We used to have that behavior but it is problematic because unrelated requests end up sharing
    * credentials. Worse, that approach leaks proxy credentials to the origin server.
    */
-  @Test fun noPreemptiveProxyAuthorization() {
+  @Test
+  fun noPreemptiveProxyAuthorization() {
     server.useHttps(handshakeCertificates.sslSocketFactory())
-    server.enqueue(
-      MockResponse()
-        .inTunnel()
-    )
-    server.enqueue(
-      MockResponse()
-        .setBody("response body")
-    )
+    server.enqueue(MockResponse(inTunnel = true))
+    server.enqueue(MockResponse(body = "response body"))
     client = client.newBuilder()
       .sslSocketFactory(
         handshakeCertificates.sslSocketFactory(),
@@ -3181,22 +3382,17 @@ open class CallTest {
     val response = client.newCall(request).execute()
     assertThat(response.body.string()).isEqualTo("response body")
     val connect1 = server.takeRequest()
-    assertThat(connect1.getHeader("Proxy-Authorization")).isNull()
+    assertThat(connect1.headers["Proxy-Authorization"]).isNull()
     val connect2 = server.takeRequest()
-    assertThat(connect2.getHeader("Proxy-Authorization")).isEqualTo("password")
+    assertThat(connect2.headers["Proxy-Authorization"]).isEqualTo("password")
   }
 
   /** Confirm that we can send authentication information without being prompted first.  */
-  @Test fun preemptiveProxyAuthentication() {
+  @Test
+  fun preemptiveProxyAuthentication() {
     server.useHttps(handshakeCertificates.sslSocketFactory())
-    server.enqueue(
-      MockResponse()
-        .inTunnel()
-    )
-    server.enqueue(
-      MockResponse()
-        .setBody("encrypted response from the origin server")
-    )
+    server.enqueue(MockResponse(inTunnel = true))
+    server.enqueue(MockResponse(body = "encrypted response from the origin server"))
     val credential = basic("jesse", "password1")
     client = client.newBuilder()
       .sslSocketFactory(
@@ -3220,27 +3416,26 @@ open class CallTest {
     executeSynchronously(request).assertSuccessful()
     val connect = server.takeRequest()
     assertThat(connect.method).isEqualTo("CONNECT")
-    assertThat(connect.getHeader("Proxy-Authorization")).isEqualTo(credential)
+    assertThat(connect.headers["Proxy-Authorization"]).isEqualTo(credential)
     assertThat(connect.path).isEqualTo("/")
     val get = server.takeRequest()
     assertThat(get.method).isEqualTo("GET")
-    assertThat(get.getHeader("Proxy-Authorization")).isNull()
+    assertThat(get.headers["Proxy-Authorization"]).isNull()
     assertThat(get.path).isEqualTo("/foo")
   }
 
-  @Test fun preemptiveThenReactiveProxyAuthentication() {
+  @Test
+  fun preemptiveThenReactiveProxyAuthentication() {
     server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
-      MockResponse()
-        .inTunnel()
-        .setResponseCode(HttpURLConnection.HTTP_PROXY_AUTH)
-        .addHeader("Proxy-Authenticate", "Basic realm=\"localhost\"")
-        .setBody("proxy auth required")
+      MockResponse(
+        code = HttpURLConnection.HTTP_PROXY_AUTH,
+        headers = headersOf("Proxy-Authenticate", "Basic realm=\"localhost\""),
+        body = "proxy auth required",
+        inTunnel = true,
+      )
     )
-    server.enqueue(
-      MockResponse()
-        .inTunnel()
-    )
+    server.enqueue(MockResponse(inTunnel = true))
     server.enqueue(MockResponse())
     val challengeSchemes: MutableList<String?> = ArrayList()
     val credential = basic("jesse", "password1")
@@ -3263,20 +3458,23 @@ open class CallTest {
     executeSynchronously(request).assertSuccessful()
     val connect1 = server.takeRequest()
     assertThat(connect1.method).isEqualTo("CONNECT")
-    assertThat(connect1.getHeader("Proxy-Authorization")).isEqualTo(credential)
+    assertThat(connect1.headers["Proxy-Authorization"]).isEqualTo(credential)
     val connect2 = server.takeRequest()
     assertThat(connect2.method).isEqualTo("CONNECT")
-    assertThat(connect2.getHeader("Proxy-Authorization")).isEqualTo(credential)
+    assertThat(connect2.headers["Proxy-Authorization"]).isEqualTo(credential)
     assertThat(challengeSchemes).containsExactly("OkHttp-Preemptive", "Basic")
   }
 
   /** https://github.com/square/okhttp/issues/4915  */
-  @Test @Disabled fun proxyDisconnectsAfterRequest() {
+  @Test
+  @Disabled
+  fun proxyDisconnectsAfterRequest() {
     server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(
-      MockResponse()
-        .inTunnel()
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST)
+      MockResponse(
+        inTunnel = true,
+        socketPolicy = SocketPolicy.DISCONNECT_AFTER_REQUEST,
+      )
     )
     client = client.newBuilder()
       .sslSocketFactory(
@@ -3293,7 +3491,8 @@ open class CallTest {
     }
   }
 
-  @Test fun interceptorGetsHttp2() {
+  @Test
+  fun interceptorGetsHttp2() {
     platform.assumeHttp2Support()
     enableProtocol(Protocol.HTTP_2)
 
@@ -3313,43 +3512,48 @@ open class CallTest {
     assertThat(protocolRef.get()).isEqualTo(Protocol.HTTP_2)
   }
 
-  @Test fun serverSendsInvalidResponseHeaders() {
+  @Test
+  fun serverSendsInvalidResponseHeaders() {
     server.enqueue(
-      MockResponse()
-        .setStatus("HTP/1.1 200 OK")
-    )
+      MockResponse.Builder()
+        .status("HTP/1.1 200 OK")
+        .build())
     executeSynchronously("/")
       .assertFailure("Unexpected status line: HTP/1.1 200 OK")
   }
 
-  @Test fun serverSendsInvalidCodeTooLarge() {
+  @Test
+  fun serverSendsInvalidCodeTooLarge() {
     server.enqueue(
-      MockResponse()
-        .setStatus("HTTP/1.1 2147483648 OK")
-    )
+      MockResponse.Builder()
+        .status("HTTP/1.1 2147483648 OK")
+        .build())
     executeSynchronously("/")
       .assertFailure("Unexpected status line: HTTP/1.1 2147483648 OK")
   }
 
-  @Test fun serverSendsInvalidCodeNotANumber() {
+  @Test
+  fun serverSendsInvalidCodeNotANumber() {
     server.enqueue(
-      MockResponse()
-        .setStatus("HTTP/1.1 00a OK")
-    )
+      MockResponse.Builder()
+        .status("HTTP/1.1 00a OK")
+        .build())
     executeSynchronously("/")
       .assertFailure("Unexpected status line: HTTP/1.1 00a OK")
   }
 
-  @Test fun serverSendsUnnecessaryWhitespace() {
+  @Test
+  fun serverSendsUnnecessaryWhitespace() {
     server.enqueue(
-      MockResponse()
-        .setStatus(" HTTP/1.1 200 OK")
-    )
+      MockResponse.Builder()
+        .status(" HTTP/1.1 200 OK")
+        .build())
     executeSynchronously("/")
       .assertFailure("Unexpected status line:  HTTP/1.1 200 OK")
   }
 
-  @Test fun requestHeaderNameWithSpaceForbidden() {
+  @Test
+  fun requestHeaderNameWithSpaceForbidden() {
     try {
       Request.Builder().addHeader("a b", "c")
       fail<Unit>()
@@ -3358,7 +3562,8 @@ open class CallTest {
     }
   }
 
-  @Test fun requestHeaderNameWithTabForbidden() {
+  @Test
+  fun requestHeaderNameWithTabForbidden() {
     try {
       Request.Builder().addHeader("a\tb", "c")
       fail<Unit>()
@@ -3367,37 +3572,41 @@ open class CallTest {
     }
   }
 
-  @Test fun responseHeaderNameWithSpacePermitted() {
+  @Test
+  fun responseHeaderNameWithSpacePermitted() {
     server.enqueue(
-      MockResponse()
+      MockResponse.Builder()
         .clearHeaders()
         .addHeader("content-length: 0")
         .addHeaderLenient("a b", "c")
-    )
+        .build())
     val call = client.newCall(Request(server.url("/")))
     val response = call.execute()
     assertThat(response.header("a b")).isEqualTo("c")
   }
 
-  @Test fun responseHeaderNameWithTabPermitted() {
+  @Test
+  fun responseHeaderNameWithTabPermitted() {
     server.enqueue(
-      MockResponse()
+      MockResponse.Builder()
         .clearHeaders()
         .addHeader("content-length: 0")
         .addHeaderLenient("a\tb", "c")
-    )
+        .build())
     val call = client.newCall(Request(server.url("/")))
     val response = call.execute()
     assertThat(response.header("a\tb")).isEqualTo("c")
   }
 
-  @Test fun connectFails() {
+  @Test
+  fun connectFails() {
     server.shutdown()
     executeSynchronously("/")
       .assertFailure(IOException::class.java)
   }
 
-  @Test fun requestBodySurvivesRetries() {
+  @Test
+  fun requestBodySurvivesRetries() {
     server.enqueue(MockResponse())
 
     // Enable a misconfigured proxy selector to guarantee that the request is retried.
@@ -3418,34 +3627,39 @@ open class CallTest {
   }
 
   @Disabled // This may fail in DNS lookup, which we don't have timeouts for.
-  @Test fun invalidHost() {
+  @Test
+  fun invalidHost() {
     val request = Request("http://1234.1.1.1/".toHttpUrl())
     executeSynchronously(request)
       .assertFailure(UnknownHostException::class.java)
   }
 
-  @Test fun uploadBodySmallChunkedEncoding() {
+  @Test
+  fun uploadBodySmallChunkedEncoding() {
     upload(true, 1048576, 256)
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.bodySize).isEqualTo(1048576)
     assertThat(recordedRequest.chunkSizes).isNotEmpty
   }
 
-  @Test fun uploadBodyLargeChunkedEncoding() {
+  @Test
+  fun uploadBodyLargeChunkedEncoding() {
     upload(true, 1048576, 65536)
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.bodySize).isEqualTo(1048576)
     assertThat(recordedRequest.chunkSizes).isNotEmpty
   }
 
-  @Test fun uploadBodySmallFixedLength() {
+  @Test
+  fun uploadBodySmallFixedLength() {
     upload(false, 1048576, 256)
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.bodySize).isEqualTo(1048576)
     assertThat(recordedRequest.chunkSizes).isEmpty()
   }
 
-  @Test fun uploadBodyLargeFixedLength() {
+  @Test
+  fun uploadBodyLargeFixedLength() {
     upload(false, 1048576, 65536)
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.bodySize).isEqualTo(1048576)
@@ -3463,11 +3677,11 @@ open class CallTest {
   }
 
   /** https://github.com/square/okhttp/issues/2344  */
-  @Test fun ipv6HostHasSquareBracesHttp1() {
+  @Test
+  fun ipv6HostHasSquareBracesHttp1() {
     configureClientAndServerProxies(http2 = false)
     server.enqueue(
-      MockResponse()
-        .setBody("response body")
+      MockResponse(body = "response body")
     )
     val port = server.port
     val url = server.url("/").newBuilder()
@@ -3479,20 +3693,20 @@ open class CallTest {
     assertThat(response.body.string()).isEqualTo("response body")
     val connect = server.takeRequest()
     assertThat(connect.requestLine).isEqualTo("CONNECT [::1]:$port HTTP/1.1")
-    assertThat(connect.getHeader("Host")).isEqualTo("[::1]:$port")
-    assertThat(connect.getHeader(":authority")).isNull()
+    assertThat(connect.headers["Host"]).isEqualTo("[::1]:$port")
+    assertThat(connect.headers[":authority"]).isNull()
     val get = server.takeRequest()
     assertThat(get.requestLine).isEqualTo("GET / HTTP/1.1")
-    assertThat(get.getHeader("Host")).isEqualTo("[::1]:$port")
-    assertThat(get.getHeader(":authority")).isNull()
+    assertThat(get.headers["Host"]).isEqualTo("[::1]:$port")
+    assertThat(get.headers[":authority"]).isNull()
     assertThat(get.requestUrl).isEqualTo(url)
   }
 
-  @Test fun ipv6HostHasSquareBracesHttp2() {
+  @Test
+  fun ipv6HostHasSquareBracesHttp2() {
     configureClientAndServerProxies(http2 = true)
     server.enqueue(
-      MockResponse()
-        .setBody("response body")
+      MockResponse(body = "response body")
     )
     val port = server.port
     val url = server.url("/").newBuilder()
@@ -3506,24 +3720,24 @@ open class CallTest {
     assertThat(connect.requestLine).isEqualTo(
       "CONNECT [::1]:$port HTTP/1.1"
     )
-    assertThat(connect.getHeader("Host")).isEqualTo(
+    assertThat(connect.headers["Host"]).isEqualTo(
       "[::1]:$port"
     )
-    assertThat(connect.getHeader(":authority")).isNull()
+    assertThat(connect.headers[":authority"]).isNull()
     val get = server.takeRequest()
     assertThat(get.requestLine).isEqualTo("GET / HTTP/1.1")
-    assertThat(get.getHeader("Host")).isNull()
-    assertThat(get.getHeader(":authority")).isEqualTo(
+    assertThat(get.headers["Host"]).isNull()
+    assertThat(get.headers[":authority"]).isEqualTo(
       "[::1]:$port"
     )
     assertThat(get.requestUrl).isEqualTo(url)
   }
 
-  @Test fun ipv4IpHostHasNoSquareBracesHttp1() {
+  @Test
+  fun ipv4IpHostHasNoSquareBracesHttp1() {
     configureClientAndServerProxies(http2 = false)
     server.enqueue(
-      MockResponse()
-        .setBody("response body")
+      MockResponse(body = "response body")
     )
     val port = server.port
     val url = server.url("/").newBuilder()
@@ -3537,24 +3751,24 @@ open class CallTest {
     assertThat(connect.requestLine).isEqualTo(
       "CONNECT 127.0.0.1:$port HTTP/1.1"
     )
-    assertThat(connect.getHeader("Host")).isEqualTo(
+    assertThat(connect.headers["Host"]).isEqualTo(
       "127.0.0.1:$port"
     )
-    assertThat(connect.getHeader(":authority")).isNull()
+    assertThat(connect.headers[":authority"]).isNull()
     val get = server.takeRequest()
     assertThat(get.requestLine).isEqualTo("GET / HTTP/1.1")
-    assertThat(get.getHeader("Host")).isEqualTo(
+    assertThat(get.headers["Host"]).isEqualTo(
       "127.0.0.1:$port"
     )
-    assertThat(get.getHeader(":authority")).isNull()
+    assertThat(get.headers[":authority"]).isNull()
     assertThat(get.requestUrl).isEqualTo(url)
   }
 
-  @Test fun ipv4IpHostHasNoSquareBracesHttp2() {
+  @Test
+  fun ipv4IpHostHasNoSquareBracesHttp2() {
     configureClientAndServerProxies(http2 = true)
     server.enqueue(
-      MockResponse()
-        .setBody("response body")
+      MockResponse(body = "response body")
     )
     val port = server.port
     val url = server.url("/").newBuilder()
@@ -3566,20 +3780,20 @@ open class CallTest {
     assertThat(response.body.string()).isEqualTo("response body")
     val connect = server.takeRequest()
     assertThat(connect.requestLine).isEqualTo("CONNECT 127.0.0.1:$port HTTP/1.1")
-    assertThat(connect.getHeader("Host")).isEqualTo("127.0.0.1:$port")
-    assertThat(connect.getHeader(":authority")).isNull()
+    assertThat(connect.headers["Host"]).isEqualTo("127.0.0.1:$port")
+    assertThat(connect.headers[":authority"]).isNull()
     val get = server.takeRequest()
     assertThat(get.requestLine).isEqualTo("GET / HTTP/1.1")
-    assertThat(get.getHeader("Host")).isNull()
-    assertThat(get.getHeader(":authority")).isEqualTo("127.0.0.1:$port")
+    assertThat(get.headers["Host"]).isNull()
+    assertThat(get.headers[":authority"]).isEqualTo("127.0.0.1:$port")
     assertThat(get.requestUrl).isEqualTo(url)
   }
 
-  @Test fun hostnameRequestHostHasNoSquareBracesHttp1() {
+  @Test
+  fun hostnameRequestHostHasNoSquareBracesHttp1() {
     configureClientAndServerProxies(http2 = false)
     server.enqueue(
-      MockResponse()
-        .setBody("response body")
+      MockResponse(body = "response body")
     )
     val port = server.port
     val url = server.url("/").newBuilder()
@@ -3591,20 +3805,20 @@ open class CallTest {
     assertThat(response.body.string()).isEqualTo("response body")
     val connect = server.takeRequest()
     assertThat(connect.requestLine).isEqualTo("CONNECT any-host-name:$port HTTP/1.1")
-    assertThat(connect.getHeader("Host")).isEqualTo("any-host-name:$port")
-    assertThat(connect.getHeader(":authority")).isNull()
+    assertThat(connect.headers["Host"]).isEqualTo("any-host-name:$port")
+    assertThat(connect.headers[":authority"]).isNull()
     val get = server.takeRequest()
     assertThat(get.requestLine).isEqualTo("GET / HTTP/1.1")
-    assertThat(get.getHeader("Host")).isEqualTo("any-host-name:$port")
-    assertThat(get.getHeader(":authority")).isNull()
+    assertThat(get.headers["Host"]).isEqualTo("any-host-name:$port")
+    assertThat(get.headers[":authority"]).isNull()
     assertThat(get.requestUrl).isEqualTo(url)
   }
 
-  @Test fun hostnameRequestHostHasNoSquareBracesHttp2() {
+  @Test
+  fun hostnameRequestHostHasNoSquareBracesHttp2() {
     configureClientAndServerProxies(http2 = true)
     server.enqueue(
-      MockResponse()
-        .setBody("response body")
+      MockResponse(body = "response body")
     )
     val port = server.port
     val url = server.url("/").newBuilder()
@@ -3616,12 +3830,12 @@ open class CallTest {
     assertThat(response.body.string()).isEqualTo("response body")
     val connect = server.takeRequest()
     assertThat(connect.requestLine).isEqualTo("CONNECT any-host-name:$port HTTP/1.1")
-    assertThat(connect.getHeader("Host")).isEqualTo("any-host-name:$port")
-    assertThat(connect.getHeader(":authority")).isNull()
+    assertThat(connect.headers["Host"]).isEqualTo("any-host-name:$port")
+    assertThat(connect.headers[":authority"]).isNull()
     val get = server.takeRequest()
     assertThat(get.requestLine).isEqualTo("GET / HTTP/1.1")
-    assertThat(get.getHeader("Host")).isNull()
-    assertThat(get.getHeader(":authority")).isEqualTo("any-host-name:$port")
+    assertThat(get.headers["Host"]).isNull()
+    assertThat(get.headers[":authority"]).isEqualTo("any-host-name:$port")
     assertThat(get.requestUrl).isEqualTo(url)
   }
 
@@ -3632,10 +3846,7 @@ open class CallTest {
       http2 -> listOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
       else -> listOf(Protocol.HTTP_1_1)
     }
-    server.enqueue(
-      MockResponse()
-        .inTunnel()
-    )
+    server.enqueue(MockResponse(inTunnel = true))
     client = client.newBuilder()
       .sslSocketFactory(
         handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
@@ -3665,10 +3876,10 @@ open class CallTest {
     }
   }
 
-  @Test fun emptyResponseBody() {
+  @Test
+  fun emptyResponseBody() {
     server.enqueue(
-      MockResponse()
-        .addHeader("abc", "def")
+      MockResponse(headers = headersOf("abc", "def"))
     )
     executeSynchronously("/")
       .assertCode(200)
@@ -3676,10 +3887,10 @@ open class CallTest {
       .assertBody("")
   }
 
-  @Test fun leakedResponseBodyLogsStackTrace() {
+  @Test
+  fun leakedResponseBodyLogsStackTrace() {
     server.enqueue(
-      MockResponse()
-        .setBody("This gets leaked.")
+      MockResponse(body = "This gets leaked.")
     )
     client = clientTestRule.newClientBuilder()
       .connectionPool(ConnectionPool(0, 10, TimeUnit.MILLISECONDS))
@@ -3694,11 +3905,9 @@ open class CallTest {
   }
 
   @Tag("Slowish")
-  @Test fun asyncLeakedResponseBodyLogsStackTrace() {
-    server.enqueue(
-      MockResponse()
-        .setBody("This gets leaked.")
-    )
+  @Test
+  fun asyncLeakedResponseBodyLogsStackTrace() {
+    server.enqueue(MockResponse(body = "This gets leaked."))
     client = clientTestRule.newClientBuilder()
       .connectionPool(ConnectionPool(0, 10, TimeUnit.MILLISECONDS))
       .build()
@@ -3725,11 +3934,9 @@ open class CallTest {
     )
   }
 
-  @Test fun failedAuthenticatorReleasesConnection() {
-    server.enqueue(
-      MockResponse()
-        .setResponseCode(401)
-    )
+  @Test
+  fun failedAuthenticatorReleasesConnection() {
+    server.enqueue(MockResponse(code = 401))
     client = client.newBuilder()
       .authenticator { _: Route?, _: Response -> throw IOException("IOException!") }
       .build()
@@ -3739,10 +3946,10 @@ open class CallTest {
     assertThat(client.connectionPool.idleConnectionCount()).isEqualTo(1)
   }
 
-  @Test fun failedProxyAuthenticatorReleasesConnection() {
+  @Test
+  fun failedProxyAuthenticatorReleasesConnection() {
     server.enqueue(
-      MockResponse()
-        .setResponseCode(407)
+      MockResponse(code = 407)
     )
     client = client.newBuilder()
       .proxyAuthenticator { _: Route?, _: Response ->
@@ -3755,7 +3962,8 @@ open class CallTest {
     assertThat(client.connectionPool.idleConnectionCount()).isEqualTo(1)
   }
 
-  @Test fun httpsWithIpAddress() {
+  @Test
+  fun httpsWithIpAddress() {
     val localIpAddress = InetAddress.getLoopbackAddress().hostAddress
 
     // Create a certificate with an IP address in the subject alt name.
@@ -3789,10 +3997,11 @@ open class CallTest {
 
     // Confirm that the IP address was used in the host header.
     val recordedRequest = server.takeRequest()
-    assertThat(recordedRequest.getHeader("Host")).isEqualTo("$localIpAddress:${server.port}")
+    assertThat(recordedRequest.headers["Host"]).isEqualTo("$localIpAddress:${server.port}")
   }
 
-  @Test fun postWithFileNotFound() {
+  @Test
+  fun postWithFileNotFound() {
     val called = AtomicInteger(0)
     val body: RequestBody = object : RequestBody() {
       override fun contentType(): MediaType = "application/octet-stream".toMediaType()
@@ -3814,14 +4023,15 @@ open class CallTest {
     assertThat(called.get()).isEqualTo(1L)
   }
 
-  @Test fun clientReadsHeadersDataTrailersHttp1ChunkedTransferEncoding() {
-    val mockResponse = MockResponse()
+  @Test
+  fun clientReadsHeadersDataTrailersHttp1ChunkedTransferEncoding() {
+    server.enqueue(MockResponse.Builder()
       .clearHeaders()
       .addHeader("h1", "v1")
       .addHeader("h2", "v2")
-      .setChunkedBody("HelloBonjour", 1024)
-      .setTrailers(headersOf("trailers", "boom"))
-    server.enqueue(mockResponse)
+      .chunkedBody("HelloBonjour", 1024)
+      .trailers(headersOf("trailers", "boom"))
+      .build())
     val call = client.newCall(Request(server.url("/")))
     val response = call.execute()
     val source = response.body.source()
@@ -3835,15 +4045,16 @@ open class CallTest {
     ).isEqualTo(headersOf("trailers", "boom"))
   }
 
-  @Test fun clientReadsHeadersDataTrailersHttp2() {
+  @Test
+  fun clientReadsHeadersDataTrailersHttp2() {
     platform.assumeHttp2Support()
-    val mockResponse = MockResponse()
+    server.enqueue(MockResponse.Builder()
       .clearHeaders()
       .addHeader("h1", "v1")
       .addHeader("h2", "v2")
-      .setBody("HelloBonjour")
-      .setTrailers(headersOf("trailers", "boom"))
-    server.enqueue(mockResponse)
+      .body("HelloBonjour")
+      .trailers(headersOf("trailers", "boom"))
+      .build())
     enableProtocol(Protocol.HTTP_2)
     val call = client.newCall(Request(server.url("/")))
     call.execute().use { response ->
@@ -3857,7 +4068,8 @@ open class CallTest {
     }
   }
 
-  @Test fun connectionIsImmediatelyUnhealthy() {
+  @Test
+  fun connectionIsImmediatelyUnhealthy() {
     val listener: EventListener = object : EventListener() {
       override fun connectionAcquired(call: Call, connection: Connection) {
         connection.socket().closeQuietly()
@@ -3871,7 +4083,8 @@ open class CallTest {
       .assertFailure("Socket closed", "Socket is closed")
   }
 
-  @Test fun requestBodyThrowsUnrelatedToNetwork() {
+  @Test
+  fun requestBodyThrowsUnrelatedToNetwork() {
     server.enqueue(MockResponse())
     val request = Request(
       url = server.url("/"),
@@ -3890,7 +4103,8 @@ open class CallTest {
     assertThat(server.takeRequest().failure).isNotNull
   }
 
-  @Test fun requestBodyThrowsUnrelatedToNetwork_HTTP2() {
+  @Test
+  fun requestBodyThrowsUnrelatedToNetwork_HTTP2() {
     enableProtocol(Protocol.HTTP_2)
     requestBodyThrowsUnrelatedToNetwork()
   }
@@ -3900,10 +4114,11 @@ open class CallTest {
    * connection that returns to the connection pool with the underlying socket closed. This relies
    * on an implementation detail so it might not be a valid test case in the future.
    */
-  @Test fun cancelAfterResponseBodyEnd() {
+  @Test
+  fun cancelAfterResponseBodyEnd() {
     enableTls()
-    server.enqueue(MockResponse().setBody("abc"))
-    server.enqueue(MockResponse().setBody("def"))
+    server.enqueue(MockResponse(body = "abc"))
+    server.enqueue(MockResponse(body = "def"))
     client = client.newBuilder()
       .protocols(listOf(Protocol.HTTP_1_1))
       .build()
@@ -3921,10 +4136,10 @@ open class CallTest {
   }
 
   /** https://github.com/square/okhttp/issues/4583  */
-  @Test fun lateCancelCallsOnFailure() {
+  @Test
+  fun lateCancelCallsOnFailure() {
     server.enqueue(
-      MockResponse()
-        .setBody("abc")
+      MockResponse(body = "abc")
     )
     val closed = AtomicBoolean()
     client = client.newBuilder()
@@ -3946,18 +4161,21 @@ open class CallTest {
     assertThat(closed.get()).isTrue
   }
 
-  @Test fun priorResponseBodyNotReadable() {
+  @Test
+  fun priorResponseBodyNotReadable() {
     server.enqueue(
-      MockResponse()
-        .setResponseCode(301)
-        .addHeader("Location: /b")
-        .addHeader("Content-Type: text/plain; charset=UTF-8")
-        .addHeader("Test", "Redirect from /a to /b")
-        .setBody("/a has moved!")
+      MockResponse(
+        code = 301,
+        headers = headersOf(
+          "Location", "/b",
+          "Content-Type", "text/plain; charset=UTF-8",
+          "Test", "Redirect from /a to /b",
+        ),
+        body = "/a has moved!",
+      )
     )
     server.enqueue(
-      MockResponse()
-        .setBody("this is the redirect target")
+      MockResponse(body = "this is the redirect target")
     )
 
     val call = client.newCall(Request(server.url("/")))
