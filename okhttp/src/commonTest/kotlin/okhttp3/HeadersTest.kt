@@ -285,7 +285,7 @@ class HeadersTest {
   }
 
   @Test fun nameIndexesAreStrict() {
-    val headers = Headers.headersOf("a", "b", "c", "d")
+    val headers = headersOf("a", "b", "c", "d")
     try {
       headers.name(-1)
       fail()
@@ -301,7 +301,7 @@ class HeadersTest {
   }
 
   @Test fun valueIndexesAreStrict() {
-    val headers = Headers.headersOf("a", "b", "c", "d")
+    val headers = headersOf("a", "b", "c", "d")
     try {
       headers.value(-1)
       fail()

@@ -224,3 +224,5 @@ internal fun inet6AddressToAscii(address: ByteArray): String {
   }
   return result.readUtf8()
 }
+
+expect fun String.toCanonicalHost(): String?

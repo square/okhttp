@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import android.annotation.SuppressLint
 import java.net.Proxy
 import java.net.ProxySelector
 import java.net.Socket
@@ -512,7 +513,7 @@ open class OkHttpClient internal constructor(
     internal val networkInterceptors: MutableList<Interceptor> = mutableListOf()
     internal var eventListenerFactory: EventListener.Factory = EventListener.NONE.asFactory()
     internal var retryOnConnectionFailure = true
-    internal var fastFallback = false
+    internal var fastFallback = true
     internal var authenticator: Authenticator = Authenticator.NONE
     internal var followRedirects = true
     internal var followSslRedirects = true
@@ -668,6 +669,8 @@ open class OkHttpClient internal constructor(
      *
      * This implements Happy Eyeballs ([RFC 6555][rfc_6555]), balancing connect latency vs.
      * wasted resources.
+     *
+     * Defaults to enabled, call with [fastFallback] = false to revert to 4.x behaviour.
      *
      * [rfc_6555]: https://datatracker.ietf.org/doc/html/rfc6555
      */
@@ -991,6 +994,7 @@ open class OkHttpClient internal constructor(
      *
      * The default value is 0 which imposes no timeout.
      */
+    @SuppressLint("NewApi")
     @IgnoreJRERequirement
     fun callTimeout(duration: Duration) = apply {
       callTimeout(duration.toMillis(), MILLISECONDS)
@@ -1014,6 +1018,7 @@ open class OkHttpClient internal constructor(
      * The connect timeout is applied when connecting a TCP socket to the target host. The default
      * value is 10 seconds.
      */
+    @SuppressLint("NewApi")
     @IgnoreJRERequirement
     fun connectTimeout(duration: Duration) = apply {
       connectTimeout(duration.toMillis(), MILLISECONDS)
@@ -1043,6 +1048,7 @@ open class OkHttpClient internal constructor(
      * @see Socket.setSoTimeout
      * @see Source.timeout
      */
+    @SuppressLint("NewApi")
     @IgnoreJRERequirement
     fun readTimeout(duration: Duration) = apply {
       readTimeout(duration.toMillis(), MILLISECONDS)
@@ -1070,6 +1076,7 @@ open class OkHttpClient internal constructor(
      *
      * @see Sink.timeout
      */
+    @SuppressLint("NewApi")
     @IgnoreJRERequirement
     fun writeTimeout(duration: Duration) = apply {
       writeTimeout(duration.toMillis(), MILLISECONDS)
@@ -1105,6 +1112,7 @@ open class OkHttpClient internal constructor(
      *
      * The default value of 0 disables client-initiated pings.
      */
+    @SuppressLint("NewApi")
     @IgnoreJRERequirement
     fun pingInterval(duration: Duration) = apply {
       pingInterval(duration.toMillis(), MILLISECONDS)

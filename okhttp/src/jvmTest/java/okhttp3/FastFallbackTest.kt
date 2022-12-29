@@ -36,6 +36,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.RegisterExtension
+import org.junitpioneer.jupiter.RetryingTest
 import org.opentest4j.TestAbortedException
 
 /**
@@ -206,7 +207,7 @@ class FastFallbackTest {
     assertThat(listener.recordedEventTypes().filter { it == "ConnectFailed" }).hasSize(2)
   }
 
-  @Test
+  @RetryingTest(5)
   @Flaky
   fun reachesIpv4AfterUnreachableIpv6Address() {
     dnsResults = listOf(

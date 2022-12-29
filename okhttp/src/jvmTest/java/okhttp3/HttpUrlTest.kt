@@ -126,58 +126,6 @@ open class HttpUrlTest {
   }
 
   @Test
-  fun scheme() {
-    assertThat(parse("http://host/")).isEqualTo(parse("http://host/"))
-    assertThat(parse("Http://host/")).isEqualTo(parse("http://host/"))
-    assertThat(parse("http://host/")).isEqualTo(parse("http://host/"))
-    assertThat(parse("HTTP://host/")).isEqualTo(parse("http://host/"))
-    assertThat(parse("https://host/")).isEqualTo(parse("https://host/"))
-    assertThat(parse("HTTPS://host/")).isEqualTo(parse("https://host/"))
-    assertInvalid(
-      "image640://480.png",
-      "Expected URL scheme 'http' or 'https' but was 'image640'"
-    )
-    assertInvalid("httpp://host/", "Expected URL scheme 'http' or 'https' but was 'httpp'")
-    assertInvalid(
-      "0ttp://host/",
-      "Expected URL scheme 'http' or 'https' but no scheme was found for 0ttp:/..."
-    )
-    assertInvalid("ht+tp://host/", "Expected URL scheme 'http' or 'https' but was 'ht+tp'")
-    assertInvalid("ht.tp://host/", "Expected URL scheme 'http' or 'https' but was 'ht.tp'")
-    assertInvalid("ht-tp://host/", "Expected URL scheme 'http' or 'https' but was 'ht-tp'")
-    assertInvalid("ht1tp://host/", "Expected URL scheme 'http' or 'https' but was 'ht1tp'")
-    assertInvalid("httpss://host/", "Expected URL scheme 'http' or 'https' but was 'httpss'")
-  }
-
-  @Test
-  fun parseNoScheme() {
-    assertInvalid(
-      "//host",
-      "Expected URL scheme 'http' or 'https' but no scheme was found for //host"
-    )
-    assertInvalid(
-      "://host",
-      "Expected URL scheme 'http' or 'https' but no scheme was found for ://hos..."
-    )
-    assertInvalid(
-      "/path",
-      "Expected URL scheme 'http' or 'https' but no scheme was found for /path"
-    )
-    assertInvalid(
-      "path",
-      "Expected URL scheme 'http' or 'https' but no scheme was found for path"
-    )
-    assertInvalid(
-      "?query",
-      "Expected URL scheme 'http' or 'https' but no scheme was found for ?query"
-    )
-    assertInvalid(
-      "#fragment",
-      "Expected URL scheme 'http' or 'https' but no scheme was found for #fragm..."
-    )
-  }
-
-  @Test
   fun newBuilderResolve() {
     // Non-exhaustive tests because implementation is the same as resolve.
     val base = parse("http://host/a/b")
@@ -464,26 +412,26 @@ open class HttpUrlTest {
     UrlComponentEncodingTester.newInstance()
       .override(
         Encoding.PERCENT,
-        '['.toInt(),
-        ']'.toInt(),
-        '{'.toInt(),
-        '}'.toInt(),
-        '|'.toInt(),
-        '^'.toInt(),
-        '\''.toInt(),
-        ';'.toInt(),
-        '='.toInt(),
-        '@'.toInt()
+        '['.code,
+        ']'.code,
+        '{'.code,
+        '}'.code,
+        '|'.code,
+        '^'.code,
+        '\''.code,
+        ';'.code,
+        '='.code,
+        '@'.code
       )
       .override(
         Encoding.SKIP,
-        ':'.toInt(),
-        '/'.toInt(),
-        '\\'.toInt(),
-        '?'.toInt(),
-        '#'.toInt()
+        ':'.code,
+        '/'.code,
+        '\\'.code,
+        '?'.code,
+        '#'.code
       )
-      .escapeForUri('%'.toInt())
+      .escapeForUri('%'.code)
       .test(UrlComponentEncodingTester.Component.USER)
   }
 
@@ -492,26 +440,26 @@ open class HttpUrlTest {
     UrlComponentEncodingTester.newInstance()
       .override(
         Encoding.PERCENT,
-        '['.toInt(),
-        ']'.toInt(),
-        '{'.toInt(),
-        '}'.toInt(),
-        '|'.toInt(),
-        '^'.toInt(),
-        '\''.toInt(),
-        ':'.toInt(),
-        ';'.toInt(),
-        '='.toInt(),
-        '@'.toInt()
+        '['.code,
+        ']'.code,
+        '{'.code,
+        '}'.code,
+        '|'.code,
+        '^'.code,
+        '\''.code,
+        ':'.code,
+        ';'.code,
+        '='.code,
+        '@'.code
       )
       .override(
         Encoding.SKIP,
-        '/'.toInt(),
-        '\\'.toInt(),
-        '?'.toInt(),
-        '#'.toInt()
+        '/'.code,
+        '\\'.code,
+        '?'.code,
+        '#'.code
       )
-      .escapeForUri('%'.toInt())
+      .escapeForUri('%'.code)
       .test(UrlComponentEncodingTester.Component.PASSWORD)
   }
 
@@ -582,44 +530,44 @@ open class HttpUrlTest {
       .nonAscii(Encoding.FORBIDDEN)
       .override(
         Encoding.FORBIDDEN,
-        '\t'.toInt(),
-        '\n'.toInt(),
-        '\u000c'.toInt(),
-        '\r'.toInt(),
-        ' '.toInt()
+        '\t'.code,
+        '\n'.code,
+        '\u000c'.code,
+        '\r'.code,
+        ' '.code
       )
       .override(
         Encoding.FORBIDDEN,
-        '#'.toInt(),
-        '%'.toInt(),
-        '/'.toInt(),
-        ':'.toInt(),
-        '?'.toInt(),
-        '@'.toInt(),
-        '['.toInt(),
-        '\\'.toInt(),
-        ']'.toInt()
+        '#'.code,
+        '%'.code,
+        '/'.code,
+        ':'.code,
+        '?'.code,
+        '@'.code,
+        '['.code,
+        '\\'.code,
+        ']'.code
       )
       .override(
         Encoding.IDENTITY,
-        '\"'.toInt(),
-        '<'.toInt(),
-        '>'.toInt(),
-        '^'.toInt(),
-        '`'.toInt(),
-        '{'.toInt(),
-        '|'.toInt(),
-        '}'.toInt()
+        '\"'.code,
+        '<'.code,
+        '>'.code,
+        '^'.code,
+        '`'.code,
+        '{'.code,
+        '|'.code,
+        '}'.code
       )
       .stripForUri(
-        '\"'.toInt(),
-        '<'.toInt(),
-        '>'.toInt(),
-        '^'.toInt(),
-        '`'.toInt(),
-        '{'.toInt(),
-        '|'.toInt(),
-        '}'.toInt()
+        '\"'.code,
+        '<'.code,
+        '>'.code,
+        '^'.code,
+        '`'.code,
+        '{'.code,
+        '|'.code,
+        '}'.code
       )
       .test(UrlComponentEncodingTester.Component.HOST)
   }
@@ -914,18 +862,6 @@ open class HttpUrlTest {
       .isEqualTo("http://[::1]/")
   }
 
-  @Test
-  fun hostIpv4CanonicalForm() {
-    assertThat(parse("http://255.255.255.255/").host).isEqualTo("255.255.255.255")
-    assertThat(parse("http://1.2.3.4/").host).isEqualTo("1.2.3.4")
-    assertThat(parse("http://0.0.0.0/").host).isEqualTo("0.0.0.0")
-  }
-
-  @Test
-  fun hostWithTrailingDot() {
-    assertThat(parse("http://host./").host).isEqualTo("host.")
-  }
-
   /**
    * Strip unexpected characters when converting to URI (which is more strict).
    * https://github.com/square/okhttp/issues/5667
@@ -946,52 +882,39 @@ open class HttpUrlTest {
   }
 
   @Test
-  fun port() {
-    assertThat(parse("http://host:80/")).isEqualTo(parse("http://host/"))
-    assertThat(parse("http://host:99/")).isEqualTo(parse("http://host:99/"))
-    assertThat(parse("http://host:/")).isEqualTo(parse("http://host/"))
-    assertThat(parse("http://host:65535/").port).isEqualTo(65535)
-    assertInvalid("http://host:0/", "Invalid URL port: \"0\"")
-    assertInvalid("http://host:65536/", "Invalid URL port: \"65536\"")
-    assertInvalid("http://host:-1/", "Invalid URL port: \"-1\"")
-    assertInvalid("http://host:a/", "Invalid URL port: \"a\"")
-    assertInvalid("http://host:%39%39/", "Invalid URL port: \"%39%39\"")
-  }
-
-  @Test
   fun pathCharacters() {
     UrlComponentEncodingTester.newInstance()
       .override(
         Encoding.PERCENT,
-        '^'.toInt(),
-        '{'.toInt(),
-        '}'.toInt(),
-        '|'.toInt()
+        '^'.code,
+        '{'.code,
+        '}'.code,
+        '|'.code
       )
       .override(
         Encoding.SKIP,
-        '\\'.toInt(),
-        '?'.toInt(),
-        '#'.toInt()
+        '\\'.code,
+        '?'.code,
+        '#'.code
       )
-      .escapeForUri('%'.toInt(), '['.toInt(), ']'.toInt())
+      .escapeForUri('%'.code, '['.code, ']'.code)
       .test(UrlComponentEncodingTester.Component.PATH)
   }
 
   @Test
   fun queryCharacters() {
     UrlComponentEncodingTester.newInstance()
-      .override(Encoding.IDENTITY, '?'.toInt(), '`'.toInt())
-      .override(Encoding.PERCENT, '\''.toInt())
-      .override(Encoding.SKIP, '#'.toInt(), '+'.toInt())
+      .override(Encoding.IDENTITY, '?'.code, '`'.code)
+      .override(Encoding.PERCENT, '\''.code)
+      .override(Encoding.SKIP, '#'.code, '+'.code)
       .escapeForUri(
-        '%'.toInt(),
-        '\\'.toInt(),
-        '^'.toInt(),
-        '`'.toInt(),
-        '{'.toInt(),
-        '|'.toInt(),
-        '}'.toInt()
+        '%'.code,
+        '\\'.code,
+        '^'.code,
+        '`'.code,
+        '{'.code,
+        '|'.code,
+        '}'.code
       )
       .test(UrlComponentEncodingTester.Component.QUERY)
   }
@@ -999,17 +922,17 @@ open class HttpUrlTest {
   @Test
   fun queryValueCharacters() {
     UrlComponentEncodingTester.newInstance()
-      .override(Encoding.IDENTITY, '?'.toInt(), '`'.toInt())
-      .override(Encoding.PERCENT, '\''.toInt())
-      .override(Encoding.SKIP, '#'.toInt(), '+'.toInt())
+      .override(Encoding.IDENTITY, '?'.code, '`'.code)
+      .override(Encoding.PERCENT, '\''.code)
+      .override(Encoding.SKIP, '#'.code, '+'.code)
       .escapeForUri(
-        '%'.toInt(),
-        '\\'.toInt(),
-        '^'.toInt(),
-        '`'.toInt(),
-        '{'.toInt(),
-        '|'.toInt(),
-        '}'.toInt()
+        '%'.code,
+        '\\'.code,
+        '^'.code,
+        '`'.code,
+        '{'.code,
+        '|'.code,
+        '}'.code
       )
       .test(UrlComponentEncodingTester.Component.QUERY_VALUE)
   }
@@ -1019,27 +942,27 @@ open class HttpUrlTest {
     UrlComponentEncodingTester.newInstance()
       .override(
         Encoding.IDENTITY,
-        ' '.toInt(),
-        '"'.toInt(),
-        '#'.toInt(),
-        '<'.toInt(),
-        '>'.toInt(),
-        '?'.toInt(),
-        '`'.toInt()
+        ' '.code,
+        '"'.code,
+        '#'.code,
+        '<'.code,
+        '>'.code,
+        '?'.code,
+        '`'.code
       )
       .escapeForUri(
-        '%'.toInt(),
-        ' '.toInt(),
-        '"'.toInt(),
-        '#'.toInt(),
-        '<'.toInt(),
-        '>'.toInt(),
-        '\\'.toInt(),
-        '^'.toInt(),
-        '`'.toInt(),
-        '{'.toInt(),
-        '|'.toInt(),
-        '}'.toInt()
+        '%'.code,
+        ' '.code,
+        '"'.code,
+        '#'.code,
+        '<'.code,
+        '>'.code,
+        '\\'.code,
+        '^'.code,
+        '`'.code,
+        '{'.code,
+        '|'.code,
+        '}'.code
       )
       .nonAscii(Encoding.IDENTITY)
       .test(UrlComponentEncodingTester.Component.FRAGMENT)
@@ -1225,44 +1148,6 @@ open class HttpUrlTest {
   }
 
   @Test
-  fun minimalUrlComposition() {
-    val url = HttpUrl.Builder().scheme("http").host("host").build()
-    assertThat(url.toString()).isEqualTo("http://host/")
-    assertThat(url.scheme).isEqualTo("http")
-    assertThat(url.username).isEqualTo("")
-    assertThat(url.password).isEqualTo("")
-    assertThat(url.host).isEqualTo("host")
-    assertThat(url.port).isEqualTo(80)
-    assertThat(url.encodedPath).isEqualTo("/")
-    assertThat(url.query).isNull()
-    assertThat(url.fragment).isNull()
-  }
-
-  @Test
-  fun fullUrlComposition() {
-    val url = HttpUrl.Builder()
-      .scheme("http")
-      .username("username")
-      .password("password")
-      .host("host")
-      .port(8080)
-      .addPathSegment("path")
-      .query("query")
-      .fragment("fragment")
-      .build()
-    assertThat(url.toString())
-      .isEqualTo("http://username:password@host:8080/path?query#fragment")
-    assertThat(url.scheme).isEqualTo("http")
-    assertThat(url.username).isEqualTo("username")
-    assertThat(url.password).isEqualTo("password")
-    assertThat(url.host).isEqualTo("host")
-    assertThat(url.port).isEqualTo(8080)
-    assertThat(url.encodedPath).isEqualTo("/path")
-    assertThat(url.query).isEqualTo("query")
-    assertThat(url.fragment).isEqualTo("fragment")
-  }
-
-  @Test
   fun changingSchemeChangesDefaultPort() {
     assertThat(
       parse("http://example.com")
@@ -1420,12 +1305,6 @@ open class HttpUrlTest {
       .addPathSegment("")
       .build().encodedPath)
       .isEqualTo("/a/b/c/")
-  }
-
-  @Test
-  fun pathSize() {
-    assertThat(parse("http://host/").pathSize).isEqualTo(1)
-    assertThat(parse("http://host/a/b/c").pathSize).isEqualTo(3)
   }
 
   @Test

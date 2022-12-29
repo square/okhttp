@@ -31,6 +31,7 @@ import okhttp3.ConnectionListener
 import okhttp3.ConnectionSpec
 import okhttp3.Handshake
 import okhttp3.Handshake.Companion.handshake
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
@@ -63,6 +64,7 @@ class ConnectPlan(
   // Configuration and state scoped to the call.
   private val client: OkHttpClient,
   private val call: RealCall,
+  private val chain: Interceptor.Chain,
   private val routePlanner: RealRoutePlanner,
 
   // Specifics to this plan.
@@ -108,6 +110,7 @@ class ConnectPlan(
     return ConnectPlan(
       client = client,
       call = call,
+      chain = chain,
       routePlanner = routePlanner,
       route = route,
       routes = routes,
@@ -257,9 +260,9 @@ class ConnectPlan(
       throw IOException("canceled")
     }
 
-    rawSocket.soTimeout = client.readTimeoutMillis
+    rawSocket.soTimeout = chain.readTimeoutMillis()
     try {
-      Platform.get().connectSocket(rawSocket, route.socketAddress, client.connectTimeoutMillis)
+      Platform.get().connectSocket(rawSocket, route.socketAddress, chain.connectTimeoutMillis())
     } catch (e: ConnectException) {
       throw ConnectException("Failed to connect to ${route.socketAddress}").apply {
         initCause(e)
@@ -510,6 +513,7 @@ class ConnectPlan(
     return ConnectPlan(
       client = client,
       call = call,
+      chain = chain,
       routePlanner = routePlanner,
       route = route,
       routes = routes,

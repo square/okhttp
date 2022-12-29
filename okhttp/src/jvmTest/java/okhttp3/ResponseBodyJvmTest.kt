@@ -490,7 +490,7 @@ class ResponseBodyJvmTest {
       val buf = CharArray(10)
       var read: Int
       while (reader.read(buf).also { read = it } != -1) {
-        builder.append(buf, 0, read)
+        builder.appendRange(buf, 0, read)
       }
       return builder.toString()
     }

@@ -152,10 +152,16 @@ class MockWebServer : Closeable {
   val hostName: String
     get() {
       before()
-      return inetSocketAddress!!.address.canonicalHostName
+      return _inetSocketAddress!!.address.canonicalHostName
     }
 
-  private var inetSocketAddress: InetSocketAddress? = null
+  private var _inetSocketAddress: InetSocketAddress? = null
+
+  val inetSocketAddress: InetSocketAddress
+    get() {
+      before()
+      return InetSocketAddress(hostName, portField)
+    }
 
   /**
    * True if ALPN is used on incoming HTTPS connections to negotiate a protocol like HTTP/1.1 or
@@ -206,7 +212,7 @@ class MockWebServer : Closeable {
 
   fun toProxyAddress(): Proxy {
     before()
-    val address = InetSocketAddress(inetSocketAddress!!.address.canonicalHostName, port)
+    val address = InetSocketAddress(_inetSocketAddress!!.address.canonicalHostName, port)
     return Proxy(Proxy.Type.HTTP, address)
   }
 
@@ -383,7 +389,7 @@ class MockWebServer : Closeable {
     if (started) return
     started = true
 
-    this.inetSocketAddress = inetSocketAddress
+    this._inetSocketAddress = inetSocketAddress
 
     serverSocket = serverSocketFactory!!.createServerSocket()
 

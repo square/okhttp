@@ -254,6 +254,8 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
         logger.log("<-- END HTTP")
       } else if (bodyHasUnknownEncoding(response.headers)) {
         logger.log("<-- END HTTP (encoded body omitted)")
+      } else if (bodyIsStreaming(response)) {
+        logger.log("<-- END HTTP (streaming)")
       } else {
         val source = responseBody.source()
         source.request(Long.MAX_VALUE) // Buffer the entire body.
@@ -301,5 +303,10 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
     val contentEncoding = headers["Content-Encoding"] ?: return false
     return !contentEncoding.equals("identity", ignoreCase = true) &&
         !contentEncoding.equals("gzip", ignoreCase = true)
+  }
+
+  private fun bodyIsStreaming(response: Response): Boolean {
+    val contentType = response.body.contentType()
+    return contentType != null && contentType.type == "text" && contentType.subtype == "event-stream"
   }
 }
