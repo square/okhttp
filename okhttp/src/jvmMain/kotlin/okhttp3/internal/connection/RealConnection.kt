@@ -22,6 +22,7 @@ import java.net.Proxy
 import java.net.Socket
 import java.net.SocketException
 import java.security.cert.X509Certificate
+import java.util.Queue
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit.MILLISECONDS
 import javax.net.ssl.SSLPeerUnverifiedException
@@ -137,7 +138,8 @@ class RealConnection(
   internal val isMultiplexed: Boolean
     get() = http2Connection != null
 
-  private val queuedEvents = ConcurrentLinkedQueue<Runnable>()
+  private val queuedEvents: Queue<Runnable>? =
+    if (connectionListener == ConnectionListener.NONE) null else ConcurrentLinkedQueue()
 
   /** Prevent further exchanges from being created on this connection. */
   @Synchronized override fun noNewExchanges() {
@@ -394,12 +396,20 @@ class RealConnection(
   override fun protocol(): Protocol = protocol!!
 
   fun queueEvent(function: Runnable) {
+    if (queuedEvents == null) {
+      return
+    }
+
     assertThreadHoldsLock()
 
     queuedEvents.add(function)
   }
 
   fun takeQueuedEvents(): List<Runnable> {
+    if (queuedEvents == null) {
+      return emptyList()
+    }
+
     // optimise for zero or one items
     val first = queuedEvents.poll() ?: return emptyList()
     val second = queuedEvents.poll() ?: return listOf(first)
