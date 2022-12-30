@@ -321,7 +321,7 @@ class MockResponse {
         bytesOut.writeUtf8("\r\n")
       }
       bytesOut.writeUtf8("0\r\n") // Last chunk. Trailers follow!
-      body(bytesOut)
+      this.body = bytesOut.toMockResponseBody()
     }
 
     /**
