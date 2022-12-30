@@ -18,6 +18,7 @@ jobs:
     permissions:
       checks: write # for actions/upload-artifact
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'documentation')
 
     steps:
       - name: Checkout
