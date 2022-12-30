@@ -574,8 +574,8 @@ public final class MockWebServerTest {
   @Test public void testMockWebServerH2PriorKnowledgeProtocol() {
     server.setProtocols(asList(Protocol.H2_PRIOR_KNOWLEDGE));
 
-    assertThat(server.protocols().size()).isEqualTo(1);
-    assertThat(server.protocols().get(0)).isEqualTo(Protocol.H2_PRIOR_KNOWLEDGE);
+    assertThat(server.getProtocols().size()).isEqualTo(1);
+    assertThat(server.getProtocols().get(0)).isEqualTo(Protocol.H2_PRIOR_KNOWLEDGE);
   }
 
   @Test public void https() throws Exception {

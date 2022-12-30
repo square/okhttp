@@ -275,6 +275,13 @@ subprojects {
       ignoredPackages += "okhttp3.tls.internal"
     }
   }
+
+  plugins.withId("org.jetbrains.kotlin.jvm") {
+    val jvmTest by tasks.creating {
+      description = "Get 'gradlew jvmTest' to run the tests of JVM-only modules"
+      dependsOn("test")
+    }
+  }
 }
 
 tasks.wrapper {
