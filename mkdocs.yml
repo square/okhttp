@@ -95,6 +95,7 @@ nav:
     - 'Events': features/events.md
     - 'HTTPS': features/https.md
     - 'Interceptors': features/interceptors.md
+    - 'R8/Proguard': features/r8_proguard.md
   - 'Recipes': recipes.md
   - 'Security':
     - 'Security': security/security.md
@@ -102,14 +103,14 @@ nav:
     - 'Configuration History': security/tls_configuration_history.md
   - 'Works with OkHttp': works_with_okhttp.md
   - 'API':
-    - 'okhttp': 4.x/okhttp/okhttp3/index.md
-    - 'brotli': 4.x/okhttp-brotli/okhttp3.brotli/index.md
-    - 'dnsoverhttps': 4.x/okhttp-dnsoverhttps/okhttp3.dnsoverhttps/index.md
-    - 'logging-interceptor': 4.x/logging-interceptor/okhttp3.logging/index.md
-    - 'sse': 4.x/okhttp-sse/okhttp3.sse/index.md
-    - 'tls': 4.x/okhttp-tls/okhttp3.tls/index.md
-    - 'urlconnection': 4.x/okhttp-urlconnection/okhttp3/index.md
-    - 'mockwebserver': 4.x/mockwebserver/okhttp3.mockwebserver/index.md
+    - 'okhttp': 4.x/okhttp/okhttp3/index.html
+    - 'brotli': 4.x/okhttp-brotli/okhttp3.brotli/index.html
+    - 'dnsoverhttps': 4.x/okhttp-dnsoverhttps/okhttp3.dnsoverhttps/index.html
+    - 'logging-interceptor': 4.x/logging-interceptor/okhttp3.logging/index.html
+    - 'sse': 4.x/okhttp-sse/okhttp3.sse/index.html
+    - 'tls': 4.x/okhttp-tls/okhttp3.tls/index.html
+    - 'urlconnection': 4.x/okhttp-urlconnection/okhttp3/index.html
+    - 'mockwebserver': 4.x/mockwebserver/okhttp3.mockwebserver/index.html
   - 'Change Logs':
     - 'Change Log': changelogs/changelog.md
     - '4.x Change Log': changelogs/changelog_4x.md

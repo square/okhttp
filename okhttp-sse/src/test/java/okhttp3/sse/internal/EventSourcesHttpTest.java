@@ -52,9 +52,11 @@ public final class EventSourcesHttpTest {
   }
 
   @Test public void processResponse() throws IOException {
-    server.enqueue(new MockResponse().setBody(""
-        + "data: hey\n"
-        + "\n").setHeader("content-type", "text/event-stream"));
+    server.enqueue(new MockResponse.Builder()
+      .body(""
+          + "data: hey\n"
+          + "\n").setHeader("content-type", "text/event-stream")
+      .build());
 
     Request request = new Request.Builder()
         .url(server.url("/"))
@@ -68,9 +70,11 @@ public final class EventSourcesHttpTest {
   }
 
   @Test public void cancelShortCircuits() throws IOException {
-    server.enqueue(new MockResponse().setBody(""
-      + "data: hey\n"
-      + "\n").setHeader("content-type", "text/event-stream"));
+    server.enqueue(new MockResponse.Builder()
+      .body(""
+          + "data: hey\n"
+          + "\n").setHeader("content-type", "text/event-stream")
+      .build());
     listener.enqueueCancel(); // Will cancel in onOpen().
 
     Request request = new Request.Builder()

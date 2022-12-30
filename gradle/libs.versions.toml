@@ -1,22 +1,22 @@
 [versions]
-biz-aQute-bnd = "6.3.1"
-checkStyle = "10.3.3"
+biz-aQute-bnd = "6.4.0"
+checkStyle = "10.5.0"
 com-squareup-moshi = "1.14.0"
 com-squareup-okio = "3.2.0"
 de-mannodermaus-junit5 = "1.3.0"
-graalvm = "22.2.0"
-org-bouncycastle = "1.71"
+graalvm = "22.3.0"
+org-bouncycastle = "1.72"
 org-conscrypt = "2.5.2"
 org-jetbrains-coroutines = "1.6.4"
-org-jetbrains-kotlin = "1.6.21"
-org-junit-jupiter = "5.9.0"
+org-jetbrains-kotlin = "1.7.10"
+org-junit-jupiter = "5.9.1"
 
 [libraries]
 amazonCorretto = "software.amazon.cryptools:AmazonCorrettoCryptoProvider:1.6.1"
-androidx-annotation = "androidx.annotation:annotation:1.4.0"
-androidx-espresso-core = "androidx.test.espresso:espresso-core:3.4.0"
-androidx-junit = "androidx.test.ext:junit:1.1.3"
-androidx-test-runner = "androidx.test:runner:1.4.0"
+androidx-annotation = "androidx.annotation:annotation:1.5.0"
+androidx-espresso-core = "androidx.test.espresso:espresso-core:3.5.0"
+androidx-junit = "androidx.test.ext:junit:1.1.4"
+androidx-test-runner = "androidx.test:runner:1.5.1"
 animalsniffer-annotations = "org.codehaus.mojo:animal-sniffer-annotations:1.22"
 aqute-resolve = { module = "biz.aQute.bnd:biz.aQute.resolve", version.ref = "biz-aQute-bnd" }
 assertj-core = "org.assertj:assertj-core:3.23.1"
@@ -26,36 +26,37 @@ bouncycastle-bcprov = { module = "org.bouncycastle:bcprov-jdk15to18", version.re
 bouncycastle-bctls = { module = "org.bouncycastle:bctls-jdk15to18", version.ref = "org-bouncycastle" }
 brotli-dec = "org.brotli:dec:0.1.2"
 checkStyle = { module = "com.puppycrawl.tools:checkstyle", version.ref = "checkStyle" }
-clikt = "com.github.ajalt.clikt:clikt:3.5.0"
+clikt = "com.github.ajalt.clikt:clikt:3.5.1"
 codehaus-signature-java18 = "org.codehaus.mojo.signature:java18:1.0"
 conscrypt-android = { module = "org.conscrypt:conscrypt-android", version.ref = "org-conscrypt" }
 conscrypt-openjdk = { module = "org.conscrypt:conscrypt-openjdk-uber", version.ref = "org-conscrypt" }
-eclipseOsgi = "org.eclipse.platform:org.eclipse.osgi:3.18.0"
+eclipseOsgi = "org.eclipse.platform:org.eclipse.osgi:3.18.200"
 findbugs-jsr305 = "com.google.code.findbugs:jsr305:3.0.2"
 gradlePlugin-android = "com.android.tools.build:gradle:7.2.2"
 gradlePlugin-androidJunit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.8.2.1"
 gradlePlugin-animalsniffer = "ru.vyarus:gradle-animalsniffer-plugin:1.6.0"
-gradlePlugin-binaryCompatibilityValidator = "org.jetbrains.kotlinx.binary-compatibility-validator:org.jetbrains.kotlinx.binary-compatibility-validator.gradle.plugin:0.11.1"
+gradlePlugin-binaryCompatibilityValidator = "org.jetbrains.kotlinx.binary-compatibility-validator:org.jetbrains.kotlinx.binary-compatibility-validator.gradle.plugin:0.12.1"
 gradlePlugin-bnd = { module = "biz.aQute.bnd:biz.aQute.bnd.gradle", version.ref = "biz-aQute-bnd" }
-gradlePlugin-dokka = "org.jetbrains.dokka:dokka-gradle-plugin:1.7.10"
-gradlePlugin-errorprone = "net.ltgt.gradle:gradle-errorprone-plugin:2.0.2"
+gradlePlugin-dokka = "org.jetbrains.dokka:dokka-gradle-plugin:1.7.20"
+gradlePlugin-errorprone = "net.ltgt.gradle:gradle-errorprone-plugin:3.0.1"
 gradlePlugin-graal = "com.palantir.graal:gradle-graal:0.12.0"
 gradlePlugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "org-jetbrains-kotlin" }
-gradlePlugin-mavenPublish = "com.vanniktech:gradle-maven-publish-plugin:0.20.0"
+gradlePlugin-mavenPublish = "com.vanniktech:gradle-maven-publish-plugin:0.23.0"
 gradlePlugin-shadow = "gradle.plugin.com.github.johnrengelman:shadow:7.1.2"
-gradlePlugin-spotless = "com.diffplug.spotless:spotless-plugin-gradle:6.10.0"
+gradlePlugin-spotless = "com.diffplug.spotless:spotless-plugin-gradle:6.12.0"
 guava-jre = "com.google.guava:guava:31.1-jre"
 hamcrestLibrary = "org.hamcrest:hamcrest-library:2.2"
-httpClient5 = "org.apache.httpcomponents.client5:httpclient5:5.1.3"
-jettyClient = "org.eclipse.jetty:jetty-client:11.0.11"
-jnr-unixsocket = "com.github.jnr:jnr-unixsocket:0.38.17"
+httpClient5 = "org.apache.httpcomponents.client5:httpclient5:5.2.1"
+jettyClient = "org.eclipse.jetty:jetty-client:11.0.13"
+jnr-unixsocket = "com.github.jnr:jnr-unixsocket:0.38.19"
 jsoup = "org.jsoup:jsoup:1.15.3"
 junit = "junit:junit:4.13.2"
 junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "org-junit-jupiter" }
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "org-junit-jupiter" }
 junit-jupiter-params = { module = "org.junit.jupiter:junit-jupiter-params", version.ref = "org-junit-jupiter" }
-junit-platform-console = "org.junit.platform:junit-platform-console:1.9.0"
-junit-vintage-engine = "org.junit.vintage:junit-vintage-engine:5.9.0"
+junit-platform-console = "org.junit.platform:junit-platform-console:1.9.1"
+junit-vintage-engine = "org.junit.vintage:junit-vintage-engine:5.9.1"
+junit-pioneer = "org.junit-pioneer:junit-pioneer:1.9.1"
 junit5android-core = { module = "de.mannodermaus.junit5:android-test-core", version.ref = "de-mannodermaus-junit5" }
 junit5android-runner = { module = "de.mannodermaus.junit5:android-test-runner", version.ref = "de-mannodermaus-junit5" }
 kotlin-junit5 = { module = "org.jetbrains.kotlin:kotlin-test-junit5", version.ref = "org-jetbrains-kotlin" }

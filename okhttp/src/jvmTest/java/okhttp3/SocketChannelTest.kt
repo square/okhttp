@@ -77,6 +77,9 @@ class SocketChannelTest {
   @BeforeEach
   fun setUp(server: MockWebServer) {
     this.server = server
+
+    // Test designed for Conscrypt and JSSE
+    platform.assumeNotBouncyCastle()
   }
 
   @ParameterizedTest
@@ -148,7 +151,7 @@ class SocketChannelTest {
       }
       .build()
 
-    server.enqueue(MockResponse().setBody("abc"))
+    server.enqueue(MockResponse(body = "abc"))
 
     @Suppress("HttpUrlsUsage") val url =
       if (socketMode is TlsInstance)

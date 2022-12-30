@@ -61,6 +61,6 @@ dependencies {
 }
 
 mavenPublishing {
-  @Suppress("DEPRECATION") // Requires AGP 7.1.x
-  configure(com.vanniktech.maven.publish.AndroidLibrary(javadocJar = JavadocJar.Dokka("dokkaGfm")))
+  // AGP 7.2 embeds Dokka 4, which breaks publishing. Android modules are hardcoded to generate Javadoc instead of Gfm.
+  configure(com.vanniktech.maven.publish.AndroidSingleVariantLibrary(publishJavadocJar=false))
 }

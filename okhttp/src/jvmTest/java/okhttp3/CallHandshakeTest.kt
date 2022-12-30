@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import javax.net.ssl.SSLSocket
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.CipherSuite.Companion.TLS_AES_128_GCM_SHA256
@@ -35,7 +36,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
-import javax.net.ssl.SSLSocket
 
 class CallHandshakeTest {
   private lateinit var client: OkHttpClient
@@ -62,7 +62,7 @@ class CallHandshakeTest {
   fun setup(server: MockWebServer) {
     this.server = server
 
-    server.enqueue(MockResponse().setResponseCode(200))
+    server.enqueue(MockResponse())
 
     client = clientTestRule.newClientBuilder()
       .sslSocketFactory(
@@ -131,6 +131,11 @@ class CallHandshakeTest {
 
   @Test
   fun testDefaultHandshakeCipherSuiteOrderingTls13Modern() {
+    // handshake_failure(40)
+    // org.bouncycastle.tls.TlsFatalAlertReceived: handshake_failure(40)
+    //	at app//org.bouncycastle.tls.TlsProtocol.handleAlertMessage(Unknown Source)
+    platform.assumeNotBouncyCastle()
+
     val client = makeClient(ConnectionSpec.MODERN_TLS, TlsVersion.TLS_1_3)
 
     val handshake = makeRequest(client)
@@ -157,6 +162,10 @@ class CallHandshakeTest {
 
   @Test
   fun testHandshakeCipherSuiteOrderingWhenReversed() {
+    // handshake_failure(40)
+    // org.bouncycastle.tls.TlsFatalAlertReceived: handshake_failure(40)
+    //	at app//org.bouncycastle.tls.TlsProtocol.handleAlertMessage(Unknown Source)
+
     // We are avoiding making guarantees on ordering of secondary Platforms.
     platform.assumeNotConscrypt()
     platform.assumeNotBouncyCastle()
@@ -176,6 +185,11 @@ class CallHandshakeTest {
 
   @Test
   fun defaultOrderMaintained() {
+    // Flaky in CI
+    // CallHandshakeTest[jvm] > defaultOrderMaintained()[jvm] FAILED
+    //  org.bouncycastle.tls.TlsFatalAlertReceived: handshake_failure(40)
+    platform.assumeNotBouncyCastle()
+
     val client = makeClient()
     makeRequest(client)
 

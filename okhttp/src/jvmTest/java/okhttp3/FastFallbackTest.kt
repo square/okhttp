@@ -36,6 +36,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.RegisterExtension
+import org.junitpioneer.jupiter.RetryingTest
 import org.opentest4j.TestAbortedException
 
 /**
@@ -113,12 +114,10 @@ class FastFallbackTest {
       localhostIpv6,
     )
     serverIpv4.enqueue(
-      MockResponse()
-        .setBody("unexpected call to IPv4")
+      MockResponse(body = "unexpected call to IPv4")
     )
     serverIpv6.enqueue(
-      MockResponse()
-        .setBody("hello from IPv6")
+      MockResponse(body = "hello from IPv6")
     )
 
     val call = client.newCall(Request(url))
@@ -138,12 +137,10 @@ class FastFallbackTest {
       localhostIpv4,
     )
     serverIpv4.enqueue(
-      MockResponse()
-        .setBody("unexpected call to IPv4")
+      MockResponse(body = "unexpected call to IPv4")
     )
     serverIpv6.enqueue(
-      MockResponse()
-        .setBody("hello from IPv6")
+      MockResponse(body = "hello from IPv6")
     )
 
     val call = client.newCall(Request(url))
@@ -159,8 +156,7 @@ class FastFallbackTest {
   fun reachesIpv4WhenIpv6IsDown() {
     serverIpv6.shutdown()
     serverIpv4.enqueue(
-      MockResponse()
-        .setBody("hello from IPv4")
+      MockResponse(body = "hello from IPv4")
     )
 
     val call = client.newCall(Request(url))
@@ -177,8 +173,7 @@ class FastFallbackTest {
   fun reachesIpv6WhenIpv4IsDown() {
     serverIpv4.shutdown()
     serverIpv6.enqueue(
-      MockResponse()
-        .setBody("hello from IPv6")
+      MockResponse(body = "hello from IPv6")
     )
 
     val call = client.newCall(Request(url))
@@ -206,7 +201,7 @@ class FastFallbackTest {
     assertThat(listener.recordedEventTypes().filter { it == "ConnectFailed" }).hasSize(2)
   }
 
-  @Test
+  @RetryingTest(5)
   @Flaky
   fun reachesIpv4AfterUnreachableIpv6Address() {
     dnsResults = listOf(
@@ -215,8 +210,7 @@ class FastFallbackTest {
     )
     serverIpv6.shutdown()
     serverIpv4.enqueue(
-      MockResponse()
-        .setBody("hello from IPv4")
+      MockResponse(body = "hello from IPv4")
     )
 
     val call = client.newCall(Request(url))
@@ -236,8 +230,7 @@ class FastFallbackTest {
     )
     serverIpv4.shutdown()
     serverIpv6.enqueue(
-      MockResponse()
-        .setBody("hello from IPv6")
+      MockResponse(body = "hello from IPv6")
     )
 
     client = client.newBuilder()
@@ -299,17 +292,16 @@ class FastFallbackTest {
 
     // Set up a same-connection retry.
     serverIpv4.enqueue(
-      MockResponse()
-        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
-        .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.httpCode)
+      MockResponse(
+        socketPolicy = SocketPolicy.RESET_STREAM_AT_START,
+        http2ErrorCode = ErrorCode.REFUSED_STREAM.httpCode,
+      )
     )
     serverIpv4.enqueue(
-      MockResponse()
-        .setBody("this was the 2nd request on IPv4")
+      MockResponse(body = "this was the 2nd request on IPv4")
     )
     serverIpv6.enqueue(
-      MockResponse()
-        .setBody("unexpected call to IPv6")
+      MockResponse(body = "unexpected call to IPv6")
     )
 
     // Confirm the retry succeeds on the same connection.

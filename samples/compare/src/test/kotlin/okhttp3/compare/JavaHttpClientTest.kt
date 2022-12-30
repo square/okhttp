@@ -44,8 +44,9 @@ class JavaHttpClientTest {
       .followRedirects(NORMAL)
       .build()
 
-    server.enqueue(MockResponse()
-        .setBody("hello, Java HTTP Client"))
+    server.enqueue(MockResponse.Builder()
+        .body("hello, Java HTTP Client")
+        .build())
 
     val request = HttpRequest.newBuilder(server.url("/").toUri())
         .header("Accept", "text/plain")
@@ -56,12 +57,12 @@ class JavaHttpClientTest {
     assertThat(response.body()).isEqualTo("hello, Java HTTP Client")
 
     val recorded = server.takeRequest()
-    assertThat(recorded.getHeader("Accept")).isEqualTo("text/plain")
-    assertThat(recorded.getHeader("Accept-Encoding")).isNull() // No built-in gzip.
-    assertThat(recorded.getHeader("Connection")).isEqualTo("Upgrade, HTTP2-Settings")
-    assertThat(recorded.getHeader("Content-Length")).isEqualTo("0")
-    assertThat(recorded.getHeader("HTTP2-Settings")).isNotNull()
-    assertThat(recorded.getHeader("Upgrade")).isEqualTo("h2c") // HTTP/2 over plaintext!
-    assertThat(recorded.getHeader("User-Agent")).matches("Java-http-client/.*")
+      assertThat(recorded.headers["Accept"]).isEqualTo("text/plain")
+      assertThat(recorded.headers["Accept-Encoding"]).isNull() // No built-in gzip.
+      assertThat(recorded.headers["Connection"]).isEqualTo("Upgrade, HTTP2-Settings")
+      assertThat(recorded.headers["Content-Length"]).isEqualTo("0")
+      assertThat(recorded.headers["HTTP2-Settings"]).isNotNull()
+      assertThat(recorded.headers["Upgrade"]).isEqualTo("h2c") // HTTP/2 over plaintext!
+      assertThat(recorded.headers["User-Agent"]).matches("Java-http-client/.*")
   }
 }

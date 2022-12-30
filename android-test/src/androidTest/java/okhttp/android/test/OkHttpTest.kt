@@ -84,13 +84,15 @@ import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
+import org.junit.jupiter.api.BeforeEach
 
 /**
  * Run with "./gradlew :android-test:connectedCheck" and make sure ANDROID_SDK_ROOT is set.
  */
 @ExtendWith(MockWebServerExtension::class)
 @Tag("Slow")
-class OkHttpTest(val server: MockWebServer) {
+class OkHttpTest {
+
   @Suppress("RedundantVisibilityModifier")
   @JvmField
   @RegisterExtension public val platform = PlatformRule()
@@ -108,6 +110,13 @@ class OkHttpTest(val server: MockWebServer) {
     .build()
 
   private val handshakeCertificates = localhost()
+
+  private lateinit var server: MockWebServer
+
+  @BeforeEach
+  fun setup(server: MockWebServer) {
+    this.server = server
+  }
 
   @Test
   fun testPlatform() {

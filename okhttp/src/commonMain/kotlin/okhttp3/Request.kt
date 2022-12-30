@@ -16,7 +16,6 @@
 package okhttp3
 
 import kotlin.reflect.KClass
-import okhttp3.internal.HttpUrlRepresentation
 import okhttp3.internal.commonEmptyRequestBody
 
 /**
@@ -24,7 +23,7 @@ import okhttp3.internal.commonEmptyRequestBody
  * immutable.
  */
 expect class Request private constructor(builder: Builder) {
-  val url: HttpUrlRepresentation
+  val url: HttpUrl
   val method: String
   val headers: Headers
   val body: RequestBody?
@@ -33,6 +32,13 @@ expect class Request private constructor(builder: Builder) {
   internal var lazyCacheControl: CacheControl?
 
   val isHttps: Boolean
+
+  constructor(
+    url: HttpUrl,
+    headers: Headers = Headers.headersOf(),
+    method: String = "\u0000", // Sentinel value chooses based on what the body is.
+    body: RequestBody? = null,
+  )
 
   fun header(name: String): String?
 
@@ -53,7 +59,7 @@ expect class Request private constructor(builder: Builder) {
   val cacheControl: CacheControl
 
   open class Builder {
-    internal var url: HttpUrlRepresentation?
+    internal var url: HttpUrl?
     internal var method: String
     internal var headers: Headers.Builder
     internal var body: RequestBody?
@@ -68,8 +74,7 @@ expect class Request private constructor(builder: Builder) {
     // /** A mutable map of tags, or an immutable empty map if we don't have any. */
     // internal var tags: MutableMap<Class<*>, Any> = mutableMapOf()
 
-    // Wait for HttpUrl
-    // open fun url(url: HttpUrl): Builder
+     open fun url(url: HttpUrl): Builder
 
     /**
      * Sets the URL target of this request.
