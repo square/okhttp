@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Square, Inc.
+ * Copyright (C) 2022 Block, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.duplex
+package mockwebserver3.internal.duplex
 
-import mockwebserver3.MockResponse
-import mockwebserver3.StreamHandler
+import mockwebserver3.Stream
+import okhttp3.internal.http2.ErrorCode
+import okhttp3.internal.http2.Http2Stream
+import okio.buffer
 
-/**
- * Internal access to MockWebServer APIs. Don't use this, don't use internal, these APIs are not
- * stable.
- */
-abstract class MwsDuplexAccess {
+/** Adapt OkHttp's internal [Http2Stream] type to the public [Stream] type. */
+internal class RealStream(
+  private val http2Stream: Http2Stream,
+) : Stream {
+  override val requestBody = http2Stream.getSource().buffer()
+  override val responseBody = http2Stream.getSink().buffer()
 
-  abstract fun setBody(
-    mockResponseBuilder: MockResponse.Builder,
-    duplexResponseBody: StreamHandler,
-  )
-
-  companion object {
-    @JvmField var instance: MwsDuplexAccess? = null
+  override fun cancel() {
+    http2Stream.closeLater(ErrorCode.CANCEL)
   }
 }

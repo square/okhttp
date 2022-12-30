@@ -60,7 +60,7 @@ import mockwebserver3.SocketPolicy.SHUTDOWN_SERVER_AFTER_RESPONSE
 import mockwebserver3.SocketPolicy.STALL_SOCKET_AT_START
 import mockwebserver3.internal.ThrottledSink
 import mockwebserver3.internal.TriggerSink
-import mockwebserver3.internal.duplex.DuplexResponseBody
+import mockwebserver3.internal.duplex.RealStream
 import mockwebserver3.internal.sleepNanos
 import okhttp3.Headers
 import okhttp3.Headers.Companion.headersOf
@@ -986,7 +986,7 @@ class MockWebServer : Closeable {
       val body = Buffer()
       val requestLine = "$method $path HTTP/1.1"
       var exception: IOException? = null
-      if (readBody && !peek.isDuplex && peek.socketPolicy != DO_NOT_READ_REQUEST_BODY) {
+      if (readBody && peek.streamHandler == null && peek.socketPolicy != DO_NOT_READ_REQUEST_BODY) {
         try {
           val contentLengthString = headers["content-length"]
           val requestBodySink = body.withThrottlingAndSocketPolicy(
@@ -1040,9 +1040,10 @@ class MockWebServer : Closeable {
       val bodyDelayNanos = response.bodyDelayNanos
       val trailers = response.trailers
       val body = response.body
+      val streamHandler = response.streamHandler
       val outFinished = (body == null &&
         response.pushPromises.isEmpty() &&
-        !response.isDuplex)
+        streamHandler == null)
       val flushHeaders = body == null || bodyDelayNanos != 0L
       require(!outFinished || trailers.size == 0) {
         "unsupported: no body and non-empty trailers $trailers"
@@ -1066,9 +1067,8 @@ class MockWebServer : Closeable {
         responseBodySink.use {
           body.writeTo(responseBodySink)
         }
-      } else if (response.isDuplex) {
-        val duplexResponseBody = response.duplexResponseBody!!
-        duplexResponseBody.onRequest(request, stream)
+      } else if (streamHandler != null) {
+        streamHandler.handle(RealStream(stream))
       } else if (!outFinished) {
         stream.close(ErrorCode.NO_ERROR, null)
       }
@@ -1114,9 +1114,9 @@ class MockWebServer : Closeable {
       MwsDuplexAccess.instance = object : MwsDuplexAccess() {
         override fun setBody(
           mockResponseBuilder: MockResponse.Builder,
-          duplexResponseBody: DuplexResponseBody,
+          duplexResponseBody: StreamHandler,
         ) {
-          mockResponseBuilder.body(duplexResponseBody)
+          mockResponseBuilder.streamHandler(duplexResponseBody)
         }
       }
     }
