@@ -22,6 +22,7 @@ import java.net.Proxy
 import java.net.Socket
 import java.net.SocketException
 import java.security.cert.X509Certificate
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit.MILLISECONDS
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocket
@@ -136,7 +137,7 @@ class RealConnection(
   internal val isMultiplexed: Boolean
     get() = http2Connection != null
 
-  private val queuedEvents = mutableListOf<Runnable>()
+  private val queuedEvents = ConcurrentLinkedQueue<Runnable>()
 
   /** Prevent further exchanges from being created on this connection. */
   @Synchronized override fun noNewExchanges() {
@@ -393,13 +394,21 @@ class RealConnection(
   override fun protocol(): Protocol = protocol!!
 
   fun queueEvent(function: Runnable) {
+    assertThreadHoldsLock()
+
     queuedEvents.add(function)
   }
 
-  fun takeQueuedEvents(): List<Runnable> = if (queuedEvents.isEmpty()) {
-    emptyList()
-  } else {
-    queuedEvents.toList().also {
+  fun takeQueuedEvents(): List<Runnable> {
+    // optimise for zero or one items
+    val first = queuedEvents.poll() ?: return emptyList()
+    val second = queuedEvents.poll() ?: return listOf(first)
+
+    return buildList {
+      add(first)
+      add(second)
+      // Should be safe since writes are synchronized, so tests should synchronize for this.
+      addAll(queuedEvents)
       queuedEvents.clear()
     }
   }

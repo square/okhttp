@@ -111,7 +111,9 @@ open class RecordingConnectionListener : ConnectionListener() {
   override fun connectEnd(connection: Connection) {
     forbidLock(connection)
     (connection as? RealConnection)?.let {
-      assertThat(it.takeQueuedEvents()).isEmpty()
+      synchronized(connection) {
+        assertThat(it.takeQueuedEvents()).isEmpty()
+      }
     }
     logEvent(ConnectionEvent.ConnectEnd(System.nanoTime(), connection))
   }
