@@ -273,6 +273,15 @@ subprojects { project ->
             developerConnection = 'scm:git:ssh://git@github.com/square/okhttp.git'
             url = 'https://github.com/square/okhttp'
           }
+          withXml {
+            asNode().dependencies.dependency
+              .findAll { dependency ->
+                dependency.artifactId.text() == 'okio-jvm'
+              }
+              .each { dependency ->
+                dependency.artifactId*.value = 'okio'
+              }
+          }
         }
       }
     }
