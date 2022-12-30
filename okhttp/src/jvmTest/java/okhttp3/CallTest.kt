@@ -1022,6 +1022,8 @@ open class CallTest {
     executeSynchronously(request)
       .assertCode(200)
       .assertBody("success!")
+
+    assertThat(client.routeDatabase.failedRoutes.single().proxy.address()).isEqualTo(server.toProxyAddress().address())
   }
 
   /** https://github.com/square/okhttp/issues/1801  */
