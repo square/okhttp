@@ -56,6 +56,10 @@ import org.assertj.core.data.Offset
 import org.junit.jupiter.api.Assertions.assertTrue
 
 open class RecordingEventListener(
+  /**
+   * An override to ignore the normal order that is enforced.
+   * EventListeners added by Interceptors will not see all events.
+   */
   private val enforceOrder: Boolean = true
 ) : EventListener() {
   val eventSequence: Deque<CallEvent> = ConcurrentLinkedDeque()
