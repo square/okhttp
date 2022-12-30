@@ -13,701 +13,667 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package mockwebserver3;
+package mockwebserver3
 
-import java.io.BufferedReader;
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.ConnectException;
-import java.net.HttpURLConnection;
-import java.net.ProtocolException;
-import java.net.SocketTimeoutException;
-import java.net.URL;
-import java.net.URLConnection;
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import javax.net.ssl.HttpsURLConnection;
-import okhttp3.Handshake;
-import okhttp3.Headers;
-import okhttp3.HttpUrl;
-import okhttp3.OkHttpClient;
-import okhttp3.Protocol;
-import okhttp3.RecordingHostnameVerifier;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.TestUtil;
-import okhttp3.testing.PlatformRule;
-import okhttp3.tls.HandshakeCertificates;
-import okhttp3.tls.HeldCertificate;
-import okio.Buffer;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
-import org.junit.jupiter.api.extension.RegisterExtension;
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Arrays.asList;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static okhttp3.tls.internal.TlsUtil.localhost;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.data.Offset.offset;
-import static org.junit.jupiter.api.Assertions.fail;
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
+import java.io.BufferedReader
+import java.io.Closeable
+import java.io.IOException
+import java.io.InputStreamReader
+import java.net.ConnectException
+import java.net.HttpURLConnection
+import java.net.ProtocolException
+import java.net.SocketTimeoutException
+import java.nio.charset.StandardCharsets.UTF_8
+import java.time.Duration
+import java.util.Arrays
+import java.util.concurrent.TimeUnit
+import javax.net.ssl.HttpsURLConnection
+import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.OkHttpClient
+import okhttp3.Protocol
+import okhttp3.RecordingHostnameVerifier
+import okhttp3.Request
+import okhttp3.TestUtil.assumeNotWindows
+import okhttp3.testing.PlatformRule
+import okhttp3.tls.HandshakeCertificates
+import okhttp3.tls.HeldCertificate
+import okhttp3.tls.internal.TlsUtil.localhost
+import okio.Buffer
+import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.data.Offset
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.fail
+import org.junit.jupiter.api.Assumptions
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Tag
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import org.junit.jupiter.api.extension.RegisterExtension
 
-@SuppressWarnings({"ArraysAsListWithZeroOrOneArgument", "deprecation"})
+@Suppress("deprecation")
 @Timeout(30)
 @Tag("Slow")
-public final class MockWebServerTest {
-  @RegisterExtension public PlatformRule platform = new PlatformRule();
+class MockWebServerTest {
+  @RegisterExtension
+  var platform = PlatformRule()
 
-  private MockWebServer server;
+  private lateinit var server: MockWebServer
 
-  @BeforeEach public void setUp(MockWebServer server) throws IOException {
-    this.server = server;
-    platform.assumeNotBouncyCastle();
-    server.start();
+  @BeforeEach
+  fun setUp(server: MockWebServer) {
+    this.server = server
+    platform.assumeNotBouncyCastle()
+    server.start()
   }
 
   @AfterEach
-  public void tearDown() throws Exception {
-    server.shutdown();
+  fun tearDown() {
+    server.shutdown()
   }
 
-  @Test public void defaultMockResponse() {
-    MockResponse.Builder builder = new MockResponse.Builder();
-    assertThat(headersToList(builder)).containsExactly("Content-Length: 0");
-    assertThat(builder.getStatus()).isEqualTo("HTTP/1.1 200 OK");
+  @Test
+  fun defaultMockResponse() {
+    val builder = MockResponse.Builder()
+    assertThat(headersToList(builder)).containsExactly("Content-Length: 0")
+    assertThat(builder.status).isEqualTo("HTTP/1.1 200 OK")
   }
 
-  @Test public void setResponseMockReason() {
-    String[] reasons = {
-        "Mock Response",
-        "Informational",
-        "OK",
-        "Redirection",
-        "Client Error",
-        "Server Error",
-        "Mock Response"
-    };
-    for (int i = 0; i < 600; i++) {
-      MockResponse.Builder builder = new MockResponse.Builder().code(i);
-      String expectedReason = reasons[i / 100];
-      assertThat(builder.getStatus()).isEqualTo(("HTTP/1.1 " + i + " " + expectedReason));
-      assertThat(headersToList(builder)).containsExactly("Content-Length: 0");
+  @Test
+  fun setResponseMockReason() {
+    val reasons = arrayOf<String?>(
+      "Mock Response",
+      "Informational",
+      "OK",
+      "Redirection",
+      "Client Error",
+      "Server Error",
+      "Mock Response"
+    )
+    for (i in 0..599) {
+      val builder = MockResponse.Builder().code(i)
+      val expectedReason = reasons[i / 100]
+      assertThat(builder.status).isEqualTo("HTTP/1.1 $i $expectedReason")
+      assertThat(headersToList(builder)).containsExactly("Content-Length: 0")
     }
   }
 
-  @Test public void setStatusControlsWholeStatusLine() {
-    MockResponse.Builder builder = new MockResponse.Builder().status("HTTP/1.1 202 That'll do pig");
-    assertThat(headersToList(builder)).containsExactly("Content-Length: 0");
-    assertThat(builder.getStatus()).isEqualTo("HTTP/1.1 202 That'll do pig");
+  @Test
+  fun setStatusControlsWholeStatusLine() {
+    val builder = MockResponse.Builder().status("HTTP/1.1 202 That'll do pig")
+    assertThat(headersToList(builder)).containsExactly("Content-Length: 0")
+    assertThat(builder.status).isEqualTo("HTTP/1.1 202 That'll do pig")
   }
 
-  @Test public void setBodyAdjustsHeaders() throws IOException {
-    MockResponse.Builder builder = new MockResponse.Builder().body("ABC");
-    assertThat(headersToList(builder)).containsExactly("Content-Length: 3");
-    MockResponse response = builder.build();
-    Buffer body = new Buffer();
-    response.getBody().writeTo(body);
-    assertThat(body.readUtf8()).isEqualTo("ABC");
+  @Test
+  fun setBodyAdjustsHeaders() {
+    val builder = MockResponse.Builder().body("ABC")
+    assertThat(headersToList(builder)).containsExactly("Content-Length: 3")
+    val response = builder.build()
+    val body = Buffer()
+    response.body!!.writeTo(body)
+    assertThat(body.readUtf8()).isEqualTo("ABC")
   }
 
-  @Test public void mockResponseAddHeader() {
-    MockResponse.Builder builder = new MockResponse.Builder()
-        .clearHeaders()
-        .addHeader("Cookie: s=square")
-        .addHeader("Cookie", "a=android");
-    assertThat(headersToList(builder)).containsExactly("Cookie: s=square", "Cookie: a=android");
+  @Test
+  fun mockResponseAddHeader() {
+    val builder = MockResponse.Builder()
+      .clearHeaders()
+      .addHeader("Cookie: s=square")
+      .addHeader("Cookie", "a=android")
+    assertThat(headersToList(builder)).containsExactly("Cookie: s=square", "Cookie: a=android")
   }
 
-  @Test public void mockResponseSetHeader() {
-    MockResponse.Builder builder = new MockResponse.Builder()
-        .clearHeaders()
-        .addHeader("Cookie: s=square")
-        .addHeader("Cookie: a=android")
-        .addHeader("Cookies: delicious");
-    builder.setHeader("cookie", "r=robot");
-    assertThat(headersToList(builder)).containsExactly("Cookies: delicious", "cookie: r=robot");
+  @Test
+  fun mockResponseSetHeader() {
+    val builder = MockResponse.Builder()
+      .clearHeaders()
+      .addHeader("Cookie: s=square")
+      .addHeader("Cookie: a=android")
+      .addHeader("Cookies: delicious")
+    builder.setHeader("cookie", "r=robot")
+    assertThat(headersToList(builder)).containsExactly("Cookies: delicious", "cookie: r=robot")
   }
 
-  @Test public void mockResponseSetHeaders() {
-    MockResponse.Builder builder = new MockResponse.Builder()
-        .clearHeaders()
-        .addHeader("Cookie: s=square")
-        .addHeader("Cookies: delicious");
-
-    builder.headers(new Headers.Builder().add("Cookie", "a=android").build());
-
-    assertThat(headersToList(builder)).containsExactly("Cookie: a=android");
+  @Test
+  fun mockResponseSetHeaders() {
+    val builder = MockResponse.Builder()
+      .clearHeaders()
+      .addHeader("Cookie: s=square")
+      .addHeader("Cookies: delicious")
+    builder.headers(Headers.Builder().add("Cookie", "a=android").build())
+    assertThat(headersToList(builder)).containsExactly("Cookie: a=android")
   }
 
-  @Test public void regularResponse() throws Exception {
-    server.enqueue(new MockResponse.Builder().body("hello world").build());
-
-    URL url = server.url("/").url();
-    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-    connection.setRequestProperty("Accept-Language", "en-US");
-    InputStream in = connection.getInputStream();
-    BufferedReader reader = new BufferedReader(new InputStreamReader(in, UTF_8));
-    assertThat(connection.getResponseCode()).isEqualTo(HttpURLConnection.HTTP_OK);
-    assertThat(reader.readLine()).isEqualTo("hello world");
-
-    RecordedRequest request = server.takeRequest();
-    assertThat(request.getRequestLine()).isEqualTo("GET / HTTP/1.1");
-    assertThat(request.getHeaders().get("Accept-Language")).isEqualTo("en-US");
+  @Test
+  fun regularResponse() {
+    server.enqueue(MockResponse.Builder().body("hello world").build())
+    val url = server.url("/").toUrl()
+    val connection = url.openConnection() as HttpURLConnection
+    connection.setRequestProperty("Accept-Language", "en-US")
+    val reader = BufferedReader(InputStreamReader(connection.inputStream, UTF_8))
+    assertThat(connection.responseCode).isEqualTo(HttpURLConnection.HTTP_OK)
+    assertThat(reader.readLine()).isEqualTo("hello world")
+    val request = server.takeRequest()
+    assertThat(request.requestLine).isEqualTo("GET / HTTP/1.1")
+    assertThat(request.headers["Accept-Language"]).isEqualTo("en-US")
 
     // Server has no more requests.
-    assertThat(server.takeRequest(100, MILLISECONDS)).isNull();
+    assertThat(server.takeRequest(100, TimeUnit.MILLISECONDS)).isNull()
   }
 
-  @Test public void redirect() throws Exception {
-    server.enqueue(new MockResponse.Builder()
-        .code(HttpURLConnection.HTTP_MOVED_TEMP)
-        .addHeader("Location: " + server.url("/new-path"))
-        .body("This page has moved!")
-        .build());
-    server.enqueue(new MockResponse.Builder()
-        .body("This is the new location!")
-        .build());
-
-    URLConnection connection = server.url("/").url().openConnection();
-    InputStream in = connection.getInputStream();
-    BufferedReader reader = new BufferedReader(new InputStreamReader(in, UTF_8));
-    assertThat(reader.readLine()).isEqualTo("This is the new location!");
-
-    RecordedRequest first = server.takeRequest();
-    assertThat(first.getRequestLine()).isEqualTo("GET / HTTP/1.1");
-    RecordedRequest redirect = server.takeRequest();
-    assertThat(redirect.getRequestLine()).isEqualTo("GET /new-path HTTP/1.1");
+  @Test
+  fun redirect() {
+    server.enqueue(MockResponse.Builder()
+      .code(HttpURLConnection.HTTP_MOVED_TEMP)
+      .addHeader("Location: " + server.url("/new-path"))
+      .body("This page has moved!")
+      .build())
+    server.enqueue(MockResponse.Builder()
+      .body("This is the new location!")
+      .build())
+    val connection = server.url("/").toUrl().openConnection()
+    val reader = BufferedReader(InputStreamReader(connection!!.getInputStream(), UTF_8))
+    assertThat(reader.readLine()).isEqualTo("This is the new location!")
+    val first = server.takeRequest()
+    assertThat(first.requestLine).isEqualTo("GET / HTTP/1.1")
+    val redirect = server.takeRequest()
+    assertThat(redirect.requestLine).isEqualTo("GET /new-path HTTP/1.1")
   }
 
   /**
    * Test that MockWebServer blocks for a call to enqueue() if a request is made before a mock
    * response is ready.
    */
-  @Test public void dispatchBlocksWaitingForEnqueue() throws Exception {
-    new Thread(() -> {
+  @Test
+  fun dispatchBlocksWaitingForEnqueue() {
+    Thread {
       try {
-        Thread.sleep(1000);
-      } catch (InterruptedException ignored) {
+        Thread.sleep(1000)
+      } catch (ignored: InterruptedException) {
       }
-      server.enqueue(new MockResponse.Builder()
-          .body("enqueued in the background")
-          .build());
-    }).start();
-
-    URLConnection connection = server.url("/").url().openConnection();
-    InputStream in = connection.getInputStream();
-    BufferedReader reader = new BufferedReader(new InputStreamReader(in, UTF_8));
-    assertThat(reader.readLine()).isEqualTo("enqueued in the background");
+      server.enqueue(MockResponse.Builder()
+        .body("enqueued in the background")
+        .build())
+    }.start()
+    val connection = server.url("/").toUrl().openConnection()
+    val reader = BufferedReader(InputStreamReader(connection!!.getInputStream(), UTF_8))
+    assertThat(reader.readLine()).isEqualTo("enqueued in the background")
   }
 
-  @Test public void nonHexadecimalChunkSize() throws Exception {
-    server.enqueue(new MockResponse.Builder()
-        .body("G\r\nxxxxxxxxxxxxxxxx\r\n0\r\n\r\n")
-        .clearHeaders()
-        .addHeader("Transfer-encoding: chunked")
-        .build());
-
-    URLConnection connection = server.url("/").url().openConnection();
-    InputStream in = connection.getInputStream();
+  @Test
+  fun nonHexadecimalChunkSize() {
+    server.enqueue(MockResponse.Builder()
+      .body("G\r\nxxxxxxxxxxxxxxxx\r\n0\r\n\r\n")
+      .clearHeaders()
+      .addHeader("Transfer-encoding: chunked")
+      .build())
+    val connection = server.url("/").toUrl().openConnection()
     try {
-      in.read();
-      fail();
-    } catch (IOException expected) {
+      connection.getInputStream().read()
+      fail<Unit>()
+    } catch (expected: IOException) {
+      // Expected.
     }
   }
 
-  @Test public void responseTimeout() throws Exception {
-    server.enqueue(new MockResponse.Builder()
-        .body("ABC")
-        .clearHeaders()
-        .addHeader("Content-Length: 4")
-        .build());
-    server.enqueue(new MockResponse.Builder()
-        .body("DEF")
-        .build());
-
-    URLConnection urlConnection = server.url("/").url().openConnection();
-    urlConnection.setReadTimeout(1000);
-    InputStream in = urlConnection.getInputStream();
-    assertThat(in.read()).isEqualTo('A');
-    assertThat(in.read()).isEqualTo('B');
-    assertThat(in.read()).isEqualTo('C');
+  @Test
+  fun responseTimeout() {
+    server.enqueue(MockResponse.Builder()
+      .body("ABC")
+      .clearHeaders()
+      .addHeader("Content-Length: 4")
+      .build())
+    server.enqueue(MockResponse.Builder()
+      .body("DEF")
+      .build())
+    val urlConnection = server.url("/").toUrl().openConnection()
+    urlConnection!!.readTimeout = 1000
+    val inputStream = urlConnection.getInputStream()
+    assertThat(inputStream!!.read()).isEqualTo('A'.code)
+    assertThat(inputStream.read()).isEqualTo('B'.code)
+    assertThat(inputStream.read()).isEqualTo('C'.code)
     try {
-      in.read(); // if Content-Length was accurate, this would return -1 immediately
-      fail();
-    } catch (SocketTimeoutException expected) {
+      inputStream.read() // if Content-Length was accurate, this would return -1 immediately
+      fail<Unit>()
+    } catch (expected: SocketTimeoutException) {
+      // Expected.
     }
-
-    URLConnection urlConnection2 = server.url("/").url().openConnection();
-    InputStream in2 = urlConnection2.getInputStream();
-    assertThat(in2.read()).isEqualTo('D');
-    assertThat(in2.read()).isEqualTo('E');
-    assertThat(in2.read()).isEqualTo('F');
-    assertThat(in2.read()).isEqualTo(-1);
-
-    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
-    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
+    val urlConnection2 = server.url("/").toUrl().openConnection()
+    val in2 = urlConnection2!!.getInputStream()
+    assertThat(in2!!.read()).isEqualTo('D'.code)
+    assertThat(in2.read()).isEqualTo('E'.code)
+    assertThat(in2.read()).isEqualTo('F'.code)
+    assertThat(in2.read()).isEqualTo(-1)
+    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
+    assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
   }
 
   @Disabled("Not actually failing where expected")
-  @Test public void disconnectAtStart() throws Exception {
-    server.enqueue(new MockResponse.Builder()
-        .socketPolicy(SocketPolicy.DISCONNECT_AT_START)
-        .build());
-    server.enqueue(new MockResponse()); // The jdk's HttpUrlConnection is a bastard.
-    server.enqueue(new MockResponse());
+  @Test
+  fun disconnectAtStart() {
+    server.enqueue(MockResponse.Builder()
+      .socketPolicy(SocketPolicy.DISCONNECT_AT_START)
+      .build())
+    server.enqueue(MockResponse()) // The jdk's HttpUrlConnection is a bastard.
+    server.enqueue(MockResponse())
     try {
-      server.url("/a").url().openConnection().getInputStream();
-      fail();
-    } catch (IOException expected) {
+      server.url("/a").toUrl().openConnection().getInputStream()
+      fail<Unit>()
+    } catch (expected: IOException) {
+      // Expected.
     }
-    server.url("/b").url().openConnection().getInputStream(); // Should succeed.
+    server.url("/b").toUrl().openConnection().getInputStream() // Should succeed.
   }
 
-  @Test public void clearDispatcherQueue() throws Exception {
-    server.enqueue(new MockResponse.Builder()
-        .body("A")
-        .build());
-    ((QueueDispatcher) server.getDispatcher()).clear();
-    server.enqueue(new MockResponse.Builder()
-        .body("B")
-        .build());
-
-    InputStream in = server.url("/a").url().openConnection().getInputStream();
-    assertThat(in.read()).isEqualTo('B');
+  @Test
+  fun clearDispatcherQueue() {
+    server.enqueue(MockResponse(body = "A"))
+    (server.dispatcher as QueueDispatcher).clear()
+    server.enqueue(MockResponse(body = "B"))
+    val inputStream = server.url("/a").toUrl().openConnection().getInputStream()
+    assertThat(inputStream!!.read()).isEqualTo('B'.code)
   }
 
   /**
    * Throttle the request body by sleeping 500ms after every 3 bytes. With a 6-byte request, this
    * should yield one sleep for a total delay of 500ms.
    */
-  @Test public void throttleRequest() throws Exception {
-    TestUtil.assumeNotWindows();
-
-    server.enqueue(new MockResponse.Builder()
-        .throttleBody(3, 500, TimeUnit.MILLISECONDS)
-        .build());
-
-    long startNanos = System.nanoTime();
-    URLConnection connection = server.url("/").url().openConnection();
-    connection.setDoOutput(true);
-    connection.getOutputStream().write("ABCDEF".getBytes(UTF_8));
-    InputStream in = connection.getInputStream();
-    assertThat(in.read()).isEqualTo(-1);
-    long elapsedNanos = System.nanoTime() - startNanos;
-    long elapsedMillis = NANOSECONDS.toMillis(elapsedNanos);
-    assertThat(elapsedMillis).isBetween(500L, 1000L);
+  @Test
+  fun throttleRequest() {
+    assumeNotWindows()
+    server.enqueue(MockResponse.Builder()
+      .throttleBody(3, 500, TimeUnit.MILLISECONDS)
+      .build())
+    val startNanos = System.nanoTime()
+    val connection = server.url("/").toUrl().openConnection()
+    connection.doOutput = true
+    connection.getOutputStream().write("ABCDEF".toByteArray(UTF_8))
+    val inputStream = connection.getInputStream()
+    assertThat(inputStream.read()).isEqualTo(-1)
+    val elapsedNanos = System.nanoTime() - startNanos
+    val elapsedMillis = TimeUnit.NANOSECONDS.toMillis(elapsedNanos)
+    assertThat(elapsedMillis).isBetween(500L, 1000L)
   }
 
   /**
    * Throttle the response body by sleeping 500ms after every 3 bytes. With a 6-byte response, this
    * should yield one sleep for a total delay of 500ms.
    */
-  @Test public void throttleResponse() throws Exception {
-    TestUtil.assumeNotWindows();
-
-    server.enqueue(new MockResponse.Builder()
-        .body("ABCDEF")
-        .throttleBody(3, 500, TimeUnit.MILLISECONDS)
-        .build());
-
-    long startNanos = System.nanoTime();
-    URLConnection connection = server.url("/").url().openConnection();
-    InputStream in = connection.getInputStream();
-    assertThat(in.read()).isEqualTo('A');
-    assertThat(in.read()).isEqualTo('B');
-    assertThat(in.read()).isEqualTo('C');
-    assertThat(in.read()).isEqualTo('D');
-    assertThat(in.read()).isEqualTo('E');
-    assertThat(in.read()).isEqualTo('F');
-    assertThat(in.read()).isEqualTo(-1);
-    long elapsedNanos = System.nanoTime() - startNanos;
-    long elapsedMillis = NANOSECONDS.toMillis(elapsedNanos);
-    assertThat(elapsedMillis).isBetween(500L, 1000L);
+  @Test
+  fun throttleResponse() {
+    assumeNotWindows()
+    server.enqueue(MockResponse.Builder()
+      .body("ABCDEF")
+      .throttleBody(3, 500, TimeUnit.MILLISECONDS)
+      .build())
+    val startNanos = System.nanoTime()
+    val connection = server.url("/").toUrl().openConnection()
+    val inputStream = connection!!.getInputStream()
+    assertThat(inputStream!!.read()).isEqualTo('A'.code)
+    assertThat(inputStream.read()).isEqualTo('B'.code)
+    assertThat(inputStream.read()).isEqualTo('C'.code)
+    assertThat(inputStream.read()).isEqualTo('D'.code)
+    assertThat(inputStream.read()).isEqualTo('E'.code)
+    assertThat(inputStream.read()).isEqualTo('F'.code)
+    assertThat(inputStream.read()).isEqualTo(-1)
+    val elapsedNanos = System.nanoTime() - startNanos
+    val elapsedMillis = TimeUnit.NANOSECONDS.toMillis(elapsedNanos)
+    assertThat(elapsedMillis).isBetween(500L, 1000L)
   }
 
-  /** Delay the response body by sleeping 1s. */
-  @Test public void delayResponse() throws IOException {
-    TestUtil.assumeNotWindows();
-
-    server.enqueue(new MockResponse.Builder()
-        .body("ABCDEF")
-        .bodyDelay(1, SECONDS)
-        .build());
-
-    long startNanos = System.nanoTime();
-    URLConnection connection = server.url("/").url().openConnection();
-    InputStream in = connection.getInputStream();
-    assertThat(in.read()).isEqualTo('A');
-    long elapsedNanos = System.nanoTime() - startNanos;
-    long elapsedMillis = NANOSECONDS.toMillis(elapsedNanos);
-    assertThat(elapsedMillis).isGreaterThanOrEqualTo(1000L);
-
-    in.close();
+  /** Delay the response body by sleeping 1s.  */
+  @Test
+  fun delayResponse() {
+    assumeNotWindows()
+    server.enqueue(MockResponse.Builder()
+      .body("ABCDEF")
+      .bodyDelay(1, TimeUnit.SECONDS)
+      .build())
+    val startNanos = System.nanoTime()
+    val connection = server.url("/").toUrl().openConnection()
+    val inputStream = connection!!.getInputStream()
+    assertThat(inputStream!!.read()).isEqualTo('A'.code)
+    val elapsedNanos = System.nanoTime() - startNanos
+    val elapsedMillis = TimeUnit.NANOSECONDS.toMillis(elapsedNanos)
+    assertThat(elapsedMillis).isGreaterThanOrEqualTo(1000L)
+    inputStream.close()
   }
 
-  @Test public void disconnectRequestHalfway() throws Exception {
-    server.enqueue(new MockResponse.Builder()
-        .socketPolicy(SocketPolicy.DISCONNECT_DURING_REQUEST_BODY)
-        .build());
+  @Test
+  fun disconnectRequestHalfway() {
+    server.enqueue(MockResponse.Builder()
+      .socketPolicy(SocketPolicy.DISCONNECT_DURING_REQUEST_BODY)
+      .build())
     // Limit the size of the request body that the server holds in memory to an arbitrary
     // 3.5 MBytes so this test can pass on devices with little memory.
-    server.setBodyLimit(7 * 512 * 1024);
-
-    HttpURLConnection connection = (HttpURLConnection) server.url("/").url().openConnection();
-    connection.setRequestMethod("POST");
-    connection.setDoOutput(true);
-    connection.setFixedLengthStreamingMode(1024 * 1024 * 1024); // 1 GB
-    connection.connect();
-    OutputStream out = connection.getOutputStream();
-
-    byte[] data = new byte[1024 * 1024];
-    int i;
-    for (i = 0; i < 1024; i++) {
+    server.bodyLimit = 7 * 512 * 1024
+    val connection = server.url("/").toUrl().openConnection() as HttpURLConnection
+    connection.requestMethod = "POST"
+    connection.doOutput = true
+    connection.setFixedLengthStreamingMode(1024 * 1024 * 1024) // 1 GB
+    connection.connect()
+    val out = connection.outputStream
+    val data = ByteArray(1024 * 1024)
+    var i = 0
+    while (i < 1024) {
       try {
-        out.write(data);
-        out.flush();
+        out!!.write(data)
+        out.flush()
         if (i == 513) {
           // pause slightly after half way to make result more predictable
-          Thread.sleep(100);
+          Thread.sleep(100)
         }
-      } catch (IOException e) {
-        break;
+      } catch (e: IOException) {
+        break
       }
+      i++
     }
     // Halfway +/- 0.5%
-    assertThat((float) i).isCloseTo(512f, offset(5f));
+    assertThat(i.toFloat()).isCloseTo(512f, Offset.offset(5f))
   }
 
-  @Test public void disconnectResponseHalfway() throws IOException {
-    server.enqueue(new MockResponse.Builder()
-        .body("ab")
-        .socketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY)
-        .build());
-
-    URLConnection connection = server.url("/").url().openConnection();
-    assertThat(connection.getContentLength()).isEqualTo(2);
-    InputStream in = connection.getInputStream();
-    assertThat(in.read()).isEqualTo('a');
+  @Test
+  fun disconnectResponseHalfway() {
+    server.enqueue(MockResponse.Builder()
+      .body("ab")
+      .socketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY)
+      .build())
+    val connection = server.url("/").toUrl().openConnection()
+    assertThat(connection!!.contentLength).isEqualTo(2)
+    val inputStream = connection.getInputStream()
+    assertThat(inputStream!!.read()).isEqualTo('a'.code)
     try {
-      int byteRead = in.read();
+      val byteRead = inputStream.read()
       // OpenJDK behavior: end of stream.
-      assertThat(byteRead).isEqualTo(-1);
-    } catch (ProtocolException e) {
+      assertThat(byteRead).isEqualTo(-1)
+    } catch (e: ProtocolException) {
       // On Android, HttpURLConnection is implemented by OkHttp v2. OkHttp
       // treats an incomplete response body as a ProtocolException.
     }
   }
 
-  private List<String> headersToList(MockResponse.Builder response) {
-    Headers headers = response.build().getHeaders();
-    int size = headers.size();
-    List<String> headerList = new ArrayList<>(size);
-    for (int i = 0; i < size; i++) {
-      headerList.add(headers.name(i) + ": " + headers.value(i));
-    }
-    return headerList;
+  private fun headersToList(response: MockResponse.Builder): List<String> {
+    val headers = response.build().headers
+    return headers.map { (key, value) -> "$key: $value" }.toList()
   }
 
-  @Test public void shutdownWithoutStart() throws IOException {
-    MockWebServer server = new MockWebServer();
-    server.shutdown();
+  @Test
+  fun shutdownWithoutStart() {
+    val server = MockWebServer()
+    server.shutdown()
   }
 
-  @Test public void closeViaClosable() throws IOException {
-    Closeable server = new MockWebServer();
-    server.close();
+  @Test
+  fun closeViaClosable() {
+    val server: Closeable = MockWebServer()
+    server.close()
   }
 
-  @Test public void shutdownWithoutEnqueue() throws IOException {
-    MockWebServer server = new MockWebServer();
-    server.start();
-    server.shutdown();
+  @Test
+  fun shutdownWithoutEnqueue() {
+    val server = MockWebServer()
+    server.start()
+    server.shutdown()
   }
 
-  @Test public void portImplicitlyStarts() {
-    assertThat(server.getPort()).isGreaterThan(0);
+  @Test
+  fun portImplicitlyStarts() {
+    assertThat(server.port).isGreaterThan(0)
   }
 
-  @Test public void hostnameImplicitlyStarts() {
-    assertThat(server.getHostName()).isNotNull();
+  @Test
+  fun hostnameImplicitlyStarts() {
+    assertThat(server.hostName).isNotNull
   }
 
-  @Test public void toProxyAddressImplicitlyStarts() {
-    assertThat(server.toProxyAddress()).isNotNull();
+  @Test
+  fun toProxyAddressImplicitlyStarts() {
+    assertThat(server.toProxyAddress()).isNotNull
   }
 
-  @Test public void differentInstancesGetDifferentPorts() throws IOException {
-    MockWebServer other = new MockWebServer();
-    assertThat(other.getPort()).isNotEqualTo(server.getPort());
-    other.shutdown();
+  @Test
+  fun differentInstancesGetDifferentPorts() {
+    val other = MockWebServer()
+    assertThat(other.port).isNotEqualTo(server.port)
+    other.shutdown()
   }
 
-  @Test public void shutdownWhileBlockedDispatching() throws Exception {
+  @Test
+  fun shutdownWhileBlockedDispatching() {
     // Enqueue a request that'll cause MockWebServer to hang on QueueDispatcher.dispatch().
-    HttpURLConnection connection = (HttpURLConnection) server.url("/").url().openConnection();
-    connection.setReadTimeout(500);
+    val connection = server.url("/").toUrl().openConnection() as HttpURLConnection
+    connection.readTimeout = 500
     try {
-      connection.getResponseCode();
-      fail();
-    } catch (SocketTimeoutException expected) {
+      connection.responseCode
+      fail<Unit>()
+    } catch (expected: SocketTimeoutException) {
+      // Expected.
     }
 
     // Shutting down the server should unblock the dispatcher.
-    server.shutdown();
+    server.shutdown()
   }
 
-  @Test public void requestUrlReconstructed() throws Exception {
-    server.enqueue(new MockResponse.Builder()
-        .body("hello world")
-        .build());
-
-    URL url = server.url("/a/deep/path?key=foo%20bar").url();
-    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-    InputStream in = connection.getInputStream();
-    BufferedReader reader = new BufferedReader(new InputStreamReader(in, UTF_8));
-    assertThat(connection.getResponseCode()).isEqualTo(HttpURLConnection.HTTP_OK);
-    assertThat(reader.readLine()).isEqualTo("hello world");
-
-    RecordedRequest request = server.takeRequest();
-    assertThat(request.getRequestLine()).isEqualTo(
-        "GET /a/deep/path?key=foo%20bar HTTP/1.1");
-
-    HttpUrl requestUrl = request.getRequestUrl();
-    assertThat(requestUrl.scheme()).isEqualTo("http");
-    assertThat(requestUrl.host()).isEqualTo(server.getHostName());
-    assertThat(requestUrl.port()).isEqualTo(server.getPort());
-    assertThat(requestUrl.encodedPath()).isEqualTo("/a/deep/path");
-    assertThat(requestUrl.queryParameter("key")).isEqualTo("foo bar");
+  @Test
+  fun requestUrlReconstructed() {
+    server.enqueue(MockResponse.Builder()
+      .body("hello world")
+      .build())
+    val url = server.url("/a/deep/path?key=foo%20bar").toUrl()
+    val connection = url.openConnection() as HttpURLConnection
+    val inputStream = connection.inputStream
+    val reader = BufferedReader(InputStreamReader(inputStream, UTF_8))
+    assertThat(connection.responseCode).isEqualTo(HttpURLConnection.HTTP_OK)
+    assertThat(reader.readLine()).isEqualTo("hello world")
+    val request = server.takeRequest()
+    assertThat(request.requestLine).isEqualTo(
+      "GET /a/deep/path?key=foo%20bar HTTP/1.1")
+    val requestUrl = request.requestUrl
+    assertThat(requestUrl!!.scheme).isEqualTo("http")
+    assertThat(requestUrl.host).isEqualTo(server.hostName)
+    assertThat(requestUrl.port).isEqualTo(server.port)
+    assertThat(requestUrl.encodedPath).isEqualTo("/a/deep/path")
+    assertThat(requestUrl.queryParameter("key")).isEqualTo("foo bar")
   }
 
-  @Test public void shutdownServerAfterRequest() throws Exception {
-    server.enqueue(new MockResponse.Builder()
-        .socketPolicy(SocketPolicy.SHUTDOWN_SERVER_AFTER_RESPONSE)
-        .build());
-
-    URL url = server.url("/").url();
-
-    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-    assertThat(connection.getResponseCode()).isEqualTo(HttpURLConnection.HTTP_OK);
-
-    HttpURLConnection refusedConnection = (HttpURLConnection) url.openConnection();
-
+  @Test
+  fun shutdownServerAfterRequest() {
+    server.enqueue(MockResponse.Builder()
+      .socketPolicy(SocketPolicy.SHUTDOWN_SERVER_AFTER_RESPONSE)
+      .build())
+    val url = server.url("/").toUrl()
+    val connection = url.openConnection() as HttpURLConnection
+    assertThat(connection.responseCode).isEqualTo(HttpURLConnection.HTTP_OK)
+    val refusedConnection = url.openConnection() as HttpURLConnection
     try {
-      refusedConnection.getResponseCode();
-      fail("Second connection should be refused");
-    } catch (ConnectException e) {
-      assertThat(e.getMessage()).contains("refused");
+      refusedConnection.responseCode
+      fail<Any?>("Second connection should be refused")
+    } catch (e: ConnectException) {
+      assertThat(e.message).contains("refused")
     }
   }
 
-  @Test public void http100Continue() throws Exception {
-    server.enqueue(new MockResponse.Builder()
-        .body("response")
-        .build());
-
-    URL url = server.url("/").url();
-    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-    connection.setDoOutput(true);
-    connection.setRequestProperty("Expect", "100-Continue");
-    connection.getOutputStream().write("request".getBytes(UTF_8));
-
-    InputStream in = connection.getInputStream();
-    BufferedReader reader = new BufferedReader(new InputStreamReader(in, UTF_8));
-    assertThat(reader.readLine()).isEqualTo("response");
-
-    RecordedRequest request = server.takeRequest();
-    assertThat(request.getBody().readUtf8()).isEqualTo("request");
+  @Test
+  fun http100Continue() {
+    server.enqueue(MockResponse.Builder()
+      .body("response")
+      .build())
+    val url = server.url("/").toUrl()
+    val connection = url.openConnection() as HttpURLConnection
+    connection.doOutput = true
+    connection.setRequestProperty("Expect", "100-Continue")
+    connection.outputStream.write("request".toByteArray(UTF_8))
+    val inputStream = connection.inputStream
+    val reader = BufferedReader(InputStreamReader(inputStream, UTF_8))
+    assertThat(reader.readLine()).isEqualTo("response")
+    val request = server.takeRequest()
+    assertThat(request.body.readUtf8()).isEqualTo("request")
   }
 
-  @Test public void multiple1xxResponses() throws Exception {
-    server.enqueue(new MockResponse.Builder()
+  @Test
+  fun multiple1xxResponses() {
+    server.enqueue(MockResponse.Builder()
       .add100Continue()
       .add100Continue()
       .body("response")
-      .build());
-
-    URL url = server.url("/").url();
-    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-    connection.setDoOutput(true);
-    connection.getOutputStream().write("request".getBytes(UTF_8));
-
-    InputStream in = connection.getInputStream();
-    BufferedReader reader = new BufferedReader(new InputStreamReader(in, UTF_8));
-    assertThat(reader.readLine()).isEqualTo("response");
-
-    RecordedRequest request = server.takeRequest();
-    assertThat(request.getBody().readUtf8()).isEqualTo("request");
+      .build())
+    val url = server.url("/").toUrl()
+    val connection = url.openConnection() as HttpURLConnection
+    connection.doOutput = true
+    connection.outputStream.write("request".toByteArray(UTF_8))
+    val inputStream = connection.inputStream
+    val reader = BufferedReader(InputStreamReader(inputStream, UTF_8))
+    assertThat(reader.readLine()).isEqualTo("response")
+    val request = server.takeRequest()
+    assertThat(request.body.readUtf8()).isEqualTo("request")
   }
 
-  @Test public void testH2PriorKnowledgeServerFallback() {
+  @Test
+  fun testH2PriorKnowledgeServerFallback() {
     try {
-      server.setProtocols(asList(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.HTTP_1_1));
-      fail();
-    } catch (IllegalArgumentException expected) {
-      assertThat(expected.getMessage()).isEqualTo(
-          ("protocols containing h2_prior_knowledge cannot use other protocols: "
-              + "[h2_prior_knowledge, http/1.1]"));
+      server.protocols = listOf(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.HTTP_1_1)
+      fail<Unit>()
+    } catch (expected: IllegalArgumentException) {
+      assertThat(expected.message).isEqualTo(
+        "protocols containing h2_prior_knowledge cannot use other protocols: "
+          + "[h2_prior_knowledge, http/1.1]")
     }
   }
 
-  @Test public void testH2PriorKnowledgeServerDuplicates() {
+  @Test
+  fun testH2PriorKnowledgeServerDuplicates() {
     try {
       // Treating this use case as user error
-      server.setProtocols(asList(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.H2_PRIOR_KNOWLEDGE));
-      fail();
-    } catch (IllegalArgumentException expected) {
-      assertThat(expected.getMessage()).isEqualTo(
-          ("protocols containing h2_prior_knowledge cannot use other protocols: "
-              + "[h2_prior_knowledge, h2_prior_knowledge]"));
+      server.protocols = listOf(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.H2_PRIOR_KNOWLEDGE)
+      fail<Unit>()
+    } catch (expected: IllegalArgumentException) {
+      assertThat(expected.message).isEqualTo(
+        "protocols containing h2_prior_knowledge cannot use other protocols: "
+          + "[h2_prior_knowledge, h2_prior_knowledge]")
     }
   }
 
-  @Test public void testMockWebServerH2PriorKnowledgeProtocol() {
-    server.setProtocols(asList(Protocol.H2_PRIOR_KNOWLEDGE));
-
-    assertThat(server.getProtocols().size()).isEqualTo(1);
-    assertThat(server.getProtocols().get(0)).isEqualTo(Protocol.H2_PRIOR_KNOWLEDGE);
+  @Test
+  fun testMockWebServerH2PriorKnowledgeProtocol() {
+    server.protocols = listOf(Protocol.H2_PRIOR_KNOWLEDGE)
+    assertThat(server.protocols.size).isEqualTo(1)
+    assertThat(server.protocols[0]).isEqualTo(Protocol.H2_PRIOR_KNOWLEDGE)
   }
 
-  @Test public void https() throws Exception {
-    HandshakeCertificates handshakeCertificates = localhost();
-    server.useHttps(handshakeCertificates.sslSocketFactory());
-    server.enqueue(new MockResponse.Builder()
-        .body("abc")
-        .build());
-
-    HttpUrl url = server.url("/");
-    HttpsURLConnection connection = (HttpsURLConnection) url.url().openConnection();
-    connection.setSSLSocketFactory(handshakeCertificates.sslSocketFactory());
-    connection.setHostnameVerifier(new RecordingHostnameVerifier());
-
-    assertThat(connection.getResponseCode()).isEqualTo(HttpURLConnection.HTTP_OK);
-    BufferedReader reader =
-        new BufferedReader(new InputStreamReader(connection.getInputStream(), UTF_8));
-    assertThat(reader.readLine()).isEqualTo("abc");
-
-    RecordedRequest request = server.takeRequest();
-    assertThat(request.getRequestUrl().scheme()).isEqualTo("https");
-    Handshake handshake = request.getHandshake();
-    assertThat(handshake.tlsVersion()).isNotNull();
-    assertThat(handshake.cipherSuite()).isNotNull();
-    assertThat(handshake.localPrincipal()).isNotNull();
-    assertThat(handshake.localCertificates().size()).isEqualTo(1);
-    assertThat(handshake.peerPrincipal()).isNull();
-    assertThat(handshake.peerCertificates().size()).isEqualTo(0);
+  @Test
+  fun https() {
+    val handshakeCertificates = localhost()
+    server.useHttps(handshakeCertificates.sslSocketFactory())
+    server.enqueue(MockResponse.Builder()
+      .body("abc")
+      .build())
+    val url = server.url("/")
+    val connection = url.toUrl().openConnection() as HttpsURLConnection
+    connection.sslSocketFactory = handshakeCertificates.sslSocketFactory()
+    connection.hostnameVerifier = RecordingHostnameVerifier()
+    assertThat(connection.responseCode).isEqualTo(HttpURLConnection.HTTP_OK)
+    val reader = BufferedReader(InputStreamReader(connection.inputStream, UTF_8))
+    assertThat(reader.readLine()).isEqualTo("abc")
+    val request = server.takeRequest()
+    assertThat(request.requestUrl!!.scheme).isEqualTo("https")
+    val handshake = request.handshake
+    assertThat(handshake!!.tlsVersion).isNotNull
+    assertThat(handshake.cipherSuite).isNotNull
+    assertThat(handshake.localPrincipal).isNotNull
+    assertThat(handshake.localCertificates.size).isEqualTo(1)
+    assertThat(handshake.peerPrincipal).isNull()
+    assertThat(handshake.peerCertificates.size).isEqualTo(0)
   }
 
-  @Test public void httpsWithClientAuth() throws Exception {
-    assumeFalse(getPlatform().equals("conscrypt"));
-
-    HeldCertificate clientCa = new HeldCertificate.Builder()
-        .certificateAuthority(0)
-        .build();
-    HeldCertificate serverCa = new HeldCertificate.Builder()
-        .certificateAuthority(0)
-        .build();
-    HeldCertificate serverCertificate = new HeldCertificate.Builder()
-        .signedBy(serverCa)
-        .addSubjectAlternativeName(server.getHostName())
-        .build();
-    HandshakeCertificates serverHandshakeCertificates = new HandshakeCertificates.Builder()
-        .addTrustedCertificate(clientCa.certificate())
-        .heldCertificate(serverCertificate)
-        .build();
-
-    server.useHttps(serverHandshakeCertificates.sslSocketFactory());
-    server.enqueue(new MockResponse.Builder()
-        .body("abc")
-        .build());
-    server.requestClientAuth();
-
-    HeldCertificate clientCertificate = new HeldCertificate.Builder()
-        .signedBy(clientCa)
-        .build();
-    HandshakeCertificates clientHandshakeCertificates = new HandshakeCertificates.Builder()
-        .addTrustedCertificate(serverCa.certificate())
-        .heldCertificate(clientCertificate)
-        .build();
-
-    HttpUrl url = server.url("/");
-    HttpsURLConnection connection = (HttpsURLConnection) url.url().openConnection();
-    connection.setSSLSocketFactory(clientHandshakeCertificates.sslSocketFactory());
-    connection.setHostnameVerifier(new RecordingHostnameVerifier());
-
-    assertThat(connection.getResponseCode()).isEqualTo(HttpURLConnection.HTTP_OK);
-    BufferedReader reader =
-        new BufferedReader(new InputStreamReader(connection.getInputStream(), UTF_8));
-    assertThat(reader.readLine()).isEqualTo("abc");
-
-    RecordedRequest request = server.takeRequest();
-    assertThat(request.getRequestUrl().scheme()).isEqualTo("https");
-    Handshake handshake = request.getHandshake();
-    assertThat(handshake.tlsVersion()).isNotNull();
-    assertThat(handshake.cipherSuite()).isNotNull();
-    assertThat(handshake.localPrincipal()).isNotNull();
-    assertThat(handshake.localCertificates().size()).isEqualTo(1);
-    assertThat(handshake.peerPrincipal()).isNotNull();
-    assertThat(handshake.peerCertificates().size()).isEqualTo(1);
+  @Test
+  fun httpsWithClientAuth() {
+    Assumptions.assumeFalse(getPlatform() == "conscrypt")
+    val clientCa = HeldCertificate.Builder()
+      .certificateAuthority(0)
+      .build()
+    val serverCa = HeldCertificate.Builder()
+      .certificateAuthority(0)
+      .build()
+    val serverCertificate = HeldCertificate.Builder()
+      .signedBy(serverCa)
+      .addSubjectAlternativeName(server.hostName)
+      .build()
+    val serverHandshakeCertificates = HandshakeCertificates.Builder()
+      .addTrustedCertificate(clientCa.certificate)
+      .heldCertificate(serverCertificate)
+      .build()
+    server.useHttps(serverHandshakeCertificates.sslSocketFactory())
+    server.enqueue(MockResponse.Builder()
+      .body("abc")
+      .build())
+    server.requestClientAuth()
+    val clientCertificate = HeldCertificate.Builder()
+      .signedBy(clientCa)
+      .build()
+    val clientHandshakeCertificates = HandshakeCertificates.Builder()
+      .addTrustedCertificate(serverCa.certificate)
+      .heldCertificate(clientCertificate)
+      .build()
+    val url = server.url("/")
+    val connection = url.toUrl().openConnection() as HttpsURLConnection
+    connection.sslSocketFactory = clientHandshakeCertificates.sslSocketFactory()
+    connection.hostnameVerifier = RecordingHostnameVerifier()
+    assertThat(connection.responseCode).isEqualTo(HttpURLConnection.HTTP_OK)
+    val reader = BufferedReader(InputStreamReader(connection.inputStream, UTF_8))
+    assertThat(reader.readLine()).isEqualTo("abc")
+    val request = server.takeRequest()
+    assertThat(request.requestUrl!!.scheme).isEqualTo("https")
+    val handshake = request.handshake
+    assertThat(handshake!!.tlsVersion).isNotNull
+    assertThat(handshake.cipherSuite).isNotNull
+    assertThat(handshake.localPrincipal).isNotNull
+    assertThat(handshake.localCertificates.size).isEqualTo(1)
+    assertThat(handshake.peerPrincipal).isNotNull
+    assertThat(handshake.peerCertificates.size).isEqualTo(1)
   }
 
-  @Test public void proxiedRequestGetsCorrectRequestUrl() throws Exception {
-    server.enqueue(new MockResponse.Builder()
-        .body("Result")
-        .build());
-
-    OkHttpClient proxiedClient = new OkHttpClient.Builder()
+  @Test
+  fun proxiedRequestGetsCorrectRequestUrl() {
+    server.enqueue(MockResponse.Builder()
+      .body("Result")
+      .build())
+    val proxiedClient = OkHttpClient.Builder()
       .proxy(server.toProxyAddress())
       .readTimeout(Duration.ofMillis(100))
-      .build();
-
-    Request request = new Request.Builder().url("http://android.com/").build();
-
-    try (Response response = proxiedClient.newCall(request).execute()) {
-      assertThat(response.body().string()).isEqualTo("Result");
+      .build()
+    val request = Request.Builder().url("http://android.com/").build()
+    proxiedClient.newCall(request).execute().use { response ->
+      assertThat(response.body.string()).isEqualTo("Result")
     }
-
-    RecordedRequest recordedRequest = server.takeRequest();
-
-    assertThat(recordedRequest.getRequestUrl()).isEqualTo(HttpUrl.get("http://android.com/"));
+    val recordedRequest = server.takeRequest()
+    assertThat(recordedRequest.requestUrl).isEqualTo("http://android.com/".toHttpUrl())
   }
 
   @Test
-  public void startTwice() throws IOException {
-    MockWebServer server2 = new MockWebServer();
-
-    server2.start();
-    server2.start();
-    server2.shutdown();
+  fun startTwice() {
+    val server2 = MockWebServer()
+    server2.start()
+    server2.start()
+    server2.shutdown()
   }
 
   @Test
-  public void shutdownTwice() throws IOException {
-    MockWebServer server2 = new MockWebServer();
-
-    server2.start();
-    server2.shutdown();
+  fun shutdownTwice() {
+    val server2 = MockWebServer()
+    server2.start()
+    server2.shutdown()
     try {
-      server2.start();
-      fail();
-    } catch (IllegalStateException expected) {
-      // expected
+      server2.start()
+      fail<Unit>()
+    } catch (expected: IllegalStateException) {
+      // Expected.
     }
-    server2.shutdown();
+    server2.shutdown()
   }
 
-  public static String getPlatform() {
-    return System.getProperty("okhttp.platform", "jdk8");
+  private fun getPlatform(): String? {
+    return System.getProperty("okhttp.platform", "jdk8")
   }
 }
