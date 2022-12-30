@@ -77,7 +77,10 @@ public final class LoggingEventListenerTest {
   public void get() throws Exception {
     TestUtil.assumeNotWindows();
 
-    server.enqueue(new MockResponse().setBody("Hello!").setHeader("Content-Type", PLAIN));
+    server.enqueue(new MockResponse.Builder()
+        .body("Hello!")
+        .setHeader("Content-Type", PLAIN)
+        .build());
     Response response = client.newCall(request().build()).execute();
     assertThat(response.body()).isNotNull();
     response.body().bytes();
@@ -223,7 +226,9 @@ public final class LoggingEventListenerTest {
 
     server.useHttps(handshakeCertificates.sslSocketFactory());
     server.setProtocols(asList(HTTP_2, HTTP_1_1));
-    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
+    server.enqueue(new MockResponse.Builder()
+        .socketPolicy(SocketPolicy.FAIL_HANDSHAKE)
+        .build());
     url = server.url("/");
 
     try {

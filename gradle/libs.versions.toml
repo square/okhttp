@@ -26,7 +26,7 @@ bouncycastle-bcprov = { module = "org.bouncycastle:bcprov-jdk15to18", version.re
 bouncycastle-bctls = { module = "org.bouncycastle:bctls-jdk15to18", version.ref = "org-bouncycastle" }
 brotli-dec = "org.brotli:dec:0.1.2"
 checkStyle = { module = "com.puppycrawl.tools:checkstyle", version.ref = "checkStyle" }
-clikt = "com.github.ajalt.clikt:clikt:3.5.0"
+clikt = "com.github.ajalt.clikt:clikt:3.5.1"
 codehaus-signature-java18 = "org.codehaus.mojo.signature:java18:1.0"
 conscrypt-android = { module = "org.conscrypt:conscrypt-android", version.ref = "org-conscrypt" }
 conscrypt-openjdk = { module = "org.conscrypt:conscrypt-openjdk-uber", version.ref = "org-conscrypt" }
@@ -37,11 +37,11 @@ gradlePlugin-androidJunit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.8.
 gradlePlugin-animalsniffer = "ru.vyarus:gradle-animalsniffer-plugin:1.6.0"
 gradlePlugin-binaryCompatibilityValidator = "org.jetbrains.kotlinx.binary-compatibility-validator:org.jetbrains.kotlinx.binary-compatibility-validator.gradle.plugin:0.12.1"
 gradlePlugin-bnd = { module = "biz.aQute.bnd:biz.aQute.bnd.gradle", version.ref = "biz-aQute-bnd" }
-gradlePlugin-dokka = "org.jetbrains.dokka:dokka-gradle-plugin:1.7.10"
+gradlePlugin-dokka = "org.jetbrains.dokka:dokka-gradle-plugin:1.7.20"
 gradlePlugin-errorprone = "net.ltgt.gradle:gradle-errorprone-plugin:3.0.1"
 gradlePlugin-graal = "com.palantir.graal:gradle-graal:0.12.0"
 gradlePlugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "org-jetbrains-kotlin" }
-gradlePlugin-mavenPublish = "com.vanniktech:gradle-maven-publish-plugin:0.22.0"
+gradlePlugin-mavenPublish = "com.vanniktech:gradle-maven-publish-plugin:0.23.0"
 gradlePlugin-shadow = "gradle.plugin.com.github.johnrengelman:shadow:7.1.2"
 gradlePlugin-spotless = "com.diffplug.spotless:spotless-plugin-gradle:6.12.0"
 guava-jre = "com.google.guava:guava:31.1-jre"

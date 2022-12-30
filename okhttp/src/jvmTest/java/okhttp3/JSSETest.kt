@@ -62,7 +62,7 @@ class JSSETest {
 
     enableTls()
 
-    server.enqueue(MockResponse().setBody("abc"))
+    server.enqueue(MockResponse(body = "abc"))
 
     val request = Request(server.url("/"))
 

@@ -37,14 +37,14 @@ class ExtensionLifecycleTest {
   fun setup(server: MockWebServer) {
     _server = server
     assertThat(server.started).isTrue()
-    server.enqueue(MockResponse().setResponseCode(200))
+    server.enqueue(MockResponse())
   }
 
   @AfterEach
   fun tearDown(server: MockWebServer) {
     assertThat(_server).isSameAs(server)
     assertThat(server.started).isTrue()
-    server.enqueue(MockResponse().setResponseCode(200))
+    server.enqueue(MockResponse())
   }
 
   @Test

@@ -99,8 +99,8 @@ class SessionReuseTest {
       .sslSocketFactory(sslSocketFactory, handshakeCertificates.trustManager)
       .build()
 
-    server.enqueue(MockResponse().setBody("abc1"))
-    server.enqueue(MockResponse().setBody("abc2"))
+    server.enqueue(MockResponse(body = "abc1"))
+    server.enqueue(MockResponse(body = "abc2"))
 
     val request = Request(server.url("/"))
 

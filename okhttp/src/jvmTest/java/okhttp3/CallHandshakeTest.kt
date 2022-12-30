@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import javax.net.ssl.SSLSocket
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.CipherSuite.Companion.TLS_AES_128_GCM_SHA256
@@ -35,7 +36,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
-import javax.net.ssl.SSLSocket
 
 class CallHandshakeTest {
   private lateinit var client: OkHttpClient
@@ -62,7 +62,7 @@ class CallHandshakeTest {
   fun setup(server: MockWebServer) {
     this.server = server
 
-    server.enqueue(MockResponse().setResponseCode(200))
+    server.enqueue(MockResponse())
 
     client = clientTestRule.newClientBuilder()
       .sslSocketFactory(

@@ -32,6 +32,8 @@ buildscript {
   }
 }
 
+apply(plugin = "org.jetbrains.dokka")
+
 allprojects {
   group = "com.squareup.okhttp3"
   version = "5.0.0-SNAPSHOT"
@@ -210,7 +212,7 @@ subprojects {
   plugins.withId("com.vanniktech.maven.publish.base") {
     val publishingExtension = extensions.getByType(PublishingExtension::class.java)
     configure<MavenPublishBaseExtension> {
-      publishToMavenCentral(SonatypeHost.S01)
+      publishToMavenCentral(SonatypeHost.S01, automaticRelease = true)
       signAllPublications()
       pom {
         name.set(project.name)

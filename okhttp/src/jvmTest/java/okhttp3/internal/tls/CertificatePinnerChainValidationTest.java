@@ -101,8 +101,9 @@ public final class CertificatePinnerChainValidationTest {
     server.useHttps(serverHandshakeCertificates.sslSocketFactory());
 
     // The request should complete successfully.
-    server.enqueue(new MockResponse()
-        .setBody("abc"));
+    server.enqueue(new MockResponse.Builder()
+        .body("abc")
+        .build());
     Call call1 = client.newCall(new Request.Builder()
         .url(server.url("/"))
         .build());
@@ -149,9 +150,10 @@ public final class CertificatePinnerChainValidationTest {
     server.useHttps(serverHandshakeCertificates.sslSocketFactory());
 
     // The request should complete successfully.
-    server.enqueue(new MockResponse()
-        .setBody("abc")
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END));
+    server.enqueue(new MockResponse.Builder()
+        .body("abc")
+        .socketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        .build());
     Call call1 = client.newCall(new Request.Builder()
         .url(server.url("/"))
         .build());
@@ -163,9 +165,10 @@ public final class CertificatePinnerChainValidationTest {
     client.connectionPool().evictAll();
 
     // Confirm that a second request also succeeds. This should detect caching problems.
-    server.enqueue(new MockResponse()
-        .setBody("def")
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END));
+    server.enqueue(new MockResponse.Builder()
+        .body("def")
+        .socketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        .build());
     Call call2 = client.newCall(new Request.Builder()
         .url(server.url("/"))
         .build());
@@ -233,9 +236,10 @@ public final class CertificatePinnerChainValidationTest {
         compromisedIntermediateCa.certificate(), goodCertificate.certificate());
 
     server.useHttps(socketFactory);
-    server.enqueue(new MockResponse()
-        .setBody("abc")
-        .addHeader("Content-Type: text/plain"));
+    server.enqueue(new MockResponse.Builder()
+        .body("abc")
+        .addHeader("Content-Type: text/plain")
+        .build());
 
     // Make a request from client to server. It should succeed certificate checks (unfortunately the
     // rogue CA is trusted) but it should fail certificate pinning.
@@ -312,9 +316,10 @@ public final class CertificatePinnerChainValidationTest {
     SSLSocketFactory socketFactory = newServerSocketFactory(rogueCertificate,
         goodIntermediateCa.certificate(), compromisedIntermediateCa.certificate());
     server.useHttps(socketFactory);
-    server.enqueue(new MockResponse()
-        .setBody("abc")
-        .addHeader("Content-Type: text/plain"));
+    server.enqueue(new MockResponse.Builder()
+        .body("abc")
+        .addHeader("Content-Type: text/plain")
+        .build());
 
     // Make a request from client to server. It should succeed certificate checks (unfortunately the
     // rogue CA is trusted) but it should fail certificate pinning.
@@ -595,8 +600,9 @@ public final class CertificatePinnerChainValidationTest {
     server.useHttps(serverHandshakeCertificates.sslSocketFactory());
 
     // The request should complete successfully.
-    server.enqueue(new MockResponse()
-        .setBody("abc"));
+    server.enqueue(new MockResponse.Builder()
+        .body("abc")
+        .build());
     Call call1 = client.newCall(new Request.Builder()
         .url(server.url("/"))
         .build());
