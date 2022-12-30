@@ -180,13 +180,14 @@ class CancelTest {
     setUp(mode)
     val responseBodySize = 8 * 1024 * 1024 // 8 MiB.
     server.enqueue(
-      MockResponse()
-        .setBody(
+      MockResponse.Builder()
+        .body(
           Buffer()
             .write(ByteArray(responseBodySize))
         )
-        .throttleBody(64 * 1024, 125, MILLISECONDS)
-    ) // 500 Kbps
+        .throttleBody(64 * 1024, 125, MILLISECONDS) // 500 Kbps
+        .build()
+    )
     val call = client.newCall(Request(server.url("/")))
     val response = call.execute()
     cancelLater(call, 500)
@@ -209,17 +210,15 @@ class CancelTest {
     setUp(mode)
     val responseBodySize = 8 * 1024 * 1024 // 8 MiB.
     server.enqueue(
-      MockResponse()
-        .setBody(
+      MockResponse.Builder()
+        .body(
           Buffer()
             .write(ByteArray(responseBodySize))
         )
-        .throttleBody(64 * 1024, 125, MILLISECONDS)
-    ) // 500 Kbps
-    server.enqueue(MockResponse().apply {
-      setResponseCode(200)
-      setBody(".")
-    })
+        .throttleBody(64 * 1024, 125, MILLISECONDS) // 500 Kbps
+        .build()
+    )
+    server.enqueue(MockResponse(body = "."))
 
     val call = client.newCall(Request.Builder().url(server.url("/")).build())
     val response = call.execute()

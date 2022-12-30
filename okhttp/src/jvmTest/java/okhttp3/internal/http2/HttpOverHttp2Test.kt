@@ -156,11 +156,7 @@ class HttpOverHttp2Test {
   @ArgumentsSource(ProtocolParamProvider::class)
   fun get(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
-    server.enqueue(
-      MockResponse()
-        .setBody("ABCDE")
-        .setStatus("HTTP/1.1 200 Sweet")
-    )
+    server.enqueue(MockResponse(body = "ABCDE"))
     val call = client.newCall(Request(server.url("/foo")))
     val response = call.execute()
     assertThat(response.body.string()).isEqualTo("ABCDE")
@@ -169,16 +165,17 @@ class HttpOverHttp2Test {
     assertThat(response.protocol).isEqualTo(protocol)
     val request = server.takeRequest()
     assertThat(request.requestLine).isEqualTo("GET /foo HTTP/1.1")
-    assertThat(request.getHeader(":scheme")).isEqualTo(scheme)
-    assertThat(request.getHeader(":authority")).isEqualTo("${server.hostName}:${server.port}")
+      assertThat(request.headers[":scheme"]).isEqualTo(scheme)
+      assertThat(request.headers[":authority"]).isEqualTo("${server.hostName}:${server.port}")
   }
 
   @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
   fun get204Response(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
-    val responseWithoutBody = MockResponse()
-    responseWithoutBody.status = "HTTP/1.1 204"
-    responseWithoutBody.removeHeader("Content-Length")
+    val responseWithoutBody = MockResponse.Builder()
+      .status("HTTP/1.1 204")
+      .removeHeader("Content-Length")
+      .build()
     server.enqueue(responseWithoutBody)
     val call = client.newCall(Request(server.url("/foo")))
     val response = call.execute()
@@ -197,8 +194,10 @@ class HttpOverHttp2Test {
   @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
   fun head(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
-    val mockResponse = MockResponse().setHeader("Content-Length", 5)
-    mockResponse.status = "HTTP/1.1 200"
+    val mockResponse = MockResponse.Builder()
+      .setHeader("Content-Length", 5)
+      .status("HTTP/1.1 200")
+      .build()
     server.enqueue(mockResponse)
     val call = client.newCall(
       Request.Builder()
@@ -232,7 +231,7 @@ class HttpOverHttp2Test {
   fun noDefaultContentLengthOnStreamingPost(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
     val postBytes = "FGHIJ".toByteArray()
-    server.enqueue(MockResponse().setBody("ABCDE"))
+    server.enqueue(MockResponse(body = "ABCDE"))
     val call = client.newCall(
       Request(
         url = server.url("/foo"),
@@ -250,14 +249,14 @@ class HttpOverHttp2Test {
     val request = server.takeRequest()
     assertThat(request.requestLine).isEqualTo("POST /foo HTTP/1.1")
     org.junit.jupiter.api.Assertions.assertArrayEquals(postBytes, request.body.readByteArray())
-    assertThat(request.getHeader("Content-Length")).isNull()
+      assertThat(request.headers["Content-Length"]).isNull()
   }
 
   @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
   fun userSuppliedContentLengthHeader(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
     val postBytes = "FGHIJ".toByteArray()
-    server.enqueue(MockResponse().setBody("ABCDE"))
+    server.enqueue(MockResponse(body = "ABCDE"))
     val call = client.newCall(
       Request(
         url = server.url("/foo"),
@@ -277,7 +276,7 @@ class HttpOverHttp2Test {
     val request = server.takeRequest()
     assertThat(request.requestLine).isEqualTo("POST /foo HTTP/1.1")
     org.junit.jupiter.api.Assertions.assertArrayEquals(postBytes, request.body.readByteArray())
-    assertThat(request.getHeader("Content-Length")!!.toInt()).isEqualTo(
+    assertThat(request.headers["Content-Length"]!!.toInt()).isEqualTo(
       postBytes.size.toLong()
     )
   }
@@ -288,7 +287,7 @@ class HttpOverHttp2Test {
   ) {
     setUp(protocol, mockWebServer)
     val postBytes = "FGHIJ".toByteArray()
-    server.enqueue(MockResponse().setBody("ABCDE"))
+    server.enqueue(MockResponse(body = "ABCDE"))
     val call = client.newCall(
       Request(
         url = server.url("/foo"),
@@ -310,15 +309,15 @@ class HttpOverHttp2Test {
     val request = server.takeRequest()
     assertThat(request.requestLine).isEqualTo("POST /foo HTTP/1.1")
     org.junit.jupiter.api.Assertions.assertArrayEquals(postBytes, request.body.readByteArray())
-    assertThat(request.getHeader("Content-Length")!!.toInt())
+    assertThat(request.headers["Content-Length"]!!.toInt())
       .isEqualTo(postBytes.size.toLong())
   }
 
   @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
   fun connectionReuse(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
-    server.enqueue(MockResponse().setBody("ABCDEF"))
-    server.enqueue(MockResponse().setBody("GHIJKL"))
+    server.enqueue(MockResponse(body = "ABCDEF"))
+    server.enqueue(MockResponse(body = "GHIJKL"))
     val call1 = client.newCall(Request(server.url("/r1")))
     val call2 = client.newCall(Request(server.url("/r1")))
     val response1 = call1.execute()
@@ -337,12 +336,12 @@ class HttpOverHttp2Test {
   fun connectionWindowUpdateAfterCanceling(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
     server.enqueue(
-      MockResponse()
-        .setBody(Buffer().write(ByteArray(Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE + 1)))
+      MockResponse.Builder()
+        .body(Buffer().write(ByteArray(Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE + 1)))
+        .build()
     )
     server.enqueue(
-      MockResponse()
-        .setBody("abc")
+      MockResponse(body = "abc")
     )
     val call1 = client.newCall(Request(server.url("/")))
     val response1 = call1.execute()
@@ -375,17 +374,16 @@ class HttpOverHttp2Test {
   fun connectionWindowUpdateOnClose(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
     server.enqueue(
-      MockResponse()
-        .setBody(Buffer().write(ByteArray(Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE + 1)))
+      MockResponse.Builder()
+        .body(Buffer().write(ByteArray(Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE + 1)))
+        .build()
     )
     server.enqueue(
-      MockResponse()
-        .setBody("abc")
+      MockResponse(body = "abc")
     )
     // Enqueue an additional response that show if we burnt a good prior response.
     server.enqueue(
-      MockResponse()
-        .setBody("XXX")
+      MockResponse(body = "XXX")
     )
     val call1 = client.newCall(Request(server.url("/")))
     val response1 = call1.execute()
@@ -406,12 +404,12 @@ class HttpOverHttp2Test {
   ) {
     setUp(protocol, mockWebServer)
     server.enqueue(
-      MockResponse()
-        .setBody(Buffer().write(ByteArray(Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE)))
+      MockResponse.Builder()
+        .body(Buffer().write(ByteArray(Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE)))
+        .build()
     )
     server.enqueue(
-      MockResponse()
-        .setBody("abc")
+      MockResponse(body = "abc")
     )
     val call1 = client.newCall(Request(server.url("/")))
     val response1 = call1.execute()
@@ -439,8 +437,8 @@ class HttpOverHttp2Test {
   @Disabled
   fun synchronousRequest(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
-    server.enqueue(MockResponse().setBody("A"))
-    server.enqueue(MockResponse().setBody("A"))
+    server.enqueue(MockResponse(body = "A"))
+    server.enqueue(MockResponse(body = "A"))
     val executor = Executors.newCachedThreadPool()
     val countDownLatch = CountDownLatch(2)
     executor.execute(AsyncRequest("/r1", countDownLatch))
@@ -454,9 +452,10 @@ class HttpOverHttp2Test {
   fun gzippedResponseBody(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
     server.enqueue(
-      MockResponse()
+      MockResponse.Builder()
         .addHeader("Content-Encoding: gzip")
-        .setBody(gzip("ABCABCABC"))
+        .body(gzip("ABCABCABC"))
+        .build()
     )
     val call = client.newCall(Request(server.url("/r1")))
     val response = call.execute()
@@ -467,14 +466,14 @@ class HttpOverHttp2Test {
   fun authenticate(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
     server.enqueue(
-      MockResponse()
-        .setResponseCode(HttpURLConnection.HTTP_UNAUTHORIZED)
-        .addHeader("www-authenticate: Basic realm=\"protected area\"")
-        .setBody("Please authenticate.")
+      MockResponse(
+        code = HttpURLConnection.HTTP_UNAUTHORIZED,
+        headers = headersOf("www-authenticate", "Basic realm=\"protected area\""),
+        body = "Please authenticate.",
+      )
     )
     server.enqueue(
-      MockResponse()
-        .setBody("Successful auth!")
+      MockResponse(body = "Successful auth!")
     )
     val credential = basic("username", "password")
     client = client.newBuilder()
@@ -484,21 +483,23 @@ class HttpOverHttp2Test {
     val response = call.execute()
     assertThat(response.body.string()).isEqualTo("Successful auth!")
     val denied = server.takeRequest()
-    assertThat(denied.getHeader("Authorization")).isNull()
+      assertThat(denied.headers["Authorization"]).isNull()
     val accepted = server.takeRequest()
     assertThat(accepted.requestLine).isEqualTo("GET / HTTP/1.1")
-    assertThat(accepted.getHeader("Authorization")).isEqualTo(credential)
+      assertThat(accepted.headers["Authorization"]).isEqualTo(credential)
   }
 
   @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
   fun redirect(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
     server.enqueue(
-      MockResponse().setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
-        .addHeader("Location: /foo")
-        .setBody("This page has moved!")
+      MockResponse(
+        code = HttpURLConnection.HTTP_MOVED_TEMP,
+        headers = headersOf("Location", "/foo"),
+        body = "This page has moved!",
+      )
     )
-    server.enqueue(MockResponse().setBody("This is the new location!"))
+    server.enqueue(MockResponse(body = "This is the new location!"))
     val call = client.newCall(Request(server.url("/")))
     val response = call.execute()
     assertThat(response.body.string()).isEqualTo("This is the new location!")
@@ -511,7 +512,7 @@ class HttpOverHttp2Test {
   @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
   fun readAfterLastByte(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
-    server.enqueue(MockResponse().setBody("ABC"))
+    server.enqueue(MockResponse(body = "ABC"))
     val call = client.newCall(Request(server.url("/")))
     val response = call.execute()
     val inputStream = response.body.byteStream()
@@ -526,8 +527,8 @@ class HttpOverHttp2Test {
   @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
   fun readResponseHeaderTimeout(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
-    server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE))
-    server.enqueue(MockResponse().setBody("A"))
+    server.enqueue(MockResponse(socketPolicy = SocketPolicy.NO_RESPONSE))
+    server.enqueue(MockResponse(body = "A"))
     client = client.newBuilder()
       .readTimeout(Duration.ofSeconds(1))
       .build()
@@ -562,8 +563,10 @@ class HttpOverHttp2Test {
     val body = CharArray(4096) // 4KiB to read.
     Arrays.fill(body, 'y')
     server.enqueue(
-      MockResponse().setBody(String(body))
+      MockResponse.Builder()
+        .body(String(body))
         .throttleBody(1024, 1, TimeUnit.SECONDS) // Slow connection 1KiB/second.
+        .build()
     )
     client = client.newBuilder()
       .readTimeout(Duration.ofSeconds(2))
@@ -584,13 +587,13 @@ class HttpOverHttp2Test {
     setUp(protocol, mockWebServer)
     val body = repeat('y', 2048)
     server.enqueue(
-      MockResponse()
-        .setBody(body)
+      MockResponse.Builder()
+        .body(body)
         .throttleBody(1024, 1, TimeUnit.SECONDS)
+        .build()
     ) // Slow connection 1KiB/second.
     server.enqueue(
-      MockResponse()
-        .setBody(body)
+      MockResponse(body = body)
     )
     client = client.newBuilder()
       .readTimeout(Duration.ofMillis(500)) // Half a second to read something.
@@ -620,9 +623,10 @@ class HttpOverHttp2Test {
   fun connectionTimeout(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
     server.enqueue(
-      MockResponse()
-        .setBody("A")
-        .setBodyDelay(1, TimeUnit.SECONDS)
+      MockResponse.Builder()
+        .body("A")
+        .bodyDelay(1, TimeUnit.SECONDS)
+        .build()
     )
     val client1 = client.newBuilder()
       .readTimeout(Duration.ofSeconds(2))
@@ -662,9 +666,10 @@ class HttpOverHttp2Test {
       .cache(cache)
       .build()
     server.enqueue(
-      MockResponse()
-        .addHeader("cache-control: max-age=60")
-        .setBody("A")
+      MockResponse(
+        headers = headersOf("cache-control", "max-age=60"),
+        body = "A",
+      )
     )
     val call1 = client.newCall(Request(server.url("/")))
     val response1 = call1.execute()
@@ -690,13 +695,13 @@ class HttpOverHttp2Test {
       .cache(cache)
       .build()
     server.enqueue(
-      MockResponse()
-        .addHeader("ETag: v1")
-        .setBody("A")
+      MockResponse(
+        headers = headersOf("ETag", "v1"),
+        body = "A",
+      )
     )
     server.enqueue(
-      MockResponse()
-        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+      MockResponse(code = HttpURLConnection.HTTP_NOT_MODIFIED)
     )
     val call1 = client.newCall(Request(server.url("/")))
     val response1 = call1.execute()
@@ -719,14 +724,16 @@ class HttpOverHttp2Test {
       .cache(cache)
       .build()
     server.enqueue(
-      MockResponse()
-        .addHeader("cache-control: max-age=60")
-        .setBody("ABCD")
+      MockResponse(
+        headers = headersOf("cache-control", "max-age=60"),
+        body = "ABCD",
+      )
     )
     server.enqueue(
-      MockResponse()
-        .addHeader("cache-control: max-age=60")
-        .setBody("EFGH")
+      MockResponse(
+        headers = headersOf("cache-control", "max-age=60"),
+        body = "EFGH",
+      )
     )
     val call1 = client.newCall(Request(server.url("/")))
     val response1 = call1.execute()
@@ -756,7 +763,7 @@ class HttpOverHttp2Test {
     val response = call.execute()
     assertThat(response.body.string()).isEqualTo("")
     val request = server.takeRequest()
-    assertThat(request.getHeader("Cookie")).isEqualTo("a=b")
+      assertThat(request.headers["Cookie"]).isEqualTo("a=b")
   }
 
   @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
@@ -767,8 +774,7 @@ class HttpOverHttp2Test {
       .cookieJar(cookieJar)
       .build()
     server.enqueue(
-      MockResponse()
-        .addHeader("set-cookie: a=b")
+      MockResponse(headers = headersOf("set-cookie", "a=b"))
     )
     val call = client.newCall(Request(server.url("/")))
     val response = call.execute()
@@ -779,14 +785,8 @@ class HttpOverHttp2Test {
   @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
   fun cancelWithStreamNotCompleted(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
-    server.enqueue(
-      MockResponse()
-        .setBody("abc")
-    )
-    server.enqueue(
-      MockResponse()
-        .setBody("def")
-    )
+    server.enqueue(MockResponse(body = "abc"))
+    server.enqueue(MockResponse(body = "def"))
 
     // Disconnect before the stream is created. A connection is still established!
     val call1 = client.newCall(Request(server.url("/")))
@@ -810,14 +810,12 @@ class HttpOverHttp2Test {
   ) {
     setUp(protocol, mockWebServer)
     server.enqueue(
-      MockResponse()
-        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
-        .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.httpCode)
+      MockResponse(
+        socketPolicy = SocketPolicy.RESET_STREAM_AT_START,
+        http2ErrorCode = ErrorCode.REFUSED_STREAM.httpCode,
+      )
     )
-    server.enqueue(
-      MockResponse()
-        .setBody("abc")
-    )
+    server.enqueue(MockResponse(body = "abc"))
     val call = client.newCall(Request(server.url("/")))
     try {
       call.execute()
@@ -836,14 +834,12 @@ class HttpOverHttp2Test {
       .dns(DoubleInetAddressDns()) // Two routes!
       .build()
     server.enqueue(
-      MockResponse()
-        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
-        .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.httpCode)
+      MockResponse(
+        socketPolicy = SocketPolicy.RESET_STREAM_AT_START,
+        http2ErrorCode = ErrorCode.REFUSED_STREAM.httpCode,
+      )
     )
-    server.enqueue(
-      MockResponse()
-        .setBody("abc")
-    )
+    server.enqueue(MockResponse(body = "abc"))
 
     val request = Request(server.url("/"))
     val response = client.newCall(request).execute()
@@ -865,19 +861,22 @@ class HttpOverHttp2Test {
       .dns(DoubleInetAddressDns()) // Two routes!
       .build()
     server.enqueue(
-      MockResponse()
-        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
-        .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.httpCode)
+      MockResponse(
+        socketPolicy = SocketPolicy.RESET_STREAM_AT_START,
+        http2ErrorCode = ErrorCode.REFUSED_STREAM.httpCode,
+      )
     )
     server.enqueue(
-      MockResponse()
-        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
-        .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.httpCode)
+      MockResponse(
+        socketPolicy = SocketPolicy.RESET_STREAM_AT_START,
+        http2ErrorCode = ErrorCode.REFUSED_STREAM.httpCode,
+      )
     )
     server.enqueue(
-      MockResponse()
-        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
-        .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.httpCode)
+      MockResponse(
+        socketPolicy = SocketPolicy.RESET_STREAM_AT_START,
+        http2ErrorCode = ErrorCode.REFUSED_STREAM.httpCode,
+      )
     )
 
     val request = Request(server.url("/"))
@@ -898,14 +897,12 @@ class HttpOverHttp2Test {
   ) {
     setUp(protocol, mockWebServer)
     server.enqueue(
-      MockResponse()
-        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
-        .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.httpCode)
+      MockResponse(
+        socketPolicy = SocketPolicy.RESET_STREAM_AT_START,
+        http2ErrorCode = ErrorCode.REFUSED_STREAM.httpCode,
+      )
     )
-    server.enqueue(
-      MockResponse()
-        .setBody("abc")
-    )
+    server.enqueue(MockResponse(body = "abc"))
     val request = Request(server.url("/"))
 
     // First call fails because it only has one route.
@@ -929,23 +926,19 @@ class HttpOverHttp2Test {
   ) {
     setUp(protocol, mockWebServer)
     server.enqueue(
-      MockResponse()
-        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
-        .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.httpCode)
+      MockResponse(
+        socketPolicy = SocketPolicy.RESET_STREAM_AT_START,
+        http2ErrorCode = ErrorCode.REFUSED_STREAM.httpCode,
+      )
     )
     server.enqueue(
-      MockResponse()
-        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
-        .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.httpCode)
+      MockResponse(
+        socketPolicy = SocketPolicy.RESET_STREAM_AT_START,
+        http2ErrorCode = ErrorCode.REFUSED_STREAM.httpCode,
+      )
     )
-    server.enqueue(
-      MockResponse()
-        .setBody("abc")
-    )
-    server.enqueue(
-      MockResponse()
-        .setBody("def")
-    )
+    server.enqueue(MockResponse(body = "abc"))
+    server.enqueue(MockResponse(body = "def"))
     val request = Request(server.url("/"))
 
     // First call makes a new connection and fails because it is the only route.
@@ -979,18 +972,19 @@ class HttpOverHttp2Test {
   fun noRecoveryFromTwoRefusedStreams(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
     server.enqueue(
-      MockResponse()
-        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
-        .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.httpCode)
+      MockResponse(
+        socketPolicy = SocketPolicy.RESET_STREAM_AT_START,
+        http2ErrorCode = ErrorCode.REFUSED_STREAM.httpCode,
+      )
     )
     server.enqueue(
-      MockResponse()
-        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
-        .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.httpCode)
+      MockResponse(
+        socketPolicy = SocketPolicy.RESET_STREAM_AT_START,
+        http2ErrorCode = ErrorCode.REFUSED_STREAM.httpCode,
+      )
     )
     server.enqueue(
-      MockResponse()
-        .setBody("abc")
+      MockResponse(body = "abc")
     )
     val call = client.newCall(Request(server.url("/")))
     try {
@@ -1019,14 +1013,12 @@ class HttpOverHttp2Test {
 
   private fun recoverFromOneHttp2ErrorRequiresNewConnection(errorCode: ErrorCode?) {
     server.enqueue(
-      MockResponse()
-        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
-        .setHttp2ErrorCode(errorCode!!.httpCode)
+      MockResponse(
+        socketPolicy = SocketPolicy.RESET_STREAM_AT_START,
+        http2ErrorCode = errorCode!!.httpCode,
+      )
     )
-    server.enqueue(
-      MockResponse()
-        .setBody("abc")
-    )
+    server.enqueue(MockResponse(body = "abc"))
     client = client.newBuilder()
       .dns(DoubleInetAddressDns())
       .build()
@@ -1046,19 +1038,18 @@ class HttpOverHttp2Test {
   ) {
     setUp(protocol, mockWebServer)
     server.enqueue(
-      MockResponse()
-        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
-        .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.httpCode)
+      MockResponse(
+        socketPolicy = SocketPolicy.RESET_STREAM_AT_START,
+        http2ErrorCode = ErrorCode.REFUSED_STREAM.httpCode,
+      )
     )
     server.enqueue(
-      MockResponse()
-        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
-        .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.httpCode)
+      MockResponse(
+        socketPolicy = SocketPolicy.RESET_STREAM_AT_START,
+        http2ErrorCode = ErrorCode.REFUSED_STREAM.httpCode,
+      )
     )
-    server.enqueue(
-      MockResponse()
-        .setBody("abc")
-    )
+    server.enqueue(MockResponse(body = "abc"))
     client = client.newBuilder()
       .dns(DoubleInetAddressDns())
       .build()
@@ -1087,13 +1078,13 @@ class HttpOverHttp2Test {
     )
     val dispatcher = RespondAfterCancelDispatcher(responseDequeuedLatches, requestCanceledLatches)
     dispatcher.enqueueResponse(
-      MockResponse()
-        .setBodyDelay(10, TimeUnit.SECONDS)
-        .setBody("abc")
+      MockResponse.Builder()
+        .bodyDelay(10, TimeUnit.SECONDS)
+        .body("abc")
+        .build()
     )
     dispatcher.enqueueResponse(
-      MockResponse()
-        .setBody("def")
+      MockResponse(body = "def")
     )
     server.dispatcher = dispatcher
     client = client.newBuilder()
@@ -1123,18 +1114,19 @@ class HttpOverHttp2Test {
     )
     val dispatcher = RespondAfterCancelDispatcher(responseDequeuedLatches, requestCanceledLatches)
     dispatcher.enqueueResponse(
-      MockResponse()
-        .setBodyDelay(10, TimeUnit.SECONDS)
-        .setBody("abc")
+      MockResponse.Builder()
+        .bodyDelay(10, TimeUnit.SECONDS)
+        .body("abc")
+        .build()
     )
     dispatcher.enqueueResponse(
-      MockResponse()
-        .setBodyDelay(10, TimeUnit.SECONDS)
-        .setBody("def")
+      MockResponse.Builder()
+        .bodyDelay(10, TimeUnit.SECONDS)
+        .body("def")
+        .build()
     )
     dispatcher.enqueueResponse(
-      MockResponse()
-        .setBody("ghi")
+      MockResponse(body = "ghi")
     )
     server.dispatcher = dispatcher
     client = client.newBuilder()
@@ -1222,14 +1214,12 @@ class HttpOverHttp2Test {
 
   private fun noRecoveryFromErrorWithRetryDisabled(errorCode: ErrorCode?) {
     server.enqueue(
-      MockResponse()
-        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
-        .setHttp2ErrorCode(errorCode!!.httpCode)
+      MockResponse(
+        socketPolicy = SocketPolicy.RESET_STREAM_AT_START,
+        http2ErrorCode = errorCode!!.httpCode,
+      )
     )
-    server.enqueue(
-      MockResponse()
-        .setBody("abc")
-    )
+    server.enqueue(MockResponse(body = "abc"))
     client = client.newBuilder()
       .retryOnConnectionFailure(false)
       .build()
@@ -1247,28 +1237,21 @@ class HttpOverHttp2Test {
     protocol: Protocol, mockWebServer: MockWebServer
   ) {
     setUp(protocol, mockWebServer)
+    server.enqueue(MockResponse(code = 401))
     server.enqueue(
-      MockResponse()
-        .setResponseCode(401)
+      MockResponse(
+        socketPolicy = SocketPolicy.RESET_STREAM_AT_START,
+        http2ErrorCode = ErrorCode.INTERNAL_ERROR.httpCode,
+      )
     )
+    server.enqueue(MockResponse(body = "DEF"))
     server.enqueue(
-      MockResponse()
-        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
-        .setHttp2ErrorCode(ErrorCode.INTERNAL_ERROR.httpCode)
+      MockResponse(
+        code = 301,
+        headers = headersOf("Location", "/foo")
+      )
     )
-    server.enqueue(
-      MockResponse()
-        .setBody("DEF")
-    )
-    server.enqueue(
-      MockResponse()
-        .setResponseCode(301)
-        .addHeader("Location", "/foo")
-    )
-    server.enqueue(
-      MockResponse()
-        .setBody("ABC")
-    )
+    server.enqueue(MockResponse(body = "ABC"))
     val latch = CountDownLatch(1)
     val responses: BlockingQueue<String?> = SynchronousQueue()
     val authenticator = okhttp3.Authenticator { route: Route?, response: Response? ->
@@ -1321,9 +1304,10 @@ class HttpOverHttp2Test {
   fun nonAsciiResponseHeader(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
     server.enqueue(
-      MockResponse()
+      MockResponse.Builder()
         .addHeaderLenient("Alpha", "α")
         .addHeaderLenient("β", "Beta")
+        .build()
     )
     val call = client.newCall(Request(server.url("/")))
     val response = call.execute()
@@ -1337,13 +1321,13 @@ class HttpOverHttp2Test {
     setUp(protocol, mockWebServer)
     val pushPromise = PushPromise(
       "GET", "/foo/bar", headersOf("foo", "bar"),
-      MockResponse().setBody("bar").setStatus("HTTP/1.1 200 Sweet")
+      MockResponse(body = "bar")
     )
     server.enqueue(
-      MockResponse()
-        .setBody("ABCDE")
-        .setStatus("HTTP/1.1 200 Sweet")
-        .withPush(pushPromise)
+      MockResponse.Builder()
+        .body("ABCDE")
+        .addPush(pushPromise)
+        .build()
     )
     val call = client.newCall(Request(server.url("/foo")))
     val response = call.execute()
@@ -1352,13 +1336,13 @@ class HttpOverHttp2Test {
     assertThat(response.message).isEqualTo("")
     val request = server.takeRequest()
     assertThat(request.requestLine).isEqualTo("GET /foo HTTP/1.1")
-    assertThat(request.getHeader(":scheme")).isEqualTo(scheme)
-    assertThat(request.getHeader(":authority")).isEqualTo(
+      assertThat(request.headers[":scheme"]).isEqualTo(scheme)
+      assertThat(request.headers[":authority"]).isEqualTo(
       server.hostName + ":" + server.port
     )
     val pushedRequest = server.takeRequest()
     assertThat(pushedRequest.requestLine).isEqualTo("GET /foo/bar HTTP/1.1")
-    assertThat(pushedRequest.getHeader("foo")).isEqualTo("bar")
+      assertThat(pushedRequest.headers["foo"]).isEqualTo("bar")
   }
 
   @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
@@ -1366,13 +1350,13 @@ class HttpOverHttp2Test {
     setUp(protocol, mockWebServer)
     val pushPromise = PushPromise(
       "HEAD", "/foo/bar", headersOf("foo", "bar"),
-      MockResponse().setStatus("HTTP/1.1 204 Sweet")
+      MockResponse(code = 204)
     )
     server.enqueue(
-      MockResponse()
-        .setBody("ABCDE")
-        .setStatus("HTTP/1.1 200 Sweet")
-        .withPush(pushPromise)
+      MockResponse.Builder()
+        .body("ABCDE")
+        .addPush(pushPromise)
+        .build()
     )
     val call = client.newCall(Request(server.url("/foo")))
     val response = call.execute()
@@ -1381,24 +1365,21 @@ class HttpOverHttp2Test {
     assertThat(response.message).isEqualTo("")
     val request = server.takeRequest()
     assertThat(request.requestLine).isEqualTo("GET /foo HTTP/1.1")
-    assertThat(request.getHeader(":scheme")).isEqualTo(scheme)
-    assertThat(request.getHeader(":authority")).isEqualTo(
+      assertThat(request.headers[":scheme"]).isEqualTo(scheme)
+      assertThat(request.headers[":authority"]).isEqualTo(
       server.hostName + ":" + server.port
     )
     val pushedRequest = server.takeRequest()
     assertThat(pushedRequest.requestLine).isEqualTo(
       "HEAD /foo/bar HTTP/1.1"
     )
-    assertThat(pushedRequest.getHeader("foo")).isEqualTo("bar")
+      assertThat(pushedRequest.headers["foo"]).isEqualTo("bar")
   }
 
   @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
   fun noDataFramesSentWithNullRequestBody(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
-    server.enqueue(
-      MockResponse()
-        .setBody("ABC")
-    )
+    server.enqueue(MockResponse(body = "ABC"))
     val call = client.newCall(
       Request.Builder()
         .url(server.url("/"))
@@ -1417,10 +1398,7 @@ class HttpOverHttp2Test {
   @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)
   fun emptyDataFrameSentWithEmptyBody(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
-    server.enqueue(
-      MockResponse()
-        .setBody("ABC")
-    )
+    server.enqueue(MockResponse(body = "ABC"))
     val call = client.newCall(
       Request.Builder()
         .url(server.url("/"))
@@ -1453,9 +1431,10 @@ class HttpOverHttp2Test {
 
     // Delay the response to give 1 ping enough time to be sent and replied to.
     server.enqueue(
-      MockResponse()
-        .setBodyDelay(750, TimeUnit.MILLISECONDS)
-        .setBody("ABC")
+      MockResponse.Builder()
+        .bodyDelay(750, TimeUnit.MILLISECONDS)
+        .body("ABC")
+        .build()
     )
     val call = client.newCall(Request(server.url("/")))
     val response = call.execute()
@@ -1491,10 +1470,7 @@ class HttpOverHttp2Test {
       .build()
 
     // Set up the server to ignore the socket. It won't respond to pings!
-    server.enqueue(
-      MockResponse()
-        .setSocketPolicy(SocketPolicy.STALL_SOCKET_AT_START)
-    )
+    server.enqueue(MockResponse(socketPolicy = SocketPolicy.STALL_SOCKET_AT_START))
 
     // Make a call. It'll fail as soon as our pings detect a problem.
     val call = client.newCall(Request(server.url("/")))
@@ -1528,15 +1504,11 @@ class HttpOverHttp2Test {
       .build()
 
     // Stalling the socket will cause TWO requests to time out!
-    server.enqueue(
-      MockResponse()
-        .setSocketPolicy(SocketPolicy.STALL_SOCKET_AT_START)
-    )
+    server.enqueue(MockResponse(socketPolicy = SocketPolicy.STALL_SOCKET_AT_START))
 
     // The 3rd request should be sent to a fresh connection.
     server.enqueue(
-      MockResponse()
-        .setBody("fresh connection")
+      MockResponse(body = "fresh connection")
     )
 
     // The first call times out.
@@ -1573,18 +1545,13 @@ class HttpOverHttp2Test {
       .readTimeout(Duration.ofMillis(500))
       .build()
     server.enqueue(
-      MockResponse()
-        .setBodyDelay(1000, TimeUnit.MILLISECONDS)
-        .setBody("a")
+      MockResponse.Builder()
+        .bodyDelay(1000, TimeUnit.MILLISECONDS)
+        .body("a")
+        .build()
     )
-    server.enqueue(
-      MockResponse()
-        .setBody("b")
-    )
-    server.enqueue(
-      MockResponse()
-        .setBody("c")
-    )
+    server.enqueue(MockResponse(body = "b"))
+    server.enqueue(MockResponse(body = "c"))
 
     // The first call times out.
     val call1 = client.newCall(Request(server.url("/")))
@@ -1649,21 +1616,20 @@ class HttpOverHttp2Test {
     settings[Settings.MAX_CONCURRENT_STREAMS] = 2
 
     // Read & write a full request to confirm settings are accepted.
-    server.enqueue(MockResponse().withSettings(settings))
+    server.enqueue(MockResponse.Builder()
+      .settings(settings)
+      .build())
     val call = client.newCall(Request(server.url("/")))
     val response = call.execute()
     assertThat(response.body.string()).isEqualTo("")
     server.enqueue(
-      MockResponse()
-        .setBody("ABC")
+      MockResponse(body = "ABC")
     )
     server.enqueue(
-      MockResponse()
-        .setBody("DEF")
+      MockResponse(body = "DEF")
     )
     server.enqueue(
-      MockResponse()
-        .setBody("GHI")
+      MockResponse(body = "GHI")
     )
     val call1 = client.newCall(Request(server.url("/")))
     val response1 = call1.execute()
@@ -1688,18 +1654,15 @@ class HttpOverHttp2Test {
   fun connectionNotReusedAfterShutdown(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
     server.enqueue(
-      MockResponse()
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
-        .setBody("ABC")
+      MockResponse(
+        body = "ABC",
+        socketPolicy = SocketPolicy.DISCONNECT_AT_END,
+      )
     )
-    server.enqueue(
-      MockResponse()
-        .setBody("DEF")
-    )
+    server.enqueue(MockResponse(body = "DEF"))
     // Enqueue an additional response that show if we burnt a good prior response.
     server.enqueue(
-      MockResponse()
-        .setBody("XXX")
+      MockResponse(body = "XXX")
     )
     val connections: MutableList<RealConnection?> = ArrayList()
     val localClient = client.newBuilder().eventListener(object : EventListener() {
@@ -1741,14 +1704,12 @@ class HttpOverHttp2Test {
   fun connectionShutdownAfterHealthCheck(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
     server.enqueue(
-      MockResponse()
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
-        .setBody("ABC")
+      MockResponse(
+        body = "ABC",
+        socketPolicy = SocketPolicy.DISCONNECT_AT_END,
+      )
     )
-    server.enqueue(
-      MockResponse()
-        .setBody("DEF")
-    )
+    server.enqueue(MockResponse(body = "DEF"))
     val client2 = client.newBuilder()
       .addNetworkInterceptor(object : Interceptor {
         var executedCall = false
@@ -1783,14 +1744,16 @@ class HttpOverHttp2Test {
   fun responseHeadersAfterGoaway(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
     server.enqueue(
-      MockResponse()
-        .setHeadersDelay(1, TimeUnit.SECONDS)
-        .setBody("ABC")
+      MockResponse.Builder()
+        .headersDelay(1, TimeUnit.SECONDS)
+        .body("ABC")
+        .build()
     )
     server.enqueue(
-      MockResponse()
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
-        .setBody("DEF")
+      MockResponse(
+        body = "DEF",
+        socketPolicy = SocketPolicy.DISCONNECT_AT_END,
+      )
     )
     val latch = CountDownLatch(2)
     val errors = ArrayList<IOException?>()
@@ -1840,22 +1803,10 @@ class HttpOverHttp2Test {
     assumeTrue(protocol === Protocol.HTTP_2)
     server.useHttps(handshakeCertificates.sslSocketFactory())
     val queueDispatcher = QueueDispatcher()
-    queueDispatcher.enqueueResponse(
-      MockResponse()
-        .inTunnel()
-    )
-    queueDispatcher.enqueueResponse(
-      MockResponse()
-        .inTunnel()
-    )
-    queueDispatcher.enqueueResponse(
-      MockResponse()
-        .setBody("call2 response")
-    )
-    queueDispatcher.enqueueResponse(
-      MockResponse()
-        .setBody("call1 response")
-    )
+    queueDispatcher.enqueueResponse(MockResponse(inTunnel = true))
+    queueDispatcher.enqueueResponse(MockResponse(inTunnel = true))
+    queueDispatcher.enqueueResponse(MockResponse(body = "call2 response"))
+    queueDispatcher.enqueueResponse(MockResponse(body = "call1 response"))
 
     // We use a re-entrant dispatcher to initiate one HTTPS connection while the other is in flight.
     server.dispatcher = object : Dispatcher() {
@@ -1927,7 +1878,7 @@ class HttpOverHttp2Test {
     val response = call.execute()
     assertThat(response.body.string()).isEqualTo("")
     val recordedRequest = server.takeRequest()
-    assertThat(recordedRequest.getHeader(":authority")).isEqualTo("privateobject.com")
+      assertThat(recordedRequest.headers[":authority"]).isEqualTo("privateobject.com")
   }
 
   private fun gzip(bytes: String): Buffer {
@@ -2028,15 +1979,8 @@ class HttpOverHttp2Test {
   @ArgumentsSource(ProtocolParamProvider::class)
   fun http2WithProxy(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
-    server.enqueue(
-      MockResponse()
-        .inTunnel()
-    )
-    server.enqueue(
-      MockResponse()
-        .setBody("ABCDE")
-        .setStatus("HTTP/1.1 200 Sweet")
-    )
+    server.enqueue(MockResponse(inTunnel = true))
+    server.enqueue(MockResponse(body = "ABCDE"))
     val client = client.newBuilder()
       .proxy(server.toProxyAddress())
       .build()
@@ -2060,8 +2004,8 @@ class HttpOverHttp2Test {
 
     val request = server.takeRequest()
     assertThat(request.requestLine).isEqualTo("GET /foo HTTP/1.1")
-    assertThat(request.getHeader(":scheme")).isEqualTo(scheme)
-    assertThat(request.getHeader(":authority")).isEqualTo("android.com")
+      assertThat(request.headers[":scheme"]).isEqualTo(scheme)
+      assertThat(request.headers[":authority"]).isEqualTo("android.com")
   }
 
   /** Respond to a proxy authorization challenge.  */
@@ -2070,19 +2014,14 @@ class HttpOverHttp2Test {
   fun proxyAuthenticateOnConnect(protocol: Protocol, mockWebServer: MockWebServer) {
     setUp(protocol, mockWebServer)
     server.enqueue(
-      MockResponse()
-        .inTunnel()
-        .setResponseCode(407)
-        .addHeader("Proxy-Authenticate: Basic realm=\"localhost\"")
+      MockResponse(
+        code = 407,
+        headers = headersOf("Proxy-Authenticate", "Basic realm=\"localhost\""),
+        inTunnel = true,
+      )
     )
-    server.enqueue(
-      MockResponse()
-        .inTunnel()
-    )
-    server.enqueue(
-      MockResponse()
-        .setBody("response body")
-    )
+    server.enqueue(MockResponse(inTunnel = true))
+    server.enqueue(MockResponse(body = "response body"))
     val client = client.newBuilder()
       .proxy(server.toProxyAddress())
       .proxyAuthenticator(RecordingOkAuthenticator("password", "Basic"))
@@ -2101,15 +2040,15 @@ class HttpOverHttp2Test {
 
     val connect1 = server.takeRequest()
     assertThat(connect1.requestLine).isEqualTo("CONNECT android.com:$port HTTP/1.1")
-    assertThat(connect1.getHeader("Proxy-Authorization")).isNull()
+      assertThat(connect1.headers["Proxy-Authorization"]).isNull()
 
     val connect2 = server.takeRequest()
     assertThat(connect2.requestLine).isEqualTo("CONNECT android.com:$port HTTP/1.1")
-    assertThat(connect2.getHeader("Proxy-Authorization")).isEqualTo("password")
+      assertThat(connect2.headers["Proxy-Authorization"]).isEqualTo("password")
 
     val get = server.takeRequest()
     assertThat(get.requestLine).isEqualTo("GET /foo HTTP/1.1")
-    assertThat(get.getHeader("Proxy-Authorization")).isNull()
+      assertThat(get.headers["Proxy-Authorization"]).isNull()
   }
 
   companion object {

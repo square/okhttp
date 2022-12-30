@@ -17,6 +17,7 @@ package okhttp3
 
 import java.net.URL
 import kotlin.reflect.KClass
+import kotlin.reflect.cast
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.internal.canonicalUrl
 import okhttp3.internal.commonAddHeader
@@ -32,7 +33,7 @@ import okhttp3.internal.commonPost
 import okhttp3.internal.commonPut
 import okhttp3.internal.commonRemoveHeader
 import okhttp3.internal.commonTag
-import okhttp3.internal.isSensitiveHeader
+import okhttp3.internal.commonToString
 
 actual class Request internal actual constructor(builder: Builder) {
   @get:JvmName("url")
@@ -61,11 +62,11 @@ actual class Request internal actual constructor(builder: Builder) {
    *
    * @param method defaults to "GET" if [body] is null, and "POST" otherwise.
    */
-  constructor(
+  actual constructor(
     url: HttpUrl,
-    headers: Headers = Headers.headersOf(),
-    method: String = "\u0000", // Sentinel value chooses based on what the body is.
-    body: RequestBody? = null,
+    headers: Headers,
+    method: String,
+    body: RequestBody?,
   ) : this(
     Builder()
       .url(url)
@@ -154,29 +155,7 @@ actual class Request internal actual constructor(builder: Builder) {
       level = DeprecationLevel.ERROR)
   fun cacheControl(): CacheControl = cacheControl
 
-  override fun toString(): String = buildString {
-    append("Request{method=")
-    append(method)
-    append(", url=")
-    append(url)
-    if (headers.size != 0) {
-      append(", headers=[")
-      headers.forEachIndexed { index, (name, value) ->
-        if (index > 0) {
-          append(", ")
-        }
-        append(name)
-        append(':')
-        append(if (isSensitiveHeader(name)) "██" else value)
-      }
-      append(']')
-    }
-    if (tags.isNotEmpty()) {
-      append(", tags=")
-      append(tags)
-    }
-    append('}')
-  }
+  override fun toString(): String = commonToString()
 
   actual open class Builder {
     internal actual var url: HttpUrl? = null
@@ -201,7 +180,7 @@ actual class Request internal actual constructor(builder: Builder) {
       this.headers = request.headers.newBuilder()
     }
 
-    open fun url(url: HttpUrl): Builder = apply {
+    actual open fun url(url: HttpUrl): Builder = apply {
       this.url = url
     }
 
@@ -244,7 +223,7 @@ actual class Request internal actual constructor(builder: Builder) {
     @JvmName("reifiedTag")
     actual inline fun <reified T : Any> tag(tag: T?): Builder = tag(T::class, tag)
 
-    actual fun <T : Any> tag(type: KClass<T>, tag: T?): Builder = commonTag(type, tag)
+    actual fun <T : Any> tag(type: KClass<T>, tag: T?): Builder = commonTag(type, type.cast(tag))
 
     /** Attaches [tag] to the request using `Object.class` as a key. */
     open fun tag(tag: Any?): Builder = commonTag(Any::class, tag)
@@ -258,6 +237,6 @@ actual class Request internal actual constructor(builder: Builder) {
      */
     open fun <T> tag(type: Class<in T>, tag: T?) = commonTag(type.kotlin, tag)
 
-    actual open fun build() = Request(this)
+    actual open fun build(): Request = Request(this)
   }
 }

@@ -15,5 +15,3 @@
  */
 
 package okhttp3.internal
-
-actual typealias HttpUrlRepresentation = String

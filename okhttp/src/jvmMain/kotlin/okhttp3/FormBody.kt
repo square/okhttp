@@ -17,10 +17,10 @@ package okhttp3
 
 import java.io.IOException
 import java.nio.charset.Charset
-import okhttp3.HttpUrl.Companion.FORM_ENCODE_SET
-import okhttp3.HttpUrl.Companion.canonicalize
-import okhttp3.HttpUrl.Companion.percentDecode
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.internal.CommonHttpUrl.FORM_ENCODE_SET
+import okhttp3.internal.CommonHttpUrl.percentDecode
+import okhttp3.internal.JvmHttpUrl.canonicalizeWithCharset
 import okhttp3.internal.toImmutableList
 import okio.Buffer
 import okio.BufferedSink
@@ -90,12 +90,12 @@ class FormBody internal constructor(
     private val values = mutableListOf<String>()
 
     fun add(name: String, value: String) = apply {
-      names += name.canonicalize(
+      names += name.canonicalizeWithCharset(
           encodeSet = FORM_ENCODE_SET,
           plusIsSpace = false, // plus is encoded as `%2B`, space is encoded as plus.
           charset = charset
       )
-      values += value.canonicalize(
+      values += value.canonicalizeWithCharset(
           encodeSet = FORM_ENCODE_SET,
           plusIsSpace = false, // plus is encoded as `%2B`, space is encoded as plus.
           charset = charset
@@ -103,13 +103,13 @@ class FormBody internal constructor(
     }
 
     fun addEncoded(name: String, value: String) = apply {
-      names += name.canonicalize(
+      names += name.canonicalizeWithCharset(
           encodeSet = FORM_ENCODE_SET,
           alreadyEncoded = true,
           plusIsSpace = true,
           charset = charset
       )
-      values += value.canonicalize(
+      values += value.canonicalizeWithCharset(
           encodeSet = FORM_ENCODE_SET,
           alreadyEncoded = true,
           plusIsSpace = true,
