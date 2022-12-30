@@ -64,7 +64,7 @@ jobs:
       - name: Run Checks
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: check -x test
+          arguments: check -x test -x jvmTest
 
       - name: Publish Test Report
         if: github.repository == 'square/okhttp' && github.ref == 'refs/heads/master'
