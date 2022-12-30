@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Square, Inc.
+ * Copyright (C) 2022 Block, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package mockwebserver3.internal.duplex
+package mockwebserver3
 
-import java.io.IOException
-import okhttp3.internal.http2.Http2Stream
-import mockwebserver3.RecordedRequest
-
-fun interface DuplexResponseBody {
-  @Throws(IOException::class)
-  fun onRequest(request: RecordedRequest, http2Stream: Http2Stream)
+/**
+ * Handles a call's stream directly. Use this instead of [MockResponseBody] to begin sending
+ * response data before all request data has been received.
+ *
+ * See [okhttp3.RequestBody.isDuplex].
+ */
+interface StreamHandler {
+  fun handle(stream: Stream)
 }
