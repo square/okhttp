@@ -354,7 +354,7 @@ jobs:
         env:
           USE_NATIVE_IMAGE_JAVA_PLATFORM_MODULE_SYSTEM: false
         with:
-          arguments: -PgraalBuild native-image-tests:nativeImage
+          arguments: -PgraalBuild=true native-image-tests:nativeImage
 
       - name: Run Checks
         run: ./native-image-tests/build/graal/ConsoleLauncher
@@ -409,7 +409,7 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
-          script: ./gradlew -PandroidBuild :okhttp-android:connectedCheck :android-test:connectedCheck
+          script: ./gradlew -PandroidBuild=true :okhttp-android:connectedCheck :android-test:connectedCheck
         env:
           API_LEVEL: ${{ matrix.api-level }}
 
@@ -463,6 +463,6 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
-          script: ./gradlew -PandroidBuild :regression-test:connectedCheck
+          script: ./gradlew -PandroidBuild=true :regression-test:connectedCheck
         env:
           API_LEVEL: ${{ matrix.api-level }}
