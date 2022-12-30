@@ -16,6 +16,7 @@
 package okhttp3.internal.platform
 
 import java.security.NoSuchAlgorithmException
+import javax.net.ssl.SNIHostName
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
@@ -36,6 +37,10 @@ open class Jdk9Platform : Platform() {
     val names = alpnProtocolNames(protocols)
 
     sslParameters.applicationProtocols = names.toTypedArray()
+
+    if (hostname != null) {
+      sslParameters.serverNames = listOf(SNIHostName(hostname))
+    }
 
     sslSocket.sslParameters = sslParameters
   }

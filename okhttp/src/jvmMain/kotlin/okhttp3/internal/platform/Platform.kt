@@ -16,6 +16,7 @@
  */
 package okhttp3.internal.platform
 
+import android.annotation.SuppressLint
 import java.io.IOException
 import java.net.InetSocketAddress
 import java.net.Socket
@@ -24,6 +25,8 @@ import java.security.KeyStore
 import java.security.Security
 import java.util.logging.Level
 import java.util.logging.Logger
+import javax.net.ssl.ExtendedSSLSession
+import javax.net.ssl.SNIHostName
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
@@ -122,6 +125,13 @@ open class Platform {
 
   /** Returns the negotiated protocol, or null if no protocol was negotiated. */
   open fun getSelectedProtocol(sslSocket: SSLSocket): String? = null
+
+  /** For MockWebServer. This returns the inbound SNI names. */
+  @SuppressLint("NewApi")
+  open fun getHandshakeServerNames(sslSocket: SSLSocket): List<String> {
+    val session = sslSocket.session as? ExtendedSSLSession ?: return listOf()
+    return session.requestedServerNames.mapNotNull { (it as? SNIHostName)?.asciiName }
+  }
 
   @Throws(IOException::class)
   open fun connectSocket(socket: Socket, address: InetSocketAddress, connectTimeout: Int) {
