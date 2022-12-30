@@ -1110,7 +1110,7 @@ public final class EventListenerTest {
     }
 
     @Override public long contentLength() {
-      return chunk.length * 16L;
+      return chunk.length * 32L;
     }
 
     @Override public void writeTo(BufferedSink sink) throws IOException {
