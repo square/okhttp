@@ -335,7 +335,7 @@ class RealConnection(
       )
     }
 
-    client.routeDatabase.failed(failedRoute)
+//    client.routeDatabase.failed(failedRoute)
   }
 
   /**
