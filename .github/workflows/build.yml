@@ -3,7 +3,7 @@ name: build
 on:
   push:
     branches:
-      - master
+      - okhttp_4.10.x
   pull_request:
     types: [opened, labeled, unlabeled, synchronize]
 

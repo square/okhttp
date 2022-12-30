@@ -1118,7 +1118,7 @@ public final class EventListenerTest {
     assertThat(listener.recordedEventTypes()).containsExactly(
         "CallStart", "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd", "ConnectStart",
         "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart", "RequestHeadersEnd",
-        "RequestBodyStart", "RequestFailed", "ConnectionReleased", "CallFailed");
+        "RequestBodyStart", "RequestFailed", "ResponseFailed", "ConnectionReleased", "CallFailed");
   }
 
   @Test public void requestBodySuccessHttp1OverHttps() throws IOException {

@@ -72,6 +72,7 @@ import okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AT_END
 import okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AT_START
 import okhttp3.mockwebserver.SocketPolicy.DISCONNECT_DURING_REQUEST_BODY
 import okhttp3.mockwebserver.SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY
+import okhttp3.mockwebserver.SocketPolicy.DO_NOT_READ_REQUEST_BODY
 import okhttp3.mockwebserver.SocketPolicy.EXPECT_CONTINUE
 import okhttp3.mockwebserver.SocketPolicy.FAIL_HANDSHAKE
 import okhttp3.mockwebserver.SocketPolicy.NO_RESPONSE
@@ -627,7 +628,7 @@ class MockWebServer : ExternalResource(), Closeable {
 
       // See warnings associated with these socket policies in SocketPolicy.
       when (response.socketPolicy) {
-        DISCONNECT_AT_END -> {
+        DISCONNECT_AT_END, DO_NOT_READ_REQUEST_BODY -> {
           socket.close()
           return false
         }
@@ -719,7 +720,9 @@ class MockWebServer : ExternalResource(), Closeable {
 
       var hasBody = false
       val policy = dispatcher.peek()
-      if (contentLength != -1L) {
+      if (policy.socketPolicy == DO_NOT_READ_REQUEST_BODY) {
+        // Ignore the body completely.
+      } else if (contentLength != -1L) {
         hasBody = contentLength > 0L
         throttledTransfer(policy, socket, source, requestBody.buffer(), contentLength, true)
       } else if (chunked) {
@@ -966,7 +969,8 @@ class MockWebServer : ExternalResource(), Closeable {
 
       val response: MockResponse = dispatcher.dispatch(request)
 
-      if (response.socketPolicy === DISCONNECT_AFTER_REQUEST) {
+      val socketPolicy = response.socketPolicy
+      if (socketPolicy === DISCONNECT_AFTER_REQUEST) {
         socket.close()
         return
       }
@@ -977,9 +981,15 @@ class MockWebServer : ExternalResource(), Closeable {
                 "and responded: $response protocol is $protocol")
       }
 
-      if (response.socketPolicy === DISCONNECT_AT_END) {
-        val connection = stream.connection
-        connection.shutdown(ErrorCode.NO_ERROR)
+      when (socketPolicy) {
+        DISCONNECT_AT_END -> {
+          stream.connection.shutdown(ErrorCode.NO_ERROR)
+        }
+        DO_NOT_READ_REQUEST_BODY -> {
+          stream.close(ErrorCode.fromHttp2(response.http2ErrorCode)!!, null)
+        }
+        else -> {
+        }
       }
     }
 
@@ -1019,7 +1029,7 @@ class MockWebServer : ExternalResource(), Closeable {
       val body = Buffer()
       val requestLine = "$method $path HTTP/1.1"
       var exception: IOException? = null
-      if (readBody && !peek.isDuplex) {
+      if (readBody && !peek.isDuplex && peek.socketPolicy !== DO_NOT_READ_REQUEST_BODY) {
         try {
           val contentLengthString = headers["content-length"]
           val byteCount = contentLengthString?.toLong() ?: Long.MAX_VALUE

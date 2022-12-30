@@ -350,7 +350,7 @@ class Http2Stream internal constructor(
         synchronized(this@Http2Stream) {
           readTimeout.enter()
           try {
-            if (errorCode != null) {
+            if (errorCode != null && !finished) {
               // Prepare to deliver an error.
               errorExceptionToDeliver = errorException ?: StreamResetException(errorCode!!)
             }
