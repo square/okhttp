@@ -9,15 +9,15 @@ project(":mockwebserver-junit4").name = "mockwebserver3-junit4"
 include(":mockwebserver-junit5")
 project(":mockwebserver-junit5").name = "mockwebserver3-junit5"
 
-val androidBuild: String? by settings
-val graalBuild: String? by settings
+val androidBuild: String by settings
+val graalBuild: String by settings
 
-if (androidBuild != null) {
+if (androidBuild.toBoolean()) {
   include(":android-test")
   include(":regression-test")
 }
 
-if (graalBuild != null) {
+if (graalBuild.toBoolean()) {
   include(":native-image-tests")
 }
 
