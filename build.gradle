@@ -17,7 +17,7 @@ buildscript {
       'junit': '4.13',
       'kotlin': '1.6.20',
       'moshi': '1.13.0',
-      'okio': '3.0.0',
+      'okio': '3.2.0',
       'ktlint': '0.38.0',
       'picocli': '4.2.0',
       'openjsse': '1.1.0'
@@ -272,6 +272,15 @@ subprojects { project ->
             connection = 'scm:git:https://github.com/square/okhttp.git'
             developerConnection = 'scm:git:ssh://git@github.com/square/okhttp.git'
             url = 'https://github.com/square/okhttp'
+          }
+          withXml {
+            asNode().dependencies.dependency
+              .findAll { dependency ->
+                dependency.artifactId.text() == 'okio-jvm'
+              }
+              .each { dependency ->
+                dependency.artifactId*.value = 'okio'
+              }
           }
         }
       }
