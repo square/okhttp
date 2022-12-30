@@ -778,9 +778,11 @@ public final class InterceptorTest {
       )
       .build();
 
-    server.enqueue(new MockResponse()
-      .setBody("abc")
-      .throttleBody(1, 1, TimeUnit.SECONDS));
+    server.enqueue(new MockResponse.Builder()
+      .body("abc")
+      .throttleBody(1, 1, TimeUnit.SECONDS)
+      .build()
+    );
 
     Request request1 = new Request.Builder().url(server.url("/")).build();
     Call call = client.newCall(request1);
