@@ -43,7 +43,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import static java.util.Arrays.asList;
-import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -56,7 +55,8 @@ public final class DuplexTest {
 
   private MockWebServer server;
   private RecordingEventListener listener = new RecordingEventListener();
-  private final HandshakeCertificates handshakeCertificates = localhost();
+  private final HandshakeCertificates handshakeCertificates
+    = platform.localhostHandshakeCertificates();
   private OkHttpClient client = clientTestRule.newClientBuilder()
       .eventListenerFactory(clientTestRule.wrap(listener))
       .build();
@@ -67,7 +67,6 @@ public final class DuplexTest {
     this.server = server;
     platform.assumeNotOpenJSSE();
     platform.assumeHttp2Support();
-    platform.assumeNotBouncyCastle();
   }
 
   @AfterEach public void tearDown() {

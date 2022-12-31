@@ -27,8 +27,8 @@ import okhttp3.ResponseBody.Companion.toResponseBody
 import okhttp3.internal.closeQuietly
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
-import okhttp3.tls.internal.TlsUtil.localhost
 import org.assertj.core.api.Assertions.assertThat
+import org.bouncycastle.tls.TlsFatalAlert
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
@@ -46,7 +46,7 @@ class ConnectionReuseTest {
   val clientTestRule: OkHttpClientTestRule = OkHttpClientTestRule()
 
   private lateinit var server: MockWebServer
-  private val handshakeCertificates: HandshakeCertificates = localhost()
+  private val handshakeCertificates = platform.localhostHandshakeCertificates()
   private var client: OkHttpClient = clientTestRule.newClient()
 
   @BeforeEach
@@ -75,7 +75,6 @@ class ConnectionReuseTest {
 
   @Test
   fun connectionsAreReusedWithHttp2() {
-    platform.assumeNotBouncyCastle()
     enableHttp2()
     server.enqueue(MockResponse(body = "a"))
     server.enqueue(MockResponse(body = "b"))
@@ -191,7 +190,6 @@ class ConnectionReuseTest {
 
   @Test
   fun http2ConnectionsAreSharedBeforeResponseIsConsumed() {
-    platform.assumeNotBouncyCastle()
     enableHttp2()
     server.enqueue(MockResponse(body = "a"))
     server.enqueue(MockResponse(body = "b"))
@@ -225,7 +223,6 @@ class ConnectionReuseTest {
 
   @Test
   fun connectionsAreNotReusedIfSslSocketFactoryChanges() {
-    platform.assumeNotBouncyCastle()
     enableHttps()
     server.enqueue(MockResponse())
     server.enqueue(MockResponse())
@@ -246,12 +243,12 @@ class ConnectionReuseTest {
       anotherClient.newCall(request).execute()
       fail<Any?>()
     } catch (expected: SSLException) {
+    } catch (expected: TlsFatalAlert) {
     }
   }
 
   @Test
   fun connectionsAreNotReusedIfHostnameVerifierChanges() {
-    platform.assumeNotBouncyCastle()
     enableHttps()
     server.enqueue(MockResponse())
     server.enqueue(MockResponse())

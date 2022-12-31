@@ -74,7 +74,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import static java.util.Arrays.asList;
-import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.any;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -92,7 +91,8 @@ public final class EventListenerTest {
 
   private MockWebServer server;
   private final RecordingEventListener listener = new RecordingEventListener();
-  private final HandshakeCertificates handshakeCertificates = localhost();
+  private final HandshakeCertificates handshakeCertificates
+    = platform.localhostHandshakeCertificates();
 
   private OkHttpClient client = clientTestRule.newClientBuilder()
       .eventListenerFactory(clientTestRule.wrap(listener))
@@ -104,7 +104,6 @@ public final class EventListenerTest {
     this.server = server;
 
     platform.assumeNotOpenJSSE();
-    platform.assumeNotBouncyCastle();
 
     listener.forbidLock(RealConnectionPool.Companion.get(client.connectionPool()));
     listener.forbidLock(client.dispatcher());

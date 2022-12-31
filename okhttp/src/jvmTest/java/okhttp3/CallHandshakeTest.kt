@@ -31,7 +31,6 @@ import okhttp3.CipherSuite.Companion.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
 import okhttp3.internal.effectiveCipherSuites
 import okhttp3.internal.platform.Platform
 import okhttp3.testing.PlatformRule
-import okhttp3.tls.internal.TlsUtil.localhost
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -40,7 +39,6 @@ import org.junit.jupiter.api.extension.RegisterExtension
 class CallHandshakeTest {
   private lateinit var client: OkHttpClient
   private lateinit var server: MockWebServer
-  val handshakeCertificates = localhost()
 
   @RegisterExtension
   @JvmField
@@ -49,6 +47,8 @@ class CallHandshakeTest {
   @RegisterExtension
   @JvmField
   var platform = PlatformRule()
+
+  private val handshakeCertificates = platform.localhostHandshakeCertificates()
 
   private lateinit var handshakeEnabledCipherSuites: List<String>
   private lateinit var defaultEnabledCipherSuites: List<String>
@@ -131,9 +131,7 @@ class CallHandshakeTest {
 
   @Test
   fun testDefaultHandshakeCipherSuiteOrderingTls13Modern() {
-    // handshake_failure(40)
-    // org.bouncycastle.tls.TlsFatalAlertReceived: handshake_failure(40)
-    //	at app//org.bouncycastle.tls.TlsProtocol.handleAlertMessage(Unknown Source)
+    // We are avoiding making guarantees on ordering of secondary Platforms.
     platform.assumeNotBouncyCastle()
 
     val client = makeClient(ConnectionSpec.MODERN_TLS, TlsVersion.TLS_1_3)
@@ -162,10 +160,6 @@ class CallHandshakeTest {
 
   @Test
   fun testHandshakeCipherSuiteOrderingWhenReversed() {
-    // handshake_failure(40)
-    // org.bouncycastle.tls.TlsFatalAlertReceived: handshake_failure(40)
-    //	at app//org.bouncycastle.tls.TlsProtocol.handleAlertMessage(Unknown Source)
-
     // We are avoiding making guarantees on ordering of secondary Platforms.
     platform.assumeNotConscrypt()
     platform.assumeNotBouncyCastle()
@@ -185,11 +179,6 @@ class CallHandshakeTest {
 
   @Test
   fun defaultOrderMaintained() {
-    // Flaky in CI
-    // CallHandshakeTest[jvm] > defaultOrderMaintained()[jvm] FAILED
-    //  org.bouncycastle.tls.TlsFatalAlertReceived: handshake_failure(40)
-    platform.assumeNotBouncyCastle()
-
     val client = makeClient()
     makeRequest(client)
 

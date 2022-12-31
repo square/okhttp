@@ -25,7 +25,6 @@ import java.net.ProtocolException
 import java.net.SocketTimeoutException
 import java.nio.charset.StandardCharsets.UTF_8
 import java.time.Duration
-import java.util.Arrays
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.HttpsURLConnection
 import okhttp3.Headers
@@ -38,13 +37,11 @@ import okhttp3.TestUtil.assumeNotWindows
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
-import okhttp3.tls.internal.TlsUtil.localhost
 import okio.Buffer
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.data.Offset
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.fail
-import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Tag
@@ -64,7 +61,6 @@ class MockWebServerTest {
   @BeforeEach
   fun setUp(server: MockWebServer) {
     this.server = server
-    platform.assumeNotBouncyCastle()
     server.start()
   }
 
@@ -564,7 +560,7 @@ class MockWebServerTest {
 
   @Test
   fun https() {
-    val handshakeCertificates = localhost()
+    val handshakeCertificates = platform.localhostHandshakeCertificates()
     server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(MockResponse.Builder()
       .body("abc")
@@ -589,7 +585,9 @@ class MockWebServerTest {
 
   @Test
   fun httpsWithClientAuth() {
-    Assumptions.assumeFalse(getPlatform() == "conscrypt")
+    platform.assumeNotBouncyCastle()
+    platform.assumeNotConscrypt()
+
     val clientCa = HeldCertificate.Builder()
       .certificateAuthority(0)
       .build()
