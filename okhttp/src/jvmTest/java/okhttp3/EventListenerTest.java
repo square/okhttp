@@ -1102,6 +1102,7 @@ public final class EventListenerTest {
   }
 
   private class NonCompletingRequestBody extends RequestBody {
+    private final byte[] chunk = new byte[1024 * 512];
     IOException ioe;
 
     @Override public MediaType contentType() {
@@ -1109,27 +1110,18 @@ public final class EventListenerTest {
     }
 
     @Override public long contentLength() {
-      return 1024 * 1024 * 4;
+      return chunk.length * 32L;
     }
 
     @Override public void writeTo(BufferedSink sink) throws IOException {
       try {
-        writeChunk(sink);
-        writeChunk(sink);
-        writeChunk(sink);
-        writeChunk(sink);
-        Thread.sleep(1000);
-        writeChunk(sink);
-        writeChunk(sink);
+        for (int i = 0; i < contentLength(); i += chunk.length) {
+          sink.write(chunk);
+          sink.flush();
+        }
       } catch (IOException e) {
         ioe = e;
-      } catch (InterruptedException e) {
       }
-    }
-
-    private void writeChunk(BufferedSink sink) throws IOException {
-      sink.write(new byte[1024 * 512]);
-      sink.flush();
     }
   }
 

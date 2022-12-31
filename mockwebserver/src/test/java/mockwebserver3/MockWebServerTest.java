@@ -44,6 +44,7 @@ import okhttp3.TestUtil;
 import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okhttp3.tls.HeldCertificate;
+import okio.Buffer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -115,7 +116,9 @@ public final class MockWebServerTest {
     MockResponse.Builder builder = new MockResponse.Builder().body("ABC");
     assertThat(headersToList(builder)).containsExactly("Content-Length: 3");
     MockResponse response = builder.build();
-    assertThat(response.getBody().readUtf8()).isEqualTo("ABC");
+    Buffer body = new Buffer();
+    response.getBody().writeTo(body);
+    assertThat(body.readUtf8()).isEqualTo("ABC");
   }
 
   @Test public void mockResponseAddHeader() {
