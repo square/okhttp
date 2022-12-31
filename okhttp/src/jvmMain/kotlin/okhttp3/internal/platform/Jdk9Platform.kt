@@ -23,6 +23,7 @@ import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol
 import okhttp3.internal.SuppressSignatureCheck
+import okhttp3.internal.canParseAsIpAddress
 
 /** OpenJDK 9+. */
 open class Jdk9Platform : Platform() {
@@ -38,7 +39,7 @@ open class Jdk9Platform : Platform() {
 
     sslParameters.applicationProtocols = names.toTypedArray()
 
-    if (hostname != null) {
+    if (hostname != null && !hostname.canParseAsIpAddress()) {
       sslParameters.serverNames = listOf(SNIHostName(hostname))
     }
 

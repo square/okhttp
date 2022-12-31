@@ -104,4 +104,67 @@ class MockResponseSniTest {
     assertThat(recordedRequest.requestUrl!!.host).isEqualTo("header-host")
     assertThat(recordedRequest.handshakeServerNames).containsExactly("url-host")
   }
+
+  /** No SNI for literal IPv6 addresses. */
+  @Test
+  fun ipv6() {
+    val recordedRequest = requestToHostnameViaProxy("2607:f8b0:400b:804::200e")
+    assertThat(recordedRequest.requestUrl!!.host).isEqualTo("2607:f8b0:400b:804::200e")
+    assertThat(recordedRequest.handshakeServerNames).isEmpty()
+  }
+
+  /** No SNI for literal IPv4 addresses. */
+  @Test
+  fun ipv4() {
+    val recordedRequest = requestToHostnameViaProxy("76.223.91.57")
+    assertThat(recordedRequest.requestUrl!!.host).isEqualTo("76.223.91.57")
+    assertThat(recordedRequest.handshakeServerNames).isEmpty()
+  }
+
+  @Test
+  fun regularHostname() {
+    val recordedRequest = requestToHostnameViaProxy("cash.app")
+    assertThat(recordedRequest.requestUrl!!.host).isEqualTo("cash.app")
+    assertThat(recordedRequest.handshakeServerNames).containsExactly("cash.app")
+  }
+
+  /**
+   * Connect to [hostnameOrIpAddress] and return what was received. To fake an arbitrary hostname we
+   * tell MockWebServer to act as a proxy.
+   */
+  private fun requestToHostnameViaProxy(hostnameOrIpAddress: String): RecordedRequest {
+    val heldCertificate = HeldCertificate.Builder()
+      .commonName("server name")
+      .addSubjectAlternativeName(hostnameOrIpAddress)
+      .build()
+    val handshakeCertificates = HandshakeCertificates.Builder()
+      .heldCertificate(heldCertificate)
+      .addTrustedCertificate(heldCertificate.certificate)
+      .build()
+    server.useHttps(handshakeCertificates.sslSocketFactory())
+
+    val client = clientTestRule.newClientBuilder()
+      .sslSocketFactory(
+        handshakeCertificates.sslSocketFactory(),
+        handshakeCertificates.trustManager
+      )
+      .proxy(server.toProxyAddress())
+      .build()
+
+    server.enqueue(MockResponse(inTunnel = true))
+    server.enqueue(MockResponse())
+
+    val call = client.newCall(
+      Request(
+        url = server.url("/").newBuilder()
+          .host(hostnameOrIpAddress)
+          .build()
+      )
+    )
+    val response = call.execute()
+    assertThat(response.isSuccessful).isTrue()
+
+    server.takeRequest() // Discard the CONNECT tunnel.
+    return server.takeRequest()
+  }
 }
