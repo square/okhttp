@@ -33,7 +33,7 @@ import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 
 /**
- * Test for new Let's Encrypt Root Certificate.
+ * Tests for SNI overriding on Android.
  */
 @Tag("Remote")
 class SniOverrideTest {
