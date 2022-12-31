@@ -84,6 +84,7 @@ import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
+import okhttp3.Headers
 import org.junit.jupiter.api.BeforeEach
 
 /**
@@ -279,7 +280,7 @@ class OkHttpTest {
   private fun localhostInsecureRequest() {
     server.useHttps(handshakeCertificates.sslSocketFactory())
 
-    server.enqueue(MockResponse().setResponseCode(200))
+    server.enqueue(MockResponse())
 
     val request = Request.Builder().url(server.url("/")).build()
 
@@ -384,7 +385,7 @@ class OkHttpTest {
     val response = client.newCall(request).execute()
 
     val results = response.use {
-      moshi.adapter(HowsMySslResults::class.java).fromJson(response.body!!.string())!!
+      moshi.adapter(HowsMySslResults::class.java).fromJson(response.body.string())!!
     }
 
     Platform.get().log("results $results", Platform.WARN)
@@ -403,7 +404,7 @@ class OkHttpTest {
   fun testMockWebserverRequest() {
     enableTls()
 
-    server.enqueue(MockResponse().setBody("abc"))
+    server.enqueue(MockResponse(body = "abc"))
 
     val request = Request.Builder().url(server.url("/")).build()
 
@@ -430,7 +431,7 @@ class OkHttpTest {
       .build()
     client = client.newBuilder().certificatePinner(certificatePinner).build()
 
-    server.enqueue(MockResponse().setBody("abc"))
+    server.enqueue(MockResponse(body = "abc"))
 
     val request = Request.Builder().url(server.url("/")).build()
 
@@ -453,7 +454,7 @@ class OkHttpTest {
       .build()
     client = client.newBuilder().certificatePinner(certificatePinner).build()
 
-    server.enqueue(MockResponse().setBody("abc"))
+    server.enqueue(MockResponse(body = "abc"))
 
     val request = Request.Builder().url(server.url("/")).build()
 
@@ -472,8 +473,8 @@ class OkHttpTest {
 
     client = client.newBuilder().eventListenerFactory(clientTestRule.wrap(eventListener)).build()
 
-    server.enqueue(MockResponse().setBody("abc1"))
-    server.enqueue(MockResponse().setBody("abc2"))
+    server.enqueue(MockResponse(body = "abc1"))
+    server.enqueue(MockResponse(body = "abc2"))
 
     val request = Request.Builder().url(server.url("/")).build()
 
@@ -525,8 +526,8 @@ class OkHttpTest {
       })
     ).build()
 
-    server.enqueue(MockResponse().setBody("abc1"))
-    server.enqueue(MockResponse().setBody("abc2"))
+    server.enqueue(MockResponse(body = "abc1"))
+    server.enqueue(MockResponse(body = "abc2"))
 
     val request = Request.Builder().url(server.url("/")).build()
 
@@ -592,7 +593,7 @@ class OkHttpTest {
   fun testCustomSSLSocketFactoryWithoutALPN() {
     enableTls()
 
-    server.enqueue(MockResponse().setBody("abc"))
+    server.enqueue(MockResponse(body = "abc"))
 
     val sslSocketFactory = client.sslSocketFactory
     val trustManager = client.x509TrustManager!!
@@ -770,7 +771,7 @@ class OkHttpTest {
     Logger.getLogger(OkHttpClient::class.java.name)
       .addHandler(testHandler)
 
-    server.enqueue(MockResponse().setBody("abc"))
+    server.enqueue(MockResponse(body = "abc"))
 
     val request = Request.Builder()
       .url(server.url("/"))
@@ -792,8 +793,8 @@ class OkHttpTest {
   fun testCachedRequest() {
     enableTls()
 
-    server.enqueue(MockResponse().setBody("abc").addHeader("cache-control: public, max-age=3"))
-    server.enqueue(MockResponse().setBody("abc"))
+    server.enqueue(MockResponse(body = "abc", headers = Headers.headersOf("cache-control", "public, max-age=3")))
+    server.enqueue(MockResponse(body = "abc"))
 
     val ctxt = InstrumentationRegistry.getInstrumentation().targetContext.applicationContext
 
