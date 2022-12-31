@@ -39,7 +39,7 @@ import okhttp3.internal.tls.BasicTrustRootIndex
 import okhttp3.internal.tls.CertificateChainCleaner
 import okhttp3.internal.tls.TrustRootIndex
 
-/** Android 5+ (API 21+). */
+/** Android 5 to 9 (API 21 to 28). */
 @SuppressSignatureCheck
 class AndroidPlatform : Platform() {
   private val socketAdapters = listOfNotNull(
