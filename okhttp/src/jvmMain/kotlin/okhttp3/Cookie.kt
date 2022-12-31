@@ -608,20 +608,8 @@ class Cookie private constructor(
     /** Returns all of the cookies from a set of HTTP response headers. */
     @JvmStatic
     fun parseAll(url: HttpUrl, headers: Headers): List<Cookie> {
-      val cookieStrings = headers.values("Set-Cookie")
-      var cookies: MutableList<Cookie>? = null
-
-      for (i in 0 until cookieStrings.size) {
-        val cookie = parse(url, cookieStrings[i]) ?: continue
-        if (cookies == null) cookies = mutableListOf()
-        cookies.add(cookie)
-      }
-
-      return if (cookies != null) {
-        Collections.unmodifiableList(cookies)
-      } else {
-        emptyList()
-      }
+      val cookies = headers.values("Set-Cookie").mapNotNull { parse(url, it) }
+      return Collections.unmodifiableList(cookies)
     }
   }
 }
