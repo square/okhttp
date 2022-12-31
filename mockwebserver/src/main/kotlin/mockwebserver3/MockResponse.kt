@@ -156,28 +156,22 @@ class MockResponse {
       get() = body_
       set(value) {
         body_ = value
-        if (value != null) {
-          streamHandler_ = null
-          webSocketListener_ = null
-        }
+        streamHandler_ = null
+        webSocketListener_ = null
       }
     var streamHandler: StreamHandler?
       get() = streamHandler_
       set(value) {
         streamHandler_ = value
-        if (value != null) {
-          body_ = null
-          webSocketListener_ = null
-        }
+        body_ = null
+        webSocketListener_ = null
       }
     var webSocketListener: WebSocketListener?
       get() = webSocketListener_
       set(value) {
         webSocketListener_ = value
-        if (value != null) {
-          body_ = null
-          streamHandler_ = null
-        }
+        body_ = null
+        streamHandler_ = null
       }
 
     var throttleBytesPerPeriod: Long
