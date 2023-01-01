@@ -109,6 +109,7 @@ open class ConnectionListenerTest {
       "ConnectStart",
       "ConnectEnd",
       "ConnectionAcquired",
+      "NoNewExchanges",
       "ConnectionReleased",
       "ConnectionClosed",
     )

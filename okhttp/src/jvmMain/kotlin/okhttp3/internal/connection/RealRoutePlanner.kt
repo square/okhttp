@@ -89,9 +89,11 @@ class RealRoutePlanner(
     // Make sure this connection is healthy & eligible for new exchanges. If it's no longer needed
     // then we're on the hook to close it.
     val healthy = candidate.isHealthy(doExtensiveHealthChecks)
+    var noNewExchangesEvent = false
     val toClose: Socket? = synchronized(candidate) {
       when {
         !healthy -> {
+          noNewExchangesEvent = !candidate.noNewExchanges
           candidate.noNewExchanges = true
           call.releaseConnectionNoEvents()
         }
@@ -115,6 +117,8 @@ class RealRoutePlanner(
     candidate.connectionListener.connectionReleased(candidate, call)
     if (toClose != null) {
       candidate.connectionListener.connectionClosed(candidate)
+    } else if (noNewExchangesEvent) {
+      candidate.connectionListener.noNewExchanges(candidate)
     }
     return null
   }
@@ -298,7 +302,7 @@ class RealRoutePlanner(
    * connections.
    */
   private fun retryRoute(connection: RealConnection): Route? {
-    return connection.synchronizedWithEvents {
+    return synchronized(connection) {
       if (connection.routeFailureCount != 0) null
       else if (!connection.noNewExchanges) null // This route is still in use.
       else if (!connection.route().address.url.canReuseConnectionFor(address.url)) null

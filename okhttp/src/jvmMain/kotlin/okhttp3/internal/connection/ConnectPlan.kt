@@ -487,7 +487,7 @@ class ConnectPlan(
     val pooled3 = routePlanner.planReusePooledConnection(this, routes)
     if (pooled3 != null) return pooled3.connection
 
-    connection.synchronizedWithEvents {
+    synchronized(connection) {
       client.connectionPool.delegate.put(connection)
       call.acquireConnectionNoEvents(connection)
     }

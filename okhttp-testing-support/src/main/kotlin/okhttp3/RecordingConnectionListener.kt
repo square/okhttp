@@ -95,6 +95,11 @@ open class RecordingConnectionListener : ConnectionListener() {
   }
 
   private fun logEvent(e: ConnectionEvent) {
+    if (e.connection != null) {
+      assertThat(Thread.holdsLock(e.connection))
+        .overridingErrorMessage("Called with lock $${e.connection}")
+        .isFalse()
+    }
     for (lock in forbiddenLocks) {
       assertThat(Thread.holdsLock(lock))
         .overridingErrorMessage("Called with lock $lock")
@@ -109,19 +114,12 @@ open class RecordingConnectionListener : ConnectionListener() {
   override fun connectFailed(route: Route, call: Call, failure: IOException) = logEvent(ConnectionEvent.ConnectFailed(System.nanoTime(), route, call, failure))
 
   override fun connectEnd(connection: Connection) {
-    forbidLock(connection)
-    (connection as? RealConnection)?.let {
-      synchronized(connection) {
-        assertThat(it.takeQueuedEvents()).isEmpty()
-      }
-    }
     logEvent(ConnectionEvent.ConnectEnd(System.nanoTime(), connection))
   }
 
   override fun connectionClosed(connection: Connection) = logEvent(ConnectionEvent.ConnectionClosed(System.nanoTime(), connection))
 
   override fun connectionAcquired(connection: Connection, call: Call) {
-    forbidLock(connection)
     logEvent(ConnectionEvent.ConnectionAcquired(System.nanoTime(), connection, call))
   }
 

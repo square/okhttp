@@ -22,8 +22,6 @@ import java.net.Proxy
 import java.net.Socket
 import java.net.SocketException
 import java.security.cert.X509Certificate
-import java.util.Queue
-import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit.MILLISECONDS
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocket
@@ -94,15 +92,6 @@ class RealConnection(
    * Once true this is always true. Guarded by this.
    */
   var noNewExchanges = false
-    set(value) {
-      val previousValue = field
-      field = value
-      if (!previousValue) {
-        queueEvent {
-          connectionListener.noNewExchanges(this)
-        }
-      }
-    }
 
   /**
    * If true, this connection may not be used for coalesced requests. These are requests that could
@@ -138,12 +127,12 @@ class RealConnection(
   internal val isMultiplexed: Boolean
     get() = http2Connection != null
 
-  private val queuedEvents: Queue<Runnable>? =
-    if (connectionListener == ConnectionListener.NONE) null else ConcurrentLinkedQueue()
-
   /** Prevent further exchanges from being created on this connection. */
-  @Synchronized override fun noNewExchanges() {
-    noNewExchanges = true
+  override fun noNewExchanges() {
+    synchronized(this) {
+      noNewExchanges = true
+    }
+    connectionListener.noNewExchanges(this)
   }
 
   /** Prevent this connection from being used for hosts other than the one in [route]. */
@@ -358,70 +347,54 @@ class RealConnection(
    * Track a failure using this connection. This may prevent both the connection and its route from
    * being used for future exchanges.
    */
-  @Synchronized override fun trackFailure(call: RealCall, e: IOException?) {
-    if (e is StreamResetException) {
-      when {
-        e.errorCode == ErrorCode.REFUSED_STREAM -> {
-          // Stop using this connection on the 2nd REFUSED_STREAM error.
-          refusedStreamCount++
-          if (refusedStreamCount > 1) {
+  override fun trackFailure(call: RealCall, e: IOException?) {
+    var noNewExchangesEvent = false
+    synchronized(this) {
+      if (e is StreamResetException) {
+        when {
+          e.errorCode == ErrorCode.REFUSED_STREAM -> {
+            // Stop using this connection on the 2nd REFUSED_STREAM error.
+            refusedStreamCount++
+            if (refusedStreamCount > 1) {
+              noNewExchangesEvent = !noNewExchanges
+              noNewExchanges = true
+              routeFailureCount++
+            }
+          }
+
+          e.errorCode == ErrorCode.CANCEL && call.isCanceled() -> {
+            // Permit any number of CANCEL errors on locally-canceled calls.
+          }
+
+          else -> {
+            // Everything else wants a fresh connection.
+            noNewExchangesEvent = !noNewExchanges
             noNewExchanges = true
             routeFailureCount++
           }
         }
+      } else if (!isMultiplexed || e is ConnectionShutdownException) {
+        noNewExchangesEvent = !noNewExchanges
+        noNewExchanges = true
 
-        e.errorCode == ErrorCode.CANCEL && call.isCanceled() -> {
-          // Permit any number of CANCEL errors on locally-canceled calls.
-        }
-
-        else -> {
-          // Everything else wants a fresh connection.
-          noNewExchanges = true
+        // If this route hasn't completed a call, avoid it for new connections.
+        if (successCount == 0) {
+          if (e != null) {
+            connectFailed(call.client, route, e)
+          }
           routeFailureCount++
         }
       }
-    } else if (!isMultiplexed || e is ConnectionShutdownException) {
-      noNewExchanges = true
 
-      // If this route hasn't completed a call, avoid it for new connections.
-      if (successCount == 0) {
-        if (e != null) {
-          connectFailed(call.client, route, e)
-        }
-        routeFailureCount++
-      }
+      Unit
+    }
+
+    if (noNewExchangesEvent) {
+      connectionListener.noNewExchanges(this)
     }
   }
 
   override fun protocol(): Protocol = protocol!!
-
-  fun queueEvent(function: Runnable) {
-    if (queuedEvents == null) {
-      return
-    }
-
-    assertThreadHoldsLock()
-
-    queuedEvents.add(function)
-  }
-
-  fun takeQueuedEvents(): List<Runnable> {
-    if (queuedEvents == null) {
-      return emptyList()
-    }
-
-    // optimise for zero or one items
-    val first = queuedEvents.poll() ?: return emptyList()
-    val second = queuedEvents.poll() ?: return listOf(first)
-
-    return buildList {
-      add(first)
-      add(second)
-      // Should be safe since writes are synchronized, so tests should synchronize for this.
-      addAll(queuedEvents)
-      queuedEvents.clear()
-    }
-  }
 
   override fun toString(): String {
     return "Connection{${route.address.url.host}:${route.address.url.port}," +
@@ -429,16 +402,6 @@ class RealConnection(
       " hostAddress=${route.socketAddress}" +
       " cipherSuite=${handshake?.cipherSuite ?: "none"}" +
       " protocol=$protocol}"
-  }
-
-  inline fun <T> synchronizedWithEvents(function: () -> T): T {
-    return synchronized(this) {
-      function()
-    }.also {
-      takeQueuedEvents().forEach {
-        it.run()
-      }
-    }
   }
 
   companion object {

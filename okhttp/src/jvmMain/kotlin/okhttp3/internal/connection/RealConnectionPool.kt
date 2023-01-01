@@ -90,7 +90,7 @@ class RealConnectionPool(
   ): RealConnection? {
     for (connection in connections) {
       // In the first synchronized block, acquire the connection if it can satisfy this call.
-      val acquired = connection.synchronizedWithEvents {
+      val acquired = synchronized(connection) {
         when {
           requireMultiplexed && !connection.isMultiplexed -> false
           !connection.isEligible(address, routes) -> false
@@ -107,13 +107,17 @@ class RealConnectionPool(
 
       // In the second synchronized block, release the unhealthy acquired connection. We're also on
       // the hook to close this connection if it's no longer in use.
+      val noNewExchangesEvent: Boolean
       val toClose: Socket? = synchronized(connection) {
+        noNewExchangesEvent = !connection.noNewExchanges
         connection.noNewExchanges = true
         call.releaseConnectionNoEvents()
       }
       if (toClose != null) {
         toClose.closeQuietly()
         connectionListener.connectionClosed(connection)
+      } else if (noNewExchangesEvent) {
+        connectionListener.noNewExchanges(connection)
       }
     }
     return null
@@ -149,16 +153,19 @@ class RealConnectionPool(
     val i = connections.iterator()
     while (i.hasNext()) {
       val connection = i.next()
-      val socketToClose = connection.synchronizedWithEvents {
+      val socketToClose = synchronized(connection) {
         if (connection.calls.isEmpty()) {
           i.remove()
           connection.noNewExchanges = true
-          return@synchronizedWithEvents connection.socket()
+          return@synchronized connection.socket()
         } else {
-          return@synchronizedWithEvents null
+          return@synchronized  null
         }
       }
-      socketToClose?.closeQuietly()
+      if (socketToClose != null) {
+        socketToClose.closeQuietly()
+        connectionListener.connectionClosed(connection)
+      }
     }
 
     if (connections.isEmpty()) cleanupQueue.cancelAll()
@@ -179,7 +186,7 @@ class RealConnectionPool(
 
     // Find either a connection to evict, or the time that the next eviction is due.
     for (connection in connections) {
-      connection.synchronizedWithEvents {
+      synchronized(connection) {
         // If the connection is in use, keep searching.
         if (pruneAndGetAllocationCount(connection, now) > 0) {
           inUseConnectionCount++
@@ -201,7 +208,7 @@ class RealConnectionPool(
           || idleConnectionCount > this.maxIdleConnections -> {
         // We've chosen a connection to evict. Confirm it's still okay to be evict, then close it.
         val connection = longestIdleConnection!!
-        connection.synchronizedWithEvents {
+        synchronized(connection) {
           if (connection.calls.isNotEmpty()) return 0L // No longer idle.
           if (connection.idleAtNs + longestIdleDurationNs != now) return 0L // No longer oldest.
           connection.noNewExchanges = true
@@ -258,7 +265,6 @@ class RealConnectionPool(
       Platform.get().logCloseableLeak(message, callReference.callStackTrace)
 
       references.removeAt(i)
-      connection.noNewExchanges = true
 
       // If this was the last allocation, the connection is eligible for immediate eviction.
       if (references.isEmpty()) {
