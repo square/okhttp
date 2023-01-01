@@ -75,7 +75,6 @@ import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
-import okhttp3.tls.internal.TlsUtil.localhost
 import okio.Buffer
 import okio.BufferedSink
 import okio.ForwardingSource
@@ -88,7 +87,7 @@ import org.assertj.core.data.Offset
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.fail
-import org.junit.jupiter.api.Assumptions
+import org.junit.jupiter.api.Assumptions.assumeFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Tag
@@ -114,7 +113,7 @@ open class CallTest {
   private lateinit var server2: MockWebServer
 
   private var listener = RecordingEventListener()
-  private val handshakeCertificates = localhost()
+  private val handshakeCertificates = platform.localhostHandshakeCertificates()
   private var client = clientTestRule.newClientBuilder()
     .eventListenerFactory(clientTestRule.wrap(listener))
     .build()
@@ -134,7 +133,6 @@ open class CallTest {
     this.server2 = server2
 
     platform.assumeNotOpenJSSE()
-    platform.assumeNotBouncyCastle()
   }
 
   @AfterEach
@@ -1205,6 +1203,8 @@ open class CallTest {
 
   @Test
   fun tlsHandshakeFailure_noFallbackByDefault() {
+    platform.assumeNotBouncyCastle()
+
     server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(MockResponse(socketPolicy = SocketPolicy.FAIL_HANDSHAKE))
     server.enqueue(MockResponse(body = "response that will never be received"))
@@ -1219,6 +1219,8 @@ open class CallTest {
 
   @Test
   fun recoverFromTlsHandshakeFailure() {
+    platform.assumeNotBouncyCastle()
+
     server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(MockResponse(socketPolicy = SocketPolicy.FAIL_HANDSHAKE))
     server.enqueue(MockResponse(body = "abc"))
@@ -1271,6 +1273,8 @@ open class CallTest {
 
   @Test
   fun recoverFromTlsHandshakeFailure_Async() {
+    platform.assumeNotBouncyCastle()
+
     server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(MockResponse(socketPolicy = SocketPolicy.FAIL_HANDSHAKE))
     server.enqueue(MockResponse(body = "abc"))
@@ -1291,6 +1295,8 @@ open class CallTest {
 
   @Test
   fun noRecoveryFromTlsHandshakeFailureWhenTlsFallbackIsDisabled() {
+    platform.assumeNotBouncyCastle()
+
     client = client.newBuilder()
       .connectionSpecs(listOf(ConnectionSpec.MODERN_TLS, ConnectionSpec.CLEARTEXT))
       .hostnameVerifier(RecordingHostnameVerifier())
@@ -1319,6 +1325,8 @@ open class CallTest {
   @Test
   fun tlsHostnameVerificationFailure() {
     assumeNotWindows()
+    platform.assumeNotBouncyCastle()
+
     server.enqueue(MockResponse())
     val serverCertificate = HeldCertificate.Builder()
       .commonName("localhost") // Unusued for hostname verification.
@@ -1345,9 +1353,10 @@ open class CallTest {
   @Test
   fun anonCipherSuiteUnsupported() {
     platform.assumeNotConscrypt()
+    platform.assumeNotBouncyCastle()
 
     // The _anon_ suites became unsupported in "1.8.0_201" and "11.0.2".
-    Assumptions.assumeFalse(
+    assumeFalse(
       System.getProperty("java.version", "unknown").matches(Regex("1\\.8\\.0_1\\d\\d"))
     )
     server.enqueue(MockResponse())
@@ -3964,6 +3973,8 @@ open class CallTest {
 
   @Test
   fun httpsWithIpAddress() {
+    platform.assumeNotBouncyCastle()
+
     val localIpAddress = InetAddress.getLoopbackAddress().hostAddress
 
     // Create a certificate with an IP address in the subject alt name.

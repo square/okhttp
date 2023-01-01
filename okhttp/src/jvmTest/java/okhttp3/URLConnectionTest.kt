@@ -71,13 +71,13 @@ import okhttp3.internal.platform.Platform.Companion.get
 import okhttp3.internal.userAgent
 import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule
-import okhttp3.tls.internal.TlsUtil.localhost
 import okio.Buffer
 import okio.BufferedSink
 import okio.GzipSink
 import okio.buffer
 import okio.utf8Size
 import org.assertj.core.api.Assertions.assertThat
+import org.bouncycastle.tls.TlsFatalAlert
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
@@ -102,7 +102,7 @@ class URLConnectionTest {
 
   private lateinit var server: MockWebServer
   private lateinit var server2: MockWebServer
-  private val handshakeCertificates = localhost()
+  private val handshakeCertificates = platform.localhostHandshakeCertificates()
   private var client = clientTestRule.newClient()
   private var cache: Cache? = null
 
@@ -110,7 +110,6 @@ class URLConnectionTest {
   fun setUp(server: MockWebServer, @MockWebServerInstance("server2") server2: MockWebServer) {
     this.server = server
     this.server2 = server2
-    platform.assumeNotBouncyCastle()
     server.protocolNegotiationEnabled = false
   }
 
@@ -571,12 +570,15 @@ class URLConnectionTest {
         "without an SSL socket factory, the connection should fail"
       )
     } catch (expected: SSLException) {
+    } catch (expected: TlsFatalAlert) {
     }
   }
 
   // TODO(jwilson): tests below this marker need to be migrated to OkHttp's request/response API.
   @Test
   fun connectViaHttpsWithSSLFallback() {
+    platform.assumeNotBouncyCastle()
+
     server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(MockResponse(socketPolicy = SocketPolicy.FAIL_HANDSHAKE))
     server.enqueue(MockResponse(body = "this response comes via SSL"))
@@ -600,6 +602,8 @@ class URLConnectionTest {
 
   @Test
   fun connectViaHttpsWithSSLFallbackFailuresRecorded() {
+    platform.assumeNotBouncyCastle()
+
     server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(MockResponse(socketPolicy = SocketPolicy.FAIL_HANDSHAKE))
     server.enqueue(MockResponse(socketPolicy = SocketPolicy.FAIL_HANDSHAKE))
@@ -679,6 +683,7 @@ class URLConnectionTest {
           CertificateException::class.java
         )
       }
+    } catch (expected: TlsFatalAlert) {
     }
     assertThat(server.requestCount).isEqualTo(0)
   }
@@ -3749,6 +3754,8 @@ class URLConnectionTest {
 
   @Test
   fun testNoSslFallback() {
+    platform.assumeNotBouncyCastle()
+
     server.useHttps(handshakeCertificates.sslSocketFactory())
     server.enqueue(MockResponse(socketPolicy = SocketPolicy.FAIL_HANDSHAKE))
     server.enqueue(MockResponse(body = "Response that would have needed fallbacks"))

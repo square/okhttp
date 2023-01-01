@@ -32,7 +32,6 @@ import okhttp3.internal.connection.RealConnection.Companion.IDLE_CONNECTION_HEAL
 import okhttp3.internal.http.RecordingProxySelector
 import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule
-import okhttp3.tls.internal.TlsUtil.localhost
 import okio.BufferedSink
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -52,13 +51,12 @@ class CallKotlinTest {
   }
 
   private var client = clientTestRule.newClient()
-  private val handshakeCertificates = localhost()
+  private val handshakeCertificates = platform.localhostHandshakeCertificates()
   private lateinit var server: MockWebServer
 
   @BeforeEach
   fun setUp(server: MockWebServer) {
     this.server = server
-    platform.assumeNotBouncyCastle()
   }
 
   @Test

@@ -31,7 +31,6 @@ import okhttp3.Headers.Companion.headersOf
 import okhttp3.internal.buildCache
 import okhttp3.okio.LoggingFilesystem
 import okhttp3.testing.PlatformRule
-import okhttp3.tls.internal.TlsUtil.localhost
 import okio.Path.Companion.toPath
 import okio.fakefilesystem.FakeFileSystem
 import org.assertj.core.api.Assertions.assertThat
@@ -51,7 +50,7 @@ class CacheCorruptionTest {
   @RegisterExtension
   val platform = PlatformRule()
 
-  private val handshakeCertificates = localhost()
+  private val handshakeCertificates = platform.localhostHandshakeCertificates()
   private lateinit var client: OkHttpClient
   private lateinit var cache: Cache
   private val NULL_HOSTNAME_VERIFIER = HostnameVerifier { _: String?, _: SSLSession? -> true }
@@ -63,7 +62,6 @@ class CacheCorruptionTest {
     this.server = server
 
     platform.assumeNotOpenJSSE()
-    platform.assumeNotBouncyCastle()
     server.protocolNegotiationEnabled = false
     val loggingFileSystem = LoggingFilesystem(fileSystem)
     cache = buildCache("/cache/".toPath(), Int.MAX_VALUE.toLong(), loggingFileSystem)

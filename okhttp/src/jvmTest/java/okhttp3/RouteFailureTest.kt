@@ -24,7 +24,6 @@ import mockwebserver3.SocketPolicy
 import mockwebserver3.junit5.internal.MockWebServerInstance
 import okhttp3.internal.http2.ErrorCode
 import okhttp3.testing.PlatformRule
-import okhttp3.tls.internal.TlsUtil.localhost
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -45,7 +44,7 @@ class RouteFailureTest {
 
   private var listener = RecordingEventListener()
 
-  private val handshakeCertificates = localhost()
+  private val handshakeCertificates = platform.localhostHandshakeCertificates()
 
   val dns = FakeDns()
 

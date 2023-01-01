@@ -57,7 +57,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import static java.util.Arrays.asList;
 import static okhttp3.TestUtil.repeat;
-import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -73,7 +72,8 @@ public final class WebSocketHttpTest {
   @RegisterExtension TestLogHandler testLogHandler = new TestLogHandler(OkHttpClient.class);
 
   private MockWebServer webServer;
-  private final HandshakeCertificates handshakeCertificates = localhost();
+  private final HandshakeCertificates handshakeCertificates
+    = platform.localhostHandshakeCertificates();
   private final WebSocketRecorder clientListener = new WebSocketRecorder("client");
   private final WebSocketRecorder serverListener = new WebSocketRecorder("server");
   private final Random random = new Random(0);
@@ -98,7 +98,6 @@ public final class WebSocketHttpTest {
     this.webServer = webServer;
 
     platform.assumeNotOpenJSSE();
-    platform.assumeNotBouncyCastle();
   }
 
   @AfterEach public void tearDown() throws InterruptedException {

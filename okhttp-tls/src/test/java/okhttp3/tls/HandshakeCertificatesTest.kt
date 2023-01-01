@@ -56,6 +56,7 @@ class HandshakeCertificatesTest {
   @Test fun clientAndServer() {
     platform.assumeNotConscrypt()
     platform.assumeNotBouncyCastle()
+
     val clientRoot = HeldCertificate.Builder()
       .certificateAuthority(1)
       .build()

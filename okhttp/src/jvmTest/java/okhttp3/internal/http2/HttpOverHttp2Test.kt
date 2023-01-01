@@ -70,7 +70,6 @@ import okhttp3.internal.discard
 import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
-import okhttp3.tls.internal.TlsUtil.localhost
 import okio.Buffer
 import okio.BufferedSink
 import okio.GzipSink
@@ -109,6 +108,11 @@ class HttpOverHttp2Test {
   @RegisterExtension
   val testLogHandler: TestLogHandler = TestLogHandler(Http2::class.java)
 
+  // Flaky https://github.com/square/okhttp/issues/4632
+  // Flaky https://github.com/square/okhttp/issues/4633
+  private val handshakeCertificates: HandshakeCertificates =
+    platform.localhostHandshakeCertificates()
+
   private lateinit var server: MockWebServer
   private lateinit var protocol: Protocol
   private lateinit var client: OkHttpClient
@@ -125,7 +129,6 @@ class HttpOverHttp2Test {
     this.server = server
     this.protocol = protocol
     platform.assumeNotOpenJSSE()
-    platform.assumeNotBouncyCastle()
     if (protocol === Protocol.HTTP_2) {
       platform.assumeHttp2Support()
       server.useHttps(handshakeCertificates.sslSocketFactory())
@@ -2049,11 +2052,5 @@ class HttpOverHttp2Test {
     val get = server.takeRequest()
     assertThat(get.requestLine).isEqualTo("GET /foo HTTP/1.1")
       assertThat(get.headers["Proxy-Authorization"]).isNull()
-  }
-
-  companion object {
-    // Flaky https://github.com/square/okhttp/issues/4632
-    // Flaky https://github.com/square/okhttp/issues/4633
-    private val handshakeCertificates: HandshakeCertificates = localhost()
   }
 }

@@ -50,17 +50,14 @@ import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
-
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 @SuppressWarnings({"ArraysAsListWithZeroOrOneArgument", "deprecation"})
 @Timeout(30)
@@ -71,7 +68,6 @@ public final class MockWebServerTest {
   private final MockWebServer server = new MockWebServer();
 
   @BeforeEach public void setUp() throws IOException {
-    platform.assumeNotBouncyCastle();
     server.start();
   }
 
@@ -540,7 +536,7 @@ public final class MockWebServerTest {
   }
 
   @Test public void https() throws Exception {
-    HandshakeCertificates handshakeCertificates = localhost();
+    HandshakeCertificates handshakeCertificates = platform.localhostHandshakeCertificates();
     server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     server.enqueue(new MockResponse().setBody("abc"));
 
@@ -566,7 +562,8 @@ public final class MockWebServerTest {
   }
 
   @Test public void httpsWithClientAuth() throws Exception {
-    assumeFalse(getPlatform().equals("conscrypt"));
+    platform.assumeNotBouncyCastle();
+    platform.assumeNotConscrypt();
 
     HeldCertificate clientCa = new HeldCertificate.Builder()
         .certificateAuthority(0)

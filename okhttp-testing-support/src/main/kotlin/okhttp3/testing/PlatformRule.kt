@@ -18,12 +18,18 @@ package okhttp3.testing
 import android.os.Build
 import com.amazon.corretto.crypto.provider.AmazonCorrettoCryptoProvider
 import com.amazon.corretto.crypto.provider.SelfTestStatus
+import java.lang.reflect.Method
+import java.net.InetAddress
+import java.security.Security
 import okhttp3.TestUtil
 import okhttp3.internal.platform.ConscryptPlatform
 import okhttp3.internal.platform.Jdk8WithJettyBootPlatform
 import okhttp3.internal.platform.Jdk9Platform
 import okhttp3.internal.platform.OpenJSSEPlatform
 import okhttp3.internal.platform.Platform
+import okhttp3.tls.HandshakeCertificates
+import okhttp3.tls.HeldCertificate
+import okhttp3.tls.internal.TlsUtil.localhost
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.jsse.provider.BouncyCastleJsseProvider
 import org.conscrypt.Conscrypt
@@ -43,8 +49,6 @@ import org.junit.jupiter.api.extension.InvocationInterceptor
 import org.junit.jupiter.api.extension.ReflectiveInvocationContext
 import org.openjsse.net.ssl.OpenJSSE
 import org.opentest4j.TestAbortedException
-import java.lang.reflect.Method
-import java.security.Security
 
 /**
  * Marks a test as Platform aware, before the test runs a consistent Platform will be
@@ -323,6 +327,13 @@ open class PlatformRule @JvmOverloads constructor(
     }
   }
 
+  fun localhostHandshakeCertificates(): HandshakeCertificates {
+    return when {
+      isBouncyCastle() -> localhostHandshakeCertificatesWithRsa2048
+      else -> localhost()
+    }
+  }
+
   val isAndroid: Boolean
     get() = Platform.Companion.isAndroid
 
@@ -335,6 +346,24 @@ open class PlatformRule @JvmOverloads constructor(
     const val JDK8_PROPERTY = "jdk8"
     const val OPENJSSE_PROPERTY = "openjsse"
     const val BOUNCYCASTLE_PROPERTY = "bouncycastle"
+
+    /**
+     * For whatever reason our BouncyCastle provider doesn't work with ECDSA keys. Just configure it
+     * to use RSA-2048 instead.
+     *
+     * (We otherwise prefer ECDSA because it's faster.)
+     */
+    private val localhostHandshakeCertificatesWithRsa2048: HandshakeCertificates by lazy {
+      val heldCertificate = HeldCertificate.Builder()
+        .commonName("localhost")
+        .addSubjectAlternativeName(InetAddress.getByName("localhost").canonicalHostName)
+        .rsa2048()
+        .build()
+      return@lazy HandshakeCertificates.Builder()
+        .heldCertificate(heldCertificate)
+        .addTrustedCertificate(heldCertificate.certificate)
+        .build()
+    }
 
     init {
       val platformSystemProperty = getPlatformSystemProperty()
