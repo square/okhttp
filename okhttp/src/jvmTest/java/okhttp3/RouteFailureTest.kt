@@ -100,6 +100,13 @@ class RouteFailureTest {
     assertThat(client.routeDatabase.failedRoutes).isEmpty()
     assertThat(server1.requestCount).isEqualTo(1)
     assertThat(server2.requestCount).isEqualTo(0)
+
+    assertThat(clientTestRule.recordedConnectionEventTypes()).containsExactly(
+      "ConnectStart",
+      "ConnectEnd",
+      "ConnectionAcquired",
+      "ConnectionReleased"
+    )
   }
 
   @Test
@@ -130,6 +137,19 @@ class RouteFailureTest {
     // TODO check if we expect a second request to server1, before attempting server2
     assertThat(server1.requestCount).isEqualTo(2)
     assertThat(server2.requestCount).isEqualTo(1)
+
+    assertThat(clientTestRule.recordedConnectionEventTypes()).containsExactly(
+      "ConnectStart",
+      "ConnectEnd",
+      "ConnectionAcquired",
+      "NoNewExchanges",
+      "ConnectionReleased",
+      "ConnectionClosed",
+      "ConnectStart",
+      "ConnectEnd",
+      "ConnectionAcquired",
+      "ConnectionReleased",
+    )
   }
 
   @Test
@@ -158,6 +178,13 @@ class RouteFailureTest {
     assertThat(client.routeDatabase.failedRoutes).isEmpty()
     assertThat(server1.requestCount).isEqualTo(1)
     assertThat(server2.requestCount).isEqualTo(0)
+
+    assertThat(clientTestRule.recordedConnectionEventTypes()).containsExactly(
+      "ConnectStart",
+      "ConnectEnd",
+      "ConnectionAcquired",
+      "ConnectionReleased"
+    )
   }
 
   @Test
@@ -188,6 +215,19 @@ class RouteFailureTest {
     // TODO check if we expect a second request to server1, before attempting server2
     assertThat(server1.requestCount).isEqualTo(2)
     assertThat(server2.requestCount).isEqualTo(1)
+
+    assertThat(clientTestRule.recordedConnectionEventTypes()).containsExactly(
+      "ConnectStart",
+      "ConnectEnd",
+      "ConnectionAcquired",
+      "NoNewExchanges",
+      "ConnectionReleased",
+      "ConnectionClosed",
+      "ConnectStart",
+      "ConnectEnd",
+      "ConnectionAcquired",
+      "ConnectionReleased"
+    )
   }
 
   @Test
@@ -214,6 +254,13 @@ class RouteFailureTest {
 
     assertThat(client.routeDatabase.failedRoutes).isEmpty()
     assertThat(server1.requestCount).isEqualTo(1)
+
+    assertThat(clientTestRule.recordedConnectionEventTypes()).containsExactly(
+      "ConnectStart",
+      "ConnectEnd",
+      "ConnectionAcquired",
+      "ConnectionReleased"
+    )
   }
 
   @Test
@@ -240,6 +287,13 @@ class RouteFailureTest {
 
     assertThat(client.routeDatabase.failedRoutes).isEmpty()
     assertThat(server1.requestCount).isEqualTo(1)
+
+    assertThat(clientTestRule.recordedConnectionEventTypes()).containsExactly(
+      "ConnectStart",
+      "ConnectEnd",
+      "ConnectionAcquired",
+      "ConnectionReleased"
+    )
   }
 
   private fun enableProtocol(protocol: Protocol) {

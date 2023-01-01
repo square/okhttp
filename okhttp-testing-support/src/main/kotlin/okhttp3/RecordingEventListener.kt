@@ -95,7 +95,7 @@ open class RecordingEventListener : EventListener() {
    *     -1L to take any duration.
    */
   fun takeEvent(
-    eventClass: Class<*>? = null,
+    eventClass: Class<out CallEvent>? = null,
     elapsedMs: Long = -1L
   ): CallEvent {
     val result = eventSequence.remove()

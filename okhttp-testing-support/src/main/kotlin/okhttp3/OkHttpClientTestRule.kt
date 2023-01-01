@@ -23,6 +23,7 @@ import java.util.logging.LogManager
 import java.util.logging.LogRecord
 import java.util.logging.Logger
 import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.connection.RealConnectionPool
 import okhttp3.internal.http2.Http2
 import okhttp3.testing.Flaky
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -45,6 +46,7 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
   private lateinit var testName: String
   private var defaultUncaughtExceptionHandler: Thread.UncaughtExceptionHandler? = null
   private var taskQueuesWereIdle: Boolean = false
+  val connectionListener = RecordingConnectionListener()
 
   var logger: Logger? = null
 
@@ -117,7 +119,10 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
       client = OkHttpClient.Builder()
         .dns(SINGLE_INET_ADDRESS_DNS) // Prevent unexpected fallback addresses.
         .eventListenerFactory { ClientRuleEventListener(logger = ::addEvent) }
+        .connectionPool(ConnectionPool(connectionListener = connectionListener))
         .build()
+      connectionListener.forbidLock(RealConnectionPool.get(client.connectionPool))
+      connectionListener.forbidLock(client.dispatcher)
       testClient = client
     }
     return client
@@ -248,6 +253,10 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
         println(e)
       }
     }
+  }
+
+  fun recordedConnectionEventTypes(): List<String> {
+    return connectionListener.recordedEventTypes()
   }
 
   companion object {
