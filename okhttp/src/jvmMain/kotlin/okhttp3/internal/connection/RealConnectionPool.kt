@@ -111,7 +111,10 @@ class RealConnectionPool(
         connection.noNewExchanges = true
         call.releaseConnectionNoEvents()
       }
-      toClose?.closeQuietly()
+      if (toClose != null) {
+        toClose.closeQuietly()
+        connectionListener.connectionClosed(connection)
+      }
     }
     return null
   }
@@ -134,7 +137,6 @@ class RealConnectionPool(
     return if (connection.noNewExchanges || maxIdleConnections == 0) {
       connection.noNewExchanges = true
       connections.remove(connection)
-      connection.queueEvent { connectionListener.connectionClosed(connection) }
       if (connections.isEmpty()) cleanupQueue.cancelAll()
       true
     } else {
@@ -205,9 +207,8 @@ class RealConnectionPool(
           connection.noNewExchanges = true
           connections.remove(longestIdleConnection)
         }
-        connectionListener.connectionClosed(connection)
-
         connection.socket().closeQuietly()
+        connectionListener.connectionClosed(connection)
         if (connections.isEmpty()) cleanupQueue.cancelAll()
 
         // Clean up again immediately.

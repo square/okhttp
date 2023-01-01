@@ -113,6 +113,9 @@ class RealRoutePlanner(
     toClose?.closeQuietly()
     call.eventListener.connectionReleased(call, candidate)
     candidate.connectionListener.connectionReleased(candidate, call)
+    if (toClose != null) {
+      candidate.connectionListener.connectionClosed(candidate)
+    }
     return null
   }
 

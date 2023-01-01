@@ -145,10 +145,11 @@ class RouteFailureTest {
       "ConnectionAcquired",
       "NoNewExchanges",
       "ConnectionReleased",
+      "ConnectionClosed",
       "ConnectStart",
       "ConnectEnd",
       "ConnectionAcquired",
-      "ConnectionReleased"
+      "ConnectionReleased",
     )
   }
 
@@ -222,6 +223,7 @@ class RouteFailureTest {
       "ConnectionAcquired",
       "NoNewExchanges",
       "ConnectionReleased",
+      "ConnectionClosed",
       "ConnectStart",
       "ConnectEnd",
       "ConnectionAcquired",

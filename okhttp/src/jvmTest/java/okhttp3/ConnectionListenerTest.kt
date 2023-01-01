@@ -52,11 +52,11 @@ open class ConnectionListenerTest {
   private val listener = RecordingConnectionListener()
   private val handshakeCertificates = localhost()
 
-  open val fastFallback: Boolean = true
+  open val fastFallback: Boolean get() = true
 
   private var client: OkHttpClient = clientTestRule.newClientBuilder()
     .connectionPool(ConnectionPool(connectionListener = listener))
-      .fastFallback(fastFallback)
+    .fastFallback(fastFallback)
     .build()
 
   @BeforeEach
@@ -109,9 +109,8 @@ open class ConnectionListenerTest {
       "ConnectStart",
       "ConnectEnd",
       "ConnectionAcquired",
-      "NoNewExchanges",
+      "ConnectionReleased",
       "ConnectionClosed",
-      "ConnectionReleased"
     )
   }
 
@@ -287,5 +286,5 @@ open class ConnectionListenerTest {
 @Timeout(30)
 @Tag("Slow")
 class ConnectionListenerLegacyTest: ConnectionListenerTest() {
-  override val fastFallback: Boolean = false
+  override val fastFallback get() = false
 }

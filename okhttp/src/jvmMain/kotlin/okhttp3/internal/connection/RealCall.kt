@@ -360,7 +360,7 @@ class RealCall(
     val connection = this.connection
     if (connection != null) {
       connection.assertThreadDoesntHoldLock()
-      val toClose: Socket? = connection.synchronizedWithEvents {
+      val toClose: Socket? = synchronized(connection) {
         // Sets this.connection to null.
         releaseConnectionNoEvents()
       }
@@ -368,6 +368,9 @@ class RealCall(
         toClose?.closeQuietly()
         eventListener.connectionReleased(this, connection)
         connection.connectionListener.connectionReleased(connection, this)
+        if (toClose != null) {
+          connection.connectionListener.connectionClosed(connection)
+        }
       } else {
         check(toClose == null) // If we still have a connection we shouldn't be closing any sockets.
       }
