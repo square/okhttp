@@ -71,7 +71,6 @@ import okhttp3.Response
 import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.TaskRunner
-import okhttp3.internal.duplex.MwsDuplexAccess
 import okhttp3.internal.http.HttpMethod
 import okhttp3.internal.http2.ErrorCode
 import okhttp3.internal.http2.Header
@@ -1110,17 +1109,6 @@ class MockWebServer : Closeable {
   }
 
   companion object {
-    init {
-      MwsDuplexAccess.instance = object : MwsDuplexAccess() {
-        override fun setBody(
-          mockResponseBuilder: MockResponse.Builder,
-          duplexResponseBody: StreamHandler,
-        ) {
-          mockResponseBuilder.streamHandler(duplexResponseBody)
-        }
-      }
-    }
-
     private const val CLIENT_AUTH_NONE = 0
     private const val CLIENT_AUTH_REQUESTED = 1
     private const val CLIENT_AUTH_REQUIRED = 2
