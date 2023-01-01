@@ -23,7 +23,7 @@ import java.util.Arrays
 import java.util.concurrent.TimeUnit
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import mockwebserver3.SocketPolicy
+import mockwebserver3.SocketPolicy.FailHandshake
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.internal.DoubleInetAddressDns
 import okhttp3.internal.connection.RealConnectionPool.Companion.get
@@ -211,7 +211,7 @@ open class ConnectionListenerTest {
   @Throws(UnknownHostException::class)
   fun failedConnect() {
     enableTls()
-    server!!.enqueue(MockResponse(socketPolicy = SocketPolicy.FAIL_HANDSHAKE))
+    server!!.enqueue(MockResponse(socketPolicy = FailHandshake))
     val call = client.newCall(Request.Builder()
       .url(server!!.url("/"))
       .build())
@@ -235,7 +235,7 @@ open class ConnectionListenerTest {
   @Throws(IOException::class)
   fun multipleConnectsForSingleCall() {
     enableTls()
-    server!!.enqueue(MockResponse(socketPolicy = SocketPolicy.FAIL_HANDSHAKE))
+    server!!.enqueue(MockResponse(socketPolicy = FailHandshake))
     server!!.enqueue(MockResponse())
     client = client.newBuilder()
       .dns(DoubleInetAddressDns())

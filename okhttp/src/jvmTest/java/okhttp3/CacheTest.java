@@ -56,7 +56,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import static mockwebserver3.SocketPolicy.DISCONNECT_AT_END;
+import static mockwebserver3.SocketPolicy.DisconnectAtEnd;
 import static okhttp3.internal.Internal.cacheGet;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
@@ -2888,9 +2888,10 @@ public final class CacheTest {
    * Shortens the body of {@code response} but not the corresponding headers. Only useful to test
    * how clients respond to the premature conclusion of the HTTP body.
    */
-  private MockResponse.Builder truncateViolently(MockResponse.Builder builder, int numBytesToKeep) throws IOException {
+  private MockResponse.Builder truncateViolently(
+      MockResponse.Builder builder, int numBytesToKeep) throws IOException {
     MockResponse response = builder.build();
-    builder.socketPolicy(DISCONNECT_AT_END);
+    builder.socketPolicy(DisconnectAtEnd.INSTANCE);
     Headers headers = response.getHeaders();
     Buffer fullBody = new Buffer();
     response.getBody().writeTo(fullBody);
@@ -2915,7 +2916,7 @@ public final class CacheTest {
     END_OF_STREAM {
       @Override void setBody(MockResponse.Builder response, Buffer content, int chunkSize) {
         response.body(content);
-        response.socketPolicy(DISCONNECT_AT_END);
+        response.socketPolicy(DisconnectAtEnd.INSTANCE);
         response.removeHeader("Content-Length");
       }
     };
