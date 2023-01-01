@@ -356,7 +356,7 @@ open class PlatformRule @JvmOverloads constructor(
     private val localhostHandshakeCertificatesWithRsa2048: HandshakeCertificates by lazy {
       val heldCertificate = HeldCertificate.Builder()
         .commonName("localhost")
-        .addSubjectAlternativeName(InetAddress.getByName("localhost").canonicalHostName)
+        .addSubjectAlternativeName("localhost")
         .rsa2048()
         .build()
       return@lazy HandshakeCertificates.Builder()
