@@ -31,6 +31,7 @@ import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.internal.TlsUtil.localhost
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -101,7 +102,7 @@ open class ConnectionListenerTest {
       .build())
     try {
       call.execute()
-      org.junit.jupiter.api.Assertions.fail<Any>()
+      fail<Any>()
     } catch (expected: IOException) {
       assertThat(expected.message).isIn("timeout", "Read timed out")
     }
@@ -210,6 +211,9 @@ open class ConnectionListenerTest {
   @Test
   @Throws(UnknownHostException::class)
   fun failedConnect() {
+    // Read error: ssl=0x7f740908fdc8: Failure in SSL library, usually a protocol error
+//    platform.assumeNotConscrypt()
+
     enableTls()
     server!!.enqueue(MockResponse(socketPolicy = FailHandshake))
     val call = client.newCall(Request.Builder()
@@ -217,7 +221,7 @@ open class ConnectionListenerTest {
       .build())
     try {
       call.execute()
-      org.junit.jupiter.api.Assertions.fail<Any>()
+      fail<Any>()
     } catch (expected: IOException) {
     }
     val address = client.dns.lookup(server!!.hostName)[0]
