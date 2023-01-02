@@ -151,7 +151,7 @@ jobs:
 
   testopenjdk8:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdk8')
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions')
 
     steps:
       - name: Checkout
@@ -172,7 +172,7 @@ jobs:
 
   testopenjdk8alpn:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdk8')
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions')
 
     steps:
       - name: Checkout
@@ -284,7 +284,7 @@ jobs:
 
   testopenjdk17:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdk17')
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions')
 
     steps:
       - name: Checkout
@@ -305,7 +305,7 @@ jobs:
 
   testopenjdk19:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdk19')
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions')
 
     steps:
       - name: Checkout
