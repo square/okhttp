@@ -48,23 +48,17 @@ import kotlin.concurrent.withLock
 class TaskFaker : Closeable {
   @Suppress("NOTHING_TO_INLINE")
   internal inline fun Any.assertThreadHoldsLock() {
-    if (assertionsEnabled && !Thread.holdsLock(this)) {
+    if (assertionsEnabled && !taskRunner.lock.isHeldByCurrentThread) {
       throw AssertionError("Thread ${Thread.currentThread().name} MUST hold lock on $this")
     }
   }
 
   @Suppress("NOTHING_TO_INLINE")
   internal inline fun Any.assertThreadDoesntHoldLock() {
-    if (assertionsEnabled && Thread.holdsLock(this)) {
+    if (assertionsEnabled && taskRunner.lock.isHeldByCurrentThread) {
       throw AssertionError("Thread ${Thread.currentThread().name} MUST NOT hold lock on $this")
     }
   }
-
-  @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "NOTHING_TO_INLINE")
-  internal inline fun Any.wait() = (this as Object).wait()
-
-  @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "NOTHING_TO_INLINE")
-  internal inline fun Any.notifyAll() = (this as Object).notifyAll()
 
   val logger = Logger.getLogger("TaskFaker." + instance++)
 
@@ -131,7 +125,7 @@ class TaskFaker : Closeable {
 
       // Execute() must not return until the launched task stalls.
       while (!acquiredTaskRunnerLock.get()) {
-        taskRunner.wait()
+        taskRunner.condition.await()
       }
     }
 
@@ -142,7 +136,7 @@ class TaskFaker : Closeable {
       check(waitingCoordinatorThread != null)
 
       stalledTasks.remove(waitingCoordinatorThread)
-      taskRunner.notifyAll()
+      taskRunner.condition.signalAll()
     }
 
     override fun coordinatorWait(taskRunner: TaskRunner, nanos: Long) {
@@ -171,7 +165,7 @@ class TaskFaker : Closeable {
     stalledTasks += currentThread
     try {
       while (currentThread in stalledTasks) {
-        taskRunner.wait()
+        taskRunner.condition.await()
       }
     } catch (e: InterruptedException) {
       stalledTasks.remove(currentThread)
@@ -183,7 +177,7 @@ class TaskFaker : Closeable {
     taskRunner.assertThreadHoldsLock()
 
     stalledTasks.clear()
-    taskRunner.notifyAll()
+    taskRunner.condition.signalAll()
   }
 
   /** Runs all tasks that are ready. Used by the test thread only. */
@@ -251,7 +245,7 @@ class TaskFaker : Closeable {
     taskRunner.lock.withLock {
       check(stalledTasks.size >= 1) { "no tasks to run" }
       stalledTasks.removeFirst()
-      taskRunner.notifyAll()
+      taskRunner.condition.signalAll()
     }
 
     waitForTasksToStall()
