@@ -23,7 +23,13 @@ import okhttp3.Dispatcher
 import okhttp3.OkHttpClient
 import okhttp3.internal.concurrent.TaskRunner
 
+/**
+ * Factory for a [OkHttpClient.Builder] with defaults for Loom execution.
+ */
 object LoomClientBuilder {
+  /**
+   * Create a [OkHttpClient.Builder] configured with Loom dispatcher and connection pool.
+   */
   @JvmStatic
   fun clientBuilder(connectionListener: ConnectionListener = NONE): OkHttpClient.Builder {
     val backend = LoomBackend()
