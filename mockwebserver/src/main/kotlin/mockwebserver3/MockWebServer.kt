@@ -154,7 +154,7 @@ class MockWebServer : Closeable {
   val hostName: String
     get() {
       before()
-      return _inetSocketAddress!!.address.canonicalHostName
+      return _inetSocketAddress!!.address.hostName
     }
 
   private var _inetSocketAddress: InetSocketAddress? = null
@@ -205,7 +205,7 @@ class MockWebServer : Closeable {
 
   fun toProxyAddress(): Proxy {
     before()
-    val address = InetSocketAddress(_inetSocketAddress!!.address.canonicalHostName, port)
+    val address = InetSocketAddress(_inetSocketAddress!!.address.hostName, port)
     return Proxy(Proxy.Type.HTTP, address)
   }
 
