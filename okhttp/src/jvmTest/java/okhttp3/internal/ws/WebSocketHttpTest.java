@@ -31,6 +31,8 @@ import mockwebserver3.MockResponse;
 import mockwebserver3.MockWebServer;
 import mockwebserver3.RecordedRequest;
 import mockwebserver3.SocketPolicy;
+import mockwebserver3.SocketPolicy.KeepOpen;
+import mockwebserver3.SocketPolicy.NoResponse;
 import okhttp3.OkHttpClient;
 import okhttp3.OkHttpClientTestRule;
 import okhttp3.Protocol;
@@ -591,7 +593,7 @@ public final class WebSocketHttpTest {
 
   @Test public void readTimeoutAppliesToHttpRequest() {
     webServer.enqueue(new MockResponse.Builder()
-        .socketPolicy(SocketPolicy.NO_RESPONSE)
+        .socketPolicy(NoResponse.INSTANCE)
         .build());
 
     WebSocket webSocket = newWebSocket();
@@ -611,7 +613,7 @@ public final class WebSocketHttpTest {
         return upgradeResponse(request)
             .body(new Buffer().write(ByteString.decodeHex("81"))) // Truncated frame.
             .removeHeader("Content-Length")
-            .socketPolicy(SocketPolicy.KEEP_OPEN)
+            .socketPolicy(KeepOpen.INSTANCE)
             .build();
       }
     });

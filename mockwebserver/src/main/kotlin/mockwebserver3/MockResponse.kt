@@ -16,6 +16,7 @@
 package mockwebserver3
 
 import java.util.concurrent.TimeUnit
+import mockwebserver3.SocketPolicy.KeepOpen
 import mockwebserver3.internal.toMockResponseBody
 import okhttp3.Headers
 import okhttp3.Headers.Companion.headersOf
@@ -63,7 +64,7 @@ class MockResponse {
   /**
    * Sets the [HTTP/2 error code](https://tools.ietf.org/html/rfc7540#section-7) to be
    * returned when resetting the stream. This is only valid with
-   * [SocketPolicy.RESET_STREAM_AT_START] and [SocketPolicy.DO_NOT_READ_REQUEST_BODY].
+   * [SocketPolicy.ResetStreamAtStart] and [SocketPolicy.DoNotReadRequestBody].
    */
   val http2ErrorCode: Int
 
@@ -80,7 +81,7 @@ class MockResponse {
     headers: Headers = headersOf(),
     body: String = "",
     inTunnel: Boolean = false,
-    socketPolicy: SocketPolicy = SocketPolicy.KEEP_OPEN,
+    socketPolicy: SocketPolicy = KeepOpen,
     http2ErrorCode: Int = -1,
   ) : this(Builder()
     .apply {
@@ -203,7 +204,7 @@ class MockResponse {
       this.trailers = Headers.Builder()
       this.throttleBytesPerPeriod = Long.MAX_VALUE
       this.throttlePeriodNanos = 0L
-      this.socketPolicy = SocketPolicy.KEEP_OPEN
+      this.socketPolicy = KeepOpen
       this.http2ErrorCode = -1
       this.bodyDelayNanos = 0L
       this.headersDelayNanos = 0L

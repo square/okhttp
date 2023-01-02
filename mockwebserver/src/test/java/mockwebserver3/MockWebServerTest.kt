@@ -27,6 +27,10 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.time.Duration
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.HttpsURLConnection
+import mockwebserver3.SocketPolicy.DisconnectAtStart
+import mockwebserver3.SocketPolicy.DisconnectDuringRequestBody
+import mockwebserver3.SocketPolicy.DisconnectDuringResponseBody
+import mockwebserver3.SocketPolicy.ShutdownServerAfterResponse
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -250,7 +254,7 @@ class MockWebServerTest {
   @Test
   fun disconnectAtStart() {
     server.enqueue(MockResponse.Builder()
-      .socketPolicy(SocketPolicy.DISCONNECT_AT_START)
+      .socketPolicy(DisconnectAtStart)
       .build())
     server.enqueue(MockResponse()) // The jdk's HttpUrlConnection is a bastard.
     server.enqueue(MockResponse())
@@ -340,7 +344,7 @@ class MockWebServerTest {
   @Test
   fun disconnectRequestHalfway() {
     server.enqueue(MockResponse.Builder()
-      .socketPolicy(SocketPolicy.DISCONNECT_DURING_REQUEST_BODY)
+      .socketPolicy(DisconnectDuringRequestBody)
       .build())
     // Limit the size of the request body that the server holds in memory to an arbitrary
     // 3.5 MBytes so this test can pass on devices with little memory.
@@ -374,7 +378,7 @@ class MockWebServerTest {
   fun disconnectResponseHalfway() {
     server.enqueue(MockResponse.Builder()
       .body("ab")
-      .socketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY)
+      .socketPolicy(DisconnectDuringResponseBody)
       .build())
     val connection = server.url("/").toUrl().openConnection()
     assertThat(connection!!.contentLength).isEqualTo(2)
@@ -477,7 +481,7 @@ class MockWebServerTest {
   @Test
   fun shutdownServerAfterRequest() {
     server.enqueue(MockResponse.Builder()
-      .socketPolicy(SocketPolicy.SHUTDOWN_SERVER_AFTER_RESPONSE)
+      .socketPolicy(ShutdownServerAfterResponse)
       .build())
     val url = server.url("/").toUrl()
     val connection = url.openConnection() as HttpURLConnection
@@ -669,9 +673,5 @@ class MockWebServerTest {
       // Expected.
     }
     server2.shutdown()
-  }
-
-  private fun getPlatform(): String? {
-    return System.getProperty("okhttp.platform", "jdk8")
   }
 }
