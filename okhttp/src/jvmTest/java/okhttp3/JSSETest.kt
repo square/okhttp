@@ -15,13 +15,14 @@
  */
 package okhttp3
 
+import javax.net.ssl.SSLSocket
+import javax.net.ssl.SSLSocketFactory
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.TestUtil.assumeNetwork
 import okhttp3.internal.connection
 import okhttp3.testing.PlatformRule
 import okhttp3.testing.PlatformVersion
-import okhttp3.tls.internal.TlsUtil
 import okio.ByteString.Companion.toByteString
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -30,14 +31,12 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
-import javax.net.ssl.SSLSocket
-import javax.net.ssl.SSLSocketFactory
 
 class JSSETest {
   @JvmField @RegisterExtension var platform = PlatformRule()
   @JvmField @RegisterExtension val clientTestRule = OkHttpClientTestRule()
 
-  private val handshakeCertificates = TlsUtil.localhost()
+  private val handshakeCertificates = platform.localhostHandshakeCertificates()
 
   var client = clientTestRule.newClient()
 
@@ -62,7 +61,7 @@ class JSSETest {
 
     enableTls()
 
-    server.enqueue(MockResponse().setBody("abc"))
+    server.enqueue(MockResponse(body = "abc"))
 
     val request = Request(server.url("/"))
 

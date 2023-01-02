@@ -16,6 +16,20 @@
 package okhttp3.mockwebserver
 
 import java.util.concurrent.TimeUnit.MILLISECONDS
+import mockwebserver3.SocketPolicy.DisconnectAfterRequest
+import mockwebserver3.SocketPolicy.DisconnectAtEnd
+import mockwebserver3.SocketPolicy.DisconnectAtStart
+import mockwebserver3.SocketPolicy.DisconnectDuringRequestBody
+import mockwebserver3.SocketPolicy.DisconnectDuringResponseBody
+import mockwebserver3.SocketPolicy.DoNotReadRequestBody
+import mockwebserver3.SocketPolicy.FailHandshake
+import mockwebserver3.SocketPolicy.KeepOpen
+import mockwebserver3.SocketPolicy.NoResponse
+import mockwebserver3.SocketPolicy.ResetStreamAtStart
+import mockwebserver3.SocketPolicy.ShutdownInputAtEnd
+import mockwebserver3.SocketPolicy.ShutdownOutputAtEnd
+import mockwebserver3.SocketPolicy.ShutdownServerAfterResponse
+import mockwebserver3.SocketPolicy.StallSocketAtStart
 
 internal fun Dispatcher.wrap(): mockwebserver3.Dispatcher {
   if (this is QueueDispatcher) return this.delegate
@@ -39,39 +53,39 @@ internal fun Dispatcher.wrap(): mockwebserver3.Dispatcher {
 }
 
 internal fun MockResponse.wrap(): mockwebserver3.MockResponse {
-  val result = mockwebserver3.MockResponse()
+  val result = mockwebserver3.MockResponse.Builder()
   val copyFromWebSocketListener = webSocketListener
   if (copyFromWebSocketListener != null) {
-    result.withWebSocketUpgrade(copyFromWebSocketListener)
+    result.webSocketUpgrade(copyFromWebSocketListener)
   }
 
   val body = getBody()
-  if (body != null) result.setBody(body)
+  if (body != null) result.body(body)
 
   for (pushPromise in pushPromises) {
-    result.withPush(pushPromise.wrap())
+    result.addPush(pushPromise.wrap())
   }
 
-  result.withSettings(settings)
+  result.settings(settings)
   result.status = status
-  result.headers = headers
-  result.trailers = trailers
+  result.headers(headers)
+  result.trailers(trailers)
   result.socketPolicy = when (socketPolicy) {
     SocketPolicy.EXPECT_CONTINUE, SocketPolicy.CONTINUE_ALWAYS -> {
       result.add100Continue()
-      mockwebserver3.SocketPolicy.KEEP_OPEN
+      KeepOpen
     }
     SocketPolicy.UPGRADE_TO_SSL_AT_END -> {
       result.inTunnel()
-      mockwebserver3.SocketPolicy.KEEP_OPEN
+      KeepOpen
     }
     else -> socketPolicy.wrap()
   }
   result.http2ErrorCode = http2ErrorCode
   result.throttleBody(throttleBytesPerPeriod, getThrottlePeriod(MILLISECONDS), MILLISECONDS)
-  result.setBodyDelay(getBodyDelay(MILLISECONDS), MILLISECONDS)
-  result.setHeadersDelay(getHeadersDelay(MILLISECONDS), MILLISECONDS)
-  return result
+  result.bodyDelay(getBodyDelay(MILLISECONDS), MILLISECONDS)
+  result.headersDelay(getHeadersDelay(MILLISECONDS), MILLISECONDS)
+  return result.build()
 }
 
 private fun PushPromise.wrap(): mockwebserver3.PushPromise {
@@ -100,5 +114,21 @@ internal fun mockwebserver3.RecordedRequest.unwrap(): RecordedRequest {
 }
 
 private fun SocketPolicy.wrap(): mockwebserver3.SocketPolicy {
-  return mockwebserver3.SocketPolicy.valueOf(name)
+  return when (this) {
+    SocketPolicy.SHUTDOWN_SERVER_AFTER_RESPONSE -> ShutdownServerAfterResponse
+    SocketPolicy.KEEP_OPEN -> KeepOpen
+    SocketPolicy.DISCONNECT_AT_END -> DisconnectAtEnd
+    SocketPolicy.DISCONNECT_AT_START -> DisconnectAtStart
+    SocketPolicy.DISCONNECT_AFTER_REQUEST -> DisconnectAfterRequest
+    SocketPolicy.DISCONNECT_DURING_REQUEST_BODY -> DisconnectDuringRequestBody
+    SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY -> DisconnectDuringResponseBody
+    SocketPolicy.DO_NOT_READ_REQUEST_BODY -> DoNotReadRequestBody
+    SocketPolicy.FAIL_HANDSHAKE -> FailHandshake
+    SocketPolicy.SHUTDOWN_INPUT_AT_END -> ShutdownInputAtEnd
+    SocketPolicy.SHUTDOWN_OUTPUT_AT_END -> ShutdownOutputAtEnd
+    SocketPolicy.STALL_SOCKET_AT_START -> StallSocketAtStart
+    SocketPolicy.NO_RESPONSE -> NoResponse
+    SocketPolicy.RESET_STREAM_AT_START -> ResetStreamAtStart
+    else -> error("Unexpected SocketPolicy: $this")
+  }
 }

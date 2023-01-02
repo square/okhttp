@@ -49,8 +49,8 @@ public final class SocksProxyTest {
   }
 
   @Test public void proxy() throws Exception {
-    server.enqueue(new MockResponse().setBody("abc"));
-    server.enqueue(new MockResponse().setBody("def"));
+    server.enqueue(new MockResponse.Builder().body("abc").build());
+    server.enqueue(new MockResponse.Builder().body("def").build());
 
     OkHttpClient client = clientTestRule.newClientBuilder()
         .proxy(socksProxy.proxy())
@@ -69,7 +69,7 @@ public final class SocksProxyTest {
   }
 
   @Test public void proxySelector() throws Exception {
-    server.enqueue(new MockResponse().setBody("abc"));
+    server.enqueue(new MockResponse.Builder().body("abc").build());
 
     ProxySelector proxySelector = new ProxySelector() {
       @Override public List<Proxy> select(URI uri) {
@@ -94,7 +94,7 @@ public final class SocksProxyTest {
 
   @Test public void checkRemoteDNSResolve() throws Exception {
     // This testcase will fail if the target is resolved locally instead of through the proxy.
-    server.enqueue(new MockResponse().setBody("abc"));
+    server.enqueue(new MockResponse.Builder().body("abc").build());
 
     OkHttpClient client = clientTestRule.newClientBuilder()
         .proxy(socksProxy.proxy())

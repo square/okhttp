@@ -15,12 +15,12 @@
  */
 package okhttp3
 
+import javax.net.ssl.SSLSocket
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule
 import okhttp3.testing.PlatformVersion
-import okhttp3.tls.internal.TlsUtil
 import okio.ByteString.Companion.toByteString
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -30,13 +30,12 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
-import javax.net.ssl.SSLSocket
 
 class SessionReuseTest {
   @JvmField @RegisterExtension var platform = PlatformRule()
   @JvmField @RegisterExtension val clientTestRule = OkHttpClientTestRule()
 
-  private val handshakeCertificates = TlsUtil.localhost()
+  private val handshakeCertificates = platform.localhostHandshakeCertificates()
 
   var client = clientTestRule.newClient()
 
@@ -50,9 +49,7 @@ class SessionReuseTest {
     // System.setProperty("jdk.tls.client.enableSessionTicketExtension", "true")
     // System.setProperty("jdk.tls.server.enableSessionTicketExtension", "true")
 
-    // Session reuse not tested
-    // org.bouncycastle.tls.TlsFatalAlert: handshake_failure(40); No selectable cipher suite
-    //	at org.bouncycastle.tls.AbstractTlsServer.getSelectedCipherSuite(Unknown Source)
+    // IllegalStateException: Cannot resume session and session creation is disabled
     platform.assumeNotBouncyCastle()
   }
 
@@ -99,8 +96,8 @@ class SessionReuseTest {
       .sslSocketFactory(sslSocketFactory, handshakeCertificates.trustManager)
       .build()
 
-    server.enqueue(MockResponse().setBody("abc1"))
-    server.enqueue(MockResponse().setBody("abc2"))
+    server.enqueue(MockResponse(body = "abc1"))
+    server.enqueue(MockResponse(body = "abc2"))
 
     val request = Request(server.url("/"))
 

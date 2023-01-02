@@ -21,7 +21,8 @@ import java.security.cert.X509Certificate
 import java.time.Duration
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import mockwebserver3.SocketPolicy
+import mockwebserver3.SocketPolicy.DisconnectAtStart
+import mockwebserver3.SocketPolicy.ShutdownOutputAtEnd
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -32,7 +33,6 @@ import okhttp3.internal.connection.RealConnection.Companion.IDLE_CONNECTION_HEAL
 import okhttp3.internal.http.RecordingProxySelector
 import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule
-import okhttp3.tls.internal.TlsUtil.localhost
 import okio.BufferedSink
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -52,19 +52,18 @@ class CallKotlinTest {
   }
 
   private var client = clientTestRule.newClient()
-  private val handshakeCertificates = localhost()
+  private val handshakeCertificates = platform.localhostHandshakeCertificates()
   private lateinit var server: MockWebServer
 
   @BeforeEach
   fun setUp(server: MockWebServer) {
     this.server = server
-    platform.assumeNotBouncyCastle()
   }
 
   @Test
   fun legalToExecuteTwiceCloning() {
-    server.enqueue(MockResponse().setBody("abc"))
-    server.enqueue(MockResponse().setBody("def"))
+    server.enqueue(MockResponse(body = "abc"))
+    server.enqueue(MockResponse(body = "def"))
 
     val request = Request(server.url("/"))
 
@@ -83,7 +82,7 @@ class CallKotlinTest {
   fun testMockWebserverRequest() {
     enableTls()
 
-    server.enqueue(MockResponse().setBody("abc"))
+    server.enqueue(MockResponse(body = "abc"))
 
     val request = Request.Builder().url(server.url("/")).build()
 
@@ -130,15 +129,9 @@ class CallKotlinTest {
       }
     }
 
-    server.enqueue(MockResponse().apply {
-      setResponseCode(201)
-    })
-    server.enqueue(MockResponse().apply {
-      setResponseCode(204)
-    })
-    server.enqueue(MockResponse().apply {
-      setResponseCode(204)
-    })
+    server.enqueue(MockResponse(code = 201))
+    server.enqueue(MockResponse(code = 204))
+    server.enqueue(MockResponse(code = 204))
 
     val endpointUrl = server.url("/endpoint")
 
@@ -192,9 +185,13 @@ class CallKotlinTest {
         })
         .build()
 
-    server.enqueue(MockResponse().setBody("a")
-        .setSocketPolicy(SocketPolicy.SHUTDOWN_OUTPUT_AT_END))
-    server.enqueue(MockResponse().setBody("b"))
+    server.enqueue(
+      MockResponse(
+        body = "a",
+        socketPolicy = ShutdownOutputAtEnd
+      )
+    )
+    server.enqueue(MockResponse(body = "b"))
 
     val requestA = Request(server.url("/"))
     val responseA = client.newCall(requestA).execute()
@@ -243,8 +240,8 @@ class CallKotlinTest {
 
   /** Confirm suppressed exceptions that occur after connecting are returned. */
   @Test fun httpExceptionsAreReturnedAsSuppressed() {
-    server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))
-    server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))
+    server.enqueue(MockResponse(socketPolicy = DisconnectAtStart))
+    server.enqueue(MockResponse(socketPolicy = DisconnectAtStart))
 
     client = client.newBuilder()
         .dns(DoubleInetAddressDns()) // Two routes so we get two failures.
@@ -266,9 +263,10 @@ class CallKotlinTest {
   @Test
   fun responseRequestIsLastRedirect() {
     server.enqueue(
-      MockResponse()
-        .setResponseCode(302)
-        .addHeader("Location: /b")
+      MockResponse(
+        code = 302,
+        headers = headersOf("Location", "/b"),
+      )
     )
     server.enqueue(MockResponse())
 

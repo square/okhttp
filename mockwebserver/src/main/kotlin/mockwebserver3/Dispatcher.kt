@@ -15,6 +15,8 @@
  */
 package mockwebserver3
 
+import mockwebserver3.SocketPolicy.KeepOpen
+
 /** Handler for mock server requests. */
 abstract class Dispatcher {
   /**
@@ -31,7 +33,7 @@ abstract class Dispatcher {
    * request bodies.
    */
   open fun peek(): MockResponse {
-    return MockResponse().apply { this.socketPolicy = SocketPolicy.KEEP_OPEN }
+    return MockResponse(socketPolicy = KeepOpen)
   }
 
   /**

@@ -39,6 +39,7 @@ import okhttp3.OkHttpClient
 import okhttp3.RequestBody
 import okhttp3.Response
 import okhttp3.ResponseBody
+import okhttp3.internal.CommonHttpUrl.commonDefaultPort
 import okhttp3.internal.http2.Header
 import okio.Buffer
 import okio.BufferedSource
@@ -50,8 +51,6 @@ val EMPTY_HEADERS: Headers = commonEmptyHeaders
 val EMPTY_REQUEST: RequestBody = commonEmptyRequestBody
 @JvmField
 val EMPTY_RESPONSE: ResponseBody = commonEmptyResponse
-
-actual typealias HttpUrlRepresentation = HttpUrl
 
 /** GMT and UTC are equivalent for our purposes. */
 @JvmField
@@ -72,7 +71,7 @@ internal fun HttpUrl.toHostHeader(includeDefaultPort: Boolean = false): String {
   } else {
     host
   }
-  return if (includeDefaultPort || port != HttpUrl.defaultPort(scheme)) {
+  return if (includeDefaultPort || port != commonDefaultPort(scheme)) {
     "$host:$port"
   } else {
     host

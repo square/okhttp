@@ -15,6 +15,15 @@
  */
 package okhttp3
 
+import java.io.IOException
+import java.net.InetAddress
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit.SECONDS
+import javax.net.ssl.SNIHostName
+import javax.net.ssl.SNIMatcher
+import javax.net.ssl.SNIServerName
+import javax.net.ssl.SSLSocket
+import javax.net.ssl.StandardConstants
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.Protocol.HTTP_1_1
@@ -31,21 +40,12 @@ import okhttp3.tls.HeldCertificate
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assumptions.assumeFalse
 import org.junit.jupiter.api.Assumptions.assumeTrue
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
-import java.io.IOException
-import java.net.InetAddress
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.TimeUnit.SECONDS
-import javax.net.ssl.SNIHostName
-import javax.net.ssl.SNIMatcher
-import javax.net.ssl.SNIServerName
-import javax.net.ssl.SSLSocket
-import javax.net.ssl.StandardConstants
-import org.junit.jupiter.api.BeforeEach
 
 @Suppress("UsePropertyAccessSyntax")
 @Timeout(6)
@@ -151,7 +151,7 @@ class SocketChannelTest {
       }
       .build()
 
-    server.enqueue(MockResponse().setBody("abc"))
+    server.enqueue(MockResponse(body = "abc"))
 
     @Suppress("HttpUrlsUsage") val url =
       if (socketMode is TlsInstance)

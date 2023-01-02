@@ -20,6 +20,7 @@ import java.net.UnknownHostException;
 import mockwebserver3.MockResponse;
 import mockwebserver3.MockWebServer;
 import mockwebserver3.SocketPolicy;
+import mockwebserver3.SocketPolicy.FailHandshake;
 import mockwebserver3.junit5.internal.MockWebServerExtension;
 import okhttp3.Call;
 import okhttp3.EventListener;
@@ -37,11 +38,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
-
 import static java.util.Arrays.asList;
 import static okhttp3.Protocol.HTTP_1_1;
 import static okhttp3.Protocol.HTTP_2;
-import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -53,7 +52,8 @@ public final class LoggingEventListenerTest {
   @RegisterExtension public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
   private MockWebServer server;
 
-  private final HandshakeCertificates handshakeCertificates = localhost();
+  private final HandshakeCertificates handshakeCertificates
+    = platform.localhostHandshakeCertificates();
   private final LogRecorder logRecorder = new LogRecorder();
   private final LoggingEventListener.Factory loggingEventListenerFactory =
       new LoggingEventListener.Factory(logRecorder);
@@ -77,7 +77,10 @@ public final class LoggingEventListenerTest {
   public void get() throws Exception {
     TestUtil.assumeNotWindows();
 
-    server.enqueue(new MockResponse().setBody("Hello!").setHeader("Content-Type", PLAIN));
+    server.enqueue(new MockResponse.Builder()
+        .body("Hello!")
+        .setHeader("Content-Type", PLAIN)
+        .build());
     Response response = client.newCall(request().build()).execute();
     assertThat(response.body()).isNotNull();
     response.body().bytes();
@@ -150,7 +153,6 @@ public final class LoggingEventListenerTest {
   @Test
   public void secureGet() throws Exception {
     TestUtil.assumeNotWindows();
-    platform.assumeNotBouncyCastle();
 
     server.useHttps(handshakeCertificates.sslSocketFactory());
     url = server.url("/");
@@ -219,11 +221,12 @@ public final class LoggingEventListenerTest {
   @Test
   public void connectFail() {
     TestUtil.assumeNotWindows();
-    platform.assumeNotBouncyCastle();
 
     server.useHttps(handshakeCertificates.sslSocketFactory());
     server.setProtocols(asList(HTTP_2, HTTP_1_1));
-    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
+    server.enqueue(new MockResponse.Builder()
+        .socketPolicy(FailHandshake.INSTANCE)
+        .build());
     url = server.url("/");
 
     try {
@@ -241,9 +244,9 @@ public final class LoggingEventListenerTest {
         .assertLogMatch("connectStart: " + url.host() + "/.+ DIRECT")
         .assertLogMatch("secureConnectStart")
         .assertLogMatch(
-            "connectFailed: null javax\\.net\\.ssl\\.(?:SSLProtocolException|SSLHandshakeException): (?:Unexpected handshake message: client_hello|Handshake message sequence violation, 1|Read error|Handshake failed).*")
+            "connectFailed: null \\S+(?:SSLProtocolException|SSLHandshakeException|TlsFatalAlert): (?:Unexpected handshake message: client_hello|Handshake message sequence violation, 1|Read error|Handshake failed|unexpected_message\\(10\\)).*")
         .assertLogMatch(
-            "callFailed: javax\\.net\\.ssl\\.(?:SSLProtocolException|SSLHandshakeException): (?:Unexpected handshake message: client_hello|Handshake message sequence violation, 1|Read error|Handshake failed).*")
+            "callFailed: \\S+(?:SSLProtocolException|SSLHandshakeException|TlsFatalAlert): (?:Unexpected handshake message: client_hello|Handshake message sequence violation, 1|Read error|Handshake failed|unexpected_message\\(10\\)).*")
         .assertNoMoreLogs();
   }
 

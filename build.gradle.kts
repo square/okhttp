@@ -140,6 +140,13 @@ subprojects {
       "-XX:+HeapDumpOnOutOfMemoryError"
     )
 
+    if (platform == "loom") {
+      jvmArgs = jvmArgs!! + listOf(
+        "-Djdk.tracePinnedThread=full",
+        "--enable-preview"
+      )
+    }
+
     val javaToolchains = project.extensions.getByType<JavaToolchainService>()
     javaLauncher.set(javaToolchains.launcherFor {
       languageVersion.set(JavaLanguageVersion.of(testJavaVersion))
@@ -212,7 +219,7 @@ subprojects {
   plugins.withId("com.vanniktech.maven.publish.base") {
     val publishingExtension = extensions.getByType(PublishingExtension::class.java)
     configure<MavenPublishBaseExtension> {
-      publishToMavenCentral(SonatypeHost.S01)
+      publishToMavenCentral(SonatypeHost.S01, automaticRelease = true)
       signAllPublications()
       pom {
         name.set(project.name)
@@ -273,6 +280,13 @@ subprojects {
       ignoredPackages += "okhttp3.brotli.internal"
       ignoredPackages += "okhttp3.sse.internal"
       ignoredPackages += "okhttp3.tls.internal"
+    }
+  }
+
+  plugins.withId("org.jetbrains.kotlin.jvm") {
+    val jvmTest by tasks.creating {
+      description = "Get 'gradlew jvmTest' to run the tests of JVM-only modules"
+      dependsOn("test")
     }
   }
 }

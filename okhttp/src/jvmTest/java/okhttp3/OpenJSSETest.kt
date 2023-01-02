@@ -52,7 +52,7 @@ class OpenJSSETest {
   fun testTlsv13Works() {
     enableTls()
 
-    server.enqueue(MockResponse().setBody("abc"))
+    server.enqueue(MockResponse(body = "abc"))
 
     val request = Request(server.url("/"))
 
@@ -99,7 +99,7 @@ class OpenJSSETest {
     // can't use TlsUtil.localhost with a non OpenJSSE trust manager
     val heldCertificate = HeldCertificate.Builder()
         .commonName("localhost")
-        .addSubjectAlternativeName(InetAddress.getByName("localhost").canonicalHostName)
+        .addSubjectAlternativeName("localhost")
         .build()
     val handshakeCertificates = HandshakeCertificates.Builder()
         .heldCertificate(heldCertificate)

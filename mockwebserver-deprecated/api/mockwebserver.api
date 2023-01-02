@@ -74,17 +74,13 @@ public final class okhttp3/mockwebserver/MockWebServer : org/junit/rules/Externa
 	public fun close ()V
 	public final fun enqueue (Lokhttp3/mockwebserver/MockResponse;)V
 	public final fun getBodyLimit ()J
-	public static fun getBodyLimit$delegate (Lokhttp3/mockwebserver/MockWebServer;)Ljava/lang/Object;
 	public final fun getDelegate ()Lmockwebserver3/MockWebServer;
 	public final fun getDispatcher ()Lokhttp3/mockwebserver/Dispatcher;
 	public final fun getHostName ()Ljava/lang/String;
 	public final fun getPort ()I
 	public final fun getProtocolNegotiationEnabled ()Z
-	public static fun getProtocolNegotiationEnabled$delegate (Lokhttp3/mockwebserver/MockWebServer;)Ljava/lang/Object;
 	public final fun getRequestCount ()I
-	public static fun getRequestCount$delegate (Lokhttp3/mockwebserver/MockWebServer;)Ljava/lang/Object;
 	public final fun getServerSocketFactory ()Ljavax/net/ServerSocketFactory;
-	public static fun getServerSocketFactory$delegate (Lokhttp3/mockwebserver/MockWebServer;)Ljava/lang/Object;
 	public final fun noClientAuth ()V
 	public final fun protocols ()Ljava/util/List;
 	public final fun requestClientAuth ()V

@@ -19,11 +19,11 @@ import javax.net.ssl.SSLSocket
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy
+import mockwebserver3.SocketPolicy.DoNotReadRequestBody
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.internal.duplex.AsyncRequestBody
 import okhttp3.internal.http2.ErrorCode
 import okhttp3.testing.PlatformRule
-import okhttp3.tls.internal.TlsUtil.localhost
 import okio.BufferedSink
 import okio.IOException
 import org.assertj.core.api.Assertions.assertThat
@@ -32,22 +32,26 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
-import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.fail
 
 @Timeout(30)
 @Tag("Slowish")
 class ServerTruncatesRequestTest {
-  @RegisterExtension @JvmField val platform = PlatformRule()
-  @RegisterExtension @JvmField var clientTestRule = OkHttpClientTestRule()
+  @RegisterExtension
+  @JvmField
+  val platform = PlatformRule()
+  @RegisterExtension
+  @JvmField
+  var clientTestRule = OkHttpClientTestRule()
 
   private val listener = RecordingEventListener()
-  private val handshakeCertificates = localhost()
+  private val handshakeCertificates = platform.localhostHandshakeCertificates()
 
   private var client = clientTestRule.newClientBuilder()
-      .eventListenerFactory(clientTestRule.wrap(listener))
-      .build()
+    .eventListenerFactory(clientTestRule.wrap(listener))
+    .build()
 
   private lateinit var server: MockWebServer
 
@@ -56,23 +60,27 @@ class ServerTruncatesRequestTest {
     this.server = server
     platform.assumeNotOpenJSSE()
     platform.assumeHttp2Support()
-    platform.assumeNotBouncyCastle()
   }
 
-  @Test fun serverTruncatesRequestOnLongPostHttp1() {
+  @Test
+  fun serverTruncatesRequestOnLongPostHttp1() {
     serverTruncatesRequestOnLongPost(https = false)
   }
 
-  @Test fun serverTruncatesRequestOnLongPostHttp2() {
+  @Test
+  fun serverTruncatesRequestOnLongPostHttp2() {
     enableProtocol(Protocol.HTTP_2)
     serverTruncatesRequestOnLongPost(https = true)
   }
 
   private fun serverTruncatesRequestOnLongPost(https: Boolean) {
-    server.enqueue(MockResponse()
-      .setSocketPolicy(SocketPolicy.DO_NOT_READ_REQUEST_BODY)
-      .setBody("abc")
-      .apply { this.http2ErrorCode = ErrorCode.NO_ERROR.httpCode })
+    server.enqueue(
+      MockResponse(
+        body = "abc",
+        socketPolicy = DoNotReadRequestBody,
+        http2ErrorCode = ErrorCode.NO_ERROR.httpCode,
+      )
+    )
 
     val call = client.newCall(
       Request(
@@ -120,13 +128,17 @@ class ServerTruncatesRequestTest {
    * If the server returns a full response, it doesn't really matter if the HTTP/2 stream is reset.
    * Attempts to write the request body fails fast.
    */
-  @Test fun serverTruncatesRequestHttp2OnDuplexRequest() {
+  @Test
+  fun serverTruncatesRequestHttp2OnDuplexRequest() {
     enableProtocol(Protocol.HTTP_2)
 
-    server.enqueue(MockResponse()
-      .setSocketPolicy(SocketPolicy.DO_NOT_READ_REQUEST_BODY)
-      .setBody("abc")
-      .apply { this.http2ErrorCode = ErrorCode.NO_ERROR.httpCode })
+    server.enqueue(
+      MockResponse(
+        body = "abc",
+        socketPolicy = DoNotReadRequestBody,
+        http2ErrorCode = ErrorCode.NO_ERROR.httpCode,
+      )
+    )
 
     val requestBody = AsyncRequestBody()
 
@@ -156,31 +168,31 @@ class ServerTruncatesRequestTest {
     makeSimpleCall()
   }
 
-  @Test fun serverTruncatesRequestButTrailersCanStillBeReadHttp1() {
+  @Test
+  fun serverTruncatesRequestButTrailersCanStillBeReadHttp1() {
     serverTruncatesRequestButTrailersCanStillBeRead(http2 = false)
   }
 
-  @Test fun serverTruncatesRequestButTrailersCanStillBeReadHttp2() {
+  @Test
+  fun serverTruncatesRequestButTrailersCanStillBeReadHttp2() {
     enableProtocol(Protocol.HTTP_2)
     serverTruncatesRequestButTrailersCanStillBeRead(http2 = true)
   }
 
   private fun serverTruncatesRequestButTrailersCanStillBeRead(http2: Boolean) {
-    val mockResponse = MockResponse()
-        .setSocketPolicy(SocketPolicy.DO_NOT_READ_REQUEST_BODY)
-        .apply {
-          this.trailers = headersOf("caboose", "xyz")
-          this.http2ErrorCode = ErrorCode.NO_ERROR.httpCode
-        }
+    val mockResponse = MockResponse.Builder()
+      .socketPolicy(DoNotReadRequestBody)
+      .trailers(headersOf("caboose", "xyz"))
+      .http2ErrorCode(ErrorCode.NO_ERROR.httpCode)
 
     // Trailers always work for HTTP/2, but only for chunked bodies in HTTP/1.
     if (http2) {
-      mockResponse.setBody("abc")
+      mockResponse.body("abc")
     } else {
-      mockResponse.setChunkedBody("abc", 1)
+      mockResponse.chunkedBody("abc", 1)
     }
 
-    server.enqueue(mockResponse)
+    server.enqueue(mockResponse.build())
 
     val call = client.newCall(
       Request(
@@ -196,11 +208,12 @@ class ServerTruncatesRequestTest {
   }
 
   @Disabled("Follow up with fix in https://github.com/square/okhttp/issues/6853")
-  @Test fun serverDisconnectsBeforeSecondRequestHttp1() {
+  @Test
+  fun serverDisconnectsBeforeSecondRequestHttp1() {
     enableProtocol(Protocol.HTTP_1_1)
 
-    server.enqueue(MockResponse().setResponseCode(200).setBody("Req1"))
-    server.enqueue(MockResponse().setResponseCode(200).setBody("Req2"))
+    server.enqueue(MockResponse(code = 200, body = "Req1"))
+    server.enqueue(MockResponse(code = 200, body = "Req2"))
 
     val eventListener = object : EventListener() {
       var socket: SSLSocket? = null
@@ -235,8 +248,9 @@ class ServerTruncatesRequestTest {
     }
   }
 
-  @Test fun noAttemptToReadResponseIfLoadingRequestBodyIsSourceOfFailure() {
-    server.enqueue(MockResponse().setBody("abc"))
+  @Test
+  fun noAttemptToReadResponseIfLoadingRequestBodyIsSourceOfFailure() {
+    server.enqueue(MockResponse(body = "abc"))
 
     val requestBody = object : RequestBody() {
       override fun contentType(): MediaType? = null
@@ -271,7 +285,7 @@ class ServerTruncatesRequestTest {
   }
 
   private fun makeSimpleCall() {
-    server.enqueue(MockResponse().setBody("healthy"))
+    server.enqueue(MockResponse(body = "healthy"))
     val callB = client.newCall(Request(server.url("/")))
     callB.execute().use { response ->
       assertThat(response.body.string()).isEqualTo("healthy")
@@ -281,19 +295,19 @@ class ServerTruncatesRequestTest {
   private fun enableProtocol(protocol: Protocol) {
     enableTls()
     client = client.newBuilder()
-        .protocols(listOf(protocol, Protocol.HTTP_1_1))
-        .build()
+      .protocols(listOf(protocol, Protocol.HTTP_1_1))
+      .build()
     server.protocols = client.protocols
   }
 
   private fun enableTls() {
     client = client.newBuilder()
-        .sslSocketFactory(
-          handshakeCertificates.sslSocketFactory(),
-          handshakeCertificates.trustManager
-        )
-        .hostnameVerifier(RecordingHostnameVerifier())
-        .build()
+      .sslSocketFactory(
+        handshakeCertificates.sslSocketFactory(),
+        handshakeCertificates.trustManager
+      )
+      .hostnameVerifier(RecordingHostnameVerifier())
+      .build()
     server.useHttps(handshakeCertificates.sslSocketFactory())
   }
 

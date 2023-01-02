@@ -27,7 +27,7 @@ import java.util.Locale
  * `null` will be returned if the host cannot be ToASCII encoded or if the result contains
  * unsupported ASCII characters.
  */
-fun String.toCanonicalHost(): String? {
+actual fun String.toCanonicalHost(): String? {
   val host: String = this
 
   // If the input contains a :, it’s an IPv6 address.

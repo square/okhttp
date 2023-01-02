@@ -15,6 +15,13 @@
  */
 package okhttp3.internal.http
 
+import java.io.IOException
+import java.net.ServerSocket
+import java.net.Socket
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit.MILLISECONDS
+import javax.net.ServerSocketFactory
+import javax.net.SocketFactory
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.Call
@@ -44,7 +51,6 @@ import okhttp3.internal.http.CancelTest.ConnectionType.H2
 import okhttp3.internal.http.CancelTest.ConnectionType.HTTP
 import okhttp3.internal.http.CancelTest.ConnectionType.HTTPS
 import okhttp3.testing.PlatformRule
-import okhttp3.tls.internal.TlsUtil
 import okio.Buffer
 import okio.BufferedSink
 import org.assertj.core.api.Assertions.assertThat
@@ -55,13 +61,6 @@ import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.fail
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsSource
-import java.io.IOException
-import java.net.ServerSocket
-import java.net.Socket
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit.MILLISECONDS
-import javax.net.ServerSocketFactory
-import javax.net.SocketFactory
 
 @Timeout(30)
 @Tag("Slow")
@@ -85,7 +84,8 @@ class CancelTest {
   }
 
   @JvmField @RegisterExtension val clientTestRule = OkHttpClientTestRule()
-  val handshakeCertificates = TlsUtil.localhost()
+
+  val handshakeCertificates = platform.localhostHandshakeCertificates()
 
   private lateinit var server: MockWebServer
   private lateinit var client: OkHttpClient
@@ -99,8 +99,6 @@ class CancelTest {
     if (connectionType == H2) {
       platform.assumeHttp2Support()
     }
-
-    platform.assumeNotBouncyCastle()
 
     // Sockets on some platforms can have large buffers that mean writes do not block when
     // required. These socket factories explicitly set the buffer sizes on sockets created.
@@ -180,13 +178,14 @@ class CancelTest {
     setUp(mode)
     val responseBodySize = 8 * 1024 * 1024 // 8 MiB.
     server.enqueue(
-      MockResponse()
-        .setBody(
+      MockResponse.Builder()
+        .body(
           Buffer()
             .write(ByteArray(responseBodySize))
         )
-        .throttleBody(64 * 1024, 125, MILLISECONDS)
-    ) // 500 Kbps
+        .throttleBody(64 * 1024, 125, MILLISECONDS) // 500 Kbps
+        .build()
+    )
     val call = client.newCall(Request(server.url("/")))
     val response = call.execute()
     cancelLater(call, 500)
@@ -209,17 +208,15 @@ class CancelTest {
     setUp(mode)
     val responseBodySize = 8 * 1024 * 1024 // 8 MiB.
     server.enqueue(
-      MockResponse()
-        .setBody(
+      MockResponse.Builder()
+        .body(
           Buffer()
             .write(ByteArray(responseBodySize))
         )
-        .throttleBody(64 * 1024, 125, MILLISECONDS)
-    ) // 500 Kbps
-    server.enqueue(MockResponse().apply {
-      setResponseCode(200)
-      setBody(".")
-    })
+        .throttleBody(64 * 1024, 125, MILLISECONDS) // 500 Kbps
+        .build()
+    )
+    server.enqueue(MockResponse(body = "."))
 
     val call = client.newCall(Request.Builder().url(server.url("/")).build())
     val response = call.execute()
