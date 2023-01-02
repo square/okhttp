@@ -151,7 +151,7 @@ jobs:
 
   testopenjdk8:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdk8')
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions')
 
     steps:
       - name: Checkout
@@ -172,7 +172,7 @@ jobs:
 
   testopenjdk8alpn:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdk8')
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions')
 
     steps:
       - name: Checkout
@@ -284,7 +284,7 @@ jobs:
 
   testopenjdk17:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdk17')
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions')
 
     steps:
       - name: Checkout
@@ -302,6 +302,33 @@ jobs:
         uses: gradle/gradle-build-action@v2
         with:
           arguments: jvmTest -Dtest.java.version=17
+
+  testopenjdk19:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Configure JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 19
+
+      - name: Configure JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 11
+
+      - name: Run Checks
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: jvmTest -Dtest.java.version=19
 
   testwindows:
     runs-on: windows-latest
