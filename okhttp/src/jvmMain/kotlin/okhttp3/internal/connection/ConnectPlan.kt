@@ -480,7 +480,7 @@ class ConnectPlan(
     call.client.routeDatabase.connected(route)
 
     val connection = this.connection!!
-    connectionListener.connectEnd(connection)
+    connectionListener.connectEnd(connection, route, call)
 
     // If we raced another call connecting to this host, coalesce the connections. This makes for
     // 3 different lookups in the connection pool!

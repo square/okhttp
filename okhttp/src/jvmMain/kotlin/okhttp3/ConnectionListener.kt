@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import okhttp3.internal.connection.RealCall
 import okio.IOException
 
 /**
@@ -38,7 +39,7 @@ abstract class ConnectionListener {
   /**
    * Invoked as soon as a connection is successfully established.
    */
-  open fun connectEnd(connection: Connection) {}
+  open fun connectEnd(connection: Connection, route: Route, call: RealCall) {}
 
   /**
    * Invoked when a connection is released as no longer required.

@@ -135,20 +135,22 @@ open class ConnectionListenerTest {
   @Test
   @Throws(IOException::class)
   fun secondCallEventSequence() {
-    enableTlsWithTunnel()
-    server!!.protocols = Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1)
+    enableTls()
+    server!!.protocols = listOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
     server!!.enqueue(MockResponse())
     server!!.enqueue(MockResponse())
-    client.newCall(Request.Builder()
-      .url(server!!.url("/"))
-      .build()).execute().close()
-    listener.removeUpToEvent(ConnectionEvent.ConnectionReleased::class.java)
-    val call = client.newCall(Request.Builder()
-      .url(server!!.url("/"))
-      .build())
-    val response = call.execute()
-    response.close()
+
+    client.newCall(Request(server!!.url("/")))
+      .execute().close()
+
+    client.newCall(Request(server!!.url("/")))
+      .execute().close()
+
     assertThat(listener.recordedEventTypes()).containsExactly(
+      "ConnectStart",
+      "ConnectEnd",
+      "ConnectionAcquired",
+      "ConnectionReleased",
       "ConnectionAcquired",
       "ConnectionReleased"
     )
@@ -157,7 +159,7 @@ open class ConnectionListenerTest {
   @Test
   @Throws(IOException::class)
   fun successfulEmptyH2CallEventSequence() {
-    enableTlsWithTunnel()
+    enableTls()
     server!!.protocols = Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1)
     server!!.enqueue(MockResponse())
     assertSuccessfulEventOrder()
@@ -208,7 +210,7 @@ open class ConnectionListenerTest {
   @Test
   @Throws(UnknownHostException::class)
   fun failedConnect() {
-    enableTlsWithTunnel()
+    enableTls()
     server!!.enqueue(MockResponse(socketPolicy = SocketPolicy.FAIL_HANDSHAKE))
     val call = client.newCall(Request.Builder()
       .url(server!!.url("/"))
@@ -232,7 +234,7 @@ open class ConnectionListenerTest {
   @Test
   @Throws(IOException::class)
   fun multipleConnectsForSingleCall() {
-    enableTlsWithTunnel()
+    enableTls()
     server!!.enqueue(MockResponse(socketPolicy = SocketPolicy.FAIL_HANDSHAKE))
     server!!.enqueue(MockResponse())
     client = client.newBuilder()
@@ -277,7 +279,7 @@ open class ConnectionListenerTest {
     assertThat(event.connection.route().proxy).isEqualTo(proxy)
   }
 
-  private fun enableTlsWithTunnel() {
+  private fun enableTls() {
     client = client.newBuilder()
       .sslSocketFactory(
         handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager)

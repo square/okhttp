@@ -54,8 +54,16 @@ import okhttp3.CallEvent.SecureConnectStart
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.data.Offset
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.fail
+import org.junit.jupiter.api.fail
 
-open class RecordingEventListener : EventListener() {
+open class RecordingEventListener(
+  /**
+   * An override to ignore the normal order that is enforced.
+   * EventListeners added by Interceptors will not see all events.
+   */
+  private val enforceOrder: Boolean = true
+) : EventListener() {
   val eventSequence: Deque<CallEvent> = ConcurrentLinkedDeque()
 
   private val forbiddenLocks = mutableListOf<Any>()
@@ -72,7 +80,7 @@ open class RecordingEventListener : EventListener() {
    * Removes recorded events up to (and including) an event is found whose class equals [eventClass]
    * and returns it.
    */
-  fun <T> removeUpToEvent(eventClass: Class<T>): T {
+  fun <T : CallEvent> removeUpToEvent(eventClass: Class<T>): T {
     val fullEventSequence = eventSequence.toList()
     try {
       while (true) {
@@ -132,12 +140,26 @@ open class RecordingEventListener : EventListener() {
           .isFalse()
     }
 
-    val startEvent = e.closes(-1L)
-    if (startEvent != null) {
-      assertTrue(eventSequence.any { it == e.closes(it.timestampNs) })
+    if (enforceOrder) {
+      checkForStartEvent(e)
     }
 
     eventSequence.offer(e)
+  }
+
+  private fun checkForStartEvent(e: CallEvent) {
+    if (eventSequence.isEmpty()) {
+      assertThat(e).isInstanceOfAny(CallStart::class.java, Canceled::class.java)
+    } else {
+      eventSequence.forEach loop@ {
+        when (e.closes(it)) {
+          null -> return // no open event
+          true -> return // found open event
+          false -> return@loop // this is not the open event so continue
+        }
+      }
+      fail<Any>("event $e without matching start event")
+    }
   }
 
   override fun proxySelectStart(
