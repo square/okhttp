@@ -61,7 +61,7 @@ class JavaHttpClientTest {
       assertThat(recorded.headers["Accept"]).isEqualTo("text/plain")
       assertThat(recorded.headers["Accept-Encoding"]).isNull() // No built-in gzip.
       assertThat(recorded.headers["Connection"]).isEqualTo("Upgrade, HTTP2-Settings")
-      if (PlatformVersion.majorVersion >= 19) {
+      if (PlatformVersion.majorVersion < 19) {
         assertThat(recorded.headers["Content-Length"]).isEqualTo("0")
       }
       assertThat(recorded.headers["HTTP2-Settings"]).isNotNull()
