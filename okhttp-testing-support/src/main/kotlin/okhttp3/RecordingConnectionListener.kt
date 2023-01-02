@@ -19,12 +19,20 @@ import java.util.Deque
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.TimeUnit
 import okhttp3.ConnectionEvent.NoNewExchanges
+import okhttp3.internal.connection.RealCall
 import okhttp3.internal.connection.RealConnection
 import okio.IOException
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.data.Offset
+import org.junit.jupiter.api.Assertions
 
-open class RecordingConnectionListener : ConnectionListener() {
+open class RecordingConnectionListener(
+  /**
+   * An override to ignore the normal order that is enforced.
+   * EventListeners added by Interceptors will not see all events.
+   */
+  private val enforceOrder: Boolean = true
+) : ConnectionListener() {
   val eventSequence: Deque<ConnectionEvent> = ConcurrentLinkedDeque()
 
   private val forbiddenLocks = mutableSetOf<Any>()
@@ -41,7 +49,7 @@ open class RecordingConnectionListener : ConnectionListener() {
    * Removes recorded events up to (and including) an event is found whose class equals [eventClass]
    * and returns it.
    */
-  fun <T> removeUpToEvent(eventClass: Class<T>): T {
+  fun <T: ConnectionEvent> removeUpToEvent(eventClass: Class<T>): T {
     val fullEventSequence = eventSequence.toList()
     try {
       while (true) {
@@ -106,15 +114,34 @@ open class RecordingConnectionListener : ConnectionListener() {
         .isFalse()
     }
 
+    if (enforceOrder) {
+      checkForStartEvent(e)
+    }
+
     eventSequence.offer(e)
+  }
+
+  private fun checkForStartEvent(e: ConnectionEvent) {
+    if (eventSequence.isEmpty()) {
+      assertThat(e).isInstanceOf(ConnectionEvent.ConnectStart::class.java)
+    } else {
+      eventSequence.forEach loop@ {
+        when (e.closes(it)) {
+          null -> return // no open event
+          true -> return // found open event
+          false -> return@loop // this is not the open event so continue
+        }
+      }
+      Assertions.fail<Any>("event $e without matching start event")
+    }
   }
 
   override fun connectStart(route: Route, call: Call) = logEvent(ConnectionEvent.ConnectStart(System.nanoTime(), route, call))
 
   override fun connectFailed(route: Route, call: Call, failure: IOException) = logEvent(ConnectionEvent.ConnectFailed(System.nanoTime(), route, call, failure))
 
-  override fun connectEnd(connection: Connection) {
-    logEvent(ConnectionEvent.ConnectEnd(System.nanoTime(), connection))
+  override fun connectEnd(connection: Connection, route: Route, call: RealCall) {
+    logEvent(ConnectionEvent.ConnectEnd(System.nanoTime(), connection, route, call))
   }
 
   override fun connectionClosed(connection: Connection) = logEvent(ConnectionEvent.ConnectionClosed(System.nanoTime(), connection))

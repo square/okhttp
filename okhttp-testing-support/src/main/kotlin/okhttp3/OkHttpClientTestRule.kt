@@ -173,7 +173,9 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
       // a test timeout failure.
       val waitTime = (entryTime + 1_000_000_000L - System.nanoTime())
       if (!queue.idleLatch().await(waitTime, TimeUnit.NANOSECONDS)) {
-        TaskRunner.INSTANCE.cancelAll()
+        synchronized (TaskRunner.INSTANCE) {
+          TaskRunner.INSTANCE.cancelAll()
+        }
         fail<Unit>("Queue still active after 1000 ms")
       }
     }

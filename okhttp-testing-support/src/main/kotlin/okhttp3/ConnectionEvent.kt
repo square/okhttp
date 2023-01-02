@@ -16,16 +16,17 @@
 package okhttp3
 
 import java.io.IOException
-import java.net.InetAddress
-import java.net.InetSocketAddress
-import java.net.Proxy
 import okhttp3.internal.SuppressSignatureCheck
 
 /** Data classes that correspond to each of the methods of [ConnectionListener]. */
 @SuppressSignatureCheck
 sealed class ConnectionEvent {
   abstract val timestampNs: Long
-  open val connection: Connection? = null
+  open val connection: Connection?
+    get() = null
+
+  /** Returns if the event closes this event, or null if this is no open event. */
+  open fun closes(event: ConnectionEvent): Boolean? = null
 
   val name: String
     get() = javaClass.simpleName
@@ -41,12 +42,20 @@ sealed class ConnectionEvent {
     val route: Route,
     val call: Call,
     val exception: IOException
-  ) : ConnectionEvent()
+  ) : ConnectionEvent() {
+    override fun closes(event: ConnectionEvent): Boolean =
+      event is ConnectStart && call == event.call && route == event.route
+  }
 
   data class ConnectEnd(
     override val timestampNs: Long,
     override val connection: Connection,
-  ) : ConnectionEvent()
+    val route: Route,
+    val call: Call,
+  ) : ConnectionEvent() {
+    override fun closes(event: ConnectionEvent): Boolean =
+      event is ConnectStart && call == event.call && route == event.route
+  }
 
   data class ConnectionClosed(
     override val timestampNs: Long,
@@ -63,7 +72,11 @@ sealed class ConnectionEvent {
     override val timestampNs: Long,
     override val connection: Connection,
     val call: Call
-  ) : ConnectionEvent()
+  ) : ConnectionEvent() {
+
+    override fun closes(event: ConnectionEvent): Boolean =
+      event is ConnectionAcquired && connection == event.connection && call == event.call
+  }
 
   data class NoNewExchanges(
     override val timestampNs: Long,
