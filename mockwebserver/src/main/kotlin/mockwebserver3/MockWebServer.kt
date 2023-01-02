@@ -587,7 +587,7 @@ class MockWebServer : Closeable {
 
       // See warnings associated with these socket policies in SocketPolicy.
       when (response.socketPolicy) {
-        DisconnectAtEnd, DoNotReadRequestBody -> {
+        DisconnectAtEnd, is DoNotReadRequestBody -> {
           socket.close()
           return false
         }
@@ -682,7 +682,7 @@ class MockWebServer : Closeable {
       ).buffer()
       requestBodySink.use {
         when {
-          policy.socketPolicy == DoNotReadRequestBody -> {
+          policy.socketPolicy is DoNotReadRequestBody -> {
             // Ignore the body completely.
           }
 
@@ -771,7 +771,7 @@ class MockWebServer : Closeable {
       extensions = WebSocketExtensions.parse(webSocketResponse.headers),
       minimumDeflateSize = 0L // Compress all messages if compression is enabled.
     )
-    webSocketResponse.webSocketListener!!.onOpen(webSocket, fancyResponse)
+    webSocketResponse.webSocketListener.onOpen(webSocket, fancyResponse)
     val name = "MockWebServer WebSocket ${request.path!!}"
     webSocket.initReaderAndWriter(name, streams)
     try {
@@ -909,9 +909,9 @@ class MockWebServer : Closeable {
     @Throws(IOException::class)
     override fun onStream(stream: Http2Stream) {
       val peekedResponse = dispatcher.peek()
-      if (peekedResponse.socketPolicy === ResetStreamAtStart) {
+      if (peekedResponse.socketPolicy is ResetStreamAtStart) {
         dispatchBookkeepingRequest(sequenceNumber.getAndIncrement(), socket)
-        stream.close(ErrorCode.fromHttp2(peekedResponse.http2ErrorCode)!!, null)
+        stream.close(ErrorCode.fromHttp2(peekedResponse.socketPolicy.http2ErrorCode)!!, null)
         return
       }
 
@@ -941,8 +941,8 @@ class MockWebServer : Closeable {
         DisconnectAtEnd -> {
           stream.connection.shutdown(ErrorCode.NO_ERROR)
         }
-        DoNotReadRequestBody -> {
-          stream.close(ErrorCode.fromHttp2(response.http2ErrorCode)!!, null)
+        is DoNotReadRequestBody -> {
+          stream.close(ErrorCode.fromHttp2(socketPolicy.http2ErrorCode)!!, null)
         }
         else -> {
         }
@@ -985,7 +985,7 @@ class MockWebServer : Closeable {
       val body = Buffer()
       val requestLine = "$method $path HTTP/1.1"
       var exception: IOException? = null
-      if (readBody && peek.streamHandler == null && peek.socketPolicy != DoNotReadRequestBody) {
+      if (readBody && peek.streamHandler == null && peek.socketPolicy !is DoNotReadRequestBody) {
         try {
           val contentLengthString = headers["content-length"]
           val requestBodySink = body.withThrottlingAndSocketPolicy(

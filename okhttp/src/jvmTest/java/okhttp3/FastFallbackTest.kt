@@ -27,7 +27,6 @@ import kotlin.test.assertFailsWith
 import kotlin.test.fail
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import mockwebserver3.SocketPolicy
 import mockwebserver3.SocketPolicy.ResetStreamAtStart
 import okhttp3.internal.http2.ErrorCode
 import okhttp3.testing.Flaky
@@ -293,10 +292,7 @@ class FastFallbackTest {
 
     // Set up a same-connection retry.
     serverIpv4.enqueue(
-      MockResponse(
-        socketPolicy = ResetStreamAtStart,
-        http2ErrorCode = ErrorCode.REFUSED_STREAM.httpCode,
-      )
+      MockResponse(socketPolicy = ResetStreamAtStart(ErrorCode.REFUSED_STREAM.httpCode))
     )
     serverIpv4.enqueue(
       MockResponse(body = "this was the 2nd request on IPv4")

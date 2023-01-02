@@ -20,7 +20,6 @@ import java.net.InetAddress
 import java.net.InetSocketAddress
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import mockwebserver3.SocketPolicy
 import mockwebserver3.SocketPolicy.ResetStreamAtStart
 import mockwebserver3.junit5.internal.MockWebServerInstance
 import okhttp3.internal.http2.ErrorCode
@@ -53,8 +52,7 @@ class RouteFailureTest {
   val ipv6 = InetAddress.getByName("2001:db8:ffff:ffff:ffff:ffff:ffff:1")
 
   val refusedStream = MockResponse(
-    socketPolicy = ResetStreamAtStart,
-    http2ErrorCode = ErrorCode.REFUSED_STREAM.httpCode,
+    socketPolicy = ResetStreamAtStart(ErrorCode.REFUSED_STREAM.httpCode),
   )
   val bodyResponse = MockResponse(body = "body")
 

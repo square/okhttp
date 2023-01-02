@@ -77,10 +77,12 @@ sealed interface SocketPolicy {
 
   /**
    * Process the response without even attempting to reading the request body. For HTTP/2 this will
-   * send [MockResponse.getHttp2ErrorCode] after the response body or trailers. For HTTP/1 this will
-   * close the socket after the response body or trailers.
+   * send [http2ErrorCode] after the response body or trailers. For HTTP/1 this will close the
+   * socket after the response body or trailers.
    */
-  object DoNotReadRequestBody : SocketPolicy
+  class DoNotReadRequestBody(
+    val http2ErrorCode: Int = 0,
+  ) : SocketPolicy
 
   /** Don't trust the client during the SSL handshake. */
   object FailHandshake : SocketPolicy
@@ -112,7 +114,9 @@ sealed interface SocketPolicy {
   object NoResponse : SocketPolicy
 
   /**
-   * Fail HTTP/2 requests without processing them by sending an [MockResponse.http2ErrorCode].
+   * Fail HTTP/2 requests without processing them by sending [http2ErrorCode].
    */
-  object ResetStreamAtStart : SocketPolicy
+  class ResetStreamAtStart(
+    val http2ErrorCode: Int = 0,
+  ) : SocketPolicy
 }
