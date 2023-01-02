@@ -57,7 +57,7 @@ class ConnectionSpec internal constructor(
    */
   @get:JvmName("cipherSuites") val cipherSuites: List<CipherSuite>?
     get() {
-      return cipherSuitesAsString?.map { CipherSuite.forJavaName(it) }?.toList()
+      return cipherSuitesAsString?.map { CipherSuite.forJavaName(it) }
     }
 
   @JvmName("-deprecated_cipherSuites")
@@ -73,7 +73,7 @@ class ConnectionSpec internal constructor(
    */
   @get:JvmName("tlsVersions") val tlsVersions: List<TlsVersion>?
     get() {
-      return tlsVersionsAsString?.map { TlsVersion.forJavaName(it) }?.toList()
+      return tlsVersionsAsString?.map { TlsVersion.forJavaName(it) }
     }
 
   @JvmName("-deprecated_tlsVersions")
@@ -228,7 +228,7 @@ class ConnectionSpec internal constructor(
       require(tls) { "no cipher suites for cleartext connections" }
       require(cipherSuites.isNotEmpty()) { "At least one cipher suite is required" }
 
-      this.cipherSuites = cipherSuites.clone() as Array<String> // Defensive copy.
+      this.cipherSuites = cipherSuites.copyOf() as Array<String> // Defensive copy.
     }
 
     fun allEnabledTlsVersions() = apply {
@@ -247,7 +247,7 @@ class ConnectionSpec internal constructor(
       require(tls) { "no TLS versions for cleartext connections" }
       require(tlsVersions.isNotEmpty()) { "At least one TLS version is required" }
 
-      this.tlsVersions = tlsVersions.clone() as Array<String> // Defensive copy.
+      this.tlsVersions = tlsVersions.copyOf() as Array<String> // Defensive copy.
     }
 
     @Deprecated("since OkHttp 3.13 all TLS-connections are expected to support TLS extensions.\n" +
@@ -269,7 +269,7 @@ class ConnectionSpec internal constructor(
   @Suppress("DEPRECATION")
   companion object {
     // Most secure but generally supported list.
-    private val RESTRICTED_CIPHER_SUITES = arrayOf(
+    private val RESTRICTED_CIPHER_SUITES = listOf(
         // TLSv1.3.
         CipherSuite.TLS_AES_128_GCM_SHA256,
         CipherSuite.TLS_AES_256_GCM_SHA384,
@@ -285,7 +285,7 @@ class ConnectionSpec internal constructor(
 
     // This is nearly equal to the cipher suites supported in Chrome 72, current as of 2019-02-24.
     // See https://tinyurl.com/okhttp-cipher-suites for availability.
-    private val APPROVED_CIPHER_SUITES = arrayOf(
+    private val APPROVED_CIPHER_SUITES = listOf(
         // TLSv1.3.
         CipherSuite.TLS_AES_128_GCM_SHA256,
         CipherSuite.TLS_AES_256_GCM_SHA384,
@@ -312,7 +312,7 @@ class ConnectionSpec internal constructor(
     /** A secure TLS connection that requires a recent client platform and a recent server. */
     @JvmField
     val RESTRICTED_TLS = Builder(true)
-        .cipherSuites(*RESTRICTED_CIPHER_SUITES)
+        .cipherSuites(*RESTRICTED_CIPHER_SUITES.toTypedArray())
         .tlsVersions(TlsVersion.TLS_1_3, TlsVersion.TLS_1_2)
         .supportsTlsExtensions(true)
         .build()
@@ -323,7 +323,7 @@ class ConnectionSpec internal constructor(
      */
     @JvmField
     val MODERN_TLS = Builder(true)
-        .cipherSuites(*APPROVED_CIPHER_SUITES)
+        .cipherSuites(*APPROVED_CIPHER_SUITES.toTypedArray())
         .tlsVersions(TlsVersion.TLS_1_3, TlsVersion.TLS_1_2)
         .supportsTlsExtensions(true)
         .build()
@@ -335,7 +335,7 @@ class ConnectionSpec internal constructor(
      */
     @JvmField
     val COMPATIBLE_TLS = Builder(true)
-        .cipherSuites(*APPROVED_CIPHER_SUITES)
+        .cipherSuites(*APPROVED_CIPHER_SUITES.toTypedArray())
         .tlsVersions(TlsVersion.TLS_1_3, TlsVersion.TLS_1_2, TlsVersion.TLS_1_1, TlsVersion.TLS_1_0)
         .supportsTlsExtensions(true)
         .build()
