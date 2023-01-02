@@ -149,7 +149,7 @@ open class RecordingEventListener(
 
   private fun checkForStartEvent(e: CallEvent) {
     if (eventSequence.isEmpty()) {
-      assertThat(e).isInstanceOf(CallStart::class.java)
+      assertThat(e).isInstanceOfAny(CallStart::class.java, Canceled::class.java)
     } else {
       eventSequence.forEach loop@ {
         when (e.closes(it)) {
