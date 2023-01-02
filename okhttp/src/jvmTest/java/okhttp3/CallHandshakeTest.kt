@@ -50,13 +50,13 @@ class CallHandshakeTest {
 
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
 
-  // Ciphers in order we observed directly on the socket
+  /** Ciphers in order we observed directly on the socket. */
   private lateinit var handshakeEnabledCipherSuites: List<String>
 
-  // Ciphers in order we observed on sslSocketFactory defaults.
+  /** Ciphers in order we observed on sslSocketFactory defaults. */
   private lateinit var defaultEnabledCipherSuites: List<String>
 
-  // Ciphers in order we observed on sslSocketFactory supported.
+  /** Ciphers in order we observed on sslSocketFactory supported. */
   private lateinit var defaultSupportedCipherSuites: List<String>
 
   val expectedModernTls12CipherSuites =
