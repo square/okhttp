@@ -149,11 +149,7 @@ sealed class CallEvent {
   data class Canceled(
     override val timestampNs: Long,
     override val call: Call
-  ) : CallEvent() {
-
-    override fun closes(event: CallEvent): Boolean =
-      event is CallStart && call == event.call
-  }
+  ) : CallEvent()
 
   data class RequestHeadersStart(
     override val timestampNs: Long,
