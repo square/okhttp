@@ -16,7 +16,7 @@
 package okhttp3
 
 import android.annotation.SuppressLint
-import java.util.concurrent.ExecutorService
+import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
 import java.util.logging.Handler
 import java.util.logging.Level
@@ -27,7 +27,6 @@ import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.connection.RealConnectionPool
 import okhttp3.internal.http2.Http2
 import okhttp3.testing.Flaky
-import okhttp3.testing.PlatformRule
 import okhttp3.testing.PlatformRule.Companion.LOOM_PROPERTY
 import okhttp3.testing.PlatformRule.Companion.getPlatformSystemProperty
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -132,12 +131,22 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
   }
 
   private fun initialClientBuilder(): OkHttpClient.Builder = if (isLoom()) {
-    Class.forName("okhttp3.loom.LoomClientBuilder")
-      .getMethod("clientBuilder", ConnectionListener::class.java)
-      .invoke(null, connectionListener) as OkHttpClient.Builder
+    val backend = TaskRunner.RealBackend(loomThreadFactory())
+    val taskRunner = TaskRunner(backend)
+
+    OkHttpClient.Builder()
+      .connectionPool(ConnectionPool(connectionListener = connectionListener, taskRunner = taskRunner))
+      .dispatcher(Dispatcher(backend.executor))
+      .taskRunner(taskRunner)
   } else {
     OkHttpClient.Builder()
       .connectionPool(ConnectionPool(connectionListener = connectionListener))
+  }
+
+  private fun loomThreadFactory(): ThreadFactory {
+    val ofVirtual = Thread::class.java.getMethod("ofVirtual").invoke(null)
+
+    return Class.forName("java.lang.Thread\$Builder").getMethod("factory").invoke(ofVirtual) as ThreadFactory
   }
 
   private fun isLoom(): Boolean {

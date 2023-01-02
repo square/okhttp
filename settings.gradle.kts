@@ -22,10 +22,6 @@ if (graalBuild.toBoolean()) {
   include(":native-image-tests")
 }
 
-if (loomBuild.toBoolean()) {
-  include(":okhttp-loom")
-}
-
 include(":okcurl")
 include(":okhttp")
 include(":okhttp-android")
