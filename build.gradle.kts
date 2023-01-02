@@ -140,6 +140,13 @@ subprojects {
       "-XX:+HeapDumpOnOutOfMemoryError"
     )
 
+    if (platform == "loom") {
+      jvmArgs = jvmArgs!! + listOf(
+        "-Djdk.tracePinnedThread=full",
+        "--enable-preview"
+      )
+    }
+
     val javaToolchains = project.extensions.getByType<JavaToolchainService>()
     javaLauncher.set(javaToolchains.launcherFor {
       languageVersion.set(JavaLanguageVersion.of(testJavaVersion))
