@@ -305,7 +305,7 @@ jobs:
 
   testopenjdk19:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdk17')
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdk19')
 
     steps:
       - name: Checkout
