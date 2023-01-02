@@ -68,7 +68,6 @@ public final class okhttp3/Cache : java/io/Closeable, java/io/Flushable {
 	public final fun -deprecated_directory ()Ljava/io/File;
 	public fun <init> (Ljava/io/File;J)V
 	public fun <init> (Lokio/Path;JLokio/FileSystem;)V
-	public fun <init> (Lokio/Path;JLokio/FileSystem;Lokhttp3/internal/concurrent/TaskRunner;)V
 	public fun close ()V
 	public final fun delete ()V
 	public final fun directory ()Ljava/io/File;
@@ -379,10 +378,8 @@ public final class okhttp3/ConnectionListener$Companion {
 public final class okhttp3/ConnectionPool {
 	public fun <init> ()V
 	public fun <init> (IJLjava/util/concurrent/TimeUnit;)V
-	public fun <init> (IJLjava/util/concurrent/TimeUnit;Lokhttp3/internal/concurrent/TaskRunner;)V
-	public synthetic fun <init> (IJLjava/util/concurrent/TimeUnit;Lokhttp3/internal/concurrent/TaskRunner;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun <init> (IJLjava/util/concurrent/TimeUnit;Lokhttp3/internal/concurrent/TaskRunner;Lokhttp3/ConnectionListener;)V
-	public synthetic fun <init> (IJLjava/util/concurrent/TimeUnit;Lokhttp3/internal/concurrent/TaskRunner;Lokhttp3/ConnectionListener;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lokhttp3/ConnectionListener;IJLjava/util/concurrent/TimeUnit;)V
+	public synthetic fun <init> (Lokhttp3/ConnectionListener;IJLjava/util/concurrent/TimeUnit;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun connectionCount ()I
 	public final fun evictAll ()V
 	public final fun idleConnectionCount ()I
@@ -983,7 +980,6 @@ public final class okhttp3/OkHttpClient$Builder {
 	public final fun socketFactory (Ljavax/net/SocketFactory;)Lokhttp3/OkHttpClient$Builder;
 	public final fun sslSocketFactory (Ljavax/net/ssl/SSLSocketFactory;)Lokhttp3/OkHttpClient$Builder;
 	public final fun sslSocketFactory (Ljavax/net/ssl/SSLSocketFactory;Ljavax/net/ssl/X509TrustManager;)Lokhttp3/OkHttpClient$Builder;
-	public final fun taskRunner (Lokhttp3/internal/concurrent/TaskRunner;)Lokhttp3/OkHttpClient$Builder;
 	public final fun writeTimeout (JLjava/util/concurrent/TimeUnit;)Lokhttp3/OkHttpClient$Builder;
 	public final fun writeTimeout (Ljava/time/Duration;)Lokhttp3/OkHttpClient$Builder;
 }

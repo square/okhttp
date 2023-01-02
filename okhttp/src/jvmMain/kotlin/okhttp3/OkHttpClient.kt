@@ -718,7 +718,7 @@ open class OkHttpClient internal constructor(
       this.cache = cache
     }
 
-    fun taskRunner(taskRunner: TaskRunner) = apply {
+    internal fun taskRunner(taskRunner: TaskRunner) = apply {
       this.taskRunner = taskRunner
     }
 

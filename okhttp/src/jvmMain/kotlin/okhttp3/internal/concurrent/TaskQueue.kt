@@ -19,7 +19,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
-import okhttp3.internal.assertThreadDoesntHold
+import okhttp3.internal.assertNotHeld
 import okhttp3.internal.okHttpName
 
 /**
@@ -184,7 +184,7 @@ class TaskQueue internal constructor(
    * be removed from the execution schedule.
    */
   fun cancelAll() {
-    lock.assertThreadDoesntHold()
+    lock.assertNotHeld()
 
     taskRunner.lock.withLock {
       if (cancelAllAndDecide()) {
@@ -194,7 +194,7 @@ class TaskQueue internal constructor(
   }
 
   fun shutdown() {
-    lock.assertThreadDoesntHold()
+    lock.assertNotHeld()
 
     taskRunner.lock.withLock {
       shutdown = true

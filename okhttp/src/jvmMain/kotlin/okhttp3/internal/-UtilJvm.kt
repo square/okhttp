@@ -258,7 +258,7 @@ internal fun Int.toHexString(): String = Integer.toHexString(this)
 internal inline fun Any.wait() = (this as Object).wait()
 
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "NOTHING_TO_INLINE")
-inline fun Any.notify() = (this as Object).notify()
+internal inline fun Any.notify() = (this as Object).notify()
 
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "NOTHING_TO_INLINE")
 internal inline fun Any.notifyAll() = (this as Object).notifyAll()
@@ -301,7 +301,7 @@ internal val okHttpName: String =
     OkHttpClient::class.java.name.removePrefix("okhttp3.").removeSuffix("Client")
 
 @Suppress("NOTHING_TO_INLINE")
-internal inline fun ReentrantLock.assertThreadHolds() {
+internal inline fun ReentrantLock.assertHeld() {
   if (assertionsEnabled && !this.isHeldByCurrentThread) {
     throw AssertionError("Thread ${Thread.currentThread().name} MUST hold lock on $this")
   }
@@ -315,7 +315,7 @@ internal inline fun Any.assertThreadHoldsLock() {
 }
 
 @Suppress("NOTHING_TO_INLINE")
-internal inline fun ReentrantLock.assertThreadDoesntHold() {
+internal inline fun ReentrantLock.assertNotHeld() {
   if (assertionsEnabled && this.isHeldByCurrentThread) {
     throw AssertionError("Thread ${Thread.currentThread().name} MUST NOT hold lock on $this")
   }

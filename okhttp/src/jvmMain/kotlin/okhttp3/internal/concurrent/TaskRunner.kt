@@ -25,9 +25,8 @@ import java.util.concurrent.locks.ReentrantLock
 import java.util.logging.Logger
 import kotlin.concurrent.withLock
 import okhttp3.internal.addIfAbsent
-import okhttp3.internal.assertThreadHolds
+import okhttp3.internal.assertHeld
 import okhttp3.internal.concurrent.TaskRunner.Companion.INSTANCE
-import okhttp3.internal.notify
 import okhttp3.internal.okHttpName
 import okhttp3.internal.threadFactory
 
@@ -85,7 +84,7 @@ class TaskRunner(
   }
 
   internal fun kickCoordinator(taskQueue: TaskQueue) {
-    lock.assertThreadHolds()
+    lock.assertHeld()
 
     if (taskQueue.activeTask == null) {
       if (taskQueue.futureTasks.isNotEmpty()) {
@@ -103,7 +102,7 @@ class TaskRunner(
   }
 
   private fun beforeRun(task: Task) {
-    lock.assertThreadHolds()
+    lock.assertHeld()
 
     task.nextExecuteNanoTime = -1L
     val queue = task.queue!!
@@ -130,7 +129,7 @@ class TaskRunner(
   }
 
   private fun afterRun(task: Task, delayNanos: Long) {
-    lock.assertThreadHolds()
+    lock.assertHeld()
 
     val queue = task.queue!!
     check(queue.activeTask === task)
@@ -156,7 +155,7 @@ class TaskRunner(
    * this will launch another thread to handle that work.
    */
   fun awaitTaskToRun(): Task? {
-    lock.assertThreadHolds()
+    lock.assertHeld()
 
     while (true) {
       if (readyQueues.isEmpty()) {
@@ -250,7 +249,7 @@ class TaskRunner(
   }
 
   fun cancelAll() {
-    lock.assertThreadHolds()
+    lock.assertHeld()
     for (i in busyQueues.size - 1 downTo 0) {
       busyQueues[i].cancelAllAndDecide()
     }
@@ -293,7 +292,7 @@ class TaskRunner(
     @Throws(InterruptedException::class)
     @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
     override fun coordinatorWait(taskRunner: TaskRunner, nanos: Long) {
-      taskRunner.lock.assertThreadHolds()
+      taskRunner.lock.assertHeld()
       if (nanos > 0) {
         taskRunner.condition.awaitNanos(nanos)
       }

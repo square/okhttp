@@ -33,7 +33,7 @@ import okhttp3.internal.connection.RealConnectionPool
 class ConnectionPool internal constructor(
   internal val delegate: RealConnectionPool
 ) {
-  constructor(
+  internal constructor(
     maxIdleConnections: Int = 5,
     keepAliveDuration: Long = 5,
     timeUnit: TimeUnit = TimeUnit.MINUTES,
@@ -46,19 +46,21 @@ class ConnectionPool internal constructor(
       timeUnit = timeUnit,
       connectionListener = connectionListener
   ))
+
   constructor(
+    connectionListener: ConnectionListener = ConnectionListener.NONE,
     maxIdleConnections: Int = 5,
     keepAliveDuration: Long = 5,
     timeUnit: TimeUnit = TimeUnit.MINUTES,
-    taskRunner: TaskRunner = TaskRunner.INSTANCE,
   ) : this(
-    taskRunner = taskRunner,
+    taskRunner = TaskRunner.INSTANCE,
     maxIdleConnections = maxIdleConnections,
     keepAliveDuration = keepAliveDuration,
     timeUnit = timeUnit,
-    connectionListener = ConnectionListener.NONE
+    connectionListener = connectionListener
   )
 
+  // Public API
   constructor(
     maxIdleConnections: Int,
     keepAliveDuration: Long,
