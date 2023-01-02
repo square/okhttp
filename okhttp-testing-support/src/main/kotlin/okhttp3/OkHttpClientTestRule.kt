@@ -16,6 +16,7 @@
 package okhttp3
 
 import android.annotation.SuppressLint
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.TimeUnit
 import java.util.logging.Handler
 import java.util.logging.Level
@@ -26,6 +27,9 @@ import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.connection.RealConnectionPool
 import okhttp3.internal.http2.Http2
 import okhttp3.testing.Flaky
+import okhttp3.testing.PlatformRule
+import okhttp3.testing.PlatformRule.Companion.LOOM_PROPERTY
+import okhttp3.testing.PlatformRule.Companion.getPlatformSystemProperty
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.extension.AfterEachCallback
@@ -116,16 +120,28 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
   fun newClient(): OkHttpClient {
     var client = testClient
     if (client == null) {
-      client = OkHttpClient.Builder()
+      client = initialClientBuilder()
         .dns(SINGLE_INET_ADDRESS_DNS) // Prevent unexpected fallback addresses.
         .eventListenerFactory { ClientRuleEventListener(logger = ::addEvent) }
-        .connectionPool(ConnectionPool(connectionListener = connectionListener))
         .build()
       connectionListener.forbidLock(RealConnectionPool.get(client.connectionPool))
       connectionListener.forbidLock(client.dispatcher)
       testClient = client
     }
     return client
+  }
+
+  private fun initialClientBuilder(): OkHttpClient.Builder = if (isLoom()) {
+    Class.forName("okhttp3.loom.LoomClientBuilder")
+      .getMethod("clientBuilder", ConnectionListener::class.java)
+      .invoke(null, connectionListener) as OkHttpClient.Builder
+  } else {
+    OkHttpClient.Builder()
+      .connectionPool(ConnectionPool(connectionListener = connectionListener))
+  }
+
+  private fun isLoom(): Boolean {
+    return getPlatformSystemProperty() == LOOM_PROPERTY
   }
 
   fun newClientBuilder(): OkHttpClient.Builder {

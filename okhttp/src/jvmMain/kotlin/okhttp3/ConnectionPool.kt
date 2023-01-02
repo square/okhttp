@@ -34,41 +34,42 @@ class ConnectionPool internal constructor(
   internal val delegate: RealConnectionPool
 ) {
   constructor(
-    maxIdleConnections: Int,
-    keepAliveDuration: Long,
-    timeUnit: TimeUnit,
-    taskRunner: TaskRunner
+    maxIdleConnections: Int = 5,
+    keepAliveDuration: Long = 5,
+    timeUnit: TimeUnit = TimeUnit.MINUTES,
+    taskRunner: TaskRunner = TaskRunner.INSTANCE,
+    connectionListener: ConnectionListener = ConnectionListener.NONE,
   ) : this(RealConnectionPool(
       taskRunner = taskRunner,
       maxIdleConnections = maxIdleConnections,
       keepAliveDuration = keepAliveDuration,
       timeUnit = timeUnit,
-      connectionListener = ConnectionListener.NONE
+      connectionListener = connectionListener
   ))
-
   constructor(
     maxIdleConnections: Int = 5,
     keepAliveDuration: Long = 5,
     timeUnit: TimeUnit = TimeUnit.MINUTES,
-    connectionListener: ConnectionListener = ConnectionListener.NONE
-  ) : this(RealConnectionPool(
-    taskRunner = TaskRunner.INSTANCE,
+    taskRunner: TaskRunner = TaskRunner.INSTANCE,
+  ) : this(
+    taskRunner = taskRunner,
     maxIdleConnections = maxIdleConnections,
     keepAliveDuration = keepAliveDuration,
     timeUnit = timeUnit,
-    connectionListener = connectionListener
-  ))
+    connectionListener = ConnectionListener.NONE
+  )
 
   constructor(
     maxIdleConnections: Int,
     keepAliveDuration: Long,
     timeUnit: TimeUnit,
-  ) : this(RealConnectionPool(
-    taskRunner = TaskRunner.INSTANCE,
+  ) : this(
     maxIdleConnections = maxIdleConnections,
     keepAliveDuration = keepAliveDuration,
-    timeUnit = timeUnit
-  ))
+    timeUnit = timeUnit,
+    taskRunner = TaskRunner.INSTANCE,
+    connectionListener = ConnectionListener.NONE
+  )
 
   constructor() : this(5, 5, TimeUnit.MINUTES)
 

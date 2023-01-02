@@ -6,6 +6,9 @@ plugins {
 dependencies {
   api(projects.okhttp)
   api(projects.okhttpTls)
+  if (findProject(":okhttp-loom") != null) {
+    implementation(project(":okhttp-loom"))
+  }
   api(libs.assertj.core)
   api(libs.bouncycastle.bcprov)
   implementation(libs.bouncycastle.bcpkix)
