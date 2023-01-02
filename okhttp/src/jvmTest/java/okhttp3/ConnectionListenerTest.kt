@@ -222,7 +222,11 @@ open class ConnectionListenerTest {
     val expectedAddress = InetSocketAddress(address, server!!.port)
     val event = listener.removeUpToEvent(ConnectionEvent.ConnectFailed::class.java)
     assertThat(event.route.socketAddress).isEqualTo(expectedAddress)
-    assertThat(event.exception).hasMessage("Unexpected handshake message: client_hello")
+
+    // Read error: ssl=0x7fd1d8d0fee8: Failure in SSL library, usually a protocol error
+    if (!platform.isConscrypt()) {
+      assertThat(event.exception).hasMessage("Unexpected handshake message: client_hello")
+    }
   }
 
   @Test

@@ -220,7 +220,7 @@ jobs:
 
   testconscrypt:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'providers')
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'conscrypt')
 
     steps:
       - name: Checkout
