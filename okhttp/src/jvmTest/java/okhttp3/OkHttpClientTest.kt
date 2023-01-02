@@ -217,7 +217,7 @@ class OkHttpClientTest {
   }
 
   @Test fun nullDefaultProxySelector() {
-    server!!.enqueue(MockResponse().setBody("abc"))
+    server!!.enqueue(MockResponse(body = "abc"))
     ProxySelector.setDefault(null)
     val client = clientTestRule.newClient()
     val request = Request(server!!.url("/"))

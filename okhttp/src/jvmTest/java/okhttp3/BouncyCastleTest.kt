@@ -23,15 +23,15 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
-class BouncyCastleTest(
-  val server: MockWebServer
-) {
+class BouncyCastleTest {
   @JvmField @RegisterExtension var platform = PlatformRule()
   @JvmField @RegisterExtension val clientTestRule = OkHttpClientTestRule()
   var client = clientTestRule.newClient()
+  private lateinit var server: MockWebServer
 
   @BeforeEach
-  fun setUp() {
+  fun setUp(server: MockWebServer) {
+    this.server = server
     OkHttpDebugLogging.enable("org.bouncycastle.jsse")
     platform.assumeBouncyCastle()
   }
@@ -44,7 +44,7 @@ class BouncyCastleTest(
 
     client.newCall(request).execute().use {
       assertThat(it.protocol).isEqualTo(Protocol.HTTP_2)
-      assertThat(it.handshake!!.tlsVersion).isEqualTo(TlsVersion.TLS_1_2)
+      assertThat(it.handshake!!.tlsVersion).isEqualTo(TlsVersion.TLS_1_3)
     }
   }
 }

@@ -26,11 +26,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import mockwebserver3.MockResponse;
 import mockwebserver3.MockWebServer;
-import mockwebserver3.internal.duplex.MockDuplexResponseBody;
+import mockwebserver3.internal.duplex.MockStreamHandler;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.duplex.AsyncRequestBody;
-import okhttp3.internal.duplex.MwsDuplexAccess;
-import okhttp3.internal.http2.ErrorCode;
 import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okio.BufferedSink;
@@ -43,9 +41,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
-
 import static java.util.Arrays.asList;
-import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -58,7 +54,8 @@ public final class DuplexTest {
 
   private MockWebServer server;
   private RecordingEventListener listener = new RecordingEventListener();
-  private final HandshakeCertificates handshakeCertificates = localhost();
+  private final HandshakeCertificates handshakeCertificates
+    = platform.localhostHandshakeCertificates();
   private OkHttpClient client = clientTestRule.newClientBuilder()
       .eventListenerFactory(clientTestRule.wrap(listener))
       .build();
@@ -69,7 +66,6 @@ public final class DuplexTest {
     this.server = server;
     platform.assumeNotOpenJSSE();
     platform.assumeHttp2Support();
-    platform.assumeNotBouncyCastle();
   }
 
   @AfterEach public void tearDown() {
@@ -90,18 +86,19 @@ public final class DuplexTest {
 
   @Test public void trueDuplexClientWritesFirst() throws Exception {
     enableProtocol(Protocol.HTTP_2);
-    MockDuplexResponseBody mockDuplexResponseBody = enqueueResponseWithBody(
-        new MockResponse()
-            .clearHeaders(),
-        new MockDuplexResponseBody()
-            .receiveRequest("request A\n")
-            .sendResponse("response B\n")
-            .receiveRequest("request C\n")
-            .sendResponse("response D\n")
-            .receiveRequest("request E\n")
-            .sendResponse("response F\n")
-            .exhaustRequest()
-            .exhaustResponse());
+    MockStreamHandler body = new MockStreamHandler()
+        .receiveRequest("request A\n")
+        .sendResponse("response B\n")
+        .receiveRequest("request C\n")
+        .sendResponse("response D\n")
+        .receiveRequest("request E\n")
+        .sendResponse("response F\n")
+        .exhaustRequest()
+        .exhaustResponse();
+    server.enqueue(new MockResponse.Builder()
+        .clearHeaders()
+        .streamHandler(body)
+        .build());
 
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
@@ -128,23 +125,24 @@ public final class DuplexTest {
       assertThat(responseBody.readUtf8Line()).isNull();
     }
 
-    mockDuplexResponseBody.awaitSuccess();
+    body.awaitSuccess();
   }
 
   @Test public void trueDuplexServerWritesFirst() throws Exception {
     enableProtocol(Protocol.HTTP_2);
-    MockDuplexResponseBody mockDuplexResponseBody = enqueueResponseWithBody(
-        new MockResponse()
-            .clearHeaders(),
-        new MockDuplexResponseBody()
-            .sendResponse("response A\n")
-            .receiveRequest("request B\n")
-            .sendResponse("response C\n")
-            .receiveRequest("request D\n")
-            .sendResponse("response E\n")
-            .receiveRequest("request F\n")
-            .exhaustResponse()
-            .exhaustRequest());
+    MockStreamHandler body = new MockStreamHandler()
+        .sendResponse("response A\n")
+        .receiveRequest("request B\n")
+        .sendResponse("response C\n")
+        .receiveRequest("request D\n")
+        .sendResponse("response E\n")
+        .receiveRequest("request F\n")
+        .exhaustResponse()
+        .exhaustRequest();
+    server.enqueue(new MockResponse.Builder()
+        .clearHeaders()
+        .streamHandler(body)
+        .build());
 
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
@@ -171,20 +169,21 @@ public final class DuplexTest {
       requestBody.close();
     }
 
-    mockDuplexResponseBody.awaitSuccess();
+    body.awaitSuccess();
   }
 
   @Test public void clientReadsHeadersDataTrailers() throws Exception {
     enableProtocol(Protocol.HTTP_2);
-    MockDuplexResponseBody mockDuplexResponseBody = enqueueResponseWithBody(
-        new MockResponse()
-            .clearHeaders()
-            .addHeader("h1", "v1")
-            .addHeader("h2", "v2")
-            .setTrailers(Headers.of("trailers", "boom")),
-        new MockDuplexResponseBody()
-            .sendResponse("ok")
-            .exhaustResponse());
+    MockStreamHandler body = new MockStreamHandler()
+        .sendResponse("ok")
+        .exhaustResponse();
+    server.enqueue(new MockResponse.Builder()
+        .clearHeaders()
+        .addHeader("h1", "v1")
+        .addHeader("h2", "v2")
+        .trailers(Headers.of("trailers", "boom"))
+        .streamHandler(body)
+        .build());
 
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
@@ -199,23 +198,24 @@ public final class DuplexTest {
       assertThat(response.trailers()).isEqualTo(Headers.of("trailers", "boom"));
     }
 
-    mockDuplexResponseBody.awaitSuccess();
+    body.awaitSuccess();
   }
 
   @Test public void serverReadsHeadersData() throws Exception {
     TestUtil.assumeNotWindows();
 
     enableProtocol(Protocol.HTTP_2);
-    MockDuplexResponseBody mockDuplexResponseBody = enqueueResponseWithBody(
-        new MockResponse()
-            .clearHeaders()
-            .addHeader("h1", "v1")
-            .addHeader("h2", "v2"),
-        new MockDuplexResponseBody()
-            .exhaustResponse()
-            .receiveRequest("hey\n")
-            .receiveRequest("whats going on\n")
-            .exhaustRequest());
+    MockStreamHandler body = new MockStreamHandler()
+        .exhaustResponse()
+        .receiveRequest("hey\n")
+        .receiveRequest("whats going on\n")
+        .exhaustRequest();
+    server.enqueue(new MockResponse.Builder()
+        .clearHeaders()
+        .addHeader("h1", "v1")
+        .addHeader("h2", "v2")
+        .streamHandler(body)
+        .build());
 
     Request request = new Request.Builder()
         .url(server.url("/"))
@@ -230,18 +230,19 @@ public final class DuplexTest {
       sink.close();
     }
 
-    mockDuplexResponseBody.awaitSuccess();
+    body.awaitSuccess();
   }
 
   @Test public void requestBodyEndsAfterResponseBody() throws Exception {
     enableProtocol(Protocol.HTTP_2);
-    MockDuplexResponseBody mockDuplexResponseBody = enqueueResponseWithBody(
-        new MockResponse()
-            .clearHeaders(),
-        new MockDuplexResponseBody()
-            .exhaustResponse()
-            .receiveRequest("request A\n")
-            .exhaustRequest());
+    MockStreamHandler body = new MockStreamHandler()
+        .exhaustResponse()
+        .receiveRequest("request A\n")
+        .exhaustRequest();
+    server.enqueue(new MockResponse.Builder()
+        .clearHeaders()
+        .streamHandler(body)
+        .build());
 
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
@@ -257,7 +258,7 @@ public final class DuplexTest {
       requestBody.close();
     }
 
-    mockDuplexResponseBody.awaitSuccess();
+    body.awaitSuccess();
 
     assertThat(listener.recordedEventTypes()).containsExactly(
         "CallStart", "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd", "ConnectStart",
@@ -270,14 +271,15 @@ public final class DuplexTest {
   @Test public void duplexWith100Continue() throws Exception {
     enableProtocol(Protocol.HTTP_2);
 
-    MockDuplexResponseBody mockDuplexResponseBody = enqueueResponseWithBody(
-        new MockResponse()
-            .clearHeaders()
-            .add100Continue(),
-        new MockDuplexResponseBody()
-            .receiveRequest("request body\n")
-            .sendResponse("response body\n")
-            .exhaustRequest());
+    MockStreamHandler body = new MockStreamHandler()
+        .receiveRequest("request body\n")
+        .sendResponse("response body\n")
+        .exhaustRequest();
+    server.enqueue(new MockResponse.Builder()
+        .clearHeaders()
+        .add100Continue()
+        .streamHandler(body)
+        .build());
 
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
@@ -297,7 +299,7 @@ public final class DuplexTest {
       assertThat(responseBody.readUtf8Line()).isNull();
     }
 
-    mockDuplexResponseBody.awaitSuccess();
+    body.awaitSuccess();
   }
 
   /**
@@ -326,17 +328,19 @@ public final class DuplexTest {
         .eventListener(listener)
         .build();
 
-    MockDuplexResponseBody mockDuplexResponseBody = enqueueResponseWithBody(
-        new MockResponse()
-            .clearHeaders()
-            .setResponseCode(HttpURLConnection.HTTP_MOVED_PERM)
-            .addHeader("Location: /b"),
-        new MockDuplexResponseBody()
-            .sendResponse("/a has moved!\n", duplexResponseSent)
-            .requestIOException()
-            .exhaustResponse());
-    server.enqueue(new MockResponse()
-        .setBody("this is /b"));
+    MockStreamHandler body = new MockStreamHandler()
+        .sendResponse("/a has moved!\n", duplexResponseSent)
+        .requestIOException()
+        .exhaustResponse();
+    server.enqueue(new MockResponse.Builder()
+        .clearHeaders()
+        .code(HttpURLConnection.HTTP_MOVED_PERM)
+        .addHeader("Location: /b")
+        .streamHandler(body)
+        .build());
+    server.enqueue(new MockResponse.Builder()
+        .body("this is /b")
+        .build());
 
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
@@ -357,7 +361,7 @@ public final class DuplexTest {
       assertThat(expected.getMessage()).isEqualTo("stream was reset: CANCEL");
     }
 
-    mockDuplexResponseBody.awaitSuccess();
+    body.awaitSuccess();
 
     assertThat(listener.recordedEventTypes()).containsExactly(
         "CallStart", "ProxySelectStart", "ProxySelectEnd", "DnsStart", "DnsEnd", "ConnectStart",
@@ -380,22 +384,24 @@ public final class DuplexTest {
         .authenticator(new RecordingOkAuthenticator(credential, null))
         .build();
 
-    MockDuplexResponseBody mockResponseBody1 = enqueueResponseWithBody(
-        new MockResponse()
-            .clearHeaders()
-            .setResponseCode(HttpURLConnection.HTTP_UNAUTHORIZED),
-        new MockDuplexResponseBody()
-            .sendResponse("please authenticate!\n")
-            .requestIOException()
-            .exhaustResponse());
-    MockDuplexResponseBody mockResponseBody2 = enqueueResponseWithBody(
-        new MockResponse()
-            .clearHeaders(),
-        new MockDuplexResponseBody()
-            .sendResponse("response body\n")
-            .exhaustResponse()
-            .receiveRequest("request body\n")
-            .exhaustRequest());
+    MockStreamHandler body1 = new MockStreamHandler()
+        .sendResponse("please authenticate!\n")
+        .requestIOException()
+        .exhaustResponse();
+    server.enqueue(new MockResponse.Builder()
+        .clearHeaders()
+        .code(HttpURLConnection.HTTP_UNAUTHORIZED)
+        .streamHandler(body1)
+        .build());
+    MockStreamHandler body = new MockStreamHandler()
+        .sendResponse("response body\n")
+        .exhaustResponse()
+        .receiveRequest("request body\n")
+        .exhaustRequest();
+    server.enqueue(new MockResponse.Builder()
+        .clearHeaders()
+        .streamHandler(body)
+        .build());
 
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
@@ -413,7 +419,7 @@ public final class DuplexTest {
     } catch (IOException expected) {
       assertThat(expected.getMessage()).isEqualTo("stream was reset: CANCEL");
     }
-    mockResponseBody1.awaitSuccess();
+    body1.awaitSuccess();
 
     // Second duplex request proceeds normally.
     BufferedSink requestBody2 = ((AsyncRequestBody) call.request().body()).takeSink();
@@ -422,7 +428,7 @@ public final class DuplexTest {
     BufferedSource responseBody2 = response2.body().source();
     assertThat(responseBody2.readUtf8Line()).isEqualTo("response body");
     assertTrue(responseBody2.exhausted());
-    mockResponseBody2.awaitSuccess();
+    body.awaitSuccess();
 
     // No more requests attempted!
     ((AsyncRequestBody) call.request().body()).assertNoMoreSinks();
@@ -431,8 +437,9 @@ public final class DuplexTest {
   @Test public void fullCallTimeoutAppliesToSetup() throws Exception {
     enableProtocol(Protocol.HTTP_2);
 
-    server.enqueue(new MockResponse()
-        .setHeadersDelay(500, TimeUnit.MILLISECONDS));
+    server.enqueue(new MockResponse.Builder()
+        .headersDelay(500, TimeUnit.MILLISECONDS)
+        .build());
 
     Request request = new Request.Builder()
         .url(server.url("/"))
@@ -453,16 +460,17 @@ public final class DuplexTest {
   @Test public void fullCallTimeoutDoesNotApplyOnceConnected() throws Exception {
     enableProtocol(Protocol.HTTP_2);
 
-    MockDuplexResponseBody mockDuplexResponseBody = enqueueResponseWithBody(
-        new MockResponse()
-            .clearHeaders(),
-        new MockDuplexResponseBody()
-            .sendResponse("response A\n")
-            .sleep(750, TimeUnit.MILLISECONDS)
-            .sendResponse("response B\n")
-            .receiveRequest("request C\n")
-            .exhaustResponse()
-            .exhaustRequest());
+    MockStreamHandler body = new MockStreamHandler()
+        .sendResponse("response A\n")
+        .sleep(750, TimeUnit.MILLISECONDS)
+        .sendResponse("response B\n")
+        .receiveRequest("request C\n")
+        .exhaustResponse()
+        .exhaustRequest();
+    server.enqueue(new MockResponse.Builder()
+        .clearHeaders()
+        .streamHandler(body)
+        .build());
 
     Request request = new Request.Builder()
         .url(server.url("/"))
@@ -484,19 +492,20 @@ public final class DuplexTest {
       assertThat(responseBody.readUtf8Line()).isNull();
     }
 
-    mockDuplexResponseBody.awaitSuccess();
+    body.awaitSuccess();
   }
 
   @Test public void duplexWithRewriteInterceptors() throws Exception {
     enableProtocol(Protocol.HTTP_2);
-    MockDuplexResponseBody mockDuplexResponseBody = enqueueResponseWithBody(
-        new MockResponse()
-            .clearHeaders(),
-        new MockDuplexResponseBody()
-            .receiveRequest("REQUEST A\n")
-            .sendResponse("response B\n")
-            .exhaustRequest()
-            .exhaustResponse());
+    MockStreamHandler body = new MockStreamHandler()
+        .receiveRequest("REQUEST A\n")
+        .sendResponse("response B\n")
+        .exhaustRequest()
+        .exhaustResponse();
+    server.enqueue(new MockResponse.Builder()
+        .clearHeaders()
+        .streamHandler(body)
+        .build());
 
     client = client.newBuilder()
         .addInterceptor(new UppercaseRequestInterceptor())
@@ -520,7 +529,7 @@ public final class DuplexTest {
       assertThat(responseBody.readUtf8Line()).isNull();
     }
 
-    mockDuplexResponseBody.awaitSuccess();
+    body.awaitSuccess();
   }
 
   /**
@@ -540,13 +549,14 @@ public final class DuplexTest {
     BlockingQueue<String> log = new LinkedBlockingQueue<>();
 
     enableProtocol(Protocol.HTTP_2);
-    MockDuplexResponseBody mockDuplexResponseBody = enqueueResponseWithBody(
-        new MockResponse()
-            .clearHeaders(),
-        new MockDuplexResponseBody()
-            .sendResponse("success!")
-            .exhaustResponse()
-            .cancelStream(ErrorCode.NO_ERROR));
+    MockStreamHandler body = new MockStreamHandler()
+        .sendResponse("success!")
+        .exhaustResponse()
+        .cancelStream();
+    server.enqueue(new MockResponse.Builder()
+        .clearHeaders()
+        .streamHandler(body)
+        .build());
 
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
@@ -576,29 +586,30 @@ public final class DuplexTest {
       assertThat(response.body().string()).isEqualTo("success!");
     }
 
-    mockDuplexResponseBody.awaitSuccess();
+    body.awaitSuccess();
 
-    assertThat(log.take()).contains("StreamResetException: stream was reset: NO_ERROR");
+    assertThat(log.take()).contains("StreamResetException: stream was reset: CANCEL");
   }
 
   /**
    * We delay sending the last byte of the request body 1500 ms. The 1000 ms read timeout should
    * only elapse 1000 ms after the request body is sent.
    */
-  @Test public void headersReadTimeoutDoesNotStartUntilLastRequestBodyByteFire() throws Exception {
+  @Test public void headersReadTimeoutDoesNotStartUntilLastRequestBodyByteFire() {
     enableProtocol(Protocol.HTTP_2);
 
-    server.enqueue(new MockResponse()
-      .setHeadersDelay(1500, TimeUnit.MILLISECONDS));
+    server.enqueue(new MockResponse.Builder()
+        .headersDelay(1500, TimeUnit.MILLISECONDS)
+        .build());
 
     Request request = new Request.Builder()
-      .url(server.url("/"))
-      .post(new DelayedRequestBody(RequestBody.create("hello", null), 1500, TimeUnit.MILLISECONDS))
-      .build();
+        .url(server.url("/"))
+        .post(new DelayedRequestBody(RequestBody.create("hello", null), 1500, TimeUnit.MILLISECONDS))
+        .build();
 
     client = client.newBuilder()
-      .readTimeout(1000, TimeUnit.MILLISECONDS)
-      .build();
+        .readTimeout(1000, TimeUnit.MILLISECONDS)
+        .build();
 
     Call call = client.newCall(request);
     try {
@@ -613,18 +624,19 @@ public final class DuplexTest {
   @Test public void bodyReadTimeoutDoesNotStartUntilLastRequestBodyByteFire() throws Exception {
     enableProtocol(Protocol.HTTP_2);
 
-    server.enqueue(new MockResponse()
-      .setBodyDelay(1500, TimeUnit.MILLISECONDS)
-      .setBody("this should never be received"));
+    server.enqueue(new MockResponse.Builder()
+        .bodyDelay(1500, TimeUnit.MILLISECONDS)
+        .body("this should never be received")
+        .build());
 
     Request request = new Request.Builder()
-      .url(server.url("/"))
-      .post(new DelayedRequestBody(RequestBody.create("hello", null), 1500, TimeUnit.MILLISECONDS))
-      .build();
+        .url(server.url("/"))
+        .post(new DelayedRequestBody(RequestBody.create("hello", null), 1500, TimeUnit.MILLISECONDS))
+        .build();
 
     client = client.newBuilder()
-      .readTimeout(1000, TimeUnit.MILLISECONDS)
-      .build();
+        .readTimeout(1000, TimeUnit.MILLISECONDS)
+        .build();
 
     Call call = client.newCall(request);
     Response response = call.execute();
@@ -643,17 +655,18 @@ public final class DuplexTest {
   @Test public void headersReadTimeoutDoesNotStartUntilLastRequestBodyByteNoFire() throws Exception {
     enableProtocol(Protocol.HTTP_2);
 
-    server.enqueue(new MockResponse()
-      .setHeadersDelay(500, TimeUnit.MILLISECONDS));
+    server.enqueue(new MockResponse.Builder()
+        .headersDelay(500, TimeUnit.MILLISECONDS)
+        .build());
 
     Request request = new Request.Builder()
-      .url(server.url("/"))
-      .post(new DelayedRequestBody(RequestBody.create("hello", null), 1500, TimeUnit.MILLISECONDS))
-      .build();
+        .url(server.url("/"))
+        .post(new DelayedRequestBody(RequestBody.create("hello", null), 1500, TimeUnit.MILLISECONDS))
+        .build();
 
     client = client.newBuilder()
-      .readTimeout(1000, TimeUnit.MILLISECONDS)
-      .build();
+        .readTimeout(1000, TimeUnit.MILLISECONDS)
+        .build();
 
     Call call = client.newCall(request);
     Response response = call.execute();
@@ -667,29 +680,23 @@ public final class DuplexTest {
   @Test public void bodyReadTimeoutDoesNotStartUntilLastRequestBodyByteNoFire() throws Exception {
     enableProtocol(Protocol.HTTP_2);
 
-    server.enqueue(new MockResponse()
-      .setBodyDelay(500, TimeUnit.MILLISECONDS)
-      .setBody("success"));
+    server.enqueue(new MockResponse.Builder()
+        .bodyDelay(500, TimeUnit.MILLISECONDS)
+        .body("success")
+        .build());
 
     Request request = new Request.Builder()
-      .url(server.url("/"))
-      .post(new DelayedRequestBody(RequestBody.create("hello", null), 1500, TimeUnit.MILLISECONDS))
-      .build();
+        .url(server.url("/"))
+        .post(new DelayedRequestBody(RequestBody.create("hello", null), 1500, TimeUnit.MILLISECONDS))
+        .build();
 
     client = client.newBuilder()
-      .readTimeout(1000, TimeUnit.MILLISECONDS)
-      .build();
+        .readTimeout(1000, TimeUnit.MILLISECONDS)
+        .build();
 
     Call call = client.newCall(request);
     Response response = call.execute();
     assertThat(response.body().string()).isEqualTo("success");
-  }
-
-  private MockDuplexResponseBody enqueueResponseWithBody(
-      MockResponse response, MockDuplexResponseBody body) {
-    MwsDuplexAccess.instance.setBody(response, body);
-    server.enqueue(response);
-    return body;
   }
 
   /**

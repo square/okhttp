@@ -42,7 +42,21 @@ class ConnectionPool internal constructor(
       taskRunner = taskRunner,
       maxIdleConnections = maxIdleConnections,
       keepAliveDuration = keepAliveDuration,
-      timeUnit = timeUnit
+      timeUnit = timeUnit,
+      connectionListener = ConnectionListener.NONE
+  ))
+
+  constructor(
+    maxIdleConnections: Int = 5,
+    keepAliveDuration: Long = 5,
+    timeUnit: TimeUnit = TimeUnit.MINUTES,
+    connectionListener: ConnectionListener = ConnectionListener.NONE
+  ) : this(RealConnectionPool(
+    taskRunner = TaskRunner.INSTANCE,
+    maxIdleConnections = maxIdleConnections,
+    keepAliveDuration = keepAliveDuration,
+    timeUnit = timeUnit,
+    connectionListener = connectionListener
   ))
 
   constructor(
@@ -63,6 +77,9 @@ class ConnectionPool internal constructor(
 
   /** Returns total number of connections in the pool. */
   fun connectionCount(): Int = delegate.connectionCount()
+
+  internal val connectionListener: ConnectionListener
+    get() = delegate.connectionListener
 
   /** Close and remove all idle connections in the pool. */
   fun evictAll() {

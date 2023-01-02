@@ -247,6 +247,7 @@ class RealCall(
         createAddress(request.url),
         this,
         chain,
+        connectionListener = connectionPool.connectionListener
       )
       this.exchangeFinder = when {
         client.fastFallback -> FastFallbackExchangeFinder(routePlanner, client.taskRunner)
@@ -360,11 +361,16 @@ class RealCall(
     if (connection != null) {
       connection.assertThreadDoesntHoldLock()
       val toClose: Socket? = synchronized(connection) {
-        releaseConnectionNoEvents() // Sets this.connection to null.
+        // Sets this.connection to null.
+        releaseConnectionNoEvents()
       }
       if (this.connection == null) {
         toClose?.closeQuietly()
         eventListener.connectionReleased(this, connection)
+        connection.connectionListener.connectionReleased(connection, this)
+        if (toClose != null) {
+          connection.connectionListener.connectionClosed(connection)
+        }
       } else {
         check(toClose == null) // If we still have a connection we shouldn't be closing any sockets.
       }
@@ -514,15 +520,19 @@ class RealCall(
         executorService.execute(this)
         success = true
       } catch (e: RejectedExecutionException) {
-        val ioException = InterruptedIOException("executor rejected")
-        ioException.initCause(e)
-        noMoreExchanges(ioException)
-        responseCallback.onFailure(this@RealCall, ioException)
+        failRejected(e)
       } finally {
         if (!success) {
           client.dispatcher.finished(this) // This call is no longer running!
         }
       }
+    }
+
+    internal fun failRejected(e: RejectedExecutionException? = null) {
+      val ioException = InterruptedIOException("executor rejected")
+      ioException.initCause(e)
+      noMoreExchanges(ioException)
+      responseCallback.onFailure(this@RealCall, ioException)
     }
 
     override fun run() {

@@ -39,23 +39,23 @@ internal fun Dispatcher.wrap(): mockwebserver3.Dispatcher {
 }
 
 internal fun MockResponse.wrap(): mockwebserver3.MockResponse {
-  val result = mockwebserver3.MockResponse()
+  val result = mockwebserver3.MockResponse.Builder()
   val copyFromWebSocketListener = webSocketListener
   if (copyFromWebSocketListener != null) {
-    result.withWebSocketUpgrade(copyFromWebSocketListener)
+    result.webSocketUpgrade(copyFromWebSocketListener)
   }
 
   val body = getBody()
-  if (body != null) result.setBody(body)
+  if (body != null) result.body(body)
 
   for (pushPromise in pushPromises) {
-    result.withPush(pushPromise.wrap())
+    result.addPush(pushPromise.wrap())
   }
 
-  result.withSettings(settings)
+  result.settings(settings)
   result.status = status
-  result.headers = headers
-  result.trailers = trailers
+  result.headers(headers)
+  result.trailers(trailers)
   result.socketPolicy = when (socketPolicy) {
     SocketPolicy.EXPECT_CONTINUE, SocketPolicy.CONTINUE_ALWAYS -> {
       result.add100Continue()
@@ -69,9 +69,9 @@ internal fun MockResponse.wrap(): mockwebserver3.MockResponse {
   }
   result.http2ErrorCode = http2ErrorCode
   result.throttleBody(throttleBytesPerPeriod, getThrottlePeriod(MILLISECONDS), MILLISECONDS)
-  result.setBodyDelay(getBodyDelay(MILLISECONDS), MILLISECONDS)
-  result.setHeadersDelay(getHeadersDelay(MILLISECONDS), MILLISECONDS)
-  return result
+  result.bodyDelay(getBodyDelay(MILLISECONDS), MILLISECONDS)
+  result.headersDelay(getHeadersDelay(MILLISECONDS), MILLISECONDS)
+  return result.build()
 }
 
 private fun PushPromise.wrap(): mockwebserver3.PushPromise {

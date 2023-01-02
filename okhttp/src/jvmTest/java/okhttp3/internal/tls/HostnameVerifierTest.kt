@@ -28,7 +28,6 @@ import okhttp3.internal.canParseAsIpAddress
 import okhttp3.internal.platform.Platform.Companion.isAndroid
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.HeldCertificate
-import okhttp3.tls.internal.TlsUtil.localhost
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -163,6 +162,12 @@ class HostnameVerifierTest {
    * them, so the CN is unused.
    */
   @Test fun verifyNonAsciiSubjectAlt() {
+    // Expecting actual:
+    //  ["bar.com", "è±å­.co.jp"]
+    // to contain exactly (and in same order):
+    //  ["bar.com", "������.co.jp"]
+    platform.assumeNotBouncyCastle()
+
     // CN=foo.com, subjectAlt=bar.com, subjectAlt=&#x82b1;&#x5b50;.co.jp
     // (hanako.co.jp in kanji)
     val session = session(
@@ -371,6 +376,12 @@ class HostnameVerifierTest {
    * The RI does parse them, so the CN is unused.
    */
   @Test fun testWilcardNonAsciiSubjectAlt() {
+    // Expecting actual:
+    //  ["*.bar.com", "*.è±å­.co.jp"]
+    // to contain exactly (and in same order):
+    //  ["*.bar.com", "*.������.co.jp"]
+    platform.assumeNotBouncyCastle()
+
     // CN=*.foo.com, subjectAlt=*.bar.com, subjectAlt=*.&#x82b1;&#x5b50;.co.jp
     // (*.hanako.co.jp in kanji)
     val session = session(
@@ -672,6 +683,12 @@ class HostnameVerifierTest {
     // OpenJDK related test.
     platform.assumeNotConscrypt()
 
+    // Expecting actual:
+    //  ["â¡.com", "âª.com"]
+    // to contain exactly (and in same order):
+    //  ["���.com", "���.com"]
+    platform.assumeNotBouncyCastle()
+
     // $ cat ./cert.cnf
     // [req]
     // distinguished_name=distinguished_name
@@ -757,7 +774,8 @@ class HostnameVerifierTest {
 
     // Since this is public API, okhttp3.internal.tls.OkHostnameVerifier.verify is also
     assertThat(verifier).isInstanceOf(OkHostnameVerifier::class.java)
-    val session = localhost().sslContext().createSSLEngine().session
+    val handshakeCertificates = platform.localhostHandshakeCertificates()
+    val session = handshakeCertificates.sslContext().createSSLEngine().session
     assertThat(localVerifier.verify("\uD83D\uDCA9.com", session)).isFalse
   }
 

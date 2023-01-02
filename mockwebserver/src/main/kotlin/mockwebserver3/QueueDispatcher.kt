@@ -34,7 +34,7 @@ open class QueueDispatcher : Dispatcher() {
     val requestLine = request.requestLine
     if (requestLine == "GET /favicon.ico HTTP/1.1") {
       logger.info("served $requestLine")
-      return MockResponse().setResponseCode(HttpURLConnection.HTTP_NOT_FOUND)
+      return MockResponse(code = HttpURLConnection.HTTP_NOT_FOUND)
     }
 
     if (failFastResponse != null && responseQueue.peek() == null) {
@@ -69,7 +69,7 @@ open class QueueDispatcher : Dispatcher() {
 
   open fun setFailFast(failFast: Boolean) {
     val failFastResponse = if (failFast) {
-      MockResponse().setResponseCode(HttpURLConnection.HTTP_NOT_FOUND)
+      MockResponse(code = HttpURLConnection.HTTP_NOT_FOUND)
     } else {
       null
     }
@@ -85,9 +85,7 @@ open class QueueDispatcher : Dispatcher() {
      * Enqueued on shutdown to release threads waiting on [dispatch]. Note that this response
      * isn't transmitted because the connection is closed before this response is returned.
      */
-    private val DEAD_LETTER = MockResponse().apply {
-      this.status = "HTTP/1.1 $HTTP_UNAVAILABLE shutting down"
-    }
+    private val DEAD_LETTER = MockResponse(code = HTTP_UNAVAILABLE)
 
     private val logger = Logger.getLogger(QueueDispatcher::class.java.name)
   }

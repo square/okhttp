@@ -84,13 +84,16 @@ import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
+import okhttp3.Headers
+import org.junit.jupiter.api.BeforeEach
 
 /**
  * Run with "./gradlew :android-test:connectedCheck" and make sure ANDROID_SDK_ROOT is set.
  */
 @ExtendWith(MockWebServerExtension::class)
 @Tag("Slow")
-class OkHttpTest(val server: MockWebServer) {
+class OkHttpTest {
+
   @Suppress("RedundantVisibilityModifier")
   @JvmField
   @RegisterExtension public val platform = PlatformRule()
@@ -108,6 +111,13 @@ class OkHttpTest(val server: MockWebServer) {
     .build()
 
   private val handshakeCertificates = localhost()
+
+  private lateinit var server: MockWebServer
+
+  @BeforeEach
+  fun setup(server: MockWebServer) {
+    this.server = server
+  }
 
   @Test
   fun testPlatform() {
@@ -268,9 +278,9 @@ class OkHttpTest(val server: MockWebServer) {
   }
 
   private fun localhostInsecureRequest() {
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
 
-    server.enqueue(MockResponse().setResponseCode(200))
+    server.enqueue(MockResponse())
 
     val request = Request.Builder().url(server.url("/")).build()
 
@@ -375,7 +385,7 @@ class OkHttpTest(val server: MockWebServer) {
     val response = client.newCall(request).execute()
 
     val results = response.use {
-      moshi.adapter(HowsMySslResults::class.java).fromJson(response.body!!.string())!!
+      moshi.adapter(HowsMySslResults::class.java).fromJson(response.body.string())!!
     }
 
     Platform.get().log("results $results", Platform.WARN)
@@ -394,7 +404,7 @@ class OkHttpTest(val server: MockWebServer) {
   fun testMockWebserverRequest() {
     enableTls()
 
-    server.enqueue(MockResponse().setBody("abc"))
+    server.enqueue(MockResponse(body = "abc"))
 
     val request = Request.Builder().url(server.url("/")).build()
 
@@ -421,7 +431,7 @@ class OkHttpTest(val server: MockWebServer) {
       .build()
     client = client.newBuilder().certificatePinner(certificatePinner).build()
 
-    server.enqueue(MockResponse().setBody("abc"))
+    server.enqueue(MockResponse(body = "abc"))
 
     val request = Request.Builder().url(server.url("/")).build()
 
@@ -444,7 +454,7 @@ class OkHttpTest(val server: MockWebServer) {
       .build()
     client = client.newBuilder().certificatePinner(certificatePinner).build()
 
-    server.enqueue(MockResponse().setBody("abc"))
+    server.enqueue(MockResponse(body = "abc"))
 
     val request = Request.Builder().url(server.url("/")).build()
 
@@ -463,8 +473,8 @@ class OkHttpTest(val server: MockWebServer) {
 
     client = client.newBuilder().eventListenerFactory(clientTestRule.wrap(eventListener)).build()
 
-    server.enqueue(MockResponse().setBody("abc1"))
-    server.enqueue(MockResponse().setBody("abc2"))
+    server.enqueue(MockResponse(body = "abc1"))
+    server.enqueue(MockResponse(body = "abc2"))
 
     val request = Request.Builder().url(server.url("/")).build()
 
@@ -516,8 +526,8 @@ class OkHttpTest(val server: MockWebServer) {
       })
     ).build()
 
-    server.enqueue(MockResponse().setBody("abc1"))
-    server.enqueue(MockResponse().setBody("abc2"))
+    server.enqueue(MockResponse(body = "abc1"))
+    server.enqueue(MockResponse(body = "abc2"))
 
     val request = Request.Builder().url(server.url("/")).build()
 
@@ -583,7 +593,7 @@ class OkHttpTest(val server: MockWebServer) {
   fun testCustomSSLSocketFactoryWithoutALPN() {
     enableTls()
 
-    server.enqueue(MockResponse().setBody("abc"))
+    server.enqueue(MockResponse(body = "abc"))
 
     val sslSocketFactory = client.sslSocketFactory
     val trustManager = client.x509TrustManager!!
@@ -761,7 +771,7 @@ class OkHttpTest(val server: MockWebServer) {
     Logger.getLogger(OkHttpClient::class.java.name)
       .addHandler(testHandler)
 
-    server.enqueue(MockResponse().setBody("abc"))
+    server.enqueue(MockResponse(body = "abc"))
 
     val request = Request.Builder()
       .url(server.url("/"))
@@ -783,8 +793,8 @@ class OkHttpTest(val server: MockWebServer) {
   fun testCachedRequest() {
     enableTls()
 
-    server.enqueue(MockResponse().setBody("abc").addHeader("cache-control: public, max-age=3"))
-    server.enqueue(MockResponse().setBody("abc"))
+    server.enqueue(MockResponse(body = "abc", headers = Headers.headersOf("cache-control", "public, max-age=3")))
+    server.enqueue(MockResponse(body = "abc"))
 
     val ctxt = InstrumentationRegistry.getInstrumentation().targetContext.applicationContext
 
@@ -848,7 +858,7 @@ class OkHttpTest(val server: MockWebServer) {
         handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager
       )
       .build()
-    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+    server.useHttps(handshakeCertificates.sslSocketFactory())
   }
 
   private fun assumeNetwork() {

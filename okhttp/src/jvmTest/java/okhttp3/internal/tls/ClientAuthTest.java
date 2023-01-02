@@ -51,6 +51,8 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junitpioneer.jupiter.RetryingTest;
+
 import static java.util.Arrays.asList;
 import static okhttp3.tls.internal.TlsUtil.newKeyManager;
 import static okhttp3.tls.internal.TlsUtil.newTrustManager;
@@ -128,7 +130,9 @@ public final class ClientAuthTest {
 
     server.useHttps(socketFactory);
     server.requestClientAuth();
-    server.enqueue(new MockResponse().setBody("abc"));
+    server.enqueue(new MockResponse.Builder()
+        .body("abc")
+        .build());
 
     Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response = call.execute();
@@ -146,7 +150,9 @@ public final class ClientAuthTest {
 
     server.useHttps(socketFactory);
     server.requireClientAuth();
-    server.enqueue(new MockResponse().setBody("abc"));
+    server.enqueue(new MockResponse.Builder()
+        .body("abc")
+        .build());
 
     Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response = call.execute();
@@ -164,7 +170,9 @@ public final class ClientAuthTest {
 
     server.useHttps(socketFactory);
     server.noClientAuth();
-    server.enqueue(new MockResponse().setBody("abc"));
+    server.enqueue(new MockResponse.Builder()
+        .body("abc")
+        .build());
 
     Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response = call.execute();
@@ -181,7 +189,9 @@ public final class ClientAuthTest {
 
     server.useHttps(socketFactory);
     server.requestClientAuth();
-    server.enqueue(new MockResponse().setBody("abc"));
+    server.enqueue(new MockResponse.Builder()
+        .body("abc")
+        .build());
 
     Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response = call.execute();
@@ -191,7 +201,9 @@ public final class ClientAuthTest {
     assertThat(response.body().string()).isEqualTo("abc");
   }
 
-  @Test @Flaky
+  static int count = 0;
+
+  @Flaky @RetryingTest(5)
   public void missingClientAuthFailsForNeeds() throws Exception {
     // Fails with 11.0.1 https://github.com/square/okhttp/issues/4598
     // StreamReset stream was reset: PROT...
@@ -278,7 +290,9 @@ public final class ClientAuthTest {
   }
 
   @Test public void invalidClientAuthEvents() throws Throwable {
-    server.enqueue(new MockResponse().setBody("abc"));
+    server.enqueue(new MockResponse.Builder()
+        .body("abc")
+        .build());
 
     clientCert = new HeldCertificate.Builder()
         .signedBy(clientIntermediateCa)

@@ -43,6 +43,8 @@ dependencies {
   api(projects.okhttp)
   compileOnly(libs.androidx.annotation)
   compileOnly(libs.findbugs.jsr305)
+  debugImplementation(libs.androidx.annotation)
+  debugImplementation(libs.findbugs.jsr305)
   compileOnly(libs.animalsniffer.annotations)
   compileOnly(libs.robolectric.android)
 
@@ -61,6 +63,6 @@ dependencies {
 }
 
 mavenPublishing {
-  @Suppress("DEPRECATION") // Requires AGP 7.1.x
-  configure(com.vanniktech.maven.publish.AndroidLibrary(javadocJar = JavadocJar.Dokka("dokkaGfm")))
+  // AGP 7.2 embeds Dokka 4, which breaks publishing. Android modules are hardcoded to generate Javadoc instead of Gfm.
+  configure(com.vanniktech.maven.publish.AndroidSingleVariantLibrary(publishJavadocJar=false))
 }

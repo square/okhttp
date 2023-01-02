@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import javax.net.ssl.SSLSocket
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.CipherSuite.Companion.TLS_AES_128_GCM_SHA256
@@ -30,17 +31,14 @@ import okhttp3.CipherSuite.Companion.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
 import okhttp3.internal.effectiveCipherSuites
 import okhttp3.internal.platform.Platform
 import okhttp3.testing.PlatformRule
-import okhttp3.tls.internal.TlsUtil.localhost
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
-import javax.net.ssl.SSLSocket
 
 class CallHandshakeTest {
   private lateinit var client: OkHttpClient
   private lateinit var server: MockWebServer
-  val handshakeCertificates = localhost()
 
   @RegisterExtension
   @JvmField
@@ -49,6 +47,8 @@ class CallHandshakeTest {
   @RegisterExtension
   @JvmField
   var platform = PlatformRule()
+
+  private val handshakeCertificates = platform.localhostHandshakeCertificates()
 
   private lateinit var handshakeEnabledCipherSuites: List<String>
   private lateinit var defaultEnabledCipherSuites: List<String>
@@ -62,7 +62,7 @@ class CallHandshakeTest {
   fun setup(server: MockWebServer) {
     this.server = server
 
-    server.enqueue(MockResponse().setResponseCode(200))
+    server.enqueue(MockResponse())
 
     client = clientTestRule.newClientBuilder()
       .sslSocketFactory(
@@ -131,6 +131,9 @@ class CallHandshakeTest {
 
   @Test
   fun testDefaultHandshakeCipherSuiteOrderingTls13Modern() {
+    // We are avoiding making guarantees on ordering of secondary Platforms.
+    platform.assumeNotBouncyCastle()
+
     val client = makeClient(ConnectionSpec.MODERN_TLS, TlsVersion.TLS_1_3)
 
     val handshake = makeRequest(client)

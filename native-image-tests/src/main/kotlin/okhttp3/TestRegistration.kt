@@ -20,6 +20,7 @@ import org.graalvm.nativeimage.hosted.Feature
 import org.graalvm.nativeimage.hosted.RuntimeClassInitialization
 import org.graalvm.nativeimage.hosted.RuntimeReflection
 import java.io.File
+import java.lang.IllegalStateException
 
 @AutomaticFeature
 class TestRegistration : Feature {
@@ -51,14 +52,12 @@ class TestRegistration : Feature {
   private fun registerJupiterClasses(access: Feature.BeforeAnalysisAccess) {
     registerStandardClass(access, "org.junit.jupiter.params.ParameterizedTestExtension")
     registerStandardClass(access, "org.junit.platform.console.tasks.TreePrintingListener")
-    registerStandardClass(access,
-      "org.junit.jupiter.engine.extension.TimeoutExtension\$ExecutorResource")
   }
 
   private fun registerStandardClass(access: Feature.BeforeAnalysisAccess, name: String) {
-    val listener = access.findClassByName(name)
-    RuntimeReflection.register(listener)
-    listener.declaredConstructors.forEach {
+    val clazz: Class<*> = access.findClassByName(name) ?: throw IllegalStateException("Missing class $name")
+    RuntimeReflection.register(clazz)
+    clazz.declaredConstructors.forEach {
       RuntimeReflection.register(it)
     }
   }

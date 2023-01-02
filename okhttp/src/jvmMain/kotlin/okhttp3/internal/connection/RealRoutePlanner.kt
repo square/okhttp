@@ -20,6 +20,7 @@ import java.net.HttpURLConnection
 import java.net.Socket
 import java.net.UnknownServiceException
 import okhttp3.Address
+import okhttp3.ConnectionListener
 import okhttp3.ConnectionSpec
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
@@ -39,7 +40,8 @@ class RealRoutePlanner(
   private val client: OkHttpClient,
   override val address: Address,
   private val call: RealCall,
-  chain: RealInterceptorChain,
+  private val chain: RealInterceptorChain,
+  private val connectionListener: ConnectionListener
 ) : RoutePlanner {
   private val doExtensiveHealthChecks = chain.request.method != "GET"
 
@@ -87,9 +89,11 @@ class RealRoutePlanner(
     // Make sure this connection is healthy & eligible for new exchanges. If it's no longer needed
     // then we're on the hook to close it.
     val healthy = candidate.isHealthy(doExtensiveHealthChecks)
+    var noNewExchangesEvent = false
     val toClose: Socket? = synchronized(candidate) {
       when {
         !healthy -> {
+          noNewExchangesEvent = !candidate.noNewExchanges
           candidate.noNewExchanges = true
           call.releaseConnectionNoEvents()
         }
@@ -110,6 +114,12 @@ class RealRoutePlanner(
     // The call's connection was released.
     toClose?.closeQuietly()
     call.eventListener.connectionReleased(call, candidate)
+    candidate.connectionListener.connectionReleased(candidate, call)
+    if (toClose != null) {
+      candidate.connectionListener.connectionClosed(candidate)
+    } else if (noNewExchangesEvent) {
+      candidate.connectionListener.noNewExchanges(candidate)
+    }
     return null
   }
 
@@ -179,6 +189,7 @@ class RealRoutePlanner(
     }
 
     call.eventListener.connectionAcquired(call, result)
+    result.connectionListener.connectionAcquired(result, call)
     return ReusePlan(result)
   }
 
@@ -210,6 +221,7 @@ class RealRoutePlanner(
     return ConnectPlan(
       client = client,
       call = call,
+      chain = chain,
       routePlanner = this,
       route = route,
       routes = routes,
@@ -217,6 +229,7 @@ class RealRoutePlanner(
       tunnelRequest = tunnelRequest,
       connectionSpecIndex = -1,
       isTlsFallback = false,
+      connectionListener = connectionListener
     )
   }
 
@@ -289,11 +302,11 @@ class RealRoutePlanner(
    * connections.
    */
   private fun retryRoute(connection: RealConnection): Route? {
-    synchronized(connection) {
-      if (connection.routeFailureCount != 0) return null
-      if (!connection.noNewExchanges) return null // This route is still in use.
-      if (!connection.route().address.url.canReuseConnectionFor(address.url)) return null
-      return connection.route()
+    return synchronized(connection) {
+      if (connection.routeFailureCount != 0) null
+      else if (!connection.noNewExchanges) null // This route is still in use.
+      else if (!connection.route().address.url.canReuseConnectionFor(address.url)) null
+      else connection.route()
     }
   }
 
