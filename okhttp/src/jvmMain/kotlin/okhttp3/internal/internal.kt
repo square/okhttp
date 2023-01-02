@@ -23,14 +23,18 @@ import java.nio.charset.Charset
 import javax.net.ssl.SSLSocket
 import okhttp3.Cache
 import okhttp3.CipherSuite
+import okhttp3.ConnectionListener
+import okhttp3.ConnectionPool
 import okhttp3.ConnectionSpec
 import okhttp3.Cookie
 import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.connection.RealConnection
 
 fun parseCookie(currentTimeMillis: Long, url: HttpUrl, setCookie: String): Cookie? =
@@ -79,3 +83,7 @@ fun MediaType?.charset(defaultValue: Charset = Charsets.UTF_8): Charset {
 
 val Response.connection: RealConnection
   get() = this.exchange!!.connection
+
+fun OkHttpClient.Builder.taskRunnerInternal(taskRunner: TaskRunner) = this.taskRunner(taskRunner)
+
+fun buildConnectionPool(connectionListener: ConnectionListener, taskRunner: TaskRunner): ConnectionPool = ConnectionPool(connectionListener = connectionListener, taskRunner = taskRunner)

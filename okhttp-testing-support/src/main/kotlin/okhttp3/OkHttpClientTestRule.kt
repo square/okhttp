@@ -23,9 +23,11 @@ import java.util.logging.Level
 import java.util.logging.LogManager
 import java.util.logging.LogRecord
 import java.util.logging.Logger
+import okhttp3.internal.buildConnectionPool
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.connection.RealConnectionPool
 import okhttp3.internal.http2.Http2
+import okhttp3.internal.taskRunnerInternal
 import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule.Companion.LOOM_PROPERTY
 import okhttp3.testing.PlatformRule.Companion.getPlatformSystemProperty
@@ -135,9 +137,9 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
     val taskRunner = TaskRunner(backend)
 
     OkHttpClient.Builder()
-      .connectionPool(ConnectionPool(connectionListener = connectionListener, taskRunner = taskRunner))
+      .connectionPool(buildConnectionPool(connectionListener = connectionListener, taskRunner = taskRunner))
       .dispatcher(Dispatcher(backend.executor))
-      .taskRunner(taskRunner)
+      .taskRunnerInternal(taskRunner)
   } else {
     OkHttpClient.Builder()
       .connectionPool(ConnectionPool(connectionListener = connectionListener))
