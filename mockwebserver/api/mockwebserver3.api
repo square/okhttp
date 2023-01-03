@@ -166,6 +166,7 @@ public final class mockwebserver3/RecordedRequest {
 	public final fun getChunkSizes ()Ljava/util/List;
 	public final fun getFailure ()Ljava/io/IOException;
 	public final fun getHandshake ()Lokhttp3/Handshake;
+	public final fun getHandshakeServerNames ()Ljava/util/List;
 	public final fun getHeaders ()Lokhttp3/Headers;
 	public final fun getMethod ()Ljava/lang/String;
 	public final fun getPath ()Ljava/lang/String;
