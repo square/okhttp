@@ -20,6 +20,7 @@ import okhttp3.Headers.Companion.headersOf
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClientTestRule
 import okhttp3.Request
+import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import okhttp3.tls.internal.TlsUtil.localhost
@@ -32,6 +33,9 @@ class MockResponseSniTest {
   @RegisterExtension
   val clientTestRule = OkHttpClientTestRule()
 
+  @RegisterExtension
+  val platform = PlatformRule()
+
   private lateinit var server: MockWebServer
 
   @BeforeEach
@@ -41,6 +45,9 @@ class MockResponseSniTest {
 
   @Test
   fun clientSendsServerNameAndServerReceivesIt() {
+    // java.net.ConnectException: Connection refused
+    platform.assumeNotConscrypt()
+
     val handshakeCertificates = localhost()
     server.useHttps(handshakeCertificates.sslSocketFactory())
 
