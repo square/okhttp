@@ -16,16 +16,21 @@
 package okhttp3
 
 import android.annotation.SuppressLint
+import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
 import java.util.logging.Handler
 import java.util.logging.Level
 import java.util.logging.LogManager
 import java.util.logging.LogRecord
 import java.util.logging.Logger
+import okhttp3.internal.buildConnectionPool
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.connection.RealConnectionPool
 import okhttp3.internal.http2.Http2
+import okhttp3.internal.taskRunnerInternal
 import okhttp3.testing.Flaky
+import okhttp3.testing.PlatformRule.Companion.LOOM_PROPERTY
+import okhttp3.testing.PlatformRule.Companion.getPlatformSystemProperty
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.extension.AfterEachCallback
@@ -116,16 +121,38 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
   fun newClient(): OkHttpClient {
     var client = testClient
     if (client == null) {
-      client = OkHttpClient.Builder()
+      client = initialClientBuilder()
         .dns(SINGLE_INET_ADDRESS_DNS) // Prevent unexpected fallback addresses.
         .eventListenerFactory { ClientRuleEventListener(logger = ::addEvent) }
-        .connectionPool(ConnectionPool(connectionListener = connectionListener))
         .build()
       connectionListener.forbidLock(RealConnectionPool.get(client.connectionPool))
       connectionListener.forbidLock(client.dispatcher)
       testClient = client
     }
     return client
+  }
+
+  private fun initialClientBuilder(): OkHttpClient.Builder = if (isLoom()) {
+    val backend = TaskRunner.RealBackend(loomThreadFactory())
+    val taskRunner = TaskRunner(backend)
+
+    OkHttpClient.Builder()
+      .connectionPool(buildConnectionPool(connectionListener = connectionListener, taskRunner = taskRunner))
+      .dispatcher(Dispatcher(backend.executor))
+      .taskRunnerInternal(taskRunner)
+  } else {
+    OkHttpClient.Builder()
+      .connectionPool(ConnectionPool(connectionListener = connectionListener))
+  }
+
+  private fun loomThreadFactory(): ThreadFactory {
+    val ofVirtual = Thread::class.java.getMethod("ofVirtual").invoke(null)
+
+    return Class.forName("java.lang.Thread\$Builder").getMethod("factory").invoke(ofVirtual) as ThreadFactory
+  }
+
+  private fun isLoom(): Boolean {
+    return getPlatformSystemProperty() == LOOM_PROPERTY
   }
 
   fun newClientBuilder(): OkHttpClient.Builder {

@@ -27,6 +27,7 @@ import java.util.Locale
 import java.util.TimeZone
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.ReentrantLock
 import kotlin.text.Charsets.UTF_16BE
 import kotlin.text.Charsets.UTF_16LE
 import kotlin.text.Charsets.UTF_32BE
@@ -300,9 +301,23 @@ internal val okHttpName: String =
     OkHttpClient::class.java.name.removePrefix("okhttp3.").removeSuffix("Client")
 
 @Suppress("NOTHING_TO_INLINE")
+internal inline fun ReentrantLock.assertHeld() {
+  if (assertionsEnabled && !this.isHeldByCurrentThread) {
+    throw AssertionError("Thread ${Thread.currentThread().name} MUST hold lock on $this")
+  }
+}
+
+@Suppress("NOTHING_TO_INLINE")
 internal inline fun Any.assertThreadHoldsLock() {
   if (assertionsEnabled && !Thread.holdsLock(this)) {
     throw AssertionError("Thread ${Thread.currentThread().name} MUST hold lock on $this")
+  }
+}
+
+@Suppress("NOTHING_TO_INLINE")
+internal inline fun ReentrantLock.assertNotHeld() {
+  if (assertionsEnabled && this.isHeldByCurrentThread) {
+    throw AssertionError("Thread ${Thread.currentThread().name} MUST NOT hold lock on $this")
   }
 }
 

@@ -33,30 +33,45 @@ import okhttp3.internal.connection.RealConnectionPool
 class ConnectionPool internal constructor(
   internal val delegate: RealConnectionPool
 ) {
-  constructor(
-    maxIdleConnections: Int,
-    keepAliveDuration: Long,
-    timeUnit: TimeUnit
-  ) : this(RealConnectionPool(
-      taskRunner = TaskRunner.INSTANCE,
-      maxIdleConnections = maxIdleConnections,
-      keepAliveDuration = keepAliveDuration,
-      timeUnit = timeUnit,
-      connectionListener = ConnectionListener.NONE
-  ))
-
-  constructor(
+  internal constructor(
     maxIdleConnections: Int = 5,
     keepAliveDuration: Long = 5,
     timeUnit: TimeUnit = TimeUnit.MINUTES,
-    connectionListener: ConnectionListener = ConnectionListener.NONE
+    taskRunner: TaskRunner = TaskRunner.INSTANCE,
+    connectionListener: ConnectionListener = ConnectionListener.NONE,
   ) : this(RealConnectionPool(
+      taskRunner = taskRunner,
+      maxIdleConnections = maxIdleConnections,
+      keepAliveDuration = keepAliveDuration,
+      timeUnit = timeUnit,
+      connectionListener = connectionListener
+  ))
+
+  constructor(
+    connectionListener: ConnectionListener = ConnectionListener.NONE,
+    maxIdleConnections: Int = 5,
+    keepAliveDuration: Long = 5,
+    timeUnit: TimeUnit = TimeUnit.MINUTES,
+  ) : this(
     taskRunner = TaskRunner.INSTANCE,
     maxIdleConnections = maxIdleConnections,
     keepAliveDuration = keepAliveDuration,
     timeUnit = timeUnit,
     connectionListener = connectionListener
-  ))
+  )
+
+  // Public API
+  constructor(
+    maxIdleConnections: Int,
+    keepAliveDuration: Long,
+    timeUnit: TimeUnit,
+  ) : this(
+    maxIdleConnections = maxIdleConnections,
+    keepAliveDuration = keepAliveDuration,
+    timeUnit = timeUnit,
+    taskRunner = TaskRunner.INSTANCE,
+    connectionListener = ConnectionListener.NONE
+  )
 
   constructor() : this(5, 5, TimeUnit.MINUTES)
 
