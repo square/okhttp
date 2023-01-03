@@ -163,6 +163,11 @@ class DiskLruCache(
   private val journalFileBackup: Path
   private var size: Long = 0L
   private var journalWriter: BufferedSink? = null
+    set(value) {
+      field?.closeQuietly()
+      field = value
+    }
+
   internal val lruEntries = LinkedHashMap<String, Entry>(0, 0.75f, true)
   private var redundantOpCount: Int = 0
   private var hasJournalErrors: Boolean = false
@@ -202,7 +207,6 @@ class DiskLruCache(
           }
         } catch (_: IOException) {
           mostRecentRebuildFailed = true
-          check(journalWriter?.isOpen != true)
           journalWriter = blackholeSink().buffer()
         }
 
@@ -248,6 +252,7 @@ class DiskLruCache(
         initialized = true
         return
       } catch (journalIsCorrupt: IOException) {
+        journalWriter!!.close()
         Platform.get().log(
             "DiskLruCache $directory is corrupt: ${journalIsCorrupt.message}, removing",
             WARN,
@@ -302,7 +307,6 @@ class DiskLruCache(
       if (!exhausted()) {
         rebuildJournal()
       } else {
-        check(journalWriter?.isOpen != true)
         journalWriter = newJournalWriter()
       }
     }
@@ -425,7 +429,6 @@ class DiskLruCache(
       fileSystem.atomicMove(journalFileTmp, journalFile)
     }
 
-    check(journalWriter?.isOpen != true)
     journalWriter = newJournalWriter()
     hasJournalErrors = false
     mostRecentRebuildFailed = false
@@ -691,7 +694,7 @@ class DiskLruCache(
     }
 
     trimToSize()
-    journalWriter!!.close()
+//    journalWriter!!.close()
     journalWriter = null
     closed = true
   }

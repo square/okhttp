@@ -32,7 +32,7 @@ import okio.FileSystem
 import okio.IOException
 import okio.Options
 import okio.Path
-import okio.use
+import okio.Sink
 
 // TODO: migrate callers to [Regex.matchAt] when that API is not experimental.
 internal fun Regex.matchAtPolyfill(input: CharSequence, index: Int): MatchResult? {
@@ -299,15 +299,16 @@ fun Closeable.closeQuietly() {
  * @param file a file in the directory to check. This file shouldn't already exist!
  */
 internal fun FileSystem.isCivilized(file: Path): Boolean {
-  sink(file).use {
-    try {
-      delete(file)
-      return true
-    } catch (_: IOException) {
-    }
+  val sink: Sink = sink(file)
+  return try {
+    delete(file)
+    true
+  } catch (_: IOException) {
+    false
+  } finally {
+    sink.close()
+    delete(file)
   }
-  delete(file)
-  return false
 }
 
 /** Delete file we expect but don't require to exist. */

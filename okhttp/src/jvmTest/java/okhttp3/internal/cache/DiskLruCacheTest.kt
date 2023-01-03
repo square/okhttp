@@ -95,8 +95,7 @@ class DiskLruCacheTest {
     }
     taskFaker.close()
 
-    // TODO uncomment after fixing up snapshot calls in this test
-    // (filesystem.delegate as? FakeFileSystem)?.checkNoOpenFiles()
+    (filesystem.delegate as? FakeFileSystem)?.checkNoOpenFiles()
   }
 
   @ParameterizedTest
