@@ -694,7 +694,6 @@ class DiskLruCache(
     }
 
     trimToSize()
-//    journalWriter!!.close()
     journalWriter = null
     closed = true
   }
