@@ -252,7 +252,7 @@ class DiskLruCache(
         initialized = true
         return
       } catch (journalIsCorrupt: IOException) {
-        journalWriter!!.close()
+        journalWriter?.close()
         Platform.get().log(
             "DiskLruCache $directory is corrupt: ${journalIsCorrupt.message}, removing",
             WARN,
