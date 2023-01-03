@@ -20,12 +20,10 @@ import okhttp3.Headers.Companion.headersOf
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClientTestRule
 import okhttp3.Request
-import okhttp3.internal.canParseAsIpAddress
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import okhttp3.tls.internal.TlsUtil.localhost
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assumptions.assumeThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -45,9 +43,6 @@ class MockResponseSniTest {
   fun clientSendsServerNameAndServerReceivesIt() {
     val handshakeCertificates = localhost()
     server.useHttps(handshakeCertificates.sslSocketFactory())
-
-    // Skip this test if the machine's canonical localhost name is an IP address like '127.0.0.1'.
-    assumeThat(server.hostName.canParseAsIpAddress()).isFalse()
 
     val dns = Dns {
       Dns.SYSTEM.lookup(server.hostName)
