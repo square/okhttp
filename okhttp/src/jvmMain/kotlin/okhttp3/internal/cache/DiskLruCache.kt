@@ -202,6 +202,7 @@ class DiskLruCache(
           }
         } catch (_: IOException) {
           mostRecentRebuildFailed = true
+          check(journalWriter?.isOpen != true)
           journalWriter = blackholeSink().buffer()
         }
 
@@ -301,6 +302,7 @@ class DiskLruCache(
       if (!exhausted()) {
         rebuildJournal()
       } else {
+        check(journalWriter?.isOpen != true)
         journalWriter = newJournalWriter()
       }
     }
@@ -423,6 +425,7 @@ class DiskLruCache(
       fileSystem.atomicMove(journalFileTmp, journalFile)
     }
 
+    check(journalWriter?.isOpen != true)
     journalWriter = newJournalWriter()
     hasJournalErrors = false
     mostRecentRebuildFailed = false
