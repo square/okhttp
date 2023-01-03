@@ -32,6 +32,9 @@ import javax.annotation.Nullable;
 import mockwebserver3.MockResponse;
 import mockwebserver3.MockWebServer;
 import mockwebserver3.SocketPolicy;
+import mockwebserver3.SocketPolicy.DisconnectDuringRequestBody;
+import mockwebserver3.SocketPolicy.DisconnectDuringResponseBody;
+import mockwebserver3.SocketPolicy.FailHandshake;
 import okhttp3.CallEvent.CallEnd;
 import okhttp3.CallEvent.CallFailed;
 import okhttp3.CallEvent.CallStart;
@@ -74,7 +77,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import static java.util.Arrays.asList;
-import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.any;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -92,7 +94,8 @@ public final class EventListenerTest {
 
   private MockWebServer server;
   private final RecordingEventListener listener = new RecordingEventListener();
-  private final HandshakeCertificates handshakeCertificates = localhost();
+  private final HandshakeCertificates handshakeCertificates
+    = platform.localhostHandshakeCertificates();
 
   private OkHttpClient client = clientTestRule.newClientBuilder()
       .eventListenerFactory(clientTestRule.wrap(listener))
@@ -104,7 +107,6 @@ public final class EventListenerTest {
     this.server = server;
 
     platform.assumeNotOpenJSSE();
-    platform.assumeNotBouncyCastle();
 
     listener.forbidLock(RealConnectionPool.Companion.get(client.connectionPool()));
     listener.forbidLock(client.dispatcher());
@@ -222,7 +224,7 @@ public final class EventListenerTest {
     server.enqueue(new MockResponse.Builder()
         .body("0123456789")
         .throttleBody(2, 100, TimeUnit.MILLISECONDS)
-        .socketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY)
+        .socketPolicy(DisconnectDuringResponseBody.INSTANCE)
         .build());
 
     client = client.newBuilder()
@@ -598,7 +600,7 @@ public final class EventListenerTest {
   @Test public void failedConnect() throws UnknownHostException {
     enableTlsWithTunnel();
     server.enqueue(new MockResponse.Builder()
-        .socketPolicy(SocketPolicy.FAIL_HANDSHAKE)
+        .socketPolicy(FailHandshake.INSTANCE)
         .build());
 
     Call call = client.newCall(new Request.Builder()
@@ -628,7 +630,7 @@ public final class EventListenerTest {
   @Test public void multipleConnectsForSingleCall() throws IOException {
     enableTlsWithTunnel();
     server.enqueue(new MockResponse.Builder()
-        .socketPolicy(SocketPolicy.FAIL_HANDSHAKE)
+        .socketPolicy(FailHandshake.INSTANCE)
         .build());
     server.enqueue(new MockResponse());
 
@@ -765,7 +767,7 @@ public final class EventListenerTest {
   @Test public void failedSecureConnect() {
     enableTlsWithTunnel();
     server.enqueue(new MockResponse.Builder()
-        .socketPolicy(SocketPolicy.FAIL_HANDSHAKE)
+        .socketPolicy(FailHandshake.INSTANCE)
         .build());
 
     Call call = client.newCall(new Request.Builder()
@@ -814,7 +816,7 @@ public final class EventListenerTest {
   @Test public void multipleSecureConnectsForSingleCall() throws IOException {
     enableTlsWithTunnel();
     server.enqueue(new MockResponse.Builder()
-        .socketPolicy(SocketPolicy.FAIL_HANDSHAKE)
+        .socketPolicy(FailHandshake.INSTANCE)
         .build());
     server.enqueue(new MockResponse());
 
@@ -973,7 +975,7 @@ public final class EventListenerTest {
     int responseBodySize = 2 * 1024 * 1024; // 2 MiB
     server.enqueue(new MockResponse.Builder()
         .body(new Buffer().write(new byte[responseBodySize]))
-        .socketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY)
+        .socketPolicy(DisconnectDuringResponseBody.INSTANCE)
         .build());
 
     Call call = client.newCall(new Request.Builder()
@@ -999,7 +1001,7 @@ public final class EventListenerTest {
     server.enqueue(new MockResponse.Builder()
         .body("")
         .bodyDelay(1, TimeUnit.SECONDS)
-        .socketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY)
+        .socketPolicy(DisconnectDuringResponseBody.INSTANCE)
         .build());
 
     Call call = client.newCall(new Request.Builder()
@@ -1038,7 +1040,7 @@ public final class EventListenerTest {
     server.enqueue(new MockResponse.Builder()
         .body("abc")
         .bodyDelay(1, TimeUnit.SECONDS)
-        .socketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY)
+        .socketPolicy(DisconnectDuringResponseBody.INSTANCE)
         .build());
 
     Call call = client.newCall(new Request.Builder()
@@ -1076,7 +1078,7 @@ public final class EventListenerTest {
 
   private void requestBodyFail(@Nullable Protocol expectedProtocol) {
     server.enqueue(new MockResponse.Builder()
-        .socketPolicy(SocketPolicy.DISCONNECT_DURING_REQUEST_BODY)
+        .socketPolicy(DisconnectDuringRequestBody.INSTANCE)
         .build());
 
     NonCompletingRequestBody request = new NonCompletingRequestBody();
@@ -1102,6 +1104,7 @@ public final class EventListenerTest {
   }
 
   private class NonCompletingRequestBody extends RequestBody {
+    private final byte[] chunk = new byte[1024 * 1024];
     IOException ioe;
 
     @Override public MediaType contentType() {
@@ -1109,27 +1112,21 @@ public final class EventListenerTest {
     }
 
     @Override public long contentLength() {
-      return 1024 * 1024 * 4;
+      return chunk.length * 8L;
     }
 
     @Override public void writeTo(BufferedSink sink) throws IOException {
       try {
-        writeChunk(sink);
-        writeChunk(sink);
-        writeChunk(sink);
-        writeChunk(sink);
-        Thread.sleep(1000);
-        writeChunk(sink);
-        writeChunk(sink);
+        for (int i = 0; i < contentLength(); i += chunk.length) {
+          sink.write(chunk);
+          sink.flush();
+          Thread.sleep(100);
+        }
       } catch (IOException e) {
         ioe = e;
       } catch (InterruptedException e) {
+        throw new RuntimeException(e);
       }
-    }
-
-    private void writeChunk(BufferedSink sink) throws IOException {
-      sink.write(new byte[1024 * 512]);
-      sink.flush();
     }
   }
 
@@ -1158,7 +1155,7 @@ public final class EventListenerTest {
     };
 
     server.enqueue(new MockResponse.Builder()
-        .socketPolicy(SocketPolicy.DISCONNECT_DURING_REQUEST_BODY)
+        .socketPolicy(DisconnectDuringRequestBody.INSTANCE)
         .build());
 
     Call call = client.newCall(new Request.Builder()

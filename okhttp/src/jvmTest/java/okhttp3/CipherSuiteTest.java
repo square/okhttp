@@ -111,7 +111,7 @@ public class CipherSuiteTest {
         forJavaName("TLS_FAKE_NEW_CIPHER"));
   }
 
-  @Test public void applyIntersectionRetainsSslPrefixes() throws Exception {
+  @Test public void applyIntersectionRetainsTlsPrefixes() throws Exception {
     FakeSslSocket socket = new FakeSslSocket();
     socket.setEnabledProtocols(new String[] { "TLSv1" });
     socket.setSupportedCipherSuites(new String[] { "SSL_A", "SSL_B", "SSL_C", "SSL_D", "SSL_E" });
@@ -123,10 +123,10 @@ public class CipherSuiteTest {
         .build();
     applyConnectionSpec(connectionSpec, socket, false);
 
-    assertArrayEquals(new String[] { "SSL_A", "SSL_C" }, socket.enabledCipherSuites);
+    assertArrayEquals(new String[] { "TLS_A", "TLS_C" }, socket.enabledCipherSuites);
   }
 
-  @Test public void applyIntersectionRetainsTlsPrefixes() throws Exception {
+  @Test public void applyIntersectionRetainsSslPrefixes() throws Exception {
     FakeSslSocket socket = new FakeSslSocket();
     socket.setEnabledProtocols(new String[] { "TLSv1" });
     socket.setSupportedCipherSuites(new String[] { "TLS_A", "TLS_B", "TLS_C", "TLS_D", "TLS_E" });
@@ -138,7 +138,7 @@ public class CipherSuiteTest {
         .build();
     applyConnectionSpec(connectionSpec, socket, false);
 
-    assertArrayEquals(new String[] { "TLS_A", "TLS_C" }, socket.enabledCipherSuites);
+    assertArrayEquals(new String[] { "SSL_A", "SSL_C" }, socket.enabledCipherSuites);
   }
 
   @Test public void applyIntersectionAddsSslScsvForFallback() throws Exception {

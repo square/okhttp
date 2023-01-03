@@ -16,7 +16,8 @@
 package mockwebserver3
 
 import java.util.concurrent.TimeUnit
-import mockwebserver3.internal.duplex.DuplexResponseBody
+import mockwebserver3.SocketPolicy.KeepOpen
+import mockwebserver3.internal.toMockResponseBody
 import okhttp3.Headers
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.WebSocketListener
@@ -47,8 +48,10 @@ class MockResponse {
   val headers: Headers
   val trailers: Headers
 
-  val body: Buffer?
-    get() { return field?.clone() }
+  // At most one of (body,webSocketListener,streamHandler) is non-null.
+  val body: MockResponseBody?
+  val webSocketListener: WebSocketListener?
+  val streamHandler: StreamHandler?
 
   val inTunnel: Boolean
   val informationalResponses: List<MockResponse>
@@ -61,7 +64,7 @@ class MockResponse {
   /**
    * Sets the [HTTP/2 error code](https://tools.ietf.org/html/rfc7540#section-7) to be
    * returned when resetting the stream. This is only valid with
-   * [SocketPolicy.RESET_STREAM_AT_START] and [SocketPolicy.DO_NOT_READ_REQUEST_BODY].
+   * [SocketPolicy.ResetStreamAtStart] and [SocketPolicy.DoNotReadRequestBody].
    */
   val http2ErrorCode: Int
 
@@ -72,19 +75,13 @@ class MockResponse {
 
   val settings: Settings
 
-  val webSocketListener: WebSocketListener?
-  val duplexResponseBody: DuplexResponseBody?
-
-  val isDuplex: Boolean
-    get() = duplexResponseBody != null
-
   @JvmOverloads
   constructor(
     code: Int = 200,
     headers: Headers = headersOf(),
     body: String = "",
     inTunnel: Boolean = false,
-    socketPolicy: SocketPolicy = SocketPolicy.KEEP_OPEN,
+    socketPolicy: SocketPolicy = KeepOpen,
     http2ErrorCode: Int = -1,
   ) : this(Builder()
     .apply {
@@ -101,7 +98,9 @@ class MockResponse {
     this.status = builder.status
     this.headers = builder.headers.build()
     this.trailers = builder.trailers.build()
-    this.body = builder.body?.clone()
+    this.body = builder.body
+    this.streamHandler = builder.streamHandler
+    this.webSocketListener = builder.webSocketListener
     this.inTunnel = builder.inTunnel
     this.informationalResponses = builder.informationalResponses.toList()
     this.throttleBytesPerPeriod = builder.throttleBytesPerPeriod
@@ -114,8 +113,6 @@ class MockResponse {
     this.settings = Settings().apply {
       merge(builder.settings)
     }
-    this.webSocketListener = builder.webSocketListener
-    this.duplexResponseBody = builder.duplexResponseBody
   }
 
   fun newBuilder(): Builder = Builder(this)
@@ -152,7 +149,31 @@ class MockResponse {
 
     internal var trailers: Headers.Builder
 
-    internal var body: Buffer?
+    // At most one of (body,webSocketListener,streamHandler) is non-null.
+    private var body_: MockResponseBody? = null
+    private var streamHandler_: StreamHandler? = null
+    private var webSocketListener_: WebSocketListener? = null
+    var body: MockResponseBody?
+      get() = body_
+      set(value) {
+        body_ = value
+        streamHandler_ = null
+        webSocketListener_ = null
+      }
+    var streamHandler: StreamHandler?
+      get() = streamHandler_
+      set(value) {
+        streamHandler_ = value
+        body_ = null
+        webSocketListener_ = null
+      }
+    var webSocketListener: WebSocketListener?
+      get() = webSocketListener_
+      set(value) {
+        webSocketListener_ = value
+        body_ = null
+        streamHandler_ = null
+      }
 
     var throttleBytesPerPeriod: Long
       private set
@@ -170,29 +191,25 @@ class MockResponse {
     val pushPromises: MutableList<PushPromise>
 
     val settings: Settings
-    var webSocketListener: WebSocketListener?
-      private set
-    var duplexResponseBody: DuplexResponseBody?
-      private set
 
     constructor() {
       this.inTunnel = false
       this.informationalResponses = mutableListOf()
       this.status = "HTTP/1.1 200 OK"
-      this.body = null
+      this.body_ = null
+      this.streamHandler_ = null
+      this.webSocketListener_ = null
       this.headers = Headers.Builder()
         .add("Content-Length", "0")
       this.trailers = Headers.Builder()
       this.throttleBytesPerPeriod = Long.MAX_VALUE
       this.throttlePeriodNanos = 0L
-      this.socketPolicy = SocketPolicy.KEEP_OPEN
+      this.socketPolicy = KeepOpen
       this.http2ErrorCode = -1
       this.bodyDelayNanos = 0L
       this.headersDelayNanos = 0L
       this.pushPromises = mutableListOf()
       this.settings = Settings()
-      this.webSocketListener = null
-      this.duplexResponseBody = null
     }
 
     internal constructor(mockResponse: MockResponse) {
@@ -201,7 +218,9 @@ class MockResponse {
       this.status = mockResponse.status
       this.headers = mockResponse.headers.newBuilder()
       this.trailers = mockResponse.trailers.newBuilder()
-      this.body = mockResponse.body
+      this.body_ = mockResponse.body
+      this.streamHandler_ = mockResponse.streamHandler
+      this.webSocketListener_ = mockResponse.webSocketListener
       this.throttleBytesPerPeriod = mockResponse.throttleBytesPerPeriod
       this.throttlePeriodNanos = mockResponse.throttlePeriodNanos
       this.socketPolicy = mockResponse.socketPolicy
@@ -212,8 +231,6 @@ class MockResponse {
       this.settings = Settings().apply {
         merge(mockResponse.settings)
       }
-      this.webSocketListener = mockResponse.webSocketListener
-      this.duplexResponseBody = mockResponse.duplexResponseBody
     }
 
     fun code(code: Int) = apply {
@@ -269,16 +286,18 @@ class MockResponse {
       headers.removeAll(name)
     }
 
-    fun body(body: Buffer) = apply {
-      setHeader("Content-Length", body.size)
-      this.body = body.clone() // Defensive copy.
+    fun body(body: Buffer) = body(body.toMockResponseBody())
+
+    fun body(body: MockResponseBody) = apply {
+      setHeader("Content-Length", body.contentLength)
+      this.body = body
     }
 
     /** Sets the response body to the UTF-8 encoded bytes of [body]. */
     fun body(body: String): Builder = body(Buffer().writeUtf8(body))
 
-    fun body(duplexResponseBody: DuplexResponseBody) = apply {
-      this.duplexResponseBody = duplexResponseBody
+    fun streamHandler(streamHandler: StreamHandler) = apply {
+      this.streamHandler = streamHandler
     }
 
     /**
@@ -297,7 +316,7 @@ class MockResponse {
         bytesOut.writeUtf8("\r\n")
       }
       bytesOut.writeUtf8("0\r\n") // Last chunk. Trailers follow!
-      this.body = bytesOut
+      this.body = bytesOut.toMockResponseBody()
     }
 
     /**
@@ -367,13 +386,12 @@ class MockResponse {
 
     /**
      * Attempts to perform a web socket upgrade on the connection.
-     * This will overwrite any previously set status or body.
+     * This will overwrite any previously set status, body, or streamHandler.
      */
     fun webSocketUpgrade(listener: WebSocketListener) = apply {
       status = "HTTP/1.1 101 Switching Protocols"
       setHeader("Connection", "Upgrade")
       setHeader("Upgrade", "websocket")
-      body = null
       webSocketListener = listener
     }
 

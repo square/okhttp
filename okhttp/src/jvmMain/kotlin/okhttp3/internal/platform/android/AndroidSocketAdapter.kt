@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.platform.android
 
+import android.os.Build
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import javax.net.ssl.SSLSocket
@@ -52,7 +53,8 @@ open class AndroidSocketAdapter(private val sslSocketClass: Class<in SSLSocket>)
         // Enable session tickets.
         setUseSessionTickets.invoke(sslSocket, true)
 
-        if (hostname != null) {
+        // Assume platform support on 24+
+        if (hostname != null && Build.VERSION.SDK_INT <= 23) {
           // This is SSLParameters.setServerNames() in API 24+.
           setHostname.invoke(sslSocket, hostname)
         }

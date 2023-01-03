@@ -20,87 +20,83 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.FutureTask
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
-import mockwebserver3.RecordedRequest
-import okhttp3.internal.http2.ErrorCode
-import okhttp3.internal.http2.Http2Stream
-import okio.BufferedSink
-import okio.BufferedSource
-import okio.buffer
+import mockwebserver3.Stream
+import mockwebserver3.StreamHandler
 import okio.utf8Size
 
-private typealias Action = (RecordedRequest, BufferedSource, BufferedSink, Http2Stream) -> Unit
+private typealias Action = (Stream) -> Unit
 
 /**
  * A scriptable request/response conversation. Create the script by calling methods like
  * [receiveRequest] in the sequence they are run.
  */
-class MockDuplexResponseBody : DuplexResponseBody {
+class MockStreamHandler : StreamHandler {
   private val actions = LinkedBlockingQueue<Action>()
   private val results = LinkedBlockingQueue<FutureTask<Void>>()
 
   fun receiveRequest(expected: String) = apply {
-    actions += { _, requestBody, _, _ ->
-      val actual = requestBody.readUtf8(expected.utf8Size())
+    actions += { stream ->
+      val actual = stream.requestBody.readUtf8(expected.utf8Size())
       if (actual != expected) throw AssertionError("$actual != $expected")
     }
   }
 
   fun exhaustRequest() = apply {
-    actions += { _, requestBody, _, _ ->
-      if (!requestBody.exhausted()) throw AssertionError("expected exhausted")
+    actions += { stream ->
+      if (!stream.requestBody.exhausted()) throw AssertionError("expected exhausted")
     }
   }
 
-  fun cancelStream(errorCode: ErrorCode) = apply {
-    actions += { _, _, _, stream -> stream.closeLater(errorCode) }
+  fun cancelStream() = apply {
+    actions += { stream -> stream.cancel() }
   }
 
   fun requestIOException() = apply {
-    actions += { _, requestBody, _, _ ->
+    actions += { stream ->
       try {
-        requestBody.exhausted()
+        stream.requestBody.exhausted()
         throw AssertionError("expected IOException")
       } catch (expected: IOException) {
       }
     }
   }
 
-  @JvmOverloads fun sendResponse(
+  @JvmOverloads
+  fun sendResponse(
     s: String,
     responseSent: CountDownLatch = CountDownLatch(0)
   ) = apply {
-    actions += { _, _, responseBody, _ ->
-      responseBody.writeUtf8(s)
-      responseBody.flush()
+    actions += { stream ->
+      stream.responseBody.writeUtf8(s)
+      stream.responseBody.flush()
       responseSent.countDown()
     }
   }
 
   fun exhaustResponse() = apply {
-    actions += { _, _, responseBody, _ -> responseBody.close() }
+    actions += { stream -> stream.responseBody.close() }
   }
 
   fun sleep(duration: Long, unit: TimeUnit) = apply {
-    actions += { _, _, _, _ -> Thread.sleep(unit.toMillis(duration)) }
+    actions += { Thread.sleep(unit.toMillis(duration)) }
   }
 
-  override fun onRequest(request: RecordedRequest, http2Stream: Http2Stream) {
-    val task = serviceStreamTask(request, http2Stream)
+  override fun handle(stream: Stream) {
+    val task = serviceStreamTask(stream)
     results.add(task)
     task.run()
   }
 
-  /** Returns a task that processes both request and response from [http2Stream]. */
+  /** Returns a task that processes both request and response from [stream]. */
   private fun serviceStreamTask(
-    request: RecordedRequest,
-    http2Stream: Http2Stream
+    stream: Stream,
   ): FutureTask<Void> {
     return FutureTask<Void> {
-      http2Stream.getSource().buffer().use { requestBody ->
-        http2Stream.getSink().buffer().use { responseBody ->
+      stream.requestBody.use {
+        stream.responseBody.use {
           while (true) {
             val action = actions.poll() ?: break
-            action(request, requestBody, responseBody, http2Stream)
+            action(stream)
           }
         }
       }
@@ -108,10 +104,10 @@ class MockDuplexResponseBody : DuplexResponseBody {
     }
   }
 
-  /** Returns once the duplex conversation completes successfully. */
+  /** Returns once all stream actions complete successfully. */
   fun awaitSuccess() {
     val futureTask = results.poll(5, TimeUnit.SECONDS)
-        ?: throw AssertionError("no onRequest call received")
+      ?: throw AssertionError("no onRequest call received")
     futureTask.get(5, TimeUnit.SECONDS)
   }
 }

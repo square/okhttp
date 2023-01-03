@@ -16,9 +16,6 @@
 package okhttp3;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.time.Duration;
 import java.util.Locale;
@@ -33,6 +30,7 @@ import mockwebserver3.MockResponse;
 import mockwebserver3.MockWebServer;
 import mockwebserver3.RecordedRequest;
 import mockwebserver3.SocketPolicy;
+import mockwebserver3.SocketPolicy.DisconnectAtEnd;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.ForwardingSink;
@@ -620,7 +618,7 @@ public final class InterceptorTest {
 
   @Test public void networkInterceptorReturnsConnectionOnEmptyBody() throws Exception {
     server.enqueue(new MockResponse.Builder()
-        .socketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        .socketPolicy(DisconnectAtEnd.INSTANCE)
         .addHeader("Connection", "Close")
         .build());
 

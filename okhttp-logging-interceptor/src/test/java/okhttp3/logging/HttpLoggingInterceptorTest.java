@@ -45,9 +45,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
-
 import static okhttp3.RequestBody.gzip;
-import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
@@ -59,7 +57,8 @@ public final class HttpLoggingInterceptorTest {
   @RegisterExtension public final PlatformRule platform = new PlatformRule();
   private MockWebServer server;
 
-  private final HandshakeCertificates handshakeCertificates = localhost();
+  private final HandshakeCertificates handshakeCertificates
+    = platform.localhostHandshakeCertificates();
   private final HostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
   private OkHttpClient client;
   private String host;
@@ -848,8 +847,6 @@ public final class HttpLoggingInterceptorTest {
   }
 
   @Test public void http2() throws Exception {
-    platform.assumeNotBouncyCastle();
-
     server.useHttps(handshakeCertificates.sslSocketFactory());
     url = server.url("/");
 
@@ -930,7 +927,6 @@ public final class HttpLoggingInterceptorTest {
 
   @Test public void duplexRequestsAreNotLogged() throws Exception {
     platform.assumeHttp2Support();
-    platform.assumeNotBouncyCastle();
 
     server.useHttps(handshakeCertificates.sslSocketFactory()); // HTTP/2
     url = server.url("/");

@@ -56,9 +56,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import static mockwebserver3.SocketPolicy.DISCONNECT_AT_END;
+import static mockwebserver3.SocketPolicy.DisconnectAtEnd;
 import static okhttp3.internal.Internal.cacheGet;
-import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -73,7 +72,8 @@ public final class CacheTest {
 
   private MockWebServer server;
   private MockWebServer server2;
-  private final HandshakeCertificates handshakeCertificates = localhost();
+  private final HandshakeCertificates handshakeCertificates
+    = platform.localhostHandshakeCertificates();
   private OkHttpClient client;
   private Cache cache;
   private final CookieManager cookieManager = new CookieManager();
@@ -87,7 +87,6 @@ public final class CacheTest {
     this.server2 = server2;
 
     platform.assumeNotOpenJSSE();
-    platform.assumeNotBouncyCastle();
 
     server.setProtocolNegotiationEnabled(false);
     fileSystem.emulateUnix();
@@ -2889,12 +2888,15 @@ public final class CacheTest {
    * Shortens the body of {@code response} but not the corresponding headers. Only useful to test
    * how clients respond to the premature conclusion of the HTTP body.
    */
-  private MockResponse.Builder truncateViolently(MockResponse.Builder builder, int numBytesToKeep) {
+  private MockResponse.Builder truncateViolently(
+      MockResponse.Builder builder, int numBytesToKeep) throws IOException {
     MockResponse response = builder.build();
-    builder.socketPolicy(DISCONNECT_AT_END);
+    builder.socketPolicy(DisconnectAtEnd.INSTANCE);
     Headers headers = response.getHeaders();
+    Buffer fullBody = new Buffer();
+    response.getBody().writeTo(fullBody);
     Buffer truncatedBody = new Buffer();
-    truncatedBody.write(response.getBody(), numBytesToKeep);
+    truncatedBody.write(fullBody, numBytesToKeep);
     builder.body(truncatedBody);
     builder.headers(headers);
     return builder;
@@ -2914,7 +2916,7 @@ public final class CacheTest {
     END_OF_STREAM {
       @Override void setBody(MockResponse.Builder response, Buffer content, int chunkSize) {
         response.body(content);
-        response.socketPolicy(DISCONNECT_AT_END);
+        response.socketPolicy(DisconnectAtEnd.INSTANCE);
         response.removeHeader("Content-Length");
       }
     };

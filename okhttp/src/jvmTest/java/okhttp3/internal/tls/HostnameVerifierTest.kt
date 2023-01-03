@@ -28,7 +28,6 @@ import okhttp3.internal.canParseAsIpAddress
 import okhttp3.internal.platform.Platform.Companion.isAndroid
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.HeldCertificate
-import okhttp3.tls.internal.TlsUtil.localhost
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -775,7 +774,8 @@ class HostnameVerifierTest {
 
     // Since this is public API, okhttp3.internal.tls.OkHostnameVerifier.verify is also
     assertThat(verifier).isInstanceOf(OkHostnameVerifier::class.java)
-    val session = localhost().sslContext().createSSLEngine().session
+    val handshakeCertificates = platform.localhostHandshakeCertificates()
+    val session = handshakeCertificates.sslContext().createSSLEngine().session
     assertThat(localVerifier.verify("\uD83D\uDCA9.com", session)).isFalse
   }
 

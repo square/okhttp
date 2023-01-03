@@ -16,15 +16,21 @@
 package okhttp3
 
 import android.annotation.SuppressLint
+import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
 import java.util.logging.Handler
 import java.util.logging.Level
 import java.util.logging.LogManager
 import java.util.logging.LogRecord
 import java.util.logging.Logger
+import okhttp3.internal.buildConnectionPool
 import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.connection.RealConnectionPool
 import okhttp3.internal.http2.Http2
+import okhttp3.internal.taskRunnerInternal
 import okhttp3.testing.Flaky
+import okhttp3.testing.PlatformRule.Companion.LOOM_PROPERTY
+import okhttp3.testing.PlatformRule.Companion.getPlatformSystemProperty
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.extension.AfterEachCallback
@@ -45,6 +51,7 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
   private lateinit var testName: String
   private var defaultUncaughtExceptionHandler: Thread.UncaughtExceptionHandler? = null
   private var taskQueuesWereIdle: Boolean = false
+  val connectionListener = RecordingConnectionListener()
 
   var logger: Logger? = null
 
@@ -114,13 +121,38 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
   fun newClient(): OkHttpClient {
     var client = testClient
     if (client == null) {
-      client = OkHttpClient.Builder()
+      client = initialClientBuilder()
         .dns(SINGLE_INET_ADDRESS_DNS) // Prevent unexpected fallback addresses.
         .eventListenerFactory { ClientRuleEventListener(logger = ::addEvent) }
         .build()
+      connectionListener.forbidLock(RealConnectionPool.get(client.connectionPool))
+      connectionListener.forbidLock(client.dispatcher)
       testClient = client
     }
     return client
+  }
+
+  private fun initialClientBuilder(): OkHttpClient.Builder = if (isLoom()) {
+    val backend = TaskRunner.RealBackend(loomThreadFactory())
+    val taskRunner = TaskRunner(backend)
+
+    OkHttpClient.Builder()
+      .connectionPool(buildConnectionPool(connectionListener = connectionListener, taskRunner = taskRunner))
+      .dispatcher(Dispatcher(backend.executor))
+      .taskRunnerInternal(taskRunner)
+  } else {
+    OkHttpClient.Builder()
+      .connectionPool(ConnectionPool(connectionListener = connectionListener))
+  }
+
+  private fun loomThreadFactory(): ThreadFactory {
+    val ofVirtual = Thread::class.java.getMethod("ofVirtual").invoke(null)
+
+    return Class.forName("java.lang.Thread\$Builder").getMethod("factory").invoke(ofVirtual) as ThreadFactory
+  }
+
+  private fun isLoom(): Boolean {
+    return getPlatformSystemProperty() == LOOM_PROPERTY
   }
 
   fun newClientBuilder(): OkHttpClient.Builder {
@@ -168,7 +200,9 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
       // a test timeout failure.
       val waitTime = (entryTime + 1_000_000_000L - System.nanoTime())
       if (!queue.idleLatch().await(waitTime, TimeUnit.NANOSECONDS)) {
-        TaskRunner.INSTANCE.cancelAll()
+        synchronized (TaskRunner.INSTANCE) {
+          TaskRunner.INSTANCE.cancelAll()
+        }
         fail<Unit>("Queue still active after 1000 ms")
       }
     }
@@ -248,6 +282,10 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
         println(e)
       }
     }
+  }
+
+  fun recordedConnectionEventTypes(): List<String> {
+    return connectionListener.recordedEventTypes()
   }
 
   companion object {

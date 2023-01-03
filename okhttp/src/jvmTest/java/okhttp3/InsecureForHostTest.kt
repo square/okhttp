@@ -21,7 +21,6 @@ import mockwebserver3.MockWebServer
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
-import okhttp3.tls.internal.TlsUtil.localhost
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -43,7 +42,7 @@ class InsecureForHostTest {
   }
 
   @Test fun `untrusted host in insecureHosts connects successfully`() {
-    val serverCertificates = localhost()
+    val serverCertificates = platform.localhostHandshakeCertificates()
     server.useHttps(serverCertificates.sslSocketFactory())
     server.enqueue(MockResponse())
 
@@ -95,7 +94,7 @@ class InsecureForHostTest {
   }
 
   @Test fun `untrusted host not in insecureHosts fails with SSLException`() {
-    val serverCertificates = localhost()
+    val serverCertificates = platform.localhostHandshakeCertificates()
     server.useHttps(serverCertificates.sslSocketFactory())
     server.enqueue(MockResponse())
 

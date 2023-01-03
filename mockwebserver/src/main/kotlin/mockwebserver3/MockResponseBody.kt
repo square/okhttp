@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Square, Inc.
+ * Copyright (c) 2022 Block, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,14 +12,23 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
-package mockwebserver3.internal.duplex
+package mockwebserver3
 
 import java.io.IOException
-import okhttp3.internal.http2.Http2Stream
-import mockwebserver3.RecordedRequest
+import okio.BufferedSink
 
-fun interface DuplexResponseBody {
+/**
+ * The body of a [MockResponse].
+ *
+ * Unlike [okhttp3.ResponseBody], this interface is designed to be implemented by writers and not
+ * called by readers.
+ */
+interface MockResponseBody {
+  /** The length of this response in bytes, or -1 if unknown. */
+  val contentLength: Long
+
   @Throws(IOException::class)
-  fun onRequest(request: RecordedRequest, http2Stream: Http2Stream)
+  fun writeTo(sink: BufferedSink)
 }

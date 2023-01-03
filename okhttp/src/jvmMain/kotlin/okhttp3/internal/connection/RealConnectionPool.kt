@@ -20,6 +20,7 @@ import java.net.Socket
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
 import okhttp3.Address
+import okhttp3.ConnectionListener
 import okhttp3.ConnectionPool
 import okhttp3.Route
 import okhttp3.internal.assertThreadHoldsLock
@@ -36,7 +37,8 @@ class RealConnectionPool(
   /** The maximum number of idle connections for each address. */
   private val maxIdleConnections: Int,
   keepAliveDuration: Long,
-  timeUnit: TimeUnit
+  timeUnit: TimeUnit,
+  internal val connectionListener: ConnectionListener
 ) {
   private val keepAliveDurationNs: Long = timeUnit.toNanos(keepAliveDuration)
 
@@ -105,11 +107,18 @@ class RealConnectionPool(
 
       // In the second synchronized block, release the unhealthy acquired connection. We're also on
       // the hook to close this connection if it's no longer in use.
+      val noNewExchangesEvent: Boolean
       val toClose: Socket? = synchronized(connection) {
+        noNewExchangesEvent = !connection.noNewExchanges
         connection.noNewExchanges = true
         call.releaseConnectionNoEvents()
       }
-      toClose?.closeQuietly()
+      if (toClose != null) {
+        toClose.closeQuietly()
+        connectionListener.connectionClosed(connection)
+      } else if (noNewExchangesEvent) {
+        connectionListener.noNewExchanges(connection)
+      }
     }
     return null
   }
@@ -118,6 +127,7 @@ class RealConnectionPool(
     connection.assertThreadHoldsLock()
 
     connections.add(connection)
+//    connection.queueEvent { connectionListener.connectEnd(connection) }
     cleanupQueue.schedule(cleanupTask)
   }
 
@@ -149,10 +159,13 @@ class RealConnectionPool(
           connection.noNewExchanges = true
           return@synchronized connection.socket()
         } else {
-          return@synchronized null
+          return@synchronized  null
         }
       }
-      socketToClose?.closeQuietly()
+      if (socketToClose != null) {
+        socketToClose.closeQuietly()
+        connectionListener.connectionClosed(connection)
+      }
     }
 
     if (connections.isEmpty()) cleanupQueue.cancelAll()
@@ -201,8 +214,8 @@ class RealConnectionPool(
           connection.noNewExchanges = true
           connections.remove(longestIdleConnection)
         }
-
         connection.socket().closeQuietly()
+        connectionListener.connectionClosed(connection)
         if (connections.isEmpty()) cleanupQueue.cancelAll()
 
         // Clean up again immediately.
@@ -252,7 +265,6 @@ class RealConnectionPool(
       Platform.get().logCloseableLeak(message, callReference.callStackTrace)
 
       references.removeAt(i)
-      connection.noNewExchanges = true
 
       // If this was the last allocation, the connection is eligible for immediate eviction.
       if (references.isEmpty()) {

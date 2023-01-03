@@ -33,8 +33,6 @@ class OkHttpClientTest {
   @JvmField @RegisterExtension val platform = PlatformRule()
 
   @Test fun get(server: MockWebServer) {
-    platform.assumeNotBouncyCastle()
-
     server.enqueue(MockResponse(body = "hello, OkHttp"))
 
     val client = OkHttpClient()

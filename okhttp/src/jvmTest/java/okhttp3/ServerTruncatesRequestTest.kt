@@ -19,11 +19,11 @@ import javax.net.ssl.SSLSocket
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy
+import mockwebserver3.SocketPolicy.DoNotReadRequestBody
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.internal.duplex.AsyncRequestBody
 import okhttp3.internal.http2.ErrorCode
 import okhttp3.testing.PlatformRule
-import okhttp3.tls.internal.TlsUtil.localhost
 import okio.BufferedSink
 import okio.IOException
 import org.assertj.core.api.Assertions.assertThat
@@ -47,7 +47,7 @@ class ServerTruncatesRequestTest {
   var clientTestRule = OkHttpClientTestRule()
 
   private val listener = RecordingEventListener()
-  private val handshakeCertificates = localhost()
+  private val handshakeCertificates = platform.localhostHandshakeCertificates()
 
   private var client = clientTestRule.newClientBuilder()
     .eventListenerFactory(clientTestRule.wrap(listener))
@@ -60,7 +60,6 @@ class ServerTruncatesRequestTest {
     this.server = server
     platform.assumeNotOpenJSSE()
     platform.assumeHttp2Support()
-    platform.assumeNotBouncyCastle()
   }
 
   @Test
@@ -78,7 +77,7 @@ class ServerTruncatesRequestTest {
     server.enqueue(
       MockResponse(
         body = "abc",
-        socketPolicy = SocketPolicy.DO_NOT_READ_REQUEST_BODY,
+        socketPolicy = DoNotReadRequestBody,
         http2ErrorCode = ErrorCode.NO_ERROR.httpCode,
       )
     )
@@ -136,7 +135,7 @@ class ServerTruncatesRequestTest {
     server.enqueue(
       MockResponse(
         body = "abc",
-        socketPolicy = SocketPolicy.DO_NOT_READ_REQUEST_BODY,
+        socketPolicy = DoNotReadRequestBody,
         http2ErrorCode = ErrorCode.NO_ERROR.httpCode,
       )
     )
@@ -182,7 +181,7 @@ class ServerTruncatesRequestTest {
 
   private fun serverTruncatesRequestButTrailersCanStillBeRead(http2: Boolean) {
     val mockResponse = MockResponse.Builder()
-      .socketPolicy(SocketPolicy.DO_NOT_READ_REQUEST_BODY)
+      .socketPolicy(DoNotReadRequestBody)
       .trailers(headersOf("caboose", "xyz"))
       .http2ErrorCode(ErrorCode.NO_ERROR.httpCode)
 

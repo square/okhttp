@@ -16,10 +16,9 @@ public final class mockwebserver3/MockResponse {
 	public fun <init> (ILokhttp3/Headers;Ljava/lang/String;ZLmockwebserver3/SocketPolicy;I)V
 	public synthetic fun <init> (ILokhttp3/Headers;Ljava/lang/String;ZLmockwebserver3/SocketPolicy;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (Lmockwebserver3/MockResponse$Builder;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun getBody ()Lokio/Buffer;
+	public final fun getBody ()Lmockwebserver3/MockResponseBody;
 	public final fun getBodyDelayNanos ()J
 	public final fun getCode ()I
-	public final fun getDuplexResponseBody ()Lmockwebserver3/internal/duplex/DuplexResponseBody;
 	public final fun getHeaders ()Lokhttp3/Headers;
 	public final fun getHeadersDelayNanos ()J
 	public final fun getHttp2ErrorCode ()I
@@ -30,11 +29,11 @@ public final class mockwebserver3/MockResponse {
 	public final fun getSettings ()Lokhttp3/internal/http2/Settings;
 	public final fun getSocketPolicy ()Lmockwebserver3/SocketPolicy;
 	public final fun getStatus ()Ljava/lang/String;
+	public final fun getStreamHandler ()Lmockwebserver3/StreamHandler;
 	public final fun getThrottleBytesPerPeriod ()J
 	public final fun getThrottlePeriodNanos ()J
 	public final fun getTrailers ()Lokhttp3/Headers;
 	public final fun getWebSocketListener ()Lokhttp3/WebSocketListener;
-	public final fun isDuplex ()Z
 	public final fun newBuilder ()Lmockwebserver3/MockResponse$Builder;
 	public fun toString ()Ljava/lang/String;
 }
@@ -48,7 +47,7 @@ public final class mockwebserver3/MockResponse$Builder : java/lang/Cloneable {
 	public final fun addInformationalResponse (Lmockwebserver3/MockResponse;)Lmockwebserver3/MockResponse$Builder;
 	public final fun addPush (Lmockwebserver3/PushPromise;)Lmockwebserver3/MockResponse$Builder;
 	public final fun body (Ljava/lang/String;)Lmockwebserver3/MockResponse$Builder;
-	public final fun body (Lmockwebserver3/internal/duplex/DuplexResponseBody;)Lmockwebserver3/MockResponse$Builder;
+	public final fun body (Lmockwebserver3/MockResponseBody;)Lmockwebserver3/MockResponse$Builder;
 	public final fun body (Lokio/Buffer;)Lmockwebserver3/MockResponse$Builder;
 	public final fun bodyDelay (JLjava/util/concurrent/TimeUnit;)Lmockwebserver3/MockResponse$Builder;
 	public final fun build ()Lmockwebserver3/MockResponse;
@@ -58,8 +57,8 @@ public final class mockwebserver3/MockResponse$Builder : java/lang/Cloneable {
 	public synthetic fun clone ()Ljava/lang/Object;
 	public fun clone ()Lmockwebserver3/MockResponse$Builder;
 	public final fun code (I)Lmockwebserver3/MockResponse$Builder;
+	public final fun getBody ()Lmockwebserver3/MockResponseBody;
 	public final fun getCode ()I
-	public final fun getDuplexResponseBody ()Lmockwebserver3/internal/duplex/DuplexResponseBody;
 	public final fun getHttp2ErrorCode ()I
 	public final fun getInTunnel ()Z
 	public final fun getInformationalResponses ()Ljava/util/List;
@@ -67,6 +66,7 @@ public final class mockwebserver3/MockResponse$Builder : java/lang/Cloneable {
 	public final fun getSettings ()Lokhttp3/internal/http2/Settings;
 	public final fun getSocketPolicy ()Lmockwebserver3/SocketPolicy;
 	public final fun getStatus ()Ljava/lang/String;
+	public final fun getStreamHandler ()Lmockwebserver3/StreamHandler;
 	public final fun getThrottleBytesPerPeriod ()J
 	public final fun getWebSocketListener ()Lokhttp3/WebSocketListener;
 	public final fun headers (Lokhttp3/Headers;)Lmockwebserver3/MockResponse$Builder;
@@ -74,20 +74,29 @@ public final class mockwebserver3/MockResponse$Builder : java/lang/Cloneable {
 	public final fun http2ErrorCode (I)Lmockwebserver3/MockResponse$Builder;
 	public final fun inTunnel ()Lmockwebserver3/MockResponse$Builder;
 	public final fun removeHeader (Ljava/lang/String;)Lmockwebserver3/MockResponse$Builder;
+	public final fun setBody (Lmockwebserver3/MockResponseBody;)V
 	public final fun setCode (I)V
 	public final fun setHeader (Ljava/lang/String;Ljava/lang/Object;)Lmockwebserver3/MockResponse$Builder;
 	public final fun setHttp2ErrorCode (I)V
 	public final fun setSocketPolicy (Lmockwebserver3/SocketPolicy;)V
 	public final fun setStatus (Ljava/lang/String;)V
+	public final fun setStreamHandler (Lmockwebserver3/StreamHandler;)V
+	public final fun setWebSocketListener (Lokhttp3/WebSocketListener;)V
 	public final fun settings (Lokhttp3/internal/http2/Settings;)Lmockwebserver3/MockResponse$Builder;
 	public final fun socketPolicy (Lmockwebserver3/SocketPolicy;)Lmockwebserver3/MockResponse$Builder;
 	public final fun status (Ljava/lang/String;)Lmockwebserver3/MockResponse$Builder;
+	public final fun streamHandler (Lmockwebserver3/StreamHandler;)Lmockwebserver3/MockResponse$Builder;
 	public final fun throttleBody (JJLjava/util/concurrent/TimeUnit;)Lmockwebserver3/MockResponse$Builder;
 	public final fun trailers (Lokhttp3/Headers;)Lmockwebserver3/MockResponse$Builder;
 	public final fun webSocketUpgrade (Lokhttp3/WebSocketListener;)Lmockwebserver3/MockResponse$Builder;
 }
 
 public final class mockwebserver3/MockResponse$Companion {
+}
+
+public abstract interface class mockwebserver3/MockResponseBody {
+	public abstract fun getContentLength ()J
+	public abstract fun writeTo (Lokio/BufferedSink;)V
 }
 
 public final class mockwebserver3/MockWebServer : java/io/Closeable {
@@ -171,23 +180,76 @@ public final class mockwebserver3/RecordedRequest {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class mockwebserver3/SocketPolicy : java/lang/Enum {
-	public static final field DISCONNECT_AFTER_REQUEST Lmockwebserver3/SocketPolicy;
-	public static final field DISCONNECT_AT_END Lmockwebserver3/SocketPolicy;
-	public static final field DISCONNECT_AT_START Lmockwebserver3/SocketPolicy;
-	public static final field DISCONNECT_DURING_REQUEST_BODY Lmockwebserver3/SocketPolicy;
-	public static final field DISCONNECT_DURING_RESPONSE_BODY Lmockwebserver3/SocketPolicy;
-	public static final field DO_NOT_READ_REQUEST_BODY Lmockwebserver3/SocketPolicy;
-	public static final field FAIL_HANDSHAKE Lmockwebserver3/SocketPolicy;
-	public static final field HALF_CLOSE_AFTER_REQUEST Lmockwebserver3/SocketPolicy;
-	public static final field KEEP_OPEN Lmockwebserver3/SocketPolicy;
-	public static final field NO_RESPONSE Lmockwebserver3/SocketPolicy;
-	public static final field RESET_STREAM_AT_START Lmockwebserver3/SocketPolicy;
-	public static final field SHUTDOWN_INPUT_AT_END Lmockwebserver3/SocketPolicy;
-	public static final field SHUTDOWN_OUTPUT_AT_END Lmockwebserver3/SocketPolicy;
-	public static final field SHUTDOWN_SERVER_AFTER_RESPONSE Lmockwebserver3/SocketPolicy;
-	public static final field STALL_SOCKET_AT_START Lmockwebserver3/SocketPolicy;
-	public static fun valueOf (Ljava/lang/String;)Lmockwebserver3/SocketPolicy;
-	public static fun values ()[Lmockwebserver3/SocketPolicy;
+public abstract interface class mockwebserver3/SocketPolicy {
+}
+
+public final class mockwebserver3/SocketPolicy$DisconnectAfterRequest : mockwebserver3/SocketPolicy {
+	public static final field INSTANCE Lmockwebserver3/SocketPolicy$DisconnectAfterRequest;
+}
+
+public final class mockwebserver3/SocketPolicy$DisconnectAtEnd : mockwebserver3/SocketPolicy {
+	public static final field INSTANCE Lmockwebserver3/SocketPolicy$DisconnectAtEnd;
+}
+
+public final class mockwebserver3/SocketPolicy$DisconnectAtStart : mockwebserver3/SocketPolicy {
+	public static final field INSTANCE Lmockwebserver3/SocketPolicy$DisconnectAtStart;
+}
+
+public final class mockwebserver3/SocketPolicy$DisconnectDuringRequestBody : mockwebserver3/SocketPolicy {
+	public static final field INSTANCE Lmockwebserver3/SocketPolicy$DisconnectDuringRequestBody;
+}
+
+public final class mockwebserver3/SocketPolicy$DisconnectDuringResponseBody : mockwebserver3/SocketPolicy {
+	public static final field INSTANCE Lmockwebserver3/SocketPolicy$DisconnectDuringResponseBody;
+}
+
+public final class mockwebserver3/SocketPolicy$DoNotReadRequestBody : mockwebserver3/SocketPolicy {
+	public static final field INSTANCE Lmockwebserver3/SocketPolicy$DoNotReadRequestBody;
+}
+
+public final class mockwebserver3/SocketPolicy$FailHandshake : mockwebserver3/SocketPolicy {
+	public static final field INSTANCE Lmockwebserver3/SocketPolicy$FailHandshake;
+}
+
+public final class mockwebserver3/SocketPolicy$HalfCloseAfterRequest : mockwebserver3/SocketPolicy {
+	public static final field INSTANCE Lmockwebserver3/SocketPolicy$HalfCloseAfterRequest;
+}
+
+public final class mockwebserver3/SocketPolicy$KeepOpen : mockwebserver3/SocketPolicy {
+	public static final field INSTANCE Lmockwebserver3/SocketPolicy$KeepOpen;
+}
+
+public final class mockwebserver3/SocketPolicy$NoResponse : mockwebserver3/SocketPolicy {
+	public static final field INSTANCE Lmockwebserver3/SocketPolicy$NoResponse;
+}
+
+public final class mockwebserver3/SocketPolicy$ResetStreamAtStart : mockwebserver3/SocketPolicy {
+	public static final field INSTANCE Lmockwebserver3/SocketPolicy$ResetStreamAtStart;
+}
+
+public final class mockwebserver3/SocketPolicy$ShutdownInputAtEnd : mockwebserver3/SocketPolicy {
+	public static final field INSTANCE Lmockwebserver3/SocketPolicy$ShutdownInputAtEnd;
+}
+
+public final class mockwebserver3/SocketPolicy$ShutdownOutputAtEnd : mockwebserver3/SocketPolicy {
+	public static final field INSTANCE Lmockwebserver3/SocketPolicy$ShutdownOutputAtEnd;
+}
+
+public final class mockwebserver3/SocketPolicy$ShutdownServerAfterResponse : mockwebserver3/SocketPolicy {
+	public static final field INSTANCE Lmockwebserver3/SocketPolicy$ShutdownServerAfterResponse;
+}
+
+public final class mockwebserver3/SocketPolicy$StallSocketAtStart : mockwebserver3/SocketPolicy {
+	public static final field INSTANCE Lmockwebserver3/SocketPolicy$StallSocketAtStart;
+}
+
+public abstract interface class mockwebserver3/Stream {
+	public abstract fun cancel ()V
+	public abstract fun getRequestBody ()Lokio/BufferedSource;
+	public abstract fun getResponseBody ()Lokio/BufferedSink;
+}
+
+public abstract interface class mockwebserver3/StreamHandler {
+	public abstract fun handle (Lmockwebserver3/Stream;)V
 }
 
