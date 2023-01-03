@@ -718,6 +718,10 @@ open class OkHttpClient internal constructor(
       this.cache = cache
     }
 
+    internal fun taskRunner(taskRunner: TaskRunner) = apply {
+      this.taskRunner = taskRunner
+    }
+
     /**
      * Sets the DNS service used to lookup IP addresses for hostnames.
      *

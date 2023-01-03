@@ -244,7 +244,8 @@ public final class MockWebServerTest {
 
   @Disabled("Not actually failing where expected")
   @Test public void disconnectAtStart() throws Exception {
-    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START));
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_START));
     server.enqueue(new MockResponse()); // The jdk's HttpUrlConnection is a bastard.
     server.enqueue(new MockResponse());
     try {

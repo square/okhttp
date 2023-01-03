@@ -214,6 +214,8 @@ open class PlatformRule @JvmOverloads constructor(
 
   fun isOpenJsse() = getPlatformSystemProperty() == OPENJSSE_PROPERTY
 
+  fun isLoom() = getPlatformSystemProperty() == LOOM_PROPERTY
+
   fun isGraalVMImage() = TestUtil.isGraalVmImage
 
   fun hasHttp2Support() = !isJdk8()
@@ -250,6 +252,10 @@ open class PlatformRule @JvmOverloads constructor(
     assumeTrue(getPlatformSystemProperty() == OPENJSSE_PROPERTY)
   }
 
+  fun assumeLoom() {
+    assumeTrue(getPlatformSystemProperty() == LOOM_PROPERTY)
+  }
+
   fun assumeHttp2Support() {
     assumeTrue(getPlatformSystemProperty() != JDK8_PROPERTY)
   }
@@ -280,6 +286,10 @@ open class PlatformRule @JvmOverloads constructor(
 
   fun assumeNotOpenJSSE() {
     assumeTrue(getPlatformSystemProperty() != OPENJSSE_PROPERTY)
+  }
+
+  fun assumeNotLoom() {
+    assumeTrue(getPlatformSystemProperty() != LOOM_PROPERTY)
   }
 
   fun assumeNotCorretto() {
@@ -346,6 +356,7 @@ open class PlatformRule @JvmOverloads constructor(
     const val JDK8_PROPERTY = "jdk8"
     const val OPENJSSE_PROPERTY = "openjsse"
     const val BOUNCYCASTLE_PROPERTY = "bouncycastle"
+    const val LOOM_PROPERTY = "loom"
 
     /**
      * For whatever reason our BouncyCastle provider doesn't work with ECDSA keys. Just configure it
@@ -356,7 +367,7 @@ open class PlatformRule @JvmOverloads constructor(
     private val localhostHandshakeCertificatesWithRsa2048: HandshakeCertificates by lazy {
       val heldCertificate = HeldCertificate.Builder()
         .commonName("localhost")
-        .addSubjectAlternativeName(InetAddress.getByName("localhost").canonicalHostName)
+        .addSubjectAlternativeName("localhost")
         .rsa2048()
         .build()
       return@lazy HandshakeCertificates.Builder()

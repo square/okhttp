@@ -181,24 +181,67 @@ public final class mockwebserver3/RecordedRequest {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class mockwebserver3/SocketPolicy : java/lang/Enum {
-	public static final field DISCONNECT_AFTER_REQUEST Lmockwebserver3/SocketPolicy;
-	public static final field DISCONNECT_AT_END Lmockwebserver3/SocketPolicy;
-	public static final field DISCONNECT_AT_START Lmockwebserver3/SocketPolicy;
-	public static final field DISCONNECT_DURING_REQUEST_BODY Lmockwebserver3/SocketPolicy;
-	public static final field DISCONNECT_DURING_RESPONSE_BODY Lmockwebserver3/SocketPolicy;
-	public static final field DO_NOT_READ_REQUEST_BODY Lmockwebserver3/SocketPolicy;
-	public static final field FAIL_HANDSHAKE Lmockwebserver3/SocketPolicy;
-	public static final field HALF_CLOSE_AFTER_REQUEST Lmockwebserver3/SocketPolicy;
-	public static final field KEEP_OPEN Lmockwebserver3/SocketPolicy;
-	public static final field NO_RESPONSE Lmockwebserver3/SocketPolicy;
-	public static final field RESET_STREAM_AT_START Lmockwebserver3/SocketPolicy;
-	public static final field SHUTDOWN_INPUT_AT_END Lmockwebserver3/SocketPolicy;
-	public static final field SHUTDOWN_OUTPUT_AT_END Lmockwebserver3/SocketPolicy;
-	public static final field SHUTDOWN_SERVER_AFTER_RESPONSE Lmockwebserver3/SocketPolicy;
-	public static final field STALL_SOCKET_AT_START Lmockwebserver3/SocketPolicy;
-	public static fun valueOf (Ljava/lang/String;)Lmockwebserver3/SocketPolicy;
-	public static fun values ()[Lmockwebserver3/SocketPolicy;
+public abstract interface class mockwebserver3/SocketPolicy {
+}
+
+public final class mockwebserver3/SocketPolicy$DisconnectAfterRequest : mockwebserver3/SocketPolicy {
+	public static final field INSTANCE Lmockwebserver3/SocketPolicy$DisconnectAfterRequest;
+}
+
+public final class mockwebserver3/SocketPolicy$DisconnectAtEnd : mockwebserver3/SocketPolicy {
+	public static final field INSTANCE Lmockwebserver3/SocketPolicy$DisconnectAtEnd;
+}
+
+public final class mockwebserver3/SocketPolicy$DisconnectAtStart : mockwebserver3/SocketPolicy {
+	public static final field INSTANCE Lmockwebserver3/SocketPolicy$DisconnectAtStart;
+}
+
+public final class mockwebserver3/SocketPolicy$DisconnectDuringRequestBody : mockwebserver3/SocketPolicy {
+	public static final field INSTANCE Lmockwebserver3/SocketPolicy$DisconnectDuringRequestBody;
+}
+
+public final class mockwebserver3/SocketPolicy$DisconnectDuringResponseBody : mockwebserver3/SocketPolicy {
+	public static final field INSTANCE Lmockwebserver3/SocketPolicy$DisconnectDuringResponseBody;
+}
+
+public final class mockwebserver3/SocketPolicy$DoNotReadRequestBody : mockwebserver3/SocketPolicy {
+	public static final field INSTANCE Lmockwebserver3/SocketPolicy$DoNotReadRequestBody;
+}
+
+public final class mockwebserver3/SocketPolicy$FailHandshake : mockwebserver3/SocketPolicy {
+	public static final field INSTANCE Lmockwebserver3/SocketPolicy$FailHandshake;
+}
+
+public final class mockwebserver3/SocketPolicy$HalfCloseAfterRequest : mockwebserver3/SocketPolicy {
+	public static final field INSTANCE Lmockwebserver3/SocketPolicy$HalfCloseAfterRequest;
+}
+
+public final class mockwebserver3/SocketPolicy$KeepOpen : mockwebserver3/SocketPolicy {
+	public static final field INSTANCE Lmockwebserver3/SocketPolicy$KeepOpen;
+}
+
+public final class mockwebserver3/SocketPolicy$NoResponse : mockwebserver3/SocketPolicy {
+	public static final field INSTANCE Lmockwebserver3/SocketPolicy$NoResponse;
+}
+
+public final class mockwebserver3/SocketPolicy$ResetStreamAtStart : mockwebserver3/SocketPolicy {
+	public static final field INSTANCE Lmockwebserver3/SocketPolicy$ResetStreamAtStart;
+}
+
+public final class mockwebserver3/SocketPolicy$ShutdownInputAtEnd : mockwebserver3/SocketPolicy {
+	public static final field INSTANCE Lmockwebserver3/SocketPolicy$ShutdownInputAtEnd;
+}
+
+public final class mockwebserver3/SocketPolicy$ShutdownOutputAtEnd : mockwebserver3/SocketPolicy {
+	public static final field INSTANCE Lmockwebserver3/SocketPolicy$ShutdownOutputAtEnd;
+}
+
+public final class mockwebserver3/SocketPolicy$ShutdownServerAfterResponse : mockwebserver3/SocketPolicy {
+	public static final field INSTANCE Lmockwebserver3/SocketPolicy$ShutdownServerAfterResponse;
+}
+
+public final class mockwebserver3/SocketPolicy$StallSocketAtStart : mockwebserver3/SocketPolicy {
+	public static final field INSTANCE Lmockwebserver3/SocketPolicy$StallSocketAtStart;
 }
 
 public abstract interface class mockwebserver3/Stream {

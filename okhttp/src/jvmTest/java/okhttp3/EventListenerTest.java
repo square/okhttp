@@ -32,6 +32,9 @@ import javax.annotation.Nullable;
 import mockwebserver3.MockResponse;
 import mockwebserver3.MockWebServer;
 import mockwebserver3.SocketPolicy;
+import mockwebserver3.SocketPolicy.DisconnectDuringRequestBody;
+import mockwebserver3.SocketPolicy.DisconnectDuringResponseBody;
+import mockwebserver3.SocketPolicy.FailHandshake;
 import okhttp3.CallEvent.CallEnd;
 import okhttp3.CallEvent.CallFailed;
 import okhttp3.CallEvent.CallStart;
@@ -221,7 +224,7 @@ public final class EventListenerTest {
     server.enqueue(new MockResponse.Builder()
         .body("0123456789")
         .throttleBody(2, 100, TimeUnit.MILLISECONDS)
-        .socketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY)
+        .socketPolicy(DisconnectDuringResponseBody.INSTANCE)
         .build());
 
     client = client.newBuilder()
@@ -597,7 +600,7 @@ public final class EventListenerTest {
   @Test public void failedConnect() throws UnknownHostException {
     enableTlsWithTunnel();
     server.enqueue(new MockResponse.Builder()
-        .socketPolicy(SocketPolicy.FAIL_HANDSHAKE)
+        .socketPolicy(FailHandshake.INSTANCE)
         .build());
 
     Call call = client.newCall(new Request.Builder()
@@ -627,7 +630,7 @@ public final class EventListenerTest {
   @Test public void multipleConnectsForSingleCall() throws IOException {
     enableTlsWithTunnel();
     server.enqueue(new MockResponse.Builder()
-        .socketPolicy(SocketPolicy.FAIL_HANDSHAKE)
+        .socketPolicy(FailHandshake.INSTANCE)
         .build());
     server.enqueue(new MockResponse());
 
@@ -764,7 +767,7 @@ public final class EventListenerTest {
   @Test public void failedSecureConnect() {
     enableTlsWithTunnel();
     server.enqueue(new MockResponse.Builder()
-        .socketPolicy(SocketPolicy.FAIL_HANDSHAKE)
+        .socketPolicy(FailHandshake.INSTANCE)
         .build());
 
     Call call = client.newCall(new Request.Builder()
@@ -813,7 +816,7 @@ public final class EventListenerTest {
   @Test public void multipleSecureConnectsForSingleCall() throws IOException {
     enableTlsWithTunnel();
     server.enqueue(new MockResponse.Builder()
-        .socketPolicy(SocketPolicy.FAIL_HANDSHAKE)
+        .socketPolicy(FailHandshake.INSTANCE)
         .build());
     server.enqueue(new MockResponse());
 
@@ -972,7 +975,7 @@ public final class EventListenerTest {
     int responseBodySize = 2 * 1024 * 1024; // 2 MiB
     server.enqueue(new MockResponse.Builder()
         .body(new Buffer().write(new byte[responseBodySize]))
-        .socketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY)
+        .socketPolicy(DisconnectDuringResponseBody.INSTANCE)
         .build());
 
     Call call = client.newCall(new Request.Builder()
@@ -998,7 +1001,7 @@ public final class EventListenerTest {
     server.enqueue(new MockResponse.Builder()
         .body("")
         .bodyDelay(1, TimeUnit.SECONDS)
-        .socketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY)
+        .socketPolicy(DisconnectDuringResponseBody.INSTANCE)
         .build());
 
     Call call = client.newCall(new Request.Builder()
@@ -1037,7 +1040,7 @@ public final class EventListenerTest {
     server.enqueue(new MockResponse.Builder()
         .body("abc")
         .bodyDelay(1, TimeUnit.SECONDS)
-        .socketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY)
+        .socketPolicy(DisconnectDuringResponseBody.INSTANCE)
         .build());
 
     Call call = client.newCall(new Request.Builder()
@@ -1075,7 +1078,7 @@ public final class EventListenerTest {
 
   private void requestBodyFail(@Nullable Protocol expectedProtocol) {
     server.enqueue(new MockResponse.Builder()
-        .socketPolicy(SocketPolicy.DISCONNECT_DURING_REQUEST_BODY)
+        .socketPolicy(DisconnectDuringRequestBody.INSTANCE)
         .build());
 
     NonCompletingRequestBody request = new NonCompletingRequestBody();
@@ -1152,7 +1155,7 @@ public final class EventListenerTest {
     };
 
     server.enqueue(new MockResponse.Builder()
-        .socketPolicy(SocketPolicy.DISCONNECT_DURING_REQUEST_BODY)
+        .socketPolicy(DisconnectDuringRequestBody.INSTANCE)
         .build());
 
     Call call = client.newCall(new Request.Builder()

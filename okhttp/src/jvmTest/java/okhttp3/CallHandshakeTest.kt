@@ -50,8 +50,13 @@ class CallHandshakeTest {
 
   private val handshakeCertificates = platform.localhostHandshakeCertificates()
 
+  /** Ciphers in order we observed directly on the socket. */
   private lateinit var handshakeEnabledCipherSuites: List<String>
+
+  /** Ciphers in order we observed on sslSocketFactory defaults. */
   private lateinit var defaultEnabledCipherSuites: List<String>
+
+  /** Ciphers in order we observed on sslSocketFactory supported. */
   private lateinit var defaultSupportedCipherSuites: List<String>
 
   val expectedModernTls12CipherSuites =
@@ -164,26 +169,34 @@ class CallHandshakeTest {
     platform.assumeNotConscrypt()
     platform.assumeNotBouncyCastle()
 
-    val client = makeClient(ConnectionSpec.RESTRICTED_TLS, TlsVersion.TLS_1_2,
-      defaultEnabledCipherSuites.asReversed())
+    val reversed = ConnectionSpec.COMPATIBLE_TLS.cipherSuites!!.reversed()
+    val client = makeClient(ConnectionSpec.COMPATIBLE_TLS, TlsVersion.TLS_1_2,
+      reversed)
 
-    val handshake = makeRequest(client)
+    makeRequest(client)
 
-    // TODO better selection
-    assertThat(handshake.cipherSuite).isIn(expectedModernTls12CipherSuites)
-
-    // TODO reversed ciphers
+    val expectedConnectionCipherSuites = expectedConnectionCipherSuites(client)
+    // Will choose a poor cipher suite but not plaintext.
+//    assertThat(handshake.cipherSuite).isEqualTo("TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256")
     assertThat(handshakeEnabledCipherSuites).containsExactlyElementsOf(
-      expectedConnectionCipherSuites(client))
+      expectedConnectionCipherSuites)
   }
 
   @Test
-  fun defaultOrderMaintained() {
+  fun clientOrderApplied() {
+//    // Flaky in CI
+//    // CallHandshakeTest[jvm] > defaultOrderMaintained()[jvm] FAILED
+//    //  org.bouncycastle.tls.TlsFatalAlertReceived: handshake_failure(40)
+//    platform.assumeNotBouncyCastle()
+
     val client = makeClient()
     makeRequest(client)
 
+    // As of OkHttp 5 we now apply the ordering from the OkHttpClient, which defaults to MODERN_TLS
+    // Clients might need a changed order, but can at least define a preferred order to override that default.
     val socketOrderedByDefaults =
-      handshakeEnabledCipherSuites.sortedBy { defaultEnabledCipherSuites.indexOf(it) }
+      handshakeEnabledCipherSuites.sortedBy { ConnectionSpec.MODERN_TLS.cipherSuitesAsString!!.indexOf(it) }
+
     assertThat(handshakeEnabledCipherSuites).containsExactlyElementsOf(socketOrderedByDefaults)
   }
 
@@ -217,15 +230,15 @@ class CallHandshakeTest {
 
     if (cipherSuites.contains(TLS_CHACHA20_POLY1305_SHA256.javaName)) {
       assertThat(cipherSuites).containsExactlyElementsOf(listOf(
-        TLS_AES_256_GCM_SHA384,
         TLS_AES_128_GCM_SHA256,
+        TLS_AES_256_GCM_SHA384,
         TLS_CHACHA20_POLY1305_SHA256,
-        TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
         TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-        TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
-        TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-        TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
         TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+        TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+        TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+        TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
+        TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
       ).map { it.javaName })
     } else {
       assertThat(cipherSuites).containsExactlyElementsOf(listOf(
@@ -240,16 +253,13 @@ class CallHandshakeTest {
   }
 
   private fun expectedConnectionCipherSuites(client: OkHttpClient): Set<String> {
-    // TODO correct for the client provided order
-//    return client.connectionSpecs.first().cipherSuites!!.map { it.javaName }.intersect(defaultEnabledCipherSuites)
-    return defaultEnabledCipherSuites.intersect(
-      client.connectionSpecs.first().cipherSuites!!.map { it.javaName })
+    return client.connectionSpecs.first().cipherSuites!!.map { it.javaName }.intersect(defaultEnabledCipherSuites.toSet())
   }
 
   private fun makeClient(
     connectionSpec: ConnectionSpec? = null,
     tlsVersion: TlsVersion? = null,
-    cipherSuites: List<String>? = null
+    cipherSuites: List<CipherSuite>? = null
   ): OkHttpClient {
     return this.client.newBuilder()
       .apply {

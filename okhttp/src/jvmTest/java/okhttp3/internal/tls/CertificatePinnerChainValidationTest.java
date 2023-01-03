@@ -30,6 +30,7 @@ import javax.net.ssl.X509TrustManager;
 import mockwebserver3.MockResponse;
 import mockwebserver3.MockWebServer;
 import mockwebserver3.SocketPolicy;
+import mockwebserver3.SocketPolicy.DisconnectAtEnd;
 import okhttp3.Call;
 import okhttp3.CertificatePinner;
 import okhttp3.OkHttpClient;
@@ -152,7 +153,7 @@ public final class CertificatePinnerChainValidationTest {
     // The request should complete successfully.
     server.enqueue(new MockResponse.Builder()
         .body("abc")
-        .socketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        .socketPolicy(DisconnectAtEnd.INSTANCE)
         .build());
     Call call1 = client.newCall(new Request.Builder()
         .url(server.url("/"))
@@ -167,7 +168,7 @@ public final class CertificatePinnerChainValidationTest {
     // Confirm that a second request also succeeds. This should detect caching problems.
     server.enqueue(new MockResponse.Builder()
         .body("def")
-        .socketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        .socketPolicy(DisconnectAtEnd.INSTANCE)
         .build());
     Call call2 = client.newCall(new Request.Builder()
         .url(server.url("/"))
@@ -181,6 +182,7 @@ public final class CertificatePinnerChainValidationTest {
     // https://github.com/square/okhttp/issues/4729
     platform.expectFailureOnConscryptPlatform();
     platform.expectFailureOnCorrettoPlatform();
+    platform.expectFailureFromJdkVersion(19);
 
     // Start with a trusted root CA certificate.
     HeldCertificate rootCa = new HeldCertificate.Builder()
@@ -261,6 +263,7 @@ public final class CertificatePinnerChainValidationTest {
     // https://github.com/square/okhttp/issues/4729
     platform.expectFailureOnConscryptPlatform();
     platform.expectFailureOnCorrettoPlatform();
+    platform.expectFailureFromJdkVersion(19);
 
     // Start with two root CA certificates, one is good and the other is compromised.
     HeldCertificate rootCa = new HeldCertificate.Builder()

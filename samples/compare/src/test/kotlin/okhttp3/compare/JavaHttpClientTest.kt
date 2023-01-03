@@ -22,6 +22,7 @@ import java.net.http.HttpClient.Redirect.NORMAL
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse.BodyHandlers
 import okhttp3.testing.PlatformRule
+import okhttp3.testing.PlatformVersion
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -60,7 +61,9 @@ class JavaHttpClientTest {
       assertThat(recorded.headers["Accept"]).isEqualTo("text/plain")
       assertThat(recorded.headers["Accept-Encoding"]).isNull() // No built-in gzip.
       assertThat(recorded.headers["Connection"]).isEqualTo("Upgrade, HTTP2-Settings")
-      assertThat(recorded.headers["Content-Length"]).isEqualTo("0")
+      if (PlatformVersion.majorVersion < 19) {
+        assertThat(recorded.headers["Content-Length"]).isEqualTo("0")
+      }
       assertThat(recorded.headers["HTTP2-Settings"]).isNotNull()
       assertThat(recorded.headers["Upgrade"]).isEqualTo("h2c") // HTTP/2 over plaintext!
       assertThat(recorded.headers["User-Agent"]).matches("Java-http-client/.*")

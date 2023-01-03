@@ -64,7 +64,7 @@ jobs:
       - name: Run Checks
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: check -x test -x jvmTest
+          arguments: check -PandroidBuild=true -PgraalBuild=true -x test -x jvmTest -x jsTest
 
       - name: Publish Test Report
         if: github.repository == 'square/okhttp' && github.ref == 'refs/heads/master'
@@ -151,7 +151,7 @@ jobs:
 
   testopenjdk8:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdk8')
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions')
 
     steps:
       - name: Checkout
@@ -172,7 +172,7 @@ jobs:
 
   testopenjdk8alpn:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdk8')
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions')
 
     steps:
       - name: Checkout
@@ -220,7 +220,7 @@ jobs:
 
   testconscrypt:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'providers')
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'conscrypt')
 
     steps:
       - name: Checkout
@@ -284,7 +284,7 @@ jobs:
 
   testopenjdk17:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdk17')
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions')
 
     steps:
       - name: Checkout
@@ -302,6 +302,33 @@ jobs:
         uses: gradle/gradle-build-action@v2
         with:
           arguments: jvmTest -Dtest.java.version=17
+
+  testopenjdk19:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Configure JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 19
+
+      - name: Configure JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 11
+
+      - name: Run Checks
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: jvmTest -Dtest.java.version=19
 
   testwindows:
     runs-on: windows-latest
@@ -412,6 +439,33 @@ jobs:
           script: ./gradlew -PandroidBuild=true :okhttp-android:connectedCheck :android-test:connectedCheck
         env:
           API_LEVEL: ${{ matrix.api-level }}
+
+  testloom:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'loom')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Configure JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 19
+
+      - name: Configure JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 11
+
+      - name: Run Checks
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: jvmTest -Dokhttp.platform=loom -Dtest.java.version=19
 
 
   testandroidregression:

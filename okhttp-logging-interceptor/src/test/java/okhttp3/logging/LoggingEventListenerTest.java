@@ -20,6 +20,7 @@ import java.net.UnknownHostException;
 import mockwebserver3.MockResponse;
 import mockwebserver3.MockWebServer;
 import mockwebserver3.SocketPolicy;
+import mockwebserver3.SocketPolicy.FailHandshake;
 import mockwebserver3.junit5.internal.MockWebServerExtension;
 import okhttp3.Call;
 import okhttp3.EventListener;
@@ -224,7 +225,7 @@ public final class LoggingEventListenerTest {
     server.useHttps(handshakeCertificates.sslSocketFactory());
     server.setProtocols(asList(HTTP_2, HTTP_1_1));
     server.enqueue(new MockResponse.Builder()
-        .socketPolicy(SocketPolicy.FAIL_HANDSHAKE)
+        .socketPolicy(FailHandshake.INSTANCE)
         .build());
     url = server.url("/");
 

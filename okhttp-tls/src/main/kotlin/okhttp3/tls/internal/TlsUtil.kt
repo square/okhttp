@@ -37,7 +37,7 @@ object TlsUtil {
     // Generate a self-signed cert for the server to serve and the client to trust.
     val heldCertificate = HeldCertificate.Builder()
         .commonName("localhost")
-        .addSubjectAlternativeName(InetAddress.getByName("localhost").canonicalHostName)
+        .addSubjectAlternativeName("localhost")
         .build()
     return@lazy HandshakeCertificates.Builder()
         .heldCertificate(heldCertificate)

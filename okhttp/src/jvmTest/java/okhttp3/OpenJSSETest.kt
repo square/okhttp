@@ -99,7 +99,7 @@ class OpenJSSETest {
     // can't use TlsUtil.localhost with a non OpenJSSE trust manager
     val heldCertificate = HeldCertificate.Builder()
         .commonName("localhost")
-        .addSubjectAlternativeName(InetAddress.getByName("localhost").canonicalHostName)
+        .addSubjectAlternativeName("localhost")
         .build()
     val handshakeCertificates = HandshakeCertificates.Builder()
         .heldCertificate(heldCertificate)

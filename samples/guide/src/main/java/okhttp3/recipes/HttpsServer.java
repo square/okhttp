@@ -30,9 +30,8 @@ import okhttp3.tls.HeldCertificate;
  */
 public class HttpsServer {
   public void run() throws Exception {
-    String localhost = InetAddress.getByName("localhost").getCanonicalHostName();
     HeldCertificate localhostCertificate = new HeldCertificate.Builder()
-        .addSubjectAlternativeName(localhost)
+        .addSubjectAlternativeName("localhost")
         .build();
 
     HandshakeCertificates serverCertificates = new HandshakeCertificates.Builder()
