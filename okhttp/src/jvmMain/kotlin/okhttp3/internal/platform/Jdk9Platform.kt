@@ -16,14 +16,12 @@
 package okhttp3.internal.platform
 
 import java.security.NoSuchAlgorithmException
-import javax.net.ssl.SNIHostName
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol
 import okhttp3.internal.SuppressSignatureCheck
-import okhttp3.internal.canParseAsIpAddress
 
 /** OpenJDK 9+. */
 open class Jdk9Platform : Platform() {
@@ -38,10 +36,6 @@ open class Jdk9Platform : Platform() {
     val names = alpnProtocolNames(protocols)
 
     sslParameters.applicationProtocols = names.toTypedArray()
-
-    if (hostname != null && !hostname.canParseAsIpAddress()) {
-      sslParameters.serverNames = listOf(SNIHostName(hostname))
-    }
 
     sslSocket.sslParameters = sslParameters
   }

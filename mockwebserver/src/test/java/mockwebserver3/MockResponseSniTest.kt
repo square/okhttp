@@ -49,15 +49,21 @@ class MockResponseSniTest {
     // Skip this test if the machine's canonical localhost name is an IP address like '127.0.0.1'.
     assumeThat(server.hostName.canParseAsIpAddress()).isFalse()
 
+    val dns = Dns {
+      Dns.SYSTEM.lookup(server.hostName)
+    }
+
     val client = clientTestRule.newClientBuilder()
       .sslSocketFactory(
         handshakeCertificates.sslSocketFactory(),
         handshakeCertificates.trustManager
-      ).build()
+      )
+      .dns(dns)
+      .build()
 
     server.enqueue(MockResponse())
 
-    val url = server.url("/")
+    val url = server.url("/").newBuilder().host("localhost.localdomain").build()
     val call = client.newCall(Request(url = url))
     val response = call.execute()
     assertThat(response.isSuccessful).isTrue()
@@ -74,7 +80,7 @@ class MockResponseSniTest {
   fun domainFronting() {
     val heldCertificate = HeldCertificate.Builder()
       .commonName("server name")
-      .addSubjectAlternativeName("url-host")
+      .addSubjectAlternativeName("url-host.com")
       .build()
     val handshakeCertificates = HandshakeCertificates.Builder()
       .heldCertificate(heldCertificate)
@@ -98,7 +104,7 @@ class MockResponseSniTest {
 
     val call = client.newCall(
       Request(
-        url = "https://url-host:${server.port}/".toHttpUrl(),
+        url = "https://url-host.com:${server.port}/".toHttpUrl(),
         headers = headersOf("Host", "header-host"),
       )
     )
@@ -107,7 +113,7 @@ class MockResponseSniTest {
 
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.requestUrl!!.host).isEqualTo("header-host")
-    assertThat(recordedRequest.handshakeServerNames).containsExactly("url-host")
+    assertThat(recordedRequest.handshakeServerNames).containsExactly("url-host.com")
   }
 
   /** No SNI for literal IPv6 addresses. */
