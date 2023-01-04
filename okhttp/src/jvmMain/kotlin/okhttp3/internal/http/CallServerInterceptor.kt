@@ -122,7 +122,7 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
 
       exchange.responseHeadersEnd(response)
 
-      response = if (forWebSocket && code == 101) {
+      response = if (forWebSocket && code == HTTP_SWITCHING_PROTOCOLS) {
         // Connection is upgrading, but we need to ensure interceptors see a non-null response body.
         response.stripBody()
       } else {
@@ -134,7 +134,7 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
           "close".equals(response.header("Connection"), ignoreCase = true)) {
         exchange.noNewExchangesOnConnection()
       }
-      if ((code == 204 || code == 205) && response.body.contentLength() > 0L) {
+      if ((code == HTTP_NO_CONTENT || code == HTTP_RESET_CONTENT) && response.body.contentLength() > 0L) {
         throw ProtocolException(
             "HTTP $code had non-zero Content-Length: ${response.body.contentLength()}")
       }
@@ -151,10 +151,10 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
   private fun shouldIgnoreAndWaitForRealResponse(code: Int, exchange: Exchange): Boolean = when {
     // Server sent a 100-continue even though we did not request one. Try again to read the
     // actual response status.
-    code == 100 -> true
+    code == HTTP_CONTINUE -> true
 
-    // Early Hints (103) but not supported yet in OkHttp
-    code == 103 -> true
+    // Processing & Early Hints (103) but not supported yet in OkHttp
+    code in (HTTP_PROCESSING until HTTP_OK) -> true
 
     else -> false
   }
