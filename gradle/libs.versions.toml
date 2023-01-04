@@ -14,9 +14,9 @@ org-junit-jupiter = "5.9.1"
 [libraries]
 amazonCorretto = "software.amazon.cryptools:AmazonCorrettoCryptoProvider:1.6.1"
 androidx-annotation = "androidx.annotation:annotation:1.5.0"
-androidx-espresso-core = "androidx.test.espresso:espresso-core:3.5.0"
-androidx-junit = "androidx.test.ext:junit:1.1.4"
-androidx-test-runner = "androidx.test:runner:1.5.1"
+androidx-espresso-core = "androidx.test.espresso:espresso-core:3.5.1"
+androidx-junit = "androidx.test.ext:junit:1.1.5"
+androidx-test-runner = "androidx.test:runner:1.5.2"
 animalsniffer-annotations = "org.codehaus.mojo:animal-sniffer-annotations:1.22"
 aqute-resolve = { module = "biz.aQute.bnd:biz.aQute.resolve", version.ref = "biz-aQute-bnd" }
 assertj-core = "org.assertj:assertj-core:3.23.1"
