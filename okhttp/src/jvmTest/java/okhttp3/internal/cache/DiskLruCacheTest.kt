@@ -71,9 +71,10 @@ class DiskLruCacheTest {
   }
 
   private fun createNewCacheWithSize(maxSize: Int) {
-    cache = DiskLruCache(filesystem, cacheDir, appVersion, 2, maxSize.toLong(), taskRunner)
+    cache = DiskLruCache(filesystem, cacheDir, appVersion, 2, maxSize.toLong(), taskRunner).also {
+      toClose.add(it)
+    }
     synchronized(cache) { cache.initialize() }
-    toClose.add(cache)
   }
 
   fun setUp(baseFilesystem: FileSystem, windows: Boolean) {
@@ -125,8 +126,9 @@ class DiskLruCacheTest {
     // Simulate a severe Filesystem failure on the first initialization.
     filesystem.setFaultyDelete(cacheDir / "k1.0.tmp", true)
     filesystem.setFaultyDelete(cacheDir, true)
-    cache = DiskLruCache(filesystem, cacheDir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner)
-    toClose.add(cache)
+    cache = DiskLruCache(filesystem, cacheDir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner).also {
+      toClose.add(it)
+    }
     try {
       cache["k1"]
       fail("")
@@ -1134,12 +1136,12 @@ class DiskLruCacheTest {
   @ParameterizedTest
   @ArgumentsSource(FileSystemParamProvider::class)
   fun openCreatesDirectoryIfNecessary(parameters: Pair<FileSystem, Boolean>) {
-    disableFileCheck = true
-
     setUp(parameters.first, parameters.second)
     cache.close()
     val dir = (cacheDir / "testOpenCreatesDirectoryIfNecessary").also { filesystem.createDirectories(it) }
-    cache = DiskLruCache(filesystem, dir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner)
+    cache = DiskLruCache(filesystem, dir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner).also {
+      toClose.add(it)
+    }
     set("a", "a", "a")
     assertThat(filesystem.exists(dir / "a.0")).isTrue()
     assertThat(filesystem.exists(dir / "a.1")).isTrue()
@@ -1201,17 +1203,16 @@ class DiskLruCacheTest {
   @ParameterizedTest
   @ArgumentsSource(FileSystemParamProvider::class)
   fun editSinceEvicted(parameters: Pair<FileSystem, Boolean>) {
-    disableFileCheck = true
-
     setUp(parameters.first, parameters.second)
     cache.close()
     createNewCacheWithSize(10)
     set("a", "aa", "aaa") // size 5
-    val snapshot = cache["a"]!!
-    set("b", "bb", "bbb") // size 5
-    set("c", "cc", "ccc") // size 5; will evict 'A'
-    cache.flush()
-    assertThat(snapshot.edit()).isNull()
+    cache["a"]!!.use {
+      set("b", "bb", "bbb") // size 5
+      set("c", "cc", "ccc") // size 5; will evict 'A'
+      cache.flush()
+      assertThat(it.edit()).isNull()
+    }
   }
 
   @ParameterizedTest
@@ -1537,8 +1538,9 @@ class DiskLruCacheTest {
   fun isClosed_uninitializedCache(parameters: Pair<FileSystem, Boolean>) {
     setUp(parameters.first, parameters.second)
     // Create an uninitialized cache.
-    cache = DiskLruCache(filesystem, cacheDir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner)
-    toClose.add(cache)
+    cache = DiskLruCache(filesystem, cacheDir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner).also {
+      toClose.add(it)
+    }
     assertThat(cache.isClosed()).isFalse()
     cache.close()
     assertThat(cache.isClosed()).isTrue()
@@ -1547,8 +1549,6 @@ class DiskLruCacheTest {
   @ParameterizedTest
   @ArgumentsSource(FileSystemParamProvider::class)
   fun journalWriteFailsDuringEdit(parameters: Pair<FileSystem, Boolean>) {
-    disableFileCheck = true
-
     setUp(parameters.first, parameters.second)
     set("a", "a", "a")
     set("b", "b", "b")
@@ -1563,7 +1563,9 @@ class DiskLruCacheTest {
 
     // Confirm that the fault didn't corrupt entries stored before the fault was introduced.
     cache.close()
-    cache = DiskLruCache(filesystem, cacheDir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner)
+    cache = DiskLruCache(filesystem, cacheDir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner).also {
+      toClose.add(it)
+    }
     assertValue("a", "a", "a")
     assertValue("b", "b", "b")
     assertAbsent("c")
@@ -1577,8 +1579,6 @@ class DiskLruCacheTest {
   @ParameterizedTest
   @ArgumentsSource(FileSystemParamProvider::class)
   fun journalWriteFailsDuringEditorCommit(parameters: Pair<FileSystem, Boolean>) {
-    disableFileCheck = true
-
     setUp(parameters.first, parameters.second)
     set("a", "a", "a")
     set("b", "b", "b")
@@ -1596,7 +1596,9 @@ class DiskLruCacheTest {
 
     // Confirm that the fault didn't corrupt entries stored before the fault was introduced.
     cache.close()
-    cache = DiskLruCache(filesystem, cacheDir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner)
+    cache = DiskLruCache(filesystem, cacheDir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner).also {
+      toClose.add(it)
+    }
     assertValue("a", "a", "a")
     assertValue("b", "b", "b")
     assertAbsent("c")
@@ -1606,8 +1608,6 @@ class DiskLruCacheTest {
   @ParameterizedTest
   @ArgumentsSource(FileSystemParamProvider::class)
   fun journalWriteFailsDuringEditorAbort(parameters: Pair<FileSystem, Boolean>) {
-    disableFileCheck = true
-
     setUp(parameters.first, parameters.second)
     set("a", "a", "a")
     set("b", "b", "b")
@@ -1625,7 +1625,9 @@ class DiskLruCacheTest {
 
     // Confirm that the fault didn't corrupt entries stored before the fault was introduced.
     cache.close()
-    cache = DiskLruCache(filesystem, cacheDir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner)
+    cache = DiskLruCache(filesystem, cacheDir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner).also {
+      toClose.add(it)
+    }
     assertValue("a", "a", "a")
     assertValue("b", "b", "b")
     assertAbsent("c")
@@ -1635,8 +1637,6 @@ class DiskLruCacheTest {
   @ParameterizedTest
   @ArgumentsSource(FileSystemParamProvider::class)
   fun journalWriteFailsDuringRemove(parameters: Pair<FileSystem, Boolean>) {
-    disableFileCheck = true
-
     setUp(parameters.first, parameters.second)
     set("a", "a", "a")
     set("b", "b", "b")
@@ -1648,7 +1648,9 @@ class DiskLruCacheTest {
     // Confirm that the entry was still removed.
     filesystem.setFaultyWrite(journalFile, false)
     cache.close()
-    cache = DiskLruCache(filesystem, cacheDir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner)
+    cache = DiskLruCache(filesystem, cacheDir, appVersion, 2, Int.MAX_VALUE.toLong(), taskRunner).also {
+      toClose.add(it)
+    }
     assertAbsent("a")
     assertValue("b", "b", "b")
   }
@@ -1975,7 +1977,7 @@ class DiskLruCacheTest {
   @ParameterizedTest
   @ArgumentsSource(FileSystemParamProvider::class)
   fun dontRemoveUnfinishedEntryWhenCreatingSnapshot(parameters: Pair<FileSystem, Boolean>) {
-    disableFileCheck = true
+    disableFileCheck = true // keep
 
     setUp(parameters.first, parameters.second)
     val creator = cache.edit("k1")!!
