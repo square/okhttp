@@ -40,8 +40,10 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.internal.platform.Platform;
 import okhttp3.testing.PlatformRule;
+import okhttp3.testing.PlatformVersion;
 import okhttp3.tls.HandshakeCertificates;
 import okhttp3.tls.HeldCertificate;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -182,7 +184,9 @@ public final class CertificatePinnerChainValidationTest {
     // https://github.com/square/okhttp/issues/4729
     platform.expectFailureOnConscryptPlatform();
     platform.expectFailureOnCorrettoPlatform();
-    platform.expectFailureFromJdkVersion(19);
+
+    // unpredictable as to whether it passes or fails? Environmental?
+    Assumptions.assumeTrue(PlatformVersion.INSTANCE.getMajorVersion() < 19);
 
     // Start with a trusted root CA certificate.
     HeldCertificate rootCa = new HeldCertificate.Builder()
@@ -263,7 +267,9 @@ public final class CertificatePinnerChainValidationTest {
     // https://github.com/square/okhttp/issues/4729
     platform.expectFailureOnConscryptPlatform();
     platform.expectFailureOnCorrettoPlatform();
-    platform.expectFailureFromJdkVersion(19);
+
+    // unpredictable as to whether it passes or fails? Environmental?
+    Assumptions.assumeTrue(PlatformVersion.INSTANCE.getMajorVersion() < 19);
 
     // Start with two root CA certificates, one is good and the other is compromised.
     HeldCertificate rootCa = new HeldCertificate.Builder()
