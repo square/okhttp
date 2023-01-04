@@ -64,7 +64,6 @@ class DiskLruCacheTest {
   private val taskRunner = taskFaker.taskRunner
   private lateinit var cache: DiskLruCache
   private val toClose = ArrayDeque<DiskLruCache>()
-  private var disableFileCheck = false
 
   private fun createNewCache() {
     createNewCacheWithSize(Int.MAX_VALUE)
@@ -97,10 +96,7 @@ class DiskLruCacheTest {
     }
     taskFaker.close()
 
-    // TODO enable unconditionally after fixing up snapshot calls in this test
-    if (!disableFileCheck) {
-      (filesystem.delegate as? FakeFileSystem)?.checkNoOpenFiles()
-    }
+    (filesystem.delegate as? FakeFileSystem)?.checkNoOpenFiles()
   }
 
   @ParameterizedTest
@@ -1977,8 +1973,6 @@ class DiskLruCacheTest {
   @ParameterizedTest
   @ArgumentsSource(FileSystemParamProvider::class)
   fun dontRemoveUnfinishedEntryWhenCreatingSnapshot(parameters: Pair<FileSystem, Boolean>) {
-    disableFileCheck = true // keep
-
     setUp(parameters.first, parameters.second)
     val creator = cache.edit("k1")!!
     creator.setString(0, "ABC")
@@ -1992,6 +1986,7 @@ class DiskLruCacheTest {
     assertThat(snapshotAfterCommit.hasNext()).withFailMessage(
       "Entry has been removed during creation."
     ).isTrue()
+    snapshotAfterCommit.next().close()
   }
 
   @ParameterizedTest
