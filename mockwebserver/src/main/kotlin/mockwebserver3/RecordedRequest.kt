@@ -25,6 +25,7 @@ import okhttp3.Handshake.Companion.handshake
 import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.internal.platform.Platform
 import okio.Buffer
 
 /** An HTTP request that came into the mock web server. */
@@ -69,15 +70,24 @@ class RecordedRequest(
   val handshake: Handshake?
   val requestUrl: HttpUrl?
 
+  /**
+   * Returns the name of the server the client requested via the SNI (Server Name Indication)
+   * attribute in the TLS handshake. Unlike the rest of the HTTP exchange, this name is sent in
+   * cleartext and may be monitored or blocked by a proxy or other middlebox.
+   */
+  val handshakeServerNames: List<String>
+
   init {
     if (socket is SSLSocket) {
       try {
         this.handshake = socket.session.handshake()
+        this.handshakeServerNames = Platform.get().getHandshakeServerNames(socket)
       } catch (e: IOException) {
         throw IllegalArgumentException(e)
       }
     } else {
       this.handshake = null
+      this.handshakeServerNames = listOf()
     }
 
     if (requestLine.isNotEmpty()) {

@@ -54,6 +54,10 @@ import javax.net.ssl.X509TrustManager
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.SocketPolicy
+import mockwebserver3.SocketPolicy.DisconnectAtEnd
+import mockwebserver3.SocketPolicy.FailHandshake
+import mockwebserver3.SocketPolicy.ShutdownInputAtEnd
+import mockwebserver3.SocketPolicy.ShutdownOutputAtEnd
 import mockwebserver3.junit5.internal.MockWebServerInstance
 import okhttp3.Credentials.basic
 import okhttp3.Headers.Companion.headersOf
@@ -71,13 +75,13 @@ import okhttp3.internal.platform.Platform.Companion.get
 import okhttp3.internal.userAgent
 import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule
-import okhttp3.tls.internal.TlsUtil.localhost
 import okio.Buffer
 import okio.BufferedSink
 import okio.GzipSink
 import okio.buffer
 import okio.utf8Size
 import org.assertj.core.api.Assertions.assertThat
+import org.bouncycastle.tls.TlsFatalAlert
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
@@ -102,7 +106,7 @@ class URLConnectionTest {
 
   private lateinit var server: MockWebServer
   private lateinit var server2: MockWebServer
-  private val handshakeCertificates = localhost()
+  private val handshakeCertificates = platform.localhostHandshakeCertificates()
   private var client = clientTestRule.newClient()
   private var cache: Cache? = null
 
@@ -110,7 +114,6 @@ class URLConnectionTest {
   fun setUp(server: MockWebServer, @MockWebServerInstance("server2") server2: MockWebServer) {
     this.server = server
     this.server2 = server2
-    platform.assumeNotBouncyCastle()
     server.protocolNegotiationEnabled = false
   }
 
@@ -333,17 +336,17 @@ class URLConnectionTest {
 
   @Test
   fun serverClosesSocket() {
-    testServerClosesOutput(SocketPolicy.DISCONNECT_AT_END)
+    testServerClosesOutput(DisconnectAtEnd)
   }
 
   @Test
   fun serverShutdownInput() {
-    testServerClosesOutput(SocketPolicy.SHUTDOWN_INPUT_AT_END)
+    testServerClosesOutput(ShutdownInputAtEnd)
   }
 
   @Test
   fun serverShutdownOutput() {
-    testServerClosesOutput(SocketPolicy.SHUTDOWN_OUTPUT_AT_END)
+    testServerClosesOutput(ShutdownOutputAtEnd)
   }
 
   @Test
@@ -571,14 +574,17 @@ class URLConnectionTest {
         "without an SSL socket factory, the connection should fail"
       )
     } catch (expected: SSLException) {
+    } catch (expected: TlsFatalAlert) {
     }
   }
 
   // TODO(jwilson): tests below this marker need to be migrated to OkHttp's request/response API.
   @Test
   fun connectViaHttpsWithSSLFallback() {
+    platform.assumeNotBouncyCastle()
+
     server.useHttps(handshakeCertificates.sslSocketFactory())
-    server.enqueue(MockResponse(socketPolicy = SocketPolicy.FAIL_HANDSHAKE))
+    server.enqueue(MockResponse(socketPolicy = FailHandshake))
     server.enqueue(MockResponse(body = "this response comes via SSL"))
     client = client.newBuilder()
       .hostnameVerifier(
@@ -600,9 +606,11 @@ class URLConnectionTest {
 
   @Test
   fun connectViaHttpsWithSSLFallbackFailuresRecorded() {
+    platform.assumeNotBouncyCastle()
+
     server.useHttps(handshakeCertificates.sslSocketFactory())
-    server.enqueue(MockResponse(socketPolicy = SocketPolicy.FAIL_HANDSHAKE))
-    server.enqueue(MockResponse(socketPolicy = SocketPolicy.FAIL_HANDSHAKE))
+    server.enqueue(MockResponse(socketPolicy = FailHandshake))
+    server.enqueue(MockResponse(socketPolicy = FailHandshake))
     client = client.newBuilder()
       .connectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS))
       .hostnameVerifier(RecordingHostnameVerifier())
@@ -633,7 +641,7 @@ class URLConnectionTest {
     server.enqueue(
       MockResponse(
         body = "abc",
-        socketPolicy = SocketPolicy.DISCONNECT_AT_END,
+        socketPolicy = DisconnectAtEnd,
       )
     )
     server.enqueue(MockResponse(body = "def"))
@@ -679,6 +687,7 @@ class URLConnectionTest {
           CertificateException::class.java
         )
       }
+    } catch (expected: TlsFatalAlert) {
     }
     assertThat(server.requestCount).isEqualTo(0)
   }
@@ -730,7 +739,7 @@ class URLConnectionTest {
       MockResponse.Builder()
         .body("abc")
         .setHeader("Content-Length", "5")
-        .socketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        .socketPolicy(DisconnectAtEnd)
         .build())
     try {
       val response = getResponse(newRequest("/"))
@@ -803,7 +812,8 @@ class URLConnectionTest {
   fun contentDisagreesWithChunkedHeaderBodyTooLong() {
     val builder = MockResponse.Builder()
       .chunkedBody("abc", 3)
-    val buffer = builder.build().body!!
+    val buffer = Buffer()
+    builder.body!!.writeTo(buffer)
     buffer.writeUtf8("\r\nYOU SHOULD NOT SEE THIS")
     builder.body(buffer)
     builder.clearHeaders()
@@ -816,13 +826,14 @@ class URLConnectionTest {
   fun contentDisagreesWithChunkedHeaderBodyTooShort() {
     val builder = MockResponse.Builder()
       .chunkedBody("abcdefg", 5)
+    val fullBody = Buffer()
+    builder.body!!.writeTo(fullBody)
     val truncatedBody = Buffer()
-    val fullBody = builder.build().body!!
     truncatedBody.write(fullBody, 4)
     builder.body(truncatedBody)
     builder.clearHeaders()
     builder.addHeader("Transfer-encoding: chunked")
-    builder.socketPolicy(SocketPolicy.DISCONNECT_AT_END)
+    builder.socketPolicy(DisconnectAtEnd)
     server.enqueue(builder.build())
     try {
       val response = getResponse(newRequest("/"))
@@ -1288,7 +1299,7 @@ class URLConnectionTest {
         .body("5")
         .clearHeaders()
         .addHeader("Transfer-encoding: chunked")
-        .socketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        .socketPolicy(DisconnectAtEnd)
         .build()
     )
     try {
@@ -1431,7 +1442,7 @@ class URLConnectionTest {
     server.enqueue(
       MockResponse(
         body = "a",
-        socketPolicy = SocketPolicy.SHUTDOWN_INPUT_AT_END,
+        socketPolicy = ShutdownInputAtEnd,
       )
     )
     server.enqueue(
@@ -1461,7 +1472,7 @@ class URLConnectionTest {
       MockResponse.Builder()
         .body("{}")
         .clearHeaders()
-        .socketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        .socketPolicy(DisconnectAtEnd)
         .build()
     )
     val response = getResponse(newRequest("/"))
@@ -2704,7 +2715,7 @@ class URLConnectionTest {
         code = HttpURLConnection.HTTP_CLIENT_TIMEOUT,
         headers = headersOf("Connection", "Close"),
         body = "You took too long!",
-        socketPolicy = SocketPolicy.DISCONNECT_AT_END,
+        socketPolicy = DisconnectAtEnd,
       )
     )
     server.enqueue(
@@ -2908,7 +2919,7 @@ class URLConnectionTest {
       MockResponse(
         code = HttpURLConnection.HTTP_MOVED_TEMP,
         headers = headersOf("Location", "/foo"),
-        socketPolicy = SocketPolicy.SHUTDOWN_INPUT_AT_END,
+        socketPolicy = ShutdownInputAtEnd,
       )
     )
     server.enqueue(MockResponse(body = "This is the new page!"))
@@ -3003,7 +3014,7 @@ class URLConnectionTest {
 
   @Test
   fun getHeadersThrows() {
-    server.enqueue(MockResponse(socketPolicy = SocketPolicy.DISCONNECT_AT_START))
+    server.enqueue(MockResponse(socketPolicy = SocketPolicy.DisconnectAtStart))
     try {
       getResponse(newRequest("/"))
       fail<Any>()
@@ -3058,7 +3069,7 @@ class URLConnectionTest {
         .body("ABC")
         .clearHeaders()
         .addHeader("Connection: close")
-        .socketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        .socketPolicy(DisconnectAtEnd)
         .build()
     )
     val response = getResponse(newRequest("/"))
@@ -3225,7 +3236,7 @@ class URLConnectionTest {
     server.enqueue(
       MockResponse(
         body = "A",
-        socketPolicy = SocketPolicy.DISCONNECT_AT_END,
+        socketPolicy = DisconnectAtEnd,
       )
     )
     server.enqueue(MockResponse(body = "B"))
@@ -3265,7 +3276,7 @@ class URLConnectionTest {
   @Test
   fun postBodyRetransmittedOnFailureRecovery() {
     server.enqueue(MockResponse(body = "abc"))
-    server.enqueue(MockResponse(socketPolicy = SocketPolicy.DISCONNECT_AFTER_REQUEST))
+    server.enqueue(MockResponse(socketPolicy = SocketPolicy.DisconnectAfterRequest))
     server.enqueue(MockResponse(body = "def"))
 
     // Seed the connection pool so we have something that can fail.
@@ -3747,8 +3758,10 @@ class URLConnectionTest {
 
   @Test
   fun testNoSslFallback() {
+    platform.assumeNotBouncyCastle()
+
     server.useHttps(handshakeCertificates.sslSocketFactory())
-    server.enqueue(MockResponse(socketPolicy = SocketPolicy.FAIL_HANDSHAKE))
+    server.enqueue(MockResponse(socketPolicy = FailHandshake))
     server.enqueue(MockResponse(body = "Response that would have needed fallbacks"))
     client = client.newBuilder()
       .sslSocketFactory(
@@ -3935,7 +3948,7 @@ class URLConnectionTest {
     server.enqueue(
       MockResponse(
         body = "abc",
-        socketPolicy = SocketPolicy.DISCONNECT_AT_END,
+        socketPolicy = DisconnectAtEnd,
       )
     )
     server.enqueue(
@@ -3970,7 +3983,7 @@ class URLConnectionTest {
       MockResponse(
         code = 401,
         headers = headersOf("Connection", "close"),
-        socketPolicy = SocketPolicy.DISCONNECT_AT_END,
+        socketPolicy = DisconnectAtEnd,
       )
     )
     java.net.Authenticator.setDefault(RecordingAuthenticator(null))
@@ -4048,7 +4061,7 @@ class URLConnectionTest {
     END_OF_STREAM {
       override fun setBody(response: MockResponse.Builder, content: Buffer?, chunkSize: Int) {
         response.body(content!!)
-        response.socketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        response.socketPolicy(DisconnectAtEnd)
         response.removeHeader("Content-Length")
       }
 

@@ -43,6 +43,8 @@ dependencies {
   api(projects.okhttp)
   compileOnly(libs.androidx.annotation)
   compileOnly(libs.findbugs.jsr305)
+  debugImplementation(libs.androidx.annotation)
+  debugImplementation(libs.findbugs.jsr305)
   compileOnly(libs.animalsniffer.annotations)
   compileOnly(libs.robolectric.android)
 

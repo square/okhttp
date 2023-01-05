@@ -92,7 +92,8 @@ class TestValueFactory : Closeable {
       taskRunner = taskRunner,
       maxIdleConnections = maxIdleConnections,
       keepAliveDuration = 100L,
-      timeUnit = TimeUnit.NANOSECONDS
+      timeUnit = TimeUnit.NANOSECONDS,
+      connectionListener = ConnectionListener.NONE
     )
   }
 
@@ -176,7 +177,7 @@ class TestValueFactory : Closeable {
     address: Address = newAddress(),
   ): RealRoutePlanner {
     val call = RealCall(client, Request(address.url), forWebSocket = false)
-    return RealRoutePlanner(client, address, call, newChain(call))
+    return RealRoutePlanner(client, address, call, newChain(call), ConnectionListener.NONE)
   }
 
   override fun close() {

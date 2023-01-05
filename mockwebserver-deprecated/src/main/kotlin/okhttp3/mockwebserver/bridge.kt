@@ -16,6 +16,20 @@
 package okhttp3.mockwebserver
 
 import java.util.concurrent.TimeUnit.MILLISECONDS
+import mockwebserver3.SocketPolicy.DisconnectAfterRequest
+import mockwebserver3.SocketPolicy.DisconnectAtEnd
+import mockwebserver3.SocketPolicy.DisconnectAtStart
+import mockwebserver3.SocketPolicy.DisconnectDuringRequestBody
+import mockwebserver3.SocketPolicy.DisconnectDuringResponseBody
+import mockwebserver3.SocketPolicy.DoNotReadRequestBody
+import mockwebserver3.SocketPolicy.FailHandshake
+import mockwebserver3.SocketPolicy.KeepOpen
+import mockwebserver3.SocketPolicy.NoResponse
+import mockwebserver3.SocketPolicy.ResetStreamAtStart
+import mockwebserver3.SocketPolicy.ShutdownInputAtEnd
+import mockwebserver3.SocketPolicy.ShutdownOutputAtEnd
+import mockwebserver3.SocketPolicy.ShutdownServerAfterResponse
+import mockwebserver3.SocketPolicy.StallSocketAtStart
 
 internal fun Dispatcher.wrap(): mockwebserver3.Dispatcher {
   if (this is QueueDispatcher) return this.delegate
@@ -59,15 +73,14 @@ internal fun MockResponse.wrap(): mockwebserver3.MockResponse {
   result.socketPolicy = when (socketPolicy) {
     SocketPolicy.EXPECT_CONTINUE, SocketPolicy.CONTINUE_ALWAYS -> {
       result.add100Continue()
-      mockwebserver3.SocketPolicy.KEEP_OPEN
+      KeepOpen
     }
     SocketPolicy.UPGRADE_TO_SSL_AT_END -> {
       result.inTunnel()
-      mockwebserver3.SocketPolicy.KEEP_OPEN
+      KeepOpen
     }
-    else -> socketPolicy.wrap()
+    else -> wrapSocketPolicy()
   }
-  result.http2ErrorCode = http2ErrorCode
   result.throttleBody(throttleBytesPerPeriod, getThrottlePeriod(MILLISECONDS), MILLISECONDS)
   result.bodyDelay(getBodyDelay(MILLISECONDS), MILLISECONDS)
   result.headersDelay(getHeadersDelay(MILLISECONDS), MILLISECONDS)
@@ -99,6 +112,22 @@ internal fun mockwebserver3.RecordedRequest.unwrap(): RecordedRequest {
   )
 }
 
-private fun SocketPolicy.wrap(): mockwebserver3.SocketPolicy {
-  return mockwebserver3.SocketPolicy.valueOf(name)
+private fun MockResponse.wrapSocketPolicy(): mockwebserver3.SocketPolicy {
+  return when (val socketPolicy = socketPolicy) {
+    SocketPolicy.SHUTDOWN_SERVER_AFTER_RESPONSE -> ShutdownServerAfterResponse
+    SocketPolicy.KEEP_OPEN -> KeepOpen
+    SocketPolicy.DISCONNECT_AT_END -> DisconnectAtEnd
+    SocketPolicy.DISCONNECT_AT_START -> DisconnectAtStart
+    SocketPolicy.DISCONNECT_AFTER_REQUEST -> DisconnectAfterRequest
+    SocketPolicy.DISCONNECT_DURING_REQUEST_BODY -> DisconnectDuringRequestBody
+    SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY -> DisconnectDuringResponseBody
+    SocketPolicy.DO_NOT_READ_REQUEST_BODY -> DoNotReadRequestBody(http2ErrorCode)
+    SocketPolicy.FAIL_HANDSHAKE -> FailHandshake
+    SocketPolicy.SHUTDOWN_INPUT_AT_END -> ShutdownInputAtEnd
+    SocketPolicy.SHUTDOWN_OUTPUT_AT_END -> ShutdownOutputAtEnd
+    SocketPolicy.STALL_SOCKET_AT_START -> StallSocketAtStart
+    SocketPolicy.NO_RESPONSE -> NoResponse
+    SocketPolicy.RESET_STREAM_AT_START -> ResetStreamAtStart(http2ErrorCode)
+    else -> error("Unexpected SocketPolicy: $socketPolicy")
+  }
 }

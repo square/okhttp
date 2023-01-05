@@ -25,6 +25,7 @@ import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.logging.Logger
+import kotlin.concurrent.withLock
 
 /**
  * Runs a [TaskRunner] in a controlled environment so that everything is sequential and
@@ -47,23 +48,17 @@ import java.util.logging.Logger
 class TaskFaker : Closeable {
   @Suppress("NOTHING_TO_INLINE")
   internal inline fun Any.assertThreadHoldsLock() {
-    if (assertionsEnabled && !Thread.holdsLock(this)) {
+    if (assertionsEnabled && !taskRunner.lock.isHeldByCurrentThread) {
       throw AssertionError("Thread ${Thread.currentThread().name} MUST hold lock on $this")
     }
   }
 
   @Suppress("NOTHING_TO_INLINE")
   internal inline fun Any.assertThreadDoesntHoldLock() {
-    if (assertionsEnabled && Thread.holdsLock(this)) {
+    if (assertionsEnabled && taskRunner.lock.isHeldByCurrentThread) {
       throw AssertionError("Thread ${Thread.currentThread().name} MUST NOT hold lock on $this")
     }
   }
-
-  @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "NOTHING_TO_INLINE")
-  internal inline fun Any.wait() = (this as Object).wait()
-
-  @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "NOTHING_TO_INLINE")
-  internal inline fun Any.notifyAll() = (this as Object).notifyAll()
 
   val logger = Logger.getLogger("TaskFaker." + instance++)
 
@@ -108,9 +103,9 @@ class TaskFaker : Closeable {
       val acquiredTaskRunnerLock = AtomicBoolean()
 
       tasksExecutor.execute {
-        synchronized(taskRunner) {
+        taskRunner.lock.withLock {
           acquiredTaskRunnerLock.set(true)
-          taskRunner.notifyAll()
+          taskRunner.condition.signalAll()
 
           tasksRunningCount++
           if (tasksRunningCount > 1) isParallel = true
@@ -130,7 +125,7 @@ class TaskFaker : Closeable {
 
       // Execute() must not return until the launched task stalls.
       while (!acquiredTaskRunnerLock.get()) {
-        taskRunner.wait()
+        taskRunner.condition.await()
       }
     }
 
@@ -141,7 +136,7 @@ class TaskFaker : Closeable {
       check(waitingCoordinatorThread != null)
 
       stalledTasks.remove(waitingCoordinatorThread)
-      taskRunner.notifyAll()
+      taskRunner.condition.signalAll()
     }
 
     override fun coordinatorWait(taskRunner: TaskRunner, nanos: Long) {
@@ -170,7 +165,7 @@ class TaskFaker : Closeable {
     stalledTasks += currentThread
     try {
       while (currentThread in stalledTasks) {
-        taskRunner.wait()
+        taskRunner.condition.await()
       }
     } catch (e: InterruptedException) {
       stalledTasks.remove(currentThread)
@@ -182,7 +177,7 @@ class TaskFaker : Closeable {
     taskRunner.assertThreadHoldsLock()
 
     stalledTasks.clear()
-    taskRunner.notifyAll()
+    taskRunner.condition.signalAll()
   }
 
   /** Runs all tasks that are ready. Used by the test thread only. */
@@ -194,7 +189,7 @@ class TaskFaker : Closeable {
   fun advanceUntil(newTime: Long) {
     taskRunner.assertThreadDoesntHoldLock()
 
-    synchronized(taskRunner) {
+    taskRunner.lock.withLock {
       isRunningAllTasks = true
       nanoTime = newTime
       unstallTasks()
@@ -207,7 +202,7 @@ class TaskFaker : Closeable {
     taskRunner.assertThreadDoesntHoldLock()
 
     while (true) {
-      synchronized(taskRunner) {
+      taskRunner.lock.withLock {
         if (tasksRunningCount == stalledTasks.size) {
           isRunningAllTasks = false
           return@waitForTasksToStall // All stalled.
@@ -222,7 +217,7 @@ class TaskFaker : Closeable {
   fun assertNoMoreTasks() {
     taskRunner.assertThreadDoesntHoldLock()
 
-    synchronized(taskRunner) {
+    taskRunner.lock.withLock {
       assertThat(stalledTasks).isEmpty()
     }
   }
@@ -234,7 +229,7 @@ class TaskFaker : Closeable {
     // Make sure the coordinator is ready to be interrupted.
     runTasks()
 
-    synchronized(taskRunner) {
+    taskRunner.lock.withLock {
       val toInterrupt = waitingCoordinatorThread ?: error("no thread currently waiting")
       taskBecameStalled.drainPermits()
       toInterrupt.interrupt()
@@ -247,10 +242,10 @@ class TaskFaker : Closeable {
   fun runNextTask() {
     taskRunner.assertThreadDoesntHoldLock()
 
-    synchronized(taskRunner) {
+    taskRunner.lock.withLock {
       check(stalledTasks.size >= 1) { "no tasks to run" }
       stalledTasks.removeFirst()
-      taskRunner.notifyAll()
+      taskRunner.condition.signalAll()
     }
 
     waitForTasksToStall()

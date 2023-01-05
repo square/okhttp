@@ -23,14 +23,18 @@ import java.nio.charset.Charset
 import javax.net.ssl.SSLSocket
 import okhttp3.Cache
 import okhttp3.CipherSuite
+import okhttp3.ConnectionListener
+import okhttp3.ConnectionPool
 import okhttp3.ConnectionSpec
 import okhttp3.Cookie
 import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.connection.RealConnection
 
 fun parseCookie(currentTimeMillis: Long, url: HttpUrl, setCookie: String): Cookie? =
@@ -52,7 +56,15 @@ fun applyConnectionSpec(connectionSpec: ConnectionSpec, sslSocket: SSLSocket, is
 
 fun ConnectionSpec.effectiveCipherSuites(socketEnabledCipherSuites: Array<String>): Array<String> {
   return if (cipherSuitesAsString != null) {
-    socketEnabledCipherSuites.intersect(cipherSuitesAsString, CipherSuite.ORDER_BY_NAME)
+    // 3 options here for ordering
+    // 1) Legacy Platform - based on the Platform/Provider existing ordering in
+    // sslSocket.enabledCipherSuites
+    // 2) OkHttp Client - based on MODERN_TLS source code ordering
+    // 3) Caller specified but assuming the visible defaults in MODERN_CIPHER_SUITES are rejigged
+    // to match legacy i.e. the platform/provider
+    //
+    // Opting for 2 here and keeping MODERN_TLS in line with secure browsers.
+    cipherSuitesAsString.intersect(socketEnabledCipherSuites, CipherSuite.ORDER_BY_NAME)
   } else {
     socketEnabledCipherSuites
   }
@@ -79,3 +91,7 @@ fun MediaType?.charset(defaultValue: Charset = Charsets.UTF_8): Charset {
 
 val Response.connection: RealConnection
   get() = this.exchange!!.connection
+
+fun OkHttpClient.Builder.taskRunnerInternal(taskRunner: TaskRunner) = this.taskRunner(taskRunner)
+
+fun buildConnectionPool(connectionListener: ConnectionListener, taskRunner: TaskRunner): ConnectionPool = ConnectionPool(connectionListener = connectionListener, taskRunner = taskRunner)

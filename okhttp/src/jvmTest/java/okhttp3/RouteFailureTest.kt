@@ -19,11 +19,10 @@ import java.io.IOException
 import java.net.InetAddress
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import mockwebserver3.SocketPolicy
+import mockwebserver3.SocketPolicy.ResetStreamAtStart
 import mockwebserver3.junit5.internal.MockWebServerInstance
 import okhttp3.internal.http2.ErrorCode
 import okhttp3.testing.PlatformRule
-import okhttp3.tls.internal.TlsUtil.localhost
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -46,7 +45,7 @@ class RouteFailureTest {
 
   private var socketFactory: SpecificHostSocketFactory = SpecificHostSocketFactory(defaultAddress = null)
 
-  private val handshakeCertificates = localhost()
+  private val handshakeCertificates = platform.localhostHandshakeCertificates()
 
   val dns = FakeDns()
 
@@ -56,8 +55,7 @@ class RouteFailureTest {
   val unresolvableIpv6 = InetAddress.getByName("2001:db8:ffff:ffff:ffff:ffff:ffff:ffff")
 
   val refusedStream = MockResponse(
-    socketPolicy = SocketPolicy.RESET_STREAM_AT_START,
-    http2ErrorCode = ErrorCode.REFUSED_STREAM.httpCode,
+    socketPolicy = ResetStreamAtStart(ErrorCode.REFUSED_STREAM.httpCode),
   )
   val bodyResponse = MockResponse(body = "body")
 
@@ -106,6 +104,13 @@ class RouteFailureTest {
     assertThat(client.routeDatabase.failedRoutes).isEmpty()
     assertThat(server1.requestCount).isEqualTo(1)
     assertThat(server2.requestCount).isEqualTo(0)
+
+    assertThat(clientTestRule.recordedConnectionEventTypes()).containsExactly(
+      "ConnectStart",
+      "ConnectEnd",
+      "ConnectionAcquired",
+      "ConnectionReleased"
+    )
   }
 
   @ParameterizedTest
@@ -139,6 +144,19 @@ class RouteFailureTest {
     // TODO check if we expect a second request to server1, before attempting server2
     assertThat(server1.requestCount).isEqualTo(2)
     assertThat(server2.requestCount).isEqualTo(1)
+
+    assertThat(clientTestRule.recordedConnectionEventTypes()).containsExactly(
+      "ConnectStart",
+      "ConnectEnd",
+      "ConnectionAcquired",
+      "NoNewExchanges",
+      "ConnectionReleased",
+      "ConnectionClosed",
+      "ConnectStart",
+      "ConnectEnd",
+      "ConnectionAcquired",
+      "ConnectionReleased"
+    )
   }
 
   @ParameterizedTest
@@ -168,6 +186,13 @@ class RouteFailureTest {
 
     assertThat(client.routeDatabase.failedRoutes).isEmpty()
     assertThat(server1.requestCount).isEqualTo(1)
+
+    assertThat(clientTestRule.recordedConnectionEventTypes()).containsExactly(
+      "ConnectStart",
+      "ConnectEnd",
+      "ConnectionAcquired",
+      "ConnectionReleased"
+    )
   }
 
   @ParameterizedTest
@@ -198,6 +223,15 @@ class RouteFailureTest {
 
     val failedRoutes = client.routeDatabase.failedRoutes
     assertThat(failedRoutes.single().socketAddress.address).isEqualTo(unresolvableIpv6)
+
+    assertThat(server1.requestCount).isEqualTo(1)
+
+    assertThat(clientTestRule.recordedConnectionEventTypes()).containsExactly(
+      "ConnectStart",
+      "ConnectEnd",
+      "ConnectionAcquired",
+      "ConnectionReleased"
+    )
   }
 
   private fun enableProtocol(protocol: Protocol) {

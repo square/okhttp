@@ -45,13 +45,11 @@ import org.opentest4j.TestAbortedException
  */
 @ExtendWith(MockWebServerExtension::class)
 class AndroidAsyncDnsTest {
-  private val localhostName: String = InetAddress.getByName("localhost").canonicalHostName
 
   private val localhost: HandshakeCertificates by lazy {
     // Generate a self-signed cert for the server to serve and the client to trust.
     val heldCertificate = HeldCertificate.Builder()
-      .commonName("localhost")
-      .addSubjectAlternativeName(localhostName)
+      .addSubjectAlternativeName("localhost")
       .build()
     return@lazy HandshakeCertificates.Builder()
       .addPlatformTrustedCertificates()
@@ -111,7 +109,7 @@ class AndroidAsyncDnsTest {
   @Test
   @Disabled("No results on CI for localhost")
   fun testDnsRequest() {
-    val (allAddresses, exception) = dnsQuery(localhostName)
+    val (allAddresses, exception) = dnsQuery("localhost")
 
     assertThat(exception).isNull()
     assertThat(allAddresses).isNotEmpty

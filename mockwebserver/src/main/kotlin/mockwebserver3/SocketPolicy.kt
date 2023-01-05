@@ -19,8 +19,8 @@ package mockwebserver3
 /**
  * What should be done with the incoming socket.
  *
- * Be careful when using values like [DISCONNECT_AT_END], [SHUTDOWN_INPUT_AT_END]
- * and [SHUTDOWN_OUTPUT_AT_END] that close a socket after a response, and where there are
+ * Be careful when using values like [DisconnectAtEnd], [ShutdownInputAtEnd]
+ * and [ShutdownOutputAtEnd] that close a socket after a response, and where there are
  * follow-up requests. The client is unblocked and free to continue as soon as it has received the
  * entire response body. If and when the client makes a subsequent request using a pooled socket the
  * server may not have had time to close the socket. The socket will be closed at an indeterminate
@@ -29,17 +29,17 @@ package mockwebserver3
  * client behavior non-deterministic. Add delays in the client to improve the chances that the
  * server has closed the socket before follow up requests are made.
  */
-enum class SocketPolicy {
+sealed interface SocketPolicy {
 
   /**
    * Shutdown [MockWebServer] after writing response.
    */
-  SHUTDOWN_SERVER_AFTER_RESPONSE,
+  object ShutdownServerAfterResponse : SocketPolicy
 
   /**
    * Keep the socket open after the response. This is the default HTTP/1.1 behavior.
    */
-  KEEP_OPEN,
+  object KeepOpen : SocketPolicy
 
   /**
    * Close the socket after the response. This is the default HTTP/1.0 behavior. For HTTP/2
@@ -49,70 +49,74 @@ enum class SocketPolicy {
    *
    * See [SocketPolicy] for reasons why this can cause test flakiness and how to avoid it.
    */
-  DISCONNECT_AT_END,
+  object DisconnectAtEnd : SocketPolicy
 
   /**
    * Request immediate close of connection without even reading the request. Use to simulate buggy
    * SSL servers closing connections in response to unrecognized TLS extensions.
    */
-  DISCONNECT_AT_START,
+  object DisconnectAtStart : SocketPolicy
 
   /**
    * Close connection after reading the request but before writing the response. Use this to
    * simulate late connection pool failures.
    */
-  DISCONNECT_AFTER_REQUEST,
+  object DisconnectAfterRequest : SocketPolicy
 
   /**
    * Half close connection (InputStream for client) after reading the request but before
    * writing the response. Use this to simulate late connection pool failures.
    */
-  HALF_CLOSE_AFTER_REQUEST,
+  object HalfCloseAfterRequest : SocketPolicy
 
   /** Close connection after reading half of the request body (if present). */
-  DISCONNECT_DURING_REQUEST_BODY,
+  object DisconnectDuringRequestBody : SocketPolicy
 
   /** Close connection after writing half of the response body (if present). */
-  DISCONNECT_DURING_RESPONSE_BODY,
+  object DisconnectDuringResponseBody : SocketPolicy
 
   /**
    * Process the response without even attempting to reading the request body. For HTTP/2 this will
-   * send [MockResponse.getHttp2ErrorCode] after the response body or trailers. For HTTP/1 this will
-   * close the socket after the response body or trailers.
+   * send [http2ErrorCode] after the response body or trailers. For HTTP/1 this will close the
+   * socket after the response body or trailers.
    */
-  DO_NOT_READ_REQUEST_BODY,
+  class DoNotReadRequestBody(
+    val http2ErrorCode: Int = 0,
+  ) : SocketPolicy
 
   /** Don't trust the client during the SSL handshake. */
-  FAIL_HANDSHAKE,
+  object FailHandshake : SocketPolicy
 
   /**
    * Shutdown the socket input after sending the response. For testing bad behavior.
    *
    * See [SocketPolicy] for reasons why this can cause test flakiness and how to avoid it.
    */
-  SHUTDOWN_INPUT_AT_END,
+  object ShutdownInputAtEnd : SocketPolicy
 
   /**
    * Shutdown the socket output after sending the response. For testing bad behavior.
    *
    * See [SocketPolicy] for reasons why this can cause test flakiness and how to avoid it.
    */
-  SHUTDOWN_OUTPUT_AT_END,
+  object ShutdownOutputAtEnd : SocketPolicy
 
   /**
    * After accepting the connection and doing TLS (if configured) don't do HTTP/1.1 or HTTP/2
    * framing. Ignore the socket completely until the server is shut down.
    */
-  STALL_SOCKET_AT_START,
+  object StallSocketAtStart : SocketPolicy
 
   /**
    * Read the request but don't respond to it. Just keep the socket open. For testing read response
    * header timeout issue.
    */
-  NO_RESPONSE,
+  object NoResponse : SocketPolicy
 
   /**
-   * Fail HTTP/2 requests without processing them by sending an [MockResponse.getHttp2ErrorCode].
+   * Fail HTTP/2 requests without processing them by sending [http2ErrorCode].
    */
-  RESET_STREAM_AT_START,
+  class ResetStreamAtStart(
+    val http2ErrorCode: Int = 0,
+  ) : SocketPolicy
 }

@@ -8,9 +8,8 @@ A [`HeldCertificate`][held_certificate] is a certificate and its private key. Us
 for HTTPS:
 
 ```java
-String localhost = InetAddress.getByName("localhost").getCanonicalHostName();
 HeldCertificate localhostCertificate = new HeldCertificate.Builder()
-    .addSubjectAlternativeName(localhost)
+    .addSubjectAlternativeName("localhost")
     .build();
 ```
 
@@ -62,9 +61,8 @@ HeldCertificate intermediateCertificate = new HeldCertificate.Builder()
     .signedBy(rootCertificate)
     .build();
 
-String localhost = InetAddress.getByName("localhost").getCanonicalHostName();
 HeldCertificate serverCertificate = new HeldCertificate.Builder()
-    .addSubjectAlternativeName(localhost)
+    .addSubjectAlternativeName("localhost")
     .signedBy(intermediateCertificate)
     .build();
 ```

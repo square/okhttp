@@ -19,7 +19,8 @@ import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLException
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import mockwebserver3.SocketPolicy
+import mockwebserver3.SocketPolicy.DisconnectAfterRequest
+import mockwebserver3.SocketPolicy.DisconnectAtEnd
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -27,8 +28,8 @@ import okhttp3.ResponseBody.Companion.toResponseBody
 import okhttp3.internal.closeQuietly
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
-import okhttp3.tls.internal.TlsUtil.localhost
 import org.assertj.core.api.Assertions.assertThat
+import org.bouncycastle.tls.TlsFatalAlert
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
@@ -46,7 +47,7 @@ class ConnectionReuseTest {
   val clientTestRule: OkHttpClientTestRule = OkHttpClientTestRule()
 
   private lateinit var server: MockWebServer
-  private val handshakeCertificates: HandshakeCertificates = localhost()
+  private val handshakeCertificates = platform.localhostHandshakeCertificates()
   private var client: OkHttpClient = clientTestRule.newClient()
 
   @BeforeEach
@@ -75,7 +76,6 @@ class ConnectionReuseTest {
 
   @Test
   fun connectionsAreReusedWithHttp2() {
-    platform.assumeNotBouncyCastle()
     enableHttp2()
     server.enqueue(MockResponse(body = "a"))
     server.enqueue(MockResponse(body = "b"))
@@ -115,7 +115,7 @@ class ConnectionReuseTest {
       MockResponse.Builder()
         .body("a")
         .clearHeaders()
-        .socketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        .socketPolicy(DisconnectAtEnd)
         .build()
     )
     server.enqueue(MockResponse(body = "b"))
@@ -177,7 +177,7 @@ class ConnectionReuseTest {
   @Test
   fun silentRetryWhenIdempotentRequestFailsOnReusedConnection() {
     server.enqueue(MockResponse(body = "a"))
-    server.enqueue(MockResponse(socketPolicy = SocketPolicy.DISCONNECT_AFTER_REQUEST))
+    server.enqueue(MockResponse(socketPolicy = DisconnectAfterRequest))
     server.enqueue(MockResponse(body = "b"))
     val request = Request(server.url("/"))
     val responseA = client.newCall(request).execute()
@@ -191,7 +191,6 @@ class ConnectionReuseTest {
 
   @Test
   fun http2ConnectionsAreSharedBeforeResponseIsConsumed() {
-    platform.assumeNotBouncyCastle()
     enableHttp2()
     server.enqueue(MockResponse(body = "a"))
     server.enqueue(MockResponse(body = "b"))
@@ -225,7 +224,6 @@ class ConnectionReuseTest {
 
   @Test
   fun connectionsAreNotReusedIfSslSocketFactoryChanges() {
-    platform.assumeNotBouncyCastle()
     enableHttps()
     server.enqueue(MockResponse())
     server.enqueue(MockResponse())
@@ -246,12 +244,12 @@ class ConnectionReuseTest {
       anotherClient.newCall(request).execute()
       fail<Any?>()
     } catch (expected: SSLException) {
+    } catch (expected: TlsFatalAlert) {
     }
   }
 
   @Test
   fun connectionsAreNotReusedIfHostnameVerifierChanges() {
-    platform.assumeNotBouncyCastle()
     enableHttps()
     server.enqueue(MockResponse())
     server.enqueue(MockResponse())

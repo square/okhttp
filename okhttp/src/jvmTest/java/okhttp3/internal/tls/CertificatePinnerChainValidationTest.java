@@ -15,21 +15,9 @@
  */
 package okhttp3.internal.tls;
 
-import java.security.GeneralSecurityException;
-import java.security.SecureRandom;
-import java.security.cert.X509Certificate;
-import java.util.Collections;
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLHandshakeException;
-import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509KeyManager;
-import javax.net.ssl.X509TrustManager;
 import mockwebserver3.MockResponse;
 import mockwebserver3.MockWebServer;
-import mockwebserver3.SocketPolicy;
+import mockwebserver3.SocketPolicy.DisconnectAtEnd;
 import okhttp3.Call;
 import okhttp3.CertificatePinner;
 import okhttp3.OkHttpClient;
@@ -44,6 +32,19 @@ import okhttp3.tls.HeldCertificate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509KeyManager;
+import javax.net.ssl.X509TrustManager;
+import java.security.GeneralSecurityException;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
+import java.util.Collections;
 
 import static okhttp3.tls.internal.TlsUtil.newKeyManager;
 import static okhttp3.tls.internal.TlsUtil.newTrustManager;
@@ -152,7 +153,7 @@ public final class CertificatePinnerChainValidationTest {
     // The request should complete successfully.
     server.enqueue(new MockResponse.Builder()
         .body("abc")
-        .socketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        .socketPolicy(DisconnectAtEnd.INSTANCE)
         .build());
     Call call1 = client.newCall(new Request.Builder()
         .url(server.url("/"))
@@ -167,7 +168,7 @@ public final class CertificatePinnerChainValidationTest {
     // Confirm that a second request also succeeds. This should detect caching problems.
     server.enqueue(new MockResponse.Builder()
         .body("def")
-        .socketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        .socketPolicy(DisconnectAtEnd.INSTANCE)
         .build());
     Call call2 = client.newCall(new Request.Builder()
         .url(server.url("/"))
