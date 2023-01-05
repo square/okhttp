@@ -116,7 +116,9 @@ public final class CacheTest {
     // We can't test 100 because it's not really a response.
     // assertCached(false, 100);
     assertCached(false, 101);
-    assertCached(false, 102);
+    // We can't test Processing (102) and Early Hints (103) because they are not really a response.
+//    assertCached(false, 102);
+//    assertCached(false, 103);
     assertCached(true, 200);
     assertCached(false, 201);
     assertCached(false, 202);
