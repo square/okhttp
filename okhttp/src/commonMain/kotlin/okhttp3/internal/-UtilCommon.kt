@@ -299,16 +299,41 @@ fun Closeable.closeQuietly() {
  * @param file a file in the directory to check. This file shouldn't already exist!
  */
 internal fun FileSystem.isCivilized(file: Path): Boolean {
-  val sink: Sink = sink(file)
-  return try {
-    delete(file)
-    true
-  } catch (_: IOException) {
-    false
-  } finally {
-    sink.close()
-    delete(file)
+  sink(file).use {
+    try {
+      delete(file)
+      return true
+    } catch (_: IOException) {
+    }
   }
+  delete(file)
+  return false
+}
+
+/**
+ * Execute [block] then close this. This will be closed even if [block] throws.
+ *
+ * TODO Remove once okio 3.3.0 released
+ */
+inline fun <T : Closeable?, R> T.use(block: (T) -> R): R {
+  var result: R? = null
+  var thrown: Throwable? = null
+
+  try {
+    result = block(this)
+  } catch (t: Throwable) {
+    thrown = t
+  } finally {
+    try {
+      this?.close()
+    } catch (t: Throwable) {
+      if (thrown == null) thrown = t
+      else thrown.addSuppressed(t)
+    }
+  }
+
+  if (thrown != null) throw thrown
+  return result!!
 }
 
 /** Delete file we expect but don't require to exist. */

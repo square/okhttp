@@ -163,10 +163,6 @@ class DiskLruCache(
   private val journalFileBackup: Path
   private var size: Long = 0L
   private var journalWriter: BufferedSink? = null
-    set(value) {
-      field?.closeQuietly()
-      field = value
-    }
 
   internal val lruEntries = LinkedHashMap<String, Entry>(0, 0.75f, true)
   private var redundantOpCount: Int = 0
@@ -207,6 +203,7 @@ class DiskLruCache(
           }
         } catch (_: IOException) {
           mostRecentRebuildFailed = true
+          journalWriter?.closeQuietly()
           journalWriter = blackholeSink().buffer()
         }
 
@@ -306,6 +303,7 @@ class DiskLruCache(
       if (!exhausted()) {
         rebuildJournal()
       } else {
+        journalWriter?.closeQuietly()
         journalWriter = newJournalWriter()
       }
     }
@@ -428,6 +426,7 @@ class DiskLruCache(
       fileSystem.atomicMove(journalFileTmp, journalFile)
     }
 
+    journalWriter?.closeQuietly()
     journalWriter = newJournalWriter()
     hasJournalErrors = false
     mostRecentRebuildFailed = false
@@ -693,6 +692,7 @@ class DiskLruCache(
     }
 
     trimToSize()
+    journalWriter?.closeQuietly()
     journalWriter = null
     closed = true
   }

@@ -2861,7 +2861,6 @@ public final class CacheTest {
       "metadataOrNull:/cache",
       "sink:/cache/journal.bkp",
       "delete:/cache/journal.bkp",
-      "delete:/cache/journal.bkp",
       "metadataOrNull:/cache/journal",
       "metadataOrNull:/cache",
       "sink:/cache/journal.tmp",
