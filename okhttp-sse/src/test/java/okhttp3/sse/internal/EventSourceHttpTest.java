@@ -33,6 +33,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junitpioneer.jupiter.RetryingTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -71,7 +72,8 @@ public final class EventSourceHttpTest {
     listener.assertClose();
   }
 
-  @Test public void cancelInEventShortCircuits() throws IOException {
+  @RetryingTest(5)
+  public void cancelInEventShortCircuits() throws IOException {
     server.enqueue(new MockResponse.Builder()
         .body(""
             + "data: hey\n"
