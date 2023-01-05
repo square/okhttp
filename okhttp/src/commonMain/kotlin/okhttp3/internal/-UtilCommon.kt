@@ -32,7 +32,6 @@ import okio.FileSystem
 import okio.IOException
 import okio.Options
 import okio.Path
-import okio.Sink
 
 // TODO: migrate callers to [Regex.matchAt] when that API is not experimental.
 internal fun Regex.matchAtPolyfill(input: CharSequence, index: Int): MatchResult? {
