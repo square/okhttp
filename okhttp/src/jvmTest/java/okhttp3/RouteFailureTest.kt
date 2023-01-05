@@ -228,6 +228,8 @@ class RouteFailureTest {
 
     assertThat(clientTestRule.recordedConnectionEventTypes()).containsExactly(
       "ConnectStart",
+      "ConnectFailed",
+      "ConnectStart",
       "ConnectEnd",
       "ConnectionAcquired",
       "ConnectionReleased"
