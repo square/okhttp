@@ -19,8 +19,8 @@ import java.io.IOException
 import java.net.ProtocolException
 import okhttp3.Interceptor
 import okhttp3.Response
+import okhttp3.internal.EMPTY_RESPONSE
 import okhttp3.internal.http2.ConnectionShutdownException
-import okhttp3.internal.stripBody
 import okio.buffer
 
 /** This is the last interceptor in the chain. It makes a network call to the server. */
@@ -104,7 +104,7 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
           .build()
       var code = response.code
 
-      if (shouldIgnoreAndWaitForRealResponse(code, exchange)) {
+      if (shouldIgnoreAndWaitForRealResponse(code)) {
         responseBuilder = exchange.readResponseHeaders(expectContinue = false)!!
         if (invokeStartEvent) {
           exchange.responseHeadersStart()
@@ -136,7 +136,7 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
       }
       if ((code == 204 || code == 205) && response.body?.contentLength() ?: -1L > 0L) {
         throw ProtocolException(
-            "HTTP $code had non-zero Content-Length: ${response.body.contentLength()}")
+            "HTTP $code had non-zero Content-Length: ${response.body?.contentLength()}")
       }
       return response
     } catch (e: IOException) {
@@ -148,7 +148,7 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
     }
   }
 
-  private fun shouldIgnoreAndWaitForRealResponse(code: Int, exchange: Exchange): Boolean = when {
+  private fun shouldIgnoreAndWaitForRealResponse(code: Int): Boolean = when {
     // Server sent a 100-continue even though we did not request one. Try again to read the
     // actual response status.
     code == 100 -> true
