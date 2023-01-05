@@ -79,9 +79,8 @@ internal fun MockResponse.wrap(): mockwebserver3.MockResponse {
       result.inTunnel()
       KeepOpen
     }
-    else -> socketPolicy.wrap()
+    else -> wrapSocketPolicy()
   }
-  result.http2ErrorCode = http2ErrorCode
   result.throttleBody(throttleBytesPerPeriod, getThrottlePeriod(MILLISECONDS), MILLISECONDS)
   result.bodyDelay(getBodyDelay(MILLISECONDS), MILLISECONDS)
   result.headersDelay(getHeadersDelay(MILLISECONDS), MILLISECONDS)
@@ -113,8 +112,8 @@ internal fun mockwebserver3.RecordedRequest.unwrap(): RecordedRequest {
   )
 }
 
-private fun SocketPolicy.wrap(): mockwebserver3.SocketPolicy {
-  return when (this) {
+private fun MockResponse.wrapSocketPolicy(): mockwebserver3.SocketPolicy {
+  return when (val socketPolicy = socketPolicy) {
     SocketPolicy.SHUTDOWN_SERVER_AFTER_RESPONSE -> ShutdownServerAfterResponse
     SocketPolicy.KEEP_OPEN -> KeepOpen
     SocketPolicy.DISCONNECT_AT_END -> DisconnectAtEnd
@@ -122,13 +121,13 @@ private fun SocketPolicy.wrap(): mockwebserver3.SocketPolicy {
     SocketPolicy.DISCONNECT_AFTER_REQUEST -> DisconnectAfterRequest
     SocketPolicy.DISCONNECT_DURING_REQUEST_BODY -> DisconnectDuringRequestBody
     SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY -> DisconnectDuringResponseBody
-    SocketPolicy.DO_NOT_READ_REQUEST_BODY -> DoNotReadRequestBody
+    SocketPolicy.DO_NOT_READ_REQUEST_BODY -> DoNotReadRequestBody(http2ErrorCode)
     SocketPolicy.FAIL_HANDSHAKE -> FailHandshake
     SocketPolicy.SHUTDOWN_INPUT_AT_END -> ShutdownInputAtEnd
     SocketPolicy.SHUTDOWN_OUTPUT_AT_END -> ShutdownOutputAtEnd
     SocketPolicy.STALL_SOCKET_AT_START -> StallSocketAtStart
     SocketPolicy.NO_RESPONSE -> NoResponse
-    SocketPolicy.RESET_STREAM_AT_START -> ResetStreamAtStart
-    else -> error("Unexpected SocketPolicy: $this")
+    SocketPolicy.RESET_STREAM_AT_START -> ResetStreamAtStart(http2ErrorCode)
+    else -> error("Unexpected SocketPolicy: $socketPolicy")
   }
 }

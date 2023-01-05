@@ -38,6 +38,7 @@ object TlsUtil {
     val heldCertificate = HeldCertificate.Builder()
         .commonName("localhost")
         .addSubjectAlternativeName("localhost")
+        .addSubjectAlternativeName("localhost.localdomain")
         .build()
     return@lazy HandshakeCertificates.Builder()
         .heldCertificate(heldCertificate)

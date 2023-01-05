@@ -74,6 +74,8 @@ import okhttp3.internal.DoubleInetAddressDns
 import okhttp3.internal.RecordingOkAuthenticator
 import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.closeQuietly
+import okhttp3.internal.http.HTTP_EARLY_HINTS
+import okhttp3.internal.http.HTTP_PROCESSING
 import okhttp3.internal.http.RecordingProxySelector
 import okhttp3.internal.userAgent
 import okhttp3.okio.LoggingFilesystem
@@ -2966,7 +2968,7 @@ open class CallTest {
       MockResponse.Builder()
         .addInformationalResponse(
           MockResponse(
-            code = 103,
+            code = HTTP_EARLY_HINTS,
             headers = headersOf("Link", "</style.css>; rel=preload; as=style"),
           )
         ).build()
@@ -2981,6 +2983,33 @@ open class CallTest {
     val recordedRequest = server.takeRequest()
     assertThat(recordedRequest.body.readUtf8()).isEqualTo("abc")
     assertThat(recordedRequest.headers["Link"]).isNull()
+  }
+
+  @Test
+  fun serverRespondsWithProcessingHttp2() {
+    enableProtocol(Protocol.HTTP_2)
+    serverRespondsWithProcessing()
+  }
+
+  @Test
+  fun serverRespondsWithProcessing() {
+    server.enqueue(
+      MockResponse.Builder()
+        .addInformationalResponse(
+          MockResponse(
+            code = HTTP_PROCESSING,
+          )
+        ).build()
+    )
+    val request = Request(
+      url = server.url("/"),
+      body = "abc".toRequestBody("text/plain".toMediaType()),
+    )
+    executeSynchronously(request)
+      .assertCode(200)
+      .assertSuccessful()
+    val recordedRequest = server.takeRequest()
+    assertThat(recordedRequest.body.readUtf8()).isEqualTo("abc")
   }
 
   @Test

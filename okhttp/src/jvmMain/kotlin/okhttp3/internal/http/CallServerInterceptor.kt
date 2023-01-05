@@ -18,7 +18,6 @@ package okhttp3.internal.http
 import java.io.IOException
 import java.net.ProtocolException
 import okhttp3.Interceptor
-import okhttp3.Protocol
 import okhttp3.Response
 import okhttp3.internal.connection.Exchange
 import okhttp3.internal.http2.ConnectionShutdownException
@@ -153,8 +152,10 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
     // actual response status.
     code == 100 -> true
 
-    // Early Hints (103) but not supported yet in OkHttp
-    code == 103 -> true
+    // Handle Processing (102) & Early Hints (103) and any new codes without failing
+    // 100 and 101 are the exceptions with different meanings
+    // But Early Hints not currently exposed
+    code in (102 until 200) -> true
 
     else -> false
   }

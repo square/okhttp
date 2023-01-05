@@ -39,7 +39,7 @@ import okhttp3.internal.tls.BasicTrustRootIndex
 import okhttp3.internal.tls.CertificateChainCleaner
 import okhttp3.internal.tls.TrustRootIndex
 
-/** Android 5+. */
+/** Android 5 to 9 (API 21 to 28). */
 @SuppressSignatureCheck
 class AndroidPlatform : Platform() {
   private val socketAdapters = listOfNotNull(
@@ -105,6 +105,12 @@ class AndroidPlatform : Platform() {
     CustomTrustRootIndex(trustManager, method)
   } catch (e: NoSuchMethodException) {
     super.buildTrustRootIndex(trustManager)
+  }
+
+  override fun getHandshakeServerNames(sslSocket: SSLSocket): List<String> {
+    // The superclass implementation requires APIs not available until API 24+.
+    if (Build.VERSION.SDK_INT < 24) return listOf()
+    return super.getHandshakeServerNames(sslSocket)
   }
 
   /**

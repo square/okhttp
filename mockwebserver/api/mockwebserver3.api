@@ -13,15 +13,13 @@ public final class mockwebserver3/MockResponse {
 	public fun <init> (ILokhttp3/Headers;Ljava/lang/String;)V
 	public fun <init> (ILokhttp3/Headers;Ljava/lang/String;Z)V
 	public fun <init> (ILokhttp3/Headers;Ljava/lang/String;ZLmockwebserver3/SocketPolicy;)V
-	public fun <init> (ILokhttp3/Headers;Ljava/lang/String;ZLmockwebserver3/SocketPolicy;I)V
-	public synthetic fun <init> (ILokhttp3/Headers;Ljava/lang/String;ZLmockwebserver3/SocketPolicy;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (ILokhttp3/Headers;Ljava/lang/String;ZLmockwebserver3/SocketPolicy;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (Lmockwebserver3/MockResponse$Builder;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getBody ()Lmockwebserver3/MockResponseBody;
 	public final fun getBodyDelayNanos ()J
 	public final fun getCode ()I
 	public final fun getHeaders ()Lokhttp3/Headers;
 	public final fun getHeadersDelayNanos ()J
-	public final fun getHttp2ErrorCode ()I
 	public final fun getInTunnel ()Z
 	public final fun getInformationalResponses ()Ljava/util/List;
 	public final fun getMessage ()Ljava/lang/String;
@@ -59,7 +57,6 @@ public final class mockwebserver3/MockResponse$Builder : java/lang/Cloneable {
 	public final fun code (I)Lmockwebserver3/MockResponse$Builder;
 	public final fun getBody ()Lmockwebserver3/MockResponseBody;
 	public final fun getCode ()I
-	public final fun getHttp2ErrorCode ()I
 	public final fun getInTunnel ()Z
 	public final fun getInformationalResponses ()Ljava/util/List;
 	public final fun getPushPromises ()Ljava/util/List;
@@ -71,13 +68,11 @@ public final class mockwebserver3/MockResponse$Builder : java/lang/Cloneable {
 	public final fun getWebSocketListener ()Lokhttp3/WebSocketListener;
 	public final fun headers (Lokhttp3/Headers;)Lmockwebserver3/MockResponse$Builder;
 	public final fun headersDelay (JLjava/util/concurrent/TimeUnit;)Lmockwebserver3/MockResponse$Builder;
-	public final fun http2ErrorCode (I)Lmockwebserver3/MockResponse$Builder;
 	public final fun inTunnel ()Lmockwebserver3/MockResponse$Builder;
 	public final fun removeHeader (Ljava/lang/String;)Lmockwebserver3/MockResponse$Builder;
 	public final fun setBody (Lmockwebserver3/MockResponseBody;)V
 	public final fun setCode (I)V
 	public final fun setHeader (Ljava/lang/String;Ljava/lang/Object;)Lmockwebserver3/MockResponse$Builder;
-	public final fun setHttp2ErrorCode (I)V
 	public final fun setSocketPolicy (Lmockwebserver3/SocketPolicy;)V
 	public final fun setStatus (Ljava/lang/String;)V
 	public final fun setStreamHandler (Lmockwebserver3/StreamHandler;)V
@@ -171,6 +166,7 @@ public final class mockwebserver3/RecordedRequest {
 	public final fun getChunkSizes ()Ljava/util/List;
 	public final fun getFailure ()Ljava/io/IOException;
 	public final fun getHandshake ()Lokhttp3/Handshake;
+	public final fun getHandshakeServerNames ()Ljava/util/List;
 	public final fun getHeaders ()Lokhttp3/Headers;
 	public final fun getMethod ()Ljava/lang/String;
 	public final fun getPath ()Ljava/lang/String;
@@ -204,7 +200,10 @@ public final class mockwebserver3/SocketPolicy$DisconnectDuringResponseBody : mo
 }
 
 public final class mockwebserver3/SocketPolicy$DoNotReadRequestBody : mockwebserver3/SocketPolicy {
-	public static final field INSTANCE Lmockwebserver3/SocketPolicy$DoNotReadRequestBody;
+	public fun <init> ()V
+	public fun <init> (I)V
+	public synthetic fun <init> (IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getHttp2ErrorCode ()I
 }
 
 public final class mockwebserver3/SocketPolicy$FailHandshake : mockwebserver3/SocketPolicy {
@@ -224,7 +223,10 @@ public final class mockwebserver3/SocketPolicy$NoResponse : mockwebserver3/Socke
 }
 
 public final class mockwebserver3/SocketPolicy$ResetStreamAtStart : mockwebserver3/SocketPolicy {
-	public static final field INSTANCE Lmockwebserver3/SocketPolicy$ResetStreamAtStart;
+	public fun <init> ()V
+	public fun <init> (I)V
+	public synthetic fun <init> (IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getHttp2ErrorCode ()I
 }
 
 public final class mockwebserver3/SocketPolicy$ShutdownInputAtEnd : mockwebserver3/SocketPolicy {
