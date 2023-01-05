@@ -2856,18 +2856,17 @@ public final class CacheTest {
 
     c.size();
 
-    assertThat(events).containsExactly(
-      "metadataOrNull:/cache/journal.bkp",
-      "metadataOrNull:/cache",
-      "sink:/cache/journal.bkp",
-      "delete:/cache/journal.bkp",
-      "metadataOrNull:/cache/journal",
-      "metadataOrNull:/cache",
-      "sink:/cache/journal.tmp",
-      "metadataOrNull:/cache/journal",
-      "atomicMove:/cache/journal.tmp",
-      "atomicMove:/cache/journal",
-      "appendingSink:/cache/journal");
+    assertThat(events).containsExactly("metadataOrNull:/cache/journal.bkp",
+            "metadataOrNull:/cache",
+            "sink:/cache/journal.bkp",
+            "delete:/cache/journal.bkp",
+            "metadataOrNull:/cache/journal",
+            "metadataOrNull:/cache",
+            "sink:/cache/journal.tmp",
+            "metadataOrNull:/cache/journal",
+            "atomicMove:/cache/journal.tmp",
+            "atomicMove:/cache/journal",
+            "appendingSink:/cache/journal");
 
     events.clear();
 

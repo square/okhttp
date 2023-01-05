@@ -163,7 +163,6 @@ class DiskLruCache(
   private val journalFileBackup: Path
   private var size: Long = 0L
   private var journalWriter: BufferedSink? = null
-
   internal val lruEntries = LinkedHashMap<String, Entry>(0, 0.75f, true)
   private var redundantOpCount: Int = 0
   private var hasJournalErrors: Boolean = false
