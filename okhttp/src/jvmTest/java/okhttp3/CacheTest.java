@@ -163,7 +163,6 @@ public final class CacheTest {
   }
 
   @Test public void responseCachingWith1xxInformationalResponse() throws Exception {
-    // We can't test Processing (102) and Early Hints (103) because they are not really a response.
     assertSubsequentResponseCached( 102, 200);
     assertSubsequentResponseCached( 103, 200);
   }
