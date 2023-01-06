@@ -34,7 +34,7 @@ class InformationalResponseCodeTest {
 
   @Test
   fun test103() {
-    // Enable curl so cloudflare will send a 103
+    // Pretend we are curl so cloudflare will send a 103
     val request = Request.Builder()
       .url("https://tradingstrategy.ai")
       .header("user-agent", "curl/7.85.0")
