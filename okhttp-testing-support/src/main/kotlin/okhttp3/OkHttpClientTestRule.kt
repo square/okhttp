@@ -264,6 +264,12 @@ class OkHttpClientTestRule : TestRule {
     }
   }
 
+  fun eventsList(): List<String> {
+    return synchronized(clientEventsList) {
+      clientEventsList.toList()
+    }
+  }
+
   companion object {
     /**
      * A network that resolves only one IP address per host. Use this when testing route selection
