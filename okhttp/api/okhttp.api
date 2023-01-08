@@ -378,8 +378,8 @@ public final class okhttp3/ConnectionListener$Companion {
 public final class okhttp3/ConnectionPool {
 	public fun <init> ()V
 	public fun <init> (IJLjava/util/concurrent/TimeUnit;)V
-	public fun <init> (Lokhttp3/ConnectionListener;IJLjava/util/concurrent/TimeUnit;)V
-	public synthetic fun <init> (Lokhttp3/ConnectionListener;IJLjava/util/concurrent/TimeUnit;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (IJLjava/util/concurrent/TimeUnit;Lokhttp3/ConnectionListener;)V
+	public synthetic fun <init> (IJLjava/util/concurrent/TimeUnit;Lokhttp3/ConnectionListener;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun connectionCount ()I
 	public final fun evictAll ()V
 	public final fun idleConnectionCount ()I

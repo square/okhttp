@@ -47,11 +47,12 @@ class ConnectionPool internal constructor(
       connectionListener = connectionListener
   ))
 
+  // Public API
   constructor(
-    connectionListener: ConnectionListener = ConnectionListener.NONE,
     maxIdleConnections: Int = 5,
     keepAliveDuration: Long = 5,
     timeUnit: TimeUnit = TimeUnit.MINUTES,
+    connectionListener: ConnectionListener = ConnectionListener.NONE,
   ) : this(
     taskRunner = TaskRunner.INSTANCE,
     maxIdleConnections = maxIdleConnections,
