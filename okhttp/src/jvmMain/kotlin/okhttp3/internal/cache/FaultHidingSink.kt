@@ -53,9 +53,6 @@ internal open class FaultHidingSink(
   }
 
   override fun close() {
-    if (hasErrors) {
-      return
-    }
     try {
       super.close()
     } catch (e: IOException) {
