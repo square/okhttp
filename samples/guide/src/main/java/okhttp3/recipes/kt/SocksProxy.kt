@@ -29,7 +29,7 @@ import sockslib.client.SocksSocket
 
 
 class SocksProxy {
-  val withTestContainers: Boolean = false
+  val withTestContainers: Boolean = true
 
   val request = Request.Builder()
     .url("https://publicobject.com/helloworld.txt")
@@ -37,8 +37,8 @@ class SocksProxy {
 
   fun run() {
     if (withTestContainers) {
-      val container = GenericContainer("shadowsocks/shadowsocks-libev:v3.3.5")
-        .withExposedPorts(8388)
+      val container = GenericContainer("serjs/go-socks5-proxy")
+        .withExposedPorts(1080)
         .withLogConsumer {
           println(it.utf8String)
         }
@@ -52,7 +52,7 @@ class SocksProxy {
         runTestCall(host, port, request)
       }
     } else {
-      runTestCall("localhost", 8388, request)
+      runTestCall("localhost", 1080, request)
     }
   }
 
@@ -61,10 +61,10 @@ class SocksProxy {
 
     val client = OkHttpClient.Builder()
       .socketFactory(Socks5SocketFactory(proxy))
-      .eventListenerFactory(LoggingEventListener.Factory())
-      .dns {
-        listOf(InetAddress.getLocalHost())
-      }
+      .eventListenerFactory(LoggingEventListener.Factory { println("okhttp: $it") })
+//      .dns {
+//        listOf(InetAddress.getLocalHost())
+//      }
       .build()
 
     client.newCall(request).execute().use { response ->
