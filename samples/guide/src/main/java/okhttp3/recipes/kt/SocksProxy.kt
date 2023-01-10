@@ -22,6 +22,7 @@ import java.net.Socket
 import javax.net.SocketFactory
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.logging.LoggingEventListener
 import org.testcontainers.containers.GenericContainer
 import sockslib.client.Socks5
 import sockslib.client.SocksSocket
@@ -60,6 +61,10 @@ class SocksProxy {
 
     val client = OkHttpClient.Builder()
       .socketFactory(Socks5SocketFactory(proxy))
+      .eventListenerFactory(LoggingEventListener.Factory())
+      .dns {
+        listOf(InetAddress.getLocalHost())
+      }
       .build()
 
     client.newCall(request).execute().use { response ->

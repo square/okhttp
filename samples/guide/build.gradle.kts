@@ -8,6 +8,7 @@ dependencies {
   implementation(projects.mockwebserver)
   implementation(projects.okhttpTestingSupport)
   implementation(projects.okhttpTls)
+  implementation(projects.loggingInterceptor)
   implementation(libs.animalsniffer.annotations)
   implementation(libs.squareup.moshi)
   implementation(libs.squareup.okio.fakefilesystem)
