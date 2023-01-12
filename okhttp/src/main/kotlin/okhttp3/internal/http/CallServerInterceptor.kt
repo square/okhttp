@@ -103,9 +103,8 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
           .receivedResponseAtMillis(System.currentTimeMillis())
           .build()
       var code = response.code
-      if (code == 100) {
-        // Server sent a 100-continue even though we did not request one. Try again to read the
-        // actual response status.
+
+      if (shouldIgnoreAndWaitForRealResponse(code)) {
         responseBuilder = exchange.readResponseHeaders(expectContinue = false)!!
         if (invokeStartEvent) {
           exchange.responseHeadersStart()
@@ -147,5 +146,18 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
       }
       throw e
     }
+  }
+
+  private fun shouldIgnoreAndWaitForRealResponse(code: Int): Boolean = when {
+    // Server sent a 100-continue even though we did not request one. Try again to read the
+    // actual response status.
+    code == 100 -> true
+
+    // Handle Processing (102) & Early Hints (103) and any new codes without failing
+    // 100 and 101 are the exceptions with different meanings
+    // But Early Hints not currently exposed
+    code in (102 until 200) -> true
+
+    else -> false
   }
 }

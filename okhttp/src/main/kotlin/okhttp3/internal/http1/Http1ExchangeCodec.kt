@@ -193,6 +193,12 @@ class Http1ExchangeCodec(
           state = STATE_READ_RESPONSE_HEADERS
           responseBuilder
         }
+        statusLine.code in (102 until 200) -> {
+          // Processing and Early Hints will mean a second headers are coming.
+          // Treat others the same for now
+          state = STATE_READ_RESPONSE_HEADERS
+          responseBuilder
+        }
         else -> {
           state = STATE_OPEN_RESPONSE_BODY
           responseBuilder
