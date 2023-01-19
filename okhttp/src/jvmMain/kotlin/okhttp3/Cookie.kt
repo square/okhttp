@@ -50,7 +50,7 @@ class Cookie private constructor(
 
   /**
    * Returns the time that this cookie expires, in the same format as [System.currentTimeMillis].
-   * This is December 31, 9999 if the cookie is [persistent], in which case it will expire at the
+   * This is December 31, 9999 if the cookie is not [persistent], in which case it will expire at the
    * end of the current session.
    *
    * This may return a value less than the current time, in which case the cookie is already
