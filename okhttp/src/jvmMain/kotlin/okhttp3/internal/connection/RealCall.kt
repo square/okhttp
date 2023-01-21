@@ -20,6 +20,7 @@ import java.io.InterruptedIOException
 import java.lang.ref.WeakReference
 import java.net.Socket
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.Executor
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit.MILLISECONDS
@@ -512,7 +513,7 @@ class RealCall(
      * Attempt to enqueue this async call on [executorService]. This will attempt to clean up
      * if the executor has been shut down by reporting the call as failed.
      */
-    fun executeOn(executorService: ExecutorService) {
+    fun executeOn(executorService: Executor) {
       client.dispatcher.assertThreadDoesntHoldLock()
 
       var success = false

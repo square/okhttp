@@ -18,6 +18,7 @@ package okhttp3
 import java.util.ArrayDeque
 import java.util.Collections
 import java.util.Deque
+import java.util.concurrent.Executor
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.SynchronousQueue
 import java.util.concurrent.ThreadPoolExecutor
@@ -86,16 +87,26 @@ class Dispatcher() {
   @get:Synchronized
   var idleCallback: Runnable? = null
 
-  private var executorServiceOrNull: ExecutorService? = null
+  private var executorOrNull: Executor? = null
+
+  @get:Synchronized
+  @get:JvmName("executor") val executor: Executor
+    get() {
+      return if (executorOrNull == null) {
+        // force creation
+        executorService
+      } else
+        executorOrNull!!
+    }
 
   @get:Synchronized
   @get:JvmName("executorService") val executorService: ExecutorService
     get() {
-      if (executorServiceOrNull == null) {
-        executorServiceOrNull = ThreadPoolExecutor(0, Int.MAX_VALUE, 60, TimeUnit.SECONDS,
+      if (executorOrNull == null) {
+        executorOrNull = ThreadPoolExecutor(0, Int.MAX_VALUE, 60, TimeUnit.SECONDS,
             SynchronousQueue(), threadFactory("$okHttpName Dispatcher", false))
       }
-      return executorServiceOrNull!!
+      return executorOrNull as ExecutorService
     }
 
   /** Ready async calls in the order they'll be run. */
@@ -108,7 +119,11 @@ class Dispatcher() {
   private val runningSyncCalls = ArrayDeque<RealCall>()
 
   constructor(executorService: ExecutorService) : this() {
-    this.executorServiceOrNull = executorService
+    this.executorOrNull = executorService
+  }
+
+  constructor(executor: Executor) : this() {
+    this.executorOrNull = executor
   }
 
   internal fun enqueue(call: AsyncCall) {
@@ -179,10 +194,11 @@ class Dispatcher() {
       isRunning = runningCallsCount() > 0
     }
 
+    val thisExecutor = executor
     // Avoid resubmitting if we can't logically progress
     // particularly because RealCall handles a RejectedExecutionException
     // by executing on the same thread.
-    if (executorService.isShutdown) {
+    if (thisExecutor is ExecutorService && thisExecutor.isShutdown) {
         for (i in 0 until executableCalls.size) {
           val asyncCall = executableCalls[i]
           asyncCall.callsPerHost.decrementAndGet()
@@ -197,7 +213,7 @@ class Dispatcher() {
     } else {
       for (i in 0 until executableCalls.size) {
         val asyncCall = executableCalls[i]
-        asyncCall.executeOn(executorService)
+        asyncCall.executeOn(thisExecutor)
       }
     }
 
