@@ -487,8 +487,10 @@ public final class okhttp3/Credentials {
 public final class okhttp3/Dispatcher {
 	public final fun -deprecated_executorService ()Ljava/util/concurrent/ExecutorService;
 	public fun <init> ()V
+	public fun <init> (Ljava/util/concurrent/Executor;)V
 	public fun <init> (Ljava/util/concurrent/ExecutorService;)V
 	public final fun cancelAll ()V
+	public final fun executor ()Ljava/util/concurrent/Executor;
 	public final fun executorService ()Ljava/util/concurrent/ExecutorService;
 	public final fun getIdleCallback ()Ljava/lang/Runnable;
 	public final fun getMaxRequests ()I

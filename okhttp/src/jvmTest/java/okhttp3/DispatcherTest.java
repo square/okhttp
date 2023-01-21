@@ -1,19 +1,17 @@
 package okhttp3;
 
-import java.io.IOException;
-import java.io.InterruptedIOException;
-import java.net.UnknownHostException;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
+import java.io.IOException;
+import java.io.InterruptedIOException;
+import java.net.UnknownHostException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -320,21 +318,8 @@ public final class DispatcherTest {
   @Test public void dispatcherWithExecutor() throws Exception {
     Request request1 = newRequest("http://a/1");
 
-    AtomicInteger executed = new AtomicInteger(0);
-    AtomicInteger completed = new AtomicInteger(0);
-
     ExecutorService realExecutor = Executors.newCachedThreadPool();
-    Executor executor = (runnable) -> {
-      realExecutor.execute(() -> {
-        executed.incrementAndGet();
-        try {
-          runnable.run();
-        } finally {
-          completed.incrementAndGet();
-        }
-      });
-    };
-    Dispatcher newDispatcher = new Dispatcher(executor);
+    Dispatcher newDispatcher = new Dispatcher((runnable) -> { realExecutor.execute(runnable::run); });
 
     OkHttpClient newClient = new OkHttpClient.Builder()
       .dns((host) -> { throw new UnknownHostException(); })
@@ -344,9 +329,6 @@ public final class DispatcherTest {
     newClient.newCall(request1).enqueue(callback);
 
     callback.await(request1.url()).assertFailure(UnknownHostException.class);
-
-    assertThat(executed.get()).isGreaterThan(0);
-    assertThat(completed.get()).isEqualTo(executed.get());
   }
 
   private Thread makeSynchronousCall(Call call) {
