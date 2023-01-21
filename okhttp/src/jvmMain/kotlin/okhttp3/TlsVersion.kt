@@ -28,7 +28,7 @@ actual enum class TlsVersion(
   TLS_1_0("TLSv1"), // 1999.
   SSL_3_0("SSLv3"); // 1996.
 
-  @JvmName("-deprecated_javaName")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "javaName"),

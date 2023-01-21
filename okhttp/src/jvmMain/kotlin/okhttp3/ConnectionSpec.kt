@@ -60,7 +60,7 @@ class ConnectionSpec internal constructor(
       return cipherSuitesAsString?.map { CipherSuite.forJavaName(it) }
     }
 
-  @JvmName("-deprecated_cipherSuites")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "cipherSuites"),
@@ -76,14 +76,14 @@ class ConnectionSpec internal constructor(
       return tlsVersionsAsString?.map { TlsVersion.forJavaName(it) }
     }
 
-  @JvmName("-deprecated_tlsVersions")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "tlsVersions"),
       level = DeprecationLevel.ERROR)
   fun tlsVersions(): List<TlsVersion>? = tlsVersions
 
-  @JvmName("-deprecated_supportsTlsExtensions")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "supportsTlsExtensions"),

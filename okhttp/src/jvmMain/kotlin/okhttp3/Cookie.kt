@@ -143,63 +143,63 @@ class Cookie private constructor(
 
   override fun toString(): String = toString(false)
 
-  @JvmName("-deprecated_name")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "name"),
       level = DeprecationLevel.ERROR)
   fun name(): String = name
 
-  @JvmName("-deprecated_value")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "value"),
       level = DeprecationLevel.ERROR)
   fun value(): String = value
 
-  @JvmName("-deprecated_persistent")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "persistent"),
       level = DeprecationLevel.ERROR)
   fun persistent(): Boolean = persistent
 
-  @JvmName("-deprecated_expiresAt")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "expiresAt"),
       level = DeprecationLevel.ERROR)
   fun expiresAt(): Long = expiresAt
 
-  @JvmName("-deprecated_hostOnly")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "hostOnly"),
       level = DeprecationLevel.ERROR)
   fun hostOnly(): Boolean = hostOnly
 
-  @JvmName("-deprecated_domain")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "domain"),
       level = DeprecationLevel.ERROR)
   fun domain(): String = domain
 
-  @JvmName("-deprecated_path")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "path"),
       level = DeprecationLevel.ERROR)
   fun path(): String = path
 
-  @JvmName("-deprecated_httpOnly")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "httpOnly"),
       level = DeprecationLevel.ERROR)
   fun httpOnly(): Boolean = httpOnly
 
-  @JvmName("-deprecated_secure")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "secure"),

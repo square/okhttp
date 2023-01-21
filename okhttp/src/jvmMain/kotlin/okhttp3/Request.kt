@@ -120,35 +120,35 @@ actual class Request internal actual constructor(builder: Builder) {
       return result
     }
 
-  @JvmName("-deprecated_url")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "url"),
       level = DeprecationLevel.ERROR)
   fun url(): HttpUrl = url
 
-  @JvmName("-deprecated_method")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "method"),
       level = DeprecationLevel.ERROR)
   fun method(): String = method
 
-  @JvmName("-deprecated_headers")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "headers"),
       level = DeprecationLevel.ERROR)
   fun headers(): Headers = headers
 
-  @JvmName("-deprecated_body")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "body"),
       level = DeprecationLevel.ERROR)
   fun body(): RequestBody? = body
 
-  @JvmName("-deprecated_cacheControl")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "cacheControl"),

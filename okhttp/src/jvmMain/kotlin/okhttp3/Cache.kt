@@ -379,7 +379,7 @@ class Cache internal constructor(
   @get:JvmName("directoryPath") val directoryPath: Path
     get() = cache.directory
 
-  @JvmName("-deprecated_directory")
+  @JvmSynthetic
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "directory"),

@@ -138,7 +138,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
     this.level = level
   }
 
-  @JvmName("-deprecated_level")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to var",
       replaceWith = ReplaceWith(expression = "level"),

@@ -467,133 +467,133 @@ actual class HttpUrl internal actual constructor(
     }
   }
 
-  @JvmName("-deprecated_url")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to toUrl()",
       replaceWith = ReplaceWith(expression = "toUrl()"),
       level = DeprecationLevel.ERROR)
   fun url(): URL = toUrl()
 
-  @JvmName("-deprecated_uri")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to toUri()",
       replaceWith = ReplaceWith(expression = "toUri()"),
       level = DeprecationLevel.ERROR)
   fun uri(): URI = toUri()
 
-  @JvmName("-deprecated_scheme")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "scheme"),
       level = DeprecationLevel.ERROR)
   fun scheme(): String = scheme
 
-  @JvmName("-deprecated_encodedUsername")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "encodedUsername"),
       level = DeprecationLevel.ERROR)
   fun encodedUsername(): String = encodedUsername
 
-  @JvmName("-deprecated_username")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "username"),
       level = DeprecationLevel.ERROR)
   fun username(): String = username
 
-  @JvmName("-deprecated_encodedPassword")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "encodedPassword"),
       level = DeprecationLevel.ERROR)
   fun encodedPassword(): String = encodedPassword
 
-  @JvmName("-deprecated_password")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "password"),
       level = DeprecationLevel.ERROR)
   fun password(): String = password
 
-  @JvmName("-deprecated_host")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "host"),
       level = DeprecationLevel.ERROR)
   fun host(): String = host
 
-  @JvmName("-deprecated_port")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "port"),
       level = DeprecationLevel.ERROR)
   fun port(): Int = port
 
-  @JvmName("-deprecated_pathSize")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "pathSize"),
       level = DeprecationLevel.ERROR)
   fun pathSize(): Int = pathSize
 
-  @JvmName("-deprecated_encodedPath")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "encodedPath"),
       level = DeprecationLevel.ERROR)
   fun encodedPath(): String = encodedPath
 
-  @JvmName("-deprecated_encodedPathSegments")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "encodedPathSegments"),
       level = DeprecationLevel.ERROR)
   fun encodedPathSegments(): List<String> = encodedPathSegments
 
-  @JvmName("-deprecated_pathSegments")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "pathSegments"),
       level = DeprecationLevel.ERROR)
   fun pathSegments(): List<String> = pathSegments
 
-  @JvmName("-deprecated_encodedQuery")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "encodedQuery"),
       level = DeprecationLevel.ERROR)
   fun encodedQuery(): String? = encodedQuery
 
-  @JvmName("-deprecated_query")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "query"),
       level = DeprecationLevel.ERROR)
   fun query(): String? = query
 
-  @JvmName("-deprecated_querySize")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "querySize"),
       level = DeprecationLevel.ERROR)
   fun querySize(): Int = querySize
 
-  @JvmName("-deprecated_queryParameterNames")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "queryParameterNames"),
       level = DeprecationLevel.ERROR)
   fun queryParameterNames(): Set<String> = queryParameterNames
 
-  @JvmName("-deprecated_encodedFragment")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "encodedFragment"),
       level = DeprecationLevel.ERROR)
   fun encodedFragment(): String? = encodedFragment
 
-  @JvmName("-deprecated_fragment")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "fragment"),
@@ -741,7 +741,7 @@ actual class HttpUrl internal actual constructor(
     @JvmStatic
     @JvmName("get") fun URI.toHttpUrlOrNull(): HttpUrl? = toString().toHttpUrlOrNull()
 
-    @JvmName("-deprecated_get")
+    @JvmSynthetic
     @Deprecated(
         message = "moved to extension function",
         replaceWith = ReplaceWith(
@@ -750,7 +750,7 @@ actual class HttpUrl internal actual constructor(
         level = DeprecationLevel.ERROR)
     fun get(url: String): HttpUrl = url.toHttpUrl()
 
-    @JvmName("-deprecated_parse")
+    @JvmSynthetic
     @Deprecated(
         message = "moved to extension function",
         replaceWith = ReplaceWith(
@@ -759,7 +759,7 @@ actual class HttpUrl internal actual constructor(
         level = DeprecationLevel.ERROR)
     fun parse(url: String): HttpUrl? = url.toHttpUrlOrNull()
 
-    @JvmName("-deprecated_get")
+    @JvmSynthetic
     @Deprecated(
         message = "moved to extension function",
         replaceWith = ReplaceWith(
@@ -768,7 +768,7 @@ actual class HttpUrl internal actual constructor(
         level = DeprecationLevel.ERROR)
     fun get(url: URL): HttpUrl? = url.toHttpUrlOrNull()
 
-    @JvmName("-deprecated_get")
+    @JvmSynthetic
     @Deprecated(
         message = "moved to extension function",
         replaceWith = ReplaceWith(

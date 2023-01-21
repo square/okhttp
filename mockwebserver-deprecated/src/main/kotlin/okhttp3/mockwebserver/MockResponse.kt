@@ -83,7 +83,7 @@ class MockResponse : Cloneable {
     return result
   }
 
-  @JvmName("-deprecated_getStatus")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to var",
       replaceWith = ReplaceWith(expression = "status"),
@@ -159,7 +159,7 @@ class MockResponse : Cloneable {
   fun setChunkedBody(body: String, maxChunkSize: Int): MockResponse =
     setChunkedBody(Buffer().writeUtf8(body), maxChunkSize)
 
-  @JvmName("-deprecated_getHeaders")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to var",
       replaceWith = ReplaceWith(expression = "headers"),
@@ -168,7 +168,7 @@ class MockResponse : Cloneable {
 
   fun setHeaders(headers: Headers) = apply { this.headers = headers }
 
-  @JvmName("-deprecated_getTrailers")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to var",
       replaceWith = ReplaceWith(expression = "trailers"),
@@ -177,7 +177,7 @@ class MockResponse : Cloneable {
 
   fun setTrailers(trailers: Headers) = apply { this.trailers = trailers }
 
-  @JvmName("-deprecated_getSocketPolicy")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to var",
       replaceWith = ReplaceWith(expression = "socketPolicy"),
@@ -188,7 +188,7 @@ class MockResponse : Cloneable {
     this.socketPolicy = socketPolicy
   }
 
-  @JvmName("-deprecated_getHttp2ErrorCode")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to var",
       replaceWith = ReplaceWith(expression = "http2ErrorCode"),

@@ -52,7 +52,7 @@ class MultipartBody internal constructor(
   /** A combination of [type] and [boundaryByteString]. */
   override fun contentType(): MediaType = contentType
 
-  @JvmName("-deprecated_type")
+  @JvmSynthetic
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "type"),
@@ -60,7 +60,7 @@ class MultipartBody internal constructor(
   )
   fun type(): MediaType = type
 
-  @JvmName("-deprecated_boundary")
+  @JvmSynthetic
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "boundary"),
@@ -68,7 +68,7 @@ class MultipartBody internal constructor(
   )
   fun boundary(): String = boundary
 
-  @JvmName("-deprecated_size")
+  @JvmSynthetic
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "size"),
@@ -76,7 +76,7 @@ class MultipartBody internal constructor(
   )
   fun size(): Int = size
 
-  @JvmName("-deprecated_parts")
+  @JvmSynthetic
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "parts"),
@@ -180,7 +180,7 @@ class MultipartBody internal constructor(
     @get:JvmName("body") val body: RequestBody
   ) {
 
-    @JvmName("-deprecated_headers")
+    @JvmSynthetic
     @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "headers"),
@@ -188,7 +188,7 @@ class MultipartBody internal constructor(
     )
     fun headers(): Headers? = headers
 
-    @JvmName("-deprecated_body")
+    @JvmSynthetic
     @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "body"),

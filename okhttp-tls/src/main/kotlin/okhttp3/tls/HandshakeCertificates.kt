@@ -74,14 +74,14 @@ class HandshakeCertificates private constructor(
   @get:JvmName("trustManager") val trustManager: X509TrustManager
 ) {
 
-  @JvmName("-deprecated_keyManager")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "keyManager"),
       level = DeprecationLevel.ERROR)
   fun keyManager(): X509KeyManager = keyManager
 
-  @JvmName("-deprecated_trustManager")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "trustManager"),

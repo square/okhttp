@@ -56,21 +56,21 @@ class Handshake internal constructor(
     }
   }
 
-  @JvmName("-deprecated_tlsVersion")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "tlsVersion"),
       level = DeprecationLevel.ERROR)
   fun tlsVersion(): TlsVersion = tlsVersion
 
-  @JvmName("-deprecated_cipherSuite")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "cipherSuite"),
       level = DeprecationLevel.ERROR)
   fun cipherSuite(): CipherSuite = cipherSuite
 
-  @JvmName("-deprecated_peerCertificates")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "peerCertificates"),
@@ -82,14 +82,14 @@ class Handshake internal constructor(
   val peerPrincipal: Principal?
     get() = (peerCertificates.firstOrNull() as? X509Certificate)?.subjectX500Principal
 
-  @JvmName("-deprecated_peerPrincipal")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "peerPrincipal"),
       level = DeprecationLevel.ERROR)
   fun peerPrincipal(): Principal? = peerPrincipal
 
-  @JvmName("-deprecated_localCertificates")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "localCertificates"),
@@ -101,7 +101,7 @@ class Handshake internal constructor(
   val localPrincipal: Principal?
     get() = (localCertificates.firstOrNull() as? X509Certificate)?.subjectX500Principal
 
-  @JvmName("-deprecated_localPrincipal")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "localPrincipal"),
@@ -175,7 +175,7 @@ class Handshake internal constructor(
     }
 
     @Throws(IOException::class)
-    @JvmName("-deprecated_get")
+    @JvmSynthetic
     @Deprecated(
         message = "moved to extension function",
         replaceWith = ReplaceWith(expression = "sslSession.handshake()"),

@@ -78,7 +78,7 @@ class MockWebServer : ExternalResource(), Closeable {
     }
   }
 
-  @JvmName("-deprecated_port")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "port"),
@@ -90,7 +90,7 @@ class MockWebServer : ExternalResource(), Closeable {
     return delegate.toProxyAddress()
   }
 
-  @JvmName("-deprecated_serverSocketFactory")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to var",
       replaceWith = ReplaceWith(
@@ -106,7 +106,7 @@ class MockWebServer : ExternalResource(), Closeable {
     return delegate.url(path)
   }
 
-  @JvmName("-deprecated_bodyLimit")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to var",
       replaceWith = ReplaceWith(
@@ -117,7 +117,7 @@ class MockWebServer : ExternalResource(), Closeable {
     delegate.bodyLimit = bodyLimit
   }
 
-  @JvmName("-deprecated_protocolNegotiationEnabled")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to var",
       replaceWith = ReplaceWith(
@@ -128,7 +128,7 @@ class MockWebServer : ExternalResource(), Closeable {
     delegate.protocolNegotiationEnabled = protocolNegotiationEnabled
   }
 
-  @JvmName("-deprecated_protocols")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to var",
       replaceWith = ReplaceWith(expression = "run { this.protocols = protocols }"),
@@ -137,7 +137,7 @@ class MockWebServer : ExternalResource(), Closeable {
     delegate.protocols = protocols
   }
 
-  @JvmName("-deprecated_protocols")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to var",
       replaceWith = ReplaceWith(expression = "protocols"),
@@ -170,7 +170,7 @@ class MockWebServer : ExternalResource(), Closeable {
     return delegate.takeRequest(timeout, unit)?.unwrap()
   }
 
-  @JvmName("-deprecated_requestCount")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "requestCount"),

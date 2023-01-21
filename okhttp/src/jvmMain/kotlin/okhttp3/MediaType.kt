@@ -49,7 +49,7 @@ actual class MediaType internal actual constructor(
 
   actual fun parameter(name: String): String? = commonParameter(name)
 
-  @JvmName("-deprecated_type")
+  @JvmSynthetic
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "type"),
@@ -57,7 +57,7 @@ actual class MediaType internal actual constructor(
   )
   fun type(): String = type
 
-  @JvmName("-deprecated_subtype")
+  @JvmSynthetic
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "subtype"),
@@ -80,7 +80,7 @@ actual class MediaType internal actual constructor(
     @JvmName("parse")
     actual fun String.toMediaTypeOrNull(): MediaType? = commonToMediaTypeOrNull()
 
-    @JvmName("-deprecated_get")
+    @JvmSynthetic
     @Deprecated(
       message = "moved to extension function",
       replaceWith = ReplaceWith(
@@ -91,7 +91,7 @@ actual class MediaType internal actual constructor(
     )
     fun get(mediaType: String): MediaType = mediaType.toMediaType()
 
-    @JvmName("-deprecated_parse")
+    @JvmSynthetic
     @Deprecated(
       message = "moved to extension function",
       replaceWith = ReplaceWith(

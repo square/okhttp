@@ -69,7 +69,7 @@ actual class Headers internal actual constructor(
   @get:JvmName("size") actual val size: Int
     get() = namesAndValues.size / 2
 
-  @JvmName("-deprecated_size")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "size"),
@@ -225,7 +225,7 @@ actual class Headers internal actual constructor(
     @JvmName("of")
     actual fun headersOf(vararg namesAndValues: String): Headers = commonHeadersOf(*namesAndValues)
 
-    @JvmName("-deprecated_of")
+    @JvmSynthetic
     @Deprecated(
         message = "function name changed",
         replaceWith = ReplaceWith(expression = "headersOf(*namesAndValues)"),
@@ -238,7 +238,7 @@ actual class Headers internal actual constructor(
     @JvmName("of")
     actual fun Map<String, String>.toHeaders(): Headers = commonToHeaders()
 
-    @JvmName("-deprecated_of")
+    @JvmSynthetic
     @Deprecated(
         message = "function moved to extension",
         replaceWith = ReplaceWith(expression = "headers.toHeaders()"),

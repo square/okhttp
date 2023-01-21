@@ -65,28 +65,28 @@ actual class Challenge actual constructor(
     return Challenge(scheme, authParams)
   }
 
-  @JvmName("-deprecated_scheme")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "scheme"),
       level = DeprecationLevel.ERROR)
   fun scheme(): String = scheme
 
-  @JvmName("-deprecated_authParams")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "authParams"),
       level = DeprecationLevel.ERROR)
   fun authParams(): Map<String?, String> = authParams
 
-  @JvmName("-deprecated_realm")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "realm"),
       level = DeprecationLevel.ERROR)
   fun realm(): String? = realm
 
-  @JvmName("-deprecated_charset")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "charset"),

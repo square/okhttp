@@ -36,7 +36,7 @@ class FormBody internal constructor(
   @get:JvmName("size") val size: Int
     get() = encodedNames.size
 
-  @JvmName("-deprecated_size")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "size"),

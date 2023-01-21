@@ -91,21 +91,21 @@ actual class Response internal constructor(
 
   internal actual var lazyCacheControl: CacheControl? = null
 
-  @JvmName("-deprecated_request")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "request"),
       level = DeprecationLevel.ERROR)
   fun request(): Request = request
 
-  @JvmName("-deprecated_protocol")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "protocol"),
       level = DeprecationLevel.ERROR)
   fun protocol(): Protocol = protocol
 
-  @JvmName("-deprecated_code")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "code"),
@@ -114,14 +114,14 @@ actual class Response internal constructor(
 
   actual val isSuccessful: Boolean = commonIsSuccessful
 
-  @JvmName("-deprecated_message")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "message"),
       level = DeprecationLevel.ERROR)
   fun message(): String = message
 
-  @JvmName("-deprecated_handshake")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "handshake"),
@@ -133,7 +133,7 @@ actual class Response internal constructor(
   @JvmOverloads
   actual fun header(name: String, defaultValue: String?): String? = commonHeader(name, defaultValue)
 
-  @JvmName("-deprecated_headers")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "headers"),
@@ -156,7 +156,7 @@ actual class Response internal constructor(
     return buffer.asResponseBody(body.contentType(), buffer.size)
   }
 
-  @JvmName("-deprecated_body")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "body"),
@@ -168,21 +168,21 @@ actual class Response internal constructor(
   /** Returns true if this response redirects to another resource. */
   actual val isRedirect: Boolean = commonIsRedirect
 
-  @JvmName("-deprecated_networkResponse")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "networkResponse"),
       level = DeprecationLevel.ERROR)
   fun networkResponse(): Response? = networkResponse
 
-  @JvmName("-deprecated_cacheResponse")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "cacheResponse"),
       level = DeprecationLevel.ERROR)
   fun cacheResponse(): Response? = cacheResponse
 
-  @JvmName("-deprecated_priorResponse")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "priorResponse"),
@@ -213,21 +213,21 @@ actual class Response internal constructor(
   @get:JvmName("cacheControl") actual val cacheControl: CacheControl
     get() = commonCacheControl
 
-  @JvmName("-deprecated_cacheControl")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "cacheControl"),
       level = DeprecationLevel.ERROR)
   fun cacheControl(): CacheControl = cacheControl
 
-  @JvmName("-deprecated_sentRequestAtMillis")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "sentRequestAtMillis"),
       level = DeprecationLevel.ERROR)
   fun sentRequestAtMillis(): Long = sentRequestAtMillis
 
-  @JvmName("-deprecated_receivedResponseAtMillis")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "receivedResponseAtMillis"),

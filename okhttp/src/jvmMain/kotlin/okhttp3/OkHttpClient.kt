@@ -298,7 +298,7 @@ open class OkHttpClient internal constructor(
 
   open fun newBuilder(): Builder = Builder(this)
 
-  @JvmName("-deprecated_dispatcher")
+  @JvmSynthetic
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "dispatcher"),
@@ -306,7 +306,7 @@ open class OkHttpClient internal constructor(
   )
   fun dispatcher(): Dispatcher = dispatcher
 
-  @JvmName("-deprecated_connectionPool")
+  @JvmSynthetic
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "connectionPool"),
@@ -314,7 +314,7 @@ open class OkHttpClient internal constructor(
   )
   fun connectionPool(): ConnectionPool = connectionPool
 
-  @JvmName("-deprecated_interceptors")
+  @JvmSynthetic
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "interceptors"),
@@ -322,7 +322,7 @@ open class OkHttpClient internal constructor(
   )
   fun interceptors(): List<Interceptor> = interceptors
 
-  @JvmName("-deprecated_networkInterceptors")
+  @JvmSynthetic
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "networkInterceptors"),
@@ -330,7 +330,7 @@ open class OkHttpClient internal constructor(
   )
   fun networkInterceptors(): List<Interceptor> = networkInterceptors
 
-  @JvmName("-deprecated_eventListenerFactory")
+  @JvmSynthetic
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "eventListenerFactory"),
@@ -338,7 +338,7 @@ open class OkHttpClient internal constructor(
   )
   fun eventListenerFactory(): EventListener.Factory = eventListenerFactory
 
-  @JvmName("-deprecated_retryOnConnectionFailure")
+  @JvmSynthetic
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "retryOnConnectionFailure"),
@@ -346,7 +346,7 @@ open class OkHttpClient internal constructor(
   )
   fun retryOnConnectionFailure(): Boolean = retryOnConnectionFailure
 
-  @JvmName("-deprecated_authenticator")
+  @JvmSynthetic
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "authenticator"),
@@ -354,7 +354,7 @@ open class OkHttpClient internal constructor(
   )
   fun authenticator(): Authenticator = authenticator
 
-  @JvmName("-deprecated_followRedirects")
+  @JvmSynthetic
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "followRedirects"),
@@ -362,7 +362,7 @@ open class OkHttpClient internal constructor(
   )
   fun followRedirects(): Boolean = followRedirects
 
-  @JvmName("-deprecated_followSslRedirects")
+  @JvmSynthetic
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "followSslRedirects"),
@@ -370,7 +370,7 @@ open class OkHttpClient internal constructor(
   )
   fun followSslRedirects(): Boolean = followSslRedirects
 
-  @JvmName("-deprecated_cookieJar")
+  @JvmSynthetic
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "cookieJar"),
@@ -378,7 +378,7 @@ open class OkHttpClient internal constructor(
   )
   fun cookieJar(): CookieJar = cookieJar
 
-  @JvmName("-deprecated_cache")
+  @JvmSynthetic
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "cache"),
@@ -386,7 +386,7 @@ open class OkHttpClient internal constructor(
   )
   fun cache(): Cache? = cache
 
-  @JvmName("-deprecated_dns")
+  @JvmSynthetic
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "dns"),
@@ -394,7 +394,7 @@ open class OkHttpClient internal constructor(
   )
   fun dns(): Dns = dns
 
-  @JvmName("-deprecated_proxy")
+  @JvmSynthetic
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "proxy"),
@@ -402,7 +402,7 @@ open class OkHttpClient internal constructor(
   )
   fun proxy(): Proxy? = proxy
 
-  @JvmName("-deprecated_proxySelector")
+  @JvmSynthetic
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "proxySelector"),
@@ -410,7 +410,7 @@ open class OkHttpClient internal constructor(
   )
   fun proxySelector(): ProxySelector = proxySelector
 
-  @JvmName("-deprecated_proxyAuthenticator")
+  @JvmSynthetic
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "proxyAuthenticator"),
@@ -418,7 +418,7 @@ open class OkHttpClient internal constructor(
   )
   fun proxyAuthenticator(): Authenticator = proxyAuthenticator
 
-  @JvmName("-deprecated_socketFactory")
+  @JvmSynthetic
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "socketFactory"),
@@ -426,7 +426,7 @@ open class OkHttpClient internal constructor(
   )
   fun socketFactory(): SocketFactory = socketFactory
 
-  @JvmName("-deprecated_sslSocketFactory")
+  @JvmSynthetic
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "sslSocketFactory"),
@@ -434,7 +434,7 @@ open class OkHttpClient internal constructor(
   )
   fun sslSocketFactory(): SSLSocketFactory = sslSocketFactory
 
-  @JvmName("-deprecated_connectionSpecs")
+  @JvmSynthetic
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "connectionSpecs"),
@@ -442,7 +442,7 @@ open class OkHttpClient internal constructor(
   )
   fun connectionSpecs(): List<ConnectionSpec> = connectionSpecs
 
-  @JvmName("-deprecated_protocols")
+  @JvmSynthetic
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "protocols"),
@@ -450,7 +450,7 @@ open class OkHttpClient internal constructor(
   )
   fun protocols(): List<Protocol> = protocols
 
-  @JvmName("-deprecated_hostnameVerifier")
+  @JvmSynthetic
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "hostnameVerifier"),
@@ -458,7 +458,7 @@ open class OkHttpClient internal constructor(
   )
   fun hostnameVerifier(): HostnameVerifier = hostnameVerifier
 
-  @JvmName("-deprecated_certificatePinner")
+  @JvmSynthetic
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "certificatePinner"),
@@ -466,7 +466,7 @@ open class OkHttpClient internal constructor(
   )
   fun certificatePinner(): CertificatePinner = certificatePinner
 
-  @JvmName("-deprecated_callTimeoutMillis")
+  @JvmSynthetic
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "callTimeoutMillis"),
@@ -474,7 +474,7 @@ open class OkHttpClient internal constructor(
   )
   fun callTimeoutMillis(): Int = callTimeoutMillis
 
-  @JvmName("-deprecated_connectTimeoutMillis")
+  @JvmSynthetic
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "connectTimeoutMillis"),
@@ -482,7 +482,7 @@ open class OkHttpClient internal constructor(
   )
   fun connectTimeoutMillis(): Int = connectTimeoutMillis
 
-  @JvmName("-deprecated_readTimeoutMillis")
+  @JvmSynthetic
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "readTimeoutMillis"),
@@ -490,7 +490,7 @@ open class OkHttpClient internal constructor(
   )
   fun readTimeoutMillis(): Int = readTimeoutMillis
 
-  @JvmName("-deprecated_writeTimeoutMillis")
+  @JvmSynthetic
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "writeTimeoutMillis"),
@@ -498,7 +498,7 @@ open class OkHttpClient internal constructor(
   )
   fun writeTimeoutMillis(): Int = writeTimeoutMillis
 
-  @JvmName("-deprecated_pingIntervalMillis")
+  @JvmSynthetic
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "pingIntervalMillis"),
@@ -602,7 +602,7 @@ open class OkHttpClient internal constructor(
       interceptors += interceptor
     }
 
-    @JvmName("-addInterceptor") // Prefix with '-' to prevent ambiguous overloads from Java.
+    @JvmSynthetic
     inline fun addInterceptor(crossinline block: (chain: Interceptor.Chain) -> Response) =
       addInterceptor(Interceptor { chain -> block(chain) })
 
@@ -617,7 +617,7 @@ open class OkHttpClient internal constructor(
       networkInterceptors += interceptor
     }
 
-    @JvmName("-addNetworkInterceptor") // Prefix with '-' to prevent ambiguous overloads from Java.
+    @JvmSynthetic
     inline fun addNetworkInterceptor(crossinline block: (chain: Interceptor.Chain) -> Response) =
       addNetworkInterceptor(Interceptor { chain -> block(chain) })
 

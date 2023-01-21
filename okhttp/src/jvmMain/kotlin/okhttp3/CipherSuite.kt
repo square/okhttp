@@ -44,7 +44,7 @@ class CipherSuite private constructor(
    */
   @get:JvmName("javaName") val javaName: String
 ) {
-  @JvmName("-deprecated_javaName")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "javaName"),

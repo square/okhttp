@@ -248,7 +248,7 @@ class Dispatcher() {
 
   @Synchronized fun runningCallsCount(): Int = runningAsyncCalls.size + runningSyncCalls.size
 
-  @JvmName("-deprecated_executorService")
+  @JvmSynthetic
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "executorService"),
