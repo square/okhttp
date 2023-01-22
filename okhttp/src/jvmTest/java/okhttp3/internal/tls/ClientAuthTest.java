@@ -201,8 +201,6 @@ public final class ClientAuthTest {
     assertThat(response.body().string()).isEqualTo("abc");
   }
 
-  static int count = 0;
-
   @Flaky @RetryingTest(5)
   public void missingClientAuthFailsForNeeds() throws Exception {
     // Fails with 11.0.1 https://github.com/square/okhttp/issues/4598
