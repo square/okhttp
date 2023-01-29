@@ -50,3 +50,10 @@ class MyTest(
   }
 }
 ```
+
+Requirements
+------------
+
+MockWebServer's JUnit 5 integration works on Android 7.0+ (API level 24+) and Java 8+. Note that
+this is above OkHttp's core requirements.
+

@@ -4,7 +4,7 @@ import com.squareup.moshi.JsonClass
 
 
 @JsonClass(generateAdapter = true)
-data class UserAgentCapabilities(
+class UserAgentCapabilities(
     val abortsOnUnrecognizedName: Boolean,
     val alpnProtocols: List<String>,
     val ellipticCurves: List<Int>,

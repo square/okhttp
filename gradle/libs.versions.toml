@@ -74,6 +74,7 @@ openjsse = "org.openjsse:openjsse:1.1.10"
 playservices-safetynet = "com.google.android.gms:play-services-safetynet:18.0.1"
 robolectric-android = "org.robolectric:android-all:13-robolectric-9030017"
 signature-android-apilevel21 = "net.sf.androidscents.signature:android-api-level-21:5.0.1_r2"
+signature-android-apilevel24 = "net.sf.androidscents.signature:android-api-level-24:7.0_r2"
 squareup-moshi = { module = "com.squareup.moshi:moshi", version.ref = "com-squareup-moshi" }
 squareup-moshi-compiler = { module = "com.squareup.moshi:moshi-kotlin-codegen", version.ref = "com-squareup-moshi" }
 squareup-moshi-kotlin = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "com-squareup-moshi" }
