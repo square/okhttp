@@ -42,6 +42,7 @@ import okhttp3.internal.tls.BasicTrustRootIndex
 import okhttp3.internal.tls.CertificateChainCleaner
 import okhttp3.internal.tls.TrustRootIndex
 import okio.Buffer
+import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 
 /**
  * Access to platform-specific features.
@@ -128,6 +129,7 @@ open class Platform {
 
   /** For MockWebServer. This returns the inbound SNI names. */
   @SuppressLint("NewApi")
+  @IgnoreJRERequirement // This function is overridden to require API >= 24.
   open fun getHandshakeServerNames(sslSocket: SSLSocket): List<String> {
     val session = sslSocket.session as? ExtendedSSLSession ?: return listOf()
     return session.requestedServerNames.mapNotNull { (it as? SNIHostName)?.asciiName }

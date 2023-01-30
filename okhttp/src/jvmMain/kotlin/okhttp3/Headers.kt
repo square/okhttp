@@ -18,7 +18,6 @@
 package okhttp3
 
 import java.time.Instant
-import java.util.ArrayList
 import java.util.Collections
 import java.util.Date
 import java.util.Locale
@@ -45,6 +44,7 @@ import okhttp3.internal.commonValues
 import okhttp3.internal.headersCheckName
 import okhttp3.internal.http.toHttpDateOrNull
 import okhttp3.internal.http.toHttpDateString
+import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 
 @Suppress("NAME_SHADOWING")
 actual class Headers internal actual constructor(
@@ -62,6 +62,7 @@ actual class Headers internal actual constructor(
    * Returns the last value corresponding to the specified field parsed as an HTTP date, or null if
    * either the field is absent or cannot be parsed as a date.
    */
+  @IgnoreJRERequirement // Only programs that already have Instant will use this.
   fun getInstant(name: String): Instant? {
     return getDate(name)?.toInstant()
   }
@@ -186,6 +187,7 @@ actual class Headers internal actual constructor(
      * Add a header with the specified name and formatted instant. Does validation of header names
      * and value.
      */
+    @IgnoreJRERequirement // Only programs that already have Instant will use this.
     fun add(name: String, value: Instant) = add(name, Date.from(value))
 
     /**
@@ -198,6 +200,7 @@ actual class Headers internal actual constructor(
      * Set a field with the specified instant. If the field is not found, it is added. If the field
      * is found, the existing values are replaced.
      */
+    @IgnoreJRERequirement // Only programs that already have Instant will use this.
     operator fun set(name: String, value: Instant) = set(name, Date.from(value))
 
     /**

@@ -111,8 +111,19 @@ subprojects {
 
   val signature: Configuration by configurations.getting
   dependencies {
-    signature(rootProject.libs.signature.android.apilevel21)
-    signature(rootProject.libs.codehaus.signature.java18)
+    // No dependency requirements for testing-support.
+    if (project.name == "okhttp-testing-support") return@dependencies
+
+    if (project.name == "mockwebserver3-junit5") {
+      // JUnit 5's APIs need java.util.function.Function and java.util.Optional from API 24.
+      signature(rootProject.libs.signature.android.apilevel24) { artifact { type = "signature" } }
+    } else {
+      // Everything else requires Android API 21+.
+      signature(rootProject.libs.signature.android.apilevel21) { artifact { type = "signature" } }
+    }
+
+    // OkHttp requires Java 8+.
+    signature(rootProject.libs.codehaus.signature.java18) { artifact { type = "signature" } }
   }
 
   tasks.withType<KotlinCompile> {
