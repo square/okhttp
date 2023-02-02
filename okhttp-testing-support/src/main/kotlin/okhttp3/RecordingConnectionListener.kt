@@ -19,7 +19,6 @@ import java.util.Deque
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.TimeUnit
 import okhttp3.ConnectionEvent.NoNewExchanges
-import okhttp3.internal.connection.RealCall
 import okhttp3.internal.connection.RealConnection
 import okio.IOException
 import org.assertj.core.api.Assertions.assertThat
@@ -140,7 +139,7 @@ open class RecordingConnectionListener(
 
   override fun connectFailed(route: Route, call: Call, failure: IOException) = logEvent(ConnectionEvent.ConnectFailed(System.nanoTime(), route, call, failure))
 
-  override fun connectEnd(connection: Connection, route: Route, call: RealCall) {
+  override fun connectEnd(connection: Connection, route: Route, call: Call) {
     logEvent(ConnectionEvent.ConnectEnd(System.nanoTime(), connection, route, call))
   }
 
