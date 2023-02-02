@@ -362,7 +362,7 @@ public abstract interface class okhttp3/Connection {
 public abstract class okhttp3/ConnectionListener {
 	public static final field Companion Lokhttp3/ConnectionListener$Companion;
 	public fun <init> ()V
-	public fun connectEnd (Lokhttp3/Connection;Lokhttp3/Route;Lokhttp3/internal/connection/RealCall;)V
+	public fun connectEnd (Lokhttp3/Connection;Lokhttp3/Route;Lokhttp3/Call;)V
 	public fun connectFailed (Lokhttp3/Route;Lokhttp3/Call;Ljava/io/IOException;)V
 	public fun connectStart (Lokhttp3/Route;Lokhttp3/Call;)V
 	public fun connectionAcquired (Lokhttp3/Connection;Lokhttp3/Call;)V
