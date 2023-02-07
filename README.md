@@ -89,8 +89,7 @@ Security.insertProviderAt(Conscrypt.newProvider(), 1);
 ```
 
 The OkHttp 3.12.x branch supports Android 2.3+ (API level 9+) and Java 7+. These platforms lack
-support for TLS 1.2 and should not be used. But because upgrading is difficult, we will backport
-critical fixes to the [3.12.x branch][okhttp_312x] through December 31, 2021.
+support for TLS 1.2 and should not be used.
 
 
 Releases
