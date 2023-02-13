@@ -47,6 +47,9 @@ dependencies {
   debugImplementation(libs.findbugs.jsr305)
   compileOnly(libs.animalsniffer.annotations)
   compileOnly(libs.robolectric.android)
+  api(projects.loggingInterceptor)
+
+  implementation(libs.androidx.tracing.ktx)
 
   testImplementation(projects.okhttpTestingSupport)
   testImplementation(projects.mockwebserver3Junit5)

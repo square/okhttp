@@ -58,7 +58,7 @@ class AndroidAsyncDnsTest {
       .build()
   }
 
-  private val client = OkHttpClient.Builder()
+  private val client = OkHttpClient.AndroidBuilder()
     .dns(AsyncDns.toDns(AndroidAsyncDns.IPv4, AndroidAsyncDns.IPv6))
     .sslSocketFactory(localhost.sslSocketFactory(), localhost.trustManager)
     .build()
