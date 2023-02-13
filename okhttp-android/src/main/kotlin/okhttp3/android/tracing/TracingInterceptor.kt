@@ -22,7 +22,7 @@ import okhttp3.Request
 import okhttp3.Response
 
 /**
- * Tacing implementation of Interceptor that marks each Call in a perfetto
+ * Tracing implementation of Interceptor that marks each Call in a perfetto
  * trace.
  */
 class TracingInterceptor : Interceptor {
