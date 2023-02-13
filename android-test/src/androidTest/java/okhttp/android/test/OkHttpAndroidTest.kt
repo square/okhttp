@@ -35,7 +35,8 @@ import org.junit.jupiter.api.extension.ExtendWith
 @Tag("Slow")
 class OkHttpAndroidTest {
   private var client: OkHttpClient = OkHttpClient.AndroidBuilder(
-    cache = null
+    cache = null,
+    debugLogging = true,
   ).build()
 
   private val handshakeCertificates = localhost()
