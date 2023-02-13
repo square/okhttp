@@ -14,6 +14,7 @@ val graalBuild: String by settings
 val loomBuild: String by settings
 
 if (androidBuild.toBoolean()) {
+  include(":android-test")
   include(":regression-test")
 }
 
