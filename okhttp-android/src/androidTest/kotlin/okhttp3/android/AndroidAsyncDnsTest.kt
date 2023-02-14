@@ -41,7 +41,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.opentest4j.TestAbortedException
 
 /**
- * Run with "./gradlew :android-test:connectedCheck" and make sure ANDROID_SDK_ROOT is set.
+ * Run with "./gradlew :android-test:connectedCheck -PandroidBuild=true" and make sure ANDROID_SDK_ROOT is set.
  */
 @ExtendWith(MockWebServerExtension::class)
 class AndroidAsyncDnsTest {
