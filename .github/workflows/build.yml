@@ -70,12 +70,6 @@ jobs:
         with:
           arguments: check -PandroidBuild=true -PgraalBuild=true -x test -x jvmTest -x jsTest
 
-      - name: Publish Test Report
-        if: github.repository == 'square/okhttp' && github.ref == 'refs/heads/master'
-        uses: mikepenz/action-junit-report@v3
-        with:
-          report_paths: '**/build/test-results/*/TEST-*.xml'
-
   testopenjdk11:
     permissions:
       checks: write # for mikepenz/action-junit-report
