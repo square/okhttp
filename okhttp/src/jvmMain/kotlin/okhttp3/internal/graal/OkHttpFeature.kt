@@ -16,23 +16,21 @@
 
 package okhttp3.internal.graal
 
-import com.oracle.svm.core.annotate.AutomaticFeature
-import com.oracle.svm.core.configure.ResourcesRegistry
-import org.graalvm.nativeimage.ImageSingletons
+import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 import org.graalvm.nativeimage.hosted.Feature
+import org.graalvm.nativeimage.hosted.RuntimeResourceAccess
 
 /**
  * Automatic configuration of OkHttp for native images.
  *
  * Currently, includes all necessary resources.
  */
-@AutomaticFeature
 class OkHttpFeature : Feature {
+  @IgnoreJRERequirement
   override fun beforeAnalysis(access: Feature.BeforeAnalysisAccess?) {
-    val resourcesRegistry = ImageSingletons.lookup(ResourcesRegistry::class.java)
-
-    resourcesRegistry.addResources(
-      "\\Qokhttp3/internal/publicsuffix/PublicSuffixDatabase.gz\\E"
+    RuntimeResourceAccess.addResource(
+      ClassLoader.getSystemClassLoader().getUnnamedModule(),
+      "okhttp3/internal/publicsuffix/PublicSuffixDatabase.gz"
     )
   }
 }
