@@ -23,6 +23,7 @@ import java.util.logging.Level
 import java.util.logging.LogManager
 import java.util.logging.LogRecord
 import java.util.logging.Logger
+import kotlin.concurrent.withLock
 import okhttp3.internal.buildConnectionPool
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.connection.RealConnectionPool
@@ -200,7 +201,7 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
       // a test timeout failure.
       val waitTime = (entryTime + 1_000_000_000L - System.nanoTime())
       if (!queue.idleLatch().await(waitTime, TimeUnit.NANOSECONDS)) {
-        synchronized (TaskRunner.INSTANCE) {
+        TaskRunner.INSTANCE.lock.withLock {
           TaskRunner.INSTANCE.cancelAll()
         }
         fail<Unit>("Queue still active after 1000 ms")

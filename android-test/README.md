@@ -37,7 +37,7 @@ $ adb logcat '*:E' OkHttp:D Http2:D TestRunner:D TaskRunner:D OkHttpTest:D GnssH
 3. Run tests using gradle
 
 ```
-$ ANDROID_SDK_ROOT=/Users/myusername/Library/Android/sdk ./gradlew :android-test:connectedCheck
+$ ANDROID_SDK_ROOT=/Users/myusername/Library/Android/sdk ./gradlew :android-test:connectedCheck -PandroidBuild=true
 ...
 > Task :android-test:connectedDebugAndroidTest
 ...

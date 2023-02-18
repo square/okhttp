@@ -4,7 +4,7 @@ checkStyle = "10.7.0"
 com-squareup-moshi = "1.14.0"
 com-squareup-okio = "3.3.0"
 de-mannodermaus-junit5 = "1.3.0"
-graalvm = "22.3.0"
+graalvm = "22.3.1"
 org-bouncycastle = "1.72"
 org-conscrypt = "2.5.2"
 org-jetbrains-coroutines = "1.6.4"
@@ -12,7 +12,7 @@ org-jetbrains-kotlin = "1.8.10"
 org-junit-jupiter = "5.9.2"
 
 [libraries]
-amazonCorretto = "software.amazon.cryptools:AmazonCorrettoCryptoProvider:1.6.1"
+amazonCorretto = "software.amazon.cryptools:AmazonCorrettoCryptoProvider:2.0.0"
 androidx-annotation = "androidx.annotation:annotation:1.5.0"
 androidx-espresso-core = "androidx.test.espresso:espresso-core:3.5.1"
 androidx-junit = "androidx.test.ext:junit:1.1.5"
@@ -35,7 +35,7 @@ findbugs-jsr305 = "com.google.code.findbugs:jsr305:3.0.2"
 gradlePlugin-android = "com.android.tools.build:gradle:7.2.2"
 gradlePlugin-androidJunit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.8.2.1"
 gradlePlugin-animalsniffer = "ru.vyarus:gradle-animalsniffer-plugin:1.7.0"
-gradlePlugin-binaryCompatibilityValidator = "org.jetbrains.kotlinx.binary-compatibility-validator:org.jetbrains.kotlinx.binary-compatibility-validator.gradle.plugin:0.12.1"
+gradlePlugin-binaryCompatibilityValidator = "org.jetbrains.kotlinx.binary-compatibility-validator:org.jetbrains.kotlinx.binary-compatibility-validator.gradle.plugin:0.13.0"
 gradlePlugin-bnd = { module = "biz.aQute.bnd:biz.aQute.bnd.gradle", version.ref = "biz-aQute-bnd" }
 gradlePlugin-dokka = "org.jetbrains.dokka:dokka-gradle-plugin:1.7.20"
 gradlePlugin-errorprone = "net.ltgt.gradle:gradle-errorprone-plugin:3.0.1"
@@ -43,13 +43,13 @@ gradlePlugin-graal = "com.palantir.graal:gradle-graal:0.12.0"
 gradlePlugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "org-jetbrains-kotlin" }
 gradlePlugin-mavenPublish = "com.vanniktech:gradle-maven-publish-plugin:0.24.0"
 gradlePlugin-shadow = "gradle.plugin.com.github.johnrengelman:shadow:7.1.2"
-gradlePlugin-spotless = "com.diffplug.spotless:spotless-plugin-gradle:6.14.1"
+gradlePlugin-spotless = "com.diffplug.spotless:spotless-plugin-gradle:6.15.0"
 guava-jre = "com.google.guava:guava:31.1-jre"
 hamcrestLibrary = "org.hamcrest:hamcrest-library:2.2"
 httpClient5 = "org.apache.httpcomponents.client5:httpclient5:5.2.1"
 jettyClient = "org.eclipse.jetty:jetty-client:9.4.50.v20221201"
 jnr-unixsocket = "com.github.jnr:jnr-unixsocket:0.38.19"
-jsoup = "org.jsoup:jsoup:1.15.3"
+jsoup = "org.jsoup:jsoup:1.15.4"
 junit = "junit:junit:4.13.2"
 junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "org-junit-jupiter" }
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "org-junit-jupiter" }
@@ -70,7 +70,7 @@ kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "org-jetbrains-coroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "org-jetbrains-coroutines" }
 nativeImageSvm = { module = "org.graalvm.nativeimage:svm", version.ref = "graalvm" }
-openjsse = "org.openjsse:openjsse:1.1.10"
+openjsse = "org.openjsse:openjsse:1.1.11"
 playservices-safetynet = "com.google.android.gms:play-services-safetynet:18.0.1"
 robolectric-android = "org.robolectric:android-all:13-robolectric-9030017"
 signature-android-apilevel21 = "net.sf.androidscents.signature:android-api-level-21:5.0.1_r2"
