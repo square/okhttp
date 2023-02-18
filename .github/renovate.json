@@ -18,11 +18,23 @@
     },
     {
       "matchPackageNames": ["org.eclipse.jetty:jetty-client"],
-      "allowedVersions": "<10.0"
+      "allowedVersions": "<10.0",
+      "description": "JDK 11 requirement"
     },
     {
       "matchPackageNames": ["org.junit-pioneer:junit-pioneer"],
-      "allowedVersions": "<2.0.0"
+      "allowedVersions": "<2.0.0",
+      "description": "JDK 11 requirement"
+    },
+    {
+      "matchPackageNames": ["gradle"],
+      "allowedVersions": "<8.0",
+      "description": "Recent release, not compatible with pinned AGP and Kotlin versions yet. Wait for AGP 8?"
+    },
+    {
+      "matchPackageNames": ["com.android.tools.build:gradle"],
+      "allowedVersions": "<7.4",
+      "description": "Recent release, no compatible Intellij stable release (2023.1)"
     }
   ]
 }
