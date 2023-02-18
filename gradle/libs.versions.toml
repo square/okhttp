@@ -49,7 +49,7 @@ hamcrestLibrary = "org.hamcrest:hamcrest-library:2.2"
 httpClient5 = "org.apache.httpcomponents.client5:httpclient5:5.2.1"
 jettyClient = "org.eclipse.jetty:jetty-client:9.4.50.v20221201"
 jnr-unixsocket = "com.github.jnr:jnr-unixsocket:0.38.19"
-jsoup = "org.jsoup:jsoup:1.15.3"
+jsoup = "org.jsoup:jsoup:1.15.4"
 junit = "junit:junit:4.13.2"
 junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "org-junit-jupiter" }
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "org-junit-jupiter" }
