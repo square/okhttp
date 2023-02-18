@@ -1,6 +1,6 @@
 import com.android.build.gradle.internal.tasks.factory.dependsOn
 import com.vanniktech.maven.publish.JavadocJar
-import com.vanniktech.maven.publish.KotlinJvm
+import com.vanniktech.maven.publish.KotlinMultiplatform
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
@@ -108,7 +108,7 @@ tasks.getByName("copyJvmJar").dependsOn(tasks.getByName("jvmJar"))
 tasks.getByName("nativeImage").dependsOn(copyJvmJar)
 
 mavenPublishing {
-  configure(KotlinJvm(javadocJar = JavadocJar.Dokka("dokkaGfm")))
+  configure(KotlinMultiplatform(javadocJar = JavadocJar.Dokka("dokkaGfm")))
 }
 
 tasks.register<Copy>("copyResourcesTemplates") {
@@ -119,5 +119,5 @@ tasks.register<Copy>("copyResourcesTemplates") {
 }.let {
   tasks.processResources.dependsOn(it)
   tasks.compileJava.dependsOn(it)
-  tasks["javaSourcesJar"].dependsOn(it)
+  tasks["jvmSourcesJar"].dependsOn(it)
 }
