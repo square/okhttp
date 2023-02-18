@@ -97,7 +97,7 @@ jobs:
         uses: mikepenz/action-junit-report@v3
         with:
           report_paths: '**/build/test-results/*/TEST-*.xml'
-          check_name: OpenJDK 11
+          check_name: OpenJDK 11 Test Report
 
   testjs:
     permissions:
@@ -126,7 +126,7 @@ jobs:
         uses: mikepenz/action-junit-report@v3
         with:
           report_paths: '**/build/test-results/test/TEST-*.xml'
-          check_name: JS
+          check_name: JS Test Report
 
   testzulu11:
     runs-on: ubuntu-latest
