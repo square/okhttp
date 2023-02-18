@@ -24,6 +24,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.executeAsync
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase.Companion.PUBLIC_SUFFIX_RESOURCE
+import okio.BufferedSink
 import okio.ByteString
 import okio.ByteString.Companion.encodeUtf8
 import okio.FileSystem
@@ -112,18 +113,24 @@ class PublicSuffixListGenerator(
     val sortedExceptionRules: SortedSet<ByteString>,
     val totalRuleBytes: Int,
     val totalExceptionRuleBytes: Int
-  )
+  ) {
+    fun writeOut(sink: BufferedSink) {
+      with (sink) {
+        writeInt(totalRuleBytes)
+        for (domain in sortedRules) {
+          write(domain).writeByte(NEWLINE)
+        }
+        writeInt(totalExceptionRuleBytes)
+        for (domain in sortedExceptionRules) {
+          write(domain).writeByte(NEWLINE)
+        }
+      }
+    }
+  }
 
   private suspend fun writeOutputFile(importResults: ImportResults) = withContext(Dispatchers.IO) {
     fileSystem.sink(outputFile).gzip().buffer().use { sink ->
-      sink.writeInt(importResults.totalRuleBytes)
-      for (domain in importResults.sortedRules) {
-        sink.write(domain!!).writeByte('\n'.code)
-      }
-      sink.writeInt(importResults.totalExceptionRuleBytes)
-      for (domain in importResults.sortedExceptionRules) {
-        sink.write(domain!!).writeByte('\n'.code)
-      }
+        importResults.writeOut(sink)
     }
   }
 
@@ -150,6 +157,7 @@ A wildcard rule was added that wildcards the first level! We'll need to change t
   }
 
   companion object {
+    private const val NEWLINE = '\n'.code
     private const val WILDCARD_CHAR = "*"
     private val EXCEPTION_RULE_MARKER: ByteString = "!".encodeUtf8()
   }
