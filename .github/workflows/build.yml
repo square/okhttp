@@ -43,6 +43,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: gradle/wrapper-validation-action@v1
+      - name: Validate Renovate
+        uses: rinchsan/renovate-config-validator@v0.0.12
+        with:
+          pattern: '.github/renovate.json'
 
   checkjdk11:
     permissions:
