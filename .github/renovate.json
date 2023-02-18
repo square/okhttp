@@ -16,7 +16,7 @@
       "allowedVersions": "<=2.6"
     },
     {
-      "matchPackageNames": ["org.eclipse.jetty"],
+      "matchPackageNames": ["org.eclipse.jetty:jetty-client"],
       "allowedVersions": "<10.0"
     }
   ]
