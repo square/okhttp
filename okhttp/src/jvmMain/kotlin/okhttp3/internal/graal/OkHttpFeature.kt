@@ -16,6 +16,7 @@
 
 package okhttp3.internal.graal
 
+import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 import org.graalvm.nativeimage.hosted.Feature
 import org.graalvm.nativeimage.hosted.RuntimeResourceAccess
 
@@ -25,6 +26,7 @@ import org.graalvm.nativeimage.hosted.RuntimeResourceAccess
  * Currently, includes all necessary resources.
  */
 class OkHttpFeature : Feature {
+  @IgnoreJRERequirement
   override fun beforeAnalysis(access: Feature.BeforeAnalysisAccess?) {
     RuntimeResourceAccess.addResource(
       ClassLoader.getSystemClassLoader().getUnnamedModule(),
