@@ -18,6 +18,10 @@
     {
       "matchPackageNames": ["org.eclipse.jetty:jetty-client"],
       "allowedVersions": "<10.0"
+    },
+    {
+      "matchPackageNames": ["org.junit-pioneer:junit-pioneer"],
+      "allowedVersions": "<2.0.0"
     }
   ]
 }
