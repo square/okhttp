@@ -5,6 +5,7 @@
     ":dependencyDashboard",
     "schedule:weekly"
   ],
+  "labels": ["renovate"],
   "ignoreDeps": [
     "com.squareup.okhttp3:okhttp",
     "com.squareup.okhttp3:okhttp-tls",
