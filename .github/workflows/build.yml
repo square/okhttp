@@ -155,7 +155,7 @@ jobs:
 
   testopenjdk8:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions')
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions') || contains(github.event.pull_request.labels.*.name, 'renovate')
 
     steps:
       - name: Checkout
@@ -288,7 +288,8 @@ jobs:
 
   testopenjdk17:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions')
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions') || contains(github.event.pull_request.labels.*.name, 'renovate')
+
 
     steps:
       - name: Checkout
@@ -309,7 +310,8 @@ jobs:
 
   testopenjdk19:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions')
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions') || contains(github.event.pull_request.labels.*.name, 'renovate')
+
 
     steps:
       - name: Checkout
@@ -393,7 +395,8 @@ jobs:
   testandroid:
     runs-on: macos-latest
     timeout-minutes: 30
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'android')
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'android') || contains(github.event.pull_request.labels.*.name, 'renovate')
+
 
     strategy:
       fail-fast: false
