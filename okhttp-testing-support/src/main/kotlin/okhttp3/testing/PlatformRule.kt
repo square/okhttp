@@ -138,6 +138,10 @@ open class PlatformRule @JvmOverloads constructor(
     }
   }
 
+  fun expectFailureOnLoomPlatform() {
+    expectFailure(platformMatches(LOOM_PROPERTY))
+  }
+
   private fun expectFailure(
     versionMatcher: Matcher<out Any>,
     failureMatcher: Matcher<out Any> = anything()

@@ -182,6 +182,7 @@ public final class CertificatePinnerChainValidationTest {
     // https://github.com/square/okhttp/issues/4729
     platform.expectFailureOnConscryptPlatform();
     platform.expectFailureOnCorrettoPlatform();
+    platform.expectFailureOnLoomPlatform();
 
     // Start with a trusted root CA certificate.
     HeldCertificate rootCa = new HeldCertificate.Builder()
@@ -262,6 +263,7 @@ public final class CertificatePinnerChainValidationTest {
     // https://github.com/square/okhttp/issues/4729
     platform.expectFailureOnConscryptPlatform();
     platform.expectFailureOnCorrettoPlatform();
+    platform.expectFailureOnLoomPlatform();
 
     // Start with two root CA certificates, one is good and the other is compromised.
     HeldCertificate rootCa = new HeldCertificate.Builder()
