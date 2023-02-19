@@ -93,7 +93,7 @@ jobs:
           arguments: jvmTest -Dtest.java.version=11
 
       - name: Publish Test Report
-        if: github.repository == 'square/okhttp' && github.ref == 'refs/heads/master'
+        if: success() || failure()
         uses: mikepenz/action-junit-report@v3
         with:
           report_paths: '**/build/test-results/*/TEST-*.xml'
@@ -150,7 +150,7 @@ jobs:
           arguments: jvmTest -Dtest.java.version=11
 
       - name: Publish Test Report
-        if: github.repository == 'square/okhttp' && github.ref == 'refs/heads/master'
+        if: success() || failure()
         uses: mikepenz/action-junit-report@v3
         with:
           report_paths: '**/build/test-results/*/TEST-*.xml'
@@ -178,7 +178,7 @@ jobs:
           arguments: jvmTest -Dtest.java.version=8
 
       - name: Publish Test Report
-        if: github.repository == 'square/okhttp' && github.ref == 'refs/heads/master'
+        if: success() || failure()
         uses: mikepenz/action-junit-report@v3
         with:
           report_paths: '**/build/test-results/*/TEST-*.xml'
@@ -212,7 +212,7 @@ jobs:
           arguments: jvmTest -Dtest.java.version=8 -Dokhttp.platform=jdk8alpn -Dalpn.boot.version=8.1.13.v20181017 -Dorg.gradle.java.installations.paths=/opt/hostedtoolcache/Java_Adopt_jdk/8.0.242-8.1/x64
 
       - name: Publish Test Report
-        if: github.repository == 'square/okhttp' && github.ref == 'refs/heads/master'
+        if: success() || failure()
         uses: mikepenz/action-junit-report@v3
         with:
           report_paths: '**/build/test-results/*/TEST-*.xml'
@@ -240,7 +240,7 @@ jobs:
           arguments: jvmTest -Dtest.java.version=8 -Dokhttp.platform=openjsse
 
       - name: Publish Test Report
-        if: github.repository == 'square/okhttp' && github.ref == 'refs/heads/master'
+        if: success() || failure()
         uses: mikepenz/action-junit-report@v3
         with:
           report_paths: '**/build/test-results/*/TEST-*.xml'
@@ -268,7 +268,7 @@ jobs:
           arguments: jvmTest -Dokhttp.platform=conscrypt
 
       - name: Publish Test Report
-        if: github.repository == 'square/okhttp' && github.ref == 'refs/heads/master'
+        if: success() || failure()
         uses: mikepenz/action-junit-report@v3
         with:
           report_paths: '**/build/test-results/*/TEST-*.xml'
@@ -296,7 +296,7 @@ jobs:
           arguments: jvmTest -Dokhttp.platform=bouncycastle
 
       - name: Publish Test Report
-        if: github.repository == 'square/okhttp' && github.ref == 'refs/heads/master'
+        if: success() || failure()
         uses: mikepenz/action-junit-report@v3
         with:
           report_paths: '**/build/test-results/*/TEST-*.xml'
@@ -325,7 +325,7 @@ jobs:
           arguments: jvmTest -Dokhttp.platform=corretto
 
       - name: Publish Test Report
-        if: github.repository == 'square/okhttp' && github.ref == 'refs/heads/master'
+        if: success() || failure()
         uses: mikepenz/action-junit-report@v3
         with:
           report_paths: '**/build/test-results/*/TEST-*.xml'
@@ -353,7 +353,7 @@ jobs:
           arguments: jvmTest -Dtest.java.version=17
 
       - name: Publish Test Report
-        if: github.repository == 'square/okhttp' && github.ref == 'refs/heads/master'
+        if: success() || failure()
         uses: mikepenz/action-junit-report@v3
         with:
           report_paths: '**/build/test-results/*/TEST-*.xml'
@@ -387,7 +387,7 @@ jobs:
           arguments: jvmTest -Dtest.java.version=19
 
       - name: Publish Test Report
-        if: github.repository == 'square/okhttp' && github.ref == 'refs/heads/master'
+        if: success() || failure()
         uses: mikepenz/action-junit-report@v3
         with:
           report_paths: '**/build/test-results/*/TEST-*.xml'
@@ -527,6 +527,12 @@ jobs:
         with:
           arguments: jvmTest -Dokhttp.platform=loom -Dtest.java.version=19
 
+      - name: Publish Test Report
+        if: success() || failure()
+        uses: mikepenz/action-junit-report@v3
+        with:
+          report_paths: '**/build/test-results/*/TEST-*.xml'
+          check_name: Loom Test Report
 
   testandroidregression:
     runs-on: macos-latest
