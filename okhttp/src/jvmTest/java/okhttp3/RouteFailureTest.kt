@@ -18,16 +18,23 @@ package okhttp3
 import java.io.IOException
 import java.net.InetAddress
 import java.net.InetSocketAddress
+import java.net.Proxy
+import java.net.SocketTimeoutException
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.SocketPolicy
 import mockwebserver3.SocketPolicy.ResetStreamAtStart
 import mockwebserver3.junit5.internal.MockWebServerInstance
+import okhttp3.internal.http.RecordingProxySelector
 import okhttp3.internal.http2.ErrorCode
 import okhttp3.testing.PlatformRule
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ArgumentsSource
+import org.junit.jupiter.params.provider.ValueSource
 
 class RouteFailureTest {
   private lateinit var socketFactory: SpecificHostSocketFactory
@@ -293,6 +300,73 @@ class RouteFailureTest {
       "ConnectionAcquired",
       "ConnectionReleased"
     )
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = [false, true])
+  fun proxyMoveTest(
+    cleanShutdown: Boolean
+  ) {
+    // Define a single Proxy at myproxy:8008 that will artificially move during the test
+    val proxySelector = RecordingProxySelector()
+    proxySelector.proxies.add(Proxy(Proxy.Type.HTTP, InetSocketAddress("myproxy", 8008)))
+
+    // Define two host names for the DNS routing of fake proxy servers
+    val proxyServer1 = InetAddress.getByAddress("proxyServer1", byteArrayOf(127, 0, 0, 2))
+    val proxyServer2 = InetAddress.getByAddress("proxyServer2", byteArrayOf(127, 0, 0, 3))
+
+    println("Proxy Server 1 is ${server1.inetSocketAddress}")
+    println("Proxy Server 2 is ${server2.inetSocketAddress}")
+
+    // Since myproxy:8008 won't resolve, redirect with DNS to proxyServer1
+    // Then redirect socket connection to server1
+    dns["myproxy"] = listOf(proxyServer1)
+    socketFactory[proxyServer1] = server1.inetSocketAddress
+
+    client = client.newBuilder().proxySelector(proxySelector).build()
+
+    val request = Request(server1.url("/"))
+
+    server1.enqueue(MockResponse(200))
+    server2.enqueue(MockResponse(200))
+    server2.enqueue(MockResponse(200))
+
+    println("\n\nRequest to ${server1.inetSocketAddress}")
+    executeSynchronously(request)
+      .assertSuccessful()
+      .assertCode(200)
+
+    println("server1.requestCount ${server1.requestCount}")
+    assertThat(server1.requestCount).isEqualTo(1)
+
+    // Shutdown the proxy server
+    if (cleanShutdown) {
+      server1.shutdown()
+    }
+
+    // Now redirect with DNS to proxyServer2
+    // Then redirect socket connection to server2
+    dns["myproxy"] = listOf(proxyServer2)
+    socketFactory[proxyServer2] = server2.inetSocketAddress
+
+    println("\n\nRequest to ${server2.inetSocketAddress}")
+    executeSynchronously(request)
+      .apply {
+        // We may have a single failed request if not clean shutdown
+        if (cleanShutdown) {
+          assertSuccessful()
+          assertCode(200)
+
+          assertThat(server2.requestCount).isEqualTo(1)
+        } else {
+          this.assertFailure(SocketTimeoutException::class.java)
+        }
+      }
+
+    println("\n\nRequest to ${server2.inetSocketAddress}")
+    executeSynchronously(request)
+      .assertSuccessful()
+      .assertCode(200)
   }
 
   private fun enableProtocol(protocol: Protocol) {

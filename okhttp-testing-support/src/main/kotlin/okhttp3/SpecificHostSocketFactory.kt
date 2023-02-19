@@ -41,6 +41,7 @@ class SpecificHostSocketFactory(
       override fun connect(endpoint: SocketAddress?, timeout: Int) {
         val requested = (endpoint as InetSocketAddress)
         val inetSocketAddress = hostMapping[requested.address] ?: defaultAddress ?: requested
+        println("Socket connection to: ${inetSocketAddress} was: ${requested}")
         super.connect(inetSocketAddress, timeout)
       }
     }

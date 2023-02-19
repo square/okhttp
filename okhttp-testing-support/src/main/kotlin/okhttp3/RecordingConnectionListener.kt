@@ -102,6 +102,8 @@ open class RecordingConnectionListener(
   }
 
   private fun logEvent(e: ConnectionEvent) {
+    println(e)
+
     if (e.connection != null) {
       assertThat(Thread.holdsLock(e.connection))
         .overridingErrorMessage("Called with lock $${e.connection}")
