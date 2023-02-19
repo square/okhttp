@@ -125,7 +125,7 @@ jobs:
         if: success() || failure()
         uses: mikepenz/action-junit-report@v3
         with:
-          report_paths: '**/build/test-results/test/TEST-*.xml'
+          report_paths: '**/build/test-results/*/TEST-*.xml'
           check_name: JS Test Report
 
   testzulu11:
@@ -149,6 +149,13 @@ jobs:
         with:
           arguments: jvmTest -Dtest.java.version=11
 
+      - name: Publish Test Report
+        if: github.repository == 'square/okhttp' && github.ref == 'refs/heads/master'
+        uses: mikepenz/action-junit-report@v3
+        with:
+          report_paths: '**/build/test-results/*/TEST-*.xml'
+          check_name: Zulu Test Report
+
   testopenjdk8:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions') || contains(github.event.pull_request.labels.*.name, 'renovate')
@@ -169,6 +176,13 @@ jobs:
         uses: gradle/gradle-build-action@v2
         with:
           arguments: jvmTest -Dtest.java.version=8
+
+      - name: Publish Test Report
+        if: github.repository == 'square/okhttp' && github.ref == 'refs/heads/master'
+        uses: mikepenz/action-junit-report@v3
+        with:
+          report_paths: '**/build/test-results/*/TEST-*.xml'
+          check_name: OpenJDK 8 Test Report
 
   testopenjdk8alpn:
     runs-on: ubuntu-latest
@@ -197,6 +211,13 @@ jobs:
         with:
           arguments: jvmTest -Dtest.java.version=8 -Dokhttp.platform=jdk8alpn -Dalpn.boot.version=8.1.13.v20181017 -Dorg.gradle.java.installations.paths=/opt/hostedtoolcache/Java_Adopt_jdk/8.0.242-8.1/x64
 
+      - name: Publish Test Report
+        if: github.repository == 'square/okhttp' && github.ref == 'refs/heads/master'
+        uses: mikepenz/action-junit-report@v3
+        with:
+          report_paths: '**/build/test-results/*/TEST-*.xml'
+          check_name: OpenJDK 8 ALPN Test Report
+
   testopenjsse:
     runs-on: ubuntu-latest
     if: contains(github.event.pull_request.labels.*.name, 'providers')
@@ -217,6 +238,13 @@ jobs:
         uses: gradle/gradle-build-action@v2
         with:
           arguments: jvmTest -Dtest.java.version=8 -Dokhttp.platform=openjsse
+
+      - name: Publish Test Report
+        if: github.repository == 'square/okhttp' && github.ref == 'refs/heads/master'
+        uses: mikepenz/action-junit-report@v3
+        with:
+          report_paths: '**/build/test-results/*/TEST-*.xml'
+          check_name: OpenJSSE Test Report
 
   testconscrypt:
     runs-on: ubuntu-latest
@@ -239,6 +267,13 @@ jobs:
         with:
           arguments: jvmTest -Dokhttp.platform=conscrypt
 
+      - name: Publish Test Report
+        if: github.repository == 'square/okhttp' && github.ref == 'refs/heads/master'
+        uses: mikepenz/action-junit-report@v3
+        with:
+          report_paths: '**/build/test-results/*/TEST-*.xml'
+          check_name: Conscrypt Test Report
+
   testbouncycastle:
     runs-on: ubuntu-latest
     if: contains(github.event.pull_request.labels.*.name, 'providers')
@@ -259,6 +294,13 @@ jobs:
         uses: gradle/gradle-build-action@v2
         with:
           arguments: jvmTest -Dokhttp.platform=bouncycastle
+
+      - name: Publish Test Report
+        if: github.repository == 'square/okhttp' && github.ref == 'refs/heads/master'
+        uses: mikepenz/action-junit-report@v3
+        with:
+          report_paths: '**/build/test-results/*/TEST-*.xml'
+          check_name: BouncyCastle Test Report
 
   testcorretto:
     runs-on: ubuntu-latest
@@ -282,10 +324,16 @@ jobs:
         with:
           arguments: jvmTest -Dokhttp.platform=corretto
 
+      - name: Publish Test Report
+        if: github.repository == 'square/okhttp' && github.ref == 'refs/heads/master'
+        uses: mikepenz/action-junit-report@v3
+        with:
+          report_paths: '**/build/test-results/*/TEST-*.xml'
+          check_name: Corretto Test Report
+
   testopenjdk17:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions') || contains(github.event.pull_request.labels.*.name, 'renovate')
-
 
     steps:
       - name: Checkout
@@ -304,10 +352,16 @@ jobs:
         with:
           arguments: jvmTest -Dtest.java.version=17
 
+      - name: Publish Test Report
+        if: github.repository == 'square/okhttp' && github.ref == 'refs/heads/master'
+        uses: mikepenz/action-junit-report@v3
+        with:
+          report_paths: '**/build/test-results/*/TEST-*.xml'
+          check_name: OpenJDK 17 Test Report
+
   testopenjdk19:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions') || contains(github.event.pull_request.labels.*.name, 'renovate')
-
 
     steps:
       - name: Checkout
@@ -331,6 +385,13 @@ jobs:
         uses: gradle/gradle-build-action@v2
         with:
           arguments: jvmTest -Dtest.java.version=19
+
+      - name: Publish Test Report
+        if: github.repository == 'square/okhttp' && github.ref == 'refs/heads/master'
+        uses: mikepenz/action-junit-report@v3
+        with:
+          report_paths: '**/build/test-results/*/TEST-*.xml'
+          check_name: OpenJDK 19 Test Report
 
   testwindows:
     runs-on: windows-latest
