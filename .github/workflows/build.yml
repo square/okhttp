@@ -119,7 +119,7 @@ jobs:
       - name: Run Checks
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: jsTest
+          arguments: jsNodeTest jsBrowserTest
 
       - name: Publish Test Report
         if: success() || failure()
