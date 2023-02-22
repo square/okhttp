@@ -36,12 +36,12 @@ import okhttp3.internal.checkDuration
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.connection.RealCall
 import okhttp3.internal.connection.RouteDatabase
-import okhttp3.internal.immutableListOf
+import okhttp3.internal.okImmutableListOf
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.proxy.NullProxySelector
 import okhttp3.internal.tls.CertificateChainCleaner
 import okhttp3.internal.tls.OkHostnameVerifier
-import okhttp3.internal.toImmutableList
+import okhttp3.internal.okToImmutableList
 import okhttp3.internal.ws.RealWebSocket
 import okio.Sink
 import okio.Source
@@ -143,7 +143,7 @@ open class OkHttpClient internal constructor(
    * origin server, cache, or both).
    */
   @get:JvmName("interceptors") val interceptors: List<Interceptor> =
-    builder.interceptors.toImmutableList()
+    builder.interceptors.okToImmutableList()
 
   /**
    * Returns an immutable list of interceptors that observe a single network request and response.
@@ -151,7 +151,7 @@ open class OkHttpClient internal constructor(
    * a network interceptor to short-circuit or repeat a network request.
    */
   @get:JvmName("networkInterceptors") val networkInterceptors: List<Interceptor> =
-    builder.networkInterceptors.toImmutableList()
+    builder.networkInterceptors.okToImmutableList()
 
   @get:JvmName("eventListenerFactory") val eventListenerFactory: EventListener.Factory =
     builder.eventListenerFactory
@@ -883,7 +883,7 @@ open class OkHttpClient internal constructor(
         this.routeDatabase = null
       }
 
-      this.connectionSpecs = connectionSpecs.toImmutableList()
+      this.connectionSpecs = connectionSpecs.okToImmutableList()
     }
 
     /**
@@ -1141,9 +1141,9 @@ open class OkHttpClient internal constructor(
   }
 
   companion object {
-    internal val DEFAULT_PROTOCOLS = immutableListOf(HTTP_2, HTTP_1_1)
+    internal val DEFAULT_PROTOCOLS = okImmutableListOf(HTTP_2, HTTP_1_1)
 
-    internal val DEFAULT_CONNECTION_SPECS = immutableListOf(
+    internal val DEFAULT_CONNECTION_SPECS = okImmutableListOf(
       ConnectionSpec.MODERN_TLS,
       ConnectionSpec.CLEARTEXT,
     )

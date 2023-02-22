@@ -21,7 +21,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.internal.CommonHttpUrl.FORM_ENCODE_SET
 import okhttp3.internal.CommonHttpUrl.percentDecode
 import okhttp3.internal.JvmHttpUrl.canonicalizeWithCharset
-import okhttp3.internal.toImmutableList
+import okhttp3.internal.okToImmutableList
 import okio.Buffer
 import okio.BufferedSink
 
@@ -29,8 +29,8 @@ class FormBody internal constructor(
   encodedNames: List<String>,
   encodedValues: List<String>
 ) : RequestBody() {
-  private val encodedNames: List<String> = encodedNames.toImmutableList()
-  private val encodedValues: List<String> = encodedValues.toImmutableList()
+  private val encodedNames: List<String> = encodedNames.okToImmutableList()
+  private val encodedValues: List<String> = encodedValues.okToImmutableList()
 
   /** The number of key-value pairs in this form-encoded body. */
   @get:JvmName("size") val size: Int

@@ -28,8 +28,8 @@ import okhttp3.EventListener
 import okhttp3.HttpUrl
 import okhttp3.Route
 import okhttp3.internal.canParseAsIpAddress
-import okhttp3.internal.immutableListOf
-import okhttp3.internal.toImmutableList
+import okhttp3.internal.okImmutableListOf
+import okhttp3.internal.okToImmutableList
 
 /**
  * Selects routes to connect to an origin server. Each connection requires a choice of proxy server,
@@ -103,13 +103,13 @@ class RouteSelector(
 
       // If the URI lacks a host (as in "http://</"), don't call the ProxySelector.
       val uri = url.toUri()
-      if (uri.host == null) return immutableListOf(Proxy.NO_PROXY)
+      if (uri.host == null) return okImmutableListOf(Proxy.NO_PROXY)
 
       // Try each of the ProxySelector choices until one connection succeeds.
       val proxiesOrNull = address.proxySelector.select(uri)
-      if (proxiesOrNull.isNullOrEmpty()) return immutableListOf(Proxy.NO_PROXY)
+      if (proxiesOrNull.isNullOrEmpty()) return okImmutableListOf(Proxy.NO_PROXY)
 
-      return proxiesOrNull.toImmutableList()
+      return proxiesOrNull.okToImmutableList()
     }
 
     eventListener.proxySelectStart(call, url)

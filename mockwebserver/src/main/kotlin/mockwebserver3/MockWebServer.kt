@@ -76,10 +76,10 @@ import okhttp3.internal.http2.ErrorCode
 import okhttp3.internal.http2.Header
 import okhttp3.internal.http2.Http2Connection
 import okhttp3.internal.http2.Http2Stream
-import okhttp3.internal.immutableListOf
+import okhttp3.internal.okImmutableListOf
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.threadFactory
-import okhttp3.internal.toImmutableList
+import okhttp3.internal.okToImmutableList
 import okhttp3.internal.ws.RealWebSocket
 import okhttp3.internal.ws.WebSocketExtensions
 import okhttp3.internal.ws.WebSocketProtocol
@@ -178,9 +178,9 @@ class MockWebServer : Closeable {
    *
    * This list is ignored when [negotiation is disabled][protocolNegotiationEnabled].
    */
-  var protocols: List<Protocol> = immutableListOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
+  var protocols: List<Protocol> = okImmutableListOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
     set(value) {
-      val protocolList = value.toImmutableList()
+      val protocolList = value.okToImmutableList()
       require(Protocol.H2_PRIOR_KNOWLEDGE !in protocolList || protocolList.size == 1) {
         "protocols containing h2_prior_knowledge cannot use other protocols: $protocolList"
       }

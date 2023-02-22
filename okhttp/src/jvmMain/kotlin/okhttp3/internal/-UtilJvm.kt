@@ -213,13 +213,13 @@ internal fun Response.headersContentLength(): Long {
 }
 
 /** Returns an immutable copy of this. */
-fun <T> List<T>.toImmutableList(): List<T> {
+fun <T> List<T>.okToImmutableList(): List<T> {
   return Collections.unmodifiableList(toMutableList())
 }
 
 /** Returns an immutable list containing [elements]. */
 @SafeVarargs
-fun <T> immutableListOf(vararg elements: T): List<T> {
+fun <T> okImmutableListOf(vararg elements: T): List<T> {
   return Collections.unmodifiableList(listOf(*elements.clone()))
 }
 

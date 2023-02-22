@@ -21,8 +21,8 @@ import java.security.cert.Certificate
 import java.security.cert.X509Certificate
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSession
-import okhttp3.internal.immutableListOf
-import okhttp3.internal.toImmutableList
+import okhttp3.internal.okImmutableListOf
+import okhttp3.internal.okToImmutableList
 
 /**
  * A record of a TLS handshake. For HTTPS clients, the client is *local* and the remote server is
@@ -168,7 +168,7 @@ class Handshake internal constructor(
 
     private fun Array<out Certificate>?.toImmutableList(): List<Certificate> {
       return if (this != null) {
-        immutableListOf(*this)
+        okImmutableListOf(*this)
       } else {
         emptyList()
       }
@@ -189,8 +189,8 @@ class Handshake internal constructor(
       peerCertificates: List<Certificate>,
       localCertificates: List<Certificate>
     ): Handshake {
-      val peerCertificatesCopy = peerCertificates.toImmutableList()
-      return Handshake(tlsVersion, cipherSuite, localCertificates.toImmutableList()) {
+      val peerCertificatesCopy = peerCertificates.okToImmutableList()
+      return Handshake(tlsVersion, cipherSuite, localCertificates.okToImmutableList()) {
         peerCertificatesCopy
       }
     }

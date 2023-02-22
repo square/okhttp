@@ -41,7 +41,7 @@ import okhttp3.internal.http2.Header.Companion.TARGET_PATH
 import okhttp3.internal.http2.Header.Companion.TARGET_PATH_UTF8
 import okhttp3.internal.http2.Header.Companion.TARGET_SCHEME
 import okhttp3.internal.http2.Header.Companion.TARGET_SCHEME_UTF8
-import okhttp3.internal.immutableListOf
+import okhttp3.internal.okImmutableListOf
 import okio.Sink
 import okio.Source
 
@@ -133,7 +133,7 @@ class Http2ExchangeCodec(
     private const val UPGRADE = "upgrade"
 
     /** See http://tools.ietf.org/html/draft-ietf-httpbis-http2-09#section-8.1.3. */
-    private val HTTP_2_SKIPPED_REQUEST_HEADERS = immutableListOf(
+    private val HTTP_2_SKIPPED_REQUEST_HEADERS = okImmutableListOf(
         CONNECTION,
         HOST,
         KEEP_ALIVE,
@@ -146,7 +146,7 @@ class Http2ExchangeCodec(
         TARGET_PATH_UTF8,
         TARGET_SCHEME_UTF8,
         TARGET_AUTHORITY_UTF8)
-    private val HTTP_2_SKIPPED_RESPONSE_HEADERS = immutableListOf(
+    private val HTTP_2_SKIPPED_RESPONSE_HEADERS = okImmutableListOf(
         CONNECTION,
         HOST,
         KEEP_ALIVE,

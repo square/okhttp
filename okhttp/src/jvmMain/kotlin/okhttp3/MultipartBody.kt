@@ -18,7 +18,7 @@ package okhttp3
 import java.io.IOException
 import java.util.UUID
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.internal.toImmutableList
+import okhttp3.internal.okToImmutableList
 import okio.Buffer
 import okio.BufferedSink
 import okio.ByteString
@@ -274,7 +274,7 @@ class MultipartBody internal constructor(
     /** Assemble the specified parts into a request body. */
     fun build(): MultipartBody {
       check(parts.isNotEmpty()) { "Multipart body must have at least one part." }
-      return MultipartBody(boundary, type, parts.toImmutableList())
+      return MultipartBody(boundary, type, parts.okToImmutableList())
     }
   }
 

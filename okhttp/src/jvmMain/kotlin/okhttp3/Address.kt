@@ -21,7 +21,7 @@ import java.util.Objects
 import javax.net.SocketFactory
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSocketFactory
-import okhttp3.internal.toImmutableList
+import okhttp3.internal.okToImmutableList
 
 /**
  * A specification for a connection to an origin server. For simple connections, this is the
@@ -81,10 +81,10 @@ class Address(
    * The protocols the client supports. This method always returns a non-null list that
    * contains minimally [Protocol.HTTP_1_1].
    */
-  @get:JvmName("protocols") val protocols: List<Protocol> = protocols.toImmutableList()
+  @get:JvmName("protocols") val protocols: List<Protocol> = protocols.okToImmutableList()
 
   @get:JvmName("connectionSpecs") val connectionSpecs: List<ConnectionSpec> =
-      connectionSpecs.toImmutableList()
+      connectionSpecs.okToImmutableList()
 
   @JvmName("-deprecated_url")
   @Deprecated(

@@ -27,7 +27,7 @@ import javax.net.ssl.X509KeyManager
 import javax.net.ssl.X509TrustManager
 import okhttp3.CertificatePinner
 import okhttp3.internal.platform.Platform
-import okhttp3.internal.toImmutableList
+import okhttp3.internal.okToImmutableList
 import okhttp3.tls.internal.TlsUtil.newKeyManager
 import okhttp3.tls.internal.TlsUtil.newTrustManager
 import java.security.KeyStoreException
@@ -172,7 +172,7 @@ class HandshakeCertificates private constructor(
     }
 
     fun build(): HandshakeCertificates {
-      val immutableInsecureHosts = insecureHosts.toImmutableList()
+      val immutableInsecureHosts = insecureHosts.okToImmutableList()
 
       val heldCertificate = heldCertificate
       if (heldCertificate != null && heldCertificate.keyPair.private.format == null) {
