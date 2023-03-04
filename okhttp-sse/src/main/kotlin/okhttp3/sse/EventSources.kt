@@ -42,6 +42,10 @@ object EventSources {
     eventSource.processResponse(response)
   }
 
+  /**
+   * Request tag that indicates the request is a SSE request,
+   * including carrying the EventSourceListener through the chain.
+   */
   data class EventSourceRequest(
     val listener: EventSourceListener
   )

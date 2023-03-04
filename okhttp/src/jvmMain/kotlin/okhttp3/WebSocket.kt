@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import okhttp3.internal.connection.RealCall
 import okio.ByteString
 
 /**
@@ -117,6 +118,13 @@ interface WebSocket {
      * in use.
      */
     fun newWebSocket(request: Request, listener: WebSocketListener): WebSocket
+
+    companion object {
+
+      fun Factory.asOkHttpClient(): OkHttpClient? {
+        return (this as? OkHttpClient) ?: ((this as? Decorator<*>)?.decorated as? Factory)?.asOkHttpClient()
+      }
+    }
   }
 
   object WebSocketRequest

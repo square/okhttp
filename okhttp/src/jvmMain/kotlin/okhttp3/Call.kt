@@ -72,4 +72,8 @@ actual interface Call : Cloneable {
   actual fun interface Factory {
     actual fun newCall(request: Request): Call
   }
+
+  fun Factory.asOkHttpClient(): OkHttpClient? {
+    return (this as? OkHttpClient) ?: ((this as? Decorator<*>)?.decorated as? Factory)?.asOkHttpClient()
+  }
 }

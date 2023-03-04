@@ -574,4 +574,10 @@ class RealCall(
      */
     val callStackTrace: Any?
   ) : WeakReference<RealCall>(referent)
+
+  companion object {
+    fun Call.asRealCall(): RealCall? {
+      return (this as? RealCall) ?: ((this as? Decorator<*>)?.decorated as? Call)?.asRealCall()
+    }
+  }
 }
