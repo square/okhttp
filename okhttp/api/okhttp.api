@@ -145,6 +145,7 @@ public final class okhttp3/CacheControl$Companion {
 }
 
 public abstract interface class okhttp3/Call : java/lang/Cloneable {
+	public fun asOkHttpClient (Lokhttp3/Call$Factory;)Lokhttp3/OkHttpClient;
 	public abstract fun cancel ()V
 	public abstract fun clone ()Lokhttp3/Call;
 	public abstract fun enqueue (Lokhttp3/Callback;)V
@@ -484,6 +485,10 @@ public final class okhttp3/Credentials {
 	public static synthetic fun basic$default (Ljava/lang/String;Ljava/lang/String;Ljava/nio/charset/Charset;ILjava/lang/Object;)Ljava/lang/String;
 }
 
+public abstract interface class okhttp3/Decorator {
+	public abstract fun getDecorated ()Ljava/lang/Object;
+}
+
 public final class okhttp3/Dispatcher {
 	public final fun -deprecated_executorService ()Ljava/util/concurrent/ExecutorService;
 	public fun <init> ()V
@@ -547,6 +552,10 @@ public abstract class okhttp3/EventListener {
 }
 
 public final class okhttp3/EventListener$Companion {
+}
+
+public final class okhttp3/EventListener$Companion$DisableEventListener {
+	public static final field INSTANCE Lokhttp3/EventListener$Companion$DisableEventListener;
 }
 
 public abstract interface class okhttp3/EventListener$Factory {
@@ -1247,7 +1256,16 @@ public abstract interface class okhttp3/WebSocket {
 }
 
 public abstract interface class okhttp3/WebSocket$Factory {
+	public static final field Companion Lokhttp3/WebSocket$Factory$Companion;
 	public abstract fun newWebSocket (Lokhttp3/Request;Lokhttp3/WebSocketListener;)Lokhttp3/WebSocket;
+}
+
+public final class okhttp3/WebSocket$Factory$Companion {
+	public final fun asOkHttpClient (Lokhttp3/WebSocket$Factory;)Lokhttp3/OkHttpClient;
+}
+
+public final class okhttp3/WebSocket$WebSocketRequest {
+	public static final field INSTANCE Lokhttp3/WebSocket$WebSocketRequest;
 }
 
 public abstract class okhttp3/WebSocketListener {

@@ -21,3 +21,14 @@ public final class okhttp3/sse/EventSources {
 	public static final fun processResponse (Lokhttp3/Response;Lokhttp3/sse/EventSourceListener;)V
 }
 
+public final class okhttp3/sse/EventSources$EventSourceRequest {
+	public fun <init> (Lokhttp3/sse/EventSourceListener;)V
+	public final fun component1 ()Lokhttp3/sse/EventSourceListener;
+	public final fun copy (Lokhttp3/sse/EventSourceListener;)Lokhttp3/sse/EventSources$EventSourceRequest;
+	public static synthetic fun copy$default (Lokhttp3/sse/EventSources$EventSourceRequest;Lokhttp3/sse/EventSourceListener;ILjava/lang/Object;)Lokhttp3/sse/EventSources$EventSourceRequest;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getListener ()Lokhttp3/sse/EventSourceListener;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+

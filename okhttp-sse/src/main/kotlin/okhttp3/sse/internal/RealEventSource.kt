@@ -16,15 +16,8 @@
 package okhttp3.sse.internal
 
 import java.io.IOException
-import okhttp3.Call
-import okhttp3.Callback
-import okhttp3.EventListener
+import okhttp3.*
 import okhttp3.EventListener.Companion.DisableEventListener
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Response
-import okhttp3.ResponseBody
-import okhttp3.internal.connection.RealCall
 import okhttp3.internal.connection.RealCall.Companion.asRealCall
 import okhttp3.internal.stripBody
 import okhttp3.sse.EventSource
@@ -35,7 +28,7 @@ internal class RealEventSource(
   private val request: Request,
   private val listener: EventSourceListener
 ) : EventSource, ServerSentEventReader.Callback, Callback {
-  private lateinit var call: Call
+  private var call: Call? = null
   @Volatile
   private var canceled = false
 
@@ -76,7 +69,7 @@ internal class RealEventSource(
       }
 
       // This is a long-lived response. Cancel full-call timeouts.
-      call.asRealCall()?.timeoutEarlyExit()
+      call?.asRealCall()?.timeoutEarlyExit()
 
       // Replace the body with a stripped one so the callbacks can't see real data.
       val response = response.stripBody()
@@ -117,7 +110,7 @@ internal class RealEventSource(
 
   override fun cancel() {
     canceled = true
-    call.cancel()
+    call?.cancel()
   }
 
   override fun onEvent(id: String?, type: String?, data: String) {
