@@ -160,8 +160,9 @@ class RealWebSocket(
         .header("Sec-WebSocket-Key", key)
         .header("Sec-WebSocket-Version", "13")
         .header("Sec-WebSocket-Extensions", "permessage-deflate")
+        .tag(WebSocket.WebSocketRequest)
         .build()
-    call = RealCall(webSocketClient, request, forWebSocket = true)
+    call = RealCall(webSocketClient, request)
     call!!.enqueue(object : Callback {
       override fun onResponse(call: Call, response: Response) {
         val exchange = response.exchange

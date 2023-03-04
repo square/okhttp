@@ -176,7 +176,7 @@ class TestValueFactory : Closeable {
     client: OkHttpClient,
     address: Address = newAddress(),
   ): RealRoutePlanner {
-    val call = RealCall(client, Request(address.url), forWebSocket = false)
+    val call = RealCall(client, Request(address.url))
     return RealRoutePlanner(client, address, call, newChain(call), ConnectionListener.NONE)
   }
 

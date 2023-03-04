@@ -41,4 +41,8 @@ object EventSources {
     val eventSource = RealEventSource(response.request, listener)
     eventSource.processResponse(response)
   }
+
+  data class EventSourceRequest(
+    val listener: EventSourceListener
+  )
 }

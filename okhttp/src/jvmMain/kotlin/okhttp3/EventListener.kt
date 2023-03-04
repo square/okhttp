@@ -474,5 +474,10 @@ abstract class EventListener {
     @JvmField
     val NONE: EventListener = object : EventListener() {
     }
+
+    /**
+     * Tag to disable the EventListener for a request.
+     */
+    object DisableEventListener
   }
 }

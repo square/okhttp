@@ -118,4 +118,6 @@ interface WebSocket {
      */
     fun newWebSocket(request: Request, listener: WebSocketListener): WebSocket
   }
+
+  object WebSocketRequest
 }

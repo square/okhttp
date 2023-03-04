@@ -27,16 +27,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSocketFactory
-import okhttp3.Address
-import okhttp3.Call
-import okhttp3.Callback
-import okhttp3.CertificatePinner
-import okhttp3.EventListener
-import okhttp3.HttpUrl
-import okhttp3.Interceptor
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Response
+import okhttp3.*
+import okhttp3.EventListener.Companion.DisableEventListener
 import okhttp3.internal.assertThreadDoesntHoldLock
 import okhttp3.internal.assertThreadHoldsLock
 import okhttp3.internal.cache.CacheInterceptor
@@ -62,12 +54,21 @@ import okio.Timeout
 class RealCall(
   val client: OkHttpClient,
   /** The application's original request unadulterated by redirects or auth headers. */
-  val originalRequest: Request,
-  val forWebSocket: Boolean
+  val originalRequest: Request
 ) : Call, Cloneable {
+  internal val forWebSocket = originalRequest.tag<WebSocket.WebSocketRequest>() != null
+
   private val connectionPool: RealConnectionPool = client.connectionPool.delegate
 
-  internal val eventListener: EventListener = client.eventListenerFactory.create(this)
+  internal val eventListener: EventListener = createCallListener()
+
+  private fun createCallListener(): EventListener {
+    return if (originalRequest.tag<DisableEventListener>() != null) {
+      EventListener.NONE
+    } else {
+      client.eventListenerFactory.create(this)
+    }
+  }
 
   private val timeout = object : AsyncTimeout() {
     override fun timedOut() {
@@ -121,7 +122,7 @@ class RealCall(
   override fun timeout(): Timeout = timeout
 
   @SuppressWarnings("CloneDoesntCallSuperClone") // We are a final type & this saves clearing state.
-  override fun clone(): Call = RealCall(client, originalRequest, forWebSocket)
+  override fun clone(): Call = RealCall(client, originalRequest)
 
   override fun request(): Request = originalRequest
 
