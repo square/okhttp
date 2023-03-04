@@ -25,6 +25,7 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.ResponseBody
 import okhttp3.internal.connection.RealCall
+import okhttp3.internal.connection.RealCall.Companion.asRealCall
 import okhttp3.internal.stripBody
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSourceListener
@@ -75,7 +76,7 @@ internal class RealEventSource(
       }
 
       // This is a long-lived response. Cancel full-call timeouts.
-      (call as? RealCall)?.timeoutEarlyExit()
+      call.asRealCall()?.timeoutEarlyExit()
 
       // Replace the body with a stripped one so the callbacks can't see real data.
       val response = response.stripBody()
