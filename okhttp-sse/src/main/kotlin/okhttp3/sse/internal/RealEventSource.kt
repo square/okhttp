@@ -16,8 +16,13 @@
 package okhttp3.sse.internal
 
 import java.io.IOException
-import okhttp3.*
+import okhttp3.Call
+import okhttp3.Callback
 import okhttp3.EventListener.Companion.DisableEventListener
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
+import okhttp3.ResponseBody
 import okhttp3.internal.connection.RealCall.Companion.asRealCall
 import okhttp3.internal.stripBody
 import okhttp3.sse.EventSource

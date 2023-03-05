@@ -27,8 +27,19 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSocketFactory
-import okhttp3.*
+import okhttp3.Address
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.CertificatePinner
+import okhttp3.Decorator
+import okhttp3.EventListener
 import okhttp3.EventListener.Companion.DisableEventListener
+import okhttp3.HttpUrl
+import okhttp3.Interceptor
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
+import okhttp3.WebSocket.WebSocketRequest
 import okhttp3.internal.assertThreadDoesntHoldLock
 import okhttp3.internal.assertThreadHoldsLock
 import okhttp3.internal.cache.CacheInterceptor
@@ -56,7 +67,7 @@ class RealCall(
   /** The application's original request unadulterated by redirects or auth headers. */
   val originalRequest: Request
 ) : Call, Cloneable {
-  internal val forWebSocket = originalRequest.tag<WebSocket.WebSocketRequest>() != null
+  internal val forWebSocket = originalRequest.tag<WebSocketRequest>() != null
 
   private val connectionPool: RealConnectionPool = client.connectionPool.delegate
 
