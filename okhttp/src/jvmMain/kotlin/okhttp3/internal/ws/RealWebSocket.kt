@@ -25,12 +25,13 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeUnit.MILLISECONDS
 import okhttp3.Call
 import okhttp3.Callback
-import okhttp3.EventListener
+import okhttp3.EventListener.Companion.DisableEventListener
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.WebSocket
+import okhttp3.WebSocket.WebSocketRequest
 import okhttp3.WebSocketListener
 import okhttp3.internal.assertThreadHoldsLock
 import okhttp3.internal.closeQuietly
@@ -151,7 +152,6 @@ class RealWebSocket(
     }
 
     val webSocketClient = client.newBuilder()
-        .eventListener(EventListener.NONE)
         .protocols(ONLY_HTTP1)
         .build()
     val request = originalRequest.newBuilder()
@@ -160,7 +160,8 @@ class RealWebSocket(
         .header("Sec-WebSocket-Key", key)
         .header("Sec-WebSocket-Version", "13")
         .header("Sec-WebSocket-Extensions", "permessage-deflate")
-        .tag(WebSocket.WebSocketRequest)
+        .tag<WebSocketRequest>(WebSocketRequest)
+        .tag<DisableEventListener>(DisableEventListener)
         .build()
     call = RealCall(webSocketClient, request)
     call!!.enqueue(object : Callback {

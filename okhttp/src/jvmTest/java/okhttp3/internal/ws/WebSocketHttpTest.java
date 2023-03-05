@@ -30,7 +30,6 @@ import mockwebserver3.Dispatcher;
 import mockwebserver3.MockResponse;
 import mockwebserver3.MockWebServer;
 import mockwebserver3.RecordedRequest;
-import mockwebserver3.SocketPolicy;
 import mockwebserver3.SocketPolicy.KeepOpen;
 import mockwebserver3.SocketPolicy.NoResponse;
 import okhttp3.OkHttpClient;
@@ -43,6 +42,7 @@ import okhttp3.Response;
 import okhttp3.TestLogHandler;
 import okhttp3.TestUtil;
 import okhttp3.WebSocket;
+import okhttp3.WebSocket.WebSocketRequest;
 import okhttp3.WebSocketListener;
 import okhttp3.internal.UnreadableResponseBody;
 import okhttp3.internal.concurrent.TaskRunner;
@@ -1000,7 +1000,8 @@ public final class WebSocketHttpTest {
   }
 
   private RealWebSocket newWebSocket(Request request) {
-    RealWebSocket webSocket = new RealWebSocket(TaskRunner.INSTANCE, request, clientListener,
+    Request taggedRequest = request.newBuilder().tag(WebSocketRequest.class, WebSocketRequest.INSTANCE).build();
+    RealWebSocket webSocket = new RealWebSocket(TaskRunner.INSTANCE, taggedRequest, clientListener,
         random, client.pingIntervalMillis(), null, 0L);
     webSocket.connect(client);
     return webSocket;
