@@ -211,7 +211,7 @@ class DnsOverHttps internal constructor(
 
       val body = response.body
 
-      if (body!!.contentLength() > MAX_RESPONSE_SIZE) {
+      if (body.contentLength() > MAX_RESPONSE_SIZE) {
         throw IOException(
             "response size exceeds limit ($MAX_RESPONSE_SIZE bytes): ${body.contentLength()} bytes"
         )

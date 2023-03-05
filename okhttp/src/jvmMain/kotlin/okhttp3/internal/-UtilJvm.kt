@@ -47,17 +47,17 @@ import okio.BufferedSource
 import okio.Source
 
 @JvmField
-val EMPTY_HEADERS: Headers = commonEmptyHeaders
+internal val EMPTY_HEADERS: Headers = commonEmptyHeaders
 @JvmField
-val EMPTY_REQUEST: RequestBody = commonEmptyRequestBody
+internal val EMPTY_REQUEST: RequestBody = commonEmptyRequestBody
 @JvmField
-val EMPTY_RESPONSE: ResponseBody = commonEmptyResponse
+internal val EMPTY_RESPONSE: ResponseBody = commonEmptyResponse
 
 /** GMT and UTC are equivalent for our purposes. */
 @JvmField
 internal val UTC: TimeZone = TimeZone.getTimeZone("GMT")!!
 
-fun threadFactory(
+internal fun threadFactory(
   name: String,
   daemon: Boolean
 ): ThreadFactory = ThreadFactory { runnable ->
@@ -80,7 +80,7 @@ internal fun HttpUrl.toHostHeader(includeDefaultPort: Boolean = false): String {
 }
 
 /** Returns a [Locale.US] formatted [String]. */
-fun format(format: String, vararg args: Any): String {
+internal fun format(format: String, vararg args: Any): String {
   return String.format(Locale.US, format, *args)
 }
 
@@ -166,7 +166,7 @@ internal fun Source.discard(timeout: Int, timeUnit: TimeUnit): Boolean = try {
   false
 }
 
-fun Socket.peerName(): String {
+internal fun Socket.peerName(): String {
   val address = remoteSocketAddress
   return if (address is InetSocketAddress) address.hostName else address.toString()
 }
@@ -213,13 +213,13 @@ internal fun Response.headersContentLength(): Long {
 }
 
 /** Returns an immutable copy of this. */
-fun <T> List<T>.toImmutableList(): List<T> {
+internal fun <T> List<T>.toImmutableList(): List<T> {
   return Collections.unmodifiableList(toMutableList())
 }
 
 /** Returns an immutable list containing [elements]. */
 @SafeVarargs
-fun <T> immutableListOf(vararg elements: T): List<T> {
+internal fun <T> immutableListOf(vararg elements: T): List<T> {
   return Collections.unmodifiableList(listOf(*elements.clone()))
 }
 
@@ -241,7 +241,7 @@ internal fun Socket.closeQuietly() {
 }
 
 /** Closes this, ignoring any checked exceptions.  */
-fun ServerSocket.closeQuietly() {
+internal fun ServerSocket.closeQuietly() {
   try {
     close()
   } catch (rethrown: RuntimeException) {
