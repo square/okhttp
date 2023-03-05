@@ -85,7 +85,7 @@ internal fun MediaType?.chooseCharset(): Pair<Charset, MediaType?> {
   return charset to finalContentType
 }
 
-internal fun MediaType?.charset(defaultValue: Charset = Charsets.UTF_8): Charset {
+internal fun MediaType?.charsetNonNull(defaultValue: Charset = Charsets.UTF_8): Charset {
   return this?.charset(defaultValue) ?: Charsets.UTF_8
 }
 

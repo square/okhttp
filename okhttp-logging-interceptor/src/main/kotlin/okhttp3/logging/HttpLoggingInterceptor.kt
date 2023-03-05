@@ -24,7 +24,7 @@ import okhttp3.Headers
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
-import okhttp3.internal.charset
+import okhttp3.internal.charsetNonNull
 import okhttp3.internal.http.promisesBody
 import okhttp3.internal.platform.Platform
 import okhttp3.logging.internal.isProbablyUtf8
@@ -212,7 +212,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
           }
         }
 
-        val charset: Charset = requestBody.contentType().charset()
+        val charset: Charset = requestBody.contentType().charsetNonNull()
 
         logger.log("")
         if (!buffer.isProbablyUtf8()) {
@@ -271,7 +271,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
           }
         }
 
-        val charset: Charset = responseBody.contentType().charset()
+        val charset: Charset = responseBody.contentType().charsetNonNull()
 
         if (!buffer.isProbablyUtf8()) {
           logger.log("")
