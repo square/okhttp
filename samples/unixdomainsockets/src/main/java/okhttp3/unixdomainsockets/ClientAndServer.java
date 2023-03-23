@@ -53,7 +53,7 @@ public class ClientAndServer {
     }
 
     server.shutdown();
-    socketFile.delete();
+    File.delete(socketFile);
   }
 
   public static void main(String... args) throws Exception {
