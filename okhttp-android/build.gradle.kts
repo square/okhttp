@@ -1,3 +1,5 @@
+@file:Suppress("UnstableApiUsage")
+
 import com.vanniktech.maven.publish.JavadocJar
 
 plugins {
@@ -10,11 +12,10 @@ plugins {
 }
 
 android {
-  compileSdk = 31
+  compileSdkPreview = "UpsideDownCake"
 
   defaultConfig {
     minSdk = 21
-    targetSdk = 31
 
     // Make sure to use the AndroidJUnitRunner (or a sub-class) in order to hook in the JUnit 5 Test Builder
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -52,6 +53,8 @@ dependencies {
   testImplementation(projects.mockwebserver3Junit5)
   testImplementation(libs.junit)
   testImplementation(libs.assertj.core)
+
+  implementation("com.google.net.cronet:cronet-okhttp:0.1.0")
 
   androidTestImplementation(projects.okhttpTls)
   androidTestImplementation(libs.assertj.core)
