@@ -21,6 +21,5 @@ import okhttp3.RequestBody
 
 /** An interface for classes converting from OkHttp to Cronet request bodies.  */
 interface RequestBodyConverter {
-  @Throws(IOException::class)
   fun convertRequestBody(requestBody: RequestBody, writeTimeoutMillis: Int): UploadDataProvider
 }

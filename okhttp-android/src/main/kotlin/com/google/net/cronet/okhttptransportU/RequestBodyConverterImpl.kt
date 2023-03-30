@@ -41,7 +41,7 @@ import okio.buffer
 internal class RequestBodyConverterImpl(
   private val inMemoryRequestBodyConverter: InMemoryRequestBodyConverter,
   private val streamingRequestBodyConverter: StreamingRequestBodyConverter) : RequestBodyConverter {
-  @Throws(IOException::class)
+
   override fun convertRequestBody(requestBody: RequestBody, writeTimeoutMillis: Int): UploadDataProvider {
     val contentLength = requestBody.contentLength()
     return if (contentLength == -1L || contentLength > IN_MEMORY_BODY_LENGTH_THRESHOLD_BYTES) {
@@ -106,7 +106,6 @@ internal class RequestBodyConverterImpl(
         return okHttpRequestBody.contentLength()
       }
 
-      @Throws(IOException::class)
       override fun read(uploadDataSink: UploadDataSink, byteBuffer: ByteBuffer) {
         ensureReadTaskStarted()
         if (length == -1L) {
@@ -116,7 +115,6 @@ internal class RequestBodyConverterImpl(
         }
       }
 
-      @Throws(IOException::class)
       private fun readKnownBodyLength(uploadDataSink: UploadDataSink, byteBuffer: ByteBuffer) {
         try {
           val readResult = readFromOkHttp(byteBuffer)
@@ -204,7 +202,6 @@ internal class RequestBodyConverterImpl(
         }
       }
 
-      @Throws(TimeoutException::class, ExecutionException::class)
       private fun readFromOkHttp(byteBuffer: ByteBuffer): UploadBodyDataBroker.ReadResult {
         val positionBeforeRead = byteBuffer.position()
         val readResult = Uninterruptibles.getUninterruptibly(
@@ -239,7 +236,6 @@ internal class RequestBodyConverterImpl(
    */
   @VisibleForTesting
   internal class InMemoryRequestBodyConverter : RequestBodyConverter {
-    @Throws(IOException::class)
     override fun convertRequestBody(requestBody: RequestBody, writeTimeoutMillis: Int): UploadDataProvider {
 
       // content length is immutable by contract
@@ -259,7 +255,6 @@ internal class RequestBodyConverterImpl(
           return length
         }
 
-        @Throws(IOException::class)
         override fun read(uploadDataSink: UploadDataSink, byteBuffer: ByteBuffer) {
           // We're not expecting any concurrent calls here so a simple flag should be sufficient.
           if (!isMaterialized) {

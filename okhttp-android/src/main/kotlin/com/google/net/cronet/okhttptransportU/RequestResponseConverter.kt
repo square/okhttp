@@ -91,7 +91,6 @@ class RequestResponseConverter(
   private fun createResponseSupplier(
     request: Request, callback: OkHttpBridgeRequestCallback): ResponseSupplier {
     return object : ResponseSupplier {
-      @get:Throws(IOException::class)
       override val response: Response
         get() = responseConverter.toResponse(request, callback)
       override val responseFuture: ListenableFuture<Response>
@@ -101,14 +100,12 @@ class RequestResponseConverter(
 
   /** A [Future] like holder for OkHttp's [Response].  */
   interface ResponseSupplier {
-    @get:Throws(IOException::class)
     val response: Response
     val responseFuture: ListenableFuture<Response>
   }
 
   /** A simple data class for bundling Cronet request and OkHttp response.  */
   class CronetRequestAndOkHttpResponse(val request: UrlRequest, private val responseSupplier: ResponseSupplier) {
-    @get:Throws(IOException::class)
     val response: Response
       get() = responseSupplier.response
     val responseAsync: ListenableFuture<Response>

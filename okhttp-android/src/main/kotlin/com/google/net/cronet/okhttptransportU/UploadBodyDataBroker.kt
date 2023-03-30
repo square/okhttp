@@ -94,7 +94,6 @@ internal class UploadBodyDataBroker : Sink {
    *
    * This method is executed by the background OkHttp body reading thread.
    */
-  @Throws(IOException::class)
   fun handleEndOfStreamSignal() {
     check(!isClosed.getAndSet(true)) { "Already closed" }
     pendingCronetRead.second.set(ReadResult.END_OF_BODY)
@@ -106,7 +105,6 @@ internal class UploadBodyDataBroker : Sink {
    *
    * This method is executed by the background OkHttp body reading thread.
    */
-  @Throws(IOException::class)
   override fun write(source: Buffer, byteCount: Long) {
     // This is just a safeguard, close() is a no-op if the body length contract is honored.
     check(!isClosed.get())
@@ -135,7 +133,6 @@ internal class UploadBodyDataBroker : Sink {
     }
   }
 
-  @get:Throws(IOException::class)
   private val pendingCronetRead: Pair<ByteBuffer, SettableFuture<ReadResult>>
     private get() = try {
       pendingRead.take()

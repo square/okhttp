@@ -54,7 +54,6 @@ class ResponseConverter {
    * However, this method doesn't fetch the entire body response. As a result, subsequent calls to
    * the result's [Response.body] methods might block further.
    */
-  @Throws(IOException::class)
   fun toResponse(request: Request, callback: OkHttpBridgeRequestCallback): Response {
     val cronetResponseInfo = getFutureValue(callback.urlResponseInfo)
     val responseBuilder = createResponse(request, cronetResponseInfo, getFutureValue(callback.bodySource))
@@ -93,8 +92,6 @@ class ResponseConverter {
     private val ENCODINGS_HANDLED_BY_CRONET = ImmutableSet.of("br", "deflate", "gzip", "x-gzip")
     private val COMMA_SPLITTER = Splitter.on(',').trimResults().omitEmptyStrings()
 
-    @RequiresApi(34)
-    @Throws(IOException::class)
     private fun createResponse(
       request: Request, cronetResponseInfo: UrlResponseInfo, bodySource: Source?): Response.Builder {
       val responseBuilder = Response.Builder()
@@ -157,7 +154,6 @@ class ResponseConverter {
      * However, this method doesn't fetch the entire body response. As a result, subsequent calls to
      * [ResponseBody] methods might block further to fetch parts of the body.
      */
-    @Throws(IOException::class)
     private fun createResponseBody(
       request: Request,
       httpStatusCode: Int,
@@ -212,7 +208,6 @@ class ResponseConverter {
       } else Iterables.getLast(headers)
     }
 
-    @Throws(IOException::class)
     private fun <T> getFutureValue(future: Future<T>): T {
       return try {
         Uninterruptibles.getUninterruptibly(future)

@@ -185,7 +185,6 @@ class OkHttpBridgeRequestCallback(readTimeoutMillis: Long, redirectStrategy: Red
     @Volatile
     private var closed = false
 
-    @Throws(IOException::class)
     override fun read(sink: Buffer, byteCount: Long): Long {
       if (canceled.get()) {
         throw IOException("The request was canceled!")

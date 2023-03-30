@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Google LLC
+ * Copyright (C) 2019 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.net.cronet.okhttptransportU
+package com.google.net.cronet.okhttptransportU.internal
 
 import okhttp3.MediaType
 import okhttp3.ResponseBody
 import okio.BufferedSource
 
-internal abstract class CronetTransportResponseBody protected constructor(private val delegate: ResponseBody) : ResponseBody() {
+open class ForwardingResponseBody(delegate: ResponseBody?) : ResponseBody() {
+  private val delegate: ResponseBody
+  fun delegate(): ResponseBody {
+    return delegate
+  }
+
   override fun contentType(): MediaType? {
     return delegate.contentType()
   }
@@ -32,10 +37,8 @@ internal abstract class CronetTransportResponseBody protected constructor(privat
     return delegate.source()
   }
 
-  override fun close() {
-    delegate.close()
-    customCloseHook()
+  init {
+    requireNotNull(delegate) { "delegate == null" }
+    this.delegate = delegate
   }
-
-  abstract fun customCloseHook()
 }
