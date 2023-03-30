@@ -49,6 +49,7 @@ dependencies {
   compileOnly(libs.animalsniffer.annotations)
   compileOnly(libs.robolectric.android)
   implementation("com.google.guava:guava:31.1-android")
+  implementation(libs.kotlinx.coroutines.core)
 
   testImplementation(projects.okhttpTestingSupport)
   testImplementation(projects.mockwebserver3Junit5)
