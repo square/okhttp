@@ -43,12 +43,7 @@ import okhttp3.Response
  *
  */
 @RequiresApi(34)
-class CronetInterceptor private constructor(converter: RequestResponseConverter) : Interceptor {
-  private val converter: RequestResponseConverter
-
-  init {
-    this.converter = converter
-  }
+class CronetInterceptor private constructor(private val converter: RequestResponseConverter) : Interceptor {
 
   override fun intercept(chain: Interceptor.Chain): Response {
     if (chain.call().isCanceled()) {
@@ -57,7 +52,7 @@ class CronetInterceptor private constructor(converter: RequestResponseConverter)
     val request = chain.request()
     val requestAndOkHttpResponse = converter.convert(request, chain.readTimeoutMillis(), chain.writeTimeoutMillis())
 
-    chain.withEventListener(object: EventListener() {
+    chain.withEventListener(object : EventListener() {
       override fun canceled(call: Call) {
         requestAndOkHttpResponse.request.cancel()
       }

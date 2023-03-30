@@ -49,7 +49,7 @@ import okio.Timeout
  * scheduling, especially when handling cancellations.
  */
 @RequiresApi(34)
-class OkHttpBridgeRequestCallback(readTimeoutMillis: Long, redirectStrategy: RedirectStrategy) : UrlRequest.Callback() {
+class OkHttpBridgeRequestCallback(private val readTimeoutMillis: Long, private val redirectStrategy: RedirectStrategy) : UrlRequest.Callback() {
   /** A bridge between Cronet's asynchronous callbacks and OkHttp's blocking stream-like reads.  */
   private val bodySourceFuture = SettableFuture.create<Source>()
 
@@ -71,12 +71,8 @@ class OkHttpBridgeRequestCallback(readTimeoutMillis: Long, redirectStrategy: Red
   /** The response headers.  */
   private val _headersFuture = SettableFuture.create<UrlResponseInfo>()
 
-  /** The read timeout as specified by OkHttp. *  */
-  private var readTimeoutMillis: Long = 0
-
   /** The previous responses as reported to [.onRedirectReceived], from oldest to newest. *  */
   private val _urlResponseInfoChain: MutableList<UrlResponseInfo> = ArrayList()
-  private var redirectStrategy: RedirectStrategy
 
   /** The request being processed. Set when the request is first seen by the callback.  */
   @Volatile
@@ -84,20 +80,12 @@ class OkHttpBridgeRequestCallback(readTimeoutMillis: Long, redirectStrategy: Red
 
   init {
     check(readTimeoutMillis >= 0)
-
-    // So that we don't have to special case infinity. Int.MAX_VALUE is ~infinity for all practical
-    // use cases.
-    if (readTimeoutMillis == 0L) {
-      this.readTimeoutMillis = Int.MAX_VALUE.toLong()
-    } else {
-      this.readTimeoutMillis = readTimeoutMillis
-    }
-    this.redirectStrategy = redirectStrategy
   }
 
   val urlResponseInfo: ListenableFuture<UrlResponseInfo>
     /** Returns the [UrlResponseInfo] for the request associated with this callback.  */
     get() = _headersFuture
+
   val bodySource: ListenableFuture<Source>
     /**
      * Returns the OkHttp [Source] for the request associated with this callback.
@@ -203,7 +191,15 @@ class OkHttpBridgeRequestCallback(readTimeoutMillis: Long, redirectStrategy: Red
       }
       request!!.read(buffer)
       val result: CallbackResult? = try {
-        callbackResults.poll(readTimeoutMillis, TimeUnit.MILLISECONDS)
+        // So that we don't have to special case infinity. Int.MAX_VALUE is ~infinity for all practical
+        // use cases.
+        val effectiveTimeout = if (readTimeoutMillis == 0L) {
+          Long.MAX_VALUE
+        } else {
+          readTimeoutMillis
+        }
+
+        callbackResults.poll(effectiveTimeout, TimeUnit.MILLISECONDS)
       } catch (e: InterruptedException) {
         Thread.currentThread().interrupt()
         null
@@ -240,7 +236,6 @@ class OkHttpBridgeRequestCallback(readTimeoutMillis: Long, redirectStrategy: Red
           bytesWritten.toLong()
         }
       }
-      throw AssertionError("The switch block above is exhaustive!")
     }
 
     override fun timeout(): Timeout {
