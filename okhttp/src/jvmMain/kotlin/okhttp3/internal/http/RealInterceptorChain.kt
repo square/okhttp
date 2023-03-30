@@ -19,6 +19,7 @@ import java.io.IOException
 import java.util.concurrent.TimeUnit
 import okhttp3.Call
 import okhttp3.Connection
+import okhttp3.EventListener
 import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
@@ -80,6 +81,11 @@ class RealInterceptorChain(
     check(exchange == null) { "Timeouts can't be adjusted in a network interceptor" }
 
     return copy(writeTimeoutMillis = checkDuration("writeTimeout", timeout.toLong(), unit))
+  }
+
+  override fun withEventListener(eventListener: EventListener): Interceptor.Chain {
+    call.eventListener.addListener(eventListener)
+    return this
   }
 
   override fun call(): Call = call
