@@ -18,15 +18,16 @@ package okhttp3.android
 
 import android.content.Context
 import android.net.http.HttpEngine
-import android.os.Build
 import androidx.annotation.RequiresApi
+import com.google.net.cronet.okhttptransportU.CronetInterceptor
 import okhttp3.OkHttpClient
-import org.chromium.net.CronetEngine
 
-@RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-fun OkHttpClient.newAndroidBuilder(context: Context): OkHttpClient.Builder {
-  val engine: android.net.http.HttpEngine = HttpEngine.Builder(context)
+@RequiresApi(10000)
+fun OkHttpClient.Companion.newAndroidBuilder(context: Context, engineConfig: HttpEngine.Builder.() -> Unit = {}): OkHttpClient.Builder {
+  val engine: HttpEngine = HttpEngine.Builder(context)
+    .apply(engineConfig)
     .build()
 
   return OkHttpClient.Builder()
+    .addInterceptor(CronetInterceptor.newBuilder(engine).build())
 }

@@ -48,13 +48,12 @@ dependencies {
   debugImplementation(libs.findbugs.jsr305)
   compileOnly(libs.animalsniffer.annotations)
   compileOnly(libs.robolectric.android)
+  implementation("com.google.guava:guava:31.1-android")
 
   testImplementation(projects.okhttpTestingSupport)
   testImplementation(projects.mockwebserver3Junit5)
   testImplementation(libs.junit)
   testImplementation(libs.assertj.core)
-
-  implementation("com.google.net.cronet:cronet-okhttp:0.1.0")
 
   androidTestImplementation(projects.okhttpTls)
   androidTestImplementation(libs.assertj.core)
