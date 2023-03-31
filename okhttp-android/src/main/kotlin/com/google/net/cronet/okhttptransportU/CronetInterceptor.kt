@@ -50,7 +50,9 @@ class CronetInterceptor private constructor(private val converter: RequestRespon
       throw IOException("Canceled")
     }
     val request = chain.request()
-    val requestAndOkHttpResponse = converter.convert(request, chain.readTimeoutMillis(), chain.writeTimeoutMillis())
+
+    val requestAndOkHttpResponse = converter.createRequest(request, chain.writeTimeoutMillis(), callback)
+
 
     chain.withEventListener(object : EventListener() {
       override fun canceled(call: Call) {

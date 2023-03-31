@@ -20,19 +20,16 @@ import android.net.http.UploadDataSink
 import androidx.annotation.RequiresApi
 import androidx.annotation.VisibleForTesting
 import com.google.common.base.Verify
-import com.google.common.util.concurrent.FutureCallback
-import com.google.common.util.concurrent.Futures
-import com.google.common.util.concurrent.ListenableFuture
-import com.google.common.util.concurrent.ListeningExecutorService
-import com.google.common.util.concurrent.MoreExecutors
 import com.google.common.util.concurrent.Uninterruptibles
+import com.google.net.cronet.okhttptransportU.OkHttpBridgeRequestCallback.Companion.timeoutOrMax
 import java.io.IOException
 import java.nio.ByteBuffer
-import java.util.concurrent.Callable
 import java.util.concurrent.ExecutionException
-import java.util.concurrent.ExecutorService
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import okhttp3.RequestBody
 import okio.Buffer
 import okio.buffer
@@ -69,7 +66,7 @@ internal class RequestBodyConverterImpl(
    * This is repeated until the entire body has been read.
    */
   @VisibleForTesting
-  internal class StreamingRequestBodyConverter(private val readerExecutor: ExecutorService) : RequestBodyConverter {
+  internal class StreamingRequestBodyConverter(private val readerExecutor: CoroutineScope) : RequestBodyConverter {
     override fun convertRequestBody(requestBody: RequestBody, writeTimeoutMillis: Int): UploadDataProvider {
       return StreamingUploadDataProvider(
         requestBody, UploadBodyDataBroker(), readerExecutor, writeTimeoutMillis.toLong())
@@ -78,28 +75,14 @@ internal class RequestBodyConverterImpl(
     private class StreamingUploadDataProvider(
       private val okHttpRequestBody: RequestBody,
       private val broker: UploadBodyDataBroker,
-      readTaskExecutor: ExecutorService,
-      writeTimeoutMillis: Long) : UploadDataProvider() {
-      private var readTaskExecutor: ListeningExecutorService? = null
-      private val writeTimeoutMillis: Long
+      private val readTaskExecutor: CoroutineScope,
+      private val writeTimeoutMillis: Long) : UploadDataProvider() {
 
       /** The future for the task that reads the OkHttp request body in the background.  */
-      private lateinit var readTaskFuture: ListenableFuture<*>
+      private var readTaskFuture: Job? = null
 
       /** The number of bytes we read from the OkHttp body thus far.  */
       private var totalBytesReadFromOkHttp: Long = 0
-
-      init {
-        if (readTaskExecutor is ListeningExecutorService) {
-          this.readTaskExecutor = readTaskExecutor
-        } else {
-          this.readTaskExecutor = MoreExecutors.listeningDecorator(readTaskExecutor)
-        }
-
-        // So that we don't have to special case infinity. Int.MAX_VALUE is ~infinity for all
-        // practical use cases.
-        this.writeTimeoutMillis = if (writeTimeoutMillis == 0L) Int.MAX_VALUE.toLong() else writeTimeoutMillis
-      }
 
       @Throws(IOException::class)
       override fun getLength(): Long {
@@ -131,10 +114,10 @@ internal class RequestBodyConverterImpl(
           // Else we're handling what's supposed to be the last chunk
           handleLastBodyRead(uploadDataSink, byteBuffer)
         } catch (e: TimeoutException) {
-          readTaskFuture.cancel(true)
+          readTaskFuture!!.cancel()
           uploadDataSink.onReadError(IOException(e))
         } catch (e: ExecutionException) {
-          readTaskFuture.cancel(true)
+          readTaskFuture!!.cancel()
           uploadDataSink.onReadError(IOException(e))
         }
       }
@@ -171,41 +154,33 @@ internal class RequestBodyConverterImpl(
           val readResult = readFromOkHttp(byteBuffer)
           uploadDataSink.onReadSucceeded(readResult == UploadBodyDataBroker.ReadResult.END_OF_BODY)
         } catch (e: TimeoutException) {
-          readTaskFuture.cancel(true)
+          readTaskFuture!!.cancel()
           uploadDataSink.onReadError(IOException(e))
         } catch (e: ExecutionException) {
-          readTaskFuture.cancel(true)
+          readTaskFuture!!.cancel()
           uploadDataSink.onReadError(IOException(e))
         }
       }
 
       private fun ensureReadTaskStarted() {
         // We don't expect concurrent calls so a simple flag is sufficient
-        if (readTaskFuture == null) {
-          readTaskFuture = readTaskExecutor!!.submit(
-            Callable<Void?> {
-              val bufferedSink = broker.buffer()
-              okHttpRequestBody.writeTo(bufferedSink)
-              bufferedSink.flush()
-              broker.handleEndOfStreamSignal()
-              null
-            })
-          Futures.addCallback(
-            readTaskFuture,
-            object : FutureCallback<Any?> {
-              override fun onSuccess(result: Any?) {}
-              override fun onFailure(t: Throwable) {
-                broker.setBackgroundReadError(t)
-              }
-            },
-            MoreExecutors.directExecutor())
+        check(readTaskFuture == null)
+        readTaskFuture = readTaskExecutor.launch {
+          try {
+            val bufferedSink = broker.buffer()
+            okHttpRequestBody.writeTo(bufferedSink)
+            bufferedSink.flush()
+            broker.handleEndOfStreamSignal()
+          } catch (e: Exception) {
+            broker.setBackgroundReadError(e)
+          }
         }
       }
 
       private fun readFromOkHttp(byteBuffer: ByteBuffer): UploadBodyDataBroker.ReadResult {
         val positionBeforeRead = byteBuffer.position()
         val readResult = Uninterruptibles.getUninterruptibly(
-          broker.enqueueBodyRead(byteBuffer), writeTimeoutMillis, TimeUnit.MILLISECONDS)
+          broker.enqueueBodyRead(byteBuffer), writeTimeoutMillis.timeoutOrMax, TimeUnit.MILLISECONDS)
         val bytesRead = byteBuffer.position() - positionBeforeRead
         totalBytesReadFromOkHttp += bytesRead.toLong()
         return readResult
@@ -286,7 +261,7 @@ internal class RequestBodyConverterImpl(
 
   companion object {
     private const val IN_MEMORY_BODY_LENGTH_THRESHOLD_BYTES = (1024 * 1024).toLong()
-    fun create(bodyReaderExecutor: ExecutorService): RequestBodyConverterImpl {
+    fun create(bodyReaderExecutor: CoroutineScope): RequestBodyConverterImpl {
       return RequestBodyConverterImpl(
         InMemoryRequestBodyConverter(), StreamingRequestBodyConverter(bodyReaderExecutor))
     }

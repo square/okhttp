@@ -18,10 +18,11 @@ package com.google.net.cronet.okhttptransportU
 import android.net.http.HttpEngine
 import android.net.http.UrlRequest
 import androidx.annotation.RequiresApi
-import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
-import java.io.IOException
-import java.util.concurrent.Executor
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asExecutor
+import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
 
@@ -29,10 +30,8 @@ import okhttp3.Response
 @RequiresApi(34)
 class RequestResponseConverter(
   private val cronetEngine: HttpEngine,
-  private val uploadDataProviderExecutor: Executor,
-  private val requestBodyConverter: RequestBodyConverter,
-  private val responseConverter: ResponseConverter,
-  private val redirectStrategy: RedirectStrategy) {
+  private val uploadDataProviderExecutor: CoroutineDispatcher = Dispatchers.IO,
+  internal val requestBodyConverter: RequestBodyConverter) {
   /**
    * Converts OkHttp's [Request] to a corresponding Cronet's [UrlRequest].
    *
@@ -52,15 +51,16 @@ class RequestResponseConverter(
    * // use OkHttp Response as usual
   </pre> *
    */
-  fun convert(
-    okHttpRequest: Request, readTimeoutMillis: Int, writeTimeoutMillis: Int): CronetRequestAndOkHttpResponse {
-    val callback = OkHttpBridgeRequestCallback(readTimeoutMillis.toLong(), redirectStrategy)
+  fun convertRequest(chain: Interceptor.Chain): CompletableCronetRequest {
+    val okHttpRequest = chain.request()
+
+    val completableCronetRequest = CompletableCronetRequest(chain)
 
     // The OkHttp request callback methods are lightweight, the heavy lifting is done by OkHttp /
     // app owned threads. Use a direct executor to avoid extra thread hops.
     val builder = cronetEngine
       .newUrlRequestBuilder(
-        okHttpRequest.url.toString(), callback, MoreExecutors.directExecutor())
+        okHttpRequest.url.toString(), completableCronetRequest.callback, MoreExecutors.directExecutor())
       .allowDirectExecutor()
     builder.setHttpMethod(okHttpRequest.method)
     for (i in 0 until okHttpRequest.headers.size) {
@@ -81,35 +81,10 @@ class RequestResponseConverter(
         } // else use the header
         builder.setUploadDataProvider(
           requestBodyConverter.convertRequestBody(body, writeTimeoutMillis),
-          uploadDataProviderExecutor)
+          uploadDataProviderExecutor.asExecutor())
       }
     }
-    return CronetRequestAndOkHttpResponse(
-      builder.build(), createResponseSupplier(okHttpRequest, callback))
-  }
-
-  private fun createResponseSupplier(
-    request: Request, callback: OkHttpBridgeRequestCallback): ResponseSupplier {
-    return object : ResponseSupplier {
-      override val response: Response
-        get() = responseConverter.toResponse(request, callback)
-      override val responseFuture: ListenableFuture<Response>
-        get() = responseConverter.toResponseAsync(request, callback)
-    }
-  }
-
-  /** A [Future] like holder for OkHttp's [Response].  */
-  interface ResponseSupplier {
-    val response: Response
-    val responseFuture: ListenableFuture<Response>
-  }
-
-  /** A simple data class for bundling Cronet request and OkHttp response.  */
-  class CronetRequestAndOkHttpResponse(val request: UrlRequest, private val responseSupplier: ResponseSupplier) {
-    val response: Response
-      get() = responseSupplier.response
-    val responseAsync: ListenableFuture<Response>
-      get() = responseSupplier.responseFuture
+    return builder.build()
   }
 
   companion object {

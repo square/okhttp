@@ -23,14 +23,7 @@ import com.google.common.base.Ascii
 import com.google.common.base.Splitter
 import com.google.common.collect.ImmutableSet
 import com.google.common.collect.Iterables
-import com.google.common.util.concurrent.Futures
-import com.google.common.util.concurrent.ListenableFuture
-import com.google.common.util.concurrent.MoreExecutors
-import com.google.common.util.concurrent.Uninterruptibles
-import java.io.IOException
 import java.net.ProtocolException
-import java.util.concurrent.ExecutionException
-import java.util.concurrent.Future
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.Protocol
 import okhttp3.Request
@@ -54,9 +47,9 @@ class ResponseConverter {
    * However, this method doesn't fetch the entire body response. As a result, subsequent calls to
    * the result's [Response.body] methods might block further.
    */
-  fun toResponse(request: Request, callback: OkHttpBridgeRequestCallback): Response {
-    val cronetResponseInfo = getFutureValue(callback.urlResponseInfo)
-    val responseBuilder = createResponse(request, cronetResponseInfo, getFutureValue(callback.bodySource))
+  suspend fun toResponse(request: Request, callback: OkHttpBridgeRequestCallback): Response {
+    val cronetResponseInfo = callback.urlResponseInfo.await()
+    val responseBuilder = createResponse(request, cronetResponseInfo, callback.bodySource.await())
     val redirectResponseInfos = callback.urlResponseInfoChain
     val urlChain = cronetResponseInfo.urlChain
     if (!redirectResponseInfos.isEmpty()) {
@@ -75,12 +68,6 @@ class ResponseConverter {
         .priorResponse(priorResponse)
     }
     return responseBuilder.build()
-  }
-
-  fun toResponseAsync(
-    request: Request, callback: OkHttpBridgeRequestCallback): ListenableFuture<Response> {
-    return Futures.whenAllComplete(callback.urlResponseInfo, callback.bodySource)
-      .call({ toResponse(request, callback) }, MoreExecutors.directExecutor())
   }
 
   companion object {
@@ -206,14 +193,6 @@ class ResponseConverter {
       return if (headers.isNullOrEmpty()) {
         null
       } else Iterables.getLast(headers)
-    }
-
-    private fun <T> getFutureValue(future: Future<T>): T {
-      return try {
-        Uninterruptibles.getUninterruptibly(future)
-      } catch (e: ExecutionException) {
-        throw IOException(e)
-      }
     }
 
     private fun <K, V> getOrDefault(map: Map<K, V>, key: K, defaultValue: V): V {

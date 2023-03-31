@@ -19,8 +19,6 @@ import android.net.http.HttpException
 import android.net.http.UrlRequest
 import android.net.http.UrlResponseInfo
 import androidx.annotation.RequiresApi
-import com.google.common.util.concurrent.ListenableFuture
-import com.google.common.util.concurrent.SettableFuture
 import java.io.IOException
 import java.net.ProtocolException
 import java.nio.ByteBuffer
@@ -29,6 +27,8 @@ import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
 import okio.Buffer
 import okio.Source
 import okio.Timeout
@@ -51,7 +51,7 @@ import okio.Timeout
 @RequiresApi(34)
 class OkHttpBridgeRequestCallback(private val readTimeoutMillis: Long, private val redirectStrategy: RedirectStrategy) : UrlRequest.Callback() {
   /** A bridge between Cronet's asynchronous callbacks and OkHttp's blocking stream-like reads.  */
-  private val bodySourceFuture = SettableFuture.create<Source>()
+  private val bodySourceFuture = CompletableDeferred<Source>()
 
   /** Signal whether the request is finished and the response has been fully read.  */
   private val finished = AtomicBoolean(false)
@@ -69,7 +69,7 @@ class OkHttpBridgeRequestCallback(private val readTimeoutMillis: Long, private v
   private val callbackResults: BlockingQueue<CallbackResult> = ArrayBlockingQueue(2)
 
   /** The response headers.  */
-  private val _headersFuture = SettableFuture.create<UrlResponseInfo>()
+  private val _headersFuture = CompletableDeferred<UrlResponseInfo>()
 
   /** The previous responses as reported to [.onRedirectReceived], from oldest to newest. *  */
   private val _urlResponseInfoChain: MutableList<UrlResponseInfo> = ArrayList()
@@ -82,11 +82,11 @@ class OkHttpBridgeRequestCallback(private val readTimeoutMillis: Long, private v
     check(readTimeoutMillis >= 0)
   }
 
-  val urlResponseInfo: ListenableFuture<UrlResponseInfo>
+  val urlResponseInfo: Deferred<UrlResponseInfo>
     /** Returns the [UrlResponseInfo] for the request associated with this callback.  */
     get() = _headersFuture
 
-  val bodySource: ListenableFuture<Source>
+  val bodySource: CompletableDeferred<Source>
     /**
      * Returns the OkHttp [Source] for the request associated with this callback.
      *
@@ -103,10 +103,10 @@ class OkHttpBridgeRequestCallback(private val readTimeoutMillis: Long, private v
     urlRequest: UrlRequest, urlResponseInfo: UrlResponseInfo, nextUrl: String) {
     // We shouldn't follow redirects - pass the given UrlResponseInfo as the ultimate result
     if (!redirectStrategy.followRedirects()) {
-      check(_headersFuture.set(urlResponseInfo))
+      check(_headersFuture.complete(urlResponseInfo))
       // Note: This might not match the content length headers but we have no way of accessing
       // the actual body with current Cronet's APIs (see RedirectStrategy).
-      check(bodySourceFuture.set(Buffer()))
+      check(bodySourceFuture.complete(Buffer()))
       urlRequest.cancel()
       return
     }
@@ -122,14 +122,14 @@ class OkHttpBridgeRequestCallback(private val readTimeoutMillis: Long, private v
     urlRequest.cancel()
     val e: IOException = ProtocolException(
       "Too many follow-up requests: " + (redirectStrategy.numberOfRedirectsToFollow() + 1))
-    _headersFuture.setException(e)
-    bodySourceFuture.setException(e)
+    _headersFuture.completeExceptionally(e)
+    bodySourceFuture.completeExceptionally(e)
   }
 
   override fun onResponseStarted(urlRequest: UrlRequest, urlResponseInfo: UrlResponseInfo) {
     request = urlRequest
-    check(_headersFuture.set(urlResponseInfo))
-    check(bodySourceFuture.set(CronetBodySource()))
+    check(_headersFuture.complete(urlResponseInfo))
+    check(bodySourceFuture.complete(CronetBodySource()))
   }
 
   override fun onReadCompleted(
@@ -144,7 +144,7 @@ class OkHttpBridgeRequestCallback(private val readTimeoutMillis: Long, private v
   override fun onFailed(urlRequest: UrlRequest, urlResponseInfo: UrlResponseInfo, e: HttpException) {
     // If this was called before we start reading the body, the exception will
     // propagate in the future providing headers and the body wrapper.
-    if (_headersFuture.setException(e) && bodySourceFuture.setException(e)) {
+    if (_headersFuture.completeExceptionally(e) && bodySourceFuture.completeExceptionally(e)) {
       return
     }
 
@@ -162,8 +162,8 @@ class OkHttpBridgeRequestCallback(private val readTimeoutMillis: Long, private v
     // response about the cancellation as well. This becomes a no-op if the futures
     // were already set.
     val e = IOException("The request was canceled!")
-    _headersFuture.setException(e)
-    bodySourceFuture.setException(e)
+    _headersFuture.completeExceptionally(e)
+    bodySourceFuture.completeExceptionally(e)
   }
 
   private inner class CronetBodySource : Source {
@@ -193,11 +193,7 @@ class OkHttpBridgeRequestCallback(private val readTimeoutMillis: Long, private v
       val result: CallbackResult? = try {
         // So that we don't have to special case infinity. Int.MAX_VALUE is ~infinity for all practical
         // use cases.
-        val effectiveTimeout = if (readTimeoutMillis == 0L) {
-          Long.MAX_VALUE
-        } else {
-          readTimeoutMillis
-        }
+        val effectiveTimeout = readTimeoutMillis.timeoutOrMax
 
         callbackResults.poll(effectiveTimeout, TimeUnit.MILLISECONDS)
       } catch (e: InterruptedException) {
@@ -272,5 +268,12 @@ class OkHttpBridgeRequestCallback(private val readTimeoutMillis: Long, private v
      * allocate its own buffer of this size once the response starts being processed.
      */
     private const val CRONET_BYTE_BUFFER_CAPACITY = 32 * 1024
+
+    internal val Long.timeoutOrMax: Long
+      get() = if (this == 0L) {
+        Long.MAX_VALUE
+      } else {
+        this
+      }
   }
 }

@@ -20,15 +20,12 @@ import androidx.annotation.RequiresApi
 import java.util.concurrent.Executors
 
 @RequiresApi(34)
-abstract class RequestResponseConverterBasedBuilder<S : RequestResponseConverterBasedBuilder<S, T>, T>(cronetEngine: HttpEngine) {
+abstract class RequestResponseConverterBasedBuilder<S : RequestResponseConverterBasedBuilder<S, T>, T>(
   private val cronetEngine: HttpEngine
+) {
   private var uploadDataProviderExecutorSize = DEFAULT_THREAD_POOL_SIZE
 
-  private var redirectStrategy: RedirectStrategy = RedirectStrategy.defaultStrategy()
-
-  init {
-    this.cronetEngine = checkNotNull(cronetEngine)
-  }
+  internal var redirectStrategy: RedirectStrategy = RedirectStrategy.defaultStrategy()
 
   /**
    * Sets the size of upload data provider executor. The same executor is used for all upload data
@@ -52,7 +49,6 @@ abstract class RequestResponseConverterBasedBuilder<S : RequestResponseConverter
    * follow redirects too many times.
    */
   fun setRedirectStrategy(redirectStrategy: RedirectStrategy): S {
-    checkNotNull(redirectStrategy)
     this.redirectStrategy = redirectStrategy
     return this as S
   }
