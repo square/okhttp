@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.net.cronet.okhttptransportU
+package com.google.net.cronet.okhttptransportU.internal
 
 import android.net.http.HttpEngine
 import android.net.http.UrlRequest
 import androidx.annotation.RequiresApi
-import com.google.common.util.concurrent.MoreExecutors
-import kotlinx.coroutines.CoroutineDispatcher
+import java.util.concurrent.Executor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
 import okhttp3.Interceptor
@@ -28,10 +27,11 @@ import okhttp3.Response
 
 /** Converts OkHttp requests to Cronet requests.  */
 @RequiresApi(34)
-class RequestResponseConverter(
+class RequestConverter(
   private val cronetEngine: HttpEngine,
-  private val uploadDataProviderExecutor: CoroutineDispatcher = Dispatchers.IO,
-  internal val requestBodyConverter: RequestBodyConverter) {
+  internal val requestBodyConverter: RequestBodyConverter,
+  internal val responseConverter: ResponseConverter
+) {
   /**
    * Converts OkHttp's [Request] to a corresponding Cronet's [UrlRequest].
    *
@@ -51,16 +51,16 @@ class RequestResponseConverter(
    * // use OkHttp Response as usual
   </pre> *
    */
-  fun convertRequest(chain: Interceptor.Chain): CompletableCronetRequest {
+  fun create(chain: Interceptor.Chain): CompletableCronetRequest {
     val okHttpRequest = chain.request()
 
-    val completableCronetRequest = CompletableCronetRequest(chain)
+    val completableCronetRequest = CompletableCronetRequest(chain, responseConverter)
 
     // The OkHttp request callback methods are lightweight, the heavy lifting is done by OkHttp /
     // app owned threads. Use a direct executor to avoid extra thread hops.
     val builder = cronetEngine
       .newUrlRequestBuilder(
-        okHttpRequest.url.toString(), completableCronetRequest.callback, MoreExecutors.directExecutor())
+        okHttpRequest.url.toString(), completableCronetRequest.callback, directExecutor)
       .allowDirectExecutor()
     builder.setHttpMethod(okHttpRequest.method)
     for (i in 0 until okHttpRequest.headers.size) {
@@ -80,16 +80,20 @@ class RequestResponseConverter(
           builder.addHeader(CONTENT_TYPE_HEADER_NAME, CONTENT_TYPE_HEADER_DEFAULT_VALUE)
         } // else use the header
         builder.setUploadDataProvider(
-          requestBodyConverter.convertRequestBody(body, writeTimeoutMillis),
-          uploadDataProviderExecutor.asExecutor())
+          requestBodyConverter.convertRequestBody(body, chain.writeTimeoutMillis()),
+          Dispatchers.IO.asExecutor())
       }
     }
-    return builder.build()
+
+    completableCronetRequest.setRequest(builder.build())
+
+    return completableCronetRequest
   }
 
   companion object {
     private const val CONTENT_LENGTH_HEADER_NAME = "Content-Length"
     private const val CONTENT_TYPE_HEADER_NAME = "Content-Type"
     private const val CONTENT_TYPE_HEADER_DEFAULT_VALUE = "application/octet-stream"
+    private val directExecutor = Executor(Runnable::run)
   }
 }

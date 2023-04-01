@@ -13,15 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.net.cronet.okhttptransportU
+package com.google.net.cronet.okhttptransportU.internal
 
 import android.net.http.UploadDataProvider
 import android.net.http.UploadDataSink
 import androidx.annotation.RequiresApi
 import androidx.annotation.VisibleForTesting
-import com.google.common.base.Verify
-import com.google.common.util.concurrent.Uninterruptibles
-import com.google.net.cronet.okhttptransportU.OkHttpBridgeRequestCallback.Companion.timeoutOrMax
+import com.google.net.cronet.okhttptransportU.internal.OkHttpBridgeRequestCallback.Companion.timeoutOrMax
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.util.concurrent.ExecutionException
@@ -30,6 +28,8 @@ import java.util.concurrent.TimeoutException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import okhttp3.RequestBody
 import okio.Buffer
 import okio.buffer
@@ -140,9 +140,9 @@ internal class RequestBodyConverterImpl(
         if (readResult != UploadBodyDataBroker.ReadResult.END_OF_BODY) {
           throw prepareBodyTooLongException(length, totalBytesReadFromOkHttp)
         }
-        Verify.verify(
-          filledByteBuffer.position() == 0,
-          "END_OF_BODY reads shouldn't write anything to the buffer")
+        check(
+          filledByteBuffer.position() == 0
+        ) { "END_OF_BODY reads shouldn't write anything to the buffer" }
 
         // revert the position change
         filledByteBuffer.position(bufferPosition)
@@ -179,8 +179,11 @@ internal class RequestBodyConverterImpl(
 
       private fun readFromOkHttp(byteBuffer: ByteBuffer): UploadBodyDataBroker.ReadResult {
         val positionBeforeRead = byteBuffer.position()
-        val readResult = Uninterruptibles.getUninterruptibly(
-          broker.enqueueBodyRead(byteBuffer), writeTimeoutMillis.timeoutOrMax, TimeUnit.MILLISECONDS)
+        val readResult = runBlocking {
+          withTimeout(writeTimeoutMillis.timeoutOrMax) {
+            broker.enqueueBodyRead(byteBuffer).await()
+          }
+        }
         val bytesRead = byteBuffer.position() - positionBeforeRead
         totalBytesReadFromOkHttp += bytesRead.toLong()
         return readResult

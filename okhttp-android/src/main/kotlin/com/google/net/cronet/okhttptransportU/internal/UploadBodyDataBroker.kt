@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.net.cronet.okhttptransportU
+package com.google.net.cronet.okhttptransportU.internal
 
 import android.util.Pair
 import androidx.annotation.RequiresApi
-import com.google.common.util.concurrent.Futures
-import com.google.common.util.concurrent.SettableFuture
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.BlockingQueue
-import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
 import okio.Buffer
 import okio.Sink
 import okio.Timeout
@@ -38,7 +37,7 @@ internal class UploadBodyDataBroker : Sink {
    *
    * We don't expect more than one parallel read call for a single request body provider.
    */
-  private val pendingRead: BlockingQueue<Pair<ByteBuffer, SettableFuture<ReadResult>>> = ArrayBlockingQueue(1)
+  private val pendingRead: BlockingQueue<Pair<ByteBuffer, CompletableDeferred<ReadResult>>> = ArrayBlockingQueue(1)
 
   /**
    * Whether the sink has been closed.
@@ -61,17 +60,19 @@ internal class UploadBodyDataBroker : Sink {
    *
    * This method is executed by Cronet's upload data provider.
    */
-  fun enqueueBodyRead(readBuffer: ByteBuffer): Future<ReadResult> {
+  fun enqueueBodyRead(readBuffer: ByteBuffer): Deferred<ReadResult> {
     var backgroundThrowable = backgroundReadThrowable.get()
     if (backgroundThrowable != null) {
-      return Futures.immediateFailedFuture(backgroundThrowable)
+      return CompletableDeferred<ReadResult>().apply {
+        completeExceptionally(backgroundThrowable)
+      }
     }
-    val future = SettableFuture.create<ReadResult>()
+    val future = CompletableDeferred<ReadResult>()
     pendingRead.add(Pair.create(readBuffer, future))
 
     // Properly handle interleaving handleBackgroundReadError / enqueueBodyRead calls.
     if (backgroundReadThrowable.get().also { backgroundThrowable = it } != null) {
-      future.setException(backgroundThrowable!!)
+      future.completeExceptionally(backgroundThrowable!!)
     }
     return future
   }
@@ -85,7 +86,7 @@ internal class UploadBodyDataBroker : Sink {
   fun setBackgroundReadError(t: Throwable) {
     backgroundReadThrowable.set(t)
     val read = pendingRead.poll()
-    read?.second?.setException(t)
+    read?.second?.completeExceptionally(t)
   }
 
   /**
@@ -96,7 +97,7 @@ internal class UploadBodyDataBroker : Sink {
    */
   fun handleEndOfStreamSignal() {
     check(!isClosed.getAndSet(true)) { "Already closed" }
-    pendingCronetRead.second.set(ReadResult.END_OF_BODY)
+    pendingCronetRead.second.complete(ReadResult.END_OF_BODY)
   }
 
   /**
@@ -120,20 +121,20 @@ internal class UploadBodyDataBroker : Sink {
         val bytesRead = source.read(readBuffer).toLong()
         if (bytesRead == -1L) {
           val e = IOException("The source has been exhausted but we expected more!")
-          future.setException(e)
+          future.completeExceptionally(e)
           throw e
         }
         bytesRemaining -= bytesRead
         readBuffer.limit(originalBufferLimit)
-        future.set(ReadResult.SUCCESS)
+        future.complete(ReadResult.SUCCESS)
       } catch (e: IOException) {
-        future.setException(e)
+        future.completeExceptionally(e)
         throw e
       }
     }
   }
 
-  private val pendingCronetRead: Pair<ByteBuffer, SettableFuture<ReadResult>>
+  private val pendingCronetRead: Pair<ByteBuffer, CompletableDeferred<ReadResult>>
     private get() = try {
       pendingRead.take()
     } catch (e: InterruptedException) {

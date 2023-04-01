@@ -29,5 +29,5 @@ fun OkHttpClient.Companion.newAndroidBuilder(context: Context, engineConfig: Htt
     .build()
 
   return OkHttpClient.Builder()
-    .addInterceptor(CronetInterceptor.newBuilder(engine).build())
+    .addInterceptor(CronetInterceptor.Builder(engine).build())
 }

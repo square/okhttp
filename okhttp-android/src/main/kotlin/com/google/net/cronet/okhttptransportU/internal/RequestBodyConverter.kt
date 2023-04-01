@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.net.cronet.okhttptransportU
+package com.google.net.cronet.okhttptransportU.internal
 
 import android.net.http.UploadDataProvider
 import java.io.IOException

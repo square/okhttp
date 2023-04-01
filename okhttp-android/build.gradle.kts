@@ -48,7 +48,6 @@ dependencies {
   debugImplementation(libs.findbugs.jsr305)
   compileOnly(libs.animalsniffer.annotations)
   compileOnly(libs.robolectric.android)
-  implementation("com.google.guava:guava:31.1-android")
   implementation(libs.kotlinx.coroutines.core)
 
   testImplementation(projects.okhttpTestingSupport)

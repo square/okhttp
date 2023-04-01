@@ -15,14 +15,10 @@
  */
 @file:Suppress("UnstableApiUsage")
 
-package com.google.net.cronet.okhttptransportU
+package com.google.net.cronet.okhttptransportU.internal
 
 import android.net.http.UrlResponseInfo
 import androidx.annotation.RequiresApi
-import com.google.common.base.Ascii
-import com.google.common.base.Splitter
-import com.google.common.collect.ImmutableSet
-import com.google.common.collect.Iterables
 import java.net.ProtocolException
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.Protocol
@@ -64,7 +60,7 @@ class ResponseConverter {
           .build()
       }
       responseBuilder
-        .request(request.newBuilder().url(Iterables.getLast(urlChain)).build())
+        .request(request.newBuilder().url(urlChain.last()).build())
         .priorResponse(priorResponse)
     }
     return responseBuilder.build()
@@ -76,8 +72,7 @@ class ResponseConverter {
     private const val CONTENT_ENCODING_HEADER_NAME = "Content-Encoding"
 
     // https://source.chromium.org/search?q=symbol:FilterSourceStream::ParseEncodingType%20f:cc
-    private val ENCODINGS_HANDLED_BY_CRONET = ImmutableSet.of("br", "deflate", "gzip", "x-gzip")
-    private val COMMA_SPLITTER = Splitter.on(',').trimResults().omitEmptyStrings()
+    private val ENCODINGS_HANDLED_BY_CRONET = setOf("br", "deflate", "gzip", "x-gzip")
 
     private fun createResponse(
       request: Request, cronetResponseInfo: UrlResponseInfo, bodySource: Source?): Response.Builder {
@@ -92,11 +87,11 @@ class ResponseConverter {
 
       // Theoretically, the content encodings can be scattered across multiple comma separated
       // Content-Encoding headers. This list contains individual encodings.
-      val contentEncodingItems: List<String> = ArrayList()
+      val contentEncodingItems: MutableList<String> = ArrayList()
       for (contentEncodingHeaderValue in getOrDefault<String, List<String>>(
         cronetResponseInfo.allHeaders,
         CONTENT_ENCODING_HEADER_NAME, emptyList<String>())) {
-        Iterables.addAll(contentEncodingItems, COMMA_SPLITTER.split(contentEncodingHeaderValue))
+        contentEncodingItems.addAll(contentEncodingHeaderValue.split("\\s*,\\s*".toRegex()))
       }
       val keepEncodingAffectedHeaders = (contentEncodingItems.isEmpty()
         || !ENCODINGS_HANDLED_BY_CRONET.containsAll(contentEncodingItems))
@@ -121,8 +116,8 @@ class ResponseConverter {
       for ((key, value) in cronetResponseInfo.allHeadersAsList) {
         var copyHeader = true
         if (!keepEncodingAffectedHeaders) {
-          if (Ascii.equalsIgnoreCase(key, CONTENT_LENGTH_HEADER_NAME)
-            || Ascii.equalsIgnoreCase(key, CONTENT_ENCODING_HEADER_NAME)) {
+          if (key.equals(CONTENT_LENGTH_HEADER_NAME, ignoreCase = true)
+            || key.equals(CONTENT_ENCODING_HEADER_NAME, ignoreCase = true)) {
             copyHeader = false
           }
         }
@@ -192,7 +187,7 @@ class ResponseConverter {
       val headers = responseInfo.allHeaders[name]
       return if (headers.isNullOrEmpty()) {
         null
-      } else Iterables.getLast(headers)
+      } else headers.last()
     }
 
     private fun <K, V> getOrDefault(map: Map<K, V>, key: K, defaultValue: V): V {

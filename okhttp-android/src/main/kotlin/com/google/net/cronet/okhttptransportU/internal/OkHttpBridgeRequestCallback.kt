@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.net.cronet.okhttptransportU
+package com.google.net.cronet.okhttptransportU.internal
 
 import android.net.http.HttpException
 import android.net.http.UrlRequest
 import android.net.http.UrlResponseInfo
 import androidx.annotation.RequiresApi
+import com.google.net.cronet.okhttptransportU.CronetTimeoutException
+import com.google.net.cronet.okhttptransportU.RedirectStrategy
 import java.io.IOException
 import java.net.ProtocolException
 import java.nio.ByteBuffer

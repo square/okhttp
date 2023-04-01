@@ -17,7 +17,14 @@ package com.google.net.cronet.okhttptransportU
 
 import android.net.http.HttpEngine
 import androidx.annotation.RequiresApi
+import com.google.net.cronet.okhttptransportU.internal.RequestBodyConverterImpl
+import com.google.net.cronet.okhttptransportU.internal.RequestConverter
+import com.google.net.cronet.okhttptransportU.internal.ResponseConverter
 import java.io.IOException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.asExecutor
 import okhttp3.Call
 import okhttp3.EventListener
 import okhttp3.Interceptor
@@ -43,41 +50,40 @@ import okhttp3.Response
  *
  */
 @RequiresApi(34)
-class CronetInterceptor private constructor(private val converter: RequestResponseConverter) : Interceptor {
+class CronetInterceptor(
+  private val requestConverter: RequestConverter
+) : Interceptor {
 
   override fun intercept(chain: Interceptor.Chain): Response {
     if (chain.call().isCanceled()) {
       throw IOException("Canceled")
     }
-    val request = chain.request()
 
-    val requestAndOkHttpResponse = converter.createRequest(request, chain.writeTimeoutMillis(), callback)
-
+    val cronetRequestHolder = requestConverter.create(chain)
 
     chain.withEventListener(object : EventListener() {
       override fun canceled(call: Call) {
-        requestAndOkHttpResponse.request.cancel()
+        cronetRequestHolder.cancel()
       }
     })
 
-    requestAndOkHttpResponse.request.start()
+    cronetRequestHolder.start()
 
-    return requestAndOkHttpResponse.response
+    return cronetRequestHolder.response()
   }
 
   /** A builder for [CronetInterceptor].  */
-  class Builder internal constructor(cronetEngine: HttpEngine) : RequestResponseConverterBasedBuilder<Builder, CronetInterceptor>(cronetEngine) {
+  class Builder(private val cronetEngine: HttpEngine) {
     /** Builds the interceptor. The same builder can be used to build multiple interceptors.  */
-    override fun build(converter: RequestResponseConverter): CronetInterceptor {
-      return CronetInterceptor(converter)
-    }
-  }
+    fun build(): CronetInterceptor {
+      val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+      val requestConverter = RequestConverter(
+        cronetEngine = cronetEngine,
+        requestBodyConverter = RequestBodyConverterImpl.create(coroutineScope),
+        responseConverter = ResponseConverter()
+      )
 
-  companion object {
-
-    /** Creates a [CronetInterceptor] builder.  */
-    fun newBuilder(cronetEngine: HttpEngine): Builder {
-      return Builder(cronetEngine)
+      return CronetInterceptor(requestConverter)
     }
   }
 }
