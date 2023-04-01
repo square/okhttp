@@ -169,7 +169,7 @@ class OkHttpBridgeRequestCallback(private val readTimeoutMillis: Long, private v
   }
 
   private inner class CronetBodySource : Source {
-    private var buffer = ByteBuffer.allocateDirect(CRONET_BYTE_BUFFER_CAPACITY)
+    private var buffer: ByteBuffer? = ByteBuffer.allocateDirect(CRONET_BYTE_BUFFER_CAPACITY)
 
     /** Whether the close() method has been called.  */
     @Volatile
@@ -188,8 +188,8 @@ class OkHttpBridgeRequestCallback(private val readTimeoutMillis: Long, private v
       if (finished.get()) {
         return -1
       }
-      if (byteCount < buffer.limit()) {
-        buffer.limit(byteCount.toInt())
+      if (byteCount < buffer!!.limit()) {
+        buffer!!.limit(byteCount.toInt())
       }
       request!!.read(buffer)
       val result: CallbackResult? = try {

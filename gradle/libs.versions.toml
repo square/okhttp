@@ -1,4 +1,5 @@
 [versions]
+androidx-tracing = "1.1.0"
 biz-aQute-bnd = "6.4.0"
 checkStyle = "10.8.1"
 com-squareup-moshi = "1.14.0"
@@ -17,6 +18,7 @@ androidx-annotation = "androidx.annotation:annotation:1.6.0"
 androidx-espresso-core = "androidx.test.espresso:espresso-core:3.5.1"
 androidx-junit = "androidx.test.ext:junit:1.1.5"
 androidx-test-runner = "androidx.test:runner:1.5.2"
+androidx-tracing-ktx = { module = "androidx.tracing:tracing-ktx", version.ref = "androidx-tracing" }
 animalsniffer-annotations = "org.codehaus.mojo:animal-sniffer-annotations:1.22"
 aqute-resolve = { module = "biz.aQute.bnd:biz.aQute.resolve", version.ref = "biz-aQute-bnd" }
 assertj-core = "org.assertj:assertj-core:3.24.2"

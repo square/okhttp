@@ -25,7 +25,7 @@ android {
     )
 
     buildFeatures {
-      buildConfig = false
+      buildConfig = true
     }
   }
 
@@ -49,6 +49,10 @@ dependencies {
   compileOnly(libs.animalsniffer.annotations)
   compileOnly(libs.robolectric.android)
   implementation(libs.kotlinx.coroutines.core)
+  api(projects.loggingInterceptor)
+  api(projects.okhttpBrotli)
+
+  implementation(libs.androidx.tracing.ktx)
 
   testImplementation(projects.okhttpTestingSupport)
   testImplementation(projects.mockwebserver3Junit5)

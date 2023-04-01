@@ -19,6 +19,8 @@ package okhttp3.android
 import androidx.test.platform.app.InstrumentationRegistry
 import java.net.InetAddress
 import java.net.UnknownHostException
+import okhttp.android.test.BuildConfig
+import okhttp3.CacheControl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
@@ -38,22 +40,38 @@ class AndroidClientBuilderTest {
   @BeforeEach
   fun setUp() {
     val context = InstrumentationRegistry.getInstrumentation().context
-    client = OkHttpClient.newAndroidBuilder(context) {
+    client = OkHttpClient.newAndroidClient(context, debug = BuildConfig.DEBUG, engineConfig = {
+
       addQuicHint("google.com", 443, 443)
       addQuicHint("www.google.com", 443, 443)
-    }
-      .build()
+
+    })
   }
 
   @Test
   fun testRequestExternal() {
     assumeNetwork()
 
-    val call = client.newCall(Request("https://google.com/robots.txt".toHttpUrl()))
+    val request = Request("https://google.com/robots.txt".toHttpUrl())
+
+    val networkRequest = request.newBuilder()
+      .url("https://google.com/robots.txt".toHttpUrl())
+      .cacheControl(CacheControl.FORCE_NETWORK)
+      .build()
+
+    val call = client.newCall(networkRequest)
 
     call.execute().use { response ->
       assertThat(response.code).isEqualTo(200)
       assertThat(response.protocol).isEqualTo(Protocol.HTTP_3)
+    }
+
+    val cachedCall = client.newCall(request)
+
+    cachedCall.execute().use { response ->
+      assertThat(response.code).isEqualTo(200)
+      // Cronet not observing cache control
+//      assertThat(response.protocol).isEqualTo(Protocol.HTTP_1_1)
     }
   }
 

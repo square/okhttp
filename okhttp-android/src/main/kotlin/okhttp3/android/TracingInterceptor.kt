@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Google LLC
+ * Copyright (c) 2022 Block, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,13 +12,26 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
-package com.google.net.cronet.okhttptransportU.internal
+package okhttp3.android;
 
-import android.net.http.UploadDataProvider
-import okhttp3.RequestBody
+import androidx.tracing.trace
+import okhttp3.Interceptor
+import okhttp3.Request
+import okhttp3.Response
 
-/** An interface for classes converting from OkHttp to Cronet request bodies.  */
-interface RequestBodyConverter {
-  fun convertRequestBody(requestBody: RequestBody, writeTimeoutMillis: Int): UploadDataProvider
+/**
+ * Tracing implementation of Interceptor that marks each Call in a perfetto
+ * trace.
+ */
+class TracingInterceptor : Interceptor {
+  override fun intercept(chain: Interceptor.Chain): Response {
+    return trace(chain.request().tracingTag) {
+      chain.proceed(chain.request())
+    }
+  }
+
+  val Request.tracingTag: String
+    get() = url.encodedPath.take(127)
 }

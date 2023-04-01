@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Google LLC
+ * Copyright (c) 2023 Block, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,13 +12,23 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
-package com.google.net.cronet.okhttptransportU.internal
+package okhttp3.android
 
-import android.net.http.UploadDataProvider
-import okhttp3.RequestBody
+import okhttp3.Interceptor
+import okhttp3.Response
 
-/** An interface for classes converting from OkHttp to Cronet request bodies.  */
-interface RequestBodyConverter {
-  fun convertRequestBody(requestBody: RequestBody, writeTimeoutMillis: Int): UploadDataProvider
+object AlwaysOkHttpInterceptor : Interceptor {
+  override fun intercept(chain: Interceptor.Chain): Response {
+    var request = chain.request()
+
+    if (request.url.scheme == "http") {
+      request = request.newBuilder().url(
+        request.url.newBuilder().scheme("https").build()
+      ).build()
+    }
+
+    return chain.proceed(request)
+  }
 }

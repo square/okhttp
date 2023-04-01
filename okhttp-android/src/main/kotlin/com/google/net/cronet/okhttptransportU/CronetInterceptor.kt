@@ -24,7 +24,6 @@ import java.io.IOException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.asExecutor
 import okhttp3.Call
 import okhttp3.EventListener
 import okhttp3.Interceptor

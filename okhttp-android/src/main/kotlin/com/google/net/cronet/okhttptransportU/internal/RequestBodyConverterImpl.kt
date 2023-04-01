@@ -23,7 +23,6 @@ import com.google.net.cronet.okhttptransportU.internal.OkHttpBridgeRequestCallba
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.util.concurrent.ExecutionException
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
