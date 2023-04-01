@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-  compileSdk = 31
+  compileSdkPreview = "UpsideDownCake"
 
   defaultConfig {
     minSdk = 21
