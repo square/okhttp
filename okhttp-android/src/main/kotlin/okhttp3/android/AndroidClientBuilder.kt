@@ -24,6 +24,7 @@ import android.net.http.QuicOptions
 import android.os.Build
 import androidx.annotation.RequiresApi
 import com.google.net.cronet.okhttptransportU.CronetInterceptor
+import java.net.URL
 import okhttp3.Cache
 import okhttp3.ConnectionPool
 import okhttp3.OkHttp
@@ -73,13 +74,15 @@ fun OkHttpClient.Companion.newAndroidClient(
           .setEnablePathDegradationMigration(true)
           .build())
         setUserAgent("okhttp/${OkHttp.VERSION} Cronet/${HttpEngine.getVersionString()}")
-        setEnableHttp2(true)
         setEnableQuic(true)
         setQuicOptions(QuicOptions.Builder()
           .build())
       }
       .apply(engineConfig)
       .build()
+
+    // Let's play with using this for everything
+    URL.setURLStreamHandlerFactory(engine.createURLStreamHandlerFactory());
 
     clientBuilder.addInterceptor(CronetInterceptor.Builder(engine).build())
   } else {
