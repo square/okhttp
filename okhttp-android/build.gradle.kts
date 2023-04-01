@@ -53,6 +53,7 @@ dependencies {
   api(projects.okhttpBrotli)
 
   implementation(libs.androidx.tracing.ktx)
+  implementation("com.google.net.cronet:cronet-okhttp:0.1.0")
 
   testImplementation(projects.okhttpTestingSupport)
   testImplementation(projects.mockwebserver3Junit5)
@@ -66,6 +67,9 @@ dependencies {
   androidTestImplementation(libs.junit.jupiter.api)
   androidTestImplementation(libs.junit5android.core)
   androidTestRuntimeOnly(libs.junit5android.runner)
+
+  androidTestImplementation("com.google.android.gms:play-services-cronet:18.0.1")
+  androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4")
 }
 
 mavenPublishing {
