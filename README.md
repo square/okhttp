@@ -81,14 +81,14 @@ track][tls_history] the dynamic TLS ecosystem and adjust OkHttp to improve conne
 security.
 
 OkHttp uses your platform's built-in TLS implementation. On Java platforms OkHttp also supports
-[Conscrypt][conscrypt], which integrates BoringSSL with Java. OkHttp will use Conscrypt if it is
+[Conscrypt][conscrypt], which integrates [BoringSSL](https://github.com/google/boringssl) with Java. OkHttp will use Conscrypt if it is
 the first security provider:
 
 ```java
 Security.insertProviderAt(Conscrypt.newProvider(), 1);
 ```
 
-The OkHttp 3.12.x branch supports Android 2.3+ (API level 9+) and Java 7+. These platforms lack
+The OkHttp `3.12.x` branch supports Android 2.3+ (API level 9+) and Java 7+. These platforms lack
 support for TLS 1.2 and should not be used.
 
 
@@ -133,7 +133,7 @@ GraalVM Native Image
 --------------------
 
 Building your native images with Graal https://www.graalvm.org/ should work automatically.
-This is not currently in a final released version, so 5.0.0-alpha.2 should be used.
+This is not currently in a final released version, so `5.0.0-alpha.2` should be used.
 Please report any bugs or workarounds you find.
 
 See the okcurl module for an example build.
