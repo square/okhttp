@@ -602,7 +602,18 @@ internal object CommonHttpUrl {
   }
 
   internal fun HttpUrl.Builder.effectivePort(): Int {
-    return if (port != -1) port else HttpUrl.defaultPort(scheme!!)
+    if (port >= 1 && port <= 65535){
+      return port
+    }
+    else {
+      val defaultPort: Int = HttpUrl.defaultPort(scheme!!)
+      if (defaultPort != -1){
+        return defaultPort
+      }
+      else {
+        throw IllegalArgumentException("Invalid port: $port")
+      }
+    }
   }
   internal fun HttpUrl.Builder.commonToString(): String {
     return buildString {
@@ -761,7 +772,13 @@ internal object CommonHttpUrl {
               }
             } else {
               host = input.percentDecode(pos = pos, limit = portColonOffset).toCanonicalHost()
-              port = HttpUrl.defaultPort(scheme!!)
+              val defaultPort: Int = HttpUrl.defaultPort(scheme!!)
+              if (defaultPort != -1){
+                port = defaultPort
+              }
+              else {
+                throw IllegalArgumentException("Invalid port: $port")
+              }
             }
             require(host != null) {
               "$INVALID_HOST: \"${input.substring(pos, portColonOffset)}\""
