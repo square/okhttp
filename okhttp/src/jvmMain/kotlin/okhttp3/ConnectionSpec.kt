@@ -16,6 +16,7 @@
 package okhttp3
 
 import java.util.Arrays
+import java.util.Collections
 import java.util.Objects
 import javax.net.ssl.SSLSocket
 import okhttp3.ConnectionSpec.Builder
@@ -71,6 +72,15 @@ class ConnectionSpec internal constructor(
    * Returns the TLS versions to use when negotiating a connection. Returns null if all of the SSL
    * socket's enabled TLS versions should be used.
    */
+  @get:JvmName("tlsVersionsAsString") val tlsVersionsAsStringList: List<String>?
+    get() {
+      return tlsVersionsAsString?.let { Collections.unmodifiableList(it.asList()) }
+    }
+
+  /**
+   * Returns the TLS versions to use when negotiating a connection. Returns null if all of the SSL
+   * socket's enabled TLS versions should be used.
+   */
   @get:JvmName("tlsVersions") val tlsVersions: List<TlsVersion>?
     get() {
       return tlsVersionsAsString?.map { TlsVersion.forJavaName(it) }
@@ -94,7 +104,7 @@ class ConnectionSpec internal constructor(
   internal fun apply(sslSocket: SSLSocket, isFallback: Boolean) {
     val specToApply = supportedSpec(sslSocket, isFallback)
 
-    if (specToApply.tlsVersions != null) {
+    if (specToApply.tlsVersionsAsString != null) {
       sslSocket.enabledProtocols = specToApply.tlsVersionsAsString
     }
 
@@ -190,9 +200,10 @@ class ConnectionSpec internal constructor(
   override fun toString(): String {
     if (!isTls) return "ConnectionSpec()"
 
+    val tlsVersionsToUse = tlsVersionsAsString?.map { TlsVersion.parseJavaName(it)?.toString() ?: it }
     return ("ConnectionSpec(" +
         "cipherSuites=${Objects.toString(cipherSuites, "[all enabled]")}, " +
-        "tlsVersions=${Objects.toString(tlsVersions, "[all enabled]")}, " +
+        "tlsVersions=${Objects.toString(tlsVersionsToUse, "[all enabled]")}, " +
         "supportsTlsExtensions=$supportsTlsExtensions)")
   }
 

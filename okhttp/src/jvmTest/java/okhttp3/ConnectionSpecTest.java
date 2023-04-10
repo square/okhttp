@@ -21,8 +21,11 @@ import okhttp3.testing.PlatformVersion;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import javax.net.ssl.HandshakeCompletedListener;
+import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -182,10 +185,107 @@ public final class ConnectionSpecTest {
   @Test public void tls_stringCiphersAndVersions() throws Exception {
     // Supporting arbitrary input strings allows users to enable suites and versions that are not
     // yet known to the library, but are supported by the platform.
-    new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
+    ConnectionSpec tlsSpec = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
         .cipherSuites("MAGIC-CIPHER")
         .tlsVersions("TLS9k")
         .build();
+
+    SSLSocket socket = new SSLSocket() {
+      private final String[] supportedCipherSuites = {"MAGIC-CIPHER", "OTHER-MAGIC-CIPHER"};
+      private final String[] supportedProtocols = {"TLS8k", "TLS9k"};
+
+      private String[] enabledCipherSuites = supportedCipherSuites;
+      private String[] enabledProtocols = supportedProtocols;
+
+      @Override
+      public String[] getSupportedCipherSuites() {
+        return supportedCipherSuites;
+      }
+
+      @Override
+      public String[] getEnabledCipherSuites() {
+        return enabledCipherSuites;
+      }
+
+      @Override
+      public void setEnabledCipherSuites(String[] strings) {
+        this.enabledCipherSuites = strings;
+      }
+
+      @Override
+      public String[] getSupportedProtocols() {
+        return supportedProtocols;
+      }
+
+      @Override
+      public String[] getEnabledProtocols() {
+        return enabledProtocols;
+      }
+
+      @Override
+      public void setEnabledProtocols(String[] strings) {
+        this.enabledProtocols = strings;
+      }
+
+      @Override
+      public SSLSession getSession() {
+        return null;
+      }
+
+      @Override
+      public void addHandshakeCompletedListener(HandshakeCompletedListener handshakeCompletedListener) {
+      }
+
+      @Override
+      public void removeHandshakeCompletedListener(HandshakeCompletedListener handshakeCompletedListener) {
+      }
+
+      @Override
+      public void startHandshake() throws IOException {
+      }
+
+      @Override
+      public void setUseClientMode(boolean b) {
+      }
+
+      @Override
+      public boolean getUseClientMode() {
+        return false;
+      }
+
+      @Override
+      public void setNeedClientAuth(boolean b) {
+      }
+
+      @Override
+      public boolean getNeedClientAuth() {
+        return false;
+      }
+
+      @Override
+      public void setWantClientAuth(boolean b) {
+      }
+
+      @Override
+      public boolean getWantClientAuth() {
+        return false;
+      }
+
+      @Override
+      public void setEnableSessionCreation(boolean b) {
+      }
+
+      @Override
+      public boolean getEnableSessionCreation() {
+        return false;
+      }
+    };
+
+    assertThat(tlsSpec.isCompatible(socket)).isTrue();
+    applyConnectionSpec(tlsSpec, socket, false);
+
+    assertThat(socket.getEnabledCipherSuites()).containsExactly("MAGIC-CIPHER");
+    assertThat(socket.getEnabledProtocols()).containsExactly("TLS9k");
   }
 
   @Test public void tls_missingRequiredCipher() throws Exception {
