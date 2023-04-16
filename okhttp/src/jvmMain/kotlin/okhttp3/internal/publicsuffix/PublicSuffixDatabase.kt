@@ -32,6 +32,7 @@ import okio.source
  * [publicsuffix_org]: https://publicsuffix.org/
  */
 class PublicSuffixDatabase {
+  internal var publicSuffixResource = PUBLIC_SUFFIX_RESOURCE
 
   /** True after we've attempted to read the list for the first time. */
   private val listRead = AtomicBoolean(false)
@@ -205,8 +206,10 @@ class PublicSuffixDatabase {
     var publicSuffixListBytes: ByteArray?
     var publicSuffixExceptionListBytes: ByteArray?
 
+    Thread.sleep(500)
+
     val resource =
-        PublicSuffixDatabase::class.java.getResourceAsStream(PUBLIC_SUFFIX_RESOURCE) ?: return
+        PublicSuffixDatabase::class.java.getResourceAsStream(publicSuffixResource) ?: return
 
     GzipSource(resource.source()).buffer().use { bufferedSource ->
       val totalBytes = bufferedSource.readInt()

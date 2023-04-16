@@ -26,6 +26,30 @@ import org.junit.jupiter.api.Test
 
 class PublicSuffixDatabaseTest {
   private val publicSuffixDatabase = PublicSuffixDatabase()
+
+  @Test
+  fun testFailing() {
+    publicSuffixDatabase.publicSuffixResource = "XXX"
+
+    val runnable = Runnable {
+      try {
+        println("Starting " + Thread.currentThread().name)
+        publicSuffixDatabase.getEffectiveTldPlusOne("google.com")
+      } finally {
+        println("Finished " + Thread.currentThread().name)
+      }
+    }
+    val other1 = Thread(runnable).apply {
+      start()
+    }
+    val other2 = Thread(runnable).apply {
+      start()
+    }
+
+    other1.join()
+    other2.join()
+  }
+
   @Test fun longestMatchWins() {
     val buffer = Buffer()
       .writeUtf8("com\n")
