@@ -52,6 +52,7 @@ kotlin {
       dependencies {
         dependsOn(sourceSets.commonMain.get())
         implementation(libs.kotlinx.coroutines.core)
+        implementation(libs.squareup.okhttp.icu)
       }
     }
     val nonJvmTest = create("nonJvmTest") {
