@@ -93,6 +93,8 @@ kotlin {
         implementation(projects.okhttpBrotli)
         implementation(projects.okhttpDnsoverhttps)
         implementation(projects.okhttpSse)
+        implementation(projects.okhttpCoroutines)
+        implementation(libs.kotlinx.coroutines.core)
         implementation(libs.squareup.okio.fakefilesystem)
         implementation(libs.conscrypt.openjdk)
         implementation(libs.junit)
