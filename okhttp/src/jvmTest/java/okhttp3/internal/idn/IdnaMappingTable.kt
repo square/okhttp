@@ -22,5 +22,5 @@ interface IdnaMappingTable {
   /**
    * Returns true if the [codePoint] was applied successfully. Returns false if it was disallowed.
    */
-  fun apply(codePoint: Int, sink: BufferedSink): Boolean
+  fun map(codePoint: Int, sink: BufferedSink): Boolean
 }

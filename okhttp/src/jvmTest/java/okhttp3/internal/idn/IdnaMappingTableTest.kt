@@ -18,6 +18,7 @@ package okhttp3.internal.idn
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isGreaterThan
+import kotlin.test.assertFailsWith
 import okio.Buffer
 import okio.FileSystem
 import okio.Path.Companion.toPath
@@ -66,10 +67,21 @@ class IdnaMappingTableTest {
     assertThat("\u00b8".map()).isEqualTo("\u0020\u0327")
   }
 
+  @Test fun outOfBounds() {
+    assertFailsWith<IllegalArgumentException> {
+      table.map(-1, Buffer())
+    }
+    table.map(0, Buffer()) // Lowest legal code point.
+    table.map(0x10ffff, Buffer()) // Highest legal code point.
+    assertFailsWith<IllegalArgumentException> {
+      table.map(0x110000, Buffer())
+    }
+  }
+
   private fun String.map(): String {
     val result = Buffer()
     for (codePoint in codePoints()) {
-      require(table.apply(codePoint, result))
+      require(table.map(codePoint, result))
     }
     return result.readUtf8()
   }
@@ -78,7 +90,7 @@ class IdnaMappingTableTest {
     val result = Buffer()
     var errorCount = 0
     for (codePoint in codePoints()) {
-      if (!table.apply(codePoint, result)) errorCount++
+      if (!table.map(codePoint, result)) errorCount++
     }
     assertThat(errorCount).isGreaterThan(0)
     return result.readUtf8()

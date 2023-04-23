@@ -34,7 +34,7 @@ import okio.Options
 class PlainTextIdnaMappingTable internal constructor(
   private val mappings: List<Mapping>,
 ) : IdnaMappingTable {
-  override fun apply(codePoint: Int, sink: BufferedSink): Boolean {
+  override fun map(codePoint: Int, sink: BufferedSink): Boolean {
     val index = mappings.binarySearch {
       when {
         it.sourceCodePoint1 < codePoint -> -1
@@ -42,6 +42,9 @@ class PlainTextIdnaMappingTable internal constructor(
         else -> 0
       }
     }
+
+    // Code points must be in 0..0x10ffff.
+    require(index in mappings.indices) { "unexpected code point: $codePoint" }
 
     val mapping = mappings[index]
     var result = true
@@ -62,7 +65,7 @@ class PlainTextIdnaMappingTable internal constructor(
 }
 
 
-private val optionsDelimeter = Options.of(
+private val optionsDelimiter = Options.of(
   ".".encodeUtf8(),  // 0.
   " ".encodeUtf8(),  // 1.
   ";".encodeUtf8(),  // 2.
@@ -136,7 +139,7 @@ fun BufferedSource.readPlainTextIdnaMappingTable(): PlainTextIdnaMappingTable {
 
   while (!exhausted()) {
     // Skip comment and empty lines.
-    when (select(optionsDelimeter)) {
+    when (select(optionsDelimiter)) {
       DELIMITER_HASH -> {
         skipRestOfLine()
         continue
@@ -175,7 +178,7 @@ fun BufferedSource.readPlainTextIdnaMappingTable(): PlainTextIdnaMappingTable {
         while (true) {
           skipWhitespace()
 
-          when (select(optionsDelimeter)) {
+          when (select(optionsDelimiter)) {
             DELIMITER_HASH -> {
               break
             }
