@@ -1,11 +1,6 @@
 name: build
 
-on:
-  push:
-    branches:
-      - okhttp_4x
-  pull_request:
-    types: [opened, labeled, unlabeled, synchronize]
+on: [push]
 
 env:
   GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.daemon=false -Dkotlin.incremental=false"
@@ -13,7 +8,6 @@ env:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/okhttp_4x'
 
     steps:
       - name: Checkout
