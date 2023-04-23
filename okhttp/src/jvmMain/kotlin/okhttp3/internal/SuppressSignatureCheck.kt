@@ -9,4 +9,4 @@ import kotlin.annotation.AnnotationTarget.FUNCTION
 @Retention(BINARY)
 @Documented
 @Target(CONSTRUCTOR, CLASS, FUNCTION)
-annotation class SuppressSignatureCheck
+internal annotation class SuppressSignatureCheck

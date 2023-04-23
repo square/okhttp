@@ -20,6 +20,7 @@ import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.TimeUnit
 import okhttp3.ConnectionEvent.NoNewExchanges
 import okhttp3.internal.connection.RealConnection
+import okhttp3.internal.platform.Platform
 import okio.IOException
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.data.Offset

@@ -22,12 +22,12 @@ import java.util.Locale
 /**
  * If this is an IP address, this returns the IP address in canonical form.
  *
- * Otherwise this performs IDN ToASCII encoding and canonicalize the result to lowercase. For
+ * Otherwise, this performs IDN ToASCII encoding and canonicalize the result to lowercase. For
  * example this converts `☃.net` to `xn--n3h.net`, and `WwW.GoOgLe.cOm` to `www.google.com`.
  * `null` will be returned if the host cannot be ToASCII encoded or if the result contains
  * unsupported ASCII characters.
  */
-actual fun String.toCanonicalHost(): String? {
+internal actual fun String.toCanonicalHost(): String? {
   val host: String = this
 
   // If the input contains a :, it’s an IPv6 address.

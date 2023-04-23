@@ -21,7 +21,7 @@ import java.io.InputStream
 import java.io.InputStreamReader
 import java.io.Reader
 import java.nio.charset.Charset
-import okhttp3.internal.charset
+import okhttp3.internal.charsetOrUtf8
 import okhttp3.internal.chooseCharset
 import okhttp3.internal.commonAsResponseBody
 import okhttp3.internal.commonByteString
@@ -72,7 +72,7 @@ actual abstract class ResponseBody : Closeable {
     source.readString(charset = source.readBomAsCharset(charset()))
   }
 
-  private fun charset() = contentType().charset()
+  private fun charset() = contentType().charsetOrUtf8()
 
   actual override fun close() = commonClose()
 

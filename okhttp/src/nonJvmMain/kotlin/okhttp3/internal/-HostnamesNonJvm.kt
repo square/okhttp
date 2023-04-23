@@ -15,7 +15,9 @@
  */
 package okhttp3.internal
 
-actual fun String.toCanonicalHost(): String? {
+import com.squareup.okhttpicu.SYSTEM_NORMALIZER
+
+internal actual fun String.toCanonicalHost(): String? {
   val host: String = this
 
   // If the input contains a :, it’s an IPv6 address.
@@ -54,5 +56,5 @@ internal fun inet4AddressToAscii(address: ByteArray): String {
 
 fun idnToAscii(host: String): String {
   // TODO implement properly
-  return host.lowercase()
+  return SYSTEM_NORMALIZER.normalizeNfc(host).lowercase()
 }

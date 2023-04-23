@@ -24,20 +24,20 @@ import okhttp3.internal.connection.RealConnection
 import okio.FileSystem
 import okio.Path
 
-fun buildCache(file: Path, maxSize: Long, fileSystem: FileSystem): Cache {
+internal fun buildCache(file: Path, maxSize: Long, fileSystem: FileSystem): Cache {
   return Cache(file, maxSize, fileSystem)
 }
 
-var RealConnection.idleAtNsAccessor: Long
+internal var RealConnection.idleAtNsAccessor: Long
   get() = idleAtNs
   set(value) {
     idleAtNs = value
   }
 
-val Response.exchangeAccessor: Exchange?
+internal val Response.exchangeAccessor: Exchange?
   get() = this.exchange
 
-val Exchange.connectionAccessor: RealConnection
+internal val Exchange.connectionAccessor: RealConnection
   get() = this.connection
 
-fun Dispatcher.finishedAccessor(call: RealCall.AsyncCall) = this.finished(call)
+internal fun Dispatcher.finishedAccessor(call: RealCall.AsyncCall) = this.finished(call)
