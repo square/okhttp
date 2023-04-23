@@ -1,6 +1,25 @@
 OkHttp 4.x Change Log
 =====================
 
+## Version 4.11.0
+
+_2023-04-22_
+
+ *  Fix: Don't fail the call when the response code is ‘HTTP 102 Processing’ or
+    ‘HTTP 103 Early Hints’.
+ *  Fix: Read the response even if writing the request fails. This means you'll get a proper HTTP
+    response even if the server rejects your request body.
+ *  Fix: Use literal IP addresses directly rather than passing them to `DnsOverHttps`.
+ *  Fix: Embed Proguard rules to prevent warnings from tools like DexGuard and R8. These warnings
+    were triggered by OkHttp’s feature detection for TLS packages like `org.conscrypt`,
+    `org.bouncycastle`, and `org.openjsse`.
+ *  Upgrade: Explicitly depend on `kotlin-stdlib-jdk8`. This fixes a problem with dependency
+    locking. That's a potential security vulnerability, tracked as [CVE-2022-24329].
+ *  Upgrade: [publicsuffix.org data][public_suffix]. This powers `HttpUrl.topPrivateDomain()`.
+    It's also how OkHttp knows which domains can share cookies with one another.
+ *  Upgrade: [Okio 3.2.0][okio_3_2_0].
+
+
 ## Version 4.10.0
 
 _2022-06-12_
@@ -532,6 +551,7 @@ _2019-06-03_
  [bom]: https://docs.gradle.org/6.2/userguide/platforms.html#sub:bom_import
  [bouncy_castle_releases]: https://www.bouncycastle.org/releasenotes.html
  [CVE-2021-0341]: https://nvd.nist.gov/vuln/detail/CVE-2021-0341
+ [CVE-2022-24329]: https://nvd.nist.gov/vuln/detail/CVE-2022-24329
  [dev_server]: https://github.com/square/okhttp/blob/482f88300f78c3419b04379fc26c3683c10d6a9d/samples/guide/src/main/java/okhttp3/recipes/kt/DevServer.kt
  [fun_interface]: https://kotlinlang.org/docs/reference/fun-interfaces.html
  [iana_websocket]: https://www.iana.org/assignments/websocket/websocket.txt
@@ -545,6 +565,7 @@ _2019-06-03_
  [okio_2_6_0]: https://square.github.io/okio/changelog/#version-260
  [okio_2_7_0]: https://square.github.io/okio/changelog/#version-270
  [okio_3_0_0]: https://square.github.io/okio/changelog/#version-300
+ [okio_3_2_0]: https://square.github.io/okio/changelog/#version-320
  [public_suffix]: https://publicsuffix.org/
  [rfc_2045]: https://tools.ietf.org/html/rfc2045
  [rfc_7231_647]: https://tools.ietf.org/html/rfc7231#section-6.4.7

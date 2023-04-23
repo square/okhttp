@@ -1,6 +1,6 @@
 [versions]
 biz-aQute-bnd = "6.4.0"
-checkStyle = "10.7.0"
+checkStyle = "10.9.3"
 com-squareup-moshi = "1.14.0"
 com-squareup-okio = "3.3.0"
 de-mannodermaus-junit5 = "1.3.0"
@@ -13,7 +13,7 @@ org-junit-jupiter = "5.9.2"
 
 [libraries]
 amazonCorretto = "software.amazon.cryptools:AmazonCorrettoCryptoProvider:2.0.0"
-androidx-annotation = "androidx.annotation:annotation:1.5.0"
+androidx-annotation = "androidx.annotation:annotation:1.6.0"
 androidx-espresso-core = "androidx.test.espresso:espresso-core:3.5.1"
 androidx-junit = "androidx.test.ext:junit:1.1.5"
 androidx-test-runner = "androidx.test:runner:1.5.2"
@@ -26,28 +26,28 @@ bouncycastle-bcprov = { module = "org.bouncycastle:bcprov-jdk15to18", version.re
 bouncycastle-bctls = { module = "org.bouncycastle:bctls-jdk15to18", version.ref = "org-bouncycastle" }
 brotli-dec = "org.brotli:dec:0.1.2"
 checkStyle = { module = "com.puppycrawl.tools:checkstyle", version.ref = "checkStyle" }
-clikt = "com.github.ajalt.clikt:clikt:3.5.1"
+clikt = "com.github.ajalt.clikt:clikt:3.5.2"
 codehaus-signature-java18 = "org.codehaus.mojo.signature:java18:1.0"
 conscrypt-android = { module = "org.conscrypt:conscrypt-android", version.ref = "org-conscrypt" }
 conscrypt-openjdk = { module = "org.conscrypt:conscrypt-openjdk-uber", version.ref = "org-conscrypt" }
-eclipseOsgi = "org.eclipse.platform:org.eclipse.osgi:3.18.200"
+eclipseOsgi = "org.eclipse.platform:org.eclipse.osgi:3.18.300"
 findbugs-jsr305 = "com.google.code.findbugs:jsr305:3.0.2"
 gradlePlugin-android = "com.android.tools.build:gradle:7.3.1"
 gradlePlugin-androidJunit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.8.2.1"
 gradlePlugin-animalsniffer = "ru.vyarus:gradle-animalsniffer-plugin:1.7.0"
 gradlePlugin-binaryCompatibilityValidator = "org.jetbrains.kotlinx.binary-compatibility-validator:org.jetbrains.kotlinx.binary-compatibility-validator.gradle.plugin:0.13.0"
 gradlePlugin-bnd = { module = "biz.aQute.bnd:biz.aQute.bnd.gradle", version.ref = "biz-aQute-bnd" }
-gradlePlugin-dokka = "org.jetbrains.dokka:dokka-gradle-plugin:1.7.20"
+gradlePlugin-dokka = "org.jetbrains.dokka:dokka-gradle-plugin:1.8.10"
 gradlePlugin-errorprone = "net.ltgt.gradle:gradle-errorprone-plugin:3.0.1"
 gradlePlugin-graal = "com.palantir.graal:gradle-graal:0.12.0"
 gradlePlugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "org-jetbrains-kotlin" }
 gradlePlugin-mavenPublish = "com.vanniktech:gradle-maven-publish-plugin:0.24.0"
 gradlePlugin-shadow = "gradle.plugin.com.github.johnrengelman:shadow:7.1.2"
-gradlePlugin-spotless = "com.diffplug.spotless:spotless-plugin-gradle:6.15.0"
+gradlePlugin-spotless = "com.diffplug.spotless:spotless-plugin-gradle:6.18.0"
 guava-jre = "com.google.guava:guava:31.1-jre"
 hamcrestLibrary = "org.hamcrest:hamcrest-library:2.2"
 httpClient5 = "org.apache.httpcomponents.client5:httpclient5:5.2.1"
-jettyClient = "org.eclipse.jetty:jetty-client:9.4.50.v20221201"
+jettyClient = "org.eclipse.jetty:jetty-client:9.4.51.v20230217"
 jnr-unixsocket = "com.github.jnr:jnr-unixsocket:0.38.19"
 jsoup = "org.jsoup:jsoup:1.15.4"
 junit = "junit:junit:4.13.2"
@@ -78,5 +78,6 @@ signature-android-apilevel24 = "net.sf.androidscents.signature:android-api-level
 squareup-moshi = { module = "com.squareup.moshi:moshi", version.ref = "com-squareup-moshi" }
 squareup-moshi-compiler = { module = "com.squareup.moshi:moshi-kotlin-codegen", version.ref = "com-squareup-moshi" }
 squareup-moshi-kotlin = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "com-squareup-moshi" }
+squareup-okhttp-icu = "com.squareup.okhttpicu:okhttp-icu:0.2.0"
 squareup-okio = { module = "com.squareup.okio:okio", version.ref = "com-squareup-okio" }
 squareup-okio-fakefilesystem = { module = "com.squareup.okio:okio-fakefilesystem", version.ref = "com-squareup-okio" }
