@@ -3,7 +3,7 @@ name: build
 on:
   push:
     branches:
-      - okhttp_4.10.x
+      - okhttp_4x
   pull_request:
     types: [opened, labeled, unlabeled, synchronize]
 
@@ -13,7 +13,7 @@ env:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/okhttp_4x'
 
     steps:
       - name: Checkout
@@ -74,7 +74,7 @@ jobs:
 
   testzulu11:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'zulu')
+    if: github.ref == 'refs/heads/okhttp_4x' || contains(github.event.pull_request.labels.*.name, 'zulu')
 
     steps:
       - name: Checkout
@@ -94,7 +94,7 @@ jobs:
 
   testopenjdk8:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdk8')
+    if: github.ref == 'refs/heads/okhttp_4x' || contains(github.event.pull_request.labels.*.name, 'jdk8')
 
     steps:
       - name: Checkout
@@ -114,7 +114,7 @@ jobs:
 
   testopenjdk8alpn:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdk8')
+    if: github.ref == 'refs/heads/okhttp_4x' || contains(github.event.pull_request.labels.*.name, 'jdk8')
 
     steps:
       - name: Checkout
@@ -140,7 +140,7 @@ jobs:
 
   testopenjsse:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'openjsse')
+    if: github.ref == 'refs/heads/okhttp_4x' || contains(github.event.pull_request.labels.*.name, 'openjsse')
 
     steps:
       - name: Checkout
@@ -160,7 +160,7 @@ jobs:
 
   testconscrypt:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'conscrypt')
+    if: github.ref == 'refs/heads/okhttp_4x' || contains(github.event.pull_request.labels.*.name, 'conscrypt')
 
     steps:
       - name: Checkout
@@ -180,7 +180,7 @@ jobs:
 
   testbouncycastle:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'bouncycastle')
+    if: github.ref == 'refs/heads/okhttp_4x' || contains(github.event.pull_request.labels.*.name, 'bouncycastle')
 
     steps:
       - name: Checkout
@@ -200,7 +200,7 @@ jobs:
 
   testcorretto:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/okhttp_4x'
 
     steps:
       - name: Checkout
@@ -220,7 +220,7 @@ jobs:
 
   testopenjdk16:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/okhttp_4x'
 
     steps:
       - name: Checkout
@@ -240,7 +240,7 @@ jobs:
 
   testwindows:
     runs-on: windows-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'windows')
+    if: github.ref == 'refs/heads/okhttp_4x' || contains(github.event.pull_request.labels.*.name, 'windows')
 
     steps:
       - name: Checkout
@@ -261,7 +261,7 @@ jobs:
 
   testgraal:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'graal')
+    if: github.ref == 'refs/heads/okhttp_4x' || contains(github.event.pull_request.labels.*.name, 'graal')
 
     steps:
       - name: Checkout
@@ -284,7 +284,7 @@ jobs:
 
   testandroid:
     runs-on: macos-latest
-    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'android')
+    if: github.ref == 'refs/heads/okhttp_4x' || contains(github.event.pull_request.labels.*.name, 'android')
 
     strategy:
       fail-fast: false
