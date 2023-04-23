@@ -85,8 +85,8 @@ internal fun MediaType?.chooseCharset(): Pair<Charset, MediaType?> {
   return charset to finalContentType
 }
 
-internal fun MediaType?.charsetNonNull(defaultValue: Charset = Charsets.UTF_8): Charset {
-  return this?.charset(defaultValue) ?: Charsets.UTF_8
+internal fun MediaType?.charsetOrUtf8(): Charset {
+  return this?.charset() ?: Charsets.UTF_8
 }
 
 internal val Response.connection: RealConnection
