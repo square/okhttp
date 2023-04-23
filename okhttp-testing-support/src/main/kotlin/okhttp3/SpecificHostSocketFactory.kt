@@ -19,6 +19,7 @@ import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.Socket
 import java.net.SocketAddress
+import okhttp3.internal.platform.Platform
 
 /**
  * A [SocketFactory] that redirects connections to [defaultAddress] or specific overridden address via [set].
@@ -41,6 +42,7 @@ class SpecificHostSocketFactory(
       override fun connect(endpoint: SocketAddress?, timeout: Int) {
         val requested = (endpoint as InetSocketAddress)
         val inetSocketAddress = hostMapping[requested.address] ?: defaultAddress ?: requested
+        Platform.get().log("Socket connection to: $inetSocketAddress was: $requested")
         super.connect(inetSocketAddress, timeout)
       }
     }
