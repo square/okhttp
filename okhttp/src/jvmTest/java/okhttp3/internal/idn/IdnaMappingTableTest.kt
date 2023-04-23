@@ -43,7 +43,7 @@ class IdnaMappingTableTest {
 
     // These compound characters map their its components.
     assertThat("¼".map()).isEqualTo("1⁄4")
-    assertThat("™".map()).isEqualTo("TM")
+    assertThat("™".map()).isEqualTo("tm")
   }
 
   @Test fun deviations() {
