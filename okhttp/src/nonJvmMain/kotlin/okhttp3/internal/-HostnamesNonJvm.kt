@@ -17,7 +17,7 @@ package okhttp3.internal
 
 import com.squareup.okhttpicu.SYSTEM_NORMALIZER
 
-actual fun String.toCanonicalHost(): String? {
+internal actual fun String.toCanonicalHost(): String? {
   val host: String = this
 
   // If the input contains a :, it’s an IPv6 address.
