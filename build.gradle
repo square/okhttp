@@ -292,14 +292,16 @@ subprojects { project ->
         name = "mavencentral"
         url = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
         credentials {
-          username System.getenv('SONATYPE_NEXUS_USERNAME')
-          password System.getenv('SONATYPE_NEXUS_PASSWORD')
+          setUsername((String) findProperty('SONATYPE_NEXUS_USERNAME'))
+          setPassword((String) findProperty('SONATYPE_NEXUS_PASSWORD'))
         }
       }
     }
   }
 
   signing {
+    var inMemoryKey = findProperty("signingInMemoryKey")
+    useInMemoryPgpKeys(null, inMemoryKey, "")
     sign publishing.publications.maven
   }
 }
