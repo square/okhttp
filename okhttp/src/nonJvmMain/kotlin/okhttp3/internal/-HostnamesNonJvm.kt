@@ -15,6 +15,8 @@
  */
 package okhttp3.internal
 
+import com.squareup.okhttpicu.SYSTEM_NORMALIZER
+
 internal actual fun String.toCanonicalHost(): String? {
   val host: String = this
 
@@ -54,5 +56,5 @@ internal fun inet4AddressToAscii(address: ByteArray): String {
 
 fun idnToAscii(host: String): String {
   // TODO implement properly
-  return host.lowercase()
+  return SYSTEM_NORMALIZER.normalizeNfc(host).lowercase()
 }
