@@ -40,7 +40,10 @@ class IdnaMappingTableTest {
     assertThat("hello-world".map()).isEqualTo("hello-world")
     assertThat("HELLO".map()).isEqualTo("hello")
     assertThat("Hello".map()).isEqualTo("hello")
+
+    // These compound characters map their its components.
     assertThat("¼".map()).isEqualTo("1⁄4")
+    assertThat("™".map()).isEqualTo("TM")
   }
 
   @Test fun deviations() {
