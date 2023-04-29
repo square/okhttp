@@ -61,7 +61,7 @@ class RequestConverter(
     val builder = cronetEngine
       .newUrlRequestBuilder(
         okHttpRequest.url.toString(), completableCronetRequest.callback, directExecutor)
-      .allowDirectExecutor()
+      .setDirectExecutorAllowed(true)
     builder.setHttpMethod(okHttpRequest.method)
     for (i in 0 until okHttpRequest.headers.size) {
       builder.addHeader(okHttpRequest.headers.name(i), okHttpRequest.headers.value(i))

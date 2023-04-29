@@ -88,8 +88,9 @@ class ResponseConverter {
       // Theoretically, the content encodings can be scattered across multiple comma separated
       // Content-Encoding headers. This list contains individual encodings.
       val contentEncodingItems: MutableList<String> = ArrayList()
+      val headerMap: Map<String, List<String>> = cronetResponseInfo.headers.asMap
       for (contentEncodingHeaderValue in getOrDefault<String, List<String>>(
-        cronetResponseInfo.allHeaders,
+        headerMap,
         CONTENT_ENCODING_HEADER_NAME, emptyList<String>())) {
         contentEncodingItems.addAll(contentEncodingHeaderValue.split("\\s*,\\s*".toRegex()))
       }
@@ -113,7 +114,7 @@ class ResponseConverter {
         .message(cronetResponseInfo.httpStatusText)
         .protocol(convertProtocol(cronetResponseInfo.negotiatedProtocol))
         .body(responseBody ?: byteArrayOf().toResponseBody())
-      for ((key, value) in cronetResponseInfo.allHeadersAsList) {
+      for ((key, values) in headerMap) {
         var copyHeader = true
         if (!keepEncodingAffectedHeaders) {
           if (key.equals(CONTENT_LENGTH_HEADER_NAME, ignoreCase = true)
@@ -122,7 +123,9 @@ class ResponseConverter {
           }
         }
         if (copyHeader) {
-          responseBuilder.addHeader(key, value)
+          values.forEach {
+            responseBuilder.addHeader(key, it)
+          }
         }
       }
       return responseBuilder
@@ -184,7 +187,7 @@ class ResponseConverter {
 
     /** Returns the last header value for the given name, or null if the header isn't present.  */
     private fun getLastHeaderValue(name: String, responseInfo: UrlResponseInfo): String? {
-      val headers = responseInfo.allHeaders[name]
+      val headers = responseInfo.headers.asMap[name]
       return if (headers.isNullOrEmpty()) {
         null
       } else headers.last()

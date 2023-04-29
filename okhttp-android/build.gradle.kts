@@ -5,7 +5,6 @@ import com.vanniktech.maven.publish.JavadocJar
 plugins {
   id("com.android.library")
   kotlin("android")
-  id("de.mannodermaus.android-junit5")
   id("org.jetbrains.dokka")
   id("com.vanniktech.maven.publish.base")
   id("binary-compatibility-validator")
@@ -37,6 +36,12 @@ android {
   kotlinOptions {
     jvmTarget = JavaVersion.VERSION_11.toString()
   }
+
+  testOptions {
+    unitTests {
+      isIncludeAndroidResources = true
+    }
+  }
 }
 
 dependencies {
@@ -55,10 +60,16 @@ dependencies {
   implementation(libs.androidx.tracing.ktx)
   implementation("com.google.net.cronet:cronet-okhttp:0.1.0")
 
+  testImplementation("com.google.android.gms:play-services-cronet:18.0.1")
+  testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4")
   testImplementation(projects.okhttpTestingSupport)
-  testImplementation(projects.mockwebserver3Junit5)
   testImplementation(libs.junit)
   testImplementation(libs.assertj.core)
+  testImplementation(projects.okhttpTls)
+  testImplementation(libs.androidx.test.runner)
+  testImplementation("org.robolectric:robolectric:4.10")
+  testImplementation("androidx.test.ext:junit-ktx:1.1.5")
+  testImplementation("androidx.test.espresso:espresso-core:3.5.1")
 
   androidTestImplementation(projects.okhttpTls)
   androidTestImplementation(libs.assertj.core)

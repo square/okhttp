@@ -122,7 +122,7 @@ private fun buildAndroidHttpEngine(
     .build()
 
   // Let's play with using this for everything
-  URL.setURLStreamHandlerFactory(engine.createURLStreamHandlerFactory())
+  URL.setURLStreamHandlerFactory(engine.createUrlStreamHandlerFactory())
   return engine
 }
 

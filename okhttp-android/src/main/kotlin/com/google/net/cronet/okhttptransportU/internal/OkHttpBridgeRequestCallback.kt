@@ -143,7 +143,7 @@ class OkHttpBridgeRequestCallback(private val readTimeoutMillis: Long, private v
     callbackResults.add(CallbackResult(CallbackStep.ON_SUCCESS, null, null))
   }
 
-  override fun onFailed(urlRequest: UrlRequest, urlResponseInfo: UrlResponseInfo, e: HttpException) {
+  override fun onFailed(urlRequest: UrlRequest, urlResponseInfo: UrlResponseInfo?, e: HttpException) {
     // If this was called before we start reading the body, the exception will
     // propagate in the future providing headers and the body wrapper.
     if (_headersFuture.completeExceptionally(e) && bodySourceFuture.completeExceptionally(e)) {
@@ -155,7 +155,7 @@ class OkHttpBridgeRequestCallback(private val readTimeoutMillis: Long, private v
     callbackResults.add(CallbackResult(CallbackStep.ON_FAILED, null, e))
   }
 
-  override fun onCanceled(urlRequest: UrlRequest, responseInfo: UrlResponseInfo) {
+  override fun onCanceled(urlRequest: UrlRequest, responseInfo: UrlResponseInfo?) {
     canceled.set(true)
     callbackResults.add(CallbackResult(CallbackStep.ON_CANCELED, null, null))
 
@@ -191,7 +191,7 @@ class OkHttpBridgeRequestCallback(private val readTimeoutMillis: Long, private v
       if (byteCount < buffer!!.limit()) {
         buffer!!.limit(byteCount.toInt())
       }
-      request!!.read(buffer)
+      request!!.read(buffer!!)
       val result: CallbackResult? = try {
         // So that we don't have to special case infinity. Int.MAX_VALUE is ~infinity for all practical
         // use cases.
