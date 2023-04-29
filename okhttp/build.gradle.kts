@@ -80,6 +80,7 @@ kotlin {
       }
     }
     getByName("jvmTest") {
+      kotlin.srcDir("$buildDir/generated/sources/idnaMappingTable")
       dependencies {
         dependsOn(commonTest)
         implementation(projects.okhttpTestingSupport)
@@ -92,6 +93,7 @@ kotlin {
         implementation(projects.loggingInterceptor)
         implementation(projects.okhttpBrotli)
         implementation(projects.okhttpDnsoverhttps)
+        implementation(projects.okhttpIdnaMappingTable)
         implementation(projects.okhttpSse)
         implementation(projects.okhttpCoroutines)
         implementation(libs.kotlinx.coroutines.core)
@@ -191,6 +193,7 @@ mavenPublishing {
   configure(KotlinMultiplatform(javadocJar = JavadocJar.Dokka("dokkaGfm")))
 }
 
+// Build & use okhttp3/internal/-InternalVersion.kt
 val copyKotlinTemplates = tasks.register<Copy>("copyKotlinTemplates") {
   from("src/commonMain/kotlinTemplates")
   into("$buildDir/generated/sources/kotlinTemplates")
@@ -199,4 +202,18 @@ val copyKotlinTemplates = tasks.register<Copy>("copyKotlinTemplates") {
 }
 tasks.withType<KotlinCompile<*>> {
   dependsOn(copyKotlinTemplates)
+}
+
+// Build & use okhttp3/internal/idn/IdnaMappingTableInstance.kt
+val generateIdnaMappingTableConfiguration: Configuration by configurations.creating
+dependencies {
+  generateIdnaMappingTableConfiguration(projects.okhttpIdnaMappingTable)
+}
+val generateIdnaMappingTable by tasks.creating(JavaExec::class.java) {
+  mainClass.set("okhttp3.internal.idn.GenerateIdnaMappingTableCode")
+  args("$buildDir/generated/sources/idnaMappingTable")
+  classpath = generateIdnaMappingTableConfiguration
+}
+tasks.withType<KotlinCompile<*>> {
+  dependsOn(generateIdnaMappingTable)
 }

@@ -15,12 +15,12 @@
  */
 package okhttp3.internal.idn
 
+import java.io.IOException
 import okio.Buffer
 import okio.BufferedSink
 import okio.BufferedSource
 import okio.ByteString
 import okio.ByteString.Companion.encodeUtf8
-import okio.IOException
 import okio.Options
 
 /**
@@ -28,13 +28,21 @@ import okio.Options
  *
  * This implementation is optimized for readability over efficiency.
  *
+ * This implements non-transitional processing by preserving deviation characters.
+ *
+ * This implementation's STD3 rules are configured to `UseSTD3ASCIIRules=false`. This is
+ * permissive and permits the `_` character.
+ *
  * [mapping table]: https://www.unicode.org/reports/tr46/#IDNA_Mapping_Table
  * [mapping step]: https://www.unicode.org/reports/tr46/#ProcessingStepMap
  */
-class PlainTextIdnaMappingTable internal constructor(
-  private val mappings: List<Mapping>,
-) : IdnaMappingTable {
-  override fun map(codePoint: Int, sink: BufferedSink): Boolean {
+class SimpleIdnaMappingTable internal constructor(
+  internal val mappings: List<Mapping>,
+) {
+  /**
+   * Returns true if the [codePoint] was applied successfully. Returns false if it was disallowed.
+   */
+  fun map(codePoint: Int, sink: BufferedSink): Boolean {
     val index = mappings.binarySearch {
       when {
         it.sourceCodePoint1 < codePoint -> -1
@@ -51,13 +59,18 @@ class PlainTextIdnaMappingTable internal constructor(
 
     when (mapping.type) {
       TYPE_IGNORED -> Unit
-      TYPE_DEVIATION, TYPE_MAPPED, TYPE_DISALLOWED_STD3_MAPPED -> {
+      TYPE_MAPPED, TYPE_DISALLOWED_STD3_MAPPED -> {
         sink.write(mapping.mappedTo)
       }
-      TYPE_DISALLOWED_STD3_VALID, TYPE_VALID -> {
+
+      TYPE_DEVIATION, TYPE_DISALLOWED_STD3_VALID, TYPE_VALID -> {
         sink.writeUtf8CodePoint(codePoint)
       }
-      TYPE_DISALLOWED -> result = false
+
+      TYPE_DISALLOWED -> {
+        sink.writeUtf8CodePoint(codePoint)
+        result = false
+      }
     }
 
     return result
@@ -93,13 +106,13 @@ private val optionsType = Options.of(
   "valid ".encodeUtf8(),                  // 6.
 )
 
-private const val TYPE_DEVIATION = 0
-private const val TYPE_DISALLOWED = 1
-private const val TYPE_DISALLOWED_STD3_MAPPED = 2
-private const val TYPE_DISALLOWED_STD3_VALID = 3
-private const val TYPE_IGNORED = 4
-private const val TYPE_MAPPED = 5
-private const val TYPE_VALID = 6
+internal const val TYPE_DEVIATION = 0
+internal const val TYPE_DISALLOWED = 1
+internal const val TYPE_DISALLOWED_STD3_MAPPED = 2
+internal const val TYPE_DISALLOWED_STD3_VALID = 3
+internal const val TYPE_IGNORED = 4
+internal const val TYPE_MAPPED = 5
+internal const val TYPE_VALID = 6
 
 private fun BufferedSource.skipWhitespace() {
   while (!exhausted()) {
@@ -133,7 +146,7 @@ private fun BufferedSource.skipRestOfLine() {
  *
  * All other data is ignored.
  */
-fun BufferedSource.readPlainTextIdnaMappingTable(): PlainTextIdnaMappingTable {
+fun BufferedSource.readPlainTextIdnaMappingTable(): SimpleIdnaMappingTable {
   val mappedTo = Buffer()
   val result = mutableListOf<Mapping>()
 
@@ -144,9 +157,11 @@ fun BufferedSource.readPlainTextIdnaMappingTable(): PlainTextIdnaMappingTable {
         skipRestOfLine()
         continue
       }
+
       DELIMITER_NEWLINE -> {
         continue
       }
+
       DELIMITER_DOT, DELIMITER_SPACE, DELIMITER_SEMICOLON -> {
         throw IOException("unexpected delimiter")
       }
@@ -159,6 +174,7 @@ fun BufferedSource.readPlainTextIdnaMappingTable(): PlainTextIdnaMappingTable {
         if (readByte() != '.'.code.toByte()) throw IOException("expected '..'")
         readHexadecimalUnsignedLong()
       }
+
       else -> sourceCodePoint0
     }
 
@@ -182,6 +198,7 @@ fun BufferedSource.readPlainTextIdnaMappingTable(): PlainTextIdnaMappingTable {
             DELIMITER_HASH -> {
               break
             }
+
             DELIMITER_DOT, DELIMITER_SEMICOLON, DELIMITER_NEWLINE -> {
               throw IOException("unexpected delimiter")
             }
@@ -206,7 +223,7 @@ fun BufferedSource.readPlainTextIdnaMappingTable(): PlainTextIdnaMappingTable {
     )
   }
 
-  return PlainTextIdnaMappingTable(result)
+  return SimpleIdnaMappingTable(result)
 }
 
 internal data class Mapping(
@@ -214,4 +231,13 @@ internal data class Mapping(
   val sourceCodePoint1: Int,
   val type: Int,
   val mappedTo: ByteString,
-)
+) {
+  val section: Int
+    get() = sourceCodePoint0 and 0x1fff80
+
+  val rangeStart: Int
+    get() = sourceCodePoint0 and 0x7f
+
+  val spansSections: Boolean
+    get() = (sourceCodePoint0 and 0x1fff80) != (sourceCodePoint1 and 0x1fff80)
+}

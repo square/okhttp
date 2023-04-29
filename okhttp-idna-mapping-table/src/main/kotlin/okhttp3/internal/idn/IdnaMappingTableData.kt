@@ -15,12 +15,9 @@
  */
 package okhttp3.internal.idn
 
-import okio.BufferedSink
-
-interface IdnaMappingTable {
-
-  /**
-   * Returns true if the [codePoint] was applied successfully. Returns false if it was disallowed.
-   */
-  fun map(codePoint: Int, sink: BufferedSink): Boolean
-}
+/** Recipe to build an `IdnaMappingTable`. */
+class IdnaMappingTableData(
+  val sections: String,
+  val ranges: String,
+  val mappings: String,
+)
