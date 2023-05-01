@@ -18,6 +18,7 @@ package okhttp3.internal.idn
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isGreaterThan
+import assertk.assertions.isLessThan
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import okhttp3.internal.toHexString
@@ -60,6 +61,15 @@ class IdnaMappingTableTest {
 
   /** Confirm the compact table satisfies is documented invariants. */
   @Test fun validateCompactTableInvariants() {
+    // Less than 16,834 bytes, because we binary search on a 14-bit index.
+    assertThat(compactTable.sections.length).isLessThan(1 shl 14)
+
+    // Less than 65,536 bytes, because we binary search on a 14-bit index with a stride of 4 bytes.
+    assertThat(compactTable.ranges.length).isLessThan((1 shl 14) * 4)
+
+    // Less than 16,384 chars, because we index on a 14-bit index in the ranges table.
+    assertThat(compactTable.mappings.length).isLessThan(1 shl 14)
+
     // Confirm the data strings are ASCII.
     for (dataString in listOf<String>(compactTable.sections, compactTable.ranges)) {
       for (codePoint in dataString.codePoints()) {
