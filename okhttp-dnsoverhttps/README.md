@@ -6,7 +6,7 @@ This module is an implementation of [DNS over HTTPS][1] using OkHttp.
 ### Download
 
 ```kotlin
-testImplementation("com.squareup.okhttp3:okhttp-dnsoverhttps:4.10.0")
+testImplementation("com.squareup.okhttp3:okhttp-dnsoverhttps:4.11.0")
 ```
 
 ### Usage
