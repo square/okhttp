@@ -1,6 +1,10 @@
 Change Log
 ==========
 
+## Version 4.x
+
+See [4.x Change log](https://square.github.io/okhttp/changelogs/changelog_4x/) for the stable version changelogs.
+
 ## Version 5.0.0-alpha.11
 
 _2022-12-24_
@@ -258,11 +262,6 @@ and Android! Please report any issues you encounter: we'll fix them urgently.
 
 Note that this was originally released on 2020-10-06 as 4.10.0-RC1. The only change from that
 release is the version name.
-
-
-## Version 4.x
-
-[Change log](https://square.github.io/okhttp/changelogs/changelog_4x/)
 
 
 [assertk]: https://github.com/willowtreeapps/assertk
