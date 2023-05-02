@@ -73,6 +73,7 @@ kotlin {
         implementation(projects.okhttpTestingSupport)
         implementation(libs.kotlinx.coroutines.test)
         implementation(projects.mockwebserver3Junit5)
+        implementation(projects.loggingInterceptor)
       }
 
       getByName("jsMain") {
