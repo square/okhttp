@@ -60,6 +60,24 @@ class HeadersJvmTest {
     assertThat(headers.getInstant("Test-Instant")).isEqualTo(expected)
   }
 
+  @Test fun addMinimumInstant() {
+    val expected = Instant.MIN
+    val headers = Headers.Builder()
+      .add("Test-Instant", expected)
+      .build()
+    assertThat(headers["Test-Instant"]).isEqualTo("Thu, 01 Jan 1970 00:00:00 GMT")
+    assertThat(headers.getInstant("Test-Instant")).isEqualTo(expected)
+  }
+
+  @Test fun addMaximumInstant() {
+    val expected = Instant.MAX
+    val headers = Headers.Builder()
+      .add("Test-Instant", expected)
+      .build()
+    assertThat(headers["Test-Instant"]).isEqualTo("Thu, 01 Jan 1970 00:00:00 GMT")
+    assertThat(headers.getInstant("Test-Instant")).isEqualTo(expected)
+  }
+
   @Test fun setDate() {
     val expected = Date(1000)
     val headers = Headers.Builder()

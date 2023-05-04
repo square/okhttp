@@ -188,7 +188,7 @@ actual class Headers internal actual constructor(
      * and value.
      */
     @IgnoreJRERequirement // Only programs that already have Instant will use this.
-    fun add(name: String, value: Instant) = add(name, Date.from(value))
+    fun add(name: String, value: Instant) = set(name, value.toHttpDateString())
 
     /**
      * Set a field with the specified date. If the field is not found, it is added. If the field is

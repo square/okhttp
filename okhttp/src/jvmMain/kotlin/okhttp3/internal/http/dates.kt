@@ -18,6 +18,9 @@ package okhttp3.internal.http
 import java.text.DateFormat
 import java.text.ParsePosition
 import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.Date
 import java.util.Locale
 import okhttp3.internal.UTC
@@ -37,6 +40,11 @@ private val STANDARD_DATE_FORMAT = object : ThreadLocal<DateFormat>() {
       timeZone = UTC
     }
   }
+}
+
+@Suppress("NewApi")
+private val STANDARD_INSTANT_FORMAT by lazy {
+  DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.US).withZone(ZoneId.of("GMT"))
 }
 
 /** If we fail to parse a date in a non-standard format, try each of these formats in sequence. */
@@ -104,3 +112,7 @@ fun String.toHttpDateOrNull(): Date? {
 
 /** Returns the string for this date. */
 fun Date.toHttpDateString(): String = STANDARD_DATE_FORMAT.get().format(this)
+
+/** Returns the string for this instant. */
+@Suppress("NewApi")
+fun Instant.toHttpDateString(): String = STANDARD_INSTANT_FORMAT.format(this)
