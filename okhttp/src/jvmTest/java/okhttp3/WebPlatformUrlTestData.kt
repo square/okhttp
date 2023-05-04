@@ -20,7 +20,7 @@ import okio.Buffer
 import okio.BufferedSource
 
 /**
- * A test from the [Web Platform URL test suite](https://github.com/w3c/web-platform-tests/tree/master/url).
+ * A test from the [Web Platform URL test suite](https://github.com/web-platform-tests/wpt/blob/master/url/resources/urltestdata.json).
  *
  * Each test is a line of the file `urltestdata.txt`. The format is informally specified by its
  * JavaScript parser `urltestparser.js` with which this class attempts to be compatible.
