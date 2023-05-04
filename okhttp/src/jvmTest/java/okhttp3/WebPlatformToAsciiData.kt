@@ -43,7 +43,7 @@ class WebPlatformToAsciiData {
       val adapter = moshi.adapter<List<WebPlatformToAsciiData>>()
 
       return FileSystem.RESOURCES.read("/web-platform-test-toascii.json".toPath()) {
-        return@read adapter.fromJson(this)!!
+        adapter.fromJson(this)!!
       }
     }
   }
