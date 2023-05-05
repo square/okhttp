@@ -389,9 +389,8 @@ class Http2Stream internal constructor(
               readBytesTotal += readBytesDelivered
 
               val unacknowledgedBytesRead = readBytesTotal - readBytesAcknowledged
-              val okHttpSettings = connection.okHttpSettings
               if (errorExceptionToDeliver == null &&
-                  unacknowledgedBytesRead >= windowThreshold(okHttpSettings)
+                  unacknowledgedBytesRead >= windowThreshold(connection.okHttpSettings)
               ) {
                 // Flow control: notify the peer that we're ready for more data! Only send a
                 // WINDOW_UPDATE if the stream isn't in error.
