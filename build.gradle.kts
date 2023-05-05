@@ -6,6 +6,9 @@ import java.net.URL
 import kotlinx.validation.ApiValidationExtension
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.dokka.gradle.DokkaTask
+import org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest
+import org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmTest
+import org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeTest
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSnifferExtension
 
@@ -13,6 +16,7 @@ buildscript {
   dependencies {
     classpath(libs.gradlePlugin.dokka)
     classpath(libs.gradlePlugin.kotlin)
+    classpath(libs.gradlePlugin.kotlinSerialization)
     classpath(libs.gradlePlugin.androidJunit5)
     classpath(libs.gradlePlugin.android)
     classpath(libs.gradlePlugin.graal)
@@ -170,6 +174,18 @@ subprojects {
 
     systemProperty("okhttp.platform", platform)
     systemProperty("junit.jupiter.extensions.autodetection.enabled", "true")
+  }
+
+  // https://publicobject.com/2023/04/16/read-a-project-file-in-a-kotlin-multiplatform-test/
+  tasks.withType<KotlinJvmTest>().configureEach {
+    environment("OKHTTP_ROOT", rootDir)
+  }
+  tasks.withType<KotlinNativeTest>().configureEach {
+    environment("SIMCTL_CHILD_OKHTTP_ROOT", rootDir)
+    environment("OKHTTP_ROOT", rootDir)
+  }
+  tasks.withType<KotlinJsTest>().configureEach {
+    environment("OKHTTP_ROOT", rootDir.toString())
   }
 
   if (platform == "jdk8alpn") {

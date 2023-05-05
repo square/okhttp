@@ -7,8 +7,23 @@ kotlin {
   jvm {
     withJava()
   }
+  if (kmpJsEnabled) {
+    js(IR) {
+      nodejs()
+    }
+  }
 
   sourceSets {
+    val commonMain by getting {
+      dependencies {
+        api(libs.squareup.okio)
+      }
+    }
+    val jsMain by getting {
+      dependencies {
+        implementation(libs.squareup.okio.nodefilesystem)
+      }
+    }
     val jvmMain by getting {
       dependencies {
         api(projects.okhttp)

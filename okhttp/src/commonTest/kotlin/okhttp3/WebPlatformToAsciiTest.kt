@@ -17,14 +17,12 @@ package okhttp3
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
-import assertk.assertions.isNotNull
+import kotlin.test.Test
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import org.junit.jupiter.api.DynamicTest
-import org.junit.jupiter.api.TestFactory
 
 /** Runs the web platform ToAscii tests. */
 class WebPlatformToAsciiTest {
-  val knownFailures = setOf(
+  val knownFailuresJvm = setOf(
     // OkHttp rejects empty labels.
     "x..xn--zca",
     "x..ß",
@@ -65,24 +63,47 @@ class WebPlatformToAsciiTest {
     "نامه‌ای",
   )
 
-  @TestFactory
-  fun testFactory(): List<DynamicTest> {
-    val list = WebPlatformToAsciiData.load()
-    return list.map { entry ->
-      DynamicTest.dynamicTest(entry.input!!) {
-        var failure: AssertionError? = null
-        try {
-          testToAscii(entry.input!!, entry.output, entry.comment)
-        } catch (e: AssertionError) {
-          failure = e
-        }
+  val knownFailuresNonJvm = knownFailuresJvm + setOf(
+    // Punycode is not implemented.
+    "a†--",
+    "-†",
+    "≠",
+    "≮",
+    "≯",
+  ) - setOf(
+    // Non-Transitional is fixed.
+    "xn--a.ß",
+  )
 
-        if (entry.input in knownFailures) {
-          assertThat(failure).isNotNull()
-        } else {
-          if (failure != null) throw failure
-        }
+  @Test
+  fun test() {
+    val knownFailures = when {
+      isJvm -> knownFailuresJvm
+      else -> knownFailuresNonJvm
+    }
+
+    val list = WebPlatformToAsciiData.load()
+    val failures = mutableListOf<Throwable>()
+    for (entry in list) {
+      var failure: Throwable? = null
+      try {
+        testToAscii(entry.input!!, entry.output, entry.comment)
+      } catch (e: Throwable) {
+        failure = e
       }
+
+      if (entry.input in knownFailures) {
+        if (failure == null) failures += AssertionError("known failure didn't fail: $entry")
+      } else {
+        if (failure != null) failures += failure
+      }
+    }
+
+    if (failures.isNotEmpty()) {
+      for (failure in failures) {
+        println(failure)
+      }
+      throw failures.first()
     }
   }
 
