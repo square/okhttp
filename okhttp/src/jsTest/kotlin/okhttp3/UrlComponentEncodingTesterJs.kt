@@ -15,24 +15,8 @@
  */
 package okhttp3
 
-import okio.Buffer
-import okio.FileSystem
-import okio.Path
-import okio.Path.Companion.toPath
+import okhttp3.UrlComponentEncodingTester.Component
 
-val okHttpRoot: Path
-  get() = getEnv("OKHTTP_ROOT")!!.toPath()
-
-expect val SYSTEM_FILE_SYSTEM: FileSystem
-
-expect fun getEnv(name: String): String?
-
-expect val isJvm: Boolean
-
-fun String(vararg codePoints: Int): String {
-  val buffer = Buffer()
-  for (codePoint in codePoints) {
-    buffer.writeUtf8CodePoint(codePoint)
-  }
-  return buffer.readUtf8()
-}
+actual fun urlComponentEncodingTesterJvmPlatform(
+  component: Component,
+) = UrlComponentEncodingTester.Platform()
