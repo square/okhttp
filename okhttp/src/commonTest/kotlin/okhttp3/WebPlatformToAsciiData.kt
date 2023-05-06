@@ -15,17 +15,16 @@
  */
 package okhttp3
 
-import com.squareup.moshi.Moshi
-import com.squareup.moshi.adapter
-import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import okio.FileSystem
-import okio.Path.Companion.toPath
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 
 /**
  * A test from the [Web Platform To ASCII](https://github.com/web-platform-tests/wpt/blob/master/url/resources/toascii.json).
  *
  * Each test is a line of the file `toascii.json`.
  */
+@Serializable
 class WebPlatformToAsciiData {
   var input: String? = null
   var output: String? = null
@@ -35,15 +34,9 @@ class WebPlatformToAsciiData {
 
   companion object {
     fun load(): List<WebPlatformToAsciiData> {
-      val moshi = Moshi.Builder()
-        .add(KotlinJsonAdapterFactory())
-        .build()
-
-      @OptIn(ExperimentalStdlibApi::class)
-      val adapter = moshi.adapter<List<WebPlatformToAsciiData>>()
-
-      return FileSystem.RESOURCES.read("/web-platform-test-toascii.json".toPath()) {
-        adapter.fromJson(this)!!
+      val path = okHttpRoot / "okhttp/src/commonTest/resources/web-platform-test-toascii.json"
+      return SYSTEM_FILE_SYSTEM.read(path) {
+        Json.decodeFromString<List<WebPlatformToAsciiData>>(readUtf8())
       }
     }
   }
