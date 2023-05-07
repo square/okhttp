@@ -108,7 +108,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
   /** Consider this connection to be unhealthy if a degraded pong isn't received by this time. */
   private var degradedPongDeadlineNs = 0L
 
-  internal val flowControl: Http2FlowControlStrategy = DefaultHttp2FlowControlStrategy()
+  internal val flowControl: Http2FlowControlStrategy = builder.flowControl
 
   /** Settings we communicate to the peer. */
   val okHttpSettings = if (builder.client) {
@@ -576,6 +576,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     internal var listener = Listener.REFUSE_INCOMING_STREAMS
     internal var pushObserver = PushObserver.CANCEL
     internal var pingIntervalMillis: Int = 0
+    internal var flowControl: Http2FlowControlStrategy = DefaultHttp2FlowControlStrategy()
 
     @Throws(IOException::class)
     @JvmOverloads
@@ -604,6 +605,10 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
 
     fun pingIntervalMillis(pingIntervalMillis: Int) = apply {
       this.pingIntervalMillis = pingIntervalMillis
+    }
+
+    fun flowControl(flowControl: Http2FlowControlStrategy) = apply {
+      this.flowControl = flowControl
     }
 
     fun build(): Http2Connection {

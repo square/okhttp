@@ -16,4 +16,6 @@ interface Http2FlowControlStrategy {
   fun connectionBytesOnConsumed(windowCounter: WindowCounter): Long? = null
 
   fun connectionBytesOnDiscarded(windowCounter: WindowCounter): Long? = null
+
+  fun connectionBytesOnReceived(windowCounter: WindowCounter): Long? = null
 }

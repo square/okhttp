@@ -28,6 +28,8 @@ import okhttp3.internal.EMPTY_BYTE_ARRAY
 import okhttp3.internal.EMPTY_HEADERS
 import okhttp3.internal.concurrent.TaskFaker
 import okhttp3.internal.concurrent.TaskRunner
+import okhttp3.internal.http2.flowcontrol.DefaultHttp2FlowControlStrategy
+import okhttp3.internal.http2.flowcontrol.Http2FlowControlStrategy
 import okhttp3.internal.notifyAll
 import okhttp3.internal.wait
 import okio.AsyncTimeout
@@ -40,6 +42,7 @@ import org.assertj.core.data.Offset
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.fail
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -282,8 +285,7 @@ class Http2ConnectionTest {
     peer.play()
 
     // Play it back.
-    val connection = connect(peer)
-    connection.okHttpSettings[Settings.INITIAL_WINDOW_SIZE] = windowSize
+    val connection = connect(peer, flowControlStrategy = DefaultHttp2FlowControlStrategy(windowSize))
     val stream = connection.newStream(headerEntries("b", "banana"), false)
     assertThat(stream.readBytesAcknowledged).isEqualTo(0L)
     assertThat(stream.readBytesTotal).isEqualTo(0L)
@@ -1741,8 +1743,7 @@ class Http2ConnectionTest {
     peer.play()
 
     // Play it back.
-    val connection = connect(peer)
-    connection.okHttpSettings[Settings.INITIAL_WINDOW_SIZE] = windowSize
+    val connection = connect(peer, flowControlStrategy = DefaultHttp2FlowControlStrategy(windowSize))
     val stream = connection.newStream(headerEntries("b", "banana"), false)
     assertThat(stream.readBytesAcknowledged).isEqualTo(0L)
     assertThat(stream.readBytesTotal).isEqualTo(0L)
@@ -1975,12 +1976,14 @@ class Http2ConnectionTest {
   private fun connect(
     peer: MockHttp2Peer,
     pushObserver: PushObserver = IGNORE,
-    listener: Http2Connection.Listener = Http2Connection.Listener.REFUSE_INCOMING_STREAMS
+    listener: Http2Connection.Listener = Http2Connection.Listener.REFUSE_INCOMING_STREAMS,
+    flowControlStrategy: Http2FlowControlStrategy = DefaultHttp2FlowControlStrategy()
   ): Http2Connection {
     val connection = Http2Connection.Builder(true, TaskRunner.INSTANCE)
       .socket(peer.openSocket())
       .pushObserver(pushObserver)
       .listener(listener)
+      .flowControl(flowControlStrategy)
       .build()
     connection.start(sendConnectionPreface = false)
 
