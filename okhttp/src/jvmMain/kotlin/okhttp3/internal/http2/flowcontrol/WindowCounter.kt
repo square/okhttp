@@ -6,6 +6,11 @@ data class WindowCounter(
   /** The total number of bytes acknowledged by outgoing `WINDOW_UPDATE` frames. */
   val acknowledged: Long = 0
 ) {
+  init {
+    check(acknowledged >= 0)
+    check(total >= acknowledged)
+  }
+
   val unacknowledged: Long
     get() = total - acknowledged
 }
