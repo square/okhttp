@@ -39,6 +39,107 @@ object Punycode {
   private const val initial_n = 0x80
 
   /**
+   * Returns null if any label is oversized so much that the encoder cannot encode it without
+   * integer overflow. This will not return null for labels that fit within the DNS size
+   * limits.
+   */
+  fun encode(string: String): String? {
+    var pos = 0
+    val limit = string.length
+    val result = Buffer()
+
+    while (pos < limit) {
+      var dot = string.indexOf('.', startIndex = pos)
+      if (dot == -1) dot = limit
+
+      if (!encodeLabel(string, pos, dot, result)) {
+        // If we couldn't encode the label, give up.
+        return null
+      }
+
+      if (dot < limit) {
+        result.writeByte('.'.code)
+        pos = dot + 1
+      } else {
+        break
+      }
+    }
+
+    return result.readUtf8()
+  }
+
+  private fun encodeLabel(
+    string: String,
+    pos: Int,
+    limit: Int,
+    result: Buffer
+  ) : Boolean {
+    if (!string.requiresEncode(pos, limit)) {
+      result.writeUtf8(string, pos, limit)
+      return true
+    }
+
+    result.writeUtf8("xn--")
+
+    val input = string.codePoints(pos, limit)
+
+    // Copy all the basic code points to the output.
+    var b = 0
+    for (codePoint in input) {
+      if (codePoint < initial_n) {
+        result.writeByte(codePoint)
+        b++
+      }
+    }
+
+    // Copy a delimiter if any basic code points were emitted.
+    if (b > 0) result.writeByte('-'.code)
+
+    var n = initial_n
+    var delta = 0
+    var bias = initial_bias
+    var h = b
+    while (h < input.size) {
+      val m = input.minBy { if (it >= n) it else Int.MAX_VALUE }
+
+      val increment = (m - n) * (h + 1)
+      if (delta > Int.MAX_VALUE - increment) return false // Prevent overflow.
+      delta += increment
+
+      n = m
+
+      for (c in input) {
+        if (c < n) {
+          if (delta == Int.MAX_VALUE) return false // Prevent overflow.
+          delta++
+        } else if (c == n) {
+          var q = delta
+
+          for (k in base until Int.MAX_VALUE step base) {
+            val t = when {
+              k <= bias -> tmin
+              k >= bias + tmax -> tmax
+              else -> k - bias
+            }
+            if (q < t) break
+            result.writeByte((t + ((q - t) % (base - t))).punycodeDigit)
+            q = (q - t) / (base - t)
+          }
+
+          result.writeByte(q.punycodeDigit)
+          bias = adapt(delta, h + 1, h == b)
+          delta = 0
+          h++
+        }
+      }
+      delta++
+      n++
+    }
+
+    return true
+  }
+
+  /**
    * Converts a punycode-encoded domain name with `.`-separated labels into a human-readable
    * Internationalized Domain Name.
    */
@@ -169,4 +270,41 @@ object Punycode {
     }
     return k + (((base - tmin + 1) * delta) / (delta + skew))
   }
+
+  private fun String.requiresEncode(pos: Int, limit: Int): Boolean {
+    for (i in pos until limit) {
+      if (this[i].code >= initial_n) return true
+    }
+    return false
+  }
+
+  private fun String.codePoints(pos: Int, limit: Int): List<Int> {
+    val result = mutableListOf<Int>()
+    var i = pos
+    while (i < limit) {
+      val c = this[i]
+      result += when {
+        c.isSurrogate() -> {
+          val low = (if (i + 1 < limit) this[i + 1] else '\u0000')
+          if (c.isLowSurrogate() || !low.isLowSurrogate()) {
+            '?'.code
+          } else {
+            i++
+            0x010000 + (c.code and 0x03ff shl 10 or (low.code and 0x03ff))
+          }
+        }
+
+        else -> c.code
+      }
+      i++
+    }
+    return result
+  }
+
+  private val Int.punycodeDigit: Int
+    get() = when {
+      this < 26 -> this + 'a'.code
+      this < 36 -> (this - 26) + '0'.code
+      else -> error("unexpected digit: $this")
+    }
 }
