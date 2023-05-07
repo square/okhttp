@@ -42,14 +42,13 @@ import org.assertj.core.data.Offset
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.fail
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 
 @Timeout(5)
 @Tag("Slow")
-class Http2ConnectionTest {
+open class Http2ConnectionTest {
   private val peer = MockHttp2Peer()
   private val taskFaker = TaskFaker()
 
@@ -210,7 +209,7 @@ class Http2ConnectionTest {
     val frame3 = peer.takeFrame()
     assertThat(frame3.type).isEqualTo(Http2.TYPE_RST_STREAM)
     assertThat(connection.readBytes.acknowledged).isEqualTo(0L)
-    assertThat(connection.readBytes.total).isEqualTo(2048L)
+    assertThat(connection.readBytes.total).isBetween(2048L, 3072L)
   }
 
   @Test fun receiveGoAwayHttp2() {
@@ -285,7 +284,7 @@ class Http2ConnectionTest {
     peer.play()
 
     // Play it back.
-    val connection = connect(peer, flowControlStrategy = DefaultHttp2FlowControlStrategy(windowSize))
+    val connection = connect(peer, flowControlStrategy = flowControlStrategy(windowSize))
     val stream = connection.newStream(headerEntries("b", "banana"), false)
     assertThat(stream.readBytesAcknowledged).isEqualTo(0L)
     assertThat(stream.readBytesTotal).isEqualTo(0L)
@@ -303,7 +302,7 @@ class Http2ConnectionTest {
         val windowUpdate = peer.takeFrame()
         assertThat(windowUpdate.type).isEqualTo(Http2.TYPE_WINDOW_UPDATE)
         windowUpdateStreamIds.add(windowUpdate.streamId)
-        assertThat(windowUpdate.windowSizeIncrement).isEqualTo(windowUpdateThreshold.toLong())
+        assertThat(windowUpdate.windowSizeIncrement).isBetween(windowUpdateThreshold.toLong(), 100L)
       }
       // connection
       assertThat(windowUpdateStreamIds).contains(0)
@@ -1743,7 +1742,7 @@ class Http2ConnectionTest {
     peer.play()
 
     // Play it back.
-    val connection = connect(peer, flowControlStrategy = DefaultHttp2FlowControlStrategy(windowSize))
+    val connection = connect(peer, flowControlStrategy = flowControlStrategy(windowSize))
     val stream = connection.newStream(headerEntries("b", "banana"), false)
     assertThat(stream.readBytesAcknowledged).isEqualTo(0L)
     assertThat(stream.readBytesTotal).isEqualTo(0L)
@@ -1762,7 +1761,7 @@ class Http2ConnectionTest {
         assertThat(windowUpdate.type).isEqualTo(Http2.TYPE_WINDOW_UPDATE)
         windowUpdateStreamIds.add(windowUpdate.streamId)
         assertThat(windowUpdate.windowSizeIncrement)
-          .isEqualTo(windowUpdateThreshold.toLong())
+          .isBetween(windowUpdateThreshold.toLong(), 100)
       }
       // connection
       assertThat(windowUpdateStreamIds).contains(0)
@@ -1977,7 +1976,7 @@ class Http2ConnectionTest {
     peer: MockHttp2Peer,
     pushObserver: PushObserver = IGNORE,
     listener: Http2Connection.Listener = Http2Connection.Listener.REFUSE_INCOMING_STREAMS,
-    flowControlStrategy: Http2FlowControlStrategy = DefaultHttp2FlowControlStrategy()
+    flowControlStrategy: Http2FlowControlStrategy = flowControlStrategy(Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE)
   ): Http2Connection {
     val connection = Http2Connection.Builder(true, TaskRunner.INSTANCE)
       .socket(peer.openSocket())
@@ -1993,6 +1992,10 @@ class Http2ConnectionTest {
     assertThat(ackFrame.streamId).isEqualTo(0)
     assertThat(ackFrame.ack).isTrue
     return connection
+  }
+
+  open fun flowControlStrategy(windowSize: Int): Http2FlowControlStrategy {
+    return DefaultHttp2FlowControlStrategy(windowSize)
   }
 
   private class RecordingPushObserver : PushObserver {
