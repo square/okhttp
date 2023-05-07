@@ -502,6 +502,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
   @JvmOverloads
   fun start(sendConnectionPreface: Boolean = true) {
     if (sendConnectionPreface) {
+      // TODO check if we can merge settings with initial preface
       writer.connectionPreface()
       writer.settings(okHttpSettings)
       val windowUpdate = flowControl.initialConnectionWindowUpdate()

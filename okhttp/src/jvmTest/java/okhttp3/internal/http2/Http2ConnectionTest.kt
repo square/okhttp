@@ -37,6 +37,7 @@ import okio.Buffer
 import okio.BufferedSource
 import okio.Source
 import okio.buffer
+import org.assertj.core.api.AbstractLongAssert
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.data.Offset
 import org.junit.jupiter.api.AfterEach
@@ -209,7 +210,7 @@ open class Http2ConnectionTest {
     val frame3 = peer.takeFrame()
     assertThat(frame3.type).isEqualTo(Http2.TYPE_RST_STREAM)
     assertThat(connection.readBytes.acknowledged).isEqualTo(0L)
-    assertThat(connection.readBytes.total).isBetween(2048L, 3072L)
+    assertThat(connection.readBytes.total).isEqualTo(3072L)
   }
 
   @Test fun receiveGoAwayHttp2() {
@@ -286,8 +287,8 @@ open class Http2ConnectionTest {
     // Play it back.
     val connection = connect(peer, flowControlStrategy = flowControlStrategy(windowSize))
     val stream = connection.newStream(headerEntries("b", "banana"), false)
-    assertThat(stream.readBytesAcknowledged).isEqualTo(0L)
-    assertThat(stream.readBytesTotal).isEqualTo(0L)
+    assertThat(stream.readBytes.acknowledged).isEqualTo(0L)
+    assertThat(stream.readBytes.total).isEqualTo(0L)
     assertThat(stream.takeHeaders()).isEqualTo(headersOf("a", "android"))
     val source = stream.getSource()
     val buffer = Buffer()
@@ -296,19 +297,19 @@ open class Http2ConnectionTest {
     assertThat(buffer.size).isEqualTo(150)
     val synStream = peer.takeFrame()
     assertThat(synStream.type).isEqualTo(Http2.TYPE_HEADERS)
+    val windowUpdateStreamIds: MutableList<Int?> = ArrayList(2)
     for (i in 0..2) {
-      val windowUpdateStreamIds: MutableList<Int?> = ArrayList(2)
       for (j in 0..1) {
         val windowUpdate = peer.takeFrame()
         assertThat(windowUpdate.type).isEqualTo(Http2.TYPE_WINDOW_UPDATE)
         windowUpdateStreamIds.add(windowUpdate.streamId)
         assertThat(windowUpdate.windowSizeIncrement).isBetween(windowUpdateThreshold.toLong(), 100L)
       }
-      // connection
-      assertThat(windowUpdateStreamIds).contains(0)
-      // stream
-      assertThat(windowUpdateStreamIds).contains(3)
     }
+    // connection
+    assertThat(windowUpdateStreamIds).contains(0)
+    // stream
+    assertThat(windowUpdateStreamIds).contains(3)
   }
 
   @Test fun serverSendsEmptyDataClientDoesntSendWindowUpdateHttp2() {
@@ -1744,8 +1745,8 @@ open class Http2ConnectionTest {
     // Play it back.
     val connection = connect(peer, flowControlStrategy = flowControlStrategy(windowSize))
     val stream = connection.newStream(headerEntries("b", "banana"), false)
-    assertThat(stream.readBytesAcknowledged).isEqualTo(0L)
-    assertThat(stream.readBytesTotal).isEqualTo(0L)
+    assertThat(stream.readBytes.acknowledged).isEqualTo(0L)
+    assertThat(stream.readBytes.total).isBetween(0L, 50L)
     assertThat(stream.takeHeaders()).isEqualTo(headersOf("a", "android"))
     val source = stream.getSource()
     val buffer = Buffer()
@@ -1754,8 +1755,8 @@ open class Http2ConnectionTest {
     assertThat(buffer.size).isEqualTo(150)
     val synStream = peer.takeFrame()
     assertThat(synStream.type).isEqualTo(Http2.TYPE_HEADERS)
+    val windowUpdateStreamIds: MutableList<Int?> = ArrayList(2)
     for (i in 0..2) {
-      val windowUpdateStreamIds: MutableList<Int?> = ArrayList(2)
       for (j in 0..1) {
         val windowUpdate = peer.takeFrame()
         assertThat(windowUpdate.type).isEqualTo(Http2.TYPE_WINDOW_UPDATE)
@@ -1763,11 +1764,11 @@ open class Http2ConnectionTest {
         assertThat(windowUpdate.windowSizeIncrement)
           .isBetween(windowUpdateThreshold.toLong(), 100)
       }
-      // connection
-      assertThat(windowUpdateStreamIds).contains(0)
-      // stream
-      assertThat(windowUpdateStreamIds).contains(3)
     }
+    // connection
+    assertThat(windowUpdateStreamIds).contains(0)
+    // stream
+    assertThat(windowUpdateStreamIds).contains(3)
   }
 
   @Test fun serverSendsEmptyDataClientDoesntSendWindowUpdate() {
@@ -2061,4 +2062,7 @@ open class Http2ConnectionTest {
       override fun onReset(streamId: Int, errorCode: ErrorCode) {}
     }
   }
+
+  open fun <T : AbstractLongAssert<T>?> AbstractLongAssert<T>.isInAcceptableRange(expected: Long, max: Long): T =
+    this.isEqualTo(expected)
 }

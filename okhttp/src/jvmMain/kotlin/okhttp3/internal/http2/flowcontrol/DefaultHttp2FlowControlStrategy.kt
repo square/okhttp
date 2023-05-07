@@ -6,6 +6,8 @@ import okhttp3.internal.http2.Settings
 class DefaultHttp2FlowControlStrategy(
   val clientWindowSize: Int = OKHTTP_CLIENT_WINDOW_SIZE
 ) : Http2FlowControlStrategy {
+  override val trackOnReceive: Boolean = false
+
   override val initialSettings: Settings
     get() {
       return Settings().apply {
@@ -25,6 +27,8 @@ class DefaultHttp2FlowControlStrategy(
   override fun connectionBytesOnConsumed(windowCounter: WindowCounter): Long? = halfUnacknowledged(windowCounter)
 
   override fun connectionBytesOnDiscarded(windowCounter: WindowCounter): Long? = halfUnacknowledged(windowCounter)
+
+  override fun streamBytesOnConsumed(windowCounter: WindowCounter): Long? = halfUnacknowledged(windowCounter)
 
   private fun halfUnacknowledged(windowCounter: WindowCounter): Long? {
     val unacknowledged = windowCounter.unacknowledged

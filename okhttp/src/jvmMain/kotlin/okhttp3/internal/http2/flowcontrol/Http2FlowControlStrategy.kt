@@ -5,6 +5,7 @@ import okhttp3.internal.http2.Settings
 
 interface Http2FlowControlStrategy {
 
+  val trackOnReceive: Boolean
   val initialSettings: Settings
 
   fun initialStreamWindowUpdate(streamId: Int, requestHeaders: List<Header>): Long? = null
@@ -18,4 +19,6 @@ interface Http2FlowControlStrategy {
   fun connectionBytesOnDiscarded(windowCounter: WindowCounter): Long? = null
 
   fun connectionBytesOnReceived(windowCounter: WindowCounter): Long? = null
+
+  fun streamBytesOnConsumed(windowCounter: WindowCounter): Long? = null
 }

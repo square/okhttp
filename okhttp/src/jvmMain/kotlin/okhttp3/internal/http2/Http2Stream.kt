@@ -46,13 +46,9 @@ class Http2Stream internal constructor(
   // Internal state is guarded by this. No long-running or potentially blocking operations are
   // performed while the lock is held.
 
-  /** The total number of bytes consumed by the application. */
-  var readBytesTotal = 0L
-    internal set
-
-  /** The total number of bytes acknowledged by outgoing `WINDOW_UPDATE` frames. */
-  var readBytesAcknowledged = 0L
-    internal set
+  /** The bytes consumed and acknowledged by the stream. */
+  var readBytes: WindowCounter = WindowCounter()
+    private set
 
   /** The total number of bytes produced by the application. */
   var writeBytesTotal = 0L
@@ -387,15 +383,16 @@ class Http2Stream internal constructor(
             } else if (readBuffer.size > 0L) {
               // Prepare to read bytes. Start by moving them to the caller's buffer.
               readBytesDelivered = readBuffer.read(sink, minOf(byteCount, readBuffer.size))
-              readBytesTotal += readBytesDelivered
+              if (!connection.flowControl.trackOnReceive) {
+                readBytes = readBytes.copy(total = readBytes.total + readBytesDelivered)
+              }
 
-              val unacknowledgedBytesRead = readBytesTotal - readBytesAcknowledged
-              if (errorExceptionToDeliver == null &&
-                  unacknowledgedBytesRead >= connection.okHttpSettings.initialWindowSize / 2) {
+              val readBytesToAcknowledge = connection.flowControl.streamBytesOnConsumed(readBytes)
+              if (errorExceptionToDeliver == null && readBytesToAcknowledge != null) {
                 // Flow control: notify the peer that we're ready for more data! Only send a
                 // WINDOW_UPDATE if the stream isn't in error.
-                connection.writeWindowUpdateLater(id, unacknowledgedBytesRead)
-                readBytesAcknowledged = readBytesTotal
+                connection.writeWindowUpdateLater(id, readBytesToAcknowledge)
+                readBytes = readBytes.copy(acknowledged = readBytes.acknowledged + readBytesToAcknowledge)
               }
             } else if (!finished && errorExceptionToDeliver == null) {
               // Nothing to do. Wait until that changes then try again.
@@ -491,17 +488,27 @@ class Http2Stream internal constructor(
             }
           }
         }
-        if (bytesDiscarded > 0L) {
-          updateConnectionFlowControl(bytesDiscarded, connection.flowControl::connectionBytesOnDiscarded)
-        }
+      }
+
+      if (bytesDiscarded > 0) {
+        updateConnectionFlowControl(bytesDiscarded, connection.flowControl::connectionBytesOnDiscarded)
       }
 
       // Update the connection flow control, as this is a shared resource.
       // Even if our stream doesn't need more data, others might.
       // But delay updating the stream flow control until that stream has been
       // consumed
-      if (byteCount - bytesDiscarded > 0L) {
-        updateConnectionFlowControl(byteCount - bytesDiscarded, connection.flowControl::connectionBytesOnReceived)
+      val streamReceivedBytes = byteCount - bytesDiscarded
+
+      if (streamReceivedBytes > 0L) {
+        updateConnectionFlowControl(streamReceivedBytes, connection.flowControl::connectionBytesOnReceived)
+
+        // TODO check if safe to lock here
+        if (connection.flowControl.trackOnReceive && !closed) {
+          synchronized(this@Http2Stream) {
+            readBytes = readBytes.copy(total = readBytes.total + streamReceivedBytes)
+          }
+        }
       }
     }
 
