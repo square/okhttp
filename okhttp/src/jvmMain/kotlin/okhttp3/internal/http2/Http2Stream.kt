@@ -23,6 +23,7 @@ import java.util.ArrayDeque
 import okhttp3.Headers
 import okhttp3.internal.EMPTY_HEADERS
 import okhttp3.internal.assertThreadDoesntHoldLock
+import okhttp3.internal.http2.flowcontrol.WindowCounter
 import okhttp3.internal.notifyAll
 import okhttp3.internal.toHeaderList
 import okhttp3.internal.wait
@@ -416,7 +417,7 @@ class Http2Stream internal constructor(
 
         if (readBytesDelivered != -1L) {
           // Update connection.unacknowledgedBytesRead outside the synchronized block.
-          updateConnectionFlowControl(readBytesDelivered)
+          updateConnectionFlowControl(readBytesDelivered) { connection.flowControl.connectionBytesOnConsumed(it) }
           return readBytesDelivered
         }
 
@@ -432,10 +433,10 @@ class Http2Stream internal constructor(
       }
     }
 
-    private fun updateConnectionFlowControl(read: Long) {
+    private fun updateConnectionFlowControl(read: Long, calculation: (WindowCounter) -> Long?) {
       this@Http2Stream.assertThreadDoesntHoldLock()
 
-      connection.updateConnectionFlowControl(read)
+      connection.updateConnectionFlowControl(read, calculation)
     }
 
     /**
@@ -491,7 +492,7 @@ class Http2Stream internal constructor(
           }
         }
         if (bytesDiscarded > 0L) {
-          updateConnectionFlowControl(bytesDiscarded)
+          updateConnectionFlowControl(bytesDiscarded, connection.flowControl::connectionBytesOnDiscarded)
         }
       }
     }
@@ -508,7 +509,7 @@ class Http2Stream internal constructor(
         this@Http2Stream.notifyAll() // TODO(jwilson): Unnecessary?
       }
       if (bytesDiscarded > 0L) {
-        updateConnectionFlowControl(bytesDiscarded)
+        updateConnectionFlowControl(bytesDiscarded, connection.flowControl::connectionBytesOnDiscarded)
       }
       cancelStreamIfNecessary()
     }

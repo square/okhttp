@@ -27,6 +27,9 @@ import okhttp3.internal.closeQuietly
 import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.http2.ErrorCode.REFUSED_STREAM
 import okhttp3.internal.http2.Settings.Companion.DEFAULT_INITIAL_WINDOW_SIZE
+import okhttp3.internal.http2.flowcontrol.DefaultHttp2FlowControlStrategy
+import okhttp3.internal.http2.flowcontrol.Http2FlowControlStrategy
+import okhttp3.internal.http2.flowcontrol.WindowCounter
 import okhttp3.internal.ignoreIoExceptions
 import okhttp3.internal.notifyAll
 import okhttp3.internal.okHttpName
@@ -105,14 +108,13 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
   /** Consider this connection to be unhealthy if a degraded pong isn't received by this time. */
   private var degradedPongDeadlineNs = 0L
 
+  internal val flowControl: Http2FlowControlStrategy = DefaultHttp2FlowControlStrategy()
+
   /** Settings we communicate to the peer. */
-  val okHttpSettings = Settings().apply {
-    // Flow control was designed more for servers, or proxies than edge clients. If we are a client,
-    // set the flow control window to 16MiB.  This avoids thrashing window updates every 64KiB, yet
-    // small enough to avoid blowing up the heap.
-    if (builder.client) {
-      set(Settings.INITIAL_WINDOW_SIZE, OKHTTP_CLIENT_WINDOW_SIZE)
-    }
+  val okHttpSettings = if (builder.client) {
+    flowControl.initialSettings
+  } else {
+    Settings()
   }
 
   /**
@@ -121,12 +123,8 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
    */
   var peerSettings = DEFAULT_SETTINGS
 
-  /** The total number of bytes consumed by the application. */
-  var readBytesTotal = 0L
-    private set
-
-  /** The total number of bytes acknowledged by outgoing `WINDOW_UPDATE` frames. */
-  var readBytesAcknowledged = 0L
+  /** The bytes consumed and acknowledged by the application. */
+  var readBytes: WindowCounter = WindowCounter()
     private set
 
   /** The total number of bytes produced by the application. */
@@ -172,11 +170,14 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
   /**
    * Returns the number of [open streams][Http2Stream.isOpen] on this connection.
    */
-  @Synchronized fun openStreamCount(): Int = streams.size
+  @Synchronized
+  fun openStreamCount(): Int = streams.size
 
-  @Synchronized fun getStream(id: Int): Http2Stream? = streams[id]
+  @Synchronized
+  fun getStream(id: Int): Http2Stream? = streams[id]
 
-  @Synchronized internal fun removeStream(streamId: Int): Http2Stream? {
+  @Synchronized
+  internal fun removeStream(streamId: Int): Http2Stream? {
     val stream = streams.remove(streamId)
 
     // The removed stream may be blocked on a connection-wide window update.
@@ -185,12 +186,13 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     return stream
   }
 
-  @Synchronized internal fun updateConnectionFlowControl(read: Long) {
-    readBytesTotal += read
-    val readBytesToAcknowledge = readBytesTotal - readBytesAcknowledged
-    if (readBytesToAcknowledge >= okHttpSettings.initialWindowSize / 2) {
+  @Synchronized
+  internal fun updateConnectionFlowControl(read: Long, calculation: (WindowCounter) -> Long?) {
+    readBytes = readBytes.copy(total = read + readBytes.total)
+    val readBytesToAcknowledge = calculation(readBytes)
+    if (readBytesToAcknowledge != null) {
       writeWindowUpdateLater(0, readBytesToAcknowledge)
-      readBytesAcknowledged += readBytesToAcknowledge
+      readBytes = readBytes.copy(acknowledged = readBytesToAcknowledge + readBytes.acknowledged)
     }
   }
 
@@ -261,6 +263,10 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
         require(!client) { "client streams shouldn't have associated stream IDs" }
         // HTTP/2 has a PUSH_PROMISE frame.
         writer.pushPromise(associatedStreamId, streamId, requestHeaders)
+      }
+      val initialStreamWindowUpdate = flowControl.initialStreamWindowUpdate(streamId, requestHeaders)
+      if (initialStreamWindowUpdate != null) {
+        writer.windowUpdate(streamId, initialStreamWindowUpdate)
       }
     }
 
@@ -396,7 +402,8 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
   }
 
   /** For testing: awaits a pong. */
-  @Synchronized @Throws(InterruptedException::class)
+  @Synchronized
+  @Throws(InterruptedException::class)
   fun awaitPong() {
     while (awaitPongsReceived < awaitPingsSent) {
       wait()
@@ -491,14 +498,15 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
    *     except for in tests that don't check for a connection preface.
    * @param taskRunner the TaskRunner to use, daemon by default.
    */
-  @Throws(IOException::class) @JvmOverloads
+  @Throws(IOException::class)
+  @JvmOverloads
   fun start(sendConnectionPreface: Boolean = true) {
     if (sendConnectionPreface) {
       writer.connectionPreface()
       writer.settings(okHttpSettings)
-      val windowSize = okHttpSettings.initialWindowSize
-      if (windowSize != DEFAULT_INITIAL_WINDOW_SIZE) {
-        writer.windowUpdate(0, (windowSize - DEFAULT_INITIAL_WINDOW_SIZE).toLong())
+      val windowUpdate = flowControl.initialConnectionWindowUpdate()
+      if (windowUpdate != null) {
+        writer.windowUpdate(0, windowUpdate)
       }
     }
     // Thread doesn't use client Dispatcher, since it is scoped potentially across clients via
@@ -569,7 +577,8 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     internal var pushObserver = PushObserver.CANCEL
     internal var pingIntervalMillis: Int = 0
 
-    @Throws(IOException::class) @JvmOverloads
+    @Throws(IOException::class)
+    @JvmOverloads
     fun socket(
       socket: Socket,
       peerName: String = socket.peerName(),
@@ -643,7 +652,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
       val dataStream = getStream(streamId)
       if (dataStream == null) {
         writeSynResetLater(streamId, ErrorCode.PROTOCOL_ERROR)
-        updateConnectionFlowControl(length.toLong())
+        updateConnectionFlowControl(length.toLong()) { flowControl.connectionBytesOnRstStream(it) }
         source.skip(length.toLong())
         return
       }
@@ -789,13 +798,16 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
             INTERVAL_PING -> {
               intervalPongsReceived++
             }
+
             DEGRADED_PING -> {
               degradedPongsReceived++
             }
+
             AWAIT_PING -> {
               awaitPongsReceived++
               this@Http2Connection.notifyAll()
             }
+
             else -> {
               // Ignore an unexpected pong.
             }
