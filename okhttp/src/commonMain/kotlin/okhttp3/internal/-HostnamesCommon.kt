@@ -292,22 +292,18 @@ internal fun String.toCanonicalHost(): String? {
     throw AssertionError("Invalid IPv6 address: '$host'")
   }
 
-  try {
-    val result = idnToAscii(host)
-    if (result.isEmpty()) return null
+  val result = idnToAscii(host) ?: return null
+  if (result.isEmpty()) return null
 
-    return if (result.containsInvalidHostnameAsciiCodes()) {
-      // The IDN ToASCII result contains illegal characters.
-      null
-    } else if (result.containsInvalidLabelLengths()) {
-      // The IDN ToASCII result contains invalid labels.
-      null
-    } else {
-      result
-    }
-  } catch (_: IllegalArgumentException) {
-    return null
+  return if (result.containsInvalidHostnameAsciiCodes()) {
+    // The IDN ToASCII result contains illegal characters.
+    null
+  } else if (result.containsInvalidLabelLengths()) {
+    // The IDN ToASCII result contains invalid labels.
+    null
+  } else {
+    result
   }
 }
 
-internal expect fun idnToAscii(host: String): String
+internal expect fun idnToAscii(host: String): String?

@@ -471,14 +471,12 @@ open class HttpUrlTest {
 
   @Test
   fun hostnameLowercaseCharactersMappedDirectly() {
-    if (!isJvm) return // TODO: this test is broken on non-JVM platforms.
     assertThat(parse("http://abcd").host).isEqualTo("abcd")
     assertThat(parse("http://σ").host).isEqualTo("xn--4xa")
   }
 
   @Test
   fun hostnameUppercaseCharactersConvertedToLowercase() {
-    if (!isJvm) return // TODO: this test is broken on non-JVM platforms.
     assertThat(parse("http://ABCD").host).isEqualTo("abcd")
     assertThat(parse("http://Σ").host).isEqualTo("xn--4xa")
   }
@@ -497,7 +495,6 @@ open class HttpUrlTest {
 
   @Test
   fun hostnameMappingLastMappedCodePoint() {
-    if (!isJvm) return // TODO: this test is broken on non-JVM platforms.
     assertThat(parse("http://\uD87E\uDE1D").host).isEqualTo("xn--pu5l")
   }
 
@@ -520,14 +517,14 @@ open class HttpUrlTest {
     //  * Several characters are forbidden and must throw exceptions if used.
     //  * They don't use percent escaping at all.
     //  * They use punycode for internationalization.
-    //  * URI is much more strict that HttpUrl or URL on what's accepted.
+    //  * URI is much more strict than HttpUrl or URL on what's accepted.
     //
     // HttpUrl is quite lenient with what characters it accepts. In particular, characters like '{'
     // and '"' are permitted but unlikely to occur in real-world URLs. Unfortunately we can't just
     // lock it down due to URL templating: "http://{env}.{dc}.example.com".
     UrlComponentEncodingTester.newInstance()
       .nonPrintableAscii(Encoding.FORBIDDEN)
-      .nonAscii(Encoding.FORBIDDEN)
+      .nonAscii(Encoding.PUNYCODE)
       .override(
         Encoding.FORBIDDEN,
         '\t'.code,

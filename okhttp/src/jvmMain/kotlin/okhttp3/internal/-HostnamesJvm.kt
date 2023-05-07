@@ -18,5 +18,10 @@ package okhttp3.internal
 import java.net.IDN
 import java.util.Locale
 
-internal actual fun idnToAscii(host: String): String =
-  IDN.toASCII(host).lowercase(Locale.US)
+internal actual fun idnToAscii(host: String): String? {
+  return try {
+    IDN.toASCII(host).lowercase(Locale.US)
+  } catch (_: IllegalArgumentException) {
+    null
+  }
+}

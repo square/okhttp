@@ -22,7 +22,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 /** Runs the web platform ToAscii tests. */
 class WebPlatformToAsciiTest {
-  val knownFailuresJvm = setOf(
+  val commonKnownFailures = setOf(
     // OkHttp rejects empty labels.
     "x..xn--zca",
     "x..ß",
@@ -38,16 +38,7 @@ class WebPlatformToAsciiTest {
     "01234567890123456789012345678901234567890123456789.01234567890123456789012345678901234567890123456789.01234567890123456789012345678901234567890123456789.01234567890123456789012345678901234567890123456789.0123456789012345678901234567890123456789012345678.xn--zca",
     "01234567890123456789012345678901234567890123456789.01234567890123456789012345678901234567890123456789.01234567890123456789012345678901234567890123456789.01234567890123456789012345678901234567890123456789.0123456789012345678901234567890123456789012345678.ß",
 
-    // OkHttp incorrectly does transitional processing, so it maps 'ß' to 'ss'
-    "-x.ß",
-    "ab--c.ß",
-    "x-.ß",
-    "xn--a.ß",
-    "xn--zca.ß",
-    "ශ්‍රී",
-
     // OkHttp does not reject invalid Punycode.
-    "xn--",
     "xn--a",
     "xn--a.xn--zca",
     "xn--a-yoc",
@@ -58,21 +49,34 @@ class WebPlatformToAsciiTest {
 
     // OkHttp doesn't reject a U+200D. https://www.rfc-editor.org/rfc/rfc5892.html#appendix-A.2
     "xn--1ug.example",
+  )
+
+  val knownFailuresJvm = commonKnownFailures + setOf(
+    // OkHttp incorrectly does transitional processing, so it maps 'ß' to 'ss'
+    "-x.ß",
+    "ab--c.ß",
+    "x-.ß",
+    "xn--a.ß",
+    "xn--zca.ß",
+    "ශ්‍රී",
+
+    // OkHttp does not reject invalid Punycode.
+    "xn--",
 
     // OkHttp returns `xn--mgba3gch31f`, not `xn--mgba3gch31f060k`.
     "نامه‌ای",
   )
 
-  val knownFailuresNonJvm = knownFailuresJvm + setOf(
-    // Punycode is not implemented.
-    "a†--",
-    "-†",
-    "≠",
-    "≮",
-    "≯",
-  ) - setOf(
-    // Non-Transitional is fixed.
+  val knownFailuresNonJvm = commonKnownFailures + setOf(
+    // OkHttp doesn't reject this invalid punycode.
+    "xn--tešla",
     "xn--a.ß",
+
+    // OkHttp doesn't implement CheckJoiners.
+    "\u200D.example",
+
+    // OkHttp doesn't implement CheckBidi.
+    "يa",
   )
 
   @Test
