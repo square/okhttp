@@ -384,7 +384,7 @@ class Http2Stream internal constructor(
               // Prepare to read bytes. Start by moving them to the caller's buffer.
               readBytesDelivered = readBuffer.read(sink, minOf(byteCount, readBuffer.size))
               if (!connection.flowControl.trackOnReceive) {
-                readBytes = readBytes.copy(total = readBytes.total + readBytesDelivered)
+                readBytes = readBytes.increase(total = readBytesDelivered)
               }
 
               val readBytesToAcknowledge = connection.flowControl.streamBytesOnConsumed(readBytes)
@@ -392,7 +392,7 @@ class Http2Stream internal constructor(
                 // Flow control: notify the peer that we're ready for more data! Only send a
                 // WINDOW_UPDATE if the stream isn't in error.
                 connection.writeWindowUpdateLater(id, readBytesToAcknowledge)
-                readBytes = readBytes.copy(acknowledged = readBytes.acknowledged + readBytesToAcknowledge)
+                readBytes = readBytes.increase(acknowledged = readBytesToAcknowledge)
               }
             } else if (!finished && errorExceptionToDeliver == null) {
               // Nothing to do. Wait until that changes then try again.
@@ -506,7 +506,7 @@ class Http2Stream internal constructor(
         // TODO check if safe to lock here
         if (connection.flowControl.trackOnReceive && !closed) {
           synchronized(this@Http2Stream) {
-            readBytes = readBytes.copy(total = readBytes.total + streamReceivedBytes)
+            readBytes = readBytes.increase(total = streamReceivedBytes)
           }
         }
       }

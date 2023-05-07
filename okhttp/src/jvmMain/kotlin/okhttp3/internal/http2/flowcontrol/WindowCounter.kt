@@ -13,4 +13,11 @@ data class WindowCounter(
 
   val unacknowledged: Long
     get() = total - acknowledged
+
+  fun increase(total: Long = 0, acknowledged: Long = 0): WindowCounter {
+    check(total >= 0)
+    check(acknowledged >= 0)
+
+    return copy(total = this.total + total, acknowledged = this.acknowledged + acknowledged)
+  }
 }
