@@ -193,7 +193,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
       writeWindowUpdateLater(0, readBytesToAcknowledge)
       readBytes.increase(acknowledged = readBytesToAcknowledge)
     }
-    flowControlListener.flowControlWindowChanged(0, readBytes)
+    flowControlListener.receivingFlowControlWindowChanged(0, readBytes)
   }
 
   /**

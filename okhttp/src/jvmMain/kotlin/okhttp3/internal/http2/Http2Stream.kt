@@ -392,7 +392,7 @@ class Http2Stream internal constructor(
                 connection.writeWindowUpdateLater(id, unacknowledgedBytesRead)
                 readBytes.increase(acknowledged = unacknowledgedBytesRead)
               }
-              connection.flowControlListener.flowControlWindowChanged(id, readBytes)
+              connection.flowControlListener.receivingFlowControlWindowChanged(id, readBytes)
             } else if (!finished && errorExceptionToDeliver == null) {
               // Nothing to do. Wait until that changes then try again.
               waitForIo()
