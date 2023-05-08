@@ -23,6 +23,11 @@ import java.util.ArrayDeque
 import okhttp3.Headers
 import okhttp3.internal.EMPTY_HEADERS
 import okhttp3.internal.assertThreadDoesntHoldLock
+import okhttp3.internal.http2.flowcontrol.Http2FlowControlStrategy.ConnectionEvent
+import okhttp3.internal.http2.flowcontrol.Http2FlowControlStrategy.ConnectionEvent.Consumed
+import okhttp3.internal.http2.flowcontrol.Http2FlowControlStrategy.ConnectionEvent.DiscardedUnconsumed
+import okhttp3.internal.http2.flowcontrol.Http2FlowControlStrategy.ConnectionEvent.DiscardedUnexpected
+import okhttp3.internal.http2.flowcontrol.Http2FlowControlStrategy.ConnectionEvent.Received
 import okhttp3.internal.http2.flowcontrol.WindowCounter
 import okhttp3.internal.notifyAll
 import okhttp3.internal.toHeaderList
@@ -47,8 +52,7 @@ class Http2Stream internal constructor(
   // performed while the lock is held.
 
   /** The bytes consumed and acknowledged by the stream. */
-  var readBytes: WindowCounter = WindowCounter()
-    private set
+  val readBytes: WindowCounter = WindowCounter(id)
 
   /** The total number of bytes produced by the application. */
   var writeBytesTotal = 0L
@@ -384,7 +388,7 @@ class Http2Stream internal constructor(
               // Prepare to read bytes. Start by moving them to the caller's buffer.
               readBytesDelivered = readBuffer.read(sink, minOf(byteCount, readBuffer.size))
               if (!connection.flowControl.trackOnReceive) {
-                readBytes = readBytes.increase(total = readBytesDelivered)
+                readBytes.increase(total = readBytesDelivered)
               }
 
               val readBytesToAcknowledge = connection.flowControl.streamBytesOnConsumed(readBytes)
@@ -392,7 +396,7 @@ class Http2Stream internal constructor(
                 // Flow control: notify the peer that we're ready for more data! Only send a
                 // WINDOW_UPDATE if the stream isn't in error.
                 connection.writeWindowUpdateLater(id, readBytesToAcknowledge)
-                readBytes = readBytes.increase(acknowledged = readBytesToAcknowledge)
+                readBytes.increase(acknowledged = readBytesToAcknowledge)
               }
             } else if (!finished && errorExceptionToDeliver == null) {
               // Nothing to do. Wait until that changes then try again.
@@ -406,6 +410,11 @@ class Http2Stream internal constructor(
           }
         }
 
+        // Update connection.unacknowledgedBytesRead outside the synchronized block.
+        if (!connection.flowControl.trackOnReceive && readBytesDelivered > 0) {
+          updateConnectionFlowControl(readBytesDelivered, Consumed, connection.flowControl::connectionBytes)
+        }
+
         // 2. Do it outside of the synchronized block and timeout.
 
         if (tryAgain) {
@@ -413,8 +422,6 @@ class Http2Stream internal constructor(
         }
 
         if (readBytesDelivered != -1L) {
-          // Update connection.unacknowledgedBytesRead outside the synchronized block.
-          updateConnectionFlowControl(readBytesDelivered) { connection.flowControl.connectionBytesOnConsumed(it) }
           return readBytesDelivered
         }
 
@@ -430,10 +437,11 @@ class Http2Stream internal constructor(
       }
     }
 
-    private fun updateConnectionFlowControl(read: Long, calculation: (WindowCounter) -> Long?) {
+    private fun updateConnectionFlowControl(read: Long, event: ConnectionEvent, calculation: (WindowCounter, ConnectionEvent) -> Long?) {
       this@Http2Stream.assertThreadDoesntHoldLock()
 
-      connection.updateConnectionFlowControl(read, calculation)
+      connection.readBytes.increase(total = read)
+      connection.updateConnectionFlowControl { calculation(connection.readBytes, event) }
     }
 
     /**
@@ -491,7 +499,7 @@ class Http2Stream internal constructor(
       }
 
       if (bytesDiscarded > 0) {
-        updateConnectionFlowControl(bytesDiscarded, connection.flowControl::connectionBytesOnDiscarded)
+        updateConnectionFlowControl(bytesDiscarded, DiscardedUnexpected, connection.flowControl::connectionBytes)
       }
 
       // Update the connection flow control, as this is a shared resource.
@@ -501,13 +509,10 @@ class Http2Stream internal constructor(
       val streamReceivedBytes = byteCount - bytesDiscarded
 
       if (streamReceivedBytes > 0L) {
-        updateConnectionFlowControl(streamReceivedBytes, connection.flowControl::connectionBytesOnReceived)
+        updateConnectionFlowControl(streamReceivedBytes, Received, connection.flowControl::connectionBytes)
 
-        // TODO check if safe to lock here
         if (connection.flowControl.trackOnReceive && !closed) {
-          synchronized(this@Http2Stream) {
-            readBytes = readBytes.increase(total = streamReceivedBytes)
-          }
+          readBytes.increase(total = streamReceivedBytes)
         }
       }
     }
@@ -524,7 +529,7 @@ class Http2Stream internal constructor(
         this@Http2Stream.notifyAll() // TODO(jwilson): Unnecessary?
       }
       if (bytesDiscarded > 0L) {
-        updateConnectionFlowControl(bytesDiscarded, connection.flowControl::connectionBytesOnDiscarded)
+        updateConnectionFlowControl(bytesDiscarded, DiscardedUnconsumed, connection.flowControl::connectionBytes)
       }
       cancelStreamIfNecessary()
     }

@@ -79,7 +79,7 @@ class RealConnection(
   private val pingIntervalMillis: Int,
   internal val connectionListener: ConnectionListener
 ) : Http2Connection.Listener(), Connection, ExchangeCodec.Carrier {
-  private var http2Connection: Http2Connection? = null
+  internal var http2Connection: Http2Connection? = null
 
   // These properties are guarded by this.
 

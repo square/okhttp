@@ -2,6 +2,8 @@ package okhttp3.internal.http2.flowcontrol
 
 import okhttp3.internal.http2.Http2Connection.Companion.OKHTTP_CLIENT_WINDOW_SIZE
 import okhttp3.internal.http2.Settings
+import okhttp3.internal.http2.flowcontrol.Http2FlowControlStrategy.ConnectionEvent
+import okhttp3.internal.http2.flowcontrol.Http2FlowControlStrategy.ConnectionEvent.*
 
 /**
  * Updated OkHttp 5 flow control strategy, with the following properties.
@@ -31,9 +33,11 @@ class SoonerHttp2FlowControlStrategy(
     return (clientWindowSize - Settings.DEFAULT_INITIAL_WINDOW_SIZE).toLong()
   }
 
-  override fun connectionBytesOnRstStream(windowCounter: WindowCounter): Long? = halfUnacknowledged(windowCounter)
-
-  override fun connectionBytesOnReceived(windowCounter: WindowCounter): Long? = halfUnacknowledged(windowCounter)
+  override fun connectionBytes(windowCounter: WindowCounter, event: ConnectionEvent): Long? =
+    when (event) {
+      Consumed, DiscardedUnconsumed -> halfUnacknowledged(windowCounter)
+      RstStream, DiscardedUnexpected, Received -> null
+    }
 
   override fun streamBytesOnConsumed(windowCounter: WindowCounter): Long? = halfUnacknowledged(windowCounter)
 

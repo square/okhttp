@@ -41,7 +41,7 @@ class Exchange(
   internal val call: RealCall,
   internal val eventListener: EventListener,
   internal val finder: ExchangeFinder,
-  private val codec: ExchangeCodec
+  internal val codec: ExchangeCodec
 ) {
   /** True if the request body need not complete before the response body starts. */
   internal var isDuplex: Boolean = false

@@ -52,7 +52,7 @@ class Http2ExchangeCodec(
   private val chain: RealInterceptorChain,
   private val http2Connection: Http2Connection
 ) : ExchangeCodec {
-  @Volatile private var stream: Http2Stream? = null
+  @Volatile internal var stream: Http2Stream? = null
 
   private val protocol: Protocol = if (Protocol.H2_PRIOR_KNOWLEDGE in client.protocols) {
     Protocol.H2_PRIOR_KNOWLEDGE

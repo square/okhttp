@@ -45,6 +45,8 @@ import okhttp3.internal.http.BridgeInterceptor
 import okhttp3.internal.http.CallServerInterceptor
 import okhttp3.internal.http.RealInterceptorChain
 import okhttp3.internal.http.RetryAndFollowUpInterceptor
+import okhttp3.internal.http2.Http2ExchangeCodec
+import okhttp3.internal.http2.flowcontrol.WindowCounter
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.threadName
 import okio.AsyncTimeout
@@ -124,6 +126,12 @@ class RealCall(
   override fun clone(): Call = RealCall(client, originalRequest, forWebSocket)
 
   override fun request(): Request = originalRequest
+
+  val connectionFlowControl: WindowCounter?
+    get() = connection?.http2Connection?.readBytes
+
+  val streamFlowControl: WindowCounter?
+    get() = (exchange?.codec as? Http2ExchangeCodec)?.stream?.readBytes
 
   /**
    * Immediately closes the socket connection if it's currently held. Use this to interrupt an

@@ -12,7 +12,7 @@ import okhttp3.internal.http2.Settings
 interface Http2FlowControlStrategy {
 
   /**
-   * Whether to count stream bytes as unackknowledged immediately as received as frames,
+   * Whether to count stream bytes as unacknowledged immediately as received as frames,
    * or only when the response body is consumed.  Should be mostly a theoretical difference
    * but included to replicated OkHttp 4 behaviour.
    */
@@ -34,30 +34,18 @@ interface Http2FlowControlStrategy {
    */
   fun initialConnectionWindowUpdate(): Long? = null
 
-  /**
-   * How many window update bytes to release on the connection for data on an unknown or closed stream,
-   * resulting in RST_STREAM.
-   */
-  fun connectionBytesOnRstStream(windowCounter: WindowCounter): Long? = null
-
-  /**
-   * How many window update bytes to release on the connection when data is consumed by the application, removing
-   * it from stream buffers.
-   */
-  fun connectionBytesOnConsumed(windowCounter: WindowCounter): Long? = null
-
-  /**
-   * How many window update bytes to release on the connection when data is discarded on a failed stream.
-   */
-  fun connectionBytesOnDiscarded(windowCounter: WindowCounter): Long? = null
-
-  /**
-   * How many window update bytes to release on the connection when data is received into the stream buffers.
-   */
-  fun connectionBytesOnReceived(windowCounter: WindowCounter): Long? = null
+  fun connectionBytes(windowCounter: WindowCounter, event: ConnectionEvent): Long? = null
 
   /**
    * How many window update bytes to release on the stream when data is consumed by the application.
    */
   fun streamBytesOnConsumed(windowCounter: WindowCounter): Long? = null
+
+  enum class ConnectionEvent {
+    RstStream,
+    Consumed,
+    DiscardedUnexpected,
+    DiscardedUnconsumed,
+    Received
+  }
 }

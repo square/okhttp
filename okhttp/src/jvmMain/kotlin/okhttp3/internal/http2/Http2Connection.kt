@@ -29,6 +29,7 @@ import okhttp3.internal.http2.ErrorCode.REFUSED_STREAM
 import okhttp3.internal.http2.Settings.Companion.DEFAULT_INITIAL_WINDOW_SIZE
 import okhttp3.internal.http2.flowcontrol.DefaultHttp2FlowControlStrategy
 import okhttp3.internal.http2.flowcontrol.Http2FlowControlStrategy
+import okhttp3.internal.http2.flowcontrol.Http2FlowControlStrategy.ConnectionEvent.RstStream
 import okhttp3.internal.http2.flowcontrol.WindowCounter
 import okhttp3.internal.ignoreIoExceptions
 import okhttp3.internal.notifyAll
@@ -124,8 +125,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
   var peerSettings = DEFAULT_SETTINGS
 
   /** The bytes consumed and acknowledged by the application. */
-  var readBytes: WindowCounter = WindowCounter()
-    private set
+  val readBytes: WindowCounter = WindowCounter(streamId = 0)
 
   /** The total number of bytes produced by the application. */
   var writeBytesTotal = 0L
@@ -187,12 +187,11 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
   }
 
   @Synchronized
-  internal fun updateConnectionFlowControl(read: Long, calculation: (WindowCounter) -> Long?) {
-    readBytes = readBytes.increase(total = read)
+  internal fun updateConnectionFlowControl(calculation: (WindowCounter) -> Long?) {
     val readBytesToAcknowledge = calculation(readBytes)
     if (readBytesToAcknowledge != null) {
       writeWindowUpdateLater(0, readBytesToAcknowledge)
-      readBytes = readBytes.increase(acknowledged = readBytesToAcknowledge)
+      readBytes.increase(acknowledged = readBytesToAcknowledge)
     }
   }
 
@@ -658,7 +657,8 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
       val dataStream = getStream(streamId)
       if (dataStream == null) {
         writeSynResetLater(streamId, ErrorCode.PROTOCOL_ERROR)
-        updateConnectionFlowControl(length.toLong()) { flowControl.connectionBytesOnRstStream(it) }
+        readBytes.increase(total = length.toLong())
+        updateConnectionFlowControl { flowControl.connectionBytes(it, RstStream) }
         source.skip(length.toLong())
         return
       }
