@@ -22,6 +22,7 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
 import kotlin.test.Ignore
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -1837,5 +1838,24 @@ open class HttpUrlTest {
     assertThat(parse("http://a$dotA126/").toString())
       .isEqualTo("http://a$dotA126/")
     assertInvalid("http://aa$dotA126/", "Invalid URL host: \"aa$dotA126\"")
+  }
+
+  /**
+   * UTS 46 Validity Criteria: Decoded punycode must be NFC.
+   *
+   * https://www.unicode.org/reports/tr46/#Validity_Criteria
+   */
+  @Test
+  fun hostnameInPunycodeNfcAndNfd() {
+    // café can be NFC (é is one code point) or NFD (e plus ´ as two code points).
+    val hostNfc = "café.com"
+    val hostNfcPunycode = "xn--caf-dma.com"
+    val hostNfd = "café.com"
+    val hostNfdPunycode = "xn--cafe-yvc.com"
+    assertEquals(hostNfcPunycode, "http://$hostNfc/".toHttpUrl().host)
+    assertEquals(hostNfcPunycode, "http://$hostNfcPunycode/".toHttpUrl().host)
+    assertEquals(hostNfcPunycode, "http://$hostNfd/".toHttpUrl().host)
+    if (isJvm) return // TODO: the rest of this test is broken on JVM platforms.
+    assertInvalid("http://$hostNfdPunycode/", """Invalid URL host: "$hostNfdPunycode"""")
   }
 }

@@ -147,7 +147,7 @@ object Punycode {
    * Converts a punycode-encoded domain name with `.`-separated labels into a human-readable
    * Internationalized Domain Name.
    */
-  fun decode(string: String): String {
+  fun decode(string: String): String? {
     var pos = 0
     val limit = string.length
     val result = Buffer()
@@ -156,10 +156,7 @@ object Punycode {
       var dot = string.indexOf('.', startIndex = pos)
       if (dot == -1) dot = limit
 
-      if (!decodeLabel(string, pos, dot, result)) {
-        // If we couldn't decode the label, emit it without decoding.
-        result.writeUtf8(string, pos, dot)
-      }
+      if (!decodeLabel(string, pos, dot, result)) return null
 
       if (dot < limit) {
         result.writeByte('.'.code)

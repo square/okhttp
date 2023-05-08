@@ -35,7 +35,18 @@ internal actual fun idnToAscii(host: String): String? {
   bufferA.writeUtf8(normalized)
 
   // 3. For each label, convert/validate Punycode.
-  val decoded = Punycode.decode(bufferA.readUtf8())
-  // TODO: check 4.1 Validity Criteria
+  val decoded = Punycode.decode(bufferA.readUtf8()) ?: return null
+
+  // 4.1 Validate.
+
+  // Must be NFC.
+  if (decoded != SYSTEM_NORMALIZER.normalizeNfc(decoded)) return null
+
+  // TODO: CheckHyphens: no '-' char in both 3rd and 4th positions of any label.
+  // TODO: Must not begin with a combining mark.
+  // TODO: Each character must be 'valid' or 'deviation'. Not mapped.
+  // TODO: CheckJoiners from IDNA 2008
+  // TODO: CheckBidi from IDNA 2008, RFC 5893, Section 2.
+
   return Punycode.encode(decoded)
 }

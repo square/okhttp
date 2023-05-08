@@ -109,28 +109,28 @@ class PunycodeTest {
   }
 
   @Test fun nonBasicCodePointInPrefix() {
-    assertEquals("xn--cåt-n3h", Punycode.decode("xn--cåt-n3h"))
+    assertNull(Punycode.decode("xn--cåt-n3h"))
   }
 
   @Test fun nonBasicCodePointInInsertionCoding() {
-    assertEquals("xn--cat-ñ3h", Punycode.decode("xn--cat-ñ3h"))
+    assertNull(Punycode.decode("xn--cat-ñ3h"))
   }
 
   @Test fun unterminatedCodePoint() {
-    assertEquals("xn--cat-n", Punycode.decode("xn--cat-n"))
+    assertNull(Punycode.decode("xn--cat-n"))
   }
 
   @Test fun overflowI() {
-    assertEquals("xn--99999999", Punycode.decode("xn--99999999"))
+    assertNull(Punycode.decode("xn--99999999"))
   }
 
   @Test fun overflowMaxCodePoint() {
-    assertEquals("xn--a-b.net", Punycode.decode("xn--a-b.net"))
-    assertEquals("xn--a-9b.net", Punycode.decode("xn--a-9b.net"))
+    assertNull(Punycode.decode("xn--a-b.net"))
+    assertNull(Punycode.decode("xn--a-9b.net"))
     assertEquals("a՚.net", Punycode.decode("xn--a-99b.net"))
     assertEquals("a溠.net", Punycode.decode("xn--a-999b.net"))
     assertEquals("a\uD8E2\uDF5C.net", Punycode.decode("xn--a-9999b.net"))
-    assertEquals("xn--a-99999b.net", Punycode.decode("xn--a-99999b.net"))
+    assertNull(Punycode.decode("xn--a-99999b.net"))
   }
 
   @Test fun dashInPrefix() {
@@ -168,6 +168,10 @@ class PunycodeTest {
     assertNull(
       Punycode.encode(a1000MaxCodePoint.repeat(2)),
     )
+  }
+
+  @Test fun invalidPunycode() {
+    assertNull(Punycode.decode("xn--ls8h="))
   }
 
   private fun testEncodeDecode(unicode: String, punycode: String) {

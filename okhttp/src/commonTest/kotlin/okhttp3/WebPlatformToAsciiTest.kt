@@ -42,7 +42,6 @@ class WebPlatformToAsciiTest {
     "xn--a",
     "xn--a.xn--zca",
     "xn--a-yoc",
-    "xn--ls8h=",
 
     // OkHttp doesn't reject U+FFFD encoded in Punycode.
     "xn--zn7c.com",
@@ -62,6 +61,7 @@ class WebPlatformToAsciiTest {
 
     // OkHttp does not reject invalid Punycode.
     "xn--",
+    "xn--ls8h=",
 
     // OkHttp returns `xn--mgba3gch31f`, not `xn--mgba3gch31f060k`.
     "نامه‌ای",
@@ -69,7 +69,6 @@ class WebPlatformToAsciiTest {
 
   val knownFailuresNonJvm = commonKnownFailures + setOf(
     // OkHttp doesn't reject this invalid punycode.
-    "xn--tešla",
     "xn--a.ß",
 
     // OkHttp doesn't implement CheckJoiners.
