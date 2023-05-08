@@ -23,7 +23,12 @@ import okhttp3.internal.http2.flowcontrol.WindowCounter
  */
 class Http2FlowControlConnectionListener: ConnectionListener(), FlowControlListener {
   val start = System.currentTimeMillis()
-  override fun receivingFlowControlWindowChanged(streamId: Int, windowCounter: WindowCounter) {
-    println("${System.currentTimeMillis() - start},$streamId,${windowCounter.unacknowledged}")
+
+  override fun receivingStreamWindowChanged(streamId: Int, windowCounter: WindowCounter, bufferSize: Long) {
+    println("${System.currentTimeMillis() - start},$streamId,${windowCounter.unacknowledged},$bufferSize")
+  }
+
+  override fun receivingConnectionWindowChanged(windowCounter: WindowCounter) {
+    println("${System.currentTimeMillis() - start},0,${windowCounter.unacknowledged},")
   }
 }

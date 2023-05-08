@@ -206,8 +206,8 @@ class Http2ConnectionTest {
     assertThat(frame2.type).isEqualTo(Http2.TYPE_RST_STREAM)
     val frame3 = peer.takeFrame()
     assertThat(frame3.type).isEqualTo(Http2.TYPE_RST_STREAM)
-    assertThat(connection.readBytesAcknowledged).isEqualTo(0L)
-    assertThat(connection.readBytesTotal).isEqualTo(2048L)
+    assertThat(connection.readBytes.acknowledged).isEqualTo(0L)
+    assertThat(connection.readBytes.total).isEqualTo(2048L)
   }
 
   @Test fun receiveGoAwayHttp2() {
@@ -285,8 +285,8 @@ class Http2ConnectionTest {
     val connection = connect(peer)
     connection.okHttpSettings[Settings.INITIAL_WINDOW_SIZE] = windowSize
     val stream = connection.newStream(headerEntries("b", "banana"), false)
-    assertThat(stream.readBytesAcknowledged).isEqualTo(0L)
-    assertThat(stream.readBytesTotal).isEqualTo(0L)
+    assertThat(stream.readBytes.acknowledged).isEqualTo(0L)
+    assertThat(stream.readBytes.total).isEqualTo(0L)
     assertThat(stream.takeHeaders()).isEqualTo(headersOf("a", "android"))
     val source = stream.getSource()
     val buffer = Buffer()
@@ -1744,8 +1744,8 @@ class Http2ConnectionTest {
     val connection = connect(peer)
     connection.okHttpSettings[Settings.INITIAL_WINDOW_SIZE] = windowSize
     val stream = connection.newStream(headerEntries("b", "banana"), false)
-    assertThat(stream.readBytesAcknowledged).isEqualTo(0L)
-    assertThat(stream.readBytesTotal).isEqualTo(0L)
+    assertThat(stream.readBytes.acknowledged).isEqualTo(0L)
+    assertThat(stream.readBytes.total).isEqualTo(0L)
     assertThat(stream.takeHeaders()).isEqualTo(headersOf("a", "android"))
     val source = stream.getSource()
     val buffer = Buffer()

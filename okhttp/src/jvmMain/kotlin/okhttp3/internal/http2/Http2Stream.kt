@@ -392,7 +392,7 @@ class Http2Stream internal constructor(
                 connection.writeWindowUpdateLater(id, unacknowledgedBytesRead)
                 readBytes.increase(acknowledged = unacknowledgedBytesRead)
               }
-              connection.flowControlListener.receivingFlowControlWindowChanged(id, readBytes)
+              connection.flowControlListener.receivingStreamWindowChanged(id, readBytes, readBuffer.size)
             } else if (!finished && errorExceptionToDeliver == null) {
               // Nothing to do. Wait until that changes then try again.
               waitForIo()
@@ -491,6 +491,7 @@ class Http2Stream internal constructor(
           updateConnectionFlowControl(bytesDiscarded)
         }
       }
+      connection.flowControlListener.receivingStreamWindowChanged(id, readBytes, readBuffer.size)
     }
 
     override fun timeout(): Timeout = readTimeout

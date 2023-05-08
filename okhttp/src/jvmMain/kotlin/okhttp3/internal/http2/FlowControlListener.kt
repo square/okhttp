@@ -19,14 +19,23 @@ import okhttp3.internal.http2.flowcontrol.WindowCounter
 
 interface FlowControlListener {
   /**
-   * Notification that the receiving flow control window has changed.
+   * Notification that the receiving stream flow control window has changed.
    * [WindowCounter] generally carries the client view of total and acked bytes.
    */
-  fun receivingFlowControlWindowChanged(streamId: Int, windowCounter: WindowCounter)
+  fun receivingStreamWindowChanged(streamId: Int, windowCounter: WindowCounter, bufferSize: Long)
+
+  /**
+   * Notification that the receiving connection flow control window has changed.
+   * [WindowCounter] generally carries the client view of total and acked bytes.
+   */
+  fun receivingConnectionWindowChanged(windowCounter: WindowCounter)
 
   /** Noop implementation */
   object None: FlowControlListener {
-    override fun receivingFlowControlWindowChanged(streamId: Int, windowCounter: WindowCounter) {
+    override fun receivingStreamWindowChanged(streamId: Int, windowCounter: WindowCounter, bufferSize: Long) {
+    }
+
+    override fun receivingConnectionWindowChanged(windowCounter: WindowCounter) {
     }
   }
 }
