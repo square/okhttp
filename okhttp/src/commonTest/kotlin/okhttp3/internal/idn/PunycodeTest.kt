@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2022 Square, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package okhttp3.internal.idn
 
 import kotlin.test.Test
@@ -6,8 +21,7 @@ import kotlin.test.assertNull
 
 class PunycodeTest {
   /** https://datatracker.ietf.org/doc/html/rfc3492#section-7.1 */
-  @Test
-  fun rfc3492Samples() {
+  @Test fun rfc3492Samples() {
     // (A) Arabic (Egyptian)
     testEncodeDecode(
       unicode = "ليهمابتكلموشعربي؟",
@@ -75,8 +89,7 @@ class PunycodeTest {
     )
   }
 
-  @Test
-  fun multipleLabels() {
+  @Test fun multipleLabels() {
     testEncodeDecode(
       unicode = "☃.net",
       punycode = "xn--n3h.net"
@@ -95,54 +108,46 @@ class PunycodeTest {
     )
   }
 
-  @Test
-  fun nonBasicCodePointInPrefix() {
-      assertNull(Punycode.decode("xn--cåt-n3h"))
+  @Test fun nonBasicCodePointInPrefix() {
+    assertNull(Punycode.decode("xn--cåt-n3h"))
   }
 
-  @Test
-  fun nonBasicCodePointInInsertionCoding() {
-      assertNull(Punycode.decode("xn--cat-ñ3h"))
+  @Test fun nonBasicCodePointInInsertionCoding() {
+    assertNull(Punycode.decode("xn--cat-ñ3h"))
   }
 
-  @Test
-  fun unterminatedCodePoint() {
-      assertNull(Punycode.decode("xn--cat-n"))
+  @Test fun unterminatedCodePoint() {
+    assertNull(Punycode.decode("xn--cat-n"))
   }
 
-  @Test
-  fun overflowI() {
-      assertNull(Punycode.decode("xn--99999999"))
+  @Test fun overflowI() {
+    assertNull(Punycode.decode("xn--99999999"))
   }
 
-  @Test
-  fun overflowMaxCodePoint() {
-      assertNull(Punycode.decode("xn--a-b.net"))
-      assertNull(Punycode.decode("xn--a-9b.net"))
-      assertEquals("a՚.net", Punycode.decode("xn--a-99b.net"))
-      assertEquals("a溠.net", Punycode.decode("xn--a-999b.net"))
-      assertEquals("a\uD8E2\uDF5C.net", Punycode.decode("xn--a-9999b.net"))
-      assertNull(Punycode.decode("xn--a-99999b.net"))
+  @Test fun overflowMaxCodePoint() {
+    assertNull(Punycode.decode("xn--a-b.net"))
+    assertNull(Punycode.decode("xn--a-9b.net"))
+    assertEquals("a՚.net", Punycode.decode("xn--a-99b.net"))
+    assertEquals("a溠.net", Punycode.decode("xn--a-999b.net"))
+    assertEquals("a\uD8E2\uDF5C.net", Punycode.decode("xn--a-9999b.net"))
+    assertNull(Punycode.decode("xn--a-99999b.net"))
   }
 
-  @Test
-  fun dashInPrefix() {
+  @Test fun dashInPrefix() {
     testEncodeDecode(
       unicode = "klmnöpqrst-uvwxy",
       punycode = "xn--klmnpqrst-uvwxy-ctb"
     )
   }
 
-  @Test
-  fun uppercasePunycode() {
+  @Test fun uppercasePunycode() {
     testDecodeOnly(
       unicode = "ليهمابتكلموشعربي؟",
       punycode = "XN--EGBPDAJ6BU4BXFGEHFVWXN"
     )
   }
 
-  @Test
-  fun mixedCasePunycode() {
+  @Test fun mixedCasePunycode() {
     testDecodeOnly(
       unicode = "ليهمابتكلموشعربي؟",
       punycode = "Xn--EgBpDaJ6Bu4bXfGeHfVwXn"
@@ -153,30 +158,28 @@ class PunycodeTest {
    * It's invalid to have a label longer than 63 characters. If that's requested, the encoder may
    * overflow and return null.
    */
-  @Test
-  fun overflowEncodingOversizedLabel() {
+  @Test fun overflowEncodingOversizedLabel() {
     val a1000 = "a".repeat(1000)
     val a1000MaxCodePoint = a1000 + "\udbff\udfff"
     testEncodeDecode(
       a1000MaxCodePoint,
       "xn--$a1000-nc89312g",
     )
-      assertNull(
-          Punycode.encode(a1000MaxCodePoint.repeat(2)),
-      )
+    assertNull(
+      Punycode.encode(a1000MaxCodePoint.repeat(2)),
+    )
   }
 
-  @Test
-  fun invalidPunycode() {
-      assertNull(Punycode.decode("xn--ls8h="))
+  @Test fun invalidPunycode() {
+    assertNull(Punycode.decode("xn--ls8h="))
   }
 
   private fun testEncodeDecode(unicode: String, punycode: String) {
-      assertEquals(unicode, Punycode.decode(punycode))
-      assertEquals(punycode, Punycode.encode(unicode))
+    assertEquals(unicode, Punycode.decode(punycode))
+    assertEquals(punycode, Punycode.encode(unicode))
   }
 
   private fun testDecodeOnly(unicode: String, punycode: String) {
-      assertEquals(unicode, Punycode.decode(punycode))
+    assertEquals(unicode, Punycode.decode(punycode))
   }
 }
