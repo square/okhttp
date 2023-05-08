@@ -294,7 +294,7 @@ class RealConnection(
     try {
       Platform.get().connectSocket(rawSocket, route.socketAddress, connectTimeout)
     } catch (e: ConnectException) {
-      throw ConnectException("Failed to connect to ${route.socketAddress}").apply {
+      throw ConnectException("Failed to connect to the server").apply {
         initCause(e)
       }
     }
