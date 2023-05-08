@@ -17,18 +17,17 @@ package okhttp3.internal
 
 import com.squareup.okhttpicu.SYSTEM_NORMALIZER
 import okhttp3.internal.idn.IDNA_MAPPING_TABLE
+import okhttp3.internal.idn.Punycode
 import okio.Buffer
 
-internal actual fun idnToAscii(host: String): String {
+internal actual fun idnToAscii(host: String): String? {
   val bufferA = Buffer().writeUtf8(host)
   val bufferB = Buffer()
 
   // 1. Map, from bufferA to bufferB.
   while (!bufferA.exhausted()) {
     val codePoint = bufferA.readUtf8CodePoint()
-    require(IDNA_MAPPING_TABLE.map(codePoint, bufferB)) {
-      "disallowed code point: $codePoint"
-    }
+    if(!IDNA_MAPPING_TABLE.map(codePoint, bufferB)) return null
   }
 
   // 2. Normalize, from bufferB to bufferA.
@@ -36,7 +35,7 @@ internal actual fun idnToAscii(host: String): String {
   bufferA.writeUtf8(normalized)
 
   // 3. For each label, convert/validate Punycode.
-  // TODO.
-
-  return bufferA.readUtf8()
+  val decoded = Punycode.decode(bufferA.readUtf8())
+  // TODO: check 4.1 Validity Criteria
+  return Punycode.encode(decoded)
 }

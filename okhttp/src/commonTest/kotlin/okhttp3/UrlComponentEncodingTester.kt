@@ -15,8 +15,11 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.startsWith
 import kotlin.test.fail
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.internal.idn.Punycode
 import okio.Buffer
 import okio.ByteString
 import okio.ByteString.Companion.encodeUtf8
@@ -86,6 +89,10 @@ class UrlComponentEncodingTester private constructor() {
         testForbidden(codePoint, codePointString, component)
         continue
       }
+      if (encoding == Encoding.PUNYCODE) {
+        testPunycode(codePointString, component)
+        continue
+      }
       testEncodeAndDecode(codePoint, codePointString, component)
       if (encoding == Encoding.SKIP) continue
       testParseOriginal(codePoint, codePointString, encoding, component)
@@ -113,12 +120,15 @@ class UrlComponentEncodingTester private constructor() {
     val expected = component.canonicalize(codePointString)
     val actual = component[url]
     if (expected != actual) {
-        fail("Roundtrip $component $codePoint $url $expected != $actual")
+      fail("Roundtrip $component $codePoint $url $expected != $actual")
     }
   }
 
   private fun testParseOriginal(
-    codePoint: Int, codePointString: String, encoding: Encoding, component: Component
+    codePoint: Int,
+    codePointString: String,
+    encoding: Encoding,
+    component: Component,
   ) {
     val expected = encoding.encode(codePoint)
     if (encoding !== Encoding.PERCENT) return
@@ -126,7 +136,7 @@ class UrlComponentEncodingTester private constructor() {
     val url = urlString.toHttpUrl()
     val actual = component.encodedValue(url)
     if (actual != expected) {
-        fail("Encoding $component $codePoint using $encoding: '$actual' != '$expected'")
+      fail("Encoding $component $codePoint using $encoding: '$actual' != '$expected'")
     }
   }
 
@@ -137,6 +147,13 @@ class UrlComponentEncodingTester private constructor() {
       fail("Accepted forbidden code point $component $codePoint")
     } catch (expected: IllegalArgumentException) {
     }
+  }
+
+  private fun testPunycode(codePointString: String, component: Component) {
+    val builder = "http://host/".toHttpUrl().newBuilder()
+    component[builder] = codePointString
+    val url = builder.build()
+    assertThat(url.host).startsWith(Punycode.PREFIX_STRING)
   }
 
   enum class Encoding {
@@ -159,6 +176,9 @@ class UrlComponentEncodingTester private constructor() {
 
     /** URLs that contain this character in this component are invalid.  */
     FORBIDDEN,
+
+    /** Hostnames that contain this character are encoded with punycode.  */
+    PUNYCODE,
 
     /** This code point is special and should not be tested.  */
     SKIP;
@@ -284,12 +304,12 @@ class UrlComponentEncodingTester private constructor() {
   }
 
   companion object {
-    /** Arbitrary code point that's 2 bytes in UTF-8. */
-    private const val UNICODE_2 = 0x07ff
-    /** Arbitrary code point that's 3 bytes in UTF-8. */
-    private const val UNICODE_3 = 0xffff
-    /** Arbitrary code point that's 4 bytes in UTF-8. */
-    private const val UNICODE_4 = 0x10ffff
+    /** Arbitrary code point that's 2 bytes in UTF-8 and valid in IdnaMappingTable.txt. */
+    private const val UNICODE_2 = 0x1a5
+    /** Arbitrary code point that's 3 bytes in UTF-8 and valid in IdnaMappingTable.txt. */
+    private const val UNICODE_3 = 0x2202
+    /** Arbitrary code point that's 4 bytes in UTF-8 and valid in IdnaMappingTable.txt. */
+    private const val UNICODE_4 = 0x1d11e
 
     /**
      * Returns a new instance configured with a default encode set for the ASCII range. The specific

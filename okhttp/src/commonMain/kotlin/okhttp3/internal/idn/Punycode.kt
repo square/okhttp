@@ -16,6 +16,7 @@
 package okhttp3.internal.idn
 
 import okio.Buffer
+import okio.ByteString.Companion.encodeUtf8
 
 /**
  * An [RFC 3492] punycode decoder for converting ASCII to Unicode domain name labels. This is
@@ -30,6 +31,9 @@ import okio.Buffer
  * [RFC 3492]: https://datatracker.ietf.org/doc/html/rfc3492
  */
 object Punycode {
+  val PREFIX_STRING = "xn--"
+  val PREFIX = PREFIX_STRING.encodeUtf8()
+
   private const val base = 36
   private const val tmin = 1
   private const val tmax = 26
@@ -79,7 +83,7 @@ object Punycode {
       return true
     }
 
-    result.writeUtf8("xn--")
+    result.write(PREFIX)
 
     val input = string.codePoints(pos, limit)
 
@@ -180,7 +184,7 @@ object Punycode {
     limit: Int,
     result: Buffer
   ): Boolean {
-    if (!string.regionMatches(pos, "xn--", 0, 4, ignoreCase = true)) {
+    if (!string.regionMatches(pos, PREFIX_STRING, 0, 4, ignoreCase = true)) {
       result.writeUtf8(string, pos, limit)
       return true
     }
