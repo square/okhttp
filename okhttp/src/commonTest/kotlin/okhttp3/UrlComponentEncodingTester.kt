@@ -305,11 +305,11 @@ class UrlComponentEncodingTester private constructor() {
 
   companion object {
     /** Arbitrary code point that's 2 bytes in UTF-8 and valid in IdnaMappingTable.txt. */
-    private const val UNICODE_2 = 0x7ff
+    private const val UNICODE_2 = 0x1a5
     /** Arbitrary code point that's 3 bytes in UTF-8 and valid in IdnaMappingTable.txt. */
-    private const val UNICODE_3 = 0xfa0e
+    private const val UNICODE_3 = 0x2202
     /** Arbitrary code point that's 4 bytes in UTF-8 and valid in IdnaMappingTable.txt. */
-    private const val UNICODE_4 = 0x1f369
+    private const val UNICODE_4 = 0x1d11e
 
     /**
      * Returns a new instance configured with a default encode set for the ASCII range. The specific
