@@ -42,6 +42,7 @@ import okhttp3.internal.http.RealInterceptorChain
 import okhttp3.internal.http1.Http1ExchangeCodec
 import okhttp3.internal.http2.ConnectionShutdownException
 import okhttp3.internal.http2.ErrorCode
+import okhttp3.internal.http2.FlowControlListener
 import okhttp3.internal.http2.Http2Connection
 import okhttp3.internal.http2.Http2ExchangeCodec
 import okhttp3.internal.http2.Http2Stream
@@ -158,10 +159,12 @@ class RealConnection(
     val source = this.source!!
     val sink = this.sink!!
     socket.soTimeout = 0 // HTTP/2 connection timeouts are set per-stream.
+    val flowControlListener = connectionListener as? FlowControlListener ?: FlowControlListener.None
     val http2Connection = Http2Connection.Builder(client = true, taskRunner)
       .socket(socket, route.address.url.host, source, sink)
       .listener(this)
       .pingIntervalMillis(pingIntervalMillis)
+      .flowControlListener(flowControlListener)
       .build()
     this.http2Connection = http2Connection
     this.allocationLimit = Http2Connection.DEFAULT_SETTINGS.getMaxConcurrentStreams()

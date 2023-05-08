@@ -23,6 +23,7 @@ import java.util.ArrayDeque
 import okhttp3.Headers
 import okhttp3.internal.EMPTY_HEADERS
 import okhttp3.internal.assertThreadDoesntHoldLock
+import okhttp3.internal.http2.flowcontrol.WindowCounter
 import okhttp3.internal.notifyAll
 import okhttp3.internal.toHeaderList
 import okhttp3.internal.wait
@@ -45,13 +46,8 @@ class Http2Stream internal constructor(
   // Internal state is guarded by this. No long-running or potentially blocking operations are
   // performed while the lock is held.
 
-  /** The total number of bytes consumed by the application. */
-  var readBytesTotal = 0L
-    internal set
-
-  /** The total number of bytes acknowledged by outgoing `WINDOW_UPDATE` frames. */
-  var readBytesAcknowledged = 0L
-    internal set
+  /** The bytes consumed and acknowledged by the stream. */
+  val readBytes: WindowCounter = WindowCounter(id)
 
   /** The total number of bytes produced by the application. */
   var writeBytesTotal = 0L
@@ -386,16 +382,17 @@ class Http2Stream internal constructor(
             } else if (readBuffer.size > 0L) {
               // Prepare to read bytes. Start by moving them to the caller's buffer.
               readBytesDelivered = readBuffer.read(sink, minOf(byteCount, readBuffer.size))
-              readBytesTotal += readBytesDelivered
+              readBytes.increase(total = readBytesDelivered)
 
-              val unacknowledgedBytesRead = readBytesTotal - readBytesAcknowledged
+              val unacknowledgedBytesRead = readBytes.unacknowledged
               if (errorExceptionToDeliver == null &&
                   unacknowledgedBytesRead >= connection.okHttpSettings.initialWindowSize / 2) {
                 // Flow control: notify the peer that we're ready for more data! Only send a
                 // WINDOW_UPDATE if the stream isn't in error.
                 connection.writeWindowUpdateLater(id, unacknowledgedBytesRead)
-                readBytesAcknowledged = readBytesTotal
+                readBytes.increase(acknowledged = unacknowledgedBytesRead)
               }
+              connection.flowControlListener.flowControlWindowChanged(id, readBytes)
             } else if (!finished && errorExceptionToDeliver == null) {
               // Nothing to do. Wait until that changes then try again.
               waitForIo()
