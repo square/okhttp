@@ -22,7 +22,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 /** Runs the web platform ToAscii tests. */
 class WebPlatformToAsciiTest {
-  val commonKnownFailures = setOf(
+  val knownFailures = setOf(
     // OkHttp rejects empty labels.
     "x..xn--zca",
     "x..ß",
@@ -40,6 +40,7 @@ class WebPlatformToAsciiTest {
 
     // OkHttp does not reject invalid Punycode.
     "xn--a",
+    "xn--a.ß",
     "xn--a.xn--zca",
     "xn--a-yoc",
 
@@ -48,28 +49,6 @@ class WebPlatformToAsciiTest {
 
     // OkHttp doesn't reject a U+200D. https://www.rfc-editor.org/rfc/rfc5892.html#appendix-A.2
     "xn--1ug.example",
-  )
-
-  val knownFailuresJvm = commonKnownFailures + setOf(
-    // OkHttp incorrectly does transitional processing, so it maps 'ß' to 'ss'
-    "-x.ß",
-    "ab--c.ß",
-    "x-.ß",
-    "xn--a.ß",
-    "xn--zca.ß",
-    "ශ්‍රී",
-
-    // OkHttp does not reject invalid Punycode.
-    "xn--",
-    "xn--ls8h=",
-
-    // OkHttp returns `xn--mgba3gch31f`, not `xn--mgba3gch31f060k`.
-    "نامه‌ای",
-  )
-
-  val knownFailuresNonJvm = commonKnownFailures + setOf(
-    // OkHttp doesn't reject this invalid punycode.
-    "xn--a.ß",
 
     // OkHttp doesn't implement CheckJoiners.
     "\u200D.example",
@@ -80,11 +59,6 @@ class WebPlatformToAsciiTest {
 
   @Test
   fun test() {
-    val knownFailures = when {
-      isJvm -> knownFailuresJvm
-      else -> knownFailuresNonJvm
-    }
-
     val list = WebPlatformToAsciiData.load()
     val failures = mutableListOf<Throwable>()
     for (entry in list) {

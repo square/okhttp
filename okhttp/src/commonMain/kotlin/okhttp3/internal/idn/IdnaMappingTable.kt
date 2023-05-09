@@ -238,8 +238,8 @@ internal fun String.read14BitInt(index: Int): Int {
 inline fun binarySearch(position: Int, limit: Int, compare: (Int) -> Int): Int {
   // Do the binary searching bit.
   var low = position
-  var high = limit
-  while (low < high) {
+  var high = limit - 1
+  while (low <= high) {
     val mid = (low + high) / 2
     val compareResult = compare(mid)
     when {
@@ -249,17 +249,5 @@ inline fun binarySearch(position: Int, limit: Int, compare: (Int) -> Int): Int {
     }
   }
 
-  // We still might match...
-  return when {
-    low == limit -> return -low - 1 // insertionPoint is after the last element.
-    low == high -> {
-      val compareResult = compare(low)
-      when {
-        compareResult < 0 -> -low - 1 // insertionPoint is before this element.
-        compareResult > 0 -> -low - 2 // insertionPoint is after this element.
-        else -> return low // Match.
-      }
-    }
-    else -> -low - 1 // insertionPoint is before the first element.
-  }
+  return -low - 1 // insertionPoint is before the first element.
 }
