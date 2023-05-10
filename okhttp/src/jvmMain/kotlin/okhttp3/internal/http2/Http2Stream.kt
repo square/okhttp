@@ -390,7 +390,7 @@ class Http2Stream internal constructor(
 
               val unacknowledgedBytesRead = readBytesTotal - readBytesAcknowledged
               if (errorExceptionToDeliver == null &&
-                  unacknowledgedBytesRead >= windowThreshold(connection.okHttpSettings)
+                unacknowledgedBytesRead >= connection.okHttpSettings.initialWindowSize / 2
               ) {
                 // Flow control: notify the peer that we're ready for more data! Only send a
                 // WINDOW_UPDATE if the stream isn't in error.
@@ -656,7 +656,6 @@ class Http2Stream internal constructor(
   }
 
   companion object {
-    internal fun windowThreshold(okHttpSettings: Settings) = okHttpSettings.initialWindowSize / 2
 
     internal const val EMIT_BUFFER_SIZE = 16384L
   }
