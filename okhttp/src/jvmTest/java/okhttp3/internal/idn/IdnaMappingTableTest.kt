@@ -203,8 +203,6 @@ class IdnaMappingTableTest {
   @Test fun comparePlainAndCompactTables() {
     val buffer = Buffer()
     for (codePoint in 0..0x10ffff) {
-      println(codePoint.toHexString())
-
       val allowedByTable = table.map(codePoint, buffer)
       val tableMappedTo = buffer.readUtf8()
 

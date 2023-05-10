@@ -22,6 +22,7 @@ import java.net.UnknownHostException
 import java.util.Arrays
 import okhttp3.internal.http2.Header
 import okio.Buffer
+import okio.FileSystem
 import org.junit.jupiter.api.Assumptions.assumeFalse
 import org.junit.jupiter.api.Assumptions.assumeTrue
 
@@ -122,3 +123,9 @@ object TestUtil {
     block(suppressed.toList())
   }
 }
+
+actual fun getEnv(name: String) = System.getenv(name)
+
+actual val SYSTEM_FILE_SYSTEM = FileSystem.SYSTEM
+
+actual val isJvm = true

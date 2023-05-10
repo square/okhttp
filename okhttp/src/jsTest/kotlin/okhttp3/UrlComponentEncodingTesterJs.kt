@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 The Android Open Source Project
+ * Copyright (C) 2023 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal
+package okhttp3
 
-import java.net.IDN
-import java.util.Locale
+import okhttp3.UrlComponentEncodingTester.Component
 
-internal actual fun idnToAscii(host: String): String? {
-  return try {
-    IDN.toASCII(host).lowercase(Locale.US)
-  } catch (_: IllegalArgumentException) {
-    null
-  }
-}
+actual fun urlComponentEncodingTesterJvmPlatform(
+  component: Component,
+) = UrlComponentEncodingTester.Platform()

@@ -15,18 +15,22 @@
  */
 package okhttp3
 
+import assertk.assertThat
+import assertk.assertions.startsWith
+import kotlin.test.fail
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import okhttp3.internal.format
+import okhttp3.internal.idn.Punycode
 import okio.Buffer
+import okio.ByteString
 import okio.ByteString.Companion.encodeUtf8
-import org.junit.jupiter.api.Assertions.fail
 
-/** Tests how each code point is encoded and decoded in the context of each URL component.  */
-internal class UrlComponentEncodingTester private constructor() {
+/**
+ * Tests how each code point is encoded and decoded in the context of each URL component.
+ *
+ * This supports [HttpUrlTest].
+ */
+class UrlComponentEncodingTester private constructor() {
   private val encodings: MutableMap<Int, Encoding> = LinkedHashMap()
-  private val uriEscapedCodePoints = StringBuilder()
-  private val uriStrippedCodePoints = StringBuilder()
 
   private fun allAscii(encoding: Encoding) = apply {
     for (i in 0..127) {
@@ -78,22 +82,6 @@ internal class UrlComponentEncodingTester private constructor() {
     encodings[UNICODE_4] = encoding
   }
 
-  /**
-   * Configure code points to be escaped for conversion to `java.net.URI`. That class is more
-   * strict than the others.
-   */
-  fun escapeForUri(vararg codePoints: Int) = apply {
-    uriEscapedCodePoints.append(String(codePoints, 0, codePoints.size))
-  }
-
-  /**
-   * Configure code points to be stripped in conversion to `java.net.URI`. That class is more
-   * strict than the others.
-   */
-  fun stripForUri(vararg codePoints: Int) = apply {
-    uriStrippedCodePoints.append(String(codePoints, 0, codePoints.size))
-  }
-
   fun test(component: Component) = apply {
     for ((codePoint, encoding) in encodings) {
       val codePointString = Encoding.IDENTITY.encode(codePoint)
@@ -101,13 +89,17 @@ internal class UrlComponentEncodingTester private constructor() {
         testForbidden(codePoint, codePointString, component)
         continue
       }
+      if (encoding == Encoding.PUNYCODE) {
+        testPunycode(codePointString, component)
+        continue
+      }
       testEncodeAndDecode(codePoint, codePointString, component)
       if (encoding == Encoding.SKIP) continue
       testParseOriginal(codePoint, codePointString, encoding, component)
       testParseAlreadyEncoded(codePoint, encoding, component)
-      testToUrl(codePoint, encoding, component)
-      testFromUrl(codePoint, encoding, component)
-      testUri(codePoint, codePointString, encoding, component)
+
+      val platform = urlComponentEncodingTesterJvmPlatform(component)
+      platform.test(codePoint, codePointString, encoding, component)
     }
   }
 
@@ -117,12 +109,7 @@ internal class UrlComponentEncodingTester private constructor() {
     val url = urlString.toHttpUrl()
     val actual = component.encodedValue(url)
     if (actual != expected) {
-      fail<Any>(
-        format(
-          "Encoding %s %#x using %s: '%s' != '%s'",
-          component, codePoint, encoding, actual, expected
-        )
-      )
+        fail("Encoding $component $codePoint using $encoding: '$actual' != '$expected'")
     }
   }
 
@@ -133,12 +120,15 @@ internal class UrlComponentEncodingTester private constructor() {
     val expected = component.canonicalize(codePointString)
     val actual = component[url]
     if (expected != actual) {
-      fail<Any>(format("Roundtrip %s %#x %s", component, codePoint, url))
+      fail("Roundtrip $component $codePoint $url $expected != $actual")
     }
   }
 
   private fun testParseOriginal(
-    codePoint: Int, codePointString: String, encoding: Encoding, component: Component
+    codePoint: Int,
+    codePointString: String,
+    encoding: Encoding,
+    component: Component,
   ) {
     val expected = encoding.encode(codePoint)
     if (encoding !== Encoding.PERCENT) return
@@ -146,67 +136,7 @@ internal class UrlComponentEncodingTester private constructor() {
     val url = urlString.toHttpUrl()
     val actual = component.encodedValue(url)
     if (actual != expected) {
-      fail<Any>(
-        format(
-          "Encoding %s %#02x using %s: '%s' != '%s'",
-          component, codePoint, encoding, actual, expected
-        )
-      )
-    }
-  }
-
-  private fun testToUrl(codePoint: Int, encoding: Encoding, component: Component) {
-    val encoded = encoding.encode(codePoint)
-    val httpUrl = component.urlString(encoded).toHttpUrl()
-    val javaNetUrl = httpUrl.toUrl()
-    if (javaNetUrl.toString() != javaNetUrl.toString()) {
-      fail<Any>(format("Encoding %s %#x using %s", component, codePoint, encoding))
-    }
-  }
-
-  private fun testFromUrl(codePoint: Int, encoding: Encoding, component: Component) {
-    val encoded = encoding.encode(codePoint)
-    val httpUrl = component.urlString(encoded).toHttpUrl()
-    val toAndFromJavaNetUrl = httpUrl.toUrl().toHttpUrlOrNull()
-    if (toAndFromJavaNetUrl != httpUrl) {
-      fail<Any>(format("Encoding %s %#x using %s", component, codePoint, encoding))
-    }
-  }
-
-  private fun testUri(
-    codePoint: Int, codePointString: String, encoding: Encoding, component: Component
-  ) {
-    if (codePoint == '%'.code) return
-    val encoded = encoding.encode(codePoint)
-    val httpUrl = component.urlString(encoded).toHttpUrl()
-    val uri = httpUrl.toUri()
-    val toAndFromUri = uri.toHttpUrlOrNull()
-    val uriStripped = uriStrippedCodePoints.indexOf(codePointString) != -1
-    if (uriStripped) {
-      if (uri.toString() != component.urlString("")) {
-        fail<Any>(format("Encoding %s %#x using %s", component, codePoint, encoding))
-      }
-      return
-    }
-
-    // If the URI has more escaping than the HttpURL, check that the decoded values still match.
-    val uriEscaped = uriEscapedCodePoints.indexOf(codePointString) != -1
-    if (uriEscaped) {
-      if (uri.toString() == httpUrl.toString()) {
-        fail<Any>(format("Encoding %s %#x using %s", component, codePoint, encoding))
-      }
-      if (component[toAndFromUri!!] != codePointString) {
-        fail<Any>(format("Encoding %s %#x using %s", component, codePoint, encoding))
-      }
-      return
-    }
-
-    // Check that the URI and HttpURL have the exact same escaping.
-    if (toAndFromUri != httpUrl) {
-      fail<Any>(format("Encoding %s %#x using %s", component, codePoint, encoding))
-    }
-    if (uri.toString() != httpUrl.toString()) {
-      fail<Any>(format("Encoding %s %#x using %s", component, codePoint, encoding))
+      fail("Encoding $component $codePoint using $encoding: '$actual' != '$expected'")
     }
   }
 
@@ -214,15 +144,22 @@ internal class UrlComponentEncodingTester private constructor() {
     val builder = "http://host/".toHttpUrl().newBuilder()
     try {
       component[builder] = codePointString
-      fail<Any>(format("Accepted forbidden code point %s %#x", component, codePoint))
+      fail("Accepted forbidden code point $component $codePoint")
     } catch (expected: IllegalArgumentException) {
     }
+  }
+
+  private fun testPunycode(codePointString: String, component: Component) {
+    val builder = "http://host/".toHttpUrl().newBuilder()
+    component[builder] = codePointString
+    val url = builder.build()
+    assertThat(url.host).startsWith(Punycode.PREFIX_STRING)
   }
 
   enum class Encoding {
     IDENTITY {
       override fun encode(codePoint: Int): String {
-        return String(intArrayOf(codePoint), 0, 1)
+        return String(codePoint)
       }
     },
     PERCENT {
@@ -230,7 +167,8 @@ internal class UrlComponentEncodingTester private constructor() {
         val utf8 = IDENTITY.encode(codePoint).encodeUtf8()
         val percentEncoded = Buffer()
         for (i in 0 until utf8.size) {
-          percentEncoded.writeUtf8(format("%%%02X", utf8[i].toInt() and 0xff))
+          percentEncoded.writeUtf8("%")
+            .writeUtf8(ByteString.of(utf8[i]).hex().uppercase())
         }
         return percentEncoded.readUtf8()
       }
@@ -238,6 +176,9 @@ internal class UrlComponentEncodingTester private constructor() {
 
     /** URLs that contain this character in this component are invalid.  */
     FORBIDDEN,
+
+    /** Hostnames that contain this character are encoded with punycode.  */
+    PUNYCODE,
 
     /** This code point is special and should not be tested.  */
     SKIP;
@@ -351,13 +292,24 @@ internal class UrlComponentEncodingTester private constructor() {
     open fun canonicalize(s: String): String = s
   }
 
+  /** Tests integration between HttpUrl and the host platform's built-in URL classes, if any. */
+  open class Platform {
+    open fun test(
+      codePoint: Int,
+      codePointString: String,
+      encoding: Encoding,
+      component: Component,
+    ) {
+    }
+  }
+
   companion object {
-    /** Arbitrary code point that's 2 bytes in UTF-8. */
-    private const val UNICODE_2 = 0x07ff
-    /** Arbitrary code point that's 3 bytes in UTF-8. */
-    private const val UNICODE_3 = 0xffff
-    /** Arbitrary code point that's 4 bytes in UTF-8. */
-    private const val UNICODE_4 = 0x10ffff
+    /** Arbitrary code point that's 2 bytes in UTF-8 and valid in IdnaMappingTable.txt. */
+    private const val UNICODE_2 = 0x1a5
+    /** Arbitrary code point that's 3 bytes in UTF-8 and valid in IdnaMappingTable.txt. */
+    private const val UNICODE_3 = 0x2202
+    /** Arbitrary code point that's 4 bytes in UTF-8 and valid in IdnaMappingTable.txt. */
+    private const val UNICODE_4 = 0x1d11e
 
     /**
      * Returns a new instance configured with a default encode set for the ASCII range. The specific
@@ -366,7 +318,7 @@ internal class UrlComponentEncodingTester private constructor() {
      *
      * See https://url.spec.whatwg.org/#percent-encoded-bytes
      */
-    @JvmStatic fun newInstance(): UrlComponentEncodingTester {
+    fun newInstance(): UrlComponentEncodingTester {
       return UrlComponentEncodingTester()
         .allAscii(Encoding.IDENTITY)
         .nonPrintableAscii(Encoding.PERCENT)
@@ -396,3 +348,7 @@ internal class UrlComponentEncodingTester private constructor() {
     }
   }
 }
+
+expect fun urlComponentEncodingTesterJvmPlatform(
+  component: UrlComponentEncodingTester.Component,
+): UrlComponentEncodingTester.Platform

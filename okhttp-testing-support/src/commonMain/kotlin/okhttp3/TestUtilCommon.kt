@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 The Android Open Source Project
+ * Copyright (C) 2023 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal
+package okhttp3
 
-import java.net.IDN
-import java.util.Locale
+import okio.Buffer
+import okio.FileSystem
+import okio.Path
+import okio.Path.Companion.toPath
 
-internal actual fun idnToAscii(host: String): String? {
-  return try {
-    IDN.toASCII(host).lowercase(Locale.US)
-  } catch (_: IllegalArgumentException) {
-    null
+val okHttpRoot: Path
+  get() = getEnv("OKHTTP_ROOT")!!.toPath()
+
+expect val SYSTEM_FILE_SYSTEM: FileSystem
+
+expect fun getEnv(name: String): String?
+
+expect val isJvm: Boolean
+
+fun String(vararg codePoints: Int): String {
+  val buffer = Buffer()
+  for (codePoint in codePoints) {
+    buffer.writeUtf8CodePoint(codePoint)
   }
+  return buffer.readUtf8()
 }

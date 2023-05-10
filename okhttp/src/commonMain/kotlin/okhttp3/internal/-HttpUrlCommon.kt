@@ -275,8 +275,8 @@ internal object CommonHttpUrl {
    * address.
    */
   fun HttpUrl.Builder.commonHost(host: String) = apply {
-    val encoded = host.percentDecode().toCanonicalHost() ?: throw IllegalArgumentException(
-      "unexpected host: $host")
+    val encoded = host.percentDecode().toCanonicalHost()
+      ?: throw IllegalArgumentException("unexpected host: $host")
     this.host = encoded
   }
 
