@@ -656,7 +656,6 @@ class Http2Stream internal constructor(
   }
 
   companion object {
-
     internal const val EMIT_BUFFER_SIZE = 16384L
   }
 
