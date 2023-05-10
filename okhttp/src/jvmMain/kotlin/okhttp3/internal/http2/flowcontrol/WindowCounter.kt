@@ -1,34 +1,28 @@
 package okhttp3.internal.http2.flowcontrol
 
-import java.util.concurrent.atomic.AtomicLong
-
 class WindowCounter(
   val streamId: Int
 ) {
   /** The total number of bytes consumed. */
-  private val _total: AtomicLong = AtomicLong(0)
+  var total: Long = 0L
+    private set
 
   /** The total number of bytes acknowledged by outgoing `WINDOW_UPDATE` frames. */
-  private val _acknowledged: AtomicLong = AtomicLong(0)
-
-  val total: Long
-    get() = _total.get()
-
-  val acknowledged: Long
-    get() = _acknowledged.get()
+  var acknowledged: Long = 0L
+    private set
 
   val unacknowledged: Long
-    @Synchronized get() = _total.get() - _acknowledged.get()
+    @Synchronized get() = total - acknowledged
 
   @Synchronized
-  fun increase(total: Long = 0, acknowledged: Long = 0) {
+  fun update(total: Long = 0, acknowledged: Long = 0) {
     check(total >= 0)
     check(acknowledged >= 0)
 
-    this._total.addAndGet(total)
-    this._acknowledged.addAndGet(acknowledged)
+    this.total += total
+    this.acknowledged += acknowledged
 
-    check(this._acknowledged.get() <= this._total.get())
+    check(this.acknowledged <= this.total)
   }
 
   override fun toString(): String {

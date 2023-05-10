@@ -187,11 +187,11 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
   }
 
   @Synchronized internal fun updateConnectionFlowControl(read: Long) {
-    readBytes.increase(total = read)
+    readBytes.update(total = read)
     val readBytesToAcknowledge = readBytes.unacknowledged
     if (readBytesToAcknowledge >= okHttpSettings.initialWindowSize / 2) {
       writeWindowUpdateLater(0, readBytesToAcknowledge)
-      readBytes.increase(acknowledged = readBytesToAcknowledge)
+      readBytes.update(acknowledged = readBytesToAcknowledge)
     }
     flowControlListener.receivingConnectionWindowChanged(readBytes)
   }

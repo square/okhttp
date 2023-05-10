@@ -382,7 +382,7 @@ class Http2Stream internal constructor(
             } else if (readBuffer.size > 0L) {
               // Prepare to read bytes. Start by moving them to the caller's buffer.
               readBytesDelivered = readBuffer.read(sink, minOf(byteCount, readBuffer.size))
-              readBytes.increase(total = readBytesDelivered)
+              readBytes.update(total = readBytesDelivered)
 
               val unacknowledgedBytesRead = readBytes.unacknowledged
               if (errorExceptionToDeliver == null &&
@@ -390,9 +390,8 @@ class Http2Stream internal constructor(
                 // Flow control: notify the peer that we're ready for more data! Only send a
                 // WINDOW_UPDATE if the stream isn't in error.
                 connection.writeWindowUpdateLater(id, unacknowledgedBytesRead)
-                readBytes.increase(acknowledged = unacknowledgedBytesRead)
+                readBytes.update(acknowledged = unacknowledgedBytesRead)
               }
-              connection.flowControlListener.receivingStreamWindowChanged(id, readBytes, readBuffer.size)
             } else if (!finished && errorExceptionToDeliver == null) {
               // Nothing to do. Wait until that changes then try again.
               waitForIo()
@@ -404,6 +403,7 @@ class Http2Stream internal constructor(
             }
           }
         }
+        connection.flowControlListener.receivingStreamWindowChanged(id, readBytes, readBuffer.size)
 
         // 2. Do it outside of the synchronized block and timeout.
 
