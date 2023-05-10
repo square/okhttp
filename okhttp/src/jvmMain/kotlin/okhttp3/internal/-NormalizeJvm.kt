@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Square, Inc.
+ * Copyright (C) 2012 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,5 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package okhttp3.internal
+
+import java.text.Normalizer
+import java.text.Normalizer.Form.NFC
+
+internal actual fun normalizeNfc(string: String): String =
+  Normalizer.normalize(string, NFC)

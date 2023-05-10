@@ -36,6 +36,7 @@ kotlin {
   sourceSets {
     commonMain {
       kotlin.srcDir("$buildDir/generated/sources/kotlinTemplates")
+      kotlin.srcDir("$buildDir/generated/sources/idnaMappingTable")
       dependencies {
         api(libs.squareup.okio)
       }
@@ -82,7 +83,6 @@ kotlin {
       }
     }
     getByName("jvmTest") {
-      kotlin.srcDir("$buildDir/generated/sources/idnaMappingTable")
       dependencies {
         dependsOn(commonTest)
         implementation(projects.okhttpTls)
@@ -113,7 +113,6 @@ kotlin {
       }
 
       getByName("jsMain") {
-        kotlin.srcDir("$buildDir/generated/sources/idnaMappingTable")
         dependencies {
           dependsOn(nonJvmMain)
           api(libs.squareup.okio)

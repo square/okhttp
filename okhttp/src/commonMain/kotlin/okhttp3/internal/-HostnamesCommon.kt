@@ -15,6 +15,8 @@
  */
 package okhttp3.internal
 
+import okhttp3.internal.idn.IDNA_MAPPING_TABLE
+import okhttp3.internal.idn.Punycode
 import okio.Buffer
 
 /**
@@ -294,16 +296,40 @@ internal fun String.toCanonicalHost(): String? {
 
   val result = idnToAscii(host) ?: return null
   if (result.isEmpty()) return null
+  if (result.containsInvalidHostnameAsciiCodes()) return null
+  if (result.containsInvalidLabelLengths()) return null
 
-  return if (result.containsInvalidHostnameAsciiCodes()) {
-    // The IDN ToASCII result contains illegal characters.
-    null
-  } else if (result.containsInvalidLabelLengths()) {
-    // The IDN ToASCII result contains invalid labels.
-    null
-  } else {
-    result
-  }
+  return result
 }
 
-internal expect fun idnToAscii(host: String): String?
+internal fun idnToAscii(host: String): String? {
+  val bufferA = Buffer().writeUtf8(host)
+  val bufferB = Buffer()
+
+  // 1. Map, from bufferA to bufferB.
+  while (!bufferA.exhausted()) {
+    val codePoint = bufferA.readUtf8CodePoint()
+    if(!IDNA_MAPPING_TABLE.map(codePoint, bufferB)) return null
+  }
+
+  // 2. Normalize, from bufferB to bufferA.
+  val normalized = normalizeNfc(bufferB.readUtf8())
+  bufferA.writeUtf8(normalized)
+
+  // 3. For each label, convert/validate Punycode.
+  val decoded = Punycode.decode(bufferA.readUtf8()) ?: return null
+
+  // 4.1 Validate.
+
+  // Must be NFC.
+  if (decoded != normalizeNfc(decoded)) return null
+
+  // TODO: Must not begin with a combining mark.
+  // TODO: Each character must be 'valid' or 'deviation'. Not mapped.
+  // TODO: CheckJoiners from IDNA 2008
+  // TODO: CheckBidi from IDNA 2008, RFC 5893, Section 2.
+
+  return Punycode.encode(decoded)
+}
+
+internal expect fun normalizeNfc(string: String): String
