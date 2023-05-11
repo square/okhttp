@@ -16,7 +16,8 @@
 package okhttp3
 
 import kotlin.jvm.JvmName
-import kotlin.jvm.JvmStatic
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 /**
  * A uniform resource locator (URL) with a scheme of either `http` or `https`. Use this class to
@@ -501,6 +502,11 @@ expect class HttpUrl internal constructor(
 
   internal val url: String
 
+  /**
+   * Alternating, decoded query names and values, or null for no query. Names may be empty or
+   * non-empty, but never null. Values are null if the name has no corresponding '=' separator, or
+   * empty, or non-empty.
+   */
   internal val queryNamesAndValues: List<String?>?
 
   /**
@@ -595,6 +601,9 @@ expect class HttpUrl internal constructor(
     internal var encodedQueryNamesAndValues: MutableList<String?>?
     internal var encodedFragment: String?
 
+    /**
+     * @param scheme either "http" or "https".
+     */
     fun scheme(scheme: String): Builder
     fun username(username: String): Builder
 
@@ -604,6 +613,10 @@ expect class HttpUrl internal constructor(
 
     fun encodedPassword(encodedPassword: String): Builder
 
+    /**
+     * @param host either a regular hostname, International Domain Name, IPv4 address, or IPv6
+     * address.
+     */
     fun host(host: String): Builder
     fun port(port: Int): Builder
 
