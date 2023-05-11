@@ -18,14 +18,15 @@ package okhttp3
 import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.containsExactlyInAnyOrder
+import assertk.assertions.hasMessage
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.fail
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.UrlComponentEncodingTester.Encoding
 
 @Suppress("HttpUrlsUsage") // Don't warn if we should be using https://.
@@ -35,7 +36,19 @@ open class HttpUrlTest {
   }
 
   protected open fun assertInvalid(string: String, exceptionMessage: String?) {
-    assertThat(string.toHttpUrlOrNull()).isNull()
+    try {
+      val result = string.toHttpUrl()
+      if (exceptionMessage != null) {
+        fail("Expected failure with $exceptionMessage but got $result")
+      } else {
+        fail("Expected failure but got $result")
+      }
+    } catch(iae: IllegalArgumentException) {
+      iae.printStackTrace()
+      if (exceptionMessage != null) {
+        assertThat(iae).hasMessage(exceptionMessage)
+      }
+    }
   }
 
   @Test

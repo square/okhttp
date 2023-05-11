@@ -20,7 +20,6 @@ okhttp3.FormBodyTest
 okhttp3.HandshakeTest
 okhttp3.HeadersKotlinTest
 okhttp3.HeadersTest
-okhttp3.HttpUrlGetTest
 okhttp3.HttpUrlTest
 okhttp3.InsecureForHostTest
 okhttp3.InterceptorTest
