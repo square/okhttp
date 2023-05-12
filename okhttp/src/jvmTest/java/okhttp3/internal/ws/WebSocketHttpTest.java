@@ -51,6 +51,8 @@ import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.ByteString;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -866,6 +868,43 @@ public final class WebSocketHttpTest {
     WebSocket webSocket = client.newWebSocket(request, clientListener);
     webSocket.send("hello");
     webSocket.close(1000, null);
+  }
+
+  /** https://github.com/square/okhttp/issues/7768 */
+  @Test public void reconnectingToNonWebSocket() throws InterruptedException {
+    for (int i = 0; i < 30; i++) {
+      webServer.enqueue(new MockResponse.Builder()
+        .bodyDelay(100, TimeUnit.MILLISECONDS)
+        .body("Wrong endpoint")
+        .code(401)
+        .build());
+    }
+
+    Request request = new Request.Builder()
+      .url(webServer.url("/"))
+      .build();
+
+    CountDownLatch attempts = new CountDownLatch(20);
+
+    WebSocketListener reconnectOnFailure = new WebSocketListener() {
+      @Override
+      public void onFailure(@NotNull WebSocket webSocket, @NotNull Throwable t, @Nullable Response response) {
+        if (attempts.getCount() > 0) {
+          clientListener.setNextEventDelegate(this);
+          client.newWebSocket(request, clientListener);
+          attempts.countDown();
+        }
+      }
+    };
+
+    clientListener.setNextEventDelegate(reconnectOnFailure);
+
+    WebSocket webSocket = client.newWebSocket(request, clientListener);
+
+    attempts.await();
+
+    client.dispatcher().cancelAll();
+    client.connectionPool().evictAll();
   }
 
   @Test public void compressedMessages() throws Exception {
