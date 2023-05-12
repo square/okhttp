@@ -885,7 +885,7 @@ public final class WebSocketHttpTest {
 
     WebSocketListener reconnectOnFailure = new WebSocketListener() {
       @Override
-      public void onFailure(@NotNull WebSocket webSocket, @NotNull Throwable t, @Nullable Response response) {
+      public void onFailure(WebSocket webSocket, Throwable t, Response response) {
         if (attempts.getCount() > 0) {
           clientListener.setNextEventDelegate(this);
           client.newWebSocket(request, clientListener);
