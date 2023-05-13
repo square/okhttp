@@ -910,9 +910,6 @@ public final class WebSocketHttpTest {
     }
     client.dispatcher().cancelAll();
     client.connectionPool().evictAll();
-
-    ConnectionEvent.ConnectionClosed connectionClosed =
-      clientTestRule.getConnectionListener().removeUpToEvent(ConnectionEvent.ConnectionClosed.class);
   }
 
   @Test public void compressedMessages() throws Exception {
