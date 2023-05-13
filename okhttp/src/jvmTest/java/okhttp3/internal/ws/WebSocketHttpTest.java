@@ -22,6 +22,8 @@ import java.net.HttpURLConnection;
 import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -32,7 +34,18 @@ import mockwebserver3.MockWebServer;
 import mockwebserver3.RecordedRequest;
 import mockwebserver3.SocketPolicy.KeepOpen;
 import mockwebserver3.SocketPolicy.NoResponse;
-import okhttp3.*;
+import okhttp3.ConnectionEvent;
+import okhttp3.OkHttpClient;
+import okhttp3.OkHttpClientTestRule;
+import okhttp3.Protocol;
+import okhttp3.RecordingEventListener;
+import okhttp3.RecordingHostnameVerifier;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.TestLogHandler;
+import okhttp3.TestUtil;
+import okhttp3.WebSocket;
+import okhttp3.WebSocketListener;
 import okhttp3.internal.UnreadableResponseBody;
 import okhttp3.internal.concurrent.TaskRunner;
 import okhttp3.testing.Flaky;
@@ -873,12 +886,14 @@ public final class WebSocketHttpTest {
 
     CountDownLatch attempts = new CountDownLatch(20);
 
+    List<WebSocket> webSockets = new ArrayList<>();
+
     WebSocketListener reconnectOnFailure = new WebSocketListener() {
       @Override
       public void onFailure(WebSocket webSocket, Throwable t, Response response) {
         if (attempts.getCount() > 0) {
           clientListener.setNextEventDelegate(this);
-          client.newWebSocket(request, clientListener);
+          webSockets.add(client.newWebSocket(request, clientListener));
           attempts.countDown();
         }
       }
@@ -886,11 +901,13 @@ public final class WebSocketHttpTest {
 
     clientListener.setNextEventDelegate(reconnectOnFailure);
 
-    WebSocket webSocket = client.newWebSocket(request, clientListener);
+    webSockets.add(client.newWebSocket(request, clientListener));
 
     attempts.await();
 
-    webSocket.cancel();
+    for (WebSocket webSocket: webSockets) {
+      webSocket.cancel();
+    }
     client.dispatcher().cancelAll();
     client.connectionPool().evictAll();
 
