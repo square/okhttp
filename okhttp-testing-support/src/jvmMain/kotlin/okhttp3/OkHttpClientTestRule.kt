@@ -190,7 +190,9 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
         println("After delay: " + connectionPool.connectionCount())
       }
 
-      assertEquals(0, connectionPool.connectionCount())
+      assertEquals(0, connectionPool.connectionCount()) {
+        "Still ${connectionPool.connectionCount()} connections open"
+      }
     }
   }
 
