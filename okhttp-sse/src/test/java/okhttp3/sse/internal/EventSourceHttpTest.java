@@ -81,9 +81,11 @@ public final class EventSourceHttpTest {
         .build());
     listener.enqueueCancel(); // Will cancel in onOpen().
 
-    newEventSource();
+    EventSource eventSource = newEventSource();
     listener.assertOpen();
     listener.assertFailure("canceled");
+
+    eventSource.cancel();
   }
 
   @Test public void badContentType() {
