@@ -375,6 +375,8 @@ public final class WebSocketHttpTest {
 
     clientListener.assertFailure(101, null, ProtocolException.class,
         "Expected 'Connection' header value 'Upgrade' but was 'Downgrade'");
+
+    ensureAllWebSocketsClosed();
   }
 
   @Test public void missingUpgradeHeader() throws IOException {
@@ -402,6 +404,8 @@ public final class WebSocketHttpTest {
 
     clientListener.assertFailure(101, null, ProtocolException.class,
         "Expected 'Upgrade' header value 'websocket' but was 'Pepsi'");
+
+    ensureAllWebSocketsClosed();
   }
 
   @Test public void missingMagicHeader() throws IOException {
