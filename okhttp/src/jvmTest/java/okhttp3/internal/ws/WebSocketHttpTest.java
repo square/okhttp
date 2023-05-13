@@ -358,10 +358,12 @@ public final class WebSocketHttpTest {
             .socketPolicy(SocketPolicy.DisconnectAtStart.INSTANCE)
             .build());
 
-    newWebSocket();
+    RealWebSocket webSocket = newWebSocket();
 
     clientListener.assertFailure(101, null, ProtocolException.class,
         "Expected 'Connection' header value 'Upgrade' but was 'null'");
+
+    webSocket.cancel();
   }
 
   @Test public void wrongConnectionHeader() throws IOException {
@@ -375,10 +377,12 @@ public final class WebSocketHttpTest {
             .socketPolicy(SocketPolicy.DisconnectAtStart.INSTANCE)
             .build());
 
-    newWebSocket();
+    RealWebSocket webSocket = newWebSocket();
 
     clientListener.assertFailure(101, null, ProtocolException.class,
         "Expected 'Connection' header value 'Upgrade' but was 'Downgrade'");
+
+    webSocket.cancel();
   }
 
   @Test public void missingUpgradeHeader() throws IOException {
@@ -391,10 +395,12 @@ public final class WebSocketHttpTest {
             .socketPolicy(SocketPolicy.DisconnectAtStart.INSTANCE)
             .build());
 
-    newWebSocket();
+    RealWebSocket webSocket = newWebSocket();
 
     clientListener.assertFailure(101, null, ProtocolException.class,
         "Expected 'Upgrade' header value 'websocket' but was 'null'");
+
+    webSocket.cancel();
   }
 
   @Test public void wrongUpgradeHeader() throws IOException {
@@ -408,10 +414,12 @@ public final class WebSocketHttpTest {
             .socketPolicy(SocketPolicy.DisconnectAtStart.INSTANCE)
             .build());
 
-    newWebSocket();
+    RealWebSocket webSocket = newWebSocket();
 
     clientListener.assertFailure(101, null, ProtocolException.class,
         "Expected 'Upgrade' header value 'websocket' but was 'Pepsi'");
+
+    webSocket.cancel();
   }
 
   @Test public void missingMagicHeader() throws IOException {
@@ -424,10 +432,12 @@ public final class WebSocketHttpTest {
             .socketPolicy(SocketPolicy.DisconnectAtStart.INSTANCE)
             .build());
 
-    newWebSocket();
+    RealWebSocket webSocket = newWebSocket();
 
     clientListener.assertFailure(101, null, ProtocolException.class,
         "Expected 'Sec-WebSocket-Accept' header value 'ujmZX4KXZqjwy6vi1aQFH5p4Ygk=' but was 'null'");
+
+    webSocket.cancel();
   }
 
   @Test public void wrongMagicHeader() throws IOException {
@@ -441,10 +451,12 @@ public final class WebSocketHttpTest {
             .socketPolicy(SocketPolicy.DisconnectAtStart.INSTANCE)
             .build());
 
-    newWebSocket();
+    RealWebSocket webSocket = newWebSocket();
 
     clientListener.assertFailure(101, null, ProtocolException.class,
         "Expected 'Sec-WebSocket-Accept' header value 'ujmZX4KXZqjwy6vi1aQFH5p4Ygk=' but was 'magic'");
+
+    webSocket.cancel();
   }
 
   @Test public void clientIncludesForbiddenHeader() throws IOException {
