@@ -23,7 +23,6 @@ import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
@@ -35,7 +34,7 @@ import mockwebserver3.MockWebServer;
 import mockwebserver3.RecordedRequest;
 import mockwebserver3.SocketPolicy.KeepOpen;
 import mockwebserver3.SocketPolicy.NoResponse;
-import okhttp3.ConnectionEvent;
+import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
 import okhttp3.OkHttpClientTestRule;
 import okhttp3.Protocol;
@@ -92,8 +91,6 @@ public final class WebSocketHttpTest {
         return response;
       })
       .build();
-
-  private List<WebSocket> createdWebSockets = Collections.synchronizedList(new ArrayList<>());
 
   private OkHttpClientTestRule configureClientTestRule() {
     OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
@@ -360,8 +357,6 @@ public final class WebSocketHttpTest {
 
     clientListener.assertFailure(101, null, ProtocolException.class,
         "Expected 'Connection' header value 'Upgrade' but was 'null'");
-
-    ensureAllWebSocketsClosed();
   }
 
   @Test public void wrongConnectionHeader() throws IOException {
@@ -375,8 +370,6 @@ public final class WebSocketHttpTest {
 
     clientListener.assertFailure(101, null, ProtocolException.class,
         "Expected 'Connection' header value 'Upgrade' but was 'Downgrade'");
-
-    ensureAllWebSocketsClosed();
   }
 
   @Test public void missingUpgradeHeader() throws IOException {
@@ -389,8 +382,6 @@ public final class WebSocketHttpTest {
 
     clientListener.assertFailure(101, null, ProtocolException.class,
         "Expected 'Upgrade' header value 'websocket' but was 'null'");
-
-    ensureAllWebSocketsClosed();
   }
 
   @Test public void wrongUpgradeHeader() throws IOException {
@@ -404,8 +395,6 @@ public final class WebSocketHttpTest {
 
     clientListener.assertFailure(101, null, ProtocolException.class,
         "Expected 'Upgrade' header value 'websocket' but was 'Pepsi'");
-
-    ensureAllWebSocketsClosed();
   }
 
   @Test public void missingMagicHeader() throws IOException {
@@ -883,6 +872,11 @@ public final class WebSocketHttpTest {
 
   /** https://github.com/square/okhttp/issues/7768 */
   @Test public void reconnectingToNonWebSocket() throws InterruptedException {
+    // Async test is problematic
+    client = this.client.newBuilder()
+            .connectionPool(new ConnectionPool())
+            .build();
+
     for (int i = 0; i < 30; i++) {
       webServer.enqueue(new MockResponse.Builder()
         .bodyDelay(100, TimeUnit.MILLISECONDS)
@@ -891,14 +885,20 @@ public final class WebSocketHttpTest {
         .build());
     }
 
+    Request request = new Request.Builder()
+      .url(webServer.url("/"))
+      .build();
+
     CountDownLatch attempts = new CountDownLatch(20);
+
+    List<WebSocket> webSockets = new ArrayList<>();
 
     WebSocketListener reconnectOnFailure = new WebSocketListener() {
       @Override
       public void onFailure(WebSocket webSocket, Throwable t, Response response) {
         if (attempts.getCount() > 0) {
           clientListener.setNextEventDelegate(this);
-          newWebSocket();
+          webSockets.add(client.newWebSocket(request, clientListener));
           attempts.countDown();
         }
       }
@@ -906,26 +906,15 @@ public final class WebSocketHttpTest {
 
     clientListener.setNextEventDelegate(reconnectOnFailure);
 
-    newWebSocket();
+    webSockets.add(client.newWebSocket(request, clientListener));
 
     attempts.await();
 
-    ensureAllWebSocketsClosed();
-  }
-
-  private void ensureAllWebSocketsClosed() {
-    for (WebSocket webSocket: createdWebSockets) {
+    for (WebSocket webSocket: webSockets) {
       webSocket.cancel();
     }
     client.dispatcher().cancelAll();
     client.connectionPool().evictAll();
-
-    if (client.connectionPool().connectionCount() > 0) {
-      // Sync websockets can be created async
-      for (WebSocket webSocket : createdWebSockets) {
-        webSocket.cancel();
-      }
-    }
   }
 
   @Test public void compressedMessages() throws Exception {
@@ -1063,7 +1052,6 @@ public final class WebSocketHttpTest {
     RealWebSocket webSocket = new RealWebSocket(TaskRunner.INSTANCE, request, clientListener,
         random, client.pingIntervalMillis(), null, 0L);
     webSocket.connect(client);
-    createdWebSockets.add(webSocket);
     return webSocket;
   }
 
