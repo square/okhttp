@@ -170,9 +170,9 @@ class RealWebSocket(
           checkUpgradeSuccess(response, exchange)
           streams = exchange!!.newWebSocketStreams()
         } catch (e: IOException) {
-          exchange?.webSocketUpgradeFailed()
           failWebSocket(e, response)
           response.closeQuietly()
+          exchange?.webSocketUpgradeFailed()
           return
         }
 
