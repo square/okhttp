@@ -902,6 +902,9 @@ public final class WebSocketHttpTest {
 
     client.dispatcher().cancelAll();
     client.connectionPool().evictAll();
+
+    // Flag this earlier, but shouldn't be needed
+    clientTestRule.ensureAllConnectionsReleased();
   }
 
   @Test public void compressedMessages() throws Exception {
