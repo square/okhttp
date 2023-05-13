@@ -900,8 +900,11 @@ public final class WebSocketHttpTest {
 
     attempts.await();
 
+    webSocket.cancel();
+
     client.dispatcher().cancelAll();
     client.connectionPool().evictAll();
+
 
     // Flag this earlier, but shouldn't be needed
     clientTestRule.ensureAllConnectionsReleased();
