@@ -28,13 +28,6 @@ import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import mockwebserver3.Dispatcher;
-import mockwebserver3.MockResponse;
-import mockwebserver3.MockWebServer;
-import mockwebserver3.RecordedRequest;
-import mockwebserver3.SocketPolicy;
-import mockwebserver3.SocketPolicy.KeepOpen;
-import mockwebserver3.SocketPolicy.NoResponse;
 import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
 import okhttp3.OkHttpClientTestRule;
@@ -326,10 +319,8 @@ public final class WebSocketHttpTest {
         .setResponseCode(101)
         .setHeader("Upgrade", "websocket")
         .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk=")
-        .build());
-    webServer.enqueue(new MockResponse.Builder()
-            .socketPolicy(SocketPolicy.DisconnectAtStart.INSTANCE)
-            .build());
+    );
+    webServer.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START));
 
     RealWebSocket webSocket = newWebSocket();
 
@@ -344,11 +335,8 @@ public final class WebSocketHttpTest {
         .setResponseCode(101)
         .setHeader("Upgrade", "websocket")
         .setHeader("Connection", "Downgrade")
-        .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk=")
-        .build());
-    webServer.enqueue(new MockResponse.Builder()
-            .socketPolicy(SocketPolicy.DisconnectAtStart.INSTANCE)
-            .build());
+        .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk="));
+    webServer.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START));
 
     RealWebSocket webSocket = newWebSocket();
 
@@ -362,11 +350,8 @@ public final class WebSocketHttpTest {
     webServer.enqueue(new MockResponse()
         .setResponseCode(101)
         .setHeader("Connection", "Upgrade")
-        .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk=")
-        .build());
-    webServer.enqueue(new MockResponse.Builder()
-            .socketPolicy(SocketPolicy.DisconnectAtStart.INSTANCE)
-            .build());
+        .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk="));
+    webServer.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START));
 
     RealWebSocket webSocket = newWebSocket();
 
@@ -381,11 +366,8 @@ public final class WebSocketHttpTest {
         .setResponseCode(101)
         .setHeader("Connection", "Upgrade")
         .setHeader("Upgrade", "Pepsi")
-        .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk=")
-        .build());
-    webServer.enqueue(new MockResponse.Builder()
-            .socketPolicy(SocketPolicy.DisconnectAtStart.INSTANCE)
-            .build());
+        .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk="));
+    webServer.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START));
 
     RealWebSocket webSocket = newWebSocket();
 
@@ -399,11 +381,8 @@ public final class WebSocketHttpTest {
     webServer.enqueue(new MockResponse()
         .setResponseCode(101)
         .setHeader("Connection", "Upgrade")
-        .setHeader("Upgrade", "websocket")
-        .build());
-    webServer.enqueue(new MockResponse.Builder()
-            .socketPolicy(SocketPolicy.DisconnectAtStart.INSTANCE)
-            .build());
+        .setHeader("Upgrade", "websocket"));
+    webServer.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START));
 
     RealWebSocket webSocket = newWebSocket();
 
@@ -418,11 +397,8 @@ public final class WebSocketHttpTest {
         .setResponseCode(101)
         .setHeader("Connection", "Upgrade")
         .setHeader("Upgrade", "websocket")
-        .setHeader("Sec-WebSocket-Accept", "magic")
-        .build());
-    webServer.enqueue(new MockResponse.Builder()
-            .socketPolicy(SocketPolicy.DisconnectAtStart.INSTANCE)
-            .build());
+        .setHeader("Sec-WebSocket-Accept", "magic"));
+    webServer.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START));
 
     RealWebSocket webSocket = newWebSocket();
 
@@ -860,11 +836,10 @@ public final class WebSocketHttpTest {
             .build();
 
     for (int i = 0; i < 30; i++) {
-      webServer.enqueue(new MockResponse.Builder()
-        .bodyDelay(100, TimeUnit.MILLISECONDS)
-        .body("Wrong endpoint")
-        .code(401)
-        .build());
+      webServer.enqueue(new MockResponse()
+                      .setBodyDelay(100, TimeUnit.MILLISECONDS)
+        .setBody("Wrong endpoint")
+        .setResponseCode(401));
     }
 
     Request request = new Request.Builder()
