@@ -908,12 +908,15 @@ public final class WebSocketHttpTest {
     for (WebSocket webSocket: webSockets) {
       webSocket.cancel();
     }
-    // Sync websockets can be created async
-    for (WebSocket webSocket: webSockets) {
-      webSocket.cancel();
-    }
     client.dispatcher().cancelAll();
     client.connectionPool().evictAll();
+
+    if (client.connectionPool().connectionCount() > 0) {
+      // Sync websockets can be created async
+      for (WebSocket webSocket : webSockets) {
+        webSocket.cancel();
+      }
+    }
   }
 
   @Test public void compressedMessages() throws Exception {
