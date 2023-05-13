@@ -28,8 +28,11 @@ import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import mockwebserver3.*;
+import mockwebserver3.Dispatcher;
+import mockwebserver3.MockResponse;
+import mockwebserver3.MockWebServer;
+import mockwebserver3.RecordedRequest;
+import mockwebserver3.SocketPolicy;
 import mockwebserver3.SocketPolicy.KeepOpen;
 import mockwebserver3.SocketPolicy.NoResponse;
 import okhttp3.ConnectionPool;
