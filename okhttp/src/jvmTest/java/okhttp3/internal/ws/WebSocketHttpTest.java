@@ -23,6 +23,7 @@ import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
@@ -91,6 +92,8 @@ public final class WebSocketHttpTest {
         return response;
       })
       .build();
+
+  private List<WebSocket> createdWebSockets = Collections.synchronizedList(new ArrayList<>());
 
   private OkHttpClientTestRule configureClientTestRule() {
     OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
@@ -357,6 +360,8 @@ public final class WebSocketHttpTest {
 
     clientListener.assertFailure(101, null, ProtocolException.class,
         "Expected 'Connection' header value 'Upgrade' but was 'null'");
+
+    ensureAllWebSocketsClosed();
   }
 
   @Test public void wrongConnectionHeader() throws IOException {
@@ -382,6 +387,8 @@ public final class WebSocketHttpTest {
 
     clientListener.assertFailure(101, null, ProtocolException.class,
         "Expected 'Upgrade' header value 'websocket' but was 'null'");
+
+    ensureAllWebSocketsClosed();
   }
 
   @Test public void wrongUpgradeHeader() throws IOException {
@@ -880,20 +887,14 @@ public final class WebSocketHttpTest {
         .build());
     }
 
-    Request request = new Request.Builder()
-      .url(webServer.url("/"))
-      .build();
-
     CountDownLatch attempts = new CountDownLatch(20);
-
-    List<WebSocket> webSockets = new ArrayList<>();
 
     WebSocketListener reconnectOnFailure = new WebSocketListener() {
       @Override
       public void onFailure(WebSocket webSocket, Throwable t, Response response) {
         if (attempts.getCount() > 0) {
           clientListener.setNextEventDelegate(this);
-          webSockets.add(client.newWebSocket(request, clientListener));
+          newWebSocket();
           attempts.countDown();
         }
       }
@@ -901,11 +902,15 @@ public final class WebSocketHttpTest {
 
     clientListener.setNextEventDelegate(reconnectOnFailure);
 
-    webSockets.add(client.newWebSocket(request, clientListener));
+    newWebSocket();
 
     attempts.await();
 
-    for (WebSocket webSocket: webSockets) {
+    ensureAllWebSocketsClosed();
+  }
+
+  private void ensureAllWebSocketsClosed() {
+    for (WebSocket webSocket: createdWebSockets) {
       webSocket.cancel();
     }
     client.dispatcher().cancelAll();
@@ -913,7 +918,7 @@ public final class WebSocketHttpTest {
 
     if (client.connectionPool().connectionCount() > 0) {
       // Sync websockets can be created async
-      for (WebSocket webSocket : webSockets) {
+      for (WebSocket webSocket : createdWebSockets) {
         webSocket.cancel();
       }
     }
@@ -1054,6 +1059,7 @@ public final class WebSocketHttpTest {
     RealWebSocket webSocket = new RealWebSocket(TaskRunner.INSTANCE, request, clientListener,
         random, client.pingIntervalMillis(), null, 0L);
     webSocket.connect(client);
+    createdWebSockets.add(webSocket);
     return webSocket;
   }
 
