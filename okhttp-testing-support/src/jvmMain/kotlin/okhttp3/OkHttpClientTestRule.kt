@@ -190,10 +190,11 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
         println("After delay: " + connectionPool.connectionCount())
       }
 
+      connectionPool.evictAll()
       assertEquals(0, connectionPool.connectionCount()) {
-        val call = connectionPool.delegate.calls
+        val calls = connectionPool.delegate.calls
 
-        "Still ${connectionPool.connectionCount()} connections open: $call"
+        "Still ${connectionPool.connectionCount()} connections open, calls: $calls"
       }
     }
   }
