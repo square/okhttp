@@ -154,9 +154,7 @@ class OkHttpClientTestRule : TestRule {
       }
 
       connectionPool.evictAll()
-      assertEquals(0, connectionPool.connectionCount()) {
-        "Still ${connectionPool.connectionCount()} connections open"
-      }
+      assertEquals("Still ${connectionPool.connectionCount()} connections open", 0, connectionPool.connectionCount())
     }
   }
 
