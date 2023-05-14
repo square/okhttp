@@ -192,9 +192,7 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
 
       connectionPool.evictAll()
       assertEquals(0, connectionPool.connectionCount()) {
-        val calls = connectionPool.delegate.calls
-
-        "Still ${connectionPool.connectionCount()} connections open, calls: $calls"
+        "Still ${connectionPool.connectionCount()} connections open"
       }
     }
   }

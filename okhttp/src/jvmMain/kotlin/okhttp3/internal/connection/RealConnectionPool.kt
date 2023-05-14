@@ -20,7 +20,6 @@ import java.net.Socket
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
 import okhttp3.Address
-import okhttp3.Call
 import okhttp3.ConnectionListener
 import okhttp3.ConnectionPool
 import okhttp3.Route
@@ -276,11 +275,6 @@ class RealConnectionPool(
 
     return references.size
   }
-
-  val calls: List<Call>
-    get() {
-      return connections.flatMap { it.calls.mapNotNull { it.get() } }
-    }
 
   companion object {
     fun get(connectionPool: ConnectionPool): RealConnectionPool = connectionPool.delegate
