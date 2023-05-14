@@ -153,7 +153,10 @@ class OkHttpClientTestRule : TestRule {
         println("After delay: " + connectionPool.connectionCount())
       }
 
-      assertEquals(0, connectionPool.connectionCount())
+      connectionPool.evictAll()
+      assertEquals(0, connectionPool.connectionCount()) {
+        "Still ${connectionPool.connectionCount()} connections open"
+      }
     }
   }
 

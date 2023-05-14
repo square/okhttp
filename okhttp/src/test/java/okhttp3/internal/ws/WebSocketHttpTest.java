@@ -830,11 +830,6 @@ public final class WebSocketHttpTest {
 
   /** https://github.com/square/okhttp/issues/7768 */
   @Test public void reconnectingToNonWebSocket() throws InterruptedException {
-    // Async test is problematic
-    client = this.client.newBuilder()
-            .connectionPool(new ConnectionPool())
-            .build();
-
     for (int i = 0; i < 30; i++) {
       webServer.enqueue(new MockResponse()
                       .setBodyDelay(100, TimeUnit.MILLISECONDS)
@@ -870,8 +865,6 @@ public final class WebSocketHttpTest {
     for (WebSocket webSocket: webSockets) {
       webSocket.cancel();
     }
-    client.dispatcher().cancelAll();
-    client.connectionPool().evictAll();
   }
 
   @Test public void compressedMessages() throws Exception {
