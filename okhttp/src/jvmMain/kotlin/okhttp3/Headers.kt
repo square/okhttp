@@ -26,7 +26,6 @@ import java.util.TreeSet
 import okhttp3.internal.commonAdd
 import okhttp3.internal.commonAddAll
 import okhttp3.internal.commonAddLenient
-import okhttp3.internal.commonBuild
 import okhttp3.internal.commonEquals
 import okhttp3.internal.commonGet
 import okhttp3.internal.commonHashCode
@@ -34,7 +33,6 @@ import okhttp3.internal.commonHeadersGet
 import okhttp3.internal.commonHeadersOf
 import okhttp3.internal.commonIterator
 import okhttp3.internal.commonName
-import okhttp3.internal.commonNewBuilder
 import okhttp3.internal.commonRemoveAll
 import okhttp3.internal.commonSet
 import okhttp3.internal.commonToHeaders
@@ -45,12 +43,16 @@ import okhttp3.internal.headersCheckName
 import okhttp3.internal.http.toHttpDateOrNull
 import okhttp3.internal.http.toHttpDateString
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
+import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets
 
 @Suppress("NAME_SHADOWING")
-actual class Headers internal actual constructor(
-  internal actual val namesAndValues: Array<String>
+actual class Headers(
+  internal actual val namesAndValues: Array<String>,
+  val unsafeEncoding: Charset = StandardCharsets.UTF_8
 ) : Iterable<Pair<String, String>> {
   actual operator fun get(name: String): String? = commonHeadersGet(namesAndValues, name)
+
 
   /**
    * Returns the last value corresponding to the specified field parsed as an HTTP date, or null if
@@ -110,7 +112,12 @@ actual class Headers internal actual constructor(
 
   actual override operator fun iterator(): Iterator<Pair<String, String>> = commonIterator()
 
-  actual fun newBuilder(): Builder = commonNewBuilder()
+  actual fun newBuilder(): Builder {
+    val result = Builder()
+    result.namesAndValues += namesAndValues
+    result.unsafeEncoding = unsafeEncoding
+    return result
+  }
 
   actual override fun equals(other: Any?): Boolean = commonEquals(other)
 
@@ -135,6 +142,9 @@ actual class Headers internal actual constructor(
   actual class Builder {
     internal actual val namesAndValues: MutableList<String> = ArrayList(20)
 
+    var unsafeEncoding: Charset = StandardCharsets.UTF_8
+      internal set
+
     /**
      * Add a header line without any validation. Only appropriate for headers from the remote peer
      * or cache.
@@ -145,11 +155,13 @@ actual class Headers internal actual constructor(
         index != -1 -> {
           addLenient(line.substring(0, index), line.substring(index + 1))
         }
+
         line[0] == ':' -> {
           // Work around empty header names and header names that start with a colon (created by old
           // broken SPDY versions of the response cache).
           addLenient("", line.substring(1)) // Empty header name.
         }
+
         else -> {
           // No header name.
           addLenient("", line)
@@ -220,7 +232,14 @@ actual class Headers internal actual constructor(
     /** Equivalent to `build().get(name)`, but potentially faster. */
     actual operator fun get(name: String): String? = commonGet(name)
 
-    actual fun build(): Headers = commonBuild()
+    fun unsafeEncoding(unsafeEncoding: Charset): Headers.Builder = apply {
+      this.unsafeEncoding = unsafeEncoding
+    }
+
+    actual fun build(): Headers = Headers(
+      namesAndValues.toTypedArray<String>(),
+      this.unsafeEncoding
+    )
   }
 
   actual companion object {

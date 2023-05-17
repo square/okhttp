@@ -37,7 +37,7 @@ import okhttp3.internal.commonValue
 import okhttp3.internal.commonValues
 
 @Suppress("NAME_SHADOWING")
-actual class Headers internal actual constructor(
+actual class Headers internal constructor(
   internal actual val namesAndValues: Array<String>
 ) : Iterable<Pair<String, String>> {
   actual operator fun get(name: String): String? = commonHeadersGet(namesAndValues, name)

@@ -160,7 +160,7 @@ class Http1ExchangeCodec(
     for (i in 0 until headers.size) {
       sink.writeUtf8(headers.name(i))
           .writeUtf8(": ")
-          .writeUtf8(headers.value(i))
+          .writeString(headers.value(i), headers.unsafeEncoding)
           .writeUtf8("\r\n")
     }
     sink.writeUtf8("\r\n")
