@@ -6,6 +6,8 @@ plugins {
 }
 
 android {
+  namespace = "okhttp.regression"
+
   compileSdk = 31
 
   defaultConfig {
