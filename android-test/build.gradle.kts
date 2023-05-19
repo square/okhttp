@@ -1,3 +1,5 @@
+@file:Suppress("UnstableApiUsage")
+
 plugins {
   id("com.android.library")
   kotlin("android")
@@ -5,11 +7,12 @@ plugins {
 }
 
 android {
+  namespace = "okhttp.android.test"
+
   compileSdk = 31
 
   defaultConfig {
     minSdk = 21
-    targetSdk = 31
 
     // Make sure to use the AndroidJUnitRunner (or a sub-class) in order to hook in the JUnit 5 Test Builder
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
