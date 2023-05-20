@@ -15,13 +15,17 @@
  */
 package okhttp3.internal.publicsuffix
 
+import kotlin.test.assertEquals
+import kotlin.test.assertSame
 import okhttp3.internal.toCanonicalHost
 import okio.Buffer
+import okio.FileSystem
 import okio.GzipSource
+import okio.Path.Companion.toPath
 import okio.buffer
-import okio.source
 import okio.use
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.fail
 import org.junit.jupiter.api.Test
 
 class PublicSuffixDatabaseTest {
@@ -98,9 +102,8 @@ class PublicSuffixDatabaseTest {
 
   @Test fun allPublicSuffixes() {
     val buffer = Buffer()
-    PublicSuffixDatabaseTest::class.java
-      .getResourceAsStream(PublicSuffixDatabase.PUBLIC_SUFFIX_RESOURCE).use { resource ->
-        GzipSource(resource.source()).buffer().use { source ->
+    FileSystem.RESOURCES.source(PublicSuffixDatabase.PUBLIC_SUFFIX_RESOURCE).use { resource ->
+        GzipSource(resource).buffer().use { source ->
           val length = source.readInt()
           buffer.write(source, length.toLong())
         }
@@ -119,9 +122,8 @@ class PublicSuffixDatabaseTest {
 
   @Test fun publicSuffixExceptions() {
     val buffer = Buffer()
-    PublicSuffixDatabaseTest::class.java
-      .getResourceAsStream(PublicSuffixDatabase.PUBLIC_SUFFIX_RESOURCE).use { resource ->
-        GzipSource(resource.source()).buffer().use { source ->
+    FileSystem.RESOURCES.source(PublicSuffixDatabase.PUBLIC_SUFFIX_RESOURCE).use { resource ->
+        GzipSource(resource).buffer().use { source ->
           var length = source.readInt()
           source.skip(length.toLong())
           length = source.readInt()
@@ -145,6 +147,26 @@ class PublicSuffixDatabaseTest {
       assertThat(result).isEqualTo("squareup.com")
     } finally {
       assertThat(Thread.interrupted()).isTrue
+    }
+  }
+
+  @Test fun secondReadFailsSameAsFirst() {
+    val badPublicSuffixDatabase = PublicSuffixDatabase(
+      path = "/xxx.gz".toPath()
+    )
+    lateinit var firstFailure: Exception
+    try {
+      badPublicSuffixDatabase.getEffectiveTldPlusOne("squareup.com")
+      fail("Read shouldn't have worked")
+    } catch (e: Exception) {
+      firstFailure = e
+    }
+    try {
+      badPublicSuffixDatabase.getEffectiveTldPlusOne("squareup.com")
+      fail("Read shouldn't have worked")
+    } catch (e: Exception) {
+      // expected
+      assertEquals(firstFailure.toString(), e.toString())
     }
   }
 
