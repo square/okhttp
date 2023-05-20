@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-  <base-config cleartextTrafficPermitted="false">
-  </base-config>
+  <domain-config>
+    <domain includeSubdomains="false">self-signed.badssl.com</domain>
+    <pin-set expiration="2100-01-01">
+      <pin digest="SHA-256">9SLklscvzMYj8f+52lp5ze/hY0CFHyLSPQzSpYYIBm8=</pin>
+
+      <!-- www.google.com -->
+<!--      <pin digest="SHA-256">jy+SO+xLQc803kKYFNnbpAYWk4L5IzSiLricBvLilU0=</pin>-->
+    </pin-set>
+    <trust-anchors>
+      <certificates src="@raw/badssl"/>
+    </trust-anchors>
+  </domain-config>
 </network-security-config>
