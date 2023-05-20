@@ -10,11 +10,15 @@ include(":mockwebserver-junit5")
 project(":mockwebserver-junit5").name = "mockwebserver3-junit5"
 
 val androidBuild: String by settings
+val androidRegressionBuild: String by settings
 val graalBuild: String by settings
 val loomBuild: String by settings
 
 if (androidBuild.toBoolean()) {
   include(":android-test")
+}
+
+if (androidRegressionBuild.toBoolean()) {
   include(":regression-test")
 }
 

@@ -409,16 +409,10 @@ jobs:
           distribution: 'zulu'
           java-version: 11
 
-      - name: Gradle cache
-        uses: gradle/gradle-build-action@v2
-
       - name: Run Tests
-        uses: reactivecircus/android-emulator-runner@v2
+        uses: gradle/gradle-build-action@v2
         with:
-          api-level: ${{ matrix.api-level }}
-          script: ./gradlew -PandroidBuild=true :okhttp-android:connectedCheck :android-test:connectedCheck
-        env:
-          API_LEVEL: ${{ matrix.api-level }}
+          arguments: -PandroidBuild=true pixelApi${{ matrix.api-level }}Check
 
   testloom:
     runs-on: ubuntu-latest
@@ -453,12 +447,6 @@ jobs:
     timeout-minutes: 10
     if: contains(github.event.pull_request.labels.*.name, 'android-regression')
 
-    strategy:
-      fail-fast: false
-      matrix:
-        api-level:
-          - 29
-
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -473,30 +461,5 @@ jobs:
 
       - name: Gradle cache
         uses: gradle/gradle-build-action@v2
-
-      - name: AVD cache
-        uses: actions/cache@v3
-        id: avd-cache
         with:
-          path: |
-            ~/.android/avd/*
-            ~/.android/adb*
-          key: avd-${{ matrix.api-level }}
-
-      - name: Create AVD and generate snapshot for caching
-        if: steps.avd-cache.outputs.cache-hit != 'true'
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: ${{ matrix.api-level }}
-          force-avd-creation: false
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          disable-animations: false
-          script: echo "Generated AVD snapshot for caching."
-
-      - name: Run Tests
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: ${{ matrix.api-level }}
-          script: ./gradlew -PandroidBuild=true :regression-test:connectedCheck
-        env:
-          API_LEVEL: ${{ matrix.api-level }}
+          arguments: -PandroidRegressionBuild=true pixelApi33Check

@@ -30,6 +30,18 @@ android {
   packagingOptions.resources.excludes += setOf(
     "META-INF/DEPENDENCIES"
   )
+
+  testOptions {
+    managedDevices {
+      devices {
+        create<ManagedVirtualDevice>("pixelApi33") {
+          device = "Pixel 6"
+          apiLevel = 33
+          systemImageSource = "google"
+        }
+      }
+    }
+  }
 }
 
 
