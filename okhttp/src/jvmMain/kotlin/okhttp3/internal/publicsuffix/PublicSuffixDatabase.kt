@@ -196,8 +196,6 @@ class PublicSuffixDatabase internal constructor(
           interrupted = true
         } catch (e: IOException) {
           Platform.get().log("Failed to read public suffix list", Platform.WARN, e)
-          // Make failure permanent
-          readCompleteLatch.countDown()
           return
         }
       }
@@ -213,20 +211,22 @@ class PublicSuffixDatabase internal constructor(
     var publicSuffixListBytes: ByteArray?
     var publicSuffixExceptionListBytes: ByteArray?
 
-    GzipSource(fileSystem.source(path)).buffer().use { bufferedSource ->
-      val totalBytes = bufferedSource.readInt()
-      publicSuffixListBytes = bufferedSource.readByteArray(totalBytes.toLong())
+    try {
+      GzipSource(fileSystem.source(path)).buffer().use { bufferedSource ->
+        val totalBytes = bufferedSource.readInt()
+        publicSuffixListBytes = bufferedSource.readByteArray(totalBytes.toLong())
 
-      val totalExceptionBytes = bufferedSource.readInt()
-      publicSuffixExceptionListBytes = bufferedSource.readByteArray(totalExceptionBytes.toLong())
+        val totalExceptionBytes = bufferedSource.readInt()
+        publicSuffixExceptionListBytes = bufferedSource.readByteArray(totalExceptionBytes.toLong())
+      }
+
+      synchronized(this) {
+        this.publicSuffixListBytes = publicSuffixListBytes!!
+        this.publicSuffixExceptionListBytes = publicSuffixExceptionListBytes!!
+      }
+    } finally {
+      readCompleteLatch.countDown()
     }
-
-    synchronized(this) {
-      this.publicSuffixListBytes = publicSuffixListBytes!!
-      this.publicSuffixExceptionListBytes = publicSuffixExceptionListBytes!!
-    }
-
-    readCompleteLatch.countDown()
   }
 
   /** Visible for testing. */
