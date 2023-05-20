@@ -389,13 +389,13 @@ jobs:
     timeout-minutes: 30
     if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'android') || contains(github.event.pull_request.labels.*.name, 'renovate')
 
-
     strategy:
       fail-fast: false
       matrix:
         api-level:
           - 21
           - 29
+          - 33
 
     steps:
       - name: Checkout
@@ -411,25 +411,6 @@ jobs:
 
       - name: Gradle cache
         uses: gradle/gradle-build-action@v2
-
-      - name: AVD cache
-        uses: actions/cache@v3
-        id: avd-cache
-        with:
-          path: |
-            ~/.android/avd/*
-            ~/.android/adb*
-          key: avd-${{ matrix.api-level }}
-
-      - name: Create AVD and generate snapshot for caching
-        if: steps.avd-cache.outputs.cache-hit != 'true'
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: ${{ matrix.api-level }}
-          force-avd-creation: false
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          disable-animations: false
-          script: echo "Generated AVD snapshot for caching."
 
       - name: Run Tests
         uses: reactivecircus/android-emulator-runner@v2

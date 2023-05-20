@@ -1,4 +1,6 @@
-import com.vanniktech.maven.publish.JavadocJar
+@file:Suppress("UnstableApiUsage")
+
+import com.android.build.api.dsl.ManagedVirtualDevice
 
 plugins {
   id("com.android.library")
@@ -35,6 +37,28 @@ android {
 
   kotlinOptions {
     jvmTarget = JavaVersion.VERSION_11.toString()
+  }
+
+  testOptions {
+    managedDevices {
+      devices {
+        create<ManagedVirtualDevice>("pixelApi21") {
+          device = "Pixel 6"
+          apiLevel = 21
+          systemImageSource = "aosp"
+        }
+        create<ManagedVirtualDevice>("pixelApi30") {
+          device = "Pixel 6"
+          apiLevel = 30
+          systemImageSource = "aosp-atd"
+        }
+        create<ManagedVirtualDevice>("pixelApi33") {
+          device = "Pixel 6"
+          apiLevel = 33
+          systemImageSource = "google"
+        }
+      }
+    }
   }
 }
 
