@@ -18,7 +18,7 @@ dependencies {
   implementation(libs.squareup.moshi)
   implementation(libs.squareup.moshi.kotlin)
 
-  ksp("com.squareup.moshi:moshi-kotlin-codegen:1.14.0")
+  ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.0")
 }
 
 tasks.compileJava {
