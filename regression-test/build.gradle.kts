@@ -1,3 +1,7 @@
+@file:Suppress("UnstableApiUsage")
+
+import com.android.build.api.dsl.ManagedVirtualDevice
+
 plugins {
   id("com.android.library")
   kotlin("android")
