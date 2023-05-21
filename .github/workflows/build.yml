@@ -394,7 +394,7 @@ jobs:
       matrix:
         api-level:
           - 21
-          - 29
+          - 30
           - 33
 
     steps:
