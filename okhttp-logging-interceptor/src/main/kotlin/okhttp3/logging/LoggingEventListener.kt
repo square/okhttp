@@ -181,4 +181,6 @@ class LoggingEventListener private constructor(
   ) : EventListener.Factory {
     override fun create(call: Call): EventListener = LoggingEventListener(logger)
   }
+
+  companion object
 }
