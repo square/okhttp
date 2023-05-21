@@ -1,9 +1,6 @@
-import com.vanniktech.maven.publish.JavadocJar
-
 plugins {
   id("com.android.library")
   kotlin("android")
-  id("de.mannodermaus.android-junit5")
   id("org.jetbrains.dokka")
   id("com.vanniktech.maven.publish.base")
   id("binary-compatibility-validator")
@@ -14,7 +11,6 @@ android {
 
   defaultConfig {
     minSdk = 21
-    targetSdk = 31
 
     // Make sure to use the AndroidJUnitRunner (or a sub-class) in order to hook in the JUnit 5 Test Builder
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -47,6 +43,7 @@ dependencies {
   debugImplementation(libs.findbugs.jsr305)
   compileOnly(libs.animalsniffer.annotations)
   compileOnly(libs.robolectric.android)
+  implementation(libs.androidx.tracing.ktx)
 
   testImplementation(projects.okhttpTestingSupport)
   testImplementation(projects.mockwebserver3Junit5)
