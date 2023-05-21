@@ -16,22 +16,45 @@
  */
 package okhttp3.android
 
+import android.os.Build
+import android.security.NetworkSecurityPolicy
 import okhttp3.Interceptor
+import okhttp3.Request
 import okhttp3.Response
 
 /**
  * An interceptor that enforces HTTPS for all requests, to work within Android's network security policy.
  */
-class AlwaysHttpsInterceptor : Interceptor {
+class AlwaysHttpsInterceptor(private val requiresHttps: (Request) -> Boolean) : Interceptor {
   override fun intercept(chain: Interceptor.Chain): Response {
     var request = chain.request()
 
     if (request.url.scheme == "http") {
-      request = request.newBuilder().url(
-        request.url.newBuilder().scheme("https").build()
-      ).build()
+      if (requiresHttps(request)) {
+        request = request.newBuilder().url(
+          request.url.newBuilder().scheme("https").build()
+        ).build()
+      }
     }
 
     return chain.proceed(request)
+  }
+
+  companion object {
+    val Always: AlwaysHttpsInterceptor = AlwaysHttpsInterceptor { true }
+
+    fun AndroidNetworkSecurityPolicy(): AlwaysHttpsInterceptor {
+      if (Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
+        val policy = NetworkSecurityPolicy.getInstance()
+
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.N) {
+          return AlwaysHttpsInterceptor { !policy.isCleartextTrafficPermitted(it.url.host) }
+        } else {
+          return AlwaysHttpsInterceptor { !policy.isCleartextTrafficPermitted }
+        }
+      } else {
+        return AlwaysHttpsInterceptor { false }
+      }
+    }
   }
 }
