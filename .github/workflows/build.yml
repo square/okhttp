@@ -418,6 +418,11 @@ jobs:
         uses: gradle/gradle-build-action@v2
         with:
           arguments: -PandroidBuild=true pixelApi${{ matrix.api-level }}Check
+            -Dorg.gradle.workers.max=1
+            -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect"
+            -Pandroid.experimental.androidTest.numManagedDeviceShards=1
+            -Pandroid.experimental.testOptions.managedDevices.maxConcurrentDevices=1
+            -Pandroid.experimental.testOptions.managedDevices.emulator.showKernelLogging=false
 
   testloom:
     runs-on: ubuntu-latest
@@ -473,3 +478,8 @@ jobs:
         uses: gradle/gradle-build-action@v2
         with:
           arguments: -PandroidRegressionBuild=true pixelApi33Check
+            -Dorg.gradle.workers.max=1
+            -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect"
+            -Pandroid.experimental.androidTest.numManagedDeviceShards=1
+            -Pandroid.experimental.testOptions.managedDevices.maxConcurrentDevices=1
+            -Pandroid.experimental.testOptions.managedDevices.emulator.showKernelLogging=false
