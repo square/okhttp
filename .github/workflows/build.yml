@@ -411,9 +411,8 @@ jobs:
 
       - name: Accept licenses
         run: |
-          mkdir -p /Users/runner/Library/Android/sdk/licenses
-          echo 84831b9409646a918e30573bab4c9c91346d8abd > /Users/runner/Library/Android/sdk/licenses/android-sdk-preview-license
-          echo 24333f8a63b6825ea9c5514f83c2829b004d1fee > /Users/runner/Library/Android/sdk/licenses/android-sdk-license
+          mkdir -p /Users/runner/Library/Android/sdk
+          tar xf .github/android_license.tar.gz -C /Users/runner/Library/Android/sdk
 
       - name: Run Tests
         uses: gradle/gradle-build-action@v2
@@ -467,9 +466,8 @@ jobs:
 
       - name: Accept licenses
         run: |
-          mkdir -p /Users/runner/Library/Android/sdk/licenses
-          echo 84831b9409646a918e30573bab4c9c91346d8abd > /Users/runner/Library/Android/sdk/licenses/android-sdk-preview-license
-          echo 24333f8a63b6825ea9c5514f83c2829b004d1fee > /Users/runner/Library/Android/sdk/licenses/android-sdk-license
+          mkdir -p /Users/runner/Library/Android/sdk
+          tar xf .github/android_license.tar.gz -C /Users/runner/Library/Android/sdk
 
       - name: Gradle cache
         uses: gradle/gradle-build-action@v2
