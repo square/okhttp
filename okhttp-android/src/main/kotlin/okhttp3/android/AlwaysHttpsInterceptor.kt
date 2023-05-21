@@ -22,7 +22,7 @@ import okhttp3.Response
 /**
  * An interceptor that enforces HTTPS for all requests, to work within Android's network security policy.
  */
-object AlwaysHttpsInterceptor : Interceptor {
+class AlwaysHttpsInterceptor : Interceptor {
   override fun intercept(chain: Interceptor.Chain): Response {
     var request = chain.request()
 
