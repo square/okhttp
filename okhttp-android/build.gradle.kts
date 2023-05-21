@@ -39,23 +39,27 @@ android {
     jvmTarget = JavaVersion.VERSION_11.toString()
   }
 
+  val androidBuild: String by project
+
   testOptions {
     managedDevices {
-      devices {
-        create<ManagedVirtualDevice>("pixelApi21") {
-          device = "Pixel 6"
-          apiLevel = 21
-          systemImageSource = "aosp"
-        }
-        create<ManagedVirtualDevice>("pixelApi30") {
-          device = "Pixel 6"
-          apiLevel = 30
-          systemImageSource = "aosp-atd"
-        }
-        create<ManagedVirtualDevice>("pixelApi33") {
-          device = "Pixel 6"
-          apiLevel = 33
-          systemImageSource = "google"
+      if (androidBuild.toBoolean()) {
+        devices {
+          create<ManagedVirtualDevice>("pixelApi21") {
+            device = "Pixel 6"
+            apiLevel = 21
+            systemImageSource = "aosp"
+          }
+          create<ManagedVirtualDevice>("pixelApi30") {
+            device = "Pixel 6"
+            apiLevel = 30
+            systemImageSource = "aosp-atd"
+          }
+          create<ManagedVirtualDevice>("pixelApi33") {
+            device = "Pixel 6"
+            apiLevel = 33
+            systemImageSource = "google"
+          }
         }
       }
     }
