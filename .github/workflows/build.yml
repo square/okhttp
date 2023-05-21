@@ -412,7 +412,7 @@ jobs:
       - name: Accept licenses
         run: |
           mkdir -p /Users/runner/Library/Android/sdk
-          tar xf .github/android_license.tar.gz -C /Users/runner/Library/Android/sdk
+          tar xf .github/android_licenses.tar.gz -C /Users/runner/Library/Android/sdk
 
       - name: Run Tests
         uses: gradle/gradle-build-action@v2
@@ -467,7 +467,7 @@ jobs:
       - name: Accept licenses
         run: |
           mkdir -p /Users/runner/Library/Android/sdk
-          tar xf .github/android_license.tar.gz -C /Users/runner/Library/Android/sdk
+          tar xf .github/android_licenses.tar.gz -C /Users/runner/Library/Android/sdk
 
       - name: Gradle cache
         uses: gradle/gradle-build-action@v2
