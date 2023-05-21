@@ -53,6 +53,7 @@ jettyClient = "org.eclipse.jetty:jetty-client:9.4.51.v20230217"
 jnr-unixsocket = "com.github.jnr:jnr-unixsocket:0.38.19"
 jsoup = "org.jsoup:jsoup:1.15.4"
 junit = "junit:junit:4.13.2"
+junit-ktx = "androidx.test.ext:junit-ktx:1.1.5"
 junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "org-junit-jupiter" }
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "org-junit-jupiter" }
 junit-jupiter-params = { module = "org.junit.jupiter:junit-jupiter-params", version.ref = "org-junit-jupiter" }
@@ -77,6 +78,7 @@ nativeImageSvm = { module = "org.graalvm.nativeimage:svm", version.ref = "graalv
 openjsse = "org.openjsse:openjsse:1.1.12"
 playservices-safetynet = "com.google.android.gms:play-services-safetynet:18.0.1"
 robolectric-android = "org.robolectric:android-all:13-robolectric-9030017"
+robolectric = "org.robolectric:robolectric:4.10.2"
 signature-android-apilevel21 = "net.sf.androidscents.signature:android-api-level-21:5.0.1_r2"
 signature-android-apilevel24 = "net.sf.androidscents.signature:android-api-level-24:7.0_r2"
 squareup-moshi = { module = "com.squareup.moshi:moshi", version.ref = "com-squareup-moshi" }
