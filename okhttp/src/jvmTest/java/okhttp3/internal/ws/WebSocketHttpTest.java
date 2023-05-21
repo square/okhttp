@@ -23,6 +23,7 @@ import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
@@ -923,7 +924,7 @@ public final class WebSocketHttpTest {
 
     CountDownLatch attempts = new CountDownLatch(20);
 
-    List<WebSocket> webSockets = new ArrayList<>();
+    List<WebSocket> webSockets = Collections.synchronizedList(new ArrayList<>());
 
     WebSocketListener reconnectOnFailure = new WebSocketListener() {
       @Override
@@ -942,8 +943,10 @@ public final class WebSocketHttpTest {
 
     attempts.await();
 
-    for (WebSocket webSocket: webSockets) {
-      webSocket.cancel();
+    synchronized (webSockets) {
+      for (WebSocket webSocket : webSockets) {
+        webSocket.cancel();
+      }
     }
   }
 
