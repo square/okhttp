@@ -409,6 +409,12 @@ jobs:
           distribution: 'zulu'
           java-version: 11
 
+      - name: Accept licenses
+        run: |
+          mkdir -p /Users/runner/Library/Android/sdk/licenses
+          echo 84831b9409646a918e30573bab4c9c91346d8abd > /Users/runner/Library/Android/sdk/licenses/android-sdk-preview-license
+          echo 84831b9409646a918e30573bab4c9c91346d8abd > /Users/runner/Library/Android/sdk/licenses/android-sdk-license
+
       - name: Run Tests
         uses: gradle/gradle-build-action@v2
         with:
