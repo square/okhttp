@@ -951,9 +951,11 @@ public final class okhttp3/OkHttpClient$Builder {
 	public final fun cache (Lokhttp3/Cache;)Lokhttp3/OkHttpClient$Builder;
 	public final fun callTimeout (JLjava/util/concurrent/TimeUnit;)Lokhttp3/OkHttpClient$Builder;
 	public final fun callTimeout (Ljava/time/Duration;)Lokhttp3/OkHttpClient$Builder;
+	public final fun callTimeout-LRDsOJo (J)Lokhttp3/OkHttpClient$Builder;
 	public final fun certificatePinner (Lokhttp3/CertificatePinner;)Lokhttp3/OkHttpClient$Builder;
 	public final fun connectTimeout (JLjava/util/concurrent/TimeUnit;)Lokhttp3/OkHttpClient$Builder;
 	public final fun connectTimeout (Ljava/time/Duration;)Lokhttp3/OkHttpClient$Builder;
+	public final fun connectTimeout-LRDsOJo (J)Lokhttp3/OkHttpClient$Builder;
 	public final fun connectionPool (Lokhttp3/ConnectionPool;)Lokhttp3/OkHttpClient$Builder;
 	public final fun connectionSpecs (Ljava/util/List;)Lokhttp3/OkHttpClient$Builder;
 	public final fun cookieJar (Lokhttp3/CookieJar;)Lokhttp3/OkHttpClient$Builder;
@@ -970,18 +972,21 @@ public final class okhttp3/OkHttpClient$Builder {
 	public final fun networkInterceptors ()Ljava/util/List;
 	public final fun pingInterval (JLjava/util/concurrent/TimeUnit;)Lokhttp3/OkHttpClient$Builder;
 	public final fun pingInterval (Ljava/time/Duration;)Lokhttp3/OkHttpClient$Builder;
+	public final fun pingInterval-LRDsOJo (J)Lokhttp3/OkHttpClient$Builder;
 	public final fun protocols (Ljava/util/List;)Lokhttp3/OkHttpClient$Builder;
 	public final fun proxy (Ljava/net/Proxy;)Lokhttp3/OkHttpClient$Builder;
 	public final fun proxyAuthenticator (Lokhttp3/Authenticator;)Lokhttp3/OkHttpClient$Builder;
 	public final fun proxySelector (Ljava/net/ProxySelector;)Lokhttp3/OkHttpClient$Builder;
 	public final fun readTimeout (JLjava/util/concurrent/TimeUnit;)Lokhttp3/OkHttpClient$Builder;
 	public final fun readTimeout (Ljava/time/Duration;)Lokhttp3/OkHttpClient$Builder;
+	public final fun readTimeout-LRDsOJo (J)Lokhttp3/OkHttpClient$Builder;
 	public final fun retryOnConnectionFailure (Z)Lokhttp3/OkHttpClient$Builder;
 	public final fun socketFactory (Ljavax/net/SocketFactory;)Lokhttp3/OkHttpClient$Builder;
 	public final fun sslSocketFactory (Ljavax/net/ssl/SSLSocketFactory;)Lokhttp3/OkHttpClient$Builder;
 	public final fun sslSocketFactory (Ljavax/net/ssl/SSLSocketFactory;Ljavax/net/ssl/X509TrustManager;)Lokhttp3/OkHttpClient$Builder;
 	public final fun writeTimeout (JLjava/util/concurrent/TimeUnit;)Lokhttp3/OkHttpClient$Builder;
 	public final fun writeTimeout (Ljava/time/Duration;)Lokhttp3/OkHttpClient$Builder;
+	public final fun writeTimeout-LRDsOJo (J)Lokhttp3/OkHttpClient$Builder;
 }
 
 public final class okhttp3/OkHttpClient$Companion {
