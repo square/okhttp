@@ -24,6 +24,7 @@ import java.net.UnknownHostException
 import java.util.concurrent.CountDownLatch
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.junit4.MockWebServerRule
 import okhttp3.AsyncDns
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -36,12 +37,14 @@ import org.assertj.core.api.Assertions.fail
 import org.junit.AssumptionViolatedException
 import org.junit.Before
 import org.junit.Ignore
+import org.junit.Rule
 import org.junit.Test
 
 /**
  * Run with "./gradlew :android-test:connectedCheck -PandroidBuild=true" and make sure ANDROID_SDK_ROOT is set.
  */
 class AndroidAsyncDnsTest {
+  @JvmField @Rule val serverRule = MockWebServerRule()
 
   private val localhost: HandshakeCertificates by lazy {
     // Generate a self-signed cert for the server to serve and the client to trust.
