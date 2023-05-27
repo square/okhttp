@@ -28,6 +28,12 @@ android {
     buildFeatures {
       buildConfig = false
     }
+
+    testOptions {
+      unitTests {
+        isIncludeAndroidResources = true
+      }
+    }
   }
 
   compileOptions {
@@ -38,6 +44,10 @@ android {
   kotlinOptions {
     jvmTarget = JavaVersion.VERSION_11.toString()
   }
+}
+
+tasks.withType<Test> {
+  useJUnit()
 }
 
 dependencies {
