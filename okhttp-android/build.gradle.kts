@@ -48,10 +48,13 @@ dependencies {
   compileOnly(libs.animalsniffer.annotations)
   compileOnly(libs.robolectric.android)
 
-  testImplementation(projects.okhttpTestingSupport)
-  testImplementation(projects.mockwebserver3Junit5)
   testImplementation(libs.junit)
+  testImplementation(libs.junit.ktx)
   testImplementation(libs.assertj.core)
+  testImplementation(projects.okhttpTls)
+  testImplementation(libs.androidx.test.runner)
+  testImplementation(libs.robolectric)
+  testImplementation(libs.androidx.espresso.core)
 
   androidTestImplementation(projects.okhttpTls)
   androidTestImplementation(libs.assertj.core)
