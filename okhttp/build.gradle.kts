@@ -1,5 +1,8 @@
+import com.android.build.gradle.internal.tasks.factory.dependsOn
+import com.android.build.gradle.tasks.JavaDocJarTask
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
+import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.dokka.gradle.DokkaTaskPartial
 import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
 
@@ -9,6 +12,26 @@ plugins {
   id("org.jetbrains.dokka")
   id("com.vanniktech.maven.publish.base")
   id("binary-compatibility-validator")
+}
+
+// Build & use okhttp3/internal/-InternalVersion.kt
+val copyKotlinTemplates = tasks.register<Copy>("copyKotlinTemplates") {
+  from("src/commonMain/kotlinTemplates")
+  into("$buildDir/generated/sources/kotlinTemplates")
+  expand("projectVersion" to project.version)
+  filteringCharset = Charsets.UTF_8.toString()
+}
+
+// Build & use okhttp3/internal/idn/IdnaMappingTableInstance.kt
+val generateIdnaMappingTableConfiguration: Configuration by configurations.creating
+dependencies {
+  generateIdnaMappingTableConfiguration(projects.okhttpIdnaMappingTable)
+}
+val generateIdnaMappingTable by tasks.creating(JavaExec::class.java) {
+  outputs.dir("$buildDir/generated/sources/idnaMappingTable")
+  mainClass.set("okhttp3.internal.idn.GenerateIdnaMappingTableCode")
+  args("$buildDir/generated/sources/idnaMappingTable")
+  classpath = generateIdnaMappingTableConfiguration
 }
 
 kotlin {
@@ -36,8 +59,8 @@ kotlin {
 
   sourceSets {
     commonMain {
-      kotlin.srcDir("$buildDir/generated/sources/kotlinTemplates")
-      kotlin.srcDir("$buildDir/generated/sources/idnaMappingTable")
+      kotlin.srcDir(copyKotlinTemplates.get().outputs)
+      kotlin.srcDir(generateIdnaMappingTable.outputs)
       dependencies {
         api(libs.squareup.okio)
       }
@@ -195,32 +218,4 @@ dependencies {
 
 mavenPublishing {
   configure(KotlinMultiplatform(javadocJar = JavadocJar.Dokka("dokkaGfm")))
-}
-
-// Build & use okhttp3/internal/-InternalVersion.kt
-val copyKotlinTemplates = tasks.register<Copy>("copyKotlinTemplates") {
-  from("src/commonMain/kotlinTemplates")
-  into("$buildDir/generated/sources/kotlinTemplates")
-  expand("projectVersion" to project.version)
-  filteringCharset = Charsets.UTF_8.toString()
-}
-tasks.withType<KotlinCompile<*>> {
-  dependsOn(copyKotlinTemplates)
-}
-tasks.withType<DokkaTaskPartial> {
-  dependsOn(copyKotlinTemplates)
-}
-
-// Build & use okhttp3/internal/idn/IdnaMappingTableInstance.kt
-val generateIdnaMappingTableConfiguration: Configuration by configurations.creating
-dependencies {
-  generateIdnaMappingTableConfiguration(projects.okhttpIdnaMappingTable)
-}
-val generateIdnaMappingTable by tasks.creating(JavaExec::class.java) {
-  mainClass.set("okhttp3.internal.idn.GenerateIdnaMappingTableCode")
-  args("$buildDir/generated/sources/idnaMappingTable")
-  classpath = generateIdnaMappingTableConfiguration
-}
-tasks.withType<KotlinCompile<*>> {
-  dependsOn(generateIdnaMappingTable)
 }
