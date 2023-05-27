@@ -1,5 +1,6 @@
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
+import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.dokka.gradle.DokkaTaskPartial
 import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
 
@@ -208,6 +209,9 @@ tasks.withType<KotlinCompile<*>> {
   dependsOn(copyKotlinTemplates)
 }
 tasks.withType<DokkaTaskPartial> {
+  dependsOn(copyKotlinTemplates)
+}
+tasks.withType<DokkaTask> {
   dependsOn(copyKotlinTemplates)
 }
 
