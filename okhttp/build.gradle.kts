@@ -1,5 +1,6 @@
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
+import org.jetbrains.dokka.gradle.DokkaTaskPartial
 import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
 
 plugins {
@@ -204,6 +205,9 @@ val copyKotlinTemplates = tasks.register<Copy>("copyKotlinTemplates") {
   filteringCharset = Charsets.UTF_8.toString()
 }
 tasks.withType<KotlinCompile<*>> {
+  dependsOn(copyKotlinTemplates)
+}
+tasks.withType<DokkaTaskPartial> {
   dependsOn(copyKotlinTemplates)
 }
 
