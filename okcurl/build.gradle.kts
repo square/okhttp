@@ -13,7 +13,7 @@ plugins {
 }
 
 val copyResourcesTemplates = tasks.register<Copy>("copyResourcesTemplates") {
-  from("src/main/resources-templates")
+  from("src/jvmMain/resources-templates")
   into("$buildDir/generated/resources-templates")
   expand("projectVersion" to "${project.version}")
   filteringCharset = Charsets.UTF_8.toString()
@@ -38,8 +38,6 @@ kotlin {
     }
 
     val jvmMain by getting {
-      kotlin.srcDir("$buildDir/generated/resources-templates")
-
       dependencies {
         api(libs.kotlin.stdlib)
         api(projects.okhttp)
