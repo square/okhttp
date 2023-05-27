@@ -152,7 +152,7 @@ class OkHttpTest {
     val response = client.newCall(request).execute()
 
     response.use {
-      assertEquals(404, response.code)
+      assertEquals(200, response.code)
     }
 
     if (Build.VERSION.SDK_INT >= 24) {
