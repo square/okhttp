@@ -63,20 +63,17 @@ class AndroidAsyncDnsTest {
     .sslSocketFactory(localhost.sslSocketFactory(), localhost.trustManager)
     .build()
 
-  private lateinit var server: MockWebServer
-
   @Before
-  fun init(server: MockWebServer) {
-    this.server = server
-    server.useHttps(localhost.sslSocketFactory())
+  fun init() {
+    serverRule.server.useHttps(localhost.sslSocketFactory())
   }
 
   @Test
   @Ignore("java.net.UnknownHostException: No results for localhost, in CI.")
   fun testRequest() {
-    server.enqueue(MockResponse())
+    serverRule.server.enqueue(MockResponse())
 
-    val call = client.newCall(Request(server.url("/")))
+    val call = client.newCall(Request(serverRule.server.url("/")))
 
     call.execute().use { response ->
       assertThat(response.code).isEqualTo(200)
