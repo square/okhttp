@@ -1,3 +1,5 @@
+@file:Suppress("UnstableApiUsage")
+
 import com.vanniktech.maven.publish.JavadocJar
 
 plugins {
@@ -10,11 +12,11 @@ plugins {
 }
 
 android {
-  compileSdk = 31
+  compileSdk = 33
 
   defaultConfig {
     minSdk = 21
-    targetSdk = 31
+    targetSdk = 33
 
     // Make sure to use the AndroidJUnitRunner (or a sub-class) in order to hook in the JUnit 5 Test Builder
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

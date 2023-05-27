@@ -23,7 +23,6 @@ import okhttp3.CacheControl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.android.OkHttpClientContext.okHttpClient
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.AssumptionViolatedException
 import org.junit.Before
@@ -38,10 +37,9 @@ import java.net.UnknownHostException
 @RunWith(RobolectricTestRunner::class)
 @Config(
   sdk = [30],
-  qualifiers = "w221dp-h221dp-small-notlong-round-watch-xhdpi-keyshidden-nonav"
 )
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-class RobolectricClientBuilderTest {
+class RobolectricOkHttpClientTest {
 
   private lateinit var context: Context
   private lateinit var client: OkHttpClient
@@ -49,7 +47,7 @@ class RobolectricClientBuilderTest {
   @Before
   fun setUp() {
     context = ApplicationProvider.getApplicationContext<Application>()
-    client = context.okHttpClient
+    client = OkHttpClient()
   }
 
   @Test
