@@ -49,10 +49,13 @@ dependencies {
   compileOnly(libs.robolectric.android)
   implementation("androidx.core:core-ktx:1.10.1")
 
-  testImplementation(projects.okhttpTestingSupport)
-  testImplementation(projects.mockwebserver3Junit5)
   testImplementation(libs.junit)
+  testImplementation(libs.junit.ktx)
   testImplementation(libs.assertj.core)
+  testImplementation(projects.okhttpTls)
+  testImplementation(libs.androidx.test.runner)
+  testImplementation(libs.robolectric)
+  testImplementation(libs.androidx.espresso.core)
 
   androidTestImplementation(projects.okhttpTls)
   androidTestImplementation(libs.assertj.core)

@@ -9,7 +9,7 @@ kotlinx-serialization = "1.5.1"
 org-bouncycastle = "1.73"
 org-conscrypt = "2.5.2"
 org-jetbrains-coroutines = "1.7.1"
-org-jetbrains-kotlin = "1.8.10"
+org-jetbrains-kotlin = "1.8.21"
 org-junit-jupiter = "5.9.3"
 
 [libraries]
@@ -44,7 +44,7 @@ gradlePlugin-graal = "com.palantir.graal:gradle-graal:0.12.0"
 gradlePlugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "org-jetbrains-kotlin" }
 gradlePlugin-kotlinSerialization = { module = "org.jetbrains.kotlin:kotlin-serialization", version.ref = "org-jetbrains-kotlin" }
 gradlePlugin-mavenPublish = "com.vanniktech:gradle-maven-publish-plugin:0.25.2"
-gradlePlugin-shadow = "gradle.plugin.com.github.johnrengelman:shadow:7.1.2"
+gradlePlugin-shadow = "gradle.plugin.com.github.johnrengelman:shadow:8.0.0"
 gradlePlugin-spotless = "com.diffplug.spotless:spotless-plugin-gradle:6.19.0"
 guava-jre = "com.google.guava:guava:32.0.0-jre"
 hamcrestLibrary = "org.hamcrest:hamcrest-library:2.2"
@@ -53,6 +53,7 @@ jettyClient = "org.eclipse.jetty:jetty-client:9.4.51.v20230217"
 jnr-unixsocket = "com.github.jnr:jnr-unixsocket:0.38.19"
 jsoup = "org.jsoup:jsoup:1.16.1"
 junit = "junit:junit:4.13.2"
+junit-ktx = "androidx.test.ext:junit-ktx:1.1.5"
 junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "org-junit-jupiter" }
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "org-junit-jupiter" }
 junit-jupiter-params = { module = "org.junit.jupiter:junit-jupiter-params", version.ref = "org-junit-jupiter" }
@@ -77,6 +78,7 @@ nativeImageSvm = { module = "org.graalvm.nativeimage:svm", version.ref = "graalv
 openjsse = "org.openjsse:openjsse:1.1.12"
 playservices-safetynet = "com.google.android.gms:play-services-safetynet:18.0.1"
 robolectric-android = "org.robolectric:android-all:13-robolectric-9030017"
+robolectric = "org.robolectric:robolectric:4.10.2"
 signature-android-apilevel21 = "net.sf.androidscents.signature:android-api-level-21:5.0.1_r2"
 signature-android-apilevel24 = "net.sf.androidscents.signature:android-api-level-24:7.0_r2"
 squareup-moshi = { module = "com.squareup.moshi:moshi", version.ref = "com-squareup-moshi" }
