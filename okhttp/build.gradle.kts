@@ -59,7 +59,7 @@ kotlin {
 
   sourceSets {
     commonMain {
-      kotlin.srcDir(copyKotlinTemplates.get())
+      kotlin.srcDir(copyKotlinTemplates.get().outputs)
       kotlin.srcDir(generateIdnaMappingTable.outputs)
       dependencies {
         api(libs.squareup.okio)

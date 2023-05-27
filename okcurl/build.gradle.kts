@@ -24,7 +24,7 @@ kotlin {
 
   sourceSets {
     commonMain {
-      resources.srcDir(copyResourcesTemplates.get())
+      resources.srcDir(copyResourcesTemplates.get().outputs)
       dependencies {
         api(libs.kotlin.stdlib)
       }
