@@ -24,7 +24,6 @@ import java.net.UnknownHostException
 import java.util.concurrent.CountDownLatch
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import mockwebserver3.junit5.internal.MockWebServerExtension
 import okhttp3.AsyncDns
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -34,16 +33,14 @@ import okhttp3.tls.HeldCertificate
 import okio.IOException
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.fail
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
-import org.opentest4j.TestAbortedException
+import org.junit.AssumptionViolatedException
+import org.junit.Before
+import org.junit.Ignore
+import org.junit.Test
 
 /**
  * Run with "./gradlew :android-test:connectedCheck -PandroidBuild=true" and make sure ANDROID_SDK_ROOT is set.
  */
-@ExtendWith(MockWebServerExtension::class)
 class AndroidAsyncDnsTest {
 
   private val localhost: HandshakeCertificates by lazy {
@@ -65,14 +62,14 @@ class AndroidAsyncDnsTest {
 
   private lateinit var server: MockWebServer
 
-  @BeforeEach
+  @Before
   fun init(server: MockWebServer) {
     this.server = server
     server.useHttps(localhost.sslSocketFactory())
   }
 
   @Test
-  @Disabled("java.net.UnknownHostException: No results for localhost, in CI.")
+  @Ignore("java.net.UnknownHostException: No results for localhost, in CI.")
   fun testRequest() {
     server.enqueue(MockResponse())
 
@@ -107,7 +104,7 @@ class AndroidAsyncDnsTest {
   }
 
   @Test
-  @Disabled("No results on CI for localhost")
+  @Ignore("No results on CI for localhost")
   fun testDnsRequest() {
     val (allAddresses, exception) = dnsQuery("localhost")
 
@@ -165,7 +162,7 @@ class AndroidAsyncDnsTest {
       context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
     val network =
-      connectivityManager.activeNetwork ?: throw TestAbortedException("No active network")
+      connectivityManager.activeNetwork ?: throw AssumptionViolatedException("No active network")
 
     val client = OkHttpClient.Builder()
       .dns(AsyncDns.toDns(AndroidAsyncDns.IPv4, AndroidAsyncDns.IPv6))
@@ -184,7 +181,7 @@ class AndroidAsyncDnsTest {
     try {
       InetAddress.getByName("www.google.com")
     } catch (uhe: UnknownHostException) {
-      throw TestAbortedException(uhe.message, uhe)
+      throw AssumptionViolatedException(uhe.message, uhe)
     }
   }
 }
