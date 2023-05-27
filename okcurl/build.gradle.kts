@@ -12,11 +12,19 @@ plugins {
   id("com.github.johnrengelman.shadow")
 }
 
+val copyResourcesTemplates = tasks.register<Copy>("copyResourcesTemplates") {
+  from("src/jvmMain/resources-templates")
+  into("$buildDir/generated/resources-templates")
+  expand("projectVersion" to "${project.version}")
+  filteringCharset = Charsets.UTF_8.toString()
+}
+
 kotlin {
   jvm()
 
   sourceSets {
     commonMain {
+      resources.srcDir(copyResourcesTemplates.get().outputs)
       dependencies {
         api(libs.kotlin.stdlib)
       }
@@ -30,8 +38,6 @@ kotlin {
     }
 
     val jvmMain by getting {
-      kotlin.srcDir("$buildDir/generated/resources-templates")
-
       dependencies {
         api(libs.kotlin.stdlib)
         api(projects.okhttp)
@@ -109,15 +115,4 @@ tasks.getByName("nativeImage").dependsOn(copyJvmJar)
 
 mavenPublishing {
   configure(KotlinMultiplatform(javadocJar = JavadocJar.Dokka("dokkaGfm")))
-}
-
-tasks.register<Copy>("copyResourcesTemplates") {
-  from("src/main/resources-templates")
-  into("$buildDir/generated/resources-templates")
-  expand("projectVersion" to "${project.version}")
-  filteringCharset = Charsets.UTF_8.toString()
-}.let {
-  tasks.processResources.dependsOn(it)
-  tasks.compileJava.dependsOn(it)
-  tasks["jvmSourcesJar"].dependsOn(it)
 }
