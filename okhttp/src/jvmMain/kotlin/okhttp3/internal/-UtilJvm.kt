@@ -33,6 +33,7 @@ import kotlin.text.Charsets.UTF_16LE
 import kotlin.text.Charsets.UTF_32BE
 import kotlin.text.Charsets.UTF_32LE
 import kotlin.text.Charsets.UTF_8
+import kotlin.time.Duration
 import okhttp3.EventListener
 import okhttp3.Headers
 import okhttp3.HttpUrl
@@ -97,12 +98,19 @@ internal fun BufferedSource.readBomAsCharset(default: Charset): Charset {
   }
 }
 
-internal fun checkDuration(name: String, duration: Long, unit: TimeUnit?): Int {
+internal fun checkDuration(name: String, duration: Long, unit: TimeUnit): Int {
   check(duration >= 0L) { "$name < 0" }
-  check(unit != null) { "unit == null" }
   val millis = unit.toMillis(duration)
-  require(millis <= Integer.MAX_VALUE) { "$name too large." }
-  require(millis != 0L || duration <= 0L) { "$name too small." }
+  require(millis <= Integer.MAX_VALUE) { "$name too large" }
+  require(millis != 0L || duration <= 0L) { "$name too small" }
+  return millis.toInt()
+}
+
+internal fun checkDuration(name: String, duration: Duration): Int {
+  check(!duration.isNegative()) { "$name < 0" }
+  val millis = duration.inWholeMilliseconds
+  require(millis <= Integer.MAX_VALUE) { "$name too large" }
+  require(millis != 0L || !duration.isPositive()) { "$name too small" }
   return millis.toInt()
 }
 
