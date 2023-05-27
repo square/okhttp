@@ -1015,9 +1015,8 @@ open class OkHttpClient internal constructor(
      *
      * The default value is 0 which imposes no timeout.
      */
-    @IgnoreJRERequirement
     fun callTimeout(duration: KotlinDuration) = apply {
-      callTimeout(duration.inWholeMilliseconds, MILLISECONDS)
+      callTimeout = checkDuration("duration", duration)
     }
 
     /**
@@ -1051,9 +1050,8 @@ open class OkHttpClient internal constructor(
      * The connect timeout is applied when connecting a TCP socket to the target host. The default
      * value is 10 seconds.
      */
-    @IgnoreJRERequirement
     fun connectTimeout(duration: KotlinDuration) = apply {
-      connectTimeout(duration.inWholeMilliseconds, MILLISECONDS)
+      connectTimeout = checkDuration("duration", duration)
     }
 
     /**
@@ -1096,9 +1094,8 @@ open class OkHttpClient internal constructor(
      * @see Socket.setSoTimeout
      * @see Source.timeout
      */
-    @IgnoreJRERequirement
     fun readTimeout(duration: KotlinDuration) = apply {
-      readTimeout(duration.inWholeMilliseconds, MILLISECONDS)
+      readTimeout = checkDuration("duration", duration)
     }
 
     /**
@@ -1138,9 +1135,8 @@ open class OkHttpClient internal constructor(
      *
      * @see Sink.timeout
      */
-    @IgnoreJRERequirement
     fun writeTimeout(duration: KotlinDuration) = apply {
-      writeTimeout(duration.inWholeMilliseconds, MILLISECONDS)
+      writeTimeout = checkDuration("duration", duration)
     }
 
     /**
@@ -1192,9 +1188,8 @@ open class OkHttpClient internal constructor(
      *
      * The default value of 0 disables client-initiated pings.
      */
-    @IgnoreJRERequirement
     fun pingInterval(duration: KotlinDuration) = apply {
-      pingInterval(duration.inWholeMilliseconds, MILLISECONDS)
+      pingInterval = checkDuration("duration", duration)
     }
 
     /**
