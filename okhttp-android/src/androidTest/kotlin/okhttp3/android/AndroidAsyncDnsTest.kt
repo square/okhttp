@@ -18,6 +18,7 @@ package okhttp3.android
 
 import android.content.Context
 import android.net.ConnectivityManager
+import android.os.Build
 import androidx.test.platform.app.InstrumentationRegistry
 import java.net.InetAddress
 import java.net.UnknownHostException
@@ -34,6 +35,8 @@ import okhttp3.tls.HeldCertificate
 import okio.IOException
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.fail
+import org.junit.Assume
+import org.junit.Assume.assumeTrue
 import org.junit.AssumptionViolatedException
 import org.junit.Before
 import org.junit.Ignore
@@ -45,6 +48,7 @@ import org.junit.Test
  */
 class AndroidAsyncDnsTest {
   @JvmField @Rule val serverRule = MockWebServerRule()
+  private lateinit var client: OkHttpClient
 
   private val localhost: HandshakeCertificates by lazy {
     // Generate a self-signed cert for the server to serve and the client to trust.
@@ -58,13 +62,15 @@ class AndroidAsyncDnsTest {
       .build()
   }
 
-  private val client = OkHttpClient.Builder()
-    .dns(AsyncDns.toDns(AndroidAsyncDns.IPv4, AndroidAsyncDns.IPv6))
-    .sslSocketFactory(localhost.sslSocketFactory(), localhost.trustManager)
-    .build()
-
   @Before
   fun init() {
+    assumeTrue("Supported on API 29+", Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+
+    client = OkHttpClient.Builder()
+      .dns(AsyncDns.toDns(AndroidAsyncDns.IPv4, AndroidAsyncDns.IPv6))
+      .sslSocketFactory(localhost.sslSocketFactory(), localhost.trustManager)
+      .build()
+
     serverRule.server.useHttps(localhost.sslSocketFactory())
   }
 
