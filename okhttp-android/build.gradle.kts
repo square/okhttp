@@ -5,7 +5,6 @@ import com.vanniktech.maven.publish.JavadocJar
 plugins {
   id("com.android.library")
   kotlin("android")
-  id("de.mannodermaus.android-junit5")
   id("org.jetbrains.dokka")
   id("com.vanniktech.maven.publish.base")
   id("binary-compatibility-validator")
@@ -20,10 +19,6 @@ android {
 
     // Make sure to use the AndroidJUnitRunner (or a sub-class) in order to hook in the JUnit 5 Test Builder
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    testInstrumentationRunnerArguments += mapOf(
-      "runnerBuilder" to "de.mannodermaus.junit5.AndroidJUnit5Builder",
-      "notPackage" to "org.bouncycastle"
-    )
 
     buildFeatures {
       buildConfig = false
@@ -68,14 +63,12 @@ dependencies {
   testImplementation(libs.androidx.test.runner)
   testImplementation(libs.robolectric)
   testImplementation(libs.androidx.espresso.core)
+  testImplementation(libs.squareup.okio.fakefilesystem)
 
   androidTestImplementation(projects.okhttpTls)
   androidTestImplementation(libs.assertj.core)
-  androidTestImplementation(projects.mockwebserver3Junit5)
+  androidTestImplementation(projects.mockwebserver3Junit4)
   androidTestImplementation(libs.androidx.test.runner)
-  androidTestImplementation(libs.junit.jupiter.api)
-  androidTestImplementation(libs.junit5android.core)
-  androidTestRuntimeOnly(libs.junit5android.runner)
 }
 
 mavenPublishing {

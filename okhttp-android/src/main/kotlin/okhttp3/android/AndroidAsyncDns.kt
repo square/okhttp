@@ -61,7 +61,10 @@ class AndroidAsyncDns(
   }
 
   companion object {
+    @RequiresApi(Build.VERSION_CODES.Q)
     val IPv4 = AndroidAsyncDns(dnsClass = AsyncDns.DnsClass.IPV4)
+
+    @RequiresApi(Build.VERSION_CODES.Q)
     val IPv6 = AndroidAsyncDns(dnsClass = AsyncDns.DnsClass.IPV6)
   }
 }

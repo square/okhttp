@@ -30,15 +30,16 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import org.robolectric.annotation.GraphicsMode
 import java.net.InetAddress
 import java.net.UnknownHostException
+import okhttp3.Cache
+import okio.Path.Companion.toPath
+import okio.fakefilesystem.FakeFileSystem
 
 @RunWith(RobolectricTestRunner::class)
 @Config(
   sdk = [30],
 )
-@GraphicsMode(GraphicsMode.Mode.NATIVE)
 class RobolectricOkHttpClientTest {
 
   private lateinit var context: Context
@@ -47,7 +48,9 @@ class RobolectricOkHttpClientTest {
   @Before
   fun setUp() {
     context = ApplicationProvider.getApplicationContext<Application>()
-    client = OkHttpClient()
+    client = OkHttpClient.Builder()
+      .cache(Cache("/cache".toPath(), 10_000_000, FakeFileSystem()))
+      .build()
   }
 
   @Test
@@ -57,21 +60,20 @@ class RobolectricOkHttpClientTest {
     val request = Request("https://www.google.com/robots.txt".toHttpUrl())
 
     val networkRequest = request.newBuilder()
-      .cacheControl(CacheControl.FORCE_NETWORK)
       .build()
 
     val call = client.newCall(networkRequest)
 
     call.execute().use { response ->
       assertThat(response.code).isEqualTo(200)
-      assertThat(response.networkResponse).isNull()
+      assertThat(response.cacheResponse).isNull()
     }
 
     val cachedCall = client.newCall(request)
 
     cachedCall.execute().use { response ->
       assertThat(response.code).isEqualTo(200)
-      assertThat(response.networkResponse).isNotNull()
+      assertThat(response.cacheResponse).isNotNull()
     }
   }
 

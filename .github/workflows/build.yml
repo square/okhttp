@@ -389,7 +389,6 @@ jobs:
     timeout-minutes: 30
     if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'android') || contains(github.event.pull_request.labels.*.name, 'renovate')
 
-
     strategy:
       fail-fast: false
       matrix:
@@ -411,6 +410,8 @@ jobs:
 
       - name: Gradle cache
         uses: gradle/gradle-build-action@v2
+        with:
+          arguments: -PandroidBuild=true :okhttp-android:test
 
       - name: AVD cache
         uses: actions/cache@v3

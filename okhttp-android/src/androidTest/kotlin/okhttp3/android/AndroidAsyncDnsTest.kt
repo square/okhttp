@@ -18,13 +18,14 @@ package okhttp3.android
 
 import android.content.Context
 import android.net.ConnectivityManager
+import android.os.Build
 import androidx.test.platform.app.InstrumentationRegistry
 import java.net.InetAddress
 import java.net.UnknownHostException
 import java.util.concurrent.CountDownLatch
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
-import mockwebserver3.junit5.internal.MockWebServerExtension
+import mockwebserver3.junit4.MockWebServerRule
 import okhttp3.AsyncDns
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -34,17 +35,20 @@ import okhttp3.tls.HeldCertificate
 import okio.IOException
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.fail
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
-import org.opentest4j.TestAbortedException
+import org.junit.Assume
+import org.junit.Assume.assumeTrue
+import org.junit.AssumptionViolatedException
+import org.junit.Before
+import org.junit.Ignore
+import org.junit.Rule
+import org.junit.Test
 
 /**
  * Run with "./gradlew :android-test:connectedCheck -PandroidBuild=true" and make sure ANDROID_SDK_ROOT is set.
  */
-@ExtendWith(MockWebServerExtension::class)
 class AndroidAsyncDnsTest {
+  @JvmField @Rule val serverRule = MockWebServerRule()
+  private lateinit var client: OkHttpClient
 
   private val localhost: HandshakeCertificates by lazy {
     // Generate a self-signed cert for the server to serve and the client to trust.
@@ -58,25 +62,24 @@ class AndroidAsyncDnsTest {
       .build()
   }
 
-  private val client = OkHttpClient.Builder()
-    .dns(AsyncDns.toDns(AndroidAsyncDns.IPv4, AndroidAsyncDns.IPv6))
-    .sslSocketFactory(localhost.sslSocketFactory(), localhost.trustManager)
-    .build()
+  @Before
+  fun init() {
+    assumeTrue("Supported on API 29+", Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
 
-  private lateinit var server: MockWebServer
+    client = OkHttpClient.Builder()
+      .dns(AsyncDns.toDns(AndroidAsyncDns.IPv4, AndroidAsyncDns.IPv6))
+      .sslSocketFactory(localhost.sslSocketFactory(), localhost.trustManager)
+      .build()
 
-  @BeforeEach
-  fun init(server: MockWebServer) {
-    this.server = server
-    server.useHttps(localhost.sslSocketFactory())
+    serverRule.server.useHttps(localhost.sslSocketFactory())
   }
 
   @Test
-  @Disabled("java.net.UnknownHostException: No results for localhost, in CI.")
+  @Ignore("java.net.UnknownHostException: No results for localhost, in CI.")
   fun testRequest() {
-    server.enqueue(MockResponse())
+    serverRule.server.enqueue(MockResponse())
 
-    val call = client.newCall(Request(server.url("/")))
+    val call = client.newCall(Request(serverRule.server.url("/")))
 
     call.execute().use { response ->
       assertThat(response.code).isEqualTo(200)
@@ -107,7 +110,7 @@ class AndroidAsyncDnsTest {
   }
 
   @Test
-  @Disabled("No results on CI for localhost")
+  @Ignore("No results on CI for localhost")
   fun testDnsRequest() {
     val (allAddresses, exception) = dnsQuery("localhost")
 
@@ -165,7 +168,7 @@ class AndroidAsyncDnsTest {
       context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
     val network =
-      connectivityManager.activeNetwork ?: throw TestAbortedException("No active network")
+      connectivityManager.activeNetwork ?: throw AssumptionViolatedException("No active network")
 
     val client = OkHttpClient.Builder()
       .dns(AsyncDns.toDns(AndroidAsyncDns.IPv4, AndroidAsyncDns.IPv6))
@@ -184,7 +187,7 @@ class AndroidAsyncDnsTest {
     try {
       InetAddress.getByName("www.google.com")
     } catch (uhe: UnknownHostException) {
-      throw TestAbortedException(uhe.message, uhe)
+      throw AssumptionViolatedException(uhe.message, uhe)
     }
   }
 }
