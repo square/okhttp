@@ -129,6 +129,18 @@ internal class IdnaMappingTable internal constructor(
         val beginIndex = ranges.read14BitInt(rangesIndex + 2)
         sink.writeUtf8(mappings, beginIndex, beginIndex + b1)
       }
+      in 64..95 -> {
+        // Mapped inline as codepoint delta
+        val b2 = ranges[rangesIndex + 2].code
+        val b3 = ranges[rangesIndex + 3].code
+
+        val delta = (b1 and 0xF shl 14) or (b2 shl 7) or b3
+        if (b1 < 80) {
+          sink.writeUtf8CodePoint(codePoint + delta)
+        } else {
+          sink.writeUtf8CodePoint(codePoint - delta)
+        }
+      }
       119 -> {
         // Ignored.
       }

@@ -107,4 +107,37 @@ class MappingTablesTest {
       Mapping(0x40080, 0x400ff, TYPE_DISALLOWED, ByteString.EMPTY),
     )
   }
+
+  @Test
+  fun mergeAdjacentDeltaMappedRangesWithMultipleDeltas() {
+    assertThat(
+      mergeAdjacentDeltaMappedRanges(
+        mutableListOf(
+          MappedRange.InlineDelta(1, 5),
+          MappedRange.InlineDelta(2, 5),
+          MappedRange.InlineDelta(3, 5),
+          MappedRange.External(4, "a".encodeUtf8()),
+        )
+      )
+    ).containsExactly(
+      MappedRange.InlineDelta(1, 5),
+      MappedRange.External(4, "a".encodeUtf8()),
+    )
+  }
+
+  @Test
+  fun mergeAdjacentDeltaMappedRangesWithDifferentSizedDeltas() {
+    assertThat(
+      mergeAdjacentDeltaMappedRanges(
+        mutableListOf(
+          MappedRange.InlineDelta(1, 5),
+          MappedRange.InlineDelta(2, 5),
+          MappedRange.InlineDelta(3, 1),
+        )
+      )
+    ).containsExactly(
+      MappedRange.InlineDelta(1, 5),
+      MappedRange.InlineDelta(3, 1),
+    )
+  }
 }
