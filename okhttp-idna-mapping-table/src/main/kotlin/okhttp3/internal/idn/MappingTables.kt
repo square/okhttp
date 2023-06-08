@@ -104,10 +104,10 @@ fun buildIdnaMappingTableData(table: SimpleIdnaMappingTable): IdnaMappingTableDa
 
 /**
  * If [mapping] qualifies to be encoded as [MappedRange.InlineDelta] return new instance, otherwise null.
- * An [MappedRange.InlineDelta] must be a mapping from a single code-point to a single-codepoint with a difference
- * that can be represented in 2^18 bits.
+ * An [MappedRange.InlineDelta] must be a mapping from a single code-point to a single code-point with a difference
+ * that can be represented in 2^18-1.
  */
-private fun inlineDeltaOrNull(mapping: Mapping): MappedRange.InlineDelta? {
+internal fun inlineDeltaOrNull(mapping: Mapping): MappedRange.InlineDelta? {
   if (mapping.hasSingleSourceCodePoint) {
     val sourceCodePoint = mapping.sourceCodePoint0
     val mappedCodePoints = mapping.mappedTo.utf8().codePoints().toList()
