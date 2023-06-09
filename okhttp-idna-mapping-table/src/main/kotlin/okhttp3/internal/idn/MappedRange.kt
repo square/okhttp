@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.idn
 
+import kotlin.math.abs
 import okio.ByteString
 
 internal sealed interface MappedRange {
@@ -70,6 +71,31 @@ internal sealed interface MappedRange {
 
     val b3: Int
       get() = mappedTo[1] and 0x7f
+  }
+
+  data class InlineDelta(
+    override val rangeStart: Int,
+    val codepointDelta: Int
+  ) : MappedRange {
+
+    private val absoluteDelta = abs(codepointDelta)
+
+    val b1: Int
+      get() = when {
+        codepointDelta < 0 -> 0x40 or (absoluteDelta shr 14)
+        codepointDelta > 0 -> 0x50 or (absoluteDelta shr 14)
+        else -> error("Unexpected codepointDelta of 0")
+      }
+
+    val b2: Int
+      get() = absoluteDelta shr 7 and 0x7f
+
+    val b3: Int
+      get() = absoluteDelta and 0x7f
+
+    companion object {
+      const val MAX_VALUE = 0x3FFFF
+    }
   }
 
   data class External(

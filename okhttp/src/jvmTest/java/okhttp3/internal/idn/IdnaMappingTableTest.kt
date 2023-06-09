@@ -21,7 +21,6 @@ import assertk.assertions.isGreaterThan
 import assertk.assertions.isLessThan
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import okhttp3.internal.toHexString
 import okio.Buffer
 import okio.FileSystem
 import okio.Path.Companion.toPath

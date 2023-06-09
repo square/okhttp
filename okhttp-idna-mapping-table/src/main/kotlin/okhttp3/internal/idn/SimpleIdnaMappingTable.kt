@@ -238,6 +238,9 @@ internal data class Mapping(
   val rangeStart: Int
     get() = sourceCodePoint0 and 0x7f
 
+  val hasSingleSourceCodePoint: Boolean
+    get() = sourceCodePoint0 == sourceCodePoint1
+
   val spansSections: Boolean
     get() = (sourceCodePoint0 and 0x1fff80) != (sourceCodePoint1 and 0x1fff80)
 }

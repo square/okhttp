@@ -56,16 +56,18 @@ import okio.BufferedSink
  * This is either a mapping decision or the length of the mapped output, according to this table:
  *
  * ```
- * 0..63 : Length of the UTF-16 sequence that this range maps to. The offset is b2b3.
- *   119 : Ignored.
- *   120 : Valid.
- *   121 : Disallowed
- *   122 : Mapped inline to the sequence: [b2].
- *   123 : Mapped inline to the sequence: [b2a].
- *   124 : Mapped inline to the sequence: [b2, b3].
- *   125 : Mapped inline to the sequence: [b2a, b3].
- *   126 : Mapped inline to the sequence: [b2, b3a].
- *   127 : Mapped inline to the sequence: [b2a, b3a].
+ *  0..63 : Length of the UTF-16 sequence that this range maps to. The offset is b2b3.
+ * 64..79 : Offset by a fixed negative offset. The bottom 4 bits of the offset are the top 4 bits of the offset.
+ * 80..95 : Offset by a fixed positive offset. The bottom 4 bits of the offset are the top 4 bits of the offset.
+ *    119 : Ignored.
+ *    120 : Valid.
+ *    121 : Disallowed
+ *    122 : Mapped inline to the sequence: [b2].
+ *    123 : Mapped inline to the sequence: [b2a].
+ *    124 : Mapped inline to the sequence: [b2, b3].
+ *    125 : Mapped inline to the sequence: [b2a, b3].
+ *    126 : Mapped inline to the sequence: [b2, b3a].
+ *    127 : Mapped inline to the sequence: [b2a, b3a].
  *
  * The range goes until the beginning of the next range.
  *
@@ -128,6 +130,22 @@ internal class IdnaMappingTable internal constructor(
         // Length of the UTF-16 sequence that this range maps to. The offset is b2b3.
         val beginIndex = ranges.read14BitInt(rangesIndex + 2)
         sink.writeUtf8(mappings, beginIndex, beginIndex + b1)
+      }
+      in 64..79 -> {
+        // Mapped inline as codePoint delta to subtract
+        val b2 = ranges[rangesIndex + 2].code
+        val b3 = ranges[rangesIndex + 3].code
+
+        val codepointDelta = (b1 and 0xF shl 14) or (b2 shl 7) or b3
+        sink.writeUtf8CodePoint(codePoint - codepointDelta)
+      }
+      in 80..95 -> {
+        // Mapped inline as codePoint delta to add
+        val b2 = ranges[rangesIndex + 2].code
+        val b3 = ranges[rangesIndex + 3].code
+
+        val codepointDelta = (b1 and 0xF shl 14) or (b2 shl 7) or b3
+        sink.writeUtf8CodePoint(codePoint + codepointDelta)
       }
       119 -> {
         // Ignored.

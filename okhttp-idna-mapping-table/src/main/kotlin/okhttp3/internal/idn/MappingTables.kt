@@ -15,6 +15,8 @@
  */
 package okhttp3.internal.idn
 
+import kotlin.math.abs
+import kotlin.streams.toList
 import okio.Buffer
 
 /** Index [table] for compactness as specified by `IdnaMappingTable`. */
@@ -64,6 +66,11 @@ fun buildIdnaMappingTableData(table: SimpleIdnaMappingTable): IdnaMappingTableDa
           rangesBuffer.writeByte(range.b2)
           rangesBuffer.writeByte(range.b3)
         }
+        is MappedRange.InlineDelta -> {
+          rangesBuffer.writeByte(range.b1)
+          rangesBuffer.writeByte(range.b2)
+          rangesBuffer.writeByte(range.b3)
+        }
         is MappedRange.External -> {
           // Write the mapping.
           val mappingOffset: Int
@@ -96,6 +103,25 @@ fun buildIdnaMappingTableData(table: SimpleIdnaMappingTable): IdnaMappingTableDa
 }
 
 /**
+ * If [mapping] qualifies to be encoded as [MappedRange.InlineDelta] return new instance, otherwise null.
+ * An [MappedRange.InlineDelta] must be a mapping from a single code-point to a single code-point with a difference
+ * that can be represented in 2^18-1.
+ */
+internal fun inlineDeltaOrNull(mapping: Mapping): MappedRange.InlineDelta? {
+  if (mapping.hasSingleSourceCodePoint) {
+    val sourceCodePoint = mapping.sourceCodePoint0
+    val mappedCodePoints = mapping.mappedTo.utf8().codePoints().toList()
+    if (mappedCodePoints.size == 1) {
+      val codePointDelta = mappedCodePoints.single() - sourceCodePoint
+      if (MappedRange.InlineDelta.MAX_VALUE >= abs(codePointDelta)) {
+        return MappedRange.InlineDelta(mapping.rangeStart, codePointDelta)
+      }
+    }
+  }
+  return null
+}
+
+/**
  * Inputs must have applied [withoutSectionSpans].
  */
 internal fun sections(mappings: List<Mapping>): Map<Int, List<MappedRange>> {
@@ -110,7 +136,12 @@ internal fun sections(mappings: List<Mapping>): Map<Int, List<MappedRange>> {
     val sectionList = result.getOrPut(section) { mutableListOf() }
 
     sectionList += when (mapping.type) {
-      TYPE_MAPPED -> {
+      TYPE_MAPPED -> run {
+        val deltaMapping = inlineDeltaOrNull(mapping)
+        if (deltaMapping != null) {
+          return@run deltaMapping
+        }
+
         when (mapping.mappedTo.size) {
           1 -> MappedRange.Inline1(rangeStart, mapping.mappedTo)
           2 -> MappedRange.Inline2(rangeStart, mapping.mappedTo)
@@ -126,9 +157,38 @@ internal fun sections(mappings: List<Mapping>): Map<Int, List<MappedRange>> {
     }
   }
 
+  for (sectionList in result.values) {
+    mergeAdjacentDeltaMappedRanges(sectionList)
+  }
+
   return result.toMap()
 }
 
+/**
+ * Modifies [ranges] to combine any adjacent [MappedRange.InlineDelta] of same size to single entry.
+ * @returns same instance of [ranges] for convenience
+ */
+internal fun mergeAdjacentDeltaMappedRanges(ranges: MutableList<MappedRange>): MutableList<MappedRange> {
+  var i = 0
+  while (i < ranges.size) {
+    val curr = ranges[i]
+    if (curr is MappedRange.InlineDelta) {
+      val j = i + 1
+      mergeAdjacent@ while (j < ranges.size) {
+        val next = ranges[j]
+        if (next is MappedRange.InlineDelta &&
+          curr.codepointDelta == next.codepointDelta
+        ) {
+          ranges.removeAt(j)
+        } else {
+          break@mergeAdjacent
+        }
+      }
+    }
+    i++
+  }
+  return ranges
+}
 
 /**
  * Returns a copy of [mappings], splitting to ensure that each mapping is entirely contained within
@@ -219,3 +279,4 @@ internal infix fun Byte.and(mask: Int): Int = toInt() and mask
 internal infix fun Short.and(mask: Int): Int = toInt() and mask
 
 internal infix fun Int.and(mask: Long): Long = toLong() and mask
+
