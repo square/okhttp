@@ -16,22 +16,16 @@
 @file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 package okhttp3.tls
 
-import java.security.SecureRandom
+import java.net.Socket
+import java.security.*
 import java.security.cert.X509Certificate
 import java.util.Collections
-import javax.net.ssl.HostnameVerifier
-import javax.net.ssl.KeyManager
-import javax.net.ssl.SSLContext
-import javax.net.ssl.SSLSocketFactory
-import javax.net.ssl.TrustManager
-import javax.net.ssl.X509KeyManager
-import javax.net.ssl.X509TrustManager
+import javax.net.ssl.*
 import okhttp3.CertificatePinner
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.toImmutableList
 import okhttp3.tls.internal.TlsUtil.newKeyManager
 import okhttp3.tls.internal.TlsUtil.newTrustManager
-import java.security.KeyStoreException
 
 /**
  * Certificates to identify which peers to trust and also to earn the trust of those peers in kind.
@@ -183,6 +177,71 @@ class HandshakeCertificates private constructor(
       val keyManager = newKeyManager(null, heldCertificate, *(intermediates ?: emptyArray()))
       val trustManager = newTrustManager(null, trustedCertificates, immutableInsecureHosts)
       return HandshakeCertificates(keyManager, trustManager)
+    }
+  }
+
+  companion object {
+    fun from(
+      privateKey: PrivateKey,
+      clientCertificateChain: Array<X509Certificate>,
+      serverCertificates: Array<X509Certificate>
+    ): HandshakeCertificates {
+      return HandshakeCertificates(
+        getKeyManager(privateKey, clientCertificateChain),
+        getTrustManager(serverCertificates)
+      )
+    }
+
+    private fun getKeyManager(privateKey: PrivateKey, certificateChain: Array<X509Certificate>) =
+      object : X509KeyManager {
+        override fun getClientAliases(p0: String?, p1: Array<out Principal>?): Array<String> {
+          return arrayOf("client")
+        }
+
+        override fun chooseClientAlias(
+          p0: Array<out String>?,
+          p1: Array<out Principal>?,
+          p2: Socket?
+        ): String {
+          return "client"
+        }
+
+        override fun getServerAliases(p0: String?, p1: Array<out Principal>?): Array<String> {
+          return arrayOf("server")
+        }
+
+        override fun chooseServerAlias(
+          p0: String?,
+          p1: Array<out Principal>?,
+          p2: Socket?
+        ): String {
+          return "server"
+        }
+
+        override fun getCertificateChain(p0: String?): Array<X509Certificate> {
+          return certificateChain
+        }
+
+        override fun getPrivateKey(p0: String?): PrivateKey {
+          return privateKey
+        }
+      }
+
+    private fun getTrustManager(serverCertificates: Array<X509Certificate>): X509TrustManager {
+      val trustKeyStore: KeyStore? = if (serverCertificates.isNotEmpty()) {
+        KeyStore.getInstance(KeyStore.getDefaultType()).apply {
+          serverCertificates.forEachIndexed { index, certificate ->
+            setCertificateEntry("ca$index", certificate)
+          }
+        }
+      } else {
+        null
+      }
+
+      val trustManager = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm()).apply {
+          init(trustKeyStore)
+        }
+      return trustManager.trustManagers.first() as X509TrustManager
     }
   }
 }
