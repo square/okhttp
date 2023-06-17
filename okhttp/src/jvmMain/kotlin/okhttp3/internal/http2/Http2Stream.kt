@@ -491,7 +491,7 @@ class Http2Stream internal constructor(
       // But delay updating the stream flow control until that stream has been
       // consumed
       updateConnectionFlowControl(byteCount)
-      
+
       // Notify that buffer size changed
       connection.flowControlListener.receivingStreamWindowChanged(id, readBytes, readBuffer.size)
     }
@@ -528,7 +528,8 @@ class Http2Stream internal constructor(
       // RST this stream to prevent additional data from being sent. This is safe because the input
       // stream is closed (we won't use any further bytes) and the output stream is either finished
       // or closed (so RSTing both streams doesn't cause harm).
-      this@Http2Stream.close(ErrorCode.CANCEL, null)
+//      this@Http2Stream.close(ErrorCode.CANCEL, null)
+      closeInternal(ErrorCode.CANCEL, null)
     } else if (!open) {
       connection.removeStream(id)
     }
