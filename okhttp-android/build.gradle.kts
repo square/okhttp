@@ -59,6 +59,7 @@ dependencies {
   testImplementation(libs.squareup.okio.fakefilesystem)
 
   androidTestImplementation(projects.okhttpTls)
+  androidTestImplementation(projects.loggingInterceptor)
   androidTestImplementation(libs.assertj.core)
   androidTestImplementation(projects.mockwebserver3Junit4)
   androidTestImplementation(libs.androidx.test.runner)
