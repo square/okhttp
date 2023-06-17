@@ -234,6 +234,8 @@ class Http2Stream internal constructor(
     return sink
   }
 
+  var wroteReset = false
+
   /**
    * Abnormally terminate this stream. This blocks until the `RST_STREAM` frame has been
    * transmitted.
@@ -243,7 +245,9 @@ class Http2Stream internal constructor(
     if (!closeInternal(rstStatusCode, errorException)) {
       return // Already closed.
     }
+    check(!wroteReset)
     connection.writeSynReset(id, rstStatusCode)
+    wroteReset = true
   }
 
   /**
@@ -253,7 +257,9 @@ class Http2Stream internal constructor(
     if (!closeInternal(errorCode, null)) {
       return // Already closed.
     }
+    check(!wroteReset)
     connection.writeSynResetLater(id, errorCode)
+    wroteReset = true
   }
 
   /** Returns true if this stream was closed. */
@@ -491,7 +497,7 @@ class Http2Stream internal constructor(
       // But delay updating the stream flow control until that stream has been
       // consumed
       updateConnectionFlowControl(byteCount)
-      
+
       // Notify that buffer size changed
       connection.flowControlListener.receivingStreamWindowChanged(id, readBytes, readBuffer.size)
     }
