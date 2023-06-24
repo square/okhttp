@@ -1,0 +1,214 @@
+/*
+ * Copyright (c) 2022 Square, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+@file:OptIn(ExperimentalCoroutinesApi::class)
+
+package okhttp3
+
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import java.util.concurrent.Executors
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
+import mockwebserver3.junit5.internal.MockWebServerExtension
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.extension.RegisterExtension
+
+@ExtendWith(MockWebServerExtension::class)
+class InterceptorTest {
+  @RegisterExtension
+  val clientTestRule = OkHttpClientTestRule()
+
+  private lateinit var server: MockWebServer
+
+  val request by lazy { Request(server.url("/")) }
+
+  @BeforeEach
+  fun setup(server: MockWebServer) {
+    this.server = server
+  }
+
+  @Test
+  fun asyncCallTest() {
+    runTest {
+      server.enqueue(MockResponse(body = "failed", code = 401))
+      server.enqueue(MockResponse(body = "token"))
+      server.enqueue(MockResponse(body = "abc"))
+
+      val interceptor = Interceptor {
+        val response = it.proceed(it.request())
+
+        if (response.code == 401 && it.request().url.encodedPath != "/token") {
+          check(response.body.string() == "failed")
+          response.close()
+
+          val tokenRequest = Request(server.url("/token"))
+          val call = it.callFactory.newCall(tokenRequest)
+          val token = runBlocking {
+            val tokenResponse = call.executeAsync()
+            withContext(Dispatchers.IO) {
+              tokenResponse.body.string()
+            }
+          }
+
+          check(token == "token")
+
+          val secondResponse = it.proceed(
+            it.request().newBuilder()
+              .header("Authorization", token)
+              .build()
+          )
+
+          secondResponse
+        } else {
+          response
+        }
+      }
+
+
+      val client = clientTestRule.newClientBuilder()
+        .dispatcher(Dispatcher(Executors.newSingleThreadExecutor()))
+        .addInterceptor(interceptor)
+        .build()
+
+      val call = client.newCall(request)
+
+      val tokenResponse = call.executeAsync()
+      val body = withContext(Dispatchers.IO) {
+        tokenResponse.body.string()
+      }
+
+      assertThat(body).isEqualTo("abc")
+    }
+  }
+
+  @Test
+  fun syncCallTest() {
+    server.enqueue(MockResponse(body = "failed", code = 401))
+    server.enqueue(MockResponse(body = "token"))
+    server.enqueue(MockResponse(body = "abc"))
+
+    val interceptor = Interceptor {
+      val response = it.proceed(it.request())
+
+      if (response.code == 401 && it.request().url.encodedPath != "/token") {
+        check(response.body.string() == "failed")
+        response.close()
+
+        val tokenRequest = Request(server.url("/token"))
+        val call = it.callFactory.newCall(tokenRequest)
+        val token = if (false)
+          runBlocking {
+            val tokenResponse = call.executeAsync()
+            withContext(Dispatchers.IO) {
+              tokenResponse.body.string()
+            }
+          }
+        else
+          call.execute().body.string()
+
+        check(token == "token")
+
+        val secondResponse = it.proceed(
+          it.request().newBuilder()
+            .header("Authorization", token)
+            .build()
+        )
+
+        secondResponse
+      } else {
+        response
+      }
+    }
+
+
+    val client = clientTestRule.newClientBuilder()
+      .dispatcher(Dispatcher(Executors.newSingleThreadExecutor()))
+      .addInterceptor(interceptor)
+      .build()
+
+    val call = client.newCall(request)
+
+    val body = call.execute().body.string()
+
+    assertThat(body).isEqualTo("abc")
+
+  }
+
+  @Test
+  fun asyncInterceptorCallTest() {
+    runTest {
+      server.enqueue(MockResponse(body = "failed", code = 401))
+      server.enqueue(MockResponse(body = "token"))
+      server.enqueue(MockResponse(body = "abc"))
+
+      val interceptor = object : SuspendingInterceptor() {
+        override suspend fun interceptAsync(it: Interceptor.Chain): Response {
+          val response = it.proceed(it.request())
+
+          return if (response.code == 401 && it.request().url.encodedPath != "/token") {
+            check(response.body.string() == "failed")
+            response.close()
+
+            val tokenRequest = Request(server.url("/token"))
+            val call = it.callFactory.newCall(tokenRequest)
+
+            val tokenResponse = call.executeAsync()
+            val token = withContext(Dispatchers.IO) {
+              tokenResponse.body.string()
+            }
+
+            check(token == "token")
+
+            val secondResponse = it.proceed(
+              it.request().newBuilder()
+                .header("Authorization", token)
+                .build()
+            )
+
+            secondResponse
+          } else {
+            response
+          }
+        }
+      }
+
+
+      val client = clientTestRule.newClientBuilder()
+        .dispatcher(Dispatcher(Executors.newSingleThreadExecutor()))
+        .addInterceptor(interceptor)
+        .build()
+
+      val call = client.newCall(request)
+
+      val tokenResponse = call.executeAsync()
+      val body = withContext(Dispatchers.IO) {
+        tokenResponse.body.string()
+      }
+
+      assertThat(body).isEqualTo("abc")
+    }
+  }
+
+}

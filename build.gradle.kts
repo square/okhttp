@@ -139,7 +139,7 @@ subprojects {
     }
   }
 
-  val platform = System.getProperty("okhttp.platform", "jdk9")
+  val platform = System.getProperty("okhttp.platform", "bouncycastle")
   val testJavaVersion = System.getProperty("test.java.version", "11").toInt()
 
   val testRuntimeOnly: Configuration by configurations.getting

@@ -89,6 +89,8 @@ fun interface Interceptor {
 
     fun call(): Call
 
+    val callFactory: Call.Factory
+
     fun connectTimeoutMillis(): Int
 
     fun withConnectTimeout(timeout: Int, unit: TimeUnit): Chain

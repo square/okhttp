@@ -58,6 +58,9 @@ class RealInterceptorChain(
 
   override fun connection(): Connection? = exchange?.connection
 
+  override val callFactory: Call.Factory
+    get() = InterceptorCallFactory(call.client)
+
   override fun connectTimeoutMillis(): Int = connectTimeoutMillis
 
   override fun withConnectTimeout(timeout: Int, unit: TimeUnit): Interceptor.Chain {

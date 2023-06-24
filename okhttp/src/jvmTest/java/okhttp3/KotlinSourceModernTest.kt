@@ -1175,6 +1175,8 @@ class KotlinSourceModernTest {
       override fun proceed(request: Request): Response = TODO()
       override fun connection(): Connection? = TODO()
       override fun call(): Call = TODO()
+      override val callFactory: Call.Factory
+        get() = TODO()
       override fun connectTimeoutMillis(): Int = TODO()
       override fun withConnectTimeout(timeout: Int, unit: TimeUnit): Interceptor.Chain = TODO()
       override fun readTimeoutMillis(): Int = TODO()
