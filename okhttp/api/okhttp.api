@@ -762,6 +762,7 @@ public abstract interface class okhttp3/Interceptor$Chain {
 	public abstract fun call ()Lokhttp3/Call;
 	public abstract fun connectTimeoutMillis ()I
 	public abstract fun connection ()Lokhttp3/Connection;
+	public abstract fun getCallFactory ()Lokhttp3/Call$Factory;
 	public abstract fun proceed (Lokhttp3/Request;)Lokhttp3/Response;
 	public abstract fun readTimeoutMillis ()I
 	public abstract fun request ()Lokhttp3/Request;

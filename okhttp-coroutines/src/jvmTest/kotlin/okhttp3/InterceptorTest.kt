@@ -21,7 +21,6 @@ package okhttp3
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
-import java.util.concurrent.Executors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
@@ -34,179 +33,220 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.RegisterExtension
+import java.util.concurrent.Executors
 
 @ExtendWith(MockWebServerExtension::class)
 class InterceptorTest {
-  @RegisterExtension
-  val clientTestRule = OkHttpClientTestRule()
+    @RegisterExtension
+    val clientTestRule = OkHttpClientTestRule()
 
-  private lateinit var server: MockWebServer
+    private lateinit var server: MockWebServer
 
-  val request by lazy { Request(server.url("/")) }
+    val request by lazy { Request(server.url("/")) }
 
-  @BeforeEach
-  fun setup(server: MockWebServer) {
-    this.server = server
-  }
+    @BeforeEach
+    fun setup(server: MockWebServer) {
+        this.server = server
 
-  @Test
-  fun asyncCallTest() {
-    runTest {
-      server.enqueue(MockResponse(body = "failed", code = 401))
-      server.enqueue(MockResponse(body = "token"))
-      server.enqueue(MockResponse(body = "abc"))
-
-      val interceptor = Interceptor {
-        val response = it.proceed(it.request())
-
-        if (response.code == 401 && it.request().url.encodedPath != "/token") {
-          check(response.body.string() == "failed")
-          response.close()
-
-          val tokenRequest = Request(server.url("/token"))
-          val call = it.callFactory.newCall(tokenRequest)
-          val token = runBlocking {
-            val tokenResponse = call.executeAsync()
-            withContext(Dispatchers.IO) {
-              tokenResponse.body.string()
-            }
-          }
-
-          check(token == "token")
-
-          val secondResponse = it.proceed(
-            it.request().newBuilder()
-              .header("Authorization", token)
-              .build()
-          )
-
-          secondResponse
-        } else {
-          response
-        }
-      }
-
-
-      val client = clientTestRule.newClientBuilder()
-        .dispatcher(Dispatcher(Executors.newSingleThreadExecutor()))
-        .addInterceptor(interceptor)
-        .build()
-
-      val call = client.newCall(request)
-
-      val tokenResponse = call.executeAsync()
-      val body = withContext(Dispatchers.IO) {
-        tokenResponse.body.string()
-      }
-
-      assertThat(body).isEqualTo("abc")
+        server.enqueue(MockResponse(body = "failed", code = 401))
+        server.enqueue(MockResponse(body = "token"))
+        server.enqueue(MockResponse(body = "abc"))
     }
-  }
 
-  @Test
-  fun syncCallTest() {
-    server.enqueue(MockResponse(body = "failed", code = 401))
-    server.enqueue(MockResponse(body = "token"))
-    server.enqueue(MockResponse(body = "abc"))
+    @Test
+    fun asyncCallTest() {
+        runTest {
+            val interceptor = Interceptor {
+                val response = it.proceed(it.request())
 
-    val interceptor = Interceptor {
-      val response = it.proceed(it.request())
+                if (response.code == 401 && it.request().url.encodedPath != "/token") {
+                    check(response.body.string() == "failed")
+                    response.close()
 
-      if (response.code == 401 && it.request().url.encodedPath != "/token") {
-        check(response.body.string() == "failed")
-        response.close()
+                    val tokenRequest = Request(server.url("/token"))
+                    val call = it.callFactory.newCall(tokenRequest)
+                    val token = runBlocking {
+                        val tokenResponse = call.executeAsync()
+                        withContext(Dispatchers.IO) {
+                            tokenResponse.body.string()
+                        }
+                    }
 
-        val tokenRequest = Request(server.url("/token"))
-        val call = it.callFactory.newCall(tokenRequest)
-        val token = if (false)
-          runBlocking {
-            val tokenResponse = call.executeAsync()
-            withContext(Dispatchers.IO) {
-              tokenResponse.body.string()
+                    check(token == "token")
+
+                    val secondResponse = it.proceed(
+                        it.request().newBuilder()
+                            .header("Authorization", token)
+                            .build()
+                    )
+
+                    secondResponse
+                } else {
+                    response
+                }
             }
-          }
-        else
-          call.execute().body.string()
 
-        check(token == "token")
 
-        val secondResponse = it.proceed(
-          it.request().newBuilder()
-            .header("Authorization", token)
+            val client = clientTestRule.newClientBuilder()
+                .dispatcher(Dispatcher(Executors.newSingleThreadExecutor()))
+                .addInterceptor(interceptor)
+                .build()
+
+            val call = client.newCall(request)
+
+            val tokenResponse = call.executeAsync()
+            val body = withContext(Dispatchers.IO) {
+                tokenResponse.body.string()
+            }
+
+            assertThat(body).isEqualTo("abc")
+        }
+    }
+
+    @Test
+    fun syncCallTest() {
+        val interceptor = Interceptor {
+            val response = it.proceed(it.request())
+
+            if (response.code == 401 && it.request().url.encodedPath != "/token") {
+                check(response.body.string() == "failed")
+                response.close()
+
+                val tokenRequest = Request(server.url("/token"))
+                val call = it.callFactory.newCall(tokenRequest)
+                val token = if (false)
+                    runBlocking {
+                        val tokenResponse = call.executeAsync()
+                        withContext(Dispatchers.IO) {
+                            tokenResponse.body.string()
+                        }
+                    }
+                else
+                    call.execute().body.string()
+
+                check(token == "token")
+
+                val secondResponse = it.proceed(
+                    it.request().newBuilder()
+                        .header("Authorization", token)
+                        .build()
+                )
+
+                secondResponse
+            } else {
+                response
+            }
+        }
+
+        val client = clientTestRule.newClientBuilder()
+            .dispatcher(Dispatcher(Executors.newSingleThreadExecutor()))
+            .addInterceptor(interceptor)
             .build()
-        )
 
-        secondResponse
-      } else {
-        response
-      }
+        val call = client.newCall(request)
+
+        val body = call.execute().body.string()
+
+        assertThat(body).isEqualTo("abc")
     }
 
+    @Test
+    fun asyncInterceptorCallTest() {
+        runTest {
+            val interceptor = SuspendingInterceptor {
+                val response = it.proceed(it.request())
 
-    val client = clientTestRule.newClientBuilder()
-      .dispatcher(Dispatcher(Executors.newSingleThreadExecutor()))
-      .addInterceptor(interceptor)
-      .build()
+                if (response.code == 401 && it.request().url.encodedPath != "/token") {
+                    check(response.body.string() == "failed")
+                    response.close()
 
-    val call = client.newCall(request)
+                    val tokenRequest = Request(server.url("/token"))
+                    val call = it.callFactory.newCall(tokenRequest)
 
-    val body = call.execute().body.string()
+                    val tokenResponse = call.executeAsync()
+                    val token = withContext(Dispatchers.IO) {
+                        tokenResponse.body.string()
+                    }
 
-    assertThat(body).isEqualTo("abc")
+                    check(token == "token")
 
-  }
+                    val secondResponse = it.proceed(
+                        it.request().newBuilder()
+                            .header("Authorization", token)
+                            .build()
+                    )
 
-  @Test
-  fun asyncInterceptorCallTest() {
-    runTest {
-      server.enqueue(MockResponse(body = "failed", code = 401))
-      server.enqueue(MockResponse(body = "token"))
-      server.enqueue(MockResponse(body = "abc"))
+                    secondResponse
+                } else {
+                    response
+                }
+            }
 
-      val interceptor = SuspendingInterceptor {
-        val response = it.proceed(it.request())
 
-        if (response.code == 401 && it.request().url.encodedPath != "/token") {
-          check(response.body.string() == "failed")
-          response.close()
+            val client = clientTestRule.newClientBuilder()
+                .dispatcher(Dispatcher(Executors.newSingleThreadExecutor()))
+                .addInterceptor(interceptor)
+                .build()
 
-          val tokenRequest = Request(server.url("/token"))
-          val call = it.callFactory.newCall(tokenRequest)
+            val call = client.newCall(request)
 
-          val tokenResponse = call.executeAsync()
-          val token = withContext(Dispatchers.IO) {
-            tokenResponse.body.string()
-          }
+            val tokenResponse = call.executeAsync()
+            val body = withContext(Dispatchers.IO) {
+                tokenResponse.body.string()
+            }
 
-          check(token == "token")
-
-          val secondResponse = it.proceed(
-            it.request().newBuilder()
-              .header("Authorization", token)
-              .build()
-          )
-
-          secondResponse
-        } else {
-          response
+            assertThat(body).isEqualTo("abc")
         }
-      }
-
-
-      val client = clientTestRule.newClientBuilder()
-        .dispatcher(Dispatcher(Executors.newSingleThreadExecutor()))
-        .addInterceptor(interceptor)
-        .build()
-
-      val call = client.newCall(request)
-
-      val tokenResponse = call.executeAsync()
-      val body = withContext(Dispatchers.IO) {
-        tokenResponse.body.string()
-      }
-
-      assertThat(body).isEqualTo("abc")
     }
-  }
+
+    @Test
+    fun asyncInterceptorCallByThreadTest() {
+        lateinit var client: OkHttpClient
+
+        runTest {
+            val interceptor = SuspendingInterceptor {
+                val response = it.proceed(it.request())
+
+                if (response.code == 401 && it.request().url.encodedPath != "/token") {
+                    check(response.body.string() == "failed")
+                    response.close()
+
+                    val tokenRequest = Request(server.url("/token"))
+                    val call = client.newCall(tokenRequest)
+
+                    val tokenResponse = call.executeAsync()
+                    val token = withContext(Dispatchers.IO) {
+                        tokenResponse.body.string()
+                    }
+
+                    check(token == "token")
+
+                    val secondResponse = it.proceed(
+                        it.request().newBuilder()
+                            .header("Authorization", token)
+                            .build()
+                    )
+
+                    secondResponse
+                } else {
+                    response
+                }
+            }
+
+            client = clientTestRule.newClientBuilder()
+                .dispatcher(Dispatcher(Executors.newSingleThreadExecutor()))
+                .addInterceptor(interceptor)
+                .build()
+
+            val call = client.newCall(request)
+
+            val tokenResponse = call.executeAsync()
+            val body = withContext(Dispatchers.IO) {
+                tokenResponse.body.string()
+            }
+
+            assertThat(body).isEqualTo("abc")
+        }
+    }
 
 }

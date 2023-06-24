@@ -15,9 +15,9 @@ class InterceptorCall(val delegate: Call): Call by delegate  {
 
   override fun enqueue(responseCallback: Callback) {
     try {
-      responseCallback.onResponse(this, delegate.execute())
+      responseCallback.onResponse(delegate, delegate.execute())
     } catch (ioe: IOException) {
-      responseCallback.onFailure(this, ioe)
+      responseCallback.onFailure(delegate, ioe)
     }
   }
 
