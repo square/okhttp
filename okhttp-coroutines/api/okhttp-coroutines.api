@@ -2,3 +2,8 @@ public final class okhttp3/JvmCallExtensionsKt {
 	public static final fun executeAsync (Lokhttp3/Call;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
+public abstract interface class okhttp3/SuspendingInterceptor : okhttp3/Interceptor {
+	public fun intercept (Lokhttp3/Interceptor$Chain;)Lokhttp3/Response;
+	public abstract fun interceptAsync (Lokhttp3/Interceptor$Chain;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
