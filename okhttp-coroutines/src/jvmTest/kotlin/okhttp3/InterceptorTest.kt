@@ -163,34 +163,32 @@ class InterceptorTest {
       server.enqueue(MockResponse(body = "token"))
       server.enqueue(MockResponse(body = "abc"))
 
-      val interceptor = object : SuspendingInterceptor() {
-        override suspend fun interceptAsync(it: Interceptor.Chain): Response {
-          val response = it.proceed(it.request())
+      val interceptor = SuspendingInterceptor {
+        val response = it.proceed(it.request())
 
-          return if (response.code == 401 && it.request().url.encodedPath != "/token") {
-            check(response.body.string() == "failed")
-            response.close()
+        if (response.code == 401 && it.request().url.encodedPath != "/token") {
+          check(response.body.string() == "failed")
+          response.close()
 
-            val tokenRequest = Request(server.url("/token"))
-            val call = it.callFactory.newCall(tokenRequest)
+          val tokenRequest = Request(server.url("/token"))
+          val call = it.callFactory.newCall(tokenRequest)
 
-            val tokenResponse = call.executeAsync()
-            val token = withContext(Dispatchers.IO) {
-              tokenResponse.body.string()
-            }
-
-            check(token == "token")
-
-            val secondResponse = it.proceed(
-              it.request().newBuilder()
-                .header("Authorization", token)
-                .build()
-            )
-
-            secondResponse
-          } else {
-            response
+          val tokenResponse = call.executeAsync()
+          val token = withContext(Dispatchers.IO) {
+            tokenResponse.body.string()
           }
+
+          check(token == "token")
+
+          val secondResponse = it.proceed(
+            it.request().newBuilder()
+              .header("Authorization", token)
+              .build()
+          )
+
+          secondResponse
+        } else {
+          response
         }
       }
 
