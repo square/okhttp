@@ -29,10 +29,13 @@ import kotlinx.coroutines.withContext
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.junit5.internal.MockWebServerExtension
+import okhttp3.tls.internal.TlsUtil
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import java.util.concurrent.Executors
 
 @ExtendWith(MockWebServerExtension::class)
@@ -42,11 +45,32 @@ class InterceptorTest {
 
     private lateinit var server: MockWebServer
 
+    private val clientBuilder: OkHttpClient.Builder = clientTestRule.newClientBuilder()
+
     val request by lazy { Request(server.url("/")) }
+
+    // TODO parameterize
+    val tls: Boolean = true
 
     @BeforeEach
     fun setup(server: MockWebServer) {
         this.server = server
+
+        clientBuilder.addInterceptor { chain ->
+            chain.proceed(chain.request()).also {
+                if (tls) {
+                    check(it.protocol == Protocol.HTTP_2)
+                    check(it.handshake != null)
+                } else {
+                    check(it.protocol == Protocol.HTTP_1_1)
+                    check(it.handshake == null)
+                }
+            }
+        }
+
+        if (tls) {
+            enableTls()
+        }
 
         server.enqueue(MockResponse(body = "failed", code = 401))
         server.enqueue(MockResponse(body = "token"))
@@ -87,7 +111,7 @@ class InterceptorTest {
             }
 
 
-            val client = clientTestRule.newClientBuilder()
+            val client = clientBuilder
                 .dispatcher(Dispatcher(Executors.newSingleThreadExecutor()))
                 .addInterceptor(interceptor)
                 .build()
@@ -138,7 +162,7 @@ class InterceptorTest {
             }
         }
 
-        val client = clientTestRule.newClientBuilder()
+        val client = clientBuilder
             .dispatcher(Dispatcher(Executors.newSingleThreadExecutor()))
             .addInterceptor(interceptor)
             .build()
@@ -183,7 +207,7 @@ class InterceptorTest {
             }
 
 
-            val client = clientTestRule.newClientBuilder()
+            val client = clientBuilder
                 .dispatcher(Dispatcher(Executors.newSingleThreadExecutor()))
                 .addInterceptor(interceptor)
                 .build()
@@ -233,7 +257,7 @@ class InterceptorTest {
                 }
             }
 
-            client = clientTestRule.newClientBuilder()
+            client = clientBuilder
                 .dispatcher(Dispatcher(Executors.newSingleThreadExecutor()))
                 .addInterceptor(interceptor)
                 .build()
@@ -249,4 +273,14 @@ class InterceptorTest {
         }
     }
 
+    private fun enableTls() {
+        val certs = TlsUtil.localhost()
+
+        clientBuilder
+            .sslSocketFactory(
+                certs.sslSocketFactory(), certs.trustManager
+            )
+
+        server.useHttps(certs.sslSocketFactory())
+    }
 }
