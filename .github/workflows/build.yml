@@ -26,7 +26,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
-          java-version: 11
+          java-version: 17
 
       - name: Upload Artifacts
         uses: gradle/gradle-build-action@v2
@@ -63,7 +63,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
-          java-version: 11
+          java-version: 17
 
       - name: Run Checks
         uses: gradle/gradle-build-action@v2
@@ -85,7 +85,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
-          java-version: 11
+          java-version: 17
 
       - name: Run Checks
         uses: gradle/gradle-build-action@v2
@@ -114,7 +114,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
-          java-version: 11
+          java-version: 17
 
       - name: Run Checks
         uses: gradle/gradle-build-action@v2
@@ -142,7 +142,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
-          java-version: 11
+          java-version: 17
 
       - name: Run Checks
         uses: gradle/gradle-build-action@v2
@@ -163,7 +163,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
-          java-version: 11
+          java-version: 17
 
       - name: Run Checks
         uses: gradle/gradle-build-action@v2
@@ -190,7 +190,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
-          java-version: 11
+          java-version: 17
 
       - name: Run Checks
         uses: gradle/gradle-build-action@v2
@@ -211,7 +211,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
-          java-version: 11
+          java-version: 17
 
       - name: Run Checks
         uses: gradle/gradle-build-action@v2
@@ -232,7 +232,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
-          java-version: 11
+          java-version: 17
 
       - name: Run Checks
         uses: gradle/gradle-build-action@v2
@@ -253,7 +253,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
-          java-version: 11
+          java-version: 17
 
       - name: Run Checks
         uses: gradle/gradle-build-action@v2
@@ -275,7 +275,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
-          java-version: 11
+          java-version: 17
 
       - name: Run Checks
         uses: gradle/gradle-build-action@v2
@@ -297,7 +297,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
-          java-version: 11
+          java-version: 17
 
       - name: Run Checks
         uses: gradle/gradle-build-action@v2
@@ -325,7 +325,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
-          java-version: 11
+          java-version: 17
 
       - name: Run Checks
         uses: gradle/gradle-build-action@v2
@@ -347,7 +347,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
-          java-version: 11
+          java-version: 17
 
       - name: Test
         uses: gradle/gradle-build-action@v2
@@ -369,7 +369,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
-          java-version: 11
+          java-version: 17
 
       - name: Build okcurl
         uses: gradle/gradle-build-action@v2
@@ -406,7 +406,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
-          java-version: 11
+          java-version: 17
 
       - name: Gradle cache
         uses: gradle/gradle-build-action@v2
@@ -460,7 +460,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
-          java-version: 11
+          java-version: 17
 
       - name: Run Checks
         uses: gradle/gradle-build-action@v2
@@ -489,7 +489,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
-          java-version: 11
+          java-version: 17
 
       - name: Gradle cache
         uses: gradle/gradle-build-action@v2
