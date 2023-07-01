@@ -44,19 +44,22 @@ include(":samples:static-server")
 include(":samples:tlssurvey")
 include(":samples:unixdomainsockets")
 
-if (isIdea20232()) {
+if (isIdea20232OrHigher()) {
   include(":okhttp-android")
   include(":android-test")
 }
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
-fun isIdea20232() = System.getProperty("idea.version")?.let {
-  try {
-    val (major, minor, _) = it.split(".", limit = 3)
-    major.toInt() > 2023 || (major.toInt() == 2023 && minor.toInt() >=2)
+fun isIdea20232OrHigher(): Boolean {
+  // No problem outside Idea
+  val ideaVersionString = System.getProperty("idea.version") ?: return true
+
+  return try {
+    val (major, minor, _) = ideaVersionString.split(".", limit = 3)
+    KotlinVersion(major.toInt(), minor.toInt()) >= KotlinVersion(2023, 2)
   } catch (e: Exception) {
-    println(e)
-    null
+    // Unknown version, presumably compatible
+    true
   }
-} == true
+}
