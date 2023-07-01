@@ -26,6 +26,12 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
+          java-version: 11
+
+      - name: Configure JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
           java-version: 17
 
       - name: Upload Artifacts
@@ -63,6 +69,12 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
+          java-version: 11
+
+      - name: Configure JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
           java-version: 17
 
       - name: Run Checks
@@ -80,6 +92,12 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+
+      - name: Configure JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 11
 
       - name: Configure JDK
         uses: actions/setup-java@v3
@@ -114,6 +132,12 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
+          java-version: 11
+
+      - name: Configure JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
           java-version: 17
 
       - name: Run Checks
@@ -142,6 +166,12 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
+          java-version: 11
+
+      - name: Configure JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
           java-version: 17
 
       - name: Run Checks
@@ -158,6 +188,12 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+
+      - name: Configure JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 11
 
       - name: Configure JDK
         uses: actions/setup-java@v3
@@ -190,6 +226,12 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
+          java-version: 11
+
+      - name: Configure JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
           java-version: 17
 
       - name: Run Checks
@@ -206,6 +248,12 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+
+      - name: Configure JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 11
 
       - name: Configure JDK
         uses: actions/setup-java@v3
@@ -232,6 +280,12 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
+          java-version: 11
+
+      - name: Configure JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
           java-version: 17
 
       - name: Run Checks
@@ -248,6 +302,12 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+
+      - name: Configure JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 11
 
       - name: Configure JDK
         uses: actions/setup-java@v3
@@ -275,6 +335,12 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
+          java-version: 11
+
+      - name: Configure JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
           java-version: 17
 
       - name: Run Checks
@@ -297,6 +363,12 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
+          java-version: 11
+
+      - name: Configure JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
           java-version: 17
 
       - name: Run Checks
@@ -304,7 +376,7 @@ jobs:
         with:
           arguments: jvmTest -Dtest.java.version=17
 
-  testopenjdk19:
+  testopenjdk20:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'jdkversions') || contains(github.event.pull_request.labels.*.name, 'renovate')
 
@@ -319,7 +391,13 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
-          java-version: 19
+          java-version: 11
+
+      - name: Configure JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 20
 
       - name: Configure JDK
         uses: actions/setup-java@v3
@@ -330,7 +408,7 @@ jobs:
       - name: Run Checks
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: jvmTest -Dtest.java.version=19
+          arguments: jvmTest -Dtest.java.version=20
 
   testwindows:
     runs-on: windows-latest
@@ -342,6 +420,12 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+
+      - name: Configure JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 11
 
       - name: Configure JDK
         uses: actions/setup-java@v3
@@ -364,6 +448,12 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+
+      - name: Configure JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 11
 
       - name: Configure JDK
         uses: actions/setup-java@v3
@@ -401,6 +491,12 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+
+      - name: Configure JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 11
 
       - name: Configure JDK
         uses: actions/setup-java@v3
@@ -454,7 +550,13 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
-          java-version: 19
+          java-version: 11
+
+      - name: Configure JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 20
 
       - name: Configure JDK
         uses: actions/setup-java@v3
@@ -465,7 +567,7 @@ jobs:
       - name: Run Checks
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: jvmTest -Dokhttp.platform=loom -Dtest.java.version=19
+          arguments: jvmTest -Dokhttp.platform=loom -Dtest.java.version=20
 
 
   testandroidregression:
@@ -484,6 +586,12 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+
+      - name: Configure JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 11
 
       - name: Configure JDK
         uses: actions/setup-java@v3
