@@ -23,7 +23,6 @@ if (graalBuild.toBoolean()) {
 
 include(":okcurl")
 include(":okhttp")
-include(":okhttp-android")
 include(":okhttp-bom")
 include(":okhttp-brotli")
 include(":okhttp-dnsoverhttps")
@@ -44,6 +43,20 @@ include(":samples:slack")
 include(":samples:static-server")
 include(":samples:tlssurvey")
 include(":samples:unixdomainsockets")
-include(":android-test")
+
+if (isIdea20232()) {
+  include(":okhttp-android")
+  include(":android-test")
+}
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+
+fun isIdea20232() = System.getProperty("idea.version")?.let {
+  try {
+    val (major, minor, _) = it.split(".", limit = 3)
+    major.toInt() > 2023 || (major.toInt() == 2023 && minor.toInt() >=2)
+  } catch (e: Exception) {
+    println(e)
+    null
+  }
+} == true
