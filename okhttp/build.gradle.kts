@@ -134,6 +134,12 @@ kotlin {
         implementation(libs.openjsse)
         implementation(libs.aqute.resolve)
         compileOnly(libs.findbugs.jsr305)
+
+        @Suppress("UseTomlInstead")
+        implementation("io.helidon.nima.webserver:helidon-nima-webserver:4.0.0-ALPHA6")
+
+        @Suppress("UseTomlInstead")
+        implementation("io.helidon.nima.http2:helidon-nima-http2-webserver:4.0.0-ALPHA6")
       }
 
       getByName("jsMain") {
