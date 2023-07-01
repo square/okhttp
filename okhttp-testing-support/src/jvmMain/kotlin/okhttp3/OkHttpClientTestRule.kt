@@ -293,6 +293,9 @@ class OkHttpClientTestRule : BeforeEachCallback, AfterEachCallback {
     return connectionListener.recordedEventTypes()
   }
 
+  fun filterEvents(matcher: (String) -> Boolean): List<String> =
+    synchronized(clientEventsList) { clientEventsList.filter(matcher) }
+
   companion object {
     /**
      * A network that resolves only one IP address per host. Use this when testing route selection

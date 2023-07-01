@@ -2011,4 +2011,29 @@ class HttpOverHttp2Test {
     assertThat(get.requestLine).isEqualTo("GET /foo HTTP/1.1")
       assertThat(get.headers["Proxy-Authorization"]).isNull()
   }
+
+  /** Don't sent two resets.  */
+  @ParameterizedTest
+  @ArgumentsSource(ProtocolParamProvider::class)
+  fun youOnlyCancelOnce(protocol: Protocol, mockWebServer: MockWebServer) {
+    clientTestRule.recordFrames = true
+
+    setUp(protocol, mockWebServer)
+    server.enqueue(
+      MockResponse(
+        socketPolicy = NoResponse,
+      )
+    )
+
+    val request = Request(server.url("/"))
+
+    try {
+      client.newCall(request).execute()
+      fail()
+    } catch (ioe: IOException) {
+      // expected
+    }
+
+    assertThat(clientTestRule.filterEvents { it.contains("RST_STREAM") }).hasSize(1)
+  }
 }
