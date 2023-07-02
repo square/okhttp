@@ -408,7 +408,7 @@ jobs:
       - name: Run Checks
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: jvmTest -Dtest.java.version=20
+          arguments: jvmTest -Dtest.java.version=19
 
   testwindows:
     runs-on: windows-latest
@@ -567,7 +567,7 @@ jobs:
       - name: Run Checks
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: jvmTest -Dokhttp.platform=loom -Dtest.java.version=20
+          arguments: jvmTest -Dokhttp.platform=loom -Dtest.java.version=19
 
 
   testandroidregression:
