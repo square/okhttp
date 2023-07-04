@@ -1,0 +1,7 @@
+version = 1
+
+[[analyzers]]
+name = "kotlin"
+
+  [analyzers.meta]
+  runtime_version = "11"
