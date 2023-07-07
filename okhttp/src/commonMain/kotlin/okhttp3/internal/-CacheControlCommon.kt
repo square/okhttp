@@ -45,6 +45,10 @@ internal fun CacheControl.commonToString(): String {
   return result
 }
 
+fun dsEmptyFunction() {
+
+}
+
 internal fun CacheControl.Builder.commonMaxAge(maxAge: Int, timeUnit: DurationUnit) = apply {
   require(maxAge >= 0) { "maxAge < 0: $maxAge" }
   val maxAgeSecondsLong = maxAge.toDuration(timeUnit).inWholeSeconds
