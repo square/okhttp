@@ -2,7 +2,7 @@
 biz-aQute-bnd = "6.4.0"
 checkStyle = "10.12.1"
 com-squareup-moshi = "1.15.0"
-com-squareup-okio = "3.3.0"
+com-squareup-okio = "3.4.0"
 de-mannodermaus-junit5 = "1.3.0"
 graalvm = "22.3.2"
 kotlinx-serialization = "1.5.1"
