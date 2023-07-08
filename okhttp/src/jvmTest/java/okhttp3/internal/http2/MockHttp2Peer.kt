@@ -87,6 +87,8 @@ class MockHttp2Peer : Closeable {
 
   fun takeFrame(): InFrame = inFrames.take()
 
+  fun pollFrame(): InFrame? = inFrames.poll()
+
   fun play() {
     check(serverSocket == null)
     serverSocket = ServerSocket()

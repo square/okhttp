@@ -204,8 +204,7 @@ class Http2ConnectionTest {
     assertThat(frame1.type).isEqualTo(Http2.TYPE_HEADERS)
     val frame2 = peer.takeFrame()
     assertThat(frame2.type).isEqualTo(Http2.TYPE_RST_STREAM)
-    val frame3 = peer.takeFrame()
-    assertThat(frame3.type).isEqualTo(Http2.TYPE_RST_STREAM)
+    assertThat(peer.pollFrame()).isNull()
     assertThat(connection.readBytes.acknowledged).isEqualTo(0L)
     assertThat(connection.readBytes.total).isEqualTo(2048L)
   }

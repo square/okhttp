@@ -649,6 +649,10 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
       }
       val dataStream = getStream(streamId)
       if (dataStream == null) {
+        if (streamId > lastGoodStreamId) {
+          // TODO should be a connection error for a data frame on an idle stream
+          writeSynResetLater(streamId, ErrorCode.PROTOCOL_ERROR)
+        }
         updateConnectionFlowControl(length.toLong())
         source.skip(length.toLong())
         return
