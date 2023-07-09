@@ -1,3 +1,5 @@
+@file:Suppress("UnstableApiUsage")
+
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import com.vanniktech.maven.publish.SonatypeHost
 import groovy.util.Node
@@ -86,7 +88,7 @@ subprojects {
 
   configure<JavaPluginExtension> {
     toolchain {
-      languageVersion.set(JavaLanguageVersion.of(11))
+      languageVersion.set(JavaLanguageVersion.of(17))
     }
   }
 
@@ -140,7 +142,7 @@ subprojects {
   }
 
   val platform = System.getProperty("okhttp.platform", "jdk9")
-  val testJavaVersion = System.getProperty("test.java.version", "11").toInt()
+  val testJavaVersion = System.getProperty("test.java.version", "17").toInt()
 
   val testRuntimeOnly: Configuration by configurations.getting
   dependencies {
@@ -150,13 +152,13 @@ subprojects {
 
   tasks.withType<Test> {
     useJUnitPlatform()
-    jvmArgs = jvmArgs!! + listOf(
+    jvmArgs(
       "-Dokhttp.platform=$platform",
       "-XX:+HeapDumpOnOutOfMemoryError"
     )
 
     if (platform == "loom") {
-      jvmArgs = jvmArgs!! + listOf(
+      jvmArgs(
         "-Djdk.tracePinnedThread=full",
         "--enable-preview"
       )
@@ -196,7 +198,7 @@ subprojects {
         dependencies.create("org.mortbay.jetty.alpn:alpn-boot:$alpnBootVersion")
       ).singleFile
       tasks.withType<Test> {
-        jvmArgs = jvmArgs!! + listOf("-Xbootclasspath/p:${alpnBootJar}")
+        jvmArgs("-Xbootclasspath/p:${alpnBootJar}")
       }
     }
   } else if (platform == "conscrypt") {

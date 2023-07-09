@@ -1,3 +1,6 @@
+@file:SuppressLint("OldTargetApi")
+
+import android.annotation.SuppressLint
 import com.vanniktech.maven.publish.JavadocJar
 
 plugins {
@@ -11,9 +14,10 @@ plugins {
 android {
   compileSdk = 33
 
+  namespace = "okhttp.android"
+
   defaultConfig {
     minSdk = 21
-    targetSdk = 33
 
     // Make sure to use the AndroidJUnitRunner (or a sub-class) in order to hook in the JUnit 5 Test Builder
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

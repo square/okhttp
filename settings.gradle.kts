@@ -23,7 +23,6 @@ if (graalBuild.toBoolean()) {
 
 include(":okcurl")
 include(":okhttp")
-include(":okhttp-android")
 include(":okhttp-bom")
 include(":okhttp-brotli")
 include(":okhttp-dnsoverhttps")
@@ -44,6 +43,23 @@ include(":samples:slack")
 include(":samples:static-server")
 include(":samples:tlssurvey")
 include(":samples:unixdomainsockets")
-include(":android-test")
+
+if (isIdea20232OrHigher()) {
+  include(":okhttp-android")
+  include(":android-test")
+}
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+
+fun isIdea20232OrHigher(): Boolean {
+  // No problem outside Idea
+  val ideaVersionString = System.getProperty("idea.version") ?: return true
+
+  return try {
+    val (major, minor, _) = ideaVersionString.split(".", limit = 3)
+    KotlinVersion(major.toInt(), minor.toInt()) >= KotlinVersion(2023, 2)
+  } catch (e: Exception) {
+    // Unknown version, presumably compatible
+    true
+  }
+}
