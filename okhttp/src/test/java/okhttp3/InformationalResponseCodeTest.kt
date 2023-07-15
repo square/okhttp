@@ -30,19 +30,22 @@ class InformationalResponseCodeTest {
     recordFrames = true
   }
 
-  private var client = clientTestRule.newClient()
+  private var client = clientTestRule.newClientBuilder()
+    .followRedirects(false)
+    .build()
 
   @Test
   fun test103() {
     // Pretend we are curl so cloudflare will send a 103
     val request = Request.Builder()
-      .url("https://tradingstrategy.ai")
-      .header("user-agent", "curl/7.85.0")
+      .url("https://theornateoracle.com/cart.php?action=add&product_id=456")
+      .header("user-agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) " +
+        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36")
       .build()
 
     val response = client.newCall(request).execute()
 
-    assertThat(response.code).isEqualTo(200)
+    assertThat(response.code).isEqualTo(302)
     assertThat(response.protocol).isEqualTo(Protocol.HTTP_2)
     response.close()
 
