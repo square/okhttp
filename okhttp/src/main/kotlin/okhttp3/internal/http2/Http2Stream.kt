@@ -18,6 +18,8 @@ package okhttp3.internal.http2
 import okhttp3.Headers
 import okhttp3.internal.EMPTY_HEADERS
 import okhttp3.internal.assertThreadDoesntHoldLock
+import okhttp3.internal.http.CallServerInterceptor
+import okhttp3.internal.http.CallServerInterceptor.Companion.shouldIgnoreAndWaitForRealResponse
 import okhttp3.internal.notifyAll
 import okhttp3.internal.toHeaderList
 import okhttp3.internal.wait
@@ -283,7 +285,10 @@ class Http2Stream internal constructor(
     val open: Boolean
     synchronized(this) {
       if (!hasResponseHeaders || !inFinished) {
-        hasResponseHeaders = true
+        val status = headers[Header.RESPONSE_STATUS_UTF8]?.toIntOrNull()
+        if (status == null || !shouldIgnoreAndWaitForRealResponse(status)) {
+          hasResponseHeaders = true
+        }
         headersQueue += headers
       } else {
         this.source.trailers = headers
