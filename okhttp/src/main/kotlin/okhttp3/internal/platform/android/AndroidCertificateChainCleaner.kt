@@ -30,6 +30,7 @@ import okhttp3.internal.tls.CertificateChainCleaner
  * Not used if X509TrustManager doesn't implement [X509TrustManager.checkServerTrusted] with
  * an additional host param.
  */
+@SuppressSignatureCheck
 internal class AndroidCertificateChainCleaner(
   private val trustManager: X509TrustManager,
   private val x509TrustManagerExtensions: X509TrustManagerExtensions
