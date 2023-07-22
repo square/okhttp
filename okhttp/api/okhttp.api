@@ -48,6 +48,7 @@ public final class okhttp3/AsyncDns$Companion {
 public final class okhttp3/AsyncDns$DnsClass : java/lang/Enum {
 	public static final field IPV4 Lokhttp3/AsyncDns$DnsClass;
 	public static final field IPV6 Lokhttp3/AsyncDns$DnsClass;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public final fun getType ()I
 	public static fun valueOf (Ljava/lang/String;)Lokhttp3/AsyncDns$DnsClass;
 	public static fun values ()[Lokhttp3/AsyncDns$DnsClass;
@@ -1002,6 +1003,7 @@ public final class okhttp3/Protocol : java/lang/Enum {
 	public static final field QUIC Lokhttp3/Protocol;
 	public static final field SPDY_3 Lokhttp3/Protocol;
 	public static final fun get (Ljava/lang/String;)Lokhttp3/Protocol;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public fun toString ()Ljava/lang/String;
 	public static fun valueOf (Ljava/lang/String;)Lokhttp3/Protocol;
 	public static fun values ()[Lokhttp3/Protocol;
@@ -1233,6 +1235,7 @@ public final class okhttp3/TlsVersion : java/lang/Enum {
 	public static final field TLS_1_3 Lokhttp3/TlsVersion;
 	public final fun -deprecated_javaName ()Ljava/lang/String;
 	public static final fun forJavaName (Ljava/lang/String;)Lokhttp3/TlsVersion;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public final fun javaName ()Ljava/lang/String;
 	public static fun valueOf (Ljava/lang/String;)Lokhttp3/TlsVersion;
 	public static fun values ()[Lokhttp3/TlsVersion;

@@ -15,6 +15,7 @@ public final class okhttp3/logging/HttpLoggingInterceptor$Level : java/lang/Enum
 	public static final field BODY Lokhttp3/logging/HttpLoggingInterceptor$Level;
 	public static final field HEADERS Lokhttp3/logging/HttpLoggingInterceptor$Level;
 	public static final field NONE Lokhttp3/logging/HttpLoggingInterceptor$Level;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lokhttp3/logging/HttpLoggingInterceptor$Level;
 	public static fun values ()[Lokhttp3/logging/HttpLoggingInterceptor$Level;
 }
