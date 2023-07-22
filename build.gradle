@@ -61,7 +61,7 @@ buildscript {
 }
 
 plugins {
-  id "ru.vyarus.animalsniffer" version "1.7.0"
+  id "ru.vyarus.animalsniffer" version "1.7.1"
   id "com.github.johnrengelman.shadow" version "7.1.2"
   id "me.champeau.gradle.japicmp" version "0.4.0"
   id "com.diffplug.spotless" version "5.1.2"
