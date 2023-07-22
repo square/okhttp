@@ -18,9 +18,11 @@ android {
     exclude("META-INF/DEPENDENCIES")
   }
 
+  compileSdk 34
+
   defaultConfig {
-    minSdkVersion 21
-    targetSdkVersion 33
+    minSdk 21
+    targetSdk 33
     versionCode 1
     versionName "1.0"
 

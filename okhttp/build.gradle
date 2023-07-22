@@ -55,8 +55,8 @@ afterEvaluate { project ->
 }
 
 task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {
-  oldClasspath = files(baselineJar(project, baselineVersion))
-  newClasspath = files(jar.archivePath)
+  oldClasspath.from(baselineJar(project, baselineVersion))
+  newClasspath.from(files(jar.archivePath))
   onlyBinaryIncompatibleModified = true
   failOnModification = true
   txtOutputFile = file("$buildDir/reports/japi.txt")
