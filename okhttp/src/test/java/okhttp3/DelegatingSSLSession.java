@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package okhttp3;
 
 import java.security.Principal;
@@ -20,9 +21,9 @@ import java.security.cert.Certificate;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSessionContext;
-import javax.security.cert.X509Certificate;
 
 /** An {@link SSLSession} that delegates all calls. */
+@SuppressWarnings("removal")
 public abstract class DelegatingSSLSession implements SSLSession {
   protected final SSLSession delegate;
 
@@ -78,7 +79,7 @@ public abstract class DelegatingSSLSession implements SSLSession {
     return delegate.getLocalCertificates();
   }
 
-  @Override public X509Certificate[] getPeerCertificateChain() throws SSLPeerUnverifiedException {
+  @Override public javax.security.cert.X509Certificate[] getPeerCertificateChain() throws SSLPeerUnverifiedException {
     return delegate.getPeerCertificateChain();
   }
 
