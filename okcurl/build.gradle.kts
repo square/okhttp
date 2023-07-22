@@ -5,7 +5,6 @@ import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
   kotlin("multiplatform")
-  kotlin("kapt")
   id("org.jetbrains.dokka")
   id("com.vanniktech.maven.publish.base")
   id("com.palantir.graal")

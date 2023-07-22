@@ -9,7 +9,7 @@ kotlinx-serialization = "1.5.1"
 org-bouncycastle = "1.75"
 org-conscrypt = "2.5.2"
 org-jetbrains-coroutines = "1.7.2"
-org-jetbrains-kotlin = "1.8.21"
+org-jetbrains-kotlin = "1.9.0"
 org-junit-jupiter = "5.9.3"
 
 [libraries]
