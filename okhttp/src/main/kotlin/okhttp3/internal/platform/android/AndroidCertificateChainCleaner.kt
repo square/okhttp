@@ -24,12 +24,14 @@ import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.X509TrustManager
 import okhttp3.internal.SuppressSignatureCheck
 import okhttp3.internal.tls.CertificateChainCleaner
+import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 
 /**
  * Android implementation of CertificateChainCleaner using direct Android API calls.
  * Not used if X509TrustManager doesn't implement [X509TrustManager.checkServerTrusted] with
  * an additional host param.
  */
+@IgnoreJRERequirement
 internal class AndroidCertificateChainCleaner(
   private val trustManager: X509TrustManager,
   private val x509TrustManagerExtensions: X509TrustManagerExtensions
