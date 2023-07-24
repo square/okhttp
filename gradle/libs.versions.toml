@@ -10,7 +10,7 @@ org-bouncycastle = "1.75"
 org-conscrypt = "2.5.2"
 org-jetbrains-coroutines = "1.7.2"
 org-jetbrains-kotlin = "1.9.0"
-org-junit-jupiter = "5.9.3"
+org-junit-jupiter = "5.10.0"
 
 [libraries]
 amazonCorretto = "software.amazon.cryptools:AmazonCorrettoCryptoProvider:2.1.0"
@@ -57,8 +57,8 @@ junit-ktx = "androidx.test.ext:junit-ktx:1.1.5"
 junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "org-junit-jupiter" }
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "org-junit-jupiter" }
 junit-jupiter-params = { module = "org.junit.jupiter:junit-jupiter-params", version.ref = "org-junit-jupiter" }
-junit-platform-console = "org.junit.platform:junit-platform-console:1.9.3"
-junit-vintage-engine = "org.junit.vintage:junit-vintage-engine:5.9.3"
+junit-platform-console = "org.junit.platform:junit-platform-console:1.10.0"
+junit-vintage-engine = "org.junit.vintage:junit-vintage-engine:5.10.0"
 junit-pioneer = "org.junit-pioneer:junit-pioneer:1.9.1"
 junit5android-core = { module = "de.mannodermaus.junit5:android-test-core", version.ref = "de-mannodermaus-junit5" }
 junit5android-runner = { module = "de.mannodermaus.junit5:android-test-runner", version.ref = "de-mannodermaus-junit5" }
