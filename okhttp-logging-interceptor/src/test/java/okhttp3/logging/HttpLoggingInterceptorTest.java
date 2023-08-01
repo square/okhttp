@@ -421,7 +421,7 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("--> END GET")
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 0")
-        .assertLogEqual("<-- END HTTP (0-byte body)")
+        .assertLogMatch("<-- END HTTP \\(\\d+ms, 0-byte body\\)")
         .assertNoMoreLogs();
 
     networkLogs
@@ -433,7 +433,7 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("--> END GET")
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 0")
-        .assertLogEqual("<-- END HTTP (0-byte body)")
+        .assertLogMatch("<-- END HTTP \\(\\d+ms, 0-byte body\\)")
         .assertNoMoreLogs();
   }
 
@@ -459,7 +459,7 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("--> END GET")
         .assertLogMatch("<-- " + code + " No Content " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 0")
-        .assertLogEqual("<-- END HTTP (0-byte body)")
+        .assertLogMatch("<-- END HTTP \\(\\d+ms, 0-byte body\\)")
         .assertNoMoreLogs();
 
     networkLogs
@@ -471,7 +471,7 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("--> END GET")
         .assertLogMatch("<-- " + code + " No Content " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 0")
-        .assertLogEqual("<-- END HTTP (0-byte body)")
+        .assertLogMatch("<-- END HTTP \\(\\d+ms, 0-byte body\\)")
         .assertNoMoreLogs();
   }
 
@@ -492,7 +492,7 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("--> END POST (3-byte body)")
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 0")
-        .assertLogEqual("<-- END HTTP (0-byte body)")
+        .assertLogMatch("<-- END HTTP \\(\\d+ms, 0-byte body\\)")
         .assertNoMoreLogs();
 
     networkLogs
@@ -508,7 +508,7 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("--> END POST (3-byte body)")
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 0")
-        .assertLogEqual("<-- END HTTP (0-byte body)")
+        .assertLogMatch("<-- END HTTP \\(\\d+ms, 0-byte body\\)")
         .assertNoMoreLogs();
   }
 
@@ -530,7 +530,7 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("Content-Type: text/plain; charset=utf-8")
         .assertLogEqual("")
         .assertLogEqual("Hello!")
-        .assertLogEqual("<-- END HTTP (6-byte body)")
+        .assertLogMatch("<-- END HTTP \\(\\d+ms, 6-byte body\\)")
         .assertNoMoreLogs();
 
     networkLogs
@@ -545,7 +545,7 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("Content-Type: text/plain; charset=utf-8")
         .assertLogEqual("")
         .assertLogEqual("Hello!")
-        .assertLogEqual("<-- END HTTP (6-byte body)")
+        .assertLogMatch("<-- END HTTP \\(\\d+ms, 6-byte body\\)")
         .assertNoMoreLogs();
   }
 
@@ -567,7 +567,7 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("Content-Type: text/plain; charset=utf-8")
         .assertLogEqual("")
         .assertLogEqual("Hello!")
-        .assertLogEqual("<-- END HTTP (6-byte body)")
+        .assertLogMatch("<-- END HTTP \\(\\d+ms, 6-byte body\\)")
         .assertNoMoreLogs();
 
     networkLogs
@@ -582,7 +582,7 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("Content-Type: text/plain; charset=utf-8")
         .assertLogEqual("")
         .assertLogEqual("Hello!")
-        .assertLogEqual("<-- END HTTP (6-byte body)")
+        .assertLogMatch("<-- END HTTP \\(\\d+ms, 6-byte body\\)")
         .assertNoMoreLogs();
   }
 
@@ -619,7 +619,7 @@ public final class HttpLoggingInterceptorTest {
       .assertLogMatch("Content-Length: \\d+")
       .assertLogEqual("")
       .assertLogEqual("Uncompressed")
-      .assertLogEqual("<-- END HTTP (12-byte body)")
+      .assertLogMatch("<-- END HTTP \\(\\d+ms, 12-byte body\\)")
       .assertNoMoreLogs();
   }
 
@@ -652,7 +652,7 @@ public final class HttpLoggingInterceptorTest {
         .assertLogMatch("Content-Length: \\d+")
         .assertLogEqual("")
         .assertLogEqual("Hello, Hello, Hello")
-        .assertLogEqual("<-- END HTTP (19-byte, 29-gzipped-byte body)")
+        .assertLogMatch("<-- END HTTP \\(\\d+ms, 19-byte, 29-gzipped-byte body\\)")
         .assertNoMoreLogs();
 
     applicationLogs
@@ -662,7 +662,7 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("Content-Type: text/plain; charset=utf-8")
         .assertLogEqual("")
         .assertLogEqual("Hello, Hello, Hello")
-        .assertLogEqual("<-- END HTTP (19-byte body)")
+        .assertLogMatch("<-- END HTTP \\(\\d+ms, 19-byte body\\)")
         .assertNoMoreLogs();
   }
 
@@ -769,7 +769,7 @@ public final class HttpLoggingInterceptorTest {
         .assertLogMatch("Content-Length: \\d+")
         .assertLogMatch("")
         .assertLogEqual("Body with unknown charset")
-        .assertLogEqual("<-- END HTTP (25-byte body)")
+        .assertLogMatch("<-- END HTTP \\(\\d+ms, 25-byte body\\)")
         .assertNoMoreLogs();
 
     applicationLogs
@@ -780,7 +780,7 @@ public final class HttpLoggingInterceptorTest {
         .assertLogMatch("Content-Length: \\d+")
         .assertLogEqual("")
         .assertLogEqual("Body with unknown charset")
-        .assertLogEqual("<-- END HTTP (25-byte body)")
+        .assertLogMatch("<-- END HTTP \\(\\d+ms, 25-byte body\\)")
         .assertNoMoreLogs();
   }
 
@@ -809,7 +809,7 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("Content-Length: 9")
         .assertLogEqual("Content-Type: image/png; charset=utf-8")
         .assertLogEqual("")
-        .assertLogEqual("<-- END HTTP (binary 9-byte body omitted)")
+        .assertLogMatch("<-- END HTTP \\(\\d+ms, binary 9-byte body omitted\\)")
         .assertNoMoreLogs();
 
     networkLogs
@@ -823,7 +823,7 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("Content-Length: 9")
         .assertLogEqual("Content-Type: image/png; charset=utf-8")
         .assertLogEqual("")
-        .assertLogEqual("<-- END HTTP (binary 9-byte body omitted)")
+        .assertLogMatch("<-- END HTTP \\(\\d+ms, binary 9-byte body omitted\\)")
         .assertNoMoreLogs();
   }
 
@@ -967,7 +967,7 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("content-length: 15")
         .assertLogEqual("")
         .assertLogEqual("Hello response!")
-        .assertLogEqual("<-- END HTTP (15-byte body)")
+        .assertLogMatch("<-- END HTTP \\(\\d+ms, 15-byte body\\)")
         .assertNoMoreLogs();
   }
 
@@ -1013,7 +1013,7 @@ public final class HttpLoggingInterceptorTest {
             .assertLogEqual("Content-Length: 15")
             .assertLogEqual("")
             .assertLogEqual("Hello response!")
-            .assertLogEqual("<-- END HTTP (15-byte body)")
+            .assertLogMatch("<-- END HTTP \\(\\d+ms, 15-byte body\\)")
             .assertNoMoreLogs();
   }
 
