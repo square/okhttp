@@ -23,6 +23,7 @@ if (graalBuild.toBoolean()) {
 
 include(":okcurl")
 include(":okhttp")
+include(":okhttp-api")
 include(":okhttp-bom")
 include(":okhttp-brotli")
 include(":okhttp-dnsoverhttps")
