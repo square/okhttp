@@ -260,6 +260,9 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
       } else {
         val source = responseBody.source()
         source.request(Long.MAX_VALUE) // Buffer the entire body.
+
+        val totalMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNs)
+
         var buffer = source.buffer
 
         var gzippedLength: Long? = null
@@ -275,7 +278,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
 
         if (!buffer.isProbablyUtf8()) {
           logger.log("")
-          logger.log("<-- END HTTP (binary ${buffer.size}-byte body omitted)")
+          logger.log("<-- END HTTP (${totalMs}ms, binary ${buffer.size}-byte body omitted)")
           return response
         }
 
@@ -285,9 +288,9 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
         }
 
         if (gzippedLength != null) {
-          logger.log("<-- END HTTP (${buffer.size}-byte, $gzippedLength-gzipped-byte body)")
+          logger.log("<-- END HTTP (${totalMs}ms, ${buffer.size}-byte, $gzippedLength-gzipped-byte body)")
         } else {
-          logger.log("<-- END HTTP (${buffer.size}-byte body)")
+          logger.log("<-- END HTTP (${totalMs}ms, ${buffer.size}-byte body)")
         }
       }
     }
