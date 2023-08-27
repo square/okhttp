@@ -45,7 +45,8 @@ public final class OsgiTest {
       "com.squareup.okhttp3.logging",
       "com.squareup.okhttp3.sse",
       "com.squareup.okhttp3.tls",
-      "com.squareup.okhttp3.urlconnection"
+      "com.squareup.okhttp3.java_net.authenticator",
+      "com.squareup.okhttp3.java_net.cookiejar"
   );
 
   /** Equinox must also be on the testing classpath. */
