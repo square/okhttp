@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 @file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
-package okhttp3
+package okhttp3.java_net.cookiejar
 
 import java.io.IOException
 import java.net.CookieHandler
 import java.net.HttpCookie
 import java.util.Collections
+import okhttp3.Cookie
+import okhttp3.CookieJar
+import okhttp3.HttpUrl
 import okhttp3.internal.cookieToString
 import okhttp3.internal.delimiterOffset
 import okhttp3.internal.platform.Platform

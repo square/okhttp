@@ -1,0 +1,5 @@
+public final class okhttp3/java_net/authenticator/JavaNetAuthenticator : okhttp3/Authenticator {
+	public fun <init> ()V
+	public fun authenticate (Lokhttp3/Route;Lokhttp3/Response;)Lokhttp3/Request;
+}
+

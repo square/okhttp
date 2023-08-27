@@ -34,7 +34,10 @@ include(":okhttp-sse")
 include(":okhttp-testing-support")
 include(":okhttp-tls")
 include(":okhttp-coroutines")
-include(":okhttp-urlconnection")
+include(":okhttp-java-net-authenticator")
+project(":okhttp-java-net-authenticator").name = "java-net-authenticator"
+include(":okhttp-java-net-cookiejar")
+project(":okhttp-java-net-cookiejar").name = "java-net-cookiejar"
 include(":samples:compare")
 include(":samples:crawler")
 include(":samples:guide")

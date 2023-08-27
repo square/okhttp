@@ -110,7 +110,8 @@ kotlin {
       dependencies {
         dependsOn(commonTest)
         implementation(projects.okhttpTls)
-        implementation(projects.okhttpUrlconnection)
+        implementation(projects.javaNetCookiejar)
+        implementation(projects.javaNetAuthenticator)
         implementation(projects.mockwebserver3)
         implementation(projects.mockwebserver3Junit4)
         implementation(projects.mockwebserver3Junit5)

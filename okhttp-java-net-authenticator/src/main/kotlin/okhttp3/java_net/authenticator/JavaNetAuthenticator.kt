@@ -13,11 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3
+package okhttp3.java_net.authenticator
 
 import java.io.IOException
 import java.net.Authenticator
 import okhttp3.Authenticator.Companion.JAVA_NET_AUTHENTICATOR
+import okhttp3.Request
+import okhttp3.Response
+import okhttp3.Route
 
 /**
  * Adapts [Authenticator] to [okhttp3.Authenticator]. Configure OkHttp to use [Authenticator] with

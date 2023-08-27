@@ -10,8 +10,8 @@ plugins {
 
 project.applyOsgi(
   "Fragment-Host: com.squareup.okhttp3; bundle-version=\"\${range;[==,+);\${version_cleanup;${projects.okhttp.version}}}\"",
-  "Automatic-Module-Name: okhttp3.urlconnection",
-  "Bundle-SymbolicName: com.squareup.okhttp3.urlconnection",
+  "Automatic-Module-Name: okhttp3.java_net.cookiejar",
+  "Bundle-SymbolicName: com.squareup.okhttp3.java_net.cookiejar",
   "-removeheaders: Private-Package"
 )
 
