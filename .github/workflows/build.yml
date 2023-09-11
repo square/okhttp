@@ -112,7 +112,7 @@ jobs:
 
       - name: Publish Test Report
         if: github.repository == 'square/okhttp' && github.ref == 'refs/heads/master'
-        uses: mikepenz/action-junit-report@v3
+        uses: mikepenz/action-junit-report@v4
         with:
           report_paths: '**/build/test-results/*/TEST-*.xml'
           check_name: OpenJDK 11 Test Report
@@ -147,7 +147,7 @@ jobs:
 
       - name: Publish Test Report
         if: success() || failure()
-        uses: mikepenz/action-junit-report@v3
+        uses: mikepenz/action-junit-report@v4
         with:
           report_paths: '**/build/test-results/test/TEST-*.xml'
           check_name: JS Test Report
