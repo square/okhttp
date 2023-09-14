@@ -28,7 +28,6 @@ import okhttp3.internal.http.MAX_DATE
 import okhttp3.internal.http.toHttpDateString
 import okhttp3.internal.indexOfControlOrNonAscii
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
-import okhttp3.internal.immutableListOf
 import okhttp3.internal.toCanonicalHost
 import okhttp3.internal.trimSubstring
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
@@ -350,7 +349,7 @@ class Cookie private constructor(
     }
 
     fun samesite(sameSite: String) = apply {
-      val validSameSites = immutableListOf("lax", "strict", "none")
+      val validSameSites = listOf("lax", "strict", "none")
       require(validSameSites.contains(sameSite.lowercase())) { "SameSite must be one of: ${validSameSites.joinToString(", ")}" }
 
       if (sameSite.lowercase() == "none") {
