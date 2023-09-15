@@ -22,10 +22,13 @@ import java.net.HttpURLConnection;
 import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
 import okhttp3.OkHttpClientTestRule;
 import okhttp3.Protocol;
@@ -315,11 +318,16 @@ public final class WebSocketHttpTest {
     webServer.enqueue(new MockResponse()
         .setResponseCode(101)
         .setHeader("Upgrade", "websocket")
-        .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk="));
-    newWebSocket();
+        .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk=")
+    );
+    webServer.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START));
+
+    RealWebSocket webSocket = newWebSocket();
 
     clientListener.assertFailure(101, null, ProtocolException.class,
         "Expected 'Connection' header value 'Upgrade' but was 'null'");
+
+    webSocket.cancel();
   }
 
   @Test public void wrongConnectionHeader() throws IOException {
@@ -328,10 +336,14 @@ public final class WebSocketHttpTest {
         .setHeader("Upgrade", "websocket")
         .setHeader("Connection", "Downgrade")
         .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk="));
-    newWebSocket();
+    webServer.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START));
+
+    RealWebSocket webSocket = newWebSocket();
 
     clientListener.assertFailure(101, null, ProtocolException.class,
         "Expected 'Connection' header value 'Upgrade' but was 'Downgrade'");
+
+    webSocket.cancel();
   }
 
   @Test public void missingUpgradeHeader() throws IOException {
@@ -339,10 +351,14 @@ public final class WebSocketHttpTest {
         .setResponseCode(101)
         .setHeader("Connection", "Upgrade")
         .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk="));
-    newWebSocket();
+    webServer.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START));
+
+    RealWebSocket webSocket = newWebSocket();
 
     clientListener.assertFailure(101, null, ProtocolException.class,
         "Expected 'Upgrade' header value 'websocket' but was 'null'");
+
+    webSocket.cancel();
   }
 
   @Test public void wrongUpgradeHeader() throws IOException {
@@ -351,10 +367,14 @@ public final class WebSocketHttpTest {
         .setHeader("Connection", "Upgrade")
         .setHeader("Upgrade", "Pepsi")
         .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk="));
-    newWebSocket();
+    webServer.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START));
+
+    RealWebSocket webSocket = newWebSocket();
 
     clientListener.assertFailure(101, null, ProtocolException.class,
         "Expected 'Upgrade' header value 'websocket' but was 'Pepsi'");
+
+    webSocket.cancel();
   }
 
   @Test public void missingMagicHeader() throws IOException {
@@ -362,10 +382,14 @@ public final class WebSocketHttpTest {
         .setResponseCode(101)
         .setHeader("Connection", "Upgrade")
         .setHeader("Upgrade", "websocket"));
-    newWebSocket();
+    webServer.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START));
+
+    RealWebSocket webSocket = newWebSocket();
 
     clientListener.assertFailure(101, null, ProtocolException.class,
         "Expected 'Sec-WebSocket-Accept' header value 'ujmZX4KXZqjwy6vi1aQFH5p4Ygk=' but was 'null'");
+
+    webSocket.cancel();
   }
 
   @Test public void wrongMagicHeader() throws IOException {
@@ -374,10 +398,14 @@ public final class WebSocketHttpTest {
         .setHeader("Connection", "Upgrade")
         .setHeader("Upgrade", "websocket")
         .setHeader("Sec-WebSocket-Accept", "magic"));
-    newWebSocket();
+    webServer.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START));
+
+    RealWebSocket webSocket = newWebSocket();
 
     clientListener.assertFailure(101, null, ProtocolException.class,
         "Expected 'Sec-WebSocket-Accept' header value 'ujmZX4KXZqjwy6vi1aQFH5p4Ygk=' but was 'magic'");
+
+    webSocket.cancel();
   }
 
   @Test public void clientIncludesForbiddenHeader() throws IOException {
@@ -798,6 +826,45 @@ public final class WebSocketHttpTest {
     WebSocket webSocket = client.newWebSocket(request, clientListener);
     webSocket.send("hello");
     webSocket.close(1000, null);
+  }
+
+  /** https://github.com/square/okhttp/issues/7768 */
+  @Test public void reconnectingToNonWebSocket() throws InterruptedException {
+    for (int i = 0; i < 30; i++) {
+      webServer.enqueue(new MockResponse()
+                      .setBodyDelay(100, TimeUnit.MILLISECONDS)
+        .setBody("Wrong endpoint")
+        .setResponseCode(401));
+    }
+
+    Request request = new Request.Builder()
+      .url(webServer.url("/"))
+      .build();
+
+    CountDownLatch attempts = new CountDownLatch(20);
+
+    List<WebSocket> webSockets = new ArrayList<>();
+
+    WebSocketListener reconnectOnFailure = new WebSocketListener() {
+      @Override
+      public void onFailure(WebSocket webSocket, Throwable t, Response response) {
+        if (attempts.getCount() > 0) {
+          clientListener.setNextEventDelegate(this);
+          webSockets.add(client.newWebSocket(request, clientListener));
+          attempts.countDown();
+        }
+      }
+    };
+
+    clientListener.setNextEventDelegate(reconnectOnFailure);
+
+    webSockets.add(client.newWebSocket(request, clientListener));
+
+    attempts.await();
+
+    for (WebSocket webSocket: webSockets) {
+      webSocket.cancel();
+    }
   }
 
   @Test public void compressedMessages() throws Exception {
