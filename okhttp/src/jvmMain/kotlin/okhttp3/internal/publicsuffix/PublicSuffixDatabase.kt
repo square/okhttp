@@ -22,16 +22,21 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
 import okhttp3.internal.and
 import okhttp3.internal.platform.Platform
+import okio.FileSystem
 import okio.GzipSource
+import okio.Path
+import okio.Path.Companion.toPath
 import okio.buffer
-import okio.source
 
 /**
  * A database of public suffixes provided by [publicsuffix.org][publicsuffix_org].
  *
  * [publicsuffix_org]: https://publicsuffix.org/
  */
-class PublicSuffixDatabase {
+class PublicSuffixDatabase internal constructor(
+  val path: Path = PUBLIC_SUFFIX_RESOURCE,
+  val fileSystem: FileSystem = FileSystem.RESOURCES
+) {
 
   /** True after we've attempted to read the list for the first time. */
   private val listRead = AtomicBoolean(false)
@@ -107,6 +112,7 @@ class PublicSuffixDatabase {
     }
 
     check(::publicSuffixListBytes.isInitialized) {
+      // May have failed with an IOException
       "Unable to load $PUBLIC_SUFFIX_RESOURCE resource from the classpath."
     }
 
@@ -205,23 +211,22 @@ class PublicSuffixDatabase {
     var publicSuffixListBytes: ByteArray?
     var publicSuffixExceptionListBytes: ByteArray?
 
-    val resource =
-        PublicSuffixDatabase::class.java.getResourceAsStream(PUBLIC_SUFFIX_RESOURCE) ?: return
+    try {
+      GzipSource(fileSystem.source(path)).buffer().use { bufferedSource ->
+        val totalBytes = bufferedSource.readInt()
+        publicSuffixListBytes = bufferedSource.readByteArray(totalBytes.toLong())
 
-    GzipSource(resource.source()).buffer().use { bufferedSource ->
-      val totalBytes = bufferedSource.readInt()
-      publicSuffixListBytes = bufferedSource.readByteArray(totalBytes.toLong())
+        val totalExceptionBytes = bufferedSource.readInt()
+        publicSuffixExceptionListBytes = bufferedSource.readByteArray(totalExceptionBytes.toLong())
+      }
 
-      val totalExceptionBytes = bufferedSource.readInt()
-      publicSuffixExceptionListBytes = bufferedSource.readByteArray(totalExceptionBytes.toLong())
+      synchronized(this) {
+        this.publicSuffixListBytes = publicSuffixListBytes!!
+        this.publicSuffixExceptionListBytes = publicSuffixExceptionListBytes!!
+      }
+    } finally {
+      readCompleteLatch.countDown()
     }
-
-    synchronized(this) {
-      this.publicSuffixListBytes = publicSuffixListBytes!!
-      this.publicSuffixExceptionListBytes = publicSuffixExceptionListBytes!!
-    }
-
-    readCompleteLatch.countDown()
   }
 
   /** Visible for testing. */
@@ -237,7 +242,7 @@ class PublicSuffixDatabase {
 
   companion object {
     @JvmField
-    val PUBLIC_SUFFIX_RESOURCE = "${PublicSuffixDatabase::class.java.simpleName}.gz"
+    val PUBLIC_SUFFIX_RESOURCE = "/okhttp3/internal/publicsuffix/${PublicSuffixDatabase::class.java.simpleName}.gz".toPath()
 
     private val WILDCARD_LABEL = byteArrayOf('*'.code.toByte())
     private val PREVAILING_RULE = listOf("*")
