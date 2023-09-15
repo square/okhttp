@@ -203,26 +203,28 @@ class PublicSuffixDatabase {
 
   @Throws(IOException::class)
   private fun readTheList() {
-    var publicSuffixListBytes: ByteArray?
-    var publicSuffixExceptionListBytes: ByteArray?
+    try {
+      var publicSuffixListBytes: ByteArray?
+      var publicSuffixExceptionListBytes: ByteArray?
 
-    val resource =
+      val resource =
         PublicSuffixDatabase::class.java.getResourceAsStream(PUBLIC_SUFFIX_RESOURCE) ?: return
 
-    GzipSource(resource.source()).buffer().use { bufferedSource ->
-      val totalBytes = bufferedSource.readInt()
-      publicSuffixListBytes = bufferedSource.readByteArray(totalBytes.toLong())
+      GzipSource(resource.source()).buffer().use { bufferedSource ->
+        val totalBytes = bufferedSource.readInt()
+        publicSuffixListBytes = bufferedSource.readByteArray(totalBytes.toLong())
 
-      val totalExceptionBytes = bufferedSource.readInt()
-      publicSuffixExceptionListBytes = bufferedSource.readByteArray(totalExceptionBytes.toLong())
+        val totalExceptionBytes = bufferedSource.readInt()
+        publicSuffixExceptionListBytes = bufferedSource.readByteArray(totalExceptionBytes.toLong())
+      }
+
+      synchronized(this) {
+        this.publicSuffixListBytes = publicSuffixListBytes!!
+        this.publicSuffixExceptionListBytes = publicSuffixExceptionListBytes!!
+      }
+    } finally {
+      readCompleteLatch.countDown()
     }
-
-    synchronized(this) {
-      this.publicSuffixListBytes = publicSuffixListBytes!!
-      this.publicSuffixExceptionListBytes = publicSuffixExceptionListBytes!!
-    }
-
-    readCompleteLatch.countDown()
   }
 
   /** Visible for testing. */
