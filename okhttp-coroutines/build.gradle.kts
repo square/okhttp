@@ -102,6 +102,6 @@ project.applyOsgi(
 
 mavenPublishing {
   configure(
-    KotlinMultiplatform(javadocJar = JavadocJar.Dokka("dokkaGfm"))
+    KotlinMultiplatform(javadocJar = JavadocJar.Empty())
   )
 }

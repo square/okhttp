@@ -113,5 +113,5 @@ tasks.getByName("copyJvmJar").dependsOn(tasks.getByName("jvmJar"))
 tasks.getByName("nativeImage").dependsOn(copyJvmJar)
 
 mavenPublishing {
-  configure(KotlinMultiplatform(javadocJar = JavadocJar.Dokka("dokkaGfm")))
+  configure(KotlinMultiplatform(javadocJar = JavadocJar.Empty()))
 }
