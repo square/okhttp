@@ -294,7 +294,7 @@ class Cookie private constructor(
     private var httpOnly = false
     private var persistent = false
     private var hostOnly = false
-    private var sameSite = "lax"
+    private var sameSite = "Lax"
 
     internal constructor(cookie: Cookie) : this() {
       this.name = cookie.name
@@ -359,18 +359,18 @@ class Cookie private constructor(
       this.httpOnly = true
     }
 
-    fun samesite(sameSite: String) = apply {
+    fun sameSite(sameSite: String) = apply {
       val validSameSites = listOf("lax", "strict", "none")
       require(validSameSites.contains(sameSite.lowercase())) { "SameSite must be one of: ${validSameSites.joinToString(", ")}" }
-
-      if (sameSite.lowercase() == "none") {
-        require(secure) { "Secure attribute is required for this SameSite policy" }
-      }
 
       this.sameSite = sameSite
     }
 
     fun build(): Cookie {
+      if (sameSite.lowercase() == "none") {
+        require(secure) { "Secure attribute is required for this SameSite policy" }
+      }
+
       return Cookie(
         name ?: throw NullPointerException("builder.name == null"),
         value ?: throw NullPointerException("builder.value == null"),
@@ -447,7 +447,7 @@ class Cookie private constructor(
       var httpOnly = false
       var hostOnly = true
       var persistent = false
-      var sameSite: String? = null
+      var sameSite = "Lax"
 
       var pos = cookiePairEnd + 1
       val limit = setCookie.length
@@ -540,16 +540,6 @@ class Cookie private constructor(
         val encodedPath = url.encodedPath
         val lastSlash = encodedPath.lastIndexOf('/')
         path = if (lastSlash != 0) encodedPath.substring(0, lastSlash) else "/"
-      }
-
-      // If SameSite is absent or not a valid option, use the default value.
-      if (sameSite == null) {
-        sameSite = "lax"
-      }
-
-      // If SameSite is set to `None`, Secure must be true
-      if (sameSite.lowercase() == "none" && !secureOnly) {
-        secureOnly = true
       }
 
       return Cookie(cookieName, cookieValue, expiresAt, domain, path, secureOnly, httpOnly,
