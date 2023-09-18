@@ -2224,9 +2224,9 @@ open class CallTest {
     val responseCookies = cookieJar.takeResponseCookies()
     assertThat(responseCookies.size).isEqualTo(2)
     assertThat(responseCookies[0].toString())
-      .isEqualTo("a=b; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/")
+      .isEqualTo("a=b; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; samesite=Lax")
     assertThat(responseCookies[1].toString())
-      .isEqualTo("c=d; expires=Fri, 02 Jan 1970 23:59:59 GMT; path=/bar; secure")
+      .isEqualTo("c=d; expires=Fri, 02 Jan 1970 23:59:59 GMT; path=/bar; secure; samesite=Lax")
   }
 
   @Test

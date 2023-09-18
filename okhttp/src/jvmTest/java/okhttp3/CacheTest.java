@@ -2015,9 +2015,9 @@ public final class CacheTest {
 
     HttpUrl url = server.url("/");
     assertThat(get(url).body().string()).isEqualTo("A");
-    cookieJar.assertResponseCookies("a=FIRST; path=/");
+    cookieJar.assertResponseCookies("a=FIRST; path=/; samesite=Lax");
     assertThat(get(url).body().string()).isEqualTo("A");
-    cookieJar.assertResponseCookies("a=SECOND; path=/");
+    cookieJar.assertResponseCookies("a=SECOND; path=/; samesite=Lax");
   }
 
   @Test public void getHeadersReturnsNetworkEndToEndHeaders() throws Exception {
