@@ -96,18 +96,29 @@ class Cookie private constructor(
   @get:JvmName("hostOnly") val hostOnly: Boolean, // True unless 'domain' is present.
 
   /**
-   * Returns a non-empty string with the cookie's policy for whether the cookie is sent with
-   * cross-site requests, providing some protection against cross-site request forgery (CSRF) attacks.
-   * Same-site requests means requests originating from the same site that set the cookie. Cross-site
-   * means requests originating from site that's different from the one that set the cookie.
+   * Returns a string describing whether this cookie is sent for cross-site calls.
    *
-   * The possible values are:
-   * - `Strict`: Cookie will only be sent for same-site requests. The scheme and domain
-   *     must match the one on the cookie.
-   * - `Lax`: Cookie is not sent on cross-site requests. Cookie won't be sent when going from origin
-   *     site to an external site, but is sent when going from an external site to the origin site.
-   * - `None`: Browser will send the cookie with both cross-site and same-site requests. The Secure
-   *     attribute must be set when setting this value.
+   * Two URLs are on the same site if they share a [top private domain][HttpUrl.topPrivateDomain].
+   * Otherwise, they are cross-site URLs.
+   *
+   * When a URL is requested, it may be in the context of another URL.
+   *
+   *  * **Embedded resources like images and iframes** in browsers use the context as the page in
+   *    the address bar and the subject is the URL of an embedded resource.
+   *
+   *  * **Potentially-destructive navigations such as HTTP POST calls** use the context as the page
+   *    originating the navigation, and the subject is the page being navigated to.
+   *
+   * The values of this attribute determine whether this cookie is sent for cross-site calls:
+   *
+   *  - "Strict": the cookie is omitted when the subject URL is an embedded resource or a
+   *    potentially-destructive navigation.
+   *
+   *  - "Lax": the cookie is omitted when the subject URL is an embedded resource. It is sent for
+   *    potentially-destructive navigation. This is the default value.
+   *
+   *  - None: the cookie is always sent. The "Secure" attribute must also be set when setting this
+   *    value.
    */
   @get:JvmName("sameSite") val sameSite: String,
 ) {
