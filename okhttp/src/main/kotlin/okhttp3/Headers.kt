@@ -272,6 +272,14 @@ class Headers private constructor(
     }
 
     /**
+     * Add a header with the specified name and value. Doesn't validate neither header names or values,
+     * allowing non-ASCII characters in both.
+     */
+    fun addUnsafeNonAsciiNameOrValue(name: String, value: String) = apply {
+      addLenientNoTrim(name, value)
+    }
+
+    /**
      * Adds all headers from an existing collection.
      */
     fun addAll(headers: Headers) = apply {
@@ -321,6 +329,15 @@ class Headers private constructor(
     internal fun addLenient(name: String, value: String) = apply {
       namesAndValues.add(name)
       namesAndValues.add(value.trim())
+    }
+
+    /**
+     * Add a field with the specified value without any validation or value trimming. Only appropriate for headers
+     * from the remote peer or cache.
+     */
+    private fun addLenientNoTrim(name: String, value: String) = apply {
+      namesAndValues.add(name)
+      namesAndValues.add(value)
     }
 
     fun removeAll(name: String) = apply {
