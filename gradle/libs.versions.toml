@@ -45,7 +45,7 @@ gradlePlugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", ve
 gradlePlugin-kotlinSerialization = { module = "org.jetbrains.kotlin:kotlin-serialization", version.ref = "org-jetbrains-kotlin" }
 gradlePlugin-mavenPublish = "com.vanniktech:gradle-maven-publish-plugin:0.25.3"
 gradlePlugin-shadow = "gradle.plugin.com.github.johnrengelman:shadow:7.1.2"
-gradlePlugin-spotless = "com.diffplug.spotless:spotless-plugin-gradle:6.21.0"
+gradlePlugin-spotless = "com.diffplug.spotless:spotless-plugin-gradle:6.22.0"
 guava-jre = "com.google.guava:guava:32.1.2-jre"
 hamcrestLibrary = "org.hamcrest:hamcrest-library:2.2"
 httpClient5 = "org.apache.httpcomponents.client5:httpclient5:5.2.1"
