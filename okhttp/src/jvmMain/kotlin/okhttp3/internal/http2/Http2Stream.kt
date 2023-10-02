@@ -264,12 +264,12 @@ class Http2Stream internal constructor(
       if (this.errorCode != null) {
         return false
       }
-      if (source.finished && sink.finished) {
-        return false
-      }
       this.errorCode = errorCode
       this.errorException = errorException
       notifyAll()
+      if (source.finished && sink.finished) {
+        return false
+      }
     }
     connection.removeStream(id)
     return true
@@ -491,7 +491,7 @@ class Http2Stream internal constructor(
       // But delay updating the stream flow control until that stream has been
       // consumed
       updateConnectionFlowControl(byteCount)
-      
+
       // Notify that buffer size changed
       connection.flowControlListener.receivingStreamWindowChanged(id, readBytes, readBuffer.size)
     }
