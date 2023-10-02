@@ -785,7 +785,7 @@ class HttpOverHttp2Test {
     val call = client.newCall(Request(server.url("/")))
     val response = call.execute()
     assertThat(response.body.string()).isEqualTo("")
-    cookieJar.assertResponseCookies("a=b; path=/; samesite=Lax")
+    cookieJar.assertResponseCookies("a=b; path=/")
   }
 
   @ParameterizedTest @ArgumentsSource(ProtocolParamProvider::class)

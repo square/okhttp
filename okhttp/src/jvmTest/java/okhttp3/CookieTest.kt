@@ -34,7 +34,7 @@ class CookieTest {
 
   @Test fun simpleCookie() {
     val cookie = parse(url, "SID=31d4d96e407aad42")
-    assertThat(cookie.toString()).isEqualTo("SID=31d4d96e407aad42; path=/; samesite=Lax")
+    assertThat(cookie.toString()).isEqualTo("SID=31d4d96e407aad42; path=/")
   }
 
   @Test fun noEqualsSign() {
@@ -128,14 +128,14 @@ class CookieTest {
     assertThat(cookie!!.domain).isEqualTo("example.com")
     assertThat(cookie.path).isEqualTo("/")
     assertThat(cookie.hostOnly).isFalse
-    assertThat(cookie.toString()).isEqualTo("SID=31d4d96e407aad42; domain=example.com; path=/; samesite=Lax")
+    assertThat(cookie.toString()).isEqualTo("SID=31d4d96e407aad42; domain=example.com; path=/")
   }
 
   @Test fun secureAndHttpOnly() {
     val cookie = parse(url, "SID=31d4d96e407aad42; Path=/; Secure; HttpOnly")
     assertThat(cookie!!.secure).isTrue
     assertThat(cookie.httpOnly).isTrue
-    assertThat(cookie.toString()).isEqualTo("SID=31d4d96e407aad42; path=/; secure; httponly; samesite=Lax")
+    assertThat(cookie.toString()).isEqualTo("SID=31d4d96e407aad42; path=/; secure; httponly")
   }
 
   @Test fun expiresDate() {
@@ -395,8 +395,8 @@ class CookieTest {
       .build()
     val cookies = parseAll(url, headers)
     assertThat(cookies.size).isEqualTo(2)
-    assertThat(cookies[0].toString()).isEqualTo("a=b; path=/; samesite=Lax")
-    assertThat(cookies[1].toString()).isEqualTo("c=d; path=/; samesite=Lax")
+    assertThat(cookies[0].toString()).isEqualTo("a=b; path=/")
+    assertThat(cookies[1].toString()).isEqualTo("c=d; path=/")
   }
 
   @Test fun builder() {
@@ -458,7 +458,7 @@ class CookieTest {
       .hostOnlyDomain("example.com")
       .expiresAt(Long.MAX_VALUE)
       .build()
-    assertThat(cookie.toString()).isEqualTo("a=b; expires=Fri, 31 Dec 9999 23:59:59 GMT; path=/; samesite=Lax")
+    assertThat(cookie.toString()).isEqualTo("a=b; expires=Fri, 31 Dec 9999 23:59:59 GMT; path=/")
   }
 
   @Test fun builderExpiresAt() {
@@ -468,7 +468,7 @@ class CookieTest {
       .hostOnlyDomain("example.com")
       .expiresAt(date("1970-01-01T00:00:01.000+0000").time)
       .build()
-    assertThat(cookie.toString()).isEqualTo("a=b; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/; samesite=Lax")
+    assertThat(cookie.toString()).isEqualTo("a=b; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/")
   }
 
   @Test fun builderClampsMinDate() {
@@ -478,7 +478,7 @@ class CookieTest {
       .hostOnlyDomain("example.com")
       .expiresAt(date("1970-01-01T00:00:00.000+0000").time)
       .build()
-    assertThat(cookie.toString()).isEqualTo("a=b; max-age=0; path=/; samesite=Lax")
+    assertThat(cookie.toString()).isEqualTo("a=b; max-age=0; path=/")
   }
 
   @Test fun builderDomainValidation() {
