@@ -117,10 +117,10 @@ class Cookie private constructor(
    *  - "Lax": the cookie is omitted when the subject URL is an embedded resource. It is sent for
    *    potentially-destructive navigation. This is the default value.
    *
-   *  - None: the cookie is always sent. The "Secure" attribute must also be set when setting this
+   *  - "None": the cookie is always sent. The "Secure" attribute must also be set when setting this
    *    value.
    */
-  @get:JvmName("sameSite") val sameSite: String,
+  @get:JvmName("sameSite") val sameSite: String?,
 ) {
 
   /**
@@ -272,7 +272,9 @@ class Cookie private constructor(
         append("; httponly")
       }
 
-      append("; samesite=").append(sameSite)
+      if (sameSite != null) {
+        append("; samesite=").append(sameSite)
+      }
 
       return toString()
     }
@@ -294,7 +296,7 @@ class Cookie private constructor(
     private var httpOnly = false
     private var persistent = false
     private var hostOnly = false
-    private var sameSite = "Lax"
+    private var sameSite: String? = null
 
     internal constructor(cookie: Cookie) : this() {
       this.name = cookie.name
@@ -367,7 +369,7 @@ class Cookie private constructor(
     }
 
     fun build(): Cookie {
-      if (sameSite.lowercase() == "none") {
+      if (sameSite.equals("None", ignoreCase = true)) {
         require(secure) { "Secure attribute is required for this SameSite policy" }
       }
 
@@ -447,7 +449,7 @@ class Cookie private constructor(
       var httpOnly = false
       var hostOnly = true
       var persistent = false
-      var sameSite = "Lax"
+      var sameSite: String? = null
 
       var pos = cookiePairEnd + 1
       val limit = setCookie.length
