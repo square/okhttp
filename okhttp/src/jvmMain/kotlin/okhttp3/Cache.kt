@@ -629,7 +629,8 @@ class Cache internal constructor(
         for (i in 0 until length) {
           val line = source.readUtf8LineStrict()
           val bytes = Buffer()
-          bytes.write(line.decodeBase64()!!)
+          val certificateBytes = line.decodeBase64() ?: throw IOException("Corrupt certificate in cache entry")
+          bytes.write(certificateBytes)
           result.add(certificateFactory.generateCertificate(bytes.inputStream()))
         }
         return result
