@@ -362,9 +362,7 @@ class Cookie private constructor(
     }
 
     fun sameSite(sameSite: String) = apply {
-      val validSameSites = listOf("lax", "strict", "none")
-      require(validSameSites.contains(sameSite.lowercase())) { "SameSite must be one of: ${validSameSites.joinToString(", ")}" }
-
+      require(sameSite.trim() == sameSite) { "sameSite is not trimmed" }
       this.sameSite = sameSite
     }
 
