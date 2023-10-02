@@ -598,18 +598,15 @@ class CookieTest {
     assertThat(cookie.sameSite).isEqualTo(sameSite)
   }
 
-  @Test fun builderSameSiteNoneRequiresSecure() {
+    /** Note that we permit building a cookie that doesn’t follow the rules. */
+    @Test fun builderSameSiteNoneDoesNotRequireSecure() {
     val cookieBuilder = Cookie.Builder()
       .name("a")
       .value("b")
       .domain("example.com")
       .sameSite("None")
 
-    // assertThrows<IllegalArgumentException> {
-    //   cookieBuilder.build()
-    // }
-
-    val cookie = cookieBuilder.secure().build()
+    val cookie = cookieBuilder.build()
     assertThat(cookie.sameSite).isEqualTo("None")
   }
 

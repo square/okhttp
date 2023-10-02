@@ -367,9 +367,6 @@ class Cookie private constructor(
     }
 
     fun build(): Cookie {
-      if (sameSite.equals("None", ignoreCase = true)) {
-        require(secure) { "Secure attribute is required for this SameSite policy" }
-      }
 
       return Cookie(
         name ?: throw NullPointerException("builder.name == null"),
