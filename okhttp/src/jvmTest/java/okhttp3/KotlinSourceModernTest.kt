@@ -302,6 +302,7 @@ class KotlinSourceModernTest {
     builder = builder.path("")
     builder = builder.secure()
     builder = builder.httpOnly()
+    builder = builder.sameSite("None")
     val cookie: Cookie = builder.build()
   }
 

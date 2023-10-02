@@ -28,6 +28,9 @@ import okhttp3.internal.parseCookie
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 
 class CookieTest {
   val url = "https://example.com/".toHttpUrl()
@@ -414,6 +417,7 @@ class CookieTest {
     assertThat(cookie.httpOnly).isFalse
     assertThat(cookie.persistent).isFalse
     assertThat(cookie.hostOnly).isFalse
+    assertThat(cookie.sameSite).isNull()
   }
 
   @Test fun newBuilder() {
@@ -546,6 +550,66 @@ class CookieTest {
     assertThat(cookie.domain).isEqualTo("::1")
   }
 
+  @Test fun emptySameSite() {
+    assertThat(parse(url, "a=b; SameSite=")!!.sameSite).isEqualTo("")
+    assertThat(parse(url, "a=b; SameSite= ")!!.sameSite).isEqualTo("")
+    assertThat(parse(url, "a=b; SameSite=\r\t \n")!!.sameSite).isEqualTo("")
+  }
+
+  @Test fun spaceInSameSite() {
+    assertThat(parse(url, "a=b; SameSite=a b")!!.sameSite).isEqualTo("a b")
+  }
+
+  @Test fun trimLeadingAndTrailingWhitespaceFromSameSite() {
+    assertThat(parse(url, "a=b; SameSite= ")!!.sameSite).isEqualTo("")
+    assertThat(parse(url, "a= b; SameSite= Lax")!!.sameSite).isEqualTo("Lax")
+    assertThat(parse(url, "a=b ; SameSite=Lax ;")!!.sameSite).isEqualTo("Lax")
+    assertThat(parse(url, "a=\r\t \nb\n; \rSameSite=\n \tLax")!!.sameSite).isEqualTo("Lax")
+  }
+
+  @Test fun builderSameSiteTrimmed() {
+    var cookieBuilder = Cookie.Builder()
+      .name("a")
+      .value("b")
+      .domain("example.com")
+
+    assertThrows<IllegalArgumentException> {
+      cookieBuilder.sameSite(" a").build()
+    }
+    assertThrows<IllegalArgumentException> {
+      cookieBuilder.sameSite("a ").build()
+    }
+    assertThrows<IllegalArgumentException> {
+      cookieBuilder.sameSite(" a ").build()
+    }
+
+    cookieBuilder.sameSite("a").build()
+  }
+
+  @ParameterizedTest(name = "{displayName}({arguments})")
+  @ValueSource(strings = ["Lax", "Strict", "UnrecognizedButValid"])
+  fun builderSameSite(sameSite: String) {
+    val cookie = Cookie.Builder()
+      .name("a")
+      .value("b")
+      .domain("example.com")
+      .sameSite(sameSite)
+      .build()
+    assertThat(cookie.sameSite).isEqualTo(sameSite)
+  }
+
+    /** Note that we permit building a cookie that doesn’t follow the rules. */
+    @Test fun builderSameSiteNoneDoesNotRequireSecure() {
+    val cookieBuilder = Cookie.Builder()
+      .name("a")
+      .value("b")
+      .domain("example.com")
+      .sameSite("None")
+
+    val cookie = cookieBuilder.build()
+    assertThat(cookie.sameSite).isEqualTo("None")
+  }
+
   @Test fun equalsAndHashCode() {
     val cookieStrings = Arrays.asList(
       "a=b; Path=/c; Domain=example.com; Max-Age=5; Secure; HttpOnly",
@@ -554,7 +618,14 @@ class CookieTest {
       "a=b; Path=/c;                     Max-Age=5; Secure; HttpOnly",
       "a=b; Path=/c; Domain=example.com;            Secure; HttpOnly",
       "a=b; Path=/c; Domain=example.com; Max-Age=5;         HttpOnly",
-      "a=b; Path=/c; Domain=example.com; Max-Age=5; Secure;         "
+      "a=b; Path=/c; Domain=example.com; Max-Age=5; Secure;         ",
+      "a=b; Path=/c; Domain=example.com; Max-Age=5; Secure; HttpOnly; SameSite=Lax",
+      "a= ; Path=/c; Domain=example.com; Max-Age=5; Secure; HttpOnly; SameSite=Lax",
+      "a=b;          Domain=example.com; Max-Age=5; Secure; HttpOnly; SameSite=Lax",
+      "a=b; Path=/c;                     Max-Age=5; Secure; HttpOnly; SameSite=Lax",
+      "a=b; Path=/c; Domain=example.com;            Secure; HttpOnly; SameSite=Lax",
+      "a=b; Path=/c; Domain=example.com; Max-Age=5;         HttpOnly; SameSite=Lax",
+      "a=b; Path=/c; Domain=example.com; Max-Age=5; Secure;         ; SameSite=Lax",
     )
     for (stringA in cookieStrings) {
       val cookieA = parseCookie(0, url, stringA!!)
