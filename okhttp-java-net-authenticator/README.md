@@ -1,5 +1,5 @@
-OkHttp URLConnection
-====================
+OkHttp java.net.Authenticator
+=============================
 
 This module integrates OkHttp with `Authenticator` from `java.net`. This used to be part of `okhttp-urlconnection`.
 
