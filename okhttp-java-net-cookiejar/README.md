@@ -1,5 +1,5 @@
-OkHttp URLConnection
-====================
+OkHttp java.net.CookieHandler
+=============================
 
 This module integrates OkHttp with `CookieHandler` from `java.net`. This used to be part of `okhttp-urlconnection`
 
