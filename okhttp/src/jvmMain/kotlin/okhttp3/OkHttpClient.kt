@@ -231,6 +231,12 @@ open class OkHttpClient internal constructor(
   @get:JvmName("minWebSocketMessageToCompress")
   val minWebSocketMessageToCompress: Long = builder.minWebSocketMessageToCompress
 
+  /**
+   * Maximum outbound web socket message size (in bytes) that will be sent
+   */
+  @get:JvmName("maxQueueSize")
+  val maxQueueSize: Long = builder.maxQueueSize
+
   internal val routeDatabase: RouteDatabase = builder.routeDatabase ?: RouteDatabase()
   internal val taskRunner: TaskRunner = builder.taskRunner ?: TaskRunner.INSTANCE
 
@@ -291,7 +297,8 @@ open class OkHttpClient internal constructor(
       random = Random(),
       pingIntervalMillis = pingIntervalMillis.toLong(),
       extensions = null, // Always null for clients.
-      minimumDeflateSize = minWebSocketMessageToCompress
+      minimumDeflateSize = minWebSocketMessageToCompress,
+      maxQueueSize = maxQueueSize
     )
     webSocket.connect(this)
     return webSocket
@@ -540,6 +547,7 @@ open class OkHttpClient internal constructor(
     internal var minWebSocketMessageToCompress = RealWebSocket.DEFAULT_MINIMUM_DEFLATE_SIZE
     internal var routeDatabase: RouteDatabase? = null
     internal var taskRunner: TaskRunner? = null
+    internal var maxQueueSize = RealWebSocket.DEFAULT_MAX_QUEUE_SIZE
 
     internal constructor(okHttpClient: OkHttpClient) : this() {
       this.dispatcher = okHttpClient.dispatcher
@@ -574,6 +582,7 @@ open class OkHttpClient internal constructor(
       this.minWebSocketMessageToCompress = okHttpClient.minWebSocketMessageToCompress
       this.routeDatabase = okHttpClient.routeDatabase
       this.taskRunner = okHttpClient.taskRunner
+      this.maxQueueSize = okHttpClient.maxQueueSize
     }
 
     /**
@@ -1205,6 +1214,14 @@ open class OkHttpClient internal constructor(
       }
 
       this.minWebSocketMessageToCompress = bytes
+    }
+
+    fun maxQueueSize(bytes: Long) = apply {
+      require(bytes >= 0) {
+        "maxQueueSize must be positive: $bytes"
+      }
+
+      this.maxQueueSize = bytes
     }
 
     fun build(): OkHttpClient = OkHttpClient(this)

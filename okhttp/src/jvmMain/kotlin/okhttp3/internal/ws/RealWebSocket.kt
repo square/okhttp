@@ -63,7 +63,8 @@ class RealWebSocket(
    */
   private var extensions: WebSocketExtensions?,
   /** If compression is negotiated, outbound messages of this size and larger will be compressed. */
-  private var minimumDeflateSize: Long
+  private var minimumDeflateSize: Long,
+  private var maxQueueSize: Long
 ) : WebSocket, WebSocketReader.FrameCallback {
   private val key: String
 
@@ -126,6 +127,7 @@ class RealWebSocket(
 
   /** True if we have sent a ping that is still awaiting a reply. */
   private var awaitingPong = false
+
 
   init {
     require("GET" == originalRequest.method) {
@@ -402,7 +404,7 @@ class RealWebSocket(
     if (failed || enqueuedClose) return false
 
     // If this frame overflows the buffer, reject it and close the web socket.
-    if (queueSize + data.size > DEFAULT_MAX_QUEUE_SIZE) {
+    if (queueSize + data.size > maxQueueSize) {
       close(CLOSE_CLIENT_GOING_AWAY, "Message to large to send safely, aborting...")
       return false
     }
@@ -628,11 +630,6 @@ class RealWebSocket(
   companion object {
     private val ONLY_HTTP1 = listOf(Protocol.HTTP_1_1)
 
-    /**
-     * The maximum number of bytes to enqueue. Rather than enqueueing beyond this limit we tear down
-     * the web socket! It's possible that we're writing faster than the peer can read.
-     */
-    private const val DEFAULT_MAX_QUEUE_SIZE = 16L * 1024 * 1024 // 16 MiB.
 
     /**
      * The maximum amount of time after the client calls [close] to wait for a graceful shutdown. If
@@ -649,5 +646,8 @@ class RealWebSocket(
      * the inbound buffer.
      */
     const val DEFAULT_MINIMUM_DEFLATE_SIZE = 1024L
+
+    const val DEFAULT_MAX_QUEUE_SIZE = 16L * 1024 * 1024 // 16 MiB.
+
   }
 }
