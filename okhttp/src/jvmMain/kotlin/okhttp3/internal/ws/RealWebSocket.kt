@@ -128,7 +128,6 @@ class RealWebSocket(
   /** True if we have sent a ping that is still awaiting a reply. */
   private var awaitingPong = false
 
-
   init {
     require("GET" == originalRequest.method) {
       "Request must be GET: ${originalRequest.method}"

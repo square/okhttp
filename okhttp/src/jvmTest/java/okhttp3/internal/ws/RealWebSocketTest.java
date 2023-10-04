@@ -36,6 +36,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import static okhttp3.internal.ws.RealWebSocket.DEFAULT_MAX_QUEUE_SIZE;
 import static okhttp3.internal.ws.RealWebSocket.DEFAULT_MINIMUM_DEFLATE_SIZE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
@@ -427,7 +428,7 @@ public final class RealWebSocketTest {
           .build();
       webSocket = new RealWebSocket(TaskRunner.INSTANCE, response.request(), listener, random,
           pingIntervalMillis, WebSocketExtensions.Companion.parse(responseHeaders),
-          DEFAULT_MINIMUM_DEFLATE_SIZE);
+          DEFAULT_MINIMUM_DEFLATE_SIZE,DEFAULT_MAX_QUEUE_SIZE);
       webSocket.initReaderAndWriter(name, this);
     }
 

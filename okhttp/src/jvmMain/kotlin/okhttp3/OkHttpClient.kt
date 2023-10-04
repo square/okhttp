@@ -547,7 +547,7 @@ open class OkHttpClient internal constructor(
     internal var minWebSocketMessageToCompress = RealWebSocket.DEFAULT_MINIMUM_DEFLATE_SIZE
     internal var routeDatabase: RouteDatabase? = null
     internal var taskRunner: TaskRunner? = null
-    internal var maxQueueSize = RealWebSocket.DEFAULT_MAX_QUEUE_SIZE
+    internal var maxQueueSize: Long = RealWebSocket.DEFAULT_MAX_QUEUE_SIZE
 
     internal constructor(okHttpClient: OkHttpClient) : this() {
       this.dispatcher = okHttpClient.dispatcher

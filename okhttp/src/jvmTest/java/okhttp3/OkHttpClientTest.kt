@@ -420,6 +420,17 @@ class OkHttpClientTest {
       assertThat(expected.message)
         .isEqualTo("minWebSocketMessageToCompress must be positive: -1024")
     }
+
+    @Test fun maxQueueSizeNegative() {
+      val builder = OkHttpClient.Builder()
+      try {
+        builder.maxQueueSize(-1024)
+        fail<Any>()
+      } catch (expected: IllegalArgumentException) {
+        assertThat(expected.message)
+          .isEqualTo("maxQueueSize must be positive: -1024")
+      }
+    }
   }
 
   companion object {

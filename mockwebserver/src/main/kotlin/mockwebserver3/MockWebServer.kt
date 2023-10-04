@@ -769,7 +769,8 @@ class MockWebServer : Closeable {
       random = SecureRandom(),
       pingIntervalMillis = 0,
       extensions = WebSocketExtensions.parse(webSocketResponse.headers),
-      minimumDeflateSize = 0L // Compress all messages if compression is enabled.
+      minimumDeflateSize = 0L, // Compress all messages if compression is enabled.
+      maxQueueSize = RealWebSocket.DEFAULT_MAX_QUEUE_SIZE
     )
     webSocketResponse.webSocketListener.onOpen(webSocket, fancyResponse)
     val name = "MockWebServer WebSocket ${request.path!!}"
