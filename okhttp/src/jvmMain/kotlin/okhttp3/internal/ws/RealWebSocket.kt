@@ -402,8 +402,8 @@ class RealWebSocket(
     if (failed || enqueuedClose) return false
 
     // If this frame overflows the buffer, reject it and close the web socket.
-    if (queueSize + data.size > MAX_QUEUE_SIZE) {
-      close(CLOSE_CLIENT_GOING_AWAY, null)
+    if (queueSize + data.size > DEFAULT_MAX_QUEUE_SIZE) {
+      close(CLOSE_CLIENT_GOING_AWAY, "Message to large to send safely, aborting...")
       return false
     }
 
@@ -632,7 +632,7 @@ class RealWebSocket(
      * The maximum number of bytes to enqueue. Rather than enqueueing beyond this limit we tear down
      * the web socket! It's possible that we're writing faster than the peer can read.
      */
-    private const val MAX_QUEUE_SIZE = 16L * 1024 * 1024 // 16 MiB.
+    private const val DEFAULT_MAX_QUEUE_SIZE = 16L * 1024 * 1024 // 16 MiB.
 
     /**
      * The maximum amount of time after the client calls [close] to wait for a graceful shutdown. If
