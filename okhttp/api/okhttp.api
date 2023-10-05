@@ -925,6 +925,7 @@ public class okhttp3/OkHttpClient : okhttp3/Call$Factory, okhttp3/WebSocket$Fact
 	public final fun followSslRedirects ()Z
 	public final fun hostnameVerifier ()Ljavax/net/ssl/HostnameVerifier;
 	public final fun interceptors ()Ljava/util/List;
+	public final fun maxQueueSize ()J
 	public final fun minWebSocketMessageToCompress ()J
 	public final fun networkInterceptors ()Ljava/util/List;
 	public fun newBuilder ()Lokhttp3/OkHttpClient$Builder;
@@ -971,6 +972,7 @@ public final class okhttp3/OkHttpClient$Builder {
 	public final fun followSslRedirects (Z)Lokhttp3/OkHttpClient$Builder;
 	public final fun hostnameVerifier (Ljavax/net/ssl/HostnameVerifier;)Lokhttp3/OkHttpClient$Builder;
 	public final fun interceptors ()Ljava/util/List;
+	public final fun maxQueueSize (J)Lokhttp3/OkHttpClient$Builder;
 	public final fun minWebSocketMessageToCompress (J)Lokhttp3/OkHttpClient$Builder;
 	public final fun networkInterceptors ()Ljava/util/List;
 	public final fun pingInterval (JLjava/util/concurrent/TimeUnit;)Lokhttp3/OkHttpClient$Builder;
