@@ -541,13 +541,13 @@ public final class WebSocketHttpTest {
     for (int i = 0; i < messageCount; i++) {
       serverListener.assertBinaryMessage(message);
     }
-    serverListener.assertClosing(1001, "");
+    serverListener.assertClosing(1001, "Message to large to send safely, aborting...");
 
     // When the server acknowledges the close the connection shuts down gracefully.
     server.close(1000, null);
     clientListener.assertClosing(1000, "");
     clientListener.assertClosed(1000, "");
-    serverListener.assertClosed(1001, "");
+    serverListener.assertClosed(1001, "Message to large to send safely, aborting...");
   }
 
   @Test public void closeReasonMaximumLength() {
