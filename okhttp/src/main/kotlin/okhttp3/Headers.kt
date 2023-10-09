@@ -263,20 +263,11 @@ class Headers private constructor(
     }
 
     /**
-     * Add a header with the specified name and value. Does validation of header names, allowing
-     * non-ASCII values.
+     * Add a header with the specified name and value. Does not validate headers names and values, allowing
+     * non-ASCII characters.
      */
     fun addUnsafeNonAscii(name: String, value: String) = apply {
-      checkName(name)
       addLenient(name, value)
-    }
-
-    /**
-     * Add a header with the specified name and value. Doesn't validate neither header names or values,
-     * allowing non-ASCII characters in both.
-     */
-    fun addUnsafeNonAsciiNameOrValue(name: String, value: String) = apply {
-      addLenientNoTrim(name, value)
     }
 
     /**
@@ -329,15 +320,6 @@ class Headers private constructor(
     internal fun addLenient(name: String, value: String) = apply {
       namesAndValues.add(name)
       namesAndValues.add(value.trim())
-    }
-
-    /**
-     * Add a field with the specified value without any validation or value trimming. Only appropriate for headers
-     * from the remote peer or cache.
-     */
-    private fun addLenientNoTrim(name: String, value: String) = apply {
-      namesAndValues.add(name)
-      namesAndValues.add(value)
     }
 
     fun removeAll(name: String) = apply {
