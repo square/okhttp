@@ -23,10 +23,6 @@ task copyJavaTemplates(type: Copy) {
 
 dependencies {
   api deps.okio
-  api deps.kotlinStdlib
-  // Only imported to avoid broken vulnerability scanners for CVE-2022-24329
-  // https://github.com/square/okhttp/issues/7654
-  api deps.kotlinStdlibJdk8
   compileOnly deps.android
   compileOnly deps.bouncycastle
   compileOnly deps.bouncycastletls
