@@ -2817,7 +2817,7 @@ public final class CallTest {
     enableProtocol(Protocol.HTTP_2);
     server.enqueue(
             new MockResponse()
-                    .addInformationalResponseInternal(
+                    .addInformationalResponse(
                             new MockResponse().setResponseCode(103).addHeader("Link", "</style.css>; rel=preload; as=style")
                     )
     );
@@ -2833,7 +2833,7 @@ public final class CallTest {
   public void serverRespondsWithEarlyHintsHttp1() throws Exception {
     server.enqueue(
             new MockResponse()
-                    .addInformationalResponseInternal(
+                    .addInformationalResponse(
                             new MockResponse().setResponseCode(103).addHeader("Link", "</style.css>; rel=preload; as=style")
                     )
     );

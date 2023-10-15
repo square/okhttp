@@ -349,7 +349,7 @@ class MockResponse : Cloneable {
 
   override fun toString() = status
 
-  fun addInformationalResponseInternal(informationalResponse: MockResponse): MockResponse = apply {
+  fun addInformationalResponse(informationalResponse: MockResponse): MockResponse = apply {
     informationalResponses += informationalResponse
   }
 
