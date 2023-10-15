@@ -77,7 +77,7 @@ kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serializa
 nativeImageSvm = { module = "org.graalvm.nativeimage:svm", version.ref = "graalvm" }
 openjsse = "org.openjsse:openjsse:1.1.13"
 playservices-safetynet = "com.google.android.gms:play-services-safetynet:18.0.1"
-robolectric-android = "org.robolectric:android-all:13-robolectric-9030017"
+robolectric-android = "org.robolectric:android-all:14-robolectric-10818077"
 robolectric = "org.robolectric:robolectric:4.10.3"
 signature-android-apilevel21 = "net.sf.androidscents.signature:android-api-level-21:5.0.1_r2"
 signature-android-apilevel24 = "net.sf.androidscents.signature:android-api-level-24:7.0_r2"
