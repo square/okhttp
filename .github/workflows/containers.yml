@@ -14,7 +14,7 @@ env:
   GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.daemon=false -Dkotlin.incremental=false"
 
 jobs:
-  test_docs:
+  test_containers:
     permissions:
       checks: write # for actions/upload-artifact
     runs-on: ubuntu-latest
