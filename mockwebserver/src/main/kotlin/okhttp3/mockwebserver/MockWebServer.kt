@@ -1026,6 +1026,13 @@ class MockWebServer : ExternalResource(), Closeable {
         readBody = true
       }
 
+      peek.informationalResponses.forEach {
+        val informationalHeader =
+          listOf(Header(Header.RESPONSE_STATUS, it.status.replace("HTTP/1.1 ", "")))
+        stream.writeHeaders(informationalHeader, outFinished = false, flushHeaders = true)
+        stream.connection.flush()
+      }
+
       val body = Buffer()
       val requestLine = "$method $path HTTP/1.1"
       var exception: IOException? = null
