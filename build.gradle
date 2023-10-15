@@ -15,7 +15,7 @@ buildscript {
       'jnrUnixsocket': '0.38.20',
       'jsoup': '1.16.1',
       'junit': '4.13.2',
-      'kotlin': '1.9.10',
+      'kotlin': '1.8.21',
       'moshi': '1.15.0',
       'okio': '3.6.0',
       'ktlint': '0.38.0',
@@ -46,9 +46,9 @@ buildscript {
   ]
 
   dependencies {
-    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.10"
-    classpath "org.jetbrains.dokka:dokka-gradle-plugin:1.9.0"
-    classpath "com.android.tools.build:gradle:8.0.2"
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.21"
+    classpath "org.jetbrains.dokka:dokka-gradle-plugin:0.10.1"
+    classpath "com.android.tools.build:gradle:7.4.2"
   }
 
   repositories {
