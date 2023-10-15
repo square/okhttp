@@ -2790,25 +2790,23 @@ public final class CallTest {
     assertThat(recordedRequest.getBody().readUtf8()).isEqualTo("");
   }
 
-  @Test
-  public void expect100ContinueTimesOutWithoutContinue_HTTP2() throws Exception {
+  @Test public void expect100ContinueTimesOutWithoutContinue_HTTP2() throws Exception {
     enableProtocol(Protocol.HTTP_2);
     expect100ContinueTimesOutWithoutContinue();
   }
 
-  @Test
-  public void serverRespondsWithUnsolicited100Continue() throws Exception {
+  @Test public void serverRespondsWithUnsolicited100Continue() throws Exception {
     server.enqueue(new MockResponse()
-            .setSocketPolicy(SocketPolicy.CONTINUE_ALWAYS));
+        .setSocketPolicy(SocketPolicy.CONTINUE_ALWAYS));
 
     Request request = new Request.Builder()
-            .url(server.url("/"))
-            .post(RequestBody.create("abc", MediaType.get("text/plain")))
-            .build();
+        .url(server.url("/"))
+        .post(RequestBody.create("abc", MediaType.get("text/plain")))
+        .build();
 
     executeSynchronously(request)
-            .assertCode(200)
-            .assertSuccessful();
+        .assertCode(200)
+        .assertSuccessful();
 
     RecordedRequest recordedRequest = server.takeRequest();
     assertThat(recordedRequest.getBody().readUtf8()).isEqualTo("abc");
@@ -2851,25 +2849,23 @@ public final class CallTest {
     assertThat(recordedRequest.getHeader("Link")).isNull();
   }
 
-  @Test
-  public void serverRespondsWithUnsolicited100Continue_HTTP2() throws Exception {
+  @Test public void serverRespondsWithUnsolicited100Continue_HTTP2() throws Exception {
     enableProtocol(Protocol.HTTP_2);
     serverRespondsWithUnsolicited100Continue();
   }
 
-  @Test
-  public void serverRespondsWith100ContinueOnly() throws Exception {
+  @Test public void serverRespondsWith100ContinueOnly() throws Exception {
     client = client.newBuilder()
-            .readTimeout(Duration.ofSeconds(1))
-            .build();
+        .readTimeout(Duration.ofSeconds(1))
+        .build();
 
     server.enqueue(new MockResponse()
-            .setStatus("HTTP/1.1 100 Continue"));
+        .setStatus("HTTP/1.1 100 Continue"));
 
     Request request = new Request.Builder()
-            .url(server.url("/"))
-            .post(RequestBody.create("abc", MediaType.get("text/plain")))
-            .build();
+        .url(server.url("/"))
+        .post(RequestBody.create("abc", MediaType.get("text/plain")))
+        .build();
 
     Call call = client.newCall(request);
     try {
