@@ -39,5 +39,9 @@ class BasicMockServerTest {
     val MOCKSERVER_IMAGE: DockerImageName = DockerImageName
       .parse("mockserver/mockserver")
       .withTag("mockserver-" + MockServerClient::class.java.getPackage().implementationVersion)
+
+    init {
+      println("Docker image " + MOCKSERVER_IMAGE.asCanonicalNameString())
+    }
   }
 }
