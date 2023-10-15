@@ -332,9 +332,14 @@ public final class CacheTest {
   }
 
   private void corruptCertificate(File cacheEntry) throws IOException {
-    String content = Okio.buffer(fileSystem.source(cacheEntry)).readUtf8();
-    content = content.replace("MII", "!!!");
-    Okio.buffer(fileSystem.sink(cacheEntry)).writeUtf8(content).close();
+    BufferedSource source = Okio.buffer(fileSystem.source(cacheEntry));
+    try {
+      String content = source.readUtf8();
+      content = content.replace("MII", "!!!");
+      Okio.buffer(fileSystem.sink(cacheEntry)).writeUtf8(content).close();
+    } finally {
+      source.close();
+    }
   }
 
   @Test public void responseCachingAndRedirects() throws Exception {
