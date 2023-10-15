@@ -30,7 +30,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
-          java-version: 11
+          java-version: 17
 
       - uses: actions/setup-python@v4
         with:
