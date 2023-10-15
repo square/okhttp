@@ -1,0 +1,38 @@
+name: docs
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    types: [opened, labeled, unlabeled, synchronize]
+
+permissions:
+  contents: read
+
+env:
+  GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.daemon=false -Dkotlin.incremental=false"
+
+jobs:
+  test_docs:
+    permissions:
+      checks: write # for actions/upload-artifact
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' || contains(github.event.pull_request.labels.*.name, 'containers')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 17
+
+      - name: Run Container Tests
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: container-tests:test
