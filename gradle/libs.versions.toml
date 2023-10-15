@@ -6,11 +6,13 @@ com-squareup-okio = "3.6.0"
 de-mannodermaus-junit5 = "1.3.0"
 graalvm = "22.3.2"
 kotlinx-serialization = "1.6.0"
+mockserverClient = "5.14.0"
 org-bouncycastle = "1.76"
 org-conscrypt = "2.5.2"
 org-jetbrains-coroutines = "1.7.3"
 org-jetbrains-kotlin = "1.9.0"
 org-junit-jupiter = "5.10.0"
+testcontainers = "1.19.1"
 
 [libraries]
 amazonCorretto = "software.amazon.cryptools:AmazonCorrettoCryptoProvider:2.3.1"
@@ -74,6 +76,8 @@ kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-c
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "org-jetbrains-coroutines" }
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinx-serialization" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+mockserver = { module = "org.testcontainers:mockserver", version.ref = "testcontainers" }
+mockserver-client = { module = "org.mock-server:mockserver-client-java-no-dependencies", version.ref = "mockserverClient" }
 nativeImageSvm = { module = "org.graalvm.nativeimage:svm", version.ref = "graalvm" }
 openjsse = "org.openjsse:openjsse:1.1.13"
 playservices-safetynet = "com.google.android.gms:play-services-safetynet:18.0.1"
@@ -89,3 +93,4 @@ squareup-kotlinPoet = "com.squareup:kotlinpoet:1.14.2"
 squareup-okio = { module = "com.squareup.okio:okio", version.ref = "com-squareup-okio" }
 squareup-okio-fakefilesystem = { module = "com.squareup.okio:okio-fakefilesystem", version.ref = "com-squareup-okio" }
 squareup-okio-nodefilesystem = { module = "com.squareup.okio:okio-nodefilesystem", version.ref = "com-squareup-okio" }
+testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }

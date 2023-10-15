@@ -77,6 +77,7 @@ subprojects {
   if (project.name == "okhttp-android") return@subprojects
   if (project.name == "android-test") return@subprojects
   if (project.name == "regression-test") return@subprojects
+  if (project.name == "container-tests") return@subprojects
 
   apply(plugin = "checkstyle")
   apply(plugin = "ru.vyarus.animalsniffer")

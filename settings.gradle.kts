@@ -44,6 +44,8 @@ include(":samples:static-server")
 include(":samples:tlssurvey")
 include(":samples:unixdomainsockets")
 
+include(":container-tests")
+
 if (isIdea20232OrHigher()) {
   include(":okhttp-android")
   include(":android-test")
