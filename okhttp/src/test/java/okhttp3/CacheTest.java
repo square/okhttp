@@ -296,18 +296,16 @@ public final class CacheTest {
     assertThat(response2.handshake().localPrincipal()).isEqualTo(localPrincipal);
   }
 
-  @Test public void secureResponseCachingWithCorruption() throws IOException {
-    server.useHttps(handshakeCertificates.sslSocketFactory());
-    server.enqueue(new MockResponse.Builder()
+  @Test public void secureResponseCachingWithCorruption() throws Exception {
+    server.useHttps(handshakeCertificates.sslSocketFactory(), false);
+    server.enqueue(new MockResponse()
             .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
             .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
-            .body("ABC")
-            .build());
-    server.enqueue(new MockResponse.Builder()
+            .setBody("ABC"));
+    server.enqueue(new MockResponse()
             .addHeader("Last-Modified: " + formatDate(-5, TimeUnit.MINUTES))
             .addHeader("Expires: " + formatDate(2, TimeUnit.HOURS))
-            .body("DEF")
-            .build());
+            .setBody("DEF"));
 
     client = client.newBuilder()
             .sslSocketFactory(
@@ -319,10 +317,10 @@ public final class CacheTest {
     Response response1 = client.newCall(request).execute();
     assertThat(response1.body().string()).isEqualTo("ABC");
 
-    Path cacheEntry = fileSystem.allPaths().stream()
-            .filter((e) -> e.name().endsWith(".0"))
+    File cacheEntry = fileSystem.allPaths().stream()
+            .filter((e) -> e.getName().endsWith(".0"))
             .findFirst()
-            .orElseThrow();
+            .orElseThrow(Exception::new);
     corruptCertificate(cacheEntry);
 
     Response response2 = client.newCall(request).execute(); // Not Cached!
@@ -333,7 +331,7 @@ public final class CacheTest {
     assertThat(cache.hitCount()).isEqualTo(0);
   }
 
-  private void corruptCertificate(Path cacheEntry) throws IOException {
+  private void corruptCertificate(File cacheEntry) throws IOException {
     String content = Okio.buffer(fileSystem.source(cacheEntry)).readUtf8();
     content = content.replace("MII", "!!!");
     Okio.buffer(fileSystem.sink(cacheEntry)).writeUtf8(content).close();
