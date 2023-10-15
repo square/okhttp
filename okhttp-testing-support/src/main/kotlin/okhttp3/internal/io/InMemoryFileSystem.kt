@@ -119,4 +119,7 @@ class InMemoryFileSystem : FileSystem, TestRule {
   }
 
   override fun toString() = "InMemoryFileSystem"
+  fun allPaths(): MutableSet<File> {
+    return files.keys
+  }
 }
