@@ -232,7 +232,8 @@ open class OkHttpClient internal constructor(
   val minWebSocketMessageToCompress: Long = builder.minWebSocketMessageToCompress
 
   /**
-   * Maximum outbound web socket message size (in bytes) that will be sent
+   * The maximum number of bytes to enqueue. Rather than enqueueing beyond this limit we tear down
+   * the web socket! It's possible that we're writing faster than the peer can read.
    */
   @get:JvmName("maxQueueSize")
   val maxQueueSize: Long = builder.maxQueueSize
