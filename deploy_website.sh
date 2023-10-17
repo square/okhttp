@@ -2,9 +2,7 @@
 
 # The website is built using MkDocs with the Material theme.
 # https://squidfunk.github.io/mkdocs-material/
-# It requires Python to run.
-# Install the packages with the following command:
-# pip install mkdocs mkdocs-material mkdocs-redirects
+# It requires python3 to run.
 
 set -ex
 
@@ -26,7 +24,7 @@ cd $DIR
 # Generate the API docs
 ./gradlew dokkaHtmlMultiModule
 
-mv ./build/dokka/htmlMultiModule docs/4.x
+mv ./build/dokka/htmlMultiModule docs/5.x
 
 # Copy in special files that GitHub wants in the project root.
 cat README.md | grep -v 'project website' > docs/index.md
@@ -34,6 +32,9 @@ cp CHANGELOG.md docs/changelogs/changelog.md
 cp CONTRIBUTING.md docs/contribute/contributing.md
 
 # Build the site and push the new files up to GitHub
+python3 -m venv venv
+source venv/bin/activate
+pip install mkdocs-material mkdocs-redirects
 mkdocs gh-deploy
 
 # Restore Javadocs from 1.x, 2.x, and 3.x.

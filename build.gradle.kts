@@ -7,7 +7,7 @@ import groovy.util.NodeList
 import java.net.URL
 import kotlinx.validation.ApiValidationExtension
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
-import org.jetbrains.dokka.gradle.DokkaTask
+import org.jetbrains.dokka.gradle.DokkaTaskPartial
 import org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest
 import org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmTest
 import org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeTest
@@ -219,7 +219,7 @@ subprojects {
 
 /** Configure publishing and signing for published Java and JavaPlatform subprojects. */
 subprojects {
-  tasks.withType<DokkaTask>().configureEach {
+  tasks.withType<DokkaTaskPartial>().configureEach {
     dokkaSourceSets.configureEach {
       reportUndocumented.set(false)
       skipDeprecated.set(true)
@@ -236,12 +236,9 @@ subprojects {
         includes.from(project.file("Module.md"))
       }
       externalDocumentationLink {
-        url.set(URL("https://square.github.io/okio/2.x/okio/"))
-        packageListUrl.set(URL("https://square.github.io/okio/2.x/okio/package-list"))
+        url.set(URL("https://square.github.io/okio/3.x/okio/"))
+        packageListUrl.set(URL("https://square.github.io/okio/3.x/okio/okio/package-list"))
       }
-    }
-    if (name == "dokkaGfm") {
-      outputDirectory.set(file("${rootDir}/docs/4.x"))
     }
   }
 
