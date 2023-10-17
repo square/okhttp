@@ -1,0 +1,322 @@
+<!doctype html>
+<html class="no-js">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>Request</title>
+<link href="../../../images/logo-icon.svg" rel="icon" type="image/svg">    <script>var pathToRoot = "../../../";</script>
+    <script>document.documentElement.classList.replace("no-js","js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="https://unpkg.com/kotlin-playground@1/dist/playground.min.js" async></script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../../styles/font-jb-sans-auto.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/clipboard.js" async></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer></script></head>
+<body>
+    <div class="root">
+<nav class="navigation" id="navigation-wrapper">
+    <div class="navigation--inner">
+        <div class="navigation-title">
+            <button class="menu-toggle" id="menu-toggle" type="button">toggle menu</button>
+            <div class="library-name">
+<a class="library-name--link" href="../../../index.html">
+                            okhttp-parent
+                    </a>            </div>
+            <div class="library-version">5.0.0-SNAPSHOT
+            </div>
+        </div>
+        <div class="filter-section" id="filter-section">
+                <button class="platform-tag platform-selector common-like" data-active="" data-filter=":okhttp:dokkaHtmlPartial/commonMain">common</button>
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button>
+                <button class="platform-tag platform-selector js-like" data-active="" data-filter=":okhttp:dokkaHtmlPartial/nonJvmMain">nonJvm</button>
+        </div>
+    </div>
+    <div class="navigation-controls">
+        <button class="navigation-controls--btn navigation-controls--theme" id="theme-toggle-button" type="button">switch theme</button>
+        <div class="navigation-controls--btn navigation-controls--search" id="searchBar" role="button">search in API</div>
+    </div>
+</nav>
+        <div id="container">
+            <div class="sidebar" id="leftColumn">
+                <div class="sidebar--inner" id="sideMenu"></div>
+            </div>
+            <div id="main">
+<div class="main-content" data-page-type="classlike" id="content" pageids="okhttp::okhttp3/Request///PointingToDeclaration//-749056141">
+  <div class="breadcrumbs"><a href="../../index.html">okhttp</a><span class="delimiter">/</span><a href="../index.html">okhttp3</a><span class="delimiter">/</span><span class="current">Request</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span><span>Request</span></span></h1>
+    <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+      <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/commonMain">common</button><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/nonJvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/nonJvmMain" data-toggle=":okhttp:dokkaHtmlPartial/nonJvmMain">nonJvm</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">expect </span><span class="token keyword">class </span><a href="index.html">Request</a></div><p class="paragraph">An HTTP request. Instances of this class are immutable if their <a href="body.html">body</a> is null or itself immutable.</p></div><div class="content sourceset-dependent-content" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">actual </span><span class="token keyword">class </span><a href="index.html">Request</a></div></div><div class="content sourceset-dependent-content" data-togglable=":okhttp:dokkaHtmlPartial/nonJvmMain"><div class="symbol monospace"><span class="token keyword">actual </span><span class="token keyword">class </span><a href="index.html">Request</a></div></div>    </div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="CONSTRUCTOR">
+        <h2 class="">Constructors</h2>
+        <div class="table"><a data-name="-860662523%2FConstructors%2F-749056141" anchor-label="Request" id="-860662523%2FConstructors%2F-749056141" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain"></a>
+          <div class="table-row" data-togglable="CONSTRUCTOR" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-request.html"><span><span>Request</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-860662523%2FConstructors%2F-749056141"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/commonMain">common</button><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/nonJvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/nonJvmMain" data-toggle=":okhttp:dokkaHtmlPartial/nonJvmMain">nonJvm</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">expect </span><span class="token keyword">constructor</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">url<span class="token operator">: </span><a href="../-http-url/index.html">HttpUrl</a><span class="token punctuation">, </span></span><span class="parameter ">headers<span class="token operator">: </span><a href="../-headers/index.html">Headers</a><span class="token operator"> = </span>Headers.headersOf()<span class="token punctuation">, </span></span><span class="parameter ">method<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator"> = </span><span class="token string">""</span><span class="token punctuation">, </span></span><span class="parameter ">body<span class="token operator">: </span><a href="../-request-body/index.html">RequestBody</a><span class="token operator">?</span><span class="token operator"> = </span>null</span></span><span class="token punctuation">)</span></div></div><div class="content sourceset-dependent-content" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">actual </span><span class="token keyword">constructor</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">url<span class="token operator">: </span><a href="../-http-url/index.html">HttpUrl</a><span class="token punctuation">, </span></span><span class="parameter ">headers<span class="token operator">: </span><a href="../-headers/index.html">Headers</a><span class="token punctuation">, </span></span><span class="parameter ">method<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">body<span class="token operator">: </span><a href="../-request-body/index.html">RequestBody</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Constructs a new request.</p></div></div><div class="content sourceset-dependent-content" data-togglable=":okhttp:dokkaHtmlPartial/nonJvmMain"><div class="symbol monospace"><span class="token keyword">actual </span><span class="token keyword">constructor</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">url<span class="token operator">: </span><a href="../-http-url/index.html">HttpUrl</a><span class="token punctuation">, </span></span><span class="parameter ">headers<span class="token operator">: </span><a href="../-headers/index.html">Headers</a><span class="token punctuation">, </span></span><span class="parameter ">method<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">body<span class="token operator">: </span><a href="../-request-body/index.html">RequestBody</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Constructs a new request.</p></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="TYPE">
+        <h2 class="">Types</h2>
+        <div class="table"><a data-name="351251573%2FClasslikes%2F-749056141" anchor-label="Builder" id="351251573%2FClasslikes%2F-749056141" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-builder/index.html"><span><span>Builder</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="351251573%2FClasslikes%2F-749056141"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/commonMain">common</button><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/nonJvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/nonJvmMain" data-toggle=":okhttp:dokkaHtmlPartial/nonJvmMain">nonJvm</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">expect </span><span class="token keyword">open </span><span class="token keyword">class </span><a href="-builder/index.html">Builder</a></div></div><div class="content sourceset-dependent-content" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">actual </span><span class="token keyword">open </span><span class="token keyword">class </span><a href="-builder/index.html">Builder</a></div></div><div class="content sourceset-dependent-content" data-togglable=":okhttp:dokkaHtmlPartial/nonJvmMain"><div class="symbol monospace"><span class="token keyword">actual </span><span class="token keyword">open </span><span class="token keyword">class </span><a href="-builder/index.html">Builder</a></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="PROPERTY">
+        <h2 class="">Properties</h2>
+        <div class="table"><a data-name="-1957898501%2FProperties%2F-749056141" anchor-label="body" id="-1957898501%2FProperties%2F-749056141" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="body.html"><span><span>body</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1957898501%2FProperties%2F-749056141"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/commonMain">common</button><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/nonJvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/nonJvmMain" data-toggle=":okhttp:dokkaHtmlPartial/nonJvmMain">nonJvm</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">expect </span><span class="token keyword"></span><span class="token keyword">val </span><a href="body.html">body</a><span class="token operator">: </span><a href="../-request-body/index.html">RequestBody</a><span class="token operator">?</span></div></div><div class="content sourceset-dependent-content" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@get:</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">"body"</span></span></span><wbr><span class="token punctuation">)</span></div></div><span class="token keyword">actual </span><span class="token keyword"></span><span class="token keyword">val </span><a href="body.html">body</a><span class="token operator">: </span><a href="../-request-body/index.html">RequestBody</a><span class="token operator">?</span></div></div><div class="content sourceset-dependent-content" data-togglable=":okhttp:dokkaHtmlPartial/nonJvmMain"><div class="symbol monospace"><span class="token keyword">actual </span><span class="token keyword"></span><span class="token keyword">val </span><a href="body.html">body</a><span class="token operator">: </span><a href="../-request-body/index.html">RequestBody</a><span class="token operator">?</span></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1345802050%2FProperties%2F-749056141" anchor-label="cacheControl" id="1345802050%2FProperties%2F-749056141" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="cache-control.html"><span>cache</span><wbr><span><span>Control</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1345802050%2FProperties%2F-749056141"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/commonMain">common</button><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/nonJvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/nonJvmMain" data-toggle=":okhttp:dokkaHtmlPartial/nonJvmMain">nonJvm</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">expect </span><span class="token keyword"></span><span class="token keyword">val </span><a href="cache-control.html">cacheControl</a><span class="token operator">: </span><a href="../-cache-control/index.html">CacheControl</a></div><div class="brief "><p class="paragraph">Returns the cache control directives for this response. This is never null, even if this response contains no <code class="lang-kotlin">Cache-Control</code> header.</p></div></div><div class="content sourceset-dependent-content" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@get:</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">"cacheControl"</span></span></span><wbr><span class="token punctuation">)</span></div></div><span class="token keyword">actual </span><span class="token keyword"></span><span class="token keyword">val </span><a href="cache-control.html">cacheControl</a><span class="token operator">: </span><a href="../-cache-control/index.html">CacheControl</a></div></div><div class="content sourceset-dependent-content" data-togglable=":okhttp:dokkaHtmlPartial/nonJvmMain"><div class="symbol monospace"><span class="token keyword">actual </span><span class="token keyword"></span><span class="token keyword">val </span><a href="cache-control.html">cacheControl</a><span class="token operator">: </span><a href="../-cache-control/index.html">CacheControl</a></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="926244951%2FProperties%2F-749056141" anchor-label="headers" id="926244951%2FProperties%2F-749056141" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="headers.html"><span><span>headers</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="926244951%2FProperties%2F-749056141"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/commonMain">common</button><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/nonJvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/nonJvmMain" data-toggle=":okhttp:dokkaHtmlPartial/nonJvmMain">nonJvm</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">expect </span><span class="token keyword"></span><span class="token keyword">val </span><a href="headers.html">headers</a><span class="token operator">: </span><a href="../-headers/index.html">Headers</a></div></div><div class="content sourceset-dependent-content" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@get:</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">"headers"</span></span></span><wbr><span class="token punctuation">)</span></div></div><span class="token keyword">actual </span><span class="token keyword"></span><span class="token keyword">val </span><a href="headers.html">headers</a><span class="token operator">: </span><a href="../-headers/index.html">Headers</a></div></div><div class="content sourceset-dependent-content" data-togglable=":okhttp:dokkaHtmlPartial/nonJvmMain"><div class="symbol monospace"><span class="token keyword">actual </span><span class="token keyword"></span><span class="token keyword">val </span><a href="headers.html">headers</a><span class="token operator">: </span><a href="../-headers/index.html">Headers</a></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="299853404%2FProperties%2F-749056141" anchor-label="isHttps" id="299853404%2FProperties%2F-749056141" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="is-https.html"><span>is</span><wbr><span><span>Https</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="299853404%2FProperties%2F-749056141"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/commonMain">common</button><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/nonJvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/nonJvmMain" data-toggle=":okhttp:dokkaHtmlPartial/nonJvmMain">nonJvm</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">expect </span><span class="token keyword"></span><span class="token keyword">val </span><a href="is-https.html">isHttps</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></div></div><div class="content sourceset-dependent-content" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">actual </span><span class="token keyword"></span><span class="token keyword">val </span><a href="is-https.html">isHttps</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></div></div><div class="content sourceset-dependent-content" data-togglable=":okhttp:dokkaHtmlPartial/nonJvmMain"><div class="symbol monospace"><span class="token keyword">actual </span><span class="token keyword"></span><span class="token keyword">val </span><a href="is-https.html">isHttps</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="204893340%2FProperties%2F-749056141" anchor-label="method" id="204893340%2FProperties%2F-749056141" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="method.html"><span><span>method</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="204893340%2FProperties%2F-749056141"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/commonMain">common</button><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/nonJvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/nonJvmMain" data-toggle=":okhttp:dokkaHtmlPartial/nonJvmMain">nonJvm</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">expect </span><span class="token keyword"></span><span class="token keyword">val </span><a href="method.html">method</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></div></div><div class="content sourceset-dependent-content" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@get:</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">"method"</span></span></span><wbr><span class="token punctuation">)</span></div></div><span class="token keyword">actual </span><span class="token keyword"></span><span class="token keyword">val </span><a href="method.html">method</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></div></div><div class="content sourceset-dependent-content" data-togglable=":okhttp:dokkaHtmlPartial/nonJvmMain"><div class="symbol monospace"><span class="token keyword">actual </span><span class="token keyword"></span><span class="token keyword">val </span><a href="method.html">method</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1965227378%2FProperties%2F-749056141" anchor-label="url" id="-1965227378%2FProperties%2F-749056141" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="url.html"><span><span>url</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1965227378%2FProperties%2F-749056141"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/commonMain">common</button><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/nonJvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/nonJvmMain" data-toggle=":okhttp:dokkaHtmlPartial/nonJvmMain">nonJvm</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">expect </span><span class="token keyword"></span><span class="token keyword">val </span><a href="url.html">url</a><span class="token operator">: </span><a href="../-http-url/index.html">HttpUrl</a></div></div><div class="content sourceset-dependent-content" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@get:</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">"url"</span></span></span><wbr><span class="token punctuation">)</span></div></div><span class="token keyword">actual </span><span class="token keyword"></span><span class="token keyword">val </span><a href="url.html">url</a><span class="token operator">: </span><a href="../-http-url/index.html">HttpUrl</a></div></div><div class="content sourceset-dependent-content" data-togglable=":okhttp:dokkaHtmlPartial/nonJvmMain"><div class="symbol monospace"><span class="token keyword">actual </span><span class="token keyword"></span><span class="token keyword">val </span><a href="url.html">url</a><span class="token operator">: </span><a href="../-http-url/index.html">HttpUrl</a></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="FUNCTION">
+        <h2 class="">Functions</h2>
+        <div class="table"><a data-name="-803442028%2FFunctions%2F-749056141" anchor-label="header" id="-803442028%2FFunctions%2F-749056141" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="header.html"><span><span>header</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-803442028%2FFunctions%2F-749056141"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/commonMain">common</button><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/nonJvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/nonJvmMain" data-toggle=":okhttp:dokkaHtmlPartial/nonJvmMain">nonJvm</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">expect </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="header.html"><span class="token function">header</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">name<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span></div></div><div class="content sourceset-dependent-content" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">actual </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="header.html"><span class="token function">header</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">name<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span></div></div><div class="content sourceset-dependent-content" data-togglable=":okhttp:dokkaHtmlPartial/nonJvmMain"><div class="symbol monospace"><span class="token keyword">actual </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="header.html"><span class="token function">header</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">name<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1812084237%2FFunctions%2F-749056141" anchor-label="headers" id="1812084237%2FFunctions%2F-749056141" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="headers.html"><span><span>headers</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1812084237%2FFunctions%2F-749056141"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/commonMain">common</button><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/nonJvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/nonJvmMain" data-toggle=":okhttp:dokkaHtmlPartial/nonJvmMain">nonJvm</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">expect </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="headers.html"><span class="token function">headers</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">name<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">&gt;</span></div></div><div class="content sourceset-dependent-content" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">actual </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="headers.html"><span class="token function">headers</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">name<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">&gt;</span></div></div><div class="content sourceset-dependent-content" data-togglable=":okhttp:dokkaHtmlPartial/nonJvmMain"><div class="symbol monospace"><span class="token keyword">actual </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="headers.html"><span class="token function">headers</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">name<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">&gt;</span></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-721334046%2FFunctions%2F-749056141" anchor-label="newBuilder" id="-721334046%2FFunctions%2F-749056141" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="new-builder.html"><span>new</span><wbr><span><span>Builder</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-721334046%2FFunctions%2F-749056141"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/commonMain">common</button><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/nonJvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/nonJvmMain" data-toggle=":okhttp:dokkaHtmlPartial/nonJvmMain">nonJvm</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">expect </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="new-builder.html"><span class="token function">newBuilder</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="-builder/index.html">Request.Builder</a></div></div><div class="content sourceset-dependent-content" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">actual </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="new-builder.html"><span class="token function">newBuilder</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="-builder/index.html">Request.Builder</a></div></div><div class="content sourceset-dependent-content" data-togglable=":okhttp:dokkaHtmlPartial/nonJvmMain"><div class="symbol monospace"><span class="token keyword">actual </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="new-builder.html"><span class="token function">newBuilder</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="-builder/index.html">Request.Builder</a></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1340859801%2FFunctions%2F-749056141" anchor-label="tag" id="-1340859801%2FFunctions%2F-749056141" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain,:okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="tag.html"><span><span>tag</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1340859801%2FFunctions%2F-749056141"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/commonMain" data-filterable-set=":okhttp:dokkaHtmlPartial/commonMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/commonMain">common</button><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/nonJvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/nonJvmMain" data-toggle=":okhttp:dokkaHtmlPartial/nonJvmMain">nonJvm</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/commonMain"><div class="symbol monospace"><span class="token keyword">expect </span><span class="token keyword">inline </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="tag.html">T</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a><span class="token operator">&gt; </span><a href="tag.html"><span class="token function">tag</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="tag.html">T</a><span class="token operator">?</span></div><div class="brief "><p class="paragraph">Returns the tag attached with <a href="tag.html">T</a> as a key, or null if no tag is attached with that key.</p></div><div class="symbol monospace"><span class="token keyword">expect </span><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="tag.html">T</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a><span class="token operator">&gt; </span><a href="tag.html"><span class="token function">tag</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">type<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-class/index.html">KClass</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="tag.html">T</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="tag.html">T</a><span class="token operator">?</span></div><div class="brief "><p class="paragraph">Returns the tag attached with <a href="tag.html">type</a> as a key, or null if no tag is attached with that key.</p></div></div><div class="content sourceset-dependent-content" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">"reifiedTag"</span></span></span><wbr><span class="token punctuation">)</span></div></div><span class="token keyword">actual </span><span class="token keyword">inline </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="tag.html">T</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a><span class="token operator">&gt; </span><a href="tag.html"><span class="token function">tag</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="tag.html">T</a><span class="token operator">?</span></div><div class="symbol monospace"><span class="token keyword">actual </span><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="tag.html">T</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a><span class="token operator">&gt; </span><a href="tag.html"><span class="token function">tag</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">type<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-class/index.html">KClass</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="tag.html">T</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="tag.html">T</a><span class="token operator">?</span></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="tag.html">T</a><span class="token operator">&gt; </span><a href="tag.html"><span class="token function">tag</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">type<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html">Class</a><span class="token operator">&lt;</span><span class="token keyword">out </span><a href="tag.html">T</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="tag.html">T</a><span class="token operator">?</span></div><div class="brief "><p class="paragraph">Returns the tag attached with <a href="tag.html">type</a> as a key, or null if no tag is attached with that key.</p></div></div><div class="content sourceset-dependent-content" data-togglable=":okhttp:dokkaHtmlPartial/nonJvmMain"><div class="symbol monospace"><span class="token keyword">actual </span><span class="token keyword">inline </span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="tag.html">T</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a><span class="token operator">&gt; </span><a href="tag.html"><span class="token function">tag</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="tag.html">T</a><span class="token operator">?</span></div><div class="symbol monospace"><span class="token keyword">actual </span><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="tag.html">T</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a><span class="token operator">&gt; </span><a href="tag.html"><span class="token function">tag</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">type<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-class/index.html">KClass</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="tag.html">T</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="tag.html">T</a><span class="token operator">?</span></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1747909263%2FFunctions%2F27975350" anchor-label="toString" id="-1747909263%2FFunctions%2F27975350" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain,:okhttp:dokkaHtmlPartial/nonJvmMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../../../okhttp/okhttp3/-request/[non-jvm]to-string.html"><span>to</span><wbr><span><span>String</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1747909263%2FFunctions%2F27975350"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/nonJvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/nonJvmMain" data-toggle=":okhttp:dokkaHtmlPartial/nonJvmMain">nonJvm</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="[jvm]to-string.html"><span class="token function">toString</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></div></div><div class="content sourceset-dependent-content" data-togglable=":okhttp:dokkaHtmlPartial/nonJvmMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="[non-jvm]to-string.html"><span class="token function">toString</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2023 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

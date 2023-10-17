@@ -1,0 +1,633 @@
+<!doctype html>
+<html class="no-js">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>Builder</title>
+<link href="../../../../images/logo-icon.svg" rel="icon" type="image/svg">    <script>var pathToRoot = "../../../../";</script>
+    <script>document.documentElement.classList.replace("no-js","js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="https://unpkg.com/kotlin-playground@1/dist/playground.min.js" async></script>
+<script type="text/javascript" src="../../../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../../../styles/style.css" rel="Stylesheet">
+<link href="../../../../styles/main.css" rel="Stylesheet">
+<link href="../../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../../../styles/font-jb-sans-auto.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../../scripts/clipboard.js" async></script>
+<script type="text/javascript" src="../../../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../../../scripts/symbol-parameters-wrapper_deferred.js" defer></script></head>
+<body>
+    <div class="root">
+<nav class="navigation" id="navigation-wrapper">
+    <div class="navigation--inner">
+        <div class="navigation-title">
+            <button class="menu-toggle" id="menu-toggle" type="button">toggle menu</button>
+            <div class="library-name">
+<a class="library-name--link" href="../../../../index.html">
+                            okhttp-parent
+                    </a>            </div>
+            <div class="library-version">5.0.0-SNAPSHOT
+            </div>
+        </div>
+        <div class="filter-section" id="filter-section">
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":mockwebserver3:dokkaHtmlPartial/main">jvm</button>
+        </div>
+    </div>
+    <div class="navigation-controls">
+        <button class="navigation-controls--btn navigation-controls--theme" id="theme-toggle-button" type="button">switch theme</button>
+        <div class="navigation-controls--btn navigation-controls--search" id="searchBar" role="button">search in API</div>
+    </div>
+</nav>
+        <div id="container">
+            <div class="sidebar" id="leftColumn">
+                <div class="sidebar--inner" id="sideMenu"></div>
+            </div>
+            <div id="main">
+<div class="main-content" data-page-type="classlike" id="content" pageids="mockwebserver3::mockwebserver3/MockResponse.Builder///PointingToDeclaration//21570178">
+  <div class="breadcrumbs"><a href="../../../index.html">mockwebserver3</a><span class="delimiter">/</span><a href="../../index.html">mockwebserver3</a><span class="delimiter">/</span><a href="../index.html">MockResponse</a><span class="delimiter">/</span><span class="current">Builder</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span><span>Builder</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">class </span><a href="index.html">Builder</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-cloneable/index.html">Cloneable</a></div></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="CONSTRUCTOR">
+        <h2 class="">Constructors</h2>
+        <div class="table"><a data-name="403646064%2FConstructors%2F21570178" anchor-label="Builder" id="403646064%2FConstructors%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-togglable="CONSTRUCTOR" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-builder.html"><span><span>Builder</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="403646064%2FConstructors%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">constructor</span><span class="token punctuation">(</span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="PROPERTY">
+        <h2 class="">Properties</h2>
+        <div class="table"><a data-name="339209549%2FProperties%2F21570178" anchor-label="body" id="339209549%2FProperties%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="body.html"><span><span>body</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="339209549%2FProperties%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">var </span><a href="body.html">body</a><span class="token operator">: </span><a href="../../-mock-response-body/index.html">MockResponseBody</a><span class="token operator">?</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="411915106%2FProperties%2F21570178" anchor-label="code" id="411915106%2FProperties%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="code.html"><span><span>code</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="411915106%2FProperties%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">var </span><a href="code.html">code</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1418497236%2FProperties%2F21570178" anchor-label="informationalResponses" id="1418497236%2FProperties%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="informational-responses.html"><span>informational</span><wbr><span><span>Responses</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1418497236%2FProperties%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">val </span><a href="informational-responses.html">informationalResponses</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-list/index.html">MutableList</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../index.html">MockResponse</a><span class="token operator">&gt;</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="656367202%2FProperties%2F21570178" anchor-label="inTunnel" id="656367202%2FProperties%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="in-tunnel.html"><span>in</span><wbr><span><span>Tunnel</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="656367202%2FProperties%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">var </span><a href="in-tunnel.html">inTunnel</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1195346685%2FProperties%2F21570178" anchor-label="pushPromises" id="1195346685%2FProperties%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="push-promises.html"><span>push</span><wbr><span><span>Promises</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1195346685%2FProperties%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">val </span><a href="push-promises.html">pushPromises</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-list/index.html">MutableList</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../-push-promise/index.html">PushPromise</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">The streams the server will push with this response.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1790262036%2FProperties%2F21570178" anchor-label="settings" id="-1790262036%2FProperties%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="settings.html"><span><span>settings</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1790262036%2FProperties%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">val </span><a href="settings.html">settings</a><span class="token operator">: </span><span data-unresolved-link="okhttp3.internal.http2/Settings///PointingToDeclaration/">Settings</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1694090294%2FProperties%2F21570178" anchor-label="socketPolicy" id="-1694090294%2FProperties%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="socket-policy.html"><span>socket</span><wbr><span><span>Policy</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1694090294%2FProperties%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">var </span><a href="socket-policy.html">socketPolicy</a><span class="token operator">: </span><a href="../../-socket-policy/index.html">SocketPolicy</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="986225789%2FProperties%2F21570178" anchor-label="status" id="986225789%2FProperties%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="status.html"><span><span>status</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="986225789%2FProperties%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">var </span><a href="status.html">status</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1314238113%2FProperties%2F21570178" anchor-label="streamHandler" id="1314238113%2FProperties%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="stream-handler.html"><span>stream</span><wbr><span><span>Handler</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1314238113%2FProperties%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">var </span><a href="stream-handler.html">streamHandler</a><span class="token operator">: </span><a href="../../-stream-handler/index.html">StreamHandler</a><span class="token operator">?</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="857350130%2FProperties%2F21570178" anchor-label="throttleBytesPerPeriod" id="857350130%2FProperties%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="throttle-bytes-per-period.html"><span>throttle</span><wbr><span>Bytes</span><wbr><span>Per</span><wbr><span><span>Period</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="857350130%2FProperties%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">var </span><a href="throttle-bytes-per-period.html">throttleBytesPerPeriod</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="959378096%2FProperties%2F21570178" anchor-label="webSocketListener" id="959378096%2FProperties%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="web-socket-listener.html"><span>web</span><wbr><span>Socket</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="959378096%2FProperties%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">var </span><a href="web-socket-listener.html">webSocketListener</a><span class="token operator">: </span><a href="../../../../okhttp/okhttp3/-web-socket-listener/index.html">WebSocketListener</a><span class="token operator">?</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="FUNCTION">
+        <h2 class="">Functions</h2>
+        <div class="table"><a data-name="1209955224%2FFunctions%2F21570178" anchor-label="add100Continue" id="1209955224%2FFunctions%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="add100-continue.html"><span><span>add100Continue</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1209955224%2FFunctions%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="add100-continue.html"><span class="token function">add100Continue</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">MockResponse.Builder</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1933477146%2FFunctions%2F21570178" anchor-label="addHeader" id="1933477146%2FFunctions%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="add-header.html"><span>add</span><wbr><span><span>Header</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1933477146%2FFunctions%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="add-header.html"><span class="token function">addHeader</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">header<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">MockResponse.Builder</a></div><div class="brief "><p class="paragraph">Adds <a href="add-header.html">header</a> as an HTTP header. For well-formed HTTP <a href="add-header.html">header</a> should contain a name followed by a colon and a value.</p></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="add-header.html"><span class="token function">addHeader</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">name<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">value<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">MockResponse.Builder</a></div><div class="brief "><p class="paragraph">Adds a new header with the name and value. This may be used to add multiple headers with the same name.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1577657854%2FFunctions%2F21570178" anchor-label="addHeaderLenient" id="-1577657854%2FFunctions%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="add-header-lenient.html"><span>add</span><wbr><span>Header</span><wbr><span><span>Lenient</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1577657854%2FFunctions%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="add-header-lenient.html"><span class="token function">addHeaderLenient</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">name<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">value<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">MockResponse.Builder</a></div><div class="brief "><p class="paragraph">Adds a new header with the name and value. This may be used to add multiple headers with the same name. Unlike <a href="add-header.html">addHeader</a> this does not validate the name and value.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-838510601%2FFunctions%2F21570178" anchor-label="addInformationalResponse" id="-838510601%2FFunctions%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="add-informational-response.html"><span>add</span><wbr><span>Informational</span><wbr><span><span>Response</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-838510601%2FFunctions%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="add-informational-response.html"><span class="token function">addInformationalResponse</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">response<span class="token operator">: </span><a href="../index.html">MockResponse</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">MockResponse.Builder</a></div><div class="brief "><p class="paragraph">Adds an HTTP 1xx response to precede this response. Note that this response's <a href="headers-delay.html">headers delay</a> applies after this response is transmitted. Set a headers delay on that response to delay its transmission.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-2076502377%2FFunctions%2F21570178" anchor-label="addPush" id="-2076502377%2FFunctions%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="add-push.html"><span>add</span><wbr><span><span>Push</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2076502377%2FFunctions%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="add-push.html"><span class="token function">addPush</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">promise<span class="token operator">: </span><a href="../../-push-promise/index.html">PushPromise</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">MockResponse.Builder</a></div><div class="brief "><p class="paragraph">When <a href="../../-mock-web-server/protocols.html">protocols</a> include <a href="../../../../okhttp/okhttp3/-protocol/index.html">HTTP_2</a>, this attaches a pushed stream to this response.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1924422712%2FFunctions%2F21570178" anchor-label="body" id="-1924422712%2FFunctions%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="body.html"><span><span>body</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1924422712%2FFunctions%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="body.html"><span class="token function">body</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">body<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">MockResponse.Builder</a></div><div class="brief "><p class="paragraph">Sets the response body to the UTF-8 encoded bytes of <a href="body.html">body</a>.</p></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="body.html"><span class="token function">body</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">body<span class="token operator">: </span><a href="../../-mock-response-body/index.html">MockResponseBody</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">MockResponse.Builder</a></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="body.html"><span class="token function">body</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">body<span class="token operator">: </span><a href="https://square.github.io/okio/3.x/okio/okio/okio/-buffer/index.html">Buffer</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">MockResponse.Builder</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-2092910294%2FFunctions%2F21570178" anchor-label="bodyDelay" id="-2092910294%2FFunctions%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="body-delay.html"><span>body</span><wbr><span><span>Delay</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2092910294%2FFunctions%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="body-delay.html"><span class="token function">bodyDelay</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">delay<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a><span class="token punctuation">, </span></span><span class="parameter ">unit<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html">TimeUnit</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">MockResponse.Builder</a></div><div class="brief "><p class="paragraph">Set the delayed time of the response body to <a href="body-delay.html">delay</a>. This applies to the response body only; response headers are not affected.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="2000398941%2FFunctions%2F21570178" anchor-label="build" id="2000398941%2FFunctions%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="build.html"><span><span>build</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2000398941%2FFunctions%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="build.html"><span class="token function">build</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../index.html">MockResponse</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-752848082%2FFunctions%2F21570178" anchor-label="chunkedBody" id="-752848082%2FFunctions%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="chunked-body.html"><span>chunked</span><wbr><span><span>Body</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-752848082%2FFunctions%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="chunked-body.html"><span class="token function">chunkedBody</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">body<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">maxChunkSize<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">MockResponse.Builder</a></div><div class="brief "><p class="paragraph">Sets the response body to the UTF-8 encoded bytes of <a href="chunked-body.html">body</a>, chunked every <a href="chunked-body.html">maxChunkSize</a> bytes.</p></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="chunked-body.html"><span class="token function">chunkedBody</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">body<span class="token operator">: </span><a href="https://square.github.io/okio/3.x/okio/okio/okio/-buffer/index.html">Buffer</a><span class="token punctuation">, </span></span><span class="parameter ">maxChunkSize<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">MockResponse.Builder</a></div><div class="brief "><p class="paragraph">Sets the response body to <a href="chunked-body.html">body</a>, chunked every <a href="chunked-body.html">maxChunkSize</a> bytes.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1517589590%2FFunctions%2F21570178" anchor-label="clearHeaders" id="1517589590%2FFunctions%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="clear-headers.html"><span>clear</span><wbr><span><span>Headers</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1517589590%2FFunctions%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="clear-headers.html"><span class="token function">clearHeaders</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">MockResponse.Builder</a></div><div class="brief "><p class="paragraph">Removes all HTTP headers including any "Content-Length" and "Transfer-encoding" headers that were added by default.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="494595662%2FFunctions%2F21570178" anchor-label="clone" id="494595662%2FFunctions%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="clone.html"><span><span>clone</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="494595662%2FFunctions%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="clone.html"><span class="token function">clone</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">MockResponse.Builder</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1895037568%2FFunctions%2F21570178" anchor-label="code" id="1895037568%2FFunctions%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="code.html"><span><span>code</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1895037568%2FFunctions%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="code.html"><span class="token function">code</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">code<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">MockResponse.Builder</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1338567626%2FFunctions%2F21570178" anchor-label="headers" id="-1338567626%2FFunctions%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="headers.html"><span><span>headers</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1338567626%2FFunctions%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="headers.html"><span class="token function">headers</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">headers<span class="token operator">: </span><a href="../../../../okhttp/okhttp3/-headers/index.html">Headers</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">MockResponse.Builder</a></div><div class="brief "><p class="paragraph">Sets the headers and returns this.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1552239266%2FFunctions%2F21570178" anchor-label="headersDelay" id="1552239266%2FFunctions%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="headers-delay.html"><span>headers</span><wbr><span><span>Delay</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1552239266%2FFunctions%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="headers-delay.html"><span class="token function">headersDelay</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">delay<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a><span class="token punctuation">, </span></span><span class="parameter ">unit<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html">TimeUnit</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">MockResponse.Builder</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="656367202%2FFunctions%2F21570178" anchor-label="inTunnel" id="656367202%2FFunctions%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="in-tunnel.html"><span>in</span><wbr><span><span>Tunnel</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="656367202%2FFunctions%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="in-tunnel.html"><span class="token function">inTunnel</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">MockResponse.Builder</a></div><div class="brief "><p class="paragraph">Configures this response to be served as a response to an HTTP CONNECT request, either for doing HTTPS through an HTTP proxy, or HTTP/2 prior knowledge through an HTTP proxy.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1801876006%2FFunctions%2F21570178" anchor-label="removeHeader" id="1801876006%2FFunctions%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="remove-header.html"><span>remove</span><wbr><span><span>Header</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1801876006%2FFunctions%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="remove-header.html"><span class="token function">removeHeader</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">name<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">MockResponse.Builder</a></div><div class="brief "><p class="paragraph">Removes all headers named <a href="remove-header.html">name</a>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1125144216%2FFunctions%2F21570178" anchor-label="setHeader" id="1125144216%2FFunctions%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="set-header.html"><span>set</span><wbr><span><span>Header</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1125144216%2FFunctions%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="set-header.html"><span class="token function">setHeader</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">name<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">value<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html">Any</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">MockResponse.Builder</a></div><div class="brief "><p class="paragraph">Removes all headers named <a href="set-header.html">name</a>, then adds a new header with the name and value.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1324872701%2FFunctions%2F21570178" anchor-label="settings" id="1324872701%2FFunctions%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="settings.html"><span><span>settings</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1324872701%2FFunctions%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="settings.html"><span class="token function">settings</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">settings<span class="token operator">: </span><span data-unresolved-link="okhttp3.internal.http2/Settings///PointingToDeclaration/">Settings</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">MockResponse.Builder</a></div><div class="brief "><p class="paragraph">When <a href="../../-mock-web-server/protocols.html">protocols</a> include <a href="../../../../okhttp/okhttp3/-protocol/index.html">HTTP_2</a>, this pushes <a href="settings.html">settings</a> before writing the response.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1175908597%2FFunctions%2F21570178" anchor-label="socketPolicy" id="-1175908597%2FFunctions%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="socket-policy.html"><span>socket</span><wbr><span><span>Policy</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1175908597%2FFunctions%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="socket-policy.html"><span class="token function">socketPolicy</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">socketPolicy<span class="token operator">: </span><a href="../../-socket-policy/index.html">SocketPolicy</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">MockResponse.Builder</a></div><div class="brief "><p class="paragraph">Sets the socket policy and returns this.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1854117977%2FFunctions%2F21570178" anchor-label="status" id="-1854117977%2FFunctions%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="status.html"><span><span>status</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1854117977%2FFunctions%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="status.html"><span class="token function">status</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">status<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">MockResponse.Builder</a></div><div class="brief "><p class="paragraph">Sets the status and returns this.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="449633343%2FFunctions%2F21570178" anchor-label="streamHandler" id="449633343%2FFunctions%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="stream-handler.html"><span>stream</span><wbr><span><span>Handler</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="449633343%2FFunctions%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="stream-handler.html"><span class="token function">streamHandler</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">streamHandler<span class="token operator">: </span><a href="../../-stream-handler/index.html">StreamHandler</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">MockResponse.Builder</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1865848331%2FFunctions%2F21570178" anchor-label="throttleBody" id="1865848331%2FFunctions%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="throttle-body.html"><span>throttle</span><wbr><span><span>Body</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1865848331%2FFunctions%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="throttle-body.html"><span class="token function">throttleBody</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">bytesPerPeriod<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a><span class="token punctuation">, </span></span><span class="parameter ">period<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a><span class="token punctuation">, </span></span><span class="parameter ">unit<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html">TimeUnit</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">MockResponse.Builder</a></div><div class="brief "><p class="paragraph">Throttles the request reader and response writer to sleep for the given period after each series of <a href="throttle-body.html">bytesPerPeriod</a> bytes are transferred. Use this to simulate network behavior.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1812545108%2FFunctions%2F21570178" anchor-label="trailers" id="-1812545108%2FFunctions%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="trailers.html"><span><span>trailers</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1812545108%2FFunctions%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="trailers.html"><span class="token function">trailers</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">trailers<span class="token operator">: </span><a href="../../../../okhttp/okhttp3/-headers/index.html">Headers</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">MockResponse.Builder</a></div><div class="brief "><p class="paragraph">Sets the trailers and returns this.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1152901100%2FFunctions%2F21570178" anchor-label="webSocketUpgrade" id="1152901100%2FFunctions%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="web-socket-upgrade.html"><span>web</span><wbr><span>Socket</span><wbr><span><span>Upgrade</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1152901100%2FFunctions%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="web-socket-upgrade.html"><span class="token function">webSocketUpgrade</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="../../../../okhttp/okhttp3/-web-socket-listener/index.html">WebSocketListener</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">MockResponse.Builder</a></div><div class="brief "><p class="paragraph">Attempts to perform a web socket upgrade on the connection. This will overwrite any previously set status, body, or streamHandler.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2023 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

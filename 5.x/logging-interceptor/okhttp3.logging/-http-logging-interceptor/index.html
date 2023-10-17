@@ -1,0 +1,202 @@
+<!doctype html>
+<html class="no-js">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>HttpLoggingInterceptor</title>
+<link href="../../../images/logo-icon.svg" rel="icon" type="image/svg">    <script>var pathToRoot = "../../../";</script>
+    <script>document.documentElement.classList.replace("no-js","js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="https://unpkg.com/kotlin-playground@1/dist/playground.min.js" async></script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../../styles/font-jb-sans-auto.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/clipboard.js" async></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer></script></head>
+<body>
+    <div class="root">
+<nav class="navigation" id="navigation-wrapper">
+    <div class="navigation--inner">
+        <div class="navigation-title">
+            <button class="menu-toggle" id="menu-toggle" type="button">toggle menu</button>
+            <div class="library-name">
+<a class="library-name--link" href="../../../index.html">
+                            okhttp-parent
+                    </a>            </div>
+            <div class="library-version">5.0.0-SNAPSHOT
+            </div>
+        </div>
+        <div class="filter-section" id="filter-section">
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":logging-interceptor:dokkaHtmlPartial/main">jvm</button>
+        </div>
+    </div>
+    <div class="navigation-controls">
+        <button class="navigation-controls--btn navigation-controls--theme" id="theme-toggle-button" type="button">switch theme</button>
+        <div class="navigation-controls--btn navigation-controls--search" id="searchBar" role="button">search in API</div>
+    </div>
+</nav>
+        <div id="container">
+            <div class="sidebar" id="leftColumn">
+                <div class="sidebar--inner" id="sideMenu"></div>
+            </div>
+            <div id="main">
+<div class="main-content" data-page-type="classlike" id="content" pageids="logging-interceptor::okhttp3.logging/HttpLoggingInterceptor///PointingToDeclaration//-84129469">
+  <div class="breadcrumbs"><a href="../../index.html">logging-interceptor</a><span class="delimiter">/</span><a href="../index.html">okhttp3.logging</a><span class="delimiter">/</span><span class="current">HttpLoggingInterceptor</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span>Http</span><wbr><span>Logging</span><wbr><span><span>Interceptor</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":logging-interceptor:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">class </span><a href="index.html">HttpLoggingInterceptor</a>&nbsp;<span><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-overloads/index.html"><span class="token annotation builtin">JvmOverloads</span></a>&nbsp;</span><span class="token keyword">constructor</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">logger<span class="token operator">: </span><a href="-logger/index.html">HttpLoggingInterceptor.Logger</a><span class="token operator"> = </span>Logger.DEFAULT</span></span><span class="token punctuation">)</span> : <a href="../../../okhttp/okhttp3/-interceptor/index.html">Interceptor</a></div><p class="paragraph">An OkHttp interceptor which logs request and response information. Can be applied as an <a href="../../../okhttp/okhttp3/-ok-http-client/interceptors.html">application interceptor</a> or as a <a href="../../../okhttp/okhttp3/-ok-http-client/network-interceptors.html">OkHttpClient.networkInterceptors</a>.</p><p class="paragraph">The format of the logs created by this class should not be considered stable and may change slightly between releases. If you need a stable logging format, use your own interceptor.</p></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="CONSTRUCTOR">
+        <h2 class="">Constructors</h2>
+        <div class="table"><a data-name="-703529245%2FConstructors%2F-84129469" anchor-label="HttpLoggingInterceptor" id="-703529245%2FConstructors%2F-84129469" data-filterable-set=":logging-interceptor:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-togglable="CONSTRUCTOR" data-filterable-current=":logging-interceptor:dokkaHtmlPartial/main" data-filterable-set=":logging-interceptor:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-http-logging-interceptor.html"><span>Http</span><wbr><span>Logging</span><wbr><span><span>Interceptor</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-703529245%2FConstructors%2F-84129469"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":logging-interceptor:dokkaHtmlPartial/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-overloads/index.html"><span class="token annotation builtin">JvmOverloads</span></a></div></div><span class="token keyword">constructor</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">logger<span class="token operator">: </span><a href="-logger/index.html">HttpLoggingInterceptor.Logger</a><span class="token operator"> = </span>Logger.DEFAULT</span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="TYPE">
+        <h2 class="">Types</h2>
+        <div class="table"><a data-name="236637470%2FClasslikes%2F-84129469" anchor-label="Level" id="236637470%2FClasslikes%2F-84129469" data-filterable-set=":logging-interceptor:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":logging-interceptor:dokkaHtmlPartial/main" data-filterable-set=":logging-interceptor:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-level/index.html"><span><span>Level</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="236637470%2FClasslikes%2F-84129469"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":logging-interceptor:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">enum </span><a href="-level/index.html">Level</a> : <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-enum/index.html">Enum</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="-level/index.html">HttpLoggingInterceptor.Level</a><span class="token operator">&gt; </span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1710576944%2FClasslikes%2F-84129469" anchor-label="Logger" id="-1710576944%2FClasslikes%2F-84129469" data-filterable-set=":logging-interceptor:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":logging-interceptor:dokkaHtmlPartial/main" data-filterable-set=":logging-interceptor:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-logger/index.html"><span><span>Logger</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1710576944%2FClasslikes%2F-84129469"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":logging-interceptor:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">fun </span><span class="token keyword">interface </span><a href="-logger/index.html">Logger</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="PROPERTY">
+        <h2 class="">Properties</h2>
+        <div class="table"><a data-name="1753634507%2FProperties%2F-84129469" anchor-label="level" id="1753634507%2FProperties%2F-84129469" data-filterable-set=":logging-interceptor:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":logging-interceptor:dokkaHtmlPartial/main" data-filterable-set=":logging-interceptor:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="level.html"><span><span>level</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1753634507%2FProperties%2F-84129469"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":logging-interceptor:dokkaHtmlPartial/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-volatile/index.html"><span class="token annotation builtin">Volatile</span></a></div><div class="block"><span class="token annotation builtin">@set:</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">"level"</span></span></span><wbr><span class="token punctuation">)</span></div></div><span class="token keyword"></span><span class="token keyword">var </span><a href="level.html">level</a><span class="token operator">: </span><a href="-level/index.html">HttpLoggingInterceptor.Level</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="FUNCTION">
+        <h2 class="">Functions</h2>
+        <div class="table"><a data-name="-1075938404%2FFunctions%2F-84129469" anchor-label="intercept" id="-1075938404%2FFunctions%2F-84129469" data-filterable-set=":logging-interceptor:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":logging-interceptor:dokkaHtmlPartial/main" data-filterable-set=":logging-interceptor:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="intercept.html"><span><span>intercept</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1075938404%2FFunctions%2F-84129469"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":logging-interceptor:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="intercept.html"><span class="token function">intercept</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">chain<span class="token operator">: </span><a href="../../../okhttp/okhttp3/-interceptor/-chain/index.html">Interceptor.Chain</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../../okhttp/okhttp3/-response/index.html">Response</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-597409977%2FFunctions%2F-84129469" anchor-label="redactHeader" id="-597409977%2FFunctions%2F-84129469" data-filterable-set=":logging-interceptor:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":logging-interceptor:dokkaHtmlPartial/main" data-filterable-set=":logging-interceptor:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="redact-header.html"><span>redact</span><wbr><span><span>Header</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-597409977%2FFunctions%2F-84129469"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":logging-interceptor:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="redact-header.html"><span class="token function">redactHeader</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">name<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1429102025%2FFunctions%2F-84129469" anchor-label="setLevel" id="-1429102025%2FFunctions%2F-84129469" data-filterable-set=":logging-interceptor:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":logging-interceptor:dokkaHtmlPartial/main" data-filterable-set=":logging-interceptor:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="set-level.html"><span>set</span><wbr><span><span>Level</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1429102025%2FFunctions%2F-84129469"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":logging-interceptor:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="set-level.html"><span class="token function">setLevel</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">level<span class="token operator">: </span><a href="-level/index.html">HttpLoggingInterceptor.Level</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">HttpLoggingInterceptor</a></div><div class="brief "><p class="paragraph">Sets the level and returns this.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2023 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

@@ -1,0 +1,217 @@
+<!doctype html>
+<html class="no-js">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>HeldCertificate</title>
+<link href="../../../images/logo-icon.svg" rel="icon" type="image/svg">    <script>var pathToRoot = "../../../";</script>
+    <script>document.documentElement.classList.replace("no-js","js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="https://unpkg.com/kotlin-playground@1/dist/playground.min.js" async></script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../../styles/font-jb-sans-auto.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/clipboard.js" async></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer></script></head>
+<body>
+    <div class="root">
+<nav class="navigation" id="navigation-wrapper">
+    <div class="navigation--inner">
+        <div class="navigation-title">
+            <button class="menu-toggle" id="menu-toggle" type="button">toggle menu</button>
+            <div class="library-name">
+<a class="library-name--link" href="../../../index.html">
+                            okhttp-parent
+                    </a>            </div>
+            <div class="library-version">5.0.0-SNAPSHOT
+            </div>
+        </div>
+        <div class="filter-section" id="filter-section">
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":okhttp-tls:dokkaHtmlPartial/main">jvm</button>
+        </div>
+    </div>
+    <div class="navigation-controls">
+        <button class="navigation-controls--btn navigation-controls--theme" id="theme-toggle-button" type="button">switch theme</button>
+        <div class="navigation-controls--btn navigation-controls--search" id="searchBar" role="button">search in API</div>
+    </div>
+</nav>
+        <div id="container">
+            <div class="sidebar" id="leftColumn">
+                <div class="sidebar--inner" id="sideMenu"></div>
+            </div>
+            <div id="main">
+<div class="main-content" data-page-type="classlike" id="content" pageids="okhttp-tls::okhttp3.tls/HeldCertificate///PointingToDeclaration//1280821238">
+  <div class="breadcrumbs"><a href="../../index.html">okhttp-tls</a><span class="delimiter">/</span><a href="../index.html">okhttp3.tls</a><span class="delimiter">/</span><span class="current">HeldCertificate</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span>Held</span><wbr><span><span>Certificate</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp-tls:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">class </span><a href="index.html">HeldCertificate</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>keyPair<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/security/KeyPair.html">KeyPair</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>certificate<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/security/cert/X509Certificate.html">X509Certificate</a></span></span><span class="token punctuation">)</span></div><p class="paragraph">A certificate and its private key. These are some properties of certificates that are used with TLS:</p><ul><li><p class="paragraph"><strong>A common name.</strong> This is a string identifier for the certificate. It usually describes the     purpose of the certificate like "Entrust Root Certification Authority - G2" or     "www.squareup.com".</p></li><li><p class="paragraph"><strong>A set of hostnames.</strong> These are in the certificate's subject alternative name (SAN)     extension. A subject alternative name is either a literal hostname (<code class="lang-kotlin">squareup.com</code>), a literal     IP address (<code class="lang-kotlin">74.122.190.80</code>), or a hostname pattern (<code class="lang-kotlin">*.api.squareup.com</code>).</p></li><li><p class="paragraph"><strong>A validity interval.</strong> A certificate should not be used before its validity interval starts     or after it ends.</p></li><li><p class="paragraph"><strong>A public key.</strong> This cryptographic key is used for asymmetric encryption digital signatures.     Note that the private key is not a part of the certificate!</p></li><li><p class="paragraph"><strong>A signature issued by another certificate's private key.</strong> This mechanism allows a trusted     third-party to endorse a certificate. Third parties should only endorse certificates once     they've confirmed that the owner of the private key is also the owner of the certificate's     other properties.</p></li></ul><p class="paragraph">Certificates are signed by other certificates and a sequence of them is called a certificate chain. The chain terminates in a self-signed "root" certificate. Signing certificates in the middle of the chain are called "intermediates". Organizations that offer certificate signing are called certificate authorities (CAs).</p><p class="paragraph">Browsers and other HTTP clients need a set of trusted root certificates to authenticate their peers. Sets of root certificates are managed by either the HTTP client (like Firefox), or the host platform (like Android). In July 2018 Android had 134 trusted root certificates for its HTTP clients to trust.</p><p class="paragraph">For example, in order to establish a secure connection to <code class="lang-kotlin">https://www.squareup.com/</code>, these three certificates are used.</p><div class="sample-container"><pre><code class="block lang-kotlin" theme="idea">www.squareup.com certificate:<br><br>Common Name: www.squareup.com<br>Subject Alternative Names: www.squareup.com, squareup.com, account.squareup.com...<br>Validity: 2018-07-03T20:18:17Z – 2019-08-01T20:48:15Z<br>Public Key: d107beecc17325f55da976bcbab207ba4df68bd3f8fce7c3b5850311128264fd53e1baa342f58d93...<br>Signature: 1fb0e66fac05322721fe3a3917f7c98dee1729af39c99eab415f22d8347b508acdf0bab91781c3720...<br><br>signed by intermediate certificate:<br><br>Common Name: Entrust Certification Authority - L1M<br>Subject Alternative Names: none<br>Validity: 2014-12-15T15:25:03Z – 2030-10-15T15:55:03Z<br>Public Key: d081c13923c2b1d1ecf757dd55243691202248f7fcca520ab0ab3f33b5b08407f6df4e7ab0fb9822...<br>Signature: b487c784221a29c0a478ecf54f1bb484976f77eed4cf59afa843962f1d58dea6f3155b2ed9439c4c4...<br><br>signed by root certificate:<br><br>Common Name: Entrust Root Certification Authority - G2<br>Subject Alternative Names: none<br>Validity: 2009-07-07T17:25:54Z – 2030-12-07T17:55:54Z<br>Public Key: ba84b672db9e0c6be299e93001a776ea32b895411ac9da614e5872cffef68279bf7361060aa527d8...<br>Self-signed Signature: 799f1d96c6b6793f228d87d3870304606a6b9a2e59897311ac43d1f513ff8d392bc0f...</code></pre><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">In this example the HTTP client already knows and trusts the last certificate, "Entrust Root Certification Authority - G2". That certificate is used to verify the signature of the intermediate certificate, "Entrust Certification Authority - L1M". The intermediate certificate is used to verify the signature of the "www.squareup.com" certificate.</p><p class="paragraph">This roles are reversed for client authentication. In that case the client has a private key and a chain of certificates. The server uses a set of trusted root certificates to authenticate the client. Subject alternative names are not used for client authentication.</p></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="CONSTRUCTOR">
+        <h2 class="">Constructors</h2>
+        <div class="table"><a data-name="514110854%2FConstructors%2F1280821238" anchor-label="HeldCertificate" id="514110854%2FConstructors%2F1280821238" data-filterable-set=":okhttp-tls:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-togglable="CONSTRUCTOR" data-filterable-current=":okhttp-tls:dokkaHtmlPartial/main" data-filterable-set=":okhttp-tls:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-held-certificate.html"><span>Held</span><wbr><span><span>Certificate</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="514110854%2FConstructors%2F1280821238"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp-tls:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">constructor</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">keyPair<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/security/KeyPair.html">KeyPair</a><span class="token punctuation">, </span></span><span class="parameter ">certificate<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/security/cert/X509Certificate.html">X509Certificate</a></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="TYPE">
+        <h2 class="">Types</h2>
+        <div class="table"><a data-name="1446558549%2FClasslikes%2F1280821238" anchor-label="Builder" id="1446558549%2FClasslikes%2F1280821238" data-filterable-set=":okhttp-tls:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp-tls:dokkaHtmlPartial/main" data-filterable-set=":okhttp-tls:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-builder/index.html"><span><span>Builder</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1446558549%2FClasslikes%2F1280821238"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp-tls:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">class </span><a href="-builder/index.html">Builder</a></div><div class="brief "><p class="paragraph">Build a held certificate with reasonable defaults.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-626967228%2FClasslikes%2F1280821238" anchor-label="Companion" id="-626967228%2FClasslikes%2F1280821238" data-filterable-set=":okhttp-tls:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp-tls:dokkaHtmlPartial/main" data-filterable-set=":okhttp-tls:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-companion/index.html"><span><span>Companion</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-626967228%2FClasslikes%2F1280821238"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp-tls:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">object </span><a href="-companion/index.html">Companion</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="PROPERTY">
+        <h2 class="">Properties</h2>
+        <div class="table"><a data-name="-1679867322%2FProperties%2F1280821238" anchor-label="certificate" id="-1679867322%2FProperties%2F1280821238" data-filterable-set=":okhttp-tls:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp-tls:dokkaHtmlPartial/main" data-filterable-set=":okhttp-tls:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="certificate.html"><span><span>certificate</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1679867322%2FProperties%2F1280821238"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp-tls:dokkaHtmlPartial/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@get:</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">"certificate"</span></span></span><wbr><span class="token punctuation">)</span></div></div><span class="token keyword"></span><span class="token keyword">val </span><a href="certificate.html">certificate</a><span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/security/cert/X509Certificate.html">X509Certificate</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="503997508%2FProperties%2F1280821238" anchor-label="keyPair" id="503997508%2FProperties%2F1280821238" data-filterable-set=":okhttp-tls:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp-tls:dokkaHtmlPartial/main" data-filterable-set=":okhttp-tls:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="key-pair.html"><span>key</span><wbr><span><span>Pair</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="503997508%2FProperties%2F1280821238"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp-tls:dokkaHtmlPartial/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@get:</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">"keyPair"</span></span></span><wbr><span class="token punctuation">)</span></div></div><span class="token keyword"></span><span class="token keyword">val </span><a href="key-pair.html">keyPair</a><span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/security/KeyPair.html">KeyPair</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="FUNCTION">
+        <h2 class="">Functions</h2>
+        <div class="table"><a data-name="106420892%2FFunctions%2F1280821238" anchor-label="certificatePem" id="106420892%2FFunctions%2F1280821238" data-filterable-set=":okhttp-tls:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp-tls:dokkaHtmlPartial/main" data-filterable-set=":okhttp-tls:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="certificate-pem.html"><span>certificate</span><wbr><span><span>Pem</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="106420892%2FFunctions%2F1280821238"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp-tls:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="certificate-pem.html"><span class="token function">certificatePem</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></div><div class="brief "><p class="paragraph">Returns the certificate encoded in <a href="https://tools.ietf.org/html/rfc7468">PEM format</a>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1537873937%2FFunctions%2F1280821238" anchor-label="privateKeyPkcs1Pem" id="-1537873937%2FFunctions%2F1280821238" data-filterable-set=":okhttp-tls:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp-tls:dokkaHtmlPartial/main" data-filterable-set=":okhttp-tls:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="private-key-pkcs1-pem.html"><span>private</span><wbr><span>Key</span><wbr><span><span>Pkcs1Pem</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1537873937%2FFunctions%2F1280821238"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp-tls:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="private-key-pkcs1-pem.html"><span class="token function">privateKeyPkcs1Pem</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></div><div class="brief "><p class="paragraph">Returns the RSA private key encoded in <a href="https://tools.ietf.org/html/rfc8017">PKCS #1</a> <a href="https://tools.ietf.org/html/rfc7468">PEM format</a>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-981129354%2FFunctions%2F1280821238" anchor-label="privateKeyPkcs8Pem" id="-981129354%2FFunctions%2F1280821238" data-filterable-set=":okhttp-tls:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":okhttp-tls:dokkaHtmlPartial/main" data-filterable-set=":okhttp-tls:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="private-key-pkcs8-pem.html"><span>private</span><wbr><span>Key</span><wbr><span><span>Pkcs8Pem</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-981129354%2FFunctions%2F1280821238"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp-tls:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="private-key-pkcs8-pem.html"><span class="token function">privateKeyPkcs8Pem</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></div><div class="brief "><p class="paragraph">Returns the private key encoded in <a href="https://tools.ietf.org/html/rfc5208">PKCS #8</a> <a href="https://tools.ietf.org/html/rfc7468">PEM format</a>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2023 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
