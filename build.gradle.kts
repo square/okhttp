@@ -225,11 +225,7 @@ subprojects {
       skipDeprecated.set(true)
       jdkVersion.set(8)
       perPackageOption {
-        matchingRegex.set("okhttp3\\.internal.*")
-        suppress.set(true)
-      }
-      perPackageOption {
-        matchingRegex.set("mockwebserver3\\.internal.*")
+        matchingRegex.set(".*\\.internal.*")
         suppress.set(true)
       }
       if (project.file("Module.md").exists()) {
