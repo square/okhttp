@@ -44,22 +44,30 @@ include(":samples:static-server")
 include(":samples:tlssurvey")
 include(":samples:unixdomainsockets")
 
-if (isIdea20232OrHigher()) {
+if (!isKnownBrokenIntelliJ()) {
   include(":okhttp-android")
   include(":android-test")
 }
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
-fun isIdea20232OrHigher(): Boolean {
-  // No problem outside Idea
-  val ideaVersionString = System.getProperty("idea.version") ?: return true
+/**
+ * Avoid a crash in IntelliJ triggered by Android submodules.
+ *
+ * ```
+ * java.lang.AssertionError: Can't find built-in class kotlin.Cloneable
+ *   at org.jetbrains.kotlin.builtins.KotlinBuiltIns.getBuiltInClassByFqName(KotlinBuiltIns.java:217)
+ *   at org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMapper.mapJavaToKotlin(JavaToKotlinClassMapper.kt:41)
+ * 	...
+ * ```
+ */
+fun isKnownBrokenIntelliJ(): Boolean {
+  val ideaVersionString = System.getProperty("idea.version") ?: return false
 
   return try {
     val (major, minor, _) = ideaVersionString.split(".", limit = 3)
-    KotlinVersion(major.toInt(), minor.toInt()) >= KotlinVersion(2023, 2)
+    KotlinVersion(major.toInt(), minor.toInt()) < KotlinVersion(2023, 2)
   } catch (e: Exception) {
-    // Unknown version, presumably compatible
-    true
+    false // Unknown version, presumably compatible.
   }
 }
