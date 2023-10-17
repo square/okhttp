@@ -88,7 +88,7 @@ ext.publishedArtifactId = { project ->
 allprojects {
   group = 'com.squareup.okhttp3'
   project.ext.artifactId = rootProject.ext.publishedArtifactId(project)
-  version = '4.12.0-SNAPSHOT'
+  version = '4.12.0'
 
   repositories {
     mavenCentral()
