@@ -2812,6 +2812,43 @@ public final class CallTest {
     assertThat(recordedRequest.getBody().readUtf8()).isEqualTo("abc");
   }
 
+  @Test
+  public void serverRespondsWithEarlyHintsHttp2() throws Exception {
+    enableProtocol(Protocol.HTTP_2);
+    server.enqueue(
+            new MockResponse()
+                    .addInformationalResponse(
+                            new MockResponse().setResponseCode(103).addHeader("Link", "</style.css>; rel=preload; as=style")
+                    )
+    );
+    Request request = new Request.Builder()
+            .url(server.url("/"))
+            .post(RequestBody.create("abc", MediaType.get("text/plain")))
+            .build();
+    executeSynchronously(request)
+            .assertFailure(SocketTimeoutException.class);
+  }
+
+  @Test
+  public void serverRespondsWithEarlyHintsHttp1() throws Exception {
+    server.enqueue(
+            new MockResponse()
+                    .addInformationalResponse(
+                            new MockResponse().setResponseCode(103).addHeader("Link", "</style.css>; rel=preload; as=style")
+                    )
+    );
+    Request request = new Request.Builder()
+            .url(server.url("/"))
+            .post(RequestBody.create("abc", MediaType.get("text/plain")))
+            .build();
+    executeSynchronously(request)
+            .assertSuccessful()
+            .assertCode(200);
+    RecordedRequest recordedRequest = server.takeRequest();
+    assertThat(recordedRequest.getBody().readUtf8()).isEqualTo("abc");
+    assertThat(recordedRequest.getHeader("Link")).isNull();
+  }
+
   @Test public void serverRespondsWithUnsolicited100Continue_HTTP2() throws Exception {
     enableProtocol(Protocol.HTTP_2);
     serverRespondsWithUnsolicited100Continue();

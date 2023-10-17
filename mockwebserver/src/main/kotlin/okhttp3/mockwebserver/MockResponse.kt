@@ -29,6 +29,8 @@ class MockResponse : Cloneable {
   @set:JvmName("status")
   var status: String = ""
 
+  internal var informationalResponses: List<MockResponse> = listOf()
+
   private var headersBuilder = Headers.Builder()
   private var trailersBuilder = Headers.Builder()
 
@@ -346,6 +348,10 @@ class MockResponse : Cloneable {
   }
 
   override fun toString() = status
+
+  fun addInformationalResponse(informationalResponse: MockResponse): MockResponse = apply {
+    informationalResponses += informationalResponse
+  }
 
   companion object {
     private const val CHUNKED_BODY_HEADER = "Transfer-encoding: chunked"
