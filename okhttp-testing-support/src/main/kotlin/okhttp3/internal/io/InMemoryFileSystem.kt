@@ -35,6 +35,9 @@ class InMemoryFileSystem : FileSystem, TestRule {
   private val openSources = IdentityHashMap<Source, File>()
   private val openSinks = IdentityHashMap<Sink, File>()
 
+  val allPaths: Set<File>
+    get() = files.keys.toSet()
+
   override fun apply(base: Statement, description: Description): Statement {
     return object : Statement() {
       override fun evaluate() {
@@ -119,7 +122,4 @@ class InMemoryFileSystem : FileSystem, TestRule {
   }
 
   override fun toString() = "InMemoryFileSystem"
-  fun allPaths(): MutableSet<File> {
-    return files.keys
-  }
 }

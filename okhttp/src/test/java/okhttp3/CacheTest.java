@@ -317,7 +317,7 @@ public final class CacheTest {
     Response response1 = client.newCall(request).execute();
     assertThat(response1.body().string()).isEqualTo("ABC");
 
-    File cacheEntry = fileSystem.allPaths().stream()
+    File cacheEntry = fileSystem.getAllPaths().stream()
             .filter((e) -> e.getName().endsWith(".0"))
             .findFirst()
             .orElseThrow(Exception::new);
