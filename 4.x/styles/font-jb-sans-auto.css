@@ -1,0 +1,32 @@
+/* Light weight */
+@font-face {
+    font-family: 'JetBrains Sans';
+    src: url('https://resources.jetbrains.com/storage/jetbrains-sans/JetBrainsSans-Light.woff2') format('woff2'), url('https://resources.jetbrains.com/storage/jetbrains-sans/JetBrainsSans-Light.woff') format('woff');
+    font-weight: 300;
+    font-style: normal;
+}
+/* Regular weight */
+@font-face {
+    font-family: 'JetBrains Sans';
+    src: url('https://resources.jetbrains.com/storage/jetbrains-sans/JetBrainsSans-Regular.woff2') format('woff2'), url('https://resources.jetbrains.com/storage/jetbrains-sans/JetBrainsSans-Regular.woff') format('woff');
+    font-weight: 400;
+    font-style: normal;
+}
+/* SemiBold weight */
+@font-face {
+    font-family: 'JetBrains Sans';
+    src: url('https://resources.jetbrains.com/storage/jetbrains-sans/JetBrainsSans-SemiBold.woff2') format('woff2'), url('https://resources.jetbrains.com/storage/jetbrains-sans/JetBrainsSans-SemiBold.woff') format('woff');
+    font-weight: 600;
+    font-style: normal;
+}
+
+@supports (font-variation-settings: normal) {
+    @font-face {
+        font-family: 'JetBrains Sans';
+        src: url('https://resources.jetbrains.com/storage/jetbrains-sans/JetBrainsSans.woff2') format('woff2 supports variations'),
+        url('https://resources.jetbrains.com/storage/jetbrains-sans/JetBrainsSans.woff2') format('woff2-variations'),
+        url('https://resources.jetbrains.com/storage/jetbrains-sans/JetBrainsSans.woff') format('woff-variations');
+        font-weight: 100 900;
+        font-style: normal;
+    }
+}

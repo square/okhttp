@@ -1,0 +1,310 @@
+<!doctype html>
+<html class="no-js">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>SocketPolicy</title>
+<link href="../../../images/logo-icon.svg" rel="icon" type="image/svg">    <script>var pathToRoot = "../../../";</script>
+    <script>document.documentElement.classList.replace("no-js","js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="https://unpkg.com/kotlin-playground@1/dist/playground.min.js" async></script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../../styles/font-jb-sans-auto.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/clipboard.js" async></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer></script></head>
+<body>
+    <div class="root">
+<nav class="navigation" id="navigation-wrapper">
+    <div class="navigation--inner">
+        <div class="navigation-title">
+            <button class="menu-toggle" id="menu-toggle" type="button">toggle menu</button>
+            <div class="library-name">
+<a class="library-name--link" href="../../../index.html">
+                            okhttp-parent
+                    </a>            </div>
+            <div class="library-version">5.0.0-SNAPSHOT
+            </div>
+        </div>
+        <div class="filter-section" id="filter-section">
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":mockwebserver3:dokkaHtmlPartial/main">jvm</button>
+        </div>
+    </div>
+    <div class="navigation-controls">
+        <button class="navigation-controls--btn navigation-controls--theme" id="theme-toggle-button" type="button">switch theme</button>
+        <div class="navigation-controls--btn navigation-controls--search" id="searchBar" role="button">search in API</div>
+    </div>
+</nav>
+        <div id="container">
+            <div class="sidebar" id="leftColumn">
+                <div class="sidebar--inner" id="sideMenu"></div>
+            </div>
+            <div id="main">
+<div class="main-content" data-page-type="classlike" id="content" pageids="mockwebserver3::mockwebserver3/SocketPolicy///PointingToDeclaration//21570178">
+  <div class="breadcrumbs"><a href="../../index.html">mockwebserver3</a><span class="delimiter">/</span><a href="../index.html">mockwebserver3</a><span class="delimiter">/</span><span class="current">SocketPolicy</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span>Socket</span><wbr><span><span>Policy</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">interface </span><a href="index.html">SocketPolicy</a></div><p class="paragraph">What should be done with the incoming socket.</p><p class="paragraph">Be careful when using values like <a href="-disconnect-at-end/index.html">DisconnectAtEnd</a>, <a href="-shutdown-input-at-end/index.html">ShutdownInputAtEnd</a> and <a href="-shutdown-output-at-end/index.html">ShutdownOutputAtEnd</a> that close a socket after a response, and where there are follow-up requests. The client is unblocked and free to continue as soon as it has received the entire response body. If and when the client makes a subsequent request using a pooled socket the server may not have had time to close the socket. The socket will be closed at an indeterminate point before or during the second request. It may be closed after client has started sending the request body. If a request body is not retryable then the client may fail the request, making client behavior non-deterministic. Add delays in the client to improve the chances that the server has closed the socket before follow up requests are made.</p><h4 class="">Inheritors</h4><div class="table"><div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-shutdown-server-after-response/index.html">ShutdownServerAfterResponse</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-keep-open/index.html">KeepOpen</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-disconnect-at-end/index.html">DisconnectAtEnd</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-disconnect-at-start/index.html">DisconnectAtStart</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-disconnect-after-request/index.html">DisconnectAfterRequest</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-half-close-after-request/index.html">HalfCloseAfterRequest</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-disconnect-during-request-body/index.html">DisconnectDuringRequestBody</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-disconnect-during-response-body/index.html">DisconnectDuringResponseBody</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-do-not-read-request-body/index.html">DoNotReadRequestBody</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-fail-handshake/index.html">FailHandshake</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-shutdown-input-at-end/index.html">ShutdownInputAtEnd</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-shutdown-output-at-end/index.html">ShutdownOutputAtEnd</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-stall-socket-at-start/index.html">StallSocketAtStart</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-no-response/index.html">NoResponse</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="-reset-stream-at-start/index.html">ResetStreamAtStart</a></div></span></div><div></div></div></div></div></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="TYPE">
+        <h2 class="">Types</h2>
+        <div class="table"><a data-name="1720586434%2FClasslikes%2F21570178" anchor-label="DisconnectAfterRequest" id="1720586434%2FClasslikes%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-disconnect-after-request/index.html"><span>Disconnect</span><wbr><span>After</span><wbr><span><span>Request</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1720586434%2FClasslikes%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">object </span><a href="-disconnect-after-request/index.html">DisconnectAfterRequest</a> : <a href="index.html">SocketPolicy</a></div><div class="brief "><p class="paragraph">Close connection after reading the request but before writing the response. Use this to simulate late connection pool failures.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1695920069%2FClasslikes%2F21570178" anchor-label="DisconnectAtEnd" id="1695920069%2FClasslikes%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-disconnect-at-end/index.html"><span>Disconnect</span><wbr><span>At</span><wbr><span><span>End</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1695920069%2FClasslikes%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">object </span><a href="-disconnect-at-end/index.html">DisconnectAtEnd</a> : <a href="index.html">SocketPolicy</a></div><div class="brief "><p class="paragraph">Close the socket after the response. This is the default HTTP/1.0 behavior. For HTTP/2 connections, this sends a <a href="https://tools.ietf.org/html/rfc7540#section-6.8">GOAWAYframe</a> immediately after the response and will close the connection when the client's socket is exhausted.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-753507746%2FClasslikes%2F21570178" anchor-label="DisconnectAtStart" id="-753507746%2FClasslikes%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-disconnect-at-start/index.html"><span>Disconnect</span><wbr><span>At</span><wbr><span><span>Start</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-753507746%2FClasslikes%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">object </span><a href="-disconnect-at-start/index.html">DisconnectAtStart</a> : <a href="index.html">SocketPolicy</a></div><div class="brief "><p class="paragraph">Request immediate close of connection without even reading the request. Use to simulate buggy SSL servers closing connections in response to unrecognized TLS extensions.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="977241757%2FClasslikes%2F21570178" anchor-label="DisconnectDuringRequestBody" id="977241757%2FClasslikes%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-disconnect-during-request-body/index.html"><span>Disconnect</span><wbr><span>During</span><wbr><span>Request</span><wbr><span><span>Body</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="977241757%2FClasslikes%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">object </span><a href="-disconnect-during-request-body/index.html">DisconnectDuringRequestBody</a> : <a href="index.html">SocketPolicy</a></div><div class="brief "><p class="paragraph">Close connection after reading half of the request body (if present).</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1451144593%2FClasslikes%2F21570178" anchor-label="DisconnectDuringResponseBody" id="1451144593%2FClasslikes%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-disconnect-during-response-body/index.html"><span>Disconnect</span><wbr><span>During</span><wbr><span>Response</span><wbr><span><span>Body</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1451144593%2FClasslikes%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">object </span><a href="-disconnect-during-response-body/index.html">DisconnectDuringResponseBody</a> : <a href="index.html">SocketPolicy</a></div><div class="brief "><p class="paragraph">Close connection after writing half of the response body (if present).</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1804231906%2FClasslikes%2F21570178" anchor-label="DoNotReadRequestBody" id="-1804231906%2FClasslikes%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-do-not-read-request-body/index.html"><span>Do</span><wbr><span>Not</span><wbr><span>Read</span><wbr><span>Request</span><wbr><span><span>Body</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1804231906%2FClasslikes%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">class </span><a href="-do-not-read-request-body/index.html">DoNotReadRequestBody</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>http2ErrorCode<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><span class="token operator"> = </span><span class="token constant">0</span></span></span><span class="token punctuation">)</span> : <a href="index.html">SocketPolicy</a></div><div class="brief "><p class="paragraph">Process the response without even attempting to reading the request body. For HTTP/2 this will send <a href="-do-not-read-request-body/http2-error-code.html">http2ErrorCode</a> after the response body or trailers. For HTTP/1 this will close the socket after the response body or trailers.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="2021707352%2FClasslikes%2F21570178" anchor-label="FailHandshake" id="2021707352%2FClasslikes%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-fail-handshake/index.html"><span>Fail</span><wbr><span><span>Handshake</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2021707352%2FClasslikes%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">object </span><a href="-fail-handshake/index.html">FailHandshake</a> : <a href="index.html">SocketPolicy</a></div><div class="brief "><p class="paragraph">Don't trust the client during the SSL handshake.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-831571335%2FClasslikes%2F21570178" anchor-label="HalfCloseAfterRequest" id="-831571335%2FClasslikes%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-half-close-after-request/index.html"><span>Half</span><wbr><span>Close</span><wbr><span>After</span><wbr><span><span>Request</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-831571335%2FClasslikes%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">object </span><a href="-half-close-after-request/index.html">HalfCloseAfterRequest</a> : <a href="index.html">SocketPolicy</a></div><div class="brief "><p class="paragraph">Half close connection (InputStream for client) after reading the request but before writing the response. Use this to simulate late connection pool failures.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1133584674%2FClasslikes%2F21570178" anchor-label="KeepOpen" id="1133584674%2FClasslikes%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-keep-open/index.html"><span>Keep</span><wbr><span><span>Open</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1133584674%2FClasslikes%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">object </span><a href="-keep-open/index.html">KeepOpen</a> : <a href="index.html">SocketPolicy</a></div><div class="brief "><p class="paragraph">Keep the socket open after the response. This is the default HTTP/1.1 behavior.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-473970993%2FClasslikes%2F21570178" anchor-label="NoResponse" id="-473970993%2FClasslikes%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-no-response/index.html"><span>No</span><wbr><span><span>Response</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-473970993%2FClasslikes%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">object </span><a href="-no-response/index.html">NoResponse</a> : <a href="index.html">SocketPolicy</a></div><div class="brief "><p class="paragraph">Read the request but don't respond to it. Just keep the socket open. For testing read response header timeout issue.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1386264975%2FClasslikes%2F21570178" anchor-label="ResetStreamAtStart" id="-1386264975%2FClasslikes%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-reset-stream-at-start/index.html"><span>Reset</span><wbr><span>Stream</span><wbr><span>At</span><wbr><span><span>Start</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1386264975%2FClasslikes%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">class </span><a href="-reset-stream-at-start/index.html">ResetStreamAtStart</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>http2ErrorCode<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><span class="token operator"> = </span><span class="token constant">0</span></span></span><span class="token punctuation">)</span> : <a href="index.html">SocketPolicy</a></div><div class="brief "><p class="paragraph">Fail HTTP/2 requests without processing them by sending <a href="-reset-stream-at-start/http2-error-code.html">http2ErrorCode</a>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-198712515%2FClasslikes%2F21570178" anchor-label="ShutdownInputAtEnd" id="-198712515%2FClasslikes%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-shutdown-input-at-end/index.html"><span>Shutdown</span><wbr><span>Input</span><wbr><span>At</span><wbr><span><span>End</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-198712515%2FClasslikes%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">object </span><a href="-shutdown-input-at-end/index.html">ShutdownInputAtEnd</a> : <a href="index.html">SocketPolicy</a></div><div class="brief "><p class="paragraph">Shutdown the socket input after sending the response. For testing bad behavior.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1249458400%2FClasslikes%2F21570178" anchor-label="ShutdownOutputAtEnd" id="1249458400%2FClasslikes%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-shutdown-output-at-end/index.html"><span>Shutdown</span><wbr><span>Output</span><wbr><span>At</span><wbr><span><span>End</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1249458400%2FClasslikes%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">object </span><a href="-shutdown-output-at-end/index.html">ShutdownOutputAtEnd</a> : <a href="index.html">SocketPolicy</a></div><div class="brief "><p class="paragraph">Shutdown the socket output after sending the response. For testing bad behavior.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="676936109%2FClasslikes%2F21570178" anchor-label="ShutdownServerAfterResponse" id="676936109%2FClasslikes%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-shutdown-server-after-response/index.html"><span>Shutdown</span><wbr><span>Server</span><wbr><span>After</span><wbr><span><span>Response</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="676936109%2FClasslikes%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">object </span><a href="-shutdown-server-after-response/index.html">ShutdownServerAfterResponse</a> : <a href="index.html">SocketPolicy</a></div><div class="brief "><p class="paragraph">Shutdown <a href="../-mock-web-server/index.html">MockWebServer</a> after writing response.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-728503307%2FClasslikes%2F21570178" anchor-label="StallSocketAtStart" id="-728503307%2FClasslikes%2F21570178" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":mockwebserver3:dokkaHtmlPartial/main" data-filterable-set=":mockwebserver3:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-stall-socket-at-start/index.html"><span>Stall</span><wbr><span>Socket</span><wbr><span>At</span><wbr><span><span>Start</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-728503307%2FClasslikes%2F21570178"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":mockwebserver3:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">object </span><a href="-stall-socket-at-start/index.html">StallSocketAtStart</a> : <a href="index.html">SocketPolicy</a></div><div class="brief "><p class="paragraph">After accepting the connection and doing TLS (if configured) don't do HTTP/1.1 or HTTP/2 framing. Ignore the socket completely until the server is shut down.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2023 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

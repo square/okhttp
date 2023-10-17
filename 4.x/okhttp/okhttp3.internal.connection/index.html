@@ -1,0 +1,309 @@
+<!doctype html>
+<html class="no-js">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>okhttp3.internal.connection</title>
+<link href="../../images/logo-icon.svg" rel="icon" type="image/svg">    <script>var pathToRoot = "../../";</script>
+    <script>document.documentElement.classList.replace("no-js","js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="https://unpkg.com/kotlin-playground@1/dist/playground.min.js" async></script>
+<script type="text/javascript" src="../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../styles/style.css" rel="Stylesheet">
+<link href="../../styles/main.css" rel="Stylesheet">
+<link href="../../styles/prism.css" rel="Stylesheet">
+<link href="../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../styles/font-jb-sans-auto.css" rel="Stylesheet">
+<script type="text/javascript" src="../../scripts/clipboard.js" async></script>
+<script type="text/javascript" src="../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../scripts/symbol-parameters-wrapper_deferred.js" defer></script></head>
+<body>
+    <div class="root">
+<nav class="navigation" id="navigation-wrapper">
+    <div class="navigation--inner">
+        <div class="navigation-title">
+            <button class="menu-toggle" id="menu-toggle" type="button">toggle menu</button>
+            <div class="library-name">
+<a class="library-name--link" href="../../index.html">
+                            okhttp-parent
+                    </a>            </div>
+            <div class="library-version">5.0.0-SNAPSHOT
+            </div>
+        </div>
+        <div class="filter-section" id="filter-section">
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button>
+        </div>
+    </div>
+    <div class="navigation-controls">
+        <button class="navigation-controls--btn navigation-controls--theme" id="theme-toggle-button" type="button">switch theme</button>
+        <div class="navigation-controls--btn navigation-controls--search" id="searchBar" role="button">search in API</div>
+    </div>
+</nav>
+        <div id="container">
+            <div class="sidebar" id="leftColumn">
+                <div class="sidebar--inner" id="sideMenu"></div>
+            </div>
+            <div id="main">
+<div class="main-content" data-page-type="package" id="content" pageids="okhttp::okhttp3.internal.connection////PointingToDeclaration//-388523033">
+  <div class="breadcrumbs"><a href="../index.html">okhttp</a><span class="delimiter">/</span><span class="current">okhttp3.internal.connection</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span><span>Package-level</span></span> <span><span>declarations</span></span></h1>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="TYPE">Types</button><button class="section-tab" data-togglable="FUNCTION,EXTENSION_FUNCTION">Functions</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="TYPE">
+        <h2 class="">Types</h2>
+        <div class="table"><a data-name="-227772777%2FClasslikes%2F-388523033" anchor-label="ConnectInterceptor" id="-227772777%2FClasslikes%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-connect-interceptor/index.html"><span>Connect</span><wbr><span><span>Interceptor</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-227772777%2FClasslikes%2F-388523033"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">object </span><a href="-connect-interceptor/index.html">ConnectInterceptor</a> : <a href="../okhttp3/-interceptor/index.html">Interceptor</a></div><div class="brief "><p class="paragraph">Opens a connection to the target server and proceeds to the next interceptor. The network might be used for the returned response, or to validate a cached response with a conditional GET.</p></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1082505885%2FClasslikes%2F-388523033" anchor-label="ConnectPlan" id="1082505885%2FClasslikes%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-connect-plan/index.html"><span>Connect</span><wbr><span><span>Plan</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1082505885%2FClasslikes%2F-388523033"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">class </span><a href="-connect-plan/index.html">ConnectPlan</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">client<span class="token operator">: </span><a href="../okhttp3/-ok-http-client/index.html">OkHttpClient</a><span class="token punctuation">, </span></span><span class="parameter ">call<span class="token operator">: </span><a href="-real-call/index.html">RealCall</a><span class="token punctuation">, </span></span><span class="parameter ">chain<span class="token operator">: </span><a href="../okhttp3/-interceptor/-chain/index.html">Interceptor.Chain</a><span class="token punctuation">, </span></span><span class="parameter ">routePlanner<span class="token operator">: </span><a href="-real-route-planner/index.html">RealRoutePlanner</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>route<span class="token operator">: </span><a href="../okhttp3/-route/index.html">Route</a><span class="token punctuation">, </span></span><span class="parameter ">routes<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../okhttp3/-route/index.html">Route</a><span class="token operator">&gt;</span><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter ">attempt<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span></span><span class="parameter ">tunnelRequest<span class="token operator">: </span><a href="../okhttp3/-request/index.html">Request</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter ">connectionSpecIndex<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span></span><span class="parameter ">isTlsFallback<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token punctuation">, </span></span><span class="parameter ">connectionListener<span class="token operator">: </span><a href="../okhttp3/-connection-listener/index.html">ConnectionListener</a></span></span><span class="token punctuation">)</span> : <a href="-route-planner/-plan/index.html">RoutePlanner.Plan</a>, <a href="../okhttp3.internal.http/-exchange-codec/-carrier/index.html">ExchangeCodec.Carrier</a></div><div class="brief "><p class="paragraph">A single attempt to connect to a remote server, including these steps:</p></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-289243761%2FClasslikes%2F-388523033" anchor-label="Exchange" id="-289243761%2FClasslikes%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-exchange/index.html"><span><span>Exchange</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-289243761%2FClasslikes%2F-388523033"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">class </span><a href="-exchange/index.html">Exchange</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">call<span class="token operator">: </span><a href="-real-call/index.html">RealCall</a><span class="token punctuation">, </span></span><span class="parameter ">eventListener<span class="token operator">: </span><a href="../okhttp3/-event-listener/index.html">EventListener</a><span class="token punctuation">, </span></span><span class="parameter ">finder<span class="token operator">: </span><a href="-exchange-finder/index.html">ExchangeFinder</a><span class="token punctuation">, </span></span><span class="parameter ">codec<span class="token operator">: </span><a href="../okhttp3.internal.http/-exchange-codec/index.html">ExchangeCodec</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Transmits a single HTTP request and a response pair. This layers connection management and events on <a href="../okhttp3.internal.http/-exchange-codec/index.html">ExchangeCodec</a>, which handles the actual I/O.</p></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1400253047%2FClasslikes%2F-388523033" anchor-label="ExchangeFinder" id="-1400253047%2FClasslikes%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-exchange-finder/index.html"><span>Exchange</span><wbr><span><span>Finder</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1400253047%2FClasslikes%2F-388523033"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">interface </span><a href="-exchange-finder/index.html">ExchangeFinder</a></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="697294006%2FClasslikes%2F-388523033" anchor-label="RealCall" id="697294006%2FClasslikes%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-real-call/index.html"><span>Real</span><wbr><span><span>Call</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="697294006%2FClasslikes%2F-388523033"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">class </span><a href="-real-call/index.html">RealCall</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>client<span class="token operator">: </span><a href="../okhttp3/-ok-http-client/index.html">OkHttpClient</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>originalRequest<span class="token operator">: </span><a href="../okhttp3/-request/index.html">Request</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>forWebSocket<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></span></span><span class="token punctuation">)</span> : <a href="../okhttp3/-call/index.html">Call</a>, <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-cloneable/index.html">Cloneable</a></div><div class="brief "><p class="paragraph">Bridge between OkHttp's application and network layers. This class exposes high-level application layer primitives: connections, requests, responses, and streams.</p></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="575783414%2FClasslikes%2F-388523033" anchor-label="RealConnection" id="575783414%2FClasslikes%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-real-connection/index.html"><span>Real</span><wbr><span><span>Connection</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="575783414%2FClasslikes%2F-388523033"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">class </span><a href="-real-connection/index.html">RealConnection</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>taskRunner<span class="token operator">: </span><a href="../okhttp3.internal.concurrent/-task-runner/index.html">TaskRunner</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>connectionPool<span class="token operator">: </span><a href="-real-connection-pool/index.html">RealConnectionPool</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>route<span class="token operator">: </span><a href="../okhttp3/-route/index.html">Route</a><span class="token punctuation">, </span></span><span class="parameter ">rawSocket<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/Socket.html">Socket</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter ">socket<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/Socket.html">Socket</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter ">handshake<span class="token operator">: </span><a href="../okhttp3/-handshake/index.html">Handshake</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter ">protocol<span class="token operator">: </span><a href="../okhttp3/-protocol/index.html">Protocol</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter ">source<span class="token operator">: </span><span data-unresolved-link="okio/BufferedSource///PointingToDeclaration/">BufferedSource</span><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter ">sink<span class="token operator">: </span><span data-unresolved-link="okio/BufferedSink///PointingToDeclaration/">BufferedSink</span><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter ">pingIntervalMillis<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span></span><span class="parameter ">connectionListener<span class="token operator">: </span><a href="../okhttp3/-connection-listener/index.html">ConnectionListener</a></span></span><span class="token punctuation">)</span> : <a href="../okhttp3.internal.http2/-http2-connection/-listener/index.html">Http2Connection.Listener</a>, <a href="../okhttp3/-connection/index.html">Connection</a>, <a href="../okhttp3.internal.http/-exchange-codec/-carrier/index.html">ExchangeCodec.Carrier</a></div><div class="brief "><p class="paragraph">A connection to a remote web server capable of carrying 1 or more concurrent streams.</p></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="2062239418%2FClasslikes%2F-388523033" anchor-label="RealConnectionPool" id="2062239418%2FClasslikes%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-real-connection-pool/index.html"><span>Real</span><wbr><span>Connection</span><wbr><span><span>Pool</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2062239418%2FClasslikes%2F-388523033"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">class </span><a href="-real-connection-pool/index.html">RealConnectionPool</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">taskRunner<span class="token operator">: </span><a href="../okhttp3.internal.concurrent/-task-runner/index.html">TaskRunner</a><span class="token punctuation">, </span></span><span class="parameter ">maxIdleConnections<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span></span><span class="parameter ">keepAliveDuration<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html">Long</a><span class="token punctuation">, </span></span><span class="parameter ">timeUnit<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html">TimeUnit</a><span class="token punctuation">, </span></span><span class="parameter ">connectionListener<span class="token operator">: </span><a href="../okhttp3/-connection-listener/index.html">ConnectionListener</a></span></span><span class="token punctuation">)</span></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1982234837%2FClasslikes%2F-388523033" anchor-label="RealRoutePlanner" id="-1982234837%2FClasslikes%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-real-route-planner/index.html"><span>Real</span><wbr><span>Route</span><wbr><span><span>Planner</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1982234837%2FClasslikes%2F-388523033"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">class </span><a href="-real-route-planner/index.html">RealRoutePlanner</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">client<span class="token operator">: </span><a href="../okhttp3/-ok-http-client/index.html">OkHttpClient</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>address<span class="token operator">: </span><a href="../okhttp3/-address/index.html">Address</a><span class="token punctuation">, </span></span><span class="parameter ">call<span class="token operator">: </span><a href="-real-call/index.html">RealCall</a><span class="token punctuation">, </span></span><span class="parameter ">chain<span class="token operator">: </span><a href="../okhttp3.internal.http/-real-interceptor-chain/index.html">RealInterceptorChain</a><span class="token punctuation">, </span></span><span class="parameter ">connectionListener<span class="token operator">: </span><a href="../okhttp3/-connection-listener/index.html">ConnectionListener</a></span></span><span class="token punctuation">)</span> : <a href="-route-planner/index.html">RoutePlanner</a></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1264297036%2FClasslikes%2F-388523033" anchor-label="RouteDatabase" id="1264297036%2FClasslikes%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-route-database/index.html"><span>Route</span><wbr><span><span>Database</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1264297036%2FClasslikes%2F-388523033"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">class </span><a href="-route-database/index.html">RouteDatabase</a></div><div class="brief "><p class="paragraph">A blacklist of failed routes to avoid when creating a new connection to a target address. This is used so that OkHttp can learn from its mistakes: if there was a failure attempting to connect to a specific IP address or proxy server, that failure is remembered and alternate routes are preferred.</p></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="17020585%2FClasslikes%2F-388523033" anchor-label="RoutePlanner" id="17020585%2FClasslikes%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-route-planner/index.html"><span>Route</span><wbr><span><span>Planner</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="17020585%2FClasslikes%2F-388523033"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">interface </span><a href="-route-planner/index.html">RoutePlanner</a></div><div class="brief "><p class="paragraph">Policy on choosing which connection to use for an exchange and any retries that follow. This uses the following strategies:</p></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1657109096%2FClasslikes%2F-388523033" anchor-label="RouteSelector" id="1657109096%2FClasslikes%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-route-selector/index.html"><span>Route</span><wbr><span><span>Selector</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1657109096%2FClasslikes%2F-388523033"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword">class </span><a href="-route-selector/index.html">RouteSelector</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">address<span class="token operator">: </span><a href="../okhttp3/-address/index.html">Address</a><span class="token punctuation">, </span></span><span class="parameter ">routeDatabase<span class="token operator">: </span><a href="-route-database/index.html">RouteDatabase</a><span class="token punctuation">, </span></span><span class="parameter ">call<span class="token operator">: </span><a href="../okhttp3/-call/index.html">Call</a><span class="token punctuation">, </span></span><span class="parameter ">fastFallback<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token punctuation">, </span></span><span class="parameter ">eventListener<span class="token operator">: </span><a href="../okhttp3/-event-listener/index.html">EventListener</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Selects routes to connect to an origin server. Each connection requires a choice of proxy server, IP address, and TLS mode. Connections may also be recycled.</p></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="FUNCTION">
+        <h2 class="">Functions</h2>
+        <div class="table"><a data-name="1748472807%2FFunctions%2F-388523033" anchor-label="reorderForHappyEyeballs" id="1748472807%2FFunctions%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="reorder-for-happy-eyeballs.html"><span>reorder</span><wbr><span>For</span><wbr><span>Happy</span><wbr><span><span>Eyeballs</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1748472807%2FFunctions%2F-388523033"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="reorder-for-happy-eyeballs.html"><span class="token function">reorderForHappyEyeballs</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">addresses<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetAddress.html">InetAddress</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetAddress.html">InetAddress</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Implementation of HappyEyeballs Sorting Addresses.</p></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1345388428%2FFunctions%2F-388523033" anchor-label="retryTlsHandshake" id="1345388428%2FFunctions%2F-388523033" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain"></a>
+          <div class="table-row" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="retry-tls-handshake.html"><span>retry</span><wbr><span>Tls</span><wbr><span><span>Handshake</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1345388428%2FFunctions%2F-388523033"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":okhttp:dokkaHtmlPartial/jvmMain" data-filterable-set=":okhttp:dokkaHtmlPartial/jvmMain" data-active="" data-toggle=":okhttp:dokkaHtmlPartial/jvmMain">jvm</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":okhttp:dokkaHtmlPartial/jvmMain"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="retry-tls-handshake.html"><span class="token function">retryTlsHandshake</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">e<span class="token operator">: </span><span data-unresolved-link="okio/IOException///PointingToDeclaration/">IOException</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Returns true if a TLS connection should be retried after <a href="retry-tls-handshake.html">e</a>.</p></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2023 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
