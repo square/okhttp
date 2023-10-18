@@ -364,7 +364,7 @@ public final class CacheTest {
     Path cacheEntry = fileSystem.allPaths().stream()
             .filter((e) -> e.name().endsWith(".0"))
             .findFirst()
-            .orElseThrow();
+            .orElseThrow(NoSuchElementException::new);
     corruptCertificate(cacheEntry);
 
     Response response2 = client.newCall(request).execute(); // Not Cached!
