@@ -16,14 +16,21 @@
 package okhttp3
 
 import java.io.IOException
-import java.net.Authenticator
 import okhttp3.Authenticator.Companion.JAVA_NET_AUTHENTICATOR
 
 /**
- * Adapts [Authenticator] to [okhttp3.Authenticator]. Configure OkHttp to use [Authenticator] with
- * [okhttp3.OkHttpClient.Builder.authenticator] or [okhttp3.OkHttpClient.Builder.proxyAuthenticator].
+ * Do not use this.
+ *
+ * Instead, configure your OkHttpClient.Builder to use `Authenticator.JAVA_NET_AUTHENTICATOR`:
+ *
+ * ```
+ *   val okHttpClient = OkHttpClient.Builder()
+ *     .authenticator(okhttp3.Authenticator.Companion.JAVA_NET_AUTHENTICATOR)
+ *     .build()
+ * ```
  */
-class JavaNetAuthenticator : okhttp3.Authenticator {
+@Deprecated(message = "Use okhttp3.Authenticator.Companion.JAVA_NET_AUTHENTICATOR instead")
+class JavaNetAuthenticator : Authenticator {
   @Throws(IOException::class)
   override fun authenticate(route: Route?, response: Response): Request? =
     JAVA_NET_AUTHENTICATOR.authenticate(route, response)

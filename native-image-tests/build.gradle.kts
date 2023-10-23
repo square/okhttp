@@ -22,7 +22,7 @@ dependencies {
   implementation(libs.assertj.core)
   implementation(projects.mockwebserver3)
   implementation(projects.mockwebserver)
-  implementation(projects.okhttpUrlconnection)
+  implementation(projects.okhttpJavaNetCookiejar)
   implementation(projects.mockwebserver3Junit4)
   implementation(projects.mockwebserver3Junit5)
   implementation(libs.aqute.resolve)

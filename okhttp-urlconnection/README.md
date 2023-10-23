@@ -3,6 +3,8 @@ OkHttp URLConnection
 
 This module integrates OkHttp with `Authenticator` and `CookieHandler` from `java.net`.
 
+This module is obsolete; prefer `okhttp-java-net-cookiejar`.
+
 ### Download
 
 ```kotlin

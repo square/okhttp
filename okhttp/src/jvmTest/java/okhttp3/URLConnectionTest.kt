@@ -73,6 +73,7 @@ import okhttp3.internal.http.HTTP_PERM_REDIRECT
 import okhttp3.internal.http.HTTP_TEMP_REDIRECT
 import okhttp3.internal.platform.Platform.Companion.get
 import okhttp3.internal.userAgent
+import okhttp3.java.net.cookiejar.JavaNetCookieJar
 import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule
 import okio.Buffer
