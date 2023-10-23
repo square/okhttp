@@ -57,6 +57,7 @@ import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.ResponseBody.Companion.asResponseBody
 import okhttp3.ResponseBody.Companion.toResponseBody
+import okhttp3.internal.authenticator.JavaNetAuthenticator
 import okhttp3.internal.http2.Settings
 import okhttp3.internal.proxy.NullProxySelector
 import okhttp3.internal.tls.OkHostnameVerifier
