@@ -272,9 +272,9 @@ class CacheStrategy internal constructor(
         apparentReceivedAge
       }
 
-      val responseDuration = receivedResponseMillis - sentRequestMillis
-      val residentDuration = nowMillis - receivedResponseMillis
-      return maxOf(0, receivedAge + responseDuration + residentDuration)
+      val responseDuration = maxOf(0, receivedResponseMillis - sentRequestMillis)
+      val residentDuration = maxOf(0, nowMillis - receivedResponseMillis)
+      return receivedAge + responseDuration + residentDuration
     }
 
     /**
