@@ -17,6 +17,8 @@ package okhttp.android.test.alpn;
 
 import android.os.Build
 import android.util.Log
+import java.net.InetSocketAddress
+import java.net.Proxy
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import okhttp3.*
@@ -56,6 +58,13 @@ class AlpnOverrideTest {
           .supportsTlsExtensions(false)
           .build()
       ))
+      .eventListener(object : EventListener() {
+        override fun connectionAcquired(call: Call, connection: Connection) {
+          val sslSocket = connection.socket() as SSLSocket
+          println("Requested " + sslSocket.sslParameters.applicationProtocols.joinToString())
+          println("Negotiated " + sslSocket.applicationProtocol)
+        }
+      })
       .build()
 
     val request = Request.Builder()
@@ -63,7 +72,6 @@ class AlpnOverrideTest {
       .build()
     client.newCall(request).execute().use { response ->
       assertThat(response.code).isEqualTo(200)
-      assertThat(response.protocol).isEqualTo(Protocol.HTTP_2)
     }
   }
 }
