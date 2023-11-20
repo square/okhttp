@@ -25,15 +25,15 @@ include(":okcurl")
 include(":okhttp")
 include(":okhttp-bom")
 include(":okhttp-brotli")
+include(":okhttp-coroutines")
 include(":okhttp-dnsoverhttps")
 include(":okhttp-hpacktests")
 include(":okhttp-idna-mapping-table")
+include(":okhttp-java-net-cookiejar")
 include(":okhttp-logging-interceptor")
-project(":okhttp-logging-interceptor").name = "logging-interceptor"
 include(":okhttp-sse")
 include(":okhttp-testing-support")
 include(":okhttp-tls")
-include(":okhttp-coroutines")
 include(":okhttp-urlconnection")
 include(":samples:compare")
 include(":samples:crawler")
@@ -43,6 +43,8 @@ include(":samples:slack")
 include(":samples:static-server")
 include(":samples:tlssurvey")
 include(":samples:unixdomainsockets")
+
+project(":okhttp-logging-interceptor").name = "logging-interceptor"
 
 if (!isKnownBrokenIntelliJ()) {
   include(":okhttp-android")

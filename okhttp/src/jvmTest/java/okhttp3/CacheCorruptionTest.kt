@@ -29,6 +29,7 @@ import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.Headers.Companion.headersOf
 import okhttp3.internal.buildCache
+import okhttp3.java.net.cookiejar.JavaNetCookieJar
 import okhttp3.okio.LoggingFilesystem
 import okhttp3.testing.PlatformRule
 import okio.Path.Companion.toPath

@@ -78,6 +78,7 @@ import okhttp3.internal.http.HTTP_EARLY_HINTS
 import okhttp3.internal.http.HTTP_PROCESSING
 import okhttp3.internal.http.RecordingProxySelector
 import okhttp3.internal.userAgent
+import okhttp3.java.net.cookiejar.JavaNetCookieJar
 import okhttp3.okio.LoggingFilesystem
 import okhttp3.testing.Flaky
 import okhttp3.testing.PlatformRule

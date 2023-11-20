@@ -109,6 +109,7 @@ kotlin {
     getByName("jvmTest") {
       dependencies {
         dependsOn(commonTest)
+        implementation(projects.okhttpJavaNetCookiejar)
         implementation(projects.okhttpTls)
         implementation(projects.okhttpUrlconnection)
         implementation(projects.mockwebserver3)

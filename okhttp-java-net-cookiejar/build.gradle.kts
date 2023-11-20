@@ -9,15 +9,13 @@ plugins {
 }
 
 project.applyOsgi(
-  "Fragment-Host: com.squareup.okhttp3; bundle-version=\"\${range;[==,+);\${version_cleanup;${projects.okhttp.version}}}\"",
-  "Automatic-Module-Name: okhttp3.urlconnection",
-  "Bundle-SymbolicName: com.squareup.okhttp3.urlconnection",
-  "-removeheaders: Private-Package"
+  "Export-Package: okhttp3.java.net.cookiejar",
+  "Automatic-Module-Name: okhttp3.java.net.cookiejar",
+  "Bundle-SymbolicName: com.squareup.okhttp3.java.net.cookiejar"
 )
 
 dependencies {
   api(projects.okhttp)
-  api(projects.okhttpJavaNetCookiejar)
   compileOnly(libs.findbugs.jsr305)
   compileOnly(libs.animalsniffer.annotations)
 }
