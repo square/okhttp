@@ -66,7 +66,7 @@ object AndroidLog {
     this["okhttp3.mockwebserver.MockWebServer"] = "okhttp.MockWebServer"
   }.toMap()
 
-  internal fun androidLog(loggerName: String, logLevel: Int, message: String, t: Throwable?) {
+  internal fun androidLog(loggerName: String, logLevel: Int, message: String, t: Throwable? = null) {
     val tag = loggerTag(loggerName)
 
     if (Log.isLoggable(tag, logLevel)) {
