@@ -281,6 +281,9 @@ class RealConnection(
       override fun close() {
         exchange.bodyComplete<IOException?>(-1L, responseDone = true, requestDone = true, e = null)
       }
+      override fun cancel() {
+        exchange.cancel()
+      }
     }
   }
 

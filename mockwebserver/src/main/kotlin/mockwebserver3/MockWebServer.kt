@@ -761,6 +761,10 @@ class MockWebServer : Closeable {
     val connectionClose = CountDownLatch(1)
     val streams = object : RealWebSocket.Streams(false, source, sink) {
       override fun close() = connectionClose.countDown()
+
+      override fun cancel() {
+        socket.closeQuietly()
+      }
     }
     val webSocket = RealWebSocket(
       taskRunner = taskRunner,
@@ -771,16 +775,13 @@ class MockWebServer : Closeable {
       extensions = WebSocketExtensions.parse(webSocketResponse.headers),
       minimumDeflateSize = 0L // Compress all messages if compression is enabled.
     )
-    webSocketResponse.webSocketListener.onOpen(webSocket, fancyResponse)
     val name = "MockWebServer WebSocket ${request.path!!}"
     webSocket.initReaderAndWriter(name, streams)
     try {
-      webSocket.loopReader()
+      webSocket.loopReader(fancyResponse)
 
       // Even if messages are no longer being read we need to wait for the connection close signal.
       connectionClose.await()
-    } catch (e: IOException) {
-      webSocket.failWebSocket(e, null)
     } finally {
       source.closeQuietly()
     }
