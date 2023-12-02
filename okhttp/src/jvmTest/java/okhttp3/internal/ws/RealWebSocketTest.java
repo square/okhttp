@@ -20,25 +20,21 @@ import java.io.IOException;
 import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
 import java.util.Random;
-import java.util.concurrent.TimeUnit;
 import okhttp3.Headers;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.TestUtil;
-import okhttp3.internal.concurrent.TaskRunner;
+import okhttp3.internal.concurrent.TaskFaker;
 import okio.ByteString;
 import okio.Okio;
 import okio.Pipe;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-
 import static okhttp3.internal.ws.RealWebSocket.DEFAULT_MINIMUM_DEFLATE_SIZE;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.data.Offset.offset;
 import static org.junit.jupiter.api.Assertions.fail;
 
 @Tag("Slow")
@@ -51,8 +47,11 @@ public final class RealWebSocketTest {
   private final Pipe client2Server = new Pipe(8192L);
   private final Pipe server2client = new Pipe(8192L);
 
-  private final TestStreams client = new TestStreams(true, server2client, client2Server);
-  private final TestStreams server = new TestStreams(false, client2Server, server2client);
+  private final TaskFaker taskFaker = new TaskFaker();
+  private final TestStreams client = new TestStreams(
+    true, taskFaker, server2client, client2Server);
+  private final TestStreams server = new TestStreams(
+    false, taskFaker, client2Server, server2client);
 
   @BeforeEach public void setUp() throws IOException {
     client.initWebSocket(random, 0);
@@ -66,16 +65,20 @@ public final class RealWebSocketTest {
     client.getSource().close();
     server.webSocket.tearDown();
     client.webSocket.tearDown();
+    taskFaker.close();
   }
 
   @Test public void close() throws IOException {
     client.webSocket.close(1000, "Hello!");
+    taskFaker.runTasks();
     // This will trigger a close response.
     assertThat(server.processNextFrame()).isFalse();
     server.listener.assertClosing(1000, "Hello!");
+    server.webSocket.finishReader();
     server.webSocket.close(1000, "Goodbye!");
     assertThat(client.processNextFrame()).isFalse();
     client.listener.assertClosing(1000, "Goodbye!");
+    client.webSocket.finishReader();
     server.listener.assertClosed(1000, "Hello!");
     client.listener.assertClosed(1000, "Goodbye!");
   }
@@ -99,6 +102,7 @@ public final class RealWebSocketTest {
   @Test public void afterSocketClosedPingFailsWebSocket() throws IOException {
     client2Server.source().close();
     client.webSocket.pong(ByteString.encodeUtf8("Ping!"));
+    taskFaker.runTasks();
     client.listener.assertFailure(IOException.class, "source is closed");
 
     assertThat(client.webSocket.send("Hello!")).isFalse();
@@ -108,6 +112,7 @@ public final class RealWebSocketTest {
     client2Server.source().close();
 
     assertThat(client.webSocket.send("Hello!")).isTrue();
+    taskFaker.runTasks();
     client.listener.assertFailure(IOException.class, "source is closed");
 
     // A failed write prevents further use of the WebSocket instance.
@@ -117,6 +122,7 @@ public final class RealWebSocketTest {
 
   @Test public void serverCloseThenWritingPingSucceeds() throws IOException {
     server.webSocket.close(1000, "Hello!");
+    taskFaker.runTasks();
     client.processNextFrame();
     client.listener.assertClosing(1000, "Hello!");
 
@@ -125,6 +131,7 @@ public final class RealWebSocketTest {
 
   @Test public void clientCanWriteMessagesAfterServerClose() throws IOException {
     server.webSocket.close(1000, "Hello!");
+    taskFaker.runTasks();
     client.processNextFrame();
     client.listener.assertClosing(1000, "Hello!");
 
@@ -135,14 +142,17 @@ public final class RealWebSocketTest {
 
   @Test public void serverCloseThenClientClose() throws IOException {
     server.webSocket.close(1000, "Hello!");
+    taskFaker.runTasks();
 
     client.processNextFrame();
     client.listener.assertClosing(1000, "Hello!");
     assertThat(client.webSocket.close(1000, "Bye!")).isTrue();
+    client.webSocket.finishReader();
     client.listener.assertClosed(1000, "Hello!");
 
     server.processNextFrame();
     server.listener.assertClosing(1000, "Bye!");
+    server.webSocket.finishReader();
     server.listener.assertClosed(1000, "Bye!");
   }
 
@@ -150,24 +160,31 @@ public final class RealWebSocketTest {
     server.getSink().write(ByteString.decodeHex("8800")).emit(); // Close without code.
     client.processNextFrame();
     client.listener.assertClosing(1005, "");
+    client.webSocket.finishReader();
 
     assertThat(client.webSocket.close(1000, "Bye!")).isTrue();
+    taskFaker.runTasks();
     server.processNextFrame();
     server.listener.assertClosing(1000, "Bye!");
+    server.webSocket.finishReader();
 
     client.listener.assertClosed(1005, "");
   }
 
   @Test public void clientCloseClosesConnection() throws IOException {
     client.webSocket.close(1000, "Hello!");
+    taskFaker.runTasks();
     assertThat(client.closed).isFalse();
     server.processNextFrame(); // Read client closing, send server close.
     server.listener.assertClosing(1000, "Hello!");
+    server.webSocket.finishReader();
 
     server.webSocket.close(1000, "Goodbye!");
     client.processNextFrame(); // Read server closing, close connection.
-    assertThat(client.closed).isTrue();
+    taskFaker.runTasks();
     client.listener.assertClosing(1000, "Goodbye!");
+    client.webSocket.finishReader();
+    assertThat(client.closed).isTrue();
 
     // Server and client both finished closing, connection is closed.
     server.listener.assertClosed(1000, "Hello!");
@@ -176,14 +193,17 @@ public final class RealWebSocketTest {
 
   @Test public void serverCloseClosesConnection() throws IOException {
     server.webSocket.close(1000, "Hello!");
+    taskFaker.runTasks();
 
     client.processNextFrame(); // Read server close, send client close, close connection.
     assertThat(client.closed).isFalse();
     client.listener.assertClosing(1000, "Hello!");
+    client.webSocket.finishReader();
 
     client.webSocket.close(1000, "Hello!");
     server.processNextFrame();
     server.listener.assertClosing(1000, "Hello!");
+    server.webSocket.finishReader();
 
     client.listener.assertClosed(1000, "Hello!");
     server.listener.assertClosed(1000, "Hello!");
@@ -192,6 +212,7 @@ public final class RealWebSocketTest {
   @Test public void clientAndServerCloseClosesConnection() throws Exception {
     // Send close from both sides at the same time.
     server.webSocket.close(1000, "Hello!");
+    taskFaker.runTasks();
     client.processNextFrame(); // Read close, close connection close.
 
     assertThat(client.closed).isFalse();
@@ -200,9 +221,11 @@ public final class RealWebSocketTest {
 
     client.listener.assertClosing(1000, "Hello!");
     server.listener.assertClosing(1000, "Hi!");
+    client.webSocket.finishReader();
+    server.webSocket.finishReader();
     client.listener.assertClosed(1000, "Hello!");
     server.listener.assertClosed(1000, "Hi!");
-    client.webSocket.awaitTermination(5, TimeUnit.SECONDS);
+    taskFaker.runTasks();
     assertThat(client.closed).isTrue();
 
     server.listener.assertExhausted(); // Client should not have sent second close.
@@ -212,6 +235,7 @@ public final class RealWebSocketTest {
   @Test public void serverCloseBreaksReadMessageLoop() throws IOException {
     server.webSocket.send("Hello!");
     server.webSocket.close(1000, "Bye!");
+    taskFaker.runTasks();
     assertThat(client.processNextFrame()).isTrue();
     client.listener.assertTextMessage("Hello!");
     assertThat(client.processNextFrame()).isFalse();
@@ -222,15 +246,19 @@ public final class RealWebSocketTest {
     server.getSink().write(ByteString.decodeHex("0a00")).emit(); // Invalid non-final ping frame.
 
     client.processNextFrame(); // Detects error, send close, close connection.
+    taskFaker.runTasks();
+    client.webSocket.finishReader();
     assertThat(client.closed).isTrue();
     client.listener.assertFailure(ProtocolException.class, "Control frames must be final.");
 
     server.processNextFrame();
-    server.listener.assertFailure(EOFException.class);
+    taskFaker.runTasks();
+    server.listener.assertFailure();
   }
 
   @Test public void protocolErrorInCloseResponseClosesConnection() throws IOException {
     client.webSocket.close(1000, "Hello");
+    taskFaker.runTasks();
     server.processNextFrame();
     // Not closed until close reply is received.
     assertThat(client.closed).isFalse();
@@ -239,6 +267,7 @@ public final class RealWebSocketTest {
     server.getSink().write(ByteString.decodeHex("888760b420bb635c68de0cd84f")).emit();
 
     client.processNextFrame();// Detects error, disconnects immediately since close already sent.
+    client.webSocket.finishReader();
     assertThat(client.closed).isTrue();
     client.listener.assertFailure(
         ProtocolException.class, "Server-sent frames must not be masked.");
@@ -249,6 +278,7 @@ public final class RealWebSocketTest {
 
   @Test public void protocolErrorAfterCloseDoesNotSendClose() throws IOException {
     client.webSocket.close(1000, "Hello!");
+    taskFaker.runTasks();
     server.processNextFrame();
 
     // Not closed until close reply is received.
@@ -256,6 +286,8 @@ public final class RealWebSocketTest {
     server.getSink().write(ByteString.decodeHex("0a00")).emit(); // Invalid non-final ping frame.
 
     client.processNextFrame(); // Detects error, disconnects immediately since close already sent.
+    client.webSocket.finishReader();
+    taskFaker.runTasks();
     assertThat(client.closed).isTrue();
     client.listener.assertFailure(ProtocolException.class, "Control frames must be final.");
 
@@ -267,104 +299,84 @@ public final class RealWebSocketTest {
   @Test public void networkErrorReportedAsFailure() throws IOException {
     server.getSink().close();
     client.processNextFrame();
+    taskFaker.runTasks();
     client.listener.assertFailure(EOFException.class);
   }
 
   @Test public void closeThrowingFailsConnection() throws IOException {
     client2Server.source().close();
     client.webSocket.close(1000, null);
+    taskFaker.runTasks();
     client.listener.assertFailure(IOException.class, "source is closed");
   }
 
-  @Disabled // TODO(jwilson): come up with a way to test unchecked exceptions on the writer thread.
   @Test public void closeMessageAndConnectionCloseThrowingDoesNotMaskOriginal() throws IOException {
-    client.getSink().close();
-    client.closeThrows = true;
+    // So when the client sends close it throws an IOException.
+    server.getSource().close();
 
     client.webSocket.close(1000, "Bye!");
-    client.listener.assertFailure(IOException.class, "failure");
+    taskFaker.runTasks();
+    client.webSocket.finishReader();
+    client.listener.assertFailure(IOException.class, "source is closed");
     assertThat(client.closed).isTrue();
   }
 
-  @Disabled // TODO(jwilson): come up with a way to test unchecked exceptions on the writer thread.
-  @Test public void peerConnectionCloseThrowingPropagates() throws IOException {
-    client.closeThrows = true;
-
-    server.webSocket.close(1000, "Bye from Server!");
-    client.processNextFrame();
-    client.listener.assertClosing(1000, "Bye from Server!");
-
-    client.webSocket.close(1000, "Bye from Client!");
-    server.processNextFrame();
-    server.listener.assertClosing(1000, "Bye from Client!");
-  }
-
   @Test public void pingOnInterval() throws IOException {
-    long startNanos = System.nanoTime();
     client.initWebSocket(random, 500);
+    taskFaker.advanceUntil(ns(500L));
 
     server.processNextFrame(); // Ping.
     client.processNextFrame(); // Pong.
-    long elapsedUntilPing1 = System.nanoTime() - startNanos;
-    assertThat((double) TimeUnit.NANOSECONDS.toMillis(elapsedUntilPing1)).isCloseTo(500, offset(
-        250d));
 
+    taskFaker.advanceUntil(ns(1_000L));
     server.processNextFrame(); // Ping.
     client.processNextFrame(); // Pong.
-    long elapsedUntilPing2 = System.nanoTime() - startNanos;
-    assertThat((double) TimeUnit.NANOSECONDS.toMillis(elapsedUntilPing2)).isCloseTo(1000, offset(
-        250d));
 
+    taskFaker.advanceUntil(ns(1_500L));
     server.processNextFrame(); // Ping.
     client.processNextFrame(); // Pong.
-    long elapsedUntilPing3 = System.nanoTime() - startNanos;
-    assertThat((double) TimeUnit.NANOSECONDS.toMillis(elapsedUntilPing3)).isCloseTo(1500, offset(
-        250d));
   }
 
   @Test public void unacknowledgedPingFailsConnection() throws IOException {
-    long startNanos = System.nanoTime();
     client.initWebSocket(random, 500);
 
     // Don't process the ping and pong frames!
+    taskFaker.advanceUntil(ns(500L));
+    taskFaker.advanceUntil(ns(1_000L));
     client.listener.assertFailure(SocketTimeoutException.class,
         "sent ping but didn't receive pong within 500ms (after 0 successful ping/pongs)");
-    long elapsedUntilFailure = System.nanoTime() - startNanos;
-    assertThat((double) TimeUnit.NANOSECONDS.toMillis(elapsedUntilFailure)).isCloseTo(1000, offset(
-        250d));
   }
 
   @Test public void unexpectedPongsDoNotInterfereWithFailureDetection() throws IOException {
-    long startNanos = System.nanoTime();
     client.initWebSocket(random, 500);
 
     // At 0ms the server sends 3 unexpected pongs. The client accepts 'em and ignores em.
     server.webSocket.pong(ByteString.encodeUtf8("pong 1"));
+    taskFaker.runTasks();
     client.processNextFrame();
     server.webSocket.pong(ByteString.encodeUtf8("pong 2"));
     client.processNextFrame();
+    taskFaker.runTasks();
     server.webSocket.pong(ByteString.encodeUtf8("pong 3"));
     client.processNextFrame();
 
     // After 500ms the client automatically pings and the server pongs back.
+    taskFaker.advanceUntil(ns(500L));
     server.processNextFrame(); // Ping.
     client.processNextFrame(); // Pong.
-    long elapsedUntilPing = System.nanoTime() - startNanos;
-    assertThat((double) TimeUnit.NANOSECONDS.toMillis(elapsedUntilPing)).isCloseTo(500, offset(
-        250d));
 
     // After 1000ms the client will attempt a ping 2, but we don't process it. That'll cause the
     // client to fail at 1500ms when it's time to send ping 3 because pong 2 hasn't been received.
+    taskFaker.advanceUntil(ns(1_000L));
+    taskFaker.advanceUntil(ns(1_500L));
     client.listener.assertFailure(SocketTimeoutException.class,
         "sent ping but didn't receive pong within 500ms (after 1 successful ping/pongs)");
-    long elapsedUntilFailure = System.nanoTime() - startNanos;
-    assertThat((double) TimeUnit.NANOSECONDS.toMillis(elapsedUntilFailure)).isCloseTo(1500, offset(
-        250d));
   }
 
   @Test public void messagesNotCompressedWhenNotConfigured() throws IOException {
     String message = TestUtil.repeat('a', (int) DEFAULT_MINIMUM_DEFLATE_SIZE);
     server.webSocket.send(message);
+    taskFaker.runTasks();
 
     assertThat(client.clientSourceBufferSize()).isGreaterThan(message.length()); // Not compressed.
     assertThat(client.processNextFrame()).isTrue();
@@ -379,6 +391,7 @@ public final class RealWebSocketTest {
     String message = TestUtil.repeat('a', (int) DEFAULT_MINIMUM_DEFLATE_SIZE);
     server.webSocket.send(message);
 
+    taskFaker.runTasks();
     assertThat(client.clientSourceBufferSize()).isLessThan(message.length()); // Compressed!
     assertThat(client.processNextFrame()).isTrue();
     client.listener.assertTextMessage(message);
@@ -391,24 +404,34 @@ public final class RealWebSocketTest {
 
     String message = TestUtil.repeat('a', (int) DEFAULT_MINIMUM_DEFLATE_SIZE - 1);
     server.webSocket.send(message);
+    taskFaker.runTasks();
 
     assertThat(client.clientSourceBufferSize()).isGreaterThan(message.length()); // Not compressed.
     assertThat(client.processNextFrame()).isTrue();
     client.listener.assertTextMessage(message);
   }
 
+  private static long ns(long millis) {
+    return millis * 1_000_000L;
+  }
+
   /** One peer's streams, listener, and web socket in the test. */
   private static class TestStreams extends RealWebSocket.Streams {
     private final String name;
     private final WebSocketRecorder listener;
+    private final TaskFaker taskFaker;
+    final Pipe sourcePipe;
+    final Pipe sinkPipe;
     private RealWebSocket webSocket;
-    boolean closeThrows;
     boolean closed;
 
-    public TestStreams(boolean client, Pipe source, Pipe sink) {
+    public TestStreams(boolean client, TaskFaker taskFaker, Pipe source, Pipe sink) {
       super(client, Okio.buffer(source.source()), Okio.buffer(sink.sink()));
       this.name = client ? "client" : "server";
       this.listener = new WebSocketRecorder(name);
+      this.taskFaker = taskFaker;
+      this.sourcePipe = source;
+      this.sinkPipe = sink;
     }
 
     public void initWebSocket(Random random, int pingIntervalMillis) throws IOException {
@@ -425,7 +448,7 @@ public final class RealWebSocketTest {
           .headers(responseHeaders)
           .protocol(Protocol.HTTP_1_1)
           .build();
-      webSocket = new RealWebSocket(TaskRunner.INSTANCE, response.request(), listener, random,
+      webSocket = new RealWebSocket(taskFaker.getTaskRunner(), response.request(), listener, random,
           pingIntervalMillis, WebSocketExtensions.Companion.parse(responseHeaders),
           DEFAULT_MINIMUM_DEFLATE_SIZE);
       webSocket.initReaderAndWriter(name, this);
@@ -444,17 +467,24 @@ public final class RealWebSocketTest {
       return webSocket.processNextFrame();
     }
 
-    @Override public void close() throws IOException {
-      getSource().close();
-      getSink().close();
+    @Override public void close() {
       if (closed) {
         throw new AssertionError("Already closed");
       }
-      closed = true;
-
-      if (closeThrows) {
-        throw new RuntimeException("Oops!");
+      try {
+        getSource().close();
+      } catch (IOException ignored) {
       }
+      try {
+        getSink().close();
+      } catch (IOException ignored) {
+      }
+      closed = true;
+    }
+
+    @Override public void cancel() {
+      sourcePipe.cancel();
+      sinkPipe.cancel();
     }
   }
 }

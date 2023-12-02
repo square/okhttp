@@ -36,7 +36,6 @@ import mockwebserver3.RecordedRequest;
 import mockwebserver3.SocketPolicy;
 import mockwebserver3.SocketPolicy.KeepOpen;
 import mockwebserver3.SocketPolicy.NoResponse;
-import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
 import okhttp3.OkHttpClientTestRule;
 import okhttp3.Protocol;
@@ -1088,10 +1087,10 @@ public final class WebSocketHttpTest {
     return webSocket;
   }
 
-  private void closeWebSockets(WebSocket webSocket, WebSocket server) {
+  private void closeWebSockets(WebSocket client, WebSocket server) {
     server.close(1001, "");
     clientListener.assertClosing(1001, "");
-    webSocket.close(1000, "");
+    client.close(1000, "");
     serverListener.assertClosing(1000, "");
     clientListener.assertClosed(1001, "");
     serverListener.assertClosed(1000, "");
