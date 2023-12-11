@@ -32,6 +32,16 @@ internal class MessageDeflaterInflaterTest {
     assertThat(inflater.inflate(message)).isEqualTo("Hello inflation!".encodeUtf8())
   }
 
+  /**
+   * We had a bug where self-finishing inflater streams would infinite loop!
+   * https://github.com/square/okhttp/issues/8078
+   */
+  @Test fun `inflate returns finished before bytesRead reaches input length`() {
+    val inflater = MessageInflater(false)
+    val message = "53621260020000".decodeHex()
+    assertThat(inflater.inflate(message)).isEqualTo("22021002".decodeHex())
+  }
+
   @Test fun `deflate golden value`() {
     val deflater = MessageDeflater(false)
     val deflated = deflater.deflate("Hello deflate!".encodeUtf8())
