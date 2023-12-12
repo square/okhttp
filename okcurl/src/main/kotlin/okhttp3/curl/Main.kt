@@ -36,7 +36,6 @@ import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.curl.Main.Companion.NAME
-import okhttp3.internal.format
 import okhttp3.internal.http.StatusLine
 import okhttp3.internal.http2.Http2
 import okhttp3.internal.platform.Platform
@@ -48,6 +47,7 @@ import picocli.CommandLine.Command
 import picocli.CommandLine.IVersionProvider
 import picocli.CommandLine.Option
 import picocli.CommandLine.Parameters
+import java.util.Locale
 
 @Command(name = NAME, description = ["A curl for the next-generation web."],
     mixinStandardHelpOptions = true, versionProvider = Main.VersionProvider::class)
@@ -273,7 +273,7 @@ class Main : Runnable {
           level = Level.FINE
           formatter = object : SimpleFormatter() {
             override fun format(record: LogRecord): String {
-              return format("%s%n", record.message)
+              return "%s%n".format(Locale.US, record.message)
             }
           }
         })
@@ -289,9 +289,9 @@ class Main : Runnable {
             override fun format(record: LogRecord): String {
               val parameters = record.parameters
               if (parameters != null) {
-                return format("%s%n%s%n", record.message, record.parameters.first())
+                return "%s%n%s%n".format(Locale.US, record.message, record.parameters.first())
               } else {
-                return format("%s%n", record.message)
+                return "%s%n".format(Locale.US, record.message)
               }
             }
           }
