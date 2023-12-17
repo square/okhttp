@@ -9,7 +9,7 @@ $dokka.location:okhttp3/HttpUrl/toString/#/PointingToDeclaration/okhttp/okhttp3
 $dokka.location:okhttp3/MediaType/equals/#kotlin.Any?/PointingToDeclaration/okhttp/okhttp3/-media-type/[non-jvm]equals.html
 $dokka.location:okhttp3/MediaType/hashCode/#/PointingToDeclaration/okhttp/okhttp3/-media-type/[non-jvm]hash-code.html
 $dokka.location:okhttp3/Request/toString/#/PointingToDeclaration/okhttp/okhttp3/-request/[non-jvm]to-string.html
-$dokka.location:okhttp3/TlsVersion/entries/#/PointingToDeclaration/okhttp/okhttp3/-tls-version/[jvm]entries.html
+$dokka.location:okhttp3/TlsVersion/entries/#/PointingToDeclaration/okhttp/okhttp3/-tls-version/[non-jvm]entries.html
 $dokka.location:okhttp3/TlsVersion/valueOf/#kotlin.String/PointingToDeclaration/okhttp/okhttp3/-tls-version/[non-jvm]value-of.html
 $dokka.location:okhttp3/TlsVersion/values/#/PointingToDeclaration/okhttp/okhttp3/-tls-version/[non-jvm]values.html
 module:logging-interceptor
@@ -33,6 +33,8 @@ module:okhttp-coroutines
 okhttp3
 module:okhttp-dnsoverhttps
 okhttp3.dnsoverhttps
+module:okhttp-java-net-cookiejar
+okhttp3.java.net.cookiejar
 module:okhttp-sse
 okhttp3.sse
 module:okhttp-tls
