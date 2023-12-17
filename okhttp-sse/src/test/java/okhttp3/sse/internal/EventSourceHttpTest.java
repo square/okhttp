@@ -23,6 +23,7 @@ import mockwebserver3.MockWebServer;
 import mockwebserver3.junit5.internal.MockWebServerExtension;
 import okhttp3.OkHttpClient;
 import okhttp3.OkHttpClientTestRule;
+import okhttp3.RecordingEventListener;
 import okhttp3.Request;
 import okhttp3.sse.EventSource;
 import okhttp3.sse.EventSources;
@@ -34,7 +35,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junitpioneer.jupiter.RetryingTest;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Tag("Slowish")
@@ -45,8 +45,12 @@ public final class EventSourceHttpTest {
   private MockWebServer server;
   @RegisterExtension public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
+  private final RecordingEventListener eventListener = new RecordingEventListener();
+
   private final EventSourceRecorder listener = new EventSourceRecorder();
-  private OkHttpClient client = clientTestRule.newClient();
+  private OkHttpClient client = clientTestRule.newClientBuilder()
+    .eventListenerFactory(clientTestRule.wrap(eventListener))
+    .build();
 
   @BeforeEach public void before(MockWebServer server) {
     this.server = server;
@@ -175,6 +179,41 @@ public final class EventSourceHttpTest {
     listener.assertClose();
 
     assertThat(server.takeRequest().getHeaders().get("Accept")).isEqualTo("text/event-stream");
+  }
+
+  @Test public void eventListenerEvents() {
+    server.enqueue(new MockResponse.Builder()
+        .body(""
+          + "data: hey\n"
+          + "\n").setHeader("content-type", "text/event-stream")
+        .build());
+
+    EventSource source = newEventSource();
+
+    assertThat(source.request().url().encodedPath()).isEqualTo("/");
+
+    listener.assertOpen();
+    listener.assertEvent(null, null, "hey");
+    listener.assertClose();
+
+    assertThat(eventListener.recordedEventTypes()).containsExactly(
+        "CallStart",
+        "ProxySelectStart",
+        "ProxySelectEnd",
+        "DnsStart",
+        "DnsEnd",
+        "ConnectStart",
+        "ConnectEnd",
+        "ConnectionAcquired",
+        "RequestHeadersStart",
+        "RequestHeadersEnd",
+        "ResponseHeadersStart",
+        "ResponseHeadersEnd",
+        "ResponseBodyStart",
+        "ResponseBodyEnd",
+        "ConnectionReleased",
+        "CallEnd"
+    );
   }
 
   private EventSource newEventSource() {
