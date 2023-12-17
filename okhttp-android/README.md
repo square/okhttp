@@ -9,5 +9,5 @@ Download
 --------
 
 ```kotlin
-implementation("com.squareup.okhttp3:okhttp-android:4.11.0")
+implementation("com.squareup.okhttp3:okhttp-android:4.12.0")
 ```
