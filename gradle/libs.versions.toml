@@ -2,14 +2,14 @@
 biz-aQute-bnd = "6.4.0"
 checkStyle = "10.12.5"
 com-squareup-moshi = "1.15.0"
-com-squareup-okio = "3.6.0"
+com-squareup-okio = "3.7.0"
 de-mannodermaus-junit5 = "1.4.0"
 graalvm = "22.3.2"
 kotlinx-serialization = "1.6.0"
 org-bouncycastle = "1.76"
 org-conscrypt = "2.5.2"
 org-jetbrains-coroutines = "1.7.3"
-org-jetbrains-kotlin = "1.9.0"
+org-jetbrains-kotlin = "1.9.21"
 org-junit-jupiter = "5.10.1"
 
 [libraries]

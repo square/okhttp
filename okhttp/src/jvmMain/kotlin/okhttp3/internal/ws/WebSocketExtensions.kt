@@ -19,6 +19,7 @@ import java.io.IOException
 import okhttp3.Headers
 import okhttp3.internal.delimiterOffset
 import okhttp3.internal.trimSubstring
+import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 
 /**
  * Models the contents of a `Sec-WebSocket-Extensions` response header. OkHttp honors one extension
@@ -56,6 +57,7 @@ import okhttp3.internal.trimSubstring
  *
  * [rfc_7692]: https://tools.ietf.org/html/rfc7692#section-7.1
  */
+@IgnoreJRERequirement // As of AGP 3.4.1, D8 desugars API 24 hashCode methods.
 data class WebSocketExtensions(
   /** True if the agreed upon extensions includes the permessage-deflate extension. */
   @JvmField val perMessageDeflate: Boolean = false,
