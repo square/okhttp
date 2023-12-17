@@ -71,7 +71,7 @@ class RealCall(
 
   private val timeout = object : AsyncTimeout() {
     override fun timedOut() {
-      cancel()
+      this@RealCall.cancel()
     }
   }.apply {
     timeout(client.callTimeoutMillis.toLong(), MILLISECONDS)
