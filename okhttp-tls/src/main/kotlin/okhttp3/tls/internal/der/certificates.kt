@@ -24,6 +24,7 @@ import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 import okio.Buffer
 import okio.ByteString
+import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 
 internal data class Certificate(
   val tbsCertificate: TbsCertificate,
@@ -162,12 +163,14 @@ internal data class SubjectPublicKeyInfo(
   val subjectPublicKey: BitString
 )
 
+@IgnoreJRERequirement // As of AGP 3.4.1, D8 desugars API 24 hashCode methods.
 internal data class Extension(
   val id: String,
   val critical: Boolean,
   val value: Any?
 )
 
+@IgnoreJRERequirement // As of AGP 3.4.1, D8 desugars API 24 hashCode methods.
 internal data class BasicConstraints(
   /** True if this certificate can be used as a Certificate Authority (CA). */
   val ca: Boolean,
