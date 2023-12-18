@@ -24,13 +24,24 @@ import okhttp3.internal.commonEquals
 import okhttp3.internal.commonHashCode
 import okhttp3.internal.commonToString
 
+/**
+ * An [RFC 7235][rfc_7235] challenge.
+ *
+ * [rfc_7235]: https://tools.ietf.org/html/rfc7235
+ */
 actual class Challenge actual constructor(
+  /** Returns the authentication scheme, like `Basic`. */
   @get:JvmName("scheme") actual val scheme: String,
 
   authParams: Map<String?, String>
 ) {
+  /**
+   * Returns the auth params, including [realm] and [charset] if present, but as
+   * strings. The map's keys are lowercase and should be treated case-insensitively.
+   */
   @get:JvmName("authParams") actual val authParams: Map<String?, String>
 
+  /** Returns the protection space. */
   @get:JvmName("realm") actual val realm: String?
     get() = authParams["realm"]
 

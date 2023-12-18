@@ -44,13 +44,36 @@ import okhttp3.internal.connection.Exchange
 import okhttp3.internal.http.parseChallenges
 import okio.Buffer
 
+/**
+ * An HTTP response. Instances of this class are not immutable: the response body is a one-shot
+ * value that may be consumed only once and then closed. All other properties are immutable.
+ *
+ * This class implements [Closeable]. Closing it simply closes its response body. See
+ * [ResponseBody] for an explanation and examples.
+ */
 actual class Response internal constructor(
+  /**
+   * The request that initiated this HTTP response. This is not necessarily the same request issued
+   * by the application:
+   *
+   * * It may be transformed by the user's interceptors. For example, an application interceptor
+   *   may add headers like `User-Agent`.
+   * * It may be the request generated in response to an HTTP redirect or authentication
+   *   challenge. In this case the request URL may be different than the initial request URL.
+   *
+   * Use the `request` of the [networkResponse] field to get the wire-level request that was
+   * transmitted. In the case of follow-ups and redirects, also look at the `request` of the
+   * [priorResponse] objects, which have its own [priorResponse].
+   */
   @get:JvmName("request") actual val request: Request,
 
+  /** Returns the HTTP protocol, such as [Protocol.HTTP_1_1] or [Protocol.HTTP_1_0]. */
   @get:JvmName("protocol") actual val protocol: Protocol,
 
+  /** Returns the HTTP status message. */
   @get:JvmName("message") actual val message: String,
 
+  /** Returns the HTTP status code. */
   @get:JvmName("code") actual val code: Int,
 
   /**
@@ -62,12 +85,36 @@ actual class Response internal constructor(
   /** Returns the HTTP headers. */
   @get:JvmName("headers") actual val headers: Headers,
 
+  /**
+   * Returns a non-null value if this response was passed to [Callback.onResponse] or returned
+   * from [Call.execute]. Response bodies must be [closed][ResponseBody] and may
+   * be consumed only once.
+   *
+   * This always returns null on responses returned from [cacheResponse], [networkResponse],
+   * and [priorResponse].
+   */
   @get:JvmName("body") actual val body: ResponseBody,
 
+  /**
+   * Returns the raw response received from the network. Will be null if this response didn't use
+   * the network, such as when the response is fully cached. The body of the returned response
+   * should not be read.
+   */
   @get:JvmName("networkResponse") actual val networkResponse: Response?,
 
+  /**
+   * Returns the raw response received from the cache. Will be null if this response didn't use
+   * the cache. For conditional get requests the cache response and network response may both be
+   * non-null. The body of the returned response should not be read.
+   */
   @get:JvmName("cacheResponse") actual val cacheResponse: Response?,
 
+  /**
+   * Returns the response for the HTTP redirect or authorization challenge that triggered this
+   * response, or null if this response wasn't triggered by an automatic retry. The body of the
+   * returned response should not be read because it has already been consumed by the redirecting
+   * client.
+   */
   @get:JvmName("priorResponse") actual val priorResponse: Response?,
 
   /**
@@ -112,6 +159,10 @@ actual class Response internal constructor(
       level = DeprecationLevel.ERROR)
   fun code(): Int = code
 
+  /**
+   * Returns true if the code is in [200..300), which means the request was successfully received,
+   * understood, and accepted.
+   */
   actual val isSuccessful: Boolean = commonIsSuccessful
 
   @JvmName("-deprecated_message")
@@ -147,6 +198,17 @@ actual class Response internal constructor(
   @Throws(IOException::class)
   actual fun trailers(): Headers = trailersFn()
 
+  /**
+   * Peeks up to [byteCount] bytes from the response body and returns them as a new response
+   * body. If fewer than [byteCount] bytes are in the response body, the full response body is
+   * returned. If more than [byteCount] bytes are in the response body, the returned value
+   * will be truncated to [byteCount] bytes.
+   *
+   * It is an error to call this method after the body has been consumed.
+   *
+   * **Warning:** this method loads the requested bytes into memory. Most applications should set
+   * a modest limit on `byteCount`, such as 1 MiB.
+   */
   @Throws(IOException::class)
   actual fun peekBody(byteCount: Long): ResponseBody {
     val peeked = body.source().peek()
@@ -210,6 +272,10 @@ actual class Response internal constructor(
     )
   }
 
+  /**
+   * Returns the cache control directives for this response. This is never null, even if this
+   * response contains no `Cache-Control` header.
+   */
   @get:JvmName("cacheControl") actual val cacheControl: CacheControl
     get() = commonCacheControl
 
@@ -234,6 +300,12 @@ actual class Response internal constructor(
       level = DeprecationLevel.ERROR)
   fun receivedResponseAtMillis(): Long = receivedResponseAtMillis
 
+  /**
+   * Closes the response body. Equivalent to `body().close()`.
+   *
+   * Prior to OkHttp 5.0, it was an error to close a response that is not eligible for a body. This
+   * includes the responses returned from [cacheResponse], [networkResponse], and [priorResponse].
+   */
   actual override fun close() = commonClose()
 
   actual override fun toString(): String = commonToString()
@@ -287,12 +359,22 @@ actual class Response internal constructor(
       this.handshake = handshake
     }
 
+    /**
+     * Sets the header named [name] to [value]. If this request already has any headers
+     * with that name, they are all replaced.
+     */
     actual open fun header(name: String, value: String) = commonHeader(name, value)
 
+    /**
+     * Adds a header with [name] to [value]. Prefer this method for multiply-valued
+     * headers like "Set-Cookie".
+     */
     actual open fun addHeader(name: String, value: String) = commonAddHeader(name, value)
 
+    /** Removes all headers named [name] on this builder. */
     actual open fun removeHeader(name: String) = commonRemoveHeader(name)
 
+    /** Removes all headers on this builder and adds [headers]. */
     actual open fun headers(headers: Headers) = commonHeaders(headers)
 
     actual open fun body(body: ResponseBody) = commonBody(body)

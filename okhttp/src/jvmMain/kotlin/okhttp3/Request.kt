@@ -35,6 +35,10 @@ import okhttp3.internal.commonRemoveHeader
 import okhttp3.internal.commonTag
 import okhttp3.internal.commonToString
 
+/**
+ * An HTTP request. Instances of this class are immutable if their [body] is null or itself
+ * immutable.
+ */
 actual class Request internal actual constructor(builder: Builder) {
   @get:JvmName("url")
   actual val url: HttpUrl = checkNotNull(builder.url) { "url == null" }
@@ -85,9 +89,11 @@ actual class Request internal actual constructor(builder: Builder) {
 
   actual fun headers(name: String): List<String> = commonHeaders(name)
 
+  /** Returns the tag attached with [T] as a key, or null if no tag is attached with that key. */
   @JvmName("reifiedTag")
   actual inline fun <reified T : Any> tag(): T? = tag(T::class)
 
+  /** Returns the tag attached with [type] as a key, or null if no tag is attached with that key. */
   actual fun <T : Any> tag(type: KClass<T>): T? = type.java.cast(tags[type])
 
   /**
@@ -110,6 +116,10 @@ actual class Request internal actual constructor(builder: Builder) {
 
   actual fun newBuilder(): Builder = Builder(this)
 
+  /**
+   * Returns the cache control directives for this response. This is never null, even if this
+   * response contains no `Cache-Control` header.
+   */
   @get:JvmName("cacheControl") actual val cacheControl: CacheControl
     get() {
       var result = lazyCacheControl
@@ -162,6 +172,7 @@ actual class Request internal actual constructor(builder: Builder) {
     internal actual var method: String
     internal actual var headers: Headers.Builder
     internal actual var body: RequestBody? = null
+    /** A mutable map of tags, or an immutable empty map if we don't have any. */
     internal actual var tags = mapOf<KClass<*>, Any>()
 
     actual constructor() {
@@ -184,6 +195,12 @@ actual class Request internal actual constructor(builder: Builder) {
       this.url = url
     }
 
+    /**
+     * Sets the URL target of this request.
+     *
+     * @throws IllegalArgumentException if [url] is not a valid HTTP or HTTPS URL. Avoid this
+     *     exception by calling [HttpUrl.parse]; it returns null for invalid URLs.
+     */
     actual open fun url(url: String): Builder {
       return url(canonicalUrl(url).toHttpUrl())
     }
@@ -195,14 +212,32 @@ actual class Request internal actual constructor(builder: Builder) {
      */
     open fun url(url: URL) = url(url.toString().toHttpUrl())
 
+    /**
+     * Sets the header named [name] to [value]. If this request already has any headers
+     * with that name, they are all replaced.
+     */
     actual open fun header(name: String, value: String) = commonHeader(name, value)
 
+    /**
+     * Adds a header with [name] and [value]. Prefer this method for multiply-valued
+     * headers like "Cookie".
+     *
+     * Note that for some headers including `Content-Length` and `Content-Encoding`,
+     * OkHttp may replace [value] with a header derived from the request body.
+     */
     actual open fun addHeader(name: String, value: String) = commonAddHeader(name, value)
 
+    /** Removes all headers named [name] on this builder. */
     actual open fun removeHeader(name: String) = commonRemoveHeader(name)
 
+    /** Removes all headers on this builder and adds [headers]. */
     actual open fun headers(headers: Headers) = commonHeaders(headers)
 
+    /**
+     * Sets this request's `Cache-Control` header, replacing any cache control headers already
+     * present. If [cacheControl] doesn't define any directives, this clears this request's
+     * cache-control headers.
+     */
     actual open fun cacheControl(cacheControl: CacheControl): Builder = commonCacheControl(cacheControl)
 
     actual open fun get(): Builder = commonGet()
@@ -220,9 +255,23 @@ actual class Request internal actual constructor(builder: Builder) {
 
     actual open fun method(method: String, body: RequestBody?): Builder = commonMethod(method, body)
 
+    /**
+     * Attaches [tag] to the request using [T] as a key. Tags can be read from a request using
+     * [Request.tag]. Use null to remove any existing tag assigned for [T].
+     *
+     * Use this API to attach timing, debugging, or other application data to a request so that
+     * you may read it in interceptors, event listeners, or callbacks.
+     */
     @JvmName("reifiedTag")
     actual inline fun <reified T : Any> tag(tag: T?): Builder = tag(T::class, tag)
 
+    /**
+     * Attaches [tag] to the request using [type] as a key. Tags can be read from a request using
+     * [Request.tag]. Use null to remove any existing tag assigned for [type].
+     *
+     * Use this API to attach timing, debugging, or other application data to a request so that
+     * you may read it in interceptors, event listeners, or callbacks.
+     */
     actual fun <T : Any> tag(type: KClass<T>, tag: T?): Builder = commonTag(type, type.cast(tag))
 
     /** Attaches [tag] to the request using `Object.class` as a key. */
