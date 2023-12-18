@@ -80,7 +80,7 @@ jobs:
       - name: Run Checks
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: check -PandroidBuild=true -PgraalBuild=true -x test -x jvmTest -x jsTest
+          arguments: check -PandroidBuild=true -PgraalBuild=true -x test -x jvmTest
 
   testopenjdk11:
     permissions:
@@ -116,41 +116,6 @@ jobs:
         with:
           report_paths: '**/build/test-results/*/TEST-*.xml'
           check_name: OpenJDK 11 Test Report
-
-  testjs:
-    permissions:
-      checks: write # for mikepenz/action-junit-report
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Configure JDK
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'zulu'
-          java-version: 11
-
-      - name: Configure JDK
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'zulu'
-          java-version: 17
-
-      - name: Run Checks
-        uses: gradle/gradle-build-action@v2
-        with:
-          arguments: jsTest
-
-      - name: Publish Test Report
-        if: success() || failure()
-        uses: mikepenz/action-junit-report@v4
-        with:
-          report_paths: '**/build/test-results/test/TEST-*.xml'
-          check_name: JS Test Report
 
   testzulu11:
     runs-on: ubuntu-latest

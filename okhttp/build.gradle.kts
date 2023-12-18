@@ -38,24 +38,6 @@ kotlin {
   jvm {
     withJava()
   }
-  if (kmpJsEnabled) {
-    js(IR) {
-      compilations.all {
-        kotlinOptions {
-          moduleKind = "umd"
-          sourceMap = true
-          metaInfo = true
-        }
-      }
-      nodejs {
-        testTask {
-          useMocha {
-            timeout = "30s"
-          }
-        }
-      }
-    }
-  }
 
   sourceSets {
     commonMain {
@@ -73,18 +55,6 @@ kotlin {
         implementation(libs.kotlin.test.common)
         implementation(libs.kotlinx.serialization.core)
         implementation(libs.kotlinx.serialization.json)
-      }
-    }
-    val nonJvmMain = create("nonJvmMain") {
-      dependencies {
-        dependsOn(sourceSets.commonMain.get())
-        implementation(libs.kotlinx.coroutines.core)
-        implementation(libs.squareup.okhttp.icu)
-      }
-    }
-    val nonJvmTest = create("nonJvmTest") {
-      dependencies {
-        dependsOn(sourceSets.commonTest.get())
       }
     }
 
@@ -135,22 +105,6 @@ kotlin {
         implementation(libs.openjsse)
         implementation(libs.aqute.resolve)
         compileOnly(libs.findbugs.jsr305)
-      }
-    }
-
-    getByName("jsMain") {
-      dependencies {
-        dependsOn(nonJvmMain)
-        api(libs.squareup.okio)
-        api(libs.kotlin.stdlib)
-      }
-    }
-
-    getByName("jsTest") {
-      dependencies {
-        dependsOn(nonJvmTest)
-        implementation(libs.kotlin.test.js)
-        implementation(libs.kotlinx.coroutines.test)
       }
     }
   }
