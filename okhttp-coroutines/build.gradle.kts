@@ -12,26 +12,6 @@ kotlin {
   jvm {
     withJava()
   }
-  if (kmpJsEnabled) {
-    js {
-      compilations.all {
-        kotlinOptions {
-          moduleKind = "umd"
-          sourceMap = true
-          metaInfo = true
-        }
-      }
-      nodejs {
-        testTask {
-          useMocha {
-            timeout = "30s"
-          }
-        }
-      }
-      browser {
-      }
-    }
-  }
 
   sourceSets {
     commonMain {
@@ -48,18 +28,6 @@ kotlin {
         api(libs.assertk)
       }
     }
-    val nonJvmMain = create("nonJvmMain") {
-      dependencies {
-        dependsOn(sourceSets.commonMain.get())
-        api(projects.okhttp)
-        implementation(libs.kotlinx.coroutines.core)
-      }
-    }
-    val nonJvmTest = create("nonJvmTest") {
-      dependencies {
-        dependsOn(sourceSets.commonTest.get())
-      }
-    }
 
     getByName("jvmMain") {
       dependencies {
@@ -73,22 +41,6 @@ kotlin {
         implementation(projects.okhttpTestingSupport)
         implementation(libs.kotlinx.coroutines.test)
         implementation(projects.mockwebserver3Junit5)
-      }
-
-      getByName("jsMain") {
-        dependencies {
-          dependsOn(nonJvmMain)
-          api(projects.okhttp)
-          api(libs.squareup.okio)
-          api(libs.kotlin.stdlib)
-        }
-      }
-
-      getByName("jsTest") {
-        dependencies {
-          dependsOn(nonJvmTest)
-          implementation(libs.kotlin.test.js)
-        }
       }
     }
   }
