@@ -46,10 +46,27 @@ import okhttp3.internal.http.toHttpDateOrNull
 import okhttp3.internal.http.toHttpDateString
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 
+/**
+ * The header fields of a single HTTP message. Values are uninterpreted strings; use `Request` and
+ * `Response` for interpreted headers. This class maintains the order of the header fields within
+ * the HTTP message.
+ *
+ * This class tracks header values line-by-line. A field with multiple comma- separated values on
+ * the same line will be treated as a field with a single value by this class. It is the caller's
+ * responsibility to detect and split on commas if their field permits multiple values. This
+ * simplifies use of single-valued fields whose values routinely contain commas, such as cookies or
+ * dates.
+ *
+ * This class trims whitespace from values. It never returns values with leading or trailing
+ * whitespace.
+ *
+ * Instances of this class are immutable. Use [Builder] to create instances.
+ */
 @Suppress("NAME_SHADOWING")
 actual class Headers internal actual constructor(
   internal actual val namesAndValues: Array<String>
 ) : Iterable<Pair<String, String>> {
+  /** Returns the last value corresponding to the specified field, or null. */
   actual operator fun get(name: String): String? = commonHeadersGet(namesAndValues, name)
 
   /**
@@ -67,6 +84,7 @@ actual class Headers internal actual constructor(
     return getDate(name)?.toInstant()
   }
 
+  /** Returns the number of field values. */
   @get:JvmName("size") actual val size: Int
     get() = namesAndValues.size / 2
 
@@ -77,10 +95,13 @@ actual class Headers internal actual constructor(
       level = DeprecationLevel.ERROR)
   fun size(): Int = size
 
+  /** Returns the field at `position`. */
   actual fun name(index: Int): String = commonName(index)
 
+  /** Returns the value at `index`. */
   actual fun value(index: Int): String = commonValue(index)
 
+  /** Returns an immutable case-insensitive set of header names. */
   actual fun names(): Set<String> {
     val result = TreeSet(String.CASE_INSENSITIVE_ORDER)
     for (i in 0 until size) {
@@ -89,6 +110,7 @@ actual class Headers internal actual constructor(
     return Collections.unmodifiableSet(result)
   }
 
+  /** Returns an immutable list of the header values for `name`. */
   actual fun values(name: String): List<String> = commonValues(name)
 
   /**
@@ -112,10 +134,57 @@ actual class Headers internal actual constructor(
 
   actual fun newBuilder(): Builder = commonNewBuilder()
 
+  /**
+   * Returns true if `other` is a `Headers` object with the same headers, with the same casing, in
+   * the same order. Note that two headers instances may be *semantically* equal but not equal
+   * according to this method. In particular, none of the following sets of headers are equal
+   * according to this method:
+   *
+   * 1. Original
+   * ```
+   * Content-Type: text/html
+   * Content-Length: 50
+   * ```
+   *
+   * 2. Different order
+   *
+   * ```
+   * Content-Length: 50
+   * Content-Type: text/html
+   * ```
+   *
+   * 3. Different case
+   *
+   * ```
+   * content-type: text/html
+   * content-length: 50
+   * ```
+   *
+   * 4. Different values
+   *
+   * ```
+   * Content-Type: text/html
+   * Content-Length: 050
+   * ```
+   *
+   * Applications that require semantically equal headers should convert them into a canonical form
+   * before comparing them for equality.
+   */
   actual override fun equals(other: Any?): Boolean = commonEquals(other)
 
   override fun hashCode(): Int = commonHashCode()
 
+  /**
+   * Returns header names and values. The names and values are separated by `: ` and each pair is
+   * followed by a newline character `\n`.
+   *
+   * Since OkHttp 5 this redacts these sensitive headers:
+   *
+   *  * `Authorization`
+   *  * `Cookie`
+   *  * `Proxy-Authorization`
+   *  * `Set-Cookie`
+   */
   actual override fun toString(): String = commonToString()
 
   fun toMultimap(): Map<String, List<String>> {
@@ -164,6 +233,9 @@ actual class Headers internal actual constructor(
       add(line.substring(0, index).trim(), line.substring(index + 1))
     }
 
+    /**
+     * Add a header with the specified name and value. Does validation of header names and values.
+     */
     actual fun add(name: String, value: String) = commonAdd(name, value)
 
     /**
@@ -175,6 +247,9 @@ actual class Headers internal actual constructor(
       addLenient(name, value)
     }
 
+    /**
+     * Adds all headers from an existing collection.
+     */
     actual fun addAll(headers: Headers) = commonAddAll(headers)
 
     /**
@@ -224,6 +299,10 @@ actual class Headers internal actual constructor(
   }
 
   actual companion object {
+    /**
+     * Returns headers for the alternating header names and values. There must be an even number of
+     * arguments, and they must alternate between header names and values.
+     */
     @JvmStatic
     @JvmName("of")
     actual fun headersOf(vararg namesAndValues: String): Headers = commonHeadersOf(*namesAndValues)
@@ -237,6 +316,7 @@ actual class Headers internal actual constructor(
       return headersOf(*namesAndValues)
     }
 
+    /** Returns headers for the header names and values in the [Map]. */
     @JvmStatic
     @JvmName("of")
     actual fun Map<String, String>.toHeaders(): Headers = commonToHeaders()

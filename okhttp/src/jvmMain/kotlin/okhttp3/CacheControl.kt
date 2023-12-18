@@ -32,13 +32,32 @@ import okhttp3.internal.commonOnlyIfCached
 import okhttp3.internal.commonParse
 import okhttp3.internal.commonToString
 
+/**
+ * A Cache-Control header with cache directives from a server or client. These directives set policy
+ * on what responses can be stored, and which requests can be satisfied by those stored responses.
+ *
+ * See [RFC 7234, 5.2](https://tools.ietf.org/html/rfc7234#section-5.2).
+ */
 actual class CacheControl internal actual constructor(
+  /**
+   * In a response, this field's name "no-cache" is misleading. It doesn't prevent us from caching
+   * the response; it only means we have to validate the response with the origin server before
+   * returning it. We can do this with a conditional GET.
+   *
+   * In a request, it means do not use a cache to satisfy the request.
+   */
   @get:JvmName("noCache") actual val noCache: Boolean,
 
+  /** If true, this response should not be cached. */
   @get:JvmName("noStore") actual val noStore: Boolean,
 
+  /** The duration past the response's served date that it can be served without validation. */
   @get:JvmName("maxAgeSeconds") actual val maxAgeSeconds: Int,
 
+  /**
+   * The "s-maxage" directive is the max age for shared caches. Not to be confused with "max-age"
+   * for non-shared caches, As in Firefox and Chrome, this directive is not honored by this cache.
+   */
   @get:JvmName("sMaxAgeSeconds") actual val sMaxAgeSeconds: Int,
 
   actual val isPrivate: Boolean,
@@ -50,6 +69,12 @@ actual class CacheControl internal actual constructor(
 
   @get:JvmName("minFreshSeconds") actual val minFreshSeconds: Int,
 
+  /**
+   * This field's name "only-if-cached" is misleading. It actually means "do not use the network".
+   * It is set by a client who only wants to make a request if it can be fully satisfied by the
+   * cache. Cached responses that would require validation (ie. conditional gets) are not permitted
+   * if this header is set.
+   */
   @get:JvmName("onlyIfCached") actual val onlyIfCached: Boolean,
 
   @get:JvmName("noTransform") actual val noTransform: Boolean,
@@ -130,6 +155,7 @@ actual class CacheControl internal actual constructor(
 
   actual override fun toString(): String = commonToString()
 
+  /** Builds a `Cache-Control` request header. */
   actual class Builder {
     internal actual var noCache: Boolean = false
     internal actual var noStore: Boolean = false
@@ -140,16 +166,30 @@ actual class CacheControl internal actual constructor(
     internal actual var noTransform: Boolean = false
     internal actual var immutable: Boolean = false
 
+    /** Don't accept an unvalidated cached response. */
     actual fun noCache() = commonNoCache()
 
+    /** Don't store the server's response in any cache. */
     actual fun noStore() = commonNoStore()
 
+    /**
+     * Only accept the response if it is in the cache. If the response isn't cached, a `504
+     * Unsatisfiable Request` response will be returned.
+     */
     actual fun onlyIfCached() = commonOnlyIfCached()
 
+    /** Don't accept a transformed response. */
     actual fun noTransform() = commonNoTransform()
 
     actual fun immutable() = commonImmutable()
 
+    /**
+     * Sets the maximum age of a cached response. If the cache response's age exceeds [maxAge], it
+     * will not be used and a network request will be made.
+     *
+     * @param maxAge a non-negative integer. This is stored and transmitted with [TimeUnit.SECONDS]
+     *     precision; finer precision will be lost.
+     */
     actual fun maxAge(maxAge: Int, timeUnit: DurationUnit) = commonMaxAge(maxAge, timeUnit)
 
     actual fun maxStale(maxStale: Int, timeUnit: DurationUnit) = commonMaxStale(maxStale, timeUnit)
@@ -200,12 +240,25 @@ actual class CacheControl internal actual constructor(
   }
 
   actual companion object {
+    /**
+     * Cache control request directives that require network validation of responses. Note that such
+     * requests may be assisted by the cache via conditional GET requests.
+     */
     @JvmField
     actual val FORCE_NETWORK = commonForceNetwork()
 
+    /**
+     * Cache control request directives that uses the cache only, even if the cached response is
+     * stale. If the response isn't available in the cache or requires server validation, the call
+     * will fail with a `504 Unsatisfiable Request`.
+     */
     @JvmField
     actual val FORCE_CACHE = commonForceCache()
 
+    /**
+     * Returns the cache directives of [headers]. This honors both Cache-Control and Pragma headers
+     * if they are present.
+     */
     @JvmStatic
     actual fun parse(headers: Headers): CacheControl = commonParse(headers)
   }
