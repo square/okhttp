@@ -34,7 +34,7 @@ class WebPlatformToAsciiData {
 
   companion object {
     fun load(): List<WebPlatformToAsciiData> {
-      val path = okHttpRoot / "okhttp/src/commonTest/resources/web-platform-test-toascii.json"
+      val path = okHttpRoot / "okhttp/src/jvmTest/resources/web-platform-test-toascii.json"
       return SYSTEM_FILE_SYSTEM.read(path) {
         Json.decodeFromString<List<WebPlatformToAsciiData>>(readUtf8())
       }

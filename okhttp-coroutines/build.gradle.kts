@@ -14,30 +14,19 @@ kotlin {
   }
 
   sourceSets {
-    commonMain {
-      dependencies {
-        api(libs.squareup.okio)
-        api(projects.okhttp)
-        implementation(libs.kotlinx.coroutines.core)
-      }
-    }
-    val commonTest by getting {
-      dependencies {
-        implementation(libs.kotlin.test.common)
-        implementation(libs.kotlin.test.annotations)
-        api(libs.assertk)
-      }
-    }
-
     getByName("jvmMain") {
       dependencies {
+        api(projects.okhttp)
+        implementation(libs.kotlinx.coroutines.core)
         api(libs.squareup.okio)
         api(libs.kotlin.stdlib)
       }
     }
     getByName("jvmTest") {
       dependencies {
-        dependsOn(commonTest)
+        implementation(libs.kotlin.test.common)
+        implementation(libs.kotlin.test.annotations)
+        api(libs.assertk)
         implementation(projects.okhttpTestingSupport)
         implementation(libs.kotlinx.coroutines.test)
         implementation(projects.mockwebserver3Junit5)
