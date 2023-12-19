@@ -23,7 +23,7 @@ import okio.IOException
 import kotlin.coroutines.resumeWithException
 
 @OptIn(ExperimentalCoroutinesApi::class)
-actual suspend fun Call.executeAsync(): Response = suspendCancellableCoroutine { continuation ->
+suspend fun Call.executeAsync(): Response = suspendCancellableCoroutine { continuation ->
   continuation.invokeOnCancellation {
     this.cancel()
   }
