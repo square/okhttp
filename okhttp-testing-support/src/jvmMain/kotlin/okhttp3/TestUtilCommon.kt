@@ -16,18 +16,11 @@
 package okhttp3
 
 import okio.Buffer
-import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
 
 val okHttpRoot: Path
   get() = getEnv("OKHTTP_ROOT")!!.toPath()
-
-expect val SYSTEM_FILE_SYSTEM: FileSystem
-
-expect fun getEnv(name: String): String?
-
-expect val isJvm: Boolean
 
 fun String(vararg codePoints: Int): String {
   val buffer = Buffer()
