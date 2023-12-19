@@ -20,7 +20,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.UrlComponentEncodingTester.Component
 
-actual fun urlComponentEncodingTesterJvmPlatform(
+fun urlComponentEncodingTesterJvmPlatform(
   component: Component,
 ): UrlComponentEncodingTester.Platform {
   return when (component) {

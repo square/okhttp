@@ -63,11 +63,11 @@ import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
  * Instances of this class are immutable. Use [Builder] to create instances.
  */
 @Suppress("NAME_SHADOWING")
-actual class Headers internal actual constructor(
-  internal actual val namesAndValues: Array<String>
+class Headers internal constructor(
+  internal val namesAndValues: Array<String>
 ) : Iterable<Pair<String, String>> {
   /** Returns the last value corresponding to the specified field, or null. */
-  actual operator fun get(name: String): String? = commonHeadersGet(namesAndValues, name)
+  operator fun get(name: String): String? = commonHeadersGet(namesAndValues, name)
 
   /**
    * Returns the last value corresponding to the specified field parsed as an HTTP date, or null if
@@ -85,7 +85,7 @@ actual class Headers internal actual constructor(
   }
 
   /** Returns the number of field values. */
-  @get:JvmName("size") actual val size: Int
+  @get:JvmName("size") val size: Int
     get() = namesAndValues.size / 2
 
   @JvmName("-deprecated_size")
@@ -96,13 +96,13 @@ actual class Headers internal actual constructor(
   fun size(): Int = size
 
   /** Returns the field at `position`. */
-  actual fun name(index: Int): String = commonName(index)
+  fun name(index: Int): String = commonName(index)
 
   /** Returns the value at `index`. */
-  actual fun value(index: Int): String = commonValue(index)
+  fun value(index: Int): String = commonValue(index)
 
   /** Returns an immutable case-insensitive set of header names. */
-  actual fun names(): Set<String> {
+  fun names(): Set<String> {
     val result = TreeSet(String.CASE_INSENSITIVE_ORDER)
     for (i in 0 until size) {
       result.add(name(i))
@@ -111,7 +111,7 @@ actual class Headers internal actual constructor(
   }
 
   /** Returns an immutable list of the header values for `name`. */
-  actual fun values(name: String): List<String> = commonValues(name)
+  fun values(name: String): List<String> = commonValues(name)
 
   /**
    * Returns the number of bytes required to encode these headers using HTTP/1.1. This is also the
@@ -130,9 +130,9 @@ actual class Headers internal actual constructor(
     return result
   }
 
-  actual override operator fun iterator(): Iterator<Pair<String, String>> = commonIterator()
+  override operator fun iterator(): Iterator<Pair<String, String>> = commonIterator()
 
-  actual fun newBuilder(): Builder = commonNewBuilder()
+  fun newBuilder(): Builder = commonNewBuilder()
 
   /**
    * Returns true if `other` is a `Headers` object with the same headers, with the same casing, in
@@ -170,7 +170,7 @@ actual class Headers internal actual constructor(
    * Applications that require semantically equal headers should convert them into a canonical form
    * before comparing them for equality.
    */
-  actual override fun equals(other: Any?): Boolean = commonEquals(other)
+  override fun equals(other: Any?): Boolean = commonEquals(other)
 
   override fun hashCode(): Int = commonHashCode()
 
@@ -185,7 +185,7 @@ actual class Headers internal actual constructor(
    *  * `Proxy-Authorization`
    *  * `Set-Cookie`
    */
-  actual override fun toString(): String = commonToString()
+  override fun toString(): String = commonToString()
 
   fun toMultimap(): Map<String, List<String>> {
     val result = TreeMap<String, MutableList<String>>(String.CASE_INSENSITIVE_ORDER)
@@ -201,8 +201,8 @@ actual class Headers internal actual constructor(
     return result
   }
 
-  actual class Builder {
-    internal actual val namesAndValues: MutableList<String> = ArrayList(20)
+  class Builder {
+    internal val namesAndValues: MutableList<String> = ArrayList(20)
 
     /**
      * Add a header line without any validation. Only appropriate for headers from the remote peer
@@ -236,7 +236,7 @@ actual class Headers internal actual constructor(
     /**
      * Add a header with the specified name and value. Does validation of header names and values.
      */
-    actual fun add(name: String, value: String) = commonAdd(name, value)
+    fun add(name: String, value: String) = commonAdd(name, value)
 
     /**
      * Add a header with the specified name and value. Does validation of header names, allowing
@@ -250,7 +250,7 @@ actual class Headers internal actual constructor(
     /**
      * Adds all headers from an existing collection.
      */
-    actual fun addAll(headers: Headers) = commonAddAll(headers)
+    fun addAll(headers: Headers) = commonAddAll(headers)
 
     /**
      * Add a header with the specified name and formatted date. Does validation of header names and
@@ -284,28 +284,28 @@ actual class Headers internal actual constructor(
      */
     internal fun addLenient(name: String, value: String) = commonAddLenient(name, value)
 
-    actual fun removeAll(name: String) = commonRemoveAll(name)
+    fun removeAll(name: String) = commonRemoveAll(name)
 
     /**
      * Set a field with the specified value. If the field is not found, it is added. If the field is
      * found, the existing values are replaced.
      */
-    actual operator fun set(name: String, value: String) = commonSet(name, value)
+    operator fun set(name: String, value: String) = commonSet(name, value)
 
     /** Equivalent to `build().get(name)`, but potentially faster. */
-    actual operator fun get(name: String): String? = commonGet(name)
+    operator fun get(name: String): String? = commonGet(name)
 
-    actual fun build(): Headers = commonBuild()
+    fun build(): Headers = commonBuild()
   }
 
-  actual companion object {
+  companion object {
     /**
      * Returns headers for the alternating header names and values. There must be an even number of
      * arguments, and they must alternate between header names and values.
      */
     @JvmStatic
     @JvmName("of")
-    actual fun headersOf(vararg namesAndValues: String): Headers = commonHeadersOf(*namesAndValues)
+    fun headersOf(vararg namesAndValues: String): Headers = commonHeadersOf(*namesAndValues)
 
     @JvmName("-deprecated_of")
     @Deprecated(
@@ -319,7 +319,7 @@ actual class Headers internal actual constructor(
     /** Returns headers for the header names and values in the [Map]. */
     @JvmStatic
     @JvmName("of")
-    actual fun Map<String, String>.toHeaders(): Headers = commonToHeaders()
+    fun Map<String, String>.toHeaders(): Headers = commonToHeaders()
 
     @JvmName("-deprecated_of")
     @Deprecated(

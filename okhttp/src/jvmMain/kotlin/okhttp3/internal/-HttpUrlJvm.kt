@@ -145,8 +145,8 @@ internal object JvmHttpUrl {
   }
 }
 
-internal actual object HttpUrlCommon {
-  internal actual fun Buffer.writePercentDecoded(
+internal object HttpUrlCommon {
+  internal fun Buffer.writePercentDecoded(
     encoded: String,
     pos: Int,
     limit: Int,
@@ -174,14 +174,14 @@ internal actual object HttpUrlCommon {
       i += Character.charCount(codePoint)
     }
   }
-  internal actual fun String.canonicalize(
-    pos: Int,
-    limit: Int,
+  internal fun String.canonicalize(
+    pos: Int = 0,
+    limit: Int = length,
     encodeSet: String,
-    alreadyEncoded: Boolean,
-    strict: Boolean,
-    plusIsSpace: Boolean,
-    unicodeAllowed: Boolean,
+    alreadyEncoded: Boolean = false,
+    strict: Boolean = false,
+    plusIsSpace: Boolean = false,
+    unicodeAllowed: Boolean = false,
   ): String {
     return canonicalizeWithCharset(
       pos = pos,
@@ -193,5 +193,4 @@ internal actual object HttpUrlCommon {
       unicodeAllowed = unicodeAllowed
     )
   }
-
 }

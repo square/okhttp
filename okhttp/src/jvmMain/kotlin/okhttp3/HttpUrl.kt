@@ -320,9 +320,9 @@ import okhttp3.internal.publicsuffix.PublicSuffixDatabase
  *
  * [idna]: http://www.unicode.org/reports/tr46/#ToASCII
  */
-actual class HttpUrl internal actual constructor(
+class HttpUrl internal constructor(
   /** Either "http" or "https". */
-  @get:JvmName("scheme") actual val scheme: String,
+  @get:JvmName("scheme") val scheme: String,
 
   /**
    * The decoded username, or an empty string if none is present.
@@ -334,7 +334,7 @@ actual class HttpUrl internal actual constructor(
    * | `http://username:password@host/` | `"username"` |
    * | `http://a%20b:c%20d@host/`       | `"a b"`      |
    */
-  @get:JvmName("username") actual val username: String,
+  @get:JvmName("username") val username: String,
 
   /**
    * Returns the decoded password, or an empty string if none is present.
@@ -346,7 +346,7 @@ actual class HttpUrl internal actual constructor(
    * | `http://username:password@host/` | `"password"` |
    * | `http://a%20b:c%20d@host/`       | `"c d"`      |
    */
-  @get:JvmName("password") actual val password: String,
+  @get:JvmName("password") val password: String,
 
   /**
    * The host address suitable for use with [InetAddress.getAllByName]. May be:
@@ -366,7 +366,7 @@ actual class HttpUrl internal actual constructor(
    * | `http://[::1]/`       | `"::1"`         |
    * | `http://xn--n3h.net/` | `"xn--n3h.net"` |
    */
-  @get:JvmName("host") actual val host: String,
+  @get:JvmName("host") val host: String,
 
   /**
    * The explicitly-specified port if one was provided, or the default port for this URL's scheme.
@@ -379,7 +379,7 @@ actual class HttpUrl internal actual constructor(
    * | `http://host:8000/` | `8000`   |
    * | `https://host/`     | `443`    |
    */
-  @get:JvmName("port") actual val port: Int,
+  @get:JvmName("port") val port: Int,
 
   /**
    * A list of path segments like `["a", "b", "c"]` for the URL `http://host/a/b/c`. This list is
@@ -391,14 +391,14 @@ actual class HttpUrl internal actual constructor(
    * | `http://host/a/b/c"`     | `["a", "b", "c"]`   |
    * | `http://host/a/b%20c/d"` | `["a", "b c", "d"]` |
    */
-  @get:JvmName("pathSegments") actual val pathSegments: List<String>,
+  @get:JvmName("pathSegments") val pathSegments: List<String>,
 
   /**
    * Alternating, decoded query names and values, or null for no query. Names may be empty or
    * non-empty, but never null. Values are null if the name has no corresponding '=' separator, or
    * empty, or non-empty.
    */
-  internal actual val queryNamesAndValues: List<String?>?,
+  internal val queryNamesAndValues: List<String?>?,
 
   /**
    * This URL's fragment, like `"abc"` for `http://host/#abc`. This is null if the URL has no
@@ -411,12 +411,12 @@ actual class HttpUrl internal actual constructor(
    * | `http://host/#abc`     | `"abc"`      |
    * | `http://host/#abc|def` | `"abc|def"`  |
    */
-  @get:JvmName("fragment") actual val fragment: String?,
+  @get:JvmName("fragment") val fragment: String?,
 
   /** Canonical URL. */
-  internal actual val url: String
+  internal val url: String
 ) {
-  actual val isHttps: Boolean
+  val isHttps: Boolean
     get() = scheme == "https"
 
   /** Returns this URL as a [java.net.URL][URL]. */
@@ -466,7 +466,7 @@ actual class HttpUrl internal actual constructor(
    * | `http://username:password@host/` | `"username"`        |
    * | `http://a%20b:c%20d@host/`       | `"a%20b"`           |
    */
-  @get:JvmName("encodedUsername") actual val encodedUsername: String
+  @get:JvmName("encodedUsername") val encodedUsername: String
     get() = commonEncodedUsername
 
   /**
@@ -479,7 +479,7 @@ actual class HttpUrl internal actual constructor(
    * | `http://username:password@host/` | `"password"`        |
    * | `http://a%20b:c%20d@host/`       | `"c%20d"`           |
    */
-  @get:JvmName("encodedPassword") actual val encodedPassword: String
+  @get:JvmName("encodedPassword") val encodedPassword: String
     get() = commonEncodedPassword
 
   /**
@@ -493,7 +493,7 @@ actual class HttpUrl internal actual constructor(
    * | `http://host/a/b/c/` | `4`          |
    */
   @get:JvmName("pathSize")
-  actual val pathSize: Int
+  val pathSize: Int
     get() = commonPathSize
 
   /**
@@ -506,7 +506,7 @@ actual class HttpUrl internal actual constructor(
    * | `http://host/a/b/c`     | `"/a/b/c"`      |
    * | `http://host/a/b%20c/d` | `"/a/b%20c/d"`  |
    */
-  @get:JvmName("encodedPath") actual val encodedPath: String
+  @get:JvmName("encodedPath") val encodedPath: String
     get() = commonEncodedPath
 
   /**
@@ -519,7 +519,7 @@ actual class HttpUrl internal actual constructor(
    * | `http://host/a/b/c`     | `["a", "b", "c"]`       |
    * | `http://host/a/b%20c/d` | `["a", "b%20c", "d"]`   |
    */
-  @get:JvmName("encodedPathSegments") actual val encodedPathSegments: List<String>
+  @get:JvmName("encodedPathSegments") val encodedPathSegments: List<String>
     get() = commonEncodedPathSegments
 
   /**
@@ -534,7 +534,7 @@ actual class HttpUrl internal actual constructor(
    * | `http://host/?a=apple&a=apricot`  | `"a=apple&a=apricot"`  |
    * | `http://host/?a=apple&b`          | `"a=apple&b"`          |
    */
-  @get:JvmName("encodedQuery") actual val encodedQuery: String?
+  @get:JvmName("encodedQuery") val encodedQuery: String?
     get() = commonEncodedQuery
 
   /**
@@ -550,7 +550,7 @@ actual class HttpUrl internal actual constructor(
    * | `http://host/?a=apple&a=apricot`  | `"a=apple&a=apricot"`  |
    * | `http://host/?a=apple&b`          | `"a=apple&b"`          |
    */
-  @get:JvmName("query") actual val query: String?
+  @get:JvmName("query") val query: String?
     get() = commonQuery
 
   /**
@@ -566,7 +566,7 @@ actual class HttpUrl internal actual constructor(
    * | `http://host/?a=apple&a=apricot`  | `2`           |
    * | `http://host/?a=apple&b`          | `2`           |
    */
-  @get:JvmName("querySize") actual val querySize: Int
+  @get:JvmName("querySize") val querySize: Int
     get() = commonQuerySize
 
   /**
@@ -581,7 +581,7 @@ actual class HttpUrl internal actual constructor(
    * | `http://host/?a=apple&a=apricot`  | `"apple"`             |
    * | `http://host/?a=apple&b`          | `"apple"`             |
    */
-  actual fun queryParameter(name: String): String? = commonQueryParameter(name)
+  fun queryParameter(name: String): String? = commonQueryParameter(name)
 
   /**
    * The distinct query parameter names in this URL, like `["a", "b"]` for
@@ -595,7 +595,7 @@ actual class HttpUrl internal actual constructor(
    * | `http://host/?a=apple&a=apricot`  | `["a"]`                 |
    * | `http://host/?a=apple&b`          | `["a", "b"]`            |
    */
-  actual @get:JvmName("queryParameterNames") val queryParameterNames: Set<String>
+  @get:JvmName("queryParameterNames") val queryParameterNames: Set<String>
     get() = commonQueryParameterNames
 
   /**
@@ -611,7 +611,7 @@ actual class HttpUrl internal actual constructor(
    * | `http://host/?a=apple&a=apricot`  | `["apple", "apricot"]`      | `[]`                        |
    * | `http://host/?a=apple&b`          | `["apple"]`                 | `[null]`                    |
    */
-  actual fun queryParameterValues(name: String): List<String?> = commonQueryParameterValues(name)
+  fun queryParameterValues(name: String): List<String?> = commonQueryParameterValues(name)
 
   /**
    * Returns the name of the query parameter at `index`. For example this returns `"a"`
@@ -626,7 +626,7 @@ actual class HttpUrl internal actual constructor(
    * | `http://host/?a=apple&a=apricot`  | `"a"`                   | `"a"`                   |
    * | `http://host/?a=apple&b`          | `"a"`                   | `"b"`                   |
    */
-  actual fun queryParameterName(index: Int): String = commonQueryParameterName(index)
+  fun queryParameterName(index: Int): String = commonQueryParameterName(index)
 
   /**
    * Returns the value of the query parameter at `index`. For example this returns `"apple"` for
@@ -641,7 +641,7 @@ actual class HttpUrl internal actual constructor(
    * | `http://host/?a=apple&a=apricot`  | `"apple"`                | `"apricot"`              |
    * | `http://host/?a=apple&b`          | `"apple"`                | null                     |
    */
-  actual fun queryParameterValue(index: Int): String? = commonQueryParameterValue(index)
+  fun queryParameterValue(index: Int): String? = commonQueryParameterValue(index)
 
   /**
    * This URL's encoded fragment, like `"abc"` for `http://host/#abc`. This is null if the URL has
@@ -655,7 +655,7 @@ actual class HttpUrl internal actual constructor(
    * | `http://host/#abc|def` | `"abc|def"`         |
    */
   @get:JvmName("encodedFragment")
-  actual val encodedFragment: String?
+  val encodedFragment: String?
     get() = commonEncodedFragment
 
   /**
@@ -663,24 +663,24 @@ actual class HttpUrl internal actual constructor(
    * stripped, and its path replaced with `/...`. For example, redacting
    * `http://username:password@example.com/path` returns `http://example.com/...`.
    */
-  actual fun redact(): String = commonRedact()
+  fun redact(): String = commonRedact()
 
   /**
    * Returns the URL that would be retrieved by following `link` from this URL, or null if the
    * resulting URL is not well-formed.
    */
-  actual fun resolve(link: String): HttpUrl? = commonResolve(link)
+  fun resolve(link: String): HttpUrl? = commonResolve(link)
 
   /**
    * Returns a builder based on this URL.
    */
-  actual fun newBuilder(): Builder = commonNewBuilder()
+  fun newBuilder(): Builder = commonNewBuilder()
 
   /**
    * Returns a builder for the URL that would be retrieved by following `link` from this URL,
    * or null if the resulting URL is not well-formed.
    */
-  actual fun newBuilder(link: String): Builder? = commonNewBuilder(link)
+  fun newBuilder(link: String): Builder? = commonNewBuilder(link)
 
   override fun equals(other: Any?): Boolean = commonEquals(other)
 
@@ -846,82 +846,82 @@ actual class HttpUrl internal actual constructor(
       level = DeprecationLevel.ERROR)
   fun fragment(): String? = fragment
 
-  actual class Builder {
-    internal actual var scheme: String? = null
-    internal actual var encodedUsername = ""
-    internal actual var encodedPassword = ""
-    internal actual var host: String? = null
-    internal actual var port = -1
-    internal actual val encodedPathSegments = mutableListOf<String>("")
-    internal actual var encodedQueryNamesAndValues: MutableList<String?>? = null
-    internal actual var encodedFragment: String? = null
+  class Builder {
+    internal var scheme: String? = null
+    internal var encodedUsername = ""
+    internal var encodedPassword = ""
+    internal var host: String? = null
+    internal var port = -1
+    internal val encodedPathSegments = mutableListOf<String>("")
+    internal var encodedQueryNamesAndValues: MutableList<String?>? = null
+    internal var encodedFragment: String? = null
 
     /**
      * @param scheme either "http" or "https".
      */
-    actual fun scheme(scheme: String) = commonScheme(scheme)
+    fun scheme(scheme: String) = commonScheme(scheme)
 
-    actual fun username(username: String) = commonUsername(username)
+    fun username(username: String) = commonUsername(username)
 
-    actual fun encodedUsername(encodedUsername: String) = commonEncodedUsername(encodedUsername)
+    fun encodedUsername(encodedUsername: String) = commonEncodedUsername(encodedUsername)
 
-    actual fun password(password: String) = commonPassword(password)
+    fun password(password: String) = commonPassword(password)
 
-    actual fun encodedPassword(encodedPassword: String) = commonEncodedPassword(encodedPassword)
+    fun encodedPassword(encodedPassword: String) = commonEncodedPassword(encodedPassword)
 
     /**
      * @param host either a regular hostname, International Domain Name, IPv4 address, or IPv6
      * address.
      */
-    actual fun host(host: String) = commonHost(host)
+    fun host(host: String) = commonHost(host)
 
-    actual fun port(port: Int) = commonPort(port)
+    fun port(port: Int) = commonPort(port)
 
-    actual fun addPathSegment(pathSegment: String) = commonAddPathSegment(pathSegment)
+    fun addPathSegment(pathSegment: String) = commonAddPathSegment(pathSegment)
 
     /**
      * Adds a set of path segments separated by a slash (either `\` or `/`). If `pathSegments`
      * starts with a slash, the resulting URL will have empty path segment.
      */
-    actual fun addPathSegments(pathSegments: String): Builder = commonAddPathSegments(pathSegments)
+    fun addPathSegments(pathSegments: String): Builder = commonAddPathSegments(pathSegments)
 
-    actual fun addEncodedPathSegment(encodedPathSegment: String) = commonAddEncodedPathSegment(encodedPathSegment)
+    fun addEncodedPathSegment(encodedPathSegment: String) = commonAddEncodedPathSegment(encodedPathSegment)
 
     /**
      * Adds a set of encoded path segments separated by a slash (either `\` or `/`). If
      * `encodedPathSegments` starts with a slash, the resulting URL will have empty path segment.
      */
-    actual fun addEncodedPathSegments(encodedPathSegments: String): Builder = commonAddEncodedPathSegments(encodedPathSegments)
+    fun addEncodedPathSegments(encodedPathSegments: String): Builder = commonAddEncodedPathSegments(encodedPathSegments)
 
-    actual fun setPathSegment(index: Int, pathSegment: String) = commonSetPathSegment(index, pathSegment)
+    fun setPathSegment(index: Int, pathSegment: String) = commonSetPathSegment(index, pathSegment)
 
-    actual fun setEncodedPathSegment(index: Int, encodedPathSegment: String) = commonSetEncodedPathSegment(index, encodedPathSegment)
+    fun setEncodedPathSegment(index: Int, encodedPathSegment: String) = commonSetEncodedPathSegment(index, encodedPathSegment)
 
-    actual fun removePathSegment(index: Int) = commonRemovePathSegment(index)
+    fun removePathSegment(index: Int) = commonRemovePathSegment(index)
 
-    actual fun encodedPath(encodedPath: String) = commonEncodedPath(encodedPath)
+    fun encodedPath(encodedPath: String) = commonEncodedPath(encodedPath)
 
-    actual fun query(query: String?) = commonQuery(query)
+    fun query(query: String?) = commonQuery(query)
 
-    actual fun encodedQuery(encodedQuery: String?) = commonEncodedQuery(encodedQuery)
+    fun encodedQuery(encodedQuery: String?) = commonEncodedQuery(encodedQuery)
 
     /** Encodes the query parameter using UTF-8 and adds it to this URL's query string. */
-    actual fun addQueryParameter(name: String, value: String?) = commonAddQueryParameter(name, value)
+    fun addQueryParameter(name: String, value: String?) = commonAddQueryParameter(name, value)
 
     /** Adds the pre-encoded query parameter to this URL's query string. */
-    actual fun addEncodedQueryParameter(encodedName: String, encodedValue: String?) = commonAddEncodedQueryParameter(encodedName, encodedValue)
+    fun addEncodedQueryParameter(encodedName: String, encodedValue: String?) = commonAddEncodedQueryParameter(encodedName, encodedValue)
 
-    actual fun setQueryParameter(name: String, value: String?) = commonSetQueryParameter(name, value)
+    fun setQueryParameter(name: String, value: String?) = commonSetQueryParameter(name, value)
 
-    actual fun setEncodedQueryParameter(encodedName: String, encodedValue: String?) = commonSetEncodedQueryParameter(encodedName, encodedValue)
+    fun setEncodedQueryParameter(encodedName: String, encodedValue: String?) = commonSetEncodedQueryParameter(encodedName, encodedValue)
 
-    actual fun removeAllQueryParameters(name: String) = commonRemoveAllQueryParameters(name)
+    fun removeAllQueryParameters(name: String) = commonRemoveAllQueryParameters(name)
 
-    actual fun removeAllEncodedQueryParameters(encodedName: String) = commonRemoveAllEncodedQueryParameters(encodedName)
+    fun removeAllEncodedQueryParameters(encodedName: String) = commonRemoveAllEncodedQueryParameters(encodedName)
 
-    actual fun fragment(fragment: String?) = commonFragment(fragment)
+    fun fragment(fragment: String?) = commonFragment(fragment)
 
-    actual fun encodedFragment(encodedFragment: String?) = commonEncodedFragment(encodedFragment)
+    fun encodedFragment(encodedFragment: String?) = commonEncodedFragment(encodedFragment)
 
     /**
      * Re-encodes the components of this URL so that it satisfies (obsolete) RFC 2396, which is
@@ -958,16 +958,16 @@ actual class HttpUrl internal actual constructor(
       )
     }
 
-    actual fun build(): HttpUrl = commonBuild()
+    fun build(): HttpUrl = commonBuild()
 
     override fun toString(): String = commonToString()
 
-    internal actual fun parse(base: HttpUrl?, input: String): Builder = commonParse(base, input)
+    internal fun parse(base: HttpUrl?, input: String): Builder = commonParse(base, input)
   }
 
-  actual companion object {
+  companion object {
     @JvmStatic
-    actual fun defaultPort(scheme: String): Int = commonDefaultPort(scheme)
+    fun defaultPort(scheme: String): Int = commonDefaultPort(scheme)
 
     /**
      * Returns a new [HttpUrl] representing this.
@@ -975,7 +975,7 @@ actual class HttpUrl internal actual constructor(
      * @throws IllegalArgumentException If this is not a well-formed HTTP or HTTPS URL.
      */
     @JvmStatic
-    @JvmName("get") actual fun String.toHttpUrl(): HttpUrl = commonToHttpUrl()
+    @JvmName("get") fun String.toHttpUrl(): HttpUrl = commonToHttpUrl()
 
     /**
      * Returns a new `HttpUrl` representing `url` if it is a well-formed HTTP or HTTPS URL, or null
@@ -983,7 +983,7 @@ actual class HttpUrl internal actual constructor(
      */
     @JvmStatic
     @JvmName("parse")
-    actual fun String.toHttpUrlOrNull(): HttpUrl? = commonToHttpUrlOrNull()
+    fun String.toHttpUrlOrNull(): HttpUrl? = commonToHttpUrlOrNull()
 
     /**
      * Returns an [HttpUrl] for this if its protocol is `http` or `https`, or null if it has any

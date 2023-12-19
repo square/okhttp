@@ -21,21 +21,11 @@ kotlin {
   jvm()
 
   sourceSets {
-    commonMain {
+    val jvmMain by getting {
       resources.srcDir(copyResourcesTemplates.get().outputs)
       dependencies {
         api(libs.kotlin.stdlib)
       }
-    }
-
-    commonTest {
-      dependencies {
-        api(libs.kotlin.stdlib)
-        implementation(kotlin("test"))
-      }
-    }
-
-    val jvmMain by getting {
       dependencies {
         api(libs.kotlin.stdlib)
         api(projects.okhttp)

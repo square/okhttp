@@ -21,26 +21,6 @@ import okhttp3.internal.HttpUrlCommon.canonicalize
 import okhttp3.internal.HttpUrlCommon.writePercentDecoded
 import okio.Buffer
 
-internal expect object HttpUrlCommon {
-  internal fun Buffer.writePercentDecoded(
-    encoded: String,
-    pos: Int,
-    limit: Int,
-    plusIsSpace: Boolean
-  )
-
-  internal fun String.canonicalize(
-    pos: Int = 0,
-    limit: Int = length,
-    encodeSet: String,
-    alreadyEncoded: Boolean = false,
-    strict: Boolean = false,
-    plusIsSpace: Boolean = false,
-    unicodeAllowed: Boolean = false,
-  ): String
-
-}
-
 internal object CommonHttpUrl {
 
   internal val HEX_DIGITS =

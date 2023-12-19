@@ -22,9 +22,9 @@ import okio.Timeout
  * A call is a request that has been prepared for execution. A call can be canceled. As this object
  * represents a single request/response pair (stream), it cannot be executed twice.
  */
-actual interface Call : Cloneable {
+interface Call : Cloneable {
   /** Returns the original request that initiated this call. */
-  actual fun request(): Request
+  fun request(): Request
 
   /**
    * Invokes the request immediately, and blocks until the response can be processed or is in error.
@@ -65,18 +65,18 @@ actual interface Call : Cloneable {
    *
    * @throws IllegalStateException when the call has already been executed.
    */
-  actual fun enqueue(responseCallback: Callback)
+  fun enqueue(responseCallback: Callback)
 
   /** Cancels the request, if possible. Requests that are already complete cannot be canceled. */
-  actual fun cancel()
+  fun cancel()
 
   /**
    * Returns true if this call has been either [executed][execute] or [enqueued][enqueue]. It is an
    * error to execute a call more than once.
    */
-  actual fun isExecuted(): Boolean
+  fun isExecuted(): Boolean
 
-  actual fun isCanceled(): Boolean
+  fun isCanceled(): Boolean
 
   /**
    * Returns a timeout that spans the entire call: resolving DNS, connecting, writing the request
@@ -91,9 +91,9 @@ actual interface Call : Cloneable {
    * Create a new, identical call to this one which can be enqueued or executed even if this call
    * has already been.
    */
-  public actual override fun clone(): Call
+  public override fun clone(): Call
 
-  actual fun interface Factory {
-    actual fun newCall(request: Request): Call
+  fun interface Factory {
+    fun newCall(request: Request): Call
   }
 }

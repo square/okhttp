@@ -1,10 +1,5 @@
-import com.android.build.gradle.internal.tasks.factory.dependsOn
-import com.android.build.gradle.tasks.JavaDocJarTask
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
-import org.jetbrains.dokka.gradle.DokkaTask
-import org.jetbrains.dokka.gradle.DokkaTaskPartial
-import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
 
 plugins {
   kotlin("multiplatform")
@@ -16,7 +11,7 @@ plugins {
 
 // Build & use okhttp3/internal/-InternalVersion.kt
 val copyKotlinTemplates = tasks.register<Copy>("copyKotlinTemplates") {
-  from("src/commonMain/kotlinTemplates")
+  from("src/jvmMain/kotlinTemplates")
   into("$buildDir/generated/sources/kotlinTemplates")
   expand("projectVersion" to project.version)
   filteringCharset = Charsets.UTF_8.toString()
@@ -40,25 +35,10 @@ kotlin {
   }
 
   sourceSets {
-    commonMain {
+    getByName("jvmMain") {
       kotlin.srcDir(copyKotlinTemplates.get().outputs)
       kotlin.srcDir(generateIdnaMappingTable.outputs)
-      dependencies {
-        api(libs.squareup.okio)
-      }
-    }
-    val commonTest by getting {
-      dependencies {
-        implementation(projects.okhttpTestingSupport)
-        implementation(libs.assertk)
-        implementation(libs.kotlin.test.annotations)
-        implementation(libs.kotlin.test.common)
-        implementation(libs.kotlinx.serialization.core)
-        implementation(libs.kotlinx.serialization.json)
-      }
-    }
 
-    getByName("jvmMain") {
       dependencies {
         api(libs.squareup.okio)
         api(libs.kotlin.stdlib)
@@ -78,7 +58,12 @@ kotlin {
     }
     getByName("jvmTest") {
       dependencies {
-        dependsOn(commonTest)
+        implementation(projects.okhttpTestingSupport)
+        implementation(libs.assertk)
+        implementation(libs.kotlin.test.annotations)
+        implementation(libs.kotlin.test.common)
+        implementation(libs.kotlinx.serialization.core)
+        implementation(libs.kotlinx.serialization.json)
         implementation(projects.okhttpJavaNetCookiejar)
         implementation(projects.okhttpTls)
         implementation(projects.okhttpUrlconnection)

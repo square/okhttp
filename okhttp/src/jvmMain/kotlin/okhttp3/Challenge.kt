@@ -29,9 +29,9 @@ import okhttp3.internal.commonToString
  *
  * [rfc_7235]: https://tools.ietf.org/html/rfc7235
  */
-actual class Challenge actual constructor(
+class Challenge(
   /** Returns the authentication scheme, like `Basic`. */
-  @get:JvmName("scheme") actual val scheme: String,
+  @get:JvmName("scheme") val scheme: String,
 
   authParams: Map<String?, String>
 ) {
@@ -39,10 +39,10 @@ actual class Challenge actual constructor(
    * Returns the auth params, including [realm] and [charset] if present, but as
    * strings. The map's keys are lowercase and should be treated case-insensitively.
    */
-  @get:JvmName("authParams") actual val authParams: Map<String?, String>
+  @get:JvmName("authParams") val authParams: Map<String?, String>
 
   /** Returns the protection space. */
-  @get:JvmName("realm") actual val realm: String?
+  @get:JvmName("realm") val realm: String?
     get() = authParams["realm"]
 
   /** The charset that should be used to encode the credentials. */
@@ -58,7 +58,7 @@ actual class Challenge actual constructor(
       return ISO_8859_1
     }
 
-  actual constructor(scheme: String, realm: String) : this(scheme, singletonMap("realm", realm))
+  constructor(scheme: String, realm: String) : this(scheme, singletonMap("realm", realm))
 
   init {
     val newAuthParams = mutableMapOf<String?, String>()
@@ -104,9 +104,9 @@ actual class Challenge actual constructor(
       level = DeprecationLevel.ERROR)
   fun charset(): Charset = charset
 
-  actual override fun equals(other: Any?): Boolean = commonEquals(other)
+  override fun equals(other: Any?): Boolean = commonEquals(other)
 
-  actual override fun hashCode(): Int = commonHashCode()
+  override fun hashCode(): Int = commonHashCode()
 
-  actual override fun toString(): String = commonToString()
+  override fun toString(): String = commonToString()
 }

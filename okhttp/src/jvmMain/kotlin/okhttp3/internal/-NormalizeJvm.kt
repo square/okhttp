@@ -18,5 +18,5 @@ package okhttp3.internal
 import java.text.Normalizer
 import java.text.Normalizer.Form.NFC
 
-internal actual fun normalizeNfc(string: String): String =
+internal fun normalizeNfc(string: String): String =
   Normalizer.normalize(string, NFC)

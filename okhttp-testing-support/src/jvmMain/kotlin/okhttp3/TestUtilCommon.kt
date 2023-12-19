@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Square, Inc.
+ * Copyright (C) 2023 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,9 +12,20 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
-
 package okhttp3
 
-expect suspend fun Call.executeAsync(): Response
+import okio.Buffer
+import okio.Path
+import okio.Path.Companion.toPath
+
+val okHttpRoot: Path
+  get() = getEnv("OKHTTP_ROOT")!!.toPath()
+
+fun String(vararg codePoints: Int): String {
+  val buffer = Buffer()
+  for (codePoint in codePoints) {
+    buffer.writeUtf8CodePoint(codePoint)
+  }
+  return buffer.readUtf8()
+}

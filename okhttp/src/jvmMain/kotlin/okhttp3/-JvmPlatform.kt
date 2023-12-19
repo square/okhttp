@@ -17,4 +17,4 @@
 
 package okhttp3
 
-actual typealias ProtocolException = java.net.ProtocolException
+typealias ProtocolException = java.net.ProtocolException

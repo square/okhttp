@@ -124,8 +124,8 @@ object TestUtil {
   }
 }
 
-actual fun getEnv(name: String) = System.getenv(name)
+fun getEnv(name: String) = System.getenv(name)
 
-actual val SYSTEM_FILE_SYSTEM = FileSystem.SYSTEM
+val SYSTEM_FILE_SYSTEM = FileSystem.SYSTEM
 
-actual val isJvm = true
+val isJvm = true

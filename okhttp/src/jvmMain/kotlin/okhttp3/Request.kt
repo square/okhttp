@@ -18,11 +18,13 @@ package okhttp3
 import java.net.URL
 import kotlin.reflect.KClass
 import kotlin.reflect.cast
+import okhttp3.Headers.Companion.headersOf
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.internal.canonicalUrl
 import okhttp3.internal.commonAddHeader
 import okhttp3.internal.commonCacheControl
 import okhttp3.internal.commonDelete
+import okhttp3.internal.commonEmptyRequestBody
 import okhttp3.internal.commonGet
 import okhttp3.internal.commonHead
 import okhttp3.internal.commonHeader
@@ -39,24 +41,24 @@ import okhttp3.internal.commonToString
  * An HTTP request. Instances of this class are immutable if their [body] is null or itself
  * immutable.
  */
-actual class Request internal actual constructor(builder: Builder) {
+class Request internal constructor(builder: Builder) {
   @get:JvmName("url")
-  actual val url: HttpUrl = checkNotNull(builder.url) { "url == null" }
+  val url: HttpUrl = checkNotNull(builder.url) { "url == null" }
 
   @get:JvmName("method")
-  actual val method: String = builder.method
+  val method: String = builder.method
 
   @get:JvmName("headers")
-  actual val headers: Headers = builder.headers.build()
+  val headers: Headers = builder.headers.build()
 
   @get:JvmName("body")
-  actual val body: RequestBody? = builder.body
+  val body: RequestBody? = builder.body
 
-  internal actual val tags: Map<KClass<*>, Any> = builder.tags.toMap()
+  internal val tags: Map<KClass<*>, Any> = builder.tags.toMap()
 
-  internal actual var lazyCacheControl: CacheControl? = null
+  internal var lazyCacheControl: CacheControl? = null
 
-  actual val isHttps: Boolean
+  val isHttps: Boolean
     get() = url.isHttps
 
   /**
@@ -66,11 +68,11 @@ actual class Request internal actual constructor(builder: Builder) {
    *
    * @param method defaults to "GET" if [body] is null, and "POST" otherwise.
    */
-  actual constructor(
+  constructor(
     url: HttpUrl,
-    headers: Headers,
-    method: String,
-    body: RequestBody?,
+    headers: Headers = headersOf(),
+    method: String = "\u0000", // Sentinel value chooses based on what the body is.
+    body: RequestBody? = null,
   ) : this(
     Builder()
       .url(url)
@@ -85,16 +87,16 @@ actual class Request internal actual constructor(builder: Builder) {
       )
   )
 
-  actual fun header(name: String): String? = commonHeader(name)
+  fun header(name: String): String? = commonHeader(name)
 
-  actual fun headers(name: String): List<String> = commonHeaders(name)
+  fun headers(name: String): List<String> = commonHeaders(name)
 
   /** Returns the tag attached with [T] as a key, or null if no tag is attached with that key. */
   @JvmName("reifiedTag")
-  actual inline fun <reified T : Any> tag(): T? = tag(T::class)
+  inline fun <reified T : Any> tag(): T? = tag(T::class)
 
   /** Returns the tag attached with [type] as a key, or null if no tag is attached with that key. */
-  actual fun <T : Any> tag(type: KClass<T>): T? = type.java.cast(tags[type])
+  fun <T : Any> tag(type: KClass<T>): T? = type.java.cast(tags[type])
 
   /**
    * Returns the tag attached with `Object.class` as a key, or null if no tag is attached with
@@ -114,13 +116,13 @@ actual class Request internal actual constructor(builder: Builder) {
    */
   fun <T> tag(type: Class<out T>): T? = tag(type.kotlin)
 
-  actual fun newBuilder(): Builder = Builder(this)
+  fun newBuilder(): Builder = Builder(this)
 
   /**
    * Returns the cache control directives for this response. This is never null, even if this
    * response contains no `Cache-Control` header.
    */
-  @get:JvmName("cacheControl") actual val cacheControl: CacheControl
+  @get:JvmName("cacheControl") val cacheControl: CacheControl
     get() {
       var result = lazyCacheControl
       if (result == null) {
@@ -167,20 +169,20 @@ actual class Request internal actual constructor(builder: Builder) {
 
   override fun toString(): String = commonToString()
 
-  actual open class Builder {
-    internal actual var url: HttpUrl? = null
-    internal actual var method: String
-    internal actual var headers: Headers.Builder
-    internal actual var body: RequestBody? = null
+  open class Builder {
+    internal var url: HttpUrl? = null
+    internal var method: String
+    internal var headers: Headers.Builder
+    internal var body: RequestBody? = null
     /** A mutable map of tags, or an immutable empty map if we don't have any. */
-    internal actual var tags = mapOf<KClass<*>, Any>()
+    internal var tags = mapOf<KClass<*>, Any>()
 
-    actual constructor() {
+    constructor() {
       this.method = "GET"
       this.headers = Headers.Builder()
     }
 
-    internal actual constructor(request: Request) {
+    internal constructor(request: Request) {
       this.url = request.url
       this.method = request.method
       this.body = request.body
@@ -191,7 +193,7 @@ actual class Request internal actual constructor(builder: Builder) {
       this.headers = request.headers.newBuilder()
     }
 
-    actual open fun url(url: HttpUrl): Builder = apply {
+    open fun url(url: HttpUrl): Builder = apply {
       this.url = url
     }
 
@@ -201,7 +203,7 @@ actual class Request internal actual constructor(builder: Builder) {
      * @throws IllegalArgumentException if [url] is not a valid HTTP or HTTPS URL. Avoid this
      *     exception by calling [HttpUrl.parse]; it returns null for invalid URLs.
      */
-    actual open fun url(url: String): Builder {
+    open fun url(url: String): Builder {
       return url(canonicalUrl(url).toHttpUrl())
     }
 
@@ -216,7 +218,7 @@ actual class Request internal actual constructor(builder: Builder) {
      * Sets the header named [name] to [value]. If this request already has any headers
      * with that name, they are all replaced.
      */
-    actual open fun header(name: String, value: String) = commonHeader(name, value)
+    open fun header(name: String, value: String) = commonHeader(name, value)
 
     /**
      * Adds a header with [name] and [value]. Prefer this method for multiply-valued
@@ -225,35 +227,35 @@ actual class Request internal actual constructor(builder: Builder) {
      * Note that for some headers including `Content-Length` and `Content-Encoding`,
      * OkHttp may replace [value] with a header derived from the request body.
      */
-    actual open fun addHeader(name: String, value: String) = commonAddHeader(name, value)
+    open fun addHeader(name: String, value: String) = commonAddHeader(name, value)
 
     /** Removes all headers named [name] on this builder. */
-    actual open fun removeHeader(name: String) = commonRemoveHeader(name)
+    open fun removeHeader(name: String) = commonRemoveHeader(name)
 
     /** Removes all headers on this builder and adds [headers]. */
-    actual open fun headers(headers: Headers) = commonHeaders(headers)
+    open fun headers(headers: Headers) = commonHeaders(headers)
 
     /**
      * Sets this request's `Cache-Control` header, replacing any cache control headers already
      * present. If [cacheControl] doesn't define any directives, this clears this request's
      * cache-control headers.
      */
-    actual open fun cacheControl(cacheControl: CacheControl): Builder = commonCacheControl(cacheControl)
+    open fun cacheControl(cacheControl: CacheControl): Builder = commonCacheControl(cacheControl)
 
-    actual open fun get(): Builder = commonGet()
+    open fun get(): Builder = commonGet()
 
-    actual open fun head(): Builder = commonHead()
+    open fun head(): Builder = commonHead()
 
-    actual open fun post(body: RequestBody): Builder = commonPost(body)
+    open fun post(body: RequestBody): Builder = commonPost(body)
 
     @JvmOverloads
-    actual open fun delete(body: RequestBody?): Builder = commonDelete(body)
+    open fun delete(body: RequestBody? = commonEmptyRequestBody): Builder = commonDelete(body)
 
-    actual open fun put(body: RequestBody): Builder = commonPut(body)
+    open fun put(body: RequestBody): Builder = commonPut(body)
 
-    actual open fun patch(body: RequestBody): Builder = commonPatch(body)
+    open fun patch(body: RequestBody): Builder = commonPatch(body)
 
-    actual open fun method(method: String, body: RequestBody?): Builder = commonMethod(method, body)
+    open fun method(method: String, body: RequestBody?): Builder = commonMethod(method, body)
 
     /**
      * Attaches [tag] to the request using [T] as a key. Tags can be read from a request using
@@ -263,7 +265,7 @@ actual class Request internal actual constructor(builder: Builder) {
      * you may read it in interceptors, event listeners, or callbacks.
      */
     @JvmName("reifiedTag")
-    actual inline fun <reified T : Any> tag(tag: T?): Builder = tag(T::class, tag)
+    inline fun <reified T : Any> tag(tag: T?): Builder = tag(T::class, tag)
 
     /**
      * Attaches [tag] to the request using [type] as a key. Tags can be read from a request using
@@ -272,7 +274,7 @@ actual class Request internal actual constructor(builder: Builder) {
      * Use this API to attach timing, debugging, or other application data to a request so that
      * you may read it in interceptors, event listeners, or callbacks.
      */
-    actual fun <T : Any> tag(type: KClass<T>, tag: T?): Builder = commonTag(type, type.cast(tag))
+    fun <T : Any> tag(type: KClass<T>, tag: T?): Builder = commonTag(type, type.cast(tag))
 
     /** Attaches [tag] to the request using `Object.class` as a key. */
     open fun tag(tag: Any?): Builder = commonTag(Any::class, tag)
@@ -286,6 +288,6 @@ actual class Request internal actual constructor(builder: Builder) {
      */
     open fun <T> tag(type: Class<in T>, tag: T?) = commonTag(type.kotlin, tag)
 
-    actual open fun build(): Request = Request(this)
+    open fun build(): Request = Request(this)
   }
 }

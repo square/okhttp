@@ -101,21 +101,21 @@ import okio.ByteString
  * re-read the bytes of the response. Use this one shot to read the entire response into memory with
  * [bytes] or [string]. Or stream the response with either [source], [byteStream], or [charStream].
  */
-actual abstract class ResponseBody : Closeable {
+abstract class ResponseBody : Closeable {
   /** Multiple calls to [charStream] must return the same instance. */
   private var reader: Reader? = null
 
-  actual abstract fun contentType(): MediaType?
+  abstract fun contentType(): MediaType?
 
   /**
    * Returns the number of bytes in that will returned by [bytes], or [byteStream], or -1 if
    * unknown.
    */
-  actual abstract fun contentLength(): Long
+  abstract fun contentLength(): Long
 
   fun byteStream(): InputStream = source().inputStream()
 
-  actual abstract fun source(): BufferedSource
+  abstract fun source(): BufferedSource
 
   /**
    * Returns the response as a byte array.
@@ -125,7 +125,7 @@ actual abstract class ResponseBody : Closeable {
    * possibility for your response.
    */
   @Throws(IOException::class)
-  actual fun bytes() = commonBytes()
+  fun bytes() = commonBytes()
 
   /**
    * Returns the response as a [ByteString].
@@ -135,7 +135,7 @@ actual abstract class ResponseBody : Closeable {
    * possibility for your response.
    */
   @Throws(IOException::class)
-  actual fun byteString() = commonByteString()
+  fun byteString() = commonByteString()
 
   /**
    * Returns the response as a character stream.
@@ -170,13 +170,13 @@ actual abstract class ResponseBody : Closeable {
    * possibility for your response.
    */
   @Throws(IOException::class)
-  actual fun string(): String = source().use { source ->
+  fun string(): String = source().use { source ->
     source.readString(charset = source.readBomAsCharset(charset()))
   }
 
   private fun charset() = contentType().charsetOrUtf8()
 
-  actual override fun close() = commonClose()
+  override fun close() = commonClose()
 
   internal class BomAwareReader(
     private val source: BufferedSource,
@@ -205,7 +205,7 @@ actual abstract class ResponseBody : Closeable {
     }
   }
 
-  actual companion object {
+  companion object {
     /**
      * Returns a new response body that transmits this string. If [contentType] is non-null and
      * has a charset other than utf-8 the behaviour differs by platform.
@@ -216,7 +216,7 @@ actual abstract class ResponseBody : Closeable {
      */
     @JvmStatic
     @JvmName("create")
-    actual fun String.toResponseBody(contentType: MediaType?): ResponseBody {
+    fun String.toResponseBody(contentType: MediaType? = null): ResponseBody {
       val (charset, finalContentType) = contentType.chooseCharset()
       val buffer = Buffer().writeString(this, charset)
       return buffer.asResponseBody(finalContentType, buffer.size)
@@ -225,19 +225,19 @@ actual abstract class ResponseBody : Closeable {
     /** Returns a new response body that transmits this byte array. */
     @JvmStatic
     @JvmName("create")
-    actual fun ByteArray.toResponseBody(contentType: MediaType?): ResponseBody = commonToResponseBody(contentType)
+    fun ByteArray.toResponseBody(contentType: MediaType? = null): ResponseBody = commonToResponseBody(contentType)
 
     /** Returns a new response body that transmits this byte string. */
     @JvmStatic
     @JvmName("create")
-    actual fun ByteString.toResponseBody(contentType: MediaType?): ResponseBody = commonToResponseBody(contentType)
+    fun ByteString.toResponseBody(contentType: MediaType? = null): ResponseBody = commonToResponseBody(contentType)
 
     /** Returns a new response body that transmits this source. */
     @JvmStatic
     @JvmName("create")
-    actual fun BufferedSource.asResponseBody(
-      contentType: MediaType?,
-      contentLength: Long
+    fun BufferedSource.asResponseBody(
+      contentType: MediaType? = null,
+      contentLength: Long = -1L,
     ): ResponseBody = commonAsResponseBody(contentType, contentLength)
 
     @JvmStatic

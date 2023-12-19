@@ -9,13 +9,9 @@ kotlin {
   }
 
   sourceSets {
-    val commonMain by getting {
-      dependencies {
-        api(libs.squareup.okio)
-      }
-    }
     val jvmMain by getting {
       dependencies {
+        api(libs.squareup.okio)
         api(projects.okhttp)
         api(projects.okhttpTls)
         api(libs.assertj.core)
