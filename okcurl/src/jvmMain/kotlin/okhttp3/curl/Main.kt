@@ -39,14 +39,14 @@ import okhttp3.internal.platform.Platform
 import okhttp3.logging.HttpLoggingInterceptor
 import okhttp3.logging.LoggingEventListener
 
-actual class Main : CliktCommand(name = NAME, help = "A curl for the next-generation web.") {
-  actual val method: String? by option("-X", "--request", help="Specify request command to use")
+class Main : CliktCommand(name = NAME, help = "A curl for the next-generation web.") {
+  val method: String? by option("-X", "--request", help="Specify request command to use")
 
-  actual val data: String? by option("-d", "--data", help="HTTP POST data")
+  val data: String? by option("-d", "--data", help="HTTP POST data")
 
-  actual val headers: List<String>? by option("-H", "--header", help="Custom header to pass to server").multiple()
+  val headers: List<String>? by option("-H", "--header", help="Custom header to pass to server").multiple()
 
-  actual val userAgent: String by option("-A", "--user-agent", help="User-Agent to send to server").default(NAME + "/" + versionString())
+  val userAgent: String by option("-A", "--user-agent", help="User-Agent to send to server").default(NAME + "/" + versionString())
 
   val connectTimeout: Int by option("--connect-timeout", help="Maximum time allowed for connection (seconds)").int().default(DEFAULT_TIMEOUT)
 
@@ -58,29 +58,29 @@ actual class Main : CliktCommand(name = NAME, help = "A curl for the next-genera
 
   val allowInsecure: Boolean by option("-k", "--insecure", help="Allow connections to SSL sites without certs").flag()
 
-  actual val showHeaders: Boolean by option("-i", "--include", help="Include protocol headers in the output").flag()
+  val showHeaders: Boolean by option("-i", "--include", help="Include protocol headers in the output").flag()
 
   val showHttp2Frames: Boolean by option("--frames", help="Log HTTP/2 frames to STDERR").flag()
 
-  actual val referer: String? by option("-e", "--referer", help="Referer URL")
+  val referer: String? by option("-e", "--referer", help="Referer URL")
 
   val verbose: Boolean by option("-v", "--verbose", help="Makes $NAME verbose during the operation").flag()
 
   val sslDebug: Boolean by option(help="Output SSL Debug").flag()
 
-  actual val url: String? by argument(name = "url", help="Remote resource URL")
+  val url: String? by argument(name = "url", help="Remote resource URL")
 
-  actual var client: Call.Factory? = null
+  var client: Call.Factory? = null
 
-  actual override fun run() {
+  override fun run() {
     LoggingUtil.configureLogging(debug = verbose, showHttp2Frames = showHttp2Frames, sslDebug = sslDebug)
 
     commonRun()
   }
 
-  actual fun createRequest(): Request = commonCreateRequest()
+  fun createRequest(): Request = commonCreateRequest()
 
-  actual fun createClient(): Call.Factory {
+  fun createClient(): Call.Factory {
     val builder = OkHttpClient.Builder()
     builder.followSslRedirects(followRedirects)
     if (connectTimeout != DEFAULT_TIMEOUT) {
@@ -105,7 +105,7 @@ actual class Main : CliktCommand(name = NAME, help = "A curl for the next-genera
     return builder.build()
   }
 
-  actual fun close() {
+  fun close() {
     val okHttpClient = client as OkHttpClient
     okHttpClient.connectionPool.evictAll() // Close any persistent connections.
     okHttpClient.dispatcher.executorService.shutdownNow()
