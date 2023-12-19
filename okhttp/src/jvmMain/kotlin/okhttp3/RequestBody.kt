@@ -32,21 +32,21 @@ import okio.Path
 import okio.buffer
 import okio.source
 
-actual abstract class RequestBody {
+abstract class RequestBody {
 
   /** Returns the Content-Type header for this body. */
-  actual abstract fun contentType(): MediaType?
+  abstract fun contentType(): MediaType?
 
   /**
    * Returns the number of bytes that will be written to sink in a call to [writeTo],
    * or -1 if that count is unknown.
    */
   @Throws(IOException::class)
-  actual open fun contentLength(): Long = commonContentLength()
+  open fun contentLength(): Long = commonContentLength()
 
   /** Writes the content of this request to [sink]. */
   @Throws(IOException::class)
-  actual abstract fun writeTo(sink: BufferedSink)
+  abstract fun writeTo(sink: BufferedSink)
 
   /**
    * A duplex request body is special in how it is **transmitted** on the network and
@@ -80,7 +80,7 @@ actual abstract class RequestBody {
    *
    * [grpc]: https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md
    */
-  actual open fun isDuplex(): Boolean = commonIsDuplex()
+  open fun isDuplex(): Boolean = commonIsDuplex()
 
   /**
    * Returns true if this body expects at most one call to [writeTo] and can be transmitted
@@ -99,16 +99,16 @@ actual abstract class RequestBody {
    *  * A retryable server failure (HTTP 503 with a `Retry-After: 0` response header).
    *  * A misdirected request (HTTP 421) on a coalesced connection.
    */
-  actual open fun isOneShot(): Boolean = commonIsOneShot()
+  open fun isOneShot(): Boolean = commonIsOneShot()
 
-  actual companion object {
+  companion object {
     /**
      * Returns a new request body that transmits this string. If [contentType] is non-null and lacks
      * a charset, this will use UTF-8.
      */
     @JvmStatic
     @JvmName("create")
-    actual fun String.toRequestBody(contentType: MediaType?): RequestBody {
+    fun String.toRequestBody(contentType: MediaType? = null): RequestBody {
       val (charset, finalContentType) = contentType.chooseCharset()
       val bytes = toByteArray(charset)
       return bytes.toRequestBody(finalContentType, 0, bytes.size)
@@ -116,7 +116,7 @@ actual abstract class RequestBody {
 
     @JvmStatic
     @JvmName("create")
-    actual fun ByteString.toRequestBody(contentType: MediaType?): RequestBody =
+    fun ByteString.toRequestBody(contentType: MediaType? = null): RequestBody =
       commonToRequestBody(contentType)
 
     /** Returns a new request body that transmits this. */
@@ -140,10 +140,10 @@ actual abstract class RequestBody {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    actual fun ByteArray.toRequestBody(
-      contentType: MediaType?,
-      offset: Int,
-      byteCount: Int
+    fun ByteArray.toRequestBody(
+      contentType: MediaType? = null,
+      offset: Int = 0,
+      byteCount: Int = size,
     ): RequestBody = commonToRequestBody(contentType, offset, byteCount)
 
     /** Returns a new request body that transmits the content of this. */

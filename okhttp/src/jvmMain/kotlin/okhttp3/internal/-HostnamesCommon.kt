@@ -332,4 +332,3 @@ internal fun idnToAscii(host: String): String? {
   return Punycode.encode(decoded)
 }
 
-internal expect fun normalizeNfc(string: String): String

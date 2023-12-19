@@ -38,7 +38,7 @@ import okhttp3.internal.commonToString
  *
  * See [RFC 7234, 5.2](https://tools.ietf.org/html/rfc7234#section-5.2).
  */
-actual class CacheControl internal actual constructor(
+class CacheControl internal constructor(
   /**
    * In a response, this field's name "no-cache" is misleading. It doesn't prevent us from caching
    * the response; it only means we have to validate the response with the origin server before
@@ -46,28 +46,28 @@ actual class CacheControl internal actual constructor(
    *
    * In a request, it means do not use a cache to satisfy the request.
    */
-  @get:JvmName("noCache") actual val noCache: Boolean,
+  @get:JvmName("noCache") val noCache: Boolean,
 
   /** If true, this response should not be cached. */
-  @get:JvmName("noStore") actual val noStore: Boolean,
+  @get:JvmName("noStore") val noStore: Boolean,
 
   /** The duration past the response's served date that it can be served without validation. */
-  @get:JvmName("maxAgeSeconds") actual val maxAgeSeconds: Int,
+  @get:JvmName("maxAgeSeconds") val maxAgeSeconds: Int,
 
   /**
    * The "s-maxage" directive is the max age for shared caches. Not to be confused with "max-age"
    * for non-shared caches, As in Firefox and Chrome, this directive is not honored by this cache.
    */
-  @get:JvmName("sMaxAgeSeconds") actual val sMaxAgeSeconds: Int,
+  @get:JvmName("sMaxAgeSeconds") val sMaxAgeSeconds: Int,
 
-  actual val isPrivate: Boolean,
-  actual val isPublic: Boolean,
+  val isPrivate: Boolean,
+  val isPublic: Boolean,
 
-  @get:JvmName("mustRevalidate") actual val mustRevalidate: Boolean,
+  @get:JvmName("mustRevalidate") val mustRevalidate: Boolean,
 
-  @get:JvmName("maxStaleSeconds") actual val maxStaleSeconds: Int,
+  @get:JvmName("maxStaleSeconds") val maxStaleSeconds: Int,
 
-  @get:JvmName("minFreshSeconds") actual val minFreshSeconds: Int,
+  @get:JvmName("minFreshSeconds") val minFreshSeconds: Int,
 
   /**
    * This field's name "only-if-cached" is misleading. It actually means "do not use the network".
@@ -75,13 +75,13 @@ actual class CacheControl internal actual constructor(
    * cache. Cached responses that would require validation (ie. conditional gets) are not permitted
    * if this header is set.
    */
-  @get:JvmName("onlyIfCached") actual val onlyIfCached: Boolean,
+  @get:JvmName("onlyIfCached") val onlyIfCached: Boolean,
 
-  @get:JvmName("noTransform") actual val noTransform: Boolean,
+  @get:JvmName("noTransform") val noTransform: Boolean,
 
-  @get:JvmName("immutable") actual val immutable: Boolean,
+  @get:JvmName("immutable") val immutable: Boolean,
 
-  internal actual var headerValue: String?
+  internal var headerValue: String?
 ) {
   @JvmName("-deprecated_noCache")
   @Deprecated(
@@ -153,35 +153,35 @@ actual class CacheControl internal actual constructor(
       level = DeprecationLevel.ERROR)
   fun immutable(): Boolean = immutable
 
-  actual override fun toString(): String = commonToString()
+  override fun toString(): String = commonToString()
 
   /** Builds a `Cache-Control` request header. */
-  actual class Builder {
-    internal actual var noCache: Boolean = false
-    internal actual var noStore: Boolean = false
-    internal actual var maxAgeSeconds = -1
-    internal actual var maxStaleSeconds = -1
-    internal actual var minFreshSeconds = -1
-    internal actual var onlyIfCached: Boolean = false
-    internal actual var noTransform: Boolean = false
-    internal actual var immutable: Boolean = false
+  class Builder {
+    internal var noCache: Boolean = false
+    internal var noStore: Boolean = false
+    internal var maxAgeSeconds = -1
+    internal var maxStaleSeconds = -1
+    internal var minFreshSeconds = -1
+    internal var onlyIfCached: Boolean = false
+    internal var noTransform: Boolean = false
+    internal var immutable: Boolean = false
 
     /** Don't accept an unvalidated cached response. */
-    actual fun noCache() = commonNoCache()
+    fun noCache() = commonNoCache()
 
     /** Don't store the server's response in any cache. */
-    actual fun noStore() = commonNoStore()
+    fun noStore() = commonNoStore()
 
     /**
      * Only accept the response if it is in the cache. If the response isn't cached, a `504
      * Unsatisfiable Request` response will be returned.
      */
-    actual fun onlyIfCached() = commonOnlyIfCached()
+    fun onlyIfCached() = commonOnlyIfCached()
 
     /** Don't accept a transformed response. */
-    actual fun noTransform() = commonNoTransform()
+    fun noTransform() = commonNoTransform()
 
-    actual fun immutable() = commonImmutable()
+    fun immutable() = commonImmutable()
 
     /**
      * Sets the maximum age of a cached response. If the cache response's age exceeds [maxAge], it
@@ -190,11 +190,11 @@ actual class CacheControl internal actual constructor(
      * @param maxAge a non-negative integer. This is stored and transmitted with [TimeUnit.SECONDS]
      *     precision; finer precision will be lost.
      */
-    actual fun maxAge(maxAge: Int, timeUnit: DurationUnit) = commonMaxAge(maxAge, timeUnit)
+    fun maxAge(maxAge: Int, timeUnit: DurationUnit) = commonMaxAge(maxAge, timeUnit)
 
-    actual fun maxStale(maxStale: Int, timeUnit: DurationUnit) = commonMaxStale(maxStale, timeUnit)
+    fun maxStale(maxStale: Int, timeUnit: DurationUnit) = commonMaxStale(maxStale, timeUnit)
 
-    actual fun minFresh(minFresh: Int, timeUnit: DurationUnit) = commonMinFresh(minFresh, timeUnit)
+    fun minFresh(minFresh: Int, timeUnit: DurationUnit) = commonMinFresh(minFresh, timeUnit)
 
     /**
      * Sets the maximum age of a cached response. If the cache response's age exceeds [maxAge], it
@@ -236,16 +236,16 @@ actual class CacheControl internal actual constructor(
       this.minFreshSeconds = minFreshSecondsLong.commonClampToInt()
     }
 
-    actual fun build(): CacheControl = commonBuild()
+    fun build(): CacheControl = commonBuild()
   }
 
-  actual companion object {
+  companion object {
     /**
      * Cache control request directives that require network validation of responses. Note that such
      * requests may be assisted by the cache via conditional GET requests.
      */
     @JvmField
-    actual val FORCE_NETWORK = commonForceNetwork()
+    val FORCE_NETWORK = commonForceNetwork()
 
     /**
      * Cache control request directives that uses the cache only, even if the cached response is
@@ -253,13 +253,13 @@ actual class CacheControl internal actual constructor(
      * will fail with a `504 Unsatisfiable Request`.
      */
     @JvmField
-    actual val FORCE_CACHE = commonForceCache()
+    val FORCE_CACHE = commonForceCache()
 
     /**
      * Returns the cache directives of [headers]. This honors both Cache-Control and Pragma headers
      * if they are present.
      */
     @JvmStatic
-    actual fun parse(headers: Headers): CacheControl = commonParse(headers)
+    fun parse(headers: Headers): CacheControl = commonParse(headers)
   }
 }

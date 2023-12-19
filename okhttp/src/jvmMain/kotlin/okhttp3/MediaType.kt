@@ -29,21 +29,21 @@ import okhttp3.internal.commonToString
  *
  * [rfc_2045]: http://tools.ietf.org/html/rfc2045
  */
-actual class MediaType internal actual constructor(
-  internal actual val mediaType: String,
+class MediaType internal constructor(
+  internal val mediaType: String,
 
   /**
    * Returns the high-level media type, such as "text", "image", "audio", "video", or "application".
    */
-  @get:JvmName("type") actual val type: String,
+  @get:JvmName("type") val type: String,
 
   /**
    * Returns a specific media subtype, such as "plain" or "png", "mpeg", "mp4" or "xml".
    */
-  @get:JvmName("subtype") actual val subtype: String,
+  @get:JvmName("subtype") val subtype: String,
 
   /** Alternating parameter names with their values, like `["charset", "utf-8"]`. */
-  internal actual val parameterNamesAndValues: Array<String>
+  internal val parameterNamesAndValues: Array<String>
 ) {
 
   /**
@@ -64,7 +64,7 @@ actual class MediaType internal actual constructor(
    * Returns the parameter [name] of this media type, or null if this media type does not define
    * such a parameter.
    */
-  actual fun parameter(name: String): String? = commonParameter(name)
+  fun parameter(name: String): String? = commonParameter(name)
 
   @JvmName("-deprecated_type")
   @Deprecated(
@@ -86,13 +86,13 @@ actual class MediaType internal actual constructor(
    * Returns the encoded media type, like "text/plain; charset=utf-8", appropriate for use in a
    * Content-Type header.
    */
-  actual override fun toString(): String = commonToString()
+  override fun toString(): String = commonToString()
 
   override fun equals(other: Any?): Boolean = commonEquals(other)
 
   override fun hashCode(): Int = commonHashCode()
 
-  actual companion object {
+  companion object {
     /**
      * Returns a media type for this string.
      *
@@ -100,12 +100,12 @@ actual class MediaType internal actual constructor(
      */
     @JvmStatic
     @JvmName("get")
-    actual fun String.toMediaType(): MediaType = commonToMediaType()
+    fun String.toMediaType(): MediaType = commonToMediaType()
 
     /** Returns a media type for this, or null if this is not a well-formed media type. */
     @JvmStatic
     @JvmName("parse")
-    actual fun String.toMediaTypeOrNull(): MediaType? = commonToMediaTypeOrNull()
+    fun String.toMediaTypeOrNull(): MediaType? = commonToMediaTypeOrNull()
 
     @JvmName("-deprecated_get")
     @Deprecated(

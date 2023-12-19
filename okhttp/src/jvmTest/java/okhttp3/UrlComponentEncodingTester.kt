@@ -348,7 +348,3 @@ class UrlComponentEncodingTester private constructor() {
     }
   }
 }
-
-expect fun urlComponentEncodingTesterJvmPlatform(
-  component: UrlComponentEncodingTester.Component,
-): UrlComponentEncodingTester.Platform

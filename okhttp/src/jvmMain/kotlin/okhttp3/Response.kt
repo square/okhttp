@@ -51,7 +51,7 @@ import okio.Buffer
  * This class implements [Closeable]. Closing it simply closes its response body. See
  * [ResponseBody] for an explanation and examples.
  */
-actual class Response internal constructor(
+class Response internal constructor(
   /**
    * The request that initiated this HTTP response. This is not necessarily the same request issued
    * by the application:
@@ -65,16 +65,16 @@ actual class Response internal constructor(
    * transmitted. In the case of follow-ups and redirects, also look at the `request` of the
    * [priorResponse] objects, which have its own [priorResponse].
    */
-  @get:JvmName("request") actual val request: Request,
+  @get:JvmName("request") val request: Request,
 
   /** Returns the HTTP protocol, such as [Protocol.HTTP_1_1] or [Protocol.HTTP_1_0]. */
-  @get:JvmName("protocol") actual val protocol: Protocol,
+  @get:JvmName("protocol") val protocol: Protocol,
 
   /** Returns the HTTP status message. */
-  @get:JvmName("message") actual val message: String,
+  @get:JvmName("message") val message: String,
 
   /** Returns the HTTP status code. */
-  @get:JvmName("code") actual val code: Int,
+  @get:JvmName("code") val code: Int,
 
   /**
    * Returns the TLS handshake of the connection that carried this response, or null if the
@@ -83,7 +83,7 @@ actual class Response internal constructor(
   @get:JvmName("handshake") val handshake: Handshake?,
 
   /** Returns the HTTP headers. */
-  @get:JvmName("headers") actual val headers: Headers,
+  @get:JvmName("headers") val headers: Headers,
 
   /**
    * Returns a non-null value if this response was passed to [Callback.onResponse] or returned
@@ -93,21 +93,21 @@ actual class Response internal constructor(
    * This always returns null on responses returned from [cacheResponse], [networkResponse],
    * and [priorResponse].
    */
-  @get:JvmName("body") actual val body: ResponseBody,
+  @get:JvmName("body") val body: ResponseBody,
 
   /**
    * Returns the raw response received from the network. Will be null if this response didn't use
    * the network, such as when the response is fully cached. The body of the returned response
    * should not be read.
    */
-  @get:JvmName("networkResponse") actual val networkResponse: Response?,
+  @get:JvmName("networkResponse") val networkResponse: Response?,
 
   /**
    * Returns the raw response received from the cache. Will be null if this response didn't use
    * the cache. For conditional get requests the cache response and network response may both be
    * non-null. The body of the returned response should not be read.
    */
-  @get:JvmName("cacheResponse") actual val cacheResponse: Response?,
+  @get:JvmName("cacheResponse") val cacheResponse: Response?,
 
   /**
    * Returns the response for the HTTP redirect or authorization challenge that triggered this
@@ -115,7 +115,7 @@ actual class Response internal constructor(
    * returned response should not be read because it has already been consumed by the redirecting
    * client.
    */
-  @get:JvmName("priorResponse") actual val priorResponse: Response?,
+  @get:JvmName("priorResponse") val priorResponse: Response?,
 
   /**
    * Returns a [timestamp][System.currentTimeMillis] taken immediately before OkHttp
@@ -136,7 +136,7 @@ actual class Response internal constructor(
   private var trailersFn: (() -> Headers)
 ) : Closeable {
 
-  internal actual var lazyCacheControl: CacheControl? = null
+  internal var lazyCacheControl: CacheControl? = null
 
   @JvmName("-deprecated_request")
   @Deprecated(
@@ -163,7 +163,7 @@ actual class Response internal constructor(
    * Returns true if the code is in [200..300), which means the request was successfully received,
    * understood, and accepted.
    */
-  actual val isSuccessful: Boolean = commonIsSuccessful
+  val isSuccessful: Boolean = commonIsSuccessful
 
   @JvmName("-deprecated_message")
   @Deprecated(
@@ -179,10 +179,10 @@ actual class Response internal constructor(
       level = DeprecationLevel.ERROR)
   fun handshake(): Handshake? = handshake
 
-  actual fun headers(name: String): List<String> = commonHeaders(name)
+  fun headers(name: String): List<String> = commonHeaders(name)
 
   @JvmOverloads
-  actual fun header(name: String, defaultValue: String?): String? = commonHeader(name, defaultValue)
+  fun header(name: String, defaultValue: String? = null): String? = commonHeader(name, defaultValue)
 
   @JvmName("-deprecated_headers")
   @Deprecated(
@@ -196,7 +196,7 @@ actual class Response internal constructor(
    * before the entire HTTP response body has been consumed.
    */
   @Throws(IOException::class)
-  actual fun trailers(): Headers = trailersFn()
+  fun trailers(): Headers = trailersFn()
 
   /**
    * Peeks up to [byteCount] bytes from the response body and returns them as a new response
@@ -210,7 +210,7 @@ actual class Response internal constructor(
    * a modest limit on `byteCount`, such as 1 MiB.
    */
   @Throws(IOException::class)
-  actual fun peekBody(byteCount: Long): ResponseBody {
+  fun peekBody(byteCount: Long): ResponseBody {
     val peeked = body.source().peek()
     val buffer = Buffer()
     peeked.request(byteCount)
@@ -225,10 +225,10 @@ actual class Response internal constructor(
       level = DeprecationLevel.ERROR)
   fun body() = body
 
-  actual fun newBuilder(): Builder = commonNewBuilder()
+  fun newBuilder(): Builder = commonNewBuilder()
 
   /** Returns true if this response redirects to another resource. */
-  actual val isRedirect: Boolean = commonIsRedirect
+  val isRedirect: Boolean = commonIsRedirect
 
   @JvmName("-deprecated_networkResponse")
   @Deprecated(
@@ -276,7 +276,7 @@ actual class Response internal constructor(
    * Returns the cache control directives for this response. This is never null, even if this
    * response contains no `Cache-Control` header.
    */
-  @get:JvmName("cacheControl") actual val cacheControl: CacheControl
+  @get:JvmName("cacheControl") val cacheControl: CacheControl
     get() = commonCacheControl
 
   @JvmName("-deprecated_cacheControl")
@@ -306,31 +306,31 @@ actual class Response internal constructor(
    * Prior to OkHttp 5.0, it was an error to close a response that is not eligible for a body. This
    * includes the responses returned from [cacheResponse], [networkResponse], and [priorResponse].
    */
-  actual override fun close() = commonClose()
+  override fun close() = commonClose()
 
-  actual override fun toString(): String = commonToString()
+  override fun toString(): String = commonToString()
 
-  actual open class Builder {
-    internal actual var request: Request? = null
-    internal actual var protocol: Protocol? = null
-    internal actual var code = -1
-    internal actual var message: String? = null
+  open class Builder {
+    internal var request: Request? = null
+    internal var protocol: Protocol? = null
+    internal var code = -1
+    internal var message: String? = null
     internal var handshake: Handshake? = null
-    internal actual var headers: Headers.Builder
-    internal actual var body: ResponseBody = commonEmptyResponse
-    internal actual var networkResponse: Response? = null
-    internal actual var cacheResponse: Response? = null
-    internal actual var priorResponse: Response? = null
+    internal var headers: Headers.Builder
+    internal var body: ResponseBody = commonEmptyResponse
+    internal var networkResponse: Response? = null
+    internal var cacheResponse: Response? = null
+    internal var priorResponse: Response? = null
     internal var sentRequestAtMillis: Long = 0
     internal var receivedResponseAtMillis: Long = 0
     internal var exchange: Exchange? = null
-    internal actual var trailersFn: (() -> Headers) = { Headers.headersOf() }
+    internal var trailersFn: (() -> Headers) = { Headers.headersOf() }
 
-    actual constructor() {
+    constructor() {
       headers = Headers.Builder()
     }
 
-    internal actual constructor(response: Response) {
+    internal constructor(response: Response) {
       this.request = response.request
       this.protocol = response.protocol
       this.code = response.code
@@ -347,13 +347,13 @@ actual class Response internal constructor(
       this.trailersFn = response.trailersFn
     }
 
-    actual open fun request(request: Request) = commonRequest(request)
+    open fun request(request: Request) = commonRequest(request)
 
-    actual open fun protocol(protocol: Protocol) =commonProtocol(protocol)
+    open fun protocol(protocol: Protocol) =commonProtocol(protocol)
 
-    actual open fun code(code: Int) = commonCode(code)
+    open fun code(code: Int) = commonCode(code)
 
-    actual open fun message(message: String) = commonMessage(message)
+    open fun message(message: String) = commonMessage(message)
 
     open fun handshake(handshake: Handshake?) = apply {
       this.handshake = handshake
@@ -363,29 +363,29 @@ actual class Response internal constructor(
      * Sets the header named [name] to [value]. If this request already has any headers
      * with that name, they are all replaced.
      */
-    actual open fun header(name: String, value: String) = commonHeader(name, value)
+    open fun header(name: String, value: String) = commonHeader(name, value)
 
     /**
      * Adds a header with [name] to [value]. Prefer this method for multiply-valued
      * headers like "Set-Cookie".
      */
-    actual open fun addHeader(name: String, value: String) = commonAddHeader(name, value)
+    open fun addHeader(name: String, value: String) = commonAddHeader(name, value)
 
     /** Removes all headers named [name] on this builder. */
-    actual open fun removeHeader(name: String) = commonRemoveHeader(name)
+    open fun removeHeader(name: String) = commonRemoveHeader(name)
 
     /** Removes all headers on this builder and adds [headers]. */
-    actual open fun headers(headers: Headers) = commonHeaders(headers)
+    open fun headers(headers: Headers) = commonHeaders(headers)
 
-    actual open fun body(body: ResponseBody) = commonBody(body)
+    open fun body(body: ResponseBody) = commonBody(body)
 
-    actual open fun networkResponse(networkResponse: Response?) = commonNetworkResponse(networkResponse)
+    open fun networkResponse(networkResponse: Response?) = commonNetworkResponse(networkResponse)
 
-    actual open fun cacheResponse(cacheResponse: Response?) = commonCacheResponse(cacheResponse)
+    open fun cacheResponse(cacheResponse: Response?) = commonCacheResponse(cacheResponse)
 
-    actual open fun priorResponse(priorResponse: Response?) = commonPriorResponse(priorResponse)
+    open fun priorResponse(priorResponse: Response?) = commonPriorResponse(priorResponse)
 
-    actual open fun trailers(trailersFn: (() -> Headers)): Builder = commonTrailers(trailersFn)
+    open fun trailers(trailersFn: (() -> Headers)): Builder = commonTrailers(trailersFn)
 
     open fun sentRequestAtMillis(sentRequestAtMillis: Long) = apply {
       this.sentRequestAtMillis = sentRequestAtMillis
@@ -400,7 +400,7 @@ actual class Response internal constructor(
       this.trailersFn = { exchange.trailers() }
     }
 
-    actual open fun build(): Response {
+    open fun build(): Response {
       check(code >= 0) { "code < 0: $code" }
       return Response(
           checkNotNull(request) { "request == null" },
